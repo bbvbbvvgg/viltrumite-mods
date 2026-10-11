@@ -25,6 +25,8 @@ public final class ReinhardRules {
 
    // ---- Holy Sword (spec §7.2, used in Stage 4) ----
    public static final float CHOP_BASE_DAMAGE = 20.0F;
+   /** Reid idle time before the auto-return to the sheath (spec §7.3: 60 s); HUD bar scale. */
+   public static final int REID_IDLE_TICKS = 1200;
 
    private ReinhardRules() {
    }

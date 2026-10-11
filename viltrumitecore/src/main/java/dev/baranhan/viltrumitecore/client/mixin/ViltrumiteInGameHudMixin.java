@@ -49,7 +49,8 @@ public class ViltrumiteInGameHudMixin {
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
             PanelStyle style = PanelStyles.of(player);
-            style.drawFrames(guiGraphics, new PanelStyle.Bounds(rightBarX, barY, rightWidth, barHeight), new PanelStyle.Bounds(vertBarX, vertBarY, vertWidth, vertHeight));
+            PanelStyle.Bounds abilityBar = new PanelStyle.Bounds(vertBarX, vertBarY, vertWidth, vertHeight);
+            style.drawFrames(guiGraphics, new PanelStyle.Bounds(rightBarX, barY, rightWidth, barHeight), abilityBar);
 
             for (int i = 0; i < 6; i++) {
                int slotX = vertBarX + 3;
@@ -113,6 +114,10 @@ public class ViltrumiteInGameHudMixin {
                }
             }
 
+            dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot snapshot = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
+               ? heroPlayer.getHeroSnapshot() : null;
+            style.drawAttachments(guiGraphics, abilityBar, player,
+               snapshot != null ? snapshot : dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot.EMPTY);
             RenderSystem.disableBlend();
          }
       }

@@ -181,11 +181,11 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `ReinhardHud`: pure layout `static Layout layout(Bounds abilityBar)` → three 12×12 icon rects to the right of the bar, top-aligned, 2 px gap, and a 40×3 bar rect under them; `draw(...)`: active mode icon full colour with a gold outline, others 40% alpha; the Reid bar is drawn only when `snapshot.resource() > 0` (Stage 4), fill = `resource / REID_IDLE_TICKS`.
 - `make_reinhard_icons.py` (reads the user archive path given by `--assets DIR`): copies `knight_emblem.png` and `reinhard.png`; draws the three 12×12 mode icons in the house pixel style (closed fist on white, single gauntlet on blue, sword hilt on gold); later stages add ability icons to the same script (`--only <name>` to rebuild one). Writes PNG + `.b64`. `reinhard_sources.md` lists every committed asset: source file in the archive, transformation, script.
 
-- [ ] **Step 1: Write the failing test** — `layoutRightOfBar` (rects start at `bar.x + bar.width + 2`), `iconsDoNotOverlap`, `barUnderIcons`, `reidBarHiddenAtZero`.
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*ReinhardHud*' --no-daemon` → FAIL.
-- [ ] **Step 3: Implement**; run `python3 tools/assets/make_reinhard_icons.py --assets /path/to/reinhard_assets`.
-- [ ] **Step 4: Run** → PASS. Manual: panel in knight style, three mode icons next to it, the active one lit, switching with MMB updates them; other heroes' panels unchanged (Iron Man holographic, default).
-- [ ] **Step 5: Commit** `feat(reinhard): knight panel style and mode hud`.
+- [x] **Step 1: Write the failing test** — `layoutRightOfBar` (rects start at `bar.x + bar.width + 2`), `iconsDoNotOverlap`, `barUnderIcons`, `reidBarHiddenAtZero`.
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*ReinhardHud*' --no-daemon` → FAIL.
+- [x] **Step 3: Implement**; run `python3 tools/assets/make_reinhard_icons.py --assets /path/to/reinhard_assets`.
+- [x] **Step 4: Run** → PASS. Manual: panel in knight style, three mode icons next to it, the active one lit, switching with MMB updates them; other heroes' panels unchanged (Iron Man holographic, default).
+- [x] **Step 5: Commit** `feat(reinhard): knight panel style and mode hud`.
 
 ### Task 9: Stage check, docs, PR
 
