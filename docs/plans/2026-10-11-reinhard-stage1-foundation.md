@@ -192,9 +192,9 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 **Files:**
 - Modify: `.agents/skills/add_hero/references/hero-seam.md` (hooks `clampUnblockableDamage`, `isDivine`, `isAbsolutelyInvulnerable`; `PanelStyle.drawAttachments`), `.memory-bank/project.md` (facts: unblockable hook + `AdminKill`; divine tags; Reinhard page = mode), `SESSION.md` (Russian entry)
 
-- [ ] **Step 1:** Full verification list from the overview (test, build, checker, `git diff --check`). Start the dedicated server once: `./gradlew :viltrumitecore:runServer --no-daemon` reaches "Done" (new mixin `KillCommandMixin` is common, new client classes only in `client/`).
-- [ ] **Step 2:** In-game list (first and third person where visible): race button; HP/resist/floor/regen/fall/knockback; void rescue; `/kill`; dev divine command; MMB modes + sounds + cooldown; HUD; other heroes unchanged (Homelander void death, Iron Man panel, Regulus heart key on MMB still works).
-- [ ] **Step 3:** Commit `docs(reinhard): stage 1 notes`. Push with `push_files` to `feat/reinhard-stage1`; PR «Рейнхард, этап 1: выбор героя, живучесть, режимы» (body starts with «Для игрока»).
+- [x] **Step 1:** Full verification list from the overview (test, build, checker, `git diff --check`). Start the dedicated server once: `./gradlew :viltrumitecore:runServer --no-daemon` reaches "Done" (new mixin `KillCommandMixin` is common, new client classes only in `client/`).
+- [x] **Step 2:** In-game list (first and third person where visible): race button; HP/resist/floor/regen/fall/knockback; void rescue; `/kill`; dev divine command; MMB modes + sounds + cooldown; HUD; other heroes unchanged (Homelander void death, Iron Man panel, Regulus heart key on MMB still works).
+- [x] **Step 3:** Commit `docs(reinhard): stage 1 notes`. Push with `push_files` to `feat/reinhard-stage1`; PR «Рейнхард, этап 1: выбор героя, живучесть, режимы» (body starts with «Для игрока»).
 
 Acceptance criteria closed: §11.2, §11.5, §11.3 (death part; Phoenix/Adaptation in Stage 2), §11.12 (partial). §11.1 is partial (button only; model in 1b).
 

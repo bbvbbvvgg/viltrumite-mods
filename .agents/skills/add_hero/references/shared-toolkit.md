@@ -41,6 +41,8 @@ Sends `HeroFxS2CPacket` to players tracking the source; the client draws it in `
 - `hero/HeroDamage.route(...)`, `applyCleanDamage(...)`, `isAnchored(entity)` — damage routing and control checks.
 - `hero/control/ControlManager` + `HeroRegistry.allowsExternalControl(target, kind)` — grabs, freezes, anchors.
 - `util/ThunderClapManager` — Viltrumite clap; base for hand-clap style abilities.
+- `hero/DivineDamage` (`DIVINE` damage type, `source(level, attacker, type)`, `isDivine(source)` via tag `viltrumitecore:divine`) + `hero/DivineTargets` (`isDivine(entity)`, `isAbsolutelyInvulnerable(entity)`, entity tag `viltrumitecore:divine`, part entities use the parent) — damage that ignores armor, shields, enchantments and effects but not `bypasses_invulnerability`. Dev command `/viltrumite divine <targets> <amount> [type]` (op 2).
+- `hero/AdminKill` — scope flag set while `/kill` runs (`KillCommandMixin`); inside it `HeroDamageLayers` skips `clampUnblockableDamage`, so HP floors never block an admin kill.
 
 ## Client
 

@@ -42,6 +42,9 @@ Default hooks (override only when needed):
 | `flightProfile(Player)` | null = legacy flight; else `FlightProfile` (speedMul, throttle up/down, lock cap, inertia, turn rate, hover damping, glide); both sides |
 | `absorbIncoming(ServerPlayer, DamageSource, float)` | `DamageAbsorb.PASS`; LivingAttackEvent, before armor (shields, layers) |
 | `clampFinalDamage(ServerPlayer, DamageSource, float)` | unchanged; LivingDamageEvent, after armor (HP floors) |
+| `clampUnblockableDamage(ServerPlayer, DamageSource, float)` | unchanged; the only hook that sees `bypasses_invulnerability` hits (void, `generic_kill`), from `HeroDamageLayers` (LivingDamageEvent and the clean path). Never called inside an `AdminKill` scope (`/kill`, `KillCommandMixin`), so an HP floor here cannot block `/kill` |
+| `isDivine(Player)` | false; a divine being: only divine damage (`viltrumitecore:divine`, `DivineDamage`) hurts it in full, execute-style powers skip it. Read through `DivineTargets.isDivine` (entity tag `viltrumitecore:divine` for mobs) |
+| `isAbsolutelyInvulnerable(Player)` | false; immune even to divine damage (Regulus with an active Lion's Heart). Read through `DivineTargets.isAbsolutelyInvulnerable` (part entities use the parent) |
 | `modifyOutgoingDamage(ServerPlayer, LivingEntity, DamageSource, float)` | unchanged; this hero as attacker |
 | `mouseAction(MouseButton, Player)` | null = vanilla; claimed buttons go through `HeldInputs` (press gated once, release always routed); both sides |
 | `onInputRefused(ServerPlayer, HeroAction)` | nothing; feedback when a claimed press fails `canAct` |
@@ -54,7 +57,7 @@ Default hooks (override only when needed):
 | `scanInfo(Player)` | `ScanInfo.EMPTY`; server-side extra lines for the Iron Man scan card (`protections` / `weakSpots` / `conditions` as translatable `ScanLine`s). Read by scanners on the server only; never send secrets the player could not see |
 | `hiddenFromScan(Player)` | false; true = the scan skips this player (no progress, no card) |
 
-Snapshots: `HeroPublicSnapshot.extraCooldowns` (max `EXTRA_COOLDOWN_MAX`, per-hero meaning; Iron Man index 0 = nano-lost lock ticks, 1 = countermeasures cooldown, 2 = Veronica, 3 = mark signature). `variant` and `resource2` are generic hero-owned ints written after the extras (older encodings decode 0); Iron Man: `IronManVariant` (mark + parts on the body) and mark durability ×10. Owner-only data: `HeroRegistry.pushOwnerSection(player, OwnerSection, Section)` replaces one typed section (`CARRIERS`, `THREATS`, `MARKS`, `SCAN`; enum is append-only, wire = ordinal); client reads `ClientHeroData.section(...)`.
+Snapshots: `availableActions` is a `long` bit mask (`1L << HeroAction.ordinal()`, build it with `HeroPublicSnapshot.actionMask(...)`; `-1` = all; at most 64 actions, guarded by `actionCountFitsMask`). `HeroPublicSnapshot.extraCooldowns` (max `EXTRA_COOLDOWN_MAX`, per-hero meaning; Iron Man index 0 = nano-lost lock ticks, 1 = countermeasures cooldown, 2 = Veronica, 3 = mark signature). `variant` and `resource2` are generic hero-owned ints written after the extras (older encodings decode 0); Iron Man: `IronManVariant` (mark + parts on the body) and mark durability ×10. Owner-only data: `HeroRegistry.pushOwnerSection(player, OwnerSection, Section)` replaces one typed section (`CARRIERS`, `THREATS`, `MARKS`, `SCAN`; enum is append-only, wire = ordinal); client reads `ClientHeroData.section(...)`.
 
 New behaviour that shared code must ask about → add a new default hook here. Do not branch on `HeroId` in shared code.
 
@@ -66,6 +69,7 @@ New behaviour that shared code must ask about → add a new default hook here. D
 | Input actions | `hero/HeroAction.java` (append) |
 | Registration | `hero/HeroRegistry.registerDefaults()` |
 | Hero code | `hero/<id>/` (`<Id>Hero`, `<Id>Rules`, `<Id>State`, `<Id>Abilities`, one class per ability) |
+| Panel look | `client/<id>/<Id>PanelStyle` → `PanelStyles.register`; `drawFrames` / `drawSlot` / `drawCooldown` / `accentColor`, and `drawAttachments(g, abilityBar, player, snapshot)` (default nothing) for hero HUD next to the panel, drawn after both bars and only outside the fixed layout (the ability bar is 5 px from the right screen edge) |
 | Ability panel slots, icons, grey-out | `hero/<id>/<Id>Abilities.panelAbilities()` registered from `ability/ViltrumiteAbilities.java`; icons via `abilityIcon` |
 | Input sending | `heroInputSlots()/heroActionFor()` hooks (generic loop in `client/ViltrumiteCoreClient`), `network/packet/HeroInputC2SPacket.java` |
 | Public sync | `hero/HeroPublicSnapshot.java` (generic `resource`, `resourceLocked`, `heroFlags`; encoded only when non-default), owner-only ids via `HeroRegistry.pushOwnerSnapshot` |
