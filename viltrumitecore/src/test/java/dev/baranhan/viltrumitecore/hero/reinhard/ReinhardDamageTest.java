@@ -62,4 +62,29 @@ class ReinhardDamageTest {
       assertEquals(30.0F, HeroDamageLayers.finalDamage(target, false, 30.0F), EPS);
       assertTrue(HeroDamageLayers.clean(target, HeroDamageLayers.NO_ATTACKER, false, 25.0F) >= 25.0F - EPS);
    }
+
+   /** Review focus 3: a huge unblockable hit (generic_kill from another mod) leaves exactly 1 HP, never NaN. */
+   @Test
+   void floorHandlesMaxValue() {
+      HeroDamageLayers.Target target = new HeroDamageLayers.Target() {
+         @Override
+         public DamageAbsorb absorbIncoming(float raw) {
+            return ReinhardHero.absorb(false, raw);
+         }
+
+         @Override
+         public float clampFinalDamage(float afterArmor) {
+            return ReinhardHero.clamp(false, 20.0F, afterArmor);
+         }
+
+         @Override
+         public float clampUnblockable(float amount) {
+            return ReinhardRules.floor(20.0F, amount);
+         }
+      };
+      assertEquals(19.0F, HeroDamageLayers.finalDamage(target, true, false, Float.MAX_VALUE), EPS);
+      assertEquals(19.0F, HeroDamageLayers.clean(target, HeroDamageLayers.NO_ATTACKER, true, false, Float.MAX_VALUE), EPS);
+      assertEquals(Float.MAX_VALUE, HeroDamageLayers.finalDamage(target, true, true, Float.MAX_VALUE), EPS);
+      assertEquals(0.0F, HeroDamageLayers.finalDamage(target, false, false, Float.NaN), EPS);
+   }
 }

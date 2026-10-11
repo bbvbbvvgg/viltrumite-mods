@@ -15,6 +15,10 @@ public final class ReinhardRules {
    public static final float REGEN_PER_SECOND = 1.0F;
    public static final int REGEN_INTERVAL = 20;
    public static final double KNOCKBACK_RESISTANCE = 1.0;
+   /** Blocks under the world's bottom at which the air step lifts him out (vanilla void damage starts at 64). */
+   public static final int VOID_RESCUE_DEPTH = 8;
+   /** Radius of the search for ground when the column above the fall point is empty. */
+   public static final int VOID_SEARCH_RADIUS = 64;
 
    // ---- modes (spec §5) ----
    public static final int MODE_COOLDOWN = 60;

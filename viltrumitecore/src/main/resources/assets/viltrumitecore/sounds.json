@@ -627,5 +627,15 @@
     "sounds": [
       "viltrumitecore:ironman/hulkbuster_hop"
     ]
+  },
+  "reinhard.air_step": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_air_step",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event"
+      }
+    ]
   }
 }

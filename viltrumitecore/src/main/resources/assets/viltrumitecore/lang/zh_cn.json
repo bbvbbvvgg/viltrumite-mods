@@ -407,5 +407,6 @@
   "subtitles.viltrumitecore.ironman_hulkbuster_slam": "反浩克装甲重砸地面",
   "subtitles.viltrumitecore.ironman_hulkbuster_hop": "反浩克装甲推进器点火",
   "hero.viltrumitecore.reinhard": "莱因哈鲁特·范·阿斯特雷亚",
-  "gui.viltrumitecore.race_selection.become_reinhard": "成为莱因哈鲁特"
+  "gui.viltrumitecore.race_selection.become_reinhard": "成为莱因哈鲁特",
+  "subtitles.viltrumitecore.reinhard_air_step": "莱因哈鲁特踏空而行"
 }

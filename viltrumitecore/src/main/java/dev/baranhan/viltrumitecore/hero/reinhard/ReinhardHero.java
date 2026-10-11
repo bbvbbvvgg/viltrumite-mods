@@ -92,6 +92,7 @@ public final class ReinhardHero implements HeroDefinition {
    public void tick(ServerPlayer player) {
       ReinhardState state = ReinhardState.ensure(player);
       state.tick();
+      VoidRescue.tick(player);
       if (player.isAlive() && ++state.regenTicks >= ReinhardRules.REGEN_INTERVAL) {
          state.regenTicks = 0;
          if (player.getHealth() < player.getMaxHealth()) {
@@ -132,6 +133,12 @@ public final class ReinhardHero implements HeroDefinition {
    @Override
    public float clampFinalDamage(ServerPlayer self, DamageSource source, float afterArmor) {
       return clamp(isDivine(source), self.getHealth(), afterArmor);
+   }
+
+   /** Spec §3.1: void and generic_kill never take him below 1 HP (/kill still kills: AdminKill). */
+   @Override
+   public float clampUnblockableDamage(ServerPlayer self, DamageSource source, float amount) {
+      return ReinhardRules.floor(self.getHealth(), amount);
    }
 
    /** Pure absorb step of the chassis. */
