@@ -65,17 +65,17 @@ See the overview. Stage-specific:
 
 **Files:**
 - Create: `core/hero/reinhard/ability/StepDash.java`, `core/client/reinhard/StepDashClient.java`; clip `step_dash` (6 t lean); icon; lang
-- Modify: `core/client/ViltrumiteCoreClient.java` only if the generic hero input loop cannot call a client predictor — prefer `ReinhardClient` registering a `ClientTickEvent` listener that watches the slot key through `AbilityInputManager.isAbilityKeyDown` edge.
+- Modify: none in the input path. The generic hero input loop already sends `HeroInputC2SPacket(STEP_DASH, true)` for the slot key; `StepDashClient` (a `ClientTickEvent` listener registered by `ReinhardClient`) watches the same key edge through `AbilityInputManager.isAbilityKeyDown` and **only applies the local movement** — it never sends a packet (otherwise the server gets two presses).
 - Test: `test/hero/reinhard/StepDashTest.java`
 
 **Interfaces:**
 - `ReinhardRules`: `STEP_DISTANCE = 6`, `STEP_TICKS = 4`, `STEP_COOLDOWN = 20`.
 - Direction: movement input (WASD) in world space; none → look (horizontal).
-- Client: on press with local cooldown 0 and the gate passing on the mirrored snapshot → set horizontal velocity `StepDash.velocity(STEP_DISTANCE, STEP_TICKS, friction)` for `STEP_TICKS` ticks (re-applied each tick), stops at a wall (vanilla collision), sends `HeroInputC2SPacket(STEP_DASH, true)`.
-- Server: gate → cooldown 20, action timeline 6 t, FX `HeroFx.launch` at the start feet + afterimage pixels, sound placeholder `entity.player.attack.sweep` pitch 1.6. Refused → nothing (no FX, no cooldown).
+- Client: on press with local cooldown 0 and the gate passing on the mirrored snapshot → set horizontal velocity `StepDash.velocity(STEP_DISTANCE, STEP_TICKS, friction)` for `STEP_TICKS` ticks (re-applied each tick), stops at a wall (vanilla collision). No packet from the predictor (the generic input path sends the press once).
+- Server: gate → cooldown 20, action timeline 6 t, the same velocity set server-side with `hurtMarked = true` (authoritative motion that matches the prediction), FX `HeroFx.launch` at the start feet + afterimage pixels, sound placeholder `entity.player.attack.sweep` pitch 1.6. Refused → no FX, no cooldown; server sends its current velocity (`ClientboundSetEntityMotionPacket`) to stop the predicted dash.
 - Pure `velocity(distance, ticks, friction)`: per-tick speed so the sum over `ticks` with ground friction 0.546 (0.91 × 0.6) ≈ distance.
 
-- [ ] Step 1 tests: `coversSixBlocks` (simulated sum within ±0.3), `cooldownTwentyTicks`, `serverRefusalHasNoSideEffects`, `directionFromInputThenLook`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: on flat ground ~6 blocks, into a wall stops, both views. Step 5 commit `feat(reinhard): step dash`.
+- [ ] Step 1 tests: `coversSixBlocks` (simulated sum within ±0.3), `cooldownTwentyTicks`, `serverRefusalHasNoSideEffects`, `directionFromInputThenLook`, `onePressOnePacket` (fake input loop + predictor for one key edge → exactly one `HeroInputC2SPacket`). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: on flat ground ~6 blocks, into a wall stops, both views. Step 5 commit `feat(reinhard): step dash`.
 
 ### Task 4: Catch Projectile (Restrained, slot 3)
 
@@ -124,7 +124,7 @@ See the overview. Stage-specific:
 
 **Interfaces:**
 - `ReinhardRules`: `GRAB_REACH = 3.5`, `GRAB_MAX_TICKS = 100`, `THROW_DISTANCE = 120`, `THROW_SPEED = 3.9`, `THROW_SUSTAIN_TICKS`, `THROW_DAMAGE = 15f`, `GRAB_COOLDOWN = 240` (starts at the throw, or at a forced release).
-- Press 1: target in reach, `allowsExternalControl(target, PULL)` → `ControlManager.tryAcquire(target, self, "reinhard:grab", PULL)`; anchor follows the hand point each tick (like `IronManHulkbuster` grab); flag `GRAB_HOLDING`. Press 2 (or `GRAB_MAX_TICKS`): release with effect id, `hurt(15)`, hit-stop 3 t, then velocity along the look with a small up angle (+12°), re-applied every tick for `THROW_SUSTAIN_TICKS` (pure: `sustainTicks(distance, speed, airDrag 0.91)` so the flight covers ~120 blocks) unless the target hit a block or `allowsImpulse` turns false; sonic ring + white trail (Task 6 VFX), heavy sound `regulus_impact_heavy` on release (§10.2).
+- Press 1: target in reach, `allowsExternalControl(target, PULL)` → `ControlManager.get(level).tryAcquire(target, self.getUUID(), grabEffectId, ControlKind.PULL)` (`grabEffectId = UUID.randomUUID()` at the press, stored in `ReinhardState.grab`); anchor follows the hand point each tick (like `IronManHulkbuster` grab); flag `GRAB_HOLDING`. Press 2 (or `GRAB_MAX_TICKS`): release with `grabEffectId` (`ControlManager.get(level).release(target.getUUID(), grabEffectId, ReleaseReason.…)`; real signature `release(UUID targetId, UUID effectId, ReleaseReason)`), `hurt(15)`, hit-stop 3 t, then velocity along the look with a small up angle (+12°), re-applied every tick for `THROW_SUSTAIN_TICKS` (pure: `sustainTicks(distance, speed, airDrag 0.91)` so the flight covers ~120 blocks) unless the target hit a block or `allowsImpulse` turns false; sonic ring + white trail (Task 6 VFX), heavy sound `regulus_impact_heavy` on release (§10.2).
 - Every end (death, logout, dimension change, hero change, mode change, control on Reinhard) → `GrabThrow.release(...)` with no throw.
 
 - [ ] Step 1 tests: `sustainCoversAbout120` (simulation within ±10), `damage15OnThrow`, `cooldownFromThrow`, `releaseOnEveryEnd` (each `CleanupReason` + mode change), `refusesUncontrollable`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: zombie and a player thrown ~120 blocks, Regulus in Lion's Heart refused, both views. Step 5 commit `feat(reinhard): grab and throw`.
@@ -132,16 +132,16 @@ See the overview. Stage-specific:
 ### Task 8: Dash Behind (Knight, slot 4) — safe spot, predicted
 
 **Files:**
-- Create: `core/hero/reinhard/ability/DashBehind.java`, `core/hero/SafeSpot.java` (shared, hero-neutral), `core/client/reinhard/DashBehindClient.java`; clip `dash_behind` (vanish lean → land turned); icon; lang
+- Create: `core/hero/reinhard/ability/DashBehind.java`, `core/hero/SafeSpot.java` (shared, hero-neutral), `core/client/reinhard/DashBehindClient.java`, `core/network/packet/ReinhardDashBehindC2SPacket.java` (`int targetId`, `double x, y, z` of the candidate feet; register in `CoreMessages`, PLAY_TO_SERVER); clip `dash_behind` (vanish lean → land turned); icon; lang
 - Test: `test/hero/SafeSpotTest.java`, `test/hero/reinhard/DashBehindTest.java`
 
 **Interfaces:**
 - `SafeSpot` pure: `interface Probe { boolean fits(Vec3 feet); boolean insideBorder(Vec3 feet); boolean groundBelow(Vec3 feet, int maxDrop); }`; `static Optional<Vec3> find(Vec3 wanted, Probe p, double radius, double step)` — wanted spot first; else spiral/shell search up to `radius` (3 blocks), nearest first; a spot needs `fits && insideBorder && groundBelow(…, 6)` (not over the void). Minecraft probe: `level.noCollision(entity, box at feet)`, `level.getWorldBorder().isWithinBounds(box)`, a solid block within 6 below and above `minBuildHeight`.
 - `ReinhardRules`: `BEHIND_RANGE = 24`, `BEHIND_OFFSET = 1.5`, `BEHIND_SEARCH = 3`, `BEHIND_COOLDOWN = 60`.
-- Target = the living entity under the crosshair within 24 (client and server compute it the same way). Wanted spot = target feet − target horizontal look × 1.5. Client: computes `find` with a client-level probe, teleports itself locally (`setPos` + facing the target's back), sends the press with the chosen spot. Server: recomputes; accepts the client spot if it passes its own probe and is within 1 block of the server answer; else teleports to the server answer; none → refusal sound, no cooldown (client is snapped back with `teleportTo` to the start).
+- Target = the living entity under the crosshair within 24 (client and server compute it the same way). Wanted spot = target feet − target horizontal look × 1.5. Fact: `HeroInputC2SPacket` carries only `actionOrdinal` + `pressed`, so the candidate travels in the separate `ReinhardDashBehindC2SPacket`. The slot key of Dash Behind is **not** routed through `HeroInputC2SPacket` (`ReinhardHero.heroInputSlots` excludes it, so the generic loop sends nothing for it); `DashBehindClient` sends exactly one `ReinhardDashBehindC2SPacket` per key edge. Client: computes `find` with a client-level probe, teleports itself locally (`setPos` + facing the target's back), sends the packet. Server handler (`enqueueWork`): resolves `targetId` in the sender's level (missing / not living / > 24 + 2 tolerance → refusal), runs the same gate as any ability (`canAct`, mode Knight, cooldown), recomputes; accepts the client spot if it passes its own probe and is within 1 block of the server answer; else teleports to the server answer; none → refusal sound, no cooldown (client is snapped back with `teleportTo` to the start).
 - FX: white pixel afterimage at the start, `HeroFx.flash` at the arrival, sound placeholder `entity.enderman.teleport` pitch 1.5.
 
-- [ ] Step 1 tests: `SafeSpotTest.wantedSpotFirst`, `blockedSearchesNearest`, `outsideBorderRejected`, `overVoidRejected`, `nothingWithin3Empty`; `DashBehindTest.refusalKeepsCooldown`, `rangeIs24`, `clientSpotAcceptedWithin1`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: target against a wall, in a 1×2 tunnel, at the world border, on a pillar over the void, both views. Step 5 commit `feat(hero): safe spot search` and `feat(reinhard): dash behind`.
+- [ ] Step 1 tests: `SafeSpotTest.wantedSpotFirst`, `blockedSearchesNearest`, `outsideBorderRejected`, `overVoidRejected`, `nothingWithin3Empty`; `DashBehindTest.refusalKeepsCooldown`, `rangeIs24`, `clientSpotAcceptedWithin1`, `clientSpotFarAwayReplaced`, `packetWithForeignTargetRefused` (id of an entity in another level / non-living), `nanCandidateRejected`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: target against a wall, in a 1×2 tunnel, at the world border, on a pillar over the void, both views. Step 5 commit `feat(hero): safe spot search` and `feat(reinhard): dash behind`.
 
 ### Task 9: Stomp (Knight, slot 5)
 

@@ -10,7 +10,7 @@
 
 **Spec:** `docs/design/2026-10-11-reinhard-design.md` (branch `docs/reinhard-design`, PR #25). Section numbers `§x.y` below refer to it. The spec is approved: a plan never changes its decisions. Gaps are listed in «Вопросы пользователю» at the end.
 
-Paths used in every stage file: `core/` = `viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/`, `res/` = `viltrumitecore/src/main/resources/assets/viltrumitecore/`, `data/` = `viltrumitecore/src/main/resources/data/`, `bin/` = `viltrumitecore/src/main/binassets/assets/viltrumitecore/`, `test/` = `viltrumitecore/src/test/java/dev/baranhan/viltrumitecore/`.
+Paths used in every stage file: `core/` = `viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/`, `res/` = `viltrumitecore/src/main/resources/assets/viltrumitecore/`, `mc/` = `viltrumitecore/src/main/resources/assets/minecraft/`, `data/` = `viltrumitecore/src/main/resources/data/`, `bin/` = `viltrumitecore/src/main/binassets/assets/viltrumitecore/`, `test/` = `viltrumitecore/src/test/java/dev/baranhan/viltrumitecore/`.
 
 ## Stages
 
@@ -24,10 +24,10 @@ Each stage = its own plan file, branch, PR. After each stage the game is playabl
 | 3 | `2026-10-11-reinhard-stage3-restrained-knight.md` | `feat/reinhard-stage3` | 11 | all §6 abilities with poses and VFX |
 | 4 | `2026-10-11-reinhard-stage4-holy-sword.md` | `feat/reinhard-stage4` | 9 | Reid draw event, sheathe/auto-return, Lethal Chop variant, Sheath Strike, Rain of Cuts |
 | 5 | `2026-10-11-reinhard-stage5-world-cut.md` | `feat/reinhard-stage5` | 6 | World Cut with the block budget |
-| 6 | `2026-10-11-reinhard-stage6-world-erasure.md` | `feat/reinhard-stage6` | 7 | World Erasure, global pause, limbo |
+| 6 | `2026-10-11-reinhard-stage6-world-erasure.md` | `feat/reinhard-stage6` | 8 | World Erasure, global pause, limbo |
 | 7 | `2026-10-11-reinhard-stage7-sounds-polish.md` | `feat/reinhard-stage7` | 5 | final sounds, credits, acceptance pass, release |
 
-Total: 63 tasks. Each stage branch starts from the previous stage branch (or `main` after the previous PR is merged). Before every push: fetch and compare with the remote branch (other sessions push too).
+Total: 64 tasks. Each stage branch starts from the previous stage branch (or `main` after the previous PR is merged). Before every push: fetch and compare with the remote branch (other sessions push too).
 
 ## Global Constraints
 
@@ -35,7 +35,11 @@ Every task implicitly includes these lines.
 
 - `AGENTS.md` §3: every pose, renderer, particle, shader and VFX goes through the existing system (`client/anim/`, model mixins, `client/render/vfx/`, `PixelVfx`, `HeroImpactFx`, `CameraShake`, post shader `dash_impact`). No PlayerAnimator, GeckoLib animation, Veil, second keyframe engine or second post chain. Read `.agents/skills/animation-system/SKILL.md` before any visual task.
 - `AGENTS.md` §7: no `HeroId.REINHARD` branch in shared code. Shared code asks `HeroDefinition` hooks. `NoHeroBranchTest` pattern gets `REINHARD` and the `reinhard` path prefix in Stage 1 Task 1; the allowlist never grows.
-- `AGENTS.md` §8: gameplay is server-authoritative. Movement that the player feels (step dash, air step, super jump, dash behind) is applied on the client at once and validated by the server (spec §1.2.3). Client classes only in `client/` packages and `viltrumitecore.client.mixins.json`.
+- `AGENTS.md` §8: gameplay is server-authoritative. Movement that the player feels (step dash, air step, dash behind) is predicted on the client and **reconciled** by the server: the server keeps its own counters/cooldowns with the same reset rules, confirms an accepted move with authoritative motion or position and corrects a refused one (`ClientboundSetEntityMotionPacket` / `teleportTo`); a refusal has no FX, no cooldown and no gameplay effect. The existing client-authoritative `HeroSuperJump` is not changed by this plan (separate issue). Every ability press goes through the one generic `HeroInputC2SPacket` path; client predictors never send a second packet. Client classes only in `client/` packages and `viltrumitecore.client.mixins.json`.
+- Networking: every new packet is registered in `network/CoreMessages.java` (`AGENTS.md`); there is no other registry.
+- Resource paths: `res/` already means `assets/viltrumitecore/`, so paths below are written `res/shaders/...`, `res/sounds.json`; datapack files are `data/viltrumitecore/...`; the `dash_impact` **program** lives in vanilla's namespace: `viltrumitecore/src/main/resources/assets/minecraft/shaders/program/dash_impact.{fsh,json}` (`mc/` below).
+- `ControlManager` contract (real signatures): `tryAcquire(LivingEntity target, UUID caster, UUID effectId, ControlKind kind[, long expiresAt])`; one `UUID effectId` per effect instance (`UUID.randomUUID()` at cast, kept in the ability state), never a string; release by the same effect id. Refreshing the expiry of an own control uses the new `refresh(...)` (Stage 6 Task 1), never a second `tryAcquire` (it fails on an already controlled target).
+- Level tick phases in `HeroEvents.onLevelTick`: `START` → the existing `ControlManager.tick` (unchanged), `END` → new systems (`CarveJobs.tick`, `WorldCutManager.tick`). The existing `END` early return is replaced by an explicit `if/else` on the phase; `ControlManager` must stay on `START`.
 - Append only: `HeroId`, `HeroAction`, `MouseButton`, `OwnerSection`, `CleanupReason`, `ReinhardMode`. No renames of registry ids, NBT keys, synced data, key-mapping ids.
 - Spec §1.2.6: no hook or exception for another hero. Reinhard never pierces Lion's Heart. The only cross-hero contracts are the hero-neutral hooks below.
 - Spec §1.2.4: no shared resource; only cooldowns and conditions.
@@ -71,9 +75,13 @@ Each seam lives in shared code, is a hero-neutral default, and is useful to any 
 | `hero/PersistentCooldowns` | 2 | persisted player NBT, ticked for every online player | spec §4.2: a cooldown that survives relog, hero change and death and does not tick offline |
 | `HeroDefinition.chopStyle(Player)` → `hero/ChopStyle` | 4 | `ChopSweepVFXManager`, chop key loop, `ChopC2SPacket`, `tickChop`, `ChopImpactManager` | spec §7.2: a hero variant of the kit chop without touching Homelander (`ChopStyle.DEFAULT` = today's values) |
 | `hero/Annihilation` + damage type `viltrumitecore:annihilation` | 4 | `hero/` | spec §1.3 "Удар Рейда": kill anything non-divine, ignore armor/layers/totems, stop at absolute invulnerability; reusable for any execute-style power |
-| `hero/CarveJobs` + `CarveBudget` | 4 | `hero/` (ticked from `HeroEvents.onLevelTick`) | budgeted, TPS-adaptive block removal for any large destruction |
-| `hero/control/WorldPause` (global freeze) | 6 | `hero/control/` + `client/hero/WorldPauseClient` | spec §7.7: a server-wide cinematic pause; built on `ControlManager` FREEZE, so every existing `canAct`/anchor gate works |
-| `CleanupReason.ERASED` | 6 | `hero/CleanupReason` | an erased player is not dead, but every hero must stop its channels like on death |
+| `hero/CarveJobs` + `CarveBudget` | 4 | `hero/` (ticked from `HeroEvents.onLevelTick` **END**) | budgeted, TPS-adaptive block removal for any large destruction |
+| `hero/control/WorldPause` (global freeze) + `ControlManager.refresh(...)` | 6 | `hero/control/` + `client/hero/WorldPauseClient` | spec §7.7: a server-wide cinematic pause; built on `ControlManager` FREEZE, so every existing `canAct`/anchor gate works |
+| `CleanupReason.ERASED` + `CleanupReason.losesBody()` + `HeroEvents.freshBody(ServerPlayer)` | 6 | `hero/CleanupReason`, `hero/HeroEvents` | an erased player keeps the same entity: every hero must reset all transient state like on death, and the return from limbo runs the same "fresh body" path as a respawn |
+| `HeroPublicSnapshot.availableActions` `int` → `long` | 1 | `hero/HeroPublicSnapshot` | `HeroAction` grows from 25 to 40 values; `1 << ordinal` wraps after 31 (`DASH_BEHIND` would alias bit 0) |
+| `HeroDefinition.onRespawn(ServerPlayer)` | 1 | `hero/HeroEvents.onPlayerRespawn` | `restoreHero()` on clone deliberately skips `enter`; a hero that re-applies a chassis on a new body needs a hook (Regulus' inline respawn code can move there later, out of scope) |
+| `hero/LiftLeases` (shared `noGravity` lease) | 4 | `hero/` | overlapping lifts by several owners must restore the original `noGravity` only when the last owner releases |
+| `ReinhardDashBehindC2SPacket(int targetId, Vec3 candidate)` | 3 | `network/packet/`, `CoreMessages` | `HeroInputC2SPacket` carries only `actionOrdinal` + `pressed`; a separate compact packet keeps the generic input protocol untouched |
 | Client: `SkyTint`, `SoundDuck`, `HitStop` (`client/render/vfx/`), `PanelStyle.drawAttachments`, `HeroHeadPreviews` (`client/hero/`) | 1–5 | shared client toolkit | sky darkening, sound ducking, hit-stop, HUD attachments and race-screen head previews are needed by any big hero |
 | Post shader uniforms `EraseCrack/EraseShatter/EraseDark/EraseRebuild/EraseSeed` | 6 | `dash_impact` | spec §9.5: new uniforms in the existing chain, no second chain |
 
@@ -93,17 +101,17 @@ After each seam lands, the same task updates `.agents/skills/add_hero/references
 | Spec | Requirement | Stage · Task |
 |---|---|---|
 | §1.2.1 | PvP numbers, mobs only targets | all: numbers in `ReinhardRules`; 7·4 tuning pass |
-| §1.2.2 | existing anim/VFX systems only | Global Constraints; 1b·all, 3·11, 4·4–5, 5·4, 6·4–6 |
+| §1.2.2 | existing anim/VFX systems only | Global Constraints; 1b·all, 3·11, 4·4–5, 5·4, 6·5–7 |
 | §1.2.3 | server decides; felt movement predicted on client | 2·4, 3·3, 3·8 |
 | §1.2.4 | no shared resource | 1·2 (`ReinhardState` has only cooldowns) |
 | §1.2.5 | own chassis, kit not inherited, Chop via `LegacyKit` | 1·3, 4·6 |
-| §1.2.6 | no hooks for other heroes; no Lion's Heart piercing | 1·5, 4·1, 6·2 |
+| §1.2.6 | no hooks for other heroes; no Lion's Heart piercing | 1·5, 4·1, 6·3 |
 | §1.2.7 | no flight | 1·1 |
 | §2 | 4th race button, head from model, `changeHero` | 1·1 (button), 1b·6 (3D head) |
 | §3.1 | 20 HP, 99.9% resist incl. clean and % damage, floor 1 HP incl. void/`generic_kill`, `/kill` kills, void rescue, regen 1 HP/s, no fall damage, 100% knockback resistance | 1·3, 1·4 |
 | §3.1 | protections in all modes | 2·8 (mode matrix test) |
 | §3.2 | `divine` type, layer check, dev command, order Adaptation → Phoenix → death | 1·5 (type, command, death), 2·1 (Phoenix, Adaptation, order) |
-| §3.3 | `isDivine`, entity tag, `isAbsolutelyInvulnerable` (Lion's Heart), Reid/Erasure skip divine | 1·5, 4·1, 6·2 |
+| §3.3 | `isDivine`, entity tag, `isAbsolutelyInvulnerable` (Lion's Heart), Reid/Erasure skip divine | 1·5, 4·1, 6·3 |
 | §4.1 | front melee parry with pose and spark | 2·2 |
 | §4.2 | Phoenix, NBT cooldown 10 min online | 2·1 |
 | §4.3 | projectiles deflect sideways; windows win | 2·3, 3·4, 3·10 |
@@ -125,19 +133,52 @@ After each seam lands, the same task updates `.agents/skills/add_hero/references
 | §7.4 | Sheath Strike r 6, stun 60 t, 20 dmg, cd 160 | 4·7 |
 | §7.5 | Rain of Cuts 30°, 40 blocks, 12 cuts, cd 300 | 4·8 |
 | §7.6 | World Cut timeline, 200×17×45–50, Reid strike on the line, budget 2000/tick, adaptive wave, client by time, few debris, cd 45 s | 5·1–5·6 |
-| §7.7 | World Erasure: target ≤ 64, 7–8 s, all players all dims, freeze, no overlap, mob vanishes, player → limbo 30 s → spawn, Lion's Heart/divine immune, cd 60 s | 6·1–6·7 |
+| §7.7 | World Erasure: target ≤ 64, 7–8 s, all players all dims, freeze, no overlap, mob vanishes, player → limbo 30 s → spawn, Lion's Heart/divine immune, cd 60 s | 6·1–6·8 |
 | §8 | assets only from the archive, OBJ → geo, Hulkbuster pattern, sheath on belt, walk conversion, icons, no Tensura mechanics | 1b·1–1b·5, 1·8 |
 | §9.1 | mode icons + Reid timer bar, cooldowns on panel, knight `PanelStyle` | 1·8, 4·5 |
 | §9.2 | stances and auras per mode; Chop left hand with Reid; pose per ability in both views | 1b·4, 1b·7, 3·11, 4·5, 4·6 |
 | §9.3 | kick/throw: sonic ring, white trail, hit-stop 2–3 t | 3·6, 3·7 |
 | §9.4 | no camera takeover for Reinhard; FOV pull for others; strong shake | 5·4 |
-| §9.5 | erasure screen phases, sounds, new uniforms | 6·4, 6·5 |
-| §9.6 | limbo look, text lines, heartbeat, white flash | 6·6 |
+| §9.5 | erasure screen phases, sounds, new uniforms | 6·5, 6·6 |
+| §9.6 | limbo look, text lines, heartbeat, white flash | 6·4, 6·7 |
 | §10 | quality recorded sounds, licenses, `CREDITS.md`, vanilla placeholders until then | every stage (placeholder slots), 7·1–7·3 |
 | §10.1 | 15 events from 14 Freesound files, mix and trims by `tools/sfx/` script | 7·1, 7·2 |
 | §10.2 | mod and vanilla sounds | 3·2, 3·5, 3·6, 3·7, 4·6 |
 | §11.1–12 | acceptance criteria | each stage lists the ones it closes; 7·4 runs all |
 | §12 | open later (worthy list, balance, sounds) | not in scope; `Reid` draw gate is a single `ReinhardRules.canDraw(...)` that returns true |
+
+## Revision 2 (review of PR #26)
+
+The plan was checked against the real code (`HeroDefinition`, `HeroDamageLayers`, `HeroEvents`, `HeroRegistry`, `ControlManager`, `HeroInputC2SPacket`, `HeroPublicSnapshot`, `HeroAction`, `ChopImpactManager`, `PlayerStatsMixin`, `CoreMessages`, `AGENTS.md`, animation-system). Changes:
+
+| # | Problem | Fix | Where |
+|---|---|---|---|
+| 1 | `availableActions` is an `int`; `HeroAction` grows to 40 → `1 << ordinal` wraps | `long` mask + `actionMask(...)`, legacy decode | 1·7 |
+| 2 | `restoreHero()` on clone skips `enter`; nothing re-applied the knockback modifier | new `HeroDefinition.onRespawn(ServerPlayer)` | 1·3 |
+| 3 | `tryAcquire` called with `self` and a string id; no refresh API | real signature with `UUID effectId`; `ControlManager.refresh(...)` | Global Constraints, 3·7, 4·7, 6·1 |
+| 4 | Dash Behind candidate cannot travel in `HeroInputC2SPacket` | `ReinhardDashBehindC2SPacket`, slot excluded from `heroInputSlots` | 3·8 |
+| 5 | Air step was client-authoritative | predict → server counter → confirm/correct, shared `AirJumpRules` | 2·4 |
+| 6 | Step Dash press sent twice | predictor only moves; generic path sends once | 3·3 |
+| 7 | Skeleton arrows not catchable; deflected fireballs curve back | `pickup != CREATIVE_ONLY`; rotate `xPower/yPower/zPower` too | 2·3 |
+| 8 | Overlapping Reid draws could leave `noGravity = true` forever | shared ref-counted `LiftLeases` | 4·3 |
+| 9 | Invisible Reinhard fell back to vanilla; empty off hand; held item under Reid | always cancel vanilla + pass table; `AlwaysVisibleOffhandMixin` term; `drawsHeldItem` / `RenderHandEvent` | 1b·3, 1b·5, 4·5 |
+| 10 | `SoundEngine.getVolume(SoundSource)` cannot see the sound id | mixin on `calculateVolume(SoundInstance)`, exempt ids per duck | 4·4 |
+| 11 | Detached World Cut had no ticker | level-owned `WorldCutManager` | 5·3 |
+| 12 | Level tick phases unclear | `START` → `ControlManager`, `END` → `CarveJobs`, `WorldCutManager` | Global Constraints, 4·8, 5·3 |
+| 13 | `ERASED` on a living entity: plain `if`s, no compiler help | explicit audit list, `losesBody()`, `freshBody`, same-entity test | 6·2 |
+| 14 | Erasure verdict computed twice | frozen at the cast | 6·3 |
+| 15 | Silhouette of a target in another dimension | generic silhouette by bbox / humanoid flag | 6·6 |
+| 16 | `/reload` had no hook | `OnDatapackSyncEvent` (player null) → `WorldPause.end(RELOAD)` | 6·1 |
+| 17 | `res/data`, `res/assets/...`, `ModNetwork` | `data/…`, `res/shaders/post/…`, `mc/shaders/program/…`, `CoreMessages` | 6·3–6·5 |
+| 18 | Dimension JSON was a sketch | complete `dimension_type` + flat generator with an air layer, codec test | 6·4 |
+| 19 | Limbo offline semantics vague | timer counts only online ticks in limbo (documented alternative) | 6·4 |
+| — | limbo hand in the world pass | `RenderHandEvent` cancelled in limbo | 6·7 |
+| — | Ender Dragon silent removal | `setDragonKilled` with `discard()` | 6·3 |
+| — | `reinhard_sources.md` created twice | Stage 7 modifies it | 7·1 |
+
+Not changed: the review comment "divine damage is in `bypasses_invulnerability`, so Phoenix never runs" is based on a wrong premise — Stage 1 Task 5 adds the divine type to `bypasses_armor`, `bypasses_shield`, `bypasses_enchantments`, `bypasses_effects` only, never to `bypasses_invulnerability`; the hero hooks still see it.
+
+Stage 6 grew from 7 to 8 tasks (the `ERASED` audit is its own task). Total: 64.
 
 ## Risks shared by all stages (from the memory bank)
 
@@ -147,7 +188,7 @@ After each seam lands, the same task updates `.agents/skills/add_hero/references
 - **Shadow pass:** skip glow (`RenderType.eyes`) and world VFX when `ShaderCompat.isShadowPass()`.
 - **Owner sections** are deduplicated by content; push `Section.EMPTY` before re-sending the same content. Clear on respawn, dimension change, logout.
 - **`SilhouetteManager.getState`** consumes a per-frame delta: call once per entity per frame.
-- **Knockback** of any target only through `HeroRegistry.allowsImpulse(target)` and only after `hurt(...)` returned true.
+- **Impulse rule:** a *living* target is moved (knockback, lift, throw) only through `HeroRegistry.allowsImpulse(LivingEntity)` and, for damage knockback, only after `hurt(...)` returned true. Non-living entities (`ItemEntity`, `ExperienceOrb`, `FallingBlockEntity`) are moved only through the new pure predicate `HeroImpulse.mayMoveNonLiving(Entity)` (true for those three, false for everything else: projectiles, vehicles, frames, armor stands are not lifted).
 - **Loadout migration:** new abilities of a later stage reach saves through `ViltrumiteOfferedAbilities`; a slot the player cleared stays empty.
 - **Gradle cache** can be wiped: if `--offline` fails on foojay, run one online build.
 - **GitHub MCP push is text only:** binaries via `bin/**.b64`; deletes need a separate call.

@@ -68,7 +68,7 @@ See the overview. Stage-specific:
 ### Task 3: Projectile seam and Arrow Protection
 
 **Files:**
-- Create: `core/hero/ProjectileResponse.java`, `core/hero/HeroProjectiles.java`, `core/mixin/AbstractArrowAccessor.java` (invoker `getPickupItem`; common config), `core/hero/reinhard/blessing/ArrowWard.java`
+- Create: `core/hero/ProjectileResponse.java`, `core/hero/HeroProjectiles.java`, `core/mixin/AbstractArrowAccessor.java` (invoker `getPickupItem`; common config), `core/hero/ProjectileMath.java` (pure), `core/hero/reinhard/blessing/ArrowWard.java`
 - Modify: `core/hero/HeroDefinition.java`, `core/hero/HeroEvents.java` (`ProjectileImpactEvent`), `ReinhardHero`
 - Test: `test/hero/HeroProjectilesTest.java`, `test/hero/reinhard/ArrowWardTest.java`
 
@@ -76,32 +76,37 @@ See the overview. Stage-specific:
 - `enum ProjectileResponse { PASS, DEFLECT, CATCH, REFLECT }` (append only).
 - `default ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) { return PASS; }`.
 - `HeroProjectiles.onImpact(ProjectileImpactEvent)`: hit result is an `EntityHitResult` on a `ServerPlayer` → ask the hook; non-PASS → `event.setImpactResult(SKIP_ENTITY)` (Forge 47 `ProjectileImpactEvent.ImpactResult`) and apply:
-  - `DEFLECT`: new velocity = old speed × 0.6 turned 60–90° sideways (random side, away from the player's body centre), `hasImpulse = true`; the projectile keeps flying (no damage).
-  - `CATCH`: `AbstractArrow` with `pickup == ALLOWED` → `getPickupItem()` to the inventory (drop if full); any other projectile → discarded. Sound + hand FX (Stage 3 Task 4 adds the pose).
+  - `DEFLECT`: new velocity = old speed × 0.6 turned 60–90° sideways (random side, away from the player's body centre), `hasImpulse = true`; the projectile keeps flying (no damage). `AbstractHurtingProjectile` (fireballs, wither skulls, dragon fireballs) also accelerates by its own `xPower/yPower/zPower` every tick, so its power vector gets the **same** rotation and the same × 0.6 (pure `ProjectileMath.rotateAndScale(Vec3, yawDeg, scale)` applied to both vectors); otherwise the fireball turns away and then curves back onto its old line.
+  - `CATCH`: `AbstractArrow` with `pickup != CREATIVE_ONLY` → `getPickupItem()` copy to the inventory (drop if full). Fact: arrows shot by mobs (skeleton, stray, pillager) are `pickup == DISALLOWED`, so the old `== ALLOWED` rule would never give a skeleton arrow; `CREATIVE_ONLY` (Infinity, multishot side arrows, creative shooters) is excluded so catching never duplicates free ammo. Tipped/spectral arrows keep their item (from `getPickupItem`). `ThrownTrident` → the trident item (the entity is discarded, so no duplicate; loyalty is irrelevant after the catch). Any other projectile → discarded. Sound + hand FX (Stage 3 Task 4 adds the pose).
   - `REFLECT`: velocity toward the owner's eye position with the same speed (no owner → straight back), `setOwner(self)`; `AbstractHurtingProjectile` also gets its `xPower/yPower/zPower` reversed.
   - pure helpers: `static Vec3 deflected(Vec3 v, Vec3 toBody, boolean left)`, `static Vec3 reflected(Vec3 v, Vec3 from, @Nullable Vec3 ownerEye)`.
 - `ArrowWard.response(boolean catchOpen, boolean reflectOpen)` → REFLECT if reflect open, else CATCH if catch open, else DEFLECT (spec §4.3: windows win over the passive; reflect beats catch when both are open — they cannot be open together in practice, but the function is total). Windows come from Stage 3; now both are false.
 
-- [ ] **Step 1: Write the failing tests** — `deflectTurnsSideways` (angle between old and new ≥ 60°), `deflectSlower`, `reflectAimsAtOwner`, `reflectWithoutOwnerGoesBack`, `ArrowWardTest.priority` (all 4 combinations), `allProjectileKinds` (response does not depend on the projectile class).
+- [ ] **Step 1: Write the failing tests** — `deflectTurnsSideways` (angle between old and new ≥ 60°), `deflectSlower`, `reflectAimsAtOwner`, `reflectWithoutOwnerGoesBack`, `deflectRotatesPowerVector` (fireball: angle(power, velocity) unchanged by deflect; simulate 20 ticks → no curve back), `catchSkeletonArrow` (DISALLOWED → item), `catchInfinityArrowGivesNothing` (CREATIVE_ONLY), `catchTippedKeepsPotion`, `ArrowWardTest.priority` (all 4 combinations), `allProjectileKinds` (response does not depend on the projectile class).
 - [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: skeleton, second player's bow, trident, ghast fireball, snowball, splash potion — all fly off sideways without damage or effect; other heroes still get hit.
 - [ ] **Step 5: Commit** `feat(hero): projectile response seam` and `feat(reinhard): arrow protection`.
 
 ### Task 4: Blessing of the Cloudy Sky — air steps and super jump
 
 **Files:**
-- Create: `core/hero/HeroAirJump.java`, `core/client/hero/AirJumpClient.java`, `core/hero/reinhard/blessing/CloudStep.java`, `core/client/render/vfx/AirStepVfx.java` (white pixel ring under the feet)
+- Create: `core/hero/HeroAirJump.java`, `core/hero/AirJumpRules.java` (pure, shared by client and server), `core/network/packet/AirJumpSyncS2CPacket.java` (register in `CoreMessages`), `core/client/hero/AirJumpClient.java`, `core/hero/reinhard/blessing/CloudStep.java`, `core/client/render/vfx/AirStepVfx.java` (white pixel ring under the feet)
 - Modify: `core/hero/HeroDefinition.java` (`airJumps`, `airJumpVelocity`), `core/hero/HeroAction.java` (append `AIR_STEP`), `core/network/packet/HeroInputC2SPacket.java` (route `AIR_STEP` to `HeroAirJump.onInput` like `JUMP`), `core/client/ViltrumiteCoreClient.java` (`AirJumpClient.tick`), `ReinhardHero` (`airJumps` 5, `airJumpVelocity`, `superJumpVelocity`, `onSuperJump`), `res/sounds.json` (`reinhard.air_step` from Stage 1, `reinhard.super_jump` → placeholder `entity.firework_rocket.launch`)
 - Test: `test/hero/HeroAirJumpTest.java`, `test/hero/reinhard/CloudStepTest.java`
 
 **Interfaces:**
 - `default int airJumps(Player p) { return 0; }`, `default double airJumpVelocity(Player p) { return 0; }` (both sides).
-- `AirJumpClient.tick(Minecraft)`: local player not on ground, not in water/lava/climbing, not flying, jump key pressed this tick (edge, after vanilla consumed the ground jump), local count < `airJumps` → set `deltaMovement.y = airJumpVelocity` (+ keep horizontal × 1.0), count++, send `HeroInputC2SPacket(AIR_STEP, true)`. Count resets on ground / water / climbing.
-- `HeroAirJump` (server): pure `static boolean allow(int used, int max, boolean grounded, boolean anchored, boolean canAct)`; server keeps its own count per player (reset on `onGround()`), refuses extra packets silently (movement is client-side; the server only skips FX/sound), plays FX `AirStepVfx` through `HeroFx.launch` at the feet and the sound.
+- `AirJumpRules` (pure, the **same** rules on both sides): `static boolean resets(boolean onGround, boolean inWater, boolean inLava, boolean onClimbable, boolean flying, boolean passenger)` → true if any; `static boolean allow(int used, int max, boolean resetState, boolean anchored, boolean canAct)` → `!resetState && !anchored && canAct && used < max`.
+- Predict → validate → confirm/correct (overview Global Constraints):
+  1. `AirJumpClient.tick(Minecraft)`: jump key edge this tick (after vanilla consumed the ground jump), `AirJumpRules.allow(localUsed, airJumps, resets(...), anchored, canAct)` → **predict**: `deltaMovement.y = airJumpVelocity` (horizontal kept), `localUsed++`, `pendingSeq++`; send the press through the generic path `HeroInputC2SPacket(AIR_STEP, true)` (one packet, no second channel). `localUsed = 0` whenever `resets(...)`.
+  2. `HeroAirJump.onInput` (server): own `used` counter per player, reset in the player tick by the same `AirJumpRules.resets(...)` from server-side state (`onGround()`, `isInWater()`, `isInLava()`, `onClimbable()`, `getAbilities().flying`, `isPassenger()`).
+  3. Accepted → server sets `deltaMovement.y = airJumpVelocity`, `hurtMarked = true` (vanilla sends the authoritative `ClientboundSetEntityMotionPacket`; it matches the prediction, so no visible correction), `used++`, `fallDistance = 0`, FX `AirStepVfx` via `HeroFx.launch` at the feet, sound.
+  4. Refused → no FX/sound; server sends `ClientboundSetEntityMotionPacket` with the server's current velocity (cancels the predicted boost) and `AirJumpSyncS2CPacket(used)` so the client counter matches the server again.
+  - The server is the only source of the boost a cheating client can get: an extra AIR_STEP packet is refused and its velocity corrected; a client that boosts **without** sending the packet is plain movement cheating, which vanilla's movement checks cover like any fly hack (out of scope, noted in the PR).
 - `ReinhardRules`: `AIR_STEPS = 5`, `AIR_STEP_VELOCITY = 0.62` (≈ 1.9 blocks each), `SUPER_JUMP_VELOCITY = 2.2` (≈ 20 blocks via `HeroSuperJump.apex`).
 - `CloudStep.fallDistance` reset on each step (no fall damage anyway, but it keeps the landing shockwave of other systems quiet).
 
-- [ ] **Step 1: Write the failing tests** — `HeroAirJumpTest.refusesAboveMax`, `refusesAnchored`, `CloudStepTest.fiveSteps`, `groundOrClimbResets`, `superJumpApexAbout20` (`HeroSuperJump.apex(2.2)` in 18–24), `stepHeightAbout2`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual both views: 5 steps then nothing; super jump key; Regulus/Homelander/Iron Man jump unchanged (their `airJumps` = 0).
+- [ ] **Step 1: Write the failing tests** — `HeroAirJumpTest.refusesAboveMax`, `refusesAnchored`, `AirJumpRulesTest.sameResetsBothSides` (water, lava, ladder, ground, flying, riding), `refusalSendsCorrection` (fake sender: refused press → one motion packet + one sync packet, no FX), `acceptedSetsServerVelocity`, `sixthPacketRefused` (5 accepted then refused while airborne), `CloudStepTest.fiveSteps`, `groundOrClimbResets`, `superJumpApexAbout20` (`HeroSuperJump.apex(2.2)` in 18–24), `stepHeightAbout2`.
+- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual both views: 5 steps then nothing; in water / on a ladder the counter resets on both sides (6th step after touching a ladder works); with 200 ms simulated latency (`/forge` is not needed; LAN over a lagged proxy or a dev delay flag in `AirJumpClient`) the predicted step does not snap; super jump key; Regulus/Homelander/Iron Man jump unchanged (their `airJumps` = 0).
 - [ ] **Step 5: Commit** `feat(hero): air jump seam` and `feat(reinhard): cloudy sky blessing`.
 
 ### Task 5: Blessing of Wind Reading — outlines

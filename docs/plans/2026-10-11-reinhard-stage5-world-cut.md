@@ -58,17 +58,17 @@ See the overview. Stage-specific:
 ### Task 3: Server timeline, Reid strike on the line, cooldown
 
 **Files:**
-- Create: `core/hero/reinhard/ability/WorldCut.java`, `core/network/packet/WorldCutS2CPacket.java` (register)
-- Modify: `ReinhardActions`, `ReinhardState.busy()` (true until the explosion tick), `ReinhardAbilities.SHIPPED_STAGE = 5`, icon `world_cut`, lang, `res/sounds.json` (`reinhard.world_cut_silence`, `reinhard.world_cut_blast`, `reinhard.world_cut_tail` — placeholders `block.beacon.ambient`, `entity.generic.explode`, `entity.warden.sonic_boom` until Stage 7)
+- Create: `core/hero/reinhard/ability/WorldCut.java`, `core/hero/reinhard/cut/WorldCutManager.java` (level-owned runtime), `core/network/packet/WorldCutS2CPacket.java` (register in `CoreMessages`)
+- Modify: `core/hero/HeroEvents.java` (`onLevelTick` **END** branch: `WorldCutManager.get(level).tick(level)` next to `CarveJobs.tick`; `START` stays `ControlManager` only; `ServerStoppingEvent` → `WorldCutManager.clearAll()`), `ReinhardActions`, `ReinhardState.busy()` (true until the explosion tick), `ReinhardAbilities.SHIPPED_STAGE = 5`, icon `world_cut`, lang, `res/sounds.json` (`reinhard.world_cut_silence`, `reinhard.world_cut_blast`, `reinhard.world_cut_tail` — placeholders `block.beacon.ambient`, `entity.generic.explode`, `entity.warden.sonic_boom` until Stage 7)
 - Test: `test/hero/reinhard/WorldCutTest.java`
 
 **Interfaces:**
 - `ReinhardRules`: `WORLD_CUT_SWING = 20`, `WORLD_CUT_SILENCE = 60` (ticks 20–80), `WORLD_CUT_BLAST = 80`, `WORLD_CUT_WAVE_TICKS = 30` (visual front 200 blocks in 1.5 s), `WORLD_CUT_COOLDOWN = 900`, `WORLD_CUT_VIEW_RANGE = 320`.
 - Only Reid DRAWN. Press: action timeline, cooldown starts; shape fixed at the press (origin, look yaw only — the cut is vertical; pitch ignored).
 - Tick 0: packet `START` to every player within `WORLD_CUT_VIEW_RANGE` of any point of the line (same level). Tick 80: packet `BLAST`; submit `WorldCutCarve` (priority high); start hits: each tick from 80 to 110, entities in `shape.hitBox(along)` for `along ≤ visualFront(t)` → `Annihilation.strike` (once per entity; `ReinhardTargets`-free: "всё живое" = every living entity except Reinhard; divine and absolute verdicts handled by `Annihilation`).
-- Caster dead/offline after the swing: the server-side `WorldCut` instance lives in a level-scoped list (not in the player state) and resolves on time.
+- Runtime owner: `WorldCutManager` — `static WorldCutManager get(ServerLevel)` (a `WeakHashMap<ServerLevel, WorldCutManager>` like `ControlManager.INSTANCES`), `submit(WorldCut cut)`, `tick(ServerLevel)` advances every cut by `gameTime − startTime` (catch-up safe), removes finished ones, `clearAll()` on server stop. `ReinhardHero.tick` only presses/submits; it never ticks cuts, so a dead or offline caster does not stop the cut. Not persisted: a server stop during the 4 s cast drops the cut (the swing animation is gone too; documented). The cut stores `casterId` only for damage attribution (`Annihilation.strike` with a null attacker when the caster is offline).
 
-- [ ] Step 1 tests: `timelineTicks`, `onlyWhenDrawn`, `cooldown900`, `hitsFollowFront` (pure `visualFront(t)` 0 → 200 over 30 t), `everyEntityHitOnce`, `strikeVerdicts` (fake verdicts → kills only MORTAL), `resolvesWithoutCaster`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world cut timeline and strike`.
+- [ ] Step 1 tests: `timelineTicks`, `onlyWhenDrawn`, `cooldown900`, `hitsFollowFront` (pure `visualFront(t)` 0 → 200 over 30 t), `everyEntityHitOnce`, `strikeVerdicts` (fake verdicts → kills only MORTAL), `resolvesWithoutCaster` (submit, remove the fake caster, tick the manager 110 times → blast packet sent, hits applied), `managerTickedOnEndPhaseOnly`, `twoCutsIndependent`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world cut timeline and strike`.
 
 ### Task 4: Client scene — line, silence, dust, FOV pull, blast, crater
 

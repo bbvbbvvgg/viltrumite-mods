@@ -67,22 +67,22 @@ See the overview. Stage-specific:
 ### Task 3: Chassis — HP, 99.9% resist, 1 HP floor, regen, knockback, fall
 
 **Files:**
-- Modify: `core/hero/reinhard/ReinhardHero.java` (`enter`, `tick`, `cleanup`, `absorbIncoming`, `clampFinalDamage`, `cancelsFallDamage`, `save/load/cloneHeroState`)
-- Test: `test/hero/reinhard/ReinhardDamageTest.java`
+- Modify: `core/hero/HeroDefinition.java` (new `default void onRespawn(ServerPlayer player) {}`), `core/hero/HeroEvents.java` (`onPlayerRespawn` calls `HeroRegistry.get(player).onRespawn(player)` after the existing baseline/flight/snapshot lines; the Regulus block stays as it is), `core/hero/reinhard/ReinhardHero.java` (`enter`, `onRespawn`, `tick`, `cleanup`, `absorbIncoming`, `clampFinalDamage`, `cancelsFallDamage`, `save/load/cloneHeroState`), `.agents/skills/add_hero/references/hero-seam.md` (hooks table: `onRespawn`)
+- Test: `test/hero/reinhard/ReinhardDamageTest.java`, `test/hero/HeroRespawnHookTest.java`
 
 **Interfaces:**
 - Consumes: `ReinhardRules.resist/floor`, `HeroDamageLayers.Target`, `DamageAbsorb.reduceTo`, `DivineDamage.isDivine(DamageSource)` (Task 5; until then a private `false` stub removed in Task 5).
 - `absorbIncoming(self, src, raw)`: non-divine → `DamageAbsorb.reduceTo(ReinhardRules.resist(raw))`; divine → `PASS`.
 - `clampFinalDamage(self, src, afterArmor)`: non-divine → `ReinhardRules.floor(self.getHealth(), afterArmor)`; divine → unchanged.
 - Both run on the clean path too (`HeroDamage.applyCleanDamage` → `HeroDamageLayers.onClean`), so "clean" and "% of max HP" damage obey the same numbers (spec §3.1).
-- `enter`: max-health base stays 20 (remove nothing, add no health modifier), add `Attributes.KNOCKBACK_RESISTANCE` modifier with a fixed constant `ReinhardHero.KNOCKBACK_MODIFIER_ID` (new random UUID, written once) amount 1.0, set health to max. `cleanup(HERO_CHANGE)` removes it; `DEATH` keeps it for the clone (re-added in `enter` after respawn through `HeroEvents.onPlayerRespawn`).
+- `enter`: max-health base stays 20 (remove nothing, add no health modifier), add `Attributes.KNOCKBACK_RESISTANCE` modifier with a fixed constant `ReinhardHero.KNOCKBACK_MODIFIER_ID` (new random UUID, written once) amount 1.0, set health to max. `cleanup(HERO_CHANGE)` removes it. Fact: `PlayerEvent.Clone` runs `restoreHero()` + `cloneHeroState()`, and `restoreHero()` deliberately does **not** call `enter`, so nothing re-applies a chassis on the new body today. Therefore `ReinhardHero.onRespawn(player)` (new generic hook, Files) re-applies the modifier idempotently (`removeModifier(ID)` then `addPermanentModifier`) and sets health to max; `enter` and `onRespawn` share one private `applyChassis(player)`. `onRespawn` also runs on the end-portal return (`Clone` with `isWasDeath() == false` → `PlayerRespawnEvent` fires too) — idempotent, so harmless.
 - `tick`: `regenTicks++`; every `REGEN_INTERVAL` → `heal(REGEN_PER_SECOND)` when below max.
 - `cancelsFallDamage` = true.
 
-- [ ] **Step 1: Write the failing tests** (pure pipeline with a fake `Target` built from `ReinhardHero`'s two methods, the same harness as `HeroDamageLayersTest`): `swordHitLosesOneThousandth` (raw 10 → passOn 0.01), `percentDamageAlsoResisted` (raw = 50% of 20 → 0.01), `cleanPathResistedAndFloored` (`HeroDamageLayers.clean(target, NO_ATTACKER, false, 1e6f)` at health 1.5 → 0.5), `floorNeverBelowOne`, `divinePassesUnchanged` (divine flag → passOn raw, clamp raw).
+- [ ] **Step 1: Write the failing tests** (pure pipeline with a fake `Target` built from `ReinhardHero`'s two methods, the same harness as `HeroDamageLayersTest`): `swordHitLosesOneThousandth` (raw 10 → passOn 0.01), `percentDamageAlsoResisted` (raw = 50% of 20 → 0.01), `cleanPathResistedAndFloored` (`HeroDamageLayers.clean(target, NO_ATTACKER, false, 1e6f)` at health 1.5 → 0.5), `floorNeverBelowOne`, `divinePassesUnchanged` (divine flag → passOn raw, clamp raw), `HeroRespawnHookTest.defaultIsNoOp` (other heroes unchanged), `ReinhardHeroTest.respawnReappliesKnockbackOnce` (call `onRespawn` twice on a fresh fake attribute map → exactly one modifier).
 - [ ] **Step 2: Run** → FAIL.
 - [ ] **Step 3: Implement** the hooks, regen and modifier.
-- [ ] **Step 4: Run** → PASS. Manual (dev client, survival): zombie, sword from a second player (LAN), Iron Man Unibeam, `/damage @s 1000` — HP drops ≤ 0.1% per hit and never below 1; regen visible 1 HP/s; fall from 100 blocks — no damage; zombie hit — no knockback.
+- [ ] **Step 4: Run** → PASS. Manual (dev client, survival): zombie, sword from a second player (LAN), Iron Man Unibeam, `/damage @s 1000` — HP drops ≤ 0.1% per hit and never below 1; regen visible 1 HP/s; fall from 100 blocks — no damage; zombie hit — no knockback; die and respawn — still no knockback, `/attribute @s minecraft:generic.knockback_resistance get` = 1.
 - [ ] **Step 5: Commit** `feat(reinhard): chassis with resist, hp floor and regen`.
 
 ### Task 4: Unblockable seam, `/kill` scope, void rescue
@@ -152,17 +152,17 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 
 **Files:**
 - Create: `core/hero/reinhard/ReinhardAbility.java`, `core/hero/reinhard/ReinhardAbilities.java`
-- Modify: `core/hero/reinhard/ReinhardHero.java` (`ownsAbility`, `heroInputSlots`, `heroActionFor`, `panelAbilities`, `abilityIcon`), `core/hero/HeroAction.java` (append the 13 actions below)
-- Test: `test/hero/reinhard/ReinhardAbilitiesTest.java`
+- Modify: `core/hero/reinhard/ReinhardHero.java` (`ownsAbility`, `heroInputSlots`, `heroActionFor`, `panelAbilities`, `abilityIcon`), `core/hero/HeroAction.java` (append the 14 actions below), `core/hero/HeroPublicSnapshot.java` (`availableActions` `int` → `long`: record component, all constructors, `actionAvailable` = `(availableActions & (1L << action.ordinal())) != 0`, `encode` writes the long, `decode` uses `Long.parseLong` so old int encodings still parse, `equals/hashCode` via `Long.hashCode`), constructor call sites (today every producer passes a literal `0`; the compiler accepts it for `long`, so they stay unchanged); new helper `static long actionMask(HeroAction... actions)` using `1L << ordinal` — Reinhard is the first producer of a real mask
+- Test: `test/hero/reinhard/ReinhardAbilitiesTest.java`, `test/hero/HeroPublicSnapshotTest.java` (extend)
 
 **Interfaces:**
-- `HeroAction` append: `LIGHT_PUNCH, STEP_DASH, CATCH_PROJECTILE, FIST_COMBO, SKY_KICK, GRAB_THROW, DASH_BEHIND, STOMP, REFLECT_PROJECTILE, REID, SHEATH_STRIKE, CUT_RAIN, WORLD_CUT, WORLD_ERASURE` (14; `AIR_STEP` is appended in Stage 2).
+- `HeroAction` append: `LIGHT_PUNCH, STEP_DASH, CATCH_PROJECTILE, FIST_COMBO, SKY_KICK, GRAB_THROW, DASH_BEHIND, STOMP, REFLECT_PROJECTILE, REID, SHEATH_STRIKE, CUT_RAIN, WORLD_CUT, WORLD_ERASURE` (14; `AIR_STEP` is appended in Stage 2). Current `HeroAction` has 25 values (`MODE_CYCLE` from Task 6 is ordinal 25), so these take ordinals 26–39 and `AIR_STEP` 40 → the `long` mask is required in this task, not later. A guard test fails when `HeroAction.values().length > 64`.
 - `ReinhardAbility` enum (append only; ordinal = `extraCooldowns` index): `LIGHT_PUNCH, STEP_DASH, CATCH, FIST_COMBO, SKY_KICK, GRAB_THROW, DASH_BEHIND, STOMP, REFLECT, REID, SHEATH_STRIKE, CUT_RAIN, WORLD_CUT, WORLD_ERASURE`; fields `String id` (`reinhard:<snake>`), `ReinhardMode mode`, `int slot` (0-based, spec §6/§7.1 row order), `HeroAction action`, `int stage` (stage that implements it).
 - `ReinhardAbilities.LOADOUT` (18): page 0 `light_punch, step_dash, catch, "", "", ""`; page 1 `fist_combo, sky_kick, grab_throw, dash_behind, stomp, reflect`; page 2 `reid, viltrumite:chop, sheath_strike, cut_rain, world_cut, world_erasure`. `defaultLoadout()` includes only ids with `stage <= ReinhardAbilities.SHIPPED_STAGE` (constant bumped by every stage; 1 now → empty pages) plus `viltrumite:chop` from Stage 4.
 - `ownsAbility(id)` = id is in the shipped default loadout.
 - `panelAbilities()` returns one entry per shipped ability: icon `textures/gui/ability/reinhard/<name>.png`, lang `ability.viltrumitecore.reinhard_<name>.name/.desc`, grey-out = `extraCooldowns[ordinal] > 0` or the stage condition (Stage 4 adds Reid conditions).
 
-- [ ] **Step 1: Write the failing tests** — `slotsFollowSpecOrder` (every enum value's `mode.page()*6 + slot` equals its index in `LOADOUT`), `idsUnique`, `actionsUnique`, `onlyShippedOwned` (SHIPPED_STAGE 1 → owns nothing), `chopOnHolySwordSlot2` (`LOADOUT[13] == "viltrumite:chop"`), `ordinalFitsExtraCooldowns` (`values().length <= ReinhardFlags.EXTRA_MODE_CD`).
+- [ ] **Step 1: Write the failing tests** — `slotsFollowSpecOrder` (every enum value's `mode.page()*6 + slot` equals its index in `LOADOUT`), `idsUnique`, `actionsUnique`, `onlyShippedOwned` (SHIPPED_STAGE 1 → owns nothing), `chopOnHolySwordSlot2` (`LOADOUT[13] == "viltrumite:chop"`), `ordinalFitsExtraCooldowns` (`values().length <= ReinhardFlags.EXTRA_MODE_CD`), `HeroPublicSnapshotTest.highOrdinalDoesNotAliasBitZero` (only `WORLD_ERASURE` available → `LIONS_HEART` not available), `decodesLegacyIntMask`, `encodeRoundTripLong`, `actionCountFitsMask` (≤ 64).
 - [ ] **Step 2: Run** → FAIL.
 - [ ] **Step 3: Implement**.
 - [ ] **Step 4: Run** → PASS; `check_hero_resources.py --hero reinhard` → 0 new problems (no shipped ability yet, so no icons required).
