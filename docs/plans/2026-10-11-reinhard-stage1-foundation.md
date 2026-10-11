@@ -58,11 +58,11 @@ See the overview. Stage-specific:
 - Snapshot indexes (constants in `ReinhardFlags`): `EXTRA_MODE_CD = 14`, `EXTRA_PHOENIX = 15`; ability cooldowns at `ReinhardAbility.ordinal()` (0–13, Task 7).
 - `ReinhardState`: `ReinhardMode mode`, `int modeCooldown`, `int regenTicks`, `int[] cooldowns` (length 14), `void tick()` (counts down), `save/load(CompoundTag)` under key `Reinhard` (`Mode` string, `ModeCd`, `Cooldowns` int array). `of(Player)` / `ensure(Player)` through `HeroPlayer.viltrumitecore$getHeroState` like `HomelanderState`.
 
-- [ ] **Step 1: Write the failing tests** — `resistLeavesOneThousandth` (`resist(1000) == 1.0f ± 1e-4`), `floorKeepsOneHp` (`floor(20, 50) == 19`), `floorAtOneHpIsZero` (`floor(1, 5) == 0`), `floorHandlesMaxValue` (`floor(20, Float.MAX_VALUE) == 19`, `floor(20, NaN) == 0`), `modeCycles` (R→K→H→R), `modeKeyRoundTrip`, `unknownModeKeyIsRestrained`, `flagsDoNotOverlap`, `withModeKeepsOtherBits`, `stateSaveLoadRoundTrip`, `cooldownsTickDown`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** the four classes with the values above.
-- [ ] **Step 4: Run** → PASS.
-- [ ] **Step 5: Commit** `feat(reinhard): rules, modes, flags and state`.
+- [x] **Step 1: Write the failing tests** — `resistLeavesOneThousandth` (`resist(1000) == 1.0f ± 1e-4`), `floorKeepsOneHp` (`floor(20, 50) == 19`), `floorAtOneHpIsZero` (`floor(1, 5) == 0`), `floorHandlesMaxValue` (`floor(20, Float.MAX_VALUE) == 19`, `floor(20, NaN) == 0`), `modeCycles` (R→K→H→R), `modeKeyRoundTrip`, `unknownModeKeyIsRestrained`, `flagsDoNotOverlap`, `withModeKeepsOtherBits`, `stateSaveLoadRoundTrip`, `cooldownsTickDown`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** the four classes with the values above.
+- [x] **Step 4: Run** → PASS.
+- [x] **Step 5: Commit** `feat(reinhard): rules, modes, flags and state`.
 
 ### Task 3: Chassis — HP, 99.9% resist, 1 HP floor, regen, knockback, fall
 
