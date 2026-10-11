@@ -227,7 +227,8 @@ Lethal Chop с вынутым Рейдом бьёт левой рукой. У к
 
 | Событие | Звук |
 |---|---|
-| Смена режима | https://freesound.org/people/klankbeeld/sounds/398218/ |
+| Смена режима | https://freesound.org/people/klankbeeld/sounds/398218/ — короткий фрагмент |
+| Вынимание Рейда: хор финала | https://freesound.org/people/klankbeeld/sounds/398218/ — длинный хороший момент того же файла |
 | Вынимание Рейда: меч из ножен | https://freesound.org/people/Vrymaa/sounds/770035 |
 | Вынимание Рейда: гул и тряска | https://freesound.org/people/CHallSmith/sounds/870684/ |
 | Мировой разрез: тишина и белая линия | https://freesound.org/people/reathance/sounds/503809/ |
@@ -249,11 +250,20 @@ Lethal Chop с вынутым Рейдом бьёт левой рукой. У к
 | Подброс перед пинком | ванильный, например `entity.player.attack.sweep` |
 | Lethal Chop | как у вилтрумита: `entity.player.attack.crit` (pitch 0.8), кровотечение — `entity.slime.squish` + `entity.player.hurt_sweet_berry_bush`; громче и ниже для варианта Рейнхарда |
 
-### 10.3 Ещё не найдено
+### 10.3 Кандидаты на оставшиеся звуки (прослушать)
 
-- Мировой разрез: сам взрыв борозды (кандидаты hykenfreak/MeijstroAudio не подошли как основной удар).
-- Стирание мира: обратный «вдох» на сборке мира.
-- Хор финала вынимания Рейда (можно тот же klankbeeld 398218, если подойдёт).
+Мировой разрез — основной взрыв борозды (можно слоить: треск + взрыв, затем хвост hykenfreak):
+- https://freesound.org/people/cognito%20perceptu/sounds/347853 — близкий раскат грома, резкий треск + рокот (слой «раскол»)
+- https://freesound.org/people/CGEffex/sounds/93835 — Huge Explosion 1
+- https://freesound.org/people/CGEffex/sounds/93846 — Huge Explosion 6
+- https://freesound.org/people/craigsmith/sounds/675740 — взрыв вулкана с обломками и рокотом
+- https://freesound.org/people/Alliare/sounds/825864 — Deep Cinematic Boom
+- https://freesound.org/people/opensystem/sounds/333692 — мощный взрыв с залом (public domain)
+
+Стирание мира — обратный «вдох» на сборке:
+- https://freesound.org/people/hykenfreak/sounds/331620/ — Spooky Sucking Air
+- https://freesound.org/people/JarredGibb/packs/15100 — пак реверс-тарелок
+- https://freesound.org/people/reathance/packs/28235 — другие reverse fx из того же пака, что и «тишина»
 
 ## 11. Критерии приёмки
 
