@@ -221,6 +221,27 @@ Lethal Chop с вынутым Рейдом бьёт левой рукой. У к
 - Нужны: смена режима ×3 (ангельский аккорд/хорал), вынимание Рейда (дрожь, гул, хор), Lethal Chop, мировой разрез (тишина → удар → гул), стирание мира (треск, развал, тишина, сборка), лимб (сердцебиение), удары кулаками, пинок, топот, ножны, дождь разрезов.
 - Подбор — отдельным шагом: агент предлагает кандидатов ссылками, встраивается только одобренное. Если подбор не успеет, звуки находит пользователь. До этого — временные ванильные звуки.
 
+### 10.1 Кандидаты (Freesound, нужно прослушать)
+
+Скачивание с Freesound требует логина. Лицензии у звуков разные (CC0 / CC-BY) — для CC-BY указать автора в `CREDITS.md`. Для кинематографичных ударов и гула лучший источник — бесплатные Sonniss GDC Game Audio Bundle (royalty-free, профессиональные библиотеки).
+
+| Звук | Кандидаты |
+|---|---|
+| Смена режима (ангельский аккорд) | [numerocuatro — Angelic sounds / Angelic heaven atmosphere](https://beta.freesound.org/people/numerocuatro); [klankbeeld — chorus pack](https://freesound.org/people/klankbeeld/packs/10770) |
+| Вынимание Рейда: меч | [Vrymaa — Sword Unsheathe](https://freesound.org/people/Vrymaa/sounds/770035); [Soup_UnderScore — Unsheathing a Katana](https://freesound.org/people/Soup_UnderScore/sounds/708027) |
+| Вынимание Рейда: гул и тряска | [CHallSmith — Very low rumble](https://freesound.org/people/CHallSmith/sounds/870684/); [duckduckpony — Large, Low Rumble](https://freesound.org/people/duckduckpony/sounds/130972/) |
+| Вынимание Рейда: хор финала | [klankbeeld — chorus pack](https://freesound.org/people/klankbeeld/packs/10770) |
+| Мировой разрез: тишина и линия | [reathance — reverses, risers, sweeps](https://freesound.org/people/reathance/packs/28235/); [johnjohnfm — Cinematic Risers](https://freesound.org/people/johnjohnfm/packs/43455) |
+| Мировой разрез: взрыв | [hykenfreak — Deepest Boom Yet](https://freesound.org/people/hykenfreak/sounds/248150/); [MeijstroAudio — Deep Cinematic Impact](https://freesound.org/people/MeijstroAudio/sounds/377303) |
+| Стирание: треск и раскол | [bevibeldesign — Slow Motion Glass Shatter](https://freesound.org/people/bevibeldesign/sounds/349905); [Greg_Surr — Glass Shatter 2](https://freesound.org/s/554564) |
+| Стирание: обратный «вдох» | [reathance — reverses, risers, sweeps](https://freesound.org/people/reathance/packs/28235/) |
+| Лимб: сердцебиение | [daandraait — Slow Heartbeat](https://freesound.org/people/daandraait/sounds/249716) |
+| Удары кулаками | [TannerSound — Deep Organic Punchy Impacts](https://freesound.org/people/TannerSound/sounds/842339/); [TannerSound — Double Heavy Impact](https://freesound.org/people/TannerSound/sounds/842939/) |
+| Пинок / бросок (звуковой удар) | [qubodup — Sonic Boom](https://freesound.org/people/qubodup/sounds/182050/); [tim.kahn — sonic boom](https://freesound.org/people/tim.kahn/sounds/325365/) |
+| Топот | [dingus23 — earthquake hit](https://freesound.org/people/dingus23/sounds/275809/) |
+| Lethal Chop, дождь разрезов | [qubodup — Sword Slash Attack](https://freesound.org/people/qubodup/sounds/184422/); [Heavy whoosh](https://freesound.org/s/730774/); [Robinhood76 — Swoosh pack](https://freesound.org/people/Robinhood76/packs/6417/) |
+| Удар ножнами (звон) | [Iridiuss — blade ring and scrape](https://freesound.org/s/519413) |
+
 ## 11. Критерии приёмки
 
 Каждую проверку в игре делать от первого и третьего лица.
