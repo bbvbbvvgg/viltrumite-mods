@@ -1,10 +1,14 @@
 package dev.baranhan.viltrumitecore.hero.reinhard;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import org.junit.jupiter.api.Test;
 
 /** Reinhard skeleton: id, registration, chassis flags (spec §1.2.5, §1.2.7). */
@@ -39,5 +43,30 @@ class ReinhardHeroTest {
    void registered() {
       HeroRegistry.registerDefaults();
       assertSame(ReinhardHero.INSTANCE, HeroRegistry.get(HeroId.REINHARD));
+   }
+
+   @Test
+   void respawnReappliesKnockbackOnce() {
+      AttributeInstance knockback = new AttributeInstance(new RangedAttribute("test.knockback_resistance", 0.0, 0.0, 1.0), instance -> {
+      });
+      ReinhardHero.applyKnockbackResistance(knockback);
+      ReinhardHero.applyKnockbackResistance(knockback);
+      assertEquals(1, knockback.getModifiers().size());
+      assertEquals(ReinhardRules.KNOCKBACK_RESISTANCE, knockback.getValue(), 1.0E-9);
+   }
+
+   @Test
+   void cleanupRemovesChassis() {
+      AttributeInstance knockback = new AttributeInstance(new RangedAttribute("test.knockback_resistance", 0.0, 0.0, 1.0), instance -> {
+      });
+      ReinhardHero.applyKnockbackResistance(knockback);
+      ReinhardHero.removeKnockbackResistance(knockback);
+      assertTrue(knockback.getModifiers().isEmpty());
+      assertEquals(0.0, knockback.getValue(), 1.0E-9);
+   }
+
+   @Test
+   void noFallDamage() {
+      assertTrue(ReinhardHero.INSTANCE.cancelsFallDamage(null));
    }
 }

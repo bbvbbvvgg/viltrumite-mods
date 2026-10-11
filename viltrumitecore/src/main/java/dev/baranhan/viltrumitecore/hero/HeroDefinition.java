@@ -240,6 +240,14 @@ public interface HeroDefinition {
       return amount;
    }
 
+   /**
+    * Server: the player respawned as a fresh body (PlayerRespawnEvent, also the
+    * End-portal return). {@code restoreHero()} on clone skips {@link #enter},
+    * so a hero re-applies its chassis here. Must be idempotent. Default: nothing.
+    */
+   default void onRespawn(ServerPlayer player) {
+   }
+
    /** Server: the player changed dimension (no full cleanup; stop channels if needed). */
    default void onDimensionChange(ServerPlayer player) {
    }

@@ -79,11 +79,11 @@ See the overview. Stage-specific:
 - `tick`: `regenTicks++`; every `REGEN_INTERVAL` → `heal(REGEN_PER_SECOND)` when below max.
 - `cancelsFallDamage` = true.
 
-- [ ] **Step 1: Write the failing tests** (pure pipeline with a fake `Target` built from `ReinhardHero`'s two methods, the same harness as `HeroDamageLayersTest`): `swordHitLosesOneThousandth` (raw 10 → passOn 0.01), `percentDamageAlsoResisted` (raw = 50% of 20 → 0.01), `cleanPathResistedAndFloored` (`HeroDamageLayers.clean(target, NO_ATTACKER, false, 1e6f)` at health 1.5 → 0.5), `floorNeverBelowOne`, `divinePassesUnchanged` (divine flag → passOn raw, clamp raw), `HeroRespawnHookTest.defaultIsNoOp` (other heroes unchanged), `ReinhardHeroTest.respawnReappliesKnockbackOnce` (call `onRespawn` twice on a fresh fake attribute map → exactly one modifier).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** the hooks, regen and modifier.
-- [ ] **Step 4: Run** → PASS. Manual (dev client, survival): zombie, sword from a second player (LAN), Iron Man Unibeam, `/damage @s 1000` — HP drops ≤ 0.1% per hit and never below 1; regen visible 1 HP/s; fall from 100 blocks — no damage; zombie hit — no knockback; die and respawn — still no knockback, `/attribute @s minecraft:generic.knockback_resistance get` = 1.
-- [ ] **Step 5: Commit** `feat(reinhard): chassis with resist, hp floor and regen`.
+- [x] **Step 1: Write the failing tests** (pure pipeline with a fake `Target` built from `ReinhardHero`'s two methods, the same harness as `HeroDamageLayersTest`): `swordHitLosesOneThousandth` (raw 10 → passOn 0.01), `percentDamageAlsoResisted` (raw = 50% of 20 → 0.01), `cleanPathResistedAndFloored` (`HeroDamageLayers.clean(target, NO_ATTACKER, false, 1e6f)` at health 1.5 → 0.5), `floorNeverBelowOne`, `divinePassesUnchanged` (divine flag → passOn raw, clamp raw), `HeroRespawnHookTest.defaultIsNoOp` (other heroes unchanged), `ReinhardHeroTest.respawnReappliesKnockbackOnce` (call `onRespawn` twice on a fresh fake attribute map → exactly one modifier).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** the hooks, regen and modifier.
+- [x] **Step 4: Run** → PASS. Manual (dev client, survival): zombie, sword from a second player (LAN), Iron Man Unibeam, `/damage @s 1000` — HP drops ≤ 0.1% per hit and never below 1; regen visible 1 HP/s; fall from 100 blocks — no damage; zombie hit — no knockback; die and respawn — still no knockback, `/attribute @s minecraft:generic.knockback_resistance get` = 1.
+- [x] **Step 5: Commit** `feat(reinhard): chassis with resist, hp floor and regen`.
 
 ### Task 4: Unblockable seam, `/kill` scope, void rescue
 

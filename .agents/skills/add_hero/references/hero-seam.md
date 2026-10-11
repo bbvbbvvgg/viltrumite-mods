@@ -35,6 +35,7 @@ Default hooks (override only when needed):
 | `heroInputSlots()` / `heroActionFor(String id)` | none; slot ids whose keys send `HeroInputC2SPacket` press/release (generic client loop) |
 | `onHurt(ServerPlayer, DamageSource, float)` | nothing; from `HeroEvents` LivingHurtEvent |
 | `onDimensionChange(ServerPlayer)` | nothing; stop channels |
+| `onRespawn(ServerPlayer)` | nothing; fresh body after `PlayerRespawnEvent` (death and End return). `restoreHero()` on clone skips `enter`, so re-apply chassis modifiers here; must be idempotent |
 | `abilityIcon(String id)` | null; hero-specific icon for any slot (kit slots drawn as this hero), read by panel and HUD via `ViltrumiteAbility.getIcon(player)` |
 | `saveHeroState` / `loadHeroState` / `cloneHeroState` | drop state |
 | `grantsFlightAbility(Player)` | false; vanilla `mayfly` for heroes without the legacy kit (`HeroFlightGrant`, own NBT marker) |
