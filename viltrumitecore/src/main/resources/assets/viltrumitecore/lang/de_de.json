@@ -412,5 +412,9 @@
   "death.attack.viltrumitecore.divine": "%1$s wurde von göttlicher Macht niedergestreckt",
   "death.attack.viltrumitecore.divine.player": "%1$s wurde von der göttlichen Macht von %2$s niedergestreckt",
   "commands.viltrumitecore.divine.success": "%s göttlicher Schaden an %s Ziel(en) verursacht",
-  "commands.viltrumitecore.divine.not_divine": "%s ist kein göttlicher Schadenstyp"
+  "commands.viltrumitecore.divine.not_divine": "%s ist kein göttlicher Schadenstyp",
+  "subtitles.viltrumitecore.reinhard_mode_restrained": "Reinhard hält sich zurück",
+  "subtitles.viltrumitecore.reinhard_mode_knight": "Reinhard tritt als Ritter auf",
+  "subtitles.viltrumitecore.reinhard_mode_holy_sword": "Der Schwertheilige erwacht",
+  "subtitles.viltrumitecore.reinhard_refuse": "Reinhard: nicht jetzt"
 }

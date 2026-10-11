@@ -637,5 +637,45 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.mode_restrained": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_mode_restrained",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.mode_knight": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_mode_knight",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.mode_holy_sword": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_mode_holy_sword",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_refuse",
+    "sounds": [
+      {
+        "name": "minecraft:block.note_block.bass",
+        "type": "event"
+      }
+    ]
   }
 }

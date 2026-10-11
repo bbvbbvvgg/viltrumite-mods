@@ -412,5 +412,9 @@
   "death.attack.viltrumitecore.divine": "%1$s被神圣之力击倒",
   "death.attack.viltrumitecore.divine.player": "%1$s被%2$s的神圣之力击倒",
   "commands.viltrumitecore.divine.success": "对%2$s个目标造成了%1$s点神圣伤害",
-  "commands.viltrumitecore.divine.not_divine": "%s不是神圣伤害类型"
+  "commands.viltrumitecore.divine.not_divine": "%s不是神圣伤害类型",
+  "subtitles.viltrumitecore.reinhard_mode_restrained": "莱因哈鲁特收敛力量",
+  "subtitles.viltrumitecore.reinhard_mode_knight": "莱因哈鲁特以骑士之姿应战",
+  "subtitles.viltrumitecore.reinhard_mode_holy_sword": "剑圣觉醒",
+  "subtitles.viltrumitecore.reinhard_refuse": "莱因哈鲁特：现在不行"
 }

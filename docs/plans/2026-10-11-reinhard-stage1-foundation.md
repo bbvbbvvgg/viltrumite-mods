@@ -142,11 +142,11 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `enter` → mode RESTRAINED, page 0; `cleanup(HERO_CHANGE)` → page 0. Login → page = saved mode (`loadHeroState`).
 - `sounds.json` (final slot names, vanilla placeholders as `"type": "event"` entries): `reinhard.mode_restrained` → `block.amethyst_block.chime`, `reinhard.mode_knight` → `block.beacon.power_select`, `reinhard.mode_holy_sword` → `block.beacon.activate`, `reinhard.refuse`, `reinhard.air_step` → `entity.ender_dragon.flap` (pitch via code). Subtitles keys in lang.
 
-- [ ] **Step 1: Write the failing tests** — `pressCyclesAll`, `cooldownRefuses`, `busyRefuses`, `cooldownIsSixtyTicks`, `pageMatchesMode`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS. Manual: MMB on a block — no pick-block, mode changes R→K→H→R, page indicator follows, presses inside 3 s → refusal sound and no change; page key does nothing; relog keeps the mode.
-- [ ] **Step 5: Commit** `feat(reinhard): mode cycle on middle mouse`.
+- [x] **Step 1: Write the failing tests** — `pressCyclesAll`, `cooldownRefuses`, `busyRefuses`, `cooldownIsSixtyTicks`, `pageMatchesMode`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS. Manual: MMB on a block — no pick-block, mode changes R→K→H→R, page indicator follows, presses inside 3 s → refusal sound and no change; page key does nothing; relog keeps the mode.
+- [x] **Step 5: Commit** `feat(reinhard): mode cycle on middle mouse`.
 
 ### Task 7: Ability table, loadout, panel registration
 

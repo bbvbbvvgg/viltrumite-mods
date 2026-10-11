@@ -412,5 +412,9 @@
   "death.attack.viltrumitecore.divine": "%1$s was struck down by divine power",
   "death.attack.viltrumitecore.divine.player": "%1$s was struck down by the divine power of %2$s",
   "commands.viltrumitecore.divine.success": "Dealt %s divine damage to %s target(s)",
-  "commands.viltrumitecore.divine.not_divine": "%s is not a divine damage type"
+  "commands.viltrumitecore.divine.not_divine": "%s is not a divine damage type",
+  "subtitles.viltrumitecore.reinhard_mode_restrained": "Reinhard holds back",
+  "subtitles.viltrumitecore.reinhard_mode_knight": "Reinhard stands as a knight",
+  "subtitles.viltrumitecore.reinhard_mode_holy_sword": "The Sword Saint awakens",
+  "subtitles.viltrumitecore.reinhard_refuse": "Reinhard: not now"
 }

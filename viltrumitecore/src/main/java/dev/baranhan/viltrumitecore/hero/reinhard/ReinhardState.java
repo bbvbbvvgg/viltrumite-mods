@@ -20,6 +20,18 @@ public final class ReinhardState {
    public int regenTicks;
    public int[] cooldowns = new int[COOLDOWN_SLOTS];
 
+   /**
+    * Busy = an action that must not be interrupted by a mode switch (Reid
+    * drawing / sheathing, World Cut, World Erasure; Stages 4-6). None yet.
+    */
+   public boolean busy() {
+      return false;
+   }
+
+   /** Leaving Holy Sword (Stage 4 sheathes Reid here). */
+   public void onLeaveHolySword() {
+   }
+
    /** Counts every cooldown down by one tick. */
    public void tick() {
       if (this.modeCooldown > 0) {

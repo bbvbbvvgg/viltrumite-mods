@@ -6,7 +6,10 @@ import dev.baranhan.viltrumitecore.hero.DivineDamage;
 import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDefinition;
 import dev.baranhan.viltrumitecore.hero.HeroId;
+import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
+import dev.baranhan.viltrumitecore.hero.MouseButton;
+import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
@@ -83,9 +86,29 @@ public final class ReinhardHero implements HeroDefinition {
       return true;
    }
 
+   /** Spec §5: MMB cycles the mode (both sides; the client cancels pick-block). */
+   @Override
+   public HeroAction mouseAction(MouseButton button, Player player) {
+      return button == MouseButton.MIDDLE ? HeroAction.MODE_CYCLE : null;
+   }
+
    @Override
    public boolean canAct(ServerPlayer player, HeroAction action) {
-      return false;
+      if (!player.isAlive() || HeroDamage.isAnchored(player)) {
+         return false;
+      }
+
+      ReinhardState state = ReinhardState.ensure(player);
+      return switch (action) {
+         case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
+         default -> false;
+      };
+   }
+
+   /** A refused press always gives feedback (add_hero §4.4). */
+   @Override
+   public void onInputRefused(ServerPlayer player, HeroAction action) {
+      ReinhardSounds.play(player, ReinhardSounds.REFUSE.get(), 0.8F, 0.6F);
    }
 
    @Override
@@ -103,11 +126,43 @@ public final class ReinhardHero implements HeroDefinition {
 
    @Override
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
+      if (action == HeroAction.MODE_CYCLE && pressed) {
+         cycleMode(player, ReinhardState.ensure(player));
+      }
+   }
+
+   /** Spec §5: no pose; cooldown 3 s; own sound per mode; the panel page follows the mode. */
+   private void cycleMode(ServerPlayer player, ReinhardState state) {
+      ModeCycle.Result result = ModeCycle.press(state.mode, state.modeCooldown, state.busy());
+      if (!result.accepted()) {
+         this.onInputRefused(player, HeroAction.MODE_CYCLE);
+         return;
+      }
+
+      ReinhardMode previous = state.mode;
+      state.mode = result.next();
+      state.modeCooldown = ReinhardRules.MODE_COOLDOWN;
+      if (previous == ReinhardMode.HOLY_SWORD) {
+         state.onLeaveHolySword();
+      }
+
+      setPage(player, state.mode.page());
+      ReinhardSounds.play(player, ReinhardSounds.mode(state.mode), 1.0F, 1.0F);
+   }
+
+   /** ACTIVE_PAGE is synced entity data: server only. */
+   private static void setPage(ServerPlayer player, int page) {
+      if (player instanceof ViltrumiteAbilityUser abilityUser) {
+         abilityUser.setActivePage(page);
+      }
    }
 
    @Override
    public void enter(ServerPlayer player) {
-      ReinhardState.ensure(player);
+      ReinhardState state = ReinhardState.ensure(player);
+      state.mode = ReinhardMode.RESTRAINED;
+      state.modeCooldown = 0;
+      setPage(player, ReinhardMode.RESTRAINED.page());
       applyChassis(player);
    }
 
@@ -190,9 +245,14 @@ public final class ReinhardHero implements HeroDefinition {
       }
    }
 
+   /** Login: the page follows the saved mode. */
    @Override
    public void loadHeroState(Player player, CompoundTag nbt) {
-      ReinhardState.ensure(player).load(nbt);
+      ReinhardState state = ReinhardState.ensure(player);
+      state.load(nbt);
+      if (player instanceof ServerPlayer serverPlayer) {
+         setPage(serverPlayer, state.mode.page());
+      }
    }
 
    /** Mode and cooldowns carry over to the respawned body. */
@@ -207,15 +267,27 @@ public final class ReinhardHero implements HeroDefinition {
       }
    }
 
+   /** Mode in heroFlags bits 0-1; ability cooldowns at their ordinal, mode cooldown at EXTRA_MODE_CD. */
    @Override
    public HeroPublicSnapshot snapshot(Player player) {
+      ReinhardState state = ReinhardState.of(player);
+      if (state == null) {
+         return new HeroPublicSnapshot(HeroId.REINHARD, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1,
+            new int[HeroPublicSnapshot.COOLDOWN_COUNT], false);
+      }
+
+      int[] extra = new int[HeroPublicSnapshot.EXTRA_COOLDOWN_MAX];
+      System.arraycopy(state.cooldowns, 0, extra, 0, Math.min(state.cooldowns.length, ReinhardFlags.EXTRA_MODE_CD));
+      extra[ReinhardFlags.EXTRA_MODE_CD] = state.modeCooldown;
+      int flags = ReinhardFlags.withMode(0, state.mode);
       return new HeroPublicSnapshot(HeroId.REINHARD, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1,
-         new int[HeroPublicSnapshot.COOLDOWN_COUNT], false);
+         new int[HeroPublicSnapshot.COOLDOWN_COUNT], false, -1, null, 0, false, flags, extra);
    }
 
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       if (reason == CleanupReason.HERO_CHANGE) {
+         setPage(player, 0);
          AttributeInstance knockback = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
          if (knockback != null) {
             removeKnockbackResistance(knockback);

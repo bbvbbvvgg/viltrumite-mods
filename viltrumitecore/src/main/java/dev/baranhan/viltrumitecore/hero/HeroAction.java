@@ -40,7 +40,9 @@ public enum HeroAction {
    /** Iron Man Stage 4: call Veronica; again while the pod stands = suit menu. */
    VERONICA,
    /** Iron Man Stage 4: the worn mark's signature (page 1 slot 3 in a mark; timeline id). */
-   SIGNATURE;
+   SIGNATURE,
+   /** Reinhard: claimed MMB, cycle the mode. */
+   MODE_CYCLE;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

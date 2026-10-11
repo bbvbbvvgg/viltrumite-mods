@@ -15,6 +15,10 @@ import net.minecraftforge.registries.RegistryObject;
  */
 public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> AIR_STEP = reg("reinhard.air_step");
+   public static final RegistryObject<SoundEvent> MODE_RESTRAINED = reg("reinhard.mode_restrained");
+   public static final RegistryObject<SoundEvent> MODE_KNIGHT = reg("reinhard.mode_knight");
+   public static final RegistryObject<SoundEvent> MODE_HOLY_SWORD = reg("reinhard.mode_holy_sword");
+   public static final RegistryObject<SoundEvent> REFUSE = reg("reinhard.refuse");
 
    private ReinhardSounds() {
    }
@@ -25,6 +29,15 @@ public final class ReinhardSounds {
 
    /** Loads the holders (class init). */
    public static void init() {
+   }
+
+   /** The "something in the world changed" sound of a mode (spec §5). */
+   public static SoundEvent mode(ReinhardMode mode) {
+      return switch (mode) {
+         case RESTRAINED -> MODE_RESTRAINED.get();
+         case KNIGHT -> MODE_KNIGHT.get();
+         case HOLY_SWORD -> MODE_HOLY_SWORD.get();
+      };
    }
 
    /** Everyone nearby hears it, the player included. */
