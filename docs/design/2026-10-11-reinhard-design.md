@@ -234,7 +234,7 @@ Lethal Chop с вынутым Рейдом бьёт левой рукой. У к
 | Мировой разрез: тишина и белая линия | https://freesound.org/people/reathance/sounds/503809/ |
 | Мировой разрез: хвост после разреза | https://freesound.org/people/hykenfreak/sounds/248150/ |
 | Мировой разрез: взрыв (основа) | https://freesound.org/people/Alliare/sounds/825864 |
-| Мировой разрез: взрыв (слой) | https://freesound.org/people/CGEffex/sounds/93835 (или 93846) — приглушённый, с ~2-й секунды |
+| Мировой разрез: взрыв (слой) | https://freesound.org/people/CGEffex/sounds/93835 — Huge Explosion 1, приглушённый, с ~2-й секунды |
 | Стирание мира: треск и раскол | https://freesound.org/people/Greg_Surr/sounds/554564/ |
 | Стирание мира: обратный «вдох» на сборке | https://freesound.org/people/hykenfreak/sounds/331620/ |
 | Лимб: сердцебиение | https://freesound.org/people/daandraait/sounds/249716 |
