@@ -162,11 +162,11 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `ownsAbility(id)` = id is in the shipped default loadout.
 - `panelAbilities()` returns one entry per shipped ability: icon `textures/gui/ability/reinhard/<name>.png`, lang `ability.viltrumitecore.reinhard_<name>.name/.desc`, grey-out = `extraCooldowns[ordinal] > 0` or the stage condition (Stage 4 adds Reid conditions).
 
-- [ ] **Step 1: Write the failing tests** — `slotsFollowSpecOrder` (every enum value's `mode.page()*6 + slot` equals its index in `LOADOUT`), `idsUnique`, `actionsUnique`, `onlyShippedOwned` (SHIPPED_STAGE 1 → owns nothing), `chopOnHolySwordSlot2` (`LOADOUT[13] == "viltrumite:chop"`), `ordinalFitsExtraCooldowns` (`values().length <= ReinhardFlags.EXTRA_MODE_CD`), `HeroPublicSnapshotTest.highOrdinalDoesNotAliasBitZero` (only `WORLD_ERASURE` available → `LIONS_HEART` not available), `decodesLegacyIntMask`, `encodeRoundTripLong`, `actionCountFitsMask` (≤ 64).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS; `check_hero_resources.py --hero reinhard` → 0 new problems (no shipped ability yet, so no icons required).
-- [ ] **Step 5: Commit** `feat(reinhard): ability table and loadout per mode`.
+- [x] **Step 1: Write the failing tests** — `slotsFollowSpecOrder` (every enum value's `mode.page()*6 + slot` equals its index in `LOADOUT`), `idsUnique`, `actionsUnique`, `onlyShippedOwned` (SHIPPED_STAGE 1 → owns nothing), `chopOnHolySwordSlot2` (`LOADOUT[13] == "viltrumite:chop"`), `ordinalFitsExtraCooldowns` (`values().length <= ReinhardFlags.EXTRA_MODE_CD`), `HeroPublicSnapshotTest.highOrdinalDoesNotAliasBitZero` (only `WORLD_ERASURE` available → `LIONS_HEART` not available), `decodesLegacyIntMask`, `encodeRoundTripLong`, `actionCountFitsMask` (≤ 64).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS; `check_hero_resources.py --hero reinhard` → 0 new problems (no shipped ability yet, so no icons required).
+- [x] **Step 5: Commit** `feat(reinhard): ability table and loadout per mode`.
 
 ### Task 8: Knight panel style, mode icons, HUD attachments
 

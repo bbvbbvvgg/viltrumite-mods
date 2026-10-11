@@ -42,7 +42,24 @@ public enum HeroAction {
    /** Iron Man Stage 4: the worn mark's signature (page 1 slot 3 in a mark; timeline id). */
    SIGNATURE,
    /** Reinhard: claimed MMB, cycle the mode. */
-   MODE_CYCLE;
+   MODE_CYCLE,
+   /** Reinhard Restrained (stage 3). */
+   LIGHT_PUNCH,
+   STEP_DASH,
+   CATCH_PROJECTILE,
+   /** Reinhard Knight (stage 3). */
+   FIST_COMBO,
+   SKY_KICK,
+   GRAB_THROW,
+   DASH_BEHIND,
+   STOMP,
+   REFLECT_PROJECTILE,
+   /** Reinhard Holy Sword (stages 4-6). */
+   REID,
+   SHEATH_STRIKE,
+   CUT_RAIN,
+   WORLD_CUT,
+   WORLD_ERASURE;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

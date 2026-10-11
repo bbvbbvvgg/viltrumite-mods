@@ -28,12 +28,6 @@ import net.minecraft.world.entity.player.Player;
 public final class ReinhardHero implements HeroDefinition {
    /** Knockback-resistance modifier of the chassis (fixed id, never change: saved on the player). */
    public static final UUID KNOCKBACK_MODIFIER_ID = UUID.fromString("c39ed511-76d1-4e69-a3ed-42628d488960");
-   private static final String[] EMPTY_LOADOUT = new String[18];
-
-   static {
-      java.util.Arrays.fill(EMPTY_LOADOUT, "");
-   }
-
    /** Declared after every static field the constructor may read (static init order). */
    public static final ReinhardHero INSTANCE = new ReinhardHero();
 
@@ -72,12 +66,32 @@ public final class ReinhardHero implements HeroDefinition {
 
    @Override
    public boolean ownsAbility(String abilityId) {
-      return false;
+      return ReinhardAbilities.owns(abilityId);
    }
 
    @Override
    public String[] defaultLoadout() {
-      return EMPTY_LOADOUT.clone();
+      return ReinhardAbilities.defaultLoadout();
+   }
+
+   @Override
+   public String[] heroInputSlots() {
+      return ReinhardAbilities.inputSlots();
+   }
+
+   @Override
+   public HeroAction heroActionFor(String abilityId) {
+      return ReinhardAbilities.actionFor(abilityId);
+   }
+
+   @Override
+   public java.util.List<dev.baranhan.viltrumitecore.ability.ViltrumiteAbility> panelAbilities() {
+      return ReinhardAbilities.panelAbilities();
+   }
+
+   @Override
+   public net.minecraft.resources.ResourceLocation abilityIcon(String abilityId) {
+      return ReinhardAbilities.icon(abilityId);
    }
 
    /** The spec gives Reinhard no immunity to control; knockback is the attribute (chassis). */
