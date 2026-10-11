@@ -1363,12 +1363,15 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
          AttributeModifier attributeModifier = new AttributeModifier(
             UUID.fromString("e7208d13-6453-4cae-908c-9c3f508a6b12"), "Viltrumite Base Strength", (double)damage, Operation.ADDITION
          );
-         if (this.isViltrumite()) {
-            if (!damageAttribute.hasModifier(attributeModifier)) {
-               damageAttribute.addTransientModifier(attributeModifier);
-            }
-         } else if (damageAttribute.hasModifier(attributeModifier)) {
+         AttributeModifier current = damageAttribute.getModifier(attributeModifier.getId());
+         // Re-add when the strength changed (hero chassis, config screen), not only when missing.
+         if (current != null && (!this.isViltrumite() || current.getAmount() != (double)damage)) {
             damageAttribute.removeModifier(attributeModifier.getId());
+            current = null;
+         }
+
+         if (this.isViltrumite() && current == null) {
+            damageAttribute.addTransientModifier(attributeModifier);
          }
       }
    }

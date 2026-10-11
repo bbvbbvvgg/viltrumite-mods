@@ -46,6 +46,13 @@ public final class HomelanderRules {
    public static final double BONUS_MAX_HEALTH = 20.0;
    /** Bonus armor points. */
    public static final double BONUS_ARMOR = 10.0;
+   // Chassis (user balance pass 2026-10-11): no longer the Viltrumite 19 / 97 %.
+   /** Base strength: fist +6 attack damage (7 total); kit punch 12..30, chop 10.5, clap 6, dash 3. */
+   public static final float BASE_DAMAGE = 6.0F;
+   /** Incoming damage reduction in percent (Viltrumite: 97). */
+   public static final float DAMAGE_REDUCTION = 40.0F;
+   /** Hits below this after the reduction are ignored. */
+   public static final float DAMAGE_IGNORE_THRESHOLD = 0.5F;
 
    private HomelanderRules() {
    }

@@ -60,6 +60,29 @@ class ShieldTest {
    }
 
    @Test
+   void repeatPressDoesNotReopenPerfectWindow() {
+      Energy e = new Energy();
+      Shield s = new Shield();
+      s.raise(1000L, e);
+      s.raise(1004L, e);
+      s.raise(1008L, e);
+      assertSame(Shield.Block.ABSORBED, s.hit(1009L, LOOK, FRONT, e), "a press while raised keeps the first raise time");
+   }
+
+   @Test
+   void fSpamGivesNoPerfectBlock() {
+      Energy e = new Energy();
+      Shield s = new Shield();
+      s.raise(1000L, e);
+      s.lower(1002L);
+      s.raise(1004L, e);
+      assertSame(Shield.Block.ABSORBED, s.hit(1005L, LOOK, FRONT, e), "re-raise right after a lower is not perfect");
+      s.lower(1006L);
+      s.raise(1006L + Shield.PERFECT_REARM_TICKS, e);
+      assertSame(Shield.Block.PERFECT, s.hit(1007L + Shield.PERFECT_REARM_TICKS, LOOK, FRONT, e), "a calm raise is perfect again");
+   }
+
+   @Test
    void loweredShieldPasses() {
       Energy e = new Energy();
       Shield s = new Shield();

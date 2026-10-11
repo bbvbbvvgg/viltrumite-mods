@@ -15,12 +15,6 @@ public final class ScanHighlight {
    }
 
    public static int colorOf(Entity entity) {
-      for (int id : ClientHeroData.section(OwnerSection.SCAN)) {
-         if (id == entity.getId()) {
-            return CYAN;
-         }
-      }
-
-      return -1;
+      return ClientHeroData.inSection(OwnerSection.SCAN, entity.getId()) ? CYAN : -1;
    }
 }

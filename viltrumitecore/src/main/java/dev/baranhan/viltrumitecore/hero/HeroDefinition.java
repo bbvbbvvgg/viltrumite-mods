@@ -111,6 +111,15 @@ public interface HeroDefinition {
       return java.util.List.of();
    }
 
+   /**
+    * Chassis numbers for a legacy-kit hero, or null to keep the synced
+    * Viltrumite stats (config defaults: base 19, 97 % reduction). A hero that
+    * must not be a full Viltrumite tank or one-shot puncher returns its own.
+    */
+   default HeroChassis chassisStats(Player player) {
+      return null;
+   }
+
    /** Does the shared legacy-kit regeneration (every 40 t) apply; heroes with their own regen opt out. */
    default boolean usesLegacyRegen(Player player) {
       return true;

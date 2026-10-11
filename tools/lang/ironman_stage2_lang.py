@@ -16,7 +16,7 @@ T = {
   'missiles.name': '<gold>Micro-missiles',
   'missiles.desc': '<grey>Type: <aqua>Hold\n\n<grey>Shoulder flaps open (~0.5s).\n<grey>Sweep the crosshair over enemies to mark up to 4.\n<grey>Release: a fan of homing missiles.\n<grey>No marks: they fly straight ahead.\n\n<blue>Iron Man',
   'nano_arsenal.name': '<gold>Nano arsenal',
-  'nano_arsenal.desc': '<grey>Type: <aqua>Press\n\n<grey>Forms a weapon on the right hand.\n<grey>Press again: blade ↔ hammer.\n<grey>Blade: LMB slash weakens armor, RMB dash.\n<grey>Hammer: LMB heavy blow / ground slam,\n<grey>RMB charged launch through soft blocks.\n<grey>MMB: back to the repulsors.\n\n<blue>Iron Man',
+  'nano_arsenal.desc': '<grey>Type: <aqua>Press\n\n<grey>Forms a weapon on the right hand.\n<grey>Press again: blade ↔ hammer.\n<grey>Blade: LMB slash weakens armor.\n<grey>Hammer: LMB heavy blow / ground slam,\n<grey>RMB charged launch through soft blocks.\n<grey>MMB: back to the repulsors.\n\n<blue>Iron Man',
   'sub': ['Repulsor fires', 'Repulsor charges', 'Repulsor volley', 'Repulsor fizzles', 'Unibeam charges', 'Unibeam hums',
           'Core overheats', 'Arc reactor sputters', 'Arc reactor explodes', 'Nanites form', 'Nanites dissolve', 'Nanites repair the suit',
           'Nano blade slashes', 'Nano hammer hits', 'Nano hammer slams the ground', 'Nano shield opens', 'Shield absorbs a hit', 'Perfect block',

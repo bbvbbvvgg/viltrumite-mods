@@ -101,7 +101,7 @@ public final class PulseUnibeam implements MarkSignature {
       double length = segment.length();
       AABB box = new AABB(from, to).inflate(radius + 1.0);
       DamageSource source = player.damageSources().playerAttack(player);
-      for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class, box, e -> e != player && e.isAlive() && !e.isSpectator())) {
+      for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class, box, e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
          Vec3 center = target.getBoundingBox().getCenter();
          double t = length < 1.0E-3 ? 0.0 : Mth.clamp(center.subtract(from).dot(segment) / (length * length), 0.0, 1.0);
          Vec3 closest = from.add(segment.scale(t));

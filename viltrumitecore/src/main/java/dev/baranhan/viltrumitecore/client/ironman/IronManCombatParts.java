@@ -144,7 +144,7 @@ public final class IronManCombatParts {
       }
 
       boolean open = held || now - st[2] <= FIRED_HOLD_TICKS && now >= st[2];
-      float seconds = System.nanoTime() / 1.0E9F;
+      float seconds = dev.baranhan.viltrumitecore.client.anim.RealTime.seconds();
       float dt = Float.isNaN(st[1]) ? 0.0F : Math.min(0.1F, seconds - st[1]);
       st[1] = seconds;
       st[0] = Mth.lerp(1.0F - (float)Math.exp(-LAUNCHER_RATE * dt), st[0], open ? 1.0F : 0.0F);

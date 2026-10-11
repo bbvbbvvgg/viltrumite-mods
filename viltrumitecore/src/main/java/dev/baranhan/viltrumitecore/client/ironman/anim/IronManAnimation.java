@@ -207,7 +207,7 @@ public final class IronManAnimation {
       /** Weight of a layer in one view, eased by real time (each view advances once per frame). */
       public float weight(View view, Layer layer, boolean active) {
          float[] st = this.weights.computeIfAbsent(view, v -> new EnumMap<>(Layer.class)).computeIfAbsent(layer, l -> new float[]{0.0F, Float.NaN});
-         float now = System.nanoTime() / 1.0E9F;
+         float now = dev.baranhan.viltrumitecore.client.anim.RealTime.seconds();
          float dt = Float.isNaN(st[1]) ? 0.0F : Math.min(0.1F, Math.max(0.0F, now - st[1]));
          st[1] = now;
          st[0] = Mth.lerp(1.0F - (float)Math.exp(-layer.rate * dt), st[0], active ? 1.0F : 0.0F);

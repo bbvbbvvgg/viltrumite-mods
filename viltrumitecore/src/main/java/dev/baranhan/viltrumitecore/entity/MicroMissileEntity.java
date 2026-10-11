@@ -140,18 +140,36 @@ public class MicroMissileEntity extends Projectile implements Homing {
       this.explode(result.getLocation(), null);
    }
 
+   /** Splash stops at walls: the blast point must see the target's centre. */
+   private boolean sees(Vec3 at, LivingEntity target) {
+      Vec3 centre = target.getBoundingBox().getCenter();
+      Vec3 toward = centre.subtract(at);
+      if (toward.lengthSqr() < 0.0625) {
+         return true;
+      }
+
+      // Start a bit off the impact face, else the struck block itself blocks the ray.
+      Vec3 start = at.add(toward.normalize().scale(0.25));
+      return this.level().clip(new net.minecraft.world.level.ClipContext(start, centre, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+         net.minecraft.world.level.ClipContext.Fluid.NONE, this)).getType() == net.minecraft.world.phys.HitResult.Type.MISS;
+   }
+
    /** Own explosion: direct hit + splash through vanilla hurt, no blocks, no vanilla explosion. */
    private void explode(Vec3 at, @Nullable Entity direct) {
       Entity owner = this.getOwner();
       LivingEntity shooter = owner instanceof LivingEntity living ? living : null;
       if (direct instanceof LivingEntity living) {
+         int iframes = living.invulnerableTime;
          living.invulnerableTime = 0;
-         living.hurt(this.damageSources().explosion(this, shooter), IronManRules.MISSILE_HIT * this.damageMul);
+         if (!living.hurt(this.damageSources().explosion(this, shooter), IronManRules.MISSILE_HIT * this.damageMul)) {
+            // Refused hit (PvP off, ally, layer): keep the target's own iframes.
+            living.invulnerableTime = iframes;
+         }
       }
 
       AABB box = new AABB(at, at).inflate(IronManRules.MISSILE_SPLASH_RADIUS);
       for (LivingEntity near : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e != direct && e != owner && e.isAlive())) {
-         if (near.position().distanceTo(at) <= IronManRules.MISSILE_SPLASH_RADIUS + near.getBbWidth()) {
+         if (near.position().distanceTo(at) <= IronManRules.MISSILE_SPLASH_RADIUS + near.getBbWidth() && sees(at, near)) {
             if (near.hurt(this.damageSources().explosion(this, shooter), IronManRules.MISSILE_SPLASH * this.damageMul)
                && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsImpulse(near)) {
                Vec3 push = near.position().subtract(at).normalize().scale(0.5);

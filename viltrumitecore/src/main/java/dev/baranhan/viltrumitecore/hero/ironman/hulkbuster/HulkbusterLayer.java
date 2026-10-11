@@ -14,6 +14,8 @@ public final class HulkbusterLayer {
    public static final String KEY = "Hulkbuster";
    public static final float DURABILITY = 800.0F;
    public static final double ARMOR = 30.0;
+   /** Durability loss per point of an absorbed hit (heavier than any mark). */
+   public static final float PLATING = 0.36F;
    public static final int COOLDOWN = 12000;
    public static final int DROP_TICKS = 20;
    public static final int ASSEMBLE_TICKS = 60;
@@ -226,7 +228,7 @@ public final class HulkbusterLayer {
          return false;
       }
 
-      this.durability = Math.max(0.0F, this.durability - Math.max(0.0F, amount) * dev.baranhan.viltrumitecore.hero.ironman.mark.MarkDamage.lossFactor(ARMOR));
+      this.durability = Math.max(0.0F, this.durability - Math.max(0.0F, amount) * PLATING);
       return true;
    }
 

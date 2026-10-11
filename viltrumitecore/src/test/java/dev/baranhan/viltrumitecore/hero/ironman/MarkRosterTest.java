@@ -164,8 +164,11 @@ class MarkRosterTest {
       state.roster.breakMark(MarkId.MARK_7);
       state.veronicaCooldown = 900;
       state.signature.cooldown = 50;
+      java.util.UUID pod = java.util.UUID.randomUUID();
+      state.podUuid = pod;
       state.onCleanup(CleanupReason.DEATH);
       IronManState respawned = IronManState.cloneForRespawn(state);
+      assertEquals(pod, respawned.podUuid, "death keeps Veronica");
       assertEquals(10.0F, respawned.roster.durability(MarkId.MARK_39), 1.0E-5F);
       assertEquals(MarkRoster.BREAK_COOLDOWN, respawned.roster.cooldown(MarkId.MARK_7));
       assertEquals(900, respawned.veronicaCooldown);

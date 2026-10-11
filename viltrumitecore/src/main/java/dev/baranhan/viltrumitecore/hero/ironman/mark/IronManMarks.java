@@ -467,7 +467,7 @@ public final class IronManMarks {
       }
 
       MarkId mark = state.suit.mark();
-      MarkDamage.Result result = MarkDamage.apply(state.roster.durability(mark), amount, MarkSpec.of(mark).armor());
+      MarkDamage.Result result = MarkDamage.apply(state.roster.durability(mark), amount, MarkSpec.of(mark).plating());
       if (!result.absorbed()) {
          return DamageAbsorb.PASS;
       }

@@ -9,7 +9,6 @@ import dev.baranhan.viltrumitecore.hero.HeroOwnerSnapshot;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.OwnerSection;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
-import dev.baranhan.viltrumitecore.hero.ironman.combat.BladeDash;
 import dev.baranhan.viltrumitecore.hero.ironman.combat.HammerLaunch;
 import dev.baranhan.viltrumitecore.hero.ironman.combat.MissileLock;
 import dev.baranhan.viltrumitecore.hero.ironman.combat.Overdraft;
@@ -180,7 +179,7 @@ public final class IronManCombat {
       BlockState below = level.getBlockState(player.blockPosition().below());
       HeroFx.shockwave(player, player.position(), 1.0F, below, (float)IronManRules.REPULSOR_SHOCKWAVE_RADIUS);
       double r = IronManRules.REPULSOR_SHOCKWAVE_RADIUS;
-      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r, 1.5, r), e -> e != player && e.isAlive())) {
+      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r, 1.5, r), e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
          Vec3 away = target.position().subtract(player.position());
          double distance = away.horizontalDistance();
          if (distance > r) {
@@ -306,7 +305,7 @@ public final class IronManCombat {
       Vec3 segment = hitEnd.subtract(from);
       double length = segment.length();
       AABB box = new AABB(from, hitEnd).inflate(radius + 1.0);
-      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box, e -> e != player && e.isAlive() && !e.isSpectator())) {
+      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box, e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
          Vec3 center = target.getBoundingBox().getCenter();
          double t = length < 1.0E-3 ? 0.0 : Mth.clamp(center.subtract(from).dot(segment) / (length * length), 0.0, 1.0);
          Vec3 closest = from.add(segment.scale(t));
@@ -322,10 +321,11 @@ public final class IronManCombat {
                mob.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, IronManRules.UNIBEAM_MOB_BLIND_TICKS, 0, false, false));
                mob.setTarget(null);
             }
-         }
 
-         if (target instanceof ServerPlayer victim) {
-            flash(victim, overdraft ? 1.0F : 0.9F, UnibeamTimeline.flashTicks(IronManRules.FLASH_BEAM_TICKS, true));
+            // Only a target the beam really hurt is dazzled (no flash through PvP off / teams).
+            if (target instanceof ServerPlayer victim) {
+               flash(victim, overdraft ? 1.0F : 0.9F, UnibeamTimeline.flashTicks(IronManRules.FLASH_BEAM_TICKS, true));
+            }
          }
       }
 
@@ -336,10 +336,17 @@ public final class IronManCombat {
          }
 
          Vec3 toSource = from.subtract(other.getEyePosition());
-         if (UnibeamTimeline.looksInto(other.getLookAngle(), toSource, toSource.length())) {
+         if (UnibeamTimeline.looksInto(other.getLookAngle(), toSource, toSource.length()) && seesPoint(other, from)) {
             flash(other, overdraft ? 0.8F : 0.6F, UnibeamTimeline.flashTicks(IronManRules.FLASH_LOOK_TICKS, true));
          }
       }
+   }
+
+   /** Line of sight from the eyes to a point (no flash through walls). */
+   static boolean seesPoint(ServerPlayer viewer, Vec3 point) {
+      Vec3 eye = viewer.getEyePosition();
+      return viewer.level().clip(new net.minecraft.world.level.ClipContext(eye, point, net.minecraft.world.level.ClipContext.Block.VISUAL,
+         net.minecraft.world.level.ClipContext.Fluid.NONE, viewer)).getType() == HitResult.Type.MISS;
    }
 
    /** §9.4: the core blows, the player survives on ~2 hearts and loses the nano suit for 30 s. */
@@ -354,7 +361,7 @@ public final class IronManCombat {
       sound(player, IronManCombatSounds.CORE_EXPLOSION.get(), 1.0F);
       level.explode(player, at.x, at.y, at.z, power, Level.ExplosionInteraction.MOB);
       double r = IronManRules.CORE_EXTRA_KNOCKBACK_RADIUS;
-      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r), e -> e != player && e.isAlive())) {
+      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r), e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
          Vec3 away = target.position().subtract(player.position());
          double distance = away.length();
          if (distance > r || distance < 1.0E-3) {
@@ -372,7 +379,7 @@ public final class IronManCombat {
          double distance = other.distanceTo(player);
          if (other == player) {
             flash(other, 0.9F, 20);
-         } else if (distance < 32.0) {
+         } else if (distance < 32.0 && seesPoint(other, at)) {
             flash(other, (float)(1.0 - distance / 32.0), UnibeamTimeline.flashTicks(30, true));
          }
       }
@@ -427,7 +434,7 @@ public final class IronManCombat {
          Vec3 look = player.getLookAngle();
          double range = IronManRules.MISSILE_LOCK_RANGE;
          AABB box = new AABB(eye, eye.add(look.scale(range))).inflate(4.0);
-         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box, e -> e != player && e.isAlive() && !e.isSpectator())) {
+         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box, e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
             if (MissileLock.inCone(eye, look, target.getBoundingBox().getCenter()) && state.missiles.offer(target.getId(), player.hasLineOfSight(target))) {
                sound(player, IronManCombatSounds.SHIELD_OPEN.get(), 2.0F);
             }
@@ -537,7 +544,7 @@ public final class IronManCombat {
       double cos = Math.cos(Math.toRadians(IronManRules.BLADE_ARC_DEG / 2.0F));
       sound(player, IronManCombatSounds.BLADE_SLASH.get(), 0.9F + player.getRandom().nextFloat() * 0.2F);
       HeroFx.blade(player, eye.add(look.scale(0.6)), eye.add(look.scale(reach)), null);
-      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(reach), e -> e != player && e.isAlive())) {
+      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(reach), e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
          Vec3 to = target.getBoundingBox().getCenter().subtract(eye);
          double distance = to.length();
          if (distance > reach + target.getBbWidth() / 2.0 || distance < 1.0E-3 || look.dot(to.scale(1.0 / distance)) < cos || !player.hasLineOfSight(target)) {
@@ -596,7 +603,7 @@ public final class IronManCombat {
       double r = IronManRules.HAMMER_SLAM_RADIUS;
       HeroFx.slam(player, at, material, (float)r);
       sound(player, IronManCombatSounds.HAMMER_SLAM.get(), 1.0F);
-      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(r, 2.0, r), e -> e != player && e.isAlive())) {
+      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(r, 2.0, r), e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
          if (target.position().distanceTo(at) > r + 0.5) {
             continue;
          }
@@ -606,65 +613,6 @@ public final class IronManCombat {
             target.setDeltaMovement(v.x, Math.max(v.y, IronManRules.HAMMER_SLAM_LIFT), v.z);
             target.hurtMarked = true;
          }
-      }
-   }
-
-   /** RMB with the blade: dash to the crosshair target (≤ 8 blocks), stops before walls. */
-   static void bladeDash(ServerPlayer player, IronManState state) {
-      if (state.dashTicks > 0 || state.arsenal.forming() || state.energy.weaponsLocked()) {
-         return;
-      }
-
-      ServerLevel level = player.serverLevel();
-      LivingEntity target = entityInReach(player, IronManRules.BLADE_DASH_RANGE);
-      Vec3 from = player.position();
-      Vec3 to;
-      if (target != null) {
-         to = target.position();
-      } else {
-         Vec3 eye = player.getEyePosition();
-         BlockHitResult block = level.clip(new ClipContext(eye, eye.add(player.getLookAngle().scale(IronManRules.BLADE_DASH_RANGE)),
-            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-         to = block.getLocation().subtract(0.0, player.getEyeHeight(), 0.0);
-      }
-
-      Vec3 end = BladeDash.end(from, to, target != null ? 1.2 : 0.5, (x, y, z) -> {
-         BlockPos pos = new BlockPos(x, y, z);
-         return !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
-      });
-      if (end.distanceTo(from) < 0.5) {
-         return;
-      }
-
-      state.dashTicks = IronManRules.BLADE_DASH_TICKS;
-      state.dashFrom = from;
-      state.dashTo = end;
-      state.dashTargetId = target == null ? -1 : target.getId();
-      sound(player, IronManCombatSounds.BLADE_SLASH.get(), 1.3F);
-   }
-
-   static void dashTick(ServerPlayer player, IronManState state) {
-      if (state.dashTicks <= 0 || state.dashFrom == null || state.dashTo == null) {
-         return;
-      }
-
-      state.dashTicks--;
-      float t = 1.0F - state.dashTicks / (float)IronManRules.BLADE_DASH_TICKS;
-      Vec3 p = state.dashFrom.lerp(state.dashTo, t);
-      player.teleportTo(p.x, p.y, p.z);
-      player.resetFallDistance();
-      if (state.dashTicks == 0) {
-         player.setDeltaMovement(Vec3.ZERO);
-         player.hurtMarked = true;
-         Entity target = state.dashTargetId < 0 ? null : player.level().getEntity(state.dashTargetId);
-         if (target instanceof LivingEntity living && living.isAlive() && living.distanceTo(player) < IronManRules.BLADE_REACH + 1.0) {
-            bladeHit(player, living);
-            state.strikeTicks = state.strikeLength = IronManRules.BLADE_SWING_TICKS;
-         }
-
-         state.dashFrom = null;
-         state.dashTo = null;
-         state.dashTargetId = -1;
       }
    }
 
@@ -840,7 +788,6 @@ public final class IronManCombat {
       state.arsenal.tick();
       unibeamTick(player, state);
       missilesTick(player, state);
-      dashTick(player, state);
       hammerLaunchTick(player, state);
       shieldTick(player, state);
       repairTick(player, state);

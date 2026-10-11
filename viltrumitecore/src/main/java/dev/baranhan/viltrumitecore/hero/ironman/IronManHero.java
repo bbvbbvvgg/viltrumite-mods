@@ -465,6 +465,7 @@ public class IronManHero implements HeroDefinition {
    @Override
    public void tick(ServerPlayer player) {
       IronManState state = IronManState.ensure(player);
+      dev.baranhan.viltrumitecore.hero.HeroPassiveEffect.keep(player, net.minecraft.world.effect.MobEffects.REGENERATION, IronManRules.PASSIVE_REGEN_AMPLIFIER);
       boolean controlled = controlled(player);
       if (controlled) {
          dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.onControl(player, state);
@@ -664,7 +665,7 @@ public class IronManHero implements HeroDefinition {
                IronManCombat.pushMarks(player, java.util.List.of());
             }
          }
-         case GUARD -> state.shield.lower();
+         case GUARD -> state.shield.lower(player.level().getGameTime());
          default -> {
          }
       }
@@ -863,10 +864,6 @@ public class IronManHero implements HeroDefinition {
          actionId = HeroAction.SECONDARY_USE.ordinal();
          elapsed = state.hammerCharge;
          length = IronManRules.HAMMER_CHARGE_MAX;
-      } else if (state.dashTicks > 0) {
-         actionId = HeroAction.SECONDARY_USE.ordinal();
-         elapsed = IronManRules.BLADE_DASH_TICKS - state.dashTicks;
-         length = IronManRules.BLADE_DASH_TICKS;
       } else if (state.strikeTicks > 0 && state.strikeLength > 0) {
          actionId = HeroAction.PRIMARY_ATTACK.ordinal();
          elapsed = state.strikeLength - state.strikeTicks;
@@ -922,7 +919,7 @@ public class IronManHero implements HeroDefinition {
          return dev.baranhan.viltrumitecore.hero.ScanInfo.EMPTY;
       }
 
-      dev.baranhan.viltrumitecore.hero.ScanInfo info = scanInfoFor(state.suit.armored(), state.shield.raised(), state.overheat.count(),
+      dev.baranhan.viltrumitecore.hero.ScanInfo info = scanInfoFor(state.suit.armored(), state.spec(), state.shield.raised(), state.overheat.count(),
          state.energy.weaponsLocked(), state.helmet.closed());
       dev.baranhan.viltrumitecore.hero.ironman.mark.MarkId mark = state.suit.markOn() ? state.suit.mark() : null;
       if (mark == null) {
@@ -937,11 +934,17 @@ public class IronManHero implements HeroDefinition {
    }
 
    static dev.baranhan.viltrumitecore.hero.ScanInfo scanInfoFor(boolean armored, boolean shieldUp, int overheats, boolean weaponsOffline, boolean helmetClosed) {
+      return scanInfoFor(armored, dev.baranhan.viltrumitecore.hero.ironman.mark.SuitSpec.NANO, shieldUp, overheats, weaponsOffline, helmetClosed);
+   }
+
+   /** Honest card (spec §11.2): armor numbers of the suit on Tony now (nano or mark). */
+   static dev.baranhan.viltrumitecore.hero.ScanInfo scanInfoFor(boolean armored, dev.baranhan.viltrumitecore.hero.ironman.mark.SuitSpec spec, boolean shieldUp, int overheats,
+      boolean weaponsOffline, boolean helmetClosed) {
       java.util.List<dev.baranhan.viltrumitecore.hero.ScanLine> protections = new java.util.ArrayList<>();
       java.util.List<dev.baranhan.viltrumitecore.hero.ScanLine> conditions = new java.util.ArrayList<>();
       if (armored) {
          protections.add(dev.baranhan.viltrumitecore.hero.ScanLine.of("scan.viltrumitecore.ironman.nano_armor",
-            Math.round(IronManRules.NANO_ARMOR), Math.round(IronManRules.NANO_TOUGHNESS), Math.round(IronManRules.NANO_KNOCKBACK_RES * 100.0)));
+            Math.round(spec.armor()), Math.round(spec.toughness()), Math.round(spec.knockbackRes() * 100.0)));
          protections.add(dev.baranhan.viltrumitecore.hero.ScanLine.of("scan.viltrumitecore.ironman.no_fall"));
       }
 
@@ -985,6 +988,13 @@ public class IronManHero implements HeroDefinition {
       }
    }
 
+   /** Owner sections Iron Man writes. */
+   private static final dev.baranhan.viltrumitecore.hero.OwnerSection[] OWNED_SECTIONS = {
+      dev.baranhan.viltrumitecore.hero.OwnerSection.THREATS,
+      dev.baranhan.viltrumitecore.hero.OwnerSection.MARKS,
+      dev.baranhan.viltrumitecore.hero.OwnerSection.SCAN
+   };
+
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       IronManState state = IronManState.of(player);
@@ -998,6 +1008,11 @@ public class IronManHero implements HeroDefinition {
          }
 
          state.onCleanup(reason);
+         if (reason != CleanupReason.DISCONNECT) {
+            // Threat brackets, missile locks and the scan glow must not outlive the suit (stale ESP boxes).
+            dev.baranhan.viltrumitecore.hero.HeroRegistry.clearOwnerSections(player, OWNED_SECTIONS);
+         }
+
          if (wasBig && !state.hulkbuster.big() && reason != CleanupReason.DISCONNECT) {
             player.refreshDimensions();
          }
@@ -1005,6 +1020,10 @@ public class IronManHero implements HeroDefinition {
 
       if (reason != CleanupReason.DISCONNECT) {
          syncArmor(player, false, dev.baranhan.viltrumitecore.hero.ironman.mark.SuitSpec.NANO);
+      }
+
+      if (reason == CleanupReason.HERO_CHANGE) {
+         dev.baranhan.viltrumitecore.hero.HeroPassiveEffect.drop(player, net.minecraft.world.effect.MobEffects.REGENERATION, IronManRules.PASSIVE_REGEN_AMPLIFIER);
       }
    }
 
@@ -1015,6 +1034,11 @@ public class IronManHero implements HeroDefinition {
       if (state != null) {
          dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.stopSignature(player, state);
          dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.onDimensionChange(player, state);
+         // Entity ids of the old level mean other entities here.
+         state.threats.clear();
+         state.scan.cancel();
+         state.missiles.cancel();
+         dev.baranhan.viltrumitecore.hero.HeroRegistry.clearOwnerSections(player, OWNED_SECTIONS);
          // The Hulkbuster stays on (spec §16); a carried target stays behind.
          dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.releaseGrab(player, state, dev.baranhan.viltrumitecore.hero.control.ReleaseReason.TARGET_LOST);
       }

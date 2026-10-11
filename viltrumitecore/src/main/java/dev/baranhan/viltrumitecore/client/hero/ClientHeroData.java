@@ -10,7 +10,16 @@ import java.util.UUID;
  * Owner-private hero data mirrored on the client (heart carrier ids for the
  * heart counter), plus the shared world-control view (domes + anchored
  * targets) written by HeroControlS2CPacket for render and HUD consumers.
+ *
+ * Entity ids and expiry times are per world: everything is dropped on log out
+ * and on a new local player (respawn, dimension change), else old ids light up
+ * unrelated entities of the next world (ESP boxes on random mobs).
  */
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(
+   modid = "viltrumitecore",
+   value = {net.minecraftforge.api.distmarker.Dist.CLIENT},
+   bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE
+)
 public final class ClientHeroData {
    private static final dev.baranhan.viltrumitecore.hero.OwnerSections SECTIONS = new dev.baranhan.viltrumitecore.hero.OwnerSections();
    private static Map<UUID, HeroControlS2CPacket.DomeInfo> domes = Map.of();
@@ -31,6 +40,28 @@ public final class ClientHeroData {
    /** Live ids of an owner section. */
    public static int[] section(dev.baranhan.viltrumitecore.hero.OwnerSection section) {
       return SECTIONS.ids(section, now());
+   }
+
+   /** Is {@code id} live in the section now; no allocation (per-entity render paths). */
+   public static boolean inSection(dev.baranhan.viltrumitecore.hero.OwnerSection section, int id) {
+      return SECTIONS.contains(section, id, now());
+   }
+
+   /** Drops all owner sections (world change). The control view is resent by the server. */
+   public static void clearSections() {
+      SECTIONS.clear();
+   }
+
+   @net.minecraftforge.eventbus.api.SubscribeEvent
+   public static void onLoggingOut(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
+      clearSections();
+      domes = Map.of();
+      controls = Map.of();
+   }
+
+   @net.minecraftforge.eventbus.api.SubscribeEvent
+   public static void onClone(net.minecraftforge.client.event.ClientPlayerNetworkEvent.Clone event) {
+      clearSections();
    }
 
    public static int[] carriers() {

@@ -58,6 +58,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Viltrumi
    private float prevClientLocalThrottle = 0.0F;
    @Unique
    private boolean isClientLocalPlayer = false;
+   /** Local-client Y at tick start; glide must never end a tick above {@code startY - glideSink}. */
+   @Unique
+   private double viltrumiteflight$tickStartY = Double.NaN;
 
    protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, Level level) {
       super(entityType, level);
@@ -367,6 +370,27 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Viltrumi
       } else if (currentState == FlightState.HOVER && local) {
          Vec3 input = new Vec3(this.getHoverSideways(), this.jumping ? 1.0 : (this.isShiftKeyDown() ? -1.0 : 0.0), this.getHoverForward());
          this.setDeltaMovement(dev.baranhan.viltrumiteflight.util.FlightMotion.hover(this.getDeltaMovement(), input, profile));
+         if (profile.glide()) {
+            this.viltrumiteflight$clampGlide(profile);
+         }
+      }
+   }
+
+   /**
+    * Vanilla creative-flight input (Space) still adds lift inside the tick, so
+    * a glide-only suit could climb by holding jump. Undo any rise past the
+    * sink budget for this tick; {@code move} keeps collisions intact.
+    */
+   @Unique
+   private void viltrumiteflight$clampGlide(dev.baranhan.viltrumiteflight.util.FlightProfile profile) {
+      double startY = this.viltrumiteflight$tickStartY;
+      if (Double.isNaN(startY) || this.onGround()) {
+         return;
+      }
+
+      double floor = startY - profile.glideSink();
+      if (this.getY() > floor) {
+         this.move(net.minecraft.world.entity.MoverType.SELF, new Vec3(0.0, floor - this.getY(), 0.0));
       }
    }
 
@@ -441,6 +465,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements Viltrumi
       if (this.level().isClientSide()) {
          this.prevFlightThrottle = this.getFlightThrottle();
          this.prevClientLocalThrottle = this.clientLocalThrottle;
+         this.viltrumiteflight$tickStartY = this.isClientLocalPlayer() ? this.getY() : Double.NaN;
       }
    }
 
