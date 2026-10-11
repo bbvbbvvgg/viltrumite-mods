@@ -233,12 +233,17 @@ Lethal Chop с вынутым Рейдом бьёт левой рукой. У к
 | Вынимание Рейда: гул и тряска | https://freesound.org/people/CHallSmith/sounds/870684/ |
 | Мировой разрез: тишина и белая линия | https://freesound.org/people/reathance/sounds/503809/ |
 | Мировой разрез: хвост после разреза | https://freesound.org/people/hykenfreak/sounds/248150/ |
+| Мировой разрез: взрыв (основа) | https://freesound.org/people/Alliare/sounds/825864 |
+| Мировой разрез: взрыв (слой) | https://freesound.org/people/CGEffex/sounds/93835 (или 93846) — приглушённый, с ~2-й секунды |
 | Стирание мира: треск и раскол | https://freesound.org/people/Greg_Surr/sounds/554564/ |
+| Стирание мира: обратный «вдох» на сборке | https://freesound.org/people/hykenfreak/sounds/331620/ |
 | Лимб: сердцебиение | https://freesound.org/people/daandraait/sounds/249716 |
 | Пинок в небо (сам пинок) | https://freesound.org/people/qubodup/sounds/182050/ |
 | Топот (шоквейв от ноги, Рыцарь) | https://freesound.org/people/dingus23/sounds/275809/ |
 | Дождь разрезов | https://freesound.org/people/Robinhood76/sounds/378199/ |
 | Удар ножнами (вырезать звон) | https://freesound.org/s/519413 |
+
+Склейка: взрыв мирового разреза — один `.ogg`: основа Alliare + слой CGEffex с ~2 с, приглушённый (порядка −8 дБ, подбирается на слух). Склейку и обрезку фрагментов (смена режима из klankbeeld, звон ножен из Iridiuss) делает воспроизводимый скрипт в `tools/sfx/` (ffmpeg) из исходников пользователя.
 
 ### 10.2 Звуки из мода и ванилы
 
@@ -249,21 +254,6 @@ Lethal Chop с вынутым Рейдом бьёт левой рукой. У к
 | Финал комбо, бросок | `viltrumitecore:regulus_impact_heavy` |
 | Подброс перед пинком | ванильный, например `entity.player.attack.sweep` |
 | Lethal Chop | как у вилтрумита: `entity.player.attack.crit` (pitch 0.8), кровотечение — `entity.slime.squish` + `entity.player.hurt_sweet_berry_bush`; громче и ниже для варианта Рейнхарда |
-
-### 10.3 Кандидаты на оставшиеся звуки (прослушать)
-
-Мировой разрез — основной взрыв борозды (можно слоить: треск + взрыв, затем хвост hykenfreak):
-- https://freesound.org/people/cognito%20perceptu/sounds/347853 — близкий раскат грома, резкий треск + рокот (слой «раскол»)
-- https://freesound.org/people/CGEffex/sounds/93835 — Huge Explosion 1
-- https://freesound.org/people/CGEffex/sounds/93846 — Huge Explosion 6
-- https://freesound.org/people/craigsmith/sounds/675740 — взрыв вулкана с обломками и рокотом
-- https://freesound.org/people/Alliare/sounds/825864 — Deep Cinematic Boom
-- https://freesound.org/people/opensystem/sounds/333692 — мощный взрыв с залом (public domain)
-
-Стирание мира — обратный «вдох» на сборке:
-- https://freesound.org/people/hykenfreak/sounds/331620/ — Spooky Sucking Air
-- https://freesound.org/people/JarredGibb/packs/15100 — пак реверс-тарелок
-- https://freesound.org/people/reathance/packs/28235 — другие reverse fx из того же пака, что и «тишина»
 
 ## 11. Критерии приёмки
 
