@@ -121,11 +121,11 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `DivineDamage`: `static final TagKey<DamageType> DIVINE_TYPES` (`viltrumitecore:divine`), `static final ResourceKey<DamageType> DIVINE`; `static boolean isDivine(DamageSource)`; `static DamageSource source(ServerLevel, @Nullable Entity attacker, ResourceKey<DamageType> type)`.
 - The dev command applies `target.hurt(DivineDamage.source(level, sourceEntity, type), amount)`; `type` must be in `DIVINE_TYPES`, else error message. Until Stage 2, a lethal divine hit kills Reinhard (spec §3.2 order: Adaptation → Phoenix → death; the first two arrive in Stage 2 Task 1).
 
-- [ ] **Step 1: Write the failing tests** — `verdictOrder` (divine wins over absolute), `mortalByDefault`, `reinhardIsDivine`, `defaultHeroNotDivine`, `regulusAbsoluteOnlyInLion` (state stub), `divineSkipsResistAndFloor` (Task 3 harness with divine flag).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** JSON, helpers, hooks, command, lang.
-- [ ] **Step 4: Run** → PASS. Manual: `/viltrumite divine @s 5` on Reinhard → −5 HP (no resist); `… 100` → death with the divine death message; on Iron Man in a mark → armor and mark ignored; on a zombie → normal damage; non-op player → command not available.
-- [ ] **Step 5: Commit** `feat(hero): divine damage seam and absolute invulnerability hook`.
+- [x] **Step 1: Write the failing tests** — `verdictOrder` (divine wins over absolute), `mortalByDefault`, `reinhardIsDivine`, `defaultHeroNotDivine`, `regulusAbsoluteOnlyInLion` (state stub), `divineSkipsResistAndFloor` (Task 3 harness with divine flag).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** JSON, helpers, hooks, command, lang.
+- [x] **Step 4: Run** → PASS. Manual: `/viltrumite divine @s 5` on Reinhard → −5 HP (no resist); `… 100` → death with the divine death message; on Iron Man in a mark → armor and mark ignored; on a zombie → normal damage; non-op player → command not available.
+- [x] **Step 5: Commit** `feat(hero): divine damage seam and absolute invulnerability hook`.
 
 ### Task 6: Modes on MMB, cooldown, sounds, page
 

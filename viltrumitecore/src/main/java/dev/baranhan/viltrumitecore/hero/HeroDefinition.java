@@ -177,6 +177,22 @@ public interface HeroDefinition {
       return false;
    }
 
+   /**
+    * A divine being (spec: Reinhard §3.3): only divine damage hurts it in
+    * full, and execute-style powers skip it. See {@link DivineTargets}. Default false.
+    */
+   default boolean isDivine(Player self) {
+      return false;
+   }
+
+   /**
+    * Absolute invulnerability right now (Regulus' Lion's Heart). Not the same
+    * as divinity: execute-style powers stop at it. Default false.
+    */
+   default boolean isAbsolutelyInvulnerable(Player self) {
+      return false;
+   }
+
    /** Hidden from target-acquiring senses (Homelander focus skips this player). Server side. */
    default boolean hiddenFromFocus(Player self) {
       return false;

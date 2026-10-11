@@ -2,13 +2,13 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
 
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.DamageAbsorb;
+import dev.baranhan.viltrumitecore.hero.DivineDamage;
 import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDefinition;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -151,9 +151,14 @@ public final class ReinhardHero implements HeroDefinition {
       return divine ? afterArmor : ReinhardRules.floor(health, afterArmor);
    }
 
-   // Stage 1 Task 5 replaces this stub with DivineDamage.isDivine.
-   private static boolean isDivine(@Nullable DamageSource source) {
-      return false;
+   private static boolean isDivine(DamageSource source) {
+      return DivineDamage.isDivine(source);
+   }
+
+   /** Spec §3.3: Reinhard is a divine being. */
+   @Override
+   public boolean isDivine(Player self) {
+      return true;
    }
 
    /** Base max health stays vanilla 20 (no modifier); knockback resistance 100 %; start full. */

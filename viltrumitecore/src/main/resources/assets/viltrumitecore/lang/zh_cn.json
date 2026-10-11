@@ -408,5 +408,9 @@
   "subtitles.viltrumitecore.ironman_hulkbuster_hop": "反浩克装甲推进器点火",
   "hero.viltrumitecore.reinhard": "莱因哈鲁特·范·阿斯特雷亚",
   "gui.viltrumitecore.race_selection.become_reinhard": "成为莱因哈鲁特",
-  "subtitles.viltrumitecore.reinhard_air_step": "莱因哈鲁特踏空而行"
+  "subtitles.viltrumitecore.reinhard_air_step": "莱因哈鲁特踏空而行",
+  "death.attack.viltrumitecore.divine": "%1$s被神圣之力击倒",
+  "death.attack.viltrumitecore.divine.player": "%1$s被%2$s的神圣之力击倒",
+  "commands.viltrumitecore.divine.success": "对%2$s个目标造成了%1$s点神圣伤害",
+  "commands.viltrumitecore.divine.not_divine": "%s不是神圣伤害类型"
 }

@@ -408,5 +408,9 @@
   "subtitles.viltrumitecore.ironman_hulkbuster_hop": "Hulkbuster-Düsen zünden",
   "hero.viltrumitecore.reinhard": "Reinhard van Astrea",
   "gui.viltrumitecore.race_selection.become_reinhard": "Reinhard werden",
-  "subtitles.viltrumitecore.reinhard_air_step": "Reinhard tritt auf die Luft"
+  "subtitles.viltrumitecore.reinhard_air_step": "Reinhard tritt auf die Luft",
+  "death.attack.viltrumitecore.divine": "%1$s wurde von göttlicher Macht niedergestreckt",
+  "death.attack.viltrumitecore.divine.player": "%1$s wurde von der göttlichen Macht von %2$s niedergestreckt",
+  "commands.viltrumitecore.divine.success": "%s göttlicher Schaden an %s Ziel(en) verursacht",
+  "commands.viltrumitecore.divine.not_divine": "%s ist kein göttlicher Schadenstyp"
 }

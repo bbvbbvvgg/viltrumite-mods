@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.baranhan.viltrumitecore.hero.DivineDamage;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.OpenRaceScreenS2CPacket;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
@@ -76,8 +77,48 @@ public class CoreCommands {
                   .then(Commands.argument("target", EntityArgument.player())
                      .executes(context -> reopenChoice(context.getSource(), EntityArgument.getPlayer(context, "target"))))
             )
+            .then(divine())
             .then(WorldEventCommands.build())
       );
+   }
+
+   /**
+    * Dev command (operators): {@code /viltrumite divine <targets> <amount> [type]}
+    * deals divine damage (spec Reinhard §3.2). The type must be in the
+    * {@code viltrumitecore:divine} damage-type tag; default {@code viltrumitecore:divine}.
+    */
+   private static com.mojang.brigadier.builder.ArgumentBuilder<CommandSourceStack, ?> divine() {
+      return Commands.literal("divine")
+         .requires(source -> source.hasPermission(2))
+         .then(Commands.argument("targets", EntityArgument.entities())
+            .then(Commands.argument("amount", com.mojang.brigadier.arguments.FloatArgumentType.floatArg(0.0F))
+               .executes(context -> dealDivine(context.getSource(), EntityArgument.getEntities(context, "targets"),
+                  com.mojang.brigadier.arguments.FloatArgumentType.getFloat(context, "amount"), DivineDamage.DIVINE))
+               .then(Commands.argument("type", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                  .executes(context -> dealDivine(context.getSource(), EntityArgument.getEntities(context, "targets"),
+                     com.mojang.brigadier.arguments.FloatArgumentType.getFloat(context, "amount"),
+                     net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE,
+                        net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "type")))))));
+   }
+
+   private static int dealDivine(CommandSourceStack source, java.util.Collection<? extends net.minecraft.world.entity.Entity> targets, float amount,
+      net.minecraft.resources.ResourceKey<net.minecraft.world.damagesource.DamageType> type) {
+      net.minecraft.server.level.ServerLevel level = source.getLevel();
+      if (!DivineDamage.isDivineType(level, type)) {
+         source.sendFailure(Component.translatable("commands.viltrumitecore.divine.not_divine", type.location().toString()));
+         return 0;
+      }
+
+      int hit = 0;
+      for (net.minecraft.world.entity.Entity target : targets) {
+         if (target.hurt(DivineDamage.source(level, source.getEntity(), type), amount)) {
+            hit++;
+         }
+      }
+
+      int count = hit;
+      source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.divine.success", String.format(java.util.Locale.ROOT, "%.1f", amount), count), true);
+      return count;
    }
 
    /**
