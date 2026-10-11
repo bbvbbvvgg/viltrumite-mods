@@ -235,6 +235,16 @@ public interface HeroDefinition {
       return afterArmor;
    }
 
+   /**
+    * Server: HP loss from a source that bypasses invulnerability (void,
+    * {@code generic_kill}), which skips absorbIncoming and clampFinalDamage.
+    * Runs in LivingDamageEvent and on the clean path, never inside an
+    * {@link AdminKill} scope ({@code /kill}). Default: unchanged.
+    */
+   default float clampUnblockableDamage(ServerPlayer self, net.minecraft.world.damagesource.DamageSource source, float amount) {
+      return amount;
+   }
+
    /** Server, LivingHurtEvent: damage this hero deals to {@code target} (multipliers). */
    default float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, net.minecraft.world.damagesource.DamageSource source, float amount) {
       return amount;
