@@ -18,21 +18,47 @@ public final class Shield {
       PERFECT
    }
 
+   /**
+    * Ticks the guard must stay up after a lower before a new raise opens a
+    * perfect window again. Without it F spam (or forged guard packets) keeps
+    * the window open forever.
+    */
+   public static final int PERFECT_REARM_TICKS = 15;
+
    private boolean raised;
    private long raisedAt = Long.MIN_VALUE;
+   private long loweredAt = Long.MIN_VALUE;
 
-   /** Guard down; false when the energy is locked (no shield). */
+   /**
+    * Guard down; false when the energy is locked (no shield). A repeat press
+    * while raised keeps the first raise time; a raise sooner than
+    * {@link #PERFECT_REARM_TICKS} after the last lower gives no perfect window.
+    */
    public boolean raise(long now, Energy energy) {
       if (energy.weaponsLocked()) {
          return false;
       }
 
+      if (!this.raised) {
+         boolean rearmed = this.loweredAt == Long.MIN_VALUE || now - this.loweredAt >= PERFECT_REARM_TICKS;
+         this.raisedAt = rearmed ? now : Long.MIN_VALUE;
+      }
+
       this.raised = true;
-      this.raisedAt = now;
       return true;
    }
 
+   /** Forced collapse (energy lock, suit gone); the re-arm clock is not touched. */
    public void lower() {
+      this.raised = false;
+   }
+
+   /** Guard up by the player: starts the re-arm delay. */
+   public void lower(long now) {
+      if (this.raised) {
+         this.loweredAt = now;
+      }
+
       this.raised = false;
    }
 
@@ -45,7 +71,7 @@ public final class Shield {
    }
 
    public boolean perfectWindow(long now) {
-      return this.raised && now - this.raisedAt >= 0 && now - this.raisedAt <= IronManRules.PERFECT_BLOCK_TICKS;
+      return this.raised && this.raisedAt != Long.MIN_VALUE && now - this.raisedAt >= 0 && now - this.raisedAt <= IronManRules.PERFECT_BLOCK_TICKS;
    }
 
    /** Front cone test: horizontal look vs the direction to the hit source. No direction = not blocked. */

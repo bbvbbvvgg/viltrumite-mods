@@ -155,8 +155,9 @@ public class VeronicaPodEntity extends Entity {
       this.setPos(at.x, at.y, at.z);
       this.setDeltaMovement(Vec3.ZERO);
       this.setPhase(Phase.LANDED);
-      this.level().explode(this, at.x, at.y + 0.5, at.z, IMPACT_POWER, Level.ExplosionInteraction.MOB);
       ServerPlayer owner = IronManOwned.owner(this, this.ownerId());
+      // Blast credited to the owner: PvP/team rules and kill credit apply like any of his hits.
+      this.level().explode(this, this.damageSources().explosion(this, owner), null, at.x, at.y + 0.5, at.z, IMPACT_POWER, false, Level.ExplosionInteraction.MOB);
       if (owner != null) {
          dev.baranhan.viltrumitecore.hero.fx.HeroFx.shockwave(owner, at, 1.2F, this.level().getBlockState(BlockPos.containing(at).below()), 6.0F);
          IronManVeronica.onPodLanded(owner, this);

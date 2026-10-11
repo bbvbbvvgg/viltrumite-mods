@@ -26,6 +26,8 @@ public final class HulkbusterKit {
    public static final double GRAB_RANGE = 3.5;
    public static final double THROW_SPEED = 2.2;
    public static final float THROW_IMPACT_DAMAGE = 8.0F;
+   /** Longest carry (4 s): the target drops after it (no endless carry in PvP). */
+   public static final int GRAB_MAX_TICKS = 80;
    public static final int THROW_TRACK_TICKS = 40;
    public static final int SLAM_COOLDOWN = 200;
    public static final double SLAM_RADIUS = 6.0;
@@ -45,6 +47,9 @@ public final class HulkbusterKit {
    public int charge = -1;
    /** Grab: carried entity id and its control effect id. */
    public int grabbedId = -1;
+   /** UUID of the carried target: the control is released by it even when the entity is gone. */
+   @Nullable
+   public UUID grabbedUuid;
    @Nullable
    public UUID grabEffect;
    public int grabTicks;

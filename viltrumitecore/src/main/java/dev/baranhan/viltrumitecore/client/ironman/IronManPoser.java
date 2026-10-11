@@ -142,7 +142,7 @@ public final class IronManPoser {
       float[] equip = EQUIP.computeIfAbsent(entity, e -> new float[]{0.0F, Float.NaN});
       boolean arming = mark.markOn() && (mark.equipping() || mark.equipPhase() == IronManFlags.EQUIP_PARTIAL);
       // Real-time easing: the pose runs once per render pass (shadow pass too), so a per-call lerp would race.
-      float seconds = System.nanoTime() / 1.0E9F;
+      float seconds = dev.baranhan.viltrumitecore.client.anim.RealTime.seconds();
       float dt = Float.isNaN(equip[1]) ? 0.0F : Math.min(0.1F, seconds - equip[1]);
       equip[1] = seconds;
       equip[0] = Mth.lerp(1.0F - (float)Math.exp(-10.0F * dt), equip[0], arming ? 1.0F : 0.0F);

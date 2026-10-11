@@ -98,7 +98,8 @@ public final class IronManVeronica {
    /** The menu choice: every rule is checked here, the client only displays (spec §12.3). */
    public static void choose(ServerPlayer player, int choice) {
       IronManState state = IronManState.of(player);
-      if (state == null || IronManMarks.controlled(player)) {
+      // Mid-entry into an empty suit: a second delivery would strand the first mark.
+      if (state == null || IronManMarks.controlled(player) || state.enteringSuitId >= 0) {
          return;
       }
 

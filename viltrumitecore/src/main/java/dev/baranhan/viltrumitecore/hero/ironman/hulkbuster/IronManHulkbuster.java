@@ -354,12 +354,14 @@ public final class IronManHulkbuster {
       LivingEntity target = IronManCombat.entityInReach(player, HulkbusterKit.GRAB_RANGE);
       UUID effect = UUID.randomUUID();
       if (target == null || !HeroRegistry.allowsExternalControl(target, ControlKind.PULL)
-         || !ControlManager.get(player.serverLevel()).tryAcquire(target, player.getUUID(), effect, ControlKind.PULL)) {
+         || !ControlManager.get(player.serverLevel()).tryAcquire(target, player.getUUID(), effect, ControlKind.PULL,
+            player.level().getGameTime() + HulkbusterKit.GRAB_MAX_TICKS + 20L)) {
          IronManCombat.sound(player, IronManCombatSounds.REPULSOR_FIZZLE.get(), 0.6F);
          return;
       }
 
       kit.grabbedId = target.getId();
+      kit.grabbedUuid = target.getUUID();
       kit.grabEffect = effect;
       kit.grabTicks = 0;
       IronManCombat.sound(player, IronManHulkbusterSounds.GRAB.get(), 1.0F);
@@ -378,6 +380,11 @@ public final class IronManHulkbuster {
       }
 
       kit.grabTicks++;
+      if (kit.grabTicks > HulkbusterKit.GRAB_MAX_TICKS) {
+         releaseGrab(player, state, ReleaseReason.NORMAL_END);
+         return;
+      }
+
       Vec3 look = player.getLookAngle();
       Vec3 flat = new Vec3(look.x, 0.0, look.z);
       flat = flat.lengthSqr() < 1.0E-6 ? Vec3.directionFromRotation(0.0F, player.getYRot()) : flat.normalize();
@@ -413,11 +420,13 @@ public final class IronManHulkbuster {
       }
 
       Entity entity = player.level().getEntity(kit.grabbedId);
-      if (entity != null && kit.grabEffect != null) {
-         ControlManager.get(player.serverLevel()).release(entity.getUUID(), kit.grabEffect, reason);
+      UUID targetId = kit.grabbedUuid != null ? kit.grabbedUuid : entity == null ? null : entity.getUUID();
+      if (targetId != null && kit.grabEffect != null) {
+         ControlManager.get(player.serverLevel()).release(targetId, kit.grabEffect, reason);
       }
 
       kit.grabbedId = -1;
+      kit.grabbedUuid = null;
       kit.grabEffect = null;
       kit.grabTicks = 0;
    }
@@ -484,7 +493,7 @@ public final class IronManHulkbuster {
       BlockPos ground = player.blockPosition().below();
       HeroFx.slam(player, player.position(), level.getBlockState(ground), (float)HulkbusterKit.SLAM_RADIUS);
       double r = HulkbusterKit.SLAM_RADIUS;
-      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r, 2.0, r), e -> e != player && e.isAlive())) {
+      for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r, 2.0, r), e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
          Vec3 away = target.position().subtract(player.position());
          double distance = away.horizontalDistance();
          float damage = HulkbusterKit.slamDamage(distance);

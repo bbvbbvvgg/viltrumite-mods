@@ -160,6 +160,30 @@ public final class HeroRegistry {
       pushOwnerSection(player, OwnerSection.CARRIERS, snapshot.section(OwnerSection.CARRIERS));
    }
 
+   /**
+    * Sends every non-empty owner section again, without the dedup. The client
+    * drops its sections on a new local player (respawn, dimension change) and
+    * on log out, so the server view must be replayed after those.
+    */
+   public static void resendOwnerSnapshot(ServerPlayer player) {
+      HeroOwnerSnapshot current = ((HeroPlayer)player).viltrumitecore$getOwnerSnapshot();
+      for (OwnerSection section : OwnerSection.values()) {
+         HeroOwnerSnapshot.Section value = current.section(section);
+         if (value.ids().length > 0) {
+            dev.baranhan.viltrumitecore.network.CoreMessages.sendToPlayer(
+               new dev.baranhan.viltrumitecore.network.packet.HeroOwnerSnapshotS2CPacket(section, value), player
+            );
+         }
+      }
+   }
+
+   /** Clears the given owner sections (hero cleanup, world change); only changed ones are sent. */
+   public static void clearOwnerSections(ServerPlayer player, OwnerSection... sections) {
+      for (OwnerSection section : sections) {
+         pushOwnerSection(player, section, HeroOwnerSnapshot.Section.EMPTY);
+      }
+   }
+
    /** Replaces one owner-only section and sends it when it changed; other sections stay. */
    public static void pushOwnerSection(ServerPlayer player, OwnerSection section, HeroOwnerSnapshot.Section value) {
       HeroOwnerSnapshot current = ((HeroPlayer)player).viltrumitecore$getOwnerSnapshot();

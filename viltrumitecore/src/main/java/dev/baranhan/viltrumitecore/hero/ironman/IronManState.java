@@ -58,13 +58,6 @@ public final class IronManState {
    public int strikeLength;
    /** Hammer RMB charge ticks; -1 = not charging. */
    public int hammerCharge = -1;
-   /** Blade dash: ticks left and the path. */
-   public int dashTicks;
-   @Nullable
-   public net.minecraft.world.phys.Vec3 dashFrom;
-   @Nullable
-   public net.minecraft.world.phys.Vec3 dashTo;
-   public int dashTargetId = -1;
    public final HammerLaunch hammerLaunch = new HammerLaunch();
    public final Shield shield = new Shield();
    /** Projectiles to redirect next tick after a perfect block (entity id → speed). */
@@ -190,7 +183,6 @@ public final class IronManState {
       this.rightTool = RightTool.REPULSOR;
       this.strikeTicks = 0;
       this.hammerCharge = -1;
-      this.dashTicks = 0;
       this.hammerLaunch.clear();
       this.shield.lower();
       this.reflect.clear();
@@ -207,6 +199,8 @@ public final class IronManState {
       state.roster.recallWorld();
       state.reconcileMark();
       state.veronicaCooldown = original.veronicaCooldown;
+      // The pod is permanent (user decision 2026-10-10): death must not retire it.
+      state.podUuid = original.podUuid;
       state.signature.cooldown = original.signature.cooldown;
       state.hulkbuster.copyCooldownFrom(original.hulkbuster);
       return state;

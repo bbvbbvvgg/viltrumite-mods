@@ -28,6 +28,27 @@ class HeroOwnerSnapshotTest {
    }
 
    @Test
+   void liveArrayIsCachedUntilTheNextExpiry() {
+      OwnerSections store = new OwnerSections();
+      store.set(OwnerSection.SCAN, new HeroOwnerSnapshot.Section(new int[]{1, 2}, new int[]{0, 100}), 0L);
+      int[] first = store.ids(OwnerSection.SCAN, 10L);
+      assertSame(first, store.ids(OwnerSection.SCAN, 50L), "no new array per call");
+      assertTrue(store.contains(OwnerSection.SCAN, 2, 99L));
+      assertFalse(store.contains(OwnerSection.SCAN, 2, 100L));
+      assertArrayEquals(new int[]{1}, store.ids(OwnerSection.SCAN, 100L));
+      // A new world restarts game time: the cache must not survive going back.
+      assertArrayEquals(new int[]{1, 2}, store.ids(OwnerSection.SCAN, 5L));
+   }
+
+   @Test
+   void clearDropsEverything() {
+      OwnerSections store = new OwnerSections();
+      store.set(OwnerSection.THREATS, HeroOwnerSnapshot.Section.of(new int[]{4}), 0L);
+      store.clear();
+      assertFalse(store.contains(OwnerSection.THREATS, 4, 1L));
+   }
+
+   @Test
    void emptySectionRemoved() {
       OwnerSections store = new OwnerSections();
       store.set(OwnerSection.MARKS, HeroOwnerSnapshot.Section.of(new int[]{1}), 0L);

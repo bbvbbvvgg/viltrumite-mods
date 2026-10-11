@@ -2,7 +2,6 @@ package dev.baranhan.viltrumitecore.hero.ironman;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import dev.baranhan.viltrumitecore.hero.ironman.combat.BladeDash;
 import dev.baranhan.viltrumitecore.hero.ironman.combat.HammerLaunch;
 import dev.baranhan.viltrumitecore.hero.ironman.combat.NanoArsenal;
 import dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool;
@@ -61,15 +60,6 @@ class NanoArsenalTest {
    @Test
    void bladeSunders100() {
       assertEquals(100, IronManRules.BLADE_SUNDER_TICKS);
-   }
-
-   @Test
-   void dashStopsAtWall() {
-      // Wall at x = 4 (all y): the dash stops before it.
-      Vec3 end = BladeDash.end(new Vec3(0.5, 0, 0.5), new Vec3(8.5, 0, 0.5), 0.5, (x, y, z) -> x == 4);
-      assertTrue(end.x < 4.0 && end.x > 3.0, "stopped right before the wall: " + end);
-      Vec3 open = BladeDash.end(new Vec3(0.5, 0, 0.5), new Vec3(8.5, 0, 0.5), 0.5, (x, y, z) -> false);
-      assertEquals(8.0, open.x, 1.0E-6);
    }
 
    @Test

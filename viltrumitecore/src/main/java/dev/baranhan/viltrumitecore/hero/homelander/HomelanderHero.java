@@ -52,6 +52,16 @@ public class HomelanderHero implements HeroDefinition {
       return HomelanderAbilities.panelAbilities();
    }
 
+   private static final dev.baranhan.viltrumitecore.hero.HeroChassis CHASSIS = new dev.baranhan.viltrumitecore.hero.HeroChassis(
+      HomelanderRules.BASE_DAMAGE, HomelanderRules.DAMAGE_REDUCTION, HomelanderRules.DAMAGE_IGNORE_THRESHOLD
+   );
+
+   /** Homelander is strong, not a Viltrumite tank: own chassis instead of the synced 19 / 97 %. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.HeroChassis chassisStats(Player player) {
+      return CHASSIS;
+   }
+
    /** Homelander has his own regeneration (Regen) with a pause after damage. */
    @Override
    public boolean usesLegacyRegen(Player player) {

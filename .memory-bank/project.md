@@ -128,3 +128,13 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - Suit stats: `SUIT_HEALTH_BONUS` max-health modifier while armored; nano/mark armor and toughness doubled (armor capped 30), Hulkbuster 800/30.
 - Mark faceplate: rigid 90° turn about head centre (geo pivot 0,28,0); glow layer uses `HelmetAnim.progress` like the skin; `HelmetAnim` snaps (no close replay / gesture) for `SETTLE_TICKS` after a mark is fully on.
 - Empty-suit entry: `EmptySuitEntity` stays `sealed` for `SEAL_LINGER` ticks after `finishEntering` (snapshot synced at once), so its removal never beats the owner's mark snapshot (no one-frame Tony skin).
+## Iron Man review fixes (core 1.25.0, flight 1.10.1)
+- Hero chassis: `HeroDefinition.chassisStats(Player)` → `HeroChassis(baseDamage, damageReduction, damageIgnoreThreshold)` overrides the Viltrumite `PlayerStats` getters (`PlayerStatsMixin`). Homelander = 6 / 40% / 0.5 (was Viltrumite 19 / 97%); null = Viltrumite stats.
+- Mark armor: `MarkSpec.plating` = share of absorbed damage taken as durability (`MarkDamage.apply(durability, amount, plating)`, min 0.2). Lower = tougher. Suit armor values are never lowered (user rule).
+- Iron Man always has a hidden ambient Regeneration II (`HeroPassiveEffect`, refreshed in `IronManHero.tick`, removed on hero change).
+- Owner sections (ESP/scan boxes, threats, marks): `OwnerSections` is cleared/re-sent on respawn, dimension change, logout (`ClientHeroData` clears on `LoggingOut`/`Clone`). Never keep client highlight state past those events.
+- AoE targets go through `IronManTargets.canHit` (allies and PvP-off players are skipped).
+- Shield perfect block: window counts from the first raise; re-raise needs `PERFECT_REARM_TICKS`.
+- Hulkbuster grab lasts at most `GRAB_MAX_TICKS`.
+- Glide (0-energy) cannot climb: the flight mixin clamps a glide tick to `startY - glideSink` (vanilla Space lift).
+- Client float animation time: `client/anim/RealTime.seconds()` (wraps, keeps float precision).

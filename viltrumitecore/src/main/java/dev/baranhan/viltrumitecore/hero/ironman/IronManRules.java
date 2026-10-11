@@ -39,6 +39,8 @@ public final class IronManRules {
    /** Extra max health while any suit is on (doubles Tony's 20 HP). */
    public static final double SUIT_HEALTH_BONUS = 20.0;
    public static final double NANO_KNOCKBACK_RES = 0.3;
+   /** Permanent Regeneration II (amplifier 1), suit on or off (user decision 2026-10-11). */
+   public static final int PASSIVE_REGEN_AMPLIFIER = 1;
    /** Nano punch on the ground (vanilla LMB damage factor). */
    public static final float NANO_MELEE_FACTOR = 1.5F;
 
@@ -181,8 +183,6 @@ public final class IronManRules {
    public static final int BLADE_SWING_TICKS = 8;
    public static final int HAMMER_SWING_TICKS = 14;
    public static final int BLADE_SUNDER_TICKS = 100;
-   public static final double BLADE_DASH_RANGE = 8.0;
-   public static final int BLADE_DASH_TICKS = 4;
    public static final double HAMMER_REACH = 3.5;
    public static final double HAMMER_KNOCKBACK = 2.2;
    public static final double HAMMER_SLAM_RADIUS = 4.0;

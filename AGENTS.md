@@ -135,7 +135,7 @@ Compilation proves nothing about behavior.
 - `./gradlew build` must pass locally or in the CI `build.yml` run.
 - Runtime changes (gameplay, input, rendering, entities, networking, VFX, HUD) need a check in game with `./gradlew runClient`. Check animations and VFX in first and third person. If you cannot launch the game, write this in the PR. Do not claim a check you did not do.
 - If you change the client/common split or mixin configs, prove that a dedicated server starts.
-- There is no automated test suite yet. For new non-trivial pure logic, add JUnit tests. The first task that needs them sets up JUnit in that module.
+- JUnit 5 tests live in each module's `src/test/java` (run `./gradlew test`). Add tests for new non-trivial pure logic.
 
 ## 13. Definition of Done
 

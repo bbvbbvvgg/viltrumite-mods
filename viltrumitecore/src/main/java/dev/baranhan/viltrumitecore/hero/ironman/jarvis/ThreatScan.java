@@ -104,7 +104,8 @@ public final class ThreatScan {
             if (mobThreat(targets, drawing)) {
                found.add(mob);
             }
-         } else if (entity instanceof Player other && !other.isCreative()) {
+         } else if (entity instanceof Player other && !other.isCreative() && !player.isAlliedTo(other)
+            && !HeroRegistry.get(other).hiddenFromScan(other)) {
             Vec3 toUs = eye.subtract(other.getEyePosition());
             double dot = toUs.lengthSqr() < 1.0E-4 ? 1.0 : other.getViewVector(1.0F).dot(toUs.normalize());
             boolean armedNow = armed(other.getMainHandItem()) || armed(other.getOffhandItem());

@@ -47,8 +47,20 @@ public abstract class PlayerStatsMixin implements ViltrumiteStatHolder {
       player.getEntityData().define(STAT_HEAL_FACTOR, 1.0F);
    }
 
+   /** Hero override of the chassis numbers; world-event fake players keep their own stats. */
+   @Unique
+   private dev.baranhan.viltrumitecore.hero.HeroChassis viltrumitecore$chassis() {
+      Player player = (Player)(Object)this;
+      return player instanceof ViltrumiteFakePlayer ? null : dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).chassisStats(player);
+   }
+
    @Override
    public float getBaseDamage() {
+      dev.baranhan.viltrumitecore.hero.HeroChassis chassis = this.viltrumitecore$chassis();
+      if (chassis != null) {
+         return chassis.baseDamage();
+      }
+
       return (Float)((Player)(Object)this).getEntityData().get(STAT_BASE_DAMAGE);
    }
 
@@ -59,6 +71,11 @@ public abstract class PlayerStatsMixin implements ViltrumiteStatHolder {
 
    @Override
    public float getDamageIgnoreThreshold() {
+      dev.baranhan.viltrumitecore.hero.HeroChassis chassis = this.viltrumitecore$chassis();
+      if (chassis != null) {
+         return chassis.damageIgnoreThreshold();
+      }
+
       return (Float)((Player)(Object)this).getEntityData().get(STAT_DAMAGE_IGNORE_THRESHOLD);
    }
 
@@ -69,6 +86,11 @@ public abstract class PlayerStatsMixin implements ViltrumiteStatHolder {
 
    @Override
    public float getDamageReduction() {
+      dev.baranhan.viltrumitecore.hero.HeroChassis chassis = this.viltrumitecore$chassis();
+      if (chassis != null) {
+         return chassis.damageReduction();
+      }
+
       return (Float)((Player)(Object)this).getEntityData().get(STAT_DAMAGE_REDUCTION);
    }
 
