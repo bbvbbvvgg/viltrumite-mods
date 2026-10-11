@@ -46,11 +46,11 @@ See the overview. Stage-specific:
 - `convert_reinhard.py --assets DIR`: `reinhard.obj` → `reinhard.geo.json` (body bones `head, body, right_arm, left_arm, right_leg, left_leg`, vanilla pivots) and `reinhard_arms.geo.json` (arms only, armor bone names); sword: `blade_sheath.obj` → `sheath.geo.json`, `training_blade_drawn.obj` → `blade.geo.json` (both under one bone `sword`, pivot at the hilt guard). The sheathed blade offset = translation that maps the drawn blade onto the faces of `training_blade.obj` that are not in `blade_sheath.obj` (least-squares on matching vertices); written into `blade.geo.json` as bone `sheathed_offset` metadata and into `ReinhardAssets.SHEATHED_OFFSET` by hand once (the script prints the Java line). Uses `tools/preview_geo.py` to render `docs`-free previews into `/tmp` for the visual check against `previews/*.png`.
 - `ReinhardAssets`: `ResourceLocation BODY, ARMS, SHEATH, BLADE, TEXTURE, GLOW, SWORD_TEXTURE, SWORD_GLOW, ANIMATIONS`; bone name constants; `Vector3f SHEATHED_OFFSET`.
 
-- [ ] **Step 1: Write the failing test** — `ReinhardAssetsParseTest`: `bodyHasSixBones` (names above), `armsHaveArmorBones`, `pivotsAreVanilla` (right_arm pivot (−5, 22, 0) after the parser's sign rules), `heightIs32px` (max y of head cubes = 32), `swordParses`, `missingFaceIsNull` (a hand-written geo with one face → the other five faces are null and nothing throws).
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*ReinhardAssetsParse*' --no-daemon` → FAIL (files missing).
-- [ ] **Step 3: Implement** `obj2geo.py`, the driver, run it on the archive; compare the `/tmp` previews with `previews/reinhard.png` and `sword_f.png` / `drawn_f.png` (front faces, colours, no mirrored text on the emblem).
-- [ ] **Step 4: Run** → PASS; `python3 tools/obj2geo.py … ` prints `faces: 473`.
-- [ ] **Step 5: Commit** `feat(tools): obj2geo converter` and `feat(reinhard): converted model and sword`.
+- [x] **Step 1: Write the failing test** — `ReinhardAssetsParseTest`: `bodyHasSixBones` (names above), `armsHaveArmorBones`, `pivotsAreVanilla` (right_arm pivot (−5, 22, 0) after the parser's sign rules), `heightIs32px` (max y of head cubes = 32), `swordParses`, `missingFaceIsNull` (a hand-written geo with one face → the other five faces are null and nothing throws).
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*ReinhardAssetsParse*' --no-daemon` → FAIL (files missing).
+- [x] **Step 3: Implement** `obj2geo.py`, the driver, run it on the archive; compare the `/tmp` previews with `previews/reinhard.png` and `sword_f.png` / `drawn_f.png` (front faces, colours, no mirrored text on the emblem).
+- [x] **Step 4: Run** → PASS; `python3 tools/obj2geo.py … ` prints `faces: 473`.
+- [x] **Step 5: Commit** `feat(tools): obj2geo converter` and `feat(reinhard): converted model and sword`.
 
 ### Task 2: Walk animation converter
 
