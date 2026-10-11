@@ -22,18 +22,23 @@ public class RaceSelectionScreen extends Screen {
    protected void init() {
       int centerX = this.width / 2;
       int centerY = this.height / 2;
+      // Four hero buttons in one row (100 px, 5 px gap), centred.
       this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.become_homelander"), button -> {
          this.sendHeroChoice(HeroId.HOMELANDER);
          this.onClose();
-      }).bounds(centerX - 155, centerY - 20, 100, 20).build());
+      }).bounds(centerX + heroX(0), centerY - 20, 100, 20).build());
       this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.become_regulus"), button -> {
          this.sendHeroChoice(HeroId.REGULUS);
          this.onClose();
-      }).bounds(centerX - 50, centerY - 20, 100, 20).build());
+      }).bounds(centerX + heroX(1), centerY - 20, 100, 20).build());
       this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.become_ironman"), button -> {
          this.sendHeroChoice(HeroId.IRON_MAN);
          this.onClose();
-      }).bounds(centerX + 55, centerY - 20, 100, 20).build());
+      }).bounds(centerX + heroX(2), centerY - 20, 100, 20).build());
+      this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.become_reinhard"), button -> {
+         this.sendHeroChoice(HeroId.REINHARD);
+         this.onClose();
+      }).bounds(centerX + heroX(3), centerY - 20, 100, 20).build());
       this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.remain_human"), button -> {
          this.sendHeroChoice(HeroId.HUMAN);
          this.onClose();
@@ -56,9 +61,16 @@ public class RaceSelectionScreen extends Screen {
       guiGraphics.drawCenteredString(this.font, Component.translatable("gui.viltrumitecore.race_selection.question"), centerX, centerY - 60, 16777215);
 
       // Head previews above each hero button: base face + hat layer, drawn skin-flat like a player head.
-      drawHead(guiGraphics, HOMELANDER_SKIN, centerX - 105 - 12, centerY - 48);
-      drawHead(guiGraphics, REGULUS_SKIN, centerX - 12, centerY - 48);
-      drawHead(guiGraphics, IRON_MAN_SKIN, centerX + 105 - 12, centerY - 48);
+      drawHead(guiGraphics, HOMELANDER_SKIN, centerX + heroX(0) + 50 - 12, centerY - 48);
+      drawHead(guiGraphics, REGULUS_SKIN, centerX + heroX(1) + 50 - 12, centerY - 48);
+      drawHead(guiGraphics, IRON_MAN_SKIN, centerX + heroX(2) + 50 - 12, centerY - 48);
+      // Reinhard: vanilla skin until his model head preview arrives (Stage 1b).
+      drawHead(guiGraphics, net.minecraft.client.resources.DefaultPlayerSkin.getDefaultSkin(), centerX + heroX(3) + 50 - 12, centerY - 48);
+   }
+
+   /** Left edge of hero button {@code index} relative to the screen centre (4 buttons, 100 px, 5 px gap). */
+   private static int heroX(int index) {
+      return -207 + index * 105;
    }
 
    private static void drawHead(GuiGraphics guiGraphics, ResourceLocation skin, int x, int y) {

@@ -405,5 +405,7 @@
   "subtitles.viltrumitecore.ironman_hulkbuster_grab": "El Hulkbuster agarra",
   "subtitles.viltrumitecore.ironman_hulkbuster_throw": "El Hulkbuster lanza",
   "subtitles.viltrumitecore.ironman_hulkbuster_slam": "El Hulkbuster golpea el suelo",
-  "subtitles.viltrumitecore.ironman_hulkbuster_hop": "Se encienden los propulsores del Hulkbuster"
+  "subtitles.viltrumitecore.ironman_hulkbuster_hop": "Se encienden los propulsores del Hulkbuster",
+  "hero.viltrumitecore.reinhard": "Reinhard van Astrea",
+  "gui.viltrumitecore.race_selection.become_reinhard": "Conviértete en Reinhard"
 }

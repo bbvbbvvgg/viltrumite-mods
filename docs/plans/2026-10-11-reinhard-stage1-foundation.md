@@ -39,11 +39,11 @@ See the overview. Stage-specific:
 - Produces: `HeroId.REINHARD`; `ReinhardHero implements HeroDefinition` with `INSTANCE` declared after its static fields; `allowsFlight`/`grantsFlightAbility`/`allowsLegacyAbilities` false; `hasAbilityPanel` true; `allowsAbilityPages` false; `allowsExternalControl(target, kind)` = true for every kind (spec gives no immunity to control; knockback is handled by the attribute in Task 3).
 - Lang: `hero.viltrumitecore.reinhard` = "Reinhard van Astrea", `gui.viltrumitecore.race_selection.become_reinhard` = "Become Reinhard" (locales without a translation get the English text).
 
-- [ ] **Step 1: Write the failing tests** — `reinhardIsLastOrdinal` (`HeroId.values()[length-1] == REINHARD`), `fromKeyReinhard` (`fromKey("reinhard") == REINHARD`), `legacySetKeepsReinhard` (`legacySet(REINHARD, true) == REINHARD`), `noKitNoFlight` (`allowsLegacyAbilities`, `allowsFlight`, `grantsFlightAbility` all false for a null-safe stub player), `registered` (`HeroRegistry.get(REINHARD)` is `ReinhardHero.INSTANCE`).
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*Reinhard*' --tests '*HeroIdMigration*' --no-daemon` → FAIL (`REINHARD` not defined).
-- [ ] **Step 3: Implement** the enum value, the skeleton (empty `tick`, `handleInput`, `enter`, `cleanup`; `snapshot` returns `HeroPublicSnapshot.EMPTY` with `heroId` REINHARD), registration, race button and lang in all 11 locales; update `NoHeroBranchTest` patterns.
-- [ ] **Step 4: Run** the tests → PASS; `./gradlew build --no-daemon` green; `NoHeroBranchTest` green.
-- [ ] **Step 5: Commit** `feat(reinhard): hero id, skeleton and race button`.
+- [x] **Step 1: Write the failing tests** — `reinhardIsLastOrdinal` (`HeroId.values()[length-1] == REINHARD`), `fromKeyReinhard` (`fromKey("reinhard") == REINHARD`), `legacySetKeepsReinhard` (`legacySet(REINHARD, true) == REINHARD`), `noKitNoFlight` (`allowsLegacyAbilities`, `allowsFlight`, `grantsFlightAbility` all false for a null-safe stub player), `registered` (`HeroRegistry.get(REINHARD)` is `ReinhardHero.INSTANCE`).
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*Reinhard*' --tests '*HeroIdMigration*' --no-daemon` → FAIL (`REINHARD` not defined).
+- [x] **Step 3: Implement** the enum value, the skeleton (empty `tick`, `handleInput`, `enter`, `cleanup`; `snapshot` returns `HeroPublicSnapshot.EMPTY` with `heroId` REINHARD), registration, race button and lang in all 11 locales; update `NoHeroBranchTest` patterns.
+- [x] **Step 4: Run** the tests → PASS; `./gradlew build --no-daemon` green; `NoHeroBranchTest` green.
+- [x] **Step 5: Commit** `feat(reinhard): hero id, skeleton and race button`.
 
 ### Task 2: Rules, mode, flags, state
 
