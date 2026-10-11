@@ -292,6 +292,7 @@ public final class HeroEvents {
          ControlManager.restorePendingTarget(player);
          HeroFlightGrant.sync(player);
          HeroRegistry.resendOwnerSnapshot(player);
+         HeroRegistry.get(player).onRespawn(player);
          // The bound Evangelium returns on respawn when it is missing (spec 11.2).
          if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REGULUS) {
             Evangelium.grant(player);

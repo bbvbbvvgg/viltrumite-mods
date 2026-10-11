@@ -13,6 +13,7 @@
     "EntityFireMixin",
     "EntityFreezeMixin",
     "GrabbedEntityPhysicsMixin",
+    "KillCommandMixin",
     "LivingEntityGrabFailsafeMixin",
     "LivingEntityHeroDamageMixin",
     "LivingEntityHurtAccessor",

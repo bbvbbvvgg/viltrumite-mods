@@ -172,3 +172,12 @@ Append-only: дата + имя сессии + что сделано. Не пер
 
 ## chore: имена JAR → reforgedcodex
 - Жарники переименованы: `reforgedcodex-core-<версия>.jar` и `reforgedcodex-flight-<версия>.jar` (только `archivesName`, id модов и пакеты не тронуты). PR #23 влит в `main`, релиз v1.24.1-ironman. Игра не запускалась.
+
+## 2026-10-11 — Рейнхард, этап 1: основа (ветка feat/reinhard-stage1 от docs/reinhard-plan)
+- По плану `docs/plans/2026-10-11-reinhard-stage1-foundation.md` (9 задач, executing-plans + TDD). Рейнхард выбирается на экране расы (4-я кнопка), голова пока ванильный скин; модели нет до этапа 1b, jar не собирается.
+- Шасси: 20 HP, резист 99,9 %, пол 1 HP (держит и пустоту, и `generic_kill`, `Float.MAX_VALUE` → ровно 1 HP), реген 1 HP/с, без урона от падения и отбрасывания; `/kill` убивает (scope `AdminKill` + `KillCommandMixin`); спасение из пустоты шагом по воздуху (ближайшая земля в загруженных чанках, иначе спавн; в Энде обсидиановая площадка).
+- Общие швы: `clampUnblockableDamage`, `isDivine` / `isAbsolutelyInvulnerable`, `DivineDamage` / `DivineTargets` (тип и теги `viltrumitecore:divine`), команда `/viltrumite divine`, `onRespawn`, `PanelStyle.drawAttachments`, `HeroPublicSnapshot.availableActions` → `long`.
+- Режимы на СКМ (Сдержанный → Рыцарь → Святой меч), кулдаун 3 с, звук на режим, отказ — звук; страница панели = режим. Таблица 14 способностей и раскладка по режимам (пока ничего не выдано: `SHIPPED_STAGE = 1`).
+- Рыцарская панель (белый/золото/синий, герб), значки режимов слева от панели (справа нет места — отклонение от плана), полоска Рейда под ними (с этапа 4). Иконки: `tools/assets/make_reinhard_icons.py`.
+- Отклонения от плана: значки режимов слева, а не справа; марки Железного человека всё ещё поглощают божественный урон (ручная проверка из плана ошибочна); производители снапшота передают `-1`, а не `0`.
+- Проверки: тесты и `./gradlew build` зелёные (JDK 17), checker 0 новых проблем, `git diff --check` чисто, `runServer` до Done. В игре не проверялось — ручной список в PR.

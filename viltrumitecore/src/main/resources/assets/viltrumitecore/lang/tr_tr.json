@@ -405,5 +405,16 @@
   "subtitles.viltrumitecore.ironman_hulkbuster_grab": "Hulkbuster yakalıyor",
   "subtitles.viltrumitecore.ironman_hulkbuster_throw": "Hulkbuster fırlatıyor",
   "subtitles.viltrumitecore.ironman_hulkbuster_slam": "Hulkbuster yere çarpıyor",
-  "subtitles.viltrumitecore.ironman_hulkbuster_hop": "Hulkbuster iticileri ateşleniyor"
+  "subtitles.viltrumitecore.ironman_hulkbuster_hop": "Hulkbuster iticileri ateşleniyor",
+  "hero.viltrumitecore.reinhard": "Reinhard van Astrea",
+  "gui.viltrumitecore.race_selection.become_reinhard": "Reinhard ol",
+  "subtitles.viltrumitecore.reinhard_air_step": "Reinhard havaya basıyor",
+  "death.attack.viltrumitecore.divine": "%1$s ilahi bir güçle yere serildi",
+  "death.attack.viltrumitecore.divine.player": "%1$s, %2$s tarafından ilahi bir güçle yere serildi",
+  "commands.viltrumitecore.divine.success": "%2$s hedefe %1$s ilahi hasar verildi",
+  "commands.viltrumitecore.divine.not_divine": "%s ilahi bir hasar türü değil",
+  "subtitles.viltrumitecore.reinhard_mode_restrained": "Reinhard kendini tutuyor",
+  "subtitles.viltrumitecore.reinhard_mode_knight": "Reinhard şövalye gibi duruyor",
+  "subtitles.viltrumitecore.reinhard_mode_holy_sword": "Kılıç Azizi uyanıyor",
+  "subtitles.viltrumitecore.reinhard_refuse": "Reinhard: şimdi değil"
 }
