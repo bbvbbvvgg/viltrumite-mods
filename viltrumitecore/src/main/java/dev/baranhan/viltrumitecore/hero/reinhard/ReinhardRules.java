@@ -62,6 +62,22 @@ public final class ReinhardRules {
    public static final int SHEATH_TICKS = 12;
    public static final int SHEATH_HIT_TICK = 6;
 
+   // ---- Rain of Cuts (spec §7, Holy Sword slot 4, Reid drawn only) ----
+   public static final int CUT_COUNT = 12;
+   /** Whole cone width in degrees of yaw (±15°). */
+   public static final int CUT_CONE_DEG = 30;
+   /** Length of every cut from the chest (blocks). */
+   public static final int CUT_RANGE = 40;
+   public static final int CUT_COOLDOWN = 300;
+   /** Groove section along each cut: 1 wide × 3 tall. */
+   public static final int CUT_GROOVE_WIDTH = 1;
+   public static final int CUT_GROOVE_HEIGHT = 3;
+   /** Carve blocks per tick on a healthy server (= {@code CarveJobs.BASE_BUDGET}, shared with Stage 5). */
+   public static final int CUT_BASE_BUDGET = 2000;
+   /** Action lock and the clip; the cuts land one per tick from {@link #CUT_FIRST_TICK}. */
+   public static final int CUT_TICKS = 20;
+   public static final int CUT_FIRST_TICK = 4;
+
    // ---- Divine Protection of the Phoenix (spec §4.2) ----
    /** Online ticks before the next revive (10 min). */
    public static final int PHOENIX_COOLDOWN = 12000;

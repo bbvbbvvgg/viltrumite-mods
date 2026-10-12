@@ -44,6 +44,8 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> REID_SHEATHE = reg("reinhard.reid_sheathe");
    /** Placeholder until Stage 7 (Iridiuss ring): an anvil landing, played high. */
    public static final RegistryObject<SoundEvent> SHEATH_STRIKE = reg("reinhard.sheath_strike");
+   /** Placeholder until Stage 7 (Robinhood76 whoosh): the sweep, at three pitches. */
+   public static final RegistryObject<SoundEvent> CUT_RAIN = reg("reinhard.cut_rain");
 
    private ReinhardSounds() {
    }

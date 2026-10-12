@@ -888,5 +888,15 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.cut_rain": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_cut_rain",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
   }
 }

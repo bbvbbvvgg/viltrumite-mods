@@ -371,12 +371,13 @@ public final class HeroEvents {
          return;
       }
 
-      if (event.phase == TickEvent.Phase.END) {
-         HeroProjectiles.tickPending(level);
-         HeroResourceRegen.flush(level);
-         return;
+      for (LevelTickPhases.System system : LevelTickPhases.systemsFor(event.phase)) {
+         switch (system) {
+            case CONTROL -> ControlManager.get(level).tick(level);
+            case PROJECTILES -> HeroProjectiles.tickPending(level);
+            case RESOURCE_REGEN -> HeroResourceRegen.flush(level);
+            case CARVE -> CarveJobs.tick(level);
+         }
       }
-
-      ControlManager.get(level).tick(level);
    }
 }

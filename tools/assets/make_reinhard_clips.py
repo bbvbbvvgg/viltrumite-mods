@@ -24,6 +24,7 @@ Swim (loop 1 s = vanilla's 26 walk-position units, overlay weighted by swimAmoun
 Stage 4 (overlay driven by Reid's phase clock, ReinhardPoses.reidClip):
 - chop_left / chop_right: Lethal Chop (the kit chop) sweep of each hand, 1 s.
 - idle_holy_drawn: loop, the right arm holds Reid low and forward.
+- cut_rain: fast fan of slashes with Reid, 1 s.
 - sheath_strike: the sheathed sword swung in one flat arc, 0.6 s.
 - reid_draw: 6 s slow draw from the left hip, standing still; reid_sheathe: 1 s reverse.
 
@@ -306,6 +307,15 @@ CLIPS["sheath_strike"] = {"loop": "hold_on_last_frame", "animation_length": 0.6,
     "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, 30, 0], "0.3": [0, -30, 0], "0.4": [0, -32, 0], "0.6": [0, 0, 0]}},
     "head": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, -15, 0], "0.3": [0, 12, 0], "0.6": [0, 0, 0]}},
     "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-10, 0, 0], "0.6": [0, 0, 0]}},
+}}
+
+# Rain of Cuts (1.0 s): Reid in the right hand slashes a fast fan, left-right-left, one swing per
+# few cuts (they land 0.2-0.75 s), the body twisting with each; settles back to the drawn hold.
+CLIPS["cut_rain"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.15": [-100, 50, 20], "0.3": [-95, -55, -10], "0.45": [-100, 50, 20],
+                               "0.6": [-95, -55, -10], "0.75": [-100, 45, 18], "1.0": [-40, 0, 10]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, 20, 0], "0.3": [0, -20, 0], "0.45": [0, 20, 0], "0.6": [0, -20, 0], "0.75": [0, 15, 0], "1.0": [0, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.3": [0, 6, 0], "0.6": [0, -6, 0], "1.0": [0, 0, 0]}},
 }}
 
 

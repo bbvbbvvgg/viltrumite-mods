@@ -150,7 +150,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `CUT_COUNT = 12`, `CUT_CONE_DEG = 30`, `CUT_RANGE = 40`, `CUT_COOLDOWN = 300`, `CUT_GROOVE = 1` (width) × `3` (height), `CUT_BASE_BUDGET = 2000` (shared with Stage 5).
 - `CutRain`: directions = 12 evenly spread over ±15° yaw with small pitch jitter (deterministic from the cast tick seed); each cut = a segment of 40 blocks from the chest; every living entity whose box the segment crosses → `Annihilation.strike`; a groove `1×3` along the segment is submitted as one carve job (Holy Sword = massive destruction); VFX: 12 `HeroFx.blade` white-gold trails, staggered 1 t; sound placeholder `entity.player.attack.sweep` ×3 pitches until Stage 7 (Robinhood76 whoosh).
 
-- [ ] Step 1 tests: `CarveBudgetTest.fullUnder40`, `scalesDown`, `floorAt50`, `CarveJobsTest.respectsBudget`, `fifoWithinPriority`, `HeroEventsTickPhaseTest.controlOnStartCarveOnEnd` (pure dispatcher `LevelTickPhases.systemsFor(phase)`), `CutRainTest.twelveCutsInCone`, `segmentHitsBox`, `cooldown300`, `onlyWhenDrawn`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, `mobGriefing false` → no grooves, bedrock untouched. Step 5 commit `feat(hero): carve jobs with adaptive budget` and `feat(reinhard): rain of cuts`.
+- [x] Step 1 tests: `CarveBudgetTest.fullUnder40`, `scalesDown`, `floorAt50`, `CarveJobsTest.respectsBudget`, `fifoWithinPriority`, `HeroEventsTickPhaseTest.controlOnStartCarveOnEnd` (pure dispatcher `LevelTickPhases.systemsFor(phase)`), `CutRainTest.twelveCutsInCone`, `segmentHitsBox`, `cooldown300`, `onlyWhenDrawn`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, `mobGriefing false` → no grooves, bedrock untouched. Step 5 commit `feat(hero): carve jobs with adaptive budget` and `feat(reinhard): rain of cuts`.
+- [ ] Manual: в игре: веер разрезов в обоих видах; mobGriefing false → без борозд; бедрок цел — оставлено пользователю.
 
 ### Task 9: Check, docs, PR
 

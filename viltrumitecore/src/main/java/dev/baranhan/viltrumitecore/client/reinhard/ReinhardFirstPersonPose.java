@@ -66,6 +66,9 @@ public final class ReinhardFirstPersonPose {
    static final float SHEATH_X = -0.25F;
    static final float SHEATH_Z = -0.12F;
    static final float SHEATH_YAW = 40.0F;
+   /** Rain of Cuts: the blade arm sways left and right with the fan. */
+   static final float CUT_SWAY_X = 0.18F;
+   static final float CUT_SWAY_YAW = 30.0F;
    // Reflect: the back of the hand raised across the chest, then swatted out to the side.
    static final float GUARD_X = 0.10F;
    static final float GUARD_Y = 0.12F;
@@ -122,6 +125,10 @@ public final class ReinhardFirstPersonPose {
             .scaled(strike(ticks, ReinhardRules.STOMP_HIT_TICK, ReinhardRules.STOMP_TICKS));
          case SHEATH_STRIKE -> new Offset(SHEATH_X, 0.0F, SHEATH_Z, 0.0F, SHEATH_YAW, 0.0F)
             .scaled(strike(ticks, ReinhardRules.SHEATH_HIT_TICK, ReinhardRules.SHEATH_TICKS));
+         case CUT_RAIN -> {
+            float sway = (float) Math.sin(Math.PI * 2.0 * ticks / 6.0) * strike(ticks, ReinhardRules.CUT_TICKS / 2, ReinhardRules.CUT_TICKS);
+            yield new Offset(CUT_SWAY_X * sway, 0.0F, 0.0F, 0.0F, CUT_SWAY_YAW * sway, 0.0F);
+         }
          case DASH_BEHIND -> new Offset(0.0F, BEHIND_Y, BEHIND_Z, BEHIND_PITCH, 0.0F, BEHIND_ROLL)
             .scaled(strike(ticks, 2, ReinhardRules.BEHIND_ACTION_TICKS));
          default -> Offset.NONE;

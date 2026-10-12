@@ -37,6 +37,8 @@ public final class ReinhardClips {
    public static final String IDLE_HOLY_DRAWN = "idle_holy_drawn";
    /** Sheath Strike: the sword, still in its sheath, swung in a flat arc. */
    public static final String SHEATH_STRIKE = "sheath_strike";
+   /** Rain of Cuts: a fast fan of slashes, one per cut. */
+   public static final String CUT_RAIN = "cut_rain";
    /** Phase 1 of a window (catch / reflect) and of the grab = the snap / the throw. */
    public static final int PHASE_SNAP = dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline.PHASE_SNAP;
 
@@ -57,6 +59,7 @@ public final class ReinhardClips {
          case REFLECT -> List.of(REFLECT_READY, REFLECT);
          case REID -> List.of(REID_DRAW, REID_SHEATHE, IDLE_HOLY_DRAWN);
          case SHEATH_STRIKE -> List.of(SHEATH_STRIKE);
+         case CUT_RAIN -> List.of(CUT_RAIN);
          default -> List.of();
       };
    }

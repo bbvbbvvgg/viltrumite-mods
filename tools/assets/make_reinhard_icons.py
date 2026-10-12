@@ -369,6 +369,26 @@ def sheath_strike():
     return img
 
 
+def cut_rain():
+    """Holy Sword: a fan of white-gold cut lines spreading out from the lower left."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        ".......w....w.",
+        "......w...ww..",
+        ".....w..ww...w",
+        "....w.ww...ww.",
+        "...wwW...ww...",
+        "..wWW..ww.....",
+        "..WWwww.......",
+        ".WWw..........",
+        ".Ww...........",
+        "W.............",
+        "..............",
+        "..............",
+    ], {"w": WHITE, "W": GOLD_D}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -383,6 +403,7 @@ ABILITIES = {
     "reid_drawn": reid_drawn,
     "lethal_chop": lethal_chop,
     "sheath_strike": sheath_strike,
+    "cut_rain": cut_rain,
 }
 
 DRAWN = {
