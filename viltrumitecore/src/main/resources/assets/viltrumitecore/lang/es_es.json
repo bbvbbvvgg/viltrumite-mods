@@ -454,5 +454,10 @@
   "death.attack.viltrumitecore.annihilation.player": "%1$s fue borrado por la espada sagrada de %2$s",
   "commands.viltrumitecore.annihilate.success": "Golpe de Reid: %s muertos, %s bloqueados (absoluto), %s inmunes (divino), %s omitidos",
   "ability.viltrumitecore.reinhard_reid.name": "Desenvainar / envainar a Reid",
-  "ability.viltrumitecore.reinhard_reid.desc": "Desenvaina la Espada Dragón Reid en un evento de mundo de 6 s (se queda quieto). Desenvainada: se desbloquean la Lluvia de cortes y los ataques más fuertes. Pulsa otra vez para envainar (1 s). Vuelve a la vaina tras 60 s sin combate y al salir de Espada Sagrada."
+  "ability.viltrumitecore.reinhard_reid.desc": "Desenvaina la Espada Dragón Reid en un evento de mundo de 6 s (se queda quieto). Desenvainada: se desbloquean la Lluvia de cortes y los ataques más fuertes. Pulsa otra vez para envainar (1 s). Vuelve a la vaina tras 60 s sin combate y al salir de Espada Sagrada.",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "La tierra retumba",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "Reid sale de su vaina",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "Un coro celestial",
+  "subtitles.viltrumitecore.reinhard_reid_far": "Algo terrible despierta a lo lejos",
+  "chat.viltrumitecore.reinhard.reid_drawn": "La Espada Dragón Reid ha sido desenvainada"
 }

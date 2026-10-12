@@ -828,5 +828,45 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.reid_rumble": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_rumble",
+    "sounds": [
+      {
+        "name": "minecraft:ambient.basalt_deltas.mood",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reid_unsheathe": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_unsheathe",
+    "sounds": [
+      {
+        "name": "minecraft:item.trident.riptide_1",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reid_choir": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_choir",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reid_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_far",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wither.spawn",
+        "type": "event"
+      }
+    ]
   }
 }

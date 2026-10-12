@@ -454,5 +454,10 @@
   "death.attack.viltrumitecore.annihilation.player": "%1$s wurde von der heiligen Klinge von %2$s ausgelöscht",
   "commands.viltrumitecore.annihilate.success": "Reid-Schlag: %s getötet, %s geblockt (absolut), %s immun (göttlich), %s übersprungen",
   "ability.viltrumitecore.reinhard_reid.name": "Reid ziehen / einstecken",
-  "ability.viltrumitecore.reinhard_reid.desc": "Zieht das Drachenschwert Reid in einem 6-s-Weltereignis (er steht still). Gezogen: Schnittregen und die stärksten Angriffe werden frei. Erneut drücken zum Einstecken (1 s). Kehrt nach 60 s ohne Kampf und beim Verlassen von Heiliges Schwert in die Scheide zurück."
+  "ability.viltrumitecore.reinhard_reid.desc": "Zieht das Drachenschwert Reid in einem 6-s-Weltereignis (er steht still). Gezogen: Schnittregen und die stärksten Angriffe werden frei. Erneut drücken zum Einstecken (1 s). Kehrt nach 60 s ohne Kampf und beim Verlassen von Heiliges Schwert in die Scheide zurück.",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "Die Erde grollt",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "Reid verlässt die Scheide",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "Ein himmlischer Chor",
+  "subtitles.viltrumitecore.reinhard_reid_far": "In der Ferne erwacht etwas Schreckliches",
+  "chat.viltrumitecore.reinhard.reid_drawn": "Das Drachenschwert Reid ist gezogen"
 }

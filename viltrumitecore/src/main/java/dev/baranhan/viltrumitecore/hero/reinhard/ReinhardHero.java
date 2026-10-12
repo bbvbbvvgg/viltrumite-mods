@@ -134,7 +134,8 @@ public final class ReinhardHero implements HeroDefinition {
       return switch (action) {
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
-         case JUMP, AIR_STEP -> true;
+         // Except while Reid is being drawn: the 6 s scene roots him (spec §7.1).
+         case JUMP, AIR_STEP -> state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWING;
          // Abilities (stage 3+): the mode, cooldown and timeline gate lives in ReinhardActions.
          default -> ReinhardActions.abilityFor(action) != null;
       };

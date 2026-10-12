@@ -21,5 +21,16 @@ public final class ReidLife {
    }
 
    public static void tick(ServerPlayer player, ReinhardState state, Reid.Event event) {
+      ReidDrawEvent draw = state.drawEvent;
+      if (draw != null) {
+         if (event == Reid.Event.DRAW_DONE) {
+            draw.finish(player);
+            state.drawEvent = null;
+         } else if (state.reid.phase() == Reid.Phase.DRAWING && !draw.ended()) {
+            draw.tick(player, state.reid.phaseTicks());
+         } else {
+            ReidToggle.endDraw(state);
+         }
+      }
    }
 }

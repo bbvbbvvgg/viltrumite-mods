@@ -454,5 +454,10 @@
   "death.attack.viltrumitecore.annihilation.player": "%1$s被%2$s的圣剑抹除",
   "commands.viltrumitecore.annihilate.success": "莱德斩击：击杀 %s，被挡下（绝对）%s，免疫（神圣）%s，跳过 %s",
   "ability.viltrumitecore.reinhard_reid.name": "拔出 / 收起莱德",
-  "ability.viltrumitecore.reinhard_reid.desc": "以 6 秒的世界事件拔出龙剑莱德（期间原地不动）。拔出后解锁斩击之雨和最强的攻击。再按一次收剑（1 秒）。60 秒未战斗或离开圣剑模式时自动收回剑鞘。"
+  "ability.viltrumitecore.reinhard_reid.desc": "以 6 秒的世界事件拔出龙剑莱德（期间原地不动）。拔出后解锁斩击之雨和最强的攻击。再按一次收剑（1 秒）。60 秒未战斗或离开圣剑模式时自动收回剑鞘。",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "大地轰鸣",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "雷德出鞘",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "天籁合唱",
+  "subtitles.viltrumitecore.reinhard_reid_far": "远方有可怕之物苏醒",
+  "chat.viltrumitecore.reinhard.reid_drawn": "龙剑雷德已出鞘"
 }

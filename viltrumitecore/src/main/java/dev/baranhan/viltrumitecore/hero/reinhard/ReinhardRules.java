@@ -30,6 +30,26 @@ public final class ReinhardRules {
    /** Spec §7.3: the draw event lasts 6 s; sheathing 1 s (stage 4). */
    public static final int REID_DRAW_TICKS = 120;
    public static final int REID_SHEATHE_TICKS = 20;
+   /** Draw timeline (ticks from the press, spec §7.3): cracks and the pillar grow 20-100, "Reid trembles" at 110, the final at REID_DRAW_TICKS. */
+   public static final int REID_CRACK_START = 20;
+   public static final int REID_CRACK_END = 100;
+   public static final int REID_TREMBLE_TICK = 110;
+   /** Gravity lift (spec §7.3.3): radius, max rise over the start Y, rise time, cap for overlapping lifts, max speed per tick. */
+   public static final int REID_LIFT_RADIUS = 96;
+   public static final double REID_LIFT_MAX = 2.5;
+   public static final int REID_LIFT_RISE_TICKS = 100;
+   public static final double REID_LIFT_CAP = 3.0;
+   public static final double REID_LIFT_STEP = 0.1;
+   /** New entities in the radius are searched every this many ticks (tracked ones move every tick). */
+   public static final int REID_LIFT_SCAN_INTERVAL = 5;
+   /** Final wave (spec §7.3.6): no damage, outward push within this radius. */
+   public static final double REID_WAVE_RADIUS = 24.0;
+   public static final double REID_WAVE_KNOCKBACK = 1.2;
+   /** The scene packet reaches players within this distance of the origin; refreshed every REID_SCENE_REFRESH ticks. */
+   public static final double REID_SCENE_RANGE = 96.0;
+   public static final int REID_SCENE_REFRESH = 20;
+   /** Volume of the private far sound every player on the server hears at the final. */
+   public static final float REID_FAR_VOLUME = 0.4F;
 
    // ---- Divine Protection of the Phoenix (spec §4.2) ----
    /** Online ticks before the next revive (10 min). */

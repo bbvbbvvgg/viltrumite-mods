@@ -18,7 +18,15 @@ public final class ReidToggle implements AbilityHandler {
          return false;
       }
 
-      return state.reid.toggle();
+      if (!state.reid.toggle()) {
+         return false;
+      }
+      if (state.reid.phase() == Reid.Phase.DRAWING) {
+         endDraw(state);
+         state.drawEvent = ReidDrawEvent.start(player);
+      }
+
+      return true;
    }
 
    /** A cleanup (death, logout, hero change) sheathes at once; a control or dimension change cuts a running draw short. */
@@ -28,6 +36,15 @@ public final class ReidToggle implements AbilityHandler {
          state.reid.reset();
       } else if (state.reid.phase() == Reid.Phase.DRAWING) {
          state.reid.sheatheNow();
+      }
+      endDraw(state);
+   }
+
+   /** Stops a running draw scene (the lift lets go, clients get END). */
+   static void endDraw(ReinhardState state) {
+      if (state.drawEvent != null) {
+         state.drawEvent.abort();
+         state.drawEvent = null;
       }
    }
 }

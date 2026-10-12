@@ -454,5 +454,10 @@
   "death.attack.viltrumitecore.annihilation.player": "%1$s, %2$s tarafından kutsal bir kılıçla silindi",
   "commands.viltrumitecore.annihilate.success": "Reid darbesi: %s öldü, %s engellendi (mutlak), %s bağışık (ilahi), %s atlandı",
   "ability.viltrumitecore.reinhard_reid.name": "Reid'i çek / kınına koy",
-  "ability.viltrumitecore.reinhard_reid.desc": "Ejderha Kılıcı Reid'i 6 sn'lik bir dünya olayıyla çeker (kıpırdamadan durur). Çekiliyken Kesik Yağmuru ve en güçlü saldırılar açılır. Kınına koymak için tekrar bas (1 sn). 60 sn savaşsız kalınca ve Kutsal Kılıç'tan çıkınca kınına döner."
+  "ability.viltrumitecore.reinhard_reid.desc": "Ejderha Kılıcı Reid'i 6 sn'lik bir dünya olayıyla çeker (kıpırdamadan durur). Çekiliyken Kesik Yağmuru ve en güçlü saldırılar açılır. Kınına koymak için tekrar bas (1 sn). 60 sn savaşsız kalınca ve Kutsal Kılıç'tan çıkınca kınına döner.",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "Yer gürlüyor",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "Reid kınından çıkıyor",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "Göksel bir koro",
+  "subtitles.viltrumitecore.reinhard_reid_far": "Uzakta korkunç bir şey uyanıyor",
+  "chat.viltrumitecore.reinhard.reid_drawn": "Ejderha Kılıcı Reid çekildi"
 }

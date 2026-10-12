@@ -201,6 +201,10 @@ public final class HeroEvents {
       // still consume its pending gravity restore (a4 audit finding).
       Entity entity = event.getEntity();
       ControlManager.onEntityJoinLevel(entity);
+      // Lift leases (Reid draw): a live lease lifts again, an orphaned tag restores the original noGravity.
+      if (LiftLeases.SERVER.holds(entity.getUUID()) || entity.getPersistentData().contains(LiftLeases.TAG)) {
+         LiftLeases.SERVER.onJoin(LiftLeases.body(entity));
+      }
 
       // Projectiles released while the owner is anchored never spawn — the
       // last deny layer for crossbow/trident throws past the item-use gates.
@@ -353,6 +357,12 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onProjectileImpact(net.minecraftforge.event.entity.ProjectileImpactEvent event) {
       HeroProjectiles.onImpact(event);
+   }
+
+   /** Lift leases never outlive the server; the persistent tags restore the entities on the next start. */
+   @SubscribeEvent
+   public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
+      LiftLeases.SERVER.clear();
    }
 
    @SubscribeEvent

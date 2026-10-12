@@ -48,6 +48,8 @@ public final class ReinhardState {
 
    /** Stage 4: the Dragon Sword Reid (spec §7.3); saved by phase, sheathed on a fresh body. */
    public final dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid reid = new dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid();
+   /** Stage 4: the running draw scene (lift, wave, sounds, client scene), null outside a draw; transient. */
+   public dev.baranhan.viltrumitecore.hero.reinhard.reid.ReidDrawEvent drawEvent;
 
    /**
     * Busy = an action that must not be interrupted by a mode switch: Reid

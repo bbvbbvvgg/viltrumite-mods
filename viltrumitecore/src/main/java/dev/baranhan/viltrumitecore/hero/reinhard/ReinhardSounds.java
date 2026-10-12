@@ -35,6 +35,11 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> DASH_BEHIND = reg("reinhard.dash_behind");
    public static final RegistryObject<SoundEvent> STOMP = reg("reinhard.stomp");
    public static final RegistryObject<SoundEvent> REFLECT = reg("reinhard.reflect");
+   // Stage 4: the Reid draw scene.
+   public static final RegistryObject<SoundEvent> REID_RUMBLE = reg("reinhard.reid_rumble");
+   public static final RegistryObject<SoundEvent> REID_UNSHEATHE = reg("reinhard.reid_unsheathe");
+   public static final RegistryObject<SoundEvent> REID_CHOIR = reg("reinhard.reid_choir");
+   public static final RegistryObject<SoundEvent> REID_FAR = reg("reinhard.reid_far");
 
    private ReinhardSounds() {
    }
