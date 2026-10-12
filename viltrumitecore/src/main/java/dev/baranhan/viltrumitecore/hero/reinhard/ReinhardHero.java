@@ -132,7 +132,8 @@ public final class ReinhardHero implements HeroDefinition {
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
          case JUMP, AIR_STEP -> true;
-         default -> false;
+         // Abilities (stage 3+): the mode, cooldown and timeline gate lives in ReinhardActions.
+         default -> ReinhardActions.abilityFor(action) != null;
       };
    }
 
@@ -146,6 +147,7 @@ public final class ReinhardHero implements HeroDefinition {
    public void tick(ServerPlayer player) {
       ReinhardState state = ReinhardState.ensure(player);
       state.tick();
+      ReinhardActions.tick(player, state);
       VoidRescue.tick(player);
       if (player.tickCount % ReinhardRules.WIND_SCAN_INTERVAL == 0) {
          WindReading.scan(player, state);
@@ -160,9 +162,15 @@ public final class ReinhardHero implements HeroDefinition {
 
    @Override
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
-      if (action == HeroAction.MODE_CYCLE && pressed) {
-         cycleMode(player, ReinhardState.ensure(player));
+      if (action == HeroAction.MODE_CYCLE) {
+         if (pressed) {
+            cycleMode(player, ReinhardState.ensure(player));
+         }
+
+         return;
       }
+
+      ReinhardActions.handleInput(player, ReinhardState.ensure(player), action, pressed);
    }
 
    /** Spec §5: no pose; cooldown 3 s; own sound per mode; the panel page follows the mode. */
@@ -174,6 +182,7 @@ public final class ReinhardHero implements HeroDefinition {
       }
 
       ReinhardMode previous = state.mode;
+      ReinhardActions.onModeChange(player, state);
       state.mode = result.next();
       state.modeCooldown = ReinhardRules.MODE_COOLDOWN;
       if (previous == ReinhardMode.HOLY_SWORD) {
@@ -420,8 +429,16 @@ public final class ReinhardHero implements HeroDefinition {
       if (state.parryTicks > 0) {
          flags |= 1 << ReinhardFlags.PARRY_POSE;
       }
-      return new HeroPublicSnapshot(HeroId.REINHARD, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1,
-         new int[HeroPublicSnapshot.COOLDOWN_COUNT], false, -1, null, 0, false, flags, extra);
+
+      flags = stateFlags(state, flags);
+      ActionTimeline action = state.action;
+      return new HeroPublicSnapshot(HeroId.REINHARD, action.wireId(), action.elapsed(), action.length(), 0, false, 0, 0, false, false, 0, 0,
+         action.targetId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], action.running(), -1, null, 0, false, flags, extra, action.phase(), 0);
+   }
+
+   /** Stage 3 window / hold bits of the snapshot (catch, reflect, grab, hit-stop). */
+   static int stateFlags(ReinhardState state, int flags) {
+      return flags;
    }
 
    /** Phoenix cooldown for the snapshot, whole seconds rounded up. */
@@ -429,14 +446,25 @@ public final class ReinhardHero implements HeroDefinition {
       return ticks <= 0 ? 0 : (ticks + 19) / 20;
    }
 
+   /** A dimension change ends every action (grab, windows, timeline). */
+   @Override
+   public void onDimensionChange(ServerPlayer player) {
+      ReinhardState state = ReinhardState.of(player);
+      if (state != null) {
+         ReinhardActions.cleanup(player, state, null);
+      }
+   }
+
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
+      ReinhardState state = ReinhardState.of(player);
+      if (state != null) {
+         ReinhardActions.cleanup(player, state, reason);
+      }
+
       if (reason != CleanupReason.DISCONNECT) {
          // Wind Reading outlines end with the hero / the body (a logout drops the client sections anyway).
-         if (reason != CleanupReason.DISCONNECT) {
-         // Wind Reading outlines end with the hero / the body (a logout drops the client sections anyway).
          WindReading.clear(player);
-      }
       }
       if (reason == CleanupReason.HERO_CHANGE) {
          setPage(player, 0);

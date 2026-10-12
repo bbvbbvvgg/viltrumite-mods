@@ -68,6 +68,12 @@ public final class ReinhardRules {
    public static final double MANA_RADIUS = 24.0;
    public static final float MANA_REGEN_FACTOR = 0.5F;
 
+   // ---- Restrained and Knight abilities (spec §6, stage 3) ----
+   /** Hit-stop (spec §9.3: 2–3 t): the launch lands this many ticks after the contact. */
+   public static final int HIT_STOP_TICKS = 3;
+   /** Sky Kick: ticks from the toss to the kick contact (used by the clips too). */
+   public static final int KICK_TOSS_TICKS = 6;
+
    private ReinhardRules() {
    }
 

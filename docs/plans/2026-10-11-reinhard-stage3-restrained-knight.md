@@ -45,9 +45,9 @@ See the overview. Stage-specific:
 - `ReinhardTargets.canHit(ServerPlayer self, Entity e)`: living, not self, not spectator, not a creative player, not allied (`isAlliedTo`), players only when the server allows PvP; `PartEntity` → parent. Used by every AoE of Stages 3–6.
 - `ReinhardRules.HIT_STOP_TICKS = 3`.
 
-- [ ] **Step 1: Write the failing tests** — gate cases (each refusal), `timelineRunsLength`, `cancelClears`, `restrainedNeverBreaks`, `knightModerate`, `ReinhardTargetsTest.skipsSelfAlliesSpectators` (pure predicate core), `HitStopTest.freezesForTicks`, `releasesAfter`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS.
-- [ ] **Step 5: Commit** `feat(reinhard): ability router and action timeline` and `feat(client): hit-stop helper`.
+- [x] **Step 1: Write the failing tests** — gate cases (each refusal), `timelineRunsLength`, `cancelClears`, `restrainedNeverBreaks`, `knightModerate`, `ReinhardTargetsTest.skipsSelfAlliesSpectators` (pure predicate core), `HitStopTest.freezesForTicks`, `releasesAfter`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS.
+- [x] **Step 5: Commit** `feat(reinhard): ability router and action timeline` and `feat(client): hit-stop helper`.
 
 ### Task 2: Light Punch (Restrained, slot 1)
 

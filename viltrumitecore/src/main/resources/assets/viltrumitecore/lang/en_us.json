@@ -419,5 +419,17 @@
   "subtitles.viltrumitecore.reinhard_refuse": "Reinhard: not now",
   "subtitles.viltrumitecore.reinhard_phoenix": "Reinhard rises from the flames",
   "subtitles.viltrumitecore.reinhard_parry": "Reinhard parries",
-  "subtitles.viltrumitecore.reinhard_super_jump": "Reinhard leaps skyward"
+  "subtitles.viltrumitecore.reinhard_super_jump": "Reinhard leaps skyward",
+  "subtitles.viltrumitecore.reinhard_light_punch": "Reinhard jabs",
+  "subtitles.viltrumitecore.reinhard_step_dash": "Reinhard steps in a flash",
+  "subtitles.viltrumitecore.reinhard_catch": "Reinhard catches a projectile",
+  "subtitles.viltrumitecore.reinhard_combo_hit": "Reinhard strikes",
+  "subtitles.viltrumitecore.reinhard_combo_final": "Reinhard's final blow shakes the air",
+  "subtitles.viltrumitecore.reinhard_kick_toss": "Reinhard tosses a target",
+  "subtitles.viltrumitecore.reinhard_sky_kick": "Sonic boom of a kick",
+  "subtitles.viltrumitecore.reinhard_grab": "Reinhard grabs",
+  "subtitles.viltrumitecore.reinhard_throw": "Reinhard throws beyond the horizon",
+  "subtitles.viltrumitecore.reinhard_dash_behind": "Reinhard appears behind",
+  "subtitles.viltrumitecore.reinhard_stomp": "Reinhard stomps the ground",
+  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard swats a projectile back"
 }
