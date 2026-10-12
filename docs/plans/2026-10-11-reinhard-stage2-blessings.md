@@ -121,9 +121,9 @@ See the overview. Stage-specific:
 - Pure `WindReading.isMarked(boolean invisible, boolean behind, boolean hostileToMe)`: `invisible || (behind && hostileToMe)`. `hostileToMe` = mob whose `getTarget() == self`, or a player who hit Reinhard within `WIND_RECENT_ATTACK_TICKS` (tracked from `onHurt`), or a projectile owner of a projectile flying toward him.
 - Server pushes the marked entity ids to `OwnerSection.THREATS` (reused section; only the owner sees it; push `Section.EMPTY` before re-sending the same content to restart). Client: `colorOf(entity)` = `WIND_COLOR` if the local player is Reinhard and the id is in `ClientHeroData.section(THREATS)`, else 0 (pass to the next source).
 
-- [ ] **Step 1: Write the failing tests** — `invisibleAlwaysMarked`, `behindAttackerMarked`, `behindPassiveNotMarked`, `frontAttackerNotMarked`, `outsideRadiusIgnored`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: invisible player in front and behind (outlined), zombie chasing from behind (outlined), cow behind (not); Iron Man scan and Homelander focus outlines still work for their owners.
-- [ ] **Step 5: Commit** `feat(reinhard): wind reading blessing`.
+- [x] **Step 1: Write the failing tests** — `invisibleAlwaysMarked`, `behindAttackerMarked`, `behindPassiveNotMarked`, `frontAttackerNotMarked`, `outsideRadiusIgnored`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: invisible player in front and behind (outlined), zombie chasing from behind (outlined), cow behind (not); Iron Man scan and Homelander focus outlines still work for their owners.
+- [x] **Step 5: Commit** `feat(reinhard): wind reading blessing`.
 
 ### Task 6: Blessing of Detoxification — effect seam
 

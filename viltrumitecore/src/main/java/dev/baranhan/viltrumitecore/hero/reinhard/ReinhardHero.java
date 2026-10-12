@@ -17,6 +17,7 @@ import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.CloudStep;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.WindReading;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import java.util.UUID;
@@ -143,6 +144,9 @@ public final class ReinhardHero implements HeroDefinition {
       ReinhardState state = ReinhardState.ensure(player);
       state.tick();
       VoidRescue.tick(player);
+      if (player.tickCount % ReinhardRules.WIND_SCAN_INTERVAL == 0) {
+         WindReading.scan(player, state);
+      }
       if (player.isAlive() && ++state.regenTicks >= ReinhardRules.REGEN_INTERVAL) {
          state.regenTicks = 0;
          if (player.getHealth() < player.getMaxHealth()) {
@@ -242,6 +246,7 @@ public final class ReinhardHero implements HeroDefinition {
    @Override
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
       ReinhardState state = ReinhardState.ensure(self);
+      WindReading.onAttacked(self, state, source.getEntity());
       if (!isDivine(source)) {
          if (Parry.parries(self, source, false)) {
             state.parryTicks = ReinhardRules.PARRY_POSE_TICKS;
@@ -410,6 +415,13 @@ public final class ReinhardHero implements HeroDefinition {
 
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
+      if (reason != CleanupReason.DISCONNECT) {
+         // Wind Reading outlines end with the hero / the body (a logout drops the client sections anyway).
+         if (reason != CleanupReason.DISCONNECT) {
+         // Wind Reading outlines end with the hero / the body (a logout drops the client sections anyway).
+         WindReading.clear(player);
+      }
+      }
       if (reason == CleanupReason.HERO_CHANGE) {
          setPage(player, 0);
          AttributeInstance knockback = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);

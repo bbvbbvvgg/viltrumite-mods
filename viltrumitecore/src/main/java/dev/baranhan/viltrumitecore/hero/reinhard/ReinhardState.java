@@ -24,6 +24,8 @@ public final class ReinhardState {
    public Adaptation adaptation = Adaptation.NONE;
    /** Blessing of the Holy Sword (spec §4.1): ticks left of the parry pose flag; transient. */
    public int parryTicks;
+   /** Wind Reading (spec §4.5): players who hit him → game time of the hit; transient. */
+   public final java.util.Map<java.util.UUID, Long> recentAttackers = new java.util.HashMap<>();
 
    /**
     * Busy = an action that must not be interrupted by a mode switch (Reid

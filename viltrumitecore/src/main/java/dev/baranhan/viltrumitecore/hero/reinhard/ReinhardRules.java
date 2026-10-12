@@ -54,6 +54,15 @@ public final class ReinhardRules {
    /** Super jump launch velocity (~22 blocks, HeroSuperJump.apex). */
    public static final float SUPER_JUMP_VELOCITY = 2.2F;
 
+   // ---- Blessing of Wind Reading (spec §4.5) ----
+   public static final int WIND_RADIUS = 32;
+   /** Behind = horizontal dot(look, to entity) below this. */
+   public static final float WIND_BEHIND_COS = 0.0F;
+   /** A player who hit him stays "hostile" this long (5 s). */
+   public static final int WIND_RECENT_ATTACK_TICKS = 100;
+   /** Server scan period. */
+   public static final int WIND_SCAN_INTERVAL = 5;
+
    private ReinhardRules() {
    }
 
