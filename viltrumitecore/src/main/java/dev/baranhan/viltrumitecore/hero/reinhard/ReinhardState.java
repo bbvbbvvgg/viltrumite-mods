@@ -22,6 +22,8 @@ public final class ReinhardState {
    public int[] cooldowns = new int[COOLDOWN_SLOTS];
    /** Protection Acquisition (spec §4.8): saved, lost with the body (not in {@link #respawnCopy}). */
    public Adaptation adaptation = Adaptation.NONE;
+   /** Blessing of the Holy Sword (spec §4.1): ticks left of the parry pose flag; transient. */
+   public int parryTicks;
 
    /**
     * Busy = an action that must not be interrupted by a mode switch (Reid
@@ -39,6 +41,10 @@ public final class ReinhardState {
    public void tick() {
       if (this.modeCooldown > 0) {
          this.modeCooldown--;
+      }
+
+      if (this.parryTicks > 0) {
+         this.parryTicks--;
       }
 
       for (int i = 0; i < this.cooldowns.length; i++) {

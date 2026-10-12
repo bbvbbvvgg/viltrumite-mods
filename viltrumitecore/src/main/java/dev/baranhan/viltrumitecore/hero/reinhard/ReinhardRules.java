@@ -40,6 +40,12 @@ public final class ReinhardRules {
    /** Divine hits of one type in a row that make him immune to it (the last one still lands). */
    public static final int ADAPT_HITS = 3;
 
+   // ---- Blessing of the Holy Sword (spec §4.1) ----
+   /** Front cone of the parry, horizontal: cos 60° = ±60° around the look. */
+   public static final float PARRY_CONE_COS = 0.5F;
+   /** Parry pose flag lifetime after a parried hit. */
+   public static final int PARRY_POSE_TICKS = 8;
+
    private ReinhardRules() {
    }
 

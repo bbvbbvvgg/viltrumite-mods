@@ -12,6 +12,7 @@ import dev.baranhan.viltrumitecore.hero.MouseButton;
 import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
@@ -199,18 +200,25 @@ public final class ReinhardHero implements HeroDefinition {
    }
 
    /**
-    * Spec §3.1: ordinary damage loses 99.9 % before armor. Divine damage (spec §3.2)
+    * Spec §4.1: a direct melee hit from the front is parried (absorbed, pose, spark).
+    * Spec §3.1: other ordinary damage loses 99.9 % before armor. Divine damage (spec §3.2)
     * is never resisted; it meets only Protection Acquisition here (immune type →
     * absorbed with a spark, otherwise the hit is counted and passes) and the
     * Phoenix in {@link #clampFinalDamage}.
     */
    @Override
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
+      ReinhardState state = ReinhardState.ensure(self);
       if (!isDivine(source)) {
+         if (Parry.parries(self, source, false)) {
+            state.parryTicks = ReinhardRules.PARRY_POSE_TICKS;
+            Parry.effects(self, source.getEntity());
+            return DamageAbsorb.ABSORBED;
+         }
+
          return absorb(false, raw);
       }
 
-      ReinhardState state = ReinhardState.ensure(self);
       DivineStep step = divineStep(state.adaptation, divineType(source));
       state.adaptation = step.next();
       if (step.result().absorbed()) {
@@ -345,6 +353,9 @@ public final class ReinhardHero implements HeroDefinition {
       extra[ReinhardFlags.EXTRA_MODE_CD] = state.modeCooldown;
       extra[ReinhardFlags.EXTRA_PHOENIX] = phoenixSeconds(PersistentCooldowns.get(player, ReinhardRules.PHOENIX_KEY));
       int flags = ReinhardFlags.withMode(0, state.mode);
+      if (state.parryTicks > 0) {
+         flags |= 1 << ReinhardFlags.PARRY_POSE;
+      }
       return new HeroPublicSnapshot(HeroId.REINHARD, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1,
          new int[HeroPublicSnapshot.COOLDOWN_COUNT], false, -1, null, 0, false, flags, extra);
    }

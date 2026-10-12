@@ -687,5 +687,16 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.parry": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_parry",
+    "sounds": [
+      {
+        "name": "minecraft:item.shield.block",
+        "type": "event",
+        "pitch": 1.4
+      }
+    ]
   }
 }

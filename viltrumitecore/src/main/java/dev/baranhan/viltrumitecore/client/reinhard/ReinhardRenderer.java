@@ -13,6 +13,7 @@ import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
 import java.util.List;
 import java.util.Map;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
 import net.minecraft.Util;
 import dev.baranhan.viltrumitecore.client.anim.render.PlayerGeoLayer;
@@ -59,6 +60,11 @@ public final class ReinhardRenderer {
    static final String CROUCH = "crouch";
    static final String SIT = "sit";
    static final String SWIM = "swim";
+   static final String PARRY = "parry";
+   /** First-person parry flick of the main arm at full pulse weight (degrees, right arm; mirrored for the left). */
+   static final float FP_PARRY_PITCH = -28.0F;
+   static final float FP_PARRY_YAW = 14.0F;
+   static final float FP_PARRY_ROLL = 8.0F;
    /** Fallback stance while a stance clip is missing: every bone at rest. */
    private static final Animation REST = new Animation("rest", 1.0, Animation.LoopType.LOOP, Map.of(), List.of());
 
@@ -74,6 +80,7 @@ public final class ReinhardRenderer {
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
       if (snapshot == null) {
          StanceBlend.reset(player);
+         ParryPulse.THIRD_PERSON.reset(player);
          return;
       }
 
@@ -98,8 +105,9 @@ public final class ReinhardRenderer {
       ReinhardPoses.Pose pose = pose(player, snapshot, partialTick);
       float[] weights = StanceBlend.weights(player, ReinhardView.mode(snapshot), Util.getNanos());
       float swim = player.getSwimAmount(partialTick);
+      ParryPulse.Sample parry = ParryPulse.THIRD_PERSON.sample(player, ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.PARRY_POSE), Util.getNanos());
       applyClips(body, pose, StanceBlend.mix(weights, ReinhardView.mode(snapshot)), weights[ReinhardMode.KNIGHT.ordinal()], swim,
-         player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT);
+         player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT, parry);
       applyHead(body, player, partialTick);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
@@ -153,15 +161,34 @@ public final class ReinhardRenderer {
       // Pose null: PlayerGeoLayer resets the bones, i.e. the arm follows vanilla's first-person arm exactly.
       PlayerGeoLayer.Part part = new PlayerGeoLayer.Part(ReinhardAssets.ARMS,
          List.of(PlayerGeoLayer.Pass.cutout(ReinhardAssets.TEXTURE), PlayerGeoLayer.Pass.glow(ReinhardAssets.GLOW)), null);
+      boolean flick = event.getArm() == player.getMainArm();
+      // Sampled for the main arm only: the off arm's event must not reset the pulse.
+      float w = flick ? ParryPulse.FIRST_PERSON.sample(player, ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.PARRY_POSE), Util.getNanos()).weight() : 0.0F;
+      float oldX = arm.xRot;
+      float oldY = arm.yRot;
+      float oldZ = arm.zRot;
+      if (w > 0.0F) {
+         // Blessing of the Holy Sword: a short block flick of the main arm (stage 2 Task 2).
+         float m = event.getArm() == HumanoidArm.LEFT ? -1.0F : 1.0F;
+         arm.xRot += (float) Math.toRadians(FP_PARRY_PITCH * w);
+         arm.yRot += (float) Math.toRadians(FP_PARRY_YAW * w * m);
+         arm.zRot += (float) Math.toRadians(FP_PARRY_ROLL * w * m);
+      }
+
       PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
+      arm.xRot = oldX;
+      arm.yRot = oldY;
+      arm.zRot = oldZ;
    }
 
    /**
     * Stance (old → new mode blended by {@link StanceBlend}), the walk over the limbs by swing,
     * Knight's left arm held behind the back over the walk (by the Knight stance weight),
-    * crouch/sit added like vanilla's model code, then the action overlay.
+    * crouch/sit added like vanilla's model code, then the action overlay, then the parry
+    * reaction weighted by its real-time pulse.
     */
-   static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight, float swim, double swimSeconds) {
+   static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight, float swim, double swimSeconds,
+      ParryPulse.Sample parry) {
       Animation to = clip(ReinhardPoses.stance(mix.to()));
       if (mix.weight() >= StanceBlend.SETTLED || mix.from() == mix.to()) {
          AnimationController.seek(to, model, pose.stanceSeconds());
@@ -201,6 +228,11 @@ public final class ReinhardRenderer {
          if (clip != null) {
             AnimationController.overlay(clip, model, overlay.seconds());
          }
+      }
+
+      Animation parryClip = parry.weight() > 0.0F ? AnimCache.animation(ReinhardAssets.ANIMATIONS, PARRY) : null;
+      if (parryClip != null) {
+         AnimationController.overlay(parryClip, model, parry.seconds(), parry.weight());
       }
    }
 

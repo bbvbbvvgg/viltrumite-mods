@@ -61,9 +61,9 @@ See the overview. Stage-specific:
 - `Parry.isMelee(boolean directIsAttacker, boolean projectile, boolean explosion, boolean divine)` → true only for a direct melee hit that is not divine. `Parry.inFront(Vec2 lookXZ, Vec2 toAttackerXZ)` → `dot ≥ PARRY_CONE_COS`.
 - On parry: `DamageAbsorb.ABSORBED`, flag `PARRY` for 8 t (snapshot), `HeroFx.flash` at the contact point (between the two bodies, chest height) + gold-white pixel sparks (`HeroFx.shards` with `material` = gold block), sound. The attacker gets no knockback from the parry (spec says nothing; keep it pure defence).
 
-- [ ] **Step 1: Write the failing tests** — `frontMeleeParried`, `backHitNotParried`, `sideAt70DegreesNotParried`, `projectileNotParried`, `divineNotParried`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: second player hits from the front (parry pose 3rd person, arm flick 1st person, spark, no HP loss) and from behind (normal resisted hit).
-- [ ] **Step 5: Commit** `feat(reinhard): holy sword parry`.
+- [x] **Step 1: Write the failing tests** — `frontMeleeParried`, `backHitNotParried`, `sideAt70DegreesNotParried`, `projectileNotParried`, `divineNotParried`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: second player hits from the front (parry pose 3rd person, arm flick 1st person, spark, no HP loss) and from behind (normal resisted hit).
+- [x] **Step 5: Commit** `feat(reinhard): holy sword parry`.
 
 ### Task 3: Projectile seam and Arrow Protection
 
