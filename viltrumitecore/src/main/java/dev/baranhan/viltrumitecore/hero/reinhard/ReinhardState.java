@@ -34,6 +34,13 @@ public final class ReinhardState {
    public int comboStep = -1;
    public int comboIdle;
    public boolean comboQueued;
+   /** Grab &amp; Throw (stage 3): the held target and the one control effect id of this grab, null = none; transient. */
+   public dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.Hold grab;
+   /** Grab &amp; Throw: the thrown target (−1 none), sustain ticks left / done and the re-applied velocity; transient. */
+   public int throwTargetId = -1;
+   public int throwSustain;
+   public int throwSustained;
+   public net.minecraft.world.phys.Vec3 throwVelocity;
 
    /**
     * Busy = an action that must not be interrupted by a mode switch (Reid

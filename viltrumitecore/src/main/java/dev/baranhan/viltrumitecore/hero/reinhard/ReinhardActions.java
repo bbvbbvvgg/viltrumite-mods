@@ -6,6 +6,7 @@ import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.AbilityHandler;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.CatchWindow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.FistCombo;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.LightPunch;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.SkyKick;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.StepDash;
@@ -30,6 +31,7 @@ public final class ReinhardActions {
       register(ReinhardAbility.CATCH, new CatchWindow());
       register(ReinhardAbility.FIST_COMBO, new FistCombo());
       register(ReinhardAbility.SKY_KICK, new SkyKick());
+      register(ReinhardAbility.GRAB_THROW, new GrabThrow());
    }
 
    private ReinhardActions() {

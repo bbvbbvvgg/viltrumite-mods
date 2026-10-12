@@ -132,7 +132,8 @@ See the overview. Stage-specific:
 - Press 1: target in reach, `allowsExternalControl(target, PULL)` → `ControlManager.get(level).tryAcquire(target, self.getUUID(), grabEffectId, ControlKind.PULL)` (`grabEffectId = UUID.randomUUID()` at the press, stored in `ReinhardState.grab`); anchor follows the hand point each tick (like `IronManHulkbuster` grab); flag `GRAB_HOLDING`. Press 2 (or `GRAB_MAX_TICKS`): release with `grabEffectId` (`ControlManager.get(level).release(target.getUUID(), grabEffectId, ReleaseReason.…)`; real signature `release(UUID targetId, UUID effectId, ReleaseReason)`), `hurt(15)`, hit-stop 3 t, then velocity along the look with a small up angle (+12°), re-applied every tick for `THROW_SUSTAIN_TICKS` (pure: `sustainTicks(distance, speed, airDrag 0.91)` so the flight covers ~120 blocks) unless the target hit a block or `allowsImpulse` turns false; sonic ring + white trail (Task 6 VFX), heavy sound `regulus_impact_heavy` on release (§10.2).
 - Every end (death, logout, dimension change, hero change, mode change, control on Reinhard) → `GrabThrow.release(...)` with no throw.
 
-- [ ] Step 1 tests: `sustainCoversAbout120` (simulation within ±10), `damage15OnThrow`, `cooldownFromThrow`, `releaseOnEveryEnd` (each `CleanupReason` + mode change), `refusesUncontrollable`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: zombie and a player thrown ~120 blocks, Regulus in Lion's Heart refused, both views. Step 5 commit `feat(reinhard): grab and throw`.
+- [x] Step 1 tests: `sustainCoversAbout120` (simulation within ±10), `damage15OnThrow`, `cooldownFromThrow`, `releaseOnEveryEnd` (each `CleanupReason` + mode change), `refusesUncontrollable`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): grab and throw`.
+- [ ] Manual: zombie and a player thrown ~120 blocks, Regulus in Lion's Heart refused, both views — оставлено пользователю.
 
 ### Task 8: Dash Behind (Knight, slot 4) — safe spot, predicted
 

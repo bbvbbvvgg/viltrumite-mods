@@ -213,12 +213,32 @@ def sky_kick():
     return img
 
 
+def grab_throw():
+    """Knight: a steel gauntlet closing on a figure, a white arc of the throw above it."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        ".......wwww...",
+        ".....ww....w..",
+        "....w.......w.",
+        "..............",
+        "...mmmm.......",
+        "..mssssm......",
+        "..msssssm.....",
+        "..mmsssm......",
+        "...mssm.......",
+        "...gggg.......",
+        "...gGGg.......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
     "catch": catch_projectile,
     "fist_combo": fist_combo,
     "sky_kick": sky_kick,
+    "grab_throw": grab_throw,
 }
 
 DRAWN = {

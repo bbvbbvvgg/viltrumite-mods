@@ -58,6 +58,15 @@ class ReinhardFirstPersonPoseTest {
    }
 
    @Test
+   void grabHoldsThenThrows() {
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.GRAB_THROW, 0, 40.0).z() < 0.0F, "the hand holds out in front");
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.GRAB_THROW, ReinhardClips.PHASE_SNAP, 2.0).z() > 0.0F, "cocked back during the hit-stop");
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.GRAB_THROW, ReinhardClips.PHASE_SNAP, ReinhardRules.HIT_STOP_TICKS + 1.0).z() < 0.0F,
+         "driven forward on the launch");
+      assertEquals(0.0F, ReinhardFirstPersonPose.of(ReinhardAbility.GRAB_THROW, ReinhardClips.PHASE_SNAP, ReinhardRules.THROW_ACTION_TICKS).z(), 1.0E-6F);
+   }
+
+   @Test
    void noActionNoOffset() {
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(null, 0, 3.0));
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(ReinhardAbility.REID, 0, 3.0));

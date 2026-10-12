@@ -441,5 +441,7 @@
   "ability.viltrumitecore.reinhard_fist_combo.name": "Fist Combo",
   "ability.viltrumitecore.reinhard_fist_combo.desc": "Press again for the next hit: 10, 10, then 16 with a shockwave. Pause for over 1 s and the chain starts over.",
   "ability.viltrumitecore.reinhard_sky_kick.name": "Sky Kick",
-  "ability.viltrumitecore.reinhard_sky_kick.desc": "Tosses the target lightly and kicks it 60+ blocks into the sky: 20 damage. Cooldown 10 s."
+  "ability.viltrumitecore.reinhard_sky_kick.desc": "Tosses the target lightly and kicks it 60+ blocks into the sky: 20 damage. Cooldown 10 s.",
+  "ability.viltrumitecore.reinhard_grab_throw.name": "Grab & Throw",
+  "ability.viltrumitecore.reinhard_grab_throw.desc": "Press to grab the target in front of you, press again to throw it ~120 blocks beyond the horizon: 15 damage. Cooldown 12 s."
 }

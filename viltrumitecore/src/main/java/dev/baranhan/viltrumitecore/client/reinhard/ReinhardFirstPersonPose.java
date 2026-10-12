@@ -42,6 +42,18 @@ public final class ReinhardFirstPersonPose {
    static final float KICK_ARM_Y = -0.14F;
    static final float KICK_ARM_Z = 0.14F;
    static final float KICK_ARM_PITCH = 20.0F;
+   // Grab & Throw: the hand reaches out and holds at chest height; the throw cocks it back
+   // over the hit-stop and drives it forward and down past the crosshair.
+   static final float GRAB_X = -0.04F;
+   static final float GRAB_Y = 0.10F;
+   static final float GRAB_Z = -0.30F;
+   static final float GRAB_PITCH = -22.0F;
+   static final float COCK_Y = 0.20F;
+   static final float COCK_Z = 0.16F;
+   static final float COCK_PITCH = -50.0F;
+   static final float THROW_Y = -0.08F;
+   static final float THROW_Z = -0.42F;
+   static final float THROW_PITCH = 30.0F;
    /** Ticks to raise / lower the hand. */
    static final double CATCH_EASE = 2.0;
 
@@ -74,6 +86,7 @@ public final class ReinhardFirstPersonPose {
          case CATCH -> catchHand(phase, ticks, length);
          case FIST_COMBO -> combo(phase, ticks);
          case SKY_KICK -> kick(ticks);
+         case GRAB_THROW -> grab(phase, ticks, length);
          default -> Offset.NONE;
       };
    }
@@ -101,6 +114,22 @@ public final class ReinhardFirstPersonPose {
 
       float w = strike(ticks - toss, 1, ReinhardRules.KICK_ACTION_TICKS - toss);
       return new Offset(0.0F, KICK_ARM_Y, KICK_ARM_Z, KICK_ARM_PITCH, 0.0F, 0.0F).scaled(w);
+   }
+
+   private static Offset grab(int phase, double ticks, int length) {
+      if (phase != ReinhardClips.PHASE_SNAP) {
+         // The hold has no fade-out of its own: the throw (or a release) replaces it.
+         return new Offset(GRAB_X, GRAB_Y, GRAB_Z, GRAB_PITCH, 0.0F, 0.0F).scaled((float) clamp01(ticks / CATCH_EASE));
+      }
+
+      int stop = ReinhardRules.HIT_STOP_TICKS;
+      if (ticks < stop) {
+         float w = (float) clamp01(ticks / 1.5);
+         return new Offset(GRAB_X, COCK_Y, COCK_Z, COCK_PITCH, 0.0F, 0.0F).scaled(w);
+      }
+
+      float w = strike(ticks - stop + 0.5, 1, ReinhardRules.THROW_ACTION_TICKS - stop);
+      return new Offset(GRAB_X, THROW_Y, THROW_Z, THROW_PITCH, 0.0F, 0.0F).scaled(w);
    }
 
    private static Offset catchHand(int phase, double ticks, int length) {

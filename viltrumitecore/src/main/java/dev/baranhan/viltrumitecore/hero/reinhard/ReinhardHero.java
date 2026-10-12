@@ -453,6 +453,10 @@ public final class ReinhardHero implements HeroDefinition {
          flags |= 1 << ReinhardFlags.CATCH_WINDOW;
       }
 
+      if (state.grab != null) {
+         flags |= 1 << ReinhardFlags.GRAB_HOLDING;
+      }
+
       return flags;
    }
 

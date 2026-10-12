@@ -441,5 +441,7 @@
   "ability.viltrumitecore.reinhard_fist_combo.name": "Faustkombo",
   "ability.viltrumitecore.reinhard_fist_combo.desc": "Erneut drücken für den nächsten Schlag: 10, 10, dann 16 mit Druckwelle. Über 1 s Pause startet die Kette neu.",
   "ability.viltrumitecore.reinhard_sky_kick.name": "Himmelstritt",
-  "ability.viltrumitecore.reinhard_sky_kick.desc": "Wirft das Ziel leicht hoch und tritt es 60+ Blöcke in den Himmel: 20 Schaden. Abklingzeit 10 s."
+  "ability.viltrumitecore.reinhard_sky_kick.desc": "Wirft das Ziel leicht hoch und tritt es 60+ Blöcke in den Himmel: 20 Schaden. Abklingzeit 10 s.",
+  "ability.viltrumitecore.reinhard_grab_throw.name": "Packen & Werfen",
+  "ability.viltrumitecore.reinhard_grab_throw.desc": "Drücken, um das Ziel vor dir zu packen, erneut drücken, um es ~120 Blöcke über den Horizont zu werfen: 15 Schaden. Abklingzeit 12 s."
 }

@@ -201,6 +201,25 @@ CLIPS["kick"] = {"loop": "hold_on_last_frame", "animation_length": 0.5, "bones":
     "head": {"rotation": {"0.0": [-24, 0, 0], "0.3": [-30, 0, 0], "0.5": [-10, 0, 0]}},
 }}
 
+# Grab & Throw: the right hand reaches out and closes at chest height (the target hangs
+# from it) and holds there for the whole grab ...
+CLIPS["grab_hold"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "right_arm": {"rotation": {"0.0": [-20, 0, 6], "0.15": [-95, -8, 4], "0.3": [-85, -6, 2]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.3": [4, -8, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.3": [6, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-8, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [8, 0, 0]}},
+}}
+# ... then the throw: cocked back over the 3 t hit-stop, a full overhead swing on the
+# launch (0.15 s), follow-through and recovery by the end of the 12 t action.
+CLIPS["throw"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
+    "right_arm": {"rotation": {"0.0": [-150, 0, 10], "0.15": [-160, 0, 10], "0.25": [-40, 0, 4], "0.4": [-20, 0, 2], "0.6": [-4, 0, 3]}},
+    "body": {"rotation": {"0.0": [-10, 18, 0], "0.15": [-12, 22, 0], "0.25": [16, -14, 0], "0.6": [2, 0, 0]}},
+    "head": {"rotation": {"0.0": [-6, 0, 0], "0.25": [6, 0, 0], "0.6": [0, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [10, 0, 0], "0.25": [-22, 0, 0], "0.6": [-2, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [-10, 0, 0], "0.25": [18, 0, 0], "0.6": [2, 0, 0]}},
+}}
+
 
 def main():
     data = {"format_version": "1.8.0", "animations": {}}

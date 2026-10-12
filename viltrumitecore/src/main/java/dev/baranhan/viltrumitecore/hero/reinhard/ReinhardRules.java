@@ -128,6 +128,26 @@ public final class ReinhardRules {
    public static final float COMBO_WAVE_DAMAGE = 8.0F;
    public static final double COMBO_WAVE_KNOCKBACK = 0.8;
 
+   // ---- Grab & Throw (spec §6.2) ----
+   public static final double GRAB_REACH = 3.5;
+   /** A hold this long ends with the throw by itself. */
+   public static final int GRAB_MAX_TICKS = 100;
+   /** Height of the holding hand above his feet (chest); the target hangs from it. */
+   public static final double GRAB_HAND_HEIGHT = 1.35;
+   /** Horizontal blocks the throw covers ("beyond the horizon", spec ~120). */
+   public static final int THROW_DISTANCE = 120;
+   /** Throw speed: the motion packet cap (±3.9 per axis). */
+   public static final double THROW_SPEED = 3.9;
+   /** The throw goes along the look raised by this angle. */
+   public static final double THROW_UP_DEGREES = 12.0;
+   /** Ticks the throw velocity is re-applied (GrabThrow.sustainTicks(120, 3.9 · cos 12°, 0.91)). */
+   public static final int THROW_SUSTAIN_TICKS = 21;
+   public static final float THROW_DAMAGE = 15.0F;
+   /** From the throw, or from a forced release. */
+   public static final int GRAB_COOLDOWN = 240;
+   /** Action lock and the throw clip: hit-stop 0-3, launch on 3, follow-through to 12. */
+   public static final int THROW_ACTION_TICKS = 12;
+
    private ReinhardRules() {
    }
 
