@@ -460,5 +460,8 @@
   "subtitles.viltrumitecore.reinhard_reid_choir": "Ein himmlischer Chor",
   "subtitles.viltrumitecore.reinhard_reid_far": "In der Ferne erwacht etwas Schreckliches",
   "chat.viltrumitecore.reinhard.reid_drawn": "Das Drachenschwert Reid ist gezogen",
-  "subtitles.viltrumitecore.reinhard_reid_sheathe": "Reid kehrt in die Scheide zurück"
+  "subtitles.viltrumitecore.reinhard_reid_sheathe": "Reid kehrt in die Scheide zurück",
+  "ability.viltrumitecore.reinhard_sheath_strike.name": "Scheidenhieb",
+  "ability.viltrumitecore.reinhard_sheath_strike.desc": "Nur mit Reid in der Scheide. Schwingt das Schwert samt Scheide im Bogen: 20 Schaden an allem im Umkreis von 6 Blöcken und 3 s Betäubung (gegen Kontrolle immune Helden nehmen nur den Schaden). Abklingzeit 8 s.",
+  "subtitles.viltrumitecore.reinhard_sheath_strike": "Reinhard schlägt mit der Scheide"
 }

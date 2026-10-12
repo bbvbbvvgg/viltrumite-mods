@@ -134,7 +134,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `SHEATH_RADIUS = 6`, `SHEATH_STUN = 60`, `SHEATH_DAMAGE = 20f`, `SHEATH_COOLDOWN = 160`, `SHEATH_HIT_TICK = 6`.
 - Only `Reid.Phase.SHEATHED`. Hit tick: targets within r 6 (`ReinhardTargets.canHit`) → `hurt(20)`; if `allowsExternalControl(target, FREEZE)` → `ControlManager.get(level).tryAcquire(target, self.getUUID(), UUID.randomUUID(), ControlKind.FREEZE, level.getGameTime() + 60)` (one fresh effect id per stunned target; expiry releases it, nothing else to keep); stun visual: white pixel stars over the head (client from the control sync); FX `HeroFx.slam` r 6; sound placeholder `block.anvil.land` pitch 1.6 until Stage 7 (Iridiuss ring).
 
-- [ ] Step 1 tests: `onlyWhenSheathed`, `radius6Damage20Stun60`, `cooldown160`, `uncontrollableTakesDamageOnly`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views. Step 5 commit `feat(reinhard): sheath strike`.
+- [x] Step 1 tests: `onlyWhenSheathed`, `radius6Damage20Stun60`, `cooldown160`, `uncontrollableTakesDamageOnly`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views. Step 5 commit `feat(reinhard): sheath strike`.
+- [ ] Manual: в игре: удар ножнами в обоих видах, звёзды над головой оглушённых, оглушение 3 с — оставлено пользователю.
 
 ### Task 8: Rain of Cuts (Holy Sword slot 4) + `CarveJobs`
 

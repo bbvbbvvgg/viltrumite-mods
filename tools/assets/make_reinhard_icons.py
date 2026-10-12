@@ -349,6 +349,26 @@ def lethal_chop():
     ], {"w": WHITE, "r": RED, "s": SKIN, "k": SKIN_D}, 1, 2)
     return img
 
+def sheath_strike():
+    """Holy Sword: the sheathed Reid swung flat, a white arc and three white stun stars."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        "..w.....w...w.",
+        ".www...www.www",
+        "..w.....w...w.",
+        "..............",
+        "..wwwwwwwww...",
+        ".w.........w..",
+        "w...........w.",
+        "..............",
+        "GbhbhbhbhbGGww",
+        "GbhbhbhbhbGGsw",
+        "..............",
+        "..............",
+    ], {"w": WHITE, "s": STEEL, "b": BLUE_D, "h": BLUE, "G": GOLD_D}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -362,6 +382,7 @@ ABILITIES = {
     "reid": reid,
     "reid_drawn": reid_drawn,
     "lethal_chop": lethal_chop,
+    "sheath_strike": sheath_strike,
 }
 
 DRAWN = {

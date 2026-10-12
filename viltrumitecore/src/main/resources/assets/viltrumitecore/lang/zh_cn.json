@@ -460,5 +460,8 @@
   "subtitles.viltrumitecore.reinhard_reid_choir": "天籁合唱",
   "subtitles.viltrumitecore.reinhard_reid_far": "远方有可怕之物苏醒",
   "chat.viltrumitecore.reinhard.reid_drawn": "龙剑雷德已出鞘",
-  "subtitles.viltrumitecore.reinhard_reid_sheathe": "雷德归鞘"
+  "subtitles.viltrumitecore.reinhard_reid_sheathe": "雷德归鞘",
+  "ability.viltrumitecore.reinhard_sheath_strike.name": "剑鞘击",
+  "ability.viltrumitecore.reinhard_sheath_strike.desc": "仅在莱德入鞘时可用。连鞘挥剑划出弧线：对 6 格内所有目标造成 20 点伤害并眩晕 3 秒（免疫控制的英雄只受伤害）。冷却 8 秒。",
+  "subtitles.viltrumitecore.reinhard_sheath_strike": "莱因哈鲁特以剑鞘猛击"
 }

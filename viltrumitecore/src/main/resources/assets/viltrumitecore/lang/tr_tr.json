@@ -460,5 +460,8 @@
   "subtitles.viltrumitecore.reinhard_reid_choir": "Göksel bir koro",
   "subtitles.viltrumitecore.reinhard_reid_far": "Uzakta korkunç bir şey uyanıyor",
   "chat.viltrumitecore.reinhard.reid_drawn": "Ejderha Kılıcı Reid çekildi",
-  "subtitles.viltrumitecore.reinhard_reid_sheathe": "Reid kınına dönüyor"
+  "subtitles.viltrumitecore.reinhard_reid_sheathe": "Reid kınına dönüyor",
+  "ability.viltrumitecore.reinhard_sheath_strike.name": "Kın Darbesi",
+  "ability.viltrumitecore.reinhard_sheath_strike.desc": "Yalnızca Reid kınındayken. Kınlı kılıcı yay çizerek savurur: 6 blok içindeki her şeye 20 hasar ve 3 sn sersemletme (kontrole bağışık kahramanlar yalnızca hasar alır). Bekleme 8 sn.",
+  "subtitles.viltrumitecore.reinhard_sheath_strike": "Reinhard kınla vurur"
 }

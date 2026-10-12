@@ -42,6 +42,8 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> REID_FAR = reg("reinhard.reid_far");
    /** The calm 1 s sheathe click (manual, auto-return, leaving Holy Sword). */
    public static final RegistryObject<SoundEvent> REID_SHEATHE = reg("reinhard.reid_sheathe");
+   /** Placeholder until Stage 7 (Iridiuss ring): an anvil landing, played high. */
+   public static final RegistryObject<SoundEvent> SHEATH_STRIKE = reg("reinhard.sheath_strike");
 
    private ReinhardSounds() {
    }

@@ -878,5 +878,15 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.sheath_strike": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_sheath_strike",
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event"
+      }
+    ]
   }
 }

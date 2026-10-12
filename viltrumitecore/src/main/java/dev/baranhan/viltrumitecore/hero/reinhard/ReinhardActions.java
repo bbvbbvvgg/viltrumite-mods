@@ -12,6 +12,7 @@ import dev.baranhan.viltrumitecore.hero.reinhard.ability.LightPunch;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.SkyKick;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.StepDash;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.SheathStrike;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.Stomp;
 import dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid;
 import dev.baranhan.viltrumitecore.hero.reinhard.reid.ReidToggle;
@@ -41,6 +42,7 @@ public final class ReinhardActions {
       register(ReinhardAbility.STOMP, new Stomp());
       register(ReinhardAbility.REFLECT, new ReflectWindow());
       register(ReinhardAbility.REID, new ReidToggle());
+      register(ReinhardAbility.SHEATH_STRIKE, new SheathStrike());
    }
 
    private ReinhardActions() {

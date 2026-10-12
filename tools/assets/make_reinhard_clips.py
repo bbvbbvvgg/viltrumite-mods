@@ -24,6 +24,7 @@ Swim (loop 1 s = vanilla's 26 walk-position units, overlay weighted by swimAmoun
 Stage 4 (overlay driven by Reid's phase clock, ReinhardPoses.reidClip):
 - chop_left / chop_right: Lethal Chop (the kit chop) sweep of each hand, 1 s.
 - idle_holy_drawn: loop, the right arm holds Reid low and forward.
+- sheath_strike: the sheathed sword swung in one flat arc, 0.6 s.
 - reid_draw: 6 s slow draw from the left hip, standing still; reid_sheathe: 1 s reverse.
 
 Run: python3 tools/assets/make_reinhard_clips.py
@@ -295,6 +296,16 @@ CLIPS["reid_sheathe"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, 
     "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.3": [-45, 26, -30], "0.75": [-28, 30, -38], "1.0": [0, 0, 3]}},
     "body": {"rotation": {"0.0": [0, 0, 0], "0.5": [3, 12, 0], "1.0": [0, 0, 0]}},
     "head": {"rotation": {"0.0": [0, 0, 0], "0.5": [14, 12, 0], "1.0": [0, 0, 0]}},
+}}
+
+# Sheath Strike (0.6 s, contact 0.3 s = tick 6): both hands on the sheathed sword at the left hip,
+# wound back, then one flat arc across the front from left to right, the body turning with it.
+CLIPS["sheath_strike"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
+    "right_arm": {"rotation": {"0.0": [0, 0, 3], "0.15": [-60, 40, -20], "0.3": [-85, -50, 10], "0.4": [-80, -60, 12], "0.6": [0, 0, 3]}},
+    "left_arm": {"rotation": {"0.0": [0, 0, -3], "0.15": [-50, 45, 0], "0.3": [-80, -35, 15], "0.4": [-75, -45, 15], "0.6": [0, 0, -3]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, 30, 0], "0.3": [0, -30, 0], "0.4": [0, -32, 0], "0.6": [0, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, -15, 0], "0.3": [0, 12, 0], "0.6": [0, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-10, 0, 0], "0.6": [0, 0, 0]}},
 }}
 
 

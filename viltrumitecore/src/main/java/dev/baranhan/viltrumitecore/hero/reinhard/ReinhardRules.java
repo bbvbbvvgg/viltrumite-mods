@@ -51,6 +51,17 @@ public final class ReinhardRules {
    /** Volume of the private far sound every player on the server hears at the final. */
    public static final float REID_FAR_VOLUME = 0.4F;
 
+   // ---- Sheath Strike (spec §7, Holy Sword slot 3, Reid sheathed only) ----
+   /** Everything Reinhard may hit within this sphere around his feet. */
+   public static final double SHEATH_RADIUS = 6.0;
+   public static final float SHEATH_DAMAGE = 20.0F;
+   /** Freeze (stun) length on targets that accept external control. */
+   public static final int SHEATH_STUN = 60;
+   public static final int SHEATH_COOLDOWN = 160;
+   /** Action lock and the clip: the sheathed sword swings in an arc, contact on {@link #SHEATH_HIT_TICK}. */
+   public static final int SHEATH_TICKS = 12;
+   public static final int SHEATH_HIT_TICK = 6;
+
    // ---- Divine Protection of the Phoenix (spec §4.2) ----
    /** Online ticks before the next revive (10 min). */
    public static final int PHOENIX_COOLDOWN = 12000;
