@@ -40,7 +40,7 @@ class ReinhardAbilitiesTest {
 
    @Test
    void onlyShippedOwned() {
-      assertEquals(1, ReinhardAbilities.SHIPPED_STAGE);
+      assertEquals(2, ReinhardAbilities.SHIPPED_STAGE);
       for (ReinhardAbility ability : ReinhardAbility.values()) {
          assertTrue(ability.stage() > ReinhardAbilities.SHIPPED_STAGE, ability.name());
          assertFalse(ReinhardAbilities.owns(ability.id()), ability.name());

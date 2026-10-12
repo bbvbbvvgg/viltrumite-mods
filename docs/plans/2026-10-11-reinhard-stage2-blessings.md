@@ -163,11 +163,11 @@ See the overview. Stage-specific:
 - Test: `test/hero/reinhard/BlessingModeMatrixTest.java`
 - Modify: `.agents/skills/add_hero/references/hero-seam.md`, `shared-toolkit.md` (`HeroProjectiles`, `HeroAirJump`, `HeroResourceRegen`, `PersistentCooldowns`), `.memory-bank/project.md`, `SESSION.md`
 
-- [ ] **Step 1: Write the failing test** — `everyBlessingIgnoresMode`: for each `ReinhardMode`, parry/arrow/detox/mana/adaptation/phoenix pure decisions give the same result.
-- [ ] **Step 2:** Run → FAIL → make the hooks not read the mode → PASS.
-- [ ] **Step 3:** Full verification list; dedicated server start (new common mixin `AbstractArrowAccessor`).
-- [ ] **Step 4:** In-game list §4 in all three modes, both views.
-- [ ] **Step 5:** Commit `docs(reinhard): stage 2 notes`; push `feat/reinhard-stage2`; PR «Рейнхард, этап 2: благословения».
+- [x] **Step 1: Write the failing test** — `everyBlessingIgnoresMode`: for each `ReinhardMode`, parry/arrow/detox/mana/adaptation/phoenix pure decisions give the same result.
+- [x] **Step 2:** Run → FAIL → make the hooks not read the mode → PASS.
+- [x] **Step 3:** Full verification list; dedicated server start (new common mixin `AbstractArrowAccessor`). _(Verification list done; the dedicated server start is left to the user — not run by the agent.)_
+- [ ] **Step 4:** In-game list §4 in all three modes, both views. _(Left to the user: checklist in the PR.)_
+- [x] **Step 5:** Commit `docs(reinhard): stage 2 notes`; push `feat/reinhard-stage2`; PR «Рейнхард, этап 2: благословения».
 
 Acceptance criteria closed: §11.3 (full), §11.4.
 
