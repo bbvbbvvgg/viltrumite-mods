@@ -57,6 +57,12 @@ public final class HeroDebris {
     * the block hurt what it lands on (vanilla anvil rule, capped at hurtMax).
     */
    public static FallingBlockEntity launchBlock(ServerLevel level, BlockPos pos, BlockState state, Vec3 velocity, float hurtPerBlock, int hurtMax) {
+      return launchBlock(level, pos, state, velocity, hurtPerBlock, hurtMax, 3);
+   }
+
+   /** Same debris physics, with caller-selected source removal flags for quiet carve work. */
+   public static FallingBlockEntity launchBlock(ServerLevel level, BlockPos pos, BlockState state, Vec3 velocity, float hurtPerBlock, int hurtMax,
+      int removalFlags) {
       FallingBlockEntity block = FallingBlockEntityInvoker.invokeConstructor(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, state);
       block.dropItem = false;
       block.time = 1;
@@ -66,7 +72,7 @@ public final class HeroDebris {
 
       block.setDeltaMovement(round(velocity.x), round(velocity.y), round(velocity.z));
       block.hasImpulse = true;
-      level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+      level.setBlock(pos, Blocks.AIR.defaultBlockState(), removalFlags);
       level.addFreshEntity(block);
       return block;
    }

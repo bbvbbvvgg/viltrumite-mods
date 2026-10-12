@@ -87,6 +87,11 @@ public final class ReinhardRules {
    public static final int CUT_START_OFFSET = 2;
    public static final double CUT_DEBRIS_SHARE = 0.002;
    public static final int CUT_DEBRIS_MAX = 300;
+   public static final int CUT_DEBRIS_LAYERS = 4;
+   public static final double CUT_DEBRIS_OUTWARD = 0.6;
+   public static final double CUT_DEBRIS_FORWARD = 0.25;
+   public static final double CUT_DEBRIS_UP = 0.75;
+   public static final int CUT_CARVE_PRIORITY = 10;
 
    // ---- Divine Protection of the Phoenix (spec §4.2) ----
    /** Online ticks before the next revive (10 min). */

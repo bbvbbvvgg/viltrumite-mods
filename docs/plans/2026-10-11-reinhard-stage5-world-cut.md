@@ -53,7 +53,7 @@ See the overview. Stage-specific:
 - Wave front report: `int frontAlong()` for the server timeline (hits follow the blocks or the visual front, whichever is first; see Task 3).
 - With the starting budget 2000 the 153k blocks take ~77 ticks (~3.8 s), matching the spec's "~4 s"; at high MSPT the job just takes longer (adaptive wave).
 
-- [ ] Step 1 tests: `neverAboveBudget`, `skipsUnbreakable` (probe), `debrisCapped`, `finishes` (fake level of 160k positions, budget 2000 → 80 steps), `slowerUnderLoad` (`perTick(2000, 55)` → more steps). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world cut carve job`.
+- [x] Step 1 tests: `neverAboveBudget`, `skipsUnbreakable` (probe), `debrisCapped`, `finishes` (fake level of 160k positions, budget 2000 → 80 steps), `slowerUnderLoad` (`perTick(2000, 55)` → more steps). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world cut carve job`.
 
 ### Task 3: Server timeline, Reid strike on the line, cooldown
 
