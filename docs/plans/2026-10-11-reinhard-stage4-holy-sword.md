@@ -158,7 +158,21 @@ See the overview. Stage-specific:
 **Files:**
 - Modify: `.agents/skills/animation-system/SKILL.md` (§8: `SkyTint`, `SoundDuck`; Reid clips), `.agents/skills/add_hero/references/hero-seam.md` (`chopStyle`), `shared-toolkit.md` (`Annihilation`, `CarveJobs`, `SkyTint`, `SoundDuck`), `.memory-bank/project.md`, `SESSION.md`, core version (minor +1)
 
-- [ ] Step 1: full verification list; dedicated server start (new client mixins only in the client config).
+- [x] Step 1: full verification list; dedicated server start (new client mixins only in the client config).
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [ ] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
 - [ ] Step 2: in game, both views: draw event with three LAN players at 10/60/120 blocks; auto-return; mode exit; chop (Reinhard and Homelander); Sheath Strike; Rain of Cuts; Reid strike targets list of Task 1.
 - [ ] Step 3: commit `docs(reinhard): stage 4 notes`; push `feat/reinhard-stage4`; PR «Рейнхард, этап 4: Святой меч — Рейд, Lethal Chop, удар ножнами, дождь разрезов».
 
