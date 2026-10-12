@@ -117,6 +117,7 @@ public final class ReinhardRenderer {
                1.0F, 1.0F, 1.0F, 1.0F, null);
          }
 
+         ReinhardSword.drawSheathed(stack, body, buffers, light, overlay);
          heldItems(player, body, ReinhardView.reid(snapshot), stack, buffers, light);
       }
 

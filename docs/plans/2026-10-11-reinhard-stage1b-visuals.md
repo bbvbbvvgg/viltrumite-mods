@@ -148,11 +148,11 @@ See the overview. Stage-specific:
 - `ReinhardSword.drawSheathed(PoseStack bodyFrame, BakedGeoModel body, …)`: attach to the `body` bone transform at the left hip (`HIP_OFFSET` = (+4.5, 11, 0) px, tilt rotZ −20°, rotX +10°), draw `SHEATH` + `BLADE` translated by `SHEATHED_OFFSET`, cutout + glow (glow skipped in the shadow pass). Drawn always (spec §8); Stage 4 moves the blade to the hand.
 - `ReinhardAuraVfx` (pixel style, `PixelVfx.billboardPixel`, additive blend, GL state restored): Knight — 6–10 white wind motes circling the feet (radius 0.7, rise 0.4 then fade, 1.2 s life); Holy Sword — 1 gold spark every ~15 ticks near the body (`AuraRules.goldSparkChance`); none in Restrained. Ages by ticks + partialTick. Hidden for the local player in first person except a few motes at the feet below the view (skill §8 rule: local first-person aura filtering in the manager). Motes cleared on logout/level change.
 
-- [ ] **Step 1: Write the failing test** — `restrainedHasNoAura`, `knightWindCount` (6–10), `holySparkRate` (expected sparks per 20 s within 20–30), `firstPersonFilter` (local + first person → feet motes only).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS. Manual 1st/3rd person, all three modes, walking and standing; shaders on.
-- [ ] **Step 5: Commit** `feat(reinhard): sheath on the belt and mode auras`.
+- [x] **Step 1: Write the failing test** — `restrainedHasNoAura`, `knightWindCount` (6–10), `holySparkRate` (expected sparks per 20 s within 20–30), `firstPersonFilter` (local + first person → feet motes only).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS. Manual 1st/3rd person, all three modes, walking and standing; shaders on.
+- [x] **Step 5: Commit** `feat(reinhard): sheath on the belt and mode auras`.
 
 ### Task 8: Body states, skill update, first jar
 
