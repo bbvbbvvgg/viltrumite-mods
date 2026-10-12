@@ -164,6 +164,21 @@ public final class ReinhardRules {
    /** Action lock and the clip: vanish lean, land turned. */
    public static final int BEHIND_ACTION_TICKS = 8;
 
+   // Stomp (Knight slot 5, spec §6.2): a ground slam around his feet.
+   public static final double STOMP_RADIUS = 8.0;
+   /** Only targets within this height of his feet are on the ground plane. */
+   public static final double STOMP_HEIGHT = 3.0;
+   public static final float STOMP_DAMAGE = 12.0F;
+   /** Not in the spec: the outward push of the slam (starting value, open to balance). */
+   public static final double STOMP_KNOCKBACK = 0.8;
+   public static final int STOMP_COOLDOWN = 160;
+   /** Action lock and the clip: leg up, slam on {@link #STOMP_HIT_TICK}, recover. */
+   public static final int STOMP_TICKS = 14;
+   public static final int STOMP_HIT_TICK = 8;
+   /** The ground torn around his feet before the mode's cap (Knight: top layer, radius 4, few blocks thrown). */
+   public static final dev.baranhan.viltrumitecore.hero.HeroDebris.Eruption STOMP_ERUPTION =
+      new dev.baranhan.viltrumitecore.hero.HeroDebris.Eruption(4.0, 1.0, 0.0, 14, 0.35, 0.7);
+
    private ReinhardRules() {
    }
 

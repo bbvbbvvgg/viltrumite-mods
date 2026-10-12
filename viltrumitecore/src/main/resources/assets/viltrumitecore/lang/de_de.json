@@ -445,5 +445,7 @@
   "ability.viltrumitecore.reinhard_grab_throw.name": "Packen & Werfen",
   "ability.viltrumitecore.reinhard_grab_throw.desc": "Drücken, um das Ziel vor dir zu packen, erneut drücken, um es ~120 Blöcke über den Horizont zu werfen: 15 Schaden. Abklingzeit 12 s.",
   "ability.viltrumitecore.reinhard_dash_behind.name": "Hinter den Gegner",
-  "ability.viltrumitecore.reinhard_dash_behind.desc": "Drücken, um hinter der Kreatur im Fadenkreuz (bis 24 Blöcke) zu erscheinen, ihr zugewandt. Braucht einen sicheren Platz in ihrer Nähe. Abklingzeit 3 s."
+  "ability.viltrumitecore.reinhard_dash_behind.desc": "Drücken, um hinter der Kreatur im Fadenkreuz (bis 24 Blöcke) zu erscheinen, ihr zugewandt. Braucht einen sicheren Platz in ihrer Nähe. Abklingzeit 3 s.",
+  "ability.viltrumitecore.reinhard_stomp.name": "Stampfer",
+  "ability.viltrumitecore.reinhard_stomp.desc": "Drücken, um mit dem Fuß auf den Boden zu stampfen: 12 Schaden an allem im Umkreis von 8 Blöcken am Boden, nach außen gestoßen; die oberste Bodenschicht bricht auf. Abklingzeit 8 s."
 }

@@ -160,7 +160,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `STOMP_RADIUS = 8`, `STOMP_DAMAGE = 12f`, `STOMP_COOLDOWN = 160`, `STOMP_TICKS = 14`, `STOMP_HIT_TICK = 8`, `STOMP_ERUPTION = new HeroDebris.Eruption(…)` (Knight: radius 4, depth 1, few flying blocks).
 - Hit tick: entities within r 8 on the ground plane (±3 y) → `hurt(12)` + knockback outward 0.8 (allowsImpulse); `HeroFx.shockwave(origin, power, material, 8)` (ground ring + camera shake), `HeroDebris.erupt` with the moderate spec when `DestructionLevel.mayBreak()`. Sound placeholder `entity.generic.explode` until Stage 7 (`dingus23` earthquake).
 
-- [ ] Step 1 tests: `radius8Damage12`, `cooldown160`, `airborneTargetsAbove3Missed`, `moderateEruptionOnlyInKnight`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, `mobGriefing false`. Step 5 commit `feat(reinhard): stomp`.
+- [x] Step 1 tests: `radius8Damage12`, `cooldown160`, `airborneTargetsAbove3Missed`, `moderateEruptionOnlyInKnight`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): stomp`.
+- [ ] Manual: both views, `mobGriefing false` → no blocks move — оставлено пользователю.
 
 ### Task 10: Reflect Projectile (Knight, slot 6)
 

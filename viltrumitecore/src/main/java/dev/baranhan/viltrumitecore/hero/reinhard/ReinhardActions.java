@@ -11,6 +11,7 @@ import dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.LightPunch;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.SkyKick;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.StepDash;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.Stomp;
 import java.util.EnumMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -34,6 +35,7 @@ public final class ReinhardActions {
       register(ReinhardAbility.SKY_KICK, new SkyKick());
       register(ReinhardAbility.GRAB_THROW, new GrabThrow());
       register(ReinhardAbility.DASH_BEHIND, new DashBehind());
+      register(ReinhardAbility.STOMP, new Stomp());
    }
 
    private ReinhardActions() {

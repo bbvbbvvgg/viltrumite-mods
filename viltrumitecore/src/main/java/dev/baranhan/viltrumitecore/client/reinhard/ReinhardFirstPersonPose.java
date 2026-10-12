@@ -59,6 +59,9 @@ public final class ReinhardFirstPersonPose {
    static final float BEHIND_Z = 0.10F;
    static final float BEHIND_PITCH = 24.0F;
    static final float BEHIND_ROLL = -10.0F;
+   // Stomp: the arm swings up for balance as the leg rises, then jolts down with the slam.
+   static final float STOMP_Y = -0.18F;
+   static final float STOMP_PITCH = 18.0F;
    /** Ticks to raise / lower the hand. */
    static final double CATCH_EASE = 2.0;
 
@@ -92,6 +95,8 @@ public final class ReinhardFirstPersonPose {
          case FIST_COMBO -> combo(phase, ticks);
          case SKY_KICK -> kick(ticks);
          case GRAB_THROW -> grab(phase, ticks, length);
+         case STOMP -> new Offset(0.0F, STOMP_Y, 0.0F, STOMP_PITCH, 0.0F, 0.0F)
+            .scaled(strike(ticks, ReinhardRules.STOMP_HIT_TICK, ReinhardRules.STOMP_TICKS));
          case DASH_BEHIND -> new Offset(0.0F, BEHIND_Y, BEHIND_Z, BEHIND_PITCH, 0.0F, BEHIND_ROLL)
             .scaled(strike(ticks, 2, ReinhardRules.BEHIND_ACTION_TICKS));
          default -> Offset.NONE;

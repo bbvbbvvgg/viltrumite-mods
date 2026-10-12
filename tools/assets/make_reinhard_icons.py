@@ -251,6 +251,25 @@ def dash_behind():
     return img
 
 
+def stomp():
+    """Knight: a steel boot slamming down, a gold crack and white rings on the ground."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        ".....mmm......",
+        ".....msm......",
+        ".....msm......",
+        ".....mssmm....",
+        ".....msssssm..",
+        ".....mmmmmmm..",
+        "..w....g....w.",
+        ".w....ggg....w",
+        "ww...g.G.g...w",
+        ".wwwwg...gwww.",
+        "....g.....g...",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -259,6 +278,7 @@ ABILITIES = {
     "sky_kick": sky_kick,
     "grab_throw": grab_throw,
     "dash_behind": dash_behind,
+    "stomp": stomp,
 }
 
 DRAWN = {

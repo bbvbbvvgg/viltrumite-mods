@@ -445,5 +445,7 @@
   "ability.viltrumitecore.reinhard_grab_throw.name": "Yakala ve Fırlat",
   "ability.viltrumitecore.reinhard_grab_throw.desc": "Önündeki hedefi yakalamak için bas, ufkun ötesine ~120 blok fırlatmak için tekrar bas: 15 hasar. Bekleme 12 sn.",
   "ability.viltrumitecore.reinhard_dash_behind.name": "Arkaya Atılış",
-  "ability.viltrumitecore.reinhard_dash_behind.desc": "Nişangahındaki canlının (24 bloğa kadar) arkasında, sırtına dönük belirmek için bas. Yakınında güvenli bir yer gerekir. Bekleme 3 sn."
+  "ability.viltrumitecore.reinhard_dash_behind.desc": "Nişangahındaki canlının (24 bloğa kadar) arkasında, sırtına dönük belirmek için bas. Yakınında güvenli bir yer gerekir. Bekleme 3 sn.",
+  "ability.viltrumitecore.reinhard_stomp.name": "Yere Vuruş",
+  "ability.viltrumitecore.reinhard_stomp.desc": "Ayağınla yere vurmak için bas: 8 blok içinde yerdeki her şeye 12 hasar ve dışarı itme; zeminin üst katmanı çatlar. Bekleme 8 sn."
 }

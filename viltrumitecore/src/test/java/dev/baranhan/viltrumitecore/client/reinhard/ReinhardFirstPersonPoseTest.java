@@ -73,6 +73,14 @@ class ReinhardFirstPersonPoseTest {
    }
 
    @Test
+   void stompJoltsOnTheSlam() {
+      float slam = ReinhardFirstPersonPose.of(ReinhardAbility.STOMP, 0, ReinhardRules.STOMP_HIT_TICK).y();
+      assertTrue(slam < 0.0F, "the hand jolts down on the slam");
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.STOMP, 0, 2.0).y() > slam, "it builds up to the slam");
+      assertEquals(0.0F, ReinhardFirstPersonPose.of(ReinhardAbility.STOMP, 0, ReinhardRules.STOMP_TICKS).y(), 1.0E-6F);
+   }
+
+   @Test
    void noActionNoOffset() {
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(null, 0, 3.0));
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(ReinhardAbility.REID, 0, 3.0));
