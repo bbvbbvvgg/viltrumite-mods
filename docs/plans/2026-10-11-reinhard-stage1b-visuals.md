@@ -131,11 +131,11 @@ See the overview. Stage-specific:
 - `HeroHeadPreviews`: `interface Preview { void draw(GuiGraphics g, int x, int y, int size, float partialTick); }`, `register(HeroId, Preview)`, `draw(...)` falls back to the skin face. Other heroes stay on the fallback (pixel-identical to today).
 - `ReinhardHeadPreview`: renders only the `head` bone of `BODY` with GUI lighting (`Lighting.setupForEntityInInventory`), slow yaw sway ±15°, 24 px, then `reinhard.png` (archive icon, 32×32 scaled to 12) at the button's left as the hero badge (open question 5).
 
-- [ ] **Step 1: Write the failing test** — `fallbackForUnregistered`, `registeredWins`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS. Manual: race screen shows four hero buttons; the old three heads look exactly as before; Reinhard's head is 3D.
-- [ ] **Step 5: Commit** `feat(hero): head preview seam on the race screen`.
+- [x] **Step 1: Write the failing test** — `fallbackForUnregistered`, `registeredWins`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS. Manual: race screen shows four hero buttons; the old three heads look exactly as before; Reinhard's head is 3D.
+- [x] **Step 5: Commit** `feat(hero): head preview seam on the race screen`.
 
 ### Task 7: Sheath on the belt and mode auras
 
