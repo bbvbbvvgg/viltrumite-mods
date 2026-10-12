@@ -131,4 +131,43 @@ class ReinhardPosesTest {
       assertFalse(ReinhardPoses.wantsOffhand(ReinhardMode.KNIGHT, HumanoidArm.RIGHT, 0), "Knight never forces the empty off hand");
       assertFalse(ReinhardPoses.wantsOffhand(null, HumanoidArm.LEFT, 0), "other hero");
    }
+
+   @Test
+   void bodyStateFromPose() {
+      net.minecraft.world.entity.Pose[] poses = {net.minecraft.world.entity.Pose.CROUCHING, net.minecraft.world.entity.Pose.SLEEPING,
+         net.minecraft.world.entity.Pose.SWIMMING, net.minecraft.world.entity.Pose.FALL_FLYING, net.minecraft.world.entity.Pose.STANDING,
+         net.minecraft.world.entity.Pose.SPIN_ATTACK};
+      ReinhardPoses.BodyState[] states = {ReinhardPoses.BodyState.CROUCH, ReinhardPoses.BodyState.SLEEP, ReinhardPoses.BodyState.SWIM,
+         ReinhardPoses.BodyState.FALL_FLY, ReinhardPoses.BodyState.STAND, ReinhardPoses.BodyState.STAND};
+      for (int i = 0; i < poses.length; i++) {
+         assertEquals(states[i], ReinhardPoses.body(poses[i], false), poses[i].name());
+      }
+      assertEquals(ReinhardPoses.BodyState.SIT, ReinhardPoses.body(net.minecraft.world.entity.Pose.STANDING, true));
+   }
+
+   @Test
+   void swimPitchLikeVanilla() {
+      // PlayerRenderer.setupRotations: lerp(swimAmount, 0, inWater ? -90 - xRot : -90).
+      assertEquals(0.0F, ReinhardPoses.swimPitch(0.0F, true, 30.0F), 1.0E-6F);
+      assertEquals(-120.0F, ReinhardPoses.swimPitch(1.0F, true, 30.0F), 1.0E-6F);
+      assertEquals(-45.0F, ReinhardPoses.swimPitch(0.5F, false, 30.0F), 1.0E-6F, "crawling on land: -90 whatever the look");
+   }
+
+   @Test
+   void elytraPitchLikeVanilla() {
+      // PlayerRenderer.setupRotations: clamp(t^2 / 100, 0, 1) * (-90 - xRot), none during a riptide spin.
+      assertEquals(0.0F, ReinhardPoses.elytraPitch(0.0F, 10.0F, false), 1.0E-6F);
+      assertEquals(-25.0F, ReinhardPoses.elytraPitch(5.0F, 10.0F, false), 1.0E-6F);
+      assertEquals(-100.0F, ReinhardPoses.elytraPitch(20.0F, 10.0F, false), 1.0E-6F);
+      assertEquals(0.0F, ReinhardPoses.elytraPitch(20.0F, 10.0F, true), 1.0E-6F);
+   }
+
+   @Test
+   void sleepYawFromBed() {
+      // LivingEntityRenderer.sleepDirectionToRotation.
+      assertEquals(90.0F, ReinhardPoses.sleepYaw(net.minecraft.core.Direction.SOUTH), 1.0E-6F);
+      assertEquals(0.0F, ReinhardPoses.sleepYaw(net.minecraft.core.Direction.WEST), 1.0E-6F);
+      assertEquals(270.0F, ReinhardPoses.sleepYaw(net.minecraft.core.Direction.NORTH), 1.0E-6F);
+      assertEquals(180.0F, ReinhardPoses.sleepYaw(net.minecraft.core.Direction.EAST), 1.0E-6F);
+   }
 }

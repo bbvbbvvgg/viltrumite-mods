@@ -54,6 +54,9 @@ public final class ReinhardPoses {
       return new Clip(ACTIONS[in.actionId()].name().toLowerCase(Locale.ROOT), seconds);
    }
 
+   /** Clip seconds per walk-position unit of the 1 s swim stroke: vanilla's stroke repeats every 26 units (HumanoidModel). */
+   public static final double SWIM_SECONDS_PER_UNIT = 1.0 / 26.0;
+
    static BodyState body(net.minecraft.world.entity.Pose pose, boolean passenger) {
       if (passenger) {
          return BodyState.SIT;
@@ -65,6 +68,32 @@ public final class ReinhardPoses {
          case SWIMMING -> BodyState.SWIM;
          case FALL_FLYING -> BodyState.FALL_FLY;
          default -> BodyState.STAND;
+      };
+   }
+
+   /** PlayerRenderer.setupRotations swim pitch (degrees): lerp(swimAmount, 0, inWater ? -90 - xRot : -90). */
+   public static float swimPitch(float swimAmount, boolean inWater, float xRot) {
+      float target = inWater ? -90.0F - xRot : -90.0F;
+      return swimAmount * target;
+   }
+
+   /** PlayerRenderer.setupRotations elytra pitch (degrees): clamp(t^2 / 100, 0, 1) * (-90 - xRot); none in a riptide spin. */
+   public static float elytraPitch(float fallFlyTicks, float xRot, boolean autoSpin) {
+      if (autoSpin) {
+         return 0.0F;
+      }
+
+      float k = Math.max(0.0F, Math.min(1.0F, fallFlyTicks * fallFlyTicks / 100.0F));
+      return k * (-90.0F - xRot);
+   }
+
+   /** LivingEntityRenderer.sleepDirectionToRotation (degrees). */
+   public static float sleepYaw(net.minecraft.core.Direction bed) {
+      return switch (bed) {
+         case SOUTH -> 90.0F;
+         case NORTH -> 270.0F;
+         case EAST -> 180.0F;
+         default -> 0.0F;
       };
    }
 

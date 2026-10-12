@@ -160,11 +160,11 @@ See the overview. Stage-specific:
 - Modify: `core/client/reinhard/ReinhardPoses.java` (`BodyState`), `ReinhardRenderer.java` (rotations for SLEEP/SWIM/FALL_FLY in the event stack before the body frame, like vanilla `setupRotations`), `make_reinhard_clips.py` (`sit`, `crouch` already; `swim` arm stroke), `.agents/skills/animation-system/SKILL.md` §7.4 (Reinhard as the second user; "pose clips must cover crouch/sit/sleep/swim because model mixins never run"; name tag / held items / outline restoration), `.memory-bank/project.md`, `SESSION.md`, `gradle.properties` or `viltrumitecore/build.gradle` (core minor version +1)
 - Test: extend `ReinhardPosesTest`
 
-- [ ] **Step 1: Write the failing tests** — `bodyStateFromPose` (CROUCHING → CROUCH, SLEEPING → SLEEP, SWIMMING → SWIM, FALL_FLYING → FALL_FLY, passenger → SIT, else STAND).
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS.
-- [ ] **Step 5:** Full verification list + dedicated server start (`./gradlew :viltrumitecore:runServer`): no client class loaded (renderer, invoker mixin only in client config).
-- [ ] **Step 6:** In game, both views: walk, sprint, sneak, swim, boat, horse, bed, elytra (creative), all three stances, Homelander/Iron Man/Hulkbuster/Regulus visuals unchanged.
-- [ ] **Step 7:** Commit `feat(reinhard): body states` and `docs(reinhard): stage 1b notes`; push `feat/reinhard-stage1b`; PR «Рейнхард, этап 1b: модель, ножны, стойки».
+- [x] **Step 1: Write the failing tests** — `bodyStateFromPose` (CROUCHING → CROUCH, SLEEPING → SLEEP, SWIMMING → SWIM, FALL_FLYING → FALL_FLY, passenger → SIT, else STAND).
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS.
+- [x] **Step 5:** Full verification list + dedicated server start (`./gradlew :viltrumitecore:runServer`): no client class loaded (renderer, invoker mixin only in client config).
+- [x] **Step 6:** In game, both views: walk, sprint, sneak, swim, boat, horse, bed, elytra (creative), all three stances, Homelander/Iron Man/Hulkbuster/Regulus visuals unchanged.
+- [x] **Step 7:** Commit `feat(reinhard): body states` and `docs(reinhard): stage 1b notes`; push `feat/reinhard-stage1b`; PR «Рейнхард, этап 1b: модель, ножны, стойки».
 
 Acceptance criteria closed: §11.1 (full), §11.12 (partial).
 

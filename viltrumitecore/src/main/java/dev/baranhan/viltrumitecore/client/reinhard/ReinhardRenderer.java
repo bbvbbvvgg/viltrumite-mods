@@ -17,6 +17,8 @@ import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
 import net.minecraft.Util;
 import dev.baranhan.viltrumitecore.client.anim.render.PlayerGeoLayer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -56,6 +58,7 @@ public final class ReinhardRenderer {
    static final String KNIGHT_HOLD = "knight_left_arm_hold";
    static final String CROUCH = "crouch";
    static final String SIT = "sit";
+   static final String SWIM = "swim";
    /** Fallback stance while a stance clip is missing: every bone at rest. */
    private static final Animation REST = new Animation("rest", 1.0, Animation.LoopType.LOOP, Map.of(), List.of());
 
@@ -94,11 +97,13 @@ public final class ReinhardRenderer {
 
       ReinhardPoses.Pose pose = pose(player, snapshot, partialTick);
       float[] weights = StanceBlend.weights(player, ReinhardView.mode(snapshot), Util.getNanos());
-      applyClips(body, pose, StanceBlend.mix(weights, ReinhardView.mode(snapshot)), weights[ReinhardMode.KNIGHT.ordinal()]);
+      float swim = player.getSwimAmount(partialTick);
+      applyClips(body, pose, StanceBlend.mix(weights, ReinhardView.mode(snapshot)), weights[ReinhardMode.KNIGHT.ordinal()], swim,
+         player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT);
       applyHead(body, player, partialTick);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
-      stack.mulPose(Axis.YP.rotationDegrees(180.0F - Mth.rotLerp(partialTick, player.yBodyRotO, player.yBodyRot)));
+      setupRotations(player, stack, partialTick, swim);
       stack.scale(PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
       if (passes.body()) {
          RenderType type = passes.translucent() ? RenderType.entityTranslucent(ReinhardAssets.TEXTURE) : RenderType.entityCutoutNoCull(ReinhardAssets.TEXTURE);
@@ -156,7 +161,7 @@ public final class ReinhardRenderer {
     * Knight's left arm held behind the back over the walk (by the Knight stance weight),
     * crouch/sit added like vanilla's model code, then the action overlay.
     */
-   static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight) {
+   static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight, float swim, double swimSeconds) {
       Animation to = clip(ReinhardPoses.stance(mix.to()));
       if (mix.weight() >= StanceBlend.SETTLED || mix.from() == mix.to()) {
          AnimationController.seek(to, model, pose.stanceSeconds());
@@ -172,6 +177,12 @@ public final class ReinhardRenderer {
       Animation hold = AnimCache.animation(ReinhardAssets.ANIMATIONS, KNIGHT_HOLD);
       if (hold != null) {
          AnimationController.overlay(hold, model, pose.stanceSeconds(), knightWeight);
+      }
+
+      Animation stroke = swim > 0.0F ? AnimCache.animation(ReinhardAssets.ANIMATIONS, SWIM) : null;
+      if (stroke != null) {
+         // HumanoidModel lerps the arms and legs to the crawl stroke by swimAmount.
+         AnimationController.overlay(stroke, model, swimSeconds, swim);
       }
 
       String additive = switch (pose.body()) {
@@ -196,6 +207,51 @@ public final class ReinhardRenderer {
    private static Animation clip(String name) {
       Animation clip = AnimCache.animation(ReinhardAssets.ANIMATIONS, name);
       return clip != null ? clip : REST;
+   }
+
+   /**
+    * Vanilla LivingEntityRenderer/PlayerRenderer.setupRotations for a model drawn without the vanilla
+    * body: bed (sleep), death tilt, elytra pitch and roll, swim pitch. Model mixins never run here.
+    */
+   static void setupRotations(AbstractClientPlayer player, PoseStack stack, float partialTick, float swim) {
+      float bodyYaw = Mth.rotLerp(partialTick, player.yBodyRotO, player.yBodyRot);
+      if (player.hasPose(net.minecraft.world.entity.Pose.SLEEPING)) {
+         Direction bed = player.getBedOrientation();
+         if (bed != null) {
+            float shift = player.getEyeHeight(net.minecraft.world.entity.Pose.STANDING) - 0.1F;
+            stack.translate(-bed.getStepX() * shift, 0.0F, -bed.getStepZ() * shift);
+         }
+
+         stack.mulPose(Axis.YP.rotationDegrees(bed != null ? ReinhardPoses.sleepYaw(bed) : bodyYaw));
+         stack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+         stack.mulPose(Axis.YP.rotationDegrees(270.0F));
+         return;
+      }
+
+      stack.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw));
+      if (player.deathTime > 0) {
+         float dying = Math.min(1.0F, Mth.sqrt((player.deathTime + partialTick - 1.0F) / 20.0F * 1.6F));
+         stack.mulPose(Axis.ZP.rotationDegrees(dying * 90.0F));
+      }
+
+      if (player.isFallFlying()) {
+         stack.mulPose(Axis.XP.rotationDegrees(ReinhardPoses.elytraPitch(player.getFallFlyingTicks() + partialTick, player.getXRot(), player.isAutoSpinAttack())));
+         Vec3 view = player.getViewVector(partialTick);
+         Vec3 motion = player.getDeltaMovementLerped(partialTick);
+         double motionSqr = motion.horizontalDistanceSqr();
+         double viewSqr = view.horizontalDistanceSqr();
+         if (motionSqr > 0.0 && viewSqr > 0.0) {
+            double cos = (motion.x * view.x + motion.z * view.z) / Math.sqrt(motionSqr * viewSqr);
+            double side = motion.x * view.z - motion.z * view.x;
+            stack.mulPose(Axis.YP.rotation((float) (Math.signum(side) * Math.acos(cos))));
+         }
+      } else if (swim > 0.0F) {
+         boolean inWater = player.isInWater() || player.isInFluidType((fluid, height) -> player.canSwimInFluidType(fluid));
+         stack.mulPose(Axis.XP.rotationDegrees(ReinhardPoses.swimPitch(swim, inWater, player.getXRot())));
+         if (player.isVisuallySwimming()) {
+            stack.translate(0.0F, -1.0F, 0.3F);
+         }
+      }
    }
 
    /** The head follows the look (vanilla netHeadYaw / headPitch); BakedGeoModel turns are negated. */

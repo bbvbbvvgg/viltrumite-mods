@@ -48,7 +48,7 @@ class ReinhardWalkClipTest {
       AnimationParser.lastWarnings.clear();
       Map<String, Animation> clips = AnimationParser.parse(JsonParser.parseString(Files.readString(ROOT.resolve(ReinhardAssets.ANIMATIONS.getPath()))).getAsJsonObject());
       assertTrue(AnimationParser.lastWarnings.isEmpty(), AnimationParser.lastWarnings.toString());
-      for (String name : new String[]{"walk", "idle_restrained", "idle_knight", "idle_holy", "crouch", "sit", "knight_left_arm_hold"}) {
+      for (String name : new String[]{"walk", "idle_restrained", "idle_knight", "idle_holy", "crouch", "sit", "knight_left_arm_hold", "swim"}) {
          assertNotNull(clips.get(name), name);
          assertEquals(Animation.LoopType.LOOP, clips.get(name).loopType(), name);
       }
