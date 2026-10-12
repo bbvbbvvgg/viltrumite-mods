@@ -82,9 +82,9 @@ See the overview. Stage-specific:
   - pure helpers: `static Vec3 deflected(Vec3 v, Vec3 toBody, boolean left)`, `static Vec3 reflected(Vec3 v, Vec3 from, @Nullable Vec3 ownerEye)`.
 - `ArrowWard.response(boolean catchOpen, boolean reflectOpen)` → REFLECT if reflect open, else CATCH if catch open, else DEFLECT (spec §4.3: windows win over the passive; reflect beats catch when both are open — they cannot be open together in practice, but the function is total). Windows come from Stage 3; now both are false.
 
-- [ ] **Step 1: Write the failing tests** — `deflectTurnsSideways` (angle between old and new ≥ 60°), `deflectSlower`, `reflectAimsAtOwner`, `reflectWithoutOwnerGoesBack`, `deflectRotatesPowerVector` (fireball: angle(power, velocity) unchanged by deflect; simulate 20 ticks → no curve back), `catchSkeletonArrow` (DISALLOWED → item), `catchInfinityArrowGivesNothing` (CREATIVE_ONLY), `catchTippedKeepsPotion`, `ArrowWardTest.priority` (all 4 combinations), `allProjectileKinds` (response does not depend on the projectile class).
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: skeleton, second player's bow, trident, ghast fireball, snowball, splash potion — all fly off sideways without damage or effect; other heroes still get hit.
-- [ ] **Step 5: Commit** `feat(hero): projectile response seam` and `feat(reinhard): arrow protection`.
+- [x] **Step 1: Write the failing tests** — `deflectTurnsSideways` (angle between old and new ≥ 60°), `deflectSlower`, `reflectAimsAtOwner`, `reflectWithoutOwnerGoesBack`, `deflectRotatesPowerVector` (fireball: angle(power, velocity) unchanged by deflect; simulate 20 ticks → no curve back), `catchSkeletonArrow` (DISALLOWED → item), `catchInfinityArrowGivesNothing` (CREATIVE_ONLY), `catchTippedKeepsPotion`, `ArrowWardTest.priority` (all 4 combinations), `allProjectileKinds` (response does not depend on the projectile class).
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: skeleton, second player's bow, trident, ghast fireball, snowball, splash potion — all fly off sideways without damage or effect; other heroes still get hit.
+- [x] **Step 5: Commit** `feat(hero): projectile response seam` and `feat(reinhard): arrow protection`.
 
 ### Task 4: Blessing of the Cloudy Sky — air steps and super jump
 

@@ -237,6 +237,15 @@ public interface HeroDefinition {
    }
 
    /**
+    * Server, ProjectileImpactEvent: a projectile is about to hit this hero
+    * (see {@link HeroProjectiles}). Anything but PASS skips the hit and is
+    * applied there. Default: vanilla hit.
+    */
+   default ProjectileResponse projectileResponse(ServerPlayer self, net.minecraft.world.entity.projectile.Projectile projectile) {
+      return ProjectileResponse.PASS;
+   }
+
+   /**
     * Server, LivingAttackEvent (before armor, knockback, hurt animation): this
     * hero's own damage layers in the fixed order shield → Hulkbuster → mark
     * (see {@link HeroDamageLayers}). {@link DamageAbsorb#ABSORBED} cancels the

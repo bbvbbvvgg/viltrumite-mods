@@ -341,8 +341,18 @@ public final class HeroEvents {
    }
 
    @SubscribeEvent
+   public static void onProjectileImpact(net.minecraftforge.event.entity.ProjectileImpactEvent event) {
+      HeroProjectiles.onImpact(event);
+   }
+
+   @SubscribeEvent
    public static void onLevelTick(TickEvent.LevelTickEvent event) {
-      if (event.phase == TickEvent.Phase.END || !(event.level instanceof ServerLevel level)) {
+      if (!(event.level instanceof ServerLevel level)) {
+         return;
+      }
+
+      if (event.phase == TickEvent.Phase.END) {
+         HeroProjectiles.tickPending(level);
          return;
       }
 

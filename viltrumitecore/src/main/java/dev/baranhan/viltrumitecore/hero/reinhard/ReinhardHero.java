@@ -10,8 +10,10 @@ import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.MouseButton;
 import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
+import dev.baranhan.viltrumitecore.hero.ProjectileResponse;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
@@ -27,6 +29,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 
 /**
  * Reinhard van Astrea (spec docs/design/2026-10-11-reinhard-design.md). Own
@@ -263,6 +266,16 @@ public final class ReinhardHero implements HeroDefinition {
 
    private static ResourceLocation divineType(DamageSource source) {
       return source.typeHolder().unwrapKey().map(ResourceKey::location).orElse(DivineDamage.DIVINE.location());
+   }
+
+   /**
+    * Arrow Protection (spec §4.3): every projectile is turned aside; the catch and
+    * reflect windows of the Restrained palm (stage 3) win over the passive. Mode-independent.
+    */
+   @Override
+   public ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) {
+      // Stage 3 opens the catch / reflect windows; none exist yet.
+      return ArrowWard.response(false, false);
    }
 
    /** Spec §3.1: void and generic_kill never take him below 1 HP (/kill still kills: AdminKill). */
