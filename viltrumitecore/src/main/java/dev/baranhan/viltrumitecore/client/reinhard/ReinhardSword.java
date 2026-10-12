@@ -40,20 +40,20 @@ public final class ReinhardSword {
 
    /** {@code stack} is the model frame (after the body yaw and player scale); the body bone is already posed. */
    public static void drawSheathed(PoseStack stack, BakedGeoModel body, MultiBufferSource buffers, int light, int overlay) {
-      drawSheathed(stack, body, buffers, light, overlay, 0.0F);
+      drawSheathed(stack, body, buffers, light, overlay, 0.0F, true);
    }
 
    /** {@code out} 0..1: the blade slides out of the sheath along its axis (Reid draw / sheathe, {@link ReinhardPoses#bladeOut}). */
-   public static void drawSheathed(PoseStack stack, BakedGeoModel body, MultiBufferSource buffers, int light, int overlay, float out) {
+   public static void drawSheathed(PoseStack stack, BakedGeoModel body, MultiBufferSource buffers, int light, int overlay, float out, boolean blade) {
       GeoBone bodyBone = body.getBone(ReinhardAssets.BODY_BONE);
       BakedGeoModel sheath = AnimCache.model(ReinhardAssets.SHEATH);
-      BakedGeoModel blade = AnimCache.model(ReinhardAssets.BLADE);
-      if (bodyBone == null || sheath == null || blade == null) {
+      BakedGeoModel bladeModel = AnimCache.model(ReinhardAssets.BLADE);
+      if (bodyBone == null || sheath == null || bladeModel == null) {
          return;
       }
 
       sheath.resetBones();
-      blade.resetBones();
+      bladeModel.resetBones();
       stack.pushPose();
       ReinhardRenderer.boneFrame(stack, bodyBone);
       // Renderer space mirrors Bedrock x (the parser negates it) like the bone pivots.
@@ -71,7 +71,31 @@ public final class ReinhardSword {
       stack.translate(-gx, -gy, -gz);
       draw(sheath, stack, buffers, light, overlay);
       // The blade in its sheathed place: blade geo + SHEATHED_OFFSET.
-      stack.translate(gx, gy + out * DRAW_OUT_PX / 16.0F, gz);
+      if (blade) {
+         stack.translate(gx, gy + out * DRAW_OUT_PX / 16.0F, gz);
+         draw(bladeModel, stack, buffers, light, overlay);
+      }
+      stack.popPose();
+   }
+
+   /** Guard ahead of the palm in the vanilla held-item frame (px). */
+   public static final float HAND_GUARD_PX = 2.0F;
+
+   /**
+    * Reid in the hand: {@code stack} is vanilla's held-item frame of that arm (third person:
+    * geo arm bone + {@link HeldItemAnchor#local}; first person: the ModelPart arm + the same
+    * vanilla offsets). The blade's +y (guard → tip) points out of the palm like a held sword.
+    */
+   public static void drawInHand(PoseStack stack, MultiBufferSource buffers, int light, int overlay) {
+      BakedGeoModel blade = AnimCache.model(ReinhardAssets.BLADE);
+      if (blade == null) {
+         return;
+      }
+
+      blade.resetBones();
+      stack.pushPose();
+      stack.translate(0.0F, HAND_GUARD_PX / 16.0F, 0.0F);
+      stack.scale(SWORD_SCALE, SWORD_SCALE, SWORD_SCALE);
       draw(blade, stack, buffers, light, overlay);
       stack.popPose();
    }

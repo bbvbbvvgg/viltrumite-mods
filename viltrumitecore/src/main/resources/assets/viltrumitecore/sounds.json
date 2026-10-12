@@ -868,5 +868,15 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.reid_sheathe": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_sheathe",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_chain",
+        "type": "event"
+      }
+    ]
   }
 }

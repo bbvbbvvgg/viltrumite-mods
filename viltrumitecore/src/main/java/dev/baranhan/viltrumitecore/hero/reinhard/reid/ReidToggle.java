@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.hero.reinhard.reid;
 
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardState;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.AbilityHandler;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,6 +25,8 @@ public final class ReidToggle implements AbilityHandler {
       if (state.reid.phase() == Reid.Phase.DRAWING) {
          endDraw(state);
          state.drawEvent = ReidDrawEvent.start(player);
+      } else if (state.reid.phase() == Reid.Phase.SHEATHING) {
+         ReinhardSounds.play(player, ReinhardSounds.REID_SHEATHE.get(), 0.8F, 1.0F);
       }
 
       return true;

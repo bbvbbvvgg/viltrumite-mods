@@ -60,12 +60,13 @@ public final class ReinhardPoses {
    /** Clip seconds per walk-position unit of the 1 s swim stroke: vanilla's stroke repeats every 26 units (HumanoidModel). */
    public static final double SWIM_SECONDS_PER_UNIT = 1.0 / 26.0;
 
-   /** Stage 4: Reid's draw / sheathe overlay at {@code ticks} into the phase; null outside those phases. */
+   /** Stage 4: Reid's draw / sheathe / drawn-idle overlay at {@code ticks} into the phase; null while sheathed. */
    @Nullable
    public static Clip reidClip(ReidPhase phase, double ticks) {
       return switch (phase) {
          case DRAWING -> new Clip(ReinhardClips.REID_DRAW, Math.max(0.0, ticks) / 20.0);
          case SHEATHING -> new Clip(ReinhardClips.REID_SHEATHE, Math.max(0.0, ticks) / 20.0);
+         case DRAWN -> new Clip(ReinhardClips.IDLE_HOLY_DRAWN, Math.max(0.0, ticks) / 20.0);
          default -> null;
       };
    }

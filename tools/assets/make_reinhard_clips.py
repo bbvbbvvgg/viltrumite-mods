@@ -22,6 +22,7 @@ Swim (loop 1 s = vanilla's 26 walk-position units, overlay weighted by swimAmoun
   0.3 rad (vanilla's leg period 6 pi units is shown once per stroke).
 
 Stage 4 (overlay driven by Reid's phase clock, ReinhardPoses.reidClip):
+- idle_holy_drawn: loop, the right arm holds Reid low and forward.
 - reid_draw: 6 s slow draw from the left hip, standing still; reid_sheathe: 1 s reverse.
 
 Run: python3 tools/assets/make_reinhard_clips.py
@@ -270,6 +271,9 @@ CLIPS["reid_draw"] = {"loop": "hold_on_last_frame", "animation_length": 6.0, "bo
     "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [-4, 0, 7], "6.0": [-4, 0, 7]}},
     "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [4, 0, -7], "6.0": [4, 0, -7]}},
 }}
+# Reid drawn (loop over the Holy Sword stance, right arm only: the left hand stays on the empty
+# sheath at the hip): the sword held low and forward, the arm breathing with it.
+CLIPS["idle_holy_drawn"] = loop({"right_arm": {"rotation": breathe([-40, 0, 10], [-42, 0, 11])}})
 # Sheathe (1 s): the reverse, calm: the blade comes down across to the left hip and slides in.
 CLIPS["reid_sheathe"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
     "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.3": [-45, 26, -30], "0.75": [-28, 30, -38], "1.0": [0, 0, 3]}},

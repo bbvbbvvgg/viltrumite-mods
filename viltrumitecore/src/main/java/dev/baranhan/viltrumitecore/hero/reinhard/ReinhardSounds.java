@@ -40,6 +40,8 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> REID_UNSHEATHE = reg("reinhard.reid_unsheathe");
    public static final RegistryObject<SoundEvent> REID_CHOIR = reg("reinhard.reid_choir");
    public static final RegistryObject<SoundEvent> REID_FAR = reg("reinhard.reid_far");
+   /** The calm 1 s sheathe click (manual, auto-return, leaving Holy Sword). */
+   public static final RegistryObject<SoundEvent> REID_SHEATHE = reg("reinhard.reid_sheathe");
 
    private ReinhardSounds() {
    }

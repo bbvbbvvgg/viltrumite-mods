@@ -112,6 +112,14 @@ public final class ReinhardHero implements HeroDefinition {
       return ReinhardAbilities.icon(abilityId);
    }
 
+   /** Reid sheathed / drawn icon from the synced snapshot (works on both sides). */
+   @Override
+   public net.minecraft.resources.ResourceLocation abilityIcon(String abilityId, net.minecraft.world.entity.player.Player player) {
+      dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot snapshot = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
+         ? heroPlayer.getHeroSnapshot() : null;
+      return ReinhardAbilities.icon(abilityId, snapshot == null ? 0 : snapshot.heroFlags());
+   }
+
    /** The spec gives Reinhard no immunity to control; knockback is the attribute (chassis). */
    @Override
    public boolean allowsExternalControl(LivingEntity target, ControlKind kind) {
@@ -191,6 +199,9 @@ public final class ReinhardHero implements HeroDefinition {
       state.mode = result.next();
       state.modeCooldown = ReinhardRules.MODE_COOLDOWN;
       if (previous == ReinhardMode.HOLY_SWORD) {
+         if (state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.SHEATHED) {
+            ReinhardSounds.play(player, ReinhardSounds.REID_SHEATHE.get(), 0.8F, 1.0F);
+         }
          state.onLeaveHolySword();
       }
 

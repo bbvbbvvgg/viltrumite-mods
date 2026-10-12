@@ -104,7 +104,8 @@ See the overview. Stage-specific:
 - `ReidAura`: gold `PixelVfx.bodyShell` shimmer (alpha only, skill §8) + rising gold motes; `SkyTint.push(this, priority 1, warm gold over the caster)` for players within 64 of the caster (weight by distance); removed when the flag clears.
 - Sheathing: 1 s calm reverse clip, soft click sound placeholder `item.armor.equip_chain`.
 
-- [ ] Step 1 tests: `auraOnlyWhenDrawn`, `tintWeightFallsWithDistance`, `barMatchesResource`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views: drawn idle, walk with the sword, auto-return after 60 s, MMB away from Holy Sword sheathes, bar empties correctly. Step 5 commit `feat(reinhard): reid drawn state visuals`.
+- [x] Step 1 tests: `auraOnlyWhenDrawn`, `tintWeightFallsWithDistance`, `barMatchesResource`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views: drawn idle, walk with the sword, auto-return after 60 s, MMB away from Holy Sword sheathes, bar empties correctly. Step 5 commit `feat(reinhard): reid drawn state visuals`.
+- [ ] Manual: оба вида: Рейд в руке в покое и при ходьбе, золотая аура, тёплое небо рядом; само-возврат через 60 с без боя; смена режима (СКМ) из Святого меча вкладывает меч; полоска HUD убывает верно; щелчок при вкладывании — оставлено пользователю.
 
 ### Task 6: Lethal Chop — kit chop with Reinhard's style (`ChopStyle` seam)
 

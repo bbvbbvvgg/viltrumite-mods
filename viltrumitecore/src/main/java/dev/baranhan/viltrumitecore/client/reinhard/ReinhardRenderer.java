@@ -133,7 +133,19 @@ public final class ReinhardRenderer {
                1.0F, 1.0F, 1.0F, 1.0F, null);
          }
 
-         ReinhardSword.drawSheathed(stack, body, buffers, light, overlay, ReinhardPoses.bladeOut(reidPhase, reidTicks));
+         ReinhardSword.drawSheathed(stack, body, buffers, light, overlay, ReinhardPoses.bladeOut(reidPhase, reidTicks),
+            reidPhase != ReinhardPoses.ReidPhase.DRAWN);
+         if (reidPhase == ReinhardPoses.ReidPhase.DRAWN) {
+            // Stage 4: Reid in the right hand (the vanilla item of that hand is hidden by drawsHeldItem).
+            GeoBone hand = body.getBone(ReinhardAssets.RIGHT_ARM);
+            if (hand != null) {
+               stack.pushPose();
+               boneFrame(stack, hand);
+               stack.mulPoseMatrix(HeldItemAnchor.local(HumanoidArm.RIGHT));
+               ReinhardSword.drawInHand(stack, buffers, light, overlay);
+               stack.popPose();
+            }
+         }
          heldItems(player, body, ReinhardView.reid(snapshot), stack, buffers, light);
       }
 
@@ -196,6 +208,15 @@ public final class ReinhardRenderer {
       }
 
       PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
+      if (event.getArm() == HumanoidArm.RIGHT && ReinhardView.reid(snapshot) == ReinhardPoses.ReidPhase.DRAWN) {
+         // Stage 4: Reid in the first-person right hand (onRenderHand hid the slot's item).
+         PoseStack pose = event.getPoseStack();
+         pose.pushPose();
+         arm.translateAndRotate(pose);
+         pose.mulPoseMatrix(HeldItemAnchor.vanilla(HumanoidArm.RIGHT));
+         ReinhardSword.drawInHand(pose, event.getMultiBufferSource(), event.getPackedLight(), OverlayTexture.NO_OVERLAY);
+         pose.popPose();
+      }
       if (moved) {
          event.getPoseStack().popPose();
       }
@@ -203,6 +224,33 @@ public final class ReinhardRenderer {
       arm.xRot = oldX;
       arm.yRot = oldY;
       arm.zRot = oldZ;
+   }
+
+   /**
+    * Stage 4: while Reid is out of the sheath the right hand holds it: the slot's item there is not
+    * drawn (it stays in the slot); vanilla's empty-arm render runs instead, which fires RenderArmEvent
+    * ({@link #onRenderArm} draws the geo arm and, when drawn, the blade).
+    */
+   @SubscribeEvent
+   public static void onRenderHand(net.minecraftforge.client.event.RenderHandEvent event) {
+      Minecraft mc = Minecraft.getInstance();
+      AbstractClientPlayer player = mc.player;
+      HeroPublicSnapshot snapshot = ReinhardView.of(player);
+      if (snapshot == null || ReinhardPoses.drawsHeldItem(HumanoidArm.RIGHT, ReinhardView.reid(snapshot))) {
+         return;
+      }
+
+      InteractionHand rightHand = player.getMainArm() == HumanoidArm.RIGHT ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+      if (event.getHand() != rightHand) {
+         return;
+      }
+
+      event.setCanceled(true);
+      if (!player.isInvisible()) {
+         ((dev.baranhan.viltrumitecore.client.mixin.ItemInHandRendererInvoker) mc.getEntityRenderDispatcher().getItemInHandRenderer())
+            .viltrumite$renderPlayerArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getEquipProgress(),
+               rightHand == InteractionHand.MAIN_HAND ? event.getSwingProgress() : 0.0F, HumanoidArm.RIGHT);
+      }
    }
 
    /** The synced action's first-person offset (time like the third-person overlay, hit-stop held). */

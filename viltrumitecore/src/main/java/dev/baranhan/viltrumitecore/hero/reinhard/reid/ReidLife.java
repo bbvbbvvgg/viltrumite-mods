@@ -21,6 +21,11 @@ public final class ReidLife {
    }
 
    public static void tick(ServerPlayer player, ReinhardState state, Reid.Event event) {
+      if (event == Reid.Event.AUTO_RETURN) {
+         dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds.play(player,
+            dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds.REID_SHEATHE.get(), 0.8F, 1.0F);
+      }
+
       ReidDrawEvent draw = state.drawEvent;
       if (draw != null) {
          if (event == Reid.Event.DRAW_DONE) {

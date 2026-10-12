@@ -289,6 +289,46 @@ def reflect():
     return img
 
 
+
+def reid():
+    """Holy Sword: Reid in its sheath, a diagonal blue scabbard with gold fittings, the white hilt up."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        "...........ww.",
+        "..........wsw.",
+        ".........GGw..",
+        "........GbG...",
+        ".......bbb....",
+        "......bhb.....",
+        ".....bhb......",
+        "....GbG.......",
+        "...bhb........",
+        "..bhb.........",
+        ".GbG..........",
+        ".GG...........",
+    ], {"w": WHITE, "s": STEEL, "b": BLUE_D, "h": BLUE, "G": GOLD_D}, 1, 2)
+    return img
+
+
+def reid_drawn():
+    """Holy Sword: Reid drawn, a bright white blade with a red edge glint, the hilt down-left."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        "............w.",
+        "...........ww.",
+        "..........wsw.",
+        ".........wsw..",
+        "........wsw...",
+        ".......wsw....",
+        "......wsr.....",
+        ".....wsw......",
+        "..G.wsw.......",
+        "...GGw........",
+        "..bGG.........",
+        ".bb..G........",
+    ], {"w": WHITE, "s": STEEL, "r": RED, "b": BLUE_D, "G": GOLD_D}, 1, 2)
+    return img
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -299,6 +339,8 @@ ABILITIES = {
     "dash_behind": dash_behind,
     "stomp": stomp,
     "reflect": reflect,
+    "reid": reid,
+    "reid_drawn": reid_drawn,
 }
 
 DRAWN = {

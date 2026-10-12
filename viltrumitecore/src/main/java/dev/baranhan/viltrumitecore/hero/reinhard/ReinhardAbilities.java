@@ -94,6 +94,18 @@ public final class ReinhardAbilities {
       return ability == null || !ability.shipped() ? null : iconOf(ability);
    }
 
+   /** Stage 4: the Reid slot shows the drawn blade while Reid is out of the sheath (drawing, drawn, sheathing). */
+   @Nullable
+   public static ResourceLocation icon(@Nullable String abilityId, int heroFlags) {
+      ResourceLocation base = icon(abilityId);
+      if (base != null && byId(abilityId) == ReinhardAbility.REID && (ReinhardFlags.has(heroFlags, ReinhardFlags.REID_DRAWN)
+         || ReinhardFlags.has(heroFlags, ReinhardFlags.REID_DRAWING) || ReinhardFlags.has(heroFlags, ReinhardFlags.REID_SHEATHING))) {
+         return new ResourceLocation("viltrumitecore", "textures/gui/ability/reinhard/" + ReinhardAbility.REID.key() + "_drawn.png");
+      }
+
+      return base;
+   }
+
    private static ResourceLocation iconOf(ReinhardAbility ability) {
       return new ResourceLocation("viltrumitecore", "textures/gui/ability/reinhard/" + ability.key() + ".png");
    }

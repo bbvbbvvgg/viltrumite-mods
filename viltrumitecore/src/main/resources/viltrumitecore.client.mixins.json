@@ -77,7 +77,8 @@
     "ViltrumiteInGameHudMixin",
     "SkyTintMixin",
     "LevelRainMixin",
-    "SoundEngineVolumeMixin"
+    "SoundEngineVolumeMixin",
+    "ItemInHandRendererInvoker"
   ],
   "injectors": {
     "defaultRequire": 1

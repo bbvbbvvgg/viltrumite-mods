@@ -30,6 +30,8 @@ public final class ReinhardClips {
    /** Stage 4: Reid's 6 s draw and 1 s sheathe (driven by the Reid phase, not the action timeline). */
    public static final String REID_DRAW = "reid_draw";
    public static final String REID_SHEATHE = "reid_sheathe";
+   /** Reid in the right hand: loop over the Holy Sword stance. */
+   public static final String IDLE_HOLY_DRAWN = "idle_holy_drawn";
    /** Phase 1 of a window (catch / reflect) and of the grab = the snap / the throw. */
    public static final int PHASE_SNAP = dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline.PHASE_SNAP;
 
@@ -48,7 +50,7 @@ public final class ReinhardClips {
          case DASH_BEHIND -> List.of(DASH_BEHIND);
          case STOMP -> List.of(STOMP);
          case REFLECT -> List.of(REFLECT_READY, REFLECT);
-         case REID -> List.of(REID_DRAW, REID_SHEATHE);
+         case REID -> List.of(REID_DRAW, REID_SHEATHE, IDLE_HOLY_DRAWN);
          default -> List.of();
       };
    }
