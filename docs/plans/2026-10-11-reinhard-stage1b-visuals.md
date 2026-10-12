@@ -98,11 +98,11 @@ See the overview. Stage-specific:
 - `StanceBlend`: per-player weights `WeakHashMap<Entity, State>`; `float[] weights(Entity e, ReinhardMode target, long nanoTime)`; ease `1 − exp(−k·dt)`, `k = 12`, dt clamped to 0.1 s; called once per entity per frame (skill §6). The renderer blends the old and new stance with `AnimationController.blend` while the weight < 0.999.
 - Knight's walk keeps the left arm behind the back: `walk` is blended with `idle_knight` on `left_arm` only (`overlay` of a one-bone clip `knight_left_arm_hold`).
 
-- [ ] **Step 1: Write the failing tests** — `blendReachesTarget` (after 1 s weight > 0.999), `frameRateIndependent` (60 calls at 16 ms ≈ 240 calls at 4 ms within 1e-3), `secondCallSameFrameDoesNotAdvance` (dt 0 → unchanged), `resetOnHeroChange`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**; generate the clips.
-- [ ] **Step 4: Run** → PASS. Manual third person: each MMB switch blends to the new stance in ~0.3 s; Knight walks with one arm behind the back.
-- [ ] **Step 5: Commit** `feat(reinhard): stances per mode`.
+- [x] **Step 1: Write the failing tests** — `blendReachesTarget` (after 1 s weight > 0.999), `frameRateIndependent` (60 calls at 16 ms ≈ 240 calls at 4 ms within 1e-3), `secondCallSameFrameDoesNotAdvance` (dt 0 → unchanged), `resetOnHeroChange`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**; generate the clips.
+- [x] **Step 4: Run** → PASS. Manual third person: each MMB switch blends to the new stance in ~0.3 s; Knight walks with one arm behind the back.
+- [x] **Step 5: Commit** `feat(reinhard): stances per mode`.
 
 ### Task 5: First person arms
 

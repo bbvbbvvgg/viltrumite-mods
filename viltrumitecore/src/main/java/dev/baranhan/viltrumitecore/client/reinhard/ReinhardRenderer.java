@@ -13,6 +13,8 @@ import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
 import java.util.List;
 import java.util.Map;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
@@ -47,6 +49,9 @@ public final class ReinhardRenderer {
    /** Vanilla alpha of an invisible player seen by a spectator or teammate. */
    static final float TRANSLUCENT_ALPHA = 0.15F;
    static final String WALK = "walk";
+   static final String KNIGHT_HOLD = "knight_left_arm_hold";
+   static final String CROUCH = "crouch";
+   static final String SIT = "sit";
    /** Fallback stance while a stance clip is missing: every bone at rest. */
    private static final Animation REST = new Animation("rest", 1.0, Animation.LoopType.LOOP, Map.of(), List.of());
 
@@ -61,6 +66,7 @@ public final class ReinhardRenderer {
 
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
       if (snapshot == null) {
+         StanceBlend.reset(player);
          return;
       }
 
@@ -83,7 +89,8 @@ public final class ReinhardRenderer {
       }
 
       ReinhardPoses.Pose pose = pose(player, snapshot, partialTick);
-      applyClips(body, pose);
+      float[] weights = StanceBlend.weights(player, ReinhardView.mode(snapshot), Util.getNanos());
+      applyClips(body, pose, StanceBlend.mix(weights, ReinhardView.mode(snapshot)), weights[ReinhardMode.KNIGHT.ordinal()]);
       applyHead(body, player, partialTick);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
@@ -95,7 +102,7 @@ public final class ReinhardRenderer {
          AnimRenderer.render(body, stack, null, buffers.getBuffer(type), light, overlay, 1.0F, 1.0F, 1.0F, alpha, null);
       }
 
-      if (passes.outline()) {
+      if (passes.outline() && !ShaderCompat.isShadowPass()) {
          // Vanilla draws an invisible glowing entity with RenderType.outline only (the buffer source is the outline source).
          AnimRenderer.render(body, stack, null, buffers.getBuffer(RenderType.outline(ReinhardAssets.TEXTURE)), light, overlay, 1.0F, 1.0F, 1.0F, 1.0F, null);
       }
@@ -112,15 +119,37 @@ public final class ReinhardRenderer {
       stack.popPose();
    }
 
-   /** Stance/walk blend by swing, then the action overlay on the bones it animates. */
-   static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose) {
-      Animation stance = AnimCache.animation(ReinhardAssets.ANIMATIONS, pose.stance());
-      Animation walk = AnimCache.animation(ReinhardAssets.ANIMATIONS, WALK);
-      Animation from = stance != null ? stance : REST;
-      if (walk != null) {
-         AnimationController.blend(model, from, pose.stanceSeconds(), walk, pose.walkSeconds(), pose.walk());
+   /**
+    * Stance (old → new mode blended by {@link StanceBlend}), the walk over the limbs by swing,
+    * Knight's left arm held behind the back over the walk (by the Knight stance weight),
+    * crouch/sit added like vanilla's model code, then the action overlay.
+    */
+   static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight) {
+      Animation to = clip(ReinhardPoses.stance(mix.to()));
+      if (mix.weight() >= StanceBlend.SETTLED || mix.from() == mix.to()) {
+         AnimationController.seek(to, model, pose.stanceSeconds());
       } else {
-         AnimationController.seek(from, model, pose.stanceSeconds());
+         AnimationController.blend(model, clip(ReinhardPoses.stance(mix.from())), pose.stanceSeconds(), to, pose.stanceSeconds(), mix.weight());
+      }
+
+      Animation walk = AnimCache.animation(ReinhardAssets.ANIMATIONS, WALK);
+      if (walk != null) {
+         AnimationController.overlay(walk, model, pose.walkSeconds(), pose.walk());
+      }
+
+      Animation hold = AnimCache.animation(ReinhardAssets.ANIMATIONS, KNIGHT_HOLD);
+      if (hold != null) {
+         AnimationController.overlay(hold, model, pose.stanceSeconds(), knightWeight);
+      }
+
+      String additive = switch (pose.body()) {
+         case CROUCH -> CROUCH;
+         case SIT -> SIT;
+         default -> null;
+      };
+      Animation state = additive == null ? null : AnimCache.animation(ReinhardAssets.ANIMATIONS, additive);
+      if (state != null) {
+         AnimationController.additive(state, model, 0.0, 1.0F);
       }
 
       ReinhardPoses.Clip overlay = pose.overlay();
@@ -130,6 +159,11 @@ public final class ReinhardRenderer {
             AnimationController.overlay(clip, model, overlay.seconds());
          }
       }
+   }
+
+   private static Animation clip(String name) {
+      Animation clip = AnimCache.animation(ReinhardAssets.ANIMATIONS, name);
+      return clip != null ? clip : REST;
    }
 
    /** The head follows the look (vanilla netHeadYaw / headPitch); BakedGeoModel turns are negated. */
