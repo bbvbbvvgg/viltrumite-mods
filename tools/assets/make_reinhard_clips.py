@@ -22,6 +22,7 @@ Swim (loop 1 s = vanilla's 26 walk-position units, overlay weighted by swimAmoun
   0.3 rad (vanilla's leg period 6 pi units is shown once per stroke).
 
 Stage 4 (overlay driven by Reid's phase clock, ReinhardPoses.reidClip):
+- chop_left / chop_right: Lethal Chop (the kit chop) sweep of each hand, 1 s.
 - idle_holy_drawn: loop, the right arm holds Reid low and forward.
 - reid_draw: 6 s slow draw from the left hip, standing still; reid_sheathe: 1 s reverse.
 
@@ -271,6 +272,21 @@ CLIPS["reid_draw"] = {"loop": "hold_on_last_frame", "animation_length": 6.0, "bo
     "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [-4, 0, 7], "6.0": [-4, 0, 7]}},
     "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [4, 0, -7], "6.0": [4, 0, -7]}},
 }}
+# Lethal Chop (the kit chop, 20 t = 1 s, the standard 2-keyframe timeline of the animation skill):
+# wind-up out to the side (0.25), the flat sweep across the front (0.35), hold (0.65), back (0.9).
+def chop(side):
+    m = 1 if side == "right" else -1
+    arm = side + "_arm"
+    return {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
+        arm: {"rotation": {"0.0": [0, 0, 3 * m], "0.25": [-95, 60 * m, 20 * m], "0.35": [-95, -55 * m, -10 * m],
+                           "0.5": [-90, -50 * m, -8 * m], "0.65": [-90, -50 * m, -8 * m], "0.9": [0, 0, 3 * m]}},
+        "body": {"rotation": {"0.0": [0, 0, 0], "0.25": [0, 25 * m, 0], "0.35": [0, -25 * m, 0], "0.65": [0, -20 * m, 0], "0.9": [0, 0, 0]}},
+        "head": {"rotation": {"0.0": [0, 0, 0], "0.25": [0, -10 * m, 0], "0.35": [0, 8 * m, 0], "0.9": [0, 0, 0]}},
+    }}
+
+
+CLIPS["chop_right"] = chop("right")
+CLIPS["chop_left"] = chop("left")
 # Reid drawn (loop over the Holy Sword stance, right arm only: the left hand stays on the empty
 # sheath at the hip): the sword held low and forward, the arm breathing with it.
 CLIPS["idle_holy_drawn"] = loop({"right_arm": {"rotation": breathe([-40, 0, 10], [-42, 0, 11])}})

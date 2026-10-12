@@ -72,6 +72,52 @@ public final class ReinhardHero implements HeroDefinition {
       return false;
    }
 
+   /** Lethal Chop (spec §7.2): of the kit only {@code viltrumite:chop}, and not while Reid is being drawn or sheathed. */
+   @Override
+   public boolean allowsLegacyAbility(Player player, String abilityId) {
+      return allowsKitAbility(abilityId, flags(player));
+   }
+
+   /** Pure: the kit ability rule over the synced Reinhard flags. */
+   public static boolean allowsKitAbility(String abilityId, int heroFlags) {
+      return dev.baranhan.viltrumitecore.hero.LegacyKit.CHOP.equals(abilityId)
+         && !ReinhardFlags.has(heroFlags, ReinhardFlags.REID_DRAWING) && !ReinhardFlags.has(heroFlags, ReinhardFlags.REID_SHEATHING);
+   }
+
+   /** Fixed chop base (35 per chop = ×1.75), no Viltrumite tank numbers. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.HeroChassis chassisStats(Player player) {
+      return CHASSIS;
+   }
+
+   private static final dev.baranhan.viltrumitecore.hero.HeroChassis CHASSIS = new dev.baranhan.viltrumitecore.hero.HeroChassis(ReinhardRules.CHOP_BASE_DAMAGE, 0.0F, 0.0F);
+   private static final dev.baranhan.viltrumitecore.hero.ChopStyle CHOP = new dev.baranhan.viltrumitecore.hero.ChopStyle(false, 2.0F, 0xFFFFFF, 0xB0142A, true, 1.4F, 0.8F);
+   private static final dev.baranhan.viltrumitecore.hero.ChopStyle CHOP_LEFT = new dev.baranhan.viltrumitecore.hero.ChopStyle(true, 2.0F, 0xFFFFFF, 0xB0142A, true, 1.4F, 0.8F);
+
+   /** Lethal Chop look: a 2× white-crimson arc with an air ripple, louder and lower; Reid drawn = always the left hand (spec §9.2). */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.ChopStyle chopStyle(Player player) {
+      return chopStyle(flags(player));
+   }
+
+   public static dev.baranhan.viltrumitecore.hero.ChopStyle chopStyle(int heroFlags) {
+      return ReinhardFlags.has(heroFlags, ReinhardFlags.REID_DRAWN) ? CHOP_LEFT : CHOP;
+   }
+
+   /** Synced Reinhard flags of a player (server: the live state; client: the snapshot), 0 when unknown. */
+   private static int flags(Player player) {
+      if (player instanceof ServerPlayer serverPlayer) {
+         ReinhardState state = ReinhardState.of(serverPlayer);
+         if (state != null) {
+            return dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(0, state.reid.phase());
+         }
+      }
+
+      dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot snapshot = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
+         ? heroPlayer.getHeroSnapshot() : null;
+      return snapshot == null ? 0 : snapshot.heroFlags();
+   }
+
    @Override
    public boolean hasAbilityPanel(Player player) {
       return true;

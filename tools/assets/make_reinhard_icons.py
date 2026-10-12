@@ -329,6 +329,26 @@ def reid_drawn():
     ], {"w": WHITE, "s": STEEL, "r": RED, "b": BLUE_D, "G": GOLD_D}, 1, 2)
     return img
 
+
+def lethal_chop():
+    """Lethal Chop: a flat white hand-blade arc with a crimson edge sweeping across the slot."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        "..............",
+        "....rrrrrr....",
+        "..rrwwwwwwrr..",
+        ".rww......wwr.",
+        "rw..........wr",
+        "w............w",
+        "..............",
+        "....sss.......",
+        "...sssss......",
+        "..kssssk......",
+        "...kkkk.......",
+        "..............",
+    ], {"w": WHITE, "r": RED, "s": SKIN, "k": SKIN_D}, 1, 2)
+    return img
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -341,6 +361,7 @@ ABILITIES = {
     "reflect": reflect,
     "reid": reid,
     "reid_drawn": reid_drawn,
+    "lethal_chop": lethal_chop,
 }
 
 DRAWN = {

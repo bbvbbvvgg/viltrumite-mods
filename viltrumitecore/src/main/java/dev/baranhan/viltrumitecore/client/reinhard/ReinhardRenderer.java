@@ -110,7 +110,8 @@ public final class ReinhardRenderer {
       ReinhardPoses.ReidPhase reidPhase = ReinhardView.reid(snapshot);
       double reidTicks = dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reidPhase, partialTick);
       applyClips(body, pose, StanceBlend.mix(weights, ReinhardView.mode(snapshot)), weights[ReinhardMode.KNIGHT.ordinal()], swim,
-         player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT, parry, ReinhardPoses.reidClip(reidPhase, reidTicks));
+         player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT, parry, ReinhardPoses.reidClip(reidPhase, reidTicks),
+         player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core ? ReinhardPoses.chopClip(core.getChopTicks(), core.isLeftChop(), partialTick) : null);
       applyHead(body, player, partialTick);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
@@ -277,7 +278,7 @@ public final class ReinhardRenderer {
     * reaction weighted by its real-time pulse.
     */
    static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight, float swim, double swimSeconds,
-      ParryPulse.Sample parry, @javax.annotation.Nullable ReinhardPoses.Clip reid) {
+      ParryPulse.Sample parry, @javax.annotation.Nullable ReinhardPoses.Clip reid, @javax.annotation.Nullable ReinhardPoses.Clip chop) {
       Animation to = clip(ReinhardPoses.stance(mix.to()));
       if (mix.weight() >= StanceBlend.SETTLED || mix.from() == mix.to()) {
          AnimationController.seek(to, model, pose.stanceSeconds());
@@ -323,6 +324,12 @@ public final class ReinhardRenderer {
       Animation reidClip = reid == null ? null : AnimCache.animation(ReinhardAssets.ANIMATIONS, reid.animation());
       if (reidClip != null) {
          AnimationController.overlay(reidClip, model, reid.seconds());
+      }
+
+      // Stage 4: Lethal Chop (model mixins do not run for the replaced body).
+      Animation chopClip = chop == null ? null : AnimCache.animation(ReinhardAssets.ANIMATIONS, chop.animation());
+      if (chopClip != null) {
+         AnimationController.overlay(chopClip, model, chop.seconds());
       }
 
       Animation parryClip = parry.weight() > 0.0F ? AnimCache.animation(ReinhardAssets.ANIMATIONS, PARRY) : null;

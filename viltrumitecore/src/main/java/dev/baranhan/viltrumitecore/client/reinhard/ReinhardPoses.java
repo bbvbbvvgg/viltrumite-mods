@@ -60,6 +60,20 @@ public final class ReinhardPoses {
    /** Clip seconds per walk-position unit of the 1 s swim stroke: vanilla's stroke repeats every 26 units (HumanoidModel). */
    public static final double SWIM_SECONDS_PER_UNIT = 1.0 / 26.0;
 
+   /** Kit chop length (PlayerEntityCoreMixin counts 20 → 0). */
+   public static final int CHOP_TICKS = 20;
+
+   /** Stage 4, Lethal Chop: the chop overlay from the synced chop ticks (20 → 0) and side; null when no chop runs. */
+   @Nullable
+   public static Clip chopClip(int chopTicks, boolean left, float partialTick) {
+      if (chopTicks <= 0) {
+         return null;
+      }
+
+      double seconds = Math.max(0.0, Math.min(1.0, (CHOP_TICKS - (chopTicks - partialTick)) / (double)CHOP_TICKS));
+      return new Clip(left ? ReinhardClips.CHOP_LEFT : ReinhardClips.CHOP_RIGHT, seconds);
+   }
+
    /** Stage 4: Reid's draw / sheathe / drawn-idle overlay at {@code ticks} into the phase; null while sheathed. */
    @Nullable
    public static Clip reidClip(ReidPhase phase, double ticks) {

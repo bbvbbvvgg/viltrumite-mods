@@ -1344,7 +1344,9 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
          }
 
          if (currentTicks == 15) {
-            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.5F, 0.5F);
+            dev.baranhan.viltrumitecore.hero.ChopStyle style = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).chopStyle(player);
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, style.sweepVolume(),
+               style.sweepPitch());
          }
 
          this.setChopTicks(currentTicks - 1);
