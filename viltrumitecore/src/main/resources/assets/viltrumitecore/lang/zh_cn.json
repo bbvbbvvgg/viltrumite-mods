@@ -449,5 +449,8 @@
   "ability.viltrumitecore.reinhard_stomp.name": "震地踏",
   "ability.viltrumitecore.reinhard_stomp.desc": "按下后用脚猛踏地面：对8格内地面上的一切造成12点伤害并向外击退；地表一层会碎裂。冷却8秒。",
   "ability.viltrumitecore.reinhard_reflect.name": "反弹投射物",
-  "ability.viltrumitecore.reinhard_reflect.desc": "按下后抬起手背1秒：击中你的所有投射物都会以相同速度飞回射手。冷却4秒。"
+  "ability.viltrumitecore.reinhard_reflect.desc": "按下后抬起手背1秒：击中你的所有投射物都会以相同速度飞回射手。冷却4秒。",
+  "death.attack.viltrumitecore.annihilation": "%1$s被圣剑抹除",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s被%2$s的圣剑抹除",
+  "commands.viltrumitecore.annihilate.success": "莱德斩击：击杀 %s，被挡下（绝对）%s，免疫（神圣）%s，跳过 %s"
 }

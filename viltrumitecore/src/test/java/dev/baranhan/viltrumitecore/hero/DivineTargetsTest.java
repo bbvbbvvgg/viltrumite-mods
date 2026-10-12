@@ -48,7 +48,9 @@ class DivineTargetsTest {
       for (String tag : new String[]{"bypasses_armor", "bypasses_shield", "bypasses_enchantments", "bypasses_effects"}) {
          assertTrue(java.nio.file.Files.readString(data.resolve("minecraft/tags/damage_type/" + tag + ".json")).contains("\"viltrumitecore:divine\""), tag);
       }
-      assertFalse(java.nio.file.Files.exists(data.resolve("minecraft/tags/damage_type/bypasses_invulnerability.json")));
+      // Divine damage never bypasses invulnerability (the tag exists since Stage 4 for the Reid strike only).
+      java.nio.file.Path invulnerability = data.resolve("minecraft/tags/damage_type/bypasses_invulnerability.json");
+      assertFalse(java.nio.file.Files.exists(invulnerability) && java.nio.file.Files.readString(invulnerability).contains("\"viltrumitecore:divine\""));
       assertTrue(java.nio.file.Files.exists(data.resolve("viltrumitecore/tags/entity_types/divine.json")));
    }
 }

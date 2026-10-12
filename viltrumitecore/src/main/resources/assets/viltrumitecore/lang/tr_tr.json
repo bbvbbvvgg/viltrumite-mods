@@ -449,5 +449,8 @@
   "ability.viltrumitecore.reinhard_stomp.name": "Yere Vuruş",
   "ability.viltrumitecore.reinhard_stomp.desc": "Ayağınla yere vurmak için bas: 8 blok içinde yerdeki her şeye 12 hasar ve dışarı itme; zeminin üst katmanı çatlar. Bekleme 8 sn.",
   "ability.viltrumitecore.reinhard_reflect.name": "Mermi Yansıtma",
-  "ability.viltrumitecore.reinhard_reflect.desc": "1 sn boyunca elinin tersini kaldırmak için bas: sana isabet eden her mermi aynı hızla atana geri uçar. Bekleme 4 sn."
+  "ability.viltrumitecore.reinhard_reflect.desc": "1 sn boyunca elinin tersini kaldırmak için bas: sana isabet eden her mermi aynı hızla atana geri uçar. Bekleme 4 sn.",
+  "death.attack.viltrumitecore.annihilation": "%1$s kutsal bir kılıçla silindi",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s, %2$s tarafından kutsal bir kılıçla silindi",
+  "commands.viltrumitecore.annihilate.success": "Reid darbesi: %s öldü, %s engellendi (mutlak), %s bağışık (ilahi), %s atlandı"
 }

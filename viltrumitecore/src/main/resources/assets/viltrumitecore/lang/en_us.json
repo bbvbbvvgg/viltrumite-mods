@@ -449,5 +449,8 @@
   "ability.viltrumitecore.reinhard_stomp.name": "Stomp",
   "ability.viltrumitecore.reinhard_stomp.desc": "Press to slam the ground with your foot: 12 damage to everything within 8 blocks on the ground, pushed outward; the top layer of the ground cracks. Cooldown 8 s.",
   "ability.viltrumitecore.reinhard_reflect.name": "Reflect Projectile",
-  "ability.viltrumitecore.reinhard_reflect.desc": "Press to raise the back of your hand for 1 s: every projectile that hits you flies back to its shooter at the same speed. Cooldown 4 s."
+  "ability.viltrumitecore.reinhard_reflect.desc": "Press to raise the back of your hand for 1 s: every projectile that hits you flies back to its shooter at the same speed. Cooldown 4 s.",
+  "death.attack.viltrumitecore.annihilation": "%1$s was erased by a holy blade",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s was erased by the holy blade of %2$s",
+  "commands.viltrumitecore.annihilate.success": "Reid strike: %s killed, %s blocked (absolute), %s immune (divine), %s skipped"
 }

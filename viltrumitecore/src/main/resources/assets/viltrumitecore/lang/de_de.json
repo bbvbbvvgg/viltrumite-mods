@@ -449,5 +449,8 @@
   "ability.viltrumitecore.reinhard_stomp.name": "Stampfer",
   "ability.viltrumitecore.reinhard_stomp.desc": "Drücken, um mit dem Fuß auf den Boden zu stampfen: 12 Schaden an allem im Umkreis von 8 Blöcken am Boden, nach außen gestoßen; die oberste Bodenschicht bricht auf. Abklingzeit 8 s.",
   "ability.viltrumitecore.reinhard_reflect.name": "Geschoss zurückwerfen",
-  "ability.viltrumitecore.reinhard_reflect.desc": "Drücken, um 1 s lang den Handrücken zu heben: Jedes Geschoss, das dich trifft, fliegt mit gleicher Geschwindigkeit zum Schützen zurück. Abklingzeit 4 s."
+  "ability.viltrumitecore.reinhard_reflect.desc": "Drücken, um 1 s lang den Handrücken zu heben: Jedes Geschoss, das dich trifft, fliegt mit gleicher Geschwindigkeit zum Schützen zurück. Abklingzeit 4 s.",
+  "death.attack.viltrumitecore.annihilation": "%1$s wurde von einer heiligen Klinge ausgelöscht",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s wurde von der heiligen Klinge von %2$s ausgelöscht",
+  "commands.viltrumitecore.annihilate.success": "Reid-Schlag: %s getötet, %s geblockt (absolut), %s immun (göttlich), %s übersprungen"
 }
