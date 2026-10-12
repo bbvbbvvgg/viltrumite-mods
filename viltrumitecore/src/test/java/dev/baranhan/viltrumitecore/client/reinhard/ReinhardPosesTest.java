@@ -1,0 +1,107 @@
+package dev.baranhan.viltrumitecore.client.reinhard;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.baranhan.viltrumitecore.hero.HeroAction;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
+import net.minecraft.world.entity.HumanoidArm;
+import org.junit.jupiter.api.Test;
+
+class ReinhardPosesTest {
+   private static ReinhardPoses.Input input(ReinhardMode mode, int actionId, int elapsed, int length, float swing) {
+      return new ReinhardPoses.Input(mode, ReinhardFlags.withMode(0, mode), actionId, elapsed, length, 0.5F, swing, 3.0F, 12.5,
+         net.minecraft.world.entity.Pose.STANDING, false);
+   }
+
+   @Test
+   void idleWhenStill() {
+      ReinhardPoses.Pose pose = ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, -1, 0, 0, 0.0F));
+      assertEquals(0.0F, pose.walk(), 1.0E-6F);
+      assertEquals(12.5, pose.stanceSeconds(), 1.0E-9);
+      assertNull(pose.overlay());
+      assertEquals(ReinhardPoses.BodyState.STAND, pose.body());
+   }
+
+   @Test
+   void walkWeightFromSwing() {
+      assertEquals(1.0F, ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, -1, 0, 0, 0.55F)).walk(), 1.0E-6F);
+      assertEquals(0.5F, ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, -1, 0, 0, 0.275F)).walk(), 1.0E-6F);
+      assertEquals(1.0F, ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, -1, 0, 0, 0.9F)).walk(), 1.0E-6F, "clamped");
+      // Clip time follows the walked distance: one vanilla limb-swing period (2 pi / 0.6662) = one clip length.
+      ReinhardPoses.Pose pose = ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, -1, 0, 0, 0.55F));
+      assertEquals(3.0 * ReinhardPoses.WALK_SECONDS_PER_BLOCK, pose.walkSeconds(), 1.0E-9);
+      assertEquals(1.0, 2.0 * Math.PI / 0.6662 * ReinhardPoses.WALK_SECONDS_PER_BLOCK, 1.0E-6);
+   }
+
+   @Test
+   void stanceFollowsMode() {
+      assertEquals("idle_restrained", ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, -1, 0, 0, 0.0F)).stance());
+      assertEquals("idle_knight", ReinhardPoses.pose(input(ReinhardMode.KNIGHT, -1, 0, 0, 0.0F)).stance());
+      assertEquals("idle_holy", ReinhardPoses.pose(input(ReinhardMode.HOLY_SWORD, -1, 0, 0, 0.0F)).stance());
+   }
+
+   @Test
+   void overlayFromAction() {
+      int id = HeroAction.LIGHT_PUNCH.ordinal();
+      ReinhardPoses.Clip clip = ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, id, 4, 10, 0.0F)).overlay();
+      assertNotNull(clip);
+      assertEquals("light_punch", clip.animation());
+      assertEquals((4 + 0.5) / 20.0, clip.seconds(), 1.0E-9);
+      ReinhardPoses.Clip late = ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, id, 12, 10, 0.0F)).overlay();
+      assertEquals(10 / 20.0, late.seconds(), 1.0E-9, "clamped to the action length");
+   }
+
+   @Test
+   void bodyStateFromVanillaPose() {
+      ReinhardPoses.Input crouch = new ReinhardPoses.Input(ReinhardMode.RESTRAINED, 0, -1, 0, 0, 0.0F, 0.0F, 0.0F, 0.0,
+         net.minecraft.world.entity.Pose.CROUCHING, false);
+      assertEquals(ReinhardPoses.BodyState.CROUCH, ReinhardPoses.pose(crouch).body());
+      ReinhardPoses.Input ride = new ReinhardPoses.Input(ReinhardMode.RESTRAINED, 0, -1, 0, 0, 0.0F, 0.0F, 0.0F, 0.0,
+         net.minecraft.world.entity.Pose.STANDING, true);
+      assertEquals(ReinhardPoses.BodyState.SIT, ReinhardPoses.pose(ride).body());
+   }
+
+   @Test
+   void passesInvisibleGlowingOnlyOutline() {
+      ReinhardPoses.Passes passes = ReinhardPoses.passes(true, false, true);
+      assertFalse(passes.body());
+      assertTrue(passes.outline());
+      assertFalse(passes.extras());
+      ReinhardPoses.Passes none = ReinhardPoses.passes(true, false, false);
+      assertFalse(none.body() || none.outline() || none.extras(), "invisible, not glowing: nothing, and still no vanilla body");
+   }
+
+   @Test
+   void passesInvisibleSpectatorTranslucent() {
+      ReinhardPoses.Passes passes = ReinhardPoses.passes(true, true, false);
+      assertTrue(passes.body());
+      assertTrue(passes.translucent());
+      assertFalse(passes.extras());
+      assertFalse(passes.outline());
+   }
+
+   @Test
+   void passesVisibleAll() {
+      ReinhardPoses.Passes passes = ReinhardPoses.passes(false, true, true);
+      assertTrue(passes.body());
+      assertFalse(passes.translucent());
+      assertTrue(passes.extras());
+      assertFalse(passes.outline(), "a visible glowing body outlines through the outline buffer source itself");
+   }
+
+   @Test
+   void heldItemHiddenOnReidHand() {
+      assertTrue(ReinhardPoses.drawsHeldItem(HumanoidArm.RIGHT, ReinhardPoses.ReidPhase.SHEATHED));
+      for (ReinhardPoses.ReidPhase phase : new ReinhardPoses.ReidPhase[]{ReinhardPoses.ReidPhase.DRAWING, ReinhardPoses.ReidPhase.DRAWN, ReinhardPoses.ReidPhase.SHEATHING}) {
+         assertFalse(ReinhardPoses.drawsHeldItem(HumanoidArm.RIGHT, phase), phase.name());
+         assertTrue(ReinhardPoses.drawsHeldItem(HumanoidArm.LEFT, phase), phase.name());
+      }
+      assertEquals(ReinhardPoses.ReidPhase.DRAWN, ReinhardPoses.reidPhase(1 << ReinhardFlags.REID_DRAWN));
+      assertEquals(ReinhardPoses.ReidPhase.SHEATHED, ReinhardPoses.reidPhase(0));
+   }
+}
