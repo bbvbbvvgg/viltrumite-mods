@@ -28,6 +28,8 @@ public final class ReinhardState {
    public final java.util.Map<java.util.UUID, Long> recentAttackers = new java.util.HashMap<>();
    /** Stage 3: the one action timeline (ability, elapsed, length, target, phase); transient. */
    public final ActionTimeline action = new ActionTimeline();
+   /** Catch Projectile (stage 3): ticks the palm stays open; transient. */
+   public int catchWindow;
 
    /**
     * Busy = an action that must not be interrupted by a mode switch (Reid

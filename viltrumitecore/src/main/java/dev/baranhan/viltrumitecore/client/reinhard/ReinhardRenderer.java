@@ -212,7 +212,7 @@ public final class ReinhardRenderer {
          ticks = Math.min(ticks, snapshot.actionLength());
       }
 
-      return ReinhardFirstPersonPose.of(all[id], snapshot.variant(), Math.max(0.0, ticks));
+      return ReinhardFirstPersonPose.of(all[id], snapshot.variant(), Math.max(0.0, ticks), snapshot.actionLength());
    }
 
    /**

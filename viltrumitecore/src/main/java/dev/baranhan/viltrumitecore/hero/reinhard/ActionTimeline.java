@@ -9,6 +9,8 @@ import javax.annotation.Nullable;
  * which drive the clips in both views. Transient (never saved). Pure.
  */
 public final class ActionTimeline {
+   /** Phase of a window (catch / reflect) after a projectile was taken, and of the grab after the throw. */
+   public static final int PHASE_SNAP = 1;
    @Nullable
    private ReinhardAbility ability;
    private int elapsed;

@@ -13,6 +13,7 @@ import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
 import dev.baranhan.viltrumitecore.hero.ProjectileResponse;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.CatchWindow;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.CloudStep;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Detox;
@@ -334,8 +335,18 @@ public final class ReinhardHero implements HeroDefinition {
     */
    @Override
    public ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) {
-      // Stage 3 opens the catch / reflect windows; none exist yet.
-      return ArrowWard.response(false, false);
+      ReinhardState state = ReinhardState.of(self);
+      ProjectileResponse response = projectileResponse(state);
+      if (response == ProjectileResponse.CATCH) {
+         CatchWindow.onCatch(self, state);
+      }
+
+      return response;
+   }
+
+   /** Pure: the open palm windows (stage 3) win over the passive deflection; no state = no window. */
+   static ProjectileResponse projectileResponse(@javax.annotation.Nullable ReinhardState state) {
+      return ArrowWard.response(state != null && CatchWindow.isOpen(state), false);
    }
 
    /** Spec §3.1: void and generic_kill never take him below 1 HP (/kill still kills: AdminKill). */
@@ -438,6 +449,10 @@ public final class ReinhardHero implements HeroDefinition {
 
    /** Stage 3 window / hold bits of the snapshot (catch, reflect, grab, hit-stop). */
    static int stateFlags(ReinhardState state, int flags) {
+      if (CatchWindow.isOpen(state)) {
+         flags |= 1 << ReinhardFlags.CATCH_WINDOW;
+      }
+
       return flags;
    }
 

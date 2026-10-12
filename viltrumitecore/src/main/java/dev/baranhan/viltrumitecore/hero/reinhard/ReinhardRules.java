@@ -91,6 +91,14 @@ public final class ReinhardRules {
    /** Action lock and clip length (the lean). */
    public static final int STEP_ACTION_TICKS = 6;
 
+   // ---- Catch Projectile (spec §6.1) ----
+   /** Ticks the palm is open from the press. */
+   public static final int CATCH_WINDOW = 10;
+   /** Counted from the press, not from the window's end. */
+   public static final int CATCH_COOLDOWN = 40;
+   /** The closing hand after a catch (the action lock may outlast the window by this). */
+   public static final int CATCH_SNAP_TICKS = 6;
+
    private ReinhardRules() {
    }
 

@@ -149,6 +149,19 @@ CLIPS["step_dash"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bo
     "left_leg": {"rotation": {"0.0": [14, 0, 0], "0.1": [30, 0, 0], "0.3": [4, 0, 0]}},
 }}
 
+# Catch Projectile: the palm held up in front of the face for the 10 t window...
+CLIPS["catch_ready"] = {"loop": "hold_on_last_frame", "animation_length": 0.5, "bones": {
+    "right_arm": {"rotation": {"0.0": [-60, -10, 0], "0.08": [-112, -18, 0], "0.5": [-110, -16, 0]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.08": [0, 8, 0], "0.5": [0, 8, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.08": [-4, -6, 0], "0.5": [-4, -6, 0]}},
+}}
+# ...and the hand closing on the projectile: knocked back a little, then held.
+CLIPS["catch"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "right_arm": {"rotation": {"0.0": [-110, -16, 0], "0.05": [-92, -6, 8], "0.15": [-104, -12, 2], "0.3": [-100, -10, 0]}},
+    "body": {"rotation": {"0.0": [0, 8, 0], "0.05": [-3, 12, 0], "0.3": [0, 8, 0]}},
+    "head": {"rotation": {"0.0": [-4, -6, 0], "0.3": [-4, -6, 0]}},
+}}
+
 
 def main():
     data = {"format_version": "1.8.0", "animations": {}}

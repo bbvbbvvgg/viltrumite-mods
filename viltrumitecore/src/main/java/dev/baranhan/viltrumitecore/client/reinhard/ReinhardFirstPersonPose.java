@@ -20,6 +20,17 @@ public final class ReinhardFirstPersonPose {
    static final float DASH_Y = -0.10F;
    static final float DASH_Z = 0.12F;
    static final float DASH_PITCH = 14.0F;
+   // Catch: the palm up in front of the face, then a short closing jerk on the catch.
+   static final float CATCH_X = -0.06F;
+   static final float CATCH_Y = 0.16F;
+   static final float CATCH_Z = -0.12F;
+   static final float CATCH_PITCH = -38.0F;
+   static final float CATCH_ROLL = -8.0F;
+   static final float SNAP_Z = -0.12F;
+   static final float SNAP_PITCH = 10.0F;
+   static final float SNAP_ROLL = 12.0F;
+   /** Ticks to raise / lower the hand. */
+   static final double CATCH_EASE = 2.0;
 
    private ReinhardFirstPersonPose() {
    }
@@ -33,6 +44,11 @@ public final class ReinhardFirstPersonPose {
    }
 
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks) {
+      return of(ability, phase, ticks, -1);
+   }
+
+   /** {@code length} = the synced action length (≤ 0 unknown: no fade-out at the end). */
+   public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks, int length) {
       if (ability == null) {
          return Offset.NONE;
       }
@@ -42,8 +58,25 @@ public final class ReinhardFirstPersonPose {
             .scaled(strike(ticks, ReinhardRules.LIGHT_PUNCH_HIT_TICK, ReinhardRules.LIGHT_PUNCH_TICKS));
          case STEP_DASH -> new Offset(0.0F, DASH_Y, DASH_Z, DASH_PITCH, 0.0F, 0.0F)
             .scaled(strike(ticks, ReinhardRules.STEP_TICKS / 2, ReinhardRules.STEP_ACTION_TICKS));
+         case CATCH -> catchHand(phase, ticks, length);
          default -> Offset.NONE;
       };
+   }
+
+   private static Offset catchHand(int phase, double ticks, int length) {
+      float fade = length > 0 ? (float) clamp01((length - ticks) / CATCH_EASE) : 1.0F;
+      if (phase != ReinhardClips.PHASE_SNAP) {
+         float w = (float) clamp01(ticks / CATCH_EASE) * fade;
+         return new Offset(CATCH_X, CATCH_Y, CATCH_Z, CATCH_PITCH, 0.0F, CATCH_ROLL).scaled(w);
+      }
+
+      // Held up the whole snap; the jerk peaks on the first tick and settles by the fourth.
+      float jerk = strike(ticks, 1, 4);
+      return new Offset(CATCH_X, CATCH_Y, CATCH_Z + SNAP_Z * jerk, CATCH_PITCH + SNAP_PITCH * jerk, 0.0F, CATCH_ROLL + SNAP_ROLL * jerk).scaled(fade);
+   }
+
+   private static double clamp01(double v) {
+      return v < 0.0 ? 0.0 : Math.min(1.0, v);
    }
 
    /** 0 → 1 (eased) by the contact tick, back to 0 by the end of the action. */

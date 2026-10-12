@@ -435,5 +435,7 @@
   "ability.viltrumitecore.reinhard_light_punch.name": "Golpe ligero",
   "ability.viltrumitecore.reinhard_light_punch.desc": "Un jab rápido: 4 de daño y un empujón leve. Nunca rompe bloques.",
   "ability.viltrumitecore.reinhard_step_dash.name": "Paso relámpago",
-  "ability.viltrumitecore.reinhard_step_dash.desc": "Un paso fugaz de 6 bloques hacia donde te mueves (o miras). Recarga 1 s."
+  "ability.viltrumitecore.reinhard_step_dash.desc": "Un paso fugaz de 6 bloques hacia donde te mueves (o miras). Recarga 1 s.",
+  "ability.viltrumitecore.reinhard_catch.name": "Atrapar proyectil",
+  "ability.viltrumitecore.reinhard_catch.desc": "Abre la palma 0,5 s: flechas y tridentes van a tu inventario, los demás proyectiles desaparecen. Recarga 2 s."
 }

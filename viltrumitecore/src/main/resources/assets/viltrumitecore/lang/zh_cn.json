@@ -435,5 +435,7 @@
   "ability.viltrumitecore.reinhard_light_punch.name": "轻拳",
   "ability.viltrumitecore.reinhard_light_punch.desc": "快速刺拳：造成4点伤害并轻微击退。从不破坏方块。",
   "ability.viltrumitecore.reinhard_step_dash.name": "闪步",
-  "ability.viltrumitecore.reinhard_step_dash.desc": "朝移动（或视线）方向闪步6格。冷却1秒。"
+  "ability.viltrumitecore.reinhard_step_dash.desc": "朝移动（或视线）方向闪步6格。冷却1秒。",
+  "ability.viltrumitecore.reinhard_catch.name": "接住投射物",
+  "ability.viltrumitecore.reinhard_catch.desc": "张开手掌0.5秒：箭矢和三叉戟会被收入物品栏，其他投射物直接消失。冷却2秒。"
 }

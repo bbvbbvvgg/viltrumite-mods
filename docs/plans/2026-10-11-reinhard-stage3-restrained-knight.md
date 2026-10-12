@@ -90,7 +90,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `CATCH_WINDOW = 10`, `CATCH_COOLDOWN = 40`.
 - Press opens the window (flag set, pose `catch_ready`); a caught projectile → `HeroProjectiles` CATCH (arrow to inventory), pose `catch` snap, sound placeholder `entity.item.pickup` pitch 0.8, `HeroFx.flash` at the hand; the window stays open until it ends (several catches allowed). Cooldown starts at the press.
 
-- [ ] Step 1 tests: `windowTenTicks`, `cooldownFortyFromPress`, `catchBeatsDeflectInWindow`, `deflectAfterWindow`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: skeleton arrows caught (count in inventory), trident caught as item, fireball caught = vanishes; first person hand closes. Step 5 commit `feat(reinhard): catch projectile`.
+- [x] Step 1 tests: `windowTenTicks`, `cooldownFortyFromPress`, `catchBeatsDeflectInWindow`, `deflectAfterWindow`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): catch projectile`.
+- [ ] Manual: skeleton arrows caught (count in inventory), trident caught as item, fireball caught = vanishes; first person hand closes — оставлено пользователю.
 
 ### Task 5: Fist Combo (Knight, slot 1)
 

@@ -159,9 +159,28 @@ def step_dash():
     return img
 
 
+def catch_projectile():
+    """Restrained: an open palm closing on an arrow flying in from the left."""
+    img = ability_plate(WHITE, WHITE_D)
+    paint(img, [
+        "........k.k.k.",
+        "........sksksk",
+        ".......kssssss",
+        "a.....ksssssss",
+        ".a....kssssssk",
+        "aaaaaGGssssssk",
+        ".a....kssssssk",
+        "a.....kssssk..",
+        "......kssssk..",
+        ".......kkkk...",
+    ], {"k": SKIN_D, "s": SKIN, "a": STEEL_D, "G": GOLD_D}, 1, 3)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
+    "catch": catch_projectile,
 }
 
 DRAWN = {

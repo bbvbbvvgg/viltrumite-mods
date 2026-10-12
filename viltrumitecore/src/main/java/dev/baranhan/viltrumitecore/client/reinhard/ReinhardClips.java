@@ -28,7 +28,7 @@ public final class ReinhardClips {
    public static final String REFLECT_READY = "reflect_ready";
    public static final String REFLECT = "reflect";
    /** Phase 1 of a window (catch / reflect) and of the grab = the snap / the throw. */
-   public static final int PHASE_SNAP = 1;
+   public static final int PHASE_SNAP = dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline.PHASE_SNAP;
 
    private ReinhardClips() {
    }

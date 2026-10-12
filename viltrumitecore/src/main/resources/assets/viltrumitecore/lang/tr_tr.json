@@ -435,5 +435,7 @@
   "ability.viltrumitecore.reinhard_light_punch.name": "Hafif Yumruk",
   "ability.viltrumitecore.reinhard_light_punch.desc": "Hızlı bir direkt: 4 hasar ve hafif bir itiş. Asla blok kırmaz.",
   "ability.viltrumitecore.reinhard_step_dash.name": "Adım Atılımı",
-  "ability.viltrumitecore.reinhard_step_dash.desc": "Hareket (ya da bakış) yönünde 6 blokluk şimşek adımı. Bekleme 1 sn."
+  "ability.viltrumitecore.reinhard_step_dash.desc": "Hareket (ya da bakış) yönünde 6 blokluk şimşek adımı. Bekleme 1 sn.",
+  "ability.viltrumitecore.reinhard_catch.name": "Mermi Yakala",
+  "ability.viltrumitecore.reinhard_catch.desc": "Avucunu 0,5 sn açar: oklar ve üç dişliler envantere girer, diğer mermiler yok olur. Bekleme 2 sn."
 }
