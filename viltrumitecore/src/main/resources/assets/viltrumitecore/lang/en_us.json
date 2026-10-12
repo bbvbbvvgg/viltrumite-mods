@@ -449,5 +449,22 @@
   "ability.viltrumitecore.reinhard_stomp.name": "Stomp",
   "ability.viltrumitecore.reinhard_stomp.desc": "Press to slam the ground with your foot: 12 damage to everything within 8 blocks on the ground, pushed outward; the top layer of the ground cracks. Cooldown 8 s.",
   "ability.viltrumitecore.reinhard_reflect.name": "Reflect Projectile",
-  "ability.viltrumitecore.reinhard_reflect.desc": "Press to raise the back of your hand for 1 s: every projectile that hits you flies back to its shooter at the same speed. Cooldown 4 s."
+  "ability.viltrumitecore.reinhard_reflect.desc": "Press to raise the back of your hand for 1 s: every projectile that hits you flies back to its shooter at the same speed. Cooldown 4 s.",
+  "death.attack.viltrumitecore.annihilation": "%1$s was erased by a holy blade",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s was erased by the holy blade of %2$s",
+  "commands.viltrumitecore.annihilate.success": "Reid strike: %s killed, %s blocked (absolute), %s immune (divine), %s skipped",
+  "ability.viltrumitecore.reinhard_reid.name": "Draw / Sheathe Reid",
+  "ability.viltrumitecore.reinhard_reid.desc": "Draws the Dragon Sword Reid in a 6 s world event (he stands still). Drawn: Rain of Cuts and the strongest attacks unlock. Press again to sheathe (1 s). Returns to the sheath after 60 s without combat and when you leave Holy Sword.",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "The earth rumbles",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "Reid leaves its sheath",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "A heavenly choir",
+  "subtitles.viltrumitecore.reinhard_reid_far": "Something terrible awakens far away",
+  "chat.viltrumitecore.reinhard.reid_drawn": "The Dragon Sword Reid is drawn",
+  "subtitles.viltrumitecore.reinhard_reid_sheathe": "Reid returns to its sheath",
+  "ability.viltrumitecore.reinhard_sheath_strike.name": "Sheath Strike",
+  "ability.viltrumitecore.reinhard_sheath_strike.desc": "Only with Reid sheathed. Swings the sheathed sword in an arc: 20 damage to everything within 6 blocks and a 3 s stun (heroes immune to control only take the damage). Cooldown 8 s.",
+  "subtitles.viltrumitecore.reinhard_sheath_strike": "Reinhard strikes with the sheath",
+  "ability.viltrumitecore.reinhard_cut_rain.name": "Rain of Cuts",
+  "ability.viltrumitecore.reinhard_cut_rain.desc": "Only with Reid drawn. 12 cuts in a 30° cone, 40 blocks each: every mortal target they cross dies (Reid strike), and each cut leaves a 1 × 3 groove in the ground (if mobGriefing allows; bedrock stays). Cooldown 15 s.",
+  "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhard's cuts rain down"
 }

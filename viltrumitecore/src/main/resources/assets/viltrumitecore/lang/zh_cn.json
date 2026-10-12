@@ -449,5 +449,22 @@
   "ability.viltrumitecore.reinhard_stomp.name": "震地踏",
   "ability.viltrumitecore.reinhard_stomp.desc": "按下后用脚猛踏地面：对8格内地面上的一切造成12点伤害并向外击退；地表一层会碎裂。冷却8秒。",
   "ability.viltrumitecore.reinhard_reflect.name": "反弹投射物",
-  "ability.viltrumitecore.reinhard_reflect.desc": "按下后抬起手背1秒：击中你的所有投射物都会以相同速度飞回射手。冷却4秒。"
+  "ability.viltrumitecore.reinhard_reflect.desc": "按下后抬起手背1秒：击中你的所有投射物都会以相同速度飞回射手。冷却4秒。",
+  "death.attack.viltrumitecore.annihilation": "%1$s被圣剑抹除",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s被%2$s的圣剑抹除",
+  "commands.viltrumitecore.annihilate.success": "莱德斩击：击杀 %s，被挡下（绝对）%s，免疫（神圣）%s，跳过 %s",
+  "ability.viltrumitecore.reinhard_reid.name": "拔出 / 收起莱德",
+  "ability.viltrumitecore.reinhard_reid.desc": "以 6 秒的世界事件拔出龙剑莱德（期间原地不动）。拔出后解锁斩击之雨和最强的攻击。再按一次收剑（1 秒）。60 秒未战斗或离开圣剑模式时自动收回剑鞘。",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "大地轰鸣",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "雷德出鞘",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "天籁合唱",
+  "subtitles.viltrumitecore.reinhard_reid_far": "远方有可怕之物苏醒",
+  "chat.viltrumitecore.reinhard.reid_drawn": "龙剑雷德已出鞘",
+  "subtitles.viltrumitecore.reinhard_reid_sheathe": "雷德归鞘",
+  "ability.viltrumitecore.reinhard_sheath_strike.name": "剑鞘击",
+  "ability.viltrumitecore.reinhard_sheath_strike.desc": "仅在莱德入鞘时可用。连鞘挥剑划出弧线：对 6 格内所有目标造成 20 点伤害并眩晕 3 秒（免疫控制的英雄只受伤害）。冷却 8 秒。",
+  "subtitles.viltrumitecore.reinhard_sheath_strike": "莱因哈鲁特以剑鞘猛击",
+  "ability.viltrumitecore.reinhard_cut_rain.name": "斩击之雨",
+  "ability.viltrumitecore.reinhard_cut_rain.desc": "仅在莱德出鞘时可用。在 30° 锥形内斩出 12 道各长 40 格的斩击：所经之处的凡人目标全部死亡（莱德之击），每道斩击在地面留下 1 × 3 的沟槽（需 mobGriefing 允许；基岩不受影响）。冷却 15 秒。",
+  "subtitles.viltrumitecore.reinhard_cut_rain": "莱因哈鲁特斩击如雨"
 }

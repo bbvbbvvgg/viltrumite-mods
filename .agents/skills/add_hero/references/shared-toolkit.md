@@ -71,6 +71,9 @@ Sends `HeroFxS2CPacket` to players tracking the source; the client draws it in `
 - `util/ThunderClapManager` — Viltrumite clap; base for hand-clap style abilities.
 - `hero/DivineDamage` (`DIVINE` damage type, `source(level, attacker, type)`, `isDivine(source)` via tag `viltrumitecore:divine`) + `hero/DivineTargets` (`isDivine(entity)`, `isAbsolutelyInvulnerable(entity)`, entity tag `viltrumitecore:divine`, part entities use the parent) — damage that ignores armor, shields, enchantments and effects but not `bypasses_invulnerability`. Dev command `/viltrumite divine <targets> <amount> [type]` (op 2).
 - `hero/AdminKill` — scope flag set while `/kill` runs (`KillCommandMixin`); inside it `HeroDamageLayers` skips `clampUnblockableDamage`, so HP floors never block an admin kill.
+- `hero/Annihilation` — the Reid strike (any hero may use it): `strike(attacker, target)` kills every mortal target through the `viltrumitecore:annihilation` damage type (bypasses invulnerability, armor, shields, enchantments, effects, resistance, totems, hero layers; HP floors step aside inside `run`), never a divine target, never absolute invulnerability (spark instead); part entities strike their parent. Pure `decide(verdict, creativeOrSpectator, alive)`.
+- `hero/CarveJobs` + `hero/CarveBudget` — queued block work spread over END level ticks: `CarveJobs.submit(level, job)`, `Job.step(level, budget)` / `priority()` / `remainingWork()`; per tick `CarveBudget.perTick(BASE_BUDGET 2000, mspt)` (full ≤ 40 ms, linear to base/8 at 60 ms, then `max(50, base/20)`), higher priority first, FIFO inside; unloaded levels drop their queue. Pair with `HeroDestruction.clearBlock(level, pos)` (no drops / particles / neighbour updates, `canDestroy` rules). `hero/LevelTickPhases.systemsFor(phase)` pins which system runs in which half of the level tick (control START; projectiles, regen, carve END).
+- `hero/LiftLeases` — the only owner of `noGravity` changes for lifted entities: lease per owner UUID, the original flag restored when the last lease goes; an entity that unloads mid-lift is restored on load through the `ViltrumiteLifted` tag (`EntityJoinLevelEvent`). `hero/HeroImpulse.mayMoveNonLiving / mayLiftLiving` — which entity types a hero may push or lift (items, falling blocks, minecarts...; not frames, paintings, display entities).
 
 ## Client
 
@@ -80,6 +83,9 @@ Receives `HeroFxS2CPacket` and renders all kinds above (pixel shards, rings, tra
 ### `client/render/vfx/CameraShake`
 - `addAt(at, power, range)` — shake with distance falloff; `add(power)` — local shake.
 - `falloff(distance, range)` — pure. Decay ×0.86 per tick. Scaled by `punchShakeMultiplier` config.
+
+### `client/render/vfx/SkyTint` and `SoundDuck`
+Screen-wide mood for world events: `SkyTint.INSTANCE.push(owner, priority, tintSupplier)` / `remove(owner)` (sky, fog, clouds, rain; highest priority wins, eased), `SoundDuck.INSTANCE.duck(owner, category, target, fadeTicks, exemptIds)` / `release(owner)` (the caller's own sounds exempt). Pure `SkyTint.mix/apply`, `SoundDuck.factor/exempt` are unit tested. First user: Reinhard's Reid draw scene.
 
 ### `client/render/vfx/HitStop`
 Client hit-stop for any hero: `HeroFx.hitStop` freezes the targets' interpolation for a few ticks (`RenderLivingEvent.Pre`), a hero renderer can hold its clip clock with `heldTicks`. Pure clock methods are unit tested (`HitStopTest`).

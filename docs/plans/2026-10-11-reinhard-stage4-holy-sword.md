@@ -41,7 +41,8 @@ See the overview. Stage-specific:
 - Pure `static Outcome decide(DivineTargets.Verdict v, boolean creativeOrSpectator, boolean alive)`: DIVINE → IMMUNE_DIVINE; ABSOLUTE → BLOCKED_ABSOLUTE; creative/spectator or dead → SKIPPED; else KILLED.
 - `static Outcome strike(ServerPlayer attacker, Entity target)`: resolves `PartEntity` → parent; KILLED → inside an `Annihilation` scope `target.hurt(source(annihilation, attacker), Float.MAX_VALUE)`; if still alive (a mod cancelled the event) → `setHealth(0)` + `die(source)`. Bypassing invulnerability means: armor, shields, every hero layer (Hulkbuster, marks, nano), totems (vanilla skips the totem for `bypasses_invulnerability`), Resistance — all ignored. BLOCKED_ABSOLUTE → a gold spark FX at the target (`HeroFx.flash`), no damage.
 
-- [ ] Step 1 tests: every `decide` combination; `scopeSkipsUnblockableClamp` (layers test with a flooring fake target inside the scope → full amount). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual with a temporary dev subcommand `/viltrumite annihilate <target>` (op 2; kept for testing future heroes) on: zombie, Wither (dies), Ender Dragon part, Iron Man Hulkbuster, player with a totem, Regulus in Lion's Heart (survives, spark), another Reinhard (immune). Step 5 commit `feat(hero): annihilation strike`.
+- [x] Step 1 tests: every `decide` combination; `scopeSkipsUnblockableClamp` (layers test with a flooring fake target inside the scope → full amount). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual with a temporary dev subcommand `/viltrumite annihilate <target>` (op 2; kept for testing future heroes) on: zombie, Wither (dies), Ender Dragon part, Iron Man Hulkbuster, player with a totem, Regulus in Lion's Heart (survives, spark), another Reinhard (immune). Step 5 commit `feat(hero): annihilation strike`.
+- [ ] Manual: /viltrumite annihilate по зомби, Wither, части Ender Dragon, Hulkbuster Железного человека, игроку с тотемом, Регулусу в Lion's Heart (выживает, искра), другому Рейнхарду (иммунитет) — оставлено пользователю.
 
 ### Task 2: Reid state machine, slot conditions, auto-return
 
@@ -57,7 +58,8 @@ See the overview. Stage-specific:
 - Slot conditions (spec §7.1): Lethal Chop always; Sheath Strike only SHEATHED; Rain of Cuts, World Cut, World Erasure only DRAWN. Not allowed → refusal sound, grey icon.
 - Combat = Reinhard dealt damage to a living entity, took non-environment damage, or started an ability.
 
-- [ ] Step 1 tests: `drawTakes120`, `sheatheTakes20`, `autoReturnAfter1200Idle`, `combatResetsIdle`, `leaveModeSheathes`, `cancelDrawingOnLeave`, `slotConditions` (table), `transientPhasesLoadSheathed`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): reid state machine`.
+- [x] Step 1 tests: `drawTakes120`, `sheatheTakes20`, `autoReturnAfter1200Idle`, `combatResetsIdle`, `leaveModeSheathes`, `cancelDrawingOnLeave`, `slotConditions` (table), `transientPhasesLoadSheathed`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): reid state machine`.
+- [ ] Manual: в игре: автовозврат через 60 с без боя, удар/получение урона сбрасывает таймер, СКМ во время вынимания/вкладывания отказывает, серые слоты по фазе Рейда — оставлено пользователю.
 
 ### Task 3: Draw event — server scene
 
@@ -72,7 +74,8 @@ See the overview. Stage-specific:
 - `ReidSceneS2CPacket(int casterId, BlockPos origin, long startGameTime, int phase)` sent to every player within 96 blocks of the origin in the same level (start and end/abort). A late joiner inside the radius gets it on the next 20-tick refresh.
 - Chat + far sound: at tick 120 every player on the server gets the chat line (`sendSystemMessage`) and the far sound at their own position (volume 0.4, private `ClientboundSoundPacket`).
 
-- [ ] Step 1 tests: `riseNeverAboveMax`, `riseReachesAboutMax`, `velocityNonNegative`, `restoreOnEveryEnd` (abort at t 30 → original flag restored), `overlapCapsAtMax` (two lifts → offset ≤ 3), `timelinePhases`, `LiftLeasesTest.overlappingOwnersRestoreOriginal` (A acquires, B acquires, A releases → still `true`, B releases → original `false`; and the mirror order), `originalTrueStaysTrue` (a `noGravity` mob is never set to false), `releaseAllOnlyOwn`, `tagRoundTrip`, `HeroImpulseTest.itemsYesProjectilesNo`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: items, cows, a LAN player rise ~2.5 blocks and fall back; abort by death mid-scene; two Reinhards draw 3 s apart over the same cows → all fall after the second ends; a vex/allay (naturally `noGravity`) keeps floating. Step 5 commit `feat(reinhard): reid draw event server scene`.
+- [x] Step 1 tests: `riseNeverAboveMax`, `riseReachesAboutMax`, `velocityNonNegative`, `restoreOnEveryEnd` (abort at t 30 → original flag restored), `overlapCapsAtMax` (two lifts → offset ≤ 3), `timelinePhases`, `LiftLeasesTest.overlappingOwnersRestoreOriginal` (A acquires, B acquires, A releases → still `true`, B releases → original `false`; and the mirror order), `originalTrueStaysTrue` (a `noGravity` mob is never set to false), `releaseAllOnlyOwn`, `tagRoundTrip`, `HeroImpulseTest.itemsYesProjectilesNo`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: items, cows, a LAN player rise ~2.5 blocks and fall back; abort by death mid-scene; two Reinhards draw 3 s apart over the same cows → all fall after the second ends; a vex/allay (naturally `noGravity`) keeps floating. Step 5 commit `feat(reinhard): reid draw event server scene`.
+- [ ] Manual: 6-секундное обнажение Рейда: подъём мобов и предметов в радиусе 96, волна в конце, строка в чате и дальний звук у всех игроков, неподвижность во время сцены — оставлено пользователю.
 
 ### Task 4: Draw event — client scene (shake, sky, silence, cracks, pillar, funnel, flash)
 
@@ -87,7 +90,8 @@ See the overview. Stage-specific:
 - `ReidDrawScene` (state-driven by the packet + game time; ends itself 40 t after the expected end if no end packet arrives): `CameraShake.addAt(origin, power 2.5 → 4.0, range 96)` every tick; SkyTint dark (`darken 0.75`, rain 0); SoundDuck MASTER to 0.25 with the exempt set = the scene's own sound events (`reinhard.reid_rumble`, `reinhard.reid_choir`, `reinhard.reid_unsheathe`); crack ring: dark pixel crack lines on block tops around the origin, radius growing 2 → 14 (pixel style, `PixelVfx` quads on the ground, depth test on); pillar: white column of billboard pixels from the origin to y = cloud height + 40, width pulsing; funnel: a ring of grey cloud-coloured pixels at cloud height opening from r 0 to r 40 around the pillar; final flash: white screen-free flash = `HeroFx.flash` at the hilt + ring shockwave `HeroImpactFx` kind already sent by the server.
 - Draw clip time = `(gameTime − start + pt) / 20` from the packet, so a relog mid-draw is correct.
 
-- [ ] Step 1 tests: `strongestTintWins`, `tintFadesOut`, `duckMinOfOwners`, `releaseRestoresOne`, `exemptIdNotDucked`, `otherPlayersSoundDucked` (same category, other id → ducked), `sceneEndsWithoutPacket` (timeout), `crackRadiusGrows`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, at 10 / 60 / 120 blocks (outside 96 → nothing but the chat line and far sound), Oculus on (sky tint may be overridden by the shader pack — record the result in the PR). Step 5 commit `feat(client): sky tint and sound duck helpers` and `feat(reinhard): reid draw scene`.
+- [x] Step 1 tests: `strongestTintWins`, `tintFadesOut`, `duckMinOfOwners`, `releaseRestoresOne`, `exemptIdNotDucked`, `otherPlayersSoundDucked` (same category, other id → ducked), `sceneEndsWithoutPacket` (timeout), `crackRadiusGrows`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, at 10 / 60 / 120 blocks (outside 96 → nothing but the chat line and far sound), Oculus on (sky tint may be overridden by the shader pack — record the result in the PR). Step 5 commit `feat(client): sky tint and sound duck helpers` and `feat(reinhard): reid draw scene`.
+- [ ] Manual: сцена обнажения в обоих видах на 10/60/120 блоках (дальше 96 — только чат и дальний звук); тряска, тёмное небо без дождя, тишина кроме звуков сцены, трещины, столп, воронка; Oculus с шейдерами (небо может перекрываться — записать в PR) — оставлено пользователю.
 
 ### Task 5: Reid drawn state — blade in hand, gold aura, sky tint, HUD bar, sheathing
 
@@ -100,7 +104,8 @@ See the overview. Stage-specific:
 - `ReidAura`: gold `PixelVfx.bodyShell` shimmer (alpha only, skill §8) + rising gold motes; `SkyTint.push(this, priority 1, warm gold over the caster)` for players within 64 of the caster (weight by distance); removed when the flag clears.
 - Sheathing: 1 s calm reverse clip, soft click sound placeholder `item.armor.equip_chain`.
 
-- [ ] Step 1 tests: `auraOnlyWhenDrawn`, `tintWeightFallsWithDistance`, `barMatchesResource`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views: drawn idle, walk with the sword, auto-return after 60 s, MMB away from Holy Sword sheathes, bar empties correctly. Step 5 commit `feat(reinhard): reid drawn state visuals`.
+- [x] Step 1 tests: `auraOnlyWhenDrawn`, `tintWeightFallsWithDistance`, `barMatchesResource`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views: drawn idle, walk with the sword, auto-return after 60 s, MMB away from Holy Sword sheathes, bar empties correctly. Step 5 commit `feat(reinhard): reid drawn state visuals`.
+- [ ] Manual: оба вида: Рейд в руке в покое и при ходьбе, золотая аура, тёплое небо рядом; само-возврат через 60 с без боя; смена режима (СКМ) из Святого меча вкладывает меч; полоска HUD убывает верно; щелчок при вкладывании — оставлено пользователю.
 
 ### Task 6: Lethal Chop — kit chop with Reinhard's style (`ChopStyle` seam)
 
@@ -116,7 +121,8 @@ See the overview. Stage-specific:
 - Damage: `ChopImpactManager` already computes `getBaseDamage() × 1.75` = 20 × 1.75 = 35 via `chassisStats`; bleed 4 s unchanged.
 - Third person: model mixins do not run for the replaced body, so `ReinhardRenderer` overlays `chop_left/right` from `getChopTicks/isLeftChop/getChopType`; first person: `FirstPersonChopMixin` keeps working on the event stack.
 
-- [ ] Step 1 tests: `defaultEqualsLegacyConstants`, `homelanderUsesDefault`, `reinhardStyleValues`, `serverForcesLeft` (packet isLeft false + style forceLeft → left), `LethalChopTest.damage35` (`CHOP_BASE_DAMAGE * 1.75 == 35`), `onlyChopFromKit` (`allowsLegacyAbility` false for PUNCH/DASH/…), `noViltrumiteChassis` (`allowsLegacyAbilities` false). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: Reinhard chop sheathed (random side) and drawn (left), big white-crimson arc with ripple, heavier sound, bleed; Homelander chop side by side — identical to the previous jar (§11.11), both views. Step 5 commit `feat(hero): chop style hook` and `feat(reinhard): lethal chop`.
+- [x] Step 1 tests: `defaultEqualsLegacyConstants`, `homelanderUsesDefault`, `reinhardStyleValues`, `serverForcesLeft` (packet isLeft false + style forceLeft → left), `LethalChopTest.damage35` (`CHOP_BASE_DAMAGE * 1.75 == 35`), `onlyChopFromKit` (`allowsLegacyAbility` false for PUNCH/DASH/…), `noViltrumiteChassis` (`allowsLegacyAbilities` false). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: Reinhard chop sheathed (random side) and drawn (left), big white-crimson arc with ripple, heavier sound, bleed; Homelander chop side by side — identical to the previous jar (§11.11), both views. Step 5 commit `feat(hero): chop style hook` and `feat(reinhard): lethal chop`.
+- [ ] Manual: Рейнхард: удар ребром в ножнах (сторона случайная) и с вынутым Рейдом (всегда левой), большая бело-алая дуга с рябью, тяжелее звук, кровотечение; Хоумлендер рядом — его удар ребром как в прошлой сборке (оба вида) — оставлено пользователю.
 
 ### Task 7: Sheath Strike (Holy Sword slot 3)
 
@@ -128,7 +134,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `SHEATH_RADIUS = 6`, `SHEATH_STUN = 60`, `SHEATH_DAMAGE = 20f`, `SHEATH_COOLDOWN = 160`, `SHEATH_HIT_TICK = 6`.
 - Only `Reid.Phase.SHEATHED`. Hit tick: targets within r 6 (`ReinhardTargets.canHit`) → `hurt(20)`; if `allowsExternalControl(target, FREEZE)` → `ControlManager.get(level).tryAcquire(target, self.getUUID(), UUID.randomUUID(), ControlKind.FREEZE, level.getGameTime() + 60)` (one fresh effect id per stunned target; expiry releases it, nothing else to keep); stun visual: white pixel stars over the head (client from the control sync); FX `HeroFx.slam` r 6; sound placeholder `block.anvil.land` pitch 1.6 until Stage 7 (Iridiuss ring).
 
-- [ ] Step 1 tests: `onlyWhenSheathed`, `radius6Damage20Stun60`, `cooldown160`, `uncontrollableTakesDamageOnly`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views. Step 5 commit `feat(reinhard): sheath strike`.
+- [x] Step 1 tests: `onlyWhenSheathed`, `radius6Damage20Stun60`, `cooldown160`, `uncontrollableTakesDamageOnly`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views. Step 5 commit `feat(reinhard): sheath strike`.
+- [ ] Manual: в игре: удар ножнами в обоих видах, звёзды над головой оглушённых, оглушение 3 с — оставлено пользователю.
 
 ### Task 8: Rain of Cuts (Holy Sword slot 4) + `CarveJobs`
 
@@ -143,14 +150,29 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `CUT_COUNT = 12`, `CUT_CONE_DEG = 30`, `CUT_RANGE = 40`, `CUT_COOLDOWN = 300`, `CUT_GROOVE = 1` (width) × `3` (height), `CUT_BASE_BUDGET = 2000` (shared with Stage 5).
 - `CutRain`: directions = 12 evenly spread over ±15° yaw with small pitch jitter (deterministic from the cast tick seed); each cut = a segment of 40 blocks from the chest; every living entity whose box the segment crosses → `Annihilation.strike`; a groove `1×3` along the segment is submitted as one carve job (Holy Sword = massive destruction); VFX: 12 `HeroFx.blade` white-gold trails, staggered 1 t; sound placeholder `entity.player.attack.sweep` ×3 pitches until Stage 7 (Robinhood76 whoosh).
 
-- [ ] Step 1 tests: `CarveBudgetTest.fullUnder40`, `scalesDown`, `floorAt50`, `CarveJobsTest.respectsBudget`, `fifoWithinPriority`, `HeroEventsTickPhaseTest.controlOnStartCarveOnEnd` (pure dispatcher `LevelTickPhases.systemsFor(phase)`), `CutRainTest.twelveCutsInCone`, `segmentHitsBox`, `cooldown300`, `onlyWhenDrawn`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, `mobGriefing false` → no grooves, bedrock untouched. Step 5 commit `feat(hero): carve jobs with adaptive budget` and `feat(reinhard): rain of cuts`.
+- [x] Step 1 tests: `CarveBudgetTest.fullUnder40`, `scalesDown`, `floorAt50`, `CarveJobsTest.respectsBudget`, `fifoWithinPriority`, `HeroEventsTickPhaseTest.controlOnStartCarveOnEnd` (pure dispatcher `LevelTickPhases.systemsFor(phase)`), `CutRainTest.twelveCutsInCone`, `segmentHitsBox`, `cooldown300`, `onlyWhenDrawn`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, `mobGriefing false` → no grooves, bedrock untouched. Step 5 commit `feat(hero): carve jobs with adaptive budget` and `feat(reinhard): rain of cuts`.
+- [ ] Manual: в игре: веер разрезов в обоих видах; mobGriefing false → без борозд; бедрок цел — оставлено пользователю.
 
 ### Task 9: Check, docs, PR
 
 **Files:**
 - Modify: `.agents/skills/animation-system/SKILL.md` (§8: `SkyTint`, `SoundDuck`; Reid clips), `.agents/skills/add_hero/references/hero-seam.md` (`chopStyle`), `shared-toolkit.md` (`Annihilation`, `CarveJobs`, `SkyTint`, `SoundDuck`), `.memory-bank/project.md`, `SESSION.md`, core version (minor +1)
 
-- [ ] Step 1: full verification list; dedicated server start (new client mixins only in the client config).
+- [x] Step 1: full verification list; dedicated server start (new client mixins only in the client config).
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [x] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
+- [ ] Manual: в игре по чек-листу PR; выделенный сервер не запускался — оставлено пользователю.
 - [ ] Step 2: in game, both views: draw event with three LAN players at 10/60/120 blocks; auto-return; mode exit; chop (Reinhard and Homelander); Sheath Strike; Rain of Cuts; Reid strike targets list of Task 1.
 - [ ] Step 3: commit `docs(reinhard): stage 4 notes`; push `feat/reinhard-stage4`; PR «Рейнхард, этап 4: Святой меч — Рейд, Lethal Chop, удар ножнами, дождь разрезов».
 

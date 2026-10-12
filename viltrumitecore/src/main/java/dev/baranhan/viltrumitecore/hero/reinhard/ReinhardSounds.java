@@ -35,6 +35,17 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> DASH_BEHIND = reg("reinhard.dash_behind");
    public static final RegistryObject<SoundEvent> STOMP = reg("reinhard.stomp");
    public static final RegistryObject<SoundEvent> REFLECT = reg("reinhard.reflect");
+   // Stage 4: the Reid draw scene.
+   public static final RegistryObject<SoundEvent> REID_RUMBLE = reg("reinhard.reid_rumble");
+   public static final RegistryObject<SoundEvent> REID_UNSHEATHE = reg("reinhard.reid_unsheathe");
+   public static final RegistryObject<SoundEvent> REID_CHOIR = reg("reinhard.reid_choir");
+   public static final RegistryObject<SoundEvent> REID_FAR = reg("reinhard.reid_far");
+   /** The calm 1 s sheathe click (manual, auto-return, leaving Holy Sword). */
+   public static final RegistryObject<SoundEvent> REID_SHEATHE = reg("reinhard.reid_sheathe");
+   /** Placeholder until Stage 7 (Iridiuss ring): an anvil landing, played high. */
+   public static final RegistryObject<SoundEvent> SHEATH_STRIKE = reg("reinhard.sheath_strike");
+   /** Placeholder until Stage 7 (Robinhood76 whoosh): the sweep, at three pitches. */
+   public static final RegistryObject<SoundEvent> CUT_RAIN = reg("reinhard.cut_rain");
 
    private ReinhardSounds() {
    }

@@ -76,7 +76,9 @@ public final class ReinhardAuraVfx {
             continue;
          }
 
-         double chance = AuraRules.goldSparkChance(ReinhardView.mode(snapshot), localFirstPerson(client, player));
+         // Reid drawn: ReidAura's full gold aura replaces the rare sparks.
+         double chance = dev.baranhan.viltrumitecore.client.reinhard.reid.ReidAura.active(snapshot.heroFlags()) ? 0.0
+            : AuraRules.goldSparkChance(ReinhardView.mode(snapshot), localFirstPerson(client, player));
          if (chance > 0.0 && RANDOM.nextDouble() < chance) {
             double half = player.getBbWidth() * 0.6;
             Vec3 at = player.position().add((RANDOM.nextDouble() * 2.0 - 1.0) * half, 0.2 + RANDOM.nextDouble() * (player.getBbHeight() - 0.3),

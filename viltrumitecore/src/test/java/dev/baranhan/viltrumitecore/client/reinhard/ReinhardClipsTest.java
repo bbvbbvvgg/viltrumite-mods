@@ -22,6 +22,7 @@ class ReinhardClipsTest {
    private static final Path ROOT = Path.of("src/main/resources/assets/viltrumitecore");
    /** A hold clip (no fixed length): it must hold its last frame. */
    private static final int HOLD = -1;
+   private static final int LOOP = -2;
 
    private static Map<String, Animation> clips() throws IOException {
       AnimationParser.lastWarnings.clear();
@@ -48,6 +49,11 @@ class ReinhardClipsTest {
       t.put(ReinhardClips.STOMP, ReinhardRules.STOMP_TICKS);
       t.put(ReinhardClips.REFLECT_READY, ReinhardRules.REFLECT_WINDOW);
       t.put(ReinhardClips.REFLECT, ReinhardRules.REFLECT_SNAP_TICKS);
+      t.put(ReinhardClips.REID_DRAW, ReinhardRules.REID_DRAW_TICKS);
+      t.put(ReinhardClips.REID_SHEATHE, ReinhardRules.REID_SHEATHE_TICKS);
+      t.put(ReinhardClips.IDLE_HOLY_DRAWN, LOOP);
+      t.put(ReinhardClips.SHEATH_STRIKE, ReinhardRules.SHEATH_TICKS);
+      t.put(ReinhardClips.CUT_RAIN, ReinhardRules.CUT_TICKS);
       return t;
    }
 
@@ -57,7 +63,7 @@ class ReinhardClipsTest {
       Map<String, Integer> ticks = ticks();
       int checked = 0;
       for (ReinhardAbility ability : ReinhardAbility.values()) {
-         if (ability.stage() > 3) {
+         if (ability.stage() > 4) {
             continue;
          }
 
@@ -67,7 +73,9 @@ class ReinhardClipsTest {
             assertNotNull(clip, "clip " + name + " of " + ability);
             Integer length = ticks.get(name);
             assertNotNull(length, "action length known for " + name);
-            if (length == HOLD) {
+            if (length == LOOP) {
+               assertEquals(Animation.LoopType.LOOP, clip.loopType(), name + " loops");
+            } else if (length == HOLD) {
                assertEquals(Animation.LoopType.HOLD_ON_LAST_FRAME, clip.loopType(), name + " holds");
             } else {
                assertTrue(clip.lengthSeconds() + 1.0E-9 >= length / 20.0, name + ": " + clip.lengthSeconds() + " s < " + length + " t");
@@ -77,6 +85,11 @@ class ReinhardClipsTest {
          }
       }
 
-      assertEquals(15, checked, "nine abilities, fifteen clips");
+      assertEquals(20, checked, "twelve abilities, twenty clips");
+      // Lethal Chop is the kit chop (no ReinhardAbility): both hand sweeps cover the 1 s chop.
+      for (String chop : new String[]{ReinhardClips.CHOP_LEFT, ReinhardClips.CHOP_RIGHT}) {
+         assertNotNull(clips.get(chop), "clip " + chop);
+         assertEquals(Animation.LoopType.HOLD_ON_LAST_FRAME, clips.get(chop).loopType(), chop);
+      }
    }
 }

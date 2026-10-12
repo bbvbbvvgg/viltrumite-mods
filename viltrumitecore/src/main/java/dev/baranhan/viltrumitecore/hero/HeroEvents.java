@@ -201,6 +201,10 @@ public final class HeroEvents {
       // still consume its pending gravity restore (a4 audit finding).
       Entity entity = event.getEntity();
       ControlManager.onEntityJoinLevel(entity);
+      // Lift leases (Reid draw): a live lease lifts again, an orphaned tag restores the original noGravity.
+      if (LiftLeases.SERVER.holds(entity.getUUID()) || entity.getPersistentData().contains(LiftLeases.TAG)) {
+         LiftLeases.SERVER.onJoin(LiftLeases.body(entity));
+      }
 
       // Projectiles released while the owner is anchored never spawn — the
       // last deny layer for crossbow/trident throws past the item-use gates.
@@ -355,18 +359,25 @@ public final class HeroEvents {
       HeroProjectiles.onImpact(event);
    }
 
+   /** Lift leases never outlive the server; the persistent tags restore the entities on the next start. */
+   @SubscribeEvent
+   public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
+      LiftLeases.SERVER.clear();
+   }
+
    @SubscribeEvent
    public static void onLevelTick(TickEvent.LevelTickEvent event) {
       if (!(event.level instanceof ServerLevel level)) {
          return;
       }
 
-      if (event.phase == TickEvent.Phase.END) {
-         HeroProjectiles.tickPending(level);
-         HeroResourceRegen.flush(level);
-         return;
+      for (LevelTickPhases.System system : LevelTickPhases.systemsFor(event.phase)) {
+         switch (system) {
+            case CONTROL -> ControlManager.get(level).tick(level);
+            case PROJECTILES -> HeroProjectiles.tickPending(level);
+            case RESOURCE_REGEN -> HeroResourceRegen.flush(level);
+            case CARVE -> CarveJobs.tick(level);
+         }
       }
-
-      ControlManager.get(level).tick(level);
    }
 }

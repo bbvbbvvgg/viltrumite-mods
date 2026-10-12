@@ -60,6 +60,49 @@ public final class ReinhardPoses {
    /** Clip seconds per walk-position unit of the 1 s swim stroke: vanilla's stroke repeats every 26 units (HumanoidModel). */
    public static final double SWIM_SECONDS_PER_UNIT = 1.0 / 26.0;
 
+   /** Kit chop length (PlayerEntityCoreMixin counts 20 → 0). */
+   public static final int CHOP_TICKS = 20;
+
+   /** Stage 4, Lethal Chop: the chop overlay from the synced chop ticks (20 → 0) and side; null when no chop runs. */
+   @Nullable
+   public static Clip chopClip(int chopTicks, boolean left, float partialTick) {
+      if (chopTicks <= 0) {
+         return null;
+      }
+
+      double seconds = Math.max(0.0, Math.min(1.0, (CHOP_TICKS - (chopTicks - partialTick)) / (double)CHOP_TICKS));
+      return new Clip(left ? ReinhardClips.CHOP_LEFT : ReinhardClips.CHOP_RIGHT, seconds);
+   }
+
+   /** Stage 4: Reid's draw / sheathe / drawn-idle overlay at {@code ticks} into the phase; null while sheathed. */
+   @Nullable
+   public static Clip reidClip(ReidPhase phase, double ticks) {
+      return switch (phase) {
+         case DRAWING -> new Clip(ReinhardClips.REID_DRAW, Math.max(0.0, ticks) / 20.0);
+         case SHEATHING -> new Clip(ReinhardClips.REID_SHEATHE, Math.max(0.0, ticks) / 20.0);
+         case DRAWN -> new Clip(ReinhardClips.IDLE_HOLY_DRAWN, Math.max(0.0, ticks) / 20.0);
+         default -> null;
+      };
+   }
+
+   /**
+    * How far the blade has left the sheath along its axis (0 in, 1 out): eased over the 6 s draw,
+    * reversed over the 1 s sheathe. Drawn = 1 (stage 4 Task 5 moves it to the hand).
+    */
+   public static float bladeOut(ReidPhase phase, double ticks) {
+      return switch (phase) {
+         case SHEATHED -> 0.0F;
+         case DRAWN -> 1.0F;
+         case DRAWING -> smooth(ticks / dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.REID_DRAW_TICKS);
+         case SHEATHING -> 1.0F - smooth(ticks / dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.REID_SHEATHE_TICKS);
+      };
+   }
+
+   private static float smooth(double x) {
+      double k = Math.max(0.0, Math.min(1.0, x));
+      return (float)(k * k * (3.0 - 2.0 * k));
+   }
+
    static BodyState body(net.minecraft.world.entity.Pose pose, boolean passenger) {
       if (passenger) {
          return BodyState.SIT;
