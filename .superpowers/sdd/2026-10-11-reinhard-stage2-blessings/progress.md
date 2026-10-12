@@ -1,0 +1,15 @@
+# SDD ledger — plan: docs/plans/2026-10-11-reinhard-stage2-blessings.md
+
+Branch `feat/reinhard-stage2` from `feat/reinhard-stage1b` (PR base `feat/reinhard-stage1b`). Superpowers skills are not installed in this environment; executing-plans / TDD / verification-before-completion / systematic-debugging were followed by hand.
+
+## Rulings
+
+- Ruling: stage 1b decisions were taken from the PR #28 body and `SESSION.md` — the plan references `.superpowers/sdd/2026-10-11-reinhard-stage1b-visuals/progress.md`, which does not exist on any branch — cost if wrong: a 1b decision recorded only in that missing ledger is not honoured.
+- Ruling: the Phoenix HUD icon sits left of the ability column at the row of the first mode icon (`icons[0].x`, below the Reid bar), with the remaining time as a half-size `m:ss` label to its right — the plan says "under the mode icons", but the ability bar is a vertical column at the right edge, so "under" has no room; the chosen spot keeps the icon next to the mode icons — cost if wrong: icon moves by a few pixels, layout-only.
+- Ruling: Phoenix flames reuse the existing `HeroFx` kinds (flash at origin and at the new point + launch with fire material); the client `PhoenixFlameVfx` is state-driven (it reacts to the rise of the Phoenix cooldown in the public snapshot) — no new FX packet kind was added — cost if wrong: an observer that joins mid-cooldown sees no flames (cosmetic).
+- Ruling: one commit per plan task (the user's rule) instead of the plan's two commits per task (`feat(hero): …` + `feat(reinhard): …`); the commit message names both parts — cost if wrong: history granularity only.
+- Ruling: Phoenix and Adaptation state: the Phoenix cooldown lives in `PersistentCooldowns` (player persisted NBT, survives hero change and death); Adaptation is saved with the hero state but `respawnCopy()` drops it, so death clears acquired immunities — spec §4 — cost if wrong: immunities survive death.
+
+## Tasks
+
+- [x] Task 1 — Persistent cooldowns, Phoenix, Protection Acquisition (spec §4). `./gradlew :viltrumitecore:test --tests '*Reinhard*' --tests '*reinhard*'` → 112/112 GREEN; `./gradlew build --no-daemon` → BUILD SUCCESSFUL, 703 tests, 0 failures; `check_hero_resources.py --hero reinhard` → 0 new, 4 known legacy; `git diff --check` clean. New tests: PersistentCooldownsTest 3, PhoenixTest 8, AdaptationTest 6, PhoenixFlameVfxTest 2, ReinhardHudTest +2. Notes: `PersistentCooldowns` ticks from `HeroEvents.onPlayerTick` (server, END) and therefore never ticks offline; Phoenix fires in `clampFinalDamage` (the HP-loss layer) — full HP, fire cleared, fire resistance 60 t, teleport to a stand spot 6–10 blocks away from the attacker (origin fallback); Adaptation counts consecutive divine hits of one type in `absorbIncoming`, the 3rd hit still lands, the 4th of that type is absorbed; `blessing_bearer` icon copied from the asset pack via `make_reinhard_icons.py`. Not covered by unit tests (need MC runtime): stand-spot search against real blocks, teleport/flames, HUD placement — user verifies in-game.

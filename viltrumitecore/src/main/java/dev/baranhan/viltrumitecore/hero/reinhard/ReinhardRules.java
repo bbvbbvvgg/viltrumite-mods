@@ -28,6 +28,18 @@ public final class ReinhardRules {
    /** Reid idle time before the auto-return to the sheath (spec §7.3: 60 s); HUD bar scale. */
    public static final int REID_IDLE_TICKS = 1200;
 
+   // ---- Divine Protection of the Phoenix (spec §4.2) ----
+   /** Online ticks before the next revive (10 min). */
+   public static final int PHOENIX_COOLDOWN = 12000;
+   /** PersistentCooldowns key. */
+   public static final String PHOENIX_KEY = "reinhard:phoenix";
+   public static final int PHOENIX_MIN_DIST = 6;
+   public static final int PHOENIX_MAX_DIST = 10;
+
+   // ---- Protection Acquisition (spec §4.8) ----
+   /** Divine hits of one type in a row that make him immune to it (the last one still lands). */
+   public static final int ADAPT_HITS = 3;
+
    private ReinhardRules() {
    }
 

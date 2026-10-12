@@ -9,10 +9,16 @@ import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.MouseButton;
+import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
+import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -192,16 +198,63 @@ public final class ReinhardHero implements HeroDefinition {
       return true;
    }
 
-   /** Spec §3.1: ordinary damage loses 99.9 % before armor; divine damage passes (spec §3.2). */
+   /**
+    * Spec §3.1: ordinary damage loses 99.9 % before armor. Divine damage (spec §3.2)
+    * is never resisted; it meets only Protection Acquisition here (immune type →
+    * absorbed with a spark, otherwise the hit is counted and passes) and the
+    * Phoenix in {@link #clampFinalDamage}.
+    */
    @Override
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
-      return absorb(isDivine(source), raw);
+      if (!isDivine(source)) {
+         return absorb(false, raw);
+      }
+
+      ReinhardState state = ReinhardState.ensure(self);
+      DivineStep step = divineStep(state.adaptation, divineType(source));
+      state.adaptation = step.next();
+      if (step.result().absorbed()) {
+         HeroFx.flash(self, self.position().add(0.0, 1.0, 0.0));
+      }
+
+      return step.result();
    }
 
-   /** Spec §3.1: ordinary damage never takes him below 1 HP; divine damage is not floored. */
+   /**
+    * Spec §3.1: ordinary damage never takes him below 1 HP. Divine damage is not
+    * floored: a lethal divine hit is the Phoenix's (spec §4.2) or death.
+    */
    @Override
    public float clampFinalDamage(ServerPlayer self, DamageSource source, float afterArmor) {
-      return clamp(isDivine(source), self.getHealth(), afterArmor);
+      boolean divine = isDivine(source);
+      if (Phoenix.saves(divine, self.getHealth(), afterArmor, PersistentCooldowns.get(self, ReinhardRules.PHOENIX_KEY))) {
+         Phoenix.revive(self, source.getEntity());
+         return 0.0F;
+      }
+
+      return clamp(divine, self.getHealth(), afterArmor);
+   }
+
+   /** One divine hit through Protection Acquisition: the result and the next state. */
+   public record DivineStep(DamageAbsorb result, Adaptation next) {
+   }
+
+   /** Pure: an adapted type is absorbed (state unchanged); any other divine hit counts and lands. */
+   static DivineStep divineStep(Adaptation adaptation, ResourceLocation type) {
+      if (adaptation.immuneTo(type)) {
+         return new DivineStep(DamageAbsorb.ABSORBED, adaptation);
+      }
+
+      return new DivineStep(DamageAbsorb.PASS, adaptation.onDivineHit(type));
+   }
+
+   /** Pure: ordinary damage never touches Protection Acquisition (spec §4.8). */
+   static Adaptation ordinaryStep(Adaptation adaptation) {
+      return adaptation;
+   }
+
+   private static ResourceLocation divineType(DamageSource source) {
+      return source.typeHolder().unwrapKey().map(ResourceKey::location).orElse(DivineDamage.DIVINE.location());
    }
 
    /** Spec §3.1: void and generic_kill never take him below 1 HP (/kill still kills: AdminKill). */
@@ -269,15 +322,12 @@ public final class ReinhardHero implements HeroDefinition {
       }
    }
 
-   /** Mode and cooldowns carry over to the respawned body. */
+   /** Mode and cooldowns carry over to the respawned body; adaptations do not (spec §4.8). The Phoenix timer is not hero state. */
    @Override
    public void cloneHeroState(Player original, Player clone) {
       ReinhardState previous = ReinhardState.of(original);
-      if (previous != null) {
-         ReinhardState next = ReinhardState.ensure(clone);
-         next.mode = previous.mode;
-         next.modeCooldown = previous.modeCooldown;
-         next.cooldowns = previous.cooldowns.clone();
+      if (previous != null && clone instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer) {
+         heroPlayer.viltrumitecore$setHeroState(previous.respawnCopy());
       }
    }
 
@@ -293,9 +343,15 @@ public final class ReinhardHero implements HeroDefinition {
       int[] extra = new int[HeroPublicSnapshot.EXTRA_COOLDOWN_MAX];
       System.arraycopy(state.cooldowns, 0, extra, 0, Math.min(state.cooldowns.length, ReinhardFlags.EXTRA_MODE_CD));
       extra[ReinhardFlags.EXTRA_MODE_CD] = state.modeCooldown;
+      extra[ReinhardFlags.EXTRA_PHOENIX] = phoenixSeconds(PersistentCooldowns.get(player, ReinhardRules.PHOENIX_KEY));
       int flags = ReinhardFlags.withMode(0, state.mode);
       return new HeroPublicSnapshot(HeroId.REINHARD, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1,
          new int[HeroPublicSnapshot.COOLDOWN_COUNT], false, -1, null, 0, false, flags, extra);
+   }
+
+   /** Phoenix cooldown for the snapshot, whole seconds rounded up. */
+   static int phoenixSeconds(int ticks) {
+      return ticks <= 0 ? 0 : (ticks + 19) / 20;
    }
 
    @Override

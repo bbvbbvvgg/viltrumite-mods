@@ -332,6 +332,14 @@ public final class HeroEvents {
       }
    }
 
+   /** Server player tick END: shared per-player systems that tick for every hero (online time only). */
+   @SubscribeEvent
+   public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+      if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
+         PersistentCooldowns.tick(player);
+      }
+   }
+
    @SubscribeEvent
    public static void onLevelTick(TickEvent.LevelTickEvent event) {
       if (event.phase == TickEvent.Phase.END || !(event.level instanceof ServerLevel level)) {

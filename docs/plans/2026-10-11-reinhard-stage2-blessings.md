@@ -43,11 +43,11 @@ See the overview. Stage-specific:
 - `Phoenix.revive`: target point = `SafeSpot` style search (Stage 3 Task 8 class is not available yet → local pure helper `Phoenix.pickPoint(origin, awayFrom, IntBiPredicate fits)`: ring 6–10 blocks, prefer the direction away from the attacker; fallback = origin); `setHealth(max)`, `clearFire`, fire-immunity 3 s, `PhoenixFlameVfx` (gold-red pixel flames rising for 30 t, sent as `HeroFx.flash` + `launch` with `material` null and a new `HeroFxS2CPacket` kind only if the existing kinds cannot show flames — first try `HeroFx.launch` with a fire block material).
 - HUD: `blessing_bearer.png` 12×12 under the mode icons, alpha 40% while `extraCooldowns[EXTRA_PHOENIX] > 0` (seconds left as small text).
 
-- [ ] **Step 1: Write the failing tests** — `PersistentCooldownsTest.tickRemovesAtZero`, `keysIndependent`; `PhoenixTest.revivesWhenReady`, `secondDeathInsideCooldownKills`, `cooldownIs12000`, `offlineDoesNotTick` (no `tick` calls = no change), `survivesHeroChange` (store outside hero state), `pickPointAwayFromAttacker`, `pickPointFallsBackToOrigin`; `AdaptationTest.thirdHitGrantsImmunity`, `thirdHitStillLands`, `otherTypeResetsStreak`, `ordinaryDamageDoesNotTouch`, `clearedOnDeath` (clone does not copy).
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*PersistentCooldowns*' --tests '*Phoenix*' --tests '*Adaptation*' --no-daemon` → FAIL.
-- [ ] **Step 3: Implement**. Dev command check: `/viltrumite divine @s 100` → revive with flames at a point nearby; again → death; `/viltrumite divine @s 5` ×3 → the 4th does nothing.
-- [ ] **Step 4: Run** → PASS.
-- [ ] **Step 5: Commit** `feat(hero): persistent cooldowns` and `feat(reinhard): phoenix and protection acquisition`.
+- [x] **Step 1: Write the failing tests** — `PersistentCooldownsTest.tickRemovesAtZero`, `keysIndependent`; `PhoenixTest.revivesWhenReady`, `secondDeathInsideCooldownKills`, `cooldownIs12000`, `offlineDoesNotTick` (no `tick` calls = no change), `survivesHeroChange` (store outside hero state), `pickPointAwayFromAttacker`, `pickPointFallsBackToOrigin`; `AdaptationTest.thirdHitGrantsImmunity`, `thirdHitStillLands`, `otherTypeResetsStreak`, `ordinaryDamageDoesNotTouch`, `clearedOnDeath` (clone does not copy).
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*PersistentCooldowns*' --tests '*Phoenix*' --tests '*Adaptation*' --no-daemon` → FAIL.
+- [x] **Step 3: Implement**. Dev command check: `/viltrumite divine @s 100` → revive with flames at a point nearby; again → death; `/viltrumite divine @s 5` ×3 → the 4th does nothing.
+- [x] **Step 4: Run** → PASS.
+- [x] **Step 5: Commit** `feat(hero): persistent cooldowns` and `feat(reinhard): phoenix and protection acquisition`.
 
 ### Task 2: Blessing of the Holy Sword — front parry
 

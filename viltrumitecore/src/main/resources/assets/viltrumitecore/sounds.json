@@ -677,5 +677,15 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.phoenix": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_phoenix",
+    "sounds": [
+      {
+        "name": "minecraft:item.totem.use",
+        "type": "event"
+      }
+    ]
   }
 }

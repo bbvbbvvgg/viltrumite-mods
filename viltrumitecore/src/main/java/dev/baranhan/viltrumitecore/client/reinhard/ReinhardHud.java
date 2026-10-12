@@ -23,6 +23,12 @@ public final class ReinhardHud {
    public static final int BAR_HEIGHT = 3;
    private static final int GOLD = 0xFFE8C15A;
    private static final int BAR_BACK = 0xA0101830;
+   private static final ResourceLocation PHOENIX_ICON = new ResourceLocation("viltrumitecore", "textures/gui/reinhard/blessing_bearer.png");
+   /** blessing_bearer.png is 32x32, drawn at ICON size. */
+   private static final int PHOENIX_TEXTURE = 32;
+   /** Phoenix icon alpha while it cools down. */
+   static final float PHOENIX_COOLING_ALPHA = 0.4F;
+   private static final int LABEL_COLOR = 0xFFF2E6C8;
    private static final ResourceLocation[] MODE_ICONS = new ResourceLocation[ReinhardMode.values().length];
 
    static {
@@ -34,7 +40,7 @@ public final class ReinhardHud {
    private ReinhardHud() {
    }
 
-   public record Layout(Bounds[] icons, Bounds reidBar) {
+   public record Layout(Bounds[] icons, Bounds reidBar, Bounds phoenix) {
    }
 
    /** Pure layout from the ability bar: icons end 2 px left of the bar; the Reid bar 2 px under them ends 1 px above the bar. */
@@ -47,7 +53,18 @@ public final class ReinhardHud {
          icons[i] = new Bounds(x0 + i * (ICON + GAP), iconY, ICON, ICON);
       }
 
-      return new Layout(icons, new Bounds(x0, barY, BAR_WIDTH, BAR_HEIGHT));
+      // Phoenix (spec §4.2): under the row, left of the vertical ability bar.
+      Bounds phoenix = new Bounds(x0, barY + BAR_HEIGHT + GAP, ICON, ICON);
+      return new Layout(icons, new Bounds(x0, barY, BAR_WIDTH, BAR_HEIGHT), phoenix);
+   }
+
+   /** Phoenix cooldown label (m:ss), empty when ready. */
+   public static String phoenixLabel(int seconds) {
+      if (seconds <= 0) {
+         return "";
+      }
+
+      return (seconds / 60) + ":" + (seconds % 60 < 10 ? "0" : "") + (seconds % 60);
    }
 
    /** The Reid bar shows only while Reid idles out of the sheath (resource = idle ticks left). */
@@ -79,10 +96,31 @@ public final class ReinhardHud {
          RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
       }
 
+      drawPhoenix(graphics, layout.phoenix(), snapshot.extraCooldowns().length > ReinhardFlags.EXTRA_PHOENIX ? snapshot.extraCooldowns()[ReinhardFlags.EXTRA_PHOENIX] : 0);
       if (showsReidBar(snapshot.resource())) {
          Bounds bar = layout.reidBar();
          graphics.fill(bar.x(), bar.y(), bar.x() + bar.width(), bar.y() + bar.height(), BAR_BACK);
          graphics.fill(bar.x(), bar.y(), bar.x() + reidFillWidth(snapshot.resource(), bar.width()), bar.y() + bar.height(), GOLD);
+      }
+   }
+
+   /** Lit when ready; 40 % alpha with the time left (half-size text under the icon) while cooling. */
+   private static void drawPhoenix(GuiGraphics graphics, Bounds icon, int seconds) {
+      if (seconds > 0) {
+         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, PHOENIX_COOLING_ALPHA);
+      }
+
+      RenderSystem.enableBlend();
+      graphics.blit(PHOENIX_ICON, icon.x(), icon.y(), icon.width(), icon.height(), 0.0F, 0.0F, PHOENIX_TEXTURE, PHOENIX_TEXTURE, PHOENIX_TEXTURE, PHOENIX_TEXTURE);
+      RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+      String label = phoenixLabel(seconds);
+      if (!label.isEmpty()) {
+         net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+         graphics.pose().pushPose();
+         graphics.pose().translate(icon.x() + icon.width() + 1, icon.y() + icon.height() / 2.0F - 2.0F, 0.0F);
+         graphics.pose().scale(0.5F, 0.5F, 1.0F);
+         graphics.drawString(font, label, 0, 0, LABEL_COLOR, true);
+         graphics.pose().popPose();
       }
    }
 

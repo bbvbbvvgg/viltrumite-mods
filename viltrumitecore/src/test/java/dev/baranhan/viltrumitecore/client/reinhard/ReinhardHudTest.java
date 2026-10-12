@@ -65,4 +65,25 @@ class ReinhardHudTest {
       assertEquals(20, ReinhardHud.reidFillWidth(ReinhardRules.REID_IDLE_TICKS / 2, 40));
       assertEquals(40, ReinhardHud.reidFillWidth(ReinhardRules.REID_IDLE_TICKS * 3, 40));
    }
+
+   @Test
+   void phoenixUnderTheRowLeftOfTheBar() {
+      ReinhardHud.Layout layout = ReinhardHud.layout(BAR);
+      Bounds phoenix = layout.phoenix();
+      assertEquals(12, phoenix.width());
+      assertEquals(layout.icons()[0].x(), phoenix.x());
+      assertTrue(phoenix.y() >= layout.reidBar().y() + layout.reidBar().height(), "under the Reid bar");
+      assertFalse(overlap(phoenix, BAR));
+      assertFalse(overlap(phoenix, INDICATOR));
+      assertFalse(overlap(phoenix, layout.reidBar()));
+      assertTrue(phoenix.x() + 12 + 1 + 10 <= BAR.x(), "room for the half-size label");
+   }
+
+   @Test
+   void phoenixLabel() {
+      assertEquals("", ReinhardHud.phoenixLabel(0));
+      assertEquals("10:00", ReinhardHud.phoenixLabel(600));
+      assertEquals("0:05", ReinhardHud.phoenixLabel(5));
+      assertEquals("1:30", ReinhardHud.phoenixLabel(90));
+   }
 }
