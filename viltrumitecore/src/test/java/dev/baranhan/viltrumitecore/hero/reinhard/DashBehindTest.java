@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind;
 import java.util.Arrays;
 import java.util.Optional;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
@@ -73,6 +74,25 @@ class DashBehindTest {
       assertFalse(DashBehind.validTarget(new DashBehind.TargetFacts(true, true, false, false, false, 3.0)), "dead");
       assertFalse(DashBehind.validTarget(new DashBehind.TargetFacts(true, true, true, true, false, 3.0)), "himself");
       assertFalse(DashBehind.validTarget(new DashBehind.TargetFacts(true, true, true, false, true, 3.0)), "a spectator");
+   }
+
+   /** A zombie-sized box (0.6 × 1.95) with its feet at {@code feet}. */
+   private static AABB zombie(Vec3 feet) {
+      return new AABB(feet.x - 0.3, feet.y, feet.z - 0.3, feet.x + 0.3, feet.y + 1.95, feet.z + 0.3);
+   }
+
+   @Test
+   void serverChecksTheCrosshair() {
+      Vec3 eye = new Vec3(0.0, 65.62, 0.0);
+      Vec3 look = new Vec3(0.0, 0.0, 1.0);
+      double open = ReinhardRules.BEHIND_RANGE + ReinhardRules.BEHIND_TOLERANCE;
+      assertTrue(DashBehind.onCrosshair(eye, look, zombie(new Vec3(0.0, 64.0, 10.0)), open), "straight ahead");
+      assertTrue(DashBehind.onCrosshair(eye, look, zombie(new Vec3(1.2, 64.0, 10.0)), open), "moved a block aside during the ping");
+      assertFalse(DashBehind.onCrosshair(eye, look, zombie(new Vec3(5.0, 64.0, 10.0)), open), "not where he looks");
+      assertFalse(DashBehind.onCrosshair(eye, look, zombie(new Vec3(0.0, 64.0, -10.0)), open), "behind him");
+      assertFalse(DashBehind.onCrosshair(eye, look, zombie(new Vec3(0.0, 64.0, 20.0)), 5.0), "a wall 5 blocks ahead hides it");
+      assertFalse(DashBehind.onCrosshair(eye, look, zombie(new Vec3(0.0, 64.0, 30.0)), open), "out of range");
+      assertFalse(DashBehind.onCrosshair(eye, Vec3.ZERO, zombie(new Vec3(0.0, 64.0, 10.0)), open), "no look");
    }
 
    @Test

@@ -16,7 +16,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -25,9 +28,10 @@ import net.minecraft.world.phys.Vec3;
  * crosshair (≤ {@link ReinhardRules#BEHIND_RANGE}), turned to its back.
  * Client-predicted: {@code client.reinhard.DashBehindClient} moves the player and
  * sends {@code ReinhardDashBehindC2SPacket} (target id + spot) once per key edge;
- * the server re-resolves the target and the spot ({@link SafeSpot}) behind the
- * usual gate. No spot → refusal, no cooldown, the client snapped back.
- * Pure parts ({@link #validTarget}, {@link #validCandidate}, {@link #wanted},
+ * the server re-resolves the target, checks with its own look ray that it really
+ * is under the crosshair ({@link #onCrosshair}), and finds its own spot
+ * ({@link SafeSpot}) behind the usual gate. No spot → refusal, no cooldown, the client snapped back.
+ * Pure parts ({@link #validTarget}, {@link #onCrosshair}, {@link #validCandidate}, {@link #wanted},
  * {@link #choose}, {@link #start}) are unit tested; the rest is server only
  * except {@link #find} and {@link #lookTarget} (both sides).
  */
@@ -43,6 +47,47 @@ public final class DashBehind implements AbilityHandler {
    public static boolean validTarget(TargetFacts f) {
       return f.found() && f.living() && f.alive() && !f.self() && !f.spectator()
          && f.distance() <= ReinhardRules.BEHIND_RANGE + ReinhardRules.BEHIND_TOLERANCE;
+   }
+
+   /**
+    * The server's own look ray (eye along the look, up to the range + tolerance, stopped by
+    * the first block at {@code blockDistance}) passes through the target's box widened by
+    * {@link ReinhardRules#BEHIND_AIM_TOLERANCE}. Pure.
+    */
+   public static boolean onCrosshair(Vec3 eye, Vec3 look, AABB targetBox, double blockDistance) {
+      if (look.lengthSqr() < 1.0E-8) {
+         return false;
+      }
+
+      double reach = Math.min(ReinhardRules.BEHIND_RANGE + ReinhardRules.BEHIND_TOLERANCE, blockDistance);
+      AABB box = targetBox.inflate(ReinhardRules.BEHIND_AIM_TOLERANCE);
+      if (box.contains(eye)) {
+         return true;
+      }
+
+      return box.clip(eye, eye.add(look.normalize().scale(reach))).isPresent();
+   }
+
+   /** Server: {@link #onCrosshair} with the player's eye, look and the blocks of his level (a multipart target: any part). */
+   static boolean onCrosshair(ServerPlayer player, LivingEntity target) {
+      Vec3 eye = player.getEyePosition();
+      Vec3 look = player.getLookAngle();
+      double reach = ReinhardRules.BEHIND_RANGE + ReinhardRules.BEHIND_TOLERANCE;
+      HitResult block = player.level().clip(new ClipContext(eye, eye.add(look.scale(reach)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+      double blockDistance = block.getType() == HitResult.Type.MISS ? reach : block.getLocation().distanceTo(eye);
+      if (onCrosshair(eye, look, target.getBoundingBox(), blockDistance)) {
+         return true;
+      }
+
+      if (target.isMultipartEntity() && target.getParts() != null) {
+         for (net.minecraftforge.entity.PartEntity<?> part : target.getParts()) {
+            if (onCrosshair(eye, look, part.getBoundingBox(), blockDistance)) {
+               return true;
+            }
+         }
+      }
+
+      return false;
    }
 
    public static boolean validCandidate(@Nullable Vec3 v) {
@@ -112,7 +157,7 @@ public final class DashBehind implements AbilityHandler {
       Entity entity = player.level().getEntity(request.targetId());
       LivingEntity target = entity instanceof LivingEntity living ? living : null;
       if (!validTarget(new TargetFacts(entity != null, target != null, entity != null && entity.isAlive(), entity == player,
-         entity != null && entity.isSpectator(), entity == null ? 0.0 : entity.distanceTo(player)))) {
+         entity != null && entity.isSpectator(), entity == null ? 0.0 : entity.distanceTo(player))) || !onCrosshair(player, target)) {
          return false;
       }
 

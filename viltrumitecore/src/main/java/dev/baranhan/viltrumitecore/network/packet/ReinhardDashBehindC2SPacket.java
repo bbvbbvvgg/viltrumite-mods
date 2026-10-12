@@ -6,6 +6,7 @@ import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardActions;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardState;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind;
+import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
@@ -18,8 +19,10 @@ import net.minecraftforge.network.NetworkEvent;
  * the crosshair and the feet of the spot it already moved to. Sent once per key
  * edge by {@code DashBehindClient}; this slot never goes through
  * {@link HeroInputC2SPacket}. The server trusts nothing: the slot must sit on the
- * active page, the coordinates must be finite, the target and the spot are
- * re-resolved by {@link DashBehind} behind the usual gate.
+ * active page, the coordinates must be finite, the target must be under the
+ * server's own look ray and the spot is re-resolved by {@link DashBehind} behind
+ * the usual gate. Every packet is answered with
+ * {@link ReinhardDashBehindAnswerS2CPacket} (the cooldown after the press).
  */
 public class ReinhardDashBehindC2SPacket {
    private final int targetId;
@@ -52,11 +55,18 @@ public class ReinhardDashBehindC2SPacket {
       NetworkEvent.Context context = contextSupplier.get();
       context.enqueueWork(() -> {
          ServerPlayer player = context.getSender();
-         if (player == null || HeroRegistry.get(player) != ReinhardHero.INSTANCE || !onActivePage(player, ReinhardAbility.DASH_BEHIND.id())) {
+         if (player == null) {
             return;
          }
 
-         ReinhardActions.handleDashBehind(player, ReinhardState.ensure(player), new DashBehind.Request(this.targetId, new Vec3(this.x, this.y, this.z)));
+         int cooldown = 0;
+         if (HeroRegistry.get(player) == ReinhardHero.INSTANCE && onActivePage(player, ReinhardAbility.DASH_BEHIND.id())) {
+            ReinhardState state = ReinhardState.ensure(player);
+            ReinhardActions.handleDashBehind(player, state, new DashBehind.Request(this.targetId, new Vec3(this.x, this.y, this.z)));
+            cooldown = state.cooldowns[ReinhardAbility.DASH_BEHIND.ordinal()];
+         }
+
+         CoreMessages.sendToPlayer(new ReinhardDashBehindAnswerS2CPacket(cooldown), player);
       });
       context.setPacketHandled(true);
    }

@@ -158,6 +158,8 @@ public final class ReinhardRules {
    /** Safe-spot search radius around the wanted spot, and its grid step. */
    public static final double BEHIND_SEARCH = 3.0;
    public static final double BEHIND_SEARCH_STEP = 0.5;
+   /** The server's own look ray must pass within this distance of the target's box (it moved during the ping). */
+   public static final double BEHIND_AIM_TOLERANCE = 1.0;
    /** The client's spot is kept when within this distance of the server's answer. */
    public static final double BEHIND_CLIENT_TOLERANCE = 1.0;
    public static final int BEHIND_COOLDOWN = 60;

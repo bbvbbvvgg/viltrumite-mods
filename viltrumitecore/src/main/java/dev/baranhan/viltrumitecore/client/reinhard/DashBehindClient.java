@@ -21,8 +21,10 @@ import net.minecraftforge.event.TickEvent;
  * the living entity under the crosshair, finds the safe spot behind it with its
  * own level and, when the mirrored gate passes and the local cooldown is 0,
  * moves the player there turned to the target. Every key edge sends exactly one
- * {@link ReinhardDashBehindC2SPacket} (the server answers a refusal with its
- * sound and a position snap-back). Client only; {@link Edge} is pure.
+ * {@link ReinhardDashBehindC2SPacket}; the server answers each one with its
+ * cooldown ({@code ReinhardDashBehindAnswerS2CPacket}), which replaces the local
+ * one, so a refused prediction (snap-back, no cooldown) does not block the next.
+ * Client only; {@link Edge} is pure.
  */
 public final class DashBehindClient {
    private static final Edge EDGE = new Edge();
@@ -76,6 +78,11 @@ public final class DashBehindClient {
       CoreMessages.sendToServer(new ReinhardDashBehindC2SPacket(target.getId(), spot.orElse(wanted)));
    }
 
+   /** The server's answer to a press: its Dash Behind cooldown in ticks (0 = refused). */
+   public static void onAnswer(int serverCooldown) {
+      EDGE.onAnswer(serverCooldown);
+   }
+
    /** Pure key-edge and local-cooldown state: one packet per edge, one predicted move per cooldown. */
    public static final class Edge {
       private boolean wasDown;
@@ -96,6 +103,11 @@ public final class DashBehindClient {
 
          this.cooldown = ReinhardRules.BEHIND_COOLDOWN;
          return true;
+      }
+
+      /** The server's cooldown after a press replaces the local guess (a refusal frees the predictor at once). */
+      public void onAnswer(int serverCooldown) {
+         this.cooldown = Math.max(0, serverCooldown);
       }
 
       public void tick() {
