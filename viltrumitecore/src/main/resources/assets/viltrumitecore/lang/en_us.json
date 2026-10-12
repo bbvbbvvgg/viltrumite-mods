@@ -447,5 +447,7 @@
   "ability.viltrumitecore.reinhard_dash_behind.name": "Dash Behind",
   "ability.viltrumitecore.reinhard_dash_behind.desc": "Press to appear behind the creature under your crosshair (up to 24 blocks), facing its back. Needs a safe spot near it. Cooldown 3 s.",
   "ability.viltrumitecore.reinhard_stomp.name": "Stomp",
-  "ability.viltrumitecore.reinhard_stomp.desc": "Press to slam the ground with your foot: 12 damage to everything within 8 blocks on the ground, pushed outward; the top layer of the ground cracks. Cooldown 8 s."
+  "ability.viltrumitecore.reinhard_stomp.desc": "Press to slam the ground with your foot: 12 damage to everything within 8 blocks on the ground, pushed outward; the top layer of the ground cracks. Cooldown 8 s.",
+  "ability.viltrumitecore.reinhard_reflect.name": "Reflect Projectile",
+  "ability.viltrumitecore.reinhard_reflect.desc": "Press to raise the back of your hand for 1 s: every projectile that hits you flies back to its shooter at the same speed. Cooldown 4 s."
 }

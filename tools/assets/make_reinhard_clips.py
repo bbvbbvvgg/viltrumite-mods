@@ -240,6 +240,20 @@ CLIPS["stomp"] = {"loop": "hold_on_last_frame", "animation_length": 0.7, "bones"
     "right_arm": {"rotation": {"0.0": [0, 0, 6], "0.3": [-20, 0, 40], "0.4": [10, 0, 24], "0.7": [0, 0, 4]}},
 }}
 
+# Reflect Projectile (Knight, the left arm stays behind the back): the back of the right
+# hand raised across the chest for the 20 t window...
+CLIPS["reflect_ready"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [-30, 0, 0], "0.1": [-95, 30, -20], "1.0": [-92, 28, -18]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.1": [0, -14, 0], "1.0": [0, -12, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.1": [-2, 6, 0], "1.0": [-2, 6, 0]}},
+}}
+# ...and the backhand swat out to the side on each reflection, back to the guard.
+CLIPS["reflect"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "right_arm": {"rotation": {"0.0": [-92, 28, -18], "0.1": [-88, -46, 30], "0.3": [-92, 20, -10]}},
+    "body": {"rotation": {"0.0": [0, -12, 0], "0.1": [0, 20, 0], "0.3": [0, -6, 0]}},
+    "head": {"rotation": {"0.0": [-2, 6, 0], "0.3": [-2, 4, 0]}},
+}}
+
 
 def main():
     data = {"format_version": "1.8.0", "animations": {}}

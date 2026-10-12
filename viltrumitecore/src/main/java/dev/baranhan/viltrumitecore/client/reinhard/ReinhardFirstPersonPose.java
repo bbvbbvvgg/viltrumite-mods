@@ -62,6 +62,14 @@ public final class ReinhardFirstPersonPose {
    // Stomp: the arm swings up for balance as the leg rises, then jolts down with the slam.
    static final float STOMP_Y = -0.18F;
    static final float STOMP_PITCH = 18.0F;
+   // Reflect: the back of the hand raised across the chest, then swatted out to the side.
+   static final float GUARD_X = 0.10F;
+   static final float GUARD_Y = 0.12F;
+   static final float GUARD_Z = -0.10F;
+   static final float GUARD_YAW = -28.0F;
+   static final float GUARD_ROLL = 18.0F;
+   static final float SWAT_X = -0.26F;
+   static final float SWAT_YAW = 50.0F;
    /** Ticks to raise / lower the hand. */
    static final double CATCH_EASE = 2.0;
 
@@ -95,6 +103,7 @@ public final class ReinhardFirstPersonPose {
          case FIST_COMBO -> combo(phase, ticks);
          case SKY_KICK -> kick(ticks);
          case GRAB_THROW -> grab(phase, ticks, length);
+         case REFLECT -> backhand(phase, ticks, length);
          case STOMP -> new Offset(0.0F, STOMP_Y, 0.0F, STOMP_PITCH, 0.0F, 0.0F)
             .scaled(strike(ticks, ReinhardRules.STOMP_HIT_TICK, ReinhardRules.STOMP_TICKS));
          case DASH_BEHIND -> new Offset(0.0F, BEHIND_Y, BEHIND_Z, BEHIND_PITCH, 0.0F, BEHIND_ROLL)
@@ -142,6 +151,19 @@ public final class ReinhardFirstPersonPose {
 
       float w = strike(ticks - stop + 0.5, 1, ReinhardRules.THROW_ACTION_TICKS - stop);
       return new Offset(GRAB_X, THROW_Y, THROW_Z, THROW_PITCH, 0.0F, 0.0F).scaled(w);
+   }
+
+   private static Offset backhand(int phase, double ticks, int length) {
+      float fade = length > 0 ? (float) clamp01((length - ticks) / CATCH_EASE) : 1.0F;
+      if (phase != ReinhardClips.PHASE_SNAP) {
+         float w = (float) clamp01(ticks / CATCH_EASE) * fade;
+         return new Offset(GUARD_X, GUARD_Y, GUARD_Z, 0.0F, GUARD_YAW, GUARD_ROLL).scaled(w);
+      }
+
+      // The swat peaks on the second tick, then the hand returns to the guard.
+      float swat = strike(ticks, 2, 6);
+      return new Offset(GUARD_X + (SWAT_X - GUARD_X) * swat, GUARD_Y, GUARD_Z, 0.0F, GUARD_YAW + (SWAT_YAW - GUARD_YAW) * swat, GUARD_ROLL * (1.0F - swat))
+         .scaled(fade);
    }
 
    private static Offset catchHand(int phase, double ticks, int length) {

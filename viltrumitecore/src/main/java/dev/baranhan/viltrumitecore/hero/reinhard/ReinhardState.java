@@ -30,6 +30,8 @@ public final class ReinhardState {
    public final ActionTimeline action = new ActionTimeline();
    /** Catch Projectile (stage 3): ticks the palm stays open; transient. */
    public int catchWindow;
+   /** Reflect Projectile (stage 3): ticks the backhand window stays open; transient. */
+   public int reflectWindow;
    /** Fist Combo (stage 3): the last hit of the chain (0-2, −1 none), idle ticks since it ended, a press queued during a hit; transient. */
    public int comboStep = -1;
    public int comboIdle;

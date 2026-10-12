@@ -179,6 +179,14 @@ public final class ReinhardRules {
    public static final dev.baranhan.viltrumitecore.hero.HeroDebris.Eruption STOMP_ERUPTION =
       new dev.baranhan.viltrumitecore.hero.HeroDebris.Eruption(4.0, 1.0, 0.0, 14, 0.35, 0.7);
 
+   // Reflect Projectile (Knight slot 6, spec §6.2): the Catch window's mechanics with REFLECT.
+   /** Ticks the backhand window is open from the press. */
+   public static final int REFLECT_WINDOW = 20;
+   /** Counted from the press, not from the window's end. */
+   public static final int REFLECT_COOLDOWN = 80;
+   /** The swat after a reflection (the action lock may outlast the window by this). */
+   public static final int REFLECT_SNAP_TICKS = 6;
+
    private ReinhardRules() {
    }
 

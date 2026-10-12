@@ -173,7 +173,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `REFLECT_WINDOW = 20`, `REFLECT_COOLDOWN = 80`.
 - Same window mechanics as Task 4 with `REFLECT` response (Stage 2 `HeroProjectiles`); swat pose snaps on each reflection; sound placeholder `item.shield.block` pitch 0.7; white streak on the returned projectile (`AirTrailVfx`).
 
-- [ ] Step 1 tests: `windowTwentyTicks`, `cooldownEightyFromPress`, `reflectReturnsToShooter` (pure `HeroProjectiles.reflected`). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: skeleton killed by its own arrow, ghast fireball back to the ghast, both views. Step 5 commit `feat(reinhard): reflect projectile`.
+- [x] Step 1 tests: `windowTwentyTicks`, `cooldownEightyFromPress`, `reflectReturnsToShooter` (pure `HeroProjectiles.reflected`). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): reflect projectile`.
+- [ ] Manual: skeleton killed by its own arrow, ghast fireball back to the ghast, both views — оставлено пользователю.
 
 ### Task 11: Pose audit, check, docs, PR
 

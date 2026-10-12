@@ -270,6 +270,25 @@ def stomp():
     return img
 
 
+def reflect():
+    """Knight: a steel backhand swatting a white arrow back along its own path."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        "..........mm..",
+        ".........mssm.",
+        "..w.....msssm.",
+        ".ww.....mssm..",
+        "wwwwwwwmssm...",
+        ".ww....mssm...",
+        "..w.....mm....",
+        "........gg....",
+        "........gG....",
+        "..www...gg....",
+        ".w..www.......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -279,6 +298,7 @@ ABILITIES = {
     "grab_throw": grab_throw,
     "dash_behind": dash_behind,
     "stomp": stomp,
+    "reflect": reflect,
 }
 
 DRAWN = {

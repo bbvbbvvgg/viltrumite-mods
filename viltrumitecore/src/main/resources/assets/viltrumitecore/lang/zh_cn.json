@@ -447,5 +447,7 @@
   "ability.viltrumitecore.reinhard_dash_behind.name": "闪至身后",
   "ability.viltrumitecore.reinhard_dash_behind.desc": "按下后出现在准星所指生物（24格内）的身后并面向其背部。需要其附近有安全落点。冷却3秒。",
   "ability.viltrumitecore.reinhard_stomp.name": "震地踏",
-  "ability.viltrumitecore.reinhard_stomp.desc": "按下后用脚猛踏地面：对8格内地面上的一切造成12点伤害并向外击退；地表一层会碎裂。冷却8秒。"
+  "ability.viltrumitecore.reinhard_stomp.desc": "按下后用脚猛踏地面：对8格内地面上的一切造成12点伤害并向外击退；地表一层会碎裂。冷却8秒。",
+  "ability.viltrumitecore.reinhard_reflect.name": "反弹投射物",
+  "ability.viltrumitecore.reinhard_reflect.desc": "按下后抬起手背1秒：击中你的所有投射物都会以相同速度飞回射手。冷却4秒。"
 }

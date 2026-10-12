@@ -331,7 +331,7 @@ public final class ReinhardHero implements HeroDefinition {
 
    /**
     * Arrow Protection (spec §4.3): every projectile is turned aside; the catch and
-    * reflect windows of the Restrained palm (stage 3) win over the passive. Mode-independent.
+    * reflect windows (Restrained palm / Knight backhand, stage 3) win over the passive. Mode-independent.
     */
    @Override
    public ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) {
@@ -339,6 +339,8 @@ public final class ReinhardHero implements HeroDefinition {
       ProjectileResponse response = projectileResponse(state);
       if (response == ProjectileResponse.CATCH) {
          CatchWindow.onCatch(self, state);
+      } else if (response == ProjectileResponse.REFLECT) {
+         dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow.onReflect(self, state, projectile);
       }
 
       return response;
@@ -346,7 +348,8 @@ public final class ReinhardHero implements HeroDefinition {
 
    /** Pure: the open palm windows (stage 3) win over the passive deflection; no state = no window. */
    static ProjectileResponse projectileResponse(@javax.annotation.Nullable ReinhardState state) {
-      return ArrowWard.response(state != null && CatchWindow.isOpen(state), false);
+      return ArrowWard.response(state != null && CatchWindow.isOpen(state),
+         state != null && dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow.isOpen(state));
    }
 
    /** Spec §3.1: void and generic_kill never take him below 1 HP (/kill still kills: AdminKill). */
@@ -451,6 +454,10 @@ public final class ReinhardHero implements HeroDefinition {
    static int stateFlags(ReinhardState state, int flags) {
       if (CatchWindow.isOpen(state)) {
          flags |= 1 << ReinhardFlags.CATCH_WINDOW;
+      }
+
+      if (dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow.isOpen(state)) {
+         flags |= 1 << ReinhardFlags.REFLECT_WINDOW;
       }
 
       if (state.grab != null) {

@@ -81,6 +81,13 @@ class ReinhardFirstPersonPoseTest {
    }
 
    @Test
+   void reflectGuardsThenSwats() {
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.REFLECT, 0, 5.0, ReinhardRules.REFLECT_WINDOW).x() > 0.0F, "the backhand across the chest");
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.REFLECT, ReinhardClips.PHASE_SNAP, 2.0, 10).x() < 0.0F, "swatted out to the side");
+      assertEquals(0.0F, ReinhardFirstPersonPose.of(ReinhardAbility.REFLECT, 0, ReinhardRules.REFLECT_WINDOW, ReinhardRules.REFLECT_WINDOW).x(), 1.0E-6F);
+   }
+
+   @Test
    void noActionNoOffset() {
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(null, 0, 3.0));
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(ReinhardAbility.REID, 0, 3.0));

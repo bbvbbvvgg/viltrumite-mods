@@ -447,5 +447,7 @@
   "ability.viltrumitecore.reinhard_dash_behind.name": "Tras la espalda",
   "ability.viltrumitecore.reinhard_dash_behind.desc": "Pulsa para aparecer detrás de la criatura en tu mira (hasta 24 bloques), mirando su espalda. Necesita un lugar seguro cerca. Enfriamiento 3 s.",
   "ability.viltrumitecore.reinhard_stomp.name": "Pisotón",
-  "ability.viltrumitecore.reinhard_stomp.desc": "Pulsa para golpear el suelo con el pie: 12 de daño a todo lo que esté en el suelo a 8 bloques, empujado hacia fuera; la capa superior del suelo se agrieta. Enfriamiento 8 s."
+  "ability.viltrumitecore.reinhard_stomp.desc": "Pulsa para golpear el suelo con el pie: 12 de daño a todo lo que esté en el suelo a 8 bloques, empujado hacia fuera; la capa superior del suelo se agrieta. Enfriamiento 8 s.",
+  "ability.viltrumitecore.reinhard_reflect.name": "Reflejar proyectil",
+  "ability.viltrumitecore.reinhard_reflect.desc": "Pulsa para alzar el dorso de la mano durante 1 s: todo proyectil que te alcance vuelve a su tirador a la misma velocidad. Enfriamiento 4 s."
 }
