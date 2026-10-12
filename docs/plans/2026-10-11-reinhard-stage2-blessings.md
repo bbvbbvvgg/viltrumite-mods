@@ -136,9 +136,9 @@ See the overview. Stage-specific:
 - `default boolean blocksEffect(Player self, MobEffectInstance effect) { return false; }`.
 - `Detox.blocks(MobEffectCategory category, boolean isPoisonLike)` → `category == HARMFUL || isPoisonLike` (poison and wither are HARMFUL already; `isPoisonLike` covers mod effects tagged `forge:poison` if present). `HeroPassiveEffect` (hidden ambient effects) are BENEFICIAL and pass.
 
-- [ ] **Step 1: Write the failing tests** — `harmfulBlocked`, `beneficialPasses`, `neutralPasses` (e.g. Glowing from a spectral arrow is NEUTRAL in 1.20.1 → passes, so outlines from others still work).
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: poison potion, wither skeleton, Warden darkness, pufferfish, suspicious stew — nothing applies; speed potion applies.
-- [ ] **Step 5: Commit** `feat(hero): effect immunity hook` and `feat(reinhard): detox blessing`.
+- [x] **Step 1: Write the failing tests** — `harmfulBlocked`, `beneficialPasses`, `neutralPasses` (e.g. Glowing from a spectral arrow is NEUTRAL in 1.20.1 → passes, so outlines from others still work).
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: poison potion, wither skeleton, Warden darkness, pufferfish, suspicious stew — nothing applies; speed potion applies.
+- [x] **Step 5: Commit** `feat(hero): effect immunity hook` and `feat(reinhard): detox blessing`.
 
 ### Task 7: Blessing of Mana Absorption — resource regen seam
 

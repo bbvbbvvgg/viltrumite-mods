@@ -254,6 +254,14 @@ public interface HeroDefinition {
    }
 
    /**
+    * Both sides, MobEffectEvent.Applicable: true = this effect never applies to
+    * the hero (DENY). Default: vanilla.
+    */
+   default boolean blocksEffect(Player self, net.minecraft.world.effect.MobEffectInstance effect) {
+      return false;
+   }
+
+   /**
     * Server, ProjectileImpactEvent: a projectile is about to hit this hero
     * (see {@link HeroProjectiles}). Anything but PASS skips the hit and is
     * applied there. Default: vanilla hit.

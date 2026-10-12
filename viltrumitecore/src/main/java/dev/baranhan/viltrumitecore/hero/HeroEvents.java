@@ -343,6 +343,13 @@ public final class HeroEvents {
    }
 
    @SubscribeEvent
+   public static void onEffectApplicable(net.minecraftforge.event.entity.living.MobEffectEvent.Applicable event) {
+      if (event.getEntity() instanceof Player player && HeroRegistry.get(player).blocksEffect(player, event.getEffectInstance())) {
+         event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
+      }
+   }
+
+   @SubscribeEvent
    public static void onProjectileImpact(net.minecraftforge.event.entity.ProjectileImpactEvent event) {
       HeroProjectiles.onImpact(event);
    }

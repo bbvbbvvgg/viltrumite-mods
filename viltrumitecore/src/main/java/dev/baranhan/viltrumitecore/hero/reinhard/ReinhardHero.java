@@ -15,6 +15,7 @@ import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.CloudStep;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Detox;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.WindReading;
@@ -26,6 +27,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -195,6 +197,13 @@ public final class ReinhardHero implements HeroDefinition {
       state.modeCooldown = 0;
       setPage(player, ReinhardMode.RESTRAINED.page());
       applyChassis(player);
+      Detox.cleanse(player);
+   }
+
+   /** Detoxification (spec §4.6): harmful effects never apply (both sides). */
+   @Override
+   public boolean blocksEffect(Player self, MobEffectInstance effect) {
+      return Detox.blocks(effect);
    }
 
    /** Fresh body after death or the End return: enter() is not called there. */
