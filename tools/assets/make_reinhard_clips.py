@@ -129,6 +129,16 @@ CLIPS["parry"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones"
     "body": {"rotation": {"0.0": [0, -10, 0], "0.4": [0, -6, 0]}},
 }}
 
+# ---- stage 3 action overlays (one-shots; times in seconds, 20 t = 1 s) ----
+# Light Punch: 8 t right jab, the contact on tick 3 (0.15 s).
+CLIPS["light_punch"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
+    "right_arm": {"rotation": {"0.0": [-45, -12, 6], "0.15": [-90, 6, 0], "0.25": [-84, 4, 0], "0.4": [-20, 0, 3]},
+                  "position": {"0.0": [0, 0, 0], "0.15": [0, 0, -1.5], "0.4": [0, 0, 0]}},
+    "body": {"rotation": {"0.0": [0, -6, 0], "0.15": [0, 14, 0], "0.4": [0, 2, 0]}},
+    "left_arm": {"rotation": {"0.0": [-30, 0, -6], "0.15": [-20, 0, -8], "0.4": [0, 0, -3]}},
+    "head": {"rotation": {"0.0": [0, 4, 0], "0.15": [0, -10, 0], "0.4": [0, 0, 0]}},
+}}
+
 
 def main():
     data = {"format_version": "1.8.0", "animations": {}}

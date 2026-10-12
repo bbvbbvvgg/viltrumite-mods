@@ -431,5 +431,7 @@
   "subtitles.viltrumitecore.reinhard_throw": "Reinhard throws beyond the horizon",
   "subtitles.viltrumitecore.reinhard_dash_behind": "Reinhard appears behind",
   "subtitles.viltrumitecore.reinhard_stomp": "Reinhard stomps the ground",
-  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard swats a projectile back"
+  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard swats a projectile back",
+  "ability.viltrumitecore.reinhard_light_punch.name": "Light Punch",
+  "ability.viltrumitecore.reinhard_light_punch.desc": "A quick jab: 4 damage and a light push. Never breaks blocks."
 }

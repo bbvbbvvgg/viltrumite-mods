@@ -431,5 +431,7 @@
   "subtitles.viltrumitecore.reinhard_throw": "Reinhard wirft über den Horizont",
   "subtitles.viltrumitecore.reinhard_dash_behind": "Reinhard taucht hinter dir auf",
   "subtitles.viltrumitecore.reinhard_stomp": "Reinhard stampft auf den Boden",
-  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard schlägt ein Geschoss zurück"
+  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard schlägt ein Geschoss zurück",
+  "ability.viltrumitecore.reinhard_light_punch.name": "Leichter Schlag",
+  "ability.viltrumitecore.reinhard_light_punch.desc": "Ein schneller Jab: 4 Schaden und ein leichter Stoß. Zerstört nie Blöcke."
 }

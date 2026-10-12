@@ -59,7 +59,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `LIGHT_PUNCH_DAMAGE = 4f`, `LIGHT_PUNCH_KNOCKBACK = 0.6`, `LIGHT_PUNCH_REACH = 3.5`, `LIGHT_PUNCH_TICKS = 8`, `LIGHT_PUNCH_HIT_TICK = 3`.
 - Hit: ray `LIGHT_PUNCH_REACH` from the eyes at tick 3 → `hurt(playerAttack(self), 4)`; knockback 0.6 along look. No block breaking. Sound `viltrumitecore:punch_impact` (§10.2). FX: small `HeroFx.flash`. First person: jab of the right arm (offset on the `RenderArmEvent` stack).
 
-- [ ] Step 1 tests: `damageIsFour`, `knockbackIsPointSix`, `hitOnTick3`, `noDestruction` (`DestructionLevel.NONE`). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views on a zombie and a player. Step 5 commit `feat(reinhard): light punch`.
+- [x] Step 1 tests: `damageIsFour`, `knockbackIsPointSix`, `hitOnTick3`, `noDestruction` (`DestructionLevel.NONE`). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): light punch`.
+- [ ] Manual: both views on a zombie and a player — оставлено пользователю.
 
 ### Task 3: Step Dash (Restrained, slot 2) — client-predicted
 

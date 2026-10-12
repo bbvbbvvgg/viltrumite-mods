@@ -431,5 +431,7 @@
   "subtitles.viltrumitecore.reinhard_throw": "Reinhard ufkun ötesine fırlatır",
   "subtitles.viltrumitecore.reinhard_dash_behind": "Reinhard arkada belirir",
   "subtitles.viltrumitecore.reinhard_stomp": "Reinhard yere basar",
-  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard mermiyi geri savurur"
+  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard mermiyi geri savurur",
+  "ability.viltrumitecore.reinhard_light_punch.name": "Hafif Yumruk",
+  "ability.viltrumitecore.reinhard_light_punch.desc": "Hızlı bir direkt: 4 hasar ve hafif bir itiş. Asla blok kırmaz."
 }

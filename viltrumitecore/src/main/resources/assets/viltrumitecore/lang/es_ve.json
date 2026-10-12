@@ -431,5 +431,7 @@
   "subtitles.viltrumitecore.reinhard_throw": "Reinhard lanza más allá del horizonte",
   "subtitles.viltrumitecore.reinhard_dash_behind": "Reinhard aparece por detrás",
   "subtitles.viltrumitecore.reinhard_stomp": "Reinhard pisotea el suelo",
-  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard devuelve un proyectil"
+  "subtitles.viltrumitecore.reinhard_reflect": "Reinhard devuelve un proyectil",
+  "ability.viltrumitecore.reinhard_light_punch.name": "Golpe ligero",
+  "ability.viltrumitecore.reinhard_light_punch.desc": "Un jab rápido: 4 de daño y un empujón leve. Nunca rompe bloques."
 }

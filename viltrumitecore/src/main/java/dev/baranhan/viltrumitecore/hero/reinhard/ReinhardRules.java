@@ -74,6 +74,14 @@ public final class ReinhardRules {
    /** Sky Kick: ticks from the toss to the kick contact (used by the clips too). */
    public static final int KICK_TOSS_TICKS = 6;
 
+   // ---- Light Punch (spec §6.1) ----
+   public static final float LIGHT_PUNCH_DAMAGE = 4.0F;
+   public static final double LIGHT_PUNCH_KNOCKBACK = 0.6;
+   public static final double LIGHT_PUNCH_REACH = 3.5;
+   /** Action lock (no cooldown): the clip length. */
+   public static final int LIGHT_PUNCH_TICKS = 8;
+   public static final int LIGHT_PUNCH_HIT_TICK = 3;
+
    private ReinhardRules() {
    }
 

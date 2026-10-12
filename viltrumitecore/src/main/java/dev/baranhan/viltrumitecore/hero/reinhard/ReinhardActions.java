@@ -4,6 +4,7 @@ import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.AbilityHandler;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.LightPunch;
 import java.util.EnumMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -18,6 +19,10 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public final class ReinhardActions {
    private static final Map<ReinhardAbility, AbilityHandler> HANDLERS = new EnumMap<>(ReinhardAbility.class);
+
+   static {
+      register(ReinhardAbility.LIGHT_PUNCH, new LightPunch());
+   }
 
    private ReinhardActions() {
    }
@@ -62,7 +67,7 @@ public final class ReinhardActions {
       return null;
    }
 
-   /** Ability classes register themselves here (static init of {@link ReinhardHero}). */
+   /** Every ability class is registered in the static block above. */
    static void register(ReinhardAbility ability, AbilityHandler handler) {
       HANDLERS.put(ability, handler);
    }
