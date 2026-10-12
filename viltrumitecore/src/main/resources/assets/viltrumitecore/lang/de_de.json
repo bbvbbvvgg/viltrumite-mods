@@ -433,5 +433,7 @@
   "subtitles.viltrumitecore.reinhard_stomp": "Reinhard stampft auf den Boden",
   "subtitles.viltrumitecore.reinhard_reflect": "Reinhard schlägt ein Geschoss zurück",
   "ability.viltrumitecore.reinhard_light_punch.name": "Leichter Schlag",
-  "ability.viltrumitecore.reinhard_light_punch.desc": "Ein schneller Jab: 4 Schaden und ein leichter Stoß. Zerstört nie Blöcke."
+  "ability.viltrumitecore.reinhard_light_punch.desc": "Ein schneller Jab: 4 Schaden und ein leichter Stoß. Zerstört nie Blöcke.",
+  "ability.viltrumitecore.reinhard_step_dash.name": "Schrittsprint",
+  "ability.viltrumitecore.reinhard_step_dash.desc": "Ein Blitzschritt von 6 Blöcken in Bewegungs- (oder Blick-)richtung. Abklingzeit 1 s."
 }

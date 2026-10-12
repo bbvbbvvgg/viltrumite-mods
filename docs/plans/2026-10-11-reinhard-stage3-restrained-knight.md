@@ -76,7 +76,8 @@ See the overview. Stage-specific:
 - Server: gate → cooldown 20, action timeline 6 t, the same velocity set server-side with `hurtMarked = true` (authoritative motion that matches the prediction), FX `HeroFx.launch` at the start feet + afterimage pixels, sound placeholder `entity.player.attack.sweep` pitch 1.6. Refused → no FX, no cooldown; server sends its current velocity (`ClientboundSetEntityMotionPacket`) to stop the predicted dash.
 - Pure `velocity(distance, ticks, friction)`: per-tick speed so the sum over `ticks` with ground friction 0.546 (0.91 × 0.6) ≈ distance.
 
-- [ ] Step 1 tests: `coversSixBlocks` (simulated sum within ±0.3), `cooldownTwentyTicks`, `serverRefusalHasNoSideEffects`, `directionFromInputThenLook`, `onePressOnePacket` (fake input loop + predictor for one key edge → exactly one `HeroInputC2SPacket`). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: on flat ground ~6 blocks, into a wall stops, both views. Step 5 commit `feat(reinhard): step dash`.
+- [x] Step 1 tests: `coversSixBlocks` (simulated sum within ±0.3), `cooldownTwentyTicks`, `serverRefusalHasNoSideEffects`, `directionFromInputThenLook`, `onePressOnePacket` (fake input loop + predictor for one key edge → exactly one `HeroInputC2SPacket`). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): step dash`.
+- [ ] Manual: on flat ground ~6 blocks, into a wall stops, both views — оставлено пользователю.
 
 ### Task 4: Catch Projectile (Restrained, slot 3)
 

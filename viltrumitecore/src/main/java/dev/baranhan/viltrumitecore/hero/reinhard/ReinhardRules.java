@@ -82,6 +82,15 @@ public final class ReinhardRules {
    public static final int LIGHT_PUNCH_TICKS = 8;
    public static final int LIGHT_PUNCH_HIT_TICK = 3;
 
+   // ---- Step Dash (spec §6.1) ----
+   /** Blocks covered by one dash (the velocity accounts for friction after the push). */
+   public static final int STEP_DISTANCE = 6;
+   /** Ticks the dash velocity is (re)applied. */
+   public static final int STEP_TICKS = 4;
+   public static final int STEP_COOLDOWN = 20;
+   /** Action lock and clip length (the lean). */
+   public static final int STEP_ACTION_TICKS = 6;
+
    private ReinhardRules() {
    }
 

@@ -139,6 +139,16 @@ CLIPS["light_punch"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "
     "head": {"rotation": {"0.0": [0, 4, 0], "0.15": [0, -10, 0], "0.4": [0, 0, 0]}},
 }}
 
+# Step Dash: 6 t forward lean, arms swept back, then upright again.
+CLIPS["step_dash"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "body": {"rotation": {"0.0": [8, 0, 0], "0.1": [24, 0, 0], "0.3": [4, 0, 0]}},
+    "head": {"rotation": {"0.0": [-6, 0, 0], "0.1": [-18, 0, 0], "0.3": [-3, 0, 0]}},
+    "right_arm": {"rotation": {"0.0": [20, 0, 8], "0.1": [42, 0, 12], "0.3": [8, 0, 4]}},
+    "left_arm": {"rotation": {"0.0": [20, 0, -8], "0.1": [42, 0, -12], "0.3": [8, 0, -4]}},
+    "right_leg": {"rotation": {"0.0": [-12, 0, 0], "0.1": [-28, 0, 0], "0.3": [-4, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [14, 0, 0], "0.1": [30, 0, 0], "0.3": [4, 0, 0]}},
+}}
+
 
 def main():
     data = {"format_version": "1.8.0", "animations": {}}

@@ -140,8 +140,28 @@ def light_punch():
     return img
 
 
+def step_dash():
+    """Restrained: a boot stepping right, a fading afterimage and speed lines behind."""
+    img = ability_plate(WHITE, WHITE_D)
+    paint(img, [
+        ".........bbb..",
+        ".........bsb..",
+        "...ff....bsb..",
+        "...ff....bsb..",
+        "ll.ff....bsbb.",
+        "...ff....bsssb",
+        "lll.f....bsssb",
+        "....ff...bbbbb",
+        "ll..fff.......",
+        "..............",
+        ".llllllllllll.",
+    ], {"b": BLUE_D, "s": STEEL, "f": WHITE_D, "l": STEEL_D}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
+    "step_dash": step_dash,
 }
 
 DRAWN = {

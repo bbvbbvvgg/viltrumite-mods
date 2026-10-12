@@ -16,6 +16,10 @@ public final class ReinhardFirstPersonPose {
    static final float JAB_Y = 0.06F;
    static final float JAB_Z = -0.38F;
    static final float JAB_PITCH = -10.0F;
+   // Step Dash: the arm drops and swings back with the lean.
+   static final float DASH_Y = -0.10F;
+   static final float DASH_Z = 0.12F;
+   static final float DASH_PITCH = 14.0F;
 
    private ReinhardFirstPersonPose() {
    }
@@ -36,6 +40,8 @@ public final class ReinhardFirstPersonPose {
       return switch (ability) {
          case LIGHT_PUNCH -> new Offset(JAB_X, JAB_Y, JAB_Z, JAB_PITCH, 0.0F, 0.0F)
             .scaled(strike(ticks, ReinhardRules.LIGHT_PUNCH_HIT_TICK, ReinhardRules.LIGHT_PUNCH_TICKS));
+         case STEP_DASH -> new Offset(0.0F, DASH_Y, DASH_Z, DASH_PITCH, 0.0F, 0.0F)
+            .scaled(strike(ticks, ReinhardRules.STEP_TICKS / 2, ReinhardRules.STEP_ACTION_TICKS));
          default -> Offset.NONE;
       };
    }

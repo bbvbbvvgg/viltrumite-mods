@@ -433,5 +433,7 @@
   "subtitles.viltrumitecore.reinhard_stomp": "Reinhard stomps the ground",
   "subtitles.viltrumitecore.reinhard_reflect": "Reinhard swats a projectile back",
   "ability.viltrumitecore.reinhard_light_punch.name": "Light Punch",
-  "ability.viltrumitecore.reinhard_light_punch.desc": "A quick jab: 4 damage and a light push. Never breaks blocks."
+  "ability.viltrumitecore.reinhard_light_punch.desc": "A quick jab: 4 damage and a light push. Never breaks blocks.",
+  "ability.viltrumitecore.reinhard_step_dash.name": "Step Dash",
+  "ability.viltrumitecore.reinhard_step_dash.desc": "A flash step of 6 blocks in the direction you move (or look). Cooldown 1 s."
 }

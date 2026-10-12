@@ -433,5 +433,7 @@
   "subtitles.viltrumitecore.reinhard_stomp": "Reinhard pisotea el suelo",
   "subtitles.viltrumitecore.reinhard_reflect": "Reinhard devuelve un proyectil",
   "ability.viltrumitecore.reinhard_light_punch.name": "Golpe ligero",
-  "ability.viltrumitecore.reinhard_light_punch.desc": "Un jab rápido: 4 de daño y un empujón leve. Nunca rompe bloques."
+  "ability.viltrumitecore.reinhard_light_punch.desc": "Un jab rápido: 4 de daño y un empujón leve. Nunca rompe bloques.",
+  "ability.viltrumitecore.reinhard_step_dash.name": "Paso relámpago",
+  "ability.viltrumitecore.reinhard_step_dash.desc": "Un paso fugaz de 6 bloques hacia donde te mueves (o miras). Recarga 1 s."
 }

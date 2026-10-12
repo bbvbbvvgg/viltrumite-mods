@@ -433,5 +433,7 @@
   "subtitles.viltrumitecore.reinhard_stomp": "莱因哈鲁特踏地",
   "subtitles.viltrumitecore.reinhard_reflect": "莱因哈鲁特把飞行物打回",
   "ability.viltrumitecore.reinhard_light_punch.name": "轻拳",
-  "ability.viltrumitecore.reinhard_light_punch.desc": "快速刺拳：造成4点伤害并轻微击退。从不破坏方块。"
+  "ability.viltrumitecore.reinhard_light_punch.desc": "快速刺拳：造成4点伤害并轻微击退。从不破坏方块。",
+  "ability.viltrumitecore.reinhard_step_dash.name": "闪步",
+  "ability.viltrumitecore.reinhard_step_dash.desc": "朝移动（或视线）方向闪步6格。冷却1秒。"
 }

@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.AbilityHandler;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.LightPunch;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.StepDash;
 import java.util.EnumMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -22,6 +23,7 @@ public final class ReinhardActions {
 
    static {
       register(ReinhardAbility.LIGHT_PUNCH, new LightPunch());
+      register(ReinhardAbility.STEP_DASH, new StepDash());
    }
 
    private ReinhardActions() {
@@ -114,6 +116,7 @@ public final class ReinhardActions {
          state.busy(), state.action.running()));
       if (refusal != Refusal.NONE || !handler.tryStart(player, state)) {
          ReinhardHero.INSTANCE.onInputRefused(player, ability.action());
+         handler.refused(player, state, refusal);
          return false;
       }
 

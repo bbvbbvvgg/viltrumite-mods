@@ -433,5 +433,7 @@
   "subtitles.viltrumitecore.reinhard_stomp": "Reinhard yere basar",
   "subtitles.viltrumitecore.reinhard_reflect": "Reinhard mermiyi geri savurur",
   "ability.viltrumitecore.reinhard_light_punch.name": "Hafif Yumruk",
-  "ability.viltrumitecore.reinhard_light_punch.desc": "Hızlı bir direkt: 4 hasar ve hafif bir itiş. Asla blok kırmaz."
+  "ability.viltrumitecore.reinhard_light_punch.desc": "Hızlı bir direkt: 4 hasar ve hafif bir itiş. Asla blok kırmaz.",
+  "ability.viltrumitecore.reinhard_step_dash.name": "Adım Atılımı",
+  "ability.viltrumitecore.reinhard_step_dash.desc": "Hareket (ya da bakış) yönünde 6 blokluk şimşek adımı. Bekleme 1 sn."
 }
