@@ -46,11 +46,11 @@ See the overview. Stage-specific:
 - `convert_reinhard.py --assets DIR`: `reinhard.obj` → `reinhard.geo.json` (body bones `head, body, right_arm, left_arm, right_leg, left_leg`, vanilla pivots) and `reinhard_arms.geo.json` (arms only, armor bone names); sword: `blade_sheath.obj` → `sheath.geo.json`, `training_blade_drawn.obj` → `blade.geo.json` (both under one bone `sword`, pivot at the hilt guard). The sheathed blade offset = translation that maps the drawn blade onto the faces of `training_blade.obj` that are not in `blade_sheath.obj` (least-squares on matching vertices); written into `blade.geo.json` as bone `sheathed_offset` metadata and into `ReinhardAssets.SHEATHED_OFFSET` by hand once (the script prints the Java line). Uses `tools/preview_geo.py` to render `docs`-free previews into `/tmp` for the visual check against `previews/*.png`.
 - `ReinhardAssets`: `ResourceLocation BODY, ARMS, SHEATH, BLADE, TEXTURE, GLOW, SWORD_TEXTURE, SWORD_GLOW, ANIMATIONS`; bone name constants; `Vector3f SHEATHED_OFFSET`.
 
-- [ ] **Step 1: Write the failing test** — `ReinhardAssetsParseTest`: `bodyHasSixBones` (names above), `armsHaveArmorBones`, `pivotsAreVanilla` (right_arm pivot (−5, 22, 0) after the parser's sign rules), `heightIs32px` (max y of head cubes = 32), `swordParses`, `missingFaceIsNull` (a hand-written geo with one face → the other five faces are null and nothing throws).
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*ReinhardAssetsParse*' --no-daemon` → FAIL (files missing).
-- [ ] **Step 3: Implement** `obj2geo.py`, the driver, run it on the archive; compare the `/tmp` previews with `previews/reinhard.png` and `sword_f.png` / `drawn_f.png` (front faces, colours, no mirrored text on the emblem).
-- [ ] **Step 4: Run** → PASS; `python3 tools/obj2geo.py … ` prints `faces: 473`.
-- [ ] **Step 5: Commit** `feat(tools): obj2geo converter` and `feat(reinhard): converted model and sword`.
+- [x] **Step 1: Write the failing test** — `ReinhardAssetsParseTest`: `bodyHasSixBones` (names above), `armsHaveArmorBones`, `pivotsAreVanilla` (right_arm pivot (−5, 22, 0) after the parser's sign rules), `heightIs32px` (max y of head cubes = 32), `swordParses`, `missingFaceIsNull` (a hand-written geo with one face → the other five faces are null and nothing throws).
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*ReinhardAssetsParse*' --no-daemon` → FAIL (files missing).
+- [x] **Step 3: Implement** `obj2geo.py`, the driver, run it on the archive; compare the `/tmp` previews with `previews/reinhard.png` and `sword_f.png` / `drawn_f.png` (front faces, colours, no mirrored text on the emblem).
+- [x] **Step 4: Run** → PASS; `python3 tools/obj2geo.py … ` prints `faces: 473`.
+- [x] **Step 5: Commit** `feat(tools): obj2geo converter` and `feat(reinhard): converted model and sword`.
 
 ### Task 2: Walk animation converter
 
@@ -62,11 +62,11 @@ See the overview. Stage-specific:
 - Input format (`reinhard_walk.json`): `{length: s, referenceAmount: a, tracks: {bone: [{time, rotation:[x,y,z]}]}}`, rotation in degrees in Java `ModelPart` convention. Output: format 1.8.0, `loop: true`, `animation_length` = `length`, per bone `rotation` keyframes `"t": [x, y, z]` with the same values (memory bank: BakedGeoModel's (−x, −y, z) equals a Java ModelPart turn, so angles carry over), linear.
 - `referenceAmount` (0.55) is written as `ReinhardPoses.WALK_REFERENCE_AMOUNT`: walk weight = `clamp(limbSwingAmount / 0.55, 0, 1)`; clip time = `walkDistance · WALK_SECONDS_PER_BLOCK` (constant tuned so the feet do not slide; starting value `length / (2 · 0.6662)` matching vanilla's limb swing period).
 
-- [ ] **Step 1: Write the failing test** — `walkIsOneSecondLoop`, `walkAnimatesFourLimbs`, `rightArmStartsForward` (parsed rotX at 0 s equals the source −31.51° after the parser's X negation rule, i.e. the arm swings forward like a vanilla right arm at the same phase).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** and run the converter.
-- [ ] **Step 4: Run** → PASS.
-- [ ] **Step 5: Commit** `feat(reinhard): walk clip from the archive`.
+- [x] **Step 1: Write the failing test** — `walkIsOneSecondLoop`, `walkAnimatesFourLimbs`, `rightArmStartsForward` (parsed rotX at 0 s equals the source −31.51° after the parser's X negation rule, i.e. the arm swings forward like a vanilla right arm at the same phase).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** and run the converter.
+- [x] **Step 4: Run** → PASS.
+- [x] **Step 5: Commit** `feat(reinhard): walk clip from the archive`.
 
 ### Task 3: Whole-body renderer (third person)
 
@@ -80,11 +80,11 @@ See the overview. Stage-specific:
 - `ReinhardRenderer.onRenderPlayerPre`: skip only when the player is not Reinhard (`ClientHeroData` hero id). An **invisible** Reinhard is still handled and the vanilla render is **always cancelled** (otherwise a glowing invisible Reinhard would show the vanilla `PlayerModel` outline): invisible → no body/glow/sword/items/name tag passes, only the outline pass when `Minecraft.shouldEntityAppearGlowing` (vanilla also outlines invisible glowing players), and `isInvisibleTo(localPlayer) == false` (spectator, same team with `seeFriendlyInvisibles`) → body with `entityTranslucent` at alpha 0.15 like vanilla; pure helper `ReinhardPoses.passes(boolean invisible, boolean visibleToViewer, boolean glowing)` → `{body, translucent, outline, extras}`. Then `pose(...)` → apply clips (`AnimationController.blend` stance/walk, then `overlay`) → head yaw/pitch on the `head` bone from `netHeadYaw/headPitch` (same math as `HulkbusterRenderer.applyHead`) → draw `BODY` with `entityCutoutNoCull(TEXTURE)`, then `eyes(GLOW)` unless `ShaderCompat.isShadowPass()` → sword parts (Task 7) → held items (main/off hand via `ItemRenderer.renderStatic(..., THIRD_PERSON_RIGHT_HAND/LEFT_HAND, ...)` at the hand bone's world transform, offset `HeldItemAnchor.offset(arm)`; the hand that holds Reid — right while DRAWN/DRAWING/SHEATHING, Stage 4 — draws **no** vanilla held item: pure `ReinhardPoses.drawsHeldItem(arm, reidPhase)`) → name tag through the invoker when `shouldShowName` → when the entity appears glowing, render `BODY` again into `Minecraft.renderBuffers().outlineBufferSource()` with the team colour → `event.setCanceled(true)`.
 - Clip bone sets: stance clips animate all six bones; action overlays animate only the bones they need.
 
-- [ ] **Step 1: Write the failing tests** — `idleWhenStill` (walk 0), `walkWeightFromSwing` (0.55 → 1, 0.275 → 0.5), `stanceFollowsMode` (R/K/H → `idle_restrained/idle_knight/idle_holy`), `overlayFromAction` (actionId ≠ −1 → overlay seconds = (elapsed + pt)/20, clamped to length), `NameTagRulesTest.sneakDims` (pure helper mirrors vanilla: sneaking → see-through alpha 0x20), `HeldItemAnchorTest.rightHandOffset` (anchor below the right_arm pivot by 10 px, matches vanilla `ItemInHandLayer` translate (−1/16, 0.4375, 0.0625) after the arm transform), `passesInvisibleGlowingOnlyOutline`, `passesInvisibleSpectatorTranslucent`, `passesVisibleAll`, `heldItemHiddenOnReidHand`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**; register `ReinhardRenderer` on the Forge client bus (`@EventBusSubscriber(value = Dist.CLIENT, bus = FORGE)`).
-- [ ] **Step 4: Run** → PASS. Manual third person (F5 both directions): model replaces the player, head follows the look, glow visible, no vanilla skin parts, name tag in LAN, held sword/block/bow visible, spectral arrow outline, invisibility potion + spectral arrow (outline of the knight shape, never a vanilla Steve), spectator view of an invisible Reinhard (translucent), Oculus on/off.
-- [ ] **Step 5: Commit** `feat(reinhard): whole-body renderer`.
+- [x] **Step 1: Write the failing tests** — `idleWhenStill` (walk 0), `walkWeightFromSwing` (0.55 → 1, 0.275 → 0.5), `stanceFollowsMode` (R/K/H → `idle_restrained/idle_knight/idle_holy`), `overlayFromAction` (actionId ≠ −1 → overlay seconds = (elapsed + pt)/20, clamped to length), `NameTagRulesTest.sneakDims` (pure helper mirrors vanilla: sneaking → see-through alpha 0x20), `HeldItemAnchorTest.rightHandOffset` (anchor below the right_arm pivot by 10 px, matches vanilla `ItemInHandLayer` translate (−1/16, 0.4375, 0.0625) after the arm transform), `passesInvisibleGlowingOnlyOutline`, `passesInvisibleSpectatorTranslucent`, `passesVisibleAll`, `heldItemHiddenOnReidHand`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**; register `ReinhardRenderer` on the Forge client bus (`@EventBusSubscriber(value = Dist.CLIENT, bus = FORGE)`).
+- [x] **Step 4: Run** → PASS. Manual third person (F5 both directions): model replaces the player, head follows the look, glow visible, no vanilla skin parts, name tag in LAN, held sword/block/bow visible, spectral arrow outline, invisibility potion + spectral arrow (outline of the knight shape, never a vanilla Steve), spectator view of an invisible Reinhard (translucent), Oculus on/off.
+- [x] **Step 5: Commit** `feat(reinhard): whole-body renderer`.
 
 ### Task 4: Stances per mode and stance blending
 
@@ -98,11 +98,11 @@ See the overview. Stage-specific:
 - `StanceBlend`: per-player weights `WeakHashMap<Entity, State>`; `float[] weights(Entity e, ReinhardMode target, long nanoTime)`; ease `1 − exp(−k·dt)`, `k = 12`, dt clamped to 0.1 s; called once per entity per frame (skill §6). The renderer blends the old and new stance with `AnimationController.blend` while the weight < 0.999.
 - Knight's walk keeps the left arm behind the back: `walk` is blended with `idle_knight` on `left_arm` only (`overlay` of a one-bone clip `knight_left_arm_hold`).
 
-- [ ] **Step 1: Write the failing tests** — `blendReachesTarget` (after 1 s weight > 0.999), `frameRateIndependent` (60 calls at 16 ms ≈ 240 calls at 4 ms within 1e-3), `secondCallSameFrameDoesNotAdvance` (dt 0 → unchanged), `resetOnHeroChange`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**; generate the clips.
-- [ ] **Step 4: Run** → PASS. Manual third person: each MMB switch blends to the new stance in ~0.3 s; Knight walks with one arm behind the back.
-- [ ] **Step 5: Commit** `feat(reinhard): stances per mode`.
+- [x] **Step 1: Write the failing tests** — `blendReachesTarget` (after 1 s weight > 0.999), `frameRateIndependent` (60 calls at 16 ms ≈ 240 calls at 4 ms within 1e-3), `secondCallSameFrameDoesNotAdvance` (dt 0 → unchanged), `resetOnHeroChange`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**; generate the clips.
+- [x] **Step 4: Run** → PASS. Manual third person: each MMB switch blends to the new stance in ~0.3 s; Knight walks with one arm behind the back.
+- [x] **Step 5: Commit** `feat(reinhard): stances per mode`.
 
 ### Task 5: First person arms
 
@@ -114,11 +114,11 @@ See the overview. Stage-specific:
 - `onRenderArm(RenderArmEvent)`: Reinhard → `PlayerGeoLayer.renderArmPart(stack, buffers, light, model, arm, Part(ARMS, [cutout(TEXTURE), glow(GLOW)], geo -> applyFirstPerson(geo, pose)))`, cancel. Existing first-person mixins that move the `PoseStack` before the arm (e.g. `FirstPersonChopMixin`) still apply because `RenderArmEvent` fires inside `renderPlayerArm`.
 - `ReinhardPoses.firstPersonArmVisible(mode, arm, flags)`: Knight hides the off arm (it is behind the back); Holy Sword shows the left arm lowered to the hilt (draw offset only in third person; first person = vanilla rest position). Fact (skill): an **empty** off hand is drawn in first person only through `AlwaysVisibleOffhandMixin`; `RenderArmEvent` for it never fires otherwise. So `ReinhardFirstPerson.wantsOffhand(player)` = `firstPersonArmVisible(mode, offArm, flags) && (mode != KNIGHT)` plus any Reinhard action clip that uses the off hand (Stage 3 adds Catch, Fist Combo, Grab). `onRenderHand(RenderHandEvent)` (fires before vanilla draws the arm **with** its item): main hand while Reid is in it (Stage 4) → cancel and draw the geo arm + blade ourselves; otherwise vanilla. Limbo (Stage 6) cancels `RenderHandEvent` for both hands.
 
-- [ ] **Step 1: Write the failing test** — `knightHidesOffArmInFirstPerson`, `restrainedShowsBoth`, `holyShowsBoth`, `wantsOffhandOnlyWhenVisible` (empty off hand, Restrained → true; Knight → false; other hero → false).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS. Manual first person: arms are the model's arms with glow, item in hand still drawn by vanilla on top, the **empty** left hand is visible in Restrained/Holy Sword, Knight shows one arm; other heroes' off-hand behaviour unchanged.
-- [ ] **Step 5: Commit** `feat(reinhard): first person arms`.
+- [x] **Step 1: Write the failing test** — `knightHidesOffArmInFirstPerson`, `restrainedShowsBoth`, `holyShowsBoth`, `wantsOffhandOnlyWhenVisible` (empty off hand, Restrained → true; Knight → false; other hero → false).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS. Manual first person: arms are the model's arms with glow, item in hand still drawn by vanilla on top, the **empty** left hand is visible in Restrained/Holy Sword, Knight shows one arm; other heroes' off-hand behaviour unchanged.
+- [x] **Step 5: Commit** `feat(reinhard): first person arms`.
 
 ### Task 6: 3D head on the race screen (`HeroHeadPreviews` seam)
 
@@ -131,11 +131,11 @@ See the overview. Stage-specific:
 - `HeroHeadPreviews`: `interface Preview { void draw(GuiGraphics g, int x, int y, int size, float partialTick); }`, `register(HeroId, Preview)`, `draw(...)` falls back to the skin face. Other heroes stay on the fallback (pixel-identical to today).
 - `ReinhardHeadPreview`: renders only the `head` bone of `BODY` with GUI lighting (`Lighting.setupForEntityInInventory`), slow yaw sway ±15°, 24 px, then `reinhard.png` (archive icon, 32×32 scaled to 12) at the button's left as the hero badge (open question 5).
 
-- [ ] **Step 1: Write the failing test** — `fallbackForUnregistered`, `registeredWins`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS. Manual: race screen shows four hero buttons; the old three heads look exactly as before; Reinhard's head is 3D.
-- [ ] **Step 5: Commit** `feat(hero): head preview seam on the race screen`.
+- [x] **Step 1: Write the failing test** — `fallbackForUnregistered`, `registeredWins`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS. Manual: race screen shows four hero buttons; the old three heads look exactly as before; Reinhard's head is 3D.
+- [x] **Step 5: Commit** `feat(hero): head preview seam on the race screen`.
 
 ### Task 7: Sheath on the belt and mode auras
 
@@ -148,11 +148,11 @@ See the overview. Stage-specific:
 - `ReinhardSword.drawSheathed(PoseStack bodyFrame, BakedGeoModel body, …)`: attach to the `body` bone transform at the left hip (`HIP_OFFSET` = (+4.5, 11, 0) px, tilt rotZ −20°, rotX +10°), draw `SHEATH` + `BLADE` translated by `SHEATHED_OFFSET`, cutout + glow (glow skipped in the shadow pass). Drawn always (spec §8); Stage 4 moves the blade to the hand.
 - `ReinhardAuraVfx` (pixel style, `PixelVfx.billboardPixel`, additive blend, GL state restored): Knight — 6–10 white wind motes circling the feet (radius 0.7, rise 0.4 then fade, 1.2 s life); Holy Sword — 1 gold spark every ~15 ticks near the body (`AuraRules.goldSparkChance`); none in Restrained. Ages by ticks + partialTick. Hidden for the local player in first person except a few motes at the feet below the view (skill §8 rule: local first-person aura filtering in the manager). Motes cleared on logout/level change.
 
-- [ ] **Step 1: Write the failing test** — `restrainedHasNoAura`, `knightWindCount` (6–10), `holySparkRate` (expected sparks per 20 s within 20–30), `firstPersonFilter` (local + first person → feet motes only).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS. Manual 1st/3rd person, all three modes, walking and standing; shaders on.
-- [ ] **Step 5: Commit** `feat(reinhard): sheath on the belt and mode auras`.
+- [x] **Step 1: Write the failing test** — `restrainedHasNoAura`, `knightWindCount` (6–10), `holySparkRate` (expected sparks per 20 s within 20–30), `firstPersonFilter` (local + first person → feet motes only).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS. Manual 1st/3rd person, all three modes, walking and standing; shaders on.
+- [x] **Step 5: Commit** `feat(reinhard): sheath on the belt and mode auras`.
 
 ### Task 8: Body states, skill update, first jar
 
@@ -160,11 +160,11 @@ See the overview. Stage-specific:
 - Modify: `core/client/reinhard/ReinhardPoses.java` (`BodyState`), `ReinhardRenderer.java` (rotations for SLEEP/SWIM/FALL_FLY in the event stack before the body frame, like vanilla `setupRotations`), `make_reinhard_clips.py` (`sit`, `crouch` already; `swim` arm stroke), `.agents/skills/animation-system/SKILL.md` §7.4 (Reinhard as the second user; "pose clips must cover crouch/sit/sleep/swim because model mixins never run"; name tag / held items / outline restoration), `.memory-bank/project.md`, `SESSION.md`, `gradle.properties` or `viltrumitecore/build.gradle` (core minor version +1)
 - Test: extend `ReinhardPosesTest`
 
-- [ ] **Step 1: Write the failing tests** — `bodyStateFromPose` (CROUCHING → CROUCH, SLEEPING → SLEEP, SWIMMING → SWIM, FALL_FLYING → FALL_FLY, passenger → SIT, else STAND).
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS.
-- [ ] **Step 5:** Full verification list + dedicated server start (`./gradlew :viltrumitecore:runServer`): no client class loaded (renderer, invoker mixin only in client config).
-- [ ] **Step 6:** In game, both views: walk, sprint, sneak, swim, boat, horse, bed, elytra (creative), all three stances, Homelander/Iron Man/Hulkbuster/Regulus visuals unchanged.
-- [ ] **Step 7:** Commit `feat(reinhard): body states` and `docs(reinhard): stage 1b notes`; push `feat/reinhard-stage1b`; PR «Рейнхард, этап 1b: модель, ножны, стойки».
+- [x] **Step 1: Write the failing tests** — `bodyStateFromPose` (CROUCHING → CROUCH, SLEEPING → SLEEP, SWIMMING → SWIM, FALL_FLYING → FALL_FLY, passenger → SIT, else STAND).
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS.
+- [x] **Step 5:** Full verification list + dedicated server start (`./gradlew :viltrumitecore:runServer`): no client class loaded (renderer, invoker mixin only in client config).
+- [x] **Step 6:** In game, both views: walk, sprint, sneak, swim, boat, horse, bed, elytra (creative), all three stances, Homelander/Iron Man/Hulkbuster/Regulus visuals unchanged.
+- [x] **Step 7:** Commit `feat(reinhard): body states` and `docs(reinhard): stage 1b notes`; push `feat/reinhard-stage1b`; PR «Рейнхард, этап 1b: модель, ножны, стойки».
 
 Acceptance criteria closed: §11.1 (full), §11.12 (partial).
 
