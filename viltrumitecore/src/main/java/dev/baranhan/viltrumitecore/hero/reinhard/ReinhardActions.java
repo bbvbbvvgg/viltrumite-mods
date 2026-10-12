@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.AbilityHandler;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.CatchWindow;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.FistCombo;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.LightPunch;
@@ -32,6 +33,7 @@ public final class ReinhardActions {
       register(ReinhardAbility.FIST_COMBO, new FistCombo());
       register(ReinhardAbility.SKY_KICK, new SkyKick());
       register(ReinhardAbility.GRAB_THROW, new GrabThrow());
+      register(ReinhardAbility.DASH_BEHIND, new DashBehind());
    }
 
    private ReinhardActions() {
@@ -129,6 +131,22 @@ public final class ReinhardActions {
       }
 
       return true;
+   }
+
+   /** A Dash Behind press from its own packet: the request rides in the state while the gate and tryStart run. */
+   public static void handleDashBehind(ServerPlayer player, ReinhardState state, DashBehind.Request request) {
+      ReinhardAbility ability = ReinhardAbility.DASH_BEHIND;
+      AbilityHandler handler = HANDLERS.get(ability);
+      if (handler == null || !ability.shipped()) {
+         return;
+      }
+
+      state.behindRequest = request;
+      try {
+         press(player, state, ability, handler);
+      } finally {
+         state.behindRequest = null;
+      }
    }
 
    /** Server tick: a controlled Reinhard drops every action; abilities tick, then the timeline advances. */

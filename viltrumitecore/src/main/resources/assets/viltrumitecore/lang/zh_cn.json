@@ -443,5 +443,7 @@
   "ability.viltrumitecore.reinhard_sky_kick.name": "踢上天",
   "ability.viltrumitecore.reinhard_sky_kick.desc": "轻轻抛起目标，一脚把它踢上60格以上的高空：20点伤害。冷却10秒。",
   "ability.viltrumitecore.reinhard_grab_throw.name": "擒抱投掷",
-  "ability.viltrumitecore.reinhard_grab_throw.desc": "按下抓住面前的目标，再按一次将其扔出约120格、飞过地平线：15点伤害。冷却12秒。"
+  "ability.viltrumitecore.reinhard_grab_throw.desc": "按下抓住面前的目标，再按一次将其扔出约120格、飞过地平线：15点伤害。冷却12秒。",
+  "ability.viltrumitecore.reinhard_dash_behind.name": "闪至身后",
+  "ability.viltrumitecore.reinhard_dash_behind.desc": "按下后出现在准星所指生物（24格内）的身后并面向其背部。需要其附近有安全落点。冷却3秒。"
 }

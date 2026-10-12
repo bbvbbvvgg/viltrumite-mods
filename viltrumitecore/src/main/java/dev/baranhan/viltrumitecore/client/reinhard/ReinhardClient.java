@@ -6,7 +6,7 @@ import dev.baranhan.viltrumitecore.client.render.vfx.OutlineTargets;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import net.minecraftforge.common.MinecraftForge;
 
-/** Client entry point for Reinhard: client systems register here (panel style, HUD, race screen head, Wind Reading outline, Step Dash prediction). */
+/** Client entry point for Reinhard: client systems register here (panel style, HUD, race screen head, Wind Reading outline, Step Dash and Dash Behind prediction). */
 public final class ReinhardClient {
    private ReinhardClient() {
    }
@@ -16,5 +16,6 @@ public final class ReinhardClient {
       HeroHeadPreviews.register(HeroId.REINHARD, ReinhardHeadPreview.INSTANCE);
       OutlineTargets.register(WindReadingClient::colorOf);
       MinecraftForge.EVENT_BUS.addListener(StepDashClient::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(DashBehindClient::onClientTick);
    }
 }

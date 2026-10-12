@@ -41,6 +41,8 @@ public final class ReinhardState {
    public int throwSustain;
    public int throwSustained;
    public net.minecraft.world.phys.Vec3 throwVelocity;
+   /** Dash Behind (stage 3): the packet's request while its press is gated, null otherwise; transient. */
+   public dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind.Request behindRequest;
 
    /**
     * Busy = an action that must not be interrupted by a mode switch (Reid

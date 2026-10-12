@@ -443,5 +443,7 @@
   "ability.viltrumitecore.reinhard_sky_kick.name": "Gök Tekmesi",
   "ability.viltrumitecore.reinhard_sky_kick.desc": "Hedefi hafifçe havalandırır ve 60+ blok göğe tekmeler: 20 hasar. Bekleme 10 sn.",
   "ability.viltrumitecore.reinhard_grab_throw.name": "Yakala ve Fırlat",
-  "ability.viltrumitecore.reinhard_grab_throw.desc": "Önündeki hedefi yakalamak için bas, ufkun ötesine ~120 blok fırlatmak için tekrar bas: 15 hasar. Bekleme 12 sn."
+  "ability.viltrumitecore.reinhard_grab_throw.desc": "Önündeki hedefi yakalamak için bas, ufkun ötesine ~120 blok fırlatmak için tekrar bas: 15 hasar. Bekleme 12 sn.",
+  "ability.viltrumitecore.reinhard_dash_behind.name": "Arkaya Atılış",
+  "ability.viltrumitecore.reinhard_dash_behind.desc": "Nişangahındaki canlının (24 bloğa kadar) arkasında, sırtına dönük belirmek için bas. Yakınında güvenli bir yer gerekir. Bekleme 3 sn."
 }

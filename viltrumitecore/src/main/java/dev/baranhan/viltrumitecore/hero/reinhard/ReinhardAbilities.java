@@ -73,9 +73,13 @@ public final class ReinhardAbilities {
       return ability != null && ability.shipped();
    }
 
-   /** Own shipped ids whose keys send hero input. */
+   /**
+    * Own shipped ids whose keys send hero input. Dash Behind is left out: its key sends
+    * {@code ReinhardDashBehindC2SPacket} (target + spot) from {@code DashBehindClient} instead.
+    */
    public static String[] inputSlots() {
-      return Arrays.stream(ReinhardAbility.values()).filter(ReinhardAbility::shipped).map(ReinhardAbility::id).toArray(String[]::new);
+      return Arrays.stream(ReinhardAbility.values()).filter(ReinhardAbility::shipped).filter(a -> a != ReinhardAbility.DASH_BEHIND)
+         .map(ReinhardAbility::id).toArray(String[]::new);
    }
 
    @Nullable

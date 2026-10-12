@@ -232,6 +232,25 @@ def grab_throw():
     return img
 
 
+def dash_behind():
+    """Knight: a white afterimage on the left, a curved arrow around a steel figure to its back."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        "..w......mm...",
+        ".www....mssm..",
+        "..w.....mssm..",
+        ".www..wwwmm...",
+        ".w.w.w...ss...",
+        ".w.ww...msssm.",
+        "....w...msssm.",
+        "....ww...ss...",
+        ".....wwggs.s..",
+        "......wGg..s..",
+        ".......g......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -239,6 +258,7 @@ ABILITIES = {
     "fist_combo": fist_combo,
     "sky_kick": sky_kick,
     "grab_throw": grab_throw,
+    "dash_behind": dash_behind,
 }
 
 DRAWN = {

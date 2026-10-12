@@ -229,6 +229,12 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket::handle)
          .add();
+
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket::handle)
+         .add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

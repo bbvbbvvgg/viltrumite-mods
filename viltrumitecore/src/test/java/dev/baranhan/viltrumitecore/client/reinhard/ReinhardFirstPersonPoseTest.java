@@ -67,6 +67,12 @@ class ReinhardFirstPersonPoseTest {
    }
 
    @Test
+   void dashBehindDipsThenSettles() {
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.DASH_BEHIND, 0, 2.0).y() < 0.0F, "the arm sweeps low on the vanish");
+      assertEquals(0.0F, ReinhardFirstPersonPose.of(ReinhardAbility.DASH_BEHIND, 0, ReinhardRules.BEHIND_ACTION_TICKS).y(), 1.0E-6F);
+   }
+
+   @Test
    void noActionNoOffset() {
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(null, 0, 3.0));
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(ReinhardAbility.REID, 0, 3.0));

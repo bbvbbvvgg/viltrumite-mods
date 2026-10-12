@@ -148,6 +148,22 @@ public final class ReinhardRules {
    /** Action lock and the throw clip: hit-stop 0-3, launch on 3, follow-through to 12. */
    public static final int THROW_ACTION_TICKS = 12;
 
+   // Dash Behind (Knight slot 4, spec §6.2): behind the target under the crosshair, a safe spot (SafeSpot).
+   /** Target search range along the look. */
+   public static final double BEHIND_RANGE = 24.0;
+   /** Extra distance the server accepts for the client's target (movement between the two views). */
+   public static final double BEHIND_TOLERANCE = 2.0;
+   /** Blocks behind the target's feet, against its horizontal look. */
+   public static final double BEHIND_OFFSET = 1.5;
+   /** Safe-spot search radius around the wanted spot, and its grid step. */
+   public static final double BEHIND_SEARCH = 3.0;
+   public static final double BEHIND_SEARCH_STEP = 0.5;
+   /** The client's spot is kept when within this distance of the server's answer. */
+   public static final double BEHIND_CLIENT_TOLERANCE = 1.0;
+   public static final int BEHIND_COOLDOWN = 60;
+   /** Action lock and the clip: vanish lean, land turned. */
+   public static final int BEHIND_ACTION_TICKS = 8;
+
    private ReinhardRules() {
    }
 

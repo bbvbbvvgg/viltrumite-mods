@@ -443,5 +443,7 @@
   "ability.viltrumitecore.reinhard_sky_kick.name": "Himmelstritt",
   "ability.viltrumitecore.reinhard_sky_kick.desc": "Wirft das Ziel leicht hoch und tritt es 60+ Blöcke in den Himmel: 20 Schaden. Abklingzeit 10 s.",
   "ability.viltrumitecore.reinhard_grab_throw.name": "Packen & Werfen",
-  "ability.viltrumitecore.reinhard_grab_throw.desc": "Drücken, um das Ziel vor dir zu packen, erneut drücken, um es ~120 Blöcke über den Horizont zu werfen: 15 Schaden. Abklingzeit 12 s."
+  "ability.viltrumitecore.reinhard_grab_throw.desc": "Drücken, um das Ziel vor dir zu packen, erneut drücken, um es ~120 Blöcke über den Horizont zu werfen: 15 Schaden. Abklingzeit 12 s.",
+  "ability.viltrumitecore.reinhard_dash_behind.name": "Hinter den Gegner",
+  "ability.viltrumitecore.reinhard_dash_behind.desc": "Drücken, um hinter der Kreatur im Fadenkreuz (bis 24 Blöcke) zu erscheinen, ihr zugewandt. Braucht einen sicheren Platz in ihrer Nähe. Abklingzeit 3 s."
 }

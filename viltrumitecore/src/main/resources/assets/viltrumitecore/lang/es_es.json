@@ -443,5 +443,7 @@
   "ability.viltrumitecore.reinhard_sky_kick.name": "Patada al cielo",
   "ability.viltrumitecore.reinhard_sky_kick.desc": "Lanza al objetivo un poco y lo patea más de 60 bloques al cielo: 20 de daño. Recarga 10 s.",
   "ability.viltrumitecore.reinhard_grab_throw.name": "Agarrar y lanzar",
-  "ability.viltrumitecore.reinhard_grab_throw.desc": "Pulsa para agarrar al objetivo frente a ti y pulsa de nuevo para lanzarlo ~120 bloques más allá del horizonte: 15 de daño. Recarga 12 s."
+  "ability.viltrumitecore.reinhard_grab_throw.desc": "Pulsa para agarrar al objetivo frente a ti y pulsa de nuevo para lanzarlo ~120 bloques más allá del horizonte: 15 de daño. Recarga 12 s.",
+  "ability.viltrumitecore.reinhard_dash_behind.name": "Tras la espalda",
+  "ability.viltrumitecore.reinhard_dash_behind.desc": "Pulsa para aparecer detrás de la criatura en tu mira (hasta 24 bloques), mirando su espalda. Necesita un lugar seguro cerca. Enfriamiento 3 s."
 }

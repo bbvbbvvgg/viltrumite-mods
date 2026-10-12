@@ -54,6 +54,11 @@ public final class ReinhardFirstPersonPose {
    static final float THROW_Y = -0.08F;
    static final float THROW_Z = -0.42F;
    static final float THROW_PITCH = 30.0F;
+   // Dash Behind: the arm sweeps low and back on the vanish, then rises to guard as he lands turned.
+   static final float BEHIND_Y = -0.16F;
+   static final float BEHIND_Z = 0.10F;
+   static final float BEHIND_PITCH = 24.0F;
+   static final float BEHIND_ROLL = -10.0F;
    /** Ticks to raise / lower the hand. */
    static final double CATCH_EASE = 2.0;
 
@@ -87,6 +92,8 @@ public final class ReinhardFirstPersonPose {
          case FIST_COMBO -> combo(phase, ticks);
          case SKY_KICK -> kick(ticks);
          case GRAB_THROW -> grab(phase, ticks, length);
+         case DASH_BEHIND -> new Offset(0.0F, BEHIND_Y, BEHIND_Z, BEHIND_PITCH, 0.0F, BEHIND_ROLL)
+            .scaled(strike(ticks, 2, ReinhardRules.BEHIND_ACTION_TICKS));
          default -> Offset.NONE;
       };
    }
