@@ -437,5 +437,7 @@
   "ability.viltrumitecore.reinhard_step_dash.name": "Paso relámpago",
   "ability.viltrumitecore.reinhard_step_dash.desc": "Un paso fugaz de 6 bloques hacia donde te mueves (o miras). Recarga 1 s.",
   "ability.viltrumitecore.reinhard_catch.name": "Atrapar proyectil",
-  "ability.viltrumitecore.reinhard_catch.desc": "Abre la palma 0,5 s: flechas y tridentes van a tu inventario, los demás proyectiles desaparecen. Recarga 2 s."
+  "ability.viltrumitecore.reinhard_catch.desc": "Abre la palma 0,5 s: flechas y tridentes van a tu inventario, los demás proyectiles desaparecen. Recarga 2 s.",
+  "ability.viltrumitecore.reinhard_fist_combo.name": "Combo de puños",
+  "ability.viltrumitecore.reinhard_fist_combo.desc": "Pulsa de nuevo para el siguiente golpe: 10, 10 y luego 16 con onda expansiva. Si pausas más de 1 s, la cadena empieza de nuevo."
 }

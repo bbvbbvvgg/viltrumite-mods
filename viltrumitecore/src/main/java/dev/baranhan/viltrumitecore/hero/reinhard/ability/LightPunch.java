@@ -49,15 +49,15 @@ public final class LightPunch implements AbilityHandler {
       }
 
       Strikes.knockback(target, player.getLookAngle(), ReinhardRules.LIGHT_PUNCH_KNOCKBACK);
-      Vec3 at = contact(player, target);
+      Vec3 at = contact(player, target, ReinhardRules.LIGHT_PUNCH_REACH);
       HeroFx.flash(player, at);
       ReinhardSounds.playAt(player, at, ReinhardSounds.LIGHT_PUNCH.get(), 0.9F, 1.15F);
    }
 
    /** The point of the target's box nearest to the eyes along the look. */
-   static Vec3 contact(ServerPlayer player, LivingEntity target) {
+   static Vec3 contact(ServerPlayer player, LivingEntity target, double reach) {
       Vec3 eye = player.getEyePosition();
-      Vec3 end = eye.add(player.getLookAngle().scale(ReinhardRules.LIGHT_PUNCH_REACH + 1.0));
+      Vec3 end = eye.add(player.getLookAngle().scale(reach + 1.0));
       return target.getBoundingBox().clip(eye, end).orElse(target.getBoundingBox().getCenter());
    }
 }

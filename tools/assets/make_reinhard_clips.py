@@ -162,6 +162,27 @@ CLIPS["catch"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones"
     "head": {"rotation": {"0.0": [-4, -6, 0], "0.3": [-4, -6, 0]}},
 }}
 
+# Fist Combo (Knight, one-handed: the left arm stays behind the back, so these
+# clips never touch it). Contacts: combo_1/2 on tick 3 (0.15 s), combo_3 on tick 5 (0.25 s).
+CLIPS["combo_1"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
+    "right_arm": {"rotation": {"0.0": [-50, -14, 6], "0.15": [-92, 4, 0], "0.25": [-86, 2, 0], "0.4": [-30, 0, 4]},
+                  "position": {"0.0": [0, 0, 0], "0.15": [0, 0, -1.5], "0.4": [0, 0, 0]}},
+    "body": {"rotation": {"0.0": [0, -8, 0], "0.15": [0, 16, 0], "0.4": [0, 4, 0]}},
+    "head": {"rotation": {"0.0": [0, 6, 0], "0.15": [0, -12, 0], "0.4": [0, 0, 0]}},
+}}
+CLIPS["combo_2"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
+    "right_arm": {"rotation": {"0.0": [-70, 50, 40], "0.15": [-90, -35, 10], "0.25": [-84, -40, 6], "0.4": [-30, -6, 4]}},
+    "body": {"rotation": {"0.0": [0, 18, 0], "0.15": [0, -16, 0], "0.4": [0, -4, 0]}},
+    "head": {"rotation": {"0.0": [0, -8, 0], "0.15": [0, 10, 0], "0.4": [0, 0, 0]}},
+}}
+CLIPS["combo_3"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
+    "right_arm": {"rotation": {"0.0": [-60, 0, 10], "0.15": [-165, 0, 14], "0.25": [-55, 0, 4], "0.4": [-50, 0, 4], "0.6": [-20, 0, 4]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [-10, 6, 0], "0.25": [22, -4, 0], "0.4": [18, -4, 0], "0.6": [4, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.15": [-8, 0, 0], "0.25": [-14, 0, 0], "0.6": [-3, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.25": [-22, 0, 4], "0.6": [-6, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.25": [16, 0, -4], "0.6": [4, 0, 0]}},
+}}
+
 
 def main():
     data = {"format_version": "1.8.0", "animations": {}}

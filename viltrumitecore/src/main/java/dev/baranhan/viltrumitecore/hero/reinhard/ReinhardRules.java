@@ -99,6 +99,22 @@ public final class ReinhardRules {
    /** The closing hand after a catch (the action lock may outlast the window by this). */
    public static final int CATCH_SNAP_TICKS = 6;
 
+   // ---- Fist Combo (spec §6.2) ----
+   public static final float[] COMBO_DAMAGE = {10.0F, 10.0F, 16.0F};
+   /** Contact tick of each hit (elapsed ticks of its step). */
+   public static final int[] COMBO_HIT_TICKS = {3, 3, 5};
+   /** Action lock (no cooldown) of each hit: its clip length. */
+   public static final int[] COMBO_STEP_TICKS = {8, 8, 12};
+   /** Idle ticks after a hit ends within which the next press continues the chain. */
+   public static final int COMBO_CHAIN_WINDOW = 20;
+   public static final double COMBO_REACH = 3.5;
+   /** Not in the spec: push of each hit along the look (starting values). */
+   public static final double[] COMBO_KNOCKBACK = {0.4, 0.4, 1.0};
+   public static final double COMBO_WAVE_RADIUS = 4.0;
+   /** Not in the spec: the third hit's wave (starting value, open to balance). */
+   public static final float COMBO_WAVE_DAMAGE = 8.0F;
+   public static final double COMBO_WAVE_KNOCKBACK = 0.8;
+
    private ReinhardRules() {
    }
 

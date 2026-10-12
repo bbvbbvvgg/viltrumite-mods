@@ -39,6 +39,18 @@ class ReinhardFirstPersonPoseTest {
    }
 
    @Test
+   void comboHitsLandOnTheirContactTicks() {
+      for (int step = 0; step < 3; step++) {
+         int contact = ReinhardRules.COMBO_HIT_TICKS[step];
+         assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.FIST_COMBO, step, contact).z() < -0.2F, "hit " + (step + 1) + " reaches forward");
+         assertEquals(0.0F, ReinhardFirstPersonPose.of(ReinhardAbility.FIST_COMBO, step, ReinhardRules.COMBO_STEP_TICKS[step]).z(), 1.0E-6F);
+      }
+
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.FIST_COMBO, 1, 3.0).yaw() > 0.0F, "the second hit is a hook");
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.FIST_COMBO, 2, 2.0).y() > 0.0F, "the third is raised first");
+   }
+
+   @Test
    void noActionNoOffset() {
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(null, 0, 3.0));
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(ReinhardAbility.REID, 0, 3.0));

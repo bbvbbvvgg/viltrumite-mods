@@ -104,7 +104,8 @@ See the overview. Stage-specific:
 - Input (open question 1, default): each press = next hit; a press within `COMBO_CHAIN_WINDOW` after the previous hit ends continues the chain, else it restarts at hit 1. Hit 3: `HeroFx.shockwave` r 4 + `HeroDebris.erupt` with a small Knight spec (moderate destruction) + damage in radius (targets through `ReinhardTargets.canHit`).
 - Sounds: `viltrumitecore:regulus_punch_hit` (hits 1–2), `viltrumitecore:regulus_impact_heavy` (hit 3) — §10.2.
 
-- [ ] Step 1 tests: `damageSequence10_10_16`, `chainWindowTwenty`, `lateRestarts`, `waveOnlyOnThird`, `resetOnModeChange`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, `mobGriefing false` → no blocks move. Step 5 commit `feat(reinhard): fist combo`.
+- [x] Step 1 tests: `damageSequence10_10_16`, `chainWindowTwenty`, `lateRestarts`, `waveOnlyOnThird`, `resetOnModeChange`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): fist combo`.
+- [ ] Manual: both views, `mobGriefing false` → no blocks move — оставлено пользователю.
 
 ### Task 6: Sky Kick (Knight, slot 2)
 

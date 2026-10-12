@@ -29,6 +29,13 @@ public final class ReinhardFirstPersonPose {
    static final float SNAP_Z = -0.12F;
    static final float SNAP_PITCH = 10.0F;
    static final float SNAP_ROLL = 12.0F;
+   // Fist Combo: 1 = straight, 2 = hook from the outside, 3 = raised then hammered down.
+   static final float HOOK_X = -0.22F;
+   static final float HOOK_YAW = 30.0F;
+   static final float HAMMER_RAISE_Y = 0.22F;
+   static final float HAMMER_Y = -0.12F;
+   static final float HAMMER_Z = -0.30F;
+   static final float HAMMER_PITCH = 25.0F;
    /** Ticks to raise / lower the hand. */
    static final double CATCH_EASE = 2.0;
 
@@ -59,7 +66,23 @@ public final class ReinhardFirstPersonPose {
          case STEP_DASH -> new Offset(0.0F, DASH_Y, DASH_Z, DASH_PITCH, 0.0F, 0.0F)
             .scaled(strike(ticks, ReinhardRules.STEP_TICKS / 2, ReinhardRules.STEP_ACTION_TICKS));
          case CATCH -> catchHand(phase, ticks, length);
+         case FIST_COMBO -> combo(phase, ticks);
          default -> Offset.NONE;
+      };
+   }
+
+   private static Offset combo(int phase, double ticks) {
+      int step = Math.max(0, Math.min(phase, ReinhardRules.COMBO_HIT_TICKS.length - 1));
+      float w = strike(ticks, ReinhardRules.COMBO_HIT_TICKS[step], ReinhardRules.COMBO_STEP_TICKS[step]);
+      return switch (step) {
+         case 0 -> new Offset(JAB_X, JAB_Y, JAB_Z, JAB_PITCH, 0.0F, 0.0F).scaled(w);
+         case 1 -> new Offset(HOOK_X, JAB_Y, JAB_Z * 0.8F, JAB_PITCH, HOOK_YAW, 0.0F).scaled(w);
+         default -> {
+            // Up first (wind-up over the first half of the run to the contact), then down and forward.
+            int contact = ReinhardRules.COMBO_HIT_TICKS[step];
+            float raise = ticks < contact ? (float) Math.sin(Math.PI * ticks / contact) : 0.0F;
+            yield new Offset(0.0F, HAMMER_RAISE_Y * raise + HAMMER_Y * w, HAMMER_Z * w, -40.0F * raise + HAMMER_PITCH * w, 0.0F, 0.0F);
+         }
       };
    }
 

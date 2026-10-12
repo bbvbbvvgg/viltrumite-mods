@@ -437,5 +437,7 @@
   "ability.viltrumitecore.reinhard_step_dash.name": "Step Dash",
   "ability.viltrumitecore.reinhard_step_dash.desc": "A flash step of 6 blocks in the direction you move (or look). Cooldown 1 s.",
   "ability.viltrumitecore.reinhard_catch.name": "Catch Projectile",
-  "ability.viltrumitecore.reinhard_catch.desc": "Opens your palm for 0.5 s: arrows and tridents are caught into your inventory, other projectiles vanish. Cooldown 2 s."
+  "ability.viltrumitecore.reinhard_catch.desc": "Opens your palm for 0.5 s: arrows and tridents are caught into your inventory, other projectiles vanish. Cooldown 2 s.",
+  "ability.viltrumitecore.reinhard_fist_combo.name": "Fist Combo",
+  "ability.viltrumitecore.reinhard_fist_combo.desc": "Press again for the next hit: 10, 10, then 16 with a shockwave. Pause for over 1 s and the chain starts over."
 }

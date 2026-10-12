@@ -437,5 +437,7 @@
   "ability.viltrumitecore.reinhard_step_dash.name": "Schrittsprint",
   "ability.viltrumitecore.reinhard_step_dash.desc": "Ein Blitzschritt von 6 Blöcken in Bewegungs- (oder Blick-)richtung. Abklingzeit 1 s.",
   "ability.viltrumitecore.reinhard_catch.name": "Geschoss fangen",
-  "ability.viltrumitecore.reinhard_catch.desc": "Öffnet die Hand für 0,5 s: Pfeile und Dreizacke landen im Inventar, andere Geschosse verschwinden. Abklingzeit 2 s."
+  "ability.viltrumitecore.reinhard_catch.desc": "Öffnet die Hand für 0,5 s: Pfeile und Dreizacke landen im Inventar, andere Geschosse verschwinden. Abklingzeit 2 s.",
+  "ability.viltrumitecore.reinhard_fist_combo.name": "Faustkombo",
+  "ability.viltrumitecore.reinhard_fist_combo.desc": "Erneut drücken für den nächsten Schlag: 10, 10, dann 16 mit Druckwelle. Über 1 s Pause startet die Kette neu."
 }

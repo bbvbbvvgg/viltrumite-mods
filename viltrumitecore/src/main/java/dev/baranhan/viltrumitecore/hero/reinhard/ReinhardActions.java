@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.AbilityHandler;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.CatchWindow;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.FistCombo;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.LightPunch;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.StepDash;
 import java.util.EnumMap;
@@ -26,6 +27,7 @@ public final class ReinhardActions {
       register(ReinhardAbility.LIGHT_PUNCH, new LightPunch());
       register(ReinhardAbility.STEP_DASH, new StepDash());
       register(ReinhardAbility.CATCH, new CatchWindow());
+      register(ReinhardAbility.FIST_COMBO, new FistCombo());
    }
 
    private ReinhardActions() {

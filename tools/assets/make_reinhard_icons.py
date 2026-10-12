@@ -177,10 +177,28 @@ def catch_projectile():
     return img
 
 
+def fist_combo():
+    """Knight: a steel gauntlet with a gold cuff and three impact marks."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        ".......w...w..",
+        "..mmmm..w.w...",
+        ".mssssm.......",
+        "mssssssm.www..",
+        "msmsmsmm......",
+        "mssssssm.w.w..",
+        ".mssssm.w...w.",
+        ".gggggg.......",
+        ".gGGGGg.......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 3)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
     "catch": catch_projectile,
+    "fist_combo": fist_combo,
 }
 
 DRAWN = {
