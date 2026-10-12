@@ -15,7 +15,7 @@ import net.minecraft.world.entity.player.Player;
 /** Reinhard's loadout: one page per mode (spec §6, §7.1). */
 public final class ReinhardAbilities {
    /** Highest plan stage whose abilities are in the game. Bumped by every stage. */
-   public static final int SHIPPED_STAGE = 3;
+   public static final int SHIPPED_STAGE = 4;
    /** The shared kit chop joins Holy Sword slot 2 with Stage 4. */
    public static final String CHOP = "viltrumite:chop";
    public static final int CHOP_STAGE = 4;
@@ -114,13 +114,18 @@ public final class ReinhardAbilities {
       return list;
    }
 
-   /** Grey while the ability's extra cooldown runs (later stages add their conditions). */
+   /** Grey while the ability's extra cooldown runs or Reid's phase forbids it (spec §7.1). */
    public static boolean slotGrey(Player player, ReinhardAbility ability) {
       if (!(player instanceof HeroPlayer heroPlayer)) {
          return false;
       }
 
       HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
-      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && snapshot.extraCooldown(ability.ordinal()) > 0;
+      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(ability.ordinal()), snapshot.heroFlags());
+   }
+
+   /** Pure: cooldown running, or the slot condition of Reid's phase (from the snapshot flags) fails. */
+   public static boolean slotGrey(ReinhardAbility ability, int cooldown, int heroFlags) {
+      return cooldown > 0 || !dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.allows(ability, dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.phaseOf(heroFlags));
    }
 }

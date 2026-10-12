@@ -452,5 +452,7 @@
   "ability.viltrumitecore.reinhard_reflect.desc": "Press to raise the back of your hand for 1 s: every projectile that hits you flies back to its shooter at the same speed. Cooldown 4 s.",
   "death.attack.viltrumitecore.annihilation": "%1$s was erased by a holy blade",
   "death.attack.viltrumitecore.annihilation.player": "%1$s was erased by the holy blade of %2$s",
-  "commands.viltrumitecore.annihilate.success": "Reid strike: %s killed, %s blocked (absolute), %s immune (divine), %s skipped"
+  "commands.viltrumitecore.annihilate.success": "Reid strike: %s killed, %s blocked (absolute), %s immune (divine), %s skipped",
+  "ability.viltrumitecore.reinhard_reid.name": "Draw / Sheathe Reid",
+  "ability.viltrumitecore.reinhard_reid.desc": "Draws the Dragon Sword Reid in a 6 s world event (he stands still). Drawn: Rain of Cuts and the strongest attacks unlock. Press again to sheathe (1 s). Returns to the sheath after 60 s without combat and when you leave Holy Sword."
 }

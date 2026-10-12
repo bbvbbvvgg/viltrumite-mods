@@ -13,6 +13,8 @@ import dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.SkyKick;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.StepDash;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.Stomp;
+import dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid;
+import dev.baranhan.viltrumitecore.hero.reinhard.reid.ReidToggle;
 import java.util.EnumMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -38,24 +40,30 @@ public final class ReinhardActions {
       register(ReinhardAbility.DASH_BEHIND, new DashBehind());
       register(ReinhardAbility.STOMP, new Stomp());
       register(ReinhardAbility.REFLECT, new ReflectWindow());
+      register(ReinhardAbility.REID, new ReidToggle());
    }
 
    private ReinhardActions() {
    }
 
-   /** Every condition of a press, read from the server state. */
-   public record Gate(boolean canAct, boolean anchored, ReinhardMode mode, ReinhardMode abilityMode, int cooldown, boolean busy, boolean timelineRunning) {
+   /** Every condition of a press, read from the server state; {@code allowed} = the slot condition of Reid's phase (spec §7.1). */
+   public record Gate(boolean canAct, boolean anchored, ReinhardMode mode, ReinhardMode abilityMode, int cooldown, boolean busy, boolean timelineRunning,
+      boolean allowed) {
+      public Gate(boolean canAct, boolean anchored, ReinhardMode mode, ReinhardMode abilityMode, int cooldown, boolean busy, boolean timelineRunning) {
+         this(canAct, anchored, mode, abilityMode, cooldown, busy, timelineRunning, true);
+      }
    }
 
    public enum Refusal {
       NONE,
       CONTROLLED,
       WRONG_MODE,
+      CONDITION,
       COOLDOWN,
       BUSY;
    }
 
-   /** Pure gate: control first, then mode, cooldown, busy / a running timeline. */
+   /** Pure gate: control first, then mode, Reid's slot condition, cooldown, busy / a running timeline. */
    public static Refusal gate(Gate g) {
       if (!g.canAct() || g.anchored()) {
          return Refusal.CONTROLLED;
@@ -63,6 +71,10 @@ public final class ReinhardActions {
 
       if (g.mode() != g.abilityMode()) {
          return Refusal.WRONG_MODE;
+      }
+
+      if (!g.allowed()) {
+         return Refusal.CONDITION;
       }
 
       if (g.cooldown() > 0) {
@@ -127,13 +139,15 @@ public final class ReinhardActions {
    /** Gate + start; shared with the Dash Behind packet (stage 3 Task 8). */
    static boolean press(ServerPlayer player, ReinhardState state, ReinhardAbility ability, AbilityHandler handler) {
       Refusal refusal = gate(new Gate(!controlled(player), HeroDamage.isAnchored(player), state.mode, ability.mode(), state.cooldowns[ability.ordinal()],
-         state.busy(), state.action.running()));
+         state.busy(), state.action.running(), Reid.allows(ability, state.reid.phase())));
       if (refusal != Refusal.NONE || !handler.tryStart(player, state)) {
          ReinhardHero.INSTANCE.onInputRefused(player, ability.action());
          handler.refused(player, state, refusal);
          return false;
       }
 
+      // Starting an ability is combat (spec §7.3: the 60 s auto-return counts from the last fight).
+      state.reid.combat();
       return true;
    }
 

@@ -452,5 +452,7 @@
   "ability.viltrumitecore.reinhard_reflect.desc": "Drücken, um 1 s lang den Handrücken zu heben: Jedes Geschoss, das dich trifft, fliegt mit gleicher Geschwindigkeit zum Schützen zurück. Abklingzeit 4 s.",
   "death.attack.viltrumitecore.annihilation": "%1$s wurde von einer heiligen Klinge ausgelöscht",
   "death.attack.viltrumitecore.annihilation.player": "%1$s wurde von der heiligen Klinge von %2$s ausgelöscht",
-  "commands.viltrumitecore.annihilate.success": "Reid-Schlag: %s getötet, %s geblockt (absolut), %s immun (göttlich), %s übersprungen"
+  "commands.viltrumitecore.annihilate.success": "Reid-Schlag: %s getötet, %s geblockt (absolut), %s immun (göttlich), %s übersprungen",
+  "ability.viltrumitecore.reinhard_reid.name": "Reid ziehen / einstecken",
+  "ability.viltrumitecore.reinhard_reid.desc": "Zieht das Drachenschwert Reid in einem 6-s-Weltereignis (er steht still). Gezogen: Schnittregen und die stärksten Angriffe werden frei. Erneut drücken zum Einstecken (1 s). Kehrt nach 60 s ohne Kampf und beim Verlassen von Heiliges Schwert in die Scheide zurück."
 }

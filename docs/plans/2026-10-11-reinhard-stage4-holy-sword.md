@@ -58,7 +58,8 @@ See the overview. Stage-specific:
 - Slot conditions (spec §7.1): Lethal Chop always; Sheath Strike only SHEATHED; Rain of Cuts, World Cut, World Erasure only DRAWN. Not allowed → refusal sound, grey icon.
 - Combat = Reinhard dealt damage to a living entity, took non-environment damage, or started an ability.
 
-- [ ] Step 1 tests: `drawTakes120`, `sheatheTakes20`, `autoReturnAfter1200Idle`, `combatResetsIdle`, `leaveModeSheathes`, `cancelDrawingOnLeave`, `slotConditions` (table), `transientPhasesLoadSheathed`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): reid state machine`.
+- [x] Step 1 tests: `drawTakes120`, `sheatheTakes20`, `autoReturnAfter1200Idle`, `combatResetsIdle`, `leaveModeSheathes`, `cancelDrawingOnLeave`, `slotConditions` (table), `transientPhasesLoadSheathed`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): reid state machine`.
+- [ ] Manual: в игре: автовозврат через 60 с без боя, удар/получение урона сбрасывает таймер, СКМ во время вынимания/вкладывания отказывает, серые слоты по фазе Рейда — оставлено пользователю.
 
 ### Task 3: Draw event — server scene
 

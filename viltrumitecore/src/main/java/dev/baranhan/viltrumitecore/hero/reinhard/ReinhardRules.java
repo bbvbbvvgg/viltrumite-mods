@@ -27,6 +27,9 @@ public final class ReinhardRules {
    public static final float CHOP_BASE_DAMAGE = 20.0F;
    /** Reid idle time before the auto-return to the sheath (spec §7.3: 60 s); HUD bar scale. */
    public static final int REID_IDLE_TICKS = 1200;
+   /** Spec §7.3: the draw event lasts 6 s; sheathing 1 s (stage 4). */
+   public static final int REID_DRAW_TICKS = 120;
+   public static final int REID_SHEATHE_TICKS = 20;
 
    // ---- Divine Protection of the Phoenix (spec §4.2) ----
    /** Online ticks before the next revive (10 min). */
@@ -208,5 +211,10 @@ public final class ReinhardRules {
       }
 
       return Math.max(0.0F, Math.min(amount, health - HP_FLOOR));
+   }
+
+   /** Spec §7.1: Reid may be drawn at any time for now (the "worthy" list is §12). */
+   public static boolean canDraw() {
+      return true;
    }
 }

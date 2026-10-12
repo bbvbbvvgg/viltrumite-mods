@@ -452,5 +452,7 @@
   "ability.viltrumitecore.reinhard_reflect.desc": "1 sn boyunca elinin tersini kaldırmak için bas: sana isabet eden her mermi aynı hızla atana geri uçar. Bekleme 4 sn.",
   "death.attack.viltrumitecore.annihilation": "%1$s kutsal bir kılıçla silindi",
   "death.attack.viltrumitecore.annihilation.player": "%1$s, %2$s tarafından kutsal bir kılıçla silindi",
-  "commands.viltrumitecore.annihilate.success": "Reid darbesi: %s öldü, %s engellendi (mutlak), %s bağışık (ilahi), %s atlandı"
+  "commands.viltrumitecore.annihilate.success": "Reid darbesi: %s öldü, %s engellendi (mutlak), %s bağışık (ilahi), %s atlandı",
+  "ability.viltrumitecore.reinhard_reid.name": "Reid'i çek / kınına koy",
+  "ability.viltrumitecore.reinhard_reid.desc": "Ejderha Kılıcı Reid'i 6 sn'lik bir dünya olayıyla çeker (kıpırdamadan durur). Çekiliyken Kesik Yağmuru ve en güçlü saldırılar açılır. Kınına koymak için tekrar bas (1 sn). 60 sn savaşsız kalınca ve Kutsal Kılıç'tan çıkınca kınına döner."
 }

@@ -21,6 +21,8 @@ import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ManaAbsorption;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.WindReading;
+import dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid;
+import dev.baranhan.viltrumitecore.hero.reinhard.reid.ReidLife;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import java.util.UUID;
@@ -149,6 +151,7 @@ public final class ReinhardHero implements HeroDefinition {
       ReinhardState state = ReinhardState.ensure(player);
       state.tick();
       ReinhardActions.tick(player, state);
+      ReidLife.tick(player, state, state.reid.tick());
       VoidRescue.tick(player);
       if (player.tickCount % ReinhardRules.WIND_SCAN_INTERVAL == 0) {
          WindReading.scan(player, state);
@@ -273,6 +276,10 @@ public final class ReinhardHero implements HeroDefinition {
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
       ReinhardState state = ReinhardState.ensure(self);
       WindReading.onAttacked(self, state, source.getEntity());
+      if (ReidLife.isCombat(source.getEntity(), source.getDirectEntity())) {
+         state.reid.combat();
+      }
+
       if (!isDivine(source)) {
          if (Parry.parries(self, source, false)) {
             state.parryTicks = ReinhardRules.PARRY_POSE_TICKS;
@@ -372,6 +379,17 @@ public final class ReinhardHero implements HeroDefinition {
       return DivineDamage.isDivine(source);
    }
 
+   /** Dealing damage is combat: Reid's 60 s auto-return starts over (spec §7.3). */
+   @Override
+   public float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, DamageSource source, float amount) {
+      ReinhardState state = ReinhardState.of(attacker);
+      if (state != null && amount > 0.0F) {
+         state.reid.combat();
+      }
+
+      return amount;
+   }
+
    /** Spec §3.3: Reinhard is a divine being. */
    @Override
    public boolean isDivine(Player self) {
@@ -445,9 +463,11 @@ public final class ReinhardHero implements HeroDefinition {
       }
 
       flags = stateFlags(state, flags);
+      flags = Reid.withFlags(flags, state.reid.phase());
       ActionTimeline action = state.action;
+      // resource = Reid's idle ticks left while drawn (the HUD bar, spec §9.1).
       return new HeroPublicSnapshot(HeroId.REINHARD, action.wireId(), action.elapsed(), action.length(), 0, false, 0, 0, false, false, 0, 0,
-         action.targetId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], action.running(), -1, null, 0, false, flags, extra, action.phase(), 0);
+         action.targetId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], action.running(), -1, null, state.reid.idleLeft(), false, flags, extra, action.phase(), 0);
    }
 
    /** Stage 3 window / hold bits of the snapshot (catch, reflect, grab, hit-stop). */

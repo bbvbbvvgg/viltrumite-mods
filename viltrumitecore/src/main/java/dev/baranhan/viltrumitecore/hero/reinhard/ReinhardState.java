@@ -46,16 +46,20 @@ public final class ReinhardState {
    /** Dash Behind (stage 3): the packet's request while its press is gated, null otherwise; transient. */
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind.Request behindRequest;
 
+   /** Stage 4: the Dragon Sword Reid (spec §7.3); saved by phase, sheathed on a fresh body. */
+   public final dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid reid = new dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid();
+
    /**
-    * Busy = an action that must not be interrupted by a mode switch (Reid
-    * drawing / sheathing, World Cut, World Erasure; Stages 4-6). None yet.
+    * Busy = an action that must not be interrupted by a mode switch: Reid
+    * drawing / sheathing (Stage 4); World Cut, World Erasure (Stages 5-6).
     */
    public boolean busy() {
-      return false;
+      return this.reid.busy();
    }
 
-   /** Leaving Holy Sword (Stage 4 sheathes Reid here). */
+   /** Leaving Holy Sword (spec §5): Reid goes back into the sheath. */
    public void onLeaveHolySword() {
+      this.reid.sheatheNow();
    }
 
    /** Counts every cooldown down by one tick. */
@@ -81,6 +85,7 @@ public final class ReinhardState {
       tag.putInt("ModeCd", this.modeCooldown);
       tag.putIntArray("Cooldowns", this.cooldowns.clone());
       tag.put(Adaptation.NBT_KEY, this.adaptation.save());
+      tag.put("Reid", this.reid.save());
       nbt.put(KEY, tag);
    }
 
@@ -99,6 +104,7 @@ public final class ReinhardState {
       }
 
       this.adaptation = Adaptation.load(tag.getCompound(Adaptation.NBT_KEY));
+      this.reid.load(tag.getCompound("Reid"));
    }
 
    /** What the respawned body keeps: mode and cooldowns; adaptations die with the body (spec §4.8). */
