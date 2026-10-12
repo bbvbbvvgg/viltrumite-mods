@@ -22,6 +22,19 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> PHOENIX = reg("reinhard.phoenix");
    public static final RegistryObject<SoundEvent> PARRY = reg("reinhard.parry");
    public static final RegistryObject<SoundEvent> SUPER_JUMP = reg("reinhard.super_jump");
+   // Stage 3 abilities (spec §6, §10.2: mod sounds where named, vanilla placeholders otherwise).
+   public static final RegistryObject<SoundEvent> LIGHT_PUNCH = reg("reinhard.light_punch");
+   public static final RegistryObject<SoundEvent> STEP_DASH = reg("reinhard.step_dash");
+   public static final RegistryObject<SoundEvent> CATCH = reg("reinhard.catch");
+   public static final RegistryObject<SoundEvent> COMBO_HIT = reg("reinhard.combo_hit");
+   public static final RegistryObject<SoundEvent> COMBO_FINAL = reg("reinhard.combo_final");
+   public static final RegistryObject<SoundEvent> KICK_TOSS = reg("reinhard.kick_toss");
+   public static final RegistryObject<SoundEvent> SKY_KICK = reg("reinhard.sky_kick");
+   public static final RegistryObject<SoundEvent> GRAB = reg("reinhard.grab");
+   public static final RegistryObject<SoundEvent> THROW = reg("reinhard.throw");
+   public static final RegistryObject<SoundEvent> DASH_BEHIND = reg("reinhard.dash_behind");
+   public static final RegistryObject<SoundEvent> STOMP = reg("reinhard.stomp");
+   public static final RegistryObject<SoundEvent> REFLECT = reg("reinhard.reflect");
 
    private ReinhardSounds() {
    }
@@ -46,5 +59,10 @@ public final class ReinhardSounds {
    /** Everyone nearby hears it, the player included. */
    public static void play(ServerPlayer player, SoundEvent sound, float volume, float pitch) {
       player.level().playSound(null, player.getX(), player.getY() + 1.0, player.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
+   }
+
+   /** Same, at a point (impact, arrival). */
+   public static void playAt(ServerPlayer player, net.minecraft.world.phys.Vec3 at, SoundEvent sound, float volume, float pitch) {
+      player.level().playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
    }
 }

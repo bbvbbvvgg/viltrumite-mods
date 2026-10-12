@@ -15,7 +15,7 @@ import net.minecraft.world.entity.player.Player;
 /** Reinhard's loadout: one page per mode (spec §6, §7.1). */
 public final class ReinhardAbilities {
    /** Highest plan stage whose abilities are in the game. Bumped by every stage. */
-   public static final int SHIPPED_STAGE = 2;
+   public static final int SHIPPED_STAGE = 3;
    /** The shared kit chop joins Holy Sword slot 2 with Stage 4. */
    public static final String CHOP = "viltrumite:chop";
    public static final int CHOP_STAGE = 4;
@@ -73,9 +73,13 @@ public final class ReinhardAbilities {
       return ability != null && ability.shipped();
    }
 
-   /** Own shipped ids whose keys send hero input. */
+   /**
+    * Own shipped ids whose keys send hero input. Dash Behind is left out: its key sends
+    * {@code ReinhardDashBehindC2SPacket} (target + spot) from {@code DashBehindClient} instead.
+    */
    public static String[] inputSlots() {
-      return Arrays.stream(ReinhardAbility.values()).filter(ReinhardAbility::shipped).map(ReinhardAbility::id).toArray(String[]::new);
+      return Arrays.stream(ReinhardAbility.values()).filter(ReinhardAbility::shipped).filter(a -> a != ReinhardAbility.DASH_BEHIND)
+         .map(ReinhardAbility::id).toArray(String[]::new);
    }
 
    @Nullable

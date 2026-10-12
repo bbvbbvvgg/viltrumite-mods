@@ -26,6 +26,25 @@ public final class ReinhardState {
    public int parryTicks;
    /** Wind Reading (spec §4.5): players who hit him → game time of the hit; transient. */
    public final java.util.Map<java.util.UUID, Long> recentAttackers = new java.util.HashMap<>();
+   /** Stage 3: the one action timeline (ability, elapsed, length, target, phase); transient. */
+   public final ActionTimeline action = new ActionTimeline();
+   /** Catch Projectile (stage 3): ticks the palm stays open; transient. */
+   public int catchWindow;
+   /** Reflect Projectile (stage 3): ticks the backhand window stays open; transient. */
+   public int reflectWindow;
+   /** Fist Combo (stage 3): the last hit of the chain (0-2, −1 none), idle ticks since it ended, a press queued during a hit; transient. */
+   public int comboStep = -1;
+   public int comboIdle;
+   public boolean comboQueued;
+   /** Grab &amp; Throw (stage 3): the held target and the one control effect id of this grab, null = none; transient. */
+   public dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.Hold grab;
+   /** Grab &amp; Throw: the thrown target (−1 none), sustain ticks left / done and the re-applied velocity; transient. */
+   public int throwTargetId = -1;
+   public int throwSustain;
+   public int throwSustained;
+   public net.minecraft.world.phys.Vec3 throwVelocity;
+   /** Dash Behind (stage 3): the packet's request while its press is gated, null otherwise; transient. */
+   public dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind.Request behindRequest;
 
    /**
     * Busy = an action that must not be interrupted by a mode switch (Reid

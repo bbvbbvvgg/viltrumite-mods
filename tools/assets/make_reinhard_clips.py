@@ -129,6 +129,131 @@ CLIPS["parry"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones"
     "body": {"rotation": {"0.0": [0, -10, 0], "0.4": [0, -6, 0]}},
 }}
 
+# ---- stage 3 action overlays (one-shots; times in seconds, 20 t = 1 s) ----
+# Light Punch: 8 t right jab, the contact on tick 3 (0.15 s).
+CLIPS["light_punch"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
+    "right_arm": {"rotation": {"0.0": [-45, -12, 6], "0.15": [-90, 6, 0], "0.25": [-84, 4, 0], "0.4": [-20, 0, 3]},
+                  "position": {"0.0": [0, 0, 0], "0.15": [0, 0, -1.5], "0.4": [0, 0, 0]}},
+    "body": {"rotation": {"0.0": [0, -6, 0], "0.15": [0, 14, 0], "0.4": [0, 2, 0]}},
+    "left_arm": {"rotation": {"0.0": [-30, 0, -6], "0.15": [-20, 0, -8], "0.4": [0, 0, -3]}},
+    "head": {"rotation": {"0.0": [0, 4, 0], "0.15": [0, -10, 0], "0.4": [0, 0, 0]}},
+}}
+
+# Step Dash: 6 t forward lean, arms swept back, then upright again.
+CLIPS["step_dash"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "body": {"rotation": {"0.0": [8, 0, 0], "0.1": [24, 0, 0], "0.3": [4, 0, 0]}},
+    "head": {"rotation": {"0.0": [-6, 0, 0], "0.1": [-18, 0, 0], "0.3": [-3, 0, 0]}},
+    "right_arm": {"rotation": {"0.0": [20, 0, 8], "0.1": [42, 0, 12], "0.3": [8, 0, 4]}},
+    "left_arm": {"rotation": {"0.0": [20, 0, -8], "0.1": [42, 0, -12], "0.3": [8, 0, -4]}},
+    "right_leg": {"rotation": {"0.0": [-12, 0, 0], "0.1": [-28, 0, 0], "0.3": [-4, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [14, 0, 0], "0.1": [30, 0, 0], "0.3": [4, 0, 0]}},
+}}
+
+# Catch Projectile: the palm held up in front of the face for the 10 t window...
+CLIPS["catch_ready"] = {"loop": "hold_on_last_frame", "animation_length": 0.5, "bones": {
+    "right_arm": {"rotation": {"0.0": [-60, -10, 0], "0.08": [-112, -18, 0], "0.5": [-110, -16, 0]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.08": [0, 8, 0], "0.5": [0, 8, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.08": [-4, -6, 0], "0.5": [-4, -6, 0]}},
+}}
+# ...and the hand closing on the projectile: knocked back a little, then held.
+CLIPS["catch"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "right_arm": {"rotation": {"0.0": [-110, -16, 0], "0.05": [-92, -6, 8], "0.15": [-104, -12, 2], "0.3": [-100, -10, 0]}},
+    "body": {"rotation": {"0.0": [0, 8, 0], "0.05": [-3, 12, 0], "0.3": [0, 8, 0]}},
+    "head": {"rotation": {"0.0": [-4, -6, 0], "0.3": [-4, -6, 0]}},
+}}
+
+# Fist Combo (Knight, one-handed: the left arm stays behind the back, so these
+# clips never touch it). Contacts: combo_1/2 on tick 3 (0.15 s), combo_3 on tick 5 (0.25 s).
+CLIPS["combo_1"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
+    "right_arm": {"rotation": {"0.0": [-50, -14, 6], "0.15": [-92, 4, 0], "0.25": [-86, 2, 0], "0.4": [-30, 0, 4]},
+                  "position": {"0.0": [0, 0, 0], "0.15": [0, 0, -1.5], "0.4": [0, 0, 0]}},
+    "body": {"rotation": {"0.0": [0, -8, 0], "0.15": [0, 16, 0], "0.4": [0, 4, 0]}},
+    "head": {"rotation": {"0.0": [0, 6, 0], "0.15": [0, -12, 0], "0.4": [0, 0, 0]}},
+}}
+CLIPS["combo_2"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
+    "right_arm": {"rotation": {"0.0": [-70, 50, 40], "0.15": [-90, -35, 10], "0.25": [-84, -40, 6], "0.4": [-30, -6, 4]}},
+    "body": {"rotation": {"0.0": [0, 18, 0], "0.15": [0, -16, 0], "0.4": [0, -4, 0]}},
+    "head": {"rotation": {"0.0": [0, -8, 0], "0.15": [0, 10, 0], "0.4": [0, 0, 0]}},
+}}
+CLIPS["combo_3"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
+    "right_arm": {"rotation": {"0.0": [-60, 0, 10], "0.15": [-165, 0, 14], "0.25": [-55, 0, 4], "0.4": [-50, 0, 4], "0.6": [-20, 0, 4]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [-10, 6, 0], "0.25": [22, -4, 0], "0.4": [18, -4, 0], "0.6": [4, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.15": [-8, 0, 0], "0.25": [-14, 0, 0], "0.6": [-3, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.25": [-22, 0, 4], "0.6": [-6, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.25": [16, 0, -4], "0.6": [4, 0, 0]}},
+}}
+
+# Sky Kick: a light underhand toss (6 t, the leg chambers at the end) ...
+CLIPS["kick_toss"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "right_arm": {"rotation": {"0.0": [-15, 0, 6], "0.15": [-95, 0, 4], "0.3": [-60, 0, 8]}},
+    "body": {"rotation": {"0.0": [6, 0, 0], "0.15": [-4, 0, 0], "0.3": [-6, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.2": [-10, 0, 0], "0.3": [-45, 0, 2]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [6, 0, 0]}},
+    "head": {"rotation": {"0.0": [8, 0, 0], "0.3": [-14, 0, 0]}},
+}}
+# ... then the kick: the leg snaps up at the contact (clip time 0), holds through the
+# 3 t hit-stop, and comes back down by the end of the 16 t action.
+CLIPS["kick"] = {"loop": "hold_on_last_frame", "animation_length": 0.5, "bones": {
+    "right_leg": {"rotation": {"0.0": [-135, 0, 4], "0.15": [-138, 0, 4], "0.3": [-60, 0, 2], "0.5": [-6, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [10, 0, 0], "0.15": [10, 0, 0], "0.5": [2, 0, 0]}},
+    "body": {"rotation": {"0.0": [-18, 0, 0], "0.15": [-18, 0, 0], "0.5": [-3, 0, 0]}},
+    "right_arm": {"rotation": {"0.0": [-30, 0, 24], "0.15": [-30, 0, 24], "0.5": [-6, 0, 6]}},
+    "head": {"rotation": {"0.0": [-24, 0, 0], "0.3": [-30, 0, 0], "0.5": [-10, 0, 0]}},
+}}
+
+# Grab & Throw: the right hand reaches out and closes at chest height (the target hangs
+# from it) and holds there for the whole grab ...
+CLIPS["grab_hold"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "right_arm": {"rotation": {"0.0": [-20, 0, 6], "0.15": [-95, -8, 4], "0.3": [-85, -6, 2]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.3": [4, -8, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.3": [6, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-8, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [8, 0, 0]}},
+}}
+# ... then the throw: cocked back over the 3 t hit-stop, a full overhead swing on the
+# launch (0.15 s), follow-through and recovery by the end of the 12 t action.
+CLIPS["throw"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
+    "right_arm": {"rotation": {"0.0": [-150, 0, 10], "0.15": [-160, 0, 10], "0.25": [-40, 0, 4], "0.4": [-20, 0, 2], "0.6": [-4, 0, 3]}},
+    "body": {"rotation": {"0.0": [-10, 18, 0], "0.15": [-12, 22, 0], "0.25": [16, -14, 0], "0.6": [2, 0, 0]}},
+    "head": {"rotation": {"0.0": [-6, 0, 0], "0.25": [6, 0, 0], "0.6": [0, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [10, 0, 0], "0.25": [-22, 0, 0], "0.6": [-2, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [-10, 0, 0], "0.25": [18, 0, 0], "0.6": [2, 0, 0]}},
+}}
+
+# Dash Behind (8 t): a low vanish lean forward, then he lands turned to the target's
+# back (body twist unwinding) in a guard by the end of the action.
+CLIPS["dash_behind"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
+    "body": {"rotation": {"0.0": [10, 0, 0], "0.08": [28, -14, 0], "0.15": [6, 18, 0], "0.4": [2, 0, 0]}},
+    "head": {"rotation": {"0.0": [-8, 0, 0], "0.08": [-22, 10, 0], "0.15": [-4, -12, 0], "0.4": [0, 0, 0]}},
+    "right_arm": {"rotation": {"0.0": [24, 0, 10], "0.08": [48, 0, 18], "0.15": [-36, -10, 6], "0.4": [-20, 0, 4]}},
+    "right_leg": {"rotation": {"0.0": [-14, 0, 0], "0.08": [-30, 0, 0], "0.15": [-10, 0, 4], "0.4": [-2, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [16, 0, 0], "0.08": [32, 0, 0], "0.15": [12, 0, -4], "0.4": [2, 0, 0]}},
+}}
+
+# Stomp (14 t): the right leg rises high (0-0.35 s), slams on tick 8 (0.4 s), the body
+# drops into it; the right arm out for balance (the left stays behind the back), recovery by the end (0.7 s).
+CLIPS["stomp"] = {"loop": "hold_on_last_frame", "animation_length": 0.7, "bones": {
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-80, 0, 6], "0.35": [-84, 0, 6], "0.4": [6, 0, 0], "0.55": [2, 0, 0], "0.7": [0, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [8, 0, -2], "0.4": [-6, 0, 0], "0.7": [0, 0, 0]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.3": [-8, 0, 0], "0.4": [14, 0, 0], "0.55": [8, 0, 0], "0.7": [0, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.3": [6, 0, 0], "0.4": [-10, 0, 0], "0.7": [0, 0, 0]}},
+    "right_arm": {"rotation": {"0.0": [0, 0, 6], "0.3": [-20, 0, 40], "0.4": [10, 0, 24], "0.7": [0, 0, 4]}},
+}}
+
+# Reflect Projectile (Knight, the left arm stays behind the back): the back of the right
+# hand raised across the chest for the 20 t window...
+CLIPS["reflect_ready"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [-30, 0, 0], "0.1": [-95, 30, -20], "1.0": [-92, 28, -18]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.1": [0, -14, 0], "1.0": [0, -12, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.1": [-2, 6, 0], "1.0": [-2, 6, 0]}},
+}}
+# ...and the backhand swat out to the side on each reflection, back to the guard.
+CLIPS["reflect"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "right_arm": {"rotation": {"0.0": [-92, 28, -18], "0.1": [-88, -46, 30], "0.3": [-92, 20, -10]}},
+    "body": {"rotation": {"0.0": [0, -12, 0], "0.1": [0, 20, 0], "0.3": [0, -6, 0]}},
+    "head": {"rotation": {"0.0": [-2, 6, 0], "0.3": [-2, 4, 0]}},
+}}
+
 
 def main():
     data = {"format_version": "1.8.0", "animations": {}}

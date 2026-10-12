@@ -1,9 +1,8 @@
 package dev.baranhan.viltrumitecore.client.reinhard;
 
-import dev.baranhan.viltrumitecore.hero.HeroAction;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
-import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.world.entity.HumanoidArm;
 
@@ -19,7 +18,7 @@ public final class ReinhardPoses {
     * (cos(position * 0.6662)), so one swing period 2 pi / 0.6662 = one clip length.
     */
    public static final double WALK_SECONDS_PER_BLOCK = 1.0 * 0.6662 / (2.0 * Math.PI);
-   private static final HeroAction[] ACTIONS = HeroAction.values();
+   private static final ReinhardAbility[] ABILITIES = ReinhardAbility.values();
 
    private ReinhardPoses() {
    }
@@ -39,19 +38,23 @@ public final class ReinhardPoses {
       };
    }
 
-   /** Action overlay: clip named after the synced action (lower case), time clamped to the action length. Missing clips are skipped by the renderer. */
+   /**
+    * Action overlay: the synced action is a {@link ReinhardAbility} ordinal (−1 = none), its phase is
+    * {@code variant}; {@link ReinhardClips} picks the clip. Time = elapsed + partial tick, clamped to the
+    * action length. Missing clips are skipped by the renderer.
+    */
    @Nullable
    static Clip overlay(Input in) {
-      if (in.actionId() < 0 || in.actionId() >= ACTIONS.length) {
+      if (in.actionId() < 0 || in.actionId() >= ABILITIES.length) {
          return null;
       }
 
-      double seconds = (in.actionElapsed() + in.partialTick()) / 20.0;
+      double ticks = in.actionElapsed() + in.partialTick() - in.heldTicks();
       if (in.actionLength() > 0) {
-         seconds = Math.min(seconds, in.actionLength() / 20.0);
+         ticks = Math.min(ticks, in.actionLength());
       }
 
-      return new Clip(ACTIONS[in.actionId()].name().toLowerCase(Locale.ROOT), seconds);
+      return ReinhardClips.clip(ABILITIES[in.actionId()], in.actionPhase(), Math.max(0.0, ticks));
    }
 
    /** Clip seconds per walk-position unit of the 1 s swim stroke: vanilla's stroke repeats every 26 units (HumanoidModel). */
@@ -158,8 +161,15 @@ public final class ReinhardPoses {
       float walkDistance,
       double realSeconds,
       net.minecraft.world.entity.Pose vanillaPose,
-      boolean passenger
+      boolean passenger,
+      int actionPhase,
+      double heldTicks
    ) {
+      /** No action phase, no hit-stop (stage 1b/2 callers). */
+      public Input(ReinhardMode mode, int flags, int actionId, int actionElapsed, int actionLength, float partialTick, float limbSwingAmount,
+         float walkDistance, double realSeconds, net.minecraft.world.entity.Pose vanillaPose, boolean passenger) {
+         this(mode, flags, actionId, actionElapsed, actionLength, partialTick, limbSwingAmount, walkDistance, realSeconds, vanillaPose, passenger, 0, 0.0);
+      }
    }
 
    public record Pose(String stance, double stanceSeconds, float walk, double walkSeconds, @Nullable Clip overlay, BodyState body, float aura) {

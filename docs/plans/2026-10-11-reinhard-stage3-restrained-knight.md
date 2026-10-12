@@ -45,9 +45,9 @@ See the overview. Stage-specific:
 - `ReinhardTargets.canHit(ServerPlayer self, Entity e)`: living, not self, not spectator, not a creative player, not allied (`isAlliedTo`), players only when the server allows PvP; `PartEntity` → parent. Used by every AoE of Stages 3–6.
 - `ReinhardRules.HIT_STOP_TICKS = 3`.
 
-- [ ] **Step 1: Write the failing tests** — gate cases (each refusal), `timelineRunsLength`, `cancelClears`, `restrainedNeverBreaks`, `knightModerate`, `ReinhardTargetsTest.skipsSelfAlliesSpectators` (pure predicate core), `HitStopTest.freezesForTicks`, `releasesAfter`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS.
-- [ ] **Step 5: Commit** `feat(reinhard): ability router and action timeline` and `feat(client): hit-stop helper`.
+- [x] **Step 1: Write the failing tests** — gate cases (each refusal), `timelineRunsLength`, `cancelClears`, `restrainedNeverBreaks`, `knightModerate`, `ReinhardTargetsTest.skipsSelfAlliesSpectators` (pure predicate core), `HitStopTest.freezesForTicks`, `releasesAfter`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS.
+- [x] **Step 5: Commit** `feat(reinhard): ability router and action timeline` and `feat(client): hit-stop helper`.
 
 ### Task 2: Light Punch (Restrained, slot 1)
 
@@ -59,7 +59,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `LIGHT_PUNCH_DAMAGE = 4f`, `LIGHT_PUNCH_KNOCKBACK = 0.6`, `LIGHT_PUNCH_REACH = 3.5`, `LIGHT_PUNCH_TICKS = 8`, `LIGHT_PUNCH_HIT_TICK = 3`.
 - Hit: ray `LIGHT_PUNCH_REACH` from the eyes at tick 3 → `hurt(playerAttack(self), 4)`; knockback 0.6 along look. No block breaking. Sound `viltrumitecore:punch_impact` (§10.2). FX: small `HeroFx.flash`. First person: jab of the right arm (offset on the `RenderArmEvent` stack).
 
-- [ ] Step 1 tests: `damageIsFour`, `knockbackIsPointSix`, `hitOnTick3`, `noDestruction` (`DestructionLevel.NONE`). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views on a zombie and a player. Step 5 commit `feat(reinhard): light punch`.
+- [x] Step 1 tests: `damageIsFour`, `knockbackIsPointSix`, `hitOnTick3`, `noDestruction` (`DestructionLevel.NONE`). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): light punch`.
+- [ ] Manual: both views on a zombie and a player — оставлено пользователю.
 
 ### Task 3: Step Dash (Restrained, slot 2) — client-predicted
 
@@ -75,7 +76,8 @@ See the overview. Stage-specific:
 - Server: gate → cooldown 20, action timeline 6 t, the same velocity set server-side with `hurtMarked = true` (authoritative motion that matches the prediction), FX `HeroFx.launch` at the start feet + afterimage pixels, sound placeholder `entity.player.attack.sweep` pitch 1.6. Refused → no FX, no cooldown; server sends its current velocity (`ClientboundSetEntityMotionPacket`) to stop the predicted dash.
 - Pure `velocity(distance, ticks, friction)`: per-tick speed so the sum over `ticks` with ground friction 0.546 (0.91 × 0.6) ≈ distance.
 
-- [ ] Step 1 tests: `coversSixBlocks` (simulated sum within ±0.3), `cooldownTwentyTicks`, `serverRefusalHasNoSideEffects`, `directionFromInputThenLook`, `onePressOnePacket` (fake input loop + predictor for one key edge → exactly one `HeroInputC2SPacket`). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: on flat ground ~6 blocks, into a wall stops, both views. Step 5 commit `feat(reinhard): step dash`.
+- [x] Step 1 tests: `coversSixBlocks` (simulated sum within ±0.3), `cooldownTwentyTicks`, `serverRefusalHasNoSideEffects`, `directionFromInputThenLook`, `onePressOnePacket` (fake input loop + predictor for one key edge → exactly one `HeroInputC2SPacket`). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): step dash`.
+- [ ] Manual: on flat ground ~6 blocks, into a wall stops, both views — оставлено пользователю.
 
 ### Task 4: Catch Projectile (Restrained, slot 3)
 
@@ -88,7 +90,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `CATCH_WINDOW = 10`, `CATCH_COOLDOWN = 40`.
 - Press opens the window (flag set, pose `catch_ready`); a caught projectile → `HeroProjectiles` CATCH (arrow to inventory), pose `catch` snap, sound placeholder `entity.item.pickup` pitch 0.8, `HeroFx.flash` at the hand; the window stays open until it ends (several catches allowed). Cooldown starts at the press.
 
-- [ ] Step 1 tests: `windowTenTicks`, `cooldownFortyFromPress`, `catchBeatsDeflectInWindow`, `deflectAfterWindow`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: skeleton arrows caught (count in inventory), trident caught as item, fireball caught = vanishes; first person hand closes. Step 5 commit `feat(reinhard): catch projectile`.
+- [x] Step 1 tests: `windowTenTicks`, `cooldownFortyFromPress`, `catchBeatsDeflectInWindow`, `deflectAfterWindow`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): catch projectile`.
+- [ ] Manual: skeleton arrows caught (count in inventory), trident caught as item, fireball caught = vanishes; first person hand closes — оставлено пользователю.
 
 ### Task 5: Fist Combo (Knight, slot 1)
 
@@ -101,7 +104,8 @@ See the overview. Stage-specific:
 - Input (open question 1, default): each press = next hit; a press within `COMBO_CHAIN_WINDOW` after the previous hit ends continues the chain, else it restarts at hit 1. Hit 3: `HeroFx.shockwave` r 4 + `HeroDebris.erupt` with a small Knight spec (moderate destruction) + damage in radius (targets through `ReinhardTargets.canHit`).
 - Sounds: `viltrumitecore:regulus_punch_hit` (hits 1–2), `viltrumitecore:regulus_impact_heavy` (hit 3) — §10.2.
 
-- [ ] Step 1 tests: `damageSequence10_10_16`, `chainWindowTwenty`, `lateRestarts`, `waveOnlyOnThird`, `resetOnModeChange`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, `mobGriefing false` → no blocks move. Step 5 commit `feat(reinhard): fist combo`.
+- [x] Step 1 tests: `damageSequence10_10_16`, `chainWindowTwenty`, `lateRestarts`, `waveOnlyOnThird`, `resetOnModeChange`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): fist combo`.
+- [ ] Manual: both views, `mobGriefing false` → no blocks move — оставлено пользователю.
 
 ### Task 6: Sky Kick (Knight, slot 2)
 
@@ -114,7 +118,8 @@ See the overview. Stage-specific:
 - Timeline: t0 no wind-up: light toss (target `deltaMovement.y = 0.45`, sound `entity.player.attack.sweep` §10.2) → t6 kick contact: `hurt(20)` → hit-stop 3 t (target velocity zeroed, `HitStop` on both entities through a `HeroFx` flash packet carrying the ids — reuse `HeroFxS2CPacket` with a new kind `HIT_STOP` only if needed) → t9 launch `(0, 3.9, 0)` + `hurtMarked = true` (players get `ClientboundSetEntityMotionPacket`) → sonic ring (`AirTrailVfx.ring`: white horizontal pixel ring at the contact point) + trail on the target for 40 t. Kick sound placeholder `entity.generic.explode` pitch 1.8 until Stage 7 (`qubodup` sonic boom).
 - Refuses targets that fail `allowsImpulse` (refusal sound, no cooldown).
 
-- [ ] Step 1 tests: `apexAtLeast60` (`HeroSuperJump.apex(KICK_VELOCITY) >= 60`), `velocityWithinPacketCap` (≤ 3.9), `timelineTossKickLaunch` (ticks 0/6/9), `cooldown200`, `impulseRefusedNoCooldown`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: zombie and a LAN player fly 60+ blocks, ring and trail, hit-stop visible, both views. Step 5 commit `feat(reinhard): sky kick`.
+- [x] Step 1 tests: `apexAtLeast60` (`HeroSuperJump.apex(KICK_VELOCITY) >= 60`), `velocityWithinPacketCap` (≤ 3.9), `timelineTossKickLaunch` (ticks 0/6/9), `cooldown200`, `impulseRefusedNoCooldown`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): sky kick`.
+- [ ] Manual: zombie and a LAN player fly 60+ blocks, ring and trail, hit-stop visible, both views — оставлено пользователю.
 
 ### Task 7: Grab & Throw (Knight, slot 3)
 
@@ -127,7 +132,8 @@ See the overview. Stage-specific:
 - Press 1: target in reach, `allowsExternalControl(target, PULL)` → `ControlManager.get(level).tryAcquire(target, self.getUUID(), grabEffectId, ControlKind.PULL)` (`grabEffectId = UUID.randomUUID()` at the press, stored in `ReinhardState.grab`); anchor follows the hand point each tick (like `IronManHulkbuster` grab); flag `GRAB_HOLDING`. Press 2 (or `GRAB_MAX_TICKS`): release with `grabEffectId` (`ControlManager.get(level).release(target.getUUID(), grabEffectId, ReleaseReason.…)`; real signature `release(UUID targetId, UUID effectId, ReleaseReason)`), `hurt(15)`, hit-stop 3 t, then velocity along the look with a small up angle (+12°), re-applied every tick for `THROW_SUSTAIN_TICKS` (pure: `sustainTicks(distance, speed, airDrag 0.91)` so the flight covers ~120 blocks) unless the target hit a block or `allowsImpulse` turns false; sonic ring + white trail (Task 6 VFX), heavy sound `regulus_impact_heavy` on release (§10.2).
 - Every end (death, logout, dimension change, hero change, mode change, control on Reinhard) → `GrabThrow.release(...)` with no throw.
 
-- [ ] Step 1 tests: `sustainCoversAbout120` (simulation within ±10), `damage15OnThrow`, `cooldownFromThrow`, `releaseOnEveryEnd` (each `CleanupReason` + mode change), `refusesUncontrollable`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: zombie and a player thrown ~120 blocks, Regulus in Lion's Heart refused, both views. Step 5 commit `feat(reinhard): grab and throw`.
+- [x] Step 1 tests: `sustainCoversAbout120` (simulation within ±10), `damage15OnThrow`, `cooldownFromThrow`, `releaseOnEveryEnd` (each `CleanupReason` + mode change), `refusesUncontrollable`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): grab and throw`.
+- [ ] Manual: zombie and a player thrown ~120 blocks, Regulus in Lion's Heart refused, both views — оставлено пользователю.
 
 ### Task 8: Dash Behind (Knight, slot 4) — safe spot, predicted
 
@@ -141,7 +147,8 @@ See the overview. Stage-specific:
 - Target = the living entity under the crosshair within 24 (client and server compute it the same way). Wanted spot = target feet − target horizontal look × 1.5. Fact: `HeroInputC2SPacket` carries only `actionOrdinal` + `pressed`, so the candidate travels in the separate `ReinhardDashBehindC2SPacket`. The slot key of Dash Behind is **not** routed through `HeroInputC2SPacket` (`ReinhardHero.heroInputSlots` excludes it, so the generic loop sends nothing for it); `DashBehindClient` sends exactly one `ReinhardDashBehindC2SPacket` per key edge. Client: computes `find` with a client-level probe, teleports itself locally (`setPos` + facing the target's back), sends the packet. Server handler (`enqueueWork`): resolves `targetId` in the sender's level (missing / not living / > 24 + 2 tolerance → refusal), runs the same gate as any ability (`canAct`, mode Knight, cooldown), recomputes; accepts the client spot if it passes its own probe and is within 1 block of the server answer; else teleports to the server answer; none → refusal sound, no cooldown (client is snapped back with `teleportTo` to the start).
 - FX: white pixel afterimage at the start, `HeroFx.flash` at the arrival, sound placeholder `entity.enderman.teleport` pitch 1.5.
 
-- [ ] Step 1 tests: `SafeSpotTest.wantedSpotFirst`, `blockedSearchesNearest`, `outsideBorderRejected`, `overVoidRejected`, `nothingWithin3Empty`; `DashBehindTest.refusalKeepsCooldown`, `rangeIs24`, `clientSpotAcceptedWithin1`, `clientSpotFarAwayReplaced`, `packetWithForeignTargetRefused` (id of an entity in another level / non-living), `nanCandidateRejected`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: target against a wall, in a 1×2 tunnel, at the world border, on a pillar over the void, both views. Step 5 commit `feat(hero): safe spot search` and `feat(reinhard): dash behind`.
+- [x] Step 1 tests: `SafeSpotTest.wantedSpotFirst`, `blockedSearchesNearest`, `outsideBorderRejected`, `overVoidRejected`, `nothingWithin3Empty`; `DashBehindTest.refusalKeepsCooldown`, `rangeIs24`, `clientSpotAcceptedWithin1`, `clientSpotFarAwayReplaced`, `packetWithForeignTargetRefused` (id of an entity in another level / non-living), `nanCandidateRejected`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(hero): safe spot search` and `feat(reinhard): dash behind`.
+- [ ] Manual: target against a wall, in a 1×2 tunnel, at the world border, on a pillar over the void, both views — оставлено пользователю.
 
 ### Task 9: Stomp (Knight, slot 5)
 
@@ -153,7 +160,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `STOMP_RADIUS = 8`, `STOMP_DAMAGE = 12f`, `STOMP_COOLDOWN = 160`, `STOMP_TICKS = 14`, `STOMP_HIT_TICK = 8`, `STOMP_ERUPTION = new HeroDebris.Eruption(…)` (Knight: radius 4, depth 1, few flying blocks).
 - Hit tick: entities within r 8 on the ground plane (±3 y) → `hurt(12)` + knockback outward 0.8 (allowsImpulse); `HeroFx.shockwave(origin, power, material, 8)` (ground ring + camera shake), `HeroDebris.erupt` with the moderate spec when `DestructionLevel.mayBreak()`. Sound placeholder `entity.generic.explode` until Stage 7 (`dingus23` earthquake).
 
-- [ ] Step 1 tests: `radius8Damage12`, `cooldown160`, `airborneTargetsAbove3Missed`, `moderateEruptionOnlyInKnight`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual both views, `mobGriefing false`. Step 5 commit `feat(reinhard): stomp`.
+- [x] Step 1 tests: `radius8Damage12`, `cooldown160`, `airborneTargetsAbove3Missed`, `moderateEruptionOnlyInKnight`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): stomp`.
+- [ ] Manual: both views, `mobGriefing false` → no blocks move — оставлено пользователю.
 
 ### Task 10: Reflect Projectile (Knight, slot 6)
 
@@ -165,7 +173,8 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `REFLECT_WINDOW = 20`, `REFLECT_COOLDOWN = 80`.
 - Same window mechanics as Task 4 with `REFLECT` response (Stage 2 `HeroProjectiles`); swat pose snaps on each reflection; sound placeholder `item.shield.block` pitch 0.7; white streak on the returned projectile (`AirTrailVfx`).
 
-- [ ] Step 1 tests: `windowTwentyTicks`, `cooldownEightyFromPress`, `reflectReturnsToShooter` (pure `HeroProjectiles.reflected`). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: skeleton killed by its own arrow, ghast fireball back to the ghast, both views. Step 5 commit `feat(reinhard): reflect projectile`.
+- [x] Step 1 tests: `windowTwentyTicks`, `cooldownEightyFromPress`, `reflectReturnsToShooter` (pure `HeroProjectiles.reflected`). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): reflect projectile`.
+- [ ] Manual: skeleton killed by its own arrow, ghast fireball back to the ghast, both views — оставлено пользователю.
 
 ### Task 11: Pose audit, check, docs, PR
 
@@ -173,11 +182,12 @@ See the overview. Stage-specific:
 - Modify: `make_reinhard_clips.py` (final pass), `.agents/skills/animation-system/SKILL.md` (Reinhard clip list + `HitStop`), `.agents/skills/add_hero/references/shared-toolkit.md` (`SafeSpot`, `HitStop`, `AirTrailVfx`), `.memory-bank/project.md`, `SESSION.md`
 - Test: `test/client/reinhard/ReinhardClipsTest.java`
 
-- [ ] **Step 1: Write the failing test** — `everyAbilityHasClip` (for each `ReinhardAbility` with `stage <= 3`, the animation file has its clip name(s) and each clip length ≥ the action length / 20).
-- [ ] **Step 2:** Run → FAIL → add missing clips → PASS.
-- [ ] **Step 3:** Full verification list; dedicated server start.
-- [ ] **Step 4:** In game, each ability in first and third person, grounded and in air where allowed, with `mobGriefing` true and false; old heroes unchanged.
-- [ ] **Step 5:** Commit `docs(reinhard): stage 3 notes`; push `feat/reinhard-stage3`; PR «Рейнхард, этап 3: Сдержанный и Рыцарь».
+- [x] **Step 1: Write the failing test** — `everyAbilityHasClip` (for each `ReinhardAbility` with `stage <= 3`, the animation file has its clip name(s) and each clip length ≥ the action length / 20).
+- [x] **Step 2:** Run → PASS on the first run (every clip was added in its task; see the ledger).
+- [x] **Step 3:** Full verification list (tests, build, checker, diff check).
+- [ ] Dedicated server start — not run (user rule), left to the user.
+- [ ] **Step 4 (manual, оставлено пользователю):** In game, each ability in first and third person, grounded and in air where allowed, with `mobGriefing` true and false; old heroes unchanged.
+- [x] **Step 5:** Commit `docs(reinhard): stage 3 notes`; push `feat/reinhard-stage3`; PR «Рейнхард, этап 3: Сдержанный и Рыцарь».
 
 Acceptance criteria closed: §11.6 (Restrained, Knight), §11.7 (§6 part), §11.4 (windows part of §4.3).
 

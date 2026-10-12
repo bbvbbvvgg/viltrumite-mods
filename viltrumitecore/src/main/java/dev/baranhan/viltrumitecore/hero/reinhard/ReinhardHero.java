@@ -13,6 +13,7 @@ import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
 import dev.baranhan.viltrumitecore.hero.ProjectileResponse;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.CatchWindow;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.CloudStep;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Detox;
@@ -132,7 +133,8 @@ public final class ReinhardHero implements HeroDefinition {
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
          case JUMP, AIR_STEP -> true;
-         default -> false;
+         // Abilities (stage 3+): the mode, cooldown and timeline gate lives in ReinhardActions.
+         default -> ReinhardActions.abilityFor(action) != null;
       };
    }
 
@@ -146,6 +148,7 @@ public final class ReinhardHero implements HeroDefinition {
    public void tick(ServerPlayer player) {
       ReinhardState state = ReinhardState.ensure(player);
       state.tick();
+      ReinhardActions.tick(player, state);
       VoidRescue.tick(player);
       if (player.tickCount % ReinhardRules.WIND_SCAN_INTERVAL == 0) {
          WindReading.scan(player, state);
@@ -160,9 +163,15 @@ public final class ReinhardHero implements HeroDefinition {
 
    @Override
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
-      if (action == HeroAction.MODE_CYCLE && pressed) {
-         cycleMode(player, ReinhardState.ensure(player));
+      if (action == HeroAction.MODE_CYCLE) {
+         if (pressed) {
+            cycleMode(player, ReinhardState.ensure(player));
+         }
+
+         return;
       }
+
+      ReinhardActions.handleInput(player, ReinhardState.ensure(player), action, pressed);
    }
 
    /** Spec §5: no pose; cooldown 3 s; own sound per mode; the panel page follows the mode. */
@@ -174,6 +183,7 @@ public final class ReinhardHero implements HeroDefinition {
       }
 
       ReinhardMode previous = state.mode;
+      ReinhardActions.onModeChange(player, state);
       state.mode = result.next();
       state.modeCooldown = ReinhardRules.MODE_COOLDOWN;
       if (previous == ReinhardMode.HOLY_SWORD) {
@@ -321,12 +331,25 @@ public final class ReinhardHero implements HeroDefinition {
 
    /**
     * Arrow Protection (spec §4.3): every projectile is turned aside; the catch and
-    * reflect windows of the Restrained palm (stage 3) win over the passive. Mode-independent.
+    * reflect windows (Restrained palm / Knight backhand, stage 3) win over the passive. Mode-independent.
     */
    @Override
    public ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) {
-      // Stage 3 opens the catch / reflect windows; none exist yet.
-      return ArrowWard.response(false, false);
+      ReinhardState state = ReinhardState.of(self);
+      ProjectileResponse response = projectileResponse(state);
+      if (response == ProjectileResponse.CATCH) {
+         CatchWindow.onCatch(self, state);
+      } else if (response == ProjectileResponse.REFLECT) {
+         dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow.onReflect(self, state, projectile);
+      }
+
+      return response;
+   }
+
+   /** Pure: the open palm windows (stage 3) win over the passive deflection; no state = no window. */
+   static ProjectileResponse projectileResponse(@javax.annotation.Nullable ReinhardState state) {
+      return ArrowWard.response(state != null && CatchWindow.isOpen(state),
+         state != null && dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow.isOpen(state));
    }
 
    /** Spec §3.1: void and generic_kill never take him below 1 HP (/kill still kills: AdminKill). */
@@ -420,8 +443,28 @@ public final class ReinhardHero implements HeroDefinition {
       if (state.parryTicks > 0) {
          flags |= 1 << ReinhardFlags.PARRY_POSE;
       }
-      return new HeroPublicSnapshot(HeroId.REINHARD, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1,
-         new int[HeroPublicSnapshot.COOLDOWN_COUNT], false, -1, null, 0, false, flags, extra);
+
+      flags = stateFlags(state, flags);
+      ActionTimeline action = state.action;
+      return new HeroPublicSnapshot(HeroId.REINHARD, action.wireId(), action.elapsed(), action.length(), 0, false, 0, 0, false, false, 0, 0,
+         action.targetId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], action.running(), -1, null, 0, false, flags, extra, action.phase(), 0);
+   }
+
+   /** Stage 3 window / hold bits of the snapshot (catch, reflect, grab, hit-stop). */
+   static int stateFlags(ReinhardState state, int flags) {
+      if (CatchWindow.isOpen(state)) {
+         flags |= 1 << ReinhardFlags.CATCH_WINDOW;
+      }
+
+      if (dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow.isOpen(state)) {
+         flags |= 1 << ReinhardFlags.REFLECT_WINDOW;
+      }
+
+      if (state.grab != null) {
+         flags |= 1 << ReinhardFlags.GRAB_HOLDING;
+      }
+
+      return flags;
    }
 
    /** Phoenix cooldown for the snapshot, whole seconds rounded up. */
@@ -429,14 +472,25 @@ public final class ReinhardHero implements HeroDefinition {
       return ticks <= 0 ? 0 : (ticks + 19) / 20;
    }
 
+   /** A dimension change ends every action (grab, windows, timeline). */
+   @Override
+   public void onDimensionChange(ServerPlayer player) {
+      ReinhardState state = ReinhardState.of(player);
+      if (state != null) {
+         ReinhardActions.cleanup(player, state, null);
+      }
+   }
+
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
+      ReinhardState state = ReinhardState.of(player);
+      if (state != null) {
+         ReinhardActions.cleanup(player, state, reason);
+      }
+
       if (reason != CleanupReason.DISCONNECT) {
          // Wind Reading outlines end with the hero / the body (a logout drops the client sections anyway).
-         if (reason != CleanupReason.DISCONNECT) {
-         // Wind Reading outlines end with the hero / the body (a logout drops the client sections anyway).
          WindReading.clear(player);
-      }
       }
       if (reason == CleanupReason.HERO_CHANGE) {
          setPage(player, 0);

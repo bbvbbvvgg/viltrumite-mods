@@ -107,6 +107,20 @@ public final class HeroImpactFx {
             FLASHES.add(new Flash(packet.origin, 1.4F, 6));
             addShake(listener, packet.origin, 0.6F, 20.0);
          }
+         case HeroFxS2CPacket.HIT_STOP -> {
+            for (int id : dev.baranhan.viltrumitecore.hero.fx.HeroFx.decodeIds(packet.points)) {
+               HitStop.trigger(id, Math.max(1, Math.round(packet.power)));
+            }
+         }
+         case HeroFxS2CPacket.SONIC_RING -> {
+            AirTrailVfx.ring(packet.origin);
+            addShake(listener, packet.origin, 0.9F, 32.0);
+         }
+         case HeroFxS2CPacket.AIR_TRAIL -> {
+            for (int id : dev.baranhan.viltrumitecore.hero.fx.HeroFx.decodeIds(packet.points)) {
+               AirTrailVfx.trail(id);
+            }
+         }
          default -> {
          }
       }

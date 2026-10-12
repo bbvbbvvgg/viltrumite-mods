@@ -13,6 +13,7 @@ import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
 import java.util.List;
 import java.util.Map;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
 import net.minecraft.Util;
@@ -175,10 +176,43 @@ public final class ReinhardRenderer {
          arm.zRot += (float) Math.toRadians(FP_PARRY_ROLL * w * m);
       }
 
+      ReinhardFirstPersonPose.Offset action = flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
+      boolean moved = action != ReinhardFirstPersonPose.Offset.NONE;
+      if (moved) {
+         // Stage 3: the ability's first-person pose (jab, catch, ...), mirrored for a left main arm.
+         float m = event.getArm() == HumanoidArm.LEFT ? -1.0F : 1.0F;
+         event.getPoseStack().pushPose();
+         event.getPoseStack().translate(action.x() * m, action.y(), action.z());
+         arm.xRot += (float) Math.toRadians(action.pitch());
+         arm.yRot += (float) Math.toRadians(action.yaw() * m);
+         arm.zRot += (float) Math.toRadians(action.roll() * m);
+      }
+
       PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
+      if (moved) {
+         event.getPoseStack().popPose();
+      }
+
       arm.xRot = oldX;
       arm.yRot = oldY;
       arm.zRot = oldZ;
+   }
+
+   /** The synced action's first-person offset (time like the third-person overlay, hit-stop held). */
+   private static ReinhardFirstPersonPose.Offset firstPersonAction(AbstractClientPlayer player, HeroPublicSnapshot snapshot) {
+      ReinhardAbility[] all = ReinhardAbility.values();
+      int id = snapshot.actionId();
+      if (id < 0 || id >= all.length) {
+         return ReinhardFirstPersonPose.Offset.NONE;
+      }
+
+      float partial = Minecraft.getInstance().getFrameTime();
+      double ticks = snapshot.actionElapsed() + partial - dev.baranhan.viltrumitecore.client.render.vfx.HitStop.heldTicks(player, partial);
+      if (snapshot.actionLength() > 0) {
+         ticks = Math.min(ticks, snapshot.actionLength());
+      }
+
+      return ReinhardFirstPersonPose.of(all[id], snapshot.variant(), Math.max(0.0, ticks), snapshot.actionLength());
    }
 
    /**
@@ -303,7 +337,8 @@ public final class ReinhardRenderer {
       boolean sitting = player.isPassenger() && player.getVehicle() != null && player.getVehicle().shouldRiderSit();
       float swing = sitting ? 0.0F : player.walkAnimation.speed(partialTick);
       ReinhardPoses.Input input = new ReinhardPoses.Input(ReinhardView.mode(snapshot), snapshot.heroFlags(), snapshot.actionId(), snapshot.actionElapsed(),
-         snapshot.actionLength(), partialTick, swing, player.walkAnimation.position(partialTick), AnimRenderer.time(partialTick) / 20.0, player.getPose(), sitting);
+         snapshot.actionLength(), partialTick, swing, player.walkAnimation.position(partialTick), AnimRenderer.time(partialTick) / 20.0, player.getPose(), sitting,
+         snapshot.variant(), dev.baranhan.viltrumitecore.client.render.vfx.HitStop.heldTicks(player, partialTick));
       return ReinhardPoses.pose(input);
    }
 

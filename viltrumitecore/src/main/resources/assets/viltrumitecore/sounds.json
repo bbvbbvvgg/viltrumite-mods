@@ -708,5 +708,125 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.light_punch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_light_punch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:punch_impact",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.step_dash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_step_dash",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.catch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_catch",
+    "sounds": [
+      {
+        "name": "minecraft:entity.item.pickup",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.combo_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_combo_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus_punch_hit",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.combo_final": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_combo_final",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus_impact_heavy",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.kick_toss": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_kick_toss",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.sky_kick": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_sky_kick",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.grab": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_grab",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.strong",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.throw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus_impact_heavy",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.dash_behind": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_dash_behind",
+    "sounds": [
+      {
+        "name": "minecraft:entity.enderman.teleport",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.stomp": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_stomp",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reflect": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reflect",
+    "sounds": [
+      {
+        "name": "minecraft:item.shield.block",
+        "type": "event"
+      }
+    ]
   }
 }
