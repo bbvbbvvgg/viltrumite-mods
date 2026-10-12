@@ -153,9 +153,9 @@ See the overview. Stage-specific:
 - `ReinhardHero.foreignResourceRegenFactor(self, other)`: `0.5f` when `other != self`, distance ≤ `ReinhardRules.MANA_RADIUS = 24`, and not allied (`self.isAlliedTo(other)` false); else 1.
 - Iron Man: regen part only (spend/drain unchanged). Homelander: heat cooling only.
 
-- [ ] **Step 1: Write the failing tests** — `strongestWins`, `noReinhardIsOne`, `alliesUnaffected`, `outsideRadiusUnaffected`, `EnergyTest.regenScaled` (scale 0.5 → +5/s instead of +10/s), `EnergyTest.drainNotScaled`, `EyeHeatTest.coolingScaled`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS; all Iron Man and Homelander tests green. Manual: Iron Man at 10 and 30 blocks from Reinhard — energy refills twice slower only inside 24.
-- [ ] **Step 5: Commit** `feat(hero): foreign resource regen hook` and `feat(reinhard): mana absorption blessing`.
+- [x] **Step 1: Write the failing tests** — `strongestWins`, `noReinhardIsOne`, `alliesUnaffected`, `outsideRadiusUnaffected`, `EnergyTest.regenScaled` (scale 0.5 → +5/s instead of +10/s), `EnergyTest.drainNotScaled`, `EyeHeatTest.coolingScaled`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS; all Iron Man and Homelander tests green. Manual: Iron Man at 10 and 30 blocks from Reinhard — energy refills twice slower only inside 24.
+- [x] **Step 5: Commit** `feat(hero): foreign resource regen hook` and `feat(reinhard): mana absorption blessing`.
 
 ### Task 8: All modes, check, docs, PR
 

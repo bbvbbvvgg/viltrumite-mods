@@ -16,6 +16,7 @@ import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.CloudStep;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Detox;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ManaAbsorption;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.WindReading;
@@ -198,6 +199,12 @@ public final class ReinhardHero implements HeroDefinition {
       setPage(player, ReinhardMode.RESTRAINED.page());
       applyChassis(player);
       Detox.cleanse(player);
+   }
+
+   /** Mana Absorption (spec §4.7): non-allied players nearby refill their own resource at half speed. */
+   @Override
+   public float foreignResourceRegenFactor(Player self, Player other) {
+      return ManaAbsorption.factor(other == self, other.distanceToSqr(self), self.isAlliedTo(other));
    }
 
    /** Detoxification (spec §4.6): harmful effects never apply (both sides). */

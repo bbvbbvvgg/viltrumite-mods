@@ -254,6 +254,15 @@ public interface HeroDefinition {
    }
 
    /**
+    * Server: how this hero slows {@code other}'s own resource regen (Iron Man
+    * energy, Homelander cooling), 0..1; the strongest source wins
+    * ({@link HeroResourceRegen}). Default: no effect.
+    */
+   default float foreignResourceRegenFactor(Player self, Player other) {
+      return 1.0F;
+   }
+
+   /**
     * Both sides, MobEffectEvent.Applicable: true = this effect never applies to
     * the hero (DENY). Default: vanilla.
     */

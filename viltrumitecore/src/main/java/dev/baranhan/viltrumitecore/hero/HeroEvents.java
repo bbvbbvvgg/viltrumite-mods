@@ -223,6 +223,7 @@ public final class HeroEvents {
          HeldInputs.releaseAll(player);
          HeroDamageLayers.forget(player);
          HeroAirJump.forget(player);
+         HeroResourceRegen.forget(player);
          HeroRegistry.get(player).cleanup(player, CleanupReason.DISCONNECT);
       }
    }
@@ -362,6 +363,7 @@ public final class HeroEvents {
 
       if (event.phase == TickEvent.Phase.END) {
          HeroProjectiles.tickPending(level);
+         HeroResourceRegen.flush(level);
          return;
       }
 

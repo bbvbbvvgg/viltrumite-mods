@@ -97,4 +97,21 @@ class EyeHeatTest {
       EyeHeat heat = run(new EyeHeat(), 40, true, false);
       assertEquals(400, heat.snapshotValue());
    }
+
+   @Test
+   void coolingScaled() {
+      EyeHeat full = run(new EyeHeat(), 50, true, false);
+      EyeHeat half = run(new EyeHeat(), 50, true, false);
+      for (int i = 0; i < 20 + 12; i++) {
+         full.tick(false, false, 1.0F);
+         half.tick(false, false, 0.5F);
+      }
+
+      assertEquals(50.0F - 12 * 100.0F / 120.0F, full.heat(), EPS);
+      assertEquals(50.0F - 6 * 100.0F / 120.0F, half.heat(), EPS);
+      // Heating is never scaled.
+      EyeHeat hot = new EyeHeat();
+      hot.tick(true, false, 0.5F);
+      assertEquals(run(new EyeHeat(), 1, true, false).heat(), hot.heat(), EPS);
+   }
 }

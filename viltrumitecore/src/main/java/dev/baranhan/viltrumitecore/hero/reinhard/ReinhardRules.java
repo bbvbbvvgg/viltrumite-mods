@@ -63,6 +63,11 @@ public final class ReinhardRules {
    /** Server scan period. */
    public static final int WIND_SCAN_INTERVAL = 5;
 
+   // ---- Blessing of Mana Absorption (spec §4.7) ----
+   /** Non-allied players this close regen their own resource slower. */
+   public static final double MANA_RADIUS = 24.0;
+   public static final float MANA_REGEN_FACTOR = 0.5F;
+
    private ReinhardRules() {
    }
 
