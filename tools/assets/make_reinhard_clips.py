@@ -14,6 +14,9 @@ Additive clips (added to the current pose, like vanilla's model code):
 - crouch: vanilla HumanoidModel crouching (body 0.5 rad, arms +0.4 rad, body/arms 3.2 px down,
   head 4.2 px down, legs 4 px back and 0.2 px down).
 - sit: vanilla riding (arms -36 deg, legs -81 deg, yaw +-18 deg, roll +-4.5 deg).
+Reactions (hold on the last frame, overlay weighted by a real-time pulse in ReinhardRenderer):
+- parry: Blessing of the Holy Sword (stage 2): the right arm snaps up and across the chest
+  like vanilla's old sword block (-55 / -30 deg) with a slight torso twist, 0.4 s.
 Swim (loop 1 s = vanilla's 26 walk-position units, overlay weighted by swimAmount):
 - swim: HumanoidModel's crawl stroke sampled every unit (arms) and a leg flutter
   0.3 rad (vanilla's leg period 6 pi units is shown once per stroke).
@@ -121,6 +124,10 @@ def swim_clip():
 
 
 CLIPS["swim"] = swim_clip()
+CLIPS["parry"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
+    "right_arm": {"rotation": {"0.0": [-75, -40, 12], "0.1": [-55, -30, 0], "0.4": [-50, -26, 0]}},
+    "body": {"rotation": {"0.0": [0, -10, 0], "0.4": [0, -6, 0]}},
+}}
 
 
 def main():

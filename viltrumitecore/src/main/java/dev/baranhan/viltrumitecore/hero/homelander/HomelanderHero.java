@@ -140,7 +140,7 @@ public class HomelanderHero implements HeroDefinition {
 
       EyeLasers.tick(player, state);
       Focus.tick(player, state);
-      state.heat.tick(state.laserBeamOn(), state.focusOn);
+      state.heat.tick(state.laserBeamOn(), state.focusOn, dev.baranhan.viltrumitecore.hero.HeroResourceRegen.scale(player));
       if (state.heat.justOverheated()) {
          this.onOverheat(player, state);
       }

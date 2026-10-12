@@ -223,6 +223,12 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.network.packet.VeronicaChooseC2SPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.VeronicaChooseC2SPacket::handle)
          .add();
+
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket::handle)
+         .add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

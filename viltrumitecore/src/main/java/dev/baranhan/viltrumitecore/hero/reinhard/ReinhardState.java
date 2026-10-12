@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
 
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
@@ -19,6 +20,12 @@ public final class ReinhardState {
    public int modeCooldown;
    public int regenTicks;
    public int[] cooldowns = new int[COOLDOWN_SLOTS];
+   /** Protection Acquisition (spec §4.8): saved, lost with the body (not in {@link #respawnCopy}). */
+   public Adaptation adaptation = Adaptation.NONE;
+   /** Blessing of the Holy Sword (spec §4.1): ticks left of the parry pose flag; transient. */
+   public int parryTicks;
+   /** Wind Reading (spec §4.5): players who hit him → game time of the hit; transient. */
+   public final java.util.Map<java.util.UUID, Long> recentAttackers = new java.util.HashMap<>();
 
    /**
     * Busy = an action that must not be interrupted by a mode switch (Reid
@@ -38,6 +45,10 @@ public final class ReinhardState {
          this.modeCooldown--;
       }
 
+      if (this.parryTicks > 0) {
+         this.parryTicks--;
+      }
+
       for (int i = 0; i < this.cooldowns.length; i++) {
          if (this.cooldowns[i] > 0) {
             this.cooldowns[i]--;
@@ -50,6 +61,7 @@ public final class ReinhardState {
       tag.putString("Mode", this.mode.key());
       tag.putInt("ModeCd", this.modeCooldown);
       tag.putIntArray("Cooldowns", this.cooldowns.clone());
+      tag.put(Adaptation.NBT_KEY, this.adaptation.save());
       nbt.put(KEY, tag);
    }
 
@@ -66,6 +78,17 @@ public final class ReinhardState {
       for (int i = 0; i < Math.min(saved.length, COOLDOWN_SLOTS); i++) {
          this.cooldowns[i] = Math.max(0, saved[i]);
       }
+
+      this.adaptation = Adaptation.load(tag.getCompound(Adaptation.NBT_KEY));
+   }
+
+   /** What the respawned body keeps: mode and cooldowns; adaptations die with the body (spec §4.8). */
+   public ReinhardState respawnCopy() {
+      ReinhardState next = new ReinhardState();
+      next.mode = this.mode;
+      next.modeCooldown = this.modeCooldown;
+      next.cooldowns = this.cooldowns.clone();
+      return next;
    }
 
    @Nullable

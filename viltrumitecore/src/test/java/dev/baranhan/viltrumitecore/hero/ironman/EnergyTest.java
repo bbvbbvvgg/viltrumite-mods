@@ -124,4 +124,45 @@ class EnergyTest {
       fresh.load(new CompoundTag());
       assertEquals(IronManRules.ENERGY_MAX, fresh.value(), EPS);
    }
+
+   @Test
+   void regenScaled() {
+      // Mana Absorption: scale 0.5 -> +5/s instead of +10/s after the delay.
+      Energy full = new Energy();
+      Energy half = new Energy();
+      full.drain(50.0F);
+      half.drain(50.0F);
+      for (int i = 0; i < IronManRules.ENERGY_REGEN_DELAY + 20; i++) {
+         full.tick(1.0F);
+         half.tick(0.5F);
+      }
+
+      assertEquals(50.0F + 20 * IronManRules.ENERGY_REGEN_PER_TICK, full.value(), EPS);
+      assertEquals(50.0F + 10 * IronManRules.ENERGY_REGEN_PER_TICK, half.value(), EPS);
+      assertEquals(10.0F, 20 * IronManRules.ENERGY_REGEN_PER_TICK, EPS);
+   }
+
+   @Test
+   void drainNotScaled() {
+      // Hovering in a worn suit drains 1/s whatever the regen scale.
+      IronManState full = new IronManState();
+      IronManState half = new IronManState();
+      for (IronManState state : new IronManState[]{full, half}) {
+         state.suit.toggle();
+         for (int i = 0; i < IronManRules.SUIT_DEPLOY_TICKS; i++) {
+            state.suit.tick();
+         }
+      }
+
+      for (int i = 0; i < 20; i++) {
+         IronManHero.flightEnergyTick(full, dev.baranhan.viltrumiteflight.util.FlightState.HOVER, 1.0F);
+         IronManHero.flightEnergyTick(half, dev.baranhan.viltrumiteflight.util.FlightState.HOVER, 0.5F);
+      }
+
+      assertEquals(IronManRules.ENERGY_MAX - 1.0F, full.energy.value(), 1.0E-3F);
+      assertEquals(full.energy.value(), half.energy.value(), EPS);
+      Energy energy = new Energy();
+      assertTrue(energy.spend(10.0F));
+      assertEquals(IronManRules.ENERGY_MAX - 10.0F, energy.value(), EPS);
+   }
 }

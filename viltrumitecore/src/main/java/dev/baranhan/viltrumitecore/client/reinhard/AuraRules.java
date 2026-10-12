@@ -48,10 +48,30 @@ public final class AuraRules {
       return new Mote(Math.cos(angle) * WIND_RADIUS, age * WIND_RISE, Math.sin(angle) * WIND_RADIUS, Math.max(0.0F, Math.min(1.0F, alpha)));
    }
 
+   /** Mana Absorption feedback: faint blue motes drifting from a drained player to Reinhard. */
+   public static final int MANA_MOTES = 6;
+   public static final double MANA_SECONDS_PER_TRIP = 1.6;
+   public static final double MANA_WOBBLE = 0.25;
+
+   /**
+    * Mana mote {@code index} of {@code count}: {@code t} 0 (drained player) → 1 (Reinhard) along the line,
+    * a small sideways/vertical wobble, alpha up and down over the trip. Stateless.
+    */
+   public static ManaMote manaMote(int index, int count, double seconds, int seed) {
+      double phase = frac(seed * 0.6180339887);
+      double t = frac(seconds / MANA_SECONDS_PER_TRIP + (double) index / count + phase);
+      double wobble = Math.sin(2.0 * Math.PI * (t * 1.5 + index * 0.37)) * MANA_WOBBLE;
+      float alpha = (float) Math.sin(Math.PI * t);
+      return new ManaMote(t, wobble, wobble * 0.5, Math.max(0.0F, Math.min(1.0F, alpha)));
+   }
+
    private static double frac(double v) {
       return v - Math.floor(v);
    }
 
    public record Mote(double x, double y, double z, float alpha) {
+   }
+
+   public record ManaMote(double t, double side, double up, float alpha) {
    }
 }

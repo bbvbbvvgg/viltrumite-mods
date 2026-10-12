@@ -28,6 +28,46 @@ public final class ReinhardRules {
    /** Reid idle time before the auto-return to the sheath (spec §7.3: 60 s); HUD bar scale. */
    public static final int REID_IDLE_TICKS = 1200;
 
+   // ---- Divine Protection of the Phoenix (spec §4.2) ----
+   /** Online ticks before the next revive (10 min). */
+   public static final int PHOENIX_COOLDOWN = 12000;
+   /** PersistentCooldowns key. */
+   public static final String PHOENIX_KEY = "reinhard:phoenix";
+   public static final int PHOENIX_MIN_DIST = 6;
+   public static final int PHOENIX_MAX_DIST = 10;
+
+   // ---- Protection Acquisition (spec §4.8) ----
+   /** Divine hits of one type in a row that make him immune to it (the last one still lands). */
+   public static final int ADAPT_HITS = 3;
+
+   // ---- Blessing of the Holy Sword (spec §4.1) ----
+   /** Front cone of the parry, horizontal: cos 60° = ±60° around the look. */
+   public static final float PARRY_CONE_COS = 0.5F;
+   /** Parry pose flag lifetime after a parried hit. */
+   public static final int PARRY_POSE_TICKS = 8;
+
+   // ---- Divine Protection of the Cloudy Sky (spec §4.4) ----
+   /** Air steps in a row before touching ground, water, lava or a ladder again. */
+   public static final int AIR_STEPS = 5;
+   /** Vertical velocity of one air step (blocks/tick; ~2.5 blocks from a standstill). */
+   public static final double AIR_STEP_VELOCITY = 0.62;
+   /** Super jump launch velocity (~22 blocks, HeroSuperJump.apex). */
+   public static final float SUPER_JUMP_VELOCITY = 2.2F;
+
+   // ---- Blessing of Wind Reading (spec §4.5) ----
+   public static final int WIND_RADIUS = 32;
+   /** Behind = horizontal dot(look, to entity) below this. */
+   public static final float WIND_BEHIND_COS = 0.0F;
+   /** A player who hit him stays "hostile" this long (5 s). */
+   public static final int WIND_RECENT_ATTACK_TICKS = 100;
+   /** Server scan period. */
+   public static final int WIND_SCAN_INTERVAL = 5;
+
+   // ---- Blessing of Mana Absorption (spec §4.7) ----
+   /** Non-allied players this close regen their own resource slower. */
+   public static final double MANA_RADIUS = 24.0;
+   public static final float MANA_REGEN_FACTOR = 0.5F;
+
    private ReinhardRules() {
    }
 

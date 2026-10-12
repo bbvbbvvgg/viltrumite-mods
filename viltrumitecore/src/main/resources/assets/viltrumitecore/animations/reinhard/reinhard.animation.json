@@ -428,6 +428,45 @@
         }
       }
     },
+    "parry": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 0.4,
+      "bones": {
+        "right_arm": {
+          "rotation": {
+            "0.0": [
+              -75,
+              -40,
+              12
+            ],
+            "0.1": [
+              -55,
+              -30,
+              0
+            ],
+            "0.4": [
+              -50,
+              -26,
+              0
+            ]
+          }
+        },
+        "body": {
+          "rotation": {
+            "0.0": [
+              0,
+              -10,
+              0
+            ],
+            "0.4": [
+              0,
+              -6,
+              0
+            ]
+          }
+        }
+      }
+    },
     "sit": {
       "loop": true,
       "animation_length": 1.0,

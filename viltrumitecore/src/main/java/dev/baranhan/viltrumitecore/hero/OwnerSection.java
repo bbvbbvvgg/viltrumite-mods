@@ -9,7 +9,9 @@ public enum OwnerSection {
    CARRIERS,
    THREATS,
    MARKS,
-   SCAN;
+   SCAN,
+   /** Resource regen links (HeroResourceRegen): drained player ↔ drainers. */
+   MANA_LINKS;
 
    public static OwnerSection byId(int ordinal) {
       OwnerSection[] values = values();

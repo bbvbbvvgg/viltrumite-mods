@@ -677,5 +677,36 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.phoenix": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_phoenix",
+    "sounds": [
+      {
+        "name": "minecraft:item.totem.use",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.parry": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_parry",
+    "sounds": [
+      {
+        "name": "minecraft:item.shield.block",
+        "type": "event",
+        "pitch": 1.4
+      }
+    ]
+  },
+  "reinhard.super_jump": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_super_jump",
+    "sounds": [
+      {
+        "name": "minecraft:entity.firework_rocket.launch",
+        "type": "event"
+      }
+    ]
   }
 }

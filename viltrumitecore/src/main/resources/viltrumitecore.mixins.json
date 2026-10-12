@@ -6,6 +6,7 @@
   "refmap": "viltrumitecore.refmap.json",
   "plugin": "dev.baranhan.viltrumitecore.plugin.ViltrumiteMixinPlugin",
   "mixins": [
+    "AbstractArrowAccessor",
     "AntiCheatBypassMixin",
     "BlockDamageMixin",
     "CoreFlightHookMixin",

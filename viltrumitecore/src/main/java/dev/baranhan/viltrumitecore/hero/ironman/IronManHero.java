@@ -426,6 +426,11 @@ public class IronManHero implements HeroDefinition {
     * at WEAPONS_UNLOCK or the player lands.
     */
    static void flightEnergyTick(IronManState state, @javax.annotation.Nullable dev.baranhan.viltrumiteflight.util.FlightState flight) {
+      flightEnergyTick(state, flight, 1.0F);
+   }
+
+   /** @param regenScale foreign slow-down of the regen only (HeroResourceRegen); drain is never scaled */
+   static void flightEnergyTick(IronManState state, @javax.annotation.Nullable dev.baranhan.viltrumiteflight.util.FlightState flight, float regenScale) {
       boolean flying = state.suit.worn() && flight != null && flight != dev.baranhan.viltrumiteflight.util.FlightState.NONE;
       if (!flying) {
          state.glide = false;
@@ -442,7 +447,7 @@ public class IronManHero implements HeroDefinition {
          state.glide = state.energy.empty();
       }
 
-      state.energy.tick();
+      state.energy.tick(regenScale);
    }
 
    /** Fall without flight (e.g. after the suit's flight ended mid-air): real fall distance. */
@@ -473,7 +478,7 @@ public class IronManHero implements HeroDefinition {
 
       dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.onSuitEvent(player, state, state.suit.tick());
       dev.baranhan.viltrumiteflight.util.FlightState flight = flightState(player);
-      flightEnergyTick(state, flight);
+      flightEnergyTick(state, flight, dev.baranhan.viltrumitecore.hero.HeroResourceRegen.scale(player));
       syncArmor(player, state.suit.armored(), state.spec());
       state.airStrike.tick();
       if (state.heavyPoseTicks > 0) {
