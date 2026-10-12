@@ -15,6 +15,9 @@ Sends `HeroFxS2CPacket` to players tracking the source; the client draws it in `
 | `blade(source, origin, end, whizSound)` | air-blade trail origin → end |
 | `launch(source, feet, power, material)` | take-off puff (jump, dash start) |
 | `flash(source, at)` | white impact flash |
+| `hitStop(source, at, ticks, entityIds...)` | freeze the listed entities on screen for `ticks` (client `HitStop`); ids travel as {hi16, lo16, 0} triples (`encodeIds` / `decodeIds`, pure) |
+| `sonicRing(source, at)` | white expanding ring in the air (launch / throw) |
+| `airTrail(source, entity)` | white streak following the entity for 40 t (launched body, returned projectile) |
 
 `material` may be null (default stone colour). Sound args may be null.
 
@@ -57,6 +60,10 @@ Sends `HeroFxS2CPacket` to players tracking the source; the client draws it in `
 ### `hero/PersistentCooldowns` — cooldowns that outlive hero state
 - Stored in the player's persistent NBT under `ViltrumiteCooldowns` (survives death, hero change and relog); `get(player, key)`, `set(player, key, ticks)`, `tick(player)` once per online tick (offline time does not count), pure `tickTag` (key removed at 0). Used by Reinhard's phoenix (12000 t).
 
+### `hero/SafeSpot` — where an entity may be teleported
+- `find(wanted, probe, radius, step)` → `Optional<Vec3>`: the wanted feet first, else the nearest grid point within the radius (ties: smaller vertical offset). A spot needs `fits && insideBorder && groundBelow(feet, MAX_DROP = 6)` — never over the void.
+- `Probe` is a pure interface (unit tests use fakes); `LevelProbe(level, entity)` is the Minecraft side (`noCollision` with the entity's box, world border, a collider block within 6 below and above the build floor) and works on client and server, so a predicting client and the server search the same way. First user: Reinhard's Dash Behind.
+
 ### Other shared server helpers
 - `hero/HeroDestruction.canDestroy(level, pos)` / `destroyBlock(level, pos)` — honours the `mobGriefing` gamerule, unbreakable blocks and the drop-chance config.
 - `hero/HeroDamage.route(...)`, `applyCleanDamage(...)`, `isAnchored(entity)` — damage routing and control checks.
@@ -73,6 +80,12 @@ Receives `HeroFxS2CPacket` and renders all kinds above (pixel shards, rings, tra
 ### `client/render/vfx/CameraShake`
 - `addAt(at, power, range)` — shake with distance falloff; `add(power)` — local shake.
 - `falloff(distance, range)` — pure. Decay ×0.86 per tick. Scaled by `punchShakeMultiplier` config.
+
+### `client/render/vfx/HitStop`
+Client hit-stop for any hero: `HeroFx.hitStop` freezes the targets' interpolation for a few ticks (`RenderLivingEvent.Pre`), a hero renderer can hold its clip clock with `heldTicks`. Pure clock methods are unit tested (`HitStopTest`).
+
+### `client/render/vfx/AirTrailVfx`
+Draws `HeroFx.sonicRing` (pure `ringRadius(life)`) and `HeroFx.airTrail` (40 t streak behind an entity, pure `trailAlpha`). Client constants only; the packet carries just the point / ids.
 
 ### `client/render/vfx/PixelVfx`
 Pixel-art primitives for `RenderLevelStageEvent` renderers: `billboardPixel`, `beamDots`, `boxOutline`, `domeShell`, `sphereShell`, `bodyShell`, `crossGlow`, `rotateCamera`. Use for beams (eye lasers), auras, shells.

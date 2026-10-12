@@ -182,11 +182,12 @@ See the overview. Stage-specific:
 - Modify: `make_reinhard_clips.py` (final pass), `.agents/skills/animation-system/SKILL.md` (Reinhard clip list + `HitStop`), `.agents/skills/add_hero/references/shared-toolkit.md` (`SafeSpot`, `HitStop`, `AirTrailVfx`), `.memory-bank/project.md`, `SESSION.md`
 - Test: `test/client/reinhard/ReinhardClipsTest.java`
 
-- [ ] **Step 1: Write the failing test** — `everyAbilityHasClip` (for each `ReinhardAbility` with `stage <= 3`, the animation file has its clip name(s) and each clip length ≥ the action length / 20).
-- [ ] **Step 2:** Run → FAIL → add missing clips → PASS.
-- [ ] **Step 3:** Full verification list; dedicated server start.
-- [ ] **Step 4:** In game, each ability in first and third person, grounded and in air where allowed, with `mobGriefing` true and false; old heroes unchanged.
-- [ ] **Step 5:** Commit `docs(reinhard): stage 3 notes`; push `feat/reinhard-stage3`; PR «Рейнхард, этап 3: Сдержанный и Рыцарь».
+- [x] **Step 1: Write the failing test** — `everyAbilityHasClip` (for each `ReinhardAbility` with `stage <= 3`, the animation file has its clip name(s) and each clip length ≥ the action length / 20).
+- [x] **Step 2:** Run → PASS on the first run (every clip was added in its task; see the ledger).
+- [x] **Step 3:** Full verification list (tests, build, checker, diff check).
+- [ ] Dedicated server start — not run (user rule), left to the user.
+- [ ] **Step 4 (manual, оставлено пользователю):** In game, each ability in first and third person, grounded and in air where allowed, with `mobGriefing` true and false; old heroes unchanged.
+- [x] **Step 5:** Commit `docs(reinhard): stage 3 notes`; push `feat/reinhard-stage3`; PR «Рейнхард, этап 3: Сдержанный и Рыцарь».
 
 Acceptance criteria closed: §11.6 (Restrained, Knight), §11.7 (§6 part), §11.4 (windows part of §4.3).
 
