@@ -114,11 +114,11 @@ See the overview. Stage-specific:
 - `onRenderArm(RenderArmEvent)`: Reinhard → `PlayerGeoLayer.renderArmPart(stack, buffers, light, model, arm, Part(ARMS, [cutout(TEXTURE), glow(GLOW)], geo -> applyFirstPerson(geo, pose)))`, cancel. Existing first-person mixins that move the `PoseStack` before the arm (e.g. `FirstPersonChopMixin`) still apply because `RenderArmEvent` fires inside `renderPlayerArm`.
 - `ReinhardPoses.firstPersonArmVisible(mode, arm, flags)`: Knight hides the off arm (it is behind the back); Holy Sword shows the left arm lowered to the hilt (draw offset only in third person; first person = vanilla rest position). Fact (skill): an **empty** off hand is drawn in first person only through `AlwaysVisibleOffhandMixin`; `RenderArmEvent` for it never fires otherwise. So `ReinhardFirstPerson.wantsOffhand(player)` = `firstPersonArmVisible(mode, offArm, flags) && (mode != KNIGHT)` plus any Reinhard action clip that uses the off hand (Stage 3 adds Catch, Fist Combo, Grab). `onRenderHand(RenderHandEvent)` (fires before vanilla draws the arm **with** its item): main hand while Reid is in it (Stage 4) → cancel and draw the geo arm + blade ourselves; otherwise vanilla. Limbo (Stage 6) cancels `RenderHandEvent` for both hands.
 
-- [ ] **Step 1: Write the failing test** — `knightHidesOffArmInFirstPerson`, `restrainedShowsBoth`, `holyShowsBoth`, `wantsOffhandOnlyWhenVisible` (empty off hand, Restrained → true; Knight → false; other hero → false).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS. Manual first person: arms are the model's arms with glow, item in hand still drawn by vanilla on top, the **empty** left hand is visible in Restrained/Holy Sword, Knight shows one arm; other heroes' off-hand behaviour unchanged.
-- [ ] **Step 5: Commit** `feat(reinhard): first person arms`.
+- [x] **Step 1: Write the failing test** — `knightHidesOffArmInFirstPerson`, `restrainedShowsBoth`, `holyShowsBoth`, `wantsOffhandOnlyWhenVisible` (empty off hand, Restrained → true; Knight → false; other hero → false).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS. Manual first person: arms are the model's arms with glow, item in hand still drawn by vanilla on top, the **empty** left hand is visible in Restrained/Holy Sword, Knight shows one arm; other heroes' off-hand behaviour unchanged.
+- [x] **Step 5: Commit** `feat(reinhard): first person arms`.
 
 ### Task 6: 3D head on the race screen (`HeroHeadPreviews` seam)
 

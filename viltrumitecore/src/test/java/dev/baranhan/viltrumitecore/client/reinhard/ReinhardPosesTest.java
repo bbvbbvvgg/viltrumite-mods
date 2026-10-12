@@ -104,4 +104,31 @@ class ReinhardPosesTest {
       assertEquals(ReinhardPoses.ReidPhase.DRAWN, ReinhardPoses.reidPhase(1 << ReinhardFlags.REID_DRAWN));
       assertEquals(ReinhardPoses.ReidPhase.SHEATHED, ReinhardPoses.reidPhase(0));
    }
+
+   @Test
+   void knightHidesOffArmInFirstPerson() {
+      assertFalse(ReinhardPoses.firstPersonArmVisible(ReinhardMode.KNIGHT, HumanoidArm.LEFT, 0), "the left arm is behind the back");
+      assertTrue(ReinhardPoses.firstPersonArmVisible(ReinhardMode.KNIGHT, HumanoidArm.RIGHT, 0));
+   }
+
+   @Test
+   void restrainedShowsBoth() {
+      assertTrue(ReinhardPoses.firstPersonArmVisible(ReinhardMode.RESTRAINED, HumanoidArm.LEFT, 0));
+      assertTrue(ReinhardPoses.firstPersonArmVisible(ReinhardMode.RESTRAINED, HumanoidArm.RIGHT, 0));
+   }
+
+   @Test
+   void holyShowsBoth() {
+      assertTrue(ReinhardPoses.firstPersonArmVisible(ReinhardMode.HOLY_SWORD, HumanoidArm.LEFT, 0));
+      assertTrue(ReinhardPoses.firstPersonArmVisible(ReinhardMode.HOLY_SWORD, HumanoidArm.RIGHT, 0));
+   }
+
+   @Test
+   void wantsOffhandOnlyWhenVisible() {
+      assertTrue(ReinhardPoses.wantsOffhand(ReinhardMode.RESTRAINED, HumanoidArm.LEFT, 0));
+      assertTrue(ReinhardPoses.wantsOffhand(ReinhardMode.HOLY_SWORD, HumanoidArm.LEFT, 0));
+      assertFalse(ReinhardPoses.wantsOffhand(ReinhardMode.KNIGHT, HumanoidArm.LEFT, 0));
+      assertFalse(ReinhardPoses.wantsOffhand(ReinhardMode.KNIGHT, HumanoidArm.RIGHT, 0), "Knight never forces the empty off hand");
+      assertFalse(ReinhardPoses.wantsOffhand(null, HumanoidArm.LEFT, 0), "other hero");
+   }
 }

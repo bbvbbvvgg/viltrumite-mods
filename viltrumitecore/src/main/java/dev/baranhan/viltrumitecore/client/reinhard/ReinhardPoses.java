@@ -85,6 +85,22 @@ public final class ReinhardPoses {
       return new Passes(false, false, glowing, false);
    }
 
+   /**
+    * First person: Knight keeps the model's left arm behind the back (hidden); Restrained and
+    * Holy Sword show both arms at vanilla's rest position (the hilt reach is third person only).
+    */
+   public static boolean firstPersonArmVisible(ReinhardMode mode, HumanoidArm arm, int flags) {
+      return !(mode == ReinhardMode.KNIGHT && arm == HumanoidArm.LEFT);
+   }
+
+   /**
+    * AlwaysVisibleOffhandMixin term: draw the empty off hand when its arm is visible, never in Knight.
+    * Stage 3 adds the action clips that use the off hand. {@code mode} null = not Reinhard.
+    */
+   public static boolean wantsOffhand(@Nullable ReinhardMode mode, HumanoidArm offArm, int flags) {
+      return mode != null && mode != ReinhardMode.KNIGHT && firstPersonArmVisible(mode, offArm, flags);
+   }
+
    /** The hand that holds Reid (right, while drawing, drawn or sheathing) draws no vanilla held item. */
    public static boolean drawsHeldItem(HumanoidArm arm, ReidPhase phase) {
       return arm != HumanoidArm.RIGHT || phase == ReidPhase.SHEATHED;

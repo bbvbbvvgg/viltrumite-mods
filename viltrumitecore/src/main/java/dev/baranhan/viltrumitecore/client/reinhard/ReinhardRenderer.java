@@ -15,7 +15,10 @@ import java.util.List;
 import java.util.Map;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
 import net.minecraft.Util;
+import dev.baranhan.viltrumitecore.client.anim.render.PlayerGeoLayer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -29,6 +32,7 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderArmEvent;
 import net.minecraftforge.client.event.RenderNameTagEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -117,6 +121,33 @@ public final class ReinhardRenderer {
       }
 
       stack.popPose();
+   }
+
+   /**
+    * First person: the model's arms (with glow) at vanilla's rest position replace the vanilla arm;
+    * an arm the stance hides (Knight's left arm) is not drawn. Mixins that move the PoseStack before
+    * the arm still apply because RenderArmEvent fires inside renderPlayerArm.
+    */
+   @SubscribeEvent
+   public static void onRenderArm(RenderArmEvent event) {
+      AbstractClientPlayer player = event.getPlayer();
+      HeroPublicSnapshot snapshot = ReinhardView.of(player);
+      if (snapshot == null) {
+         return;
+      }
+
+      event.setCanceled(true);
+      if (!ReinhardPoses.firstPersonArmVisible(ReinhardView.mode(snapshot), event.getArm(), snapshot.heroFlags())) {
+         return;
+      }
+
+      PlayerRenderer renderer = (PlayerRenderer) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
+      PlayerModel<AbstractClientPlayer> model = renderer.getModel();
+      ModelPart arm = event.getArm() == HumanoidArm.RIGHT ? model.rightArm : model.leftArm;
+      // Pose null: PlayerGeoLayer resets the bones, i.e. the arm follows vanilla's first-person arm exactly.
+      PlayerGeoLayer.Part part = new PlayerGeoLayer.Part(ReinhardAssets.ARMS,
+         List.of(PlayerGeoLayer.Pass.cutout(ReinhardAssets.TEXTURE), PlayerGeoLayer.Pass.glow(ReinhardAssets.GLOW)), null);
+      PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
    }
 
    /**
