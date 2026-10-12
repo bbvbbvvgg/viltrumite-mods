@@ -62,11 +62,11 @@ See the overview. Stage-specific:
 - Input format (`reinhard_walk.json`): `{length: s, referenceAmount: a, tracks: {bone: [{time, rotation:[x,y,z]}]}}`, rotation in degrees in Java `ModelPart` convention. Output: format 1.8.0, `loop: true`, `animation_length` = `length`, per bone `rotation` keyframes `"t": [x, y, z]` with the same values (memory bank: BakedGeoModel's (−x, −y, z) equals a Java ModelPart turn, so angles carry over), linear.
 - `referenceAmount` (0.55) is written as `ReinhardPoses.WALK_REFERENCE_AMOUNT`: walk weight = `clamp(limbSwingAmount / 0.55, 0, 1)`; clip time = `walkDistance · WALK_SECONDS_PER_BLOCK` (constant tuned so the feet do not slide; starting value `length / (2 · 0.6662)` matching vanilla's limb swing period).
 
-- [ ] **Step 1: Write the failing test** — `walkIsOneSecondLoop`, `walkAnimatesFourLimbs`, `rightArmStartsForward` (parsed rotX at 0 s equals the source −31.51° after the parser's X negation rule, i.e. the arm swings forward like a vanilla right arm at the same phase).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** and run the converter.
-- [ ] **Step 4: Run** → PASS.
-- [ ] **Step 5: Commit** `feat(reinhard): walk clip from the archive`.
+- [x] **Step 1: Write the failing test** — `walkIsOneSecondLoop`, `walkAnimatesFourLimbs`, `rightArmStartsForward` (parsed rotX at 0 s equals the source −31.51° after the parser's X negation rule, i.e. the arm swings forward like a vanilla right arm at the same phase).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** and run the converter.
+- [x] **Step 4: Run** → PASS.
+- [x] **Step 5: Commit** `feat(reinhard): walk clip from the archive`.
 
 ### Task 3: Whole-body renderer (third person)
 
