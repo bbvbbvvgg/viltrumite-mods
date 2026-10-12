@@ -36,6 +36,12 @@ public final class ReinhardFirstPersonPose {
    static final float HAMMER_Y = -0.12F;
    static final float HAMMER_Z = -0.30F;
    static final float HAMMER_PITCH = 25.0F;
+   // Sky Kick: the hand flicks up for the toss, then swings down and back for balance during the kick.
+   static final float TOSS_Y = 0.18F;
+   static final float TOSS_PITCH = -32.0F;
+   static final float KICK_ARM_Y = -0.14F;
+   static final float KICK_ARM_Z = 0.14F;
+   static final float KICK_ARM_PITCH = 20.0F;
    /** Ticks to raise / lower the hand. */
    static final double CATCH_EASE = 2.0;
 
@@ -67,6 +73,7 @@ public final class ReinhardFirstPersonPose {
             .scaled(strike(ticks, ReinhardRules.STEP_TICKS / 2, ReinhardRules.STEP_ACTION_TICKS));
          case CATCH -> catchHand(phase, ticks, length);
          case FIST_COMBO -> combo(phase, ticks);
+         case SKY_KICK -> kick(ticks);
          default -> Offset.NONE;
       };
    }
@@ -84,6 +91,16 @@ public final class ReinhardFirstPersonPose {
             yield new Offset(0.0F, HAMMER_RAISE_Y * raise + HAMMER_Y * w, HAMMER_Z * w, -40.0F * raise + HAMMER_PITCH * w, 0.0F, 0.0F);
          }
       };
+   }
+
+   private static Offset kick(double ticks) {
+      int toss = ReinhardRules.KICK_TOSS_TICKS;
+      if (ticks < toss) {
+         return new Offset(0.0F, TOSS_Y, 0.0F, TOSS_PITCH, 0.0F, 0.0F).scaled(strike(ticks, toss / 2, toss));
+      }
+
+      float w = strike(ticks - toss, 1, ReinhardRules.KICK_ACTION_TICKS - toss);
+      return new Offset(0.0F, KICK_ARM_Y, KICK_ARM_Z, KICK_ARM_PITCH, 0.0F, 0.0F).scaled(w);
    }
 
    private static Offset catchHand(int phase, double ticks, int length) {

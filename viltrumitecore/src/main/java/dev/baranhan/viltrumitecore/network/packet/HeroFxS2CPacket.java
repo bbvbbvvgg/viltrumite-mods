@@ -22,6 +22,12 @@ public class HeroFxS2CPacket {
    public static final byte BLADE = 3;
    public static final byte LAUNCH = 4;
    public static final byte FLASH = 5;
+   /** Every entity id in {@code points} (HeroFx.encodeIds) holds still for {@code power} ticks (client HitStop). */
+   public static final byte HIT_STOP = 6;
+   /** A white horizontal sonic ring at the origin (client AirTrailVfx). */
+   public static final byte SONIC_RING = 7;
+   /** A white air trail behind each entity id in {@code points} (client AirTrailVfx). */
+   public static final byte AIR_TRAIL = 8;
 
    private static final int MAX_POINTS = 64;
 
@@ -29,7 +35,7 @@ public class HeroFxS2CPacket {
    public final Vec3 origin;
    public final float power;
    public final int blockStateId;
-   /** Flat xyz triples: shard end points, the blade end, or {radius, 0, 0}. */
+   /** Flat xyz triples: shard end points, the blade end, {radius, 0, 0}, or entity ids (HeroFx.encodeIds). */
    public final float[] points;
    /** Sound event registry id for the pass-by whiz, or -1 for none. */
    public final int soundId;

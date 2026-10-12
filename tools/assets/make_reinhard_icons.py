@@ -194,11 +194,31 @@ def fist_combo():
     return img
 
 
+def sky_kick():
+    """Knight: a steel boot kicking straight up, a white ring and a trail above it."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        "....w..w..w...",
+        ".....wwwww....",
+        "...w.......w..",
+        ".....wwwww....",
+        "....mmmmm.....",
+        "....msssm.....",
+        "....msssm.....",
+        "....mssm......",
+        "....mssm......",
+        "....gggg......",
+        "....gGGg......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
     "catch": catch_projectile,
     "fist_combo": fist_combo,
+    "sky_kick": sky_kick,
 }
 
 DRAWN = {

@@ -118,7 +118,8 @@ See the overview. Stage-specific:
 - Timeline: t0 no wind-up: light toss (target `deltaMovement.y = 0.45`, sound `entity.player.attack.sweep` §10.2) → t6 kick contact: `hurt(20)` → hit-stop 3 t (target velocity zeroed, `HitStop` on both entities through a `HeroFx` flash packet carrying the ids — reuse `HeroFxS2CPacket` with a new kind `HIT_STOP` only if needed) → t9 launch `(0, 3.9, 0)` + `hurtMarked = true` (players get `ClientboundSetEntityMotionPacket`) → sonic ring (`AirTrailVfx.ring`: white horizontal pixel ring at the contact point) + trail on the target for 40 t. Kick sound placeholder `entity.generic.explode` pitch 1.8 until Stage 7 (`qubodup` sonic boom).
 - Refuses targets that fail `allowsImpulse` (refusal sound, no cooldown).
 
-- [ ] Step 1 tests: `apexAtLeast60` (`HeroSuperJump.apex(KICK_VELOCITY) >= 60`), `velocityWithinPacketCap` (≤ 3.9), `timelineTossKickLaunch` (ticks 0/6/9), `cooldown200`, `impulseRefusedNoCooldown`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: zombie and a LAN player fly 60+ blocks, ring and trail, hit-stop visible, both views. Step 5 commit `feat(reinhard): sky kick`.
+- [x] Step 1 tests: `apexAtLeast60` (`HeroSuperJump.apex(KICK_VELOCITY) >= 60`), `velocityWithinPacketCap` (≤ 3.9), `timelineTossKickLaunch` (ticks 0/6/9), `cooldown200`, `impulseRefusedNoCooldown`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): sky kick`.
+- [ ] Manual: zombie and a LAN player fly 60+ blocks, ring and trail, hit-stop visible, both views — оставлено пользователю.
 
 ### Task 7: Grab & Throw (Knight, slot 3)
 

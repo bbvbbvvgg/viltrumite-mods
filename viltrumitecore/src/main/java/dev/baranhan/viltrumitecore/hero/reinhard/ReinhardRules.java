@@ -74,6 +74,19 @@ public final class ReinhardRules {
    /** Sky Kick: ticks from the toss to the kick contact (used by the clips too). */
    public static final int KICK_TOSS_TICKS = 6;
 
+   // ---- Sky Kick (spec §6.2) ----
+   public static final double KICK_REACH = 3.5;
+   /** The light toss before the kick (target vertical velocity). */
+   public static final double KICK_TOSS_VELOCITY = 0.45;
+   /** Launch velocity: the motion packet cap (±3.9 per axis); apex ≈ 61 blocks. */
+   public static final double KICK_VELOCITY = 3.9;
+   public static final float KICK_DAMAGE = 20.0F;
+   public static final int KICK_COOLDOWN = 200;
+   /** Action lock and the toss + kick clips: toss 0-6, contact 6, hit-stop 6-9, launch 9, recovery to 16. */
+   public static final int KICK_ACTION_TICKS = 16;
+   /** The target may drift this far past the reach during the toss and still be kicked. */
+   public static final double KICK_CONTACT_SLACK = 2.0;
+
    // ---- Light Punch (spec §6.1) ----
    public static final float LIGHT_PUNCH_DAMAGE = 4.0F;
    public static final double LIGHT_PUNCH_KNOCKBACK = 0.6;

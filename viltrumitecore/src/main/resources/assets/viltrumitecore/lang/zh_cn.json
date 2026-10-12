@@ -439,5 +439,7 @@
   "ability.viltrumitecore.reinhard_catch.name": "接住投射物",
   "ability.viltrumitecore.reinhard_catch.desc": "张开手掌0.5秒：箭矢和三叉戟会被收入物品栏，其他投射物直接消失。冷却2秒。",
   "ability.viltrumitecore.reinhard_fist_combo.name": "连拳",
-  "ability.viltrumitecore.reinhard_fist_combo.desc": "再次按下打出下一击：10、10，最后一击16并带冲击波。停顿超过1秒连击重新开始。"
+  "ability.viltrumitecore.reinhard_fist_combo.desc": "再次按下打出下一击：10、10，最后一击16并带冲击波。停顿超过1秒连击重新开始。",
+  "ability.viltrumitecore.reinhard_sky_kick.name": "踢上天",
+  "ability.viltrumitecore.reinhard_sky_kick.desc": "轻轻抛起目标，一脚把它踢上60格以上的高空：20点伤害。冷却10秒。"
 }

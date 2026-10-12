@@ -183,6 +183,24 @@ CLIPS["combo_3"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bone
     "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.25": [16, 0, -4], "0.6": [4, 0, 0]}},
 }}
 
+# Sky Kick: a light underhand toss (6 t, the leg chambers at the end) ...
+CLIPS["kick_toss"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
+    "right_arm": {"rotation": {"0.0": [-15, 0, 6], "0.15": [-95, 0, 4], "0.3": [-60, 0, 8]}},
+    "body": {"rotation": {"0.0": [6, 0, 0], "0.15": [-4, 0, 0], "0.3": [-6, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.2": [-10, 0, 0], "0.3": [-45, 0, 2]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [6, 0, 0]}},
+    "head": {"rotation": {"0.0": [8, 0, 0], "0.3": [-14, 0, 0]}},
+}}
+# ... then the kick: the leg snaps up at the contact (clip time 0), holds through the
+# 3 t hit-stop, and comes back down by the end of the 16 t action.
+CLIPS["kick"] = {"loop": "hold_on_last_frame", "animation_length": 0.5, "bones": {
+    "right_leg": {"rotation": {"0.0": [-135, 0, 4], "0.15": [-138, 0, 4], "0.3": [-60, 0, 2], "0.5": [-6, 0, 0]}},
+    "left_leg": {"rotation": {"0.0": [10, 0, 0], "0.15": [10, 0, 0], "0.5": [2, 0, 0]}},
+    "body": {"rotation": {"0.0": [-18, 0, 0], "0.15": [-18, 0, 0], "0.5": [-3, 0, 0]}},
+    "right_arm": {"rotation": {"0.0": [-30, 0, 24], "0.15": [-30, 0, 24], "0.5": [-6, 0, 6]}},
+    "head": {"rotation": {"0.0": [-24, 0, 0], "0.3": [-30, 0, 0], "0.5": [-10, 0, 0]}},
+}}
+
 
 def main():
     data = {"format_version": "1.8.0", "animations": {}}

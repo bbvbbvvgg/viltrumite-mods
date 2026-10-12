@@ -439,5 +439,7 @@
   "ability.viltrumitecore.reinhard_catch.name": "Mermi Yakala",
   "ability.viltrumitecore.reinhard_catch.desc": "Avucunu 0,5 sn açar: oklar ve üç dişliler envantere girer, diğer mermiler yok olur. Bekleme 2 sn.",
   "ability.viltrumitecore.reinhard_fist_combo.name": "Yumruk Kombosu",
-  "ability.viltrumitecore.reinhard_fist_combo.desc": "Sonraki vuruş için tekrar bas: 10, 10, sonra şok dalgalı 16. 1 sn'den uzun durursan seri baştan başlar."
+  "ability.viltrumitecore.reinhard_fist_combo.desc": "Sonraki vuruş için tekrar bas: 10, 10, sonra şok dalgalı 16. 1 sn'den uzun durursan seri baştan başlar.",
+  "ability.viltrumitecore.reinhard_sky_kick.name": "Gök Tekmesi",
+  "ability.viltrumitecore.reinhard_sky_kick.desc": "Hedefi hafifçe havalandırır ve 60+ blok göğe tekmeler: 20 hasar. Bekleme 10 sn."
 }

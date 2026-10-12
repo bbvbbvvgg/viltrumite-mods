@@ -439,5 +439,7 @@
   "ability.viltrumitecore.reinhard_catch.name": "Catch Projectile",
   "ability.viltrumitecore.reinhard_catch.desc": "Opens your palm for 0.5 s: arrows and tridents are caught into your inventory, other projectiles vanish. Cooldown 2 s.",
   "ability.viltrumitecore.reinhard_fist_combo.name": "Fist Combo",
-  "ability.viltrumitecore.reinhard_fist_combo.desc": "Press again for the next hit: 10, 10, then 16 with a shockwave. Pause for over 1 s and the chain starts over."
+  "ability.viltrumitecore.reinhard_fist_combo.desc": "Press again for the next hit: 10, 10, then 16 with a shockwave. Pause for over 1 s and the chain starts over.",
+  "ability.viltrumitecore.reinhard_sky_kick.name": "Sky Kick",
+  "ability.viltrumitecore.reinhard_sky_kick.desc": "Tosses the target lightly and kicks it 60+ blocks into the sky: 20 damage. Cooldown 10 s."
 }

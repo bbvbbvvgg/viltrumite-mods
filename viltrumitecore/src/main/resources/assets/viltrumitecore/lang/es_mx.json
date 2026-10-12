@@ -439,5 +439,7 @@
   "ability.viltrumitecore.reinhard_catch.name": "Atrapar proyectil",
   "ability.viltrumitecore.reinhard_catch.desc": "Abre la palma 0,5 s: flechas y tridentes van a tu inventario, los demás proyectiles desaparecen. Recarga 2 s.",
   "ability.viltrumitecore.reinhard_fist_combo.name": "Combo de puños",
-  "ability.viltrumitecore.reinhard_fist_combo.desc": "Pulsa de nuevo para el siguiente golpe: 10, 10 y luego 16 con onda expansiva. Si pausas más de 1 s, la cadena empieza de nuevo."
+  "ability.viltrumitecore.reinhard_fist_combo.desc": "Pulsa de nuevo para el siguiente golpe: 10, 10 y luego 16 con onda expansiva. Si pausas más de 1 s, la cadena empieza de nuevo.",
+  "ability.viltrumitecore.reinhard_sky_kick.name": "Patada al cielo",
+  "ability.viltrumitecore.reinhard_sky_kick.desc": "Lanza al objetivo un poco y lo patea más de 60 bloques al cielo: 20 de daño. Recarga 10 s."
 }

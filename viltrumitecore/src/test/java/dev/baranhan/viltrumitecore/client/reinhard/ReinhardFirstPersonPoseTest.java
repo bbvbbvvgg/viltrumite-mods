@@ -51,6 +51,13 @@ class ReinhardFirstPersonPoseTest {
    }
 
    @Test
+   void skyKickTossThenBalance() {
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.SKY_KICK, 0, 3.0).y() > 0.0F, "the toss lifts the hand");
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.SKY_KICK, 0, ReinhardRules.KICK_TOSS_TICKS + 1.0).y() < 0.0F, "the arm swings down for the kick");
+      assertEquals(0.0F, ReinhardFirstPersonPose.of(ReinhardAbility.SKY_KICK, 0, ReinhardRules.KICK_ACTION_TICKS).y(), 1.0E-6F);
+   }
+
+   @Test
    void noActionNoOffset() {
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(null, 0, 3.0));
       assertSame(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(ReinhardAbility.REID, 0, 3.0));
