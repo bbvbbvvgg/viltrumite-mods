@@ -40,7 +40,7 @@ See the overview. Stage-specific:
 - `record WorldCutShape(Vec3 origin, Vec3 dirXZ, long seed)`: `int depthAt(int along)` = 45–50 (smooth value noise by `seed`), `boolean contains(int along, int across, int down)`, `Iterator<BlockPos> wave(int minY, int maxY)` — positions ordered by `along` (wave front from Reinhard outward), inside each slice top-down; `AABB hitBox(int along)`; `int volume()`.
 - The trench starts 2 blocks in front of Reinhard's feet (he stands at the edge) and its top follows the surface height at each `along` (scan from the highest non-air block of the centre column down).
 
-- [ ] Step 1 tests: `volumeAbout153k` (200 × 17 × 45..50 → 153 000 ≤ v ≤ 170 000), `depthBetween45And50`, `waveIsMonotonicAlong`, `widthIs17`, `clipsToWorld` (minY/maxY and border predicate), `deterministicForSeed`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world cut geometry`.
+- [x] Step 1 tests: `volumeAbout153k` (200 × 17 × 45..50 → 153 000 ≤ v ≤ 170 000), `depthBetween45And50`, `waveIsMonotonicAlong`, `widthIs17`, `clipsToWorld` (minY/maxY and border predicate), `deterministicForSeed`. Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world cut geometry`.
 
 ### Task 2: Carve job, adaptive wave, debris share
 

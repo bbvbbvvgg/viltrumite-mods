@@ -78,6 +78,16 @@ public final class ReinhardRules {
    public static final int CUT_TICKS = 20;
    public static final int CUT_FIRST_TICK = 4;
 
+   // World Cut (spec §7.6): dimensions in blocks; max build height is exclusive.
+   public static final int CUT_LENGTH = 200;
+   public static final int CUT_WIDTH = 17;
+   public static final int CUT_DEPTH_MIN = 45;
+   public static final int CUT_DEPTH_MAX = 50;
+   public static final int CUT_ABOVE = 20;
+   public static final int CUT_START_OFFSET = 2;
+   public static final double CUT_DEBRIS_SHARE = 0.002;
+   public static final int CUT_DEBRIS_MAX = 300;
+
    // ---- Divine Protection of the Phoenix (spec §4.2) ----
    /** Online ticks before the next revive (10 min). */
    public static final int PHOENIX_COOLDOWN = 12000;
