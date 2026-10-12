@@ -14,6 +14,7 @@ import dev.baranhan.viltrumitecore.hero.ProjectileResponse;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.CloudStep;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
@@ -125,6 +126,8 @@ public final class ReinhardHero implements HeroDefinition {
       ReinhardState state = ReinhardState.ensure(player);
       return switch (action) {
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
+         // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
+         case JUMP, AIR_STEP -> true;
          default -> false;
       };
    }
@@ -194,6 +197,33 @@ public final class ReinhardHero implements HeroDefinition {
    @Override
    public void onRespawn(ServerPlayer player) {
       applyChassis(player);
+   }
+
+   /** Cloudy Sky (spec §4.4): five air steps (both sides). */
+   @Override
+   public int airJumps(Player player) {
+      return CloudStep.steps();
+   }
+
+   @Override
+   public double airJumpVelocity(Player player) {
+      return ReinhardRules.AIR_STEP_VELOCITY;
+   }
+
+   @Override
+   public void onAirStep(ServerPlayer player) {
+      CloudStep.onStep(player);
+   }
+
+   /** Cloudy Sky (spec §4.4): the super jump (both sides). */
+   @Override
+   public float superJumpVelocity(Player player) {
+      return ReinhardRules.SUPER_JUMP_VELOCITY;
+   }
+
+   @Override
+   public void onSuperJump(ServerPlayer player) {
+      CloudStep.onSuperJump(player);
    }
 
    /** Spec §3.1: no fall damage. */

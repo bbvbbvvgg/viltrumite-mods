@@ -105,9 +105,9 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `AIR_STEPS = 5`, `AIR_STEP_VELOCITY = 0.62` (≈ 1.9 blocks each), `SUPER_JUMP_VELOCITY = 2.2` (≈ 20 blocks via `HeroSuperJump.apex`).
 - `CloudStep.fallDistance` reset on each step (no fall damage anyway, but it keeps the landing shockwave of other systems quiet).
 
-- [ ] **Step 1: Write the failing tests** — `HeroAirJumpTest.refusesAboveMax`, `refusesAnchored`, `AirJumpRulesTest.sameResetsBothSides` (water, lava, ladder, ground, flying, riding), `refusalSendsCorrection` (fake sender: refused press → one motion packet + one sync packet, no FX), `acceptedSetsServerVelocity`, `sixthPacketRefused` (5 accepted then refused while airborne), `CloudStepTest.fiveSteps`, `groundOrClimbResets`, `superJumpApexAbout20` (`HeroSuperJump.apex(2.2)` in 18–24), `stepHeightAbout2`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual both views: 5 steps then nothing; in water / on a ladder the counter resets on both sides (6th step after touching a ladder works); with 200 ms simulated latency (`/forge` is not needed; LAN over a lagged proxy or a dev delay flag in `AirJumpClient`) the predicted step does not snap; super jump key; Regulus/Homelander/Iron Man jump unchanged (their `airJumps` = 0).
-- [ ] **Step 5: Commit** `feat(hero): air jump seam` and `feat(reinhard): cloudy sky blessing`.
+- [x] **Step 1: Write the failing tests** — `HeroAirJumpTest.refusesAboveMax`, `refusesAnchored`, `AirJumpRulesTest.sameResetsBothSides` (water, lava, ladder, ground, flying, riding), `refusalSendsCorrection` (fake sender: refused press → one motion packet + one sync packet, no FX), `acceptedSetsServerVelocity`, `sixthPacketRefused` (5 accepted then refused while airborne), `CloudStepTest.fiveSteps`, `groundOrClimbResets`, `superJumpApexAbout20` (`HeroSuperJump.apex(2.2)` in 18–24), `stepHeightAbout2`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual both views: 5 steps then nothing; in water / on a ladder the counter resets on both sides (6th step after touching a ladder works); with 200 ms simulated latency (`/forge` is not needed; LAN over a lagged proxy or a dev delay flag in `AirJumpClient`) the predicted step does not snap; super jump key; Regulus/Homelander/Iron Man jump unchanged (their `airJumps` = 0).
+- [x] **Step 5: Commit** `feat(hero): air jump seam` and `feat(reinhard): cloudy sky blessing`.
 
 ### Task 5: Blessing of Wind Reading — outlines
 

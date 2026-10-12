@@ -100,6 +100,7 @@ public class ViltrumiteCoreClient {
       public static void onClientTick(ClientTickEvent event) {
          Minecraft client = Minecraft.getInstance();
          if (event.phase == Phase.START) {
+            dev.baranhan.viltrumitecore.client.hero.AirJumpClient.beforeTick(client);
             if (ViltrumiteCoreClient.iAmBeingGrabbedBy != null && ViltrumiteCoreClient.exactHandPos != null && client.player != null) {
                if (ViltrumiteCoreClient.currentHandPos == null) {
                   ViltrumiteCoreClient.currentHandPos = ViltrumiteCoreClient.exactHandPos;
@@ -308,6 +309,8 @@ public class ViltrumiteCoreClient {
                }
             }
 
+            // Air jumps (any hero with airJumps > 0): predicted here, validated by HeroAirJump.
+            dev.baranhan.viltrumitecore.client.hero.AirJumpClient.tick(client);
             TargetLockManager.tickClient(client);
             if (ViltrumiteCoreClient.iAmBeingGrabbedBy != null) {
                if (ViltrumiteCoreClient.preGrabPerspective == null) {

@@ -232,6 +232,23 @@ public interface HeroDefinition {
    default void onSuperJump(ServerPlayer player) {
    }
 
+   /**
+    * Jumps in the air before touching ground, water, lava, a ladder or a mount
+    * again (HeroAirJump / client AirJumpClient); 0 = none. Read on BOTH sides.
+    */
+   default int airJumps(Player player) {
+      return 0;
+   }
+
+   /** Vertical velocity of one air jump in blocks/tick (horizontal is kept). Read on BOTH sides. */
+   default double airJumpVelocity(Player player) {
+      return 0.0;
+   }
+
+   /** Server: hero-specific sound/FX after an accepted air jump (the shared ring is drawn by the clients). */
+   default void onAirStep(ServerPlayer player) {
+   }
+
    /** Server: this hero player took damage (after armor, before health change). */
    default void onHurt(ServerPlayer player, net.minecraft.world.damagesource.DamageSource source, float amount) {
    }

@@ -222,6 +222,7 @@ public final class HeroEvents {
       if (event.getEntity() instanceof ServerPlayer player) {
          HeldInputs.releaseAll(player);
          HeroDamageLayers.forget(player);
+         HeroAirJump.forget(player);
          HeroRegistry.get(player).cleanup(player, CleanupReason.DISCONNECT);
       }
    }
@@ -337,6 +338,7 @@ public final class HeroEvents {
    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
       if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
          PersistentCooldowns.tick(player);
+         HeroAirJump.tick(player);
       }
    }
 

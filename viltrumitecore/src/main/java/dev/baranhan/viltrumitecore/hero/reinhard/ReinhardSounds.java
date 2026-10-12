@@ -21,6 +21,7 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> REFUSE = reg("reinhard.refuse");
    public static final RegistryObject<SoundEvent> PHOENIX = reg("reinhard.phoenix");
    public static final RegistryObject<SoundEvent> PARRY = reg("reinhard.parry");
+   public static final RegistryObject<SoundEvent> SUPER_JUMP = reg("reinhard.super_jump");
 
    private ReinhardSounds() {
    }

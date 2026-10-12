@@ -46,6 +46,14 @@ public final class ReinhardRules {
    /** Parry pose flag lifetime after a parried hit. */
    public static final int PARRY_POSE_TICKS = 8;
 
+   // ---- Divine Protection of the Cloudy Sky (spec §4.4) ----
+   /** Air steps in a row before touching ground, water, lava or a ladder again. */
+   public static final int AIR_STEPS = 5;
+   /** Vertical velocity of one air step (blocks/tick; ~2.5 blocks from a standstill). */
+   public static final double AIR_STEP_VELOCITY = 0.62;
+   /** Super jump launch velocity (~22 blocks, HeroSuperJump.apex). */
+   public static final float SUPER_JUMP_VELOCITY = 2.2F;
+
    private ReinhardRules() {
    }
 

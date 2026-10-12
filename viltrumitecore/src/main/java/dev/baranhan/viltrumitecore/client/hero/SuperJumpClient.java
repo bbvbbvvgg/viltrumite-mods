@@ -50,19 +50,24 @@ public final class SuperJumpClient {
          return false;
       }
 
+      return !anchored(player, snapshot);
+   }
+
+   /** Held by someone's control (channel target, grab, freeze, stasis): no self-propelled jump. Shared with AirJumpClient. */
+   public static boolean anchored(LocalPlayer player, HeroPublicSnapshot snapshot) {
       if ((snapshot != null && snapshot.controlTargetId() >= 0) || ViltrumiteCoreClient.iAmBeingGrabbedBy != null) {
-         return false;
+         return true;
       }
 
       for (HeroControlS2CPacket.ControlInfo control : ClientHeroData.controls()) {
          if (control.entityId() == player.getId()) {
             int kind = control.kindOrdinal();
             if (kind == ControlKind.FREEZE.ordinal() || kind == ControlKind.STASIS.ordinal()) {
-               return false;
+               return true;
             }
          }
       }
 
-      return true;
+      return false;
    }
 }

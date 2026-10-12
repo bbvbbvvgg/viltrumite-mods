@@ -698,5 +698,15 @@
         "pitch": 1.4
       }
     ]
+  },
+  "reinhard.super_jump": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_super_jump",
+    "sounds": [
+      {
+        "name": "minecraft:entity.firework_rocket.launch",
+        "type": "event"
+      }
+    ]
   }
 }
