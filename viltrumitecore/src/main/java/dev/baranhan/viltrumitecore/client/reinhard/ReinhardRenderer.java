@@ -107,8 +107,10 @@ public final class ReinhardRenderer {
       float[] weights = StanceBlend.weights(player, ReinhardView.mode(snapshot), Util.getNanos());
       float swim = player.getSwimAmount(partialTick);
       ParryPulse.Sample parry = ParryPulse.THIRD_PERSON.sample(player, ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.PARRY_POSE), Util.getNanos());
+      ReinhardPoses.ReidPhase reidPhase = ReinhardView.reid(snapshot);
+      double reidTicks = dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reidPhase, partialTick);
       applyClips(body, pose, StanceBlend.mix(weights, ReinhardView.mode(snapshot)), weights[ReinhardMode.KNIGHT.ordinal()], swim,
-         player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT, parry);
+         player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT, parry, ReinhardPoses.reidClip(reidPhase, reidTicks));
       applyHead(body, player, partialTick);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
@@ -131,7 +133,7 @@ public final class ReinhardRenderer {
                1.0F, 1.0F, 1.0F, 1.0F, null);
          }
 
-         ReinhardSword.drawSheathed(stack, body, buffers, light, overlay);
+         ReinhardSword.drawSheathed(stack, body, buffers, light, overlay, ReinhardPoses.bladeOut(reidPhase, reidTicks));
          heldItems(player, body, ReinhardView.reid(snapshot), stack, buffers, light);
       }
 
@@ -177,6 +179,11 @@ public final class ReinhardRenderer {
       }
 
       ReinhardFirstPersonPose.Offset action = flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
+      if (flick && action == ReinhardFirstPersonPose.Offset.NONE) {
+         // Stage 4: the Reid draw / sheathe pull.
+         ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
+         action = ReinhardFirstPersonPose.reid(reid, dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, Minecraft.getInstance().getFrameTime()));
+      }
       boolean moved = action != ReinhardFirstPersonPose.Offset.NONE;
       if (moved) {
          // Stage 3: the ability's first-person pose (jab, catch, ...), mirrored for a left main arm.
@@ -222,7 +229,7 @@ public final class ReinhardRenderer {
     * reaction weighted by its real-time pulse.
     */
    static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight, float swim, double swimSeconds,
-      ParryPulse.Sample parry) {
+      ParryPulse.Sample parry, @javax.annotation.Nullable ReinhardPoses.Clip reid) {
       Animation to = clip(ReinhardPoses.stance(mix.to()));
       if (mix.weight() >= StanceBlend.SETTLED || mix.from() == mix.to()) {
          AnimationController.seek(to, model, pose.stanceSeconds());
@@ -262,6 +269,12 @@ public final class ReinhardRenderer {
          if (clip != null) {
             AnimationController.overlay(clip, model, overlay.seconds());
          }
+      }
+
+      // Stage 4: Reid's draw / sheathe (its own phase clock, not the action timeline).
+      Animation reidClip = reid == null ? null : AnimCache.animation(ReinhardAssets.ANIMATIONS, reid.animation());
+      if (reidClip != null) {
+         AnimationController.overlay(reidClip, model, reid.seconds());
       }
 
       Animation parryClip = parry.weight() > 0.0F ? AnimCache.animation(ReinhardAssets.ANIMATIONS, PARRY) : null;

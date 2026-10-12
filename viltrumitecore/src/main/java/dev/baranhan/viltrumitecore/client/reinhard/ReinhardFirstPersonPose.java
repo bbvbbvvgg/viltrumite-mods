@@ -84,6 +84,16 @@ public final class ReinhardFirstPersonPose {
       }
    }
 
+   /** Stage 4, Reid draw: the main arm rises in front of the view pulling the blade up (sheathe = the same, reversed). */
+   public static final Offset REID_PULL = new Offset(-0.12F, 0.14F, -0.06F, -40.0F, 12.0F, 0.0F);
+
+   public static Offset reid(ReinhardPoses.ReidPhase phase, double ticks) {
+      return switch (phase) {
+         case DRAWING, SHEATHING -> REID_PULL.scaled(ReinhardPoses.bladeOut(phase, ticks));
+         default -> Offset.NONE;
+      };
+   }
+
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks) {
       return of(ability, phase, ticks, -1);
    }

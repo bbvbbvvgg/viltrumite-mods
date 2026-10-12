@@ -21,6 +21,9 @@ Swim (loop 1 s = vanilla's 26 walk-position units, overlay weighted by swimAmoun
 - swim: HumanoidModel's crawl stroke sampled every unit (arms) and a leg flutter
   0.3 rad (vanilla's leg period 6 pi units is shown once per stroke).
 
+Stage 4 (overlay driven by Reid's phase clock, ReinhardPoses.reidClip):
+- reid_draw: 6 s slow draw from the left hip, standing still; reid_sheathe: 1 s reverse.
+
 Run: python3 tools/assets/make_reinhard_clips.py
 """
 import json
@@ -252,6 +255,26 @@ CLIPS["reflect"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bone
     "right_arm": {"rotation": {"0.0": [-92, 28, -18], "0.1": [-88, -46, 30], "0.3": [-92, 20, -10]}},
     "body": {"rotation": {"0.0": [0, -12, 0], "0.1": [0, 20, 0], "0.3": [0, -6, 0]}},
     "head": {"rotation": {"0.0": [-2, 6, 0], "0.3": [-2, 4, 0]}},
+}}
+
+
+# Stage 4, Reid draw (6 s, standing still, overlay over the Holy Sword stance; the left hand keeps
+# the sheath at the hip, so the left arm is not animated): the right hand crosses to the hilt at the
+# left hip (0.6 s), pulls the blade up slowly along the sheath axis (to 5.6 s), the final tick lifts
+# it overhead; feet planted wide, the head follows the hand.
+CLIPS["reid_draw"] = {"loop": "hold_on_last_frame", "animation_length": 6.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [0, 0, 3], "0.6": [-28, 30, -38], "2.0": [-45, 26, -30],
+                               "4.0": [-80, 18, -14], "5.6": [-120, 8, 4], "6.0": [-150, 0, 12]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.6": [4, 14, 0], "4.0": [0, 8, 0], "5.6": [-4, 2, 0], "6.0": [-6, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.6": [18, 14, 0], "4.0": [4, 6, 0], "6.0": [-22, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [-4, 0, 7], "6.0": [-4, 0, 7]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [4, 0, -7], "6.0": [4, 0, -7]}},
+}}
+# Sheathe (1 s): the reverse, calm: the blade comes down across to the left hip and slides in.
+CLIPS["reid_sheathe"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.3": [-45, 26, -30], "0.75": [-28, 30, -38], "1.0": [0, 0, 3]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.5": [3, 12, 0], "1.0": [0, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.5": [14, 12, 0], "1.0": [0, 0, 0]}},
 }}
 
 

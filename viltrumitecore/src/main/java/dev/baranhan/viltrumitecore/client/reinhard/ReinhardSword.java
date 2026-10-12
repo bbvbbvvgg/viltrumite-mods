@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 
 /**
  * The Dragon Sword sheathed on Reinhard's left hip (spec §8): sheath + blade in its sheathed place,
- * attached to the body bone. Drawn always in Stage 1b; Stage 4 moves the blade to the hand.
+ * attached to the body bone. Stage 4: the blade slides out along the sheath axis while Reid is drawn.
  */
 public final class ReinhardSword {
    /** Sheath mouth on the body, Bedrock px (+x = Reinhard's left), model space. */
@@ -32,12 +32,19 @@ public final class ReinhardSword {
     * 32 px body; 0.35 makes the sheath ~13 px: with the tilt its tip stays ~2 px above the ground.
     */
    public static final float SWORD_SCALE = 0.35F;
+   /** Stage 4: how far (sword px, along the sheath axis toward the hilt) the blade travels out at full draw. */
+   public static final float DRAW_OUT_PX = 40.0F;
 
    private ReinhardSword() {
    }
 
    /** {@code stack} is the model frame (after the body yaw and player scale); the body bone is already posed. */
    public static void drawSheathed(PoseStack stack, BakedGeoModel body, MultiBufferSource buffers, int light, int overlay) {
+      drawSheathed(stack, body, buffers, light, overlay, 0.0F);
+   }
+
+   /** {@code out} 0..1: the blade slides out of the sheath along its axis (Reid draw / sheathe, {@link ReinhardPoses#bladeOut}). */
+   public static void drawSheathed(PoseStack stack, BakedGeoModel body, MultiBufferSource buffers, int light, int overlay, float out) {
       GeoBone bodyBone = body.getBone(ReinhardAssets.BODY_BONE);
       BakedGeoModel sheath = AnimCache.model(ReinhardAssets.SHEATH);
       BakedGeoModel blade = AnimCache.model(ReinhardAssets.BLADE);
@@ -64,7 +71,7 @@ public final class ReinhardSword {
       stack.translate(-gx, -gy, -gz);
       draw(sheath, stack, buffers, light, overlay);
       // The blade in its sheathed place: blade geo + SHEATHED_OFFSET.
-      stack.translate(gx, gy, gz);
+      stack.translate(gx, gy + out * DRAW_OUT_PX / 16.0F, gz);
       draw(blade, stack, buffers, light, overlay);
       stack.popPose();
    }
