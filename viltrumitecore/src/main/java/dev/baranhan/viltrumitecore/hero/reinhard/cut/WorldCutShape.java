@@ -40,6 +40,18 @@ public record WorldCutShape(Vec3 origin, Vec3 dirXZ, long seed) {
       return new AABB(b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ());
    }
 
+   /** SAT: exact horizontal slice/box overlap, not just the rotated slice's enclosing AABB. */
+   public boolean intersects(AABB box, int along, int surface) {
+      if (!hitBox(along, surface).intersects(box)) return false;
+      Vec3 centre = axis(along + .5);
+      double dx=(box.minX+box.maxX)*.5-centre.x, dz=(box.minZ+box.maxZ)*.5-centre.z;
+      double hx=(box.maxX-box.minX)*.5, hz=(box.maxZ-box.minZ)*.5;
+      double projectedAlong=Math.abs(dx*dirXZ.x+dz*dirXZ.z);
+      double projectedAcross=Math.abs(-dx*dirXZ.z+dz*dirXZ.x);
+      return projectedAlong < .5+hx*Math.abs(dirXZ.x)+hz*Math.abs(dirXZ.z)
+         && projectedAcross < ReinhardRules.CUT_WIDTH*.5+hx*Math.abs(dirXZ.z)+hz*Math.abs(dirXZ.x);
+   }
+
    public Iterator<BlockPos> wave(int minY, int maxY) {
       return wave(minY, maxY, a -> (int) Math.floor(origin.y) - 1, p -> true);
    }

@@ -6,6 +6,12 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
  * changes constants here.
  */
 public final class ReinhardRules {
+   public static final int WORLD_CUT_SWING = 20;
+   public static final int WORLD_CUT_SILENCE = 60;
+   public static final int WORLD_CUT_BLAST = WORLD_CUT_SWING + WORLD_CUT_SILENCE;
+   public static final int WORLD_CUT_WAVE_TICKS = 30;
+   public static final int WORLD_CUT_COOLDOWN = 900;
+   public static final int WORLD_CUT_VIEW_RANGE = 320;
    // ---- chassis (spec §3.1) ----
    public static final float MAX_HEALTH = 20.0F;
    /** Share of ordinary damage that never lands. */

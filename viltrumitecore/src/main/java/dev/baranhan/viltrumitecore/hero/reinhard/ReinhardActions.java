@@ -45,6 +45,7 @@ public final class ReinhardActions {
       register(ReinhardAbility.REID, new ReidToggle());
       register(ReinhardAbility.SHEATH_STRIKE, new SheathStrike());
       register(ReinhardAbility.CUT_RAIN, new CutRain());
+      register(ReinhardAbility.WORLD_CUT, new dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut());
    }
 
    private ReinhardActions() {

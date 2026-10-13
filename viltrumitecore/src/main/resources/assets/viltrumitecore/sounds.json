@@ -898,5 +898,29 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.world_cut_silence": {
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.world_cut_blast": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.world_cut_tail": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.sonic_boom",
+        "type": "event"
+      }
+    ]
   }
 }

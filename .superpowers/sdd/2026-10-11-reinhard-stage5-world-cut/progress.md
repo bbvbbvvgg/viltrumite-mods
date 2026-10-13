@@ -43,3 +43,14 @@ Task 2 RED: Gradle compileTestJava fails only because WorldCutCarve is missing (
 
 - [x] Task 2 — Budgeted carve and debris. Reinhard suite 304/304 GREEN; full build 962/962, 0 failures; checker 0 new / 4 known; git diff --check clean. New tests: WorldCutCarveTest 6 (neverAboveBudget, skipsUnbreakable, debrisCapped, finishes, slowerUnderLoad, zeroBudgetDoesNoWork), CarveJobsTest.sharedBudget. RED→GREEN for the missing carve job. Synthetic 160000 positions finish in 80 × 2000 steps; debris capped at 300, sources changed exactly once. Not covered: real falling-block placement, lighting cost and fluid reactions to external updates; manual checks remain in the PR.
 Task 2: complete — base `065cd411`; full verification above.
+
+Continuation pre-flight: isolated clone at Task 2 commit `52fba52`; read full Stage 5/overview, animation-system and Stage 4 carve rulings. executing-plans + TDD + verification-before-completion loaded. JDK 17 downloaded outside repository; Gradle dependencies resolved normally (no production build changes). Concurrent baseline bootstrap was killed; rerun checks serially.
+
+Task 3 RED: compileTestJava fails with 26 missing WorldCut/WorldCutManager/WORLD_CUT dispatcher symbols; tests written before production code. Task 3 implementation in progress.
+- Ruling (Task 3): dispatch WorldCut before Carve on END, so blast submits work for this same tick. Hits use max(visual front, consumed carve slices), de-duplicate resolved parent UUIDs, and do not use ReinhardTargets — cost if wrong: one-tick order could differ from old carve-only END; shared budget remains unchanged.
+- Ruling (Task 3): Annihilation accepts nullable attribution and takes its damage level from the victim, with a hero-neutral detached flash overload. Dead, offline or other-dimension caster means null attacker — cost if wrong: kill attribution is absent, but the cast still resolves in its original dimension.
+- Ruling (Task 3 → 4): SHIPPED_STAGE changes in Task 4, after the clip/first-person/VFX exist, not in Task 3 — cost if wrong: the slot is not offered in the intermediate timeline commit; avoids shipping an animation-less ability.
+
+- Ruling (Task 3): a state reference to the detached cast keeps mode switching busy until blast even if control cancels its pose; level ownership still drives resolution — cost if wrong: a controlled caster must wait for the blast to switch mode. `interruptedPoseKeepsBusyUntilBlast` missing-field RED → GREEN.
+Task 3: complete — server timeline/packet/manager, loaded-column terrain snapshot, exact SAT slice hits, nullable attribution, icon and 11 lang files. WorldCutTest 11/11 GREEN; verification counts below. No game/server run; live death/logout, networking, damage and border writes remain manual.
+Task 3 verification: Reinhard package 313/313; selected suite including shared strike/phase tests 324/324; full build 973/973, 0 failures/errors/skips; checker 0 new / 4 known; diff check clean.
