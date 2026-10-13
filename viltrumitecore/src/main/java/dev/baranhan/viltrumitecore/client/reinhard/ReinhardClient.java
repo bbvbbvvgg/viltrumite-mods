@@ -12,6 +12,10 @@ public final class ReinhardClient {
    public static void onErasure(java.util.function.Consumer<dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket> receiver) {erasureReceiver=receiver;}
    public static void receiveErasure(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket packet) {erasureReceiver.accept(packet);}
 
+   private static java.util.function.Consumer<dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket> limboReceiver = packet -> {};
+   public static void onLimbo(java.util.function.Consumer<dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket> receiver) {limboReceiver=receiver;}
+   public static void receiveLimbo(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket packet) {limboReceiver.accept(packet);}
+
    private ReinhardClient() {
    }
 

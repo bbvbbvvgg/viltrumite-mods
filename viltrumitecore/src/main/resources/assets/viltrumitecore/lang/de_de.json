@@ -472,5 +472,6 @@
   "ability.viltrumitecore.reinhard_world_erasure.name": "Weltauslöschung",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Gezogener Reid: Ziel bis 64 Blöcke, 7,5 s Serverpause. Sterbliche verschwinden; Spieler verlieren Inventar, Rüstung, Zweithand und EP und kehren nach 30 Online-Sekunden aus dem Limbus zurück. Endertruhe bleibt. Göttliche/unverwundbare Ziele überleben. Abklingzeit: 60 s.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "Die Welt zerbricht",
-  "subtitles.viltrumitecore.reinhard.erase_inhale": "Die Welt entsteht neu"
+  "subtitles.viltrumitecore.reinhard.erase_inhale": "Die Welt entsteht neu",
+  "dimension.viltrumitecore.the_void": "Limbo"
 }

@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.hero.reinhard.ability;
 import dev.baranhan.viltrumitecore.hero.*;
 import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.hero.reinhard.*;
+import dev.baranhan.viltrumitecore.hero.reinhard.limbo.Limbo;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket;
 import java.util.*;
@@ -35,9 +36,6 @@ public final class WorldErasure implements AbilityHandler {
    private final Environment environment;
    private boolean attempted,ended;
    private UUID pauseId;
-   // Task 4 supplies the destination; until then no player cast can be accepted.
-   private static Consumer<ServerPlayer> playerTransfer;
-   public static void bindPlayerTransfer(Consumer<ServerPlayer> transfer) {playerTransfer=Objects.requireNonNull(transfer);}
    public WorldErasure() {this(null,null);}
    private WorldErasure(DivineTargets.Verdict verdict,Environment environment) {this.verdict=verdict;this.environment=environment;}
    public static WorldErasure timed(DivineTargets.Verdict verdict,Environment environment) {
@@ -90,9 +88,9 @@ public final class WorldErasure implements AbilityHandler {
    @Override public boolean tryStart(ServerPlayer player,ReinhardState state) {
       MinecraftServer server=player.getServer(); if(server==null) return false;
       LivingEntity target=aimedTarget(player);
-      if(target instanceof ServerPlayer && playerTransfer==null) return false;
+      if(target instanceof ServerPlayer && !Limbo.available(server)) return false;
       Gate gate=new Gate(target!=null,WorldPause.active(server),target instanceof ServerPlayer p && p.isCreative(),
-         target instanceof ServerPlayer p && p.isSpectator(),target instanceof ServerPlayer p && p.getPersistentData().contains("viltrumitecore:limbo"),state.reid.drawn());
+         target instanceof ServerPlayer p && p.isSpectator(),target instanceof ServerPlayer p && BodyIsolation.active(p),state.reid.drawn());
       if(target==null || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn()) return false;
       DivineTargets.Verdict frozen=DivineTargets.verdict(target);
       if(!tryStart(state,gate,()->WorldPause.begin(server,player.getUUID(),ReinhardRules.ERASE_LENGTH,
@@ -140,7 +138,7 @@ public final class WorldErasure implements AbilityHandler {
             QuietDragonCompletion.markKilled(targetLevel.getDragonFight(),dragon);
       }
       public void discard() {target.discard();}
-      public void erasePlayer() {ServerPlayer p=(ServerPlayer)target;HeroEvents.prepareErasure(p);playerTransfer.accept(p);}
+      public void erasePlayer() {ServerPlayer p=(ServerPlayer)target;HeroEvents.prepareErasure(p);Limbo.send(p);}
       public void end(WorldPause.EndReason reason) {WorldPause.end(server,reason);}
    }
 }

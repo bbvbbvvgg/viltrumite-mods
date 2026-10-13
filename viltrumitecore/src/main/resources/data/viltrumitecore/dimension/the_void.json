@@ -1,0 +1,18 @@
+{
+  "type": "viltrumitecore:the_void",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "minecraft:the_void",
+      "layers": [
+        {
+          "block": "minecraft:air",
+          "height": 1
+        }
+      ],
+      "features": false,
+      "lakes": false,
+      "structure_overrides": []
+    }
+  }
+}

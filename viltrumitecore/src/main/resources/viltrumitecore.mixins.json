@@ -32,7 +32,8 @@
     "SolidEntityBypassMixin",
     "WroughtnautDamageBypassMixin",
     "QuietBlockRemovalMixin",
-    "EndDragonFightAccess"
+    "EndDragonFightAccess",
+    "PlayerRespawnLogicInvoker"
   ],
   "injectors": {
     "defaultRequire": 1

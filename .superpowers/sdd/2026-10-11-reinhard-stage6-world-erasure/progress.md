@@ -40,6 +40,14 @@ Branch: feat/reinhard-stage6 from feat/reinhard-stage5; BASE f93f27fa2634268c968
 - Ruling (Task 3): Disappearance makes exactly one removal attempt at tick 90; targets absent then are not erased after rejoin, while visuals finish with frozen verdict — cost if wrong: a logout before removal can escape erasure, as specified.
 - Ruling (Task 3): Caster stands at the captured position; controlled/canceled action also ends its pause using OWNER_LEFT — keep the clip and no-flight post priority coherent — cost if wrong: owner cannot walk during the 7.5-second cast.
 
+- Ruling (Task 4): server.execute runs inline on the server thread (audited BlockableEventLoop bytecode); use a snapshot-drained ServerEndTasks queue at server END, after WorldPause.tick, with failed-task isolation and stop cleanup — cost if wrong: a queued follow-up waits one additional tick rather than re-entering player/entity iteration.
+- Ruling (Task 4): Persist pendingStrip with ticksLeft before enqueueing transfer; resume strips inventory/XP exactly once and never reads the ender chest — logout/restart between scheduling and transfer cannot restore the erased inventory — cost if wrong: a crash between inventory mutation and saving the marker may repeat a harmless empty strip.
+- Ruling (Task 4): Protection precedes every HeroDamage route, internal drain and direct/deferred clean path, not just Forge events; protected hits are blocked, not queued — cinematic/limbo invulnerability must not become a payout — cost if wrong: debt whose payout falls inside protection is discarded instead of postponed.
+- Ruling (Task 4): WorldPause still tracks isolated players for input/protection but does not acquire their noGravity=true body; normal gravity is restored before returning, so another pause can capture a clean baseline — cost if wrong: overlap/flag restoration needs runtime verification.
+- Ruling (Task 4): Real 1.20.1 codecs run with a registry-only Bootstrap in JUnit (no game/server/world); JSONs decode including required monster light fields and the air layer — cost if wrong: datapack startup/event mixins remain unproven until the forbidden runtime check is performed manually.
+- Ruling (Task 4): Return uses the shared overworld spawn, vanilla radius/border and protected safe-column invoker, randomized coprime search plus vanilla upward fallback; never bed/anchor or a terrain platform — cost if wrong: a fully obstructed/invalid shared spawn can still be unsafe and must be repaired by the server owner.
+- Ruling (Task 4): A missing limbo dimension refuses a new player cast before spending cooldown; an already-tagged player is rescued to shared spawn instead of remaining trapped — cost if wrong: removing the dimension datapack shortens that player's remaining text sequence.
+
 ## CleanupReason audit (Task 2)
 | Existing check / consumer | Explicit ERASED decision |
 |---|---|
@@ -64,8 +72,8 @@ Branch: feat/reinhard-stage6 from feat/reinhard-stage5; BASE f93f27fa2634268c968
 ## Tasks
 Task 1: complete (BASE f93f27f; commit 4a800b3 feat(control): refresh and server-wide world pause). RED: missing APIs; GREEN: WorldPause/refresh 20/20; selected core 377/377; full build 1020/1020, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. No runtime checks.
 Task 2: complete (BASE 4a800b3; commit a1d689a feat(hero): erased cleanup reason and fresh body path). RED missing APIs → GREEN lifecycle 14/14 + existing control 11/11; selected core 391/391; build 1034/1034, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. Same-body domain states of all five heroes compared recursively to fresh states; runtime adapters not run.
-Task 3: complete (BASE a1d689a; commit feat(reinhard): world erasure timeline). RED missing APIs → GREEN 26/26 new erasure tests; selected core 417/417; build 1060/1060; Reinhard 361/361; checker 0 new / 4 known; git diff --check clean. Dragon bytecode audited; narrow fight accessor compiled/refmap generated, no runtime mixin check.
-Task 4: pending
+Task 3: complete (BASE a1d689a; commit f2c09f4 feat(reinhard): world erasure timeline). RED missing APIs → GREEN 26/26 new erasure tests; selected core 417/417; build 1060/1060; Reinhard 361/361; checker 0 new / 4 known; git diff --check clean. Dragon bytecode audited; narrow fight accessor compiled/refmap generated, no runtime mixin check.
+Task 4: complete (BASE f2c09f4; commit feat(reinhard): limbo dimension). RED: 57 missing-API errors → GREEN 28/28 new (15 timer/isolation, 3 genuine codec, 6 damage-protection, 4 END-queue); selected core 445/445; full build 1088/1088, Reinhard 379/379; checker 0 new / 4 known; git diff --check clean. No game/server/runtime checks.
 Task 5: pending
 Task 6: pending
 Task 7: pending

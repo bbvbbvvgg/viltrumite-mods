@@ -145,7 +145,9 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 - Login with the tag → back into limbo (if not already there) with the stored `ticksLeft`; a tag with `ticksLeft <= 0` → `returnToSpawn`.
 - No death message, no `Stats.DEATHS`, no drops: the player never dies.
 
-- [ ] Step 1 tests: `TheVoidJsonTest.dimensionTypeDecodes` (parse with `DimensionType.DIRECT_CODEC` + `JsonOps` in the test — fails on any missing field), `flatSettingsDecode`; `LimboTest.stripKeepsEnderChest`, `xpZeroed`, `returnsAfter600OnlineTicks`, `offlineTimeDoesNotCount`, `returnToSpawn` (shared spawn, not bed), `persistsAcrossLogout`, `noPortalOut`, `immuneInLimbo`, `freshBodyCalledOnReturn`. Step 2 FAIL. Step 3 implement. Step 4 PASS; dedicated server start: no dimension codec errors in the log, `/execute in viltrumitecore:the_void run tp @s 0 128 0` works. Step 5 commit `feat(reinhard): limbo dimension`.
+- [x] Automated Step 1 tests: `TheVoidJsonTest.dimensionTypeDecodes` (parse with `DimensionType.DIRECT_CODEC` + `JsonOps` in the test — fails on any missing field), `flatSettingsDecode`; `LimboTest.stripKeepsEnderChest`, `xpZeroed`, `returnsAfter600OnlineTicks`, `offlineTimeDoesNotCount`, `returnToSpawn` (shared spawn, not bed), `persistsAcrossLogout`, `noPortalOut`, `immuneInLimbo`, `freshBodyCalledOnReturn`. Step 2 FAIL. Step 3 implement. Step 4 PASS (28 tests); Step 5 commit `feat(reinhard): limbo dimension`.
+- [ ] Manual dedicated server start: no dimension codec errors; `/execute in viltrumitecore:the_void run tp @s 0 128 0` works (not run by instruction).
+- Rulings: explicit server-END queue instead of possibly-inline execute; persistent pending strip; protection before all damage/queue paths; safe shared-spawn invoker; missing-dimension rescue. See progress journal for costs.
 
 ### Task 5: Post-shader uniforms for the erasure
 

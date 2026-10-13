@@ -6,6 +6,8 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
  * changes constants here.
  */
 public final class ReinhardRules {
+   public static final int LIMBO_TICKS = 600;
+   public static final net.minecraft.world.phys.Vec3 LIMBO_POS = new net.minecraft.world.phys.Vec3(.5, 128, .5);
    public static final int WORLD_CUT_SWING = 20;
    public static final int WORLD_CUT_SILENCE = 60;
    public static final int WORLD_CUT_BLAST = WORLD_CUT_SWING + WORLD_CUT_SILENCE;

@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.hero;
 
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
+import dev.baranhan.viltrumitecore.hero.reinhard.limbo.Limbo;
 import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.hero.control.HeroControlSync;
 import dev.baranhan.viltrumitecore.hero.regulus.Evangelium;
@@ -226,6 +227,7 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
       if (event.getEntity() instanceof ServerPlayer player) {
+         Limbo.onLogout(player);
          WorldPause.ownerLeft(player.getServer(),player.getUUID());
          HeldInputs.releaseAll(player);
          HeroDamageLayers.forget(player);
@@ -249,6 +251,7 @@ public final class HeroEvents {
             HeroRegistry.repairLoadout(player);
          }
          WorldPause.onJoin(player);
+         Limbo.onLogin(player);
       }
    }
 
@@ -258,7 +261,7 @@ public final class HeroEvents {
     */
    @SubscribeEvent
    public static void onSwapHands(net.minecraftforge.event.entity.living.LivingSwapItemsEvent.Hands event) {
-      if (event.getEntity() instanceof ServerPlayer player && HeroRegistry.get(player).blocksHandSwap(player)) {
+      if (event.getEntity() instanceof ServerPlayer player && (HeroDamage.isAnchored(player) || HeroRegistry.get(player).blocksHandSwap(player))) {
          event.setCanceled(true);
       }
    }
@@ -266,7 +269,7 @@ public final class HeroEvents {
    /** Damage layers, step 1: absorbIncoming before armor and knockback (HeroDamageLayers). */
    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
    public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
-      if (WorldPause.isProtected(event.getEntity())) {event.setCanceled(true); return;}
+      if (HeroDamage.isProtected(event.getEntity())) {event.setCanceled(true); return;}
       if (event.getEntity() instanceof ServerPlayer player && event.getAmount() > 0.0F && HeroDamageLayers.onAttack(player, event.getSource(), event.getAmount())) {
          event.setCanceled(true);
       }
@@ -372,6 +375,11 @@ public final class HeroEvents {
       }
    }
 
+   @SubscribeEvent
+   public static void onTravel(net.minecraftforge.event.entity.EntityTravelToDimensionEvent event) {
+      if(event.getEntity() instanceof ServerPlayer player && Limbo.blocksTravel(BodyIsolation.active(player), Limbo.internalTravel())) event.setCanceled(true);
+   }
+
    /** Landing hook for every hero (HeroDefinition.onLanded / cancelsFallDamage). */
    @SubscribeEvent
    public static void onLivingFall(LivingFallEvent event) {
@@ -395,6 +403,7 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
       if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
+         Limbo.tick(player);
          PersistentCooldowns.tick(player);
          HeroAirJump.tick(player);
       }
@@ -421,12 +430,14 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
       WorldPause.end(event.getServer(),WorldPause.EndReason.SERVER_STOP);
+      ServerEndTasks.clear(event.getServer());
+      Limbo.clear();
       dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.clearAll();
    }
 
    @SubscribeEvent
    public static void onServerTick(TickEvent.ServerTickEvent event) {
-      if(event.phase==TickEvent.Phase.END) WorldPause.tick(event.getServer());
+      if(event.phase==TickEvent.Phase.END) {WorldPause.tick(event.getServer()); ServerEndTasks.flush(event.getServer());}
    }
 
    @SubscribeEvent

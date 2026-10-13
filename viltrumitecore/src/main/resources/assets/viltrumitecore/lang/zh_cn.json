@@ -472,5 +472,6 @@
   "ability.viltrumitecore.reinhard_world_erasure.name": "世界抹除",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "拔出的莱德：选择64格内的目标，全服暂停7.5秒。凡人消失；玩家失去背包、护甲、副手和经验，在虚空中在线停留30秒后返回。末影箱保留。神性或绝对无敌的目标幸存。冷却：60秒。",
   "subtitles.viltrumitecore.reinhard.erase_crack": "世界破裂",
-  "subtitles.viltrumitecore.reinhard.erase_inhale": "世界重组"
+  "subtitles.viltrumitecore.reinhard.erase_inhale": "世界重组",
+  "dimension.viltrumitecore.the_void": "Limbo"
 }

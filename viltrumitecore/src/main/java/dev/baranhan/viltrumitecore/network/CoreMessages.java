@@ -262,6 +262,11 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket::handle)
          .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::handle)
+         .add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

@@ -472,5 +472,6 @@
   "ability.viltrumitecore.reinhard_world_erasure.name": "Borrado del mundo",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid desenvainado: objetivo a 64 bloques, pausa global de 7,5 s. Los mortales desaparecen; los jugadores pierden inventario, armadura, segunda mano y experiencia y regresan del limbo tras 30 s conectados. Cofre de Ender intacto. Seres divinos o invulnerables sobreviven. Recarga: 60 s.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "El mundo se agrieta",
-  "subtitles.viltrumitecore.reinhard.erase_inhale": "El mundo se reconstruye"
+  "subtitles.viltrumitecore.reinhard.erase_inhale": "El mundo se reconstruye",
+  "dimension.viltrumitecore.the_void": "Limbo"
 }

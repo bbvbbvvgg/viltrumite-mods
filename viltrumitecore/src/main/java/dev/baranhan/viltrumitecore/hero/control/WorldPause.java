@@ -157,7 +157,7 @@ public final class WorldPause {
       public long now(Target target) {ServerLevel level=level(target.level()); return level==null?0:level.getGameTime();}
       public void freeze(Target key,UUID owner,UUID id,long until) {
          ServerLevel level=level(key.level()); Entity e=level==null?null:level.getEntity(key.id());
-         if(!(e instanceof LivingEntity target)) return;
+         if(!(e instanceof LivingEntity target) || dev.baranhan.viltrumitecore.hero.BodyIsolation.active(target)) return;
          ControlManager.restorePendingTarget(target);
          if(target instanceof ServerPlayer player) {HeldInputs.releaseAll(player); player.stopUsingItem();}
          ControlManager cm=ControlManager.get(level);
