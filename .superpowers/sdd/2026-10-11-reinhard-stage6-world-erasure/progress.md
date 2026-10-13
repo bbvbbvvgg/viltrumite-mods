@@ -34,6 +34,12 @@ Branch: feat/reinhard-stage6 from feat/reinhard-stage5; BASE f93f27fa2634268c968
 - Ruling (Task 2): Keep death-surviving dome-owned STASIS and launched world jobs; ERASED uses CASTER_DEATH, not hero-change semantics — spec/Stage 4 world ownership — cost if wrong: a world-owned effect survives its erased caster until its natural end.
 - Ruling (Task 2): Refresh the consumed life totem on ERASED while preserving session UUID/Phoenix/PersistentCooldowns — death clone normally refreshes the new life; do not refresh on ordinary End-return — cost if wrong: one extra life after erasure instead of exhausted totem retention.
 
+- Ruling (Task 3): Vanilla EndDragonFight.setDragonKilled creates a portal, gateway and first-kill egg (verified bytecode); use narrow common accessors to mark defeat/hide bossbar without generating blocks/rewards — spec "world blocks never change" outranks that plan step — cost if wrong: an erased first dragon does not create an exit portal/gateway/egg; test End exit options manually before using it there.
+- Ruling (Task 3): Packet carries pause UUID and server age in addition to the original fixed start/target data — every dimension and late joiner uses the same elapsed scene even if local game times differ — cost if wrong: one packet latency of visual clock offset.
+- Ruling (Task 3): Player destination is an explicit bindable transfer port until Task 4; no player cast is accepted without it, and SHIPPED_STAGE remains 5 — intermediate commits cannot erase an inventory without a destination — cost if wrong: slot 6/player targets unavailable until its complete wiring.
+- Ruling (Task 3): Disappearance makes exactly one removal attempt at tick 90; targets absent then are not erased after rejoin, while visuals finish with frozen verdict — cost if wrong: a logout before removal can escape erasure, as specified.
+- Ruling (Task 3): Caster stands at the captured position; controlled/canceled action also ends its pause using OWNER_LEFT — keep the clip and no-flight post priority coherent — cost if wrong: owner cannot walk during the 7.5-second cast.
+
 ## CleanupReason audit (Task 2)
 | Existing check / consumer | Explicit ERASED decision |
 |---|---|
@@ -57,8 +63,8 @@ Branch: feat/reinhard-stage6 from feat/reinhard-stage5; BASE f93f27fa2634268c968
 
 ## Tasks
 Task 1: complete (BASE f93f27f; commit 4a800b3 feat(control): refresh and server-wide world pause). RED: missing APIs; GREEN: WorldPause/refresh 20/20; selected core 377/377; full build 1020/1020, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. No runtime checks.
-Task 2: complete (BASE 4a800b3; commit feat(hero): erased cleanup reason and fresh body path). RED missing APIs → GREEN lifecycle 14/14 + existing control 11/11; selected core 391/391; build 1034/1034, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. Same-body domain states of all five heroes compared recursively to fresh states; runtime adapters not run.
-Task 3: pending
+Task 2: complete (BASE 4a800b3; commit a1d689a feat(hero): erased cleanup reason and fresh body path). RED missing APIs → GREEN lifecycle 14/14 + existing control 11/11; selected core 391/391; build 1034/1034, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. Same-body domain states of all five heroes compared recursively to fresh states; runtime adapters not run.
+Task 3: complete (BASE a1d689a; commit feat(reinhard): world erasure timeline). RED missing APIs → GREEN 26/26 new erasure tests; selected core 417/417; build 1060/1060; Reinhard 361/361; checker 0 new / 4 known; git diff --check clean. Dragon bytecode audited; narrow fight accessor compiled/refmap generated, no runtime mixin check.
 Task 4: pending
 Task 5: pending
 Task 6: pending

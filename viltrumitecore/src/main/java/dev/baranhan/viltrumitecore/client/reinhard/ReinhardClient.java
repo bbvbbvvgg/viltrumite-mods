@@ -8,6 +8,10 @@ import net.minecraftforge.common.MinecraftForge;
 
 /** Client entry point for Reinhard: client systems register here (panel style, HUD, race screen head, Wind Reading outline, Step Dash and Dash Behind prediction). */
 public final class ReinhardClient {
+   private static java.util.function.Consumer<dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket> erasureReceiver = packet -> {};
+   public static void onErasure(java.util.function.Consumer<dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket> receiver) {erasureReceiver=receiver;}
+   public static void receiveErasure(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket packet) {erasureReceiver.accept(packet);}
+
    private ReinhardClient() {
    }
 

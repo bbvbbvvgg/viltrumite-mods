@@ -468,5 +468,9 @@
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Only with Reid drawn. 12 cuts in a 30° cone, 40 blocks each: every mortal target they cross dies (Reid strike), and each cut leaves a 1 × 3 groove in the ground (if mobGriefing allows; bedrock stays). Cooldown 15 s.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhard's cuts rain down",
   "ability.viltrumitecore.reinhard_world_cut.name": "World Cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: swing, three seconds of silence, a 200×17×45–50 trench. Reid strikes all living targets on the line. Cooldown: 45 s."
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: swing, three seconds of silence, a 200×17×45–50 trench. Reid strikes all living targets on the line. Cooldown: 45 s.",
+  "ability.viltrumitecore.reinhard_world_erasure.name": "World Erasure",
+  "ability.viltrumitecore.reinhard_world_erasure.desc": "Drawn Reid: a 64-block target, 7.5 s server-wide pause. Mortals vanish; players lose inventory, armour, offhand and XP, then return from limbo after 30 online seconds. Ender chest stays. Divine/absolute targets survive. Cooldown: 60 s.",
+  "subtitles.viltrumitecore.reinhard.erase_crack": "The world cracks",
+  "subtitles.viltrumitecore.reinhard.erase_inhale": "The world rebuilds"
 }

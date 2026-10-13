@@ -97,7 +97,10 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
   - `erase == false` → nothing, whatever the target's state now.
 - End at 150 → `WorldPause.end(DONE)`; `WorldPause.end(...)` by any other reason before 90 cancels the removal.
 
-- [ ] Step 1 tests: `refusalsSpendNoCooldown` (each case), `secondCastRefusedWhileActive`, `removeTick90`, `mobDiscardedNoLoot` (fake: removal reason DISCARDED, no `die`), `dragonMarksFightKilled`, `partEntityResolvesParent`, `verdicts` (divine / absolute / another Reinhard → stays, cd spent), `verdictFrozenAtCast` (absolute at cast, mortal at 90 → stays; mortal at cast, absolute at 90 → erased), `casterLeavesMidway`, `targetEdgeCases` (target logs out before 90 → nothing; logs in later → normal). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world erasure timeline`.
+- [x] Step 1 tests: `refusalsSpendNoCooldown` (each case), `secondCastRefusedWhileActive`, `removeTick90`, `mobDiscardedNoLoot` (fake: removal reason DISCARDED, no `die`), `dragonMarksFightKilled`, `partEntityResolvesParent`, `verdicts` (divine / absolute / another Reinhard → stays, cd spent), `verdictFrozenAtCast` (absolute at cast, mortal at 90 → stays; mortal at cast, absolute at 90 → erased), `casterLeavesMidway`, `targetEdgeCases` (target logs out before 90 → nothing; logs in later → normal). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world erasure timeline`.
+
+- [x] Automated Steps 1–5: RED → GREEN (26 tests), full build 1060 tests, checker 0 new / 4 known; diff check. Shipping stage remains 5 until clip completion (Ruling).
+- Ruling: quiet dragon defeat skips vanilla portal/gateway/egg generation to obey the unchanged-block spec; end-fight runtime/exit availability remains manual.
 
 ### Task 4: Limbo dimension, strip, timer, return
 

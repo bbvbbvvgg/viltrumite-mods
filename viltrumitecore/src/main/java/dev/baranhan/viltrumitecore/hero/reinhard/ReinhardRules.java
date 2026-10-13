@@ -260,6 +260,13 @@ public final class ReinhardRules {
    /** The swat after a reflection (the action lock may outlast the window by this). */
    public static final int REFLECT_SNAP_TICKS = 6;
 
+   public static final int ERASE_RANGE = 64;
+   public static final int ERASE_LENGTH = 150;
+   public static final int ERASE_CRACK_END = 30;
+   public static final int ERASE_SHATTER_END = 70;
+   public static final int ERASE_DARK_END = 110;
+   public static final int ERASE_REMOVE_TICK = 90;
+   public static final int ERASE_COOLDOWN = 1200;
    public static final boolean ERASE_PROTECT_FROZEN = true;
    public static final int ERASE_MOB_FREEZE_RADIUS = 32;
 

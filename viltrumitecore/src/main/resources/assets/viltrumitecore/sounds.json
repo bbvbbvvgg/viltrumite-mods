@@ -922,5 +922,25 @@
         "type": "event"
       }
     ]
+  },
+  "reinhard.erase_crack": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_crack",
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "pitch": 0.5
+      }
+    ]
+  },
+  "reinhard.erase_inhale": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_inhale",
+    "sounds": [
+      {
+        "name": "minecraft:block.respawn_anchor.charge",
+        "type": "event",
+        "pitch": 1
+      }
+    ]
   }
 }

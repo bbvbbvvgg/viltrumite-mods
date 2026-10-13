@@ -468,5 +468,9 @@
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Yalnızca Reid çekiliyken. 30°'lik bir koni içinde her biri 40 blok olan 12 kesik: geçtikleri her ölümlü hedef ölür (Reid darbesi) ve her kesik zeminde 1 × 3 bir oluk bırakır (mobGriefing izin verirse; ana kaya kalır). Bekleme 15 sn.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhard'ın kesikleri yağar",
   "ability.viltrumitecore.reinhard_world_cut.name": "World Cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: swing, three seconds of silence, a 200×17×45–50 trench. Reid strikes all living targets on the line. Cooldown: 45 s."
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: swing, three seconds of silence, a 200×17×45–50 trench. Reid strikes all living targets on the line. Cooldown: 45 s.",
+  "ability.viltrumitecore.reinhard_world_erasure.name": "Dünyayı Silme",
+  "ability.viltrumitecore.reinhard_world_erasure.desc": "Çekilmiş Reid: 64 bloktaki hedef, sunucuda 7,5 sn duraklama. Ölümlüler yok olur; oyuncular envanter, zırh, ikinci el ve deneyimi kaybedip çevrimiçi 30 sn sonra limbodan döner. Ender sandığı korunur. İlahi veya mutlak dokunulmaz hedefler kalır. Bekleme: 60 sn.",
+  "subtitles.viltrumitecore.reinhard.erase_crack": "Dünya çatlıyor",
+  "subtitles.viltrumitecore.reinhard.erase_inhale": "Dünya yeniden kuruluyor"
 }

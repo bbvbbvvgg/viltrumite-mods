@@ -468,5 +468,9 @@
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Solo con Reid desenvainada. 12 cortes en un cono de 30°, de 40 bloques cada uno: todo objetivo mortal que crucen muere (golpe de Reid) y cada corte deja un surco de 1 × 3 (si mobGriefing lo permite; la roca madre queda). Enfriamiento 15 s.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Llueven los cortes de Reinhard",
   "ability.viltrumitecore.reinhard_world_cut.name": "World Cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: swing, three seconds of silence, a 200×17×45–50 trench. Reid strikes all living targets on the line. Cooldown: 45 s."
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: swing, three seconds of silence, a 200×17×45–50 trench. Reid strikes all living targets on the line. Cooldown: 45 s.",
+  "ability.viltrumitecore.reinhard_world_erasure.name": "Borrado del mundo",
+  "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid desenvainado: objetivo a 64 bloques, pausa global de 7,5 s. Los mortales desaparecen; los jugadores pierden inventario, armadura, segunda mano y experiencia y regresan del limbo tras 30 s conectados. Cofre de Ender intacto. Seres divinos o invulnerables sobreviven. Recarga: 60 s.",
+  "subtitles.viltrumitecore.reinhard.erase_crack": "El mundo se agrieta",
+  "subtitles.viltrumitecore.reinhard.erase_inhale": "El mundo se reconstruye"
 }
