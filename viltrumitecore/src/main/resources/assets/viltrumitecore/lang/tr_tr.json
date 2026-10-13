@@ -473,5 +473,11 @@
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Çekilmiş Reid: 64 bloktaki hedef, sunucuda 7,5 sn duraklama. Ölümlüler yok olur; oyuncular envanter, zırh, ikinci el ve deneyimi kaybedip çevrimiçi 30 sn sonra limbodan döner. Ender sandığı korunur. İlahi veya mutlak dokunulmaz hedefler kalır. Bekleme: 60 sn.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "Dünya çatlıyor",
   "subtitles.viltrumitecore.reinhard.erase_inhale": "Dünya yeniden kuruluyor",
-  "dimension.viltrumitecore.the_void": "Limbo"
+  "dimension.viltrumitecore.the_void": "Limbo",
+  "viltrumitecore.limbo.line1": "Dünyadan silindin.",
+  "viltrumitecore.limbo.line2": "Reinhard van Astrea, evreni sen olmadan yeniden yarattı.",
+  "viltrumitecore.limbo.line3": "Taşıdığın her şey seninle birlikte yok oldu.",
+  "viltrumitecore.limbo.line4": "Ama bu dünyanın en güçlü kudreti sana acıdı.",
+  "viltrumitecore.limbo.line5": "Yeniden doğmana izin verildi.",
+  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Kalp atışı"
 }

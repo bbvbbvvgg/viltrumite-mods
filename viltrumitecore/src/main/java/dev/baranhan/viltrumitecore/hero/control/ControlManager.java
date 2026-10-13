@@ -107,7 +107,7 @@ public final class ControlManager {
          return false;
       }
 
-      if (this.isAnchored(target) || WorldPause.isPaused(target)) {
+      if (this.isAnchored(target) || WorldPause.isPaused(target) || dev.baranhan.viltrumitecore.hero.BodyIsolation.active(target)) {
          return true;
       }
 

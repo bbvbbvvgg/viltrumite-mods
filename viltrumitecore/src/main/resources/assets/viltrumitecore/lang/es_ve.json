@@ -473,5 +473,11 @@
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid desenvainado: objetivo a 64 bloques, pausa global de 7,5 s. Los mortales desaparecen; los jugadores pierden inventario, armadura, segunda mano y experiencia y regresan del limbo tras 30 s conectados. Cofre de Ender intacto. Seres divinos o invulnerables sobreviven. Recarga: 60 s.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "El mundo se agrieta",
   "subtitles.viltrumitecore.reinhard.erase_inhale": "El mundo se reconstruye",
-  "dimension.viltrumitecore.the_void": "Limbo"
+  "dimension.viltrumitecore.the_void": "Limbo",
+  "viltrumitecore.limbo.line1": "Te han borrado del mundo.",
+  "viltrumitecore.limbo.line2": "Reinhard van Astrea ha recreado el universo sin ti.",
+  "viltrumitecore.limbo.line3": "Todo lo que llevabas desapareció contigo.",
+  "viltrumitecore.limbo.line4": "Pero la fuerza más poderosa de este mundo se apiadó de ti.",
+  "viltrumitecore.limbo.line5": "Se te permite renacer.",
+  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Latidos"
 }

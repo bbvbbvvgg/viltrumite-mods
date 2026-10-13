@@ -942,5 +942,14 @@
         "pitch": 1
       }
     ]
+  },
+  "reinhard.limbo_heartbeat": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.limbo_heartbeat",
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.heartbeat",
+        "type": "event"
+      }
+    ]
   }
 }

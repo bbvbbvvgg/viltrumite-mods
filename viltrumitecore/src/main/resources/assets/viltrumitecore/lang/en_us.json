@@ -473,5 +473,11 @@
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Drawn Reid: a 64-block target, 7.5 s server-wide pause. Mortals vanish; players lose inventory, armour, offhand and XP, then return from limbo after 30 online seconds. Ender chest stays. Divine/absolute targets survive. Cooldown: 60 s.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "The world cracks",
   "subtitles.viltrumitecore.reinhard.erase_inhale": "The world rebuilds",
-  "dimension.viltrumitecore.the_void": "Limbo"
+  "dimension.viltrumitecore.the_void": "Limbo",
+  "viltrumitecore.limbo.line1": "You were erased from the world.",
+  "viltrumitecore.limbo.line2": "Reinhard van Astrea recreated the universe without you.",
+  "viltrumitecore.limbo.line3": "Everything you carried vanished with you.",
+  "viltrumitecore.limbo.line4": "But the strongest power in this world took pity on you.",
+  "viltrumitecore.limbo.line5": "You are allowed to be reborn.",
+  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Heartbeat"
 }

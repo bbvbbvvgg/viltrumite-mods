@@ -473,5 +473,11 @@
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Gezogener Reid: Ziel bis 64 Blöcke, 7,5 s Serverpause. Sterbliche verschwinden; Spieler verlieren Inventar, Rüstung, Zweithand und EP und kehren nach 30 Online-Sekunden aus dem Limbus zurück. Endertruhe bleibt. Göttliche/unverwundbare Ziele überleben. Abklingzeit: 60 s.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "Die Welt zerbricht",
   "subtitles.viltrumitecore.reinhard.erase_inhale": "Die Welt entsteht neu",
-  "dimension.viltrumitecore.the_void": "Limbo"
+  "dimension.viltrumitecore.the_void": "Limbo",
+  "viltrumitecore.limbo.line1": "Du wurdest aus der Welt gelöscht.",
+  "viltrumitecore.limbo.line2": "Reinhard van Astrea hat das Universum ohne dich neu erschaffen.",
+  "viltrumitecore.limbo.line3": "Alles, was du bei dir trugst, ist mit dir verschwunden.",
+  "viltrumitecore.limbo.line4": "Doch die stärkste Macht dieser Welt hatte Erbarmen mit dir.",
+  "viltrumitecore.limbo.line5": "Du darfst wiedergeboren werden.",
+  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Herzschlag"
 }

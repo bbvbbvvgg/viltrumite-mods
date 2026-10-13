@@ -27,6 +27,7 @@ public class ViltrumiteInGameHudMixin {
    private void renderViltrumiteHotbar(GuiGraphics guiGraphics, float partialTick, CallbackInfo ci) {
       Minecraft client = Minecraft.getInstance();
       Player player = client.player;
+      if (dev.baranhan.viltrumitecore.client.hero.BodyIsolationClient.active(player)) return;
       if (player != null && !client.options.hideGui) {
          if (player instanceof ViltrumiteAbilityUser abilityUser) {
             if (!dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).hasAbilityPanel(player)) {

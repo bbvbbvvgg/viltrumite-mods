@@ -25,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
 /** Persistent, same-body limbo. Time advances only in the isolated online player's tick. */
 public final class Limbo {
    public static final String TAG = BodyIsolation.TAG;
-   public static final String DIMENSION_ID = "viltrumitecore:the_void";
+   public static final String DIMENSION_ID = BodyIsolation.DIMENSION_ID;
    private static final ThreadLocal<Integer> INTERNAL_TRAVEL = ThreadLocal.withInitial(() -> 0);
    private static final Set<UUID> PENDING = new HashSet<>();
    private Limbo() {}
@@ -166,6 +166,9 @@ public final class Limbo {
          travel(() -> player.teleportTo(level, pos.getX()+.5, pos.getY(), pos.getZ()+.5, level.getSharedSpawnAngle(), 0));
       }
       public void restoreVitals() {
+         player.getAbilities().flying = false;
+         dev.baranhan.viltrumiteflight.util.FlightPermissions.resetModFlight(player);
+         player.onUpdateAbilities();
          player.setNoGravity(false); player.setDeltaMovement(Vec3.ZERO); player.fallDistance = 0; player.clearFire();
          player.setHealth(player.getMaxHealth()); player.getFoodData().setFoodLevel(20); player.getFoodData().setSaturation(5);
       }

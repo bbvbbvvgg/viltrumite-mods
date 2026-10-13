@@ -20,6 +20,8 @@ public final class ReinhardClient {
    }
 
    public static void init() {
+      dev.baranhan.viltrumitecore.client.reinhard.limbo.LimboOverlay.init();
+      onLimbo(dev.baranhan.viltrumitecore.client.reinhard.limbo.LimboOverlay::onPacket);
       dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene.init();
       onErasure(dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene::onPacket);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene::onClientTick);

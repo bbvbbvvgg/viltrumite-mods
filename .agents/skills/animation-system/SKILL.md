@@ -359,3 +359,6 @@ To add a screen effect:
 - `PixelVfx.guiPixel` reuses the paint-pixel style through the existing GuiGraphics batching; no extra VFX engine or render target.
 - `GuiEntitySilhouette` delegates to the real entity renderer with FULL_BRIGHT, but feeds NEW_ENTITY model streams into white POSITION_COLOR GUI quads. Font/leash/fire/glint streams are discarded; camera/shadow/lighting/pose state is restored in finally. Texture alpha is intentionally not part of this flat mesh silhouette.
 - `SoundDuck.release(owner, ticks)` allows an independent out-fade; existing `release(owner)` callers keep their old symmetric step.
+
+- `FlashOverlay.flashEnvelope(strength, inTicks, outTicks)` extends the SAME white overlay with an attack/release curve; old `flash`/`alpha` callers retain their original linear out-fade.
+- Limbo heartbeat uses non-positional tickable vanilla-sound pulses in a 24-client-tick logical loop (50 bpm), not a sample-length-dependent SoundEngine delay. END/dimension leave/logout stop its owned instance.

@@ -196,7 +196,9 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 - `END`: white flash 10 t in, 30 t out over the first overworld frames.
 - While in limbo: `RenderHandEvent` cancelled for both hands (the HUD event does not control the world-pass hand), `RenderGuiOverlayEvent.Pre` cancelled for hotbar, crosshair, experience, health/food.
 
-- [ ] Step 1 tests: `lineTimings`, `flashCurve`, `heartbeatStopsOnLeave`, `handsAndHudHiddenOnlyInLimbo` (pure predicate by dimension key). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: full 30 s in limbo, no hand visible, chat works, F1, relog in the middle (text restarts at the stored time). Step 5 commit `feat(reinhard): limbo client`.
+- [x] Automated Step 1 tests: `lineTimings`, `flashCurve`, `heartbeatStopsOnLeave`, `handsAndHudHiddenOnlyInLimbo` (pure predicate by dimension key). Step 2 FAIL. Step 3 implement. Step 4 PASS (25 new/expanded checks); Step 5 commit `feat(reinhard): limbo client`.
+- [ ] Manual: full 30 s, no hands/HUD, chat/menu/F1, midpoint relog and overworld flash. Not run.
+- Ruling: tickable pulses are scheduled as a 24-tick logical loop (50 bpm) instead of sample-duration-dependent looping delay; shared FlashOverlay has an attack/release envelope.
 
 ### Task 8: Clip, check, docs, PR
 

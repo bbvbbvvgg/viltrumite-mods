@@ -20,6 +20,7 @@ public final class FlashOverlay {
    private static float strength;
    private static int ticks;
    private static int left;
+   private static int fadeIn;
 
    private FlashOverlay() {
    }
@@ -32,10 +33,23 @@ public final class FlashOverlay {
       }
 
       if (s * newTicks >= strength * left) {
+         fadeIn = 0;
          strength = s;
          ticks = newTicks;
          left = newTicks;
       }
+   }
+
+   /** Existing white overlay, with an optional attack/release envelope instead of a second overlay. */
+   public static void flashEnvelope(float newStrength,int inTicks,int outTicks) {
+      int in=Math.max(0,inTicks),out=Math.max(1,outTicks);float s=Math.max(0,Math.min(1,newStrength));
+      if(s<=0 || s*(in+out)<strength*left) return;
+      strength=s;fadeIn=in;ticks=in+out;left=ticks;
+   }
+   public static float envelopeAlpha(float strength,int inTicks,int outTicks,float elapsed) {
+      if(!Float.isFinite(elapsed)||elapsed<0) return 0;
+      float a=elapsed<inTicks ? elapsed/Math.max(1,inTicks) : 1-(elapsed-inTicks)/Math.max(1,outTicks);
+      return Math.max(0,Math.min(1,strength*a));
    }
 
    /** Pure alpha 0..1 for the remaining time. */
@@ -57,7 +71,7 @@ public final class FlashOverlay {
 
    @SubscribeEvent
    public static void onRenderGui(RenderGuiEvent.Post event) {
-      float a = alpha(strength, ticks, left, event.getPartialTick());
+      float a = fadeIn>0 ? envelopeAlpha(strength,fadeIn,ticks-fadeIn,ticks-left+event.getPartialTick()) : alpha(strength, ticks, left, event.getPartialTick());
       if (a <= 0.0F) {
          return;
       }
