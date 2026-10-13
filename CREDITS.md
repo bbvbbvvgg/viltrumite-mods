@@ -32,3 +32,19 @@ The Codex-Superheroes JARVIS voice lines are no longer used (muted with the othe
 - Permission: received by the repository owner, 2026-10-09 (spec §3.1). Text: pending in `docs/licenses/ironman/`.
 
 The raw archive `IronMan_Hulkbuster_models.zip` is not committed. Only converted files that the mod uses are committed.
+
+
+## Reinhard van Astrea
+
+Sound sources and exact input/output provenance: `tools/assets/reinhard_sources.md`. Checked 2026-10-13. Only processed excerpts are distributed, never the raw archive. Changes: **trimmed / layered / normalized**, mono 44.1 kHz Vorbis. No synthesis.
+
+### CC-BY 4.0 — Freesound
+- **klankbeeld** — [St. John Cathedral female choir 001.wav (398218)](https://freesound.org/people/klankbeeld/sounds/398218/), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). Mode chords and Reid choir: trimmed / layered / normalized. Credit: klankbeeld and **Freesound.org**; only creative transformed excerpts, no raw-stock redistribution.
+- **hykenfreak** — [Deepest Boom Yet (248150)](https://freesound.org/people/hykenfreak/sounds/248150/) and [Spooky Sucking Air (331620)](https://freesound.org/people/hykenfreak/sounds/331620/), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). World Cut tail / erasure inhale: trimmed / layered / normalized.
+- **dingus23** — [earthquake.aif (275809)](https://freesound.org/people/dingus23/sounds/275809/), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). Stomp: trimmed / layered / normalized.
+
+### CC0 1.0 — Freesound
+Vrymaa (770035), CHallSmith (870684), reathance (503809), Greg_Surr (554564), daandraait (249716), qubodup (182050), Iridiuss (519413). Individual source URLs and [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) license links are in the source table. Changes: trimmed / layered / normalized. Alliare (825864) is approved-license input but **not distributed** while the blast mix is blocked.
+
+### Excluded (not distributed)
+CGEffex 93835 and Robinhood76 378199 are **CC-BY-NC 4.0** on the live pages. No excerpts/layers included. Their events retain vanilla placeholders pending owner approval of a CC0/CC-BY alternative.

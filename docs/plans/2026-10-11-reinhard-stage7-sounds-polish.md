@@ -33,13 +33,15 @@ See the overview. Stage-specific:
 
 ### Task 1: License check and sources file
 
+Stage 7 execution note (2026-10-13): license questions are deferred to sources/PR under the no-pause instruction. Native checks remain unchecked; see progress.md.
+
 **Files:**
 - Modify: `tools/assets/reinhard_sources.md` (created in Stage 1 Task 8; add a «Sounds» section), `docs/design/2026-10-11-reinhard-design.md` (§10.1: columns «Автор», «Лицензия»), `CREDITS.md` (section `## Reinhard van Astrea`)
 
-- [ ] Step 1: for each of the 14 URLs in §10.1 open the Freesound page; record author, sound name, license and version, check date, and the matching file name in the user's `sounds.zip`.
-- [ ] Step 2: any source not CC0/CC-BY → that sound keeps its placeholder; write the question with alternatives to the user.
-- [ ] Step 3: extend the sources file, the spec table and `CREDITS.md` (CC-BY: author, link, license, change note "trimmed / layered / normalized").
-- [ ] Step 4: commit `docs(reinhard): sound sources and licenses`.
+- [x] Step 1: for each of the 14 URLs in §10.1 open the Freesound page; record author, sound name, license and version, check date, and the matching file name in the user's `sounds.zip`.
+- [x] Step 2: any source not CC0/CC-BY → that sound keeps its placeholder; write the question with alternatives to the user.
+- [x] Step 3: extend the sources file, the spec table and `CREDITS.md` (CC-BY: author, link, license, change note "trimmed / layered / normalized").
+- [x] Step 4: commit `docs(reinhard): sound sources and licenses`.
 
 ### Task 2: `tools/sfx/reinhard.py` and the sound files
 
