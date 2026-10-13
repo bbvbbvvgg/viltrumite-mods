@@ -70,6 +70,8 @@ Stage 7 execution note (2026-10-13): license questions are deferred to sources/P
 
 ### Task 3: Mix and in-game listening
 
+- [x] Available automatic portion: decoded format/duration/LUFS/peaks/PCM checks 14/14, reference file punch4 measured (not perceived runtime balance). No mix change without listening; no empty fix commit. Native Steps 1–2 below remain unchecked.
+
 **Files:**
 - Modify: `res/sounds.json` (`volume`, `pitch`, `attenuation_distance` only), script constants if a re-cut is needed
 
@@ -79,6 +81,8 @@ Stage 7 execution note (2026-10-13): license questions are deferred to sources/P
 
 ### Task 4: Full acceptance pass and balance
 
+- [x] Available automatic portion: full regression 1215/1215, NoHeroBranch 1/1, Python 9/9, checker 0 new / 4 known, Java17 build and diff-check. SESSION.md separates native NOT RUN from automatic evidence. No balance constants changed.
+
 **Files:**
 - Modify: `ReinhardRules` constants and their tests only if the pass fails; `SESSION.md` (results table)
 
@@ -86,7 +90,7 @@ Stage 7 execution note (2026-10-13): license questions are deferred to sources/P
 - [ ] Step 2: cross-hero matrix: vs Viltrumite (chop both ways), vs Regulus (Lion's Heart: Reid strike, Erasure, grab), vs Homelander (laser vs the 1 HP floor; §11.11 his chop unchanged), vs Iron Man (Hulkbuster, marks, Veronica).
 - [ ] Step 3: balance only where the pass fails (spec §12 "баланс всех чисел"); each change = constant + test.
 - [ ] Step 4: regression of the other four heroes: full test suite, `NoHeroBranchTest`, `python3 .agents/skills/add_hero/scripts/check_hero_resources.py --hero reinhard`, short manual run.
-- [ ] Step 5: commit `test(reinhard): acceptance pass` and `balance(reinhard): …` if any.
+- [x] Step 5: commit `test(reinhard): acceptance pass` and `balance(reinhard): …` if any.
 
 ### Task 5: Release
 
@@ -97,7 +101,7 @@ Stage 7 execution note (2026-10-13): license questions are deferred to sources/P
 - [ ] Step 2: update docs and the memory bank (final constants; spec §12 leftovers: "worthy souls" list stays open).
 - [ ] Step 3: commit `chore(reinhard): release`; push `feat/reinhard-stage7`; PR «Рейнхард, этап 7: звуки и полировка».
 
-Acceptance criteria closed: final confirmation of §11.1–§11.12.
+Acceptance criteria **NOT closed**: native final confirmation of §11.1–§11.12 remains unchecked under the explicit no-game/no-server instruction.
 
 ## Risks and pitfalls
 
