@@ -244,6 +244,6 @@ public final class HeroDamage {
          return false;
       }
 
-      return ControlManager.get(level).isAnchored(target);
+      return dev.baranhan.viltrumitecore.hero.control.WorldPause.isPaused(target) || ControlManager.get(level).isAnchored(target);
    }
 }

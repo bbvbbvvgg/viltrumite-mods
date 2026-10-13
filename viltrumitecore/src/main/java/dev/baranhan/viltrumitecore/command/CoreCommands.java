@@ -79,6 +79,11 @@ public class CoreCommands {
             )
             .then(divine())
             .then(annihilate())
+            .then(Commands.literal("pause").requires(source -> source.hasPermission(2))
+               .then(Commands.argument("ticks", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,1200))
+                  .executes(ctx -> dev.baranhan.viltrumitecore.hero.control.WorldPause.begin(ctx.getSource().getServer(),
+                     ctx.getSource().getPlayerOrException().getUUID(),
+                     com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx,"ticks")) ? 1 : 0)))
             .then(WorldEventCommands.build())
       );
    }

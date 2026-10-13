@@ -127,3 +127,10 @@ Generic super-jump key loop. Reads `HeroRegistry.get(player).superJumpVelocity(p
 
 ## Adding to the toolkit
 Move code here only when a second hero needs it or it has no hero meaning. Keep it hero-neutral: numbers come from the caller (a `record` spec), no `HeroId` checks. Add a JUnit test for pure math (`test/.../hero/HeroToolkitTest.java`).
+
+## Server-wide cinematic pause
+- `WorldPause.begin(server, owner, maxTicks[, protect, radius])` owns one pause per server. Tick once at server END. One UUID identifies every level-owned FREEZE. Owner input stays live.
+- `ControlManager.refresh(targetId, caster, effectId, kind, expiresAt)` changes only expiry when all ownership fields match. It never captures flags or anchors again. Expiry-only updates do not broadcast structural snapshots.
+- `WorldPause.end` restores every tracked level's controls. Offline targets defer flag restore to join. Transfer releases old-level records before acquiring in the new level. DONE uses EXPIRED; other ends use INTERRUPTED.
+- `WorldPause.Listener` supplies tick, end and join callbacks. Every cinematic must end itself; the maxTicks+40 watchdog is a fallback. Foreign controls keep precedence.
+- Control sync includes `effectId`. `WorldPauseClient.hidesAnchor` suppresses only this pause's decorations, not another owner's effect. Input has a local watchdog. Network protocol 2 requires matching core clients.

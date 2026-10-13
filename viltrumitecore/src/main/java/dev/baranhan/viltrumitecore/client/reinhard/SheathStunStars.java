@@ -59,6 +59,7 @@ public final class SheathStunStars {
       PoseStack modelViewStack = RenderSystem.getModelViewStack();
       try {
          for (HeroControlS2CPacket.ControlInfo control : ClientHeroData.controls()) {
+            if(dev.baranhan.viltrumitecore.client.hero.WorldPauseClient.hidesAnchor(control.effectId())) continue;
             Player caster = control.caster() == null ? null : level.getPlayerByUUID(control.caster());
             if (!SheathStrike.showsStars(control.kindOrdinal(), caster != null && ReinhardView.of(caster) != null)) {
                continue;

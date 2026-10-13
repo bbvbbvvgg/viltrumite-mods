@@ -352,6 +352,7 @@ public class RegulusActionVFXManager {
    /** Frozen/stasis targets get a gold pixel outline (spec 14). */
    private static void drawControlOutlines(ClientLevel level, BufferBuilder buffer, Vec3 cameraPos, Camera camera, float partialTick) {
       for (HeroControlS2CPacket.ControlInfo control : ClientHeroData.controls()) {
+         if(dev.baranhan.viltrumitecore.client.hero.WorldPauseClient.hidesAnchor(control.effectId())) continue;
          int ordinal = control.kindOrdinal();
          ControlKind kind = ordinal >= 0 && ordinal < ControlKind.values().length ? ControlKind.values()[ordinal] : null;
          if (kind != ControlKind.FREEZE && kind != ControlKind.STASIS) {

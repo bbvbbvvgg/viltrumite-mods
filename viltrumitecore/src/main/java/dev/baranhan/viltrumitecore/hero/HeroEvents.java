@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.hero;
 
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
+import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.hero.control.HeroControlSync;
 import dev.baranhan.viltrumitecore.hero.regulus.Evangelium;
 import dev.baranhan.viltrumitecore.hero.regulus.RegulusHero;
@@ -80,6 +81,7 @@ public final class HeroEvents {
       }
 
       if (entity instanceof ServerPlayer player && player instanceof HeroPlayer heroPlayer) {
+         WorldPause.ownerLeft(player.getServer(),player.getUUID());
          // The hero's own cleanup runs before the death completes.
          HeldInputs.releaseAll(player);
          HeroRegistry.get(player).cleanup(player, CleanupReason.DEATH);
@@ -224,6 +226,7 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
       if (event.getEntity() instanceof ServerPlayer player) {
+         WorldPause.ownerLeft(player.getServer(),player.getUUID());
          HeldInputs.releaseAll(player);
          HeroDamageLayers.forget(player);
          HeroAirJump.forget(player);
@@ -245,6 +248,7 @@ public final class HeroEvents {
          } else {
             HeroRegistry.repairLoadout(player);
          }
+         WorldPause.onJoin(player);
       }
    }
 
@@ -262,6 +266,7 @@ public final class HeroEvents {
    /** Damage layers, step 1: absorbIncoming before armor and knockback (HeroDamageLayers). */
    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
    public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+      if (WorldPause.isProtected(event.getEntity())) {event.setCanceled(true); return;}
       if (event.getEntity() instanceof ServerPlayer player && event.getAmount() > 0.0F && HeroDamageLayers.onAttack(player, event.getSource(), event.getAmount())) {
          event.setCanceled(true);
       }
@@ -312,6 +317,8 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
       if (event.getEntity() instanceof ServerPlayer player) {
+         WorldPause.ownerLeft(player.getServer(),player.getUUID());
+         WorldPause.onJoin(player);
          HeroControlSync.sendBaseline(player);
          ControlManager.restorePendingTarget(player);
          HeroRegistry.get(player).onDimensionChange(player);
@@ -367,7 +374,18 @@ public final class HeroEvents {
 
    @SubscribeEvent
    public static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+      WorldPause.end(event.getServer(),WorldPause.EndReason.SERVER_STOP);
       dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.clearAll();
+   }
+
+   @SubscribeEvent
+   public static void onServerTick(TickEvent.ServerTickEvent event) {
+      if(event.phase==TickEvent.Phase.END) WorldPause.tick(event.getServer());
+   }
+
+   @SubscribeEvent
+   public static void onDatapackSync(net.minecraftforge.event.OnDatapackSyncEvent event) {
+      if(event.getPlayer()==null) WorldPause.end(event.getPlayerList().getServer(),WorldPause.EndReason.RELOAD);
    }
 
    @SubscribeEvent

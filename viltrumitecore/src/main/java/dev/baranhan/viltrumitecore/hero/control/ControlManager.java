@@ -107,7 +107,7 @@ public final class ControlManager {
          return false;
       }
 
-      if (this.isAnchored(target)) {
+      if (this.isAnchored(target) || WorldPause.isPaused(target)) {
          return true;
       }
 
@@ -184,6 +184,21 @@ public final class ControlManager {
       return !grabbedTag;
    }
 
+   /** Extend only our matching control. No re-anchor, flag recapture, or structural sync. */
+   public boolean refresh(UUID targetId, UUID caster, UUID effectId, ControlKind kind, long expiresAt) {
+      return refreshRecord(this.controls.get(targetId), caster, effectId, kind, expiresAt);
+   }
+
+   static boolean mayRefresh(@Nullable ControlRecord record, UUID caster, UUID effectId, ControlKind kind) {
+      return record != null && record.caster.equals(caster) && record.effectId.equals(effectId) && record.kind == kind;
+   }
+
+   static boolean refreshRecord(@Nullable ControlRecord record, UUID caster, UUID effectId, ControlKind kind, long expiresAt) {
+      if (!mayRefresh(record, caster, effectId, kind)) return false;
+      record.expiresAt = expiresAt;
+      return true;
+   }
+
    /**
     * Atomic transition: keep the ownership record (saved values stay stored)
     * while switching the applied kind, e.g. PULL -> FREEZE. Anchoring kinds
@@ -235,6 +250,7 @@ public final class ControlManager {
       ServerLevel level = this.firstLevel();
       LivingEntity target = find(level, record.targetId);
       if (target == null) {
+         PENDING_TARGET_RESTORE.put(record.targetId, new SavedFlags(record.savedNoGravity, record.savedNoAi));
          return;
       }
 
@@ -619,14 +635,20 @@ public final class ControlManager {
       long expiresAt = -1L;
 
       ControlRecord(LivingEntity target, UUID caster, UUID effectId, ControlKind kind) {
-         this.targetId = target.getUUID();
+         this(target.getUUID(), caster, effectId, kind, target.position(),
+            dev.baranhan.viltrumitecore.hero.LiftLeases.SERVER.naturalNoGravity(target.getUUID(), target.isNoGravity()),
+            target instanceof Mob mob && mob.isNoAi());
+      }
+
+      /** Captured control state. Refresh never reconstructs this capture. */
+      ControlRecord(UUID targetId, UUID caster, UUID effectId, ControlKind kind, Vec3 anchor, boolean noGravity, boolean noAi) {
+         this.targetId = targetId;
          this.caster = caster;
          this.effectId = effectId;
          this.kind = kind;
-         // A lifted target (LiftLeases) saves its natural flag, so the release never restores the lift's true.
-         this.savedNoGravity = dev.baranhan.viltrumitecore.hero.LiftLeases.SERVER.naturalNoGravity(target.getUUID(), target.isNoGravity());
-         this.savedNoAi = target instanceof Mob mob && mob.isNoAi();
-         this.anchor = target.position();
+         this.anchor = anchor;
+         this.savedNoGravity = noGravity;
+         this.savedNoAi = noAi;
       }
 
       void anchor(LivingEntity target) {
