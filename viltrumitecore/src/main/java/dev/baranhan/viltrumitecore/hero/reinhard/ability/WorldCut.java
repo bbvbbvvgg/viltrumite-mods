@@ -41,6 +41,7 @@ public final class WorldCut implements AbilityHandler {
       return (int)Math.max(0, Math.min(ReinhardRules.CUT_LENGTH,
          (elapsed - ReinhardRules.WORLD_CUT_BLAST) * ReinhardRules.CUT_LENGTH / ReinhardRules.WORLD_CUT_WAVE_TICKS));
    }
+   public static int carveFront(@javax.annotation.Nullable WorldCutCarve carve) { return carve == null ? 0 : carve.frontAlong(); }
    public boolean blasted() { return blasted; }
    public boolean advance(long gameTime) {
       long elapsed = gameTime - startTime;
@@ -96,7 +97,7 @@ public final class WorldCut implements AbilityHandler {
          carve=new WorldCutCarve(shape,surface,level.getMinBuildHeight(),level.getMaxBuildHeight(),level.getWorldBorder()::isWithinBounds);
          CarveJobs.submit(level,carve);
       }
-      public int carveFront() { return carve == null ? 0 : carve.frontAlong()+1; }
+      public int carveFront() { return WorldCut.carveFront(carve); }
       public Collection<UUID> targets(int through) {
          candidates.clear();
          if(through <= 0) return List.of();

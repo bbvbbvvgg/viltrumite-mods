@@ -84,7 +84,7 @@ See the overview. Stage-specific:
   - Blocks arrive later from the server; the scene never waits for them.
 - Pure `WorldCutFov.factor(double dist)`: 1.03 at 0, 1.0 at ≥ 64, smooth.
 
-- [ ] Step 1 tests: `fovOnlyForOthers` (caster → 1.0), `fovFallsWithDistance`, `frontReaches200At30`, `duckOnlyDuringSilence`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: caster view first and third person; a LAN player at 30 and 150 blocks; shaders on. Step 5 commit `feat(reinhard): world cut client scene`.
+- [x] Step 1 tests: `fovOnlyForOthers` (caster → 1.0), `fovFallsWithDistance`, `frontReaches200At30`, `duckOnlyDuringSilence`. Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: caster view first and third person; a LAN player at 30 and 150 blocks; shaders on. Step 5 commit `feat(reinhard): world cut client scene`.
 
 ### Task 5: Performance protocol
 

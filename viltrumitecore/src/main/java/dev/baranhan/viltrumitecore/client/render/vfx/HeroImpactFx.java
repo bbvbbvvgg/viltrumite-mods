@@ -64,6 +64,12 @@ public final class HeroImpactFx {
    private HeroImpactFx() {
    }
 
+   /** Ring-only entry point for timed scenes that own camera shake and dust separately. */
+   public static void shockwaveVisual(Vec3 origin, float radius) {
+      RINGS.add(new Ring(origin, radius, Blocks.DIRT.defaultBlockState(), 20, false));
+      RINGS.add(new Ring(origin, radius * .6F, Blocks.DIRT.defaultBlockState(), 8, false));
+   }
+
    public static void handle(HeroFxS2CPacket packet) {
       Minecraft client = Minecraft.getInstance();
       ClientLevel level = client.level;

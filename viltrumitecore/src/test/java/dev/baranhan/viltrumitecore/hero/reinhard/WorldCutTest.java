@@ -82,4 +82,10 @@ class WorldCutTest {
       assertTrue(state.busy()); state.worldCut.advance(79); assertTrue(state.busy());
       state.worldCut.advance(80); assertFalse(state.busy());
    }
+   @Test void consumedSliceCountIsNotIncrementedAgain() {
+      assertEquals(0,WorldCut.carveFront(null));
+      var carve=WorldCutCarveTest.job(100,new WorldCutCarveTest.Probe());
+      assertEquals(0,WorldCut.carveFront(carve)); carve.step(null,1);
+      assertEquals(1,WorldCut.carveFront(carve));
+   }
 }

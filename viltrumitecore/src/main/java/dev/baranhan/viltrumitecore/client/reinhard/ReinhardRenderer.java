@@ -191,7 +191,10 @@ public final class ReinhardRenderer {
          arm.zRot += (float) Math.toRadians(FP_PARRY_ROLL * w * m);
       }
 
-      ReinhardFirstPersonPose.Offset action = flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
+      boolean worldCut = snapshot.actionId() == ReinhardAbility.WORLD_CUT.ordinal();
+      ReinhardFirstPersonPose.Offset action = worldCut
+         ? ReinhardFirstPersonPose.worldCut(snapshot.actionElapsed() + Minecraft.getInstance().getFrameTime(), !flick)
+         : flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
       if (flick && action == ReinhardFirstPersonPose.Offset.NONE) {
          // Stage 4: the Reid draw / sheathe pull.
          ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);

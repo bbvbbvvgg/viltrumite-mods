@@ -125,6 +125,7 @@ public final class ReinhardFirstPersonPose {
             .scaled(strike(ticks, ReinhardRules.STOMP_HIT_TICK, ReinhardRules.STOMP_TICKS));
          case SHEATH_STRIKE -> new Offset(SHEATH_X, 0.0F, SHEATH_Z, 0.0F, SHEATH_YAW, 0.0F)
             .scaled(strike(ticks, ReinhardRules.SHEATH_HIT_TICK, ReinhardRules.SHEATH_TICKS));
+         case WORLD_CUT -> worldCut(ticks, false);
          case CUT_RAIN -> {
             float sway = (float) Math.sin(Math.PI * 2.0 * ticks / 6.0) * strike(ticks, ReinhardRules.CUT_TICKS / 2, ReinhardRules.CUT_TICKS);
             yield new Offset(CUT_SWAY_X * sway, 0.0F, 0.0F, 0.0F, CUT_SWAY_YAW * sway, 0.0F);
@@ -133,6 +134,15 @@ public final class ReinhardFirstPersonPose {
             .scaled(strike(ticks, 2, ReinhardRules.BEHIND_ACTION_TICKS));
          default -> Offset.NONE;
       };
+   }
+
+   /** Both hands rise over the view and drive the blade down, holding low through silence. */
+   public static Offset worldCut(double ticks, boolean offhand) {
+      if(ticks<=0 || ticks>=ReinhardRules.WORLD_CUT_BLAST) return Offset.NONE;
+      float raise=(float)Math.max(0,1-Math.abs(ticks-10)/10);
+      float down=(float)Math.max(0,Math.min(1,(ticks-12)/8));
+      return new Offset(offhand ? -.18F : -.08F, .45F*raise-.18F*down,
+         -.12F-.3F*down, -100*raise+25*down, offhand ? -18 : 8, 0);
    }
 
    private static Offset combo(int phase, double ticks) {
