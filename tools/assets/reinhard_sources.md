@@ -18,6 +18,8 @@ One row per committed asset. Raw archives are never committed (`reinhard_assets.
 
 ## Sounds
 
+The core JAR bundles this table as `META-INF/credits/reinhard-sources.md` and maintained credits as `META-INF/credits/reinhard-credits.md`; root-only attribution is not a standalone distribution mechanism.
+
 Checked against the live Freesound sound pages on **2026-10-13** (not inferred from archive names). Raw `sounds.zip` is external input, never committed. Sources below are used only by `tools/sfx/reinhard.py`. Changes: trimmed / layered / normalized; mono 44.1 kHz Vorbis q5. No synthesis. These transformations are not in-game listening or runtime acceptance.
 
 | ID / sound name | Author | License (version) | Freesound page | Exact archive file | Output (.ogg.b64 basename) / status | Source SHA-256 |

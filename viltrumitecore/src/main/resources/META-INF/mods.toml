@@ -27,7 +27,7 @@ displayName = "ViltrumiteForge" #mandatory
 # A file name (in the root of the mod JAR) containing a logo for display
 #logoFile="viltrumitecore.png" #optional
 # A text field displayed in the mod UI
-#credits="Thanks for this example mod goes to Java" #optional
+credits="Reinhard audio: klankbeeld, hykenfreak, dingus23 and Freesound.org. CC-BY/CC0 audio exceptions and source/modification notices: META-INF/credits/reinhard-credits.md and META-INF/credits/reinhard-sources.md inside this JAR."
 # A text field displayed in the mod UI
 authors = "" #optional
 # Display Test controls the display for your mod in the server connection screen

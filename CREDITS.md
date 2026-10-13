@@ -36,6 +36,8 @@ The raw archive `IronMan_Hulkbuster_models.zip` is not committed. Only converted
 
 ## Reinhard van Astrea
 
+Standalone core JARs carry this maintained document at `META-INF/credits/reinhard-credits.md` and the provenance table at `META-INF/credits/reinhard-sources.md`. The mod metadata credits points to these audio-license exceptions. The code license does not override the individual CC-BY/CC0 audio licenses.
+
 Sound sources and exact input/output provenance: `tools/assets/reinhard_sources.md`. Checked 2026-10-13. Only processed excerpts are distributed, never the raw archive. Changes: **trimmed / layered / normalized**, mono 44.1 kHz Vorbis. No synthesis.
 
 ### CC-BY 4.0 — Freesound

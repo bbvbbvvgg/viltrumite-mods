@@ -61,11 +61,15 @@ Use `references/shared-toolkit.md`. Typical mapping:
 - breaking blocks → `HeroDestruction.canDestroy/destroyBlock` (honours `mobGriefing` and unbreakable blocks).
 - grabs / freezes / anchors → `ControlManager`, `HeroRegistry.allowsExternalControl`.
 - damage → `HeroDamage.route` / `applyCleanDamage`.
+- budgeted large terrain work → `CarveJobs` / `CarveBudget` (level END), not an unbounded per-cast loop; honour `HeroDestruction`, no chunk force-load. See `references/shared-toolkit.md`.
+- server-wide cinematic pause → `WorldPause` + `ControlManager.refresh` (one server-END clock/listener, foreign ownership and cleanup); use `BodyIsolation` for persistent post-scene isolation. Do not add a hero-local second freeze system. Actual Forge/network/save/startup proof remains a native test, not a pure-suite claim.
 
 ### 7. Sounds and textures
 1. Sound events in `assets/viltrumitecore/sounds.json`, Java holders in the core sound registry.
 2. Binary files (`.ogg`, `.png`) that must be pushed through the GitHub MCP go to `viltrumitecore/src/main/binassets/<same path>.b64` (base64). Gradle task `decodeBinaryAssets` writes them into resources at build time.
-3. Use only CC0 or own sounds. Record source and license in the design doc.
+3. Default: use only CC0 or own sounds. A hero-specific owner decision may allow CC-BY too. Never treat that as permission for CC-BY-NC, Sampling+ or unknown licenses. Record live-page author, license/version, check date, exact input filename/digest, output and changes in the hero sources/design table; credit every CC-BY author and link in `CREDITS.md`. Bundle the maintained notices/source ledger with the standalone JAR and make the audio-license exception discoverable in mod metadata; repository-only credit is not enough.
+4. Reinhard is the CC-BY example: `tools/sfx/reinhard.py --src DIR [--check]`, sources in `tools/assets/reinhard_sources.md`. Only processed `.ogg.b64` enters git. Raw ZIP/audio stays outside. The table pins trim/fades/peak conditioning and first-pass loudnorm measurements. `--check` rebuilds into a temp folder and compares decoded PCM. Inspect decoded mono/44100/Vorbis, LUFS and true/sample peaks, not just input headers. Two NC sources were excluded; their events keep placeholders until the owner approves alternatives. No silent swap.
+5. File measurement is not listening, perceptual loop quality, runtime silence, distance audibility or acceptance. Keep native checks unchecked if a client/server run is forbidden. Keep event IDs and unrelated/§10.2 cues unchanged.
 
 ### 8. Lang
 Add every key to all locales in `assets/viltrumitecore/lang/` in the same change (en_us, de_de, es_*, tr_tr, zh_cn …). en_us is the source of truth.

@@ -94,12 +94,16 @@ Stage 7 execution note (2026-10-13): license questions are deferred to sources/P
 
 ### Task 5: Release
 
+- [x] Authorized automatic release gate: Java17 clean build/reobf and all1227 JVM +17 Python checks, selected480, --check14/14, checker0new/4known and diff-check. Native server startup is NOT completed (Step1 remains mixed/unchecked).
+- [x] One final independent whole-branch review + one TDD correction pass (4 Important; M1 structural dependency). Bundled CC-BY attribution, full arrays/legacy snapshots, provenance joins and adversarial PCM/drift/format/LUFS/peak tests; no re-review.
+
+
 **Files:**
 - Modify: core version (minor +1), `.memory-bank/project.md`, `.agents/skills/add_hero/SKILL.md` (Reinhard as the example of a CC-BY sound hero, `WorldPause`, `CarveJobs`), `SESSION.md`
 
 - [ ] Step 1: clean `./gradlew build`, all tests, dedicated server start, `git diff --check`.
-- [ ] Step 2: update docs and the memory bank (final constants; spec §12 leftovers: "worthy souls" list stays open).
-- [ ] Step 3: commit `chore(reinhard): release`; push `feat/reinhard-stage7`; PR «Рейнхард, этап 7: звуки и полировка».
+- [x] Step 2: update docs and the memory bank (final constants; spec §12 leftovers: "worthy souls" list stays open).
+- [x] Step 3: commit `chore(reinhard): release`; push `feat/reinhard-stage7`; PR «Рейнхард, этап 7: звуки и полировка».
 
 Acceptance criteria **NOT closed**: native final confirmation of §11.1–§11.12 remains unchecked under the explicit no-game/no-server instruction.
 
