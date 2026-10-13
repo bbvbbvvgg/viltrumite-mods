@@ -51,6 +51,14 @@ public final class SoundDuck {
       }
    }
 
+   /** Independent release duration; old callers retain their original symmetric fade. */
+   public void release(Object owner, int fadeTicks) {
+      Entry entry=this.entries.get(owner);
+      if(entry==null) return;
+      if(fadeTicks<=0) {this.entries.remove(owner);return;}
+      entry.step=(1-entry.level)/fadeTicks;entry.releasing=true;
+   }
+
    public void clear() {
       this.entries.clear();
    }

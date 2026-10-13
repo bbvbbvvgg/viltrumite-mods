@@ -22,6 +22,13 @@ public final class PixelVfx {
       stack.mulPose(Axis.YP.rotationDegrees(yaw + 180.0F));
    }
 
+   /** The same white/coloured paint-pixel style in a GUI scene, batched by GuiGraphics. */
+   public static void guiPixel(net.minecraft.client.gui.GuiGraphics gui, float x, float y, float radius, int r, int g, int b, int alpha) {
+      if(alpha<=0) return;
+      int color=(Math.min(255,alpha)<<24)|(r<<16)|(g<<8)|b;
+      gui.fill((int)Math.floor(x-radius),(int)Math.floor(y-radius),(int)Math.ceil(x+radius),(int)Math.ceil(y+radius),color);
+   }
+
    /** Billboard pixel at a world position, facing the camera via its basis. */
    public static void billboardPixel(BufferBuilder buffer, Vec3 cameraPos, Camera camera, Vec3 pos, float size, int r, int g, int b, int alpha) {
       Vector3f left = camera.getLeftVector();

@@ -3,6 +3,10 @@ package dev.baranhan.viltrumitecore.client.mixin;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.baranhan.viltrumitecore.client.TargetLockManager;
+import dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasurePost;
+import dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureUniforms;
+import net.minecraft.resources.ResourceLocation;
+import org.spongepowered.asm.mixin.Shadow;
 import dev.baranhan.viltrumitecore.client.regulus.RegulusClientFx;
 import dev.baranhan.viltrumitecore.client.regulus.RegulusVfxMath;
 import dev.baranhan.viltrumitecore.client.render.ViltrumiteShaders;
@@ -38,6 +42,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
    priority = 1500
 )
 public abstract class GameRendererDashMixin {
+   @Shadow private PostChain postEffect;
+   @Shadow public abstract void shutdownEffect();
+
+   /** Stop an already-running sonic chain before vanilla processes it this frame. */
+   @Inject(method = "render", at = @At("HEAD"))
+   private void erasurePriority(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
+      if (ErasurePost.active() && postEffect != null && postEffect.getName().equals("viltrumiteflight:shaders/post/sonic_boom.json")) shutdownEffect();
+   }
+
+   /** Flight's TAIL hook can otherwise restart sonic even on a frozen player. */
+   @Inject(method = "loadEffect", at = @At("HEAD"), cancellable = true)
+   private void avoidSonicDuringErasure(ResourceLocation id, CallbackInfo ci) {
+      if (ErasurePost.active() && id.toString().equals("viltrumiteflight:shaders/post/sonic_boom.json")) ci.cancel();
+   }
+
    @Unique
    private float currentLockIntensity = 0.0F;
    @Unique
@@ -306,7 +325,8 @@ public abstract class GameRendererDashMixin {
             shakeIntensity = Math.max(shakeIntensity, debrisShake);
          }
 
-         boolean anyEffect = dashProgress > 0.0F
+         ErasureUniforms erasure = ErasurePost.uniforms(partialTicks);
+         boolean anyEffect = ErasurePost.active() || dashProgress > 0.0F
             || punchIntensity > 0.0F
             || shakeIntensity > 0.0F
             || this.currentLockIntensity > 0.01F
@@ -321,6 +341,16 @@ public abstract class GameRendererDashMixin {
             PostChain chain = ViltrumiteShaders.get();
             if (chain != null) {
                for (PostPass pass : ((PostChainAccessor)chain).getPasses()) {
+                  Uniform crackErase = pass.getEffect().getUniform("EraseCrack");
+                  if (crackErase != null) crackErase.set(erasure.crack());
+                  Uniform shatterErase = pass.getEffect().getUniform("EraseShatter");
+                  if (shatterErase != null) shatterErase.set(erasure.shatter());
+                  Uniform darkErase = pass.getEffect().getUniform("EraseDark");
+                  if (darkErase != null) darkErase.set(erasure.dark());
+                  Uniform rebuildErase = pass.getEffect().getUniform("EraseRebuild");
+                  if (rebuildErase != null) rebuildErase.set(erasure.rebuild());
+                  Uniform seedErase = pass.getEffect().getUniform("EraseSeed");
+                  if (seedErase != null) seedErase.set(erasure.seed());
                   Uniform dashUniform = pass.getEffect().getUniform("DashIntensity");
                   if (dashUniform != null) {
                      dashUniform.set(Math.max(0.0F, Math.min(1.0F, dashProgress)));

@@ -38,6 +38,14 @@ public final class LegacyKit {
          return;
       }
 
+      resetActions(corePlayer);
+      AttributeInstance damageAttribute = player.getAttribute(Attributes.ATTACK_DAMAGE);
+      if (damageAttribute != null && damageAttribute.getModifier(BASE_STRENGTH_MODIFIER_ID) != null) {
+         damageAttribute.removeModifier(BASE_STRENGTH_MODIFIER_ID);
+      }
+   }
+   /** Only transient kit state. Same-entity death keeps the hero's chassis modifiers. */
+   public static void resetActions(ViltrumiteCorePlayer corePlayer) {
       corePlayer.setPunchTicks(0);
       corePlayer.setPunchCooldown(0);
       corePlayer.setChopTicks(0);
@@ -51,9 +59,6 @@ public final class LegacyKit {
       corePlayer.setBarrageCooldown(0);
       corePlayer.setBlockCooldown(0);
       corePlayer.setDashing(false);
-      AttributeInstance damageAttribute = player.getAttribute(Attributes.ATTACK_DAMAGE);
-      if (damageAttribute != null && damageAttribute.getModifier(BASE_STRENGTH_MODIFIER_ID) != null) {
-         damageAttribute.removeModifier(BASE_STRENGTH_MODIFIER_ID);
-      }
    }
+
 }

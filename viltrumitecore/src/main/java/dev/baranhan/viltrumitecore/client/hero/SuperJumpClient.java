@@ -55,6 +55,7 @@ public final class SuperJumpClient {
 
    /** Held by someone's control (channel target, grab, freeze, stasis): no self-propelled jump. Shared with AirJumpClient. */
    public static boolean anchored(LocalPlayer player, HeroPublicSnapshot snapshot) {
+      if (WorldPauseClient.isPaused() || BodyIsolationClient.active(player)) return true;
       if ((snapshot != null && snapshot.controlTargetId() >= 0) || ViltrumiteCoreClient.iAmBeingGrabbedBy != null) {
          return true;
       }

@@ -128,7 +128,7 @@ public final class IronManState {
       this.equipSource = null;
       this.hulkKit.stopChannels();
       switch (reason) {
-         case DEATH -> {
+         case DEATH, ERASED -> {
             this.hulkbuster.breakNow();
             this.suit.clear();
             this.glide = false;
@@ -205,6 +205,9 @@ public final class IronManState {
       state.hulkbuster.copyCooldownFrom(original.hulkbuster);
       return state;
    }
+
+   /** After world-side cleanup, keep exactly what a death clone keeps. */
+   public IronManState erasedCopy() {return cloneForRespawn(this);}
 
    /** End exit portal (clone without death): the suit stays on (spec §16), only live channels drop. */
    public static IronManState cloneForPortal(IronManState original) {

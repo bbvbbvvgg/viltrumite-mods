@@ -51,6 +51,10 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> WORLD_CUT_BLAST = reg("reinhard.world_cut_blast");
    public static final RegistryObject<SoundEvent> WORLD_CUT_TAIL = reg("reinhard.world_cut_tail");
 
+   public static final RegistryObject<SoundEvent> ERASE_CRACK = reg("reinhard.erase_crack");
+   public static final RegistryObject<SoundEvent> ERASE_INHALE = reg("reinhard.erase_inhale");
+   public static final RegistryObject<SoundEvent> LIMBO_HEARTBEAT = reg("reinhard.limbo_heartbeat");
+
    private ReinhardSounds() {
    }
 

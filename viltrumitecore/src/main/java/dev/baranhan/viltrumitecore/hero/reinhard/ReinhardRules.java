@@ -6,6 +6,8 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
  * changes constants here.
  */
 public final class ReinhardRules {
+   public static final int LIMBO_TICKS = 600;
+   public static final net.minecraft.world.phys.Vec3 LIMBO_POS = new net.minecraft.world.phys.Vec3(.5, 128, .5);
    public static final int WORLD_CUT_SWING = 20;
    public static final int WORLD_CUT_SILENCE = 60;
    public static final int WORLD_CUT_BLAST = WORLD_CUT_SWING + WORLD_CUT_SILENCE;
@@ -259,6 +261,16 @@ public final class ReinhardRules {
    public static final int REFLECT_COOLDOWN = 80;
    /** The swat after a reflection (the action lock may outlast the window by this). */
    public static final int REFLECT_SNAP_TICKS = 6;
+
+   public static final int ERASE_RANGE = 64;
+   public static final int ERASE_LENGTH = 150;
+   public static final int ERASE_CRACK_END = 30;
+   public static final int ERASE_SHATTER_END = 70;
+   public static final int ERASE_DARK_END = 110;
+   public static final int ERASE_REMOVE_TICK = 90;
+   public static final int ERASE_COOLDOWN = 1200;
+   public static final boolean ERASE_PROTECT_FROZEN = true;
+   public static final int ERASE_MOB_FREEZE_RADIUS = 32;
 
    private ReinhardRules() {
    }

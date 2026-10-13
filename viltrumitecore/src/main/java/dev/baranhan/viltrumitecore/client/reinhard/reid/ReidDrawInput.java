@@ -13,7 +13,7 @@ public final class ReidDrawInput {
 
    public static void onMovementInput(MovementInputUpdateEvent event) {
       HeroPublicSnapshot snapshot = ReinhardView.of(event.getEntity());
-      if (snapshot == null || ReinhardView.reid(snapshot) != ReinhardPoses.ReidPhase.DRAWING) {
+      if (snapshot == null || (ReinhardView.reid(snapshot) != ReinhardPoses.ReidPhase.DRAWING && snapshot.actionId() != dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility.WORLD_ERASURE.ordinal())) {
          return;
       }
 

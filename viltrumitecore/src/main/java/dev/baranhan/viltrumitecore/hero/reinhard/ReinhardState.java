@@ -57,8 +57,10 @@ public final class ReinhardState {
     */
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut worldCut;
 
+   public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldErasure worldErasure;
+
    public boolean busy() {
-      return this.reid.busy() || (worldCut != null ? !worldCut.blasted() : this.action.is(ReinhardAbility.WORLD_CUT));
+      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy() || (worldCut != null ? !worldCut.blasted() : this.action.is(ReinhardAbility.WORLD_CUT));
    }
 
    /** Leaving Holy Sword (spec §5): Reid goes back into the sheath. */
@@ -119,6 +121,9 @@ public final class ReinhardState {
       next.cooldowns = this.cooldowns.clone();
       return next;
    }
+
+   /** Same-entity death keeps mode/cooldowns, not Reid, adaptation or combat. */
+   public ReinhardState erasedCopy() {return this.respawnCopy();}
 
    @Nullable
    public static ReinhardState of(Player player) {

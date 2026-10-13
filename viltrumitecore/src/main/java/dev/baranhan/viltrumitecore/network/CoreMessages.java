@@ -45,9 +45,9 @@ public class CoreMessages {
 
    public static void register() {
       SimpleChannel net = ChannelBuilder.named(new ResourceLocation("viltrumitecore", "messages"))
-         .networkProtocolVersion(() -> "1.0")
-         .clientAcceptedVersions(s -> true)
-         .serverAcceptedVersions(s -> true)
+         .networkProtocolVersion(() -> "2")
+         .clientAcceptedVersions("2"::equals)
+         .serverAcceptedVersions("2"::equals)
          .simpleChannel();
       INSTANCE = net;
       net.messageBuilder(BlockToggleC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
@@ -251,6 +251,21 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::handle)
          .add();
    }
 

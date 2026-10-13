@@ -7,8 +7,9 @@ import org.junit.jupiter.api.Test;
 /** Stage 5 shipping/documentation contract: no claim that pure tests measured real TPS. */
 class WorldCutDocumentationTest {
    static String read(String path) throws IOException { return Files.readString(Path.of("..",path)); }
-   @Test void coreVersion1290() throws IOException {
-      assertTrue(read("viltrumitecore/build.gradle").contains("version = '1.29.0'"));
+   @Test void coreVersionAtLeast1290() throws IOException {
+      var version=java.util.regex.Pattern.compile("version = '([0-9]+)\\.([0-9]+)\\.([0-9]+)'").matcher(read("viltrumitecore/build.gradle"));
+      assertTrue(version.find());int major=Integer.parseInt(version.group(1)),minor=Integer.parseInt(version.group(2));assertTrue(major>1 || major==1 && minor>=29);
    }
    @Test void sharedQueueHasRunnableExample() throws IOException {
       assertTrue(read(".agents/skills/add_hero/references/shared-toolkit.md").contains("```java\nCarveJobs.submit(level,"));

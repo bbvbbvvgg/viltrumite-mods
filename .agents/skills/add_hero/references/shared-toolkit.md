@@ -127,3 +127,40 @@ Generic super-jump key loop. Reads `HeroRegistry.get(player).superJumpVelocity(p
 
 ## Adding to the toolkit
 Move code here only when a second hero needs it or it has no hero meaning. Keep it hero-neutral: numbers come from the caller (a `record` spec), no `HeroId` checks. Add a JUnit test for pure math (`test/.../hero/HeroToolkitTest.java`).
+
+## Server-wide cinematic pause
+- `WorldPause.begin(server, owner, maxTicks[, protect, radius])` owns one pause per server. Tick once at server END. One UUID identifies every level-owned FREEZE. Owner input stays live.
+- `ControlManager.refresh(targetId, caster, effectId, kind, expiresAt)` changes only expiry when all ownership fields match. It never captures flags or anchors again. Expiry-only updates do not broadcast structural snapshots.
+- `WorldPause.end` restores every tracked level's controls. Offline targets defer flag restore to join. Transfer releases old-level records before acquiring in the new level. DONE uses EXPIRED; other ends use INTERRUPTED.
+- `WorldPause.Listener` supplies tick, end and join callbacks. Every cinematic must end itself; the maxTicks+40 watchdog is a fallback. Foreign controls keep precedence.
+- Control sync includes `effectId`. `WorldPauseClient.hidesAnchor` suppresses only this pause's decorations, not another owner's effect. Input has a local watchdog. Network protocol 2 requires matching core clients.
+
+## Same-body isolation and safe END work
+- `CleanupReason.ERASED` and `HeroEvents.prepareErasure` explicitly clean the **same entity**. `HeroEvents.freshBody` is the existing respawn-equivalent return path; owner-only sections first clear then re-sync, while persistent hero fields follow their death-copy policies.
+- `ServerEndTasks.enqueue(server, task)` queues cross-dimension work. `HeroEvents` flushes a snapshot at server END, after `WorldPause.tick`; a task enqueued by a task waits until the next END. Errors are logged without blocking later tasks, and server stop clears the queue. `server.execute` can run inline on the server thread and is NOT a safe substitute inside entity iteration.
+- `BodyIsolation.active(entity)` reads persistent NBT `viltrumitecore:limbo`, not the server entity's current dimension. It gates all HeroDamage entry/internal/deferred paths before queueing or damage layers, plus generic action/flight controls. Protected hits are blocked, never stored for a later payout.
+- Limbo persists `ticksLeft=600` and `pendingStrip=true` **before** enqueueing. Resume clears main inventory, armour, offhand and XP once; ender chest is never read. Countdown is **online** and only in `viltrumitecore:the_void`; logout/restart preserves the remaining time. START is private and survives client dimension-packet ordering.
+- Return searches the overworld shared spawn with vanilla radius/border and safe-column logic, never the bed/anchor and never a platform. Then restore health/hunger/gravity, reset flying, remove the tag, send END and call `freshBody`. Invalid fully obstructed shared spawn is a server-owner/manual acceptance concern. Missing limbo refuses new player casts, but rescues an already-tagged player to shared spawn.
+- Nearby hostiles use vanilla `Enemy` on `Mob` (including dragon/ghast/hoglin), radius from the caller. Only paused **non-caster players** centre the search. Foreign controls retain ownership; isolated bodies aren't acquired by pause FREEZE, so their saved noGravity cannot leak into a new record. Matching core protocol-2 clients are required.
+
+```java
+if (WorldPause.begin(server, owner.getUUID(), length, protectFrozen, hostileRadius)) {
+    WorldPause.listen(server, new WorldPause.Listener() {
+        public void tick(int elapsed) {
+            if (elapsed >= length) WorldPause.end(server, WorldPause.EndReason.DONE);
+        }
+        public void ended(WorldPause.EndReason reason) { /* release this scene's resources */ }
+    });
+}
+```
+Register join catch-up through `Listener.onJoin` with fixed outcome/metadata and current server age, not the destination world's game time. Runtime event, teleport and Mixin application still need server/client smoke tests; pure JUnit is not that proof.
+
+### World pause refusal, departure, and saved flags
+
+`WorldPause` holds every non-caster server player's one-time UUID/dimension position even if a foreign control, a legacy grab, or a hero policy refuses FREEZE. This overlay never captures gravity/AI. Carry/PULL movement and legacy terrain grind are suspended, not handed ownership to the pause; foreign expiry continues. Isolated bodies have no pause position anchor. The local client does not invent a dimension-transfer anchor; the server remains authoritative.
+
+`WorldPause.onLeave` releases the departing owner's session or only the participant's matching record while Forge logout still precedes vanilla save. Pause-owned `tryAcquireRecoverableFreeze` stores the captured natural flags in `PauseFlagRecovery` before applying the freeze. Join/reacquire recovers orphaned originals after a new JVM; matching live leases retain them. Foreign/legacy ownership and `BodyIsolation` retain their current flags. Do not infer that older unrelated controls now have durable restart leases.
+
+Erase-specific pending strip frees inventory capacity, discards the active and inventory menu cursors, closes normally, and then clears returned personal crafting inputs. This is one persisted transaction with two inventory clear passes, not a strip replay; external chest and ender storage are not cleared. Vanilla personal menus fit in the freed capacity. Arbitrary modded menus need their own overflow compatibility check.
+
+`WorldPauseClient` watchdog ages only on unpaused local client ticks, like the cinematic clock; matching END still cleans immediately and a missing END still expires while the game runs. Integrated-menu/event execution and packet correction jitter are manual gates, not pure-test claims.

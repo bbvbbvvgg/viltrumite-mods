@@ -52,7 +52,11 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
   - `static boolean active(MinecraftServer)`, `isPaused(Entity)`, `isProtected(Entity)` (paused and protection on).
 - `WorldPauseClient`: while paused, zero movement input (`MovementInputUpdateEvent`) and cancel attack/use/pick (`InputEvent.InteractionKeyMappingTriggered`); the FREEZE anchor visual is suppressed for this pause (pure check: the control sync carries the effect id; `WorldPauseS2CPacket(true, pauseId)` tells the client which id to hide).
 
-- [ ] Step 1 tests: `ControlManagerRefreshTest.refreshKeepsSavedFlags` (acquire on a `noGravity=false` mob, refresh 10× → release restores `false`, never `true`), `refreshRefusesForeignCaster`, `refreshRefusesForeignEffect`, `refreshRefusesOtherKind`, `refreshMissingRecordFalse`; `WorldPauseTest.ownerNeverFrozen`, `secondBeginRefused`, `joinerFrozen`, `dimensionChangeReacquired`, `foreignControlNotOverridden`, `endsOnEveryPath` (DONE, OWNER_LEFT, SERVER_STOP, RELOAD, WATCHDOG → no `pauseId` record left in any level), `controlsSelfExpire`, `mobsOnlyWhenProtected`. Step 2 run `./gradlew :viltrumitecore:test --tests '*WorldPauseTest' --tests '*ControlManagerRefreshTest'` → FAIL. Step 3 implement. Step 4 PASS; manual: `/reload` during a test pause (dev command `/viltrumite pause 100`, op 2) → everyone moves again at once. Step 5 commit `feat(control): refresh and server-wide world pause`.
+- [x] Step 1 tests: `ControlManagerRefreshTest.refreshKeepsSavedFlags` (acquire on a `noGravity=false` mob, refresh 10× → release restores `false`, never `true`), `refreshRefusesForeignCaster`, `refreshRefusesForeignEffect`, `refreshRefusesOtherKind`, `refreshMissingRecordFalse`; `WorldPauseTest.ownerNeverFrozen`, `secondBeginRefused`, `joinerFrozen`, `dimensionChangeReacquired`, `foreignControlNotOverridden`, `endsOnEveryPath` (DONE, OWNER_LEFT, SERVER_STOP, RELOAD, WATCHDOG → no `pauseId` record left in any level), `controlsSelfExpire`, `mobsOnlyWhenProtected`. Step 2 run `./gradlew :viltrumitecore:test --tests '*WorldPauseTest' --tests '*ControlManagerRefreshTest'` → FAIL. Step 3 implement. Step 4 PASS; manual: `/reload` during a test pause (dev command `/viltrumite pause 100`, op 2) → everyone moves again at once. Step 5 commit `feat(control): refresh and server-wide world pause`.
+
+
+- [x] Automated Steps 1–5: RED → GREEN (20 tests), full build 1020 tests, checker 0 new / 4 known, diff check; task commit prepared.
+- [ ] Manual Step 4: dev pause and `/reload` (not run; no server/game allowed).
 
 ### Task 2: `CleanupReason.ERASED` lifecycle audit and `freshBody`
 
@@ -69,7 +73,9 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 - Order on erase (server): `hero.cleanup(player, ERASED)` → generic resets above → `Limbo.send` (Task 4). On return: `Limbo.returnToSpawn` → `HeroEvents.freshBody(player)`.
 - Rule written into `hero-seam.md`: "`ERASED` = death without a new entity. Treat like `DEATH`; never rely on the clone to drop state."
 
-- [ ] Step 1 tests: `losesBody` table; `cleanupReleaseReasonErasedIsDeath`; `ErasedLifecycleTest.sameEntityFreshAfterReturn` — for each hero (Viltrumite, Regulus, Homelander, Iron Man, Reinhard) build state "mid-everything" on one fake player, run `cleanup(ERASED)` + `freshBody`, assert transient state equals `newState()` except the documented kept fields; `noControlOwnedOrHeld`; `heldInputsEmpty`; `grabTagGone`. Step 2 FAIL. Step 3 implement. Step 4 PASS + full suite (other heroes' death tests unchanged). Step 5 commit `feat(hero): erased cleanup reason and fresh body path`.
+- [x] Step 1 tests: `losesBody` table; `cleanupReleaseReasonErasedIsDeath`; `ErasedLifecycleTest.sameEntityFreshAfterReturn` — for each hero (Viltrumite, Regulus, Homelander, Iron Man, Reinhard) build state "mid-everything" on one fake player, run `cleanup(ERASED)` + `freshBody`, assert transient state equals `newState()` except the documented kept fields; `noControlOwnedOrHeld`; `heldInputsEmpty`; `grabTagGone`. Step 2 FAIL. Step 3 implement. Step 4 PASS + full suite (other heroes' death tests unchanged). Step 5 commit `feat(hero): erased cleanup reason and fresh body path`.
+
+- [x] Automated Steps 1–5: RED → GREEN (14 lifecycle tests), existing control tests unchanged, full build 1034 tests; checker 0 new / 4 known; diff check.
 
 ### Task 3: Erasure server timeline, frozen verdict, packet
 
@@ -91,7 +97,10 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
   - `erase == false` → nothing, whatever the target's state now.
 - End at 150 → `WorldPause.end(DONE)`; `WorldPause.end(...)` by any other reason before 90 cancels the removal.
 
-- [ ] Step 1 tests: `refusalsSpendNoCooldown` (each case), `secondCastRefusedWhileActive`, `removeTick90`, `mobDiscardedNoLoot` (fake: removal reason DISCARDED, no `die`), `dragonMarksFightKilled`, `partEntityResolvesParent`, `verdicts` (divine / absolute / another Reinhard → stays, cd spent), `verdictFrozenAtCast` (absolute at cast, mortal at 90 → stays; mortal at cast, absolute at 90 → erased), `casterLeavesMidway`, `targetEdgeCases` (target logs out before 90 → nothing; logs in later → normal). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world erasure timeline`.
+- [x] Step 1 tests: `refusalsSpendNoCooldown` (each case), `secondCastRefusedWhileActive`, `removeTick90`, `mobDiscardedNoLoot` (fake: removal reason DISCARDED, no `die`), `dragonMarksFightKilled`, `partEntityResolvesParent`, `verdicts` (divine / absolute / another Reinhard → stays, cd spent), `verdictFrozenAtCast` (absolute at cast, mortal at 90 → stays; mortal at cast, absolute at 90 → erased), `casterLeavesMidway`, `targetEdgeCases` (target logs out before 90 → nothing; logs in later → normal). Step 2 FAIL. Step 3 implement. Step 4 PASS. Step 5 commit `feat(reinhard): world erasure timeline`.
+
+- [x] Automated Steps 1–5: RED → GREEN (26 tests), full build 1060 tests, checker 0 new / 4 known; diff check. Shipping stage remains 5 until clip completion (Ruling).
+- Ruling: quiet dragon defeat skips vanilla portal/gateway/egg generation to obey the unchanged-block spec; end-fight runtime/exit availability remains manual.
 
 ### Task 4: Limbo dimension, strip, timer, return
 
@@ -136,7 +145,9 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 - Login with the tag → back into limbo (if not already there) with the stored `ticksLeft`; a tag with `ticksLeft <= 0` → `returnToSpawn`.
 - No death message, no `Stats.DEATHS`, no drops: the player never dies.
 
-- [ ] Step 1 tests: `TheVoidJsonTest.dimensionTypeDecodes` (parse with `DimensionType.DIRECT_CODEC` + `JsonOps` in the test — fails on any missing field), `flatSettingsDecode`; `LimboTest.stripKeepsEnderChest`, `xpZeroed`, `returnsAfter600OnlineTicks`, `offlineTimeDoesNotCount`, `returnToSpawn` (shared spawn, not bed), `persistsAcrossLogout`, `noPortalOut`, `immuneInLimbo`, `freshBodyCalledOnReturn`. Step 2 FAIL. Step 3 implement. Step 4 PASS; dedicated server start: no dimension codec errors in the log, `/execute in viltrumitecore:the_void run tp @s 0 128 0` works. Step 5 commit `feat(reinhard): limbo dimension`.
+- [x] Automated Step 1 tests: `TheVoidJsonTest.dimensionTypeDecodes` (parse with `DimensionType.DIRECT_CODEC` + `JsonOps` in the test — fails on any missing field), `flatSettingsDecode`; `LimboTest.stripKeepsEnderChest`, `xpZeroed`, `returnsAfter600OnlineTicks`, `offlineTimeDoesNotCount`, `returnToSpawn` (shared spawn, not bed), `persistsAcrossLogout`, `noPortalOut`, `immuneInLimbo`, `freshBodyCalledOnReturn`. Step 2 FAIL. Step 3 implement. Step 4 PASS (28 tests); Step 5 commit `feat(reinhard): limbo dimension`.
+- [ ] Manual dedicated server start: no dimension codec errors; `/execute in viltrumitecore:the_void run tp @s 0 128 0` works (not run by instruction).
+- Rulings: explicit server-END queue instead of possibly-inline execute; persistent pending strip; protection before all damage/queue paths; safe shared-spawn invoker; missing-dimension rescue. See progress journal for costs.
 
 ### Task 5: Post-shader uniforms for the erasure
 
@@ -150,7 +161,8 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 - `ErasureUniforms.at(int t, float pt)`: 0–30 crack 0→1; 30–70 shatter 0→1 (crack 1); 70–110 dark 1; 110–150 rebuild 1→0 and dark 1→0 over the first 15 t.
 - The flight `sonic_boom` chain replaces the post effect; during the pause nobody flies (frozen) and the caster stands (action timeline), so `GameRendererDashMixin` gives the erasure priority and does not start the sonic chain while the scene runs.
 
-- [ ] Step 1 tests: `zeroWhenIdle`, `phaseCurves` (ticks 0, 15, 30, 50, 70, 90, 110, 130, 150), `rebuildMirrorsShatter`, `clamped`, `postJsonDeclaresEraseUniforms` (reads both JSON files). Step 2 FAIL. Step 3 implement; start the client, `F3+T`, no shader errors. Step 4 PASS; manual: screenshots per phase in both views (attached to the PR); idle image unchanged. Step 5 commit `feat(reinhard): erasure post uniforms`.
+- [x] Automated Step 1 tests: `zeroWhenIdle`, `phaseCurves` (ticks 0, 15, 30, 50, 70, 90, 110, 130, 150), `rebuildMirrorsShatter`, `clamped`, `postJsonDeclaresEraseUniforms` (reads both JSON files). Step 2 FAIL. Step 3 implement; Step 4 PASS (17 pure/JSON/priority checks). Step 5 commit `feat(reinhard): erasure post uniforms`.
+- [ ] Manual: client startup, `F3+T`, GLSL compilation, both-view phase screenshots and unchanged idle image (not run; no screenshots fabricated).
 
 ### Task 6: Erasure client scene — silhouette, dust, sounds
 
@@ -168,7 +180,8 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
   - From 80 the silhouette breaks into seeded white pixels that drift up and fade; gone at 90. `erase == false` → it re-forms at 100 instead (the world "cannot erase" it).
 - Caster: same scene over his screen, plus the clip (Task 8).
 
-- [ ] Step 1 tests: `sourceGenericInOtherDimension`, `sourceRealWhenResolved`, `dustGoneAt90`, `staysReforms`, `duckReleasedOnEveryEnd`, `catchUpFromMidway` (join at t 60 → shatter, no crack sound replay). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: two LAN clients, one in the Nether; target zombie, player, Regulus in Lion's Heart. Step 5 commit `feat(reinhard): erasure client scene`.
+- [x] Automated Step 1 tests: `sourceGenericInOtherDimension`, `sourceRealWhenResolved`, `dustGoneAt90`, `staysReforms`, `duckReleasedOnEveryEnd`, `catchUpFromMidway` (join at t 60 → shatter, no crack sound replay). Step 2 FAIL. Step 3 implement. Step 4 PASS (21 new tests). Step 5 commit `feat(reinhard): erasure client scene`.
+- [ ] Manual: two LAN clients (one Nether); zombie/player/Lion's Heart targets; real/generic model, sounds/dust and every cleanup path. Not run.
 
 ### Task 7: Limbo client — black void, text, heartbeat, flash, no hands
 
@@ -183,23 +196,26 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 - `END`: white flash 10 t in, 30 t out over the first overworld frames.
 - While in limbo: `RenderHandEvent` cancelled for both hands (the HUD event does not control the world-pass hand), `RenderGuiOverlayEvent.Pre` cancelled for hotbar, crosshair, experience, health/food.
 
-- [ ] Step 1 tests: `lineTimings`, `flashCurve`, `heartbeatStopsOnLeave`, `handsAndHudHiddenOnlyInLimbo` (pure predicate by dimension key). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: full 30 s in limbo, no hand visible, chat works, F1, relog in the middle (text restarts at the stored time). Step 5 commit `feat(reinhard): limbo client`.
+- [x] Automated Step 1 tests: `lineTimings`, `flashCurve`, `heartbeatStopsOnLeave`, `handsAndHudHiddenOnlyInLimbo` (pure predicate by dimension key). Step 2 FAIL. Step 3 implement. Step 4 PASS (25 new/expanded checks); Step 5 commit `feat(reinhard): limbo client`.
+- [ ] Manual: full 30 s, no hands/HUD, chat/menu/F1, midpoint relog and overworld flash. Not run.
+- Ruling: tickable pulses are scheduled as a 24-tick logical loop (50 bpm) instead of sample-duration-dependent looping delay; shared FlashOverlay has an attack/release envelope.
 
 ### Task 8: Clip, check, docs, PR
 
 **Files:**
 - Modify: `tools/assets/make_reinhard_clips.py` (clip `world_erasure`: Reid raised vertically before the face for 30 t, a slow single cut down and to the side at t 30, hold; first person: blade rises into view, cuts across at t 30), `ReinhardPoses`, `.agents/skills/add_hero/references/shared-toolkit.md` (`WorldPause`, `ControlManager.refresh`, `CleanupReason.ERASED`, `freshBody`), `.agents/skills/add_hero/references/hero-seam.md` (`ERASED` rule), `.agents/skills/animation-system/SKILL.md` (erasure uniforms), `.memory-bank/project.md` (limbo dimension, pause rules), `SESSION.md`, core version (minor +1)
 
-- [ ] Step 1: regenerate clips (`python3 tools/assets/make_reinhard_clips.py`), the diff is only the new clip.
-- [ ] Step 2: full verification list, `NoHeroBranchTest`, dedicated server start, `/reload` during an erasure (pause ends, no stuck freeze).
+- [x] Step 1: regenerate clips (`python3 tools/assets/make_reinhard_clips.py`), the diff is only the new clip.
+- [x] Automated Step 2: full verification list and `NoHeroBranchTest` (final: 1209/1209 full, core 1197 + flight 12, selected core 570/570, Reinhard 459/459; checker 0 new / 4 known, diff clean; 4 Important fixed in one TDD pass, 2 Minor deferred).
+- [ ] Manual Step 2: dedicated server start, `/reload` during an erasure (pause ends, no stuck freeze). Not run by user instruction.
 - [ ] Step 3: in game both views; 3 players (caster, target, observer in the Nether); mob, Wither, player, Lion's Heart; spam the key during an active erasure (refusal, no cooldown); target logs out in limbo and back; erased Regulus gets the Evangelium back on return.
-- [ ] Step 4: commit `docs(reinhard): stage 6 notes`; push `feat/reinhard-stage6`; PR «Рейнхард, этап 6: Стирание мира».
+- [x] Step 4: commit `docs(reinhard): stage 6 notes`; immediate push `feat/reinhard-stage6`; PR «Рейнхард, этап 6: Стирание мира» against `feat/reinhard-stage5` (publication receipt/commit SHA in PR).
 
-Acceptance criteria closed: §11.10, §11.7 (§7.7 part).
+Acceptance targets: §11.10, §11.7 (§7.7 part). Runtime acceptance is not closed by pure tests; the unchecked manual steps above remain mandatory.
 
 ## Risks and pitfalls
 
-- `teleportTo` to another dimension inside a tick iteration can crash: always `server.execute(...)`.
+- `teleportTo` to another dimension inside a tick iteration can crash: queue with `ServerEndTasks` for server END. Ruling: `server.execute(...)` may execute inline on the server thread, so it is not sufficient here.
 - A data dimension loads with the world; old worlds get it on the next start. Removing the mod later leaves a harmless `dimensions/viltrumitecore/the_void` folder.
 - Per-level `ControlManager`: a player who changes dimension during the pause leaves a record in the old level; it expires in ≤ 5 t and `end` releases it anyway; the new level gets a fresh acquire on the next tick.
 - `SoundDuck` MASTER to 0 also mutes UI clicks for ~4 s — acceptable for a cinematic.

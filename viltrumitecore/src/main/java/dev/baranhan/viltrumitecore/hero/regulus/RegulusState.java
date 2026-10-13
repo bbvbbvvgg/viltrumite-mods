@@ -174,17 +174,18 @@ public final class RegulusState {
     * Pure half of lifecycle cleanup: every transient combat field returns to
     * its fresh-state default. Ability cleanups handle the Minecraft side
     * (modifiers, control ownership, channel ends) before this runs; only a
-    * hero change clears the cast lock — on death/disconnect this object is
+    * hero change or erasure clears the cast lock — on death/disconnect this object is
     * discarded with the entity anyway. Cooldowns are duration bookkeeping:
     * untouched here, persisted through saveHeroData into HeroData (relogin)
     * and inheritPersistent (respawn clone).
     */
    public void resetTransient(CleanupReason reason) {
-      if (reason == CleanupReason.HERO_CHANGE) {
+      if (reason == CleanupReason.HERO_CHANGE || reason == CleanupReason.ERASED) {
          this.clearAction();
       }
 
       this.carriers.clear();
+      this.carrierLevels.clear();
       this.pushedCarriers.clear();
       this.nextCarrierScan = 0L;
 
@@ -217,4 +218,11 @@ public final class RegulusState {
       this.internalDamage = 0.0F;
       this.savedSlowness = null;
    }
+   /** Same kept fields as a death clone; no stale action/channel state on the same body. */
+   public RegulusState erasedCopy() {
+      RegulusState fresh = new RegulusState();
+      fresh.inheritPersistent(this);
+      return fresh;
+   }
+
 }

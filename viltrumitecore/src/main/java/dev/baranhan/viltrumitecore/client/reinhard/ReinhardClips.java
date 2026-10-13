@@ -40,6 +40,7 @@ public final class ReinhardClips {
    /** Rain of Cuts: a fast fan of slashes, one per cut. */
    public static final String CUT_RAIN = "cut_rain";
    public static final String WORLD_CUT = "world_cut";
+   public static final String WORLD_ERASURE = "world_erasure";
    /** Phase 1 of a window (catch / reflect) and of the grab = the snap / the throw. */
    public static final int PHASE_SNAP = dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline.PHASE_SNAP;
 
@@ -62,6 +63,7 @@ public final class ReinhardClips {
          case SHEATH_STRIKE -> List.of(SHEATH_STRIKE);
          case CUT_RAIN -> List.of(CUT_RAIN);
          case WORLD_CUT -> List.of(WORLD_CUT);
+         case WORLD_ERASURE -> List.of(WORLD_ERASURE);
          default -> List.of();
       };
    }

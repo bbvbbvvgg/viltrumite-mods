@@ -31,7 +31,9 @@
     "ShulkerBulletAccessor",
     "SolidEntityBypassMixin",
     "WroughtnautDamageBypassMixin",
-    "QuietBlockRemovalMixin"
+    "QuietBlockRemovalMixin",
+    "EndDragonFightAccess",
+    "PlayerRespawnLogicInvoker"
   ],
   "injectors": {
     "defaultRequire": 1
