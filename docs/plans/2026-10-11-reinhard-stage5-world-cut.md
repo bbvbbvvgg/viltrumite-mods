@@ -92,10 +92,11 @@ See the overview. Stage-specific:
 - Create: none (results go to the PR body and `SESSION.md`).
 - Modify: `ReinhardRules` constants only if the numbers fail.
 
-- [ ] Step 1: dedicated server (`./gradlew :viltrumitecore:runServer`) + one client, render distance 12, a flat world, a plains/forest world, an ocean cast and a mountain cast.
-- [ ] Step 2: measure `/forge tps` every second for 10 s after the blast; requirement: overworld TPS ≥ 15 at every sample (spec §11.9). If not, lower `CUT_BASE_BUDGET` (it is shared with Rain of Cuts) or tighten `CarveBudget` thresholds; re-run.
-- [ ] Step 3: verify no item entities (drops) appeared and that fluids next to the walls stay still.
-- [ ] Step 4: commit only constant changes `perf(reinhard): tune carve budget` if any.
+- [x] Automated replacement: pure real-queue/carve-budget protocol (user override; no server/client run). Two 160000-position jobs share 2000 attempts per tick; adaptive load extends completion.
+- [ ] Manual: dedicated server + one client, render distance 12, flat, plains/forest, ocean and mountain casts. Do not run in this session.
+- [ ] Manual TPS ≥ 15: measure `/forge tps` every second for 10 s after the blast; requirement: overworld TPS ≥ 15 at every sample (spec §11.9). If not, lower `CUT_BASE_BUDGET` (it is shared with Rain of Cuts) or tighten `CarveBudget` thresholds; re-run.
+- [ ] Manual: verify no item entities (drops) appeared and that fluids next to the walls stay still.
+- [x] Constants unchanged (no measurements). Commit pure protocol tests: `test(reinhard): verify world cut budget` (ledger ruling).
 
 ### Task 6: Check, docs, PR
 
