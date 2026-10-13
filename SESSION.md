@@ -267,3 +267,57 @@ Stage 6 «Стирание мира»: core 1.29.0 → 1.30.0; flight 1.10.1 б�
 Фиксы: независимый server position overlay при отказе FREEZE без перехвата чужого контроля; suspend carry/PULL/legacy terrain grind; logout до vanilla save и durable original pause flags в ForgeData; clear/discard-cursor/close/clear возвращённых crafting inputs без vanilla overflow drops; watchdog останавливается в реальной паузе игры. Pure-regressions используют actual Session/captured records/NbtIo и vanilla-faithful menu fixture, но НЕ реальный Forge player/world/save. Дополнительные ручные пункты: foreign PULL/STASIS/legacy carry + поворот взгляда/no grind, участник logout→save→restart, исходный NoGravity false/true и limbo gravity, full cursor/crafting menu и external chest, длинная integrated pause menu без потери scene. Arbitrary modded menu (>36 возвращаемых nonmerge stacks) — compatibility limit.
 
 Stage 6 добавил 209 тестов к baseline Stage 5 1000; Task 8 — 58 новых (15 clip/docs/shipping, 39 review regressions, 4 boundary invocations = 32 pure sequences на 89/90/149/150). Full build/reobf, checker, diff и генератор/idempotence/старые клипы/11 locale JSON проверены. Runtime-ready без ручной приёмки не заявляется; 12 отдельных Declined-to-judge Rulings с ценой ошибки в progress.md, исходный report в review-before-fixes.md. Восемь плановых коммитов, final `docs(reinhard): stage 6 notes`, push+PR в `feat/reinhard-stage5`; merge не выполнялся.
+
+
+## 2026-10-13 — reinhard-stage7-sounds-polish
+
+core **1.30.0 → 1.31.0**, flight **1.10.1 без изменений**. Final gameplay constants сохранены: 20 HP / resist0.999 / floor1 / regen1 HP/s, MMB60t, Reid120t / sheathe20t / idle1200t, WorldCut20+60t / cooldown900t / shared budget2000, Erasure150t / removal90t / cooldown1200t / limbo600t. Worthy souls gate остаётся открытым (`canDraw` разрешает всегда); баланс без native замеров не менять.
+
+Tasks 1–4: аудио/автоматические проверки выполнены; **игровая приёмка не выполнена**. 14 обработанных .ogg.b64 из 11 разрешённых источников, воспроизводимый ffmpeg script с source SHA-256, объективными trim/fades/limiter и pinned two-pass loudnorm. 33 Event IDs сохранены, 14 массивов заменены; §10.2 и прочие герои не изменились. Credits/spec/sources обновлены по live Freesound страницам 2026-10-13. CGEffex 93835 и Robinhood76 378199 — CC-BY-NC 4.0: исключены, blast/rain placeholders остались. Alliare не подставлен без решения владельца. 12 не покрытых §10.1 legacy cues открыты.
+
+| Область | Автоматический результат | Native / ручной результат |
+|---|---|---|
+| Аудио | --check 14/14 PCM; 14/14 format/duration/LUFS/peak; 9 Python tests | Прослушивание/offsets/mix/дистанции/камеры/реальная тишина НЕ проверены |
+| §11.1–§11.8 | Existing regression suite GREEN | NOT RUN в обоих видах |
+| §11.9 World Cut | Existing shape/budget/once-hit tests GREEN | Native TPS/FPS/terrain/fluids/lighting NOT RUN |
+| §11.10 Erasure/Limbo | Existing timeline/codec/ownership/menu/watchdog tests GREEN | Dedicated/events/save/restart/audio/shaders NOT RUN |
+| §11.11 / cross-hero | NoHeroBranch 1/1; full 1215/1215, unchanged rules/flight | Cross-hero matrix и прежние visuals NOT RUN |
+| §11.12 | Java17 build/reobf, checker 0 new / 4 known, diff clean | Dedicated startup/common Mixin targets NOT RUN |
+
+runServer, runClient, dedicated server и игра **не запускались**. Gameplay/balance constants не менялись без замеров. Числа файлов не выданы за услышанную сцену или gameplay acceptance. Task 3 не создаёт пустой mix-коммит; его измерения входят в Task 4 journal/session commit. Полные Rulings/costs и исходные deferred minors — Stage 7 progress.md; исторический Stage 6 ledger сохранён без изменений.
+
+### Полный ручной чек-лист — НЕ ВЫПОЛНЕН
+
+Все игровые пункты проверить **от первого И третьего лица**, кастером и наблюдателями; зелёные pure/source tests не закрывают эти пункты.
+
+- [ ] §11.1: четвёртая кнопка выбора расы; полная модель, FP-руки, ножны на поясе; оба вида/обе руки/занятые слоты/невидимость.
+- [ ] §11.2: меч, Unibeam, %maxHP, clean, void/generic_kill не ниже 1 HP, 99.9% сопротивление; /kill действительно убивает, rescue из void, реген 1 HP/с, нет fall damage/knockback.
+- [ ] §11.3: dev divine проходит Adaptation → Phoenix → смерть; три одинаковых типа, смена типа, offline/hero-change Phoenix cooldown.
+- [ ] §11.4: все восемь благословений во всех трёх режимах: Parry pose/spark, Phoenix safe point, Arrow Ward/catch/reflect priority, пять air steps/reset/superjump, Wind Reading invisible/back, Detox, Mana Absorption r24 ×0.5, Adaptation.
+- [ ] §11.5: MMB по кругу, отдельные звуки/страницы, без позы и pick-block; отказ/3 s cooldown, hero-change/loadout migration.
+- [ ] §11.6: Restrained не ломает; Knight умеренно; Holy масштабно; mobGriefing false/bedrock/world border/build limits/unloaded chunks без force-load.
+- [ ] §11.7: каждая способность §6–7 со своей анимацией/VFX в обоих видах, grounded/air/crouch, left/right hand, occupied hands; предсказание/отказ/lag, control/death/logout/hero/dimension cleanup.
+- [ ] §11.8: Reid 6 s, shake/sky/weather/duck, lift 2–3 blocks r96 через общие leases, crack ring/pillar/funnel/flash/wave/chat; aura, sheathe 1 s, autoreturn 60 s без боя/при выходе Holy; overlapping draws/control/foreign gravity.
+- [ ] §11.9: World Cut swing → 3 s quiet/white line → 200×17×45–50 trench wave; once-hit mortals, divine/absolute immune; budgets, detached caster death/logout/dimension, adaptive queue/no drops/XP/fluid cascade.
+- [ ] §11.9 performance: render distance 12 flat/plains/forest/ocean/mountain, /forge tps каждую секунду 10 s после blast, все ≥15; два cuts/spike; native FPS и свет/жидкости. Pure budget не является TPS measurement.
+- [ ] §11.10: erasure 7.5 s во всех измерениях; freeze всех non-caster, nearby Enemy; one cast/spam/second cast/no cooldown refusal; crack → real silence → inhale, verdict frozen, missing target at tick90, cancel на 89/90/149/150.
+- [ ] §11.10 entities: mob без loot/XP/message, Wither bossbar, dragon quiet completion/crystal respawn. **Первый erased dragon не создаёт exit portal/gateway/egg — заранее обеспечить иной выход из End.**
+- [ ] §11.10 player: inventory/armor/offhand/XP навсегда исчезли, ender chest/external storage сохранены; нет death message/DEATHS/drops; same-entity ERASED mid-actions всех пяти героев, fresh body/Evangelium return.
+- [ ] §11.10 persistence: limbo 600 онлайн ticks/30 s, logout/rejoin и новый JVM/restart в середине/между pendingStrip и transfer; исходные NoGravity/NoAI false/true, participant logout BEFORE vanilla save, foreign pause/PULL/STASIS/legacy carry ownership/no terrain grind.
+- [ ] §11.10 isolation/return: chat/F1/menu, black fog/no sky/no hands/HUD, five lines, no movement/flight/use/damage/tp/portal; safe shared spawn не bed/anchor/platform, full health/hunger/gravity/flight reset, missing-dimension rescue, pause↔limbo overlap.
+- [ ] §11.10 menu/watchdog: full inventory/cursor/2×2/3×3 crafting и external chest на tick90 и pending-strip resume; modded menus (>36 returned nonmerge inputs) отдельно; long integrated pause/resume, lost-END timeout/late join/catch-up/stale-END.
+- [ ] §11.11: Homelander Lethal Chop и прежние poses/VFX/sounds остальных героев визуально не изменились.
+- [ ] §11.12: native dedicated startup/common-side classloading/Mixin/refmap/data codecs в old/new world, два clients matching core protocol2; /reload, F3+T, restart. Server/client НЕ запускались.
+- [ ] Cross-hero: Viltrumite/Homelander legacy chop в обе стороны; Regulus Lion's Heart vs Reid strike/Erasure/grab (никакого пробития); Homelander laser vs 1 HP floor + его chop; Iron Man marks/Hulkbuster/Veronica/roster/cleanup.
+- [ ] Все 33 sound events: оба вида на 2/16/64 blocks; Reid draw/World Cut также 150; caster/viewer/global/local категории и subtitles.
+- [ ] Mix/listening: mode chords ≤ punch по восприятию в игре; choir слышен поверх rumble; World Cut quiet/blast не клиппит/tail до оседания dust; erasure crack → **настоящая runtime тишина** → inhale; heartbeat 30 s не утомляет/не обрывается/50 bpm; §10.2 подходят и не изменились.
+- [ ] Выбранные начальные offsets: три музыкальных mode excerpts, «хороший» choir, только ring без scrape; loop rumble/heartbeat без слышимого стыка. Числа endpoint/peaks это не прослушивание.
+- [ ] Oculus/shader packs/sonic priority, GPU GLSL, image idle parity, mesh/cutout/fallback/modded renderer silhouette/shards, F3+T/reload/level unload без duck/FOV/freeze leaks.
+- [ ] Владелец выбирает CC0/CC-BY альтернативы для blast/rain и источники для 12 дополнительных legacy cues; варианты в sources, никаких silent swaps/NC excerpts.
+- [ ] Реальная итоговая приёмка §11.1–§11.12 и баланс после измерений; worthy souls list остаётся открытым.
+
+Task 5: release-version assertion RED на 1.30.0 → minor bump1.31.0; исторический Stage 6 version test стал минимумом1.30.0 (вместо вечного запрета новых minor). Новая точная release gate1.31.0. Финальные build/test/review числа будут добавлены после единственного независимого ревью.
+
+Одно финальное независимое ревью:0Critical,4Important; M1 delimiter re-graded as I3 structural dependency. Один TDD-pass: упаковка CC-BY notices в JAR и metadata credits; complete-object gate всех33 IDs/19 exceptions/actual references; структурный source→output→author/URL/license/digest join и исправленная4-col §10.1 таблица; adversarial ffmpeg integrity tests. JavaRED16tests/10assertion failures→GREEN16/16; Python6guard/source bypass mutationsRED→restored byte-exact script→17/17GREEN. Первоначальный stale.pyc тестового loader исправлен fresh-source compile, не ослаблением assertion. Independent source/codec audit подтверждает14/14×2 PCM, но НЕ прослушивание/сервер. Report preserved as review-before-fixes.md, без re-review;35 Declined boundaries получили отдельные costed Rulings. Inherited Stage6 metadata/dev pause and Stage5 locale minors remain.
+
+Финальный результат Stage7: **1227/1227 JVM** (core1215+flight12), **480/480 selected Reinhard** (477package+3related), **17/17 Python**,14/14 PCM --check, checker0new/4known, NoHeroBranch1/1 allowlist unchanged, diff clean, Java17 clean/reobf GREEN. После сетевого Sponge HTTP522 финальные gates использовали проверенный ранее online dependency cache с --offline; upstream fresh-resolution availability не доказана. Source/script/code guards не ослаблены. JAR14/14 finalaudio +33 IDs +2 maintained CC-BY notices/4source links byte-exact, active credits/TOML/version1.31 parsed. Additional exact-credit-URL suffix RED1→GREEN closes I3 lexical boundary; all17 targeted attribution/sound checks GREEN. Все game/server/native/listening/camera/cross-hero/TPS/FPS пункты выше НЕ выполнены. Four nonempty planned commits/push+PR; merge не выполнялся. Полный списокRulings/costs,35proof boundaries и inherited minors — progress.md/PR; оригинальное единственное review preserved, re-review не было.

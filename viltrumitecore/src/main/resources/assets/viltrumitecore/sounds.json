@@ -643,8 +643,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_mode_restrained",
     "sounds": [
       {
-        "name": "minecraft:block.amethyst_block.chime",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/mode_restrained"
       }
     ]
   },
@@ -653,8 +652,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_mode_knight",
     "sounds": [
       {
-        "name": "minecraft:block.beacon.power_select",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/mode_knight"
       }
     ]
   },
@@ -663,8 +661,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_mode_holy_sword",
     "sounds": [
       {
-        "name": "minecraft:block.beacon.activate",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/mode_holy"
       }
     ]
   },
@@ -774,8 +771,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_sky_kick",
     "sounds": [
       {
-        "name": "minecraft:entity.generic.explode",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/sky_kick"
       }
     ]
   },
@@ -814,8 +810,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_stomp",
     "sounds": [
       {
-        "name": "minecraft:entity.generic.explode",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/stomp"
       }
     ]
   },
@@ -834,8 +829,8 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_reid_rumble",
     "sounds": [
       {
-        "name": "minecraft:ambient.basalt_deltas.mood",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/reid_rumble",
+        "stream": true
       }
     ]
   },
@@ -844,8 +839,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_reid_unsheathe",
     "sounds": [
       {
-        "name": "minecraft:item.trident.riptide_1",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/reid_unsheathe"
       }
     ]
   },
@@ -854,8 +848,8 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_reid_choir",
     "sounds": [
       {
-        "name": "minecraft:block.beacon.activate",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/reid_choir",
+        "stream": true
       }
     ]
   },
@@ -884,8 +878,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_sheath_strike",
     "sounds": [
       {
-        "name": "minecraft:block.anvil.land",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/sheath_ring"
       }
     ]
   },
@@ -902,8 +895,7 @@
   "reinhard.world_cut_silence": {
     "sounds": [
       {
-        "name": "minecraft:block.beacon.ambient",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/world_cut_silence"
       }
     ]
   },
@@ -918,8 +910,8 @@
   "reinhard.world_cut_tail": {
     "sounds": [
       {
-        "name": "minecraft:entity.warden.sonic_boom",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/world_cut_tail",
+        "stream": true
       }
     ]
   },
@@ -927,9 +919,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard.erase_crack",
     "sounds": [
       {
-        "name": "minecraft:block.glass.break",
-        "type": "event",
-        "pitch": 0.5
+        "name": "viltrumitecore:reinhard/erase_crack"
       }
     ]
   },
@@ -937,9 +927,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard.erase_inhale",
     "sounds": [
       {
-        "name": "minecraft:block.respawn_anchor.charge",
-        "type": "event",
-        "pitch": 1
+        "name": "viltrumitecore:reinhard/erase_inhale"
       }
     ]
   },
@@ -947,8 +935,7 @@
     "subtitle": "subtitles.viltrumitecore.reinhard.limbo_heartbeat",
     "sounds": [
       {
-        "name": "minecraft:entity.warden.heartbeat",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/limbo_heartbeat"
       }
     ]
   }

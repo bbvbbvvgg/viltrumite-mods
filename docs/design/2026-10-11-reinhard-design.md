@@ -235,25 +235,27 @@ Lethal Chop с вынутым Рейдом бьёт левой рукой. У к
 
 Пользователь сам скачивает и кладёт файлы. Для CC-BY — указать автора в `CREDITS.md`.
 
-| Событие | Звук |
-|---|---|
-| Смена режима | https://freesound.org/people/klankbeeld/sounds/398218/ — короткий фрагмент |
-| Вынимание Рейда: хор финала | https://freesound.org/people/klankbeeld/sounds/398218/ — длинный хороший момент того же файла |
-| Вынимание Рейда: меч из ножен | https://freesound.org/people/Vrymaa/sounds/770035 |
-| Вынимание Рейда: гул и тряска | https://freesound.org/people/CHallSmith/sounds/870684/ |
-| Мировой разрез: тишина и белая линия | https://freesound.org/people/reathance/sounds/503809/ |
-| Мировой разрез: хвост после разреза | https://freesound.org/people/hykenfreak/sounds/248150/ |
-| Мировой разрез: взрыв (основа) | https://freesound.org/people/Alliare/sounds/825864 |
-| Мировой разрез: взрыв (слой) | https://freesound.org/people/CGEffex/sounds/93835 — Huge Explosion 1, приглушённый, с ~2-й секунды |
-| Стирание мира: треск и раскол | https://freesound.org/people/Greg_Surr/sounds/554564/ |
-| Стирание мира: обратный «вдох» на сборке | https://freesound.org/people/hykenfreak/sounds/331620/ |
-| Лимб: сердцебиение | https://freesound.org/people/daandraait/sounds/249716 |
-| Пинок в небо (сам пинок) | https://freesound.org/people/qubodup/sounds/182050/ |
-| Топот (шоквейв от ноги, Рыцарь) | https://freesound.org/people/dingus23/sounds/275809/ |
-| Дождь разрезов | https://freesound.org/people/Robinhood76/sounds/378199/ |
-| Удар ножнами (вырезать звон) | https://freesound.org/s/519413 |
+| Событие | Звук | Автор | Лицензия |
+|---|---|---|---|
+| Смена режима | https://freesound.org/people/klankbeeld/sounds/398218/ — короткий фрагмент | klankbeeld | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| Вынимание Рейда: хор финала | https://freesound.org/people/klankbeeld/sounds/398218/ — длинный хороший момент того же файла | klankbeeld | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| Вынимание Рейда: меч из ножен | https://freesound.org/people/Vrymaa/sounds/770035 | Vrymaa | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) |
+| Вынимание Рейда: гул и тряска | https://freesound.org/people/CHallSmith/sounds/870684/ | CHallSmith | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) |
+| Мировой разрез: тишина и белая линия | https://freesound.org/people/reathance/sounds/503809/ | reathance | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) |
+| Мировой разрез: хвост после разреза | https://freesound.org/people/hykenfreak/sounds/248150/ | hykenfreak | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| Мировой разрез: взрыв (основа) | https://freesound.org/people/Alliare/sounds/825864 | Alliare | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) |
+| Мировой разрез: взрыв (слой) | https://freesound.org/people/CGEffex/sounds/93835 — Huge Explosion 1, приглушённый, с ~2-й секунды | CGEffex | [CC-BY-NC 4.0 — исключён, placeholder](https://creativecommons.org/licenses/by-nc/4.0/) |
+| Стирание мира: треск и раскол | https://freesound.org/people/Greg_Surr/sounds/554564/ | Greg_Surr | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) |
+| Стирание мира: обратный «вдох» на сборке | https://freesound.org/people/hykenfreak/sounds/331620/ | hykenfreak | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| Лимб: сердцебиение | https://freesound.org/people/daandraait/sounds/249716 | daandraait | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) |
+| Пинок в небо (сам пинок) | https://freesound.org/people/qubodup/sounds/182050/ | qubodup | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) |
+| Топот (шоквейв от ноги, Рыцарь) | https://freesound.org/people/dingus23/sounds/275809/ | dingus23 | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| Дождь разрезов | https://freesound.org/people/Robinhood76/sounds/378199/ | Robinhood76 | [CC-BY-NC 4.0 — исключён, placeholder](https://creativecommons.org/licenses/by-nc/4.0/) |
+| Удар ножнами (вырезать звон) | https://freesound.org/s/519413 | Iridiuss | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) |
 
-Склейка: взрыв мирового разреза — один `.ogg`: основа Alliare + слой CGEffex с ~2 с, приглушённый (порядка −8 дБ, подбирается на слух). Склейку и обрезку фрагментов (смена режима из klankbeeld, звон ножен из Iridiuss) делает воспроизводимый скрипт в `tools/sfx/` (ffmpeg) из исходников пользователя.
+Проверка лицензий: 2026-10-13. Точные имена файлов, SHA-256 и список выходов: `tools/assets/reinhard_sources.md`. Источники 93835 и 378199 имеют CC-BY-NC 4.0 и не включаются. Взрыв World Cut и Rain of Cuts сохраняют placeholders до решения владельца; альтернативы записаны в sources. Неопределённые §10.1 legacy cues остаются открытыми. Прослушивание не выполнено.
+
+Склейка (заблокирована лицензией CGEffex, не реализована): взрыв мирового разреза — один `.ogg`: основа Alliare + слой CGEffex с ~2 с, приглушённый (порядка −8 дБ, подбирается на слух). Склейку и обрезку фрагментов (смена режима из klankbeeld, звон ножен из Iridiuss) делает воспроизводимый скрипт в `tools/sfx/` (ffmpeg) из исходников пользователя.
 
 ### 10.2 Звуки из мода и ванилы
 
@@ -286,4 +288,4 @@ Lethal Chop с вынутым Рейдом бьёт левой рукой. У к
 
 - Список «достойных душой» для вынимания Рейда (сейчас — в любой момент).
 - Баланс всех чисел.
-- Подбор звуков (§10).
+- Подбор звуков (§10): 14 разрешённых обработанных файлов добавлены Stage 7; CC-BY-NC blast/rain исключены и ждут решения, 12 дополнительных legacy cues не имеют выбранного источника. Прослушивание/mix/дистанции/реальная тишина и полная приёмка не выполнены.
