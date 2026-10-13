@@ -48,6 +48,12 @@ Branch: feat/reinhard-stage6 from feat/reinhard-stage5; BASE f93f27fa2634268c968
 - Ruling (Task 4): Return uses the shared overworld spawn, vanilla radius/border and protected safe-column invoker, randomized coprime search plus vanilla upward fallback; never bed/anchor or a terrain platform — cost if wrong: a fully obstructed/invalid shared spawn can still be unsafe and must be repaired by the server owner.
 - Ruling (Task 4): A missing limbo dimension refuses a new player cast before spending cooldown; an already-tagged player is rescued to shared spawn instead of remaining trapped — cost if wrong: removing the dimension datapack shortens that player's remaining text sequence.
 
+- Ruling (Task 5): Core dash_impact is already an independently processed, reload-aware chain; flight's vanilla sonic chain can still run afterward. Keep that architecture, stop an existing sonic effect at render HEAD and cancel only sonic loadEffect during the scene — cost if wrong: shader-pack/mixin ordering needs manual runtime validation; flight code/version remain unchanged.
+- Ruling (Task 5): Bind a neutral pure ErasurePost sampler until Task 6 supplies the scene; update all five uniforms on every processed pass, keep the existing three-pass chain and zero fast path — cost if wrong: no intermediate erasure rendering until the scene is installed.
+- Ruling (Task 5): Voronoi uses centre + five UUID-seeded sites, inverse cell mapping with black gaps, quadratic falling and cubic returning displacement (ease-out). During erasure only, the cinematic colour replaces competing core effects — cost if wrong: simultaneous cosmetic effects are hidden for 7.5 seconds, never changed when erasure is idle.
+
+- Task 5 gate finding: existing RegulusVisualContractTest caught an extra OutSize fragment uniform; removed it and derive aspect from textureSize(DiffuseSampler), preserving exact program/post/fragment parity. Matched the existing null-safe getUniform setting convention too; no existing test weakened.
+
 ## CleanupReason audit (Task 2)
 | Existing check / consumer | Explicit ERASED decision |
 |---|---|
@@ -73,8 +79,8 @@ Branch: feat/reinhard-stage6 from feat/reinhard-stage5; BASE f93f27fa2634268c968
 Task 1: complete (BASE f93f27f; commit 4a800b3 feat(control): refresh and server-wide world pause). RED: missing APIs; GREEN: WorldPause/refresh 20/20; selected core 377/377; full build 1020/1020, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. No runtime checks.
 Task 2: complete (BASE 4a800b3; commit a1d689a feat(hero): erased cleanup reason and fresh body path). RED missing APIs → GREEN lifecycle 14/14 + existing control 11/11; selected core 391/391; build 1034/1034, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. Same-body domain states of all five heroes compared recursively to fresh states; runtime adapters not run.
 Task 3: complete (BASE a1d689a; commit f2c09f4 feat(reinhard): world erasure timeline). RED missing APIs → GREEN 26/26 new erasure tests; selected core 417/417; build 1060/1060; Reinhard 361/361; checker 0 new / 4 known; git diff --check clean. Dragon bytecode audited; narrow fight accessor compiled/refmap generated, no runtime mixin check.
-Task 4: complete (BASE f2c09f4; commit feat(reinhard): limbo dimension). RED: 57 missing-API errors → GREEN 28/28 new (15 timer/isolation, 3 genuine codec, 6 damage-protection, 4 END-queue); selected core 445/445; full build 1088/1088, Reinhard 379/379; checker 0 new / 4 known; git diff --check clean. No game/server/runtime checks.
-Task 5: pending
+Task 4: complete (BASE f2c09f4; commit ec4e3fb feat(reinhard): limbo dimension). RED: 57 missing-API errors → GREEN 28/28 new (15 timer/isolation, 3 genuine codec, 6 damage-protection, 4 END-queue); selected core 445/445; full build 1088/1088, Reinhard 379/379; checker 0 new / 4 known; git diff --check clean. No game/server/runtime checks.
+Task 5: complete (BASE ec4e3fb; commit feat(reinhard): erasure post uniforms). RED missing APIs → GREEN 17/17 phase/JSON/priority tests; full gate found and fixed legacy uniform parity without weakening it; selected core 462/462; build 1105/1105, Reinhard 396/396; checker 0 new / 4 known; git diff --check clean. GLSL compilation, F3+T and screenshots stay manual (no client run).
 Task 6: pending
 Task 7: pending
 Task 8: pending

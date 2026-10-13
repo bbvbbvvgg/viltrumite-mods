@@ -161,7 +161,8 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 - `ErasureUniforms.at(int t, float pt)`: 0–30 crack 0→1; 30–70 shatter 0→1 (crack 1); 70–110 dark 1; 110–150 rebuild 1→0 and dark 1→0 over the first 15 t.
 - The flight `sonic_boom` chain replaces the post effect; during the pause nobody flies (frozen) and the caster stands (action timeline), so `GameRendererDashMixin` gives the erasure priority and does not start the sonic chain while the scene runs.
 
-- [ ] Step 1 tests: `zeroWhenIdle`, `phaseCurves` (ticks 0, 15, 30, 50, 70, 90, 110, 130, 150), `rebuildMirrorsShatter`, `clamped`, `postJsonDeclaresEraseUniforms` (reads both JSON files). Step 2 FAIL. Step 3 implement; start the client, `F3+T`, no shader errors. Step 4 PASS; manual: screenshots per phase in both views (attached to the PR); idle image unchanged. Step 5 commit `feat(reinhard): erasure post uniforms`.
+- [x] Automated Step 1 tests: `zeroWhenIdle`, `phaseCurves` (ticks 0, 15, 30, 50, 70, 90, 110, 130, 150), `rebuildMirrorsShatter`, `clamped`, `postJsonDeclaresEraseUniforms` (reads both JSON files). Step 2 FAIL. Step 3 implement; Step 4 PASS (17 pure/JSON/priority checks). Step 5 commit `feat(reinhard): erasure post uniforms`.
+- [ ] Manual: client startup, `F3+T`, GLSL compilation, both-view phase screenshots and unchanged idle image (not run; no screenshots fabricated).
 
 ### Task 6: Erasure client scene — silhouette, dust, sounds
 
