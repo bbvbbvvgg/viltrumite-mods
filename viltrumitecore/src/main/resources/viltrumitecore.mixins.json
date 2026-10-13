@@ -30,7 +30,8 @@
     "PlayerStatsMixin",
     "ShulkerBulletAccessor",
     "SolidEntityBypassMixin",
-    "WroughtnautDamageBypassMixin"
+    "WroughtnautDamageBypassMixin",
+    "QuietBlockRemovalMixin"
   ],
   "injectors": {
     "defaultRequire": 1

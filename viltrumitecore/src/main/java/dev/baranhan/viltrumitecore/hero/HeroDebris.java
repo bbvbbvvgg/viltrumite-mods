@@ -72,7 +72,7 @@ public final class HeroDebris {
 
       block.setDeltaMovement(round(velocity.x), round(velocity.y), round(velocity.z));
       block.hasImpulse = true;
-      level.setBlock(pos, Blocks.AIR.defaultBlockState(), removalFlags);
+      HeroDestruction.setAir(level, pos, removalFlags);
       level.addFreshEntity(block);
       return block;
    }

@@ -100,11 +100,12 @@ See the overview. Stage-specific:
 
 ### Task 6: Check, docs, PR
 
-- [ ] Step 1: full verification list; dedicated server start.
-- [ ] Step 2: in game, both views; `mobGriefing false` (no blocks, still strike and VFX); bedrock under a shallow cast stays.
-- [ ] Step 3: update `shared-toolkit.md` (`CarveJobs` usage example), `.memory-bank/project.md` (carve flags and the fluid behaviour), `SESSION.md`; commit `docs(reinhard): stage 5 notes`; push `feat/reinhard-stage5`; PR «Рейнхард, этап 5: Мировой разрез».
+- [x] Step 1 automated: Reinhard tests, full build, resource checker, diff check (counts in progress.md).
+- [ ] Manual: dedicated server start (not run by user instruction).
+- [ ] Manual Step 2: in game, both views; `mobGriefing false` (no blocks, still strike and VFX); bedrock under a shallow cast stays.
+- [x] Step 3: update `shared-toolkit.md` (`CarveJobs` usage example), `.memory-bank/project.md` (carve flags and the fluid behaviour), `SESSION.md`; commit `docs(reinhard): stage 5 notes`; push `feat/reinhard-stage5`; PR «Рейнхард, этап 5: Мировой разрез».
 
-Acceptance criteria closed: §11.9, §11.7 (§7.6 part).
+Implementation complete: §11.9, §11.7 (§7.6 part). Runtime/TPS acceptance remains manual; unchecked manual items are not claimed complete. Core 1.29.0; no server/game run.
 
 ## Risks and pitfalls
 
