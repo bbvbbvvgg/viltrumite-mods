@@ -20,6 +20,12 @@ public final class ReinhardClient {
    }
 
    public static void init() {
+      dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene.init();
+      onErasure(dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene::onPacket);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene::onRender);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene::onUnload);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene::onLogout);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.cut.WorldCutScene::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.cut.WorldCutScene::onRender);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.cut.WorldCutScene::onUnload);

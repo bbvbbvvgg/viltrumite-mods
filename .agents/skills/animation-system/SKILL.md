@@ -354,3 +354,8 @@ To add a screen effect:
 - `WorldCutScene` receives cast UUID, caster UUID, fixed yaw/origin, surface profile and start game time; entity disappearance cannot stop it. White ground/sky billboards, dust, edge cracks, white-gold front and haze use PixelVfx. Skip the shader shadow pass and restore render state.
 - `WorldCutFov` reads a tick-refreshed array without allocating in ComputeFov; primitive finite-line distance, real-time exponential easing. Each scene excludes its own caster. SoundDuck owner is the cast UUID; release on blast, timeout and level unload.
 - `HeroImpactFx.shockwaveVisual` adds only the existing rings. It deliberately does not add shake/dust; the scene excludes caster blast shake and uses the shared CameraShake for other viewers. Check both views, a LAN viewer at 30/150 blocks and shaders manually.
+
+### GUI paint-pixels and model silhouettes (Stage 6)
+- `PixelVfx.guiPixel` reuses the paint-pixel style through the existing GuiGraphics batching; no extra VFX engine or render target.
+- `GuiEntitySilhouette` delegates to the real entity renderer with FULL_BRIGHT, but feeds NEW_ENTITY model streams into white POSITION_COLOR GUI quads. Font/leash/fire/glint streams are discarded; camera/shadow/lighting/pose state is restored in finally. Texture alpha is intentionally not part of this flat mesh silhouette.
+- `SoundDuck.release(owner, ticks)` allows an independent out-fade; existing `release(owner)` callers keep their old symmetric step.

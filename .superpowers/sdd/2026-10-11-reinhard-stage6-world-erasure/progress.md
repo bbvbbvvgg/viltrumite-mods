@@ -54,6 +54,12 @@ Branch: feat/reinhard-stage6 from feat/reinhard-stage5; BASE f93f27fa2634268c968
 
 - Task 5 gate finding: existing RegulusVisualContractTest caught an extra OutSize fragment uniform; removed it and derive aspect from textureSize(DiffuseSampler), preserving exact program/post/fragment parity. Matched the existing null-safe getUniform setting convention too; no existing test weakened.
 
+- Ruling (Task 6): Scene time is packet server age + unpaused local client ticks, not the plan's cross-dimension gameTime subtraction. Repeated same-UUID packets rebase monotonically without freezing/rewinding or replaying crack — cost if wrong: visuals retain one packet of network offset; dimension transfer never resets elapsed time.
+- Ruling (Task 6): Reuse the actual entity renderer with FULL_BRIGHT through a shared flat-white NEW_ENTITY-to-GUI material adapter; discard name/fire/leash/glint streams and restore render state in finally. No new shader/render target/animation engine — cost if wrong: texture-alpha cutouts are represented by their solid mesh, and unusual modded renderers may use the generic fallback.
+- Ruling (Task 6): Seed metadata-shaped dust pixels once per scene rather than reading back GPU/model pixels; generic shape remains humanoid or rounded aspect-ratio box at 40% GUI height — cost if wrong: dust only approximates a nonhumanoid target's detailed outline.
+- Ruling (Task 6): Extend SoundDuck with an independent release(owner,40); existing API keeps its old fade. Late joiners skip past UI sounds and snap an already-completed duck-in; early exits release in 6 ticks — cost if wrong: canceled cinematics have a short audible fade rather than instant volume restoration.
+- Ruling (Task 6): Reuse the existing pause end listener; clear on logout, level unload, resource reload and local tick-170 watchdog as well as normal end — cost if wrong: the erased player's own scene ends upon entering limbo at tick 90, while the other viewers finish through 150.
+
 ## CleanupReason audit (Task 2)
 | Existing check / consumer | Explicit ERASED decision |
 |---|---|
@@ -80,8 +86,8 @@ Task 1: complete (BASE f93f27f; commit 4a800b3 feat(control): refresh and server
 Task 2: complete (BASE 4a800b3; commit a1d689a feat(hero): erased cleanup reason and fresh body path). RED missing APIs → GREEN lifecycle 14/14 + existing control 11/11; selected core 391/391; build 1034/1034, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. Same-body domain states of all five heroes compared recursively to fresh states; runtime adapters not run.
 Task 3: complete (BASE a1d689a; commit f2c09f4 feat(reinhard): world erasure timeline). RED missing APIs → GREEN 26/26 new erasure tests; selected core 417/417; build 1060/1060; Reinhard 361/361; checker 0 new / 4 known; git diff --check clean. Dragon bytecode audited; narrow fight accessor compiled/refmap generated, no runtime mixin check.
 Task 4: complete (BASE f2c09f4; commit ec4e3fb feat(reinhard): limbo dimension). RED: 57 missing-API errors → GREEN 28/28 new (15 timer/isolation, 3 genuine codec, 6 damage-protection, 4 END-queue); selected core 445/445; full build 1088/1088, Reinhard 379/379; checker 0 new / 4 known; git diff --check clean. No game/server/runtime checks.
-Task 5: complete (BASE ec4e3fb; commit feat(reinhard): erasure post uniforms). RED missing APIs → GREEN 17/17 phase/JSON/priority tests; full gate found and fixed legacy uniform parity without weakening it; selected core 462/462; build 1105/1105, Reinhard 396/396; checker 0 new / 4 known; git diff --check clean. GLSL compilation, F3+T and screenshots stay manual (no client run).
-Task 6: pending
+Task 5: complete (BASE ec4e3fb; commit 627c520 feat(reinhard): erasure post uniforms). RED missing APIs → GREEN 17/17 phase/JSON/priority tests; full gate found and fixed legacy uniform parity without weakening it; selected core 462/462; build 1105/1105, Reinhard 396/396; checker 0 new / 4 known; git diff --check clean. GLSL compilation, F3+T and screenshots stay manual (no client run).
+Task 6: complete (BASE 627c520; commit feat(reinhard): erasure client scene). RED missing APIs → GREEN 21 new (19 scene/clock/source/dust/end, 1 flat-white vertex, 1 independent 40-tick sound release); extra repeated-catch-up RED → GREEN. Selected core 487/487; build 1126/1126, Reinhard 415/415; checker 0 new / 4 known; git diff --check clean. Rendering/LAN/runtime cleanup remains manual.
 Task 7: pending
 Task 8: pending
 

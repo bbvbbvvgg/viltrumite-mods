@@ -180,7 +180,8 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
   - From 80 the silhouette breaks into seeded white pixels that drift up and fade; gone at 90. `erase == false` → it re-forms at 100 instead (the world "cannot erase" it).
 - Caster: same scene over his screen, plus the clip (Task 8).
 
-- [ ] Step 1 tests: `sourceGenericInOtherDimension`, `sourceRealWhenResolved`, `dustGoneAt90`, `staysReforms`, `duckReleasedOnEveryEnd`, `catchUpFromMidway` (join at t 60 → shatter, no crack sound replay). Step 2 FAIL. Step 3 implement. Step 4 PASS; manual: two LAN clients, one in the Nether; target zombie, player, Regulus in Lion's Heart. Step 5 commit `feat(reinhard): erasure client scene`.
+- [x] Automated Step 1 tests: `sourceGenericInOtherDimension`, `sourceRealWhenResolved`, `dustGoneAt90`, `staysReforms`, `duckReleasedOnEveryEnd`, `catchUpFromMidway` (join at t 60 → shatter, no crack sound replay). Step 2 FAIL. Step 3 implement. Step 4 PASS (21 new tests). Step 5 commit `feat(reinhard): erasure client scene`.
+- [ ] Manual: two LAN clients (one Nether); zombie/player/Lion's Heart targets; real/generic model, sounds/dust and every cleanup path. Not run.
 
 ### Task 7: Limbo client — black void, text, heartbeat, flash, no hands
 
