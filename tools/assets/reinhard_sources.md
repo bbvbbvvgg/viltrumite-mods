@@ -47,3 +47,24 @@ Checked against the live Freesound sound pages on **2026-10-13** (not inferred f
 The plan lists fewer recordings than Stage 6 event IDs. Preserve the original cues for `air_step`, `refuse`, `phoenix`, `parry`, `super_jump`, `step_dash`, `catch`, `grab`, `dash_behind`, `reflect`, `reid_far`, `reid_sheathe`: no owner-approved recording for these events. They remain explicit unresolved legacy cues, not falsely claimed as final sounds. §10.2 (`light_punch`, `combo_hit`, `combo_final`, `kick_toss`, `throw` and the kit Chop sounds) stays unchanged. `mode_holy_sword` remains the event ID; its file is `mode_holy`. `sheath_strike` points to `sheath_ring`.
 
 klankbeeld additionally requests credit to Freesound and no raw-stock redistribution in the description. Only transformed excerpts in this mod are distributed; no raw recording or stock library. The page's CC-BY 4.0 license is recorded above.
+
+### Processed outputs / reproducible edits
+
+All files are `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/reinhard/<name>.ogg.b64`. Individual operations, peak conditioning and pinned first-pass values are in the script table; no measurements are ear-selected. Run `python3 tools/sfx/reinhard.py --src /path/to/unpacked/sounds --check`. Decode-only hashes, not container bytes, define reproducibility.
+
+| Output | Source ID | Start / length (s) | Class target | Changes |
+|---|---|---|---|---|
+| `mode_restrained` | 398218 | 10 / 1.8 | -18 LUFS | trim, fades, two-pass loudnorm |
+| `mode_knight` | 398218 | 20 / 2 | -18 LUFS | trim, fades, two-pass loudnorm |
+| `mode_holy` | 398218 | 30 / 2.2 | -18 LUFS | trim, fades, two-pass loudnorm |
+| `reid_choir` | 398218 | 40 / 6 | -20 LUFS | trim, fades, two-pass loudnorm |
+| `reid_unsheathe` | 770035 | 0 / 1.879297 | -14 LUFS | trim, fades, two-pass loudnorm |
+| `reid_rumble` | 870684 | 10 / 6 | -20 LUFS | trim, fades, two-pass loudnorm, loop-edge fades |
+| `world_cut_silence` | 503809 | 3 / 3 | -20 LUFS | trim, fades, two-pass loudnorm |
+| `world_cut_tail` | 248150 | 0 / 8 | -20 LUFS | trim, fades, two-pass loudnorm |
+| `erase_crack` | 554564 | 0 / 1.5 | -14 LUFS | trim, fades, two-pass loudnorm, peak limiting |
+| `erase_inhale` | 331620 | 0 / 2.3 | -20 LUFS | trim, fades, two-pass loudnorm |
+| `limbo_heartbeat` | 249716 | 0 / 1.2 | -20 LUFS | trim, fades, two-pass loudnorm, peak limiting, loop-edge fades |
+| `sky_kick` | 182050 | 0 / 2.5 | -14 LUFS | trim, fades, two-pass loudnorm |
+| `stomp` | 275809 | 0 / 3 | -14 LUFS | trim, fades, two-pass loudnorm, peak limiting |
+| `sheath_ring` | 519413 | 2.31 / 1.1 | -14 LUFS | trim, fades, two-pass loudnorm, peak limiting |

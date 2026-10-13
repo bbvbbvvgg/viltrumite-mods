@@ -60,7 +60,13 @@ Stage 7 execution note (2026-10-13): license questions are deferred to sources/P
 - Writes `.ogg`, then `.ogg.b64` into binassets; `--check` rebuilds into a temp dir and compares decoded PCM hashes (encoder builds differ between machines).
 - `ReinhardSoundsTest`: `everySoundCredited` (sources file vs `sounds.json`), `noPlaceholdersLeft`, `everyFileExists`.
 
-- [ ] Step 1 write `ReinhardSoundsTest`; run `./gradlew :viltrumitecore:test --tests '*ReinhardSoundsTest'` → FAIL (placeholders). Step 2 write the script, run it on the user's sources, listen to each output. Step 3 update `sounds.json`. Step 4 PASS; `./gradlew build` (b64 decode). Step 5 commit `feat(reinhard): final sounds`.
+- [x] Step 1: write `ReinhardSoundsTest`; assertion RED (3/6 missing reference/file/stream). Python converter RED observed too.
+- [x] Step 2a: implement the reproducible script, process 14 allowed outputs; source digests, two-pass normalization, format/peak gates and decoded-PCM `--check` pass.
+- [ ] Step 2b: listen to every output (not performed; no-game/no-runtime instruction, artistic offsets unaccepted).
+- [x] Step 3: update only the 14 allowed `sounds` arrays; all 33 event IDs unchanged. Blocked blast/rain and unspecified legacy cues explicitly retained.
+- [x] Step 4: PASS; `./gradlew build` (b64 decode), 1215/1215 JVM tests + 9/9 Python tests.
+- [x] Step 5: commit `feat(reinhard): final sounds`.
+
 
 ### Task 3: Mix and in-game listening
 
