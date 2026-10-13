@@ -13,11 +13,12 @@ public final class LevelTickPhases {
       CONTROL,
       PROJECTILES,
       RESOURCE_REGEN,
-      CARVE
+      CARVE,
+      WORLD_CUT
    }
 
    private static final List<System> START = List.of(System.CONTROL);
-   private static final List<System> END = List.of(System.PROJECTILES, System.RESOURCE_REGEN, System.CARVE);
+   private static final List<System> END = List.of(System.PROJECTILES, System.RESOURCE_REGEN, System.WORLD_CUT, System.CARVE);
 
    private LevelTickPhases() {
    }

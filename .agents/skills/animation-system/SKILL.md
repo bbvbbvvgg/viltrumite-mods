@@ -348,3 +348,9 @@ To add a screen effect:
 - Many VFX lists are plain `ArrayList` and are not cleared on world change. Touch them only on the render thread.
 - `MeteorImpactVFXManager` removes impacts at 600 ms, so its 2500 ms shake window is cut.
 - `tickGrab` in `PlayerEntityCoreMixin` was rewritten by hand after decompile and is not confirmed in-game. Compare grab behaviour with the original JAR.
+## Reinhard Stage 5 timed World Cut
+- DRAWN idle applies before the action overlay; draw/sheathe still apply after it. This prevents idle_holy_drawn from erasing the sword-arm action. During World Cut, RenderHandEvent routes both physical arms through the empty-arm/RenderArmEvent path even when a slot holds an item; slot contents are unchanged and item visuals return afterward.
+- `world_cut` is a 4 s action overlay: both arms lift Reid over the head during the first second, then hold low through the silence. `ReinhardFirstPersonPose.worldCut` applies to both arms in RenderArmEvent. No new pose mixin or animation engine.
+- `WorldCutScene` receives cast UUID, caster UUID, fixed yaw/origin, surface profile and start game time; entity disappearance cannot stop it. White ground/sky billboards, dust, edge cracks, white-gold front and haze use PixelVfx. Skip the shader shadow pass and restore render state.
+- `WorldCutFov` reads a tick-refreshed array without allocating in ComputeFov; primitive finite-line distance, real-time exponential easing. Each scene excludes its own caster. SoundDuck owner is the cast UUID; release on blast, timeout and level unload.
+- `HeroImpactFx.shockwaveVisual` adds only the existing rings. It deliberately does not add shake/dust; the scene excludes caster blast shake and uses the shared CameraShake for other viewers. Check both views, a LAN viewer at 30/150 blocks and shaders manually.

@@ -6,6 +6,12 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
  * changes constants here.
  */
 public final class ReinhardRules {
+   public static final int WORLD_CUT_SWING = 20;
+   public static final int WORLD_CUT_SILENCE = 60;
+   public static final int WORLD_CUT_BLAST = WORLD_CUT_SWING + WORLD_CUT_SILENCE;
+   public static final int WORLD_CUT_WAVE_TICKS = 30;
+   public static final int WORLD_CUT_COOLDOWN = 900;
+   public static final int WORLD_CUT_VIEW_RANGE = 320;
    // ---- chassis (spec §3.1) ----
    public static final float MAX_HEALTH = 20.0F;
    /** Share of ordinary damage that never lands. */
@@ -77,6 +83,21 @@ public final class ReinhardRules {
    /** Action lock and the clip; the cuts land one per tick from {@link #CUT_FIRST_TICK}. */
    public static final int CUT_TICKS = 20;
    public static final int CUT_FIRST_TICK = 4;
+
+   // World Cut (spec §7.6): dimensions in blocks; max build height is exclusive.
+   public static final int CUT_LENGTH = 200;
+   public static final int CUT_WIDTH = 17;
+   public static final int CUT_DEPTH_MIN = 45;
+   public static final int CUT_DEPTH_MAX = 50;
+   public static final int CUT_ABOVE = 20;
+   public static final int CUT_START_OFFSET = 2;
+   public static final double CUT_DEBRIS_SHARE = 0.002;
+   public static final int CUT_DEBRIS_MAX = 300;
+   public static final int CUT_DEBRIS_LAYERS = 4;
+   public static final double CUT_DEBRIS_OUTWARD = 0.6;
+   public static final double CUT_DEBRIS_FORWARD = 0.25;
+   public static final double CUT_DEBRIS_UP = 0.75;
+   public static final int CUT_CARVE_PRIORITY = 10;
 
    // ---- Divine Protection of the Phoenix (spec §4.2) ----
    /** Online ticks before the next revive (10 min). */

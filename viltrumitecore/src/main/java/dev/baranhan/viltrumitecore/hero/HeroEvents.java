@@ -366,6 +366,11 @@ public final class HeroEvents {
    }
 
    @SubscribeEvent
+   public static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+      dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.clearAll();
+   }
+
+   @SubscribeEvent
    public static void onLevelTick(TickEvent.LevelTickEvent event) {
       if (!(event.level instanceof ServerLevel level)) {
          return;
@@ -377,6 +382,7 @@ public final class HeroEvents {
             case PROJECTILES -> HeroProjectiles.tickPending(level);
             case RESOURCE_REGEN -> HeroResourceRegen.flush(level);
             case CARVE -> CarveJobs.tick(level);
+            case WORLD_CUT -> dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.get(level).tick(level);
          }
       }
    }

@@ -47,6 +47,10 @@ public final class ReinhardSounds {
    /** Placeholder until Stage 7 (Robinhood76 whoosh): the sweep, at three pitches. */
    public static final RegistryObject<SoundEvent> CUT_RAIN = reg("reinhard.cut_rain");
 
+   public static final RegistryObject<SoundEvent> WORLD_CUT_SILENCE = reg("reinhard.world_cut_silence");
+   public static final RegistryObject<SoundEvent> WORLD_CUT_BLAST = reg("reinhard.world_cut_blast");
+   public static final RegistryObject<SoundEvent> WORLD_CUT_TAIL = reg("reinhard.world_cut_tail");
+
    private ReinhardSounds() {
    }
 

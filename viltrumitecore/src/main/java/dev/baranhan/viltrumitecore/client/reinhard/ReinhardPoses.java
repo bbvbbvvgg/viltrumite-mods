@@ -177,6 +177,15 @@ public final class ReinhardPoses {
    }
 
    /** The hand that holds Reid (right, while drawing, drawn or sheathing) draws no vanilla held item. */
+   public static HumanoidArm physicalArm(HumanoidArm main, net.minecraft.world.InteractionHand hand) {
+      return hand == net.minecraft.world.InteractionHand.MAIN_HAND ? main : main.getOpposite();
+   }
+
+   /** Two-handed cinematic actions hide slot items without altering inventory. */
+   public static boolean drawsHeldItem(HumanoidArm arm, ReidPhase phase, @Nullable ReinhardAbility action) {
+      return action != ReinhardAbility.WORLD_CUT && drawsHeldItem(arm, phase);
+   }
+
    public static boolean drawsHeldItem(HumanoidArm arm, ReidPhase phase) {
       return arm != HumanoidArm.RIGHT || phase == ReidPhase.SHEATHED;
    }
