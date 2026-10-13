@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.control;
 
+import dev.baranhan.viltrumitecore.hero.BodyIsolation;
 import dev.baranhan.viltrumitecore.hero.HeldInputs;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket;
@@ -11,8 +12,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 /** A single, bounded, server-wide cinematic pause. Controls remain level-owned. */
 public final class WorldPause {
@@ -55,6 +58,16 @@ public final class WorldPause {
    public static void ownerLeft(MinecraftServer server,UUID owner) {
       Session s=SESSIONS.get(server); if(s!=null && s.owner.equals(owner)) end(server,EndReason.OWNER_LEFT);
    }
+   /** Forge logout fires before vanilla saves the still-resolvable player. */
+   public static void onLeave(ServerPlayer player) {
+      MinecraftServer server=player.getServer();
+      Session s=server==null?null:SESSIONS.get(server);
+      if(s!=null) {
+         if(s.owner.equals(player.getUUID())) end(server,EndReason.OWNER_LEFT);
+         else s.leave(new LiveBackend(server),player.getUUID());
+      }
+      ControlManager.restorePendingTarget(player);
+   }
    public static void end(MinecraftServer server,EndReason reason) {
       Session s=SESSIONS.end(server,new LiveBackend(server),reason); if(s!=null) finish(server,s,reason);
    }
@@ -83,10 +96,28 @@ public final class WorldPause {
       if(!(entity.level() instanceof ServerLevel level)) return false;
       Session s=SESSIONS.get(level.getServer()); return s!=null && s.protect && s.isPaused(entity.getUUID());
    }
+   /** Suspend carry/terrain grind, without releasing or stealing its owner. */
+   public static boolean blocksMovement(boolean actorPaused,boolean targetPaused,boolean actorIsolated,boolean targetIsolated) {
+      return actorPaused || targetPaused || actorIsolated || targetIsolated;
+   }
+   public static boolean blocksMovement(Entity actor,@Nullable Entity target) {
+      return blocksMovement(isPaused(actor),target!=null && isPaused(target),
+         BodyIsolation.active(actor),BodyIsolation.active(target));
+   }
+   public static boolean suspendForeignMovement(boolean pausedPlayer,@Nullable UUID pause,@Nullable UUID effect) {
+      return pausedPlayer && pause!=null && !pause.equals(effect);
+   }
+   public static boolean suspendForeignMovement(Entity target,UUID effect) {
+      if(!(target instanceof ServerPlayer) || !(target.level() instanceof ServerLevel level)) return false;
+      Session s=SESSIONS.get(level.getServer());
+      return s!=null && suspendForeignMovement(s.isPaused(target.getUUID()),s.id,effect);
+   }
    /** Hide only this pause's anchor decoration, not another owner's stasis/freeze. */
    public static boolean hidesAnchor(boolean active,@Nullable UUID pause,@Nullable UUID effect) {
       return active && pause!=null && pause.equals(effect);
    }
+   /** Enemy also includes hostile Mob subclasses outside Monster (dragon, ghast, hoglin). */
+   static boolean hostileType(Class<?> type) { return Enemy.class.isAssignableFrom(type); }
    record Target(UUID id,String level) {}
    interface Backend {
       List<Target> players();
@@ -94,6 +125,8 @@ public final class WorldPause {
       long now(Target target);
       void freeze(Target target,UUID owner,UUID id,long until);
       void release(Target target,UUID id,ReleaseReason reason);
+      @Nullable default Vec3 position(Target target) {return null;}
+      default void hold(Target target,Vec3 anchor) {}
    }
    static final class Coordinator<K> {
       private final Map<K,Session> sessions=new HashMap<>();
@@ -108,6 +141,7 @@ public final class WorldPause {
    static final class Session {
       final UUID owner,id; final int maxTicks,mobRadius; final boolean protect;
       final Set<Target> tracked=new HashSet<>(); Set<UUID> paused=Set.of();
+      final Map<Target,Vec3> anchors=new HashMap<>();
       ResourceKey<Level> ownerLevel; Listener listener; int age; boolean ended;
       Session(UUID owner,UUID id,int ticks,boolean protect,int radius) {
          this.owner=owner; this.id=id; this.maxTicks=ticks; this.protect=protect; this.mobRadius=radius;
@@ -121,9 +155,29 @@ public final class WorldPause {
          current.removeIf(t->owner.equals(t.id()));
          // Release transferred/left targets before the new level captures its flags.
          for(Target old:tracked) if(!current.contains(old)) env.release(old,id,ReleaseReason.INTERRUPTED);
+         anchors.keySet().retainAll(current);
          Set<UUID> ids=new HashSet<>();
-         for(Target target:current) {ids.add(target.id()); env.freeze(target,owner,id,env.now(target)+5);}
+         for(Target target:current) {
+            ids.add(target.id());
+            Vec3 position=env.position(target);
+            if(position==null) anchors.remove(target); // Limbo owns its own position/gravity.
+            else anchors.putIfAbsent(target,position);
+            env.freeze(target,owner,id,env.now(target)+5);
+            Vec3 anchor=anchors.get(target);
+            if(anchor!=null) env.hold(target,anchor);
+         }
          tracked.addAll(current); paused=Set.copyOf(ids);
+      }
+      void leave(Backend env,UUID who) {
+         for(Iterator<Target> it=tracked.iterator();it.hasNext();) {
+            Target target=it.next();
+            if(who.equals(target.id())) {
+               env.release(target,id,ReleaseReason.INTERRUPTED);
+               anchors.remove(target); it.remove();
+            }
+         }
+         Set<UUID> remaining=new HashSet<>(paused); remaining.remove(who);
+         paused=Set.copyOf(remaining);
       }
       boolean tick(Backend env) {
          if(ended) return true;
@@ -134,7 +188,7 @@ public final class WorldPause {
          if(ended) return; ended=true; paused=Set.of();
          ReleaseReason release=reason==EndReason.DONE?ReleaseReason.EXPIRED:ReleaseReason.INTERRUPTED;
          for(Target target:tracked) env.release(target,id,release);
-         tracked.clear();
+         tracked.clear(); anchors.clear();
       }
    }
    private record LiveBackend(MinecraftServer server) implements Backend {
@@ -149,19 +203,36 @@ public final class WorldPause {
          for(Target key:players) {
             ServerLevel level=level(key.level()); Entity player=level==null?null:level.getEntity(key.id());
             if(player==null) continue;
-            for(Monster mob:level.getEntitiesOfClass(Monster.class,player.getBoundingBox().inflate(radius),m->m.isAlive() && m.distanceToSqr(player)<=radius*radius))
+            for(Mob mob:level.getEntitiesOfClass(Mob.class,player.getBoundingBox().inflate(radius),m->m.isAlive() && hostileType(m.getClass()) && m.distanceToSqr(player)<=radius*radius))
                result.add(new Target(mob.getUUID(),key.level()));
          }
          return List.copyOf(result);
       }
       public long now(Target target) {ServerLevel level=level(target.level()); return level==null?0:level.getGameTime();}
+      public Vec3 position(Target key) {
+         ServerLevel level=level(key.level()); Entity entity=level==null?null:level.getEntity(key.id());
+         return entity instanceof ServerPlayer player && player.isAlive() && !BodyIsolation.active(player)
+            ? player.position() : null;
+      }
+      public void hold(Target key,Vec3 anchor) {
+         ServerLevel level=level(key.level()); Entity entity=level==null?null:level.getEntity(key.id());
+         if(!(entity instanceof ServerPlayer player) || BodyIsolation.active(player)) return;
+         if(player.getDeltaMovement().lengthSqr()>0) player.hurtMarked=true;
+         player.setDeltaMovement(Vec3.ZERO); player.fallDistance=0;
+         // No gravity/AI capture here: even a refused FREEZE has an authoritative
+         // position, while foreign controls keep their ownership and saved flags.
+         if(player.distanceToSqr(anchor)>0) {
+            player.connection.teleport(anchor.x,anchor.y,anchor.z,player.getYRot(),player.getXRot());
+         }
+      }
       public void freeze(Target key,UUID owner,UUID id,long until) {
          ServerLevel level=level(key.level()); Entity e=level==null?null:level.getEntity(key.id());
-         if(!(e instanceof LivingEntity target) || dev.baranhan.viltrumitecore.hero.BodyIsolation.active(target)) return;
+         if(!(e instanceof LivingEntity target) || BodyIsolation.active(target)) return;
          ControlManager.restorePendingTarget(target);
          if(target instanceof ServerPlayer player) {HeldInputs.releaseAll(player); player.stopUsingItem();}
          ControlManager cm=ControlManager.get(level);
-         if(!cm.refresh(key.id(),owner,id,ControlKind.FREEZE,until)) cm.tryAcquire(target,owner,id,ControlKind.FREEZE,until);
+         if(!cm.refresh(key.id(),owner,id,ControlKind.FREEZE,until)) cm.tryAcquireRecoverableFreeze(target,owner,id,until);
+         cm.rememberPauseFlags(key.id(),owner,id,target.getPersistentData());
       }
       public void release(Target key,UUID id,ReleaseReason reason) {
          ServerLevel level=level(key.level()); if(level!=null) ControlManager.get(level).release(key.id(),id,reason);

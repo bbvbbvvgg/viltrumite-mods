@@ -108,7 +108,9 @@ Run `grep -rln "HeroId.REGULUS" viltrumitecore/src/main/java` to see the current
 Reference new-style hero: `hero/homelander/` + `client/homelander/` (no new shared branches).
 
 ## Body loss without an entity clone
-- `CleanupReason.ERASED` = death without a new entity. Treat it like DEATH. Never rely on the clone to drop transient state. `losesBody()` means DEATH or ERASED.
+- `CleanupReason.ERASED` = death on the same entity, without a new entity clone. Treat it like DEATH. Never rely on the clone to drop transient state. `losesBody()` means DEATH or ERASED.
 - `HeroEvents.prepareErasure` calls hero cleanup first, then releases held inputs, controls/projectiles and both legacy grab directions, resets motion and refreshes the same session's life totem. Persistent cooldowns stay. World-owned death-surviving domes/jobs stay.
 - Hero cleanup uses its death-copy policy after world-side channel release. No new chassis removal is allowed for ERASED.
 - `HeroEvents.freshBody` is the shared respawn/return path: baseline, pending flags, flight sync, owner re-send, hero.onRespawn, then the existing legacy Evangelium rule. Limbo calls it after returning to spawn.
+
+The same entity must not inherit a previous body's channel, grab, action pose or flight state. Invoke `prepareErasure` before scheduling isolation, not on return. Death-copy policies keep session UUID / Phoenix / persistent cooldowns, Regulus cooldowns, Iron Man roster/pod and Reinhard mode; reset their transient body fields. Restore vitals and gravity at the shared world spawn before `freshBody`; do not call vanilla death/clone/statistics paths or remove the hero's chassis/flight grant.

@@ -205,16 +205,17 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 **Files:**
 - Modify: `tools/assets/make_reinhard_clips.py` (clip `world_erasure`: Reid raised vertically before the face for 30 t, a slow single cut down and to the side at t 30, hold; first person: blade rises into view, cuts across at t 30), `ReinhardPoses`, `.agents/skills/add_hero/references/shared-toolkit.md` (`WorldPause`, `ControlManager.refresh`, `CleanupReason.ERASED`, `freshBody`), `.agents/skills/add_hero/references/hero-seam.md` (`ERASED` rule), `.agents/skills/animation-system/SKILL.md` (erasure uniforms), `.memory-bank/project.md` (limbo dimension, pause rules), `SESSION.md`, core version (minor +1)
 
-- [ ] Step 1: regenerate clips (`python3 tools/assets/make_reinhard_clips.py`), the diff is only the new clip.
-- [ ] Step 2: full verification list, `NoHeroBranchTest`, dedicated server start, `/reload` during an erasure (pause ends, no stuck freeze).
+- [x] Step 1: regenerate clips (`python3 tools/assets/make_reinhard_clips.py`), the diff is only the new clip.
+- [x] Automated Step 2: full verification list and `NoHeroBranchTest` (final: 1209/1209 full, core 1197 + flight 12, selected core 570/570, Reinhard 459/459; checker 0 new / 4 known, diff clean; 4 Important fixed in one TDD pass, 2 Minor deferred).
+- [ ] Manual Step 2: dedicated server start, `/reload` during an erasure (pause ends, no stuck freeze). Not run by user instruction.
 - [ ] Step 3: in game both views; 3 players (caster, target, observer in the Nether); mob, Wither, player, Lion's Heart; spam the key during an active erasure (refusal, no cooldown); target logs out in limbo and back; erased Regulus gets the Evangelium back on return.
-- [ ] Step 4: commit `docs(reinhard): stage 6 notes`; push `feat/reinhard-stage6`; PR «Рейнхард, этап 6: Стирание мира».
+- [x] Step 4: commit `docs(reinhard): stage 6 notes`; immediate push `feat/reinhard-stage6`; PR «Рейнхард, этап 6: Стирание мира» against `feat/reinhard-stage5` (publication receipt/commit SHA in PR).
 
-Acceptance criteria closed: §11.10, §11.7 (§7.7 part).
+Acceptance targets: §11.10, §11.7 (§7.7 part). Runtime acceptance is not closed by pure tests; the unchecked manual steps above remain mandatory.
 
 ## Risks and pitfalls
 
-- `teleportTo` to another dimension inside a tick iteration can crash: always `server.execute(...)`.
+- `teleportTo` to another dimension inside a tick iteration can crash: queue with `ServerEndTasks` for server END. Ruling: `server.execute(...)` may execute inline on the server thread, so it is not sufficient here.
 - A data dimension loads with the world; old worlds get it on the next start. Removing the mod later leaves a harmless `dimensions/viltrumitecore/the_void` folder.
 - Per-level `ControlManager`: a player who changes dimension during the pause leaves a record in the old level; it expires in ≤ 5 t and `end` releases it anyway; the new level gets a fresh acquire on the next tick.
 - `SoundDuck` MASTER to 0 also mutes UI clicks for ~4 s — acceptable for a cinematic.

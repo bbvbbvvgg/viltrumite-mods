@@ -228,7 +228,7 @@ public final class HeroEvents {
    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
       if (event.getEntity() instanceof ServerPlayer player) {
          Limbo.onLogout(player);
-         WorldPause.ownerLeft(player.getServer(),player.getUUID());
+         WorldPause.onLeave(player);
          HeldInputs.releaseAll(player);
          HeroDamageLayers.forget(player);
          HeroAirJump.forget(player);

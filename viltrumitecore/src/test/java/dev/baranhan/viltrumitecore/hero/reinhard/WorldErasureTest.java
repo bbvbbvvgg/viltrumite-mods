@@ -27,6 +27,22 @@ class WorldErasureTest {
    @ParameterizedTest @EnumSource(Verdict.class) void verdicts(Verdict verdict){var state=new ReinhardState();assertTrue(WorldErasure.tryStart(state,good(),()->true));var e=new Fake();var c=WorldErasure.timed(verdict,e);c.advance(90);assertEquals(verdict==Verdict.MORTAL,c.erase());assertEquals(verdict==Verdict.MORTAL?1:0,e.discards);assertEquals(1200,state.cooldowns[13]);}
    @Test void verdictFrozenAtCast(){var stays=new Fake();stays.absolute=true;var c=WorldErasure.timed(Verdict.of(false,stays.absolute),stays);stays.absolute=false;c.advance(90);assertEquals(0,stays.discards);var erased=new Fake();var m=WorldErasure.timed(Verdict.of(false,false),erased);erased.absolute=true;m.advance(90);assertEquals(1,erased.discards);}
    @ParameterizedTest @EnumSource(value=WorldPause.EndReason.class,names={"OWNER_LEFT","SERVER_STOP","RELOAD","WATCHDOG"}) void casterLeavesMidway(WorldPause.EndReason reason){var e=new Fake();var c=WorldErasure.timed(Verdict.MORTAL,e);c.advance(60);c.interrupt(reason);c.advance(90);assertEquals(0,e.discards);assertTrue(c.ended());assertEquals(reason,e.end);}
+   @ParameterizedTest @ValueSource(ints={89,90,149,150})
+   void pureInterruptionBoundariesDoNotUndoOrRepeatRemoval(int age) {
+      for (WorldPause.EndReason reason : List.of(WorldPause.EndReason.OWNER_LEFT, WorldPause.EndReason.SERVER_STOP, WorldPause.EndReason.RELOAD, WorldPause.EndReason.WATCHDOG)) {
+         for (WorldErasure.TargetKind kind : List.of(WorldErasure.TargetKind.MOB, WorldErasure.TargetKind.PLAYER)) {
+            var e = new Fake(); e.kind = kind;
+            var c = WorldErasure.timed(Verdict.MORTAL, e);
+            c.advance(age); c.interrupt(reason); c.advance(90); c.advance(150);
+            assertTrue(c.ended());
+            assertEquals(age >= 150 ? WorldPause.EndReason.DONE : reason, e.end);
+            assertEquals(kind == WorldErasure.TargetKind.MOB && age >= 90 ? 1 : 0, e.discards);
+            List<String> order = age < 90 ? List.of()
+               : kind == WorldErasure.TargetKind.PLAYER ? List.of("cleanup", "limbo") : List.of("discard");
+            assertEquals(order, e.order);
+         }
+      }
+   }
    @Test void targetEdgeCases(){var e=new Fake();var c=WorldErasure.timed(Verdict.MORTAL,e);e.present=false;c.advance(90);e.present=true;c.advance(100);assertEquals(0,e.discards);assertTrue(c.advance(150));}
    @Test void playerCleanupBeforeTransfer(){var e=new Fake();e.kind=WorldErasure.TargetKind.PLAYER;WorldErasure.timed(Verdict.MORTAL,e).advance(90);assertEquals(List.of("cleanup","limbo"),e.order);assertEquals(0,e.discards);}
    @Test void ownCastStaysBusyUntilPauseEnd(){var s=new ReinhardState();var e=new Fake();WorldErasure.tryStart(s,good(),()->true);s.worldErasure=WorldErasure.timed(Verdict.MORTAL,e);s.action.cancel();assertTrue(s.busy());s.worldErasure.advance(149);assertTrue(s.busy());s.worldErasure.advance(150);assertFalse(s.busy());}

@@ -18,6 +18,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -38,7 +39,7 @@ public final class Limbo {
 
    public interface Body {
       CompoundTag data(); boolean online(); boolean inVoid();
-      void closeContainer(); void clearInventory(); void clearExperience();
+      void closeContainer(); void discardCarried(); void clearInventory(); void clearExperience();
       void teleportToVoid(); void holdVoid(); void startPacket(int remaining);
       void requestReturn(); void teleportToSharedSpawn(); void restoreVitals();
       void endPacket(); void freshBody();
@@ -52,11 +53,13 @@ public final class Limbo {
    public static void resume(Body body) {
       if(!body.online() || !BodyIsolation.active(body.data())) return;
       if(remaining(body.data()) <= 0) {body.requestReturn(); return;}
-      body.closeContainer();
       CompoundTag tag = body.data().getCompound(TAG);
       if(tag.getBoolean("pendingStrip")) {
+         // Free capacity before vanilla returns personal crafting inputs; consume
+         // both the cursor and those returned stacks, never external storage.
+         body.clearInventory(); body.discardCarried(); body.closeContainer();
          body.clearInventory(); body.clearExperience(); tag.putBoolean("pendingStrip", false);
-      }
+      } else body.closeContainer();
       body.teleportToVoid(); body.startPacket(remaining(body.data()));
    }
    public static void tick(Body body) {
@@ -143,6 +146,7 @@ public final class Limbo {
       public boolean online() {return player.getServer() != null && player.getServer().getPlayerList().getPlayer(player.getUUID()) == player;}
       public boolean inVoid() {return player.level().dimension().equals(dimension());}
       public void closeContainer() {player.closeContainer();}
+      public void discardCarried() {player.containerMenu.setCarried(ItemStack.EMPTY); player.inventoryMenu.setCarried(ItemStack.EMPTY);}
       public void clearInventory() {player.getInventory().clearContent(); player.getInventory().setChanged(); player.inventoryMenu.broadcastChanges();}
       public void clearExperience() {player.setExperienceLevels(0); player.setExperiencePoints(0); player.totalExperience = 0;}
       public void teleportToVoid() {

@@ -1051,6 +1051,9 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
       if (!player.isRemoved() && player.isAlive()) {
          LivingEntity currentTarget;
          currentTarget = this.getGrabbedTarget();
+         if (dev.baranhan.viltrumitecore.hero.control.WorldPause.blocksMovement(player, currentTarget)) {
+            return; // Keep the legacy owner, but suspend carry/acquire/terrain grind.
+         }
          if (!player.level().isClientSide() && this.isTryingToGrab() && currentTarget == null) {
             Vec3 eyePos = player.getEyePosition();
             Vec3 lookDir = player.getLookAngle().normalize();
@@ -1068,6 +1071,9 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
              while (targetBox.hasNext()) {
                 Entity entity = (Entity)targetBox.next();
                 if (entity instanceof LivingEntity target && target.isAlive()) {
+                  if (dev.baranhan.viltrumitecore.hero.control.WorldPause.blocksMovement(player, target)) {
+                     continue;
+                  }
                   boolean isAlreadyGrabbed = false;
 
                   for (Player p : player.level().players()) {

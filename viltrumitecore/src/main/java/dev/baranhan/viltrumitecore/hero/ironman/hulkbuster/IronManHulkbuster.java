@@ -9,6 +9,7 @@ import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
 import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
+import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.ironman.IronManCombat;
 import dev.baranhan.viltrumitecore.hero.ironman.IronManCombatSounds;
@@ -379,6 +380,9 @@ public final class IronManHulkbuster {
          return;
       }
 
+      if (WorldPause.blocksMovement(player, target)) {
+         return;
+      }
       kit.grabTicks++;
       if (kit.grabTicks > HulkbusterKit.GRAB_MAX_TICKS) {
          releaseGrab(player, state, ReleaseReason.NORMAL_END);

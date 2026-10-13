@@ -24,6 +24,11 @@ public final class WorldPauseClient {
       pauseId=p.pauseId(); owner=p.owner(); left=Math.max(0,p.ticksLeft());
    }
    public static boolean active() {return pauseId!=null && left>0;}
+   public static int remainingTicks() {return Math.max(0,left);}
+   /** Same unpaused local clock as the cinematic, including an integrated game. */
+   public static void tick(boolean gamePaused) {
+      if(!gamePaused && pauseId!=null && --left<=0) clear();
+   }
    public static boolean isPaused() {
       var player=Minecraft.getInstance().player; return active() && player!=null && !player.getUUID().equals(owner);
    }
@@ -39,7 +44,9 @@ public final class WorldPauseClient {
       if(isPaused()) {e.setCanceled(true); e.setSwingHand(false);}
    }
    @SubscribeEvent public static void onTick(TickEvent.ClientTickEvent e) {
-      if(e.phase==TickEvent.Phase.END && pauseId!=null && --left<=0) clear();
+      if(e.phase==TickEvent.Phase.END) {
+         Minecraft mc=Minecraft.getInstance(); tick(mc.isPaused());
+      }
    }
    @SubscribeEvent public static void onLogout(ClientPlayerNetworkEvent.LoggingOut e) {clear();}
 }

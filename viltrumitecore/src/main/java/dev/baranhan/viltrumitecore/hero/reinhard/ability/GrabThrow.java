@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
 import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
+import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
@@ -235,6 +236,10 @@ public final class GrabThrow implements AbilityHandler {
          return;
       }
 
+      if (WorldPause.blocksMovement(player, target)) {
+         return;
+      }
+
       if (manager.isControlled(player)) {
          // A control on Reinhard himself (a PULL; FREEZE / STASIS already cancel every action).
          release(state, ReleaseReason.INTERRUPTED);
@@ -266,6 +271,9 @@ public final class GrabThrow implements AbilityHandler {
    }
 
    private static void hold(ServerPlayer player, LivingEntity target) {
+      if (WorldPause.blocksMovement(player, target)) {
+         return;
+      }
       Vec3 at = holdPoint(player, target);
       if (target instanceof ServerPlayer victim) {
          victim.teleportTo(at.x, at.y, at.z);
