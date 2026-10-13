@@ -24,6 +24,9 @@ public final class HomelanderState {
    public int roarAnim;
    public final Regen regen = new Regen();
 
+   /** No combat state or regeneration debt survives a lost body. */
+   public HomelanderState erasedCopy() {return new HomelanderState();}
+
    public boolean laserBeamOn() {
       return this.laserAge >= HomelanderRules.LASER_CHARGE_TICKS;
    }

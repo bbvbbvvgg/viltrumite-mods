@@ -564,6 +564,9 @@ public final class ReinhardHero implements HeroDefinition {
       ReinhardState state = ReinhardState.of(player);
       if (state != null) {
          ReinhardActions.cleanup(player, state, reason);
+         if (reason == CleanupReason.ERASED && player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer) {
+            heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
+         }
       }
 
       if (reason != CleanupReason.DISCONNECT) {

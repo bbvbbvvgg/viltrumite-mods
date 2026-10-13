@@ -294,7 +294,7 @@ public final class ControlManager {
          this.release(entry.getKey(), record.effectId, cleanupReleaseReason(reason));
       }
 
-      if (reason != CleanupReason.DEATH) {
+      if (!reason.losesBody()) {
          if (this.domes.values().removeIf(dome -> dome.caster().equals(caster))) {
             this.dirty = true;
          }
@@ -305,13 +305,13 @@ public final class ControlManager {
 
    /** Pure predicate: dome-owned STASIS is the only control a death keeps. */
    static boolean releaseOnCasterCleanup(ControlKind kind, boolean domeLinked, CleanupReason reason) {
-      return !(reason == CleanupReason.DEATH && kind == ControlKind.STASIS && domeLinked);
+      return !(reason.losesBody() && kind == ControlKind.STASIS && domeLinked);
    }
 
    /** Maps a caster cleanup to the release reason victims see (no freeze). */
    public static ReleaseReason cleanupReleaseReason(CleanupReason reason) {
       return switch (reason) {
-         case DEATH -> ReleaseReason.CASTER_DEATH;
+         case DEATH, ERASED -> ReleaseReason.CASTER_DEATH;
          case HERO_CHANGE -> ReleaseReason.HERO_CHANGE;
          case DISCONNECT -> ReleaseReason.CASTER_DISCONNECT;
       };

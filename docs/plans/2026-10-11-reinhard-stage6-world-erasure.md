@@ -73,7 +73,9 @@ See the overview (paths `res/`, `mc/`, `data/`; `CoreMessages`; real `ControlMan
 - Order on erase (server): `hero.cleanup(player, ERASED)` → generic resets above → `Limbo.send` (Task 4). On return: `Limbo.returnToSpawn` → `HeroEvents.freshBody(player)`.
 - Rule written into `hero-seam.md`: "`ERASED` = death without a new entity. Treat like `DEATH`; never rely on the clone to drop state."
 
-- [ ] Step 1 tests: `losesBody` table; `cleanupReleaseReasonErasedIsDeath`; `ErasedLifecycleTest.sameEntityFreshAfterReturn` — for each hero (Viltrumite, Regulus, Homelander, Iron Man, Reinhard) build state "mid-everything" on one fake player, run `cleanup(ERASED)` + `freshBody`, assert transient state equals `newState()` except the documented kept fields; `noControlOwnedOrHeld`; `heldInputsEmpty`; `grabTagGone`. Step 2 FAIL. Step 3 implement. Step 4 PASS + full suite (other heroes' death tests unchanged). Step 5 commit `feat(hero): erased cleanup reason and fresh body path`.
+- [x] Step 1 tests: `losesBody` table; `cleanupReleaseReasonErasedIsDeath`; `ErasedLifecycleTest.sameEntityFreshAfterReturn` — for each hero (Viltrumite, Regulus, Homelander, Iron Man, Reinhard) build state "mid-everything" on one fake player, run `cleanup(ERASED)` + `freshBody`, assert transient state equals `newState()` except the documented kept fields; `noControlOwnedOrHeld`; `heldInputsEmpty`; `grabTagGone`. Step 2 FAIL. Step 3 implement. Step 4 PASS + full suite (other heroes' death tests unchanged). Step 5 commit `feat(hero): erased cleanup reason and fresh body path`.
+
+- [x] Automated Steps 1–5: RED → GREEN (14 lifecycle tests), existing control tests unchanged, full build 1034 tests; checker 0 new / 4 known; diff check.
 
 ### Task 3: Erasure server timeline, frozen verdict, packet
 

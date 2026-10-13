@@ -63,6 +63,8 @@ public class ViltrumiteHero implements HeroDefinition {
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       if (reason == CleanupReason.HERO_CHANGE) {
          LegacyKit.reset(player);
+      } else if (reason == CleanupReason.ERASED && player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core) {
+         LegacyKit.resetActions(core);
       }
    }
 

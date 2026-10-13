@@ -1007,12 +1007,15 @@ public class IronManHero implements HeroDefinition {
          dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.stopSignature(player, state);
          boolean wasBig = state.hulkbuster.big();
          switch (reason) {
-            case DEATH -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.onDeath(player, state);
+            case DEATH, ERASED -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.onDeath(player, state);
             case DISCONNECT -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.onLogout(player, state);
             case HERO_CHANGE -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.releaseGrab(player, state, dev.baranhan.viltrumitecore.hero.control.ReleaseReason.HERO_CHANGE);
          }
 
          state.onCleanup(reason);
+         if (reason == CleanupReason.ERASED && player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer) {
+            heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
+         }
          if (reason != CleanupReason.DISCONNECT) {
             // Threat brackets, missile locks and the scan glow must not outlive the suit (stale ESP boxes).
             dev.baranhan.viltrumitecore.hero.HeroRegistry.clearOwnerSections(player, OWNED_SECTIONS);

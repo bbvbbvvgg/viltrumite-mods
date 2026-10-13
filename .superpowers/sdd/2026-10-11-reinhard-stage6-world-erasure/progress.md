@@ -29,9 +29,35 @@ Branch: feat/reinhard-stage6 from feat/reinhard-stage5; BASE f93f27fa2634268c968
 
 - Ruling (Task 1): Pure target keys use dimension strings; ResourceKey/Level static initialization needs a running registry bootstrap in plain JUnit — live adapter resolves the exact dimension key — cost if wrong: typo in dimension mapping; actual keys come from server dimensions.
 
+- Ruling (Task 2): Replace hero state with the hero's exact death-copy policy after world-side cleanup; the ServerPlayer identity stays the same — safer than enumerating forgotten future fields — cost if wrong: retained fields follow existing clone semantics, not an undocumented expectation.
+- Ruling (Task 2): BodyLoss is a hero-neutral sequencing seam with pure state/fake-body tests; real ServerPlayer adapters remain manual — no game/server — cost if wrong: event or inventory/flight adapter faults can escape unit tests.
+- Ruling (Task 2): Keep death-surviving dome-owned STASIS and launched world jobs; ERASED uses CASTER_DEATH, not hero-change semantics — spec/Stage 4 world ownership — cost if wrong: a world-owned effect survives its erased caster until its natural end.
+- Ruling (Task 2): Refresh the consumed life totem on ERASED while preserving session UUID/Phoenix/PersistentCooldowns — death clone normally refreshes the new life; do not refresh on ordinary End-return — cost if wrong: one extra life after erasure instead of exhausted totem retention.
+
+## CleanupReason audit (Task 2)
+| Existing check / consumer | Explicit ERASED decision |
+|---|---|
+| HeroEvents death / logout cleanup | Existing DEATH / DISCONNECT unchanged; prepareErasure is the new ERASED call. |
+| HeroRegistry HERO_CHANGE cleanup | Unchanged; only a real hero transition removes chassis/loadout. |
+| ViltrumiteHero HERO_CHANGE | Chassis removal only HERO_CHANGE; ERASED resets kit actions without strength modifier removal. |
+| HomelanderHero HERO_CHANGE | Passive removal only HERO_CHANGE; ERASED ends channels then uses fresh state, including regen/heat/roar. |
+| RegulusHero HERO_CHANGE | Passive removal only HERO_CHANGE; ERASED world cleanup + death-copy cooldowns. |
+| RegulusState HERO_CHANGE | ERASED also clears action; carrierLevels and all combat fields drop; cooldowns kept. |
+| ControlManager reason != DEATH | !losesBody(): ERASED preserves world-owned domes. |
+| ControlManager STASIS death link | losesBody(): ERASED keeps only dome-linked STASIS. |
+| ControlManager cleanupReleaseReason switch | DEATH and ERASED → CASTER_DEATH. |
+| IronManHero Hulkbuster switch | DEATH and ERASED → onDeath; grab release/break semantics unchanged. |
+| IronManHero three != DISCONNECT checks | ERASED clears owner sections/armour and refreshes body size. |
+| IronManHero HERO_CHANGE | Passive removal only HERO_CHANGE. |
+| IronManState switch | DEATH and ERASED clear suit/overdraft/overheat; ERASED then death-copy energy/default channels; documented cooldowns/roster/pod kept. |
+| ReinhardHero != DISCONNECT | ERASED clears Wind Reading sections. |
+| ReinhardHero HERO_CHANGE | Chassis/page removal only HERO_CHANGE; ERASED keeps mode/cooldowns, Reid SHEATHED, adaptation/combos/windows/grabs gone. |
+| RegulusHearts/GreedsEmbrace/Evangelium reason consumers | No conditional reason branches; normal release/modifier cleanup applies to ERASED too. |
+| Generic held inputs / target control / projectiles / grab tag / flight / owner sections | Explicit reset on same entity; persistent cooldown NBT untouched. |
+
 ## Tasks
-Task 1: complete (BASE f93f27f; commit feat(control): refresh and server-wide world pause). RED: missing APIs; GREEN: WorldPause/refresh 20/20; selected core 377/377; full build 1020/1020, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. No runtime checks.
-Task 2: pending
+Task 1: complete (BASE f93f27f; commit 4a800b3 feat(control): refresh and server-wide world pause). RED: missing APIs; GREEN: WorldPause/refresh 20/20; selected core 377/377; full build 1020/1020, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. No runtime checks.
+Task 2: complete (BASE 4a800b3; commit feat(hero): erased cleanup reason and fresh body path). RED missing APIs → GREEN lifecycle 14/14 + existing control 11/11; selected core 391/391; build 1034/1034, Reinhard 335/335; checker 0 new / 4 known; git diff --check clean. Same-body domain states of all five heroes compared recursively to fresh states; runtime adapters not run.
 Task 3: pending
 Task 4: pending
 Task 5: pending

@@ -298,20 +298,66 @@ public final class HeroEvents {
 
    @SubscribeEvent
    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-      if (event.getEntity() instanceof ServerPlayer player) {
-         HeroControlSync.sendBaseline(player);
-         ControlManager.restorePendingTarget(player);
-         HeroFlightGrant.sync(player);
-         HeroRegistry.resendOwnerSnapshot(player);
-         HeroRegistry.get(player).onRespawn(player);
-         // The bound Evangelium returns on respawn when it is missing (spec 11.2).
-         if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REGULUS) {
-            Evangelium.grant(player);
-            // Respawn is a fresh body: re-apply the chassis and start full.
-            dev.baranhan.viltrumitecore.hero.regulus.RegulusPassives.apply(player);
-            player.setHealth(player.getMaxHealth());
+      if (event.getEntity() instanceof ServerPlayer player) freshBody(player);
+   }
+
+   /** Used by normal respawn and same-entity returns from an erased body. */
+   public static void freshBody(ServerPlayer player) {
+      BodyLoss.fresh(new BodyLoss.FreshBody() {
+         public void controlBaseline() {HeroControlSync.sendBaseline(player);}
+         public void restorePendingFlags() {ControlManager.restorePendingTarget(player);}
+         public void flightSync() {HeroFlightGrant.sync(player);}
+         public void resendOwner() {HeroRegistry.resendOwnerSnapshot(player);}
+         public void heroRespawn() {HeroRegistry.get(player).onRespawn(player);}
+         public void legacyRespawn() {
+            // The bound Evangelium returns on respawn when it is missing (spec 11.2).
+            if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REGULUS) {
+               Evangelium.grant(player);
+               // Respawn is a fresh body: re-apply the chassis and start full.
+               dev.baranhan.viltrumitecore.hero.regulus.RegulusPassives.apply(player);
+               player.setHealth(player.getMaxHealth());
+            }
          }
-      }
+      });
+   }
+
+   /** Death without die()/clone()/drops. Must run before the limbo transfer. */
+   public static void prepareErasure(ServerPlayer player) {
+      BodyLoss.erase(new BodyLoss.ErasedBody() {
+         public void cleanupHero(CleanupReason reason) {HeroRegistry.get(player).cleanup(player, reason);}
+         public void clearHeldInputs() {HeldInputs.releaseAll(player);}
+         public void releaseControls() {
+            MinecraftServer server=player.getServer();
+            if(server!=null) for(ServerLevel level:server.getAllLevels()) {
+               ControlManager.get(level).cleanupCaster(player.getUUID(), CleanupReason.ERASED);
+               ControlManager.get(level).cleanupTarget(player.getUUID());
+            }
+            ControlManager.releaseProjectilesFor(player.getUUID());
+            ControlManager.restorePendingTarget(player);
+         }
+         public void releaseLegacyGrabs() {
+            if(player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core) LegacyKit.resetActions(core);
+            MinecraftServer server=player.getServer();
+            if(server!=null) for(ServerPlayer other:server.getPlayerList().getPlayers()) {
+               if(other instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer otherCore && otherCore.getGrabbedTarget()!=null
+                  && otherCore.getGrabbedTarget().getUUID().equals(player.getUUID())) otherCore.releaseTarget();
+            }
+            player.removeTag("ViltrumiteGrabbed");
+            dev.baranhan.viltrumitecore.network.CoreMessages.sendToPlayer(
+               new dev.baranhan.viltrumitecore.network.packet.PlayerGrabStateSyncS2CPacket(false,null),player);
+         }
+         public void resetMotionAndSession() {
+            if(player instanceof dev.baranhan.viltrumiteflight.util.ViltrumiteFlightPlayer flight) flight.stopFlight();
+            player.stopUsingItem(); player.stopRiding(); player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            player.setNoGravity(false); player.fallDistance=0; player.clearFire(); player.removeAllEffects();
+            player.invulnerableTime=0; player.hurtTime=0; player.deathTime=0;
+            HeroDamageLayers.forget(player); HeroAirJump.forget(player); HeroResourceRegen.forget(player);
+            if(player instanceof HeroPlayer hero && hero.getHeroSession()!=null)
+               hero.viltrumitecore$setHeroSession(hero.getHeroSession().refreshTotem());
+         }
+         public void clearOwnerSections() {HeroRegistry.clearOwnerSections(player, OwnerSection.values());}
+         public void sync() {HeroFlightGrant.sync(player); HeroRegistry.syncSnapshot(player); HeroRegistry.resendOwnerSnapshot(player);}
+      });
    }
 
    @SubscribeEvent

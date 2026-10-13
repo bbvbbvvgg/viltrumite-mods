@@ -432,6 +432,9 @@ public class RegulusHero implements HeroDefinition {
       GreedsEmbrace.cleanup(player, state, reason);
       Evangelium.cleanup(player, state, reason);
       state.resetTransient(reason);
+      if (reason == CleanupReason.ERASED && player instanceof HeroPlayer heroPlayer) {
+         heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
+      }
 
       if (reason == CleanupReason.HERO_CHANGE) {
          RegulusPassives.remove(player);

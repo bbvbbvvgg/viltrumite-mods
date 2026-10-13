@@ -120,6 +120,9 @@ public final class ReinhardState {
       return next;
    }
 
+   /** Same-entity death keeps mode/cooldowns, not Reid, adaptation or combat. */
+   public ReinhardState erasedCopy() {return this.respawnCopy();}
+
    @Nullable
    public static ReinhardState of(Player player) {
       if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REINHARD) {
