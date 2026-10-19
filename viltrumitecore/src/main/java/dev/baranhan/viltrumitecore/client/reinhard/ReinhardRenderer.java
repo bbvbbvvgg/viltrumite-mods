@@ -58,6 +58,7 @@ public final class ReinhardRenderer {
    /** Vanilla alpha of an invisible player seen by a spectator or teammate. */
    static final float TRANSLUCENT_ALPHA = 0.15F;
    static final String WALK = "walk";
+   static final String RUN = "run";
    static final String KNIGHT_HOLD = "knight_left_arm_hold";
    static final String CROUCH = "crouch";
    static final String SIT = "sit";
@@ -175,9 +176,10 @@ public final class ReinhardRenderer {
       PlayerRenderer renderer = (PlayerRenderer) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
       PlayerModel<AbstractClientPlayer> model = renderer.getModel();
       ModelPart arm = event.getArm() == HumanoidArm.RIGHT ? model.rightArm : model.leftArm;
-      // Pose null: PlayerGeoLayer resets the bones, i.e. the arm follows vanilla's first-person arm exactly.
+      // The pose widens the arm bones only; everything else follows vanilla's first-person arm.
       PlayerGeoLayer.Part part = new PlayerGeoLayer.Part(ReinhardAssets.ARMS,
-         List.of(PlayerGeoLayer.Pass.cutout(ReinhardAssets.TEXTURE), PlayerGeoLayer.Pass.glow(ReinhardAssets.GLOW)), null);
+         List.of(PlayerGeoLayer.Pass.cutout(ReinhardAssets.TEXTURE), PlayerGeoLayer.Pass.glow(ReinhardAssets.GLOW)),
+         ReinhardFirstPerson::widenArm);
       boolean flick = event.getArm() == player.getMainArm();
       // Sampled for the main arm only: the off arm's event must not reset the pulse.
       float w = flick ? ParryPulse.FIRST_PERSON.sample(player, ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.PARRY_POSE), Util.getNanos()).weight() : 0.0F;
@@ -290,7 +292,7 @@ public final class ReinhardRenderer {
          AnimationController.blend(model, clip(ReinhardPoses.stance(mix.from())), pose.stanceSeconds(), to, pose.stanceSeconds(), mix.weight());
       }
 
-      Animation walk = AnimCache.animation(ReinhardAssets.ANIMATIONS, WALK);
+      Animation walk = AnimCache.animation(ReinhardAssets.ANIMATIONS, pose.run() ? RUN : WALK);
       if (walk != null) {
          AnimationController.overlay(walk, model, pose.walkSeconds(), pose.walk());
       }
@@ -415,7 +417,7 @@ public final class ReinhardRenderer {
       float swing = sitting ? 0.0F : player.walkAnimation.speed(partialTick);
       ReinhardPoses.Input input = new ReinhardPoses.Input(ReinhardView.mode(snapshot), snapshot.heroFlags(), snapshot.actionId(), snapshot.actionElapsed(),
          snapshot.actionLength(), partialTick, swing, player.walkAnimation.position(partialTick), AnimRenderer.time(partialTick) / 20.0, player.getPose(), sitting,
-         snapshot.variant(), dev.baranhan.viltrumitecore.client.render.vfx.HitStop.heldTicks(player, partialTick));
+         snapshot.variant(), dev.baranhan.viltrumitecore.client.render.vfx.HitStop.heldTicks(player, partialTick), player.isSprinting());
       return ReinhardPoses.pose(input);
    }
 

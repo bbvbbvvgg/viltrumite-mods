@@ -37,10 +37,25 @@ class ReinhardWalkClipTest {
    @Test
    void walkAnimatesFourLimbs() throws IOException {
       Animation walk = walk();
-      assertEquals(Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG), walk.boneAnimations().keySet());
+      // The torso and head add the bob and the counter-rotation; the four limbs carry the stride.
+      assertTrue(walk.boneAnimations().keySet().containsAll(
+         Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG)),
+         walk.boneAnimations().keySet().toString());
       for (Animation.BoneAnimation bone : walk.boneAnimations().values()) {
          assertFalse(bone.rotX().isEmpty(), bone.boneName());
       }
+   }
+
+   @Test
+   void walkBobsTheTorsoTwicePerCycle() throws IOException {
+      Animation walk = walk();
+      Animation.BoneAnimation body = walk.boneAnimations().get(ReinhardAssets.BODY_BONE);
+      assertNotNull(body, "body");
+      float atStart = body.posY().sample(0.0);
+      float atQuarter = body.posY().sample(0.25);
+      float atHalf = body.posY().sample(0.5);
+      assertTrue(atQuarter > atStart + 0.005F, "the body rises at the quarter step");
+      assertEquals(atStart, atHalf, 0.005F, "and returns at the half step");
    }
 
    @Test
@@ -77,5 +92,22 @@ class ReinhardWalkClipTest {
       assertEquals((float) Math.toRadians(31.512679), rotX, 1.0E-4F);
       float leftX = walk().boneAnimations().get(ReinhardAssets.LEFT_ARM).rotX().sample(0.0);
       assertEquals(-rotX, leftX, 1.0E-4F, "arms swing in opposite phase");
+   }
+
+   @Test
+   void runClipMatchesTheWalkPhaseButLeansIn() throws IOException {
+      AnimationParser.lastWarnings.clear();
+      Map<String, Animation> clips = AnimationParser.parse(JsonParser.parseString(Files.readString(ROOT.resolve(ReinhardAssets.ANIMATIONS.getPath()))).getAsJsonObject());
+      Animation run = clips.get("run");
+      assertNotNull(run, "clip run");
+      assertEquals(1.0, run.lengthSeconds(), 1.0E-9, "the run shares the walk phase");
+      assertEquals(Animation.LoopType.LOOP, run.loopType());
+      assertTrue(run.boneAnimations().keySet().containsAll(
+         Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG)), "four limbs");
+      Animation walk = clips.get("walk");
+      float runLean = run.boneAnimations().get(ReinhardAssets.BODY_BONE).rotX().sample(0.0);
+      float walkLean = walk.boneAnimations().get(ReinhardAssets.BODY_BONE).rotX().sample(0.0);
+      // The parser negates x, so a forward lean is negative: compare magnitudes.
+      assertTrue(Math.abs(runLean) > Math.abs(walkLean) + (float) Math.toRadians(3.0), "the sprint leans the torso forward: " + Math.toDegrees(runLean) + " vs " + Math.toDegrees(walkLean));
    }
 }

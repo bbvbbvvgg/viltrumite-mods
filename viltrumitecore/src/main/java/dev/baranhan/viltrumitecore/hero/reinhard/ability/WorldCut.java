@@ -101,11 +101,16 @@ public final class WorldCut implements AbilityHandler {
       public Collection<UUID> targets(int through) {
          candidates.clear();
          if(through <= 0) return List.of();
+         ServerPlayer caster=level.getServer().getPlayerList().getPlayer(casterId);
+         if(caster != null && (caster.serverLevel()!=level || !caster.isAlive())) caster=null;
          AABB bounds=shape.hitBox(0,surface[0]);
          for(int a=1;a<through;a++) bounds=bounds.minmax(shape.hitBox(a,surface[a]));
          for(Entity e:level.getEntities((Entity)null,bounds,e -> e instanceof LivingEntity || e instanceof PartEntity<?>)) {
             Entity resolved=e instanceof PartEntity<?> part ? part.getParent() : e;
             if(resolved.getUUID().equals(casterId)) continue;
+            // The caster's own rules (allies, PvP-off players) apply while he is present; a cast
+            // that outlives him keeps its frozen rule-free verdict, as the design says.
+            if(caster != null && !ReinhardTargets.canHit(caster, resolved)) continue;
             for(int a=0;a<through;a++) if(shape.intersects(e.getBoundingBox(),a,surface[a])) {
                candidates.put(resolved.getUUID(),resolved); break;
             }

@@ -60,7 +60,11 @@ public final class ReinhardState {
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldErasure worldErasure;
 
    public boolean busy() {
-      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy() || (worldCut != null ? !worldCut.blasted() : this.action.is(ReinhardAbility.WORLD_CUT));
+      // Stage 5 plan: the cast locks the caster until the explosion tick; the travelling wave
+      // afterwards does not (the caster regains control). A held grab also locks the caster.
+      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy()
+         || (this.worldCut != null ? !this.worldCut.blasted() : this.action.is(ReinhardAbility.WORLD_CUT))
+         || this.grab != null;
    }
 
    /** Leaving Holy Sword (spec §5): Reid goes back into the sheath. */

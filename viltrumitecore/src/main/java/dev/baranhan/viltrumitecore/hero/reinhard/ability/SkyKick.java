@@ -83,8 +83,9 @@ public final class SkyKick implements AbilityHandler {
 
       Entity entity = player.level().getEntity(state.action.targetId());
       if (!(entity instanceof LivingEntity target) || !target.isAlive()) {
-         // The target is gone (death, logout, another dimension): the kick ends.
+         // The target is gone (death, logout, another dimension): the kick ends with feedback.
          state.action.cancel();
+         dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero.INSTANCE.onInputRefused(player, ReinhardAbility.SKY_KICK.action());
          return;
       }
 
@@ -98,6 +99,9 @@ public final class SkyKick implements AbilityHandler {
          case HOLD -> move(target, Vec3.ZERO);
          case LAUNCH -> {
             if (!HeroRegistry.allowsImpulse(target)) {
+               // Gained Lion's Heart / anchor during the toss: no launch, but say so and end the action.
+               state.action.cancel();
+               dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero.INSTANCE.onInputRefused(player, ReinhardAbility.SKY_KICK.action());
                return;
             }
 

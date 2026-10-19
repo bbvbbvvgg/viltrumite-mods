@@ -53,7 +53,7 @@ def main():
     data["animations"]["walk"] = convert(src)
     data["animations"] = dict(sorted(data["animations"].items()))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as f:
+    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, indent=2)
         f.write("\n")
     print("wrote", os.path.relpath(OUT, REPO))

@@ -25,8 +25,11 @@ public final class ReinhardPoses {
 
    public static Pose pose(Input in) {
       float walk = Math.max(0.0F, Math.min(1.0F, in.limbSwingAmount() / WALK_REFERENCE_AMOUNT));
-      return new Pose(stance(in.mode()), in.realSeconds(), walk, in.walkDistance() * WALK_SECONDS_PER_BLOCK, overlay(in), body(in.vanillaPose(), in.passenger()),
-         0.0F);
+      // Sprinting swaps the locomotion clip; the phase still follows the walked distance, so the
+      // feet keep the ground speed and only the stride shape changes.
+      boolean run = in.sprinting() && walk > 0.05F;
+      return new Pose(stance(in.mode()), in.realSeconds(), walk, in.walkDistance() * WALK_SECONDS_PER_BLOCK, run, overlay(in),
+         body(in.vanillaPose(), in.passenger()), 0.0F);
    }
 
    /** Stance clip of a mode (all six bones). */
@@ -221,16 +224,17 @@ public final class ReinhardPoses {
       net.minecraft.world.entity.Pose vanillaPose,
       boolean passenger,
       int actionPhase,
-      double heldTicks
+      double heldTicks,
+      boolean sprinting
    ) {
       /** No action phase, no hit-stop (stage 1b/2 callers). */
       public Input(ReinhardMode mode, int flags, int actionId, int actionElapsed, int actionLength, float partialTick, float limbSwingAmount,
          float walkDistance, double realSeconds, net.minecraft.world.entity.Pose vanillaPose, boolean passenger) {
-         this(mode, flags, actionId, actionElapsed, actionLength, partialTick, limbSwingAmount, walkDistance, realSeconds, vanillaPose, passenger, 0, 0.0);
+         this(mode, flags, actionId, actionElapsed, actionLength, partialTick, limbSwingAmount, walkDistance, realSeconds, vanillaPose, passenger, 0, 0.0, false);
       }
    }
 
-   public record Pose(String stance, double stanceSeconds, float walk, double walkSeconds, @Nullable Clip overlay, BodyState body, float aura) {
+   public record Pose(String stance, double stanceSeconds, float walk, double walkSeconds, boolean run, @Nullable Clip overlay, BodyState body, float aura) {
    }
 
    public record Clip(String animation, double seconds) {

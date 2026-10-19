@@ -17,6 +17,8 @@ public final class WorldCutManager {
    private final List<WorldCut> cuts=new ArrayList<>();
    public static WorldCutManager get(ServerLevel level) { return INSTANCES.computeIfAbsent(level,l -> new WorldCutManager()); }
    public void submit(WorldCut cut) { cuts.add(cut); }
+   /** True while this level still owns the cast (a dropped cast must not lock the caster). */
+   public boolean contains(WorldCut cut) { return cuts.contains(cut); }
    public void tick(ServerLevel level) { advance(level.getGameTime()); }
    public void advance(long gameTime) { cuts.removeIf(cut -> cut.advance(gameTime)); }
    public int size() { return cuts.size(); }
