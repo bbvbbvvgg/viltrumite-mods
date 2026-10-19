@@ -184,8 +184,9 @@ def run_clip():
             key = str(1)
         p = 2.0 * math.pi * t
         arm = 40.0 * math.cos(p)
-        leg = 30.0 * math.cos(p)
-        # Arms bend at the elbow on the way back: a sprint reads by the bent elbows, not only the swing.
+        # The leg arc stays the walk's: the phase is distance-driven (walkSeconds), so a longer arc
+        # would slide the planted foot. The sprint reads by the arm pump, lean and bob.
+        leg = 22.0 * math.cos(p)
         bones["right_arm"]["rotation"][key] = [round(-arm - 10.0, 4), 0, round(4 + 2.0 * math.cos(p), 4)]
         bones["left_arm"]["rotation"][key] = [round(arm - 10.0, 4), 0, round(-4 + 2.0 * math.cos(p), 4)]
         bones["right_leg"]["rotation"][key] = [round(leg, 4), 0, 0.2865]
