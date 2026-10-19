@@ -20,7 +20,7 @@ class WorldCutRendererIntegrationTest {
          var json=JsonParser.parseString(Files.readString(root.resolve(ReinhardAssets.BODY.getPath()))).getAsJsonObject();
          BakedGeoModel expected=BakedGeoModel.parse(json), actual=BakedGeoModel.parse(json);
          AnimationController.overlay(clips.get("world_cut"),expected,.5);
-         var pose=new ReinhardPoses.Pose("idle_holy",0,0,0,new ReinhardPoses.Clip("world_cut",.5),ReinhardPoses.BodyState.STAND,0);
+         var pose=new ReinhardPoses.Pose("idle_holy",0,0,0,false,new ReinhardPoses.Clip("world_cut",.5),ReinhardPoses.BodyState.STAND,0);
          ReinhardRenderer.applyClips(actual,pose,new StanceBlend.Mix(ReinhardMode.HOLY_SWORD,ReinhardMode.HOLY_SWORD,1),0,0,0,
             new ParryPulse.Sample(0,0),new ReinhardPoses.Clip("idle_holy_drawn",0),null);
          assertEquals(expected.getBone("right_arm").rotX,actual.getBone("right_arm").rotX,1E-6);

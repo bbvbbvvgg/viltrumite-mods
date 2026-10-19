@@ -38,6 +38,18 @@ class ReinhardPosesTest {
    }
 
    @Test
+   void sprintSelectsTheRunClip() {
+      ReinhardPoses.Input sprint = new ReinhardPoses.Input(ReinhardMode.RESTRAINED, ReinhardFlags.withMode(0, ReinhardMode.RESTRAINED), -1, 0, 0, 0.5F,
+         0.55F, 3.0F, 12.5, net.minecraft.world.entity.Pose.STANDING, false, 0, 0.0, true);
+      assertTrue(ReinhardPoses.pose(sprint).run());
+      assertFalse(ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, -1, 0, 0, 0.55F)).run(), "walking is not running");
+      // Sprint held while standing still: no locomotion weight, so no run clip either.
+      ReinhardPoses.Input idleSprint = new ReinhardPoses.Input(ReinhardMode.RESTRAINED, ReinhardFlags.withMode(0, ReinhardMode.RESTRAINED), -1, 0, 0,
+         0.5F, 0.0F, 3.0F, 12.5, net.minecraft.world.entity.Pose.STANDING, false, 0, 0.0, true);
+      assertFalse(ReinhardPoses.pose(idleSprint).run());
+   }
+
+   @Test
    void stanceFollowsMode() {
       assertEquals("idle_restrained", ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, -1, 0, 0, 0.0F)).stance());
       assertEquals("idle_knight", ReinhardPoses.pose(input(ReinhardMode.KNIGHT, -1, 0, 0, 0.0F)).stance());

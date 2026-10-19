@@ -171,6 +171,32 @@ def walk_clip():
     return loop(bones, 1.0)
 
 
+def run_clip():
+    """Sprint: the walk stride with longer limbs, a forward lean and a deeper bob (same 1 s phase)."""
+    bones = {"right_arm": {"rotation": {}}, "left_arm": {"rotation": {}},
+             "right_leg": {"rotation": {}}, "left_leg": {"rotation": {}},
+             "body": {"rotation": {}, "position": {}}, "head": {"rotation": {}}}
+    samples = 20
+    for i in range(samples + 1):
+        t = i / samples
+        key = "%.3f" % t if i else "0.0"
+        if i == samples:
+            key = str(1)
+        p = 2.0 * math.pi * t
+        arm = 40.0 * math.cos(p)
+        leg = 30.0 * math.cos(p)
+        # Arms bend at the elbow on the way back: a sprint reads by the bent elbows, not only the swing.
+        bones["right_arm"]["rotation"][key] = [round(-arm - 10.0, 4), 0, round(4 + 2.0 * math.cos(p), 4)]
+        bones["left_arm"]["rotation"][key] = [round(arm - 10.0, 4), 0, round(-4 + 2.0 * math.cos(p), 4)]
+        bones["right_leg"]["rotation"][key] = [round(leg, 4), 0, 0.2865]
+        bones["left_leg"]["rotation"][key] = [round(-leg, 4), 0, -0.2865]
+        bones["body"]["rotation"][key] = [round(7.0 + 1.4 * math.cos(2 * p), 4), round(4.5 * math.sin(p), 4),
+                                          round(1.6 * math.cos(p), 4)]
+        bones["body"]["position"][key] = [0, round(0.5 * math.sin(p) * math.sin(p), 4), 0]
+        bones["head"]["rotation"][key] = [round(-4.0 - 1.2 * math.cos(2 * p), 4), round(-2.6 * math.sin(p), 4), 0]
+    return loop(bones, 1.0)
+
+
 # --- stage 3 abilities ---------------------------------------------------------------
 
 # Light Punch: 8 t. Quick step-in, straight right jab on tick 3 (0.15), 3 t contact
@@ -428,6 +454,7 @@ CLIPS = {
     "swim": swim_clip(),
     "parry": PARRY,
     "walk": walk_clip(),
+    "run": run_clip(),
     "light_punch": LIGHT_PUNCH,
     "step_dash": STEP_DASH,
     "catch_ready": CATCH_READY,

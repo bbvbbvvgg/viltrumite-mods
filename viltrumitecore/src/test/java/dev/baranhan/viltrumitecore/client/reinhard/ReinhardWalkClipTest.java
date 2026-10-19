@@ -93,4 +93,21 @@ class ReinhardWalkClipTest {
       float leftX = walk().boneAnimations().get(ReinhardAssets.LEFT_ARM).rotX().sample(0.0);
       assertEquals(-rotX, leftX, 1.0E-4F, "arms swing in opposite phase");
    }
+
+   @Test
+   void runClipMatchesTheWalkPhaseButLeansIn() throws IOException {
+      AnimationParser.lastWarnings.clear();
+      Map<String, Animation> clips = AnimationParser.parse(JsonParser.parseString(Files.readString(ROOT.resolve(ReinhardAssets.ANIMATIONS.getPath()))).getAsJsonObject());
+      Animation run = clips.get("run");
+      assertNotNull(run, "clip run");
+      assertEquals(1.0, run.lengthSeconds(), 1.0E-9, "the run shares the walk phase");
+      assertEquals(Animation.LoopType.LOOP, run.loopType());
+      assertTrue(run.boneAnimations().keySet().containsAll(
+         Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG)), "four limbs");
+      Animation walk = clips.get("walk");
+      float runLean = run.boneAnimations().get(ReinhardAssets.BODY_BONE).rotX().sample(0.0);
+      float walkLean = walk.boneAnimations().get(ReinhardAssets.BODY_BONE).rotX().sample(0.0);
+      // The parser negates x, so a forward lean is negative: compare magnitudes.
+      assertTrue(Math.abs(runLean) > Math.abs(walkLean) + (float) Math.toRadians(3.0), "the sprint leans the torso forward: " + Math.toDegrees(runLean) + " vs " + Math.toDegrees(walkLean));
+   }
 }

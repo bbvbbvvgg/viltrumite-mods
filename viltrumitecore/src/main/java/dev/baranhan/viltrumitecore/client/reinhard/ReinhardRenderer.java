@@ -58,6 +58,7 @@ public final class ReinhardRenderer {
    /** Vanilla alpha of an invisible player seen by a spectator or teammate. */
    static final float TRANSLUCENT_ALPHA = 0.15F;
    static final String WALK = "walk";
+   static final String RUN = "run";
    static final String KNIGHT_HOLD = "knight_left_arm_hold";
    static final String CROUCH = "crouch";
    static final String SIT = "sit";
@@ -291,7 +292,7 @@ public final class ReinhardRenderer {
          AnimationController.blend(model, clip(ReinhardPoses.stance(mix.from())), pose.stanceSeconds(), to, pose.stanceSeconds(), mix.weight());
       }
 
-      Animation walk = AnimCache.animation(ReinhardAssets.ANIMATIONS, WALK);
+      Animation walk = AnimCache.animation(ReinhardAssets.ANIMATIONS, pose.run() ? RUN : WALK);
       if (walk != null) {
          AnimationController.overlay(walk, model, pose.walkSeconds(), pose.walk());
       }
@@ -416,7 +417,7 @@ public final class ReinhardRenderer {
       float swing = sitting ? 0.0F : player.walkAnimation.speed(partialTick);
       ReinhardPoses.Input input = new ReinhardPoses.Input(ReinhardView.mode(snapshot), snapshot.heroFlags(), snapshot.actionId(), snapshot.actionElapsed(),
          snapshot.actionLength(), partialTick, swing, player.walkAnimation.position(partialTick), AnimRenderer.time(partialTick) / 20.0, player.getPose(), sitting,
-         snapshot.variant(), dev.baranhan.viltrumitecore.client.render.vfx.HitStop.heldTicks(player, partialTick));
+         snapshot.variant(), dev.baranhan.viltrumitecore.client.render.vfx.HitStop.heldTicks(player, partialTick), player.isSprinting());
       return ReinhardPoses.pose(input);
    }
 
