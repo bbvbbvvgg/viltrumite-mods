@@ -37,7 +37,7 @@ class ReinhardWalkClipTest {
    @Test
    void walkAnimatesFourLimbs() throws IOException {
       Animation walk = walk();
-      assertEquals(Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG), walk.boneAnimations().keySet());
+      assertEquals(Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG, "right_forearm", "left_forearm"), walk.boneAnimations().keySet());
       for (Animation.BoneAnimation bone : walk.boneAnimations().values()) {
          assertFalse(bone.rotX().isEmpty(), bone.boneName());
       }
@@ -53,13 +53,13 @@ class ReinhardWalkClipTest {
          assertEquals(Animation.LoopType.LOOP, clips.get(name).loopType(), name);
       }
       Set<String> six = Set.of(ReinhardAssets.HEAD, ReinhardAssets.BODY_BONE, ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG,
-         ReinhardAssets.LEFT_LEG);
+         ReinhardAssets.LEFT_LEG, "right_forearm", "left_forearm");
       for (String stance : new String[]{"idle_restrained", "idle_knight", "idle_holy"}) {
          assertEquals(six, clips.get(stance).boneAnimations().keySet(), stance + " animates all six bones");
          double length = clips.get(stance).lengthSeconds();
          assertTrue(length >= 2.0 && length <= 4.0, stance + " breathing loop 2-4 s");
       }
-      assertEquals(Set.of(ReinhardAssets.LEFT_ARM), clips.get("knight_left_arm_hold").boneAnimations().keySet());
+      assertEquals(Set.of(ReinhardAssets.LEFT_ARM, "left_forearm"), clips.get("knight_left_arm_hold").boneAnimations().keySet());
       // Knight's hold is the stance's left arm, so the walk overlay keeps the arm behind the back.
       Animation knight = clips.get("idle_knight");
       Animation hold = clips.get("knight_left_arm_hold");

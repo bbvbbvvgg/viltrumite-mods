@@ -49,10 +49,7 @@ public final class ReinhardPoses {
          return null;
       }
 
-      double ticks = in.actionElapsed() + in.partialTick() - in.heldTicks();
-      if (in.actionLength() > 0) {
-         ticks = Math.min(ticks, in.actionLength());
-      }
+      double ticks = ReinhardPlayback.actionTicks(in.actionElapsed(), in.actionLength(), in.partialTick(), in.heldTicks());
 
       return ReinhardClips.clip(ABILITIES[in.actionId()], in.actionPhase(), Math.max(0.0, ticks));
    }
@@ -183,7 +180,13 @@ public final class ReinhardPoses {
 
    /** Two-handed cinematic actions hide slot items without altering inventory. */
    public static boolean drawsHeldItem(HumanoidArm arm, ReidPhase phase, @Nullable ReinhardAbility action) {
-      return action != ReinhardAbility.WORLD_CUT && action != ReinhardAbility.WORLD_ERASURE && drawsHeldItem(arm, phase);
+      return action != ReinhardAbility.WORLD_CUT && action != ReinhardAbility.WORLD_ERASURE
+         && !(action == ReinhardAbility.SHEATH_STRIKE && arm == HumanoidArm.RIGHT) && drawsHeldItem(arm, phase);
+   }
+
+   @Nullable
+   public static ReinhardAbility action(int id) {
+      return id >= 0 && id < ABILITIES.length ? ABILITIES[id] : null;
    }
 
    @Nullable

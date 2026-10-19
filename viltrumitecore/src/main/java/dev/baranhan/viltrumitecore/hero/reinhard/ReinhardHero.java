@@ -109,7 +109,7 @@ public final class ReinhardHero implements HeroDefinition {
       if (player instanceof ServerPlayer serverPlayer) {
          ReinhardState state = ReinhardState.of(serverPlayer);
          if (state != null) {
-            return dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(0, state.reid.phase());
+            return dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(stateFlags(state, 0), state.reid.phase());
          }
       }
 
@@ -175,7 +175,13 @@ public final class ReinhardHero implements HeroDefinition {
    /** Spec §5: MMB cycles the mode (both sides; the client cancels pick-block). */
    @Override
    public HeroAction mouseAction(MouseButton button, Player player) {
-      return button == MouseButton.MIDDLE ? HeroAction.MODE_CYCLE : null;
+      return claimedMouse(button, dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags.has(flags(player), ReinhardFlags.GRAB_HOLDING));
+   }
+
+   /** Pure input policy shared by local claims and authoritative server claims. */
+   public static HeroAction claimedMouse(MouseButton button, boolean holding) {
+      if (button == MouseButton.MIDDLE) return HeroAction.MODE_CYCLE;
+      return button == MouseButton.SECONDARY && holding ? HeroAction.SECONDARY_USE : null;
    }
 
    @Override
@@ -186,6 +192,7 @@ public final class ReinhardHero implements HeroDefinition {
 
       ReinhardState state = ReinhardState.ensure(player);
       return switch (action) {
+         case SECONDARY_USE -> dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.holding(state);
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
          // Except while Reid is being drawn: the 6 s scene roots him (spec §7.1).
@@ -229,6 +236,11 @@ public final class ReinhardHero implements HeroDefinition {
          return;
       }
 
+      if (action == HeroAction.SECONDARY_USE) {
+         if (pressed && dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.holding(ReinhardState.ensure(player)))
+            dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.finish(player, ReinhardState.ensure(player));
+         return;
+      }
       ReinhardActions.handleInput(player, ReinhardState.ensure(player), action, pressed);
    }
 

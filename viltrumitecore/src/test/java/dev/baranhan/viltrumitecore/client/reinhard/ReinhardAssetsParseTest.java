@@ -39,7 +39,7 @@ class ReinhardAssetsParseTest {
       assertEquals(List.of(ReinhardAssets.HEAD, ReinhardAssets.BODY_BONE, ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG,
          ReinhardAssets.LEFT_LEG), body.topLevelBones().stream().map(b -> b.name).toList());
       int faces = 0;
-      for (GeoBone bone : body.topLevelBones()) {
+      for (GeoBone bone : body.allBones()) {
          assertTrue(!bone.cubes.isEmpty(), bone.name);
          for (GeoBone.Cube cube : bone.cubes) {
             faces += cube.quads().length;

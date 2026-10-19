@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Grab &amp; Throw (spec §6.2, Knight slot 3): the first press grabs the target in reach
  * through {@link ControlManager} PULL (one fresh {@code UUID} effect id per grab) and
- * holds it at the hand; the second press (or {@link ReinhardRules#GRAB_MAX_TICKS})
+ * holds it at the hand; RMB (or {@link ReinhardRules#GRAB_MAX_TICKS})
  * releases the control with the same effect id, hits for {@link ReinhardRules#THROW_DAMAGE},
  * holds a 3-tick hit-stop and throws the target past the horizon (~120 blocks: the
  * velocity is re-applied for {@link ReinhardRules#THROW_SUSTAIN_TICKS}) with a sonic ring
@@ -203,7 +203,11 @@ public final class GrabThrow implements AbilityHandler {
 
    @Override
    public void secondPress(ServerPlayer player, ReinhardState state) {
-      throwTarget(player, state);
+      // Z only acquires. A second Z never throws; RMB owns the finishing action.
+   }
+
+   public static void finish(ServerPlayer player, ReinhardState state) {
+      if (holding(state)) throwTarget(player, state);
    }
 
    @Override
@@ -267,7 +271,9 @@ public final class GrabThrow implements AbilityHandler {
       flat = flat.lengthSqr() < 1.0E-6 ? Vec3.directionFromRotation(0.0F, player.getYRot()) : flat.normalize();
       double ahead = 0.7 + target.getBbWidth() * 0.5;
       double lift = Math.max(0.3, ReinhardRules.GRAB_HAND_HEIGHT - target.getBbHeight() * 0.85);
-      return player.position().add(flat.scale(ahead)).add(0.0, lift, 0.0);
+      // Right-hand shoulder, not the centre of the chest (same neck anchor as the legacy grab).
+      Vec3 right = new Vec3(-flat.z, 0, flat.x);
+      return player.position().add(flat.scale(ahead)).add(right.scale(0.31)).add(0.0, lift, 0.0);
    }
 
    private static void hold(ServerPlayer player, LivingEntity target) {

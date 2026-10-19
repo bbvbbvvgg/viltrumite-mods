@@ -102,6 +102,7 @@ def main():
     run(OBJ2GEO, body_obj, os.path.join(GEO, "reinhard_arms.geo.json"), "--texture", "128", "128",
         "--bones", "right_arm,left_arm", "--pivots", "vanilla", "--armor-bones", "--offset", "0", "24", "0",
         "--identifier", "geometry.reinhard_arms")
+    run(os.path.join(REPO, "tools", "assets", "rig_reinhard.py"))
     offset = [-GUARD[0], -GUARD[1], -GUARD[2]]
     common = ["--texture", "128", "128", "--scale", str(SWORD_SCALE), "--offset", *map(str, offset), "--single-bone", "sword", "--pivot", "0", "0", "0",
               "--skip-material-suffix", "_glow", "--uv-top-origin"]

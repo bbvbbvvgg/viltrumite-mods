@@ -18,20 +18,14 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
  */
 public final class ReinhardSword {
    /** Sheath mouth on the body, Bedrock px (+x = Reinhard's left), model space. */
-   public static final float HIP_X = 4.5F;
-   public static final float HIP_Y = 11.0F;
-   public static final float HIP_Z = 0.0F;
-   /**
-    * Tilt in ModelPart degrees: the hilt leans in across the belly (Z) and forward, the tip back (X).
-    * X is 50 (plan: 10): hanging nearly upright from the 11 px hip, the sheath tip went into the ground.
-    */
-   public static final float TILT_Z = -20.0F;
-   public static final float TILT_X = 50.0F;
-   /**
-    * The archive sword is ~46 px long in block units ×16 (sized as a big item) against the
-    * 32 px body; 0.35 makes the sheath ~13 px: with the tilt its tip stays ~2 px above the ground.
-    */
-   public static final float SWORD_SCALE = 0.35F;
+   public static final float HIP_X = 6.2F;
+   public static final float HIP_Y = 16.0F;
+   public static final float HIP_Z = 1.0F;
+   /** Hilt slightly inward; long sheath trails behind the thigh, outside the walking legs. */
+   public static final float TILT_Z = -12.0F;
+   public static final float TILT_X = 60.0F;
+   /** Twice the Stage 7 visual size; the raised mouth preserves ground clearance at rest. */
+   public static final float SWORD_SCALE = 0.70F;
    /** Stage 4: how far (sword px, along the sheath axis toward the hilt) the blade travels out at full draw. */
    public static final float DRAW_OUT_PX = 40.0F;
 
@@ -72,7 +66,7 @@ public final class ReinhardSword {
       draw(sheath, stack, buffers, light, overlay);
       // The blade in its sheathed place: blade geo + SHEATHED_OFFSET.
       if (blade) {
-         stack.translate(gx, gy + out * DRAW_OUT_PX / 16.0F, gz);
+         stack.translate(gx, gy - out * DRAW_OUT_PX / 16.0F, gz);
          draw(bladeModel, stack, buffers, light, overlay);
       }
       stack.popPose();
@@ -96,6 +90,26 @@ public final class ReinhardSword {
       stack.pushPose();
       stack.translate(0.0F, HAND_GUARD_PX / 16.0F, 0.0F);
       stack.scale(SWORD_SCALE, SWORD_SCALE, SWORD_SCALE);
+      draw(blade, stack, buffers, light, overlay);
+      stack.popPose();
+   }
+
+   /** Complete sheathed weapon follows the striking hand, never a second copy on the hip. */
+   public static void drawSheathInHand(PoseStack stack, MultiBufferSource buffers, int light, int overlay) {
+      BakedGeoModel sheath = AnimCache.model(ReinhardAssets.SHEATH);
+      BakedGeoModel blade = AnimCache.model(ReinhardAssets.BLADE);
+      if (sheath == null || blade == null) return;
+      sheath.resetBones();
+      blade.resetBones();
+      stack.pushPose();
+      stack.translate(0, HAND_GUARD_PX / 16.0F, 0);
+      stack.scale(SWORD_SCALE, SWORD_SCALE, SWORD_SCALE);
+      float gx = -ReinhardAssets.SHEATHED_OFFSET.x / 16.0F;
+      float gy = ReinhardAssets.SHEATHED_OFFSET.y / 16.0F;
+      float gz = ReinhardAssets.SHEATHED_OFFSET.z / 16.0F;
+      stack.translate(-gx, -gy, -gz);
+      draw(sheath, stack, buffers, light, overlay);
+      stack.translate(gx, gy, gz);
       draw(blade, stack, buffers, light, overlay);
       stack.popPose();
    }

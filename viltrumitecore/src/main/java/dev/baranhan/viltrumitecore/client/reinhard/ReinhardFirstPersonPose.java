@@ -1,248 +1,131 @@
 package dev.baranhan.viltrumitecore.client.reinhard;
 
+import static dev.baranhan.viltrumitecore.client.anim.pose.PoseKeys.key;
+import static dev.baranhan.viltrumitecore.client.anim.pose.PoseKeys.under;
+import dev.baranhan.viltrumitecore.client.anim.pose.PoseKeys;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
 import javax.annotation.Nullable;
 
-/**
- * First-person pose of Reinhard's main arm during an action (stage 3): an offset
- * on the {@code RenderArmEvent} pose stack (blocks, x mirrored for a left main
- * arm, −z = away from the camera) plus extra arm rotation in degrees. Pure: the
- * synced ability, phase and elapsed ticks (with partial tick) in, the offset out.
+/** View-adapted shoulder poses, using the same PoseKeys interpolation as Regulus/Iron Man.
+ * Rows are ticks, pitch/yaw/roll degrees and camera-space block offsets. Contacts match
+ * the authoritative ability timelines; no frame counter or second animation engine.
  */
 public final class ReinhardFirstPersonPose {
-   // Light Punch: a straight jab toward the crosshair.
-   static final float JAB_X = -0.10F;
-   static final float JAB_Y = 0.06F;
-   static final float JAB_Z = -0.38F;
-   static final float JAB_PITCH = -10.0F;
-   // Step Dash: the arm drops and swings back with the lean.
-   static final float DASH_Y = -0.10F;
-   static final float DASH_Z = 0.12F;
-   static final float DASH_PITCH = 14.0F;
-   // Catch: the palm up in front of the face, then a short closing jerk on the catch.
-   static final float CATCH_X = -0.06F;
-   static final float CATCH_Y = 0.16F;
-   static final float CATCH_Z = -0.12F;
-   static final float CATCH_PITCH = -38.0F;
-   static final float CATCH_ROLL = -8.0F;
-   static final float SNAP_Z = -0.12F;
-   static final float SNAP_PITCH = 10.0F;
-   static final float SNAP_ROLL = 12.0F;
-   // Fist Combo: 1 = straight, 2 = hook from the outside, 3 = raised then hammered down.
-   static final float HOOK_X = -0.22F;
-   static final float HOOK_YAW = 30.0F;
-   static final float HAMMER_RAISE_Y = 0.22F;
-   static final float HAMMER_Y = -0.12F;
-   static final float HAMMER_Z = -0.30F;
-   static final float HAMMER_PITCH = 25.0F;
-   // Sky Kick: the hand flicks up for the toss, then swings down and back for balance during the kick.
-   static final float TOSS_Y = 0.18F;
-   static final float TOSS_PITCH = -32.0F;
-   static final float KICK_ARM_Y = -0.14F;
-   static final float KICK_ARM_Z = 0.14F;
-   static final float KICK_ARM_PITCH = 20.0F;
-   // Grab & Throw: the hand reaches out and holds at chest height; the throw cocks it back
-   // over the hit-stop and drives it forward and down past the crosshair.
-   static final float GRAB_X = -0.04F;
-   static final float GRAB_Y = 0.10F;
-   static final float GRAB_Z = -0.30F;
-   static final float GRAB_PITCH = -22.0F;
-   static final float COCK_Y = 0.20F;
-   static final float COCK_Z = 0.16F;
-   static final float COCK_PITCH = -50.0F;
-   static final float THROW_Y = -0.08F;
-   static final float THROW_Z = -0.42F;
-   static final float THROW_PITCH = 30.0F;
-   // Dash Behind: the arm sweeps low and back on the vanish, then rises to guard as he lands turned.
-   static final float BEHIND_Y = -0.16F;
-   static final float BEHIND_Z = 0.10F;
-   static final float BEHIND_PITCH = 24.0F;
-   static final float BEHIND_ROLL = -10.0F;
-   // Stomp: the arm swings up for balance as the leg rises, then jolts down with the slam.
-   static final float STOMP_Y = -0.18F;
-   static final float STOMP_PITCH = 18.0F;
-   /** Sheath Strike: the arm sweeps across the view in one flat arc. */
-   static final float SHEATH_X = -0.25F;
-   static final float SHEATH_Z = -0.12F;
-   static final float SHEATH_YAW = 40.0F;
-   /** Rain of Cuts: the blade arm sways left and right with the fan. */
-   static final float CUT_SWAY_X = 0.18F;
-   static final float CUT_SWAY_YAW = 30.0F;
-   // Reflect: the back of the hand raised across the chest, then swatted out to the side.
-   static final float GUARD_X = 0.10F;
-   static final float GUARD_Y = 0.12F;
-   static final float GUARD_Z = -0.10F;
-   static final float GUARD_YAW = -28.0F;
-   static final float GUARD_ROLL = 18.0F;
-   static final float SWAT_X = -0.26F;
-   static final float SWAT_YAW = 50.0F;
-   /** Ticks to raise / lower the hand. */
-   static final double CATCH_EASE = 2.0;
-
-   private ReinhardFirstPersonPose() {
-   }
+   private ReinhardFirstPersonPose() {}
 
    public record Offset(float x, float y, float z, float pitch, float yaw, float roll) {
-      public static final Offset NONE = new Offset(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-
-      Offset scaled(float w) {
-         return new Offset(this.x * w, this.y * w, this.z * w, this.pitch * w, this.yaw * w, this.roll * w);
-      }
+      public static final Offset NONE = new Offset(0, 0, 0, 0, 0, 0);
+      Offset scaled(float w) { return new Offset(x*w, y*w, z*w, pitch*w, yaw*w, roll*w); }
    }
 
-   /** Stage 4, Reid draw: the main arm rises in front of the view pulling the blade up (sheathe = the same, reversed). */
-   public static final Offset REID_PULL = new Offset(-0.12F, 0.14F, -0.06F, -40.0F, 12.0F, 0.0F);
+   private static final float[][] JAB = {under(0), key(1.6F,-24,-14,6,.03F,.07F,.10F),
+      key(3,-12,4,-3,-.12F,.06F,-.44F), key(4,-10,3,-2,-.10F,.05F,-.38F), under(8)};
+   private static final float[][] DASH = {under(0),key(1,16,0,-8,.03F,-.12F,.14F),
+      key(3,20,0,-9,.04F,-.14F,.16F),under(6)};
+   private static final float[][] HOOK = {under(0),key(1.8F,-36,-28,-14,.14F,.12F,.10F),
+      key(3,-14,38,12,-.28F,.05F,-.36F),key(4,-12,42,10,-.24F,.03F,-.30F),under(8)};
+   private static final float[][] HAMMER = {under(0),key(3.8F,-72,12,8,.02F,.30F,.08F),
+      key(5,28,-8,-6,-.06F,-.14F,-.40F),key(6,24,-10,-6,-.05F,-.12F,-.34F),under(12)};
+   private static final float[][] KICK = {under(0),key(2,-34,-4,-6,-.03F,.18F,-.08F),
+      key(4,-12,2,-4,0,.07F,-.04F),key(6,22,6,-12,.05F,-.14F,.15F),
+      key(9,22,6,-12,.05F,-.14F,.15F),under(16)};
+   private static final float[][] GRAB = {under(0),key(2,-28,-5,-3,-.04F,.12F,-.34F),
+      key(6,-26,-5,-3,-.04F,.11F,-.32F)};
+   private static final float[][] THROW = {key(0,-26,-5,-3,-.04F,.11F,-.32F),
+      key(2,-54,18,10,.08F,.22F,.18F),key(3,34,-20,-6,-.12F,-.10F,-.46F),
+      key(4,30,-24,-6,-.10F,-.08F,-.40F),under(12)};
+   private static final float[][] BEHIND = {under(0),key(2,28,-8,-14,.05F,-.18F,.14F),
+      key(4,-20,14,5,-.07F,.06F,-.12F),under(8)};
+   private static final float[][] STOMP = {under(0),key(6,-26,0,-12,.03F,.18F,.06F),
+      key(8,24,6,8,-.03F,-.20F,-.08F),key(9,18,4,6,-.02F,-.15F,-.06F),under(14)};
+   private static final float[][] CATCH_READY = {under(0),key(2,-42,-8,-10,-.07F,.18F,-.14F)};
+   private static final float[][] CATCH = {key(0,-42,-8,-10,-.07F,.18F,-.14F),
+      key(1,-30,10,4,-.09F,.18F,-.28F),key(4,-42,-8,-10,-.07F,.18F,-.14F)};
+   private static final float[][] GUARD = {under(0),key(2,-12,-30,20,.12F,.15F,-.12F)};
+   private static final float[][] SWAT = {key(0,-12,-30,20,.12F,.15F,-.12F),
+      key(2,-18,48,-8,-.28F,.15F,-.18F),key(6,-12,-30,20,.12F,.15F,-.12F)};
+   private static final float[][] SHEATH = {under(0),key(4,-46,-42,-12,.16F,.18F,.08F),
+      key(6,-8,48,12,-.30F,.04F,-.18F),key(8,-6,52,12,-.24F,.02F,-.14F),under(12)};
+   private static final float[][] WORLD_CUT = {under(0),key(10,-100,8,0,-.08F,.45F,-.12F),
+      key(13,-105,8,0,-.08F,.47F,-.12F),key(20,25,8,0,-.08F,-.18F,-.42F),
+      key(78,25,8,0,-.08F,-.18F,-.42F),under(80)};
+   private static final float[][] RAIN = rain();
 
+   private static float[][] rain() {
+      float[][] keys = new float[15][];
+      keys[0] = under(0);
+      for (int i=0;i<12;i++) {
+         float side = (i&1)==0 ? -1 : 1;
+         keys[i+1] = key((i+1)*18F/12,-24,side*34,side*9,side*.16F,.08F,-.24F);
+      }
+      keys[13]=key(19,-14,0,0,0,.03F,-.10F);
+      keys[14]=under(20);
+      return keys;
+   }
+
+   private static Offset sample(float[][] keys, double ticks) {
+      if (!Double.isFinite(ticks)) return Offset.NONE;
+      float t=(float)Math.max(0,ticks);
+      return new Offset(PoseKeys.sample(keys,t,3,0,false), PoseKeys.sample(keys,t,4,0,false),
+         PoseKeys.sample(keys,t,5,0,false), PoseKeys.sample(keys,t,0,0,false),
+         PoseKeys.sample(keys,t,1,0,false), PoseKeys.sample(keys,t,2,0,false));
+   }
+
+   /** Draw/sheathe remains driven by the six-second authoritative Reid phase. */
+   public static final Offset REID_PULL = new Offset(-.16F,.22F,-.10F,-52,18,-6);
    public static Offset reid(ReinhardPoses.ReidPhase phase, double ticks) {
-      return switch (phase) {
-         case DRAWING, SHEATHING -> REID_PULL.scaled(ReinhardPoses.bladeOut(phase, ticks));
+      return switch(phase) {
+         case DRAWING, SHEATHING -> REID_PULL.scaled(ReinhardPoses.bladeOut(phase,ticks));
          default -> Offset.NONE;
       };
    }
 
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks) {
-      return of(ability, phase, ticks, -1);
+      return of(ability,phase,ticks,-1);
    }
 
-   /** {@code length} = the synced action length (≤ 0 unknown: no fade-out at the end). */
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks, int length) {
-      if (ability == null) {
-         return Offset.NONE;
-      }
-
-      return switch (ability) {
-         case LIGHT_PUNCH -> new Offset(JAB_X, JAB_Y, JAB_Z, JAB_PITCH, 0.0F, 0.0F)
-            .scaled(strike(ticks, ReinhardRules.LIGHT_PUNCH_HIT_TICK, ReinhardRules.LIGHT_PUNCH_TICKS));
-         case STEP_DASH -> new Offset(0.0F, DASH_Y, DASH_Z, DASH_PITCH, 0.0F, 0.0F)
-            .scaled(strike(ticks, ReinhardRules.STEP_TICKS / 2, ReinhardRules.STEP_ACTION_TICKS));
-         case CATCH -> catchHand(phase, ticks, length);
-         case FIST_COMBO -> combo(phase, ticks);
-         case SKY_KICK -> kick(ticks);
-         case GRAB_THROW -> grab(phase, ticks, length);
-         case REFLECT -> backhand(phase, ticks, length);
-         case STOMP -> new Offset(0.0F, STOMP_Y, 0.0F, STOMP_PITCH, 0.0F, 0.0F)
-            .scaled(strike(ticks, ReinhardRules.STOMP_HIT_TICK, ReinhardRules.STOMP_TICKS));
-         case SHEATH_STRIKE -> new Offset(SHEATH_X, 0.0F, SHEATH_Z, 0.0F, SHEATH_YAW, 0.0F)
-            .scaled(strike(ticks, ReinhardRules.SHEATH_HIT_TICK, ReinhardRules.SHEATH_TICKS));
-         case WORLD_CUT -> worldCut(ticks, false);
-         case WORLD_ERASURE -> worldErasure(ticks, false);
-         case CUT_RAIN -> {
-            float sway = (float) Math.sin(Math.PI * 2.0 * ticks / 6.0) * strike(ticks, ReinhardRules.CUT_TICKS / 2, ReinhardRules.CUT_TICKS);
-            yield new Offset(CUT_SWAY_X * sway, 0.0F, 0.0F, 0.0F, CUT_SWAY_YAW * sway, 0.0F);
-         }
-         case DASH_BEHIND -> new Offset(0.0F, BEHIND_Y, BEHIND_Z, BEHIND_PITCH, 0.0F, BEHIND_ROLL)
-            .scaled(strike(ticks, 2, ReinhardRules.BEHIND_ACTION_TICKS));
+      if (ability==null || !Double.isFinite(ticks)) return Offset.NONE;
+      return switch(ability) {
+         case LIGHT_PUNCH -> sample(JAB,ticks);
+         case STEP_DASH -> sample(DASH,ticks);
+         case FIST_COMBO -> sample(phase<=0 ? JAB : phase==1 ? HOOK : HAMMER,ticks);
+         case SKY_KICK -> sample(KICK,ticks);
+         case GRAB_THROW -> sample(phase==ReinhardClips.PHASE_SNAP ? THROW : GRAB,ticks);
+         case DASH_BEHIND -> sample(BEHIND,ticks);
+         case STOMP -> sample(STOMP,ticks);
+         case CATCH -> sample(phase==ReinhardClips.PHASE_SNAP ? CATCH : CATCH_READY,ticks).scaled(windowFade(ticks,length));
+         case REFLECT -> sample(phase==ReinhardClips.PHASE_SNAP ? SWAT : GUARD,ticks).scaled(windowFade(ticks,length));
+         case SHEATH_STRIKE -> sample(SHEATH,ticks);
+         case CUT_RAIN -> sample(RAIN,ticks);
+         case WORLD_CUT -> worldCut(ticks,false);
+         case WORLD_ERASURE -> worldErasure(ticks,false);
          default -> Offset.NONE;
       };
    }
 
-   /** Both hands rise over the view and drive the blade down, holding low through silence. */
-   public static Offset worldCut(double ticks, boolean offhand) {
-      if(ticks<=0 || ticks>=ReinhardRules.WORLD_CUT_BLAST) return Offset.NONE;
-      float raise=(float)Math.max(0,1-Math.abs(ticks-10)/10);
-      float down=(float)Math.max(0,Math.min(1,(ticks-12)/8));
-      return new Offset(offhand ? -.18F : -.08F, .45F*raise-.18F*down,
-         -.12F-.3F*down, -100*raise+25*down, offhand ? -18 : 8, 0);
+   private static float windowFade(double ticks,int length) {
+      return length>0 ? smooth((length-ticks)/2) : 1;
    }
 
-   /** Raise Reid into view, one slow cut at tick 30, then hold. Physical arms, not inventory slots. */
-   public static Offset worldErasure(double ticks, boolean physicalLeft) {
-      if (!Double.isFinite(ticks) || ticks <= 0 || ticks >= ReinhardRules.ERASE_LENGTH) return Offset.NONE;
-      float raise = smooth(ticks / 15.0);
-      float cut = smooth((ticks - ReinhardRules.ERASE_CRACK_END) / 10.0);
-      return new Offset((physicalLeft ? .10F : -.22F) * raise + .40F * cut,
-         .22F * raise - .30F * cut, -.14F * raise - .18F * cut,
-         -20F * raise + 50F * cut, (physicalLeft ? -8F : 10F) * raise + 45F * cut,
-         (physicalLeft ? -5F : 5F) * raise + 12F * cut);
+   public static Offset worldCut(double ticks,boolean physicalLeft) {
+      if (!Double.isFinite(ticks) || ticks<=0 || ticks>=ReinhardRules.WORLD_CUT_BLAST) return Offset.NONE;
+      Offset right=sample(WORLD_CUT,ticks);
+      return physicalLeft ? new Offset(right.x()-.10F,right.y(),right.z(),right.pitch(),-right.yaw(),right.roll()) : right;
+   }
+
+   public static Offset worldErasure(double ticks,boolean physicalLeft) {
+      if (!Double.isFinite(ticks) || ticks<=0 || ticks>=ReinhardRules.ERASE_LENGTH) return Offset.NONE;
+      float raise=smooth(ticks/15),cut=smooth((ticks-ReinhardRules.ERASE_CRACK_END)/10.0);
+      return new Offset((physicalLeft ? .10F : -.22F)*raise+.40F*cut,
+         .22F*raise-.30F*cut,-.14F*raise-.18F*cut,-20*raise+50*cut,
+         (physicalLeft ? -8 : 10)*raise+45*cut,(physicalLeft ? -5 : 5)*raise+12*cut)
+         .scaled(windowFade(ticks,ReinhardRules.ERASE_LENGTH));
    }
 
    private static float smooth(double value) {
-      double t = clamp01(value);
-      return (float) (t * t * (3 - 2 * t));
-   }
-
-   private static Offset combo(int phase, double ticks) {
-      int step = Math.max(0, Math.min(phase, ReinhardRules.COMBO_HIT_TICKS.length - 1));
-      float w = strike(ticks, ReinhardRules.COMBO_HIT_TICKS[step], ReinhardRules.COMBO_STEP_TICKS[step]);
-      return switch (step) {
-         case 0 -> new Offset(JAB_X, JAB_Y, JAB_Z, JAB_PITCH, 0.0F, 0.0F).scaled(w);
-         case 1 -> new Offset(HOOK_X, JAB_Y, JAB_Z * 0.8F, JAB_PITCH, HOOK_YAW, 0.0F).scaled(w);
-         default -> {
-            // Up first (wind-up over the first half of the run to the contact), then down and forward.
-            int contact = ReinhardRules.COMBO_HIT_TICKS[step];
-            float raise = ticks < contact ? (float) Math.sin(Math.PI * ticks / contact) : 0.0F;
-            yield new Offset(0.0F, HAMMER_RAISE_Y * raise + HAMMER_Y * w, HAMMER_Z * w, -40.0F * raise + HAMMER_PITCH * w, 0.0F, 0.0F);
-         }
-      };
-   }
-
-   private static Offset kick(double ticks) {
-      int toss = ReinhardRules.KICK_TOSS_TICKS;
-      if (ticks < toss) {
-         return new Offset(0.0F, TOSS_Y, 0.0F, TOSS_PITCH, 0.0F, 0.0F).scaled(strike(ticks, toss / 2, toss));
-      }
-
-      float w = strike(ticks - toss, 1, ReinhardRules.KICK_ACTION_TICKS - toss);
-      return new Offset(0.0F, KICK_ARM_Y, KICK_ARM_Z, KICK_ARM_PITCH, 0.0F, 0.0F).scaled(w);
-   }
-
-   private static Offset grab(int phase, double ticks, int length) {
-      if (phase != ReinhardClips.PHASE_SNAP) {
-         // The hold has no fade-out of its own: the throw (or a release) replaces it.
-         return new Offset(GRAB_X, GRAB_Y, GRAB_Z, GRAB_PITCH, 0.0F, 0.0F).scaled((float) clamp01(ticks / CATCH_EASE));
-      }
-
-      int stop = ReinhardRules.HIT_STOP_TICKS;
-      if (ticks < stop) {
-         float w = (float) clamp01(ticks / 1.5);
-         return new Offset(GRAB_X, COCK_Y, COCK_Z, COCK_PITCH, 0.0F, 0.0F).scaled(w);
-      }
-
-      float w = strike(ticks - stop + 0.5, 1, ReinhardRules.THROW_ACTION_TICKS - stop);
-      return new Offset(GRAB_X, THROW_Y, THROW_Z, THROW_PITCH, 0.0F, 0.0F).scaled(w);
-   }
-
-   private static Offset backhand(int phase, double ticks, int length) {
-      float fade = length > 0 ? (float) clamp01((length - ticks) / CATCH_EASE) : 1.0F;
-      if (phase != ReinhardClips.PHASE_SNAP) {
-         float w = (float) clamp01(ticks / CATCH_EASE) * fade;
-         return new Offset(GUARD_X, GUARD_Y, GUARD_Z, 0.0F, GUARD_YAW, GUARD_ROLL).scaled(w);
-      }
-
-      // The swat peaks on the second tick, then the hand returns to the guard.
-      float swat = strike(ticks, 2, 6);
-      return new Offset(GUARD_X + (SWAT_X - GUARD_X) * swat, GUARD_Y, GUARD_Z, 0.0F, GUARD_YAW + (SWAT_YAW - GUARD_YAW) * swat, GUARD_ROLL * (1.0F - swat))
-         .scaled(fade);
-   }
-
-   private static Offset catchHand(int phase, double ticks, int length) {
-      float fade = length > 0 ? (float) clamp01((length - ticks) / CATCH_EASE) : 1.0F;
-      if (phase != ReinhardClips.PHASE_SNAP) {
-         float w = (float) clamp01(ticks / CATCH_EASE) * fade;
-         return new Offset(CATCH_X, CATCH_Y, CATCH_Z, CATCH_PITCH, 0.0F, CATCH_ROLL).scaled(w);
-      }
-
-      // Held up the whole snap; the jerk peaks on the first tick and settles by the fourth.
-      float jerk = strike(ticks, 1, 4);
-      return new Offset(CATCH_X, CATCH_Y, CATCH_Z + SNAP_Z * jerk, CATCH_PITCH + SNAP_PITCH * jerk, 0.0F, CATCH_ROLL + SNAP_ROLL * jerk).scaled(fade);
-   }
-
-   private static double clamp01(double v) {
-      return v < 0.0 ? 0.0 : Math.min(1.0, v);
-   }
-
-   /** 0 → 1 (eased) by the contact tick, back to 0 by the end of the action. */
-   static float strike(double ticks, int contact, int length) {
-      if (ticks <= 0.0 || ticks >= length) {
-         return 0.0F;
-      }
-
-      if (ticks <= contact) {
-         double t = ticks / contact;
-         return (float) (t * t * (3.0 - 2.0 * t));
-      }
-
-      return (float) (1.0 - (ticks - contact) / (length - contact));
+      double t=Math.max(0,Math.min(1,value));
+      return (float)(t*t*(3-2*t));
    }
 }
