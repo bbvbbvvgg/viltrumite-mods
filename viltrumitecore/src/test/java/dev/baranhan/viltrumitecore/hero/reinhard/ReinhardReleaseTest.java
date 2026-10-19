@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 class ReinhardReleaseTest {
-   @Test void qualityReworkContentUsesNewCoreMinorVersion() throws Exception {
+   @Test void inputBlockerUsesNewCorePatchVersion() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.33.0", version.group(1), "New Reinhard art/input content requires a new core minor; flight stays unchanged");
+      assertEquals("1.33.1", version.group(1), "Input blocker requires a new core patch; flight stays unchanged");
    }
 }

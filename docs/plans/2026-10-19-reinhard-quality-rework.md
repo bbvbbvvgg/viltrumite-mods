@@ -83,3 +83,32 @@ No new animation engine, shader chain, animation dependency or flight change.
 - Stage 7 audio source/license exclusions remain unchanged: no CC-BY-NC recordings
   were added, and existing approved/reused cues remain. This pass does not claim
   replacement recordings or listening acceptance for the prior placeholders.
+
+## Post-handoff blocker correction: core 1.33.1
+- The owner found a real blocker in the delivered 1.33.0: ViltrumiteCoreClient
+  tracked only eight hero slot edges. Reinhard has thirteen generic input slots,
+  so Reid, Sheath Strike, Rain of Cuts, World Cut and World Erasure never reached
+  the generic packet sender. The prior code-completion claim was incorrect.
+- PR #35 already contained the slot-id map fix (964d4a7) and context seeding
+  (fbd910c). This correction adapts those ideas without importing unrelated
+  animation or gameplay changes from that branch.
+- HeroKeyEdges replaces the fixed array and bounded loop in the production tick.
+  It tracks slot IDs, samples every declared slot, and emits the same validated
+  HeroInputC2SPacket. Dash Behind keeps its prediction packet; Lethal Chop keeps
+  the shared kit path. No packet protocol or server gate changes.
+- Hero, active page, active six-slot binding layout and local-player identity
+  own the state. New contexts sample held keys without firing them. Page/binding
+  changes and focus loss release channels previously sent to the same hero;
+  hero/player changes never replay an old release into a new hero or connection.
+  Logout and a null local player clear the cache. Reordered or removed IDs do not
+  inherit another slot's state.
+- Nine new regression tests cover thirteen real Reinhard mappings through the
+  production packet codec, all declared Homelander/Regulus/Iron Man slot edges,
+  press/hold/release, page and binding changes, hero switches, respawn/reconnect,
+  focus/GUI loss, duplicate/reordered/removed IDs and production tick wiring.
+  These are automated routing tests, not observed Minecraft key-event gameplay.
+- Native gameplay remains waived by the owner. The previous JAR must be replaced
+  with 1.33.1; the 1.33.0 build/test result did not detect this input blocker.
+- Full Java 17 `./gradlew build --no-daemon` passed after the fix: core 1242 +
+  flight 12 = 1254 tests, zero failures/errors/skips. `git diff --check` passed.
+  Standalone output: `reforgedcodex-core-1.33.1.jar`.

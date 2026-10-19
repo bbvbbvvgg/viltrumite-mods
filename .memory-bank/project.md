@@ -204,3 +204,7 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - A PULL lease owns control precedence, not hand attachment. Explicit held-target ownership now goes through HeroDefinition. Server movement suppression must run on the server thread; per-tick connection teleports restart player prediction. Use a shared neck anchor and one release correction. Native network smoothness remains unverified.
 
 - FP geo/item conversion: PlayerGeoLayer uses vanilla arm frame → negative vanilla pivot → Y +1.5 → scale(-1,-1,1). Follow the geo shoulder/elbow from that frame, then HeldItemAnchor.local. Attaching directly to ModelPart ignores the elbow. Neutral-grip matrix equality is verified; native visual acceptance is not.
+
+## Hero keyboard edge ownership
+- heroInputSlots lists all abilities across pages, not only six equipped keys. Do not cap its iteration to a fixed array size. Reinhard's late Holy Sword inputs were silently dropped by the old eight-slot cache.
+- Track edges by ability ID and context (hero, player session, active page and bindings). Seed held keys after a context/focus switch; do not cast the new ability on the old held physical key. Release already-sent channels on same-hero page/focus changes. Never replay old-player or old-hero edges into a new owner.
