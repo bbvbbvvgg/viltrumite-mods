@@ -37,10 +37,25 @@ class ReinhardWalkClipTest {
    @Test
    void walkAnimatesFourLimbs() throws IOException {
       Animation walk = walk();
-      assertEquals(Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG), walk.boneAnimations().keySet());
+      // The torso and head add the bob and the counter-rotation; the four limbs carry the stride.
+      assertTrue(walk.boneAnimations().keySet().containsAll(
+         Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG)),
+         walk.boneAnimations().keySet().toString());
       for (Animation.BoneAnimation bone : walk.boneAnimations().values()) {
          assertFalse(bone.rotX().isEmpty(), bone.boneName());
       }
+   }
+
+   @Test
+   void walkBobsTheTorsoTwicePerCycle() throws IOException {
+      Animation walk = walk();
+      Animation.BoneAnimation body = walk.boneAnimations().get(ReinhardAssets.BODY_BONE);
+      assertNotNull(body, "body");
+      float atStart = body.posY().sample(0.0);
+      float atQuarter = body.posY().sample(0.25);
+      float atHalf = body.posY().sample(0.5);
+      assertTrue(atQuarter > atStart + 0.005F, "the body rises at the quarter step");
+      assertEquals(atStart, atHalf, 0.005F, "and returns at the half step");
    }
 
    @Test

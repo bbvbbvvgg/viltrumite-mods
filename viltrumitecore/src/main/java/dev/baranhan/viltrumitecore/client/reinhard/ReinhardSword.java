@@ -17,23 +17,36 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
  * attached to the body bone. Stage 4: the blade slides out along the sheath axis while Reid is drawn.
  */
 public final class ReinhardSword {
-   /** Sheath mouth on the body, Bedrock px (+x = Reinhard's left), model space. */
-   public static final float HIP_X = 4.5F;
-   public static final float HIP_Y = 11.0F;
-   public static final float HIP_Z = 0.0F;
+   /** Sheath mouth on the body, Bedrock px (+x = Reinhard's left, model space): the belt, left side. */
+   public static final float HIP_X = 4.6F;
+   public static final float HIP_Y = 14.5F;
+   public static final float HIP_Z = 0.5F;
    /**
-    * Tilt in ModelPart degrees: the hilt leans in across the belly (Z) and forward, the tip back (X).
-    * X is 50 (plan: 10): hanging nearly upright from the 11 px hip, the sheath tip went into the ground.
+    * Belt carry in ModelPart degrees. X tips the sheathed sword from vertical toward the
+    * back (down-back along the thigh); Z rolls the hilt inward over the belt so the tip
+    * stays outside the leg. With {@link #SWORD_SCALE} the chape hangs {@link #TIP_HEIGHT_PX}
+    * above the feet at rest.
     */
-   public static final float TILT_Z = -20.0F;
-   public static final float TILT_X = 50.0F;
+   public static final float TILT_Z = -10.0F;
+   public static final float TILT_X = 62.0F;
    /**
-    * The archive sword is ~46 px long in block units ×16 (sized as a big item) against the
-    * 32 px body; 0.35 makes the sheath ~13 px: with the tilt its tip stays ~2 px above the ground.
+    * The archive blade is 40.8 px from guard to tip against the 32 px body. 0.6 makes Reid
+    * a two-hander (1.36 blocks in the hand, 1.26 in the sheath) — 1.7× the old 0.35, which
+    * read as a dagger. 0.7 was tried on paper: at that length the scabbard either drags on
+    * the ground or must lie almost horizontal.
     */
-   public static final float SWORD_SCALE = 0.35F;
+   public static final float SWORD_SCALE = 0.6F;
+   /** Blade guard→tip and the closed end of the sheath (sword px, archive frame). */
+   static final float BLADE_TIP_PX = 40.8F;
+   static final float SHEATH_TIP_PX = 42.55F;
+   /**
+    * Height of the sheathed chape over the feet at rest, in model px: the sheath hangs from
+    * the belt, tipped {@link #TILT_X} degrees from vertical.
+    */
+   public static final float TIP_HEIGHT_PX = HIP_Y - SWORD_SCALE * SHEATH_TIP_PX
+      * (float) (Math.cos(Math.toRadians(TILT_X)) * Math.cos(Math.toRadians(TILT_Z)));
    /** Stage 4: how far (sword px, along the sheath axis toward the hilt) the blade travels out at full draw. */
-   public static final float DRAW_OUT_PX = 40.0F;
+   public static final float DRAW_OUT_PX = 46.0F;
 
    private ReinhardSword() {
    }
