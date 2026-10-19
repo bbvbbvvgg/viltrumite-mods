@@ -49,6 +49,8 @@ public class ViltrumiteCoreClient {
    public static CameraType preGrabPerspective = null;
    /** Client edge state per hero slot id (a fixed array truncated Holy Sword's five slots). */
    public static final java.util.Map<String, Boolean> heroKeyDown = new java.util.HashMap<>();
+   /** Hero class + ability page the edge state belongs to; a switch seeds the state instead of pressing. */
+   public static String heroKeyOwner = "";
 
    @SubscribeEvent
    @SuppressWarnings({"unchecked", "rawtypes"})
@@ -273,6 +275,15 @@ public class ViltrumiteCoreClient {
             {
                dev.baranhan.viltrumitecore.hero.HeroDefinition hero = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(client.player);
                String[] heroSlots = hero.heroInputSlots();
+               int page = client.player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser user ? user.getActivePage() : -1;
+               String owner = hero.getClass().getName() + "#" + page;
+               boolean changed = !owner.equals(ViltrumiteCoreClient.heroKeyOwner);
+               ViltrumiteCoreClient.heroKeyOwner = owner;
+               if (changed) {
+                  // The same physical key now means another ability: remember its state, never press
+                  // it into the new mode (a held R must not fire Fist Combo after a mode switch).
+                  ViltrumiteCoreClient.heroKeyDown.clear();
+               }
                for (String slot : heroSlots) {
                   dev.baranhan.viltrumitecore.hero.HeroAction action = hero.heroActionFor(slot);
                   if (action == null) {
@@ -281,7 +292,7 @@ public class ViltrumiteCoreClient {
 
                   boolean down = AbilityInputManager.isAbilityKeyDown(client.player, slot);
                   Boolean was = ViltrumiteCoreClient.heroKeyDown.put(slot, down);
-                  if (was == null ? down : was != down) {
+                  if (!changed && (was == null ? down : was != down)) {
                      CoreMessages.sendToServer(new dev.baranhan.viltrumitecore.network.packet.HeroInputC2SPacket(action, down));
                   }
                }
