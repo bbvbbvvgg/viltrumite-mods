@@ -50,7 +50,8 @@ public final class LightPunch implements AbilityHandler {
 
       Strikes.knockback(target, player.getLookAngle(), ReinhardRules.LIGHT_PUNCH_KNOCKBACK);
       Vec3 at = contact(player, target, ReinhardRules.LIGHT_PUNCH_REACH);
-      HeroFx.flash(player, at);
+      HeroFx.flash(player, at, .42F); // precise contact, not the heavy launch flash
+      HeroFx.blade(player, at.subtract(player.getLookAngle().scale(.24)), at.add(player.getLookAngle().scale(.12)), null);
       ReinhardSounds.playAt(player, at, ReinhardSounds.LIGHT_PUNCH.get(), 0.9F, 1.15F);
    }
 

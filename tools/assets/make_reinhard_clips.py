@@ -79,32 +79,19 @@ CLIPS = {
 
 
 def swim_clip():
-    import math
-
-    def quad(x):
-        return -65.0 * x + x * x
-
-    right, left, rleg, lleg = {}, {}, {}, {}
-    for unit in range(27):
-        f = float(unit % 26) if unit < 26 else 26.0
-        if f < 14.0:
-            k = quad(f) / quad(14.0)
-            x, rz, lz = 0.0, math.pi - 1.8707964 * k, math.pi + 1.8707964 * k
-        elif f < 22.0:
-            k = (f - 14.0) / 8.0
-            x, rz, lz = math.pi / 2 * k, 1.2707963 + 1.8707964 * k, 5.012389 - 1.8707964 * k
-        else:
-            k = (f - 22.0) / 4.0
-            x, rz, lz = math.pi / 2 - math.pi / 2 * k, math.pi, math.pi
-        t = "%.4f" % (unit / 26.0)
-        t = t.rstrip("0").rstrip(".") if unit else "0.0"
-        right[t] = [round(math.degrees(x), 3), 180, round(math.degrees(rz), 3)]
-        left[t] = [round(math.degrees(x), 3), 180, round(math.degrees(lz), 3)]
-        phase = 2.0 * math.pi * unit / 26.0
-        rleg[t] = [round(math.degrees(0.3 * math.cos(phase)), 3), 0, 0]
-        lleg[t] = [round(math.degrees(0.3 * math.cos(phase + math.pi)), 3), 0, 0]
-    return loop({"right_arm": {"rotation": right}, "left_arm": {"rotation": left},
-                 "right_leg": {"rotation": rleg}, "left_leg": {"rotation": lleg}}, 1.0)
+    # Breaststroke: extension -> lateral catch -> bent-elbow pull -> recovery.
+    # Signed rolls never make the old 180/360-degree wrap around the shoulder.
+    stroke = [(0,[-165,0,8]),(5,[-155,0,55]),(10,[-100,0,80]),
+              (14,[-25,0,35]),(18,[-65,0,12]),(20,[-165,0,8])]
+    elbow = [(0,[-8,0,0]),(5,[-15,0,0]),(10,[-65,0,0]),
+             (14,[-95,0,0]),(18,[-60,0,0]),(20,[-8,0,0])]
+    bones = {}
+    for side, sign in [('right',1),('left',-1)]:
+        bones[side+'_arm'] = channel([(t,[v[0],v[1]*sign,v[2]*sign]) for t,v in stroke])
+        bones[side+'_forearm'] = channel(elbow)
+        bones[side+'_leg'] = channel([(0,[-12,0,4*sign]),(5,[14,0,8*sign]),
+                                      (10,[-12,0,4*sign]),(15,[14,0,8*sign]),(20,[-12,0,4*sign])])
+    return loop(bones,1.0)
 
 
 # Quality rework: authored anticipation/contact/recovery, ticks as the source unit.
@@ -125,6 +112,21 @@ def action(length, **bones):
 def pos(clip, bone, rows):
     clip['bones'].setdefault(bone, {})['position'] = keys(rows)
 
+CLIPS['crouch'] = loop({
+    'body': {'rotation':[22,0,0], 'position':[0,-3,1]},
+    'head': {'rotation':[-8,0,0], 'position':[0,-3,-1]},
+    'right_arm': {'rotation':[12,0,6], 'position':[0,-3,0]},
+    'left_arm': {'rotation':[12,0,-6], 'position':[0,-3,0]},
+    'right_forearm': {'rotation':[-14,0,0]}, 'left_forearm': {'rotation':[-14,0,0]},
+    'right_leg': {'rotation':[-12,0,3], 'position':[0,-.4,2]},
+    'left_leg': {'rotation':[-12,0,-3], 'position':[0,-.4,2]},
+},1.0)
+CLIPS['sit'] = loop({
+    'body': {'rotation':[3,0,0]},
+    'right_arm': {'rotation':[-24,0,8]},'left_arm': {'rotation':[-24,0,-8]},
+    'right_forearm': {'rotation':[-42,0,0]},'left_forearm': {'rotation':[-42,0,0]},
+    'right_leg': {'rotation':[-82,16,5]},'left_leg': {'rotation':[-82,-16,-5]},
+},1.0)
 CLIPS['swim'] = swim_clip()
 # Rest poses now include real elbows. The Knight's palm rests behind the lower back,
 # not next to the thigh. Shoulder sweeps backward; elbow folds inward across the back.

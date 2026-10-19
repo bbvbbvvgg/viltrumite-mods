@@ -32,85 +32,83 @@ public final class ReinhardSword {
    private ReinhardSword() {
    }
 
-   /** {@code stack} is the model frame (after the body yaw and player scale); the body bone is already posed. */
-   public static void drawSheathed(PoseStack stack, BakedGeoModel body, MultiBufferSource buffers, int light, int overlay) {
-      drawSheathed(stack, body, buffers, light, overlay, 0.0F, true);
-   }
-
-   /** {@code out} 0..1: the blade slides out of the sheath along its axis (Reid draw / sheathe, {@link ReinhardPoses#bladeOut}). */
-   public static void drawSheathed(PoseStack stack, BakedGeoModel body, MultiBufferSource buffers, int light, int overlay, float out, boolean blade) {
-      GeoBone bodyBone = body.getBone(ReinhardAssets.BODY_BONE);
-      BakedGeoModel sheath = AnimCache.model(ReinhardAssets.SHEATH);
-      BakedGeoModel bladeModel = AnimCache.model(ReinhardAssets.BLADE);
-      if (bodyBone == null || sheath == null || bladeModel == null) {
-         return;
-      }
-
-      sheath.resetBones();
-      bladeModel.resetBones();
-      stack.pushPose();
-      ReinhardRenderer.boneFrame(stack, bodyBone);
-      // Renderer space mirrors Bedrock x (the parser negates it) like the bone pivots.
-      stack.translate((-HIP_X - bodyBone.pivotX) / 16.0F, (HIP_Y - bodyBone.pivotY) / 16.0F, (HIP_Z - bodyBone.pivotZ) / 16.0F);
-      // ModelPart angles → BakedGeoModel space: x negated, z kept (same rule as the clips).
-      stack.mulPose(Axis.ZP.rotationDegrees(TILT_Z));
-      stack.mulPose(Axis.XP.rotationDegrees(-TILT_X));
-      stack.scale(SWORD_SCALE, SWORD_SCALE, SWORD_SCALE);
-      // The archive stores the sheathed sword hilt down: turn it hilt up, sheath mouth (the sheathed guard) at the hip.
-      stack.mulPose(Axis.ZP.rotationDegrees(180.0F));
-      // Sword space: the sheathed guard sits at SHEATHED_OFFSET (Bedrock px; renderer x negated). Put it at the hip.
-      float gx = -ReinhardAssets.SHEATHED_OFFSET.x / 16.0F;
-      float gy = ReinhardAssets.SHEATHED_OFFSET.y / 16.0F;
-      float gz = ReinhardAssets.SHEATHED_OFFSET.z / 16.0F;
-      stack.translate(-gx, -gy, -gz);
-      draw(sheath, stack, buffers, light, overlay);
-      // The blade in its sheathed place: blade geo + SHEATHED_OFFSET.
-      if (blade) {
-         stack.translate(gx, gy - out * DRAW_OUT_PX / 16.0F, gz);
-         draw(bladeModel, stack, buffers, light, overlay);
-      }
-      stack.popPose();
-   }
-
    /** Guard ahead of the palm in the vanilla held-item frame (px). */
-   public static final float HAND_GUARD_PX = 2.0F;
+   public static final float HAND_GUARD_PX = 2;
 
-   /**
-    * Reid in the hand: {@code stack} is vanilla's held-item frame of that arm (third person:
-    * geo arm bone + {@link HeldItemAnchor#local}; first person: the ModelPart arm + the same
-    * vanilla offsets). The blade's +y (guard → tip) points out of the palm like a held sword.
-    */
-   public static void drawInHand(PoseStack stack, MultiBufferSource buffers, int light, int overlay) {
-      BakedGeoModel blade = AnimCache.model(ReinhardAssets.BLADE);
-      if (blade == null) {
-         return;
-      }
-
-      blade.resetBones();
-      stack.pushPose();
-      stack.translate(0.0F, HAND_GUARD_PX / 16.0F, 0.0F);
-      stack.scale(SWORD_SCALE, SWORD_SCALE, SWORD_SCALE);
-      draw(blade, stack, buffers, light, overlay);
-      stack.popPose();
+   /** Smooth, rigid transfer: never linearly interpolate matrices (that shears the sword). */
+   public static org.joml.Matrix4f interpolate(org.joml.Matrix4f from, org.joml.Matrix4f to, float weight) {
+      float w = Math.max(0, Math.min(1, weight));
+      if (w == 0) return new org.joml.Matrix4f(from);
+      if (w == 1) return new org.joml.Matrix4f(to);
+      org.joml.Vector3f p = from.getTranslation(new org.joml.Vector3f()).lerp(to.getTranslation(new org.joml.Vector3f()), w);
+      org.joml.Vector3f scale = from.getScale(new org.joml.Vector3f()).lerp(to.getScale(new org.joml.Vector3f()), w);
+      org.joml.Quaternionf q = from.getUnnormalizedRotation(new org.joml.Quaternionf()).normalize()
+         .slerp(to.getUnnormalizedRotation(new org.joml.Quaternionf()).normalize(), w);
+      return new org.joml.Matrix4f().translationRotateScale(p, q, scale);
    }
 
-   /** Complete sheathed weapon follows the striking hand, never a second copy on the hip. */
-   public static void drawSheathInHand(PoseStack stack, MultiBufferSource buffers, int light, int overlay) {
-      BakedGeoModel sheath = AnimCache.model(ReinhardAssets.SHEATH);
-      BakedGeoModel blade = AnimCache.model(ReinhardAssets.BLADE);
-      if (sheath == null || blade == null) return;
-      sheath.resetBones();
-      blade.resetBones();
+   public static float handWeight(ReinhardPoses.ReidPhase phase, double ticks) {
+      return switch (phase) {
+         case DRAWN -> 1;
+         case DRAWING -> smooth((ticks - 96) / 24);
+         case SHEATHING -> 1 - smooth(ticks / 8);
+         default -> 0;
+      };
+   }
+
+   public static float strikeWeight(double ticks) {
+      return smooth(ticks / 4) * smooth((12 - ticks) / 4);
+   }
+
+   private static float smooth(double value) {
+      double t = Math.max(0, Math.min(1, value));
+      return (float)(t*t*(3-2*t));
+   }
+
+   /** Blade guard at the hip, before extraction. */
+   static org.joml.Matrix4f hip(BakedGeoModel body) {
+      PoseStack frame = new PoseStack();
+      GeoBone bone = body.getBone(ReinhardAssets.BODY_BONE);
+      if (bone != null) {
+         ReinhardRenderer.boneFrame(frame, bone);
+         frame.translate((-HIP_X-bone.pivotX)/16, (HIP_Y-bone.pivotY)/16, (HIP_Z-bone.pivotZ)/16);
+      }
+      frame.mulPose(Axis.ZP.rotationDegrees(TILT_Z));
+      frame.mulPose(Axis.XP.rotationDegrees(-TILT_X));
+      frame.scale(SWORD_SCALE,SWORD_SCALE,SWORD_SCALE);
+      frame.mulPose(Axis.ZP.rotationDegrees(180));
+      return new org.joml.Matrix4f(frame.last().pose());
+   }
+
+   /** Both meshes have a frame every render, so interruptions can recover without duplication. */
+   static void drawAttached(Object player, PoseStack stack, org.joml.Matrix4f hip, org.joml.Matrix4f hand,
+      ReinhardPoses.ReidPhase phase, double ticks, boolean strike, double actionTicks, int key,
+      MultiBufferSource buffers, int light, int overlay) {
+      org.joml.Matrix4f[] target=frames(hip,hand,phase,ticks,strike,actionTicks);
+      org.joml.Matrix4f[] frames = ReinhardRecovery.weapons(player,key,target[0],target[1],net.minecraft.Util.getNanos());
+      drawFrame(ReinhardAssets.SHEATH, stack,frames[0],buffers,light,overlay);
+      drawFrame(ReinhardAssets.BLADE, stack,frames[1],buffers,light,overlay);
+   }
+
+   static org.joml.Matrix4f[] frames(org.joml.Matrix4f hip,org.joml.Matrix4f hand,
+      ReinhardPoses.ReidPhase phase,double ticks,boolean strike,double actionTicks) {
+      float sw = strike ? strikeWeight(actionTicks) : 0;
+      org.joml.Matrix4f sheath = interpolate(hip,hand,sw)
+         .translate(ReinhardAssets.SHEATHED_OFFSET.x/16, -ReinhardAssets.SHEATHED_OFFSET.y/16, -ReinhardAssets.SHEATHED_OFFSET.z/16);
+      org.joml.Matrix4f blade = strike ? interpolate(hip,hand,sw)
+         : interpolate(new org.joml.Matrix4f(hip).translate(0,-ReinhardPoses.bladeOut(phase,ticks)*DRAW_OUT_PX/16,0), hand, handWeight(phase,ticks));
+      return new org.joml.Matrix4f[]{sheath,blade};
+   }
+
+   private static void drawFrame(net.minecraft.resources.ResourceLocation resource, PoseStack stack, org.joml.Matrix4f frame,
+      MultiBufferSource buffers, int light, int overlay) {
+      BakedGeoModel model = AnimCache.model(resource);
+      if (model == null) return;
+      model.resetBones();
       stack.pushPose();
-      stack.translate(0, HAND_GUARD_PX / 16.0F, 0);
-      stack.scale(SWORD_SCALE, SWORD_SCALE, SWORD_SCALE);
-      float gx = -ReinhardAssets.SHEATHED_OFFSET.x / 16.0F;
-      float gy = ReinhardAssets.SHEATHED_OFFSET.y / 16.0F;
-      float gz = ReinhardAssets.SHEATHED_OFFSET.z / 16.0F;
-      stack.translate(-gx, -gy, -gz);
-      draw(sheath, stack, buffers, light, overlay);
-      stack.translate(gx, gy, gz);
-      draw(blade, stack, buffers, light, overlay);
+      stack.mulPoseMatrix(frame);
+      stack.last().normal().mul(new org.joml.Matrix3f(frame).invert().transpose());
+      draw(model,stack,buffers,light,overlay);
       stack.popPose();
    }
 

@@ -516,6 +516,23 @@ public final class ReinhardHero implements HeroDefinition {
 
    /** Mode in heroFlags bits 0-1; ability cooldowns at their ordinal, mode cooldown at EXTRA_MODE_CD. */
    @Override
+   public int heldTargetId(Player player) {
+      if (player.level().isClientSide) {
+         HeroPublicSnapshot view = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer hp ? hp.getHeroSnapshot() : null;
+         return view != null && view.heroId() == id() && ReinhardFlags.has(view.heroFlags(), ReinhardFlags.GRAB_HOLDING)
+            ? view.controlTargetId() : -1;
+      }
+      ReinhardState state = ReinhardState.of(player);
+      return state == null || state.grab == null ? -1 : state.grab.targetId();
+   }
+
+   @Override
+   public net.minecraft.world.phys.Vec3 heldTargetPosition(Player player, net.minecraft.world.entity.Entity target, float partialTick) {
+      return dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.anchor(
+         player.getPosition(partialTick), net.minecraft.util.Mth.rotLerp(partialTick, player.yRotO, player.getYRot()), target.getBbWidth(), target.getBbHeight());
+   }
+
+   @Override
    public HeroPublicSnapshot snapshot(Player player) {
       ReinhardState state = ReinhardState.of(player);
       if (state == null) {

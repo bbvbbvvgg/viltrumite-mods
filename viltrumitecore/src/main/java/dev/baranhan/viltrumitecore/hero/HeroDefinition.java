@@ -347,6 +347,12 @@ public interface HeroDefinition {
     */
    void enter(ServerPlayer player);
 
+   /** Both sides: entity held by this hero, or -1. Never infer a hold from a generic PULL lease. */
+   default int heldTargetId(Player holder) { return -1; }
+
+   /** Both sides: authoritative hold anchor. partialTick only interpolates the client presentation. */
+   default net.minecraft.world.phys.Vec3 heldTargetPosition(Player holder, net.minecraft.world.entity.Entity target, float partialTick) { return null; }
+
    /** Server-authoritative public snapshot; written to the synced data for all trackers. */
    HeroPublicSnapshot snapshot(Player player);
 

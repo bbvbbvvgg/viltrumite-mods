@@ -82,6 +82,7 @@ public final class ReinhardRenderer {
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
       if (snapshot == null) {
          StanceBlend.reset(player);
+         ReinhardRecovery.reset(player);
          ParryPulse.THIRD_PERSON.reset(player);
          return;
       }
@@ -115,6 +116,7 @@ public final class ReinhardRenderer {
          player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core ? ReinhardPoses.chopClip(core.getChopTicks(), core.isLeftChop(), partialTick) : null, player.isSprinting());
       applyMelee(body, player, snapshot, partialTick);
       applyHead(body, player, partialTick);
+      ReinhardRecovery.body(player,body,recoveryKey(snapshot)+player.getPose().ordinal()*2048+(player.isPassenger()?32768:0),Util.getNanos());
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
       setupRotations(player, stack, partialTick, swim);
@@ -136,29 +138,16 @@ public final class ReinhardRenderer {
                1.0F, 1.0F, 1.0F, 1.0F, null);
          }
 
-         boolean sheathStrike = snapshot.actionId() == ReinhardAbility.SHEATH_STRIKE.ordinal();
-         if (!sheathStrike) ReinhardSword.drawSheathed(stack, body, buffers, light, overlay,
-            ReinhardPoses.bladeOut(reidPhase, reidTicks), reidPhase != ReinhardPoses.ReidPhase.DRAWN);
-         if (sheathStrike) {
-            GeoBone hand = body.getBone(ReinhardAssets.RIGHT_ARM);
-            if (hand != null) {
-               stack.pushPose();
-               handFrame(stack, body, hand);
-               stack.mulPoseMatrix(HeldItemAnchor.local(HumanoidArm.RIGHT));
-               ReinhardSword.drawSheathInHand(stack, buffers, light, overlay);
-               stack.popPose();
-            }
-         }
-         if (reidPhase == ReinhardPoses.ReidPhase.DRAWN) {
-            // Stage 4: Reid in the right hand (the vanilla item of that hand is hidden by drawsHeldItem).
-            GeoBone hand = body.getBone(ReinhardAssets.RIGHT_ARM);
-            if (hand != null) {
-               stack.pushPose();
-               handFrame(stack, body, hand);
-               stack.mulPoseMatrix(HeldItemAnchor.local(HumanoidArm.RIGHT));
-               ReinhardSword.drawInHand(stack, buffers, light, overlay);
-               stack.popPose();
-            }
+         GeoBone hand = body.getBone(ReinhardAssets.RIGHT_ARM);
+         if (hand != null) {
+            PoseStack handPose = new PoseStack();
+            handFrame(handPose,body,hand);
+            handPose.mulPoseMatrix(HeldItemAnchor.local(HumanoidArm.RIGHT));
+            handPose.translate(0,ReinhardSword.HAND_GUARD_PX/16,0);
+            handPose.scale(ReinhardSword.SWORD_SCALE,ReinhardSword.SWORD_SCALE,ReinhardSword.SWORD_SCALE);
+            ReinhardSword.drawAttached(player,stack,ReinhardSword.hip(body),new org.joml.Matrix4f(handPose.last().pose()),
+               reidPhase,reidTicks,snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),actionTicks(player,snapshot,partialTick),
+               recoveryKey(snapshot),buffers,light,overlay);
          }
          heldItems(player, body, ReinhardView.reid(snapshot), ReinhardPoses.action(snapshot.actionId()), stack, buffers, light);
       }
@@ -176,6 +165,7 @@ public final class ReinhardRenderer {
       AbstractClientPlayer player = event.getPlayer();
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
       if (snapshot == null) {
+         ReinhardRecovery.reset(player);
          return;
       }
 
@@ -187,13 +177,11 @@ public final class ReinhardRenderer {
       PlayerRenderer renderer = (PlayerRenderer) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
       PlayerModel<AbstractClientPlayer> model = renderer.getModel();
       ModelPart arm = event.getArm() == HumanoidArm.RIGHT ? model.rightArm : model.leftArm;
-      // Pose null: PlayerGeoLayer resets the bones, i.e. the arm follows vanilla's first-person arm exactly.
       PlayerGeoLayer.Part part = new PlayerGeoLayer.Part(ReinhardAssets.ARMS,
          List.of(PlayerGeoLayer.Pass.cutout(ReinhardAssets.TEXTURE), PlayerGeoLayer.Pass.glow(ReinhardAssets.GLOW)),
-         geo -> {
-            for (GeoBone bone : geo.topLevelBones()) bone.scaleX = 1.13F;
-         });
+         geo -> poseFirstPersonElbows(geo,player,snapshot));
       boolean flick = event.getArm() == player.getMainArm();
+      boolean actionArm = event.getArm() == HumanoidArm.RIGHT;
       // Sampled for the main arm only: the off arm's event must not reset the pulse.
       float w = flick ? ParryPulse.FIRST_PERSON.sample(player, ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.PARRY_POSE), Util.getNanos()).weight() : 0.0F;
       float oldX = arm.xRot;
@@ -214,13 +202,16 @@ public final class ReinhardRenderer {
          ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft)
          : cinematic == ReinhardAbility.WORLD_ERASURE
             ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
-            : flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
-      if (flick && action == ReinhardFirstPersonPose.Offset.NONE) {
+            : actionArm ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
+      if (actionArm && action == ReinhardFirstPersonPose.Offset.NONE) {
          // Stage 4: the Reid draw / sheathe pull.
          ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
          action = ReinhardFirstPersonPose.reid(reid, dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, Minecraft.getInstance().getFrameTime()));
       }
-      boolean moved = action != ReinhardFirstPersonPose.Offset.NONE;
+      if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
+         ReinhardPoses.action(snapshot.actionId()),cinematicTicks,snapshot.actionLength());
+      action = ReinhardRecovery.firstPerson(player,physicalLeft,action,recoveryKey(snapshot),Util.getNanos());
+      boolean moved = !action.equals(ReinhardFirstPersonPose.Offset.NONE);
       if (moved) {
          // Stage 3: the ability's first-person pose (jab, catch, ...), mirrored for a left main arm.
          float m = event.getArm() == HumanoidArm.LEFT ? -1.0F : 1.0F;
@@ -232,17 +223,28 @@ public final class ReinhardRenderer {
       }
 
       PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
-      if (event.getArm() == HumanoidArm.RIGHT && (ReinhardView.reid(snapshot) == ReinhardPoses.ReidPhase.DRAWN
-         || snapshot.actionId() == ReinhardAbility.SHEATH_STRIKE.ordinal())) {
-         // Stage 4: Reid in the first-person right hand (onRenderHand hid the slot's item).
-         PoseStack pose = event.getPoseStack();
-         pose.pushPose();
-         arm.translateAndRotate(pose);
-         pose.mulPoseMatrix(HeldItemAnchor.vanilla(HumanoidArm.RIGHT));
-         if (snapshot.actionId() == ReinhardAbility.SHEATH_STRIKE.ordinal())
-            ReinhardSword.drawSheathInHand(pose, event.getMultiBufferSource(), event.getPackedLight(), OverlayTexture.NO_OVERLAY);
-         else ReinhardSword.drawInHand(pose, event.getMultiBufferSource(), event.getPackedLight(), OverlayTexture.NO_OVERLAY);
-         pose.popPose();
+      if (event.getArm() == HumanoidArm.RIGHT && ReinhardRecovery.visible(player,ReinhardView.reid(snapshot) != ReinhardPoses.ReidPhase.SHEATHED
+         || snapshot.actionId() == ReinhardAbility.SHEATH_STRIKE.ordinal(),Util.getNanos())) {
+         PoseStack handPose = new PoseStack();
+         arm.translateAndRotate(handPose);
+         BakedGeoModel arms = AnimCache.model(ReinhardAssets.ARMS);
+         if (arms != null) {
+            // Same conversion as PlayerGeoLayer; the grip must follow the lower arm, not the shoulder.
+            handPose.translate(5/16F,22/16F,0);
+            handPose.scale(-1,-1,1);
+            handFrame(handPose,arms,arms.getBone("armorRightArm"));
+            handPose.mulPoseMatrix(HeldItemAnchor.local(HumanoidArm.RIGHT));
+         } else handPose.mulPoseMatrix(HeldItemAnchor.vanilla(HumanoidArm.RIGHT));
+         handPose.translate(0,ReinhardSword.HAND_GUARD_PX/16,0);
+         handPose.scale(ReinhardSword.SWORD_SCALE,ReinhardSword.SWORD_SCALE,ReinhardSword.SWORD_SCALE);
+         // Belt is outside the FP view. The blade enters along the sheath axis, then settles into the palm.
+         org.joml.Matrix4f belt = new org.joml.Matrix4f(handPose.last().pose()).translate(-.5F,-1.4F,.7F);
+         ReinhardPoses.ReidPhase phase = ReinhardView.reid(snapshot);
+         ReinhardSword.drawAttached(ReinhardRecovery.firstPersonWeaponKey(player),event.getPoseStack(),belt,
+            new org.joml.Matrix4f(handPose.last().pose()),phase,
+            dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player,phase,Minecraft.getInstance().getFrameTime()),
+            snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),cinematicTicks,recoveryKey(snapshot),
+            event.getMultiBufferSource(),event.getPackedLight(),OverlayTexture.NO_OVERLAY);
       }
       if (moved) {
          event.getPoseStack().popPose();
@@ -266,7 +268,8 @@ public final class ReinhardRenderer {
       if (snapshot == null) return;
       HumanoidArm arm = ReinhardPoses.physicalArm(player.getMainArm(), event.getHand());
       ReinhardAbility action = ReinhardPoses.action(snapshot.actionId());
-      if (ReinhardPoses.drawsHeldItem(arm, ReinhardView.reid(snapshot), action)) return;
+      boolean actionArm = action != null && action != ReinhardAbility.REID && arm == HumanoidArm.RIGHT;
+      if (!actionArm && ReinhardPoses.drawsHeldItem(arm, ReinhardView.reid(snapshot), action)) return;
 
       event.setCanceled(true);
       if (!player.isInvisible()) {
@@ -464,6 +467,36 @@ public final class ReinhardRenderer {
       return ReinhardPoses.pose(input);
    }
 
+   private static int recoveryKey(HeroPublicSnapshot snapshot) {
+      return (snapshot.actionId()+1)*128 + snapshot.variant()*16 + ReinhardView.reid(snapshot).ordinal()*4 + ReinhardView.mode(snapshot).ordinal();
+   }
+
+   private static void poseFirstPersonElbows(BakedGeoModel geo, AbstractClientPlayer player, HeroPublicSnapshot snapshot) {
+      geo.resetBones();
+      ReinhardPoses.Clip action = snapshot.actionId()<0 ? null : ReinhardClips.clip(ReinhardPoses.action(snapshot.actionId()),snapshot.variant(),
+         actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime()));
+      if (action == null) {
+         ReinhardPoses.ReidPhase phase=ReinhardView.reid(snapshot);
+         action=ReinhardPoses.reidClip(phase,dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(
+            player,phase,Minecraft.getInstance().getFrameTime()));
+      }
+      if (action != null) {
+         Animation clip = AnimCache.animation(ReinhardAssets.ANIMATIONS,action.animation());
+         if (clip != null) {
+            float fade = (snapshot.actionId()==ReinhardAbility.CATCH.ordinal() || snapshot.actionId()==ReinhardAbility.REFLECT.ordinal())
+               ? (float)Math.max(0,Math.min(1,(snapshot.actionLength()-actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime()))/2)) : 1;
+            AnimationController.overlay(clip,geo,ReinhardPlayback.time(clip,action.seconds()),fade);
+         }
+      }
+      // Idle has a relaxed elbow; action channels replace it. Arms keep the authored UVs.
+      for (GeoBone bone : geo.topLevelBones()) bone.scaleX=1.13F;
+      if (action == null) for (String name : new String[]{"right_forearm","left_forearm"}) {
+         GeoBone elbow=geo.getBone(name);
+         if (elbow!=null) elbow.rotX=(float)Math.toRadians(7);
+      }
+      ReinhardRecovery.arms(player,geo,recoveryKey(snapshot),Util.getNanos());
+   }
+
    /** Moves the stack from the model frame to a top-level bone's pivot frame (same order as AnimRenderer). */
    static void boneFrame(PoseStack stack, GeoBone bone) {
       if (bone.posX != 0.0F || bone.posY != 0.0F || bone.posZ != 0.0F) {
@@ -480,7 +513,7 @@ public final class ReinhardRenderer {
    /** Preserve the shoulder-space item anchor while following the articulated elbow. */
    static void handFrame(PoseStack stack, BakedGeoModel body, GeoBone shoulder) {
       boneFrame(stack, shoulder);
-      GeoBone elbow = body.getBone(shoulder.name.equals(ReinhardAssets.RIGHT_ARM) ? "right_forearm" : "left_forearm");
+      GeoBone elbow = body.getBone((shoulder.name.equals(ReinhardAssets.RIGHT_ARM) || shoulder.name.equals("armorRightArm")) ? "right_forearm" : "left_forearm");
       if (elbow == null) return;
       stack.translate(-shoulder.pivotX / 16.0F, -shoulder.pivotY / 16.0F, -shoulder.pivotZ / 16.0F);
       boneFrame(stack, elbow);

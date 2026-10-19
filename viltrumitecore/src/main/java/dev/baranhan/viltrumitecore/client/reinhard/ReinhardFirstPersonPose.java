@@ -95,14 +95,21 @@ public final class ReinhardFirstPersonPose {
          case GRAB_THROW -> sample(phase==ReinhardClips.PHASE_SNAP ? THROW : GRAB,ticks);
          case DASH_BEHIND -> sample(BEHIND,ticks);
          case STOMP -> sample(STOMP,ticks);
-         case CATCH -> sample(phase==ReinhardClips.PHASE_SNAP ? CATCH : CATCH_READY,ticks).scaled(windowFade(ticks,length));
-         case REFLECT -> sample(phase==ReinhardClips.PHASE_SNAP ? SWAT : GUARD,ticks).scaled(windowFade(ticks,length));
+         case CATCH -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.CATCH_SNAP_TICKS ? CATCH : CATCH_READY,ticks).scaled(windowFade(ticks,length));
+         case REFLECT -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.REFLECT_SNAP_TICKS ? SWAT : GUARD,ticks).scaled(windowFade(ticks,length));
          case SHEATH_STRIKE -> sample(SHEATH,ticks);
          case CUT_RAIN -> sample(RAIN,ticks);
          case WORLD_CUT -> worldCut(ticks,false);
          case WORLD_ERASURE -> worldErasure(ticks,false);
          default -> Offset.NONE;
       };
+   }
+
+   /** Counterbalance on the free arm; Knight's back hand remains hidden by the stance policy. */
+   public static Offset support(@Nullable ReinhardAbility ability,double ticks,int length) {
+      if(ability==null) return Offset.NONE;
+      Offset main=of(ability,0,ticks,length);
+      return new Offset(-main.x()*.25F,main.y()*.3F,-main.z()*.15F,-main.pitch()*.2F,-main.yaw()*.2F,-main.roll()*.4F);
    }
 
    private static float windowFade(double ticks,int length) {
