@@ -196,3 +196,12 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - §10.1 covers only 16 output recipes, not every one of the 33 Stage 6 events. Two outputs are license-blocked, 12 extra cues have no selected source, and five events reuse §10.2. Do not equate 14 final recordings with a fully accepted hero. No native listening/server/GLSL/network/save/TPS proof in Stage 7; retain SESSION/PR manual gates and Stage 6 known limitations.
 
 - Attribution-required audio must carry author/source/license/change notices in the standalone core JAR. `processResources` copies maintained credits/source tables into `META-INF/credits/`; `mods.toml` exposes those audio exceptions without replacing the code license. A root-only CREDITS file is not a distribution guarantee.
+
+## Reinhard rework (2026-10-19, branch fix/reinhard-deepseek-rework)
+- Hero slot input edges are tracked per ability id (`ViltrumiteCoreClient.heroKeyDown` Map). The old `boolean[8]` silently dropped Holy Sword slots 8-12 (Reid, Sheath Strike, Rain of Cuts, World Cut, World Erasure): no press ever reached the server.
+- Grab & Throw: Z starts the grab, RMB throws (`HeroAction.THROW_HELD` from `ReinhardHero.mouseAction(SECONDARY)` through `HeldInputs`). A slot press while holding is a silent no-op, not a refusal.
+- Reid carry: scale 0.6 (was 0.35), belt at y 14.5, tilt 62° from vertical (tip down-back along the thigh), tip 2.4 px over the feet (`TIP_HEIGHT_PX`); `DRAW_OUT_PX` 46 clears the sheath. 0.7 was rejected on paper: the scabbard either drags on the ground or must lie almost horizontal.
+- Clips: `tools/assets/make_reinhard_clips.py` owns every clip including `walk` (vanilla limb phase + torso bob/counter-rotation; 6 bones). Knight's left arm is folded behind the back (JSON x +65, z +16); `knight_left_arm_hold` equals the stance's left arm so the walk keeps it there.
+- First-person arms: `ReinhardFirstPerson.widenArm` (X 1.18, Z 1.06) runs as the `PlayerGeoLayer.Part.pose` of the arm; only the first-person copy changes.
+- Icons: `make_reinhard_icons.py` rewritten — 4x supersampled shapes, dark gradient plate, 1 px ink outline, cut corners; `ReinhardIconContractTest` checks the committed `.b64` (size, alpha corners, luminance spread, uniqueness).
+- WorldCut: `busy()` covers the whole wave, a stale `state.worldCut` is dropped when its level no longer owns the cast, and targets pass `ReinhardTargets` while the caster is present.
