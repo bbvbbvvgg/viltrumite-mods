@@ -374,7 +374,16 @@ To add a screen effect:
 
 ### Reinhard quality rework (candidate, native acceptance pending)
 - Stateless `AnimationController.seek/overlay/blend` do **not** wrap LOOP time. Reinhard uses `ReinhardPlayback.time` at every looping layer. Do not change the shared controller's semantics to fix one hero; verify long-session/multi-cycle samples in the actual renderer composition.
-- Body/FP/cinematic action time uses `ReinhardPlayback.actionTicks`: synced elapsed + partial tick, clamped to action length, minus the same HitStop hold. This is a sampling policy, not an independent progress counter. There is no client-only post-cancel recovery clock yet.
-- The archive sleeve/hand cubes are articulated by `tools/assets/rig_reinhard.py` into forearm children with absolute Bedrock elbow pivots. Preserve the cubes and UVs. The third-person item frame must pass through `ReinhardRenderer.handFrame`, not only the shoulder, or items detach when the elbow bends. First-person widths are applied through the existing PlayerGeoLayer pose callback.
+- Body/FP/cinematic action time uses `ReinhardPlayback.actionTicks`: synced elapsed + partial tick, clamped to action length, minus the same HitStop hold. This is a sampling policy, not an independent progress counter. ReinhardRecovery blends cached displayed channels after cancellation; it never advances action progress. Body, FP arms/offsets and weapon frames have separate weak-key state.
+- The archive sleeve/hand cubes are articulated by `tools/assets/rig_reinhard.py` into forearm children with absolute Bedrock elbow pivots. Preserve the cubes and UVs. The third-person item frame must pass through `ReinhardRenderer.handFrame`, not only the shoulder, or items detach when the elbow bends. First-person widths and elbow channels are applied through the existing PlayerGeoLayer pose callback. The FP item frame repeats PlayerGeoLayer's vanilla-to-geo conversion before handFrame. Neutral and bent-elbow matrix tests cover it.
 - FP action phases use the existing `PoseKeys` utility. Keep server contact ticks and the toss → kick boundary continuous. Catch/reflect/throw continue an existing guard/hold: do not fade to idle on the snap's first frame.
-- Sheath Strike renders the assembled sheathed weapon at the right hand in both views, hiding the hip copy and the occupied right-hand slot visual only. Inventory stays untouched. Native entry/recovery and weapon transfer remain acceptance work, not proven by source tests.
+- Sheath Strike renders the assembled sheathed weapon at the right hand in both views, hiding the hip copy and the occupied right-hand slot visual only. Inventory stays untouched. ReinhardSword.frames transfers the hip guard to the hand with quaternion slerp and translation/scale interpolation. Do not lerp matrix elements: that shears the weapon and invalidates normals. Native visual acceptance remains unverified.
+
+- A held-target renderer must not infer attachments from PULL. HeroDefinition exposes
+  heldTargetId/heldTargetPosition; HeroHeldTargets resolves only an explicit hold.
+  Local prediction and remote render interpolation use the same neck anchor.
+  The server rejects held-player movement on its main thread. Correct once at
+  release, not with a teleport handshake each tick. World pause has priority.
+- HeroFx.flash(source, at, power) opts into a compact/strong contact. The two-argument
+  method stays power 1, preserving other heroes. Erasure fracture changes stay inside
+  the existing Erase active branch and keep the other shader paths neutral.
