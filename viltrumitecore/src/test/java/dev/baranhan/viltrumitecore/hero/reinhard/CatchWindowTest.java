@@ -38,15 +38,15 @@ class CatchWindowTest {
 
    @Test
    void cooldownFortyFromPress() {
-      assertEquals(40, ReinhardRules.CATCH_COOLDOWN);
+      assertEquals(8, ReinhardRules.CATCH_COOLDOWN);
       ReinhardState state = new ReinhardState();
       CatchWindow.open(state);
-      assertEquals(40, state.cooldowns[ReinhardAbility.CATCH.ordinal()], "the cooldown starts at the press");
+      assertEquals(8, state.cooldowns[ReinhardAbility.CATCH.ordinal()], "the cooldown starts at the press");
       // A catch inside the window does not restart it.
       CatchWindow.tickWindow(state);
       state.tick();
       CatchWindow.snap(state);
-      assertEquals(39, state.cooldowns[ReinhardAbility.CATCH.ordinal()]);
+      assertEquals(7, state.cooldowns[ReinhardAbility.CATCH.ordinal()]);
    }
 
    @Test

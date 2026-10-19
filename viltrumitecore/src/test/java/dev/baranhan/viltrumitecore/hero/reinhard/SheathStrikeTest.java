@@ -43,7 +43,7 @@ class SheathStrikeTest {
    void cooldown160() {
       ReinhardState state = new ReinhardState();
       SheathStrike.start(state);
-      assertEquals(160, ReinhardRules.SHEATH_COOLDOWN);
+      assertEquals(8, ReinhardRules.SHEATH_COOLDOWN);
       assertEquals(ReinhardRules.SHEATH_COOLDOWN, state.cooldowns[ReinhardAbility.SHEATH_STRIKE.ordinal()]);
       assertTrue(state.action.is(ReinhardAbility.SHEATH_STRIKE));
       assertEquals(ReinhardRules.SHEATH_TICKS, state.action.length());

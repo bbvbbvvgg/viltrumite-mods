@@ -81,8 +81,8 @@ CLIPS = {
 def swim_clip():
     # Breaststroke: extension -> lateral catch -> bent-elbow pull -> recovery.
     # Signed rolls never make the old 180/360-degree wrap around the shoulder.
-    stroke = [(0,[-165,0,8]),(5,[-155,0,55]),(10,[-100,0,80]),
-              (14,[-25,0,35]),(18,[-65,0,12]),(20,[-165,0,8])]
+    stroke = [(0,[-165,0,-28]),(5,[-155,0,-55]),(10,[-100,0,-80]),
+              (14,[-25,0,35]),(18,[-65,0,12]),(20,[-165,0,-28])]
     elbow = [(0,[-8,0,0]),(5,[-15,0,0]),(10,[-65,0,0]),
              (14,[-95,0,0]),(18,[-60,0,0]),(20,[-8,0,0])]
     bones = {}
@@ -156,16 +156,16 @@ for name, amplitude, arm_amplitude in [('walk',32,31.512679),('run',48,50)]:
         bones[side+'_forearm'] = channel([(t,[-12-10*max(0,math.cos(2*math.pi*t/20+phase)),0,0]) for t in range(0,21,2)])
     CLIPS[name] = loop(bones,1)
 
-CLIPS['light_punch'] = action(8,
-    right_arm=[(0,[-6,0,3]),(1.6,[-47,-16,7],'easeInCubic'),(3,[-91,8,0],'easeOutCubic'),(4,[-92,8,0]),(8,[-6,0,3])],
-    right_forearm=[(0,[-8,0,0]),(1.6,[-68,0,0]),(3,[-4,0,0]),(4,[-6,0,0]),(8,[-8,0,0])],
-    body=[(0,[0,0,0]),(1.6,[0,-9,0]),(3,[4,17,0]),(4,[3,13,0]),(8,[0,0,0])],
-    head=[(0,[0,0,0]),(3,[-3,-10,0]),(8,[0,0,0])],
-    left_arm=[(0,[0,0,-3]),(2,[-20,0,-8]),(4,[-16,0,-6]),(8,[0,0,-3])],
-    left_forearm=[(0,[-8,0,0]),(3,[-30,0,0]),(8,[-8,0,0])],
-    right_leg=[(0,[0,0,0]),(3,[-9,0,2]),(8,[0,0,0])],
-    left_leg=[(0,[0,0,0]),(3,[7,0,-2]),(8,[0,0,0])])
-pos(CLIPS['light_punch'],'right_arm',[(0,[0,0,0]),(3,[0,0,-1]),(8,[0,0,0])])
+CLIPS['light_punch'] = action(10,
+    right_arm=[(0,[-6,0,3]),(2.6,[-47,-16,7],'easeInCubic'),(4,[-91,8,0],'easeOutCubic'),(5,[-92,8,0]),(10,[-6,0,3])],
+    right_forearm=[(0,[-8,0,0]),(2.6,[-68,0,0]),(4,[-4,0,0]),(5,[-6,0,0]),(10,[-8,0,0])],
+    body=[(0,[0,0,0]),(2.6,[0,-9,0]),(4,[4,17,0]),(5,[3,13,0]),(10,[0,0,0])],
+    head=[(0,[0,0,0]),(4,[-3,-10,0]),(10,[0,0,0])],
+    left_arm=[(0,[0,0,-3]),(2,[-20,0,-8]),(5,[-16,0,-6]),(10,[0,0,-3])],
+    left_forearm=[(0,[-8,0,0]),(4,[-30,0,0]),(10,[-8,0,0])],
+    right_leg=[(0,[0,0,0]),(4,[-9,0,2]),(10,[0,0,0])],
+    left_leg=[(0,[0,0,0]),(4,[7,0,-2]),(10,[0,0,0])])
+pos(CLIPS['light_punch'],'right_arm',[(0,[0,0,0]),(4,[0,0,-1]),(10,[0,0,0])])
 CLIPS['step_dash'] = action(6,
     body=[(0,[0,0,0]),(1,[19,0,0]),(3,[22,0,0]),(6,[0,0,0])],
     head=[(0,[0,0,0]),(2,[-16,0,0]),(6,[0,0,0])],
@@ -186,12 +186,12 @@ for n in ['catch','reflect','parry']:
         body=[(0,[0,-12,0]),(1,[0,8,0]),(6,[0,-7,0])])
 # All three Knight attacks retain the left-arm/back pose, including when walking.
 for n, length, contact, wind, strike, twist in [
-    ('combo_1',8,3,[-55,-18,8],[-92,5,0],18),
-    ('combo_2',8,3,[-67,58,24],[-86,-42,-8],-22),
-    ('combo_3',12,5,[-155,14,12],[-48,-8,6],-15)]:
+    ('combo_1',10,4,[-55,-18,8],[-92,5,0],18),
+    ('combo_2',10,4,[-67,58,24],[-75,-42,12],-22),
+    ('combo_3',14,6,[-105,14,-35],[-48,-8,6],-15)]:
     CLIPS[n] = action(length,
         right_arm=[(0,[-16,-12,6]),(contact-1.2,wind,'easeInCubic'),(contact,strike,'easeOutCubic'),(contact+1,strike),(length,[-16,-12,6])],
-        right_forearm=[(0,[-24,0,0]),(contact-1.2,[-72,0,0]),(contact,[-5,0,0]),(contact+1,[-9,0,0]),(length,[-24,0,0])],
+        right_forearm=[(0,[-24,0,0]),(contact-1.2,[-42,0,0]),(contact,[-5,0,0]),(contact+1,[-9,0,0]),(length,[-24,0,0])],
         body=[(0,[0,-7,0]),(contact-1.2,[-4,-twist*.6,0]),(contact,[10 if n=='combo_3' else 3,twist,0]),(contact+1,[7,twist*.8,0]),(length,[0,-7,0])],
         head=[(0,[0,0,0]),(contact,[-5,-twist*.5,0]),(length,[0,0,0])],
         right_leg=[(0,[0,0,0]),(contact,[-16,0,3]),(length,[0,0,0])],
@@ -218,8 +218,8 @@ CLIPS['grab_hold'] = action(6,
     body=[(0,[0,-7,0]),(6,[2,-7,0])],
     head=[(0,[0,0,0]),(6,[3,4,0])])
 CLIPS['throw'] = action(12,
-    right_arm=[(0,[-86,-6,2]),(2,[-135,16,10],'easeInCubic'),(3,[-45,-18,2],'easeOutCubic'),(4,[-28,-22,0]),(12,[-16,-12,6])],
-    right_forearm=[(0,[-8,0,0]),(2,[-50,0,0]),(3,[-4,0,0]),(12,[-24,0,0])],
+    right_arm=[(0,[-86,-6,2]),(2,[-100,16,30],'easeInCubic'),(3,[-45,-18,2],'easeOutCubic'),(4,[-28,-22,0]),(12,[-16,-12,6])],
+    right_forearm=[(0,[-8,0,0]),(2,[-25,0,0]),(3,[-4,0,0]),(12,[-24,0,0])],
     body=[(0,[2,-7,0]),(2,[-8,18,0]),(3,[16,-22,0]),(5,[12,-16,0]),(12,[0,-7,0])],
     head=[(0,[3,4,0]),(3,[-6,10,0]),(12,[0,0,0])],
     right_leg=[(0,[0,0,0]),(3,[-22,0,3]),(12,[0,0,0])],
@@ -259,8 +259,8 @@ for side in ['right','left']:
     m = 1 if side=='right' else -1
     for prefix,length,contact in [('chop',20,7),('melee',6,2.5)]:
         CLIPS[prefix+'_'+side] = action(length, **{
-            side+'_arm': [(0,[-16,0,3*m]),(contact-1,[-135,35*m,16*m],'easeInCubic'),(contact,[-50,-30*m,-8*m],'easeOutCubic'),(contact+1,[-38,-42*m,-10*m]),(length,[-16,0,3*m])],
-            side+'_forearm': [(0,[-12,0,0]),(contact-1,[-50,0,0]),(contact,[-5,0,0]),(length,[-12,0,0])],
+            side+'_arm': [(0,[-16,0,3*m]),(contact-1,[-110,15*m,-35*m],'easeInCubic'),(contact,[-50,-30*m,-8*m],'easeOutCubic'),(contact+1,[-38,-42*m,-10*m]),(length,[-16,0,3*m])],
+            side+'_forearm': [(0,[-12,0,0]),(contact-1,[-22,0,0]),(contact,[-5,0,0]),(length,[-12,0,0])],
             'body': [(0,[0,0,0]),(contact-1,[-4,16*m,0]),(contact,[10,-18*m,0]),(length,[0,0,0])],
             'head': [(0,[0,0,0]),(contact,[-6,8*m,0]),(length,[0,0,0])]})
 CLIPS['sheath_strike'] = action(12,
@@ -290,6 +290,78 @@ CLIPS['world_erasure'] = action(150,
     left_forearm=[(0,[-8,0,0]),(15,[-30,0,0]),(40,[-18,0,0]),(150,[-18,0,0])],
     body=[(0,[0,0,0]),(15,[0,10,0]),(30,[0,10,0]),(40,[5,-16,0]),(150,[5,-16,0])],
     head=[(0,[0,0,0]),(30,[-5,-5,0]),(40,[-5,8,0]),(150,[-5,8,0])])
+
+# Second pass: anatomical knees; the hip changes little during the actual thrust.
+CLIPS['kick_toss'] = action(6,
+    right_leg=[(0,[0,0,0]),(2,[-82,0,3]),(4.8,[-110,0,4]),(6,[-125,0,4],'easeOutCubic')],
+    right_shin=[(0,[0,0,0]),(2,[110,0,0]),(4.8,[100,0,0]),(6,[0,0,0],'easeOutCubic')],
+    left_leg=[(0,[0,0,0]),(6,[8,0,-2])],
+    body=[(0,[0,-7,0]),(4,[-8,0,0]),(6,[-15,0,0])],
+    head=[(0,[0,0,0]),(6,[8,0,0])],
+    right_arm=[(0,[-16,-12,6]),(4,[-35,0,18]),(6,[-20,0,22])],
+    right_forearm=[(0,[-24,0,0]),(6,[-14,0,0])])
+CLIPS['kick']['bones']['right_leg']['rotation'] = channel([(0,[-125,0,4]),(1,[-125,0,4]),(4,[-100,0,2]),(8,[-8,0,0]),(10,[0,0,0])])['rotation']
+CLIPS['kick']['bones']['right_shin'] = channel([(0,[0,0,0]),(1,[0,0,0]),(4,[100,0,0]),(8,[20,0,0]),(10,[0,0,0])])
+CLIPS['crouch'] = action(1, body=[(0,[22,0,0])],head=[(0,[-12,0,0])],
+    right_arm=[(0,[-8,0,0])],left_arm=[(0,[-8,0,0])],
+    right_leg=[(0,[-18,0,0])],left_leg=[(0,[-18,0,0])],
+    right_shin=[(0,[26,0,0])],left_shin=[(0,[26,0,0])],
+    right_forearm=[(0,[-14,0,0])],left_forearm=[(0,[-14,0,0])])
+CLIPS['crouch']['loop']=True
+for name in ['walk','run']:
+    for side,phase in [('right',0),('left',math.pi)]:
+        CLIPS[name]['bones'][side+'_shin']=channel([(t,[max(0,math.sin(2*math.pi*t/20+phase))*32,0,0]) for t in range(0,21,2)])
+CLIPS['air_rise']=action(1, right_leg=[(0,[-25,0,4])],left_leg=[(0,[12,0,-4])],
+    right_shin=[(0,[38,0,0])],left_shin=[(0,[20,0,0])],body=[(0,[-6,0,0])])
+CLIPS['air_fall']=action(1, right_leg=[(0,[-9,0,4])],left_leg=[(0,[-9,0,-4])],
+    right_shin=[(0,[16,0,0])],left_shin=[(0,[16,0,0])],body=[(0,[4,0,0])])
+
+CLIPS['idle_holy']['bones']['right_arm']={'rotation':breathe([0,0,3],[-1,0,4])}
+CLIPS['idle_holy']['bones']['right_forearm']={'rotation':still([-8,0,0])}
+
+# Draw uses the left hilt hand until the front-of-chest hand-off. The free right
+# hand waits below the face, not at the old overhead extraction pose.
+CLIPS['reid_draw']['bones']['right_arm']=channel([(0,[-16,-10,8]),(80,[-25,-10,8]),(120,[-26,-10,6])])
+CLIPS['reid_draw']['bones']['right_forearm']=channel([(0,[-20,0,0]),(80,[-25,0,0]),(120,[-18,0,0])])
+CLIPS['reid_sheathe']['bones']['right_arm']=channel([(0,[-26,-10,6]),(8,[-25,-10,8]),(20,[-16,-10,8])])
+CLIPS['reid_sheathe']['bones']['right_forearm']=channel([(0,[-18,0,0]),(8,[-25,0,0]),(20,[-20,0,0])])
+
+# Weapon choreography is sampled by the SAME animation core. The empty grip bone
+# owns the complete weapon frame; wrists solve to it, never the reverse. Coordinates
+# here are mirrored model px and model Euler degrees (converted to parser convention).
+HIP = ([-6.8,17.0836745,-2.898819],[90,55,-90])
+READY = ([.5,18.5,-6],[350,0,-50])
+def weapon(clip, rows):
+    pos(clip,'reid_grip',[(t,[-p[0],p[1],p[2]]) for t,p,r in rows])
+    clip['bones'].setdefault('reid_grip',{})['rotation']=keys([(t,[-r[0],-r[1],r[2]]) for t,p,r in rows])
+weapon(CLIPS['idle_holy'],[(0,*HIP),(60,*HIP)])
+weapon(CLIPS['idle_holy_drawn'],[(0,*READY),(60,*READY)])
+# The long blade stays outside the hair envelope. Rotate below the head at X=-8.5,
+# with enough ground clearance, then pass the hilt in front of the chest to the right.
+DRAW=[(0,*HIP),(24,*HIP),(40,[-9.2,25,-4],[90,55,-90]),
+      (52,[-9.2,25,-4],[90,0,0]),(64,[-9.2,25,-4],[180,0,0]),
+      (76,[-6.8,23,-7.5],[270,0,0]),(88,[0,20,-6],[270,0,0]),(94,[0,20,-6],[270,0,0]),
+      (100,[5.3,17,-4],[270,0,0]),(120,*READY)]
+weapon(CLIPS['reid_draw'],DRAW)
+weapon(CLIPS['reid_sheathe'],[(20-t/6,p,r) for t,p,r in reversed(DRAW)])
+weapon(CLIPS['world_cut'],[(0,*READY),(12,[0,20,-6.5],[360,0,0]),
+    (18,[0,20,-6.5],[360,0,0]),(20,[1,20,-6],[260,0,0]),
+    (26,[1,20,-6],[270,0,0]),(80,[1,20,-6],[270,0,0])])
+weapon(CLIPS['world_erasure'],[(0,*READY),(15,[0,20,-6.5],[360,0,0]),
+    (30,[0,20,-6.5],[360,0,0]),(40,[1,20,-6],[260,0,0]),
+    (150,[1,20,-6],[260,0,0])])
+weapon(CLIPS['light_punch'],[(0,*READY),(2,[1,20,-6],[275,0,0]),
+    (4,[1,20,-6],[270,0,0]),(10,*READY)])
+# Preserve the ability's existing timelines, hit events and world effects.
+weapon(CLIPS['sheath_strike'],[(0,*HIP),(3,[0,18,-6],[270,0,0]),(4,[4,18,-7],[270,0,0]),
+    (7,[5,18,-8],[270,0,0]),(12,*HIP)])
+weapon(CLIPS['cut_rain'],[(0,*READY),(4,[0,20,-6],[300,0,0]),
+    (8,[1,19.2,-5.8],[250,0,0]),(12,[0,20,-6],[300,0,0]),
+    (16,[1,19.2,-5.8],[250,0,0]),(20,*READY)])
+
+for side,sign in [('right',1),('left',-1)]:
+    weapon(CLIPS['chop_'+side],[(0,*READY),(6,[0,20,-6],[350,0,-sign*30]),
+        (7,[1,20,-6],[260,0,sign*12]),(9,[1,20,-6],[270,0,0]),(20,*READY)])
 
 if __name__ == '__main__':
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

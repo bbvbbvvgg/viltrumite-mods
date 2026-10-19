@@ -24,10 +24,10 @@ class StompTest {
    }
 
    @Test
-   void cooldown160() {
+   void technicalCooldown() {
       ReinhardState state = new ReinhardState();
       Stomp.start(state);
-      assertEquals(160, ReinhardRules.STOMP_COOLDOWN);
+      assertEquals(8, ReinhardRules.STOMP_COOLDOWN);
       assertEquals(ReinhardRules.STOMP_COOLDOWN, state.cooldowns[ReinhardAbility.STOMP.ordinal()]);
       assertTrue(state.action.is(ReinhardAbility.STOMP));
       assertEquals(ReinhardRules.STOMP_TICKS, state.action.length());

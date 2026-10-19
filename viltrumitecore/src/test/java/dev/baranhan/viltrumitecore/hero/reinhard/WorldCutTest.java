@@ -31,9 +31,9 @@ class WorldCutTest {
          assertEquals(p == Reid.Phase.DRAWN, Reid.allows(ReinhardAbility.WORLD_CUT, p));
       assertInstanceOf(WorldCut.class, ReinhardActions.handler(ReinhardAbility.WORLD_CUT));
    }
-   @Test void cooldown900() {
+   @Test void technicalCooldown() {
       ReinhardState state = new ReinhardState(); WorldCut.start(state);
-      assertEquals(900, state.cooldowns[ReinhardAbility.WORLD_CUT.ordinal()]);
+      assertEquals(4, state.cooldowns[ReinhardAbility.WORLD_CUT.ordinal()]);
       assertEquals(80, state.action.length()); assertTrue(state.busy());
       for (int i=0;i<80;i++) state.action.tick();
       assertFalse(state.busy());
@@ -88,4 +88,35 @@ class WorldCutTest {
       assertEquals(0,WorldCut.carveFront(carve)); carve.step(null,1);
       assertEquals(1,WorldCut.carveFront(carve));
    }
+   @Test void heavySceneGuardWaitsForQueueAndThenReleases() {
+      boolean[] pending={true};
+      WorldCut.Environment environment=new WorldCut.Environment() {
+         public void blast() {} public int carveFront(){return 200;}
+         public Collection<UUID> targets(int through){return List.of();}
+         public void strike(UUID id){} public boolean pendingWork(){return pending[0];}
+      };
+      WorldCut cut=WorldCut.timed(0,environment);
+      assertFalse(cut.advance(110));assertFalse(cut.finished());
+      pending[0]=false;assertTrue(cut.advance(111));assertTrue(cut.finished());
+   }
+   @Test void discardedCarveJobCannotLeaveAdmissionLockedForever() {
+      CarveJobs.Queue queue=new CarveJobs.Queue();
+      CarveJobs.Job job=new CarveJobs.Job(){
+         public boolean step(net.minecraft.server.level.ServerLevel level,int budget){throw new IllegalStateException("probe");}
+         public int priority(){return 1;}
+      };
+      queue.submit(job);assertTrue(queue.contains(job));queue.tick(null,2000);assertFalse(queue.contains(job));
+   }
+
+   @Test void waitingForCarveDoesNotCreateInvisibleLateHits() {
+      List<UUID> candidates=new ArrayList<>();candidates.add(UUID.randomUUID());int[] hits={0};
+      WorldCut.Environment environment=new WorldCut.Environment(){
+         public void blast(){}public int carveFront(){return 200;}
+         public Collection<UUID> targets(int through){return candidates;}
+         public void strike(UUID id){hits[0]++;}public boolean pendingWork(){return true;}
+      };
+      var cut=WorldCut.timed(0,environment);assertFalse(cut.advance(110));assertEquals(1,hits[0]);
+      candidates.add(UUID.randomUUID());assertFalse(cut.advance(130));assertEquals(1,hits[0]);
+   }
+
 }

@@ -12,7 +12,7 @@ public final class ReinhardRules {
    public static final int WORLD_CUT_SILENCE = 60;
    public static final int WORLD_CUT_BLAST = WORLD_CUT_SWING + WORLD_CUT_SILENCE;
    public static final int WORLD_CUT_WAVE_TICKS = 30;
-   public static final int WORLD_CUT_COOLDOWN = 900;
+   public static final int WORLD_CUT_COOLDOWN = 4;
    public static final int WORLD_CUT_VIEW_RANGE = 320;
    // ---- chassis (spec §3.1) ----
    public static final float MAX_HEALTH = 20.0F;
@@ -29,7 +29,7 @@ public final class ReinhardRules {
    public static final int VOID_SEARCH_RADIUS = 64;
 
    // ---- modes (spec §5) ----
-   public static final int MODE_COOLDOWN = 60;
+   public static final int MODE_COOLDOWN = 4;
 
    // ---- Holy Sword (spec §7.2, used in Stage 4) ----
    public static final float CHOP_BASE_DAMAGE = 20.0F;
@@ -65,7 +65,7 @@ public final class ReinhardRules {
    public static final float SHEATH_DAMAGE = 20.0F;
    /** Freeze (stun) length on targets that accept external control. */
    public static final int SHEATH_STUN = 60;
-   public static final int SHEATH_COOLDOWN = 160;
+   public static final int SHEATH_COOLDOWN = 8;
    /** Action lock and the clip: the sheathed sword swings in an arc, contact on {@link #SHEATH_HIT_TICK}. */
    public static final int SHEATH_TICKS = 12;
    public static final int SHEATH_HIT_TICK = 6;
@@ -76,7 +76,7 @@ public final class ReinhardRules {
    public static final int CUT_CONE_DEG = 30;
    /** Length of every cut from the chest (blocks). */
    public static final int CUT_RANGE = 40;
-   public static final int CUT_COOLDOWN = 300;
+   public static final int CUT_COOLDOWN = 8;
    /** Groove section along each cut: 1 wide × 3 tall. */
    public static final int CUT_GROOVE_WIDTH = 1;
    public static final int CUT_GROOVE_HEIGHT = 3;
@@ -154,7 +154,7 @@ public final class ReinhardRules {
    /** Launch velocity: the motion packet cap (±3.9 per axis); apex ≈ 61 blocks. */
    public static final double KICK_VELOCITY = 3.9;
    public static final float KICK_DAMAGE = 20.0F;
-   public static final int KICK_COOLDOWN = 200;
+   public static final int KICK_COOLDOWN = 8;
    /** Action lock and the toss + kick clips: toss 0-6, contact 6, hit-stop 6-9, launch 9, recovery to 16. */
    public static final int KICK_ACTION_TICKS = 16;
    /** The target may drift this far past the reach during the toss and still be kicked. */
@@ -165,15 +165,15 @@ public final class ReinhardRules {
    public static final double LIGHT_PUNCH_KNOCKBACK = 0.6;
    public static final double LIGHT_PUNCH_REACH = 3.5;
    /** Action lock (no cooldown): the clip length. */
-   public static final int LIGHT_PUNCH_TICKS = 8;
-   public static final int LIGHT_PUNCH_HIT_TICK = 3;
+   public static final int LIGHT_PUNCH_TICKS = 10;
+   public static final int LIGHT_PUNCH_HIT_TICK = 4;
 
    // ---- Step Dash (spec §6.1) ----
    /** Blocks covered by one dash (the velocity accounts for friction after the push). */
    public static final int STEP_DISTANCE = 6;
    /** Ticks the dash velocity is (re)applied. */
    public static final int STEP_TICKS = 4;
-   public static final int STEP_COOLDOWN = 20;
+   public static final int STEP_COOLDOWN = 6;
    /** Action lock and clip length (the lean). */
    public static final int STEP_ACTION_TICKS = 6;
 
@@ -181,16 +181,16 @@ public final class ReinhardRules {
    /** Ticks the palm is open from the press. */
    public static final int CATCH_WINDOW = 10;
    /** Counted from the press, not from the window's end. */
-   public static final int CATCH_COOLDOWN = 40;
+   public static final int CATCH_COOLDOWN = 8;
    /** The closing hand after a catch (the action lock may outlast the window by this). */
    public static final int CATCH_SNAP_TICKS = 6;
 
    // ---- Fist Combo (spec §6.2) ----
    public static final float[] COMBO_DAMAGE = {10.0F, 10.0F, 16.0F};
    /** Contact tick of each hit (elapsed ticks of its step). */
-   public static final int[] COMBO_HIT_TICKS = {3, 3, 5};
+   public static final int[] COMBO_HIT_TICKS = {4, 4, 6};
    /** Action lock (no cooldown) of each hit: its clip length. */
-   public static final int[] COMBO_STEP_TICKS = {8, 8, 12};
+   public static final int[] COMBO_STEP_TICKS = {10, 10, 14};
    /** Idle ticks after a hit ends within which the next press continues the chain. */
    public static final int COMBO_CHAIN_WINDOW = 20;
    public static final double COMBO_REACH = 3.5;
@@ -217,7 +217,7 @@ public final class ReinhardRules {
    public static final int THROW_SUSTAIN_TICKS = 21;
    public static final float THROW_DAMAGE = 15.0F;
    /** From the throw, or from a forced release. */
-   public static final int GRAB_COOLDOWN = 240;
+   public static final int GRAB_COOLDOWN = 8;
    /** Action lock and the throw clip: hit-stop 0-3, launch on 3, follow-through to 12. */
    public static final int THROW_ACTION_TICKS = 12;
 
@@ -235,7 +235,7 @@ public final class ReinhardRules {
    public static final double BEHIND_AIM_TOLERANCE = 1.0;
    /** The client's spot is kept when within this distance of the server's answer. */
    public static final double BEHIND_CLIENT_TOLERANCE = 1.0;
-   public static final int BEHIND_COOLDOWN = 60;
+   public static final int BEHIND_COOLDOWN = 6;
    /** Action lock and the clip: vanish lean, land turned. */
    public static final int BEHIND_ACTION_TICKS = 8;
 
@@ -246,7 +246,7 @@ public final class ReinhardRules {
    public static final float STOMP_DAMAGE = 12.0F;
    /** Not in the spec: the outward push of the slam (starting value, open to balance). */
    public static final double STOMP_KNOCKBACK = 0.8;
-   public static final int STOMP_COOLDOWN = 160;
+   public static final int STOMP_COOLDOWN = 8;
    /** Action lock and the clip: leg up, slam on {@link #STOMP_HIT_TICK}, recover. */
    public static final int STOMP_TICKS = 14;
    public static final int STOMP_HIT_TICK = 8;
@@ -258,7 +258,7 @@ public final class ReinhardRules {
    /** Ticks the backhand window is open from the press. */
    public static final int REFLECT_WINDOW = 20;
    /** Counted from the press, not from the window's end. */
-   public static final int REFLECT_COOLDOWN = 80;
+   public static final int REFLECT_COOLDOWN = 8;
    /** The swat after a reflection (the action lock may outlast the window by this). */
    public static final int REFLECT_SNAP_TICKS = 6;
 
@@ -268,9 +268,20 @@ public final class ReinhardRules {
    public static final int ERASE_SHATTER_END = 70;
    public static final int ERASE_DARK_END = 110;
    public static final int ERASE_REMOVE_TICK = 90;
-   public static final int ERASE_COOLDOWN = 1200;
+   public static final int ERASE_COOLDOWN = 4;
    public static final boolean ERASE_PROTECT_FROZEN = true;
    public static final int ERASE_MOB_FREEZE_RADIUS = 32;
+
+   public static int cooldownLimit(ReinhardAbility ability) {
+      return switch(ability) {
+         case STEP_DASH -> STEP_COOLDOWN; case CATCH -> CATCH_COOLDOWN;
+         case SKY_KICK -> KICK_COOLDOWN; case GRAB_THROW -> GRAB_COOLDOWN;
+         case DASH_BEHIND -> BEHIND_COOLDOWN; case STOMP -> STOMP_COOLDOWN;
+         case REFLECT -> REFLECT_COOLDOWN; case SHEATH_STRIKE -> SHEATH_COOLDOWN;
+         case CUT_RAIN -> CUT_COOLDOWN; case WORLD_CUT -> WORLD_CUT_COOLDOWN;
+         case WORLD_ERASURE -> ERASE_COOLDOWN; default -> 0;
+      };
+   }
 
    private ReinhardRules() {
    }

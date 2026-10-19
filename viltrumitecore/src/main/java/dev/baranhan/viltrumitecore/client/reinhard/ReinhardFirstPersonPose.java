@@ -19,14 +19,14 @@ public final class ReinhardFirstPersonPose {
       Offset scaled(float w) { return new Offset(x*w, y*w, z*w, pitch*w, yaw*w, roll*w); }
    }
 
-   private static final float[][] JAB = {under(0), key(1.6F,-24,-14,6,.03F,.07F,.10F),
-      key(3,-12,4,-3,-.12F,.06F,-.44F), key(4,-10,3,-2,-.10F,.05F,-.38F), under(8)};
+   private static final float[][] JAB = {under(0), key(2.6F,-24,-14,6,.03F,.07F,.10F),
+      key(4,-12,4,-3,-.12F,.06F,-.44F), key(5,-10,3,-2,-.10F,.05F,-.38F), under(10)};
    private static final float[][] DASH = {under(0),key(1,16,0,-8,.03F,-.12F,.14F),
-      key(3,20,0,-9,.04F,-.14F,.16F),under(6)};
-   private static final float[][] HOOK = {under(0),key(1.8F,-36,-28,-14,.14F,.12F,.10F),
-      key(3,-14,38,12,-.28F,.05F,-.36F),key(4,-12,42,10,-.24F,.03F,-.30F),under(8)};
-   private static final float[][] HAMMER = {under(0),key(3.8F,-72,12,8,.02F,.30F,.08F),
-      key(5,28,-8,-6,-.06F,-.14F,-.40F),key(6,24,-10,-6,-.05F,-.12F,-.34F),under(12)};
+      key(4,20,0,-9,.04F,-.14F,.16F),under(6)};
+   private static final float[][] HOOK = {under(0),key(2.8F,-36,-28,-14,.14F,.12F,.10F),
+      key(4,-14,38,12,-.28F,.05F,-.36F),key(5,-12,42,10,-.24F,.03F,-.30F),under(10)};
+   private static final float[][] HAMMER = {under(0),key(4.8F,-72,12,8,.02F,.30F,.08F),
+      key(6,28,-8,-6,-.06F,-.14F,-.40F),key(7,24,-10,-6,-.05F,-.12F,-.34F),under(14)};
    private static final float[][] KICK = {under(0),key(2,-34,-4,-6,-.03F,.18F,-.08F),
       key(4,-12,2,-4,0,.07F,-.04F),key(6,22,6,-12,.05F,-.14F,.15F),
       key(9,22,6,-12,.05F,-.14F,.15F),under(16)};

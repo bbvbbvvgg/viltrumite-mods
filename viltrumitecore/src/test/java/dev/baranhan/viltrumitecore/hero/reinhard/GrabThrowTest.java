@@ -105,7 +105,7 @@ class GrabThrowTest {
 
    @Test
    void cooldownFromThrow() {
-      assertEquals(240, ReinhardRules.GRAB_COOLDOWN);
+      assertEquals(8, ReinhardRules.GRAB_COOLDOWN);
       ReinhardState state = new ReinhardState();
       FakeControl control = new FakeControl(true);
       assertTrue(GrabThrow.grab(state, candidate(true, true), control));
@@ -113,7 +113,7 @@ class GrabThrowTest {
       assertNotNull(state.grab);
       assertTrue(GrabThrow.holding(state), "the second press belongs to the grab");
       GrabThrow.throwNow(state);
-      assertEquals(240, state.cooldowns[ReinhardAbility.GRAB_THROW.ordinal()], "the cooldown starts at the throw");
+      assertEquals(8, state.cooldowns[ReinhardAbility.GRAB_THROW.ordinal()], "the cooldown starts at the throw");
       assertNull(state.grab);
       assertFalse(GrabThrow.holding(state));
    }
@@ -157,7 +157,7 @@ class GrabThrowTest {
             "one release with the grab's own effect id: " + reason);
          assertNull(state.grab, "no throw after a forced end: " + reason);
          assertFalse(state.action.running(), "no stuck pose: " + reason);
-         assertEquals(240, state.cooldowns[ReinhardAbility.GRAB_THROW.ordinal()], "a forced release starts the cooldown: " + reason);
+         assertEquals(8, state.cooldowns[ReinhardAbility.GRAB_THROW.ordinal()], "a forced release starts the cooldown: " + reason);
       }
 
       assertEquals(ReleaseReason.CASTER_DEATH, GrabThrow.releaseReason(CleanupReason.DEATH));

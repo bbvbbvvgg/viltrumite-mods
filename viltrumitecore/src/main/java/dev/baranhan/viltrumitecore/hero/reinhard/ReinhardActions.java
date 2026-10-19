@@ -119,7 +119,7 @@ public final class ReinhardActions {
    /** A slot key edge from {@code HeroInputC2SPacket} (releases are ignored: every stage 3 ability is a press). */
    public static void handleInput(ServerPlayer player, ReinhardState state, HeroAction action, boolean pressed) {
       ReinhardAbility ability = abilityFor(action);
-      if (!pressed || ability == null || !ability.shipped()) {
+      if (!pressed || ability == null || !ReinhardAbilities.active(ability)) {
          return;
       }
 
@@ -142,6 +142,16 @@ public final class ReinhardActions {
       press(player, state, ability, handler);
    }
 
+   /** One click starts one hit. Only Knight permits a single buffered next click. No slot/R route. */
+   public static void primaryAttack(ServerPlayer player, ReinhardState state) {
+      if (controlled(player) || state.busy()) return;
+      if (state.mode == ReinhardMode.KNIGHT) {
+         if (FistCombo.claims(state)) FistCombo.queue(state);
+         else if (!state.action.running()) new FistCombo().tryStart(player,state);
+      } else if (!state.action.running()) new LightPunch().tryStart(player,state);
+      state.reid.combat();
+   }
+
    /** Gate + start; shared with the Dash Behind packet (stage 3 Task 8). */
    static boolean press(ServerPlayer player, ReinhardState state, ReinhardAbility ability, AbilityHandler handler) {
       Refusal refusal = gate(new Gate(!controlled(player), HeroDamage.isAnchored(player), state.mode, ability.mode(), state.cooldowns[ability.ordinal()],
@@ -161,7 +171,7 @@ public final class ReinhardActions {
    public static void handleDashBehind(ServerPlayer player, ReinhardState state, DashBehind.Request request) {
       ReinhardAbility ability = ReinhardAbility.DASH_BEHIND;
       AbilityHandler handler = HANDLERS.get(ability);
-      if (handler == null || !ability.shipped()) {
+      if (handler == null || !ReinhardAbilities.active(ability)) {
          return;
       }
 

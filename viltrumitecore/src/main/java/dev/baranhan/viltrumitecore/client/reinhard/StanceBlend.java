@@ -53,7 +53,7 @@ public final class StanceBlend {
    public static Mix mix(float[] weights, ReinhardMode target) {
       float to = weights[target.ordinal()];
       if (to >= SETTLED) {
-         return new Mix(target, target, 1.0F);
+         return new Mix(target, target, 1.0F, weights.clone());
       }
 
       ReinhardMode from = target;
@@ -66,10 +66,11 @@ public final class StanceBlend {
       }
 
       float sum = to + best;
-      return new Mix(from, target, sum <= 0.0F ? 1.0F : to / sum);
+      return new Mix(from, target, sum <= 0.0F ? 1.0F : to / sum, weights.clone());
    }
 
-   public record Mix(ReinhardMode from, ReinhardMode to, float weight) {
+   public record Mix(ReinhardMode from, ReinhardMode to, float weight, float[] weights) {
+      public Mix(ReinhardMode from, ReinhardMode to, float weight) {this(from,to,weight,null);}
    }
 
    private static final class State {

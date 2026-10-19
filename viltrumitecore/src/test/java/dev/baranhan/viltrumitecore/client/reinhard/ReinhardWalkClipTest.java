@@ -37,7 +37,7 @@ class ReinhardWalkClipTest {
    @Test
    void walkAnimatesFourLimbs() throws IOException {
       Animation walk = walk();
-      assertEquals(Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG, "right_forearm", "left_forearm"), walk.boneAnimations().keySet());
+      assertEquals(Set.of(ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG, ReinhardAssets.LEFT_LEG, "right_forearm", "left_forearm", "right_shin", "left_shin"), walk.boneAnimations().keySet());
       for (Animation.BoneAnimation bone : walk.boneAnimations().values()) {
          assertFalse(bone.rotX().isEmpty(), bone.boneName());
       }
@@ -55,7 +55,9 @@ class ReinhardWalkClipTest {
       Set<String> six = Set.of(ReinhardAssets.HEAD, ReinhardAssets.BODY_BONE, ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG,
          ReinhardAssets.LEFT_LEG, "right_forearm", "left_forearm");
       for (String stance : new String[]{"idle_restrained", "idle_knight", "idle_holy"}) {
-         assertEquals(six, clips.get(stance).boneAnimations().keySet(), stance + " animates all six bones");
+         var expected=new java.util.HashSet<>(six);
+         if(stance.equals("idle_holy"))expected.add("reid_grip");
+         assertEquals(expected, clips.get(stance).boneAnimations().keySet(), stance+" owns body channels and its weapon anchor");
          double length = clips.get(stance).lengthSeconds();
          assertTrue(length >= 2.0 && length <= 4.0, stance + " breathing loop 2-4 s");
       }

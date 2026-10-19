@@ -208,3 +208,34 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 ## Hero keyboard edge ownership
 - heroInputSlots lists all abilities across pages, not only six equipped keys. Do not cap its iteration to a fixed array size. Reinhard's late Holy Sword inputs were silently dropped by the old eight-slot cache.
 - Track edges by ability ID and context (hero, player session, active page and bindings). Seed held keys after a context/focus switch; do not cast the new ability on the old held physical key. Release already-sent channels on same-hero page/focus changes. Never replay old-player or old-hero edges into a new owner.
+
+
+## Reinhard second-pass invariants (core 1.34.0)
+- Retired R actions remain enum IDs for wire stability, but are not owned, shown
+  or input-routed. Restrained/Holy ordinary LMB has a server contact timeline;
+  Knight LMB is one step per press plus one next-hit buffer. Stray vanilla entity
+  hit packets are rejected; only the ordinary contact callback admits Player.attack.
+- HeroDefinition movement/mouse policy hooks default to legacy behaviour. Cloud
+  Step opts into bounded forward steering through BOTH predicted and server seams.
+- Pose overlays must preserve absent channels; crouch/shoulders/head share waist
+  ancestry. Do not subtract the transient shared HitStop counter from Reinhard's
+  authored action clock. A raw item-frame equality can still put a grip above the
+  shoulder: constrain to measured native glove geometry, with an elbow pole.
+- Active heavy-scene locks are distinct from short cooldowns. World Cut guard
+  follows actual queue ownership (including failed-job removal), not a stale work
+  counter. HUD uses the same level/server scene admission flags.
+- Build/CPU geometry checks are not native proof. Client GLFW init and the EULA
+  barrier still prevent gameplay/server acceptance in this environment.
+
+- Reinhard grip-point equality hid two visual defects: wrong wrist roll and a
+  blade path through hair. Resting palm contact must not inherit sheath roll.
+  TP equipment now has an authored grip bone in the existing animation core;
+  wrists follow its reachable path, then rendering reuses those exact frames.
+  Full-mesh CPU checks include intermediate crouch/draw/action frames. They do
+  not certify native visuals. A belt carrier bridges the coat flare.
+
+- Reinhard's TP reid_grip frame and FP camera held-item frame use different roll bases. A universal local-Y quarter-turn exposes the wrong TP edge. Test the blade face normal and inspect all three views. Two-hand targets must be distinct and reachable; pronate the forearm about elbow-to-palm rather than dislocate the wrist. Do not alter the sheath to correct a drawn-blade orientation.
+
+- Reinhard drawn blade orientation: native longitudinal axis is Y, width X, broad normal Z. In the raised TP World Erasure pose the face is already 10 degrees from front. A +90-degree Y roll exposes the edge; it does not create the anime diamond silhouette. The native asset is a narrow straight blade. Fixed-pose quad cross-sections distinguish a shape limit from an orientation bug. Do not resize or repose to conceal it; get owner approval before changing the blade shape.
+
+- Owner superseded the wide-blade direction: cancelled the +35% silhouette and explicitly selected the bottom +90-degree axial diagnostic variant (front edge, broad face at the side). Keep the original blade asset, original body/hand poses and sheath. TP rolls only its final free-blade frame after the existing grip solve; FP keeps its existing roll.

@@ -9,7 +9,7 @@ class ReinhardMouseTest {
    @Test void rightClickOnlyClaimedWhileActuallyHolding() {
       assertNull(ReinhardHero.claimedMouse(MouseButton.SECONDARY, false));
       assertEquals(HeroAction.SECONDARY_USE, ReinhardHero.claimedMouse(MouseButton.SECONDARY, true));
-      assertNull(ReinhardHero.claimedMouse(MouseButton.PRIMARY, true));
+      assertEquals(HeroAction.PRIMARY_ATTACK,ReinhardHero.claimedMouse(MouseButton.PRIMARY, true));
       assertEquals(HeroAction.MODE_CYCLE, ReinhardHero.claimedMouse(MouseButton.MIDDLE, false));
    }
    @Test void repeatedGrabKeyDoesNotReleaseTheHold() {

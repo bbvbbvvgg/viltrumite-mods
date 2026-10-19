@@ -50,19 +50,19 @@ class ReinhardCompletionTest {
    @Test void interruptionKeepsLastPoseThenReleasesIntoMovingBase() throws Exception {
       Object player=new Object();var body=model("reinhard");var arm=body.getBone("right_arm");
       arm.rotX=1;ReinhardRecovery.body(player,body,1,1_000_000_000L);
-      arm.rotX=0;ReinhardRecovery.body(player,body,2,1_010_000_000L);assertEquals(1,arm.rotX,1E-5);
-      arm.rotX=.25F;ReinhardRecovery.body(player,body,2,1_110_000_000L);assertTrue(arm.rotX>.25F&&arm.rotX<.35F);
-      arm.rotX=-.3F;ReinhardRecovery.body(player,body,2,1_320_000_000L);assertEquals(-.3F,arm.rotX,1E-5);
+      arm.rotX=0;ReinhardRecovery.body(player,body,-1,1_010_000_000L);assertEquals(1,arm.rotX,1E-5);
+      arm.rotX=.25F;ReinhardRecovery.body(player,body,-1,1_110_000_000L);assertTrue(arm.rotX>.25F&&arm.rotX<.35F);
+      arm.rotX=-.3F;ReinhardRecovery.body(player,body,-1,1_320_000_000L);assertEquals(-.3F,arm.rotX,1E-5);
       ReinhardRecovery.reset(player);
    }
    @Test void firstPersonViewsDoNotLeakAndExtraPassDoesNotAdvanceRecovery() {
       Object player=new Object();var action=new ReinhardFirstPersonPose.Offset(.1F,.2F,-.4F,30,8,2);
       ReinhardRecovery.firstPerson(player,false,action,1,1_000_000_000L);
-      var a=ReinhardRecovery.firstPerson(player,false,ReinhardFirstPersonPose.Offset.NONE,2,1_100_000_000L);
-      var b=ReinhardRecovery.firstPerson(player,false,ReinhardFirstPersonPose.Offset.NONE,2,1_100_000_000L);
+      var a=ReinhardRecovery.firstPerson(player,false,ReinhardFirstPersonPose.Offset.NONE,-1,1_100_000_000L);
+      var b=ReinhardRecovery.firstPerson(player,false,ReinhardFirstPersonPose.Offset.NONE,-1,1_100_000_000L);
       assertEquals(action,a);assertEquals(a,b);
-      assertEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardRecovery.firstPerson(player,true,ReinhardFirstPersonPose.Offset.NONE,2,1_100_000_000L));
-      assertEquals(0,ReinhardRecovery.firstPerson(player,false,ReinhardFirstPersonPose.Offset.NONE,2,1_500_000_000L).pitch());
+      assertEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardRecovery.firstPerson(player,true,ReinhardFirstPersonPose.Offset.NONE,-1,1_100_000_000L));
+      assertEquals(0,ReinhardRecovery.firstPerson(player,false,ReinhardFirstPersonPose.Offset.NONE,-1,1_500_000_000L).pitch());
       ReinhardRecovery.reset(player);
    }
    @Test void firstPersonNeutralGripMatchesVanillaAndBentElbowMovesIt() throws Exception {

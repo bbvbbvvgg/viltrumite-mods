@@ -36,6 +36,8 @@ public final class ReinhardState {
    public int comboStep = -1;
    public int comboIdle;
    public boolean comboQueued;
+   public boolean resolvingMelee;
+   public net.minecraft.world.phys.Vec3 kickDirection=new net.minecraft.world.phys.Vec3(0,0,1);
    /** Grab &amp; Throw (stage 3): the held target and the one control effect id of this grab, null = none; transient. */
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.Hold grab;
    /** Grab &amp; Throw: the thrown target (−1 none), sustain ticks left / done and the re-applied velocity; transient. */
@@ -102,11 +104,11 @@ public final class ReinhardState {
 
       CompoundTag tag = nbt.getCompound(KEY);
       this.mode = ReinhardMode.fromKey(tag.getString("Mode"));
-      this.modeCooldown = Math.max(0, tag.getInt("ModeCd"));
+      this.modeCooldown = Math.min(ReinhardRules.MODE_COOLDOWN,Math.max(0, tag.getInt("ModeCd")));
       int[] saved = tag.getIntArray("Cooldowns");
       this.cooldowns = new int[COOLDOWN_SLOTS];
       for (int i = 0; i < Math.min(saved.length, COOLDOWN_SLOTS); i++) {
-         this.cooldowns[i] = Math.max(0, saved[i]);
+         this.cooldowns[i] = Math.min(ReinhardRules.cooldownLimit(ReinhardAbility.values()[i]),Math.max(0, saved[i]));
       }
 
       this.adaptation = Adaptation.load(tag.getCompound(Adaptation.NBT_KEY));

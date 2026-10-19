@@ -45,11 +45,11 @@ class StepDashTest {
    }
 
    @Test
-   void cooldownTwentyTicks() {
-      assertEquals(20, ReinhardRules.STEP_COOLDOWN);
+   void technicalCooldown() {
+      assertEquals(6, ReinhardRules.STEP_COOLDOWN);
       ReinhardState state = new ReinhardState();
       StepDash.apply(state, StepDash.response(ReinhardActions.Refusal.NONE));
-      assertEquals(20, state.cooldowns[ReinhardAbility.STEP_DASH.ordinal()]);
+      assertEquals(6, state.cooldowns[ReinhardAbility.STEP_DASH.ordinal()]);
       assertTrue(state.action.is(ReinhardAbility.STEP_DASH));
       assertEquals(ReinhardRules.STEP_ACTION_TICKS, state.action.length());
       for (int i = 0; i < 20; i++) {
@@ -133,7 +133,7 @@ class StepDashTest {
 
       assertEquals(2, pressPackets, "two key presses → two press packets from the generic loop only");
       assertEquals(4, packets);
-      assertEquals(1, dashes, "the second press falls in the local cooldown");
+      assertEquals(2, dashes, "a fresh press after the short technical lock is accepted");
       // The predictor itself never talks to the server.
       Path source = Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/StepDashClient.java");
       String code = Files.readString(source);

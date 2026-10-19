@@ -35,7 +35,7 @@ class HeroKeyEdgesTest {
 
    @Test void everyReinhardModeKeyReachesPacketIncludingFiveLateSwordSlots() {
       HeroDefinition hero = ReinhardHero.INSTANCE;
-      assertEquals(13, hero.heroInputSlots().length); // fourteen abilities; predicted Dash Behind is separate
+      assertEquals(11, hero.heroInputSlots().length); // fourteen abilities; predicted Dash Behind is separate
       Set<HeroAction> observed = new HashSet<>();
       String[] loadout = hero.defaultLoadout();
       for (int page = 0; page < 3; page++) {
@@ -51,7 +51,7 @@ class HeroKeyEdgesTest {
             observed.add(action);
          }
       }
-      assertEquals(13, observed.size());
+      assertEquals(11, observed.size());
       assertTrue(observed.containsAll(List.of(HeroAction.REID, HeroAction.SHEATH_STRIKE,
          HeroAction.CUT_RAIN, HeroAction.WORLD_CUT, HeroAction.WORLD_ERASURE)));
       assertFalse(Arrays.asList(hero.heroInputSlots()).contains(ReinhardAbility.DASH_BEHIND.id()));
@@ -73,9 +73,9 @@ class HeroKeyEdgesTest {
 
    @Test void pageSwitchReleasesOldChannelButHeldRDoesNotFireReid() {
       HeroDefinition hero = ReinhardHero.INSTANCE;
-      tick(hero, "knight"); held.add("reinhard:fist_combo"); tick(hero, "knight");
+      tick(hero, "knight"); held.add("reinhard:sky_kick"); tick(hero, "knight");
       sent.clear(); held.clear(); held.add("reinhard:reid"); tick(hero, "sword"); tick(hero, "sword");
-      assertEquals(List.of(new Edge(HeroAction.FIST_COMBO, false)), sent);
+      assertEquals(List.of(new Edge(HeroAction.SKY_KICK, false)), sent);
       sent.clear(); held.clear(); tick(hero, "sword"); assertTrue(sent.isEmpty());
       held.add("reinhard:reid"); tick(hero, "sword");
       assertEquals(List.of(new Edge(HeroAction.REID, true)), sent);

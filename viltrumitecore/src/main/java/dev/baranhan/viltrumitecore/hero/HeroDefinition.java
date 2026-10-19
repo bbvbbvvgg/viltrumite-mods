@@ -147,6 +147,12 @@ public interface HeroDefinition {
    /** May this target be placed under the given control kind right now. */
    boolean allowsExternalControl(LivingEntity target, ControlKind kind);
 
+   /** Opt-in policy for claimed LMB; melee-only heroes leave vanilla block mining alone. */
+   default boolean claimsBlockAttack(Player player) { return true; }
+
+   /** Server rejects stray vanilla entity-hit packets for timeline-owned melee. */
+   default boolean allowsVanillaAttack(Player player) { return true; }
+
    /**
     * Action this hero claims for a mouse button right now, or null for vanilla.
     * Called on BOTH sides (client cancels vanilla, server gates the press in
@@ -251,6 +257,17 @@ public interface HeroDefinition {
    /** Vertical velocity of one air jump in blocks/tick (horizontal is kept). Read on BOTH sides. */
    default double airJumpVelocity(Player player) {
       return 0.0;
+   }
+
+   /** Opt-in horizontal air steering. Default exactly preserves the legacy velocity. */
+   default net.minecraft.world.phys.Vec3 airJumpMotion(Player player, net.minecraft.world.phys.Vec3 current) {
+      return new net.minecraft.world.phys.Vec3(current.x,airJumpVelocity(player),current.z);
+   }
+
+   /** Same launch seam used by Regulus; default behaviour is unchanged. */
+   default net.minecraft.world.phys.Vec3 superJumpMotion(Player player, net.minecraft.world.phys.Vec3 current) {
+      net.minecraft.world.phys.Vec3 look=player.getLookAngle();
+      return new net.minecraft.world.phys.Vec3(current.x+look.x*HeroSuperJump.FORWARD,superJumpVelocity(player),current.z+look.z*HeroSuperJump.FORWARD);
    }
 
    /** Server: hero-specific sound/FX after an accepted air jump (the shared ring is drawn by the clients). */

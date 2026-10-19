@@ -178,6 +178,12 @@ public final class ReinhardPoses {
       return hand == net.minecraft.world.InteractionHand.MAIN_HAND ? main : main.getOpposite();
    }
 
+   /** Holy Sword reserves the physical left palm for the hilt/sheath support.
+    * Keep inventory untouched; only its conflicting held-item visual is hidden. */
+   public static boolean drawsHeldItem(HumanoidArm arm, ReidPhase phase, @Nullable ReinhardAbility action,ReinhardMode mode) {
+      return !(mode==ReinhardMode.HOLY_SWORD && arm==HumanoidArm.LEFT) && drawsHeldItem(arm,phase,action);
+   }
+
    /** Two-handed cinematic actions hide slot items without altering inventory. */
    public static boolean drawsHeldItem(HumanoidArm arm, ReidPhase phase, @Nullable ReinhardAbility action) {
       return action != ReinhardAbility.WORLD_CUT && action != ReinhardAbility.WORLD_ERASURE

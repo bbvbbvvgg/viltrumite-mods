@@ -33,7 +33,7 @@ final class ReinhardRecovery {
    static void arms(Object player,BakedGeoModel model,int key,long now) { bones(ARMS,player,model,key,now); }
    private static void bones(Map<Object,Bones> states,Object player,BakedGeoModel model,int key,long now) {
       Bones state=states.computeIfAbsent(player,p->new Bones(key));
-      if(state.key!=key) {state.key=key;state.since=now;state.from=state.last;}
+      if(state.key!=key) {state.key=key;state.since=key<0?now:Long.MIN_VALUE/2;state.from=state.last;}
       float w=remaining(state.since,now);
       Map<String,float[]> next=new HashMap<>();
       for(GeoBone bone:model.allBones()) {
@@ -48,7 +48,7 @@ final class ReinhardRecovery {
    static ReinhardFirstPersonPose.Offset firstPerson(Object player,boolean left,ReinhardFirstPersonPose.Offset target,int key,long now) {
       OffsetState[] pair=FP.computeIfAbsent(player,p->new OffsetState[]{new OffsetState(key),new OffsetState(key)});
       OffsetState state=pair[left?1:0];
-      if(state.key!=key) {state.key=key;state.since=now;state.from=state.last;}
+      if(state.key!=key) {state.key=key;state.since=key<0?now:Long.MIN_VALUE/2;state.from=state.last;}
       float w=remaining(state.since,now);
       ReinhardFirstPersonPose.Offset from=state.from;
       state.last=new ReinhardFirstPersonPose.Offset(target.x()+(from.x()-target.x())*w,target.y()+(from.y()-target.y())*w,
@@ -58,7 +58,7 @@ final class ReinhardRecovery {
    }
    static Matrix4f[] weapons(Object player,int key,Matrix4f sheath,Matrix4f blade,long now) {
       WeaponState state=WEAPONS.computeIfAbsent(player,p->new WeaponState(key,sheath,blade));
-      if(state.key!=key) {state.key=key;state.since=now;state.from=state.last;}
+      if(state.key!=key) {state.key=key;state.since=key<0?now:Long.MIN_VALUE/2;state.from=state.last;}
       float w=remaining(state.since,now);
       state.last=new Matrix4f[]{ReinhardSword.interpolate(sheath,state.from[0],w),ReinhardSword.interpolate(blade,state.from[1],w)};
       return state.last;

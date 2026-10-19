@@ -112,3 +112,150 @@ No new animation engine, shader chain, animation dependency or flight change.
 - Full Java 17 `./gradlew build --no-daemon` passed after the fix: core 1242 +
   flight 12 = 1254 tests, zero failures/errors/skips. `git diff --check` passed.
   Standalone output: `reforgedcodex-core-1.33.1.jar`.
+
+## Second pass: owner gameplay findings (1.34 candidate, native acceptance pending)
+Diagnosis, before edits:
+- AnimationController.overlay writes all channels of each named bone, including
+  missing position channels. Combat overwrites crouch offsets. The archive body
+  pivots at the neck, while head/shoulders are independent roots; torso leaning
+  cannot carry them. This is not a transition-duration problem.
+- Sprint selects a different clip in one frame; airborne legs still use ground
+  walk speed. StanceBlend.mix discards the third weight during fast mode cycling.
+- Recovery keys contain phase changes and smooth the attack's incoming pose,
+  delaying contact; HitStop subtracts elapsed hold only while active, then returns
+  zero, producing a multi-tick forward jump at release.
+- FP clip overlays use body bone names; armorRightArm is not right_arm. Only
+  matching forearms sample; shoulder offsets and body clips are different layers.
+- The sword's local X is the broad axis, Z the thin axis; the 60-degree X mount
+  raises the long Y axis toward horizontal. Its grip is local (0,-3.5,0) px.
+- Legs have no knees. Sky Kick can only rotate an entire rigid leg through an arc.
+- Light Punch/Fist Combo remain HUD keys; ordinary melee uses an unrelated vanilla
+  swing clock with immediate damage. Existing cooldowns are 2-60 seconds.
+Implementation sequence:
+1. Preserve authored channel masks, attach upper body structurally, blend gait and
+   body states, and remove contact-delaying and hit-stop clock discontinuities.
+2. Orient sheath using measured axes; solve the two-bone arm to the actual grip
+   after all body-state blending, and keep attachments in the same hierarchy.
+3. Retire R actions while retaining wire ordinals; move Knight chain to claimed
+   LMB. Use a server contact clock for empty-hand ordinary attacks.
+4. Add bounded hero-opt-in air/super-jump motion, articulated thrust kick with
+   collision-aware approach and one server hit plus a 40-degree launch.
+5. Short technical cooldowns, active scene/job guards, HUD/locales, migration,
+   regression tests and full build. Preserve Erasure shader/audio and scene logic.
+
+
+### Second-pass implementation report
+
+#### Confirmed causes, not transition-duration guesses
+- Absent clip channels erased inherited offsets; the neck-root body could not
+  carry independent head/shoulder roots. Crouch was composed inconsistently.
+- Sprint/air selected discrete poses. Interrupted stance blending discarded one
+  of three weights. Incoming recovery smoothing delayed the authored contact.
+- Subtracting the transient external HitStop counter jumped forward on release.
+- The nominal item anchor was above the actual glove. Point-equality tests did
+  not prove blade clearance, natural elbow placement or a neutral wrist.
+- Compound quaternion/Euler conversion in bundled JOML did not invert the
+  renderer's RzRyRx chain. Reinhard now uses a local tested matrix inverse.
+- The old ordinary attack used vanilla immediate damage and a different visual
+  clock. Retired R abilities and long saved cooldowns remained visible/active.
+
+#### Existing approaches retained and adapted
+- Regulus/Iron Man: separate view weights, a shared authoritative action clock,
+  PoseKeys contacts, real-time outgoing recovery rather than a second timeline.
+- Existing forearm hierarchy, PlayerGeoLayer and AnimationController sampling;
+  the shared animation engine and other heroes' pose composition are unchanged.
+- Original Viltrumite impact/grab pipeline remains the common runtime boundary.
+  Regulus's directed jump principle becomes bounded hero-opt-in acceleration,
+  not a replacement of shared flight or a copy of his entire movement system.
+
+#### Requested ten areas
+1. ReinhardLayers preserves channel ownership; three stance weights, continuous
+   gait/air weights, outgoing recovery and stable tick sampling remove diagnosed
+   composition/clock discontinuities. No global transition-duration workaround.
+2. Earlier owner correction: whole weapon scale 0.574 (18% below 0.70), with a
+   separate 0.78 longitudinal proportion correction, 35-degree thin-edge hip
+   mount and visible belt carrier. The later drawn-blade clarification DOES NOT
+   change that accepted mount, sheath, sheathed orientation or either scale.
+3. Waist pivot Y12, structural head/shoulder children and one relative crouch
+   layer replace independent torso offsets and disconnected upper-body roots.
+4. Ordinary attack: ten ticks, one authoritative vanilla attack at tick four,
+   readable anticipation/recovery and sharp contact; no global attack slowdown.
+5. Actual glove pivots, surface contact for the resting left palm and an authored
+   reid_grip anchor replace the nominal item offset. Free-blade poses have two
+   distinct grip points at the guard and pommel. Forearm pronation keeps the
+   wrist continuous with the sleeve instead of imposing a 90-degree wrist flip.
+6. Restrained R is absent from active input, HUD availability and hints. Enum
+   ordinals remain for packet/save compatibility; Holy Sword R stays Reid.
+7. Knight LMB advances one hit per click, with one buffered next click. Damage,
+   third-hit shockwave and the vanilla double-damage guard are server-owned.
+8. Extra jumps add bounded forward acceleration, directional steering and a
+   vertical-look fallback. Only Reinhard opts into the new motion contract.
+9. Sky Kick extends an articulated knee, approaches in collision-checked steps,
+   hits once at tick six and launches at 40 degrees above the attack direction.
+10. Short technical cooldowns, old-save clamping and real scene/job admission
+    guards agree with HUD. World Cut cannot overlap a still-running carve job;
+    waiting for the job does not extend its damaging wave.
+
+#### Drawn-blade clarification and visual self-review
+- A blind universal quarter-turn was rejected: the camera held-item basis and
+  the model-space authored anchor are different. That trial exposed the edge in
+  World Cut/Erasure and introduced crouched leg intersections.
+- The camera path rolls ONLY the free blade around local Y, after extraction and
+  reversed on sheathing. The sheath frame and sheathed blade remain unchanged.
+- The TP ready pose presents the broad native X/Y blade face toward the front,
+  with the narrow Z profile toward the side. The drawn guard/hand poses move in
+  front of the chest for a reachable two-hand grip, including both chop sides,
+  Rain of Cuts, World Cut and World Erasure. Positions/scales of the sheath do
+  not depend on that free-blade roll or the constrained hands.
+- Draw's early extraction path and six-second duration stay intact. Only the
+  final transfer settles into the new two-hand free-blade pose; sheathing uses
+  the reverse path. The two palms do not share a point or a single-handed anchor.
+- Dense tests use real baked cubes and production equipment matrices, not just
+  a matching point or a screen rectangle. CPU previews are diagnostic images,
+  not a recording from Minecraft. Rejected previews are not acceptance proof.
+
+#### Files and subsystems
+- client/reinhard: Renderer, Poses, Sword, Grip, Layers, Motion, StanceBlend,
+  Recovery and FirstPersonPose; tools/assets rig and clip generators; generated
+  TP/FP geometry and animation JSON; optional geometry export/preview utility.
+- hero: opt-in mouse/vanilla-hit/jump contracts; Reinhard actions, rules, state,
+  ability admission and cooldown/HUD flags; LightPunch, SkyKick, CloudStep;
+  WorldCut and CarveJobs queue ownership. Flight sources are unchanged.
+- All eleven core locale files, core version 1.34.0, design/plan, animation skill,
+  durable project memory and regression tests. No new dependency or engine.
+- World Erasure's scene, shader, fracture effects and sounds are not rewritten.
+  Existing sound-license exclusions and placeholder limitations remain.
+
+#### Validation boundary
+- Final build/test totals and artifact digest are recorded after the last run.
+- Resource checker: zero new problems, four known legacy problems.
+- Native client probe failed GLFW initialization. Dedicated probe stopped at
+  EULA; no EULA was accepted. Neither is a successful gameplay/server check.
+- Still required in Minecraft: FP and TP motion/interruptions at real frame rates,
+  both mouse hands, draw/return continuity, HUD/keys, blocked kick approaches,
+  repeated jumps/landing, PvP latency/damage, occupied slots, other heroes and
+  Oculus/shader packs. CPU geometry cannot certify visually perfect animation.
+
+
+### Owner correction: drawn-blade orientation-only audit
+
+Status: acceptance blocked by native blade shape; no production orientation/stance/scale/sheath edit in this audit.
+
+The exact TP path is `ReinhardRenderer.onRenderPlayerPre` → `ReinhardSword.equipment` → `drawEquipment` → `drawFrame` → `AnimRenderer.render`. The immutable blade frame comes from the sampled `reid_grip` bone; the wrist solve does not recompute it. `drawFrame` resets the asset bones and multiplies that frame once. No later quarter-turn cancels the blade orientation.
+
+The blade asset has longitudinal Y, width X and broad-face normal Z. In the owner's raised World Erasure pose (tick 15), the final broad normal is already 10 degrees from character-front Z. Native blade geometry is a narrow straight blade, not the anime reference's wide diamond. At the native Y=20 cross-section, current front/side widths are 2.598725/0.997833 model px. A mesh-only +10-degree Y roll aligns the broad plane exactly with the front: 2.638814/0.665236 px. A +90-degree roll swaps them to 0.997834/2.598724 px and makes the frontal silhouette worse. These are actual transformed quad intersections, not bounding boxes including the guard.
+
+`ReinhardDiagnosticTest.exportFixedPoseAxialAudit` exports unchanged body and sheath meshes with three blade matrices: production BEFORE, +90-degree trial and exact face-alignment trial. Camera, pose, mesh, length, scale and hilt location stay fixed. The diagnostic comparison must not be labelled a successful AFTER. It proves that axial roll alone cannot create the requested broad diamond silhouette. Reshaping only the unsheathed blade would be a real design change; owner approval is required because the current instruction forbids changing its size. No such geometry change has been made.
+
+Verification: preceding complete build passed 1268 core and 12 flight tests (1280 total), zero failures/errors/skips. The added fixed-pose diagnostic export also passed. CPU renders are not native Minecraft acceptance. The correction is not complete and must not be reported as accepted.
+
+Final audit verification: full `build` passed with 1269 core + 12 flight tests (1281 total), no failures/errors/skips; `git diff --check` passed. A 0.01-degree axial sweep over 180 degrees confirms the maximum frontal mid-blade cross-section at +10 degrees: 2.638814 model px versus 2.598725 before (only +1.54%). No production transform, stance, sheath, asset shape or scale changed in this audit.
+
+
+### Final owner-selected visual: restore the bottom +90-degree audit variant
+
+The owner cancelled the +35% drawn-blade silhouette, then explicitly circled the bottom axial-audit image: +90 degrees about native longitudinal Y. This overrides the previous broad-face-front direction. All silhouette changes were removed: generated drawn asset, optional polygon loader, asset selector, extra tests and tools. Original `blade.geo.json` and `sheath.geo.json` SHA256 checks match the pre-silhouette baseline. No new blade geometry or scale change remains.
+
+Core 1.34.1 rolls only the TP final free-blade matrix after the existing grip solve. The native hilt points lie on Y and do not translate. Sheath frame is captured before that roll, Sheath Strike is excluded, and sheathed roll is zero. The unchanged draw/sheathe roll curve is reused; body poses, animation keys, hand constraints and FP transforms stay unchanged. The final production export must match the frozen +90-degree trial at World Erasure tick 15, including identical body and sheath vertices. Verification follows below.
+
+Final restored-roll verification: `./gradlew build --no-daemon` passed with 1269 core + 12 flight tests (1281 total), zero failures/errors/skips. Production `world_erasure_15.json` equals the frozen selected +90-degree trial byte-for-byte as parsed JSON, including every body, sheath and blade vertex. Original blade/sheath asset checksums and `git diff --check` passed. The head collision test now checks each actual rotated head/hair cube, like the existing torso checks: the combined conservative head envelope reported false positives in empty space between rotated cubes after the selected roll. All sampled draw/sheathe/attack frames, standing and crouched, pass actual mesh clearance without moving any pose. Version assertion updated to 1.34.1. The attached comparison is a CPU geometry diagnostic, not a Minecraft screenshot; native acceptance remains outstanding as described above.

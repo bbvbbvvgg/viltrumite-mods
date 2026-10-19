@@ -10,7 +10,7 @@ import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.MouseButton;
 import org.junit.jupiter.api.Test;
 
-/** Mode switch on MMB (spec §5): cycle, 3 s cooldown, refusal. */
+/** Mode switch on MMB (spec §5): cycle, short technical cooldown, refusal. */
 class ModeCycleTest {
    @Test
    void pressCyclesAll() {
@@ -37,7 +37,7 @@ class ModeCycleTest {
 
    @Test
    void cooldownIsSixtyTicks() {
-      assertEquals(60, ReinhardRules.MODE_COOLDOWN);
+      assertEquals(4, ReinhardRules.MODE_COOLDOWN);
    }
 
    @Test
@@ -50,7 +50,7 @@ class ModeCycleTest {
    @Test
    void middleMouseClaimsModeCycle() {
       assertSame(HeroAction.MODE_CYCLE, ReinhardHero.INSTANCE.mouseAction(MouseButton.MIDDLE, null));
-      assertNull(ReinhardHero.INSTANCE.mouseAction(MouseButton.PRIMARY, null));
+      assertEquals(HeroAction.PRIMARY_ATTACK, ReinhardHero.INSTANCE.mouseAction(MouseButton.PRIMARY, null));
       assertNull(ReinhardHero.INSTANCE.mouseAction(MouseButton.SECONDARY, null));
    }
 

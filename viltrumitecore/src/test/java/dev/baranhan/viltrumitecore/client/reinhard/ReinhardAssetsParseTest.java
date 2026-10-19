@@ -34,13 +34,14 @@ class ReinhardAssetsParseTest {
    }
 
    @Test
-   void bodyHasSixBones() throws IOException {
+   void bodyHasWaistRootAndTwoHipRoots() throws IOException {
       BakedGeoModel body = load(path(ReinhardAssets.BODY));
-      assertEquals(List.of(ReinhardAssets.HEAD, ReinhardAssets.BODY_BONE, ReinhardAssets.RIGHT_ARM, ReinhardAssets.LEFT_ARM, ReinhardAssets.RIGHT_LEG,
-         ReinhardAssets.LEFT_LEG), body.topLevelBones().stream().map(b -> b.name).toList());
+      assertEquals(List.of(ReinhardAssets.BODY_BONE,ReinhardAssets.RIGHT_LEG,ReinhardAssets.LEFT_LEG), body.topLevelBones().stream().map(b -> b.name).toList());
       int faces = 0;
       for (GeoBone bone : body.allBones()) {
+         if(bone.name.equals("reid_grip")) {assertTrue(bone.cubes.isEmpty());continue;}
          assertTrue(!bone.cubes.isEmpty(), bone.name);
+         if(bone.name.equals("reid_belt")) {assertEquals(6,bone.cubes.get(0).quads().length);continue;}
          for (GeoBone.Cube cube : bone.cubes) {
             faces += cube.quads().length;
          }
