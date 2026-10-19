@@ -196,19 +196,20 @@ public final class GrabThrow implements AbilityHandler {
       return true;
    }
 
-   @Override
-   public boolean claimsPress(ReinhardState state) {
-      return holding(state);
-   }
-
-   @Override
-   public void secondPress(ServerPlayer player, ReinhardState state) {
-      throwTarget(player, state);
+   /** RMB while the grab holds (HeldInputs press on {@link dev.baranhan.viltrumitecore.hero.HeroAction#THROW_HELD}). */
+   public static void throwHeld(ServerPlayer player, ReinhardState state) {
+      if (state.grab != null) {
+         throwTarget(player, state);
+      }
    }
 
    @Override
    public void tick(ServerPlayer player, ReinhardState state) {
       if (state.grab != null) {
+         // The 101-tick guard and a WorldPause must not end the hold clip while the target is held.
+         if (!state.action.is(ReinhardAbility.GRAB_THROW)) {
+            state.action.start(ReinhardAbility.GRAB_THROW, ReinhardRules.GRAB_MAX_TICKS + 1, state.grab.targetId());
+         }
          holdTick(player, state);
       } else if (state.action.is(ReinhardAbility.GRAB_THROW) && state.action.phase() == ActionTimeline.PHASE_SNAP) {
          throwTick(player, state);
@@ -224,6 +225,8 @@ public final class GrabThrow implements AbilityHandler {
       release(state, releaseReason(reason));
       state.throwSustain = 0;
       state.throwTargetId = -1;
+      state.throwSustained = 0;
+      state.throwVelocity = null;
    }
 
    private static void holdTick(ServerPlayer player, ReinhardState state) {
@@ -320,6 +323,8 @@ public final class GrabThrow implements AbilityHandler {
       }
 
       if (!HeroRegistry.allowsImpulse(target)) {
+         state.action.cancel();
+         dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero.INSTANCE.onInputRefused(player, ReinhardAbility.GRAB_THROW.action());
          return;
       }
 

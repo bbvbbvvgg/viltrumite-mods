@@ -123,6 +123,12 @@ public final class ReinhardActions {
          return;
       }
 
+      // The grab is started by Z and ended by RMB (user requirement 2026-10-19): a slot
+      // press while holding is not a throw and must not spam the refusal sound either.
+      if (ability == ReinhardAbility.GRAB_THROW && GrabThrow.holding(state)) {
+         return;
+      }
+
       AbilityHandler handler = HANDLERS.get(ability);
       if (handler == null) {
          ReinhardHero.INSTANCE.onInputRefused(player, action);

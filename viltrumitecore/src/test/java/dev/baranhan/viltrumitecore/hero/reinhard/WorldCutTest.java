@@ -76,11 +76,15 @@ class WorldCutTest {
       assertTrue(cut.advance(500)); assertEquals(1,w.blasts); assertEquals(1,w.strikes);
       cut.advance(501); assertEquals(1,w.blasts); assertEquals(1,w.strikes);
    }
-   @Test void interruptedPoseKeepsBusyUntilBlast() {
+   @Test void interruptedPoseKeepsBusyUntilTheCastEnds() {
       ReinhardState state=new ReinhardState(); World w=new World();
       WorldCut.start(state); state.worldCut=WorldCut.timed(0,w); state.action.cancel();
       assertTrue(state.busy()); state.worldCut.advance(79); assertTrue(state.busy());
-      state.worldCut.advance(80); assertFalse(state.busy());
+      // The blast opens the trench; the wave is still travelling, so the caster stays busy.
+      state.worldCut.advance(80); assertTrue(state.busy());
+      state.worldCut.advance(109); assertTrue(state.busy());
+      // The manager drops the finished cast; the caster's stale reference is cleared by the hero tick.
+      state.worldCut.advance(110); state.worldCut = null; assertFalse(state.busy());
    }
    @Test void consumedSliceCountIsNotIncrementedAgain() {
       assertEquals(0,WorldCut.carveFront(null));

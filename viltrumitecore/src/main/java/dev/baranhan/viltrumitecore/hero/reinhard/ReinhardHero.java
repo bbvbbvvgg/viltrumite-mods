@@ -172,10 +172,31 @@ public final class ReinhardHero implements HeroDefinition {
       return true;
    }
 
-   /** Spec §5: MMB cycles the mode (both sides; the client cancels pick-block). */
+   /**
+    * Spec §5: MMB cycles the mode (both sides; the client cancels pick-block).
+    * RMB belongs to the hero only while a grab holds (user requirement 2026-10-19:
+    * the throw is RMB; Z starts the grab and never throws).
+    */
    @Override
    public HeroAction mouseAction(MouseButton button, Player player) {
-      return button == MouseButton.MIDDLE ? HeroAction.MODE_CYCLE : null;
+      if (button == MouseButton.MIDDLE) {
+         return HeroAction.MODE_CYCLE;
+      }
+
+      // RMB means the throw only while a grab holds (user requirement 2026-10-19:
+      // Z starts the grab and never throws).
+      return player != null && button == MouseButton.SECONDARY && holdsGrab(player) ? HeroAction.THROW_HELD : null;
+   }
+
+   /** Both sides: the server state, or the synced {@link ReinhardFlags#GRAB_HOLDING} bit on the client. */
+   private static boolean holdsGrab(Player player) {
+      if (player.level().isClientSide()) {
+         HeroPublicSnapshot snapshot = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer ? heroPlayer.getHeroSnapshot() : null;
+         return snapshot != null && ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.GRAB_HOLDING);
+      }
+
+      ReinhardState state = ReinhardState.of(player);
+      return state != null && state.grab != null;
    }
 
    @Override
@@ -190,6 +211,8 @@ public final class ReinhardHero implements HeroDefinition {
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
          // Except while Reid is being drawn: the 6 s scene roots him (spec §7.1).
          case JUMP, AIR_STEP -> state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWING;
+         // RMB only means something while a grab holds (HeldInputs checked the claim on the press).
+         case THROW_HELD -> state.grab != null;
          // Abilities (stage 3+): the mode, cooldown and timeline gate lives in ReinhardActions.
          default -> ReinhardActions.abilityFor(action) != null;
       };
@@ -204,6 +227,10 @@ public final class ReinhardHero implements HeroDefinition {
    @Override
    public void tick(ServerPlayer player) {
       ReinhardState state = ReinhardState.ensure(player);
+      // A cast dropped with its level (unload, server stop) must not lock the caster forever.
+      if (state.worldCut != null && !dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.get(player.serverLevel()).contains(state.worldCut)) {
+         state.worldCut = null;
+      }
       state.tick();
       ReinhardActions.tick(player, state);
       ReidLife.tick(player, state, state.reid.tick());
@@ -224,6 +251,15 @@ public final class ReinhardHero implements HeroDefinition {
       if (action == HeroAction.MODE_CYCLE) {
          if (pressed) {
             cycleMode(player, ReinhardState.ensure(player));
+         }
+
+         return;
+      }
+
+      if (action == HeroAction.THROW_HELD) {
+         // RMB edge (HeldInputs): release the control and throw. Only a press does anything.
+         if (pressed) {
+            dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.throwHeld(player, ReinhardState.ensure(player));
          }
 
          return;
