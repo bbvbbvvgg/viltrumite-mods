@@ -19,13 +19,13 @@ public final class ReinhardFirstPersonPose {
       Offset scaled(float w) { return new Offset(x*w, y*w, z*w, pitch*w, yaw*w, roll*w); }
    }
 
-   private static final float[][] JAB = {under(0), key(2.6F,-24,-14,6,.03F,.07F,.10F),
+   private static final float[][] JAB = {under(0), key(2,-24,-14,6,.03F,.07F,.10F),
       key(4,-12,4,-3,-.12F,.06F,-.44F), key(5,-10,3,-2,-.10F,.05F,-.38F), under(10)};
    private static final float[][] DASH = {under(0),key(1,16,0,-8,.03F,-.12F,.14F),
       key(4,20,0,-9,.04F,-.14F,.16F),under(6)};
-   private static final float[][] HOOK = {under(0),key(2.8F,-36,-28,-14,.14F,.12F,.10F),
+   private static final float[][] HOOK = {under(0),key(2,-36,-28,-14,.14F,.12F,.10F),
       key(4,-14,38,12,-.28F,.05F,-.36F),key(5,-12,42,10,-.24F,.03F,-.30F),under(10)};
-   private static final float[][] HAMMER = {under(0),key(4.8F,-72,12,8,.02F,.30F,.08F),
+   private static final float[][] HAMMER = {under(0),key(3.5F,-72,12,8,.02F,.30F,.08F),
       key(6,28,-8,-6,-.06F,-.14F,-.40F),key(7,24,-10,-6,-.05F,-.12F,-.34F),under(14)};
    private static final float[][] KICK = {under(0),key(2,-34,-4,-6,-.03F,.18F,-.08F),
       key(4,-12,2,-4,0,.07F,-.04F),key(6,22,6,-12,.05F,-.14F,.15F),
@@ -58,7 +58,7 @@ public final class ReinhardFirstPersonPose {
       for(int i=0;i<12;i++) {
          float side=(i&1)==0?-1:1;
          float t=ReinhardRules.CUT_FIRST_TICK+i*ReinhardRules.CUT_INTERVAL;
-         keys[2+i*2]=key(t-.6F,-45,-side*24,-side*6,-side*.1F,.18F,.04F);
+         keys[2+i*2]=key(t-1.5F,-45,-side*24,-side*6,-side*.1F,.18F,.04F);
          keys[3+i*2]=key(t,12,side*32,side*8,side*.12F,.04F,-.30F);
       }
       keys[26]=under(ReinhardRules.CUT_TICKS);
@@ -66,11 +66,18 @@ public final class ReinhardFirstPersonPose {
    }
 
    private static Offset sample(float[][] keys, double ticks) {
+      return sample(keys,ticks,false);
+   }
+   private static Offset strike(float[][] keys,double ticks) { return sample(keys,ticks,true); }
+   private static float channel(float[][] keys,float t,int c,boolean continuous) {
+      return continuous?PoseKeys.sampleContinuous(keys,t,c,0,false):PoseKeys.sample(keys,t,c,0,false);
+   }
+   private static Offset sample(float[][] keys, double ticks,boolean continuous) {
       if (!Double.isFinite(ticks)) return Offset.NONE;
       float t=(float)Math.max(0,ticks);
-      return new Offset(PoseKeys.sample(keys,t,3,0,false), PoseKeys.sample(keys,t,4,0,false),
-         PoseKeys.sample(keys,t,5,0,false), PoseKeys.sample(keys,t,0,0,false),
-         PoseKeys.sample(keys,t,1,0,false), PoseKeys.sample(keys,t,2,0,false));
+      return new Offset(channel(keys,t,3,continuous), channel(keys,t,4,continuous),
+         channel(keys,t,5,continuous), channel(keys,t,0,continuous),
+         channel(keys,t,1,continuous), channel(keys,t,2,continuous));
    }
 
    /** Draw/sheathe remains driven by the six-second authoritative Reid phase. */
@@ -93,17 +100,17 @@ public final class ReinhardFirstPersonPose {
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks, int length) {
       if (ability==null || !Double.isFinite(ticks)) return Offset.NONE;
       return switch(ability) {
-         case LIGHT_PUNCH -> sample(JAB,ticks);
+         case LIGHT_PUNCH -> strike(JAB,ticks);
          case STEP_DASH -> sample(DASH,ticks);
-         case FIST_COMBO -> sample(phase<=0 ? JAB : phase==1 ? HOOK : HAMMER,ticks);
+         case FIST_COMBO -> strike(phase<=0 ? JAB : phase==1 ? HOOK : HAMMER,ticks);
          case SKY_KICK -> sample(KICK,ticks);
          case GRAB_THROW -> sample(phase==ReinhardClips.PHASE_SNAP ? THROW : GRAB,ticks);
          case DASH_BEHIND -> sample(BEHIND,ticks);
          case STOMP -> sample(STOMP,ticks);
          case CATCH -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.CATCH_SNAP_TICKS ? CATCH : CATCH_READY,ticks).scaled(windowFade(ticks,length));
          case REFLECT -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.REFLECT_SNAP_TICKS ? SWAT : GUARD,ticks).scaled(windowFade(ticks,length));
-         case SHEATH_STRIKE -> sample(SHEATH,ticks);
-         case CUT_RAIN -> sample(RAIN,ticks);
+         case SHEATH_STRIKE -> strike(SHEATH,ticks);
+         case CUT_RAIN -> strike(RAIN,ticks);
          case WORLD_CUT -> worldCut(ticks,false);
          case DIAGONAL_WORLD_CUT -> diagonal(ticks,false);
          case WORLD_ERASURE -> worldErasure(ticks,false);
@@ -135,7 +142,7 @@ public final class ReinhardFirstPersonPose {
       return new Offset(o.x()+(.12F-.24F*sweep)*w,o.y(),o.z(),o.pitch(),o.yaw()+(-24+48*sweep)*w,o.roll()+(-22+44*sweep)*w);
    }
    public static Offset rain(double ticks,boolean physicalLeft) {
-      Offset o=sample(RAIN,ticks);
+      Offset o=strike(RAIN,ticks);
       return physicalLeft ? new Offset(o.x()-.1F,o.y(),o.z(),o.pitch(),-o.yaw(),o.roll()) : o;
    }
 

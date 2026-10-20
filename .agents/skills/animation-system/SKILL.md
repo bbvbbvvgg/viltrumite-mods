@@ -459,3 +459,41 @@ To add a screen effect:
   complement of the existing rise/fall weights. Never gate gait with onGround.
   Test takeoff/landing and repeated timestamps at 30/60/144/240 Hz.
 - These CPU regression gates do not prove native visual or shader acceptance.
+
+### Opt-in continuous strike playback (core 1.35.3)
+- `ActionClock.sample(action, phase, elapsed, length, clientTicks)` is an opt-in
+  render policy anchored to the authoritative snapshot. It never rewinds a
+  segment, reconciles at 0.75–1.25x, extrapolates no more than three ticks, and
+  clamps to the server duration. Sample `tickCount + partial` (not wall time),
+  share one player clock across body/FP/elbows/equipment, reset on hero exit.
+  Legacy `tick/time` behavior is unchanged for existing hero callers.
+- `lerp_mode: "monotone"` opts a key's outgoing segment into bounded nonuniform
+  C1 Hermite interpolation. Tangents use neighboring secants; extrema, endpoints,
+  explicit pre/post discontinuities and boundaries to legacy segments have zero
+  tangent. This preserves exact key times/values and avoids repeated stops at
+  non-extremum keys without Catmull overshoot. Existing linear/easing/Catmull
+  clips are unchanged. `PoseKeys.sampleContinuous` exposes the same math for FP.
+- Reinhard ordinary strikes opt in; draw/sheath/world cinematics do not. Contact
+  ticks remain authoritative. Widen delivery BEFORE contact, not by delaying hits.
+- FP authored action owns the right arm: cancel the vanilla swing on that path.
+  Use shared `FirstPersonArm` once in view space, before vanilla's arm frame,
+  not additional Euler rotations inside RenderArmEvent. A cancelled RenderHand
+  path must apply it itself; the normal renderArmWithItem mixin only covers the
+  non-cancelled path. Retain elbow sampling and weapon attachment inside the
+  same outer transform. Native GPU/FP/TP/shader acceptance is separate from tests.
+- Final constrained geometry is a separate continuity gate. A smooth source
+  clip can still produce a 173-degree forearm flip: never choose a directed grip
+  axis sign from a changing per-frame dot product. Preserve the authored sign.
+  A hard shortest-arc wrist angle limit can also flip +limit to -limit at 180
+  degrees. Fade ambiguous antipodal wrist correction to neutral, preserving the
+  grip position and independent weapon matrix. Scan final world-space joint
+  quaternions between high-frame-rate samples, not only source Euler keys.
+
+- Partial grip weights blend the reachable palm target before the existing DLS
+  solve, not separately wrapped Euler/quaternion joint solutions afterward.
+  Preserve authored shoulder/forearm twist in the geometric seed; blend the
+  elbow pole from its authored position. Support elbow points outward/front,
+  leading elbow also down to clear overhead cuts. Keep full-mesh head and
+  distinct-palm gates alongside final-bone continuity; neither alone is enough.
+- Fade leading-forearm pronation with two-hand ownership, separately from its
+  palm-position ownership. Keep the one-hand wrist correction below this fade.

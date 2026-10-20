@@ -25,6 +25,7 @@
     "FirstPersonBarrageMixin",
     "FirstPersonBlockMixin",
     "IronManFirstPersonShieldMixin",
+    "ReinhardFirstPersonMixin",
     "FirstPersonChop2Mixin",
     "FirstPersonChopMixin",
     "FirstPersonGrabMixin",

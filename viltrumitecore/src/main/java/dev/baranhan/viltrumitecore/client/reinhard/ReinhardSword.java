@@ -153,7 +153,9 @@ public final class ReinhardSword {
       if(twoHands>0)ReinhardGrip.paired(body,gripAt(blade,-8.5F),holyWeight*twoHands,true);
       if(right>0) {
          var target=interpolate(blade,gripAt(blade,0),twoHands);
-         if(twoHands>0)ReinhardGrip.paired(body,target,right,false);
+         // Position is already fully owned by the right hand. Only the new
+         // paired pronation ramps with twoHands; an epsilon must not enable it fully.
+         if(twoHands>0)ReinhardGrip.paired(body,target,right,right*twoHands,false,true);
          else ReinhardGrip.solve(body,target,right);
       }
       if(!strike)blade=rollDrawnBlade(blade,phase,ticks);

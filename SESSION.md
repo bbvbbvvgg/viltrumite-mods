@@ -382,3 +382,55 @@ Native runClient: Forge early display → `glfwInit failed`, мира нет; о
 после подтверждения графического барьера. Нет визуальной приёмки в Minecraft,
 native FPS/shaders/multiplayer. План и оставшиеся ручные проверки:
 `docs/plans/2026-10-19-reinhard-quality-rework.md`, раздел continuity.
+
+
+## 2026-10-20 — Реальная плавность ударов Рейнхарда (core 1.35.3)
+
+Пользователь отклонил 1.35.2: походка/переходы не исправили джеб и меч.
+Ветка `fix/reinhard-strike-fluidity` от `45ccf66` / PR39.
+Исследованы Iron Man FP, runtime-час/снимки, ключи, итоговый хват.
+Доставка удара занимала лишь 1.2–1.4 тика. Раздвинуты предварительные
+ключи без переноса контактов; восемь обычных боевых клипов используют opt-in
+монотонный C1 Hermite в существующем движке, без overshoot. У комбо убрана
+замороженная поза contact+1; добавлен небольшой follow-through.
+Reinhard использует общий опциональный monotonic ActionClock.sample с пределом
+экстраполяции 3 тика; legacy tick/time других героев не меняется. FP применяет
+общий FirstPersonArm вокруг плеча один раз снаружи vanilla arm frame, не
+прибавляет competing local Euler. Обычный item и cancelled RenderHand пути
+разделены; vanilla swing исключён только при владении авторской атакой.
+
+Ключевой реальный дефект ПОСЛЕ семплирования: соседние кадры 240 FPS давали
+173.3269° left_forearm на light_punch и 69.1809° left_hand на sheath_strike.
+Убрано покадровое изменение знака направленной оси хвата; запястный лимит
+плавно затухает у quaternion antipode. Pronation ведущего предплечья теперь
+затухает с two-hand ownership, а не включается мгновенно при weight>0.
+Частичный хват смешивает достижимую цель ладони до прежнего DLS solve; seed
+сохраняет авторский twist и смешивает полюс локтя. Левый локоть outward/front,
+правый дополнительно вниз для безопасности overhead cuts. Симметричный полюс
+проходил continuity, но пересекал голову: это исправлено, тест НЕ ослаблен.
+Экспериментальные альтернативные IK solvers отброшены. Новых движков/фильтров нет.
+
+RED: baseline production source/timing fixture — 2/2 failures; отдельный scan
+конечных костей поймал 173°/69° скачки. GREEN: полный Java17 build/reobf —
+1307 core + 12 flight = 1319 tests, failures/errors/skips=0. Новые 11 тестов
+покрывают clock на 30/60/144/240 Hz, sampler opt-in/legacy, FP ownership,
+точные контакты и непрерывность итоговых костей на 240 FPS, включая draw/sheath
+и world scenes. Существующие head/full-mesh/distinct-palm тесты сохранены.
+Resource checker: 0 новых / 4 legacy. Генератор детерминирован, JAR asset совпал.
+Blade/sheath meshes, +90° selected roll, шестисекундный Reid draw source clips,
+world cinematic source clips, gameplay/damage/контакты/protocol4, Flight1.10.1
+не изменены. Меняются только 8 обычных combat JSON clips; gait как в1.35.2.
+
+Нативный финальный клиент запущен через Xvfb/Mesa llvmpipe: Forge47.3.0,
+Minecraft1.20.1, тестовый сохранённый creative flat world. После снижения
+renderDistance до2 F3 показывает37 FPS (старый probe при12 чанках —13–15).
+Финальные Reid strikes проверены/записаны FP и TP; джеб и knight combo —
+отдельная запись. Mixin применён, 83 geo /61 animations загружены. Это НЕ
+приёмка на60/144 FPS, шейдерах/Oculus, реальном GPU или multiplayer.
+Логи/видео находятся вне репо в /data/reinhard-audit, в коммит не включать.
+Core1.35.3 JAR SHA256:
+7aab8e983927be5caea728c0bf43fc30fa30a48cee4b46b14ba52e02636f87bf.
+
+Финальный runClient завершён штатно через Save and Quit → Quit Game, exit0 /
+BUILD SUCCESSFUL (7m11s). Render/mixin exceptions не возникли; предупреждения
+аудиоустройства/narrator/offline Realms и legacy license path — окружение/старые.
