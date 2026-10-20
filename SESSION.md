@@ -335,3 +335,29 @@ Full build/tests1292 GREEN; checker0new/4legacy; full-mesh CPU diagnostics но�
 траекторий GREEN. Native client GLFW barrier, native server EULA gate и никакого
 TPS/listening/visual acceptance. Подробный отчёт, ограничения и manual protocol:
 `docs/reports/2026-10-20-reinhard-cinematic.md`.
+
+
+## 2026-10-20 — Hotfix snapshot Рейнхарда (core 1.35.1)
+
+Исправлен пользовательский `Ticking player` crash: `ReinhardHero.snapshot` писал
+Diagonal World Cut в wire slot16 при shared capacity16. Ветка
+`fix/reinhard-snapshot-overflow` от `133aa4ee` / cinematic PR37. Ёмкость общего
+bounded snapshot32; mode14/Phoenix15 сохранены, enum/action ordinals не изменены.
+Production composeSnapshot вынесен из Player/world shell для прямого regression
+теста реального сборщика, а не его тестовой копии. Удалено дублирующее копирование.
+Codec читает variant/resource2 после объявленного wire count, не capped count;
+negative count отвергается, long offset не переполняется на INT_MAX.
+Core protocol4 запрещает подключение старого protocol3 decoder с лимитом16.
+Обновить Core одновременно на сервере и всех клиентах; flight1.10.1 не изменён.
+Сохранения/NBT, модели/ножны/хват, World Erasure/glass, sounds/VFX не изменены.
+
+RED: 2/13 codec assertions и 2/2 production snapshot tests воспроизводят дефект;
+последние дают ровно `Index 16 out of bounds for length 16`, как пользовательский
+лог. GREEN: Java17 offline full build/reobf, **1300/1300 JVM tests** (core1288,
+flight12), без skips/failures/errors; resource checker0new/4known; frozen
+blade/sheath SHA равны, diff check clean. Новые проверки покрывают все способности
+и три режима, reserved14/15, slot16, action phase/target/elapsed и scene flags,
+legacy16 codec, capped40 tail, negative/INT_MAX count и protocol4 gate.
+Native runClient повторён на hotfix: GLFW init barrier до загрузки мира, вход в
+старый мир и multiplayer НЕ проверены. Прежняя зелёная сборка1.35.0 не доказывала
+snapshot runtime: этот coverage gap признан и закрыт production-composer тестом.

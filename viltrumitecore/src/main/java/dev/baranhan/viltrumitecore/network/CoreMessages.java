@@ -36,6 +36,8 @@ import net.minecraftforge.network.NetworkRegistry.ChannelBuilder;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public class CoreMessages {
+   // v3 clients clamp extra cooldowns at 16 and misread the following phase fields.
+   private static final String PROTOCOL_VERSION = "4";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -45,9 +47,9 @@ public class CoreMessages {
 
    public static void register() {
       SimpleChannel net = ChannelBuilder.named(new ResourceLocation("viltrumitecore", "messages"))
-         .networkProtocolVersion(() -> "3")
-         .clientAcceptedVersions("3"::equals)
-         .serverAcceptedVersions("3"::equals)
+         .networkProtocolVersion(() -> PROTOCOL_VERSION)
+         .clientAcceptedVersions(PROTOCOL_VERSION::equals)
+         .serverAcceptedVersions(PROTOCOL_VERSION::equals)
          .simpleChannel();
       INSTANCE = net;
       net.messageBuilder(BlockToggleC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)

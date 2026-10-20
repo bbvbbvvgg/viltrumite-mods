@@ -174,3 +174,32 @@ PixelVfx, SkyTint, SoundDuck и CameraShake. Новый движок и втор
 
 Код и автоматические проверки готовы к review. Художественная и игровая приёмка
 по этим пунктам остаётся открытой; «визуально идеально» не заявляется.
+
+
+## 8. Исправление подтверждённого краша — core 1.35.1
+
+После выдачи1.35.0 пользователь обнаружил падение при входе в мир:
+`ReinhardHero.snapshot: ArrayIndexOutOfBoundsException: Index16 / length16`.
+Предыдущие1292 теста не вызывали production composer со всеми cooldown slots.
+Зелёная сборка не подтверждала работоспособность входа; это ошибка первого релиза.
+
+- Shared extra capacity увеличена16→32. Diagonal slot16, mode14/Phoenix15 и
+  прежние action IDs сохранены. HUD использует прежние snapshotIndex/getter.
+- Production snapshot composition отделена от Player/world shell и тестируется
+  напрямую вместе с encode/decode, всеми способностями и каждым режимом.
+- Decoder tail offset использует declared wire count, а не capped local count;
+  сохранён bounded allocation, добавлены negative/INT_MAX guards.
+- Core1.35.1, protocol4: старые protocol3 peers отвергаются, поскольку их decoder
+  обрезает cooldown array и неверно читает фазу. Обновить Core на обеих сторонах.
+  Flight остаётся1.10.1. Сохранения/NBT и ID не менялись, удалять мир не требуется.
+- Модели, согласованные blade roll/sheath attachment, анимации, sounds/VFX и
+  World Erasure/glass не изменены этим hotfix.
+
+Проверки: RED2/13 codec tests и RED2/2 actual-composer tests с точным исключением
+пользователя → GREEN **1300/1300 JVM** (core1288+flight12), Java17 offline full
+build/reobf,0failures/errors/skips. Resource checker0new/4known, frozen blade/sheath
+SHA unchanged, diff clean. Legacy16,17+/capped40 arrays, mode/Phoenix separation,
+variant/resource2, negative/extreme counts и protocol4 guards покрыты тестами.
+Повторный runClient на1.35.1 остановлен на `glfwInit failed`, до входа в мир.
+Реальный вход в сохранение, два multiplayer peers и все native пункты§7 остаются
+непроверенными. Текст§6 описывает историческую проверку1.35.0, не игровую приёмку.

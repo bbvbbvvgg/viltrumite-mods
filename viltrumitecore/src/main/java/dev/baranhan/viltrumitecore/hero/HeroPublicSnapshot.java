@@ -49,7 +49,8 @@ public record HeroPublicSnapshot(
    int resource2
 ) {
    public static final int COOLDOWN_COUNT = 6;
-   public static final int EXTRA_COOLDOWN_MAX = 16;
+   // Bounded wire capacity, including hero-reserved slots (Reinhard mode/Phoenix).
+   public static final int EXTRA_COOLDOWN_MAX = 32;
    private static final int[] NO_EXTRA = new int[0];
    public static final HeroPublicSnapshot EMPTY = new HeroPublicSnapshot(
       HeroId.HUMAN, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1, new int[COOLDOWN_COUNT], false
@@ -199,17 +200,21 @@ public record HeroPublicSnapshot(
          int variant = 0;
          int resource2 = 0;
          if (parts.length > 27) {
-            int count = Math.max(0, Math.min(EXTRA_COOLDOWN_MAX, Integer.parseInt(parts[27])));
+            int wireCount = Integer.parseInt(parts[27]);
+            if (wireCount < 0) return EMPTY;
+            int count = Math.min(EXTRA_COOLDOWN_MAX, wireCount);
             extra = new int[count];
             for (int i = 0; i < count; i++) {
                int index = 28 + i;
                extra[i] = index < parts.length ? Integer.parseInt(parts[index]) : 0;
             }
 
-            int after = 28 + count;
-            if (parts.length > after + 1) {
-               variant = Integer.parseInt(parts[after]);
-               resource2 = Integer.parseInt(parts[after + 1]);
+            // The tail follows the declared wire array, not its capped local copy.
+            // Use long arithmetic so an invalid huge count cannot wrap into earlier fields.
+            long after = 28L + wireCount;
+            if (after + 1 < parts.length) {
+               variant = Integer.parseInt(parts[(int) after]);
+               resource2 = Integer.parseInt(parts[(int) after + 1]);
             }
          }
          return new HeroPublicSnapshot(
