@@ -1,0 +1,140 @@
+[
+  {
+    "scenario": "ground_0",
+    "started_epoch": 1792514289.6482549,
+    "recorded_end_epoch": 1792514304.3752291,
+    "done": [
+      "ground,305093c4-27a2-479e-84af-c4df07107a15,157,37606,37682,152796,7847.139865,11.051858"
+    ],
+    "client": [
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,14,55",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,34,32",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,54,29",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,74,41",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,94,27",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,114,7",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,134,19",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,154,17",
+      "CLIENT_DONE,ground,305093c4-27a2-479e-84af-c4df07107a15,37682",
+      "SOUND,37683,1792514298227",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,174,19",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,194,30",
+      "FPS,ground,305093c4-27a2-479e-84af-c4df07107a15,214,43",
+      "FADE,ground,305093c4-27a2-479e-84af-c4df07107a15,71,48"
+    ],
+    "server_warnings": []
+  },
+  {
+    "scenario": "diagonal_0",
+    "started_epoch": 1792514318.1337364,
+    "recorded_end_epoch": 1792514330.1644785,
+    "done": [
+      "diagonal,79d07832-58aa-4bf2-a855-e447571c462a,114,38167,38200,67536,5698.79872,3.2093673"
+    ],
+    "client": [
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,13,52",
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,33,53",
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,53,38",
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,73,55",
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,93,49",
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,113,19",
+      "CLIENT_DONE,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,38200",
+      "SOUND,38201,1792514324148",
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,133,45",
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,153,46",
+      "FPS,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,173,49",
+      "FADE,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,71,47"
+    ],
+    "server_warnings": []
+  },
+  {
+    "scenario": "ground_35",
+    "started_epoch": 1792514342.666239,
+    "recorded_end_epoch": 1792514357.410308,
+    "done": [
+      "ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,157,38667,38743,153986,7847.890473,3.8778393"
+    ],
+    "client": [
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,13,48",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,33,43",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,53,36",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,73,37",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,93,27",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,113,18",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,133,37",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,153,38",
+      "CLIENT_DONE,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,38743",
+      "SOUND,38744,1792514351301",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,173,40",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,193,39",
+      "FPS,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,213,45",
+      "FADE,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,71,35"
+    ],
+    "server_warnings": []
+  },
+  {
+    "scenario": "diagonal_35",
+    "started_epoch": 1792514370.9139018,
+    "recorded_end_epoch": 1792514383.4119818,
+    "done": [
+      "diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,115,39227,39261,68464,5748.924716,3.7619553"
+    ],
+    "client": [
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,13,52",
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,33,53",
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,53,55",
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,73,54",
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,93,49",
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,113,46",
+      "CLIENT_DONE,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,39261",
+      "SOUND,39262,1792514377200",
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,133,37",
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,153,39",
+      "FPS,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,173,43",
+      "FADE,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,71,44"
+    ],
+    "server_warnings": []
+  },
+  {
+    "scenario": "both_0",
+    "started_epoch": 1792514395.664338,
+    "recorded_end_epoch": 1792514412.078413,
+    "done": [
+      "diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,148,39728,39795,67536,7404.437538,5.7178164",
+      "ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,190,39728,39837,152099,9497.585883,3.9954202"
+    ],
+    "client": [
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,12,56",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,12,56",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,32,48",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,32,48",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,52,39",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,52,39",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,72,41",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,72,41",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,92,30",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,92,30",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,112,22",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,112,22",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,132,33",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,132,33",
+      "CLIENT_DONE,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,39796",
+      "SOUND,39797,1792514403923",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,152,43",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,152,43",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,172,41",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,172,41",
+      "CLIENT_DONE,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,39836",
+      "SOUND,39837,1792514405964",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,192,42",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,192,42",
+      "FPS,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,212,42",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,212,42",
+      "FADE,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,71,42",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,232,43",
+      "FPS,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,252,40",
+      "FADE,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,71,40"
+    ],
+    "server_warnings": []
+  }
+]

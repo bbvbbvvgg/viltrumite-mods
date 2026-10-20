@@ -14,10 +14,26 @@ class ReinhardAbilitiesTest {
    @Test
    void slotsFollowSpecOrder() {
       assertEquals(18, ReinhardAbilities.LOADOUT.length);
-      for (ReinhardAbility ability : ReinhardAbility.values()) {
-         int index = ability.mode().page() * 6 + ability.slot();
-         if (ability != ReinhardAbility.SHEATH_STRIKE) assertEquals(ReinhardAbilities.active(ability)?ability.id():"", ReinhardAbilities.LOADOUT[index], ability.name());
-      }
+      assertEquals("reinhard:step_dash", ReinhardAbilities.LOADOUT[2]);
+      assertEquals("reinhard:sky_kick", ReinhardAbilities.LOADOUT[7]);
+      assertEquals("reinhard:step_dash", ReinhardAbilities.LOADOUT[8]);
+      assertEquals("reinhard:step_dash", ReinhardAbilities.LOADOUT[14]);
+      assertEquals("reinhard:world_cut", ReinhardAbilities.LOADOUT[16]);
+      for(var a:ReinhardAbility.values())
+         if(!ReinhardAbilities.active(a))assertFalse(java.util.Arrays.asList(ReinhardAbilities.LOADOUT).contains(a.id()));
+   }
+
+   @Test void oneWorldCutSlotPreviewsAndGatesItsActualCrouchedVariant() {
+      assertEquals(ReinhardAbility.DIAGONAL_WORLD_CUT,ReinhardAbilities.contextual(ReinhardAbility.WORLD_CUT,true));
+      assertEquals(ReinhardAbility.WORLD_CUT,ReinhardAbilities.contextual(ReinhardAbility.WORLD_CUT,false));
+      assertTrue(ReinhardAbilities.icon("reinhard:world_cut",0,true).getPath().endsWith("/diagonal_world_cut.png"));
+      assertTrue(ReinhardAbilities.icon("reinhard:world_cut",0,false).getPath().endsWith("/world_cut.png"));
+      int drawn=dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(0,dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWN);
+      assertFalse(ReinhardAbilities.slotGrey(ReinhardAbility.WORLD_CUT,0,drawn,true));
+      assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.WORLD_CUT,5,drawn,true));
+      assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.WORLD_CUT,0,0,true));
+      assertFalse(ReinhardAbilities.active(ReinhardAbility.DIAGONAL_WORLD_CUT));
+      assertEquals("viltrumite:chop",ReinhardAbilities.defaultLoadout()[13],"Default Y is Chop, not diagonal");
    }
 
    @Test
@@ -46,9 +62,7 @@ class ReinhardAbilitiesTest {
       for (ReinhardAbility ability : ReinhardAbility.values()) {
          boolean shipped = ReinhardAbilities.active(ability);
          assertEquals(shipped, ReinhardAbilities.owns(ability.id()), ability.name());
-         int index = ability.mode().page() * 6 + ability.slot();
-         if(ability!=ReinhardAbility.SHEATH_STRIKE) assertEquals(shipped ? ability.id() : "", loadout[index], ability.name());
-         else assertEquals(ReinhardAbility.DIAGONAL_WORLD_CUT.id(),loadout[index]);
+
       }
       assertTrue(ReinhardAbilities.owns("viltrumite:chop"), "the kit chop ships with stage 4");
       assertEquals("viltrumite:chop", loadout[13]);

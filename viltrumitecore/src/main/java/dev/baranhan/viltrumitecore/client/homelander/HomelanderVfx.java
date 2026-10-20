@@ -226,7 +226,8 @@ public final class HomelanderVfx {
       }
 
       HitResult hit = EyeLasers.ray(player, HomelanderRules.LASER_RANGE);
-      Vec3 end = hit.getLocation();
+      Vec3 end = hit instanceof net.minecraft.world.phys.EntityHitResult entityHit
+         ? dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.endpoint(entityHit.getEntity(),hit.getLocation()) : hit.getLocation();
       if (localFirstPerson) {
          // Start below the view so the beams converge into the crosshair.
          leftEye = eye.add(look.scale(0.5)).add(right.scale(-0.12)).add(0.0, -0.09, 0.0);

@@ -1,0 +1,94 @@
+{
+  "mastering": {
+    "cut_cinematic_impact": {
+      "peak": 0.8076938986778259,
+      "rms": 0.19814525544643402,
+      "clipped": 0,
+      "seconds": 3.4
+    },
+    "cut_rumble": {
+      "peak": 0.5276648998260498,
+      "rms": 0.15827253460884094,
+      "clipped": 0,
+      "seconds": 1.25
+    },
+    "world_cut_tail": {
+      "peak": 0.7432091236114502,
+      "rms": 0.1188180148601532,
+      "clipped": 0,
+      "seconds": 8.0
+    },
+    "old_impact": {
+      "peak": 0.5450116991996765,
+      "rms": 0.1036120057106018
+    },
+    "impact_gain_db": {
+      "peak": 3.4168195461385342,
+      "rms": 5.631471937533417
+    }
+  },
+  "openal_loopback": {
+    "ground_0": {
+      "seconds": 14.72,
+      "peak": 0.3938296437263489,
+      "rms": 0.04621081054210663,
+      "samples_at_fullscale": 0,
+      "client_done_events": [
+        "CLIENT_DONE,ground,305093c4-27a2-479e-84af-c4df07107a15,37682"
+      ],
+      "sound_events": [
+        "SOUND,37683,1792514298227"
+      ]
+    },
+    "diagonal_0": {
+      "seconds": 12.02,
+      "peak": 0.35509660840034485,
+      "rms": 0.04507345333695412,
+      "samples_at_fullscale": 0,
+      "client_done_events": [
+        "CLIENT_DONE,diagonal,79d07832-58aa-4bf2-a855-e447571c462a,38200"
+      ],
+      "sound_events": [
+        "SOUND,38201,1792514324148"
+      ]
+    },
+    "ground_35": {
+      "seconds": 14.72,
+      "peak": 0.40780189633369446,
+      "rms": 0.047166403383016586,
+      "samples_at_fullscale": 0,
+      "client_done_events": [
+        "CLIENT_DONE,ground,a55c0f85-f634-4eaf-b8b2-0ab40a4b4cf1,38743"
+      ],
+      "sound_events": [
+        "SOUND,38744,1792514351301"
+      ]
+    },
+    "diagonal_35": {
+      "seconds": 12.48,
+      "peak": 0.39986640214920044,
+      "rms": 0.05087532848119736,
+      "samples_at_fullscale": 0,
+      "client_done_events": [
+        "CLIENT_DONE,diagonal,681cb279-01b6-4e5e-8ab7-bbea4ce3816e,39261"
+      ],
+      "sound_events": [
+        "SOUND,39262,1792514377200"
+      ]
+    },
+    "both_0": {
+      "seconds": 16.38,
+      "peak": 0.39313262701034546,
+      "rms": 0.060662586241960526,
+      "samples_at_fullscale": 0,
+      "client_done_events": [
+        "CLIENT_DONE,diagonal,6da6687c-a1e2-4934-87bc-5aacae08f17f,39796",
+        "CLIENT_DONE,ground,817442c4-c3ca-4761-a3c4-52a53b5c283e,39836"
+      ],
+      "sound_events": [
+        "SOUND,39797,1792514403923",
+        "SOUND,39837,1792514405964"
+      ]
+    }
+  }
+}

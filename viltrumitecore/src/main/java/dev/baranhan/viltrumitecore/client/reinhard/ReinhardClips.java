@@ -50,6 +50,7 @@ public final class ReinhardClips {
    /** Every clip of an ability (each one must exist in the animation file); empty for later stages. */
    public static List<String> names(ReinhardAbility ability) {
       return switch (ability) {
+         case REID_STRIKE -> List.of(CHOP_RIGHT, CHOP_LEFT);
          case LIGHT_PUNCH -> List.of(LIGHT_PUNCH);
          case STEP_DASH -> List.of(STEP_DASH);
          case CATCH -> List.of(CATCH_READY, CATCH);
@@ -75,6 +76,8 @@ public final class ReinhardClips {
       if (ability == null) return null;
       double seconds = ticks / 20.0;
       return switch (ability) {
+         case REID_STRIKE -> new ReinhardPoses.Clip(phase == 1 ? CHOP_LEFT : CHOP_RIGHT,
+            ticks / (phase == 2 ? 20.0 : 14.0));
          case CATCH -> new ReinhardPoses.Clip(phase == PHASE_SNAP && ticks < ReinhardRules.CATCH_SNAP_TICKS ? CATCH : CATCH_READY, seconds);
          case REFLECT -> new ReinhardPoses.Clip(phase == PHASE_SNAP && ticks < ReinhardRules.REFLECT_SNAP_TICKS ? REFLECT : REFLECT_READY, seconds);
          case GRAB_THROW -> new ReinhardPoses.Clip(phase == PHASE_SNAP ? THROW : GRAB_HOLD, seconds);

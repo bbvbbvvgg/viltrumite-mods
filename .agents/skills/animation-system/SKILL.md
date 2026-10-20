@@ -497,3 +497,39 @@ To add a screen effect:
   distinct-palm gates alongside final-bone continuity; neither alone is enough.
 - Fade leading-forearm pronation with two-hand ownership, separately from its
   palm-position ownership. Keep the one-hand wrist correction below this fade.
+
+### Reinhard interaction rework (core 1.36.0; draft acceptance)
+- Automatic defense has a separate `DefenseReaction` channel in reserved flags
+  15..26. Do not restart the main `ActionTimeline` for each projectile/beam tick.
+  Commitment, held-beam refresh and client exponential recovery are independent.
+  Main actions and drawn-Reid two-hand ownership take priority over defense arms.
+  Existing clips are reused; this does NOT certify all new composed poses safe.
+- Drawn-Reid primary uses internal REID_STRIKE and existing chop_right/chop_left
+  clips normalized to 14/20 ticks, not LightPunch. Preserve the PR40 sampler,
+  directed grip axis and outer FP transform. Server collision reads the bounded
+  `data/viltrumitecore/reinhard/reid_melee.json` bake without client classes.
+  After changing clips, grip, scale, axial roll or equipment transforms, run
+  `REINHARD_BAKE=1 ./gradlew :viltrumitecore:test --tests '*ReidMeleeBakeTest'`,
+  then rerun without that variable to verify the checked-in final-blade samples.
+- Inspect final joints, full meshes and FP camera transforms with the defense
+  channel enabled, including threat changes, movement and recovery. Existing
+  clip/grip gates alone do not prove the defense overlay or physical arrow palm
+  alignment. Native multi-angle visual/audio acceptance remains a separate gate.
+
+### Defense contact continuation (Core 1.36.1)
+- Final contact shares the actual equipment/arm render frames: ReinhardGrip.guard constrains the selected free hand after equipment; PlayerGeoLayer.partFrame is shared by FP rendering and palm sampling. Do not duplicate its pivot conversion as magic constants.
+- HeroDefenseContacts stores TP final world points and FP view points plus the hand projection. Reproject to the current world projection before world-space beam/arrow presentation. Otherwise non-default FOV visibly misses the hand even when raw model coordinates agree. No network trust in this cache.
+- Drawn Reid temporarily releases the left support hand for protection, retains the right weapon frame and recovers support continuously. Keep the PR40 directed forearm twist, grip/roll and action clock unchanged. Different contact wrist orientations are modest, never a wrist flip; rear threats evade instead of forcing a front palm through the torso.
+- Keep hidden Knight FP arms visible until the response weight recovers below .01, not only while the snapshot flag is active. Otherwise the recovery disappears abruptly.
+- New final-palm/head-clearance, composed attack/weapon ownership, 240Hz joint recovery, beam/hand switch and FP projection gates: ReinhardDefenseGeometryTest; wire fields: ReinhardDefenseWireTest. These do not replace native FP/TP review or human audio listening.
+
+### Native acceptance corrections (1.36.1)
+- Vanilla AbstractArrow.setOwner(Player) rewrites pickup to ALLOWED/CREATIVE_ONLY. Set DISALLOWED AFTER setOwner, not before it. Native three-mode repeat: held samples age4..12 have inventory0; release13, later pickup allowed. Keep this ordering regression.
+- Minecraft Camera.rotation has +Z forward, while OpenGL view/hand space uses -Z. Convert with camera quaternion * Ry(pi), not camera quaternion alone; otherwise beam/arrow contact flips behind the camera. Test yaw/pitch roundtrip AND positive-forward dot, not roundtrip alone.
+- Capture actual perspective from RenderLevelStageEvent, never use whichever RenderSystem projection is bound by an audio/tick caller (it may be GUI orthographic). TP event bone points are in camera-view coordinates; convert back before adding camera position. FP and TP caches stay separate.
+- FP catch needs an unobscured shaft: raise ARROW contact above resting Reid, and turn the SAME held-arrow presentation crosswise in FP only. Do not create a duplicate entity/item. A frame captured on the first server holding tick can precede client snapshot/cache; inspect a settled held frame as well as ingress/release.
+
+### World-cut audio identity (Core 1.36.2)
+- The approved loud completion is the original eight-second WORLD_CUT_TAIL recording. Start it only after server DONE. Use nearest-line placement and range320; do not loop it during carve.
+- WORLD_CUT_BLAST is now only a quiet, bounded WORK pulse: tick96 then every40ticks while working, voice duration16ticks. Never pair it at DONE. Neither world-cut scene plays CUT_RUMBLE.
+- Tail mastering is reproducible through tools/sfx/reinhard.py finish_master(); begin with the original bed master, not the already-mastered output. Keep original licensing and duration.

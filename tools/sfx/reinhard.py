@@ -145,6 +145,7 @@ RECIPES = {'mode_restrained': {'source': '398218',
                                     'input_thresh': '-56.88',
                                     'target_offset': '-1.66'}},
  'world_cut_tail': {'source': '248150',
+                    'finish_lufs': -14,
                     'start': 0,
                     'duration': 8,
                     'kind': 'bed',
@@ -281,6 +282,20 @@ def pcm_hash(path):
     return hashlib.sha256(pcm(path)).hexdigest()
 
 
+def finish_master(path, recipe):
+    """Raise the original eight-second tail; a lookahead limiter preserves headroom.
+    Rebuild starts from the original -20 LUFS bed master, never another generation.
+    +12 dB pre-gain becomes about +5 dB integrated after peak limiting, not radius-only gain.
+    """
+    if 'finish_lufs' not in recipe:
+        return
+    out = path.with_suffix('.master.ogg')
+    run('ffmpeg','-v','error','-nostdin','-y','-i',str(path),
+        '-af','volume=4,alimiter=limit=0.75:level=false:latency=true',
+        '-ac','1','-ar','44100','-c:a','libvorbis','-q:a','5','-map_metadata','-1',str(out))
+    out.replace(path)
+
+
 def inspect(path, recipe):
     info = json.loads(run('ffprobe', '-v', 'error', '-show_entries',
                          'stream=codec_name,sample_rate,channels:format=duration', '-of', 'json', str(path)).stdout)
@@ -290,18 +305,19 @@ def inspect(path, recipe):
     duration = float(info['format']['duration'])
     if abs(duration - recipe['duration']) > .03:
         raise ValueError(f'Wrong duration: {path}: {duration}')
-    loud = measure(path, TARGETS[recipe['kind']])
+    target = recipe.get('finish_lufs', TARGETS[recipe['kind']])
+    loud = measure(path, target)
     data = pcm(path)
     samples = array.array('f'); samples.frombytes(data)
     peak = max(abs(x) for x in samples)
     sample_db = 20 * math.log10(max(peak, 1e-12))
     if sample_db > -1 or float(loud['input_tp']) > -1:
         raise ValueError(f'Decoded peak exceeds -1 dB ceiling: {path}')
-    if abs(float(loud['input_i']) - TARGETS[recipe['kind']]) > 1:
+    if abs(float(loud['input_i']) - target) > 1:
         raise ValueError(f'Decoded LUFS outside ±1 target: {path}: {loud["input_i"]}')
     return dict(duration=duration, codec='vorbis', rate=44100, channels=1,
                 integrated_lufs=float(loud['input_i']), true_peak_dbtp=float(loud['input_tp']),
-                sample_peak_dbfs=round(sample_db, 3), target_lufs=TARGETS[recipe['kind']],
+                sample_peak_dbfs=round(sample_db, 3), target_lufs=target,
                 pcm_sha256=hashlib.sha256(data).hexdigest(),
                 seam_delta=abs(samples[0]-samples[-1]) if recipe['loop'] else None,
                 loop_endpoints=max(abs(samples[0]), abs(samples[-1])) if recipe['loop'] else None)
@@ -331,6 +347,7 @@ def build(folder, destination):
         ogg = destination / (name + '.ogg')
         run('ffmpeg', '-v', 'error', '-nostdin', '-y', '-i', str(raw), '-af', norm,
             '-ac', '1', '-ar', '44100', '-c:a', 'libvorbis', '-q:a', '5', '-map_metadata', '-1', str(ogg))
+        finish_master(ogg, recipe)
         report[name] = inspect(ogg, recipe)
         raw.unlink()
     return report

@@ -22,9 +22,9 @@ public final class ReinhardAbilities {
    public static final int CHOP_INDEX = 13;
    /** Full layout of every stage: page = mode, 6 slots per page. */
    public static final String[] LOADOUT = {
-      "", "reinhard:step_dash", "reinhard:catch", "", "", "",
-      "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
-      "reinhard:reid", CHOP, "reinhard:diagonal_world_cut", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
+      "", "", "reinhard:step_dash", "", "", "",
+      "", "reinhard:sky_kick", "reinhard:step_dash", "", "", "",
+      "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
    };
 
    private ReinhardAbilities() {
@@ -61,7 +61,10 @@ public final class ReinhardAbilities {
    }
 
    public static boolean active(ReinhardAbility ability) {
-      return ability.shipped() && ability != ReinhardAbility.LIGHT_PUNCH && ability != ReinhardAbility.FIST_COMBO && ability != ReinhardAbility.SHEATH_STRIKE;
+      return ability.shipped() && switch (ability) {
+         case STEP_DASH, SKY_KICK, REID, CUT_RAIN, WORLD_CUT, WORLD_ERASURE -> true;
+         default -> false;
+      };
    }
 
    private static boolean shipped(String id) {
@@ -115,6 +118,18 @@ public final class ReinhardAbilities {
       return base;
    }
 
+   /** The one world-cut slot previews the variant selected by crouching. No extra binding. */
+   @Nullable
+   public static ResourceLocation icon(@Nullable String id,int flags,boolean crouching) {
+      return byId(id)==ReinhardAbility.WORLD_CUT && crouching ? iconOf(ReinhardAbility.DIAGONAL_WORLD_CUT) : icon(id,flags);
+   }
+
+   public static ReinhardAbility contextual(ReinhardAbility ability,boolean crouching) {
+      if(crouching && ability==ReinhardAbility.WORLD_CUT)return ReinhardAbility.DIAGONAL_WORLD_CUT;
+      if(crouching && ability==ReinhardAbility.SKY_KICK)return ReinhardAbility.STOMP;
+      return ability;
+   }
+
    private static ResourceLocation iconOf(ReinhardAbility ability) {
       return new ResourceLocation("viltrumitecore", "textures/gui/ability/reinhard/" + ability.key() + ".png");
    }
@@ -142,12 +157,18 @@ public final class ReinhardAbilities {
       }
 
       HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
-      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(ability.snapshotIndex()), snapshot.heroFlags());
+      ReinhardAbility selected=contextual(ability,player.isShiftKeyDown());
+      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(selected.snapshotIndex()), snapshot.heroFlags(),player.isShiftKeyDown());
    }
 
    /** Pure: cooldown running, or the slot condition of Reid's phase (from the snapshot flags) fails. */
    public static boolean slotGrey(ReinhardAbility ability, int cooldown, int heroFlags) {
-      return !active(ability) || ((ability==ReinhardAbility.WORLD_CUT || ability==ReinhardAbility.DIAGONAL_WORLD_CUT) && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_CUT_ACTIVE))
+      return slotGrey(ability,cooldown,heroFlags,false);
+   }
+
+   public static boolean slotGrey(ReinhardAbility root,int cooldown,int heroFlags,boolean crouching) {
+      ReinhardAbility ability=contextual(root,crouching);
+      return !active(root) || ((ability==ReinhardAbility.WORLD_CUT || ability==ReinhardAbility.DIAGONAL_WORLD_CUT) && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_CUT_ACTIVE))
          || (ability==ReinhardAbility.WORLD_ERASURE && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_ERASURE_ACTIVE)) || cooldown > 0 || !dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.allows(ability, dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.phaseOf(heroFlags));
    }
 }

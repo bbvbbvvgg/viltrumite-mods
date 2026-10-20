@@ -38,6 +38,6 @@ public final class ReinhardFirstPerson {
       }
 
       HumanoidArm offArm = player.getMainArm() == HumanoidArm.RIGHT ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
-      return ReinhardPoses.wantsOffhand(ReinhardView.mode(snapshot), offArm, snapshot.heroFlags());
+      return ReinhardDefense.visible(player,snapshot,offArm==HumanoidArm.LEFT) || ReinhardPoses.wantsOffhand(ReinhardView.mode(snapshot), offArm, snapshot.heroFlags());
    }
 }

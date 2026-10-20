@@ -186,7 +186,7 @@ public final class IronManCombat {
             continue;
          }
 
-         if (target.hurt(player.damageSources().playerAttack(player), IronManRules.REPULSOR_SHOCKWAVE_DAMAGE)) {
+         if (dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(target,player.damageSources().playerAttack(player), IronManRules.REPULSOR_SHOCKWAVE_DAMAGE,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE)) {
             Vec3 out = distance < 1.0E-3 ? Vec3.ZERO : new Vec3(away.x / distance, 0.0, away.z / distance);
             push(target, out.scale(IronManRules.REPULSOR_SHOCKWAVE_KNOCKBACK).add(0.0, 0.5, 0.0));
          }
@@ -279,9 +279,13 @@ public final class IronManCombat {
       Vec3 dir = state.beamDir;
       Vec3 end = from.add(dir.scale(IronManRules.UNIBEAM_RANGE));
       BlockHitResult block = null;
+      dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop guard=null;
       // Glass and leaves give way (up to 3 per tick); everything else stops the beam and only scorches.
       for (int i = 0; i < 4; i++) {
          block = level.clip(new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+         guard=dev.baranhan.viltrumitecore.hero.HeroRayDefense.clip(player,from,block.getType()==HitResult.Type.BLOCK?block.getLocation():end,
+            IronManRules.UNIBEAM_RADIUS,e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player,e));
+         if(guard.defender()!=null)break;
          if (block.getType() != HitResult.Type.BLOCK || i == 3) {
             break;
          }
@@ -295,6 +299,7 @@ public final class IronManCombat {
       }
 
       Vec3 hitEnd = block != null && block.getType() == HitResult.Type.BLOCK ? block.getLocation() : end;
+      if(guard!=null && guard.defender()!=null)hitEnd=guard.end();
       state.beamEnd = hitEnd;
       boolean overdraft = state.unibeam.overdraft();
       if (!UnibeamTimeline.damageTick(state.unibeam.ticks())) {
@@ -314,6 +319,7 @@ public final class IronManCombat {
             continue;
          }
 
+         if(!guard.permits(target,from))continue;
          target.invulnerableTime = 0;
          if (target.hurt(player.damageSources().playerAttack(player), UnibeamTimeline.damageAt(from.distanceTo(center), overdraft))) {
             push(target, dir.scale(IronManRules.UNIBEAM_PUSH));

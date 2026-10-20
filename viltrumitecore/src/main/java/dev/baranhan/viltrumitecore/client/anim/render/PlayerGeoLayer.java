@@ -161,10 +161,7 @@ public class PlayerGeoLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
       }
 
       poseStack.pushPose();
-      modelPart.translateAndRotate(poseStack);
-      poseStack.translate(-target.pivotX / 16.0F, -target.pivotY / 16.0F, -target.pivotZ / 16.0F);
-      poseStack.translate(0.0F, MODEL_HEIGHT, 0.0F);
-      poseStack.scale(-1.0F, -1.0F, 1.0F);
+      partFrame(poseStack,modelPart,target);
       boolean shadow = ShaderCompat.isShadowPass();
       for (Pass pass : part.passes()) {
          boolean glow = pass.kind() == Pass.Kind.GLOW;
@@ -179,6 +176,13 @@ public class PlayerGeoLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
       }
 
       poseStack.popPose();
+   }
+
+   /** The actual draw frame, shared with final-palm contact sampling (no parallel approximation). */
+   public static void partFrame(PoseStack stack,ModelPart part,PlayerBoneMap.Part target) {
+      part.translateAndRotate(stack);
+      stack.translate(-target.pivotX/16F,-target.pivotY/16F,-target.pivotZ/16F);
+      stack.translate(0,MODEL_HEIGHT,0);stack.scale(-1,-1,1);
    }
 
    private static ModelPart partOf(PlayerModel<AbstractClientPlayer> model, PlayerBoneMap.Part part) {

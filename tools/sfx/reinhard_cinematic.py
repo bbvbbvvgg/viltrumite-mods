@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original procedural Reinhard layers; no samples or external licensed input.
-Deterministic seed; faded, soft-limited PCM with -6 dBFS peak before Vorbis.
+Deterministic seed; faded, soft-limited PCM with bounded headroom before Vorbis.
 Install via the existing .ogg.b64 Gradle pipeline. Generated audio: CC0-1.0.
 Rebuild: python3 tools/sfx/reinhard_cinematic.py
 Not a substitute for listening and tuning in Minecraft with other scene layers.
@@ -32,14 +32,17 @@ def make(name,duration,kind):
         env=np.sin(np.pi*t/duration)**1.3
         x=(air*.8+np.sin(2*np.pi*(520*t-200*t*t))*.15)*env
     fade=np.minimum(1,t/.025)*np.minimum(1,(duration-t)/min(.25,duration/4))
-    x=np.tanh(x*1.4)*fade;x=x/max(1e-8,np.max(np.abs(x)))*.5
+    # Finishing impact: +2.92 dB peak and lower crest factor than the old bed.
+    # Shared scene gate coalesces concurrent impact+tail; leave headroom for rumble.
+    peak=.70 if kind==2 else .5
+    x=np.tanh(x*(2.4 if kind==2 else 1.4))*fade;x=x/max(1e-8,np.max(np.abs(x)))*peak
     with tempfile.TemporaryDirectory() as temp:
         wav=Path(temp)/'source.wav';ogg=Path(temp)/'output.ogg'
         with wave.open(str(wav),'wb') as w:
             w.setparams((1,2,RATE,len(t),'NONE','not compressed'));w.writeframes((x*32767).astype('<i2').tobytes())
         subprocess.run(['ffmpeg','-v','error','-y','-i',str(wav),'-c:a','libvorbis','-q:a','4',str(ogg)],check=True)
         data=ogg.read_bytes();(OUT/f'{name}.ogg.b64').write_text(base64.b64encode(data).decode()+'\n')
-        print(name,len(data),'bytes; duration',duration,'s; PCM peak -6.02 dBFS')
+        print(name,len(data),'bytes; duration',duration,'s; bounded PCM peak',peak)
 
 if __name__=='__main__':
     OUT.mkdir(parents=True,exist_ok=True)

@@ -83,6 +83,12 @@ public final class ReinhardHud {
       }
 
       Layout layout = layout(abilityBar);
+      graphics.pose().pushPose();
+      graphics.pose().translate(Math.max(2, abilityBar.x() - 164), Math.max(2, layout.icons()[0].y() - 10), 0);
+      graphics.pose().scale(.65F, .65F, 1);
+      graphics.drawString(net.minecraft.client.Minecraft.getInstance().font,
+         net.minecraft.network.chat.Component.translatable("hud.viltrumitecore.reinhard.mouse"), 0, 0, LABEL_COLOR, true);
+      graphics.pose().popPose();
       int active = ReinhardFlags.mode(snapshot.heroFlags());
       for (int i = 0; i < layout.icons().length; i++) {
          Bounds icon = layout.icons()[i];

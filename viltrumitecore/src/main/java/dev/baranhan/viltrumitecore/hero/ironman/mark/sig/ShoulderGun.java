@@ -67,7 +67,7 @@ public final class ShoulderGun implements MarkSignature {
       SignatureTrace.Hit hit = SignatureTrace.shoot(player, dir, SignatureRules.GUN_RANGE);
       sig.point = hit.end();
       if (hit.target() != null) {
-         SignatureTrace.strike(hit.target(), player.damageSources().playerAttack(player), SignatureRules.GUN_DAMAGE);
+         SignatureTrace.shot(hit.target(), player.damageSources().playerAttack(player), SignatureRules.GUN_DAMAGE);
       }
 
       SignatureTrace.sound(player, IronManMarkSounds.SHOULDER_GUN.get(), 0.6F, 0.95F + player.getRandom().nextFloat() * 0.1F);

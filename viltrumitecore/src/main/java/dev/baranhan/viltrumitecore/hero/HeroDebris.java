@@ -156,7 +156,7 @@ public final class HeroDebris {
       // Whoever stands on the torn ground goes up with it.
       AABB zone = new AABB(center, center).inflate(spec.radius(), 2.0, spec.radius());
       for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, zone, e -> e != source && e.isAlive() && !e.isSpectator() && !spared.test(e))) {
-         target.hurt(level.damageSources().playerAttack(source), entityDamage);
+         dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(target,level.damageSources().playerAttack(source), entityDamage,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
          if (HeroRegistry.allowsExternalControl(target, ControlKind.IMPULSE)) {
             target.setDeltaMovement(forward.scale(1.1 * spec.power()).add(0.0, 0.85 * spec.power(), 0.0));
             target.hasImpulse = true;

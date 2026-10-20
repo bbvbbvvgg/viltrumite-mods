@@ -85,6 +85,8 @@ public final class ReinhardRenderer {
          StanceBlend.reset(player);
          ReinhardMotion.reset(player);
          ReinhardRecovery.reset(player);
+         ReinhardDefense.reset(player);
+         dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.clear(player);
          ParryPulse.THIRD_PERSON.reset(player);
          return;
       }
@@ -122,13 +124,22 @@ public final class ReinhardRenderer {
       applyMelee(body, player, snapshot, partialTick);
       applyHead(body, player, partialTick);
       ReinhardRecovery.body(player,body,recoveryKey(snapshot),Util.getNanos());
+      ReinhardDefense.torso(player,snapshot,body);
       org.joml.Matrix4f[] equipment=ReinhardSword.equipment(body,reidPhase,reidTicks,
          snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),actionTicks(player,snapshot,partialTick),
          weights[ReinhardMode.HOLY_SWORD.ordinal()]);
+      ReinhardDefense.body(player,snapshot,body);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
       setupRotations(player, stack, partialTick, swim);
       stack.scale(PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
+      if(!dev.baranhan.viltrumiteflight.client.util.ShaderCompat.isShadowPass() && dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.kind(snapshot.heroFlags())!=dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.NONE) {
+         var p=ReinhardGrip.point(body,dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.leftHand(snapshot.heroFlags()));
+         var v=stack.last().pose().transformPosition(p);
+         var camera=Minecraft.getInstance().gameRenderer.getMainCamera();
+         var world=dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.viewToWorld(new net.minecraft.world.phys.Vec3(v.x,v.y,v.z),camera.rotation());
+         dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.record(player,camera.getPosition().add(world),false);
+      }
       if (passes.body()) {
          RenderType type = passes.translucent() ? RenderType.entityTranslucent(ReinhardAssets.TEXTURE) : RenderType.entityCutoutNoCull(ReinhardAssets.TEXTURE);
          float alpha = passes.translucent() ? TRANSLUCENT_ALPHA : 1.0F;
@@ -167,11 +178,13 @@ public final class ReinhardRenderer {
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
       if (snapshot == null) {
          ReinhardRecovery.reset(player);
+         ReinhardDefense.reset(player);
+         dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.clear(player);
          return;
       }
 
       event.setCanceled(true);
-      if (!ReinhardPoses.firstPersonArmVisible(ReinhardView.mode(snapshot), event.getArm(), snapshot.heroFlags())) {
+      if (!ReinhardPoses.firstPersonArmVisible(ReinhardView.mode(snapshot), event.getArm(), snapshot.heroFlags()) && !ReinhardDefense.visible(player,snapshot,event.getArm()==HumanoidArm.LEFT)) {
          return;
       }
 
@@ -197,6 +210,19 @@ public final class ReinhardRenderer {
 
       double cinematicTicks = actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime());
       PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
+      if(ReinhardDefense.active(snapshot,event.getArm()==HumanoidArm.LEFT)) {
+         var geo=AnimCache.model(ReinhardAssets.ARMS);
+         if(geo!=null) {
+            PoseStack contact=new PoseStack();contact.mulPoseMatrix(event.getPoseStack().last().pose());
+            PlayerGeoLayer.partFrame(contact,arm,event.getArm()==HumanoidArm.RIGHT
+               ? dev.baranhan.viltrumitecore.client.anim.render.PlayerBoneMap.Part.RIGHT_ARM
+               : dev.baranhan.viltrumitecore.client.anim.render.PlayerBoneMap.Part.LEFT_ARM);
+            var v=contact.last().pose().transformPosition(ReinhardGrip.point(geo,event.getArm()==HumanoidArm.LEFT));
+            var camera=Minecraft.getInstance().gameRenderer.getMainCamera();
+            var world=dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.viewToWorld(new net.minecraft.world.phys.Vec3(v.x,v.y,v.z),camera.rotation());
+            dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.record(player,camera.getPosition().add(world),true);
+         }
+      }
       if (event.getArm() == HumanoidArm.RIGHT && ReinhardRecovery.visible(player,ReinhardView.reid(snapshot) != ReinhardPoses.ReidPhase.SHEATHED
          || snapshot.actionId() == ReinhardAbility.SHEATH_STRIKE.ordinal(),Util.getNanos())) {
          PoseStack handPose = new PoseStack();
@@ -271,10 +297,12 @@ public final class ReinhardRenderer {
          ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
          action = ReinhardFirstPersonPose.reid(reid, dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, Minecraft.getInstance().getFrameTime()));
       }
-      if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
+      if (!actionArm && snapshot.actionId() == ReinhardAbility.REID_STRIKE.ordinal())
+         action = ReinhardFirstPersonPose.reidMelee(snapshot.variant(),cinematicTicks,true);
+      else if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
          ReinhardPoses.action(snapshot.actionId()),cinematicTicks,snapshot.actionLength());
       action = ReinhardRecovery.firstPerson(player,physicalLeft,action,recoveryKey(snapshot),Util.getNanos());
-      return action;
+      return ReinhardDefense.firstPerson(player,snapshot,physicalLeft,action);
    }
 
    /** The synced action's first-person offset (same render clock as the body and weapon). */
@@ -555,6 +583,7 @@ public final class ReinhardRenderer {
       // Idle has a relaxed elbow; action channels replace it. Arms keep the authored UVs.
       for (GeoBone bone : geo.topLevelBones()) bone.scaleX=1.13F;
       ReinhardRecovery.arms(player,geo,recoveryKey(snapshot),Util.getNanos());
+      ReinhardDefense.elbows(player,snapshot,geo);
    }
 
    /** Moves the stack from the model frame to a top-level bone's pivot frame (same order as AnimRenderer). */

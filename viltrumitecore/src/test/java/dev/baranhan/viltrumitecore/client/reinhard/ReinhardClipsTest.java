@@ -57,6 +57,7 @@ class ReinhardClipsTest {
       t.put(ReinhardClips.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST+20);
       t.put("diagonal_world_cut",ReinhardRules.WORLD_CUT_BLAST+20);
       t.put("world_erasure", ReinhardRules.ERASE_LENGTH);
+      t.put(ReinhardClips.CHOP_LEFT,20); t.put(ReinhardClips.CHOP_RIGHT,20);
       return t;
    }
 
@@ -88,7 +89,7 @@ class ReinhardClipsTest {
          }
       }
 
-      assertEquals(23, checked, "registered abilities and their action clips");
+      assertEquals(25, checked, "registered abilities and their action clips");
       // Lethal Chop is the kit chop (no ReinhardAbility): both hand sweeps cover the 1 s chop.
       for (String chop : new String[]{ReinhardClips.CHOP_LEFT, ReinhardClips.CHOP_RIGHT}) {
          assertNotNull(clips.get(chop), "clip " + chop);
