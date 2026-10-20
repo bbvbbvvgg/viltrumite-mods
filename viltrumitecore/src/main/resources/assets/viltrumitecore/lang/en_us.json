@@ -468,7 +468,7 @@
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Reid drawn: 12 lethal cuts in a 30-degree cone, 40 blocks long, with narrow ground grooves. Short technical lock.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhard's cuts rain down",
   "ability.viltrumitecore.reinhard_world_cut.name": "World cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Ground world cut. Crouch + the same key: diagonal world cut.",
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid must be drawn (R), Holy Sword mode. World-cut slot (default B): ground cut; crouch + the same key: diagonal cut. Y is Chop.",
   "ability.viltrumitecore.reinhard_world_erasure.name": "World Erasure",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid drawn: a target within 64 blocks, 7.5 s world pause and erasure. Mortal players return from limbo after 30 online seconds without carried belongings; ender chest stays. Divine/absolute targets survive. One active scene, no long cooldown.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "The world cracks",

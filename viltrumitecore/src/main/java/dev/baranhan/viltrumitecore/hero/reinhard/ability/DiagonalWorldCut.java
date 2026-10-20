@@ -10,7 +10,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.entity.PartEntity;
 
-/** Z owns its own spatial frame and event; only the detached clock/budget are reused. */
+/** Crouch + the world-cut slot owns a spatial frame; detached clock/budget are reused. */
 public final class DiagonalWorldCut implements AbilityHandler {
    @Override public boolean tryStart(ServerPlayer player,ReinhardState state) {
       ServerLevel level=player.serverLevel();

@@ -448,3 +448,8 @@ BUILD SUCCESSFUL (7m11s). Render/mixin exceptions не возникли; пре�
 - Live equal-fill295470-stone cut tests, shared2000 budget: Ground157ticks/~7.85s, diagonal114–115/~5.70–5.75s; two jobs diagonal148/ground190ticks. Old projected tilted diagonal240ticks/~12s ->115/~5.75s. Software FPS minima7–37 single,22 concurrent; report actual limitations.
 - Real OpenAL/PulseAudio monitor recording: no full-scale clips across five cases including concurrent. Impact decoded RMS+5.63dB, bounded shared impact/tail crossfade; sounds follow actual DONE, not blast timer. Human listening/GPU/shader and exhaustive author acceptance not claimed.
 - Main report and evidence: docs/reports/2026-10-20-reinhard-combat-interaction.md and reinhard-{attack-matrix,defense-native,live-cuts,audio-evidence} files. Raw worlds/logs/video remain outside repository.
+
+## Core 1.36.2 user correction
+The user explicitly selected original sound1 WORLD_CUT_TAIL for loud post-destruction/DONE only, and sound2 procedural impact for quiet pulses inside the WORK rupture. Remove sound3 repeated rumble from both cuts. Do not use the old impact+quiet-tail finishing pair. Tail uses original recording with body mastering, not a substituted sound. Contextual slot preview/cooldown now follows crouching; default Y is Chop, crouch+B is diagonal, DRAWN Reid required. Native keyboard/audio check and full build are recorded in the current report.
+
+The user explicitly stopped native audio tests. Do not resume captures or listening checks unless asked. Core1.36.2 full build passes:1330 Core+12 Flight=1342, plus17 Python audio/file tests. Native audio/keyboard acceptance of1.36.2 remains unverified by request.

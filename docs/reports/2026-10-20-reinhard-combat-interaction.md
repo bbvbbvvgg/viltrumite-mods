@@ -1,4 +1,4 @@
-# Рейнхард: Combat & Interaction Rework — Core 1.36.1
+# Рейнхард: Combat & Interaction Rework — Core 1.36.2
 
 ## База и статус
 
@@ -22,6 +22,8 @@ MMB переключает Restrained → Knight → Holy Sword; переназ�
 | Rain of Cuts | Holy V | Holy V |
 | World Cuts | Holy B / Z | Holy B / приседание+B |
 | World Erasure | Holy N | Holy N, отдельная намеренная активация |
+
+Y не является диагональным разрезом: это Chop. Для диагонали — Holy Sword, DRAWN Reid (R), затем приседание+клавиша World Cut (по умолчанию B). При приседании иконка слота меняется на диагональ, grey-state проверяет именно её cooldown. Панель K служит назначению слотов, а не непосредственному запуску способностей.
 
 Контекст выбирает сервер. Если цель рывка есть, но безопасной точки за спиной нет, другой рывок не подставляется неожиданно. Захват требует допустимую цель по лучу; блок между игроком и целью и предметы в руках сохраняют vanilla use. Не выполнена полная игровая матрица контейнеров/интерактивных блоков/переназначений.
 
@@ -48,12 +50,14 @@ MMB переключает Restrained → Knight → Holy Sword; переназ�
 - Луч/стрела используют конечный render contact; FP/TP кэш разделён, shadow pass не перезаписывает контакт, скрытая Knight-рука остаётся видна до окончания recovery.
 - Сохраняется та же tracked arrow entity на 10 тиков, затем падает с исходной pickup policy. FP-поза захвата поднята над низким resting Reid; та же tracked entity в FP повёрнута поперёк ладони, чтобы было видно древко, а не только торец оперения. Никакой второй стрелы/предмета не создаётся. Реальная повторная игра обнаружила, что vanilla `AbstractArrow.setOwner(Player)` переписывает pickup: окончательный lock теперь ставится ПОСЛЕ setOwner, добавлена проверка порядка. Повторный native тест всех трёх режимов: holding=true на age4..12, inventory=0, release на13; позднее разрешённый подбор1. Splash настоящей ракеты: BRACE,19.997HP вместо фиктивной полной неуязвимости. Трезубец не превращается в стрелу; вторая стрела не дублирует удерживаемую.
 
-### Звук обоих World Cut
+### Звук обоих World Cut — исправление по выбору пользователя, Core 1.36.2
 
-- BLAST/начало carve не играет мощный удар. WORK rumble тихий; основная пара impact/tail запускается только из DONE после фактического завершения серверной очереди.
-- Impact действительно перемастерен: после Vorbis-декодирования +3.42 dB peak / +5.63 dB RMS к прежнему, peak 0.8077, без full-scale samples. Это не просто vanilla volume >1, увеличивающий радиус.
-- Общий 12-тиковый gate и одна пара голосов для обоих разрезов: новый разрешённый DONE crossfade заменяет прежний tail за 4 тика, а не складывает 8-секундные хвосты. Impact gain .9, tail .08, тихая атмосфера .12/.07. Повторного start-акцента нет.
-- Записан настоящий OpenAL через PulseAudio loopback. Все пять записей, включая два job, без full-scale clipping; peak 0.355–0.408. Client SOUND следует CLIENT_DONE через 1 тик; arbitrary carve timer не используется. Подробности — [audio evidence](reinhard-audio-evidence.json).
+- Пользователь выбрал **№1 = исходный WORLD_CUT_TAIL**. Это единственный основной громкий финал: только после фактического серверного DONE, не при BLAST/начале carve и не циклом на протяжении разрушения. Сохраняется исходная восьмисекундная запись, а не процедурный impact вместо неё.
+- Реально усилено тело исходной записи: из старого -20 LUFS master через +12dB pre-gain и lookahead limiter получено **-14.66 LUFS**, decoded true peak **-2.25dBTP**. Runtime gain .9 вместо прежнего .08; обработка воспроизводится finish_master() в tools/sfx/reinhard.py. Не увеличивается одна лишь vanilla-дальность.
+- WORLD_CUT_TAIL имеет attenuation_distance320; каждый клиент размещает звук у ближайшей точки вдоль своей линии разреза. Поэтому звук доступен вдоль всего разреза, не только у кастера. При совместных DONE общий gate12 и crossfade4 ограничивают наложение хвостов.
+- **№2 = WORLD_CUT_BLAST/cut_cinematic_impact** теперь только тихая короткая пульсация внутри работающего разрыва: gain .10, excerpt16ticks (0.8s), первый акцент на tick96, затем каждые40ticks. Не играет на первом контакте tick80 и не добавляется к финалу. После DONE новые пульсации не запускаются, текущая затухает.
+- **№3 = CUT_RUMBLE убран из обоих World Cut**, а не просто сделан тише. Файлы/регистрация сохранены, чтобы не менять посторонние ссылки.
+- Исторические пять OpenAL-записей и числа прежнего impact+tail относятся к1.36.1, не к этой схеме. Нативный повторный аудио/keyboard прогон1.36.2 остановлен по прямой просьбе пользователя; новая звуковая схема не объявляется прослушанной/принятой в игре. Пользователь проверит её сам. Файловые аудиопроверки:17 тестов прошли; полная Java-сборка:1342 теста.
 
 ### Диагональная рана и производительность
 
@@ -61,7 +65,7 @@ MMB переключает Restrained → Knight → Holy Sword; переназ�
 - Причина длительности была в серверном обходе объёмного AABB; первая проекция всё ещё обходила слишком большой 2D rectangle при pitch35. Окончательный iterator пересекает конечный OBB по строкам, выдаёт только bounded depth candidates, клипует build-height. Память O(rows), не объём мира.
 - Каждый кандидат/отказ расходует прежний budget; quantum250 и общий CarveJobs2000/тик не увеличены. Exact voxel-mask equivalence проверена на 42 yaw/pitch направлениях, включая почти вертикальные, дробный origin и обрезанные высоты. Клиентская анимация не маскирует незаконченное разрушение.
 
-## Живые замеры, не только модель
+## Живые замеры, не только модель (Core 1.36.1, carve-код в1.36.2 не менялся)
 
 Один настоящий dedicated server + клиент Forge47.3.0/Java17. Для каждого случая одинаково заполнены **295470 stone blocks**, x[-24,24], y[70,99], z[0,200], player(0.5,100,-0.5), yaw0; pitch0/35. Чанки заранее загружены, между fill и cast — пауза. Heap сервера1GiB, клиента640MiB, renderDistance3/max60FPS, Xvfb1024×768/Mesa llvmpipe. Gradle и второй клиент во время замеров не работали. N=1 на случай: это наблюдения, не статистический benchmark/сравнение GPU.
 
@@ -80,8 +84,8 @@ MMB переключает Restrained → Knight → Holy Sword; переназ�
 
 ## Проверки
 
-- Финальная полная сборка BUILD SUCCESSFUL за1м51с, Java17/Forge1.20.1-47.3.0: `./gradlew build --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx512m -I /data/test-limits.gradle`.
-- Core1327 + Flight12 = **1339 тестов**, failures/errors/skipped0. Новые final-palm/full-head-mesh tests, weapon-hand/frame preservation во время chop/rain/world_cut, итоговая суставная непрерывность240Hz, отдельный FP evade, FOV projection, snapshot wire roundtrip всех реакций/рук. Это проверки реально скомпонованных костей, не только JSON keyframes.
+- Финальная полная сборка BUILD SUCCESSFUL за1м37с, Java17/Forge1.20.1-47.3.0: `./gradlew build --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx512m -I /data/test-limits.gradle`.
+- Core1330 + Flight12 = **1342 теста**, failures/errors/skipped0. Новые final-palm/full-head-mesh tests, weapon-hand/frame preservation во время chop/rain/world_cut, итоговая суставная непрерывность240Hz, отдельный FP evade, FOV projection, snapshot wire roundtrip всех реакций/рук. Это проверки реально скомпонованных костей, не только JSON keyframes.
 - Resource checker:0 новых проблем,4 известных legacy.
 - Настоящие два подключённых клиента, FML handshake, native FP/TP и оригинальные production handlers. Unibeam/Pulse, Eye/Micro, melee/weapon/heavy, gun/rocketfist/AirBlade, репульсор/ракета дали ожидаемые состояния. BEAM age продолжает расти; действия Рейда одновременно имели elapsed до13, здоровье20. У отражённой ракеты owner=defender и Homing target=attacker; у репульсора owner=defender.
 - Контроль серверной остановки Unibeam: cow за защитником1000HP во время блока; после ухода защитника с линии —994.1289HP. Это реальная защита целей позади, не только изменение картинки. Машиночитаемые наблюдения — [native defense evidence](reinhard-defense-native.json). Одновременный настоящий Unibeam и отдельная стрела: BEAM age растёт без перезапуска, holding=true при inventory0 и20HP; затем стрела отпускается. WAVE fixture проверяет контекст, не заменяет авторское ревью каждого Roar/Thunderclap.
@@ -95,6 +99,6 @@ MMB переключает Restrained → Knight → Holy Sword; переназ�
 
 ## Артефакт
 
-`reforgedcodex-core-1.36.1.jar`, Java17, Forge1.20.1/47.3.0, Flight1.10.1. Заменить прежний Core, не устанавливать две версии одновременно.
+`reforgedcodex-core-1.36.2.jar`, Java17, Forge1.20.1/47.3.0, Flight1.10.1. Заменить прежний Core, не устанавливать две версии одновременно.
 
-SHA256: 21c5061f51ab825e0e4dbf6c2b2d22fe8a8c3832a605cc748d7fe209e2968cdd
+SHA256: 9f3c10050f2e42db2afa824303467c2dc6b832bd7859b8e7fd94b8473ee95a8c

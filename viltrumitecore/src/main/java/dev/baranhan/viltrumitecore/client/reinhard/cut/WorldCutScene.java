@@ -91,8 +91,8 @@ public final class WorldCutScene {
          }
          Vec3 nearest=nearest(scene,mc.player.position());
          CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now);
-         if(inRange && t>=8 && scene.working() && (now-scene.packet.startTime())%28==0)
-            play(nearest,ReinhardSounds.CUT_RUMBLE.get(),t<80?.12F:.07F);
+         if(inRange && CutFinishSound.pulseDue(now-scene.packet.startTime(),scene.working()))
+            CutFinishSound.pulse(nearest,now);
          if(hush) {
             CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
             if(!scene.silencePlayed) { play(nearest,ReinhardSounds.WORLD_CUT_SILENCE.get(),.8F); scene.silencePlayed=true; }

@@ -51,3 +51,9 @@ Track each stage separately. A draft/incomplete implementation is not the reques
 
 ## Implemented continuation
 Unibeam/Pulse and execution-path attack matrix, free-hand final contact and FP evade, final-bone/head/weapon/wire/projection regressions, corrected physical-arrow pickup order, mastered/crossfaded DONE audio, tight-row exact raster, real single/concurrent carve/DONE/MSPT/FPS and OpenAL loopback checks are implemented. Native testing found and corrected pickup reset and camera/GUI projection bugs; do not label an earlier pass as final acceptance. See the updated report and machine-readable evidence. Human audio approval, GPU/shader acceptance and exhaustive movement/input combinations remain explicitly separate, not missing code hidden by green tests.
+
+## 1.36.2 correction, user-confirmed audio selection
+- Sound 1 = original WORLD_CUT_TAIL, louder and only after authoritative DONE. Keep the full eight-second recording and line-wide nearest-point placement/range320. No impact paired at DONE.
+- Sound 2 = procedural WORLD_CUT_BLAST only as quiet 0.8-second pulses while the rupture works, every40ticks from tick96 (not the initial destruction tick), shared gate. Remove sound3 CUT_RUMBLE from both cuts.
+- Check default crouch+B through real input, not only QA force-cast. Preview the diagonal icon and actual cooldown while crouching. Y remains Chop; do not add another active key.
+- Add routing/timing/HUD regressions; full build, audio-format tests and native DONE/audio capture. Version1.36.2; publish to existing stacked PR41.

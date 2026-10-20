@@ -124,8 +124,7 @@ public final class ReinhardActions {
          return;
       }
 
-      if (ability == ReinhardAbility.SKY_KICK && player.isShiftKeyDown()) ability = ReinhardAbility.STOMP;
-      if (ability == ReinhardAbility.WORLD_CUT && player.isShiftKeyDown()) ability = ReinhardAbility.DIAGONAL_WORLD_CUT;
+      ability = ReinhardAbilities.contextual(ability,player.isShiftKeyDown());
       if (ability == ReinhardAbility.STEP_DASH && state.mode == ReinhardMode.KNIGHT) {
          var target = DashBehind.lookTarget(player);
          if (target != null) {

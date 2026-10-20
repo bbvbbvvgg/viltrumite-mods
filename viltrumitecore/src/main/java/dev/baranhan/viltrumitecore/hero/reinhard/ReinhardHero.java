@@ -169,7 +169,7 @@ public final class ReinhardHero implements HeroDefinition {
    public net.minecraft.resources.ResourceLocation abilityIcon(String abilityId, net.minecraft.world.entity.player.Player player) {
       dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot snapshot = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
          ? heroPlayer.getHeroSnapshot() : null;
-      return ReinhardAbilities.icon(abilityId, snapshot == null ? 0 : snapshot.heroFlags());
+      return ReinhardAbilities.icon(abilityId, snapshot == null ? 0 : snapshot.heroFlags(),player.isShiftKeyDown());
    }
 
    /** The spec gives Reinhard no immunity to control; knockback is the attribute (chassis). */

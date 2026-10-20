@@ -118,6 +118,18 @@ public final class ReinhardAbilities {
       return base;
    }
 
+   /** The one world-cut slot previews the variant selected by crouching. No extra binding. */
+   @Nullable
+   public static ResourceLocation icon(@Nullable String id,int flags,boolean crouching) {
+      return byId(id)==ReinhardAbility.WORLD_CUT && crouching ? iconOf(ReinhardAbility.DIAGONAL_WORLD_CUT) : icon(id,flags);
+   }
+
+   public static ReinhardAbility contextual(ReinhardAbility ability,boolean crouching) {
+      if(crouching && ability==ReinhardAbility.WORLD_CUT)return ReinhardAbility.DIAGONAL_WORLD_CUT;
+      if(crouching && ability==ReinhardAbility.SKY_KICK)return ReinhardAbility.STOMP;
+      return ability;
+   }
+
    private static ResourceLocation iconOf(ReinhardAbility ability) {
       return new ResourceLocation("viltrumitecore", "textures/gui/ability/reinhard/" + ability.key() + ".png");
    }
@@ -145,12 +157,18 @@ public final class ReinhardAbilities {
       }
 
       HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
-      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(ability.snapshotIndex()), snapshot.heroFlags());
+      ReinhardAbility selected=contextual(ability,player.isShiftKeyDown());
+      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(selected.snapshotIndex()), snapshot.heroFlags(),player.isShiftKeyDown());
    }
 
    /** Pure: cooldown running, or the slot condition of Reid's phase (from the snapshot flags) fails. */
    public static boolean slotGrey(ReinhardAbility ability, int cooldown, int heroFlags) {
-      return !active(ability) || ((ability==ReinhardAbility.WORLD_CUT || ability==ReinhardAbility.DIAGONAL_WORLD_CUT) && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_CUT_ACTIVE))
+      return slotGrey(ability,cooldown,heroFlags,false);
+   }
+
+   public static boolean slotGrey(ReinhardAbility root,int cooldown,int heroFlags,boolean crouching) {
+      ReinhardAbility ability=contextual(root,crouching);
+      return !active(root) || ((ability==ReinhardAbility.WORLD_CUT || ability==ReinhardAbility.DIAGONAL_WORLD_CUT) && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_CUT_ACTIVE))
          || (ability==ReinhardAbility.WORLD_ERASURE && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_ERASURE_ACTIVE)) || cooldown > 0 || !dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.allows(ability, dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.phaseOf(heroFlags));
    }
 }

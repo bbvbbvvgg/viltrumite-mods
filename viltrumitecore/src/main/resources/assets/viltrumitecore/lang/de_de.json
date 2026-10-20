@@ -468,7 +468,7 @@
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Reid gezogen: 12 tödliche Schnitte im 30°-Kegel, 40 Blöcke lang, mit schmalen Bodenrillen. Kurze technische Sperre.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhards Schnitte regnen herab",
   "ability.viltrumitecore.reinhard_world_cut.name": "World cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Ground world cut. Crouch + the same key: diagonal world cut.",
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid must be drawn (R), Holy Sword mode. World-cut slot (default B): ground cut; crouch + the same key: diagonal cut. Y is Chop.",
   "ability.viltrumitecore.reinhard_world_erasure.name": "Weltauslöschung",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid gezogen: Ziel innerhalb von 64 Blöcken, 7,5 s Weltpause und Auslöschung. Sterbliche Spieler kehren nach 30 Online-Sekunden ohne mitgeführte Gegenstände zurück; Endertruhe bleibt. Göttliche/absolute Ziele überleben. Nur eine aktive Szene, keine lange Abklingzeit.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "Die Welt zerbricht",

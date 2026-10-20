@@ -53,7 +53,7 @@ public final class DiagonalCutScene {
          double t=now-s.packet.startTime();Vec3 near=nearest(s,m.player.position());boolean range=near.distanceTo(m.player.position())<=320;
          CutAtmosphere.update(s.packet.castId(),near,t,s.done<0,s.done<0?1:Math.max(0,1-(now-s.done)/70.0),range,now);
          if(!range)continue;
-         if(t>=8&&s.done<0&&(now-s.packet.startTime())%28==0)play(near,ReinhardSounds.CUT_RUMBLE.get(),t<80?.12F:.07F);
+         if(CutFinishSound.pulseDue(now-s.packet.startTime(),s.done<0))CutFinishSound.pulse(near,now);
          if(t>=20&&!s.hush) {play(near,ReinhardSounds.WORLD_CUT_SILENCE.get(),1.2F);s.hush=true;}
          if(s.done>=0&&!s.blast) {CutFinishSound.play(near,now);HeroImpactFx.shockwaveVisual(near,28);s.blast=true;}
          if(s.done>=0)s.tail=true;

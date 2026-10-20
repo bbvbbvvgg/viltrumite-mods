@@ -528,3 +528,8 @@ To add a screen effect:
 - Minecraft Camera.rotation has +Z forward, while OpenGL view/hand space uses -Z. Convert with camera quaternion * Ry(pi), not camera quaternion alone; otherwise beam/arrow contact flips behind the camera. Test yaw/pitch roundtrip AND positive-forward dot, not roundtrip alone.
 - Capture actual perspective from RenderLevelStageEvent, never use whichever RenderSystem projection is bound by an audio/tick caller (it may be GUI orthographic). TP event bone points are in camera-view coordinates; convert back before adding camera position. FP and TP caches stay separate.
 - FP catch needs an unobscured shaft: raise ARROW contact above resting Reid, and turn the SAME held-arrow presentation crosswise in FP only. Do not create a duplicate entity/item. A frame captured on the first server holding tick can precede client snapshot/cache; inspect a settled held frame as well as ingress/release.
+
+### World-cut audio identity (Core 1.36.2)
+- The approved loud completion is the original eight-second WORLD_CUT_TAIL recording. Start it only after server DONE. Use nearest-line placement and range320; do not loop it during carve.
+- WORLD_CUT_BLAST is now only a quiet, bounded WORK pulse: tick96 then every40ticks while working, voice duration16ticks. Never pair it at DONE. Neither world-cut scene plays CUT_RUMBLE.
+- Tail mastering is reproducible through tools/sfx/reinhard.py finish_master(); begin with the original bed master, not the already-mastered output. Keep original licensing and duration.
