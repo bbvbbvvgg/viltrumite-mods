@@ -32,5 +32,20 @@ public final class ReinhardPlayback {
       return (float)smooth(Math.max(0, Math.min(1, (length-seconds)/.1)));
    }
 
+   public static float entry(double seconds) {
+      return Double.isFinite(seconds) ? (float)smooth(Math.max(0, Math.min(1, seconds/.1))) : 0;
+   }
+
+   /** A ready/snap window owns its guard until the actual server window ends. */
+   public static float window(double seconds, double length, boolean snap) {
+      return exit(seconds, length) * (snap ? 1 : entry(seconds));
+   }
+
+   /** Fade body channels only at the sheathed boundary. The grip remains exact. */
+   public static float reidWeight(boolean drawing, double seconds, double length) {
+      double t = drawing ? seconds/.2 : (length-seconds)/.2;
+      return Double.isFinite(t) ? (float)smooth(Math.max(0,Math.min(1,t))) : 0;
+   }
+
    private static double smooth(double t) { return t * t * (3 - 2 * t); }
 }

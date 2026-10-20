@@ -10,7 +10,7 @@ class ReinhardReleaseTest {
    @Test void snapshotHotfixUsesCorePatchVersion() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.35.1", version.group(1), "Snapshot crash fix is a core patch; flight stays unchanged");
+      assertEquals("1.35.2", version.group(1), "Animation continuity is a core patch; flight stays unchanged");
    }
    @Test void snapshotCapacityUpgradeRejectsOldNetworkPeers() throws Exception {
       String source = Files.readString(Path.of("../viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));

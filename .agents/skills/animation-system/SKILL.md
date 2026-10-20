@@ -441,3 +441,21 @@ To add a screen effect:
 - CameraShake.cinematicAt is an explicit strong contribution. Ordinary add/addAt
   retain the legacy 2.5 input cap. They must not truncate an active cinematic shake.
   A local intensity setting scales the cinematic contribution; shared decay remains.
+
+### Reinhard continuity regression gates
+- Walk/run bake the original periodic trajectories at 80 linear intervals per
+  cycle. Never apply ease-in/out separately between dense gait samples: that
+  stops the limbs at each intermediate key. Test sampled velocity and position,
+  not only loop flags or the first pose. Keep combat contact keys unchanged.
+- Catch/reflect snaps overlay their matching ready guard. Fade a snap back to
+  guard, not idle. The window envelope uses the actual actionLength. Share this
+  composition between TP and FP elbows; do not apply TP shoulders to FP twice.
+- At the sheathed boundary, fade Reid body channels over four ticks against the
+  current underlying pose. Keep reid_grip at full weight: fading it changes the
+  weapon path. FP shoulder offsets return before draw completion and enter
+  sheathing over four ticks. Do not delay server contact times or add a general
+  incoming low-pass to every action.
+- Keep interpolated walk input during takeoff. Its render weight is the
+  complement of the existing rise/fall weights. Never gate gait with onGround.
+  Test takeoff/landing and repeated timestamps at 30/60/144/240 Hz.
+- These CPU regression gates do not prove native visual or shader acceptance.

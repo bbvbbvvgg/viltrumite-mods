@@ -265,3 +265,50 @@ Final restored-roll verification: `./gradlew build --no-daemon` passed with 1269
 Only the body-local mount translation changes: X 6.8 → 6.2 and Z -2 → -1 model px; height, tilt, rotation order, scale, sheath geometry and free-blade roll remain unchanged. A purely lateral move intersected the left thigh during World Cut. Measuring the two local horizontal axes allowed a closer mount without that collision. The authored grip's hip endpoints use the same translation so starting extraction and finishing sheathing do not jump; no rotation keys or drawn attack poses changed.
 
 Verification: complete `build` passed, 1271 core + 12 flight tests (1283 total), zero failures/errors/skips. New tests preserve every mount basis vector/scale and assert exact assembled weapon continuity at extraction start. Existing sampled hand/head/torso/leg clearance, sheathed palm contact and gait/crouch tests pass. The control frame's drawn blade vertices are unchanged; every sheath vertex has the same displacement (no rotation or resize). `git diff --check` passed. The before/after comparison uses the same cameras and actual exported geometry, not native Minecraft; native acceptance remains pending.
+
+### Owner follow-up: continuous animation playback (core 1.35.2)
+
+Base: snapshot hotfix 2df721d, not main. Scope: Reinhard client poses only.
+
+1. Add regression tests before implementation: gait velocity between keys and
+   at the loop seam; snap-to-guard continuity; Reid boundaries in both views;
+   ground/air weights and repeated render passes.
+2. Bake walk/run at 80 linear samples per cycle. Preserve the original cosine
+   trajectory and bend amplitudes. Do not restart an ease at each sample.
+3. Compose catch/reflect snaps over the matching ready guard, so their outgoing
+   weight reveals guard rather than idle. Use the actual action duration for
+   the window envelope, not the shorter snap clip duration. Preserve every
+   combat key and server contact time. Share this composition with FP elbows.
+4. Fade Reid body channels into/out of the live underlying pose at the sheathed
+   boundary. Keep reid_grip at full weight so weapon paths and grip stay exact.
+   Return FP shoulder offsets to neutral before drawing finishes. Ease them
+   into sheathing. Apply the same boundary policy to FP elbows.
+5. Retain the interpolated gait in the air and cross-fade its weight with the
+   existing real-time motion weights. Do not hard-cut it with onGround.
+6. Keep shared animation code, other heroes, assets, gameplay, effects, sound,
+   protocol and flight unchanged. Bump only core patch version.
+7. Run targeted and full tests, resource checks, build and native client probe.
+   Record environmental blockers honestly. Publish a separate PR with manual
+   FP/TP, shaders, occupied-hands and frame-rate acceptance still explicit.
+
+Verification: all four new regression methods failed on the original code
+(1292 core tests, exactly four failures). The first fix run found signed-zero
+camera offsets at a neutral boundary; reid now returns the canonical NONE.
+Final Java 17 `build` passed: 1296 core + 12 flight tests, zero failures, errors
+or skipped tests. Eight continuity regressions cover gait speed/position,
+TP and FP snap/guard composition, camera Reid boundaries, unweighted grip,
+actual window duration, and complementary motion weights at four frame rates.
+Resource checker: zero new problems, four known legacy problems.
+
+Only walk/run JSON clips changed. Every combat clip is identical to the base.
+Blade/sheath assets, selected free-blade roll, six-second draw, protocol 4,
+gameplay contacts, shared engine and flight sources are unchanged. Core patch
+1.35.2 JAR includes the generated clips, metadata and attribution files.
+SHA256: 514445133fc43aea610938a9436a7e47c01c0248807f6bdb932ca278d8613b41.
+
+Native `:viltrumitecore:runClient` reached Forge's early graphics initialization,
+then failed `glfwInit failed` with no display. The blocked probe was stopped.
+No world, gameplay, native FPS, GPU, shader or multiplayer visual acceptance
+was performed. Still check both views, all modes, crouch, occupied slots,
+draw/sheath interruptions, catch/reflect, takeoff/landing, 30/60/144+ FPS and
+Oculus/shadow passes in Minecraft. CPU tests do not certify visual perfection.

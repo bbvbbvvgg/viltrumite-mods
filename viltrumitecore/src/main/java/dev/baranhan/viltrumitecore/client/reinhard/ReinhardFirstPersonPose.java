@@ -76,10 +76,14 @@ public final class ReinhardFirstPersonPose {
    /** Draw/sheathe remains driven by the six-second authoritative Reid phase. */
    public static final Offset REID_PULL = new Offset(-.16F,.22F,-.10F,-52,18,-6);
    public static Offset reid(ReinhardPoses.ReidPhase phase, double ticks) {
-      return switch(phase) {
-         case DRAWING, SHEATHING -> REID_PULL.scaled(ReinhardPoses.bladeOut(phase,ticks));
-         default -> Offset.NONE;
+      float weight = switch(phase) {
+         case DRAWING -> ReinhardPoses.bladeOut(phase,ticks)
+            * ReinhardPlayback.reidWeight(false,ticks/20.0,ReinhardRules.REID_DRAW_TICKS/20.0);
+         case SHEATHING -> ReinhardPoses.bladeOut(phase,ticks)
+            * ReinhardPlayback.reidWeight(true,ticks/20.0,ReinhardRules.REID_SHEATHE_TICKS/20.0);
+         default -> 0;
       };
+      return weight > 0 ? REID_PULL.scaled(weight) : Offset.NONE;
    }
 
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks) {
