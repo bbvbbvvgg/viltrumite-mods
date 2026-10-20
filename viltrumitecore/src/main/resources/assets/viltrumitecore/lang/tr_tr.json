@@ -468,7 +468,7 @@
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Reid çekiliyken: 30° konide 40 blok uzunluğunda 12 ölümcül kesik ve dar zemin yarıkları. Kısa teknik kilit.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhard'ın kesikleri yağar",
   "ability.viltrumitecore.reinhard_world_cut.name": "World cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Ground world cut. Crouch + the same key: diagonal world cut.",
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid must be drawn (R), Holy Sword mode. World-cut slot (default B): ground cut; crouch + the same key: diagonal cut. Y is Chop.",
   "ability.viltrumitecore.reinhard_world_erasure.name": "Dünyayı Silme",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid çekiliyken: 64 blok içindeki hedef, 7,5 saniye dünya duraklaması ve silinme. Ölümlü oyuncular 30 çevrimiçi saniye sonra taşıdıkları olmadan döner; Ender sandığı kalır. İlahi/mutlak hedefler yaşar. Tek etkin sahne, uzun bekleme yok.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "Dünya çatlıyor",

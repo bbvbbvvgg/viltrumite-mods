@@ -23,6 +23,19 @@ class ReinhardAbilitiesTest {
          if(!ReinhardAbilities.active(a))assertFalse(java.util.Arrays.asList(ReinhardAbilities.LOADOUT).contains(a.id()));
    }
 
+   @Test void oneWorldCutSlotPreviewsAndGatesItsActualCrouchedVariant() {
+      assertEquals(ReinhardAbility.DIAGONAL_WORLD_CUT,ReinhardAbilities.contextual(ReinhardAbility.WORLD_CUT,true));
+      assertEquals(ReinhardAbility.WORLD_CUT,ReinhardAbilities.contextual(ReinhardAbility.WORLD_CUT,false));
+      assertTrue(ReinhardAbilities.icon("reinhard:world_cut",0,true).getPath().endsWith("/diagonal_world_cut.png"));
+      assertTrue(ReinhardAbilities.icon("reinhard:world_cut",0,false).getPath().endsWith("/world_cut.png"));
+      int drawn=dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(0,dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWN);
+      assertFalse(ReinhardAbilities.slotGrey(ReinhardAbility.WORLD_CUT,0,drawn,true));
+      assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.WORLD_CUT,5,drawn,true));
+      assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.WORLD_CUT,0,0,true));
+      assertFalse(ReinhardAbilities.active(ReinhardAbility.DIAGONAL_WORLD_CUT));
+      assertEquals("viltrumite:chop",ReinhardAbilities.defaultLoadout()[13],"Default Y is Chop, not diagonal");
+   }
+
    @Test
    void idsUnique() {
       Set<String> ids = new HashSet<>();

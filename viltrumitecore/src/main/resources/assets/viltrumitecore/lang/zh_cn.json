@@ -468,7 +468,7 @@
   "ability.viltrumitecore.reinhard_cut_rain.desc": "仅限拔出雷德：30° 锥形内发出 12 道长 40 格的致命斩击，并留下狭窄地面裂槽。仅有短暂技术锁定。",
   "subtitles.viltrumitecore.reinhard_cut_rain": "莱因哈鲁特斩击如雨",
   "ability.viltrumitecore.reinhard_world_cut.name": "World cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Ground world cut. Crouch + the same key: diagonal world cut.",
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid must be drawn (R), Holy Sword mode. World-cut slot (default B): ground cut; crouch + the same key: diagonal cut. Y is Chop.",
   "ability.viltrumitecore.reinhard_world_erasure.name": "世界抹除",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "雷德已拔出：选择 64 格内目标，世界暂停 7.5 秒并将其抹除。凡人玩家在线 30 秒后从虚空归来，随身物品丢失；末影箱保留。神性与绝对目标存活。仅允许一个活动场景，无漫长冷却。",
   "subtitles.viltrumitecore.reinhard.erase_crack": "世界破裂",

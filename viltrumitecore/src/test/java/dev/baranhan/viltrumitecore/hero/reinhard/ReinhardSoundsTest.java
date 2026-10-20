@@ -49,6 +49,7 @@ class ReinhardSoundsTest {
       for (var pair : FINAL.entrySet()) {
          JsonObject choice = new JsonObject(); choice.addProperty("name", "viltrumitecore:reinhard/" + pair.getValue());
          if (STREAM.contains(pair.getKey())) choice.addProperty("stream", true);
+         if (pair.getKey().equals("world_cut_tail")) choice.addProperty("attenuation_distance",320);
          JsonArray array = new JsonArray(); array.add(choice);
          expected.getAsJsonObject("reinhard." + pair.getKey()).add("sounds", array);
       }
