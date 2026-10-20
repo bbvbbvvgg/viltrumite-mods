@@ -96,4 +96,9 @@ class ReinhardDefenseGeometryTest {
       assertEquals(1.3,world.dot(new net.minecraft.world.phys.Vec3(forward.x,forward.y,forward.z)),1E-5,"Contact must be in front, not behind the camera");
    }
  }
+ @org.junit.jupiter.api.Test void firstPersonArrowContactClearsTheRestingReidAcrossTheLowerView() {
+   var arrow=ReinhardDefense.offset(DefenseReaction.Kind.ARROW,true,1,ReinhardFirstPersonPose.Offset.NONE,true);
+   var beam=ReinhardDefense.offset(DefenseReaction.Kind.BEAM,true,1,ReinhardFirstPersonPose.Offset.NONE,true);
+   assertTrue(arrow.y()-beam.y()>.3F,"Raise the catch above the low resting blade; do not hide the shaft behind it");
+ }
 }

@@ -77,7 +77,7 @@ final class ReinhardDefense {
       float yaw=kind==DefenseReaction.Kind.PROJECTILE?28:kind==DefenseReaction.Kind.WEAPON?-12:10;
       float roll=kind==DefenseReaction.Kind.WEAPON?24:kind==DefenseReaction.Kind.PROJECTILE?-25:-8;
       // Absolute view-space guard blended from the action, not another rotation added to it.
-      return new ReinhardFirstPersonPose.Offset(base.x()*(1-w),base.y()*(1-w)+.16F*w,base.z()*(1-w)-.22F*w,
+      return new ReinhardFirstPersonPose.Offset(base.x()*(1-w),base.y()*(1-w)+(kind==DefenseReaction.Kind.ARROW?.52F:.16F)*w,base.z()*(1-w)-.22F*w,
          base.pitch()*(1-w)+pitch*w,base.yaw()*(1-w)+yaw*w,base.roll()*(1-w)+roll*w);
    }
    static ReinhardFirstPersonPose.Offset firstPerson(Object player,HeroPublicSnapshot snapshot,boolean left,ReinhardFirstPersonPose.Offset base) {

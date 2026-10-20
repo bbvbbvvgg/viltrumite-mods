@@ -72,6 +72,12 @@ public final class HeroDefenseContacts {
       }
       return synced;
    }
+   /** Same tracked arrow, but crosswise in FP so its shaft is readable rather than an end-on fletching pixel. */
+   public static boolean firstPersonHeldArrow(AbstractArrow arrow) {
+      var mc=Minecraft.getInstance();return mc.player instanceof HeroPlayer hp && mc.options.getCameraType().isFirstPerson()
+         && hp.getHeroSnapshot()!=null && HeroRegistry.get(mc.player).defenseContact(mc.player)!=null
+         && hp.getHeroSnapshot().resource2()==arrow.getId()+1;
+   }
    public static Vec3 arrowOffset(AbstractArrow arrow,float partial) {
       for(Player p:arrow.level().players()) if(p instanceof HeroPlayer hp && hp.getHeroSnapshot()!=null
          && hp.getHeroSnapshot().resource2()==arrow.getId()+1 && HeroRegistry.get(p).defenseContact(p)!=null) {
