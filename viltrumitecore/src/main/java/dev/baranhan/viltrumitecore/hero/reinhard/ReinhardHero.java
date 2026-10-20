@@ -110,13 +110,18 @@ public final class ReinhardHero implements HeroDefinition {
       if (player instanceof ServerPlayer serverPlayer) {
          ReinhardState state = ReinhardState.of(serverPlayer);
          if (state != null) {
-            return dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(stateFlags(state, 0), state.reid.phase());
+            return interactionFlags(state);
          }
       }
 
       dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot snapshot = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
          ? heroPlayer.getHeroSnapshot() : null;
       return snapshot == null ? 0 : snapshot.heroFlags();
+   }
+
+   /** Live context claims must include the same mode bits as the public snapshot. */
+   static int interactionFlags(ReinhardState state) {
+      return ReinhardFlags.withMode(Reid.withFlags(stateFlags(state, 0), state.reid.phase()), state.mode);
    }
 
    @Override

@@ -286,3 +286,20 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   first positive two-hand weight. Support elbow outward/front, leading elbow
   additionally down: a symmetric pole passed continuity but clipped the head.
   Keep BOTH final-bone continuity and full-mesh collision gates.
+
+- Reinhard projectile interception: vanilla Forge impacts use HeroProjectiles,
+  but custom RepulsorBlastEntity/MicroMissileEntity have their own onHit path and
+  must call the shared server seam explicitly. Reflection also retargets Homing;
+  hitscan beams require an explicit source-context hook, not projectile handling.
+  EyeLasers and MicroLaser are integrated; Unibeam/PulseUnibeam still need review.
+- AbstractArrow.playerTouch permits pickup during noPhysics. A visible held arrow
+  must temporarily use Pickup.DISALLOWED and restore the original pickup policy
+  on release, alongside noGravity/physics cleanup; never duplicate its item.
+- Diagonal world-cut candidates are projected along the dominant horizontal
+  normal. Rejects still consume the shared CarveJobs budget. Exact voxel-mask
+  equivalence and finite remainingWork matter more than the client animation.
+  DONE remains pending-work completion; both client tails now use 70 ticks.
+- Drawn Reid primary collision uses a bounded resource baked from production
+  final equipment transforms. Re-bake with ReidMeleeBakeTest when the geometry,
+  grip, scale or source clips change; dedicated-server code must not load client
+  render classes. FP trajectory/palm alignment is a separate acceptance concern.

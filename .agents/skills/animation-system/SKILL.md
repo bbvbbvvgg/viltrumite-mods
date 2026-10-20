@@ -497,3 +497,21 @@ To add a screen effect:
   distinct-palm gates alongside final-bone continuity; neither alone is enough.
 - Fade leading-forearm pronation with two-hand ownership, separately from its
   palm-position ownership. Keep the one-hand wrist correction below this fade.
+
+### Reinhard interaction rework (core 1.36.0; draft acceptance)
+- Automatic defense has a separate `DefenseReaction` channel in reserved flags
+  15..26. Do not restart the main `ActionTimeline` for each projectile/beam tick.
+  Commitment, held-beam refresh and client exponential recovery are independent.
+  Main actions and drawn-Reid two-hand ownership take priority over defense arms.
+  Existing clips are reused; this does NOT certify all new composed poses safe.
+- Drawn-Reid primary uses internal REID_STRIKE and existing chop_right/chop_left
+  clips normalized to 14/20 ticks, not LightPunch. Preserve the PR40 sampler,
+  directed grip axis and outer FP transform. Server collision reads the bounded
+  `data/viltrumitecore/reinhard/reid_melee.json` bake without client classes.
+  After changing clips, grip, scale, axial roll or equipment transforms, run
+  `REINHARD_BAKE=1 ./gradlew :viltrumitecore:test --tests '*ReidMeleeBakeTest'`,
+  then rerun without that variable to verify the checked-in final-blade samples.
+- Inspect final joints, full meshes and FP camera transforms with the defense
+  channel enabled, including threat changes, movement and recovery. Existing
+  clip/grip gates alone do not prove the defense overlay or physical arrow palm
+  alignment. Native multi-angle visual/audio acceptance remains a separate gate.

@@ -434,3 +434,8 @@ Core1.35.3 JAR SHA256:
 Финальный runClient завершён штатно через Save and Quit → Quit Game, exit0 /
 BUILD SUCCESSFUL (7m11s). Render/mixin exceptions не возникли; предупреждения
 аудиоустройства/narrator/offline Realms и legacy license path — окружение/старые.
+
+## 2026-10-20 — reinhard-combat-interaction (Notion AI)
+- Started directly at PR #40 HEAD 381850ab312369aceb2c8f65db556c0c6226da88; branch rework/reinhard-combat-interaction, stacked base fix/reinhard-strike-fluidity. Core 1.36.0, Flight unchanged.
+- Compact RMB/Y/Z/B contexts, independent defense channel and explicit laser/projectile seams, physical arrow retention, bounded final-blade collision bake, DONE-gated sound accent, thin recessed diagonal wound and exact budgeted projected raster.
+- Real Java17 Forge dedicated server/client connected; modes, draw, primary, cuts and grab/throw exercised under software rendering. Found early arrow pickup via noPhysics; fixed pickup policy. No audio device. Full attack matrix, exact beam/palm alignment, new defense final-mesh acceptance and live comparative/concurrent performance remain open. Draft, not full acceptance; see docs/reports/2026-10-20-reinhard-combat-interaction.md.

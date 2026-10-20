@@ -18,6 +18,14 @@ class ReinhardInteractionReworkTest {
       for(var mode:ReinhardMode.values())assertEquals(mode,ReinhardActions.contextualMode(ReinhardAbility.STEP_DASH,mode));
       assertNotEquals(ReinhardMode.HOLY_SWORD,ReinhardActions.contextualMode(ReinhardAbility.GRAB_THROW,ReinhardMode.HOLY_SWORD));
    }
+   @Test void liveInteractionModeMatchesAuthoritativeSnapshot() {
+      var state=new ReinhardState();
+      for(var mode:ReinhardMode.values()) {
+         state.mode=mode;
+         assertEquals(mode.ordinal(),ReinhardFlags.mode(ReinhardHero.interactionFlags(state)));
+         assertEquals(ReinhardFlags.mode(ReinhardHero.composeSnapshot(state,0,0).heroFlags()),ReinhardFlags.mode(ReinhardHero.interactionFlags(state)));
+      }
+   }
    @Test void continuousBeamDoesNotRestartOrStealMainAction() {
       var state=new ReinhardState();state.action.start(ReinhardAbility.FIST_COMBO,14,9);
       for(int t=0;t<80;t++) {
@@ -54,6 +62,9 @@ class ReinhardInteractionReworkTest {
       assertTrue(ground.contains("!scene.working() && !scene.blasted"));
       assertTrue(diagonal.contains("s.done>=0&&!s.blast"));
       assertFalse(ground.contains("CUT_RUMBLE.get(),t<80?1.4F:2.8F"));
+      String arrow=Files.readString(root.resolve("hero/reinhard/blessing/ArrowCapture.java"));
+      assertTrue(arrow.contains("next.pickup = AbstractArrow.Pickup.DISALLOWED"));
+      assertTrue(arrow.contains("arrow.pickup = pickup"));
       for(String name:List.of("RepulsorBlastEntity","MicroMissileEntity"))assertTrue(Files.readString(root.resolve("entity/"+name+".java")).contains("HeroProjectiles.intercept(this, hit)"));
    }
 }

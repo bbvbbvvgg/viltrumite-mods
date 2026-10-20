@@ -10,11 +10,15 @@ import net.minecraft.world.phys.Vec3;
 public final class ArrowCapture {
    private AbstractArrow arrow;
    private boolean gravity;
+   private AbstractArrow.Pickup pickup;
    private int ticks;
    public boolean holding() { return arrow != null && !arrow.isRemoved(); }
    public boolean start(ServerPlayer self, AbstractArrow next) {
       if (holding()) return false;
-      arrow = next; gravity = next.isNoGravity(); ticks = 10;
+      arrow = next; gravity = next.isNoGravity(); pickup = next.pickup; ticks = 10;
+      // AbstractArrow.playerTouch permits pickup while noPhysics is true. A held
+      // arrow must remain an entity, not disappear into the nearby owner inventory.
+      next.pickup = AbstractArrow.Pickup.DISALLOWED;
       next.setOwner(self); next.setNoPhysics(true); next.setNoGravity(true);
       next.setDeltaMovement(Vec3.ZERO); next.hasImpulse = true;
       move(self);
@@ -35,7 +39,7 @@ public final class ArrowCapture {
    }
    public void release() {
       if (arrow != null && !arrow.isRemoved()) {
-         arrow.setNoPhysics(false); arrow.setNoGravity(gravity);
+         arrow.setNoPhysics(false); arrow.setNoGravity(gravity); arrow.pickup = pickup;
          arrow.setBaseDamage(0); arrow.setDeltaMovement(0,-.12,0); arrow.hasImpulse = true;
       }
       arrow = null; ticks = 0;
