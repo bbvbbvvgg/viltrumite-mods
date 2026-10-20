@@ -77,7 +77,7 @@ public final class Stomp implements AbilityHandler {
 
       BlockPos ground = FistCombo.groundUnder(level, feet);
       BlockState material = ground != null ? level.getBlockState(ground) : null;
-      HeroFx.shockwave(player, ground != null ? Vec3.atCenterOf(ground).add(0.0, 0.5, 0.0) : feet, 1.4F, material, (float) r);
+      HeroFx.slam(player, ground != null ? Vec3.atCenterOf(ground).add(0.0, 0.5, 0.0) : feet, material, (float) r);
       HeroDebris.Eruption spec = eruption(DestructionLevel.of(state.mode));
       if (spec != null && ground != null) {
          Vec3 look = player.getLookAngle();

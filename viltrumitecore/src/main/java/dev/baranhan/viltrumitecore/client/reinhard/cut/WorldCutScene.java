@@ -141,6 +141,15 @@ public final class WorldCutScene {
                      for(int crack=0;crack<5;crack++) pixel(buffer,eye,camera,
                         wall.add(-dir.z*side*crack*.35,.04,dir.x*side*crack*.35),.08F,50,44,35,(int)(180*fade));
                   }
+                  if(a>=front-3) {
+                     double strike=Math.max(0,1-Math.abs(a-front+1)/3.0);
+                     for(int y=0;y<40;y++) {
+                        double spread=1+y*.07;
+                        Vec3 core=p.add(-dir.z*Math.sin(y*.8+t*.2)*spread,y*.9,dir.x*Math.sin(y*.8+t*.2)*spread);
+                        pixel(buffer,eye,camera,core,.22F,245,250,255,(int)(220*fade*strike));
+                        if(y%3==0) pixel(buffer,eye,camera,core.add(-dir.z*1.4,0,dir.x*1.4),.10F,255,218,130,(int)(180*fade*strike));
+                     }
+                  }
                   if(a>=front-8) for(int y=0;y<12;y++) {
                      Vec3 fire=p.add(Math.sin(a*5+y)*4,y*.65,Math.cos(a*7+y)*4);
                      pixel(buffer,eye,camera,fire,.11F,255,239,155,(int)(220*fade));

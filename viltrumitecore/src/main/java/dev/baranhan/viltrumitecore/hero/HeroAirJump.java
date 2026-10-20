@@ -39,6 +39,8 @@ public final class HeroAirJump {
 
       double velocity();
 
+      default Vec3 jumpMotion() { Vec3 v=deltaMovement(); return new Vec3(v.x,velocity(),v.z); }
+
       boolean resetState();
 
       boolean anchored();
@@ -68,8 +70,7 @@ public final class HeroAirJump {
    public static boolean press(Body body, Sink out) {
       int used = body.used();
       if (AirJumpRules.allow(used, body.max(), body.resetState(), body.anchored(), body.canAct())) {
-         Vec3 v = body.deltaMovement();
-         body.setDeltaMovement(new Vec3(v.x, body.velocity(), v.z));
+         body.setDeltaMovement(body.jumpMotion());
          body.setUsed(used + 1);
          body.resetFall();
          out.stepped(body);
@@ -123,6 +124,9 @@ public final class HeroAirJump {
       public int max() {
          return this.hero.airJumps(this.player);
       }
+
+      @Override
+      public Vec3 jumpMotion() { return hero.airJumpMotion(player,player.getDeltaMovement()); }
 
       @Override
       public double velocity() {

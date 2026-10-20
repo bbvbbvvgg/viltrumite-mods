@@ -16,7 +16,7 @@ class ReinhardAbilitiesTest {
       assertEquals(18, ReinhardAbilities.LOADOUT.length);
       for (ReinhardAbility ability : ReinhardAbility.values()) {
          int index = ability.mode().page() * 6 + ability.slot();
-         assertEquals(ability.id(), ReinhardAbilities.LOADOUT[index], ability.name());
+         assertEquals(ReinhardAbilities.active(ability)?ability.id():"", ReinhardAbilities.LOADOUT[index], ability.name());
       }
    }
 
@@ -44,7 +44,7 @@ class ReinhardAbilitiesTest {
       String[] loadout = ReinhardAbilities.defaultLoadout();
       assertEquals(18, loadout.length);
       for (ReinhardAbility ability : ReinhardAbility.values()) {
-         boolean shipped = ability.stage() <= 6;
+         boolean shipped = ReinhardAbilities.active(ability);
          assertEquals(shipped, ReinhardAbilities.owns(ability.id()), ability.name());
          int index = ability.mode().page() * 6 + ability.slot();
          assertEquals(shipped ? ability.id() : "", loadout[index], ability.name());

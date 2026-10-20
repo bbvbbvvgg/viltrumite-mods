@@ -1,33 +1,10 @@
 #!/usr/bin/env python3
-"""Reinhard pose clips -> animations/reinhard/reinhard.animation.json (merged with `walk`).
+"""Reinhard quality-rework clips, evaluated only by the existing anim core.
 
-Angles in degrees in Java ModelPart convention (the parser's x/y negation and
-BakedGeoModel's (-x, -y, z) cancel: same numbers = same turn as a ModelPart).
-Positions in px: +y up, +z backwards (the model faces -z).
-
-Stances (loop, all six bones, breathing 3 s):
-- idle_restrained: relaxed, arms free with vanilla's idle bob range, slight head sway.
-- idle_knight: left arm folded behind the back (rotX +25, rotZ -10, +2 px back), right arm loose.
-- idle_holy: left hand forward/inward to the hilt at the left hip, right arm loose.
-- knight_left_arm_hold: idle_knight's left arm alone (overlay over the walk in Knight).
-Additive clips (added to the current pose, like vanilla's model code):
-- crouch: vanilla HumanoidModel crouching (body 0.5 rad, arms +0.4 rad, body/arms 3.2 px down,
-  head 4.2 px down, legs 4 px back and 0.2 px down).
-- sit: vanilla riding (arms -36 deg, legs -81 deg, yaw +-18 deg, roll +-4.5 deg).
-Reactions (hold on the last frame, overlay weighted by a real-time pulse in ReinhardRenderer):
-- parry: Blessing of the Holy Sword (stage 2): the right arm snaps up and across the chest
-  like vanilla's old sword block (-55 / -30 deg) with a slight torso twist, 0.4 s.
-Swim (loop 1 s = vanilla's 26 walk-position units, overlay weighted by swimAmount):
-- swim: HumanoidModel's crawl stroke sampled every unit (arms) and a leg flutter
-  0.3 rad (vanilla's leg period 6 pi units is shown once per stroke).
-
-Stage 4 (overlay driven by Reid's phase clock, ReinhardPoses.reidClip):
-- chop_left / chop_right: Lethal Chop (the kit chop) sweep of each hand, 1 s.
-- idle_holy_drawn: loop, the right arm holds Reid low and forward.
-- cut_rain: fast fan of slashes with Reid, 1 s.
-- sheath_strike: the sheathed sword swung in one flat arc, 0.6 s.
-- reid_draw: 6 s slow draw from the left hip, standing still; reid_sheathe: 1 s reverse.
-
+Run after rig_reinhard.py. Every timestamp below is authored in server ticks.
+Rotation uses the project's ModelPart degree convention. Position is Bedrock px.
+Knight combat leaves the articulated left arm behind his back. Stances and
+locomotion loop; transient clips use explicit anticipation/contact/recovery.
 Run: python3 tools/assets/make_reinhard_clips.py
 """
 import json
@@ -102,256 +79,293 @@ CLIPS = {
 
 
 def swim_clip():
-    import math
-
-    def quad(x):
-        return -65.0 * x + x * x
-
-    right, left, rleg, lleg = {}, {}, {}, {}
-    for unit in range(27):
-        f = float(unit % 26) if unit < 26 else 26.0
-        if f < 14.0:
-            k = quad(f) / quad(14.0)
-            x, rz, lz = 0.0, math.pi - 1.8707964 * k, math.pi + 1.8707964 * k
-        elif f < 22.0:
-            k = (f - 14.0) / 8.0
-            x, rz, lz = math.pi / 2 * k, 1.2707963 + 1.8707964 * k, 5.012389 - 1.8707964 * k
-        else:
-            k = (f - 22.0) / 4.0
-            x, rz, lz = math.pi / 2 - math.pi / 2 * k, math.pi, math.pi
-        t = "%.4f" % (unit / 26.0)
-        t = t.rstrip("0").rstrip(".") if unit else "0.0"
-        right[t] = [round(math.degrees(x), 3), 180, round(math.degrees(rz), 3)]
-        left[t] = [round(math.degrees(x), 3), 180, round(math.degrees(lz), 3)]
-        phase = 2.0 * math.pi * unit / 26.0
-        rleg[t] = [round(math.degrees(0.3 * math.cos(phase)), 3), 0, 0]
-        lleg[t] = [round(math.degrees(0.3 * math.cos(phase + math.pi)), 3), 0, 0]
-    return loop({"right_arm": {"rotation": right}, "left_arm": {"rotation": left},
-                 "right_leg": {"rotation": rleg}, "left_leg": {"rotation": lleg}}, 1.0)
+    # Breaststroke: extension -> lateral catch -> bent-elbow pull -> recovery.
+    # Signed rolls never make the old 180/360-degree wrap around the shoulder.
+    stroke = [(0,[-165,0,-28]),(5,[-155,0,-55]),(10,[-100,0,-80]),
+              (14,[-25,0,35]),(18,[-65,0,12]),(20,[-165,0,-28])]
+    elbow = [(0,[-8,0,0]),(5,[-15,0,0]),(10,[-65,0,0]),
+             (14,[-95,0,0]),(18,[-60,0,0]),(20,[-8,0,0])]
+    bones = {}
+    for side, sign in [('right',1),('left',-1)]:
+        bones[side+'_arm'] = channel([(t,[v[0],v[1]*sign,v[2]*sign]) for t,v in stroke])
+        bones[side+'_forearm'] = channel(elbow)
+        bones[side+'_leg'] = channel([(0,[-12,0,4*sign]),(5,[14,0,8*sign]),
+                                      (10,[-12,0,4*sign]),(15,[14,0,8*sign]),(20,[-12,0,4*sign])])
+    return loop(bones,1.0)
 
 
-CLIPS["swim"] = swim_clip()
-CLIPS["parry"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
-    "right_arm": {"rotation": {"0.0": [-75, -40, 12], "0.1": [-55, -30, 0], "0.4": [-50, -26, 0]}},
-    "body": {"rotation": {"0.0": [0, -10, 0], "0.4": [0, -6, 0]}},
-}}
+# Quality rework: authored anticipation/contact/recovery, ticks as the source unit.
+# Only the existing AnimationParser/AnimationController evaluates these keys.
+import math
 
-# ---- stage 3 action overlays (one-shots; times in seconds, 20 t = 1 s) ----
-# Light Punch: 8 t right jab, the contact on tick 3 (0.15 s).
-CLIPS["light_punch"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
-    "right_arm": {"rotation": {"0.0": [-45, -12, 6], "0.15": [-90, 6, 0], "0.25": [-84, 4, 0], "0.4": [-20, 0, 3]},
-                  "position": {"0.0": [0, 0, 0], "0.15": [0, 0, -1.5], "0.4": [0, 0, 0]}},
-    "body": {"rotation": {"0.0": [0, -6, 0], "0.15": [0, 14, 0], "0.4": [0, 2, 0]}},
-    "left_arm": {"rotation": {"0.0": [-30, 0, -6], "0.15": [-20, 0, -8], "0.4": [0, 0, -3]}},
-    "head": {"rotation": {"0.0": [0, 4, 0], "0.15": [0, -10, 0], "0.4": [0, 0, 0]}},
-}}
+def keys(rows):
+    return {str(round(t / 20, 6)): {'vector': list(v), 'easing': ease}
+            for t, v, *style in rows for ease in [style[0] if style else 'easeInOutSine']}
 
-# Step Dash: 6 t forward lean, arms swept back, then upright again.
-CLIPS["step_dash"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
-    "body": {"rotation": {"0.0": [8, 0, 0], "0.1": [24, 0, 0], "0.3": [4, 0, 0]}},
-    "head": {"rotation": {"0.0": [-6, 0, 0], "0.1": [-18, 0, 0], "0.3": [-3, 0, 0]}},
-    "right_arm": {"rotation": {"0.0": [20, 0, 8], "0.1": [42, 0, 12], "0.3": [8, 0, 4]}},
-    "left_arm": {"rotation": {"0.0": [20, 0, -8], "0.1": [42, 0, -12], "0.3": [8, 0, -4]}},
-    "right_leg": {"rotation": {"0.0": [-12, 0, 0], "0.1": [-28, 0, 0], "0.3": [-4, 0, 0]}},
-    "left_leg": {"rotation": {"0.0": [14, 0, 0], "0.1": [30, 0, 0], "0.3": [4, 0, 0]}},
-}}
+def channel(rows):
+    return {'rotation': keys(rows)}
 
-# Catch Projectile: the palm held up in front of the face for the 10 t window...
-CLIPS["catch_ready"] = {"loop": "hold_on_last_frame", "animation_length": 0.5, "bones": {
-    "right_arm": {"rotation": {"0.0": [-60, -10, 0], "0.08": [-112, -18, 0], "0.5": [-110, -16, 0]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.08": [0, 8, 0], "0.5": [0, 8, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.08": [-4, -6, 0], "0.5": [-4, -6, 0]}},
-}}
-# ...and the hand closing on the projectile: knocked back a little, then held.
-CLIPS["catch"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
-    "right_arm": {"rotation": {"0.0": [-110, -16, 0], "0.05": [-92, -6, 8], "0.15": [-104, -12, 2], "0.3": [-100, -10, 0]}},
-    "body": {"rotation": {"0.0": [0, 8, 0], "0.05": [-3, 12, 0], "0.3": [0, 8, 0]}},
-    "head": {"rotation": {"0.0": [-4, -6, 0], "0.3": [-4, -6, 0]}},
-}}
+def action(length, **bones):
+    return {'loop': 'hold_on_last_frame', 'animation_length': length/20,
+            'bones': {bone: channel(rows) for bone, rows in bones.items()}}
 
-# Fist Combo (Knight, one-handed: the left arm stays behind the back, so these
-# clips never touch it). Contacts: combo_1/2 on tick 3 (0.15 s), combo_3 on tick 5 (0.25 s).
-CLIPS["combo_1"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
-    "right_arm": {"rotation": {"0.0": [-50, -14, 6], "0.15": [-92, 4, 0], "0.25": [-86, 2, 0], "0.4": [-30, 0, 4]},
-                  "position": {"0.0": [0, 0, 0], "0.15": [0, 0, -1.5], "0.4": [0, 0, 0]}},
-    "body": {"rotation": {"0.0": [0, -8, 0], "0.15": [0, 16, 0], "0.4": [0, 4, 0]}},
-    "head": {"rotation": {"0.0": [0, 6, 0], "0.15": [0, -12, 0], "0.4": [0, 0, 0]}},
-}}
-CLIPS["combo_2"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
-    "right_arm": {"rotation": {"0.0": [-70, 50, 40], "0.15": [-90, -35, 10], "0.25": [-84, -40, 6], "0.4": [-30, -6, 4]}},
-    "body": {"rotation": {"0.0": [0, 18, 0], "0.15": [0, -16, 0], "0.4": [0, -4, 0]}},
-    "head": {"rotation": {"0.0": [0, -8, 0], "0.15": [0, 10, 0], "0.4": [0, 0, 0]}},
-}}
-CLIPS["combo_3"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
-    "right_arm": {"rotation": {"0.0": [-60, 0, 10], "0.15": [-165, 0, 14], "0.25": [-55, 0, 4], "0.4": [-50, 0, 4], "0.6": [-20, 0, 4]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [-10, 6, 0], "0.25": [22, -4, 0], "0.4": [18, -4, 0], "0.6": [4, 0, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.15": [-8, 0, 0], "0.25": [-14, 0, 0], "0.6": [-3, 0, 0]}},
-    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.25": [-22, 0, 4], "0.6": [-6, 0, 0]}},
-    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.25": [16, 0, -4], "0.6": [4, 0, 0]}},
-}}
+def pos(clip, bone, rows):
+    clip['bones'].setdefault(bone, {})['position'] = keys(rows)
 
-# Sky Kick: a light underhand toss (6 t, the leg chambers at the end) ...
-CLIPS["kick_toss"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
-    "right_arm": {"rotation": {"0.0": [-15, 0, 6], "0.15": [-95, 0, 4], "0.3": [-60, 0, 8]}},
-    "body": {"rotation": {"0.0": [6, 0, 0], "0.15": [-4, 0, 0], "0.3": [-6, 0, 0]}},
-    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.2": [-10, 0, 0], "0.3": [-45, 0, 2]}},
-    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [6, 0, 0]}},
-    "head": {"rotation": {"0.0": [8, 0, 0], "0.3": [-14, 0, 0]}},
-}}
-# ... then the kick: the leg snaps up at the contact (clip time 0), holds through the
-# 3 t hit-stop, and comes back down by the end of the 16 t action.
-CLIPS["kick"] = {"loop": "hold_on_last_frame", "animation_length": 0.5, "bones": {
-    "right_leg": {"rotation": {"0.0": [-135, 0, 4], "0.15": [-138, 0, 4], "0.3": [-60, 0, 2], "0.5": [-6, 0, 0]}},
-    "left_leg": {"rotation": {"0.0": [10, 0, 0], "0.15": [10, 0, 0], "0.5": [2, 0, 0]}},
-    "body": {"rotation": {"0.0": [-18, 0, 0], "0.15": [-18, 0, 0], "0.5": [-3, 0, 0]}},
-    "right_arm": {"rotation": {"0.0": [-30, 0, 24], "0.15": [-30, 0, 24], "0.5": [-6, 0, 6]}},
-    "head": {"rotation": {"0.0": [-24, 0, 0], "0.3": [-30, 0, 0], "0.5": [-10, 0, 0]}},
-}}
+CLIPS['crouch'] = loop({
+    'body': {'rotation':[22,0,0], 'position':[0,-3,1]},
+    'head': {'rotation':[-8,0,0], 'position':[0,-3,-1]},
+    'right_arm': {'rotation':[12,0,6], 'position':[0,-3,0]},
+    'left_arm': {'rotation':[12,0,-6], 'position':[0,-3,0]},
+    'right_forearm': {'rotation':[-14,0,0]}, 'left_forearm': {'rotation':[-14,0,0]},
+    'right_leg': {'rotation':[-12,0,3], 'position':[0,-.4,2]},
+    'left_leg': {'rotation':[-12,0,-3], 'position':[0,-.4,2]},
+},1.0)
+CLIPS['sit'] = loop({
+    'body': {'rotation':[3,0,0]},
+    'right_arm': {'rotation':[-24,0,8]},'left_arm': {'rotation':[-24,0,-8]},
+    'right_forearm': {'rotation':[-42,0,0]},'left_forearm': {'rotation':[-42,0,0]},
+    'right_leg': {'rotation':[-82,16,5]},'left_leg': {'rotation':[-82,-16,-5]},
+},1.0)
+CLIPS['swim'] = swim_clip()
+# Rest poses now include real elbows. The Knight's palm rests behind the lower back,
+# not next to the thigh. Shoulder sweeps backward; elbow folds inward across the back.
+for name in ['idle_restrained','idle_knight','idle_holy']:
+    CLIPS[name]['bones']['right_forearm'] = {'rotation': breathe([-7,0,0],[-9,0,0])}
+    CLIPS[name]['bones']['left_forearm'] = {'rotation': breathe([-7,0,0],[-9,0,0])}
+KNIGHT_LEFT_ARM = {'rotation': breathe([40,20,10],[41,20,10]), 'position': still([0,0,.5])}
+CLIPS['idle_knight']['bones']['left_arm'] = KNIGHT_LEFT_ARM
+CLIPS['idle_knight']['bones']['left_forearm'] = {'rotation': breathe([-65,60,0],[-66,60,0])}
+CLIPS['knight_left_arm_hold'] = loop({
+    'left_arm': KNIGHT_LEFT_ARM,
+    'left_forearm': CLIPS['idle_knight']['bones']['left_forearm']})
+CLIPS['idle_knight']['bones']['body'] = {'rotation': breathe([0,-7,0],[.6,-7,0])}
+CLIPS['idle_knight']['bones']['right_arm'] = {'rotation': breathe([-16,-12,6],[-17,-12,6])}
+CLIPS['idle_knight']['bones']['right_forearm'] = {'rotation': breathe([-24,0,0],[-26,0,0])}
+CLIPS['idle_holy']['bones']['right_arm'] = {'rotation': breathe([-30,24,6],[-31,24,6])}
+CLIPS['idle_holy']['bones']['right_forearm'] = {'rotation': still([-38,-12,0])}
+CLIPS['idle_holy']['bones']['left_arm'] = {'rotation': breathe([-18,0,-8],[-19,0,-8])}
+# Continuous gait, feet oppose the hands. Small elbow articulation, not rigid poles.
+for name, amplitude, arm_amplitude in [('walk',32,31.512679),('run',48,50)]:
+    bones = {}
+    for side, phase in [('right',0),('left',math.pi)]:
+        sign = -1 if side == 'right' else 1
+        rows = [(t,[-arm_amplitude*math.cos(2*math.pi*t/20+phase),0,3*sign]) for t in range(0,21,2)]
+        bones[side+'_arm'] = channel(rows)
+        bones[side+'_leg'] = channel([(t,[amplitude*math.cos(2*math.pi*t/20+phase),0,0]) for t in range(0,21,2)])
+        bones[side+'_forearm'] = channel([(t,[-12-10*max(0,math.cos(2*math.pi*t/20+phase)),0,0]) for t in range(0,21,2)])
+    CLIPS[name] = loop(bones,1)
 
-# Grab & Throw: the right hand reaches out and closes at chest height (the target hangs
-# from it) and holds there for the whole grab ...
-CLIPS["grab_hold"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
-    "right_arm": {"rotation": {"0.0": [-20, 0, 6], "0.15": [-95, -8, 4], "0.3": [-85, -6, 2]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.3": [4, -8, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.3": [6, 0, 0]}},
-    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-8, 0, 0]}},
-    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [8, 0, 0]}},
-}}
-# ... then the throw: cocked back over the 3 t hit-stop, a full overhead swing on the
-# launch (0.15 s), follow-through and recovery by the end of the 12 t action.
-CLIPS["throw"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
-    "right_arm": {"rotation": {"0.0": [-150, 0, 10], "0.15": [-160, 0, 10], "0.25": [-40, 0, 4], "0.4": [-20, 0, 2], "0.6": [-4, 0, 3]}},
-    "body": {"rotation": {"0.0": [-10, 18, 0], "0.15": [-12, 22, 0], "0.25": [16, -14, 0], "0.6": [2, 0, 0]}},
-    "head": {"rotation": {"0.0": [-6, 0, 0], "0.25": [6, 0, 0], "0.6": [0, 0, 0]}},
-    "right_leg": {"rotation": {"0.0": [10, 0, 0], "0.25": [-22, 0, 0], "0.6": [-2, 0, 0]}},
-    "left_leg": {"rotation": {"0.0": [-10, 0, 0], "0.25": [18, 0, 0], "0.6": [2, 0, 0]}},
-}}
+CLIPS['light_punch'] = action(10,
+    right_arm=[(0,[-6,0,3]),(2.6,[-47,-16,7],'easeInCubic'),(4,[-91,8,0],'easeOutCubic'),(5,[-92,8,0]),(10,[-6,0,3])],
+    right_forearm=[(0,[-8,0,0]),(2.6,[-68,0,0]),(4,[-4,0,0]),(5,[-6,0,0]),(10,[-8,0,0])],
+    body=[(0,[0,0,0]),(2.6,[0,-9,0]),(4,[4,17,0]),(5,[3,13,0]),(10,[0,0,0])],
+    head=[(0,[0,0,0]),(4,[-3,-10,0]),(10,[0,0,0])],
+    left_arm=[(0,[0,0,-3]),(2,[-20,0,-8]),(5,[-16,0,-6]),(10,[0,0,-3])],
+    left_forearm=[(0,[-8,0,0]),(4,[-30,0,0]),(10,[-8,0,0])],
+    right_leg=[(0,[0,0,0]),(4,[-9,0,2]),(10,[0,0,0])],
+    left_leg=[(0,[0,0,0]),(4,[7,0,-2]),(10,[0,0,0])])
+pos(CLIPS['light_punch'],'right_arm',[(0,[0,0,0]),(4,[0,0,-1]),(10,[0,0,0])])
+CLIPS['step_dash'] = action(6,
+    body=[(0,[0,0,0]),(1,[19,0,0]),(3,[22,0,0]),(6,[0,0,0])],
+    head=[(0,[0,0,0]),(2,[-16,0,0]),(6,[0,0,0])],
+    right_arm=[(0,[0,0,3]),(2,[35,0,12]),(6,[0,0,3])],
+    left_arm=[(0,[0,0,-3]),(2,[35,0,-12]),(6,[0,0,-3])],
+    right_leg=[(0,[0,0,0]),(2,[-38,0,2]),(6,[0,0,0])],
+    left_leg=[(0,[0,0,0]),(2,[32,0,-2]),(6,[0,0,0])])
+for n,length in [('catch_ready',10),('reflect_ready',20)]:
+    CLIPS[n] = action(length,
+        right_arm=[(0,[-16,-12,6]),(2,[-72,-18,10]),(length,[-72,-18,10])],
+        right_forearm=[(0,[-24,0,0]),(2,[-40,12,0]),(length,[-40,12,0])],
+        body=[(0,[0,-7,0]),(2,[0,-12,0]),(length,[0,-12,0])],
+        head=[(0,[0,0,0]),(length,[-3,7,0])])
+for n in ['catch','reflect','parry']:
+    CLIPS[n] = action(8 if n=='parry' else 6,
+        right_arm=[(0,[-72,-18,10]),(1,[-90,30,12],'easeOutCubic'),(3,[-79,20,8]),(6,[-65,0,6])],
+        right_forearm=[(0,[-40,12,0]),(1,[-12,-12,0]),(3,[-25,0,0]),(6,[-35,0,0])],
+        body=[(0,[0,-12,0]),(1,[0,8,0]),(6,[0,-7,0])])
+# All three Knight attacks retain the left-arm/back pose, including when walking.
+for n, length, contact, wind, strike, twist in [
+    ('combo_1',10,4,[-55,-18,8],[-92,5,0],18),
+    ('combo_2',10,4,[-67,58,24],[-75,-42,12],-22),
+    ('combo_3',14,6,[-105,14,-35],[-48,-8,6],-15)]:
+    CLIPS[n] = action(length,
+        right_arm=[(0,[-16,-12,6]),(contact-1.2,wind,'easeInCubic'),(contact,strike,'easeOutCubic'),(contact+1,strike),(length,[-16,-12,6])],
+        right_forearm=[(0,[-24,0,0]),(contact-1.2,[-42,0,0]),(contact,[-5,0,0]),(contact+1,[-9,0,0]),(length,[-24,0,0])],
+        body=[(0,[0,-7,0]),(contact-1.2,[-4,-twist*.6,0]),(contact,[10 if n=='combo_3' else 3,twist,0]),(contact+1,[7,twist*.8,0]),(length,[0,-7,0])],
+        head=[(0,[0,0,0]),(contact,[-5,-twist*.5,0]),(length,[0,0,0])],
+        right_leg=[(0,[0,0,0]),(contact,[-16,0,3]),(length,[0,0,0])],
+        left_leg=[(0,[0,0,0]),(contact,[10,0,-3]),(length,[0,0,0])])
+# Continuous toss -> extension. The preceding clip ends at the exact kick pose:
+# the final 1.3 ticks deliver the leg, rather than a discontinuity on contact.
+CLIPS['kick_toss'] = action(6,
+    right_arm=[(0,[-16,-12,6]),(2,[-72,-4,8]),(4,[-40,0,16]),(6,[-20,0,22])],
+    right_forearm=[(0,[-24,0,0]),(2,[-42,0,0]),(6,[-14,0,0])],
+    right_leg=[(0,[0,0,0]),(3.8,[-12,0,0]),(4.7,[-36,0,2],'easeInCubic'),(6,[-116,0,4],'easeOutCubic')],
+    left_leg=[(0,[0,0,0]),(6,[8,0,-2])],
+    body=[(0,[0,-7,0]),(4,[-3,-4,0]),(6,[-15,0,0])],
+    head=[(0,[0,0,0]),(6,[-20,0,0])])
+CLIPS['kick'] = action(10,
+    right_leg=[(0,[-116,0,4]),(3,[-116,0,4]),(5,[-58,0,2]),(8,[-8,0,0]),(10,[0,0,0])],
+    left_leg=[(0,[8,0,-2]),(3,[8,0,-2]),(10,[0,0,0])],
+    right_arm=[(0,[-20,0,22]),(3,[-20,0,22]),(10,[-16,-12,6])],
+    right_forearm=[(0,[-14,0,0]),(10,[-24,0,0])],
+    body=[(0,[-15,0,0]),(3,[-15,0,0]),(10,[0,-7,0])],
+    head=[(0,[-20,0,0]),(4,[-28,0,0]),(10,[0,0,0])])
+CLIPS['grab_hold'] = action(6,
+    right_arm=[(0,[-16,-12,6]),(2,[-88,-6,2]),(6,[-86,-6,2])],
+    right_forearm=[(0,[-24,0,0]),(2,[-5,0,0]),(6,[-8,0,0])],
+    body=[(0,[0,-7,0]),(6,[2,-7,0])],
+    head=[(0,[0,0,0]),(6,[3,4,0])])
+CLIPS['throw'] = action(12,
+    right_arm=[(0,[-86,-6,2]),(2,[-100,16,30],'easeInCubic'),(3,[-45,-18,2],'easeOutCubic'),(4,[-28,-22,0]),(12,[-16,-12,6])],
+    right_forearm=[(0,[-8,0,0]),(2,[-25,0,0]),(3,[-4,0,0]),(12,[-24,0,0])],
+    body=[(0,[2,-7,0]),(2,[-8,18,0]),(3,[16,-22,0]),(5,[12,-16,0]),(12,[0,-7,0])],
+    head=[(0,[3,4,0]),(3,[-6,10,0]),(12,[0,0,0])],
+    right_leg=[(0,[0,0,0]),(3,[-22,0,3]),(12,[0,0,0])],
+    left_leg=[(0,[0,0,0]),(3,[14,0,-3]),(12,[0,0,0])])
+CLIPS['dash_behind'] = action(8,
+    right_arm=[(0,[-16,-12,6]),(2,[38,0,12]),(4,[-38,-12,6]),(8,[-16,-12,6])],
+    body=[(0,[0,-7,0]),(2,[24,-14,0]),(4,[6,10,0]),(8,[0,-7,0])],
+    head=[(0,[0,0,0]),(2,[-18,8,0]),(8,[0,0,0])],
+    right_leg=[(0,[0,0,0]),(2,[-38,0,0]),(4,[-12,0,0]),(8,[0,0,0])],
+    left_leg=[(0,[0,0,0]),(2,[32,0,0]),(4,[10,0,0]),(8,[0,0,0])])
+CLIPS['stomp'] = action(14,
+    right_leg=[(0,[0,0,0]),(5,[-68,0,4]),(6.5,[-72,0,4],'easeInCubic'),(8,[5,0,0],'easeOutCubic'),(9,[4,0,0]),(14,[0,0,0])],
+    left_leg=[(0,[0,0,0]),(6,[8,0,-3]),(8,[-9,0,-3]),(14,[0,0,0])],
+    body=[(0,[0,-7,0]),(6,[-6,-7,0]),(8,[18,0,0]),(9,[15,0,0]),(14,[0,-7,0])],
+    head=[(0,[0,0,0]),(6,[6,0,0]),(8,[-12,0,0]),(14,[0,0,0])],
+    right_arm=[(0,[-16,-12,6]),(6,[-24,0,28]),(8,[8,0,18]),(14,[-16,-12,6])])
+pos(CLIPS['stomp'],'body',[(0,[0,0,0]),(6,[0,.6,0]),(8,[0,-.8,0]),(14,[0,0,0])])
+CLIPS['idle_holy_drawn'] = loop({
+    'right_arm': {'rotation': breathe([-26,-10,6],[-27,-10,6])},
+    'right_forearm': {'rotation': breathe([-18,0,0],[-20,0,0])},
+    'left_arm': {'rotation': breathe([0,0,-4],[-1,0,-4])},
+    'left_forearm': {'rotation': still([-8,0,0])}})
+# Draw and sheathe remain 120/20 ticks; right hand crosses to the left hip.
+CLIPS['reid_draw'] = action(120,
+    right_arm=[(0,[-30,24,6]),(8,[-46,38,12]),(80,[-82,22,10]),(112,[-112,-8,8]),(120,[-26,-10,6])],
+    right_forearm=[(0,[-38,-12,0]),(8,[-58,-12,0]),(80,[-42,0,0]),(112,[-16,0,0]),(120,[-18,0,0])],
+    left_arm=[(0,[-18,0,-8]),(8,[-22,-10,-8]),(112,[-22,-10,-8]),(120,[0,0,-4])],
+    left_forearm=[(0,[-8,0,0]),(8,[-32,0,0]),(112,[-32,0,0]),(120,[-8,0,0])],
+    body=[(0,[0,0,0]),(8,[0,-8,0]),(100,[0,-6,0]),(120,[0,0,0])],
+    head=[(0,[0,0,0]),(20,[6,0,0]),(100,[-4,0,0]),(120,[0,0,0])])
+CLIPS['reid_sheathe'] = action(20,
+    right_arm=[(0,[-26,-10,6]),(4,[-112,-8,8]),(16,[-46,38,12]),(20,[-30,24,6])],
+    right_forearm=[(0,[-18,0,0]),(4,[-16,0,0]),(16,[-58,-12,0]),(20,[-38,-12,0])],
+    left_arm=[(0,[0,0,-4]),(4,[-22,-10,-8]),(16,[-22,-10,-8]),(20,[-18,0,-8])],
+    body=[(0,[0,0,0]),(4,[0,-6,0]),(16,[0,-8,0]),(20,[0,0,0])])
+for side in ['right','left']:
+    m = 1 if side=='right' else -1
+    for prefix,length,contact in [('chop',20,7),('melee',6,2.5)]:
+        CLIPS[prefix+'_'+side] = action(length, **{
+            side+'_arm': [(0,[-16,0,3*m]),(contact-1,[-110,15*m,-35*m],'easeInCubic'),(contact,[-50,-30*m,-8*m],'easeOutCubic'),(contact+1,[-38,-42*m,-10*m]),(length,[-16,0,3*m])],
+            side+'_forearm': [(0,[-12,0,0]),(contact-1,[-22,0,0]),(contact,[-5,0,0]),(length,[-12,0,0])],
+            'body': [(0,[0,0,0]),(contact-1,[-4,16*m,0]),(contact,[10,-18*m,0]),(length,[0,0,0])],
+            'head': [(0,[0,0,0]),(contact,[-6,8*m,0]),(length,[0,0,0])]})
+CLIPS['sheath_strike'] = action(12,
+    right_arm=[(0,[-30,24,6]),(4,[-60,55,18],'easeInCubic'),(6,[-82,-44,-8],'easeOutCubic'),(8,[-55,-50,-8]),(12,[-30,24,6])],
+    right_forearm=[(0,[-38,0,0]),(4,[-65,0,0]),(6,[-4,0,0]),(12,[-38,0,0])],
+    body=[(0,[0,0,0]),(4,[0,20,0]),(6,[8,-22,0]),(12,[0,0,0])],
+    left_arm=[(0,[-18,0,-8]),(4,[-10,0,-14]),(12,[-18,0,-8])])
+# Twelve sharp cuts during the 20-tick server fan, with alternating torso drive.
+CLIPS['cut_rain'] = action(20,
+    right_arm=[(t,[-85,(-1)**i*38,(-1)**i*10], 'easeOutCubic') for i,t in enumerate([0]+[round((i+1)*20/12,6) for i in range(12)])],
+    right_forearm=[(0,[-18,0,0]),(2,[-5,0,0]),(18,[-5,0,0]),(20,[-18,0,0])],
+    body=[(t,[4,(-1)**i*12,0]) for i,t in enumerate(range(0,21,2))],
+    left_arm=[(0,[0,0,-4]),(3,[12,0,-16]),(17,[12,0,-16]),(20,[0,0,-4])])
+CLIPS['world_cut'] = action(80,
+    right_arm=[(0,[-26,-10,6]),(10,[-166,8,25]),(13,[-170,8,25],'easeInCubic'),(20,[-42,-8,6],'easeOutCubic'),(80,[-42,-8,6])],
+    left_arm=[(0,[0,0,-4]),(10,[-156,-12,-25]),(13,[-160,-12,-25]),(20,[-34,12,-8]),(80,[-34,12,-8])],
+    right_forearm=[(0,[-18,0,0]),(10,[-35,0,0]),(20,[-4,0,0]),(80,[-4,0,0])],
+    left_forearm=[(0,[-8,0,0]),(10,[-45,0,0]),(20,[-12,0,0]),(80,[-12,0,0])],
+    body=[(0,[0,0,0]),(12,[-8,0,0]),(20,[18,0,0]),(26,[10,0,0]),(80,[10,0,0])],
+    head=[(0,[0,0,0]),(12,[-8,0,0]),(20,[-10,0,0]),(80,[-10,0,0])],
+    right_leg=[(0,[0,0,0]),(20,[-18,0,4]),(80,[-18,0,4])],
+    left_leg=[(0,[0,0,0]),(20,[12,0,-4]),(80,[12,0,-4])])
+CLIPS['world_erasure'] = action(150,
+    right_arm=[(0,[-26,-10,6]),(15,[-115,-12,8]),(30,[-115,-12,8],'easeInCubic'),(40,[-45,-52,-8],'easeOutCubic'),(150,[-45,-52,-8])],
+    right_forearm=[(0,[-18,0,0]),(15,[-38,0,0]),(30,[-38,0,0]),(40,[-8,0,0]),(150,[-8,0,0])],
+    left_arm=[(0,[0,0,-4]),(15,[-58,12,-8]),(30,[-58,12,-8]),(40,[-20,24,-12]),(150,[-20,24,-12])],
+    left_forearm=[(0,[-8,0,0]),(15,[-30,0,0]),(40,[-18,0,0]),(150,[-18,0,0])],
+    body=[(0,[0,0,0]),(15,[0,10,0]),(30,[0,10,0]),(40,[5,-16,0]),(150,[5,-16,0])],
+    head=[(0,[0,0,0]),(30,[-5,-5,0]),(40,[-5,8,0]),(150,[-5,8,0])])
 
-# Dash Behind (8 t): a low vanish lean forward, then he lands turned to the target's
-# back (body twist unwinding) in a guard by the end of the action.
-CLIPS["dash_behind"] = {"loop": "hold_on_last_frame", "animation_length": 0.4, "bones": {
-    "body": {"rotation": {"0.0": [10, 0, 0], "0.08": [28, -14, 0], "0.15": [6, 18, 0], "0.4": [2, 0, 0]}},
-    "head": {"rotation": {"0.0": [-8, 0, 0], "0.08": [-22, 10, 0], "0.15": [-4, -12, 0], "0.4": [0, 0, 0]}},
-    "right_arm": {"rotation": {"0.0": [24, 0, 10], "0.08": [48, 0, 18], "0.15": [-36, -10, 6], "0.4": [-20, 0, 4]}},
-    "right_leg": {"rotation": {"0.0": [-14, 0, 0], "0.08": [-30, 0, 0], "0.15": [-10, 0, 4], "0.4": [-2, 0, 0]}},
-    "left_leg": {"rotation": {"0.0": [16, 0, 0], "0.08": [32, 0, 0], "0.15": [12, 0, -4], "0.4": [2, 0, 0]}},
-}}
+# Second pass: anatomical knees; the hip changes little during the actual thrust.
+CLIPS['kick_toss'] = action(6,
+    right_leg=[(0,[0,0,0]),(2,[-82,0,3]),(4.8,[-110,0,4]),(6,[-125,0,4],'easeOutCubic')],
+    right_shin=[(0,[0,0,0]),(2,[110,0,0]),(4.8,[100,0,0]),(6,[0,0,0],'easeOutCubic')],
+    left_leg=[(0,[0,0,0]),(6,[8,0,-2])],
+    body=[(0,[0,-7,0]),(4,[-8,0,0]),(6,[-15,0,0])],
+    head=[(0,[0,0,0]),(6,[8,0,0])],
+    right_arm=[(0,[-16,-12,6]),(4,[-35,0,18]),(6,[-20,0,22])],
+    right_forearm=[(0,[-24,0,0]),(6,[-14,0,0])])
+CLIPS['kick']['bones']['right_leg']['rotation'] = channel([(0,[-125,0,4]),(1,[-125,0,4]),(4,[-100,0,2]),(8,[-8,0,0]),(10,[0,0,0])])['rotation']
+CLIPS['kick']['bones']['right_shin'] = channel([(0,[0,0,0]),(1,[0,0,0]),(4,[100,0,0]),(8,[20,0,0]),(10,[0,0,0])])
+CLIPS['crouch'] = action(1, body=[(0,[22,0,0])],head=[(0,[-12,0,0])],
+    right_arm=[(0,[-8,0,0])],left_arm=[(0,[-8,0,0])],
+    right_leg=[(0,[-18,0,0])],left_leg=[(0,[-18,0,0])],
+    right_shin=[(0,[26,0,0])],left_shin=[(0,[26,0,0])],
+    right_forearm=[(0,[-14,0,0])],left_forearm=[(0,[-14,0,0])])
+CLIPS['crouch']['loop']=True
+for name in ['walk','run']:
+    for side,phase in [('right',0),('left',math.pi)]:
+        CLIPS[name]['bones'][side+'_shin']=channel([(t,[max(0,math.sin(2*math.pi*t/20+phase))*32,0,0]) for t in range(0,21,2)])
+CLIPS['air_rise']=action(1, right_leg=[(0,[-25,0,4])],left_leg=[(0,[12,0,-4])],
+    right_shin=[(0,[38,0,0])],left_shin=[(0,[20,0,0])],body=[(0,[-6,0,0])])
+CLIPS['air_fall']=action(1, right_leg=[(0,[-9,0,4])],left_leg=[(0,[-9,0,-4])],
+    right_shin=[(0,[16,0,0])],left_shin=[(0,[16,0,0])],body=[(0,[4,0,0])])
 
-# Stomp (14 t): the right leg rises high (0-0.35 s), slams on tick 8 (0.4 s), the body
-# drops into it; the right arm out for balance (the left stays behind the back), recovery by the end (0.7 s).
-CLIPS["stomp"] = {"loop": "hold_on_last_frame", "animation_length": 0.7, "bones": {
-    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-80, 0, 6], "0.35": [-84, 0, 6], "0.4": [6, 0, 0], "0.55": [2, 0, 0], "0.7": [0, 0, 0]}},
-    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [8, 0, -2], "0.4": [-6, 0, 0], "0.7": [0, 0, 0]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.3": [-8, 0, 0], "0.4": [14, 0, 0], "0.55": [8, 0, 0], "0.7": [0, 0, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.3": [6, 0, 0], "0.4": [-10, 0, 0], "0.7": [0, 0, 0]}},
-    "right_arm": {"rotation": {"0.0": [0, 0, 6], "0.3": [-20, 0, 40], "0.4": [10, 0, 24], "0.7": [0, 0, 4]}},
-}}
+CLIPS['idle_holy']['bones']['right_arm']={'rotation':breathe([0,0,3],[-1,0,4])}
+CLIPS['idle_holy']['bones']['right_forearm']={'rotation':still([-8,0,0])}
 
-# Reflect Projectile (Knight, the left arm stays behind the back): the back of the right
-# hand raised across the chest for the 20 t window...
-CLIPS["reflect_ready"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
-    "right_arm": {"rotation": {"0.0": [-30, 0, 0], "0.1": [-95, 30, -20], "1.0": [-92, 28, -18]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.1": [0, -14, 0], "1.0": [0, -12, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.1": [-2, 6, 0], "1.0": [-2, 6, 0]}},
-}}
-# ...and the backhand swat out to the side on each reflection, back to the guard.
-CLIPS["reflect"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bones": {
-    "right_arm": {"rotation": {"0.0": [-92, 28, -18], "0.1": [-88, -46, 30], "0.3": [-92, 20, -10]}},
-    "body": {"rotation": {"0.0": [0, -12, 0], "0.1": [0, 20, 0], "0.3": [0, -6, 0]}},
-    "head": {"rotation": {"0.0": [-2, 6, 0], "0.3": [-2, 4, 0]}},
-}}
+# Draw uses the left hilt hand until the front-of-chest hand-off. The free right
+# hand waits below the face, not at the old overhead extraction pose.
+CLIPS['reid_draw']['bones']['right_arm']=channel([(0,[-16,-10,8]),(80,[-25,-10,8]),(120,[-26,-10,6])])
+CLIPS['reid_draw']['bones']['right_forearm']=channel([(0,[-20,0,0]),(80,[-25,0,0]),(120,[-18,0,0])])
+CLIPS['reid_sheathe']['bones']['right_arm']=channel([(0,[-26,-10,6]),(8,[-25,-10,8]),(20,[-16,-10,8])])
+CLIPS['reid_sheathe']['bones']['right_forearm']=channel([(0,[-18,0,0]),(8,[-25,0,0]),(20,[-20,0,0])])
 
+# Weapon choreography is sampled by the SAME animation core. The empty grip bone
+# owns the complete weapon frame; wrists solve to it, never the reverse. Coordinates
+# here are mirrored model px and model Euler degrees (converted to parser convention).
+HIP = ([-6.2,17.0836745,-1.898819],[90,55,-90])
+READY = ([.5,18.5,-6],[350,0,-50])
+def weapon(clip, rows):
+    pos(clip,'reid_grip',[(t,[-p[0],p[1],p[2]]) for t,p,r in rows])
+    clip['bones'].setdefault('reid_grip',{})['rotation']=keys([(t,[-r[0],-r[1],r[2]]) for t,p,r in rows])
+weapon(CLIPS['idle_holy'],[(0,*HIP),(60,*HIP)])
+weapon(CLIPS['idle_holy_drawn'],[(0,*READY),(60,*READY)])
+# The long blade stays outside the hair envelope. Rotate below the head at X=-8.5,
+# with enough ground clearance, then pass the hilt in front of the chest to the right.
+DRAW=[(0,*HIP),(24,*HIP),(40,[-9.2,25,-4],[90,55,-90]),
+      (52,[-9.2,25,-4],[90,0,0]),(64,[-9.2,25,-4],[180,0,0]),
+      (76,[-6.8,23,-7.5],[270,0,0]),(88,[0,20,-6],[270,0,0]),(94,[0,20,-6],[270,0,0]),
+      (100,[5.3,17,-4],[270,0,0]),(120,*READY)]
+weapon(CLIPS['reid_draw'],DRAW)
+weapon(CLIPS['reid_sheathe'],[(20-t/6,p,r) for t,p,r in reversed(DRAW)])
+weapon(CLIPS['world_cut'],[(0,*READY),(12,[0,20,-6.5],[360,0,0]),
+    (18,[0,20,-6.5],[360,0,0]),(20,[1,20,-6],[260,0,0]),
+    (26,[1,20,-6],[270,0,0]),(80,[1,20,-6],[270,0,0])])
+weapon(CLIPS['world_erasure'],[(0,*READY),(15,[0,20,-6.5],[360,0,0]),
+    (30,[0,20,-6.5],[360,0,0]),(40,[1,20,-6],[260,0,0]),
+    (150,[1,20,-6],[260,0,0])])
+weapon(CLIPS['light_punch'],[(0,*READY),(2,[1,20,-6],[275,0,0]),
+    (4,[1,20,-6],[270,0,0]),(10,*READY)])
+# Preserve the ability's existing timelines, hit events and world effects.
+weapon(CLIPS['sheath_strike'],[(0,*HIP),(3,[0,18,-6],[270,0,0]),(4,[4,18,-7],[270,0,0]),
+    (7,[5,18,-8],[270,0,0]),(12,*HIP)])
+weapon(CLIPS['cut_rain'],[(0,*READY),(4,[0,20,-6],[300,0,0]),
+    (8,[1,19.2,-5.8],[250,0,0]),(12,[0,20,-6],[300,0,0]),
+    (16,[1,19.2,-5.8],[250,0,0]),(20,*READY)])
 
-# Stage 4, Reid draw (6 s, standing still, overlay over the Holy Sword stance; the left hand keeps
-# the sheath at the hip, so the left arm is not animated): the right hand crosses to the hilt at the
-# left hip (0.6 s), pulls the blade up slowly along the sheath axis (to 5.6 s), the final tick lifts
-# it overhead; feet planted wide, the head follows the hand.
-CLIPS["reid_draw"] = {"loop": "hold_on_last_frame", "animation_length": 6.0, "bones": {
-    "right_arm": {"rotation": {"0.0": [0, 0, 3], "0.6": [-28, 30, -38], "2.0": [-45, 26, -30],
-                               "4.0": [-80, 18, -14], "5.6": [-120, 8, 4], "6.0": [-150, 0, 12]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.6": [4, 14, 0], "4.0": [0, 8, 0], "5.6": [-4, 2, 0], "6.0": [-6, 0, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.6": [18, 14, 0], "4.0": [4, 6, 0], "6.0": [-22, 0, 0]}},
-    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [-4, 0, 7], "6.0": [-4, 0, 7]}},
-    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [4, 0, -7], "6.0": [4, 0, -7]}},
-}}
-# Lethal Chop (the kit chop, 20 t = 1 s, the standard 2-keyframe timeline of the animation skill):
-# wind-up out to the side (0.25), the flat sweep across the front (0.35), hold (0.65), back (0.9).
-def chop(side):
-    m = 1 if side == "right" else -1
-    arm = side + "_arm"
-    return {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
-        arm: {"rotation": {"0.0": [0, 0, 3 * m], "0.25": [-95, 60 * m, 20 * m], "0.35": [-95, -55 * m, -10 * m],
-                           "0.5": [-90, -50 * m, -8 * m], "0.65": [-90, -50 * m, -8 * m], "0.9": [0, 0, 3 * m]}},
-        "body": {"rotation": {"0.0": [0, 0, 0], "0.25": [0, 25 * m, 0], "0.35": [0, -25 * m, 0], "0.65": [0, -20 * m, 0], "0.9": [0, 0, 0]}},
-        "head": {"rotation": {"0.0": [0, 0, 0], "0.25": [0, -10 * m, 0], "0.35": [0, 8 * m, 0], "0.9": [0, 0, 0]}},
-    }}
+for side,sign in [('right',1),('left',-1)]:
+    weapon(CLIPS['chop_'+side],[(0,*READY),(6,[0,20,-6],[350,0,-sign*30]),
+        (7,[1,20,-6],[260,0,sign*12]),(9,[1,20,-6],[270,0,0]),(20,*READY)])
 
-
-CLIPS["chop_right"] = chop("right")
-CLIPS["chop_left"] = chop("left")
-# Reid drawn (loop over the Holy Sword stance, right arm only: the left hand stays on the empty
-# sheath at the hip): the sword held low and forward, the arm breathing with it.
-CLIPS["idle_holy_drawn"] = loop({"right_arm": {"rotation": breathe([-40, 0, 10], [-42, 0, 11])}})
-# Sheathe (1 s): the reverse, calm: the blade comes down across to the left hip and slides in.
-CLIPS["reid_sheathe"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
-    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.3": [-45, 26, -30], "0.75": [-28, 30, -38], "1.0": [0, 0, 3]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.5": [3, 12, 0], "1.0": [0, 0, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.5": [14, 12, 0], "1.0": [0, 0, 0]}},
-}}
-
-# Sheath Strike (0.6 s, contact 0.3 s = tick 6): both hands on the sheathed sword at the left hip,
-# wound back, then one flat arc across the front from left to right, the body turning with it.
-CLIPS["sheath_strike"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
-    "right_arm": {"rotation": {"0.0": [0, 0, 3], "0.15": [-60, 40, -20], "0.3": [-85, -50, 10], "0.4": [-80, -60, 12], "0.6": [0, 0, 3]}},
-    "left_arm": {"rotation": {"0.0": [0, 0, -3], "0.15": [-50, 45, 0], "0.3": [-80, -35, 15], "0.4": [-75, -45, 15], "0.6": [0, 0, -3]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, 30, 0], "0.3": [0, -30, 0], "0.4": [0, -32, 0], "0.6": [0, 0, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, -15, 0], "0.3": [0, 12, 0], "0.6": [0, 0, 0]}},
-    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-10, 0, 0], "0.6": [0, 0, 0]}},
-}}
-
-# Rain of Cuts (1.0 s): Reid in the right hand slashes a fast fan, left-right-left, one swing per
-# few cuts (they land 0.2-0.75 s), the body twisting with each; settles back to the drawn hold.
-CLIPS["cut_rain"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
-    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.15": [-100, 50, 20], "0.3": [-95, -55, -10], "0.45": [-100, 50, 20],
-                               "0.6": [-95, -55, -10], "0.75": [-100, 45, 18], "1.0": [-40, 0, 10]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, 20, 0], "0.3": [0, -20, 0], "0.45": [0, 20, 0], "0.6": [0, -20, 0], "0.75": [0, 15, 0], "1.0": [0, 0, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.3": [0, 6, 0], "0.6": [0, -6, 0], "1.0": [0, 0, 0]}},
-}}
-
-
-# World Cut: one second overhead downswing, then a three-second low hold.
-CLIPS["world_cut"] = {"loop": "hold_on_last_frame", "animation_length": 4.0, "bones": {
-    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.5": [-170, 0, 15], "1.0": [-55, 0, 8], "4.0": [-55, 0, 8]}},
-    "left_arm": {"rotation": {"0.0": [0, 0, -3], "0.5": [-160, -12, -15], "1.0": [-50, -12, -8], "4.0": [-50, -12, -8]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "0.5": [-12, 0, 0], "1.0": [12, 0, 0], "4.0": [12, 0, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "0.5": [8, 0, 0], "1.0": [-8, 0, 0], "4.0": [-8, 0, 0]}},
-}}
-
-
-# World Erasure: Reid rises vertically before the face, waits through the first 30 ticks,
-# cuts once down/across over 10 ticks, then holds the completed cut until tick 150.
-CLIPS["world_erasure"] = {"loop": "hold_on_last_frame", "animation_length": 7.5, "bones": {
-    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.75": [-75, -20, 12], "1.5": [-75, -20, 12],
-                                "2.0": [-50, 42, 35], "7.5": [-50, 42, 35]}},
-    "left_arm": {"rotation": {"0.0": [0, 0, -3], "0.75": [-40, 12, -10], "1.5": [-40, 12, -10],
-                               "2.0": [-25, -10, -5], "7.5": [-25, -10, -5]}},
-    "body": {"rotation": {"0.0": [0, 0, 0], "1.5": [0, 0, 0], "2.0": [8, 10, 0], "7.5": [8, 10, 0]}},
-    "head": {"rotation": {"0.0": [0, 0, 0], "1.5": [0, 0, 0], "2.0": [-4, -5, 0], "7.5": [-4, -5, 0]}},
-}}
-
-
-def main():
-    data = {"format_version": "1.8.0", "animations": {}}
-    if os.path.exists(OUT):
-        with open(OUT, encoding="utf-8") as f:
-            data = json.load(f)
-    data["animations"].update(CLIPS)
-    data["animations"] = dict(sorted(data["animations"].items()))
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-        f.write("\n")
-    print("wrote", os.path.relpath(OUT, REPO), "clips:", ", ".join(data["animations"]))
-
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    with open(OUT,'w') as f:
+        json.dump({'format_version':'1.8.0','animations':CLIPS}, f, indent=2)
+        f.write('\n')
+    print('Wrote', len(CLIPS), 'clips')

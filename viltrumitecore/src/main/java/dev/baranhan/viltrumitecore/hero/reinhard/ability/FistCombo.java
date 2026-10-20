@@ -140,7 +140,8 @@ public final class FistCombo implements AbilityHandler {
       if (target != null && Strikes.hit(player, target, damage(step))) {
          Strikes.knockback(target, look, ReinhardRules.COMBO_KNOCKBACK[step]);
          if (!wave(step)) {
-            HeroFx.flash(player, at);
+            HeroFx.flash(player, at, step==0 ? .62F : .78F);
+            HeroFx.hitStop(player,at,1,player.getId(),target.getId());
             ReinhardSounds.playAt(player, at, ReinhardSounds.COMBO_HIT.get(), 1.0F, 1.0F);
          }
       }

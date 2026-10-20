@@ -48,6 +48,12 @@ public final class CarveJobs {
       QUEUES.computeIfAbsent(level.dimension(), key -> new Queue()).submit(job);
    }
 
+   /** Actual queue ownership, including jobs discarded after a failed step. */
+   public static boolean pending(ServerLevel level, Job job) {
+      Queue queue=QUEUES.get(level.dimension());
+      return queue!=null && queue.contains(job);
+   }
+
    public static void tick(ServerLevel level) {
       Queue queue = QUEUES.get(level.dimension());
       if (queue == null || queue.size() == 0) {
@@ -76,6 +82,10 @@ public final class CarveJobs {
 
       public void submit(Job job) {
          this.byPriority.computeIfAbsent(job.priority(), p -> new ArrayDeque<>()).add(job);
+      }
+
+      public boolean contains(Job job) {
+         return byPriority.values().stream().anyMatch(jobs -> jobs.stream().anyMatch(candidate -> candidate==job));
       }
 
       public int size() {

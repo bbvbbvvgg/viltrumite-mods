@@ -11,11 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Light Punch (spec §6.1, Restrained slot 1): a right jab. The ray of
- * {@link ReinhardRules#LIGHT_PUNCH_REACH} from the eyes is cast on tick
- * {@link ReinhardRules#LIGHT_PUNCH_HIT_TICK}; 4 damage and a 0.6 push along the
- * look. No cooldown: the 8-tick action lock. Never breaks blocks.
+/** Ordinary LMB jab outside Knight: server-owned ten-tick animation with one vanilla
+ * held-item attack at tick four. No separate R slot and no environmental destruction.
  */
 public final class LightPunch implements AbilityHandler {
    public static final DestructionLevel DESTRUCTION = DestructionLevel.NONE;
@@ -38,19 +35,20 @@ public final class LightPunch implements AbilityHandler {
    @Override
    public void tick(ServerPlayer player, ReinhardState state) {
       if (state.action.is(ReinhardAbility.LIGHT_PUNCH) && hitsAt(state.action.elapsed())) {
-         hit(player);
+         hit(player,state);
       }
    }
 
-   private static void hit(ServerPlayer player) {
+   private static void hit(ServerPlayer player, ReinhardState state) {
       LivingEntity target = ReinhardTargets.inReach(player, ReinhardRules.LIGHT_PUNCH_REACH);
-      if (target == null || !Strikes.hit(player, target, damage())) {
-         return;
-      }
-
-      Strikes.knockback(target, player.getLookAngle(), ReinhardRules.LIGHT_PUNCH_KNOCKBACK);
+      if (target == null) return;
+      // This is ordinary melee now: keep vanilla held-item/enchantment/attack-strength behaviour,
+      // but resolve it once at the authored contact instead of on mouse-down.
+      state.resolvingMelee=true;
+      try { player.attack(target); } finally { state.resolvingMelee=false; }
       Vec3 at = contact(player, target, ReinhardRules.LIGHT_PUNCH_REACH);
-      HeroFx.flash(player, at);
+      HeroFx.flash(player, at, .42F); // precise contact, not the heavy launch flash
+      HeroFx.blade(player, at.subtract(player.getLookAngle().scale(.24)), at.add(player.getLookAngle().scale(.12)), null);
       ReinhardSounds.playAt(player, at, ReinhardSounds.LIGHT_PUNCH.get(), 0.9F, 1.15F);
    }
 

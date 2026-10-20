@@ -60,8 +60,8 @@ class CutRainTest {
    void cooldown300() {
       ReinhardState state = new ReinhardState();
       CutRain.start(state);
-      assertEquals(300, ReinhardRules.CUT_COOLDOWN);
-      assertEquals(300, state.cooldowns[ReinhardAbility.CUT_RAIN.ordinal()]);
+      assertEquals(8, ReinhardRules.CUT_COOLDOWN);
+      assertEquals(8, state.cooldowns[ReinhardAbility.CUT_RAIN.ordinal()]);
       assertTrue(state.action.is(ReinhardAbility.CUT_RAIN));
       assertEquals(ReinhardRules.CUT_TICKS, state.action.length());
       int cuts = 0;

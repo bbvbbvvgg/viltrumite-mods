@@ -22,6 +22,7 @@ public final class WorldCut implements AbilityHandler {
    /** Runtime boundary: a level adapter supplies carve progress, candidates and the strike. */
    public interface Environment {
       void blast();
+      default boolean pendingWork() { return false; }
       int carveFront();
       Collection<UUID> targets(int through);
       void strike(UUID target);
@@ -30,6 +31,8 @@ public final class WorldCut implements AbilityHandler {
    private final Environment environment;
    private final Set<UUID> hit = new HashSet<>();
    private boolean blasted;
+   private boolean finished;
+   private boolean waveComplete;
    public WorldCut() { this(0, null); }
    private WorldCut(long startTime, Environment environment) {
       this.startTime = startTime; this.environment = environment;
@@ -43,13 +46,19 @@ public final class WorldCut implements AbilityHandler {
    }
    public static int carveFront(@javax.annotation.Nullable WorldCutCarve carve) { return carve == null ? 0 : carve.frontAlong(); }
    public boolean blasted() { return blasted; }
+   public boolean finished() { return finished; }
    public boolean advance(long gameTime) {
       long elapsed = gameTime - startTime;
       if (elapsed < ReinhardRules.WORLD_CUT_BLAST) return false;
       if (!blasted) { environment.blast(); blasted = true; }
       int front = Math.min(ReinhardRules.CUT_LENGTH, Math.max(visualFront(elapsed), environment.carveFront()));
-      for (UUID target : environment.targets(front)) if (hit.add(target)) environment.strike(target);
-      return elapsed >= ReinhardRules.WORLD_CUT_BLAST + ReinhardRules.WORLD_CUT_WAVE_TICKS;
+      if(!waveComplete) {
+         for (UUID target : environment.targets(front)) if (hit.add(target)) environment.strike(target);
+         waveComplete=elapsed >= ReinhardRules.WORLD_CUT_BLAST + ReinhardRules.WORLD_CUT_WAVE_TICKS;
+      }
+      // Queue ownership extends admission protection, NOT the damaging wave's lifetime.
+      finished=waveComplete && !environment.pendingWork();
+      return finished;
    }
    public static void start(ReinhardState state) {
       state.cooldowns[ReinhardAbility.WORLD_CUT.ordinal()] = ReinhardRules.WORLD_CUT_COOLDOWN;
@@ -58,6 +67,7 @@ public final class WorldCut implements AbilityHandler {
    @Override public boolean tryStart(ServerPlayer player, ReinhardState state) {
       if (!state.reid.drawn()) return false;
       ServerLevel level = player.serverLevel();
+      if (WorldCutManager.get(level).size()>0) return false;
       WorldCutShape shape = new WorldCutShape(player.position(), Vec3.directionFromRotation(0, player.getYRot()), level.getGameTime());
       int[] surface = new int[ReinhardRules.CUT_LENGTH];
       for (int a=0; a<surface.length; a++) {
@@ -97,6 +107,7 @@ public final class WorldCut implements AbilityHandler {
          carve=new WorldCutCarve(shape,surface,level.getMinBuildHeight(),level.getMaxBuildHeight(),level.getWorldBorder()::isWithinBounds);
          CarveJobs.submit(level,carve);
       }
+      public boolean pendingWork() { return carve!=null && CarveJobs.pending(level,carve); }
       public int carveFront() { return WorldCut.carveFront(carve); }
       public Collection<UUID> targets(int through) {
          candidates.clear();

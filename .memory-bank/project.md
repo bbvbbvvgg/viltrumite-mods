@@ -146,7 +146,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - Knight HUD: `PanelStyle.drawAttachments`; mode icons sit LEFT of the ability bar (the bar is 5 px from the screen edge). Icons: `tools/assets/make_reinhard_icons.py --assets <unpacked reinhard_assets>`, sources in `tools/assets/reinhard_sources.md`.
 ## Reinhard stage 1b (visuals, first jar)
 - Model: `geo/reinhard/{reinhard,reinhard_arms,sheath,blade}.geo.json` from the archive via `tools/assets/convert_reinhard.py` → `tools/obj2geo.py` (rotated boxes become cube rotation/pivot; sword OBJs: drop `dragon_glow` overlay faces, vt from the top). Sword origin = hilt guard; sheathed blade offset (0, −14, 0) (`ReinhardAssets.SHEATHED_OFFSET` + bone `sheathed_offset`).
-- `ReinhardRenderer` (RenderPlayerEvent.Pre, always cancels for Reinhard, invisible included) + `ReinhardPoses` (pure) + `StanceBlend` + `ReinhardSword` (left hip, hilt up, scale 0.35, tilt Z −20 / X 50) + `ReinhardAuraVfx` (Knight wind motes, Holy Sword gold sparks). Clips: `tools/assets/reinhard_walk2anim.py` (walk = vanilla swing, 0.6662/(2π) s per walk unit), `tools/assets/make_reinhard_clips.py` (stances, knight hold, crouch/sit additive, swim).
+- `ReinhardRenderer` (RenderPlayerEvent.Pre, always cancels for Reinhard, invisible included) + `ReinhardPoses` (pure) + `StanceBlend` + `ReinhardSword` (left hip, hilt up; quality-rework mount is a candidate, not native-accepted) + `ReinhardAuraVfx` (Knight wind motes, Holy Sword gold sparks). Clips: `tools/assets/reinhard_walk2anim.py` (walk = vanilla swing, 0.6662/(2π) s per walk unit), `tools/assets/make_reinhard_clips.py` (stances, knight hold, crouch/sit additive, swim).
 - Shared additions: `AnimationController.overlay(…, weight)` / `additive(…)`, `HeroHeadPreviews` (race screen heads; fallback = flat skin face), `EntityRendererNameTagInvoker`, `AlwaysVisibleOffhandMixin` term `ReinhardFirstPerson.wantsOffhand`.
 ## Reinhard stage 2 (blessings, core 1.27.0)
 - Blessings are passive, every mode (`BlessingModeMatrixTest`: no blessing rule takes `ReinhardMode`). Pure rules in `hero/reinhard/blessing/` (`Phoenix`, `Adaptation`, `Parry`, `ArrowWard`, `CloudStep`, `WindReading`, `Detox`, `ManaAbsorption`), numbers in `ReinhardRules`, visual constants in client classes. `SHIPPED_STAGE = 2` (no abilities yet, all are stage ≥ 3).
@@ -196,3 +196,46 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - §10.1 covers only 16 output recipes, not every one of the 33 Stage 6 events. Two outputs are license-blocked, 12 extra cues have no selected source, and five events reuse §10.2. Do not equate 14 final recordings with a fully accepted hero. No native listening/server/GLSL/network/save/TPS proof in Stage 7; retain SESSION/PR manual gates and Stage 6 known limitations.
 
 - Attribution-required audio must carry author/source/license/change notices in the standalone core JAR. `processResources` copies maintained credits/source tables into `META-INF/credits/`; `mods.toml` exposes those audio exceptions without replacing the code license. A root-only CREDITS file is not a distribution guarantee.
+
+
+## Reinhard rendering invariants discovered during the quality rework
+- Stateless AnimationController seek/overlay/blend sample raw seconds without loop wrapping; a LOOP asset alone does not keep walking/breathing alive. The bug was verified with actual renderer composition beyond the first cycle. Keep Reinhard-only sampling in ReinhardPlayback until a deliberate shared-core change.
+- Sword archive coordinates: the sheath assembly is rotated Z 180 to put the hilt up. Therefore extracting the blade toward the hilt subtracts from its local Y offset; adding to Y pushes it farther into the sheath. Native hand-transfer alignment is still unverified.
+- A PULL lease owns control precedence, not hand attachment. Explicit held-target ownership now goes through HeroDefinition. Server movement suppression must run on the server thread; per-tick connection teleports restart player prediction. Use a shared neck anchor and one release correction. Native network smoothness remains unverified.
+
+- FP geo/item conversion: PlayerGeoLayer uses vanilla arm frame → negative vanilla pivot → Y +1.5 → scale(-1,-1,1). Follow the geo shoulder/elbow from that frame, then HeldItemAnchor.local. Attaching directly to ModelPart ignores the elbow. Neutral-grip matrix equality is verified; native visual acceptance is not.
+
+## Hero keyboard edge ownership
+- heroInputSlots lists all abilities across pages, not only six equipped keys. Do not cap its iteration to a fixed array size. Reinhard's late Holy Sword inputs were silently dropped by the old eight-slot cache.
+- Track edges by ability ID and context (hero, player session, active page and bindings). Seed held keys after a context/focus switch; do not cast the new ability on the old held physical key. Release already-sent channels on same-hero page/focus changes. Never replay old-player or old-hero edges into a new owner.
+
+
+## Reinhard second-pass invariants (core 1.34.0)
+- Retired R actions remain enum IDs for wire stability, but are not owned, shown
+  or input-routed. Restrained/Holy ordinary LMB has a server contact timeline;
+  Knight LMB is one step per press plus one next-hit buffer. Stray vanilla entity
+  hit packets are rejected; only the ordinary contact callback admits Player.attack.
+- HeroDefinition movement/mouse policy hooks default to legacy behaviour. Cloud
+  Step opts into bounded forward steering through BOTH predicted and server seams.
+- Pose overlays must preserve absent channels; crouch/shoulders/head share waist
+  ancestry. Do not subtract the transient shared HitStop counter from Reinhard's
+  authored action clock. A raw item-frame equality can still put a grip above the
+  shoulder: constrain to measured native glove geometry, with an elbow pole.
+- Active heavy-scene locks are distinct from short cooldowns. World Cut guard
+  follows actual queue ownership (including failed-job removal), not a stale work
+  counter. HUD uses the same level/server scene admission flags.
+- Build/CPU geometry checks are not native proof. Client GLFW init and the EULA
+  barrier still prevent gameplay/server acceptance in this environment.
+
+- Reinhard grip-point equality hid two visual defects: wrong wrist roll and a
+  blade path through hair. Resting palm contact must not inherit sheath roll.
+  TP equipment now has an authored grip bone in the existing animation core;
+  wrists follow its reachable path, then rendering reuses those exact frames.
+  Full-mesh CPU checks include intermediate crouch/draw/action frames. They do
+  not certify native visuals. A belt carrier bridges the coat flare.
+
+- Reinhard's TP reid_grip frame and FP camera held-item frame use different roll bases. A universal local-Y quarter-turn exposes the wrong TP edge. Test the blade face normal and inspect all three views. Two-hand targets must be distinct and reachable; pronate the forearm about elbow-to-palm rather than dislocate the wrist. Do not alter the sheath to correct a drawn-blade orientation.
+
+- Reinhard drawn blade orientation: native longitudinal axis is Y, width X, broad normal Z. In the raised TP World Erasure pose the face is already 10 degrees from front. A +90-degree Y roll exposes the edge; it does not create the anime diamond silhouette. The native asset is a narrow straight blade. Fixed-pose quad cross-sections distinguish a shape limit from an orientation bug. Do not resize or repose to conceal it; get owner approval before changing the blade shape.
+
+- Owner superseded the wide-blade direction: cancelled the +35% silhouette and explicitly selected the bottom +90-degree axial diagnostic variant (front edge, broad face at the side). Keep the original blade asset, original body/hand poses and sheath. TP rolls only its final free-blade frame after the existing grip solve; FP keeps its existing roll.

@@ -22,8 +22,8 @@ public final class ReinhardAbilities {
    public static final int CHOP_INDEX = 13;
    /** Full layout of every stage: page = mode, 6 slots per page. */
    public static final String[] LOADOUT = {
-      "reinhard:light_punch", "reinhard:step_dash", "reinhard:catch", "", "", "",
-      "reinhard:fist_combo", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
+      "", "reinhard:step_dash", "reinhard:catch", "", "", "",
+      "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
       "reinhard:reid", CHOP, "reinhard:sheath_strike", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
    };
 
@@ -60,6 +60,10 @@ public final class ReinhardAbilities {
       return abilityId != null && !abilityId.isEmpty() && Arrays.asList(LOADOUT).contains(abilityId) && shipped(abilityId);
    }
 
+   public static boolean active(ReinhardAbility ability) {
+      return ability.shipped() && ability != ReinhardAbility.LIGHT_PUNCH && ability != ReinhardAbility.FIST_COMBO;
+   }
+
    private static boolean shipped(String id) {
       if (id.isEmpty()) {
          return false;
@@ -70,7 +74,7 @@ public final class ReinhardAbilities {
       }
 
       ReinhardAbility ability = byId(id);
-      return ability != null && ability.shipped();
+      return ability != null && active(ability);
    }
 
    /**
@@ -78,14 +82,14 @@ public final class ReinhardAbilities {
     * {@code ReinhardDashBehindC2SPacket} (target + spot) from {@code DashBehindClient} instead.
     */
    public static String[] inputSlots() {
-      return Arrays.stream(ReinhardAbility.values()).filter(ReinhardAbility::shipped).filter(a -> a != ReinhardAbility.DASH_BEHIND)
+      return Arrays.stream(ReinhardAbility.values()).filter(ReinhardAbilities::active).filter(a -> a != ReinhardAbility.DASH_BEHIND)
          .map(ReinhardAbility::id).toArray(String[]::new);
    }
 
    @Nullable
    public static HeroAction actionFor(@Nullable String abilityId) {
       ReinhardAbility ability = byId(abilityId);
-      return ability != null && ability.shipped() ? ability.action() : null;
+      return ability != null && active(ability) ? ability.action() : null;
    }
 
    @Nullable
@@ -96,7 +100,7 @@ public final class ReinhardAbilities {
       }
 
       ReinhardAbility ability = byId(abilityId);
-      return ability == null || !ability.shipped() ? null : iconOf(ability);
+      return ability == null || !active(ability) ? null : iconOf(ability);
    }
 
    /** Stage 4: the Reid slot shows the drawn blade while Reid is out of the sheath (drawing, drawn, sheathing). */
@@ -119,7 +123,7 @@ public final class ReinhardAbilities {
    public static List<ViltrumiteAbility> panelAbilities() {
       List<ViltrumiteAbility> list = new ArrayList<>();
       for (ReinhardAbility ability : ReinhardAbility.values()) {
-         if (!ability.shipped()) {
+         if (!active(ability)) {
             continue;
          }
 
@@ -143,6 +147,7 @@ public final class ReinhardAbilities {
 
    /** Pure: cooldown running, or the slot condition of Reid's phase (from the snapshot flags) fails. */
    public static boolean slotGrey(ReinhardAbility ability, int cooldown, int heroFlags) {
-      return cooldown > 0 || !dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.allows(ability, dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.phaseOf(heroFlags));
+      return !active(ability) || (ability==ReinhardAbility.WORLD_CUT && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_CUT_ACTIVE))
+         || (ability==ReinhardAbility.WORLD_ERASURE && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_ERASURE_ACTIVE)) || cooldown > 0 || !dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.allows(ability, dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.phaseOf(heroFlags));
    }
 }

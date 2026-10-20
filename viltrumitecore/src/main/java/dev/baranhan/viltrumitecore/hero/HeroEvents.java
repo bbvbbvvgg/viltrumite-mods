@@ -139,7 +139,7 @@ public final class HeroEvents {
 
    @SubscribeEvent
    public static void onAttackEntity(AttackEntityEvent event) {
-      if (anchored(event.getEntity())) {
+      if (anchored(event.getEntity()) || !HeroRegistry.get(event.getEntity()).allowsVanillaAttack(event.getEntity())) {
          event.setCanceled(true);
       }
    }

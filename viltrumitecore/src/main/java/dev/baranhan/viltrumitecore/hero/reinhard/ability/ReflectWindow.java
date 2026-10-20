@@ -56,7 +56,10 @@ public final class ReflectWindow implements AbilityHandler {
    public static void onReflect(ServerPlayer player, ReinhardState state, Projectile projectile) {
       snap(state);
       Vec3 hand = CatchWindow.hand(player);
-      HeroFx.flash(player, hand);
+      HeroFx.flash(player, hand, .65F);
+      Vec3 returning = projectile.getOwner() instanceof net.minecraft.world.entity.LivingEntity shooter
+         ? shooter.getEyePosition().subtract(hand).normalize() : projectile.getDeltaMovement().normalize().scale(-1);
+      HeroFx.blade(player,hand,hand.add(returning.scale(2)),null);
       HeroFx.airTrail(player, projectile);
       ReinhardSounds.playAt(player, hand, ReinhardSounds.REFLECT.get(), 1.0F, 0.7F);
    }

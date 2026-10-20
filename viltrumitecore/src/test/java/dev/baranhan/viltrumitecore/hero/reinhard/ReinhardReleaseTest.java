@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 class ReinhardReleaseTest {
-   @Test void soundContentShipsAsCore1310() throws Exception {
+   @Test void inputBlockerUsesNewCorePatchVersion() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.31.0", version.group(1), "Stage 7 adds sound content, not flight/gameplay changes");
+      assertEquals("1.34.2", version.group(1), "Inward sheath attachment is a core patch; flight stays unchanged");
    }
 }

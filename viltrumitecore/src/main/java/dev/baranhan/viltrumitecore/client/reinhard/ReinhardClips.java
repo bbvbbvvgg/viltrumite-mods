@@ -71,10 +71,11 @@ public final class ReinhardClips {
    /** Overlay clip and its time for the synced action; null = no overlay. {@code ticks} = elapsed + partial tick. */
    @Nullable
    public static ReinhardPoses.Clip clip(ReinhardAbility ability, int phase, double ticks) {
+      if (ability == null) return null;
       double seconds = ticks / 20.0;
       return switch (ability) {
-         case CATCH -> new ReinhardPoses.Clip(phase == PHASE_SNAP ? CATCH : CATCH_READY, seconds);
-         case REFLECT -> new ReinhardPoses.Clip(phase == PHASE_SNAP ? REFLECT : REFLECT_READY, seconds);
+         case CATCH -> new ReinhardPoses.Clip(phase == PHASE_SNAP && ticks < ReinhardRules.CATCH_SNAP_TICKS ? CATCH : CATCH_READY, seconds);
+         case REFLECT -> new ReinhardPoses.Clip(phase == PHASE_SNAP && ticks < ReinhardRules.REFLECT_SNAP_TICKS ? REFLECT : REFLECT_READY, seconds);
          case GRAB_THROW -> new ReinhardPoses.Clip(phase == PHASE_SNAP ? THROW : GRAB_HOLD, seconds);
          case FIST_COMBO -> new ReinhardPoses.Clip(phase <= 0 ? COMBO_1 : phase == 1 ? COMBO_2 : COMBO_3, seconds);
          // The kick clip starts at the contact tick; before it the toss plays.

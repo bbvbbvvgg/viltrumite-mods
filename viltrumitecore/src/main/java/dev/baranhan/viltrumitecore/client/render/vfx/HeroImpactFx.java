@@ -110,8 +110,9 @@ public final class HeroImpactFx {
             addShake(listener, packet.origin, 0.25F + 0.35F * packet.power, 10.0);
          }
          case HeroFxS2CPacket.FLASH -> {
-            FLASHES.add(new Flash(packet.origin, 1.4F, 6));
-            addShake(listener, packet.origin, 0.6F, 20.0);
+            float power=Math.max(.1F,Math.min(2,packet.power));
+            FLASHES.add(new Flash(packet.origin, 1.4F*power, 6));
+            addShake(listener, packet.origin, 0.6F*power, 20.0);
          }
          case HeroFxS2CPacket.HIT_STOP -> {
             for (int id : dev.baranhan.viltrumitecore.hero.fx.HeroFx.decodeIds(packet.points)) {

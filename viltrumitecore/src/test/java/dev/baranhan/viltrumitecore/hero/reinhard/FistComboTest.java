@@ -27,8 +27,8 @@ class FistComboTest {
    @Test
    void damageSequence10_10_16() {
       assertArrayEquals(new float[]{10.0F, 10.0F, 16.0F}, ReinhardRules.COMBO_DAMAGE);
-      assertArrayEquals(new int[]{3, 3, 5}, ReinhardRules.COMBO_HIT_TICKS);
-      assertArrayEquals(new int[]{8, 8, 12}, ReinhardRules.COMBO_STEP_TICKS);
+      assertArrayEquals(new int[]{4, 4, 6}, ReinhardRules.COMBO_HIT_TICKS);
+      assertArrayEquals(new int[]{10, 10, 14}, ReinhardRules.COMBO_STEP_TICKS);
       assertEquals(3.5, ReinhardRules.COMBO_REACH);
       ReinhardState state = new ReinhardState();
       for (int step = 0; step < 3; step++) {
