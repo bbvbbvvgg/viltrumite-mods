@@ -41,3 +41,13 @@ RMB must not claim block interactions, held items, allies or invalid targets. Do
 
 ## Acceptance reporting
 Track each stage separately. A draft/incomplete implementation is not the requested full rework. Record failed/unavailable checks and do not ship an unbuilt JAR as final.
+
+## Continuation: close the draft gates
+- Continue PR41, retaining PR40 ancestry. Integrate Unibeam/PulseUnibeam through a narrow generic server ray-defense clip; truncate real damage and synced endpoint, not just a visual beam.
+- Use a server-owned local palm target in Reinhard's existing snapshot actionTarget and a free-hand bit. Solve the existing arm chain after weapon constraints; keep weapon-owning hand unchanged. Client final-hand contact cache feeds beam endpoints and held-arrow rendering in FP/TP, never C2S gameplay authority.
+- Classify blast/splash as bracing, not projectile reflection. Inventory attacks by execution path and add source/behavior regression coverage. Beam refresh runs each tick, damage cadence unchanged.
+- Add deterministic final-bone/matrix checks for defense and recovery, explicit FP evade, physical-arrow pickup regression, bounded concurrent DONE/tail audio with mastered PCM headroom.
+- Add opt-in phase telemetry and run actual dedicated-server/client scenes, including two jobs. Report true server ticks/wall time and software-render FPS separately from the synthetic queue model. Capture actual audio output if available; digital loopback is not human listening.
+
+## Implemented continuation
+Unibeam/Pulse and execution-path attack matrix, free-hand final contact and FP evade, final-bone/head/weapon/wire/projection regressions, corrected physical-arrow pickup order, mastered/crossfaded DONE audio, tight-row exact raster, real single/concurrent carve/DONE/MSPT/FPS and OpenAL loopback checks are implemented. Native testing found and corrected pickup reset and camera/GUI projection bugs; do not label an earlier pass as final acceptance. See the updated report and machine-readable evidence. Human audio approval, GPU/shader acceptance and exhaustive movement/input combinations remain explicitly separate, not missing code hidden by green tests.
