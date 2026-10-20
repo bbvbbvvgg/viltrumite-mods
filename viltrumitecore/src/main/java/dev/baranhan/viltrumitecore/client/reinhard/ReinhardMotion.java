@@ -7,6 +7,10 @@ import java.util.WeakHashMap;
 final class ReinhardMotion {
    private static final Map<Object,State> STATES=new WeakHashMap<>();
    private ReinhardMotion() {}
+   /** Rise and fall share the same filter as their complementary ground weight. */
+   static float ground(float[] weights) {
+      return 1-Math.max(0,Math.min(1,weights[2]+weights[3]));
+   }
    static float[] sample(Object owner,boolean crouch,boolean sprint,boolean air,boolean rising,long now) {
       float[] target={crouch?1:0,sprint?1:0,air&&rising?1:0,air&&!rising?1:0};
       State s=STATES.computeIfAbsent(owner,o->new State(now,target.clone()));

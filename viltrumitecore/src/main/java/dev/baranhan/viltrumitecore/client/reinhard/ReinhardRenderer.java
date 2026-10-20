@@ -116,7 +116,8 @@ public final class ReinhardRenderer {
          !player.onGround() && !player.isPassenger() && swim<.1F && !player.isFallFlying(),player.getDeltaMovement().y>0,Util.getNanos());
       applyClips(body, pose, StanceBlend.mix(weights, ReinhardView.mode(snapshot)), weights[ReinhardMode.KNIGHT.ordinal()], swim,
          player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT, parry, ReinhardPoses.reidClip(reidPhase, reidTicks),
-         player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core ? ReinhardPoses.chopClip(core.getChopTicks(), core.isLeftChop(), partialTick) : null, motion);
+         player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core ? ReinhardPoses.chopClip(core.getChopTicks(), core.isLeftChop(), partialTick) : null,
+         motion, snapshot.actionLength());
       applyMelee(body, player, snapshot, partialTick);
       applyHead(body, player, partialTick);
       ReinhardRecovery.body(player,body,recoveryKey(snapshot),Util.getNanos());
@@ -319,6 +320,11 @@ public final class ReinhardRenderer {
 
    static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight, float swim, double swimSeconds,
       ParryPulse.Sample parry, @Nullable ReinhardPoses.Clip reid, @Nullable ReinhardPoses.Clip chop, float[] motion) {
+      applyClips(model,pose,mix,knightWeight,swim,swimSeconds,parry,reid,chop,motion,-1);
+   }
+
+   static void applyClips(BakedGeoModel model, ReinhardPoses.Pose pose, StanceBlend.Mix mix, float knightWeight, float swim, double swimSeconds,
+      ParryPulse.Sample parry, @Nullable ReinhardPoses.Clip reid, @Nullable ReinhardPoses.Clip chop, float[] motion, int actionLength) {
       Animation to = clip(ReinhardPoses.stance(mix.to()));
       if (mix.weights()!=null) {
          model.resetBones(); float sum=0;
@@ -337,11 +343,11 @@ public final class ReinhardRenderer {
 
       Animation walk = AnimCache.animation(ReinhardAssets.ANIMATIONS, WALK);
       if (walk != null) {
-         ReinhardLayers.overlay(walk, model, ReinhardPlayback.time(walk, pose.walkSeconds()), pose.walk());
+         ReinhardLayers.overlay(walk, model, ReinhardPlayback.time(walk, pose.walkSeconds()), pose.walk()*ReinhardMotion.ground(motion));
       }
 
       Animation run=AnimCache.animation(ReinhardAssets.ANIMATIONS,"run");
-      if(run!=null) ReinhardLayers.overlay(run,model,ReinhardPlayback.time(run,pose.walkSeconds()),pose.walk()*motion[1]);
+      if(run!=null) ReinhardLayers.overlay(run,model,ReinhardPlayback.time(run,pose.walkSeconds()),pose.walk()*motion[1]*ReinhardMotion.ground(motion));
       for(int i=2;i<4;i++) {
          Animation air=AnimCache.animation(ReinhardAssets.ANIMATIONS,i==2?"air_rise":"air_fall");
          if(air!=null) ReinhardLayers.overlay(air,model,0,motion[i]);
@@ -378,7 +384,7 @@ public final class ReinhardRenderer {
       ReinhardPoses.Clip overlay = pose.overlay();
       if (overlay != null) {
          Animation clip = AnimCache.animation(ReinhardAssets.ANIMATIONS, overlay.animation());
-         if (clip != null) {
+         if (clip != null && !applyWindow(model,clip,overlay.seconds(),actionLength,false)) {
             boolean held = overlay.animation().equals(ReinhardClips.GRAB_HOLD)
                || overlay.animation().equals(ReinhardClips.KICK_TOSS);
             boolean continuation = overlay.animation().equals(ReinhardClips.CATCH)
@@ -392,7 +398,8 @@ public final class ReinhardRenderer {
 
       // Draw/sheathe override an action; DRAWN idle is a base below the action.
       if (reidClip != null && !drawnIdle) {
-         ReinhardLayers.overlay(reidClip, model, ReinhardPlayback.time(reidClip, reid.seconds()));
+         ReinhardLayers.overlay(reidClip, model, ReinhardPlayback.time(reidClip, reid.seconds()),
+            ReinhardPlayback.reidWeight(reid.animation().equals(ReinhardClips.REID_DRAW),reid.seconds(),reidClip.lengthSeconds()),"reid_grip");
       }
 
       // Stage 4: Lethal Chop (model mixins do not run for the replaced body).
@@ -407,6 +414,37 @@ public final class ReinhardRenderer {
       }
       Animation crouch=AnimCache.animation(ReinhardAssets.ANIMATIONS,CROUCH);
       if(crouch!=null && motion[0]>0) AnimationController.additive(crouch,model,0,motion[0]);
+   }
+
+   /** Identical guard composition for the body and the camera elbows. Contacts stay sharp. */
+   static boolean applyWindow(BakedGeoModel model, Animation clip, double seconds, int actionLength, boolean elbowsOnly) {
+      String ready = switch (clip.name()) {
+         case ReinhardClips.CATCH, ReinhardClips.CATCH_READY -> ReinhardClips.CATCH_READY;
+         case ReinhardClips.REFLECT, ReinhardClips.REFLECT_READY -> ReinhardClips.REFLECT_READY;
+         default -> null;
+      };
+      if (ready == null) return false;
+      boolean snap = !clip.name().equals(ready);
+      double length = actionLength > 0 ? actionLength/20.0
+         : ready.equals(ReinhardClips.CATCH_READY)
+            ? dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.CATCH_WINDOW/20.0
+            : dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.REFLECT_WINDOW/20.0;
+      float weight = ReinhardPlayback.window(seconds,length,snap);
+      if (snap) {
+         // Recover to the live guard, never idle just before ready replaces the snap.
+         Animation guard = AnimCache.animation(ReinhardAssets.ANIMATIONS,ready);
+         if (guard != null) ReinhardLayers.overlay(elbowsOnly ? forearms(guard) : guard,model,Math.max(.1,seconds),weight);
+         weight *= ReinhardPlayback.exit(seconds,clip.lengthSeconds());
+      }
+      ReinhardLayers.overlay(elbowsOnly ? forearms(clip) : clip,model,ReinhardPlayback.time(clip,seconds),weight);
+      return true;
+   }
+
+   private static Animation forearms(Animation clip) {
+      java.util.Map<String,Animation.BoneAnimation> elbows=new java.util.HashMap<>();
+      for(String name:new String[]{"right_forearm","left_forearm"})
+         if(clip.boneAnimations().containsKey(name)) elbows.put(name,clip.boneAnimations().get(name));
+      return new Animation(clip.name(),clip.lengthSeconds(),clip.loopType(),elbows,java.util.List.of());
    }
 
    /** Vanilla melee still owns damage, reach, cooldown, mining and item interactions. */
@@ -486,7 +524,8 @@ public final class ReinhardRenderer {
 
    static ReinhardPoses.Pose pose(AbstractClientPlayer player, HeroPublicSnapshot snapshot, float partialTick) {
       boolean sitting = player.isPassenger() && player.getVehicle() != null && player.getVehicle().shouldRiderSit();
-      float swing = sitting || !player.onGround() ? 0.0F : player.walkAnimation.speed(partialTick);
+      // Air weights cross-fade locomotion; onGround must not hard-cut a moving limb.
+      float swing = sitting ? 0.0F : player.walkAnimation.speed(partialTick);
       ReinhardPoses.Input input = new ReinhardPoses.Input(ReinhardView.mode(snapshot), snapshot.heroFlags(), snapshot.actionId(), snapshot.actionElapsed(),
          snapshot.actionLength(), partialTick, swing, player.walkAnimation.position(partialTick), (player.tickCount + partialTick) / 20.0, player.getPose(), sitting,
          snapshot.variant(), 0);
@@ -499,6 +538,10 @@ public final class ReinhardRenderer {
 
    private static void poseFirstPersonElbows(BakedGeoModel geo, AbstractClientPlayer player, HeroPublicSnapshot snapshot) {
       geo.resetBones();
+      for (String name : new String[]{"right_forearm","left_forearm"}) {
+         GeoBone elbow=geo.getBone(name);
+         if (elbow!=null) elbow.rotX=(float)Math.toRadians(7);
+      }
       ReinhardPoses.Clip action = snapshot.actionId()<0 ? null : ReinhardClips.clip(ReinhardPoses.action(snapshot.actionId()),snapshot.variant(),
          actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime()));
       if (action == null) {
@@ -508,22 +551,15 @@ public final class ReinhardRenderer {
       }
       if (action != null) {
          Animation clip = AnimCache.animation(ReinhardAssets.ANIMATIONS,action.animation());
-         if (clip != null) {
-            float fade = (snapshot.actionId()==ReinhardAbility.CATCH.ordinal() || snapshot.actionId()==ReinhardAbility.REFLECT.ordinal())
-               ? (float)Math.max(0,Math.min(1,(snapshot.actionLength()-actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime()))/2)) : 1;
-            java.util.Map<String,Animation.BoneAnimation> elbows=new java.util.HashMap<>();
-            for(String name:new String[]{"right_forearm","left_forearm"})
-               if(clip.boneAnimations().containsKey(name)) elbows.put(name,clip.boneAnimations().get(name));
-            Animation forearms=new Animation(clip.name(),clip.lengthSeconds(),clip.loopType(),elbows,java.util.List.of());
-            ReinhardLayers.overlay(forearms,geo,ReinhardPlayback.time(clip,action.seconds()),fade);
+         if (clip != null && !applyWindow(geo,clip,action.seconds(),snapshot.actionLength(),true)) {
+            float fade = 1;
+            if (action.animation().equals(ReinhardClips.REID_DRAW) || action.animation().equals(ReinhardClips.REID_SHEATHE))
+               fade=ReinhardPlayback.reidWeight(action.animation().equals(ReinhardClips.REID_DRAW),action.seconds(),clip.lengthSeconds());
+            ReinhardLayers.overlay(forearms(clip),geo,ReinhardPlayback.time(clip,action.seconds()),fade);
          }
       }
       // Idle has a relaxed elbow; action channels replace it. Arms keep the authored UVs.
       for (GeoBone bone : geo.topLevelBones()) bone.scaleX=1.13F;
-      if (action == null) for (String name : new String[]{"right_forearm","left_forearm"}) {
-         GeoBone elbow=geo.getBone(name);
-         if (elbow!=null) elbow.rotX=(float)Math.toRadians(7);
-      }
       ReinhardRecovery.arms(player,geo,recoveryKey(snapshot),Util.getNanos());
    }
 

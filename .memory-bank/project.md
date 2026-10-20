@@ -258,3 +258,11 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   its explicit index is correct. A capped decoder must locate trailing fields
   using the declared wire count, not the retained local count. Older peers can
   misread those fields; reject them when increasing the supported capacity.
+
+- Dense gait keys plus per-segment ease-in/out produce near-zero velocity at
+  intermediate swing points, even if all key poses and loop endpoints are right.
+  Reinhard's velocity regression samples the production parser, not just JSON.
+- A snap -> ready switch needs the guard underneath the outgoing snap. Fading
+  only the snap to zero reveals idle and creates a jump when ready replaces it.
+- Reid body fades must exclude reid_grip, which owns the exact weapon path.
+  FP camera offsets and elbows need their own sheathed-boundary envelopes.

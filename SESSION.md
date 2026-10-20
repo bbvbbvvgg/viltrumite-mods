@@ -361,3 +361,24 @@ legacy16 codec, capped40 tail, negative/INT_MAX count и protocol4 gate.
 Native runClient повторён на hotfix: GLFW init barrier до загрузки мира, вход в
 старый мир и multiplayer НЕ проверены. Прежняя зелёная сборка1.35.0 не доказывала
 snapshot runtime: этот coverage gap признан и закрыт production-composer тестом.
+
+## 2026-10-20 — Плавность анимаций Рейнхарда (core 1.35.2)
+
+Ветка `fix/reinhard-animation-continuity` от snapshot hotfix `2df721d`.
+Убраны остановки на промежуточных ключах ходьбы/бега: исходные траектории
+запечены в 80 linear-интервалов на цикл. Catch/Reflect возвращаются в ready guard,
+не проваливаются в idle; тело и FP-локти используют одну композицию с реальной
+длиной окна. Reid плавно входит/выходит на sheathed-границе за четыре тика;
+FP-смещения возвращаются до конца draw. Grip-канал остаётся точным.
+Походка не обрывается onGround: ground-вес дополняет rise/fall-веса.
+
+RED: четыре регрессии падают на исходной версии. GREEN: полный Java17 build,
+1296 core + 12 flight = 1308 tests, без failures/errors/skips; восемь новых
+continuity tests. Ресурсы: 0 новых/4 известных проблемы. Все боевые JSON-клипы,
+blade/sheath, selected roll, gameplay, VFX, звуки, protocol4 и Flight1.10.1
+не изменены. JAR Core1.35.2 содержит новые клипы и credits.
+
+Native runClient: Forge early display → `glfwInit failed`, мира нет; остановлен
+после подтверждения графического барьера. Нет визуальной приёмки в Minecraft,
+native FPS/shaders/multiplayer. План и оставшиеся ручные проверки:
+`docs/plans/2026-10-19-reinhard-quality-rework.md`, раздел continuity.
