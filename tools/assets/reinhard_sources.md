@@ -70,3 +70,13 @@ All files are `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/re
 | `sky_kick` | 182050 | 0 / 2.5 | -14 LUFS | trim, fades, two-pass loudnorm |
 | `stomp` | 275809 | 0 / 3 | -14 LUFS | trim, fades, two-pass loudnorm, peak limiting |
 | `sheath_ring` | 519413 | 2.31 / 1.1 | -14 LUFS | trim, fades, two-pass loudnorm, peak limiting |
+
+## Cinematic original synthesis (2026-10-20)
+
+No new external recordings. `tools/sfx/reinhard_cinematic.py` deterministically creates four original CC0-1.0 layers:
+- `reid_cinematic_layer`: 6.00 s tension, metal harmonics and light pulse, alongside existing approved draw recordings.
+- `cut_rumble`: 1.25 s low air/stone layer, retriggered no faster than 1.4 s, no overlapping instance per cast.
+- `cut_cinematic_impact`: 3.40 s displacement impact with decaying low tail; replaces the vanilla World Cut placeholder, not blocked NC recordings.
+- `cut_cinematic_sweep`: 0.32 s pressure sweep for Rain of Cuts; replaces the vanilla placeholder, not blocked NC recordings.
+
+24 kHz mono Vorbis quality 4, faded/soft-limited source PCM peak -6.02 dBFS. Decoded true peaks measured with ffmpeg ebur128: draw -5.9, impact -5.3, sweep -5.1 dBFS. This is file-level headroom, not a claim of clipping-free scene mixing. Subjective gain and Minecraft mix require listening in game. Existing CC-BY attribution stays unchanged.

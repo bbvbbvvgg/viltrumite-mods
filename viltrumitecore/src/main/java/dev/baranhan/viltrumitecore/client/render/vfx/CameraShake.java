@@ -41,7 +41,16 @@ public final class CameraShake {
 
    /** Shake that ignores distance (the local player's own action). */
    public static void add(float power) {
-      shake = Math.min(MAX, Math.max(shake, power));
+      shake = Math.max(shake, Math.min(MAX,power));
+   }
+
+   /** Opt-in cinematic contribution; does not raise the shared cap for other heroes. */
+   public static void cinematicAt(Vec3 at,float power,double range) {
+      float setting=ViltrumitePostProcessingConfig.INSTANCE.reinhardWorldCutShake;
+      if(!Float.isFinite(setting)) setting=1;
+      float value=power*falloff(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().distanceTo(at),range)
+         *Math.max(0,Math.min(2,setting));
+      shake=Math.max(shake,Math.min(8,value));
    }
 
    /** Pure: linear distance falloff, 1 at the source, 0 at range and beyond. */
@@ -73,7 +82,7 @@ public final class CameraShake {
 
    @SubscribeEvent
    public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
-      if (shake <= 0.0F) {
+      if (shake <= 0.001F) {
          return;
       }
 

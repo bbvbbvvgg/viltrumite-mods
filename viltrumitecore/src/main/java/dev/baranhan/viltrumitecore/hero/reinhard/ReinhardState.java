@@ -13,7 +13,7 @@ import net.minecraft.world.entity.player.Player;
  */
 public final class ReinhardState {
    /** One cooldown per ability (ReinhardAbility ordinal). */
-   public static final int COOLDOWN_SLOTS = 14;
+   public static final int COOLDOWN_SLOTS = ReinhardAbility.values().length;
    static final String KEY = "Reinhard";
 
    public ReinhardMode mode = ReinhardMode.RESTRAINED;
@@ -37,6 +37,9 @@ public final class ReinhardState {
    public int comboIdle;
    public boolean comboQueued;
    public boolean resolvingMelee;
+   public float rainYaw,rainPitch;
+   /** Transient self-root; no gravity/AI flag ownership and nothing to restore after logout. */
+   public net.minecraft.world.phys.Vec3 cutAnchor;
    public net.minecraft.world.phys.Vec3 kickDirection=new net.minecraft.world.phys.Vec3(0,0,1);
    /** Grab &amp; Throw (stage 3): the held target and the one control effect id of this grab, null = none; transient. */
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.Hold grab;
@@ -62,7 +65,7 @@ public final class ReinhardState {
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldErasure worldErasure;
 
    public boolean busy() {
-      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy() || (worldCut != null ? !worldCut.blasted() : this.action.is(ReinhardAbility.WORLD_CUT));
+      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy() || (worldCut != null ? !worldCut.blasted() : (this.action.is(ReinhardAbility.WORLD_CUT)||this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT)));
    }
 
    /** Leaving Holy Sword (spec §5): Reid goes back into the sheath. */

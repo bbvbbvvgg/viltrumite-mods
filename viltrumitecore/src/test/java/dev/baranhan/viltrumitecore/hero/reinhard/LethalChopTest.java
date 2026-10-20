@@ -27,7 +27,7 @@ class LethalChopTest {
       }
       assertFalse(ReinhardHero.allowsKitAbility(LegacyKit.CHOP, 1 << ReinhardFlags.REID_DRAWING), "not while Reid is being drawn");
       assertFalse(ReinhardHero.allowsKitAbility(LegacyKit.CHOP, 1 << ReinhardFlags.REID_SHEATHING));
-      assertTrue(ReinhardHero.allowsKitAbility(LegacyKit.CHOP, 1 << ReinhardFlags.REID_DRAWN));
+      assertFalse(ReinhardHero.allowsKitAbility(LegacyKit.CHOP, 1 << ReinhardFlags.REID_DRAWN));
    }
 
    @Test

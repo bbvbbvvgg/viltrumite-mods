@@ -887,8 +887,9 @@
     "subtitle": "subtitles.viltrumitecore.reinhard_cut_rain",
     "sounds": [
       {
-        "name": "minecraft:entity.player.attack.sweep",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/cut_cinematic_sweep",
+        "stream": false,
+        "attenuation_distance": 128
       }
     ]
   },
@@ -902,8 +903,9 @@
   "reinhard.world_cut_blast": {
     "sounds": [
       {
-        "name": "minecraft:entity.generic.explode",
-        "type": "event"
+        "name": "viltrumitecore:reinhard/cut_cinematic_impact",
+        "stream": false,
+        "attenuation_distance": 320
       }
     ]
   },
@@ -936,6 +938,24 @@
     "sounds": [
       {
         "name": "viltrumitecore:reinhard/limbo_heartbeat"
+      }
+    ]
+  },
+  "reinhard.reid_cinematic_layer": {
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_cinematic_layer",
+        "stream": false,
+        "attenuation_distance": 320
+      }
+    ]
+  },
+  "reinhard.cut_rumble": {
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/cut_rumble",
+        "stream": false,
+        "attenuation_distance": 320
       }
     ]
   }

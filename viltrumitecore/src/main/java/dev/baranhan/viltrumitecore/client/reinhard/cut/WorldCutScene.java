@@ -19,7 +19,7 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 
-/** Packet/game-time pixel scene. Blocks may lag; this scene never waits for the carve queue. */
+/** Packet/game-time pixel scene. Server DONE, not a fixed timer, releases the carve curtain. */
 public final class WorldCutScene {
    public static final int END=190;
    private static final Map<UUID,Active> SCENES=new LinkedHashMap<>();
@@ -32,6 +32,9 @@ public final class WorldCutScene {
    public static final class Active {
       public final WorldCutS2CPacket packet;
       private boolean blastReceived, blasted, ducked, silencePlayed, tailPlayed;
+      private long lastPacket,doneAt=-1;
+      public boolean working() { return doneAt<0; }
+      public double fade(long now) { return doneAt<0?1:Math.max(0,1-(now-doneAt)/70.0); }
       Active(WorldCutS2CPacket packet) { this.packet=packet; }
       public boolean blastReceived() { return blastReceived; }
    }
@@ -40,20 +43,24 @@ public final class WorldCutScene {
    private static void refresh() { frames=SCENES.values().toArray(Active[]::new); }
    public static void onPacket(WorldCutS2CPacket packet) {
       Active scene=SCENES.computeIfAbsent(packet.castId(),id -> new Active(packet));
-      scene.blastReceived |= packet.phase()==WorldCutS2CPacket.BLAST;
+      scene.blastReceived |= packet.phase()!=WorldCutS2CPacket.START;
+      var mc=Minecraft.getInstance();
+      scene.lastPacket=mc==null||mc.level==null?packet.startTime():mc.level.getGameTime();
+      if(packet.phase()==WorldCutS2CPacket.DONE&&scene.doneAt<0)scene.doneAt=scene.lastPacket;
       refresh();
    }
    public static double elapsed(long start,long now,double partial) { return now-start+partial; }
    public static boolean silence(double t) { return t>=ReinhardRules.WORLD_CUT_SWING && t<ReinhardRules.WORLD_CUT_BLAST; }
    public static int front(double t) { return WorldCut.visualFront(t); }
-   public static boolean shakeCaster(boolean caster) { return !caster; }
+   public static boolean shakeCaster(boolean caster) { return true; }
    public static void clear() {
-      for(Active a:SCENES.values()) SoundDuck.INSTANCE.release(a.packet.castId());
+      for(Active a:SCENES.values()) { SoundDuck.INSTANCE.release(a.packet.castId());CutAtmosphere.release(a.packet.castId()); }
       SCENES.clear(); refresh(); WorldCutFov.reset();
    }
    public static void prune(long now) {
       SCENES.values().removeIf(a -> {
-         if(now-a.packet.startTime()<=END) return false;
+         if(now-a.packet.startTime()<12000 && (a.doneAt<0 ? now-a.lastPacket<=140 : now-a.doneAt<=70)) return false;
+         CutAtmosphere.release(a.packet.castId());
          SoundDuck.INSTANCE.release(a.packet.castId()); return true;
       });
       refresh();
@@ -78,6 +85,9 @@ public final class WorldCutScene {
             SoundDuck.INSTANCE.release(scene.packet.castId()); scene.ducked=false;
          }
          Vec3 nearest=nearest(scene,mc.player.position());
+         CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now);
+         if(inRange && t>=8 && scene.working() && (now-scene.packet.startTime())%28==0)
+            play(nearest,ReinhardSounds.CUT_RUMBLE.get(),t<80?1.4F:2.8F);
          if(hush) {
             CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
             if(!scene.silencePlayed) { play(nearest,ReinhardSounds.WORLD_CUT_SILENCE.get(),.8F); scene.silencePlayed=true; }
@@ -88,7 +98,7 @@ public final class WorldCutScene {
             if(shakeCaster(scene.packet.casterId().equals(mc.player.getUUID()))) CameraShake.addAt(nearest,5,200);
             for(int a=0;a<200;a+=20) HeroImpactFx.shockwaveVisual(point(scene,a+.5),20);
          }
-         if(inRange && t>=110 && !scene.tailPlayed) { play(nearest,ReinhardSounds.WORLD_CUT_TAIL.get(),2); scene.tailPlayed=true; }
+         if(inRange && !scene.working() && !scene.tailPlayed) { play(nearest,ReinhardSounds.WORLD_CUT_TAIL.get(),2); scene.tailPlayed=true; }
       }
    }
    private static Vec3 point(Active a,double along) {
@@ -119,7 +129,7 @@ public final class WorldCutScene {
          double cloudY=mc.level.effects().getCloudHeight(); if(!Double.isFinite(cloudY)) cloudY=192;
          for(Active scene:frames) {
             double t=elapsed(scene.packet.startTime(),mc.level.getGameTime(),event.getPartialTick());
-            if(t<20 || t>END) continue;
+            if(t<8) continue;
             if(silence(t) && !scene.blastReceived) {
                for(double a=0;a<200;a+=.25) {
                   Vec3 ground=point(scene,a), sky=new Vec3(ground.x,cloudY,ground.z);
@@ -132,10 +142,10 @@ public final class WorldCutScene {
                   pixel(buffer,eye,camera,p,.04F,148,131,107,145);
                }
             } else {
-               int front=front(t); double fade=Math.max(0,Math.min(1,(END-t)/80));
+               int front=front(t); double fade=scene.fade(mc.level.getGameTime());
                Vec3 dir=scene.packet.shape().dirXZ();
                for(int a=0;a<front;a++) {
-                  Vec3 p=point(scene,a+.5); double edge=ReinhardRules.CUT_WIDTH*.5;
+                  Vec3 p=point(scene,a+.5); double edge=scene.packet.shape().geometry().halfWidth(a,0)+.5;
                   for(int side=-1;side<=1;side+=2) {
                      Vec3 wall=p.add(-dir.z*edge*side,0,dir.x*edge*side);
                      for(int crack=0;crack<5;crack++) pixel(buffer,eye,camera,
@@ -155,7 +165,7 @@ public final class WorldCutScene {
                      pixel(buffer,eye,camera,fire,.11F,255,239,155,(int)(220*fade));
                   }
                   if(a%2==0) for(int y=0;y<12;y++) {
-                     double rise=Math.max(0,t-80-a*.15)*.12;
+                     double rise=((Math.max(0,t-80-a*.15)*.12)%14);
                      Vec3 dust=p.add(Math.sin(a*11+y)*(3+y*.8),rise+y*.8,Math.cos(a*7+y)*(3+y*.8));
                      pixel(buffer,eye,camera,dust,.18F+y*.015F,149,133,112,(int)(90*fade));
                   }
@@ -163,6 +173,11 @@ public final class WorldCutScene {
             }
          }
          tess.end();
+         for(Active scene:frames) {
+            double t=elapsed(scene.packet.startTime(),mc.level.getGameTime(),event.getPartialTick());
+            dev.baranhan.viltrumitecore.client.reinhard.ReinhardTitanBlade.render(scene.packet.shape().origin(),
+               scene.packet.shape().dirXZ(),t,event.getPoseStack(),eye);
+         }
       } finally {
          RenderSystem.depthMask(true); RenderSystem.enableCull(); RenderSystem.defaultBlendFunc();
          RenderSystem.disableBlend(); stack.popPose(); RenderSystem.applyModelViewMatrix();

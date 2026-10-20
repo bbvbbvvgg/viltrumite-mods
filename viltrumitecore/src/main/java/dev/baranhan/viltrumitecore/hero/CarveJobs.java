@@ -18,7 +18,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
  * Hero-neutral queue of block work (grooves, cuts; Reinhard stage 4+), spread over
  * ticks: per level one queue, each END level tick the queue gets
  * {@link CarveBudget#perTick}({@link #BASE_BUDGET}, mean tick ms) blocks. Higher
- * priority first, FIFO inside one priority; a job takes what it still needs
+ * priority first, FIFO by default. Jobs can opt into a finite round-robin quantum.
+ * A job takes what it still needs
  * ({@link Job#remainingWork}) and the rest goes on to the next job. A level that
  * unloads drops its queue (the work is simply not done).
  */
@@ -37,6 +38,9 @@ public final class CarveJobs {
       boolean step(@Nullable ServerLevel level, int budget);
 
       int priority();
+
+      /** Opt-in round-robin quantum; other jobs retain their original FIFO behavior. */
+      default int quantum() { return Integer.MAX_VALUE; }
 
       /** Blocks still to do (the budget a step may use up); unknown = all of it. */
       default int remainingWork() {
@@ -104,7 +108,7 @@ public final class CarveJobs {
             ArrayDeque<Job> jobs = classes.next();
             while (left > 0 && !jobs.isEmpty()) {
                Job job = jobs.peekFirst();
-               int give = Math.min(left, Math.max(1, job.remainingWork()));
+               int give = Math.min(left, Math.min(Math.max(1,job.quantum()), Math.max(1, job.remainingWork())));
                boolean done;
                try {
                   done = job.step(level, give);
@@ -115,6 +119,8 @@ public final class CarveJobs {
                left -= give;
                if (done) {
                   jobs.pollFirst();
+               } else if(job.quantum()!=Integer.MAX_VALUE) {
+                  jobs.pollFirst();jobs.addLast(job);
                } else {
                   break;
                }

@@ -4,8 +4,8 @@ import dev.baranhan.viltrumitecore.hero.HeroAction;
 import java.util.Locale;
 
 /**
- * Reinhard's own abilities (spec §6, §7.1 row order). Append only: the ordinal
- * is the {@code HeroPublicSnapshot.extraCooldowns} index.
+ * Reinhard's own abilities. Append only: the ordinal is the action id.
+ * Cooldown wire slots use snapshotIndex() because mode/Phoenix slots are reserved.
  */
 public enum ReinhardAbility {
    LIGHT_PUNCH(ReinhardMode.RESTRAINED, 0, HeroAction.LIGHT_PUNCH, 3),
@@ -21,7 +21,8 @@ public enum ReinhardAbility {
    SHEATH_STRIKE(ReinhardMode.HOLY_SWORD, 2, HeroAction.SHEATH_STRIKE, 4),
    CUT_RAIN(ReinhardMode.HOLY_SWORD, 3, HeroAction.CUT_RAIN, 4),
    WORLD_CUT(ReinhardMode.HOLY_SWORD, 4, HeroAction.WORLD_CUT, 5),
-   WORLD_ERASURE(ReinhardMode.HOLY_SWORD, 5, HeroAction.WORLD_ERASURE, 6);
+   WORLD_ERASURE(ReinhardMode.HOLY_SWORD, 5, HeroAction.WORLD_ERASURE, 6),
+   DIAGONAL_WORLD_CUT(ReinhardMode.HOLY_SWORD, 2, HeroAction.DIAGONAL_WORLD_CUT, 6);
 
    private final String name;
    private final String id;
@@ -38,6 +39,9 @@ public enum ReinhardAbility {
       this.action = action;
       this.stage = stage;
    }
+
+   /** Snapshot slots 14/15 are already mode/Phoenix; new cooldowns append after them. */
+   public int snapshotIndex() { return ordinal()<14 ? ordinal() : ordinal()+2; }
 
    /** Snake-case name: icon file and lang suffix. */
    public String key() {

@@ -467,8 +467,8 @@
   "ability.viltrumitecore.reinhard_cut_rain.name": "Lluvia de cortes",
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Reid desenvainada: 12 cortes letales en un cono de 30°, de 40 bloques, con surcos estrechos. Bloqueo técnico breve.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Llueven los cortes de Reinhard",
-  "ability.viltrumitecore.reinhard_world_cut.name": "World Cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid desenvainada: golpe, tres segundos de silencio y corte de 200 bloques. Sin larga recarga; espera a que termine la escena y el trabajo de bloques anterior.",
+  "ability.viltrumitecore.reinhard_world_cut.name": "Ground World Cut",
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: a heavy two-handed windup, silence, then a tapered 200-block canyon. At most two world cuts may remain active.",
   "ability.viltrumitecore.reinhard_world_erasure.name": "Borrado del mundo",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid desenvainada: objetivo a 64 bloques, pausa mundial de 7,5 s y borrado. Los jugadores mortales vuelven del limbo tras 30 s conectados sin lo que llevaban; conserva el cofre de Ender. Los objetivos divinos/absolutos sobreviven. Una escena activa, sin larga recarga.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "El mundo se agrieta",
@@ -479,5 +479,8 @@
   "viltrumitecore.limbo.line3": "Todo lo que llevabas desapareció contigo.",
   "viltrumitecore.limbo.line4": "Pero la fuerza más poderosa de este mundo se apiadó de ti.",
   "viltrumitecore.limbo.line5": "Se te permite renacer.",
-  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Latidos"
+  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Latidos",
+  "ability.viltrumitecore.reinhard_diagonal_world_cut.name": "Diagonal World Cut",
+  "ability.viltrumitecore.reinhard_diagonal_world_cut.desc": "Reid drawn: a tilted three-dimensional rupture cuts air, mountains and buildings. Shares the two-cut limit with Ground World Cut.",
+  "ability.viltrumitecore.reinhard_lethal_chop.desc": "Reid must be fully sheathed. A decisive lethal hand chop; unavailable while drawing, drawn or sheathing."
 }

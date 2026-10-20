@@ -207,7 +207,7 @@ class ReidTest {
       assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.CUT_RAIN, 0, 0), "Rain of Cuts grey while sheathed");
       assertFalse(ReinhardAbilities.slotGrey(ReinhardAbility.CUT_RAIN, 0, drawn));
       assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.SHEATH_STRIKE, 0, drawn), "Sheath Strike grey while drawn");
-      assertFalse(ReinhardAbilities.slotGrey(ReinhardAbility.SHEATH_STRIKE, 0, 0));
+      assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.SHEATH_STRIKE, 0, 0));
       assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.SHEATH_STRIKE, 5, 0), "cooldown greys too");
       assertFalse(ReinhardAbilities.slotGrey(ReinhardAbility.REID, 0, Reid.withFlags(0, Reid.Phase.DRAWING)));
    }

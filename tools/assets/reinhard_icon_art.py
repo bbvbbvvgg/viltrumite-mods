@@ -148,6 +148,13 @@ def icon(name):
         for x,y in [(15,38),(44,34),(12,50),(49,48)]:
             d.polygon([(x,y),(x+5,y-4),(x+8,y+2),(x+2,y+5)],fill=SHADE,outline=STEEL)
         d.line((8,13,55,13),fill=WHITE,width=1);spark(d,32,13,5)
+    elif name=='diagonal_world_cut':
+        d.polygon([(7,47),(44,9),(57,17),(20,55)],fill=DARK,outline=GOLD)
+        d.line((11,49,49,12),fill=WHITE,width=3)
+        d.line((13,51,51,14),fill=GOLD,width=1)
+        for x,y in [(16,29),(38,43),(30,13),(47,34)]:
+            d.polygon([(x,y),(x+5,y-4),(x+8,y+2),(x+2,y+5)],fill=BLUE,outline=STEEL)
+        spark(d,35,25,4)
     elif name=='world_erasure':
         d.ellipse((10,10,54,54),fill='#070e1e',outline=GOLD,width=2)
         figure(d,32,33,WHITE,.9)
@@ -158,4 +165,4 @@ def icon(name):
     else:raise ValueError(name)
     return im
 
-NAMES=['light_punch','step_dash','catch','fist_combo','sky_kick','grab_throw','dash_behind','stomp','reflect','reid','reid_drawn','lethal_chop','sheath_strike','cut_rain','world_cut','world_erasure']
+NAMES=['light_punch','step_dash','catch','fist_combo','sky_kick','grab_throw','dash_behind','stomp','reflect','reid','reid_drawn','lethal_chop','sheath_strike','cut_rain','world_cut','world_erasure','diagonal_world_cut']

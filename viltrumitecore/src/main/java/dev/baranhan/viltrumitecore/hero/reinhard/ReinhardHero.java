@@ -81,6 +81,7 @@ public final class ReinhardHero implements HeroDefinition {
    /** Pure: the kit ability rule over the synced Reinhard flags. */
    public static boolean allowsKitAbility(String abilityId, int heroFlags) {
       return dev.baranhan.viltrumitecore.hero.LegacyKit.CHOP.equals(abilityId)
+         && !ReinhardFlags.has(heroFlags, ReinhardFlags.REID_DRAWN)
          && !ReinhardFlags.has(heroFlags, ReinhardFlags.REID_DRAWING) && !ReinhardFlags.has(heroFlags, ReinhardFlags.REID_SHEATHING);
    }
 
@@ -207,10 +208,14 @@ public final class ReinhardHero implements HeroDefinition {
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
          // Except while Reid is being drawn: the 6 s scene roots him (spec §7.1).
-         case JUMP, AIR_STEP -> state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWING;
+         case JUMP, AIR_STEP -> !cinematicRoot(state) && state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWING;
          // Abilities (stage 3+): the mode, cooldown and timeline gate lives in ReinhardActions.
          default -> ReinhardActions.abilityFor(action) != null;
       };
+   }
+
+   public static boolean cinematicRoot(ReinhardState state) {
+      return state.action.is(ReinhardAbility.WORLD_CUT) || state.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT);
    }
 
    /** A refused press always gives feedback (add_hero §4.4). */
@@ -222,6 +227,14 @@ public final class ReinhardHero implements HeroDefinition {
    @Override
    public void tick(ServerPlayer player) {
       ReinhardState state = ReinhardState.ensure(player);
+      if (cinematicRoot(state)) {
+         if(state.cutAnchor==null)state.cutAnchor=player.position();
+         var anchor=state.cutAnchor;
+         if(player.position().distanceToSqr(anchor)>1E-6)
+            player.connection.teleport(anchor.x,anchor.y,anchor.z,player.getYRot(),player.getXRot());
+         player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+         player.hurtMarked=true;
+      } else state.cutAnchor=null;
       state.tick();
       ReinhardActions.tick(player, state);
       ReidLife.tick(player, state, state.reid.tick());
@@ -567,6 +580,7 @@ public final class ReinhardHero implements HeroDefinition {
 
       int[] extra = new int[HeroPublicSnapshot.EXTRA_COOLDOWN_MAX];
       System.arraycopy(state.cooldowns, 0, extra, 0, Math.min(state.cooldowns.length, ReinhardFlags.EXTRA_MODE_CD));
+      for (ReinhardAbility a:ReinhardAbility.values()) extra[a.snapshotIndex()]=state.cooldowns[a.ordinal()];
       extra[ReinhardFlags.EXTRA_MODE_CD] = state.modeCooldown;
       extra[ReinhardFlags.EXTRA_PHOENIX] = phoenixSeconds(PersistentCooldowns.get(player, ReinhardRules.PHOENIX_KEY));
       int flags = ReinhardFlags.withMode(0, state.mode);
@@ -578,7 +592,7 @@ public final class ReinhardHero implements HeroDefinition {
       // A level-owned carve/scene can outlive its caster's timeline. Advertise the same
       // admission locks that the server uses, including another player's active cast.
       if (player instanceof net.minecraft.server.level.ServerPlayer server) {
-         if (dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.get(server.serverLevel()).size() > 0)
+         if (dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.get(server.serverLevel()).size() >= 2)
             flags |= 1 << ReinhardFlags.WORLD_CUT_ACTIVE;
          if (dev.baranhan.viltrumitecore.hero.control.WorldPause.active(server.getServer()))
             flags |= 1 << ReinhardFlags.WORLD_ERASURE_ACTIVE;

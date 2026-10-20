@@ -63,6 +63,7 @@ public final class ReinhardClips {
          case SHEATH_STRIKE -> List.of(SHEATH_STRIKE);
          case CUT_RAIN -> List.of(CUT_RAIN);
          case WORLD_CUT -> List.of(WORLD_CUT);
+         case DIAGONAL_WORLD_CUT -> List.of("diagonal_world_cut");
          case WORLD_ERASURE -> List.of(WORLD_ERASURE);
          default -> List.of();
       };

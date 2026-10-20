@@ -41,6 +41,8 @@ public final class WorldCutCarve implements CarveJobs.Job {
       this.dir = dir;
    }
 
+   @Override public int quantum() { return 250; }
+
    @Override
    public boolean step(@Nullable ServerLevel level, int budget) {
       if (!wave.hasNext()) return true;
@@ -48,6 +50,7 @@ public final class WorldCutCarve implements CarveJobs.Job {
       Probe world = probe != null ? probe : new LiveProbe(Objects.requireNonNull(level));
       for (int used = 0; used < budget && wave.hasNext(); used++) {
          WorldCutGeometry.Cell cell = wave.next();
+         if (!wave.carve(cell)) continue;
          BlockPos pos = new BlockPos(cell.x(), cell.y(), cell.z());
          if (!world.loaded(pos) || !world.canDestroy(pos)) continue;
          boolean solid = world.solid(pos);

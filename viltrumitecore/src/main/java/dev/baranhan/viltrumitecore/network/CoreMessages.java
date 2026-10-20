@@ -45,9 +45,9 @@ public class CoreMessages {
 
    public static void register() {
       SimpleChannel net = ChannelBuilder.named(new ResourceLocation("viltrumitecore", "messages"))
-         .networkProtocolVersion(() -> "2")
-         .clientAcceptedVersions("2"::equals)
-         .serverAcceptedVersions("2"::equals)
+         .networkProtocolVersion(() -> "3")
+         .clientAcceptedVersions("3"::equals)
+         .serverAcceptedVersions("3"::equals)
          .simpleChannel();
       INSTANCE = net;
       net.messageBuilder(BlockToggleC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
@@ -267,6 +267,14 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::handle)
          .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket.class,id(),NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
