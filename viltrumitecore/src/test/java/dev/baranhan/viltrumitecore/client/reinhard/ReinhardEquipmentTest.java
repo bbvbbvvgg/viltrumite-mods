@@ -88,6 +88,31 @@ class ReinhardEquipmentTest {
          assertTrue(Math.abs(face.x)>(name.equals("idle_holy_drawn")?.5:.9),"owner-selected variant: side sees the face: "+name);
       }
    }
+   @Test void hipMountIsCloserWithoutChangingTiltOrScale()throws Exception {
+      var body=ReinhardSecondPassTest.body();
+      var mount=ReinhardSword.hip(body);
+      // Previous mount: X=6.8. Only its body-local lateral translation changes.
+      var old=new Matrix4f().translation(-6.8F/16,15.8F/16,-2F/16)
+         .rotateZ(0).rotateX((float)Math.toRadians(-35))
+         .scale(.574F,.574F*.78F,.574F)
+         .rotateZ((float)Math.PI).rotateY((float)Math.PI/2);
+      var bone=body.getBone("body");
+      var local=new Matrix4f(ReinhardGeometry.frame(bone)).invert().mul(mount);
+      assertEquals(.6F/16,local.m30()-old.m30(),1E-6);
+      assertEquals(old.m31(),local.m31(),1E-6);
+      assertEquals(1F/16,local.m32()-old.m32(),1E-6);
+      for(var axis:new Vector3f[]{new Vector3f(1,0,0),new Vector3f(0,1,0),new Vector3f(0,0,1)})
+         assertTrue(old.transformDirection(new Vector3f(axis)).distance(local.transformDirection(new Vector3f(axis)))<1E-6);
+   }
+   @Test void extractionStartsAtTheShiftedSheathWithoutJumping()throws Exception {
+      var clips=ReinhardSecondPassTest.clips();
+      var rest=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("idle_holy"),rest,0);
+      var drawing=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("reid_draw"),drawing,0);
+      var a=ReinhardSword.equipment(rest,ReinhardPoses.ReidPhase.SHEATHED,0,false,0,1);
+      var b=ReinhardSword.equipment(drawing,ReinhardPoses.ReidPhase.DRAWING,0,false,0,1);
+      assertTrue(a[0].equals(b[0],1E-5F),"sheath must not jump at draw start");
+      assertTrue(a[1].equals(b[1],1E-5F),"assembled blade must start at the new mount");
+   }
    @Test void cameraAxialCorrectionPreservesScaleHiltAndLongitudinalAxis() {
       var original=new Matrix4f().translation(.2F,.3F,-.4F).rotateX(.7F)
          .scale(ReinhardSword.SWORD_SCALE,ReinhardSword.SWORD_SCALE*ReinhardSword.LENGTH_SCALE,ReinhardSword.SWORD_SCALE);

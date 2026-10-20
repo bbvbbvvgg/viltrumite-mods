@@ -329,7 +329,7 @@ CLIPS['reid_sheathe']['bones']['right_forearm']=channel([(0,[-18,0,0]),(8,[-25,0
 # Weapon choreography is sampled by the SAME animation core. The empty grip bone
 # owns the complete weapon frame; wrists solve to it, never the reverse. Coordinates
 # here are mirrored model px and model Euler degrees (converted to parser convention).
-HIP = ([-6.8,17.0836745,-2.898819],[90,55,-90])
+HIP = ([-6.2,17.0836745,-1.898819],[90,55,-90])
 READY = ([.5,18.5,-6],[350,0,-50])
 def weapon(clip, rows):
     pos(clip,'reid_grip',[(t,[-p[0],p[1],p[2]]) for t,p,r in rows])

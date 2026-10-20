@@ -18,9 +18,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
  */
 public final class ReinhardSword {
    /** Sheath mouth on the body, Bedrock px (+x = Reinhard's left), model space. */
-   public static final float HIP_X = 6.8F;
+   public static final float HIP_X = 6.2F;
    public static final float HIP_Y = 15.8F;
-   public static final float HIP_Z = -2.0F;
+   public static final float HIP_Z = -1.0F;
    /** Hilt slightly inward; long sheath trails behind the thigh, outside the walking legs. */
    public static final float TILT_Z = 0.0F;
    public static final float TILT_X = 35.0F;
