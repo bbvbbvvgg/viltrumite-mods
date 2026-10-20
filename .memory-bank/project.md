@@ -251,3 +251,10 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   through the head even though endpoint frames looked valid. Keep reachability and
   SAT checks at intermediate times, both crouched and standing; do not relax them
   to approve a more dramatic roll. Native first-person/VFX acceptance remains open.
+
+- A cooldown enum-to-wire mapping test does not prove snapshot production. Test
+  the production composer through encode/decode with every ability and reserved
+  slot populated. The shared wire cap can lag an appended ability even when
+  its explicit index is correct. A capped decoder must locate trailing fields
+  using the declared wire count, not the retained local count. Older peers can
+  misread those fields; reject them when increasing the supported capacity.
