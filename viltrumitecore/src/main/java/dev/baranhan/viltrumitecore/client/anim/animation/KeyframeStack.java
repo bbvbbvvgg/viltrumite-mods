@@ -13,8 +13,15 @@ public final class KeyframeStack {
    private final DoubleUnaryOperator[] easings;
    private final boolean[] smooth;
    private final float defaultValue;
+   private final boolean[] monotone;
 
    public KeyframeStack(double[] times, float[] pre, float[] post, DoubleUnaryOperator[] easings, boolean[] smooth, float defaultValue) {
+      this(times,pre,post,easings,smooth,new boolean[times.length],defaultValue);
+   }
+
+   public KeyframeStack(double[] times, float[] pre, float[] post, DoubleUnaryOperator[] easings,
+      boolean[] smooth, boolean[] monotone, float defaultValue) {
+      this.monotone = monotone;
       this.times = times;
       this.pre = pre;
       this.post = post;
@@ -71,7 +78,9 @@ public final class KeyframeStack {
             double f = span <= 0.0 ? 0.0 : (time - t0) / span;
             float v0 = this.post[i];
             float v1 = this.pre[i + 1];
-            if (this.smooth[i]) {
+            if (this.monotone[i]) {
+               return MonotoneCubic.sample(v0,v1,tangent(i),tangent(i+1),span,f);
+            } else if (this.smooth[i]) {
                float vPrev = i > 0 ? this.post[i - 1] : v0;
                float vNext = i + 2 < n ? this.pre[i + 2] : v1;
                return catmullRom(vPrev, v0, v1, vNext, f);
@@ -82,6 +91,12 @@ public final class KeyframeStack {
             }
          }
       }
+   }
+
+   private double tangent(int i) {
+      if (i<=0 || i>=times.length-1 || pre[i]!=post[i] || !monotone[i-1] || !monotone[i]) return 0;
+      double left=times[i]-times[i-1], right=times[i+1]-times[i];
+      return MonotoneCubic.tangent(left,(pre[i]-post[i-1])/left,right,(pre[i+1]-post[i])/right);
    }
 
    private static float catmullRom(float p0, float p1, float p2, float p3, double t) {

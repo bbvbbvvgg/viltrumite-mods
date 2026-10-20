@@ -165,9 +165,9 @@ for name, amplitude, arm_amplitude in [('walk',32,31.512679),('run',48,50)]:
     CLIPS[name] = loop(bones,1)
 
 CLIPS['light_punch'] = action(10,
-    right_arm=[(0,[-6,0,3]),(2.6,[-47,-16,7],'easeInCubic'),(4,[-91,8,0],'easeOutCubic'),(5,[-92,8,0]),(10,[-6,0,3])],
-    right_forearm=[(0,[-8,0,0]),(2.6,[-68,0,0]),(4,[-4,0,0]),(5,[-6,0,0]),(10,[-8,0,0])],
-    body=[(0,[0,0,0]),(2.6,[0,-9,0]),(4,[4,17,0]),(5,[3,13,0]),(10,[0,0,0])],
+    right_arm=[(0,[-6,0,3]),(2,[-47,-16,7],'easeInCubic'),(4,[-91,8,0],'easeOutCubic'),(5,[-92,8,0]),(10,[-6,0,3])],
+    right_forearm=[(0,[-8,0,0]),(2,[-68,0,0]),(4,[-4,0,0]),(5,[-6,0,0]),(10,[-8,0,0])],
+    body=[(0,[0,0,0]),(2,[0,-9,0]),(4,[4,17,0]),(5,[3,13,0]),(10,[0,0,0])],
     head=[(0,[0,0,0]),(4,[-3,-10,0]),(10,[0,0,0])],
     left_arm=[(0,[0,0,-3]),(2,[-20,0,-8]),(5,[-16,0,-6]),(10,[0,0,-3])],
     left_forearm=[(0,[-8,0,0]),(4,[-30,0,0]),(10,[-8,0,0])],
@@ -198,9 +198,9 @@ for n, length, contact, wind, strike, twist in [
     ('combo_2',10,4,[-67,58,24],[-75,-42,12],-22),
     ('combo_3',14,6,[-105,14,-35],[-48,-8,6],-15)]:
     CLIPS[n] = action(length,
-        right_arm=[(0,[-16,-12,6]),(contact-1.2,wind,'easeInCubic'),(contact,strike,'easeOutCubic'),(contact+1,strike),(length,[-16,-12,6])],
-        right_forearm=[(0,[-24,0,0]),(contact-1.2,[-42,0,0]),(contact,[-5,0,0]),(contact+1,[-9,0,0]),(length,[-24,0,0])],
-        body=[(0,[0,-7,0]),(contact-1.2,[-4,-twist*.6,0]),(contact,[10 if n=='combo_3' else 3,twist,0]),(contact+1,[7,twist*.8,0]),(length,[0,-7,0])],
+        right_arm=[(0,[-16,-12,6]),(contact-(2.5 if n=='combo_3' else 2),wind,'easeInCubic'),(contact,strike,'easeOutCubic'),(contact+1,[strike[i]+(strike[i]-wind[i])*.08 for i in range(3)]),(length,[-16,-12,6])],
+        right_forearm=[(0,[-24,0,0]),(contact-(2.5 if n=='combo_3' else 2),[-42,0,0]),(contact,[-5,0,0]),(contact+1,[-9,0,0]),(length,[-24,0,0])],
+        body=[(0,[0,-7,0]),(contact-(2.5 if n=='combo_3' else 2),[-4,-twist*.6,0]),(contact,[10 if n=='combo_3' else 3,twist,0]),(contact+1,[7,twist*.8,0]),(length,[0,-7,0])],
         head=[(0,[0,0,0]),(contact,[-5,-twist*.5,0]),(length,[0,0,0])],
         right_leg=[(0,[0,0,0]),(contact,[-16,0,3]),(length,[0,0,0])],
         left_leg=[(0,[0,0,0]),(contact,[10,0,-3]),(length,[0,0,0])])
@@ -369,14 +369,27 @@ RAIN_WEAPON=[(0,*READY),(4,[0,20,-6.5],[320,0,0])]
 for i in range(12):
     t=7+i*3
     sign=(-1)**i
-    RAIN_WEAPON.extend([(t-.6,[0,20,-6.5],[320,0,sign*10]),
+    RAIN_WEAPON.extend([(t-1.5,[0,20,-6.5],[320,0,sign*10]),
                         (t,[1,20,-6.5],[260,0,-sign*10])])
 RAIN_WEAPON.append((46,*READY))
 weapon(CLIPS['cut_rain'],RAIN_WEAPON)
 
 for side,sign in [('right',1),('left',-1)]:
-    weapon(CLIPS['chop_'+side],[(0,*READY),(6,[0,20,-6],[350,0,-sign*30]),
+    weapon(CLIPS['chop_'+side],[(0,*READY),(4,[0,20,-6],[350,0,-sign*30]),
         (7,[1,20,-6],[260,0,sign*12]),(9,[1,20,-6],[270,0,0]),(20,*READY)])
+
+# Bounded C1 curves only for strikes: no per-segment ease restart at contacts.
+# Draw/sheath cinematics retain their protected paths and free-blade roll.
+for name in ['light_punch','combo_1','combo_2','combo_3','sheath_strike','cut_rain','chop_left','chop_right']:
+    for bone in CLIPS[name]['bones'].values():
+        for channel_data in bone.values():
+            if isinstance(channel_data, dict):
+                for time, entry in list(channel_data.items()):
+                    if isinstance(entry, list):
+                        entry = channel_data[time] = {'vector': entry}
+                    if isinstance(entry, dict):
+                        entry.pop('easing', None)
+                        entry['lerp_mode'] = 'monotone'
 
 if __name__ == '__main__':
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
