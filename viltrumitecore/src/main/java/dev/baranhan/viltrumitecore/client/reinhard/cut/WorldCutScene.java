@@ -55,7 +55,7 @@ public final class WorldCutScene {
    public static boolean shakeCaster(boolean caster) { return true; }
    public static void clear() {
       for(Active a:SCENES.values()) { SoundDuck.INSTANCE.release(a.packet.castId());CutAtmosphere.release(a.packet.castId()); }
-      SCENES.clear(); refresh(); WorldCutFov.reset();
+      SCENES.clear(); refresh(); WorldCutFov.reset(); CutFinishSound.clear();
    }
    public static void prune(long now) {
       SCENES.values().removeIf(a -> {
@@ -87,14 +87,14 @@ public final class WorldCutScene {
          Vec3 nearest=nearest(scene,mc.player.position());
          CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now);
          if(inRange && t>=8 && scene.working() && (now-scene.packet.startTime())%28==0)
-            play(nearest,ReinhardSounds.CUT_RUMBLE.get(),t<80?1.4F:2.8F);
+            play(nearest,ReinhardSounds.CUT_RUMBLE.get(),t<80?.28F:.18F);
          if(hush) {
             CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
             if(!scene.silencePlayed) { play(nearest,ReinhardSounds.WORLD_CUT_SILENCE.get(),.8F); scene.silencePlayed=true; }
          }
-         if(inRange && (t>=80 || scene.blastReceived) && !scene.blasted) {
+         if(inRange && !scene.working() && !scene.blasted) {
             scene.blasted=true;
-            play(nearest,ReinhardSounds.WORLD_CUT_BLAST.get(),4);
+            CutFinishSound.play(nearest, now);
             if(shakeCaster(scene.packet.casterId().equals(mc.player.getUUID()))) CameraShake.addAt(nearest,5,200);
             for(int a=0;a<200;a+=20) HeroImpactFx.shockwaveVisual(point(scene,a+.5),20);
          }

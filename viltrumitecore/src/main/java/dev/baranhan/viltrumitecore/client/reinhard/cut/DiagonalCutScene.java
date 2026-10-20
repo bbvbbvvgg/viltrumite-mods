@@ -37,21 +37,21 @@ public final class DiagonalCutScene {
    }
    @SubscribeEvent public static void unload(LevelEvent.Unload e) {
       if(!e.getLevel().isClientSide())return;
-      for(UUID id:SCENES.keySet())CutAtmosphere.release(id);SCENES.clear();
+      for(UUID id:SCENES.keySet())CutAtmosphere.release(id);SCENES.clear();CutFinishSound.clear();
    }
    @SubscribeEvent public static void tick(TickEvent.ClientTickEvent e) {
       if(e.phase!=TickEvent.Phase.END)return;var m=Minecraft.getInstance();
-      if(m.level==null||m.player==null) {for(UUID id:SCENES.keySet())CutAtmosphere.release(id);SCENES.clear();return;}
+      if(m.level==null||m.player==null) {for(UUID id:SCENES.keySet())CutAtmosphere.release(id);SCENES.clear();CutFinishSound.clear();return;}
       if(m.isPaused())return;long now=m.level.getGameTime();
-      SCENES.values().removeIf(s->{boolean end=now-s.last>140||now-s.packet.startTime()>12000||(s.done>=0&&now-s.done>90);
+      SCENES.values().removeIf(s->{boolean end=now-s.last>140||now-s.packet.startTime()>12000||(s.done>=0&&now-s.done>70);
          if(end)CutAtmosphere.release(s.packet.castId());return end;});
       for(Scene s:SCENES.values()) {
          double t=now-s.packet.startTime();Vec3 near=nearest(s,m.player.position());boolean range=near.distanceTo(m.player.position())<=320;
-         CutAtmosphere.update(s.packet.castId(),near,t,s.done<0,s.done<0?1:Math.max(0,1-(now-s.done)/90.0),range,now);
+         CutAtmosphere.update(s.packet.castId(),near,t,s.done<0,s.done<0?1:Math.max(0,1-(now-s.done)/70.0),range,now);
          if(!range)continue;
-         if(t>=8&&s.done<0&&(now-s.packet.startTime())%28==0)play(near,ReinhardSounds.CUT_RUMBLE.get(),t<80?1.4F:2.8F);
+         if(t>=8&&s.done<0&&(now-s.packet.startTime())%28==0)play(near,ReinhardSounds.CUT_RUMBLE.get(),t<80?.28F:.18F);
          if(t>=20&&!s.hush) {play(near,ReinhardSounds.WORLD_CUT_SILENCE.get(),1.2F);s.hush=true;}
-         if(t>=80&&!s.blast) {play(near,ReinhardSounds.WORLD_CUT_BLAST.get(),4);HeroImpactFx.shockwaveVisual(near,28);s.blast=true;}
+         if(s.done>=0&&!s.blast) {CutFinishSound.play(near,now);HeroImpactFx.shockwaveVisual(near,28);s.blast=true;}
          if(s.done>=0&&!s.tail) {play(near,ReinhardSounds.WORLD_CUT_TAIL.get(),2);s.tail=true;}
       }
    }
@@ -70,26 +70,35 @@ public final class DiagonalCutScene {
          b.begin(VertexFormat.Mode.QUADS,DefaultVertexFormat.POSITION_COLOR);
          for(Scene s:SCENES.values()) {
             double t=m.level.getGameTime()-s.packet.startTime()+e.getPartialTick();if(t<20)continue;
-            var g=s.packet.shape();double fade=s.done<0?1:Math.max(0,1-(m.level.getGameTime()-s.done+e.getPartialTick())/90.0);
+            var g=s.packet.shape();double fade=s.done<0?1:Math.max(0,1-(m.level.getGameTime()-s.done+e.getPartialTick())/70.0);
             double open=t<80?.02:Math.min(1,(t-80)/10)*fade;
             double front=t<80?200:WorldCutScene.front(t);
-            // 200 x 2 ribbons, real 3-D sheet volume. Edges close only after server DONE.
+            // Narrow spatial aperture, not a filled 56-block gray sheet. A recessed
+            // opaque core and two sidewalls give parallax; thin irregular lips glow.
+            Vec3 normal=g.normal(), span=g.span();
             for(int a=0;a<front;a+=2) {
-               double w=g.width(a),gap=(.25+.6*Math.sin(a*.17+t*.03))*open+1.4*open;
-               Vec3 low=g.point(a,-w,0),high=g.point(a,w,0),lo2=g.point(Math.min(200,a+2),-g.width(a+2),0),hi2=g.point(Math.min(200,a+2),g.width(a+2),0);
-               Vec3 n=g.normal().scale(gap);
-               quad(b,eye,low.subtract(n),lo2.subtract(n),hi2.add(n),high.add(n),3,7,16,(int)(235*fade));
-               for(int side:new int[]{-1,1}) {
-                  Vec3 c=g.point(a,side*w,0),d=g.point(a+2,side*g.width(a+2),0);
-                  quad(b,eye,c.subtract(n),d.subtract(n),d.add(n),c.add(n),255,233,170,(int)(240*fade));
-                  // Seeded branching cracks and floating, bounded fragments on each lip.
-                  if(a%4==0) for(int k=0;k<4;k++) {
-                     Vec3 p=c.add(g.span().scale(side*k*.8)).add(g.forward().scale(Math.sin(a+k)*.6));
-                     PixelVfx.billboardPixel(b,eye,camera,p,.11F,255,245,215,(int)(180*fade/(1+k*.2)));
-                  }
-                  if(a%8==0) {
-                     Vec3 p=c.add(g.normal().scale(Math.sin(t*.12+a)*2)).add(g.span().scale(side*2));
-                     PixelVfx.billboardPixel(b,eye,camera,p,.35F,130,158,184,(int)(145*fade));
+               double end=Math.min(200,a+2);
+               double taper=Math.min(1,Math.min((a+2)/16.0,(200-a)/22.0));
+               double aperture=(.32+.08*Math.sin(a*.83+(g.seed()&255)))*open*taper;
+               if(aperture<.001)continue;
+               double aperture2=(.32+.08*Math.sin(end*.83+(g.seed()&255)))*open*taper;
+               Vec3 c=g.point(a,0,0), d=g.point(end,0,0);
+               Vec3 left=c.subtract(span.scale(aperture)),right=c.add(span.scale(aperture));
+               Vec3 left2=d.subtract(span.scale(aperture2)),right2=d.add(span.scale(aperture2));
+               // Two inward-facing cavities: depth is visible from either side of the cut.
+               for(int face=-1;face<=1;face+=2) {
+                  Vec3 lip=normal.scale(face*.14*open), recess=normal.scale(-face*.48*open);
+                  quad(b,eye,left.add(recess),left2.add(recess),right2.add(recess),right.add(recess),1,1,3,255);
+                  for(int side=-1;side<=1;side+=2) {
+                     Vec3 edge=c.add(span.scale(side*aperture)),edge2=d.add(span.scale(side*aperture2));
+                     quad(b,eye,edge.add(lip),edge2.add(lip),edge2.add(recess),edge.add(recess),8,6,14,255);
+                     Vec3 rim=span.scale(side*.055*open);
+                     quad(b,eye,edge.add(lip),edge2.add(lip),edge2.add(lip).add(rim),edge.add(lip).add(rim),255,224,140,(int)(235*fade));
+                     if(a%8==0) {
+                        Vec3 p=edge.add(lip).add(span.scale(side*(.15+.15*Math.sin(t*.06+a))));
+                        PixelVfx.billboardPixel(b,eye,camera,p,.08F,255,247,220,(int)(190*fade));
+                        PixelVfx.billboardPixel(b,eye,camera,p.add(normal.scale(face*.22)),.035F,255,209,110,(int)(120*fade));
+                     }
                   }
                }
             }
