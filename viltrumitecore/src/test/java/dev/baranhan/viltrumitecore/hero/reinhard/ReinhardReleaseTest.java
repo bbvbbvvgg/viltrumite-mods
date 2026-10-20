@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 class ReinhardReleaseTest {
-   @Test void inputBlockerUsesNewCorePatchVersion() throws Exception {
+   @Test void cinematicOverhaulUsesNewCoreMinorVersion() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.34.2", version.group(1), "Inward sheath attachment is a core patch; flight stays unchanged");
+      assertEquals("1.35.0", version.group(1), "Cinematic overhaul changes core protocol and abilities; flight stays unchanged");
    }
 }

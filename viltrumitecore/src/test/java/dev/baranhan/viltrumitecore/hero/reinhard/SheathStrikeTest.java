@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.baranhan.viltrumitecore.client.reinhard.ReinhardClips;
@@ -23,7 +24,7 @@ class SheathStrikeTest {
          }
       }
       assertEquals(ReinhardMode.HOLY_SWORD, ReinhardAbility.SHEATH_STRIKE.mode());
-      assertInstanceOf(SheathStrike.class, ReinhardActions.handler(ReinhardAbility.SHEATH_STRIKE));
+      assertNull(ReinhardActions.handler(ReinhardAbility.SHEATH_STRIKE));
    }
 
    @Test

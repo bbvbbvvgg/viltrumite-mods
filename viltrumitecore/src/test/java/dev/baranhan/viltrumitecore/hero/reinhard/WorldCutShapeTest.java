@@ -17,9 +17,9 @@ class WorldCutShapeTest {
    }
 
    @Test
-   void volumeAbout153k() {
+   void naturalVolumeMatchesMask() {
       WorldCutShape shape = shape(123);
-      assertTrue(shape.volume() >= 153000 && shape.volume() <= 170000);
+      assertTrue(shape.volume() > 60000 && shape.volume() < 153000);
       int count = 0;
       Iterator<BlockPos> wave = shape.wave(-64, 320);
       while (wave.hasNext()) { wave.next(); count++; }
@@ -27,13 +27,13 @@ class WorldCutShapeTest {
    }
 
    @Test
-   void depthBetween45And50() {
+   void taperedDepthAndSmoothInterior() {
       for (long seed : new long[] {0, 1, 123, Long.MIN_VALUE, Long.MAX_VALUE}) {
          WorldCutShape shape = shape(seed);
          for (int along = 0; along < 200; along++) {
             int depth = shape.depthAt(along);
-            assertTrue(depth >= 45 && depth <= 50);
-            if (along > 0) assertTrue(Math.abs(depth - shape.depthAt(along - 1)) <= 1, "smooth noise");
+            assertTrue(depth >= 1 && depth <= 50);
+            if (along > 20 && along < 175) assertTrue(Math.abs(depth - shape.depthAt(along - 1)) <= 1, "smooth interior noise");
          }
       }
    }
@@ -58,12 +58,24 @@ class WorldCutShapeTest {
    @Test
    void widthIs17() {
       WorldCutShape shape = shape(42);
-      for (int x = -10; x <= 10; x++) assertEquals(Math.abs(x) <= 8, shape.contains(0, x, 0));
+      for (int x = -10; x <= 10; x++) assertEquals(Math.abs(x) <= shape.geometry().halfWidth(0,0), shape.contains(0, x, 0));
       assertFalse(shape.contains(-1, 0, 0));
       assertFalse(shape.contains(200, 0, 0));
       assertFalse(shape.contains(0, 0, -1));
       assertFalse(shape.contains(0, 0, shape.depthAt(0)));
       assertEquals(17, shape.hitBox(0).getXsize(), 1E-8);
+   }
+
+   @Test
+   void damageFollowsActualTaperAndDepthTerraces() {
+      WorldCutShape s = shape(42);
+      var centre = s.axis(.5);
+      assertTrue(s.intersects(new net.minecraft.world.phys.AABB(centre, centre).inflate(.1), 0, 99));
+      assertFalse(s.intersects(new net.minecraft.world.phys.AABB(centre.add(4,0,0), centre.add(4,0,0)).inflate(.1), 0, 99), "outside narrow start");
+      int a=80, down=35;
+      double bank=s.geometry().halfWidth(a,down)+1;
+      var deep=s.axis(a+.5).add(bank,-down,0);
+      assertFalse(s.intersects(new net.minecraft.world.phys.AABB(deep,deep).inflate(.1), a, 99), "outside deep terrace");
    }
 
    @Test
@@ -76,7 +88,9 @@ class WorldCutShapeTest {
          assertTrue(pos.getZ() >= 2 && pos.getZ() < 12);
          count++;
       }
-      assertEquals(10 * 17 * 10, count);
+      int expected=0;for(int a=0;a<10;a++)for(int y=80;y<90;y++)
+         if(100-y<shape(9).depthAt(a))expected+=2*shape(9).geometry().halfWidth(a,100-y)+1;
+      assertEquals(expected,count);
       assertFalse(shape(9).wave(110, 120).hasNext());
       assertFalse(shape(9).wave(90, 90).hasNext());
    }

@@ -175,7 +175,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - WorldCutGeometry.frontAlong is a count of consumed slices, not the zero-based last index. WorldCut uses that count directly; hits follow the greater of carve and timed visual fronts, once per resolved UUID, without ally/PvP filters. Divine and absolute verdicts remain in Annihilation.
 - Flags alone do not suppress old-block onRemove: chest/furnace callbacks drop inventory/XP; redstone callbacks notify neighbours and schedule adjacent fluid ticks (mapped 1.20.1 bytecode checked). QuietBlockRemoval scope + common QuietBlockRemovalMixin skip those callbacks only for clean air replacement and remove block entities without drops. Ordinary destruction and debris flags 3 keep their callbacks. Runtime Mixin application still needs the manual server smoke.
 - Clean carve flags = HeroDestruction.CLEAR_FLAGS (UPDATE_CLIENTS | UPDATE_KNOWN_SHAPE | UPDATE_SUPPRESS_DROPS). The debris overload uses the same source flags. There is no final neighbour sweep: water/lava are intended to stay still at the cut until external neighbour updates occur. This is not a guarantee against other world activity. Actual fluids and lighting performance are unverified in game.
-- WorldCutScene keeps the fixed packet frame independently of the caster snapshot; game-time pixels never wait for blocks. Duck/FOV end on blast/timeout/unload. CameraShake still caps all shared shakes at 2.5, even when this scene requests 5. Pure budget checks do not measure TPS.
+- WorldCutScene keeps the fixed packet frame independently of the caster snapshot; game-time pixels never wait for blocks. Duck/FOV end on blast/timeout/unload. Ordinary CameraShake contributions cap at 2.5. Explicit cinematicAt contributions use the same accumulator with their own cap and local setting. Scene lifetime follows actual queue DONE; pure budget checks do not measure TPS.
 
 ## Reinhard stage 6 (World Erasure, core 1.30.0)
 - `SHIPPED_STAGE=6`: all fourteen abilities; Holy Sword slot 6 requires drawn Reid. One server-wide `WorldPause`, target ray 64, 150-tick scene, once-only removal at 90, cooldown 1200. Outcome is frozen at cast (divine / absolute targets stay but spend cooldown). Absent target at removal escapes; later rejoin never triggers a second attempt. Every dimension gets packet server age, not a subtraction of world game times.
@@ -190,7 +190,7 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 
 
 ## Reinhard stage 7 (sounds, core 1.31.0; flight unchanged 1.10.1)
-- Owner exception allows CC0/CC-BY for Reinhard, not NC. Live-page check 2026-10-13 found CGEffex 93835 and Robinhood76 378199 **CC-BY-NC 4.0**. Do not accidentally include them from the complete user archive. Blast/rain placeholders and candidate questions remain open; Alliare is not silently substituted alone. Sources/license links and input digests: `tools/assets/reinhard_sources.md`.
+- Owner exception allows CC0/CC-BY for Reinhard, not NC. Live-page check 2026-10-13 found CGEffex 93835 and Robinhood76 378199 **CC-BY-NC 4.0**. Do not accidentally include them from the complete user archive. The cinematic overhaul replaces blast/rain placeholders with original procedural CC0 audio; no excluded recording or silent Alliare-only substitution is used. Sources/license links and input digests: `tools/assets/reinhard_sources.md`.
 - The existing heartbeat clock is 24 client ticks (50 bpm), independent of source length; the source recording has a slower native repetition. The processed 1.2 s pulse fits that clock without changing gameplay constants. Fade/endpoint metrics do not prove perceptually seamless loops or correct runtime stopping.
 - Short high-crest clips can be peak-limited below the LUFS goal even with measured two-pass loudnorm. Condition selected transients before measurement; measure **decoded Vorbis** too. Preserve both LUFS and true/sample peak gates, not merely encoder settings. Pinned first-pass values depend on the approved source digests and ffmpeg build.
 - §10.1 covers only 16 output recipes, not every one of the 33 Stage 6 events. Two outputs are license-blocked, 12 extra cues have no selected source, and five events reuse §10.2. Do not equate 14 final recordings with a fully accepted hero. No native listening/server/GLSL/network/save/TPS proof in Stage 7; retain SESSION/PR manual gates and Stage 6 known limitations.
@@ -239,3 +239,15 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - Reinhard drawn blade orientation: native longitudinal axis is Y, width X, broad normal Z. In the raised TP World Erasure pose the face is already 10 degrees from front. A +90-degree Y roll exposes the edge; it does not create the anime diamond silhouette. The native asset is a narrow straight blade. Fixed-pose quad cross-sections distinguish a shape limit from an orientation bug. Do not resize or repose to conceal it; get owner approval before changing the blade shape.
 
 - Owner superseded the wide-blade direction: cancelled the +35% silhouette and explicitly selected the bottom +90-degree axial diagnostic variant (front edge, broad face at the side). Keep the original blade asset, original body/hand poses and sheath. TP rolls only its final free-blade frame after the existing grip solve; FP keeps its existing roll.
+
+
+## Detached cut and wire invariants
+- A completed damaging wave and completed terrain work are different events. Keep
+  scene admission and atmosphere until the queued carve leaves CarveJobs; do not
+  extend the damaging wave while a slow queue drains.
+- Reinhard wire cooldown slots 14 and 15 remain mode/Phoenix. Appended abilities
+  use explicit snapshot indices after them; an enum ordinal is not a wire slot.
+- Full-mesh intermediate checks caught an unreachable diagonal grip and forearm
+  through the head even though endpoint frames looked valid. Keep reachability and
+  SAT checks at intermediate times, both crouched and standing; do not relax them
+  to approve a more dramatic roll. Native first-person/VFX acceptance remains open.

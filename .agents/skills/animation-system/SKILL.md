@@ -427,3 +427,17 @@ To add a screen effect:
 - Optional native-matrix CPU export: REINHARD_DIAGNOSTICS=1 and
   ReinhardDiagnosticTest writes build/diagnostics/reinhard/*.json. These are
   diagnostic posed vertices, NOT Minecraft animation/VFX/network acceptance.
+
+
+### Detached cinematic weapon projections
+- Sample the existing AnimCache clip and the same body/grip ancestry as the real
+  weapon. Clone sampled GeoBone state; do not mutate the shared cached skeleton
+  from a world-render callback. Compare sampled matrices with AnimationController.
+- Scale a giant weapon projection about its grip. Keep the physical weapon scale,
+  sheath frame and hand solver unchanged. CPU matrix checks do not prove GL output.
+- Keep a long terrain scene alive until the server queue reports DONE. Use bounded
+  progress heartbeats and a client watchdog, not a hard-coded visual end tick.
+  Fade atmosphere leases after DONE. Release them on unload and watchdog expiry.
+- CameraShake.cinematicAt is an explicit strong contribution. Ordinary add/addAt
+  retain the legacy 2.5 input cap. They must not truncate an active cinematic shake.
+  A local intensity setting scales the cinematic contribution; shared decay remains.

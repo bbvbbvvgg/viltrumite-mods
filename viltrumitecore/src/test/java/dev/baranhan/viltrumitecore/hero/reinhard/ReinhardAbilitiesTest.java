@@ -16,7 +16,7 @@ class ReinhardAbilitiesTest {
       assertEquals(18, ReinhardAbilities.LOADOUT.length);
       for (ReinhardAbility ability : ReinhardAbility.values()) {
          int index = ability.mode().page() * 6 + ability.slot();
-         assertEquals(ReinhardAbilities.active(ability)?ability.id():"", ReinhardAbilities.LOADOUT[index], ability.name());
+         if (ability != ReinhardAbility.SHEATH_STRIKE) assertEquals(ReinhardAbilities.active(ability)?ability.id():"", ReinhardAbilities.LOADOUT[index], ability.name());
       }
    }
 
@@ -47,7 +47,8 @@ class ReinhardAbilitiesTest {
          boolean shipped = ReinhardAbilities.active(ability);
          assertEquals(shipped, ReinhardAbilities.owns(ability.id()), ability.name());
          int index = ability.mode().page() * 6 + ability.slot();
-         assertEquals(shipped ? ability.id() : "", loadout[index], ability.name());
+         if(ability!=ReinhardAbility.SHEATH_STRIKE) assertEquals(shipped ? ability.id() : "", loadout[index], ability.name());
+         else assertEquals(ReinhardAbility.DIAGONAL_WORLD_CUT.id(),loadout[index]);
       }
       assertTrue(ReinhardAbilities.owns("viltrumite:chop"), "the kit chop ships with stage 4");
       assertEquals("viltrumite:chop", loadout[13]);
@@ -62,6 +63,11 @@ class ReinhardAbilitiesTest {
 
    @Test
    void ordinalFitsExtraCooldowns() {
-      assertTrue(ReinhardAbility.values().length <= ReinhardFlags.EXTRA_MODE_CD);
+      Set<Integer> used=new HashSet<>();
+      for(var a:ReinhardAbility.values()) {
+         assertTrue(used.add(a.snapshotIndex()));
+         assertTrue(a.snapshotIndex()!=ReinhardFlags.EXTRA_MODE_CD && a.snapshotIndex()!=ReinhardFlags.EXTRA_PHOENIX);
+      }
+      assertEquals(16,ReinhardAbility.DIAGONAL_WORLD_CUT.snapshotIndex());
    }
 }

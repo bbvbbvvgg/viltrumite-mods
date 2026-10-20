@@ -34,8 +34,8 @@ class WorldCutTest {
    @Test void technicalCooldown() {
       ReinhardState state = new ReinhardState(); WorldCut.start(state);
       assertEquals(4, state.cooldowns[ReinhardAbility.WORLD_CUT.ordinal()]);
-      assertEquals(80, state.action.length()); assertTrue(state.busy());
-      for (int i=0;i<80;i++) state.action.tick();
+      assertEquals(100, state.action.length()); assertTrue(state.busy());
+      for (int i=0;i<100;i++) state.action.tick();
       assertFalse(state.busy());
    }
    @Test void hitsFollowFront() {
