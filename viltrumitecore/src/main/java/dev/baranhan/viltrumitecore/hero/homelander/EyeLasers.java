@@ -73,6 +73,11 @@ public final class EyeLasers {
 
       if (damageTick(state.laserAge)) {
          LivingEntity target = firstLivingOnRay(player);
+         if (target instanceof ServerPlayer defender && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender)
+            .blocksContinuousRay(defender, player.getEyePosition(), ray(player, HomelanderRules.LASER_RANGE).getLocation())) {
+            state.laserAge++;
+            return;
+         }
          if (target != null) {
             int previousInvulnerable = target.invulnerableTime;
             target.invulnerableTime = 0;

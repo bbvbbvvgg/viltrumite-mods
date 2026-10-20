@@ -41,18 +41,21 @@ public final class HeroProjectiles {
    }
 
    public static void onImpact(ProjectileImpactEvent event) {
-      Projectile projectile = event.getProjectile();
-      if (projectile.level().isClientSide() || !(event.getRayTraceResult() instanceof EntityHitResult hit)
+      if (intercept(event.getProjectile(), event.getRayTraceResult()))
+         event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
+   }
+
+   /** Custom projectile entities must call the same seam before their own onHit. */
+   public static boolean intercept(Projectile projectile, net.minecraft.world.phys.HitResult result) {
+      if (projectile.level().isClientSide() || !(result instanceof EntityHitResult hit)
          || !(hit.getEntity() instanceof ServerPlayer self) || projectile.getOwner() == self || !self.isAlive()) {
-         return;
+         return false;
       }
 
       ProjectileResponse response = HeroRegistry.get(self).projectileResponse(self, projectile);
       if (response == ProjectileResponse.PASS) {
-         return;
+         return false;
       }
-
-      event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
       switch (response) {
          case DEFLECT -> deflect(self, projectile);
          case CATCH -> caught(self, projectile);
@@ -60,6 +63,7 @@ public final class HeroProjectiles {
          default -> {
          }
       }
+      return true;
    }
 
    private static void deflect(ServerPlayer self, Projectile projectile) {
@@ -91,11 +95,13 @@ public final class HeroProjectiles {
       }
 
       projectile.setOwner(self);
+      if (projectile instanceof dev.baranhan.viltrumitecore.entity.Homing homing) homing.retarget(owner);
       launch(self, projectile, next);
    }
 
    /** Arrow → its pickup item (unless CREATIVE_ONLY), trident → the trident, anything else is removed. */
    private static void caught(ServerPlayer self, Projectile projectile) {
+      if (HeroRegistry.get(self).captureProjectile(self, projectile)) return;
       ItemStack item = null;
       if (projectile instanceof AbstractArrow arrow) {
          // A trident is an AbstractArrow: its pickup item is the trident stack itself.

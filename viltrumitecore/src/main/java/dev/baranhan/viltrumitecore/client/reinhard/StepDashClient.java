@@ -42,7 +42,9 @@ public final class StepDashClient {
       ReinhardAbility dash = ReinhardAbility.STEP_DASH;
       boolean down = AbilityInputManager.isAbilityKeyDown(player, dash.id());
       boolean gate = ReinhardActions.gate(new ReinhardActions.Gate(player.isAlive() && !player.isSpectator(), SuperJumpClient.anchored(player, snapshot),
-         ReinhardView.mode(snapshot), dash.mode(), snapshot.extraCooldown(dash.ordinal()), snapshot.actionBusy(), false)) == ReinhardActions.Refusal.NONE;
+         ReinhardView.mode(snapshot), ReinhardView.mode(snapshot), snapshot.extraCooldown(dash.ordinal()), snapshot.actionBusy(), false)) == ReinhardActions.Refusal.NONE;
+      if (ReinhardView.mode(snapshot) == dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode.KNIGHT
+         && dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind.lookTarget(player) != null) gate = false;
       boolean started = PREDICTOR.onKey(down, gate);
       if (started) {
          PREDICTOR.aim(StepDash.direction(player.input.forwardImpulse, player.input.leftImpulse, player.getYRot()),

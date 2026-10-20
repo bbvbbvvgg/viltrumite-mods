@@ -22,9 +22,9 @@ public final class ReinhardAbilities {
    public static final int CHOP_INDEX = 13;
    /** Full layout of every stage: page = mode, 6 slots per page. */
    public static final String[] LOADOUT = {
-      "", "reinhard:step_dash", "reinhard:catch", "", "", "",
-      "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
-      "reinhard:reid", CHOP, "reinhard:diagonal_world_cut", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
+      "", "", "reinhard:step_dash", "", "", "",
+      "", "reinhard:sky_kick", "reinhard:step_dash", "", "", "",
+      "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
    };
 
    private ReinhardAbilities() {
@@ -61,7 +61,10 @@ public final class ReinhardAbilities {
    }
 
    public static boolean active(ReinhardAbility ability) {
-      return ability.shipped() && ability != ReinhardAbility.LIGHT_PUNCH && ability != ReinhardAbility.FIST_COMBO && ability != ReinhardAbility.SHEATH_STRIKE;
+      return ability.shipped() && switch (ability) {
+         case STEP_DASH, SKY_KICK, REID, CUT_RAIN, WORLD_CUT, WORLD_ERASURE -> true;
+         default -> false;
+      };
    }
 
    private static boolean shipped(String id) {

@@ -85,6 +85,7 @@ public final class ReinhardRenderer {
          StanceBlend.reset(player);
          ReinhardMotion.reset(player);
          ReinhardRecovery.reset(player);
+         ReinhardDefense.reset(player);
          ParryPulse.THIRD_PERSON.reset(player);
          return;
       }
@@ -121,6 +122,7 @@ public final class ReinhardRenderer {
          motion, snapshot.actionLength());
       applyMelee(body, player, snapshot, partialTick);
       applyHead(body, player, partialTick);
+      ReinhardDefense.body(player, snapshot, body);
       ReinhardRecovery.body(player,body,recoveryKey(snapshot),Util.getNanos());
       org.joml.Matrix4f[] equipment=ReinhardSword.equipment(body,reidPhase,reidTicks,
          snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),actionTicks(player,snapshot,partialTick),
@@ -167,6 +169,7 @@ public final class ReinhardRenderer {
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
       if (snapshot == null) {
          ReinhardRecovery.reset(player);
+         ReinhardDefense.reset(player);
          return;
       }
 
@@ -271,10 +274,12 @@ public final class ReinhardRenderer {
          ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
          action = ReinhardFirstPersonPose.reid(reid, dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, Minecraft.getInstance().getFrameTime()));
       }
-      if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
+      if (!actionArm && snapshot.actionId() == ReinhardAbility.REID_STRIKE.ordinal())
+         action = ReinhardFirstPersonPose.reidMelee(snapshot.variant(),cinematicTicks,true);
+      else if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
          ReinhardPoses.action(snapshot.actionId()),cinematicTicks,snapshot.actionLength());
       action = ReinhardRecovery.firstPerson(player,physicalLeft,action,recoveryKey(snapshot),Util.getNanos());
-      return action;
+      return ReinhardDefense.firstPerson(player,snapshot,physicalLeft,action);
    }
 
    /** The synced action's first-person offset (same render clock as the body and weapon). */

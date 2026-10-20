@@ -185,7 +185,18 @@ public final class ReinhardHero implements HeroDefinition {
 
    @Override
    public HeroAction mouseAction(MouseButton button, Player player) {
-      return claimedMouse(button, dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags.has(flags(player), ReinhardFlags.GRAB_HOLDING));
+      return claimedMouse(button, ReinhardFlags.has(flags(player), ReinhardFlags.GRAB_HOLDING) || button == MouseButton.SECONDARY && canContextGrab(player));
+   }
+
+   /** Empty hands and an explicit ray target keep normal item/block use untouched. */
+   public static boolean canContextGrab(Player player) {
+      if (player == null || !player.isAlive() || player.isSpectator() || !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()) return false;
+      ReinhardMode mode = ReinhardMode.values()[ReinhardFlags.mode(flags(player))];
+      if (mode == ReinhardMode.HOLY_SWORD) return false;
+      var target = ReinhardTargets.lookTarget(player, ReinhardRules.GRAB_REACH, e -> e.isAlive() && !player.isAlliedTo(e)
+         && !e.isAlliedTo(player) && (!(e instanceof Player other) || !other.isCreative() && player.canHarmPlayer(other)));
+      return target != null && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(target, ControlKind.PULL)
+         && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsImpulse(target);
    }
 
    /** Pure input policy shared by local claims and authoritative server claims. */
@@ -204,7 +215,7 @@ public final class ReinhardHero implements HeroDefinition {
       ReinhardState state = ReinhardState.ensure(player);
       return switch (action) {
          case PRIMARY_ATTACK -> !state.busy() && (!state.action.running() || state.action.is(ReinhardAbility.FIST_COMBO));
-         case SECONDARY_USE -> dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.holding(state);
+         case SECONDARY_USE -> dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.holding(state) || canContextGrab(player);
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
          // Except while Reid is being drawn: the 6 s scene roots him (spec §7.1).
@@ -235,6 +246,7 @@ public final class ReinhardHero implements HeroDefinition {
          player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
          player.hurtMarked=true;
       } else state.cutAnchor=null;
+      state.arrowCapture.tick(player);
       state.tick();
       ReinhardActions.tick(player, state);
       ReidLife.tick(player, state, state.reid.tick());
@@ -265,8 +277,7 @@ public final class ReinhardHero implements HeroDefinition {
       }
 
       if (action == HeroAction.SECONDARY_USE) {
-         if (pressed && dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.holding(ReinhardState.ensure(player)))
-            dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.finish(player, ReinhardState.ensure(player));
+         if (pressed) ReinhardActions.secondaryUse(player, ReinhardState.ensure(player));
          return;
       }
       ReinhardActions.handleInput(player, ReinhardState.ensure(player), action, pressed);
@@ -380,6 +391,24 @@ public final class ReinhardHero implements HeroDefinition {
     * absorbed with a spark, otherwise the hit is counted and passes) and the
     * Phoenix in {@link #clampFinalDamage}.
     */
+   private static void react(ServerPlayer self, ReinhardState state,
+      dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind kind, net.minecraft.world.phys.Vec3 source) {
+      var delta = source.subtract(self.getEyePosition());
+      float yaw = net.minecraft.util.Mth.wrapDegrees((float)Math.toDegrees(Math.atan2(-delta.x, delta.z)) - self.getYRot());
+      float pitch = (float)-Math.toDegrees(Math.atan2(delta.y, delta.horizontalDistance()));
+      state.defense.contact(kind, yaw, pitch);
+   }
+
+   @Override
+   public boolean blocksContinuousRay(ServerPlayer self, net.minecraft.world.phys.Vec3 source, net.minecraft.world.phys.Vec3 contact) {
+      if (!self.isAlive()) return false;
+      ReinhardState state = ReinhardState.ensure(self);
+      react(self, state, dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.BEAM, source);
+      state.reid.combat();
+      if (self.tickCount % 4 == 0) HeroFx.flash(self, contact, .25F);
+      return true;
+   }
+
    @Override
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
       ReinhardState state = ReinhardState.ensure(self);
@@ -390,8 +419,13 @@ public final class ReinhardHero implements HeroDefinition {
 
       if (!isDivine(source)) {
          if (Parry.parries(self, source, false)) {
-            state.parryTicks = ReinhardRules.PARRY_POSE_TICKS;
-            Parry.effects(self, source.getEntity());
+            var attacker = (LivingEntity)source.getEntity();
+            var kind = raw >= 20 ? dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.EVADE
+               : attacker.getMainHandItem().isEmpty() ? dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.PALM
+               : dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.WEAPON;
+            boolean idle = state.defense.kind() == dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.NONE;
+            react(self, state, kind, attacker.getEyePosition());
+            if (idle) Parry.effects(self, attacker);
             return DamageAbsorb.ABSORBED;
          }
 
@@ -451,14 +485,22 @@ public final class ReinhardHero implements HeroDefinition {
    @Override
    public ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) {
       ReinhardState state = ReinhardState.of(self);
-      ProjectileResponse response = projectileResponse(state);
-      if (response == ProjectileResponse.CATCH) {
-         CatchWindow.onCatch(self, state);
-      } else if (response == ProjectileResponse.REFLECT) {
-         dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow.onReflect(self, state, projectile);
-      }
+      if (state == null) return ProjectileResponse.DEFLECT;
+      react(self, state, projectile instanceof net.minecraft.world.entity.projectile.AbstractArrow
+         ? dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.ARROW
+         : dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.PROJECTILE, projectile.position());
+      // A real projectile keeps its speed, ownership and (for missiles) target in the shared seam.
+      if (projectile instanceof net.minecraft.world.entity.projectile.AbstractArrow
+         && !(projectile instanceof net.minecraft.world.entity.projectile.ThrownTrident))
+         return state.arrowCapture.holding() || state.action.running() || state.reid.phase() != Reid.Phase.SHEATHED
+            ? ProjectileResponse.DEFLECT : ProjectileResponse.CATCH;
+      return ProjectileResponse.REFLECT;
+   }
 
-      return response;
+   @Override
+   public boolean captureProjectile(ServerPlayer self, Projectile projectile) {
+      return projectile instanceof net.minecraft.world.entity.projectile.AbstractArrow arrow
+         && ReinhardState.ensure(self).arrowCapture.start(self, arrow);
    }
 
    /** Pure: the open palm windows (stage 3) win over the passive deflection; no state = no window. */
@@ -600,6 +642,7 @@ public final class ReinhardHero implements HeroDefinition {
       extra[ReinhardFlags.EXTRA_PHOENIX] = phoenixSeconds(phoenixTicks);
       int flags = ReinhardFlags.withMode(sceneFlags, state.mode);
       if (state.parryTicks > 0) flags |= 1 << ReinhardFlags.PARRY_POSE;
+      flags |= state.defense.flags();
       flags = stateFlags(state, flags);
       flags = Reid.withFlags(flags, state.reid.phase());
       ActionTimeline action = state.action;

@@ -50,6 +50,13 @@ public final class ReinhardFirstPersonPose {
    private static final float[][] WORLD_CUT = {under(0),key(10,-100,8,0,-.08F,.45F,-.12F),
       key(66,-105,8,0,-.08F,.47F,-.12F),key(80,25,8,0,-.08F,-.18F,-.42F),
       key(86,25,8,0,-.08F,-.18F,-.42F),under(100)};
+   private static final float[][] REID_MELEE = {under(0),key(4,-42,-16,-6,.02F,.20F,.06F),
+      key(7,12,20,7,-.06F,-.08F,-.28F),key(9,14,24,6,-.05F,-.10F,-.22F),under(20)};
+   public static Offset reidMelee(int phase,double ticks,boolean left) {
+      Offset o=strike(REID_MELEE,ticks*20/(phase==2?20:14));
+      float side=phase==1?-1:1;
+      return new Offset(o.x()*side+(left?-.08F:0),o.y(),o.z(),o.pitch(),o.yaw()*side,o.roll()*side);
+   }
    private static final float[][] RAIN = rain();
 
    private static float[][] rain() {
@@ -100,6 +107,7 @@ public final class ReinhardFirstPersonPose {
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks, int length) {
       if (ability==null || !Double.isFinite(ticks)) return Offset.NONE;
       return switch(ability) {
+         case REID_STRIKE -> reidMelee(phase,ticks,false);
          case LIGHT_PUNCH -> strike(JAB,ticks);
          case STEP_DASH -> sample(DASH,ticks);
          case FIST_COMBO -> strike(phase<=0 ? JAB : phase==1 ? HOOK : HAMMER,ticks);

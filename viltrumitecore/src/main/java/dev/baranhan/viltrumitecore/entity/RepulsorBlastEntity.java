@@ -60,6 +60,9 @@ public class RepulsorBlastEntity extends Projectile {
       super.tick();
       Vec3 motion = this.getDeltaMovement();
       HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+      if (!this.level().isClientSide() && dev.baranhan.viltrumitecore.hero.HeroProjectiles.intercept(this, hit)) return;
+      if (this.level().isClientSide() && hit instanceof EntityHitResult entityHit
+         && entityHit.getEntity() instanceof net.minecraft.world.entity.player.Player) return;
       if (hit.getType() != HitResult.Type.MISS) {
          if (this.level().isClientSide()) {
             net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,

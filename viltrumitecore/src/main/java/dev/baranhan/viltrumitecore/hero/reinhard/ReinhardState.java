@@ -24,6 +24,8 @@ public final class ReinhardState {
    public Adaptation adaptation = Adaptation.NONE;
    /** Blessing of the Holy Sword (spec §4.1): ticks left of the parry pose flag; transient. */
    public int parryTicks;
+   public final dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowCapture arrowCapture = new dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowCapture();
+   public final dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction defense = new dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction();
    /** Wind Reading (spec §4.5): players who hit him → game time of the hit; transient. */
    public final java.util.Map<java.util.UUID, Long> recentAttackers = new java.util.HashMap<>();
    /** Stage 3: the one action timeline (ability, elapsed, length, target, phase); transient. */
@@ -37,6 +39,8 @@ public final class ReinhardState {
    public int comboIdle;
    public boolean comboQueued;
    public boolean resolvingMelee;
+   public int meleeSide;
+   public final java.util.Set<java.util.UUID> meleeHit = new java.util.HashSet<>();
    public float rainYaw,rainPitch;
    /** Transient self-root; no gravity/AI flag ownership and nothing to restore after logout. */
    public net.minecraft.world.phys.Vec3 cutAnchor;
@@ -75,6 +79,7 @@ public final class ReinhardState {
 
    /** Counts every cooldown down by one tick. */
    public void tick() {
+      defense.tick();
       if (this.modeCooldown > 0) {
          this.modeCooldown--;
       }
