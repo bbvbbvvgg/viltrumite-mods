@@ -199,6 +199,8 @@ public final class ReinhardRenderer {
       boolean physicalLeft = event.getArm() == HumanoidArm.LEFT;
       ReinhardFirstPersonPose.Offset action = cinematic == ReinhardAbility.WORLD_CUT
          ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft)
+         : cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT ? ReinhardFirstPersonPose.diagonal(cinematicTicks,physicalLeft)
+         : cinematic == ReinhardAbility.CUT_RAIN ? ReinhardFirstPersonPose.rain(cinematicTicks,physicalLeft)
          : cinematic == ReinhardAbility.WORLD_ERASURE
             ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
             : actionArm ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;

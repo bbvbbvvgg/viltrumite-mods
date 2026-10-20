@@ -47,10 +47,11 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 @EventBusSubscriber(modid = "viltrumitecore", bus = Bus.FORGE, value = {Dist.CLIENT})
 public final class ReidDrawSceneVfx {
    public static final int TINT_PRIORITY = 100;
-   public static final SkyTint.Tint DARK = new SkyTint.Tint(0.55F, 0.55F, 0.65F, 0.75F, 0.0F);
+   public static final SkyTint.Tint DARK = new SkyTint.Tint(0.25F, 0.28F, 0.39F, 0.88F, 0.0F);
    public static final float DUCK_TARGET = 0.25F;
    public static final int DUCK_FADE_TICKS = 20;
    private static final Set<ResourceLocation> OWN_SOUNDS = Set.of(
+      new ResourceLocation("viltrumitecore", "reinhard.reid_cinematic_layer"),
       new ResourceLocation("viltrumitecore", "reinhard.reid_rumble"),
       new ResourceLocation("viltrumitecore", "reinhard.reid_choir"),
       new ResourceLocation("viltrumitecore", "reinhard.reid_unsheathe"),
@@ -106,7 +107,10 @@ public final class ReidDrawSceneVfx {
          float p = ReidDrawScene.progress(scene.startGameTime(), now, 0.0F);
          CameraShake.addAt(Vec3.atBottomCenterOf(scene.origin()), Mth.lerp(p, 2.5F, 4.0F), ReinhardRules.REID_SCENE_RANGE);
          if (PUSHED.add(scene.casterId())) {
-            SkyTint.INSTANCE.push(owner(scene.casterId()), TINT_PRIORITY, () -> DARK);
+            float age=now-scene.startGameTime();
+            if(age<8)level.playLocalSound(scene.origin().getX()+.5,scene.origin().getY()+1,scene.origin().getZ()+.5,
+               dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds.REID_CINEMATIC_LAYER.get(),SoundSource.PLAYERS,3.0F,1,false);
+            SkyTint.INSTANCE.push(owner(scene.casterId()), TINT_PRIORITY, () -> SkyTint.mix(SkyTint.NONE,DARK,Math.min(1,(level.getGameTime()-scene.startGameTime())/30.0F)));
             SoundDuck.INSTANCE.duck(owner(scene.casterId()), SoundSource.MASTER, DUCK_TARGET, DUCK_FADE_TICKS, OWN_SOUNDS);
          }
       }
@@ -181,6 +185,7 @@ public final class ReidDrawSceneVfx {
                pillar(buffer, cameraPos, camera, scene, cloudY + SKY_ABOVE_CLOUDS, t, grow);
                funnel(buffer, cameraPos, camera, scene, cloudY, t, grow);
                coronas(buffer,cameraPos,camera,scene,t,grow);
+               weaponBursts(buffer,cameraPos,camera,scene,t,level);
             }
          }
          tesselator.end();
@@ -192,6 +197,20 @@ public final class ReidDrawSceneVfx {
          RenderSystem.disableBlend();
          modelViewStack.popPose();
          RenderSystem.applyModelViewMatrix();
+      }
+   }
+
+   /** Small bursts follow the actual sampled hilt/blade, not the scene's ground origin. */
+   private static void weaponBursts(BufferBuilder b,Vec3 eye,Camera camera,ReidDrawScene.Active scene,float ticks,ClientLevel level) {
+      var e=level.getEntity(scene.casterId());if(!(e instanceof net.minecraft.world.entity.LivingEntity caster))return;
+      float envelope=Mth.clamp((ticks-18)/16,0,1)*Mth.clamp((120-ticks)/10,0,1);
+      for(int band=0;band<4;band++) {
+         Vec3 center=dev.baranhan.viltrumitecore.client.reinhard.ReinhardTitanBlade.drawPoint(caster,ticks,-3.5+band*8);
+         for(int i=0;i<8;i++) {
+            double a=i*Math.PI/4+ticks*.19+band;double rad=.06+.11*(.5+.5*Math.sin(ticks*.8-band));
+            Vec3 at=center.add(Math.cos(a)*rad,Math.sin(a*2)*rad*.35,Math.sin(a)*rad);
+            PixelVfx.billboardPixel(b,eye,camera,at,i%3==0?.055F:.025F,255,i%3==0?213:250,i%3==0?125:240,(int)(220*envelope));
+         }
       }
    }
 
@@ -245,14 +264,19 @@ public final class ReidDrawSceneVfx {
       Vec3 base = Vec3.atBottomCenterOf(scene.origin());
       float height = (float)(topY - base.y) * Math.min(1.0F, grow * 3.0F);
       float width = (0.5F + 0.6F * grow) * (1.0F + 0.25F * Mth.sin(t * 0.6F));
-      int alpha = (int)(90.0F + 120.0F * grow);
+      int alpha = (int)((90.0F + 120.0F * grow)*Mth.clamp((120-t)/12,0,1));
       for (float y = 0.0F; y <= height; y += PILLAR_STEP) {
          for (int i = 0; i < 6; i++) {
             double a = i * Math.PI / 3.0 + y * 0.15 + t * 0.05;
             Vec3 at = base.add(Math.cos(a) * width, y, Math.sin(a) * width);
             PixelVfx.billboardPixel(buffer, cameraPos, camera, at, 0.22F, 255, 255, 245, alpha);
          }
-         PixelVfx.billboardPixel(buffer, cameraPos, camera, base.add(0.0, y, 0.0), 0.35F, 255, 255, 255, alpha);
+         PixelVfx.billboardPixel(buffer, cameraPos, camera, base.add(0.0, y, 0.0), 0.50F+grow*.2F, 255, 255, 255, alpha);
+         for(int j=0;j<3;j++) {
+            double angle=j*Math.PI*2/3+y*.08-t*.035;
+            double radius=width*2.1;double drift=(y+t*.35)%Math.max(1,height);
+            PixelVfx.billboardPixel(buffer,cameraPos,camera,base.add(Math.cos(angle)*radius,drift,Math.sin(angle)*radius),.11F,255,214,111,alpha/2);
+         }
       }
    }
 
@@ -270,7 +294,7 @@ public final class ReidDrawSceneVfx {
          for (int i = 0; i < count; i++) {
             double a = (Math.PI * 2.0 * i) / count + t * 0.01 * (ring + 1);
             Vec3 at = center.add(Math.cos(a) * r, ring * 1.5 - Math.sin(a * 3.0 + t * 0.1) * 0.8, Math.sin(a) * r);
-            PixelVfx.billboardPixel(buffer, cameraPos, camera, at, 1.1F, 150, 152, 160, 70);
+            PixelVfx.billboardPixel(buffer, cameraPos, camera, at, 1.1F, 150, 152, 160, (int)(70*Mth.clamp((120-t)/12,0,1)));
          }
       }
    }

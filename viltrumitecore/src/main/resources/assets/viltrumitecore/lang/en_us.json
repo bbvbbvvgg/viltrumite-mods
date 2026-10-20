@@ -467,8 +467,8 @@
   "ability.viltrumitecore.reinhard_cut_rain.name": "Rain of Cuts",
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Reid drawn: 12 lethal cuts in a 30-degree cone, 40 blocks long, with narrow ground grooves. Short technical lock.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhard's cuts rain down",
-  "ability.viltrumitecore.reinhard_world_cut.name": "World Cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: swing, three seconds of silence, then a 200-block world cut. No long cooldown; another scene waits for this cut and its block work to finish.",
+  "ability.viltrumitecore.reinhard_world_cut.name": "Ground World Cut",
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: a heavy two-handed windup, silence, then a tapered 200-block canyon. At most two world cuts may remain active.",
   "ability.viltrumitecore.reinhard_world_erasure.name": "World Erasure",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid drawn: a target within 64 blocks, 7.5 s world pause and erasure. Mortal players return from limbo after 30 online seconds without carried belongings; ender chest stays. Divine/absolute targets survive. One active scene, no long cooldown.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "The world cracks",
@@ -479,5 +479,8 @@
   "viltrumitecore.limbo.line3": "Everything you carried vanished with you.",
   "viltrumitecore.limbo.line4": "But the strongest power in this world took pity on you.",
   "viltrumitecore.limbo.line5": "You are allowed to be reborn.",
-  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Heartbeat"
+  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Heartbeat",
+  "ability.viltrumitecore.reinhard_diagonal_world_cut.name": "Diagonal World Cut",
+  "ability.viltrumitecore.reinhard_diagonal_world_cut.desc": "Reid drawn: a tilted three-dimensional rupture cuts air, mountains and buildings. Shares the two-cut limit with Ground World Cut.",
+  "ability.viltrumitecore.reinhard_lethal_chop.desc": "Reid must be fully sheathed. A decisive lethal hand chop; unavailable while drawing, drawn or sheathing."
 }

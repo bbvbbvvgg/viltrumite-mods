@@ -48,19 +48,20 @@ public final class ReinhardFirstPersonPose {
    private static final float[][] SHEATH = {under(0),key(4,-46,-42,-12,.16F,.18F,.08F),
       key(6,-8,48,12,-.30F,.04F,-.18F),key(8,-6,52,12,-.24F,.02F,-.14F),under(12)};
    private static final float[][] WORLD_CUT = {under(0),key(10,-100,8,0,-.08F,.45F,-.12F),
-      key(13,-105,8,0,-.08F,.47F,-.12F),key(20,25,8,0,-.08F,-.18F,-.42F),
-      key(78,25,8,0,-.08F,-.18F,-.42F),under(80)};
+      key(66,-105,8,0,-.08F,.47F,-.12F),key(80,25,8,0,-.08F,-.18F,-.42F),
+      key(86,25,8,0,-.08F,-.18F,-.42F),under(100)};
    private static final float[][] RAIN = rain();
 
    private static float[][] rain() {
-      float[][] keys = new float[15][];
-      keys[0] = under(0);
-      for (int i=0;i<12;i++) {
-         float side = (i&1)==0 ? -1 : 1;
-         keys[i+1] = key((i+1)*18F/12,-24,side*34,side*9,side*.16F,.08F,-.24F);
+      float[][] keys = new float[27][];
+      keys[0]=under(0);keys[1]=key(4,-45,-24,-6,-.1F,.18F,.04F);
+      for(int i=0;i<12;i++) {
+         float side=(i&1)==0?-1:1;
+         float t=ReinhardRules.CUT_FIRST_TICK+i*ReinhardRules.CUT_INTERVAL;
+         keys[2+i*2]=key(t-.6F,-45,-side*24,-side*6,-side*.1F,.18F,.04F);
+         keys[3+i*2]=key(t,12,side*32,side*8,side*.12F,.04F,-.30F);
       }
-      keys[13]=key(19,-14,0,0,0,.03F,-.10F);
-      keys[14]=under(20);
+      keys[26]=under(ReinhardRules.CUT_TICKS);
       return keys;
    }
 
@@ -100,6 +101,7 @@ public final class ReinhardFirstPersonPose {
          case SHEATH_STRIKE -> sample(SHEATH,ticks);
          case CUT_RAIN -> sample(RAIN,ticks);
          case WORLD_CUT -> worldCut(ticks,false);
+         case DIAGONAL_WORLD_CUT -> diagonal(ticks,false);
          case WORLD_ERASURE -> worldErasure(ticks,false);
          default -> Offset.NONE;
       };
@@ -117,9 +119,20 @@ public final class ReinhardFirstPersonPose {
    }
 
    public static Offset worldCut(double ticks,boolean physicalLeft) {
-      if (!Double.isFinite(ticks) || ticks<=0 || ticks>=ReinhardRules.WORLD_CUT_BLAST) return Offset.NONE;
+      if (!Double.isFinite(ticks) || ticks<=0 || ticks>=ReinhardRules.WORLD_CUT_BLAST+20) return Offset.NONE;
       Offset right=sample(WORLD_CUT,ticks);
       return physicalLeft ? new Offset(right.x()-.10F,right.y(),right.z(),right.pitch(),-right.yaw(),right.roll()) : right;
+   }
+
+   public static Offset diagonal(double ticks,boolean physicalLeft) {
+      Offset o=worldCut(ticks,physicalLeft);
+      float w=smooth(ticks/16)*(1-smooth((ticks-86)/14));
+      float sweep=smooth((ticks-66)/14);
+      return new Offset(o.x()+(.12F-.24F*sweep)*w,o.y(),o.z(),o.pitch(),o.yaw()+(-24+48*sweep)*w,o.roll()+(-22+44*sweep)*w);
+   }
+   public static Offset rain(double ticks,boolean physicalLeft) {
+      Offset o=sample(RAIN,ticks);
+      return physicalLeft ? new Offset(o.x()-.1F,o.y(),o.z(),o.pitch(),-o.yaw(),o.roll()) : o;
    }
 
    public static Offset worldErasure(double ticks,boolean physicalLeft) {
