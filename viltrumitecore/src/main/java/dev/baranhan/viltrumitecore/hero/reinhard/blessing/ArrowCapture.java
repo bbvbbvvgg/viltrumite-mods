@@ -12,14 +12,15 @@ public final class ArrowCapture {
    private boolean gravity;
    private AbstractArrow.Pickup pickup;
    private int ticks;
+   public int entityId() { return holding() ? arrow.getId()+1 : 0; }
    public boolean holding() { return arrow != null && !arrow.isRemoved(); }
    public boolean start(ServerPlayer self, AbstractArrow next) {
       if (holding()) return false;
       arrow = next; gravity = next.isNoGravity(); pickup = next.pickup; ticks = 10;
       // AbstractArrow.playerTouch permits pickup while noPhysics is true. A held
       // arrow must remain an entity, not disappear into the nearby owner inventory.
-      next.pickup = AbstractArrow.Pickup.DISALLOWED;
-      next.setOwner(self); next.setNoPhysics(true); next.setNoGravity(true);
+      next.setOwner(self); // Vanilla setOwner(Player) rewrites pickup; lock only afterwards.
+      next.pickup = AbstractArrow.Pickup.DISALLOWED; next.setNoPhysics(true); next.setNoGravity(true);
       next.setDeltaMovement(Vec3.ZERO); next.hasImpulse = true;
       move(self);
       return true;
@@ -28,7 +29,9 @@ public final class ArrowCapture {
       // Right palm, in front of the face; identical facing policy to the reaction layer.
       Vec3 forward = self.getLookAngle();
       Vec3 right = new Vec3(-forward.z, 0, forward.x).normalize();
-      Vec3 at = self.getEyePosition().add(forward.scale(.62)).add(right.scale(.22)).add(0,-.2,0);
+      var state=dev.baranhan.viltrumitecore.hero.reinhard.ReinhardState.of(self);
+      Vec3 palm=state==null?null:state.defense.palm();
+      Vec3 at = palm==null ? self.getEyePosition().add(forward.scale(.62)).add(right.scale(.22)).add(0,-.2,0) : DefenseContact.world(self,palm);
       arrow.setPos(at); arrow.setDeltaMovement(Vec3.ZERO); arrow.hasImpulse = true;
    }
    public void tick(ServerPlayer self) {

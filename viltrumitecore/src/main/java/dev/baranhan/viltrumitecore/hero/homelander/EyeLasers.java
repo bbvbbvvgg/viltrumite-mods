@@ -71,13 +71,10 @@ public final class EyeLasers {
          return;
       }
 
-      if (damageTick(state.laserAge)) {
-         LivingEntity target = firstLivingOnRay(player);
-         if (target instanceof ServerPlayer defender && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender)
-            .blocksContinuousRay(defender, player.getEyePosition(), ray(player, HomelanderRules.LASER_RANGE).getLocation())) {
-            state.laserAge++;
-            return;
-         }
+      LivingEntity target = firstLivingOnRay(player);
+      boolean guarded=state.laserBeamOn() && target instanceof ServerPlayer defender && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender)
+         .blocksContinuousRay(defender,player.getEyePosition(),ray(player,HomelanderRules.LASER_RANGE).getLocation());
+      if (damageTick(state.laserAge) && !guarded) {
          if (target != null) {
             int previousInvulnerable = target.invulnerableTime;
             target.invulnerableTime = 0;

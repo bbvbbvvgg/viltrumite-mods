@@ -60,7 +60,10 @@ public final class MicroLaser implements MarkSignature {
       SignatureTrace.Hit hit = SignatureTrace.shoot(player, player.getLookAngle(), SignatureRules.LASER_RANGE);
       sig.point = hit.end();
       if (hit.target() instanceof ServerPlayer defender && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender)
-         .blocksContinuousRay(defender, player.getEyePosition(), hit.end())) return;
+         .blocksContinuousRay(defender, player.getEyePosition(), hit.end())) {
+         var palm=dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender).defenseContact(defender);
+         if(palm!=null)sig.point=palm;return;
+      }
       if (hit.target() != null) {
          breakShield(hit.target());
          SignatureTrace.strike(hit.target(), player.damageSources().playerAttack(player), SignatureRules.LASER_DAMAGE);

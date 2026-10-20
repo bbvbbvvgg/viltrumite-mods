@@ -195,7 +195,7 @@ public final class IronManCombatVfx {
    private static Vec3 beamEnd(Player player, HeroPublicSnapshot snapshot, float partialTick) {
       Vec3 target = snapshot.actionTarget();
       if (target != null) {
-         return target;
+         return dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.endpoint(target);
       }
 
       return chest(player, partialTick).add(player.getViewVector(partialTick).scale(IronManRules.UNIBEAM_RANGE));
@@ -301,11 +301,12 @@ public final class IronManCombatVfx {
       } else if (phase == 2) {
          Vec3 end = beamEnd(player, snapshot, partialTick);
          boolean overdraft = IronManFlags.is(snapshot.heroFlags(), IronManFlags.Field.OVERDRAFT);
-         float width = overdraft ? 0.32F : 0.22F;
+         boolean defended= snapshot.actionTarget()!=null && dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.defended(snapshot.actionTarget());
+         float width = defended ? .045F : overdraft ? 0.32F : 0.22F;
          PixelVfx.beamDots(buffer, cameraPos, camera, chest, end, 0.06F, width, 90, 170, 255, (int)(110 * flicker));
          PixelVfx.beamDots(buffer, cameraPos, camera, chest, end, 0.06F, width * 0.45F, 230, 250, 255, (int)(240 * flicker));
          PixelVfx.crossGlow(buffer, cameraPos, camera, chest, 0.35F, 170, 230, 255, 230);
-         PixelVfx.crossGlow(buffer, cameraPos, camera, end, 0.3F + 0.08F * Mth.sin((player.tickCount + partialTick) * 2.3F), 150, 210, 255, 220);
+         PixelVfx.crossGlow(buffer, cameraPos, camera, end, defended ? .065F : 0.3F + 0.08F * Mth.sin((player.tickCount + partialTick) * 2.3F), 150, 210, 255, 220);
       }
 
       if (IronManFlags.is(snapshot.heroFlags(), IronManFlags.Field.OVERDRAFT)) {

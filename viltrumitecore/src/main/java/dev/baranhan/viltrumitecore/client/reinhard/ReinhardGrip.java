@@ -42,6 +42,11 @@ final class ReinhardGrip {
    }
    static Vector3f point(BakedGeoModel model) { return point(model,false); }
    static Vector3f point(BakedGeoModel model,boolean left) { return hand(model,left).transformPosition(new Vector3f(HANDLE)); }
+   /** Position-only palm defense, through the same bounded arm constraint as the sword. */
+   static float guard(BakedGeoModel model,Vector3f point,float weight,boolean left) {
+      Matrix4f mount=new Matrix4f().translation(point).translate(-HANDLE.x,-HANDLE.y,-HANDLE.z);
+      return solve(model,mount,weight,left,false);
+   }
    static float solve(BakedGeoModel model,Matrix4f mount,float weight) { return solve(model,mount,weight,false); }
    /** Rest the closed glove ON the hilt. A resting palm is not a sword wielding grip:
     * keep the wrist aligned with the forearm instead of forcing the blade's roll. */

@@ -29,7 +29,9 @@ public final class DiagonalCutScene {
       var m=Minecraft.getInstance();long now=m==null||m.level==null?p.startTime():m.level.getGameTime();
       if(SCENES.size()>=16&&!SCENES.containsKey(p.castId()))return;
       Scene s=SCENES.computeIfAbsent(p.castId(),id->new Scene(p,now));s.last=now;
-      if(p.phase()==3&&s.done<0)s.done=now;
+      if(p.phase()==3&&s.done<0) {s.done=now;
+         if(dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED)com.mojang.logging.LogUtils.getLogger().info("CUT_QA,CLIENT_DONE,diagonal,{},{}",p.castId(),now);
+      }
    }
    private static Vec3 nearest(Scene s,Vec3 p) {
       var g=s.packet.shape();double a=Math.max(0,Math.min(200,p.subtract(g.origin()).dot(g.forward())));
@@ -44,15 +46,17 @@ public final class DiagonalCutScene {
       if(m.level==null||m.player==null) {for(UUID id:SCENES.keySet())CutAtmosphere.release(id);SCENES.clear();CutFinishSound.clear();return;}
       if(m.isPaused())return;long now=m.level.getGameTime();
       SCENES.values().removeIf(s->{boolean end=now-s.last>140||now-s.packet.startTime()>12000||(s.done>=0&&now-s.done>70);
-         if(end)CutAtmosphere.release(s.packet.castId());return end;});
+         if(end) {CutAtmosphere.release(s.packet.castId());
+            if(dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED)com.mojang.logging.LogUtils.getLogger().info("CUT_QA,FADE,diagonal,{},{},{}",s.packet.castId(),s.done<0?-1:now-s.done,m.getFps());}return end;});
       for(Scene s:SCENES.values()) {
+         if(dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED && now%20==0)com.mojang.logging.LogUtils.getLogger().info("CUT_QA,FPS,diagonal,{},{},{}",s.packet.castId(),now-s.packet.startTime(),m.getFps());
          double t=now-s.packet.startTime();Vec3 near=nearest(s,m.player.position());boolean range=near.distanceTo(m.player.position())<=320;
          CutAtmosphere.update(s.packet.castId(),near,t,s.done<0,s.done<0?1:Math.max(0,1-(now-s.done)/70.0),range,now);
          if(!range)continue;
-         if(t>=8&&s.done<0&&(now-s.packet.startTime())%28==0)play(near,ReinhardSounds.CUT_RUMBLE.get(),t<80?.28F:.18F);
+         if(t>=8&&s.done<0&&(now-s.packet.startTime())%28==0)play(near,ReinhardSounds.CUT_RUMBLE.get(),t<80?.12F:.07F);
          if(t>=20&&!s.hush) {play(near,ReinhardSounds.WORLD_CUT_SILENCE.get(),1.2F);s.hush=true;}
          if(s.done>=0&&!s.blast) {CutFinishSound.play(near,now);HeroImpactFx.shockwaveVisual(near,28);s.blast=true;}
-         if(s.done>=0&&!s.tail) {play(near,ReinhardSounds.WORLD_CUT_TAIL.get(),2);s.tail=true;}
+         if(s.done>=0)s.tail=true;
       }
    }
    private static void play(Vec3 p,net.minecraft.sounds.SoundEvent s,float v) {

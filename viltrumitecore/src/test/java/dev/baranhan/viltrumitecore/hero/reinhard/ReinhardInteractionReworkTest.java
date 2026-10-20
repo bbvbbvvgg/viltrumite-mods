@@ -44,7 +44,7 @@ class ReinhardInteractionReworkTest {
       d.tick();assertTrue(d.contact(DefenseReaction.Kind.PROJECTILE,60,0));assertEquals(0,d.age());
    }
    @Test void rasterMatchesExhaustiveOriginalMaskAcrossAnglesAndFractionalOrigins() {
-      for(int yaw:new int[]{0,45,103,225})for(int pitch:new int[]{-35,0,35}) {
+      for(int yaw:new int[]{0,45,90,103,180,225})for(int pitch:new int[]{-90,-80,-35,0,35,80,90}) {
          var g=new DiagonalCutGeometry(new Vec3(.17,63.37,-.61),Vec3.directionFromRotation(pitch,yaw),931);
          var b=g.bounds(); Set<Long> actual=new HashSet<>(),expected=new HashSet<>();var wave=g.wave(58,72);
          int total=wave.remainingWork(),visited=0;
@@ -64,6 +64,7 @@ class ReinhardInteractionReworkTest {
       assertFalse(ground.contains("CUT_RUMBLE.get(),t<80?1.4F:2.8F"));
       String arrow=Files.readString(root.resolve("hero/reinhard/blessing/ArrowCapture.java"));
       assertTrue(arrow.contains("next.pickup = AbstractArrow.Pickup.DISALLOWED"));
+      assertTrue(arrow.indexOf("next.setOwner(self)") < arrow.indexOf("next.pickup = AbstractArrow.Pickup.DISALLOWED"), "Vanilla setOwner(Player) resets pickup: lock must follow ownership");
       assertTrue(arrow.contains("arrow.pickup = pickup"));
       for(String name:List.of("RepulsorBlastEntity","MicroMissileEntity"))assertTrue(Files.readString(root.resolve("entity/"+name+".java")).contains("HeroProjectiles.intercept(this, hit)"));
    }

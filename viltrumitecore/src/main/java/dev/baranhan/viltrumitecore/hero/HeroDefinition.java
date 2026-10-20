@@ -156,6 +156,8 @@ public interface HeroDefinition {
 
    /** True only when an explicit continuous ray is mechanically stopped by this hero. */
    default boolean blocksContinuousRay(ServerPlayer self, Vec3 source, Vec3 contact) { return false; }
+   /** Server-owned defensive contact. Client renderers may refine only its presentation. */
+   default Vec3 defenseContact(Player self) { return null; }
 
    /** Server rejects stray vanilla entity-hit packets for timeline-owned melee. */
    default boolean allowsVanillaAttack(Player player) { return true; }

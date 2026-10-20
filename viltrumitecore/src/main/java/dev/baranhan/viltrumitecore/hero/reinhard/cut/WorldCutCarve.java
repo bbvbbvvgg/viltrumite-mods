@@ -29,6 +29,10 @@ public final class WorldCutCarve implements CarveJobs.Job {
    private final Vec3 dir;
    private int solidRemoved;
    private int debris;
+   private long firstTick=-1,lastTick=-1; private int visited;
+   public long firstTick() {return firstTick;}
+   public long lastTick() {return lastTick;}
+   public int visited() {return visited;}
 
    public WorldCutCarve(WorldCutShape shape, int[] surface, int minY, int maxY, Predicate<BlockPos> border) {
       this(shape.cells(minY, maxY, a -> surface[a], border), null, shape.origin(), shape.dirXZ());
@@ -47,9 +51,10 @@ public final class WorldCutCarve implements CarveJobs.Job {
    public boolean step(@Nullable ServerLevel level, int budget) {
       if (!wave.hasNext()) return true;
       if (budget <= 0) return false;
+      if(firstTick<0 && level!=null)firstTick=level.getGameTime();
       Probe world = probe != null ? probe : new LiveProbe(Objects.requireNonNull(level));
       for (int used = 0; used < budget && wave.hasNext(); used++) {
-         WorldCutGeometry.Cell cell = wave.next();
+         WorldCutGeometry.Cell cell = wave.next();visited++;
          if (!wave.carve(cell)) continue;
          BlockPos pos = new BlockPos(cell.x(), cell.y(), cell.z());
          if (!world.loaded(pos) || !world.canDestroy(pos)) continue;
@@ -68,6 +73,7 @@ public final class WorldCutCarve implements CarveJobs.Job {
          if (removed && solid) solidRemoved++;
       }
       // No neighbour-update pass, no drops or block particles at completion.
+      if(!wave.hasNext() && level!=null)lastTick=level.getGameTime();
       return !wave.hasNext();
    }
 

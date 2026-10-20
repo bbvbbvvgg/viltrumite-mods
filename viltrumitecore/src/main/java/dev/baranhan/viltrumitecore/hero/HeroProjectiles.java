@@ -66,7 +66,11 @@ public final class HeroProjectiles {
       return true;
    }
 
+   private static void atContact(ServerPlayer self,Projectile projectile) {
+      Vec3 contact=HeroRegistry.get(self).defenseContact(self);if(contact!=null && contact.distanceToSqr(projectile.position())<.36)projectile.setPos(contact);
+   }
    private static void deflect(ServerPlayer self, Projectile projectile) {
+      atContact(self,projectile);
       Vec3 v = projectile.getDeltaMovement();
       Vec3 toBody = self.getBoundingBox().getCenter().subtract(projectile.position());
       double yaw = ProjectileMath.deflectYaw(v, toBody, self.getRandom().nextBoolean(), ProjectileMath.deflectDegrees(self.getRandom().nextDouble()));
@@ -84,6 +88,7 @@ public final class HeroProjectiles {
    }
 
    private static void reflect(ServerPlayer self, Projectile projectile) {
+      atContact(self,projectile);
       Entity owner = projectile.getOwner();
       Vec3 ownerEye = owner != null && owner.isAlive() && owner.level() == projectile.level() ? owner.getEyePosition() : null;
       Vec3 next = ProjectileMath.reflected(projectile.getDeltaMovement(), projectile.position(), ownerEye);

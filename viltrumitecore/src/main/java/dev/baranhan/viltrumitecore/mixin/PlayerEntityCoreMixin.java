@@ -1020,7 +1020,7 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
                      if (entity instanceof LivingEntity) {
                         LivingEntity living = (LivingEntity)entity;
                         if (entity != this.getGrabbedTarget()) {
-                           living.hurt(player.damageSources().playerAttack(player), 5.0F + throttle * maxFlightSpeed);
+                           dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(living,player.damageSources().playerAttack(player), 5.0F + throttle * maxFlightSpeed,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
                            if (dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(living, dev.baranhan.viltrumitecore.hero.control.ControlKind.IMPULSE)) {
                               Vec3 pushDir = living.position().subtract(player.position()).normalize();
                               living.setDeltaMovement(living.getDeltaMovement().add(pushDir.x * 2.0, 0.5, pushDir.z * 2.0));

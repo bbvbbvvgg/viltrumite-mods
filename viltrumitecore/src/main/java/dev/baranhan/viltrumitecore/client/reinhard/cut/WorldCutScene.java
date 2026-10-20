@@ -46,7 +46,10 @@ public final class WorldCutScene {
       scene.blastReceived |= packet.phase()!=WorldCutS2CPacket.START;
       var mc=Minecraft.getInstance();
       scene.lastPacket=mc==null||mc.level==null?packet.startTime():mc.level.getGameTime();
-      if(packet.phase()==WorldCutS2CPacket.DONE&&scene.doneAt<0)scene.doneAt=scene.lastPacket;
+      if(packet.phase()==WorldCutS2CPacket.DONE&&scene.doneAt<0) {
+         scene.doneAt=scene.lastPacket;
+         if(dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED)com.mojang.logging.LogUtils.getLogger().info("CUT_QA,CLIENT_DONE,ground,{},{}",packet.castId(),scene.doneAt);
+      }
       refresh();
    }
    public static double elapsed(long start,long now,double partial) { return now-start+partial; }
@@ -60,6 +63,7 @@ public final class WorldCutScene {
    public static void prune(long now) {
       SCENES.values().removeIf(a -> {
          if(now-a.packet.startTime()<12000 && (a.doneAt<0 ? now-a.lastPacket<=140 : now-a.doneAt<=70)) return false;
+         if(dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED)com.mojang.logging.LogUtils.getLogger().info("CUT_QA,FADE,ground,{},{},{}",a.packet.castId(),a.doneAt<0?-1:now-a.doneAt,Minecraft.getInstance().getFps());
          CutAtmosphere.release(a.packet.castId());
          SoundDuck.INSTANCE.release(a.packet.castId()); return true;
       });
@@ -75,6 +79,7 @@ public final class WorldCutScene {
       if(mc.isPaused()) return;
       long now=mc.level.getGameTime(); prune(now);
       for(Active scene:frames) {
+         if(dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED && now%20==0)com.mojang.logging.LogUtils.getLogger().info("CUT_QA,FPS,ground,{},{},{}",scene.packet.castId(),now-scene.packet.startTime(),mc.getFps());
          double t=elapsed(scene.packet.startTime(),now,0);
          double distance=WorldCutFov.distance(scene.packet.shape(),mc.player.getX(),mc.player.getZ());
          boolean inRange=distance<=ReinhardRules.WORLD_CUT_VIEW_RANGE;
@@ -87,7 +92,7 @@ public final class WorldCutScene {
          Vec3 nearest=nearest(scene,mc.player.position());
          CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now);
          if(inRange && t>=8 && scene.working() && (now-scene.packet.startTime())%28==0)
-            play(nearest,ReinhardSounds.CUT_RUMBLE.get(),t<80?.28F:.18F);
+            play(nearest,ReinhardSounds.CUT_RUMBLE.get(),t<80?.12F:.07F);
          if(hush) {
             CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
             if(!scene.silencePlayed) { play(nearest,ReinhardSounds.WORLD_CUT_SILENCE.get(),.8F); scene.silencePlayed=true; }
@@ -98,7 +103,7 @@ public final class WorldCutScene {
             if(shakeCaster(scene.packet.casterId().equals(mc.player.getUUID()))) CameraShake.addAt(nearest,5,200);
             for(int a=0;a<200;a+=20) HeroImpactFx.shockwaveVisual(point(scene,a+.5),20);
          }
-         if(inRange && !scene.working() && !scene.tailPlayed) { play(nearest,ReinhardSounds.WORLD_CUT_TAIL.get(),2); scene.tailPlayed=true; }
+         if(inRange && !scene.working()) scene.tailPlayed=true;
       }
    }
    private static Vec3 point(Active a,double along) {
