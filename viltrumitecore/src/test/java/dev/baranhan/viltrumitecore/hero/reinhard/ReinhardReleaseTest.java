@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 class ReinhardReleaseTest {
-   @Test void combatReworkUsesNewMinorVersion() throws Exception {
+   @Test void worldCutAudioUsesNewMinorVersion() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.36.2", version.group(1), "Combat fluidity is a core patch; flight stays unchanged");
+      assertEquals("1.38.1", version.group(1), "World Cut duck fix is a core patch; flight stays unchanged");
    }
    @Test void snapshotCapacityUpgradeRejectsOldNetworkPeers() throws Exception {
       String source = Files.readString(Path.of("../viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));
