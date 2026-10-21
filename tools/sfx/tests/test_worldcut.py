@@ -55,6 +55,16 @@ class WorldCutAudioTest(unittest.TestCase):
         self.assertLess(abs(pulse[-1]), .01)
         self.assertGreater(max(abs(v) for v in pulse), .05)
 
+    def test_pulse_lowers_a_known_source_frequency(self):
+        mod = self.module()
+        rate = mod.RATE
+        tone = [math.sin(2 * math.pi * 100 * i / rate) for i in range(int(3 * rate))]
+        pulse = mod.build_pulse(tone)
+        start, stop = int(.05 * rate), int(.45 * rate)
+        crossings = sum(1 for i in range(start + 1, stop) if (pulse[i - 1] < 0) != (pulse[i] < 0))
+        frequency = crossings / 2 / ((stop - start) / rate)
+        self.assertAlmostEqual(100 * mod.PULSE_PITCH, frequency, delta=2)
+
     def test_short_input_is_rejected(self):
         mod = self.module()
         with self.assertRaisesRegex(ValueError, 'does not contain the two-second seed'):

@@ -108,7 +108,7 @@ def build_pulse(pcm):
     seed = pcm[start:start + length]
     if len(seed) != length:
         raise ValueError('Source does not contain the pulse seed')
-    step = 1.0 / PULSE_PITCH
+    step = PULSE_PITCH  # read slower to lower the pitch; >1 would raise it
     out = array.array('f')
     total = int(PULSE_LENGTH * RATE)
     attack = int(PULSE_ATTACK * RATE)
@@ -258,7 +258,7 @@ def main():
                     source=dict(name=args.src.name, sha256=SOURCE_SHA256),
                     method=dict(seed_start_s=SEED_START, seed_seconds=SEED_SECONDS,
                                 loop='forward + time reverse, exact seam, 8 ms circular smoothing',
-                                pulse=f'pitch {PULSE_PITCH}, {PULSE_ATTACK}s attack, '
+                                pulse=f'pitch {PULSE_PITCH} (slower read), {PULSE_ATTACK}s attack, '
                                       f'{(1 - PULSE_LENGTH):.2f}s release'),
                     ffmpeg=run('ffmpeg', '-version').stdout.decode().splitlines()[0],
                     sounds=report), indent=2) + '\n')

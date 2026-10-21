@@ -35,9 +35,9 @@ y[t] = s[t] + s[T - t]
 | файл | длина | LUFS | true peak | назначение |
 |---|---:|---:|---:|---|
 | `world_cut_hum` | 1.992 s | −17.96 | −4.26 dBTP | непрерывный гул |
-| `world_cut_pulse` | 1.350 s | −17.92 | −2.63 dBTP | импульс пульсации |
+| `world_cut_pulse` | 1.350 s | −18.54 | −1.93 dBTP | импульс пульсации |
 
-`world_cut_pulse`: тот же seed, питч 0.90, атака 30 мс, квадратичный
+`world_cut_pulse`: тот же seed, питч 0.90 (чтение исходника медленнее, ниже на 10 %), атака 30 мс, квадратичный
 спад. Оба файла — mono 44.1 kHz Vorbis q5, attenuation 320, без stream.
 Генератор и `--check`: `tools/sfx/reinhard_worldcut.py`; замеры:
 `docs/reports/reinhard-worldcut-audio.json`.
@@ -90,10 +90,11 @@ y[t] = s[t] + s[T - t]
 - `:viltrumitecore:compileJava` — успешно.
 - `WorldCutSceneTest`, `CutFinishSoundTest`, `ReinhardSoundsTest` — все
   проходят.
-- `python -m unittest discover -s tools/sfx/tests` — 22 теста, включая
-  новый `test_worldcut.py` (шов, потеря затухания, атака/спад импульса).
+- `python -m unittest discover -s tools/sfx/tests` — 23 теста, включая
+  `test_worldcut.py` (шов, потеря затухания, атака/спад и понижение
+  частоты: 100 Гц на входе → 88.8 Гц на выходе).
 - `python tools/sfx/reinhard_worldcut.py --src ... --check` — PASS.
-- `gradlew build` — BUILD SUCCESSFUL, 1331 тест; JAR `reforgedcodex-core-1.37.0.jar` собран.
+- `gradlew build` — BUILD SUCCESSFUL, 1332 теста; JAR `reforgedcodex-core-1.37.0.jar` собран.
 
 ## Ограничения
 

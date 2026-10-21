@@ -8,7 +8,7 @@
     "seed_start_s": 0.1,
     "seed_seconds": 2.0,
     "loop": "forward + time reverse, exact seam, 8 ms circular smoothing",
-    "pulse": "pitch 0.9, 0.03s attack, -0.35s release"
+    "pulse": "pitch 0.9 (slower read), 0.03s attack, -0.35s release"
   },
   "ffmpeg": "ffmpeg version 9.0.1-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
   "sounds": {
@@ -52,28 +52,28 @@
         "loop": false
       },
       "first_pass": {
-        "input_i": "-19.97",
-        "input_tp": "-4.64",
+        "input_i": "-21.42",
+        "input_tp": "-4.87",
         "input_lra": "0.00",
-        "input_thresh": "-32.12",
-        "output_i": "-17.98",
-        "output_tp": "-2.67",
+        "input_thresh": "-32.94",
+        "output_i": "-18.55",
+        "output_tp": "-2.00",
         "output_lra": "0.00",
-        "output_thresh": "-30.13",
+        "output_thresh": "-30.07",
         "normalization_type": "linear",
-        "target_offset": "-0.02"
+        "target_offset": "0.55"
       },
-      "applied_gain_db": 1.97,
+      "applied_gain_db": 2.87,
       "output": {
         "duration": 1.35,
         "codec": "vorbis",
         "rate": 44100,
         "channels": 1,
-        "integrated_lufs": -17.92,
-        "true_peak_dbtp": -2.63,
-        "sample_peak_dbfs": -2.63,
+        "integrated_lufs": -18.54,
+        "true_peak_dbtp": -1.93,
+        "sample_peak_dbfs": -1.931,
         "target_lufs": -18,
-        "pcm_sha256": "06870ecc74dc9f100a7169510895ffdac70fddc82417938ab74065749e093278",
+        "pcm_sha256": "bdce1487ff93c2ea7b7482296b80a02964f48694bcdc4f64d868a7c731b296f9",
         "seam_delta": null,
         "seam_ratio": null
       }
