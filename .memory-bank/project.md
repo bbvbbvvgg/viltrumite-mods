@@ -320,3 +320,9 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 
 ### Core 1.36.2 context/audio correction
 - World-cut slot previews diagonal while crouching and uses the selected variant cooldown. Server and UI use ReinhardAbilities.contextual(). Default Y is Chop; default crouch+B is diagonal and needs DRAWN Reid in Holy Sword. Do not expose retired diagonal as a separate active slot.
+
+## The Hand erasure on World Cut (core 1.39.0)
+- `client/render/erasure/` is a hero-neutral port of Roundabout's The Hand erasure (shader `viltrumitecore:thehand_erasure`, `RegisterShadersEvent`). `ErasureRenderer` draws at Forge `AFTER_LEVEL` (= Roundabout's `renderLevel` TAIL). It copies main colour+depth once per frame only when a provider returns a visible stroke; mipmaps of the colour copy are the refraction blur. Order: all shells, all glass (depth writes), all auras, then world depth is blitted back.
+- Sizes go through the `Scale` uniform, never through vertex colour: colour r = radius / (RADIUS_SCALE or SHELL_SCALE x scale) stays in 0..1 at any size. Scale 1 is the original; `/erasuretest [scale]` replays the original sandbox swipe.
+- `WorldCutErasure` splits the 200-block cut into 12 original strokes (scale 7.5, overlap 0.3). Piece k is cut when the visual front reaches its tail; its head is the exact front; each piece then holds and zips shut on the original 0.75 s timeline. Only the leading piece shows the flame ball. Reads `WorldCutScene.frames()`; no packet or server change. Diagonal World Cut is not wired.
+- Shader packs (Iris/Oculus `isShaderPackInUse`, or an unknown Oculus API) disable the effect. Fabulous transparency chain: unverified.
