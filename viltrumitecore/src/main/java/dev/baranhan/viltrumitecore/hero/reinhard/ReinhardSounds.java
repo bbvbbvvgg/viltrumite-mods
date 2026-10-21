@@ -58,6 +58,8 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> WORLD_CUT_PULSE = reg("reinhard.world_cut_pulse");
    /** Short saturated hit for the first BLAST of the rupture. */
    public static final RegistryObject<SoundEvent> WORLD_CUT_IMPACT = reg("reinhard.world_cut_impact");
+   /** Blade ring for the normal cut only; same file as sheath_ring, own id for duck exemption. */
+   public static final RegistryObject<SoundEvent> WORLD_CUT_BLADE = reg("reinhard.world_cut_blade");
 
    public static final RegistryObject<SoundEvent> ERASE_CRACK = reg("reinhard.erase_crack");
    public static final RegistryObject<SoundEvent> ERASE_INHALE = reg("reinhard.erase_inhale");

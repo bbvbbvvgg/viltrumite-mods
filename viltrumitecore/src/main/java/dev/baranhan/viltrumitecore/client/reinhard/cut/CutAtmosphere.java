@@ -20,9 +20,12 @@ public final class CutAtmosphere {
       new ResourceLocation("viltrumitecore","reinhard.world_cut_tail"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_hum"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_pulse"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_impact"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_blade"),
       new ResourceLocation("viltrumitecore","reinhard.cut_rumble"));
    private record Lease(long seen,float weight) {}
    private CutAtmosphere() {}
+   static boolean owns(ResourceLocation id) { return OWN.contains(id); }
    public static void update(UUID id,Vec3 near,double t,boolean working,double tail,boolean inRange,long now) {
       update(id,near,t,working,tail,inRange,now,0F);
    }

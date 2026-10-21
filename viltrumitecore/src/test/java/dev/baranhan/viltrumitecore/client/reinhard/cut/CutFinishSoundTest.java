@@ -8,6 +8,15 @@ class CutFinishSoundTest {
       assertTrue(gate.admit(world,112));assertTrue(gate.admit(new Object(),112));
       gate.clear();assertTrue(gate.admit(world,112));assertFalse(gate.admit(null,200));
    }
+   @Test void bothDuckOwnersSpareTheNormalCutAccents() {
+      var blade=new net.minecraft.resources.ResourceLocation("viltrumitecore","reinhard.world_cut_blade");
+      var impact=new net.minecraft.resources.ResourceLocation("viltrumitecore","reinhard.world_cut_impact");
+      var generic=new net.minecraft.resources.ResourceLocation("viltrumitecore","reinhard.sheath_strike");
+      assertTrue(CutAtmosphere.owns(blade)); assertTrue(WorldCutScene.owns(blade));
+      assertTrue(CutAtmosphere.owns(impact)); assertTrue(WorldCutScene.owns(impact));
+      assertFalse(CutAtmosphere.owns(generic), "the generic SheathStrike stays duckable");
+      assertFalse(WorldCutScene.owns(generic));
+   }
    @Test void impactPulsesOnlyDuringOpenWorkingRupture() {
       for(int t=0;t<240;t++) {
          assertEquals(t>=96 && (t-96)%40==0,CutFinishSound.pulseDue(t,true));

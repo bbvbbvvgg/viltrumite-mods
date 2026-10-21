@@ -74,7 +74,7 @@ final class WorldCutAudio {
          return;
       }
       lastBlade = now;
-      play(ReinhardSounds.SHEATH_STRIKE.get(), at, .5F, 1.15F);
+      play(ReinhardSounds.WORLD_CUT_BLADE.get(), at, .5F, 1.15F);
    }
 
    /** One short explosion on the first BLAST. */

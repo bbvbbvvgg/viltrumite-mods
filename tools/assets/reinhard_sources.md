@@ -37,7 +37,7 @@ Checked against the live Freesound sound pages on **2026-10-13** (not inferred f
 | 182050 — Sonic Boom | qubodup | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/qubodup/sounds/182050/ | `182050__qubodup__sonic-boom.flac` | sky_kick | `68e00321c8f0219078b4b9737a561fcd1316c67800a031828df1bd926a74e06f` |
 | 275809 — earthquake.aif | dingus23 | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | https://freesound.org/people/dingus23/sounds/275809/ | `275809__dingus23__earthquake.aiff` | stomp | `60ab71881cdb214c09a624cdee22ada76624c3fce1ff3af061174596148888aa` |
 | 378199 — 06992 sucking flyby whoosh.wav | Robinhood76 | [CC-BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) | https://freesound.org/people/Robinhood76/sounds/378199/ | `378199__robinhood76__06992-sucking-flyby-whoosh.wav` | EXCLUDED: cut_rain placeholder retained | `6a7b98c9fa7f633a36e0c206e2450bf7426a3e8aa87847dba6568147394d3df1` |
-| 519413 — Sword , blade ring and scrape | Iridiuss | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/s/519413 | `519413__iridiuss__sword-blade-ring-and-scrape.m4a` | sheath_ring | `2cbf59f58b0f0e516fd80f876df184e31c3d274ebd65a9577f760fbb03e972da` |
+| 519413 — Sword , blade ring and scrape | Iridiuss | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/s/519413 | `519413__iridiuss__sword-blade-ring-and-scrape.m4a` | sheath_ring, world_cut_blade | `2cbf59f58b0f0e516fd80f876df184e31c3d274ebd65a9577f760fbb03e972da` |
 
 ### Blocked licenses — owner decision pending
 
@@ -73,6 +73,7 @@ All files are `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/re
 | `world_cut_hum` | 248150 | 0.10 / 2.00 seed | -12.6 LUFS | forward + time reverse, exact seam, 8 ms circular smoothing, tanh drive 2.0/ceiling 0.8 for loudness; 1.992 s loop; `tools/sfx/reinhard_worldcut.py` |
 | `world_cut_pulse` | 248150 | 0.10 / 1.35 | -18 LUFS | pitch 0.90, 30 ms attack, quadratic release; `tools/sfx/reinhard_worldcut.py` |
 | `world_cut_impact` | 248150 | 0.10 / 0.60 | -14 LUFS | pitch 0.90, 5 ms attack, tight decay, tanh drive 4.0/ceiling 0.8; `tools/sfx/reinhard_worldcut.py` |
+| `world_cut_blade` | 519413 | 2.31 / 1.1 | -14 LUFS | same `sheath_ring` file; separate event id so only the normal-cut cue is duck-exempt |
 
 ## Cinematic original synthesis (2026-10-20)
 

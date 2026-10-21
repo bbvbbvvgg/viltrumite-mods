@@ -24,7 +24,9 @@ public final class WorldCutScene {
    private static Active[] frames=new Active[0];
    private static final Set<ResourceLocation> OWN_SOUNDS=Set.of(
       new ResourceLocation("viltrumitecore","reinhard.world_cut_hum"),
-      new ResourceLocation("viltrumitecore","reinhard.world_cut_pulse"));
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_pulse"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_blade"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_impact"));
    private WorldCutScene() {}
    public static final class Active {
       public final WorldCutS2CPacket packet;
@@ -52,6 +54,7 @@ public final class WorldCutScene {
       refresh();
    }
    public static double elapsed(long start,long now,double partial) { return now-start+partial; }
+   static boolean owns(ResourceLocation id) { return OWN_SOUNDS.contains(id); }
    public static boolean silence(double t) { return t>=ReinhardRules.WORLD_CUT_SWING && t<ReinhardRules.WORLD_CUT_BLAST; }
    /** The blade appears with the first white line, before the rupture opens. */
    public static boolean bladeDue(double t) { return t>=8 && t<ReinhardRules.WORLD_CUT_BLAST; }

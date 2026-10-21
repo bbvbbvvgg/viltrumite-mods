@@ -978,6 +978,15 @@
       }
     ]
   },
+  "reinhard.world_cut_blade": {
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/sheath_ring",
+        "stream": false,
+        "attenuation_distance": 320
+      }
+    ]
+  },
   "reinhard.world_cut_impact": {
     "sounds": [
       {

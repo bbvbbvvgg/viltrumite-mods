@@ -21,7 +21,7 @@ class ReinhardSoundsTest {
       Map.entry("stomp", "stomp"), Map.entry("sheath_strike", "sheath_ring"));
    private static final Map<String, String> DERIVED = Map.of(
       "world_cut_hum", "world_cut_hum", "world_cut_pulse", "world_cut_pulse",
-      "world_cut_impact", "world_cut_impact");
+      "world_cut_impact", "world_cut_impact", "world_cut_blade", "sheath_ring");
    private static final Map<String,String> CINEMATIC = Map.of(
       "reid_cinematic_layer","reid_cinematic_layer","cut_rumble","cut_rumble",
       "world_cut_blast","cut_cinematic_impact","cut_rain","cut_cinematic_sweep");
@@ -36,7 +36,7 @@ class ReinhardSoundsTest {
       Map.entry("erase_inhale", "331620"), Map.entry("limbo_heartbeat", "249716"), Map.entry("sky_kick", "182050"),
       Map.entry("stomp", "275809"), Map.entry("sheath_ring", "519413"),
       Map.entry("world_cut_hum", "248150"), Map.entry("world_cut_pulse", "248150"),
-      Map.entry("world_cut_impact", "248150"));
+      Map.entry("world_cut_impact", "248150"), Map.entry("world_cut_blade", "519413"));
 
    private JsonObject sounds() throws Exception {
       return JsonParser.parseString(Files.readString(Path.of("src/main/resources/assets/viltrumitecore/sounds.json"))).getAsJsonObject();
