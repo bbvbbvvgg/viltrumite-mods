@@ -90,7 +90,7 @@ y[t] = s[t] + s[T - t]
 - `python -m unittest discover -s tools/sfx/tests` — 22 теста, включая
   новый `test_worldcut.py` (шов, потеря затухания, атака/спад импульса).
 - `python tools/sfx/reinhard_worldcut.py --src ... --check` — PASS.
-- Полная сборка: см. итог задачи/CI.
+- `gradlew build` — BUILD SUCCESSFUL, 1331 тест; JAR `reforgedcodex-core-1.37.0.jar` собран.
 
 ## Ограничения
 
