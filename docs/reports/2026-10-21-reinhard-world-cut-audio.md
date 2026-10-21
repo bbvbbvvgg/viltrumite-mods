@@ -1,4 +1,4 @@
-# Рейнхард: новое звуковое сопровождение обычного World Cut — Core 1.37.0
+# Рейнхард: новое звуковое сопровождение обычного World Cut — Core 1.38.0
 
 ## База
 
@@ -34,11 +34,22 @@ y[t] = s[t] + s[T - t]
 
 | файл | длина | LUFS | true peak | назначение |
 |---|---:|---:|---:|---|
-| `world_cut_hum` | 1.992 s | −17.96 | −4.26 dBTP | непрерывный гул |
+| `world_cut_hum` | 1.992 s | −12.56 | −3.33 dBTP | непрерывный гул |
 | `world_cut_pulse` | 1.350 s | −18.54 | −1.93 dBTP | импульс пульсации |
+| `world_cut_impact` | 0.600 s | −13.55 | −1.73 dBTP | первый удар BLAST |
 
 `world_cut_pulse`: тот же seed, питч 0.90 (чтение исходника медленнее, ниже на 10 %), атака 30 мс, квадратичный
-спад. Оба файла — mono 44.1 kHz Vorbis q5, attenuation 320, без stream.
+спад. `world_cut_impact`: 0.60 s, питч 0.90, атака 5 мс и короткий спад.
+
+Громкость: гул поднят примерно вдвое (+6 дБ) относительно прежнего.
+Сделано не просто усилением — пики исходника уже близки к 0 dBFS,
+поэтому в файл добавлен **memoryless tanh** (drive 2.0, ceiling 0.8):
+он повышает RMS, не клиппит цифру и, что важно для петли, отображает
+равные входные отсчёты в равные выходные, то есть не рушит шов. После
+сатурации файл нормализован: −12.56 LUFS, true peak −3.33 dBTP.
+Игровой gain гула теперь 1.0 (было 0.92), суммарно ≈ +6.1 дБ к прежнему
+звучанию. Импульс остался −18.54 LUFS при gain 1.0, удар — −13.55 LUFS
+при gain 0.85. Оба файла — mono 44.1 kHz Vorbis q5, attenuation 320, без stream.
 Генератор и `--check`: `tools/sfx/reinhard_worldcut.py`; замеры:
 `docs/reports/reinhard-worldcut-audio.json`.
 
@@ -66,6 +77,19 @@ y[t] = s[t] + s[T - t]
   (`2.4 * strength`) поверх базовых 6.8; общий cap `CameraShake` — 8,
   поэтому импульс даёт короткий толчок, а не постоянную тряску.
 
+### 2a. Новые акценты
+
+- **Появление меча** на тике 8 (первая белая линия, до BLAST): один
+  `reinhard.sheath_strike` — уже одобренный CC0-звон клинка — volume 0.5,
+  pitch 1.15, у основания разреза. Из предоставленного OGG металлический
+  звон не получить: в нём нет энергии выше ~120 Гц, поэтому взят
+  существующий звук клинка, а не синтетическая подделка.
+- **Первый удар** на BLAST: `world_cut_impact` из того же OGG, volume 0.85.
+  Один раз на каст; глобальный кулдаун 20 тиков не даёт двум кастам
+  сложить удар в клиппинг.
+- Оба акцента — client-local, как и остальные звуки сцены; флаги
+  `bladePlayed`/`impactPlayed` не дают им повториться.
+
 ### 3. Удалённые звуки обычного разреза
 
 Из обычного World Cut убраны `world_cut_silence`, `world_cut_blast`
@@ -90,11 +114,11 @@ y[t] = s[t] + s[T - t]
 - `:viltrumitecore:compileJava` — успешно.
 - `WorldCutSceneTest`, `CutFinishSoundTest`, `ReinhardSoundsTest` — все
   проходят.
-- `python -m unittest discover -s tools/sfx/tests` — 23 теста, включая
+- `python -m unittest discover -s tools/sfx/tests` — 24 теста, включая
   `test_worldcut.py` (шов, потеря затухания, атака/спад и понижение
   частоты: 100 Гц на входе → 88.8 Гц на выходе).
 - `python tools/sfx/reinhard_worldcut.py --src ... --check` — PASS.
-- `gradlew build` — BUILD SUCCESSFUL, 1332 теста; JAR `reforgedcodex-core-1.37.0.jar` собран.
+- `gradlew build` — BUILD SUCCESSFUL, 1333 теста; JAR `reforgedcodex-core-1.38.0.jar` собран.
 
 ## Ограничения
 

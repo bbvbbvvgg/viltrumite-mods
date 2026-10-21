@@ -28,7 +28,7 @@ public final class WorldCutScene {
    private WorldCutScene() {}
    public static final class Active {
       public final WorldCutS2CPacket packet;
-      private boolean blastReceived, blasted, ducked;
+      private boolean blastReceived, blasted, ducked, bladePlayed, impactPlayed;
       private long lastPacket,doneAt=-1;
       public boolean working() { return doneAt<0; }
       public double fade(long now) { return doneAt<0?1:Math.max(0,1-(now-doneAt)/70.0); }
@@ -53,6 +53,10 @@ public final class WorldCutScene {
    }
    public static double elapsed(long start,long now,double partial) { return now-start+partial; }
    public static boolean silence(double t) { return t>=ReinhardRules.WORLD_CUT_SWING && t<ReinhardRules.WORLD_CUT_BLAST; }
+   /** The blade appears with the first white line, before the rupture opens. */
+   public static boolean bladeDue(double t) { return t>=8 && t<ReinhardRules.WORLD_CUT_BLAST; }
+   /** The first damage wave is the BLAST. */
+   public static boolean impactDue(double t) { return t>=ReinhardRules.WORLD_CUT_BLAST; }
    public static int front(double t) { return WorldCut.visualFront(t); }
    public static boolean shakeCaster(boolean caster) { return true; }
    public static void clear() {
@@ -90,6 +94,8 @@ public final class WorldCutScene {
             SoundDuck.INSTANCE.release(scene.packet.castId()); scene.ducked=false;
          }
          Vec3 nearest=nearest(scene,mc.player.position());
+         if(inRange && !scene.bladePlayed && bladeDue(t)) { scene.bladePlayed=true; WorldCutAudio.blade(point(scene,0),now); }
+         if(inRange && !scene.impactPlayed && impactDue(t)) { scene.impactPlayed=true; WorldCutAudio.impact(nearest,now); }
          double acceptedUntil=scene.acceptedUntil();
          WorldCutAudio.update(scene.packet.castId(),nearest,t,acceptedUntil,(float)scene.fade(now),inRange);
          if(inRange && WorldCutPulse.due((long)t,acceptedUntil)) WorldCutAudio.pulse(nearest,now);

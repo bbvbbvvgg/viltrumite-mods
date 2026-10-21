@@ -26,11 +26,13 @@ final class WorldCutAudio {
    private static final Map<UUID, Hum> HUM = new HashMap<>();
    private static Pulse pulse;
    private static long lastPulse = Long.MIN_VALUE;
+   private static long lastBlade = Long.MIN_VALUE;
+   private static long lastImpact = Long.MIN_VALUE;
    /** No second pulse within this many client ticks. */
    private static final int PULSE_COOLDOWN = 20;
    /** Linear gain of the loop before scene fade and pulse swell. */
-   private static final float HUM_GAIN = .92F;
-   private static final float PULSE_GAIN = .8F;
+   private static final float HUM_GAIN = 1.0F;
+   private static final float PULSE_GAIN = 1.0F;
    private static final float SWELL = .45F;
 
    private WorldCutAudio() {
@@ -66,6 +68,28 @@ final class WorldCutAudio {
       Minecraft.getInstance().getSoundManager().play(pulse);
    }
 
+   /** One blade-presentation ring at the swing; bounded globally like the pulse. */
+   static void blade(Vec3 at, long now) {
+      if (lastBlade != Long.MIN_VALUE && now - lastBlade < PULSE_COOLDOWN) {
+         return;
+      }
+      lastBlade = now;
+      play(ReinhardSounds.SHEATH_STRIKE.get(), at, .5F, 1.15F);
+   }
+
+   /** One short explosion on the first BLAST. */
+   static void impact(Vec3 at, long now) {
+      if (lastImpact != Long.MIN_VALUE && now - lastImpact < PULSE_COOLDOWN) {
+         return;
+      }
+      lastImpact = now;
+      play(ReinhardSounds.WORLD_CUT_IMPACT.get(), at, .85F, 1.0F);
+   }
+
+   private static void play(SoundEvent event, Vec3 at, float volume, float pitch) {
+      Minecraft.getInstance().level.playLocalSound(at.x, at.y, at.z, event, SoundSource.PLAYERS, volume, pitch, false);
+   }
+
    static void stop(UUID cast) {
       Hum hum = HUM.get(cast);
       if (hum != null) {
@@ -91,6 +115,8 @@ final class WorldCutAudio {
          pulse = null;
       }
       lastPulse = Long.MIN_VALUE;
+      lastBlade = Long.MIN_VALUE;
+      lastImpact = Long.MIN_VALUE;
    }
 
    private static final class Hum extends AbstractTickableSoundInstance {

@@ -977,5 +977,14 @@
         "attenuation_distance": 320
       }
     ]
+  },
+  "reinhard.world_cut_impact": {
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/world_cut_impact",
+        "stream": false,
+        "attenuation_distance": 320
+      }
+    ]
   }
 }

@@ -65,6 +65,14 @@ class WorldCutAudioTest(unittest.TestCase):
         frequency = crossings / 2 / ((stop - start) / rate)
         self.assertAlmostEqual(100 * mod.PULSE_PITCH, frequency, delta=2)
 
+    def test_impact_is_short_and_clean(self):
+        mod = self.module()
+        impact = mod.build_impact(self.seed(mod.RATE))
+        self.assertEqual(int(mod.IMPACT_LENGTH * mod.RATE), len(impact))
+        self.assertLess(abs(impact[0]), 1e-6)
+        self.assertLess(abs(impact[-1]), .01)
+        self.assertGreater(max(abs(v) for v in impact), .05)
+
     def test_short_input_is_rejected(self):
         mod = self.module()
         with self.assertRaisesRegex(ValueError, 'does not contain the two-second seed'):

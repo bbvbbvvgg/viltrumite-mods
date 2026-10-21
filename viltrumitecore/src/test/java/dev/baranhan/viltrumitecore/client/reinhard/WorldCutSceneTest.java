@@ -67,6 +67,15 @@ class WorldCutSceneTest {
       assertEquals(0F,WorldCutPulse.shake(124),1E-6);
       assertTrue(WorldCutPulse.shake(96)>2F);
    }
+   @Test void bladeAndImpactAccentsStayOnTheirSideOfBlast() {
+      assertFalse(WorldCutScene.bladeDue(7.9));
+      assertTrue(WorldCutScene.bladeDue(8));
+      assertTrue(WorldCutScene.bladeDue(79.9));
+      assertFalse(WorldCutScene.bladeDue(80));
+      assertFalse(WorldCutScene.impactDue(79.9));
+      assertTrue(WorldCutScene.impactDue(80));
+      assertTrue(WorldCutScene.impactDue(200));
+   }
    @Test void doneBetweenBeatsFinishesOnlyTheAcceptedImpulse() {
       double inf=Double.POSITIVE_INFINITY;
       assertEquals(0,WorldCutPulse.age(96.5,inf));

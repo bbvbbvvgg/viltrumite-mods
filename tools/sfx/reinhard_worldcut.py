@@ -50,8 +50,12 @@ PULSE_PITCH = 0.90
 PULSE_LENGTH = 1.35
 PULSE_ATTACK = 0.03
 PULSE_RELEASE = 2.2
+IMPACT_START = 0.10
+IMPACT_SECONDS = 0.65
+IMPACT_LENGTH = 0.60
+IMPACT_PITCH = 0.90
 TRUE_PEAK = -2
-TARGETS = {'world_cut_hum': -18, 'world_cut_pulse': -18}
+TARGETS = {'world_cut_hum': -12.6, 'world_cut_pulse': -18, 'world_cut_impact': -14}
 
 
 def run(*args, stdin=None):
@@ -90,6 +94,21 @@ def smooth_seam(seg, n):
     return out
 
 
+def saturate(samples, drive=2.0, ceiling=0.8):
+    """Memoryless tanh drive: more RMS without digital clipping.
+
+    A static waveshaper maps equal input samples to equal output samples, so
+    a seamless loop stays seamless.  The peak is then pinned to the ceiling;
+    linear scaling keeps the seam relation.
+    """
+    shaped = array.array('f', (ceiling * math.tanh(drive * v / ceiling) for v in samples))
+    peak = max(abs(v) for v in shaped)
+    if peak <= 0:
+        raise ValueError('Silent loop')
+    scale = ceiling / peak
+    return array.array('f', (v * scale for v in shaped))
+
+
 def build_loop(pcm):
     """Forward plus time-reverse of the first two seconds, exact seam."""
     start = int(SEED_START * RATE)
@@ -98,7 +117,33 @@ def build_loop(pcm):
     if len(seed) != length:
         raise ValueError('Source does not contain the two-second seed')
     folded = array.array('f', (seed[i] + seed[length - 1 - i] for i in range(length)))
-    return smooth_seam(folded, int(SEAM_MS * RATE / 1000))
+    return saturate(smooth_seam(folded, int(SEAM_MS * RATE / 1000)))
+
+
+def build_impact(pcm):
+    """Short pitched-down hit for BLAST; the attack stays, the tail is tight."""
+    start = int(IMPACT_START * RATE)
+    length = int(IMPACT_SECONDS * RATE)
+    seed = pcm[start:start + length]
+    if len(seed) != length:
+        raise ValueError('Source does not contain the impact seed')
+    total = int(IMPACT_LENGTH * RATE)
+    attack = int(.005 * RATE)
+    tail = int(.03 * RATE)
+    out = array.array('f')
+    for i in range(total):
+        pos = i * IMPACT_PITCH
+        j = min(int(pos), len(seed) - 2)
+        f = pos - j
+        value = seed[j] * (1.0 - f) + seed[j + 1] * f
+        if i < attack:
+            value *= i / attack
+        u = i / (total - 1)
+        value *= (1.0 - u) ** 2.5
+        if i > total - tail:
+            value *= (total - i) / tail
+        out.append(value)
+    return out
 
 
 def build_pulse(pcm):
@@ -200,11 +245,14 @@ def build(src, destination):
     pcm = read_pcm(src)
     hum = build_loop(pcm)
     pulse = build_pulse(pcm)
+    impact = saturate(build_impact(pcm), drive=4.0, ceiling=0.8)
     recipes = {
         'world_cut_hum': dict(samples=hum, duration=len(hum) / RATE,
                               target=TARGETS['world_cut_hum'], loop=True),
         'world_cut_pulse': dict(samples=pulse, duration=len(pulse) / RATE,
                                 target=TARGETS['world_cut_pulse'], loop=False),
+        'world_cut_impact': dict(samples=impact, duration=len(impact) / RATE,
+                                 target=TARGETS['world_cut_impact'], loop=False),
     }
     destination.mkdir(parents=True, exist_ok=True)
     report = {}
@@ -259,7 +307,9 @@ def main():
                     method=dict(seed_start_s=SEED_START, seed_seconds=SEED_SECONDS,
                                 loop='forward + time reverse, exact seam, 8 ms circular smoothing',
                                 pulse=f'pitch {PULSE_PITCH} (slower read), {PULSE_ATTACK}s attack, '
-                                      f'{(1 - PULSE_LENGTH):.2f}s release'),
+                                      f'{(1 - PULSE_LENGTH):.2f}s release',
+                                impact=f'pitch {IMPACT_PITCH}, {IMPACT_LENGTH}s decay',
+                                hum='loop saturated: tanh drive 2.0, ceiling 0.8'),
                     ffmpeg=run('ffmpeg', '-version').stdout.decode().splitlines()[0],
                     sounds=report), indent=2) + '\n')
         print(f'{"CHECK PASS" if args.check else "BUILT"}: {len(report)} sounds; '
