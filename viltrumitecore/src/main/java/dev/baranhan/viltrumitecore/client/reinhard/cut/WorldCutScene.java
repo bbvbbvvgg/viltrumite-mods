@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import dev.baranhan.viltrumitecore.client.render.vfx.*;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
-import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut;
 import dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket;
 import java.util.*;
@@ -12,7 +11,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -25,13 +23,12 @@ public final class WorldCutScene {
    private static final Map<UUID,Active> SCENES=new LinkedHashMap<>();
    private static Active[] frames=new Active[0];
    private static final Set<ResourceLocation> OWN_SOUNDS=Set.of(
-      new ResourceLocation("viltrumitecore","reinhard.world_cut_silence"),
-      new ResourceLocation("viltrumitecore","reinhard.world_cut_blast"),
-      new ResourceLocation("viltrumitecore","reinhard.world_cut_tail"));
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_hum"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_pulse"));
    private WorldCutScene() {}
    public static final class Active {
       public final WorldCutS2CPacket packet;
-      private boolean blastReceived, blasted, ducked, silencePlayed, tailPlayed;
+      private boolean blastReceived, blasted, ducked;
       private long lastPacket,doneAt=-1;
       public boolean working() { return doneAt<0; }
       public double fade(long now) { return doneAt<0?1:Math.max(0,1-(now-doneAt)/70.0); }
@@ -58,14 +55,15 @@ public final class WorldCutScene {
    public static boolean shakeCaster(boolean caster) { return true; }
    public static void clear() {
       for(Active a:SCENES.values()) { SoundDuck.INSTANCE.release(a.packet.castId());CutAtmosphere.release(a.packet.castId()); }
-      SCENES.clear(); refresh(); WorldCutFov.reset(); CutFinishSound.clear();
+      SCENES.clear(); refresh(); WorldCutFov.reset(); WorldCutAudio.clear();
    }
    public static void prune(long now) {
       SCENES.values().removeIf(a -> {
          if(now-a.packet.startTime()<12000 && (a.doneAt<0 ? now-a.lastPacket<=140 : now-a.doneAt<=70)) return false;
          if(dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED)com.mojang.logging.LogUtils.getLogger().info("CUT_QA,FADE,ground,{},{},{}",a.packet.castId(),a.doneAt<0?-1:now-a.doneAt,Minecraft.getInstance().getFps());
          CutAtmosphere.release(a.packet.castId());
-         SoundDuck.INSTANCE.release(a.packet.castId()); return true;
+         SoundDuck.INSTANCE.release(a.packet.castId());
+         WorldCutAudio.stop(a.packet.castId()); return true;
       });
       refresh();
    }
@@ -77,7 +75,7 @@ public final class WorldCutScene {
       Minecraft mc=Minecraft.getInstance();
       if(mc.level==null || mc.player==null) { if(!SCENES.isEmpty()) clear(); return; }
       if(mc.isPaused()) return;
-      long now=mc.level.getGameTime(); prune(now);
+      long now=mc.level.getGameTime(); prune(now); WorldCutAudio.prune();
       for(Active scene:frames) {
          if(dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED && now%20==0)com.mojang.logging.LogUtils.getLogger().info("CUT_QA,FPS,ground,{},{},{}",scene.packet.castId(),now-scene.packet.startTime(),mc.getFps());
          double t=elapsed(scene.packet.startTime(),now,0);
@@ -90,20 +88,16 @@ public final class WorldCutScene {
             SoundDuck.INSTANCE.release(scene.packet.castId()); scene.ducked=false;
          }
          Vec3 nearest=nearest(scene,mc.player.position());
-         CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now);
-         if(inRange && CutFinishSound.pulseDue(now-scene.packet.startTime(),scene.working()))
-            CutFinishSound.pulse(nearest,now);
-         if(hush) {
-            CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
-            if(!scene.silencePlayed) { play(nearest,ReinhardSounds.WORLD_CUT_SILENCE.get(),.8F); scene.silencePlayed=true; }
-         }
+         WorldCutAudio.update(scene.packet.castId(),nearest,t, (float)scene.fade(now),scene.working(),inRange);
+         if(inRange && scene.working() && WorldCutPulse.due((long)t)) WorldCutAudio.pulse(nearest,now);
+         CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now,
+            scene.working()?WorldCutPulse.shake(t):0F);
+         if(hush) CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
          if(inRange && !scene.working() && !scene.blasted) {
             scene.blasted=true;
-            CutFinishSound.play(nearest, now);
             if(shakeCaster(scene.packet.casterId().equals(mc.player.getUUID()))) CameraShake.addAt(nearest,5,200);
             for(int a=0;a<200;a+=20) HeroImpactFx.shockwaveVisual(point(scene,a+.5),20);
          }
-         if(inRange && !scene.working()) scene.tailPlayed=true;
       }
    }
    private static Vec3 point(Active a,double along) {
@@ -114,9 +108,6 @@ public final class WorldCutScene {
       Vec3 start=scene.packet.shape().axis(0), dir=scene.packet.shape().dirXZ();
       double along=Math.max(0,Math.min(199,(listener.x-start.x)*dir.x+(listener.z-start.z)*dir.z));
       return point(scene,along);
-   }
-   private static void play(Vec3 at,SoundEvent sound,float volume) {
-      Minecraft.getInstance().level.playLocalSound(at.x,at.y,at.z,sound,SoundSource.PLAYERS,volume,1,false);
    }
    public static void onRender(RenderLevelStageEvent event) {
       if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || frames.length==0
@@ -173,6 +164,25 @@ public final class WorldCutScene {
                      double rise=((Math.max(0,t-80-a*.15)*.12)%14);
                      Vec3 dust=p.add(Math.sin(a*11+y)*(3+y*.8),rise+y*.8,Math.cos(a*7+y)*(3+y*.8));
                      pixel(buffer,eye,camera,dust,.18F+y*.015F,149,133,112,(int)(90*fade));
+                  }
+               }
+               int pulseAge=WorldCutPulse.age(t);
+               if(pulseAge>=0 && pulseAge<WorldCutPulse.LENGTH) {
+                  double swell=1.0-pulseAge/(double)WorldCutPulse.LENGTH;
+                  for(int a=0;a<front;a+=3) {
+                     Vec3 wound=point(scene,a+.5);
+                     for(int side=-1;side<=1;side+=2) {
+                        double reach=1.2+pulseAge*1.15;
+                        for(int k=0;k<3;k++) {
+                           double r=reach*(.7+k*.25)+Math.sin(a*.37+k)*.6;
+                           Vec3 dust=wound.add(-dir.z*side*r,.3+pulseAge*.06+k*.35,dir.x*side*r);
+                           pixel(buffer,eye,camera,dust,.15F+k*.01F,152,136,115,(int)(120*fade*swell));
+                        }
+                        if(pulseAge<8) {
+                           Vec3 lip=wound.add(-dir.z*side*(reach+.4),.45,dir.x*side*(reach+.4));
+                           pixel(buffer,eye,camera,lip,.09F,214,192,150,(int)(80*fade*swell));
+                        }
+                     }
                   }
                }
             }

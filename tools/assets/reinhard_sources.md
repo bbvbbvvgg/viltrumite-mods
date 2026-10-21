@@ -28,7 +28,7 @@ Checked against the live Freesound sound pages on **2026-10-13** (not inferred f
 | 770035 — Sword - Unsheathe | Vrymaa | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/Vrymaa/sounds/770035 | `770035__vrymaa__sword-unsheathe.wav` | reid_unsheathe | `cadfdd8d7427fff68415b482d27fe714cfd86d60d2a83acf8d4200e5dd895e26` |
 | 870684 — Very low rumble (Stereo) | CHallSmith | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/CHallSmith/sounds/870684/ | `870684__challsmith__very-low-rumble-stereo.wav` | reid_rumble | `fb3d74efcb82021a397dbf07649ce409e53dd1b53b8e16cd9532fa47c76c2926` |
 | 503809 — reverse fx 6.wav | reathance | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/reathance/sounds/503809/ | `503809__reathance__reverse-fx-6.wav` | world_cut_silence | `bf2a3a7d7df281130e36776b445d2a0627cf41c9a91c0fd196e85fabe868d278` |
-| 248150 — Deepest Boom Yet | hykenfreak | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | https://freesound.org/people/hykenfreak/sounds/248150/ | `248150__hykenfreak__deepest-boom-yet.wav` | world_cut_tail | `8a95a5fabb53a3140371b8b6edef304ed75598672f4d4f1e1b565c773c866e5c` |
+| 248150 — Deepest Boom Yet | hykenfreak | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | https://freesound.org/people/hykenfreak/sounds/248150/ | `248150__hykenfreak__deepest-boom-yet.wav` | world_cut_tail, world_cut_hum, world_cut_pulse | `8a95a5fabb53a3140371b8b6edef304ed75598672f4d4f1e1b565c773c866e5c` |
 | 825864 — Deep Cinematic Boom | Alliare | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/Alliare/sounds/825864 | `825864__alliare__deep-cinematic-boom.mp3` | NOT USED: World Cut mix blocked by 93835 | `83ac7b803c169fc675bd4a6f3429a307fbaf4aaa905054256abac1e0a2caf9fa` |
 | 93835 — Huge Explosion1.flac | CGEffex | [CC-BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) | https://freesound.org/people/CGEffex/sounds/93835 | `93835__cgeffex__huge-explosion1.flac` | EXCLUDED: world_cut_blast placeholder retained | `51a0a552b30c090ea7f7b89520e9df56cbad51045c168392e421b8cfab9ebaa5` |
 | 554564 — Glass Shatter 2.wav | Greg_Surr | [CC0 1.0](http://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/Greg_Surr/sounds/554564/ | `554564__greg_surr__glass-shatter-2.wav` | erase_crack | `79b099b8a8cdfa20e85d3097d2a0f7d2a0d3592f18cc59e7d968c84d810577cf` |
@@ -70,6 +70,8 @@ All files are `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/re
 | `sky_kick` | 182050 | 0 / 2.5 | -14 LUFS | trim, fades, two-pass loudnorm |
 | `stomp` | 275809 | 0 / 3 | -14 LUFS | trim, fades, two-pass loudnorm, peak limiting |
 | `sheath_ring` | 519413 | 2.31 / 1.1 | -14 LUFS | trim, fades, two-pass loudnorm, peak limiting |
+| `world_cut_hum` | 248150 | 0.10 / 2.00 seed | -18 LUFS | forward + time reverse, exact seam, 8 ms circular smoothing; 1.992 s loop; `tools/sfx/reinhard_worldcut.py` |
+| `world_cut_pulse` | 248150 | 0.10 / 1.35 | -18 LUFS | pitch 0.90, 30 ms attack, quadratic release; `tools/sfx/reinhard_worldcut.py` |
 
 ## Cinematic original synthesis (2026-10-20)
 
@@ -78,5 +80,17 @@ No new external recordings. `tools/sfx/reinhard_cinematic.py` deterministically 
 - `cut_rumble`: 1.25 s low air/stone layer, retriggered no faster than 1.4 s, no overlapping instance per cast.
 - `cut_cinematic_impact`: 3.40 s displacement impact with decaying low tail; replaces the vanilla World Cut placeholder, not blocked NC recordings.
 - `cut_cinematic_sweep`: 0.32 s pressure sweep for Rain of Cuts; replaces the vanilla placeholder, not blocked NC recordings.
+
+## World Cut ambience from the owner re-export (2026-10-21)
+
+The owner supplied `01-original-final-tail.ogg` (8.00 s mono, SHA-256
+`8fc6abd5...12dce6`). It is the approved hykenfreak `248150` tail re-exported
+about 6.7 dB quieter; the shipped file is not byte-identical to the archive
+trim. `tools/sfx/reinhard_worldcut.py` is the only writer of the two derived
+assets. The 1.992 s hum sums the first 2.00 s with its own time reverse and
+then smooths the wrap; the 1.35 s pulse is a pitched-down swell of the same
+seed. Both are mono 44.1 kHz Vorbis q5 and pass decoded seam, loudness and
+peak gates. Run `python3 tools/sfx/reinhard_worldcut.py --src <file> --check`.
+No raw input is committed and no listening proof is claimed.
 
 24 kHz mono Vorbis quality 4, faded/soft-limited source PCM peak -6.02 dBFS. Decoded true peaks measured with ffmpeg ebur128: draw -5.9, impact -5.3, sweep -5.1 dBFS. This is file-level headroom, not a claim of clipping-free scene mixing. Subjective gain and Minecraft mix require listening in game. Existing CC-BY attribution stays unchanged.

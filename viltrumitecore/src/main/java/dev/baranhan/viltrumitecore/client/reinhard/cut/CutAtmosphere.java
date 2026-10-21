@@ -18,10 +18,16 @@ public final class CutAtmosphere {
       new ResourceLocation("viltrumitecore","reinhard.world_cut_silence"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_blast"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_tail"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_hum"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_pulse"),
       new ResourceLocation("viltrumitecore","reinhard.cut_rumble"));
    private record Lease(long seen,float weight) {}
    private CutAtmosphere() {}
    public static void update(UUID id,Vec3 near,double t,boolean working,double tail,boolean inRange,long now) {
+      update(id,near,t,working,tail,inRange,now,0F);
+   }
+   /** {@code pulse} is extra cinematic shake from the rupture clock; diagonal passes zero. */
+   public static void update(UUID id,Vec3 near,double t,boolean working,double tail,boolean inRange,long now,float pulse) {
       if(!inRange || t<8 || (!working&&tail<=0)) { release(id);return; }
       float weight=(float)(Math.min(1,Math.max(0,(t-8)/22))*Math.min(1,tail));
       if(ACTIVE.put(id,new Lease(now,weight))==null) SkyTint.INSTANCE.push(id,110,()-> {
@@ -29,8 +35,8 @@ public final class CutAtmosphere {
       });
       if(t<80) SoundDuck.INSTANCE.duck(id,SoundSource.MASTER,.08F,6,OWN);
       else SoundDuck.INSTANCE.release(id);
-      float power=t<40?1.2F:t<80?2.3F:6.8F;
-      CameraShake.cinematicAt(near,power*weight,ReinhardRange.VALUE);
+      float power=(t<40?1.2F:t<80?2.3F:6.8F)*weight;
+      CameraShake.cinematicAt(near,power+pulse,ReinhardRange.VALUE);
    }
    public static void release(UUID id) { ACTIVE.remove(id);SkyTint.INSTANCE.remove(id);SoundDuck.INSTANCE.release(id); }
    @SubscribeEvent public static void fog(ViewportEvent.RenderFog e) {

@@ -19,6 +19,8 @@ class ReinhardSoundsTest {
       Map.entry("erase_crack", "erase_crack"), Map.entry("erase_inhale", "erase_inhale"),
       Map.entry("limbo_heartbeat", "limbo_heartbeat"), Map.entry("sky_kick", "sky_kick"),
       Map.entry("stomp", "stomp"), Map.entry("sheath_strike", "sheath_ring"));
+   private static final Map<String, String> DERIVED = Map.of(
+      "world_cut_hum", "world_cut_hum", "world_cut_pulse", "world_cut_pulse");
    private static final Map<String,String> CINEMATIC = Map.of(
       "reid_cinematic_layer","reid_cinematic_layer","cut_rumble","cut_rumble",
       "world_cut_blast","cut_cinematic_impact","cut_rain","cut_cinematic_sweep");
@@ -31,7 +33,8 @@ class ReinhardSoundsTest {
       Map.entry("reid_choir", "398218"), Map.entry("reid_unsheathe", "770035"), Map.entry("reid_rumble", "870684"),
       Map.entry("world_cut_silence", "503809"), Map.entry("world_cut_tail", "248150"), Map.entry("erase_crack", "554564"),
       Map.entry("erase_inhale", "331620"), Map.entry("limbo_heartbeat", "249716"), Map.entry("sky_kick", "182050"),
-      Map.entry("stomp", "275809"), Map.entry("sheath_ring", "519413"));
+      Map.entry("stomp", "275809"), Map.entry("sheath_ring", "519413"),
+      Map.entry("world_cut_hum", "248150"), Map.entry("world_cut_pulse", "248150"));
 
    private JsonObject sounds() throws Exception {
       return JsonParser.parseString(Files.readString(Path.of("src/main/resources/assets/viltrumitecore/sounds.json"))).getAsJsonObject();
@@ -59,6 +62,12 @@ class ReinhardSoundsTest {
          JsonObject choice=new JsonObject();choice.addProperty("name","viltrumitecore:reinhard/"+pair.getValue());
          choice.addProperty("stream",false);choice.addProperty("attenuation_distance",pair.getKey().equals("cut_rain")?128:320);
          JsonArray array=new JsonArray();array.add(choice);definition.add("sounds",array);expected.add(event,definition);
+      }
+      for(var pair:DERIVED.entrySet()) {
+         JsonObject choice=new JsonObject();choice.addProperty("name","viltrumitecore:reinhard/"+pair.getValue());
+         choice.addProperty("stream",false);choice.addProperty("attenuation_distance",320);
+         JsonObject definition=new JsonObject();JsonArray array=new JsonArray();array.add(choice);
+         definition.add("sounds",array);expected.add("reinhard."+pair.getKey(),definition);
       }
       JsonObject current = new JsonObject();
       for (String key : actual.keySet()) if (key.startsWith("reinhard.")) current.add(key, actual.get(key));
@@ -152,7 +161,7 @@ class ReinhardSoundsTest {
    @Test void noPlaceholdersLeft() throws Exception { validateSounds(sounds()); }
    @Test void everyFileExists() throws Exception {
       allFileReferencesExist(sounds());
-      Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());
+      Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());all.addAll(DERIVED.values());
       for (String f : all) {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));

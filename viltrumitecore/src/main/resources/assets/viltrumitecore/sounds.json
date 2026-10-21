@@ -959,5 +959,23 @@
         "attenuation_distance": 320
       }
     ]
+  },
+  "reinhard.world_cut_hum": {
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/world_cut_hum",
+        "stream": false,
+        "attenuation_distance": 320
+      }
+    ]
+  },
+  "reinhard.world_cut_pulse": {
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/world_cut_pulse",
+        "stream": false,
+        "attenuation_distance": 320
+      }
+    ]
   }
 }

@@ -42,7 +42,7 @@ Sound sources and exact input/output provenance: `tools/assets/reinhard_sources.
 
 ### CC-BY 4.0 — Freesound
 - **klankbeeld** — [St. John Cathedral female choir 001.wav (398218)](https://freesound.org/people/klankbeeld/sounds/398218/), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). Mode chords and Reid choir: trimmed / layered / normalized. Credit: klankbeeld and **Freesound.org**; only creative transformed excerpts, no raw-stock redistribution.
-- **hykenfreak** — [Deepest Boom Yet (248150)](https://freesound.org/people/hykenfreak/sounds/248150/) and [Spooky Sucking Air (331620)](https://freesound.org/people/hykenfreak/sounds/331620/), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). World Cut tail / erasure inhale: trimmed / layered / normalized.
+- **hykenfreak** — [Deepest Boom Yet (248150)](https://freesound.org/people/hykenfreak/sounds/248150/) and [Spooky Sucking Air (331620)](https://freesound.org/people/hykenfreak/sounds/331620/), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). World Cut tail, its derived hum/pulse loop / erasure inhale: trimmed / layered / normalized.
 - **dingus23** — [earthquake.aif (275809)](https://freesound.org/people/dingus23/sounds/275809/), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). Stomp: trimmed / layered / normalized.
 
 ### CC0 1.0 — Freesound

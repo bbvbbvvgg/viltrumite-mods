@@ -52,4 +52,19 @@ class WorldCutSceneTest {
    @Test void casterSharesCinematicShake() {
       assertTrue(WorldCutScene.shakeCaster(true)); assertTrue(WorldCutScene.shakeCaster(false));
    }
+   @Test void pulseClockRestsBetweenImpulses() {
+      assertFalse(WorldCutPulse.due(95));
+      assertTrue(WorldCutPulse.due(96));
+      assertFalse(WorldCutPulse.due(97));
+      assertFalse(WorldCutPulse.due(145));
+      assertTrue(WorldCutPulse.due(146));
+      assertEquals(-1,WorldCutPulse.age(95.9));
+      assertEquals(0,WorldCutPulse.age(96.5));
+      assertEquals(5,WorldCutPulse.age(101.5));
+      assertEquals(1F,WorldCutPulse.strength(96),1E-6);
+      assertTrue(WorldCutPulse.strength(106)<.4F);
+      assertEquals(0F,WorldCutPulse.strength(120),1E-6);
+      assertEquals(0F,WorldCutPulse.shake(124),1E-6);
+      assertTrue(WorldCutPulse.shake(96)>2F);
+   }
 }
