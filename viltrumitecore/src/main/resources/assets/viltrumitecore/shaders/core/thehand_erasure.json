@@ -1,0 +1,334 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "srcalpha",
+    "dstrgb": "1-srcalpha"
+  },
+  "vertex": "viltrumitecore:thehand_erasure",
+  "fragment": "viltrumitecore:thehand_erasure",
+  "attributes": [
+    "Position",
+    "UV0",
+    "Color",
+    "Normal"
+  ],
+  "samplers": [
+    {
+      "name": "Sampler0"
+    },
+    {
+      "name": "Sampler1"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "ModelViewMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "ScreenSize",
+      "type": "float",
+      "count": 2,
+      "values": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "Mode",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "Time",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "Seed",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "Amount",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "AuraCentre",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "AuraRadius",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "AuraDrift",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Length",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "HeadS",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "CapR",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "Decay",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "Flash",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "HaloStrength",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "Scale",
+      "type": "float",
+      "count": 1,
+      "values": [
+        1.0
+      ]
+    },
+    {
+      "name": "HeadRamp0",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.055,
+        0.102,
+        0.29
+      ]
+    },
+    {
+      "name": "HeadRamp1",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.078,
+        0.361,
+        0.584
+      ]
+    },
+    {
+      "name": "HeadRamp2",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.031,
+        0.729,
+        0.839
+      ]
+    },
+    {
+      "name": "HeadRamp3",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.561,
+        0.867,
+        0.886
+      ]
+    },
+    {
+      "name": "HeadRamp4",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.749,
+        0.973,
+        0.988
+      ]
+    },
+    {
+      "name": "TailRamp0",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.055,
+        0.102,
+        0.29
+      ]
+    },
+    {
+      "name": "TailRamp1",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.078,
+        0.361,
+        0.584
+      ]
+    },
+    {
+      "name": "TailRamp2",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.031,
+        0.729,
+        0.839
+      ]
+    },
+    {
+      "name": "TailRamp3",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.561,
+        0.867,
+        0.886
+      ]
+    },
+    {
+      "name": "TailRamp4",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.749,
+        0.973,
+        0.988
+      ]
+    },
+    {
+      "name": "EdgeColor",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        0.145,
+        0.263
+      ]
+    },
+    {
+      "name": "DecayColor0",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.004,
+        0.953,
+        0.659
+      ]
+    },
+    {
+      "name": "DecayColor1",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.72,
+        0.95,
+        0.36
+      ]
+    },
+    {
+      "name": "Debug",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    }
+  ]
+}
