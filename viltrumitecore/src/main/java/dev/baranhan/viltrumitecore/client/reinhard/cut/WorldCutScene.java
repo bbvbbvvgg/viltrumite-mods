@@ -32,6 +32,8 @@ public final class WorldCutScene {
       private long lastPacket,doneAt=-1;
       public boolean working() { return doneAt<0; }
       public double fade(long now) { return doneAt<0?1:Math.max(0,1-(now-doneAt)/70.0); }
+      /** Last elapsed tick strictly before DONE; +inf while the server still reports WORK. */
+      public double acceptedUntil() { return doneAt<0?Double.POSITIVE_INFINITY:doneAt-packet.startTime()-1.0; }
       Active(WorldCutS2CPacket packet) { this.packet=packet; }
       public boolean blastReceived() { return blastReceived; }
    }
@@ -88,10 +90,11 @@ public final class WorldCutScene {
             SoundDuck.INSTANCE.release(scene.packet.castId()); scene.ducked=false;
          }
          Vec3 nearest=nearest(scene,mc.player.position());
-         WorldCutAudio.update(scene.packet.castId(),nearest,t, (float)scene.fade(now),scene.working(),inRange);
-         if(inRange && scene.working() && WorldCutPulse.due((long)t)) WorldCutAudio.pulse(nearest,now);
+         double acceptedUntil=scene.acceptedUntil();
+         WorldCutAudio.update(scene.packet.castId(),nearest,t,acceptedUntil,(float)scene.fade(now),inRange);
+         if(inRange && WorldCutPulse.due((long)t,acceptedUntil)) WorldCutAudio.pulse(nearest,now);
          CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now,
-            scene.working()?WorldCutPulse.shake(t):0F);
+            WorldCutPulse.shake(t,acceptedUntil));
          if(hush) CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
          if(inRange && !scene.working() && !scene.blasted) {
             scene.blasted=true;
@@ -166,7 +169,7 @@ public final class WorldCutScene {
                      pixel(buffer,eye,camera,dust,.18F+y*.015F,149,133,112,(int)(90*fade));
                   }
                }
-               int pulseAge=WorldCutPulse.age(t);
+               int pulseAge=WorldCutPulse.age(t,scene.acceptedUntil());
                if(pulseAge>=0 && pulseAge<WorldCutPulse.LENGTH) {
                   double swell=1.0-pulseAge/(double)WorldCutPulse.LENGTH;
                   for(int a=0;a<front;a+=3) {

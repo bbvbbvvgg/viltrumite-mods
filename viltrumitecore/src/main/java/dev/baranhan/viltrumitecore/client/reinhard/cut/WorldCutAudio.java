@@ -36,7 +36,7 @@ final class WorldCutAudio {
    private WorldCutAudio() {
    }
 
-   static void update(UUID cast, Vec3 at, double elapsed, float fade, boolean working, boolean inRange) {
+   static void update(UUID cast, Vec3 at, double elapsed, double acceptedUntil, float fade, boolean inRange) {
       Hum hum = HUM.get(cast);
       if (!inRange || fade <= .002F || elapsed < ReinhardRules.WORLD_CUT_BLAST) {
          if (hum != null) {
@@ -49,7 +49,7 @@ final class WorldCutAudio {
          HUM.put(cast, hum);
          Minecraft.getInstance().getSoundManager().play(hum);
       }
-      float swell = 1.0F + SWELL * WorldCutPulse.strength(elapsed);
+      float swell = 1.0F + SWELL * WorldCutPulse.strength(elapsed, acceptedUntil);
       hum.aim(at, HUM_GAIN * fade * swell);
    }
 
