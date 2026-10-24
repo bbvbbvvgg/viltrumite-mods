@@ -98,7 +98,7 @@ Use a `PlayerRenderer.setupRotations` TAIL mixin (`PunchRendererCoreMixin` 1500,
 
 ## 5. First person
 
-- Each ability has a `FirstPersonXMixin` (Barrage, Block, Chop, Chop2, Grab, Gun, Punch, Thunderclap; Homelander; Iron Man: `IronManFirstPersonShieldMixin` → `IronManFirstPerson` for every combat pose and the shield guard). Read the nearest one before you write a new one. Copy its structure.
+- Legacy actions use individual `FirstPersonXMixin` hooks (Barrage, Block, Chop, Chop2, Grab, Gun, Punch, Thunderclap). Modern heroes can share one first-person compositor (Homelander; Iron Man: `IronManFirstPersonShieldMixin` → `IronManFirstPerson` for every combat pose and the shield guard). Read the nearest one before you write a new one. Copy its structure.
 - Iron Man (Regulus-style, PR #19): `client/ironman/anim/IronManAnimation` is the one client clock per player (shot edges per palm, stance hold, volleys, strike clock with forehand/backhand, nano weapon form/dissolve, missiles, unibeam, signatures); `State.weight(View, Layer, active)` gives separate third/first-person weights. `IronManPoser` keys layers on `PoseRig.begin(...).slerp()` and then aims arms with `client/anim/pose/ArmAim` (direction from the head axes, rotation-to quaternion → Euler ZYX); `IronManFirstPerson` uses `FirstPersonArm` (shoulder pivot) with the same layers. Do not add a separate signature mixin: signatures are a layer in these two classes.
 - An arm that is not the main hand renders in first person only through `AlwaysVisibleOffhandMixin`; a hero adds its `wantsOffhand(player)` there.
 - Flight applies `PoseDataManager.FP` in `ItemInHandRendererMixin` and resets arm pivots in `PlayerRendererMixin`. Do not fight these transforms.
@@ -233,9 +233,9 @@ For new effects, age by ticks with partialTick (Thunderclap pattern). Do not use
 
 ### Regulus pose and world-space helpers
 
-- Use `RegulusAnimationManager.actionTime(entity, snapshot, partialTick)` in both views. It uses client game time and limits extrapolation to six ticks and the action length. Do not use raw snapshot ticks for one view and the shared clock for the other.
-- Use `calculateWeight` for third person. Use `calculateFirstPersonWeight` for first person. For a held-book pose, pass the fourth `mainHand` argument so each hand has its own weight. Tick inactive weights too, so they fade out.
-- Call `RegulusAnimationManager.reset(entity)` when the hero changes. It clears third-person weights, both first-person hands, and the action clock.
+- Use `RegulusAnimationManager.castTime(entity, partialTick)` for the Regulus cast in both views. The client-ticked `RegulusActionClock` follows synced action elapsed/length; do not use raw snapshot ticks for one view and the shared clock for the other. This is distinct from the opt-in `ActionClock.sample` policy used by Reinhard.
+- Use `RegulusAnimationManager.weight(entity, layer, active)` for third person and `firstPersonWeight(entity, layer, active, mainHand)` for first person. For casts use `castWeight` / `firstPersonCastWeight`. The `mainHand` argument gives each physical view its own weight. Tick inactive weights too, so they fade out.
+- `RegulusAnimationManager.onClientTick` removes an entity's clock and view weights when its snapshot stops being Regulus; a level change clears all clocks/weights. Do not call a nonexistent `reset(entity)` API.
 - `RegulusPoseTiming.keyedAngle` recovers to the supplied base rotation. End transient keys at zero. Add head/body offsets to vanilla aim and crouch. Mirror action limbs and yaw/roll for the main arm. Restore position offsets at `setupAnim` HEAD before vanilla uses the model again. Copy hat, jacket, sleeves and pants; do not copy body pivots to the cloak.
 - `PixelVfx` emits camera-relative vertices. Call `rotateCamera` once per render pass. Do not translate by the camera again. Use `billboardPixel`, `domeShell` or `sphereShell` for floating points. Shell shimmer changes alpha, not position. Apply owner-only carrier filtering and local first-person aura filtering in the managers, not in the shape helper.
 
