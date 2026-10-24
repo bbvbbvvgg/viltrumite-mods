@@ -30,6 +30,8 @@ This file is a **decision and acceptance procedure**, not a list of poses to cop
 
 Do not add PlayerAnimator, Emotecraft, GeckoLib animation, Veil, a second pose/keyframe engine or a generic VFX pipeline. GeckoLib assets may be read by the project's **own** geo loader. Do not use GeckoLib as a new runtime animation engine. A special shader is not permission to build another general renderer. If the current system lacks a feature, extend its existing seam and update this skill.
 
+Every active hero ability needs recognizable animation and visual feedback in each relevant view. Cover both first and third person for visible player actions. If a passive or non-visual action has no meaningful pose, record the intentional exception in its design and still provide clear player feedback.
+
 Choose **one pose owner** for each body and view. A hero can have layered actions, but should not have several competing mixins that independently own the same arm. Check mixin registration, Forge event order and render cancellation before adding a hook.
 
 ## 2. Four reference implementations: copy the lesson, not the character
@@ -40,6 +42,8 @@ Choose **one pose owner** for each body and view. A hero can have layered action
 | **Homelander** | `client/homelander/HomelanderPoser`, `HomelanderVfx`, `client/mixin/FirstPersonHomelanderMixin` | Compact snapshot-driven poses; independent view fades; eyes/beam VFX and state cleanup | Fixed-duration roar or laser pose for unrelated abilities |
 | **Iron Man** | `client/ironman/anim/IronManAnimation`, `IronManPoser`, `IronManFirstPerson`, `IronManPartsProvider` | One state machine for layered combat, guard, equipment, FP/TP; quaternion aiming; skin/part reveal | Separate signature mixins, redundant clocks or a new suit renderer for each mark |
 | **Reinhard** | `client/reinhard/ReinhardRenderer`, `ReinhardLayers`, `ReinhardPlayback`, `ReinhardGrip` | Full geo body, stance/gait/action composition, real elbow and weapon matrices, continuity gates | The unverified look, brittle grip solutions, cinematic complexity or specialized shader for ordinary hits |
+
+The project design references are `docs/design/2026-10-05-regulus-design.md`, `docs/design/2026-10-08-homelander-design.md`, `docs/design/2026-10-09-ironman-design.md` and `docs/design/2026-10-11-reinhard-design.md`. For external art/audio sources also inspect `tools/assets/ironman_sources.md` and `tools/assets/reinhard_sources.md` where applicable. These specs express intent; the current code shows what actually shipped.
 
 Use a source-material reference **and** the nearest working code example. For a new hero, prefer the smallest suitable existing architecture. Do not use Reinhard's full-body replacement merely because it has more bones.
 
