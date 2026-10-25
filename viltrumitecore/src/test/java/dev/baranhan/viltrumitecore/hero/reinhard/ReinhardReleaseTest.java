@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 class ReinhardReleaseTest {
-   @Test void worldCutAudioUsesNewMinorVersion() throws Exception {
+   @Test void stackStabilizationIsAPatchRelease() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.39.0", version.group(1), "The Hand erasure on World Cut is a core feature; flight stays unchanged");
+      assertEquals("1.39.1", version.group(1), "The review fixes over 1.39.0 are bugfix-only; flight stays unchanged");
    }
    @Test void snapshotCapacityUpgradeRejectsOldNetworkPeers() throws Exception {
       String source = Files.readString(Path.of("../viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));
