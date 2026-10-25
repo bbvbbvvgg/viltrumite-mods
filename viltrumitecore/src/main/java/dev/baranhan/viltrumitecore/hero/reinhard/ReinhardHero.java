@@ -109,7 +109,7 @@ public final class ReinhardHero implements HeroDefinition {
       if (player instanceof ServerPlayer serverPlayer) {
          ReinhardState state = ReinhardState.of(serverPlayer);
          if (state != null) {
-            return dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(0, state.reid.phase());
+            return dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(stateFlags(state, 0), state.reid.phase());
          }
       }
 
@@ -174,8 +174,24 @@ public final class ReinhardHero implements HeroDefinition {
 
    /** Spec §5: MMB cycles the mode (both sides; the client cancels pick-block). */
    @Override
+   public boolean claimsBlockAttack(Player player) { return false; }
+
+   @Override
+   public boolean allowsVanillaAttack(Player player) {
+      ReinhardState state=ReinhardState.of(player);
+      return state!=null && state.resolvingMelee;
+   }
+
+   @Override
    public HeroAction mouseAction(MouseButton button, Player player) {
-      return button == MouseButton.MIDDLE ? HeroAction.MODE_CYCLE : null;
+      return claimedMouse(button, dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags.has(flags(player), ReinhardFlags.GRAB_HOLDING));
+   }
+
+   /** Pure input policy shared by local claims and authoritative server claims. */
+   public static HeroAction claimedMouse(MouseButton button, boolean holding) {
+      if (button == MouseButton.PRIMARY) return HeroAction.PRIMARY_ATTACK;
+      if (button == MouseButton.MIDDLE) return HeroAction.MODE_CYCLE;
+      return button == MouseButton.SECONDARY && holding ? HeroAction.SECONDARY_USE : null;
    }
 
    @Override
@@ -186,6 +202,8 @@ public final class ReinhardHero implements HeroDefinition {
 
       ReinhardState state = ReinhardState.ensure(player);
       return switch (action) {
+         case PRIMARY_ATTACK -> !state.busy() && (!state.action.running() || state.action.is(ReinhardAbility.FIST_COMBO));
+         case SECONDARY_USE -> dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.holding(state);
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
          // Except while Reid is being drawn: the 6 s scene roots him (spec §7.1).
@@ -221,6 +239,10 @@ public final class ReinhardHero implements HeroDefinition {
 
    @Override
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
+      if (action == HeroAction.PRIMARY_ATTACK) {
+         if (pressed) ReinhardActions.primaryAttack(player, ReinhardState.ensure(player));
+         return;
+      }
       if (action == HeroAction.MODE_CYCLE) {
          if (pressed) {
             cycleMode(player, ReinhardState.ensure(player));
@@ -229,6 +251,11 @@ public final class ReinhardHero implements HeroDefinition {
          return;
       }
 
+      if (action == HeroAction.SECONDARY_USE) {
+         if (pressed && dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.holding(ReinhardState.ensure(player)))
+            dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.finish(player, ReinhardState.ensure(player));
+         return;
+      }
       ReinhardActions.handleInput(player, ReinhardState.ensure(player), action, pressed);
    }
 
@@ -291,6 +318,16 @@ public final class ReinhardHero implements HeroDefinition {
    }
 
    /** Cloudy Sky (spec §4.4): five air steps (both sides). */
+   @Override
+   public net.minecraft.world.phys.Vec3 airJumpMotion(Player player, net.minecraft.world.phys.Vec3 current) {
+      return CloudStep.motion(current,player.getLookAngle(),player.getYRot(),airJumpVelocity(player),false);
+   }
+
+   @Override
+   public net.minecraft.world.phys.Vec3 superJumpMotion(Player player, net.minecraft.world.phys.Vec3 current) {
+      return CloudStep.motion(current,player.getLookAngle(),player.getYRot(),superJumpVelocity(player),true);
+   }
+
    @Override
    public int airJumps(Player player) {
       return CloudStep.steps();
@@ -504,6 +541,23 @@ public final class ReinhardHero implements HeroDefinition {
 
    /** Mode in heroFlags bits 0-1; ability cooldowns at their ordinal, mode cooldown at EXTRA_MODE_CD. */
    @Override
+   public int heldTargetId(Player player) {
+      if (player.level().isClientSide) {
+         HeroPublicSnapshot view = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer hp ? hp.getHeroSnapshot() : null;
+         return view != null && view.heroId() == id() && ReinhardFlags.has(view.heroFlags(), ReinhardFlags.GRAB_HOLDING)
+            ? view.controlTargetId() : -1;
+      }
+      ReinhardState state = ReinhardState.of(player);
+      return state == null || state.grab == null ? -1 : state.grab.targetId();
+   }
+
+   @Override
+   public net.minecraft.world.phys.Vec3 heldTargetPosition(Player player, net.minecraft.world.entity.Entity target, float partialTick) {
+      return dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.anchor(
+         player.getPosition(partialTick), net.minecraft.util.Mth.rotLerp(partialTick, player.yRotO, player.getYRot()), target.getBbWidth(), target.getBbHeight());
+   }
+
+   @Override
    public HeroPublicSnapshot snapshot(Player player) {
       ReinhardState state = ReinhardState.of(player);
       if (state == null) {
@@ -521,6 +575,14 @@ public final class ReinhardHero implements HeroDefinition {
       }
 
       flags = stateFlags(state, flags);
+      // A level-owned carve/scene can outlive its caster's timeline. Advertise the same
+      // admission locks that the server uses, including another player's active cast.
+      if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+         if (dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.get(server.serverLevel()).size() > 0)
+            flags |= 1 << ReinhardFlags.WORLD_CUT_ACTIVE;
+         if (dev.baranhan.viltrumitecore.hero.control.WorldPause.active(server.getServer()))
+            flags |= 1 << ReinhardFlags.WORLD_ERASURE_ACTIVE;
+      }
       flags = Reid.withFlags(flags, state.reid.phase());
       ActionTimeline action = state.action;
       // resource = Reid's idle ticks left while drawn (the HUD bar, spec §9.1).
@@ -542,6 +604,7 @@ public final class ReinhardHero implements HeroDefinition {
          flags |= 1 << ReinhardFlags.GRAB_HOLDING;
       }
 
+      if(state.worldErasure!=null && !state.worldErasure.ended()) flags|=1<<ReinhardFlags.WORLD_ERASURE_ACTIVE;
       return flags;
    }
 

@@ -72,7 +72,10 @@ vec3 eraseCracks(vec2 uv, float amount) {
     float reveal = 1.0 - smoothstep(max(0.0, amount - 0.06), max(0.001, amount), sqrt(first));
     float edge = line * reveal * amount;
     vec2 refract = normalize(uv - eraseSite(cell) + vec2(0.0001)) * edge * 0.006;
-    return texture(DiffuseSampler, clamp(uv + refract, 0.0, 1.0)).rgb + vec3(edge * 0.55);
+    // Steel-blue fracture rim and a narrow white core; all other hero paths stay unchanged.
+    float rim = (1.0 - smoothstep(0.004, 0.012, gap)) * reveal * amount;
+    vec3 fracture = vec3(0.36, 0.58, 0.85) * rim * 0.35 + vec3(1.0, 0.95, 0.80) * edge * 0.65;
+    return texture(DiffuseSampler, clamp(uv + refract, 0.0, 1.0)).rgb + fracture;
 }
 
 void main() {

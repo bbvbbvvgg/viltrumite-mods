@@ -18,7 +18,9 @@ public final class ReinhardFlags {
    public static final int HIT_STOP = 10;
    public static final int ERASURE_CASTER = 11;
    public static final int CHOP_LEFT_FORCED = 12;
-   // 13-31 reserved.
+   public static final int WORLD_CUT_ACTIVE = 13;
+   public static final int WORLD_ERASURE_ACTIVE = 14;
+   // 15-31 reserved.
 
    /** extraCooldowns: 0-13 = ability cooldowns by ReinhardAbility ordinal, then these. */
    public static final int EXTRA_MODE_CD = 14;

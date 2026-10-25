@@ -44,9 +44,13 @@ public final class GenericSilhouette {
       float alpha=ErasureScene.dustAlpha(t); if(alpha <= 0) return;
       float progress=Math.max(0,Math.min(1,(t-80)/10)), width=height*(humanoid ? .48F : aspect);
       for(Pixel pixel:pixels) {
-         float x=cx+(pixel.x()-.5F)*width+pixel.drift()*progress*height;
-         float y=cy+(pixel.y()-.5F)*height-pixel.up()*progress*height;
-         PixelVfx.guiPixel(gui,x,y,Math.max(1,height/90)*pixel.size(),255,255,255,Math.round(255*alpha));
+         float shrink=1-progress*progress;
+         double turn=progress*(1.5+pixel.up()+pixel.drift()*2);
+         float dx=(pixel.x()-.5F)*width,dy=(pixel.y()-.5F)*height;
+         float x=cx+(float)(dx*Math.cos(turn)-dy*Math.sin(turn))*shrink;
+         float y=cy+(float)(dx*Math.sin(turn)+dy*Math.cos(turn))*shrink;
+         PixelVfx.guiPixel(gui,x,y,Math.max(1,height/90)*pixel.size(),220,238,255,Math.round(255*alpha));
+         if(pixel.size()>.8F) PixelVfx.guiPixel(gui,x+pixel.drift()*height*.05F,y,Math.max(1,height/160),255,220,150,Math.round(180*alpha));
       }
    }
 }

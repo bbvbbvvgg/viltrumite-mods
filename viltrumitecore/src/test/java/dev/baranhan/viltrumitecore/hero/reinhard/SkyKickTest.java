@@ -24,8 +24,9 @@ class SkyKickTest {
       // ClientboundSetEntityMotionPacket clamps every axis to ±3.9: more would fly only on the server.
       assertTrue(ReinhardRules.KICK_VELOCITY <= 3.9);
       assertEquals(0.0, SkyKick.launchVelocity().x);
-      assertEquals(0.0, SkyKick.launchVelocity().z);
-      assertEquals(ReinhardRules.KICK_VELOCITY, SkyKick.launchVelocity().y);
+      assertTrue(SkyKick.launchVelocity().z>2.9);
+      assertEquals(40,Math.toDegrees(Math.atan2(SkyKick.launchVelocity().y,SkyKick.launchVelocity().horizontalDistance())),1E-6);
+      assertEquals(ReinhardRules.KICK_VELOCITY,SkyKick.launchVelocity().length(),1E-6);
       assertTrue(Math.abs(ReinhardRules.KICK_TOSS_VELOCITY) <= 3.9);
    }
 
@@ -47,17 +48,17 @@ class SkyKickTest {
          tick++;
       }
 
-      assertEquals(List.of("0:TOSS", "6:KICK", "7:HOLD", "8:HOLD", "9:LAUNCH"), beats, "toss, contact, 3 t hit-stop, launch");
+      assertEquals(List.of("0:TOSS", "6:KICK"), beats, "prepare, single contact and launch together; no later hold overwrites the impulse");
       assertEquals(ReinhardRules.KICK_ACTION_TICKS, tick);
    }
 
    @Test
-   void cooldown200() {
-      assertEquals(200, ReinhardRules.KICK_COOLDOWN);
+   void technicalCooldown() {
+      assertEquals(8, ReinhardRules.KICK_COOLDOWN);
       assertEquals(20.0F, ReinhardRules.KICK_DAMAGE);
       ReinhardState state = new ReinhardState();
       SkyKick.start(state, true, true, 7);
-      assertEquals(200, state.cooldowns[ReinhardAbility.SKY_KICK.ordinal()]);
+      assertEquals(8, state.cooldowns[ReinhardAbility.SKY_KICK.ordinal()]);
       assertTrue(state.action.is(ReinhardAbility.SKY_KICK));
       assertEquals(7, state.action.targetId(), "the target is synced (controlTargetId)");
    }

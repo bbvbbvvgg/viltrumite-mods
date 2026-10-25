@@ -28,7 +28,7 @@ class DashBehindTest {
 
       assertTrue(DashBehind.start(state, Optional.of(SERVER), 7));
       assertEquals(ReinhardRules.BEHIND_COOLDOWN, state.cooldowns[ReinhardAbility.DASH_BEHIND.ordinal()]);
-      assertEquals(60, ReinhardRules.BEHIND_COOLDOWN);
+      assertEquals(6, ReinhardRules.BEHIND_COOLDOWN);
       assertTrue(state.action.is(ReinhardAbility.DASH_BEHIND));
       assertEquals(7, state.action.targetId());
    }

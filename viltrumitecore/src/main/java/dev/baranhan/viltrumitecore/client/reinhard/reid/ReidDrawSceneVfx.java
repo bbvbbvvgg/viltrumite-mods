@@ -124,7 +124,7 @@ public final class ReidDrawSceneVfx {
 
    @SubscribeEvent
    public static void onRenderLevel(RenderLevelStageEvent event) {
-      if (event.getStage() != Stage.AFTER_PARTICLES) {
+      if (event.getStage() != Stage.AFTER_PARTICLES || dev.baranhan.viltrumiteflight.client.util.ShaderCompat.isShadowPass()) {
          return;
       }
 
@@ -180,6 +180,7 @@ public final class ReidDrawSceneVfx {
                float cloudY = cloudHeight(level, scene);
                pillar(buffer, cameraPos, camera, scene, cloudY + SKY_ABOVE_CLOUDS, t, grow);
                funnel(buffer, cameraPos, camera, scene, cloudY, t, grow);
+               coronas(buffer,cameraPos,camera,scene,t,grow);
             }
          }
          tesselator.end();
@@ -191,6 +192,23 @@ public final class ReidDrawSceneVfx {
          RenderSystem.disableBlend();
          modelViewStack.popPose();
          RenderSystem.applyModelViewMatrix();
+      }
+   }
+
+   /** Three rising halos contract around the blade at the final beat, keeping the silhouette readable. */
+   private static void coronas(BufferBuilder buffer,Vec3 cameraPos,Camera camera,ReidDrawScene.Active scene,float ticks,float grow) {
+      Vec3 origin=Vec3.atBottomCenterOf(scene.origin());
+      float finish=Mth.clamp((ticks-96)/24,0,1);
+      for(int band=0;band<3;band++) {
+         float radius=(1.3F+band*.7F)*(1-.55F*finish);
+         double height=.35+band*.8+grow*1.2;
+         for(int point=0;point<48;point++) {
+            double angle=point*Math.PI*2/48+ticks*.035*(band%2==0?1:-1);
+            Vec3 at=origin.add(Math.cos(angle)*radius,height,Math.sin(angle)*radius);
+            boolean gold=point%4==0;
+            PixelVfx.billboardPixel(buffer,cameraPos,camera,at,gold?.065F:.04F,
+               gold?255:185,gold?218:225,gold?135:255,(int)(grow*(90+110*finish)));
+         }
       }
    }
 

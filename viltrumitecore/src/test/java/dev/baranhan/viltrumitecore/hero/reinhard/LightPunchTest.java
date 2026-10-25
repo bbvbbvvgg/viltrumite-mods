@@ -35,9 +35,9 @@ class LightPunchTest {
    }
 
    @Test
-   void hitOnTick3() {
-      assertEquals(8, ReinhardRules.LIGHT_PUNCH_TICKS);
-      assertEquals(3, ReinhardRules.LIGHT_PUNCH_HIT_TICK);
+   void hitOnTick4() {
+      assertEquals(10, ReinhardRules.LIGHT_PUNCH_TICKS);
+      assertEquals(4, ReinhardRules.LIGHT_PUNCH_HIT_TICK);
       // Router order: the ability ticks, then the timeline advances.
       ActionTimeline timeline = new ActionTimeline();
       timeline.start(ReinhardAbility.LIGHT_PUNCH, ReinhardRules.LIGHT_PUNCH_TICKS, -1);
@@ -52,7 +52,7 @@ class LightPunchTest {
          tick++;
       }
 
-      assertEquals(List.of(3), hits, "exactly one hit, on tick 3");
+      assertEquals(List.of(4), hits, "exactly one hit, on tick 4");
       assertEquals(ReinhardRules.LIGHT_PUNCH_TICKS, tick, "the action lock is the clip length");
    }
 

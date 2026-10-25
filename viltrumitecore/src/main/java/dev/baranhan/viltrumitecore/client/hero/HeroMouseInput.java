@@ -108,6 +108,9 @@ public final class HeroMouseInput {
    }
 
    private static HeroAction claim(Player player, MouseButton button) {
-      return HeroRegistry.get(player).mouseAction(button, player);
+      var hero=HeroRegistry.get(player);
+      if(button==MouseButton.PRIMARY && !hero.claimsBlockAttack(player)
+         && Minecraft.getInstance().hitResult!=null && Minecraft.getInstance().hitResult.getType()==net.minecraft.world.phys.HitResult.Type.BLOCK) return null;
+      return hero.mouseAction(button, player);
    }
 }

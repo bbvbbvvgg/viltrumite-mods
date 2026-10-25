@@ -48,7 +48,12 @@ public final class HeroFx {
 
    /** Short white flash + medium shake (a hit that sends someone flying). */
    public static void flash(ServerPlayer source, Vec3 at) {
-      send(source, HeroFxS2CPacket.FLASH, at, 1.0F, null, null, null);
+      flash(source,at,1.0F);
+   }
+
+   /** Compact contact flash; power controls size/shake without a ground wave or block damage. */
+   public static void flash(ServerPlayer source, Vec3 at, float power) {
+      send(source, HeroFxS2CPacket.FLASH, at, Math.max(.1F,Math.min(2,power)), null, null, null);
    }
 
    /** Detached effects have no tracking source (offline caster, environment hazard). */

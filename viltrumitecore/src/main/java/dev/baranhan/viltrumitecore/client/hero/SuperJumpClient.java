@@ -33,14 +33,7 @@ public final class SuperJumpClient {
          return false;
       }
 
-      Vec3 delta = player.getDeltaMovement();
-      Vec3 look = player.getLookAngle();
-      // A little of the facing goes into the launch, so it can travel.
-      player.setDeltaMovement(
-         delta.x + look.x * HeroSuperJump.FORWARD,
-         velocity,
-         delta.z + look.z * HeroSuperJump.FORWARD
-      );
+      player.setDeltaMovement(HeroRegistry.get(player).superJumpMotion(player,player.getDeltaMovement()));
       player.hasImpulse = true;
       return true;
    }

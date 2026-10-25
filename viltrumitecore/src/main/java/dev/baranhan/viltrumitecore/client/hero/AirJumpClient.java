@@ -66,7 +66,7 @@ public final class AirJumpClient {
       }
 
       Vec3 v = player.getDeltaMovement();
-      player.setDeltaMovement(v.x, hero.airJumpVelocity(player), v.z);
+      player.setDeltaMovement(hero.airJumpMotion(player,v));
       player.resetFallDistance();
       used++;
       AirStepVfx.spawn(player);

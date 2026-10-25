@@ -46,7 +46,7 @@ class ReinhardFirstPersonPoseTest {
          assertEquals(0.0F, ReinhardFirstPersonPose.of(ReinhardAbility.FIST_COMBO, step, ReinhardRules.COMBO_STEP_TICKS[step]).z(), 1.0E-6F);
       }
 
-      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.FIST_COMBO, 1, 3.0).yaw() > 0.0F, "the second hit is a hook");
+      assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.FIST_COMBO, 1, ReinhardRules.COMBO_HIT_TICKS[1]).yaw() > 0.0F, "the second hit is a hook");
       assertTrue(ReinhardFirstPersonPose.of(ReinhardAbility.FIST_COMBO, 2, 2.0).y() > 0.0F, "the third is raised first");
    }
 

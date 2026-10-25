@@ -36,15 +36,15 @@ class ReflectWindowTest {
 
    @Test
    void cooldownEightyFromPress() {
-      assertEquals(80, ReinhardRules.REFLECT_COOLDOWN);
+      assertEquals(8, ReinhardRules.REFLECT_COOLDOWN);
       ReinhardState state = new ReinhardState();
       ReflectWindow.open(state);
-      assertEquals(80, state.cooldowns[ReinhardAbility.REFLECT.ordinal()], "the cooldown starts at the press");
+      assertEquals(8, state.cooldowns[ReinhardAbility.REFLECT.ordinal()], "the cooldown starts at the press");
       assertTrue(state.action.is(ReinhardAbility.REFLECT));
       ReflectWindow.tickWindow(state);
       state.tick();
       ReflectWindow.snap(state);
-      assertEquals(79, state.cooldowns[ReinhardAbility.REFLECT.ordinal()], "a reflection does not restart it");
+      assertEquals(7, state.cooldowns[ReinhardAbility.REFLECT.ordinal()], "a reflection does not restart it");
       assertEquals(ActionTimeline.PHASE_SNAP, state.action.phase(), "the swat plays");
       assertTrue(state.action.length() >= ReinhardRules.REFLECT_SNAP_TICKS);
    }

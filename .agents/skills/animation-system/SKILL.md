@@ -350,7 +350,7 @@ To add a screen effect:
 - `tickGrab` in `PlayerEntityCoreMixin` was rewritten by hand after decompile and is not confirmed in-game. Compare grab behaviour with the original JAR.
 ## Reinhard Stage 5 timed World Cut
 - DRAWN idle applies before the action overlay; draw/sheathe still apply after it. This prevents idle_holy_drawn from erasing the sword-arm action. During World Cut, RenderHandEvent routes both physical arms through the empty-arm/RenderArmEvent path even when a slot holds an item; slot contents are unchanged and item visuals return afterward.
-- `world_cut` is a 4 s action overlay: both arms lift Reid over the head during the first second, then hold low through the silence. `ReinhardFirstPersonPose.worldCut` applies to both arms in RenderArmEvent. No new pose mixin or animation engine.
+- `world_cut` is a 4 s action overlay: the weapon grip rises outside the head during the first second, then holds low through the silence. `ReinhardFirstPersonPose.worldCut` applies to both arms in RenderArmEvent. No new pose mixin or animation engine.
 - `WorldCutScene` receives cast UUID, caster UUID, fixed yaw/origin, surface profile and start game time; entity disappearance cannot stop it. White ground/sky billboards, dust, edge cracks, white-gold front and haze use PixelVfx. Skip the shader shadow pass and restore render state.
 - `WorldCutFov` reads a tick-refreshed array without allocating in ComputeFov; primitive finite-line distance, real-time exponential easing. Each scene excludes its own caster. SoundDuck owner is the cast UUID; release on blast, timeout and level unload.
 - `HeroImpactFx.shockwaveVisual` adds only the existing rings. It deliberately does not add shake/dust; the scene excludes caster blast shake and uses the shared CameraShake for other viewers. Check both views, a LAN viewer at 30/150 blocks and shaders manually.
@@ -371,3 +371,59 @@ To add a screen effect:
 - `ErasureScene` paints a FULL_BRIGHT real-model white silhouette during 70–110 when the entity resolves in the viewer's dimension; otherwise the metadata humanoid/rounded-box fallback is centred at 40% GUI height. Geometry material omits texture cutout alpha. Cached metadata-shaped paint-pixels approximate dust, not GPU silhouette readback. Frozen `erase=false` reforms the silhouette at 95–100.
 - Limbo is a HUD layer, not a Screen: chat/pause stay available, hands and gameplay HUD are hidden. Text uses vanilla F1 visibility; server remains authoritative if the client text reaches its last line early. Existing FlashOverlay supplies the return's 10-in/30-out white envelope after the overworld loads.
 - Do not claim rendered acceptance from source/codec tests: dedicated startup/common Mixin targets, GPU GLSL compilation, first/third person, cross-dimension catch-up, F3+T and Oculus/shader packs remain manual (not launched in this stage).
+
+### Reinhard quality rework (candidate, native acceptance pending)
+- Stateless `AnimationController.seek/overlay/blend` do **not** wrap LOOP time. Reinhard uses `ReinhardPlayback.time` at every looping layer. Do not change the shared controller's semantics to fix one hero; verify long-session/multi-cycle samples in the actual renderer composition.
+- Body/FP/cinematic action time uses `ReinhardPlayback.actionTicks`: synced elapsed + partial tick, clamped to action length. Reinhard passes zero external HitStop subtraction: its authored impact holds already supply the pause, and the shared hold counter returns zero on release (subtracting it creates a forward time jump). This is a sampling policy, not an independent progress counter. ReinhardRecovery blends cached displayed channels after cancellation; it never advances action progress. Body, FP arms/offsets and weapon frames have separate weak-key state.
+- The archive sleeve/hand cubes are articulated by `tools/assets/rig_reinhard.py` into forearm children with absolute Bedrock elbow pivots. Preserve the cubes and UVs. The third-person item frame must pass through `ReinhardRenderer.handFrame`, not only the shoulder, or items detach when the elbow bends. First-person widths and elbow channels are applied through the existing PlayerGeoLayer pose callback. The FP item frame repeats PlayerGeoLayer's vanilla-to-geo conversion before handFrame. Neutral and bent-elbow matrix tests cover it.
+- FP action phases use the existing `PoseKeys` utility. Keep server contact ticks and the toss → kick boundary continuous. Catch/reflect/throw continue an existing guard/hold: do not fade to idle on the snap's first frame.
+- Sheath Strike renders the assembled sheathed weapon at the right hand in both views, hiding the hip copy and the occupied right-hand slot visual only. Inventory stays untouched. ReinhardSword.frames transfers the hip guard to the hand with quaternion slerp and translation/scale interpolation. Do not lerp matrix elements: that shears the weapon and invalidates normals. Native visual acceptance remains unverified.
+
+- A held-target renderer must not infer attachments from PULL. HeroDefinition exposes
+  heldTargetId/heldTargetPosition; HeroHeldTargets resolves only an explicit hold.
+  Local prediction and remote render interpolation use the same neck anchor.
+  The server rejects held-player movement on its main thread. Correct once at
+  release, not with a teleport handshake each tick. World pause has priority.
+- HeroFx.flash(source, at, power) opts into a compact/strong contact. The two-argument
+  method stays power 1, preserving other heroes. Erasure fracture changes stay inside
+  the existing Erase active branch and keep the other shader paths neutral.
+
+
+### Reinhard second-pass composition and measured grip
+- Keep AnimationController unchanged for other heroes. ReinhardLayers samples it,
+  restores absent position/scale/rotation channels, and quaternion-slerps only
+  owned rotations at partial weight. Weight 1 keeps the exact authored Euler pose.
+  Missing channels do not own a base offset. Pose state samples use tick time;
+  render weight filters advance once for a timestamp, not once per outline pass.
+- The body pivots at waist Y12; head and shoulders inherit it. Apply crouch once
+  as relative rotations, after combat layers, without independent root offsets.
+  Forearms/shins retain archive cube geometry and UVs. Parent-aware attachment
+  frames must undo the parent's absolute pivot before applying a child frame.
+- Recovery is outgoing to idle, not a generic incoming low-pass over contacts or
+  phase changes. Keep all three stance weights when interrupted during a blend.
+- A grip-point equality is not proof of a natural hand or a clear blade. Measure
+  the native glove, test full weapon cubes, and inspect intermediate frames.
+  A resting palm is a surface contact, not a wielding pose. Keep its wrist
+  neutral; do not align it to the sheath's roll. Limit active wrist deflection.
+- TP Reid uses an empty reid_grip child of the body in the existing animation
+  JSON. Sample it once, solve both arms, then draw the SAME equipment matrices.
+  Left hand rests on the sheathed hilt, draws outside the head, hands off in front
+  of the chest. The drawn ready/action poses use separate guard and pommel
+  targets for both palms. A two-hand grip uses forearm pronation about the
+  elbow-to-palm axis, not a 90-degree wrist flip. The sheathed resting wrist
+  remains neutral. Camera and TP sword bases differ. The owner later selected the diagnostic
+  +90-degree TP free-blade roll: front edge, side face. Apply it after the
+  unchanged grip solve; never rotate the sheath, stance or sheathed blade.
+  Do not recompute the weapon from the constrained arm or bind unreachable
+  extraction paths by moving the weapon afterward. Keep the six-second event.
+- Use a visible belt carrier outside the coat, not a floating attachment. Weapon
+  thickness faces out. Its reduced length must clear ground at the waist mount.
+- Check quaternion-to-RzRyRx round trips. In bundled JOML 1.10.5, the X component
+  from getEulerAnglesZYX does not invert compound rotationZYX. Reinhard's local
+  matrix decomposition avoids that drift; do not change other heroes blindly.
+- FP elbow clips and camera shoulder offsets stay separate. Do not apply the TP
+  shoulder clip twice. Camera Reid uses the measured palm and a forward geo axis
+  before the existing vanilla-to-geo conversion. Native FP acceptance is pending.
+- Optional native-matrix CPU export: REINHARD_DIAGNOSTICS=1 and
+  ReinhardDiagnosticTest writes build/diagnostics/reinhard/*.json. These are
+  diagnostic posed vertices, NOT Minecraft animation/VFX/network acceptance.

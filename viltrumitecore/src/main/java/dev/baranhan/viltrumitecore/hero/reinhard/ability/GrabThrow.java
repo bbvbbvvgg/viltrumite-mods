@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Grab &amp; Throw (spec §6.2, Knight slot 3): the first press grabs the target in reach
  * through {@link ControlManager} PULL (one fresh {@code UUID} effect id per grab) and
- * holds it at the hand; the second press (or {@link ReinhardRules#GRAB_MAX_TICKS})
+ * holds it at the hand; RMB (or {@link ReinhardRules#GRAB_MAX_TICKS})
  * releases the control with the same effect id, hits for {@link ReinhardRules#THROW_DAMAGE},
  * holds a 3-tick hit-stop and throws the target past the horizon (~120 blocks: the
  * velocity is re-applied for {@link ReinhardRules#THROW_SUSTAIN_TICKS}) with a sonic ring
@@ -185,6 +185,9 @@ public final class GrabThrow implements AbilityHandler {
          @Override
          public void release(UUID targetId, UUID effectId, ReleaseReason reason) {
             manager.release(targetId, effectId, reason);
+            Entity released = player.serverLevel().getEntity(targetId);
+            if (released instanceof ServerPlayer victim && victim.isAlive())
+               victim.connection.teleport(victim.getX(),victim.getY(),victim.getZ(),victim.getYRot(),victim.getXRot());
          }
       };
       if (!grab(state, candidate, control)) {
@@ -203,7 +206,11 @@ public final class GrabThrow implements AbilityHandler {
 
    @Override
    public void secondPress(ServerPlayer player, ReinhardState state) {
-      throwTarget(player, state);
+      // Z only acquires. A second Z never throws; RMB owns the finishing action.
+   }
+
+   public static void finish(ServerPlayer player, ReinhardState state) {
+      if (holding(state)) throwTarget(player, state);
    }
 
    @Override
@@ -262,25 +269,23 @@ public final class GrabThrow implements AbilityHandler {
 
    /** The target hangs from the hand at chest height, in front of him (the Hulkbuster grab's rate: every tick). */
    static Vec3 holdPoint(ServerPlayer player, LivingEntity target) {
-      Vec3 look = player.getLookAngle();
-      Vec3 flat = new Vec3(look.x, 0.0, look.z);
-      flat = flat.lengthSqr() < 1.0E-6 ? Vec3.directionFromRotation(0.0F, player.getYRot()) : flat.normalize();
-      double ahead = 0.7 + target.getBbWidth() * 0.5;
-      double lift = Math.max(0.3, ReinhardRules.GRAB_HAND_HEIGHT - target.getBbHeight() * 0.85);
-      return player.position().add(flat.scale(ahead)).add(0.0, lift, 0.0);
+      return anchor(player.position(), player.getYRot(), target.getBbWidth(), target.getBbHeight());
+   }
+
+   /** Shared server/client neck anchor; yaw only prevents aim pitch moving the victim through the floor. */
+   public static Vec3 anchor(Vec3 position, float yaw, float width, float height) {
+      Vec3 flat = Vec3.directionFromRotation(0, yaw);
+      Vec3 right = new Vec3(-flat.z, 0, flat.x);
+      return position.add(flat.scale(.7 + width * .5)).add(right.scale(.31))
+         .add(0, Math.max(.3, ReinhardRules.GRAB_HAND_HEIGHT - height * .85), 0);
    }
 
    private static void hold(ServerPlayer player, LivingEntity target) {
-      if (WorldPause.blocksMovement(player, target)) {
-         return;
-      }
+      if (WorldPause.blocksMovement(player, target)) return;
       Vec3 at = holdPoint(player, target);
-      if (target instanceof ServerPlayer victim) {
-         victim.teleportTo(at.x, at.y, at.z);
-      } else {
-         target.setPos(at.x, at.y, at.z);
-      }
-
+      // A teleport handshake every tick resets player prediction and causes rubberbanding.
+      // The shared held-target seam owns incoming movement and client prediction instead.
+      target.setPos(at.x, at.y, at.z);
       target.setDeltaMovement(Vec3.ZERO);
       target.resetFallDistance();
       target.hurtMarked = true;

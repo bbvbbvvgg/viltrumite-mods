@@ -21,8 +21,9 @@ class ReinhardStateTest {
       ReinhardState loaded = new ReinhardState();
       loaded.load(nbt);
       assertSame(ReinhardMode.HOLY_SWORD, loaded.mode);
-      assertEquals(33, loaded.modeCooldown);
-      assertArrayEquals(state.cooldowns, loaded.cooldowns);
+      assertEquals(ReinhardRules.MODE_COOLDOWN, loaded.modeCooldown);
+      assertEquals(0,loaded.cooldowns[3],"removed R combo cooldown is not restored");
+      assertEquals(ReinhardRules.ERASE_COOLDOWN,loaded.cooldowns[13],"old saves migrate to the technical lock");
    }
 
    @Test
