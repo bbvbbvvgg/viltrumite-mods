@@ -25,13 +25,27 @@ class ContinuousPlaybackTest {
       var c=new ActionClock();assertEquals(8,c.sample(1,0,8,20,100));
       double t=c.sample(1,0,8,20,100.9);
       assertEquals(t,c.sample(1,0,8,20,100.9));
-      assertEquals(11,c.sample(1,0,8,20,200));
+      assertEquals(8,c.sample(1,0,8,20,200),"an unrendered gap resyncs to the authoritative elapsed");
       assertEquals(0,c.sample(1,1,0,10,201));
       c.sample(1,1,5,10,205);assertEquals(0,c.sample(1,1,0,10,206));
       assertEquals(0,c.sample(-1,0,0,0,207));
       assertEquals(4,c.sample(1,1,4,4,208));
       assertEquals(4,c.sample(1,1,4,4,300));
       c.reset();assertEquals(0,c.sample(1,1,0,10,300));
+   }
+   @Test void renderedStallPredictsAtMostThreeTicksThenAGapResyncs() {
+      var c=new ActionClock();assertEquals(8,c.sample(1,0,8,20,100));
+      double t=0;
+      for(double now=100.25;now<=120;now+=.25) t=c.sample(1,0,8,20,now);
+      assertEquals(11,t,1e-9,"frames during a snapshot stall keep the bounded prediction");
+      assertEquals(8,c.sample(1,0,8,20,124),"more than three unrendered ticks: back on the server's elapsed");
+   }
+   @Test void unrenderedRecastOfTheSameActionStartsOnItsOwnElapsed() {
+      var c=new ActionClock();c.sample(1,0,2,20,100);
+      // Not rendered meanwhile: that cast ended (-1 never sampled) and the same action/phase began again.
+      assertEquals(5,c.sample(1,0,5,20,150),"a new cast never starts ahead of the server");
+      double t=c.sample(1,0,5,20,150.5);
+      assertTrue(t>5 && t<=5+.5*1.25+1e-9,"then advances at the reconciled rate: "+t);
    }
    @Test void continuousKeysAreExactBoundedAndCarryVelocityThroughIntermediateKeys() {
       float[][] keys={PoseKeys.key(0,0,0,0),PoseKeys.key(1,20,0,0),PoseKeys.key(3,30,0,0),PoseKeys.under(5)};
