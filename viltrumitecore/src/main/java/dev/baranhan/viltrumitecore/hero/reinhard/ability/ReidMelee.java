@@ -1,79 +1,101 @@
 package dev.baranhan.viltrumitecore.hero.reinhard.ability;
 
-import com.google.gson.JsonParser;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
-import dev.baranhan.viltrumitecore.hero.reinhard.*;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardState;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeArc;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeHits;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeImpact;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves;
+import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.*;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
-/** Ordinary drawn-Reid strokes, no carve, forced combo, input lock or cinematic kill.
- * Collision tracks are baked from the production final blade transform, including
- * body animation, axial roll, scale and crouch; a regression compares the bake.
- * Runtime loads no client classes. Eight blade segments per authored tick cap work.
+/** Ordinary drawn-Reid strokes on LMB: diagonal cut → rising cut → wide sweep → overhead
+ * finisher (MeleeMoves.REID), crouch = low sweep. No carve, input lock or cinematic kill.
+ * Each tick of the contact window sweeps the same view-relative path the clip and the
+ * client trail show, several bodies per stroke, never through walls or behind him.
  */
 public final class ReidMelee implements AbilityHandler {
-   private static final String RESOURCE = "/data/viltrumitecore/reinhard/reid_melee.json";
-   private static final class Samples {
-      static final double[][][] TRACKS = load();
-      static double[][][] load() {
-         try (var stream = ReidMelee.class.getResourceAsStream(RESOURCE)) {
-            if (stream == null) throw new IllegalStateException("Missing Reid blade bake");
-            var root = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonArray();
-            double[][][] tracks = new double[root.size()][][];
-            for (int i=0;i<root.size();i++) {
-               var rows=root.get(i).getAsJsonArray(); tracks[i]=new double[rows.size()][6];
-               for(int j=0;j<rows.size();j++) for(int k=0;k<6;k++) tracks[i][j][k]=rows.get(j).getAsJsonArray().get(k).getAsDouble();
-            }
-            return tracks;
-         } catch (java.io.IOException e) { throw new IllegalStateException(e); }
+   /** Pure: the press starts the next stroke; returns its move index. */
+   public static int press(ReinhardState state, boolean crouching) {
+      int last = state.meleeAbility == ReinhardAbility.REID_STRIKE ? state.meleeStep : -1;
+      int move = MeleeMoves.reidMove(last, state.meleeIdle, crouching);
+      state.meleeAbility = ReinhardAbility.REID_STRIKE;
+      state.meleeStep = move;
+      state.meleeIdle = 0;
+      state.meleeQueued = false;
+      state.meleeHit.clear();
+      state.action.start(ReinhardAbility.REID_STRIKE, MeleeMoves.reid(move).ticks(), -1, move);
+      return move;
+   }
+
+   @Override
+   public boolean tryStart(ServerPlayer p, ReinhardState s) {
+      if (!s.reid.drawn() || s.action.running() || s.busy()) {
+         return false;
       }
-   }
-   public static double[] sample(int side, boolean crouch, int index) {
-      return Samples.TRACKS[(side==1?1:0)+(crouch?2:0)][Math.max(0,Math.min(160,index))].clone();
-   }
-   @Override public boolean tryStart(ServerPlayer p, ReinhardState s) {
-      if (!s.reid.drawn() || s.action.running() || s.busy()) return false;
-      int phase=p.isShiftKeyDown()?2:(s.meleeSide++ & 1);
-      s.meleeHit.clear(); s.action.start(ReinhardAbility.REID_STRIKE,phase==2?20:14,-1,phase);
+
+      press(s, p.isShiftKeyDown());
       return true;
    }
-   private static Vec3 world(ServerPlayer p,double[] row,int off) {
-      // Same entity frame and player scale as ReinhardRenderer.setupRotations.
-      double yaw=Math.toRadians(180-p.yBodyRot),c=Math.cos(yaw),s=Math.sin(yaw);
-      double x=row[off]*.9375,y=row[off+1]*.9375,z=row[off+2]*.9375;
-      return p.position().add(c*x+s*z,y,-s*x+c*z);
-   }
-   @Override public void tick(ServerPlayer p, ReinhardState s) {
-      if(!s.action.is(ReinhardAbility.REID_STRIKE))return;
-      double rate=20.0/s.action.length();
-      int first=(int)Math.floor((s.action.elapsed()-1)*rate*8)+1, last=(int)Math.floor(s.action.elapsed()*rate*8);
-      if(last<32 || first>72)return;
-      int phase=s.action.phase();
-      for(int i=Math.max(32,first);i<=Math.min(72,last);i++) {
-         double[] row=sample(phase,p.isCrouching(),i);
-         Vec3 from=world(p,row,0),tip=world(p,row,3);
-         var block=p.level().clip(new ClipContext(from,tip,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));
-         Vec3 to=block.getType()==HitResult.Type.MISS?tip:block.getLocation();
-         if(i==40) ReinhardSounds.playAt(p,from,ReinhardSounds.CUT_RAIN.get(),.55F,phase==2?.8F:1.3F);
-         for(Entity e:p.level().getEntities(p,new AABB(from,to).inflate(.12),e->ReinhardTargets.canHit(p,e))) {
-            Entity root=ReinhardTargets.resolve(e);
-            if(!(root instanceof LivingEntity target) || s.meleeHit.contains(root.getUUID())
-               || !CutRain.segmentHits(e.getBoundingBox().inflate(.08),from,to))continue;
-            s.meleeHit.add(root.getUUID());
-            if(Strikes.hit(p,target,phase==2?14:8)) {
-               Strikes.knockback(target,p.getLookAngle(),phase==2?.6:.25);
-               Vec3 at=target.getBoundingBox().getCenter(); HeroFx.flash(p,at,.35F);
-               HeroFx.blade(p,from,to,null);
-               ReinhardSounds.playAt(p,at,ReinhardSounds.PARRY.get(),.6F,phase==2?.8F:1.2F);
-            }
+
+   @Override
+   public void tick(ServerPlayer p, ReinhardState s) {
+      if (MeleeChain.tick(s, ReinhardAbility.REID_STRIKE) && s.reid.drawn() && !s.busy()) {
+         press(s, p.isShiftKeyDown());
+      }
+
+      ActionTimeline action = s.action;
+      if (!action.is(ReinhardAbility.REID_STRIKE)) {
+         return;
+      }
+
+      MeleeMoves.Move move = MeleeMoves.reid(action.phase());
+      MeleeArc.Swing swing = move.swing();
+      int tick = action.elapsed();
+      if (tick == swing.contactStart() - 2) {
+         // The air is cut before the blade arrives: whoosh leads the contact by two ticks.
+         ReinhardSounds.play(p, ReinhardSounds.REID_SWING.get(), move.heavy() ? 1.0F : 0.8F, move.heavy() ? 0.82F : 0.96F + 0.04F * action.phase());
+      }
+
+      List<MeleeHits.Hit> hits = MeleeHits.sweep(p, swing, tick, s.meleeHit);
+      for (MeleeHits.Hit hit : hits) {
+         if (Strikes.hit(p, hit.target(), move.damage())) {
+            Strikes.knockback(hit.target(), MeleeImpact.push(p, swing), move.knockback());
          }
       }
+
+      MeleeImpact.land(p, move, hits, move.heavy() ? ReinhardSounds.REID_HEAVY.get() : ReinhardSounds.REID_HIT.get(), move.heavy() ? 1.2F : 0.95F, 1.0F);
+      if (tick == (swing.contactStart() + swing.contactEnd()) / 2 && s.meleeHit.isEmpty()) {
+         MeleeImpact.glance(p, swing, ReinhardSounds.REID_HIT.get());
+      }
+
+      if (move.heavy() && tick == swing.contactEnd()) {
+         finisherShock(p, swing);
+      }
    }
-   @Override public void cancel(ServerPlayer p, ReinhardState s, CleanupReason reason) { s.meleeHit.clear(); }
+
+   /** The overhead finisher ends in the ground in front of him: a small dust ring, no block damage. */
+   private static void finisherShock(ServerPlayer p, MeleeArc.Swing swing) {
+      double[] end = swing.at(1.0);
+      double[] d = MeleeArc.direction(MeleeArc.basis(p.getYRot(), p.getXRot()), end[0], end[1]);
+      Vec3 eye = p.getEyePosition();
+      BlockHitResult block = p.level().clip(new ClipContext(eye, eye.add(d[0] * swing.reach(), d[1] * swing.reach() - 1.0, d[2] * swing.reach()),
+         ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+      if (block.getType() == HitResult.Type.BLOCK) {
+         HeroFx.shockwave(p, block.getLocation(), 0.2F, p.level().getBlockState(block.getBlockPos()), 2.5F);
+      }
+   }
+
+   @Override
+   public void cancel(ServerPlayer p, ReinhardState s, CleanupReason reason) {
+      MeleeChain.reset(s);
+   }
 }

@@ -11,6 +11,11 @@ import java.lang.Math;
 import org.junit.jupiter.api.Test;
 
 class ReinhardEquipmentTest {
+   /** Ordinary drawn strokes and the sprint carry are one-handed (left palm on the scabbard). */
+   static float oneHand(String clip,double ticks,double lengthTicks) {
+      if(clip.startsWith("reid_slash"))return ReinhardSword.strikeRelease(ticks,(int)Math.round(lengthTicks));
+      return clip.equals("drawn_run")?1:0;
+   }
    static BakedGeoModel weapon(String name)throws Exception {
       return BakedGeoModel.parse(JsonParser.parseString(Files.readString(Path.of("src/main/resources/assets/viltrumitecore/geo/reinhard/"+name+".geo.json"))).getAsJsonObject());
    }
@@ -18,14 +23,15 @@ class ReinhardEquipmentTest {
       var clips=ReinhardSecondPassTest.clips();var blade=weapon("blade");var sheath=weapon("sheath");
       List<String> bad=new ArrayList<>();
       List<String> torsoHits=new ArrayList<>();
-      for(String name:new String[]{"reid_draw","reid_sheathe","world_cut","diagonal_world_cut","world_erasure","cut_rain","sheath_strike","light_punch","chop_left","chop_right"}) {
+      for(String name:new String[]{"reid_draw","reid_sheathe","world_cut","diagonal_world_cut","world_erasure","cut_rain","sheath_strike","light_punch","chop_left","chop_right",
+         "reid_slash_down","reid_slash_rise","reid_slash_sweep","reid_slash_finish","reid_slash_low","drawn_stance","drawn_walk","drawn_run","air_step","land"}) {
          var clip=clips.get(name);
          for(double t=0;t<=clip.lengthSeconds()*20;t+=.5)for(boolean crouch:new boolean[]{false,true}) {
             var b=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("idle_holy_drawn"),b,0);
             ReinhardLayers.overlay(clip,b,t/20,1);
             if(crouch)AnimationController.additive(clips.get("crouch"),b,0,1);
             var phase=name.equals("reid_draw")?ReinhardPoses.ReidPhase.DRAWING:name.equals("reid_sheathe")?ReinhardPoses.ReidPhase.SHEATHING:ReinhardPoses.ReidPhase.DRAWN;
-            var frames=ReinhardSword.equipment(b,phase,t,name.equals("sheath_strike"),t,1);
+            var frames=ReinhardSword.equipment(b,phase,t,name.equals("sheath_strike"),t,1,oneHand(name,t,clip.lengthSeconds()*20));
             for(String bone:new String[]{"body","right_leg","left_leg","right_shin","left_shin"})
                if((ReinhardGeometry.intersectsBoneExactly(b.getBone(bone),blade,frames[1]) || ReinhardGeometry.intersectsBoneExactly(b.getBone(bone),sheath,frames[0])) && torsoHits.size()<35)
                   torsoHits.add(name+" tick="+t+" crouch="+crouch+" bone="+bone);
@@ -53,12 +59,15 @@ class ReinhardEquipmentTest {
    }
    @Test void bothDrawnPalmsReachDistinctHandlePointsWithoutIntersecting()throws Exception {
       var clips=ReinhardSecondPassTest.clips();List<String> bad=new ArrayList<>();
-      for(String name:new String[]{"idle_holy_drawn","world_cut","diagonal_world_cut","world_erasure","cut_rain","light_punch","chop_left","chop_right"})
+      for(String name:new String[]{"idle_holy_drawn","world_cut","diagonal_world_cut","world_erasure","cut_rain","light_punch","chop_left","chop_right",
+         "reid_slash_down","reid_slash_rise","reid_slash_sweep","reid_slash_finish","reid_slash_low","drawn_stance","drawn_walk","drawn_run","air_step","land"})
          for(double t=0;t<=clips.get(name).lengthSeconds()*20;t+=1) {
             var b=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("idle_holy_drawn"),b,0);
             ReinhardLayers.overlay(clips.get(name),b,t/20,1);
-            var f=ReinhardSword.equipment(b,ReinhardPoses.ReidPhase.DRAWN,0,false,0,1);
+            float one=oneHand(name,t,clips.get(name).lengthSeconds()*20);
+            var f=ReinhardSword.equipment(b,ReinhardPoses.ReidPhase.DRAWN,0,false,0,1,one);
             for(boolean left:new boolean[]{false,true}) {
+               if(left && one>0)continue; // the support palm is on the scabbard mouth, not the pommel
                var target=ReinhardSword.gripAt(f[1],left?-8.5F:0).transformPosition(new Vector3f(ReinhardGrip.HANDLE));
                if(ReinhardGrip.point(b,left).distance(target)*16>.05 && bad.size()<20)bad.add(name+" "+t+" left="+left+" residual="+ReinhardGrip.point(b,left).distance(target)*16);
             }
@@ -93,7 +102,7 @@ class ReinhardEquipmentTest {
       var mount=ReinhardSword.hip(body);
       // Previous mount: X=6.8. Only its body-local lateral translation changes.
       var old=new Matrix4f().translation(-6.8F/16,15.8F/16,-2F/16)
-         .rotateZ(0).rotateX((float)Math.toRadians(-35))
+         .rotateZ(0).rotateX((float)Math.toRadians(-ReinhardSword.TILT_X))
          .scale(.574F,.574F*.78F,.574F)
          .rotateZ((float)Math.PI).rotateY((float)Math.PI/2);
       var bone=body.getBone("body");
@@ -136,8 +145,9 @@ class ReinhardEquipmentTest {
       for(var entry:clips.entrySet())for(double t=0;t<=entry.getValue().lengthSeconds()*20;t+=1) {
          var b=ReinhardSecondPassTest.body();AnimationController.seek(entry.getValue(),b,t/20);
          var phase=entry.getKey().equals("reid_draw")?ReinhardPoses.ReidPhase.DRAWING:entry.getKey().equals("reid_sheathe")?ReinhardPoses.ReidPhase.SHEATHING:
-            Set.of("world_cut","diagonal_world_cut","world_erasure","cut_rain","idle_holy_drawn","chop_left","chop_right").contains(entry.getKey())?ReinhardPoses.ReidPhase.DRAWN:ReinhardPoses.ReidPhase.SHEATHED;
-         if(phase!=ReinhardPoses.ReidPhase.SHEATHED || Set.of("idle_holy","sheath_strike").contains(entry.getKey()))ReinhardSword.equipment(b,phase,t,entry.getKey().equals("sheath_strike"),t,1);
+            (Set.of("world_cut","diagonal_world_cut","world_erasure","cut_rain","idle_holy_drawn","chop_left","chop_right").contains(entry.getKey())||entry.getKey().startsWith("reid_slash")||entry.getKey().startsWith("drawn_"))?ReinhardPoses.ReidPhase.DRAWN:ReinhardPoses.ReidPhase.SHEATHED;
+         if(phase!=ReinhardPoses.ReidPhase.SHEATHED || Set.of("idle_holy","sheath_strike").contains(entry.getKey()))
+            ReinhardSword.equipment(b,phase,t,entry.getKey().equals("sheath_strike"),t,1,oneHand(entry.getKey(),t,entry.getValue().lengthSeconds()*20));
          for(String limb:new String[]{"left_hand","right_hand","left_forearm","right_forearm"})
             if(ReinhardGeometry.intersectsBones(b.getBone("head"),b.getBone(limb)) && bad.size()<50)bad.putIfAbsent(entry.getKey()+" "+limb," tick="+t+" arm="+b.getBone(limb.startsWith("left")?"left_arm":"right_arm").rotX+","+b.getBone(limb.startsWith("left")?"left_arm":"right_arm").rotY+","+b.getBone(limb.startsWith("left")?"left_arm":"right_arm").rotZ);
       }

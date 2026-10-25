@@ -83,6 +83,18 @@ No new external recordings. `tools/sfx/reinhard_cinematic.py` deterministically 
 - `cut_cinematic_impact`: 3.40 s displacement impact with decaying low tail; replaces the vanilla World Cut placeholder, not blocked NC recordings.
 - `cut_cinematic_sweep`: 0.32 s pressure sweep for Rain of Cuts; replaces the vanilla placeholder, not blocked NC recordings.
 
+## REINHARD OVERHAUL strike synthesis
+
+No new external recordings. `tools/sfx/reinhard_overhaul.py` deterministically creates original CC0-1.0 layers for ordinary attacks; each event picks a random variant per play:
+- `fist_swing_1..3`: 0.22-0.26 s band-swept air whoosh (centre about 500 -> 2200 -> 900 Hz) with a low cloth layer.
+- `fist_hit_1..3`: 0.32 s body hit: 120 -> 55 Hz thump, 0.8-2.5 kHz slap, short click and low tail.
+- `reid_swing_1..3`: 0.36-0.40 s heavier blade whoosh with a faint inharmonic shimmer.
+- `reid_hit_1..3`: 0.50 s bright slice, decaying metallic ring partials and a low thud.
+- `reid_heavy_1..2`: 1.20 s finisher: low 70 -> 35 Hz chirp, crack, long ring and rumble.
+- `reid_drawn_hum`: 4.00 s seamless loop (every partial is a multiple of 0.25 Hz, periodic noise, no fades), played quietly while Reid is drawn.
+
+44.1 kHz mono Vorbis quality 4, soft-limited source PCM peaks -10.5 to -1.9 dBFS. `--check` re-synthesizes without writing. No listening proof in game is claimed.
+
 ## World Cut ambience from the owner re-export (2026-10-21)
 
 The owner supplied `01-original-final-tail.ogg` (8.00 s mono, SHA-256

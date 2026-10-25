@@ -336,7 +336,12 @@ CLIPS['reid_sheathe']['bones']['right_forearm']=channel([(0,[-18,0,0]),(8,[-25,0
 # Weapon choreography is sampled by the SAME animation core. The empty grip bone
 # owns the complete weapon frame; wrists solve to it, never the reverse. Coordinates
 # here are mirrored model px and model Euler degrees (converted to parser convention).
-HIP = ([-6.2,17.0836745,-1.898819],[90,55,-90])
+# Sheathed hilt = ReinhardSword.hip(): mouth (6.2,15.8,-1.0) tilted TILT_X back, handle
+# centre 3.5 sword px (x .574 x .78) up the sheath axis. Keep in sync with TILT_X (50).
+SHEATH_TILT = 50
+_HANDLE_PX = 3.5*.574*.78
+HIP = ([-6.2,15.8+_HANDLE_PX*math.cos(math.radians(SHEATH_TILT)),-1.0-_HANDLE_PX*math.sin(math.radians(SHEATH_TILT))],
+       [90,90-SHEATH_TILT,-90])
 READY = ([.5,18.5,-6],[350,0,-50])
 def weapon(clip, rows):
     pos(clip,'reid_grip',[(t,[-p[0],p[1],p[2]]) for t,p,r in rows])
@@ -345,7 +350,7 @@ weapon(CLIPS['idle_holy'],[(0,*HIP),(60,*HIP)])
 weapon(CLIPS['idle_holy_drawn'],[(0,*READY),(60,*READY)])
 # The long blade stays outside the hair envelope. Rotate below the head at X=-8.5,
 # with enough ground clearance, then pass the hilt in front of the chest to the right.
-DRAW=[(0,*HIP),(24,*HIP),(40,[-9.2,25,-4],[90,55,-90]),
+DRAW=[(0,*HIP),(24,*HIP),(40,[-9.2,25,-4],HIP[1]),
       (52,[-9.2,25,-4],[90,0,0]),(64,[-9.2,25,-4],[180,0,0]),
       (76,[-6.8,23,-7.5],[270,0,0]),(88,[0,20,-6],[270,0,0]),(94,[0,20,-6],[270,0,0]),
       (100,[5.3,17,-4],[270,0,0]),(120,*READY)]
@@ -378,9 +383,186 @@ for side,sign in [('right',1),('left',-1)]:
     weapon(CLIPS['chop_'+side],[(0,*READY),(4,[0,20,-6],[350,0,-sign*30]),
         (7,[1,20,-6],[260,0,sign*12]),(9,[1,20,-6],[270,0,0]),(20,*READY)])
 
+# REINHARD OVERHAUL (combat): ordinary strikes as data. Contact ticks match
+# hero/reinhard/melee/MeleeMoves; the blade tip sweeps the same view-relative arc the
+# server hit test and the client slash trail use (designed with a forward model of
+# the grip chain, verified by the mesh collision tests). Grip rows: render px + model
+# Euler degrees, one continuous representation per clip (no 360-degree wrap).
+# Right jab: the right shoulder drives forward at contact (+ky turns the chest right).
+CLIPS['light_punch']['bones']['body']=channel([(0,[0,0,0]),(2,[0,8,0]),(4,[4,-14,0]),(5,[3,-11,0]),(10,[0,0,0])])
+CLIPS['light_punch']['bones']['head']=channel([(0,[0,0,0]),(4,[-3,8,0]),(10,[0,0,0])])
+
+def mirror_rows(rows):
+    return [(t,[v[0],-v[1],-v[2]],*style) for t,v,*style in rows]
+
+def mirrored(clip):
+    """Left/right mirror of an authored clip (rotation y/z and position x flip, sides swap)."""
+    out={'loop':clip['loop'],'animation_length':clip['animation_length'],'bones':{}}
+    for bone,data in clip['bones'].items():
+        if bone=='reid_grip': continue
+        name=bone.replace('right_','@').replace('left_','right_').replace('@','left_')
+        target={}
+        for ch,keysd in data.items():
+            flipped={}
+            for time,entry in keysd.items():
+                vec=entry['vector'] if isinstance(entry,dict) else entry
+                vec=[-vec[0],vec[1],vec[2]] if ch=='position' else [vec[0],-vec[1],-vec[2]]
+                flipped[time]=dict(entry,vector=vec) if isinstance(entry,dict) else vec
+            target[ch]=flipped
+        out['bones'][name]=target
+    return out
+
+CLIPS['light_punch_left']=mirrored(CLIPS['light_punch'])
+# Right hook: a wide swing from the right (Knight's combo_2 family, the fist passes at
+# shoulder height in front of the face, never folded back into it), chest turning left.
+CLIPS['light_hook']=action(12,
+    right_arm=[(0,[-6,0,3]),(2.5,[-62,52,30],'easeInCubic'),(4,[-78,14,22]),(5,[-80,-26,14]),(6,[-76,-36,12]),(7,[-70,-40,10]),(12,[-6,0,3])],
+    right_forearm=[(0,[-8,0,0]),(2.5,[-46,0,0]),(4,[-26,0,0]),(5,[-18,0,0]),(7,[-22,0,0]),(12,[-8,0,0])],
+    body=[(0,[0,0,0]),(2.5,[-2,14,0]),(4,[2,2,0]),(5,[4,-16,0]),(6,[4,-24,0]),(7,[3,-24,0]),(12,[0,0,0])],
+    head=[(0,[0,0,0]),(2.5,[2,-8,0]),(5,[-3,10,0]),(12,[0,0,0])],
+    left_arm=[(0,[0,0,-3]),(2.5,[-42,-18,-8]),(7,[-38,-14,-8]),(12,[0,0,-3])],
+    left_forearm=[(0,[-8,0,0]),(2.5,[-70,0,0]),(7,[-64,0,0]),(12,[-8,0,0])],
+    right_leg=[(0,[0,0,0]),(5,[-10,0,2]),(12,[0,0,0])],
+    left_leg=[(0,[0,0,0]),(5,[8,0,-2]),(12,[0,0,0])])
+
+# Drawn Reid ordinary strokes are ONE-HANDED (ReinhardSword.strikeRelease): the left palm
+# leaves the pommel for the scabbard mouth over the first ticks and returns at the end.
+# Rows are authored by the RIGHT PALM (guard end of the hilt) so the arm reach is visible
+# in the data: shoulder (5,22,0) -> elbow -> wrist is 4.5 + 4.81 = 9.31 px, keep every
+# palm 6..8.9 px from the shoulder (no locked elbow, no residual in crouch either).
+# The hand stays right of / below the head (hair envelope); the blade points away from
+# the torso in body space, the chest twist (body ky) carries the stroke across.
+PALM_PX = 3.5*.574*.78   # handle centre -> guard-side palm along the blade, scaled like the mesh
+def _rot(axis, deg, v):
+    a=math.radians(deg); c,s=math.cos(a),math.sin(a); x,y,z=v
+    if axis=='x': return [x, c*y-s*z, s*y+c*z]
+    if axis=='y': return [c*x+s*z, y, -s*x+c*z]
+    return [c*x-s*y, s*x+c*y, z]
+def blade_axis(rot):
+    """Render-space blade direction of grip Euler degrees (Rz*Ry*Rx, as ReinhardSword)."""
+    return _rot('z',rot[2],_rot('y',rot[1],_rot('x',rot[0],[0,1,0])))
+def palm_of(grip):
+    pos,rot=grip
+    return [round(p+PALM_PX*a,3) for p,a in zip(pos,blade_axis(rot))]
+def palm_rows(rows):
+    """(t, palm, rot) -> (t, grip, rot); READY rows pass through unchanged."""
+    out=[]
+    for t,*row in rows:
+        if len(row)==1: out.append((t,*row[0])); continue
+        palm,rot=row
+        out.append((t,[round(p-PALM_PX*a,3) for p,a in zip(palm,blade_axis(rot))],rot))
+    return out
+REID_STRIKES={
+ # Forehand diagonal: blade loaded over the right shoulder, cut to the lower left.
+ 'reid_slash_down':dict(length=13,
+   grip=palm_rows([(0,READY),(1,[6,21.4,-7],[376,0,-42]),(2,[8.6,26,-3.4],[400,0,-36]),(3.4,[7,24.5,-6.5],[362,0,-40]),
+         (4.4,[4.5,21.5,-8.3],[292,0,-42]),(5.4,[3,18.8,-7.4],[238,0,-42]),(7,[2.8,17.6,-6.4],[226,0,-44]),(13,READY)]),
+   body=[(0,[0,0,0]),(2,[-4,20,0]),(3.4,[-1,12,0]),(4.4,[3,-4,0]),(5.4,[5,-18,0]),(7,[5,-22,0]),(13,[0,0,0])],
+   head=[(0,[0,0,0]),(2,[-3,-14,0]),(5.4,[0,12,0]),(7,[0,14,0]),(13,[0,0,0])],
+   forearm=[(0,[-18,0,0]),(2,[-44,0,0]),(4.4,[-12,0,0]),(7,[-10,0,0]),(13,[-18,0,0])],
+   right_leg=[(0,[0,0,0]),(4.4,[-14,0,3]),(8,[-14,0,3]),(13,[0,0,0])],
+   right_shin=[(0,[0,0,0]),(4.4,[16,0,0]),(8,[16,0,0]),(13,[0,0,0])],
+   left_leg=[(0,[0,0,0]),(4.4,[10,0,-3]),(8,[10,0,-3]),(13,[0,0,0])]),
+ # Backhand rising diagonal: from the low left (chest turned left) up past the right shoulder.
+ 'reid_slash_rise':dict(length=13,
+   grip=palm_rows([(0,READY),(2,[1.6,16.8,-5.6],[206,0,-52]),(3.4,[2.4,17.8,-6.8],[230,0,-46]),
+         (4.4,[4.2,20.6,-8.3],[286,0,-42]),(5.4,[6.2,23.6,-6.8],[350,0,-42]),(7,[8,25.6,-4],[384,0,-40]),(9.5,[6.4,21,-7],[366,0,-46]),(13,READY)]),
+   body=[(0,[0,0,0]),(2,[4,-22,0]),(3.4,[3,-14,0]),(4.4,[1,0,0]),(5.4,[-2,14,0]),(7,[-4,18,0]),(13,[0,0,0])],
+   head=[(0,[0,0,0]),(2,[4,14,0]),(5.4,[-3,-10,0]),(13,[0,0,0])],
+   forearm=[(0,[-18,0,0]),(2,[-30,0,0]),(4.4,[-14,0,0]),(7,[-34,0,0]),(13,[-18,0,0])],
+   right_leg=[(0,[0,0,0]),(2,[-6,0,3]),(5.4,[4,0,3]),(13,[0,0,0])],
+   left_leg=[(0,[0,0,0]),(2,[6,0,-3]),(5.4,[-12,0,-3]),(13,[0,0,0])],
+   left_shin=[(0,[0,0,0]),(5.4,[14,0,0]),(13,[0,0,0])]),
+ # Forehand horizontal at chest height (below the chin), right to left.
+ 'reid_slash_sweep':dict(length=15,
+   grip=palm_rows([(0,READY),(3,[9.2,21.2,-4.6],[404,0,-90]),(4.2,[8.4,21,-6.6],[372,0,-90]),(5.2,[7,20.8,-8],[330,0,-90]),
+         (6.2,[4.8,20.8,-8.4],[276,0,-90]),(7.2,[2.8,20.8,-7.9],[226,0,-90]),(8.2,[1.8,20.8,-6.8],[194,0,-90]),
+         (10,[2,20.6,-6.2],[186,0,-84]),(15,READY)]),
+   body=[(0,[0,0,0]),(3,[0,28,0]),(4.2,[0,20,0]),(5.2,[2,8,0]),(6.2,[3,-6,0]),(7.2,[3,-20,0]),(8.2,[3,-28,0]),
+         (10,[2,-28,0]),(15,[0,0,0])],
+   head=[(0,[0,0,0]),(3,[0,-20,0]),(7.2,[0,14,0]),(10,[0,20,0]),(15,[0,0,0])],
+   forearm=[(0,[-18,0,0]),(3,[-50,0,0]),(6.2,[-8,0,0]),(10,[-24,0,0]),(15,[-18,0,0])],
+   right_leg=[(0,[0,0,0]),(3,[-6,0,8]),(10,[-6,0,8]),(15,[0,0,0])],
+   left_leg=[(0,[0,0,0]),(3,[6,0,-8]),(10,[6,0,-8]),(15,[0,0,0])],
+   right_shin=[(0,[0,0,0]),(3,[12,0,0]),(10,[12,0,0]),(15,[0,0,0])],
+   left_shin=[(0,[0,0,0]),(3,[12,0,0]),(10,[12,0,0]),(15,[0,0,0])]),
+ # Heavy finisher: one-handed high guard right of the head, the chest folds into the cut.
+ 'reid_slash_finish':dict(length=22,
+   grip=palm_rows([(0,READY),(2,[7.4,23,-6.6],[376,0,-30]),(4,[8.2,29.6,-1.6],[398,0,-16]),(6.5,[8.4,30,-1.2],[404,0,-14]),(7.3,[7.6,28.6,-4.6],[370,0,-10]),
+         (8.2,[6,25.4,-7.6],[326,0,-6]),(9.2,[4.6,21.6,-8.6],[274,0,-2]),(10.2,[3.8,18.6,-7.6],[252,0,0]),
+         (14,[3.8,18.4,-7.4],[248,0,0]),(22,READY)]),
+   body=[(0,[0,0,0]),(4,[-10,8,0]),(6.5,[-12,8,0]),(7.3,[-6,4,0]),(8.2,[4,0,0]),(9.2,[11,-2,0]),(10.2,[14,-2,0]),
+         (14,[12,-2,0]),(22,[0,0,0])],
+   head=[(0,[0,0,0]),(4,[-8,0,0]),(6.5,[-10,0,0]),(9.2,[-14,0,0]),(14,[-12,0,0]),(22,[0,0,0])],
+   forearm=[(0,[-18,0,0]),(4,[-70,0,0]),(6.5,[-74,0,0]),(9.2,[-10,0,0]),(14,[-12,0,0]),(22,[-18,0,0])],
+   right_leg=[(0,[0,0,0]),(4,[4,0,3]),(6.5,[4,0,3]),(9.2,[-30,0,4]),(14,[-28,0,4]),(22,[0,0,0])],
+   right_shin=[(0,[0,0,0]),(6.5,[6,0,0]),(9.2,[34,0,0]),(14,[32,0,0]),(22,[0,0,0])],
+   left_leg=[(0,[0,0,0]),(6.5,[-4,0,-3]),(9.2,[16,0,-4]),(14,[15,0,-4]),(22,[0,0,0])],
+   left_shin=[(0,[0,0,0]),(9.2,[22,0,0]),(14,[20,0,0]),(22,[0,0,0])],
+   body_pos=[(0,[0,0,0]),(6.5,[0,.4,0]),(9.2,[0,-1,-.5]),(14,[0,-.9,-.4]),(22,[0,0,0])]),
+ # Crouch: low backhand sweep at hip height, left to right; the blade stays in front of the hips.
+ 'reid_slash_low':dict(length=16,
+   grip=palm_rows([(0,READY),(3,[1.8,18,-6.6],[185,0,-96]),(4.2,[2.6,18.2,-7.1],[206,0,-96]),(5.2,[3.8,18.4,-7.4],[240,0,-96]),
+         (6.2,[5.4,18.4,-7.5],[276,0,-96]),(7.2,[7.2,18.6,-6.8],[318,0,-96]),(8.2,[8.4,19,-5.6],[350,0,-96]),
+         (10,[8.8,19.4,-4.6],[364,0,-92]),(16,READY)]),
+   body=[(0,[0,0,0]),(3,[6,-26,0]),(4.2,[6,-18,0]),(5.2,[6,-6,0]),(6.2,[6,8,0]),(7.2,[6,18,0]),(8.2,[6,26,0]),
+         (10,[5,26,0]),(16,[0,0,0])],
+   head=[(0,[0,0,0]),(3,[6,22,0]),(8.2,[6,-20,0]),(16,[0,0,0])],
+   forearm=[(0,[-18,0,0]),(3,[-36,0,0]),(6.2,[-8,0,0]),(10,[-30,0,0]),(16,[-18,0,0])],
+   right_leg=[(0,[0,0,0]),(3,[-16,0,8]),(10,[-16,0,8]),(16,[0,0,0])],
+   right_shin=[(0,[0,0,0]),(3,[26,0,0]),(10,[26,0,0]),(16,[0,0,0])],
+   left_leg=[(0,[0,0,0]),(3,[14,0,-8]),(10,[14,0,-8]),(16,[0,0,0])],
+   left_shin=[(0,[0,0,0]),(3,[30,0,0]),(10,[30,0,0]),(16,[0,0,0])],
+   body_pos=[(0,[0,0,0]),(3,[0,-.8,0]),(10,[0,-.8,0]),(16,[0,0,0])]),
+}
+for name,m in REID_STRIKES.items():
+    bones=dict(body=m['body'],head=m['head'],right_forearm=m['forearm'],
+        left_forearm=[(0,[-8,0,0]),(m['length'],[-8,0,0])])
+    for leg in ['right_leg','left_leg','right_shin','left_shin']:
+        if leg in m: bones[leg]=m[leg]
+    CLIPS[name]=action(m['length'],**bones)
+    if 'body_pos' in m: pos(CLIPS[name],'body',m['body_pos'])
+    weapon(CLIPS[name],m['grip'])
+
+# Sword Drawn state: the stance itself (body/legs, only while standing), its own gait
+# (combat walk: shorter steps, bent knees, steady two-hand guard; run: shoulder carry,
+# the blade trailing back above the legs), and the ground<->air transitions.
+CLIPS['drawn_stance']=loop({
+    'body': {'rotation': breathe([2,6,0],[2.6,6,0]), 'position': breathe([0,-.3,0],[0,-.45,0])},
+    'right_leg': {'rotation': still([7,0,4])}, 'left_leg': {'rotation': still([-9,0,-3])},
+    'right_shin': {'rotation': still([9,0,0])}, 'left_shin': {'rotation': still([7,0,0])}})
+def drawn_gait(amplitude, knee, lean, bob):
+    bones={}
+    for side,phase in [('right',0),('left',math.pi)]:
+        bones[side+'_leg']=gait_channel(lambda t,ph=phase: [amplitude*math.cos(2*math.pi*t+ph),0,0])
+        bones[side+'_shin']=gait_channel(lambda t,ph=phase: [knee+max(0,math.sin(2*math.pi*t+ph))*(knee+24),0,0])
+    bones['body']=gait_channel(lambda t: [lean,4*math.cos(2*math.pi*t),0])
+    bones['body']['position']={str(i/40):[0,-bob*abs(math.sin(2*math.pi*i/40)),0] for i in range(41)}
+    return loop(bones,1)
+CLIPS['drawn_walk']=drawn_gait(26,8,5,.45)
+weapon(CLIPS['drawn_walk'],[(i*2.5,[READY[0][0],READY[0][1]-.35*abs(math.sin(math.pi*i/4)),READY[0][2]],
+    [READY[1][0]+1.5*math.sin(math.pi*i/4),0,READY[1][2]]) for i in range(9)])
+CLIPS['drawn_run']=drawn_gait(44,10,14,.8)
+# Sprint: ONE-handed shoulder carry (the renderer releases the left hand by the run
+# weight): the right fist in front of the right shoulder, the blade laid back over it,
+# right of the head. Blending from the guard only tilts the blade back (shortest slerp).
+RUN_PALM,RUN_ROT=[7.6,24,-4.5],[400,0,-28]
+weapon(CLIPS['drawn_run'],palm_rows([(i*2.5,[RUN_PALM[0],RUN_PALM[1]-.5*abs(math.sin(math.pi*i/4)),RUN_PALM[2]],
+    [RUN_ROT[0]+3*math.sin(math.pi*i/4),0,RUN_ROT[2]]) for i in range(9)]))
+# Air step: a quick tuck on every Cloud Step; landing: knees absorb, chest dips.
+CLIPS['air_step']=action(6,
+    right_leg=[(0,[-25,0,4]),(2,[-46,0,5]),(6,[-20,0,4])], right_shin=[(0,[38,0,0]),(2,[70,0,0]),(6,[34,0,0])],
+    left_leg=[(0,[12,0,-4]),(2,[-18,0,-5]),(6,[6,0,-4])], left_shin=[(0,[20,0,0]),(2,[54,0,0]),(6,[24,0,0])],
+    body=[(0,[-6,0,0]),(2,[10,0,0]),(6,[0,0,0])], head=[(0,[0,0,0]),(2,[-8,0,0]),(6,[0,0,0])])
+CLIPS['land']=action(8,
+    right_leg=[(0,[-9,0,4]),(2,[-24,0,4]),(8,[0,0,0])], right_shin=[(0,[16,0,0]),(2,[44,0,0]),(8,[0,0,0])],
+    left_leg=[(0,[-9,0,-4]),(2,[-22,0,-4]),(8,[0,0,0])], left_shin=[(0,[16,0,0]),(2,[42,0,0]),(8,[0,0,0])],
+    body=[(0,[4,0,0]),(2,[16,0,0]),(8,[0,0,0])], head=[(0,[0,0,0]),(2,[-12,0,0]),(8,[0,0,0])])
+pos(CLIPS['land'],'body',[(0,[0,0,0]),(2,[0,-1,-.4]),(8,[0,0,0])])
+
 # Bounded C1 curves only for strikes: no per-segment ease restart at contacts.
 # Draw/sheath cinematics retain their protected paths and free-blade roll.
-for name in ['light_punch','combo_1','combo_2','combo_3','sheath_strike','cut_rain','chop_left','chop_right']:
+for name in ['light_punch','light_punch_left','light_hook','combo_1','combo_2','combo_3','sheath_strike','cut_rain','chop_left','chop_right',*REID_STRIKES]:
     for bone in CLIPS[name]['bones'].values():
         for channel_data in bone.values():
             if isinstance(channel_data, dict):

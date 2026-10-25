@@ -71,3 +71,4 @@ For a fully original sound, use `--own` instead of `--source-id`. Use `--stereo`
 - This repo stores many audio files as `.ogg.b64` under `binassets`. Putting a new binary in the wrong resource directory can pass review yet fail to ship correctly.
 - Minecraft positional sound and GUI/ambience sound have different channel and playback needs. Do not force stereo or streaming on short positional impacts.
 - The user's intentional silence and approved signature audio take priority over automated search quality scores.
+- Fully original procedural families are scripts, not one-off mixes: `tools/sfx/reinhard_overhaul.py` (deterministic seeds, `--check`, variants as several entries of one event). A seamless loop needs every partial at a multiple of 1/loop-length, periodic noise (inverse FFT of exactly the loop length) and no fades.

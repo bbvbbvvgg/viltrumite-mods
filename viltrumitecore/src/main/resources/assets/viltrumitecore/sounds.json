@@ -995,5 +995,87 @@
         "attenuation_distance": 320
       }
     ]
+  },
+  "reinhard.fist_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_fist_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/fist_swing_1"
+      },
+      {
+        "name": "viltrumitecore:reinhard/fist_swing_2"
+      },
+      {
+        "name": "viltrumitecore:reinhard/fist_swing_3"
+      }
+    ]
+  },
+  "reinhard.fist_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_fist_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/fist_hit_1"
+      },
+      {
+        "name": "viltrumitecore:reinhard/fist_hit_2"
+      },
+      {
+        "name": "viltrumitecore:reinhard/fist_hit_3"
+      }
+    ]
+  },
+  "reinhard.reid_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_swing_1"
+      },
+      {
+        "name": "viltrumitecore:reinhard/reid_swing_2"
+      },
+      {
+        "name": "viltrumitecore:reinhard/reid_swing_3"
+      }
+    ]
+  },
+  "reinhard.reid_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_hit_1"
+      },
+      {
+        "name": "viltrumitecore:reinhard/reid_hit_2"
+      },
+      {
+        "name": "viltrumitecore:reinhard/reid_hit_3"
+      }
+    ]
+  },
+  "reinhard.reid_heavy": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_heavy",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_heavy_1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "viltrumitecore:reinhard/reid_heavy_2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "reinhard.reid_drawn_hum": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_drawn_hum"
+      }
+    ]
   }
 }

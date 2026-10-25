@@ -50,13 +50,107 @@ public final class ReinhardFirstPersonPose {
    private static final float[][] WORLD_CUT = {under(0),key(10,-100,8,0,-.08F,.45F,-.12F),
       key(66,-105,8,0,-.08F,.47F,-.12F),key(80,25,8,0,-.08F,-.18F,-.42F),
       key(86,25,8,0,-.08F,-.18F,-.42F),under(100)};
-   private static final float[][] REID_MELEE = {under(0),key(4,-42,-16,-6,.02F,.20F,.06F),
-      key(7,12,20,7,-.06F,-.08F,-.28F),key(9,14,24,6,-.05F,-.10F,-.22F),under(20)};
-   public static Offset reidMelee(int phase,double ticks,boolean left) {
-      Offset o=strike(REID_MELEE,ticks*20/(phase==2?20:14));
-      float side=phase==1?-1:1;
-      return new Offset(o.x()*side+(left?-.08F:0),o.y(),o.z(),o.pitch(),o.yaw()*side,o.roll()*side);
+   /**
+    * Drawn Reid in first person: the hand low right, the blade on a rising diagonal across
+    * the view towards the crosshair like the third-person guard (guard at NDC ≈(.67,-.73),
+    * tip ≈(.21,.52)), never a vertical bar over the screen. Applied while Reid is in hand.
+    */
+   public static final Offset DRAWN_GUARD = new Offset(.20F,.20F,-.10F,-25,0,-45);
+   public static Offset drawnGuard(ReinhardPoses.ReidPhase phase,double ticks) {
+      float w=ReinhardSword.handWeight(phase,ticks);
+      return w>0.001F?DRAWN_GUARD.scaled(Math.min(1,w)):Offset.NONE;
    }
+
+   /** Absolute shoulder keys {pitch, yaw, roll, x, y, z} of the one-handed drawn strokes,
+    * fitted (FirstPersonBladeProbeTest fit:) so the blade crosses the view along the same
+    * MeleeArc path the server tests: wind-up at the arc start, mid at its centre, end at its end. */
+   private static final float[] DOWN_WIND={-10,-15.6F,-47,.302F,.381F,-.130F},DOWN_MID={-5.3F,-15.9F,1.9F,.031F,.073F,-.103F},
+      DOWN_END={20.3F,-11.3F,32.5F,-.203F,-.192F,.019F},RISE_END={-10,-18,-51.9F,.245F,.355F,-.177F},
+      SWEEP_MID={-11.7F,-28.3F,7.5F,-.013F,.084F,-.206F},
+      SWEEP_WIND={-7.2F,15,-118.8F,.5F,.5F,-.108F},SWEEP_END={36.9F,-12.7F,24.2F,-.498F,-.014F,.067F},
+      // Between the cocked wind-up and the middle the arm turns about the shoulder's vertical,
+      // so the blade comes round level through the right of the view instead of over the top.
+      SWEEP_IN=turned(SWEEP_MID,-60),FINISH_WIND={10,-35.3F,-30.9F,-.153F,.5F,-.237F},
+      FINISH_MID={-10.6F,-29.2F,-.8F,-.038F,.175F,-.294F},FINISH_END={-12.2F,-39.4F,50,.006F,-.031F,-.134F},
+      LOW_START={32.5F,-12.5F,25,-.409F,-.178F,.052F},LOW_MID={-20,-40.9F,18.8F,-.019F,-.056F,-.169F},
+      LOW_END={-26.9F,-80,38,.197F,-.014F,-.181F};
+   /** Key {@code k} with the arm turned {@code degrees} about the view vertical through the shoulder. */
+   static float[] turned(float[] k,float degrees) {
+      org.joml.Quaternionf q=new org.joml.Quaternionf().rotateY((float)Math.toRadians(degrees))
+         .rotateX((float)Math.toRadians(k[0])).rotateY((float)Math.toRadians(k[1])).rotateZ((float)Math.toRadians(k[2]));
+      org.joml.Vector3f e=q.getEulerAnglesXYZ(new org.joml.Vector3f());
+      return new float[]{(float)Math.toDegrees(e.x),(float)Math.toDegrees(e.y),(float)Math.toDegrees(e.z),k[3],k[4],k[5]};
+   }
+   private static float[] at(float t,float[] k) { return key(t,k[0],k[1],k[2],k[3],k[4],k[5]); }
+   private static float[] guard(float t) {
+      Offset g=DRAWN_GUARD;
+      return key(t,g.pitch(),g.yaw(),g.roll(),g.x(),g.y(),g.z());
+   }
+   /** Index = MeleeMoves.REID move; key ticks follow each move's contact window. */
+   private static final float[][][] REID_STRIKES = {
+      densify(guard(0),at(3,DOWN_WIND),at(4.5F,DOWN_MID),at(6,DOWN_END),at(8,DOWN_END),guard(13)),
+      densify(guard(0),at(3,DOWN_END),at(4.5F,DOWN_MID),at(6,RISE_END),at(8,RISE_END),guard(13)),
+      densify(guard(0),at(4,SWEEP_WIND),at(5,SWEEP_IN),at(6,SWEEP_MID),at(8,SWEEP_END),at(10,SWEEP_END),guard(15)),
+      densify(guard(0),at(4.5F,FINISH_WIND),at(7,FINISH_WIND),at(8.5F,FINISH_MID),at(10,FINISH_END),at(14,FINISH_END),guard(22)),
+      densify(guard(0),at(4,LOW_START),at(6,LOW_MID),at(8,LOW_END),at(10,LOW_END),guard(16))};
+
+   /** Rows every {@value #DENSE_DEGREES}° of shortest-arc turn between keys: the per-channel
+    * monotone sampling then follows the arm's real arc instead of an Euler-angle detour
+    * (a wide sweep would otherwise bulge up through the top of the view). */
+   static float[][] densify(float[]... keys) {
+      java.util.List<float[]> out=new java.util.ArrayList<>();
+      org.joml.Quaternionf qa=new org.joml.Quaternionf(),qb=new org.joml.Quaternionf(),q=new org.joml.Quaternionf();
+      org.joml.Vector3f e=new org.joml.Vector3f();
+      for(int i=0;i<keys.length;i++) {
+         if(i>0) {
+            float[] a=keys[i-1],b=keys[i];
+            euler(a,qa);euler(b,qb);
+            double turn=Math.toDegrees(2*Math.acos(Math.min(1,Math.abs(qa.dot(qb)))));
+            int n=(int)Math.ceil(turn/DENSE_DEGREES);
+            for(int j=1;j<n;j++) {
+               float f=j/(float)n;
+               q.set(qa).slerp(qb,f).getEulerAnglesXYZ(e);
+               float[] row=new float[7];
+               row[0]=a[0]+(b[0]-a[0])*f;
+               float[] angles={(float)Math.toDegrees(e.x),(float)Math.toDegrees(e.y),(float)Math.toDegrees(e.z)};
+               for(int c=0;c<3;c++) {
+                  float near=a[c+1]+(b[c+1]-a[c+1])*f;
+                  row[c+1]=angles[c]+360*Math.round((near-angles[c])/360);
+                  row[c+4]=a[c+4]+(b[c+4]-a[c+4])*f;
+               }
+               out.add(row);
+            }
+         }
+         out.add(keys[i]);
+      }
+      return out.toArray(new float[0][]);
+   }
+   static final float DENSE_DEGREES=25;
+   private static void euler(float[] row,org.joml.Quaternionf out) {
+      out.identity().rotateX((float)Math.toRadians(row[1])).rotateY((float)Math.toRadians(row[2])).rotateZ((float)Math.toRadians(row[3]));
+   }
+   /** The drawn stroke of Reid move {@code phase}: absolute (it starts and ends at the guard). */
+   public static Offset reidStrike(int phase,double ticks) {
+      return strike(REID_STRIKES[Math.floorMod(phase,REID_STRIKES.length)],ticks);
+   }
+   /** The free left arm's small counter-motion to a drawn stroke (zero at the guard). */
+   public static Offset reidSupport(int phase,double ticks) {
+      Offset s=reidStrike(phase,ticks),g=DRAWN_GUARD;
+      return counter(new Offset(s.x()-g.x(),s.y()-g.y(),s.z()-g.z(),s.pitch()-g.pitch(),s.yaw()-g.yaw(),s.roll()-g.roll()));
+   }
+   /** Sum of two shoulder offsets (a pose on top of the drawn guard). */
+   public static Offset plus(Offset a,Offset b) {
+      if(b==Offset.NONE) return a;
+      if(a==Offset.NONE) return b;
+      return new Offset(a.x()+b.x(),a.y()+b.y(),a.z()+b.z(),a.pitch()+b.pitch(),a.yaw()+b.yaw(),a.roll()+b.roll());
+   }
+   /** A short dip of the sword arm on an air step: {@code seconds} since the step, -1 = none. */
+   public static Offset airStep(double seconds) {
+      if(!(seconds>=0) || seconds>=AIR_STEP_SECONDS) return Offset.NONE;
+      float w=(float)Math.sin(Math.PI*seconds/AIR_STEP_SECONDS);
+      return new Offset(0,-.06F*w,.03F*w,7*w,0,-3*w);
+   }
+   static final double AIR_STEP_SECONDS=.3;
    private static final float[][] RAIN = rain();
 
    private static float[][] rain() {
@@ -107,8 +201,8 @@ public final class ReinhardFirstPersonPose {
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks, int length) {
       if (ability==null || !Double.isFinite(ticks)) return Offset.NONE;
       return switch(ability) {
-         case REID_STRIKE -> reidMelee(phase,ticks,false);
-         case LIGHT_PUNCH -> strike(JAB,ticks);
+         case REID_STRIKE -> reidStrike(phase,ticks);
+         case LIGHT_PUNCH -> strike(phase==2 ? HOOK : JAB,ticks);
          case STEP_DASH -> sample(DASH,ticks);
          case FIST_COMBO -> strike(phase<=0 ? JAB : phase==1 ? HOOK : HAMMER,ticks);
          case SKY_KICK -> sample(KICK,ticks);
@@ -128,9 +222,28 @@ public final class ReinhardFirstPersonPose {
 
    /** Counterbalance on the free arm; Knight's back hand remains hidden by the stance policy. */
    public static Offset support(@Nullable ReinhardAbility ability,double ticks,int length) {
+      return support(ability,0,ticks,length);
+   }
+   /** Counterbalance of the arm that does not strike in move {@code phase} of {@code ability}. */
+   public static Offset support(@Nullable ReinhardAbility ability,int phase,double ticks,int length) {
       if(ability==null) return Offset.NONE;
-      Offset main=of(ability,0,ticks,length);
+      if(ability==ReinhardAbility.REID_STRIKE) return reidSupport(phase,ticks);
+      return counter(of(ability,ability==ReinhardAbility.LIGHT_PUNCH?phase:0,ticks,length));
+   }
+   private static Offset counter(Offset main) {
       return new Offset(-main.x()*.25F,main.y()*.3F,-main.z()*.15F,-main.pitch()*.2F,-main.yaw()*.2F,-main.roll()*.4F);
+   }
+   /** Light punch move 1 is the left jab: the left arm strikes, the right one counters. */
+   public static boolean leftStrike(@Nullable ReinhardAbility ability,int phase) {
+      return ability==ReinhardAbility.LIGHT_PUNCH && phase==1;
+   }
+
+   /** Weight of the drawn guard under another action: out over its first ticks, back over its last. */
+   public static float guardUnder(double ticks,int length) {
+      if(!Double.isFinite(ticks)) return 1;
+      float in=smooth(ticks/4);
+      float out=length>0?smooth((length-ticks)/4):1;
+      return 1-in*out;
    }
 
    private static float windowFade(double ticks,int length) {

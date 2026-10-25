@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.AbilityHandler;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.CatchWindow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.CutRain;
@@ -10,6 +11,7 @@ import dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.FistCombo;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.LightPunch;
+import dev.baranhan.viltrumitecore.hero.reinhard.ability.MeleeChain;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.ReflectWindow;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.SkyKick;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.StepDash;
@@ -146,16 +148,31 @@ public final class ReinhardActions {
       press(player, state, ability, handler);
    }
 
-   /** One click starts one hit. Only Knight permits a single buffered next click. No slot/R route. */
+   /** One click starts one strike; a click in the second half of a strike is buffered as the next
+    * link of the chain (fists outside Knight, drawn Reid, Knight's Fist Combo). No slot/R route. */
    public static void primaryAttack(ServerPlayer player, ReinhardState state) {
       if (controlled(player) || state.busy()) return;
       if (state.mode == ReinhardMode.HOLY_SWORD && state.reid.drawn()) {
-         if (!state.action.running()) HANDLERS.get(ReinhardAbility.REID_STRIKE).tryStart(player, state);
+         melee(player, state, ReinhardAbility.REID_STRIKE);
       } else if (state.mode == ReinhardMode.KNIGHT) {
          if (FistCombo.claims(state)) FistCombo.queue(state);
          else if (!state.action.running()) new FistCombo().tryStart(player,state);
-      } else if (!state.action.running()) new LightPunch().tryStart(player,state);
+      } else melee(player, state, ReinhardAbility.LIGHT_PUNCH);
       state.reid.combat();
+   }
+
+   private static void melee(ServerPlayer player, ReinhardState state, ReinhardAbility ability) {
+      if (state.action.is(ability)) {
+         MeleeMoves.Move move = ability == ReinhardAbility.REID_STRIKE ? MeleeMoves.reid(state.action.phase()) : MeleeMoves.fist(state.action.phase());
+         MeleeChain.buffer(state, move);
+      } else if (!state.action.running()) {
+         HANDLERS.get(ability).tryStart(player, state);
+      }
+   }
+
+   /** Pure: LMB during this action belongs to the strike chain (buffered, never refused). */
+   public static boolean meleeChain(@Nullable ReinhardAbility running) {
+      return running == ReinhardAbility.FIST_COMBO || running == ReinhardAbility.LIGHT_PUNCH || running == ReinhardAbility.REID_STRIKE;
    }
 
    static ReinhardMode contextualMode(ReinhardAbility ability, ReinhardMode mode) {

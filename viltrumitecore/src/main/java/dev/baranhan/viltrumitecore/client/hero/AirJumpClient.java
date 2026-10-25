@@ -77,6 +77,7 @@ public final class AirJumpClient {
       used++;
       lastStepTick = player.tickCount;
       AirStepVfx.spawn(player);
+      AirStepPulse.mark(player, net.minecraft.Util.getNanos());
       CoreMessages.sendToServer(new HeroInputC2SPacket(HeroAction.AIR_STEP, true));
    }
 
@@ -91,6 +92,7 @@ public final class AirJumpClient {
          Entity entity = client.level.getEntity(entityId);
          if (entity != null && entity != client.player) {
             AirStepVfx.spawn(entity);
+            AirStepPulse.mark(entity, net.minecraft.Util.getNanos());
          }
 
          return;

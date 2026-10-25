@@ -25,6 +25,14 @@ class ReinhardSoundsTest {
    private static final Map<String,String> CINEMATIC = Map.of(
       "reid_cinematic_layer","reid_cinematic_layer","cut_rumble","cut_rumble",
       "world_cut_blast","cut_cinematic_impact","cut_rain","cut_cinematic_sweep");
+   /** REINHARD OVERHAUL: original procedural strike layers (tools/sfx/reinhard_overhaul.py, CC0-1.0), random variant per play. */
+   private static final Map<String, List<String>> OVERHAUL = Map.of(
+      "fist_swing", List.of("fist_swing_1", "fist_swing_2", "fist_swing_3"),
+      "fist_hit", List.of("fist_hit_1", "fist_hit_2", "fist_hit_3"),
+      "reid_swing", List.of("reid_swing_1", "reid_swing_2", "reid_swing_3"),
+      "reid_hit", List.of("reid_hit_1", "reid_hit_2", "reid_hit_3"),
+      "reid_heavy", List.of("reid_heavy_1", "reid_heavy_2"),
+      "reid_drawn_hum", List.of("reid_drawn_hum"));
    private static final Set<String> STREAM = Set.of("reid_choir", "world_cut_tail", "reid_rumble");
    private static final Set<String> LEGACY = Set.of("air_step", "refuse", "phoenix", "parry", "super_jump",
       "light_punch", "step_dash", "catch", "combo_hit", "combo_final", "kick_toss", "grab", "throw",
@@ -70,6 +78,18 @@ class ReinhardSoundsTest {
          choice.addProperty("stream",false);choice.addProperty("attenuation_distance",320);
          JsonObject definition=new JsonObject();JsonArray array=new JsonArray();array.add(choice);
          definition.add("sounds",array);expected.add("reinhard."+pair.getKey(),definition);
+      }
+      for (var pair : OVERHAUL.entrySet()) {
+         JsonObject definition = new JsonObject(); definition.addProperty("category", "player");
+         // The drawn hum is a quiet stance loop: no subtitle spam while Reid is held.
+         if (!pair.getKey().equals("reid_drawn_hum")) definition.addProperty("subtitle", "subtitles.viltrumitecore.reinhard_" + pair.getKey());
+         JsonArray array = new JsonArray();
+         for (String file : pair.getValue()) {
+            JsonObject choice = new JsonObject(); choice.addProperty("name", "viltrumitecore:reinhard/" + file);
+            if (pair.getKey().equals("reid_heavy")) choice.addProperty("attenuation_distance", 32);
+            array.add(choice);
+         }
+         definition.add("sounds", array); expected.add("reinhard." + pair.getKey(), definition);
       }
       JsonObject current = new JsonObject();
       for (String key : actual.keySet()) if (key.startsWith("reinhard.")) current.add(key, actual.get(key));
@@ -164,6 +184,7 @@ class ReinhardSoundsTest {
    @Test void everyFileExists() throws Exception {
       allFileReferencesExist(sounds());
       Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());all.addAll(DERIVED.values());
+      OVERHAUL.values().forEach(all::addAll);
       for (String f : all) {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));
@@ -177,6 +198,8 @@ class ReinhardSoundsTest {
       assertFalse(entry("world_cut_blast").has("type"));assertFalse(entry("cut_rain").has("type"));
       assertFalse(Files.exists(BIN.resolve("world_cut_blast.ogg.b64")));assertFalse(Files.exists(BIN.resolve("cut_rain.ogg.b64")));
       assertTrue(text("tools/assets/reinhard_sources.md").contains("tools/sfx/reinhard_cinematic.py"));
+      assertTrue(text("tools/assets/reinhard_sources.md").contains("tools/sfx/reinhard_overhaul.py"));
+      assertTrue(text("CREDITS.md").contains("tools/sfx/reinhard_overhaul.py"));
       assertTrue(text("CREDITS.md").contains("CC0-1.0"));
    }
    @Test void longFilesStream() throws Exception { for (String e : STREAM) { assertTrue(entry(e).has("stream")); assertTrue(entry(e).get("stream").getAsBoolean()); } }

@@ -34,7 +34,8 @@ class ReinhardClipsTest {
    /** Ticks each clip plays for (the action length, or the part of it the clip covers). */
    private static Map<String, Integer> ticks() {
       Map<String, Integer> t = new HashMap<>();
-      t.put(ReinhardClips.LIGHT_PUNCH, ReinhardRules.LIGHT_PUNCH_TICKS);
+      for (var move : dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves.FIST) t.put(move.clip(), move.ticks());
+      for (var move : dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves.REID) t.put(move.clip(), move.ticks());
       t.put(ReinhardClips.STEP_DASH, ReinhardRules.STEP_ACTION_TICKS);
       t.put(ReinhardClips.CATCH_READY, ReinhardRules.CATCH_WINDOW);
       t.put(ReinhardClips.CATCH, ReinhardRules.CATCH_SNAP_TICKS);
@@ -89,7 +90,17 @@ class ReinhardClipsTest {
          }
       }
 
-      assertEquals(25, checked, "registered abilities and their action clips");
+      assertEquals(30, checked, "registered abilities and their action clips");
+      // Every ordinary strike ends exactly on its lock: the chain never starts over a running clip.
+      for (var moves : java.util.List.of(dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves.FIST, dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves.REID))
+         for (var move : moves) {
+            assertEquals(Animation.LoopType.HOLD_ON_LAST_FRAME, clips.get(move.clip()).loopType(), move.clip());
+            assertEquals(move.ticks() / 20.0, clips.get(move.clip()).lengthSeconds(), 1.0E-6, move.clip());
+         }
+      for (String loop : new String[]{ReinhardClips.DRAWN_STANCE, ReinhardClips.DRAWN_WALK, ReinhardClips.DRAWN_RUN})
+         assertEquals(Animation.LoopType.LOOP, clips.get(loop).loopType(), loop);
+      for (String pulse : new String[]{ReinhardClips.AIR_STEP, ReinhardClips.LAND})
+         assertEquals(Animation.LoopType.HOLD_ON_LAST_FRAME, clips.get(pulse).loopType(), pulse);
       // Lethal Chop is the kit chop (no ReinhardAbility): both hand sweeps cover the 1 s chop.
       for (String chop : new String[]{ReinhardClips.CHOP_LEFT, ReinhardClips.CHOP_RIGHT}) {
          assertNotNull(clips.get(chop), "clip " + chop);

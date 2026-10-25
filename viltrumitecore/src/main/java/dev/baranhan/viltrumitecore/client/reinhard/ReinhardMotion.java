@@ -19,7 +19,39 @@ final class ReinhardMotion {
       for(int i=0;i<4;i++)s.values[i]+=(target[i]-s.values[i])*w;
       return s.values.clone();
    }
-   static void reset(Object owner){STATES.remove(owner);}
+   static void reset(Object owner){STATES.remove(owner);PULSES.remove(owner);}
+
+   /** Shortest flight that ends in a landing pulse (a stair hop or a step-up is not one). */
+   static final double LAND_MIN_AIR=.35;
+   private static final Map<Object,Pulse> PULSES=new WeakHashMap<>();
+   /** Pure: landing pulse strength from the time spent airborne (seconds). */
+   static float landWeight(double airborne) {
+      return airborne<LAND_MIN_AIR?0:(float)Math.min(1,.45+.55*(airborne-LAND_MIN_AIR)/.8);
+   }
+   /**
+    * {air step seconds, landing seconds, landing weight}; seconds -1 = no pulse.
+    * {@code stepSeconds} comes from the air-step prediction/observation (AirStepPulse).
+    */
+   static float[] pulses(Object owner,boolean air,double stepSeconds,long now) {
+      Pulse p=PULSES.computeIfAbsent(owner,o->new Pulse());
+      if(air && p.airSince==Long.MIN_VALUE)p.airSince=now;
+      if(!air && p.airSince!=Long.MIN_VALUE) {
+         float w=landWeight((now-p.airSince)/1E9);
+         p.airSince=Long.MIN_VALUE;
+         if(w>0){p.landAt=now;p.landWeight=w;}
+      }
+      double land=p.landAt==Long.MIN_VALUE?-1:(now-p.landAt)/1E9;
+      return new float[]{(float)stepSeconds,(float)land,p.landWeight};
+   }
+   /** {crouch, sprint, rise, fall} followed by {step s, land s, land weight}. */
+   static float[] withPulses(float[] motion,float[] pulses) {
+      float[] out=java.util.Arrays.copyOf(motion,motion.length+pulses.length);
+      System.arraycopy(pulses,0,out,motion.length,pulses.length);
+      return out;
+   }
+   private static final class Pulse {
+      long airSince=Long.MIN_VALUE,landAt=Long.MIN_VALUE; float landWeight;
+   }
    private static final class State {
       long now; final float[] values;
       State(long now,float[] values){this.now=now;this.values=values;}

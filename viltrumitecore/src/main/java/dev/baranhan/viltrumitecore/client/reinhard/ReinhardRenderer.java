@@ -115,8 +115,11 @@ public final class ReinhardRenderer {
       ParryPulse.Sample parry = ParryPulse.THIRD_PERSON.sample(player, ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.PARRY_POSE), Util.getNanos());
       ReinhardPoses.ReidPhase reidPhase = ReinhardView.reid(snapshot);
       double reidTicks = dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reidPhase, partialTick);
-      float[] motion=ReinhardMotion.sample(player,player.isCrouching(),player.isSprinting(),
-         !player.onGround() && !player.isPassenger() && swim<.1F && !player.isFallFlying(),player.getDeltaMovement().y>0,Util.getNanos());
+      boolean airborne=!player.onGround() && !player.isPassenger() && swim<.1F && !player.isFallFlying();
+      long now=Util.getNanos();
+      float[] motion=ReinhardMotion.withPulses(ReinhardMotion.sample(player,player.isCrouching(),player.isSprinting(),
+         airborne,player.getDeltaMovement().y>0,now),
+         ReinhardMotion.pulses(player,airborne,dev.baranhan.viltrumitecore.client.hero.AirStepPulse.seconds(player,now),now));
       applyClips(body, pose, StanceBlend.mix(weights, ReinhardView.mode(snapshot)), weights[ReinhardMode.KNIGHT.ordinal()], swim,
          player.walkAnimation.position(partialTick) * ReinhardPoses.SWIM_SECONDS_PER_UNIT, parry, ReinhardPoses.reidClip(reidPhase, reidTicks),
          player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core ? ReinhardPoses.chopClip(core.getChopTicks(), core.isLeftChop(), partialTick) : null,
@@ -125,9 +128,12 @@ public final class ReinhardRenderer {
       applyHead(body, player, partialTick);
       ReinhardRecovery.body(player,body,recoveryKey(snapshot),Util.getNanos());
       ReinhardDefense.torso(player,snapshot,body);
+      double swordTicks=actionTicks(player,snapshot,partialTick);
       org.joml.Matrix4f[] equipment=ReinhardSword.equipment(body,reidPhase,reidTicks,
-         snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),actionTicks(player,snapshot,partialTick),
-         weights[ReinhardMode.HOLY_SWORD.ordinal()]);
+         snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),swordTicks,
+         weights[ReinhardMode.HOLY_SWORD.ordinal()],
+         Math.max(snapshot.actionId()==ReinhardAbility.REID_STRIKE.ordinal()?ReinhardSword.strikeRelease(swordTicks,snapshot.actionLength()):0,
+            reidPhase==ReinhardPoses.ReidPhase.DRAWN?runCarry(pose,motion):0));
       ReinhardDefense.body(player,snapshot,body);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
@@ -287,10 +293,19 @@ public final class ReinhardRenderer {
    }
 
    static ReinhardFirstPersonPose.Offset firstPersonOffset(AbstractClientPlayer player, HeroPublicSnapshot snapshot, HumanoidArm side) {
-      boolean actionArm = side == HumanoidArm.RIGHT;
+      ReinhardAbility actionAbility = ReinhardPoses.action(snapshot.actionId());
+      // Light punch move 1 is the left jab: the left arm takes the strike row, the right one counters.
+      boolean leftStrike = ReinhardFirstPersonPose.leftStrike(actionAbility,snapshot.variant());
+      boolean actionArm = (side == HumanoidArm.RIGHT) != leftStrike;
       ReinhardAbility cinematic = ReinhardPoses.cinematicAction(snapshot.actionId());
-      double cinematicTicks = actionTicks(player, snapshot, Minecraft.getInstance().getFrameTime());
+      float frame = Minecraft.getInstance().getFrameTime();
+      double cinematicTicks = actionTicks(player, snapshot, frame);
       boolean physicalLeft = side == HumanoidArm.LEFT;
+      ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
+      double reidTicks = dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, frame);
+      // Reid in hand: the sword arm holds the diagonal guard; authored actions start from and return to it.
+      ReinhardFirstPersonPose.Offset guard = physicalLeft ? ReinhardFirstPersonPose.Offset.NONE
+         : ReinhardFirstPersonPose.drawnGuard(reid, reidTicks);
       ReinhardFirstPersonPose.Offset action = cinematic == ReinhardAbility.WORLD_CUT
          ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft)
          : cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT ? ReinhardFirstPersonPose.diagonal(cinematicTicks,physicalLeft)
@@ -298,15 +313,21 @@ public final class ReinhardRenderer {
          : cinematic == ReinhardAbility.WORLD_ERASURE
             ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
             : actionArm ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
-      if (actionArm && action == ReinhardFirstPersonPose.Offset.NONE) {
-         // Stage 4: the Reid draw / sheathe pull.
-         ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
-         action = ReinhardFirstPersonPose.reid(reid, dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, Minecraft.getInstance().getFrameTime()));
+      if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
+         actionAbility,snapshot.variant(),cinematicTicks,snapshot.actionLength());
+      if (actionAbility == ReinhardAbility.REID_STRIKE) {
+         // Drawn strokes are absolute rows that start and end at the guard.
+         if (physicalLeft) action = ReinhardFirstPersonPose.reidSupport(snapshot.variant(),cinematicTicks);
+      } else if (actionAbility != null && actionAbility != ReinhardAbility.REID) {
+         action = ReinhardFirstPersonPose.plus(action,
+            guard.scaled(ReinhardFirstPersonPose.guardUnder(cinematicTicks,snapshot.actionLength())));
+      } else if (!physicalLeft) {
+         // Stage 4: the Reid draw / sheathe pull, then the guard once Reid is in hand.
+         action = ReinhardFirstPersonPose.plus(ReinhardFirstPersonPose.reid(reid,reidTicks),guard);
       }
-      if (!actionArm && snapshot.actionId() == ReinhardAbility.REID_STRIKE.ordinal())
-         action = ReinhardFirstPersonPose.reidMelee(snapshot.variant(),cinematicTicks,true);
-      else if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
-         ReinhardPoses.action(snapshot.actionId()),cinematicTicks,snapshot.actionLength());
+      if (!physicalLeft && guard != ReinhardFirstPersonPose.Offset.NONE)
+         action = ReinhardFirstPersonPose.plus(action,ReinhardFirstPersonPose.airStep(
+            dev.baranhan.viltrumitecore.client.hero.AirStepPulse.seconds(player,Util.getNanos())));
       action = ReinhardRecovery.firstPerson(player,physicalLeft,action,recoveryKey(snapshot),Util.getNanos());
       return ReinhardDefense.firstPerson(player,snapshot,physicalLeft,action);
    }
@@ -413,7 +434,9 @@ public final class ReinhardRenderer {
       boolean drawnIdle = reid != null && ReinhardClips.IDLE_HOLY_DRAWN.equals(reid.animation());
       if (reidClip != null && drawnIdle) {
          ReinhardLayers.overlay(reidClip, model, ReinhardPlayback.time(reidClip, reid.seconds()));
+         drawnGait(model, pose, motion, ground);
       }
+      pulses(model, pose, motion);
 
       ReinhardPoses.Clip overlay = pose.overlay();
       if (overlay != null) {
@@ -448,6 +471,35 @@ public final class ReinhardRenderer {
       }
       Animation crouch=AnimCache.animation(ReinhardAssets.ANIMATIONS,CROUCH);
       if(crouch!=null && motion[0]>0) AnimationController.additive(crouch,model,0,motion[0]);
+   }
+
+   /** Reid drawn: its own stance (standing), combat walk and one-handed sprint carry
+    * over the plain gait. Airborne the air poses own the legs, so these fade by ground. */
+   static void drawnGait(BakedGeoModel model, ReinhardPoses.Pose pose, float[] motion, float ground) {
+      float walk=Math.max(0,Math.min(1,pose.walk()));
+      Animation stance=AnimCache.animation(ReinhardAssets.ANIMATIONS,ReinhardClips.DRAWN_STANCE);
+      if(stance!=null)ReinhardLayers.overlay(stance,model,ReinhardPlayback.time(stance,pose.stanceSeconds()),(1-walk)*ground);
+      Animation drawnWalk=AnimCache.animation(ReinhardAssets.ANIMATIONS,ReinhardClips.DRAWN_WALK);
+      if(drawnWalk!=null)ReinhardLayers.overlay(drawnWalk,model,ReinhardPlayback.time(drawnWalk,pose.walkSeconds()),walk*ground);
+      Animation drawnRun=AnimCache.animation(ReinhardAssets.ANIMATIONS,ReinhardClips.DRAWN_RUN);
+      if(drawnRun!=null)ReinhardLayers.overlay(drawnRun,model,ReinhardPlayback.time(drawnRun,pose.walkSeconds()),runCarry(pose,motion));
+   }
+
+   /** Weight of the one-handed sprint carry (also releases the support hand by the same weight). */
+   static float runCarry(ReinhardPoses.Pose pose, float[] motion) {
+      return Math.max(0,Math.min(1,pose.walk()))*Math.max(0,Math.min(1,motion[1]))*ReinhardMotion.ground(motion);
+   }
+
+   /** Air-step tuck and landing absorb: short pulses over locomotion, below every action. */
+   static void pulses(BakedGeoModel model, ReinhardPoses.Pose pose, float[] motion) {
+      if(motion.length<7)return;
+      Animation step=AnimCache.animation(ReinhardAssets.ANIMATIONS,ReinhardClips.AIR_STEP);
+      if(step!=null && motion[4]>=0 && motion[4]<step.lengthSeconds())
+         ReinhardLayers.overlay(step,model,motion[4],ReinhardPlayback.weight(motion[4],step.lengthSeconds()));
+      Animation land=AnimCache.animation(ReinhardAssets.ANIMATIONS,ReinhardClips.LAND);
+      if(land!=null && motion[5]>=0 && motion[5]<land.lengthSeconds())
+         ReinhardLayers.overlay(land,model,motion[5],ReinhardPlayback.weight(motion[5],land.lengthSeconds())*motion[6]
+            *(1-.6F*Math.max(0,Math.min(1,pose.walk()))));
    }
 
    /** Identical guard composition for the body and the camera elbows. Contacts stay sharp. */
@@ -602,7 +654,9 @@ public final class ReinhardRenderer {
          GeoBone elbow=geo.getBone(name);
          if (elbow!=null) elbow.rotX=(float)Math.toRadians(7);
       }
-      ReinhardPoses.Clip action = snapshot.actionId()<0 ? null : ReinhardClips.clip(ReinhardPoses.action(snapshot.actionId()),snapshot.variant(),
+      // Drawn strokes keep the drawn-idle elbow: their first-person rows are fitted on it.
+      ReinhardPoses.Clip action = snapshot.actionId()<0 || snapshot.actionId()==ReinhardAbility.REID_STRIKE.ordinal() ? null
+         : ReinhardClips.clip(ReinhardPoses.action(snapshot.actionId()),snapshot.variant(),
          actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime()));
       if (action == null) {
          ReinhardPoses.ReidPhase phase=ReinhardView.reid(snapshot);

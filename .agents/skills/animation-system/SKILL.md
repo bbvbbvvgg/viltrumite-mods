@@ -145,5 +145,6 @@ Report checks in three categories: **verified in code/tests**, **verified in run
 - **"Third-person pose works in first person."** Camera transforms, hand mapping, held items and view-space projections differ.
 - **"The shader compiled, so the effect is correct."** Driver output, render order, shader packs, depth copy, F3+T and performance still need native checks.
 - **"CI is green, so the animation is done."** Compilation and pure tests do not establish visual quality.
+- **"The trail, hit test and first-person pose each get their own numbers."** Reinhard keeps one data row per strike (`hero/reinhard/melee/MeleeMoves`) that drives the server hit sweep, the clip choice, first-person keys and the slash trail. Edit them together; a trail or FP pose that disagrees with the hit area reads as a missed hit.
 
 Keep the reference catalogs current when code changes. Do not grow this entrypoint with a chronological PR diary; add durable implementation details to the relevant reference file instead.
