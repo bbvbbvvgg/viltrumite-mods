@@ -109,11 +109,13 @@ The sources are Vineflower output. Loops, casts, lambdas, switches and generics 
 ## 10. Skills
 
 Project skills live in `.agents/skills/<name>/SKILL.md` with `name` and `description` frontmatter. A matching skill is a procedure: read it and follow it.
+Before adding, replacing, processing or wiring any SFX, read `.agents/skills/sound-design/SKILL.md` and follow it.
 
 | Skill | Use for |
 |---|---|
 | `animation-system` | all animation, pose, model-mixin, renderer and VFX work (mandatory, see §3) |
 | `add_hero` | adding or porting a hero, adding a hero ability; shared hero toolkit and resource checker |
+| `sound-design` | new, missing or changed sound effects, Openverse sourcing, audio loops and sound credits |
 
 `AGENTS.md` owns global rules. Skills own repeatable workflows. Do not make a skill for a micro-action. If a skill disagrees with the current code or this file, fix the skill.
 
