@@ -52,6 +52,14 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> WORLD_CUT_SILENCE = reg("reinhard.world_cut_silence");
    public static final RegistryObject<SoundEvent> WORLD_CUT_BLAST = reg("reinhard.world_cut_blast");
    public static final RegistryObject<SoundEvent> WORLD_CUT_TAIL = reg("reinhard.world_cut_tail");
+   /** Seamless 1.99 s loop derived from the owner-provided tail recording. */
+   public static final RegistryObject<SoundEvent> WORLD_CUT_HUM = reg("reinhard.world_cut_hum");
+   /** Short pitched-down swell for the periodic rupture pulse. */
+   public static final RegistryObject<SoundEvent> WORLD_CUT_PULSE = reg("reinhard.world_cut_pulse");
+   /** Short saturated hit for the first BLAST of the rupture. */
+   public static final RegistryObject<SoundEvent> WORLD_CUT_IMPACT = reg("reinhard.world_cut_impact");
+   /** Blade ring for the normal cut only; same file as sheath_ring, own id for duck exemption. */
+   public static final RegistryObject<SoundEvent> WORLD_CUT_BLADE = reg("reinhard.world_cut_blade");
 
    public static final RegistryObject<SoundEvent> ERASE_CRACK = reg("reinhard.erase_crack");
    public static final RegistryObject<SoundEvent> ERASE_INHALE = reg("reinhard.erase_inhale");

@@ -52,4 +52,48 @@ class WorldCutSceneTest {
    @Test void casterSharesCinematicShake() {
       assertTrue(WorldCutScene.shakeCaster(true)); assertTrue(WorldCutScene.shakeCaster(false));
    }
+   @Test void pulseClockRestsBetweenImpulses() {
+      assertFalse(WorldCutPulse.due(95));
+      assertTrue(WorldCutPulse.due(96));
+      assertFalse(WorldCutPulse.due(97));
+      assertFalse(WorldCutPulse.due(145));
+      assertTrue(WorldCutPulse.due(146));
+      assertEquals(-1,WorldCutPulse.age(95.9));
+      assertEquals(0,WorldCutPulse.age(96.5));
+      assertEquals(5,WorldCutPulse.age(101.5));
+      assertEquals(1F,WorldCutPulse.strength(96),1E-6);
+      assertTrue(WorldCutPulse.strength(106)<.4F);
+      assertEquals(0F,WorldCutPulse.strength(120),1E-6);
+      assertEquals(0F,WorldCutPulse.shake(124),1E-6);
+      assertTrue(WorldCutPulse.shake(96)>2F);
+   }
+   @Test void bladeAndImpactAccentsStayOnTheirSideOfBlast() {
+      assertFalse(WorldCutScene.bladeDue(7.9));
+      assertTrue(WorldCutScene.bladeDue(8));
+      assertTrue(WorldCutScene.bladeDue(79.9));
+      assertFalse(WorldCutScene.bladeDue(80));
+      assertFalse(WorldCutScene.impactDue(79.9));
+      assertTrue(WorldCutScene.impactDue(80));
+      assertTrue(WorldCutScene.impactDue(200));
+   }
+   @Test void doneBetweenBeatsFinishesOnlyTheAcceptedImpulse() {
+      double inf=Double.POSITIVE_INFINITY;
+      assertEquals(0,WorldCutPulse.age(96.5,inf));
+      assertEquals(4,WorldCutPulse.age(150.5,inf));
+      // DONE at 148 accepts the 146 beat and lets it finish; the 196 beat never starts.
+      double done=147.0;
+      assertEquals(2,WorldCutPulse.age(148.5,done));
+      assertEquals(10,WorldCutPulse.age(156.5,done));
+      assertEquals(-1,WorldCutPulse.age(171.0,done));
+      assertEquals(-1,WorldCutPulse.age(196.5,done));
+      assertFalse(WorldCutPulse.due(196,done));
+      assertEquals(0F,WorldCutPulse.strength(196.5,done),1E-6);
+      assertEquals(0F,WorldCutPulse.shake(196.5,done),1E-6);
+      assertTrue(WorldCutPulse.strength(148.5,done)>0F);
+      // DONE at 145 rejects both the next beat and an already-finished 96 beat.
+      assertEquals(-1,WorldCutPulse.age(145.5,144.0));
+      assertEquals(-1,WorldCutPulse.age(146.5,144.0));
+      assertEquals(-1,WorldCutPulse.age(196.5,144.0));
+      assertFalse(WorldCutPulse.due(146,144.0));
+   }
 }
