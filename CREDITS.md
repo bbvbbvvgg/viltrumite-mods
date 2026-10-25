@@ -34,6 +34,12 @@ The Codex-Superheroes JARVIS voice lines are no longer used (muted with the othe
 The raw archive `IronMan_Hulkbuster_models.zip` is not committed. Only converted files that the mod uses are committed.
 
 
+## Roundabout — The Hand erasure shader
+
+- Authors: Hydraheads and the Roundabout contributors (Roundabout, the JoJo mod, https://github.com/Hydraheads/RoundaboutMod). Source: archive `TheHand-source-da2326bd5.zip` from the repository owner (SHA-256 `a600d0e2c429a625cfb4082f8df05b928a94e37a977421d9f6fb9f94e8ad72c3`).
+- License: Roundabout License v1.2 — modification and redistribution allowed with credit; ownership is not claimed. Text: `docs/licenses/roundabout/LICENSE.txt`.
+- Used: `thehand_erasure.vsh/.fsh/.json` (GLSL as authored; only addition is the `Scale` uniform) and ports of `TheHandErasureRenderer` (draw passes, ring mesh, timeline) and `TheHandErasureStyle` (colours) in `client/render/erasure/`. Not used: stand, palm source, stopped time, sandbox clock, timing readout, mixin callbacks.
+
 ## Reinhard van Astrea
 
 Standalone core JARs carry this maintained document at `META-INF/credits/reinhard-credits.md` and the provenance table at `META-INF/credits/reinhard-sources.md`. The mod metadata credits points to these audio-license exceptions. The code license does not override the individual CC-BY/CC0 audio licenses.
