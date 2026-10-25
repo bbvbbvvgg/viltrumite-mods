@@ -1,7 +1,12 @@
 """Run from repository root: python3 -m unittest discover -s tools/sfx/tests -v."""
+import array
+import base64
 import importlib.util
 import math
 from pathlib import Path
+import shutil
+import subprocess
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -77,6 +82,55 @@ class WorldCutAudioTest(unittest.TestCase):
         mod = self.module()
         with self.assertRaisesRegex(ValueError, 'does not contain the two-second seed'):
             mod.build_loop([0.0] * 1000)
+
+    @staticmethod
+    def wrap_loop(n, step=0.0):
+        """Whole-period loop of n samples; `step` lifts the last tenth into a wrap click."""
+        return [0.3 * math.sin(2 * math.pi * 100 * i / n) + 0.2 * math.sin(2 * math.pi * 37 * i / n)
+                + (step if i > n * .9 else 0.0) for i in range(n)]
+
+    def test_seam_gate_rejects_a_wrap_click(self):
+        mod = self.module()
+        smooth = self.wrap_loop(65536)
+        delta, ratio = mod.check_seam('smooth', smooth)
+        self.assertLess(delta, mod.SEAM_MAX_DELTA)
+        self.assertLess(ratio, mod.SEAM_MAX_RATIO)
+        with self.assertRaisesRegex(ValueError, 'Decoded loop seam fails'):
+            mod.check_seam('click', self.wrap_loop(65536, step=.05))
+
+    def encode(self, mod, samples, path):
+        raw = path.with_suffix('.f32')
+        raw.write_bytes(array.array('f', samples).tobytes())
+        mod.run('ffmpeg', '-v', 'error', '-nostdin', '-y', '-f', 'f32le', '-ar', str(mod.RATE), '-ac', '1',
+                '-i', str(raw), '-c:a', 'libvorbis', '-q:a', '5', '-map_metadata', '-1', str(path))
+
+    @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'), 'needs ffmpeg/ffprobe')
+    def test_inspect_enforces_the_seam_on_the_decoded_vorbis(self):
+        mod = self.module()
+        with tempfile.TemporaryDirectory() as td:
+            for name, step in (('smooth', 0.0), ('click', .25)):
+                path = Path(td) / (name + '.ogg')
+                self.encode(mod, self.wrap_loop(65536, step), path)
+                recipe = dict(duration=65536 / mod.RATE, loop=True,
+                              target=float(mod.measure(path, -12.6)['input_i']))
+                if step:
+                    with self.assertRaisesRegex(ValueError, 'Decoded loop seam fails'):
+                        mod.inspect(path, recipe)
+                else:
+                    out = mod.inspect(path, recipe)
+                    self.assertLess(out['seam_delta'], mod.SEAM_MAX_DELTA)
+                    self.assertLess(out['seam_ratio'], mod.SEAM_MAX_RATIO)
+
+    @unittest.skipUnless(shutil.which('ffmpeg'), 'needs ffmpeg')
+    def test_committed_hum_passes_the_decoded_seam_gate(self):
+        mod = self.module()
+        encoded = mod.OUT / 'world_cut_hum.ogg.b64'
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / 'world_cut_hum.ogg'
+            path.write_bytes(base64.b64decode(''.join(encoded.read_text().split()), validate=True))
+            delta, ratio = mod.check_seam(path, mod.read_pcm(path, 0))
+        self.assertLess(delta, mod.SEAM_MAX_DELTA)
+        self.assertLess(ratio, mod.SEAM_MAX_RATIO)
 
     def test_smoothing_keeps_the_circular_length(self):
         mod = self.module()
