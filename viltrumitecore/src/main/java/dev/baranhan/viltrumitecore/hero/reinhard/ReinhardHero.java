@@ -199,10 +199,17 @@ public final class ReinhardHero implements HeroDefinition {
       if (player == null || !player.isAlive() || player.isSpectator() || !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()) return false;
       ReinhardMode mode = ReinhardMode.values()[ReinhardFlags.mode(flags(player))];
       if (mode == ReinhardMode.HOLY_SWORD) return false;
+      // canHarmPlayer checks teams only on the client; the server's pvp switch is mirrored by ServerRules.
       var target = ReinhardTargets.lookTarget(player, ReinhardRules.GRAB_REACH, e -> e.isAlive() && !player.isAlliedTo(e)
-         && !e.isAlliedTo(player) && (!(e instanceof Player other) || !other.isCreative() && player.canHarmPlayer(other)));
+         && !e.isAlliedTo(player) && (!(e instanceof Player other) || grabsPlayer(other.isCreative(),
+            dev.baranhan.viltrumitecore.hero.ServerRules.pvp(player), player.canHarmPlayer(other))));
       return target != null && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(target, ControlKind.PULL)
          && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsImpulse(target);
+   }
+
+   /** Pure: a player target is grabbable only when the server allows PvP and teams allow the harm. */
+   static boolean grabsPlayer(boolean creative, boolean pvp, boolean canHarm) {
+      return !creative && pvp && canHarm;
    }
 
    /** Pure input policy shared by local claims and authoritative server claims. */

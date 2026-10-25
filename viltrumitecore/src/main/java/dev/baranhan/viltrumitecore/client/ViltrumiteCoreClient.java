@@ -337,6 +337,7 @@ public class ViltrumiteCoreClient {
       @SubscribeEvent
       public static void onLoggingOut(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
          HERO_KEYS.clear();
+         dev.baranhan.viltrumitecore.hero.ServerRules.reset();
       }
 
       @SubscribeEvent

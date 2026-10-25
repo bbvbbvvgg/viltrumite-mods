@@ -14,7 +14,7 @@ class ReinhardReleaseTest {
    }
    @Test void snapshotCapacityUpgradeRejectsOldNetworkPeers() throws Exception {
       String source = Files.readString(Path.of("../viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));
-      assertTrue(source.contains("PROTOCOL_VERSION = \"4\""));
+      assertTrue(source.contains("PROTOCOL_VERSION = \"5\""));
       assertTrue(source.contains("networkProtocolVersion(() -> PROTOCOL_VERSION)"));
       assertTrue(source.contains("clientAcceptedVersions(PROTOCOL_VERSION::equals)"));
       assertTrue(source.contains("serverAcceptedVersions(PROTOCOL_VERSION::equals)"));

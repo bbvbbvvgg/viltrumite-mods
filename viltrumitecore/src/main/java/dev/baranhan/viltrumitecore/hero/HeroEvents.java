@@ -242,6 +242,8 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
       if (event.getEntity() instanceof ServerPlayer player) {
+         dev.baranhan.viltrumitecore.network.CoreMessages.sendToPlayer(
+            new dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket(player.server.isPvpAllowed()), player);
          HeroControlSync.sendBaseline(player);
          ControlManager.restorePendingTarget(player);
          HeroFlightGrant.sync(player);
