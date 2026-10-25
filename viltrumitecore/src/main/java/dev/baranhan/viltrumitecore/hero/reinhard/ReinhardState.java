@@ -26,6 +26,17 @@ public final class ReinhardState {
    public int parryTicks;
    public final dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowCapture arrowCapture = new dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowCapture();
    public final dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction defense = new dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction();
+   /** Last parry contact burst (game tick, attacker id); transient. */
+   private long parryFxTick = Long.MIN_VALUE;
+   private int parryFxAttacker = -1;
+
+   /** Every parried hit shows its contact burst; repeated hurt calls of one attacker in one tick share it. */
+   public boolean parryFx(long gameTime, int attackerId) {
+      if (gameTime == this.parryFxTick && attackerId == this.parryFxAttacker) return false;
+      this.parryFxTick = gameTime;
+      this.parryFxAttacker = attackerId;
+      return true;
+   }
    /** Wind Reading (spec §4.5): players who hit him → game time of the hit; transient. */
    public final java.util.Map<java.util.UUID, Long> recentAttackers = new java.util.HashMap<>();
    /** Stage 3: the one action timeline (ability, elapsed, length, target, phase); transient. */
