@@ -74,6 +74,19 @@ public final class HeroEvents {
       }
    }
 
+   /**
+    * World Pause overlay (server): a paused hostile held by a foreign control does
+    * not act or move until the pause ends; the foreign control is left intact.
+    */
+   @SubscribeEvent
+   public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
+      LivingEntity entity = event.getEntity();
+      if (!entity.level().isClientSide() && dev.baranhan.viltrumitecore.hero.control.WorldPause.suspendsMob(entity)) {
+         entity.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+         event.setCanceled(true);
+      }
+   }
+
    @SubscribeEvent
    public static void onPlayerDeath(LivingDeathEvent event) {
       LivingEntity entity = event.getEntity();
