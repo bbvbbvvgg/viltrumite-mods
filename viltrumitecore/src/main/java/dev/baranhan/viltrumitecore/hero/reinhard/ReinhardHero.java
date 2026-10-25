@@ -368,10 +368,15 @@ public final class ReinhardHero implements HeroDefinition {
       return Detox.blocks(effect);
    }
 
-   /** Fresh body after death or the End return: enter() is not called there. */
+   /**
+    * Fresh body after death or the End return: enter() is not called there. Only the
+    * chassis modifier comes back; health is not touched. A death respawn already starts
+    * at the vanilla maximum (the chassis has no max-health modifier) and the End return
+    * keeps the wounded body's health, so the exit portal is no full heal.
+    */
    @Override
    public void onRespawn(ServerPlayer player) {
-      applyChassis(player);
+      respawn(chassisBody(player));
    }
 
    /** Cloudy Sky (spec §4.4): five air steps (both sides). */
@@ -642,14 +647,57 @@ public final class ReinhardHero implements HeroDefinition {
       return true;
    }
 
-   /** Base max health stays vanilla 20 (no modifier); knockback resistance 100 %; start full. */
+   /** The chassis side of a body (an adapter over ServerPlayer; a fake in tests). */
+   interface ChassisBody {
+      @javax.annotation.Nullable
+      AttributeInstance knockback();
+
+      float maxHealth();
+
+      void setHealth(float health);
+   }
+
+   private static ChassisBody chassisBody(ServerPlayer player) {
+      return new ChassisBody() {
+         @Override
+         public AttributeInstance knockback() {
+            return player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+         }
+
+         @Override
+         public float maxHealth() {
+            return player.getMaxHealth();
+         }
+
+         @Override
+         public void setHealth(float health) {
+            player.setHealth(health);
+         }
+      };
+   }
+
+   /** Becoming Reinhard: the chassis and a full start. */
    private static void applyChassis(ServerPlayer player) {
-      AttributeInstance knockback = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+      become(chassisBody(player));
+   }
+
+   /** Becoming Reinhard: base max health stays vanilla 20 (no modifier), knockback resistance 100 %, start full. */
+   static void become(ChassisBody body) {
+      restoreChassis(body);
+      body.setHealth(body.maxHealth());
+   }
+
+   /** A respawned body (death, End return): the chassis modifier only, health stays as vanilla left it. */
+   static void respawn(ChassisBody body) {
+      restoreChassis(body);
+   }
+
+   /** Idempotent, never heals. */
+   private static void restoreChassis(ChassisBody body) {
+      AttributeInstance knockback = body.knockback();
       if (knockback != null) {
          applyKnockbackResistance(knockback);
       }
-
-      player.setHealth(player.getMaxHealth());
    }
 
    /** Idempotent: exactly one chassis modifier afterwards. */

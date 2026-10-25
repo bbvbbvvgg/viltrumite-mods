@@ -55,6 +55,49 @@ class ReinhardHeroTest {
       assertEquals(ReinhardRules.KNOCKBACK_RESISTANCE, knockback.getValue(), 1.0E-9);
    }
 
+   /** A fake body: 20 max health, a knockback attribute, every setHealth recorded. */
+   private static final class Body implements ReinhardHero.ChassisBody {
+      final AttributeInstance knockback = new AttributeInstance(new RangedAttribute("test.knockback_resistance", 0.0, 0.0, 1.0), instance -> {
+      });
+      float health;
+
+      Body(float health) {
+         this.health = health;
+      }
+
+      @Override
+      public AttributeInstance knockback() {
+         return knockback;
+      }
+
+      @Override
+      public float maxHealth() {
+         return ReinhardRules.MAX_HEALTH;
+      }
+
+      @Override
+      public void setHealth(float health) {
+         this.health = health;
+      }
+   }
+
+   @Test
+   void respawnRestoresTheChassisWithoutHealing() {
+      // The End return keeps the wounded body's health: the exit portal must not heal.
+      Body body = new Body(7.0F);
+      ReinhardHero.respawn(body);
+      assertEquals(7.0F, body.health);
+      assertEquals(ReinhardRules.KNOCKBACK_RESISTANCE, body.knockback.getValue(), 1.0E-9);
+   }
+
+   @Test
+   void becomingReinhardStartsFull() {
+      Body body = new Body(7.0F);
+      ReinhardHero.become(body);
+      assertEquals(ReinhardRules.MAX_HEALTH, body.health);
+      assertEquals(ReinhardRules.KNOCKBACK_RESISTANCE, body.knockback.getValue(), 1.0E-9);
+   }
+
    @Test
    void cleanupRemovesChassis() {
       AttributeInstance knockback = new AttributeInstance(new RangedAttribute("test.knockback_resistance", 0.0, 0.0, 1.0), instance -> {
