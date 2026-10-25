@@ -146,6 +146,17 @@ public final class ReinhardHero implements HeroDefinition {
    }
 
    @Override
+   public String[][] previousDefaultLoadouts() {
+      return ReinhardAbilities.PREVIOUS_DEFAULTS;
+   }
+
+   /** Retired ids (merged keys, LMB/RMB, automatic defense) keep the rest of a custom layout. */
+   @Override
+   public String[] migrateLoadout(String[] slots) {
+      return ReinhardAbilities.migrate(slots);
+   }
+
+   @Override
    public String[] heroInputSlots() {
       return ReinhardAbilities.inputSlots();
    }

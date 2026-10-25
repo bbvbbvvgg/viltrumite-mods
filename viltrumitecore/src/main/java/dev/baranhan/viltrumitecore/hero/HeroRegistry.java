@@ -199,9 +199,11 @@ public final class HeroRegistry {
    }
 
    /**
-    * Repair the slots after login / a repeated choice: a slot holding an ability
-    * the current hero does not own (e.g. a migrated Viltrumite save) resets the
-    * whole loadout to the hero's default. Otherwise default abilities the hero
+    * Repair the slots after login / a repeated choice: retired ids are first
+    * mapped by {@link HeroDefinition#migrateLoadout}; a slot still holding an
+    * ability the current hero does not own (e.g. a migrated Viltrumite save)
+    * resets the whole loadout to the hero's default, as does an untouched
+    * former default. Otherwise default abilities the hero
     * never gave this player (added by a later version) are filled in once; an
     * ability the player removed stays removed.
     */
@@ -216,10 +218,19 @@ public final class HeroRegistry {
          slots[slot] = abilityUser.getAbilityInSlot(slot);
       }
 
-      if (needsLoadoutReset(slots, hero::ownsAbility) || isPreviousDefault(slots, hero.previousDefaultLoadouts())) {
+      String[] repaired = repairedSlots(slots, hero);
+      if (repaired == null) {
          resetLoadout(player);
          return;
       }
+
+      for (int slot = 0; slot < 18; slot++) {
+         if (!java.util.Objects.equals(repaired[slot], slots[slot])) {
+            abilityUser.setAbilityInSlot(slot, repaired[slot]);
+         }
+      }
+
+      slots = repaired;
 
       String[] defaults = hero.defaultLoadout();
       // A save from before the offered set: what is in the slots counts as given.
@@ -238,6 +249,26 @@ public final class HeroRegistry {
       java.util.Set<String> given = new java.util.LinkedHashSet<>(offered);
       given.addAll(defaultIds(defaults));
       abilityUser.setOfferedAbilities(given);
+   }
+
+   /**
+    * Pure: the saved slots after the hero's id migration, or null when the whole
+    * loadout resets to the default (an untouched former default, or an id the
+    * hero does not own even after the migration).
+    */
+   @javax.annotation.Nullable
+   public static String[] repairedSlots(String[] slots, HeroDefinition hero) {
+      if (isPreviousDefault(slots, hero.previousDefaultLoadouts())) {
+         return null;
+      }
+
+      String[] normalized = new String[slots.length];
+      for (int i = 0; i < slots.length; i++) {
+         normalized[i] = slots[i] == null ? "" : slots[i];
+      }
+
+      String[] migrated = hero.migrateLoadout(normalized);
+      return needsLoadoutReset(migrated, hero::ownsAbility) ? null : migrated;
    }
 
    /** Non-empty ids of a slot array. */

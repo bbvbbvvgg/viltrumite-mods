@@ -27,7 +27,85 @@ public final class ReinhardAbilities {
       "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
    };
 
+   /**
+    * Former shipped defaults (stage 6 before the quality rework, the rework, and
+    * the Diagonal World Cut slot). An untouched one moves to {@link #LOADOUT}.
+    */
+   static final String[][] PREVIOUS_DEFAULTS = {
+      {"reinhard:light_punch", "reinhard:step_dash", "reinhard:catch", "", "", "",
+         "reinhard:fist_combo", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
+         "reinhard:reid", CHOP, "reinhard:sheath_strike", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"},
+      {"", "reinhard:step_dash", "reinhard:catch", "", "", "",
+         "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
+         "reinhard:reid", CHOP, "reinhard:sheath_strike", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"},
+      {"", "reinhard:step_dash", "reinhard:catch", "", "", "",
+         "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
+         "reinhard:reid", CHOP, "reinhard:diagonal_world_cut", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"}
+   };
+
+   /**
+    * Loadout ids retired by the combat rework and what replaced them: Dash Behind,
+    * Stomp and Diagonal World Cut became variants of the merged keys; the others
+    * moved to LMB/RMB or the automatic defense ("" = the slot empties).
+    */
+   private static final java.util.Map<String, String> RETIRED = java.util.Map.of(
+      "reinhard:dash_behind", "reinhard:step_dash",
+      "reinhard:stomp", "reinhard:sky_kick",
+      "reinhard:diagonal_world_cut", "reinhard:world_cut",
+      "reinhard:light_punch", "",
+      "reinhard:fist_combo", "",
+      "reinhard:catch", "",
+      "reinhard:reflect", "",
+      "reinhard:grab_throw", "",
+      "reinhard:sheath_strike", "");
+
    private ReinhardAbilities() {
+   }
+
+   /**
+    * Pure: a saved loadout with every retired id replaced, page by page (6 slots).
+    * The successor takes the retired slot unless the page already holds it; a
+    * freed slot then takes this version's default for that slot when the page
+    * lacks that id. Every other slot stays where the player put it.
+    */
+   public static String[] migrate(String[] slots) {
+      String[] out = new String[slots.length];
+      for (int i = 0; i < slots.length; i++) {
+         out[i] = slots[i] == null ? "" : slots[i];
+      }
+
+      for (int from = 0; from < out.length; from += 6) {
+         int to = Math.min(out.length, from + 6);
+         boolean[] freed = new boolean[to - from];
+         for (int i = from; i < to; i++) {
+            String next = RETIRED.get(out[i]);
+            if (next == null) {
+               continue;
+            }
+
+            out[i] = next.isEmpty() || onPage(out, from, to, next) ? "" : next;
+            freed[i - from] = out[i].isEmpty();
+         }
+
+         for (int i = from; i < to; i++) {
+            String id = i < LOADOUT.length && shipped(LOADOUT[i]) ? LOADOUT[i] : "";
+            if (freed[i - from] && !id.isEmpty() && !onPage(out, from, to, id)) {
+               out[i] = id;
+            }
+         }
+      }
+
+      return out;
+   }
+
+   private static boolean onPage(String[] slots, int from, int to, String id) {
+      for (int i = from; i < to; i++) {
+         if (id.equals(slots[i])) {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    @Nullable

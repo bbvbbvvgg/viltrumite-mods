@@ -145,6 +145,17 @@ public interface HeroDefinition {
       return new String[0][];
    }
 
+   /**
+    * Maps retired or merged ability ids of a saved loadout (18 slots, "" for
+    * empty) to their successors before the ownership check, so a customized
+    * layout keeps its other slots instead of resetting to the default. Returns
+    * the migrated slots (the argument may be changed and returned). Default:
+    * nothing retired.
+    */
+   default String[] migrateLoadout(String[] slots) {
+      return slots;
+   }
+
    /** May this target be placed under the given control kind right now. */
    boolean allowsExternalControl(LivingEntity target, ControlKind kind);
 
