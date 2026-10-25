@@ -63,6 +63,11 @@ public final class SoundDuck {
       this.entries.clear();
    }
 
+   /** Is the owner's duck still registered (a level change clears every entry). */
+   public boolean holds(Object owner) {
+      return this.entries.containsKey(owner);
+   }
+
    public boolean active() {
       return !this.entries.isEmpty();
    }
