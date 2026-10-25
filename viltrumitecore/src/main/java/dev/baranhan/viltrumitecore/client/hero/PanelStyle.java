@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.client.hero;
 
+import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * Look of the ability panel (ViltrumiteInGameHudMixin). The layout (six
@@ -23,6 +25,13 @@ public interface PanelStyle {
 
    /** Page number colour (RGB). */
    int accentColor();
+
+   /**
+    * Hero HUD next to the panel (mode icons, timers), drawn after both bars.
+    * Draws only outside the fixed layout; default: nothing.
+    */
+   default void drawAttachments(GuiGraphics graphics, Bounds abilityBar, Player player, HeroPublicSnapshot snapshot) {
+   }
 
    record Bounds(int x, int y, int width, int height) {
    }

@@ -42,6 +42,16 @@ public class RegulusHero implements HeroDefinition {
       return null;
    }
 
+   /** Lion's Heart is absolute invulnerability (spec Reinhard §3.3). */
+   @Override
+   public boolean isAbsolutelyInvulnerable(Player self) {
+      return absolutelyInvulnerable(stateOf(self));
+   }
+
+   public static boolean absolutelyInvulnerable(@Nullable RegulusState state) {
+      return state != null && state.lionActive;
+   }
+
    public static RegulusState ensureState(Player player) {
       HeroPlayer heroPlayer = (HeroPlayer)player;
       Object state = heroPlayer.viltrumitecore$getHeroState();

@@ -177,6 +177,22 @@ public interface HeroDefinition {
       return false;
    }
 
+   /**
+    * A divine being (spec: Reinhard §3.3): only divine damage hurts it in
+    * full, and execute-style powers skip it. See {@link DivineTargets}. Default false.
+    */
+   default boolean isDivine(Player self) {
+      return false;
+   }
+
+   /**
+    * Absolute invulnerability right now (Regulus' Lion's Heart). Not the same
+    * as divinity: execute-style powers stop at it. Default false.
+    */
+   default boolean isAbsolutelyInvulnerable(Player self) {
+      return false;
+   }
+
    /** Hidden from target-acquiring senses (Homelander focus skips this player). Server side. */
    default boolean hiddenFromFocus(Player self) {
       return false;
@@ -235,9 +251,27 @@ public interface HeroDefinition {
       return afterArmor;
    }
 
+   /**
+    * Server: HP loss from a source that bypasses invulnerability (void,
+    * {@code generic_kill}), which skips absorbIncoming and clampFinalDamage.
+    * Runs in LivingDamageEvent and on the clean path, never inside an
+    * {@link AdminKill} scope ({@code /kill}). Default: unchanged.
+    */
+   default float clampUnblockableDamage(ServerPlayer self, net.minecraft.world.damagesource.DamageSource source, float amount) {
+      return amount;
+   }
+
    /** Server, LivingHurtEvent: damage this hero deals to {@code target} (multipliers). */
    default float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, net.minecraft.world.damagesource.DamageSource source, float amount) {
       return amount;
+   }
+
+   /**
+    * Server: the player respawned as a fresh body (PlayerRespawnEvent, also the
+    * End-portal return). {@code restoreHero()} on clone skips {@link #enter},
+    * so a hero re-applies its chassis here. Must be idempotent. Default: nothing.
+    */
+   default void onRespawn(ServerPlayer player) {
    }
 
    /** Server: the player changed dimension (no full cleanup; stop channels if needed). */

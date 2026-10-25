@@ -161,4 +161,60 @@ class HeroDamageLayersTest {
       assertFalse(HeroDamageLayers.inInvulnerabilityFrames(15, 4.0F, 5.0F));
       assertFalse(HeroDamageLayers.inInvulnerabilityFrames(10, 6.0F, 5.0F));
    }
+
+   /** Fake hero with an unblockable HP floor (Reinhard-like); counts hook calls. */
+   private static final class FloorHero implements HeroDamageLayers.Target {
+      final float health;
+      int unblockableCalls;
+
+      FloorHero(float health) {
+         this.health = health;
+      }
+
+      @Override
+      public DamageAbsorb absorbIncoming(float raw) {
+         return DamageAbsorb.PASS;
+      }
+
+      @Override
+      public float clampFinalDamage(float afterArmor) {
+         return afterArmor;
+      }
+
+      @Override
+      public float clampUnblockable(float amount) {
+         this.unblockableCalls++;
+         return Math.max(0.0F, Math.min(amount, this.health - 1.0F));
+      }
+   }
+
+   @Test
+   void unblockableDefaultUnchanged() {
+      assertEquals(50.0F, HeroDamageLayers.finalDamage(HeroDamageLayers.NO_LAYERS, true, false, 50.0F), EPS);
+      assertEquals(Float.MAX_VALUE, HeroDamageLayers.finalDamage(HeroDamageLayers.NO_LAYERS, true, false, Float.MAX_VALUE), EPS);
+      assertEquals(50.0F, HeroDamageLayers.clean(HeroDamageLayers.NO_LAYERS, HeroDamageLayers.NO_ATTACKER, true, false, 50.0F), EPS);
+   }
+
+   @Test
+   void unblockableHookFloors() {
+      FloorHero hero = new FloorHero(20.0F);
+      assertEquals(19.0F, HeroDamageLayers.finalDamage(hero, true, false, Float.MAX_VALUE), EPS);
+      assertEquals(19.0F, HeroDamageLayers.clean(hero, HeroDamageLayers.NO_ATTACKER, true, false, 4000.0F), EPS);
+      assertEquals(2, hero.unblockableCalls);
+   }
+
+   @Test
+   void adminKillSkipsHook() {
+      FloorHero hero = new FloorHero(20.0F);
+      assertEquals(Float.MAX_VALUE, HeroDamageLayers.finalDamage(hero, true, true, Float.MAX_VALUE), EPS);
+      assertEquals(4000.0F, HeroDamageLayers.clean(hero, HeroDamageLayers.NO_ATTACKER, true, true, 4000.0F), EPS);
+      assertEquals(0, hero.unblockableCalls);
+   }
+
+   @Test
+   void nonBypassPathIgnoresUnblockableHook() {
+      FloorHero hero = new FloorHero(20.0F);
+      assertEquals(30.0F, HeroDamageLayers.finalDamage(hero, false, false, 30.0F), EPS);
+      assertEquals(0, hero.unblockableCalls);
+   }
 }

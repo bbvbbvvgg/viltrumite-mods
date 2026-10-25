@@ -39,11 +39,11 @@ See the overview. Stage-specific:
 - Produces: `HeroId.REINHARD`; `ReinhardHero implements HeroDefinition` with `INSTANCE` declared after its static fields; `allowsFlight`/`grantsFlightAbility`/`allowsLegacyAbilities` false; `hasAbilityPanel` true; `allowsAbilityPages` false; `allowsExternalControl(target, kind)` = true for every kind (spec gives no immunity to control; knockback is handled by the attribute in Task 3).
 - Lang: `hero.viltrumitecore.reinhard` = "Reinhard van Astrea", `gui.viltrumitecore.race_selection.become_reinhard` = "Become Reinhard" (locales without a translation get the English text).
 
-- [ ] **Step 1: Write the failing tests** — `reinhardIsLastOrdinal` (`HeroId.values()[length-1] == REINHARD`), `fromKeyReinhard` (`fromKey("reinhard") == REINHARD`), `legacySetKeepsReinhard` (`legacySet(REINHARD, true) == REINHARD`), `noKitNoFlight` (`allowsLegacyAbilities`, `allowsFlight`, `grantsFlightAbility` all false for a null-safe stub player), `registered` (`HeroRegistry.get(REINHARD)` is `ReinhardHero.INSTANCE`).
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*Reinhard*' --tests '*HeroIdMigration*' --no-daemon` → FAIL (`REINHARD` not defined).
-- [ ] **Step 3: Implement** the enum value, the skeleton (empty `tick`, `handleInput`, `enter`, `cleanup`; `snapshot` returns `HeroPublicSnapshot.EMPTY` with `heroId` REINHARD), registration, race button and lang in all 11 locales; update `NoHeroBranchTest` patterns.
-- [ ] **Step 4: Run** the tests → PASS; `./gradlew build --no-daemon` green; `NoHeroBranchTest` green.
-- [ ] **Step 5: Commit** `feat(reinhard): hero id, skeleton and race button`.
+- [x] **Step 1: Write the failing tests** — `reinhardIsLastOrdinal` (`HeroId.values()[length-1] == REINHARD`), `fromKeyReinhard` (`fromKey("reinhard") == REINHARD`), `legacySetKeepsReinhard` (`legacySet(REINHARD, true) == REINHARD`), `noKitNoFlight` (`allowsLegacyAbilities`, `allowsFlight`, `grantsFlightAbility` all false for a null-safe stub player), `registered` (`HeroRegistry.get(REINHARD)` is `ReinhardHero.INSTANCE`).
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*Reinhard*' --tests '*HeroIdMigration*' --no-daemon` → FAIL (`REINHARD` not defined).
+- [x] **Step 3: Implement** the enum value, the skeleton (empty `tick`, `handleInput`, `enter`, `cleanup`; `snapshot` returns `HeroPublicSnapshot.EMPTY` with `heroId` REINHARD), registration, race button and lang in all 11 locales; update `NoHeroBranchTest` patterns.
+- [x] **Step 4: Run** the tests → PASS; `./gradlew build --no-daemon` green; `NoHeroBranchTest` green.
+- [x] **Step 5: Commit** `feat(reinhard): hero id, skeleton and race button`.
 
 ### Task 2: Rules, mode, flags, state
 
@@ -58,11 +58,11 @@ See the overview. Stage-specific:
 - Snapshot indexes (constants in `ReinhardFlags`): `EXTRA_MODE_CD = 14`, `EXTRA_PHOENIX = 15`; ability cooldowns at `ReinhardAbility.ordinal()` (0–13, Task 7).
 - `ReinhardState`: `ReinhardMode mode`, `int modeCooldown`, `int regenTicks`, `int[] cooldowns` (length 14), `void tick()` (counts down), `save/load(CompoundTag)` under key `Reinhard` (`Mode` string, `ModeCd`, `Cooldowns` int array). `of(Player)` / `ensure(Player)` through `HeroPlayer.viltrumitecore$getHeroState` like `HomelanderState`.
 
-- [ ] **Step 1: Write the failing tests** — `resistLeavesOneThousandth` (`resist(1000) == 1.0f ± 1e-4`), `floorKeepsOneHp` (`floor(20, 50) == 19`), `floorAtOneHpIsZero` (`floor(1, 5) == 0`), `floorHandlesMaxValue` (`floor(20, Float.MAX_VALUE) == 19`, `floor(20, NaN) == 0`), `modeCycles` (R→K→H→R), `modeKeyRoundTrip`, `unknownModeKeyIsRestrained`, `flagsDoNotOverlap`, `withModeKeepsOtherBits`, `stateSaveLoadRoundTrip`, `cooldownsTickDown`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** the four classes with the values above.
-- [ ] **Step 4: Run** → PASS.
-- [ ] **Step 5: Commit** `feat(reinhard): rules, modes, flags and state`.
+- [x] **Step 1: Write the failing tests** — `resistLeavesOneThousandth` (`resist(1000) == 1.0f ± 1e-4`), `floorKeepsOneHp` (`floor(20, 50) == 19`), `floorAtOneHpIsZero` (`floor(1, 5) == 0`), `floorHandlesMaxValue` (`floor(20, Float.MAX_VALUE) == 19`, `floor(20, NaN) == 0`), `modeCycles` (R→K→H→R), `modeKeyRoundTrip`, `unknownModeKeyIsRestrained`, `flagsDoNotOverlap`, `withModeKeepsOtherBits`, `stateSaveLoadRoundTrip`, `cooldownsTickDown`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** the four classes with the values above.
+- [x] **Step 4: Run** → PASS.
+- [x] **Step 5: Commit** `feat(reinhard): rules, modes, flags and state`.
 
 ### Task 3: Chassis — HP, 99.9% resist, 1 HP floor, regen, knockback, fall
 
@@ -79,11 +79,11 @@ See the overview. Stage-specific:
 - `tick`: `regenTicks++`; every `REGEN_INTERVAL` → `heal(REGEN_PER_SECOND)` when below max.
 - `cancelsFallDamage` = true.
 
-- [ ] **Step 1: Write the failing tests** (pure pipeline with a fake `Target` built from `ReinhardHero`'s two methods, the same harness as `HeroDamageLayersTest`): `swordHitLosesOneThousandth` (raw 10 → passOn 0.01), `percentDamageAlsoResisted` (raw = 50% of 20 → 0.01), `cleanPathResistedAndFloored` (`HeroDamageLayers.clean(target, NO_ATTACKER, false, 1e6f)` at health 1.5 → 0.5), `floorNeverBelowOne`, `divinePassesUnchanged` (divine flag → passOn raw, clamp raw), `HeroRespawnHookTest.defaultIsNoOp` (other heroes unchanged), `ReinhardHeroTest.respawnReappliesKnockbackOnce` (call `onRespawn` twice on a fresh fake attribute map → exactly one modifier).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** the hooks, regen and modifier.
-- [ ] **Step 4: Run** → PASS. Manual (dev client, survival): zombie, sword from a second player (LAN), Iron Man Unibeam, `/damage @s 1000` — HP drops ≤ 0.1% per hit and never below 1; regen visible 1 HP/s; fall from 100 blocks — no damage; zombie hit — no knockback; die and respawn — still no knockback, `/attribute @s minecraft:generic.knockback_resistance get` = 1.
-- [ ] **Step 5: Commit** `feat(reinhard): chassis with resist, hp floor and regen`.
+- [x] **Step 1: Write the failing tests** (pure pipeline with a fake `Target` built from `ReinhardHero`'s two methods, the same harness as `HeroDamageLayersTest`): `swordHitLosesOneThousandth` (raw 10 → passOn 0.01), `percentDamageAlsoResisted` (raw = 50% of 20 → 0.01), `cleanPathResistedAndFloored` (`HeroDamageLayers.clean(target, NO_ATTACKER, false, 1e6f)` at health 1.5 → 0.5), `floorNeverBelowOne`, `divinePassesUnchanged` (divine flag → passOn raw, clamp raw), `HeroRespawnHookTest.defaultIsNoOp` (other heroes unchanged), `ReinhardHeroTest.respawnReappliesKnockbackOnce` (call `onRespawn` twice on a fresh fake attribute map → exactly one modifier).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** the hooks, regen and modifier.
+- [x] **Step 4: Run** → PASS. Manual (dev client, survival): zombie, sword from a second player (LAN), Iron Man Unibeam, `/damage @s 1000` — HP drops ≤ 0.1% per hit and never below 1; regen visible 1 HP/s; fall from 100 blocks — no damage; zombie hit — no knockback; die and respawn — still no knockback, `/attribute @s minecraft:generic.knockback_resistance get` = 1.
+- [x] **Step 5: Commit** `feat(reinhard): chassis with resist, hp floor and regen`.
 
 ### Task 4: Unblockable seam, `/kill` scope, void rescue
 
@@ -102,11 +102,11 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `ReinhardHero.clampUnblockableDamage` = `ReinhardRules.floor(health, amount)`.
 - `VoidRescue`: `static OptionalInt surfaceY(int minY, int maxY, IntPredicate solidAt)` (pure, top-down scan of one column); `static BlockPos target(ServerLevel, BlockPos fallXZ)`: the column above the fall point; if empty, the nearest column with a top block within `ReinhardRules.VOID_SEARCH_RADIUS = 64` (spiral, step 4); if none, the level's spawn (End: the obsidian platform `ServerLevel.END_SPAWN_POINT`). `ReinhardHero.tick`: `y < level.getMinBuildHeight() - ReinhardRules.VOID_RESCUE_DEPTH (= 8)` → `teleportTo` 1 block above the surface, zero velocity, `fallDistance = 0`, air-step FX (`HeroFx.launch` + Stage 2 air-step sound slot `reinhard.air_step`, vanilla placeholder now).
 
-- [ ] **Step 1: Write the failing tests** — `unblockableDefaultUnchanged` (`NO_LAYERS`, bypass → amount unchanged), `unblockableHookFloors` (fake target floors to `health-1`), `adminKillSkipsHook`, `nonBypassPathUnchanged` (existing tests stay green), `AdminKillTest.scopeNests`, `scopeClosesOnThrow` (runnable throws → `active()` false after), `VoidRescueTest.findsTopBlock`, `emptyColumnReturnsEmpty`, `searchesNearestColumn` (pure spiral helper `nearestColumn(int r, BiPredicate<Integer,Integer> hasTop)`).
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*HeroDamageLayers*' --tests '*AdminKill*' --tests '*VoidRescue*' --no-daemon` → FAIL.
-- [ ] **Step 3: Implement**; update the `HeroDamageLayers` javadoc ("Sources that bypass invulnerability skip absorb and clamp; they reach only `clampUnblockableDamage`, except inside `AdminKill`").
-- [ ] **Step 4: Run** → PASS; all existing damage tests green. Manual: Reinhard jumps into the Overworld void → stays at ≥ 1 HP, is lifted onto the surface above; End void with no island above → platform; `/kill @s` kills; Homelander in the void dies as before.
-- [ ] **Step 5: Commit** `feat(hero): unblockable damage hook and admin kill scope` and `feat(reinhard): void rescue`.
+- [x] **Step 1: Write the failing tests** — `unblockableDefaultUnchanged` (`NO_LAYERS`, bypass → amount unchanged), `unblockableHookFloors` (fake target floors to `health-1`), `adminKillSkipsHook`, `nonBypassPathUnchanged` (existing tests stay green), `AdminKillTest.scopeNests`, `scopeClosesOnThrow` (runnable throws → `active()` false after), `VoidRescueTest.findsTopBlock`, `emptyColumnReturnsEmpty`, `searchesNearestColumn` (pure spiral helper `nearestColumn(int r, BiPredicate<Integer,Integer> hasTop)`).
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*HeroDamageLayers*' --tests '*AdminKill*' --tests '*VoidRescue*' --no-daemon` → FAIL.
+- [x] **Step 3: Implement**; update the `HeroDamageLayers` javadoc ("Sources that bypass invulnerability skip absorb and clamp; they reach only `clampUnblockableDamage`, except inside `AdminKill`").
+- [x] **Step 4: Run** → PASS; all existing damage tests green. Manual: Reinhard jumps into the Overworld void → stays at ≥ 1 HP, is lifted onto the surface above; End void with no island above → platform; `/kill @s` kills; Homelander in the void dies as before.
+- [x] **Step 5: Commit** `feat(hero): unblockable damage hook and admin kill scope` and `feat(reinhard): void rescue`.
 
 ### Task 5: Divine seam, absolute invulnerability, dev command
 
@@ -121,11 +121,11 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `DivineDamage`: `static final TagKey<DamageType> DIVINE_TYPES` (`viltrumitecore:divine`), `static final ResourceKey<DamageType> DIVINE`; `static boolean isDivine(DamageSource)`; `static DamageSource source(ServerLevel, @Nullable Entity attacker, ResourceKey<DamageType> type)`.
 - The dev command applies `target.hurt(DivineDamage.source(level, sourceEntity, type), amount)`; `type` must be in `DIVINE_TYPES`, else error message. Until Stage 2, a lethal divine hit kills Reinhard (spec §3.2 order: Adaptation → Phoenix → death; the first two arrive in Stage 2 Task 1).
 
-- [ ] **Step 1: Write the failing tests** — `verdictOrder` (divine wins over absolute), `mortalByDefault`, `reinhardIsDivine`, `defaultHeroNotDivine`, `regulusAbsoluteOnlyInLion` (state stub), `divineSkipsResistAndFloor` (Task 3 harness with divine flag).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** JSON, helpers, hooks, command, lang.
-- [ ] **Step 4: Run** → PASS. Manual: `/viltrumite divine @s 5` on Reinhard → −5 HP (no resist); `… 100` → death with the divine death message; on Iron Man in a mark → armor and mark ignored; on a zombie → normal damage; non-op player → command not available.
-- [ ] **Step 5: Commit** `feat(hero): divine damage seam and absolute invulnerability hook`.
+- [x] **Step 1: Write the failing tests** — `verdictOrder` (divine wins over absolute), `mortalByDefault`, `reinhardIsDivine`, `defaultHeroNotDivine`, `regulusAbsoluteOnlyInLion` (state stub), `divineSkipsResistAndFloor` (Task 3 harness with divine flag).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** JSON, helpers, hooks, command, lang.
+- [x] **Step 4: Run** → PASS. Manual: `/viltrumite divine @s 5` on Reinhard → −5 HP (no resist); `… 100` → death with the divine death message; on Iron Man in a mark → armor and mark ignored; on a zombie → normal damage; non-op player → command not available.
+- [x] **Step 5: Commit** `feat(hero): divine damage seam and absolute invulnerability hook`.
 
 ### Task 6: Modes on MMB, cooldown, sounds, page
 
@@ -142,11 +142,11 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `enter` → mode RESTRAINED, page 0; `cleanup(HERO_CHANGE)` → page 0. Login → page = saved mode (`loadHeroState`).
 - `sounds.json` (final slot names, vanilla placeholders as `"type": "event"` entries): `reinhard.mode_restrained` → `block.amethyst_block.chime`, `reinhard.mode_knight` → `block.beacon.power_select`, `reinhard.mode_holy_sword` → `block.beacon.activate`, `reinhard.refuse`, `reinhard.air_step` → `entity.ender_dragon.flap` (pitch via code). Subtitles keys in lang.
 
-- [ ] **Step 1: Write the failing tests** — `pressCyclesAll`, `cooldownRefuses`, `busyRefuses`, `cooldownIsSixtyTicks`, `pageMatchesMode`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS. Manual: MMB on a block — no pick-block, mode changes R→K→H→R, page indicator follows, presses inside 3 s → refusal sound and no change; page key does nothing; relog keeps the mode.
-- [ ] **Step 5: Commit** `feat(reinhard): mode cycle on middle mouse`.
+- [x] **Step 1: Write the failing tests** — `pressCyclesAll`, `cooldownRefuses`, `busyRefuses`, `cooldownIsSixtyTicks`, `pageMatchesMode`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS. Manual: MMB on a block — no pick-block, mode changes R→K→H→R, page indicator follows, presses inside 3 s → refusal sound and no change; page key does nothing; relog keeps the mode.
+- [x] **Step 5: Commit** `feat(reinhard): mode cycle on middle mouse`.
 
 ### Task 7: Ability table, loadout, panel registration
 
@@ -162,11 +162,11 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `ownsAbility(id)` = id is in the shipped default loadout.
 - `panelAbilities()` returns one entry per shipped ability: icon `textures/gui/ability/reinhard/<name>.png`, lang `ability.viltrumitecore.reinhard_<name>.name/.desc`, grey-out = `extraCooldowns[ordinal] > 0` or the stage condition (Stage 4 adds Reid conditions).
 
-- [ ] **Step 1: Write the failing tests** — `slotsFollowSpecOrder` (every enum value's `mode.page()*6 + slot` equals its index in `LOADOUT`), `idsUnique`, `actionsUnique`, `onlyShippedOwned` (SHIPPED_STAGE 1 → owns nothing), `chopOnHolySwordSlot2` (`LOADOUT[13] == "viltrumite:chop"`), `ordinalFitsExtraCooldowns` (`values().length <= ReinhardFlags.EXTRA_MODE_CD`), `HeroPublicSnapshotTest.highOrdinalDoesNotAliasBitZero` (only `WORLD_ERASURE` available → `LIONS_HEART` not available), `decodesLegacyIntMask`, `encodeRoundTripLong`, `actionCountFitsMask` (≤ 64).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement**.
-- [ ] **Step 4: Run** → PASS; `check_hero_resources.py --hero reinhard` → 0 new problems (no shipped ability yet, so no icons required).
-- [ ] **Step 5: Commit** `feat(reinhard): ability table and loadout per mode`.
+- [x] **Step 1: Write the failing tests** — `slotsFollowSpecOrder` (every enum value's `mode.page()*6 + slot` equals its index in `LOADOUT`), `idsUnique`, `actionsUnique`, `onlyShippedOwned` (SHIPPED_STAGE 1 → owns nothing), `chopOnHolySwordSlot2` (`LOADOUT[13] == "viltrumite:chop"`), `ordinalFitsExtraCooldowns` (`values().length <= ReinhardFlags.EXTRA_MODE_CD`), `HeroPublicSnapshotTest.highOrdinalDoesNotAliasBitZero` (only `WORLD_ERASURE` available → `LIONS_HEART` not available), `decodesLegacyIntMask`, `encodeRoundTripLong`, `actionCountFitsMask` (≤ 64).
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement**.
+- [x] **Step 4: Run** → PASS; `check_hero_resources.py --hero reinhard` → 0 new problems (no shipped ability yet, so no icons required).
+- [x] **Step 5: Commit** `feat(reinhard): ability table and loadout per mode`.
 
 ### Task 8: Knight panel style, mode icons, HUD attachments
 
@@ -181,20 +181,20 @@ Fact: `HeroDamageLayers.bypassesLayers` (`source.is(DamageTypeTags.BYPASSES_INVU
 - `ReinhardHud`: pure layout `static Layout layout(Bounds abilityBar)` → three 12×12 icon rects to the right of the bar, top-aligned, 2 px gap, and a 40×3 bar rect under them; `draw(...)`: active mode icon full colour with a gold outline, others 40% alpha; the Reid bar is drawn only when `snapshot.resource() > 0` (Stage 4), fill = `resource / REID_IDLE_TICKS`.
 - `make_reinhard_icons.py` (reads the user archive path given by `--assets DIR`): copies `knight_emblem.png` and `reinhard.png`; draws the three 12×12 mode icons in the house pixel style (closed fist on white, single gauntlet on blue, sword hilt on gold); later stages add ability icons to the same script (`--only <name>` to rebuild one). Writes PNG + `.b64`. `reinhard_sources.md` lists every committed asset: source file in the archive, transformation, script.
 
-- [ ] **Step 1: Write the failing test** — `layoutRightOfBar` (rects start at `bar.x + bar.width + 2`), `iconsDoNotOverlap`, `barUnderIcons`, `reidBarHiddenAtZero`.
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*ReinhardHud*' --no-daemon` → FAIL.
-- [ ] **Step 3: Implement**; run `python3 tools/assets/make_reinhard_icons.py --assets /path/to/reinhard_assets`.
-- [ ] **Step 4: Run** → PASS. Manual: panel in knight style, three mode icons next to it, the active one lit, switching with MMB updates them; other heroes' panels unchanged (Iron Man holographic, default).
-- [ ] **Step 5: Commit** `feat(reinhard): knight panel style and mode hud`.
+- [x] **Step 1: Write the failing test** — `layoutRightOfBar` (rects start at `bar.x + bar.width + 2`), `iconsDoNotOverlap`, `barUnderIcons`, `reidBarHiddenAtZero`.
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*ReinhardHud*' --no-daemon` → FAIL.
+- [x] **Step 3: Implement**; run `python3 tools/assets/make_reinhard_icons.py --assets /path/to/reinhard_assets`.
+- [x] **Step 4: Run** → PASS. Manual: panel in knight style, three mode icons next to it, the active one lit, switching with MMB updates them; other heroes' panels unchanged (Iron Man holographic, default).
+- [x] **Step 5: Commit** `feat(reinhard): knight panel style and mode hud`.
 
 ### Task 9: Stage check, docs, PR
 
 **Files:**
 - Modify: `.agents/skills/add_hero/references/hero-seam.md` (hooks `clampUnblockableDamage`, `isDivine`, `isAbsolutelyInvulnerable`; `PanelStyle.drawAttachments`), `.memory-bank/project.md` (facts: unblockable hook + `AdminKill`; divine tags; Reinhard page = mode), `SESSION.md` (Russian entry)
 
-- [ ] **Step 1:** Full verification list from the overview (test, build, checker, `git diff --check`). Start the dedicated server once: `./gradlew :viltrumitecore:runServer --no-daemon` reaches "Done" (new mixin `KillCommandMixin` is common, new client classes only in `client/`).
-- [ ] **Step 2:** In-game list (first and third person where visible): race button; HP/resist/floor/regen/fall/knockback; void rescue; `/kill`; dev divine command; MMB modes + sounds + cooldown; HUD; other heroes unchanged (Homelander void death, Iron Man panel, Regulus heart key on MMB still works).
-- [ ] **Step 3:** Commit `docs(reinhard): stage 1 notes`. Push with `push_files` to `feat/reinhard-stage1`; PR «Рейнхард, этап 1: выбор героя, живучесть, режимы» (body starts with «Для игрока»).
+- [x] **Step 1:** Full verification list from the overview (test, build, checker, `git diff --check`). Start the dedicated server once: `./gradlew :viltrumitecore:runServer --no-daemon` reaches "Done" (new mixin `KillCommandMixin` is common, new client classes only in `client/`).
+- [x] **Step 2:** In-game list (first and third person where visible): race button; HP/resist/floor/regen/fall/knockback; void rescue; `/kill`; dev divine command; MMB modes + sounds + cooldown; HUD; other heroes unchanged (Homelander void death, Iron Man panel, Regulus heart key on MMB still works).
+- [x] **Step 3:** Commit `docs(reinhard): stage 1 notes`. Push with `push_files` to `feat/reinhard-stage1`; PR «Рейнхард, этап 1: выбор героя, живучесть, режимы» (body starts with «Для игрока»).
 
 Acceptance criteria closed: §11.2, §11.5, §11.3 (death part; Phoenix/Adaptation in Stage 2), §11.12 (partial). §11.1 is partial (button only; model in 1b).
 

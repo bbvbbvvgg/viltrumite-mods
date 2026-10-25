@@ -138,3 +138,9 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - Hulkbuster grab lasts at most `GRAB_MAX_TICKS`.
 - Glide (0-energy) cannot climb: the flight mixin clamps a glide tick to `startY - glideSink` (vanilla Space lift).
 - Client float animation time: `client/anim/RealTime.seconds()` (wraps, keeps float precision).
+## Reinhard stage 1 (foundation, no jar until 1b)
+- Unblockable seam: `HeroDefinition.clampUnblockableDamage(player, source, amount)` is the only hook for `bypasses_invulnerability` hits (void, `generic_kill`); default unchanged. `/kill` runs inside `AdminKill` (ThreadLocal depth, `KillCommandMixin` redirect of `Entity.kill` in `KillCommand.kill`) and `HeroDamageLayers` skips the hook there.
+- Divine: damage type `viltrumitecore:divine` in damage-type tag `viltrumitecore:divine` + vanilla `bypasses_armor/shield/enchantments/effects` (never `bypasses_invulnerability`); entity tag `viltrumitecore:divine`; `DivineTargets.verdict`; Regulus Lion's Heart = `isAbsolutelyInvulnerable`. Iron Man marks / Hulkbuster still absorb divine hits (they skip only `bypasses_invulnerability`).
+- Unit tests cannot load classes with `Registries` / `TagKey` / `ResourceKey` statics (no Bootstrap): keep pure rules in nested classes (`DivineTargets.Verdict.of`).
+- Reinhard: page = mode (`ReinhardMode.page()`), MMB = `MODE_CYCLE` (3 s cooldown, `extraCooldowns[14]`), mode in `heroFlags` bits 0-1. `ReinhardAbility` ordinal = `extraCooldowns` index; `ReinhardAbilities.SHIPPED_STAGE` gates loadout/owned ids (bump every stage). `HeroPublicSnapshot.availableActions` is a `long` mask now (actions ≥ 32 exist).
+- Knight HUD: `PanelStyle.drawAttachments`; mode icons sit LEFT of the ability bar (the bar is 5 px from the screen edge). Icons: `tools/assets/make_reinhard_icons.py --assets <unpacked reinhard_assets>`, sources in `tools/assets/reinhard_sources.md`.

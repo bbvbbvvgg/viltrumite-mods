@@ -405,5 +405,16 @@
   "subtitles.viltrumitecore.ironman_hulkbuster_grab": "El Hulkbuster agarra",
   "subtitles.viltrumitecore.ironman_hulkbuster_throw": "El Hulkbuster lanza",
   "subtitles.viltrumitecore.ironman_hulkbuster_slam": "El Hulkbuster golpea el suelo",
-  "subtitles.viltrumitecore.ironman_hulkbuster_hop": "Se encienden los propulsores del Hulkbuster"
+  "subtitles.viltrumitecore.ironman_hulkbuster_hop": "Se encienden los propulsores del Hulkbuster",
+  "hero.viltrumitecore.reinhard": "Reinhard van Astrea",
+  "gui.viltrumitecore.race_selection.become_reinhard": "Conviértete en Reinhard",
+  "subtitles.viltrumitecore.reinhard_air_step": "Reinhard pisa el aire",
+  "death.attack.viltrumitecore.divine": "%1$s fue abatido por un poder divino",
+  "death.attack.viltrumitecore.divine.player": "%1$s fue abatido por el poder divino de %2$s",
+  "commands.viltrumitecore.divine.success": "Se infligieron %s de daño divino a %s objetivo(s)",
+  "commands.viltrumitecore.divine.not_divine": "%s no es un tipo de daño divino",
+  "subtitles.viltrumitecore.reinhard_mode_restrained": "Reinhard se contiene",
+  "subtitles.viltrumitecore.reinhard_mode_knight": "Reinhard se alza como caballero",
+  "subtitles.viltrumitecore.reinhard_mode_holy_sword": "El Santo de la Espada despierta",
+  "subtitles.viltrumitecore.reinhard_refuse": "Reinhard: ahora no"
 }
