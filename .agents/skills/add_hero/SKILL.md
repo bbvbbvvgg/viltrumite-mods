@@ -65,6 +65,7 @@ Use `references/shared-toolkit.md`. Typical mapping:
 - server-wide cinematic pause → `WorldPause` + `ControlManager.refresh` (one server-END clock/listener, foreign ownership and cleanup); use `BodyIsolation` for persistent post-scene isolation. Do not add a hero-local second freeze system. Actual Forge/network/save/startup proof remains a native test, not a pure-suite claim.
 
 ### 7. Sounds and textures
+Before sourcing or changing sounds, follow `../sound-design/SKILL.md` (CC0/own assets only).
 1. Sound events in `assets/viltrumitecore/sounds.json`, Java holders in the core sound registry.
 2. Binary files (`.ogg`, `.png`) that must be pushed through the GitHub MCP go to `viltrumitecore/src/main/binassets/<same path>.b64` (base64). Gradle task `decodeBinaryAssets` writes them into resources at build time.
 3. Default: use only CC0 or own sounds. A hero-specific owner decision may allow CC-BY too. Never treat that as permission for CC-BY-NC, Sampling+ or unknown licenses. Record live-page author, license/version, check date, exact input filename/digest, output and changes in the hero sources/design table; credit every CC-BY author and link in `CREDITS.md`. Bundle the maintained notices/source ledger with the standalone JAR and make the audio-license exception discoverable in mod metadata; repository-only credit is not enough.
