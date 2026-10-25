@@ -105,6 +105,15 @@ def keys(rows):
 def channel(rows):
     return {'rotation': keys(rows)}
 
+def gait_channel(sample):
+    """Bake the original trajectory, not a stop/start ease between its samples.
+
+    Eighty linear intervals keep the 48-degree run arc within 0.04 degrees of
+    the continuous cosine. Endpoints match exactly; no spline knee overshoot.
+    Combat still uses its authored easing and contact holds.
+    """
+    return {'rotation': {str(i / 80): sample(i / 80) for i in range(81)}}
+
 def action(length, **bones):
     return {'loop': 'hold_on_last_frame', 'animation_length': length/20,
             'bones': {bone: channel(rows) for bone, rows in bones.items()}}
@@ -150,10 +159,9 @@ for name, amplitude, arm_amplitude in [('walk',32,31.512679),('run',48,50)]:
     bones = {}
     for side, phase in [('right',0),('left',math.pi)]:
         sign = -1 if side == 'right' else 1
-        rows = [(t,[-arm_amplitude*math.cos(2*math.pi*t/20+phase),0,3*sign]) for t in range(0,21,2)]
-        bones[side+'_arm'] = channel(rows)
-        bones[side+'_leg'] = channel([(t,[amplitude*math.cos(2*math.pi*t/20+phase),0,0]) for t in range(0,21,2)])
-        bones[side+'_forearm'] = channel([(t,[-12-10*max(0,math.cos(2*math.pi*t/20+phase)),0,0]) for t in range(0,21,2)])
+        bones[side+'_arm'] = gait_channel(lambda t: [-arm_amplitude*math.cos(2*math.pi*t+phase),0,3*sign])
+        bones[side+'_leg'] = gait_channel(lambda t: [amplitude*math.cos(2*math.pi*t+phase),0,0])
+        bones[side+'_forearm'] = gait_channel(lambda t: [-12-10*max(0,math.cos(2*math.pi*t+phase)),0,0])
     CLIPS[name] = loop(bones,1)
 
 CLIPS['light_punch'] = action(10,
@@ -309,7 +317,7 @@ CLIPS['crouch'] = action(1, body=[(0,[22,0,0])],head=[(0,[-12,0,0])],
 CLIPS['crouch']['loop']=True
 for name in ['walk','run']:
     for side,phase in [('right',0),('left',math.pi)]:
-        CLIPS[name]['bones'][side+'_shin']=channel([(t,[max(0,math.sin(2*math.pi*t/20+phase))*32,0,0]) for t in range(0,21,2)])
+        CLIPS[name]['bones'][side+'_shin']=gait_channel(lambda t: [max(0,math.sin(2*math.pi*t+phase))*32,0,0])
 CLIPS['air_rise']=action(1, right_leg=[(0,[-25,0,4])],left_leg=[(0,[12,0,-4])],
     right_shin=[(0,[38,0,0])],left_shin=[(0,[20,0,0])],body=[(0,[-6,0,0])])
 CLIPS['air_fall']=action(1, right_leg=[(0,[-9,0,4])],left_leg=[(0,[-9,0,-4])],

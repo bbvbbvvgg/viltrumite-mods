@@ -67,9 +67,9 @@ class ReidDrawSceneTest {
    }
 
    @Test
-   void firstPersonPullFollowsBlade() {
+   void firstPersonPullFollowsBladeAndReturnsBeforeThePhaseEnds() {
       assertEquals(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.reid(ReinhardPoses.ReidPhase.SHEATHED, 10.0));
-      assertEquals(ReinhardFirstPersonPose.REID_PULL.pitch(),
-         ReinhardFirstPersonPose.reid(ReinhardPoses.ReidPhase.DRAWING, ReinhardRules.REID_DRAW_TICKS).pitch(), 1.0E-4F);
+      assertTrue(Math.abs(ReinhardFirstPersonPose.reid(ReinhardPoses.ReidPhase.DRAWING, 100).pitch()) > 20);
+      assertEquals(0, ReinhardFirstPersonPose.reid(ReinhardPoses.ReidPhase.DRAWING, ReinhardRules.REID_DRAW_TICKS).pitch(), 1.0E-4F);
    }
 }

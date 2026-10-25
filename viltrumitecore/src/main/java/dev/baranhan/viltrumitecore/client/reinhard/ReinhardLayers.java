@@ -14,13 +14,18 @@ final class ReinhardLayers {
    private ReinhardLayers() {}
    static void overlay(Animation clip, BakedGeoModel model, double seconds) { overlay(clip,model,seconds,1); }
    static void overlay(Animation clip, BakedGeoModel model, double seconds, float weight) {
-      float w=Math.max(0,Math.min(1,weight));
-      if(w==0) return;
+      overlay(clip, model, seconds, weight, null);
+   }
+   /** The authored equipment anchor must not fade with the surrounding body. */
+   static void overlay(Animation clip, BakedGeoModel model, double seconds, float weight, String fullWeightBone) {
+      float bodyWeight=Math.max(0,Math.min(1,weight));
+      if(bodyWeight==0 && fullWeightBone==null) return;
       Map<String,float[]> before=new HashMap<>();
       for(GeoBone b:model.allBones()) before.put(b.name,new float[]{b.rotX,b.rotY,b.rotZ,b.posX,b.posY,b.posZ,b.scaleX,b.scaleY,b.scaleZ});
       AnimationController.overlay(clip,model,seconds);
       for(Animation.BoneAnimation a:clip.boneAnimations().values()) {
          GeoBone b=model.getBone(a.boneName()); if(b==null) continue;
+         float w=a.boneName().equals(fullWeightBone)?1:bodyWeight;
          float[] p=before.get(b.name);
          boolean rotation=!a.rotX().isEmpty() || !a.rotY().isEmpty() || !a.rotZ().isEmpty();
          if(rotation && w<1) {
