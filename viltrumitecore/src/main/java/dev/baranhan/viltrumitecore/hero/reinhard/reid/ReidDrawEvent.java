@@ -46,6 +46,8 @@ public final class ReidDrawEvent {
    private final int casterId;
    private final UUID casterUuid;
    private final BlockPos origin;
+   /** Reinhard's exact position at the press: the scene (beam, cracks, wave) is centred on him, not on his block. */
+   private final Vec3 center;
    private final long startTime;
    private final GravityLift lift = new GravityLift(UUID.randomUUID(), LiftLeases.SERVER);
    private final Map<UUID, Entity> lifted = new HashMap<>();
@@ -56,6 +58,7 @@ public final class ReidDrawEvent {
       this.casterId = caster.getId();
       this.casterUuid = caster.getUUID();
       this.origin = caster.blockPosition();
+      this.center = caster.position();
       this.startTime = this.level.getGameTime();
    }
 
@@ -95,6 +98,10 @@ public final class ReidDrawEvent {
       return this.origin;
    }
 
+   public Vec3 center() {
+      return this.center;
+   }
+
    public long startTime() {
       return this.startTime;
    }
@@ -125,7 +132,7 @@ public final class ReidDrawEvent {
 
       Vec3 hilt = caster.position().add(0.0, 1.0, 0.0);
       HeroFx.flash(caster, hilt);
-      HeroFx.shockwave(caster, Vec3.atBottomCenterOf(this.origin), 1.5F, this.level.getBlockState(this.origin.below()), (float)ReinhardRules.REID_WAVE_RADIUS);
+      HeroFx.shockwave(caster, this.center, 1.5F, this.level.getBlockState(this.origin.below()), (float)ReinhardRules.REID_WAVE_RADIUS);
       this.wave(caster);
       ReinhardSounds.play(caster, ReinhardSounds.REID_CHOIR.get(), 6.0F, 0.8F);
       Component line = Component.translatable("chat.viltrumitecore.reinhard.reid_drawn");
@@ -169,7 +176,7 @@ public final class ReidDrawEvent {
          double r = ReinhardRules.REID_LIFT_RADIUS;
          AABB box = new AABB(this.origin).inflate(r, r, r);
          for (Entity entity : this.level.getEntities((Entity)null, box, e -> this.mayLift(caster, e))) {
-            if (entity.distanceToSqr(Vec3.atCenterOf(this.origin)) <= r * r) {
+            if (entity.distanceToSqr(this.center) <= r * r) {
                this.lifted.putIfAbsent(entity.getUUID(), entity);
             }
          }
@@ -205,9 +212,9 @@ public final class ReidDrawEvent {
 
    /** Final wave: everyone movable within 24 is pushed outward (no damage). */
    private void wave(ServerPlayer caster) {
-      Vec3 center = Vec3.atBottomCenterOf(this.origin);
+      Vec3 center = this.center;
       double r = ReinhardRules.REID_WAVE_RADIUS;
-      for (LivingEntity living : this.level.getEntitiesOfClass(LivingEntity.class, new AABB(this.origin).inflate(r), e -> e != caster && !e.isSpectator())) {
+      for (LivingEntity living : this.level.getEntitiesOfClass(LivingEntity.class, new AABB(center, center).inflate(r), e -> e != caster && !e.isSpectator())) {
          Vec3 flat = new Vec3(living.getX() - center.x, 0.0, living.getZ() - center.z);
          double strength = waveKnockback(flat.length());
          if (strength <= 0.0 || !HeroImpulse.mayLiftLiving(living.getClass()) || !HeroRegistry.allowsImpulse(living)) {
@@ -221,8 +228,8 @@ public final class ReidDrawEvent {
    }
 
    private void broadcast(int phase) {
-      ReidSceneS2CPacket packet = new ReidSceneS2CPacket(this.casterId, this.origin, this.startTime, phase);
-      Vec3 center = Vec3.atCenterOf(this.origin);
+      ReidSceneS2CPacket packet = new ReidSceneS2CPacket(this.casterId, this.center, this.startTime, phase);
+      Vec3 center = this.center;
       double range = ReinhardRules.REID_SCENE_RANGE;
       for (ServerPlayer player : this.level.players()) {
          if (player.distanceToSqr(center) <= range * range || player.getUUID().equals(this.casterUuid)) {

@@ -38,7 +38,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 public class CoreMessages {
    // v3 clients clamp extra cooldowns at 16 and misread the following phase fields.
    // v4 clients lack ServerRulesS2CPacket and send the merged dash key's Dash Behind as Step Dash.
-   private static final String PROTOCOL_VERSION = "5";
+   private static final String PROTOCOL_VERSION = "6";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
