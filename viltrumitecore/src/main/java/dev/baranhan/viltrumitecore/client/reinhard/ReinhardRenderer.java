@@ -81,6 +81,7 @@ public final class ReinhardRenderer {
 
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
       if (snapshot == null) {
+         ReinhardPlayback.reset(player);
          StanceBlend.reset(player);
          ReinhardMotion.reset(player);
          ReinhardRecovery.reset(player);
@@ -181,7 +182,6 @@ public final class ReinhardRenderer {
          List.of(PlayerGeoLayer.Pass.cutout(ReinhardAssets.TEXTURE), PlayerGeoLayer.Pass.glow(ReinhardAssets.GLOW)),
          geo -> poseFirstPersonElbows(geo,player,snapshot));
       boolean flick = event.getArm() == player.getMainArm();
-      boolean actionArm = event.getArm() == HumanoidArm.RIGHT;
       // Sampled for the main arm only: the off arm's event must not reset the pulse.
       float w = flick ? ParryPulse.FIRST_PERSON.sample(player, ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.PARRY_POSE), Util.getNanos()).weight() : 0.0F;
       float oldX = arm.xRot;
@@ -195,35 +195,7 @@ public final class ReinhardRenderer {
          arm.zRot += (float) Math.toRadians(FP_PARRY_ROLL * w * m);
       }
 
-      ReinhardAbility cinematic = ReinhardPoses.cinematicAction(snapshot.actionId());
-      double cinematicTicks = actionTicks(player, snapshot, Minecraft.getInstance().getFrameTime());
-      boolean physicalLeft = event.getArm() == HumanoidArm.LEFT;
-      ReinhardFirstPersonPose.Offset action = cinematic == ReinhardAbility.WORLD_CUT
-         ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft)
-         : cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT ? ReinhardFirstPersonPose.diagonal(cinematicTicks,physicalLeft)
-         : cinematic == ReinhardAbility.CUT_RAIN ? ReinhardFirstPersonPose.rain(cinematicTicks,physicalLeft)
-         : cinematic == ReinhardAbility.WORLD_ERASURE
-            ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
-            : actionArm ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
-      if (actionArm && action == ReinhardFirstPersonPose.Offset.NONE) {
-         // Stage 4: the Reid draw / sheathe pull.
-         ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
-         action = ReinhardFirstPersonPose.reid(reid, dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, Minecraft.getInstance().getFrameTime()));
-      }
-      if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
-         ReinhardPoses.action(snapshot.actionId()),cinematicTicks,snapshot.actionLength());
-      action = ReinhardRecovery.firstPerson(player,physicalLeft,action,recoveryKey(snapshot),Util.getNanos());
-      boolean moved = !action.equals(ReinhardFirstPersonPose.Offset.NONE);
-      if (moved) {
-         // Stage 3: the ability's first-person pose (jab, catch, ...), mirrored for a left main arm.
-         float m = event.getArm() == HumanoidArm.LEFT ? -1.0F : 1.0F;
-         event.getPoseStack().pushPose();
-         event.getPoseStack().translate(action.x() * m, action.y(), action.z());
-         arm.xRot += (float) Math.toRadians(action.pitch());
-         arm.yRot += (float) Math.toRadians(action.yaw() * m);
-         arm.zRot += (float) Math.toRadians(action.roll() * m);
-      }
-
+      double cinematicTicks = actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime());
       PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
       if (event.getArm() == HumanoidArm.RIGHT && ReinhardRecovery.visible(player,ReinhardView.reid(snapshot) != ReinhardPoses.ReidPhase.SHEATHED
          || snapshot.actionId() == ReinhardAbility.SHEATH_STRIKE.ordinal(),Util.getNanos())) {
@@ -249,9 +221,6 @@ public final class ReinhardRenderer {
             snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),cinematicTicks,recoveryKey(snapshot),
             event.getMultiBufferSource(),event.getPackedLight(),OverlayTexture.NO_OVERLAY,true);
       }
-      if (moved) {
-         event.getPoseStack().popPose();
-      }
 
       arm.xRot = oldX;
       arm.yRot = oldY;
@@ -276,13 +245,39 @@ public final class ReinhardRenderer {
 
       event.setCanceled(true);
       if (!player.isInvisible()) {
+         event.getPoseStack().pushPose();
+         ReinhardFirstPerson.apply(player,arm,event.getPoseStack());
          ((dev.baranhan.viltrumitecore.client.mixin.ItemInHandRendererInvoker) mc.getEntityRenderDispatcher().getItemInHandRenderer())
             .viltrumite$renderPlayerArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getEquipProgress(),
-               event.getHand() == InteractionHand.MAIN_HAND ? event.getSwingProgress() : 0.0F, arm);
+               ReinhardFirstPerson.swing(snapshot,arm,event.getHand() == InteractionHand.MAIN_HAND ? event.getSwingProgress() : 0.0F), arm);
+         event.getPoseStack().popPose();
       }
    }
 
-   /** The synced action's first-person offset (time like the third-person overlay, hit-stop held). */
+   static ReinhardFirstPersonPose.Offset firstPersonOffset(AbstractClientPlayer player, HeroPublicSnapshot snapshot, HumanoidArm side) {
+      boolean actionArm = side == HumanoidArm.RIGHT;
+      ReinhardAbility cinematic = ReinhardPoses.cinematicAction(snapshot.actionId());
+      double cinematicTicks = actionTicks(player, snapshot, Minecraft.getInstance().getFrameTime());
+      boolean physicalLeft = side == HumanoidArm.LEFT;
+      ReinhardFirstPersonPose.Offset action = cinematic == ReinhardAbility.WORLD_CUT
+         ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft)
+         : cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT ? ReinhardFirstPersonPose.diagonal(cinematicTicks,physicalLeft)
+         : cinematic == ReinhardAbility.CUT_RAIN ? ReinhardFirstPersonPose.rain(cinematicTicks,physicalLeft)
+         : cinematic == ReinhardAbility.WORLD_ERASURE
+            ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
+            : actionArm ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
+      if (actionArm && action == ReinhardFirstPersonPose.Offset.NONE) {
+         // Stage 4: the Reid draw / sheathe pull.
+         ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
+         action = ReinhardFirstPersonPose.reid(reid, dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, Minecraft.getInstance().getFrameTime()));
+      }
+      if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
+         ReinhardPoses.action(snapshot.actionId()),cinematicTicks,snapshot.actionLength());
+      action = ReinhardRecovery.firstPerson(player,physicalLeft,action,recoveryKey(snapshot),Util.getNanos());
+      return action;
+   }
+
+   /** The synced action's first-person offset (same render clock as the body and weapon). */
    private static ReinhardFirstPersonPose.Offset firstPersonAction(AbstractClientPlayer player, HeroPublicSnapshot snapshot) {
       ReinhardAbility[] all = ReinhardAbility.values();
       int id = snapshot.actionId();
@@ -297,8 +292,7 @@ public final class ReinhardRenderer {
    }
 
    private static double actionTicks(AbstractClientPlayer player, HeroPublicSnapshot snapshot, float partial) {
-      return ReinhardPlayback.actionTicks(snapshot.actionElapsed(), snapshot.actionLength(), partial,
-         0);
+      return ReinhardPlayback.actionTicks(player,snapshot,partial);
    }
 
    /**
@@ -529,7 +523,7 @@ public final class ReinhardRenderer {
       ReinhardPoses.Input input = new ReinhardPoses.Input(ReinhardView.mode(snapshot), snapshot.heroFlags(), snapshot.actionId(), snapshot.actionElapsed(),
          snapshot.actionLength(), partialTick, swing, player.walkAnimation.position(partialTick), (player.tickCount + partialTick) / 20.0, player.getPose(), sitting,
          snapshot.variant(), 0);
-      return ReinhardPoses.pose(input);
+      return ReinhardPoses.pose(input,actionTicks(player,snapshot,partialTick));
    }
 
    private static int recoveryKey(HeroPublicSnapshot snapshot) {

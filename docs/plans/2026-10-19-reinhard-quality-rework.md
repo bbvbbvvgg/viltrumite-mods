@@ -312,3 +312,68 @@ No world, gameplay, native FPS, GPU, shader or multiplayer visual acceptance
 was performed. Still check both views, all modes, crouch, occupied slots,
 draw/sheath interruptions, catch/reflect, takeoff/landing, 30/60/144+ FPS and
 Oculus/shadow passes in Minecraft. CPU tests do not certify visual perfection.
+
+## Combat fluidity follow-up — 2026-10-20
+
+Player rejected 1.35.2: locomotion fixes did not address punch/sword feel.
+1. Add failing production-path regressions for authored action ownership of FP
+   swing and for delivery duration. Add clock and continuous-sampler unit tests.
+2. Extend existing ActionClock with an opt-in monotonic, bounded render sampler;
+   keep legacy tick/time callers unchanged. Reinhard TP/FP/elbows/weapon share
+   one per-player sample. Reset on action/phase/restart and cap extrapolation.
+3. Extend existing animation sampler/PoseKeys with opt-in monotone cubic
+   interpolation (nonuniform keys, exact contacts, no overshoot). Only Reinhard
+   strikes opt in; legacy heroes, gait and protected draw scenes stay unchanged.
+4. Widen punch/hook/hammer delivery and rapid-cut delivery before their existing
+   contact ticks; retain server durations, damage, blade geometry and roll.
+5. Reuse FirstPersonArm's view-space shoulder pivot as Iron Man does. Apply once
+   outside the vanilla arm frame, covering both Forge-cancelled and normal item
+   paths. Remove competing local Euler arm transform. Suppress vanilla swing
+   only while the authored action owns that arm; keep idle/mining unchanged.
+6. Run regression/full build/resource checks. Attempt native client with a
+   software display; report actual verification limits, not visual perfection.
+7. Bump core 1.35.3, update shared-sampler contract/notes, separate PR and JAR.
+
+Additional production-path finding during the combat pass: a 240 FPS scan of
+FINAL constrained arm transforms failed on light_punch left_forearm frame 13:
+173.3269 degrees between adjacent samples. `paired` negated the directed handle
+axis whenever a dot product changed sign. Removed that per-frame sign choice;
+the weapon's authored direction now stays directed. The next scan exposed a
+69.1809-degree left-wrist jump in sheath_strike: a hard +/-35 degree shortest-arc
+wrist clamp changed branch at 180 degrees. The bounded wrist correction now
+smoothly fades to neutral near that antipode. Neither fix moves the grip point,
+weapon mesh/path, selected blade roll, authoritative contacts or damage. Extend
+continuity coverage to final solved bones, draw/sheath and all sword scenes;
+retain the existing full-mesh collision and distinct-palm gates unchanged.
+The expanded scan also caught right forearm pronation being enabled at full
+weight as soon as twoHandWeight became merely positive. Position ownership and
+pronation weight are now separate, with the existing one-hand wrist frame below
+that blend. Partial grip ownership blends the reachable palm target BEFORE the
+existing constraint solve, rather than selecting independent shortest-angle
+branches for joints afterward. The elbow pole stays outward/front (not along
+the usual palm ray), blends from the authored elbow, and the geometric seed
+preserves authored shoulder/forearm twist. Experimental alternative solvers
+were discarded: the existing damped least-squares core remains. Full final-bone
+240 FPS scan now covers ordinary jab, assembled strike, both chops, cut rain,
+draw, sheathe and world-cut scenes, plus the wrist antipode regression.
+
+
+Combat follow-up verification: full Java17 build/reobf succeeded, 1307 core +
+12 flight = 1319 JVM tests, zero failures/errors/skips. Both full-mesh/head
+gates and the final-bone continuity scan pass without weakening assertions.
+The leading elbow pole additionally points down: a symmetric outward pole
+was continuous but clipped the head on overhead cuts. Generator deterministic;
+resource checker zero new/four known legacy problems. JAR1.35.3 contains new
+classes/mixin and byte-identical generated assets. SHA256:
+7aab8e983927be5caea728c0bf43fc30fa30a48cee4b46b14ba52e02636f87bf.
+
+Final native probe: actual Forge47.3.0/Minecraft1.20.1 world via Xvfb/llvmpipe,
+37 FPS observed at render distance2. Recorded drawn sword attacks in FP/TP
+and ordinary jab/knight combo separately. Source clips and final constraints
+were the release candidate. Do not confuse with earlier native recordings
+before the final grip corrections. Native 60/144 FPS, shaders and multiplayer
+remain unverified; CPU sampling at these rates is not native visual acceptance.
+
+Final runClient saved the world and quit normally: exit0 / BUILD SUCCESSFUL
+(7m11s), no animation/mixin render exceptions. Audio/narrator/offline Realms
+and the existing license-path warning remain environment/legacy limitations.

@@ -118,6 +118,7 @@ public final class AnimationParser {
                   double[] times = new double[n];
                   DoubleUnaryOperator[] easings = new DoubleUnaryOperator[n];
                   boolean[] smooth = new boolean[n];
+                  boolean[] monotone = new boolean[n];
                   float[][] pre = new float[3][n];
                   float[][] post = new float[3][n];
 
@@ -126,6 +127,7 @@ public final class AnimationParser {
                      times[i] = en.time;
                      easings[i] = en.easing;
                      smooth[i] = en.smooth;
+                     monotone[i] = en.monotone;
 
                      for (int axis = 0; axis < 3; axis++) {
                         pre[axis][i] = en.pre[axis];
@@ -136,7 +138,7 @@ public final class AnimationParser {
                   KeyframeStack[] out = new KeyframeStack[3];
 
                   for (int axis = 0; axis < 3; axis++) {
-                     out[axis] = new KeyframeStack(times, pre[axis], post[axis], easings, smooth, channel.defaultValue);
+                     out[axis] = new KeyframeStack(times, pre[axis], post[axis], easings, smooth, monotone, channel.defaultValue);
                   }
 
                   return out;
@@ -167,6 +169,7 @@ public final class AnimationParser {
    private static AnimationParser.Entry readEntry(double time, JsonElement value, AnimationParser.Channel channel) {
       DoubleUnaryOperator easing = Easing.LINEAR;
       boolean smooth = false;
+      boolean monotone = false;
       float[] pre;
       float[] post;
       if (value.isJsonArray()) {
@@ -177,6 +180,8 @@ public final class AnimationParser {
          if (o.has("lerp_mode") && "catmullrom".equalsIgnoreCase(o.get("lerp_mode").getAsString())) {
             smooth = true;
          }
+
+         monotone = o.has("lerp_mode") && "monotone".equalsIgnoreCase(o.get("lerp_mode").getAsString());
 
          if (o.has("easing")) {
             easing = Easing.byName(o.get("easing").getAsString());
@@ -197,7 +202,7 @@ public final class AnimationParser {
          pre = post = new float[]{v, v, v};
       }
 
-      return new AnimationParser.Entry(time, pre, post, easing, smooth);
+      return new AnimationParser.Entry(time, pre, post, easing, smooth, monotone);
    }
 
    private static float[] readAny(JsonElement el, AnimationParser.Channel channel) {
@@ -305,6 +310,6 @@ public final class AnimationParser {
       }
    }
 
-   private static record Entry(double time, float[] pre, float[] post, DoubleUnaryOperator easing, boolean smooth) {
+   private static record Entry(double time, float[] pre, float[] post, DoubleUnaryOperator easing, boolean smooth, boolean monotone) {
    }
 }

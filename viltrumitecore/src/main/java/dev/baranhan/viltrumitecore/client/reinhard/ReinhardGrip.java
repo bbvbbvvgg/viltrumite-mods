@@ -57,7 +57,10 @@ final class ReinhardGrip {
    /** Pronation belongs to the forearm, not a dislocated 90-degree wrist.
     * Rotate about elbow-to-palm: the palm and elbow positions stay unchanged. */
    static void paired(BakedGeoModel model,Matrix4f mount,float weight,boolean left) {
-      solve(model,mount,weight,left,false);
+      paired(model,mount,weight,weight,left,false);
+   }
+   static void paired(BakedGeoModel model,Matrix4f mount,float positionWeight,float twistWeight,boolean left,boolean singleHandBase) {
+      solve(model,mount,positionWeight,left,singleHandBase);
       GeoBone lower=model.getBone(left?"left_forearm":"right_forearm");
       GeoBone wrist=model.getBone(left?"left_hand":"right_hand");
       PoseStack stack=new PoseStack();ReinhardRenderer.boneFrame(stack,lower);
@@ -68,22 +71,24 @@ final class ReinhardGrip {
       across.sub(new Vector3f(axis).mul(across.dot(axis)));
       desired.sub(new Vector3f(axis).mul(desired.dot(axis)));
       if(across.lengthSquared()>1E-7F && desired.lengthSquared()>1E-7F) {
-         across.normalize();desired.normalize();if(across.dot(desired)<0)desired.negate();
+         // The handle axis is DIRECTED. Choosing its sign from the current
+         // dot product flips the forearm by 180 degrees when that dot crosses
+         // zero (ordinary jab reaches this at ~1 tick). Keep its authored sign.
+         across.normalize();desired.normalize();
          float turn=(float)Math.atan2(axis.dot(new Vector3f(across).cross(desired)),across.dot(desired));
          var q=new org.joml.Quaternionf().rotationZYX(lower.rotZ,lower.rotY,lower.rotX)
-            .rotateAxis(turn*weight,localAxis.x,localAxis.y,localAxis.z);
+            .rotateAxis(turn*twistWeight,localAxis.x,localAxis.y,localAxis.z);
          Vector3f e=euler(q);lower.rotX=e.x;lower.rotY=e.y;lower.rotZ=e.z;
       }
       // Keep the palm continuous with the sleeve; forearm twist did the work.
-      wrist.rotX*=1-weight;wrist.rotY*=1-weight;wrist.rotZ*=1-weight;
+      wrist.rotX*=1-twistWeight;wrist.rotY*=1-twistWeight;wrist.rotZ*=1-twistWeight;
    }
    private static float solve(BakedGeoModel model,Matrix4f mount,float weight,boolean left,boolean alignWrist) {
       GeoBone upper=model.getBone(left?"left_arm":ReinhardAssets.RIGHT_ARM),lower=model.getBone(left?"left_forearm":"right_forearm");
       if(upper==null || lower==null || weight<=0) return 0;
-      Vector3f target=mount.transformPosition(new Vector3f(HANDLE));
-      float[] initial={upper.rotX,upper.rotY,upper.rotZ,lower.rotX,lower.rotY,lower.rotZ};
-      float[] angles=initial.clone();
-      seedFrontElbow(model,upper,lower,target,angles,left);
+      Vector3f target=point(model,left).lerp(mount.transformPosition(new Vector3f(HANDLE)),weight);
+      float[] angles={upper.rotX,upper.rotY,upper.rotZ,lower.rotX,lower.rotY,lower.rotZ};
+      seedFrontElbow(model,upper,lower,target,angles,left,weight);
       set(upper,lower,angles);
       for(int iteration=0;iteration<32;iteration++) {
          Vector3f p=point(model,left), error=new Vector3f(target).sub(p);
@@ -103,15 +108,16 @@ final class ReinhardGrip {
          set(upper,lower,angles);
       }
       float residual=point(model,left).distance(target)*16;
-      for(int k=0;k<6;k++) angles[k]=initial[k]+(float)Math.atan2(Math.sin(angles[k]-initial[k]),Math.cos(angles[k]-initial[k]))*weight;
+      // Weight the reachable palm TARGET before solving, not Euler angles or
+      // unrelated shortest quaternion branches after solving.
       set(upper,lower,angles);
       if(alignWrist)orientWrist(model,mount,weight,left);
       return residual;
    }
-   /** Two-segment geometric seed with an explicit forward elbow pole. Position-only
+   /** Two-segment geometric seed with an explicit outward/front elbow pole. Position-only
     * least squares has infinitely many solutions, including an elbow behind the neck.
     * This chooses the anatomical half-plane before the small numeric correction. */
-   private static void seedFrontElbow(BakedGeoModel model,GeoBone upper,GeoBone lower,Vector3f target,float[] angles,boolean left) {
+   private static void seedFrontElbow(BakedGeoModel model,GeoBone upper,GeoBone lower,Vector3f target,float[] angles,boolean left,float weight) {
       PoseStack parent=new PoseStack(),shoulder=new PoseStack();
       if(upper.parent!=null) {
          ReinhardRenderer.boneFrame(parent,upper.parent);
@@ -123,17 +129,32 @@ final class ReinhardGrip {
       Vector3f restLower=new Vector3f((left?-5.3281F:5.3281F)-lower.pivotX,12.6993F-lower.pivotY,-lower.pivotZ).div(16);
       float a=restUpper.length(),b=restLower.length();Vector3f delta=new Vector3f(target).sub(root);
       float distance=Math.max(.001F,Math.min(delta.length(),a+b-.001F));Vector3f axis=delta.normalize();
-      Vector3f pole=parent.last().pose().transformDirection(new Vector3f(left?-.7F:.7F,-2,-1));
+      // Do not point the pole down the usual palm trajectory: projection then
+      // vanishes and reverses sign during a strike. Keep the support elbow outward/front;
+      // the leading elbow also points down to clear the head on overhead cuts.
+      Vector3f pole=parent.last().pose().transformDirection(new Vector3f(left?-1:1,left?0:-1.5F,left?-.25F:-1));
       pole.sub(new Vector3f(axis).mul(pole.dot(axis)));
       if(pole.lengthSquared()<1E-6F) {pole=parent.last().pose().transformDirection(new Vector3f(0,-1,0));pole.sub(new Vector3f(axis).mul(pole.dot(axis)));}
-      pole.normalize();float along=(distance*distance+a*a-b*b)/(2*distance);
-      Vector3f elbow=new Vector3f(root).add(new Vector3f(axis).mul(along)).add(pole.mul((float)Math.sqrt(Math.max(0,a*a-along*along))));
+      pole.normalize();
+      PoseStack oldElbow=new PoseStack();ReinhardRenderer.boneFrame(oldElbow,lower);
+      Vector3f currentPole=oldElbow.last().pose().getTranslation(new Vector3f()).sub(root);
+      currentPole.sub(new Vector3f(axis).mul(currentPole.dot(axis)));
+      float along=(distance*distance+a*a-b*b)/(2*distance);
+      float height=(float)Math.sqrt(Math.max(0,a*a-along*along));
+      Vector3f preferred=new Vector3f(pole).mul(height);
+      currentPole.lerp(preferred,weight);
+      if(currentPole.lengthSquared()>1E-10F) pole.set(currentPole).normalize();
+      Vector3f elbow=new Vector3f(root).add(new Vector3f(axis).mul(along)).add(pole.mul(height));
       Vector3f upperGoal=new Matrix4f(parent.last().pose()).invert().transformDirection(new Vector3f(elbow).sub(root));
-      Vector3f e=euler(new org.joml.Quaternionf().rotationTo(restUpper,upperGoal));
+      var upperPose=new org.joml.Quaternionf().rotationZYX(angles[2],angles[1],angles[0]);
+      var upperTurn=new org.joml.Quaternionf().rotationTo(upperPose.transform(new Vector3f(restUpper)),upperGoal);
+      Vector3f e=euler(upperTurn.mul(upperPose));
       angles[0]=e.x;angles[1]=e.y;angles[2]=e.z;set(upper,lower,angles);
       PoseStack arm=new PoseStack();ReinhardRenderer.boneFrame(arm,upper);
       Vector3f lowerGoal=new Matrix4f(arm.last().pose()).invert().transformDirection(new Vector3f(target).sub(elbow));
-      e=euler(new org.joml.Quaternionf().rotationTo(restLower,lowerGoal));
+      var lowerPose=new org.joml.Quaternionf().rotationZYX(angles[5],angles[4],angles[3]);
+      var lowerTurn=new org.joml.Quaternionf().rotationTo(lowerPose.transform(new Vector3f(restLower)),lowerGoal);
+      e=euler(lowerTurn.mul(lowerPose));
       angles[3]=e.x;angles[4]=e.y;angles[5]=e.z;
    }
    private static void orientWrist(BakedGeoModel model,Matrix4f weapon,float weight,boolean left) {
@@ -146,13 +167,23 @@ final class ReinhardGrip {
       desired=base.invert().mul(desired);
       // The sleeve must not end in a dislocated 90-degree wrist. Grip position
       // owns contact; weapon roll is not a command to flip a resting palm.
-      if(desired.w<0)desired.mul(-1);
-      float angle=2*(float)Math.acos(Math.min(1,desired.w));
-      float limit=(float)Math.toRadians(35);
-      if(angle>limit)desired=new org.joml.Quaternionf().slerp(desired,limit/angle);
+      desired=limitedWrist(desired);
       Vector3f e=euler(new org.joml.Quaternionf().rotationZYX(wrist.rotZ,wrist.rotY,wrist.rotX).slerp(desired,weight));
       wrist.rotX=e.x;wrist.rotY=e.y;wrist.rotZ=e.z;
    }
+   /** A clamped shortest-arc wrist must not flip +35 -> -35 at the 180-degree
+    * quaternion branch. Fade an ambiguous antipodal correction to neutral over
+    * the last 30 degrees; position/weapon frame stay owned by the grip solve. */
+   static org.joml.Quaternionf limitedWrist(org.joml.Quaternionf desired) {
+      if(desired.w<0) desired.mul(-1);
+      float angle=2*(float)Math.acos(Math.min(1,desired.w));
+      if(angle<1E-6F) return desired;
+      float fade=Math.min(1,desired.w/(float)Math.sin(Math.toRadians(15)));
+      fade=fade*fade*(3-2*fade);
+      float turn=Math.min(angle,(float)Math.toRadians(35))*fade;
+      return new org.joml.Quaternionf().slerp(desired,turn/angle);
+   }
+
    /** Exact inverse of Rz*Ry*Rx used by AnimRenderer. JOML 1.10.5's
     * getEulerAnglesZYX has an X denominator that does not invert this chain. */
    static Vector3f euler(org.joml.Quaternionf q) {

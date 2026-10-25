@@ -266,3 +266,23 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   only the snap to zero reveals idle and creates a jump when ready replaces it.
 - Reid body fades must exclude reid_grip, which owns the exact weapon path.
   FP camera offsets and elbows need their own sheathed-boundary envelopes.
+
+- Core 1.35.3 combat follow-up: Reinhard FP reuses FirstPersonArm's outer
+  shoulder transform instead of local Euler addition; authored right-arm action
+  suppresses vanilla swing. Forge-cancelled and normal item paths apply once.
+  Shared ActionClock has an opt-in bounded monotonic snapshot sampler; legacy
+  tick/time users unchanged. Shared parser accepts opt-in monotone cubic keys;
+  only Reinhard strikes use them. Contact ticks, draw path and blade roll stay
+  unchanged. Runtime acceptance must be reported separately from CPU gates.
+- Sword grip continuity gate: paired forearms preserve the directed handle axis
+  (old nearest-sign choice flipped 173 degrees during a jab). Wrist limit fades
+  its antipodal correction instead of jumping +35 to -35 (old sheath strike
+  jumped 69 degrees). These are arm-orientation fixes only: grip points, weapon
+  matrices, sheath geometry and owner-selected +90-degree blade roll unchanged.
+
+- Grip ownership blends reachable palm targets before the unchanged DLS solve;
+  geometric seed preserves authored twist and blends the elbow pole. Separate
+  paired pronation from leading-hand position ownership; no full twist at the
+  first positive two-hand weight. Support elbow outward/front, leading elbow
+  additionally down: a symmetric pole passed continuity but clipped the head.
+  Keep BOTH final-bone continuity and full-mesh collision gates.

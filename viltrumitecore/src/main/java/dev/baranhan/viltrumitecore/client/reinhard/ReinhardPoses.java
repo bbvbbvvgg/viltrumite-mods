@@ -24,8 +24,12 @@ public final class ReinhardPoses {
    }
 
    public static Pose pose(Input in) {
+      return pose(in,ReinhardPlayback.actionTicks(in.actionElapsed(),in.actionLength(),in.partialTick(),in.heldTicks()));
+   }
+
+   public static Pose pose(Input in,double ticks) {
       float walk = Math.max(0.0F, Math.min(1.0F, in.limbSwingAmount() / WALK_REFERENCE_AMOUNT));
-      return new Pose(stance(in.mode()), in.realSeconds(), walk, in.walkDistance() * WALK_SECONDS_PER_BLOCK, overlay(in), body(in.vanillaPose(), in.passenger()),
+      return new Pose(stance(in.mode()), in.realSeconds(), walk, in.walkDistance() * WALK_SECONDS_PER_BLOCK, overlay(in,ticks), body(in.vanillaPose(), in.passenger()),
          0.0F);
    }
 
@@ -45,11 +49,14 @@ public final class ReinhardPoses {
     */
    @Nullable
    static Clip overlay(Input in) {
+      return overlay(in,ReinhardPlayback.actionTicks(in.actionElapsed(),in.actionLength(),in.partialTick(),in.heldTicks()));
+   }
+
+   private static Clip overlay(Input in,double ticks) {
       if (in.actionId() < 0 || in.actionId() >= ABILITIES.length) {
          return null;
       }
 
-      double ticks = ReinhardPlayback.actionTicks(in.actionElapsed(), in.actionLength(), in.partialTick(), in.heldTicks());
 
       return ReinhardClips.clip(ABILITIES[in.actionId()], in.actionPhase(), Math.max(0.0, ticks));
    }

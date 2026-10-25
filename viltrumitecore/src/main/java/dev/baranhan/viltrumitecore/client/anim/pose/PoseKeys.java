@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.client.anim.pose;
 
+import dev.baranhan.viltrumitecore.client.anim.animation.MonotoneCubic;
+
 /**
  * Keyframe math shared by every hero pose layer (first used by Regulus,
  * animation-system §3.5). Rows are {@code {tick, pitchDeg, yawDeg, rollDeg,
@@ -71,6 +73,27 @@ public final class PoseKeys {
       }
       float b = resolve(keys[i + 1], channel, base, additive);
       return a + (b - a) * t;
+   }
+
+   /** Opt-in bounded cubic: preserves velocity through non-extremum keys. */
+   public static float sampleContinuous(float[][] keys, float elapsed, int channel, float base, boolean additive) {
+      int last=keys.length-1;
+      if(elapsed<=keys[0][0]) return resolve(keys[0],channel,base,additive);
+      if(elapsed>=keys[last][0]) return resolve(keys[last],channel,base,additive);
+      int i=0;
+      while(i+1<last && elapsed>=keys[i+1][0]) i++;
+      double span=keys[i+1][0]-keys[i][0];
+      return MonotoneCubic.sample(
+         resolve(keys[i],channel,base,additive),resolve(keys[i+1],channel,base,additive),
+         tangent(keys,i,channel,base,additive),tangent(keys,i+1,channel,base,additive),span,
+         (elapsed-keys[i][0])/span);
+   }
+
+   private static double tangent(float[][] keys,int i,int channel,float base,boolean additive) {
+      if(i<=0 || i>=keys.length-1) return 0;
+      double left=keys[i][0]-keys[i-1][0], right=keys[i+1][0]-keys[i][0];
+      double a=resolve(keys[i-1],channel,base,additive),b=resolve(keys[i],channel,base,additive),c=resolve(keys[i+1],channel,base,additive);
+      return MonotoneCubic.tangent(left,(b-a)/left,right,(c-b)/right);
    }
 
    public static float resolve(float[] row, int channel, float base, boolean additive) {

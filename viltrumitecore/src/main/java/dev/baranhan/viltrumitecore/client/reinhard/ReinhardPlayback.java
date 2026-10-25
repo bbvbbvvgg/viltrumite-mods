@@ -1,10 +1,25 @@
 package dev.baranhan.viltrumitecore.client.reinhard;
 
 import dev.baranhan.viltrumitecore.client.anim.animation.Animation;
+import dev.baranhan.viltrumitecore.client.anim.pose.ActionClock;
+import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
+import java.util.Map;
+import java.util.WeakHashMap;
+import net.minecraft.client.player.AbstractClientPlayer;
 
 /** Sampling policy for Reinhard's stateless geo clips; not a second animation engine. */
 public final class ReinhardPlayback {
    private ReinhardPlayback() {}
+   private static final Map<AbstractClientPlayer, ActionClock> CLOCKS = new WeakHashMap<>();
+
+   public static void reset(AbstractClientPlayer player) { CLOCKS.remove(player); }
+
+   public static double actionTicks(AbstractClientPlayer player,
+      HeroPublicSnapshot snapshot, float partial) {
+      return CLOCKS.computeIfAbsent(player,p -> new ActionClock())
+         .sample(snapshot.actionId(),snapshot.variant(),snapshot.actionElapsed(),snapshot.actionLength(),
+            player.tickCount+(Float.isFinite(partial)?partial:0));
+   }
 
    /** Identical bounded server time for first person, third person and cinematics. */
    public static double actionTicks(int elapsed, int length, float partial, double held) {
