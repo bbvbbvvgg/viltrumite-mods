@@ -203,6 +203,36 @@ public class AnimationController {
       poseBones(animation, model, seconds, 1.0F, null);
    }
 
+   /** Poses the clip's bones blended from their current pose by weight (0 = unchanged, 1 = the clip); other bones keep their pose. */
+   public static void overlay(Animation animation, BakedGeoModel model, double seconds, float weight) {
+      float w = Math.max(0.0F, Math.min(1.0F, weight));
+      if (w <= 0.0F) {
+         return;
+      }
+
+      Map<String, float[]> from = new HashMap<>();
+      for (GeoBone bone : model.allBones()) {
+         from.put(bone.name, pose(bone));
+      }
+
+      poseBones(animation, model, seconds, w, from);
+   }
+
+   /** Adds the clip's rotation and position (times weight) to the current pose of its bones; scale is untouched. */
+   public static void additive(Animation animation, BakedGeoModel model, double seconds, float weight) {
+      for (Animation.BoneAnimation ba : animation.boneAnimations().values()) {
+         GeoBone bone = model.getBone(ba.boneName());
+         if (bone != null) {
+            bone.rotX += ba.rotX().sample(seconds) * weight;
+            bone.rotY += ba.rotY().sample(seconds) * weight;
+            bone.rotZ += ba.rotZ().sample(seconds) * weight;
+            bone.posX += ba.posX().sample(seconds) * weight;
+            bone.posY += ba.posY().sample(seconds) * weight;
+            bone.posZ += ba.posZ().sample(seconds) * weight;
+         }
+      }
+   }
+
    /** Two clips blended per bone: weight 0 = a at secondsA, weight 1 = b at secondsB. */
    public static void blend(BakedGeoModel model, Animation a, double secondsA, Animation b, double secondsB, float weight) {
       seek(a, model, secondsA);

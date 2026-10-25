@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.client.gui;
 
+import dev.baranhan.viltrumitecore.client.hero.HeroHeadPreviews;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.HeroChoiceC2SPacket;
@@ -60,22 +61,17 @@ public class RaceSelectionScreen extends Screen {
       int centerY = this.height / 2;
       guiGraphics.drawCenteredString(this.font, Component.translatable("gui.viltrumitecore.race_selection.question"), centerX, centerY - 60, 16777215);
 
-      // Head previews above each hero button: base face + hat layer, drawn skin-flat like a player head.
-      drawHead(guiGraphics, HOMELANDER_SKIN, centerX + heroX(0) + 50 - 12, centerY - 48);
-      drawHead(guiGraphics, REGULUS_SKIN, centerX + heroX(1) + 50 - 12, centerY - 48);
-      drawHead(guiGraphics, IRON_MAN_SKIN, centerX + heroX(2) + 50 - 12, centerY - 48);
-      // Reinhard: vanilla skin until his model head preview arrives (Stage 1b).
-      drawHead(guiGraphics, net.minecraft.client.resources.DefaultPlayerSkin.getDefaultSkin(), centerX + heroX(3) + 50 - 12, centerY - 48);
+      // Head previews above each hero button (HeroHeadPreviews: registered 3D heads, else the flat skin face).
+      HeroHeadPreviews.draw(HeroId.HOMELANDER, guiGraphics, centerX + heroX(0) + 50 - 12, centerY - 48, 24, partialTick, HOMELANDER_SKIN);
+      HeroHeadPreviews.draw(HeroId.REGULUS, guiGraphics, centerX + heroX(1) + 50 - 12, centerY - 48, 24, partialTick, REGULUS_SKIN);
+      HeroHeadPreviews.draw(HeroId.IRON_MAN, guiGraphics, centerX + heroX(2) + 50 - 12, centerY - 48, 24, partialTick, IRON_MAN_SKIN);
+      HeroHeadPreviews.draw(HeroId.REINHARD, guiGraphics, centerX + heroX(3) + 50 - 12, centerY - 48, 24, partialTick,
+         net.minecraft.client.resources.DefaultPlayerSkin.getDefaultSkin());
    }
 
    /** Left edge of hero button {@code index} relative to the screen centre (4 buttons, 100 px, 5 px gap). */
    private static int heroX(int index) {
       return -207 + index * 105;
-   }
-
-   private static void drawHead(GuiGraphics guiGraphics, ResourceLocation skin, int x, int y) {
-      guiGraphics.blit(skin, x, y, 24, 24, 8.0F, 8.0F, 8, 8, 64, 64);
-      guiGraphics.blit(skin, x, y, 24, 24, 40.0F, 8.0F, 8, 8, 64, 64);
    }
 
    public boolean shouldCloseOnEsc() {

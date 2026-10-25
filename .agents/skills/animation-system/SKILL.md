@@ -203,7 +203,7 @@ Decision record: `docs/spikes/2026-10-ironman-reveal.md`. No custom shader
 - Progress must come from synced timeline fields (`actionElapsed/Length`),
   never from a client counter: relog mid-wave stays correct.
 
-### 7.4 Whole-body replacement (Hulkbuster): allowed only through this renderer pattern
+### 7.4 Whole-body replacement (Hulkbuster, Reinhard): allowed only through this renderer pattern
 
 Iron Man stage 5 replaces the whole player body with the Mark 48 model. Only this pattern may do that:
 
@@ -216,6 +216,14 @@ Iron Man stage 5 replaces the whole player body with the Mark 48 model. Only thi
 7. `GeoBone.resetToDefault` does not reset `hidden`. A pose that hides bones must set `hidden` every frame.
 8. Hitbox and eye height come from the body scale seam (`HeroDefinition.bodyScale`). This renderer does not change them.
 9. No pose mixin was added for the Hulkbuster, so the priority table in §3.1 is unchanged.
+
+Second user — Reinhard (stage 1b, `client/reinhard/ReinhardRenderer`), always on for the hero:
+- Cancel the vanilla render for every Reinhard render, invisible included; otherwise a glowing invisible player outlines as a vanilla Steve. Passes come from `ReinhardPoses.passes(invisible, visibleToViewer, glowing)`: visible → body + glow + sword + held items (a glowing body outlines by itself because the event's buffer source is the outline source); invisible but visible to the viewer → body `entityTranslucent` alpha 0.15 only; invisible + glowing → `RenderType.outline(texture)` only. Outline and glow skipped in the shadow pass.
+- Cancelling also skips what vanilla does after the model, so restore it: Forge's name tag step (fire `RenderNameTagEvent`, then vanilla `renderNameTag` / `shouldShowName` through `EntityRendererNameTagInvoker`), held items (`ItemInHandRenderer.renderItem` at the geo hand bone: `HeldItemAnchor.local(arm)` = rotZ 180 + vanilla `ItemInHandLayer` chain), hurt tint (`LivingEntityRenderer.getOverlayCoords`), player scale 0.9375.
+- Pose clips must cover crouch/sit/sleep/swim/elytra because model mixins never run: `setupRotations` mirrors vanilla (bed, death tilt, elytra pitch + roll, swim pitch); `crouch` / `sit` are additive clips with vanilla's numbers (`AnimationController.additive`); `swim` is vanilla's 26-unit crawl stroke, overlay weighted by `getSwimAmount`.
+- Layering: stance (`StanceBlend`, k 12, one per mode) → walk as a weighted `overlay` on the limbs (keeps the stance's head/body; `blend` would reset them) → Knight arm hold `overlay` by the Knight weight → additive body state → action overlay (clip = HeroAction name in lower case, missing = skipped).
+- First person: `RenderArmEvent` → `PlayerGeoLayer.renderArmPart(ARMS)` with pose null (rest = vanilla's first-person arm); a stance-hidden arm is cancelled and not drawn; the empty off hand goes through `AlwaysVisibleOffhandMixin` + `ReinhardFirstPerson.wantsOffhand`.
+- Art from OBJ: `tools/obj2geo.py` (rotated boxes → cube `rotation`/`pivot`; `--skip-material-suffix _glow` for emissive overlay copies; `--uv-top-origin` when vt is measured from the top). Note: `GeoBone.resetToDefault` resets `hidden` now (item 7 is kept for old code paths).
 
 Art: Sind Hulkbuster from the user's archive, `tools/assets/convert_ironman_sind.py` (geo via `tools/tabula2geo.py`, clips baked from the Sind `.fsk` scripts via `tools/fsk2anim.py`). The model is 68 px tall: the renderer scale is `HulkbusterLayer.SCALE × 32/68`. The jackhammer arm is a separate geo with its own texture; it replaces the body bone `pivotLeft` while the jackhammer tool is selected. Thruster fire is a separate geo posed with the same clips and drawn as glow. Tests: `HulkbusterAssetsParseTest` (parse, bones, clip lengths), `HulkbusterPosesTest`, `HulkbusterAssemblyTest`.
 
