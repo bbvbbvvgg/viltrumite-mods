@@ -506,6 +506,12 @@ public final class ReinhardHero implements HeroDefinition {
       return source.typeHolder().unwrapKey().map(ResourceKey::location).orElse(DivineDamage.DIVINE.location());
    }
 
+   /** Arrow Protection never lets a projectile through ({@link #projectileResponse} is never PASS). */
+   @Override
+   public boolean interceptsProjectiles(Player self) {
+      return true;
+   }
+
    /**
     * Arrow Protection (spec §4.3): every projectile is turned aside; the catch and
     * reflect windows (Restrained palm / Knight backhand, stage 3) win over the passive. Mode-independent.

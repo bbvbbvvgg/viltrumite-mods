@@ -314,6 +314,17 @@ public interface HeroDefinition {
    }
 
    /**
+    * Both sides: true when {@link #projectileResponse} may turn a projectile
+    * away from this hero. Clients then keep custom projectiles that touch the
+    * hero flying until the server outcome arrives (see
+    * {@link HeroProjectiles#awaitsServer}); every other hit plays its local
+    * impact at once. Default: never.
+    */
+   default boolean interceptsProjectiles(Player self) {
+      return false;
+   }
+
+   /**
     * Server, LivingAttackEvent (before armor, knockback, hurt animation): this
     * hero's own damage layers in the fixed order shield → Hulkbuster → mark
     * (see {@link HeroDamageLayers}). {@link DamageAbsorb#ABSORBED} cancels the
