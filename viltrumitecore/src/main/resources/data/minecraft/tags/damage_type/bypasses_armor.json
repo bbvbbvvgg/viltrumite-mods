@@ -1,7 +1,10 @@
 {
   "replace": false,
   "values": [
-    "viltrumitecore:divine",
+    {
+      "id": "#viltrumitecore:divine",
+      "required": false
+    },
     "viltrumitecore:annihilation"
   ]
 }
