@@ -66,9 +66,11 @@ public final class WorldCut implements AbilityHandler {
       if (finished || elapsed % 10 == 0) environment.progress(elapsed,finished);
       return finished;
    }
-   public static void start(ReinhardState state) {
+   public static void start(ReinhardState state) { start(state, WorldCutSweep.FROM_RIGHT); }
+   /** The action phase is the {@link WorldCutSweep}: every viewer plays the clip of the same shoulder. */
+   public static void start(ReinhardState state, int sweep) {
       state.cooldowns[ReinhardAbility.WORLD_CUT.ordinal()] = ReinhardRules.WORLD_CUT_COOLDOWN;
-      state.action.start(ReinhardAbility.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST + 20, -1);
+      state.action.start(ReinhardAbility.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST + 20, -1, WorldCutSweep.ofPhase(sweep));
    }
    @Override public boolean tryStart(ServerPlayer player, ReinhardState state) {
       if (!state.reid.drawn()) return false;
@@ -83,7 +85,7 @@ public final class WorldCut implements AbilityHandler {
             : (int)Math.floor(shape.origin().y) - 1;
       }
       Live world = new Live(level, UUID.randomUUID(), player.getUUID(), shape, surface, level.getGameTime());
-      start(state);
+      start(state, WorldCutSweep.of(shape.seed()));
       state.cutAnchor=player.position();
       state.worldCut = timed(world.startTime, world);
       WorldCutManager.get(level).submit(state.worldCut);

@@ -16,6 +16,15 @@ public record ErasureStyle(Ramp head, Ramp tail, int edge, int decayStart, int d
             mixColor(body, other.body, t), mixColor(light, other.light, t), mixColor(brightest, other.brightest, t));
       }
 
+      /** Every colour toward white by {@code amount} (0..1), or toward black for a negative amount. */
+      public Ramp lift(float amount) {
+         if (amount == 0) return this;
+         int to = amount > 0 ? 0xFFFFFF : 0x000000;
+         float t = Math.min(1F, Math.abs(amount));
+         return new Ramp(mixColor(darkest, to, t), mixColor(dark, to, t), mixColor(body, to, t), mixColor(light, to, t),
+            mixColor(brightest, to, t));
+      }
+
       public int get(int i) {
          return switch (i) {
             case 0 -> darkest;
@@ -34,6 +43,17 @@ public record ErasureStyle(Ramp head, Ramp tail, int edge, int decayStart, int d
 
    /** The original default: cyan, a little greener toward the tail, cooling to mint and lime. */
    public static final ErasureStyle CYAN = new ErasureStyle(CYAN_RAMP, CYAN_RAMP.mix(GREEN_RAMP, 0.4F), 0x002543, MINT, LIME);
+
+   /**
+    * The original colours, shimmering (REINHARD OVERHAUL item 10, a stroke held open for seconds): both ramps shifted
+    * toward the green ramp by {@code shift} (0..1, the tail keeps its original lead) and lifted toward white by
+    * {@code lift} (a negative lift dims). {@code shimmer(0, 0)} is {@link #CYAN}.
+    */
+   public static ErasureStyle shimmer(float lift, float shift) {
+      float s = Math.max(0F, Math.min(1F, shift));
+      return new ErasureStyle(CYAN_RAMP.mix(GREEN_RAMP, s).lift(lift), CYAN_RAMP.mix(GREEN_RAMP, 0.4F + 0.6F * s).lift(lift),
+         0x002543, MINT, LIME);
+   }
 
    static int mixColor(int a, int b, float t) {
       int r = Math.round(((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t);

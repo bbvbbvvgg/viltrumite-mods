@@ -43,11 +43,8 @@ public final class CutRainWaves {
             for(int trail=0;trail<4;trail++) {
                double distance=Math.max(0,Math.min(40,(t-trail*.35)*6));
                Vec3 centre=w.origin().add(w.direction().scale(distance));double radius=1.3+distance*.075;
-               for(int i=0;i<20;i++) {
-                  double a=-1.2+i*2.4/19;Vec3 p=centre.add(span.scale(Math.sin(a)*radius)).add(w.direction().scale((Math.cos(a)-1)*1.2));
-                  int alpha=(int)(230*Math.max(0,1-t/12)/(1+trail*.7));
-                  PixelVfx.billboardPixel(b,eye,c,p,trail==0?.13F:.08F,255,trail==0?249:216,trail==0?238:130,alpha);
-               }
+               int alpha=(int)(230*Math.max(0,1-t/12)/(1+trail*.7));
+               CrescentWave.draw(b,eye,c,centre,span,w.direction(),radius,1.2,20,trail==0?.13F:.08F,255,trail==0?249:216,trail==0?238:130,alpha);
             }
          }tess.end();
       } finally {RenderSystem.depthMask(true);RenderSystem.enableCull();RenderSystem.defaultBlendFunc();RenderSystem.disableBlend();stack.popPose();RenderSystem.applyModelViewMatrix();}

@@ -68,6 +68,13 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> WORLD_CUT_IMPACT = reg("reinhard.world_cut_impact");
    /** Blade ring for the normal cut only; same file as sheath_ring, own id for duck exemption. */
    public static final RegistryObject<SoundEvent> WORLD_CUT_BLADE = reg("reinhard.world_cut_blade");
+   /**
+    * TEMPORARY test asset (REINHARD OVERHAUL item 12): the owner-confirmed strike on Theresia
+    * (Re:Zero S3E14), played once at the BLAST of the normal World Cut instead of
+    * {@link #WORLD_CUT_IMPACT}. Its license is NOT verified: replace it with a licensed or original
+    * sound before a public release and keep the BLAST timing (tools/assets/reinhard_sources.md).
+    */
+   public static final RegistryObject<SoundEvent> WORLD_CUT_STRIKE_VOICE = reg("reinhard.world_cut_strike_voice");
 
    public static final RegistryObject<SoundEvent> ERASE_CRACK = reg("reinhard.erase_crack");
    public static final RegistryObject<SoundEvent> ERASE_INHALE = reg("reinhard.erase_inhale");

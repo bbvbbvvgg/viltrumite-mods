@@ -51,6 +51,9 @@ public final class ErasureStroke {
    final boolean preAura;
    // Derived from time once per frame by update().
    float time;
+   /** Seconds since the cut started and the end of this stroke's timeline (END, or the end of a held stroke). */
+   float clock;
+   float end = END;
    float headS;
    /** The round head cap is a half sphere of radius capR centred at capS on the path. */
    float capS;
@@ -93,6 +96,8 @@ public final class ErasureStroke {
    /** Original timeline with the head position supplied by the caller (blocks from the stroke's tail). */
    public ErasureStroke update(float t, float head) {
       time = t;
+      clock = t;
+      end = END;
       headS = Mth.clamp(head, 0F, length);
       decay = Mth.clamp((t - DECAY_START) / (END - DECAY_START), 0F, 1F);
       // The width breathes slightly while the tube holds; closing is done per point by radius().
@@ -102,6 +107,31 @@ public final class ErasureStroke {
       flash = t < CUT_END ? 1F : (float) Math.exp(-(t - CUT_END) / 0.025F);
       halo = 1F - smoothstep(0.85F, 1F, decay);
       aura = t < 0 ? (preAura ? easeOut((t - auraStart) / -auraStart) : 0F) : 1F - Mth.clamp((t - CUT_END) / (AURA_END - CUT_END), 0F, 1F);
+      return this;
+   }
+
+   /**
+    * A stroke that stays open (REINHARD OVERHAUL item 10, the diagonal World Cut). The original cut is played over
+    * {@code reveal} seconds instead of {@link #CUT_END} (flash, aura and reveal keep their shape), then the original
+    * clock runs on while the tube holds open, breathing as in the original, until {@code hold} seconds; from there it
+    * zips shut from the tail to the head on the original closing curve, over {@code close} seconds instead of
+    * END - DECAY_START. {@code swell} (0..1) widens it a little for a pulse. {@link #update} is untouched: the
+    * /erasuretest swipe and the ordinary World Cut keep the original timeline.
+    *
+    * @param t    seconds since the cut started
+    * @param head blocks from the stroke's tail
+    */
+   public ErasureStroke updateHeld(float t, float head, float reveal, float hold, float close, float swell) {
+      if (!(reveal > 0) || !(close > 0) || !(hold >= reveal)) throw new IllegalArgumentException("Invalid held timeline");
+      float original = t < reveal ? t * (CUT_END / reveal) : CUT_END + (t - reveal);
+      update(original, head);
+      decay = Mth.clamp((t - hold) / close, 0F, 1F);
+      width *= 1F + 0.1F * Mth.clamp(swell, 0F, 1F);
+      capS = Math.max(headS - radius(headS), 0F);
+      capR = radius(capS);
+      halo = 1F - smoothstep(0.85F, 1F, decay);
+      clock = t;
+      end = hold + close;
       return this;
    }
 
@@ -123,7 +153,7 @@ public final class ErasureStroke {
    }
 
    public boolean finished() {
-      return time > END;
+      return clock > end;
    }
 
    boolean tubeVisible() {
@@ -135,6 +165,9 @@ public final class ErasureStroke {
    }
 
    public float time() { return time; }
+   /** Width of the tube this frame (blocks), breathing and swell included, before taper and closing. */
+   public float width() { return width; }
+   public ErasureStyle style() { return style; }
    public float headS() { return headS; }
    public float decay() { return decay; }
    public float aura() { return aura; }

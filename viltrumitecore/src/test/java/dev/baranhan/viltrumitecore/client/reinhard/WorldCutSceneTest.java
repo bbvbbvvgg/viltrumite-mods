@@ -30,7 +30,7 @@ class WorldCutSceneTest {
       assertEquals(90.5,WorldCutScene.elapsed(100,190,.5),1E-8);
    }
    @Test void clipAndBothHands() {
-      assertEquals(List.of("world_cut"),ReinhardClips.names(ReinhardAbility.WORLD_CUT));
+      assertEquals(List.of("world_cut","world_cut_from_left"),ReinhardClips.names(ReinhardAbility.WORLD_CUT)); // item 13: both shoulders
       assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(10,false));
       assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(10,true));
       assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(60,false));
