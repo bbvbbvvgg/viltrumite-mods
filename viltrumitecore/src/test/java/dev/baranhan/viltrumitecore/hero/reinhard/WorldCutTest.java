@@ -26,6 +26,19 @@ class WorldCutTest {
       cut.advance(180); assertEquals(1, w.blasts);
       assertTrue(cut.advance(210)); assertEquals(1, w.blasts);
    }
+   /** Ported from #35: a cast dropped with its level (unload, server stop) must not lock the caster. */
+   @Test void castDroppedWithItsLevelReleasesTheCaster() {
+      ReinhardState state = new ReinhardState(); World w = new World(); WorldCutManager manager = new WorldCutManager();
+      state.worldCut = WorldCut.timed(0, w); manager.submit(state.worldCut);
+      manager.advance(40);
+      assertTrue(state.busy(), "a pre-blast cast keeps the caster busy");
+      manager.dropAll();
+      assertEquals(0, manager.size());
+      assertTrue(state.worldCut.dropped());
+      assertFalse(state.busy(), "the dropped cast never blasts, so it must not hold MODE_CYCLE forever");
+      manager.advance(200);
+      assertEquals(0, w.blasts, "nothing of the dropped cast runs again");
+   }
    @Test void onlyWhenDrawn() {
       for (Reid.Phase p : Reid.Phase.values())
          assertEquals(p == Reid.Phase.DRAWN, Reid.allows(ReinhardAbility.WORLD_CUT, p));

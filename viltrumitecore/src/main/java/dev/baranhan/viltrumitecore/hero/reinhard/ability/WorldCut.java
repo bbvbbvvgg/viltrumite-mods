@@ -34,6 +34,7 @@ public final class WorldCut implements AbilityHandler {
    private boolean blasted;
    private boolean finished;
    private boolean waveComplete;
+   private boolean dropped;
    public WorldCut() { this(0, null); }
    private WorldCut(long startTime, Environment environment) {
       this.startTime = startTime; this.environment = environment;
@@ -48,6 +49,9 @@ public final class WorldCut implements AbilityHandler {
    public static int carveFront(@javax.annotation.Nullable WorldCutCarve carve) { return carve == null ? 0 : carve.frontAlong(); }
    public boolean blasted() { return blasted; }
    public boolean finished() { return finished; }
+   /** The owning level went away (unload, server stop) before the cast could end: it never blasts again. */
+   public void drop() { dropped = true; }
+   public boolean dropped() { return dropped; }
    public boolean advance(long gameTime) {
       long elapsed = gameTime - startTime;
       if (elapsed < ReinhardRules.WORLD_CUT_BLAST) return false;

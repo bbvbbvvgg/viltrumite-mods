@@ -82,8 +82,9 @@ public final class ReinhardState {
    public boolean busy() {
       // The detached cut blasts at tick 80, but the cast pose and movement lock
       // keep running until the action ends (tick 100): both must block MODE_CYCLE.
+      // A cast dropped with its level never blasts and must not lock the caster.
       return (worldErasure != null && !worldErasure.ended()) || this.reid.busy()
-         || (worldCut != null && !worldCut.blasted())
+         || (worldCut != null && !worldCut.blasted() && !worldCut.dropped())
          || this.action.is(ReinhardAbility.WORLD_CUT) || this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT);
    }
 
