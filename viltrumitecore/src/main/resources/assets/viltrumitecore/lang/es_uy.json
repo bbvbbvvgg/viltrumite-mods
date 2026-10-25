@@ -449,5 +449,22 @@
   "ability.viltrumitecore.reinhard_stomp.name": "Pisotón",
   "ability.viltrumitecore.reinhard_stomp.desc": "Pulsa para golpear el suelo con el pie: 12 de daño a todo lo que esté en el suelo a 8 bloques, empujado hacia fuera; la capa superior del suelo se agrieta. Enfriamiento 8 s.",
   "ability.viltrumitecore.reinhard_reflect.name": "Reflejar proyectil",
-  "ability.viltrumitecore.reinhard_reflect.desc": "Pulsa para alzar el dorso de la mano durante 1 s: todo proyectil que te alcance vuelve a su tirador a la misma velocidad. Enfriamiento 4 s."
+  "ability.viltrumitecore.reinhard_reflect.desc": "Pulsa para alzar el dorso de la mano durante 1 s: todo proyectil que te alcance vuelve a su tirador a la misma velocidad. Enfriamiento 4 s.",
+  "death.attack.viltrumitecore.annihilation": "%1$s fue borrado por una espada sagrada",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s fue borrado por la espada sagrada de %2$s",
+  "commands.viltrumitecore.annihilate.success": "Golpe de Reid: %s muertos, %s bloqueados (absoluto), %s inmunes (divino), %s omitidos",
+  "ability.viltrumitecore.reinhard_reid.name": "Desenvainar / envainar a Reid",
+  "ability.viltrumitecore.reinhard_reid.desc": "Desenvaina la Espada Dragón Reid en un evento de mundo de 6 s (se queda quieto). Desenvainada: se desbloquean la Lluvia de cortes y los ataques más fuertes. Pulsa otra vez para envainar (1 s). Vuelve a la vaina tras 60 s sin combate y al salir de Espada Sagrada.",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "La tierra retumba",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "Reid sale de su vaina",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "Un coro celestial",
+  "subtitles.viltrumitecore.reinhard_reid_far": "Algo terrible despierta a lo lejos",
+  "chat.viltrumitecore.reinhard.reid_drawn": "La Espada Dragón Reid ha sido desenvainada",
+  "subtitles.viltrumitecore.reinhard_reid_sheathe": "Reid vuelve a su vaina",
+  "ability.viltrumitecore.reinhard_sheath_strike.name": "Golpe de vaina",
+  "ability.viltrumitecore.reinhard_sheath_strike.desc": "Solo con Reid envainada. Barre en arco con la espada envainada: 20 de daño a todo en 6 bloques y aturdimiento de 3 s (los héroes inmunes al control solo reciben el daño). Enfriamiento 8 s.",
+  "subtitles.viltrumitecore.reinhard_sheath_strike": "Reinhard golpea con la vaina",
+  "ability.viltrumitecore.reinhard_cut_rain.name": "Lluvia de cortes",
+  "ability.viltrumitecore.reinhard_cut_rain.desc": "Solo con Reid desenvainada. 12 cortes en un cono de 30°, de 40 bloques cada uno: todo objetivo mortal que crucen muere (golpe de Reid) y cada corte deja un surco de 1 × 3 (si mobGriefing lo permite; la roca madre queda). Enfriamiento 15 s.",
+  "subtitles.viltrumitecore.reinhard_cut_rain": "Llueven los cortes de Reinhard"
 }

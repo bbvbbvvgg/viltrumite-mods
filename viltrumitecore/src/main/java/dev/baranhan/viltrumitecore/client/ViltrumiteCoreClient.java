@@ -149,7 +149,8 @@ public class ViltrumiteCoreClient {
                      && corePlayer.getBarrageTicks() == 0
                      && corePlayer.getPunchCooldown() <= 0) {
                      boolean shouldBeRight = corePlayer.isTryingToGrab() || corePlayer.getGrabbedTarget() != null;
-                     boolean isLeft = !shouldBeRight && client.level.random.nextBoolean();
+                     boolean isLeft = dev.baranhan.viltrumitecore.hero.ChopStyle.resolveLeft(!shouldBeRight && client.level.random.nextBoolean(),
+                        dev.baranhan.viltrumitecore.hero.HeroRegistry.get(client.player).chopStyle(client.player));
                      corePlayer.setLeftArmPunch(isLeft);
                      corePlayer.setPunchTicks(20);
                      CoreMessages.sendToServer(new PunchC2SPacket(isLeft));

@@ -449,5 +449,22 @@
   "ability.viltrumitecore.reinhard_stomp.name": "Stampfer",
   "ability.viltrumitecore.reinhard_stomp.desc": "Drücken, um mit dem Fuß auf den Boden zu stampfen: 12 Schaden an allem im Umkreis von 8 Blöcken am Boden, nach außen gestoßen; die oberste Bodenschicht bricht auf. Abklingzeit 8 s.",
   "ability.viltrumitecore.reinhard_reflect.name": "Geschoss zurückwerfen",
-  "ability.viltrumitecore.reinhard_reflect.desc": "Drücken, um 1 s lang den Handrücken zu heben: Jedes Geschoss, das dich trifft, fliegt mit gleicher Geschwindigkeit zum Schützen zurück. Abklingzeit 4 s."
+  "ability.viltrumitecore.reinhard_reflect.desc": "Drücken, um 1 s lang den Handrücken zu heben: Jedes Geschoss, das dich trifft, fliegt mit gleicher Geschwindigkeit zum Schützen zurück. Abklingzeit 4 s.",
+  "death.attack.viltrumitecore.annihilation": "%1$s wurde von einer heiligen Klinge ausgelöscht",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s wurde von der heiligen Klinge von %2$s ausgelöscht",
+  "commands.viltrumitecore.annihilate.success": "Reid-Schlag: %s getötet, %s geblockt (absolut), %s immun (göttlich), %s übersprungen",
+  "ability.viltrumitecore.reinhard_reid.name": "Reid ziehen / einstecken",
+  "ability.viltrumitecore.reinhard_reid.desc": "Zieht das Drachenschwert Reid in einem 6-s-Weltereignis (er steht still). Gezogen: Schnittregen und die stärksten Angriffe werden frei. Erneut drücken zum Einstecken (1 s). Kehrt nach 60 s ohne Kampf und beim Verlassen von Heiliges Schwert in die Scheide zurück.",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "Die Erde grollt",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "Reid verlässt die Scheide",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "Ein himmlischer Chor",
+  "subtitles.viltrumitecore.reinhard_reid_far": "In der Ferne erwacht etwas Schreckliches",
+  "chat.viltrumitecore.reinhard.reid_drawn": "Das Drachenschwert Reid ist gezogen",
+  "subtitles.viltrumitecore.reinhard_reid_sheathe": "Reid kehrt in die Scheide zurück",
+  "ability.viltrumitecore.reinhard_sheath_strike.name": "Scheidenhieb",
+  "ability.viltrumitecore.reinhard_sheath_strike.desc": "Nur mit Reid in der Scheide. Schwingt das Schwert samt Scheide im Bogen: 20 Schaden an allem im Umkreis von 6 Blöcken und 3 s Betäubung (gegen Kontrolle immune Helden nehmen nur den Schaden). Abklingzeit 8 s.",
+  "subtitles.viltrumitecore.reinhard_sheath_strike": "Reinhard schlägt mit der Scheide",
+  "ability.viltrumitecore.reinhard_cut_rain.name": "Schnittregen",
+  "ability.viltrumitecore.reinhard_cut_rain.desc": "Nur mit gezogenem Reid. 12 Schnitte in einem 30°-Kegel, je 40 Blöcke: Jedes sterbliche Ziel auf ihrem Weg stirbt (Reid-Schlag), und jeder Schnitt hinterlässt eine 1 × 3 große Rille (wenn mobGriefing es erlaubt; Grundgestein bleibt). Abklingzeit 15 s.",
+  "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhards Schnitte regnen herab"
 }

@@ -62,6 +62,13 @@ public final class ReinhardFirstPersonPose {
    // Stomp: the arm swings up for balance as the leg rises, then jolts down with the slam.
    static final float STOMP_Y = -0.18F;
    static final float STOMP_PITCH = 18.0F;
+   /** Sheath Strike: the arm sweeps across the view in one flat arc. */
+   static final float SHEATH_X = -0.25F;
+   static final float SHEATH_Z = -0.12F;
+   static final float SHEATH_YAW = 40.0F;
+   /** Rain of Cuts: the blade arm sways left and right with the fan. */
+   static final float CUT_SWAY_X = 0.18F;
+   static final float CUT_SWAY_YAW = 30.0F;
    // Reflect: the back of the hand raised across the chest, then swatted out to the side.
    static final float GUARD_X = 0.10F;
    static final float GUARD_Y = 0.12F;
@@ -82,6 +89,16 @@ public final class ReinhardFirstPersonPose {
       Offset scaled(float w) {
          return new Offset(this.x * w, this.y * w, this.z * w, this.pitch * w, this.yaw * w, this.roll * w);
       }
+   }
+
+   /** Stage 4, Reid draw: the main arm rises in front of the view pulling the blade up (sheathe = the same, reversed). */
+   public static final Offset REID_PULL = new Offset(-0.12F, 0.14F, -0.06F, -40.0F, 12.0F, 0.0F);
+
+   public static Offset reid(ReinhardPoses.ReidPhase phase, double ticks) {
+      return switch (phase) {
+         case DRAWING, SHEATHING -> REID_PULL.scaled(ReinhardPoses.bladeOut(phase, ticks));
+         default -> Offset.NONE;
+      };
    }
 
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks) {
@@ -106,6 +123,12 @@ public final class ReinhardFirstPersonPose {
          case REFLECT -> backhand(phase, ticks, length);
          case STOMP -> new Offset(0.0F, STOMP_Y, 0.0F, STOMP_PITCH, 0.0F, 0.0F)
             .scaled(strike(ticks, ReinhardRules.STOMP_HIT_TICK, ReinhardRules.STOMP_TICKS));
+         case SHEATH_STRIKE -> new Offset(SHEATH_X, 0.0F, SHEATH_Z, 0.0F, SHEATH_YAW, 0.0F)
+            .scaled(strike(ticks, ReinhardRules.SHEATH_HIT_TICK, ReinhardRules.SHEATH_TICKS));
+         case CUT_RAIN -> {
+            float sway = (float) Math.sin(Math.PI * 2.0 * ticks / 6.0) * strike(ticks, ReinhardRules.CUT_TICKS / 2, ReinhardRules.CUT_TICKS);
+            yield new Offset(CUT_SWAY_X * sway, 0.0F, 0.0F, 0.0F, CUT_SWAY_YAW * sway, 0.0F);
+         }
          case DASH_BEHIND -> new Offset(0.0F, BEHIND_Y, BEHIND_Z, BEHIND_PITCH, 0.0F, BEHIND_ROLL)
             .scaled(strike(ticks, 2, ReinhardRules.BEHIND_ACTION_TICKS));
          default -> Offset.NONE;

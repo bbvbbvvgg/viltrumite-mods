@@ -86,7 +86,8 @@ public class ChopImpactManager {
       }
 
       if (hitSomeone) {
-         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.2F, 0.8F);
+         dev.baranhan.viltrumitecore.hero.ChopStyle style = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).chopStyle(player);
+         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, style.critVolume(), style.critPitch());
       }
    }
 

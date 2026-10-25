@@ -289,6 +289,106 @@ def reflect():
     return img
 
 
+
+def reid():
+    """Holy Sword: Reid in its sheath, a diagonal blue scabbard with gold fittings, the white hilt up."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        "...........ww.",
+        "..........wsw.",
+        ".........GGw..",
+        "........GbG...",
+        ".......bbb....",
+        "......bhb.....",
+        ".....bhb......",
+        "....GbG.......",
+        "...bhb........",
+        "..bhb.........",
+        ".GbG..........",
+        ".GG...........",
+    ], {"w": WHITE, "s": STEEL, "b": BLUE_D, "h": BLUE, "G": GOLD_D}, 1, 2)
+    return img
+
+
+def reid_drawn():
+    """Holy Sword: Reid drawn, a bright white blade with a red edge glint, the hilt down-left."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        "............w.",
+        "...........ww.",
+        "..........wsw.",
+        ".........wsw..",
+        "........wsw...",
+        ".......wsw....",
+        "......wsr.....",
+        ".....wsw......",
+        "..G.wsw.......",
+        "...GGw........",
+        "..bGG.........",
+        ".bb..G........",
+    ], {"w": WHITE, "s": STEEL, "r": RED, "b": BLUE_D, "G": GOLD_D}, 1, 2)
+    return img
+
+
+def lethal_chop():
+    """Lethal Chop: a flat white hand-blade arc with a crimson edge sweeping across the slot."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        "..............",
+        "....rrrrrr....",
+        "..rrwwwwwwrr..",
+        ".rww......wwr.",
+        "rw..........wr",
+        "w............w",
+        "..............",
+        "....sss.......",
+        "...sssss......",
+        "..kssssk......",
+        "...kkkk.......",
+        "..............",
+    ], {"w": WHITE, "r": RED, "s": SKIN, "k": SKIN_D}, 1, 2)
+    return img
+
+def sheath_strike():
+    """Holy Sword: the sheathed Reid swung flat, a white arc and three white stun stars."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        "..w.....w...w.",
+        ".www...www.www",
+        "..w.....w...w.",
+        "..............",
+        "..wwwwwwwww...",
+        ".w.........w..",
+        "w...........w.",
+        "..............",
+        "GbhbhbhbhbGGww",
+        "GbhbhbhbhbGGsw",
+        "..............",
+        "..............",
+    ], {"w": WHITE, "s": STEEL, "b": BLUE_D, "h": BLUE, "G": GOLD_D}, 1, 2)
+    return img
+
+
+def cut_rain():
+    """Holy Sword: a fan of white-gold cut lines spreading out from the lower left."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        ".......w....w.",
+        "......w...ww..",
+        ".....w..ww...w",
+        "....w.ww...ww.",
+        "...wwW...ww...",
+        "..wWW..ww.....",
+        "..WWwww.......",
+        ".WWw..........",
+        ".Ww...........",
+        "W.............",
+        "..............",
+        "..............",
+    ], {"w": WHITE, "W": GOLD_D}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -299,6 +399,11 @@ ABILITIES = {
     "dash_behind": dash_behind,
     "stomp": stomp,
     "reflect": reflect,
+    "reid": reid,
+    "reid_drawn": reid_drawn,
+    "lethal_chop": lethal_chop,
+    "sheath_strike": sheath_strike,
+    "cut_rain": cut_rain,
 }
 
 DRAWN = {

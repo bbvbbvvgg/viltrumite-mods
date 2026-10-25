@@ -37,7 +37,9 @@ public class ChopC2SPacket {
                return;
             }
 
-            corePlayer.setLeftChop(this.isLeft);
+            // A hero style may force the side (Reinhard with Reid drawn: always left), whatever the packet says.
+            corePlayer.setLeftChop(dev.baranhan.viltrumitecore.hero.ChopStyle.resolveLeft(this.isLeft,
+               dev.baranhan.viltrumitecore.hero.HeroRegistry.get(context.getSender()).chopStyle(context.getSender())));
             corePlayer.setChopType(this.chopType);
             corePlayer.setChopTicks(20);
          }

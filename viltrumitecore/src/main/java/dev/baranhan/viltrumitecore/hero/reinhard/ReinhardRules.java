@@ -27,6 +27,56 @@ public final class ReinhardRules {
    public static final float CHOP_BASE_DAMAGE = 20.0F;
    /** Reid idle time before the auto-return to the sheath (spec §7.3: 60 s); HUD bar scale. */
    public static final int REID_IDLE_TICKS = 1200;
+   /** Spec §7.3: the draw event lasts 6 s; sheathing 1 s (stage 4). */
+   public static final int REID_DRAW_TICKS = 120;
+   public static final int REID_SHEATHE_TICKS = 20;
+   /** Draw timeline (ticks from the press, spec §7.3): cracks and the pillar grow 20-100, "Reid trembles" at 110, the final at REID_DRAW_TICKS. */
+   public static final int REID_CRACK_START = 20;
+   public static final int REID_CRACK_END = 100;
+   public static final int REID_TREMBLE_TICK = 110;
+   /** Gravity lift (spec §7.3.3): radius, max rise over the start Y, rise time, cap for overlapping lifts, max speed per tick. */
+   public static final int REID_LIFT_RADIUS = 96;
+   public static final double REID_LIFT_MAX = 2.5;
+   public static final int REID_LIFT_RISE_TICKS = 100;
+   public static final double REID_LIFT_CAP = 3.0;
+   public static final double REID_LIFT_STEP = 0.1;
+   /** New entities in the radius are searched every this many ticks (tracked ones move every tick). */
+   public static final int REID_LIFT_SCAN_INTERVAL = 5;
+   /** Final wave (spec §7.3.6): no damage, outward push within this radius. */
+   public static final double REID_WAVE_RADIUS = 24.0;
+   public static final double REID_WAVE_KNOCKBACK = 1.2;
+   /** The scene packet reaches players within this distance of the origin; refreshed every REID_SCENE_REFRESH ticks. */
+   public static final double REID_SCENE_RANGE = 96.0;
+   public static final int REID_SCENE_REFRESH = 20;
+   /** Volume of the private far sound every player on the server hears at the final. */
+   public static final float REID_FAR_VOLUME = 0.4F;
+
+   // ---- Sheath Strike (spec §7, Holy Sword slot 3, Reid sheathed only) ----
+   /** Everything Reinhard may hit within this sphere around his feet. */
+   public static final double SHEATH_RADIUS = 6.0;
+   public static final float SHEATH_DAMAGE = 20.0F;
+   /** Freeze (stun) length on targets that accept external control. */
+   public static final int SHEATH_STUN = 60;
+   public static final int SHEATH_COOLDOWN = 160;
+   /** Action lock and the clip: the sheathed sword swings in an arc, contact on {@link #SHEATH_HIT_TICK}. */
+   public static final int SHEATH_TICKS = 12;
+   public static final int SHEATH_HIT_TICK = 6;
+
+   // ---- Rain of Cuts (spec §7, Holy Sword slot 4, Reid drawn only) ----
+   public static final int CUT_COUNT = 12;
+   /** Whole cone width in degrees of yaw (±15°). */
+   public static final int CUT_CONE_DEG = 30;
+   /** Length of every cut from the chest (blocks). */
+   public static final int CUT_RANGE = 40;
+   public static final int CUT_COOLDOWN = 300;
+   /** Groove section along each cut: 1 wide × 3 tall. */
+   public static final int CUT_GROOVE_WIDTH = 1;
+   public static final int CUT_GROOVE_HEIGHT = 3;
+   /** Carve blocks per tick on a healthy server (= {@code CarveJobs.BASE_BUDGET}, shared with Stage 5). */
+   public static final int CUT_BASE_BUDGET = 2000;
+   /** Action lock and the clip; the cuts land one per tick from {@link #CUT_FIRST_TICK}. */
+   public static final int CUT_TICKS = 20;
+   public static final int CUT_FIRST_TICK = 4;
 
    // ---- Divine Protection of the Phoenix (spec §4.2) ----
    /** Online ticks before the next revive (10 min). */
@@ -208,5 +258,10 @@ public final class ReinhardRules {
       }
 
       return Math.max(0.0F, Math.min(amount, health - HP_FLOOR));
+   }
+
+   /** Spec §7.1: Reid may be drawn at any time for now (the "worthy" list is §12). */
+   public static boolean canDraw() {
+      return true;
    }
 }

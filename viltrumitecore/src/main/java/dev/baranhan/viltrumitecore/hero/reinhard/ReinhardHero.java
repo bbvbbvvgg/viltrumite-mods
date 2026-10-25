@@ -21,6 +21,8 @@ import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ManaAbsorption;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.WindReading;
+import dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid;
+import dev.baranhan.viltrumitecore.hero.reinhard.reid.ReidLife;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import java.util.UUID;
@@ -70,6 +72,52 @@ public final class ReinhardHero implements HeroDefinition {
       return false;
    }
 
+   /** Lethal Chop (spec §7.2): of the kit only {@code viltrumite:chop}, and not while Reid is being drawn or sheathed. */
+   @Override
+   public boolean allowsLegacyAbility(Player player, String abilityId) {
+      return allowsKitAbility(abilityId, flags(player));
+   }
+
+   /** Pure: the kit ability rule over the synced Reinhard flags. */
+   public static boolean allowsKitAbility(String abilityId, int heroFlags) {
+      return dev.baranhan.viltrumitecore.hero.LegacyKit.CHOP.equals(abilityId)
+         && !ReinhardFlags.has(heroFlags, ReinhardFlags.REID_DRAWING) && !ReinhardFlags.has(heroFlags, ReinhardFlags.REID_SHEATHING);
+   }
+
+   /** Fixed chop base (35 per chop = ×1.75), no Viltrumite tank numbers. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.HeroChassis chassisStats(Player player) {
+      return CHASSIS;
+   }
+
+   private static final dev.baranhan.viltrumitecore.hero.HeroChassis CHASSIS = new dev.baranhan.viltrumitecore.hero.HeroChassis(ReinhardRules.CHOP_BASE_DAMAGE, 0.0F, 0.0F);
+   private static final dev.baranhan.viltrumitecore.hero.ChopStyle CHOP = new dev.baranhan.viltrumitecore.hero.ChopStyle(false, 2.0F, 0xFFFFFF, 0xB0142A, true, 1.4F, 0.8F);
+   private static final dev.baranhan.viltrumitecore.hero.ChopStyle CHOP_LEFT = new dev.baranhan.viltrumitecore.hero.ChopStyle(true, 2.0F, 0xFFFFFF, 0xB0142A, true, 1.4F, 0.8F);
+
+   /** Lethal Chop look: a 2× white-crimson arc with an air ripple, louder and lower; Reid drawn = always the left hand (spec §9.2). */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.ChopStyle chopStyle(Player player) {
+      return chopStyle(flags(player));
+   }
+
+   public static dev.baranhan.viltrumitecore.hero.ChopStyle chopStyle(int heroFlags) {
+      return ReinhardFlags.has(heroFlags, ReinhardFlags.REID_DRAWN) ? CHOP_LEFT : CHOP;
+   }
+
+   /** Synced Reinhard flags of a player (server: the live state; client: the snapshot), 0 when unknown. */
+   private static int flags(Player player) {
+      if (player instanceof ServerPlayer serverPlayer) {
+         ReinhardState state = ReinhardState.of(serverPlayer);
+         if (state != null) {
+            return dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.withFlags(0, state.reid.phase());
+         }
+      }
+
+      dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot snapshot = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
+         ? heroPlayer.getHeroSnapshot() : null;
+      return snapshot == null ? 0 : snapshot.heroFlags();
+   }
+
    @Override
    public boolean hasAbilityPanel(Player player) {
       return true;
@@ -110,6 +158,14 @@ public final class ReinhardHero implements HeroDefinition {
       return ReinhardAbilities.icon(abilityId);
    }
 
+   /** Reid sheathed / drawn icon from the synced snapshot (works on both sides). */
+   @Override
+   public net.minecraft.resources.ResourceLocation abilityIcon(String abilityId, net.minecraft.world.entity.player.Player player) {
+      dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot snapshot = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
+         ? heroPlayer.getHeroSnapshot() : null;
+      return ReinhardAbilities.icon(abilityId, snapshot == null ? 0 : snapshot.heroFlags());
+   }
+
    /** The spec gives Reinhard no immunity to control; knockback is the attribute (chassis). */
    @Override
    public boolean allowsExternalControl(LivingEntity target, ControlKind kind) {
@@ -132,7 +188,8 @@ public final class ReinhardHero implements HeroDefinition {
       return switch (action) {
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
-         case JUMP, AIR_STEP -> true;
+         // Except while Reid is being drawn: the 6 s scene roots him (spec §7.1).
+         case JUMP, AIR_STEP -> state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWING;
          // Abilities (stage 3+): the mode, cooldown and timeline gate lives in ReinhardActions.
          default -> ReinhardActions.abilityFor(action) != null;
       };
@@ -149,6 +206,7 @@ public final class ReinhardHero implements HeroDefinition {
       ReinhardState state = ReinhardState.ensure(player);
       state.tick();
       ReinhardActions.tick(player, state);
+      ReidLife.tick(player, state, state.reid.tick());
       VoidRescue.tick(player);
       if (player.tickCount % ReinhardRules.WIND_SCAN_INTERVAL == 0) {
          WindReading.scan(player, state);
@@ -187,6 +245,9 @@ public final class ReinhardHero implements HeroDefinition {
       state.mode = result.next();
       state.modeCooldown = ReinhardRules.MODE_COOLDOWN;
       if (previous == ReinhardMode.HOLY_SWORD) {
+         if (state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.SHEATHED) {
+            ReinhardSounds.play(player, ReinhardSounds.REID_SHEATHE.get(), 0.8F, 1.0F);
+         }
          state.onLeaveHolySword();
       }
 
@@ -273,6 +334,10 @@ public final class ReinhardHero implements HeroDefinition {
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
       ReinhardState state = ReinhardState.ensure(self);
       WindReading.onAttacked(self, state, source.getEntity());
+      if (ReidLife.isCombat(source.getEntity(), source.getDirectEntity())) {
+         state.reid.combat();
+      }
+
       if (!isDivine(source)) {
          if (Parry.parries(self, source, false)) {
             state.parryTicks = ReinhardRules.PARRY_POSE_TICKS;
@@ -372,6 +437,17 @@ public final class ReinhardHero implements HeroDefinition {
       return DivineDamage.isDivine(source);
    }
 
+   /** Dealing damage is combat: Reid's 60 s auto-return starts over (spec §7.3). */
+   @Override
+   public float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, DamageSource source, float amount) {
+      ReinhardState state = ReinhardState.of(attacker);
+      if (state != null && amount > 0.0F) {
+         state.reid.combat();
+      }
+
+      return amount;
+   }
+
    /** Spec §3.3: Reinhard is a divine being. */
    @Override
    public boolean isDivine(Player self) {
@@ -445,9 +521,11 @@ public final class ReinhardHero implements HeroDefinition {
       }
 
       flags = stateFlags(state, flags);
+      flags = Reid.withFlags(flags, state.reid.phase());
       ActionTimeline action = state.action;
+      // resource = Reid's idle ticks left while drawn (the HUD bar, spec §9.1).
       return new HeroPublicSnapshot(HeroId.REINHARD, action.wireId(), action.elapsed(), action.length(), 0, false, 0, 0, false, false, 0, 0,
-         action.targetId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], action.running(), -1, null, 0, false, flags, extra, action.phase(), 0);
+         action.targetId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], action.running(), -1, null, state.reid.idleLeft(), false, flags, extra, action.phase(), 0);
    }
 
    /** Stage 3 window / hold bits of the snapshot (catch, reflect, grab, hit-stop). */

@@ -34,7 +34,8 @@ import net.minecraft.world.entity.LivingEntity;
  * charged twice. Sources that bypass invulnerability (void, {@code generic_kill})
  * skip absorb and clamp; they reach only
  * {@link HeroDefinition#clampUnblockableDamage}, except inside {@link AdminKill}
- * ({@code /kill} stays an admin tool for every hero).
+ * ({@code /kill} stays an admin tool for every hero) or an {@link Annihilation}
+ * scope (the Reid strike kills every mortal target).
  */
 public final class HeroDamageLayers {
    /** Target side of one hit. */
@@ -124,6 +125,16 @@ public final class HeroDamageLayers {
       }
 
       return Math.max(0.0F, target.clampFinalDamage(afterArmor));
+   }
+
+   /** True inside a scope where hero HP floors on unblockable damage step aside: /kill ({@link AdminKill}) or a Reid strike ({@link Annihilation}). */
+   public static boolean unflooredScope() {
+      return AdminKill.active() || Annihilation.active();
+   }
+
+   /** {@link #finalDamage} with the current scope ({@link #unflooredScope}). */
+   public static float finalDamageInScope(Target target, boolean bypassesLayers, float afterArmor) {
+      return finalDamage(target, bypassesLayers, unflooredScope(), afterArmor);
    }
 
    /** LivingHurtEvent step for a hero attacker. */
@@ -226,7 +237,7 @@ public final class HeroDamageLayers {
 
    /** LivingDamageEvent for a player target. */
    public static float onDamage(ServerPlayer player, DamageSource source, float afterArmor) {
-      return finalDamage(target(player, source), bypassesLayers(source), AdminKill.active(), afterArmor);
+      return finalDamageInScope(target(player, source), bypassesLayers(source), afterArmor);
    }
 
    /** Direct path used by {@link HeroDamage#applyCleanDamage}. */
@@ -234,6 +245,6 @@ public final class HeroDamageLayers {
       Target layers = target instanceof ServerPlayer player ? target(player, source) : NO_LAYERS;
       ServerPlayer heroAttacker = heroAttacker(target, source);
       Attacker attacker = heroAttacker == null ? NO_ATTACKER : attacker(heroAttacker, target, source);
-      return clean(layers, attacker, bypassesLayers(source), AdminKill.active(), amount);
+      return clean(layers, attacker, bypassesLayers(source), unflooredScope(), amount);
    }
 }

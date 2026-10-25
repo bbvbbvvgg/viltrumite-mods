@@ -21,6 +21,13 @@ Swim (loop 1 s = vanilla's 26 walk-position units, overlay weighted by swimAmoun
 - swim: HumanoidModel's crawl stroke sampled every unit (arms) and a leg flutter
   0.3 rad (vanilla's leg period 6 pi units is shown once per stroke).
 
+Stage 4 (overlay driven by Reid's phase clock, ReinhardPoses.reidClip):
+- chop_left / chop_right: Lethal Chop (the kit chop) sweep of each hand, 1 s.
+- idle_holy_drawn: loop, the right arm holds Reid low and forward.
+- cut_rain: fast fan of slashes with Reid, 1 s.
+- sheath_strike: the sheathed sword swung in one flat arc, 0.6 s.
+- reid_draw: 6 s slow draw from the left hip, standing still; reid_sheathe: 1 s reverse.
+
 Run: python3 tools/assets/make_reinhard_clips.py
 """
 import json
@@ -252,6 +259,63 @@ CLIPS["reflect"] = {"loop": "hold_on_last_frame", "animation_length": 0.3, "bone
     "right_arm": {"rotation": {"0.0": [-92, 28, -18], "0.1": [-88, -46, 30], "0.3": [-92, 20, -10]}},
     "body": {"rotation": {"0.0": [0, -12, 0], "0.1": [0, 20, 0], "0.3": [0, -6, 0]}},
     "head": {"rotation": {"0.0": [-2, 6, 0], "0.3": [-2, 4, 0]}},
+}}
+
+
+# Stage 4, Reid draw (6 s, standing still, overlay over the Holy Sword stance; the left hand keeps
+# the sheath at the hip, so the left arm is not animated): the right hand crosses to the hilt at the
+# left hip (0.6 s), pulls the blade up slowly along the sheath axis (to 5.6 s), the final tick lifts
+# it overhead; feet planted wide, the head follows the hand.
+CLIPS["reid_draw"] = {"loop": "hold_on_last_frame", "animation_length": 6.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [0, 0, 3], "0.6": [-28, 30, -38], "2.0": [-45, 26, -30],
+                               "4.0": [-80, 18, -14], "5.6": [-120, 8, 4], "6.0": [-150, 0, 12]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.6": [4, 14, 0], "4.0": [0, 8, 0], "5.6": [-4, 2, 0], "6.0": [-6, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.6": [18, 14, 0], "4.0": [4, 6, 0], "6.0": [-22, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [-4, 0, 7], "6.0": [-4, 0, 7]}},
+    "left_leg": {"rotation": {"0.0": [0, 0, 0], "0.6": [4, 0, -7], "6.0": [4, 0, -7]}},
+}}
+# Lethal Chop (the kit chop, 20 t = 1 s, the standard 2-keyframe timeline of the animation skill):
+# wind-up out to the side (0.25), the flat sweep across the front (0.35), hold (0.65), back (0.9).
+def chop(side):
+    m = 1 if side == "right" else -1
+    arm = side + "_arm"
+    return {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
+        arm: {"rotation": {"0.0": [0, 0, 3 * m], "0.25": [-95, 60 * m, 20 * m], "0.35": [-95, -55 * m, -10 * m],
+                           "0.5": [-90, -50 * m, -8 * m], "0.65": [-90, -50 * m, -8 * m], "0.9": [0, 0, 3 * m]}},
+        "body": {"rotation": {"0.0": [0, 0, 0], "0.25": [0, 25 * m, 0], "0.35": [0, -25 * m, 0], "0.65": [0, -20 * m, 0], "0.9": [0, 0, 0]}},
+        "head": {"rotation": {"0.0": [0, 0, 0], "0.25": [0, -10 * m, 0], "0.35": [0, 8 * m, 0], "0.9": [0, 0, 0]}},
+    }}
+
+
+CLIPS["chop_right"] = chop("right")
+CLIPS["chop_left"] = chop("left")
+# Reid drawn (loop over the Holy Sword stance, right arm only: the left hand stays on the empty
+# sheath at the hip): the sword held low and forward, the arm breathing with it.
+CLIPS["idle_holy_drawn"] = loop({"right_arm": {"rotation": breathe([-40, 0, 10], [-42, 0, 11])}})
+# Sheathe (1 s): the reverse, calm: the blade comes down across to the left hip and slides in.
+CLIPS["reid_sheathe"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.3": [-45, 26, -30], "0.75": [-28, 30, -38], "1.0": [0, 0, 3]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.5": [3, 12, 0], "1.0": [0, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.5": [14, 12, 0], "1.0": [0, 0, 0]}},
+}}
+
+# Sheath Strike (0.6 s, contact 0.3 s = tick 6): both hands on the sheathed sword at the left hip,
+# wound back, then one flat arc across the front from left to right, the body turning with it.
+CLIPS["sheath_strike"] = {"loop": "hold_on_last_frame", "animation_length": 0.6, "bones": {
+    "right_arm": {"rotation": {"0.0": [0, 0, 3], "0.15": [-60, 40, -20], "0.3": [-85, -50, 10], "0.4": [-80, -60, 12], "0.6": [0, 0, 3]}},
+    "left_arm": {"rotation": {"0.0": [0, 0, -3], "0.15": [-50, 45, 0], "0.3": [-80, -35, 15], "0.4": [-75, -45, 15], "0.6": [0, 0, -3]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, 30, 0], "0.3": [0, -30, 0], "0.4": [0, -32, 0], "0.6": [0, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, -15, 0], "0.3": [0, 12, 0], "0.6": [0, 0, 0]}},
+    "right_leg": {"rotation": {"0.0": [0, 0, 0], "0.3": [-10, 0, 0], "0.6": [0, 0, 0]}},
+}}
+
+# Rain of Cuts (1.0 s): Reid in the right hand slashes a fast fan, left-right-left, one swing per
+# few cuts (they land 0.2-0.75 s), the body twisting with each; settles back to the drawn hold.
+CLIPS["cut_rain"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.15": [-100, 50, 20], "0.3": [-95, -55, -10], "0.45": [-100, 50, 20],
+                               "0.6": [-95, -55, -10], "0.75": [-100, 45, 18], "1.0": [-40, 0, 10]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.15": [0, 20, 0], "0.3": [0, -20, 0], "0.45": [0, 20, 0], "0.6": [0, -20, 0], "0.75": [0, 15, 0], "1.0": [0, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.3": [0, 6, 0], "0.6": [0, -6, 0], "1.0": [0, 0, 0]}},
 }}
 
 

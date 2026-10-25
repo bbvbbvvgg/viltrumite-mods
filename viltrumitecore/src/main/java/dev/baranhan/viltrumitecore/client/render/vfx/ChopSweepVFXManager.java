@@ -104,6 +104,10 @@ public class ChopSweepVFXManager {
                            poseStack.mulPose(Axis.XP.rotationDegrees(tiltPitch));
                            poseStack.mulPose(Axis.ZP.rotationDegrees(tiltRoll));
                            poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+                           dev.baranhan.viltrumitecore.hero.ChopStyle style = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).chopStyle(player);
+                           if (style.arcScale() != 1.0F) {
+                              poseStack.scale(style.arcScale(), style.arcScale(), style.arcScale());
+                           }
                            PoseStack modelViewStack = RenderSystem.getModelViewStack();
                            modelViewStack.pushPose();
                            modelViewStack.setIdentity();
@@ -131,10 +135,15 @@ public class ChopSweepVFXManager {
                               sweepAngle = isLeft ? -180.0F : 180.0F;
                            }
 
-                           for (int x = -outerR; x <= outerR; x++) {
-                              for (int y = -outerR; y <= outerR; y++) {
+                           // Air ripple (style.ripple): a faint ring just outside the arc, same sweep.
+                           int extent = style.ripple() ? outerR + 4 : outerR;
+                           int innerRgb = style.trailInner();
+                           int outerRgb = style.trailOuter();
+                           for (int x = -extent; x <= extent; x++) {
+                              for (int y = -extent; y <= extent; y++) {
                                  float dist = (float)Math.sqrt((double)(x * x + y * y));
-                                 if (dist >= (float)innerR && dist <= (float)outerR) {
+                                 boolean rippleRing = style.ripple() && dist >= (float)outerR + 2.5F && dist <= (float)outerR + 3.5F;
+                                 if (dist >= (float)innerR && dist <= (float)outerR || rippleRing) {
                                     float angle = (float)Math.toDegrees(Math.atan2((double)(-y), (double)(-x)));
                                     float relAngle = angle - startAngle;
                                     if (sweepAngle > 0.0F) {
@@ -160,15 +169,12 @@ public class ChopSweepVFXManager {
                                        float age = sweepProgress - angleProgress;
                                        if (!(age < 0.0F) && !(age > tailLength)) {
                                           float localAlpha = 1.0F - age / tailLength;
-                                          int finalAlpha = (int)(255.0F * localAlpha);
+                                          int finalAlpha = (int)(255.0F * localAlpha * (rippleRing ? 0.3F : 1.0F));
                                           if (finalAlpha > 5) {
-                                             int r = 255;
-                                             int g = 255;
-                                             int b = 255;
-                                             if (dist > (float)outerR - 1.5F || dist < (float)innerR + 1.5F) {
-                                                g = 200;
-                                                b = 200;
-                                             }
+                                             int rgb = !rippleRing && (dist > (float)outerR - 1.5F || dist < (float)innerR + 1.5F) ? outerRgb : innerRgb;
+                                             int r = rgb >> 16 & 0xFF;
+                                             int g = rgb >> 8 & 0xFF;
+                                             int b = rgb & 0xFF;
 
                                              drawPaintPixel(matrix, buffer, x, y, pixelScale, r, g, b, finalAlpha);
                                           }

@@ -32,6 +32,8 @@ Default hooks (override only when needed):
 | `onSuperJump(ServerPlayer)` | nothing (hero sounds) |
 | `preventsExhaustion(Player)` | false |
 | `allowsLegacyAbility(Player, String id)` | `allowsLegacyAbilities && ownsAbility(id)`; both sides, read through `LegacyKit.allows` — a hero keeps a subset of the Viltrumite kit by owning those ids |
+| `chopStyle(Player)` | `ChopStyle.DEFAULT` (legacy chop look/sound); both sides, read cheaply per frame by the chop VFX/sounds. `ChopStyle(forceLeft, arcScale, trailInner, trailOuter, ripple, soundVolume, soundPitch)`: volume/pitch multiply the two legacy chop sounds; `forceLeft` is applied by the server in `ChopC2SPacket` (`ChopStyle.resolveLeft`). Reinhard: 2× white-crimson arc with a ripple, always left while Reid is out |
+| `abilityIcon(String id, Player player)` | `abilityIcon(id)`; per-player icon (Reinhard swaps Reid → `reid_drawn` from the synced flags) |
 | `heroInputSlots()` / `heroActionFor(String id)` | none; slot ids whose keys send `HeroInputC2SPacket` press/release (generic client loop) |
 | `onHurt(ServerPlayer, DamageSource, float)` | nothing; from `HeroEvents` LivingHurtEvent |
 | `onDimensionChange(ServerPlayer)` | nothing; stop channels |

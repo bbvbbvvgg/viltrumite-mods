@@ -623,7 +623,8 @@ public final class ControlManager {
          this.caster = caster;
          this.effectId = effectId;
          this.kind = kind;
-         this.savedNoGravity = target.isNoGravity();
+         // A lifted target (LiftLeases) saves its natural flag, so the release never restores the lift's true.
+         this.savedNoGravity = dev.baranhan.viltrumitecore.hero.LiftLeases.SERVER.naturalNoGravity(target.getUUID(), target.isNoGravity());
          this.savedNoAi = target instanceof Mob mob && mob.isNoAi();
          this.anchor = target.position();
       }

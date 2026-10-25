@@ -58,4 +58,19 @@ public final class HeroDestruction {
       );
       return true;
    }
+
+   /**
+    * Removes one block without drops, neighbour updates or particles (carve work,
+    * Reinhard stage 4): air with UPDATE_CLIENTS | UPDATE_KNOWN_SHAPE | UPDATE_SUPPRESS_DROPS.
+    * Only where {@link #canDestroy} allows (mobGriefing, unbreakable) and the chunk is loaded.
+    */
+   public static boolean clearBlock(ServerLevel level, BlockPos pos) {
+      if (!level.isLoaded(pos) || !canDestroy(level, pos)) {
+         return false;
+      }
+
+      return level.setBlock(pos, Blocks.AIR.defaultBlockState(), CLEAR_FLAGS);
+   }
+
+   public static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS;
 }

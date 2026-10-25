@@ -449,5 +449,22 @@
   "ability.viltrumitecore.reinhard_stomp.name": "Yere Vuruş",
   "ability.viltrumitecore.reinhard_stomp.desc": "Ayağınla yere vurmak için bas: 8 blok içinde yerdeki her şeye 12 hasar ve dışarı itme; zeminin üst katmanı çatlar. Bekleme 8 sn.",
   "ability.viltrumitecore.reinhard_reflect.name": "Mermi Yansıtma",
-  "ability.viltrumitecore.reinhard_reflect.desc": "1 sn boyunca elinin tersini kaldırmak için bas: sana isabet eden her mermi aynı hızla atana geri uçar. Bekleme 4 sn."
+  "ability.viltrumitecore.reinhard_reflect.desc": "1 sn boyunca elinin tersini kaldırmak için bas: sana isabet eden her mermi aynı hızla atana geri uçar. Bekleme 4 sn.",
+  "death.attack.viltrumitecore.annihilation": "%1$s kutsal bir kılıçla silindi",
+  "death.attack.viltrumitecore.annihilation.player": "%1$s, %2$s tarafından kutsal bir kılıçla silindi",
+  "commands.viltrumitecore.annihilate.success": "Reid darbesi: %s öldü, %s engellendi (mutlak), %s bağışık (ilahi), %s atlandı",
+  "ability.viltrumitecore.reinhard_reid.name": "Reid'i çek / kınına koy",
+  "ability.viltrumitecore.reinhard_reid.desc": "Ejderha Kılıcı Reid'i 6 sn'lik bir dünya olayıyla çeker (kıpırdamadan durur). Çekiliyken Kesik Yağmuru ve en güçlü saldırılar açılır. Kınına koymak için tekrar bas (1 sn). 60 sn savaşsız kalınca ve Kutsal Kılıç'tan çıkınca kınına döner.",
+  "subtitles.viltrumitecore.reinhard_reid_rumble": "Yer gürlüyor",
+  "subtitles.viltrumitecore.reinhard_reid_unsheathe": "Reid kınından çıkıyor",
+  "subtitles.viltrumitecore.reinhard_reid_choir": "Göksel bir koro",
+  "subtitles.viltrumitecore.reinhard_reid_far": "Uzakta korkunç bir şey uyanıyor",
+  "chat.viltrumitecore.reinhard.reid_drawn": "Ejderha Kılıcı Reid çekildi",
+  "subtitles.viltrumitecore.reinhard_reid_sheathe": "Reid kınına dönüyor",
+  "ability.viltrumitecore.reinhard_sheath_strike.name": "Kın Darbesi",
+  "ability.viltrumitecore.reinhard_sheath_strike.desc": "Yalnızca Reid kınındayken. Kınlı kılıcı yay çizerek savurur: 6 blok içindeki her şeye 20 hasar ve 3 sn sersemletme (kontrole bağışık kahramanlar yalnızca hasar alır). Bekleme 8 sn.",
+  "subtitles.viltrumitecore.reinhard_sheath_strike": "Reinhard kınla vurur",
+  "ability.viltrumitecore.reinhard_cut_rain.name": "Kesik Yağmuru",
+  "ability.viltrumitecore.reinhard_cut_rain.desc": "Yalnızca Reid çekiliyken. 30°'lik bir koni içinde her biri 40 blok olan 12 kesik: geçtikleri her ölümlü hedef ölür (Reid darbesi) ve her kesik zeminde 1 × 3 bir oluk bırakır (mobGriefing izin verirse; ana kaya kalır). Bekleme 15 sn.",
+  "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhard'ın kesikleri yağar"
 }

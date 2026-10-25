@@ -78,6 +78,7 @@ public class CoreCommands {
                      .executes(context -> reopenChoice(context.getSource(), EntityArgument.getPlayer(context, "target"))))
             )
             .then(divine())
+            .then(annihilate())
             .then(WorldEventCommands.build())
       );
    }
@@ -99,6 +100,30 @@ public class CoreCommands {
                      com.mojang.brigadier.arguments.FloatArgumentType.getFloat(context, "amount"),
                      net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE,
                         net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "type")))))));
+   }
+
+   /**
+    * Dev command (operators): {@code /viltrumite annihilate <targets>} strikes each
+    * target with the Reid strike ({@code Annihilation.strike}, Reinhard spec §1.3)
+    * from the calling player. Kept for testing future heroes.
+    */
+   private static com.mojang.brigadier.builder.ArgumentBuilder<CommandSourceStack, ?> annihilate() {
+      return Commands.literal("annihilate")
+         .requires(source -> source.hasPermission(2))
+         .then(Commands.argument("targets", EntityArgument.entities())
+            .executes(context -> annihilate(context.getSource(), EntityArgument.getEntities(context, "targets"))));
+   }
+
+   private static int annihilate(CommandSourceStack source, java.util.Collection<? extends net.minecraft.world.entity.Entity> targets)
+      throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+      net.minecraft.server.level.ServerPlayer attacker = source.getPlayerOrException();
+      int[] counts = new int[dev.baranhan.viltrumitecore.hero.Annihilation.Outcome.values().length];
+      for (net.minecraft.world.entity.Entity target : targets) {
+         counts[dev.baranhan.viltrumitecore.hero.Annihilation.strike(attacker, target).ordinal()]++;
+      }
+
+      source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.annihilate.success", counts[0], counts[1], counts[2], counts[3]), true);
+      return counts[0];
    }
 
    private static int dealDivine(CommandSourceStack source, java.util.Collection<? extends net.minecraft.world.entity.Entity> targets, float amount,

@@ -120,6 +120,14 @@ public interface HeroDefinition {
       return null;
    }
 
+   /**
+    * Style of the kit chop for this player (both sides, cheap: no allocation per
+    * call). Default: the legacy look and sound, unchanged.
+    */
+   default ChopStyle chopStyle(Player player) {
+      return ChopStyle.DEFAULT;
+   }
+
    /** Does the shared legacy-kit regeneration (every 40 t) apply; heroes with their own regen opt out. */
    default boolean usesLegacyRegen(Player player) {
       return true;

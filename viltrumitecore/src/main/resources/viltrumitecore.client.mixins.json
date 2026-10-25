@@ -74,7 +74,11 @@
     "SuperSpeedModelMixin",
     "ThirdPersonGunMixin",
     "ThunderclapModelMixin",
-    "ViltrumiteInGameHudMixin"
+    "ViltrumiteInGameHudMixin",
+    "SkyTintMixin",
+    "LevelRainMixin",
+    "SoundEngineVolumeMixin",
+    "ItemInHandRendererInvoker"
   ],
   "injectors": {
     "defaultRequire": 1
