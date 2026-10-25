@@ -38,6 +38,32 @@ class VoidRescueTest {
       assertFalse(VoidRescue.nearestColumn(64, 4, (dx, dz) -> false).isPresent());
    }
 
+   /** A Nether column: bedrock floor 0-4, netherrack 5-40, open cave 41-60, ledge 61-63, air 64-122, roof 123-127. */
+   private static boolean netherSolid(int y) {
+      return y <= 40 || y >= 61 && y <= 63 || y >= 123 && y <= 127;
+   }
+
+   @Test
+   void roofedColumnLandsOnTheHighestFloorUnderTheRoof() {
+      // Without the ceiling rule the plain top scan picks the roof.
+      assertEquals(127, VoidRescue.surfaceY(0, 127, VoidRescueTest::netherSolid).getAsInt());
+      assertEquals(63, VoidRescue.floorBelowCeiling(0, 127, VoidRescueTest::netherSolid).getAsInt());
+   }
+
+   @Test
+   void roofedColumnNeedsHeadroom() {
+      // A one-block gap under the roof is not a floor; the next one down is.
+      assertEquals(40, VoidRescue.floorBelowCeiling(0, 127, y -> y <= 40 || y >= 50 && y != 51 && y <= 127).getAsInt());
+      assertFalse(VoidRescue.floorBelowCeiling(0, 127, y -> true).isPresent());
+   }
+
+   @Test
+   void onlyATopAtTheLogicalCeilingIsARoof() {
+      assertTrue(VoidRescue.roofed(true, 127, 0, 128));
+      assertFalse(VoidRescue.roofed(true, 90, 0, 128), "a roofless column of a ceiling dimension keeps the plain top");
+      assertFalse(VoidRescue.roofed(false, 319, -64, 384), "the Overworld has no ceiling");
+   }
+
    @Test
    void rescueDepthBelowWorld() {
       assertTrue(VoidRescue.needsRescue(-73.0, -64));

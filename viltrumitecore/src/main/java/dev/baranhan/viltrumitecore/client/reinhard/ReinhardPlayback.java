@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.client.reinhard;
 import dev.baranhan.viltrumitecore.client.anim.animation.Animation;
 import dev.baranhan.viltrumitecore.client.anim.pose.ActionClock;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -16,9 +17,28 @@ public final class ReinhardPlayback {
 
    public static double actionTicks(AbstractClientPlayer player,
       HeroPublicSnapshot snapshot, float partial) {
-      return CLOCKS.computeIfAbsent(player,p -> new ActionClock())
-         .sample(snapshot.actionId(),snapshot.variant(),snapshot.actionElapsed(),snapshot.actionLength(),
-            player.tickCount+(Float.isFinite(partial)?partial:0));
+      return sample(CLOCKS.computeIfAbsent(player,p -> new ActionClock()),snapshot.actionId(),snapshot.variant(),
+         snapshot.actionElapsed(),snapshot.actionLength(),player.tickCount+(Float.isFinite(partial)?partial:0),partial);
+   }
+
+   /**
+    * Pure sampling policy: the world cinematics stay on the authoritative
+    * {@code elapsed + partial} their scenes (silence, shatter, blast, erasure)
+    * also run on, so the body and the first-person blade never lead them;
+    * every other cast uses the bounded predictive render clock.
+    */
+   static double sample(ActionClock clock, int action, int variant, int elapsed, int length, double clientTicks, float partial) {
+      if (authoritative(action)) {
+         clock.reset();
+         return actionTicks(elapsed, length, partial, 0);
+      }
+      return clock.sample(action, variant, elapsed, length, clientTicks);
+   }
+
+   /** World Cut, Diagonal World Cut and World Erasure: casts with a client scene on the packet/game-time clock. */
+   static boolean authoritative(int action) {
+      return action == ReinhardAbility.WORLD_CUT.ordinal() || action == ReinhardAbility.DIAGONAL_WORLD_CUT.ordinal()
+         || action == ReinhardAbility.WORLD_ERASURE.ordinal();
    }
 
    /** Identical bounded server time for first person, third person and cinematics. */

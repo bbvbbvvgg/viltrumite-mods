@@ -26,6 +26,17 @@ public final class ReinhardState {
    public int parryTicks;
    public final dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowCapture arrowCapture = new dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowCapture();
    public final dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction defense = new dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction();
+   /** Last parry contact burst (game tick, attacker id); transient. */
+   private long parryFxTick = Long.MIN_VALUE;
+   private int parryFxAttacker = -1;
+
+   /** Every parried hit shows its contact burst; repeated hurt calls of one attacker in one tick share it. */
+   public boolean parryFx(long gameTime, int attackerId) {
+      if (gameTime == this.parryFxTick && attackerId == this.parryFxAttacker) return false;
+      this.parryFxTick = gameTime;
+      this.parryFxAttacker = attackerId;
+      return true;
+   }
    /** Wind Reading (spec §4.5): players who hit him → game time of the hit; transient. */
    public final java.util.Map<java.util.UUID, Long> recentAttackers = new java.util.HashMap<>();
    /** Stage 3: the one action timeline (ability, elapsed, length, target, phase); transient. */
@@ -69,7 +80,12 @@ public final class ReinhardState {
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldErasure worldErasure;
 
    public boolean busy() {
-      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy() || (worldCut != null ? !worldCut.blasted() : (this.action.is(ReinhardAbility.WORLD_CUT)||this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT)));
+      // The detached cut blasts at tick 80, but the cast pose and movement lock
+      // keep running until the action ends (tick 100): both must block MODE_CYCLE.
+      // A cast dropped with its level never blasts and must not lock the caster.
+      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy()
+         || (worldCut != null && !worldCut.blasted() && !worldCut.dropped())
+         || this.action.is(ReinhardAbility.WORLD_CUT) || this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT);
    }
 
    /** Leaving Holy Sword (spec §5): Reid goes back into the sheath. */

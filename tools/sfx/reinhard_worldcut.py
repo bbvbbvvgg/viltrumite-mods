@@ -55,6 +55,13 @@ IMPACT_SECONDS = 0.65
 IMPACT_LENGTH = 0.60
 IMPACT_PITCH = 0.90
 TRUE_PEAK = -2
+# Decoded loop gates: the wrap jump in full scale (-40 dBFS) and relative to
+# the mean per-sample change at the loop start.  A step click is far above
+# both; the committed hum decodes to 0.0021 and 1.6 (its steepest natural
+# step in the window is 3.9x the mean, so 6 leaves room for a smooth wrap).
+SEAM_MAX_DELTA = 0.01
+SEAM_MAX_RATIO = 6.0
+SEAM_WINDOW = 2000
 TARGETS = {'world_cut_hum': -12.6, 'world_cut_pulse': -18, 'world_cut_impact': -14}
 
 
@@ -207,6 +214,25 @@ def pcm_hash(samples):
     return hashlib.sha256(samples.tobytes()).hexdigest()
 
 
+def seam_metrics(samples, window=SEAM_WINDOW):
+    """Wrap jump of a loop and its ratio to the mean |derivative| at the loop start."""
+    if len(samples) < 2:
+        raise ValueError('Loop too short for a seam check')
+    delta = abs(samples[0] - samples[-1])
+    n = min(len(samples) - 1, window)
+    slope = sum(abs(samples[i + 1] - samples[i]) for i in range(n)) / n
+    return delta, delta / max(1e-12, slope)
+
+
+def check_seam(path, samples):
+    """Reject a decoded loop whose wrap is a click before any success is reported."""
+    delta, ratio = seam_metrics(samples)
+    if delta > SEAM_MAX_DELTA or ratio > SEAM_MAX_RATIO:
+        raise ValueError(f'Decoded loop seam fails: {path}: delta {delta:.5f} (max {SEAM_MAX_DELTA}), '
+                         f'ratio {ratio:.2f} (max {SEAM_MAX_RATIO})')
+    return delta, ratio
+
+
 def inspect(path, recipe):
     info = json.loads(run('ffprobe', '-v', 'error', '-show_entries',
                           'stream=codec_name,sample_rate,channels:format=duration', '-of', 'json',
@@ -228,14 +254,12 @@ def inspect(path, recipe):
         raise ValueError(f'Decoded peak exceeds -1 dB ceiling: {path}')
     if abs(float(loud['input_i']) - recipe['target']) > 1:
         raise ValueError(f'Decoded LUFS outside +/-1 target: {path}: {loud["input_i"]}')
+    seam_delta, seam_ratio = check_seam(path, samples) if recipe['loop'] else (None, None)
     return dict(duration=duration, codec='vorbis', rate=44100, channels=1,
                 integrated_lufs=float(loud['input_i']), true_peak_dbtp=float(loud['input_tp']),
                 sample_peak_dbfs=round(sample_db, 3), target_lufs=recipe['target'],
                 pcm_sha256=hashlib.sha256(data).hexdigest(),
-                seam_delta=abs(samples[0] - samples[-1]) if recipe['loop'] else None,
-                seam_ratio=abs(samples[0] - samples[-1]) / max(1e-12, float(
-                    sum(abs(samples[i + 1] - samples[i]) for i in range(0, min(len(samples) - 1, 2000))) / 2000
-                )) if recipe['loop'] else None)
+                seam_delta=seam_delta, seam_ratio=seam_ratio)
 
 
 def build(src, destination):
@@ -307,7 +331,7 @@ def main():
                     method=dict(seed_start_s=SEED_START, seed_seconds=SEED_SECONDS,
                                 loop='forward + time reverse, exact seam, 8 ms circular smoothing',
                                 pulse=f'pitch {PULSE_PITCH} (slower read), {PULSE_ATTACK}s attack, '
-                                      f'{(1 - PULSE_LENGTH):.2f}s release',
+                                      f'(1-u)^{PULSE_RELEASE} release over {PULSE_LENGTH}s',
                                 impact=f'pitch {IMPACT_PITCH}, {IMPACT_LENGTH}s decay',
                                 hum='loop saturated: tanh drive 2.0, ceiling 0.8'),
                     ffmpeg=run('ffmpeg', '-version').stdout.decode().splitlines()[0],

@@ -2,6 +2,8 @@ package dev.baranhan.viltrumitecore.client.reinhard;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
 import org.junit.jupiter.api.Test;
@@ -9,12 +11,22 @@ import org.junit.jupiter.api.Test;
 /** Dash Behind prediction: one packet per key edge, the local cooldown follows the server's answer. */
 class DashBehindClientTest {
    @Test
-   void onePacketPerKeyEdge() {
-      DashBehindClient.Edge edge = new DashBehindClient.Edge();
-      assertTrue(edge.onKey(true));
-      assertFalse(edge.onKey(true), "held: no second packet");
-      assertFalse(edge.onKey(false));
-      assertTrue(edge.onKey(true));
+   void mergedKeyTakesExactlyOnePathPerPress() {
+      DashBehindClient.Route route = new DashBehindClient.Route();
+      assertTrue(route.claim(true, true), "Knight press with a target: Dash Behind packet, no generic press");
+      assertTrue(route.claim(false, false), "its release stays with it even after the target is gone");
+      assertFalse(route.claim(true, false), "no target: the generic Step Dash press");
+      assertFalse(route.claim(false, true), "and its generic release");
+   }
+
+   @Test
+   void variantIsDecidedOncePerTick() {
+      DashBehindClient.Decision<String> decision = new DashBehindClient.Decision<>();
+      Object player = new Object();
+      assertEquals("zombie", decision.get(player, 10, () -> "zombie"));
+      assertEquals("zombie", decision.get(player, 10, () -> null), "the predictor and the interceptor of one tick agree");
+      assertNull(decision.get(player, 11, () -> null), "the next tick resolves again");
+      assertEquals("cow", decision.get(new Object(), 11, () -> "cow"), "a new player object resolves again");
    }
 
    @Test

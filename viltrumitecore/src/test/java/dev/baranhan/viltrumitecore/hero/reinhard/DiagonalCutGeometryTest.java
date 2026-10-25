@@ -25,6 +25,29 @@ class DiagonalCutGeometryTest {
       assertTrue(g.intersects(new AABB(g.point(100,0,0),g.point(100,0,0)).inflate(.5),110));
       assertFalse(g.intersects(new AABB(g.point(150,0,0),g.point(150,0,0)).inflate(.5),100));
    }
+   @Test void entityHitsFollowTheTaperedWidth() {
+      for(Vec3 f:List.of(new Vec3(0,0,1),new Vec3(.7,.2,.7))) {
+         var g=geometry(f);
+         // Near the start the wound is ~5 blocks wide: 20 blocks across must be safe.
+         assertTrue(g.width(2)<8);
+         assertFalse(g.intersects(new AABB(g.point(2,20,0),g.point(2,20,0)).inflate(.3,.9,.3),200));
+         assertFalse(g.intersects(new AABB(g.point(196,20,0),g.point(196,20,0)).inflate(.3,.9,.3),200));
+         // Inside the local width it still hits; in the middle the full span applies.
+         assertTrue(g.intersects(new AABB(g.point(2,g.width(2)-.5,0),g.point(2,g.width(2)-.5,0)).inflate(.3,.9,.3),200));
+         assertTrue(g.intersects(new AABB(g.point(100,g.width(100)-.5,0),g.point(100,g.width(100)-.5,0)).inflate(.3,.9,.3),200));
+      }
+   }
+   @Test void maxWidthBoundsEverySampledWidth() {
+      for(long seed:new long[]{0,61,1023,777}) {
+         var g=new DiagonalCutGeometry(new Vec3(.5,100,.5),new Vec3(0,0,1),seed);
+         for(double lo=-2;lo<DiagonalCutGeometry.LENGTH+2;lo+=3.7) for(double len:new double[]{0,.6,2.5,9}) {
+            double hi=lo+len,bound=g.maxWidth(Math.max(0,lo),hi),max=0;
+            for(double x=Math.max(0,lo);x<=hi;x+=.01) max=Math.max(max,g.width(x));
+            assertTrue(bound+1E-9>=max,"seed "+seed+" ["+lo+","+hi+"]");
+            assertTrue(bound<=DiagonalCutGeometry.HALF_SPAN+1E-9);
+         }
+      }
+   }
    @Test void finiteInputAndDeterministicTaper() {
       assertThrows(IllegalArgumentException.class,()->geometry(new Vec3(Double.NaN,0,1)));
       var g=geometry(new Vec3(0,0,1));assertTrue(g.width(0)<g.width(100));assertTrue(g.width(199)<g.width(100));

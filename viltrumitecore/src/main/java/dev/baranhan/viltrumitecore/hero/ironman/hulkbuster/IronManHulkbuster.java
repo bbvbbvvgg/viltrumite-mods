@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.hero.ironman.hulkbuster;
 import dev.baranhan.viltrumitecore.entity.RepulsorBlastEntity;
 import dev.baranhan.viltrumitecore.hero.BodyScale;
 import dev.baranhan.viltrumitecore.hero.DamageAbsorb;
+import dev.baranhan.viltrumitecore.hero.DivineDamage;
 import dev.baranhan.viltrumitecore.hero.HeldInputs;
 import dev.baranhan.viltrumitecore.hero.HeroDebris;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
@@ -218,9 +219,12 @@ public final class IronManHulkbuster {
       return true;
    }
 
-   /** Damage layer between the shield and the mark (spec §14.2): the whole hit, no spill. */
+   /**
+    * Damage layer between the shield and the mark (spec §14.2): the whole hit, no spill.
+    * Like vanilla armor it lets divine and invulnerability-bypassing damage through ({@link DivineDamage#piercesHeroArmor}).
+    */
    public static DamageAbsorb absorb(IronManState state, DamageSource source, float amount) {
-      if (!state.hulkbuster.active() || source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+      if (!state.hulkbuster.active() || DivineDamage.piercesHeroArmor(source)) {
          return DamageAbsorb.PASS;
       }
 

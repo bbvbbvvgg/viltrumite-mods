@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,23 @@ import org.junit.jupiter.api.Test;
 class HeroProjectilesTest {
    private static final Vec3 ARROW = new Vec3(0.3, -0.05, 2.8);
    private static final Vec3 CENTRED = new Vec3(0.0, 0.0, 1.0);
+
+   /**
+    * The client holds a custom projectile on a player hit only while the
+    * server may turn it away; every hero that cannot (PvP Repulsor/missile
+    * hits on Iron Man, Homelander, …) plays the impact locally at once.
+    */
+   @Test
+   void onlyHeroesThatCanTurnProjectilesAwayMakeClientsWait() throws Exception {
+      HeroRegistry.registerDefaults();
+      for (HeroId id : HeroId.values()) {
+         HeroDefinition hero = HeroRegistry.get(id);
+         boolean turnsAway = hero.getClass().getMethod("projectileResponse", ServerPlayer.class, Projectile.class)
+            .getDeclaringClass() != HeroDefinition.class;
+         assertEquals(turnsAway, hero.interceptsProjectiles(null), id + ": client wait must match the server seam");
+      }
+      assertTrue(HeroRegistry.get(HeroId.REINHARD).interceptsProjectiles(null));
+   }
 
    @Test
    void deflectTurnsSideways() {

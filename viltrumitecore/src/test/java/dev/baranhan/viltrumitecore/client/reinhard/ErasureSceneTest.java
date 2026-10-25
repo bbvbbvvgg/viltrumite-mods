@@ -23,5 +23,15 @@ class ErasureSceneTest {
    @Test void repeatedCatchUpDoesNotFreezeOrRewindScene(){var clock=new ErasureScene.Clock(60,500);assertEquals(61,clock.at(501));clock.sync(90,501);assertEquals(91,clock.at(502));clock.sync(40,503);assertEquals(93,clock.at(504));}
    @Test void genericSilhouetteAndSeededPixels(){assertTrue(GenericSilhouette.contains(.5F,.12F,true));assertFalse(GenericSilhouette.contains(0,0,true));assertFalse(GenericSilhouette.contains(.5F,.9F,true));assertTrue(GenericSilhouette.contains(.4F,.9F,true));assertTrue(GenericSilhouette.contains(.5F,.5F,false));assertFalse(GenericSilhouette.contains(0,0,false));assertEquals(2,GenericSilhouette.ratio(2,1));assertTrue(Float.isFinite(GenericSilhouette.ratio(Float.NaN,0)));var a=GenericSilhouette.pixels(123,true);assertEquals(a,GenericSilhouette.pixels(123,true));assertNotEquals(a,GenericSilhouette.pixels(124,true));assertTrue(a.size()>100);for(var p:a){assertTrue(p.x()>=0&&p.x()<=1);assertTrue(p.y()>=0&&p.y()<=1);assertTrue(p.up()>0);}}
    @Test void runtimeUsesExistingProjectionPixelsAndPauseEndHook() throws Exception {var s=Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/erasure/ErasureScene.java"));for(String key:List.of("ScreenProjector.project","GuiEntitySilhouette.render","SimpleSoundInstance.forUI","WorldPauseClient.onEnd","ErasurePost.bind"))assertTrue(s.contains(key),key);assertTrue(Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/erasure/GenericSilhouette.java")).contains("PixelVfx.guiPixel"));assertFalse(s.contains("new PostChain"));var client=Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/ReinhardClient.java"));assertTrue(client.contains("ErasureScene.init()"));assertTrue(client.contains("ErasureScene::onPacket"));}
-   static class Env implements ErasureScene.SoundEnvironment {int cracks,ducks,inhales,releases,fadeIn,fadeOut;public void crack(){cracks++;}public void duck(int fade){ducks++;fadeIn=fade;}public void inhale(){inhales++;}public void release(int fade){releases++;fadeOut=fade;}}
+   @Test void levelChangeMidSceneReRegistersTheDuck(){
+      var env=new Env();var clock=new ErasureScene.Timeline(90,env);assertEquals(1,env.ducks);assertEquals(0,env.fadeIn);
+      env.held=false; // SoundDuckEvents saw the new ClientLevel and cleared every duck
+      clock.advance(91);assertEquals(2,env.ducks,"audio must not come back until the inhale");assertTrue(env.held);assertEquals(0,env.fadeIn);
+      clock.advance(92);assertEquals(2,env.ducks,"registered once, not every tick");
+      clock.advance(110);assertEquals(1,env.releases);env.held=false;clock.advance(111);assertEquals(2,env.ducks,"no duck after the release");
+   }
+   @Test void releasedDuckIsNotRestoredBeforeTheInhaleEither(){
+      var env=new Env();var clock=new ErasureScene.Timeline(40,env);clock.end(ErasureScene.EndReason.CANCEL);env.held=false;clock.advance(50);assertEquals(1,env.ducks);
+   }
+   static class Env implements ErasureScene.SoundEnvironment {int cracks,ducks,inhales,releases,fadeIn,fadeOut;boolean held;public void crack(){cracks++;}public void duck(int fade){ducks++;fadeIn=fade;held=true;}public void inhale(){inhales++;}public void release(int fade){releases++;fadeOut=fade;held=false;}public boolean ducking(){return held;}}
 }

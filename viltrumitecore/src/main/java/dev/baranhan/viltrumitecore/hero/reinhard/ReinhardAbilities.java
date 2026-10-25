@@ -27,7 +27,85 @@ public final class ReinhardAbilities {
       "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
    };
 
+   /**
+    * Former shipped defaults (stage 6 before the quality rework, the rework, and
+    * the Diagonal World Cut slot). An untouched one moves to {@link #LOADOUT}.
+    */
+   static final String[][] PREVIOUS_DEFAULTS = {
+      {"reinhard:light_punch", "reinhard:step_dash", "reinhard:catch", "", "", "",
+         "reinhard:fist_combo", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
+         "reinhard:reid", CHOP, "reinhard:sheath_strike", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"},
+      {"", "reinhard:step_dash", "reinhard:catch", "", "", "",
+         "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
+         "reinhard:reid", CHOP, "reinhard:sheath_strike", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"},
+      {"", "reinhard:step_dash", "reinhard:catch", "", "", "",
+         "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
+         "reinhard:reid", CHOP, "reinhard:diagonal_world_cut", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"}
+   };
+
+   /**
+    * Loadout ids retired by the combat rework and what replaced them: Dash Behind,
+    * Stomp and Diagonal World Cut became variants of the merged keys; the others
+    * moved to LMB/RMB or the automatic defense ("" = the slot empties).
+    */
+   private static final java.util.Map<String, String> RETIRED = java.util.Map.of(
+      "reinhard:dash_behind", "reinhard:step_dash",
+      "reinhard:stomp", "reinhard:sky_kick",
+      "reinhard:diagonal_world_cut", "reinhard:world_cut",
+      "reinhard:light_punch", "",
+      "reinhard:fist_combo", "",
+      "reinhard:catch", "",
+      "reinhard:reflect", "",
+      "reinhard:grab_throw", "",
+      "reinhard:sheath_strike", "");
+
    private ReinhardAbilities() {
+   }
+
+   /**
+    * Pure: a saved loadout with every retired id replaced, page by page (6 slots).
+    * The successor takes the retired slot unless the page already holds it; a
+    * freed slot then takes this version's default for that slot when the page
+    * lacks that id. Every other slot stays where the player put it.
+    */
+   public static String[] migrate(String[] slots) {
+      String[] out = new String[slots.length];
+      for (int i = 0; i < slots.length; i++) {
+         out[i] = slots[i] == null ? "" : slots[i];
+      }
+
+      for (int from = 0; from < out.length; from += 6) {
+         int to = Math.min(out.length, from + 6);
+         boolean[] freed = new boolean[to - from];
+         for (int i = from; i < to; i++) {
+            String next = RETIRED.get(out[i]);
+            if (next == null) {
+               continue;
+            }
+
+            out[i] = next.isEmpty() || onPage(out, from, to, next) ? "" : next;
+            freed[i - from] = out[i].isEmpty();
+         }
+
+         for (int i = from; i < to; i++) {
+            String id = i < LOADOUT.length && shipped(LOADOUT[i]) ? LOADOUT[i] : "";
+            if (freed[i - from] && !id.isEmpty() && !onPage(out, from, to, id)) {
+               out[i] = id;
+            }
+         }
+      }
+
+      return out;
+   }
+
+   private static boolean onPage(String[] slots, int from, int to, String id) {
+      for (int i = from; i < to; i++) {
+         if (id.equals(slots[i])) {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    @Nullable
@@ -81,8 +159,9 @@ public final class ReinhardAbilities {
    }
 
    /**
-    * Own shipped ids whose keys send hero input. Dash Behind is left out: its key sends
-    * {@code ReinhardDashBehindC2SPacket} (target + spot) from {@code DashBehindClient} instead.
+    * Own shipped ids whose keys send hero input. Dash Behind has no slot: a Knight's press
+    * of the merged dash key with a target is sent as {@code ReinhardDashBehindC2SPacket}
+    * (target + spot) by {@code DashBehindClient} instead of this generic press.
     */
    public static String[] inputSlots() {
       return Arrays.stream(ReinhardAbility.values()).filter(ReinhardAbilities::active).filter(a -> a != ReinhardAbility.DASH_BEHIND)
@@ -157,8 +236,24 @@ public final class ReinhardAbilities {
       }
 
       HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
-      ReinhardAbility selected=contextual(ability,player.isShiftKeyDown());
-      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(selected.snapshotIndex()), snapshot.heroFlags(),player.isShiftKeyDown());
+      if (snapshot == null || snapshot.heroId() != HeroId.REINHARD) {
+         return false;
+      }
+
+      boolean knight = ReinhardMode.byOrdinal(ReinhardFlags.mode(snapshot.heroFlags())) == ReinhardMode.KNIGHT;
+      ReinhardAbility selected = selected(ability, player.isShiftKeyDown(), knight,
+         knight && ability == ReinhardAbility.STEP_DASH && dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind.lookTarget(player) != null);
+      return slotGrey(ability, snapshot.extraCooldown(selected.snapshotIndex()), snapshot.heroFlags(),player.isShiftKeyDown());
+   }
+
+   /**
+    * Pure: the variant a slot press starts now, whose cooldown the slot shows: the
+    * crouch variants, and the Knight's merged dash key with a target is Dash Behind
+    * (the same choice the client makes when it sends the press).
+    */
+   public static ReinhardAbility selected(ReinhardAbility root, boolean crouching, boolean knight, boolean behindTarget) {
+      ReinhardAbility ability = contextual(root, crouching);
+      return ability == ReinhardAbility.STEP_DASH && knight && behindTarget ? ReinhardAbility.DASH_BEHIND : ability;
    }
 
    /** Pure: cooldown running, or the slot condition of Reid's phase (from the snapshot flags) fails. */

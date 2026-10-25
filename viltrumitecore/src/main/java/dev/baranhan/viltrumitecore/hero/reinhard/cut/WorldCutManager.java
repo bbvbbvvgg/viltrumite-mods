@@ -20,8 +20,13 @@ public final class WorldCutManager {
    public void tick(ServerLevel level) { advance(level.getGameTime()); }
    public void advance(long gameTime) { cuts.removeIf(cut -> cut.advance(gameTime)); }
    public int size() { return cuts.size(); }
-   public static void clearAll() { INSTANCES.clear(); }
+   /** The level goes away: its unpersisted casts end here and stop keeping their casters busy. */
+   public void dropAll() { cuts.forEach(WorldCut::drop); cuts.clear(); }
+   public static void clearAll() { INSTANCES.values().forEach(WorldCutManager::dropAll); INSTANCES.clear(); }
    @SubscribeEvent public static void onUnload(LevelEvent.Unload event) {
-      if(event.getLevel() instanceof ServerLevel level) INSTANCES.remove(level);
+      if(event.getLevel() instanceof ServerLevel level) {
+         WorldCutManager manager=INSTANCES.remove(level);
+         if(manager!=null) manager.dropAll();
+      }
    }
 }

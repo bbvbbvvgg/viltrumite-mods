@@ -26,6 +26,19 @@ class WorldCutTest {
       cut.advance(180); assertEquals(1, w.blasts);
       assertTrue(cut.advance(210)); assertEquals(1, w.blasts);
    }
+   /** Ported from #35: a cast dropped with its level (unload, server stop) must not lock the caster. */
+   @Test void castDroppedWithItsLevelReleasesTheCaster() {
+      ReinhardState state = new ReinhardState(); World w = new World(); WorldCutManager manager = new WorldCutManager();
+      state.worldCut = WorldCut.timed(0, w); manager.submit(state.worldCut);
+      manager.advance(40);
+      assertTrue(state.busy(), "a pre-blast cast keeps the caster busy");
+      manager.dropAll();
+      assertEquals(0, manager.size());
+      assertTrue(state.worldCut.dropped());
+      assertFalse(state.busy(), "the dropped cast never blasts, so it must not hold MODE_CYCLE forever");
+      manager.advance(200);
+      assertEquals(0, w.blasts, "nothing of the dropped cast runs again");
+   }
    @Test void onlyWhenDrawn() {
       for (Reid.Phase p : Reid.Phase.values())
          assertEquals(p == Reid.Phase.DRAWN, Reid.allows(ReinhardAbility.WORLD_CUT, p));
@@ -81,6 +94,15 @@ class WorldCutTest {
       WorldCut.start(state); state.worldCut=WorldCut.timed(0,w); state.action.cancel();
       assertTrue(state.busy()); state.worldCut.advance(79); assertTrue(state.busy());
       state.worldCut.advance(80); assertFalse(state.busy());
+   }
+   @Test void recoveryAfterBlastStaysBusyUntilActionEnds() {
+      ReinhardState state=new ReinhardState(); World w=new World();
+      WorldCut.start(state); state.worldCut=WorldCut.timed(0,w);
+      state.worldCut.advance(80); assertTrue(state.worldCut.blasted());
+      for(int t=0;t<80;t++) state.action.tick();
+      assertTrue(state.action.is(ReinhardAbility.WORLD_CUT)); assertTrue(state.busy(), "post-blast recovery must block MODE_CYCLE");
+      for(int t=80;t<ReinhardRules.WORLD_CUT_BLAST+20;t++) state.action.tick();
+      assertFalse(state.action.running()); assertFalse(state.busy());
    }
    @Test void consumedSliceCountIsNotIncrementedAgain() {
       assertEquals(0,WorldCut.carveFront(null));

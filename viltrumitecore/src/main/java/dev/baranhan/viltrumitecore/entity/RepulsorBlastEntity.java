@@ -61,8 +61,8 @@ public class RepulsorBlastEntity extends Projectile {
       Vec3 motion = this.getDeltaMovement();
       HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
       if (!this.level().isClientSide() && dev.baranhan.viltrumitecore.hero.HeroProjectiles.intercept(this, hit)) return;
-      if (this.level().isClientSide() && hit instanceof EntityHitResult entityHit
-         && entityHit.getEntity() instanceof net.minecraft.world.entity.player.Player) return;
+      // Only a hit the server may turn away waits for it; ordinary hits (PvP too) play their impact.
+      if (this.level().isClientSide() && dev.baranhan.viltrumitecore.hero.HeroProjectiles.awaitsServer(this, hit)) return;
       if (hit.getType() != HitResult.Type.MISS) {
          if (this.level().isClientSide()) {
             net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,

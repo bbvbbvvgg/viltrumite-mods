@@ -65,6 +65,22 @@ class ReinhardDefenseGeometryTest {
       for(int i=0;i<120;i++)s.advance(d.flags(),d.palm(),n+1_116_666_666L+i*8_333_333L);
       assertTrue(s.left);assertTrue(s.weight>.99);
    }
+   @Test void recordedContactFollowsTheHandTheRecoveryStillDraws() {
+      var d=new DefenseReaction();d.contact(DefenseReaction.Kind.BEAM,0,0);d.aim(false);
+      assertFalse(ReinhardDefense.renderedLeft(null,d.flags()),"no state yet: the snapshot decides");
+      var s=new ReinhardDefense.State();
+      long n=1_000_000_000L;for(int i=0;i<120;i++)s.advance(d.flags(),d.palm(),n+i*8_333_333L);
+      assertFalse(ReinhardDefense.renderedLeft(s,d.flags()));
+      // The beam continues while a Reid action starts: the snapshot already names the other hand.
+      d.aim(true);assertTrue(DefenseReaction.leftHand(d.flags()));
+      long t=n+1_008_333_333L;
+      s.advance(d.flags(),d.palm(),t);
+      assertTrue(s.weight>.02F);
+      assertFalse(ReinhardDefense.renderedLeft(s,d.flags()),"the fading old hand keeps the contact");
+      for(int i=1;i<120 && !s.left;i++)s.advance(d.flags(),d.palm(),t+i*8_333_333L);
+      assertTrue(s.left);
+      assertTrue(ReinhardDefense.renderedLeft(s,d.flags()),"the new hand takes over once adopted");
+   }
    @Test void finalFpContactKeepsTheSamePixelAcrossWorldAndHandFov() {
       for(float fov:new float[]{40,70,110})for(float aspect:new float[]{4/3F,16/9F}) {
          var hand=new Matrix4f().perspective((float)Math.toRadians(70),aspect,.05F,1000);

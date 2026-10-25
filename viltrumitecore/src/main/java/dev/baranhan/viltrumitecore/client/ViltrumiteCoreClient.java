@@ -283,8 +283,12 @@ public class ViltrumiteCoreClient {
                HERO_KEYS.tick(client.player, hero.id().key(), page + layout.toString(),
                   client.screen == null && client.isWindowActive(), hero.heroInputSlots(), hero::heroActionFor,
                   slot -> AbilityInputManager.isAbilityKeyDown(client.player, slot),
-                  (action, down) -> CoreMessages.sendToServer(
-                     new dev.baranhan.viltrumitecore.network.packet.HeroInputC2SPacket(action, down)));
+                  (action, down) -> {
+                     // A hero may route an edge through its own predictor and packet (Reinhard's merged dash key).
+                     if (!dev.baranhan.viltrumitecore.client.hero.HeroClientInput.intercepted(client.player, hero.id(), action, down)) {
+                        CoreMessages.sendToServer(new dev.baranhan.viltrumitecore.network.packet.HeroInputC2SPacket(action, down));
+                     }
+                  });
             }
 
             if (client.player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
@@ -333,6 +337,7 @@ public class ViltrumiteCoreClient {
       @SubscribeEvent
       public static void onLoggingOut(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
          HERO_KEYS.clear();
+         dev.baranhan.viltrumitecore.hero.ServerRules.reset();
       }
 
       @SubscribeEvent

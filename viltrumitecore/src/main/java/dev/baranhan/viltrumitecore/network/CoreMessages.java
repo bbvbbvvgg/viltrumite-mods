@@ -37,7 +37,8 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 public class CoreMessages {
    // v3 clients clamp extra cooldowns at 16 and misread the following phase fields.
-   private static final String PROTOCOL_VERSION = "4";
+   // v4 clients lack ServerRulesS2CPacket and send the merged dash key's Dash Behind as Step Dash.
+   private static final String PROTOCOL_VERSION = "5";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -277,6 +278,10 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

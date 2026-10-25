@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.hero.ironman.mark;
 import dev.baranhan.viltrumitecore.entity.EmptySuitEntity;
 import dev.baranhan.viltrumitecore.entity.SuitDebrisEntity;
 import dev.baranhan.viltrumitecore.hero.DamageAbsorb;
+import dev.baranhan.viltrumitecore.hero.DivineDamage;
 import dev.baranhan.viltrumitecore.hero.HeldInputs;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
@@ -16,7 +17,6 @@ import javax.annotation.Nullable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -460,9 +460,12 @@ public final class IronManMarks {
       state.signature.clear();
    }
 
-   /** Damage layer after the shield (spec §4.3): the mark takes the whole hit while durability lasts. */
+   /**
+    * Damage layer after the shield (spec §4.3): the mark takes the whole hit while durability lasts.
+    * Like vanilla armor it lets divine and invulnerability-bypassing damage through ({@link DivineDamage#piercesHeroArmor}).
+    */
    public static DamageAbsorb absorb(IronManState state, DamageSource source, float amount) {
-      if (!state.suit.markOn() || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+      if (!state.suit.markOn() || DivineDamage.piercesHeroArmor(source)) {
          return DamageAbsorb.PASS;
       }
 

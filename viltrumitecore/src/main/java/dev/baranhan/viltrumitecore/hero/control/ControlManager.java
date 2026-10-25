@@ -206,6 +206,16 @@ public final class ControlManager {
       return refreshRecord(this.controls.get(targetId), caster, effectId, kind, expiresAt);
    }
 
+   /** Does this effect's own FREEZE hold the target (a World Pause that acquired it). */
+   public boolean holdsFreeze(UUID targetId, UUID effectId) {
+      return heldBy(this.controls.get(targetId), effectId);
+   }
+
+   /** Pure: the record is the given effect's FREEZE; foreign controls and no control are not. */
+   static boolean heldBy(@Nullable ControlRecord record, UUID effectId) {
+      return record != null && record.kind == ControlKind.FREEZE && record.effectId.equals(effectId);
+   }
+
    static boolean mayRefresh(@Nullable ControlRecord record, UUID caster, UUID effectId, ControlKind kind) {
       return record != null && record.caster.equals(caster) && record.effectId.equals(effectId) && record.kind == kind;
    }

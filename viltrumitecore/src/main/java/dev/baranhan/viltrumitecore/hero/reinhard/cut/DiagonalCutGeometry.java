@@ -23,8 +23,21 @@ public record DiagonalCutGeometry(Vec3 origin, Vec3 forward, long seed) {
       return origin.add(forward.scale(along)).add(span().scale(across)).add(normal().scale(depth));
    }
    public double width(double along) {
-      double t=Math.max(0,Math.min(1,Math.min((along+4)/20,(LENGTH-along+4)/28)));
-      return HALF_SPAN*(.88+.12*Math.sin(along*.065+(seed&1023)))*t;
+      return HALF_SPAN*wiggle(along)*taper(along);
+   }
+   private static double taper(double along) {
+      return Math.max(0,Math.min(1,Math.min((along+4)/20,(LENGTH-along+4)/28)));
+   }
+   private double wiggle(double along) { return .88+.12*Math.sin(along*.065+(seed&1023)); }
+   /** Upper bound of {@link #width} on [lo, hi]: the taper rises then falls (max at an end or the flat
+    *  top); the wiggle peaks at an end or at an interior crest. Never smaller than any sampled width. */
+   public double maxWidth(double lo,double hi) {
+      if(hi<lo) return 0;
+      double taper=Math.max(0,Math.min(1,Math.min((hi+4)/20,(LENGTH-lo+4)/28)));
+      double phase=seed&1023, crest=Math.ceil((lo*.065+phase-Math.PI/2)/(2*Math.PI));
+      double crestAt=(Math.PI/2+2*Math.PI*crest-phase)/.065;
+      double wiggle=crestAt<=hi ? 1 : Math.max(wiggle(lo),wiggle(hi));
+      return HALF_SPAN*wiggle*taper;
    }
    public boolean contains(Vec3 p) {
       Vec3 d=p.subtract(origin); double a=d.dot(forward);
@@ -36,7 +49,10 @@ public record DiagonalCutGeometry(Vec3 origin, Vec3 forward, long seed) {
       Vec3 c=box.getCenter().subtract(origin);
       Vec3 h=new Vec3(box.getXsize()*.5,box.getYsize()*.5,box.getZsize()*.5);
       double a=c.dot(forward), ra=radius(h,forward);
-      return a+ra>=0 && a-ra<through && Math.abs(c.dot(span()))<=HALF_SPAN+radius(h,span())
+      double lo=Math.max(0,a-ra), hi=Math.min(Math.min(through,LENGTH),a+ra);
+      if(a+ra<0 || a-ra>=through || a-ra>=LENGTH || hi<lo) return false;
+      // The rendered and carved wound tapers at both ends: test the local width, not HALF_SPAN.
+      return Math.abs(c.dot(span()))<=maxWidth(lo,hi)+radius(h,span())
          && Math.abs(c.dot(normal()))<=HALF_THICKNESS+radius(h,normal());
    }
    private static double radius(Vec3 h,Vec3 n) { return h.x*Math.abs(n.x)+h.y*Math.abs(n.y)+h.z*Math.abs(n.z); }

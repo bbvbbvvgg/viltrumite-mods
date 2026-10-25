@@ -203,7 +203,14 @@
 - Capture actual perspective from RenderLevelStageEvent, never use whichever RenderSystem projection is bound by an audio/tick caller (it may be GUI orthographic). TP event bone points are in camera-view coordinates; convert back before adding camera position. FP and TP caches stay separate.
 - FP catch needs an unobscured shaft: raise ARROW contact above resting Reid, and turn the SAME held-arrow presentation crosswise in FP only. Do not create a duplicate entity/item. A frame captured on the first server holding tick can precede client snapshot/cache; inspect a settled held frame as well as ingress/release.
 
-### World-cut audio identity (Core 1.36.2)
-- The approved loud completion is the original eight-second WORLD_CUT_TAIL recording. Start it only after server DONE. Use nearest-line placement and range320; do not loop it during carve.
-- WORLD_CUT_BLAST is now only a quiet, bounded WORK pulse: tick96 then every40ticks while working, voice duration16ticks. Never pair it at DONE. Neither world-cut scene plays CUT_RUMBLE.
-- Tail mastering is reproducible through tools/sfx/reinhard.py finish_master(); begin with the original bed master, not the already-mastered output. Keep original licensing and duration.
+### World-cut audio identity
+- Two separate contracts. Do not mix them: the normal (ground) World Cut uses `WorldCutAudio` + `WorldCutPulse`; only Diagonal World Cut keeps the Core 1.36.2 `CutFinishSound` cues below.
+- Diagonal World Cut (Core 1.36.2): the loud completion is the original eight-second WORLD_CUT_TAIL recording, started only after server DONE, nearest-line placement, range320, never looped during carve. WORLD_CUT_BLAST is only a quiet WORK pulse there: tick96 then every40ticks while working, voice16ticks, never at DONE.
+- Normal World Cut (Core 1.38+): no WORLD_CUT_SILENCE/BLAST/TAIL. One looping `world_cut_hum` per cast from BLAST (follows scene fade after DONE), one `world_cut_pulse` voice per beat, one `world_cut_impact` at BLAST and one `world_cut_blade` ring at tick8. Both accents are exempt from the two MASTER ducks (tick8..BLAST).
+- Pulse clock: `WorldCutPulse` FIRST=96, PERIOD=50, LENGTH=24. Voice, hum swell, +2.4 shake and the dust ring read one beat per scene: a scene admits a beat once, on time or at most CATCH_UP=3 ticks late; a scene created later in the pulse (late join from a WORK packet) skips that whole beat. The `acceptedUntil` cap (DONE elapsed − 1) lets an in-flight beat finish and rejects later beats for every component.
+- One-shot accents use the same bounded window (tick..tick+3): a late viewer never hears BLAST or the blade ring at join time.
+- Dust ring renders from the fractional `phase` (partial ticks); sound triggers stay on whole ticks.
+- Hum level: the engine clamps a voice to 1.0, so the swell crest is 1.0 and the resting level is 1/(1+SWELL)=0.69. Never put the resting gain at the ceiling — the +45 % swell would be clipped away.
+- The pulse release is baked into the PCM (`tools/sfx/reinhard_worldcut.py`); the runtime voice keeps a constant gain for the whole 1.35 s asset (27 ticks). Never add a second runtime decay.
+- Neither world-cut scene plays CUT_RUMBLE.
+- Tail mastering is reproducible through tools/sfx/reinhard.py finish_master(); begin with the original bed master, not the already-mastered output. Keep original licensing and duration. The ground-cut assets come from tools/sfx/reinhard_worldcut.py; its decoded-loop seam gate (delta ≤ 0.01, ratio ≤ 6) must pass before a regenerated hum is accepted.

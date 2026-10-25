@@ -16,6 +16,7 @@ import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.CatchWindow;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.CloudStep;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Detox;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ManaAbsorption;
 import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
@@ -72,9 +73,18 @@ public final class ReinhardHero implements HeroDefinition {
       return false;
    }
 
-   /** Lethal Chop (spec §7.2): of the kit only {@code viltrumite:chop}, and not while Reid is being drawn or sheathed. */
+   /**
+    * Lethal Chop (spec §7.2): of the kit only {@code viltrumite:chop}, and not while Reid is
+    * being drawn or sheathed. Server: never over a running World Erasure (the caster stays
+    * free of the pause; Reid's drawn state already excludes it, this keeps it so).
+    */
    @Override
    public boolean allowsLegacyAbility(Player player, String abilityId) {
+      ReinhardState state = ReinhardState.of(player);
+      if (state != null && state.worldErasure != null && !state.worldErasure.ended()) {
+         return false;
+      }
+
       return allowsKitAbility(abilityId, flags(player));
    }
 
@@ -145,6 +155,17 @@ public final class ReinhardHero implements HeroDefinition {
    }
 
    @Override
+   public String[][] previousDefaultLoadouts() {
+      return ReinhardAbilities.PREVIOUS_DEFAULTS;
+   }
+
+   /** Retired ids (merged keys, LMB/RMB, automatic defense) keep the rest of a custom layout. */
+   @Override
+   public String[] migrateLoadout(String[] slots) {
+      return ReinhardAbilities.migrate(slots);
+   }
+
+   @Override
    public String[] heroInputSlots() {
       return ReinhardAbilities.inputSlots();
    }
@@ -198,10 +219,17 @@ public final class ReinhardHero implements HeroDefinition {
       if (player == null || !player.isAlive() || player.isSpectator() || !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()) return false;
       ReinhardMode mode = ReinhardMode.values()[ReinhardFlags.mode(flags(player))];
       if (mode == ReinhardMode.HOLY_SWORD) return false;
+      // canHarmPlayer checks teams only on the client; the server's pvp switch is mirrored by ServerRules.
       var target = ReinhardTargets.lookTarget(player, ReinhardRules.GRAB_REACH, e -> e.isAlive() && !player.isAlliedTo(e)
-         && !e.isAlliedTo(player) && (!(e instanceof Player other) || !other.isCreative() && player.canHarmPlayer(other)));
+         && !e.isAlliedTo(player) && (!(e instanceof Player other) || grabsPlayer(other.isCreative(),
+            dev.baranhan.viltrumitecore.hero.ServerRules.pvp(player), player.canHarmPlayer(other))));
       return target != null && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(target, ControlKind.PULL)
          && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsImpulse(target);
+   }
+
+   /** Pure: a player target is grabbable only when the server allows PvP and teams allow the harm. */
+   static boolean grabsPlayer(boolean creative, boolean pvp, boolean canHarm) {
+      return !creative && pvp && canHarm;
    }
 
    /** Pure input policy shared by local claims and authoritative server claims. */
@@ -340,10 +368,15 @@ public final class ReinhardHero implements HeroDefinition {
       return Detox.blocks(effect);
    }
 
-   /** Fresh body after death or the End return: enter() is not called there. */
+   /**
+    * Fresh body after death or the End return: enter() is not called there. Only the
+    * chassis modifier comes back; health is not touched. A death respawn already starts
+    * at the vanilla maximum (the chassis has no max-health modifier) and the End return
+    * keeps the wounded body's health, so the exit portal is no full heal.
+    */
    @Override
    public void onRespawn(ServerPlayer player) {
-      applyChassis(player);
+      respawn(chassisBody(player));
    }
 
    /** Cloudy Sky (spec §4.4): five air steps (both sides). */
@@ -389,23 +422,50 @@ public final class ReinhardHero implements HeroDefinition {
       return true;
    }
 
-   /**
-    * Spec §4.1: a direct melee hit from the front is parried (absorbed, pose, spark).
-    * Spec §3.1: other ordinary damage loses 99.9 % before armor. Divine damage (spec §3.2)
-    * is never resisted; it meets only Protection Acquisition here (immune type →
-    * absorbed with a spark, otherwise the hit is counted and passes) and the
-    * Phoenix in {@link #clampFinalDamage}.
-    */
-   private static void react(ServerPlayer self, ReinhardState state,
-      dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind kind, net.minecraft.world.phys.Vec3 source) {
+   /** Reacts to a threat and returns its classification (the committed presentation may still show an older kind). */
+   private static DefenseReaction.Kind react(ServerPlayer self, ReinhardState state,
+      DefenseReaction.Kind kind, net.minecraft.world.phys.Vec3 source) {
       var delta = source.subtract(self.getEyePosition());
       float yaw = net.minecraft.util.Mth.wrapDegrees((float)Math.toDegrees(Math.atan2(-delta.x, delta.z)) - self.getYRot());
       float pitch = (float)-Math.toDegrees(Math.atan2(delta.y, delta.horizontalDistance()));
-      // Never force a front palm through the torso toward a rear threat.
-      if(Math.abs(yaw)>100 && kind!=dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.BRACE)
-         kind=dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.EVADE;
+      kind=classify(kind, yaw);
       boolean changed=state.defense.contact(kind, yaw, pitch);
       if(changed || state.defense.age()>=8) state.defense.aim(state.reid.phase()!=Reid.Phase.SHEATHED || state.action.running());
+      return kind;
+   }
+
+   /** Pure: never force a front palm through the torso toward a rear threat (|yaw| &gt; 100°); a brace faces anything. */
+   static DefenseReaction.Kind classify(DefenseReaction.Kind kind, float yaw) {
+      return Math.abs(yaw)>100 && kind!=DefenseReaction.Kind.BRACE ? DefenseReaction.Kind.EVADE : kind;
+   }
+
+   /**
+    * Pure: an arrow is caught only when both this threat and the presented
+    * reaction face it. A rear threat (EVADE) or a still-committed evade has no
+    * palm to hold it, and a second arrow cannot join a held one: deflect.
+    */
+   static ProjectileResponse arrowResponse(boolean holding, DefenseReaction.Kind threat, DefenseReaction.Kind presented) {
+      return holding || threat==DefenseReaction.Kind.EVADE || presented==DefenseReaction.Kind.EVADE
+         ? ProjectileResponse.DEFLECT : ProjectileResponse.CATCH;
+   }
+
+   /**
+    * Pure: the reaction to a hit by a living attacker. A contextual attack (shot,
+    * wave) reacts whether or not the frontal parry cone absorbed it; a plain melee
+    * hit poses only when parried (null = no reaction).
+    */
+   @javax.annotation.Nullable
+   static DefenseReaction.Kind hitReaction(boolean parried, @javax.annotation.Nullable DefenseReaction.Kind contextual, float raw, boolean emptyHand) {
+      if (contextual != null) return contextual;
+      if (!parried) return null;
+      return raw >= 20 ? DefenseReaction.Kind.EVADE : emptyHand ? DefenseReaction.Kind.PALM : DefenseReaction.Kind.WEAPON;
+   }
+
+   /** Pure: the reaction a contextual non-entity attack asks for (null = no context). */
+   @javax.annotation.Nullable
+   static DefenseReaction.Kind contextKind(@javax.annotation.Nullable dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind context) {
+      if (context == null) return null;
+      return context==dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE ? DefenseReaction.Kind.BRACE : DefenseReaction.Kind.PROJECTILE;
    }
 
    @Override
@@ -430,6 +490,13 @@ public final class ReinhardHero implements HeroDefinition {
       return local==null ? null : dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseContact.world(player,local);
    }
 
+   /**
+    * Spec §4.1: a direct melee hit from the front is parried (absorbed, pose, spark).
+    * Spec §3.1: other ordinary damage loses 99.9 % before armor. Divine damage (spec §3.2)
+    * is never resisted; it meets only Protection Acquisition here (immune type →
+    * absorbed with a spark, otherwise the hit is counted and passes) and the
+    * Phoenix in {@link #clampFinalDamage}.
+    */
    @Override
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
       ReinhardState state = ReinhardState.ensure(self);
@@ -443,18 +510,20 @@ public final class ReinhardHero implements HeroDefinition {
             var at=source.getSourcePosition();
             if(at!=null)react(self,state,dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.BRACE,at);
          }
+         // Contextual attacks (shots, waves) get their reaction from every side;
+         // only the frontal melee cone below decides whether the hit is absorbed.
+         var contextual = contextKind(dev.baranhan.viltrumitecore.hero.HeroAttackContext.current());
          if (Parry.parries(self, source, false)) {
             var attacker = (LivingEntity)source.getEntity();
-            var context=dev.baranhan.viltrumitecore.hero.HeroAttackContext.current();
-            var kind = context==dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE ? dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.BRACE
-               : context==dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.SHOT ? dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.PROJECTILE
-               : raw >= 20 ? dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.EVADE
-               : attacker.getMainHandItem().isEmpty() ? dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.PALM
-               : dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.WEAPON;
-            boolean idle = state.defense.kind() == dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.NONE;
-            react(self, state, kind, attacker.getEyePosition());
-            if (idle) Parry.effects(self, attacker);
+            react(self, state, hitReaction(true, contextual, raw, attacker.getMainHandItem().isEmpty()), attacker.getEyePosition());
+            // Every absorbed hit keeps its contact feedback; one burst per attacker per tick.
+            if (state.parryFx(self.level().getGameTime(), attacker.getId())) Parry.effects(self, attacker);
             return DamageAbsorb.ABSORBED;
+         }
+
+         if (source.getEntity() instanceof LivingEntity attacker && attacker != self) {
+            var kind = hitReaction(false, contextual, raw, attacker.getMainHandItem().isEmpty());
+            if (kind != null) react(self, state, kind, attacker.getEyePosition());
          }
 
          return absorb(false, raw);
@@ -506,6 +575,12 @@ public final class ReinhardHero implements HeroDefinition {
       return source.typeHolder().unwrapKey().map(ResourceKey::location).orElse(DivineDamage.DIVINE.location());
    }
 
+   /** Arrow Protection never lets a projectile through ({@link #projectileResponse} is never PASS). */
+   @Override
+   public boolean interceptsProjectiles(Player self) {
+      return true;
+   }
+
    /**
     * Arrow Protection (spec §4.3): every projectile is turned aside; the catch and
     * reflect windows (Restrained palm / Knight backhand, stage 3) win over the passive. Mode-independent.
@@ -514,14 +589,12 @@ public final class ReinhardHero implements HeroDefinition {
    public ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) {
       ReinhardState state = ReinhardState.of(self);
       if (state == null) return ProjectileResponse.DEFLECT;
-      react(self, state, projectile instanceof net.minecraft.world.entity.projectile.AbstractArrow
-         && !(projectile instanceof net.minecraft.world.entity.projectile.ThrownTrident) && !state.arrowCapture.holding()
-         ? dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.ARROW
-         : dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.PROJECTILE, projectile.position());
+      boolean arrow = projectile instanceof net.minecraft.world.entity.projectile.AbstractArrow
+         && !(projectile instanceof net.minecraft.world.entity.projectile.ThrownTrident);
+      var threat = react(self, state, arrow && !state.arrowCapture.holding() ? DefenseReaction.Kind.ARROW : DefenseReaction.Kind.PROJECTILE,
+         projectile.position());
       // A real projectile keeps its speed, ownership and (for missiles) target in the shared seam.
-      if (projectile instanceof net.minecraft.world.entity.projectile.AbstractArrow
-         && !(projectile instanceof net.minecraft.world.entity.projectile.ThrownTrident))
-         return state.arrowCapture.holding() || state.defense.kind()==dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.EVADE ? ProjectileResponse.DEFLECT : ProjectileResponse.CATCH;
+      if (arrow) return arrowResponse(state.arrowCapture.holding(), threat, state.defense.kind());
       return ProjectileResponse.REFLECT;
    }
 
@@ -574,14 +647,57 @@ public final class ReinhardHero implements HeroDefinition {
       return true;
    }
 
-   /** Base max health stays vanilla 20 (no modifier); knockback resistance 100 %; start full. */
+   /** The chassis side of a body (an adapter over ServerPlayer; a fake in tests). */
+   interface ChassisBody {
+      @javax.annotation.Nullable
+      AttributeInstance knockback();
+
+      float maxHealth();
+
+      void setHealth(float health);
+   }
+
+   private static ChassisBody chassisBody(ServerPlayer player) {
+      return new ChassisBody() {
+         @Override
+         public AttributeInstance knockback() {
+            return player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+         }
+
+         @Override
+         public float maxHealth() {
+            return player.getMaxHealth();
+         }
+
+         @Override
+         public void setHealth(float health) {
+            player.setHealth(health);
+         }
+      };
+   }
+
+   /** Becoming Reinhard: the chassis and a full start. */
    private static void applyChassis(ServerPlayer player) {
-      AttributeInstance knockback = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+      become(chassisBody(player));
+   }
+
+   /** Becoming Reinhard: base max health stays vanilla 20 (no modifier), knockback resistance 100 %, start full. */
+   static void become(ChassisBody body) {
+      restoreChassis(body);
+      body.setHealth(body.maxHealth());
+   }
+
+   /** A respawned body (death, End return): the chassis modifier only, health stays as vanilla left it. */
+   static void respawn(ChassisBody body) {
+      restoreChassis(body);
+   }
+
+   /** Idempotent, never heals. */
+   private static void restoreChassis(ChassisBody body) {
+      AttributeInstance knockback = body.knockback();
       if (knockback != null) {
          applyKnockbackResistance(knockback);
       }
-
-      player.setHealth(player.getMaxHealth());
    }
 
    /** Idempotent: exactly one chassis modifier afterwards. */

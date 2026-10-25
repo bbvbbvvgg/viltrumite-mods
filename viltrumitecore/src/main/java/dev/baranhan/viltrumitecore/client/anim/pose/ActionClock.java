@@ -67,6 +67,8 @@ public class ActionClock {
    }
 
    // Opt-in render policy. Legacy tick()/time() callers retain their exact behavior.
+   /** Render prediction horizon past the last authoritative elapsed, in ticks. */
+   static final double PREDICTION = 3.0;
    private int renderAction = -1, renderPhase, renderElapsed;
    private double renderTime, renderChangedAt, renderSampledAt;
    private boolean renderRunning;
@@ -76,7 +78,10 @@ public class ActionClock {
     * Reconciles snapshots at 0.75..1.25x, never rewinds an active segment, and
     * predicts at most three ticks past the last authoritative sample. Repeated
     * view/shadow passes at the same timestamp are idempotent; pausing adds no time.
-    * Phase changes and authoritative timeline restarts explicitly begin a new clip.
+    * Phase changes and authoritative timeline restarts explicitly begin a new clip,
+    * and so does a sample after an unrendered gap longer than the prediction
+    * horizon: nothing on screen needs continuity then, and the cast may be a new
+    * one of the same action/phase whose -1 between casts was never sampled.
     */
    public double sample(int action, int phase, int elapsed, int length, double clientTicks) {
       if (!Double.isFinite(clientTicks)) return renderRunning ? renderTime : 0;
@@ -84,7 +89,7 @@ public class ActionClock {
       if (renderRunning && clientTicks < renderSampledAt) return renderTime;
       elapsed = Math.max(0, elapsed);
       if (!renderRunning || action != renderAction || phase != renderPhase
-         || elapsed < renderElapsed) {
+         || elapsed < renderElapsed || clientTicks - renderSampledAt > PREDICTION) {
          renderAction = action; renderPhase = phase; renderElapsed = elapsed;
          renderTime = elapsed; renderSampledAt = renderChangedAt = clientTicks;
          renderRunning = true;
@@ -94,9 +99,9 @@ public class ActionClock {
             renderElapsed = elapsed;
             renderChangedAt = clientTicks;
          }
-         double target = elapsed + Math.min(3, Math.max(0, clientTicks-renderChangedAt));
+         double target = elapsed + Math.min(PREDICTION, Math.max(0, clientTicks-renderChangedAt));
          double rate = Math.max(.75, Math.min(1.25, 1 + (target-renderTime-dt)*.25));
-         renderTime = Math.min(elapsed + 3.0, renderTime + dt*rate);
+         renderTime = Math.min(elapsed + PREDICTION, renderTime + dt*rate);
          renderSampledAt = clientTicks;
       }
       if (length > 0) renderTime = Math.min(length, renderTime);

@@ -112,6 +112,21 @@ public final class WorldPause {
       Session s=SESSIONS.get(level.getServer());
       return s!=null && suspendForeignMovement(s.isPaused(target.getUUID()),s.id,effect);
    }
+   /**
+    * A paused hostile this pause could not freeze (a foreign PULL/FREEZE or the
+    * legacy grab owns it) is suspended as an overlay: its tick is skipped (AI,
+    * attacks, physics) and producer velocity is cleared, while the foreign
+    * control keeps its owner, saved flags and expiry. Server; see HeroEvents.
+    */
+   public static boolean suspendsMob(Entity entity) {
+      if(!(entity instanceof Mob) || !(entity.level() instanceof ServerLevel level)) return false;
+      Session s=SESSIONS.get(level.getServer());
+      return s!=null && suspendsMob(s.isPaused(entity.getUUID()),ControlManager.get(level).holdsFreeze(entity.getUUID(),s.id));
+   }
+   /** Pure: paused, but not held by this pause's own FREEZE. */
+   static boolean suspendsMob(boolean paused,boolean frozenByThisPause) {
+      return paused && !frozenByThisPause;
+   }
    /** Hide only this pause's anchor decoration, not another owner's stasis/freeze. */
    public static boolean hidesAnchor(boolean active,@Nullable UUID pause,@Nullable UUID effect) {
       return active && pause!=null && pause.equals(effect);

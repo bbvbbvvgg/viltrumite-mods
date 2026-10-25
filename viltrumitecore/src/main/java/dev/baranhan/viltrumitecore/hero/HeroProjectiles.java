@@ -45,6 +45,17 @@ public final class HeroProjectiles {
          event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
    }
 
+   /**
+    * Client half of the seam: a custom projectile touching a hero that may
+    * intercept it ({@link HeroDefinition#interceptsProjectiles}) must not
+    * play its impact or vanish locally, because the server may turn it away.
+    * Any other player hit is an ordinary impact.
+    */
+   public static boolean awaitsServer(Projectile projectile, net.minecraft.world.phys.HitResult result) {
+      return result instanceof EntityHitResult hit && hit.getEntity() instanceof net.minecraft.world.entity.player.Player player
+         && projectile.getOwner() != player && player.isAlive() && HeroRegistry.get(player).interceptsProjectiles(player);
+   }
+
    /** Custom projectile entities must call the same seam before their own onHit. */
    public static boolean intercept(Projectile projectile, net.minecraft.world.phys.HitResult result) {
       if (projectile.level().isClientSide() || !(result instanceof EntityHitResult hit)

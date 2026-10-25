@@ -23,7 +23,11 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 /** One all-dimension cinematic. Clock is server age + local unpaused client ticks, not a dimension's time. */
 public final class ErasureScene {
    public enum EndReason { NORMAL, CANCEL, LOGOUT, LEVEL_UNLOAD, RELOAD, WATCHDOG }
-   public interface SoundEnvironment {void crack(); void duck(int fadeTicks); void inhale(); void release(int fadeTicks);}
+   public interface SoundEnvironment {
+      void crack(); void duck(int fadeTicks); void inhale(); void release(int fadeTicks);
+      /** Is this scene's duck still registered; a client level change clears every duck. */
+      default boolean ducking() {return true;}
+   }
    public static final class Timeline {
       private int age; private boolean ducked,released,inhalePlayed,ended;
       private final SoundEnvironment sound;
@@ -40,6 +44,8 @@ public final class ErasureScene {
          if(ended) return;
          int before=age; age=Math.max(age,tick);
          if(age>=30 && age<110 && !ducked) {sound.duck(Math.max(0,36-age));ducked=true;}
+         // A dimension change mid-scene dropped the duck: register it again, already at depth.
+         else if(age>=30 && age<110 && !released && !sound.ducking()) sound.duck(Math.max(0,36-age));
          if(before<110 && age>=110 && !inhalePlayed) {
             sound.inhale(); inhalePlayed=true;
             if(ducked && !released) {sound.release(40);released=true;}
@@ -78,6 +84,7 @@ public final class ErasureScene {
             public void duck(int fade){SoundDuck.INSTANCE.duck(Active.this,SoundSource.MASTER,0,fade,OWN_SOUNDS);}
             public void inhale(){Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ReinhardSounds.ERASE_INHALE.get(),1));}
             public void release(int fade){SoundDuck.INSTANCE.release(Active.this,fade);}
+            public boolean ducking(){return SoundDuck.INSTANCE.holds(Active.this);}
          });
       }
    }
