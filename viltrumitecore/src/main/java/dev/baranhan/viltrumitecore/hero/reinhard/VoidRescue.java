@@ -18,7 +18,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Spec §3.1: falling below the world never kills Reinhard; an air step lifts
- * him onto the surface above the fall point, else the nearest loaded column
+ * him onto the surface above the fall point (under a roof such as the Nether's:
+ * the highest floor below it, never the roof), else the nearest loaded column
  * with ground, else the level spawn (End: the obsidian platform).
  */
 public final class VoidRescue {
@@ -41,6 +42,31 @@ public final class VoidRescue {
       }
 
       return OptionalInt.empty();
+   }
+
+   /**
+    * A roofed column (the Nether): the highest floor under the ceiling, never the roof.
+    * Below {@code maxY} the ceiling's solid run is skipped, then the first solid y with
+    * two free blocks above it is the floor; empty when the column has none.
+    */
+   public static OptionalInt floorBelowCeiling(int minY, int maxY, IntPredicate solidAt) {
+      int y = maxY;
+      while (y >= minY && solidAt.test(y)) {
+         y--;
+      }
+
+      for (; y >= minY; y--) {
+         if (solidAt.test(y) && !solidAt.test(y + 1) && !solidAt.test(y + 2)) {
+            return OptionalInt.of(y);
+         }
+      }
+
+      return OptionalInt.empty();
+   }
+
+   /** The column's top reaches the logical ceiling of a dimension that has one: the top is a roof. */
+   public static boolean roofed(boolean hasCeiling, int top, int minBuildHeight, int logicalHeight) {
+      return hasCeiling && top >= minBuildHeight + logicalHeight - 1;
    }
 
    /**
@@ -122,7 +148,7 @@ public final class VoidRescue {
       return spawnTop.isPresent() ? new BlockPos(spawn.getX(), spawnTop.getAsInt() + 1, spawn.getZ()) : spawn;
    }
 
-   /** Highest standable block of a loaded column (motion-blocking or fluid). */
+   /** Highest standable block of a loaded column (motion-blocking or fluid); under a roof, the floor below it. */
    private static OptionalInt columnTop(ServerLevel level, int x, int z) {
       if (!level.hasChunk(x >> 4, z >> 4)) {
          return OptionalInt.empty();
@@ -130,9 +156,14 @@ public final class VoidRescue {
 
       int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) - 1;
       BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-      return surfaceY(level.getMinBuildHeight(), top, y -> {
+      IntPredicate solid = y -> {
          BlockState state = level.getBlockState(pos.set(x, y, z));
          return state.blocksMotion() || !state.getFluidState().isEmpty();
-      });
+      };
+      if (roofed(level.dimensionType().hasCeiling(), top, level.getMinBuildHeight(), level.getLogicalHeight())) {
+         return floorBelowCeiling(level.getMinBuildHeight(), top, solid);
+      }
+
+      return surfaceY(level.getMinBuildHeight(), top, solid);
    }
 }
