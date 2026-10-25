@@ -42,7 +42,7 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> REID_FAR = reg("reinhard.reid_far");
    /** The calm 1 s sheathe click (manual, auto-return, leaving Holy Sword). */
    public static final RegistryObject<SoundEvent> REID_SHEATHE = reg("reinhard.reid_sheathe");
-   /** Placeholder until Stage 7 (Iridiuss ring): an anvil landing, played high. */
+   /** The sheathed-blade ring ({@code reinhard/sheath_ring}, Iridiuss CC0; the same file voices the World Cut blade accent). */
    public static final RegistryObject<SoundEvent> SHEATH_STRIKE = reg("reinhard.sheath_strike");
    /** Original procedural sweep, one spatial sound per authored Rain contact. */
    public static final RegistryObject<SoundEvent> CUT_RAIN = reg("reinhard.cut_rain");

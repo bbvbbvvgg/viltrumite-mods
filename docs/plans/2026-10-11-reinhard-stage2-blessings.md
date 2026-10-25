@@ -99,7 +99,7 @@ See the overview. Stage-specific:
 - Predict → validate → confirm/correct (overview Global Constraints):
   1. `AirJumpClient.tick(Minecraft)`: jump key edge this tick (after vanilla consumed the ground jump), `AirJumpRules.allow(localUsed, airJumps, resets(...), anchored, canAct)` → **predict**: `deltaMovement.y = airJumpVelocity` (horizontal kept), `localUsed++`, `pendingSeq++`; send the press through the generic path `HeroInputC2SPacket(AIR_STEP, true)` (one packet, no second channel). `localUsed = 0` whenever `resets(...)`.
   2. `HeroAirJump.onInput` (server): own `used` counter per player, reset in the player tick by the same `AirJumpRules.resets(...)` from server-side state (`onGround()`, `isInWater()`, `isInLava()`, `onClimbable()`, `getAbilities().flying`, `isPassenger()`).
-  3. Accepted → server sets `deltaMovement.y = airJumpVelocity`, `hurtMarked = true` (vanilla sends the authoritative `ClientboundSetEntityMotionPacket`; it matches the prediction, so no visible correction), `used++`, `fallDistance = 0`, FX `AirStepVfx` via `HeroFx.launch` at the feet, sound.
+  3. Accepted → the server sets its own copy of `deltaMovement` (the same `airJumpMotion`) **without** `hurtMarked`: the client already moved, and a late authoritative motion packet would boost it twice (as built in `HeroAirJump.PlayerBody.setDeltaMovement`); `used++`, `fallDistance = 0`, FX `AirStepVfx` via `HeroFx.launch` at the feet, sound.
   4. Refused → no FX/sound; server sends `ClientboundSetEntityMotionPacket` with the server's current velocity (cancels the predicted boost) and `AirJumpSyncS2CPacket(used)` so the client counter matches the server again.
   - The server is the only source of the boost a cheating client can get: an extra AIR_STEP packet is refused and its velocity corrected; a client that boosts **without** sending the packet is plain movement cheating, which vanilla's movement checks cover like any fly hack (out of scope, noted in the PR).
 - `ReinhardRules`: `AIR_STEPS = 5`, `AIR_STEP_VELOCITY = 0.62` (≈ 1.9 blocks each), `SUPER_JUMP_VELOCITY = 2.2` (≈ 20 blocks via `HeroSuperJump.apex`).
@@ -174,6 +174,6 @@ Acceptance criteria closed: §11.3 (full), §11.4.
 ## Risks and pitfalls
 
 - `ProjectileImpactEvent` in Forge 47 uses `ImpactResult` (not `setCanceled`); a cancelled impact that keeps the projectile inside the player re-hits next tick — move the deflected projectile 0.6 blocks out of the bounding box.
-- Air steps are client-side movement; the server must not set velocity for them (double jump). Vanilla "moved too quickly" checks allow 0.62 b/t.
+- Air steps follow predict → validate → confirm/correct (Task 4): the client moves at once, the server validates the press with its own counter, keeps its own copy of the velocity without sending a motion packet on acceptance (that would double the boost), and corrects a refusal with a motion packet plus `AirJumpSyncS2CPacket`. Vanilla "moved too quickly" checks allow 0.62 b/t.
 - `PERSISTED_NBT_TAG` is copied by Forge on respawn only if written inside that sub-compound; writing to the root persistent data is lost on death.
 - Owner section `THREATS` is also used by Iron Man; it is per owner, so there is no clash, but the client must read it only when the local hero is Reinhard.
