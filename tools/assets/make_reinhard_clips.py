@@ -277,9 +277,23 @@ CLIPS['sheath_strike'] = action(12,
     body=[(0,[0,0,0]),(4,[0,20,0]),(6,[8,-22,0]),(12,[0,0,0])],
     left_arm=[(0,[-18,0,-8]),(4,[-10,0,-14]),(12,[-18,0,-8])])
 # Cinematic cuts: a shared server clock, readable preparation and contact at tick 80.
+# REINHARD OVERHAUL item 13: the normal World Cut comes down from either shoulder (the action
+# phase is hero/reinhard/cut/WorldCutSweep). 'world_cut' is raised over the RIGHT shoulder and
+# cuts right to left; 'world_cut_from_left' is its exact mirror (left to right). The chest turns
+# toward the raised shoulder and unwinds through the stroke; both reach the contact of tick 80
+# square on the trench (no lean, no chest twist), so the carve and the cut line stay the same.
+# The blade is raised upright first (tick 20, exactly as before) and only then settles over the
+# shoulder (tick 30): the raise keeps the owner-selected edge/face read and a clear arm path.
+# Most of the side read is the chest (twist + bend), which carries arms and grip together, so
+# the right-hand-on-top grip stays reachable over the left shoulder as well.
+SWEEP_TWIST = 12
+# Side bend of the chest toward the raised shoulder (degrees); the head stays level and keeps
+# most of the twist (it turns back only SWEEP_HEAD), clear of the raised blade.
+SWEEP_BEND = 6
+SWEEP_HEAD = 4
 CLIPS['world_cut'] = action(100,
-    body=[(0,[0,0,0]),(20,[-8,0,0]),(66,[-8,0,0]),(80,[16,0,0]),(87,[10,0,0]),(100,[0,0,0])],
-    head=[(0,[0,0,0]),(20,[-8,0,0]),(66,[-8,0,0]),(80,[-8,0,0]),(100,[0,0,0])],
+    body=[(0,[0,0,0]),(20,[-8,0,0]),(30,[-8,SWEEP_TWIST,-SWEEP_BEND]),(66,[-8,SWEEP_TWIST,-SWEEP_BEND]),(80,[16,0,0]),(87,[10,-4,2]),(100,[0,0,0])],
+    head=[(0,[0,0,0]),(20,[-8,0,0]),(30,[-8,-SWEEP_HEAD,SWEEP_BEND]),(66,[-8,-SWEEP_HEAD,SWEEP_BEND]),(80,[-8,0,0]),(87,[-6,3,-2]),(100,[0,0,0])],
     right_leg=[(0,[0,0,0]),(20,[-12,0,4]),(80,[-18,0,4]),(100,[0,0,0])],
     left_leg=[(0,[0,0,0]),(20,[-8,0,-4]),(66,[-8,0,-4]),(80,[16,0,-4]),(100,[0,0,0])])
 CLIPS['diagonal_world_cut'] = action(100,
@@ -356,9 +370,15 @@ DRAW=[(0,*HIP),(24,*HIP),(40,[-9.2,25,-4],HIP[1]),
       (100,[5.3,17,-4],[270,0,0]),(120,*READY)]
 weapon(CLIPS['reid_draw'],DRAW)
 weapon(CLIPS['reid_sheathe'],[(20-t/6,p,r) for t,p,r in reversed(DRAW)])
-weapon(CLIPS['world_cut'],[(0,*READY),(20,[0,20,-6.5],[360,0,0]),
-    (66,[0,20,-6.5],[360,0,0]),(80,[1,20,-6.5],[260,0,0]),
-    (87,[1,20,-6.5],[270,0,0]),(100,*READY)])
+# Blade lean over the raised shoulder (degrees), at the end of the raise and through the hold,
+# and the grip shift toward that shoulder (px).
+SWEEP_LEAN = 12
+SWEEP_SHIFT = 0.5
+WORLD_CUT_WEAPON=[(0,*READY),(20,[0,20,-6.5],[360,0,0]),
+    (30,[SWEEP_SHIFT,20,-6.5],[360,0,-SWEEP_LEAN]),
+    (66,[SWEEP_SHIFT,20,-6.5],[360,0,-SWEEP_LEAN]),(80,[1,20,-6.5],[260,0,0]),
+    (87,[1,20,-6.5],[270,0,0]),(100,*READY)]
+weapon(CLIPS['world_cut'],WORLD_CUT_WEAPON)
 weapon(CLIPS['diagonal_world_cut'],[(0,*READY),(20,[0,20,-6.5],[360,0,-12]),
     (66,[0,20,-6.5],[360,0,-12]),(80,[1,20,-6.5],[260,0,12]),
     (87,[1,20,-6.5],[270,0,8]),(100,*READY)])
@@ -413,6 +433,13 @@ def mirrored(clip):
     return out
 
 CLIPS['light_punch_left']=mirrored(CLIPS['light_punch'])
+# The left-shoulder World Cut: body, head and legs mirrored; the grip mirrored through the raise
+# and the hold. READY (the drawn guard both clips start from and return to) and the contact /
+# follow-through rows are shared: both strokes meet the trench at the same square grip, and the
+# right hand stays on top without reaching across for the contact.
+CLIPS['world_cut_from_left']=mirrored(CLIPS['world_cut'])
+weapon(CLIPS['world_cut_from_left'],[(t,p,r) if (p,r)==READY or t>=80 else (t,[-p[0],p[1],p[2]],[r[0],-r[1],-r[2]])
+    for t,p,r in WORLD_CUT_WEAPON])
 # Right hook: a wide swing from the right (Knight's combo_2 family, the fist passes at
 # shoulder height in front of the face, never folded back into it), chest turning left.
 CLIPS['light_hook']=action(12,

@@ -32,6 +32,11 @@ public final class ErasureTestSwipe implements ErasureRenderer.Provider {
       new Vec3(-1.30, -0.33, 1.84)
    };
    private static final int MAX = 8;
+
+   /** A copy of the original swipe, for effects built on it (the diagonal World Cut wound). */
+   public static Vec3[] originalSwipe() {
+      return SWIPE.clone();
+   }
    private static final ErasureTestSwipe INSTANCE = new ErasureTestSwipe();
    private static final List<Swipe> SWIPES = new ArrayList<>();
 

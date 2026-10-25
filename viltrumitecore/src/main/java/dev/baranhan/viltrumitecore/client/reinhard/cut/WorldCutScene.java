@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.*;
 import dev.baranhan.viltrumitecore.client.render.vfx.*;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut;
+import dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep;
 import dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket;
 import java.util.*;
 import net.minecraft.client.Camera;
@@ -26,7 +27,8 @@ public final class WorldCutScene {
       new ResourceLocation("viltrumitecore","reinhard.world_cut_hum"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_pulse"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_blade"),
-      new ResourceLocation("viltrumitecore","reinhard.world_cut_impact"));
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_impact"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_strike_voice"));
    private WorldCutScene() {}
    public static final class Active {
       public final WorldCutS2CPacket packet;
@@ -36,7 +38,9 @@ public final class WorldCutScene {
       public double fade(long now) { return doneAt<0?1:Math.max(0,1-(now-doneAt)/70.0); }
       /** Last elapsed tick strictly before DONE; +inf while the server still reports WORK. */
       public double acceptedUntil() { return doneAt<0?Double.POSITIVE_INFINITY:doneAt-packet.startTime()-1.0; }
-      Active(WorldCutS2CPacket packet) { this.packet=packet; }
+      Active(WorldCutS2CPacket packet) { this.packet=packet; this.sweep=WorldCutSweep.of(packet.shape().seed()); }
+      /** Shoulder of this cast (same bit as the caster's synced action phase). */
+      public final int sweep;
       public boolean blastReceived() { return blastReceived; }
       /** Admits the current pulse once, on time or within CATCH_UP; true when its voice should start now. */
       boolean admitPulse(long elapsed) {
@@ -71,7 +75,11 @@ public final class WorldCutScene {
     * CATCH_UP ticks later (late join from a WORK packet) does not replay it.
     */
    public static boolean bladeDue(double t) { return accentDue(t,BLADE_TICK); }
-   /** The first damage wave is the BLAST; a viewer who joins after it does not hear it again. */
+   /**
+    * The first damage wave is the BLAST (server WorldCut.advance: blast() and the first strikes on
+    * elapsed tick WORLD_CUT_BLAST). The strike voice starts on that elapsed tick of the shared game
+    * clock, not on the BLAST packet's arrival; a viewer who joins after it does not hear it again.
+    */
    public static boolean impactDue(double t) { return accentDue(t,ReinhardRules.WORLD_CUT_BLAST); }
    private static boolean accentDue(double t,int at) { return t>=at && t<=at+WorldCutPulse.CATCH_UP; }
    public static int front(double t) { return WorldCut.visualFront(t); }
@@ -111,13 +119,13 @@ public final class WorldCutScene {
             SoundDuck.INSTANCE.release(scene.packet.castId()); scene.ducked=false;
          }
          Vec3 nearest=nearest(scene,mc.player.position());
-         if(inRange && !scene.bladePlayed && bladeDue(t)) { scene.bladePlayed=true; WorldCutAudio.blade(point(scene,0),now); }
-         if(inRange && !scene.impactPlayed && impactDue(t)) { scene.impactPlayed=true; WorldCutAudio.impact(nearest,now); }
+         if(inRange && !scene.bladePlayed && bladeDue(t)) { scene.bladePlayed=true; WorldCutAudio.blade(bladeRing(scene),now); }
+         if(inRange && !scene.impactPlayed && impactDue(t)) { scene.impactPlayed=true; WorldCutAudio.strike(scene.packet.castId(),distance,t,now); }
          // One admitted beat drives voice, hum swell, shake and dust; a beat joined too late drives none.
          boolean beat=scene.admitPulse((long)t);
          float pulse=WorldCutPulse.envelope(scene.pulsePhase(t));
          WorldCutAudio.update(scene.packet.castId(),nearest,t,(float)scene.fade(now),inRange,pulse);
-         if(inRange && beat) WorldCutAudio.pulse(nearest,now);
+         if(inRange && beat) WorldCutAudio.pulse(nearest,now,WorldCutAudio.duck(scene.packet.castId(),t));
          CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now,
             WorldCutPulse.shakeFor(pulse));
          if(hush) CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
@@ -127,6 +135,13 @@ public final class WorldCutScene {
             for(int a=0;a<200;a+=20) HeroImpactFx.shockwaveVisual(point(scene,a+.5),20);
          }
       }
+   }
+   /** Lateral offset of the blade ring: on the side the blade is raised, so the swing starts where it is heard. */
+   static final double RING_SIDE=6;
+   /** Caster's right along the cut (Minecraft: facing +z, the right hand points to -x). */
+   static Vec3 right(Vec3 dir) { return new Vec3(-dir.z,0,dir.x); }
+   static Vec3 bladeRing(Active a) {
+      return point(a,0).add(right(a.packet.shape().dirXZ()).scale(RING_SIDE*WorldCutSweep.side(a.sweep)));
    }
    private static Vec3 point(Active a,double along) {
       Vec3 p=a.packet.shape().axis(along);
@@ -168,6 +183,9 @@ public final class WorldCutScene {
             } else {
                int front=front(t); double fade=scene.fade(mc.level.getGameTime());
                Vec3 dir=scene.packet.shape().dirXZ();
+               // The stroke exits on the side opposite the raised shoulder: the spiral turns that way and the
+               // sparks over the front drift toward it.
+               int sweepSide=WorldCutSweep.side(scene.sweep); Vec3 exit=right(dir).scale(-sweepSide);
                for(int a=0;a<front;a++) {
                   Vec3 p=point(scene,a+.5); double edge=scene.packet.shape().geometry().halfWidth(a,0)+.5;
                   for(int side=-1;side<=1;side+=2) {
@@ -179,13 +197,14 @@ public final class WorldCutScene {
                      double strike=Math.max(0,1-Math.abs(a-front+1)/3.0);
                      for(int y=0;y<40;y++) {
                         double spread=1+y*.07;
-                        Vec3 core=p.add(-dir.z*Math.sin(y*.8+t*.2)*spread,y*.9,dir.x*Math.sin(y*.8+t*.2)*spread);
+                        double turn=Math.sin(y*.8+sweepSide*t*.2);
+                        Vec3 core=p.add(-dir.z*turn*spread,y*.9,dir.x*turn*spread);
                         pixel(buffer,eye,camera,core,.22F,245,250,255,(int)(220*fade*strike));
                         if(y%3==0) pixel(buffer,eye,camera,core.add(-dir.z*1.4,0,dir.x*1.4),.10F,255,218,130,(int)(180*fade*strike));
                      }
                   }
                   if(a>=front-8) for(int y=0;y<12;y++) {
-                     Vec3 fire=p.add(Math.sin(a*5+y)*4,y*.65,Math.cos(a*7+y)*4);
+                     Vec3 fire=p.add(Math.sin(a*5+y)*4,y*.65,Math.cos(a*7+y)*4).add(exit.scale(y*.35));
                      pixel(buffer,eye,camera,fire,.11F,255,239,155,(int)(220*fade));
                   }
                   if(a%2==0) for(int y=0;y<12;y++) {
@@ -220,7 +239,7 @@ public final class WorldCutScene {
          for(Active scene:frames) {
             double t=elapsed(scene.packet.startTime(),mc.level.getGameTime(),event.getPartialTick());
             dev.baranhan.viltrumitecore.client.reinhard.ReinhardTitanBlade.render(scene.packet.shape().origin(),
-               scene.packet.shape().dirXZ(),t,event.getPoseStack(),eye);
+               scene.packet.shape().dirXZ(),scene.packet.surface(),scene.sweep,t,eye);
          }
       } finally {
          RenderSystem.depthMask(true); RenderSystem.enableCull(); RenderSystem.defaultBlendFunc();

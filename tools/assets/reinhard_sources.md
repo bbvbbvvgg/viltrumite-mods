@@ -129,3 +129,28 @@ peak gates. Run `python3 tools/sfx/reinhard_worldcut.py --src <file> --check`.
 No raw input is committed and no listening proof is claimed.
 
 24 kHz mono Vorbis quality 4, faded/soft-limited source PCM peak -6.02 dBFS. Decoded true peaks measured with ffmpeg ebur128: draw -5.9, impact -5.3, sweep -5.1 dBFS. This is file-level headroom, not a claim of clipping-free scene mixing. Subjective gain and Minecraft mix require listening in game. Existing CC-BY attribution stays unchanged.
+
+## TEMPORARY test asset — World Cut strike voice (license NOT verified)
+
+REINHARD OVERHAUL item 12. `sword_strike_voice.ogg.b64` is the owner-confirmed sound of Reinhard's strike on
+Theresia from Re:Zero Season 3 Episode 14 ("Reinhard Finally Draws His Sword", reference
+https://www.youtube.com/watch?v=GtFqJpCrwCQ). It is a **temporary test asset**:
+
+- Source file: owner repository https://github.com/bbvbbvvgg/Codex-Superheroes,
+  `src/main/resources/assets/superheroes/sounds/reinhard/sword_strike_voice.ogg` at commit
+  `be526ea313d7f5f652346c70a88b995f28977cee` (git blob `2cdc23f09b22fea399c62dfc805195ce4f121fd0`). The owner
+  listened to it and confirmed it is the strike on Theresia; it was not searched for or re-cut here.
+- Shipped byte-identical: stereo 48 kHz Vorbis, 8.76 s, 159533 bytes, SHA-256
+  `b7c97f3fb070687b8ae4252a627f4f9b932dd7975fb16cee1a3f4694b04ae1a6`. The onset is at 3.6 ms (peak at 19 ms),
+  so the hit lands on the tick the voice starts; about 4.5 s of loud body, then an even decay. Integrated
+  loudness -14.7 LUFS (ffmpeg ebur128). Measured numbers only, **not a listening test**.
+- Event `reinhard.world_cut_strike_voice` (stream), normal World Cut only: `WorldCutAudio.strike` starts it once
+  on the elapsed BLAST tick (`ReinhardRules.WORLD_CUT_BLAST` = 80, the server tick of the first damage and the
+  carve start) instead of the old `world_cut_impact` hit. Stereo is never positioned by the sound engine, so the
+  voice is head-relative and the distance to the cut sets its volume (1.0 within 32 blocks, 0.25 at 320). The
+  hum and the pulse voice drop to 45 % under its loud body. The diagonal World Cut audio is unchanged.
+- **License NOT verified.** The recording comes from a commercial anime episode; no license is claimed and it is
+  not covered by the CC0 / CC-BY rules of this file. **Replace it with a licensed or original sound before any
+  public release** and keep the timing: the replacement must put its transient within the first ~20 ms and be
+  played from the same `WorldCutAudio.strike` call. `reinhard.world_cut_impact` (derived from the CC-BY 248150
+  tail) stays registered as the licensed fallback.

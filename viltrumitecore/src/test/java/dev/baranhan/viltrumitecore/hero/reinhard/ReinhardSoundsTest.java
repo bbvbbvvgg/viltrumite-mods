@@ -33,6 +33,9 @@ class ReinhardSoundsTest {
       "reid_hit", List.of("reid_hit_1", "reid_hit_2", "reid_hit_3"),
       "reid_heavy", List.of("reid_heavy_1", "reid_heavy_2"),
       "reid_drawn_hum", List.of("reid_drawn_hum"));
+   /** REINHARD OVERHAUL item 12: owner-confirmed test sound, shipped byte-identical, license NOT verified. */
+   private static final Map<String, String> TEMPORARY = Map.of("world_cut_strike_voice", "sword_strike_voice");
+   private static final String TEMPORARY_SHA256 = "b7c97f3fb070687b8ae4252a627f4f9b932dd7975fb16cee1a3f4694b04ae1a6";
    private static final List<String> OVERHAUL_SOURCES = List.of(
       "https://freesound.org/people/mateusboga/sounds/614084", "https://freesound.org/people/qubodup/sounds/60004",
       "https://freesound.org/people/qubodup/sounds/60024", "https://freesound.org/people/Danjocross/sounds/507466",
@@ -97,6 +100,13 @@ class ReinhardSoundsTest {
             if (pair.getKey().equals("reid_heavy")) choice.addProperty("attenuation_distance", 32);
             array.add(choice);
          }
+         definition.add("sounds", array); expected.add("reinhard." + pair.getKey(), definition);
+      }
+      for (var pair : TEMPORARY.entrySet()) {
+         // Streamed, no attenuation: the stereo voice is played head-relative by WorldCutAudio.strike.
+         JsonObject choice = new JsonObject(); choice.addProperty("name", "viltrumitecore:reinhard/" + pair.getValue());
+         choice.addProperty("stream", true);
+         JsonObject definition = new JsonObject(); JsonArray array = new JsonArray(); array.add(choice);
          definition.add("sounds", array); expected.add("reinhard." + pair.getKey(), definition);
       }
       JsonObject current = new JsonObject();
@@ -192,7 +202,7 @@ class ReinhardSoundsTest {
    @Test void everyFileExists() throws Exception {
       allFileReferencesExist(sounds());
       Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());all.addAll(DERIVED.values());
-      OVERHAUL.values().forEach(all::addAll);
+      OVERHAUL.values().forEach(all::addAll); all.addAll(TEMPORARY.values());
       for (String f : all) {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));
@@ -222,6 +232,22 @@ class ReinhardSoundsTest {
          assertTrue(hasExactSourceLink(credits, page), id + " credit link");
       }
       assertTrue(section.contains("not a listening test"), "No listening claim without playback");
+   }
+   /** The temporary strike voice is the owner's file byte for byte and is documented as unlicensed, to be replaced. */
+   @Test void temporaryStrikeVoiceIsTheOwnerFileAndMarkedUnverified() throws Exception {
+      byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve("sword_strike_voice.ogg.b64")).trim());
+      assertEquals(159533, bytes.length);
+      assertEquals(TEMPORARY_SHA256, java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes)));
+      String sources = text("tools/assets/reinhard_sources.md"), credits = text("CREDITS.md");
+      String section = sources.substring(sources.indexOf("## TEMPORARY test asset"));
+      for (String required : List.of(TEMPORARY_SHA256, "https://github.com/bbvbbvvgg/Codex-Superheroes",
+            "be526ea313d7f5f652346c70a88b995f28977cee", "https://www.youtube.com/watch?v=GtFqJpCrwCQ",
+            "License NOT verified", "Replace it with a licensed or original sound", "public release", "WORLD_CUT_BLAST",
+            "not a listening test"))
+         assertTrue(section.contains(required), "source record mentions " + required);
+      String credit = credits.substring(credits.indexOf("### TEMPORARY test asset"));
+      assertTrue(credit.contains("not verified") && credit.contains("replaced"), "credits flag the temporary use");
+      assertFalse(OUTPUT_SOURCE.containsKey("sword_strike_voice"), "not presented as an approved CC0 / CC-BY output");
    }
    @Test void longFilesStream() throws Exception { for (String e : STREAM) { assertTrue(entry(e).has("stream")); assertTrue(entry(e).get("stream").getAsBoolean()); } }
    @Test void spec102ReferencesRemainUnchanged() throws Exception { validateSounds(sounds()); }

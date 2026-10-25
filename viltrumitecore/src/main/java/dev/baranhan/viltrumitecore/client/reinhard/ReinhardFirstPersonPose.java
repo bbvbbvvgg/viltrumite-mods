@@ -213,7 +213,7 @@ public final class ReinhardFirstPersonPose {
          case REFLECT -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.REFLECT_SNAP_TICKS ? SWAT : GUARD,ticks).scaled(windowFade(ticks,length));
          case SHEATH_STRIKE -> strike(SHEATH,ticks);
          case CUT_RAIN -> strike(RAIN,ticks);
-         case WORLD_CUT -> worldCut(ticks,false);
+         case WORLD_CUT -> worldCut(ticks,false,phase);
          case DIAGONAL_WORLD_CUT -> diagonal(ticks,false);
          case WORLD_ERASURE -> worldErasure(ticks,false);
          default -> Offset.NONE;
@@ -254,6 +254,23 @@ public final class ReinhardFirstPersonPose {
       if (!Double.isFinite(ticks) || ticks<=0 || ticks>=ReinhardRules.WORLD_CUT_BLAST+20) return Offset.NONE;
       Offset right=sample(WORLD_CUT,ticks);
       return physicalLeft ? new Offset(right.x()-.10F,right.y(),right.z(),right.pitch(),-right.yaw(),right.roll()) : right;
+   }
+
+   /**
+    * Normal World Cut of a {@link dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep}: the arm is raised
+    * toward that shoulder through the hold, comes down square at the contact (tick 80) and follows through a little
+    * past the centre, the same path as the third-person clip. View-space offsets like {@link #diagonal}.
+    */
+   public static Offset worldCut(double ticks,boolean physicalLeft,int sweep) {
+      Offset o=worldCut(ticks,physicalLeft);
+      if(o==Offset.NONE) return o;
+      float side=dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep.side(sweep);
+      // Same beats as the clip: raised upright by tick 20, settled over the shoulder by tick 30.
+      float w=smooth((ticks-16)/14)*(1-smooth((ticks-86)/14));
+      float lean=1-smooth((ticks-(ReinhardRules.WORLD_CUT_BLAST-14))/14);
+      float through=smooth((ticks-ReinhardRules.WORLD_CUT_BLAST)/4)*(1-smooth((ticks-88)/10));
+      float lateral=(lean-.3F*through)*side*w;
+      return new Offset(o.x()+.12F*lateral,o.y(),o.z(),o.pitch(),o.yaw()-20*lateral,o.roll()-24*lateral);
    }
 
    public static Offset diagonal(double ticks,boolean physicalLeft) {

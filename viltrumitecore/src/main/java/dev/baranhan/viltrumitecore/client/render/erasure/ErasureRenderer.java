@@ -84,6 +84,11 @@ public final class ErasureRenderer {
    private ErasureRenderer() {
    }
 
+   /** True when strokes can be drawn: the shader loaded and no shader pack owns the frame. Callers may fall back. */
+   public static boolean available() {
+      return program != null && !ErasureCompat.shaderPackInUse();
+   }
+
    public static void register(Provider provider) {
       if (!PROVIDERS.contains(provider)) PROVIDERS.add(provider);
    }
