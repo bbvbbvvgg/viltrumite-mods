@@ -30,15 +30,28 @@ final class WorldCutAudio {
    private static long lastImpact = Long.MIN_VALUE;
    /** No second pulse within this many client ticks. */
    private static final int PULSE_COOLDOWN = 20;
-   /** Linear gain of the loop before scene fade and pulse swell. */
-   private static final float HUM_GAIN = 1.0F;
+   /**
+    * Hum gain at the crest of a pulse swell. The sound engine clamps a voice
+    * to 1.0, so the crest sits there and the resting level is
+    * {@code HUM_PEAK / (1 + SWELL)}: the full +45 % swell stays audible
+    * instead of being clipped away.
+    */
+   static final float HUM_PEAK = 1.0F;
+   static final float SWELL = .45F;
+   private static final float WOBBLE = .10F;
    private static final float PULSE_GAIN = 1.0F;
-   private static final float SWELL = .45F;
+   /**
+    * Ticks of the 1.35 s {@code world_cut_pulse} asset. Its release is baked
+    * into the PCM by tools/sfx/reinhard_worldcut.py, so the voice keeps a
+    * constant gain and only a safety stop at the asset end.
+    */
+   static final int PULSE_TICKS = 27;
 
    private WorldCutAudio() {
    }
 
-   static void update(UUID cast, Vec3 at, double elapsed, double acceptedUntil, float fade, boolean inRange) {
+   /** {@code pulse} is the scene's admitted envelope (0 between beats and for a beat joined too late). */
+   static void update(UUID cast, Vec3 at, double elapsed, float fade, boolean inRange, float pulse) {
       Hum hum = HUM.get(cast);
       if (!inRange || fade <= .002F || elapsed < ReinhardRules.WORLD_CUT_BLAST) {
          if (hum != null) {
@@ -51,8 +64,26 @@ final class WorldCutAudio {
          HUM.put(cast, hum);
          Minecraft.getInstance().getSoundManager().play(hum);
       }
-      float swell = 1.0F + SWELL * WorldCutPulse.strength(elapsed, acceptedUntil);
-      hum.aim(at, HUM_GAIN * fade * swell);
+      hum.aim(at, humGain(fade, pulse));
+   }
+
+   /** Hum target: rests at HUM_PEAK / (1 + SWELL), reaches HUM_PEAK on a full pulse, never above it. */
+   static float humGain(float fade, float pulse) {
+      float swell = 1.0F + SWELL * Mth.clamp(pulse, 0.0F, 1.0F);
+      return HUM_PEAK * Mth.clamp(fade, 0.0F, 1.0F) * swell / (1.0F + SWELL);
+   }
+
+   /** One hum tick: slow wobble around the target, eased, capped at the engine ceiling. */
+   static float humStep(float volume, float target, int age) {
+      // A slow wobble at a period that does not divide the 2 s loop, so the
+      // repeat pattern is longer than one cast.
+      float wobble = 1.0F + WOBBLE * Mth.sin(age * .13F);
+      return volume + (Math.min(HUM_PEAK, target * wobble) - volume) * .22F;
+   }
+
+   /** Pulse voice gain: the baked release is the only decay; no second runtime envelope. */
+   static float pulseVolume(int age) {
+      return age < PULSE_TICKS ? PULSE_GAIN : 0.0F;
    }
 
    /** One pulse voice total; a new pulse stops the previous one instead of layering. */
@@ -64,7 +95,7 @@ final class WorldCutAudio {
       if (pulse != null) {
          pulse.stopNow();
       }
-      pulse = new Pulse(ReinhardSounds.WORLD_CUT_PULSE.get(), at, PULSE_GAIN);
+      pulse = new Pulse(ReinhardSounds.WORLD_CUT_PULSE.get(), at);
       Minecraft.getInstance().getSoundManager().play(pulse);
    }
 
@@ -158,10 +189,7 @@ final class WorldCutAudio {
       @Override
       public void tick() {
          age++;
-         // A slow wobble at a period that does not divide the 2 s loop, so the
-         // repeat pattern is longer than one cast.
-         float wobble = 1.0F + .10F * Mth.sin(age * .13F);
-         volume += (target * wobble - volume) * .22F;
+         volume = humStep(volume, target, age);
          if (releasing && volume <= .002F) {
             stop();
          }
@@ -174,18 +202,15 @@ final class WorldCutAudio {
    }
 
    private static final class Pulse extends AbstractTickableSoundInstance {
-      private static final int LENGTH = WorldCutPulse.LENGTH;
-      private final float gain;
       private int age;
 
-      Pulse(SoundEvent event, Vec3 at, float gain) {
+      Pulse(SoundEvent event, Vec3 at) {
          super(event, SoundSource.PLAYERS, RandomSource.create());
          attenuation = Attenuation.LINEAR;
          x = at.x;
          y = at.y;
          z = at.z;
-         this.gain = gain;
-         volume = gain;
+         volume = pulseVolume(0);
       }
 
       void stopNow() {
@@ -199,9 +224,8 @@ final class WorldCutAudio {
       @Override
       public void tick() {
          age++;
-         float left = Math.max(0.0F, 1.0F - age / (float)LENGTH);
-         volume = gain * left * left;
-         if (age >= LENGTH) {
+         volume = pulseVolume(age);
+         if (age >= PULSE_TICKS) {
             stop();
          }
       }

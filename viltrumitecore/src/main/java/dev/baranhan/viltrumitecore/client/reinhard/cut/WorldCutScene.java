@@ -31,13 +31,21 @@ public final class WorldCutScene {
    public static final class Active {
       public final WorldCutS2CPacket packet;
       private boolean blastReceived, blasted, ducked, bladePlayed, impactPlayed;
-      private long lastPacket,doneAt=-1;
+      private long lastPacket,doneAt=-1,admittedBeat=-1;
       public boolean working() { return doneAt<0; }
       public double fade(long now) { return doneAt<0?1:Math.max(0,1-(now-doneAt)/70.0); }
       /** Last elapsed tick strictly before DONE; +inf while the server still reports WORK. */
       public double acceptedUntil() { return doneAt<0?Double.POSITIVE_INFINITY:doneAt-packet.startTime()-1.0; }
       Active(WorldCutS2CPacket packet) { this.packet=packet; }
       public boolean blastReceived() { return blastReceived; }
+      /** Admits the current pulse once, on time or within CATCH_UP; true when its voice should start now. */
+      boolean admitPulse(long elapsed) {
+         double accepted=acceptedUntil();
+         if(!WorldCutPulse.admits(elapsed,accepted,admittedBeat)) return false;
+         admittedBeat=WorldCutPulse.beat(elapsed,accepted); return true;
+      }
+      /** Fractional age of the pulse this scene admitted; -1 for a beat it joined too late to hear. */
+      double pulsePhase(double elapsed) { return WorldCutPulse.admittedPhase(elapsed,acceptedUntil(),admittedBeat); }
    }
    public static Iterable<Active> active() { return SCENES.values(); }
    static Active[] frames() { return frames; }
@@ -56,10 +64,16 @@ public final class WorldCutScene {
    public static double elapsed(long start,long now,double partial) { return now-start+partial; }
    static boolean owns(ResourceLocation id) { return OWN_SOUNDS.contains(id); }
    public static boolean silence(double t) { return t>=ReinhardRules.WORLD_CUT_SWING && t<ReinhardRules.WORLD_CUT_BLAST; }
-   /** The blade appears with the first white line, before the rupture opens. */
-   public static boolean bladeDue(double t) { return t>=8 && t<ReinhardRules.WORLD_CUT_BLAST; }
-   /** The first damage wave is the BLAST. */
-   public static boolean impactDue(double t) { return t>=ReinhardRules.WORLD_CUT_BLAST; }
+   /** Tick of the blade ring: the first white line, before the rupture opens. */
+   static final int BLADE_TICK=8;
+   /**
+    * The blade appears with the first white line. A scene first seen more than
+    * CATCH_UP ticks later (late join from a WORK packet) does not replay it.
+    */
+   public static boolean bladeDue(double t) { return accentDue(t,BLADE_TICK); }
+   /** The first damage wave is the BLAST; a viewer who joins after it does not hear it again. */
+   public static boolean impactDue(double t) { return accentDue(t,ReinhardRules.WORLD_CUT_BLAST); }
+   private static boolean accentDue(double t,int at) { return t>=at && t<=at+WorldCutPulse.CATCH_UP; }
    public static int front(double t) { return WorldCut.visualFront(t); }
    public static boolean shakeCaster(boolean caster) { return true; }
    public static void clear() {
@@ -99,11 +113,13 @@ public final class WorldCutScene {
          Vec3 nearest=nearest(scene,mc.player.position());
          if(inRange && !scene.bladePlayed && bladeDue(t)) { scene.bladePlayed=true; WorldCutAudio.blade(point(scene,0),now); }
          if(inRange && !scene.impactPlayed && impactDue(t)) { scene.impactPlayed=true; WorldCutAudio.impact(nearest,now); }
-         double acceptedUntil=scene.acceptedUntil();
-         WorldCutAudio.update(scene.packet.castId(),nearest,t,acceptedUntil,(float)scene.fade(now),inRange);
-         if(inRange && WorldCutPulse.due((long)t,acceptedUntil)) WorldCutAudio.pulse(nearest,now);
+         // One admitted beat drives voice, hum swell, shake and dust; a beat joined too late drives none.
+         boolean beat=scene.admitPulse((long)t);
+         float pulse=WorldCutPulse.envelope(scene.pulsePhase(t));
+         WorldCutAudio.update(scene.packet.castId(),nearest,t,(float)scene.fade(now),inRange,pulse);
+         if(inRange && beat) WorldCutAudio.pulse(nearest,now);
          CutAtmosphere.update(scene.packet.castId(),nearest,t,scene.working(),scene.fade(now),inRange,now,
-            WorldCutPulse.shake(t,acceptedUntil));
+            WorldCutPulse.shakeFor(pulse));
          if(hush) CameraShake.addAt(nearest,.3F,ReinhardRules.WORLD_CUT_VIEW_RANGE);
          if(inRange && !scene.working() && !scene.blasted) {
             scene.blasted=true;
@@ -178,9 +194,10 @@ public final class WorldCutScene {
                      pixel(buffer,eye,camera,dust,.18F+y*.015F,149,133,112,(int)(90*fade));
                   }
                }
-               int pulseAge=WorldCutPulse.age(t,scene.acceptedUntil());
+               // Fractional render age: the dust front moves every frame, not in 20 Hz steps.
+               double pulseAge=scene.pulsePhase(t);
                if(pulseAge>=0 && pulseAge<WorldCutPulse.LENGTH) {
-                  double swell=1.0-pulseAge/(double)WorldCutPulse.LENGTH;
+                  double swell=1.0-pulseAge/WorldCutPulse.LENGTH;
                   for(int a=0;a<front;a+=3) {
                      Vec3 wound=point(scene,a+.5);
                      for(int side=-1;side<=1;side+=2) {

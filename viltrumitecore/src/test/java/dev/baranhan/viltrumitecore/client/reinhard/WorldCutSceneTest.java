@@ -70,11 +70,13 @@ class WorldCutSceneTest {
    @Test void bladeAndImpactAccentsStayOnTheirSideOfBlast() {
       assertFalse(WorldCutScene.bladeDue(7.9));
       assertTrue(WorldCutScene.bladeDue(8));
-      assertTrue(WorldCutScene.bladeDue(79.9));
+      assertTrue(WorldCutScene.bladeDue(11));
+      // A late viewer must not hear the blade ring or BLAST long after the event.
+      assertFalse(WorldCutScene.bladeDue(79.9));
       assertFalse(WorldCutScene.bladeDue(80));
       assertFalse(WorldCutScene.impactDue(79.9));
       assertTrue(WorldCutScene.impactDue(80));
-      assertTrue(WorldCutScene.impactDue(200));
+      assertFalse(WorldCutScene.impactDue(200));
    }
    @Test void doneBetweenBeatsFinishesOnlyTheAcceptedImpulse() {
       double inf=Double.POSITIVE_INFINITY;
