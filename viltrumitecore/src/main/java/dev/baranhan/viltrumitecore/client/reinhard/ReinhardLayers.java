@@ -20,12 +20,16 @@ final class ReinhardLayers {
    static void overlay(Animation clip, BakedGeoModel model, double seconds, float weight, String fullWeightBone) {
       float bodyWeight=Math.max(0,Math.min(1,weight));
       if(bodyWeight==0 && fullWeightBone==null) return;
+      overlay(clip,model,seconds,bone->bone.equals(fullWeightBone)?1:bodyWeight);
+   }
+   /** Per-bone weights (clamped to 0..1); a bone at weight 0 keeps its pose. */
+   static void overlay(Animation clip, BakedGeoModel model, double seconds, java.util.function.ToDoubleFunction<String> weightOf) {
       Map<String,float[]> before=new HashMap<>();
       for(GeoBone b:model.allBones()) before.put(b.name,new float[]{b.rotX,b.rotY,b.rotZ,b.posX,b.posY,b.posZ,b.scaleX,b.scaleY,b.scaleZ});
       AnimationController.overlay(clip,model,seconds);
       for(Animation.BoneAnimation a:clip.boneAnimations().values()) {
          GeoBone b=model.getBone(a.boneName()); if(b==null) continue;
-         float w=a.boneName().equals(fullWeightBone)?1:bodyWeight;
+         float w=(float)Math.max(0,Math.min(1,weightOf.applyAsDouble(a.boneName())));
          float[] p=before.get(b.name);
          boolean rotation=!a.rotX().isEmpty() || !a.rotY().isEmpty() || !a.rotZ().isEmpty();
          if(rotation && w<1) {

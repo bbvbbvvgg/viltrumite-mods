@@ -363,17 +363,23 @@ public final class ReinhardRenderer {
          AnimationController.blend(model, from, ReinhardPlayback.time(from, pose.stanceSeconds()), to, ReinhardPlayback.time(to, pose.stanceSeconds()), mix.weight());
       }
 
+      // The gait is composed in full on the bones the air poses replace (legs, shins);
+      // only the bones they leave alone (arms) fade with the ground weight. The air poses
+      // then blend over that full gait with sequential weights that keep ground, rise and
+      // fall complementary: no double attenuation, no idle dip during takeoff or landing.
+      Animation[] air={AnimCache.animation(ReinhardAssets.ANIMATIONS,"air_rise"),AnimCache.animation(ReinhardAssets.ANIMATIONS,"air_fall")};
+      java.util.Set<String> airBones=new java.util.HashSet<>();
+      for(Animation a:air) if(a!=null) airBones.addAll(a.boneAnimations().keySet());
+      float ground=ReinhardMotion.ground(motion);
       Animation walk = AnimCache.animation(ReinhardAssets.ANIMATIONS, WALK);
       if (walk != null) {
-         ReinhardLayers.overlay(walk, model, ReinhardPlayback.time(walk, pose.walkSeconds()), pose.walk()*ReinhardMotion.ground(motion));
+         ReinhardLayers.overlay(walk, model, ReinhardPlayback.time(walk, pose.walkSeconds()), gaitWeight(airBones,pose.walk(),ground));
       }
 
       Animation run=AnimCache.animation(ReinhardAssets.ANIMATIONS,"run");
-      if(run!=null) ReinhardLayers.overlay(run,model,ReinhardPlayback.time(run,pose.walkSeconds()),pose.walk()*motion[1]*ReinhardMotion.ground(motion));
-      for(int i=2;i<4;i++) {
-         Animation air=AnimCache.animation(ReinhardAssets.ANIMATIONS,i==2?"air_rise":"air_fall");
-         if(air!=null) ReinhardLayers.overlay(air,model,0,motion[i]);
-      }
+      if(run!=null) ReinhardLayers.overlay(run,model,ReinhardPlayback.time(run,pose.walkSeconds()),gaitWeight(airBones,pose.walk()*motion[1],ground));
+      float[] airWeights=airWeights(ground,motion[2],motion[3]);
+      for(int i=0;i<2;i++) if(air[i]!=null && airWeights[i]>0) ReinhardLayers.overlay(air[i],model,0,airWeights[i]);
 
       Animation hold = AnimCache.animation(ReinhardAssets.ANIMATIONS, KNIGHT_HOLD);
       if (hold != null) {
@@ -544,10 +550,36 @@ public final class ReinhardRenderer {
       head.rotX += (float) Math.toRadians(-pitch);
    }
 
+   /** Pure: the gait weight of one bone; bones an air pose covers keep the full gait (the air pose fades it). */
+   static java.util.function.ToDoubleFunction<String> gaitWeight(java.util.Set<String> airBones,float gait,float ground) {
+      return bone->airBones.contains(bone)?gait:gait*ground;
+   }
+
+   /**
+    * Pure: sequential overlay weights of air_rise and air_fall so the result is
+    * {@code ground·gait + rise·risePose + fall·fallPose} (overlays compose in order).
+    */
+   static float[] airWeights(float ground,float rise,float fall) {
+      float sum=Math.max(0,ground);
+      float[] out=new float[2];
+      float[] parts={Math.max(0,rise),Math.max(0,fall)};
+      for(int i=0;i<2;i++) {
+         out[i]=sum+parts[i]<=0?0:parts[i]/(sum+parts[i]);
+         sum+=parts[i];
+      }
+      return out;
+   }
+
+   /** Pure: the gait swing; a seat or an elytra glide has none (the air weights exclude the glide). */
+   static float gaitSwing(boolean sitting,boolean fallFlying,float speed) {
+      return sitting || fallFlying ? 0.0F : speed;
+   }
+
    static ReinhardPoses.Pose pose(AbstractClientPlayer player, HeroPublicSnapshot snapshot, float partialTick) {
       boolean sitting = player.isPassenger() && player.getVehicle() != null && player.getVehicle().shouldRiderSit();
-      // Air weights cross-fade locomotion; onGround must not hard-cut a moving limb.
-      float swing = sitting ? 0.0F : player.walkAnimation.speed(partialTick);
+      // Air weights cross-fade locomotion for jumps; onGround must not hard-cut a moving limb.
+      // Fall flying is not an air weight, so the gait itself stops there.
+      float swing = gaitSwing(sitting, player.isFallFlying(), player.walkAnimation.speed(partialTick));
       ReinhardPoses.Input input = new ReinhardPoses.Input(ReinhardView.mode(snapshot), snapshot.heroFlags(), snapshot.actionId(), snapshot.actionElapsed(),
          snapshot.actionLength(), partialTick, swing, player.walkAnimation.position(partialTick), (player.tickCount + partialTick) / 20.0, player.getPose(), sitting,
          snapshot.variant(), 0);
