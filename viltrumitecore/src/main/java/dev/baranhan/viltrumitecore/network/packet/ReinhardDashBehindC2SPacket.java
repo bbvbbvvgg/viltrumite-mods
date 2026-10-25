@@ -16,10 +16,10 @@ import net.minecraftforge.network.NetworkEvent;
 
 /**
  * Reinhard's Dash Behind press (stage 3 Task 8): the target the client saw under
- * the crosshair and the feet of the spot it already moved to. Sent once per key
- * edge by {@code DashBehindClient}; this slot never goes through
- * {@link HeroInputC2SPacket}. The server trusts nothing: the slot must sit on the
- * active page, the coordinates must be finite, the target must be under the
+ * the crosshair and the feet of the spot it already moved to. Sent once per
+ * Knight press of the merged dash key with a target by {@code DashBehindClient},
+ * instead of that press's {@link HeroInputC2SPacket}. The server trusts nothing:
+ * the merged slot must sit on the active page, the mode must be Knight (gate), the coordinates must be finite, the target must be under the
  * server's own look ray and the spot is re-resolved by {@link DashBehind} behind
  * the usual gate. Every packet is answered with
  * {@link ReinhardDashBehindAnswerS2CPacket} (the cooldown after the press).
@@ -60,7 +60,8 @@ public class ReinhardDashBehindC2SPacket {
          }
 
          int cooldown = 0;
-         if (HeroRegistry.get(player) == ReinhardHero.INSTANCE && onActivePage(player, ReinhardAbility.DASH_BEHIND.id())) {
+         // Dash Behind rides the merged dash key: its slot must sit on the active page.
+         if (HeroRegistry.get(player) == ReinhardHero.INSTANCE && onActivePage(player, ReinhardAbility.STEP_DASH.id())) {
             ReinhardState state = ReinhardState.ensure(player);
             ReinhardActions.handleDashBehind(player, state, new DashBehind.Request(this.targetId, new Vec3(this.x, this.y, this.z)));
             cooldown = state.cooldowns[ReinhardAbility.DASH_BEHIND.ordinal()];

@@ -1,15 +1,18 @@
 package dev.baranhan.viltrumitecore.client.reinhard;
 
-import dev.baranhan.viltrumitecore.client.AbilityInputManager;
 import dev.baranhan.viltrumitecore.client.hero.SuperJumpClient;
+import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardActions;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket;
 import java.util.Optional;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,53 +20,81 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 
 /**
- * Dash Behind prediction (stage 3 Task 8): on the slot key edge the client picks
- * the living entity under the crosshair, finds the safe spot behind it with its
- * own level and, when the mirrored gate passes and the local cooldown is 0,
- * moves the player there turned to the target. Every key edge sends exactly one
- * {@link ReinhardDashBehindC2SPacket}; the server answers each one with its
- * cooldown ({@code ReinhardDashBehindAnswerS2CPacket}), which replaces the local
- * one, so a refused prediction (snap-back, no cooldown) does not block the next.
- * Client only; {@link Edge} is pure.
+ * Dash Behind prediction (stage 3 Task 8) on the merged dash key: a Knight's
+ * {@code reinhard:step_dash} press with a living entity under the crosshair is
+ * taken over from the generic slot loop ({@link #intercept}). The client finds
+ * the safe spot behind the target with its own level and, when the mirrored
+ * gate passes and the local cooldown is 0, moves the player there turned to the
+ * target. Each such press sends exactly one {@link ReinhardDashBehindC2SPacket}
+ * instead of the generic press; the server answers it with its cooldown
+ * ({@code ReinhardDashBehindAnswerS2CPacket}), which replaces the local one, so
+ * a refused prediction (snap-back, no cooldown) does not block the next. Every
+ * other press stays a Step Dash ({@link StepDashClient}), decided once per tick
+ * by {@link #behindTarget}. Client only; {@link Edge}, {@link Route} and
+ * {@link Decision} are pure.
  */
 public final class DashBehindClient {
    private static final Edge EDGE = new Edge();
+   private static final Route ROUTE = new Route();
+   private static final Decision<LivingEntity> DECISION = new Decision<>();
 
    private DashBehindClient() {
    }
 
-   /** Registered on the Forge bus by {@link ReinhardClient}. */
+   /** Registered on the Forge bus by {@link ReinhardClient}: the local cooldown runs down. */
    public static void onClientTick(TickEvent.ClientTickEvent event) {
       if (event.phase != TickEvent.Phase.END) {
          return;
       }
 
       LocalPlayer player = Minecraft.getInstance().player;
-      HeroPublicSnapshot snapshot = ReinhardView.of(player);
-      if (player == null || snapshot == null) {
+      if (player == null || ReinhardView.of(player) == null) {
          EDGE.reset();
+         ROUTE.reset();
+         DECISION.reset();
          return;
-      }
-
-      ReinhardAbility dash = ReinhardAbility.DASH_BEHIND;
-      boolean down = AbilityInputManager.isAbilityKeyDown(player, dash.id());
-      boolean gate = ReinhardActions.gate(new ReinhardActions.Gate(player.isAlive() && !player.isSpectator(), SuperJumpClient.anchored(player, snapshot),
-         ReinhardView.mode(snapshot), dash.mode(), snapshot.extraCooldown(dash.ordinal()), snapshot.actionBusy(), false)) == ReinhardActions.Refusal.NONE;
-      if (EDGE.onKey(down)) {
-         press(player, gate);
       }
 
       EDGE.tick();
    }
 
-   private static void press(LocalPlayer player, boolean gate) {
-      LivingEntity target = DashBehind.lookTarget(player);
-      if (target == null) {
-         // The server refuses (sound); nothing moves.
-         CoreMessages.sendToServer(new ReinhardDashBehindC2SPacket(-1, player.position()));
-         return;
+   /**
+    * This tick's one decision for the merged dash key: the Knight's Dash Behind
+    * target, or null for a Step Dash. {@link StepDashClient} and {@link #intercept}
+    * read the same answer within a tick.
+    */
+   @Nullable
+   static LivingEntity behindTarget(LocalPlayer player, HeroPublicSnapshot snapshot) {
+      if (ReinhardView.mode(snapshot) != ReinhardMode.KNIGHT) {
+         return null;
       }
 
+      return DECISION.get(player, player.tickCount, () -> DashBehind.lookTarget(player));
+   }
+
+   /** Registered with {@code HeroClientInput}: claims the merged key's Knight press with a target (and its release). */
+   public static boolean intercept(LocalPlayer player, HeroAction action, boolean down) {
+      if (action != ReinhardAbility.STEP_DASH.action()) {
+         return false;
+      }
+
+      HeroPublicSnapshot snapshot = ReinhardView.of(player);
+      LivingEntity target = down && snapshot != null ? behindTarget(player, snapshot) : null;
+      if (!ROUTE.claim(down, target != null)) {
+         return false;
+      }
+
+      if (down) {
+         ReinhardAbility dash = ReinhardAbility.DASH_BEHIND;
+         boolean gate = ReinhardActions.gate(new ReinhardActions.Gate(player.isAlive() && !player.isSpectator(), SuperJumpClient.anchored(player, snapshot),
+            ReinhardView.mode(snapshot), dash.mode(), snapshot.extraCooldown(dash.snapshotIndex()), snapshot.actionBusy(), false)) == ReinhardActions.Refusal.NONE;
+         press(player, target, gate);
+      }
+
+      return true;
+   }
+
+   private static void press(LocalPlayer player, LivingEntity target, boolean gate) {
       Vec3 wanted = DashBehind.wanted(target.position(), target.getYRot());
       Optional<Vec3> spot = DashBehind.find(player.level(), player, target);
       if (spot.isPresent() && EDGE.predict(gate)) {
@@ -83,17 +114,52 @@ public final class DashBehindClient {
       EDGE.onAnswer(serverCooldown);
    }
 
-   /** Pure key-edge and local-cooldown state: one packet per edge, one predicted move per cooldown. */
-   public static final class Edge {
-      private boolean wasDown;
-      private int cooldown;
+   /** Pure routing of the merged key: one path per press, and a release follows its own press. */
+   public static final class Route {
+      private boolean ownsPress;
 
-      /** One tick's key state; true = an edge (send one packet). */
-      public boolean onKey(boolean down) {
-         boolean edge = down && !this.wasDown;
-         this.wasDown = down;
-         return edge;
+      /** true = this edge is Dash Behind's (no generic press/release is sent for it). */
+      public boolean claim(boolean down, boolean behindTarget) {
+         if (!down) {
+            boolean owned = this.ownsPress;
+            this.ownsPress = false;
+            return owned;
+         }
+
+         this.ownsPress = behindTarget;
+         return behindTarget;
       }
+
+      void reset() {
+         this.ownsPress = false;
+      }
+   }
+
+   /** Pure per-tick memo: the merged key resolves its variant once per client tick and player. */
+   public static final class Decision<T> {
+      private Object owner;
+      private int tick;
+      private T value;
+
+      public T get(Object owner, int tick, Supplier<T> resolve) {
+         if (owner != this.owner || tick != this.tick) {
+            this.owner = owner;
+            this.tick = tick;
+            this.value = resolve.get();
+         }
+
+         return this.value;
+      }
+
+      void reset() {
+         this.owner = null;
+         this.value = null;
+      }
+   }
+
+   /** Pure local-cooldown state: one predicted move per cooldown, corrected by the server's answer. */
+   public static final class Edge {
+      private int cooldown;
 
       /** True = move locally now (the gate passed and the local cooldown is over); starts the local cooldown. */
       public boolean predict(boolean gateOk) {
@@ -117,7 +183,6 @@ public final class DashBehindClient {
       }
 
       void reset() {
-         this.wasDown = false;
          this.cooldown = 0;
       }
    }

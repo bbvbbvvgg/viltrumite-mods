@@ -38,6 +38,7 @@ public final class ReinhardClient {
       OutlineTargets.register(WindReadingClient::colorOf);
       MinecraftForge.EVENT_BUS.addListener(StepDashClient::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(DashBehindClient::onClientTick);
+      dev.baranhan.viltrumitecore.client.hero.HeroClientInput.register(HeroId.REINHARD, DashBehindClient::intercept);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.reid.ReidDrawInput::onMovementInput);
    }
 }

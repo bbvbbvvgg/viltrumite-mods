@@ -81,8 +81,9 @@ public final class ReinhardAbilities {
    }
 
    /**
-    * Own shipped ids whose keys send hero input. Dash Behind is left out: its key sends
-    * {@code ReinhardDashBehindC2SPacket} (target + spot) from {@code DashBehindClient} instead.
+    * Own shipped ids whose keys send hero input. Dash Behind has no slot: a Knight's press
+    * of the merged dash key with a target is sent as {@code ReinhardDashBehindC2SPacket}
+    * (target + spot) by {@code DashBehindClient} instead of this generic press.
     */
    public static String[] inputSlots() {
       return Arrays.stream(ReinhardAbility.values()).filter(ReinhardAbilities::active).filter(a -> a != ReinhardAbility.DASH_BEHIND)
@@ -157,8 +158,24 @@ public final class ReinhardAbilities {
       }
 
       HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
-      ReinhardAbility selected=contextual(ability,player.isShiftKeyDown());
-      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(selected.snapshotIndex()), snapshot.heroFlags(),player.isShiftKeyDown());
+      if (snapshot == null || snapshot.heroId() != HeroId.REINHARD) {
+         return false;
+      }
+
+      boolean knight = ReinhardMode.byOrdinal(ReinhardFlags.mode(snapshot.heroFlags())) == ReinhardMode.KNIGHT;
+      ReinhardAbility selected = selected(ability, player.isShiftKeyDown(), knight,
+         knight && ability == ReinhardAbility.STEP_DASH && dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind.lookTarget(player) != null);
+      return slotGrey(ability, snapshot.extraCooldown(selected.snapshotIndex()), snapshot.heroFlags(),player.isShiftKeyDown());
+   }
+
+   /**
+    * Pure: the variant a slot press starts now, whose cooldown the slot shows: the
+    * crouch variants, and the Knight's merged dash key with a target is Dash Behind
+    * (the same choice the client makes when it sends the press).
+    */
+   public static ReinhardAbility selected(ReinhardAbility root, boolean crouching, boolean knight, boolean behindTarget) {
+      ReinhardAbility ability = contextual(root, crouching);
+      return ability == ReinhardAbility.STEP_DASH && knight && behindTarget ? ReinhardAbility.DASH_BEHIND : ability;
    }
 
    /** Pure: cooldown running, or the slot condition of Reid's phase (from the snapshot flags) fails. */

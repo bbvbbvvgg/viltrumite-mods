@@ -17,7 +17,9 @@ import net.minecraftforge.event.TickEvent;
  * on the mirrored snapshot and the local cooldown at 0, the local player gets the
  * dash velocity for {@link ReinhardRules#STEP_TICKS} ticks (re-applied each tick,
  * stopped by a wall or by a server correction). It only moves the player: the
- * press reaches the server through the generic hero slot loop, once.
+ * press reaches the server through the generic hero slot loop, once. A Knight's
+ * press with a target under the crosshair is Dash Behind instead
+ * ({@link DashBehindClient}).
  * Client only; the {@link Predictor} core is pure.
  */
 public final class StepDashClient {
@@ -42,9 +44,9 @@ public final class StepDashClient {
       ReinhardAbility dash = ReinhardAbility.STEP_DASH;
       boolean down = AbilityInputManager.isAbilityKeyDown(player, dash.id());
       boolean gate = ReinhardActions.gate(new ReinhardActions.Gate(player.isAlive() && !player.isSpectator(), SuperJumpClient.anchored(player, snapshot),
-         ReinhardView.mode(snapshot), ReinhardView.mode(snapshot), snapshot.extraCooldown(dash.ordinal()), snapshot.actionBusy(), false)) == ReinhardActions.Refusal.NONE;
-      if (ReinhardView.mode(snapshot) == dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode.KNIGHT
-         && dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind.lookTarget(player) != null) gate = false;
+         ReinhardView.mode(snapshot), ReinhardView.mode(snapshot), snapshot.extraCooldown(dash.snapshotIndex()), snapshot.actionBusy(), false)) == ReinhardActions.Refusal.NONE;
+      // A Knight's press with a target is Dash Behind's (DashBehindClient.intercept, same per-tick decision).
+      if (DashBehindClient.behindTarget(player, snapshot) != null) gate = false;
       boolean started = PREDICTOR.onKey(down, gate);
       if (started) {
          PREDICTOR.aim(StepDash.direction(player.input.forwardImpulse, player.input.leftImpulse, player.getYRot()),

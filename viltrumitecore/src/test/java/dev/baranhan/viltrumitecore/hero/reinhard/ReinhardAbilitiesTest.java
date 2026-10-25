@@ -37,6 +37,17 @@ class ReinhardAbilitiesTest {
    }
 
    @Test
+   void knightMergedDashShowsTheBehindDashCooldownWithATarget() {
+      assertEquals(ReinhardAbility.DASH_BEHIND, ReinhardAbilities.selected(ReinhardAbility.STEP_DASH, false, true, true));
+      assertEquals(ReinhardAbility.DASH_BEHIND, ReinhardAbilities.selected(ReinhardAbility.STEP_DASH, true, true, true));
+      assertEquals(ReinhardAbility.STEP_DASH, ReinhardAbilities.selected(ReinhardAbility.STEP_DASH, false, true, false));
+      assertEquals(ReinhardAbility.STEP_DASH, ReinhardAbilities.selected(ReinhardAbility.STEP_DASH, false, false, true));
+      assertEquals(ReinhardAbility.STOMP, ReinhardAbilities.selected(ReinhardAbility.SKY_KICK, true, true, true));
+      // The slot greys from the behind-dash cooldown, not from the idle Step Dash one.
+      assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.STEP_DASH, 40, 0, false));
+   }
+
+   @Test
    void idsUnique() {
       Set<String> ids = new HashSet<>();
       for (ReinhardAbility ability : ReinhardAbility.values()) {

@@ -124,18 +124,9 @@ public final class ReinhardActions {
          return;
       }
 
+      // The merged dash key reaches here only as Step Dash: the client sends a Knight's
+      // press with a target as ReinhardDashBehindC2SPacket (one predictor, one packet path).
       ability = ReinhardAbilities.contextual(ability,player.isShiftKeyDown());
-      if (ability == ReinhardAbility.STEP_DASH && state.mode == ReinhardMode.KNIGHT) {
-         var target = DashBehind.lookTarget(player);
-         if (target != null) {
-            var spot = DashBehind.find(player.level(), player, target);
-            if (spot.isEmpty()) { ReinhardHero.INSTANCE.onInputRefused(player, action); return; }
-            state.behindRequest = new DashBehind.Request(target.getId(), spot.get());
-            try { press(player, state, ReinhardAbility.DASH_BEHIND, HANDLERS.get(ReinhardAbility.DASH_BEHIND)); }
-            finally { state.behindRequest = null; }
-            return;
-         }
-      }
       AbilityHandler handler = HANDLERS.get(ability);
       if (handler == null) {
          ReinhardHero.INSTANCE.onInputRefused(player, action);
@@ -198,7 +189,8 @@ public final class ReinhardActions {
    public static void handleDashBehind(ServerPlayer player, ReinhardState state, DashBehind.Request request) {
       ReinhardAbility ability = ReinhardAbility.DASH_BEHIND;
       AbilityHandler handler = HANDLERS.get(ability);
-      if (handler == null || !ReinhardAbilities.active(ability)) {
+      // Dash Behind has no slot of its own: it is the Knight variant of the merged dash key.
+      if (handler == null || !ReinhardAbilities.active(ReinhardAbility.STEP_DASH)) {
          return;
       }
 
