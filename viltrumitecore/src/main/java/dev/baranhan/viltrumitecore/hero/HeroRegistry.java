@@ -50,6 +50,14 @@ public final class HeroRegistry {
       }
    }
 
+   /** Server, once per joining mob: may any hero scare this mob type (HeroMobFear). */
+   public static boolean anyScares(net.minecraft.world.entity.EntityType<?> type) {
+      for (HeroDefinition definition : DEFINITIONS.values()) {
+         if (definition.scaresMobType(type)) return true;
+      }
+      return false;
+   }
+
    public static HeroDefinition get(HeroId id) {
       HeroDefinition definition = DEFINITIONS.get(id);
       return definition == null ? DEFINITIONS.get(HeroId.HUMAN) : definition;

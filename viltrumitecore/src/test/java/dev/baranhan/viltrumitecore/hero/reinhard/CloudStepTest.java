@@ -91,39 +91,77 @@ class CloudStepTest {
    };
 
    @Test
-   void fiveSteps() {
-      assertEquals(5, CloudStep.steps());
-      assertEquals(5, ReinhardHero.INSTANCE.airJumps(null));
+   void unlimitedSteps() {
+      assertEquals(Integer.MAX_VALUE, CloudStep.steps());
+      assertEquals(Integer.MAX_VALUE, ReinhardHero.INSTANCE.airJumps(null));
       Body body = new Body();
-      for (int i = 0; i < 5; i++) {
-         assertTrue(HeroAirJump.press(body, QUIET));
+      for (int i = 0; i < 500; i++) {
+         assertTrue(HeroAirJump.press(body, QUIET), "step " + i);
          assertEquals(0.62, body.delta.y, 1.0E-9);
       }
-
-      assertFalse(HeroAirJump.press(body, QUIET));
    }
 
    @Test
-   void groundOrClimbResets() {
+   void groundOrClimbResetsAndRefusesWhileThere() {
       Body body = new Body();
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < 12; i++) {
          HeroAirJump.press(body, QUIET);
       }
 
       body.onLadder = true;
       body.tick();
+      assertEquals(0, body.used, "the ladder refills the count");
       assertFalse(HeroAirJump.press(body, QUIET), "no step while on the ladder");
       body.onLadder = false;
-      assertTrue(HeroAirJump.press(body, QUIET), "6th step after touching a ladder");
-      for (int i = 0; i < 4; i++) {
-         HeroAirJump.press(body, QUIET);
-      }
-
-      assertFalse(HeroAirJump.press(body, QUIET));
+      assertTrue(HeroAirJump.press(body, QUIET), "a step after leaving the ladder");
       body.onGround = true;
       body.tick();
-      body.onGround = false;
-      assertTrue(HeroAirJump.press(body, QUIET));
+      assertEquals(0, body.used);
+      assertFalse(HeroAirJump.press(body, QUIET), "the ground jump is vanilla's, not a step");
+   }
+
+   @Test
+   void stepFollowsTheInputAndBuildsSpeed() {
+      // Yaw 0 faces +Z; forward input from a standstill.
+      Vec3 v = CloudStep.step(Vec3.ZERO, 0.0F, 0.62, 0.0F, 1.0F);
+      assertEquals(0.0, v.x, 1.0E-9);
+      assertEquals(ReinhardRules.AIR_STEP_ACCEL, v.z, 1.0E-9);
+      assertEquals(0.62, v.y, 1.0E-9);
+      double previous = v.z;
+      for (int i = 0; i < 10; i++) {
+         v = CloudStep.step(v, 0.0F, 0.62, 0.0F, 1.0F);
+         assertTrue(v.z >= previous - 1.0E-9, "speed builds or holds at the cap");
+         previous = v.z;
+      }
+      assertEquals(ReinhardRules.AIR_STEP_MAX_SPEED, v.z, 1.0E-9, "capped");
+      // Strafe right (left impulse negative) with yaw 0 goes toward -X.
+      Vec3 side = CloudStep.step(Vec3.ZERO, 0.0F, 0.62, -1.0F, 0.0F);
+      assertTrue(side.x < 0.0 && Math.abs(side.z) < 1.0E-9, "strafe " + side);
+   }
+
+   @Test
+   void turnsBendInsteadOfSnapping() {
+      Vec3 fast = new Vec3(0.0, -0.3, ReinhardRules.AIR_STEP_MAX_SPEED);
+      // Hard left (+X at yaw 0 is the left impulse): the old forward momentum is kept in part.
+      Vec3 turned = CloudStep.step(fast, 0.0F, 0.62, 1.0F, 0.0F);
+      assertTrue(turned.z > 0.3, "keeps part of the old heading " + turned);
+      assertTrue(turned.x > 0.3, "already bends into the new heading " + turned);
+      // Reversal: the first step brakes, the next ones accelerate the other way.
+      Vec3 back = CloudStep.step(fast, 0.0F, 0.62, 0.0F, -1.0F);
+      assertTrue(back.z < 0.2 && back.z > -0.2, "braked, not snapped " + back);
+      Vec3 again = CloudStep.step(back, 0.0F, 0.62, 0.0F, -1.0F);
+      assertTrue(again.z < back.z - 0.2, "then turns " + again);
+      // No input: coasts on.
+      Vec3 coast = CloudStep.step(fast, 0.0F, 0.62, 0.0F, 0.0F);
+      assertEquals(ReinhardRules.AIR_STEP_MAX_SPEED * ReinhardRules.AIR_STEP_COAST_KEEP, coast.z, 1.0E-9);
+   }
+
+   @Test
+   void airStepsAreNotFlight() {
+      assertTrue(ReinhardHero.INSTANCE.sustainsAirborne(null), "the floating kick never counts air steps");
+      assertFalse(ReinhardHero.INSTANCE.allowsFlight(null), "no vanilla or mod flight");
+      assertEquals(ReinhardRules.AIR_STEP_INTERVAL, ReinhardHero.INSTANCE.airJumpInterval(null));
+      assertTrue(ReinhardHero.INSTANCE.airControl(null) > 0.02F, "more air control than vanilla");
    }
 
    @Test
