@@ -73,9 +73,18 @@ public final class ReinhardHero implements HeroDefinition {
       return false;
    }
 
-   /** Lethal Chop (spec §7.2): of the kit only {@code viltrumite:chop}, and not while Reid is being drawn or sheathed. */
+   /**
+    * Lethal Chop (spec §7.2): of the kit only {@code viltrumite:chop}, and not while Reid is
+    * being drawn or sheathed. Server: never over a running World Erasure (the caster stays
+    * free of the pause; Reid's drawn state already excludes it, this keeps it so).
+    */
    @Override
    public boolean allowsLegacyAbility(Player player, String abilityId) {
+      ReinhardState state = ReinhardState.of(player);
+      if (state != null && state.worldErasure != null && !state.worldErasure.ended()) {
+         return false;
+      }
+
       return allowsKitAbility(abilityId, flags(player));
    }
 

@@ -31,7 +31,12 @@ public final class WorldErasure implements AbilityHandler {
       void erasePlayer();
       void end(WorldPause.EndReason reason);
    }
-   public record Gate(boolean target,boolean pauseActive,boolean creative,boolean spectator,boolean limbo,boolean drawn) {}
+   /** {@code chopping}: the shared Lethal Chop is still running (its damage, pose and VFX must not overlap the cast). */
+   public record Gate(boolean target,boolean pauseActive,boolean creative,boolean spectator,boolean limbo,boolean drawn,boolean chopping) {
+      public Gate(boolean target,boolean pauseActive,boolean creative,boolean spectator,boolean limbo,boolean drawn) {
+         this(target,pauseActive,creative,spectator,limbo,drawn,false);
+      }
+   }
    private final DivineTargets.Verdict verdict;
    private final Environment environment;
    private boolean attempted,ended;
@@ -44,7 +49,7 @@ public final class WorldErasure implements AbilityHandler {
    public boolean erase() {return verdict==DivineTargets.Verdict.MORTAL;}
    public boolean ended() {return ended;}
    public static boolean tryStart(ReinhardState state,Gate gate,BooleanSupplier beginPause) {
-      if(!gate.target() || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn()
+      if(!gate.target() || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn() || gate.chopping()
          || state.cooldowns[ReinhardAbility.WORLD_ERASURE.ordinal()]>0 || state.busy()) return false;
       if(!beginPause.getAsBoolean()) return false;
       state.cooldowns[ReinhardAbility.WORLD_ERASURE.ordinal()]=ReinhardRules.ERASE_COOLDOWN;
@@ -90,8 +95,9 @@ public final class WorldErasure implements AbilityHandler {
       LivingEntity target=aimedTarget(player);
       if(target instanceof ServerPlayer && !Limbo.available(server)) return false;
       Gate gate=new Gate(target!=null,WorldPause.active(server),target instanceof ServerPlayer p && p.isCreative(),
-         target instanceof ServerPlayer p && p.isSpectator(),target instanceof ServerPlayer p && BodyIsolation.active(p),state.reid.drawn());
-      if(target==null || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn()) return false;
+         target instanceof ServerPlayer p && p.isSpectator(),target instanceof ServerPlayer p && BodyIsolation.active(p),state.reid.drawn(),
+         player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core && core.getChopTicks()>0);
+      if(target==null || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn() || gate.chopping()) return false;
       DivineTargets.Verdict frozen=DivineTargets.verdict(target);
       if(!tryStart(state,gate,()->WorldPause.begin(server,player.getUUID(),ReinhardRules.ERASE_LENGTH,
          ReinhardRules.ERASE_PROTECT_FROZEN,ReinhardRules.ERASE_MOB_FREEZE_RADIUS))) return false;

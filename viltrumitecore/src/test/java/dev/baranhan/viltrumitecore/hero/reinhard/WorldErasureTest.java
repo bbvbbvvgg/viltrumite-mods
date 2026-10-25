@@ -15,7 +15,8 @@ class WorldErasureTest {
    static Stream<WorldErasure.Gate> refusals() {return Stream.of(
       new WorldErasure.Gate(false,false,false,false,false,true), new WorldErasure.Gate(true,true,false,false,false,true),
       new WorldErasure.Gate(true,false,true,false,false,true),new WorldErasure.Gate(true,false,false,true,false,true),
-      new WorldErasure.Gate(true,false,false,false,true,true),new WorldErasure.Gate(true,false,false,false,false,false));}
+      new WorldErasure.Gate(true,false,false,false,true,true),new WorldErasure.Gate(true,false,false,false,false,false),
+      new WorldErasure.Gate(true,false,false,false,false,true,true));}
    static WorldErasure.Gate good(){return new WorldErasure.Gate(true,false,false,false,false,true);}
    @ParameterizedTest @MethodSource("refusals") void refusalsSpendNoCooldown(WorldErasure.Gate gate){var state=new ReinhardState(); int[] begin={0}; assertFalse(WorldErasure.tryStart(state,gate,()->{begin[0]++;return true;})); assertEquals(0,begin[0]); assertEquals(0,state.cooldowns[ReinhardAbility.WORLD_ERASURE.ordinal()]);assertFalse(state.action.running());}
    @Test void failedBeginSpendsNothing(){var s=new ReinhardState(); assertFalse(WorldErasure.tryStart(s,good(),()->false));assertEquals(0,s.cooldowns[ReinhardAbility.WORLD_ERASURE.ordinal()]);}
