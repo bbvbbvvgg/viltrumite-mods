@@ -12,6 +12,10 @@ public final class ReinhardClient {
    }
 
    public static void init() {
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.cut.WorldCutScene::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.cut.WorldCutScene::onRender);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.cut.WorldCutScene::onUnload);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.cut.WorldCutFov::onFov);
       PanelStyles.register(HeroId.REINHARD, ReinhardPanelStyle.INSTANCE);
       HeroHeadPreviews.register(HeroId.REINHARD, ReinhardHeadPreview.INSTANCE);
       OutlineTargets.register(WindReadingClient::colorOf);

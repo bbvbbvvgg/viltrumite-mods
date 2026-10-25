@@ -191,7 +191,10 @@ public final class ReinhardRenderer {
          arm.zRot += (float) Math.toRadians(FP_PARRY_ROLL * w * m);
       }
 
-      ReinhardFirstPersonPose.Offset action = flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
+      boolean worldCut = snapshot.actionId() == ReinhardAbility.WORLD_CUT.ordinal();
+      ReinhardFirstPersonPose.Offset action = worldCut
+         ? ReinhardFirstPersonPose.worldCut(snapshot.actionElapsed() + Minecraft.getInstance().getFrameTime(), event.getArm() == HumanoidArm.LEFT)
+         : flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
       if (flick && action == ReinhardFirstPersonPose.Offset.NONE) {
          // Stage 4: the Reid draw / sheathe pull.
          ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
@@ -237,20 +240,16 @@ public final class ReinhardRenderer {
       Minecraft mc = Minecraft.getInstance();
       AbstractClientPlayer player = mc.player;
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
-      if (snapshot == null || ReinhardPoses.drawsHeldItem(HumanoidArm.RIGHT, ReinhardView.reid(snapshot))) {
-         return;
-      }
-
-      InteractionHand rightHand = player.getMainArm() == HumanoidArm.RIGHT ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-      if (event.getHand() != rightHand) {
-         return;
-      }
+      if (snapshot == null) return;
+      HumanoidArm arm = ReinhardPoses.physicalArm(player.getMainArm(), event.getHand());
+      ReinhardAbility action = snapshot.actionId() == ReinhardAbility.WORLD_CUT.ordinal() ? ReinhardAbility.WORLD_CUT : null;
+      if (ReinhardPoses.drawsHeldItem(arm, ReinhardView.reid(snapshot), action)) return;
 
       event.setCanceled(true);
       if (!player.isInvisible()) {
          ((dev.baranhan.viltrumitecore.client.mixin.ItemInHandRendererInvoker) mc.getEntityRenderDispatcher().getItemInHandRenderer())
             .viltrumite$renderPlayerArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getEquipProgress(),
-               rightHand == InteractionHand.MAIN_HAND ? event.getSwingProgress() : 0.0F, HumanoidArm.RIGHT);
+               event.getHand() == InteractionHand.MAIN_HAND ? event.getSwingProgress() : 0.0F, arm);
       }
    }
 
@@ -312,6 +311,12 @@ public final class ReinhardRenderer {
          AnimationController.additive(state, model, 0.0, 1.0F);
       }
 
+      Animation reidClip = reid == null ? null : AnimCache.animation(ReinhardAssets.ANIMATIONS, reid.animation());
+      boolean drawnIdle = reid != null && ReinhardClips.IDLE_HOLY_DRAWN.equals(reid.animation());
+      if (reidClip != null && drawnIdle) {
+         AnimationController.overlay(reidClip, model, reid.seconds());
+      }
+
       ReinhardPoses.Clip overlay = pose.overlay();
       if (overlay != null) {
          Animation clip = AnimCache.animation(ReinhardAssets.ANIMATIONS, overlay.animation());
@@ -320,9 +325,8 @@ public final class ReinhardRenderer {
          }
       }
 
-      // Stage 4: Reid's draw / sheathe (its own phase clock, not the action timeline).
-      Animation reidClip = reid == null ? null : AnimCache.animation(ReinhardAssets.ANIMATIONS, reid.animation());
-      if (reidClip != null) {
+      // Draw/sheathe override an action; DRAWN idle is a base below the action.
+      if (reidClip != null && !drawnIdle) {
          AnimationController.overlay(reidClip, model, reid.seconds());
       }
 

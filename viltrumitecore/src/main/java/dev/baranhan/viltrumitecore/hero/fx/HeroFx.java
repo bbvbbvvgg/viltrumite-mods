@@ -51,6 +51,13 @@ public final class HeroFx {
       send(source, HeroFxS2CPacket.FLASH, at, 1.0F, null, null, null);
    }
 
+   /** Detached effects have no tracking source (offline caster, environment hazard). */
+   public static void flash(net.minecraft.server.level.ServerLevel level, Vec3 at) {
+      HeroFxS2CPacket packet = new HeroFxS2CPacket(HeroFxS2CPacket.FLASH, at, 1, 0, null, -1);
+      for (ServerPlayer viewer : level.players())
+         if (viewer.position().distanceToSqr(at) <= 96 * 96) CoreMessages.sendToPlayer(packet, viewer);
+   }
+
    /** Hit-stop (spec §9.3): the listed entities hold still on every client for {@code ticks}. */
    public static void hitStop(ServerPlayer source, Vec3 at, int ticks, int... entityIds) {
       send(source, HeroFxS2CPacket.HIT_STOP, at, ticks, null, encodeIds(entityIds), null);

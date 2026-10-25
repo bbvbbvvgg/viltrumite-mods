@@ -319,6 +319,15 @@ CLIPS["cut_rain"] = {"loop": "hold_on_last_frame", "animation_length": 1.0, "bon
 }}
 
 
+# World Cut: one second overhead downswing, then a three-second low hold.
+CLIPS["world_cut"] = {"loop": "hold_on_last_frame", "animation_length": 4.0, "bones": {
+    "right_arm": {"rotation": {"0.0": [-40, 0, 10], "0.5": [-170, 0, 15], "1.0": [-55, 0, 8], "4.0": [-55, 0, 8]}},
+    "left_arm": {"rotation": {"0.0": [0, 0, -3], "0.5": [-160, -12, -15], "1.0": [-50, -12, -8], "4.0": [-50, -12, -8]}},
+    "body": {"rotation": {"0.0": [0, 0, 0], "0.5": [-12, 0, 0], "1.0": [12, 0, 0], "4.0": [12, 0, 0]}},
+    "head": {"rotation": {"0.0": [0, 0, 0], "0.5": [8, 0, 0], "1.0": [-8, 0, 0], "4.0": [-8, 0, 0]}},
+}}
+
+
 def main():
     data = {"format_version": "1.8.0", "animations": {}}
     if os.path.exists(OUT):

@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.hero;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -78,5 +79,27 @@ class CarveJobsTest {
       assertEquals("first", log.get(59));
       assertEquals("second", log.get(60));
       assertTrue(queue.size() == 1);
+   }
+
+   @Test
+   void sharedBudget() {
+      List<String> log = new ArrayList<>();
+      CarveJobs.Queue queue = new CarveJobs.Queue();
+      queue.submit(new Fake("cut1", 10, 1500, log));
+      queue.submit(new Fake("cut2", 10, 1600, log));
+      queue.submit(new Fake("rain", 0, 25, log));
+      queue.tick(null, CarveBudget.perTick(CarveJobs.BASE_BUDGET, 40));
+      assertEquals(2000, log.size(), "one level budget shared by two cuts");
+      assertEquals(1500, log.stream().filter("cut1"::equals).count());
+      assertEquals(500, log.stream().filter("cut2"::equals).count());
+      assertFalse(log.contains("rain"), "large high-priority cuts come first");
+      int before = log.size();
+      queue.tick(null, CarveBudget.perTick(CarveJobs.BASE_BUDGET, 55));
+      assertTrue(log.size() - before <= CarveBudget.perTick(2000, 55));
+      before = log.size();
+      queue.tick(null, CarveBudget.perTick(CarveJobs.BASE_BUDGET, 40));
+      assertTrue(log.size() - before <= 2000);
+      assertEquals(3125, log.size());
+      assertEquals(0, queue.size());
    }
 }

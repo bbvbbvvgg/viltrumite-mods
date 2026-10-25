@@ -389,6 +389,17 @@ def cut_rain():
     return img
 
 
+def world_cut():
+    """Holy Sword: white axis splitting a deep dark trench."""
+    img = ability_plate(GOLD, GOLD_D)
+    paint(img, [
+        ".....sw.......", ".....sw.......", "....swb.......", "....swb.......",
+        "...swbb.......", "...swbb.......", "..swbbb.......", "..swbbb.......",
+        ".swbbbb.......", ".swbbbb.......", "swbbbbb.......", "swbbbbb.......",
+    ], {"s": STEEL, "w": WHITE, "b": BLUE_D}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -404,6 +415,7 @@ ABILITIES = {
     "lethal_chop": lethal_chop,
     "sheath_strike": sheath_strike,
     "cut_rain": cut_rain,
+    "world_cut": world_cut,
 }
 
 DRAWN = {

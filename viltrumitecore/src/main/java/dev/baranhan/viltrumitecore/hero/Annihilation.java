@@ -76,7 +76,7 @@ public final class Annihilation {
     * inside the scope; when a mod cancelled the hurt, the target dies directly.
     * BLOCKED_ABSOLUTE: a spark at the target, no damage.
     */
-   public static Outcome strike(ServerPlayer attacker, Entity target) {
+   public static Outcome strike(@javax.annotation.Nullable ServerPlayer attacker, Entity target) {
       Entity resolved = target instanceof PartEntity<?> part ? part.getParent() : target;
       if (!(resolved instanceof LivingEntity living)) {
          return Outcome.SKIPPED;
@@ -85,9 +85,9 @@ public final class Annihilation {
       boolean creative = living instanceof Player player && (player.isCreative() || player.isSpectator());
       Outcome outcome = decide(DivineTargets.verdict(living), creative, living.isAlive());
       if (outcome == Outcome.BLOCKED_ABSOLUTE) {
-         HeroFx.flash(attacker, living.position().add(0.0, living.getBbHeight() * 0.6, 0.0));
+         HeroFx.flash((ServerLevel)living.level(), living.position().add(0.0, living.getBbHeight() * 0.6, 0.0));
       } else if (outcome == Outcome.KILLED) {
-         ServerLevel level = attacker.serverLevel();
+         ServerLevel level = (ServerLevel)living.level();
          DamageSource source = source(level, attacker);
          run(() -> {
             living.invulnerableTime = 0;

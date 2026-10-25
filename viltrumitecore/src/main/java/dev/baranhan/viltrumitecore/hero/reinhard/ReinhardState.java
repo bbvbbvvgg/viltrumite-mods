@@ -55,8 +55,10 @@ public final class ReinhardState {
     * Busy = an action that must not be interrupted by a mode switch: Reid
     * drawing / sheathing (Stage 4); World Cut, World Erasure (Stages 5-6).
     */
+   public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut worldCut;
+
    public boolean busy() {
-      return this.reid.busy();
+      return this.reid.busy() || (worldCut != null ? !worldCut.blasted() : this.action.is(ReinhardAbility.WORLD_CUT));
    }
 
    /** Leaving Holy Sword (spec §5): Reid goes back into the sheath. */

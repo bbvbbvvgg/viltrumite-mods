@@ -40,11 +40,11 @@ class ReinhardAbilitiesTest {
 
    @Test
    void onlyShippedOwned() {
-      assertEquals(4, ReinhardAbilities.SHIPPED_STAGE);
+      assertEquals(5, ReinhardAbilities.SHIPPED_STAGE);
       String[] loadout = ReinhardAbilities.defaultLoadout();
       assertEquals(18, loadout.length);
       for (ReinhardAbility ability : ReinhardAbility.values()) {
-         boolean shipped = ability.stage() <= 4;
+         boolean shipped = ability.stage() <= 5;
          assertEquals(shipped, ReinhardAbilities.owns(ability.id()), ability.name());
          int index = ability.mode().page() * 6 + ability.slot();
          assertEquals(shipped ? ability.id() : "", loadout[index], ability.name());
@@ -52,7 +52,7 @@ class ReinhardAbilitiesTest {
       assertTrue(ReinhardAbilities.owns("viltrumite:chop"), "the kit chop ships with stage 4");
       assertEquals("viltrumite:chop", loadout[13]);
       assertFalse(ReinhardAbilities.owns(null));
-      for (int i = 16; i < 18; i++) {
+      for (int i = 17; i < 18; i++) {
          assertEquals("", loadout[i], "World Cut / World Erasure ship with stages 5-6");
       }
    }

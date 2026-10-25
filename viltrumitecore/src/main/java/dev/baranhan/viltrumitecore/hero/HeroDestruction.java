@@ -69,7 +69,14 @@ public final class HeroDestruction {
          return false;
       }
 
-      return level.setBlock(pos, Blocks.AIR.defaultBlockState(), CLEAR_FLAGS);
+      return setAir(level, pos, CLEAR_FLAGS);
+   }
+
+   /** Debris and normal carve clearing use the same scoped callback boundary. */
+   public static boolean setAir(ServerLevel level, BlockPos pos, int flags) {
+      return flags == CLEAR_FLAGS
+         ? QuietBlockRemoval.run(() -> level.setBlock(pos, Blocks.AIR.defaultBlockState(), flags))
+         : level.setBlock(pos, Blocks.AIR.defaultBlockState(), flags);
    }
 
    public static final int CLEAR_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS;

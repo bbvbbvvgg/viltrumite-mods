@@ -214,3 +214,26 @@ Append-only: дата + имя сессии + что сделано. Не пер
 - Общее: `Annihilation`, `LiftLeases`, `HeroImpulse`, `SkyTint`, `SoundDuck`, `ChopStyle`, `CarveJobs` / `CarveBudget`, `HeroDestruction.clearBlock`, разделение тика уровня (`LevelTickPhases`).
 - Отклонения от плана — в «Rulings» журнала `.superpowers/sdd/2026-10-11-reinhard-stage4-holy-sword/progress.md`.
 - Проверки: тесты Рейнхарда 282/282, `./gradlew build` зелёный (938 тестов), checker 0 новых, `git diff --check` чисто. runServer / выделенный сервер не запускались (по правилу пользователя); Oculus не проверялся. В игре не проверялось — список в PR.
+
+## 2026-10-13 — reinhard-stage5-world-cut
+
+Stage 5 «Мировой разрез»: core 1.28.0 → 1.29.0; flight без изменений. Вынутый Рейд, слот 5 Святого меча: 1 с замах, 3 с тишины с белой линией по земле/небу на 200 блоков, затем бело-золотая волна за 30 тиков и борозда 200×17×45–50. Блоки догоняют VFX через общую CarveJobs очередь; все попытки (включая пропуски) входят в адаптивный бюджет. Малый поток обломков ограничен 300. Удар Рейда по живым на линии однократно; божественные, абсолютная неуязвимость, creative/spectator защищены; союзники/PvP фильтр не применяются. Кулдаун 900 тиков. Камеру кастера не перехватываем; у наблюдателей FOV до +3% и blast shake через существующий общий accumulator. Звуки — vanilla placeholders до Stage 7.
+
+Task 1/2 ранее выполнены (065cd41 / 52fba52); продолжение Task 3/4/5 отдельными коммитами и немедленным push. Task 3 runtime принадлежит уровню и переживает смерть/logout: форма и поверхность фиксированы на нажатии, только загруженные колонки; серверный стоп/выгрузка уровня теряет незавершённые сцены/работу. No neighbour sweep: вода/лава стоят у чистой стенки до внешних обновлений, не обещаем вечной неподвижности. Проверены RED→GREEN таймлайн, once-hit, independent/catch-up manager, busy при прерывании позы, FOV/duck/клиентский clock, reordered packets/timeout, фронт волны, клипы и обе руки.
+
+Task 5 по прямому указанию заменён чистым тестовым протоколом: две работы по 160000 позиций = 160 тиков при общем лимите 2000 попыток/тик; один cut = 80 тиков при 40 ms и 233 тика при 55 ms; две работы с 60-тиковым spike до 80 ms = 217 тиков. Каждый тик сравнивается с CarveBudget. Константы не менялись, измерений нет. Реальный TPS ≥ 15 по /forge tps каждую секунду 10 с после blast остаётся ручной проверкой. Чистые тесты НЕ доказывают фактический TPS, световой движок, отсутствие предметов или реакций жидкостей.
+
+До Task 6: полный build 987/987, 0 failures/errors/skips; selected core suite 344/344; checker 0 new / 4 known. Финальные числа Task 6 записаны ниже и в progress.md/PR. Java 17; runServer/runClient и игру не запускали по запрету пользователя. Начальный параллельный bootstrap Gradle был убит, последующие гейты запускались последовательно. Журнал .superpowers/sdd/2026-10-11-reinhard-stage5-world-cut/progress.md сохранён с полным списком Rulings/cost if wrong.
+
+Ручной чек-лист (НЕ выполнен):
+- dedicated server start; от первого/третьего лица caster на земле/в воздухе и обе руки;
+- LAN-наблюдатели на 30 и 150 блоках, shader pack/Oculus: ground/sky line, FOV, duck/release, shake, wave/crater;
+- render distance 12: flat, plains/forest, ocean, mountain; /forge tps раз в секунду 10 с, каждая выборка ≥15;
+- два одновременных разреза; бедрок при мелком касте; world border, void и build limits; незагруженные чанки без force-load;
+- mobGriefing false: блоки целы, strike/VFX/звук остаются; нет drops от carve; вода/лава у стенок без каскада;
+- caster смерть/logout на тишине, смена измерения; клиентский выход/смена уровня без зависших duck/FOV; стоп сервера сбрасывает незавершённый cast;
+- цель в mark/Hulkbuster с тотемом погибает; Regulus Lion’s Heart и другой Reinhard живы; Homelander Lethal Chop и прежние VFX не изменились.
+
+Финальная проверка Task 6 до независимого ревью: 992/992 теста в полном build (938 baseline + 54 новых Stage 5), 0 failures/errors/skips; Reinhard package 332/332; selected core suite 349/349; документация 5/5 GREEN после 4 assertion RED. Checker 0 new / 4 known; diff-check чистый. Reobfuscated core 1.29.0 jar содержит packet class, clip и world_cut icon. GitHub Build Tasks 1–5 зелёный. Runtime/TPS пункты выше не проверены; финальный review verdict и любые TDD-фиксы записаны в progress.md/PR.
+
+Итоговый независимый review: 0 Critical, 3 Important исправлены одним TDD-pass — DRAWN idle больше не перезаписывает swing; обе физические руки проходят posed rendering даже с предметами; QuietBlockRemoval + common LevelChunk redirect подавляют старые onRemove drops/XP/redstone callbacks при clean carve с явным удалением block entity. Обычное разрушение и debris flags 3 не меняются. Регрессии используют реальную композицию model/clip, hand-routing policy и scoped callback boundary + mapped Minecraft bytecode. Полный финальный build **1000/1000**, 0 failures/errors/skips; Reinhard **335/335**; selected core suite **357/357**; checker **0 new / 4 known**; git diff --check чистый. 938 baseline + 62 новых Stage 5 теста. Новому common Mixin нужен ручной server smoke (не запускался). Отложенный Minor: новые строки World Cut в non-English locale пока английские. Все Rulings/cost if wrong и ручная приёмка — progress.md и PR.

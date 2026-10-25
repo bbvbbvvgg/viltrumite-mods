@@ -75,6 +75,32 @@ Sends `HeroFxS2CPacket` to players tracking the source; the client draws it in `
 - `hero/CarveJobs` + `hero/CarveBudget` — queued block work spread over END level ticks: `CarveJobs.submit(level, job)`, `Job.step(level, budget)` / `priority()` / `remainingWork()`; per tick `CarveBudget.perTick(BASE_BUDGET 2000, mspt)` (full ≤ 40 ms, linear to base/8 at 60 ms, then `max(50, base/20)`), higher priority first, FIFO inside; unloaded levels drop their queue. Pair with `HeroDestruction.clearBlock(level, pos)` (no drops / particles / neighbour updates, `canDestroy` rules). `hero/LevelTickPhases.systemsFor(phase)` pins which system runs in which half of the level tick (control START; projectiles, regen, carve END).
 - `hero/LiftLeases` — the only owner of `noGravity` changes for lifted entities: lease per owner UUID, the original flag restored when the last lease goes; an entity that unloads mid-lift is restored on load through the `ViltrumiteLifted` tag (`EntityJoinLevelEvent`). `hero/HeroImpulse.mayMoveNonLiving / mayLiftLiving` — which entity types a hero may push or lift (items, falling blocks, minecarts...; not frames, paintings, display entities).
 
+### Budgeted carve example
+
+Submit once on the server. Do not step a job from a player tick. The shared END queue owns the per-level budget. Every attempt spends budget, including unloaded, air and protected positions. Keep remainingWork exact, or return the default unknown bound.
+
+```java
+CarveJobs.submit(level, new CarveJobs.Job() {
+   public boolean step(ServerLevel world, int budget) {
+      for (int used = 0; used < budget && cursor.hasNext(); used++) {
+         BlockPos pos = cursor.next();
+         if (world.isLoaded(pos) && world.getWorldBorder().isWithinBounds(pos)
+            && pos.getY() >= world.getMinBuildHeight() && pos.getY() < world.getMaxBuildHeight()) {
+            HeroDestruction.clearBlock(world, pos);
+         }
+      }
+      return !cursor.hasNext();
+   }
+   public int priority() { return 10; }
+});
+```
+
+Here `cursor` is a finite Iterator<BlockPos> of clipped positions. Higher priorities run first; FIFO applies within a priority. One job cannot receive more than the remaining tick budget. A throwing job is dropped. No final neighbour-update sweep is needed. Flags alone do not stop old-block callbacks. HeroDestruction.setAir with CLEAR_FLAGS uses QuietBlockRemoval plus the common LevelChunk redirect to discard old block entities without onRemove drops/XP or redstone neighbour callbacks. Use the helper, not raw level.setBlock with the same flags. Ordinary flags 3 keep the old callbacks.
+
+World Cut uses priority 10; Rain of Cuts uses 0. `HeroDebris.launchBlock(..., flags)` accepts explicit source-removal flags; use `HeroDestruction.CLEAR_FLAGS` for a clean carve. Old callers still use flags 3. A debris launch clears its source: do not clear the same position again.
+
+Detached execute effects may call `Annihilation.strike(null, target)`: the victim supplies the damage level. `HeroFx.flash(level, at)` sends a detached flash without a tracking source. Client timed scenes may call `HeroImpactFx.shockwaveVisual(at, radius)` for rings without automatic shake or dust; the scene owns those effects.
+
 ## Client
 
 ### `client/render/vfx/HeroImpactFx`
