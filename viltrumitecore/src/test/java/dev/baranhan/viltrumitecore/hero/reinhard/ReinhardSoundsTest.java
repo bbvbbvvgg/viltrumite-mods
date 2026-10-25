@@ -19,6 +19,9 @@ class ReinhardSoundsTest {
       Map.entry("erase_crack", "erase_crack"), Map.entry("erase_inhale", "erase_inhale"),
       Map.entry("limbo_heartbeat", "limbo_heartbeat"), Map.entry("sky_kick", "sky_kick"),
       Map.entry("stomp", "stomp"), Map.entry("sheath_strike", "sheath_ring"));
+   private static final Map<String,String> CINEMATIC = Map.of(
+      "reid_cinematic_layer","reid_cinematic_layer","cut_rumble","cut_rumble",
+      "world_cut_blast","cut_cinematic_impact","cut_rain","cut_cinematic_sweep");
    private static final Set<String> STREAM = Set.of("reid_choir", "world_cut_tail", "reid_rumble");
    private static final Set<String> LEGACY = Set.of("air_step", "refuse", "phoenix", "parry", "super_jump",
       "light_punch", "step_dash", "catch", "combo_hit", "combo_final", "kick_toss", "grab", "throw",
@@ -49,9 +52,16 @@ class ReinhardSoundsTest {
          JsonArray array = new JsonArray(); array.add(choice);
          expected.getAsJsonObject("reinhard." + pair.getKey()).add("sounds", array);
       }
+      for(var pair:CINEMATIC.entrySet()) {
+         String event="reinhard."+pair.getKey();
+         JsonObject definition=expected.has(event)?expected.getAsJsonObject(event):new JsonObject();
+         JsonObject choice=new JsonObject();choice.addProperty("name","viltrumitecore:reinhard/"+pair.getValue());
+         choice.addProperty("stream",false);choice.addProperty("attenuation_distance",pair.getKey().equals("cut_rain")?128:320);
+         JsonArray array=new JsonArray();array.add(choice);definition.add("sounds",array);expected.add(event,definition);
+      }
       JsonObject current = new JsonObject();
       for (String key : actual.keySet()) if (key.startsWith("reinhard.")) current.add(key, actual.get(key));
-      assertEquals(expected, current, "Complete arrays, metadata and all 19 deliberate exceptions must match");
+      assertEquals(expected, current, "Complete arrays, metadata and preserved legacy and scoped cinematic definitions must match");
       allFileReferencesExist(actual);
    }
    private void allFileReferencesExist(JsonObject actual) throws Exception {
@@ -141,19 +151,21 @@ class ReinhardSoundsTest {
    @Test void noPlaceholdersLeft() throws Exception { validateSounds(sounds()); }
    @Test void everyFileExists() throws Exception {
       allFileReferencesExist(sounds());
-      for (String f : FINAL.values()) {
+      Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());
+      for (String f : all) {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));
       }
-      try (var paths = Files.list(BIN)) { assertEquals(Set.copyOf(FINAL.values()), paths.map(p -> p.getFileName().toString().replace(".ogg.b64", "")).collect(java.util.stream.Collectors.toSet())); }
+      try (var paths = Files.list(BIN)) { assertEquals(all, paths.map(p -> p.getFileName().toString().replace(".ogg.b64", "")).collect(java.util.stream.Collectors.toSet())); }
    }
    @Test void everySoundCredited() throws Exception { validateCredits(text("tools/assets/reinhard_sources.md"), text("CREDITS.md"), text("docs/design/2026-10-11-reinhard-design.md")); }
-   @Test void blockedSourcesStayExactPlaceholders() throws Exception {
-      assertEquals("minecraft:entity.generic.explode", entry("world_cut_blast").get("name").getAsString());
-      assertEquals("minecraft:entity.player.attack.sweep", entry("cut_rain").get("name").getAsString());
-      assertEquals("event", entry("world_cut_blast").get("type").getAsString());
-      assertEquals("event", entry("cut_rain").get("type").getAsString());
-      assertFalse(Files.exists(BIN.resolve("world_cut_blast.ogg.b64"))); assertFalse(Files.exists(BIN.resolve("cut_rain.ogg.b64")));
+   @Test void blockedSourcesAreNotShippedAndOriginalSynthesisReplacesPlaceholders() throws Exception {
+      assertEquals("viltrumitecore:reinhard/cut_cinematic_impact",entry("world_cut_blast").get("name").getAsString());
+      assertEquals("viltrumitecore:reinhard/cut_cinematic_sweep",entry("cut_rain").get("name").getAsString());
+      assertFalse(entry("world_cut_blast").has("type"));assertFalse(entry("cut_rain").has("type"));
+      assertFalse(Files.exists(BIN.resolve("world_cut_blast.ogg.b64")));assertFalse(Files.exists(BIN.resolve("cut_rain.ogg.b64")));
+      assertTrue(text("tools/assets/reinhard_sources.md").contains("tools/sfx/reinhard_cinematic.py"));
+      assertTrue(text("CREDITS.md").contains("CC0-1.0"));
    }
    @Test void longFilesStream() throws Exception { for (String e : STREAM) { assertTrue(entry(e).has("stream")); assertTrue(entry(e).get("stream").getAsBoolean()); } }
    @Test void spec102ReferencesRemainUnchanged() throws Exception { validateSounds(sounds()); }

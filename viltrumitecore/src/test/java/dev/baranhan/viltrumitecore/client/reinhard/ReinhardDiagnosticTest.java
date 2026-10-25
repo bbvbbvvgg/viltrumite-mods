@@ -16,13 +16,13 @@ class ReinhardDiagnosticTest {
    @Test void exportNativePoseGeometry() throws Exception {
       if(System.getenv("REINHARD_DIAGNOSTICS")==null)return;
       var clips=ReinhardSecondPassTest.clips();
-      for(String sample:new String[]{"holy","walk","run","crouch","kick_prep","kick_contact","draw_48","draw_108","sheath_10","draw_32","draw_40","draw_64","draw_80","draw_88","drawn","world_cut_12","world_cut_20","world_erasure_15","world_erasure_35","cut_rain_4","cut_rain_8","chop_left_6","chop_left_7","chop_right_6","chop_right_7","drawn_walk","drawn_run","drawn_crouch"}) {
+      for(String sample:new String[]{"holy","walk","run","crouch","kick_prep","kick_contact","draw_48","draw_108","sheath_10","draw_32","draw_40","draw_64","draw_80","draw_88","drawn","world_cut_12","world_cut_20","world_cut_66","world_cut_80","world_cut_87","diagonal_world_cut_20","diagonal_world_cut_73","diagonal_world_cut_80","diagonal_world_cut_87","cut_rain_7","cut_rain_19","cut_rain_40","world_erasure_15","world_erasure_35","cut_rain_4","cut_rain_8","chop_left_6","chop_left_7","chop_right_6","chop_right_7","drawn_walk","drawn_run","drawn_crouch"}) {
          var b=ReinhardSecondPassTest.body(); AnimationController.seek(clips.get("idle_holy"),b,0);
          if(sample.equals("walk")||sample.equals("run")) ReinhardLayers.overlay(clips.get(sample),b,.18,1);
          if(sample.equals("crouch")) AnimationController.additive(clips.get("crouch"),b,0,1);
          if(sample.startsWith("kick")) AnimationController.seek(clips.get("kick_toss"),b,(sample.equals("kick_prep")?4.8:6)/20);
 
-         boolean swordAction=sample.startsWith("world_")||sample.startsWith("cut_rain_")||sample.startsWith("chop_");
+         boolean swordAction=sample.startsWith("diagonal_")||sample.startsWith("world_")||sample.startsWith("cut_rain_")||sample.startsWith("chop_");
          var phase=sample.startsWith("draw_")?ReinhardPoses.ReidPhase.DRAWING:sample.startsWith("sheath")?ReinhardPoses.ReidPhase.SHEATHING:sample.startsWith("drawn")||swordAction?ReinhardPoses.ReidPhase.DRAWN:ReinhardPoses.ReidPhase.SHEATHED;
          double tick=sample.contains("_")&&(sample.startsWith("draw_")||sample.startsWith("sheath_"))?Double.parseDouble(sample.split("_")[1]):0;
          if(phase!=ReinhardPoses.ReidPhase.SHEATHED) {

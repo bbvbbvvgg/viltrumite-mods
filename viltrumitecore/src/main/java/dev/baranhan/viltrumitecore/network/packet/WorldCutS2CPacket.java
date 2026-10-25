@@ -12,9 +12,9 @@ import net.minecraftforge.network.NetworkEvent;
 
 /** Fixed cast frame and terrain profile: no entity lookup needed to keep the scene alive. */
 public record WorldCutS2CPacket(UUID castId, UUID casterId, WorldCutShape shape, int[] surface, long startTime, int phase) {
-   public static final int START=0, BLAST=1;
+   public static final int START=0, BLAST=1, WORK=2, DONE=3;
    public WorldCutS2CPacket {
-      if(surface.length != ReinhardRules.CUT_LENGTH || (phase != START && phase != BLAST)) throw new IllegalArgumentException("Invalid world cut packet");
+      if(surface.length != ReinhardRules.CUT_LENGTH || (phase < START || phase > DONE)) throw new IllegalArgumentException("Invalid world cut packet");
       surface=surface.clone();
    }
    public WorldCutS2CPacket(FriendlyByteBuf b) {

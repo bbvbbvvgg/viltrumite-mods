@@ -14,6 +14,8 @@ public record WorldCutGeometry(double ox, double oy, double oz, double dx, doubl
    public interface Wave extends Iterator<Cell> {
       int remainingWork();
       int frontAlong();
+      /** Masking never hides work from the shared visit budget. */
+      default boolean carve(Cell cell) { return true; }
    }
    public record Bounds(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
       public double widthX() { return maxX - minX; }
@@ -36,7 +38,8 @@ public record WorldCutGeometry(double ox, double oy, double oz, double dx, doubl
       double t = Math.floorMod(along, 16) / 16.0;
       t = t * t * (3 - 2 * t);
       double n = noise(knot) * (1 - t) + noise(knot + 1) * t;
-      return minDepth + (int) Math.round(n * (maxDepth - minDepth));
+      double end = Math.min(1,Math.min((along+4)/16.0,(length-along+3)/20.0));
+      return Math.max(1,(int)Math.round((minDepth+n*(maxDepth-minDepth))*end));
    }
 
    private double noise(int knot) {
@@ -48,13 +51,24 @@ public record WorldCutGeometry(double ox, double oy, double oz, double dx, doubl
    }
 
    public boolean contains(int along, int across, int down) {
-      return along >= 0 && along < length && Math.abs((long) across) <= width / 2
+      return along >= 0 && along < length && Math.abs((long) across) <= halfWidth(along, down)
          && down >= 0 && down < depthAt(along);
+   }
+
+   /** Coherent banks, depth terraces and tapered finite endpoints. No isolated holes. */
+   public int halfWidth(int along, int down) {
+      double end = Math.min(1, Math.min((along + 2) / 16.0, (length - along + 1) / 22.0));
+      double depth = Math.max(0, Math.min(1, down / (double) depthAt(along)));
+      int k=Math.floorDiv(along,12);double blend=Math.floorMod(along,12)/12.0;
+      blend=blend*blend*(3-2*blend);
+      double banks = .82+.18*(noise(k)*(1-blend)+noise(k+1)*blend);
+      double terraces = 1 - .72 * (Math.floor(depth * 5) / 5);
+      return Math.max(0, (int)Math.floor(width * .5 * end * banks * terraces));
    }
 
    public int volume() {
       int volume = 0;
-      for (int a = 0; a < length; a++) volume += width * depthAt(a);
+      for (int a = 0; a < length; a++) for (int d=0; d<depthAt(a); d++) volume += 2*halfWidth(a,d)+1;
       return volume;
    }
 
@@ -110,6 +124,10 @@ public record WorldCutGeometry(double ox, double oy, double oz, double dx, doubl
          private int remaining = work, front;
          public int remainingWork() { return remaining; }
          public int frontAlong() { return front; }
+         public boolean carve(Cell c) {
+            double vx=c.x()+.5-ox, vz=c.z()+.5-oz;
+            return Math.abs(-vx*dz+vz*dx) < halfWidth(c.along(),c.down())+.5;
+         }
          private void advanceEmpty() {
             while (along < length && (columns.get(along).isEmpty() || y < bottoms[along])) {
                along++;

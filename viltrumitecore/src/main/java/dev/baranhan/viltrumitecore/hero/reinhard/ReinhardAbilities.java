@@ -24,7 +24,7 @@ public final class ReinhardAbilities {
    public static final String[] LOADOUT = {
       "", "reinhard:step_dash", "reinhard:catch", "", "", "",
       "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
-      "reinhard:reid", CHOP, "reinhard:sheath_strike", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
+      "reinhard:reid", CHOP, "reinhard:diagonal_world_cut", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
    };
 
    private ReinhardAbilities() {
@@ -61,7 +61,7 @@ public final class ReinhardAbilities {
    }
 
    public static boolean active(ReinhardAbility ability) {
-      return ability.shipped() && ability != ReinhardAbility.LIGHT_PUNCH && ability != ReinhardAbility.FIST_COMBO;
+      return ability.shipped() && ability != ReinhardAbility.LIGHT_PUNCH && ability != ReinhardAbility.FIST_COMBO && ability != ReinhardAbility.SHEATH_STRIKE;
    }
 
    private static boolean shipped(String id) {
@@ -142,12 +142,12 @@ public final class ReinhardAbilities {
       }
 
       HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
-      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(ability.ordinal()), snapshot.heroFlags());
+      return snapshot != null && snapshot.heroId() == HeroId.REINHARD && slotGrey(ability, snapshot.extraCooldown(ability.snapshotIndex()), snapshot.heroFlags());
    }
 
    /** Pure: cooldown running, or the slot condition of Reid's phase (from the snapshot flags) fails. */
    public static boolean slotGrey(ReinhardAbility ability, int cooldown, int heroFlags) {
-      return !active(ability) || (ability==ReinhardAbility.WORLD_CUT && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_CUT_ACTIVE))
+      return !active(ability) || ((ability==ReinhardAbility.WORLD_CUT || ability==ReinhardAbility.DIAGONAL_WORLD_CUT) && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_CUT_ACTIVE))
          || (ability==ReinhardAbility.WORLD_ERASURE && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_ERASURE_ACTIVE)) || cooldown > 0 || !dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.allows(ability, dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.phaseOf(heroFlags));
    }
 }

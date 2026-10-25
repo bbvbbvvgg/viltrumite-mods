@@ -22,6 +22,7 @@ public final class WorldCut implements AbilityHandler {
    /** Runtime boundary: a level adapter supplies carve progress, candidates and the strike. */
    public interface Environment {
       void blast();
+      default void progress(long elapsed, boolean finished) { }
       default boolean pendingWork() { return false; }
       int carveFront();
       Collection<UUID> targets(int through);
@@ -58,16 +59,17 @@ public final class WorldCut implements AbilityHandler {
       }
       // Queue ownership extends admission protection, NOT the damaging wave's lifetime.
       finished=waveComplete && !environment.pendingWork();
+      if (finished || elapsed % 10 == 0) environment.progress(elapsed,finished);
       return finished;
    }
    public static void start(ReinhardState state) {
       state.cooldowns[ReinhardAbility.WORLD_CUT.ordinal()] = ReinhardRules.WORLD_CUT_COOLDOWN;
-      state.action.start(ReinhardAbility.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST, -1);
+      state.action.start(ReinhardAbility.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST + 20, -1);
    }
    @Override public boolean tryStart(ServerPlayer player, ReinhardState state) {
       if (!state.reid.drawn()) return false;
       ServerLevel level = player.serverLevel();
-      if (WorldCutManager.get(level).size()>0) return false;
+      if (WorldCutManager.get(level).size()>=2) return false;
       WorldCutShape shape = new WorldCutShape(player.position(), Vec3.directionFromRotation(0, player.getYRot()), level.getGameTime());
       int[] surface = new int[ReinhardRules.CUT_LENGTH];
       for (int a=0; a<surface.length; a++) {
@@ -78,6 +80,7 @@ public final class WorldCut implements AbilityHandler {
       }
       Live world = new Live(level, UUID.randomUUID(), player.getUUID(), shape, surface, level.getGameTime());
       start(state);
+      state.cutAnchor=player.position();
       state.worldCut = timed(world.startTime, world);
       WorldCutManager.get(level).submit(state.worldCut);
       world.send(WorldCutS2CPacket.START);
@@ -107,6 +110,7 @@ public final class WorldCut implements AbilityHandler {
          carve=new WorldCutCarve(shape,surface,level.getMinBuildHeight(),level.getMaxBuildHeight(),level.getWorldBorder()::isWithinBounds);
          CarveJobs.submit(level,carve);
       }
+      public void progress(long elapsed, boolean finished) { send(finished ? WorldCutS2CPacket.DONE : WorldCutS2CPacket.WORK); }
       public boolean pendingWork() { return carve!=null && CarveJobs.pending(level,carve); }
       public int carveFront() { return WorldCut.carveFront(carve); }
       public Collection<UUID> targets(int through) {

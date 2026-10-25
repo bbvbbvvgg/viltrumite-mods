@@ -8,8 +8,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
- * Reinhard sound events. Final slot names; the sounds are vanilla
- * placeholders in sounds.json until the recorded ones arrive (spec §10).
+ * Reinhard sound events. sounds.json owns licensed recordings, original
+ * procedural cinematic layers and retained vanilla kit sounds.
  * Registered on ViltrumiteCore.SOUND_EVENTS; {@link #init()} runs from the
  * mod constructor so the holders exist before registration.
  */
@@ -44,9 +44,11 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> REID_SHEATHE = reg("reinhard.reid_sheathe");
    /** Placeholder until Stage 7 (Iridiuss ring): an anvil landing, played high. */
    public static final RegistryObject<SoundEvent> SHEATH_STRIKE = reg("reinhard.sheath_strike");
-   /** Placeholder until Stage 7 (Robinhood76 whoosh): the sweep, at three pitches. */
+   /** Original procedural sweep, one spatial sound per authored Rain contact. */
    public static final RegistryObject<SoundEvent> CUT_RAIN = reg("reinhard.cut_rain");
 
+   public static final RegistryObject<SoundEvent> REID_CINEMATIC_LAYER = reg("reinhard.reid_cinematic_layer");
+   public static final RegistryObject<SoundEvent> CUT_RUMBLE = reg("reinhard.cut_rumble");
    public static final RegistryObject<SoundEvent> WORLD_CUT_SILENCE = reg("reinhard.world_cut_silence");
    public static final RegistryObject<SoundEvent> WORLD_CUT_BLAST = reg("reinhard.world_cut_blast");
    public static final RegistryObject<SoundEvent> WORLD_CUT_TAIL = reg("reinhard.world_cut_tail");

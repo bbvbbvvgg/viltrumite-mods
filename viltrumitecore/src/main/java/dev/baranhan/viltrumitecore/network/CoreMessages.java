@@ -36,6 +36,8 @@ import net.minecraftforge.network.NetworkRegistry.ChannelBuilder;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public class CoreMessages {
+   // v3 clients clamp extra cooldowns at 16 and misread the following phase fields.
+   private static final String PROTOCOL_VERSION = "4";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -45,9 +47,9 @@ public class CoreMessages {
 
    public static void register() {
       SimpleChannel net = ChannelBuilder.named(new ResourceLocation("viltrumitecore", "messages"))
-         .networkProtocolVersion(() -> "2")
-         .clientAcceptedVersions("2"::equals)
-         .serverAcceptedVersions("2"::equals)
+         .networkProtocolVersion(() -> PROTOCOL_VERSION)
+         .clientAcceptedVersions(PROTOCOL_VERSION::equals)
+         .serverAcceptedVersions(PROTOCOL_VERSION::equals)
          .simpleChannel();
       INSTANCE = net;
       net.messageBuilder(BlockToggleC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
@@ -267,6 +269,14 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::handle)
          .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket.class,id(),NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

@@ -23,8 +23,8 @@ class WorldCutRendererIntegrationTest {
          var pose=new ReinhardPoses.Pose("idle_holy",0,0,0,new ReinhardPoses.Clip("world_cut",.5),ReinhardPoses.BodyState.STAND,0);
          ReinhardRenderer.applyClips(actual,pose,new StanceBlend.Mix(ReinhardMode.HOLY_SWORD,ReinhardMode.HOLY_SWORD,1),0,0,0,
             new ParryPulse.Sample(0,0),new ReinhardPoses.Clip("idle_holy_drawn",0),null);
-         assertEquals(expected.getBone("right_arm").rotX,actual.getBone("right_arm").rotX,1E-6);
-         assertTrue(Math.abs(actual.getBone("right_arm").rotX)>2, "sword arm actually overhead");
+         assertEquals(expected.getBone("reid_grip").rotX,actual.getBone("reid_grip").rotX,1E-6);
+         assertEquals(expected.getBone("reid_grip").posZ,actual.getBone("reid_grip").posZ,1E-6);
       } finally { field.set(null,old); }
    }
 }

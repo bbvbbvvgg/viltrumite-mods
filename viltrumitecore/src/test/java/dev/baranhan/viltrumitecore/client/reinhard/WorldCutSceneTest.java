@@ -34,7 +34,7 @@ class WorldCutSceneTest {
       assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(10,false));
       assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(10,true));
       assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(60,false));
-      assertEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(80,false));
+      assertEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(100,false));
    }
    @Test void reorderedStartCannotUndoBlast() {
       UUID cast=UUID.randomUUID(), caster=UUID.randomUUID(); WorldCutShape shape=new WorldCutShape(Vec3.ZERO,new Vec3(0,0,1),1);
@@ -49,7 +49,7 @@ class WorldCutSceneTest {
       WorldCutScene.onPacket(new WorldCutS2CPacket(cast,UUID.randomUUID(),new WorldCutShape(Vec3.ZERO,new Vec3(0,0,1),1),new int[200],0,0));
       WorldCutScene.prune(500); assertFalse(WorldCutScene.active().iterator().hasNext());
    }
-   @Test void casterHasNoBlastShake() {
-      assertFalse(WorldCutScene.shakeCaster(true)); assertTrue(WorldCutScene.shakeCaster(false));
+   @Test void casterSharesCinematicShake() {
+      assertTrue(WorldCutScene.shakeCaster(true)); assertTrue(WorldCutScene.shakeCaster(false));
    }
 }

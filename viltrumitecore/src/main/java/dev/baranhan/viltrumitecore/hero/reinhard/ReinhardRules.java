@@ -83,8 +83,9 @@ public final class ReinhardRules {
    /** Carve blocks per tick on a healthy server (= {@code CarveJobs.BASE_BUDGET}, shared with Stage 5). */
    public static final int CUT_BASE_BUDGET = 2000;
    /** Action lock and the clip; the cuts land one per tick from {@link #CUT_FIRST_TICK}. */
-   public static final int CUT_TICKS = 20;
-   public static final int CUT_FIRST_TICK = 4;
+   public static final int CUT_TICKS = 46;
+   public static final int CUT_INTERVAL = 3;
+   public static final int CUT_FIRST_TICK = 7;
 
    // World Cut (spec §7.6): dimensions in blocks; max build height is exclusive.
    public static final int CUT_LENGTH = 200;
@@ -278,7 +279,7 @@ public final class ReinhardRules {
          case SKY_KICK -> KICK_COOLDOWN; case GRAB_THROW -> GRAB_COOLDOWN;
          case DASH_BEHIND -> BEHIND_COOLDOWN; case STOMP -> STOMP_COOLDOWN;
          case REFLECT -> REFLECT_COOLDOWN; case SHEATH_STRIKE -> SHEATH_COOLDOWN;
-         case CUT_RAIN -> CUT_COOLDOWN; case WORLD_CUT -> WORLD_CUT_COOLDOWN;
+         case CUT_RAIN -> CUT_COOLDOWN; case WORLD_CUT, DIAGONAL_WORLD_CUT -> WORLD_CUT_COOLDOWN;
          case WORLD_ERASURE -> ERASE_COOLDOWN; default -> 0;
       };
    }

@@ -52,7 +52,7 @@ class HeroKeyEdgesTest {
          }
       }
       assertEquals(11, observed.size());
-      assertTrue(observed.containsAll(List.of(HeroAction.REID, HeroAction.SHEATH_STRIKE,
+      assertTrue(observed.containsAll(List.of(HeroAction.REID, HeroAction.DIAGONAL_WORLD_CUT,
          HeroAction.CUT_RAIN, HeroAction.WORLD_CUT, HeroAction.WORLD_ERASURE)));
       assertFalse(Arrays.asList(hero.heroInputSlots()).contains(ReinhardAbility.DASH_BEHIND.id()));
       assertFalse(Arrays.asList(hero.heroInputSlots()).contains(ReinhardAbilities.CHOP)); // shared kit path

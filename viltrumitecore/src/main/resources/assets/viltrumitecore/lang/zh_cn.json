@@ -467,8 +467,8 @@
   "ability.viltrumitecore.reinhard_cut_rain.name": "斩击之雨",
   "ability.viltrumitecore.reinhard_cut_rain.desc": "仅限拔出雷德：30° 锥形内发出 12 道长 40 格的致命斩击，并留下狭窄地面裂槽。仅有短暂技术锁定。",
   "subtitles.viltrumitecore.reinhard_cut_rain": "莱因哈鲁特斩击如雨",
-  "ability.viltrumitecore.reinhard_world_cut.name": "World Cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "雷德已拔出：挥剑、静默三秒，随后发动 200 格世界斩。无漫长冷却；前一场景及其方块处理结束后才能再次施放。",
+  "ability.viltrumitecore.reinhard_world_cut.name": "Ground World Cut",
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: a heavy two-handed windup, silence, then a tapered 200-block canyon. At most two world cuts may remain active.",
   "ability.viltrumitecore.reinhard_world_erasure.name": "世界抹除",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "雷德已拔出：选择 64 格内目标，世界暂停 7.5 秒并将其抹除。凡人玩家在线 30 秒后从虚空归来，随身物品丢失；末影箱保留。神性与绝对目标存活。仅允许一个活动场景，无漫长冷却。",
   "subtitles.viltrumitecore.reinhard.erase_crack": "世界破裂",
@@ -479,5 +479,8 @@
   "viltrumitecore.limbo.line3": "你携带的一切都随你一同消失了。",
   "viltrumitecore.limbo.line4": "但这个世界最强大的力量怜悯了你。",
   "viltrumitecore.limbo.line5": "你获准重生。",
-  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "心跳"
+  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "心跳",
+  "ability.viltrumitecore.reinhard_diagonal_world_cut.name": "Diagonal World Cut",
+  "ability.viltrumitecore.reinhard_diagonal_world_cut.desc": "Reid drawn: a tilted three-dimensional rupture cuts air, mountains and buildings. Shares the two-cut limit with Ground World Cut.",
+  "ability.viltrumitecore.reinhard_lethal_chop.desc": "Reid must be fully sheathed. A decisive lethal hand chop; unavailable while drawing, drawn or sheathing."
 }

@@ -467,8 +467,8 @@
   "ability.viltrumitecore.reinhard_cut_rain.name": "Kesik Yağmuru",
   "ability.viltrumitecore.reinhard_cut_rain.desc": "Reid çekiliyken: 30° konide 40 blok uzunluğunda 12 ölümcül kesik ve dar zemin yarıkları. Kısa teknik kilit.",
   "subtitles.viltrumitecore.reinhard_cut_rain": "Reinhard'ın kesikleri yağar",
-  "ability.viltrumitecore.reinhard_world_cut.name": "World Cut",
-  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid çekiliyken: savuruş, üç saniye sessizlik, sonra 200 blokluk kesik. Uzun bekleme yok; önceki sahne ve blok işlemi bitmelidir.",
+  "ability.viltrumitecore.reinhard_world_cut.name": "Ground World Cut",
+  "ability.viltrumitecore.reinhard_world_cut.desc": "Reid drawn: a heavy two-handed windup, silence, then a tapered 200-block canyon. At most two world cuts may remain active.",
   "ability.viltrumitecore.reinhard_world_erasure.name": "Dünyayı Silme",
   "ability.viltrumitecore.reinhard_world_erasure.desc": "Reid çekiliyken: 64 blok içindeki hedef, 7,5 saniye dünya duraklaması ve silinme. Ölümlü oyuncular 30 çevrimiçi saniye sonra taşıdıkları olmadan döner; Ender sandığı kalır. İlahi/mutlak hedefler yaşar. Tek etkin sahne, uzun bekleme yok.",
   "subtitles.viltrumitecore.reinhard.erase_crack": "Dünya çatlıyor",
@@ -479,5 +479,8 @@
   "viltrumitecore.limbo.line3": "Taşıdığın her şey seninle birlikte yok oldu.",
   "viltrumitecore.limbo.line4": "Ama bu dünyanın en güçlü kudreti sana acıdı.",
   "viltrumitecore.limbo.line5": "Yeniden doğmana izin verildi.",
-  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Kalp atışı"
+  "subtitles.viltrumitecore.reinhard.limbo_heartbeat": "Kalp atışı",
+  "ability.viltrumitecore.reinhard_diagonal_world_cut.name": "Diagonal World Cut",
+  "ability.viltrumitecore.reinhard_diagonal_world_cut.desc": "Reid drawn: a tilted three-dimensional rupture cuts air, mountains and buildings. Shares the two-cut limit with Ground World Cut.",
+  "ability.viltrumitecore.reinhard_lethal_chop.desc": "Reid must be fully sheathed. A decisive lethal hand chop; unavailable while drawing, drawn or sheathing."
 }

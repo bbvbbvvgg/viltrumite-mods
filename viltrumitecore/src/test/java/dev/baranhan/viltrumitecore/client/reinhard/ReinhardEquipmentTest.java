@@ -18,7 +18,7 @@ class ReinhardEquipmentTest {
       var clips=ReinhardSecondPassTest.clips();var blade=weapon("blade");var sheath=weapon("sheath");
       List<String> bad=new ArrayList<>();
       List<String> torsoHits=new ArrayList<>();
-      for(String name:new String[]{"reid_draw","reid_sheathe","world_cut","world_erasure","cut_rain","sheath_strike","light_punch","chop_left","chop_right"}) {
+      for(String name:new String[]{"reid_draw","reid_sheathe","world_cut","diagonal_world_cut","world_erasure","cut_rain","sheath_strike","light_punch","chop_left","chop_right"}) {
          var clip=clips.get(name);
          for(double t=0;t<=clip.lengthSeconds()*20;t+=.5)for(boolean crouch:new boolean[]{false,true}) {
             var b=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("idle_holy_drawn"),b,0);
@@ -53,7 +53,7 @@ class ReinhardEquipmentTest {
    }
    @Test void bothDrawnPalmsReachDistinctHandlePointsWithoutIntersecting()throws Exception {
       var clips=ReinhardSecondPassTest.clips();List<String> bad=new ArrayList<>();
-      for(String name:new String[]{"idle_holy_drawn","world_cut","world_erasure","cut_rain","light_punch","chop_left","chop_right"})
+      for(String name:new String[]{"idle_holy_drawn","world_cut","diagonal_world_cut","world_erasure","cut_rain","light_punch","chop_left","chop_right"})
          for(double t=0;t<=clips.get(name).lengthSeconds()*20;t+=1) {
             var b=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("idle_holy_drawn"),b,0);
             ReinhardLayers.overlay(clips.get(name),b,t/20,1);
@@ -136,7 +136,7 @@ class ReinhardEquipmentTest {
       for(var entry:clips.entrySet())for(double t=0;t<=entry.getValue().lengthSeconds()*20;t+=1) {
          var b=ReinhardSecondPassTest.body();AnimationController.seek(entry.getValue(),b,t/20);
          var phase=entry.getKey().equals("reid_draw")?ReinhardPoses.ReidPhase.DRAWING:entry.getKey().equals("reid_sheathe")?ReinhardPoses.ReidPhase.SHEATHING:
-            Set.of("world_cut","world_erasure","cut_rain","idle_holy_drawn","chop_left","chop_right").contains(entry.getKey())?ReinhardPoses.ReidPhase.DRAWN:ReinhardPoses.ReidPhase.SHEATHED;
+            Set.of("world_cut","diagonal_world_cut","world_erasure","cut_rain","idle_holy_drawn","chop_left","chop_right").contains(entry.getKey())?ReinhardPoses.ReidPhase.DRAWN:ReinhardPoses.ReidPhase.SHEATHED;
          if(phase!=ReinhardPoses.ReidPhase.SHEATHED || Set.of("idle_holy","sheath_strike").contains(entry.getKey()))ReinhardSword.equipment(b,phase,t,entry.getKey().equals("sheath_strike"),t,1);
          for(String limb:new String[]{"left_hand","right_hand","left_forearm","right_forearm"})
             if(ReinhardGeometry.intersectsBones(b.getBone("head"),b.getBone(limb)) && bad.size()<50)bad.putIfAbsent(entry.getKey()+" "+limb," tick="+t+" arm="+b.getBone(limb.startsWith("left")?"left_arm":"right_arm").rotX+","+b.getBone(limb.startsWith("left")?"left_arm":"right_arm").rotY+","+b.getBone(limb.startsWith("left")?"left_arm":"right_arm").rotZ);

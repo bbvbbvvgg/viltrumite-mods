@@ -321,3 +321,43 @@ Task 5: release-version assertion RED на 1.30.0 → minor bump1.31.0; исто
 Одно финальное независимое ревью:0Critical,4Important; M1 delimiter re-graded as I3 structural dependency. Один TDD-pass: упаковка CC-BY notices в JAR и metadata credits; complete-object gate всех33 IDs/19 exceptions/actual references; структурный source→output→author/URL/license/digest join и исправленная4-col §10.1 таблица; adversarial ffmpeg integrity tests. JavaRED16tests/10assertion failures→GREEN16/16; Python6guard/source bypass mutationsRED→restored byte-exact script→17/17GREEN. Первоначальный stale.pyc тестового loader исправлен fresh-source compile, не ослаблением assertion. Independent source/codec audit подтверждает14/14×2 PCM, но НЕ прослушивание/сервер. Report preserved as review-before-fixes.md, без re-review;35 Declined boundaries получили отдельные costed Rulings. Inherited Stage6 metadata/dev pause and Stage5 locale minors remain.
 
 Финальный результат Stage7: **1227/1227 JVM** (core1215+flight12), **480/480 selected Reinhard** (477package+3related), **17/17 Python**,14/14 PCM --check, checker0new/4known, NoHeroBranch1/1 allowlist unchanged, diff clean, Java17 clean/reobf GREEN. После сетевого Sponge HTTP522 финальные gates использовали проверенный ранее online dependency cache с --offline; upstream fresh-resolution availability не доказана. Source/script/code guards не ослаблены. JAR14/14 finalaudio +33 IDs +2 maintained CC-BY notices/4source links byte-exact, active credits/TOML/version1.31 parsed. Additional exact-credit-URL suffix RED1→GREEN closes I3 lexical boundary; all17 targeted attribution/sound checks GREEN. Все game/server/native/listening/camera/cross-hero/TPS/FPS пункты выше НЕ выполнены. Four nonempty planned commits/push+PR; merge не выполнялся. Полный списокRulings/costs,35proof boundaries и inherited minors — progress.md/PR; оригинальное единственное review preserved, re-review не было.
+
+## 2026-10-20 — Holy Sword cinematic overhaul (core 1.35.0)
+
+Новая ветка `feat/reinhard-holy-sword-cinematic` от актуального PR36
+`69d094d0be5bb1e11c192266159c6df84a86cdc3`; PR35 не использован. Реализованы
+новый Z Diagonal World Cut, 12 contact-synced Rain ударов, медленный ground cut
+с actual Reid projection и terrain taper/noise/terraces, усиленная draw сцена,
+scoped darkness/rumble/continuous shake до queue DONE, два concurrent cut через
+один adaptive budget. Y только SHEATHED. Core protocol3, flight без изменений.
+Оригинальные blade/sheath/grip attachment и World Erasure сохранены.
+Full build/tests1292 GREEN; checker0new/4legacy; full-mesh CPU diagnostics новых
+траекторий GREEN. Native client GLFW barrier, native server EULA gate и никакого
+TPS/listening/visual acceptance. Подробный отчёт, ограничения и manual protocol:
+`docs/reports/2026-10-20-reinhard-cinematic.md`.
+
+
+## 2026-10-20 — Hotfix snapshot Рейнхарда (core 1.35.1)
+
+Исправлен пользовательский `Ticking player` crash: `ReinhardHero.snapshot` писал
+Diagonal World Cut в wire slot16 при shared capacity16. Ветка
+`fix/reinhard-snapshot-overflow` от `133aa4ee` / cinematic PR37. Ёмкость общего
+bounded snapshot32; mode14/Phoenix15 сохранены, enum/action ordinals не изменены.
+Production composeSnapshot вынесен из Player/world shell для прямого regression
+теста реального сборщика, а не его тестовой копии. Удалено дублирующее копирование.
+Codec читает variant/resource2 после объявленного wire count, не capped count;
+negative count отвергается, long offset не переполняется на INT_MAX.
+Core protocol4 запрещает подключение старого protocol3 decoder с лимитом16.
+Обновить Core одновременно на сервере и всех клиентах; flight1.10.1 не изменён.
+Сохранения/NBT, модели/ножны/хват, World Erasure/glass, sounds/VFX не изменены.
+
+RED: 2/13 codec assertions и 2/2 production snapshot tests воспроизводят дефект;
+последние дают ровно `Index 16 out of bounds for length 16`, как пользовательский
+лог. GREEN: Java17 offline full build/reobf, **1300/1300 JVM tests** (core1288,
+flight12), без skips/failures/errors; resource checker0new/4known; frozen
+blade/sheath SHA равны, diff check clean. Новые проверки покрывают все способности
+и три режима, reserved14/15, slot16, action phase/target/elapsed и scene flags,
+legacy16 codec, capped40 tail, negative/INT_MAX count и protocol4 gate.
+Native runClient повторён на hotfix: GLFW init barrier до загрузки мира, вход в
+старый мир и multiplayer НЕ проверены. Прежняя зелёная сборка1.35.0 не доказывала
+snapshot runtime: этот coverage gap признан и закрыт production-composer тестом.

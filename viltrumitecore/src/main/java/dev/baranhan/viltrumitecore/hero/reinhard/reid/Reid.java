@@ -141,7 +141,7 @@ public final class Reid {
    public static boolean allows(ReinhardAbility ability, Phase phase) {
       return switch (ability) {
          case SHEATH_STRIKE -> phase == Phase.SHEATHED;
-         case CUT_RAIN, WORLD_CUT, WORLD_ERASURE -> phase == Phase.DRAWN;
+         case CUT_RAIN, WORLD_CUT, WORLD_ERASURE, DIAGONAL_WORLD_CUT -> phase == Phase.DRAWN;
          default -> true;
       };
    }

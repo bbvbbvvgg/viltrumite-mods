@@ -29,7 +29,7 @@ import net.minecraftforge.entity.PartEntity;
 /**
  * Rain of Cuts (spec §7, Holy Sword slot 4, Reid drawn only): {@link ReinhardRules#CUT_COUNT}
  * cuts fanned evenly over ±{@link ReinhardRules#CUT_CONE_DEG}/2° of yaw (small pitch jitter,
- * deterministic from the cast tick), one per tick from {@link ReinhardRules#CUT_FIRST_TICK}.
+ * deterministic from the cast tick), one per CUT_INTERVAL ticks from {@link ReinhardRules#CUT_FIRST_TICK}.
  * Each cut is a {@link ReinhardRules#CUT_RANGE}-block segment from the chest: every target whose
  * box it crosses takes the Reid strike ({@link Annihilation#strike}); in Holy Sword (massive
  * destruction) a 1 × 3 groove along it goes to the {@link CarveJobs} queue (no drops,
@@ -85,7 +85,7 @@ public final class CutRain implements AbilityHandler {
       }
 
       int i = action.elapsed() - ReinhardRules.CUT_FIRST_TICK;
-      return i >= 0 && i < ReinhardRules.CUT_COUNT ? i : -1;
+      return i >= 0 && i % ReinhardRules.CUT_INTERVAL == 0 && i / ReinhardRules.CUT_INTERVAL < ReinhardRules.CUT_COUNT ? i / ReinhardRules.CUT_INTERVAL : -1;
    }
 
    public static void start(ReinhardState state) {
@@ -95,6 +95,7 @@ public final class CutRain implements AbilityHandler {
 
    @Override
    public boolean tryStart(ServerPlayer player, ReinhardState state) {
+      state.rainYaw=player.getYRot();state.rainPitch=player.getXRot();
       start(state);
       return true;
    }
@@ -110,13 +111,18 @@ public final class CutRain implements AbilityHandler {
    private static void cut(ServerPlayer player, ReinhardState state, int index) {
       ServerLevel level = player.serverLevel();
       long seed = level.getGameTime() - state.action.elapsed();
-      Vec3 dir = directions(player.getYRot(), player.getXRot(), seed).get(index);
+      Vec3 dir = directions(state.rainYaw, state.rainPitch, seed).get(index);
       Vec3 from = player.position().add(0.0, player.getBbHeight() * 0.7, 0.0);
       Vec3 to = from.add(dir.scale(ReinhardRules.CUT_RANGE));
+      Set<java.util.UUID> struck = new java.util.HashSet<>();
       for (Entity e : level.getEntities(player, new AABB(from, to).inflate(1.0),
          e -> (e instanceof LivingEntity || e instanceof PartEntity<?>) && segmentHits(e.getBoundingBox(), from, to)
             && ReinhardTargets.canHit(player, e instanceof PartEntity<?> part ? part.getParent() : e))) {
-         Annihilation.strike(player, e);
+         Entity root=e instanceof PartEntity<?> part ? part.getParent() : e;
+         if(struck.add(root.getUUID())) {
+            Vec3 contact=root.position().add(0,root.getBbHeight()*.6,0);
+            if(Annihilation.strike(player,root)==Annihilation.Outcome.KILLED) HeroFx.flash(player,contact);
+         }
       }
 
       if (DestructionLevel.of(state.mode).mayBreak()) {
@@ -124,9 +130,11 @@ public final class CutRain implements AbilityHandler {
       }
 
       HeroFx.blade(player, from, to, null);
-      if (index % 4 == 0) {
-         ReinhardSounds.playAt(player, from, ReinhardSounds.CUT_RAIN.get(), 1.2F, SOUND_PITCHES[(index / 4) % SOUND_PITCHES.length]);
-      }
+      var packet=new dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket(from,dir,index,level.getGameTime());
+      for(ServerPlayer viewer:level.players()) if(viewer.distanceToSqr(player)<128*128)
+         dev.baranhan.viltrumitecore.network.CoreMessages.sendToPlayer(packet,viewer);
+      ReinhardSounds.playAt(player, from, ReinhardSounds.CUT_RAIN.get(), index == ReinhardRules.CUT_COUNT - 1 ? 1.5F : 1.0F,
+         SOUND_PITCHES[index % SOUND_PITCHES.length]);
    }
 
    /** One cut's groove, cleared near to far under the carve budget. */
