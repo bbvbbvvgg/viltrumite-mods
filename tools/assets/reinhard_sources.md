@@ -63,7 +63,7 @@ All files are `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/re
 | `reid_unsheathe` | 770035 | 0 / 1.879297 | -14 LUFS | trim, fades, two-pass loudnorm |
 | `reid_rumble` | 870684 | 10 / 6 | -20 LUFS | trim, fades, two-pass loudnorm, loop-edge fades |
 | `world_cut_silence` | 503809 | 3 / 3 | -20 LUFS | trim, fades, two-pass loudnorm |
-| `world_cut_tail` | 248150 | 0 / 8 | -20 LUFS | trim, fades, two-pass loudnorm |
+| `world_cut_tail` | 248150 | 0 / 8 | -14 LUFS target (-14.66 measured) | original -20 LUFS master, +12 dB pre-gain + lookahead limiter; decoded true peak -2.25 dBTP; DONE only |
 | `erase_crack` | 554564 | 0 / 1.5 | -14 LUFS | trim, fades, two-pass loudnorm, peak limiting |
 | `erase_inhale` | 331620 | 0 / 2.3 | -20 LUFS | trim, fades, two-pass loudnorm |
 | `limbo_heartbeat` | 249716 | 0 / 1.2 | -20 LUFS | trim, fades, two-pass loudnorm, peak limiting, loop-edge fades |

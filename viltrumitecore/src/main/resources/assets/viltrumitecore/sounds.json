@@ -913,7 +913,8 @@
     "sounds": [
       {
         "name": "viltrumitecore:reinhard/world_cut_tail",
-        "stream": true
+        "stream": true,
+        "attenuation_distance": 320
       }
     ]
   },

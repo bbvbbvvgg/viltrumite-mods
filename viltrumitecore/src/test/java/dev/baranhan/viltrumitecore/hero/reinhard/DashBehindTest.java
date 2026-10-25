@@ -107,6 +107,7 @@ class DashBehindTest {
    void slotKeyNotRoutedThroughGenericInput() {
       assertFalse(Arrays.asList(ReinhardAbilities.inputSlots()).contains(ReinhardAbility.DASH_BEHIND.id()),
          "the separate packet carries the press");
-      assertTrue(Arrays.asList(ReinhardAbilities.inputSlots()).contains(ReinhardAbility.GRAB_THROW.id()));
+      assertFalse(Arrays.asList(ReinhardAbilities.inputSlots()).contains(ReinhardAbility.GRAB_THROW.id()));
+      assertTrue(Arrays.asList(ReinhardAbilities.inputSlots()).contains(ReinhardAbility.STEP_DASH.id()));
    }
 }

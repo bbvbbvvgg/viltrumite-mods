@@ -81,7 +81,7 @@ class ReinhardConverterTest(unittest.TestCase):
                 path.write_bytes(base64.b64decode(encoded.read_bytes()))
                 measured = m.inspect(path, recipe)
                 expected = {'mode_restrained':-18, 'mode_knight':-18, 'mode_holy':-18, 'reid_choir':-20,
-                            'reid_unsheathe':-14, 'reid_rumble':-20, 'world_cut_silence':-20, 'world_cut_tail':-20,
+                            'reid_unsheathe':-14, 'reid_rumble':-20, 'world_cut_silence':-20, 'world_cut_tail':-14,
                             'erase_crack':-14, 'erase_inhale':-20, 'limbo_heartbeat':-20, 'sky_kick':-14,
                             'stomp':-14, 'sheath_ring':-14}[name]
                 # Independently inspect decoded integrated loudness, not inspect()'s own decision.

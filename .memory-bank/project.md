@@ -286,3 +286,37 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   first positive two-hand weight. Support elbow outward/front, leading elbow
   additionally down: a symmetric pole passed continuity but clipped the head.
   Keep BOTH final-bone continuity and full-mesh collision gates.
+
+- Reinhard projectile interception: vanilla Forge impacts use HeroProjectiles,
+  but custom RepulsorBlastEntity/MicroMissileEntity have their own onHit path and
+  must call the shared server seam explicitly. Reflection also retargets Homing;
+  hitscan beams require an explicit source-context hook, not projectile handling.
+  EyeLasers, MicroLaser, Unibeam and PulseUnibeam have explicit server ray hooks. Piercing rays stop before block/damage work behind a defender, respecting PvP/teams. See docs/reports/reinhard-attack-matrix.md.
+- AbstractArrow.playerTouch permits pickup during noPhysics. A visible held arrow
+  must temporarily use Pickup.DISALLOWED and restore the original pickup policy
+  on release, alongside noGravity/physics cleanup; never duplicate its item.
+- Diagonal world-cut candidates are projected along the dominant horizontal
+  normal. Rejects still consume the shared CarveJobs budget. Exact voxel-mask
+  equivalence and finite remainingWork matter more than the client animation.
+  DONE remains pending-work completion; both client tails now use 70 ticks.
+- Drawn Reid primary collision uses a bounded resource baked from production
+  final equipment transforms. Re-bake with ReidMeleeBakeTest when the geometry,
+  grip, scale or source clips change; dedicated-server code must not load client
+  render classes. FP trajectory/palm alignment is a separate acceptance concern.
+
+## Core 1.36.1 continuation
+- DefenseContact is a server-owned local palm target; snapshot actionTarget carries it and bit27 selects the free hand. resource2 carries held arrow entityId+1. Do not reuse these Reinhard fields for unrelated UI state.
+- Use existing ReinhardGrip.guard AFTER weapon equipment, selected hand only; torso before equipment. Drawn Reid/active attacks retain the weapon hand. FP evade is its own view transform, hidden arms remain visible through exponential recovery.
+- HeroDefenseContacts records the actual draw-frame palm (PlayerGeoLayer.partFrame in FP). FP/world projection scales differ: preserve the same pixel through reproject(), including dynamic FOV. Shadow passes must not replace the world contact. This cache is presentation only, never C2S authority.
+- A held arrow uses the original entity and may be caught by the free hand with Reid drawn. Pickup.DISALLOWED during the 10-tick hold; restore original pickup policy on release. Tridents stay non-arrow responses.
+- CutFinishSound owns one loud original WORLD_CUT_TAIL voice after server DONE. Do not pair the procedural impact at completion. The user selected that impact only for quiet 0.8-second pulses during WORK (first tick96, cadence40). CUT_RUMBLE is not played by either scene. Both paths share coalescing gates; four-tick crossfade bounds overlap. Tail has a separate reproducible +12dB pre-gain/lookahead-limit master (about -14.66 LUFS, -2.25dBTP), gain.9, range320, nearest-line position per listener.
+- Diagonal raster narrows the projected OBB row intervals and depth samples analytically; exact original voxel mask and build-height clipping remain authoritative. Bounded O(rows*12) setup, every emitted candidate consumes shared CarveJobs budget; never increase quantum250/budget2000 to mask slow geometry.
+- Opt-in production QA harness lives in hero/reinhard/qa; -Dviltrumitecore.reinhard.qa=true. Use real connected PvP actors for beam tests, not Forge FakePlayer. Never enable on a valuable world.
+
+### Native acceptance corrections (1.36.1)
+- Vanilla AbstractArrow.setOwner(Player) rewrites pickup to ALLOWED/CREATIVE_ONLY. Set DISALLOWED AFTER setOwner, not before it. Native three-mode repeat: held samples age4..12 have inventory0; release13, later pickup allowed. Keep this ordering regression.
+- Minecraft Camera.rotation has +Z forward, while OpenGL view/hand space uses -Z. Convert with camera quaternion * Ry(pi), not camera quaternion alone; otherwise beam/arrow contact flips behind the camera. Test yaw/pitch roundtrip AND positive-forward dot, not roundtrip alone.
+- Capture actual perspective from RenderLevelStageEvent, never use whichever RenderSystem projection is bound by an audio/tick caller (it may be GUI orthographic). TP event bone points are in camera-view coordinates; convert back before adding camera position. FP and TP caches stay separate.
+
+### Core 1.36.2 context/audio correction
+- World-cut slot previews diagonal while crouching and uses the selected variant cooldown. Server and UI use ReinhardAbilities.contextual(). Default Y is Chop; default crouch+B is diagonal and needs DRAWN Reid in Holy Sword. Do not expose retired diagonal as a separate active slot.

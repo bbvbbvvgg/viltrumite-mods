@@ -1,4 +1,5 @@
 package dev.baranhan.viltrumitecore.hero;
+import net.minecraft.world.phys.Vec3;
 
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import net.minecraft.nbt.CompoundTag;
@@ -149,6 +150,14 @@ public interface HeroDefinition {
 
    /** Opt-in policy for claimed LMB; melee-only heroes leave vanilla block mining alone. */
    default boolean claimsBlockAttack(Player player) { return true; }
+
+   /** Optional physical catch. True transfers temporary projectile ownership to the hero. */
+   default boolean captureProjectile(ServerPlayer self, net.minecraft.world.entity.projectile.Projectile projectile) { return false; }
+
+   /** True only when an explicit continuous ray is mechanically stopped by this hero. */
+   default boolean blocksContinuousRay(ServerPlayer self, Vec3 source, Vec3 contact) { return false; }
+   /** Server-owned defensive contact. Client renderers may refine only its presentation. */
+   default Vec3 defenseContact(Player self) { return null; }
 
    /** Server rejects stray vanilla entity-hit packets for timeline-owned melee. */
    default boolean allowsVanillaAttack(Player player) { return true; }

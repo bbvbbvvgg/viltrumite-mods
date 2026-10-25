@@ -96,6 +96,7 @@ public final class WorldCut implements AbilityHandler {
    private static final class Live implements Environment {
       final ServerLevel level; final UUID castId, casterId; final WorldCutShape shape;
       final int[] surface; final long startTime; WorldCutCarve carve;
+      final long telemetryStart=System.nanoTime();
       final Map<UUID, Entity> candidates = new HashMap<>();
       Live(ServerLevel level, UUID castId, UUID casterId, WorldCutShape shape, int[] surface, long startTime) {
          this.level=level; this.castId=castId; this.casterId=casterId; this.shape=shape; this.surface=surface; this.startTime=startTime;
@@ -110,7 +111,7 @@ public final class WorldCut implements AbilityHandler {
          carve=new WorldCutCarve(shape,surface,level.getMinBuildHeight(),level.getMaxBuildHeight(),level.getWorldBorder()::isWithinBounds);
          CarveJobs.submit(level,carve);
       }
-      public void progress(long elapsed, boolean finished) { send(finished ? WorldCutS2CPacket.DONE : WorldCutS2CPacket.WORK); }
+      public void progress(long elapsed, boolean finished) { if(finished)CutTelemetry.done("ground",castId,level,elapsed,telemetryStart,carve); send(finished ? WorldCutS2CPacket.DONE : WorldCutS2CPacket.WORK); }
       public boolean pendingWork() { return carve!=null && CarveJobs.pending(level,carve); }
       public int carveFront() { return WorldCut.carveFront(carve); }
       public Collection<UUID> targets(int through) {

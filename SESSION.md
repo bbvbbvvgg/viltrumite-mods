@@ -434,3 +434,22 @@ Core1.35.3 JAR SHA256:
 Финальный runClient завершён штатно через Save and Quit → Quit Game, exit0 /
 BUILD SUCCESSFUL (7m11s). Render/mixin exceptions не возникли; предупреждения
 аудиоустройства/narrator/offline Realms и legacy license path — окружение/старые.
+
+## 2026-10-20 — reinhard-combat-interaction (Notion AI)
+- Started directly at PR #40 HEAD 381850ab312369aceb2c8f65db556c0c6226da88; branch rework/reinhard-combat-interaction, stacked base fix/reinhard-strike-fluidity. Core 1.36.0, Flight unchanged.
+- Compact RMB/Y/Z/B contexts, independent defense channel and explicit laser/projectile seams, physical arrow retention, bounded final-blade collision bake, DONE-gated sound accent, thin recessed diagonal wound and exact budgeted projected raster.
+- Real Java17 Forge dedicated server/client connected; modes, draw, primary, cuts and grab/throw exercised under software rendering. Found early arrow pickup via noPhysics; fixed pickup policy. No audio device. Full attack matrix, exact beam/palm alignment, new defense final-mesh acceptance and live comparative/concurrent performance remain open. Draft, not full acceptance; see docs/reports/2026-10-20-reinhard-combat-interaction.md.
+
+## 2026-10-20 — Reinhard 1.36.1 continuation (Notion AI)
+- Continued PR41 over unchanged PR40 HEAD381850ab312369aceb2c8f65db556c0c6226da88. No main/previous PR merges.
+- Real server ray stops for Unibeam/Pulse; shot/wave/splash execution-path matrix, actual reflected missile owner/target; free-hand defense while Reid attacks, final render-palm endpoint, separate FP evade and geometry/projection/wire gates.
+- Native repeat found vanilla setOwner resets pickup; fixed order AFTER ownership. All three modes hold original arrow with inventory0 until release. Native beam blocked a cow behind defender (1000HP); moving defender off line allowed damage994.1289HP.
+- Native review found Camera.rotation +Z vs OpenGL -Z and GUI/audio projection hazards; fixed both, added direction and perspective-capture regressions. Do not mistake a pure coordinate roundtrip test for correct forward orientation.
+- Live equal-fill295470-stone cut tests, shared2000 budget: Ground157ticks/~7.85s, diagonal114–115/~5.70–5.75s; two jobs diagonal148/ground190ticks. Old projected tilted diagonal240ticks/~12s ->115/~5.75s. Software FPS minima7–37 single,22 concurrent; report actual limitations.
+- Real OpenAL/PulseAudio monitor recording: no full-scale clips across five cases including concurrent. Impact decoded RMS+5.63dB, bounded shared impact/tail crossfade; sounds follow actual DONE, not blast timer. Human listening/GPU/shader and exhaustive author acceptance not claimed.
+- Main report and evidence: docs/reports/2026-10-20-reinhard-combat-interaction.md and reinhard-{attack-matrix,defense-native,live-cuts,audio-evidence} files. Raw worlds/logs/video remain outside repository.
+
+## Core 1.36.2 user correction
+The user explicitly selected original sound1 WORLD_CUT_TAIL for loud post-destruction/DONE only, and sound2 procedural impact for quiet pulses inside the WORK rupture. Remove sound3 repeated rumble from both cuts. Do not use the old impact+quiet-tail finishing pair. Tail uses original recording with body mastering, not a substituted sound. Contextual slot preview/cooldown now follows crouching; default Y is Chop, crouch+B is diagonal, DRAWN Reid required. Native keyboard/audio check and full build are recorded in the current report.
+
+The user explicitly stopped native audio tests. Do not resume captures or listening checks unless asked. Core1.36.2 full build passes:1330 Core+12 Flight=1342, plus17 Python audio/file tests. Native audio/keyboard acceptance of1.36.2 remains unverified by request.

@@ -66,20 +66,23 @@ public final class PulseUnibeam implements MarkSignature {
 
       Vec3 from = SignatureTrace.chest(player);
       Vec3 dir = player.getLookAngle();
-      Vec3 end = beamEnd(player, from, dir);
-      sig.point = end;
+      var guard=beamEnd(player,from,dir);
+      sig.point = guard.end();
       if (SignatureRules.pulseHitsTick(tick)) {
-         hitAlong(player, from, end, dir);
+         hitAlong(player, from, guard, dir);
       }
    }
 
    /** Glass and leaves give way (as the Unibeam); everything else stops the pulse. */
-   private static Vec3 beamEnd(ServerPlayer player, Vec3 from, Vec3 dir) {
+   private static dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop beamEnd(ServerPlayer player, Vec3 from, Vec3 dir) {
       ServerLevel level = player.serverLevel();
       Vec3 end = from.add(dir.scale(IronManRules.UNIBEAM_RANGE));
       BlockHitResult block = null;
       for (int i = 0; i < 4; i++) {
          block = level.clip(new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+         var guard=dev.baranhan.viltrumitecore.hero.HeroRayDefense.clip(player,from,block.getType()==HitResult.Type.BLOCK?block.getLocation():end,
+            IronManRules.UNIBEAM_RADIUS,e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player,e));
+         if(guard.defender()!=null)return guard;
          if (block.getType() != HitResult.Type.BLOCK || i == 3) {
             break;
          }
@@ -92,10 +95,11 @@ public final class PulseUnibeam implements MarkSignature {
          }
       }
 
-      return block != null && block.getType() == HitResult.Type.BLOCK ? block.getLocation() : end;
+      return new dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop(block != null && block.getType() == HitResult.Type.BLOCK ? block.getLocation() : end,null);
    }
 
-   private static void hitAlong(ServerPlayer player, Vec3 from, Vec3 to, Vec3 dir) {
+   private static void hitAlong(ServerPlayer player, Vec3 from, dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop guard, Vec3 dir) {
+      Vec3 to=guard.end();
       double radius = IronManRules.UNIBEAM_RADIUS;
       Vec3 segment = to.subtract(from);
       double length = segment.length();
@@ -110,6 +114,7 @@ public final class PulseUnibeam implements MarkSignature {
             continue;
          }
 
+         if(!guard.permits(target,from))continue;
          if (SignatureTrace.strike(target, source, SignatureRules.PULSE_DAMAGE)) {
             SignatureTrace.push(target, dir.scale(IronManRules.UNIBEAM_PUSH));
             if (target instanceof Mob mob) {

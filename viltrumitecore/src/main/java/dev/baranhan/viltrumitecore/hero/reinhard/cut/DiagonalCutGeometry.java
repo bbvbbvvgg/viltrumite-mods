@@ -47,30 +47,74 @@ public record DiagonalCutGeometry(Vec3 origin, Vec3 forward, long seed) {
       }
       return b.inflate(.5);
    }
-   /** Every AABB candidate, including mask rejects, consumes one queue visit. O(1) memory. */
+   /** Raster columns parallel to the dominant normal. No unbudgeted search or full-volume scan.
+    * Each column has a fixed conservative number of depth samples. The exact mask remains
+    * authoritative. This covers every original voxel once, including fractional origins.
+    */
    public WorldCutGeometry.Wave wave(int minY,int maxY) {
       AABB b=bounds();
-      int x0=(int)Math.floor(b.minX),x1=(int)Math.ceil(b.maxX);
-      int y0=Math.max(minY,(int)Math.floor(b.minY)),y1=Math.min(maxY,(int)Math.ceil(b.maxY));
-      int z0=(int)Math.floor(b.minZ),z1=(int)Math.ceil(b.maxZ);
-      boolean majorX=Math.abs(forward.x)>=Math.abs(forward.z);
-      int u0=majorX?x0:z0, u1=majorX?x1:z1, v0=majorX?z0:x0,v1=majorX?z1:x1;
-      boolean reverse=(majorX?forward.x:forward.z)<0;
-      int total=Math.max(0,u1-u0)*Math.max(0,v1-v0)*Math.max(0,y1-y0);
+      Vec3 n=normal(), span=span();
+      double[] nv={n.x,n.y,n.z}, ov={origin.x,origin.y,origin.z};
+      // Y stays in the projected grid: every emitted candidate obeys build height.
+      int axis=Math.abs(n.x)>=Math.abs(n.z)?0:2;
+      final int depthAxis=axis, uAxis=(axis+1)%3, vAxis=(axis+2)%3;
+      int[] lo={(int)Math.floor(b.minX),Math.max(minY,(int)Math.floor(b.minY)),(int)Math.floor(b.minZ)};
+      int[] hi={(int)Math.ceil(b.maxX),Math.min(maxY,(int)Math.ceil(b.maxY)),(int)Math.ceil(b.maxZ)};
+      double depth=HALF_THICKNESS/Math.abs(nv[axis]);
+      int samples=(int)Math.ceil(2*depth)+1;
+      // Project the finite OBB, not its much larger AABB. At most ~400 rows x 12
+      // fixed edges: bounded setup, no voxel search outside CarveJobs' budget.
+      double[][] corners=new double[8][];
+      for(int k=0;k<8;k++) {
+         Vec3 c=point((k&1)==0?0:LENGTH,(k&2)==0?-HALF_SPAN:HALF_SPAN,(k&4)==0?-HALF_THICKNESS:HALF_THICKNESS);
+         double[] xyz={c.x,c.y,c.z};corners[k]=new double[]{xyz[uAxis],xyz[vAxis]};
+      }
+      record Row(int u,int v,int columns,int end) {}
+      java.util.List<Row> rows=new java.util.ArrayList<>();int cells=0;
+      if(minY<maxY)for(int u=lo[uAxis];u<hi[uAxis];u++) {
+         double at=u+.5,min=Double.POSITIVE_INFINITY,max=Double.NEGATIVE_INFINITY;
+         for(int k=0;k<8;k++)for(int bit=1;bit<=4;bit*=2)if((k&bit)==0) {
+            double[] c=corners[k],d=corners[k|bit];double delta=d[0]-c[0];
+            if(Math.abs(delta)<1E-10) {
+               if(Math.abs(at-c[0])<1E-8) {min=Math.min(min,Math.min(c[1],d[1]));max=Math.max(max,Math.max(c[1],d[1]));}
+            } else {
+               double t=(at-c[0])/delta;
+               if(t>=-1E-10 && t<=1+1E-10) {double v=c[1]+t*(d[1]-c[1]);min=Math.min(min,v);max=Math.max(max,v);}
+            }
+         }
+         if(!Double.isFinite(min))continue;
+         int first=Math.max(lo[vAxis],(int)Math.ceil(min-.5-1E-8));
+         int last=Math.min(hi[vAxis],(int)Math.floor(max-.5+1E-8)+1);
+         if(last<=first)continue;
+         cells=Math.addExact(cells,Math.multiplyExact(last-first,samples));rows.add(new Row(u,first,last-first,cells));
+      }
+      final int total=cells;
       return new WorldCutGeometry.Wave() {
-         int index,front;
+         int index,front,rowIndex;
          public boolean hasNext() { return index<total; }
          public int remainingWork() { return total-index; }
          public int frontAlong() { return front; }
-         public boolean carve(WorldCutGeometry.Cell c) { return contains(new Vec3(c.x()+.5,c.y()+.5,c.z()+.5)); }
+         public boolean carve(WorldCutGeometry.Cell c) {
+            double x=c.x()+.5-origin.x, y=c.y()+.5-origin.y, z=c.z()+.5-origin.z;
+            double a=x*forward.x+y*forward.y+z*forward.z;
+            return c.y()>=minY && c.y()<maxY && a>=0 && a<LENGTH && Math.abs(x*span.x+y*span.y+z*span.z)<=width(a)
+               && Math.abs(x*n.x+y*n.y+z*n.z)<=HALF_THICKNESS;
+         }
          public WorldCutGeometry.Cell next() {
-            if(!hasNext()) throw new NoSuchElementException();
-            int h=y1-y0,w=v1-v0, q=index++;
-            int u=q/(h*w),v=q/h%w,y=y1-1-q%h;
-            u=reverse?u1-1-u:u0+u;
-            int x=majorX?u:v0+v,z=majorX?v0+v:u;
-            int along=(int)Math.max(0,Math.min(LENGTH-1,new Vec3(x+.5,y+.5,z+.5).subtract(origin).dot(forward)));
-            front=Math.max(front,along+1);
+            if(!hasNext())throw new NoSuchElementException();
+            int q=index++;
+            if(q>=rows.get(rowIndex).end())rowIndex++;
+            Row row=rows.get(rowIndex);int base=rowIndex==0?0:rows.get(rowIndex-1).end();
+            int u=row.u(),v=row.v()+(q-base)/samples;
+            double center=ov[depthAxis]-(nv[uAxis]*(u+.5-ov[uAxis])+nv[vAxis]*(v+.5-ov[vAxis]))/nv[depthAxis];
+            int d=(int)Math.ceil(center-.5-depth-1E-8)+(q-base)%samples;
+            int x=depthAxis==0?d:uAxis==0?u:v;
+            int y=depthAxis==1?d:uAxis==1?u:v;
+            int z=depthAxis==2?d:uAxis==2?u:v;
+            int along=(int)Math.max(0,Math.min(LENGTH-1,(x+.5-origin.x)*forward.x+(y+.5-origin.y)*forward.y+(z+.5-origin.z)*forward.z));
+            // Conservative progress: projections are not sorted in forward order. Do not
+            // claim an unvisited prefix for entity damage. Completion releases all targets.
+            if(index==total)front=LENGTH;
             return new WorldCutGeometry.Cell(x,y,z,along,99);
          }
       };

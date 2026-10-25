@@ -10,7 +10,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.entity.PartEntity;
 
-/** Z owns its own spatial frame and event; only the detached clock/budget are reused. */
+/** Crouch + the world-cut slot owns a spatial frame; detached clock/budget are reused. */
 public final class DiagonalWorldCut implements AbilityHandler {
    @Override public boolean tryStart(ServerPlayer player,ReinhardState state) {
       ServerLevel level=player.serverLevel();
@@ -26,6 +26,7 @@ public final class DiagonalWorldCut implements AbilityHandler {
    }
    private static final class Live implements WorldCut.Environment {
       final ServerLevel level; final UUID id,caster; final DiagonalCutGeometry shape; final long start;
+      final long telemetryStart=System.nanoTime();
       WorldCutCarve carve; final Map<UUID,Entity> targets=new HashMap<>();
       Live(ServerLevel l,UUID id,UUID caster,DiagonalCutGeometry s,long start) {
          this.level=l;this.id=id;this.caster=caster;this.shape=s;this.start=start;
@@ -41,7 +42,7 @@ public final class DiagonalWorldCut implements AbilityHandler {
       }
       public boolean pendingWork() { return carve!=null&&CarveJobs.pending(level,carve); }
       public int carveFront() { return carve==null?0:carve.frontAlong(); }
-      public void progress(long elapsed,boolean done) { send(done?3:2); }
+      public void progress(long elapsed,boolean done) { if(done)CutTelemetry.done("diagonal",id,level,elapsed,telemetryStart,carve); send(done?3:2); }
       public Collection<UUID> targets(int through) {
          targets.clear();
          for(Entity e:level.getEntities((Entity)null,shape.bounds(),e->e instanceof LivingEntity||e instanceof PartEntity<?>)) {

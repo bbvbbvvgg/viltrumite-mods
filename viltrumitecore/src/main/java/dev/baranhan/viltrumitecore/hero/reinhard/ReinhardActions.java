@@ -34,6 +34,7 @@ public final class ReinhardActions {
 
    static {
       register(ReinhardAbility.LIGHT_PUNCH, new LightPunch());
+      register(ReinhardAbility.REID_STRIKE, new dev.baranhan.viltrumitecore.hero.reinhard.ability.ReidMelee());
       register(ReinhardAbility.STEP_DASH, new StepDash());
       register(ReinhardAbility.CATCH, new CatchWindow());
       register(ReinhardAbility.FIST_COMBO, new FistCombo());
@@ -123,6 +124,18 @@ public final class ReinhardActions {
          return;
       }
 
+      ability = ReinhardAbilities.contextual(ability,player.isShiftKeyDown());
+      if (ability == ReinhardAbility.STEP_DASH && state.mode == ReinhardMode.KNIGHT) {
+         var target = DashBehind.lookTarget(player);
+         if (target != null) {
+            var spot = DashBehind.find(player.level(), player, target);
+            if (spot.isEmpty()) { ReinhardHero.INSTANCE.onInputRefused(player, action); return; }
+            state.behindRequest = new DashBehind.Request(target.getId(), spot.get());
+            try { press(player, state, ReinhardAbility.DASH_BEHIND, HANDLERS.get(ReinhardAbility.DASH_BEHIND)); }
+            finally { state.behindRequest = null; }
+            return;
+         }
+      }
       AbilityHandler handler = HANDLERS.get(ability);
       if (handler == null) {
          ReinhardHero.INSTANCE.onInputRefused(player, action);
@@ -145,16 +158,30 @@ public final class ReinhardActions {
    /** One click starts one hit. Only Knight permits a single buffered next click. No slot/R route. */
    public static void primaryAttack(ServerPlayer player, ReinhardState state) {
       if (controlled(player) || state.busy()) return;
-      if (state.mode == ReinhardMode.KNIGHT) {
+      if (state.mode == ReinhardMode.HOLY_SWORD && state.reid.drawn()) {
+         if (!state.action.running()) HANDLERS.get(ReinhardAbility.REID_STRIKE).tryStart(player, state);
+      } else if (state.mode == ReinhardMode.KNIGHT) {
          if (FistCombo.claims(state)) FistCombo.queue(state);
          else if (!state.action.running()) new FistCombo().tryStart(player,state);
       } else if (!state.action.running()) new LightPunch().tryStart(player,state);
       state.reid.combat();
    }
 
+   static ReinhardMode contextualMode(ReinhardAbility ability, ReinhardMode mode) {
+      return ability == ReinhardAbility.STEP_DASH || ability == ReinhardAbility.GRAB_THROW && mode == ReinhardMode.RESTRAINED
+         ? mode : ability.mode();
+   }
+
+   public static void secondaryUse(ServerPlayer player, ReinhardState state) {
+      if (controlled(player)) return;
+      if (GrabThrow.holding(state)) { GrabThrow.finish(player, state); return; }
+      if (!ReinhardHero.canContextGrab(player)) return;
+      press(player, state, ReinhardAbility.GRAB_THROW, HANDLERS.get(ReinhardAbility.GRAB_THROW));
+   }
+
    /** Gate + start; shared with the Dash Behind packet (stage 3 Task 8). */
    static boolean press(ServerPlayer player, ReinhardState state, ReinhardAbility ability, AbilityHandler handler) {
-      Refusal refusal = gate(new Gate(!controlled(player), HeroDamage.isAnchored(player), state.mode, ability.mode(), state.cooldowns[ability.ordinal()],
+      Refusal refusal = gate(new Gate(!controlled(player), HeroDamage.isAnchored(player), state.mode, contextualMode(ability, state.mode), state.cooldowns[ability.ordinal()],
          state.busy(), state.action.running(), Reid.allows(ability, state.reid.phase())));
       if (refusal != Refusal.NONE || !handler.tryStart(player, state)) {
          ReinhardHero.INSTANCE.onInputRefused(player, ability.action());
@@ -212,6 +239,8 @@ public final class ReinhardActions {
       }
 
       state.action.cancel();
+      state.defense.clear();
+      state.arrowCapture.release();
       state.cutAnchor = null;
    }
 }

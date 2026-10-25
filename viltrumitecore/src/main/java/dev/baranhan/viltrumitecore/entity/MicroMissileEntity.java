@@ -90,6 +90,9 @@ public class MicroMissileEntity extends Projectile implements Homing {
 
       this.setDeltaMovement(dir.scale(speed));
       HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+      if (!this.level().isClientSide() && dev.baranhan.viltrumitecore.hero.HeroProjectiles.intercept(this, hit)) return;
+      if (this.level().isClientSide() && hit instanceof EntityHitResult entityHit
+         && entityHit.getEntity() instanceof net.minecraft.world.entity.player.Player) return;
       if (hit.getType() != HitResult.Type.MISS) {
          if (!this.level().isClientSide()) {
             this.onHit(hit);

@@ -145,7 +145,7 @@ public class RocketFistEntity extends Entity {
       Vec3 away = target.position().subtract(owner.position());
       Vec3 flat = new Vec3(away.x, 0.0, away.z);
       Vec3 dir = flat.lengthSqr() < 1.0E-4 ? Vec3.ZERO : flat.normalize();
-      if (SignatureTrace.strike(target, owner.damageSources().playerAttack(owner), SignatureRules.FIST_DAMAGE)) {
+      if (SignatureTrace.shot(target, owner.damageSources().playerAttack(owner), SignatureRules.FIST_DAMAGE)) {
          SignatureTrace.push(target, dir.scale(SignatureRules.FIST_KNOCKBACK).add(0.0, SignatureRules.FIST_KNOCKBACK_UP, 0.0));
       }
 

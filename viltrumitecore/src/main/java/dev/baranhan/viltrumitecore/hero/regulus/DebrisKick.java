@@ -255,7 +255,7 @@ public final class DebrisKick {
 
       int savedInvulnerable = target.invulnerableTime;
       target.invulnerableTime = 0;
-      boolean landed = target.hurt(player.damageSources().playerAttack(player), damage);
+      boolean landed = dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(target,player.damageSources().playerAttack(player), damage,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
       target.invulnerableTime = savedInvulnerable;
       if (!landed) {
          return;

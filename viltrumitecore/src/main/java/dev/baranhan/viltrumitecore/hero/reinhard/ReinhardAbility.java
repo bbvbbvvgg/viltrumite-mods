@@ -22,7 +22,8 @@ public enum ReinhardAbility {
    CUT_RAIN(ReinhardMode.HOLY_SWORD, 3, HeroAction.CUT_RAIN, 4),
    WORLD_CUT(ReinhardMode.HOLY_SWORD, 4, HeroAction.WORLD_CUT, 5),
    WORLD_ERASURE(ReinhardMode.HOLY_SWORD, 5, HeroAction.WORLD_ERASURE, 6),
-   DIAGONAL_WORLD_CUT(ReinhardMode.HOLY_SWORD, 2, HeroAction.DIAGONAL_WORLD_CUT, 6);
+   DIAGONAL_WORLD_CUT(ReinhardMode.HOLY_SWORD, 2, HeroAction.DIAGONAL_WORLD_CUT, 6),
+   REID_STRIKE(ReinhardMode.HOLY_SWORD, 0, HeroAction.PRIMARY_ATTACK, 6);
 
    private final String name;
    private final String id;

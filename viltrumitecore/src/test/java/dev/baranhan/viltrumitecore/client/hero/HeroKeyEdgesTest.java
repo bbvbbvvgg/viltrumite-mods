@@ -35,7 +35,7 @@ class HeroKeyEdgesTest {
 
    @Test void everyReinhardModeKeyReachesPacketIncludingFiveLateSwordSlots() {
       HeroDefinition hero = ReinhardHero.INSTANCE;
-      assertEquals(11, hero.heroInputSlots().length); // fourteen abilities; predicted Dash Behind is separate
+      assertEquals(6, hero.heroInputSlots().length); // context variants are not separate keys
       Set<HeroAction> observed = new HashSet<>();
       String[] loadout = hero.defaultLoadout();
       for (int page = 0; page < 3; page++) {
@@ -51,8 +51,8 @@ class HeroKeyEdgesTest {
             observed.add(action);
          }
       }
-      assertEquals(11, observed.size());
-      assertTrue(observed.containsAll(List.of(HeroAction.REID, HeroAction.DIAGONAL_WORLD_CUT,
+      assertEquals(6, observed.size());
+      assertTrue(observed.containsAll(List.of(HeroAction.REID, HeroAction.STEP_DASH,
          HeroAction.CUT_RAIN, HeroAction.WORLD_CUT, HeroAction.WORLD_ERASURE)));
       assertFalse(Arrays.asList(hero.heroInputSlots()).contains(ReinhardAbility.DASH_BEHIND.id()));
       assertFalse(Arrays.asList(hero.heroInputSlots()).contains(ReinhardAbilities.CHOP)); // shared kit path
@@ -101,12 +101,12 @@ class HeroKeyEdgesTest {
 
    @Test void guiOrFocusLossReleasesOnceAndRequiresFreshPressAfterReturn() {
       HeroDefinition hero = ReinhardHero.INSTANCE;
-      tick(hero, "page"); held.add("reinhard:reflect"); tick(hero, "page"); sent.clear();
+      tick(hero, "page"); held.add("reinhard:step_dash"); tick(hero, "page"); sent.clear();
       tick(hero, "page", false, hero.heroInputSlots()); tick(hero, "page", false, hero.heroInputSlots());
       tick(hero, "page"); tick(hero, "page"); held.clear(); tick(hero, "page");
-      assertEquals(List.of(new Edge(HeroAction.REFLECT_PROJECTILE, false)), sent);
-      sent.clear(); held.add("reinhard:reflect"); tick(hero, "page");
-      assertEquals(List.of(new Edge(HeroAction.REFLECT_PROJECTILE, true)), sent);
+      assertEquals(List.of(new Edge(HeroAction.STEP_DASH, false)), sent);
+      sent.clear(); held.add("reinhard:step_dash"); tick(hero, "page");
+      assertEquals(List.of(new Edge(HeroAction.STEP_DASH, true)), sent);
    }
 
    @Test void bindingChangeWithinSamePageDoesNotSynthesizePress() {

@@ -82,7 +82,7 @@ public final class HeroShockwave {
          }
 
          double falloff = 1.0 - Math.sqrt(entity.distanceToSqr(player)) / (radius + 0.5);
-         entity.hurt(player.damageSources().playerAttack(player), damage * (float)(0.5 + 0.5 * falloff));
+         dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(entity,player.damageSources().playerAttack(player), damage * (float)(0.5 + 0.5 * falloff),dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
          if (HeroRegistry.allowsExternalControl(entity, ControlKind.IMPULSE) && !manager.isAnchored(entity)) {
             Vec3 away = entity.position().subtract(feet);
             Vec3 flat = new Vec3(away.x, 0.0, away.z);
