@@ -15,7 +15,7 @@ import net.minecraft.world.entity.player.Player;
 /** Reinhard's loadout: one page per mode (spec §6, §7.1). */
 public final class ReinhardAbilities {
    /** Highest plan stage whose abilities are in the game. Bumped by every stage. */
-   public static final int SHIPPED_STAGE = 1;
+   public static final int SHIPPED_STAGE = 2;
    /** The shared kit chop joins Holy Sword slot 2 with Stage 4. */
    public static final String CHOP = "viltrumite:chop";
    public static final int CHOP_STAGE = 4;

@@ -222,6 +222,8 @@ public final class HeroEvents {
       if (event.getEntity() instanceof ServerPlayer player) {
          HeldInputs.releaseAll(player);
          HeroDamageLayers.forget(player);
+         HeroAirJump.forget(player);
+         HeroResourceRegen.forget(player);
          HeroRegistry.get(player).cleanup(player, CleanupReason.DISCONNECT);
       }
    }
@@ -332,9 +334,36 @@ public final class HeroEvents {
       }
    }
 
+   /** Server player tick END: shared per-player systems that tick for every hero (online time only). */
+   @SubscribeEvent
+   public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+      if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
+         PersistentCooldowns.tick(player);
+         HeroAirJump.tick(player);
+      }
+   }
+
+   @SubscribeEvent
+   public static void onEffectApplicable(net.minecraftforge.event.entity.living.MobEffectEvent.Applicable event) {
+      if (event.getEntity() instanceof Player player && HeroRegistry.get(player).blocksEffect(player, event.getEffectInstance())) {
+         event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
+      }
+   }
+
+   @SubscribeEvent
+   public static void onProjectileImpact(net.minecraftforge.event.entity.ProjectileImpactEvent event) {
+      HeroProjectiles.onImpact(event);
+   }
+
    @SubscribeEvent
    public static void onLevelTick(TickEvent.LevelTickEvent event) {
-      if (event.phase == TickEvent.Phase.END || !(event.level instanceof ServerLevel level)) {
+      if (!(event.level instanceof ServerLevel level)) {
+         return;
+      }
+
+      if (event.phase == TickEvent.Phase.END) {
+         HeroProjectiles.tickPending(level);
+         HeroResourceRegen.flush(level);
          return;
       }
 

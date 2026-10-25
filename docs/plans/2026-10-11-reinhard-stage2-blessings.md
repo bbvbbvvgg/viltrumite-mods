@@ -43,11 +43,11 @@ See the overview. Stage-specific:
 - `Phoenix.revive`: target point = `SafeSpot` style search (Stage 3 Task 8 class is not available yet → local pure helper `Phoenix.pickPoint(origin, awayFrom, IntBiPredicate fits)`: ring 6–10 blocks, prefer the direction away from the attacker; fallback = origin); `setHealth(max)`, `clearFire`, fire-immunity 3 s, `PhoenixFlameVfx` (gold-red pixel flames rising for 30 t, sent as `HeroFx.flash` + `launch` with `material` null and a new `HeroFxS2CPacket` kind only if the existing kinds cannot show flames — first try `HeroFx.launch` with a fire block material).
 - HUD: `blessing_bearer.png` 12×12 under the mode icons, alpha 40% while `extraCooldowns[EXTRA_PHOENIX] > 0` (seconds left as small text).
 
-- [ ] **Step 1: Write the failing tests** — `PersistentCooldownsTest.tickRemovesAtZero`, `keysIndependent`; `PhoenixTest.revivesWhenReady`, `secondDeathInsideCooldownKills`, `cooldownIs12000`, `offlineDoesNotTick` (no `tick` calls = no change), `survivesHeroChange` (store outside hero state), `pickPointAwayFromAttacker`, `pickPointFallsBackToOrigin`; `AdaptationTest.thirdHitGrantsImmunity`, `thirdHitStillLands`, `otherTypeResetsStreak`, `ordinaryDamageDoesNotTouch`, `clearedOnDeath` (clone does not copy).
-- [ ] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*PersistentCooldowns*' --tests '*Phoenix*' --tests '*Adaptation*' --no-daemon` → FAIL.
-- [ ] **Step 3: Implement**. Dev command check: `/viltrumite divine @s 100` → revive with flames at a point nearby; again → death; `/viltrumite divine @s 5` ×3 → the 4th does nothing.
-- [ ] **Step 4: Run** → PASS.
-- [ ] **Step 5: Commit** `feat(hero): persistent cooldowns` and `feat(reinhard): phoenix and protection acquisition`.
+- [x] **Step 1: Write the failing tests** — `PersistentCooldownsTest.tickRemovesAtZero`, `keysIndependent`; `PhoenixTest.revivesWhenReady`, `secondDeathInsideCooldownKills`, `cooldownIs12000`, `offlineDoesNotTick` (no `tick` calls = no change), `survivesHeroChange` (store outside hero state), `pickPointAwayFromAttacker`, `pickPointFallsBackToOrigin`; `AdaptationTest.thirdHitGrantsImmunity`, `thirdHitStillLands`, `otherTypeResetsStreak`, `ordinaryDamageDoesNotTouch`, `clearedOnDeath` (clone does not copy).
+- [x] **Step 2: Run** `./gradlew :viltrumitecore:test --tests '*PersistentCooldowns*' --tests '*Phoenix*' --tests '*Adaptation*' --no-daemon` → FAIL.
+- [x] **Step 3: Implement**. Dev command check: `/viltrumite divine @s 100` → revive with flames at a point nearby; again → death; `/viltrumite divine @s 5` ×3 → the 4th does nothing.
+- [x] **Step 4: Run** → PASS.
+- [x] **Step 5: Commit** `feat(hero): persistent cooldowns` and `feat(reinhard): phoenix and protection acquisition`.
 
 ### Task 2: Blessing of the Holy Sword — front parry
 
@@ -61,9 +61,9 @@ See the overview. Stage-specific:
 - `Parry.isMelee(boolean directIsAttacker, boolean projectile, boolean explosion, boolean divine)` → true only for a direct melee hit that is not divine. `Parry.inFront(Vec2 lookXZ, Vec2 toAttackerXZ)` → `dot ≥ PARRY_CONE_COS`.
 - On parry: `DamageAbsorb.ABSORBED`, flag `PARRY` for 8 t (snapshot), `HeroFx.flash` at the contact point (between the two bodies, chest height) + gold-white pixel sparks (`HeroFx.shards` with `material` = gold block), sound. The attacker gets no knockback from the parry (spec says nothing; keep it pure defence).
 
-- [ ] **Step 1: Write the failing tests** — `frontMeleeParried`, `backHitNotParried`, `sideAt70DegreesNotParried`, `projectileNotParried`, `divineNotParried`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: second player hits from the front (parry pose 3rd person, arm flick 1st person, spark, no HP loss) and from behind (normal resisted hit).
-- [ ] **Step 5: Commit** `feat(reinhard): holy sword parry`.
+- [x] **Step 1: Write the failing tests** — `frontMeleeParried`, `backHitNotParried`, `sideAt70DegreesNotParried`, `projectileNotParried`, `divineNotParried`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: second player hits from the front (parry pose 3rd person, arm flick 1st person, spark, no HP loss) and from behind (normal resisted hit).
+- [x] **Step 5: Commit** `feat(reinhard): holy sword parry`.
 
 ### Task 3: Projectile seam and Arrow Protection
 
@@ -82,9 +82,9 @@ See the overview. Stage-specific:
   - pure helpers: `static Vec3 deflected(Vec3 v, Vec3 toBody, boolean left)`, `static Vec3 reflected(Vec3 v, Vec3 from, @Nullable Vec3 ownerEye)`.
 - `ArrowWard.response(boolean catchOpen, boolean reflectOpen)` → REFLECT if reflect open, else CATCH if catch open, else DEFLECT (spec §4.3: windows win over the passive; reflect beats catch when both are open — they cannot be open together in practice, but the function is total). Windows come from Stage 3; now both are false.
 
-- [ ] **Step 1: Write the failing tests** — `deflectTurnsSideways` (angle between old and new ≥ 60°), `deflectSlower`, `reflectAimsAtOwner`, `reflectWithoutOwnerGoesBack`, `deflectRotatesPowerVector` (fireball: angle(power, velocity) unchanged by deflect; simulate 20 ticks → no curve back), `catchSkeletonArrow` (DISALLOWED → item), `catchInfinityArrowGivesNothing` (CREATIVE_ONLY), `catchTippedKeepsPotion`, `ArrowWardTest.priority` (all 4 combinations), `allProjectileKinds` (response does not depend on the projectile class).
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: skeleton, second player's bow, trident, ghast fireball, snowball, splash potion — all fly off sideways without damage or effect; other heroes still get hit.
-- [ ] **Step 5: Commit** `feat(hero): projectile response seam` and `feat(reinhard): arrow protection`.
+- [x] **Step 1: Write the failing tests** — `deflectTurnsSideways` (angle between old and new ≥ 60°), `deflectSlower`, `reflectAimsAtOwner`, `reflectWithoutOwnerGoesBack`, `deflectRotatesPowerVector` (fireball: angle(power, velocity) unchanged by deflect; simulate 20 ticks → no curve back), `catchSkeletonArrow` (DISALLOWED → item), `catchInfinityArrowGivesNothing` (CREATIVE_ONLY), `catchTippedKeepsPotion`, `ArrowWardTest.priority` (all 4 combinations), `allProjectileKinds` (response does not depend on the projectile class).
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: skeleton, second player's bow, trident, ghast fireball, snowball, splash potion — all fly off sideways without damage or effect; other heroes still get hit.
+- [x] **Step 5: Commit** `feat(hero): projectile response seam` and `feat(reinhard): arrow protection`.
 
 ### Task 4: Blessing of the Cloudy Sky — air steps and super jump
 
@@ -105,9 +105,9 @@ See the overview. Stage-specific:
 - `ReinhardRules`: `AIR_STEPS = 5`, `AIR_STEP_VELOCITY = 0.62` (≈ 1.9 blocks each), `SUPER_JUMP_VELOCITY = 2.2` (≈ 20 blocks via `HeroSuperJump.apex`).
 - `CloudStep.fallDistance` reset on each step (no fall damage anyway, but it keeps the landing shockwave of other systems quiet).
 
-- [ ] **Step 1: Write the failing tests** — `HeroAirJumpTest.refusesAboveMax`, `refusesAnchored`, `AirJumpRulesTest.sameResetsBothSides` (water, lava, ladder, ground, flying, riding), `refusalSendsCorrection` (fake sender: refused press → one motion packet + one sync packet, no FX), `acceptedSetsServerVelocity`, `sixthPacketRefused` (5 accepted then refused while airborne), `CloudStepTest.fiveSteps`, `groundOrClimbResets`, `superJumpApexAbout20` (`HeroSuperJump.apex(2.2)` in 18–24), `stepHeightAbout2`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual both views: 5 steps then nothing; in water / on a ladder the counter resets on both sides (6th step after touching a ladder works); with 200 ms simulated latency (`/forge` is not needed; LAN over a lagged proxy or a dev delay flag in `AirJumpClient`) the predicted step does not snap; super jump key; Regulus/Homelander/Iron Man jump unchanged (their `airJumps` = 0).
-- [ ] **Step 5: Commit** `feat(hero): air jump seam` and `feat(reinhard): cloudy sky blessing`.
+- [x] **Step 1: Write the failing tests** — `HeroAirJumpTest.refusesAboveMax`, `refusesAnchored`, `AirJumpRulesTest.sameResetsBothSides` (water, lava, ladder, ground, flying, riding), `refusalSendsCorrection` (fake sender: refused press → one motion packet + one sync packet, no FX), `acceptedSetsServerVelocity`, `sixthPacketRefused` (5 accepted then refused while airborne), `CloudStepTest.fiveSteps`, `groundOrClimbResets`, `superJumpApexAbout20` (`HeroSuperJump.apex(2.2)` in 18–24), `stepHeightAbout2`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual both views: 5 steps then nothing; in water / on a ladder the counter resets on both sides (6th step after touching a ladder works); with 200 ms simulated latency (`/forge` is not needed; LAN over a lagged proxy or a dev delay flag in `AirJumpClient`) the predicted step does not snap; super jump key; Regulus/Homelander/Iron Man jump unchanged (their `airJumps` = 0).
+- [x] **Step 5: Commit** `feat(hero): air jump seam` and `feat(reinhard): cloudy sky blessing`.
 
 ### Task 5: Blessing of Wind Reading — outlines
 
@@ -121,9 +121,9 @@ See the overview. Stage-specific:
 - Pure `WindReading.isMarked(boolean invisible, boolean behind, boolean hostileToMe)`: `invisible || (behind && hostileToMe)`. `hostileToMe` = mob whose `getTarget() == self`, or a player who hit Reinhard within `WIND_RECENT_ATTACK_TICKS` (tracked from `onHurt`), or a projectile owner of a projectile flying toward him.
 - Server pushes the marked entity ids to `OwnerSection.THREATS` (reused section; only the owner sees it; push `Section.EMPTY` before re-sending the same content to restart). Client: `colorOf(entity)` = `WIND_COLOR` if the local player is Reinhard and the id is in `ClientHeroData.section(THREATS)`, else 0 (pass to the next source).
 
-- [ ] **Step 1: Write the failing tests** — `invisibleAlwaysMarked`, `behindAttackerMarked`, `behindPassiveNotMarked`, `frontAttackerNotMarked`, `outsideRadiusIgnored`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: invisible player in front and behind (outlined), zombie chasing from behind (outlined), cow behind (not); Iron Man scan and Homelander focus outlines still work for their owners.
-- [ ] **Step 5: Commit** `feat(reinhard): wind reading blessing`.
+- [x] **Step 1: Write the failing tests** — `invisibleAlwaysMarked`, `behindAttackerMarked`, `behindPassiveNotMarked`, `frontAttackerNotMarked`, `outsideRadiusIgnored`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: invisible player in front and behind (outlined), zombie chasing from behind (outlined), cow behind (not); Iron Man scan and Homelander focus outlines still work for their owners.
+- [x] **Step 5: Commit** `feat(reinhard): wind reading blessing`.
 
 ### Task 6: Blessing of Detoxification — effect seam
 
@@ -136,9 +136,9 @@ See the overview. Stage-specific:
 - `default boolean blocksEffect(Player self, MobEffectInstance effect) { return false; }`.
 - `Detox.blocks(MobEffectCategory category, boolean isPoisonLike)` → `category == HARMFUL || isPoisonLike` (poison and wither are HARMFUL already; `isPoisonLike` covers mod effects tagged `forge:poison` if present). `HeroPassiveEffect` (hidden ambient effects) are BENEFICIAL and pass.
 
-- [ ] **Step 1: Write the failing tests** — `harmfulBlocked`, `beneficialPasses`, `neutralPasses` (e.g. Glowing from a spectral arrow is NEUTRAL in 1.20.1 → passes, so outlines from others still work).
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: poison potion, wither skeleton, Warden darkness, pufferfish, suspicious stew — nothing applies; speed potion applies.
-- [ ] **Step 5: Commit** `feat(hero): effect immunity hook` and `feat(reinhard): detox blessing`.
+- [x] **Step 1: Write the failing tests** — `harmfulBlocked`, `beneficialPasses`, `neutralPasses` (e.g. Glowing from a spectral arrow is NEUTRAL in 1.20.1 → passes, so outlines from others still work).
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS. Manual: poison potion, wither skeleton, Warden darkness, pufferfish, suspicious stew — nothing applies; speed potion applies.
+- [x] **Step 5: Commit** `feat(hero): effect immunity hook` and `feat(reinhard): detox blessing`.
 
 ### Task 7: Blessing of Mana Absorption — resource regen seam
 
@@ -153,9 +153,9 @@ See the overview. Stage-specific:
 - `ReinhardHero.foreignResourceRegenFactor(self, other)`: `0.5f` when `other != self`, distance ≤ `ReinhardRules.MANA_RADIUS = 24`, and not allied (`self.isAlliedTo(other)` false); else 1.
 - Iron Man: regen part only (spend/drain unchanged). Homelander: heat cooling only.
 
-- [ ] **Step 1: Write the failing tests** — `strongestWins`, `noReinhardIsOne`, `alliesUnaffected`, `outsideRadiusUnaffected`, `EnergyTest.regenScaled` (scale 0.5 → +5/s instead of +10/s), `EnergyTest.drainNotScaled`, `EyeHeatTest.coolingScaled`.
-- [ ] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS; all Iron Man and Homelander tests green. Manual: Iron Man at 10 and 30 blocks from Reinhard — energy refills twice slower only inside 24.
-- [ ] **Step 5: Commit** `feat(hero): foreign resource regen hook` and `feat(reinhard): mana absorption blessing`.
+- [x] **Step 1: Write the failing tests** — `strongestWins`, `noReinhardIsOne`, `alliesUnaffected`, `outsideRadiusUnaffected`, `EnergyTest.regenScaled` (scale 0.5 → +5/s instead of +10/s), `EnergyTest.drainNotScaled`, `EyeHeatTest.coolingScaled`.
+- [x] **Step 2: Run** → FAIL. **Step 3:** Implement. **Step 4:** Run → PASS; all Iron Man and Homelander tests green. Manual: Iron Man at 10 and 30 blocks from Reinhard — energy refills twice slower only inside 24.
+- [x] **Step 5: Commit** `feat(hero): foreign resource regen hook` and `feat(reinhard): mana absorption blessing`.
 
 ### Task 8: All modes, check, docs, PR
 
@@ -163,11 +163,11 @@ See the overview. Stage-specific:
 - Test: `test/hero/reinhard/BlessingModeMatrixTest.java`
 - Modify: `.agents/skills/add_hero/references/hero-seam.md`, `shared-toolkit.md` (`HeroProjectiles`, `HeroAirJump`, `HeroResourceRegen`, `PersistentCooldowns`), `.memory-bank/project.md`, `SESSION.md`
 
-- [ ] **Step 1: Write the failing test** — `everyBlessingIgnoresMode`: for each `ReinhardMode`, parry/arrow/detox/mana/adaptation/phoenix pure decisions give the same result.
-- [ ] **Step 2:** Run → FAIL → make the hooks not read the mode → PASS.
-- [ ] **Step 3:** Full verification list; dedicated server start (new common mixin `AbstractArrowAccessor`).
-- [ ] **Step 4:** In-game list §4 in all three modes, both views.
-- [ ] **Step 5:** Commit `docs(reinhard): stage 2 notes`; push `feat/reinhard-stage2`; PR «Рейнхард, этап 2: благословения».
+- [x] **Step 1: Write the failing test** — `everyBlessingIgnoresMode`: for each `ReinhardMode`, parry/arrow/detox/mana/adaptation/phoenix pure decisions give the same result.
+- [x] **Step 2:** Run → FAIL → make the hooks not read the mode → PASS.
+- [x] **Step 3:** Full verification list; dedicated server start (new common mixin `AbstractArrowAccessor`). _(Verification list done; the dedicated server start is left to the user — not run by the agent.)_
+- [ ] **Step 4:** In-game list §4 in all three modes, both views. _(Left to the user: checklist in the PR.)_
+- [x] **Step 5:** Commit `docs(reinhard): stage 2 notes`; push `feat/reinhard-stage2`; PR «Рейнхард, этап 2: благословения».
 
 Acceptance criteria closed: §11.3 (full), §11.4.
 

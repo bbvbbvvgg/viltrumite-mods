@@ -36,6 +36,27 @@ Sends `HeroFxS2CPacket` to players tracking the source; the client draws it in `
 - Velocity is applied on the client by `client/hero/SuperJumpClient` (client-authoritative movement). `FORWARD = 0.35` horizontal push.
 - `apex(v)` — pure jump height estimate.
 
+### `hero/HeroAirJump` — air jumps (multi-jump)
+- Hook pair `airJumps` / `airJumpVelocity` (both sides) + `onAirStep` (server extras).
+- `client/hero/AirJumpClient` — vanilla jump key in the air: checks `AirJumpRules.allow(used, max, reset, anchored, canAct)`, sets `motion.y = airJumpVelocity`, sends `HeroAction.AIR_STEP`; `onSync(entityId, serverUsed, step)` takes server corrections and draws the observer ring.
+- Server `HeroAirJump.onInput` counts presses with the same rules (pure core `press(Body, Sink)`, unit-tested with fakes); an accepted press sends no motion (no double jump), a refused one sends motion `(x, min(y,0), z)` + the server counter. `tick` resets on ground/water/lava/ladder/flight/mount, `forget` on logout.
+- `AirJumpRules.resets(...)` / `allow(...)` — pure rules shared by both sides. Packet `network/AirJumpSyncS2CPacket` (owner counter or `step=true` ring to trackers).
+- `client/render/vfx/AirStepVfx` — pixel ring under the feet (own view and observers).
+- `client/hero/SuperJumpClient.anchored(player, snapshot)` — public anchor check reused by air jumps.
+
+### `hero/HeroProjectiles` — projectiles that hit a hero
+- `onImpact(ProjectileImpactEvent)` (server): an `EntityHitResult` on a `ServerPlayer` asks `projectileResponse`; non-PASS → `ImpactResult.SKIP_ENTITY` and the response is applied. Deflected/reflected projectiles are pushed out of the hero's box (≤ 0.6 blocks) so they cannot re-hit next tick; `tickPending(level)` re-applies the new velocity at the end of the level tick (projectiles whose own tick overwrote it, e.g. llama spit).
+- `ProjectileMath` (pure, unit-tested): `sideAxis`, `rotateAndScale` (Rodrigues; the same call turns a velocity and an `AbstractHurtingProjectile` power vector), `deflectYaw`/`deflected` (side away from the body centre when it is more than `SIDE_PICK_OFFSET` off the line, else random), `reflected`, catch yield. `DEFLECT_SCALE = 0.6`, turn 60–90°.
+- `ProjectileResponse { PASS, DEFLECT, CATCH, REFLECT }` — append-only.
+- `mixin/AbstractArrowAccessor` (common mixin) — invoker `getPickupItem` for CATCH.
+
+### `hero/HeroResourceRegen` — slowing another player's own regen
+- `scale(ServerPlayer)` — regen factor of this tick (cached), the lowest `foreignResourceRegenFactor` of heroes within `MAX_RADIUS` (64), `combine(float[])` pure. Resource owners multiply their own regen by it (Iron Man energy, Homelander cooling).
+- Sources record the drained pairs; `flush(level)` at the end of a level tick pushes them to the source's `OwnerSection.MANA_LINKS` (client motes), `forget(player)` on logout.
+
+### `hero/PersistentCooldowns` — cooldowns that outlive hero state
+- Stored in the player's persistent NBT under `ViltrumiteCooldowns` (survives death, hero change and relog); `get(player, key)`, `set(player, key, ticks)`, `tick(player)` once per online tick (offline time does not count), pure `tickTag` (key removed at 0). Used by Reinhard's phoenix (12000 t).
+
 ### Other shared server helpers
 - `hero/HeroDestruction.canDestroy(level, pos)` / `destroyBlock(level, pos)` — honours the `mobGriefing` gamerule, unbreakable blocks and the drop-chance config.
 - `hero/HeroDamage.route(...)`, `applyCleanDamage(...)`, `isAnchored(entity)` — damage routing and control checks.

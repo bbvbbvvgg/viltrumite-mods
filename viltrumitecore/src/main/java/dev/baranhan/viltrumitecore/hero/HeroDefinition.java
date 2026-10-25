@@ -232,8 +232,51 @@ public interface HeroDefinition {
    default void onSuperJump(ServerPlayer player) {
    }
 
+   /**
+    * Jumps in the air before touching ground, water, lava, a ladder or a mount
+    * again (HeroAirJump / client AirJumpClient); 0 = none. Read on BOTH sides.
+    */
+   default int airJumps(Player player) {
+      return 0;
+   }
+
+   /** Vertical velocity of one air jump in blocks/tick (horizontal is kept). Read on BOTH sides. */
+   default double airJumpVelocity(Player player) {
+      return 0.0;
+   }
+
+   /** Server: hero-specific sound/FX after an accepted air jump (the shared ring is drawn by the clients). */
+   default void onAirStep(ServerPlayer player) {
+   }
+
    /** Server: this hero player took damage (after armor, before health change). */
    default void onHurt(ServerPlayer player, net.minecraft.world.damagesource.DamageSource source, float amount) {
+   }
+
+   /**
+    * Server: how this hero slows {@code other}'s own resource regen (Iron Man
+    * energy, Homelander cooling), 0..1; the strongest source wins
+    * ({@link HeroResourceRegen}). Default: no effect.
+    */
+   default float foreignResourceRegenFactor(Player self, Player other) {
+      return 1.0F;
+   }
+
+   /**
+    * Both sides, MobEffectEvent.Applicable: true = this effect never applies to
+    * the hero (DENY). Default: vanilla.
+    */
+   default boolean blocksEffect(Player self, net.minecraft.world.effect.MobEffectInstance effect) {
+      return false;
+   }
+
+   /**
+    * Server, ProjectileImpactEvent: a projectile is about to hit this hero
+    * (see {@link HeroProjectiles}). Anything but PASS skips the hit and is
+    * applied there. Default: vanilla hit.
+    */
+   default ProjectileResponse projectileResponse(ServerPlayer self, net.minecraft.world.entity.projectile.Projectile projectile) {
+      return ProjectileResponse.PASS;
    }
 
    /**

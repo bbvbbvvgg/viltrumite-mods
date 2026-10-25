@@ -112,7 +112,7 @@ DRAWN = {
     "mode_knight": mode_knight,
     "mode_holy_sword": mode_holy_sword,
 }
-COPIED = {"emblem": "knight_emblem.png", "hero": "reinhard.png"}
+COPIED = {"emblem": "knight_emblem.png", "hero": "reinhard.png", "blessing_bearer": "blessing_bearer.png"}
 
 
 def find_source(assets, name):

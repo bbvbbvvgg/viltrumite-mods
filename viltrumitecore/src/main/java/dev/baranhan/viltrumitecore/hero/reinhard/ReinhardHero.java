@@ -9,17 +9,32 @@ import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.MouseButton;
+import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
+import dev.baranhan.viltrumitecore.hero.ProjectileResponse;
+import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Adaptation;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ArrowWard;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.CloudStep;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Detox;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.ManaAbsorption;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Parry;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.Phoenix;
+import dev.baranhan.viltrumitecore.hero.reinhard.blessing.WindReading;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 
 /**
  * Reinhard van Astrea (spec docs/design/2026-10-11-reinhard-design.md). Own
@@ -115,6 +130,8 @@ public final class ReinhardHero implements HeroDefinition {
       ReinhardState state = ReinhardState.ensure(player);
       return switch (action) {
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
+         // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
+         case JUMP, AIR_STEP -> true;
          default -> false;
       };
    }
@@ -130,6 +147,9 @@ public final class ReinhardHero implements HeroDefinition {
       ReinhardState state = ReinhardState.ensure(player);
       state.tick();
       VoidRescue.tick(player);
+      if (player.tickCount % ReinhardRules.WIND_SCAN_INTERVAL == 0) {
+         WindReading.scan(player, state);
+      }
       if (player.isAlive() && ++state.regenTicks >= ReinhardRules.REGEN_INTERVAL) {
          state.regenTicks = 0;
          if (player.getHealth() < player.getMaxHealth()) {
@@ -178,6 +198,19 @@ public final class ReinhardHero implements HeroDefinition {
       state.modeCooldown = 0;
       setPage(player, ReinhardMode.RESTRAINED.page());
       applyChassis(player);
+      Detox.cleanse(player);
+   }
+
+   /** Mana Absorption (spec §4.7): non-allied players nearby refill their own resource at half speed. */
+   @Override
+   public float foreignResourceRegenFactor(Player self, Player other) {
+      return ManaAbsorption.factor(other == self, other.distanceToSqr(self), self.isAlliedTo(other));
+   }
+
+   /** Detoxification (spec §4.6): harmful effects never apply (both sides). */
+   @Override
+   public boolean blocksEffect(Player self, MobEffectInstance effect) {
+      return Detox.blocks(effect);
    }
 
    /** Fresh body after death or the End return: enter() is not called there. */
@@ -186,22 +219,114 @@ public final class ReinhardHero implements HeroDefinition {
       applyChassis(player);
    }
 
+   /** Cloudy Sky (spec §4.4): five air steps (both sides). */
+   @Override
+   public int airJumps(Player player) {
+      return CloudStep.steps();
+   }
+
+   @Override
+   public double airJumpVelocity(Player player) {
+      return ReinhardRules.AIR_STEP_VELOCITY;
+   }
+
+   @Override
+   public void onAirStep(ServerPlayer player) {
+      CloudStep.onStep(player);
+   }
+
+   /** Cloudy Sky (spec §4.4): the super jump (both sides). */
+   @Override
+   public float superJumpVelocity(Player player) {
+      return ReinhardRules.SUPER_JUMP_VELOCITY;
+   }
+
+   @Override
+   public void onSuperJump(ServerPlayer player) {
+      CloudStep.onSuperJump(player);
+   }
+
    /** Spec §3.1: no fall damage. */
    @Override
    public boolean cancelsFallDamage(Player player) {
       return true;
    }
 
-   /** Spec §3.1: ordinary damage loses 99.9 % before armor; divine damage passes (spec §3.2). */
+   /**
+    * Spec §4.1: a direct melee hit from the front is parried (absorbed, pose, spark).
+    * Spec §3.1: other ordinary damage loses 99.9 % before armor. Divine damage (spec §3.2)
+    * is never resisted; it meets only Protection Acquisition here (immune type →
+    * absorbed with a spark, otherwise the hit is counted and passes) and the
+    * Phoenix in {@link #clampFinalDamage}.
+    */
    @Override
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
-      return absorb(isDivine(source), raw);
+      ReinhardState state = ReinhardState.ensure(self);
+      WindReading.onAttacked(self, state, source.getEntity());
+      if (!isDivine(source)) {
+         if (Parry.parries(self, source, false)) {
+            state.parryTicks = ReinhardRules.PARRY_POSE_TICKS;
+            Parry.effects(self, source.getEntity());
+            return DamageAbsorb.ABSORBED;
+         }
+
+         return absorb(false, raw);
+      }
+
+      DivineStep step = divineStep(state.adaptation, divineType(source));
+      state.adaptation = step.next();
+      if (step.result().absorbed()) {
+         HeroFx.flash(self, self.position().add(0.0, 1.0, 0.0));
+      }
+
+      return step.result();
    }
 
-   /** Spec §3.1: ordinary damage never takes him below 1 HP; divine damage is not floored. */
+   /**
+    * Spec §3.1: ordinary damage never takes him below 1 HP. Divine damage is not
+    * floored: a lethal divine hit is the Phoenix's (spec §4.2) or death.
+    */
    @Override
    public float clampFinalDamage(ServerPlayer self, DamageSource source, float afterArmor) {
-      return clamp(isDivine(source), self.getHealth(), afterArmor);
+      boolean divine = isDivine(source);
+      if (Phoenix.saves(divine, self.getHealth(), afterArmor, PersistentCooldowns.get(self, ReinhardRules.PHOENIX_KEY))) {
+         Phoenix.revive(self, source.getEntity());
+         return 0.0F;
+      }
+
+      return clamp(divine, self.getHealth(), afterArmor);
+   }
+
+   /** One divine hit through Protection Acquisition: the result and the next state. */
+   public record DivineStep(DamageAbsorb result, Adaptation next) {
+   }
+
+   /** Pure: an adapted type is absorbed (state unchanged); any other divine hit counts and lands. */
+   static DivineStep divineStep(Adaptation adaptation, ResourceLocation type) {
+      if (adaptation.immuneTo(type)) {
+         return new DivineStep(DamageAbsorb.ABSORBED, adaptation);
+      }
+
+      return new DivineStep(DamageAbsorb.PASS, adaptation.onDivineHit(type));
+   }
+
+   /** Pure: ordinary damage never touches Protection Acquisition (spec §4.8). */
+   static Adaptation ordinaryStep(Adaptation adaptation) {
+      return adaptation;
+   }
+
+   private static ResourceLocation divineType(DamageSource source) {
+      return source.typeHolder().unwrapKey().map(ResourceKey::location).orElse(DivineDamage.DIVINE.location());
+   }
+
+   /**
+    * Arrow Protection (spec §4.3): every projectile is turned aside; the catch and
+    * reflect windows of the Restrained palm (stage 3) win over the passive. Mode-independent.
+    */
+   @Override
+   public ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) {
+      // Stage 3 opens the catch / reflect windows; none exist yet.
+      return ArrowWard.response(false, false);
    }
 
    /** Spec §3.1: void and generic_kill never take him below 1 HP (/kill still kills: AdminKill). */
@@ -269,15 +394,12 @@ public final class ReinhardHero implements HeroDefinition {
       }
    }
 
-   /** Mode and cooldowns carry over to the respawned body. */
+   /** Mode and cooldowns carry over to the respawned body; adaptations do not (spec §4.8). The Phoenix timer is not hero state. */
    @Override
    public void cloneHeroState(Player original, Player clone) {
       ReinhardState previous = ReinhardState.of(original);
-      if (previous != null) {
-         ReinhardState next = ReinhardState.ensure(clone);
-         next.mode = previous.mode;
-         next.modeCooldown = previous.modeCooldown;
-         next.cooldowns = previous.cooldowns.clone();
+      if (previous != null && clone instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer) {
+         heroPlayer.viltrumitecore$setHeroState(previous.respawnCopy());
       }
    }
 
@@ -293,13 +415,29 @@ public final class ReinhardHero implements HeroDefinition {
       int[] extra = new int[HeroPublicSnapshot.EXTRA_COOLDOWN_MAX];
       System.arraycopy(state.cooldowns, 0, extra, 0, Math.min(state.cooldowns.length, ReinhardFlags.EXTRA_MODE_CD));
       extra[ReinhardFlags.EXTRA_MODE_CD] = state.modeCooldown;
+      extra[ReinhardFlags.EXTRA_PHOENIX] = phoenixSeconds(PersistentCooldowns.get(player, ReinhardRules.PHOENIX_KEY));
       int flags = ReinhardFlags.withMode(0, state.mode);
+      if (state.parryTicks > 0) {
+         flags |= 1 << ReinhardFlags.PARRY_POSE;
+      }
       return new HeroPublicSnapshot(HeroId.REINHARD, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1,
          new int[HeroPublicSnapshot.COOLDOWN_COUNT], false, -1, null, 0, false, flags, extra);
    }
 
+   /** Phoenix cooldown for the snapshot, whole seconds rounded up. */
+   static int phoenixSeconds(int ticks) {
+      return ticks <= 0 ? 0 : (ticks + 19) / 20;
+   }
+
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
+      if (reason != CleanupReason.DISCONNECT) {
+         // Wind Reading outlines end with the hero / the body (a logout drops the client sections anyway).
+         if (reason != CleanupReason.DISCONNECT) {
+         // Wind Reading outlines end with the hero / the body (a logout drops the client sections anyway).
+         WindReading.clear(player);
+      }
+      }
       if (reason == CleanupReason.HERO_CHANGE) {
          setPage(player, 0);
          AttributeInstance knockback = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
