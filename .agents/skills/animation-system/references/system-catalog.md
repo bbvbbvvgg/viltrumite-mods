@@ -305,7 +305,7 @@ For new effects, age by ticks with partialTick (Thunderclap pattern). Do not use
 ## 9. Screen effects
 
 Core shader: `viltrumitecore:shaders/post/dash_impact.json`, set in `GameRendererDashMixin` (`renderLevel` TAIL).
-Current uniforms: `DashIntensity, PunchIntensity, ShakeIntensity, GrabIntensity, LockIntensity, Time, ChopIntensity, ChopType, ChopIsLeft, BarrageIntensity, BarrageIsLeft, ScourgeIntensity, ScourgeTurn`.
+Current uniforms (besides `ProjMat`/`OutSize`): `DashIntensity, PunchIntensity, ShakeIntensity, GrabIntensity, LockIntensity, Time, ChopIntensity, ChopType, ChopIsLeft, BarrageIntensity, BarrageIsLeft, ScourgeIntensity, ScourgeTurn, RegulusOverheat, RegulusHeartFlash, RegulusMadness, RegulusPulse, EraseCrack, EraseShatter, EraseDark, EraseRebuild, EraseSeed`. `ScreenEffectCatalogTest` fails when this list drifts from `program/dash_impact.json` or the post pass.
 
 To add a screen effect:
 1. Declare the uniform in `program/dash_impact.json` AND in the pass `uniforms` of `post/dash_impact.json`.
@@ -313,4 +313,4 @@ To add a screen effect:
 3. Add it to the early-out check. If you do not, the effect never shows alone.
 4. Colour effects are an exclusive chain: chop > barrage > dash/punch. Put a new one in the chain or as an overlay after it, like lock.
 5. Compute the intensity in `GameRendererDashMixin`. Use distance falloff for other players.
-6. Do not create a second post chain. Flight `sonic_boom` already replaces other post effects when it loads.
+6. Do not create a second post chain. Flight `sonic_boom` already replaces other post effects when it loads; during World Erasure core shuts an already-loaded sonic chain down and cancels sonic loads (`GameRendererDashMixin`).
