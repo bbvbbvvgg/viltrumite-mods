@@ -23,6 +23,18 @@ class AdminKillTest {
       assertFalse(AdminKill.active());
    }
 
+   /** AGENTS.md: members a mixin adds are {@code @Unique}, including the /kill redirect handler. */
+   @Test
+   void killRedirectHandlerIsUnique() throws java.io.IOException {
+      String source = java.nio.file.Files.readString(java.nio.file.Path.of(
+         "src/main/java/dev/baranhan/viltrumitecore/mixin/KillCommandMixin.java"));
+      int handler = source.indexOf("viltrumitecore$adminKill(");
+      assertTrue(handler > 0);
+      String annotations = source.substring(source.lastIndexOf("}", handler) + 1, handler);
+      assertTrue(annotations.contains("@Unique"), annotations);
+      assertTrue(annotations.contains("@Redirect"), annotations);
+   }
+
    @Test
    void scopeClosesOnThrow() {
       assertThrows(IllegalStateException.class, () -> AdminKill.run(() -> {
