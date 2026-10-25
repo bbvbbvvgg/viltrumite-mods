@@ -82,6 +82,15 @@ class WorldCutTest {
       assertTrue(state.busy()); state.worldCut.advance(79); assertTrue(state.busy());
       state.worldCut.advance(80); assertFalse(state.busy());
    }
+   @Test void recoveryAfterBlastStaysBusyUntilActionEnds() {
+      ReinhardState state=new ReinhardState(); World w=new World();
+      WorldCut.start(state); state.worldCut=WorldCut.timed(0,w);
+      state.worldCut.advance(80); assertTrue(state.worldCut.blasted());
+      for(int t=0;t<80;t++) state.action.tick();
+      assertTrue(state.action.is(ReinhardAbility.WORLD_CUT)); assertTrue(state.busy(), "post-blast recovery must block MODE_CYCLE");
+      for(int t=80;t<ReinhardRules.WORLD_CUT_BLAST+20;t++) state.action.tick();
+      assertFalse(state.action.running()); assertFalse(state.busy());
+   }
    @Test void consumedSliceCountIsNotIncrementedAgain() {
       assertEquals(0,WorldCut.carveFront(null));
       var carve=WorldCutCarveTest.job(100,new WorldCutCarveTest.Probe());

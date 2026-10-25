@@ -69,7 +69,11 @@ public final class ReinhardState {
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldErasure worldErasure;
 
    public boolean busy() {
-      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy() || (worldCut != null ? !worldCut.blasted() : (this.action.is(ReinhardAbility.WORLD_CUT)||this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT)));
+      // The detached cut blasts at tick 80, but the cast pose and movement lock
+      // keep running until the action ends (tick 100): both must block MODE_CYCLE.
+      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy()
+         || (worldCut != null && !worldCut.blasted())
+         || this.action.is(ReinhardAbility.WORLD_CUT) || this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT);
    }
 
    /** Leaving Holy Sword (spec §5): Reid goes back into the sheath. */
