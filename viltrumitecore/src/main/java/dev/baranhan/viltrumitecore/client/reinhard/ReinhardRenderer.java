@@ -272,6 +272,12 @@ public final class ReinhardRenderer {
       event.setCanceled(true);
       if (!player.isInvisible()) {
          event.getPoseStack().pushPose();
+         // This path skips renderArmWithItem and its kit chop mixins: pose the chop arm here alike.
+         if (player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core && core.getChopTicks() > 0
+            && core.isLeftChop() == (arm == HumanoidArm.LEFT)) {
+            ReinhardChopFirstPerson.apply(event.getPoseStack(), ReinhardChopFirstPerson.sample(core.getChopType(),
+               ReinhardChopFirstPerson.time(core.getChopTicks(), event.getPartialTick())), core.isLeftChop());
+         }
          ReinhardFirstPerson.apply(player,arm,event.getPoseStack());
          ((dev.baranhan.viltrumitecore.client.mixin.ItemInHandRendererInvoker) mc.getEntityRenderDispatcher().getItemInHandRenderer())
             .viltrumite$renderPlayerArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getEquipProgress(),

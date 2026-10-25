@@ -79,6 +79,11 @@ public abstract class FirstPersonChop2Mixin {
          if (chopTicks > 0 && corePlayer.getChopType() == 1) {
             boolean isLeftChop = corePlayer.isLeftChop();
             if (isLeftChop == isRenderingLeftArm) {
+               // Reinhard: the continuous chop on the third-person timing.
+               if (dev.baranhan.viltrumitecore.client.reinhard.ReinhardChopFirstPerson.applyIfReinhard(player, chopTicks, 1, isLeftChop, tickDelta, matrices)) {
+                  return;
+               }
+
                float time = (20.0F - ((float)chopTicks - tickDelta)) / 20.0F;
                time = Mth.clamp(time, 0.0F, 1.0F);
                float m = isLeftChop ? -1.0F : 1.0F;

@@ -72,6 +72,11 @@ public abstract class FirstPersonChopMixin {
             HumanoidArm currentArm = hand == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
             boolean isRenderingLeftArm = currentArm == HumanoidArm.LEFT;
             if (isLeftChop == isRenderingLeftArm) {
+               // Reinhard: the continuous chop on the third-person timing.
+               if (dev.baranhan.viltrumitecore.client.reinhard.ReinhardChopFirstPerson.applyIfReinhard(player, chopTicks, 0, isLeftChop, partialTicks, poseStack)) {
+                  return;
+               }
+
                float time = (20.0F - ((float)chopTicks - partialTicks)) / 20.0F;
                time = Mth.clamp(time, 0.0F, 1.0F);
                float m = isLeftChop ? -1.0F : 1.0F;
