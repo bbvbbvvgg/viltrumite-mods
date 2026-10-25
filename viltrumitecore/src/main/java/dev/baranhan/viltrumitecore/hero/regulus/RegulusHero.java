@@ -42,6 +42,16 @@ public class RegulusHero implements HeroDefinition {
       return null;
    }
 
+   /** Lion's Heart is absolute invulnerability (spec Reinhard §3.3). */
+   @Override
+   public boolean isAbsolutelyInvulnerable(Player self) {
+      return absolutelyInvulnerable(stateOf(self));
+   }
+
+   public static boolean absolutelyInvulnerable(@Nullable RegulusState state) {
+      return state != null && state.lionActive;
+   }
+
    public static RegulusState ensureState(Player player) {
       HeroPlayer heroPlayer = (HeroPlayer)player;
       Object state = heroPlayer.viltrumitecore$getHeroState();
@@ -422,6 +432,9 @@ public class RegulusHero implements HeroDefinition {
       GreedsEmbrace.cleanup(player, state, reason);
       Evangelium.cleanup(player, state, reason);
       state.resetTransient(reason);
+      if (reason == CleanupReason.ERASED && player instanceof HeroPlayer heroPlayer) {
+         heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
+      }
 
       if (reason == CleanupReason.HERO_CHANGE) {
          RegulusPassives.remove(player);

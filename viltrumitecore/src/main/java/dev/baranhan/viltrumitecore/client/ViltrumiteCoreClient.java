@@ -47,7 +47,8 @@ public class ViltrumiteCoreClient {
    public static Vec3 prevHandPos = null;
    public static Vec3 currentHandPos = null;
    public static CameraType preGrabPerspective = null;
-   public static boolean[] heroKeyDown = new boolean[8];
+   private static final dev.baranhan.viltrumitecore.client.hero.HeroKeyEdges HERO_KEYS =
+      new dev.baranhan.viltrumitecore.client.hero.HeroKeyEdges();
 
    @SubscribeEvent
    @SuppressWarnings({"unchecked", "rawtypes"})
@@ -77,6 +78,7 @@ public class ViltrumiteCoreClient {
          RegulusClient.registerSkins();
          dev.baranhan.viltrumitecore.client.homelander.HomelanderClient.registerSkins();
          dev.baranhan.viltrumitecore.client.ironman.IronManClient.registerSkins();
+         dev.baranhan.viltrumitecore.client.reinhard.ReinhardClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();
          ViltrumitePostProcessingConfig.load();
@@ -99,6 +101,7 @@ public class ViltrumiteCoreClient {
       public static void onClientTick(ClientTickEvent event) {
          Minecraft client = Minecraft.getInstance();
          if (event.phase == Phase.START) {
+            dev.baranhan.viltrumitecore.client.hero.AirJumpClient.beforeTick(client);
             if (ViltrumiteCoreClient.iAmBeingGrabbedBy != null && ViltrumiteCoreClient.exactHandPos != null && client.player != null) {
                if (ViltrumiteCoreClient.currentHandPos == null) {
                   ViltrumiteCoreClient.currentHandPos = ViltrumiteCoreClient.exactHandPos;
@@ -118,6 +121,7 @@ public class ViltrumiteCoreClient {
 
          if (event.phase == Phase.END) {
             if (client.player == null) {
+               HERO_KEYS.clear();
                return;
             }
 
@@ -147,7 +151,8 @@ public class ViltrumiteCoreClient {
                      && corePlayer.getBarrageTicks() == 0
                      && corePlayer.getPunchCooldown() <= 0) {
                      boolean shouldBeRight = corePlayer.isTryingToGrab() || corePlayer.getGrabbedTarget() != null;
-                     boolean isLeft = !shouldBeRight && client.level.random.nextBoolean();
+                     boolean isLeft = dev.baranhan.viltrumitecore.hero.ChopStyle.resolveLeft(!shouldBeRight && client.level.random.nextBoolean(),
+                        dev.baranhan.viltrumitecore.hero.HeroRegistry.get(client.player).chopStyle(client.player));
                      corePlayer.setLeftArmPunch(isLeft);
                      corePlayer.setPunchTicks(20);
                      CoreMessages.sendToServer(new PunchC2SPacket(isLeft));
@@ -267,19 +272,23 @@ public class ViltrumiteCoreClient {
             // Hero slot keys (any hero): send press/release edges for the hero's own slots.
             {
                dev.baranhan.viltrumitecore.hero.HeroDefinition hero = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(client.player);
-               String[] heroSlots = hero.heroInputSlots();
-               for (int i = 0; i < heroSlots.length && i < ViltrumiteCoreClient.heroKeyDown.length; i++) {
-                  dev.baranhan.viltrumitecore.hero.HeroAction action = hero.heroActionFor(heroSlots[i]);
-                  if (action == null) {
-                     continue;
-                  }
-
-                  boolean down = AbilityInputManager.isAbilityKeyDown(client.player, heroSlots[i]);
-                  if (down != ViltrumiteCoreClient.heroKeyDown[i]) {
-                     ViltrumiteCoreClient.heroKeyDown[i] = down;
-                     CoreMessages.sendToServer(new dev.baranhan.viltrumitecore.network.packet.HeroInputC2SPacket(action, down));
+               int page = -1;
+               StringBuilder layout = new StringBuilder();
+               if (client.player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser user) {
+                  page = user.getActivePage();
+                  for (int slot = page * 6; slot < page * 6 + 6; slot++) {
+                     layout.append('|').append(user.getAbilityInSlot(slot));
                   }
                }
+               HERO_KEYS.tick(client.player, hero.id().key(), page + layout.toString(),
+                  client.screen == null && client.isWindowActive(), hero.heroInputSlots(), hero::heroActionFor,
+                  slot -> AbilityInputManager.isAbilityKeyDown(client.player, slot),
+                  (action, down) -> {
+                     // A hero may route an edge through its own predictor and packet (Reinhard's merged dash key).
+                     if (!dev.baranhan.viltrumitecore.client.hero.HeroClientInput.intercepted(client.player, hero.id(), action, down)) {
+                        CoreMessages.sendToServer(new dev.baranhan.viltrumitecore.network.packet.HeroInputC2SPacket(action, down));
+                     }
+                  });
             }
 
             if (client.player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
@@ -307,6 +316,8 @@ public class ViltrumiteCoreClient {
                }
             }
 
+            // Air jumps (any hero with airJumps > 0): predicted here, validated by HeroAirJump.
+            dev.baranhan.viltrumitecore.client.hero.AirJumpClient.tick(client);
             TargetLockManager.tickClient(client);
             if (ViltrumiteCoreClient.iAmBeingGrabbedBy != null) {
                if (ViltrumiteCoreClient.preGrabPerspective == null) {
@@ -321,6 +332,12 @@ public class ViltrumiteCoreClient {
                ViltrumiteCoreClient.preGrabPerspective = null;
             }
          }
+      }
+
+      @SubscribeEvent
+      public static void onLoggingOut(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
+         HERO_KEYS.clear();
+         dev.baranhan.viltrumitecore.hero.ServerRules.reset();
       }
 
       @SubscribeEvent

@@ -172,3 +172,296 @@ Append-only: дата + имя сессии + что сделано. Не пер
 
 ## chore: имена JAR → reforgedcodex
 - Жарники переименованы: `reforgedcodex-core-<версия>.jar` и `reforgedcodex-flight-<версия>.jar` (только `archivesName`, id модов и пакеты не тронуты). PR #23 влит в `main`, релиз v1.24.1-ironman. Игра не запускалась.
+
+## 2026-10-11 — Рейнхард, этап 1: основа (ветка feat/reinhard-stage1 от docs/reinhard-plan)
+- По плану `docs/plans/2026-10-11-reinhard-stage1-foundation.md` (9 задач, executing-plans + TDD). Рейнхард выбирается на экране расы (4-я кнопка), голова пока ванильный скин; модели нет до этапа 1b, jar не собирается.
+- Шасси: 20 HP, резист 99,9 %, пол 1 HP (держит и пустоту, и `generic_kill`, `Float.MAX_VALUE` → ровно 1 HP), реген 1 HP/с, без урона от падения и отбрасывания; `/kill` убивает (scope `AdminKill` + `KillCommandMixin`); спасение из пустоты шагом по воздуху (ближайшая земля в загруженных чанках, иначе спавн; в Энде обсидиановая площадка).
+- Общие швы: `clampUnblockableDamage`, `isDivine` / `isAbsolutelyInvulnerable`, `DivineDamage` / `DivineTargets` (тип и теги `viltrumitecore:divine`), команда `/viltrumite divine`, `onRespawn`, `PanelStyle.drawAttachments`, `HeroPublicSnapshot.availableActions` → `long`.
+- Режимы на СКМ (Сдержанный → Рыцарь → Святой меч), кулдаун 3 с, звук на режим, отказ — звук; страница панели = режим. Таблица 14 способностей и раскладка по режимам (пока ничего не выдано: `SHIPPED_STAGE = 1`).
+- Рыцарская панель (белый/золото/синий, герб), значки режимов слева от панели (справа нет места — отклонение от плана), полоска Рейда под ними (с этапа 4). Иконки: `tools/assets/make_reinhard_icons.py`.
+- Отклонения от плана: значки режимов слева, а не справа; марки Железного человека всё ещё поглощают божественный урон (ручная проверка из плана ошибочна); производители снапшота передают `-1`, а не `0`.
+- Проверки: тесты и `./gradlew build` зелёные (JDK 17), checker 0 новых проблем, `git diff --check` чисто, `runServer` до Done. В игре не проверялось — ручной список в PR.
+
+## 2026-10-11 — Рейнхард, этап 1b: модель, ножны, стойки (ветка feat/reinhard-stage1b от feat/reinhard-stage1, core 1.26.0)
+- По плану `docs/plans/2026-10-11-reinhard-stage1b-visuals.md` (8 задач). Модель из архива заменяет игрока от 3-го лица (всегда, и невидимым: контур — силуэт рыцаря), руки модели от 1-го лица, голова на экране расы — 3D.
+- Конвертер `tools/obj2geo.py`: повёрнутые коробки → `rotation`/`pivot` кубов (в плане — ошибка), у меча выброшены дубли граней `dragon_glow`, UV меча считаются от верха картинки. Превью сверены с архивом.
+- Ходьба из `reinhard_walk.json` (= ванильный мах ног, скорость 0.6662/(2π) с на единицу шага — формула плана крутила бы ноги в ~7 раз быстрее), стойки трёх режимов с плавной сменой, Рыцарь держит левую руку за спиной (+2 px назад, у плана знак перепутан), присед/сидение/плавание/кровать/элитры/смерть как в ванилле.
+- Ножны на левом бедре рукоятью вверх (в архиве меч хранится рукоятью вниз), масштаб 0.35 и наклон 50° вместо 10° — иначе ножны уходят в землю. Ауры: Рыцарь — белые искры у ног, Святой меч — золотые искры.
+- Восстановлено то, что пропадает при отмене ванильного рендера: ник, предметы в руках, красная вспышка урона.
+- Проверки: тесты `*Reinhard*` и `./gradlew build` зелёные, checker 0 новых, `git diff --check` чисто. Выделенный сервер не запускался (по просьбе пользователя). В игре не проверялось — список в PR.
+
+## 2026-10-11 — Рейнхард, этап 2: благословения (ветка feat/reinhard-stage2 от feat/reinhard-stage1b, core 1.27.0)
+- По плану `docs/plans/2026-10-11-reinhard-stage2-blessings.md` (8 задач, по коммиту на задачу). Все благословения пассивные и работают в любом режиме.
+- Феникс: смертельный удар раз в 10 минут — полное HP, огонь потушен, перенос на 6–10 блоков от атакующего, золото-красное пламя; кулдаун в `PersistentCooldowns` (переживает смерть, смену героя, перезаход; офлайн не тикает), значок на HUD. Обретение защиты: третий подряд божественный удар одного типа — иммунитет к этому типу до смерти.
+- Святой меч: удар в упор спереди (±60°) парируется — поза, вспышка руки от 1-го лица, искры, звук, без урона.
+- Стрелы: общий шов `projectileResponse` + `HeroProjectiles`; стрелы, трезубцы, файерболы, снежки, зелья, плевки ламы отклоняются в сторону (×0,6, 60–90°). Новый общий миксин `AbstractArrowAccessor`.
+- Облачное небо: 5 шагов по воздуху (шов `airJumps`, клиент двигает, сервер считает), сброс на земле/воде/лестнице, кольцо под ногами; суперпрыжок ~22 блока.
+- Чтение ветра: враги за спиной и невидимки подсвечиваются (секция THREATS). Детокс: вредные эффекты не накладываются (шов `blocksEffect`). Поглощение маны: в 24 блоках реген энергии Железного человека и охлаждения Хоумлендера ×0,5, синие искры.
+- Отклонения от плана — в «Rulings» журнала `.superpowers/sdd/2026-10-11-reinhard-stage2-blessings/progress.md` (в т.ч. шаг по воздуху без пакета движения, высота шага ≈2,5 блока при 0,62, `SHIPPED_STAGE = 2`).
+- Проверки: тесты `*Reinhard*`, `./gradlew build` зелёные, checker 0 новых, `git diff --check` чисто. runServer / выделенный сервер не запускались (по правилу пользователя). В игре не проверялось — список в PR.
+## 2026-10-12 — Рейнхард, этап 3: Сдержанный и Рыцарь (ветка feat/reinhard-stage3 от feat/reinhard-stage2, core 1.27.0)
+- По плану `docs/plans/2026-10-11-reinhard-stage3-restrained-knight.md` (11 задач, по коммиту на задачу; задача 8 — двумя коммитами, см. журнал). `SHIPPED_STAGE = 3`: девять способностей.
+- Сдержанный: лёгкий удар (4 урона), рывок на ~6 блоков (предсказан клиентом), ловля снаряда (окно 0,5 с, стрела/трезубец в инвентарь).
+- Рыцарь: серия из трёх ударов 10/10/16 с волной на третьем; удар в небо (подброс, пинок 20, полёт 60+ блоков, хит-стоп, кольцо и след); захват и бросок (~120 блоков, 15 урона, контроль PULL); рывок за спину (цель под прицелом до 24 блоков, общий поиск безопасной точки `SafeSpot`, свой пакет); топот (радиус 8, 12 урона, верхний слой земли); отражение снаряда (окно 1 с, снаряд летит обратно стрелку).
+- Общее: роутер способностей с одним таймлайном, `Strikes`, `DestructionLevel` (в Сдержанном блоки не ломаются, в Рыцаре — умеренно, с учётом `mobGriefing`), новые виды FX `HIT_STOP` / `SONIC_RING` / `AIR_TRAIL`, клипы и иконки всех способностей, поза от 1-го лица, названия и описания на 11 языках.
+- Отклонения от плана — в «Rulings» журнала `.superpowers/sdd/2026-10-11-reinhard-stage3-restrained-knight/progress.md`.
+- Проверки: тесты Рейнхарда 227/227, `./gradlew build` зелёный (850 тестов), checker 0 новых, `git diff --check` чисто. runServer / выделенный сервер не запускались (по правилу пользователя). В игре не проверялось — список в PR.
+
+## 2026-10-12 — Рейнхард, этап 4: Святой меч (ветка feat/reinhard-stage4 от feat/reinhard-stage3, core 1.28.0)
+- По плану `docs/plans/2026-10-11-reinhard-stage4-holy-sword.md` (9 задач, по коммиту на задачу; задачи 4, 6, 8 — одним коммитом с двумя частями; плюс фикс-коммит пропущенного `ReidDrawSceneVfx`, см. журнал). `SHIPPED_STAGE = 4`.
+- Рейд: обнажение 6 с как событие мира (подъём всего вокруг в радиусе 96, тёмное небо, тишина, трещины, столб света, волна 24), в руке — золотая аура и тёплое небо; само-возврат через 60 с без боя, вкладывание 1 с.
+- Lethal Chop — общий удар ребром ладони через новый хук `chopStyle` (35 урона + кровотечение, с Рейдом всегда левой); удар ножнами (r 6, 20 урона, оглушение 3 с, кд 8 с); дождь разрезов (12 разрезов, конус 30°, 40 блоков, удар Рейда, борозды 1×3 через очередь `CarveJobs`, кд 15 с).
+- Общее: `Annihilation`, `LiftLeases`, `HeroImpulse`, `SkyTint`, `SoundDuck`, `ChopStyle`, `CarveJobs` / `CarveBudget`, `HeroDestruction.clearBlock`, разделение тика уровня (`LevelTickPhases`).
+- Отклонения от плана — в «Rulings» журнала `.superpowers/sdd/2026-10-11-reinhard-stage4-holy-sword/progress.md`.
+- Проверки: тесты Рейнхарда 282/282, `./gradlew build` зелёный (938 тестов), checker 0 новых, `git diff --check` чисто. runServer / выделенный сервер не запускались (по правилу пользователя); Oculus не проверялся. В игре не проверялось — список в PR.
+
+## 2026-10-13 — reinhard-stage5-world-cut
+
+Stage 5 «Мировой разрез»: core 1.28.0 → 1.29.0; flight без изменений. Вынутый Рейд, слот 5 Святого меча: 1 с замах, 3 с тишины с белой линией по земле/небу на 200 блоков, затем бело-золотая волна за 30 тиков и борозда 200×17×45–50. Блоки догоняют VFX через общую CarveJobs очередь; все попытки (включая пропуски) входят в адаптивный бюджет. Малый поток обломков ограничен 300. Удар Рейда по живым на линии однократно; божественные, абсолютная неуязвимость, creative/spectator защищены; союзники/PvP фильтр не применяются. Кулдаун 900 тиков. Камеру кастера не перехватываем; у наблюдателей FOV до +3% и blast shake через существующий общий accumulator. Звуки — vanilla placeholders до Stage 7.
+
+Task 1/2 ранее выполнены (065cd41 / 52fba52); продолжение Task 3/4/5 отдельными коммитами и немедленным push. Task 3 runtime принадлежит уровню и переживает смерть/logout: форма и поверхность фиксированы на нажатии, только загруженные колонки; серверный стоп/выгрузка уровня теряет незавершённые сцены/работу. No neighbour sweep: вода/лава стоят у чистой стенки до внешних обновлений, не обещаем вечной неподвижности. Проверены RED→GREEN таймлайн, once-hit, independent/catch-up manager, busy при прерывании позы, FOV/duck/клиентский clock, reordered packets/timeout, фронт волны, клипы и обе руки.
+
+Task 5 по прямому указанию заменён чистым тестовым протоколом: две работы по 160000 позиций = 160 тиков при общем лимите 2000 попыток/тик; один cut = 80 тиков при 40 ms и 233 тика при 55 ms; две работы с 60-тиковым spike до 80 ms = 217 тиков. Каждый тик сравнивается с CarveBudget. Константы не менялись, измерений нет. Реальный TPS ≥ 15 по /forge tps каждую секунду 10 с после blast остаётся ручной проверкой. Чистые тесты НЕ доказывают фактический TPS, световой движок, отсутствие предметов или реакций жидкостей.
+
+До Task 6: полный build 987/987, 0 failures/errors/skips; selected core suite 344/344; checker 0 new / 4 known. Финальные числа Task 6 записаны ниже и в progress.md/PR. Java 17; runServer/runClient и игру не запускали по запрету пользователя. Начальный параллельный bootstrap Gradle был убит, последующие гейты запускались последовательно. Журнал .superpowers/sdd/2026-10-11-reinhard-stage5-world-cut/progress.md сохранён с полным списком Rulings/cost if wrong.
+
+Ручной чек-лист (НЕ выполнен):
+- dedicated server start; от первого/третьего лица caster на земле/в воздухе и обе руки;
+- LAN-наблюдатели на 30 и 150 блоках, shader pack/Oculus: ground/sky line, FOV, duck/release, shake, wave/crater;
+- render distance 12: flat, plains/forest, ocean, mountain; /forge tps раз в секунду 10 с, каждая выборка ≥15;
+- два одновременных разреза; бедрок при мелком касте; world border, void и build limits; незагруженные чанки без force-load;
+- mobGriefing false: блоки целы, strike/VFX/звук остаются; нет drops от carve; вода/лава у стенок без каскада;
+- caster смерть/logout на тишине, смена измерения; клиентский выход/смена уровня без зависших duck/FOV; стоп сервера сбрасывает незавершённый cast;
+- цель в mark/Hulkbuster с тотемом погибает; Regulus Lion’s Heart и другой Reinhard живы; Homelander Lethal Chop и прежние VFX не изменились.
+
+Финальная проверка Task 6 до независимого ревью: 992/992 теста в полном build (938 baseline + 54 новых Stage 5), 0 failures/errors/skips; Reinhard package 332/332; selected core suite 349/349; документация 5/5 GREEN после 4 assertion RED. Checker 0 new / 4 known; diff-check чистый. Reobfuscated core 1.29.0 jar содержит packet class, clip и world_cut icon. GitHub Build Tasks 1–5 зелёный. Runtime/TPS пункты выше не проверены; финальный review verdict и любые TDD-фиксы записаны в progress.md/PR.
+
+Итоговый независимый review: 0 Critical, 3 Important исправлены одним TDD-pass — DRAWN idle больше не перезаписывает swing; обе физические руки проходят posed rendering даже с предметами; QuietBlockRemoval + common LevelChunk redirect подавляют старые onRemove drops/XP/redstone callbacks при clean carve с явным удалением block entity. Обычное разрушение и debris flags 3 не меняются. Регрессии используют реальную композицию model/clip, hand-routing policy и scoped callback boundary + mapped Minecraft bytecode. Полный финальный build **1000/1000**, 0 failures/errors/skips; Reinhard **335/335**; selected core suite **357/357**; checker **0 new / 4 known**; git diff --check чистый. 938 baseline + 62 новых Stage 5 теста. Новому common Mixin нужен ручной server smoke (не запускался). Отложенный Minor: новые строки World Cut в non-English locale пока английские. Все Rulings/cost if wrong и ручная приёмка — progress.md и PR.
+
+## 2026-10-13 — reinhard-stage6-world-erasure
+
+Stage 6 «Стирание мира»: core 1.29.0 → 1.30.0; flight 1.10.1 без изменений. Ветка `feat/reinhard-stage6` от `feat/reinhard-stage5`, восемь задач, TDD и один плановый коммит/немедленный push на задачу. Вынутый Рейд, слот 6 Святого меча, цель под прицелом до 64 блоков: 150 тиков (7,5 с) трещины → осколки → тьма/белый силуэт → сборка. У всех игроков во всех измерениях, все кроме кастера заморожены; защита не копит урон. Один каст на сервер, отказ не тратит кулдаун. Вердикт неизменен с нажатия: Lion’s Heart/божественная цель остаётся, но 1200 тиков кд тратятся. Цель, отсутствующая на тике 90, избегает удаления; повторной попытки после входа нет.
+
+Моб/босс удаляется без обычной смерти, лута/XP/сообщения; блоки не меняются. ВАЖНО для первого дракона: quiet completion отмечает поражение, но не создаёт exit portal/gateway/egg (ванильный setDragonKilled меняет мир). Можно остаться без обычного выхода из Энда — до использования проверить существующий портал/другой способ возвращения.
+
+Игрок: ERASED сбрасывает всё временное на том же ServerPlayer; инвентарь, броня, offhand и XP **стираются навсегда**, эндер-сундук не трогается. `the_void`: 30 онлайн секунд (600 тиков), пять HUD-строк, 50 bpm placeholder heartbeat; logout/restart сохраняет оставшееся время и pendingStrip. Возврат на общий overworld spawn, не кровать/якорь: полное здоровье/голод, полёт выключен, shared freshBody/возврат Evangelium. Persisted cooldowns/Phoenix/session, mode, roster и иные поля следуют существующим death-copy правилам. Тег даёт неуязвимость/запрет действий и после завершения глобальной паузы.
+
+Общие швы: ControlManager.refresh только expiry, WorldPause один/server с listener/catch-up/watchdog, ERASED/BodyLoss/freshBody, ServerEndTasks snapshot END queue вместо потенциально inline server.execute, BodyIsolation. Не добавлялись конкретные ветки героя в shared code; NoHeroBranchTest allowlist не расширен. Сохранены CarveJobs/CarveBudget/LevelTickPhases Stage 4. Константы без замеров не менялись. Core wire protocol 2 — нужны совпадающие клиенты. В старом мире data dimension появится после restart; без неё новый каст игрока отклоняется, а уже помеченный игрок спасается на общий spawn.
+
+Клиент: пять uniforms в существующем dash_impact, приоритет над vanilla sonic, единый server-age clock, mesh silhouette или metadata fallback, PixelVfx dust, SoundDuck/FlashOverlay без нового движка. Новый 7,5-секундный clip и обе физические руки, скрытие предметов обеих рук только визуально в обоих видах. Оригинальные клипы не изменены. Сервер, runServer/runClient и игра **не запускались**; registry-only JUnit Bootstrap не запускает мир/сервер. GLSL и фактический runtime не доказаны чистыми тестами.
+
+Проверки Tasks 1–7: последний полный build 1151/1151 (core 1139 + flight 12), Reinhard 439/439, selected core 512/512, checker 0 new / 4 known, diff-check чистый. Task 8: полный build **1209/1209** (core 1197 + flight 12), 0 failures/errors/skips; Reinhard **459/459**; selected core **570/570**; checker 0 new / 4 known, diff чистый, NoHeroBranchTest 1/1 и allowlist прежний; полный журнал Rulings с cost if wrong сохраняется в `.superpowers/sdd/2026-10-11-reinhard-stage6-world-erasure/progress.md` и PR.
+
+Ручной чек-лист (НЕ выполнен):
+- dedicated startup/common Mixins/data codecs in a real old/new world; /reload и каждый выход caster (death/logout/dimension/hero) до/после 90, watchdog, отсутствие зависшего FREEZE/звука/экрана;
+- оба вида, grounded/flying, левша/правша, обе занятые руки: клип/свет/силуэт/окклюзия/shards/GUI; F3+T, F1, Oculus/shader packs и sonic priority;
+- три игрока (кастер, цель, наблюдатель в Nether), поздний вход/cross-dimension clock; spam/second cast без расхода кд; mob, Wither bossbar, дракон и доступный End exit;
+- divine и Lion’s Heart: target остаётся, кд тратится, переключение после cast не меняет вердикт; отсутствие targets на тике 90;
+- инвентарь/броня/offhand/XP исчезают, ender chest сохраняется; нет death message/Stats.DEATHS/drops/XP; ERASED mid-everything всех пяти героев → fresh body и Evangelium;
+- limbo logout/rejoin, server restart в середине/между записью pendingStrip и transfer, 600 online тиков; chat доступен, movement/flight/use/damage недоступны; /tp/portal blocked;
+- shared world spawn безопасен и не bed/anchor; gravity/flying/health/hunger/flash после возврата; missing-dimension rescue, pause↔limbo overlaps/foreign controls;
+- реальный TPS ≥15 и FPS, звук и старые способности/VFX не регрессировали. Никаких измерений/тюнинга не выполнялось.
+
+Финальное ревью: одна независимая seat (тот же reviewer возобновлён после сервисного прерывания), 0 установленного Critical, 4 Important исправлены одним RED→GREEN pass (39 новых регрессий; целевой GREEN 108/108), re-review нет. Отложены 2 Minor: неполный reset residual legacy punch metadata/cached hand positions и dev pause 100 фактически 140 тиков; WorldErasure штатно заканчивается на 150. Нет blanket runtime/fresh-entity доказательства по legacy полям.
+
+Фиксы: независимый server position overlay при отказе FREEZE без перехвата чужого контроля; suspend carry/PULL/legacy terrain grind; logout до vanilla save и durable original pause flags в ForgeData; clear/discard-cursor/close/clear возвращённых crafting inputs без vanilla overflow drops; watchdog останавливается в реальной паузе игры. Pure-regressions используют actual Session/captured records/NbtIo и vanilla-faithful menu fixture, но НЕ реальный Forge player/world/save. Дополнительные ручные пункты: foreign PULL/STASIS/legacy carry + поворот взгляда/no grind, участник logout→save→restart, исходный NoGravity false/true и limbo gravity, full cursor/crafting menu и external chest, длинная integrated pause menu без потери scene. Arbitrary modded menu (>36 возвращаемых nonmerge stacks) — compatibility limit.
+
+Stage 6 добавил 209 тестов к baseline Stage 5 1000; Task 8 — 58 новых (15 clip/docs/shipping, 39 review regressions, 4 boundary invocations = 32 pure sequences на 89/90/149/150). Full build/reobf, checker, diff и генератор/idempotence/старые клипы/11 locale JSON проверены. Runtime-ready без ручной приёмки не заявляется; 12 отдельных Declined-to-judge Rulings с ценой ошибки в progress.md, исходный report в review-before-fixes.md. Восемь плановых коммитов, final `docs(reinhard): stage 6 notes`, push+PR в `feat/reinhard-stage5`; merge не выполнялся.
+
+
+## 2026-10-13 — reinhard-stage7-sounds-polish
+
+core **1.30.0 → 1.31.0**, flight **1.10.1 без изменений**. Final gameplay constants сохранены: 20 HP / resist0.999 / floor1 / regen1 HP/s, MMB60t, Reid120t / sheathe20t / idle1200t, WorldCut20+60t / cooldown900t / shared budget2000, Erasure150t / removal90t / cooldown1200t / limbo600t. Worthy souls gate остаётся открытым (`canDraw` разрешает всегда); баланс без native замеров не менять.
+
+Tasks 1–4: аудио/автоматические проверки выполнены; **игровая приёмка не выполнена**. 14 обработанных .ogg.b64 из 11 разрешённых источников, воспроизводимый ffmpeg script с source SHA-256, объективными trim/fades/limiter и pinned two-pass loudnorm. 33 Event IDs сохранены, 14 массивов заменены; §10.2 и прочие герои не изменились. Credits/spec/sources обновлены по live Freesound страницам 2026-10-13. CGEffex 93835 и Robinhood76 378199 — CC-BY-NC 4.0: исключены, blast/rain placeholders остались. Alliare не подставлен без решения владельца. 12 не покрытых §10.1 legacy cues открыты.
+
+| Область | Автоматический результат | Native / ручной результат |
+|---|---|---|
+| Аудио | --check 14/14 PCM; 14/14 format/duration/LUFS/peak; 9 Python tests | Прослушивание/offsets/mix/дистанции/камеры/реальная тишина НЕ проверены |
+| §11.1–§11.8 | Existing regression suite GREEN | NOT RUN в обоих видах |
+| §11.9 World Cut | Existing shape/budget/once-hit tests GREEN | Native TPS/FPS/terrain/fluids/lighting NOT RUN |
+| §11.10 Erasure/Limbo | Existing timeline/codec/ownership/menu/watchdog tests GREEN | Dedicated/events/save/restart/audio/shaders NOT RUN |
+| §11.11 / cross-hero | NoHeroBranch 1/1; full 1215/1215, unchanged rules/flight | Cross-hero matrix и прежние visuals NOT RUN |
+| §11.12 | Java17 build/reobf, checker 0 new / 4 known, diff clean | Dedicated startup/common Mixin targets NOT RUN |
+
+runServer, runClient, dedicated server и игра **не запускались**. Gameplay/balance constants не менялись без замеров. Числа файлов не выданы за услышанную сцену или gameplay acceptance. Task 3 не создаёт пустой mix-коммит; его измерения входят в Task 4 journal/session commit. Полные Rulings/costs и исходные deferred minors — Stage 7 progress.md; исторический Stage 6 ledger сохранён без изменений.
+
+### Полный ручной чек-лист — НЕ ВЫПОЛНЕН
+
+Все игровые пункты проверить **от первого И третьего лица**, кастером и наблюдателями; зелёные pure/source tests не закрывают эти пункты.
+
+- [ ] §11.1: четвёртая кнопка выбора расы; полная модель, FP-руки, ножны на поясе; оба вида/обе руки/занятые слоты/невидимость.
+- [ ] §11.2: меч, Unibeam, %maxHP, clean, void/generic_kill не ниже 1 HP, 99.9% сопротивление; /kill действительно убивает, rescue из void, реген 1 HP/с, нет fall damage/knockback.
+- [ ] §11.3: dev divine проходит Adaptation → Phoenix → смерть; три одинаковых типа, смена типа, offline/hero-change Phoenix cooldown.
+- [ ] §11.4: все восемь благословений во всех трёх режимах: Parry pose/spark, Phoenix safe point, Arrow Ward/catch/reflect priority, пять air steps/reset/superjump, Wind Reading invisible/back, Detox, Mana Absorption r24 ×0.5, Adaptation.
+- [ ] §11.5: MMB по кругу, отдельные звуки/страницы, без позы и pick-block; отказ/3 s cooldown, hero-change/loadout migration.
+- [ ] §11.6: Restrained не ломает; Knight умеренно; Holy масштабно; mobGriefing false/bedrock/world border/build limits/unloaded chunks без force-load.
+- [ ] §11.7: каждая способность §6–7 со своей анимацией/VFX в обоих видах, grounded/air/crouch, left/right hand, occupied hands; предсказание/отказ/lag, control/death/logout/hero/dimension cleanup.
+- [ ] §11.8: Reid 6 s, shake/sky/weather/duck, lift 2–3 blocks r96 через общие leases, crack ring/pillar/funnel/flash/wave/chat; aura, sheathe 1 s, autoreturn 60 s без боя/при выходе Holy; overlapping draws/control/foreign gravity.
+- [ ] §11.9: World Cut swing → 3 s quiet/white line → 200×17×45–50 trench wave; once-hit mortals, divine/absolute immune; budgets, detached caster death/logout/dimension, adaptive queue/no drops/XP/fluid cascade.
+- [ ] §11.9 performance: render distance 12 flat/plains/forest/ocean/mountain, /forge tps каждую секунду 10 s после blast, все ≥15; два cuts/spike; native FPS и свет/жидкости. Pure budget не является TPS measurement.
+- [ ] §11.10: erasure 7.5 s во всех измерениях; freeze всех non-caster, nearby Enemy; one cast/spam/second cast/no cooldown refusal; crack → real silence → inhale, verdict frozen, missing target at tick90, cancel на 89/90/149/150.
+- [ ] §11.10 entities: mob без loot/XP/message, Wither bossbar, dragon quiet completion/crystal respawn. **Первый erased dragon не создаёт exit portal/gateway/egg — заранее обеспечить иной выход из End.**
+- [ ] §11.10 player: inventory/armor/offhand/XP навсегда исчезли, ender chest/external storage сохранены; нет death message/DEATHS/drops; same-entity ERASED mid-actions всех пяти героев, fresh body/Evangelium return.
+- [ ] §11.10 persistence: limbo 600 онлайн ticks/30 s, logout/rejoin и новый JVM/restart в середине/между pendingStrip и transfer; исходные NoGravity/NoAI false/true, participant logout BEFORE vanilla save, foreign pause/PULL/STASIS/legacy carry ownership/no terrain grind.
+- [ ] §11.10 isolation/return: chat/F1/menu, black fog/no sky/no hands/HUD, five lines, no movement/flight/use/damage/tp/portal; safe shared spawn не bed/anchor/platform, full health/hunger/gravity/flight reset, missing-dimension rescue, pause↔limbo overlap.
+- [ ] §11.10 menu/watchdog: full inventory/cursor/2×2/3×3 crafting и external chest на tick90 и pending-strip resume; modded menus (>36 returned nonmerge inputs) отдельно; long integrated pause/resume, lost-END timeout/late join/catch-up/stale-END.
+- [ ] §11.11: Homelander Lethal Chop и прежние poses/VFX/sounds остальных героев визуально не изменились.
+- [ ] §11.12: native dedicated startup/common-side classloading/Mixin/refmap/data codecs в old/new world, два clients matching core protocol2; /reload, F3+T, restart. Server/client НЕ запускались.
+- [ ] Cross-hero: Viltrumite/Homelander legacy chop в обе стороны; Regulus Lion's Heart vs Reid strike/Erasure/grab (никакого пробития); Homelander laser vs 1 HP floor + его chop; Iron Man marks/Hulkbuster/Veronica/roster/cleanup.
+- [ ] Все 33 sound events: оба вида на 2/16/64 blocks; Reid draw/World Cut также 150; caster/viewer/global/local категории и subtitles.
+- [ ] Mix/listening: mode chords ≤ punch по восприятию в игре; choir слышен поверх rumble; World Cut quiet/blast не клиппит/tail до оседания dust; erasure crack → **настоящая runtime тишина** → inhale; heartbeat 30 s не утомляет/не обрывается/50 bpm; §10.2 подходят и не изменились.
+- [ ] Выбранные начальные offsets: три музыкальных mode excerpts, «хороший» choir, только ring без scrape; loop rumble/heartbeat без слышимого стыка. Числа endpoint/peaks это не прослушивание.
+- [ ] Oculus/shader packs/sonic priority, GPU GLSL, image idle parity, mesh/cutout/fallback/modded renderer silhouette/shards, F3+T/reload/level unload без duck/FOV/freeze leaks.
+- [ ] Владелец выбирает CC0/CC-BY альтернативы для blast/rain и источники для 12 дополнительных legacy cues; варианты в sources, никаких silent swaps/NC excerpts.
+- [ ] Реальная итоговая приёмка §11.1–§11.12 и баланс после измерений; worthy souls list остаётся открытым.
+
+Task 5: release-version assertion RED на 1.30.0 → minor bump1.31.0; исторический Stage 6 version test стал минимумом1.30.0 (вместо вечного запрета новых minor). Новая точная release gate1.31.0. Финальные build/test/review числа будут добавлены после единственного независимого ревью.
+
+Одно финальное независимое ревью:0Critical,4Important; M1 delimiter re-graded as I3 structural dependency. Один TDD-pass: упаковка CC-BY notices в JAR и metadata credits; complete-object gate всех33 IDs/19 exceptions/actual references; структурный source→output→author/URL/license/digest join и исправленная4-col §10.1 таблица; adversarial ffmpeg integrity tests. JavaRED16tests/10assertion failures→GREEN16/16; Python6guard/source bypass mutationsRED→restored byte-exact script→17/17GREEN. Первоначальный stale.pyc тестового loader исправлен fresh-source compile, не ослаблением assertion. Independent source/codec audit подтверждает14/14×2 PCM, но НЕ прослушивание/сервер. Report preserved as review-before-fixes.md, без re-review;35 Declined boundaries получили отдельные costed Rulings. Inherited Stage6 metadata/dev pause and Stage5 locale minors remain.
+
+Финальный результат Stage7: **1227/1227 JVM** (core1215+flight12), **480/480 selected Reinhard** (477package+3related), **17/17 Python**,14/14 PCM --check, checker0new/4known, NoHeroBranch1/1 allowlist unchanged, diff clean, Java17 clean/reobf GREEN. После сетевого Sponge HTTP522 финальные gates использовали проверенный ранее online dependency cache с --offline; upstream fresh-resolution availability не доказана. Source/script/code guards не ослаблены. JAR14/14 finalaudio +33 IDs +2 maintained CC-BY notices/4source links byte-exact, active credits/TOML/version1.31 parsed. Additional exact-credit-URL suffix RED1→GREEN closes I3 lexical boundary; all17 targeted attribution/sound checks GREEN. Все game/server/native/listening/camera/cross-hero/TPS/FPS пункты выше НЕ выполнены. Four nonempty planned commits/push+PR; merge не выполнялся. Полный списокRulings/costs,35proof boundaries и inherited minors — progress.md/PR; оригинальное единственное review preserved, re-review не было.
+
+## 2026-10-20 — Holy Sword cinematic overhaul (core 1.35.0)
+
+Новая ветка `feat/reinhard-holy-sword-cinematic` от актуального PR36
+`69d094d0be5bb1e11c192266159c6df84a86cdc3`; PR35 не использован. Реализованы
+новый Z Diagonal World Cut, 12 contact-synced Rain ударов, медленный ground cut
+с actual Reid projection и terrain taper/noise/terraces, усиленная draw сцена,
+scoped darkness/rumble/continuous shake до queue DONE, два concurrent cut через
+один adaptive budget. Y только SHEATHED. Core protocol3, flight без изменений.
+Оригинальные blade/sheath/grip attachment и World Erasure сохранены.
+Full build/tests1292 GREEN; checker0new/4legacy; full-mesh CPU diagnostics новых
+траекторий GREEN. Native client GLFW barrier, native server EULA gate и никакого
+TPS/listening/visual acceptance. Подробный отчёт, ограничения и manual protocol:
+`docs/reports/2026-10-20-reinhard-cinematic.md`.
+
+
+## 2026-10-20 — Hotfix snapshot Рейнхарда (core 1.35.1)
+
+Исправлен пользовательский `Ticking player` crash: `ReinhardHero.snapshot` писал
+Diagonal World Cut в wire slot16 при shared capacity16. Ветка
+`fix/reinhard-snapshot-overflow` от `133aa4ee` / cinematic PR37. Ёмкость общего
+bounded snapshot32; mode14/Phoenix15 сохранены, enum/action ordinals не изменены.
+Production composeSnapshot вынесен из Player/world shell для прямого regression
+теста реального сборщика, а не его тестовой копии. Удалено дублирующее копирование.
+Codec читает variant/resource2 после объявленного wire count, не capped count;
+negative count отвергается, long offset не переполняется на INT_MAX.
+Core protocol4 запрещает подключение старого protocol3 decoder с лимитом16.
+Обновить Core одновременно на сервере и всех клиентах; flight1.10.1 не изменён.
+Сохранения/NBT, модели/ножны/хват, World Erasure/glass, sounds/VFX не изменены.
+
+RED: 2/13 codec assertions и 2/2 production snapshot tests воспроизводят дефект;
+последние дают ровно `Index 16 out of bounds for length 16`, как пользовательский
+лог. GREEN: Java17 offline full build/reobf, **1300/1300 JVM tests** (core1288,
+flight12), без skips/failures/errors; resource checker0new/4known; frozen
+blade/sheath SHA равны, diff check clean. Новые проверки покрывают все способности
+и три режима, reserved14/15, slot16, action phase/target/elapsed и scene flags,
+legacy16 codec, capped40 tail, negative/INT_MAX count и protocol4 gate.
+Native runClient повторён на hotfix: GLFW init barrier до загрузки мира, вход в
+старый мир и multiplayer НЕ проверены. Прежняя зелёная сборка1.35.0 не доказывала
+snapshot runtime: этот coverage gap признан и закрыт production-composer тестом.
+
+## 2026-10-20 — Плавность анимаций Рейнхарда (core 1.35.2)
+
+Ветка `fix/reinhard-animation-continuity` от snapshot hotfix `2df721d`.
+Убраны остановки на промежуточных ключах ходьбы/бега: исходные траектории
+запечены в 80 linear-интервалов на цикл. Catch/Reflect возвращаются в ready guard,
+не проваливаются в idle; тело и FP-локти используют одну композицию с реальной
+длиной окна. Reid плавно входит/выходит на sheathed-границе за четыре тика;
+FP-смещения возвращаются до конца draw. Grip-канал остаётся точным.
+Походка не обрывается onGround: ground-вес дополняет rise/fall-веса.
+
+RED: четыре регрессии падают на исходной версии. GREEN: полный Java17 build,
+1296 core + 12 flight = 1308 tests, без failures/errors/skips; восемь новых
+continuity tests. Ресурсы: 0 новых/4 известных проблемы. Все боевые JSON-клипы,
+blade/sheath, selected roll, gameplay, VFX, звуки, protocol4 и Flight1.10.1
+не изменены. JAR Core1.35.2 содержит новые клипы и credits.
+
+Native runClient: Forge early display → `glfwInit failed`, мира нет; остановлен
+после подтверждения графического барьера. Нет визуальной приёмки в Minecraft,
+native FPS/shaders/multiplayer. План и оставшиеся ручные проверки:
+`docs/plans/2026-10-19-reinhard-quality-rework.md`, раздел continuity.
+
+
+## 2026-10-20 — Реальная плавность ударов Рейнхарда (core 1.35.3)
+
+Пользователь отклонил 1.35.2: походка/переходы не исправили джеб и меч.
+Ветка `fix/reinhard-strike-fluidity` от `45ccf66` / PR39.
+Исследованы Iron Man FP, runtime-час/снимки, ключи, итоговый хват.
+Доставка удара занимала лишь 1.2–1.4 тика. Раздвинуты предварительные
+ключи без переноса контактов; восемь обычных боевых клипов используют opt-in
+монотонный C1 Hermite в существующем движке, без overshoot. У комбо убрана
+замороженная поза contact+1; добавлен небольшой follow-through.
+Reinhard использует общий опциональный monotonic ActionClock.sample с пределом
+экстраполяции 3 тика; legacy tick/time других героев не меняется. FP применяет
+общий FirstPersonArm вокруг плеча один раз снаружи vanilla arm frame, не
+прибавляет competing local Euler. Обычный item и cancelled RenderHand пути
+разделены; vanilla swing исключён только при владении авторской атакой.
+
+Ключевой реальный дефект ПОСЛЕ семплирования: соседние кадры 240 FPS давали
+173.3269° left_forearm на light_punch и 69.1809° left_hand на sheath_strike.
+Убрано покадровое изменение знака направленной оси хвата; запястный лимит
+плавно затухает у quaternion antipode. Pronation ведущего предплечья теперь
+затухает с two-hand ownership, а не включается мгновенно при weight>0.
+Частичный хват смешивает достижимую цель ладони до прежнего DLS solve; seed
+сохраняет авторский twist и смешивает полюс локтя. Левый локоть outward/front,
+правый дополнительно вниз для безопасности overhead cuts. Симметричный полюс
+проходил continuity, но пересекал голову: это исправлено, тест НЕ ослаблен.
+Экспериментальные альтернативные IK solvers отброшены. Новых движков/фильтров нет.
+
+RED: baseline production source/timing fixture — 2/2 failures; отдельный scan
+конечных костей поймал 173°/69° скачки. GREEN: полный Java17 build/reobf —
+1307 core + 12 flight = 1319 tests, failures/errors/skips=0. Новые 11 тестов
+покрывают clock на 30/60/144/240 Hz, sampler opt-in/legacy, FP ownership,
+точные контакты и непрерывность итоговых костей на 240 FPS, включая draw/sheath
+и world scenes. Существующие head/full-mesh/distinct-palm тесты сохранены.
+Resource checker: 0 новых / 4 legacy. Генератор детерминирован, JAR asset совпал.
+Blade/sheath meshes, +90° selected roll, шестисекундный Reid draw source clips,
+world cinematic source clips, gameplay/damage/контакты/protocol4, Flight1.10.1
+не изменены. Меняются только 8 обычных combat JSON clips; gait как в1.35.2.
+
+Нативный финальный клиент запущен через Xvfb/Mesa llvmpipe: Forge47.3.0,
+Minecraft1.20.1, тестовый сохранённый creative flat world. После снижения
+renderDistance до2 F3 показывает37 FPS (старый probe при12 чанках —13–15).
+Финальные Reid strikes проверены/записаны FP и TP; джеб и knight combo —
+отдельная запись. Mixin применён, 83 geo /61 animations загружены. Это НЕ
+приёмка на60/144 FPS, шейдерах/Oculus, реальном GPU или multiplayer.
+Логи/видео находятся вне репо в /data/reinhard-audit, в коммит не включать.
+Core1.35.3 JAR SHA256:
+7aab8e983927be5caea728c0bf43fc30fa30a48cee4b46b14ba52e02636f87bf.
+
+Финальный runClient завершён штатно через Save and Quit → Quit Game, exit0 /
+BUILD SUCCESSFUL (7m11s). Render/mixin exceptions не возникли; предупреждения
+аудиоустройства/narrator/offline Realms и legacy license path — окружение/старые.
+
+## 2026-10-20 — reinhard-combat-interaction (Notion AI)
+- Started directly at PR #40 HEAD 381850ab312369aceb2c8f65db556c0c6226da88; branch rework/reinhard-combat-interaction, stacked base fix/reinhard-strike-fluidity. Core 1.36.0, Flight unchanged.
+- Compact RMB/Y/Z/B contexts, independent defense channel and explicit laser/projectile seams, physical arrow retention, bounded final-blade collision bake, DONE-gated sound accent, thin recessed diagonal wound and exact budgeted projected raster.
+- Real Java17 Forge dedicated server/client connected; modes, draw, primary, cuts and grab/throw exercised under software rendering. Found early arrow pickup via noPhysics; fixed pickup policy. No audio device. Full attack matrix, exact beam/palm alignment, new defense final-mesh acceptance and live comparative/concurrent performance remain open. Draft, not full acceptance; see docs/reports/2026-10-20-reinhard-combat-interaction.md.
+
+## 2026-10-20 — Reinhard 1.36.1 continuation (Notion AI)
+- Continued PR41 over unchanged PR40 HEAD381850ab312369aceb2c8f65db556c0c6226da88. No main/previous PR merges.
+- Real server ray stops for Unibeam/Pulse; shot/wave/splash execution-path matrix, actual reflected missile owner/target; free-hand defense while Reid attacks, final render-palm endpoint, separate FP evade and geometry/projection/wire gates.
+- Native repeat found vanilla setOwner resets pickup; fixed order AFTER ownership. All three modes hold original arrow with inventory0 until release. Native beam blocked a cow behind defender (1000HP); moving defender off line allowed damage994.1289HP.
+- Native review found Camera.rotation +Z vs OpenGL -Z and GUI/audio projection hazards; fixed both, added direction and perspective-capture regressions. Do not mistake a pure coordinate roundtrip test for correct forward orientation.
+- Live equal-fill295470-stone cut tests, shared2000 budget: Ground157ticks/~7.85s, diagonal114–115/~5.70–5.75s; two jobs diagonal148/ground190ticks. Old projected tilted diagonal240ticks/~12s ->115/~5.75s. Software FPS minima7–37 single,22 concurrent; report actual limitations.
+- Real OpenAL/PulseAudio monitor recording: no full-scale clips across five cases including concurrent. Impact decoded RMS+5.63dB, bounded shared impact/tail crossfade; sounds follow actual DONE, not blast timer. Human listening/GPU/shader and exhaustive author acceptance not claimed.
+- Main report and evidence: docs/reports/2026-10-20-reinhard-combat-interaction.md and reinhard-{attack-matrix,defense-native,live-cuts,audio-evidence} files. Raw worlds/logs/video remain outside repository.
+
+## Core 1.36.2 user correction
+The user explicitly selected original sound1 WORLD_CUT_TAIL for loud post-destruction/DONE only, and sound2 procedural impact for quiet pulses inside the WORK rupture. Remove sound3 repeated rumble from both cuts. Do not use the old impact+quiet-tail finishing pair. Tail uses original recording with body mastering, not a substituted sound. Contextual slot preview/cooldown now follows crouching; default Y is Chop, crouch+B is diagonal, DRAWN Reid required. Native keyboard/audio check and full build are recorded in the current report.
+
+The user explicitly stopped native audio tests. Do not resume captures or listening checks unless asked. Core1.36.2 full build passes:1330 Core+12 Flight=1342, plus17 Python audio/file tests. Native audio/keyboard acceptance of1.36.2 remains unverified by request.
+
+## 2026-10-21 — World Cut sound rework (Core 1.38.1)
+- Branch feat/reinhard-worldcut-audio from PR41 HEAD e0e2da3; stacked on rework/reinhard-combat-interaction, not main.
+- Normal World Cut now owns world_cut_hum (1.992 s forward+time-reverse loop) and world_cut_pulse (1.35 s pitched swell). world_cut_silence/blast/tail no longer play inside the normal cut; CutFinishSound and legacy events stay for the diagonal cut only.
+- Pulse clock: first tick96, period50, envelope24; one acceptedUntil cap shared by hum, dust and shake lets an in-flight impulse finish and rejects post-DONE beats. Same clock drives hum swell, dust wave and +2.4 cinematic shake (cap 8). One hum per cast, one pulse voice overall, 20-tick pulse cooldown, DONE fade and prune stop.
+- Generated by tools/sfx/reinhard_worldcut.py from the owner's 01-original-final-tail.ogg (8fc6abd5...12dce6, re-export of approved 248150). Decoded loop: -17.96 LUFS, seam 0.00116 (-59 dBFS), pulse -18.54 LUFS. No listening/native audio run: the owner stopped those earlier; runtime audio acceptance is still open. Core1.38.1 full build passes:1334 tests; Python sfx suite 24. Blade/impact use dedicated ids exempt from both MASTER ducks (sheath_strike itself stays duckable). Hum saturated to -12.56 LUFS (+6 dB vs 1.37.0), impact sound at BLAST, blade ring at tick8.
+
+## 2026-10-25 — Стабилизация стека Рейнхарда и слияние в main (core 1.39.1, Notion AI)
+- Ветка fix/reinhard-stack-stabilization поверх #44 (docs/animation-skill-2026-refresh). Разобраны все ревью Codex: 33 комментария к коду (#27, #33, #37, #39, #40, #41, #42), 47 к дизайну и планам (#25/#26), 2 к #45; каждый исправлен с регрессионным тестом или отклонён со ссылками на код и дизайн.
+- Главное: попадания диагонального разреза по сужающейся ране, World Cut занят до конца каста, PvP-попадания снарядов и реакция на выстрелы с любой стороны, контакт защиты на видимой руке, один предиктор для объединённой клавиши рывка Рыцаря, PvP-флаг сервера для клиентского захвата (протокол 5), миграция старых раскладок Рейнхарда, позы в воздухе и элитры, тайминг Lethal Chop от первого лица, кинематика на авторитетном времени, пауза мира держит мобов под чужим контролем, Lethal Chop и World Erasure исключают друг друга, повторный дак стирания после смены измерения, пульс World Cut из одного допущенного старта, шов петли гула, божественный урон проходит броню героев, побочки удара только после принятого попадания, возврат из Энда без лечения, спасение из пустоты под крышей Незера, сброс каста World Cut при выгрузке уровня (из #35).
+- Отклонено по дизайну: исключение творческого режима, пауза для Lion's Heart, кулдаун перевынимания Рейда, позиция Step Dash при отказе. Фильтр целей World Cut из #35 не перенесён: по плану Stage 5 и критерию 9 дизайна разрез бьёт всё живое — решение владельца.
+- Проверки: `./gradlew build` зелёный, 1407 core + 12 flight = 1419 тестов; Python sfx 27 + sound-design 8. Выделенный сервер 1.39.1 стартовал на мире, созданном main 1.25.0, без ошибок. Проверку игроком/клиентом в мире владелец остановил — in-game проверка этой сессии не выполнялась.

@@ -1,0 +1,107 @@
+package dev.baranhan.viltrumitecore.client.render.vfx;
+
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+
+/**
+ * Shared sky / cloud / fog tint and weather fade with prioritised sources.
+ * The strongest live source wins and is blended over {@link #NONE} by its
+ * weight, which eases in after {@link #push} and fades out after
+ * {@link #remove} (real time, skill rule 6). Read by {@code SkyTintMixin}
+ * (sky, clouds), {@code LevelRainMixin} (rain, thunder on the client level)
+ * and {@link SkyTintEvents} (fog). Under a shader pack only the fog part may
+ * show. Render thread only; the instance form is for tests.
+ */
+public final class SkyTint {
+   /** Colour multipliers, extra darkening (0 none, 1 black) and the rain / thunder multiplier. */
+   public record Tint(float r, float g, float b, float darken, float rain) {
+   }
+
+   public static final Tint NONE = new Tint(1.0F, 1.0F, 1.0F, 0.0F, 1.0F);
+   public static final SkyTint INSTANCE = new SkyTint();
+   private static final float K_IN = 3.0F;
+   private static final float K_OUT = 3.0F;
+   private static final float GONE = 0.001F;
+
+   private static final class Source {
+      int priority;
+      Supplier<Tint> tint;
+      float weight;
+      boolean removing;
+   }
+
+   private final Map<Object, Source> sources = new LinkedHashMap<>();
+
+   /** Starts (or retargets) the tint of {@code owner}; the same owner again replaces its supplier and priority. */
+   public void push(Object owner, int priority, Supplier<Tint> tint) {
+      Source source = this.sources.computeIfAbsent(owner, key -> new Source());
+      source.priority = priority;
+      source.tint = tint;
+      source.removing = false;
+   }
+
+   /** Fades the owner's tint out; it is dropped once invisible. */
+   public void remove(Object owner) {
+      Source source = this.sources.get(owner);
+      if (source != null) {
+         source.removing = true;
+      }
+   }
+
+   public void clear() {
+      this.sources.clear();
+   }
+
+   public boolean active() {
+      return !this.sources.isEmpty();
+   }
+
+   /** Eases every weight by {@code dtSeconds} of real time. */
+   public void advance(float dtSeconds) {
+      Iterator<Source> it = this.sources.values().iterator();
+      while (it.hasNext()) {
+         Source source = it.next();
+         float target = source.removing ? 0.0F : 1.0F;
+         float k = source.removing ? K_OUT : K_IN;
+         source.weight += (target - source.weight) * (1.0F - (float)Math.exp(-k * dtSeconds));
+         if (source.removing && source.weight < GONE) {
+            it.remove();
+         }
+      }
+   }
+
+   /** The tint to apply now: the highest priority source (the later push wins a tie) over NONE by its weight. */
+   public Tint current() {
+      Source best = null;
+      for (Source source : this.sources.values()) {
+         if (best == null || source.priority >= best.priority) {
+            best = source;
+         }
+      }
+
+      if (best == null) {
+         return NONE;
+      }
+
+      Tint tint = best.tint.get();
+      return tint == null ? NONE : mix(NONE, tint, best.weight);
+   }
+
+   /** Pure: linear blend of every field. */
+   public static Tint mix(Tint base, Tint over, float w) {
+      return new Tint(lerp(base.r, over.r, w), lerp(base.g, over.g, w), lerp(base.b, over.b, w),
+         lerp(base.darken, over.darken, w), lerp(base.rain, over.rain, w));
+   }
+
+   /** Pure: a colour under a tint. */
+   public static double[] apply(double r, double g, double b, Tint tint) {
+      double keep = 1.0 - tint.darken;
+      return new double[]{r * tint.r * keep, g * tint.g * keep, b * tint.b * keep};
+   }
+
+   private static float lerp(float a, float b, float w) {
+      return a + (b - a) * w;
+   }
+}

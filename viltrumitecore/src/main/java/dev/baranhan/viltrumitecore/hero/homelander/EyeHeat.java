@@ -13,6 +13,11 @@ public final class EyeHeat {
 
    /** @param laser laser beam on this tick; @param focus focus on this tick */
    public void tick(boolean laser, boolean focus) {
+      this.tick(laser, focus, 1.0F);
+   }
+
+   /** @param coolScale foreign slow-down of the cooling only (HeroResourceRegen), 0..1 */
+   public void tick(boolean laser, boolean focus, float coolScale) {
       this.justOverheated = false;
       boolean allowed = this.lockTicks <= 0;
       if (this.lockTicks > 0) {
@@ -38,7 +43,7 @@ public final class EyeHeat {
       } else {
          this.idleTicks++;
          if (this.idleTicks > HomelanderRules.HEAT_COOL_DELAY && this.heat > 0.0F) {
-            this.heat -= HomelanderRules.HEAT_COOL_PER_TICK;
+            this.heat -= HomelanderRules.HEAT_COOL_PER_TICK * coolScale;
             if (this.heat < 1.0E-3F) {
                this.heat = 0.0F;
             }

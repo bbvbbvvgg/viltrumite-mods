@@ -121,6 +121,7 @@ public final class SignatureVfx {
             }
 
             Vec3 point = snapshot.actionTarget();
+      if(point!=null)point=dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.endpoint(point);
             if (point != null) {
                Vec3 shoulder = shoulder(player, 1.0F);
                Vec3 toPoint = point.subtract(shoulder);
@@ -244,6 +245,7 @@ public final class SignatureVfx {
    private static void drawSignature(BufferBuilder buffer, Vec3 cameraPos, Camera camera, Player player, HeroPublicSnapshot snapshot, float partialTick) {
       MarkId mark = IronManVariant.mark(snapshot.variant());
       Vec3 point = snapshot.actionTarget();
+      if(point!=null)point=dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.endpoint(point);
       if (mark == null || point == null) {
          return;
       }
@@ -281,11 +283,12 @@ public final class SignatureVfx {
 
    private static void drawPulse(BufferBuilder buffer, Vec3 cameraPos, Camera camera, Player player, Vec3 point, float partialTick) {
       Vec3 from = IronManCombatVfx.chest(player, partialTick);
+      boolean defended=dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.defended(point);
       float flicker = 0.85F + 0.15F * Mth.sin((player.tickCount + partialTick) * 1.9F);
-      PixelVfx.beamDots(buffer, cameraPos, camera, from, point, 0.06F, 0.3F, 90, 170, 255, (int)(110 * flicker));
-      PixelVfx.beamDots(buffer, cameraPos, camera, from, point, 0.06F, 0.13F, 230, 250, 255, (int)(240 * flicker));
+      PixelVfx.beamDots(buffer, cameraPos, camera, from, point, 0.06F, defended?.045F:.3F, 90, 170, 255, (int)(110 * flicker));
+      PixelVfx.beamDots(buffer, cameraPos, camera, from, point, 0.06F, defended?.02F:.13F, 230, 250, 255, (int)(240 * flicker));
       PixelVfx.crossGlow(buffer, cameraPos, camera, from, 0.35F, 170, 230, 255, 230);
-      PixelVfx.crossGlow(buffer, cameraPos, camera, point, 0.45F, 170, 230, 255, 230);
+      PixelVfx.crossGlow(buffer, cameraPos, camera, point, defended?.065F:.45F, 170, 230, 255, 230);
    }
 
    private static void drawDive(BufferBuilder buffer, Vec3 cameraPos, Camera camera, Player player, Vec3 start, float partialTick) {

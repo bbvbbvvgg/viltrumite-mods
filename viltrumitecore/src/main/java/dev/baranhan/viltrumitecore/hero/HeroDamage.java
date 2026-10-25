@@ -50,6 +50,8 @@ public final class HeroDamage {
          return DamageResult.PASS;
       }
 
+      if (isProtected(target)) return DamageResult.BLOCKED;
+
       Set<UUID> routing = ROUTING.get();
       if (!routing.add(target.getUUID())) {
          return DamageResult.PASS;
@@ -89,9 +91,15 @@ public final class HeroDamage {
 
    /** Routing order: dead/empty hits pass, control queues (except payouts), Lion blocks external only. */
    static DamageResult decide(DamageKind kind, boolean alive, boolean anchored, boolean lionActive, float amount) {
+      return decide(kind, alive, anchored, lionActive, amount, false);
+   }
+
+   static DamageResult decide(DamageKind kind, boolean alive, boolean anchored, boolean lionActive, float amount, boolean protectedBody) {
       if (!alive || amount <= 0.0F) {
          return DamageResult.PASS;
       }
+
+      if (protectedBody) return DamageResult.BLOCKED;
 
       if (kind != DamageKind.DEFERRED_RELEASE && anchored) {
          return DamageResult.QUEUED;
@@ -155,6 +163,8 @@ public final class HeroDamage {
          return;
       }
 
+      if (isProtected(player)) return;
+
       ControlManager manager = player.level() instanceof ServerLevel serverLevel ? ControlManager.get(serverLevel) : null;
       boolean anchored = manager != null && manager.isAnchored(player);
       if (decide(DamageKind.INTERNAL, player.isAlive(), anchored, false, amount) == DamageResult.QUEUED && manager != null) {
@@ -188,6 +198,8 @@ public final class HeroDamage {
       if (amount <= 0.0F || target.level().isClientSide()) {
          return;
       }
+
+      if (isProtected(target)) return;
 
       // No Forge damage event fires on this path: run the hero layers here, once.
       amount = HeroDamageLayers.onClean(target, source, amount);
@@ -238,12 +250,17 @@ public final class HeroDamage {
       return true;
    }
 
+   /** Protection wins before queueing/layers, including internal and deferred clean damage. */
+   public static boolean isProtected(LivingEntity target) {
+      return BodyIsolation.active(target) || dev.baranhan.viltrumitecore.hero.control.WorldPause.isProtected(target);
+   }
+
    /** Queue the hit under any anchor control; used by routed EXTERNAL damage. */
    public static boolean isAnchored(@Nullable LivingEntity target) {
       if (target == null || !(target.level() instanceof ServerLevel level)) {
          return false;
       }
 
-      return ControlManager.get(level).isAnchored(target);
+      return BodyIsolation.active(target) || dev.baranhan.viltrumitecore.hero.control.WorldPause.isPaused(target) || ControlManager.get(level).isAnchored(target);
    }
 }

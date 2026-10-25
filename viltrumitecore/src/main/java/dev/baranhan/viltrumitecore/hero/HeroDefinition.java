@@ -1,4 +1,5 @@
 package dev.baranhan.viltrumitecore.hero;
+import net.minecraft.world.phys.Vec3;
 
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import net.minecraft.nbt.CompoundTag;
@@ -120,6 +121,14 @@ public interface HeroDefinition {
       return null;
    }
 
+   /**
+    * Style of the kit chop for this player (both sides, cheap: no allocation per
+    * call). Default: the legacy look and sound, unchanged.
+    */
+   default ChopStyle chopStyle(Player player) {
+      return ChopStyle.DEFAULT;
+   }
+
    /** Does the shared legacy-kit regeneration (every 40 t) apply; heroes with their own regen opt out. */
    default boolean usesLegacyRegen(Player player) {
       return true;
@@ -136,8 +145,33 @@ public interface HeroDefinition {
       return new String[0][];
    }
 
+   /**
+    * Maps retired or merged ability ids of a saved loadout (18 slots, "" for
+    * empty) to their successors before the ownership check, so a customized
+    * layout keeps its other slots instead of resetting to the default. Returns
+    * the migrated slots (the argument may be changed and returned). Default:
+    * nothing retired.
+    */
+   default String[] migrateLoadout(String[] slots) {
+      return slots;
+   }
+
    /** May this target be placed under the given control kind right now. */
    boolean allowsExternalControl(LivingEntity target, ControlKind kind);
+
+   /** Opt-in policy for claimed LMB; melee-only heroes leave vanilla block mining alone. */
+   default boolean claimsBlockAttack(Player player) { return true; }
+
+   /** Optional physical catch. True transfers temporary projectile ownership to the hero. */
+   default boolean captureProjectile(ServerPlayer self, net.minecraft.world.entity.projectile.Projectile projectile) { return false; }
+
+   /** True only when an explicit continuous ray is mechanically stopped by this hero. */
+   default boolean blocksContinuousRay(ServerPlayer self, Vec3 source, Vec3 contact) { return false; }
+   /** Server-owned defensive contact. Client renderers may refine only its presentation. */
+   default Vec3 defenseContact(Player self) { return null; }
+
+   /** Server rejects stray vanilla entity-hit packets for timeline-owned melee. */
+   default boolean allowsVanillaAttack(Player player) { return true; }
 
    /**
     * Action this hero claims for a mouse button right now, or null for vanilla.
@@ -174,6 +208,22 @@ public interface HeroDefinition {
 
    /** Hidden from scans (Iron Man scan skips this player). */
    default boolean hiddenFromScan(Player self) {
+      return false;
+   }
+
+   /**
+    * A divine being (spec: Reinhard §3.3): only divine damage hurts it in
+    * full, and execute-style powers skip it. See {@link DivineTargets}. Default false.
+    */
+   default boolean isDivine(Player self) {
+      return false;
+   }
+
+   /**
+    * Absolute invulnerability right now (Regulus' Lion's Heart). Not the same
+    * as divinity: execute-style powers stop at it. Default false.
+    */
+   default boolean isAbsolutelyInvulnerable(Player self) {
       return false;
    }
 
@@ -216,8 +266,73 @@ public interface HeroDefinition {
    default void onSuperJump(ServerPlayer player) {
    }
 
+   /**
+    * Jumps in the air before touching ground, water, lava, a ladder or a mount
+    * again (HeroAirJump / client AirJumpClient); 0 = none. Read on BOTH sides.
+    */
+   default int airJumps(Player player) {
+      return 0;
+   }
+
+   /** Vertical velocity of one air jump in blocks/tick (horizontal is kept). Read on BOTH sides. */
+   default double airJumpVelocity(Player player) {
+      return 0.0;
+   }
+
+   /** Opt-in horizontal air steering. Default exactly preserves the legacy velocity. */
+   default net.minecraft.world.phys.Vec3 airJumpMotion(Player player, net.minecraft.world.phys.Vec3 current) {
+      return new net.minecraft.world.phys.Vec3(current.x,airJumpVelocity(player),current.z);
+   }
+
+   /** Same launch seam used by Regulus; default behaviour is unchanged. */
+   default net.minecraft.world.phys.Vec3 superJumpMotion(Player player, net.minecraft.world.phys.Vec3 current) {
+      net.minecraft.world.phys.Vec3 look=player.getLookAngle();
+      return new net.minecraft.world.phys.Vec3(current.x+look.x*HeroSuperJump.FORWARD,superJumpVelocity(player),current.z+look.z*HeroSuperJump.FORWARD);
+   }
+
+   /** Server: hero-specific sound/FX after an accepted air jump (the shared ring is drawn by the clients). */
+   default void onAirStep(ServerPlayer player) {
+   }
+
    /** Server: this hero player took damage (after armor, before health change). */
    default void onHurt(ServerPlayer player, net.minecraft.world.damagesource.DamageSource source, float amount) {
+   }
+
+   /**
+    * Server: how this hero slows {@code other}'s own resource regen (Iron Man
+    * energy, Homelander cooling), 0..1; the strongest source wins
+    * ({@link HeroResourceRegen}). Default: no effect.
+    */
+   default float foreignResourceRegenFactor(Player self, Player other) {
+      return 1.0F;
+   }
+
+   /**
+    * Both sides, MobEffectEvent.Applicable: true = this effect never applies to
+    * the hero (DENY). Default: vanilla.
+    */
+   default boolean blocksEffect(Player self, net.minecraft.world.effect.MobEffectInstance effect) {
+      return false;
+   }
+
+   /**
+    * Server, ProjectileImpactEvent: a projectile is about to hit this hero
+    * (see {@link HeroProjectiles}). Anything but PASS skips the hit and is
+    * applied there. Default: vanilla hit.
+    */
+   default ProjectileResponse projectileResponse(ServerPlayer self, net.minecraft.world.entity.projectile.Projectile projectile) {
+      return ProjectileResponse.PASS;
+   }
+
+   /**
+    * Both sides: true when {@link #projectileResponse} may turn a projectile
+    * away from this hero. Clients then keep custom projectiles that touch the
+    * hero flying until the server outcome arrives (see
+    * {@link HeroProjectiles#awaitsServer}); every other hit plays its local
+    * impact at once. Default: never.
+    */
+   default boolean interceptsProjectiles(Player self) {
+      return false;
    }
 
    /**
@@ -235,9 +350,27 @@ public interface HeroDefinition {
       return afterArmor;
    }
 
+   /**
+    * Server: HP loss from a source that bypasses invulnerability (void,
+    * {@code generic_kill}), which skips absorbIncoming and clampFinalDamage.
+    * Runs in LivingDamageEvent and on the clean path, never inside an
+    * {@link AdminKill} scope ({@code /kill}). Default: unchanged.
+    */
+   default float clampUnblockableDamage(ServerPlayer self, net.minecraft.world.damagesource.DamageSource source, float amount) {
+      return amount;
+   }
+
    /** Server, LivingHurtEvent: damage this hero deals to {@code target} (multipliers). */
    default float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, net.minecraft.world.damagesource.DamageSource source, float amount) {
       return amount;
+   }
+
+   /**
+    * Server: the player respawned as a fresh body (PlayerRespawnEvent, also the
+    * End-portal return). {@code restoreHero()} on clone skips {@link #enter},
+    * so a hero re-applies its chassis here. Must be idempotent. Default: nothing.
+    */
+   default void onRespawn(ServerPlayer player) {
    }
 
    /** Server: the player changed dimension (no full cleanup; stop channels if needed). */
@@ -261,6 +394,12 @@ public interface HeroDefinition {
     * loadout, grants, baseline snapshot. Never called when the id is unchanged.
     */
    void enter(ServerPlayer player);
+
+   /** Both sides: entity held by this hero, or -1. Never infer a hold from a generic PULL lease. */
+   default int heldTargetId(Player holder) { return -1; }
+
+   /** Both sides: authoritative hold anchor. partialTick only interpolates the client presentation. */
+   default net.minecraft.world.phys.Vec3 heldTargetPosition(Player holder, net.minecraft.world.entity.Entity target, float partialTick) { return null; }
 
    /** Server-authoritative public snapshot; written to the synced data for all trackers. */
    HeroPublicSnapshot snapshot(Player player);

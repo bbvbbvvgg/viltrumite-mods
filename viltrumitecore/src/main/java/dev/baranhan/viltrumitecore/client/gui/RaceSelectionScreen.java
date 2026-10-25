@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.client.gui;
 
+import dev.baranhan.viltrumitecore.client.hero.HeroHeadPreviews;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.HeroChoiceC2SPacket;
@@ -14,30 +15,29 @@ public class RaceSelectionScreen extends Screen {
    private static final ResourceLocation HOMELANDER_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/homelander.png");
    private static final ResourceLocation REGULUS_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/regulus.png");
    private static final ResourceLocation IRON_MAN_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/ironman.png");
+   private static final HeroId[] HEROES = {HeroId.HOMELANDER, HeroId.REGULUS, HeroId.IRON_MAN, HeroId.REINHARD};
+   private static final String[] LABELS = {"become_homelander", "become_regulus", "become_ironman", "become_reinhard"};
+   private HeroChoiceLayout.Layout layout = HeroChoiceLayout.of(0, 0, HEROES.length);
 
    public RaceSelectionScreen() {
       super(Component.translatable("gui.viltrumitecore.race_selection.title"));
    }
 
    protected void init() {
-      int centerX = this.width / 2;
-      int centerY = this.height / 2;
-      this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.become_homelander"), button -> {
-         this.sendHeroChoice(HeroId.HOMELANDER);
-         this.onClose();
-      }).bounds(centerX - 155, centerY - 20, 100, 20).build());
-      this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.become_regulus"), button -> {
-         this.sendHeroChoice(HeroId.REGULUS);
-         this.onClose();
-      }).bounds(centerX - 50, centerY - 20, 100, 20).build());
-      this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.become_ironman"), button -> {
-         this.sendHeroChoice(HeroId.IRON_MAN);
-         this.onClose();
-      }).bounds(centerX + 55, centerY - 20, 100, 20).build());
+      // One centred row when it fits, wrapped rows on narrow GUI scales (HeroChoiceLayout).
+      this.layout = HeroChoiceLayout.of(this.width, this.height, HEROES.length);
+      for (int index = 0; index < HEROES.length; index++) {
+         HeroId hero = HEROES[index];
+         HeroChoiceLayout.Cell cell = this.layout.heroes().get(index);
+         this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection." + LABELS[index]), button -> {
+            this.sendHeroChoice(hero);
+            this.onClose();
+         }).bounds(cell.x(), cell.y(), HeroChoiceLayout.BUTTON_W, HeroChoiceLayout.BUTTON_H).build());
+      }
       this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection.remain_human"), button -> {
          this.sendHeroChoice(HeroId.HUMAN);
          this.onClose();
-      }).bounds(centerX - 50, centerY + 6, 100, 20).build());
+      }).bounds(this.layout.humanX(), this.layout.humanY(), HeroChoiceLayout.BUTTON_W, HeroChoiceLayout.BUTTON_H).build());
    }
 
    private void sendLegacyChoice(boolean choseViltrumite) {
@@ -51,19 +51,22 @@ public class RaceSelectionScreen extends Screen {
    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
       this.renderBackground(guiGraphics);
       super.render(guiGraphics, mouseX, mouseY, partialTick);
-      int centerX = this.width / 2;
-      int centerY = this.height / 2;
-      guiGraphics.drawCenteredString(this.font, Component.translatable("gui.viltrumitecore.race_selection.question"), centerX, centerY - 60, 16777215);
+      guiGraphics.drawCenteredString(this.font, Component.translatable("gui.viltrumitecore.race_selection.question"), this.width / 2, this.layout.questionY(), 16777215);
 
-      // Head previews above each hero button: base face + hat layer, drawn skin-flat like a player head.
-      drawHead(guiGraphics, HOMELANDER_SKIN, centerX - 105 - 12, centerY - 48);
-      drawHead(guiGraphics, REGULUS_SKIN, centerX - 12, centerY - 48);
-      drawHead(guiGraphics, IRON_MAN_SKIN, centerX + 105 - 12, centerY - 48);
+      // Head previews above each hero button (HeroHeadPreviews: registered 3D heads, else the flat skin face).
+      for (int index = 0; index < HEROES.length; index++) {
+         HeroChoiceLayout.Cell cell = this.layout.heroes().get(index);
+         HeroHeadPreviews.draw(HEROES[index], guiGraphics, cell.headX(), cell.headY(), HeroChoiceLayout.HEAD, partialTick, skin(HEROES[index]));
+      }
    }
 
-   private static void drawHead(GuiGraphics guiGraphics, ResourceLocation skin, int x, int y) {
-      guiGraphics.blit(skin, x, y, 24, 24, 8.0F, 8.0F, 8, 8, 64, 64);
-      guiGraphics.blit(skin, x, y, 24, 24, 40.0F, 8.0F, 8, 8, 64, 64);
+   private static ResourceLocation skin(HeroId hero) {
+      return switch (hero) {
+         case HOMELANDER -> HOMELANDER_SKIN;
+         case REGULUS -> REGULUS_SKIN;
+         case IRON_MAN -> IRON_MAN_SKIN;
+         default -> net.minecraft.client.resources.DefaultPlayerSkin.getDefaultSkin();
+      };
    }
 
    public boolean shouldCloseOnEsc() {

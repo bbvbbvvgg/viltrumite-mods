@@ -44,6 +44,16 @@ public abstract class GrabbedEntityPositionMixin {
       CallbackInfo ci
    ) {
       if (entity.level() != null && entity.level().isClientSide) {
+         Player attached = dev.baranhan.viltrumitecore.client.hero.WorldPauseClient.active() ? null
+            : dev.baranhan.viltrumitecore.hero.HeroHeldTargets.holder(entity);
+         if (attached != null) {
+            Vec3 at = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(attached).heldTargetPosition(attached, entity, partialTicks);
+            if (at != null) {
+               Vec3 interpolated = entity.getPosition(partialTicks);
+               poseStack.translate(at.x - interpolated.x, at.y - interpolated.y, at.z - interpolated.z);
+            }
+            return;
+         }
          Player holdingPlayer = this.getHoldingPlayer(entity);
          if (holdingPlayer != null) {
             Vec3 handPos = null;

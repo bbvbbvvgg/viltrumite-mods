@@ -1,0 +1,480 @@
+{
+  "setup": "Two real Java17 Forge clients / dedicated server, QA property, production handlers. WAVE is an explicit synthetic context fixture, not a visual test of every wave ability.",
+  "cases": {
+    "melee": {
+      "states": [
+        "NONE",
+        "PALM"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "weapon": {
+      "states": [
+        "NONE",
+        "WEAPON"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "heavy": {
+      "states": [
+        "EVADE",
+        "NONE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "repulsor": {
+      "states": [
+        "NONE",
+        "PROJECTILE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "missile": {
+      "states": [
+        "NONE",
+        "PROJECTILE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "unibeam": {
+      "states": [
+        "BEAM",
+        "NONE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 13
+    },
+    "pulse": {
+      "states": [
+        "BEAM",
+        "NONE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 4
+    },
+    "homelander": {
+      "states": [
+        "BEAM",
+        "NONE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "microlaser": {
+      "states": [
+        "BEAM",
+        "NONE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "gun": {
+      "states": [
+        "NONE",
+        "PROJECTILE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "rocketfist": {
+      "states": [
+        "NONE",
+        "PROJECTILE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "airblade": {
+      "states": [
+        "NONE",
+        "PROJECTILE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    },
+    "wave": {
+      "states": [
+        "BRACE",
+        "NONE"
+      ],
+      "minimum_hp": 20.0,
+      "max_action_elapsed": 0
+    }
+  },
+  "arrow_pickup_after_setOwner_fix": [
+    {
+      "mode": "restrained",
+      "held_samples": [
+        {
+          "tick": 4,
+          "kind": "ARROW",
+          "reaction_age": 1,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 5,
+          "kind": "ARROW",
+          "reaction_age": 2,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 6,
+          "kind": "ARROW",
+          "reaction_age": 3,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 7,
+          "kind": "ARROW",
+          "reaction_age": 4,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 8,
+          "kind": "ARROW",
+          "reaction_age": 5,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 9,
+          "kind": "ARROW",
+          "reaction_age": 6,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 10,
+          "kind": "ARROW",
+          "reaction_age": 7,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 11,
+          "kind": "ARROW",
+          "reaction_age": 8,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 12,
+          "kind": "ARROW",
+          "reaction_age": 9,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        }
+      ],
+      "first_release_after_hold": {
+        "tick": 13,
+        "kind": "NONE",
+        "reaction_age": 10,
+        "left": false,
+        "holding": false,
+        "inventory": 0,
+        "hp": 20.0,
+        "action_elapsed": 0
+      },
+      "later_inventory_max": 1
+    },
+    {
+      "mode": "knight",
+      "held_samples": [
+        {
+          "tick": 4,
+          "kind": "ARROW",
+          "reaction_age": 1,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 5,
+          "kind": "ARROW",
+          "reaction_age": 2,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 6,
+          "kind": "ARROW",
+          "reaction_age": 3,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 7,
+          "kind": "ARROW",
+          "reaction_age": 4,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 8,
+          "kind": "ARROW",
+          "reaction_age": 5,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 9,
+          "kind": "ARROW",
+          "reaction_age": 6,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 10,
+          "kind": "ARROW",
+          "reaction_age": 7,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 11,
+          "kind": "ARROW",
+          "reaction_age": 8,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 12,
+          "kind": "ARROW",
+          "reaction_age": 9,
+          "left": false,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        }
+      ],
+      "first_release_after_hold": {
+        "tick": 13,
+        "kind": "NONE",
+        "reaction_age": 10,
+        "left": false,
+        "holding": false,
+        "inventory": 0,
+        "hp": 20.0,
+        "action_elapsed": 0
+      },
+      "later_inventory_max": 1
+    },
+    {
+      "mode": "holy",
+      "held_samples": [
+        {
+          "tick": 4,
+          "kind": "ARROW",
+          "reaction_age": 1,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 5,
+          "kind": "ARROW",
+          "reaction_age": 2,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 6,
+          "kind": "ARROW",
+          "reaction_age": 3,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 7,
+          "kind": "ARROW",
+          "reaction_age": 4,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 8,
+          "kind": "ARROW",
+          "reaction_age": 5,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 9,
+          "kind": "ARROW",
+          "reaction_age": 6,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 10,
+          "kind": "ARROW",
+          "reaction_age": 7,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 11,
+          "kind": "ARROW",
+          "reaction_age": 8,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        },
+        {
+          "tick": 12,
+          "kind": "ARROW",
+          "reaction_age": 9,
+          "left": true,
+          "holding": true,
+          "inventory": 0,
+          "hp": 20.0,
+          "action_elapsed": 0
+        }
+      ],
+      "first_release_after_hold": {
+        "tick": 13,
+        "kind": "NONE",
+        "reaction_age": 10,
+        "left": true,
+        "holding": false,
+        "inventory": 0,
+        "hp": 20.0,
+        "action_elapsed": 0
+      },
+      "later_inventory_max": 1
+    }
+  ],
+  "actual_missile_block_splash": {
+    "states": [
+      "BRACE",
+      "NONE"
+    ],
+    "minimum_hp": 19.997
+  },
+  "reflected_projectile_server_examples": [
+    "repulsor,2,11,true,false,(300.5, -58.57999999523163, 3.5)",
+    "missile,6,12,true,true,(300.75609778507317, -58.75404737177614, 1.4292638555510753)",
+    "missile,7,12,true,true,(300.69058383764144, -58.69889363363803, 2.7264400146988255)",
+    "missile,8,12,true,true,(300.6250140539075, -58.686041227524456, 4.024721732631483)",
+    "missile,9,12,true,true,(300.55946790262544, -58.723230669047865, 5.322535528016355)"
+  ],
+  "unibeam_behind_target_control": {
+    "blocked_cow_hp": 1000,
+    "defender_moved_off_ray_cow_hp": 994.1289,
+    "native_log_confirmed": true
+  },
+  "final_concurrent_beam_arrow": {
+    "production_handlers": true,
+    "beam_actor": "real connected AttackQA",
+    "arrow_source": "separate QA/dispenser-like source so the real beam is not cancelled",
+    "observations": [
+      "unibeam,4,BEAM,4,true,true,0,20.0,0",
+      "unibeam,5,BEAM,5,true,true,0,20.0,0",
+      "unibeam,6,BEAM,6,true,true,0,20.0,0",
+      "unibeam,7,BEAM,7,true,true,0,20.0,0",
+      "unibeam,8,BEAM,8,true,true,0,20.0,0",
+      "unibeam,9,BEAM,9,true,true,0,20.0,0",
+      "unibeam,10,BEAM,10,true,true,0,20.0,0",
+      "unibeam,11,BEAM,11,true,true,0,20.0,0",
+      "unibeam,12,BEAM,12,true,true,0,20.0,0"
+    ],
+    "assertions": [
+      "BEAM reaction age advances, not restarted",
+      "same tracked arrow held concurrently",
+      "inventory remains zero while holding",
+      "defender health 20"
+    ],
+    "limitations": [
+      "One simultaneous-threat setup; not exhaustive threat-direction/multiplayer load coverage"
+    ]
+  },
+  "final_fp_arrow_review": {
+    "build": "Core 1.36.1, final full build 1339 tests",
+    "frame": "Clean native FP, drawn Reid, raised left catch, visible crosswise arrow/fletching above the lower blade silhouette",
+    "same_entity": true,
+    "no_pickup_while_held": true,
+    "limitations": "The resting blade can occlude part of the shaft; native viewpoints are sampled, not exhaustive human visual acceptance."
+  }
+}

@@ -22,8 +22,8 @@ public class AntiCheatBypassMixin {
       cancellable = true
    )
    private void bypassGrabRubberband(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
-      if (this.player != null && this.player.server != null) {
-         boolean isBeingGrabbed = false;
+      if (this.player != null && this.player.server != null && this.player.server.isSameThread()) {
+         boolean isBeingGrabbed = dev.baranhan.viltrumitecore.hero.HeroHeldTargets.holder(this.player) != null;
 
          for (ServerPlayer otherPlayer : this.player.server.getPlayerList().getPlayers()) {
             ViltrumiteCorePlayer coreOther = (ViltrumiteCorePlayer)otherPlayer;

@@ -26,7 +26,7 @@ public record HeroPublicSnapshot(
    int controlTargetId,
    int[] cooldowns,
    boolean actionBusy,
-   int availableActions,
+   long availableActions,
    @Nullable Vec3 actionTarget,
    /** Generic hero resource (Homelander: eye heat x10, 0-1000). */
    int resource,
@@ -49,7 +49,8 @@ public record HeroPublicSnapshot(
    int resource2
 ) {
    public static final int COOLDOWN_COUNT = 6;
-   public static final int EXTRA_COOLDOWN_MAX = 16;
+   // Bounded wire capacity, including hero-reserved slots (Reinhard mode/Phoenix).
+   public static final int EXTRA_COOLDOWN_MAX = 32;
    private static final int[] NO_EXTRA = new int[0];
    public static final HeroPublicSnapshot EMPTY = new HeroPublicSnapshot(
       HeroId.HUMAN, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1, new int[COOLDOWN_COUNT], false
@@ -65,7 +66,7 @@ public record HeroPublicSnapshot(
    public HeroPublicSnapshot(HeroId heroId, int actionId, int actionElapsed, int actionLength, int hearts,
       boolean lionActive, int lionWindowLeft, int lionWindowMax, boolean lionOverheat, boolean madness,
       int madnessTicksLeft, int ritualTicks, int controlTargetId, int[] cooldowns, boolean actionBusy,
-      int availableActions, @Nullable Vec3 actionTarget) {
+      long availableActions, @Nullable Vec3 actionTarget) {
       this(heroId, actionId, actionElapsed, actionLength, hearts, lionActive, lionWindowLeft, lionWindowMax,
          lionOverheat, madness, madnessTicksLeft, ritualTicks, controlTargetId, cooldowns, actionBusy,
          availableActions, actionTarget, 0, false, 0);
@@ -74,7 +75,7 @@ public record HeroPublicSnapshot(
    public HeroPublicSnapshot(HeroId heroId, int actionId, int actionElapsed, int actionLength, int hearts,
       boolean lionActive, int lionWindowLeft, int lionWindowMax, boolean lionOverheat, boolean madness,
       int madnessTicksLeft, int ritualTicks, int controlTargetId, int[] cooldowns, boolean actionBusy,
-      int availableActions, @Nullable Vec3 actionTarget, int resource, boolean resourceLocked, int heroFlags) {
+      long availableActions, @Nullable Vec3 actionTarget, int resource, boolean resourceLocked, int heroFlags) {
       this(heroId, actionId, actionElapsed, actionLength, hearts, lionActive, lionWindowLeft, lionWindowMax,
          lionOverheat, madness, madnessTicksLeft, ritualTicks, controlTargetId, cooldowns, actionBusy,
          availableActions, actionTarget, resource, resourceLocked, heroFlags, NO_EXTRA);
@@ -83,7 +84,7 @@ public record HeroPublicSnapshot(
    public HeroPublicSnapshot(HeroId heroId, int actionId, int actionElapsed, int actionLength, int hearts,
       boolean lionActive, int lionWindowLeft, int lionWindowMax, boolean lionOverheat, boolean madness,
       int madnessTicksLeft, int ritualTicks, int controlTargetId, int[] cooldowns, boolean actionBusy,
-      int availableActions, @Nullable Vec3 actionTarget, int resource, boolean resourceLocked, int heroFlags, int[] extraCooldowns) {
+      long availableActions, @Nullable Vec3 actionTarget, int resource, boolean resourceLocked, int heroFlags, int[] extraCooldowns) {
       this(heroId, actionId, actionElapsed, actionLength, hearts, lionActive, lionWindowLeft, lionWindowMax,
          lionOverheat, madness, madnessTicksLeft, ritualTicks, controlTargetId, cooldowns, actionBusy,
          availableActions, actionTarget, resource, resourceLocked, heroFlags, extraCooldowns, 0, 0);
@@ -104,7 +105,16 @@ public record HeroPublicSnapshot(
    }
 
    public boolean actionAvailable(HeroAction action) {
-      return (this.availableActions & (1 << action.ordinal())) != 0;
+      return (this.availableActions & (1L << action.ordinal())) != 0;
+   }
+
+   /** Bit mask with one {@code 1L << ordinal} bit per action (Reinhard is the first real producer). */
+   public static long actionMask(HeroAction... actions) {
+      long mask = 0L;
+      for (HeroAction action : actions) {
+         mask |= 1L << action.ordinal();
+      }
+      return mask;
    }
 
    public String encode() {
@@ -190,17 +200,21 @@ public record HeroPublicSnapshot(
          int variant = 0;
          int resource2 = 0;
          if (parts.length > 27) {
-            int count = Math.max(0, Math.min(EXTRA_COOLDOWN_MAX, Integer.parseInt(parts[27])));
+            int wireCount = Integer.parseInt(parts[27]);
+            if (wireCount < 0) return EMPTY;
+            int count = Math.min(EXTRA_COOLDOWN_MAX, wireCount);
             extra = new int[count];
             for (int i = 0; i < count; i++) {
                int index = 28 + i;
                extra[i] = index < parts.length ? Integer.parseInt(parts[index]) : 0;
             }
 
-            int after = 28 + count;
-            if (parts.length > after + 1) {
-               variant = Integer.parseInt(parts[after]);
-               resource2 = Integer.parseInt(parts[after + 1]);
+            // The tail follows the declared wire array, not its capped local copy.
+            // Use long arithmetic so an invalid huge count cannot wrap into earlier fields.
+            long after = 28L + wireCount;
+            if (after + 1 < parts.length) {
+               variant = Integer.parseInt(parts[(int) after]);
+               resource2 = Integer.parseInt(parts[(int) after + 1]);
             }
          }
          return new HeroPublicSnapshot(
@@ -219,7 +233,7 @@ public record HeroPublicSnapshot(
             Integer.parseInt(parts[12]),
             cooldowns,
             parts.length > 19 && "1".equals(parts[19]),
-            parts.length > 20 ? Integer.parseInt(parts[20]) : -1,
+            parts.length > 20 ? Long.parseLong(parts[20]) : -1L,
             target,
             parts.length > 24 ? Integer.parseInt(parts[24]) : 0,
             parts.length > 25 && "1".equals(parts[25]),
@@ -283,7 +297,7 @@ public record HeroPublicSnapshot(
       result = 31 * result + this.controlTargetId;
       result = 31 * result + Arrays.hashCode(this.cooldowns);
       result = 31 * result + Boolean.hashCode(this.actionBusy);
-      result = 31 * result + this.availableActions;
+      result = 31 * result + Long.hashCode(this.availableActions);
       result = 31 * result + Objects.hashCode(this.actionTarget);
       result = 31 * result + this.resource;
       result = 31 * result + Boolean.hashCode(this.resourceLocked);

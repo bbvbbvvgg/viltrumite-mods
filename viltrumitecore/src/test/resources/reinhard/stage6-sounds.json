@@ -1,0 +1,326 @@
+{
+  "reinhard.air_step": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_air_step",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.mode_restrained": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_mode_restrained",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.mode_knight": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_mode_knight",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.mode_holy_sword": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_mode_holy_sword",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_refuse",
+    "sounds": [
+      {
+        "name": "minecraft:block.note_block.bass",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.phoenix": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_phoenix",
+    "sounds": [
+      {
+        "name": "minecraft:item.totem.use",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.parry": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_parry",
+    "sounds": [
+      {
+        "name": "minecraft:item.shield.block",
+        "type": "event",
+        "pitch": 1.4
+      }
+    ]
+  },
+  "reinhard.super_jump": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_super_jump",
+    "sounds": [
+      {
+        "name": "minecraft:entity.firework_rocket.launch",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.light_punch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_light_punch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:punch_impact",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.step_dash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_step_dash",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.catch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_catch",
+    "sounds": [
+      {
+        "name": "minecraft:entity.item.pickup",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.combo_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_combo_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus_punch_hit",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.combo_final": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_combo_final",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus_impact_heavy",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.kick_toss": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_kick_toss",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.sky_kick": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_sky_kick",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.grab": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_grab",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.strong",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.throw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus_impact_heavy",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.dash_behind": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_dash_behind",
+    "sounds": [
+      {
+        "name": "minecraft:entity.enderman.teleport",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.stomp": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_stomp",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reflect": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reflect",
+    "sounds": [
+      {
+        "name": "minecraft:item.shield.block",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reid_rumble": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_rumble",
+    "sounds": [
+      {
+        "name": "minecraft:ambient.basalt_deltas.mood",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reid_unsheathe": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_unsheathe",
+    "sounds": [
+      {
+        "name": "minecraft:item.trident.riptide_1",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reid_choir": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_choir",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reid_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_far",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wither.spawn",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.reid_sheathe": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_sheathe",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_chain",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.sheath_strike": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_sheath_strike",
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.cut_rain": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_cut_rain",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.world_cut_silence": {
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.world_cut_blast": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.world_cut_tail": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.sonic_boom",
+        "type": "event"
+      }
+    ]
+  },
+  "reinhard.erase_crack": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_crack",
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "pitch": 0.5
+      }
+    ]
+  },
+  "reinhard.erase_inhale": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_inhale",
+    "sounds": [
+      {
+        "name": "minecraft:block.respawn_anchor.charge",
+        "type": "event",
+        "pitch": 1
+      }
+    ]
+  },
+  "reinhard.limbo_heartbeat": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.limbo_heartbeat",
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.heartbeat",
+        "type": "event"
+      }
+    ]
+  }
+}

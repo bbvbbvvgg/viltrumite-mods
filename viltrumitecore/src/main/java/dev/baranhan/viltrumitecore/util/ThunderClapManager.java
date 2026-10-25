@@ -58,7 +58,7 @@ public class ThunderClapManager {
                      double distFromAxisSq = toTarget.lengthSqr() - distanceAlongAxis * distanceAlongAxis;
                      if (distFromAxisSq <= currentRadius * currentRadius) {
                         if (clap.attacker instanceof ViltrumiteStatHolder statHolder) {
-                           target.hurt(world.damageSources().playerAttack(clap.attacker), statHolder.getBaseDamage());
+                           dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(target,world.damageSources().playerAttack(clap.attacker), statHolder.getBaseDamage(),dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
                         }
 
                         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2));

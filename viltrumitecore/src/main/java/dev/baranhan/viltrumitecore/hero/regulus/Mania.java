@@ -187,6 +187,11 @@ public final class Mania {
 
    /** Additive pull toward the caster's chest height, on top of the target's own motion. */
    private static void applyPull(ServerPlayer player, LivingEntity target) {
+      // A World Pause suspends the pull without ending or stealing the channel.
+      if (dev.baranhan.viltrumitecore.hero.control.WorldPause.blocksMovement(player, target)) {
+         return;
+      }
+
       Vec3 toward = player.getEyePosition().subtract(target.getEyePosition());
       double distance = toward.length();
       if (distance < 1.0) {

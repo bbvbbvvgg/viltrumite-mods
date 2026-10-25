@@ -33,14 +33,7 @@ public final class SuperJumpClient {
          return false;
       }
 
-      Vec3 delta = player.getDeltaMovement();
-      Vec3 look = player.getLookAngle();
-      // A little of the facing goes into the launch, so it can travel.
-      player.setDeltaMovement(
-         delta.x + look.x * HeroSuperJump.FORWARD,
-         velocity,
-         delta.z + look.z * HeroSuperJump.FORWARD
-      );
+      player.setDeltaMovement(HeroRegistry.get(player).superJumpMotion(player,player.getDeltaMovement()));
       player.hasImpulse = true;
       return true;
    }
@@ -50,19 +43,25 @@ public final class SuperJumpClient {
          return false;
       }
 
+      return !anchored(player, snapshot);
+   }
+
+   /** Held by someone's control (channel target, grab, freeze, stasis): no self-propelled jump. Shared with AirJumpClient. */
+   public static boolean anchored(LocalPlayer player, HeroPublicSnapshot snapshot) {
+      if (WorldPauseClient.isPaused() || BodyIsolationClient.active(player)) return true;
       if ((snapshot != null && snapshot.controlTargetId() >= 0) || ViltrumiteCoreClient.iAmBeingGrabbedBy != null) {
-         return false;
+         return true;
       }
 
       for (HeroControlS2CPacket.ControlInfo control : ClientHeroData.controls()) {
          if (control.entityId() == player.getId()) {
             int kind = control.kindOrdinal();
             if (kind == ControlKind.FREEZE.ordinal() || kind == ControlKind.STASIS.ordinal()) {
-               return false;
+               return true;
             }
          }
       }
 
-      return true;
+      return false;
    }
 }

@@ -40,7 +40,30 @@ public enum HeroAction {
    /** Iron Man Stage 4: call Veronica; again while the pod stands = suit menu. */
    VERONICA,
    /** Iron Man Stage 4: the worn mark's signature (page 1 slot 3 in a mark; timeline id). */
-   SIGNATURE;
+   SIGNATURE,
+   /** Reinhard: claimed MMB, cycle the mode. */
+   MODE_CYCLE,
+   /** Reinhard Restrained (stage 3). */
+   LIGHT_PUNCH,
+   STEP_DASH,
+   CATCH_PROJECTILE,
+   /** Reinhard Knight (stage 3). */
+   FIST_COMBO,
+   SKY_KICK,
+   GRAB_THROW,
+   DASH_BEHIND,
+   STOMP,
+   REFLECT_PROJECTILE,
+   /** Reinhard Holy Sword (stages 4-6). */
+   REID,
+   SHEATH_STRIKE,
+   CUT_RAIN,
+   WORLD_CUT,
+   WORLD_ERASURE,
+   /** Any hero with airJumps > 0: jump in the air (HeroAirJump; no slot, not an ability). */
+   AIR_STEP,
+   /** Reinhard cinematic Z; appended to preserve existing wire ordinals. */
+   DIAGONAL_WORLD_CUT;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

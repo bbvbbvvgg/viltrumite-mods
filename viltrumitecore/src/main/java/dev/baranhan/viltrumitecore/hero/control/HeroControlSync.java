@@ -47,7 +47,7 @@ public final class HeroControlSync {
       for (ControlManager.ControlRecord record : manager.records()) {
          Entity entity = level.getEntity(record.targetId);
          controls.add(new HeroControlS2CPacket.ControlInfo(
-            record.targetId, entity == null ? -1 : entity.getId(), record.kind.ordinal(), record.expiresAt, record.caster));
+            record.targetId, entity == null ? -1 : entity.getId(), record.kind.ordinal(), record.expiresAt, record.caster, record.effectId));
       }
 
       return new HeroControlS2CPacket(level.dimension(), domes, controls);

@@ -36,6 +36,9 @@ import net.minecraftforge.network.NetworkRegistry.ChannelBuilder;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public class CoreMessages {
+   // v3 clients clamp extra cooldowns at 16 and misread the following phase fields.
+   // v4 clients lack ServerRulesS2CPacket and send the merged dash key's Dash Behind as Step Dash.
+   private static final String PROTOCOL_VERSION = "5";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -45,9 +48,9 @@ public class CoreMessages {
 
    public static void register() {
       SimpleChannel net = ChannelBuilder.named(new ResourceLocation("viltrumitecore", "messages"))
-         .networkProtocolVersion(() -> "1.0")
-         .clientAcceptedVersions(s -> true)
-         .serverAcceptedVersions(s -> true)
+         .networkProtocolVersion(() -> PROTOCOL_VERSION)
+         .clientAcceptedVersions(PROTOCOL_VERSION::equals)
+         .serverAcceptedVersions(PROTOCOL_VERSION::equals)
          .simpleChannel();
       INSTANCE = net;
       net.messageBuilder(BlockToggleC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
@@ -223,6 +226,62 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.network.packet.VeronicaChooseC2SPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.VeronicaChooseC2SPacket::handle)
          .add();
+
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.AirJumpSyncS2CPacket::handle)
+         .add();
+
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindC2SPacket::handle)
+         .add();
+
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindAnswerS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindAnswerS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindAnswerS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ReinhardDashBehindAnswerS2CPacket::handle)
+         .add();
+      // Reinhard stage 4: the Reid draw scene (registered last: earlier ids stay).
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ReidSceneS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ReidSceneS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ReidSceneS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ReidSceneS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.WorldCutS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.WorldPauseS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ErasureS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LimboS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket.class,id(),NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CutRainS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ServerRulesS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

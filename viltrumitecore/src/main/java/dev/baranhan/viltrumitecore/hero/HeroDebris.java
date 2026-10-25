@@ -57,6 +57,12 @@ public final class HeroDebris {
     * the block hurt what it lands on (vanilla anvil rule, capped at hurtMax).
     */
    public static FallingBlockEntity launchBlock(ServerLevel level, BlockPos pos, BlockState state, Vec3 velocity, float hurtPerBlock, int hurtMax) {
+      return launchBlock(level, pos, state, velocity, hurtPerBlock, hurtMax, 3);
+   }
+
+   /** Same debris physics, with caller-selected source removal flags for quiet carve work. */
+   public static FallingBlockEntity launchBlock(ServerLevel level, BlockPos pos, BlockState state, Vec3 velocity, float hurtPerBlock, int hurtMax,
+      int removalFlags) {
       FallingBlockEntity block = FallingBlockEntityInvoker.invokeConstructor(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, state);
       block.dropItem = false;
       block.time = 1;
@@ -66,7 +72,7 @@ public final class HeroDebris {
 
       block.setDeltaMovement(round(velocity.x), round(velocity.y), round(velocity.z));
       block.hasImpulse = true;
-      level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+      HeroDestruction.setAir(level, pos, removalFlags);
       level.addFreshEntity(block);
       return block;
    }
@@ -150,7 +156,7 @@ public final class HeroDebris {
       // Whoever stands on the torn ground goes up with it.
       AABB zone = new AABB(center, center).inflate(spec.radius(), 2.0, spec.radius());
       for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, zone, e -> e != source && e.isAlive() && !e.isSpectator() && !spared.test(e))) {
-         target.hurt(level.damageSources().playerAttack(source), entityDamage);
+         dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(target,level.damageSources().playerAttack(source), entityDamage,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
          if (HeroRegistry.allowsExternalControl(target, ControlKind.IMPULSE)) {
             target.setDeltaMovement(forward.scale(1.1 * spec.power()).add(0.0, 0.85 * spec.power(), 0.0));
             target.hasImpulse = true;

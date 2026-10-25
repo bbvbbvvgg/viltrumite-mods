@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -47,7 +48,55 @@ public final class HeroFx {
 
    /** Short white flash + medium shake (a hit that sends someone flying). */
    public static void flash(ServerPlayer source, Vec3 at) {
-      send(source, HeroFxS2CPacket.FLASH, at, 1.0F, null, null, null);
+      flash(source,at,1.0F);
+   }
+
+   /** Compact contact flash; power controls size/shake without a ground wave or block damage. */
+   public static void flash(ServerPlayer source, Vec3 at, float power) {
+      send(source, HeroFxS2CPacket.FLASH, at, Math.max(.1F,Math.min(2,power)), null, null, null);
+   }
+
+   /** Detached effects have no tracking source (offline caster, environment hazard). */
+   public static void flash(net.minecraft.server.level.ServerLevel level, Vec3 at) {
+      HeroFxS2CPacket packet = new HeroFxS2CPacket(HeroFxS2CPacket.FLASH, at, 1, 0, null, -1);
+      for (ServerPlayer viewer : level.players())
+         if (viewer.position().distanceToSqr(at) <= 96 * 96) CoreMessages.sendToPlayer(packet, viewer);
+   }
+
+   /** Hit-stop (spec §9.3): the listed entities hold still on every client for {@code ticks}. */
+   public static void hitStop(ServerPlayer source, Vec3 at, int ticks, int... entityIds) {
+      send(source, HeroFxS2CPacket.HIT_STOP, at, ticks, null, encodeIds(entityIds), null);
+   }
+
+   /** A white sonic ring at a kick / throw contact (spec §9.3). */
+   public static void sonicRing(ServerPlayer source, Vec3 at) {
+      send(source, HeroFxS2CPacket.SONIC_RING, at, 1.0F, null, null, null);
+   }
+
+   /** A white air trail behind a launched entity (spec §9.3); the client decides its length. */
+   public static void airTrail(ServerPlayer source, Entity target) {
+      send(source, HeroFxS2CPacket.AIR_TRAIL, target.position(), 1.0F, null, encodeIds(target.getId()), null);
+   }
+
+   /** Pure: entity ids as packet points, one {hi16, lo16, 0} triple each (floats hold 16-bit halves exactly). */
+   public static float[] encodeIds(int... ids) {
+      float[] out = new float[ids.length * 3];
+      for (int i = 0; i < ids.length; i++) {
+         out[i * 3] = (ids[i] >>> 16) & 0xFFFF;
+         out[i * 3 + 1] = ids[i] & 0xFFFF;
+      }
+
+      return out;
+   }
+
+   /** Pure: the inverse of {@link #encodeIds}. */
+   public static int[] decodeIds(float[] points) {
+      int[] out = new int[points.length / 3];
+      for (int i = 0; i < out.length; i++) {
+         out[i] = ((int) points[i * 3] & 0xFFFF) << 16 | ((int) points[i * 3 + 1] & 0xFFFF);
+      }
+
+      return out;
    }
 
    private static void send(ServerPlayer source, byte kind, Vec3 origin, float power, @Nullable BlockState material, @Nullable float[] points, @Nullable SoundEvent sound) {

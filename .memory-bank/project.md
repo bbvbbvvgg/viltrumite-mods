@@ -138,3 +138,203 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - Hulkbuster grab lasts at most `GRAB_MAX_TICKS`.
 - Glide (0-energy) cannot climb: the flight mixin clamps a glide tick to `startY - glideSink` (vanilla Space lift).
 - Client float animation time: `client/anim/RealTime.seconds()` (wraps, keeps float precision).
+## Reinhard stage 1 (foundation, no jar until 1b)
+- Unblockable seam: `HeroDefinition.clampUnblockableDamage(player, source, amount)` is the only hook for `bypasses_invulnerability` hits (void, `generic_kill`); default unchanged. `/kill` runs inside `AdminKill` (ThreadLocal depth, `KillCommandMixin` redirect of `Entity.kill` in `KillCommand.kill`) and `HeroDamageLayers` skips the hook there.
+- Divine: damage type `viltrumitecore:divine` in damage-type tag `viltrumitecore:divine`; vanilla `bypasses_armor/shield/enchantments/effects` reference the tag `#viltrumitecore:divine` (optional entry), never `bypasses_invulnerability`; entity tag `viltrumitecore:divine`; `DivineTargets.verdict`; Regulus Lion's Heart = `isAbsolutelyInvulnerable`. Since core 1.39.1 Iron Man marks / Hulkbuster let divine hits through (`DivineDamage.piercesHeroArmor`: `bypasses_invulnerability` or divine).
+- Unit tests cannot load classes with `Registries` / `TagKey` / `ResourceKey` statics (no Bootstrap): keep pure rules in nested classes (`DivineTargets.Verdict.of`).
+- Reinhard: page = mode (`ReinhardMode.page()`), MMB = `MODE_CYCLE` (3 s cooldown, `extraCooldowns[14]`), mode in `heroFlags` bits 0-1. `ReinhardAbility` ordinal = `extraCooldowns` index; `ReinhardAbilities.SHIPPED_STAGE` gates loadout/owned ids (bump every stage). `HeroPublicSnapshot.availableActions` is a `long` mask now (actions ≥ 32 exist).
+- Knight HUD: `PanelStyle.drawAttachments`; mode icons sit LEFT of the ability bar (the bar is 5 px from the screen edge). Icons: `tools/assets/make_reinhard_icons.py --assets <unpacked reinhard_assets>`, sources in `tools/assets/reinhard_sources.md`.
+## Reinhard stage 1b (visuals, first jar)
+- Model: `geo/reinhard/{reinhard,reinhard_arms,sheath,blade}.geo.json` from the archive via `tools/assets/convert_reinhard.py` → `tools/obj2geo.py` (rotated boxes become cube rotation/pivot; sword OBJs: drop `dragon_glow` overlay faces, vt from the top). Sword origin = hilt guard; sheathed blade offset (0, −14, 0) (`ReinhardAssets.SHEATHED_OFFSET` + bone `sheathed_offset`).
+- `ReinhardRenderer` (RenderPlayerEvent.Pre, always cancels for Reinhard, invisible included) + `ReinhardPoses` (pure) + `StanceBlend` + `ReinhardSword` (left hip, hilt up; quality-rework mount is a candidate, not native-accepted) + `ReinhardAuraVfx` (Knight wind motes, Holy Sword gold sparks). Clips: `tools/assets/reinhard_walk2anim.py` (walk = vanilla swing, 0.6662/(2π) s per walk unit), `tools/assets/make_reinhard_clips.py` (stances, knight hold, crouch/sit additive, swim).
+- Shared additions: `AnimationController.overlay(…, weight)` / `additive(…)`, `HeroHeadPreviews` (race screen heads; fallback = flat skin face), `EntityRendererNameTagInvoker`, `AlwaysVisibleOffhandMixin` term `ReinhardFirstPerson.wantsOffhand`.
+## Reinhard stage 2 (blessings, core 1.27.0)
+- Blessings are passive, every mode (`BlessingModeMatrixTest`: no blessing rule takes `ReinhardMode`). Pure rules in `hero/reinhard/blessing/` (`Phoenix`, `Adaptation`, `Parry`, `ArrowWard`, `CloudStep`, `WindReading`, `Detox`, `ManaAbsorption`), numbers in `ReinhardRules`, visual constants in client classes. `SHIPPED_STAGE = 2` (no abilities yet, all are stage ≥ 3).
+- New seam hooks (defaults = vanilla): `airJumps` / `airJumpVelocity` (both sides) + `onAirStep`, `projectileResponse` (`HeroProjectiles`, `ProjectileImpactEvent` → `SKIP_ENTITY`), `blocksEffect` (`MobEffectEvent.Applicable` DENY, both sides), `foreignResourceRegenFactor` (`HeroResourceRegen.scale`, Iron Man energy refill and Homelander cooling multiply by it). New common mixin `AbstractArrowAccessor` (CATCH, used from stage 3).
+- Air jumps are client-authoritative (`AirJumpClient`); the server only counts: accepted = no motion packet (avoids a double boost), refused = motion `(x, min(y,0), z)` + `AirJumpSyncS2CPacket`. `HeroAction.AIR_STEP` routed like `JUMP`.
+- `PersistentCooldowns` (player persistent NBT `ViltrumiteCooldowns`, online ticks only) holds the phoenix cooldown across death/hero change; Adaptation is dropped on respawn.
+- Owner sections: Reinhard uses `THREATS` (wind reading outlines via `WindReadingClient`, colour -1 = not ours) and new `MANA_LINKS` (blue motes between drained pairs).
+- Parry = `ReinhardFlags.PARRY_POSE`; client `ParryPulse` weight drives the `parry` overlay clip and a first-person main-arm `ModelPart` flick (no mixin).
+## Reinhard stage 3 (Restrained + Knight abilities, core 1.27.0)
+- `SHIPPED_STAGE = 3`: nine abilities (Restrained: Light Punch, Step Dash, Catch; Knight: Fist Combo, Sky Kick, Grab & Throw, Dash Behind, Stomp, Reflect). Router `hero/reinhard/ReinhardActions` (pure `gate`: control → mode → cooldown → busy/timeline) → `ability/*` `AbilityHandler`s; one `ActionTimeline` (ability, length, target, phase) drives the snapshot (`actionId`, `variant` = phase, `controlTargetId`), clips (`client/reinhard/ReinhardClips`) and the first-person table (`ReinhardFirstPersonPose`). Mode change / control / cleanup cancel everything.
+- Hits go through `ability/Strikes` (i-frames skipped, vanilla knockback when `allowsImpulse`) and `ReinhardTargets.canHit`; destruction only via `DestructionLevel.of(mode).scaled(spec)` (Restrained none, Knight moderate ≤ r 4 / depth 1 / 40 blocks), blocks only, `HeroDestruction` rules honoured.
+- Predicted on the client: Step Dash (`StepDashClient`, press through the generic `HeroInputC2SPacket`) and Dash Behind (`DashBehindClient` → own `ReinhardDashBehindC2SPacket`, the slot is left out of `heroInputSlots`; server re-checks page, finite coords, target ≤ 26 and on its own look ray (`DashBehind.onCrosshair`, ±1 block), shared `hero/SafeSpot`; refusal = snap back, no cooldown; every press is answered by `ReinhardDashBehindAnswerS2CPacket` with the server cooldown, which replaces the client's predictor cooldown).
+- Windows: Catch (10 t, CATCH) and Reflect (20 t, REFLECT beats catch) answer `projectileResponse` through `ArrowWard.response`; flags `CATCH_WINDOW` / `REFLECT_WINDOW`. Grab & Throw holds with a PULL control of the level it started in (`GrabThrow.Control` seam), throw ~120 blocks by re-applying 3.9 for 21 t; flag `GRAB_HOLDING`.
+- Shared FX: `HeroFxS2CPacket` kinds `HIT_STOP` / `SONIC_RING` / `AIR_TRAIL` (`HeroFx.hitStop/sonicRing/airTrail`), client `HitStop` + `AirTrailVfx`. Icons `make_reinhard_icons.py`, clips `make_reinhard_clips.py`; `ReinhardClipsTest` checks every shipped ability's clips.
+
+## Reinhard stage 4 (Holy Sword: Reid, Lethal Chop, Sheath Strike, Rain of Cuts, core 1.28.0)
+- `SHIPPED_STAGE = 4`. Reid (`hero/reinhard/reid/Reid`): sheathed → drawing (6 s, `ReidDrawEvent` world scene) → drawn (auto-return after 60 s without combat, `combat()` resets) → sheathing (1 s); snapshot flags `REID_DRAWING/DRAWN/SHEATHING`; pure slot rule `Reid.allows` (Sheath Strike only sheathed; Rain of Cuts / World Cut / World Erasure only drawn). Leaving Holy Sword sheathes.
+- Draw scene: server `ReidDrawEvent` (gravity lift r 96 up to 2.5–3 blocks through `LiftLeases` + `GravityLift`, wave r 24 at the end, chat + far sound to the server), client `ReidDrawScene` + `ReidDrawSceneVfx` (shake, `SkyTint` dark sky, `SoundDuck` 25 %, cracks, pillar, funnel) via `ReidSceneS2CPacket`. Drawn: `ReidAura` (gold shell, motes, warm sky r 64), blade in the right hand.
+- Reid strike = `hero/Annihilation` (kills mortals; divine / absolutely invulnerable untouched). Lethal Chop = the kit chop through `HeroDefinition.chopStyle` (`hero/ChopStyle`) + `allowsKitAbility`; Reinhard chop 35 + bleed, forced left with Reid.
+- Sheath Strike (r 6, 20, FREEZE 3 s when `allowsExternalControl`, cd 8 s; stars `SheathStunStars`). Rain of Cuts (12 cuts ±15°, 40 blocks, `Annihilation.strike`, 1×3 grooves through `CarveJobs` / `HeroDestruction.clearBlock`, cd 15 s).
+- Not checked: Oculus shaders with `SkyTint`, dedicated server start, in-game look (list in the PR).
+
+## Reinhard stage 5 (World Cut, core 1.29.0)
+- WorldCutManager owns detached casts by ServerLevel; END ticks advance the server game-time clock before CarveJobs runs. Death, logout or a changed caster dimension does not cancel a started cut. Unloaded levels and server stop discard unpersisted casts/jobs. Offline/dead/other-dimension attribution is null; Annihilation reads the victim's level.
+- Terrain heights freeze at press from loaded centre columns (WORLD_SURFACE); pitch does not rotate the vertical trench. Unloaded columns use cast height and remain skip-only unless loaded naturally. Bounds/build height clip the carve; no chunk force-load.
+- WorldCutGeometry.frontAlong is a count of consumed slices, not the zero-based last index. WorldCut uses that count directly; hits follow the greater of carve and timed visual fronts, once per resolved UUID, without ally/PvP filters. Divine and absolute verdicts remain in Annihilation.
+- Flags alone do not suppress old-block onRemove: chest/furnace callbacks drop inventory/XP; redstone callbacks notify neighbours and schedule adjacent fluid ticks (mapped 1.20.1 bytecode checked). QuietBlockRemoval scope + common QuietBlockRemovalMixin skip those callbacks only for clean air replacement and remove block entities without drops. Ordinary destruction and debris flags 3 keep their callbacks. Runtime Mixin application still needs the manual server smoke.
+- Clean carve flags = HeroDestruction.CLEAR_FLAGS (UPDATE_CLIENTS | UPDATE_KNOWN_SHAPE | UPDATE_SUPPRESS_DROPS). The debris overload uses the same source flags. There is no final neighbour sweep: water/lava are intended to stay still at the cut until external neighbour updates occur. This is not a guarantee against other world activity. Actual fluids and lighting performance are unverified in game.
+- WorldCutScene keeps the fixed packet frame independently of the caster snapshot; game-time pixels never wait for blocks. Duck/FOV end on blast/timeout/unload. Ordinary CameraShake contributions cap at 2.5. Explicit cinematicAt contributions use the same accumulator with their own cap and local setting. Scene lifetime follows actual queue DONE; pure budget checks do not measure TPS.
+
+## Reinhard stage 6 (World Erasure, core 1.30.0)
+- `SHIPPED_STAGE=6`: all fourteen abilities; Holy Sword slot 6 requires drawn Reid. One server-wide `WorldPause`, target ray 64, 150-tick scene, once-only removal at 90, cooldown 1200. Outcome is frozen at cast (divine / absolute targets stay but spend cooldown). Absent target at removal escapes; later rejoin never triggers a second attempt. Every dimension gets packet server age, not a subtraction of world game times.
+- WorldPause is level-owned FREEZE refreshed to now+5 at server END; foreign controls aren't replaced/released. Every non-caster online player is input-blocked/protected; nearby Enemy mobs within 32 of those players are included. Owner stays at the cast position, not immune by this seam. End/death/logout/dimension/hero change/reload/stop/watchdog release tracked controls; client has its own watchdog. Stage 4 CarveJobs/CarveBudget/LevelTickPhases stay unchanged.
+- Mob discard is not a death. QuietDragonCompletion uses narrow common EndDragonFight accessors to mark defeat without terrain/rewards: **NO first-kill portal/gateway/egg**. Vanilla setDragonKilled changes blocks, so it cannot satisfy erasure's unchanged-world rule. An erased first dragon can leave no normal End exit; verify an existing exit or another permitted return method before using it.
+- Players keep the same ServerPlayer: ERASED explicitly resets transient state using each hero's death-copy policy; persistent cooldowns/session/Phoenix, Regulus cooldowns, Iron Man roster/pod and Reinhard mode stay. Inventory/armour/offhand/XP are permanently erased (not stored); ender chest untouched. No real death/DEATHS increment/message/loot. Return invokes shared `freshBody`, including existing Evangelium refresh.
+- `viltrumitecore:the_void` is a data dimension, all air/black fog/no sky/clouds. Persistent `viltrumitecore:limbo` (`ticksLeft`, `pendingStrip`) exists before queued END teleport and survives logout/restart; 600 online ticks only in limbo. BodyIsolation denies all damage before queues and flight/actions after the 150-tick pause too. Shared-spawn safe-column return never bed/anchor/platform; an invalid world spawn remains manual. Missing dimension refuses new casts and rescues already-tagged players. Existing worlds need restart to load the dimension.
+- Client uses only existing dash_impact/anim/PixelVfx/SoundDuck/FlashOverlay: five zero-default erasure uniforms, sonic-only priority block, model mesh or metadata fallback silhouette/dust, 50 bpm logical heartbeat, five timed HUD lines, return flash. F1 hides the HUD, not the timer. Packet shape changes bump `CoreMessages.PROTOCOL_VERSION` (5 since core 1.39.1) and need matching clients; flight stays 1.10.1.
+- Automated source/geometry/codec/lifecycle tests are NOT proof of actual Forge events, server startup, renderer/GLSL/mixins, old-world/restart persistence or FPS/TPS. Runtime and shader-pack checks were forbidden; retain the full manual checklist and Rulings/costs in the Stage 6 journal/PR. Stage 7 replaces the allowed selected audio; its native acceptance remains open when game/server runs are forbidden.
+
+Stage 6 final review fixes: server UUID/dimension position overlay freezes non-caster players even when control acquisition is refused; suspend foreign carry/PULL/legacy grind without stealing ownership. Pause originals persist in `PauseFlagRecovery` and participants release before vanilla logout save; isolation/foreign owners retain their flags. Pending strip clears capacity/cursors, closes and clears returned personal inputs (one transaction); external storage untouched. Client watchdog stops with actual game pause. Deferred legacy metadata/dev-command duration and all native proof boundaries are documented in the Stage 6 ledger/PR; build tests do not certify runtime.
+
+
+## Reinhard stage 7 (sounds, core 1.31.0; flight unchanged 1.10.1)
+- Owner exception allows CC0/CC-BY for Reinhard, not NC. Live-page check 2026-10-13 found CGEffex 93835 and Robinhood76 378199 **CC-BY-NC 4.0**. Do not accidentally include them from the complete user archive. The cinematic overhaul replaces blast/rain placeholders with original procedural CC0 audio; no excluded recording or silent Alliare-only substitution is used. Sources/license links and input digests: `tools/assets/reinhard_sources.md`.
+- The existing heartbeat clock is 24 client ticks (50 bpm), independent of source length; the source recording has a slower native repetition. The processed 1.2 s pulse fits that clock without changing gameplay constants. Fade/endpoint metrics do not prove perceptually seamless loops or correct runtime stopping.
+- Short high-crest clips can be peak-limited below the LUFS goal even with measured two-pass loudnorm. Condition selected transients before measurement; measure **decoded Vorbis** too. Preserve both LUFS and true/sample peak gates, not merely encoder settings. Pinned first-pass values depend on the approved source digests and ffmpeg build.
+- §10.1 covers only 16 output recipes, not every one of the 33 Stage 6 events. Two outputs are license-blocked, 12 extra cues have no selected source, and five events reuse §10.2. Do not equate 14 final recordings with a fully accepted hero. No native listening/server/GLSL/network/save/TPS proof in Stage 7; retain SESSION/PR manual gates and Stage 6 known limitations.
+
+- Attribution-required audio must carry author/source/license/change notices in the standalone core JAR. `processResources` copies maintained credits/source tables into `META-INF/credits/`; `mods.toml` exposes those audio exceptions without replacing the code license. A root-only CREDITS file is not a distribution guarantee.
+
+
+## Reinhard rendering invariants discovered during the quality rework
+- Stateless AnimationController seek/overlay/blend sample raw seconds without loop wrapping; a LOOP asset alone does not keep walking/breathing alive. The bug was verified with actual renderer composition beyond the first cycle. Keep Reinhard-only sampling in ReinhardPlayback until a deliberate shared-core change.
+- Sword archive coordinates: the sheath assembly is rotated Z 180 to put the hilt up. Therefore extracting the blade toward the hilt subtracts from its local Y offset; adding to Y pushes it farther into the sheath. Native hand-transfer alignment is still unverified.
+- A PULL lease owns control precedence, not hand attachment. Explicit held-target ownership now goes through HeroDefinition. Server movement suppression must run on the server thread; per-tick connection teleports restart player prediction. Use a shared neck anchor and one release correction. Native network smoothness remains unverified.
+
+- FP geo/item conversion: PlayerGeoLayer uses vanilla arm frame → negative vanilla pivot → Y +1.5 → scale(-1,-1,1). Follow the geo shoulder/elbow from that frame, then HeldItemAnchor.local. Attaching directly to ModelPart ignores the elbow. Neutral-grip matrix equality is verified; native visual acceptance is not.
+
+## Hero keyboard edge ownership
+- heroInputSlots lists all abilities across pages, not only six equipped keys. Do not cap its iteration to a fixed array size. Reinhard's late Holy Sword inputs were silently dropped by the old eight-slot cache.
+- Track edges by ability ID and context (hero, player session, active page and bindings). Seed held keys after a context/focus switch; do not cast the new ability on the old held physical key. Release already-sent channels on same-hero page/focus changes. Never replay old-player or old-hero edges into a new owner.
+
+
+## Reinhard second-pass invariants (core 1.34.0)
+- Retired R actions remain enum IDs for wire stability, but are not owned, shown
+  or input-routed. Restrained/Holy ordinary LMB has a server contact timeline;
+  Knight LMB is one step per press plus one next-hit buffer. Stray vanilla entity
+  hit packets are rejected; only the ordinary contact callback admits Player.attack.
+- HeroDefinition movement/mouse policy hooks default to legacy behaviour. Cloud
+  Step opts into bounded forward steering through BOTH predicted and server seams.
+- Pose overlays must preserve absent channels; crouch/shoulders/head share waist
+  ancestry. Do not subtract the transient shared HitStop counter from Reinhard's
+  authored action clock. A raw item-frame equality can still put a grip above the
+  shoulder: constrain to measured native glove geometry, with an elbow pole.
+- Active heavy-scene locks are distinct from short cooldowns. World Cut guard
+  follows actual queue ownership (including failed-job removal), not a stale work
+  counter. HUD uses the same level/server scene admission flags.
+- Build/CPU geometry checks are not native proof. Client GLFW init and the EULA
+  barrier still prevent gameplay/server acceptance in this environment.
+
+- Reinhard grip-point equality hid two visual defects: wrong wrist roll and a
+  blade path through hair. Resting palm contact must not inherit sheath roll.
+  TP equipment now has an authored grip bone in the existing animation core;
+  wrists follow its reachable path, then rendering reuses those exact frames.
+  Full-mesh CPU checks include intermediate crouch/draw/action frames. They do
+  not certify native visuals. A belt carrier bridges the coat flare.
+
+- Reinhard's TP reid_grip frame and FP camera held-item frame use different roll bases. A universal local-Y quarter-turn exposes the wrong TP edge. Test the blade face normal and inspect all three views. Two-hand targets must be distinct and reachable; pronate the forearm about elbow-to-palm rather than dislocate the wrist. Do not alter the sheath to correct a drawn-blade orientation.
+
+- Reinhard drawn blade orientation: native longitudinal axis is Y, width X, broad normal Z. In the raised TP World Erasure pose the face is already 10 degrees from front. A +90-degree Y roll exposes the edge; it does not create the anime diamond silhouette. The native asset is a narrow straight blade. Fixed-pose quad cross-sections distinguish a shape limit from an orientation bug. Do not resize or repose to conceal it; get owner approval before changing the blade shape.
+
+- Owner superseded the wide-blade direction: cancelled the +35% silhouette and explicitly selected the bottom +90-degree axial diagnostic variant (front edge, broad face at the side). Keep the original blade asset, original body/hand poses and sheath. TP rolls only its final free-blade frame after the existing grip solve; FP keeps its existing roll.
+
+
+## Detached cut and wire invariants
+- A completed damaging wave and completed terrain work are different events. Keep
+  scene admission and atmosphere until the queued carve leaves CarveJobs; do not
+  extend the damaging wave while a slow queue drains.
+- Reinhard wire cooldown slots 14 and 15 remain mode/Phoenix. Appended abilities
+  use explicit snapshot indices after them; an enum ordinal is not a wire slot.
+- Full-mesh intermediate checks caught an unreachable diagonal grip and forearm
+  through the head even though endpoint frames looked valid. Keep reachability and
+  SAT checks at intermediate times, both crouched and standing; do not relax them
+  to approve a more dramatic roll. Native first-person/VFX acceptance remains open.
+
+- A cooldown enum-to-wire mapping test does not prove snapshot production. Test
+  the production composer through encode/decode with every ability and reserved
+  slot populated. The shared wire cap can lag an appended ability even when
+  its explicit index is correct. A capped decoder must locate trailing fields
+  using the declared wire count, not the retained local count. Older peers can
+  misread those fields; reject them when increasing the supported capacity.
+
+- Dense gait keys plus per-segment ease-in/out produce near-zero velocity at
+  intermediate swing points, even if all key poses and loop endpoints are right.
+  Reinhard's velocity regression samples the production parser, not just JSON.
+- A snap -> ready switch needs the guard underneath the outgoing snap. Fading
+  only the snap to zero reveals idle and creates a jump when ready replaces it.
+- Reid body fades must exclude reid_grip, which owns the exact weapon path.
+  FP camera offsets and elbows need their own sheathed-boundary envelopes.
+
+- Core 1.35.3 combat follow-up: Reinhard FP reuses FirstPersonArm's outer
+  shoulder transform instead of local Euler addition; authored right-arm action
+  suppresses vanilla swing. Forge-cancelled and normal item paths apply once.
+  Shared ActionClock has an opt-in bounded monotonic snapshot sampler; legacy
+  tick/time users unchanged. Shared parser accepts opt-in monotone cubic keys;
+  only Reinhard strikes use them. Contact ticks, draw path and blade roll stay
+  unchanged. Runtime acceptance must be reported separately from CPU gates.
+- Sword grip continuity gate: paired forearms preserve the directed handle axis
+  (old nearest-sign choice flipped 173 degrees during a jab). Wrist limit fades
+  its antipodal correction instead of jumping +35 to -35 (old sheath strike
+  jumped 69 degrees). These are arm-orientation fixes only: grip points, weapon
+  matrices, sheath geometry and owner-selected +90-degree blade roll unchanged.
+
+- Grip ownership blends reachable palm targets before the unchanged DLS solve;
+  geometric seed preserves authored twist and blends the elbow pole. Separate
+  paired pronation from leading-hand position ownership; no full twist at the
+  first positive two-hand weight. Support elbow outward/front, leading elbow
+  additionally down: a symmetric pole passed continuity but clipped the head.
+  Keep BOTH final-bone continuity and full-mesh collision gates.
+
+- Reinhard projectile interception: vanilla Forge impacts use HeroProjectiles,
+  but custom RepulsorBlastEntity/MicroMissileEntity have their own onHit path and
+  must call the shared server seam explicitly. Reflection also retargets Homing;
+  hitscan beams require an explicit source-context hook, not projectile handling.
+  EyeLasers, MicroLaser, Unibeam and PulseUnibeam have explicit server ray hooks. Piercing rays stop before block/damage work behind a defender, respecting PvP/teams. See docs/reports/reinhard-attack-matrix.md.
+- AbstractArrow.playerTouch permits pickup during noPhysics. A visible held arrow
+  must temporarily use Pickup.DISALLOWED and restore the original pickup policy
+  on release, alongside noGravity/physics cleanup; never duplicate its item.
+- Diagonal world-cut candidates are projected along the dominant horizontal
+  normal. Rejects still consume the shared CarveJobs budget. Exact voxel-mask
+  equivalence and finite remainingWork matter more than the client animation.
+  DONE remains pending-work completion; both client tails now use 70 ticks.
+- Drawn Reid primary collision uses a bounded resource baked from production
+  final equipment transforms. Re-bake with ReidMeleeBakeTest when the geometry,
+  grip, scale or source clips change; dedicated-server code must not load client
+  render classes. FP trajectory/palm alignment is a separate acceptance concern.
+
+## Core 1.36.1 continuation
+- DefenseContact is a server-owned local palm target; snapshot actionTarget carries it and bit27 selects the free hand. resource2 carries held arrow entityId+1. Do not reuse these Reinhard fields for unrelated UI state.
+- Use existing ReinhardGrip.guard AFTER weapon equipment, selected hand only; torso before equipment. Drawn Reid/active attacks retain the weapon hand. FP evade is its own view transform, hidden arms remain visible through exponential recovery.
+- HeroDefenseContacts records the actual draw-frame palm (PlayerGeoLayer.partFrame in FP). FP/world projection scales differ: preserve the same pixel through reproject(), including dynamic FOV. Shadow passes must not replace the world contact. This cache is presentation only, never C2S authority.
+- A held arrow uses the original entity and may be caught by the free hand with Reid drawn. Pickup.DISALLOWED during the 10-tick hold; restore original pickup policy on release. Tridents stay non-arrow responses.
+- Normal World Cut audio is `WorldCutAudio`: one looping 1.992 s saturated hum (`world_cut_hum`, forward + time-reverse of the owner's tail re-export, tanh drive 2.0) plus one `world_cut_pulse` swell per `WorldCutPulse` beat, one `world_cut_impact` on BLAST and one `world_cut_blade` (same sheath_ring file, own id) at tick8; both accents are exempt from the CutAtmosphere and WorldCutScene MASTER ducks that run from tick8 to BLAST (tick96, then every50, 24-tick envelope). The hum starts at BLAST, follows scene fade after DONE, and is stopped on prune/clear. It no longer plays WORLD_CUT_SILENCE/BLAST/TAIL. `CutFinishSound` and every legacy cue remain unchanged for Diagonal World Cut only. `CutAtmosphere.update(...)` has an additive `pulse` argument; diagonal passes 0F. Pulse visuals, camera bump and hum swell read the same pure clock and the same `acceptedUntil` cap (elapsed DONE tick − 1); an impulse in flight at DONE finishes its 24 ticks, a later beat is rejected by every component. Each scene admits a beat once (on time or ≤ `WorldCutPulse.CATCH_UP`=3 ticks late) and every component reads only the admitted beat, so a late-joined viewer skips a running pulse instead of getting swell/shake/dust without the voice; BLAST impact and blade ring use the same bounded window. Hum crest = 1.0 (engine clamp), rest = 1/1.45; the pulse voice has constant gain for the whole 27-tick asset because its release is baked into the PCM.
+- Diagonal raster narrows the projected OBB row intervals and depth samples analytically; exact original voxel mask and build-height clipping remain authoritative. Bounded O(rows*12) setup, every emitted candidate consumes shared CarveJobs budget; never increase quantum250/budget2000 to mask slow geometry.
+- Opt-in production QA harness lives in hero/reinhard/qa; -Dviltrumitecore.reinhard.qa=true. Use real connected PvP actors for beam tests, not Forge FakePlayer. Never enable on a valuable world.
+
+### Native acceptance corrections (1.36.1)
+- Vanilla AbstractArrow.setOwner(Player) rewrites pickup to ALLOWED/CREATIVE_ONLY. Set DISALLOWED AFTER setOwner, not before it. Native three-mode repeat: held samples age4..12 have inventory0; release13, later pickup allowed. Keep this ordering regression.
+- Minecraft Camera.rotation has +Z forward, while OpenGL view/hand space uses -Z. Convert with camera quaternion * Ry(pi), not camera quaternion alone; otherwise beam/arrow contact flips behind the camera. Test yaw/pitch roundtrip AND positive-forward dot, not roundtrip alone.
+- Capture actual perspective from RenderLevelStageEvent, never use whichever RenderSystem projection is bound by an audio/tick caller (it may be GUI orthographic). TP event bone points are in camera-view coordinates; convert back before adding camera position. FP and TP caches stay separate.
+
+### Core 1.36.2 context/audio correction
+- World-cut slot previews diagonal while crouching and uses the selected variant cooldown. Server and UI use ReinhardAbilities.contextual(). Default Y is Chop; default crouch+B is diagonal and needs DRAWN Reid in Holy Sword. Do not expose retired diagonal as a separate active slot.
+
+## The Hand erasure on World Cut (core 1.39.0)
+- `client/render/erasure/` is a hero-neutral port of Roundabout's The Hand erasure (shader `viltrumitecore:thehand_erasure`, `RegisterShadersEvent`). `ErasureRenderer` draws at Forge `AFTER_LEVEL` (= Roundabout's `renderLevel` TAIL). It copies main colour+depth once per frame only when a provider returns a visible stroke; mipmaps of the colour copy are the refraction blur. Order: all shells, all glass (depth writes), all auras, then world depth is blitted back.
+- Sizes go through the `Scale` uniform, never through vertex colour: colour r = radius / (RADIUS_SCALE or SHELL_SCALE x scale) stays in 0..1 at any size. Scale 1 is the original; `/erasuretest [scale]` replays the original sandbox swipe.
+- `WorldCutErasure` splits the 200-block cut into 12 original strokes (scale 7.5, overlap 0.3). Piece k is cut when the visual front reaches its tail; its head is the exact front; each piece then holds and zips shut on the original 0.75 s timeline. Only the leading piece shows the flame ball. Reads `WorldCutScene.frames()`; no packet or server change. Diagonal World Cut is not wired.
+- Shader packs (Iris/Oculus `isShaderPackInUse`, or an unknown Oculus API) disable the effect. Fabulous transparency chain: unverified.
+
+## Reinhard stack stabilization (core 1.39.1)
+- Both World Cuts are `ReinhardTargets`-free by design (stage 5 plan, design acceptance 9): every living non-divine target without ABSOLUTE on the line dies, allies and PvP-off players included. PR #35 proposed a caster-present filter; it was not ported. Changing it is an owner decision.
+- Client `Player#canHarmPlayer` checks teams only. The server PvP switch reaches the client at login (`ServerRulesS2CPacket` -> `ServerRules`); until then the client assumes PvP off. Use it for client-side claims (RMB grab).
+- `HeroDefinition#migrateLoadout` runs before `repairLoadout`'s ownership check. Retiring or merging an ability id needs a migration entry, otherwise every old save loses the custom arrangement.
+- `ChopImpactManager.land`: push, bleed, hit FX and crit run only after `hurt()` accepted the hit (shared Viltrumite/Homelander chop).
+- `ReinhardHero.become` = chassis + full HP (entering the hero); `respawn` = chassis modifier only. The End exit portal goes through respawn and must not heal.
+- `VoidRescue` in a ceiling dimension (Nether) lands on the highest floor below the roof, never on the bedrock roof.
+- World Pause: a paused mob held by a foreign control (PULL/FREEZE/STASIS of another owner) skips its living tick as an overlay; the foreign record (owner, flags, expiry) stays untouched.
+- World Cut, Diagonal World Cut and World Erasure poses sample the authoritative elapsed + partial (their scenes run on it); other casts use the predictive render clock, which restarts after an unrendered gap longer than its 3-tick horizon.
+- A World Cut cast dropped with its level (unload, server stop) is marked dropped and no longer keeps the caster busy.
+- Lethal Chop and World Erasure exclude each other on both sides.

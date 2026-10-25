@@ -426,6 +426,11 @@ public class IronManHero implements HeroDefinition {
     * at WEAPONS_UNLOCK or the player lands.
     */
    static void flightEnergyTick(IronManState state, @javax.annotation.Nullable dev.baranhan.viltrumiteflight.util.FlightState flight) {
+      flightEnergyTick(state, flight, 1.0F);
+   }
+
+   /** @param regenScale foreign slow-down of the regen only (HeroResourceRegen); drain is never scaled */
+   static void flightEnergyTick(IronManState state, @javax.annotation.Nullable dev.baranhan.viltrumiteflight.util.FlightState flight, float regenScale) {
       boolean flying = state.suit.worn() && flight != null && flight != dev.baranhan.viltrumiteflight.util.FlightState.NONE;
       if (!flying) {
          state.glide = false;
@@ -442,7 +447,7 @@ public class IronManHero implements HeroDefinition {
          state.glide = state.energy.empty();
       }
 
-      state.energy.tick();
+      state.energy.tick(regenScale);
    }
 
    /** Fall without flight (e.g. after the suit's flight ended mid-air): real fall distance. */
@@ -473,7 +478,7 @@ public class IronManHero implements HeroDefinition {
 
       dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.onSuitEvent(player, state, state.suit.tick());
       dev.baranhan.viltrumiteflight.util.FlightState flight = flightState(player);
-      flightEnergyTick(state, flight);
+      flightEnergyTick(state, flight, dev.baranhan.viltrumitecore.hero.HeroResourceRegen.scale(player));
       syncArmor(player, state.suit.armored(), state.spec());
       state.airStrike.tick();
       if (state.heavyPoseTicks > 0) {
@@ -1002,12 +1007,15 @@ public class IronManHero implements HeroDefinition {
          dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.stopSignature(player, state);
          boolean wasBig = state.hulkbuster.big();
          switch (reason) {
-            case DEATH -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.onDeath(player, state);
+            case DEATH, ERASED -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.onDeath(player, state);
             case DISCONNECT -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.onLogout(player, state);
             case HERO_CHANGE -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.releaseGrab(player, state, dev.baranhan.viltrumitecore.hero.control.ReleaseReason.HERO_CHANGE);
          }
 
          state.onCleanup(reason);
+         if (reason == CleanupReason.ERASED && player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer) {
+            heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
+         }
          if (reason != CleanupReason.DISCONNECT) {
             // Threat brackets, missile locks and the scan glow must not outlive the suit (stale ESP boxes).
             dev.baranhan.viltrumitecore.hero.HeroRegistry.clearOwnerSections(player, OWNED_SECTIONS);

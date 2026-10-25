@@ -63,31 +63,75 @@ public class ChopImpactManager {
                      corePlayer.releaseTarget();
                   }
 
-                  target.hurt(player.damageSources().playerAttack(player), baseDamage);
-                  if (dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(target, dev.baranhan.viltrumitecore.hero.control.ControlKind.IMPULSE)) {
-                     Vec3 pushDir = new Vec3(toTarget.x, 0.0, toTarget.z).normalize().scale((double)knockback).add(0.0, 0.2, 0.0);
-                     target.setDeltaMovement(pushDir);
-                     target.hasImpulse = true;
-                  }
-                  BLEEDING_ENTITIES.put(target, new ChopImpactManager.BleedData(baseDamage, 80, player));
-                  Vec3 toAttacker = player.position().subtract(target.position()).normalize();
-                  Vec3 hitPos = new Vec3(
-                     target.getX() + toAttacker.x * ((double)target.getBbWidth() / 2.0),
-                     expectedY,
-                     target.getZ() + toAttacker.z * ((double)target.getBbWidth() / 2.0)
-                  );
-                  ChopHitS2CPacket packet = new ChopHitS2CPacket(hitPos, lookDir);
-                  CoreMessages.sendToTracking(packet, player);
-                  CoreMessages.sendToPlayer(packet, player);
-                  hitSomeone = true;
+                  final float damage = baseDamage;
+                  final double hitY = expectedY;
+                  boolean landed = land(new Contact() {
+                     @Override
+                     public boolean hurt() {
+                        return target.hurt(player.damageSources().playerAttack(player), damage);
+                     }
+
+                     @Override
+                     public void push() {
+                        if (dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(target, dev.baranhan.viltrumitecore.hero.control.ControlKind.IMPULSE)) {
+                           Vec3 pushDir = new Vec3(toTarget.x, 0.0, toTarget.z).normalize().scale((double)knockback).add(0.0, 0.2, 0.0);
+                           target.setDeltaMovement(pushDir);
+                           target.hasImpulse = true;
+                        }
+                     }
+
+                     @Override
+                     public void bleed() {
+                        BLEEDING_ENTITIES.put(target, new ChopImpactManager.BleedData(damage, 80, player));
+                     }
+
+                     @Override
+                     public void fx() {
+                        Vec3 toAttacker = player.position().subtract(target.position()).normalize();
+                        Vec3 hitPos = new Vec3(
+                           target.getX() + toAttacker.x * ((double)target.getBbWidth() / 2.0),
+                           hitY,
+                           target.getZ() + toAttacker.z * ((double)target.getBbWidth() / 2.0)
+                        );
+                        ChopHitS2CPacket packet = new ChopHitS2CPacket(hitPos, lookDir);
+                        CoreMessages.sendToTracking(packet, player);
+                        CoreMessages.sendToPlayer(packet, player);
+                     }
+                  });
+                  hitSomeone |= landed;
                }
             }
          }
       }
 
       if (hitSomeone) {
-         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.2F, 0.8F);
+         dev.baranhan.viltrumitecore.hero.ChopStyle style = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).chopStyle(player);
+         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, style.critVolume(), style.critPitch());
       }
+   }
+
+   /** One chop contact of {@link #tickChopSweep}. */
+   interface Contact {
+      /** The hit itself; false when the target refused it (shield, invulnerability frames, a hero layer, creative). */
+      boolean hurt();
+
+      void push();
+
+      void bleed();
+
+      void fx();
+   }
+
+   /** The push, the bleed and the hit FX follow only a hit the target really took. */
+   static boolean land(Contact contact) {
+      if (!contact.hurt()) {
+         return false;
+      }
+
+      contact.push();
+      contact.bleed();
+      contact.fx();
+      return true;
    }
 
    public static void clearChopMemory(Player player) {

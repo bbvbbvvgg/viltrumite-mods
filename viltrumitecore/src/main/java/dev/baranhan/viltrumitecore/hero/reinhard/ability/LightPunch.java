@@ -1,0 +1,61 @@
+package dev.baranhan.viltrumitecore.hero.reinhard.ability;
+
+import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
+import dev.baranhan.viltrumitecore.hero.reinhard.DestructionLevel;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardState;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardTargets;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
+
+/** Ordinary LMB jab outside Knight: server-owned ten-tick animation with one vanilla
+ * held-item attack at tick four. No separate R slot and no environmental destruction.
+ */
+public final class LightPunch implements AbilityHandler {
+   public static final DestructionLevel DESTRUCTION = DestructionLevel.NONE;
+
+   public static float damage() {
+      return ReinhardRules.LIGHT_PUNCH_DAMAGE;
+   }
+
+   /** Pure: the hit lands on this elapsed tick of the timeline. */
+   public static boolean hitsAt(int elapsed) {
+      return elapsed == ReinhardRules.LIGHT_PUNCH_HIT_TICK;
+   }
+
+   @Override
+   public boolean tryStart(ServerPlayer player, ReinhardState state) {
+      state.action.start(ReinhardAbility.LIGHT_PUNCH, ReinhardRules.LIGHT_PUNCH_TICKS, -1);
+      return true;
+   }
+
+   @Override
+   public void tick(ServerPlayer player, ReinhardState state) {
+      if (state.action.is(ReinhardAbility.LIGHT_PUNCH) && hitsAt(state.action.elapsed())) {
+         hit(player,state);
+      }
+   }
+
+   private static void hit(ServerPlayer player, ReinhardState state) {
+      LivingEntity target = ReinhardTargets.inReach(player, ReinhardRules.LIGHT_PUNCH_REACH);
+      if (target == null) return;
+      // This is ordinary melee now: keep vanilla held-item/enchantment/attack-strength behaviour,
+      // but resolve it once at the authored contact instead of on mouse-down.
+      state.resolvingMelee=true;
+      try { player.attack(target); } finally { state.resolvingMelee=false; }
+      Vec3 at = contact(player, target, ReinhardRules.LIGHT_PUNCH_REACH);
+      HeroFx.flash(player, at, .42F); // precise contact, not the heavy launch flash
+      HeroFx.blade(player, at.subtract(player.getLookAngle().scale(.24)), at.add(player.getLookAngle().scale(.12)), null);
+      ReinhardSounds.playAt(player, at, ReinhardSounds.LIGHT_PUNCH.get(), 0.9F, 1.15F);
+   }
+
+   /** The point of the target's box nearest to the eyes along the look. */
+   static Vec3 contact(ServerPlayer player, LivingEntity target, double reach) {
+      Vec3 eye = player.getEyePosition();
+      Vec3 end = eye.add(player.getLookAngle().scale(reach + 1.0));
+      return target.getBoundingBox().clip(eye, end).orElse(target.getBoundingBox().getCenter());
+   }
+}

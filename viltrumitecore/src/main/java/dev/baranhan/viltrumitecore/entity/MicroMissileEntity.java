@@ -90,6 +90,9 @@ public class MicroMissileEntity extends Projectile implements Homing {
 
       this.setDeltaMovement(dir.scale(speed));
       HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+      if (!this.level().isClientSide() && dev.baranhan.viltrumitecore.hero.HeroProjectiles.intercept(this, hit)) return;
+      // Only a hit the server may turn away waits for it; ordinary hits (PvP too) play their impact.
+      if (this.level().isClientSide() && dev.baranhan.viltrumitecore.hero.HeroProjectiles.awaitsServer(this, hit)) return;
       if (hit.getType() != HitResult.Type.MISS) {
          if (!this.level().isClientSide()) {
             this.onHit(hit);

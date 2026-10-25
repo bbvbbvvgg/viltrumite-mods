@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.control;
 
+import dev.baranhan.viltrumitecore.hero.BodyIsolation;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.regulus.RegulusRules;
@@ -16,6 +17,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -53,8 +55,9 @@ public final class ControlManager {
    /**
     * Living targets (FREEZE/STASIS) whose record dropped while they were
     * unreachable — disconnect or a dimension change. Their entity NBT already
-    * carries the frozen flags; the saved values come back the next time the
-    * entity joins any level, so it cannot stay frozen forever.
+    * carries the frozen flags; this process-local mirror restores them on join.
+    * World-pause freezes also persist their originals in PauseFlagRecovery,
+    * so that particular lease can recover after a new JVM.
     */
    private static final Map<UUID, SavedFlags> PENDING_TARGET_RESTORE = new BoundedMap<>(PENDING_RESTORE_CAP);
 
@@ -107,7 +110,7 @@ public final class ControlManager {
          return false;
       }
 
-      if (this.isAnchored(target)) {
+      if (this.isAnchored(target) || WorldPause.isPaused(target) || dev.baranhan.viltrumitecore.hero.BodyIsolation.active(target)) {
          return true;
       }
 
@@ -158,12 +161,26 @@ public final class ControlManager {
 
    /** Same as {@link #tryAcquire} plus an absolute game-time expiry. */
    public boolean tryAcquire(LivingEntity target, UUID caster, UUID effectId, ControlKind kind, long expiresAt) {
+      return this.tryAcquire(target, caster, effectId, kind, expiresAt, false);
+   }
+
+   /** Persist pause originals before applying any temporary gravity/AI flags. */
+   public boolean tryAcquireRecoverableFreeze(LivingEntity target, UUID caster, UUID effectId, long expiresAt) {
+      return this.tryAcquire(target, caster, effectId, ControlKind.FREEZE, expiresAt, true);
+   }
+
+   private boolean tryAcquire(LivingEntity target, UUID caster, UUID effectId, ControlKind kind, long expiresAt, boolean recoverablePause) {
       if (!mayAcquire(kind, this.controls.containsKey(target.getUUID()), target.getTags().contains("ViltrumiteGrabbed"), this.isAllowedOnTarget(target, kind))) {
          return false;
       }
 
+      restorePendingTarget(target);
       ControlRecord record = new ControlRecord(target, caster, effectId, kind);
       record.expiresAt = expiresAt;
+      if (recoverablePause) {
+         PauseFlagRecovery.remember(target.getPersistentData(), effectId,
+            new PauseFlagRecovery.Flags(record.savedNoGravity, record.savedNoAi));
+      }
       this.controls.put(target.getUUID(), record);
       record.anchor(target);
       this.dirty = true;
@@ -182,6 +199,42 @@ public final class ControlManager {
       }
 
       return !grabbedTag;
+   }
+
+   /** Extend only our matching control. No re-anchor, flag recapture, or structural sync. */
+   public boolean refresh(UUID targetId, UUID caster, UUID effectId, ControlKind kind, long expiresAt) {
+      return refreshRecord(this.controls.get(targetId), caster, effectId, kind, expiresAt);
+   }
+
+   /** Does this effect's own FREEZE hold the target (a World Pause that acquired it). */
+   public boolean holdsFreeze(UUID targetId, UUID effectId) {
+      return heldBy(this.controls.get(targetId), effectId);
+   }
+
+   /** Pure: the record is the given effect's FREEZE; foreign controls and no control are not. */
+   static boolean heldBy(@Nullable ControlRecord record, UUID effectId) {
+      return record != null && record.kind == ControlKind.FREEZE && record.effectId.equals(effectId);
+   }
+
+   static boolean mayRefresh(@Nullable ControlRecord record, UUID caster, UUID effectId, ControlKind kind) {
+      return record != null && record.caster.equals(caster) && record.effectId.equals(effectId) && record.kind == kind;
+   }
+
+   static boolean refreshRecord(@Nullable ControlRecord record, UUID caster, UUID effectId, ControlKind kind, long expiresAt) {
+      if (!mayRefresh(record, caster, effectId, kind)) return false;
+      record.expiresAt = expiresAt;
+      return true;
+   }
+
+   /** Only a matching pause-owned FREEZE may install/retain its captured originals. */
+   public boolean rememberPauseFlags(UUID targetId, UUID caster, UUID effectId, CompoundTag data) {
+      ControlRecord record = this.controls.get(targetId);
+      if (!mayRefresh(record, caster, effectId, ControlKind.FREEZE)) {
+         return false;
+      }
+
+      PauseFlagRecovery.remember(data, effectId, new PauseFlagRecovery.Flags(record.savedNoGravity, record.savedNoAi));
+      return true;
    }
 
    /**
@@ -235,6 +288,7 @@ public final class ControlManager {
       ServerLevel level = this.firstLevel();
       LivingEntity target = find(level, record.targetId);
       if (target == null) {
+         PENDING_TARGET_RESTORE.put(record.targetId, new SavedFlags(record.savedNoGravity, record.savedNoAi));
          return;
       }
 
@@ -278,7 +332,7 @@ public final class ControlManager {
          this.release(entry.getKey(), record.effectId, cleanupReleaseReason(reason));
       }
 
-      if (reason != CleanupReason.DEATH) {
+      if (!reason.losesBody()) {
          if (this.domes.values().removeIf(dome -> dome.caster().equals(caster))) {
             this.dirty = true;
          }
@@ -289,13 +343,13 @@ public final class ControlManager {
 
    /** Pure predicate: dome-owned STASIS is the only control a death keeps. */
    static boolean releaseOnCasterCleanup(ControlKind kind, boolean domeLinked, CleanupReason reason) {
-      return !(reason == CleanupReason.DEATH && kind == ControlKind.STASIS && domeLinked);
+      return !(reason.losesBody() && kind == ControlKind.STASIS && domeLinked);
    }
 
    /** Maps a caster cleanup to the release reason victims see (no freeze). */
    public static ReleaseReason cleanupReleaseReason(CleanupReason reason) {
       return switch (reason) {
-         case DEATH -> ReleaseReason.CASTER_DEATH;
+         case DEATH, ERASED -> ReleaseReason.CASTER_DEATH;
          case HERO_CHANGE -> ReleaseReason.HERO_CHANGE;
          case DISCONNECT -> ReleaseReason.CASTER_DISCONNECT;
       };
@@ -447,13 +501,29 @@ public final class ControlManager {
     */
    public static void restorePendingTarget(Entity entity) {
       SavedFlags flags = PENDING_TARGET_RESTORE.remove(entity.getUUID());
-      if (flags == null) {
-         return;
+      UUID currentEffect = null;
+      if (entity instanceof LivingEntity living && entity.level() instanceof ServerLevel level) {
+         ControlManager manager = INSTANCES.get(level);
+         if (manager != null) {
+            currentEffect = manager.effectIdOf(living);
+         }
       }
 
-      entity.setNoGravity(flags.noGravity());
-      if (entity instanceof Mob mob) {
-         mob.setNoAi(flags.noAi());
+      boolean preserveBodyFlags = BodyIsolation.active(entity) || entity.getTags().contains("ViltrumiteGrabbed");
+      PauseFlagRecovery.Flags durable = PauseFlagRecovery.recover(entity.getPersistentData(), currentEffect, preserveBodyFlags);
+      if (currentEffect == null && !preserveBodyFlags) {
+         if (flags != null) {
+            entity.setNoGravity(flags.noGravity());
+            if (entity instanceof Mob mob) {
+               mob.setNoAi(flags.noAi());
+            }
+         }
+         if (durable != null) {
+            entity.setNoGravity(durable.noGravity());
+            if (entity instanceof Mob mob) {
+               mob.setNoAi(durable.noAi());
+            }
+         }
       }
    }
 
@@ -487,7 +557,9 @@ public final class ControlManager {
             continue;
          }
 
-         record.apply(target);
+         if (!WorldPause.suspendForeignMovement(target, record.effectId)) {
+            record.apply(target);
+         }
       }
 
       if (expired != null) {
@@ -619,13 +691,20 @@ public final class ControlManager {
       long expiresAt = -1L;
 
       ControlRecord(LivingEntity target, UUID caster, UUID effectId, ControlKind kind) {
-         this.targetId = target.getUUID();
+         this(target.getUUID(), caster, effectId, kind, target.position(),
+            dev.baranhan.viltrumitecore.hero.LiftLeases.SERVER.naturalNoGravity(target.getUUID(), target.isNoGravity()),
+            target instanceof Mob mob && mob.isNoAi());
+      }
+
+      /** Captured control state. Refresh never reconstructs this capture. */
+      ControlRecord(UUID targetId, UUID caster, UUID effectId, ControlKind kind, Vec3 anchor, boolean noGravity, boolean noAi) {
+         this.targetId = targetId;
          this.caster = caster;
          this.effectId = effectId;
          this.kind = kind;
-         this.savedNoGravity = target.isNoGravity();
-         this.savedNoAi = target instanceof Mob mob && mob.isNoAi();
-         this.anchor = target.position();
+         this.anchor = anchor;
+         this.savedNoGravity = noGravity;
+         this.savedNoAi = noAi;
       }
 
       void anchor(LivingEntity target) {
@@ -675,6 +754,7 @@ public final class ControlManager {
       }
 
       void restore(LivingEntity target) {
+         PauseFlagRecovery.forget(target.getPersistentData(), this.effectId);
          target.setNoGravity(this.savedNoGravity);
          if (target instanceof Mob mob) {
             mob.setNoAi(this.savedNoAi);

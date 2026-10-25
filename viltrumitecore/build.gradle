@@ -8,7 +8,7 @@ plugins {
 // core uses classes from viltrumiteflight
 evaluationDependsOn(':viltrumiteflight')
 
-version = '1.25.0'
+version = '1.39.1'
 group = 'dev.baranhan.viltrumitecore'
 base { archivesName = 'reforgedcodex-core' }
 
@@ -71,6 +71,15 @@ test {
 
 processResources {
     inputs.property 'version', project.version
+    // CC-BY audio attribution must travel with standalone JARs, not only the repo.
+    from(rootProject.file('CREDITS.md')) {
+        into 'META-INF/credits'
+        rename { 'reinhard-credits.md' }
+    }
+    from(rootProject.file('tools/assets/reinhard_sources.md')) {
+        into 'META-INF/credits'
+        rename { 'reinhard-sources.md' }
+    }
     filesMatching('META-INF/mods.toml') {
         filter { line -> line.replace('@MOD_VERSION@', project.version.toString()) }
     }

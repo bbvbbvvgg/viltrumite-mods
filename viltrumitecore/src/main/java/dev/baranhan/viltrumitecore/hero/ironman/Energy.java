@@ -39,13 +39,18 @@ public final class Energy {
    }
 
    public void tick() {
+      this.tick(1.0F);
+   }
+
+   /** @param regenScale foreign slow-down of the refill only (HeroResourceRegen), 0..1 */
+   public void tick(float regenScale) {
       if (this.idleTicks < IronManRules.ENERGY_REGEN_DELAY) {
          this.idleTicks++;
          return;
       }
 
       if (this.value < IronManRules.ENERGY_MAX) {
-         this.set(this.value + IronManRules.ENERGY_REGEN_PER_TICK);
+         this.set(this.value + IronManRules.ENERGY_REGEN_PER_TICK * regenScale);
       }
    }
 

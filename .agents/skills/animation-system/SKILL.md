@@ -1,335 +1,149 @@
 ---
 name: animation-system
-description: Use for ALL work on animations, poses, visual effects, screen shaders, particles or animated items/entities in viltrumite-mods. Maps the existing animation and VFX system and gives the only allowed way to add an animation or effect for a new hero or ability.
+description: Mandatory for all animation, pose, player model, item/entity animation, VFX, shader, camera, and visual-reference work in viltrumite-mods. Choose the existing renderer, author synchronized motion, and verify actual first/third-person quality. Includes Regulus, Homelander, Iron Man and Reinhard patterns.
 ---
 
-# Animation system (viltrumite-mods)
-
-Read this file before you change or add any animation, pose or visual effect.
-The code is the source of truth. If this file and the code disagree, trust the code and update this file.
-
-## 1. Hard rules
-
-1. Do not break current visual effects. Every existing animation, VFX and shader must look the same after your change. Check in `./gradlew runClient`.
-2. Use ONLY the systems in this file. Do not add PlayerAnimator, Emotecraft, GeckoLib animation, Veil, a new shader pipeline or any second animation engine. GeckoLib is `compileOnly` for one grab mixin only.
-3. Every hero and every active ability MUST have animations: a third-person body pose, a first-person pose, and a visual effect. A hero without animations is not done.
-4. Extend the existing classes and patterns. Do not copy a system to make a "better" one.
-5. If a new effect needs a capability the system does not have, stop and ask the user before you add it.
-6. Ease weights by real time (`System.nanoTime` dt with `1 - exp(-k·dt)`), never with a fixed per-call `Mth.lerp(k, …)`: pose code runs once per render pass (twice with the shader shadow pass) and per frame, so a fixed factor changes speed with the frame rate.
-
-## 2. System map
-
-The mod has several layers. Each layer has one job. Pick the layer by what you animate.
-
-| What you animate | Layer | Where |
-|---|---|---|
-| Player body pose (third person) | `PlayerModel.setupAnim` TAIL mixins | `viltrumitecore/client/mixin/*ModelMixin*`, `viltrumiteflight/client/mixin/SlowFlyingModelMixin`, `PlayerModelMixin` |
-| Whole-body lunge/spin/tilt | `PlayerRenderer.setupRotations` TAIL mixins | `*RendererCoreMixin*`, `SlowFlyingRendererMixin` |
-| First-person arms/hands | `FirstPersonXMixin` + `PoseDataManager.FP` | `client/mixin/FirstPerson*Mixin`, flight `ItemInHandRendererMixin` |
-| Smooth on/off blend of a pose | Weight managers | `client/render/animation/*AnimationManager`, `SilhouetteManager` |
-| Animated items and geo entities | Anim core (Blockbench geo + animation JSON) | `viltrumitecore/client/anim/**`, `InfinityGunRenderer` |
-| Whole-body replacement (Hulkbuster Mark 48) | `RenderPlayerEvent.Pre` cancel + `RenderArmEvent` (§7.4) | `client/ironman/hulkbuster/HulkbusterRenderer` |
-| World effects (rings, beams, sparks, blood) | VFX managers on `RenderLevelStageEvent` | `client/render/vfx/*VFXManager`, `MeltedTunnelRenderer` |
-| Screen effects (shake, blur, tint) | Post shader `dash_impact` | `ViltrumiteShaders`, `GameRendererDashMixin`, `shaders/post/dash_impact.json`, `assets/minecraft/shaders/program/dash_impact.*` |
-| Flight screen effects | Post shader `sonic_boom` | flight `GameRendererMixin` |
-| Overlay on the player model | `RenderLayer` | `AtmosphericHeatFeatureRenderer` via `PlayerFeatureRendererMixin`; hero layers in `ViltrumiteCoreClient.onAddLayers` |
-| 3D parts on player parts (helmet, flames, gadgets) | `PlayerGeoLayer` + provider | `client/anim/render/PlayerGeoLayer`, `PlayerBoneMap` (§7.1) |
-| Suit skin growing over the body | Baked reveal frames | `client/anim/render/RevealMask`, `client/ironman/IronManSuitTextures` (§7.2) |
-| Particles, entity renderers | Forge registration | `ClientModEvents` |
-| Hand position for VFX/grab | Tracker mixins | `HandPositionTrackerMixin`, `ChopHandTrackerMixin` |
-
-Ability state comes from synced player data: `ViltrumiteCorePlayer` (core) and `ViltrumiteFlightPlayer` (flight). All visual layers READ this state. They do not own it.
-
-## 3. Player body poses (third person)
-
-Pattern: one mixin per ability on `PlayerModel.setupAnim(LivingEntity;FFFFF)V` at `@At("TAIL")`.
-
-### 3.1 Order (mixin priority)
-
-| Mixin | Priority |
-|---|---|
-| `DashModelMixin` | 1100 |
-| `PunchModelMixin` | 1150 |
-| `ChopModelMixin` | 1160 |
-| `ChopModelMixin2`, `ThunderclapModelMixin` | 1170 |
-| `BarrageModelMixin` | 1175 |
-| `HomelanderModelMixin` | 1180 |
-| `IronManModelMixin` (hover, glide, heavy-landing kneel, every Iron Man combat and mark-signature pose, suit walk-in rest pose) | 1190 |
-| `GrabModelMixin` | 2000 |
-| `BlockModelMixin` | 3000 |
-
-A higher priority applies later and wins. Grab and Block lerp from the pose that earlier mixins left. Give a new ability a free priority that fits this order.
-
-### 3.2 Rules for every pose mixin
-
-1. Act only when the entity implements `ViltrumiteCorePlayer` and the ability is active (synced ticks > 0).
-2. Skip when `entity == mc.player` and the camera is first person, EXCEPT when `ShaderCompat.isShadowPass()` is true.
-3. Write pose constants in degrees. Convert with `Math.toRadians`.
-4. Add position offsets to the base pivots:
-
-| Part | X | Y standing | Y sneaking |
-|---|---|---|---|
-| Arms | ±5 | 2.0 | 5.2 |
-| Body | 0 | 0 | 3.2 |
-| Head | 0 | 0 | 4.2 |
-| Legs | ±1.9 | 12 | 12 |
-
-5. Mirror left/right with `m = isLeft ? -1 : 1` on yaw, roll and X.
-6. Before you pose, set `head.zRot`, `body.yRot`, `body.zRot` to 0.
-7. After you pose, ALWAYS call `copyFrom` for `hat`, `jacket`, `rightSleeve`, `leftSleeve`, `rightPants`, `leftPants`. If you skip this, the outer skin layer does not move.
-8. Null-check `cloak` before you use it.
-
-### 3.3 Timing
-
-- Abilities use a 20-tick countdown. `t = clamp((20 - (ticks - partialTick)) / 20, 0, 1)`.
-- Interpolate with piecewise `Mth.lerp`. Overshoot is `×1.15`.
-- Standard 2-keyframe timeline (Punch, Chop):
-
-| t | Segment |
-|---|---|
-| 0–0.25 | vanilla → S1 (wind-up) |
-| 0.25–0.35 | S1 → S2×1.15 (strike) |
-| 0.35–0.5 | settle → S2 |
-| 0.5–0.65 | hold S2 |
-| 0.65–0.9 | S2 → vanilla |
-
-- Thunderclap and Barrage have their own timelines. Read their mixins if you need a multi-hit or charge ability.
-- Use `Minecraft.getFrameTime()` for partial ticks in new code. (Old mixins mix `getFrameTime()` and `getPartialTick()`. Do not change them.)
-
-### 3.4 Flight poses
-
-`viltrumiteflight` poses run on the same `setupAnim` TAIL.
-- `SlowFlyingRendererMixin` (`setupRotations` TAIL) computes `FlightAnimManager.AnimState.deltaSeconds` and body tilt. `SlowFlyingModelMixin` uses that value.
-- Per-player state lives in `FlightAnimManager.AnimState`. Add a new factor field there. Move it with `±rate * deltaSeconds`. Blend with smoothstep `x²(3-2x)`.
-- GUI frames must not advance state (`deltaSeconds = 0`).
-- A core ability that runs in flight must look correct in BOTH grounded and flying states. Chop and Barrage use additive leg blending when grounded. Copy that pattern.
-
-## 4. Whole-body motion
-
-Use a `PlayerRenderer.setupRotations` TAIL mixin (`PunchRendererCoreMixin` 1500, `ChopRendererCoreMixin` 1510, `BarrageRendererCoreMixin` 1515, `ChopRendererCoreMixin2` 1520).
-- Translate to a pivot Y, rotate, translate back.
-- Lunge curve for strikes: 0 → -0.3 (t 0–0.25) → 1 (–0.35) → hold (–0.65) → 0 (–0.85).
-- Existing lunges apply only in flight (`getFlightState() != NONE`).
-
-## 5. First person
-
-- Each ability has a `FirstPersonXMixin` (Barrage, Block, Chop, Chop2, Grab, Gun, Punch, Thunderclap; Homelander; Iron Man: `IronManFirstPersonShieldMixin` → `IronManFirstPerson` for every combat pose and the shield guard). Read the nearest one before you write a new one. Copy its structure.
-- Iron Man (Regulus-style, PR #19): `client/ironman/anim/IronManAnimation` is the one client clock per player (shot edges per palm, stance hold, volleys, strike clock with forehand/backhand, nano weapon form/dissolve, missiles, unibeam, signatures); `State.weight(View, Layer, active)` gives separate third/first-person weights. `IronManPoser` keys layers on `PoseRig.begin(...).slerp()` and then aims arms with `client/anim/pose/ArmAim` (direction from the head axes, rotation-to quaternion → Euler ZYX); `IronManFirstPerson` uses `FirstPersonArm` (shoulder pivot) with the same layers. Do not add a separate signature mixin: signatures are a layer in these two classes.
-- An arm that is not the main hand renders in first person only through `AlwaysVisibleOffhandMixin`; a hero adds its `wantsOffhand(player)` there.
-- Flight applies `PoseDataManager.FP` in `ItemInHandRendererMixin` and resets arm pivots in `PlayerRendererMixin`. Do not fight these transforms.
-- Blocking uses `FirstPersonBlockAnimationManager`, a separate weight manager. A pose that renders in both views needs a separate first-person weight.
-
-## 6. Weight managers
-
-Use one when a pose turns on and off by a boolean (block, grab, gun).
-- Copy `GrabAnimationManager`: `static WeakHashMap<LivingEntity, State>`, `calculateWeight(entity, active)`.
-- Wall-clock delta, clamped to 0.1 s. `weight = lerp(1 - exp(-k*dt), weight, target)`.
-- k ≈ 10 soft fade, 12–15 body pose, 25 snappy weapon pose.
-- Call it ONCE per frame per entity per view. The call also advances the state.
-- The weight starts at 0 and never reaches exactly 1. Compare with an epsilon.
-- Use from the render thread only.
-
-## 7. Anim core (geo items and entities)
-
-Use for Blockbench models: items, projectiles, summons, gadgets. Do not use it for the player body.
-
-Assets:
-- `assets/<ns>/geo/**.geo.json` (format `minecraft:geometry`, 1.12.0).
-- `assets/<ns>/animations/**.animation.json` (format 1.8.0). Times are in seconds.
-- `AnimCache` loads all namespaces on resource reload. Item helpers: `itemGeo(name)`, `itemAnimations(name)`, `itemTexture(name)`.
-
-API:
-- `AnimCache.model(loc)` returns null if missing. `AnimCache.animation(loc, name)`.
-- `new AnimationController("main").transitionLength(ticks).onEvent(e -> ...)`.
-- `play(anim)` does not restart the same name. `restart(anim)` always restarts.
-- Per frame, in this order: `controller.play(anim)` → `controller.apply(model, AnimRenderer.time(pt))` → `AnimRenderer.render(..., boneHook)`.
-- Stateless timeline form (no start clock, time comes from synced fields): `AnimationController.seek(anim, model, seconds)` resets and poses one clip; `overlay(anim, model, seconds)` poses only the bones the clip animates; `blend(model, a, sa, b, sb, weight)` lerps two clips per bone.
-- `BoneHook` runs for every bone, also for hidden bones. Use it to attach effects or vanilla arms.
-
-JSON support:
-- `loop`: `true` → LOOP, `"hold_on_last_frame"`, otherwise PLAY_ONCE. Use `hold_on_last_frame` for one-shot actions.
-- Keyframes: arrays, numbers, `{pre, post, easing, lerp_mode: "catmullrom"}`.
-- Easings: `linear`, `step`, `easeIn/Out/InOut` + `Sine|Quad|Cubic|Quart|Quint|Expo|Circ|Back|Bounce`. Elastic: in and out only.
-- Events: `sound_effects`, `particle_effects`, `timeline` → `Event.Type` SOUND, PARTICLE, INSTRUCTION.
-- NO Molang. A Molang string becomes the default value and logs a warning. Bake numbers in Blockbench.
-- Animation bone names must equal geo bone names. A missing bone is skipped without an error.
-
-Invariants:
-- One `BakedGeoModel` instance is shared per resource. Call `apply` directly before `render`.
-- Do not keep model or animation references across a resource reload.
-- `AnimRenderer.time` is wall clock × 20. It runs during pause.
-
-Template: `InfinityGunRenderer` (BEWLR). It selects `shoot` / `reload` / `idle` from NBT tick timers and hides the `right_arm` / `left_arm` bones to draw vanilla arms in first person.
-
-### 7.1 Geo parts on player parts (`PlayerGeoLayer`)
-
-Approved extension (Iron Man stage 1b): Blockbench geo drawn ON the player
-model, following every pose. Use it for armor pieces, flames, gadgets. The
-body itself stays the player model with a skin.
-
-- Register once on the client: `PlayerGeoLayer.register(provider)`. Each
-  frame `Provider.collect(player, pt, firstPerson, out)` adds
-  `Part(geoLocation, passes, pose)`.
-- Top-level bone names map to model parts with `PlayerBoneMap`
-  (`armorHead/Body/RightArm/LeftArm/RightLeg/LeftLeg`, plain names, GeckoLib
-  `armor*Boot` → legs). Children follow. An unknown top bone with cubes is
-  skipped with one warning. Write geo in Bedrock armor coordinates (feet at
-  y 0, vanilla pivots: arms ±5/22, legs ±1.9/12).
-- The layer applies the part's final pose (`translateAndRotate`) after all
-  `setupAnim` TAIL mixins, then the bone's own pivot/rotation/scale.
-- `pose` runs after `resetBones()` on the shared model: set `scaleX/Y/Z`,
-  rotations, `hidden` there (flame length, flicker). Put a child bone pivot at
-  the flame root so `scaleY` changes the length.
-- Passes: `Pass.cutout(tex)` (lit, `entityCutoutNoCull`) and
-  `Pass.glow(tex[, r, g, b])` (`eyes`, full bright, skipped in the shadow
-  pass). Glow textures must be black where nothing glows (premultiply alpha).
-- First person: `PlayerGeoHandMixin` (`renderHand` TAIL) draws the arm bones
-  on the first-person arm (`firstPerson = true` in `collect`).
-- Layer registration: `ViltrumiteCoreClient.onAddLayers` (both skins).
-
-### 7.2 Suit skin reveal (baked frames)
-
-Decision record: `docs/spikes/2026-10-ironman-reveal.md`. No custom shader
-(Oculus safe).
-
-- `RevealMask` gives every skin texel a distance 0..1 from an origin on the
-  body surface; head texels come last. `frame(progress)` → 0..16.
-- A client reload listener bakes 16 `DynamicTexture` frames (skin / cut /
-  glow / rim) from two skins and a glow map; see `IronManSuitTextures`.
-- The `skin` frame is returned by `HeroSkins.Provider.skinVariant`, so the
-  model and the first-person arm use it. Glow and rim are an `eyes` layer
-  on the parent model with head + hat hidden (`IronManSkinLayer`). A helmet
-  is a geo part drawn with the `cut` frame.
-- Progress must come from synced timeline fields (`actionElapsed/Length`),
-  never from a client counter: relog mid-wave stays correct.
-
-### 7.4 Whole-body replacement (Hulkbuster): allowed only through this renderer pattern
-
-Iron Man stage 5 replaces the whole player body with the Mark 48 model. Only this pattern may do that:
-
-1. Use Forge event hooks, not a model mixin. `RenderPlayerEvent.Pre` draws the big body and cancels the vanilla render while ACTIVE. `RenderArmEvent` draws the two big arms and cancels the vanilla arm in first person. Both are in `client/ironman/hulkbuster/HulkbusterRenderer`.
-2. Pose = `AnimationController.blend` (idle or walk, blended by limb swing speed) + `AnimationController.overlay` (one clip for the action). Clip time comes from synced fields (`actionElapsed`, `actionLength`). Loops use wall time. The walk uses walk distance. Never use a client counter for progress.
-3. Geo sits in the armor space of §7.1: feet at y 0, JSON x = vanilla x, pixels. Draw it in the entity frame: `mulPose(YP(180 - bodyYaw))`, then `scale(1.7)`. Do not flip. The entity frame already matches the armor space.
-4. Cancelling the vanilla render also hides its layers, skin and mark pieces. EXITING does not cancel. Tony draws at normal size and steps back. The step is a translation applied in the `RenderPlayerEvent.Pre` stack before vanilla rotates it, so it is in the entity frame.
-5. Locked docking parts use the `PlayerGeoLayer.Provider` `HulkbusterDocking` (the armor bones follow every pose). Flying parts draw in the world (`HulkbusterFlight`, `PartFlight`, AFTER_ENTITIES).
-6. Glow is a `RenderType.eyes` pass, skipped in the shadow pass. Thruster flames are glow-only: their cutout texels are clear, and the bone scale is zero at rest.
-7. `GeoBone.resetToDefault` does not reset `hidden`. A pose that hides bones must set `hidden` every frame.
-8. Hitbox and eye height come from the body scale seam (`HeroDefinition.bodyScale`). This renderer does not change them.
-9. No pose mixin was added for the Hulkbuster, so the priority table in §3.1 is unchanged.
-
-Art: Sind Hulkbuster from the user's archive, `tools/assets/convert_ironman_sind.py` (geo via `tools/tabula2geo.py`, clips baked from the Sind `.fsk` scripts via `tools/fsk2anim.py`). The model is 68 px tall: the renderer scale is `HulkbusterLayer.SCALE × 32/68`. The jackhammer arm is a separate geo with its own texture; it replaces the body bone `pivotLeft` while the jackhammer tool is selected. Thruster fire is a separate geo posed with the same clips and drawn as glow. Tests: `HulkbusterAssetsParseTest` (parse, bones, clip lengths), `HulkbusterPosesTest`, `HulkbusterAssemblyTest`.
-
-## 8. World VFX
-
-Pattern: a `@EventBusSubscriber(value = Dist.CLIENT, bus = FORGE)` class that renders in `RenderLevelStageEvent` at `AFTER_LEVEL` or `AFTER_PARTICLES`.
-- Geometry: `Tesselator`, `QUADS`, `POSITION_COLOR`, position-color shader.
-- Usual blend: additive (`SRC_ALPHA, ONE`), cull off, depth test on, `depthMask(false)`.
-- Camera space: push the model-view stack, `XP(camXRot)`, `YP(camYRot + 180)`, translate `worldPos - cameraPos`.
-- Style: the "paint pixel" ring (`drawPaintPixel`) and billboard crosses. New effects MUST use this pixel style to match the mod.
-- ALWAYS restore GL state: `depthMask(true)`, `enableCull`, `defaultBlendFunc`, `disableBlend`, pop the stack.
-
-Two driver types:
-- One-shot: static list + `spawnX(pos, ...)` (`BlockVFXManager`, `MeteorImpactVFXManager`).
-- State-driven: read synced ticks every frame (`PunchVFXManager`, `ChopSweepVFXManager`), or detect a tick threshold in `ClientTickEvent` (`ThunderclapVFXManager`).
-
-For new effects, age by ticks with partialTick (Thunderclap pattern). Do not use per-frame `age++`: it depends on FPS.
-
-### Regulus pose and world-space helpers
-
-- Use `RegulusAnimationManager.actionTime(entity, snapshot, partialTick)` in both views. It uses client game time and limits extrapolation to six ticks and the action length. Do not use raw snapshot ticks for one view and the shared clock for the other.
-- Use `calculateWeight` for third person. Use `calculateFirstPersonWeight` for first person. For a held-book pose, pass the fourth `mainHand` argument so each hand has its own weight. Tick inactive weights too, so they fade out.
-- Call `RegulusAnimationManager.reset(entity)` when the hero changes. It clears third-person weights, both first-person hands, and the action clock.
-- `RegulusPoseTiming.keyedAngle` recovers to the supplied base rotation. End transient keys at zero. Add head/body offsets to vanilla aim and crouch. Mirror action limbs and yaw/roll for the main arm. Restore position offsets at `setupAnim` HEAD before vanilla uses the model again. Copy hat, jacket, sleeves and pants; do not copy body pivots to the cloak.
-- `PixelVfx` emits camera-relative vertices. Call `rotateCamera` once per render pass. Do not translate by the camera again. Use `billboardPixel`, `domeShell` or `sphereShell` for floating points. Shell shimmer changes alpha, not position. Apply owner-only carrier filtering and local first-person aura filtering in the managers, not in the shape helper.
-
-### Shared hero impact FX
-
-- Server code sends impact FX with `hero/fx/HeroFx` (`shards`, `shockwave`, `slam`, `blade`, `launch`, `flash`). It sends `HeroFxS2CPacket`; `client/render/vfx/HeroImpactFx` draws it for every hero. Do not add a hero-specific packet for these shapes.
-- Camera shake goes through `client/render/vfx/CameraShake` (`addAt` with distance falloff, `add` for local). Do not add a second shake accumulator.
-- Full API list: `.agents/skills/add_hero/references/shared-toolkit.md`.
-
-### 7.3 Mark skins and pieces (Iron Man stage 4)
-
-- Whole mark on (all parts present): the body skin is the mark texture
-  `textures/entity/hero/ironman_<mark key>.png`. Helmet open uses a baked copy
-  with Tony's head (`MarkSkins`, reload listener, 64x64 layout).
-- Partial, equipping, exiting, or Mark 42 with lost parts: Tony's skin plus one
-  archive piece per `SuitPart` (`MarkParts.geo/passes`): Satsu `each_part`
-  pieces (`geo/ironman/marks/parts/`) with the mark skin, Mark 42 Sind pieces
-  (`Mark42Parts`, `geo/ironman/mark_42/`) with the Sind atlas. Drawn with
-  `PlayerGeoLayer` in both views; in the world with `MarkParts.draw`.
-- A whole Satsu mark also draws its own Satsu parts (`MarkExtras`: Mark 7 flaps,
-  Mark 17 chest, War Machine pads, Iron Heart plates) with the raw suit texture.
-- Piece geo has one top-level armor bone pivoted at the piece centre.
-  `PartWrapAnimator.pose` scales that bone about the centre. Clear `resetBones()`
-  before a direct draw of a shared piece model.
-- Glow: `ironman_<key>_glow.png` as `Pass.glow`. Click flash = an extra glow pass of the skin.
-
-### 8.1 Flying parts and wrap
-
-- Flying parts: `veronica/PartFlightVisuals` (`AFTER_ENTITIES`). Position =
-  `PartFlight.position(launch, live anchor, progress)`. The anchor follows the
-  moving player's body yaw. Tumble decays to 0, so the part meets the body
-  pose exactly. Parts wait in the pod (no draw) until their launch tick.
-- Wrap: after the flight, `MarkVisuals.collectParts` draws the same piece on the
-  body (`PartWrapAnimator`: open, close, click flash). Locked parts stay as pieces.
-- Sounds are local clips. `PartFlightVisuals.onClientTick` plays them at the synced launch and lock ticks.
-
-### 8.2 Whole-entity renderers (pod, empty suit, debris)
-
-- `VeronicaPodRenderer`: `veronica_pod.geo.json` with `open`/`close` clips
-  (`AnimationController.restart` on each phase change). Doors swing open after landing.
-- `EmptySuitRenderer`: opening shell (Satsu `full_body` + helmet cut into a back
-  half and hinged front plates by `tools/assets/opening_shell.py`, mark skin),
-  interior lining (`ironman_interior.png` 128 px grayscale + glow, tinted per mark with
-  `SuitPalette.lining`), `open` (30 ticks) clip on the door bones. Entering is
-  code-driven (`EmptySuitEntity.enterDoor`): plates open while the owner walks up,
-  close legs → arms → chest → faceplate (4 t each, no overshoot); the shell hides
-  once the owner's snapshot shows the mark on; the helmet box hides for the local
-  first-person owner. The walk (approach, turn, step back) is scripted on the client
-  by `SuitEntryDriver`, which also gives `restWeight` for `IronManPoser`. The old
-  `enter` clip is unused. Mark extras only while standing closed. Body frame: `mulPose(YP(180 - yRot))`, scale 0.9375.
-- `VeronicaPodRenderer`: Veronica after the Age of Ultron stills (twin hulls are
-  the door bones), cutout + glow pass.
-- `SuitDebrisRenderer`: one suit piece, tumbling, fades and shrinks in the last 20 ticks.
-- Forearm micro-missile pods (`geo/ironman/missiles/forearm_launchers.geo.json` + `forearm_rockets`, own work, `tools/assets/make_ironman_forearm_launchers.py`): grayscale textures tinted with `SuitPalette` via `PlayerGeoLayer.Pass.cutout(tex, r, g, b)`; pods slide out of the forearm, petals open. Launch point `IronManCombat.forearm(player, right)`.
-- War Machine rounds: `client/ironman/mark/sig/GunRounds` (travelling streaks, muzzle flash, whiz for bystanders, block/body impacts), drawn from `SignatureVfx`.
-- Helmet open (iteration 3): only the iron faceplate opens, the rest of the helmet stays. Nano: `IronManSuitTextures` `cutOpen/glowOpen` (frames without the head front and hat front) plus `face(kind, step)` dissolve steps (8; nanites recede from the middle of the face to the edges, cyan rim). Marks: `MarkSkins` opens only the face region and `MarkFaceplate` (`geo/ironman/marks/faceplate.geo.json`) slides the plate up into the crown with a small outward tilt. `HelmetAnim.gesture` is the hand-to-helmet clock (22 t, smooth, only when the suit stays on — none on exit or retract).
-- `MarkVfx`: pixel motes (fire trail, engine flames, sparks, dust ring) and a
-  heat aura (`PixelVfx.bodyShell`). Motes age by client ticks and clear on logout.
-- Animation sign convention: JSON X and Y are negated like `buildBone`, Z is not.
-  Parsed-frame checks: door `rotY` -75 turns the +x door edge toward +z.
-  Arm `rotZ` +40 on the +x arm is outward. Head `rotX` +35 tilts the top toward +z. Verify in game.
-  For a geo hinge rotated about X (front = -z): a positive bone `rotX` (clip X negative) swings the lower edge forward and up. The empty-suit faceplate (hinge at the top centre) opens with clip X = -105; +105 swung it back through the helmet (fixed in PR #19 iteration 3).
-
-## 9. Screen effects
-
-Core shader: `viltrumitecore:shaders/post/dash_impact.json`, set in `GameRendererDashMixin` (`renderLevel` TAIL).
-Current uniforms: `DashIntensity, PunchIntensity, ShakeIntensity, GrabIntensity, LockIntensity, Time, ChopIntensity, ChopType, ChopIsLeft, BarrageIntensity, BarrageIsLeft, ScourgeIntensity, ScourgeTurn`.
-
-To add a screen effect:
-1. Declare the uniform in `program/dash_impact.json` AND in the pass `uniforms` of `post/dash_impact.json`.
-2. Clamp it in `dash_impact.fsh`.
-3. Add it to the early-out check. If you do not, the effect never shows alone.
-4. Colour effects are an exclusive chain: chop > barrage > dash/punch. Put a new one in the chain or as an overlay after it, like lock.
-5. Compute the intensity in `GameRendererDashMixin`. Use distance falloff for other players.
-6. Do not create a second post chain. Flight `sonic_boom` already replaces other post effects when it loads.
-
-## 10. Recipe: new ability animation
-
-1. Add synced state to `ViltrumiteCorePlayer` (20-tick countdown + side flag if needed).
-2. Third-person pose: new `XModelMixin` (sections 3.1–3.3).
-3. Whole-body motion if the move needs it: `XRendererCoreMixin` (section 4).
-4. First-person pose: `FirstPersonXMixin` (section 5).
-5. World effect: state-driven VFX manager (section 8).
-6. Screen effect if the hit is heavy: new uniform (section 9).
-7. Register every mixin in `viltrumitecore.client.mixins.json`. `defaultRequire` is 1, so a bad target crashes the game.
-8. Test in `./gradlew runClient`: third person, first person, grounded, flying, sneaking, left and right side, shaders on (shadow pass). Check that old abilities look the same.
-
-## 11. Known pitfalls
-
-- `PlayerModelMixin` (flight) and `SlowFlyingModelMixin` inject at the same TAIL without priority. Do not depend on their order.
-- `ChopRendererCoreMixin` does not check chop type, so it also runs for type 1.
-- Many VFX lists are plain `ArrayList` and are not cleared on world change. Touch them only on the render thread.
-- `MeteorImpactVFXManager` removes impacts at 600 ms, so its 2500 ms shake window is cut.
-- `tickGrab` in `PlayerEntityCoreMixin` was rewritten by hand after decompile and is not confirmed in-game. Compare grab behaviour with the original JAR.
+# Animation system — production workflow
+
+Read this skill **before** changing any animation, pose, renderer, VFX, animated equipment or screen effect. Read `AGENTS.md` and `.memory-bank/project.md` first. Use the current source code as the implementation authority. Read only the reference sections needed for the task:
+
+- [Implementation catalog](references/system-catalog.md): original player mixins, `PoseRig`, geo parser/controller, flight, Iron Man parts, shaders and shared VFX.
+- [Reinhard lessons](references/reinhard-lessons.md): full-body renderer, clip composition, grip/IK, continuity regressions, World Cut, World Erasure and the PR #43 The Hand shader.
+- [Shared hero toolkit](../add_hero/references/shared-toolkit.md): server-owned impacts, hit-stop, debris, shockwaves, `HeroFx`, `CameraShake` and `PixelVfx`.
+
+This file is a **decision and acceptance procedure**, not a list of poses to copy. Existing characters are references with known limitations. Reinhard has extensive tests but still needs native visual acceptance.
+
+## 1. First decide what owns the visual
+
+| Target | Existing owner / reference | Use when |
+| --- | --- | --- |
+| Legacy player body | `client/mixin/*ModelMixin`, `client/anim/pose/PoseRig` | Vanilla player model, existing Viltrumite actions |
+| New hero on vanilla body | `client/regulus/RegulusPoser`, `client/homelander/HomelanderPoser`, `client/ironman/IronManPoser` | Skin, normal joints and additive combat poses |
+| Custom full-body geo | `client/reinhard/ReinhardRenderer` | Hero replaces vanilla body, needs custom elbows, clothing, attachments and clips |
+| Large suit replacement | `client/ironman/hulkbuster/HulkbusterRenderer` | A separate body model replaces player rendering |
+| First-person arms and held item | `client/anim/pose/FirstPersonArm`, `client/ironman/IronManFirstPerson`, `client/reinhard/ReinhardFirstPerson` | Camera-space arms, real hand anchors, both physical hands |
+| Parts attached to a player | `client/anim/render/PlayerGeoLayer`, `PlayerBoneMap` | Armor, helmet, weapon pieces, effects following final posed bones |
+| Animated geo item/entity | `client/anim/animation/AnimationController`, `AnimCache`, `AnimRenderer` | Blockbench geo and animation JSON, entity or item clips |
+| Ordinary world feedback | `hero/fx/HeroFx`, `client/render/vfx/HeroImpactFx`, `PixelVfx`, `CameraShake` | Impact, sparks, dust, blade trails, shockwaves, shake |
+| Special scene material | `client/render/erasure/ErasureRenderer` + `client/reinhard/cut/WorldCutErasure` | The **already approved** The Hand World Cut shader only |
+| Screen effects | Existing `dash_impact` post program, `FlashOverlay`, `SoundDuck`; flight `sonic_boom` | Full-screen tint, crack, erasure, flash, ducking |
+
+Do not add PlayerAnimator, Emotecraft, GeckoLib animation, Veil, a second pose/keyframe engine or a generic VFX pipeline. GeckoLib assets may be read by the project's **own** geo loader. Do not use GeckoLib as a new runtime animation engine. A special shader is not permission to build another general renderer. If the current system lacks a feature, extend its existing seam and update this skill.
+
+Every active hero ability needs recognizable animation and visual feedback in each relevant view. Cover both first and third person for visible player actions. If a passive or non-visual action has no meaningful pose, record the intentional exception in its design and still provide clear player feedback.
+
+Choose **one pose owner** for each body and view. A hero can have layered actions, but should not have several competing mixins that independently own the same arm. Check mixin registration, Forge event order and render cancellation before adding a hook.
+
+## 2. Four reference implementations: copy the lesson, not the character
+
+| Hero | Read first | Reusable lesson | Do not copy blindly |
+| --- | --- | --- | --- |
+| **Regulus** | `client/render/animation/RegulusAnimationManager`, `client/regulus/RegulusPoser`, `client/anim/pose/PoseRig` | Shared snapshot clock; separate TP/FP and per-hand weights; keyed actions, mirroring and pivot restoration | Legacy action-specific mixin count and hero-specific branches |
+| **Homelander** | `client/homelander/HomelanderPoser`, `HomelanderVfx`, `client/mixin/FirstPersonHomelanderMixin` | Compact snapshot-driven poses; independent view fades; eyes/beam VFX and state cleanup | Fixed-duration roar or laser pose for unrelated abilities |
+| **Iron Man** | `client/ironman/anim/IronManAnimation`, `IronManPoser`, `IronManFirstPerson`, `IronManPartsProvider` | One state machine for layered combat, guard, equipment, FP/TP; quaternion aiming; skin/part reveal | Separate signature mixins, redundant clocks or a new suit renderer for each mark |
+| **Reinhard** | `client/reinhard/ReinhardRenderer`, `ReinhardLayers`, `ReinhardPlayback`, `ReinhardGrip` | Full geo body, stance/gait/action composition, real elbow and weapon matrices, continuity gates | The unverified look, brittle grip solutions, cinematic complexity or specialized shader for ordinary hits |
+
+The project design references are `docs/design/2026-10-05-regulus-design.md`, `docs/design/2026-10-08-homelander-design.md`, `docs/design/2026-10-09-ironman-design.md` and `docs/design/2026-10-11-reinhard-design.md`. For external art/audio sources also inspect `tools/assets/ironman_sources.md` and `tools/assets/reinhard_sources.md` where applicable. These specs express intent; the current code shows what actually shipped.
+
+Use a source-material reference **and** the nearest working code example. For a new hero, prefer the smallest suitable existing architecture. Do not use Reinhard's full-body replacement merely because it has more bones.
+
+## 3. Visual-reference contract (before implementation)
+
+For a new move or major rework, prepare a short animation brief in the existing hero design/plan:
+
+1. Identify the canonical clip, stills, user-supplied video or approved original art. Record the source, time range and asset license. Do not silently invent a different visual identity or copy unlicensed assets into the repo.
+2. Define the **readable silhouette** at idle, anticipation, impact and recovery. Record the camera angle and whether the move is one-hand, two-hand, grounded, flying or mounted.
+3. Mark 3–6 motion beats with approximate times **and the authoritative contact tick**. Include the lead limb, hips, head, follow-through, secondary motion, sound and VFX beat.
+4. State what stays attached: weapon, sheath, held item, arrow, armor, effects. Specify each hand's ownership at every phase.
+5. Define transitions: start from idle/walk/flight, action interruption, guard/catch, cancellation, death, hero change, relog and dimension unload.
+6. State the acceptance shots: FP and TP, front/side/back, left/right hand, low/high camera, 30 and high FPS. A screenshot of a single good pose is not acceptance.
+
+If reference footage is ambiguous, write down the interpretation. Preserve established visuals unless the user requests a change. A more elaborate effect that changes the character's identity is a regression.
+
+## 4. Timing and state are shared across every view
+
+- **Gameplay is server-authoritative.** Read `HeroPublicSnapshot`, synced action/phase/elapsed/length/flags and existing owner sections. Do not decide damage, contact, ability success or target ownership in a renderer.
+- Action length is **not always 20 ticks**. The 20-tick countdown is a legacy Punch/Chop pattern. JSON animation times are seconds; gameplay clocks are ticks (20 ticks/s). Define per-action durations and contact points.
+- Use one action clock per player/action across TP body, FP arms, elbows, items and world projections. `RegulusAnimationManager` and `IronManAnimation` demonstrate shared state. `ReinhardPlayback.actionTicks` uses opt-in `ActionClock.sample(action, phase, elapsed, length, clientTicks)`.
+- `ActionClock.sample` is **opt-in**, not a global replacement for old `tick/time`. It is monotonic inside a segment, reconciles at 0.75–1.25x, predicts at most three ticks and clamps to the server length. Sample `tickCount + partialTick`; repeated view/shadow passes at the same timestamp must be idempotent. Reset on hero exit.
+- For one-shot cinematic progress, use packet start game time or synced elapsed. A local render counter causes drift on pause, reconnect or dimension catch-up. Looped clips must wrap explicitly where needed: `AnimationController.seek/overlay/blend` do **not** wrap LOOP time for Reinhard; `ReinhardPlayback.time` does.
+- Use real-time delta for on/off weights, e.g. `1 - exp(-k * dt)` with bounded `dt`. Do not apply a fixed per-render `Mth.lerp(k, ...)`. Cache by entity **and view/hand** when they need independent weights. Never advance a filter twice for the same timestamp or in a shader shadow pass.
+- Keep impact keys sharp. Blend **recovery** to the live stance/guard when an action ends. Do not add an incoming low-pass that erases contact, stalls a dense gait or delays a handoff.
+
+## 5. Compose motion by ownership
+
+Recommended order for a layered geo hero (adapt it to the actual action):
+
+1. Reset shared model bones. Sample base stance and its transition.
+2. Apply locomotion from continuous walk distance; handle run, flight, takeoff, landing and crouch without double offsets.
+3. Apply active action, guard or held stance with an explicit priority and ownership mask.
+4. Add defense/contact overlays only to free limbs. Main action and two-hand weapon ownership take precedence.
+5. Resolve final elbow, wrist, palm and weapon frames from the **same** posed parent chain.
+6. Add secondary pieces, particles and sound/VFX at the matching authoritative beat.
+7. Render cutout/translucent, outline and glow in the correct passes; restore all GL state.
+
+For vanilla bodies, use `PoseRig` and the existing `PlayerModel` seams. Keep the vanilla base pose and copy outer skin layers. Restore modified pivots before the next frame. Do not zero unrelated joints and destroy flight/crouch pose. Check the actual effective mixin order; a numeric priority alone does not prove which pose wins.
+
+For geo bodies, use `AnimCache`, `AnimationController` and the `ReinhardLayers` channel-ownership policy. A clip that omits a channel must **not** reset that channel to zero. Use quaternion slerp for partial rotations and preserve authored exact keys at full weight. Do not lerp matrix elements. Keep position and scale owned only by the clip's declared channels. The shared cached `BakedGeoModel` must be reset/reposed immediately before drawing; do not retain it across reload.
+
+For IK or two-hand weapons, author the weapon trajectory first. Solve reachable palms to its stable grip/guard/pommel anchors; use parent-aware final transforms, not shoulder-only positions. Preserve elbow poles and directed forearm twist. A wrist that rotates 180° to reach a mathematically correct grip is still broken. Check the entire blade mesh, sheath clearance, hand penetration and intermediate frames.
+
+## 6. First person and attached equipment
+
+- FP is a separate camera-space composition. Reuse the same action **time**, not necessarily the same TP shoulder Euler angles. Use `FirstPersonArm` once at the correct outer transform; do not apply a second vanilla swing to an authored attack.
+- Treat `MAIN_HAND` / `OFF_HAND` as inventory hands and `LEFT` / `RIGHT` as physical arms. Map them through the player's main-arm setting. Test left-handed mode and both held-item slots.
+- An offhand that must remain visible uses the existing `AlwaysVisibleOffhandMixin` policy. A cancelled `RenderHandEvent` path must render the intended empty physical arm itself; the normal item-render mixin will not run for it.
+- Never change inventory to hide a sword or occupied item during a cinematic. Hide only the conflicting render, and restore it after the action. Reinhard's `RenderHandEvent` / `RenderArmEvent` path is the reference.
+- `PlayerGeoLayer.partFrame` and the hero's final bone/hand frames must agree. A bent elbow changes the item transform. The same attachment matrix must drive TP equipment, FP equipment and contact VFX.
+- If a hero cancels `RenderPlayerEvent.Pre`, it owns **everything** the vanilla renderer used to draw: held items, name tags, invisibility, glowing outline, armor/layers, first-person arms, shadow-pass behavior and state cleanup. Read `ReinhardRenderer` and `HulkbusterRenderer` before doing this.
+- For world contact derived from FP, convert camera view to world with the correct forward convention and current perspective. Do not trust an unrelated GUI projection. Test FOV changes and contact under movement.
+
+## 7. VFX and shaders: reuse first, protect compatibility
+
+- Shared hits: `HeroFx` on the server, `HeroImpactFx` on clients. Reuse `PixelVfx` for painted particles/shells, `CameraShake` for shakes, `FlashOverlay` for flashes, `SoundDuck` for cinematic ducking and the existing `dash_impact` post program for screen-space effects.
+- Ordinary world particles should match the mod's paint-pixel style. An approved reference-driven special effect may differ, but must be isolated. Never replace an established effect to make a refactor easier.
+- **The Hand World Cut is an explicit exception:** `WorldCutErasure` feeds the existing specialized `ErasureRenderer` with a registered `thehand_erasure` core shader. It does not add a second animation engine or network protocol. Preserve its source attribution and license. It is deliberately disabled with active Oculus/Iris shader packs; do not claim shader-pack compatibility.
+- In a render callback, use the event camera and the correct coordinate space. Skip shadow passes when the effect is view-only. Preserve depth, cull, blend, depth mask, texture bindings, model-view stack and render targets with `try/finally`.
+- Current `dash_impact` uniforms are listed in `references/system-catalog.md` §9. World Erasure owns **EraseCrack, EraseShatter, EraseDark, EraseRebuild, EraseSeed** (all default 0, set every processed pass, part of the early-out). While erasure is active, core stops an already-loaded flight `sonic` chain (`sonic_boom.json`) and refuses new sonic loads; it never adds a second post chain.
+- A screen effect must set all uniforms every active pass, include itself in the early-out condition and not leak into other heroes. A world effect must cap geometry, distance and lifetime. Clean up on logout, unload and F3+T resource reload.
+- Audio/VFX are part of the motion: align anticipation, impact, follow-through and silence. A correct file duration or waveform is not proof that the sound works in game.
+
+## 8. Quality gates (required for every changed move)
+
+**Source and tests**
+- Verify geo bone names, pivots, UVs, texture/clip paths, animation length, loop and interpolation mode. Check missing-channel behavior, resource reload and left/right mirroring.
+- Test timeline edges: start, contact-1, contact, contact+1, end, cancel, phase handoff, relog catch-up. Preserve server contact ticks.
+- Sample position **and velocity** across every walk/run cycle. Dense gait keys must not stop at each sample. For final constrained joints, scan quaternion angular jumps and mesh clearance at high sample rates (240 Hz is the Reinhard regression precedent).
+- Check 30/60/144/240 Hz render sampling and repeated timestamps. A shadow pass or GUI preview must not advance a pose. Validate FP/TP clocks and weapon matrices against the same snapshot.
+- Run targeted JUnit tests and `./gradlew build`. If the task touches client/common separation, also verify a dedicated server starts.
+
+**Native visual review**
+- Run `./gradlew :viltrumitecore:runClient` or `./gradlew runClient`. Inspect **first person and third person** at normal speed and in slow motion, including other players on LAN when synchronization matters.
+- Check idle→move→attack→recovery, consecutive attacks, stance changes, airborne/crouched/flight, both hands, hit and miss, interrupted action, long sessions, shader shadow pass, F3+T and world unload.
+- Inspect from front, side, rear, above and below. Verify silhouette, wrist/elbow twist, two-hand grip, blade clearance, item/FX attachment, hit timing, sound, outline and glow. A still frame is not enough.
+- For special shaders also check shader pack fallback, Fabulous, resize, multiple scenes, GL errors and FPS/GPU load. PR #43 The Hand shader still needs native driver and visual checks.
+
+Report checks in three categories: **verified in code/tests**, **verified in running game**, **not verified**. Never call a CPU matrix test, green CI or a rendered diagnostic JSON proof of visual acceptance. If the game cannot run, state the missing acceptance clearly in the PR.
+
+## 9. Recipe: add or rework an animation
+
+1. Read this skill, the relevant reference files, current hero implementation and the hero's design spec. Identify the real animation owner and nearest working reference.
+2. Write the motion brief (section 3), including reference timestamps, phase table, contact tick, both views, equipment and cancellation.
+3. Reuse the existing synced action fields. Extend only the necessary client pose/geo/VFX seams. Prefer one hero poser/compositor to one mixin per move.
+4. Author the base pose and contact frames first. Add anticipation, follow-through, recovery and transitions. Then solve equipment, secondary motion and FP separately on the shared clock.
+5. Integrate shared impact FX and sound. Add a specialized effect only if the design requires it and the existing approved pipeline can support it.
+6. Add tests for math, clocks, loops, phase handoffs, full-mesh clearance and final constrained joints. Compare with old visuals for regressions.
+7. Run the build, then native review. Record screenshots/video observations, limitations and checks. Update this skill/reference only for durable discoveries; ship a focused PR.
+
+## 10. Frequent failure modes
+
+- **"All abilities are 20 ticks."** Legacy-only assumption. Use each action's authoritative timeline.
+- **"One mixin per ability."** Legacy implementation detail. Prefer central hero composition when several moves share joints.
+- **"The keyframes are smooth, so the motion is smooth."** IK, Euler conversion, equipment and dense-key easing can introduce discontinuities after sampling.
+- **"Blend everything toward idle."** Catch, reflect, guard and weapon handoffs must recover to the live parent pose.
+- **"The sword grip point matches."** The hand, blade, sheath and elbow can still intersect or flip. Inspect the final meshes.
+- **"Third-person pose works in first person."** Camera transforms, hand mapping, held items and view-space projections differ.
+- **"The shader compiled, so the effect is correct."** Driver output, render order, shader packs, depth copy, F3+T and performance still need native checks.
+- **"CI is green, so the animation is done."** Compilation and pure tests do not establish visual quality.
+
+Keep the reference catalogs current when code changes. Do not grow this entrypoint with a chronological PR diary; add durable implementation details to the relevant reference file instead.

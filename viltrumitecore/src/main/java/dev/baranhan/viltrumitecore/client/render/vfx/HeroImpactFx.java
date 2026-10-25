@@ -64,6 +64,12 @@ public final class HeroImpactFx {
    private HeroImpactFx() {
    }
 
+   /** Ring-only entry point for timed scenes that own camera shake and dust separately. */
+   public static void shockwaveVisual(Vec3 origin, float radius) {
+      RINGS.add(new Ring(origin, radius, Blocks.DIRT.defaultBlockState(), 20, false));
+      RINGS.add(new Ring(origin, radius * .6F, Blocks.DIRT.defaultBlockState(), 8, false));
+   }
+
    public static void handle(HeroFxS2CPacket packet) {
       Minecraft client = Minecraft.getInstance();
       ClientLevel level = client.level;
@@ -104,8 +110,23 @@ public final class HeroImpactFx {
             addShake(listener, packet.origin, 0.25F + 0.35F * packet.power, 10.0);
          }
          case HeroFxS2CPacket.FLASH -> {
-            FLASHES.add(new Flash(packet.origin, 1.4F, 6));
-            addShake(listener, packet.origin, 0.6F, 20.0);
+            float power=Math.max(.1F,Math.min(2,packet.power));
+            FLASHES.add(new Flash(packet.origin, 1.4F*power, 6));
+            addShake(listener, packet.origin, 0.6F*power, 20.0);
+         }
+         case HeroFxS2CPacket.HIT_STOP -> {
+            for (int id : dev.baranhan.viltrumitecore.hero.fx.HeroFx.decodeIds(packet.points)) {
+               HitStop.trigger(id, Math.max(1, Math.round(packet.power)));
+            }
+         }
+         case HeroFxS2CPacket.SONIC_RING -> {
+            AirTrailVfx.ring(packet.origin);
+            addShake(listener, packet.origin, 0.9F, 32.0);
+         }
+         case HeroFxS2CPacket.AIR_TRAIL -> {
+            for (int id : dev.baranhan.viltrumitecore.hero.fx.HeroFx.decodeIds(packet.points)) {
+               AirTrailVfx.trail(id);
+            }
          }
          default -> {
          }

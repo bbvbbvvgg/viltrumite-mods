@@ -1020,7 +1020,7 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
                      if (entity instanceof LivingEntity) {
                         LivingEntity living = (LivingEntity)entity;
                         if (entity != this.getGrabbedTarget()) {
-                           living.hurt(player.damageSources().playerAttack(player), 5.0F + throttle * maxFlightSpeed);
+                           dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(living,player.damageSources().playerAttack(player), 5.0F + throttle * maxFlightSpeed,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
                            if (dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(living, dev.baranhan.viltrumitecore.hero.control.ControlKind.IMPULSE)) {
                               Vec3 pushDir = living.position().subtract(player.position()).normalize();
                               living.setDeltaMovement(living.getDeltaMovement().add(pushDir.x * 2.0, 0.5, pushDir.z * 2.0));
@@ -1051,6 +1051,9 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
       if (!player.isRemoved() && player.isAlive()) {
          LivingEntity currentTarget;
          currentTarget = this.getGrabbedTarget();
+         if (dev.baranhan.viltrumitecore.hero.control.WorldPause.blocksMovement(player, currentTarget)) {
+            return; // Keep the legacy owner, but suspend carry/acquire/terrain grind.
+         }
          if (!player.level().isClientSide() && this.isTryingToGrab() && currentTarget == null) {
             Vec3 eyePos = player.getEyePosition();
             Vec3 lookDir = player.getLookAngle().normalize();
@@ -1068,6 +1071,9 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
              while (targetBox.hasNext()) {
                 Entity entity = (Entity)targetBox.next();
                 if (entity instanceof LivingEntity target && target.isAlive()) {
+                  if (dev.baranhan.viltrumitecore.hero.control.WorldPause.blocksMovement(player, target)) {
+                     continue;
+                  }
                   boolean isAlreadyGrabbed = false;
 
                   for (Player p : player.level().players()) {
@@ -1344,7 +1350,9 @@ public abstract class PlayerEntityCoreMixin implements ViltrumiteCorePlayer {
          }
 
          if (currentTicks == 15) {
-            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.5F, 0.5F);
+            dev.baranhan.viltrumitecore.hero.ChopStyle style = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).chopStyle(player);
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, style.sweepVolume(),
+               style.sweepPitch());
          }
 
          this.setChopTicks(currentTicks - 1);

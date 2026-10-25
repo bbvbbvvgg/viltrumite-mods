@@ -83,7 +83,7 @@ public final class Roar {
 
          double falloff = 1.0 - Math.min(1.0, toTarget.length() / range);
          target.invulnerableTime = 0;
-         target.hurt(player.damageSources().playerAttack(player), HomelanderRules.ROAR_DAMAGE * (float)(0.5 + 0.5 * falloff));
+         dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(target,player.damageSources().playerAttack(player), HomelanderRules.ROAR_DAMAGE * (float)(0.5 + 0.5 * falloff),dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
          target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, HomelanderRules.ROAR_SLOW_TICKS, 1), player);
          // Knockback honours control immunity (Lion's Heart) and anchors (freeze, stasis).
          if (!dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(target, dev.baranhan.viltrumitecore.hero.control.ControlKind.IMPULSE)

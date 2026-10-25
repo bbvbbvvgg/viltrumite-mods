@@ -97,6 +97,10 @@ public final class SignatureTrace {
       CoreMessages.sendToPlayer(new FlashS2CPacket(strength, ticks), player);
    }
 
+   public static boolean shot(LivingEntity target, net.minecraft.world.damagesource.DamageSource source, float amount) {
+      target.invulnerableTime=0;
+      return dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(target,source,amount,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.SHOT);
+   }
    public static void sound(ServerPlayer player, SoundEvent sound, float volume, float pitch) {
       IronManSounds.play(player, sound, volume, pitch);
    }

@@ -20,10 +20,12 @@
     "ChopRendererCoreMixin2",
     "ClientPlayerEntityMixin",
     "DashModelMixin",
+    "EntityRendererNameTagInvoker",
     "EntityShadowMixin",
     "FirstPersonBarrageMixin",
     "FirstPersonBlockMixin",
     "IronManFirstPersonShieldMixin",
+    "ReinhardFirstPersonMixin",
     "FirstPersonChop2Mixin",
     "FirstPersonChopMixin",
     "FirstPersonGrabMixin",
@@ -73,7 +75,12 @@
     "SuperSpeedModelMixin",
     "ThirdPersonGunMixin",
     "ThunderclapModelMixin",
-    "ViltrumiteInGameHudMixin"
+    "ViltrumiteInGameHudMixin",
+    "SkyTintMixin",
+    "LevelRainMixin",
+    "SoundEngineVolumeMixin",
+    "ItemInHandRendererInvoker",
+    "DefendedArrowRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

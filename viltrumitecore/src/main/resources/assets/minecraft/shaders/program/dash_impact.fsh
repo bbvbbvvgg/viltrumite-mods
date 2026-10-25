@@ -28,8 +28,55 @@ uniform float RegulusHeartFlash;  // 0..1
 uniform float RegulusMadness;     // 0..1
 uniform float RegulusPulse;       // 0..1 heartbeat pulse synced with HUD/sound
 
+// World erasure: same chain, all neutral defaults preserve the legacy idle image.
+uniform float EraseCrack;
+uniform float EraseShatter;
+uniform float EraseDark;
+uniform float EraseRebuild;
+uniform float EraseSeed;
+
 in vec2 texCoord;
 out vec4 fragColor;
+
+// Six deterministic sites: centre and five seeded impact points.
+vec2 eraseSite(int i) {
+    if (i == 0) return vec2(0.5);
+    float n = float(i) + clamp(EraseSeed, 0.0, 1.0) * 1024.0;
+    return vec2(0.08) + 0.84 * fract(sin(vec2(n * 12.9898, n * 78.233)) * 43758.5453);
+}
+float eraseDistance(vec2 a, vec2 b) {
+    vec2 size = vec2(textureSize(DiffuseSampler, 0));
+    vec2 metric = vec2(size.x / max(size.y, 1.0), 1.0);
+    vec2 delta = (a - b) * metric;
+    return dot(delta, delta);
+}
+int eraseNearest(vec2 uv) {
+    float best = 1000.0;
+    int cell = 0;
+    for (int i = 0; i < 6; i++) {
+        float d = eraseDistance(uv, eraseSite(i));
+        if (d < best) { best = d; cell = i; }
+    }
+    return cell;
+}
+vec3 eraseCracks(vec2 uv, float amount) {
+    float first = 1000.0, second = 1000.0;
+    int cell = 0;
+    for (int i = 0; i < 6; i++) {
+        float d = eraseDistance(uv, eraseSite(i));
+        if (d < first) { second = first; first = d; cell = i; }
+        else if (d < second) second = d;
+    }
+    float gap = sqrt(second) - sqrt(first);
+    float line = 1.0 - smoothstep(0.0015, 0.004, gap);
+    float reveal = 1.0 - smoothstep(max(0.0, amount - 0.06), max(0.001, amount), sqrt(first));
+    float edge = line * reveal * amount;
+    vec2 refract = normalize(uv - eraseSite(cell) + vec2(0.0001)) * edge * 0.006;
+    // Steel-blue fracture rim and a narrow white core; all other hero paths stay unchanged.
+    float rim = (1.0 - smoothstep(0.004, 0.012, gap)) * reveal * amount;
+    vec3 fracture = vec3(0.36, 0.58, 0.85) * rim * 0.35 + vec3(1.0, 0.95, 0.80) * edge * 0.65;
+    return texture(DiffuseSampler, clamp(uv + refract, 0.0, 1.0)).rgb + fracture;
+}
 
 void main() {
     vec2 baseUv = texCoord;
@@ -48,9 +95,13 @@ void main() {
     float safeHeartFlash = clamp(RegulusHeartFlash, 0.0, 1.0);
     float safeMadness = clamp(RegulusMadness, 0.0, 1.0);
     float safePulse = clamp(RegulusPulse, 0.0, 1.0);
+    float safeEraseCrack = clamp(EraseCrack, 0.0, 1.0);
+    float safeEraseShatter = clamp(EraseShatter, 0.0, 1.0);
+    float safeEraseDark = clamp(EraseDark, 0.0, 1.0);
+    float safeEraseRebuild = clamp(EraseRebuild, 0.0, 1.0);
 
     // Hiçbir efekt yoksa boş döndür (Performans)
-    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001) {
+    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0) {
         vec4 defaultColor = texture(DiffuseSampler, baseUv);
         defaultColor.a = 1.0;
         fragColor = defaultColor;
@@ -265,6 +316,33 @@ void main() {
         vec3 bloodTint = vec3(0.10, 0.01, 0.01) + finalColor.rgb * vec3(0.9, 0.3, 0.3);
         finalColor.rgb = mix(finalColor.rgb, bloodTint, safeMadness * 0.30 * (0.45 + 0.55 * safePulse));
         finalColor.rgb *= mix(1.0, 0.72 + 0.28 * vig, safeMadness * 0.35 * (0.6 + 0.4 * safePulse));
+    }
+
+    // Priority cinematic. Black holes behind displaced cells; inverse mapping
+    // samples only the original cell, rather than stretching the whole image.
+    if (safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild > 0.0) {
+        vec3 erased = eraseCracks(texCoord, safeEraseCrack);
+        if (safeEraseShatter > 0.0 || safeEraseRebuild > 0.0) {
+            erased = vec3(0.0);
+            bool rebuilding = safeEraseRebuild > 0.0;
+            // Returning displacement decreases cubically: ease-out, reverse gravity.
+            float fall = rebuilding ? pow(safeEraseRebuild, 3.0) : safeEraseShatter * safeEraseShatter;
+            float rotation = rebuilding ? pow(safeEraseRebuild, 3.0) : safeEraseShatter;
+            float shade = 1.0 - 0.65 * (rebuilding ? safeEraseRebuild : safeEraseShatter);
+            for (int i = 0; i < 6; i++) {
+                vec2 site = eraseSite(i);
+                float random = fract(sin(float(i) * 31.7 + clamp(EraseSeed, 0.0, 1.0) * 79.3) * 24634.6345);
+                vec2 offset = vec2((site.x - 0.5) * 0.22, -(1.25 + 0.35 * random)) * fall;
+                float angle = (random - 0.5) * 0.44 * rotation;
+                float s = sin(-angle), c = cos(-angle);
+                vec2 local = texCoord - site - offset;
+                vec2 sourceUv = site + vec2(local.x*c - local.y*s, local.x*s + local.y*c);
+                if (all(greaterThanEqual(sourceUv, vec2(0.0))) && all(lessThanEqual(sourceUv, vec2(1.0))) && eraseNearest(sourceUv) == i) {
+                    erased = eraseCracks(sourceUv, safeEraseCrack) * shade;
+                }
+            }
+        }
+        finalColor.rgb = mix(erased, vec3(0.0), safeEraseDark);
     }
 
     finalColor.a = 1.0;

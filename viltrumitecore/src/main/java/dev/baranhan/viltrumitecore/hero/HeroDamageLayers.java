@@ -31,8 +31,11 @@ import net.minecraft.world.entity.LivingEntity;
  * {@code LivingDamageEvent}, {@code modifyOutgoingDamage} in
  * {@code LivingHurtEvent}. The direct path {@link HeroDamage#applyCleanDamage}
  * fires no Forge event and runs outgoing → absorb → clamp itself, so nothing is
- * charged twice. Sources that bypass invulnerability (void, {@code /kill})
- * skip every layer.
+ * charged twice. Sources that bypass invulnerability (void, {@code generic_kill})
+ * skip absorb and clamp; they reach only
+ * {@link HeroDefinition#clampUnblockableDamage}, except inside {@link AdminKill}
+ * ({@code /kill} stays an admin tool for every hero) or an {@link Annihilation}
+ * scope (the Reid strike kills every mortal target).
  */
 public final class HeroDamageLayers {
    /** Target side of one hit. */
@@ -40,6 +43,11 @@ public final class HeroDamageLayers {
       DamageAbsorb absorbIncoming(float raw);
 
       float clampFinalDamage(float afterArmor);
+
+      /** HP loss from a source that bypasses invulnerability (void, generic_kill). Default unchanged. */
+      default float clampUnblockable(float amount) {
+         return amount;
+      }
    }
 
    /** Attacker side of one hit. */
@@ -97,13 +105,36 @@ public final class HeroDamageLayers {
       return raw <= 0.0F ? 1.0F : passOn(result, raw) / raw;
    }
 
-   /** LivingDamageEvent step: after armor, enchantments and Resistance. */
+   /** LivingDamageEvent step outside an admin kill. */
    public static float finalDamage(Target target, boolean bypassesLayers, float afterArmor) {
-      if (bypassesLayers || afterArmor <= 0.0F) {
+      return finalDamage(target, bypassesLayers, false, afterArmor);
+   }
+
+   /**
+    * LivingDamageEvent step: after armor, enchantments and Resistance. A
+    * bypassing source reaches only {@link Target#clampUnblockable}, and not
+    * even that inside an admin kill.
+    */
+   public static float finalDamage(Target target, boolean bypassesLayers, boolean adminKill, float afterArmor) {
+      if (afterArmor <= 0.0F) {
          return afterArmor;
       }
 
+      if (bypassesLayers) {
+         return adminKill ? afterArmor : Math.max(0.0F, target.clampUnblockable(afterArmor));
+      }
+
       return Math.max(0.0F, target.clampFinalDamage(afterArmor));
+   }
+
+   /** True inside a scope where hero HP floors on unblockable damage step aside: /kill ({@link AdminKill}) or a Reid strike ({@link Annihilation}). */
+   public static boolean unflooredScope() {
+      return AdminKill.active() || Annihilation.active();
+   }
+
+   /** {@link #finalDamage} with the current scope ({@link #unflooredScope}). */
+   public static float finalDamageInScope(Target target, boolean bypassesLayers, float afterArmor) {
+      return finalDamage(target, bypassesLayers, unflooredScope(), afterArmor);
    }
 
    /** LivingHurtEvent step for a hero attacker. */
@@ -111,15 +142,20 @@ public final class HeroDamageLayers {
       return amount <= 0.0F ? amount : Math.max(0.0F, attacker.modifyOutgoingDamage(amount));
    }
 
-   /** Direct path: outgoing → absorb → clamp. Returns the HP to remove (0 = absorbed). */
+   /** Direct path outside an admin kill. */
    public static float clean(Target target, Attacker attacker, boolean bypassesLayers, float amount) {
+      return clean(target, attacker, bypassesLayers, false, amount);
+   }
+
+   /** Direct path: outgoing → absorb → clamp. Returns the HP to remove (0 = absorbed). */
+   public static float clean(Target target, Attacker attacker, boolean bypassesLayers, boolean adminKill, float amount) {
       float hit = bypassesLayers ? amount : outgoing(attacker, amount);
       DamageAbsorb result = attack(target, bypassesLayers, false, hit);
       if (result.absorbed()) {
          return 0.0F;
       }
 
-      return finalDamage(target, bypassesLayers, passOn(result, hit));
+      return finalDamage(target, bypassesLayers, adminKill, passOn(result, hit));
    }
 
    /** Vanilla LivingEntity.hurt cooldown: inside it a hit no stronger than the last one does nothing. */
@@ -144,6 +180,11 @@ public final class HeroDamageLayers {
          @Override
          public float clampFinalDamage(float afterArmor) {
             return hero.clampFinalDamage(self, source, afterArmor);
+         }
+
+         @Override
+         public float clampUnblockable(float amount) {
+            return hero.clampUnblockableDamage(self, source, amount);
          }
       };
    }
@@ -196,7 +237,7 @@ public final class HeroDamageLayers {
 
    /** LivingDamageEvent for a player target. */
    public static float onDamage(ServerPlayer player, DamageSource source, float afterArmor) {
-      return finalDamage(target(player, source), bypassesLayers(source), afterArmor);
+      return finalDamageInScope(target(player, source), bypassesLayers(source), afterArmor);
    }
 
    /** Direct path used by {@link HeroDamage#applyCleanDamage}. */
@@ -204,6 +245,6 @@ public final class HeroDamageLayers {
       Target layers = target instanceof ServerPlayer player ? target(player, source) : NO_LAYERS;
       ServerPlayer heroAttacker = heroAttacker(target, source);
       Attacker attacker = heroAttacker == null ? NO_ATTACKER : attacker(heroAttacker, target, source);
-      return clean(layers, attacker, bypassesLayers(source), amount);
+      return clean(layers, attacker, bypassesLayers(source), unflooredScope(), amount);
    }
 }

@@ -56,7 +56,7 @@ public class HeroControlS2CPacket {
       int controlCount = buffer.readVarInt();
       this.controls = new ArrayList<>(controlCount);
       for (int i = 0; i < controlCount; i++) {
-         this.controls.add(new ControlInfo(buffer.readUUID(), buffer.readInt(), buffer.readByte(), buffer.readLong(), buffer.readUUID()));
+         this.controls.add(new ControlInfo(buffer.readUUID(), buffer.readInt(), buffer.readByte(), buffer.readLong(), buffer.readUUID(), buffer.readUUID()));
       }
    }
 
@@ -85,6 +85,7 @@ public class HeroControlS2CPacket {
          buffer.writeByte(control.kindOrdinal());
          buffer.writeLong(control.expiresAt());
          buffer.writeUUID(control.caster());
+         buffer.writeUUID(control.effectId());
       }
    }
 
@@ -99,6 +100,6 @@ public class HeroControlS2CPacket {
    }
 
    /** A live control record: target identity + entity id, kind ordinal, expiry, owner. */
-   public record ControlInfo(UUID target, int entityId, int kindOrdinal, long expiresAt, UUID caster) {
+   public record ControlInfo(UUID target, int entityId, int kindOrdinal, long expiresAt, UUID caster, UUID effectId) {
    }
 }

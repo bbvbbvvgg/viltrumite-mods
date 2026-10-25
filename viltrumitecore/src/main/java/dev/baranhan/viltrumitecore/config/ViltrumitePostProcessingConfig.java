@@ -9,6 +9,8 @@ import java.io.IOException;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 public class ViltrumitePostProcessingConfig {
+   /** Local cinematic world-cut shake, 0 disables. Other heroes retain their old cap. */
+   public float reinhardWorldCutShake = 1.0F;
    public float punchShakeMultiplier = 1.0F;
    public float punchEffectMultiplier = 1.0F;
    public float lockVignetteMultiplier = 1.0F;
