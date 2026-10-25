@@ -40,18 +40,20 @@ class ReinhardAbilitiesTest {
 
    @Test
    void onlyShippedOwned() {
-      assertEquals(2, ReinhardAbilities.SHIPPED_STAGE);
+      assertEquals(3, ReinhardAbilities.SHIPPED_STAGE);
+      String[] loadout = ReinhardAbilities.defaultLoadout();
+      assertEquals(18, loadout.length);
       for (ReinhardAbility ability : ReinhardAbility.values()) {
-         assertTrue(ability.stage() > ReinhardAbilities.SHIPPED_STAGE, ability.name());
-         assertFalse(ReinhardAbilities.owns(ability.id()), ability.name());
+         boolean shipped = ability.stage() <= 3;
+         assertEquals(shipped, ReinhardAbilities.owns(ability.id()), ability.name());
+         int index = ability.mode().page() * 6 + ability.slot();
+         assertEquals(shipped ? ability.id() : "", loadout[index], ability.name());
       }
       assertFalse(ReinhardAbilities.owns("viltrumite:chop"));
       assertFalse(ReinhardAbilities.owns(null));
-      for (String id : ReinhardAbilities.defaultLoadout()) {
-         assertEquals("", id);
+      for (int i = 12; i < 18; i++) {
+         assertEquals("", loadout[i], "Holy Sword page ships with stage 4");
       }
-      assertEquals(18, ReinhardAbilities.defaultLoadout().length);
-      assertEquals(0, ReinhardAbilities.inputSlots().length);
    }
 
    @Test

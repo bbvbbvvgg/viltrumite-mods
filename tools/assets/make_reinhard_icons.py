@@ -2,11 +2,12 @@
 """Reinhard HUD art (Stage 1): knight emblem and hero icon copied from the
 user archive unchanged, three 12x12 mode icons drawn here in the house pixel
 style (closed fist on white, single gauntlet on blue, sword hilt on gold).
-Later stages add their ability icons to this script.
+Stage 3+ ability icons (16x16, panel slots) are drawn here too and written
+under textures/gui/ability/reinhard/.
 
-Run: python3 tools/assets/make_reinhard_icons.py --assets DIR [--out ROOT] [--only NAME]
+Run: python3 tools/assets/make_reinhard_icons.py [--assets DIR] [--out ROOT] [--only NAME]
 DIR = the unpacked reinhard_assets archive (its icons/ folder or the folder
-itself). ROOT defaults to viltrumitecore/src/main/binassets; every file is
+itself); needed only for the copied files (without it they are skipped). ROOT defaults to viltrumitecore/src/main/binassets; every file is
 written as <name>.png.b64 there and as a plain PNG preview under
 build/reinhard_icons/.
 """
@@ -21,6 +22,7 @@ from PIL import Image
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BIN = os.path.join(REPO, "viltrumitecore", "src", "main", "binassets")
 GUI = "assets/viltrumitecore/textures/gui/reinhard/"
+ABILITY_GUI = "assets/viltrumitecore/textures/gui/ability/reinhard/"
 PREVIEW = os.path.join(REPO, "build", "reinhard_icons")
 
 WHITE = (244, 241, 234, 255)
@@ -107,6 +109,198 @@ def mode_holy_sword():
     return img
 
 
+def ability_plate(fill, edge):
+    """16x16 panel slot tile: 1 px edge, corners cut."""
+    img = Image.new("RGBA", (16, 16), CLEAR)
+    px = img.load()
+    for y in range(16):
+        for x in range(16):
+            if (x in (0, 15)) and (y in (0, 15)):
+                continue
+            px[x, y] = edge if x in (0, 15) or y in (0, 15) else fill
+    return img
+
+
+def light_punch():
+    """Restrained: a bare fist thrown to the right with three speed lines."""
+    img = ability_plate(WHITE, WHITE_D)
+    paint(img, [
+        "........kkkk..",
+        ".......kssssk.",
+        "ll....ksssssk.",
+        "......ksdsdsdk",
+        ".lll..kssssssk",
+        "......ksdsdsdk",
+        "ll....kssssssk",
+        ".......kssssk.",
+        "....kkkkksskk.",
+        "....kssssssk..",
+        "....kkkkkkk...",
+    ], {"k": SKIN_D, "s": SKIN, "d": SKIN_D, "l": STEEL_D}, 1, 2)
+    return img
+
+
+def step_dash():
+    """Restrained: a boot stepping right, a fading afterimage and speed lines behind."""
+    img = ability_plate(WHITE, WHITE_D)
+    paint(img, [
+        ".........bbb..",
+        ".........bsb..",
+        "...ff....bsb..",
+        "...ff....bsb..",
+        "ll.ff....bsbb.",
+        "...ff....bsssb",
+        "lll.f....bsssb",
+        "....ff...bbbbb",
+        "ll..fff.......",
+        "..............",
+        ".llllllllllll.",
+    ], {"b": BLUE_D, "s": STEEL, "f": WHITE_D, "l": STEEL_D}, 1, 2)
+    return img
+
+
+def catch_projectile():
+    """Restrained: an open palm closing on an arrow flying in from the left."""
+    img = ability_plate(WHITE, WHITE_D)
+    paint(img, [
+        "........k.k.k.",
+        "........sksksk",
+        ".......kssssss",
+        "a.....ksssssss",
+        ".a....kssssssk",
+        "aaaaaGGssssssk",
+        ".a....kssssssk",
+        "a.....kssssk..",
+        "......kssssk..",
+        ".......kkkk...",
+    ], {"k": SKIN_D, "s": SKIN, "a": STEEL_D, "G": GOLD_D}, 1, 3)
+    return img
+
+
+def fist_combo():
+    """Knight: a steel gauntlet with a gold cuff and three impact marks."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        ".......w...w..",
+        "..mmmm..w.w...",
+        ".mssssm.......",
+        "mssssssm.www..",
+        "msmsmsmm......",
+        "mssssssm.w.w..",
+        ".mssssm.w...w.",
+        ".gggggg.......",
+        ".gGGGGg.......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 3)
+    return img
+
+
+def sky_kick():
+    """Knight: a steel boot kicking straight up, a white ring and a trail above it."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        "....w..w..w...",
+        ".....wwwww....",
+        "...w.......w..",
+        ".....wwwww....",
+        "....mmmmm.....",
+        "....msssm.....",
+        "....msssm.....",
+        "....mssm......",
+        "....mssm......",
+        "....gggg......",
+        "....gGGg......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
+def grab_throw():
+    """Knight: a steel gauntlet closing on a figure, a white arc of the throw above it."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        ".......wwww...",
+        ".....ww....w..",
+        "....w.......w.",
+        "..............",
+        "...mmmm.......",
+        "..mssssm......",
+        "..msssssm.....",
+        "..mmsssm......",
+        "...mssm.......",
+        "...gggg.......",
+        "...gGGg.......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
+def dash_behind():
+    """Knight: a white afterimage on the left, a curved arrow around a steel figure to its back."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        "..w......mm...",
+        ".www....mssm..",
+        "..w.....mssm..",
+        ".www..wwwmm...",
+        ".w.w.w...ss...",
+        ".w.ww...msssm.",
+        "....w...msssm.",
+        "....ww...ss...",
+        ".....wwggs.s..",
+        "......wGg..s..",
+        ".......g......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
+def stomp():
+    """Knight: a steel boot slamming down, a gold crack and white rings on the ground."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        ".....mmm......",
+        ".....msm......",
+        ".....msm......",
+        ".....mssmm....",
+        ".....msssssm..",
+        ".....mmmmmmm..",
+        "..w....g....w.",
+        ".w....ggg....w",
+        "ww...g.G.g...w",
+        ".wwwwg...gwww.",
+        "....g.....g...",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
+def reflect():
+    """Knight: a steel backhand swatting a white arrow back along its own path."""
+    img = ability_plate(BLUE, BLUE_D)
+    paint(img, [
+        "..........mm..",
+        ".........mssm.",
+        "..w.....msssm.",
+        ".ww.....mssm..",
+        "wwwwwwwmssm...",
+        ".ww....mssm...",
+        "..w.....mm....",
+        "........gg....",
+        "........gG....",
+        "..www...gg....",
+        ".w..www.......",
+    ], {"m": STEEL_D, "s": STEEL, "g": GOLD, "G": GOLD_D, "w": WHITE}, 1, 2)
+    return img
+
+
+ABILITIES = {
+    "light_punch": light_punch,
+    "step_dash": step_dash,
+    "catch": catch_projectile,
+    "fist_combo": fist_combo,
+    "sky_kick": sky_kick,
+    "grab_throw": grab_throw,
+    "dash_behind": dash_behind,
+    "stomp": stomp,
+    "reflect": reflect,
+}
+
 DRAWN = {
     "mode_restrained": mode_restrained,
     "mode_knight": mode_knight,
@@ -122,8 +316,8 @@ def find_source(assets, name):
     sys.exit("missing %s in %s" % (name, assets))
 
 
-def write(out_root, name, data):
-    target = os.path.join(out_root, GUI + name + ".png.b64")
+def write(out_root, name, data, gui=GUI):
+    target = os.path.join(out_root, gui + name + ".png.b64")
     os.makedirs(os.path.dirname(target), exist_ok=True)
     with open(target, "w", encoding="ascii") as f:
         f.write(base64.b64encode(data).decode("ascii") + "\n")
@@ -141,19 +335,24 @@ def png_bytes(img):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--assets", required=True, help="unpacked reinhard_assets archive")
+    parser.add_argument("--assets", help="unpacked reinhard_assets archive (copied files only)")
     parser.add_argument("--out", default=BIN)
     parser.add_argument("--only", help="rebuild one file (name without .png)")
     args = parser.parse_args()
-    names = list(COPIED) + list(DRAWN)
+    names = list(COPIED) + list(DRAWN) + list(ABILITIES)
     if args.only:
         if args.only not in names:
             sys.exit("unknown name %s; known: %s" % (args.only, ", ".join(names)))
         names = [args.only]
     for name in names:
         if name in COPIED:
+            if not args.assets:
+                print("skipped", name, "(no --assets)")
+                continue
             with open(find_source(args.assets, COPIED[name]), "rb") as f:
                 write(args.out, name, f.read())
+        elif name in ABILITIES:
+            write(args.out, name, png_bytes(ABILITIES[name]()), ABILITY_GUI)
         else:
             write(args.out, name, png_bytes(DRAWN[name]()))
 

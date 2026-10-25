@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
 import net.minecraft.world.entity.HumanoidArm;
@@ -47,7 +46,7 @@ class ReinhardPosesTest {
 
    @Test
    void overlayFromAction() {
-      int id = HeroAction.LIGHT_PUNCH.ordinal();
+      int id = dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility.LIGHT_PUNCH.ordinal();
       ReinhardPoses.Clip clip = ReinhardPoses.pose(input(ReinhardMode.RESTRAINED, id, 4, 10, 0.0F)).overlay();
       assertNotNull(clip);
       assertEquals("light_punch", clip.animation());
