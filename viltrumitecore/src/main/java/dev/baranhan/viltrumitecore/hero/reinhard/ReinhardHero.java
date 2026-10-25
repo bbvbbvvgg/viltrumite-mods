@@ -578,25 +578,29 @@ public final class ReinhardHero implements HeroDefinition {
             new int[HeroPublicSnapshot.COOLDOWN_COUNT], false);
       }
 
-      int[] extra = new int[HeroPublicSnapshot.EXTRA_COOLDOWN_MAX];
-      System.arraycopy(state.cooldowns, 0, extra, 0, Math.min(state.cooldowns.length, ReinhardFlags.EXTRA_MODE_CD));
-      for (ReinhardAbility a:ReinhardAbility.values()) extra[a.snapshotIndex()]=state.cooldowns[a.ordinal()];
-      extra[ReinhardFlags.EXTRA_MODE_CD] = state.modeCooldown;
-      extra[ReinhardFlags.EXTRA_PHOENIX] = phoenixSeconds(PersistentCooldowns.get(player, ReinhardRules.PHOENIX_KEY));
-      int flags = ReinhardFlags.withMode(0, state.mode);
-      if (state.parryTicks > 0) {
-         flags |= 1 << ReinhardFlags.PARRY_POSE;
-      }
-
-      flags = stateFlags(state, flags);
+      int sceneFlags = 0;
       // A level-owned carve/scene can outlive its caster's timeline. Advertise the same
       // admission locks that the server uses, including another player's active cast.
       if (player instanceof net.minecraft.server.level.ServerPlayer server) {
          if (dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.get(server.serverLevel()).size() >= 2)
-            flags |= 1 << ReinhardFlags.WORLD_CUT_ACTIVE;
+            sceneFlags |= 1 << ReinhardFlags.WORLD_CUT_ACTIVE;
          if (dev.baranhan.viltrumitecore.hero.control.WorldPause.active(server.getServer()))
-            flags |= 1 << ReinhardFlags.WORLD_ERASURE_ACTIVE;
+            sceneFlags |= 1 << ReinhardFlags.WORLD_ERASURE_ACTIVE;
       }
+      return composeSnapshot(state, PersistentCooldowns.get(player, ReinhardRules.PHOENIX_KEY), sceneFlags);
+   }
+
+   /** Shared production composer; pure state input permits testing the full wire snapshot. */
+   static HeroPublicSnapshot composeSnapshot(ReinhardState state, int phoenixTicks, int sceneFlags) {
+      int[] extra = new int[HeroPublicSnapshot.EXTRA_COOLDOWN_MAX];
+      for (ReinhardAbility ability : ReinhardAbility.values()) {
+         extra[ability.snapshotIndex()] = state.cooldowns[ability.ordinal()];
+      }
+      extra[ReinhardFlags.EXTRA_MODE_CD] = state.modeCooldown;
+      extra[ReinhardFlags.EXTRA_PHOENIX] = phoenixSeconds(phoenixTicks);
+      int flags = ReinhardFlags.withMode(sceneFlags, state.mode);
+      if (state.parryTicks > 0) flags |= 1 << ReinhardFlags.PARRY_POSE;
+      flags = stateFlags(state, flags);
       flags = Reid.withFlags(flags, state.reid.phase());
       ActionTimeline action = state.action;
       // resource = Reid's idle ticks left while drawn (the HUD bar, spec §9.1).
