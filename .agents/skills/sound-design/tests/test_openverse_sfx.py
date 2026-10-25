@@ -49,17 +49,73 @@ class SfxTests(unittest.TestCase):
             with patch.object(sfx, "request_json", return_value=(payload, {})):
                 self.assertEqual(sfx.search("test")["results"], [])
 
-    def test_package_own_audio_and_refuse_overwrite(self):
+    @staticmethod
+    def sample(root):
+        sample = root / "sample.wav"
+        with wave.open(str(sample), "wb") as wav:
+            wav.setnchannels(1)
+            wav.setsampwidth(2)
+            wav.setframerate(44100)
+            wav.writeframes(b"\0\0" * 4410)
+        return sample
+
+    @staticmethod
+    def module(root, modid, decodes):
+        (root / modid).mkdir(parents=True, exist_ok=True)
+        text = ("def binAssetsSrc = file('src/main/binassets')\n"
+                "def decodeBinaryAssets = tasks.register('decodeBinaryAssets') {}\n") if decodes else "jar {}\n"
+        (root / modid / "build.gradle").write_text(text, encoding="utf-8")
+
+    def require_ffmpeg(self):
         if not sfx.shutil.which("ffmpeg") or not sfx.shutil.which("ffprobe"):
             self.skipTest("ffmpeg/ffprobe not installed")
+
+    def test_real_builds_match_the_storage_rule(self):
+        repo = Path(__file__).resolve().parents[4]
+        self.assertTrue(sfx.decodes_binassets(repo, "viltrumitecore"))
+        self.assertFalse(sfx.decodes_binassets(repo, "viltrumiteflight"),
+                         "flight gained decodeBinaryAssets: update the skill's flight storage rule")
+
+    def test_flight_packages_a_raw_resource_its_jar_ships(self):
+        self.require_ffmpeg()
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            sample = root / "sample.wav"
-            with wave.open(str(sample), "wb") as wav:
-                wav.setnchannels(1)
-                wav.setsampwidth(2)
-                wav.setframerate(44100)
-                wav.writeframes(b"\0\0" * 4410)
+            self.module(root, "viltrumiteflight", decodes=False)
+            result = sfx.package_audio(self.sample(root), "flight", "test_whoosh", "test_whoosh",
+                                       [], True, False, False, root)
+            output = Path(result["output"])
+            self.assertEqual(root / "viltrumiteflight/src/main/resources/assets/viltrumiteflight/sounds/test_whoosh.ogg",
+                             output)
+            self.assertEqual(b"OggS", output.read_bytes()[:4], "raw Vorbis, not base64 text")
+            self.assertFalse((root / "viltrumiteflight/src/main/binassets").exists())
+            self.assertEqual("resources raw .ogg", result["storage"])
+            self.assertIn("commit the raw .ogg", result["next_steps"][0])
+
+    def test_replace_removes_the_superseded_raw_core_sound(self):
+        self.require_ffmpeg()
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self.module(root, "viltrumitecore", decodes=True)
+            raw = root / "viltrumitecore/src/main/resources/assets/viltrumitecore/sounds/dash1.ogg"
+            raw.parent.mkdir(parents=True)
+            raw.write_bytes(b"old")
+            with self.assertRaises(sfx.SfxError):
+                sfx.package_audio(self.sample(root), "core", "dash1", "dash", [], True, False, False, root)
+            self.assertTrue(raw.is_file(), "nothing removed without --replace")
+            result = sfx.package_audio(self.sample(root), "core", "dash1", "dash", [], True, False, True, root)
+            packed = root / "viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/dash1.ogg.b64"
+            self.assertEqual(str(packed), result["output"])
+            self.assertTrue(packed.is_file())
+            self.assertFalse(raw.exists(), "processResources must not receive two dash1.ogg files")
+            self.assertEqual([str(raw)], result["removed"])
+            self.assertIn("deletion", result["next_steps"][0])
+
+    def test_package_own_audio_and_refuse_overwrite(self):
+        self.require_ffmpeg()
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self.module(root, "viltrumitecore", decodes=True)
+            sample = self.sample(root)
             result = sfx.package_audio(sample, "core", "regulus/test_sound", "regulus_test_sound",
                                        [], True, False, False, root)
             output = Path(result["output"])

@@ -38,7 +38,7 @@ python .agents/skills/sound-design/scripts/openverse_sfx.py download <result-uui
 1. Work with downloaded sources in a local scratch folder (the helper defaults to `~/.cache/viltrumite-sfx/work`). Do not commit raw downloads, previews, cache, or temporary mixes.
 2. Edit with ffmpeg or an audio editor: trim silence, choose the attack point, layer complementary textures, adjust pitch, EQ and volume, and add short fades where appropriate. Keep important transient detail. Avoid hard clipping and unnecessarily loud or long sounds.
 3. For positional one-shots, prefer **mono OGG Vorbis, 44.1 kHz**. Use stereo only for a justified non-positional sound. Make loops seamless and provide a real stop condition; `stream: true` alone does not make a sound loop.
-4. Package the reviewed mix using the helper. This writes the repository's required **base64 text asset**, not a raw `.ogg`:
+4. Package the reviewed mix using the helper. For core it writes the required **base64 text asset** (`.ogg.b64`), not a raw `.ogg`; flight has no binary-asset decoder, so for `--module flight` it writes the raw `.ogg` into flight's resources:
 
 ```bash
 python .agents/skills/sound-design/scripts/openverse_sfx.py package \
@@ -46,11 +46,11 @@ python .agents/skills/sound-design/scripts/openverse_sfx.py package \
   --event regulus_blade_whoosh --source-id <result-uuid>
 ```
 
-For a fully original sound, use `--own` instead of `--source-id`. Use `--stereo` only if justified. The helper refuses to overwrite assets by default. See [Minecraft integration](references/minecraft-audio.md) for exact paths and event registration.
+For a fully original sound, use `--own` instead of `--source-id`. Use `--stereo` only if justified. The helper refuses to overwrite assets by default; `--replace` overwrites and deletes the superseded twin (for example core's old raw `sounds/dash1.ogg` when its `.ogg.b64` replaces it) — commit that deletion. See [Minecraft integration](references/minecraft-audio.md) for exact paths and event registration.
 
 ## 4. Integrate into the game
 
-1. Core: `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/<hero>/<name>.ogg.b64`; flight: the corresponding `viltrumiteflight` path. `decodeBinaryAssets` generates `.ogg` during Gradle builds. **Do not commit a duplicate `.ogg` in resources.**
+1. Core: `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/<hero>/<name>.ogg.b64`; core's `decodeBinaryAssets` generates the `.ogg` during Gradle builds. **Do not commit a duplicate `.ogg` in core resources.** Flight: `viltrumiteflight/src/main/resources/assets/viltrumiteflight/sounds/<name>.ogg` (raw; flight's build has no `decodeBinaryAssets`, so a flight `.b64` would never ship). Commit a raw flight `.ogg` with git; a text-only push cannot carry it.
 2. Register the resource in the correct module's `src/main/resources/assets/<modid>/sounds.json`, then add/reuse the proper `SoundEvent` registry entry in Java. Inspect current registration patterns instead of inventing a second registry.
 3. Connect playback to the actual event/tick, choose the correct side and audience, and prevent duplicate client/server playback. One-shots can use server-level playback; continuous flight/charge sounds usually need a client sound instance and explicit stop handling.
 4. Add subtitle translation keys in every existing locale when adding a subtitle key. Avoid hardcoded English subtitle text for new events.

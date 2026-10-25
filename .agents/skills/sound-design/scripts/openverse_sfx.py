@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Small, dependency-free Openverse CC0 finder and Minecraft .ogg.b64 packager.
+"""Small, dependency-free Openverse CC0 finder and Minecraft sound packager.
+
+Core ships packed `.ogg.b64` text that its Gradle `decodeBinaryAssets` task
+decodes; a module without that task (today: flight) gets a raw `.ogg` in its
+resources, the only place its JAR picks sounds up.
 
 Run from the viltrumite-mods repository root. Python 3.10+; ffmpeg/ffprobe
 are needed only for the package subcommand. No API key is required.
@@ -267,6 +271,13 @@ def probe_audio(path: Path) -> dict:
             "duration_seconds": float(info.get("format", {}).get("duration", 0))}
 
 
+def decodes_binassets(repo: Path, modid: str) -> bool:
+    """True when the module's Gradle build decodes src/main/binassets/**/*.b64 into resources."""
+    build = repo / modid / "build.gradle"
+    text = build.read_text(encoding="utf-8") if build.is_file() else ""
+    return "decodeBinaryAssets" in text and "src/main/binassets" in text
+
+
 def package_audio(input_file: Path, module: str, name: str, event: str, source_ids: list[str],
                   own: bool, stereo: bool, replace: bool, repo: Path) -> dict:
     validate_name(name)
@@ -288,10 +299,16 @@ def package_audio(input_file: Path, module: str, name: str, event: str, source_i
             if read_json(metadata)["openverse"].get("license", "").lower() != "cc0":
                 raise SfxError("Source license is not CC0")
     modid = MODS[module]
-    out = repo / modid / "src" / "main" / "binassets" / "assets" / modid / "sounds" / f"{name}.ogg.b64"
+    packed_path = repo / modid / "src" / "main" / "binassets" / "assets" / modid / "sounds" / f"{name}.ogg.b64"
     plain = repo / modid / "src" / "main" / "resources" / "assets" / modid / "sounds" / f"{name}.ogg"
-    if (out.exists() or plain.exists()) and not replace:
-        raise SfxError(f"Asset already exists ({out if out.exists() else plain}). Refusing overwrite without --replace.")
+    packed = decodes_binassets(repo, modid)
+    out = packed_path if packed else plain
+    # The other form of the same resource path would ship a second copy (or, for
+    # an undecoded .b64, a dead file); --replace removes it after a good write.
+    superseded = plain if packed else packed_path
+    existing = [path for path in (packed_path, plain) if path.exists()]
+    if existing and not replace:
+        raise SfxError(f"Asset already exists ({existing[0]}). Refusing overwrite without --replace.")
     ffmpeg = shutil.which("ffmpeg")
     if not ffmpeg:
         raise SfxError("ffmpeg is required for packaging; install FFmpeg")
@@ -308,20 +325,30 @@ def package_audio(input_file: Path, module: str, name: str, event: str, source_i
         if info["codec"] != "vorbis" or info["channels"] != (2 if stereo else 1):
             raise SfxError("Output is not the expected Vorbis/channel format")
         out.parent.mkdir(parents=True, exist_ok=True)
-        encoded = base64.encodebytes(tmp_ogg.read_bytes())
-        tmp_b64 = out.with_suffix(out.suffix + ".tmp")
+        payload = base64.encodebytes(tmp_ogg.read_bytes()) if packed else tmp_ogg.read_bytes()
+        tmp_out = out.with_suffix(out.suffix + ".tmp")
         try:
-            tmp_b64.write_bytes(encoded)
-            tmp_b64.replace(out)
+            tmp_out.write_bytes(payload)
+            tmp_out.replace(out)
         finally:
-            tmp_b64.unlink(missing_ok=True)
+            tmp_out.unlink(missing_ok=True)
+    removed = []
+    if superseded.exists():
+        superseded.unlink()
+        removed.append(str(superseded))
     sound_entry = {event: {"category": "player", "subtitle": f"subtitles.{modid}.{event}",
                            "sounds": [f"{modid}:{name}"]}}
-    return {"output": str(out), "input": input_info, "output_audio": info, "source_ids": source_ids,
-            "sounds_json_fragment": sound_entry,
-            "next_steps": ["Merge fragment into the existing sounds.json", "Register/reuse SoundEvent in Java",
-                           "Add subtitle key to all locales", "Update CREDITS.md and per-hero sources list",
-                           "Build and test playback in game"]}
+    next_steps = ["Merge fragment into the existing sounds.json", "Register/reuse SoundEvent in Java",
+                  "Add subtitle key to all locales", "Update CREDITS.md and per-hero sources list",
+                  "Build and test playback in game"]
+    if not packed:
+        next_steps.insert(0, f"{modid} has no decodeBinaryAssets: commit the raw .ogg with git "
+                             "(a text-only push cannot carry it)")
+    if removed:
+        next_steps.insert(0, "Commit the deletion of the superseded file: " + ", ".join(removed))
+    return {"output": str(out), "storage": "binassets .ogg.b64" if packed else "resources raw .ogg",
+            "removed": removed, "input": input_info, "output_audio": info, "source_ids": source_ids,
+            "sounds_json_fragment": sound_entry, "next_steps": next_steps}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -334,7 +361,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--refresh", action="store_true", help="Ignore the cache; consumes API quota")
     p = sub.add_parser("download", help="Download a CC0 result and preserve exact attribution")
     p.add_argument("id", help="UUID returned by search")
-    p = sub.add_parser("package", help="Convert a reviewed audio mix into Minecraft OGG Vorbis .b64")
+    p = sub.add_parser("package", help="Convert a reviewed audio mix into the module's Minecraft OGG Vorbis asset")
     p.add_argument("--input", type=Path, required=True, help="Local audio file to package")
     p.add_argument("--module", choices=tuple(MODS), required=True)
     p.add_argument("--name", required=True, help="Resource path, e.g. regulus/blade_whoosh")
@@ -342,7 +369,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--source-id", action="append", default=[], help="Downloaded Openverse UUID; repeat for layers")
     p.add_argument("--own", action="store_true", help="The sound is fully original; no Openverse sources")
     p.add_argument("--stereo", action="store_true", help="Preserve two channels for non-positional audio")
-    p.add_argument("--replace", action="store_true", help="Explicitly overwrite an existing asset")
+    p.add_argument("--replace", action="store_true",
+                   help="Explicitly overwrite an existing asset and remove its superseded raw/packed twin")
     p.add_argument("--repo", type=Path, default=Path.cwd(), help="Repository root (default: cwd)")
     return parser
 

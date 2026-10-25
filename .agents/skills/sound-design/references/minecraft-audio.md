@@ -10,11 +10,11 @@ For `viltrumitecore`:
 
 For `viltrumiteflight`:
 
-- Packed binary text: `viltrumiteflight/src/main/binassets/assets/viltrumiteflight/sounds/<name>.ogg.b64`
+- Raw audio: `viltrumiteflight/src/main/resources/assets/viltrumiteflight/sounds/<name>.ogg` (like the existing `wind_loop.ogg`, `sonic_boom.ogg`)
 - Event definitions: `viltrumiteflight/src/main/resources/assets/viltrumiteflight/sounds.json`
 - Registry example: `viltrumiteflight/src/main/java/dev/baranhan/viltrumiteflight/registry/ModSounds.java`
 
-Both modules use Gradle `decodeBinaryAssets` to decode `.b64` into generated resources. Check the module's current Gradle file before changing this pipeline.
+Only `viltrumitecore/build.gradle` defines `decodeBinaryAssets` and adds its output to the resources; flight has no such task, so a flight `.ogg.b64` would never reach the JAR. The packaging helper reads each module's `build.gradle` and picks the matching storage. If flight ever needs packed audio, wire the same task into `viltrumiteflight/build.gradle` first and check the built JAR.
 
 ## Example sounds.json entry
 
