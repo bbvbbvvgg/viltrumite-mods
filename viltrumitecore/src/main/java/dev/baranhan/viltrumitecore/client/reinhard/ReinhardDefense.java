@@ -33,6 +33,22 @@ final class ReinhardDefense {
    static boolean active(HeroPublicSnapshot s,boolean left) {
       return DefenseReaction.kind(s.heroFlags())!=DefenseReaction.Kind.NONE && DefenseReaction.leftHand(s.heroFlags())==left;
    }
+   /**
+    * Pure: the hand the layer actually draws. A hand switch first fades the old
+    * hand out (see {@link State#advance}), so the snapshot's new hand is not yet
+    * the constrained palm; before the first reaction the snapshot decides.
+    */
+   static boolean renderedLeft(State state,int flags) {
+      return state!=null && state.kind!=DefenseReaction.Kind.NONE ? state.left : DefenseReaction.leftHand(flags);
+   }
+   /** The hand whose palm is recorded as the contact (the state was already advanced this frame). */
+   static boolean contactLeft(Object player,HeroPublicSnapshot snapshot,boolean fp) {
+      return renderedLeft((fp?FIRST:THIRD).get(player),snapshot.heroFlags());
+   }
+   /** First person: this arm carries the recorded contact. */
+   static boolean recordsContact(Object player,HeroPublicSnapshot snapshot,boolean left) {
+      return DefenseReaction.kind(snapshot.heroFlags())!=DefenseReaction.Kind.NONE && contactLeft(player,snapshot,true)==left;
+   }
    static boolean visible(Object player,HeroPublicSnapshot snapshot,boolean left) {
       var state=sample(player,snapshot,true);
       return active(snapshot,left) || state.left==left && state.weight>.01F;

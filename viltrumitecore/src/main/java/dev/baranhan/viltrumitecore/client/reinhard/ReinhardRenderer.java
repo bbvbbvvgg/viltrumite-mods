@@ -134,7 +134,7 @@ public final class ReinhardRenderer {
       setupRotations(player, stack, partialTick, swim);
       stack.scale(PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
       if(!dev.baranhan.viltrumiteflight.client.util.ShaderCompat.isShadowPass() && dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.kind(snapshot.heroFlags())!=dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.NONE) {
-         var p=ReinhardGrip.point(body,dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.leftHand(snapshot.heroFlags()));
+         var p=ReinhardGrip.point(body,ReinhardDefense.contactLeft(player,snapshot,false));
          var v=stack.last().pose().transformPosition(p);
          var camera=Minecraft.getInstance().gameRenderer.getMainCamera();
          var world=dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.viewToWorld(new net.minecraft.world.phys.Vec3(v.x,v.y,v.z),camera.rotation());
@@ -210,7 +210,7 @@ public final class ReinhardRenderer {
 
       double cinematicTicks = actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime());
       PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
-      if(ReinhardDefense.active(snapshot,event.getArm()==HumanoidArm.LEFT)) {
+      if(ReinhardDefense.recordsContact(player,snapshot,event.getArm()==HumanoidArm.LEFT)) {
          var geo=AnimCache.model(ReinhardAssets.ARMS);
          if(geo!=null) {
             PoseStack contact=new PoseStack();contact.mulPoseMatrix(event.getPoseStack().last().pose());
