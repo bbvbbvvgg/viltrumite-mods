@@ -183,7 +183,13 @@ public final class ReinhardPoses {
 
    /** Two-handed cinematic actions hide slot items without altering inventory. */
    public static boolean drawsHeldItem(HumanoidArm arm, ReidPhase phase, @Nullable ReinhardAbility action) {
-      return action != ReinhardAbility.WORLD_CUT && drawsHeldItem(arm, phase);
+      return action != ReinhardAbility.WORLD_CUT && action != ReinhardAbility.WORLD_ERASURE && drawsHeldItem(arm, phase);
+   }
+
+   @Nullable
+   public static ReinhardAbility cinematicAction(int actionId) {
+      return actionId == ReinhardAbility.WORLD_CUT.ordinal() ? ReinhardAbility.WORLD_CUT
+         : actionId == ReinhardAbility.WORLD_ERASURE.ordinal() ? ReinhardAbility.WORLD_ERASURE : null;
    }
 
    public static boolean drawsHeldItem(HumanoidArm arm, ReidPhase phase) {

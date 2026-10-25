@@ -55,6 +55,7 @@ class ReinhardClipsTest {
       t.put(ReinhardClips.SHEATH_STRIKE, ReinhardRules.SHEATH_TICKS);
       t.put(ReinhardClips.CUT_RAIN, ReinhardRules.CUT_TICKS);
       t.put(ReinhardClips.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST);
+      t.put("world_erasure", ReinhardRules.ERASE_LENGTH);
       return t;
    }
 
@@ -64,7 +65,7 @@ class ReinhardClipsTest {
       Map<String, Integer> ticks = ticks();
       int checked = 0;
       for (ReinhardAbility ability : ReinhardAbility.values()) {
-         if (ability.stage() > 5) {
+         if (ability.stage() > 6) {
             continue;
          }
 
@@ -86,7 +87,7 @@ class ReinhardClipsTest {
          }
       }
 
-      assertEquals(21, checked, "thirteen abilities, twenty-one clips");
+      assertEquals(22, checked, "fourteen abilities, twenty-two clips");
       // Lethal Chop is the kit chop (no ReinhardAbility): both hand sweeps cover the 1 s chop.
       for (String chop : new String[]{ReinhardClips.CHOP_LEFT, ReinhardClips.CHOP_RIGHT}) {
          assertNotNull(clips.get(chop), "clip " + chop);

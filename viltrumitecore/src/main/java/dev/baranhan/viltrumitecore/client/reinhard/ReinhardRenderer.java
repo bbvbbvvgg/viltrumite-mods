@@ -13,6 +13,7 @@ import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardFlags;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardMode;
@@ -147,7 +148,7 @@ public final class ReinhardRenderer {
                stack.popPose();
             }
          }
-         heldItems(player, body, ReinhardView.reid(snapshot), stack, buffers, light);
+         heldItems(player, body, ReinhardView.reid(snapshot), ReinhardPoses.cinematicAction(snapshot.actionId()), stack, buffers, light);
       }
 
       stack.popPose();
@@ -191,10 +192,14 @@ public final class ReinhardRenderer {
          arm.zRot += (float) Math.toRadians(FP_PARRY_ROLL * w * m);
       }
 
-      boolean worldCut = snapshot.actionId() == ReinhardAbility.WORLD_CUT.ordinal();
-      ReinhardFirstPersonPose.Offset action = worldCut
-         ? ReinhardFirstPersonPose.worldCut(snapshot.actionElapsed() + Minecraft.getInstance().getFrameTime(), event.getArm() == HumanoidArm.LEFT)
-         : flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
+      ReinhardAbility cinematic = ReinhardPoses.cinematicAction(snapshot.actionId());
+      double cinematicTicks = snapshot.actionElapsed() + Minecraft.getInstance().getFrameTime();
+      boolean physicalLeft = event.getArm() == HumanoidArm.LEFT;
+      ReinhardFirstPersonPose.Offset action = cinematic == ReinhardAbility.WORLD_CUT
+         ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft)
+         : cinematic == ReinhardAbility.WORLD_ERASURE
+            ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
+            : flick ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
       if (flick && action == ReinhardFirstPersonPose.Offset.NONE) {
          // Stage 4: the Reid draw / sheathe pull.
          ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
@@ -242,7 +247,7 @@ public final class ReinhardRenderer {
       HeroPublicSnapshot snapshot = ReinhardView.of(player);
       if (snapshot == null) return;
       HumanoidArm arm = ReinhardPoses.physicalArm(player.getMainArm(), event.getHand());
-      ReinhardAbility action = snapshot.actionId() == ReinhardAbility.WORLD_CUT.ordinal() ? ReinhardAbility.WORLD_CUT : null;
+      ReinhardAbility action = ReinhardPoses.cinematicAction(snapshot.actionId());
       if (ReinhardPoses.drawsHeldItem(arm, ReinhardView.reid(snapshot), action)) return;
 
       event.setCanceled(true);
@@ -427,11 +432,11 @@ public final class ReinhardRenderer {
       stack.scale(bone.scaleX, bone.scaleY, bone.scaleZ);
    }
 
-   private static void heldItems(AbstractClientPlayer player, BakedGeoModel body, ReinhardPoses.ReidPhase reid, PoseStack stack, MultiBufferSource buffers, int light) {
+   private static void heldItems(AbstractClientPlayer player, BakedGeoModel body, ReinhardPoses.ReidPhase reid, @Nullable ReinhardAbility action, PoseStack stack, MultiBufferSource buffers, int light) {
       for (HumanoidArm arm : HumanoidArm.values()) {
          ItemStack item = player.getItemInHand(player.getMainArm() == arm ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
          GeoBone bone = body.getBone(arm == HumanoidArm.RIGHT ? ReinhardAssets.RIGHT_ARM : ReinhardAssets.LEFT_ARM);
-         if (item.isEmpty() || bone == null || !ReinhardPoses.drawsHeldItem(arm, reid)) {
+         if (item.isEmpty() || bone == null || !ReinhardPoses.drawsHeldItem(arm, reid, action)) {
             continue;
          }
 

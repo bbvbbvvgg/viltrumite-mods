@@ -91,6 +91,7 @@ public final class HeroRegistry {
          return;
       }
 
+      dev.baranhan.viltrumitecore.hero.control.WorldPause.ownerLeft(player.getServer(),player.getUUID());
       HeldInputs.releaseAll(player);
       get(current).cleanup(player, CleanupReason.HERO_CHANGE);
       heroPlayer.viltrumitecore$setHeroState(null);

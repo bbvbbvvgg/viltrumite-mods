@@ -18,24 +18,213 @@
     }
   ],
   "uniforms": [
-    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-    { "name": "OutSize", "type": "float", "count": 2, "values": [ 1.0, 1.0 ] },
-    { "name": "DashIntensity", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "PunchIntensity", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "ShakeIntensity", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "GrabIntensity", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "LockIntensity", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "Time", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "ChopIntensity", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "ChopType", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "ChopIsLeft", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "BarrageIntensity", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "BarrageIsLeft", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "ScourgeIntensity", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "ScourgeTurn", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "RegulusOverheat", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "RegulusHeartFlash", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "RegulusMadness", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "RegulusPulse", "type": "float", "count": 1, "values": [ 0.0 ] }
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "OutSize",
+      "type": "float",
+      "count": 2,
+      "values": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "DashIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "PunchIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "ShakeIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "GrabIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "LockIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "Time",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "ChopIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "ChopType",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "ChopIsLeft",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "BarrageIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "BarrageIsLeft",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "ScourgeIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "ScourgeTurn",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "RegulusOverheat",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "RegulusHeartFlash",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "RegulusMadness",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "RegulusPulse",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "EraseCrack",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "EraseShatter",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "EraseDark",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "EraseRebuild",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "EraseSeed",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    }
   ]
 }

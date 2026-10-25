@@ -1,0 +1,27 @@
+package dev.baranhan.viltrumitecore.client.reinhard;
+
+import static org.junit.jupiter.api.Assertions.*;
+import dev.baranhan.viltrumitecore.client.reinhard.erasure.*;
+import java.nio.file.*;
+import java.util.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+class ErasureSceneTest {
+   @Test void sourceGenericInOtherDimension(){assertEquals(SilhouetteSource.GENERIC_CENTER,SilhouetteSource.choose(false,true,true));assertEquals(SilhouetteSource.GENERIC_CENTER,SilhouetteSource.choose(true,false,true));}
+   @Test void sourceRealWhenResolved(){assertEquals(SilhouetteSource.REAL_PROJECTED,SilhouetteSource.choose(true,true,true));assertEquals(SilhouetteSource.REAL_CENTER,SilhouetteSource.choose(true,true,false));}
+   @Test void dustGoneAt90(){assertEquals(1,ErasureScene.dustAlpha(80));assertTrue(ErasureScene.dustAlpha(85)>0);assertEquals(0,ErasureScene.dustAlpha(90));assertEquals(0,ErasureScene.shapeAlpha(90,true));assertEquals(0,ErasureScene.shapeAlpha(100,true));}
+   @Test void staysReforms(){assertEquals(0,ErasureScene.shapeAlpha(90,false));assertEquals(1,ErasureScene.shapeAlpha(100,false));assertEquals(1,ErasureScene.shapeAlpha(109,false));assertEquals(0,ErasureScene.shapeAlpha(110,false));}
+   @ParameterizedTest @EnumSource(ErasureScene.EndReason.class) void duckReleasedOnEveryEnd(ErasureScene.EndReason reason){var env=new Env();var clock=new ErasureScene.Timeline(30,env);assertEquals(1,env.ducks);clock.end(reason);clock.end(reason);assertEquals(1,env.releases);assertTrue(clock.ended());}
+   @Test void catchUpFromMidway(){var env=new Env();var clock=new ErasureScene.Timeline(60,env);assertEquals(0,env.cracks);assertEquals(1,env.ducks);assertEquals(0,env.fadeIn);assertEquals(.75F,clock.uniforms(0).shatter());clock.advance(110);assertEquals(1,env.inhales);assertEquals(40,env.fadeOut);clock.advance(170);assertTrue(clock.ended());assertEquals(1,env.releases);}
+   @Test void soundsExactlyOnceAtCrossings(){var env=new Env();var clock=new ErasureScene.Timeline(0,env);assertEquals(1,env.cracks);clock.advance(29);assertEquals(0,env.ducks);clock.advance(30);clock.advance(90);assertEquals(1,env.ducks);assertEquals(6,env.fadeIn);clock.advance(110);clock.advance(149);assertEquals(1,env.inhales);assertEquals(1,env.releases);}
+   @Test void lateRebuildJoinDoesNotReplayEarlierSounds(){var env=new Env();var clock=new ErasureScene.Timeline(120,env);assertEquals(0,env.cracks);assertEquals(0,env.ducks);assertEquals(0,env.inhales);clock.advance(125);assertEquals(0,env.inhales);assertTrue(clock.uniforms(0).rebuild()>0);}
+   @Test void interruptionBeforeBlackNeverCreatesADuck(){var env=new Env();var clock=new ErasureScene.Timeline(0,env);clock.advance(15);clock.end(ErasureScene.EndReason.CANCEL);clock.advance(110);assertEquals(0,env.ducks);assertEquals(0,env.inhales);assertEquals(ErasureUniforms.ZERO,clock.uniforms(0));}
+   @Test void watchdogAt170(){var clock=new ErasureScene.Timeline(60,new Env());clock.advance(169);assertFalse(clock.ended());clock.advance(170);assertTrue(clock.ended());}
+   @Test void localClockSurvivesDimensionGameTimeAndCatchUp(){assertEquals(60,ErasureScene.elapsed(60,500,500));assertEquals(70,ErasureScene.elapsed(60,500,510));assertEquals(60,ErasureScene.elapsed(60,500,499));assertEquals(Integer.MAX_VALUE,ErasureScene.elapsed(60,0,Long.MAX_VALUE));}
+   @Test void repeatedCatchUpDoesNotFreezeOrRewindScene(){var clock=new ErasureScene.Clock(60,500);assertEquals(61,clock.at(501));clock.sync(90,501);assertEquals(91,clock.at(502));clock.sync(40,503);assertEquals(93,clock.at(504));}
+   @Test void genericSilhouetteAndSeededPixels(){assertTrue(GenericSilhouette.contains(.5F,.12F,true));assertFalse(GenericSilhouette.contains(0,0,true));assertFalse(GenericSilhouette.contains(.5F,.9F,true));assertTrue(GenericSilhouette.contains(.4F,.9F,true));assertTrue(GenericSilhouette.contains(.5F,.5F,false));assertFalse(GenericSilhouette.contains(0,0,false));assertEquals(2,GenericSilhouette.ratio(2,1));assertTrue(Float.isFinite(GenericSilhouette.ratio(Float.NaN,0)));var a=GenericSilhouette.pixels(123,true);assertEquals(a,GenericSilhouette.pixels(123,true));assertNotEquals(a,GenericSilhouette.pixels(124,true));assertTrue(a.size()>100);for(var p:a){assertTrue(p.x()>=0&&p.x()<=1);assertTrue(p.y()>=0&&p.y()<=1);assertTrue(p.up()>0);}}
+   @Test void runtimeUsesExistingProjectionPixelsAndPauseEndHook() throws Exception {var s=Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/erasure/ErasureScene.java"));for(String key:List.of("ScreenProjector.project","GuiEntitySilhouette.render","SimpleSoundInstance.forUI","WorldPauseClient.onEnd","ErasurePost.bind"))assertTrue(s.contains(key),key);assertTrue(Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/erasure/GenericSilhouette.java")).contains("PixelVfx.guiPixel"));assertFalse(s.contains("new PostChain"));var client=Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/ReinhardClient.java"));assertTrue(client.contains("ErasureScene.init()"));assertTrue(client.contains("ErasureScene::onPacket"));}
+   static class Env implements ErasureScene.SoundEnvironment {int cracks,ducks,inhales,releases,fadeIn,fadeOut;public void crack(){cracks++;}public void duck(int fade){ducks++;fadeIn=fade;}public void inhale(){inhales++;}public void release(int fade){releases++;fadeOut=fade;}}
+}

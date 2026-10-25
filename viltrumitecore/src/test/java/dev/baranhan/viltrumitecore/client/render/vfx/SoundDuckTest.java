@@ -54,6 +54,19 @@ class SoundDuckTest {
    }
 
    @Test
+   void independentReleaseCanTake40Ticks() {
+      SoundDuck duck = new SoundDuck();
+      duck.duck("erase", SoundSource.MASTER, 0, 6, Set.of(OWN));
+      for(int i=0;i<6;i++) duck.tick();
+      duck.release("erase", 40);
+      for(int i=0;i<20;i++) duck.tick();
+      assertEquals(.5F, duck.volumeFactor(SoundSource.AMBIENT, OTHER), 1e-5);
+      assertEquals(1, duck.volumeFactor(SoundSource.PLAYERS, OWN));
+      for(int i=0;i<20;i++) duck.tick();
+      assertFalse(duck.active());
+   }
+
+   @Test
    void otherPlayersSoundDucked() {
       SoundDuck duck = new SoundDuck();
       duck.duck("scene", SoundSource.MASTER, 0.25F, 0, Set.of(OWN));

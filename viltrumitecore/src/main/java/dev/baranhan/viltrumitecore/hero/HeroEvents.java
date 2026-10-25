@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.hero;
 
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
+import dev.baranhan.viltrumitecore.hero.reinhard.limbo.Limbo;
+import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.hero.control.HeroControlSync;
 import dev.baranhan.viltrumitecore.hero.regulus.Evangelium;
 import dev.baranhan.viltrumitecore.hero.regulus.RegulusHero;
@@ -80,6 +82,7 @@ public final class HeroEvents {
       }
 
       if (entity instanceof ServerPlayer player && player instanceof HeroPlayer heroPlayer) {
+         WorldPause.ownerLeft(player.getServer(),player.getUUID());
          // The hero's own cleanup runs before the death completes.
          HeldInputs.releaseAll(player);
          HeroRegistry.get(player).cleanup(player, CleanupReason.DEATH);
@@ -224,6 +227,8 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
       if (event.getEntity() instanceof ServerPlayer player) {
+         Limbo.onLogout(player);
+         WorldPause.onLeave(player);
          HeldInputs.releaseAll(player);
          HeroDamageLayers.forget(player);
          HeroAirJump.forget(player);
@@ -245,6 +250,8 @@ public final class HeroEvents {
          } else {
             HeroRegistry.repairLoadout(player);
          }
+         WorldPause.onJoin(player);
+         Limbo.onLogin(player);
       }
    }
 
@@ -254,7 +261,7 @@ public final class HeroEvents {
     */
    @SubscribeEvent
    public static void onSwapHands(net.minecraftforge.event.entity.living.LivingSwapItemsEvent.Hands event) {
-      if (event.getEntity() instanceof ServerPlayer player && HeroRegistry.get(player).blocksHandSwap(player)) {
+      if (event.getEntity() instanceof ServerPlayer player && (HeroDamage.isAnchored(player) || HeroRegistry.get(player).blocksHandSwap(player))) {
          event.setCanceled(true);
       }
    }
@@ -262,6 +269,7 @@ public final class HeroEvents {
    /** Damage layers, step 1: absorbIncoming before armor and knockback (HeroDamageLayers). */
    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
    public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+      if (HeroDamage.isProtected(event.getEntity())) {event.setCanceled(true); return;}
       if (event.getEntity() instanceof ServerPlayer player && event.getAmount() > 0.0F && HeroDamageLayers.onAttack(player, event.getSource(), event.getAmount())) {
          event.setCanceled(true);
       }
@@ -293,30 +301,83 @@ public final class HeroEvents {
 
    @SubscribeEvent
    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-      if (event.getEntity() instanceof ServerPlayer player) {
-         HeroControlSync.sendBaseline(player);
-         ControlManager.restorePendingTarget(player);
-         HeroFlightGrant.sync(player);
-         HeroRegistry.resendOwnerSnapshot(player);
-         HeroRegistry.get(player).onRespawn(player);
-         // The bound Evangelium returns on respawn when it is missing (spec 11.2).
-         if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REGULUS) {
-            Evangelium.grant(player);
-            // Respawn is a fresh body: re-apply the chassis and start full.
-            dev.baranhan.viltrumitecore.hero.regulus.RegulusPassives.apply(player);
-            player.setHealth(player.getMaxHealth());
+      if (event.getEntity() instanceof ServerPlayer player) freshBody(player);
+   }
+
+   /** Used by normal respawn and same-entity returns from an erased body. */
+   public static void freshBody(ServerPlayer player) {
+      BodyLoss.fresh(new BodyLoss.FreshBody() {
+         public void controlBaseline() {HeroControlSync.sendBaseline(player);}
+         public void restorePendingFlags() {ControlManager.restorePendingTarget(player);}
+         public void flightSync() {HeroFlightGrant.sync(player);}
+         public void resendOwner() {HeroRegistry.resendOwnerSnapshot(player);}
+         public void heroRespawn() {HeroRegistry.get(player).onRespawn(player);}
+         public void legacyRespawn() {
+            // The bound Evangelium returns on respawn when it is missing (spec 11.2).
+            if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REGULUS) {
+               Evangelium.grant(player);
+               // Respawn is a fresh body: re-apply the chassis and start full.
+               dev.baranhan.viltrumitecore.hero.regulus.RegulusPassives.apply(player);
+               player.setHealth(player.getMaxHealth());
+            }
          }
-      }
+      });
+   }
+
+   /** Death without die()/clone()/drops. Must run before the limbo transfer. */
+   public static void prepareErasure(ServerPlayer player) {
+      BodyLoss.erase(new BodyLoss.ErasedBody() {
+         public void cleanupHero(CleanupReason reason) {HeroRegistry.get(player).cleanup(player, reason);}
+         public void clearHeldInputs() {HeldInputs.releaseAll(player);}
+         public void releaseControls() {
+            MinecraftServer server=player.getServer();
+            if(server!=null) for(ServerLevel level:server.getAllLevels()) {
+               ControlManager.get(level).cleanupCaster(player.getUUID(), CleanupReason.ERASED);
+               ControlManager.get(level).cleanupTarget(player.getUUID());
+            }
+            ControlManager.releaseProjectilesFor(player.getUUID());
+            ControlManager.restorePendingTarget(player);
+         }
+         public void releaseLegacyGrabs() {
+            if(player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core) LegacyKit.resetActions(core);
+            MinecraftServer server=player.getServer();
+            if(server!=null) for(ServerPlayer other:server.getPlayerList().getPlayers()) {
+               if(other instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer otherCore && otherCore.getGrabbedTarget()!=null
+                  && otherCore.getGrabbedTarget().getUUID().equals(player.getUUID())) otherCore.releaseTarget();
+            }
+            player.removeTag("ViltrumiteGrabbed");
+            dev.baranhan.viltrumitecore.network.CoreMessages.sendToPlayer(
+               new dev.baranhan.viltrumitecore.network.packet.PlayerGrabStateSyncS2CPacket(false,null),player);
+         }
+         public void resetMotionAndSession() {
+            if(player instanceof dev.baranhan.viltrumiteflight.util.ViltrumiteFlightPlayer flight) flight.stopFlight();
+            player.stopUsingItem(); player.stopRiding(); player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            player.setNoGravity(false); player.fallDistance=0; player.clearFire(); player.removeAllEffects();
+            player.invulnerableTime=0; player.hurtTime=0; player.deathTime=0;
+            HeroDamageLayers.forget(player); HeroAirJump.forget(player); HeroResourceRegen.forget(player);
+            if(player instanceof HeroPlayer hero && hero.getHeroSession()!=null)
+               hero.viltrumitecore$setHeroSession(hero.getHeroSession().refreshTotem());
+         }
+         public void clearOwnerSections() {HeroRegistry.clearOwnerSections(player, OwnerSection.values());}
+         public void sync() {HeroFlightGrant.sync(player); HeroRegistry.syncSnapshot(player); HeroRegistry.resendOwnerSnapshot(player);}
+      });
    }
 
    @SubscribeEvent
    public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
       if (event.getEntity() instanceof ServerPlayer player) {
+         WorldPause.ownerLeft(player.getServer(),player.getUUID());
+         WorldPause.onJoin(player);
          HeroControlSync.sendBaseline(player);
          ControlManager.restorePendingTarget(player);
          HeroRegistry.get(player).onDimensionChange(player);
          HeroRegistry.resendOwnerSnapshot(player);
       }
+   }
+
+   @SubscribeEvent
+   public static void onTravel(net.minecraftforge.event.entity.EntityTravelToDimensionEvent event) {
+      if(event.getEntity() instanceof ServerPlayer player && Limbo.blocksTravel(BodyIsolation.active(player), Limbo.internalTravel())) event.setCanceled(true);
    }
 
    /** Landing hook for every hero (HeroDefinition.onLanded / cancelsFallDamage). */
@@ -342,6 +403,7 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
       if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
+         Limbo.tick(player);
          PersistentCooldowns.tick(player);
          HeroAirJump.tick(player);
       }
@@ -367,7 +429,20 @@ public final class HeroEvents {
 
    @SubscribeEvent
    public static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+      WorldPause.end(event.getServer(),WorldPause.EndReason.SERVER_STOP);
+      ServerEndTasks.clear(event.getServer());
+      Limbo.clear();
       dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.clearAll();
+   }
+
+   @SubscribeEvent
+   public static void onServerTick(TickEvent.ServerTickEvent event) {
+      if(event.phase==TickEvent.Phase.END) {WorldPause.tick(event.getServer()); ServerEndTasks.flush(event.getServer());}
+   }
+
+   @SubscribeEvent
+   public static void onDatapackSync(net.minecraftforge.event.OnDatapackSyncEvent event) {
+      if(event.getPlayer()==null) WorldPause.end(event.getPlayerList().getServer(),WorldPause.EndReason.RELOAD);
    }
 
    @SubscribeEvent

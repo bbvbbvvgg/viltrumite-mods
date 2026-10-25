@@ -218,6 +218,9 @@ public class HomelanderHero implements HeroDefinition {
          state.heat.reset();
          state.roarCooldown = 0;
          state.roarAnim = 0;
+         if (reason == CleanupReason.ERASED && player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer) {
+            heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
+         }
       }
 
       if (reason == CleanupReason.HERO_CHANGE) {

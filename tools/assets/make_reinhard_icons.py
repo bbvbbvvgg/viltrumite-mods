@@ -400,6 +400,17 @@ def world_cut():
     return img
 
 
+def world_erasure():
+    """A white silhouette dissolves among glass cracks on a black world tile."""
+    img = ability_plate(BLUE_D, GOLD_D)
+    paint(img, [
+        "w......ww...w.", "..w...wwww.w..", "...w...ww.w...", "....w.wwww....",
+        "..w..wwwwww.w.", ".w...wwwwww...", "w....w.ww.w..w", "...w...ww..w..",
+        "......w..w....", "....w.w..w..w.", "..w...w....w..", "w.....w..w...w",
+    ], {"w": WHITE}, 1, 2)
+    return img
+
+
 ABILITIES = {
     "light_punch": light_punch,
     "step_dash": step_dash,
@@ -416,6 +427,7 @@ ABILITIES = {
     "sheath_strike": sheath_strike,
     "cut_rain": cut_rain,
     "world_cut": world_cut,
+    "world_erasure": world_erasure,
 }
 
 DRAWN = {

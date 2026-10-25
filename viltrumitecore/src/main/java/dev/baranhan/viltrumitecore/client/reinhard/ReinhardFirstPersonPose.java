@@ -126,6 +126,7 @@ public final class ReinhardFirstPersonPose {
          case SHEATH_STRIKE -> new Offset(SHEATH_X, 0.0F, SHEATH_Z, 0.0F, SHEATH_YAW, 0.0F)
             .scaled(strike(ticks, ReinhardRules.SHEATH_HIT_TICK, ReinhardRules.SHEATH_TICKS));
          case WORLD_CUT -> worldCut(ticks, false);
+         case WORLD_ERASURE -> worldErasure(ticks, false);
          case CUT_RAIN -> {
             float sway = (float) Math.sin(Math.PI * 2.0 * ticks / 6.0) * strike(ticks, ReinhardRules.CUT_TICKS / 2, ReinhardRules.CUT_TICKS);
             yield new Offset(CUT_SWAY_X * sway, 0.0F, 0.0F, 0.0F, CUT_SWAY_YAW * sway, 0.0F);
@@ -143,6 +144,22 @@ public final class ReinhardFirstPersonPose {
       float down=(float)Math.max(0,Math.min(1,(ticks-12)/8));
       return new Offset(offhand ? -.18F : -.08F, .45F*raise-.18F*down,
          -.12F-.3F*down, -100*raise+25*down, offhand ? -18 : 8, 0);
+   }
+
+   /** Raise Reid into view, one slow cut at tick 30, then hold. Physical arms, not inventory slots. */
+   public static Offset worldErasure(double ticks, boolean physicalLeft) {
+      if (!Double.isFinite(ticks) || ticks <= 0 || ticks >= ReinhardRules.ERASE_LENGTH) return Offset.NONE;
+      float raise = smooth(ticks / 15.0);
+      float cut = smooth((ticks - ReinhardRules.ERASE_CRACK_END) / 10.0);
+      return new Offset((physicalLeft ? .10F : -.22F) * raise + .40F * cut,
+         .22F * raise - .30F * cut, -.14F * raise - .18F * cut,
+         -20F * raise + 50F * cut, (physicalLeft ? -8F : 10F) * raise + 45F * cut,
+         (physicalLeft ? -5F : 5F) * raise + 12F * cut);
+   }
+
+   private static float smooth(double value) {
+      double t = clamp01(value);
+      return (float) (t * t * (3 - 2 * t));
    }
 
    private static Offset combo(int phase, double ticks) {
