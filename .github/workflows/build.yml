@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,3 +32,32 @@ jobs:
           path: |
             viltrumiteflight/build/libs/*.jar
             viltrumitecore/build/libs/*.jar
+
+      - name: Publish v1.39.1-reinhard
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release-v1.39.1]')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > release-notes.md <<'EOF'
+          Рейнхард ван Астрея — новый герой и стабилизация стека (PR #25–#46).
+
+          Что вошло:
+          - новый герой Рейнхард: режимы Сдержанный, Рыцарь и Святой меч, благословения, Рейд, Lethal Chop, удар ножнами, дождь разрезов, два мировых разреза и Стирание мира;
+          - модель, ножны и стойки, плавная походка, удары без рывков, контекстная защита;
+          - звук мирового разреза (гул, пульс, звон клинка, взрыв на первом ударе) и голубой шейдер The Hand вдоль разреза;
+          - исправления по ревью (PR #46): диагональный разрез бьёт только по сужающейся ране, World Cut нельзя оборвать сменой режима, реакции на выстрелы с любой стороны и эффекты на каждый парированный удар, мгновенный объединённый рывок Рыцаря, захват игрока учитывает серверный PvP, старые раскладки мигрируют без сброса, позы в воздухе и на элитрах, Lethal Chop от 1-го лица в такт 3-му, кинематики на авторитетном времени, пульс World Cut синхронен у поздних зрителей;
+          - божественный урон проходит броню Iron Man и Hulkbuster, возврат из Энда не лечит, спасение из пустоты в Незере ставит под крышу, выбор героя помещается на узких экранах.
+
+          Установка: положить оба JAR в `mods/` вместе (старые удалить). Forge 1.20.1. Сетевой протокол 5: клиент и сервер должны быть одной версии.
+
+          Сборка соответствует main после merge PR #45: 5b3e2bb15f593ccc1ec5d70ee78a5395f50a48ce.
+          EOF
+
+          gh release create v1.39.1-reinhard \
+            viltrumitecore/build/libs/reforgedcodex-core-1.39.1.jar \
+            viltrumiteflight/build/libs/reforgedcodex-flight-1.10.1.jar \
+            --repo "$GITHUB_REPOSITORY" \
+            --target 5b3e2bb15f593ccc1ec5d70ee78a5395f50a48ce \
+            --title "Reinhard — reforgedcodex-core 1.39.1 + reforgedcodex-flight 1.10.1" \
+            --latest \
+            --notes-file release-notes.md
