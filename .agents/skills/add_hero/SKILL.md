@@ -63,6 +63,7 @@ Use `references/shared-toolkit.md`. Typical mapping:
 - damage → `HeroDamage.route` / `applyCleanDamage`.
 
 ### 7. Sounds and textures
+Before sourcing or changing sounds, follow `../sound-design/SKILL.md` (CC0/own assets only).
 1. Sound events in `assets/viltrumitecore/sounds.json`, Java holders in the core sound registry.
 2. Binary files (`.ogg`, `.png`) that must be pushed through the GitHub MCP go to `viltrumitecore/src/main/binassets/<same path>.b64` (base64). Gradle task `decodeBinaryAssets` writes them into resources at build time.
 3. Use only CC0 or own sounds. Record source and license in the design doc.
