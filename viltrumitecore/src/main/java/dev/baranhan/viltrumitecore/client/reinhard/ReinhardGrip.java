@@ -54,19 +54,9 @@ final class ReinhardGrip {
       support(model,mount,weight,0);
    }
    static void support(BakedGeoModel model,Matrix4f mount,float weight,float gripWeight) {
-      support(model,mount,weight,gripWeight,1);
-   }
-   /** {@code poleWeight} as in {@link #solve(BakedGeoModel,Matrix4f,float,boolean,boolean,Vector3f,float)}. */
-   static void support(BakedGeoModel model,Matrix4f mount,float weight,float gripWeight,float poleWeight) {
       Matrix4f target=new Matrix4f(mount).m31(mount.m31()+(1-gripWeight)*1.3F/16);
-      solve(model,target,weight,true,false,null,poleWeight);
+      solve(model,target,weight,true,false);
       if(gripWeight>0)orientWrist(model,mount,weight*gripWeight,true);
-   }
-   /** The Reid draw's left hand on the scabbard: {@link #support} positioning (rest lift by
-    * {@code 1 - gripWeight}), but the glove keeps its forearm's orientation. */
-   static void hold(BakedGeoModel model,Matrix4f mount,float weight,float gripWeight,float poleWeight) {
-      Matrix4f target=new Matrix4f(mount).m31(mount.m31()+(1-gripWeight)*1.3F/16);
-      solve(model,target,weight,true,false,null,poleWeight);
    }
    static float solve(BakedGeoModel model,Matrix4f mount,float weight,boolean left) {return solve(model,mount,weight,left,true);}
    /** Pronation belongs to the forearm, not a dislocated 90-degree wrist.
@@ -75,11 +65,7 @@ final class ReinhardGrip {
       paired(model,mount,weight,weight,left,false);
    }
    static void paired(BakedGeoModel model,Matrix4f mount,float positionWeight,float twistWeight,boolean left,boolean singleHandBase) {
-      paired(model,mount,positionWeight,twistWeight,left,singleHandBase,1);
-   }
-   /** {@code poleWeight} as in {@link #solve(BakedGeoModel,Matrix4f,float,boolean,boolean,Vector3f,float)}. */
-   static void paired(BakedGeoModel model,Matrix4f mount,float positionWeight,float twistWeight,boolean left,boolean singleHandBase,float poleWeight) {
-      solve(model,mount,positionWeight,left,singleHandBase,null,poleWeight);
+      solve(model,mount,positionWeight,left,singleHandBase);
       GeoBone lower=model.getBone(left?"left_forearm":"right_forearm");
       GeoBone wrist=model.getBone(left?"left_hand":"right_hand");
       PoseStack stack=new PoseStack();ReinhardRenderer.boneFrame(stack,lower);
