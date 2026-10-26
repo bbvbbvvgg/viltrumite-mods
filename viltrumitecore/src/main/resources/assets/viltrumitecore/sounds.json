@@ -1004,6 +1004,17 @@
       }
     ]
   },
+  "reinhard.world_cut_explosion": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard.world_cut_explosion",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/world_cut_explosion",
+        "stream": false,
+        "attenuation_distance": 320
+      }
+    ]
+  },
   "reinhard.fist_swing": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.reinhard_fist_swing",
