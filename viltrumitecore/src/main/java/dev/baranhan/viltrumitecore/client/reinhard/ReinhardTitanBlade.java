@@ -63,6 +63,18 @@ public final class ReinhardTitanBlade {
       GeoBone grip=sample(body.getBone("reid_grip"),root,clip,ticks/20);
       PoseStack s=new PoseStack();ReinhardRenderer.boneFrame(s,grip);return new Matrix4f(s.last().pose());
    }
+   /** REINHARD OVERHAUL item 15: the draw grip's blade frame (blade native px/16 to blocks) of the interpolated
+    * caster, relative to {@code origin} (the camera, for float precision); null without the clip. */
+   @javax.annotation.Nullable
+   public static Matrix4f drawFrame(net.minecraft.world.entity.LivingEntity caster,double ticks,float partialTick,Vec3 origin) {
+      Matrix4f frame=gripFrame("reid_draw",ticks);if(frame==null)return null;
+      Vec3 at=caster.getPosition(partialTick).subtract(origin);
+      float yaw=net.minecraft.util.Mth.rotLerp(partialTick,caster.yBodyRotO,caster.yBodyRot);
+      return new Matrix4f().translation((float)at.x,(float)at.y,(float)at.z)
+         .rotateY((float)Math.toRadians(180-yaw)).scale(ReinhardRenderer.PLAYER_SCALE).mul(frame)
+         .scale(ReinhardSword.SWORD_SCALE,ReinhardSword.SWORD_SCALE*ReinhardSword.LENGTH_SCALE,ReinhardSword.SWORD_SCALE)
+         .translate(-ReinhardGrip.HANDLE.x,-ReinhardGrip.HANDLE.y,-ReinhardGrip.HANDLE.z);
+   }
    /** Same sampled draw grip as the physical mesh; no cached arm/bone mutation. */
    public static Vec3 drawPoint(net.minecraft.world.entity.LivingEntity caster,double ticks,double nativeY) {
       Matrix4f frame=gripFrame("reid_draw",ticks);if(frame==null)return caster.position().add(0,1,0);

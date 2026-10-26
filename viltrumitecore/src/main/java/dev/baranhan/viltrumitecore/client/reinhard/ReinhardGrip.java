@@ -54,9 +54,19 @@ final class ReinhardGrip {
       support(model,mount,weight,0);
    }
    static void support(BakedGeoModel model,Matrix4f mount,float weight,float gripWeight) {
+      support(model,mount,weight,gripWeight,1);
+   }
+   /** {@code poleWeight} as in {@link #solve(BakedGeoModel,Matrix4f,float,boolean,boolean,Vector3f,float)}. */
+   static void support(BakedGeoModel model,Matrix4f mount,float weight,float gripWeight,float poleWeight) {
       Matrix4f target=new Matrix4f(mount).m31(mount.m31()+(1-gripWeight)*1.3F/16);
-      solve(model,target,weight,true,false);
+      solve(model,target,weight,true,false,null,poleWeight);
       if(gripWeight>0)orientWrist(model,mount,weight*gripWeight,true);
+   }
+   /** The Reid draw's left hand on the scabbard: {@link #support} positioning (rest lift by
+    * {@code 1 - gripWeight}), but the glove keeps its forearm's orientation. */
+   static void hold(BakedGeoModel model,Matrix4f mount,float weight,float gripWeight,float poleWeight) {
+      Matrix4f target=new Matrix4f(mount).m31(mount.m31()+(1-gripWeight)*1.3F/16);
+      solve(model,target,weight,true,false,null,poleWeight);
    }
    static float solve(BakedGeoModel model,Matrix4f mount,float weight,boolean left) {return solve(model,mount,weight,left,true);}
    /** Pronation belongs to the forearm, not a dislocated 90-degree wrist.
@@ -65,7 +75,11 @@ final class ReinhardGrip {
       paired(model,mount,weight,weight,left,false);
    }
    static void paired(BakedGeoModel model,Matrix4f mount,float positionWeight,float twistWeight,boolean left,boolean singleHandBase) {
-      solve(model,mount,positionWeight,left,singleHandBase);
+      paired(model,mount,positionWeight,twistWeight,left,singleHandBase,1);
+   }
+   /** {@code poleWeight} as in {@link #solve(BakedGeoModel,Matrix4f,float,boolean,boolean,Vector3f,float)}. */
+   static void paired(BakedGeoModel model,Matrix4f mount,float positionWeight,float twistWeight,boolean left,boolean singleHandBase,float poleWeight) {
+      solve(model,mount,positionWeight,left,singleHandBase,null,poleWeight);
       GeoBone lower=model.getBone(left?"left_forearm":"right_forearm");
       GeoBone wrist=model.getBone(left?"left_hand":"right_hand");
       PoseStack stack=new PoseStack();ReinhardRenderer.boneFrame(stack,lower);
@@ -89,11 +103,18 @@ final class ReinhardGrip {
       wrist.rotX*=1-twistWeight;wrist.rotY*=1-twistWeight;wrist.rotZ*=1-twistWeight;
    }
    private static float solve(BakedGeoModel model,Matrix4f mount,float weight,boolean left,boolean alignWrist) {
+      return solve(model,mount,weight,left,alignWrist,null,1);
+   }
+   /** {@code pole}: elbow direction in the arm's parent (body) frame, null = the anatomical default.
+    * {@code poleWeight} 0 keeps the elbow plane of the current (authored) pose: the Reid draw bakes
+    * its elbow planes into the clip and must not be pulled back to the generic pole. */
+   static float solve(BakedGeoModel model,Matrix4f mount,float weight,boolean left,boolean alignWrist,
+      @javax.annotation.Nullable Vector3f pole,float poleWeight) {
       GeoBone upper=model.getBone(left?"left_arm":ReinhardAssets.RIGHT_ARM),lower=model.getBone(left?"left_forearm":"right_forearm");
       if(upper==null || lower==null || weight<=0) return 0;
       Vector3f target=point(model,left).lerp(mount.transformPosition(new Vector3f(HANDLE)),weight);
       float[] angles={upper.rotX,upper.rotY,upper.rotZ,lower.rotX,lower.rotY,lower.rotZ};
-      seedFrontElbow(model,upper,lower,target,angles,left,weight);
+      seedFrontElbow(model,upper,lower,target,angles,left,weight*Math.max(0,Math.min(1,poleWeight)),pole);
       set(upper,lower,angles);
       for(int iteration=0;iteration<32;iteration++) {
          Vector3f p=point(model,left), error=new Vector3f(target).sub(p);
@@ -122,7 +143,8 @@ final class ReinhardGrip {
    /** Two-segment geometric seed with an explicit outward/front elbow pole. Position-only
     * least squares has infinitely many solutions, including an elbow behind the neck.
     * This chooses the anatomical half-plane before the small numeric correction. */
-   private static void seedFrontElbow(BakedGeoModel model,GeoBone upper,GeoBone lower,Vector3f target,float[] angles,boolean left,float weight) {
+   private static void seedFrontElbow(BakedGeoModel model,GeoBone upper,GeoBone lower,Vector3f target,float[] angles,boolean left,float weight,
+      @javax.annotation.Nullable Vector3f customPole) {
       PoseStack parent=new PoseStack(),shoulder=new PoseStack();
       if(upper.parent!=null) {
          ReinhardRenderer.boneFrame(parent,upper.parent);
@@ -137,7 +159,7 @@ final class ReinhardGrip {
       // Do not point the pole down the usual palm trajectory: projection then
       // vanishes and reverses sign during a strike. Keep the support elbow outward/front;
       // the leading elbow also points down to clear the head on overhead cuts.
-      Vector3f pole=parent.last().pose().transformDirection(new Vector3f(left?-1:1,left?0:-1.5F,left?-.25F:-1));
+      Vector3f pole=parent.last().pose().transformDirection(customPole!=null?new Vector3f(customPole):new Vector3f(left?-1:1,left?0:-1.5F,left?-.25F:-1));
       pole.sub(new Vector3f(axis).mul(pole.dot(axis)));
       if(pole.lengthSquared()<1E-6F) {pole=parent.last().pose().transformDirection(new Vector3f(0,-1,0));pole.sub(new Vector3f(axis).mul(pole.dot(axis)));}
       pole.normalize();

@@ -8,16 +8,20 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 /**
- * The Reid draw scene (Reinhard spec §7.3) for every player within 96 blocks:
- * START (sent at the press and every 20 t for late joiners) and END (final or
- * abort). The client times the scene from {@code startGameTime}, so a relog
- * mid-draw shows the right moment. {@code center} is Reinhard's exact position
- * at the press (REINHARD OVERHAUL item 15: the beam stands on him, never on the
- * centre of his block); clients that track him follow his interpolated position.
+ * The Reid draw scene (Reinhard spec §7.3) for every player within 96 blocks. Phases: START (sent
+ * at the press and every 20 t for late joiners, always with the same {@code startGameTime}, so a
+ * refresh never restarts a running scene), RELEASE (tick 96: the tip clears the mouth), END (tick
+ * 120: the scene decays naturally) and ABORT (death, logout, ability off: it fades out at once).
+ * The client times the scene from {@code startGameTime}, so a relog mid-draw shows the right
+ * moment. {@code center} is Reinhard's exact position at the press (REINHARD OVERHAUL item 15:
+ * the beam stands on him, never on the centre of his block); clients that track him follow his
+ * interpolated position.
  */
 public class ReidSceneS2CPacket {
    public static final int START = 0;
    public static final int END = 1;
+   public static final int ABORT = 2;
+   public static final int RELEASE = 3;
    private final int casterId;
    private final Vec3 center;
    private final long startGameTime;

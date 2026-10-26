@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.hero.reinhard;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.baranhan.viltrumitecore.hero.reinhard.reid.ReidDrawEvent;
 import org.junit.jupiter.api.Test;
@@ -11,15 +12,26 @@ class ReidDrawTimelineTest {
    @Test
    void timelinePhases() {
       assertEquals(20, ReinhardRules.REID_CRACK_START);
-      assertEquals(100, ReinhardRules.REID_CRACK_END);
-      assertEquals(110, ReinhardRules.REID_TREMBLE_TICK);
+      assertEquals(96, ReinhardRules.REID_CRACK_END);
+      assertEquals(86, ReinhardRules.REID_TREMBLE_TICK);
+      assertEquals(96, ReinhardRules.REID_RELEASE_TICK);
       assertSame(ReidDrawEvent.Stage.GATHER, ReidDrawEvent.stageAt(0));
       assertSame(ReidDrawEvent.Stage.GATHER, ReidDrawEvent.stageAt(19));
       assertSame(ReidDrawEvent.Stage.CRACKS, ReidDrawEvent.stageAt(20));
-      assertSame(ReidDrawEvent.Stage.CRACKS, ReidDrawEvent.stageAt(109));
-      assertSame(ReidDrawEvent.Stage.TREMBLE, ReidDrawEvent.stageAt(110));
-      assertSame(ReidDrawEvent.Stage.TREMBLE, ReidDrawEvent.stageAt(119));
-      assertSame(ReidDrawEvent.Stage.FINAL, ReidDrawEvent.stageAt(120));
+      assertSame(ReidDrawEvent.Stage.CRACKS, ReidDrawEvent.stageAt(85));
+      assertSame(ReidDrawEvent.Stage.TREMBLE, ReidDrawEvent.stageAt(86));
+      assertSame(ReidDrawEvent.Stage.TREMBLE, ReidDrawEvent.stageAt(95));
+      assertSame(ReidDrawEvent.Stage.FINAL, ReidDrawEvent.stageAt(96));
+      assertSame(ReidDrawEvent.Stage.FINAL, ReidDrawEvent.stageAt(ReinhardRules.REID_DRAW_TICKS));
+   }
+
+   @Test
+   void theReleaseIsTheMomentTheTipLeavesTheScabbard() {
+      // One moment for the server (wave, chat line, far sound), the animation, the light and the sound.
+      assertEquals(ReinhardRules.REID_RELEASE_TICK, dev.baranhan.viltrumitecore.client.reinhard.ReidDrawChoreo.RELEASE);
+      assertEquals(ReinhardRules.REID_CRACK_END, ReinhardRules.REID_RELEASE_TICK, "the cracks stop growing when the blade is out");
+      assertTrue(ReinhardRules.REID_TREMBLE_TICK < ReinhardRules.REID_RELEASE_TICK);
+      assertTrue(ReinhardRules.REID_RELEASE_TICK < ReinhardRules.REID_DRAW_TICKS, "the blade settles into the guard after the release");
    }
 
    @Test

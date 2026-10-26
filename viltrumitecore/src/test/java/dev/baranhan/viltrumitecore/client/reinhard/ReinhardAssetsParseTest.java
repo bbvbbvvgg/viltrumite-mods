@@ -39,7 +39,7 @@ class ReinhardAssetsParseTest {
       assertEquals(List.of(ReinhardAssets.BODY_BONE,ReinhardAssets.RIGHT_LEG,ReinhardAssets.LEFT_LEG), body.topLevelBones().stream().map(b -> b.name).toList());
       int faces = 0;
       for (GeoBone bone : body.allBones()) {
-         if(bone.name.equals("reid_grip")) {assertTrue(bone.cubes.isEmpty());continue;}
+         if(bone.name.equals("reid_grip") || bone.name.equals("reid_sheath")) {assertTrue(bone.cubes.isEmpty(), bone.name);continue;}
          assertTrue(!bone.cubes.isEmpty(), bone.name);
          if(bone.name.equals("reid_belt")) {assertEquals(6,bone.cubes.get(0).quads().length);continue;}
          for (GeoBone.Cube cube : bone.cubes) {

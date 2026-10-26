@@ -130,6 +130,31 @@ No raw input is committed and no listening proof is claimed.
 
 24 kHz mono Vorbis quality 4, faded/soft-limited source PCM peak -6.02 dBFS. Decoded true peaks measured with ffmpeg ebur128: draw -5.9, impact -5.3, sweep -5.1 dBFS. This is file-level headroom, not a claim of clipping-free scene mixing. Subjective gain and Minecraft mix require listening in game. Existing CC-BY attribution stays unchanged.
 
+## REINHARD OVERHAUL draw sounds (item 15; CC0 1.0 recordings and own synthesis)
+
+The Reid draw has its own five cues, one per phase of the 6 s draw (draw ticks 0-120), started by the client on the scene clock (`ReidDrawAudio`): only CC0 recordings and own synthesis (the older choir / rumble / unsheathe events are no longer played by the draw). Recordings were found with the sound-design skill (`.agents/skills/sound-design/scripts/openverse_sfx.py search`, `license=cc0&source=freesound`; queries such as `sword unsheathe slow metal scrape`, `metal scrape long`, `blade scrape metal slide`, `sword sheath draw`, `katana`, `deep boom impact`, `wind gust whoosh`) and fetched with its `download` command. License, creator and description were checked on each live Freesound page on **2026-10-26**; every page shows CC0 1.0. 337835 says it was cut up and edited from EpicWizard's [264889 "SFX Metal Shed Door - Hits, Clangs, Rattle"](https://freesound.org/people/EpicWizard/sounds/264889/), whose page is also CC0 1.0. The downloads are Openverse's Freesound **preview MP3s** (lossy, not the original masters); raw downloads, previews and scratch mixes are not committed. The verbatim Openverse attribution lines are kept in the local `~/.cache/viltrumite-sfx/work/credits.txt`.
+
+| Freesound | Original title / file name | Creator | License | Openverse ID | Used in |
+|---|---|---|---|---|---|
+| [592023](https://freesound.org/people/C-V/sounds/592023) | sword drawn.wav | C-V | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | c9cba616-8be5-47bc-9edb-ac99cb6843f3 | reid_draw_scrape (slow draw, rip and exit) |
+| [337835](https://freesound.org/people/newagesoup/sounds/337835) | long-metal-scrape-05.wav | newagesoup | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 0e790aec-2dbc-4a85-9771-e03c4ccb7065 | reid_draw_scrape (grit layer) |
+| [593485](https://freesound.org/people/Scottrex05/sounds/593485) | Katana sheath.wav | Scottrex05 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 787844c2-63f2-485a-8eaf-e23be80af3e0 | reid_draw_koiguchi (clack) |
+| [649933](https://freesound.org/people/AudioPapkin/sounds/649933) | Riser Hit sfx 046.wav | AudioPapkin | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 0b657f87-2549-45e8-a1ae-4a991818ced8 | reid_draw_release (hit and decay) |
+| [512389](https://freesound.org/people/Kievinay/sounds/512389) | Bass Impact - Ki_01.mp3 | Kievinay | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | d946174b-650a-4ef5-ba65-2b11686aa732 | reid_draw_koiguchi, reid_draw_release (also used by the strikes) |
+| [22426](https://freesound.org/people/kibibu/sounds/22426) | sword_2.wav | kibibu | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 2ee6f76b-8bfb-4129-b200-7bdc4f398bb0 | reid_draw_koiguchi, reid_draw_scrape, reid_draw_release (also used by the strikes) |
+
+`tools/sfx/reinhard_draw.py` is the only writer of these assets and holds the exact recipe (start, length, varispeed pitch, time stretch, filters, gains, fades, envelopes on the draw timeline of `ReidDrawChoreo`). `reid_draw_hum` and `reid_draw_air` are own synthesis (numpy, fixed seeds; CC0-1.0).
+
+| Cue | Starts on (draw tick) | Layers | Phase alignment | Level (100 ms K-weighted max / true-peak ceiling) |
+|---|---|---|---|---|
+| reid_draw_hum | d6, 6.3 s | own: low drone rising 41 to 55 Hz, a detuned second voice, inharmonic blade partials from the koiguchi, band-limited rumble bed | rises with the pull, trembles in the strain (86-92), holds its breath (92-96), swells at the release, natural decay | -17 LUFS / -3 dBTP |
+| reid_draw_koiguchi | d33, 0.6 s | 593485 katana clack (pitch 0.85), 22426 faint ring, 512389 felt thump | clack at 0.050 s = d34 (the mouth breaks) | -14 LUFS / -1 dBTP, at most 1.5 dB limiting |
+| reid_draw_scrape | d36, 3.8 s | 592023 slow tonal draw (pitch 0.8, stretched to 2.7 s) shaped by the extraction speed, 337835 grit from d58 stuttering in the strain, 592023 rip, 22426 ring of the freed blade | exit peak at 3.000 s = d96 (the release) | -12 LUFS / -1 dBTP, at most 1.5 dB limiting |
+| reid_draw_air | d56, 2.0 s | own: fluttering band of wind 250 to 1100 Hz, rate rising | sucked in over the last 0.2 s, cut at d96 | -19 LUFS / -3 dBTP |
+| reid_draw_release | d96, 4.8 s | 649933 riser hit (pitch 0.92), 512389 sub boom, 22426 deep ring (pitch 0.72), own burst of displaced air | transient at 0 = d96, natural decay over 4.8 s | -8 LUFS / -1 dBTP, at most 3 dB limiting |
+
+44.1 kHz mono Vorbis q5 through the skill helper's `package` command (`.ogg.b64`). `python3 tools/sfx/reinhard_draw.py --check` re-mixes from the downloads and compares with the committed files; `tools/sfx/tests/test_draw.py` and `ReidDrawAudioTest` keep the cue ticks, the Java schedule and `sounds.json` in sync. Levels are measured numbers, **not a listening test**: the sandbox has no audio playback, so the cues were not auditioned and still need an in-game listening pass.
+
 ## TEMPORARY test asset — World Cut strike voice (license NOT verified)
 
 REINHARD OVERHAUL item 12. `sword_strike_voice.ogg.b64` is the owner-confirmed sound of Reinhard's strike on

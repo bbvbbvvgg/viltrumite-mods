@@ -33,6 +33,14 @@ class ReinhardSoundsTest {
       "reid_hit", List.of("reid_hit_1", "reid_hit_2", "reid_hit_3"),
       "reid_heavy", List.of("reid_heavy_1", "reid_heavy_2"),
       "reid_drawn_hum", List.of("reid_drawn_hum"));
+   /** REINHARD OVERHAUL item 15: the Reid draw cues (tools/sfx/reinhard_draw.py), one file each, started by ReidDrawAudio; event -> attenuation. */
+   private static final Map<String, Integer> DRAW = Map.of(
+      "reid_draw_hum", 96, "reid_draw_koiguchi", 32, "reid_draw_scrape", 48, "reid_draw_air", 64, "reid_draw_release", 128);
+   /** The CC0 recordings behind the draw cues (two of them shared with the strikes). */
+   private static final List<String> DRAW_SOURCES = List.of(
+      "https://freesound.org/people/C-V/sounds/592023", "https://freesound.org/people/newagesoup/sounds/337835",
+      "https://freesound.org/people/Scottrex05/sounds/593485", "https://freesound.org/people/AudioPapkin/sounds/649933",
+      "https://freesound.org/people/Kievinay/sounds/512389", "https://freesound.org/people/kibibu/sounds/22426");
    /** REINHARD OVERHAUL item 12: owner-confirmed test sound, shipped byte-identical, license NOT verified. */
    private static final Map<String, String> TEMPORARY = Map.of("world_cut_strike_voice", "sword_strike_voice");
    private static final String TEMPORARY_SHA256 = "b7c97f3fb070687b8ae4252a627f4f9b932dd7975fb16cee1a3f4694b04ae1a6";
@@ -100,6 +108,14 @@ class ReinhardSoundsTest {
             if (pair.getKey().equals("reid_heavy")) choice.addProperty("attenuation_distance", 32);
             array.add(choice);
          }
+         definition.add("sounds", array); expected.add("reinhard." + pair.getKey(), definition);
+      }
+      for (var pair : DRAW.entrySet()) {
+         JsonObject definition = new JsonObject(); definition.addProperty("category", "player");
+         definition.addProperty("subtitle", "subtitles.viltrumitecore.reinhard_" + pair.getKey());
+         JsonObject choice = new JsonObject(); choice.addProperty("name", "viltrumitecore:reinhard/" + pair.getKey());
+         choice.addProperty("attenuation_distance", pair.getValue());
+         JsonArray array = new JsonArray(); array.add(choice);
          definition.add("sounds", array); expected.add("reinhard." + pair.getKey(), definition);
       }
       for (var pair : TEMPORARY.entrySet()) {
@@ -202,7 +218,7 @@ class ReinhardSoundsTest {
    @Test void everyFileExists() throws Exception {
       allFileReferencesExist(sounds());
       Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());all.addAll(DERIVED.values());
-      OVERHAUL.values().forEach(all::addAll); all.addAll(TEMPORARY.values());
+      OVERHAUL.values().forEach(all::addAll); all.addAll(TEMPORARY.values()); all.addAll(DRAW.keySet());
       for (String f : all) {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));
@@ -231,6 +247,22 @@ class ReinhardSoundsTest {
          assertTrue(row.contains("[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)"), id + " CC0 license link");
          assertTrue(hasExactSourceLink(credits, page), id + " credit link");
       }
+      assertTrue(section.contains("not a listening test"), "No listening claim without playback");
+   }
+   /** The draw cues are CC0 recordings and own synthesis only, each recording credited with its exact page and the CC0 1.0 link. */
+   @Test void drawRecordingsAreCreditedCc0() throws Exception {
+      String sources = text("tools/assets/reinhard_sources.md"), credits = text("CREDITS.md");
+      String section = sources.substring(sources.indexOf("## REINHARD OVERHAUL draw sounds"), sources.indexOf("## TEMPORARY test asset"));
+      for (String page : DRAW_SOURCES) {
+         String id = page.substring(page.lastIndexOf('/') + 1);
+         String row = Arrays.stream(section.split("\\R")).filter(l -> l.startsWith("| [" + id + "](" + page + ")")).findFirst().orElse("");
+         assertFalse(row.isBlank(), id + " source row");
+         assertTrue(row.contains("[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)"), id + " CC0 license link");
+         assertTrue(hasExactSourceLink(credits, page), id + " credit link");
+      }
+      for (String cue : DRAW.keySet()) assertTrue(section.contains(cue), cue + " processing record");
+      assertTrue(section.contains("tools/sfx/reinhard_draw.py") && credits.contains("tools/sfx/reinhard_draw.py"), "the mix script is the writer");
+      assertFalse(section.contains("creativecommons.org/licenses/"), "no attribution-licensed material in the draw");
       assertTrue(section.contains("not a listening test"), "No listening claim without playback");
    }
    /** The temporary strike voice is the owner's file byte for byte and is documented as unlicensed, to be replaced. */

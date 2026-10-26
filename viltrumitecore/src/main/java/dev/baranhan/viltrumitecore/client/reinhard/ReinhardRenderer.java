@@ -455,8 +455,10 @@ public final class ReinhardRenderer {
 
       // Draw/sheathe override an action; DRAWN idle is a base below the action.
       if (reidClip != null && !drawnIdle) {
+         // The weapon anchors (blade, freed scabbard) never fade with the surrounding body.
+         float reidBody = ReinhardPlayback.reidWeight(reid.animation().equals(ReinhardClips.REID_DRAW),reid.seconds(),reidClip.lengthSeconds());
          ReinhardLayers.overlay(reidClip, model, ReinhardPlayback.time(reidClip, reid.seconds()),
-            ReinhardPlayback.reidWeight(reid.animation().equals(ReinhardClips.REID_DRAW),reid.seconds(),reidClip.lengthSeconds()),"reid_grip");
+            bone -> bone.equals("reid_grip") || bone.equals("reid_sheath") ? 1 : reidBody);
       }
 
       // Stage 4: Lethal Chop (model mixins do not run for the replaced body).

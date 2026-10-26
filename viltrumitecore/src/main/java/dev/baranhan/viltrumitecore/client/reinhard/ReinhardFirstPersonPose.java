@@ -181,17 +181,18 @@ public final class ReinhardFirstPersonPose {
          channel(keys,t,1,continuous), channel(keys,t,2,continuous));
    }
 
-   /** Draw/sheathe remains driven by the six-second authoritative Reid phase. */
+   /**
+    * Draw/sheathe, driven by the six-second authoritative Reid phase: the arm pulls with the blade
+    * out of the scabbard and hands over to the {@link #DRAWN_GUARD} as the freed blade rises into
+    * the guard (a cross-fade on {@link ReinhardSword#handWeight}, never the two stacked).
+    */
    public static final Offset REID_PULL = new Offset(-.16F,.22F,-.10F,-52,18,-6);
    public static Offset reid(ReinhardPoses.ReidPhase phase, double ticks) {
       float weight = switch(phase) {
-         case DRAWING -> ReinhardPoses.bladeOut(phase,ticks)
-            * ReinhardPlayback.reidWeight(false,ticks/20.0,ReinhardRules.REID_DRAW_TICKS/20.0);
-         case SHEATHING -> ReinhardPoses.bladeOut(phase,ticks)
-            * ReinhardPlayback.reidWeight(true,ticks/20.0,ReinhardRules.REID_SHEATHE_TICKS/20.0);
+         case DRAWING, SHEATHING -> ReinhardPoses.bladeOut(phase,ticks) * (1 - ReinhardSword.handWeight(phase,ticks));
          default -> 0;
       };
-      return weight > 0 ? REID_PULL.scaled(weight) : Offset.NONE;
+      return weight > 0.001F ? REID_PULL.scaled(weight) : Offset.NONE;
    }
 
    public static Offset of(@Nullable ReinhardAbility ability, int phase, double ticks) {
