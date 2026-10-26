@@ -11,12 +11,11 @@ import java.lang.Math;
 import org.junit.jupiter.api.Test;
 
 class ReinhardEquipmentTest {
-   /** Ordinary drawn strokes, the sprint carry and the left-hand Lethal Chop are one-handed: the
-    * released support palm follows its own clip (3b item 2: never the empty scabbard). */
+   /** Only the left-hand Lethal Chop releases the support palm (it then follows its own clip, 3b item 2:
+    * never the empty scabbard); Reid strokes, the sprint carry and the Saw swings are two-handed. */
    static float oneHand(String clip,double ticks,double lengthTicks) {
-      if(clip.startsWith("reid_slash"))return ReinhardSword.strikeRelease(ticks,(int)Math.round(lengthTicks));
-      if(clip.equals("chop_left"))return ReinhardSword.chopRelease(ticks/lengthTicks);
-      return clip.equals("drawn_run")?1:0;
+      // Sword strokes, the Saw swings and the drawn sprint are two-handed (owner, after item 19).
+      return clip.equals("chop_left")?ReinhardSword.chopRelease(ticks/lengthTicks):0;
    }
    static BakedGeoModel weapon(String name)throws Exception {
       return BakedGeoModel.parse(JsonParser.parseString(Files.readString(Path.of("src/main/resources/assets/viltrumitecore/geo/reinhard/"+name+".geo.json"))).getAsJsonObject());
@@ -25,7 +24,7 @@ class ReinhardEquipmentTest {
       var clips=ReinhardSecondPassTest.clips();var blade=weapon("blade");var sheath=weapon("sheath");
       List<String> bad=new ArrayList<>();
       List<String> torsoHits=new ArrayList<>();
-      for(String name:new String[]{"reid_draw","reid_sheathe","world_cut","world_cut_from_left","diagonal_world_cut","world_erasure","cut_rain","sheath_strike","light_punch","chop_left","chop_right",
+      for(String name:new String[]{"reid_draw","reid_sheathe","world_cut","world_cut_from_left","diagonal_world_cut","world_erasure","saw_sphere","sheath_strike","light_punch","chop_left","chop_right",
          "reid_slash_down","reid_slash_rise","reid_slash_sweep","reid_slash_finish","reid_slash_low","drawn_stance","drawn_walk","drawn_run","air_step","land"}) {
          var clip=clips.get(name);
          for(double t=0;t<=clip.lengthSeconds()*20;t+=.5)for(boolean crouch:new boolean[]{false,true}) {
@@ -70,7 +69,7 @@ class ReinhardEquipmentTest {
    }
    @Test void bothDrawnPalmsReachDistinctHandlePointsWithoutIntersecting()throws Exception {
       var clips=ReinhardSecondPassTest.clips();List<String> bad=new ArrayList<>();
-      for(String name:new String[]{"idle_holy_drawn","world_cut","world_cut_from_left","diagonal_world_cut","world_erasure","cut_rain","light_punch","chop_left","chop_right",
+      for(String name:new String[]{"idle_holy_drawn","world_cut","world_cut_from_left","diagonal_world_cut","world_erasure","saw_sphere","light_punch","chop_left","chop_right",
          "reid_slash_down","reid_slash_rise","reid_slash_sweep","reid_slash_finish","reid_slash_low","drawn_stance","drawn_walk","drawn_run","air_step","land"})
          for(double t=0;t<=clips.get(name).lengthSeconds()*20;t+=1) {
             var b=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("idle_holy_drawn"),b,0);
@@ -158,7 +157,7 @@ class ReinhardEquipmentTest {
       for(var entry:clips.entrySet())for(double t=0;t<=entry.getValue().lengthSeconds()*20;t+=1) {
          var b=ReinhardSecondPassTest.body();AnimationController.seek(entry.getValue(),b,t/20);
          var phase=entry.getKey().equals("reid_draw")?ReinhardPoses.ReidPhase.DRAWING:entry.getKey().equals("reid_sheathe")?ReinhardPoses.ReidPhase.SHEATHING:
-            (Set.of("world_cut","world_cut_from_left","diagonal_world_cut","world_erasure","cut_rain","idle_holy_drawn","chop_left","chop_right").contains(entry.getKey())||entry.getKey().startsWith("reid_slash")||entry.getKey().startsWith("drawn_"))?ReinhardPoses.ReidPhase.DRAWN:ReinhardPoses.ReidPhase.SHEATHED;
+            (Set.of("world_cut","world_cut_from_left","diagonal_world_cut","world_erasure","saw_sphere","idle_holy_drawn","chop_left","chop_right").contains(entry.getKey())||entry.getKey().startsWith("reid_slash")||entry.getKey().startsWith("drawn_"))?ReinhardPoses.ReidPhase.DRAWN:ReinhardPoses.ReidPhase.SHEATHED;
          if(phase!=ReinhardPoses.ReidPhase.SHEATHED || Set.of("idle_holy","sheath_strike").contains(entry.getKey()))
             ReinhardSword.equipment(b,phase,t,entry.getKey().equals("sheath_strike"),t,1,oneHand(entry.getKey(),t,entry.getValue().lengthSeconds()*20));
          for(String limb:new String[]{"left_hand","right_hand","left_forearm","right_forearm"})

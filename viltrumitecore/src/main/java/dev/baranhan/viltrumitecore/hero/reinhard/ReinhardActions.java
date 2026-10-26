@@ -6,7 +6,6 @@ import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.AbilityHandler;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.CatchWindow;
-import dev.baranhan.viltrumitecore.hero.reinhard.ability.CutRain;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.DashBehind;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.FistCombo;
 import dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow;
@@ -47,7 +46,7 @@ public final class ReinhardActions {
       register(ReinhardAbility.REFLECT, new ReflectWindow());
       register(ReinhardAbility.REID, new ReidToggle());
       register(ReinhardAbility.DIAGONAL_WORLD_CUT, new DiagonalWorldCut());
-      register(ReinhardAbility.CUT_RAIN, new CutRain());
+      register(ReinhardAbility.SAW_SPHERE, new dev.baranhan.viltrumitecore.hero.reinhard.saw.SawSphere());
       register(ReinhardAbility.WORLD_CUT, new dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut());
       register(ReinhardAbility.WORLD_ERASURE, new dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldErasure());
    }

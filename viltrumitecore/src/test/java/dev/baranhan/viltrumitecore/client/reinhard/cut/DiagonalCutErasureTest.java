@@ -189,7 +189,7 @@ class DiagonalCutErasureTest {
       }
    }
 
-   @Test void crescentIsTheCutRainFormula() {
+   @Test void crescentKeepsTheFormulaOfTheRetiredCutRainWave() {
       Vec3 centre = new Vec3(3, 70, -2), span = new Vec3(0, 0.6, 0.8), dir = new Vec3(1, 0, 0);
       double radius = 2.4;
       for (int i = 0; i < 20; i++) {
@@ -200,10 +200,9 @@ class DiagonalCutErasureTest {
       assertEquals(centre, CrescentWave.point(centre, span, dir, radius, 1.2, 10, 21), "the middle leads");
    }
 
-   @Test void cutRainStillDrawsItsOwnWaveAndTheDiagonalCuesAreUntouched() throws Exception {
+   @Test void cutRainIsRetiredAndTheDiagonalCuesAreUntouched() throws Exception {
       Path root = Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/cut");
-      String rain = Files.readString(root.resolve("CutRainWaves.java"));
-      assertTrue(rain.contains("CrescentWave.draw(b,eye,c,centre,span,w.direction(),radius,1.2,20,trail==0?.13F:.08F,255,trail==0?249:216,trail==0?238:130,alpha)"));
+      assertFalse(Files.exists(root.resolve("CutRainWaves.java")), "item 19: the Saw Sphere replaced the Cut Rain waves");
       String diagonal = Files.readString(root.resolve("DiagonalCutScene.java"));
       String render = diagonal.substring(diagonal.indexOf("public static void render("));
       assertTrue(render.contains("if(rift)"), "the old rift is only the fallback");

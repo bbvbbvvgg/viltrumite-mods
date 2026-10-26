@@ -23,7 +23,7 @@ class ReinhardDefenseGeometryTest {
    }
    @Test void freeHandDefensePreservesWeaponHandAndBladeFrameDuringSwordStroke()throws Exception {
       var clips=ReinhardSecondPassTest.clips();
-      for(String clip:new String[]{"chop_right","chop_left","cut_rain","world_cut"})for(int tick=0;tick<=20;tick++) {
+      for(String clip:new String[]{"chop_right","chop_left","saw_sphere","world_cut"})for(int tick=0;tick<=20;tick++) {
          var b=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("idle_holy_drawn"),b,0);
          ReinhardLayers.overlay(clips.get(clip),b,tick/20.0,1);
          var weapon=ReinhardSword.equipment(b,ReinhardPoses.ReidPhase.DRAWN,0,false,0,1);

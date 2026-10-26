@@ -58,7 +58,6 @@ public final class ReinhardState {
    public boolean meleeQueued;
    /** Bodies the running strike already hit (one hit per body per strike); transient. */
    public final java.util.Set<java.util.UUID> meleeHit = new java.util.HashSet<>();
-   public float rainYaw,rainPitch;
    /** Transient self-root; no gravity/AI flag ownership and nothing to restore after logout. */
    public net.minecraft.world.phys.Vec3 cutAnchor;
    public net.minecraft.world.phys.Vec3 kickDirection=new net.minecraft.world.phys.Vec3(0,0,1);
@@ -79,17 +78,25 @@ public final class ReinhardState {
 
    /**
     * Busy = an action that must not be interrupted by a mode switch: Reid
-    * drawing / sheathing (Stage 4); World Cut, World Erasure (Stages 5-6).
+    * drawing / sheathing (Stage 4); World Cut, World Erasure (Stages 5-6); the Saw Sphere.
     */
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut worldCut;
 
    public dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldErasure worldErasure;
 
+   /** Overhaul item 19: the running Saw Sphere scene (level-owned), null outside it; transient. */
+   public dev.baranhan.viltrumitecore.hero.reinhard.saw.SawSphereScene sawSphere;
+
+   /** The Saw Sphere locks, protects and spins its caster for its whole 13 s. */
+   public boolean sawSphereActive() {
+      return this.sawSphere != null && !this.sawSphere.ended();
+   }
+
    public boolean busy() {
       // The detached cut blasts at tick 80, but the cast pose and movement lock
       // keep running until the action ends (tick 100): both must block MODE_CYCLE.
       // A cast dropped with its level never blasts and must not lock the caster.
-      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy()
+      return (worldErasure != null && !worldErasure.ended()) || this.reid.busy() || this.sawSphereActive()
          || (worldCut != null && !worldCut.blasted() && !worldCut.dropped())
          || this.action.is(ReinhardAbility.WORLD_CUT) || this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT);
    }

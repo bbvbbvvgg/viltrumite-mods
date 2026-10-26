@@ -199,7 +199,15 @@ public final class ReinhardHero implements HeroDefinition {
     */
    @Override
    public boolean allowsExternalControl(LivingEntity target, ControlKind kind) {
+      // The Saw Sphere holds its caster on the hover curve for 13 s: nothing else may move him.
+      if (target instanceof Player player && ReinhardFlags.has(flags(player), ReinhardFlags.SAW_SPHERE_ACTIVE)) return false;
       return kind != ControlKind.IMPULSE;
+   }
+
+   /** Overhaul item 19: invulnerable for exactly the Saw Sphere's 13 s (both sides; nothing outlives the scene). */
+   @Override
+   public boolean isAbsolutelyInvulnerable(Player self) {
+      return ReinhardFlags.has(flags(self), ReinhardFlags.SAW_SPHERE_ACTIVE);
    }
 
    /** Overhaul item 17: 100 % knockback resistance from mobs, players, explosions and hero pushes (both sides). */
@@ -294,7 +302,8 @@ public final class ReinhardHero implements HeroDefinition {
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.
          // Except while Reid is being drawn: the 6 s scene roots him (spec §7.1).
-         case JUMP, AIR_STEP -> !cinematicRoot(state) && state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWING;
+         // The Saw Sphere holds him on its hover curve for the whole scene.
+         case JUMP, AIR_STEP -> !cinematicRoot(state) && !state.sawSphereActive() && state.reid.phase() != dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.Phase.DRAWING;
          // Abilities (stage 3+): the mode, cooldown and timeline gate lives in ReinhardActions.
          default -> ReinhardActions.abilityFor(action) != null;
       };
@@ -554,6 +563,7 @@ public final class ReinhardHero implements HeroDefinition {
    @Override
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
       ReinhardState state = ReinhardState.ensure(self);
+      if (state.sawSphereActive()) return DamageAbsorb.ABSORBED;
       WindReading.onAttacked(self, state, source.getEntity());
       if (ReidLife.isCombat(source.getEntity(), source.getDirectEntity())) {
          state.reid.combat();
@@ -598,6 +608,8 @@ public final class ReinhardHero implements HeroDefinition {
     */
    @Override
    public float clampFinalDamage(ServerPlayer self, DamageSource source, float afterArmor) {
+      ReinhardState saw = ReinhardState.of(self);
+      if (saw != null && saw.sawSphereActive()) return 0.0F;
       boolean divine = isDivine(source);
       if (Phoenix.saves(divine, self.getHealth(), afterArmor, PersistentCooldowns.get(self, ReinhardRules.PHOENIX_KEY))) {
          Phoenix.revive(self, source.getEntity());
@@ -667,6 +679,8 @@ public final class ReinhardHero implements HeroDefinition {
    /** Spec §3.1: void and generic_kill never take him below 1 HP (/kill still kills: AdminKill). */
    @Override
    public float clampUnblockableDamage(ServerPlayer self, DamageSource source, float amount) {
+      ReinhardState saw = ReinhardState.of(self);
+      if (saw != null && saw.sawSphereActive()) return 0.0F;
       return ReinhardRules.floor(self.getHealth(), amount);
    }
 
@@ -864,6 +878,7 @@ public final class ReinhardHero implements HeroDefinition {
       }
 
       if(state.worldErasure!=null && !state.worldErasure.ended()) flags|=1<<ReinhardFlags.WORLD_ERASURE_ACTIVE;
+      if(state.sawSphereActive()) flags|=1<<ReinhardFlags.SAW_SPHERE_ACTIVE;
       return flags;
    }
 

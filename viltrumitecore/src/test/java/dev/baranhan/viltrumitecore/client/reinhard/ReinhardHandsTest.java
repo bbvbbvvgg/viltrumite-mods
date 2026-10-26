@@ -38,14 +38,13 @@ class ReinhardHandsTest {
 
    @Test
    void actionsReleaseTheSupportHandOnlyWhenTheyUseIt() {
-      for (var two : new ReinhardAbility[]{ReinhardAbility.CUT_RAIN, ReinhardAbility.WORLD_CUT, ReinhardAbility.DIAGONAL_WORLD_CUT, ReinhardAbility.WORLD_ERASURE}) {
+      // Owner, after item 19: Reinhard always holds Reid in both hands, every sword stroke included.
+      for (var two : new ReinhardAbility[]{ReinhardAbility.REID_STRIKE, ReinhardAbility.SAW_SPHERE, ReinhardAbility.WORLD_CUT,
+            ReinhardAbility.DIAGONAL_WORLD_CUT, ReinhardAbility.WORLD_ERASURE}) {
          assertTrue(ReinhardHands.twoHanded(two));
-         assertEquals(0, ReinhardHands.actionRelease(two, true, 5, 20), "two-handed " + two + " keeps both palms on the hilt");
+         for (double t = 0; t <= 20; t += .5)
+            assertEquals(0, ReinhardHands.actionRelease(two, true, t, 20), "two-handed " + two + " keeps both palms on the hilt");
       }
-      assertFalse(ReinhardHands.twoHanded(ReinhardAbility.REID_STRIKE));
-      assertEquals(1, ReinhardHands.actionRelease(ReinhardAbility.REID_STRIKE, false, 6, 13), 1E-6, "drawn strokes are one-handed");
-      assertEquals(0, ReinhardHands.actionRelease(ReinhardAbility.REID_STRIKE, false, 0, 13), 1E-6, "and take the hand back");
-      assertEquals(0, ReinhardHands.actionRelease(ReinhardAbility.REID_STRIKE, false, 13, 13), 1E-6);
       assertEquals(1, ReinhardHands.actionRelease(ReinhardAbility.LIGHT_PUNCH, true, 5, 12), 1E-6, "a left strike frees its hand");
       assertEquals(0, ReinhardHands.actionRelease(ReinhardAbility.LIGHT_PUNCH, false, 5, 12), 1E-6, "a right strike does not");
       assertEquals(0, ReinhardHands.actionRelease(ReinhardAbility.SHEATH_STRIKE, true, 5, 12), "Sheath Strike owns its grips");
@@ -94,9 +93,10 @@ class ReinhardHandsTest {
    @Test
    void aReleasedSupportHandFollowsItsClipNotTheEmptySheath() throws Exception {
       var clips = ReinhardSecondPassTest.clips();
-      for (String clip : new String[]{"drawn_run", "chop_left", "reid_slash_down"}) {
+      // Only the left-hand Lethal Chop lets go of the hilt; everything else is two-handed (owner, after item 19).
+      for (String clip : new String[]{"chop_left"}) {
          var length = clips.get(clip).lengthSeconds() * 20;
-         double t = clip.equals("drawn_run") ? 5 : clip.equals("chop_left") ? 7 : 6;
+         double t = 7;
          var free = ReinhardSecondPassTest.body();
          AnimationController.seek(clips.get("idle_holy_drawn"), free, 0);
          ReinhardLayers.overlay(clips.get(clip), free, t / 20, 1);

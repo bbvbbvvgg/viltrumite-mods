@@ -134,14 +134,14 @@ public final class Reid {
    }
 
    /**
-    * Pure slot conditions (spec §7.1): Sheath Strike only sheathed; Rain of Cuts,
+    * Pure slot conditions (spec §7.1): Sheath Strike only sheathed; Saw Sphere,
     * World Cut and World Erasure only drawn; everything else (the toggle itself,
     * the other modes) always. Lethal Chop is the kit chop and always works.
     */
    public static boolean allows(ReinhardAbility ability, Phase phase) {
       return switch (ability) {
          case SHEATH_STRIKE -> phase == Phase.SHEATHED;
-         case CUT_RAIN, WORLD_CUT, WORLD_ERASURE, DIAGONAL_WORLD_CUT -> phase == Phase.DRAWN;
+         case SAW_SPHERE, WORLD_CUT, WORLD_ERASURE, DIAGONAL_WORLD_CUT -> phase == Phase.DRAWN;
          default -> true;
       };
    }

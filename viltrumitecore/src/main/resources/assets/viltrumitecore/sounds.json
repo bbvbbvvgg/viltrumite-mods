@@ -882,14 +882,58 @@
       }
     ]
   },
-  "reinhard.cut_rain": {
+  "reinhard.saw_swing": {
     "category": "player",
-    "subtitle": "subtitles.viltrumitecore.reinhard_cut_rain",
+    "subtitle": "subtitles.viltrumitecore.reinhard_saw_swing",
     "sounds": [
       {
         "name": "viltrumitecore:reinhard/cut_cinematic_sweep",
         "stream": false,
         "attenuation_distance": 128
+      }
+    ]
+  },
+  "reinhard.saw_hum": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_saw_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/saw_hum",
+        "stream": false,
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "reinhard.saw_grind": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_saw_grind",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/saw_grind",
+        "stream": false,
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "reinhard.saw_finale": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_saw_finale",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/saw_finale",
+        "stream": false,
+        "attenuation_distance": 160
+      }
+    ]
+  },
+  "reinhard.saw_shatter": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_saw_shatter",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/saw_shatter",
+        "stream": false,
+        "attenuation_distance": 160
       }
     ]
   },

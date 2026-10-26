@@ -20,7 +20,10 @@ public final class ReinhardFlags {
    public static final int CHOP_LEFT_FORCED = 12;
    public static final int WORLD_CUT_ACTIVE = 13;
    public static final int WORLD_ERASURE_ACTIVE = 14;
-   // 15-31 reserved.
+   // 15-27: DefenseReaction (kind, yaw, pitch, hand).
+   /** The caster's Saw Sphere scene runs (overhaul item 19): slot grey, model spin, invulnerable. */
+   public static final int SAW_SPHERE_ACTIVE = 28;
+   // 29-31 reserved.
 
    /** extraCooldowns: 0-13 = ability cooldowns by ReinhardAbility ordinal, then these. */
    public static final int EXTRA_MODE_CD = 14;

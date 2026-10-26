@@ -76,22 +76,24 @@ public final class ReinhardRules {
    public static final int SHEATH_TICKS = 12;
    public static final int SHEATH_HIT_TICK = 6;
 
-   // ---- Rain of Cuts (spec §7, Holy Sword slot 4, Reid drawn only) ----
-   public static final int CUT_COUNT = 12;
-   /** Whole cone width in degrees of yaw (±15°). */
-   public static final int CUT_CONE_DEG = 30;
-   /** Length of every cut from the chest (blocks). */
-   public static final int CUT_RANGE = 40;
-   public static final int CUT_COOLDOWN = 8;
-   /** Groove section along each cut: 1 wide × 3 tall. */
-   public static final int CUT_GROOVE_WIDTH = 1;
-   public static final int CUT_GROOVE_HEIGHT = 3;
    /** Carve blocks per tick on a healthy server (= {@code CarveJobs.BASE_BUDGET}, shared with Stage 5). */
    public static final int CUT_BASE_BUDGET = 2000;
-   /** Action lock and the clip; the cuts land one per tick from {@link #CUT_FIRST_TICK}. */
-   public static final int CUT_TICKS = 46;
-   public static final int CUT_INTERVAL = 3;
-   public static final int CUT_FIRST_TICK = 7;
+
+   // ---- Saw Sphere (overhaul item 19, Holy Sword slot 4, Reid drawn only; score in SawChoreography) ----
+   /** 8 s from activation; the running scene blocks a new press on its own (busy), none after it ends. */
+   public static final int SAW_COOLDOWN = 160;
+   /** Free blocks over the head the activation needs. */
+   public static final int SAW_HEADROOM = 4;
+   /** Saw contacts checked per tick on a healthy server (falls with the tick time, {@code CarveBudget}). */
+   public static final int SAW_BASE_BUDGET = 640;
+   /** A target takes at most one saw hit per this many ticks. */
+   public static final int SAW_HIT_GATE = 5;
+   /** Share of max HP a hero loses per hit (mortals die: {@code Annihilation.strike}). */
+   public static final float SAW_HERO_DAMAGE = 0.2F;
+   /** Viewers receive the scene within this distance of the centre. */
+   public static final int SAW_VIEW_RANGE = 160;
+   /** Chunk tickets outlive the 13 s scene and are released at its end. */
+   public static final int SAW_TICKET_TICKS = 300;
 
    // World Cut (spec §7.6): dimensions in blocks; max build height is exclusive.
    public static final int CUT_LENGTH = 200;
@@ -299,7 +301,7 @@ public final class ReinhardRules {
          case SKY_KICK -> KICK_COOLDOWN; case GRAB_THROW -> GRAB_COOLDOWN;
          case DASH_BEHIND -> BEHIND_COOLDOWN; case STOMP -> STOMP_COOLDOWN;
          case REFLECT -> REFLECT_COOLDOWN; case SHEATH_STRIKE -> SHEATH_COOLDOWN;
-         case CUT_RAIN -> CUT_COOLDOWN; case WORLD_CUT, DIAGONAL_WORLD_CUT -> WORLD_CUT_COOLDOWN;
+         case SAW_SPHERE -> SAW_COOLDOWN; case WORLD_CUT, DIAGONAL_WORLD_CUT -> WORLD_CUT_COOLDOWN;
          case WORLD_ERASURE -> ERASE_COOLDOWN; default -> 0;
       };
    }

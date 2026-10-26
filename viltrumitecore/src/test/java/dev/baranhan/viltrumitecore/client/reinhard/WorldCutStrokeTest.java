@@ -128,7 +128,7 @@ class WorldCutStrokeTest {
       Matrix4f blade = ReinhardFirstPersonRig.blade(right(), arms, 1);
       assertEquals(0, blade.transformPosition(new Vector3f()).distance(ReinhardFirstPersonPose.CUT_PIVOT), 2E-3, "the rig turns about the right palm");
       assertEquals(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(ReinhardAbility.DIAGONAL_WORLD_CUT, 0, 60));
-      assertNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.CUT_RAIN, 0, 60), "only the two World Cuts");
+      assertNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.SAW_SPHERE, 0, 60), "only the two World Cuts");
       assertNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.WORLD_CUT, 0, Double.NaN));
       assertNotNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.DIAGONAL_WORLD_CUT, 0, 60));
    }

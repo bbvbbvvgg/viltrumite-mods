@@ -163,10 +163,10 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - Shared FX: `HeroFxS2CPacket` kinds `HIT_STOP` / `SONIC_RING` / `AIR_TRAIL` (`HeroFx.hitStop/sonicRing/airTrail`), client `HitStop` + `AirTrailVfx`. Icons `make_reinhard_icons.py`, clips `make_reinhard_clips.py`; `ReinhardClipsTest` checks every shipped ability's clips.
 
 ## Reinhard stage 4 (Holy Sword: Reid, Lethal Chop, Sheath Strike, Rain of Cuts, core 1.28.0)
-- `SHIPPED_STAGE = 4`. Reid (`hero/reinhard/reid/Reid`): sheathed → drawing (6 s, `ReidDrawEvent` world scene) → drawn (auto-return after 60 s without combat, `combat()` resets) → sheathing (1 s); snapshot flags `REID_DRAWING/DRAWN/SHEATHING`; pure slot rule `Reid.allows` (Sheath Strike only sheathed; Rain of Cuts / World Cut / World Erasure only drawn). Leaving Holy Sword sheathes.
+- `SHIPPED_STAGE = 4`. Reid (`hero/reinhard/reid/Reid`): sheathed → drawing (6 s, `ReidDrawEvent` world scene) → drawn (auto-return after 60 s without combat, `combat()` resets) → sheathing (1 s); snapshot flags `REID_DRAWING/DRAWN/SHEATHING`; pure slot rule `Reid.allows` (Sheath Strike only sheathed; Rain of Cuts — since item 19 the Saw Sphere — / World Cut / World Erasure only drawn). Leaving Holy Sword sheathes.
 - Draw scene: server `ReidDrawEvent` (gravity lift r 96 up to 2.5–3 blocks through `LiftLeases` + `GravityLift`, wave r 24 at the end, chat + far sound to the server), client `ReidDrawScene` + `ReidDrawSceneVfx` (shake, `SkyTint` dark sky, `SoundDuck` 25 %, cracks, pillar, funnel) via `ReidSceneS2CPacket`. Drawn: `ReidAura` (gold shell, motes, warm sky r 64), blade in the right hand.
 - Reid strike = `hero/Annihilation` (kills mortals; divine / absolutely invulnerable untouched). Lethal Chop = the kit chop through `HeroDefinition.chopStyle` (`hero/ChopStyle`) + `allowsKitAbility`; Reinhard chop 35 + bleed, forced left with Reid.
-- Sheath Strike (r 6, 20, FREEZE 3 s when `allowsExternalControl`, cd 8 s; stars `SheathStunStars`). Rain of Cuts (12 cuts ±15°, 40 blocks, `Annihilation.strike`, 1×3 grooves through `CarveJobs` / `HeroDestruction.clearBlock`, cd 15 s).
+- Sheath Strike (r 6, 20, FREEZE 3 s when `allowsExternalControl`, cd 8 s; stars `SheathStunStars`). Rain of Cuts (12 cuts ±15°, 40 blocks, cd 15 s) was retired by the Saw Sphere (item 19, see below).
 - Not checked: Oculus shaders with `SkyTint`, dedicated server start, in-game look (list in the PR).
 
 ## Reinhard stage 5 (World Cut, core 1.29.0)
@@ -347,3 +347,19 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - Reid blade +25 % via the one-shot `tools/assets/lengthen_reid_blade.py` (never rerun it on the lengthened geo); the sheath is lengthened to match.
 - Drawn state: `drawn_stance/drawn_walk/drawn_run` over the gait (`ReinhardRenderer.drawnGait`, sprint carry one-handed via `runCarry`), air-step and landing pulses (`client/hero/AirStepPulse`, `ReinhardMotion.pulses`).
 - 3b playtest fixes (core 1.41.0, branch `fix/reinhard-overhaul-3b-playtest`, stacked on PR #49; WIP PR #50 owns the Reid draw scene): World Cut carve per column, drawn hum kept alive, one continuous Erasure, colossal diagonal wound, heavy BLAST explosion (`world_cut_explosion`, `tools/sfx/reinhard_explosion.py`) and camera jolt (`WorldCutJolt`); first-person rig rewrite (`ReinhardFirstPersonRig`, `ReinhardFirstPersonFrame`, `ReinhardHands`), first-person World Cuts as `ReinhardFirstPersonPose.cutView`, accelerating World Cut swings with coil/follow-through (`WorldCutStrokeTest`). Not reviewed in game yet.
+
+## Saw Sphere (item 19, core 1.44.0, protocol 7; replaces Rain of Cuts)
+- Pure score `hero/reinhard/saw/SawChoreography` (260 ticks, 35 discs in 4 rings, 46 swings 44..224, final 232, shatter 248). Discs descend on a helix (angle = home + 0.12 rad per block sunk; a time-based orbit left gaps); flat-ground coverage 100 % except the caster's own columns, tested for six yaws/offsets. Client and server derive every disc from it; packets: `SawSphereS2CPacket` (centre, anchor yaw, age for late viewers, cell count, activity bits) and `SawSphereEndS2CPacket`.
+- Barrier `SawShell` (half-block surface cells above Y0, flood-fill activation once, never healed) is real collision through `SawShellCollisionMixin` (`Entity#collide` shape list, caster exempt) and blocks teleports (`SawSphereManager`, commands exempt). Registries per side in `SawShells`.
+- Scene `SawSphereScene`: region tickets, watchdog, invulnerable hovering caster, cuts via `HeroDestruction.setAir(CLEAR_FLAGS)` + `BreakEvent`, loot extracted first (`SawLoot`), mortals `Annihilation.strike`, heroes 20 % max HP per hit. Tick phase `SAW_SPHERE` before `CARVE`. Every interruption = `end(true)`.
+- `reinhard:cut_rain` migrates to `reinhard:saw_sphere`. Sounds `tools/sfx/reinhard_saw_sphere.py` (own synthesis, not auditioned). Plan: `docs/plans/2026-10-27-reinhard-saw-sphere.md`.
+
+## Core 1.45.0 (two hands, shatter, lattice sphere)
+- Reinhard always holds and strikes with TWO hands while the sword is drawn: `ReinhardHands.twoHanded` covers every
+  Reid strike, the sprint carry and the Saw Sphere. Third-person grips are fitted so forearms and blade clear the head
+  and body (`ReinhardEquipmentTest`); first person keeps the right-arm strike rows and carries the left palm to the
+  pommel (`ReinhardFirstPersonPose.support` = NONE for two-handed abilities, `sawSphere(ticks)` absolute keys).
+- Sphere visuals: fresnel shell, Goldberg hex lattice with rising pulses, glowing seams at mask holes, triangular
+  spinning shards (`SawSphereRenderer`; CPU preview `SawSpherePreviewTest` with `SAW_PREVIEW=1` +
+  `tools/preview_saw_sphere.py`).
+- Released as GitHub release `v1.45.0-reinhard` together with flight 1.10.1; the overhaul stack (#47–#54) merged to main.

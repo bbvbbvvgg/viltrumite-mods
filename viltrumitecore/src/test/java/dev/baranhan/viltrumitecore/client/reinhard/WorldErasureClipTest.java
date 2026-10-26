@@ -20,7 +20,7 @@ class WorldErasureClipTest {
       assertTrue(AnimationParser.lastWarnings.isEmpty());
       for (String name : List.of("light_punch", "step_dash", "catch", "combo_1", "combo_2", "combo_3",
          "kick_toss", "kick", "grab_hold", "throw", "dash_behind", "stomp", "reflect", "reid_draw",
-         "reid_sheathe", "chop_right", "chop_left", "sheath_strike", "cut_rain", "world_cut", "world_erasure")) {
+         "reid_sheathe", "chop_right", "chop_left", "sheath_strike", "saw_sphere", "world_cut", "world_erasure")) {
          assertNotNull(clips.get(name), name);
          assertTrue(clips.get(name).lengthSeconds() > 0, name);
       }

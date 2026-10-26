@@ -338,9 +338,6 @@ CLIPS['diagonal_world_cut'] = action(100,
     **cut_legs(([-10,0,5],[-8,0,5],[-18,0,5],[-20,0,5]),([-5,4,-5],[-6,5,-5],[12,-4,-5],[14,-5,-5]),
                ([6,0,0],[5,0,0],[20,0,0],[24,0,0]),([6,0,0],[6,0,0],[14,0,0],[16,0,0])))
 pos(CLIPS['diagonal_world_cut'],'body',CUT_BODY_DROP)
-CLIPS['cut_rain'] = action(46,
-    body=[(0,[0,0,0]),(4,[-4,0,0])]+[(7+i*3,[4,(-1)**i*7,0]) for i in range(12)]+[(46,[0,0,0])],
-    head=[(0,[0,0,0]),(7,[-3,0,0]),(40,[-3,0,0]),(46,[0,0,0])])
 CLIPS['world_erasure'] = action(150,
     right_arm=[(0,[-26,-10,6]),(15,[-115,-12,8]),(30,[-115,-12,8],'easeInCubic'),(40,[-45,-52,-8],'easeOutCubic'),(150,[-45,-52,-8])],
     right_forearm=[(0,[-18,0,0]),(15,[-38,0,0]),(30,[-38,0,0]),(40,[-8,0,0]),(150,[-8,0,0])],
@@ -444,14 +441,6 @@ weapon(CLIPS['light_punch'],[(0,*READY),(2,[1,20,-6],[275,0,0]),
 # Preserve the ability's existing timelines, hit events and world effects.
 weapon(CLIPS['sheath_strike'],[(0,*HIP),(3,[0,18,-6],[270,0,0]),(4,[4,18,-7],[270,0,0]),
     (7,[5,18,-8],[270,0,0]),(12,*HIP)])
-RAIN_WEAPON=[(0,*READY),(4,[0,20,-6.5],[320,0,0])]
-for i in range(12):
-    t=7+i*3
-    sign=(-1)**i
-    RAIN_WEAPON.extend([(t-1.5,[0,20,-6.5],[320,0,sign*10]),
-                        (t,[1,20,-6.5],[260,0,-sign*10])])
-RAIN_WEAPON.append((46,*READY))
-weapon(CLIPS['cut_rain'],RAIN_WEAPON)
 
 # Lethal Chop. The right-hand chop carries Reid down with the hand that holds it. The
 # left-hand chop is the free support hand: it lets go of the pommel (ReinhardHands /
@@ -509,11 +498,15 @@ CLIPS['light_hook']=action(12,
     right_leg=[(0,[0,0,0]),(5,[-10,0,2]),(12,[0,0,0])],
     left_leg=[(0,[0,0,0]),(5,[8,0,-2]),(12,[0,0,0])])
 
-# Drawn Reid ordinary strokes are ONE-HANDED (ReinhardSword.strikeRelease): the left palm
-# leaves the pommel for the scabbard mouth over the first ticks and returns at the end.
-# Rows are authored by the RIGHT PALM (guard end of the hilt) so the arm reach is visible
-# in the data: shoulder (5,22,0) -> elbow -> wrist is 4.5 + 4.81 = 9.31 px, keep every
-# palm 6..8.9 px from the shoulder (no locked elbow, no residual in crouch either).
+# Drawn Reid strokes are TWO-HANDED (owner, after item 19: "always both hands on the hilt"):
+# the left palm keeps the pommel (ReinhardSword.gripAt POMMEL_GRIP, 3.81 px below the right
+# palm along the blade) through every stroke. Rows are authored by the RIGHT PALM (guard end
+# of the hilt) so the arm reach is visible in the data: shoulder -> elbow -> wrist is
+# 4.5 + 4.81 = 9.31 px; both palms stay 4.6..8.8 px from their shoulders (right (5,22,0),
+# left (-5,22,0)), 3.95 px in front of the chest, and the whole blade 0.3 px off the head and
+# torso. The blade angles are the one-handed paths (the cut planes and the swing, the deepest
+# wind-ups eased toward vertical where two hands cannot reach); only the hands moved toward
+# the centre line, found by a grid search per key with the motion between keys preserved.
 # The hand stays right of / below the head (hair envelope); the blade points away from
 # the torso in body space, the chest twist (body ky) carries the stroke across.
 PALM_PX = 3.5*.574*.78   # handle centre -> guard-side palm along the blade, scaled like the mesh
@@ -539,8 +532,9 @@ def palm_rows(rows):
 REID_STRIKES={
  # Forehand diagonal: blade loaded over the right shoulder, cut to the lower left.
  'reid_slash_down':dict(length=13,
-   grip=palm_rows([(0,READY),(1,[6,21.4,-7],[376,0,-42]),(2,[8.6,26,-3.4],[400,0,-36]),(3.4,[7,24.5,-6.5],[362,0,-40]),
-         (4.4,[4.5,21.5,-8.3],[292,0,-42]),(5.4,[3,18.8,-7.4],[238,0,-42]),(7,[2.8,17.6,-6.4],[226,0,-44]),(13,READY)]),
+   grip=palm_rows([(0,READY),(1,[2.25,22.65,-6],[376,0,-42]),(2,[1.35,26.75,-6.4],[376,0,-36]),
+         (3.4,[1.75,25,-7.5],[362,0,-40]),(4.4,[1.5,21.75,-8.05],[292,0,-42]),(5.4,[1.25,19.3,-7.4],[238,0,-42]),
+         (7,[0.8,18.85,-6.9],[226,0,-44]),(13,READY)]),
    body=[(0,[0,0,0]),(2,[-4,20,0]),(3.4,[-1,12,0]),(4.4,[3,-4,0]),(5.4,[5,-18,0]),(7,[5,-22,0]),(13,[0,0,0])],
    head=[(0,[0,0,0]),(2,[-3,-14,0]),(5.4,[0,12,0]),(7,[0,14,0]),(13,[0,0,0])],
    forearm=[(0,[-18,0,0]),(2,[-44,0,0]),(4.4,[-12,0,0]),(7,[-10,0,0]),(13,[-18,0,0])],
@@ -549,8 +543,9 @@ REID_STRIKES={
    left_leg=[(0,[0,0,0]),(4.4,[10,0,-3]),(8,[10,0,-3]),(13,[0,0,0])]),
  # Backhand rising diagonal: from the low left (chest turned left) up past the right shoulder.
  'reid_slash_rise':dict(length=13,
-   grip=palm_rows([(0,READY),(2,[1.6,16.8,-5.6],[206,0,-52]),(3.4,[2.4,17.8,-6.8],[230,0,-46]),
-         (4.4,[4.2,20.6,-8.3],[286,0,-42]),(5.4,[6.2,23.6,-6.8],[350,0,-42]),(7,[8,25.6,-4],[384,0,-40]),(9.5,[6.4,21,-7],[366,0,-46]),(13,READY)]),
+   grip=palm_rows([(0,READY),(2,[-0.15,18.3,-5.85],[206,0,-52]),(3.4,[0.9,19.05,-7.05],[230,0,-46]),
+         (4.4,[2.95,21.35,-8.3],[286,0,-42]),(5.4,[4.45,24.35,-6.05],[350,0,-42]),
+         (7,[2.5,25.35,-6],[376.8,0,-40]),(9.5,[1.9,21.75,-6.75],[366,0,-46]),(13,READY)]),
    body=[(0,[0,0,0]),(2,[4,-22,0]),(3.4,[3,-14,0]),(4.4,[1,0,0]),(5.4,[-2,14,0]),(7,[-4,18,0]),(13,[0,0,0])],
    head=[(0,[0,0,0]),(2,[4,14,0]),(5.4,[-3,-10,0]),(13,[0,0,0])],
    forearm=[(0,[-18,0,0]),(2,[-30,0,0]),(4.4,[-14,0,0]),(7,[-34,0,0]),(13,[-18,0,0])],
@@ -559,9 +554,9 @@ REID_STRIKES={
    left_shin=[(0,[0,0,0]),(5.4,[14,0,0]),(13,[0,0,0])]),
  # Forehand horizontal at chest height (below the chin), right to left.
  'reid_slash_sweep':dict(length=15,
-   grip=palm_rows([(0,READY),(3,[9.2,21.2,-4.6],[404,0,-90]),(4.2,[8.4,21,-6.6],[372,0,-90]),(5.2,[7,20.8,-8],[330,0,-90]),
-         (6.2,[4.8,20.8,-8.4],[276,0,-90]),(7.2,[2.8,20.8,-7.9],[226,0,-90]),(8.2,[1.8,20.8,-6.8],[194,0,-90]),
-         (10,[2,20.6,-6.2],[186,0,-84]),(15,READY)]),
+   grip=palm_rows([(0,READY),(3,[2.95,19.2,-4.1],[399.6,0,-90]),(4.2,[3.9,19.75,-5.85],[372,0,-90]),
+         (5.2,[4,20.05,-7.5],[330,0,-90]),(6.2,[2.8,20.3,-8.15],[276,0,-90]),(7.2,[0.05,21.05,-6.9],[226,0,-90]),
+         (8.2,[-1.2,21.05,-5.3],[194,0,-90]),(10,[-1.5,20.85,-5.2],[186,0,-84]),(15,READY)]),
    body=[(0,[0,0,0]),(3,[0,28,0]),(4.2,[0,20,0]),(5.2,[2,8,0]),(6.2,[3,-6,0]),(7.2,[3,-20,0]),(8.2,[3,-28,0]),
          (10,[2,-28,0]),(15,[0,0,0])],
    head=[(0,[0,0,0]),(3,[0,-20,0]),(7.2,[0,14,0]),(10,[0,20,0]),(15,[0,0,0])],
@@ -570,11 +565,12 @@ REID_STRIKES={
    left_leg=[(0,[0,0,0]),(3,[6,0,-8]),(10,[6,0,-8]),(15,[0,0,0])],
    right_shin=[(0,[0,0,0]),(3,[12,0,0]),(10,[12,0,0]),(15,[0,0,0])],
    left_shin=[(0,[0,0,0]),(3,[12,0,0]),(10,[12,0,0]),(15,[0,0,0])]),
- # Heavy finisher: one-handed high guard right of the head, the chest folds into the cut.
+ # Heavy finisher: two-handed high guard over the brow, the chest folds into the cut.
  'reid_slash_finish':dict(length=22,
-   grip=palm_rows([(0,READY),(2,[7.4,23,-6.6],[376,0,-30]),(4,[8.2,29.6,-1.6],[398,0,-16]),(6.5,[8.4,30,-1.2],[404,0,-14]),(7.3,[7.6,28.6,-4.6],[370,0,-10]),
-         (8.2,[6,25.4,-7.6],[326,0,-6]),(9.2,[4.6,21.6,-8.6],[274,0,-2]),(10.2,[3.8,18.6,-7.6],[252,0,0]),
-         (14,[3.8,18.4,-7.4],[248,0,0]),(22,READY)]),
+   grip=palm_rows([(0,READY),(2,[0.65,25.25,-6.85],[376,0,-30]),(4,[0.7,26.1,-6.35],[375.2,0,-16]),
+         (6.5,[1.15,27,-5.95],[373.2,0,-14]),(7.3,[1.1,26.6,-6.1],[370,0,-10]),
+         (8.2,[1.75,24.15,-7.85],[326,0,-6]),(9.2,[1.85,20.85,-8.1],[274,0,-2]),(10.2,[2.3,18.6,-7.6],[252,0,0]),
+         (14,[2.3,18.65,-7.65],[248,0,0]),(22,READY)]),
    body=[(0,[0,0,0]),(4,[-10,8,0]),(6.5,[-12,8,0]),(7.3,[-6,4,0]),(8.2,[4,0,0]),(9.2,[11,-2,0]),(10.2,[14,-2,0]),
          (14,[12,-2,0]),(22,[0,0,0])],
    head=[(0,[0,0,0]),(4,[-8,0,0]),(6.5,[-10,0,0]),(9.2,[-14,0,0]),(14,[-12,0,0]),(22,[0,0,0])],
@@ -586,9 +582,10 @@ REID_STRIKES={
    body_pos=[(0,[0,0,0]),(6.5,[0,.4,0]),(9.2,[0,-1,-.5]),(14,[0,-.9,-.4]),(22,[0,0,0])]),
  # Crouch: low backhand sweep at hip height, left to right; the blade stays in front of the hips.
  'reid_slash_low':dict(length=16,
-   grip=palm_rows([(0,READY),(3,[1.8,18,-6.6],[185,0,-96]),(4.2,[2.6,18.2,-7.1],[206,0,-96]),(5.2,[3.8,18.4,-7.4],[240,0,-96]),
-         (6.2,[5.4,18.4,-7.5],[276,0,-96]),(7.2,[7.2,18.6,-6.8],[318,0,-96]),(8.2,[8.4,19,-5.6],[350,0,-96]),
-         (10,[8.8,19.4,-4.6],[364,0,-92]),(16,READY)]),
+   grip=palm_rows([(0,READY),(3,[-1.7,19.25,-4.35],[185,0,-96]),(4.2,[-1.15,19.7,-5.85],[206,0,-96]),
+         (5.2,[0.55,20.4,-7.4],[240,0,-96]),(6.2,[2.9,19.65,-7.75],[276,0,-96]),
+         (7.2,[5.2,19.6,-6.8],[318,0,-96]),(8.2,[6.15,20,-5.1],[350,0,-96]),(10,[6.05,20.15,-4.35],[364,0,-92]),
+         (16,READY)]),
    body=[(0,[0,0,0]),(3,[6,-26,0]),(4.2,[6,-18,0]),(5.2,[6,-6,0]),(6.2,[6,8,0]),(7.2,[6,18,0]),(8.2,[6,26,0]),
          (10,[5,26,0]),(16,[0,0,0])],
    head=[(0,[0,0,0]),(3,[6,22,0]),(8.2,[6,-20,0]),(16,[0,0,0])],
@@ -599,7 +596,70 @@ REID_STRIKES={
    left_shin=[(0,[0,0,0]),(3,[30,0,0]),(10,[30,0,0]),(16,[0,0,0])],
    body_pos=[(0,[0,0,0]),(3,[0,-.8,0]),(10,[0,-.8,0]),(16,[0,0,0])]),
 }
+# Two-handed grip fit (core 1.45.0): the support palm stays on the pommel in every Reid strike, the Saw
+# Sphere swings and the sprint carry, so the authored grip is offset at these ticks {tick: (dx, dy, dz px in
+# authored space, x-rotation deg)} until both forearms and the blade clear the head and body with both palms
+# on the hilt (ReinhardEquipmentTest). Found by a search over grip offsets at every half tick; a tick between
+# two authored keys becomes a key, interpolated from the authored rows.
+TWO_HAND_FIT = {
+  'drawn_run':{
+    0:(0,-0.5,0,0),0.5:(0,-0.5,0,0),2.5:(0,-0.5,0,0),3:(0,-0.5,0,5),3.5:(0.5,0,0,0),4:(0.5,0,0,0),4.5:(0.5,0,0,0),
+    5:(0.5,0,0,0),5.5:(0.5,0,0,0),6:(0.5,0,0,0),6.5:(0.5,0,0,0),7:(0,-0.5,0,5),7.5:(0,-0.5,0,0),9.5:(0,-0.5,0,0),
+    10:(0,-0.5,0,0),10.5:(0,-0.5,0,0),19.5:(0,-0.5,0,0),20:(0,-0.5,0,0),
+  },
+  'reid_slash_down':{
+    1:(-1.75,-0.75,-1.25,0),1.5:(0.5,-3.75,0.5,0),2:(1.5,-4.75,0,25),2.5:(1.25,-5,1.25,0),3:(-0.5,-3.25,0,0),
+    3.4:(0.75,-1.75,0,0),4:(0,-0.75,0,0),5:(0,-0.75,0,0),5.5:(0,-0.75,0,0),6:(-0.75,-0.75,0.5,0),6.5:(0,-0.75,0.75,0),
+    7:(0,-0.75,0,0),7.5:(0,-0.75,0.5,0),8:(0,0,0.5,0),
+  },
+  'reid_slash_finish':{
+    2:(0,-3.25,0,5),2.5:(-0.75,-3.5,-0.5,5),3:(-2,-4,0,5),3.5:(-0.25,-3,-0.5,5),4:(0,-4.25,0,10),4.5:(0,-3.75,0,10),
+    5:(-1.25,-3.75,-0.75,0),5.5:(-0.75,-3.75,-0.75,0),6:(-1.25,-4.25,-0.75,0),6.5:(-1.75,-4.25,-1.25,0),
+    7:(-1.75,-4.25,-0.75,0),7.5:(-1.25,-3.25,-0.75,0),8:(0.25,-0.75,0,0),
+  },
+  'reid_slash_low':{
+    1.5:(0,0,0.25,0),2:(0,0,-0.25,0),2.5:(-0.5,0,0.25,0),3:(0,0.75,-1.5,0),3.5:(0,0,-0.5,0),8.2:(-0.75,0,0,0),
+    8.5:(-1,-0.5,0,0),9:(-0.5,-0.75,0,0),10:(0,-0.75,0,0),
+  },
+  'reid_slash_rise':{
+    1.5:(0,0,0.75,0),2:(-0.75,-0.75,0.75,0),2.5:(0,-0.5,0.75,0),3:(-0.5,-0.5,0.75,0),3.4:(-0.5,-0.75,0.25,0),5:(-0.5,-0.5,0,0),5.4:(-0.5,-2,-0.75,0),6:(0.25,-2,-0.25,0),
+    6.5:(-2.25,-2.75,-1.5,0),7:(-2,-3,-1.25,0),7.5:(-1.5,-2.25,-0.75,5),8:(-1,-1.5,-1,0),8.5:(-0.5,-0.75,-0.75,0),
+    9:(-0.75,-1,-0.75,0),9.5:(-0.75,0,-0.75,0),
+  },
+  'reid_slash_sweep':{
+    1.5:(0,0,-1.25,0),2:(-0.75,0,-0.5,0),2.5:(-0.75,0,-1,0),3:(-0.75,0,-1.25,0),7.2:(0,-0.75,0,0),8:(0,-0.5,0,0),
+    8.2:(-0.75,-0.75,-0.75,0),8.5:(0,-1,-0.25,0),9:(0,-1,-0.5,0),9.5:(0,-0.75,-0.75,-10),10:(0,-1,-0.75,-5),
+    10.5:(0.75,-1,0.25,0),11:(0.75,-0.5,0.75,0),11.5:(0.75,-0.25,-0.25,0),12:(0.75,-0.25,-0.75,0),
+    12.5:(0.5,0,-0.75,0),13:(0.5,0,-1,0),13.5:(0,0,-0.5,0),
+  },
+  'saw_sphere':{
+    235.5:(0,-0.5,0,0),236:(0,-0.5,0,0),247.5:(0.5,0,0,0),248:(0,0,0.5,0),248.5:(0,0,0.5,0),249:(0,0,0.5,0),
+    249.5:(0,0,0.5,0),250:(0,0,0.5,0),250.5:(0,0,0.5,0),251:(0,0,0.5,0),251.5:(0,0,0.5,0),252:(0,0,0.5,0),
+    252.5:(0,0,0.5,0),
+  },
+}
+def _nudged(name, rows):
+    """rows (t, grip, rot) with the TWO_HAND_FIT offsets of the clip applied."""
+    extra=TWO_HAND_FIT.get(name)
+    if not extra: return rows
+    base=[list(r) for r in rows]
+    rows=[list(r) for r in rows]
+    for t,d in sorted(extra.items()):
+        if any(abs(r[0]-t)<1e-6 for r in rows): continue
+        for i in range(len(base)-1):
+            a,b=base[i],base[i+1]
+            if a[0]<t<b[0]:
+                f=(t-a[0])/(b[0]-a[0])
+                rows.append([t,[x+(y-x)*f for x,y in zip(a[1],b[1])],[x+(y-x)*f for x,y in zip(a[2],b[2])]]); break
+    rows.sort(key=lambda r:r[0])
+    for t,d in sorted(extra.items()):
+        for r in rows:
+            if abs(r[0]-t)<1e-6:
+                r[1]=[round(x+y,3) for x,y in zip(r[1],d[:3])]
+                if len(d)>3: r[2]=[round(r[2][0]-d[3],2)]+list(r[2][1:])
+    return [tuple(r) for r in rows]
 for name,m in REID_STRIKES.items():
+    m['grip']=_nudged(name,m['grip'])
     bones=dict(body=m['body'],head=m['head'],right_forearm=m['forearm'],
         left_forearm=[(0,[-8,0,0]),(m['length'],[-8,0,0])])
     for leg in ['right_leg','left_leg','right_shin','left_shin']:
@@ -607,6 +667,65 @@ for name,m in REID_STRIKES.items():
     CLIPS[name]=action(m['length'],**bones)
     if 'body_pos' in m: pos(CLIPS[name],'body',m['body_pos'])
     weapon(CLIPS[name],m['grip'])
+
+# Saw Sphere (item 19, SawChoreography): 260 ticks, airborne the whole time while the server holds him
+# on the hover curve and the renderer spins the body yaw. TWO-handed (ReinhardHands.twoHanded: the left
+# palm never leaves the pommel): both hands fling a saw on every swing, alternating forehand (right ->
+# left, the two-handed reid_slash_sweep path) and backhand (the same chest-high path back, left ->
+# right: the arc is proven clear of head and body by the sweep) every
+# SAW_PERIOD ticks from SAW_LAUNCH to SAW_LAST; then the big final forehand at SAW_FINAL and the descent.
+SAW_LENGTH, SAW_RISE, SAW_LAUNCH, SAW_PERIOD, SAW_LAST, SAW_FINAL, SAW_DESCEND = 260, 24, 44, 4, 224, 232, 246
+# reid_slash_sweep key times 3 .. 8.2 and their palm rows, body / head twist and forearm (interpolated).
+_SWEEP_T = [3, 4.2, 5.2, 6.2, 7.2, 8.2]
+_SWEEP_PALM = [([2.45,19.7,-5.35],[399.6,0,-90]),([3.9,19.75,-5.85],[372,0,-90]),([4,19.55,-7.5],[330,0,-90]),
+               ([2.8,20.3,-8.15],[276,0,-90]),([-0.45,20.55,-6.4],[226,0,-90]),([-1.2,20.55,-5.8],[194,0,-90])]
+_SWEEP_BODY = [[0,28,0],[0,20,0],[2,8,0],[3,-6,0],[3,-20,0],[3,-28,0]]
+_SWEEP_HEAD = [[0,-20,0],[0,-14,0],[0,-6,0],[0,4,0],[0,14,0],[0,16,0]]
+_SWEEP_FORE = [-50,-36,-22,-8,-12,-16]
+SAW_LEGS = dict(right_leg=[-25,0,4], left_leg=[12,0,-4], right_shin=[38,0,0], left_shin=[20,0,0])
+def _saw_sweep(start, length, backhand):
+    """(t, index) of the sweep keys over [start, start+length]; a backhand runs them in reverse."""
+    span = _SWEEP_T[-1] - _SWEEP_T[0]
+    order = range(len(_SWEEP_T) - 1, -1, -1) if backhand else range(len(_SWEEP_T))
+    return [(round(start + (abs(_SWEEP_T[i] - (_SWEEP_T[-1] if backhand else _SWEEP_T[0])) / span) * length, 3), i)
+            for i in order]
+def _saw_clip():
+    grip, body, head, fore = [(0, READY)], [(0,[0,0,0])], [(0,[0,0,0])], [(0,[-18,0,0])]
+    # the rise: the blade drawn back to the loaded forehand pose (sweep start), chest turned right
+    for t in (SAW_RISE, SAW_LAUNCH - SAW_PERIOD / 2):
+        grip.append((t, list(_SWEEP_PALM[0][0]), list(_SWEEP_PALM[0][1])))
+        body.append((t, [-4, 24, 0])); head.append((t, [-6, -18, 0])); fore.append((t, [-46, 0, 0]))
+    swing = 0
+    for contact in range(SAW_LAUNCH, SAW_LAST + 1, SAW_PERIOD):
+        start = contact - SAW_PERIOD / 2
+        for t, i in _saw_sweep(start, SAW_PERIOD, swing % 2 == 1)[1:]:
+            grip.append((t, *_SWEEP_PALM[i])); body.append((t, _SWEEP_BODY[i])); head.append((t, _SWEEP_HEAD[i]))
+            fore.append((t, [_SWEEP_FORE[i], 0, 0]))
+        swing += 1
+    # SAW_LAST was a backhand: the hand is back on the right; coil a little deeper and hold
+    assert swing % 2 == 0
+    coil = SAW_FINAL - 3
+    grip.append((coil, list(_SWEEP_PALM[0][0]), list(_SWEEP_PALM[0][1])))
+    body.append((coil, [-6, 30, 0])); head.append((coil, [-8, -20, 0])); fore.append((coil, [-52, 0, 0]))
+    final = _saw_sweep(SAW_FINAL - 1.5, 4, False)[1:]
+    for t, i in final:
+        grip.append((t, *_SWEEP_PALM[i])); body.append((t, [b + (4 if k == 0 else 0) for k, b in enumerate(_SWEEP_BODY[i])]))
+        head.append((t, _SWEEP_HEAD[i])); fore.append((t, [_SWEEP_FORE[i], 0, 0]))
+    carry = ([-2.0,19.85,-5.7],[186,0,-84])
+    grip.append((SAW_FINAL + 6, *carry)); grip.append((SAW_DESCEND, *carry))
+    body.append((SAW_FINAL + 6, [4, -30, 0])); body.append((SAW_DESCEND, [2, -24, 0]))
+    head.append((SAW_FINAL + 6, [0, 20, 0])); head.append((SAW_DESCEND, [0, 16, 0]))
+    fore.append((SAW_FINAL + 6, [-24, 0, 0])); fore.append((SAW_DESCEND, [-22, 0, 0]))
+    grip.append((SAW_LENGTH, READY)); body.append((SAW_LENGTH, [0,0,0])); head.append((SAW_LENGTH, [0,0,0]))
+    fore.append((SAW_LENGTH, [-18,0,0]))
+    # No left-arm channel: the support palm stays on the pommel (ReinhardHands.twoHanded).
+    bones = dict(body=body, head=head, right_forearm=fore, left_forearm=[(0,[-8,0,0]),(SAW_LENGTH,[-8,0,0])])
+    for leg, v in SAW_LEGS.items():
+        bones[leg] = [(0,[0,0,0]),(SAW_RISE,v),(SAW_DESCEND,v),(SAW_LENGTH - 4,[x * .4 for x in v]),(SAW_LENGTH,[0,0,0])]
+    clip = action(SAW_LENGTH, **bones)
+    weapon(clip, _nudged('saw_sphere', palm_rows(grip)))
+    return clip
+CLIPS['saw_sphere'] = _saw_clip()
 
 # Sword Drawn state: the stance itself (body/legs, only while standing), its own gait
 # (combat walk: shorter steps, bent knees, steady two-hand guard; run: shoulder carry,
@@ -627,12 +746,12 @@ CLIPS['drawn_walk']=drawn_gait(26,8,5,.45)
 weapon(CLIPS['drawn_walk'],[(i*2.5,[READY[0][0],READY[0][1]-.35*abs(math.sin(math.pi*i/4)),READY[0][2]],
     [READY[1][0]+1.5*math.sin(math.pi*i/4),0,READY[1][2]]) for i in range(9)])
 CLIPS['drawn_run']=drawn_gait(44,10,14,.8)
-# Sprint: ONE-handed shoulder carry (the renderer releases the left hand by the run
-# weight): the right fist in front of the right shoulder, the blade laid back over it,
-# right of the head. Blending from the guard only tilts the blade back (shortest slerp).
-RUN_PALM,RUN_ROT=[7.6,24,-4.5],[400,0,-28]
-weapon(CLIPS['drawn_run'],palm_rows([(i*2.5,[RUN_PALM[0],RUN_PALM[1]-.5*abs(math.sin(math.pi*i/4)),RUN_PALM[2]],
-    [RUN_ROT[0]+3*math.sin(math.pi*i/4),0,RUN_ROT[2]]) for i in range(9)]))
+# Sprint: TWO-handed high carry (the support hand stays on the pommel): both fists in front
+# of the chest at shoulder height, the blade raised and laid a little back, right of the head.
+# Blending from the guard only tilts the blade back (shortest slerp).
+RUN_PALM,RUN_ROT=[0.85,22,-6.4],[367,0,-28]
+weapon(CLIPS['drawn_run'],_nudged('drawn_run',palm_rows([(i*2.5,[RUN_PALM[0],RUN_PALM[1]-.5*abs(math.sin(math.pi*i/4)),RUN_PALM[2]],
+    [RUN_ROT[0]+3*math.sin(math.pi*i/4),0,RUN_ROT[2]]) for i in range(9)])))
 # Air step: a quick tuck on every Cloud Step; landing: knees absorb, chest dips.
 CLIPS['air_step']=action(6,
     right_leg=[(0,[-25,0,4]),(2,[-46,0,5]),(6,[-20,0,4])], right_shin=[(0,[38,0,0]),(2,[70,0,0]),(6,[34,0,0])],
@@ -646,7 +765,7 @@ pos(CLIPS['land'],'body',[(0,[0,0,0]),(2,[0,-1,-.4]),(8,[0,0,0])])
 
 # Bounded C1 curves only for strikes: no per-segment ease restart at contacts.
 # Draw/sheath cinematics retain their protected paths and free-blade roll.
-for name in ['light_punch','light_punch_left','light_hook','combo_1','combo_2','combo_3','sheath_strike','cut_rain','chop_left','chop_right',*REID_STRIKES]:
+for name in ['light_punch','light_punch_left','light_hook','combo_1','combo_2','combo_3','sheath_strike','saw_sphere','chop_left','chop_right',*REID_STRIKES]:
     for bone in CLIPS[name]['bones'].values():
         for channel_data in bone.values():
             if isinstance(channel_data, dict):

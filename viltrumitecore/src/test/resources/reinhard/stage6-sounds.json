@@ -260,9 +260,9 @@
       }
     ]
   },
-  "reinhard.cut_rain": {
+  "reinhard.saw_swing": {
     "category": "player",
-    "subtitle": "subtitles.viltrumitecore.reinhard_cut_rain",
+    "subtitle": "subtitles.viltrumitecore.reinhard_saw_swing",
     "sounds": [
       {
         "name": "minecraft:entity.player.attack.sweep",

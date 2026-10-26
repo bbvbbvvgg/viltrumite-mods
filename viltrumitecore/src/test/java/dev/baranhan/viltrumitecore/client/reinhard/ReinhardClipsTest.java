@@ -54,7 +54,7 @@ class ReinhardClipsTest {
       t.put(ReinhardClips.REID_SHEATHE, ReinhardRules.REID_SHEATHE_TICKS);
       t.put(ReinhardClips.IDLE_HOLY_DRAWN, LOOP);
       t.put(ReinhardClips.SHEATH_STRIKE, ReinhardRules.SHEATH_TICKS);
-      t.put(ReinhardClips.CUT_RAIN, ReinhardRules.CUT_TICKS);
+      t.put(ReinhardClips.SAW_SPHERE, dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.LENGTH);
       t.put(ReinhardClips.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST+20);
       t.put(ReinhardClips.WORLD_CUT_FROM_LEFT, ReinhardRules.WORLD_CUT_BLAST+20);
       t.put("diagonal_world_cut",ReinhardRules.WORLD_CUT_BLAST+20);

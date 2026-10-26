@@ -16,8 +16,11 @@ class ReinhardFirstPersonPreviewTest {
    /** The drawn guard moved by {@code cut} (identity = the plain guard), built like the renderer:
     * the sword arm and its blade first, then the support arm carried to the pommel and solved. */
    static void scene(String name, BakedGeoModel arms, BakedGeoModel blade, Matrix4f cut) throws Exception {
+      scene(name, arms, blade, cut, ReinhardFirstPersonPose.DRAWN_GUARD);
+   }
+   static void scene(String name, BakedGeoModel arms, BakedGeoModel blade, Matrix4f cut, ReinhardFirstPersonPose.Offset sword) throws Exception {
       FirstPersonBlade.poseElbows(arms, ReinhardSecondPassTest.clips(), "idle_holy_drawn", 0);
-      Matrix4f right = new Matrix4f(cut).mul(ReinhardFirstPersonRig.arm(ReinhardFirstPersonPose.DRAWN_GUARD, false, 0, 0, null));
+      Matrix4f right = new Matrix4f(cut).mul(ReinhardFirstPersonRig.arm(sword, false, 0, 0, null));
       Matrix4f hand = ReinhardFirstPersonRig.blade(right, arms, 1);
       var scene = new FirstPersonScene();
       scene.bone(arms, "armorRightArm", right, ARMS_TEXTURE);
@@ -44,5 +47,12 @@ class ReinhardFirstPersonPreviewTest {
             Matrix4f view = ReinhardFirstPersonPose.cutView((ReinhardAbility)cut[1], (Integer)cut[2], t);
             scene(String.format("%s__%05.1f", cut[0], t), arms, blade, view);
          }
+      int[] lengths = {13, 13, 15, 22, 16};
+      for (int move = 0; move < lengths.length; move++)
+         for (double t = 1; t < lengths[move]; t += 1) {
+            scene(String.format("reid%d__%05.1f", move, t), arms, blade, new Matrix4f(), ReinhardFirstPersonPose.reidStrike(move, t));
+         }
+      for (double t : new double[]{10, 20, 30, 42, 43, 44, 45, 46, 47, 48, 49, 50, 224, 226, 228, 229, 230, 231, 232, 233, 234, 240, 248, 254})
+         scene(String.format("saw__%05.1f", t), arms, blade, new Matrix4f(), ReinhardFirstPersonPose.sawSphere(t));
    }
 }

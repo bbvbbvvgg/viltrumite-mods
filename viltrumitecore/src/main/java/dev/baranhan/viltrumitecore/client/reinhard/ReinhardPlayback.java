@@ -35,10 +35,10 @@ public final class ReinhardPlayback {
       return clock.sample(action, variant, elapsed, length, clientTicks);
    }
 
-   /** World Cut, Diagonal World Cut and World Erasure: casts with a client scene on the packet/game-time clock. */
+   /** World Cut, Diagonal World Cut, World Erasure and the Saw Sphere: casts with a client scene on the packet/game-time clock. */
    static boolean authoritative(int action) {
       return action == ReinhardAbility.WORLD_CUT.ordinal() || action == ReinhardAbility.DIAGONAL_WORLD_CUT.ordinal()
-         || action == ReinhardAbility.WORLD_ERASURE.ordinal();
+         || action == ReinhardAbility.WORLD_ERASURE.ordinal() || action == ReinhardAbility.SAW_SPHERE.ordinal();
    }
 
    /** Identical bounded server time for first person, third person and cinematics. */

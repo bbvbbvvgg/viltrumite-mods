@@ -62,7 +62,8 @@ public final class ReinhardFirstPersonPose {
       return w>0.001F?DRAWN_GUARD.scaled(Math.min(1,w)):Offset.NONE;
    }
 
-   /** Absolute shoulder keys {pitch, yaw, roll, x, y, z} of the one-handed drawn strokes,
+   /** Absolute shoulder keys {pitch, yaw, roll, x, y, z} of the sword arm in the drawn strokes
+    * (two-handed: the support pass carries the other arm to the pommel and solves its palm),
     * fitted (FirstPersonBladeProbeTest fit:) so the blade crosses the view along the same
     * MeleeArc path the server tests: wind-up at the arc start, mid at its centre, end at its end. */
    private static final float[] DOWN_WIND={-10,-15.6F,-47,.302F,.381F,-.130F},DOWN_MID={-5.3F,-15.9F,1.9F,.031F,.073F,-.103F},
@@ -134,11 +135,6 @@ public final class ReinhardFirstPersonPose {
    public static Offset reidStrike(int phase,double ticks) {
       return strike(REID_STRIKES[Math.floorMod(phase,REID_STRIKES.length)],ticks);
    }
-   /** The free left arm's small counter-motion to a drawn stroke (zero at the guard). */
-   public static Offset reidSupport(int phase,double ticks) {
-      Offset s=reidStrike(phase,ticks),g=DRAWN_GUARD;
-      return counter(new Offset(s.x()-g.x(),s.y()-g.y(),s.z()-g.z(),s.pitch()-g.pitch(),s.yaw()-g.yaw(),s.roll()-g.roll()));
-   }
    /** Sum of two shoulder offsets (a pose on top of the drawn guard). */
    public static Offset plus(Offset a,Offset b) {
       if(b==Offset.NONE) return a;
@@ -152,21 +148,36 @@ public final class ReinhardFirstPersonPose {
       return new Offset(0,-.06F*w,.03F*w,7*w,0,-3*w);
    }
    static final double AIR_STEP_SECONDS=.3;
-   private static final float[][] RAIN = rain();
+   private static final float[][] SAW = saw();
 
-   private static float[][] rain() {
-      float[][] keys = new float[27][];
-      keys[0]=under(0);keys[1]=key(4,-45,-24,-6,-.1F,.18F,.04F);
-      for(int i=0;i<12;i++) {
-         float side=(i&1)==0?-1:1;
-         float t=ReinhardRules.CUT_FIRST_TICK+i*ReinhardRules.CUT_INTERVAL;
-         keys[2+i*2]=key(t-1.5F,-45,-side*24,-side*6,-side*.1F,.18F,.04F);
-         keys[3+i*2]=key(t,12,side*32,side*8,side*.12F,.04F,-.30F);
+   /** Saw Sphere, absolute like the drawn strokes (it starts and ends at the guard) and
+    * two-handed like them (the support palm stays on the pommel): raised over the rise, then the
+    * third-person rhythm, a forehand (raised right, through the middle, out to the left) and a
+    * backhand back every {@code SWING_PERIOD} ticks, each contact at the middle of its sweep; the
+    * last backhand coils into the big final forehand, held through the plunge, back to the guard. */
+   private static float[][] saw() {
+      int period = dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.SWING_PERIOD;
+      int launch = dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.LAUNCH_START;
+      int last = dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.LAST_SWING;
+      float fin = dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.FINAL_SWING;
+      java.util.List<float[]> keys = new java.util.ArrayList<>();
+      keys.add(guard(0));
+      keys.add(at(20, RISE_END));
+      keys.add(at(launch - period / 2F, DOWN_WIND));
+      boolean left = false;
+      for (int contact = launch; contact <= last; contact += period) {
+         keys.add(at(contact, SWEEP_MID));
+         left = !left;
+         keys.add(at(contact + period / 2F, left ? SWEEP_END : DOWN_WIND));
       }
-      keys[26]=under(ReinhardRules.CUT_TICKS);
-      return keys;
+      keys.add(at(fin - 3, SWEEP_WIND));
+      keys.add(at(fin - 1.5F, SWEEP_IN));
+      keys.add(at(fin, SWEEP_MID));
+      keys.add(at(fin + 1.5F, SWEEP_END));
+      keys.add(at(fin + 8, SWEEP_END));
+      keys.add(guard(dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.LENGTH - 4));
+      return densify(keys.toArray(float[][]::new));
    }
-
    private static Offset sample(float[][] keys, double ticks) {
       return sample(keys,ticks,false);
    }
@@ -214,7 +225,7 @@ public final class ReinhardFirstPersonPose {
          case CATCH -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.CATCH_SNAP_TICKS ? CATCH : CATCH_READY,ticks).scaled(windowFade(ticks,length));
          case REFLECT -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.REFLECT_SNAP_TICKS ? SWAT : GUARD,ticks).scaled(windowFade(ticks,length));
          case SHEATH_STRIKE -> strike(SHEATH,ticks);
-         case CUT_RAIN -> strike(RAIN,ticks);
+         case SAW_SPHERE -> sawSphere(ticks);
          // Both World Cuts move the whole two-handed rig in view space (cutView), not one arm.
          case WORLD_ERASURE -> worldErasure(ticks,false);
          default -> Offset.NONE;
@@ -228,7 +239,8 @@ public final class ReinhardFirstPersonPose {
    /** Counterbalance of the arm that does not strike in move {@code phase} of {@code ability}. */
    public static Offset support(@Nullable ReinhardAbility ability,int phase,double ticks,int length) {
       if(ability==null) return Offset.NONE;
-      if(ability==ReinhardAbility.REID_STRIKE) return reidSupport(phase,ticks);
+      // Sword strokes are two-handed: the support arm is carried to the pommel, it does not counter.
+      if(ReinhardHands.twoHanded(ability)) return Offset.NONE;
       return counter(of(ability,ability==ReinhardAbility.LIGHT_PUNCH?phase:0,ticks,length));
    }
    private static Offset counter(Offset main) {
@@ -328,9 +340,9 @@ public final class ReinhardFirstPersonPose {
       return new org.joml.Quaternionf().rotationXYZ((float)Math.toRadians(k[1]),(float)Math.toRadians(k[2]),(float)Math.toRadians(k[3]));
    }
 
-   public static Offset rain(double ticks,boolean physicalLeft) {
-      Offset o=strike(RAIN,ticks);
-      return physicalLeft ? new Offset(o.x()-.1F,o.y(),o.z(),o.pitch(),-o.yaw(),o.roll()) : o;
+   /** The Saw Sphere sword arm (absolute; the support arm is carried to the pommel). */
+   public static Offset sawSphere(double ticks) {
+      return strike(SAW,ticks);
    }
 
    public static Offset worldErasure(double ticks,boolean physicalLeft) {

@@ -448,6 +448,7 @@ public final class HeroEvents {
       ServerEndTasks.clear(event.getServer());
       Limbo.clear();
       dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.clearAll();
+      dev.baranhan.viltrumitecore.hero.reinhard.saw.SawSphereManager.clearAll();
    }
 
    @SubscribeEvent
@@ -473,6 +474,7 @@ public final class HeroEvents {
             case RESOURCE_REGEN -> HeroResourceRegen.flush(level);
             case CARVE -> CarveJobs.tick(level);
             case WORLD_CUT -> dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutManager.get(level).tick(level);
+            case SAW_SPHERE -> dev.baranhan.viltrumitecore.hero.reinhard.saw.SawSphereManager.get(level).tick();
          }
       }
    }

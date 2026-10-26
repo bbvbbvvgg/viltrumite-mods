@@ -17,6 +17,9 @@ class HeroEventsTickPhaseTest {
       assertTrue(end.contains(LevelTickPhases.System.CARVE));
       assertTrue(end.contains(LevelTickPhases.System.PROJECTILES));
       assertTrue(end.contains(LevelTickPhases.System.RESOURCE_REGEN));
+      // The Saw Sphere cuts after the World Cut and before the shared carve queue spends its budget.
+      assertTrue(end.indexOf(LevelTickPhases.System.SAW_SPHERE) > end.indexOf(LevelTickPhases.System.WORLD_CUT));
+      assertTrue(end.indexOf(LevelTickPhases.System.SAW_SPHERE) < end.indexOf(LevelTickPhases.System.CARVE));
       assertFalse(end.contains(LevelTickPhases.System.CONTROL));
    }
 }

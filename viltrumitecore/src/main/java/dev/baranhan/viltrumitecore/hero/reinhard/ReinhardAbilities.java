@@ -24,12 +24,13 @@ public final class ReinhardAbilities {
    public static final String[] LOADOUT = {
       "", "", "reinhard:step_dash", "", "", "",
       "", "reinhard:sky_kick", "reinhard:step_dash", "", "", "",
-      "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"
+      "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:saw_sphere", "reinhard:world_cut", "reinhard:world_erasure"
    };
 
    /**
-    * Former shipped defaults (stage 6 before the quality rework, the rework, and
-    * the Diagonal World Cut slot). An untouched one moves to {@link #LOADOUT}.
+    * Former shipped defaults (stage 6 before the quality rework, the rework, the
+    * Diagonal World Cut slot, and the merged keys before the Saw Sphere replaced
+    * Rain of Cuts). An untouched one moves to {@link #LOADOUT}.
     */
    static final String[][] PREVIOUS_DEFAULTS = {
       {"reinhard:light_punch", "reinhard:step_dash", "reinhard:catch", "", "", "",
@@ -40,13 +41,17 @@ public final class ReinhardAbilities {
          "reinhard:reid", CHOP, "reinhard:sheath_strike", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"},
       {"", "reinhard:step_dash", "reinhard:catch", "", "", "",
          "", "reinhard:sky_kick", "reinhard:grab_throw", "reinhard:dash_behind", "reinhard:stomp", "reinhard:reflect",
-         "reinhard:reid", CHOP, "reinhard:diagonal_world_cut", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"}
+         "reinhard:reid", CHOP, "reinhard:diagonal_world_cut", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"},
+      {"", "", "reinhard:step_dash", "", "", "",
+         "", "reinhard:sky_kick", "reinhard:step_dash", "", "", "",
+         "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"}
    };
 
    /**
     * Loadout ids retired by the combat rework and what replaced them: Dash Behind,
     * Stomp and Diagonal World Cut became variants of the merged keys; the others
-    * moved to LMB/RMB or the automatic defense ("" = the slot empties).
+    * moved to LMB/RMB or the automatic defense ("" = the slot empties). Rain of Cuts
+    * gave its slot to the Saw Sphere (overhaul item 19).
     */
    private static final java.util.Map<String, String> RETIRED = java.util.Map.of(
       "reinhard:dash_behind", "reinhard:step_dash",
@@ -57,7 +62,8 @@ public final class ReinhardAbilities {
       "reinhard:catch", "",
       "reinhard:reflect", "",
       "reinhard:grab_throw", "",
-      "reinhard:sheath_strike", "");
+      "reinhard:sheath_strike", "",
+      "reinhard:cut_rain", "reinhard:saw_sphere");
 
    private ReinhardAbilities() {
    }
@@ -140,7 +146,7 @@ public final class ReinhardAbilities {
 
    public static boolean active(ReinhardAbility ability) {
       return ability.shipped() && switch (ability) {
-         case STEP_DASH, SKY_KICK, REID, CUT_RAIN, WORLD_CUT, WORLD_ERASURE -> true;
+         case STEP_DASH, SKY_KICK, REID, SAW_SPHERE, WORLD_CUT, WORLD_ERASURE -> true;
          default -> false;
       };
    }
@@ -264,6 +270,7 @@ public final class ReinhardAbilities {
    public static boolean slotGrey(ReinhardAbility root,int cooldown,int heroFlags,boolean crouching) {
       ReinhardAbility ability=contextual(root,crouching);
       return !active(root) || ((ability==ReinhardAbility.WORLD_CUT || ability==ReinhardAbility.DIAGONAL_WORLD_CUT) && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_CUT_ACTIVE))
-         || (ability==ReinhardAbility.WORLD_ERASURE && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_ERASURE_ACTIVE)) || cooldown > 0 || !dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.allows(ability, dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.phaseOf(heroFlags));
+         || (ability==ReinhardAbility.WORLD_ERASURE && ReinhardFlags.has(heroFlags,ReinhardFlags.WORLD_ERASURE_ACTIVE))
+         || (ability==ReinhardAbility.SAW_SPHERE && ReinhardFlags.has(heroFlags,ReinhardFlags.SAW_SPHERE_ACTIVE)) || cooldown > 0 || !dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.allows(ability, dev.baranhan.viltrumitecore.hero.reinhard.reid.Reid.phaseOf(heroFlags));
    }
 }

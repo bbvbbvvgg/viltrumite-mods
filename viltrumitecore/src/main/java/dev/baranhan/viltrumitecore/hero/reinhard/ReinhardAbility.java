@@ -19,7 +19,7 @@ public enum ReinhardAbility {
    REFLECT(ReinhardMode.KNIGHT, 5, HeroAction.REFLECT_PROJECTILE, 3),
    REID(ReinhardMode.HOLY_SWORD, 0, HeroAction.REID, 4),
    SHEATH_STRIKE(ReinhardMode.HOLY_SWORD, 2, HeroAction.SHEATH_STRIKE, 4),
-   CUT_RAIN(ReinhardMode.HOLY_SWORD, 3, HeroAction.CUT_RAIN, 4),
+   SAW_SPHERE(ReinhardMode.HOLY_SWORD, 3, HeroAction.SAW_SPHERE, 4),
    WORLD_CUT(ReinhardMode.HOLY_SWORD, 4, HeroAction.WORLD_CUT, 5),
    WORLD_ERASURE(ReinhardMode.HOLY_SWORD, 5, HeroAction.WORLD_ERASURE, 6),
    DIAGONAL_WORLD_CUT(ReinhardMode.HOLY_SWORD, 2, HeroAction.DIAGONAL_WORLD_CUT, 6),

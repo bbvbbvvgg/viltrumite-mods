@@ -24,7 +24,7 @@ class ReinhardSoundsTest {
       "world_cut_impact", "world_cut_impact", "world_cut_blade", "sheath_ring");
    private static final Map<String,String> CINEMATIC = Map.of(
       "reid_cinematic_layer","reid_cinematic_layer","cut_rumble","cut_rumble",
-      "world_cut_blast","cut_cinematic_impact","cut_rain","cut_cinematic_sweep");
+      "world_cut_blast","cut_cinematic_impact","saw_swing","cut_cinematic_sweep");
    /** REINHARD OVERHAUL: strike/stance cues mixed from CC0 Freesound recordings (tools/sfx/reinhard_strikes.py), random variant per play. */
    private static final Map<String, List<String>> OVERHAUL = Map.of(
       "fist_swing", List.of("fist_swing_1", "fist_swing_2", "fist_swing_3"),
@@ -45,6 +45,8 @@ class ReinhardSoundsTest {
    private static final Map<String, String> TEMPORARY = Map.of("world_cut_strike_voice", "sword_strike_voice");
    /** Original deterministic synthesis (tools/sfx/reinhard_explosion.py, CC0): positional mono, subtitled. */
    private static final Map<String, String> ORIGINAL = Map.of("world_cut_explosion", "world_cut_explosion");
+   /** Saw Sphere (item 19): original deterministic synthesis (tools/sfx/reinhard_saw_sphere.py, CC0); event -> attenuation. */
+   private static final Map<String, Integer> SAW = Map.of("saw_hum", 64, "saw_grind", 48, "saw_finale", 160, "saw_shatter", 160);
    private static final String TEMPORARY_SHA256 = "b7c97f3fb070687b8ae4252a627f4f9b932dd7975fb16cee1a3f4694b04ae1a6";
    private static final List<String> OVERHAUL_SOURCES = List.of(
       "https://freesound.org/people/mateusboga/sounds/614084", "https://freesound.org/people/qubodup/sounds/60004",
@@ -57,7 +59,7 @@ class ReinhardSoundsTest {
    private static final Set<String> STREAM = Set.of("reid_choir", "world_cut_tail", "reid_rumble");
    private static final Set<String> LEGACY = Set.of("air_step", "refuse", "phoenix", "parry", "super_jump",
       "light_punch", "step_dash", "catch", "combo_hit", "combo_final", "kick_toss", "grab", "throw",
-      "dash_behind", "reflect", "reid_far", "reid_sheathe", "cut_rain", "world_cut_blast");
+      "dash_behind", "reflect", "reid_far", "reid_sheathe", "saw_swing", "world_cut_blast");
    private static final Map<String, String> OUTPUT_SOURCE = Map.ofEntries(
       Map.entry("mode_restrained", "398218"), Map.entry("mode_knight", "398218"), Map.entry("mode_holy", "398218"),
       Map.entry("reid_choir", "398218"), Map.entry("reid_unsheathe", "770035"), Map.entry("reid_rumble", "870684"),
@@ -91,7 +93,7 @@ class ReinhardSoundsTest {
          String event="reinhard."+pair.getKey();
          JsonObject definition=expected.has(event)?expected.getAsJsonObject(event):new JsonObject();
          JsonObject choice=new JsonObject();choice.addProperty("name","viltrumitecore:reinhard/"+pair.getValue());
-         choice.addProperty("stream",false);choice.addProperty("attenuation_distance",pair.getKey().equals("cut_rain")?128:320);
+         choice.addProperty("stream",false);choice.addProperty("attenuation_distance",pair.getKey().equals("saw_swing")?128:320);
          JsonArray array=new JsonArray();array.add(choice);definition.add("sounds",array);expected.add(event,definition);
       }
       for(var pair:DERIVED.entrySet()) {
@@ -132,6 +134,14 @@ class ReinhardSoundsTest {
          choice.addProperty("stream", false); choice.addProperty("attenuation_distance", 320);
          JsonObject definition = new JsonObject(); definition.addProperty("category", "player");
          definition.addProperty("subtitle", "subtitles.viltrumitecore.reinhard." + pair.getKey());
+         JsonArray array = new JsonArray(); array.add(choice);
+         definition.add("sounds", array); expected.add("reinhard." + pair.getKey(), definition);
+      }
+      for (var pair : SAW.entrySet()) {
+         JsonObject choice = new JsonObject(); choice.addProperty("name", "viltrumitecore:reinhard/" + pair.getKey());
+         choice.addProperty("stream", false); choice.addProperty("attenuation_distance", pair.getValue());
+         JsonObject definition = new JsonObject(); definition.addProperty("category", "player");
+         definition.addProperty("subtitle", "subtitles.viltrumitecore.reinhard_" + pair.getKey());
          JsonArray array = new JsonArray(); array.add(choice);
          definition.add("sounds", array); expected.add("reinhard." + pair.getKey(), definition);
       }
@@ -228,7 +238,7 @@ class ReinhardSoundsTest {
    @Test void everyFileExists() throws Exception {
       allFileReferencesExist(sounds());
       Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());all.addAll(DERIVED.values());
-      OVERHAUL.values().forEach(all::addAll); all.addAll(TEMPORARY.values()); all.addAll(DRAW.keySet()); all.addAll(ORIGINAL.values());
+      OVERHAUL.values().forEach(all::addAll); all.addAll(TEMPORARY.values()); all.addAll(DRAW.keySet()); all.addAll(ORIGINAL.values()); all.addAll(SAW.keySet());
       for (String f : all) {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));
@@ -238,8 +248,9 @@ class ReinhardSoundsTest {
    @Test void everySoundCredited() throws Exception { validateCredits(text("tools/assets/reinhard_sources.md"), text("CREDITS.md"), text("docs/design/2026-10-11-reinhard-design.md")); }
    @Test void blockedSourcesAreNotShippedAndOriginalSynthesisReplacesPlaceholders() throws Exception {
       assertEquals("viltrumitecore:reinhard/cut_cinematic_impact",entry("world_cut_blast").get("name").getAsString());
-      assertEquals("viltrumitecore:reinhard/cut_cinematic_sweep",entry("cut_rain").get("name").getAsString());
-      assertFalse(entry("world_cut_blast").has("type"));assertFalse(entry("cut_rain").has("type"));
+      assertEquals("viltrumitecore:reinhard/cut_cinematic_sweep",entry("saw_swing").get("name").getAsString());
+      assertFalse(entry("world_cut_blast").has("type"));assertFalse(entry("saw_swing").has("type"));
+      assertFalse(sounds().has("reinhard.cut_rain"), "Cut Rain is retired by the Saw Sphere");
       assertFalse(Files.exists(BIN.resolve("world_cut_blast.ogg.b64")));assertFalse(Files.exists(BIN.resolve("cut_rain.ogg.b64")));
       assertTrue(text("tools/assets/reinhard_sources.md").contains("tools/sfx/reinhard_cinematic.py"));
       assertTrue(text("tools/assets/reinhard_sources.md").contains("tools/sfx/reinhard_strikes.py"));
@@ -315,6 +326,41 @@ class ReinhardSoundsTest {
       assertEquals(1, bytes[id + 11], "mono: the sound engine positions it");
       int rate = (bytes[id + 12] & 0xFF) | (bytes[id + 13] & 0xFF) << 8 | (bytes[id + 14] & 0xFF) << 16 | (bytes[id + 15] & 0xFF) << 24;
       assertEquals(44100, rate);
+   }
+   /** The Saw Sphere cues: one script writes them (synthesis, the shatter from pinned CC0 recordings), both credit files name it and the recordings, every language subtitles them. */
+   @Test void sawSphereCuesAreOriginalCreditedAndSubtitled() throws Exception {
+      String sources = text("tools/assets/reinhard_sources.md"), credits = text("CREDITS.md");
+      String section = sources.substring(sources.indexOf("## Saw Sphere"));
+      assertTrue(section.contains("tools/sfx/reinhard_saw_sphere.py") && section.contains("no recording and no download"));
+      assertTrue(section.contains("not a listening test"), "No listening claim without playback");
+      assertTrue(credits.contains("tools/sfx/reinhard_saw_sphere.py"));
+      String script = text("tools/sfx/reinhard_saw_sphere.py");
+      for (String id : new String[]{"221528", "244238", "336425", "349905"}) {
+         assertTrue(script.contains("\"" + id + "\""), "pinned in the script: " + id);
+         assertTrue(section.contains("sounds/" + id + "/") && credits.contains("sounds/" + id + "/"), "credited: " + id);
+      }
+      assertTrue(section.contains("CC0 1.0") && !section.substring(0, section.indexOf("| Cue |")).contains("CC-BY"), "CC0 recordings only");
+      assertTrue(Files.isRegularFile(REPO.resolve("tools/sfx/reinhard_saw_sphere.py")));
+      try (var langs = Files.list(Path.of("src/main/resources/assets/viltrumitecore/lang"))) {
+         for (Path lang : langs.toList()) {
+            JsonObject keys = JsonParser.parseString(Files.readString(lang)).getAsJsonObject();
+            for (String event : List.of("saw_swing", "saw_hum", "saw_grind", "saw_finale", "saw_shatter")) {
+               String key = "subtitles.viltrumitecore.reinhard_" + event;
+               assertTrue(keys.has(key) && !keys.get(key).getAsString().isBlank(), lang + " " + key);
+            }
+            assertFalse(keys.has("subtitles.viltrumitecore.reinhard_cut_rain"), lang + " retired subtitle");
+         }
+      }
+      for (String cue : SAW.keySet()) {
+         assertTrue(section.contains("`" + cue + "`"), cue + " processing record");
+         byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(cue + ".ogg.b64")).trim());
+         int id = -1;
+         for (int i = 0; i + 7 < bytes.length && id < 0; i++) {
+            if (bytes[i] == 1 && new String(bytes, i + 1, 6, StandardCharsets.US_ASCII).equals("vorbis")) id = i;
+         }
+         assertTrue(id >= 0, cue + " Vorbis identification header");
+         assertEquals(1, bytes[id + 11], cue + " mono: the sound engine positions it");
+      }
    }
    @Test void longFilesStream() throws Exception { for (String e : STREAM) { assertTrue(entry(e).has("stream")); assertTrue(entry(e).get("stream").getAsBoolean()); } }
    @Test void spec102ReferencesRemainUnchanged() throws Exception { validateSounds(sounds()); }
