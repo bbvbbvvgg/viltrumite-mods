@@ -50,7 +50,13 @@ public final class ReinhardState {
    public int comboIdle;
    public boolean comboQueued;
    public boolean resolvingMelee;
-   public int meleeSide;
+   /** LMB strike chain (fists outside Knight, drawn Reid): owner, last move (−1 none), idle ticks, buffered press; transient. */
+   @javax.annotation.Nullable
+   public ReinhardAbility meleeAbility;
+   public int meleeStep = -1;
+   public int meleeIdle;
+   public boolean meleeQueued;
+   /** Bodies the running strike already hit (one hit per body per strike); transient. */
    public final java.util.Set<java.util.UUID> meleeHit = new java.util.HashSet<>();
    public float rainYaw,rainPitch;
    /** Transient self-root; no gravity/AI flag ownership and nothing to restore after logout. */

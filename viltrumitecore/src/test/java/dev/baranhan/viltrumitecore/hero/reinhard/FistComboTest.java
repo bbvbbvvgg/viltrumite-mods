@@ -29,7 +29,7 @@ class FistComboTest {
       assertArrayEquals(new float[]{10.0F, 10.0F, 16.0F}, ReinhardRules.COMBO_DAMAGE);
       assertArrayEquals(new int[]{4, 4, 6}, ReinhardRules.COMBO_HIT_TICKS);
       assertArrayEquals(new int[]{10, 10, 14}, ReinhardRules.COMBO_STEP_TICKS);
-      assertEquals(3.5, ReinhardRules.COMBO_REACH);
+      assertEquals(4.0, ReinhardRules.COMBO_REACH);
       ReinhardState state = new ReinhardState();
       for (int step = 0; step < 3; step++) {
          assertEquals(step, FistCombo.press(state), "each press = the next hit");

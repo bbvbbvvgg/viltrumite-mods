@@ -2,6 +2,8 @@ package dev.baranhan.viltrumitecore.client.reinhard;
 
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -13,6 +15,16 @@ import javax.annotation.Nullable;
  */
 public final class ReinhardClips {
    public static final String LIGHT_PUNCH = "light_punch";
+   /** Ordinary fists outside Knight: right jab, left jab, right hook (MeleeMoves.FIST). */
+   public static final String LIGHT_PUNCH_LEFT = "light_punch_left";
+   public static final String LIGHT_HOOK = "light_hook";
+   /** Sword Drawn state: standing stance (body/legs), its own walk and run, both under the two-hand guard. */
+   public static final String DRAWN_STANCE = "drawn_stance";
+   public static final String DRAWN_WALK = "drawn_walk";
+   public static final String DRAWN_RUN = "drawn_run";
+   /** Ground/air transitions: the tuck of a Cloud Step and the landing absorption. */
+   public static final String AIR_STEP = "air_step";
+   public static final String LAND = "land";
    public static final String STEP_DASH = "step_dash";
    public static final String CATCH_READY = "catch_ready";
    public static final String CATCH = "catch";
@@ -50,8 +62,8 @@ public final class ReinhardClips {
    /** Every clip of an ability (each one must exist in the animation file); empty for later stages. */
    public static List<String> names(ReinhardAbility ability) {
       return switch (ability) {
-         case REID_STRIKE -> List.of(CHOP_RIGHT, CHOP_LEFT);
-         case LIGHT_PUNCH -> List.of(LIGHT_PUNCH);
+         case REID_STRIKE -> Arrays.stream(MeleeMoves.REID).map(MeleeMoves.Move::clip).toList();
+         case LIGHT_PUNCH -> Arrays.stream(MeleeMoves.FIST).map(MeleeMoves.Move::clip).toList();
          case STEP_DASH -> List.of(STEP_DASH);
          case CATCH -> List.of(CATCH_READY, CATCH);
          case FIST_COMBO -> List.of(COMBO_1, COMBO_2, COMBO_3);
@@ -76,8 +88,9 @@ public final class ReinhardClips {
       if (ability == null) return null;
       double seconds = ticks / 20.0;
       return switch (ability) {
-         case REID_STRIKE -> new ReinhardPoses.Clip(phase == 1 ? CHOP_LEFT : CHOP_RIGHT,
-            ticks / (phase == 2 ? 20.0 : 14.0));
+         // The synced phase is the move index: the clip of that row, on the strike's own clock.
+         case REID_STRIKE -> new ReinhardPoses.Clip(MeleeMoves.reid(phase).clip(), seconds);
+         case LIGHT_PUNCH -> new ReinhardPoses.Clip(MeleeMoves.fist(phase).clip(), seconds);
          case CATCH -> new ReinhardPoses.Clip(phase == PHASE_SNAP && ticks < ReinhardRules.CATCH_SNAP_TICKS ? CATCH : CATCH_READY, seconds);
          case REFLECT -> new ReinhardPoses.Clip(phase == PHASE_SNAP && ticks < ReinhardRules.REFLECT_SNAP_TICKS ? REFLECT : REFLECT_READY, seconds);
          case GRAB_THROW -> new ReinhardPoses.Clip(phase == PHASE_SNAP ? THROW : GRAB_HOLD, seconds);

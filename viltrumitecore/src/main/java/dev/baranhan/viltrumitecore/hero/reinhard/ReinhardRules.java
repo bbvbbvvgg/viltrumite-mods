@@ -181,7 +181,7 @@ public final class ReinhardRules {
    // ---- Light Punch (spec §6.1) ----
    public static final float LIGHT_PUNCH_DAMAGE = 4.0F;
    public static final double LIGHT_PUNCH_KNOCKBACK = 0.6;
-   public static final double LIGHT_PUNCH_REACH = 3.5;
+   public static final double LIGHT_PUNCH_REACH = 3.9;
    /** Action lock (no cooldown): the clip length. */
    public static final int LIGHT_PUNCH_TICKS = 10;
    public static final int LIGHT_PUNCH_HIT_TICK = 4;
@@ -211,7 +211,7 @@ public final class ReinhardRules {
    public static final int[] COMBO_STEP_TICKS = {10, 10, 14};
    /** Idle ticks after a hit ends within which the next press continues the chain. */
    public static final int COMBO_CHAIN_WINDOW = 20;
-   public static final double COMBO_REACH = 3.5;
+   public static final double COMBO_REACH = 4.0;
    /** Not in the spec: push of each hit along the look (starting values). */
    public static final double[] COMBO_KNOCKBACK = {0.4, 0.4, 1.0};
    public static final double COMBO_WAVE_RADIUS = 4.0;

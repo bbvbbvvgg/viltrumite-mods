@@ -289,7 +289,7 @@ public final class ReinhardHero implements HeroDefinition {
 
       ReinhardState state = ReinhardState.ensure(player);
       return switch (action) {
-         case PRIMARY_ATTACK -> !state.busy() && (!state.action.running() || state.action.is(ReinhardAbility.FIST_COMBO));
+         case PRIMARY_ATTACK -> !state.busy() && (!state.action.running() || ReinhardActions.meleeChain(state.action.ability()));
          case SECONDARY_USE -> dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.holding(state) || canContextGrab(player);
          case MODE_CYCLE -> ModeCycle.press(state.mode, state.modeCooldown, state.busy()).accepted();
          // Cloudy Sky (spec §4.4): super jump and air steps in every mode.

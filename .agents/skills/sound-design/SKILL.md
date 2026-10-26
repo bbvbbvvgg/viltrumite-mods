@@ -71,3 +71,7 @@ For a fully original sound, use `--own` instead of `--source-id`. Use `--stereo`
 - This repo stores many audio files as `.ogg.b64` under `binassets`. Putting a new binary in the wrong resource directory can pass review yet fail to ship correctly.
 - Minecraft positional sound and GUI/ambience sound have different channel and playback needs. Do not force stereo or streaming on short positional impacts.
 - The user's intentional silence and approved signature audio take priority over automated search quality scores.
+- Layered CC0 families are scripts, not one-off mixes: `tools/sfx/reinhard_strikes.py` keeps a source table (Openverse UUID, Freesound id, creator, title) and per-layer recipes, mixes the helper's downloads, level-matches the variants of one event on 100 ms K-weighted loudness under a true-peak ceiling and packages through this helper; `--check` re-mixes and compares with the committed files. Variants stay several entries of one event.
+- A Freesound description can name a parent recording ("modified version of …"). Check the parent's licence too before using the derivative.
+- Short hits are crest-limited: look-ahead limiting a 0.3 s punch lowers its 100 ms loudness as much as its peak. Pick takes with a lower crest factor instead of limiting harder.
+- A seamless loop from a recording: spectral freeze over exactly the loop length (source magnitude, seeded random phase, inverse FFT of the loop length, no fades), with any modulation periodic in the loop.

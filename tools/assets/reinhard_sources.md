@@ -83,6 +83,39 @@ No new external recordings. `tools/sfx/reinhard_cinematic.py` deterministically 
 - `cut_cinematic_impact`: 3.40 s displacement impact with decaying low tail; replaces the vanilla World Cut placeholder, not blocked NC recordings.
 - `cut_cinematic_sweep`: 0.32 s pressure sweep for Rain of Cuts; replaces the vanilla placeholder, not blocked NC recordings.
 
+## REINHARD OVERHAUL strike sounds (CC0 1.0, Freesound via Openverse)
+
+Found with the sound-design skill (`.agents/skills/sound-design/scripts/openverse_sfx.py search`, `license=cc0&source=freesound`, one query per family: `fast punch whoosh`, `punch impact body hit`, `sword swing whoosh`, `sword slash cut`, `heavy sword impact`, `deep impact boom`, `sword ring resonance`) and fetched with its `download` command. License, creator and description were checked on each live Freesound page on **2026-10-25**; every page shows CC0 1.0. 420674 states it is a modified version of Abyssmal's [35213 "slashkut"](https://freesound.org/people/Abyssmal/sounds/35213/), whose page is also CC0 1.0. The downloaded files are Openverse's Freesound **preview MP3s** (lossy, not the original masters); raw downloads, previews and scratch mixes are not committed. The verbatim Openverse attribution lines are kept in the local `~/.cache/viltrumite-sfx/work/credits.txt`.
+
+| Freesound | Original title / file name | Creator | License | Openverse ID | Used in |
+|---|---|---|---|---|---|
+| [614084](https://freesound.org/people/mateusboga/sounds/614084) | Woosh 1 | mateusboga | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | b8d4ab14-8b11-47a9-a386-10bd626ee880 | fist_swing_1, reid_swing_2 |
+| [60004](https://freesound.org/people/qubodup/sounds/60004) | Fast Sword Swing Sound | qubodup | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 518ead89-8e89-4614-b954-bb7a844f3c42 | fist_swing_2, reid_swing_2 |
+| [60024](https://freesound.org/people/qubodup/sounds/60024) | swosh swinging sword 37.flac | qubodup | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 084c97f3-439e-4f7f-af13-5473411c5c43 | reid_swing_1, reid_swing_3 |
+| [507466](https://freesound.org/people/Danjocross/sounds/507466) | Clean fast Swoosh.aiff | Danjocross | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | c1b6b14f-c5d2-4511-9d8a-81fb973efe58 | fist_swing_3, reid_swing_3 |
+| [475132](https://freesound.org/people/bolkmar/sounds/475132) | FX - Swoosh - Light | bolkmar | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | d343ce9e-01df-4852-b625-3ac3eb805cdd | reid_swing_1 |
+| [393904](https://freesound.org/people/Rodzuz/sounds/393904) | Body punches | Rodzuz | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 84ea30b3-f549-4663-919b-588d7ed3bac6 | fist_hit_1..3, reid_hit_2, reid_heavy_1 |
+| [512389](https://freesound.org/people/Kievinay/sounds/512389) | Bass Impact - Ki_01.mp3 | Kievinay | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | d946174b-650a-4ef5-ba65-2b11686aa732 | fist_hit_1..3, reid_hit_1..3, reid_heavy_1..2 |
+| [420674](https://freesound.org/people/SypherZent/sounds/420674) | Deep Cut / Slash / Gash | SypherZent | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 83b6422f-50a2-45e5-8408-048db7b9e341 | reid_hit_3, reid_heavy_2 |
+| [547038](https://freesound.org/people/CogFireStudios/sounds/547038) | Hit Swing Sword | CogFireStudios | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | cd90a58e-6aa9-4f1b-a421-96d8861147c1 | reid_hit_2 |
+| [547035](https://freesound.org/people/Eponn/sounds/547035) | Hit Impact Sword | Eponn | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | ced84325-bddc-4add-be3c-b529c146219f | reid_hit_3, reid_heavy_2 |
+| [547036](https://freesound.org/people/Eponn/sounds/547036) | Hit Impact Sword 2 | Eponn | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | b122081c-ef13-455b-8fd0-675fcbb8157e | reid_hit_1 |
+| [547042](https://freesound.org/people/CogFireStudios/sounds/547042) | Hit Impact Sword 3 | CogFireStudios | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 3c27fa96-eaf7-440f-9d1c-d14db5e381ae | reid_heavy_1 |
+| [22426](https://freesound.org/people/kibibu/sounds/22426) | sword_2.wav | kibibu | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 2ee6f76b-8bfb-4129-b200-7bdc4f398bb0 | reid_hit_1..3, reid_heavy_1..2, reid_drawn_hum |
+
+`tools/sfx/reinhard_strikes.py` is the only writer of these assets and holds the exact recipe (start, length, varispeed pitch, gain, filters, fades per layer). Each event picks a random variant per play.
+
+| Output | Layers (role) | Trigger alignment | Level (100 ms K-weighted max / true-peak ceiling) |
+|---|---|---|---|
+| fist_swing_1..3 | one whoosh each: 614084 / 60004 (pitch 1.12) / 507466; high-pass 150 Hz | whoosh peak about 65 ms in (played one tick before contact) | -15 LUFS / -3 dBTP |
+| fist_hit_1..3 | three single chest punches cut from 393904 (onset minus 3 ms, high-pass 90 Hz, +4 dB at 1.7 kHz) over a short pitched-up 512389 thump at -19/-20 dB | transient at 0 | -15.5 LUFS (crest-limited, no limiter) / -1 dBTP |
+| reid_swing_1..3 | deep whoosh pitched 0.78-0.88 (60024, 60004, 507466) plus an air layer (475132, 614084, 60024) | peak 105-130 ms in (played two ticks before contact) | -13.8 LUFS / -2 dBTP |
+| reid_hit_1..3 | sword-in-flesh hit (547036 / 547038 / 420674 + 547035 body), 512389 thump, 22426 deep ring at -18 dB; 393904 body blow in variant 2 | transient within 35 ms | -9 to -9.5 LUFS / -1 dBTP, at most 1.5 dB look-ahead limiting |
+| reid_heavy_1..2 | heavy sword hit pitched 0.92 / 0.88 (547042 / 547035), full 512389 boom, 22426 ring at -12 dB, plus a 393904 body blow or a 420674 slice | transient within 30 ms, 1.6 s tail | -8.3 to -8.9 LUFS / -1 dBTP, at most 1.5 dB limiting |
+| reid_drawn_hum | spectral freeze of the 22426 ring tail (0.35-2.35 s, decay flattened), seeded random phase over exactly 4.000 s, 70 Hz-3 kHz, +12 dB tilt above 250 Hz, periodic 0.5/1.25 Hz breathing | seamless 176400-sample loop, no fades | -18 LUFS / -6 dBTP |
+
+44.1 kHz mono Vorbis q5 through the skill helper's `package` command (`.ogg.b64`). `python3 tools/sfx/reinhard_strikes.py --check` re-mixes from the downloads and compares with the committed files (correlation >= 0.95). Levels are measured numbers, **not a listening test**: the sandbox that produced them has no audio playback, so the cues were not auditioned and still need an in-game listening pass.
+
 ## World Cut ambience from the owner re-export (2026-10-21)
 
 The owner supplied `01-original-final-tail.ogg` (8.00 s mono, SHA-256

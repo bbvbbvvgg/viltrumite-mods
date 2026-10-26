@@ -25,6 +25,22 @@ class ReinhardSoundsTest {
    private static final Map<String,String> CINEMATIC = Map.of(
       "reid_cinematic_layer","reid_cinematic_layer","cut_rumble","cut_rumble",
       "world_cut_blast","cut_cinematic_impact","cut_rain","cut_cinematic_sweep");
+   /** REINHARD OVERHAUL: strike/stance cues mixed from CC0 Freesound recordings (tools/sfx/reinhard_strikes.py), random variant per play. */
+   private static final Map<String, List<String>> OVERHAUL = Map.of(
+      "fist_swing", List.of("fist_swing_1", "fist_swing_2", "fist_swing_3"),
+      "fist_hit", List.of("fist_hit_1", "fist_hit_2", "fist_hit_3"),
+      "reid_swing", List.of("reid_swing_1", "reid_swing_2", "reid_swing_3"),
+      "reid_hit", List.of("reid_hit_1", "reid_hit_2", "reid_hit_3"),
+      "reid_heavy", List.of("reid_heavy_1", "reid_heavy_2"),
+      "reid_drawn_hum", List.of("reid_drawn_hum"));
+   private static final List<String> OVERHAUL_SOURCES = List.of(
+      "https://freesound.org/people/mateusboga/sounds/614084", "https://freesound.org/people/qubodup/sounds/60004",
+      "https://freesound.org/people/qubodup/sounds/60024", "https://freesound.org/people/Danjocross/sounds/507466",
+      "https://freesound.org/people/bolkmar/sounds/475132", "https://freesound.org/people/Rodzuz/sounds/393904",
+      "https://freesound.org/people/Kievinay/sounds/512389", "https://freesound.org/people/SypherZent/sounds/420674",
+      "https://freesound.org/people/CogFireStudios/sounds/547038", "https://freesound.org/people/Eponn/sounds/547035",
+      "https://freesound.org/people/Eponn/sounds/547036", "https://freesound.org/people/CogFireStudios/sounds/547042",
+      "https://freesound.org/people/kibibu/sounds/22426");
    private static final Set<String> STREAM = Set.of("reid_choir", "world_cut_tail", "reid_rumble");
    private static final Set<String> LEGACY = Set.of("air_step", "refuse", "phoenix", "parry", "super_jump",
       "light_punch", "step_dash", "catch", "combo_hit", "combo_final", "kick_toss", "grab", "throw",
@@ -70,6 +86,18 @@ class ReinhardSoundsTest {
          choice.addProperty("stream",false);choice.addProperty("attenuation_distance",320);
          JsonObject definition=new JsonObject();JsonArray array=new JsonArray();array.add(choice);
          definition.add("sounds",array);expected.add("reinhard."+pair.getKey(),definition);
+      }
+      for (var pair : OVERHAUL.entrySet()) {
+         JsonObject definition = new JsonObject(); definition.addProperty("category", "player");
+         // The drawn hum is a quiet stance loop: no subtitle spam while Reid is held.
+         if (!pair.getKey().equals("reid_drawn_hum")) definition.addProperty("subtitle", "subtitles.viltrumitecore.reinhard_" + pair.getKey());
+         JsonArray array = new JsonArray();
+         for (String file : pair.getValue()) {
+            JsonObject choice = new JsonObject(); choice.addProperty("name", "viltrumitecore:reinhard/" + file);
+            if (pair.getKey().equals("reid_heavy")) choice.addProperty("attenuation_distance", 32);
+            array.add(choice);
+         }
+         definition.add("sounds", array); expected.add("reinhard." + pair.getKey(), definition);
       }
       JsonObject current = new JsonObject();
       for (String key : actual.keySet()) if (key.startsWith("reinhard.")) current.add(key, actual.get(key));
@@ -164,6 +192,7 @@ class ReinhardSoundsTest {
    @Test void everyFileExists() throws Exception {
       allFileReferencesExist(sounds());
       Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());all.addAll(DERIVED.values());
+      OVERHAUL.values().forEach(all::addAll);
       for (String f : all) {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));
@@ -177,7 +206,22 @@ class ReinhardSoundsTest {
       assertFalse(entry("world_cut_blast").has("type"));assertFalse(entry("cut_rain").has("type"));
       assertFalse(Files.exists(BIN.resolve("world_cut_blast.ogg.b64")));assertFalse(Files.exists(BIN.resolve("cut_rain.ogg.b64")));
       assertTrue(text("tools/assets/reinhard_sources.md").contains("tools/sfx/reinhard_cinematic.py"));
+      assertTrue(text("tools/assets/reinhard_sources.md").contains("tools/sfx/reinhard_strikes.py"));
+      assertTrue(text("CREDITS.md").contains("tools/sfx/reinhard_strikes.py"));
       assertTrue(text("CREDITS.md").contains("CC0-1.0"));
+   }
+   /** Every recording behind the overhaul cues is credited with its exact Freesound page and the CC0 1.0 link. */
+   @Test void overhaulRecordingsAreCreditedCc0() throws Exception {
+      String sources = text("tools/assets/reinhard_sources.md"), credits = text("CREDITS.md");
+      String section = sources.substring(sources.indexOf("## REINHARD OVERHAUL strike sounds"), sources.indexOf("## World Cut ambience"));
+      for (String page : OVERHAUL_SOURCES) {
+         String id = page.substring(page.lastIndexOf('/') + 1);
+         String row = Arrays.stream(section.split("\\R")).filter(l -> l.startsWith("| [" + id + "](" + page + ")")).findFirst().orElse("");
+         assertFalse(row.isBlank(), id + " source row");
+         assertTrue(row.contains("[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)"), id + " CC0 license link");
+         assertTrue(hasExactSourceLink(credits, page), id + " credit link");
+      }
+      assertTrue(section.contains("not a listening test"), "No listening claim without playback");
    }
    @Test void longFilesStream() throws Exception { for (String e : STREAM) { assertTrue(entry(e).has("stream")); assertTrue(entry(e).get("stream").getAsBoolean()); } }
    @Test void spec102ReferencesRemainUnchanged() throws Exception { validateSounds(sounds()); }

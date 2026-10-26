@@ -23,13 +23,13 @@ public final class ReinhardSword {
    public static final float HIP_Z = -1.0F;
    /** Hilt slightly inward; long sheath trails behind the thigh, outside the walking legs. */
    public static final float TILT_Z = 0.0F;
-   public static final float TILT_X = 35.0F;
+   public static final float TILT_X = 50.0F;
    /** Owner correction: the whole weapon is 18% smaller than the first-pass 0.70 scale. */
    public static final float SWORD_SCALE = 0.574F;
    /** Shorten the archive's excessive longitudinal proportions to clear the ground at a waist mount. */
    public static final float LENGTH_SCALE = .78F;
    /** Stage 4: how far (sword px, along the sheath axis toward the hilt) the blade travels out at full draw. */
-   public static final float DRAW_OUT_PX = 40.0F;
+   public static final float DRAW_OUT_PX = 50.0F;
 
    private ReinhardSword() {
    }
@@ -112,10 +112,23 @@ public final class ReinhardSword {
       return new org.joml.Matrix4f(blade).rotateY(drawnRoll(phase,ticks));
    }
 
-   /** TP choreography: one sampled grip bone, then both wrist constraints, then one
-    * immutable pair of mesh frames. Never recompute the weapon from the solved arm. */
+   /** Ordinary drawn strokes are one-handed: the left palm leaves the pommel for the
+    * scabbard mouth during the first ticks and returns over the last ones. */
+   public static float strikeRelease(double ticks,int length) {
+      if(!Double.isFinite(ticks) || length<=0) return 0;
+      return smooth(ticks/2.5)*smooth((length-ticks)/3);
+   }
+
    static org.joml.Matrix4f[] equipment(BakedGeoModel body,ReinhardPoses.ReidPhase phase,
       double ticks,boolean strike,double actionTicks,float holyWeight) {
+      return equipment(body,phase,ticks,strike,actionTicks,holyWeight,0);
+   }
+
+   /** TP choreography: one sampled grip bone, then both wrist constraints, then one
+    * immutable pair of mesh frames. Never recompute the weapon from the solved arm.
+    * {@code oneHand} (0..1) releases the support hand from the pommel (strikeRelease). */
+   static org.joml.Matrix4f[] equipment(BakedGeoModel body,ReinhardPoses.ReidPhase phase,
+      double ticks,boolean strike,double actionTicks,float holyWeight,float oneHand) {
       org.joml.Matrix4f hip=hip(body), blade=new org.joml.Matrix4f(hip);
       if(phase!=ReinhardPoses.ReidPhase.SHEATHED || strike) {
          PoseStack anchor=new PoseStack();ReinhardRenderer.boneFrame(anchor,body.getBone("reid_grip"));
@@ -149,10 +162,13 @@ public final class ReinhardSword {
       }
       // The short native hilt has two distinct grips: main hand by the guard,
       // support hand by the pommel. Never stack two glove centres at HANDLE.
-      float twoHands=strike?0:twoHandWeight(phase,ticks);
+      float pairedGrip=strike?0:twoHandWeight(phase,ticks);
+      float twoHands=pairedGrip*(1-Math.max(0,Math.min(1,oneHand)));
       if(twoHands>0)ReinhardGrip.paired(body,gripAt(blade,-8.5F),holyWeight*twoHands,true);
       if(right>0) {
-         var target=interpolate(blade,gripAt(blade,0),twoHands);
+         // The main hand stays by the guard while the support hand lets go:
+         // releasing the pommel must not slide the right glove along the hilt.
+         var target=interpolate(blade,gripAt(blade,0),pairedGrip);
          // Position is already fully owned by the right hand. Only the new
          // paired pronation ramps with twoHands; an epsilon must not enable it fully.
          if(twoHands>0)ReinhardGrip.paired(body,target,right,right*twoHands,false,true);

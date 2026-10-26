@@ -27,6 +27,14 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> STEP_DASH = reg("reinhard.step_dash");
    public static final RegistryObject<SoundEvent> CATCH = reg("reinhard.catch");
    public static final RegistryObject<SoundEvent> COMBO_HIT = reg("reinhard.combo_hit");
+   /** Overhaul: ordinary LMB strikes. Fist whoosh / body hit; Reid heavy swing, cut and finisher (three variants each). */
+   public static final RegistryObject<SoundEvent> FIST_SWING = reg("reinhard.fist_swing");
+   public static final RegistryObject<SoundEvent> FIST_HIT = reg("reinhard.fist_hit");
+   public static final RegistryObject<SoundEvent> REID_SWING = reg("reinhard.reid_swing");
+   public static final RegistryObject<SoundEvent> REID_HIT = reg("reinhard.reid_hit");
+   public static final RegistryObject<SoundEvent> REID_HEAVY = reg("reinhard.reid_heavy");
+   /** Overhaul: quiet loop while Reid is drawn and settled in the hand (client sound instance). */
+   public static final RegistryObject<SoundEvent> REID_DRAWN_HUM = reg("reinhard.reid_drawn_hum");
    public static final RegistryObject<SoundEvent> COMBO_FINAL = reg("reinhard.combo_final");
    public static final RegistryObject<SoundEvent> KICK_TOSS = reg("reinhard.kick_toss");
    public static final RegistryObject<SoundEvent> SKY_KICK = reg("reinhard.sky_kick");

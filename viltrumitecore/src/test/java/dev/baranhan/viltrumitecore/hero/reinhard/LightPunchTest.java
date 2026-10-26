@@ -18,7 +18,7 @@ class LightPunchTest {
    void damageIsFour() {
       assertEquals(4.0F, ReinhardRules.LIGHT_PUNCH_DAMAGE);
       assertEquals(ReinhardRules.LIGHT_PUNCH_DAMAGE, LightPunch.damage());
-      assertEquals(3.5, ReinhardRules.LIGHT_PUNCH_REACH);
+      assertEquals(3.9, ReinhardRules.LIGHT_PUNCH_REACH);
    }
 
    @Test

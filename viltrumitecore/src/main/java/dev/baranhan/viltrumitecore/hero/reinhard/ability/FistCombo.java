@@ -19,6 +19,11 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeArc;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeHits;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeImpact;
+import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves;
+import java.util.List;
 
 /**
  * Fist Combo (spec §6.2, Knight slot 1): one-handed, three hits 10 / 10 / 16.
@@ -134,16 +139,26 @@ public final class FistCombo implements AbilityHandler {
    }
 
    private static void hit(ServerPlayer player, ReinhardState state, int step) {
-      Vec3 look = player.getLookAngle();
-      LivingEntity target = ReinhardTargets.inReach(player, ReinhardRules.COMBO_REACH);
-      Vec3 at = target != null ? LightPunch.contact(player, target, ReinhardRules.COMBO_REACH) : reachPoint(player);
-      if (target != null && Strikes.hit(player, target, damage(step))) {
-         Strikes.knockback(target, look, ReinhardRules.COMBO_KNOCKBACK[step]);
-         if (!wave(step)) {
-            HeroFx.flash(player, at, step==0 ? .62F : .78F);
-            HeroFx.hitStop(player,at,1,player.getId(),target.getId());
-            ReinhardSounds.playAt(player, at, ReinhardSounds.COMBO_HIT.get(), 1.0F, 1.0F);
+      MeleeArc.Swing swing = MeleeMoves.KNIGHT[step];
+      state.meleeHit.clear();
+      List<MeleeHits.Hit> hits = MeleeHits.sweep(player, swing, state.action.elapsed(), state.meleeHit);
+      LivingEntity target = hits.isEmpty() ? null : hits.get(0).target();
+      Vec3 at = target != null ? hits.get(0).at() : reachPoint(player);
+      boolean landed = false;
+      for (MeleeHits.Hit hit : hits) {
+         if (Strikes.hit(player, hit.target(), damage(step))) {
+            Strikes.knockback(hit.target(), MeleeImpact.push(player, swing), ReinhardRules.COMBO_KNOCKBACK[step]);
+            landed = true;
          }
+      }
+
+      if (landed && !wave(step)) {
+         int[] ids = new int[hits.size() + 1];
+         ids[0] = player.getId();
+         for (int i = 0; i < hits.size(); i++) ids[i + 1] = hits.get(i).target().getId();
+         HeroFx.flash(player, at, step == 0 ? .62F : .78F);
+         HeroFx.hitStop(player, at, 1, ids);
+         ReinhardSounds.playAt(player, at, ReinhardSounds.COMBO_HIT.get(), 1.0F, 1.0F);
       }
 
       if (wave(step)) {
