@@ -88,62 +88,128 @@ public record WorldCutGeometry(double ox, double oy, double oz, double dx, doubl
       return wave(minY, maxY, a -> (int) Math.floor(oy) - 1, p -> true);
    }
 
-   /** maxY is exclusive. Border probes are horizontal and never access a world. */
+   /** One raster column of a slice: block x, z and the signed distance of its centre from the axis. */
+   public record Column(int x, int z, double across) { }
+
+   /**
+    * Top of one raster column, inclusive. {@code surface} is the slice's reference ground (depth, terraces and the
+    * mask are measured from it); a column may start above it (a bump, a plant, a tree in the trench) or below it.
+    */
+   @FunctionalInterface
+   public interface ColumnTop {
+      /** Every column of a slice starts at the slice's reference surface (a flat snapshot). */
+      ColumnTop SLICE = (x, z, along, surface) -> surface;
+      int top(int x, int z, int along, int surface);
+   }
+
+   /**
+    * The block columns of slice {@code along}: every column whose centre projects into [along, along + 1) and
+    * [-width / 2, width / 2) across. Neighbouring slices partition the footprint: no column twice, no gap.
+    */
+   public List<Column> columns(int along) {
+      List<Column> out = new ArrayList<>();
+      if (along < 0 || along >= length) return out;
+      Bounds box = hitBox(along, 0);
+      // Include both bounding edges. Projection owns the half-open slice;
+      // the upper world-axis edge belongs to it when facing backwards.
+      int minX = (int) Math.floor(box.minX() - .5 - 1E-8), endX = (int) Math.floor(box.maxX() - .5 + 1E-8) + 1;
+      int minZ = (int) Math.floor(box.minZ() - .5 - 1E-8), endZ = (int) Math.floor(box.maxZ() - .5 + 1E-8) + 1;
+      for (int x = minX; x < endX; x++) for (int z = minZ; z < endZ; z++) {
+         double vx = x + .5 - ox, vz = z + .5 - oz;
+         int projectedAlong = (int) Math.floor(vx * dx + vz * dz + 1E-8);
+         double across = -vx * dz + vz * dx;
+         if (projectedAlong == along && across >= -width / 2.0 - 1E-8 && across < width / 2.0 - 1E-8) {
+            out.add(new Column(x, z, across));
+         }
+      }
+      return out;
+   }
+
+   /** Inside the carve mask: the trench's coherent banks and terraces at a signed depth below the slice surface. */
+   public boolean masked(int along, double across, int down) {
+      return Math.abs(across) < halfWidth(along, down) + .5;
+   }
+
+   /** maxY is exclusive. Border probes are horizontal and never access a world. Every column starts at the slice
+    *  surface ({@link ColumnTop#SLICE}). */
    public Wave wave(int minY, int maxY, IntUnaryOperator surface, Predicate<Cell> border) {
-      List<List<Cell>> columns = new ArrayList<>(length);
-      int[] tops = new int[length], bottoms = new int[length], surfaces = new int[length];
+      return wave(minY, maxY, surface, ColumnTop.SLICE, border);
+   }
+
+   /**
+    * maxY is exclusive. Each column is visited from its own top (clamped to the build height) down to the slice's
+    * floor, so terrain, plants and trees standing above the slice's reference surface inside the footprint are part
+    * of the work instead of being left floating over the trench. Within a slice the wave still runs row by row from
+    * the highest top down; a row only visits the columns that reach it. Every visit is counted work.
+    */
+   public Wave wave(int minY, int maxY, IntUnaryOperator surface, ColumnTop columnTop, Predicate<Cell> border) {
+      int[][] xs = new int[length][], zs = new int[length][], tops = new int[length][];
+      int[] bottoms = new int[length], surfaces = new int[length];
+      long total = 0;
       for (int a = 0; a < length; a++) {
          int y = surface.applyAsInt(a);
          surfaces[a] = y;
-         tops[a] = Math.min(y, maxY - 1);
-         bottoms[a] = Math.max(y - depthAt(a) + 1, minY);
-         List<Cell> slice = new ArrayList<>();
-         if (minY < maxY && tops[a] >= bottoms[a]) {
-            Bounds box = hitBox(a, y);
-            // Include both bounding edges. Projection owns the half-open slice;
-            // the upper world-axis edge belongs to it when facing backwards.
-            int minX = (int) Math.floor(box.minX() - .5 - 1E-8), endX = (int) Math.floor(box.maxX() - .5 + 1E-8) + 1;
-            int minZ = (int) Math.floor(box.minZ() - .5 - 1E-8), endZ = (int) Math.floor(box.maxZ() - .5 + 1E-8) + 1;
-            for (int x = minX; x < endX; x++) for (int z = minZ; z < endZ; z++) {
-               double vx = x + .5 - ox, vz = z + .5 - oz;
-               int projectedAlong = (int) Math.floor(vx * dx + vz * dz + 1E-8);
-               double across = -vx * dz + vz * dx;
-               if (projectedAlong == a && across >= -width / 2.0 - 1E-8 && across < width / 2.0 - 1E-8) {
-                  Cell cell = new Cell(x, y, z, a, 0);
-                  if (border.test(cell)) slice.add(cell);
-               }
+         int bottom = Math.max(y - depthAt(a) + 1, minY);
+         bottoms[a] = bottom;
+         List<int[]> slice = new ArrayList<>();
+         if (minY < maxY) {
+            for (Column column : columns(a)) {
+               if (!border.test(new Cell(column.x(), y, column.z(), a, 0))) continue;
+               int top = Math.min(columnTop.top(column.x(), column.z(), a, y), maxY - 1);
+               if (top >= bottom) slice.add(new int[] {column.x(), column.z(), top});
             }
          }
-         columns.add(slice);
+         // Highest tops first (stable): row y visits the prefix of columns that reach it.
+         slice.sort((p, q) -> Integer.compare(q[2], p[2]));
+         int n = slice.size();
+         xs[a] = new int[n]; zs[a] = new int[n]; tops[a] = new int[n];
+         for (int i = 0; i < n; i++) {
+            int[] c = slice.get(i);
+            xs[a][i] = c[0]; zs[a][i] = c[1]; tops[a][i] = c[2];
+            total += c[2] - bottom + 1;
+         }
       }
-      int total = 0;
-      for (int a = 0; a < length; a++) total += columns.get(a).size() * Math.max(0, tops[a] - bottoms[a] + 1);
-      final int work = total;
+      if (total > Integer.MAX_VALUE) throw new IllegalArgumentException("World cut wave too large");
+      final int work = (int) total;
       return new Wave() {
-         private int along, y = tops[0], column;
+         private int along = -1, y, column, reach;
          private int remaining = work, front;
          public int remainingWork() { return remaining; }
          public int frontAlong() { return front; }
          public boolean carve(Cell c) {
-            double vx=c.x()+.5-ox, vz=c.z()+.5-oz;
-            return Math.abs(-vx*dz+vz*dx) < halfWidth(c.along(),c.down())+.5;
+            double vx = c.x() + .5 - ox, vz = c.z() + .5 - oz;
+            return masked(c.along(), -vx * dz + vz * dx, c.down());
          }
-         private void advanceEmpty() {
-            while (along < length && (columns.get(along).isEmpty() || y < bottoms[along])) {
-               along++;
-               column = 0;
-               if (along < length) y = tops[along];
+         private void enter(int a) {
+            along = a;
+            column = 0;
+            reach = 0;
+            if (a < length && tops[a].length > 0) {
+               y = tops[a][0];
+               widen();
             }
          }
-         public boolean hasNext() { advanceEmpty(); return along < length; }
+         private void widen() {
+            int[] t = tops[along];
+            while (reach < t.length && t[reach] >= y) reach++;
+         }
+         private void settle() {
+            if (along < 0) enter(0);
+            while (along < length) {
+               if (tops[along].length == 0 || y < bottoms[along]) { enter(along + 1); continue; }
+               if (column < reach) return;
+               y--;
+               column = 0;
+               widen();
+            }
+         }
+         public boolean hasNext() { settle(); return along < length; }
          public Cell next() {
             if (!hasNext()) throw new NoSuchElementException();
-            Cell c = columns.get(along).get(column++);
-            Cell result = new Cell(c.x(), y, c.z(), along, surfaces[along] - y);
+            int i = column++;
             remaining--;
             front = along + 1;
-            if (column == columns.get(along).size()) { column = 0; y--; }
-            return result;
+            return new Cell(xs[along][i], y, zs[along][i], along, surfaces[along] - y);
          }
       };
    }

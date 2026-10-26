@@ -95,6 +95,19 @@ public final class SoundDuck {
       return changed;
    }
 
+   /**
+    * Lowest multiplier a duck applies to an audible sound (-80 dB, inaudible). The engine stops a channel whose
+    * volume reaches 0 ({@code SoundEngine.updateCategoryVolume}, run for every channel by each duck refresh), and
+    * an instance stopped that way is never told: a looping sound (the drawn-Reid hum, REINHARD 3b item 7) was
+    * gone for good after World Erasure ducked everything to silence. A duck lowers a sound; it never ends it.
+    */
+   public static final float KEEP_ALIVE = 1.0E-4F;
+
+   /** Pure: a sound's final volume under a duck factor; an audible sound stays above 0 (see {@link #KEEP_ALIVE}). */
+   public static float duck(float volume, float factor) {
+      return volume <= 0.0F ? volume : volume * Math.max(KEEP_ALIVE, Math.min(1.0F, factor));
+   }
+
    /** Volume multiplier of one playing sound. No allocation (runs for every channel). */
    public float volumeFactor(SoundSource category, ResourceLocation id) {
       float factor = 1.0F;

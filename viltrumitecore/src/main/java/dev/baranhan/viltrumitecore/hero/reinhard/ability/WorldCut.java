@@ -77,13 +77,9 @@ public final class WorldCut implements AbilityHandler {
       ServerLevel level = player.serverLevel();
       if (WorldCutManager.get(level).size()>=2) return false;
       WorldCutShape shape = new WorldCutShape(player.position(), Vec3.directionFromRotation(0, player.getYRot()), level.getGameTime());
-      int[] surface = new int[ReinhardRules.CUT_LENGTH];
-      for (int a=0; a<surface.length; a++) {
-         BlockPos p = BlockPos.containing(shape.axis(a + .5));
-         surface[a] = level.getWorldBorder().isWithinBounds(p) && level.isLoaded(p)
-            ? level.getHeight(Heightmap.Types.WORLD_SURFACE, p.getX(), p.getZ()) - 1
-            : (int)Math.floor(shape.origin().y) - 1;
-      }
+      // Item 6: the median ground of each slice, not one axis sample (which could sit on a trunk or a canopy).
+      int[] surface = WorldCutSurface.references(shape.geometry(), heights(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES),
+         (int)Math.floor(shape.origin().y) - 1);
       Live world = new Live(level, UUID.randomUUID(), player.getUUID(), shape, surface, level.getGameTime());
       start(state, WorldCutSweep.of(shape.seed()));
       state.cutAnchor=player.position();
@@ -91,6 +87,11 @@ public final class WorldCut implements AbilityHandler {
       WorldCutManager.get(level).submit(state.worldCut);
       world.send(WorldCutS2CPacket.START);
       return true;
+   }
+   /** Column heights of a live level: the top block of a heightmap, UNKNOWN outside the border or loaded chunks. */
+   static WorldCutSurface.Heights heights(ServerLevel level, Heightmap.Types type) {
+      return (x, z) -> level.getWorldBorder().isWithinBounds(new BlockPos(x, 0, z)) && level.hasChunk(x >> 4, z >> 4)
+         ? level.getHeight(type, x, z) - 1 : WorldCutSurface.UNKNOWN;
    }
    /** Shortest horizontal distance to the finite 200-block axis, including its endpoints. */
    public static double distanceToLine(WorldCutShape shape, Vec3 point) {
@@ -114,7 +115,9 @@ public final class WorldCut implements AbilityHandler {
       }
       public void blast() {
          send(WorldCutS2CPacket.BLAST);
-         carve=new WorldCutCarve(shape,surface,level.getMinBuildHeight(),level.getMaxBuildHeight(),level.getWorldBorder()::isWithinBounds);
+         // Item 6: every column from its own top (plants, snow, bumps, trees) at the moment of the blast.
+         carve=new WorldCutCarve(shape,surface,level.getMinBuildHeight(),level.getMaxBuildHeight(),
+            WorldCutSurface.tops(heights(level,Heightmap.Types.WORLD_SURFACE),ReinhardRules.CUT_ABOVE),level.getWorldBorder()::isWithinBounds);
          CarveJobs.submit(level,carve);
       }
       public void progress(long elapsed, boolean finished) { if(finished)CutTelemetry.done("ground",castId,level,elapsed,telemetryStart,carve); send(finished ? WorldCutS2CPacket.DONE : WorldCutS2CPacket.WORK); }

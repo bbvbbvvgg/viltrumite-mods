@@ -60,7 +60,13 @@ public record WorldCutShape(Vec3 origin, Vec3 dirXZ, long seed) {
    }
 
    public WorldCutGeometry.Wave cells(int minY, int maxY, IntUnaryOperator surface, Predicate<BlockPos> border) {
-      return geometry().wave(minY, maxY, surface, c -> border.test(new BlockPos(c.x(), c.y(), c.z())));
+      return cells(minY, maxY, surface, WorldCutGeometry.ColumnTop.SLICE, border);
+   }
+
+   /** Production wave: every column starts at its own top ({@link WorldCutSurface#tops}). */
+   public WorldCutGeometry.Wave cells(int minY, int maxY, IntUnaryOperator surface, WorldCutGeometry.ColumnTop top,
+                                      Predicate<BlockPos> border) {
+      return geometry().wave(minY, maxY, surface, top, c -> border.test(new BlockPos(c.x(), c.y(), c.z())));
    }
 
    public Iterator<BlockPos> wave(int minY, int maxY, IntUnaryOperator surface, Predicate<BlockPos> border) {

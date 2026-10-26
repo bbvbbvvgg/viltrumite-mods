@@ -14,7 +14,9 @@ public abstract class SoundEngineVolumeMixin {
    @Inject(method = "calculateVolume(Lnet/minecraft/client/resources/sounds/SoundInstance;)F", at = @At("RETURN"), cancellable = true)
    private void viltrumite$duck(SoundInstance instance, CallbackInfoReturnable<Float> cir) {
       if (SoundDuck.INSTANCE.active()) {
-         cir.setReturnValue(cir.getReturnValueF() * SoundDuck.INSTANCE.volumeFactor(instance.getSource(), instance.getLocation()));
+         // Never exactly 0: the engine would stop the channel behind the instance's back (REINHARD 3b item 7).
+         cir.setReturnValue(SoundDuck.duck(cir.getReturnValueF(),
+            SoundDuck.INSTANCE.volumeFactor(instance.getSource(), instance.getLocation())));
       }
    }
 }
