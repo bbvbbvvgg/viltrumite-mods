@@ -83,6 +83,30 @@ No new external recordings. `tools/sfx/reinhard_cinematic.py` deterministically 
 - `cut_cinematic_impact`: 3.40 s displacement impact with decaying low tail; replaces the vanilla World Cut placeholder, not blocked NC recordings.
 - `cut_cinematic_sweep`: 0.32 s pressure sweep for Rain of Cuts; replaces the vanilla placeholder, not blocked NC recordings.
 
+## World Cut explosion — original synthesis (2026-10-26)
+
+`world_cut_explosion.ogg.b64` (event `reinhard.world_cut_explosion`) is the heavy explosion under the strike voice on
+the BLAST of the normal World Cut. `tools/sfx/reinhard_explosion.py` is its only writer: deterministic synthesis from
+seeded numpy noise and oscillators, **no recording and no download**, CC0-1.0, packaged with the sound-design helper
+(`package --own`, mono 44.1 kHz Vorbis q5).
+
+| Layer | Recipe | Role |
+|---|---|---|
+| slam | band-passed noise 200 Hz-6 kHz, 1.5 ms attack, 60 ms decay, plus an 8 ms crack above 2 kHz | the attack, lands on the voice's first hit |
+| boom | sine sweep 98 -> 30 Hz, 4 ms attack, 1.0 s decay, tanh drive 2.2, low-pass 420 Hz | the low boom; its 60-250 Hz harmonics carry it without a sub woofer |
+| roar | pink noise through a falling low-pass (3.5 kHz -> 250 Hz), high-pass 110 Hz, 0.7 s decay, seeded turbulence | the fireball |
+| echoes | four low-passed slap-backs of slam + early roar at 0.17 / 0.38 / 0.75 / 1.30 s, -9 to -21 dB | the size of an open valley |
+| rumble | brown noise 22-140 Hz plus a 150-500 Hz grit layer, slow seeded swell, 2.4 s decay | the rolling decay under the voice |
+| debris | sparse seeded grains 0.4-2.5 kHz thinning out over 3.5 s, -26 dB | falling rock |
+
+6.00 s mono, 100 ms momentary max -8.2 LUFS (K-weighted meter of `tools/sfx/reinhard_strikes.py`, set to -7.5 LUFS
+under a -1 dBTP ceiling with at most 3 dB of look-ahead limiting), decoded true peak -1.0 dBTP, integrated
+-21.0 LUFS (long decay). About 77 % of the first second sits below 160 Hz, where the strike voice (most energy at
+2.5-5 kHz) is thin. Played by `WorldCutAudio.strike` together with the voice, once per cast, at the nearest point
+of the cut (positional, linear 320-block attenuation, gain 0.85). `python3 tools/sfx/reinhard_explosion.py --check`
+re-synthesizes and compares with the committed file. Measured numbers only, **not a listening test**: the sandbox
+has no audio playback.
+
 ## REINHARD OVERHAUL strike sounds (CC0 1.0, Freesound via Openverse)
 
 Found with the sound-design skill (`.agents/skills/sound-design/scripts/openverse_sfx.py search`, `license=cc0&source=freesound`, one query per family: `fast punch whoosh`, `punch impact body hit`, `sword swing whoosh`, `sword slash cut`, `heavy sword impact`, `deep impact boom`, `sword ring resonance`) and fetched with its `download` command. License, creator and description were checked on each live Freesound page on **2026-10-25**; every page shows CC0 1.0. 420674 states it is a modified version of Abyssmal's [35213 "slashkut"](https://freesound.org/people/Abyssmal/sounds/35213/), whose page is also CC0 1.0. The downloaded files are Openverse's Freesound **preview MP3s** (lossy, not the original masters); raw downloads, previews and scratch mixes are not committed. The verbatim Openverse attribution lines are kept in the local `~/.cache/viltrumite-sfx/work/credits.txt`.

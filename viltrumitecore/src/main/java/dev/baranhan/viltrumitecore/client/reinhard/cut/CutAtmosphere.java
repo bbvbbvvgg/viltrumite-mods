@@ -29,6 +29,7 @@ public final class CutAtmosphere {
       new ResourceLocation("viltrumitecore","reinhard.world_cut_impact"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_blade"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_strike_voice"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_explosion"),
       new ResourceLocation("viltrumitecore","reinhard.cut_rumble"));
    /** Full-weight tint: about 40 % of the sky light with a blue cast (was 0.15/0.18/0.25 at darken 0.94, near black). */
    static final SkyTint.Tint PEAK=new SkyTint.Tint(.62F,.66F,.78F,.40F,0);
