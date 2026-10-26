@@ -49,8 +49,8 @@ public final class ReinhardClips {
    public static final String IDLE_HOLY_DRAWN = "idle_holy_drawn";
    /** Sheath Strike: the sword, still in its sheath, swung in a flat arc. */
    public static final String SHEATH_STRIKE = "sheath_strike";
-   /** Rain of Cuts: a fast fan of slashes, one per cut. */
-   public static final String CUT_RAIN = "cut_rain";
+   /** Saw Sphere: 13 s airborne spin, a swing every 4 ticks (one disc each) and the big final swing. */
+   public static final String SAW_SPHERE = "saw_sphere";
    /** Normal World Cut from the right shoulder (right to left); its mirror comes from the left shoulder. */
    public static final String WORLD_CUT = "world_cut";
    public static final String WORLD_CUT_FROM_LEFT = "world_cut_from_left";
@@ -82,7 +82,7 @@ public final class ReinhardClips {
          case REFLECT -> List.of(REFLECT_READY, REFLECT);
          case REID -> List.of(REID_DRAW, REID_SHEATHE, IDLE_HOLY_DRAWN);
          case SHEATH_STRIKE -> List.of(SHEATH_STRIKE);
-         case CUT_RAIN -> List.of(CUT_RAIN);
+         case SAW_SPHERE -> List.of(SAW_SPHERE);
          case WORLD_CUT -> List.of(WORLD_CUT, WORLD_CUT_FROM_LEFT);
          case DIAGONAL_WORLD_CUT -> List.of("diagonal_world_cut");
          case WORLD_ERASURE -> List.of(WORLD_ERASURE);

@@ -29,7 +29,7 @@ class ReinhardLoadoutMigrationTest {
       assertArrayEquals(new String[]{
          "reinhard:step_dash", "", "", "", "", "",
          "reinhard:sky_kick", "reinhard:step_dash", "", "", "", "",
-         "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:cut_rain", "reinhard:world_cut", "reinhard:world_erasure"}, repaired);
+         "reinhard:reid", CHOP, "reinhard:step_dash", "reinhard:saw_sphere", "reinhard:world_cut", "reinhard:world_erasure"}, repaired);
       for (String id : repaired) {
          assertTrue(id.isEmpty() || ReinhardAbilities.owns(id), id);
       }

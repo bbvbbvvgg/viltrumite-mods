@@ -152,18 +152,25 @@ public final class ReinhardFirstPersonPose {
       return new Offset(0,-.06F*w,.03F*w,7*w,0,-3*w);
    }
    static final double AIR_STEP_SECONDS=.3;
-   private static final float[][] RAIN = rain();
+   private static final float[][] SAW = saw();
 
-   private static float[][] rain() {
-      float[][] keys = new float[27][];
-      keys[0]=under(0);keys[1]=key(4,-45,-24,-6,-.1F,.18F,.04F);
-      for(int i=0;i<12;i++) {
-         float side=(i&1)==0?-1:1;
-         float t=ReinhardRules.CUT_FIRST_TICK+i*ReinhardRules.CUT_INTERVAL;
-         keys[2+i*2]=key(t-1.5F,-45,-side*24,-side*6,-side*.1F,.18F,.04F);
-         keys[3+i*2]=key(t,12,side*32,side*8,side*.12F,.04F,-.30F);
+   /** Saw Sphere: guard, then a forehand / backhand pair every swing (4 ticks), the big final swing, back to the guard. */
+   private static float[][] saw() {
+      int swings = dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.swingCount();
+      float[][] keys = new float[swings * 2 + 5][];
+      int n = 0;
+      keys[n++] = under(0);
+      keys[n++] = key(30, -40, -20, -6, -.1F, .16F, .04F);
+      for (int i = 0; i < swings; i++) {
+         float side = (i & 1) == 0 ? -1 : 1;
+         float t = dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.LAUNCH_START + i * dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.SWING_PERIOD;
+         keys[n++] = key(t - 2, -38, -side * 26, -side * 6, -side * .1F, .16F, .04F);
+         keys[n++] = key(t, 10, side * 34, side * 8, side * .12F, .04F, -.28F);
       }
-      keys[26]=under(ReinhardRules.CUT_TICKS);
+      float fin = dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.FINAL_SWING;
+      keys[n++] = key(fin - 5, -60, -40, -12, -.16F, .24F, .08F);
+      keys[n++] = key(fin, 18, 48, 12, .18F, .02F, -.36F);
+      keys[n++] = under(dev.baranhan.viltrumitecore.hero.reinhard.saw.SawChoreography.LENGTH);
       return keys;
    }
 
@@ -214,7 +221,7 @@ public final class ReinhardFirstPersonPose {
          case CATCH -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.CATCH_SNAP_TICKS ? CATCH : CATCH_READY,ticks).scaled(windowFade(ticks,length));
          case REFLECT -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.REFLECT_SNAP_TICKS ? SWAT : GUARD,ticks).scaled(windowFade(ticks,length));
          case SHEATH_STRIKE -> strike(SHEATH,ticks);
-         case CUT_RAIN -> strike(RAIN,ticks);
+         case SAW_SPHERE -> strike(SAW,ticks);
          // Both World Cuts move the whole two-handed rig in view space (cutView), not one arm.
          case WORLD_ERASURE -> worldErasure(ticks,false);
          default -> Offset.NONE;
@@ -328,8 +335,8 @@ public final class ReinhardFirstPersonPose {
       return new org.joml.Quaternionf().rotationXYZ((float)Math.toRadians(k[1]),(float)Math.toRadians(k[2]),(float)Math.toRadians(k[3]));
    }
 
-   public static Offset rain(double ticks,boolean physicalLeft) {
-      Offset o=strike(RAIN,ticks);
+   public static Offset sawSphere(double ticks,boolean physicalLeft) {
+      Offset o=strike(SAW,ticks);
       return physicalLeft ? new Offset(o.x()-.1F,o.y(),o.z(),o.pitch(),-o.yaw(),o.roll()) : o;
    }
 

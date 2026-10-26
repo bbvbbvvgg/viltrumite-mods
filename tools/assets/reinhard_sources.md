@@ -82,7 +82,7 @@ No new external recordings. `tools/sfx/reinhard_cinematic.py` deterministically 
 - `reid_cinematic_layer`: 6.00 s tension, metal harmonics and light pulse, alongside existing approved draw recordings.
 - `cut_rumble`: 1.25 s low air/stone layer, retriggered no faster than 1.4 s, no overlapping instance per cast.
 - `cut_cinematic_impact`: 3.40 s displacement impact with decaying low tail; replaces the vanilla World Cut placeholder, not blocked NC recordings.
-- `cut_cinematic_sweep`: 0.32 s pressure sweep for Rain of Cuts; replaces the vanilla placeholder, not blocked NC recordings.
+- `cut_cinematic_sweep`: 0.32 s pressure sweep, written for Rain of Cuts; since item 19 (2026-10-27) it voices the Saw Sphere swings (`reinhard.saw_swing`, Rain retired); replaces the vanilla placeholder, not blocked NC recordings.
 
 ## World Cut explosion — original synthesis (2026-10-26)
 
@@ -107,6 +107,23 @@ under a -1 dBTP ceiling with at most 3 dB of look-ahead limiting), decoded true 
 of the cut (positional, linear 320-block attenuation, gain 0.85). `python3 tools/sfx/reinhard_explosion.py --check`
 re-synthesizes and compares with the committed file. Measured numbers only, **not a listening test**: the sandbox
 has no audio playback.
+
+## Saw Sphere — original synthesis (2026-10-27)
+
+`saw_hum`, `saw_grind`, `saw_finale` and `saw_shatter` (events `reinhard.saw_*`, item 19) are written only by
+`tools/sfx/reinhard_saw_sphere.py`: deterministic synthesis from seeded numpy noise and oscillators,
+**no recording and no download**, CC0-1.0, packaged with the sound-design helper (`package --own`, mono 44.1 kHz
+Vorbis q5). The swing (`reinhard.saw_swing`) reuses `cut_cinematic_sweep` and adds no file.
+
+| Cue | Recipe | Role | Level (100 ms max / true peak before encoding) |
+|---|---|---|---|
+| saw_hum | 4.0 s seamless loop: 55 Hz drone with detuned harmonics, tanh drive, 300-1400 Hz whirr pulsed at ~7 Hz, faint 1.76 / 2.64 kHz shimmer; every partial completes whole cycles, the noise is filtered circularly | bed of the whole scene; the client rises it (pitch 0.6 -> 1.0, volume) while the shell grows | -16 LUFS / -9.3 dBTP, never limited (seam step 0.38 of the largest inner step) |
+| saw_grind | 0.55 s toothed noise 2-7 kHz (95 Hz tooth rate), four inharmonic metal partials, a short rock crunch below 600 Hz | one disc biting stone, rate-limited to one per 3 ticks per scene | -14 LUFS / -8.3 dBTP |
+| saw_finale | 3.0 s sub thump 94 -> 34 Hz, an air sweep peaking at 0.25 s, a long inharmonic metal chord from 392 Hz | the last great swing | -9 LUFS / -1.1 dBTP |
+| saw_shatter | 3.6 s crack, a dense cloud of 2-9 kHz glass grains thinning out over 2.6 s, low thump, shimmering tail | the shell breaking up | -10 LUFS / -2.4 dBTP |
+
+`python3 tools/sfx/reinhard_saw_sphere.py --check` re-synthesizes and compares with the committed files (correlation
+>= 0.95). Measured numbers only, **not a listening test**: the sandbox has no audio playback.
 
 ## REINHARD OVERHAUL strike sounds (CC0 1.0, Freesound via Openverse)
 

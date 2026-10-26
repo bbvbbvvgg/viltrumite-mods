@@ -19,12 +19,26 @@ class CinematicPacketTest {
       }
       assertThrows(IllegalArgumentException.class,()->new DiagonalCutS2CPacket(UUID.randomUUID(),UUID.randomUUID(),new DiagonalCutGeometry(Vec3.ZERO,new Vec3(0,0,1),0),0,4));
    }
-   @Test void twelveRainContactsRoundTripAndRejectBadIndex() {
-      for(int i=0;i<12;i++) {
-         var p=new CutRainS2CPacket(new Vec3(1,2,3),new Vec3(0,0,2),i,7+i*3);
-         var b=new FriendlyByteBuf(Unpooled.buffer());try{p.toBytes(b);assertEquals(p,new CutRainS2CPacket(b));assertEquals(0,b.readableBytes());}finally{b.release();}
+   @Test void sawSphereStartRoundTripsAndRejectsBadScenes() {
+      long[] mask={0x5L,-1L,0L};
+      var p=new SawSphereS2CPacket(42,10.5,64,-3.25,90F,17,180,mask);
+      var b=new FriendlyByteBuf(Unpooled.buffer());try{p.toBytes(b);assertEquals(p,new SawSphereS2CPacket(b));assertEquals(0,b.readableBytes());}finally{b.release();}
+      mask[0]=0;assertEquals(0x5L,p.mask()[0],"the packet owns a copy of the mask");
+      assertEquals(260,p.withAge(999).age());assertEquals(0,p.withAge(-4).age());assertEquals(p.mask().length,p.withAge(30).mask().length);
+      assertThrows(IllegalArgumentException.class,()->new SawSphereS2CPacket(1,Double.NaN,0,0,0,0,0,new long[0]));
+      assertThrows(IllegalArgumentException.class,()->new SawSphereS2CPacket(1,0,0,0,0,-1,0,new long[0]));
+      assertThrows(IllegalArgumentException.class,()->new SawSphereS2CPacket(1,0,0,0,0,261,0,new long[0]));
+      assertThrows(IllegalArgumentException.class,()->new SawSphereS2CPacket(1,0,0,0,0,0,0,new long[SawSphereS2CPacket.MAX_MASK+1]));
+      var huge=new FriendlyByteBuf(Unpooled.buffer());try{
+         huge.writeVarInt(1);huge.writeDouble(0);huge.writeDouble(0);huge.writeDouble(0);huge.writeFloat(0);huge.writeVarInt(0);huge.writeVarInt(0);
+         huge.writeVarInt(SawSphereS2CPacket.MAX_MASK+1);
+         assertThrows(IllegalArgumentException.class,()->new SawSphereS2CPacket(huge),"a forged length is refused before allocation");
+      }finally{huge.release();}
+   }
+   @Test void sawSphereEndRoundTrips() {
+      for(boolean interrupted:new boolean[]{false,true}) {
+         var p=new SawSphereEndS2CPacket(7,interrupted);
+         var b=new FriendlyByteBuf(Unpooled.buffer());try{p.toBytes(b);assertEquals(p,new SawSphereEndS2CPacket(b));assertEquals(0,b.readableBytes());}finally{b.release();}
       }
-      assertThrows(IllegalArgumentException.class,()->new CutRainS2CPacket(Vec3.ZERO,Vec3.ZERO,12,0));
-      assertThrows(IllegalArgumentException.class,()->new CutRainS2CPacket(new Vec3(Double.NaN,0,0),Vec3.ZERO,0,0));
    }
 }

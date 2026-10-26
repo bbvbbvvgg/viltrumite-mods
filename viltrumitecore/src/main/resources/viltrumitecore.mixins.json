@@ -35,6 +35,7 @@
     "SolidEntityBypassMixin",
     "WroughtnautDamageBypassMixin",
     "QuietBlockRemovalMixin",
+    "SawShellCollisionMixin",
     "EndDragonFightAccess",
     "PlayerRespawnLogicInvoker"
   ],

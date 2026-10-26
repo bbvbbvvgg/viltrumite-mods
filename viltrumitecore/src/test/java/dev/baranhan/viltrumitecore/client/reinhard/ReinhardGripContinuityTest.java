@@ -20,7 +20,7 @@ class ReinhardGripContinuityTest {
    @Test void solvedSwordArmsDoNotFlipBetweenHighFrameRateSamples() throws Exception {
       var clips=ReinhardSecondPassTest.clips();
       var bad=new java.util.LinkedHashMap<String,String>();
-      for(String name:new String[]{"light_punch","sheath_strike","chop_left","chop_right","cut_rain","reid_draw","reid_sheathe","world_cut","world_cut_from_left","diagonal_world_cut","world_erasure"}) {
+      for(String name:new String[]{"light_punch","sheath_strike","chop_left","chop_right","saw_sphere","reid_draw","reid_sheathe","world_cut","world_cut_from_left","diagonal_world_cut","world_erasure"}) {
          var body=ReinhardSecondPassTest.body();var previous=new HashMap<String,Quaternionf>();
          int frames=(int)Math.ceil(clips.get(name).lengthSeconds()*240);
          for(int frame=0;frame<=frames;frame++) {
@@ -29,7 +29,9 @@ class ReinhardGripContinuityTest {
             ReinhardLayers.overlay(clips.get(name),body,seconds,1);
             var phase=name.equals("reid_draw")?ReinhardPoses.ReidPhase.DRAWING:
                name.equals("reid_sheathe")?ReinhardPoses.ReidPhase.SHEATHING:ReinhardPoses.ReidPhase.DRAWN;
-            ReinhardSword.equipment(body,phase,seconds*20,name.equals("sheath_strike"),seconds*20,1);
+            // The Saw Sphere is one-handed: its support palm lets go like a drawn stroke (ReinhardHands).
+            float one=name.equals("saw_sphere")?ReinhardSword.strikeRelease(seconds*20,(int)Math.round(clips.get(name).lengthSeconds()*20)):0;
+            ReinhardSword.equipment(body,phase,seconds*20,name.equals("sheath_strike"),seconds*20,1,one);
             for(String bone:new String[]{"left_arm","right_arm","left_forearm","right_forearm","left_hand","right_hand"}) {
                var q=ReinhardGeometry.frame(body.getBone(bone)).getUnnormalizedRotation(new Quaternionf()).normalize();
                var old=previous.put(bone,q);

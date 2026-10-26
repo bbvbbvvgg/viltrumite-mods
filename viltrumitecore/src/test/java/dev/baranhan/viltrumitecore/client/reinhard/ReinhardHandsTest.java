@@ -38,11 +38,13 @@ class ReinhardHandsTest {
 
    @Test
    void actionsReleaseTheSupportHandOnlyWhenTheyUseIt() {
-      for (var two : new ReinhardAbility[]{ReinhardAbility.CUT_RAIN, ReinhardAbility.WORLD_CUT, ReinhardAbility.DIAGONAL_WORLD_CUT, ReinhardAbility.WORLD_ERASURE}) {
+      for (var two : new ReinhardAbility[]{ReinhardAbility.WORLD_CUT, ReinhardAbility.DIAGONAL_WORLD_CUT, ReinhardAbility.WORLD_ERASURE}) {
          assertTrue(ReinhardHands.twoHanded(two));
          assertEquals(0, ReinhardHands.actionRelease(two, true, 5, 20), "two-handed " + two + " keeps both palms on the hilt");
       }
       assertFalse(ReinhardHands.twoHanded(ReinhardAbility.REID_STRIKE));
+      assertFalse(ReinhardHands.twoHanded(ReinhardAbility.SAW_SPHERE), "the Saw Sphere flings the saws one-handed");
+      assertEquals(1, ReinhardHands.actionRelease(ReinhardAbility.SAW_SPHERE, true, 120, 260), 1E-6, "its clip owns the balancing left arm");
       assertEquals(1, ReinhardHands.actionRelease(ReinhardAbility.REID_STRIKE, false, 6, 13), 1E-6, "drawn strokes are one-handed");
       assertEquals(0, ReinhardHands.actionRelease(ReinhardAbility.REID_STRIKE, false, 0, 13), 1E-6, "and take the hand back");
       assertEquals(0, ReinhardHands.actionRelease(ReinhardAbility.REID_STRIKE, false, 13, 13), 1E-6);

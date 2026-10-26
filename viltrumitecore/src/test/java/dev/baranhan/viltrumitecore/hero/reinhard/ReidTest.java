@@ -131,7 +131,7 @@ class ReidTest {
       for (Reid.Phase phase : Reid.Phase.values()) {
          assertTrue(Reid.allows(ReinhardAbility.REID, phase), "REID " + phase);
          assertEquals(phase == Reid.Phase.SHEATHED, Reid.allows(ReinhardAbility.SHEATH_STRIKE, phase), "SHEATH " + phase);
-         for (ReinhardAbility drawnOnly : new ReinhardAbility[]{ReinhardAbility.CUT_RAIN, ReinhardAbility.WORLD_CUT, ReinhardAbility.WORLD_ERASURE}) {
+         for (ReinhardAbility drawnOnly : new ReinhardAbility[]{ReinhardAbility.SAW_SPHERE, ReinhardAbility.WORLD_CUT, ReinhardAbility.WORLD_ERASURE}) {
             assertEquals(phase == Reid.Phase.DRAWN, Reid.allows(drawnOnly, phase), drawnOnly + " " + phase);
          }
 
@@ -204,8 +204,8 @@ class ReidTest {
    @Test
    void panelGreyFollowsReid() {
       int drawn = Reid.withFlags(0, Reid.Phase.DRAWN);
-      assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.CUT_RAIN, 0, 0), "Rain of Cuts grey while sheathed");
-      assertFalse(ReinhardAbilities.slotGrey(ReinhardAbility.CUT_RAIN, 0, drawn));
+      assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.SAW_SPHERE, 0, 0), "Saw Sphere grey while sheathed");
+      assertFalse(ReinhardAbilities.slotGrey(ReinhardAbility.SAW_SPHERE, 0, drawn));
       assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.SHEATH_STRIKE, 0, drawn), "Sheath Strike grey while drawn");
       assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.SHEATH_STRIKE, 0, 0));
       assertTrue(ReinhardAbilities.slotGrey(ReinhardAbility.SHEATH_STRIKE, 5, 0), "cooldown greys too");

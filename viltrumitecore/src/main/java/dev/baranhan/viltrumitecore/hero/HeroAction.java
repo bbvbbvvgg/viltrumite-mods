@@ -57,7 +57,7 @@ public enum HeroAction {
    /** Reinhard Holy Sword (stages 4-6). */
    REID,
    SHEATH_STRIKE,
-   CUT_RAIN,
+   SAW_SPHERE,
    WORLD_CUT,
    WORLD_ERASURE,
    /** Any hero with airJumps > 0: jump in the air (HeroAirJump; no slot, not an ability). */

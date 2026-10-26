@@ -60,8 +60,15 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> REID_SHEATHE = reg("reinhard.reid_sheathe");
    /** The sheathed-blade ring ({@code reinhard/sheath_ring}, Iridiuss CC0; the same file voices the World Cut blade accent). */
    public static final RegistryObject<SoundEvent> SHEATH_STRIKE = reg("reinhard.sheath_strike");
-   /** Original procedural sweep, one spatial sound per authored Rain contact. */
-   public static final RegistryObject<SoundEvent> CUT_RAIN = reg("reinhard.cut_rain");
+   /**
+    * Saw Sphere (item 19). The swing reuses the cinematic sweep file ({@code reinhard/cut_cinematic_sweep});
+    * hum, grind, finale and shatter are original synthesis (tools/sfx/reinhard_saw_sphere.py, CC0).
+    */
+   public static final RegistryObject<SoundEvent> SAW_HUM = reg("reinhard.saw_hum");
+   public static final RegistryObject<SoundEvent> SAW_SWING = reg("reinhard.saw_swing");
+   public static final RegistryObject<SoundEvent> SAW_GRIND = reg("reinhard.saw_grind");
+   public static final RegistryObject<SoundEvent> SAW_FINALE = reg("reinhard.saw_finale");
+   public static final RegistryObject<SoundEvent> SAW_SHATTER = reg("reinhard.saw_shatter");
 
    public static final RegistryObject<SoundEvent> REID_CINEMATIC_LAYER = reg("reinhard.reid_cinematic_layer");
    public static final RegistryObject<SoundEvent> CUT_RUMBLE = reg("reinhard.cut_rumble");

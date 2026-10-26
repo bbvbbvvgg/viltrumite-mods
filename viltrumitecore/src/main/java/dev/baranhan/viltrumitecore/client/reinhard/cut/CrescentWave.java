@@ -6,10 +6,9 @@ import net.minecraft.client.Camera;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The flying blade crescent of Reinhard's aerial diagonal strikes (the Cut Rain waves): a row of light pixels on an
- * arc of +-1.2 rad across {@code span}, its middle leading and its ends bowed back along the flight direction.
- * Shared so the diagonal World Cut sends out the same wave (REINHARD OVERHAUL item 14); Cut Rain draws exactly what
- * it drew before.
+ * The flying blade crescent of Reinhard's aerial diagonal strikes (first drawn for the Cut Rain waves, retired by
+ * the Saw Sphere in item 19): a row of light pixels on an arc of +-1.2 rad across {@code span}, its middle leading
+ * and its ends bowed back along the flight direction. The diagonal World Cut sends it out (REINHARD OVERHAUL item 14).
  */
 public final class CrescentWave {
    /** Half the arc, radians: the ends sit at sin(1.2) = 0.93 of the radius across and lag (1 - cos 1.2) * bow. */

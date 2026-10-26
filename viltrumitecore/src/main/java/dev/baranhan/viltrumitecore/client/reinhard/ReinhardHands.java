@@ -24,7 +24,7 @@ final class ReinhardHands {
 
    /** Actions that wield Reid in BOTH hands: the support hand stays on the hilt through them. */
    static boolean twoHanded(@Nullable ReinhardAbility action) {
-      return action==ReinhardAbility.CUT_RAIN || action==ReinhardAbility.WORLD_CUT
+      return action==ReinhardAbility.WORLD_CUT
          || action==ReinhardAbility.DIAGONAL_WORLD_CUT || action==ReinhardAbility.WORLD_ERASURE;
    }
 

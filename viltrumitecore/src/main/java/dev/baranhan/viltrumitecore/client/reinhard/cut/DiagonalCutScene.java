@@ -25,7 +25,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
  *
  * <p>REINHARD OVERHAUL items 10 and 14: the wound itself is The Hand erasure of {@code /erasuretest}
  * ({@link DiagonalCutErasure}, drawn by the erasure renderer), and the blade crescent of Reinhard's aerial diagonal
- * strikes ({@link CrescentWave}, the Cut Rain wave) flies out of it along the cut with the carving front. The old
+ * strikes ({@link CrescentWave}, the wave first drawn for the retired Cut Rain) flies out of it along the cut with the carving front. The old
  * narrow aperture rift is kept only as the fallback for when the erasure cannot be drawn (a shader pack owns the
  * frame, or the shader failed to load), so there is never a second rift. Sounds and timing are untouched.
  */

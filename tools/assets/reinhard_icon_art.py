@@ -887,18 +887,65 @@ def sheath_strike():
     return ic.image()
 
 
+def flat_saw(ic, sx, sy, rx, ry):
+    """A gold blade-saw seen almost edge-on: lit top face, dark rim, alternating teeth, white hub."""
+    body = {(x, y) for x in range(32) for y in range(32) if ((x - sx) / rx) ** 2 + ((y - sy) / ry) ** 2 <= 1}
+    teeth = set()
+    for i, a in enumerate(range(0, 360, 20)):
+        if i % 2 == 0:
+            t = (int(round(sx + (rx + 1) * math.cos(math.radians(a)))), int(round(sy + (ry + 0.7) * math.sin(math.radians(a)))))
+            if t not in body:
+                teeth.add(t)
+    ic.outline(body | teeth, OUT)
+    ic.fill(body, GOLD[1])
+    ic.fill({(x, y) for (x, y) in body if y < sy}, GOLD[2])
+    ic.fill({(x, y) for (x, y) in body if y < sy and abs(x - sx) < rx * 0.45}, GOLD[3])
+    ic.fill({(x, y) for (x, y) in body if y > sy}, GOLD[0])
+    ic.fill(teeth, GOLD[3])
+    ic.set(int(round(sx)), int(round(sy)), WHITE)
+
+
 @art
-def cut_rain():
-    ic = Icon("holy", center=(16, 12))
-    ic.fill(rect(2, 27, 30, 29), BG[2])
-    ic.fill(rect(2, 26, 30, 26), BG[4])
-    for (x, y, L) in ((9, 5, 7), (19, 3, 8), (27, 6, 7), (13, 14, 8), (24, 15, 8), (5, 16, 6)):
-        st = stroke([(x + 2, y - 2), (x - L * 0.25 + 1, y + L * 0.5), (x - L * 0.5, y + L)], 0.5, 2.6, 0.4)
-        ic.mix(grow(set(st)) - set(st), CYAN[1], 0.6)
-        paint_stroke(ic, st, (CYAN[2], CYAN[4], WHITE))
-    for x in (6, 14, 21, 27):
-        ic.fill({(x - 1, 26), (x + 1, 26), (x, 25)}, CYAN[4])
-        ic.set(x, 26, WHITE)
+def saw_sphere():
+    """A translucent cyan barrier sphere cut off by the ground, gold blade-saws lying flat along its shell and a
+    tiny Reinhard (red hair, white coat, Reid out) spinning at its heart."""
+    ic = Icon("holy", center=(16, 17))
+    cx, cy, r, ground = 16, 15.5, 11.8, 25
+    ic.fill(rect(2, ground + 1, 29, 29), BG[2])
+    ic.fill(rect(2, ground + 1, 29, ground + 1), BG[4])
+    ball = {(x, y) for (x, y) in disc(cx, cy, r) if y <= ground}
+    ic.mix(ball, CYAN[1], 0.35)
+    ic.mix(ball & disc(cx - 4, cy - 5, 6), CYAN[4], 0.18)
+    ic.fill(grow(ball) - ball - rect(0, ground + 1, 31, 31), OUT)
+    shell = ball - shrink(ball) - rect(0, ground, 31, ground)
+    ic.fill(shell, CYAN[3])
+    ic.fill({(x, y) for (x, y) in shell if x - cx + y - cy < -9}, CYAN[5])
+    ic.fill(arc(cx, cy, r - 2.2, 1, 200, 245), CYAN[4])
+    ic.mix(rect(cx - 11, ground, cx + 11, ground), CYAN[4], 0.8)
+    for (sx, sy, rx) in ((9, 10, 3.3), (23.5, 12, 3.3), (8.5, 20.5, 3.5), (23.5, 21.5, 3.5)):
+        flat_saw(ic, sx, sy, rx, 1.3)
+    # the swing: a gold arc wrapped round him, front half bright
+    ic.fill(arc(16, 17, 7, 1, 10, 170, ry=2.6), GOLD[3])
+    ic.fill(arc(16, 17, 7, 1, 190, 350, ry=2.6), GOLD[0])
+    # tiny Reinhard
+    hair = {(15, 11), (16, 11), (17, 11), (14, 12), (15, 12), (16, 12), (17, 12), (18, 12), (14, 13), (18, 13)}
+    face = {(15, 13), (16, 13), (17, 13), (15, 14), (16, 14), (17, 14)}
+    coat = rect(14, 15, 18, 19) | {(13, 16)}
+    legs = {(15, 20), (15, 21), (17, 20), (17, 21)}
+    ic.outline(hair | face | coat | legs, OUT)
+    ic.fill(hair, HAIR[3])
+    ic.set(16, 11, HAIR[4])
+    ic.fill(face, SKIN[3])
+    ic.set(17, 14, SKIN[2])
+    ic.fill(coat, PALE[2])
+    ic.fill({(18, 15), (18, 16), (18, 17), (18, 18), (18, 19)}, PALE[1])
+    ic.fill({(16, 15), (16, 16)}, GOLD[2])
+    ic.fill(legs, STEEL[0])
+    ic.fill(line(19, 16, 26, 16), WHITE)
+    ic.set(19, 16, GOLD[2])
+    ic.set(27, 16, PALE[2])
+    ic.sparkle(27, 5)
+    ic.sparkle(5, 4, big=False, col=CYAN[5])
     return ic.image()
 
 
@@ -949,5 +996,5 @@ def world_erasure():
 
 
 NAMES = ['light_punch', 'step_dash', 'catch', 'fist_combo', 'sky_kick', 'grab_throw', 'dash_behind', 'stomp',
-         'reflect', 'reid', 'reid_drawn', 'lethal_chop', 'sheath_strike', 'cut_rain', 'world_cut', 'world_erasure',
+         'reflect', 'reid', 'reid_drawn', 'lethal_chop', 'sheath_strike', 'saw_sphere', 'world_cut', 'world_erasure',
          'diagonal_world_cut']
