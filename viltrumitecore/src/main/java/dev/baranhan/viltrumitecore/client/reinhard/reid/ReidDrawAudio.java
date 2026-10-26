@@ -147,6 +147,10 @@ public final class ReidDrawAudio {
             Voice voice = new Voice(cue, id, scene.center());
             VOICES.computeIfAbsent(id, key -> new ArrayList<>()).add(voice);
             client.getSoundManager().play(voice);
+            if (dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED) {
+               // QA (-Dviltrumitecore.reinhard.qa): every cue starts once, on its draw tick.
+               com.mojang.logging.LogUtils.getLogger().info("REID_AUDIO_QA,{},{},{}", cue.name(), now - scene.startGameTime(), id);
+            }
          }
       }
 

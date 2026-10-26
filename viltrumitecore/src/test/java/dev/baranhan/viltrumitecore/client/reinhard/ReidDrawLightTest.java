@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.baranhan.viltrumitecore.client.reinhard.reid.ReidDrawLight;
+import dev.baranhan.viltrumitecore.client.reinhard.reid.ReidDrawSceneVfx;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
 import java.util.function.DoubleUnaryOperator;
 import org.junit.jupiter.api.Test;
@@ -129,5 +130,20 @@ class ReidDrawLightTest {
       assertEquals(2.6, ReidDrawLight.shake(ReinhardRules.REID_RELEASE_TICK), 1e-4, "the hit");
       assertTrue(ReidDrawLight.shake(ReinhardRules.REID_RELEASE_TICK + 15) < 0.01, "and it settles");
       assertTrue(ReidDrawLight.CASTER_SHAKE < 1, "his own camera shakes less");
+   }
+
+   @Test
+   void theBrightestLayerIsTheNarrowestCore() {
+      // The colour layers are halo, glow, core; the widths are core, glow, halo. A white pillar as wide
+      // as the halo was the result of mixing the two orders up.
+      for (double d = ReidDrawLight.LEAK; d <= 125; d += 0.5) {
+         float[] widths = ReidDrawLight.widths(d);
+         for (int layer = 0; layer + 1 < 3; layer++) {
+            assertTrue(ReidDrawSceneVfx.layerAlpha(layer) < ReidDrawSceneVfx.layerAlpha(layer + 1), "inner layers are brighter");
+            assertTrue(widths[ReidDrawSceneVfx.widthIndex(layer)] >= widths[ReidDrawSceneVfx.widthIndex(layer + 1)],
+               "inner layers are narrower at " + d);
+         }
+      }
+      assertTrue(ReidDrawLight.widths(80)[0] < 0.3F, "the core is a thin blade of light");
    }
 }

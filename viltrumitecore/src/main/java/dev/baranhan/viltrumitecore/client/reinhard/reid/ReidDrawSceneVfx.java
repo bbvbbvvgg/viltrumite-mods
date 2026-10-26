@@ -379,8 +379,9 @@ public final class ReidDrawSceneVfx {
       float sx = (float)(-dz / distance), sz = (float)(dx / distance);
       double[] heights = segments(height);
       for (int layer = 0; layer < 3; layer++) {
-         float half = Math.max(widths[layer], MIN_ANGULAR[layer] * (float)distance);
-         float alpha = LAYER_ALPHA[layer] * Math.min(1.0F, beam) * (float)Math.sqrt(widths[layer] / half)
+         float width = widths[widthIndex(layer)];
+         float half = Math.max(width, MIN_ANGULAR[layer] * (float)distance);
+         float alpha = LAYER_ALPHA[layer] * Math.min(1.0F, beam) * (float)Math.sqrt(width / half)
             * (1.0F + 0.35F * Math.max(0.0F, beam - 1.0F));
          int[] rgb = LAYER_RGB[layer];
          for (int i = 0; i + 1 < heights.length; i++) {
@@ -393,6 +394,16 @@ public final class ReidDrawSceneVfx {
             ribbon(buffer, eye, view.center().x, bottom + heights[i], bottom + heights[i + 1], view.center().z, sx, sz, half, rgb, a0, a1);
          }
       }
+   }
+
+   /** Pure: the {@link ReidDrawLight#widths} entry (core, glow, halo) of a colour layer (halo, glow, core). */
+   public static int widthIndex(int layer) {
+      return 2 - layer;
+   }
+
+   /** Peak alpha of a colour layer (halo, glow, core). */
+   public static float layerAlpha(int layer) {
+      return LAYER_ALPHA[layer];
    }
 
    /** Heights of the column's segments: dense by the ground and the body, coarse in the sky. */
@@ -441,7 +452,7 @@ public final class ReidDrawSceneVfx {
 
       double[] heights = segments(height);
       for (int layer = 1; layer < 3; layer++) {
-         float radius = layer == 1 ? Math.max(0.6F, widths[1] * 1.3F) : Math.max(0.25F, widths[2] * 2.0F);
+         float radius = layer == 1 ? Math.max(0.6F, widths[widthIndex(1)] * 1.3F) : Math.max(0.25F, widths[widthIndex(2)] * 2.0F);
          float alpha = LAYER_ALPHA[layer] * 0.45F * Math.min(1.0F, beam);
          int[] rgb = LAYER_RGB[layer];
          for (int i = 0; i + 1 < heights.length; i++) {
@@ -751,36 +762,68 @@ public final class ReidDrawSceneVfx {
       }
 
       GuiGraphics gui = event.getGuiGraphics();
-      int w = gui.guiWidth(), h = gui.guiHeight();
+      // Pending batched GUI first, then the layers with their own explicit state: a batched GuiGraphics
+      // fill resets the blend when it flushes, and an unblended vignette is a black screen.
+      gui.flush();
+      drawOverlay(gui.pose().last().pose(), gui.guiWidth(), gui.guiHeight(), bottom, edge, flash);
+   }
+
+   private static void drawOverlay(Matrix4f pose, int w, int h, float bottom, float edge, float flash) {
       RenderSystem.disableDepthTest();
       RenderSystem.depthMask(false);
       RenderSystem.enableBlend();
-      RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE);
-      if (bottom > 0.004F) {
-         gui.fillGradient(0, h * 2 / 3, w, h, argb(0, 255, 226, 160), argb(bottom, 255, 226, 160));
-      }
+      try {
+         BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+         // The rising light and the warm rim add to the picture.
+         RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE);
+         if (bottom > 0.004F) {
+            // The light rising from below the view (first person only).
+            int top = alpha(0.0F), low = alpha(bottom);
+            RenderSystem.setShader(GameRenderer::getPositionColorShader);
+            buffer.begin(Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+            buffer.vertex(pose, 0, h * 2 / 3.0F, 0).color(255, 226, 160, top).endVertex();
+            buffer.vertex(pose, 0, h, 0).color(255, 226, 160, low).endVertex();
+            buffer.vertex(pose, w, h, 0).color(255, 226, 160, low).endVertex();
+            buffer.vertex(pose, w, h * 2 / 3.0F, 0).color(255, 226, 160, top).endVertex();
+            Tesselator.getInstance().end();
+         }
 
-      if (edge > 0.004F) {
-         gui.setColor(edge, edge * 0.9F, edge * 0.7F, 1.0F);
-         gui.blit(VIGNETTE, 0, 0, -90, 0.0F, 0.0F, w, h, w, h);
-         gui.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-      }
+         if (edge > 0.004F) {
+            // Vanilla's vignette is white at the rim and black in the middle: added, it warms the rim only.
+            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShaderTexture(0, VIGNETTE);
+            RenderSystem.setShaderColor(edge, edge * 0.9F, edge * 0.7F, 1.0F);
+            buffer.begin(Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+            buffer.vertex(pose, 0, 0, 0).uv(0.0F, 0.0F).endVertex();
+            buffer.vertex(pose, 0, h, 0).uv(0.0F, 1.0F).endVertex();
+            buffer.vertex(pose, w, h, 0).uv(1.0F, 1.0F).endVertex();
+            buffer.vertex(pose, w, 0, 0).uv(1.0F, 0.0F).endVertex();
+            Tesselator.getInstance().end();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+         }
 
-      if (flash > 0.004F) {
-         gui.fill(0, 0, w, h, argb(flash, 255, 246, 222));
+         if (flash > 0.004F) {
+            // The release flash blends towards warm white: bright, but it never clips the picture to white.
+            int a = alpha(flash);
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.setShader(GameRenderer::getPositionColorShader);
+            buffer.begin(Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+            buffer.vertex(pose, 0, 0, 0).color(255, 246, 222, a).endVertex();
+            buffer.vertex(pose, 0, h, 0).color(255, 246, 222, a).endVertex();
+            buffer.vertex(pose, w, h, 0).color(255, 246, 222, a).endVertex();
+            buffer.vertex(pose, w, 0, 0).color(255, 246, 222, a).endVertex();
+            Tesselator.getInstance().end();
+         }
+      } finally {
+         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+         RenderSystem.defaultBlendFunc();
+         RenderSystem.disableBlend();
+         RenderSystem.depthMask(true);
+         RenderSystem.enableDepthTest();
       }
-
-      RenderSystem.defaultBlendFunc();
-      RenderSystem.disableBlend();
-      RenderSystem.depthMask(true);
-      RenderSystem.enableDepthTest();
    }
 
    private static final ResourceLocation VIGNETTE = new ResourceLocation("textures/misc/vignette.png");
-
-   private static int argb(float alpha, int r, int g, int b) {
-      return (alpha(alpha) << 24) | (r << 16) | (g << 8) | b;
-   }
 
    static int alpha(float value) {
       return Mth.clamp((int)(value * 255.0F), 0, 255);

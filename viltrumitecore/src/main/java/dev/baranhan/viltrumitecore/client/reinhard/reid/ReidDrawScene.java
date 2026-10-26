@@ -57,7 +57,12 @@ public final class ReidDrawScene {
    /** Packet entry (render thread): stamps the client game time. */
    public static void onPacket(int casterId, Vec3 center, long startGameTime, int phase) {
       Minecraft client = Minecraft.getInstance();
-      onPacket(casterId, center, startGameTime, phase, client.level == null ? startGameTime : client.level.getGameTime());
+      long now = client.level == null ? startGameTime : client.level.getGameTime();
+      if (dev.baranhan.viltrumitecore.hero.reinhard.cut.CutTelemetry.ENABLED) {
+         // QA (-Dviltrumitecore.reinhard.qa): the phases as they arrive (START repeats are idempotent).
+         com.mojang.logging.LogUtils.getLogger().info("REID_SCENE_QA,{},{},{},{}", phase, casterId, startGameTime, now - startGameTime);
+      }
+      onPacket(casterId, center, startGameTime, phase, now);
    }
 
    public static void onPacket(int casterId, Vec3 center, long startGameTime, int phase, long now) {
