@@ -1085,5 +1085,55 @@
         "name": "viltrumitecore:reinhard/reid_drawn_hum"
       }
     ]
+  },
+  "reinhard.reid_draw_hum": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_draw_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_draw_hum",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "reinhard.reid_draw_koiguchi": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_draw_koiguchi",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_draw_koiguchi",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "reinhard.reid_draw_scrape": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_draw_scrape",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_draw_scrape",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "reinhard.reid_draw_air": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_draw_air",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_draw_air",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "reinhard.reid_draw_release": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.reinhard_reid_draw_release",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/reid_draw_release",
+        "attenuation_distance": 128
+      }
+    ]
   }
 }

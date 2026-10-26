@@ -6770,6 +6770,15 @@
      ]
     },
     {
+     "name": "reid_sheath",
+     "parent": "body",
+     "pivot": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
      "name": "reid_belt",
      "parent": "body",
      "pivot": [
