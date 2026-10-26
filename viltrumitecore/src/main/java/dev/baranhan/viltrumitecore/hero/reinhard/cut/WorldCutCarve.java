@@ -29,13 +29,20 @@ public final class WorldCutCarve implements CarveJobs.Job {
    private final Vec3 dir;
    private int solidRemoved;
    private int debris;
+   private int failures;
    private long firstTick=-1,lastTick=-1; private int visited;
    public long firstTick() {return firstTick;}
    public long lastTick() {return lastTick;}
    public int visited() {return visited;}
 
    public WorldCutCarve(WorldCutShape shape, int[] surface, int minY, int maxY, Predicate<BlockPos> border) {
-      this(shape.cells(minY, maxY, a -> surface[a], border), null, shape.origin(), shape.dirXZ());
+      this(shape, surface, minY, maxY, WorldCutGeometry.ColumnTop.SLICE, border);
+   }
+
+   /** Each footprint column is carved from its own top (see {@link WorldCutSurface#tops}). */
+   public WorldCutCarve(WorldCutShape shape, int[] surface, int minY, int maxY, WorldCutGeometry.ColumnTop top,
+                        Predicate<BlockPos> border) {
+      this(shape.cells(minY, maxY, a -> surface[a], top, border), null, shape.origin(), shape.dirXZ());
    }
 
    public WorldCutCarve(WorldCutGeometry.Wave wave, @Nullable Probe probe, Vec3 origin, Vec3 dir) {
@@ -56,26 +63,39 @@ public final class WorldCutCarve implements CarveJobs.Job {
       for (int used = 0; used < budget && wave.hasNext(); used++) {
          WorldCutGeometry.Cell cell = wave.next();visited++;
          if (!wave.carve(cell)) continue;
-         BlockPos pos = new BlockPos(cell.x(), cell.y(), cell.z());
-         if (!world.loaded(pos) || !world.canDestroy(pos)) continue;
-         boolean solid = world.solid(pos);
-         boolean fly = solid && cell.down() < ReinhardRules.CUT_DEBRIS_LAYERS
-            && debris < ReinhardRules.CUT_DEBRIS_MAX
-            && (solidRemoved + 1) % Math.round(1.0 / ReinhardRules.CUT_DEBRIS_SHARE) == 0
-            && world.canLaunch(pos);
-         boolean removed;
-         if (fly) {
-            removed = world.launch(pos, velocity(cell));
-            if (removed) debris++;
-         } else {
-            removed = world.clear(pos);
+         try {
+            visit(world, cell);
+         } catch (RuntimeException e) {
+            // One misbehaving block (a modded block entity, a broken state) must not end the whole job:
+            // CarveJobs drops a job that throws, which would leave the rest of the trench standing.
+            failures++;
          }
-         if (removed && solid) solidRemoved++;
       }
       // No neighbour-update pass, no drops or block particles at completion.
       if(!wave.hasNext() && level!=null)lastTick=level.getGameTime();
       return !wave.hasNext();
    }
+
+   private void visit(Probe world, WorldCutGeometry.Cell cell) {
+      BlockPos pos = new BlockPos(cell.x(), cell.y(), cell.z());
+      if (!world.loaded(pos) || !world.canDestroy(pos)) return;
+      boolean solid = world.solid(pos);
+      boolean fly = solid && cell.down() < ReinhardRules.CUT_DEBRIS_LAYERS
+         && debris < ReinhardRules.CUT_DEBRIS_MAX
+         && (solidRemoved + 1) % Math.round(1.0 / ReinhardRules.CUT_DEBRIS_SHARE) == 0
+         && world.canLaunch(pos);
+      boolean removed;
+      if (fly) {
+         removed = world.launch(pos, velocity(cell));
+         if (removed) debris++;
+      } else {
+         removed = world.clear(pos);
+      }
+      if (removed && solid) solidRemoved++;
+   }
+
+   /** Cells whose block threw while being removed; they are skipped, the job goes on. */
+   public int failures() { return failures; }
 
    private Vec3 velocity(WorldCutGeometry.Cell cell) {
       double side = (cell.x() + .5 - origin.x) * -dir.z + (cell.z() + .5 - origin.z) * dir.x;

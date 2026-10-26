@@ -132,8 +132,7 @@ public final class ReinhardRenderer {
       org.joml.Matrix4f[] equipment=ReinhardSword.equipment(body,reidPhase,reidTicks,
          snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),swordTicks,
          weights[ReinhardMode.HOLY_SWORD.ordinal()],
-         Math.max(snapshot.actionId()==ReinhardAbility.REID_STRIKE.ordinal()?ReinhardSword.strikeRelease(swordTicks,snapshot.actionLength()):0,
-            reidPhase==ReinhardPoses.ReidPhase.DRAWN?runCarry(pose,motion):0));
+         supportRelease(player,snapshot,swordTicks,runCarry(pose,motion),partialTick,false));
       ReinhardDefense.body(player,snapshot,body);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
@@ -177,6 +176,9 @@ public final class ReinhardRenderer {
     * First person: the model's arms (with glow) at vanilla's rest position replace the vanilla arm;
     * an arm the stance hides (Knight's left arm) is not drawn. Mixins that move the PoseStack before
     * the arm still apply because RenderArmEvent fires inside renderPlayerArm.
+    * REINHARD OVERHAUL 3b item 1: with Reid in hand both camera arms hold ONE blade. The sword pass
+    * draws the blade from its palm (the guard end of the hilt) and publishes it; the support pass
+    * carries its free arm to the hilt and solves the palm onto the pommel (ReinhardFirstPersonRig).
     */
    @SubscribeEvent
    public static void onRenderArm(RenderArmEvent event) {
@@ -190,79 +192,117 @@ public final class ReinhardRenderer {
       }
 
       event.setCanceled(true);
-      if (!ReinhardPoses.firstPersonArmVisible(ReinhardView.mode(snapshot), event.getArm(), snapshot.heroFlags()) && !ReinhardDefense.visible(player,snapshot,event.getArm()==HumanoidArm.LEFT)) {
+      boolean left = event.getArm() == HumanoidArm.LEFT;
+      if (!ReinhardPoses.firstPersonArmVisible(ReinhardView.mode(snapshot), event.getArm(), snapshot.heroFlags()) && !ReinhardDefense.visible(player,snapshot,left)) {
          return;
       }
 
       PlayerRenderer renderer = (PlayerRenderer) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
       PlayerModel<AbstractClientPlayer> model = renderer.getModel();
-      ModelPart arm = event.getArm() == HumanoidArm.RIGHT ? model.rightArm : model.leftArm;
-      PlayerGeoLayer.Part part = new PlayerGeoLayer.Part(ReinhardAssets.ARMS,
-         List.of(PlayerGeoLayer.Pass.cutout(ReinhardAssets.TEXTURE), PlayerGeoLayer.Pass.glow(ReinhardAssets.GLOW)),
-         geo -> poseFirstPersonElbows(geo,player,snapshot));
+      ModelPart arm = left ? model.leftArm : model.rightArm;
+      float oldX = arm.x, oldY = arm.y, oldZ = arm.z, oldXRot = arm.xRot, oldYRot = arm.yRot, oldZRot = arm.zRot;
+      // RenderArmEvent fires BEFORE renderHand's setupAnim: the shared model still holds the last
+      // third-person pose of whichever player was drawn. Set the camera rest pose, never read it.
+      ReinhardFirstPersonRig.rest(arm, left);
       boolean flick = event.getArm() == player.getMainArm();
       // Sampled for the main arm only: the off arm's event must not reset the pulse.
       float w = flick ? ParryPulse.FIRST_PERSON.sample(player, ReinhardFlags.has(snapshot.heroFlags(), ReinhardFlags.PARRY_POSE), Util.getNanos()).weight() : 0.0F;
-      float oldX = arm.xRot;
-      float oldY = arm.yRot;
-      float oldZ = arm.zRot;
       if (w > 0.0F) {
          // Blessing of the Holy Sword: a short block flick of the main arm (stage 2 Task 2).
-         float m = event.getArm() == HumanoidArm.LEFT ? -1.0F : 1.0F;
+         float m = left ? -1.0F : 1.0F;
          arm.xRot += (float) Math.toRadians(FP_PARRY_PITCH * w);
          arm.yRot += (float) Math.toRadians(FP_PARRY_YAW * w * m);
          arm.zRot += (float) Math.toRadians(FP_PARRY_ROLL * w * m);
       }
 
+      PoseStack stack = event.getPoseStack();
+      stack.pushPose();
+      // The support arm of a two-handed hold: carry it to the hilt, then solve its palm on the pommel.
+      float support = left ? ReinhardFirstPersonFrame.support() : 0;
+      org.joml.Matrix4f blade = support > 0 ? ReinhardFirstPersonFrame.blade() : null;
+      org.joml.Matrix4f supportGeo = null;
+      if (blade != null) {
+         PoseStack frame = new PoseStack();
+         frame.mulPoseMatrix(ReinhardFirstPersonFrame.toBase(stack.last().pose()));
+         PlayerGeoLayer.partFrame(frame, arm, dev.baranhan.viltrumitecore.client.anim.render.PlayerBoneMap.Part.LEFT_ARM);
+         org.joml.Matrix4f free = new org.joml.Matrix4f(frame.last().pose());
+         org.joml.Vector3f shift = ReinhardFirstPersonRig.supportShift(blade, ReinhardFirstPersonFrame.cut(), free).mul(support);
+         stack.last().pose().translateLocal(ReinhardFirstPersonFrame.fromBase(shift));
+         supportGeo = new org.joml.Matrix4f().translation(shift).mul(free);
+      }
+      final org.joml.Matrix4f hilt = blade, holder = supportGeo;
+      PlayerGeoLayer.Part part = new PlayerGeoLayer.Part(ReinhardAssets.ARMS,
+         List.of(PlayerGeoLayer.Pass.cutout(ReinhardAssets.TEXTURE), PlayerGeoLayer.Pass.glow(ReinhardAssets.GLOW)),
+         geo -> {
+            poseFirstPersonElbows(geo,player,snapshot);
+            if (holder != null) ReinhardFirstPersonRig.support(geo, hilt, holder, support);
+         });
+
       double cinematicTicks = actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime());
-      PlayerGeoLayer.renderArmPart(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
-      if(ReinhardDefense.recordsContact(player,snapshot,event.getArm()==HumanoidArm.LEFT)) {
+      PlayerGeoLayer.renderArmPart(stack, event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
+      if(ReinhardDefense.recordsContact(player,snapshot,left)) {
          var geo=AnimCache.model(ReinhardAssets.ARMS);
          if(geo!=null) {
-            PoseStack contact=new PoseStack();contact.mulPoseMatrix(event.getPoseStack().last().pose());
+            PoseStack contact=new PoseStack();contact.mulPoseMatrix(stack.last().pose());
             PlayerGeoLayer.partFrame(contact,arm,event.getArm()==HumanoidArm.RIGHT
                ? dev.baranhan.viltrumitecore.client.anim.render.PlayerBoneMap.Part.RIGHT_ARM
                : dev.baranhan.viltrumitecore.client.anim.render.PlayerBoneMap.Part.LEFT_ARM);
-            var v=contact.last().pose().transformPosition(ReinhardGrip.point(geo,event.getArm()==HumanoidArm.LEFT));
+            var v=contact.last().pose().transformPosition(ReinhardGrip.point(geo,left));
             var camera=Minecraft.getInstance().gameRenderer.getMainCamera();
             var world=dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.viewToWorld(new net.minecraft.world.phys.Vec3(v.x,v.y,v.z),camera.rotation());
             dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.record(player,camera.getPosition().add(world),true);
          }
       }
-      if (event.getArm() == HumanoidArm.RIGHT && ReinhardRecovery.visible(player,ReinhardView.reid(snapshot) != ReinhardPoses.ReidPhase.SHEATHED
-         || snapshot.actionId() == ReinhardAbility.SHEATH_STRIKE.ordinal(),Util.getNanos())) {
+      boolean strike = snapshot.actionId() == ReinhardAbility.SHEATH_STRIKE.ordinal();
+      ReinhardPoses.ReidPhase phase = ReinhardView.reid(snapshot);
+      if (!left && ReinhardRecovery.visible(player,phase != ReinhardPoses.ReidPhase.SHEATHED || strike,Util.getNanos())) {
+         double reidTicks = dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player,phase,Minecraft.getInstance().getFrameTime());
          PoseStack handPose = new PoseStack();
          arm.translateAndRotate(handPose);
          BakedGeoModel arms = AnimCache.model(ReinhardAssets.ARMS);
+         org.joml.Matrix4f belt;
          if (arms != null) {
             // Same conversion as PlayerGeoLayer; the grip must follow the lower arm, not the shoulder.
             handPose.translate(5/16F,22/16F,0);
             handPose.scale(-1,-1,1);
             handPose.mulPoseMatrix(ReinhardGrip.cameraHand(arms));
+            // Belt is outside the FP view. The blade enters along the sheath axis, then settles into the palm.
+            belt = new org.joml.Matrix4f(handPose.last().pose()).translate(-.5F,-1.4F,.7F);
+            // Two hands on one short hilt: the sword palm slides to the guard end, the pommel is the support's.
+            handPose.translate(0,ReinhardGrip.HANDLE.y*ReinhardSword.twoHandWeight(phase,reidTicks),0);
          } else {
             handPose.mulPoseMatrix(HeldItemAnchor.vanilla(HumanoidArm.RIGHT));
             handPose.translate(0,ReinhardSword.HAND_GUARD_PX/16,0);
             handPose.scale(ReinhardSword.SWORD_SCALE,ReinhardSword.SWORD_SCALE,ReinhardSword.SWORD_SCALE);
+            belt = new org.joml.Matrix4f(handPose.last().pose()).translate(-.5F,-1.4F,.7F);
          }
-         // Belt is outside the FP view. The blade enters along the sheath axis, then settles into the palm.
-         org.joml.Matrix4f belt = new org.joml.Matrix4f(handPose.last().pose()).translate(-.5F,-1.4F,.7F);
-         ReinhardPoses.ReidPhase phase = ReinhardView.reid(snapshot);
-         ReinhardSword.drawAttached(ReinhardRecovery.firstPersonWeaponKey(player),event.getPoseStack(),belt,
-            new org.joml.Matrix4f(handPose.last().pose()),phase,
-            dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player,phase,Minecraft.getInstance().getFrameTime()),
-            snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),cinematicTicks,recoveryKey(snapshot),
-            event.getMultiBufferSource(),event.getPackedLight(),OverlayTexture.NO_OVERLAY,true);
+         org.joml.Matrix4f sheathShift = null;
+         if (ReinhardSword.firstPersonSheathVisible(phase,strike)) {
+            // A drop straight down the view, expressed in this stack's space.
+            org.joml.Matrix4f pose = stack.last().pose();
+            org.joml.Vector3f down = ReinhardFirstPersonFrame.fromBase(new org.joml.Vector3f(0,-ReinhardSword.firstPersonSheathDrop(phase,reidTicks,strike),0));
+            sheathShift = new org.joml.Matrix4f(pose).invert().mul(new org.joml.Matrix4f().translation(down)).mul(pose);
+         }
+         org.joml.Matrix4f held = ReinhardSword.drawFirstPerson(stack,belt,new org.joml.Matrix4f(handPose.last().pose()),phase,reidTicks,strike,
+            cinematicTicks,sheathShift,event.getMultiBufferSource(),event.getPackedLight(),OverlayTexture.NO_OVERLAY);
+         ReinhardFirstPersonFrame.publishBlade(ReinhardFirstPersonFrame.toBase(new org.joml.Matrix4f(stack.last().pose()).mul(held)));
       }
 
-      arm.xRot = oldX;
-      arm.yRot = oldY;
-      arm.zRot = oldZ;
+      stack.popPose();
+      arm.x = oldX;
+      arm.y = oldY;
+      arm.z = oldZ;
+      arm.xRot = oldXRot;
+      arm.yRot = oldYRot;
+      arm.zRot = oldZRot;
    }
 
    /**
     * Stage 4: while Reid is out of the sheath the right hand holds it: the slot's item there is not
     * drawn (it stays in the slot); vanilla's empty-arm render runs instead, which fires RenderArmEvent
     * ({@link #onRenderArm} draws the geo arm and, when drawn, the blade).
+    * REINHARD OVERHAUL 3b items 1 and 5: both arms share the frame's rig motion (a World Cut turns
+    * the whole two-handed rig, ReinhardFirstPersonPose.cutView) and the support grip weight.
     */
    @SubscribeEvent
    public static void onRenderHand(net.minecraftforge.client.event.RenderHandEvent event) {
@@ -273,23 +313,54 @@ public final class ReinhardRenderer {
       HumanoidArm arm = ReinhardPoses.physicalArm(player.getMainArm(), event.getHand());
       ReinhardAbility action = ReinhardPoses.action(snapshot.actionId());
       boolean actionArm = action != null && action != ReinhardAbility.REID && arm == HumanoidArm.RIGHT;
-      if (!actionArm && ReinhardPoses.drawsHeldItem(arm, ReinhardView.reid(snapshot), action,ReinhardView.mode(snapshot))) return;
+      if (!actionArm && ReinhardPoses.drawsHeldItem(arm, ReinhardView.reid(snapshot), action,ReinhardView.mode(snapshot))) {
+         // Vanilla draws this hand (its empty arm may still fire RenderArmEvent): no rig state of ours.
+         ReinhardFirstPersonFrame.pass(event.getHand() == InteractionHand.MAIN_HAND,event.getPoseStack().last().pose(),new org.joml.Matrix4f(),0);
+         return;
+      }
 
       event.setCanceled(true);
       if (!player.isInvisible()) {
-         event.getPoseStack().pushPose();
+         PoseStack stack = event.getPoseStack();
+         float frameTime = mc.getFrameTime();
+         long now = Util.getNanos();
+         double cinematicTicks = actionTicks(player,snapshot,frameTime);
+         org.joml.Matrix4f cut = ReinhardRecovery.cutView(ReinhardRecovery.firstPersonKey(player),recoveryKey(snapshot),
+            ReinhardFirstPersonPose.cutView(ReinhardPoses.cinematicAction(snapshot.actionId()),snapshot.variant(),cinematicTicks),now);
+         ReinhardFirstPersonFrame.pass(event.getHand() == InteractionHand.MAIN_HAND,stack.last().pose(),cut,
+            arm == HumanoidArm.LEFT ? firstPersonSupport(player,snapshot,cinematicTicks,frameTime,now) : 0);
+         stack.pushPose();
+         ReinhardFirstPersonPose.applyCut(stack,cut);
          // This path skips renderArmWithItem and its kit chop mixins: pose the chop arm here alike.
          if (player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core && core.getChopTicks() > 0
             && core.isLeftChop() == (arm == HumanoidArm.LEFT)) {
-            ReinhardChopFirstPerson.apply(event.getPoseStack(), ReinhardChopFirstPerson.sample(core.getChopType(),
+            ReinhardChopFirstPerson.apply(stack, ReinhardChopFirstPerson.sample(core.getChopType(),
                ReinhardChopFirstPerson.time(core.getChopTicks(), event.getPartialTick())), core.isLeftChop());
          }
-         ReinhardFirstPerson.apply(player,arm,event.getPoseStack());
+         ReinhardFirstPerson.apply(player,arm,stack);
          ((dev.baranhan.viltrumitecore.client.mixin.ItemInHandRendererInvoker) mc.getEntityRenderDispatcher().getItemInHandRenderer())
-            .viltrumite$renderPlayerArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getEquipProgress(),
+            .viltrumite$renderPlayerArm(stack, event.getMultiBufferSource(), event.getPackedLight(), event.getEquipProgress(),
                ReinhardFirstPerson.swing(snapshot,arm,event.getHand() == InteractionHand.MAIN_HAND ? event.getSwingProgress() : 0.0F), arm);
-         event.getPoseStack().popPose();
+         stack.popPose();
       }
+   }
+
+   /** Weight of the first-person support grip on the pommel ({@link ReinhardHands}, as in third person). */
+   private static float firstPersonSupport(AbstractClientPlayer player, HeroPublicSnapshot snapshot, double actionTicks, float frameTime, long now) {
+      ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
+      if (reid == ReinhardPoses.ReidPhase.SHEATHED) return 0;
+      float holy = StanceBlend.weights(player, ReinhardView.mode(snapshot), now)[ReinhardMode.HOLY_SWORD.ordinal()];
+      double reidTicks = dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, frameTime);
+      return ReinhardHands.support(reid, reidTicks, holy,
+         supportRelease(player, snapshot, actionTicks, firstPersonRunCarry(player, snapshot, frameTime, now), frameTime, true)).hilt();
+   }
+
+   /** The drawn sprint carry in first person (its own motion smoothing, see firstPersonKey). */
+   static float firstPersonRunCarry(AbstractClientPlayer player, HeroPublicSnapshot snapshot, float partialTick, long now) {
+      boolean airborne = !player.onGround() && !player.isPassenger() && player.getSwimAmount(partialTick) < .1F && !player.isFallFlying();
+      float[] motion = ReinhardMotion.sample(ReinhardRecovery.firstPersonKey(player), player.isCrouching(), player.isSprinting(),
+         airborne, player.getDeltaMovement().y > 0, now);
+      return runCarry(pose(player, snapshot, partialTick), motion);
    }
 
    static ReinhardFirstPersonPose.Offset firstPersonOffset(AbstractClientPlayer player, HeroPublicSnapshot snapshot, HumanoidArm side) {
@@ -306,9 +377,11 @@ public final class ReinhardRenderer {
       // Reid in hand: the sword arm holds the diagonal guard; authored actions start from and return to it.
       ReinhardFirstPersonPose.Offset guard = physicalLeft ? ReinhardFirstPersonPose.Offset.NONE
          : ReinhardFirstPersonPose.drawnGuard(reid, reidTicks);
-      ReinhardFirstPersonPose.Offset action = cinematic == ReinhardAbility.WORLD_CUT
-         ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft, snapshot.variant())
-         : cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT ? ReinhardFirstPersonPose.diagonal(cinematicTicks,physicalLeft)
+      // Both World Cuts turn the whole two-handed rig in view space (cutView, applied by the hand
+      // pass): the sword arm keeps the guard under it, the support arm its free rest.
+      boolean cut = cinematic == ReinhardAbility.WORLD_CUT || cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT;
+      ReinhardFirstPersonPose.Offset action = cut || physicalLeft && ReinhardHands.twoHanded(cinematic)
+         ? ReinhardFirstPersonPose.Offset.NONE
          : cinematic == ReinhardAbility.CUT_RAIN ? ReinhardFirstPersonPose.rain(cinematicTicks,physicalLeft)
          : cinematic == ReinhardAbility.WORLD_ERASURE
             ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
@@ -318,6 +391,8 @@ public final class ReinhardRenderer {
       if (actionAbility == ReinhardAbility.REID_STRIKE) {
          // Drawn strokes are absolute rows that start and end at the guard.
          if (physicalLeft) action = ReinhardFirstPersonPose.reidSupport(snapshot.variant(),cinematicTicks);
+      } else if (cut) {
+         action = guard;
       } else if (actionAbility != null && actionAbility != ReinhardAbility.REID) {
          action = ReinhardFirstPersonPose.plus(action,
             guard.scaled(ReinhardFirstPersonPose.guardUnder(cinematicTicks,snapshot.actionLength())));
@@ -455,8 +530,10 @@ public final class ReinhardRenderer {
 
       // Draw/sheathe override an action; DRAWN idle is a base below the action.
       if (reidClip != null && !drawnIdle) {
+         // The weapon anchors (blade, freed scabbard) never fade with the surrounding body.
+         float reidBody = ReinhardPlayback.reidWeight(reid.animation().equals(ReinhardClips.REID_DRAW),reid.seconds(),reidClip.lengthSeconds());
          ReinhardLayers.overlay(reidClip, model, ReinhardPlayback.time(reidClip, reid.seconds()),
-            ReinhardPlayback.reidWeight(reid.animation().equals(ReinhardClips.REID_DRAW),reid.seconds(),reidClip.lengthSeconds()),"reid_grip");
+            bone -> bone.equals("reid_grip") || bone.equals("reid_sheath") ? 1 : reidBody);
       }
 
       // Stage 4: Lethal Chop (model mixins do not run for the replaced body).
@@ -483,6 +560,38 @@ public final class ReinhardRenderer {
       if(drawnWalk!=null)ReinhardLayers.overlay(drawnWalk,model,ReinhardPlayback.time(drawnWalk,pose.walkSeconds()),walk*ground);
       Animation drawnRun=AnimCache.animation(ReinhardAssets.ANIMATIONS,ReinhardClips.DRAWN_RUN);
       if(drawnRun!=null)ReinhardLayers.overlay(drawnRun,model,ReinhardPlayback.time(drawnRun,pose.walkSeconds()),runCarry(pose,motion));
+   }
+
+   /**
+    * REINHARD OVERHAUL 3b item 2: every claim on the support (left) hand this frame, the same in
+    * both views ({@link ReinhardHands}): a one-handed stroke or a clip that swings the left arm,
+    * the drawn sprint carry, a left Lethal Chop, a left vanilla swing and the defense reaction.
+    */
+   static float supportRelease(AbstractClientPlayer player, HeroPublicSnapshot snapshot, double actionTicks, float runCarry,
+      float partialTick, boolean firstPerson) {
+      ReinhardAbility action = ReinhardPoses.action(snapshot.actionId());
+      boolean clipMovesLeftArm = false;
+      if (action != null) {
+         ReinhardPoses.Clip clip = ReinhardClips.clip(action, snapshot.variant(), Math.max(0, actionTicks));
+         Animation animation = clip == null ? null : AnimCache.animation(ReinhardAssets.ANIMATIONS, clip.animation());
+         clipMovesLeftArm = animation != null && animation.boneAnimations().containsKey(ReinhardAssets.LEFT_ARM);
+      }
+      float chop = 0;
+      if (player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core && core.getChopTicks() > 0 && core.isLeftChop())
+         chop = ReinhardSword.chopRelease(ReinhardChopFirstPerson.time(core.getChopTicks(), partialTick));
+      float melee = 0;
+      HumanoidArm swinging = player.swingingArm == InteractionHand.OFF_HAND ? player.getMainArm().getOpposite() : player.getMainArm();
+      ReinhardPoses.ReidPhase reid = ReinhardView.reid(snapshot);
+      // Same gate as applyMelee: the vanilla swing clip plays only outside actions and the draw.
+      if (snapshot.actionId() < 0 && swinging == HumanoidArm.LEFT
+         && reid != ReinhardPoses.ReidPhase.DRAWING && reid != ReinhardPoses.ReidPhase.SHEATHING) {
+         Animation clip = AnimCache.animation(ReinhardAssets.ANIMATIONS, "melee_left");
+         float swing = player.getAttackAnim(partialTick);
+         if (clip != null && swing > 0) melee = ReinhardPlayback.weight(swing * clip.lengthSeconds(), clip.lengthSeconds());
+      }
+      return ReinhardHands.release(ReinhardHands.actionRelease(action, clipMovesLeftArm, actionTicks, snapshot.actionLength()),
+         reid == ReinhardPoses.ReidPhase.DRAWN ? runCarry : 0, chop, melee,
+         ReinhardDefense.handWeight(player, true, firstPerson));
    }
 
    /** Weight of the one-handed sprint carry (also releases the support hand by the same weight). */
@@ -654,23 +763,26 @@ public final class ReinhardRenderer {
          GeoBone elbow=geo.getBone(name);
          if (elbow!=null) elbow.rotX=(float)Math.toRadians(7);
       }
-      // Drawn strokes keep the drawn-idle elbow: their first-person rows are fitted on it.
-      ReinhardPoses.Clip action = snapshot.actionId()<0 || snapshot.actionId()==ReinhardAbility.REID_STRIKE.ordinal() ? null
-         : ReinhardClips.clip(ReinhardPoses.action(snapshot.actionId()),snapshot.variant(),
-         actionTicks(player,snapshot,Minecraft.getInstance().getFrameTime()));
-      if (action == null) {
-         ReinhardPoses.ReidPhase phase=ReinhardView.reid(snapshot);
-         action=ReinhardPoses.reidClip(phase,dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(
-            player,phase,Minecraft.getInstance().getFrameTime()));
+      // Stance elbows first (Reid's draw / sheathe / drawn idle), then the action's own forearm
+      // channels over them: a clip that leaves an elbow alone (the World Cuts, Cut Rain, a chop by
+      // the other hand) keeps the stance elbow instead of snapping to the bare default. Drawn
+      // strokes keep the drawn-idle elbow entirely: their first-person rows are fitted on it.
+      float frame = Minecraft.getInstance().getFrameTime();
+      ReinhardPoses.ReidPhase phase=ReinhardView.reid(snapshot);
+      ReinhardPoses.Clip reid=ReinhardPoses.reidClip(phase,dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player,phase,frame));
+      Animation reidClip = reid == null ? null : AnimCache.animation(ReinhardAssets.ANIMATIONS,reid.animation());
+      if (reidClip != null) {
+         float fade = 1;
+         if (reid.animation().equals(ReinhardClips.REID_DRAW) || reid.animation().equals(ReinhardClips.REID_SHEATHE))
+            fade=ReinhardPlayback.reidWeight(reid.animation().equals(ReinhardClips.REID_DRAW),reid.seconds(),reidClip.lengthSeconds());
+         ReinhardLayers.overlay(forearms(reidClip),geo,ReinhardPlayback.time(reidClip,reid.seconds()),fade);
       }
+      ReinhardPoses.Clip action = snapshot.actionId()<0 || snapshot.actionId()==ReinhardAbility.REID_STRIKE.ordinal() ? null
+         : ReinhardClips.clip(ReinhardPoses.action(snapshot.actionId()),snapshot.variant(),actionTicks(player,snapshot,frame));
       if (action != null) {
          Animation clip = AnimCache.animation(ReinhardAssets.ANIMATIONS,action.animation());
-         if (clip != null && !applyWindow(geo,clip,action.seconds(),snapshot.actionLength(),true)) {
-            float fade = 1;
-            if (action.animation().equals(ReinhardClips.REID_DRAW) || action.animation().equals(ReinhardClips.REID_SHEATHE))
-               fade=ReinhardPlayback.reidWeight(action.animation().equals(ReinhardClips.REID_DRAW),action.seconds(),clip.lengthSeconds());
-            ReinhardLayers.overlay(forearms(clip),geo,ReinhardPlayback.time(clip,action.seconds()),fade);
-         }
+         if (clip != null && !applyWindow(geo,clip,action.seconds(),snapshot.actionLength(),true))
+            ReinhardLayers.overlay(forearms(clip),geo,ReinhardPlayback.time(clip,action.seconds()),1);
       }
       // Idle has a relaxed elbow; action channels replace it. Arms keep the authored UVs.
       for (GeoBone bone : geo.topLevelBones()) bone.scaleX=1.13F;

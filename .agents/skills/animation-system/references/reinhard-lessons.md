@@ -11,6 +11,17 @@
 - The Roundabout source has license and attribution requirements. Preserve `CREDITS.md`, `docs/licenses/roundabout/LICENSE.txt` and shader headers. Never treat one approved port as permission to add a second general-purpose VFX engine.
 - Preserve the existing World Cut smoke, sound, damage, carve budget, shake and diagonal cut. Test both cuts before changing the provider.
 
+## REINHARD OVERHAUL 3b playtest fixes (core 1.41.0)
+
+- `RenderArmEvent` fires BEFORE `renderHand` calls `setupAnim`. The shared `PlayerModel` arm still holds the last third-person pose of whichever player was drawn. Never read that pose in first person: set the camera rest pose (`ReinhardFirstPersonRig.rest`). Reading it made the camera arms jitter with other players and with the third-person animation.
+- One first-person frame, two hand passes: the sword pass publishes its blade in the hand base space (`ReinhardFirstPersonFrame`); the support pass carries its arm to the hilt (`ReinhardFirstPersonRig.supportShift`) and solves the palm on the pommel. Never offset one camera arm alone for a two-handed pose.
+- Support-hand ownership is one rule (`ReinhardHands`): a released support hand follows its own clip. Never send it to the empty scabbard mouth. A clip where the FREE hand acts (`chop_left`) has no `reid_grip` rows: grip rows there swing the sword with the wrong hand.
+- First-person World Cuts are one rigid view-space motion of the whole two-handed rig about the guard palm (`ReinhardFirstPersonPose.cutView`, keys `CUT_*`), on the third-person beats. `cutDip` lowers the rig while it turns, so the arm roots stay out of the view. Check arm roots, palm residual, depth and 240 Hz turn steps (`WorldCutStrokeTest`).
+- A strike must be fastest ON the contact. In `make_reinhard_clips.py` an easing shapes the segment that LEAVES its key: `easeInCubic` into the contact key, `easeOutCubic` out of it. A default smooth segment lands at zero speed.
+- Anticipation (coil): let the chest arch and a small blade tilt carry it. Moving the grip higher or further back puts the blade or the right forearm through the head.
+- `ReinhardEquipmentTest` truncates its collision lists (40 entries). One clip can hide another clip's collisions: probe each clip separately before you conclude a clip is clear.
+- Detached projections that follow a grip (`ReinhardTitanBlade`) must stop at the contact pose (`poseTick`); the follow-through of the hands must not drive the projection into the ground.
+
 ## What the project learned
 
 - A mathematically smooth clip can still produce a violent wrist/forearm flip after IK. Check the **final constrained bones**, weapon mesh and palm, not just source keyframes.
@@ -24,7 +35,7 @@
 
 ## Reinhard Stage 5 timed World Cut
 - DRAWN idle applies before the action overlay; draw/sheathe still apply after it. This prevents idle_holy_drawn from erasing the sword-arm action. During World Cut, RenderHandEvent routes both physical arms through the empty-arm/RenderArmEvent path even when a slot holds an item; slot contents are unchanged and item visuals return afterward.
-- `world_cut` is a 4 s action overlay: the weapon grip rises outside the head during the first second, then holds low through the silence. `ReinhardFirstPersonPose.worldCut` applies to both arms in RenderArmEvent. No new pose mixin or animation engine.
+- `world_cut` is a 5 s action overlay (contact on the BLAST tick 80). Its third-person beats and the first-person `ReinhardFirstPersonPose.cutView` are described in "REINHARD OVERHAUL 3b" below. No new pose mixin or animation engine.
 - `WorldCutScene` receives cast UUID, caster UUID, fixed yaw/origin, surface profile and start game time; entity disappearance cannot stop it. White ground/sky billboards, dust, edge cracks, white-gold front and haze use PixelVfx. Skip the shader shadow pass and restore render state.
 - `WorldCutFov` reads a tick-refreshed array without allocating in ComputeFov; primitive finite-line distance, real-time exponential easing. Each scene excludes its own caster. SoundDuck owner is the cast UUID; release on blast, timeout and level unload.
 - `HeroImpactFx.shockwaveVisual` adds only the existing rings. It deliberately does not add shake/dust; the scene excludes caster blast shake and uses the shared CameraShake for other viewers. Check both views, a LAN viewer at 30/150 blocks and shaders manually.

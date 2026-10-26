@@ -41,10 +41,13 @@ public final class ReinhardRules {
    /** Spec §7.3: the draw event lasts 6 s; sheathing 1 s (stage 4). */
    public static final int REID_DRAW_TICKS = 120;
    public static final int REID_SHEATHE_TICKS = 20;
-   /** Draw timeline (ticks from the press, spec §7.3): cracks and the pillar grow 20-100, "Reid trembles" at 110, the final at REID_DRAW_TICKS. */
+   /** Draw timeline (ticks from the press, spec §7.3; REINHARD OVERHAUL item 15): cracks and the pillar grow 20-96,
+    * "Reid trembles" from 86 (the strain), the tip clears the scabbard at REID_RELEASE_TICK (the final: flash,
+    * wave, the release accent), the blade settles into the Sword Drawn guard by REID_DRAW_TICKS. */
    public static final int REID_CRACK_START = 20;
-   public static final int REID_CRACK_END = 100;
-   public static final int REID_TREMBLE_TICK = 110;
+   public static final int REID_CRACK_END = 96;
+   public static final int REID_TREMBLE_TICK = 86;
+   public static final int REID_RELEASE_TICK = 96;
    /** Gravity lift (spec §7.3.3): radius, max rise over the start Y, rise time, cap for overlapping lifts, max speed per tick. */
    public static final int REID_LIFT_RADIUS = 96;
    public static final double REID_LIFT_MAX = 2.5;

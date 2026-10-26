@@ -26,13 +26,17 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The server side of the Reid draw (spec §7.3): from the press every effect
- * runs — the lift ({@link GravityLift}), the scene packet for the clients
- * (shake, dark sky, silence, cracks, pillar, funnel), the rumble; at
- * {@link ReinhardRules#REID_DRAW_TICKS} the final: flash, a wave that pushes
- * (no damage), the choir, the chat line and the far sound for every player on
- * the server; the lift ends. Never changes a block. Any abort ends the lift
- * and the scene. Server only, except the pure stage helpers.
+ * The server side of the Reid draw (spec §7.3, REINHARD OVERHAUL item 15). The server owns the
+ * timeline; clients only render it. From the press: the lift ({@link GravityLift}) and the scene
+ * packet (START, re-sent every {@link ReinhardRules#REID_SCENE_REFRESH} ticks with the same start
+ * time, so a late joiner sees the right moment and a refresh never restarts a running scene). At
+ * {@link ReinhardRules#REID_RELEASE_TICK}, when the tip clears the mouth: RELEASE (the clients' light
+ * and sound accent), the ground wave that pushes (no damage), the chat line, the far sound for every
+ * player who does not see the scene; the lift lets go. At {@link ReinhardRules#REID_DRAW_TICKS} the
+ * blade is in the guard: END (clients let the light and the sound decay). Death, logout, hero or
+ * dimension change, a control or a cut-short draw: ABORT (clients fade everything out at once).
+ * The draw's sounds are client-side ({@code ReidDrawAudio}, tied to the same clock), so nothing here
+ * plays twice. Never changes a block. Server only, except the pure stage helpers.
  */
 public final class ReidDrawEvent {
    public enum Stage {
@@ -46,9 +50,12 @@ public final class ReidDrawEvent {
    private final int casterId;
    private final UUID casterUuid;
    private final BlockPos origin;
+   /** Reinhard's exact position at the press: the scene (beam, cracks, wave) is centred on him, not on his block. */
+   private final Vec3 center;
    private final long startTime;
    private final GravityLift lift = new GravityLift(UUID.randomUUID(), LiftLeases.SERVER);
    private final Map<UUID, Entity> lifted = new HashMap<>();
+   private boolean released;
    private boolean ended;
 
    private ReidDrawEvent(ServerPlayer caster) {
@@ -56,12 +63,13 @@ public final class ReidDrawEvent {
       this.casterId = caster.getId();
       this.casterUuid = caster.getUUID();
       this.origin = caster.blockPosition();
+      this.center = caster.position();
       this.startTime = this.level.getGameTime();
    }
 
-   /** Pure: the stage of tick {@code t} of the draw. */
+   /** Pure: the stage of tick {@code t} of the draw: the final starts at the release. */
    public static Stage stageAt(int t) {
-      if (t >= ReinhardRules.REID_DRAW_TICKS) {
+      if (t >= ReinhardRules.REID_RELEASE_TICK) {
          return Stage.FINAL;
       }
 
@@ -85,14 +93,16 @@ public final class ReidDrawEvent {
    public static ReidDrawEvent start(ServerPlayer caster) {
       ReidDrawEvent event = new ReidDrawEvent(caster);
       event.broadcast(ReidSceneS2CPacket.START);
-      ReinhardSounds.play(caster, ReinhardSounds.REID_UNSHEATHE.get(), 1.0F, 0.6F);
-      ReinhardSounds.play(caster, ReinhardSounds.REID_RUMBLE.get(), 6.0F, 0.7F);
       event.liftTick(caster, 0);
       return event;
    }
 
    public BlockPos origin() {
       return this.origin;
+   }
+
+   public Vec3 center() {
+      return this.center;
    }
 
    public long startTime() {
@@ -107,51 +117,73 @@ public final class ReidDrawEvent {
 
       Vec3 motion = caster.getDeltaMovement();
       caster.setDeltaMovement(0.0, Math.min(0.0, motion.y), 0.0);
-      this.liftTick(caster, t);
+      if (!this.released) {
+         this.liftTick(caster, t);
+      }
+
       if (refreshes(t)) {
          this.broadcast(ReidSceneS2CPacket.START);
       }
 
-      if (t == ReinhardRules.REID_TREMBLE_TICK) {
-         ReinhardSounds.play(caster, ReinhardSounds.REID_RUMBLE.get(), 6.0F, 1.1F);
+      if (t >= ReinhardRules.REID_RELEASE_TICK && !this.released) {
+         this.release(caster);
       }
    }
 
-   /** Tick 120: the sword leaves the sheath. */
+   /** Tick 96: the tip clears the mouth. Once per draw. */
+   private void release(ServerPlayer caster) {
+      this.released = true;
+      HeroFx.shockwave(caster, this.center, 1.5F, this.level.getBlockState(this.origin.below()), (float)ReinhardRules.REID_WAVE_RADIUS);
+      this.wave(caster);
+      this.endLift();
+      this.broadcast(ReidSceneS2CPacket.RELEASE);
+      Component line = Component.translatable("chat.viltrumitecore.reinhard.reid_drawn");
+      var farSound = BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ReinhardSounds.REID_FAR.get());
+      for (ServerPlayer player : this.level.getServer().getPlayerList().getPlayers()) {
+         player.sendSystemMessage(line);
+         // Players who see the scene hear its own release accent; everyone else hears it from afar.
+         if (!this.seesScene(player)) {
+            player.connection.send(new ClientboundSoundPacket(farSound, SoundSource.AMBIENT, player.getX(), player.getY(), player.getZ(),
+               ReinhardRules.REID_FAR_VOLUME, 1.0F, player.getRandom().nextLong()));
+         }
+      }
+   }
+
+   /** Tick 120: the blade is in the Sword Drawn guard; the scene decays on the clients. */
    public void finish(ServerPlayer caster) {
       if (this.ended) {
          return;
       }
 
-      Vec3 hilt = caster.position().add(0.0, 1.0, 0.0);
-      HeroFx.flash(caster, hilt);
-      HeroFx.shockwave(caster, Vec3.atBottomCenterOf(this.origin), 1.5F, this.level.getBlockState(this.origin.below()), (float)ReinhardRules.REID_WAVE_RADIUS);
-      this.wave(caster);
-      ReinhardSounds.play(caster, ReinhardSounds.REID_CHOIR.get(), 6.0F, 0.8F);
-      Component line = Component.translatable("chat.viltrumitecore.reinhard.reid_drawn");
-      var farSound = BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ReinhardSounds.REID_FAR.get());
-      for (ServerPlayer player : this.level.getServer().getPlayerList().getPlayers()) {
-         player.sendSystemMessage(line);
-         player.connection.send(new ClientboundSoundPacket(farSound, SoundSource.AMBIENT, player.getX(), player.getY(), player.getZ(),
-            ReinhardRules.REID_FAR_VOLUME, 1.0F, player.getRandom().nextLong()));
+      if (!this.released) {
+         this.release(caster);
       }
 
-      this.end();
+      this.end(ReidSceneS2CPacket.END);
    }
 
-   /** Death, logout, hero / dimension change, control, a cut-short draw: the lift ends and every client stops the scene. */
+   /** Death, logout, hero / dimension change, control, a cut-short draw: the lift ends and every client fades the scene out. */
    public void abort() {
       if (!this.ended) {
-         this.end();
+         this.end(ReidSceneS2CPacket.ABORT);
       }
+   }
+
+   public boolean released() {
+      return this.released;
    }
 
    public boolean ended() {
       return this.ended;
    }
 
-   private void end() {
+   private void end(int phase) {
       this.ended = true;
+      this.endLift();
+      this.broadcast(phase);
+   }
+
+   private void endLift() {
       this.lift.end(id -> {
          Entity entity = this.lifted.get(id);
          if (entity == null) {
@@ -161,7 +193,6 @@ public final class ReidDrawEvent {
          return entity == null || entity.isRemoved() ? null : liftee(entity);
       });
       this.lifted.clear();
-      this.broadcast(ReidSceneS2CPacket.END);
    }
 
    private void liftTick(ServerPlayer caster, int t) {
@@ -169,7 +200,7 @@ public final class ReidDrawEvent {
          double r = ReinhardRules.REID_LIFT_RADIUS;
          AABB box = new AABB(this.origin).inflate(r, r, r);
          for (Entity entity : this.level.getEntities((Entity)null, box, e -> this.mayLift(caster, e))) {
-            if (entity.distanceToSqr(Vec3.atCenterOf(this.origin)) <= r * r) {
+            if (entity.distanceToSqr(this.center) <= r * r) {
                this.lifted.putIfAbsent(entity.getUUID(), entity);
             }
          }
@@ -205,9 +236,9 @@ public final class ReidDrawEvent {
 
    /** Final wave: everyone movable within 24 is pushed outward (no damage). */
    private void wave(ServerPlayer caster) {
-      Vec3 center = Vec3.atBottomCenterOf(this.origin);
+      Vec3 center = this.center;
       double r = ReinhardRules.REID_WAVE_RADIUS;
-      for (LivingEntity living : this.level.getEntitiesOfClass(LivingEntity.class, new AABB(this.origin).inflate(r), e -> e != caster && !e.isSpectator())) {
+      for (LivingEntity living : this.level.getEntitiesOfClass(LivingEntity.class, new AABB(center, center).inflate(r), e -> e != caster && !e.isSpectator())) {
          Vec3 flat = new Vec3(living.getX() - center.x, 0.0, living.getZ() - center.z);
          double strength = waveKnockback(flat.length());
          if (strength <= 0.0 || !HeroImpulse.mayLiftLiving(living.getClass()) || !HeroRegistry.allowsImpulse(living)) {
@@ -220,12 +251,17 @@ public final class ReidDrawEvent {
       }
    }
 
-   private void broadcast(int phase) {
-      ReidSceneS2CPacket packet = new ReidSceneS2CPacket(this.casterId, this.origin, this.startTime, phase);
-      Vec3 center = Vec3.atCenterOf(this.origin);
+   /** The scene's audience: players of this level within the scene range, and always the caster. */
+   private boolean seesScene(ServerPlayer player) {
       double range = ReinhardRules.REID_SCENE_RANGE;
+      return player.getUUID().equals(this.casterUuid)
+         || player.level() == this.level && player.distanceToSqr(this.center) <= range * range;
+   }
+
+   private void broadcast(int phase) {
+      ReidSceneS2CPacket packet = new ReidSceneS2CPacket(this.casterId, this.center, this.startTime, phase);
       for (ServerPlayer player : this.level.players()) {
-         if (player.distanceToSqr(center) <= range * range || player.getUUID().equals(this.casterUuid)) {
+         if (this.seesScene(player)) {
             CoreMessages.sendToPlayer(packet, player);
          }
       }

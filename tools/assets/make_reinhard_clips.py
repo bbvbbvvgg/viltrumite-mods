@@ -5,6 +5,7 @@ Run after rig_reinhard.py. Every timestamp below is authored in server ticks.
 Rotation uses the project's ModelPart degree convention. Position is Bedrock px.
 Knight combat leaves the articulated left arm behind his back. Stances and
 locomotion loop; transient clips use explicit anticipation/contact/recovery.
+Draw and sheathe are owned by ReidDrawBakeTest. Preserve their checked-in bake.
 Run: python3 tools/assets/make_reinhard_clips.py
 """
 import json
@@ -263,11 +264,15 @@ CLIPS['reid_sheathe'] = action(20,
     right_forearm=[(0,[-18,0,0]),(4,[-16,0,0]),(16,[-58,-12,0]),(20,[-38,-12,0])],
     left_arm=[(0,[0,0,-4]),(4,[-22,-10,-8]),(16,[-22,-10,-8]),(20,[-18,0,-8])],
     body=[(0,[0,0,0]),(4,[0,-6,0]),(16,[0,-8,0]),(20,[0,0,0])])
+CHOP_LEFT_LOW = 8
 for side in ['right','left']:
     m = 1 if side=='right' else -1
     for prefix,length,contact in [('chop',20,7),('melee',6,2.5)]:
+        # 3b item 2: the free left hand chops past Reid, which stays in the right hand's guard,
+        # so its contact lands a little lower than the mirrored chop (the palms never meet).
+        low = CHOP_LEFT_LOW if (prefix,side)==('chop','left') else 0
         CLIPS[prefix+'_'+side] = action(length, **{
-            side+'_arm': [(0,[-16,0,3*m]),(contact-1,[-110,15*m,-35*m],'easeInCubic'),(contact,[-50,-30*m,-8*m],'easeOutCubic'),(contact+1,[-38,-42*m,-10*m]),(length,[-16,0,3*m])],
+            side+'_arm': [(0,[-16,0,3*m]),(contact-1,[-110,15*m,-35*m],'easeInCubic'),(contact,[-50+low,-30*m,-8*m],'easeOutCubic'),(contact+1,[-38+low,-42*m,-10*m]),(length,[-16,0,3*m])],
             side+'_forearm': [(0,[-12,0,0]),(contact-1,[-22,0,0]),(contact,[-5,0,0]),(length,[-12,0,0])],
             'body': [(0,[0,0,0]),(contact-1,[-4,16*m,0]),(contact,[10,-18*m,0]),(length,[0,0,0])],
             'head': [(0,[0,0,0]),(contact,[-6,8*m,0]),(length,[0,0,0])]})
@@ -286,21 +291,53 @@ CLIPS['sheath_strike'] = action(12,
 # shoulder (tick 30): the raise keeps the owner-selected edge/face read and a clear arm path.
 # Most of the side read is the chest (twist + bend), which carries arms and grip together, so
 # the right-hand-on-top grip stays reachable over the left shoulder as well.
+# REINHARD OVERHAUL 3b item 5: one heavy two-handed stroke in beats shared with the first person
+# (ReinhardFirstPersonPose.CUT_*): raised by 20, settled over the shoulder by 30, a slow gather
+# through the silent hold, the coil (the chest arches back, the hips load) 64..74, an
+# ACCELERATING six-tick swing whose contact is exactly the BLAST tick 80 (carve, explosion,
+# camera jolt and Erasure all start on it), the inertia carrying the blade and the chest past
+# the cut line to 84, the settle by 90 and the guard at 100. An easing shapes the segment that
+# LEAVES its key: easeInCubic into the contact, easeOutCubic out of it, so the blade is fastest
+# on the contact instead of easing to a stop on it (the old swing landed at zero speed).
 SWEEP_TWIST = 12
 # Side bend of the chest toward the raised shoulder (degrees); the head stays level and keeps
 # most of the twist (it turns back only SWEEP_HEAD), clear of the raised blade.
 SWEEP_BEND = 6
 SWEEP_HEAD = 4
+CUT_HOLD, CUT_COIL, CUT_CONTACT, CUT_CARRY, CUT_SETTLE, CUT_END = 64, 74, 80, 84, 90, 100
+INTO, OUT_OF = 'easeInCubic', 'easeOutCubic'
+def cut_legs(front, back, front_knee, back_knee):
+    """Lunge of a World Cut: (raise, coil, contact, carry) rows per leg / knee."""
+    rows = {}
+    for bone, keys_ in [('right_leg', front), ('left_leg', back), ('right_shin', front_knee), ('left_shin', back_knee)]:
+        raise_, coil, contact, carry = keys_
+        rows[bone] = [(0,[0,0,0]),(20,raise_),(CUT_HOLD,raise_),(CUT_COIL,coil,INTO),(CUT_CONTACT,contact,OUT_OF),
+                      (CUT_CARRY,carry),(CUT_END,[0,0,0])]
+    return rows
+# The chest drops into the cut (the knees take it) and comes back up with the guard.
+CUT_BODY_DROP = [(0,[0,0,0]),(CUT_HOLD,[0,0,0]),(CUT_COIL,[0,.3,.2],INTO),(CUT_CONTACT,[0,-.8,-.4],OUT_OF),
+                 (CUT_CARRY,[0,-1,-.5]),(CUT_SETTLE,[0,-.7,-.3]),(CUT_END,[0,0,0])]
 CLIPS['world_cut'] = action(100,
-    body=[(0,[0,0,0]),(20,[-8,0,0]),(30,[-8,SWEEP_TWIST,-SWEEP_BEND]),(66,[-8,SWEEP_TWIST,-SWEEP_BEND]),(80,[16,0,0]),(87,[10,-4,2]),(100,[0,0,0])],
-    head=[(0,[0,0,0]),(20,[-8,0,0]),(30,[-8,-SWEEP_HEAD,SWEEP_BEND]),(66,[-8,-SWEEP_HEAD,SWEEP_BEND]),(80,[-8,0,0]),(87,[-6,3,-2]),(100,[0,0,0])],
-    right_leg=[(0,[0,0,0]),(20,[-12,0,4]),(80,[-18,0,4]),(100,[0,0,0])],
-    left_leg=[(0,[0,0,0]),(20,[-8,0,-4]),(66,[-8,0,-4]),(80,[16,0,-4]),(100,[0,0,0])])
+    body=[(0,[0,0,0]),(20,[-8,0,0]),(30,[-8,SWEEP_TWIST,-SWEEP_BEND]),(CUT_HOLD,[-8,SWEEP_TWIST,-SWEEP_BEND]),
+          (CUT_COIL,[-13,SWEEP_TWIST+3,-SWEEP_BEND-1],INTO),(CUT_CONTACT,[16,0,0],OUT_OF),(CUT_CARRY,[21,-3,1]),
+          (CUT_SETTLE,[14,-3,1]),(CUT_END,[0,0,0])],
+    head=[(0,[0,0,0]),(20,[-8,0,0]),(30,[-8,-SWEEP_HEAD,SWEEP_BEND]),(CUT_HOLD,[-8,-SWEEP_HEAD,SWEEP_BEND]),
+          (CUT_COIL,[-8,-SWEEP_HEAD-1,SWEEP_BEND+1],INTO),(CUT_CONTACT,[-8,0,0],OUT_OF),(CUT_CARRY,[-10,2,-1]),
+          (CUT_SETTLE,[-8,2,-1]),(CUT_END,[0,0,0])],
+    **cut_legs(([-12,0,4],[-10,0,4],[-20,0,4],[-22,0,4]),([-8,0,-4],[-9,0,-4],[16,0,-4],[18,0,-4]),
+               ([8,0,0],[6,0,0],[22,0,0],[26,0,0]),([6,0,0],[6,0,0],[16,0,0],[18,0,0])))
+pos(CLIPS['world_cut'],'body',CUT_BODY_DROP)
+# The diagonal swings in the tilted plane of its cut (DiagonalCutGeometry.span): loaded high over
+# the right shoulder (blade and chest leaning right), down through the front on the BLAST, the
+# follow-through carrying on to the lower left while the chest unwinds and bends left.
 CLIPS['diagonal_world_cut'] = action(100,
-    body=[(0,[0,0,0]),(20,[-5,4,0]),(66,[-5,4,0]),(80,[10,-4,0]),(87,[6,-2,0]),(100,[0,0,0])],
-    head=[(0,[0,0,0]),(20,[-6,-8,0]),(80,[-6,8,0]),(100,[0,0,0])],
-    right_leg=[(0,[0,0,0]),(20,[-10,0,5]),(80,[-15,0,5]),(100,[0,0,0])],
-    left_leg=[(0,[0,0,0]),(20,[-5,4,-5]),(66,[-5,4,-5]),(80,[10,-4,-5]),(100,[0,0,0])])
+    body=[(0,[0,0,0]),(20,[-6,14,-8]),(CUT_HOLD,[-6,14,-8]),(CUT_COIL,[-10,17,-9],INTO),(CUT_CONTACT,[12,-8,6],OUT_OF),
+          (CUT_CARRY,[16,-12,8]),(CUT_SETTLE,[11,-10,6]),(CUT_END,[0,0,0])],
+    head=[(0,[0,0,0]),(20,[-6,-8,8]),(CUT_HOLD,[-6,-8,8]),(CUT_COIL,[-7,-9,9],INTO),(CUT_CONTACT,[-6,6,-6],OUT_OF),
+          (CUT_CARRY,[-8,8,-7]),(CUT_SETTLE,[-6,7,-5]),(CUT_END,[0,0,0])],
+    **cut_legs(([-10,0,5],[-8,0,5],[-18,0,5],[-20,0,5]),([-5,4,-5],[-6,5,-5],[12,-4,-5],[14,-5,-5]),
+               ([6,0,0],[5,0,0],[20,0,0],[24,0,0]),([6,0,0],[6,0,0],[14,0,0],[16,0,0])))
+pos(CLIPS['diagonal_world_cut'],'body',CUT_BODY_DROP)
 CLIPS['cut_rain'] = action(46,
     body=[(0,[0,0,0]),(4,[-4,0,0])]+[(7+i*3,[4,(-1)**i*7,0]) for i in range(12)]+[(46,[0,0,0])],
     head=[(0,[0,0,0]),(7,[-3,0,0]),(40,[-3,0,0]),(46,[0,0,0])])
@@ -358,8 +395,9 @@ HIP = ([-6.2,15.8+_HANDLE_PX*math.cos(math.radians(SHEATH_TILT)),-1.0-_HANDLE_PX
        [90,90-SHEATH_TILT,-90])
 READY = ([.5,18.5,-6],[350,0,-50])
 def weapon(clip, rows):
-    pos(clip,'reid_grip',[(t,[-p[0],p[1],p[2]]) for t,p,r in rows])
-    clip['bones'].setdefault('reid_grip',{})['rotation']=keys([(t,[-r[0],-r[1],r[2]]) for t,p,r in rows])
+    """rows: (t, pos, rot[, easing]); an easing shapes the segment that leaves its key."""
+    pos(clip,'reid_grip',[(t,[-p[0],p[1],p[2]],*style) for t,p,r,*style in rows])
+    clip['bones'].setdefault('reid_grip',{})['rotation']=keys([(t,[-r[0],-r[1],r[2]],*style) for t,p,r,*style in rows])
 weapon(CLIPS['idle_holy'],[(0,*HIP),(60,*HIP)])
 weapon(CLIPS['idle_holy_drawn'],[(0,*READY),(60,*READY)])
 # The long blade stays outside the hair envelope. Rotate below the head at X=-8.5,
@@ -374,14 +412,30 @@ weapon(CLIPS['reid_sheathe'],[(20-t/6,p,r) for t,p,r in reversed(DRAW)])
 # and the grip shift toward that shoulder (px).
 SWEEP_LEAN = 12
 SWEEP_SHIFT = 0.5
+# 3b item 5: the gather lifts the raised blade a little through the hold; the chest arch carries
+# the coil and the blade only tilts back a few degrees (a higher or further-back grip puts the
+# blade or the right forearm through the head: ReinhardEquipmentTest); the swing
+# accelerates into the square contact; the inertia drops the blade past the cut line (the
+# hands come in toward the hips, within reach) and it settles back before the guard.
 WORLD_CUT_WEAPON=[(0,*READY),(20,[0,20,-6.5],[360,0,0]),
     (30,[SWEEP_SHIFT,20,-6.5],[360,0,-SWEEP_LEAN]),
-    (66,[SWEEP_SHIFT,20,-6.5],[360,0,-SWEEP_LEAN]),(80,[1,20,-6.5],[260,0,0]),
-    (87,[1,20,-6.5],[270,0,0]),(100,*READY)]
+    (CUT_HOLD,[.5,20.1,-6.5],[361,0,-SWEEP_LEAN]),
+    (CUT_COIL,[.5,20.3,-6.4],[362,0,-SWEEP_LEAN-2],INTO),
+    (CUT_CONTACT,[1,20,-6.5],[260,0,0],OUT_OF),
+    (CUT_CARRY,[1,19.4,-5.5],[246,0,0]),
+    (CUT_SETTLE,[1,19.6,-5.8],[252,0,0]),(CUT_END,*READY)]
 weapon(CLIPS['world_cut'],WORLD_CUT_WEAPON)
-weapon(CLIPS['diagonal_world_cut'],[(0,*READY),(20,[0,20,-6.5],[360,0,-12]),
-    (66,[0,20,-6.5],[360,0,-12]),(80,[1,20,-6.5],[260,0,12]),
-    (87,[1,20,-6.5],[270,0,8]),(100,*READY)])
+# A lean about the forward axis: the raise up and to the right, the contact through the front and
+# the follow-through down and to the left lie in one tilted plane, the cut's (the carry leans a
+# little further, so the contact stays in the plane of raise and carry: WorldCutStrokeTest). The
+# coil keeps the hands where the hold has them (the arch and a small tilt load it).
+DIAGONAL_LEAN = 30
+weapon(CLIPS['diagonal_world_cut'],[(0,*READY),(20,[0,20,-6.5],[360,0,-DIAGONAL_LEAN]),
+    (CUT_HOLD,[0,20.1,-6.5],[361,0,-DIAGONAL_LEAN-1]),
+    (CUT_COIL,[0,20.1,-6.6],[364,0,-DIAGONAL_LEAN-3],INTO),
+    (CUT_CONTACT,[1,20,-6.2],[260,0,-DIAGONAL_LEAN],OUT_OF),
+    (CUT_CARRY,[.6,19.2,-5.2],[240,0,-DIAGONAL_LEAN-8]),
+    (CUT_SETTLE,[.6,19.5,-5.5],[248,0,-DIAGONAL_LEAN-4]),(CUT_END,*READY)])
 weapon(CLIPS['world_erasure'],[(0,*READY),(15,[0,20,-6.5],[360,0,0]),
     (30,[0,20,-6.5],[360,0,0]),(40,[1,20,-6],[260,0,0]),
     (150,[1,20,-6],[260,0,0])])
@@ -399,9 +453,12 @@ for i in range(12):
 RAIN_WEAPON.append((46,*READY))
 weapon(CLIPS['cut_rain'],RAIN_WEAPON)
 
-for side,sign in [('right',1),('left',-1)]:
-    weapon(CLIPS['chop_'+side],[(0,*READY),(4,[0,20,-6],[350,0,-sign*30]),
-        (7,[1,20,-6],[260,0,sign*12]),(9,[1,20,-6],[270,0,0]),(20,*READY)])
+# Lethal Chop. The right-hand chop carries Reid down with the hand that holds it. The
+# left-hand chop is the free support hand: it lets go of the pommel (ReinhardHands /
+# ReinhardSword.chopRelease) and Reid stays in the right hand's guard, so that clip has NO grip
+# rows (REINHARD OVERHAUL 3b item 2: they swung the sword with the hand that was chopping).
+weapon(CLIPS['chop_right'],[(0,*READY),(4,[0,20,-6],[350,0,-30]),
+    (7,[1,20,-6],[260,0,12]),(9,[1,20,-6],[270,0,0]),(20,*READY)])
 
 # REINHARD OVERHAUL (combat): ordinary strikes as data. Contact ticks match
 # hero/reinhard/melee/MeleeMoves; the blade tip sweeps the same view-relative arc the
@@ -438,8 +495,8 @@ CLIPS['light_punch_left']=mirrored(CLIPS['light_punch'])
 # follow-through rows are shared: both strokes meet the trench at the same square grip, and the
 # right hand stays on top without reaching across for the contact.
 CLIPS['world_cut_from_left']=mirrored(CLIPS['world_cut'])
-weapon(CLIPS['world_cut_from_left'],[(t,p,r) if (p,r)==READY or t>=80 else (t,[-p[0],p[1],p[2]],[r[0],-r[1],-r[2]])
-    for t,p,r in WORLD_CUT_WEAPON])
+weapon(CLIPS['world_cut_from_left'],[(t,p,r,*s) if (p,r)==READY or t>=CUT_CONTACT else (t,[-p[0],p[1],p[2]],[r[0],-r[1],-r[2]],*s)
+    for t,p,r,*s in WORLD_CUT_WEAPON])
 # Right hook: a wide swing from the right (Knight's combo_2 family, the fist passes at
 # shoulder height in front of the face, never folded back into it), chest turning left.
 CLIPS['light_hook']=action(12,
@@ -601,6 +658,12 @@ for name in ['light_punch','light_punch_left','light_hook','combo_1','combo_2','
                         entry['lerp_mode'] = 'monotone'
 
 if __name__ == '__main__':
+    # The Java bake owns the draw/sheathe equipment and solved elbow trajectories.
+    # Never replace those clips with the legacy Python seed when regenerating attacks.
+    with open(OUT) as existing:
+        baked = json.load(existing)['animations']
+    for name in ('reid_draw', 'reid_sheathe'):
+        CLIPS[name] = baked[name]
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT,'w') as f:
         json.dump({'format_version':'1.8.0','animations':CLIPS}, f, indent=2)

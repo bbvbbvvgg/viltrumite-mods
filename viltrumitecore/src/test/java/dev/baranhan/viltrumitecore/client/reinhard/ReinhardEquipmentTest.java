@@ -11,9 +11,11 @@ import java.lang.Math;
 import org.junit.jupiter.api.Test;
 
 class ReinhardEquipmentTest {
-   /** Ordinary drawn strokes and the sprint carry are one-handed (left palm on the scabbard). */
+   /** Ordinary drawn strokes, the sprint carry and the left-hand Lethal Chop are one-handed: the
+    * released support palm follows its own clip (3b item 2: never the empty scabbard). */
    static float oneHand(String clip,double ticks,double lengthTicks) {
       if(clip.startsWith("reid_slash"))return ReinhardSword.strikeRelease(ticks,(int)Math.round(lengthTicks));
+      if(clip.equals("chop_left"))return ReinhardSword.chopRelease(ticks/lengthTicks);
       return clip.equals("drawn_run")?1:0;
    }
    static BakedGeoModel weapon(String name)throws Exception {
@@ -44,16 +46,25 @@ class ReinhardEquipmentTest {
       assertTrue(torsoHits.isEmpty(),"Weapon/torso or leg collisions: "+torsoHits);
       assertTrue(bad.isEmpty(),"Actual sword/head mesh collisions: "+bad);
    }
+   /** Item 15: the left palm closes on the scabbard throat (16) and keeps it until the scabbard is
+    * docked (110); the right palm keeps the handle behind the guard from 30 to the end; at 120 both
+    * hold the Sword Drawn grips. Palms reach the actual meshes: no weapon teleports to a hand. */
    @Test void handOffUsesReachablePalmTargetsNotWeaponTeleports()throws Exception {
       var clips=ReinhardSecondPassTest.clips();
       for(double t=0;t<=120;t+=.5) {
          var b=ReinhardSecondPassTest.body();AnimationController.seek(clips.get("reid_draw"),b,t/20);
          var f=ReinhardSword.equipment(b,ReinhardPoses.ReidPhase.DRAWING,t,false,0,1);
-         Vector3f hilt=f[1].transformPosition(new Vector3f(ReinhardGrip.HANDLE));
-         if(t>=24 && t<=94)assertTrue(ReinhardGrip.point(b,true).distance(hilt)*16<.04,"left hand-off "+t);
-         if(t>=94) {
-            var right=ReinhardSword.interpolate(f[1],ReinhardSword.gripAt(f[1],0),ReinhardSword.twoHandWeight(ReinhardPoses.ReidPhase.DRAWING,t));
-            assertTrue(ReinhardGrip.point(b).distance(right.transformPosition(new Vector3f(ReinhardGrip.HANDLE)))*16<.04,"right hand-off "+t);
+         var sheathAsBlade=new Matrix4f(f[0]).translate(-ReinhardAssets.SHEATHED_OFFSET.x/16,ReinhardAssets.SHEATHED_OFFSET.y/16,ReinhardAssets.SHEATHED_OFFSET.z/16);
+         Vector3f throat=ReinhardSword.gripAt(sheathAsBlade,ReidDrawChoreo.MOUTH+ReidDrawChoreo.THROAT_GRIP).transformPosition(new Vector3f(ReinhardGrip.HANDLE));
+         if(t>=ReidDrawChoreo.THROAT_CLOSED && t<ReidDrawChoreo.DOCKED)
+            assertTrue(ReinhardGrip.point(b,true).distance(throat)*16<.05,"left palm on the throat "+t+": "+ReinhardGrip.point(b,true).distance(throat)*16);
+         if(t>=30) {
+            Vector3f handle=ReinhardSword.gripAt(f[1],ReidDrawChoreo.RIGHT_GRIP).transformPosition(new Vector3f(ReinhardGrip.HANDLE));
+            assertTrue(ReinhardGrip.point(b).distance(handle)*16<.05,"right palm on the handle "+t+": "+ReinhardGrip.point(b).distance(handle)*16);
+         }
+         if(t==120) {
+            Vector3f pommel=ReinhardSword.gripAt(f[1],ReidDrawChoreo.POMMEL_GRIP).transformPosition(new Vector3f(ReinhardGrip.HANDLE));
+            assertTrue(ReinhardGrip.point(b,true).distance(pommel)*16<.05,"left palm on the pommel at the end");
          }
       }
    }
@@ -67,7 +78,7 @@ class ReinhardEquipmentTest {
             float one=oneHand(name,t,clips.get(name).lengthSeconds()*20);
             var f=ReinhardSword.equipment(b,ReinhardPoses.ReidPhase.DRAWN,0,false,0,1,one);
             for(boolean left:new boolean[]{false,true}) {
-               if(left && one>0)continue; // the support palm is on the scabbard mouth, not the pommel
+               if(left && one>0)continue; // the released support palm follows its own clip, not the pommel
                var target=ReinhardSword.gripAt(f[1],left?-8.5F:0).transformPosition(new Vector3f(ReinhardGrip.HANDLE));
                if(ReinhardGrip.point(b,left).distance(target)*16>.05 && bad.size()<20)bad.add(name+" "+t+" left="+left+" residual="+ReinhardGrip.point(b,left).distance(target)*16);
             }
@@ -130,8 +141,10 @@ class ReinhardEquipmentTest {
       assertTrue(original.transformPosition(new Vector3f(ReinhardGrip.HANDLE)).distance(corrected.transformPosition(new Vector3f(ReinhardGrip.HANDLE)))<1E-6);
       assertTrue(original.getScale(new Vector3f()).distance(corrected.getScale(new Vector3f()))<1E-6);
       assertTrue(original.equals(ReinhardSword.rollDrawnBlade(original,ReinhardPoses.ReidPhase.SHEATHED,0),1E-6F));
-      assertEquals(0,ReinhardSword.drawnRoll(ReinhardPoses.ReidPhase.DRAWING,64));
-      assertEquals(ReinhardSword.drawnRoll(ReinhardPoses.ReidPhase.DRAWING,88),ReinhardSword.drawnRoll(ReinhardPoses.ReidPhase.SHEATHING,(120-88)/6.0));
+      // The blade never turns inside the scabbard; SHEATHING replays the draw's roll backwards.
+      for(double d=0;d<=ReidDrawChoreo.RELEASE;d+=.5)assertEquals(0,ReinhardSword.drawnRoll(ReinhardPoses.ReidPhase.DRAWING,d),"roll in the scabbard "+d);
+      for(double t=0;t<=dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.REID_SHEATHE_TICKS;t+=.25)
+         assertEquals(ReinhardSword.drawnRoll(ReinhardPoses.ReidPhase.DRAWING,ReidDrawChoreo.drawTick(ReinhardPoses.ReidPhase.SHEATHING,t)),ReinhardSword.drawnRoll(ReinhardPoses.ReidPhase.SHEATHING,t),1E-6);
       assertEquals((float)Math.PI/2,ReinhardSword.drawnRoll(ReinhardPoses.ReidPhase.DRAWN,0),1E-6);
    }
    @Test void reservedHiltPalmDoesNotAlsoRenderASlotItem() {

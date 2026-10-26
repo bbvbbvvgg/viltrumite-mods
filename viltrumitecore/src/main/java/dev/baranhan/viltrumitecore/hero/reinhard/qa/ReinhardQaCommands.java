@@ -58,6 +58,14 @@ public final class ReinhardQaCommands {
          if(scenario.equals("both"))ok=new DiagonalWorldCut().tryStart(p,state)&&ok;
          LogUtils.getLogger().info("CUT_QA,CAST,{},{},{},{}",scenario,p.level().getGameTime(),ok,p.position());return ok?1:0;
       }
+      if(Set.of("draw","sheathe","abort").contains(scenario)) {
+         // REINHARD OVERHAUL item 15: the production Reid toggle (draw from Holy Sword / sheathe) and a control change mid-draw (ABORT).
+         if(scenario.equals("draw")) {ready(p,false);state=ReinhardState.ensure(p);state.mode=ReinhardMode.HOLY_SWORD;}
+         var toggle=new dev.baranhan.viltrumitecore.hero.reinhard.reid.ReidToggle();
+         boolean ok=true;
+         if(scenario.equals("abort"))toggle.cancel(p,state,null);else ok=toggle.tryStart(p,state);
+         LogUtils.getLogger().info("REID_QA,{},{},{},{}",scenario,p.level().getGameTime(),ok,state.reid.phase());return ok?1:0;
+      }
       // Keep a currently drawn sword/action for defense-composition tests.
       HeroRegistry.changeHero(p,HeroId.REINHARD);p.setGameMode(GameType.SURVIVAL);
       Vec3 facing=p.getLookAngle();

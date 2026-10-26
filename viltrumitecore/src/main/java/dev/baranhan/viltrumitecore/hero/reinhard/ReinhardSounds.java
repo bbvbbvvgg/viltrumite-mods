@@ -48,6 +48,14 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> REID_UNSHEATHE = reg("reinhard.reid_unsheathe");
    public static final RegistryObject<SoundEvent> REID_CHOIR = reg("reinhard.reid_choir");
    public static final RegistryObject<SoundEvent> REID_FAR = reg("reinhard.reid_far");
+   /** REINHARD OVERHAUL item 15: the draw's own cues, one per phase, started on the scene clock by the client
+    * ({@code ReidDrawAudio}; tools/sfx/reinhard_draw.py): the rising hum, the koiguchi, the long scrape with
+    * the exit at the release, the vibrating air and the final accent. */
+   public static final RegistryObject<SoundEvent> REID_DRAW_HUM = reg("reinhard.reid_draw_hum");
+   public static final RegistryObject<SoundEvent> REID_DRAW_KOIGUCHI = reg("reinhard.reid_draw_koiguchi");
+   public static final RegistryObject<SoundEvent> REID_DRAW_SCRAPE = reg("reinhard.reid_draw_scrape");
+   public static final RegistryObject<SoundEvent> REID_DRAW_AIR = reg("reinhard.reid_draw_air");
+   public static final RegistryObject<SoundEvent> REID_DRAW_RELEASE = reg("reinhard.reid_draw_release");
    /** The calm 1 s sheathe click (manual, auto-return, leaving Holy Sword). */
    public static final RegistryObject<SoundEvent> REID_SHEATHE = reg("reinhard.reid_sheathe");
    /** The sheathed-blade ring ({@code reinhard/sheath_ring}, Iridiuss CC0; the same file voices the World Cut blade accent). */
@@ -75,6 +83,12 @@ public final class ReinhardSounds {
     * sound before a public release and keep the BLAST timing (tools/assets/reinhard_sources.md).
     */
    public static final RegistryObject<SoundEvent> WORLD_CUT_STRIKE_VOICE = reg("reinhard.world_cut_strike_voice");
+   /**
+    * The heavy explosion under the strike voice on the BLAST of the normal World Cut: low boom, roar and a
+    * rolling decay, original synthesis (tools/sfx/reinhard_explosion.py, CC0). Mono, positioned at the nearest
+    * point of the cut and started by the same {@code WorldCutAudio.strike} call as the voice.
+    */
+   public static final RegistryObject<SoundEvent> WORLD_CUT_EXPLOSION = reg("reinhard.world_cut_explosion");
 
    public static final RegistryObject<SoundEvent> ERASE_CRACK = reg("reinhard.erase_crack");
    public static final RegistryObject<SoundEvent> ERASE_INHALE = reg("reinhard.erase_inhale");

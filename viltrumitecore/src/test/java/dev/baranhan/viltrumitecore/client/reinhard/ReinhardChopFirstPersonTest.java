@@ -76,13 +76,23 @@ class ReinhardChopFirstPersonTest {
          clips = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("animations");
       }
       var fp = List.of(0.0, exact(ReinhardChopFirstPerson.WIND), exact(ReinhardChopFirstPerson.CONTACT), exact(ReinhardChopFirstPerson.SETTLE), 1.0);
+      var choppingArmKeys = clips.getAsJsonObject("chop_right").getAsJsonObject("bones")
+         .getAsJsonObject("right_arm").getAsJsonObject("rotation").keySet().stream().map(Double::parseDouble).sorted().toList();
       for (String side : new String[]{"left", "right"}) {
          var bones = clips.getAsJsonObject("chop_" + side).getAsJsonObject("bones");
-         var grip = new TreeSet<Double>();
-         for (String channel : new String[]{"position", "rotation"})
-            bones.getAsJsonObject("reid_grip").getAsJsonObject(channel).keySet().forEach(k -> grip.add(Double.parseDouble(k)));
-         assertEquals(fp, List.copyOf(grip), side + " hand keys");
-         assertTrue(bones.getAsJsonObject(side + "_arm").getAsJsonObject("rotation").has("0.35"), side + " arm contact key");
+         if (side.equals("right")) {
+            var grip = new TreeSet<Double>();
+            for (String channel : new String[]{"position", "rotation"})
+               bones.getAsJsonObject("reid_grip").getAsJsonObject(channel).keySet().forEach(k -> grip.add(Double.parseDouble(k)));
+            assertEquals(fp, List.copyOf(grip), side + " hand keys");
+         } else {
+            // The free left hand chops: Reid stays in the right hand, so no grip rows follow the chopping arm.
+            assertFalse(bones.has("reid_grip"), "the left chop carries no sword grip");
+         }
+         var arm = new TreeSet<Double>();
+         bones.getAsJsonObject(side + "_arm").getAsJsonObject("rotation").keySet().forEach(k -> arm.add(Double.parseDouble(k)));
+         assertEquals(choppingArmKeys, List.copyOf(arm), side + " arm keys");
+         assertTrue(arm.contains(0.35), side + " arm contact key");
       }
    }
 }

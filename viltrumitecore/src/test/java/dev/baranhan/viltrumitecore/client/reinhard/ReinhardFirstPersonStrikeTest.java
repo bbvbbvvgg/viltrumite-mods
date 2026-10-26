@@ -8,6 +8,7 @@ import dev.baranhan.viltrumitecore.client.anim.geo.BakedGeoModel;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardAbility;
 import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeArc;
 import dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves;
+import org.joml.Matrix4f;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -26,14 +27,24 @@ class ReinhardFirstPersonStrikeTest {
       return FirstPersonBlade.ndc(FirstPersonBlade.point(FirstPersonBlade.frame(arms, o), y));
    }
 
+   /** The production drawn guard (ReinhardFirstPersonRig): both palms on the hilt, the sword palm
+    * slid to the guard end (REINHARD OVERHAUL 3b item 1). View-space blade frame. */
+   private static Matrix4f guardBlade() throws Exception {
+      FirstPersonBlade.poseElbows(arms, ReinhardSecondPassTest.clips(), "idle_holy_drawn", 0);
+      return ReinhardFirstPersonRig.blade(ReinhardFirstPersonRig.arm(ReinhardFirstPersonPose.DRAWN_GUARD, false, 0, 0, null), arms, 1);
+   }
+
    @Test
-   void drawnGuardIsADiagonalBesideTheCrosshair() {
-      var g = ReinhardFirstPersonPose.DRAWN_GUARD;
-      float[] guard = ndc(g, FirstPersonBlade.GUARD), mid = ndc(g, FirstPersonBlade.TIP * .5F), tip = ndc(g, FirstPersonBlade.TIP);
-      assertTrue(guard[0] > .4F && guard[1] < -.4F, "the hand stays low right: " + guard[0] + "," + guard[1]);
-      assertTrue(tip[1] > .2F && tip[0] > .05F && tip[0] < .5F, "the tip points up and in, right of centre: " + tip[0] + "," + tip[1]);
-      assertTrue(mid[0] > .15F, "the blade does not run over the crosshair: " + mid[0]);
-      assertTrue(tip[2] > guard[2] + .3F, "the blade reaches away from the camera");
+   void drawnGuardIsADiagonalBesideTheCrosshair() throws Exception {
+      Matrix4f blade = guardBlade();
+      float[] guard = FirstPersonBlade.ndc(FirstPersonBlade.point(blade, FirstPersonBlade.GUARD));
+      float[] tip = FirstPersonBlade.ndc(FirstPersonBlade.point(blade, FirstPersonBlade.TIP));
+      assertTrue(guard[0] > .4F && guard[1] < -.35F, "the hands stay low right: " + guard[0] + "," + guard[1]);
+      assertTrue(tip[1] > .5F && Math.abs(tip[0]) < .35F, "the tip rises toward the top of the view: " + tip[0] + "," + tip[1]);
+      // A projected straight blade stays straight: where it passes the crosshair height it is right of the centre.
+      float atCrosshair = guard[0] + (tip[0] - guard[0]) * -guard[1] / (tip[1] - guard[1]);
+      assertTrue(atCrosshair > .12F, "the blade does not run over the crosshair: " + atCrosshair);
+      assertTrue(tip[2] > guard[2] + .15F, "the tip leans away from the camera, never toward it: " + guard[2] + " -> " + tip[2]);
       float slope = Math.abs((tip[1] - guard[1]) / (tip[0] - guard[0]));
       assertTrue(slope > .8F && slope < 5, "a diagonal, neither flat nor a vertical bar: " + slope);
    }

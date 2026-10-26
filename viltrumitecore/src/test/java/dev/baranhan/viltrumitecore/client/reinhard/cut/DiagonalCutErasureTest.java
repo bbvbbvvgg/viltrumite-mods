@@ -45,25 +45,59 @@ class DiagonalCutErasureTest {
          DiagonalCutGeometry g = shape(pitch, yaw, seed);
          String at = "yaw " + yaw + " pitch " + pitch + " seed " + seed;
          ErasurePath path = wound(g, 0L).path();
-         for (int i = 0; i <= 40; i++) {
-            Vec3 d = path.pointAt(path.length() * i / 40).subtract(g.origin());
+         for (int i = 0; i <= 80; i++) {
+            Vec3 d = path.pointAt(path.length() * i / 80).subtract(g.origin());
             double along = d.dot(g.forward()), across = d.dot(g.span());
-            assertTrue(Math.abs(d.dot(g.normal())) <= 1.2, "in the cut plane, " + at);
-            assertTrue(along > 29 && along < 38, "30 to 36 blocks ahead, " + at + ": " + along);
-            assertTrue(Math.abs(across) <= g.width(along), "inside the cut, " + at);
+            assertTrue(Math.abs(d.dot(g.normal())) <= 1E-6, "in the cut plane, " + at);
+            assertTrue(along > DiagonalCutErasure.TIP_ALONG - 0.5 && along < DiagonalCutErasure.TIP_ALONG + DiagonalCutErasure.BOW + 0.5,
+               "in the first fifth of the cut, past its opening taper, " + at + ": " + along);
+            assertTrue(Math.abs(across) <= 0.95 * g.width(along), "inside the cut, " + at);
          }
          Vec3 tail = path.pointAt(0).subtract(g.origin()), head = path.pointAt(path.length()).subtract(g.origin());
-         assertTrue(tail.dot(g.span()) > 19 && head.dot(g.span()) < -19, "cut from the upper right to the lower left, " + at);
+         assertTrue(tail.dot(g.span()) > 0.9 * g.width(tail.dot(g.forward())), "starts at the upper right edge of the cut, " + at);
+         assertTrue(head.dot(g.span()) < -0.9 * g.width(head.dot(g.forward())), "ends at the lower left edge, " + at);
          assertTrue(tail.subtract(head).dot(g.right()) > 25, "starts on the caster's right, " + at);
-         assertTrue(path.length() > 40 && path.length() < 46, "spans the cut, " + at + ": " + path.length());
+         assertTrue(path.length() > 60 && path.length() < 95, "one colossal arc, " + at + ": " + path.length());
       }
    }
 
-   @Test void woundKeepsTheOriginalProportions() {
+   /** Playtest item 4: the wound covers the cut's whole transverse sweep, not a third of it. */
+   @Test void woundSweepsTheWholeWidthOfTheCut() {
+      for (long seed : SEEDS) for (float pitch : PITCHES) {
+         DiagonalCutGeometry g = shape(pitch, 37F, seed);
+         ErasurePath path = wound(g, 0L).path();
+         // Every share of the cut's width from edge to edge is crossed by the one stroke.
+         for (double share = -0.9; share <= 0.9; share += 0.05) {
+            boolean crossed = false;
+            for (int i = 0; i < 400 && !crossed; i++) {
+               Vec3 a = path.pointAt(path.length() * i / 400).subtract(g.origin());
+               Vec3 b = path.pointAt(path.length() * (i + 1) / 400).subtract(g.origin());
+               double sa = a.dot(g.span()) / g.width(a.dot(g.forward())), sb = b.dot(g.span()) / g.width(b.dot(g.forward()));
+               crossed = (sa - share) * (sb - share) <= 0;
+            }
+            assertTrue(crossed, "share " + share + " of the width, seed " + seed + " pitch " + pitch);
+         }
+         // From the caster's eyes the plane is seen edge on: the wound runs past the screen's edges (about 45 degrees
+         // from the centre along the diagonal at the default 70 degree FOV); PR #49's swipe reached 32 degrees.
+         Vec3 eye = g.origin().add(0, 0.62, 0);
+         double tip = Math.toDegrees(Math.acos(path.pointAt(0).subtract(eye).normalize().dot(g.forward())));
+         double end = Math.toDegrees(Math.acos(path.pointAt(path.length()).subtract(eye).normalize().dot(g.forward())));
+         assertTrue(tip > 45 && end > 45, "edge to edge on screen, seed " + seed + " pitch " + pitch + ": " + tip + ", " + end);
+      }
+   }
+
+   @Test void woundKeepsTheOriginalProportionsAtTheSizeOfTheCut() {
       assertEquals(ErasureStroke.widthAt(1F) * DiagonalCutErasure.SCALE, ErasureStroke.widthAt(DiagonalCutErasure.SCALE), 1E-5);
-      assertTrue(ErasureStroke.widthAt(DiagonalCutErasure.SCALE) > 5.5F, "a tube more than 5.5 blocks thick");
+      assertTrue(ErasureStroke.widthAt(DiagonalCutErasure.SCALE) > 8.5F, "a tube more than 8.5 blocks thick");
+      float length = wound(shape(0F, 0F), 0L).path().length();
+      float ratio = length / ErasureStroke.widthAt(DiagonalCutErasure.SCALE);
+      assertTrue(ratio > 7 && ratio < 10, "the original length to width ratio (about 8.5): " + ratio);
       double along = DiagonalCutErasure.along(shape(0F, 0F));
-      assertTrue(along > 33 && along < 37, "the wave sets off from the middle of the wound: " + along);
+      assertEquals(DiagonalCutErasure.TIP_ALONG + DiagonalCutErasure.BOW, along, 1E-6, "the wave sets off from the middle of the arc");
+      ErasureStroke open = DiagonalCutErasure.stroke(wound(shape(0F, 0F), 0L), 3F);
+      assertSame(DiagonalCutErasure.PROFILE, open.profile());
+      for (float s = 0.2F * open.length(); s <= open.length(); s += 1F)
+         assertTrue(open.radiusAt(s) > 0.65F * open.width() / 2, "thick over the sweep at " + s);
    }
 
    @Test void woundOpensOnTheImpactAndIsGoneTenSecondsLater() {

@@ -21,8 +21,11 @@ import net.minecraft.world.phys.Vec3;
  *
  * The BLAST is the owner-confirmed strike on Theresia (TEMPORARY test asset,
  * REINHARD OVERHAUL item 12): one stereo voice per cast, started on the elapsed
- * tick of the server BLAST, replacing the old world_cut_impact hit. While its
- * loud body plays the hum and the pulse voice step back ({@link #strikeDuck}).
+ * tick of the server BLAST, replacing the old world_cut_impact hit. The same call
+ * starts the heavy explosion under it (mono, at the nearest point of the cut, see
+ * {@link #EXPLOSION_GAIN}); {@link WorldCutJolt} kicks the camera on that tick.
+ * While the voice's loud body plays the hum and the pulse voice step back
+ * ({@link #strikeDuck}).
  *
  * The hum is a 1.99 s seamless loop derived from the same recording as the
  * old tail (forward + time reverse, see tools/sfx/reinhard_worldcut.py).
@@ -35,6 +38,7 @@ final class WorldCutAudio {
    private static final Map<UUID, Double> STRIKE = new HashMap<>();
    private static Pulse pulse;
    private static SoundInstance strike;
+   private static SoundInstance explosion;
    private static long lastPulse = Long.MIN_VALUE;
    private static long lastBlade = Long.MIN_VALUE;
    private static long lastImpact = Long.MIN_VALUE;
@@ -64,6 +68,13 @@ final class WorldCutAudio {
    /** Strike volume: full within this distance of the cut, then down to {@link #STRIKE_FAR_GAIN} at the view range. */
    static final double STRIKE_NEAR = 32;
    static final float STRIKE_FAR_GAIN = .25F;
+   /**
+    * Explosion volume. Positional mono with the linear 320-block attenuation of its sounds.json entry, so a
+    * listener at the cut hears it at this gain and it fades out at the view range. A step under the voice:
+    * the boom sits below 300 Hz and the voice above 1 kHz, and the step keeps headroom where the two first
+    * hits overlap.
+    */
+   static final float EXPLOSION_GAIN = .85F;
 
    private WorldCutAudio() {
    }
@@ -158,23 +169,32 @@ final class WorldCutAudio {
    }
 
    /**
-    * The strike voice on the first BLAST, once per cast. The file is stereo, which the sound
-    * engine never positions, so it plays head-relative and the distance to the cut sets its
-    * volume. The scene's impactDue window and this cooldown stop a second start from a
-    * repeated packet or a late join; world_cut_impact stays registered as the licensed fallback.
+    * The strike voice and the explosion on the first BLAST, once per cast. The voice file is stereo, which the
+    * sound engine never positions, so it plays head-relative and the distance to the cut sets its volume; the
+    * explosion is mono and positioned at {@code at}, the nearest point of the cut. The scene's admitImpact and
+    * this cooldown stop a second start from a repeated packet or a late join; world_cut_impact stays registered
+    * as the licensed fallback. True when the pair started.
     */
-   static void strike(UUID cast, double distance, double elapsed, long now) {
+   static boolean strike(UUID cast, Vec3 at, double distance, double elapsed, long now) {
       if (lastImpact != Long.MIN_VALUE && now - lastImpact < PULSE_COOLDOWN) {
-         return;
+         return false;
       }
       lastImpact = now;
+      var sounds = Minecraft.getInstance().getSoundManager();
       if (strike != null) {
-         Minecraft.getInstance().getSoundManager().stop(strike);
+         sounds.stop(strike);
+      }
+      if (explosion != null) {
+         sounds.stop(explosion);
       }
       STRIKE.put(cast, elapsed);
       strike = new SimpleSoundInstance(ReinhardSounds.WORLD_CUT_STRIKE_VOICE.get().getLocation(), SoundSource.PLAYERS,
          strikeVolume(distance), 1.0F, RandomSource.create(), false, 0, SoundInstance.Attenuation.NONE, 0, 0, 0, true);
-      Minecraft.getInstance().getSoundManager().play(strike);
+      explosion = new SimpleSoundInstance(ReinhardSounds.WORLD_CUT_EXPLOSION.get().getLocation(), SoundSource.PLAYERS,
+         EXPLOSION_GAIN, 1.0F, RandomSource.create(), false, 0, SoundInstance.Attenuation.LINEAR, at.x, at.y, at.z, false);
+      sounds.play(strike);
+      sounds.play(explosion);
+      return true;
    }
 
    private static void play(SoundEvent event, Vec3 at, float volume, float pitch) {
@@ -210,6 +230,10 @@ final class WorldCutAudio {
       if (strike != null) {
          Minecraft.getInstance().getSoundManager().stop(strike);
          strike = null;
+      }
+      if (explosion != null) {
+         Minecraft.getInstance().getSoundManager().stop(explosion);
+         explosion = null;
       }
       lastPulse = Long.MIN_VALUE;
       lastBlade = Long.MIN_VALUE;

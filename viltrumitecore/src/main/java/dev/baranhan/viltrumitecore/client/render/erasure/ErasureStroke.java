@@ -36,7 +36,12 @@ public final class ErasureStroke {
    /** Must match the .fsh. */
    static final float CLOSE_SPAN = 1.3F;
    static final float ZIP = 0.6F;
+   /** Fewest body rings, the original count; a long stroke gets more, see {@link #bodyRings()}. */
    static final int BODY_RINGS = 64;
+   /** Most body rings of one stroke: bounds the vertices of a 200-block stroke to one draw per pass. */
+   static final int MAX_BODY_RINGS = 192;
+   /** Ring spacing of a long stroke, in tube widths: a quarter width keeps the silhouette round on curves. */
+   static final float RING_SPACING = 0.25F;
    static final int CAP_RINGS = 8;
    static final int AROUND = 20;
 
@@ -46,6 +51,8 @@ public final class ErasureStroke {
    final float scale;
    final float seed;
    final ErasureStyle style;
+   /** Width along the stroke; {@link Profile#ORIGINAL} unless the stroke is built with another one. */
+   final Profile profile;
    final float auraStart;
    /** False: no aura before the cut starts (a stroke that continues another one); the original always has one. */
    final boolean preAura;
@@ -63,6 +70,8 @@ public final class ErasureStroke {
    float flash;
    float halo;
    float aura;
+   /** Centre line of this frame, shared by the shell and glass passes; dropped by every update. */
+   private Frame frame;
 
    /** @param offset path length where this stroke's tail sits
     *  @param length stroke length along the path, blocks */
@@ -72,7 +81,14 @@ public final class ErasureStroke {
 
    public ErasureStroke(ErasurePath path, float offset, float length, float scale, float seed, ErasureStyle style,
                         boolean preAura) {
-      if (!(length > 0) || !(scale > 0)) throw new IllegalArgumentException("Invalid erasure stroke");
+      this(path, offset, length, scale, seed, style, preAura, Profile.ORIGINAL);
+   }
+
+   /** A stroke with its own width profile (REINHARD OVERHAUL 3b: the World Cut wounds, tens of blocks long). */
+   public ErasureStroke(ErasurePath path, float offset, float length, float scale, float seed, ErasureStyle style,
+                        boolean preAura, Profile profile) {
+      if (!(length > 0) || !(scale > 0) || profile == null) throw new IllegalArgumentException("Invalid erasure stroke");
+      this.profile = profile;
       this.path = path;
       this.offset = offset;
       this.length = length;
@@ -95,6 +111,7 @@ public final class ErasureStroke {
 
    /** Original timeline with the head position supplied by the caller (blocks from the stroke's tail). */
    public ErasureStroke update(float t, float head) {
+      frame = null;
       time = t;
       clock = t;
       end = END;
@@ -115,15 +132,17 @@ public final class ErasureStroke {
     * {@code reveal} seconds instead of {@link #CUT_END} (flash, aura and reveal keep their shape), then the original
     * clock runs on while the tube holds open, breathing as in the original, until {@code hold} seconds; from there it
     * zips shut from the tail to the head on the original closing curve, over {@code close} seconds instead of
-    * END - DECAY_START. {@code swell} (0..1) widens it a little for a pulse. {@link #update} is untouched: the
-    * /erasuretest swipe and the ordinary World Cut keep the original timeline.
+    * END - DECAY_START. {@code swell} (0..1) widens it a little for a pulse. Before the cut (t &lt; 0) a stroke built
+    * with a pre-aura shows it on the original clock. {@link #update} is untouched: the /erasuretest swipe keeps the
+    * original timeline.
     *
     * @param t    seconds since the cut started
     * @param head blocks from the stroke's tail
     */
    public ErasureStroke updateHeld(float t, float head, float reveal, float hold, float close, float swell) {
       if (!(reveal > 0) || !(close > 0) || !(hold >= reveal)) throw new IllegalArgumentException("Invalid held timeline");
-      float original = t < reveal ? t * (CUT_END / reveal) : CUT_END + (t - reveal);
+      // Before the cut (t < 0) the original pre-aura clock runs as it is: the flame gathers over 0.3 s.
+      float original = t < 0 ? t : t < reveal ? t * (CUT_END / reveal) : CUT_END + (t - reveal);
       update(original, head);
       decay = Mth.clamp((t - hold) / close, 0F, 1F);
       width *= 1F + 0.1F * Mth.clamp(swell, 0F, 1F);
@@ -132,6 +151,7 @@ public final class ErasureStroke {
       halo = 1F - smoothstep(0.85F, 1F, decay);
       clock = t;
       end = hold + close;
+      frame = null;
       return this;
    }
 
@@ -173,11 +193,15 @@ public final class ErasureStroke {
    public float aura() { return aura; }
    public float length() { return length; }
    public float scale() { return scale; }
+   public Profile profile() { return profile; }
+   public float seed() { return seed; }
+   /** Tube radius at stroke length s this frame (blocks), profile, swell and closing included. */
+   public float radiusAt(float s) { return radius(s); }
 
    /** Tube radius at stroke length s, closing included. */
    float radius(float s) {
       float u = s / length;
-      return tubeHalfWidth(u, width, seed) * openness(u, decay);
+      return profile.halfWidth(u, width, seed) * openness(u, decay);
    }
 
    Vec3 pointAt(float s) {
@@ -218,14 +242,19 @@ public final class ErasureStroke {
       return new AABB(minX, minY, minZ, maxX, maxY, maxZ).inflate(pad);
    }
 
-   /** Rings from the tail to the head. The glass: the tapered body, then a half sphere at the head. The shell:
-    * SHELL_MARGIN wider, with round ends at both the tail point and the head. Frames are carried along the
-    * path without twisting (parallel transport), so the pattern on the surface stays put. */
-   List<Ring> rings(boolean shell) {
-      float margin = shell ? SHELL_MARGIN * scale : 0F;
-      float shellDiv = SHELL_SCALE * scale;
-      float glassDiv = RADIUS_SCALE * scale;
-      int n = BODY_RINGS;
+   /** Body rings this frame: the original 64, or one every {@link #RING_SPACING} tube widths on a long stroke, at
+    * most {@link #MAX_BODY_RINGS}. The original stroke (about eight widths long) keeps exactly 64. */
+   int bodyRings() {
+      float spacing = RING_SPACING * Math.max(width, 1.0E-3F);
+      int wanted = (int) Math.ceil(capS / spacing);
+      return Mth.clamp(wanted, BODY_RINGS, MAX_BODY_RINGS);
+   }
+
+   /** The centre line of this frame: points, tangents and transported normals of the body rings. Built once and
+    * shared by the shell and glass passes (the renderer asks for both every frame). */
+   private Frame frame() {
+      if (frame != null) return frame;
+      int n = bodyRings();
       Vec3[] centres = new Vec3[n + 1];
       Vec3[] tangents = new Vec3[n + 1];
       Vec3[] normals = new Vec3[n + 1];
@@ -245,6 +274,27 @@ public final class ErasureStroke {
          ss[i] = s;
          rs[i] = radius(s);
       }
+      frame = new Frame(n, centres, tangents, normals, ss, rs);
+      return frame;
+   }
+
+   private record Frame(int n, Vec3[] centres, Vec3[] tangents, Vec3[] normals, float[] ss, float[] rs) {
+   }
+
+   /** Rings from the tail to the head. The glass: the tapered body, then a half sphere at the head. The shell:
+    * SHELL_MARGIN wider, with round ends at both the tail point and the head. Frames are carried along the
+    * path without twisting (parallel transport), so the pattern on the surface stays put. */
+   List<Ring> rings(boolean shell) {
+      float margin = shell ? SHELL_MARGIN * scale : 0F;
+      float shellDiv = SHELL_SCALE * scale;
+      float glassDiv = RADIUS_SCALE * scale;
+      Frame f = frame();
+      int n = f.n();
+      Vec3[] centres = f.centres();
+      Vec3[] tangents = f.tangents();
+      Vec3[] normals = f.normals();
+      float[] ss = f.ss();
+      float[] rs = f.rs();
 
       List<Ring> rings = new ArrayList<>(n + 1 + 2 * CAP_RINGS);
       if (shell) {
@@ -290,12 +340,9 @@ public final class ErasureStroke {
       return rings;
    }
 
-   /** Half width of the tube at path fraction u, in blocks, before closing. */
+   /** Half width of the original tube at path fraction u, in blocks, before closing. */
    static float tubeHalfWidth(float u, float width, float seed) {
-      u = Mth.clamp(u, 0F, 1F);
-      float tail = Mth.sin(Mth.clamp(u / TAIL_TAPER, 0F, 1F) * Mth.HALF_PI);
-      float grow = TAPER_START + (1F - TAPER_START) * smoothstep(0.2F, 0.9F, u);
-      return 0.5F * width * tail * grow * (1F + 0.04F * Mth.sin(u * 7.5F + seed * Mth.TWO_PI));
+      return Profile.ORIGINAL.halfWidth(u, width, seed);
    }
 
    /** 1 open, 0 shut; space zips shut from the tail to the head. */
@@ -320,6 +367,49 @@ public final class ErasureStroke {
    private static Vec3 anyPerpendicular(Vec3 tangent) {
       Vec3 axis = Math.abs(tangent.y) < 0.9 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
       return tangent.cross(axis).normalize();
+   }
+
+   /**
+    * Width along a stroke, all in path fractions u (0 tail, 1 head). The tail opens on a quarter sine over
+    * {@code tail}; the body grows from {@code grow} of the full width to all of it between {@code growStart} and
+    * {@code growEnd}; a ripple of relative size {@code ripple} runs along it at {@code frequency} radians per unit of u,
+    * phase-shifted by the seed. The head always ends in the round cap of the original.
+    *
+    * <p>{@link #ORIGINAL} is the /erasuretest horn (Roundabout): a thin tail over 38 % of the stroke and a body that
+    * grows from 62 %. That is right for a stroke a few widths long; spread over a World Cut it leaves a thin thread
+    * over tens of blocks, so the World Cut wounds use {@link #forLength}: the same quarter-sine tail and growth, sized
+    * in blocks instead of fractions.
+    */
+   public record Profile(float tail, float grow, float growStart, float growEnd, float ripple, float frequency) {
+      /** The original stroke: TAIL_TAPER, TAPER_START, smoothstep(0.2, 0.9) and a 4 % ripple at 7.5 rad. */
+      public static final Profile ORIGINAL = new Profile(TAIL_TAPER, TAPER_START, 0.2F, 0.9F, 0.04F, 7.5F);
+
+      public Profile {
+         if (!(tail > 0) || !(tail <= 1) || !(grow > 0) || !(grow <= 1) || !(growEnd > growStart) || !(ripple >= 0)
+            || !(ripple < 0.5F) || !(frequency >= 0)) throw new IllegalArgumentException("Invalid erasure profile");
+      }
+
+      /**
+       * A long stroke: the tail opens over {@code tailBlocks}, the body reaches its full width {@code growBlocks}
+       * after the tail point (from {@code grow} of it), a ripple every {@code waveBlocks}. Fractions are clamped so
+       * a short path still gets a valid profile.
+       */
+      public static Profile forLength(float length, float tailBlocks, float grow, float growBlocks, float ripple,
+                                      float waveBlocks) {
+         if (!(length > 0)) throw new IllegalArgumentException("Invalid erasure profile length");
+         float tail = Mth.clamp(tailBlocks / length, 0.01F, 1F);
+         float growEnd = Mth.clamp(growBlocks / length, 0.02F, 1F);
+         return new Profile(tail, grow, Math.min(tail * 0.5F, growEnd * 0.5F), growEnd, ripple,
+            waveBlocks > 0 ? Mth.TWO_PI * length / waveBlocks : 0F);
+      }
+
+      /** Half width at path fraction u, in blocks, before closing. */
+      public float halfWidth(float u, float width, float seed) {
+         u = Mth.clamp(u, 0F, 1F);
+         float open = Mth.sin(Mth.clamp(u / tail, 0F, 1F) * Mth.HALF_PI);
+         float body = grow + (1F - grow) * smoothstep(growStart, growEnd, u);
+         return 0.5F * width * open * body * (1F + ripple * Mth.sin(u * frequency + seed * Mth.TWO_PI));
+      }
    }
 
    /** One ring of the tube or the shell. Vertex k sits at centre + r * (n cos a + b sin a), a = 2 pi k / AROUND;

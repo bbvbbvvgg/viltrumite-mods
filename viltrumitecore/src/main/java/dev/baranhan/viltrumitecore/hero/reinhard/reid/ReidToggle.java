@@ -43,7 +43,7 @@ public final class ReidToggle implements AbilityHandler {
       endDraw(state);
    }
 
-   /** Stops a running draw scene (the lift lets go, clients get END). */
+   /** Cuts a running draw short: the lift lets go and the clients fade the scene and its sound out (ABORT). */
    static void endDraw(ReinhardState state) {
       if (state.drawEvent != null) {
          state.drawEvent.abort();

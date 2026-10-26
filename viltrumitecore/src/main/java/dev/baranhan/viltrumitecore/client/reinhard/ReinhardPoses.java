@@ -90,21 +90,16 @@ public final class ReinhardPoses {
    }
 
    /**
-    * How far the blade has left the sheath along its axis (0 in, 1 out): eased over the 6 s draw,
-    * reversed over the 1 s sheathe. Drawn = 1 (stage 4 Task 5 moves it to the hand).
+    * How far the blade has left the sheath along its axis (0 in, 1 out), on the one draw timeline
+    * ({@link ReidDrawChoreo}): nothing until the koiguchi, a slow first span, the main extraction,
+    * the strain, out at the release; the sheathe replays it backwards. Drawn = 1.
     */
    public static float bladeOut(ReidPhase phase, double ticks) {
       return switch (phase) {
          case SHEATHED -> 0.0F;
          case DRAWN -> 1.0F;
-         case DRAWING -> smooth(ticks / dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.REID_DRAW_TICKS);
-         case SHEATHING -> 1.0F - smooth(ticks / dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.REID_SHEATHE_TICKS);
+         case DRAWING, SHEATHING -> ReidDrawChoreo.bladeOut(ReidDrawChoreo.drawTick(phase, ticks));
       };
-   }
-
-   private static float smooth(double x) {
-      double k = Math.max(0.0, Math.min(1.0, x));
-      return (float)(k * k * (3.0 - 2.0 * k));
    }
 
    static BodyState body(net.minecraft.world.entity.Pose pose, boolean passenger) {

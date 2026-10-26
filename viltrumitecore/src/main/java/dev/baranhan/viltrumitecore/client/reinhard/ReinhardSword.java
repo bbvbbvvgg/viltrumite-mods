@@ -28,8 +28,6 @@ public final class ReinhardSword {
    public static final float SWORD_SCALE = 0.574F;
    /** Shorten the archive's excessive longitudinal proportions to clear the ground at a waist mount. */
    public static final float LENGTH_SCALE = .78F;
-   /** Stage 4: how far (sword px, along the sheath axis toward the hilt) the blade travels out at full draw. */
-   public static final float DRAW_OUT_PX = 50.0F;
 
    private ReinhardSword() {
    }
@@ -49,11 +47,12 @@ public final class ReinhardSword {
       return new org.joml.Matrix4f().translationRotateScale(p, q, scale);
    }
 
+   /** The freed blade settles into the hand after the release (first person); the same curve backwards when sheathing. */
    public static float handWeight(ReinhardPoses.ReidPhase phase, double ticks) {
       return switch (phase) {
          case DRAWN -> 1;
-         case DRAWING -> smooth((ticks - 96) / 24);
-         case SHEATHING -> 1 - smooth(ticks / 8);
+         case DRAWING, SHEATHING -> smooth((ReidDrawChoreo.drawTick(phase,ticks) - ReidDrawChoreo.RELEASE)
+            / (ReidDrawChoreo.LENGTH - ReidDrawChoreo.RELEASE));
          default -> 0;
       };
    }
@@ -91,16 +90,14 @@ public final class ReinhardSword {
    static float drawnRoll(ReinhardPoses.ReidPhase phase,double ticks) {
       return switch(phase) {
          case DRAWN -> (float)Math.PI/2;
-         case DRAWING -> smooth((ticks-64)/24)*(float)Math.PI/2;
-         case SHEATHING -> smooth((120-ticks*6-64)/24)*(float)Math.PI/2;
+         case DRAWING, SHEATHING -> ReidDrawChoreo.roll(ReidDrawChoreo.drawTick(phase,ticks));
          default -> 0;
       };
    }
    static float twoHandWeight(ReinhardPoses.ReidPhase phase,double ticks) {
       return switch(phase) {
          case DRAWN -> 1;
-         case DRAWING -> smooth((ticks-100)/20);
-         case SHEATHING -> smooth((120-ticks*6-100)/20);
+         case DRAWING, SHEATHING -> ReidDrawChoreo.twoHandWeight(ReidDrawChoreo.drawTick(phase,ticks));
          default -> 0;
       };
    }
@@ -112,11 +109,19 @@ public final class ReinhardSword {
       return new org.joml.Matrix4f(blade).rotateY(drawnRoll(phase,ticks));
    }
 
-   /** Ordinary drawn strokes are one-handed: the left palm leaves the pommel for the
-    * scabbard mouth during the first ticks and returns over the last ones. */
+   /** Ordinary drawn strokes are one-handed: the left palm leaves the pommel during the first
+    * ticks and returns over the last ones (REINHARD OVERHAUL 3b item 2: it is free meanwhile,
+    * never sent to the empty scabbard). */
    public static float strikeRelease(double ticks,int length) {
       if(!Double.isFinite(ticks) || length<=0) return 0;
       return smooth(ticks/2.5)*smooth((length-ticks)/3);
+   }
+
+   /** Lethal Chop by the support hand: it lets go of the hilt (or the sheath) for the chop and
+    * takes it again after the follow-through. {@code time01} is the chop's 0..1 clip time. */
+   public static float chopRelease(double time01) {
+      if(!Double.isFinite(time01) || time01<=0 || time01>=1) return 0;
+      return smooth(time01/.12)*smooth((1-time01)/.3);
    }
 
    static org.joml.Matrix4f[] equipment(BakedGeoModel body,ReinhardPoses.ReidPhase phase,
@@ -126,17 +131,18 @@ public final class ReinhardSword {
 
    /** TP choreography: one sampled grip bone, then both wrist constraints, then one
     * immutable pair of mesh frames. Never recompute the weapon from the solved arm.
-    * {@code oneHand} (0..1) releases the support hand from the pommel (strikeRelease). */
+    * {@code release} (0..1, {@link ReinhardHands}) frees the support hand for its own clip. */
    static org.joml.Matrix4f[] equipment(BakedGeoModel body,ReinhardPoses.ReidPhase phase,
-      double ticks,boolean strike,double actionTicks,float holyWeight,float oneHand) {
+      double ticks,boolean strike,double actionTicks,float holyWeight,float release) {
       org.joml.Matrix4f hip=hip(body), blade=new org.joml.Matrix4f(hip);
       if(phase!=ReinhardPoses.ReidPhase.SHEATHED || strike) {
          PoseStack anchor=new PoseStack();ReinhardRenderer.boneFrame(anchor,body.getBone("reid_grip"));
          blade=new org.joml.Matrix4f(anchor.last().pose()).scale(SWORD_SCALE,SWORD_SCALE*LENGTH_SCALE,SWORD_SCALE)
             .translate(-ReinhardGrip.HANDLE.x,-ReinhardGrip.HANDLE.y,-ReinhardGrip.HANDLE.z);
       }
-      org.joml.Matrix4f sheath=new org.joml.Matrix4f(strike?blade:hip)
-         .translate(ReinhardAssets.SHEATHED_OFFSET.x/16,-ReinhardAssets.SHEATHED_OFFSET.y/16,-ReinhardAssets.SHEATHED_OFFSET.z/16);
+      if(!strike && (phase==ReinhardPoses.ReidPhase.DRAWING || phase==ReinhardPoses.ReidPhase.SHEATHING))
+         return drawing(body,ReidDrawChoreo.drawTick(phase,ticks),hip,blade,holyWeight);
+      org.joml.Matrix4f sheath=sheathOf(strike?blade:hip);
       // Sheath and assembled Sheath Strike keep their exact original frame.
       // The owner selected the +90-degree axial audit variant (front edge,
       // broad face from the side). Apply it only to the final free blade mesh,
@@ -144,27 +150,22 @@ public final class ReinhardSword {
       float right=phase==ReinhardPoses.ReidPhase.DRAWN || strike?1:0;
       float gripWeight=0;
       float leftBlade=phase==ReinhardPoses.ReidPhase.SHEATHED?1:0;
-      if(phase==ReinhardPoses.ReidPhase.DRAWING || phase==ReinhardPoses.ReidPhase.SHEATHING) {
-         double drawTick=phase==ReinhardPoses.ReidPhase.DRAWING?ticks:120-ticks*6;
-         right=smooth((drawTick-88)/6);
-         leftBlade=1-smooth((drawTick-94)/6);
-         gripWeight=leftBlade*smooth((drawTick-12)/12);
-      }
-      // Left hand grips the actual hilt until hand-off, then supports the sheath
-      // mouth. It does not disappear because an unrelated action overlay is active.
+      // Draw/sheath use drawing() above. Outside that scene the shared ownership
+      // policy keeps a released support hand away from the empty scabbard.
+      ReinhardHands.Support hands=ReinhardHands.support(phase,ticks,holyWeight,release);
       if(strike) {
          right=smooth((actionTicks-2)/2)*smooth((12-actionTicks)/3);
          ReinhardGrip.solve(body,blade,1-right,true);
-      } else {
+      } else if(hands.sheath()>0) {
          org.joml.Matrix4f support=new org.joml.Matrix4f(hip).translate(0,3.3F/16,0);
          org.joml.Matrix4f leftTarget=interpolate(support,blade,leftBlade);
-         ReinhardGrip.support(body,leftTarget,holyWeight,gripWeight);
+         ReinhardGrip.support(body,leftTarget,hands.sheath(),gripWeight);
       }
       // The short native hilt has two distinct grips: main hand by the guard,
       // support hand by the pommel. Never stack two glove centres at HANDLE.
       float pairedGrip=strike?0:twoHandWeight(phase,ticks);
-      float twoHands=pairedGrip*(1-Math.max(0,Math.min(1,oneHand)));
-      if(twoHands>0)ReinhardGrip.paired(body,gripAt(blade,-8.5F),holyWeight*twoHands,true);
+      float twoHands=pairedGrip*(1-Math.max(0,Math.min(1,release)));
+      if(!strike && hands.hilt()>0)ReinhardGrip.paired(body,gripAt(blade,-8.5F),hands.hilt(),true);
       if(right>0) {
          // The main hand stays by the guard while the support hand lets go:
          // releasing the pommel must not slide the right glove along the hilt.
@@ -178,29 +179,110 @@ public final class ReinhardSword {
       return new org.joml.Matrix4f[]{sheath,blade};
    }
 
+   /** The scabbard of a blade frame that sits fully in it ("sheath as blade"). */
+   static org.joml.Matrix4f sheathOf(org.joml.Matrix4f sheathAsBlade) {
+      return new org.joml.Matrix4f(sheathAsBlade)
+         .translate(ReinhardAssets.SHEATHED_OFFSET.x/16,-ReinhardAssets.SHEATHED_OFFSET.y/16,-ReinhardAssets.SHEATHED_OFFSET.z/16);
+   }
+
+   /** A weapon frame carried by an anchor bone (handle centre convention of reid_grip). */
+   static org.joml.Matrix4f anchored(BakedGeoModel body,String bone) {
+      PoseStack anchor=new PoseStack();ReinhardRenderer.boneFrame(anchor,body.getBone(bone));
+      return new org.joml.Matrix4f(anchor.last().pose()).scale(SWORD_SCALE,SWORD_SCALE*LENGTH_SCALE,SWORD_SCALE)
+         .translate(-ReinhardGrip.HANDLE.x,-ReinhardGrip.HANDLE.y,-ReinhardGrip.HANDLE.z);
+   }
+
+   /** REINHARD OVERHAUL item 15: the Reid draw / sheathe at draw tick {@code d} ({@link ReidDrawChoreo}).
+    * The clip carries the blade (reid_grip, unrolled) and, once free, the scabbard (reid_sheath);
+    * until the release the scabbard rides the blade, offset by the extraction. The left palm closes
+    * on the scabbard throat (8-16) and carries it until it is docked (110); the right palm takes the
+    * handle behind the guard (26-30). Both keep the clip's elbow planes (16-102). At d = 0 this is
+    * exactly the sheathed equipment, at d = 120 exactly the Sword Drawn one. */
+   static org.joml.Matrix4f[] drawing(BakedGeoModel body,double d,org.joml.Matrix4f hip,org.joml.Matrix4f blade,float holyWeight) {
+      org.joml.Matrix4f sheathAsBlade=d>=ReidDrawChoreo.DOCKED ? new org.joml.Matrix4f(hip)
+         : ReidDrawChoreo.sheathFree(d) && body.getBone("reid_sheath")!=null ? anchored(body,"reid_sheath")
+         : new org.joml.Matrix4f(blade).translate(0,ReidDrawChoreo.extraction(d)/16,0);
+      org.joml.Matrix4f throat=gripAt(sheathAsBlade,ReidDrawChoreo.MOUTH+ReidDrawChoreo.THROAT_GRIP);
+      float poles=ReidDrawChoreo.poleWeight(d);
+      // The left glove follows its forearm on the scabbard (grip weight 0): the throat frame is
+      // ambiguous by a half turn about the scabbard axis, and chasing it flipped the wrist
+      // through the clamp's antipode twice during the lift. The palm position stays exact.
+      if(d<ReidDrawChoreo.THROAT_CLOSED) {
+         float w=ReidDrawChoreo.throatWeight(d);
+         ReinhardGrip.hold(body,interpolate(blade,throat,w),holyWeight,w,poles);
+      } else if(d<ReidDrawChoreo.DOCKED) {
+         ReinhardGrip.hold(body,throat,holyWeight,1,poles);
+      } else {
+         float w=ReidDrawChoreo.leaveThroat(d);
+         ReinhardGrip.hold(body,leaving(body,throat,new org.joml.Matrix4f(hip).translate(0,3.3F/16,0),w),holyWeight,1-w,poles);
+      }
+      float twoHands=ReidDrawChoreo.twoHandWeight(d);
+      if(twoHands>0)ReinhardGrip.paired(body,gripAt(blade,ReidDrawChoreo.POMMEL_GRIP),holyWeight*twoHands,holyWeight*twoHands,true,false,poles);
+      float right=ReidDrawChoreo.rightWeight(d);
+      if(right>0) {
+         org.joml.Matrix4f target=gripAt(blade,ReidDrawChoreo.RIGHT_GRIP);
+         if(twoHands>0)ReinhardGrip.paired(body,target,right,right*twoHands,false,true,poles);
+         else ReinhardGrip.solve(body,target,right,false,true,null,poles);
+      }
+      return new org.joml.Matrix4f[]{sheathOf(sheathAsBlade),new org.joml.Matrix4f(blade).rotateY(ReidDrawChoreo.roll(d))};
+   }
+
+   /** Docked throat to the Sword Drawn support point along a quadratic arc through
+    * {@link ReidDrawChoreo#SUPPORT_FRONT}, so the leaving palm never crosses the belly. */
+   static org.joml.Matrix4f leaving(BakedGeoModel body,org.joml.Matrix4f throat,org.joml.Matrix4f support,float w) {
+      org.joml.Matrix4f out=interpolate(throat,support,w);
+      GeoBone bone=body.getBone(ReinhardAssets.BODY_BONE);
+      if(bone==null || w<=0 || w>=1) return out;
+      PoseStack frame=new PoseStack();ReinhardRenderer.boneFrame(frame,bone);
+      float[] f=ReidDrawChoreo.SUPPORT_FRONT;
+      org.joml.Vector3f front=frame.last().pose().transformPosition(new org.joml.Vector3f((-f[0]-bone.pivotX)/16,(f[1]-bone.pivotY)/16,(f[2]-bone.pivotZ)/16));
+      org.joml.Vector3f a=throat.getTranslation(new org.joml.Vector3f()),b=support.getTranslation(new org.joml.Vector3f());
+      // B(1/2) = front: control = 2 front - (a + b) / 2.
+      org.joml.Vector3f control=new org.joml.Vector3f(front).mul(2).sub(new org.joml.Vector3f(a).add(b).mul(.5F));
+      float u=1-w;
+      org.joml.Vector3f p=new org.joml.Vector3f(a).mul(u*u).add(new org.joml.Vector3f(control).mul(2*u*w)).add(new org.joml.Vector3f(b).mul(w*w));
+      return out.setTranslation(p);
+   }
+
    static void drawEquipment(PoseStack stack,org.joml.Matrix4f[] frames,MultiBufferSource buffers,int light,int overlay) {
       drawFrame(ReinhardAssets.SHEATH,stack,frames[0],buffers,light,overlay);
       drawFrame(ReinhardAssets.BLADE,stack,frames[1],buffers,light,overlay);
    }
 
-   /** Both meshes have a frame every render, so interruptions can recover without duplication. */
-   static void drawAttached(Object player, PoseStack stack, org.joml.Matrix4f hip, org.joml.Matrix4f hand,
-      ReinhardPoses.ReidPhase phase, double ticks, boolean strike, double actionTicks, int key,
-      MultiBufferSource buffers, int light, int overlay) {
-      drawAttached(player,stack,hip,hand,phase,ticks,strike,actionTicks,key,buffers,light,overlay,false);
+   /** First-person axial roll of the drawn blade: half of the third-person quarter turn, so the
+    * camera sees the broad face along its diagonal instead of a thin edge (CPU preview fit). */
+   static final float FIRST_PERSON_ROLL = .5F;
+   /** How far (blocks, down the view) the first-person sheath drops at full hand weight. */
+   static final float FIRST_PERSON_SHEATH_DROP = 1.5F;
+
+   /** REINHARD OVERHAUL 3b item 1: the first-person sheath exists only while it is in use (draw,
+    * sheathe, Sheath Strike). With Reid drawn it hangs empty at the hip, outside the camera view,
+    * so it is not drawn at all (the third-person sheath is unaffected). */
+   static boolean firstPersonSheathVisible(ReinhardPoses.ReidPhase phase, boolean strike) {
+      return strike || phase != ReinhardPoses.ReidPhase.DRAWN;
    }
 
-   static void drawAttached(Object player, PoseStack stack, org.joml.Matrix4f hip, org.joml.Matrix4f hand,
-      ReinhardPoses.ReidPhase phase, double ticks, boolean strike, double actionTicks, int key,
-      MultiBufferSource buffers, int light, int overlay, boolean physicalGrip) {
-      org.joml.Matrix4f[] target=frames(hip,hand,phase,ticks,strike,actionTicks);
-      if(physicalGrip && (phase==ReinhardPoses.ReidPhase.DRAWING || phase==ReinhardPoses.ReidPhase.SHEATHING))
+   /** While the blade travels the hand-relative first-person sheath sinks out of the view as the
+    * hand rises into the guard (and back as it comes down to sheathe), so it never pops. */
+   static float firstPersonSheathDrop(ReinhardPoses.ReidPhase phase, double ticks, boolean strike) {
+      if (strike || (phase != ReinhardPoses.ReidPhase.DRAWING && phase != ReinhardPoses.ReidPhase.SHEATHING)) return 0;
+      return FIRST_PERSON_SHEATH_DROP * handWeight(phase, ticks);
+   }
+
+   /** First person: the blade bound to the right palm through the draw, with the first-person
+    * roll; the sheath ({@code sheathShift} = its stack-space drop, null = hidden). Returns the
+    * blade frame before its roll: the support hand grips that handle. */
+   static org.joml.Matrix4f drawFirstPerson(PoseStack stack, org.joml.Matrix4f belt, org.joml.Matrix4f hand,
+      ReinhardPoses.ReidPhase phase, double ticks, boolean strike, double actionTicks,
+      @javax.annotation.Nullable org.joml.Matrix4f sheathShift, MultiBufferSource buffers, int light, int overlay) {
+      org.joml.Matrix4f[] target=frames(belt,hand,phase,ticks,strike,actionTicks);
+      if(phase==ReinhardPoses.ReidPhase.DRAWING || phase==ReinhardPoses.ReidPhase.SHEATHING)
          target[1]=bindGrip(target[1],hand);
-      if(!strike)target[1]=rollDrawnBlade(target[1],phase,ticks);
-      org.joml.Matrix4f[] frames = physicalGrip || (phase==ReinhardPoses.ReidPhase.SHEATHED && !strike) ? target
-         : ReinhardRecovery.weapons(player,key,target[0],target[1],net.minecraft.Util.getNanos());
-      drawFrame(ReinhardAssets.SHEATH, stack,frames[0],buffers,light,overlay);
-      drawFrame(ReinhardAssets.BLADE, stack,frames[1],buffers,light,overlay);
+      org.joml.Matrix4f blade=new org.joml.Matrix4f(target[1]);
+      if(!strike)target[1].rotateY(drawnRoll(phase,ticks)*FIRST_PERSON_ROLL);
+      if(sheathShift!=null)drawFrame(ReinhardAssets.SHEATH,stack,new org.joml.Matrix4f(sheathShift).mul(target[0]),buffers,light,overlay);
+      drawFrame(ReinhardAssets.BLADE,stack,target[1],buffers,light,overlay);
+      return blade;
    }
 
    static org.joml.Matrix4f[] frames(org.joml.Matrix4f hip,org.joml.Matrix4f hand,
@@ -209,8 +291,17 @@ public final class ReinhardSword {
       org.joml.Matrix4f sheath = interpolate(hip,hand,sw)
          .translate(ReinhardAssets.SHEATHED_OFFSET.x/16, -ReinhardAssets.SHEATHED_OFFSET.y/16, -ReinhardAssets.SHEATHED_OFFSET.z/16);
       org.joml.Matrix4f blade = strike ? interpolate(hip,hand,sw)
-         : interpolate(new org.joml.Matrix4f(hip).translate(0,-ReinhardPoses.bladeOut(phase,ticks)*DRAW_OUT_PX/16,0), hand, handWeight(phase,ticks));
+         : interpolate(new org.joml.Matrix4f(hip).translate(0,-extraction(phase,ticks)/16,0), hand, handWeight(phase,ticks));
       return new org.joml.Matrix4f[]{sheath,blade};
+   }
+
+   /** Blade travel out of the scabbard (native px) in a Reid phase: the draw timeline, FULL once in hand. */
+   static float extraction(ReinhardPoses.ReidPhase phase,double ticks) {
+      return switch(phase) {
+         case DRAWN -> ReidDrawChoreo.FULL;
+         case DRAWING, SHEATHING -> ReidDrawChoreo.extraction(ReidDrawChoreo.drawTick(phase,ticks));
+         default -> 0;
+      };
    }
 
    /** Keep the blade in the actual glove through extraction/reinsertion, preserving

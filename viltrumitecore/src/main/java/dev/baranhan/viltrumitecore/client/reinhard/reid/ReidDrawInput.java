@@ -6,7 +6,10 @@ import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import net.minecraft.client.player.Input;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
 
-/** While the local Reinhard draws Reid (6 s) he stands still: movement and jump input are cleared (the server refuses jumps too). */
+/**
+ * While the local Reinhard draws Reid (6 s) he stands still: movement and jump input are cleared
+ * (the server refuses jumps too), and he does not crouch out of the drawing stance.
+ */
 public final class ReidDrawInput {
    private ReidDrawInput() {
    }
@@ -27,5 +30,8 @@ public final class ReidDrawInput {
       input.left = false;
       input.right = false;
       input.jumping = false;
+      if (ReinhardView.reid(snapshot) == ReinhardPoses.ReidPhase.DRAWING) {
+         input.shiftKeyDown = false;
+      }
    }
 }

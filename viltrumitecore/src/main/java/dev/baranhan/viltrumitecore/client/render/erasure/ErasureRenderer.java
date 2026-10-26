@@ -277,10 +277,13 @@ public final class ErasureRenderer {
    private static void drawTube(List<ErasureStroke.Ring> rings, Vec3 camera, boolean shell) {
       BufferBuilder builder = Tesselator.getInstance().getBuilder();
       builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
-      float[] next = ringVertices(rings.get(0), camera, shell);
+      // Two ring buffers reused for the whole tube (render thread only): no per-ring allocation on long strokes.
+      float[] next = ringVertices(rings.get(0), camera, shell, RING_A);
+      float[] spare = RING_B;
       for (int i = 0; i + 1 < rings.size(); i++) {
          float[] current = next;
-         next = ringVertices(rings.get(i + 1), camera, shell);
+         next = ringVertices(rings.get(i + 1), camera, shell, spare);
+         spare = current;
          for (int k = 0; k < ErasureStroke.AROUND; k++) {
             ringVertex(builder, rings.get(i), current, k, shell);
             ringVertex(builder, rings.get(i), current, k + 1, shell);
@@ -291,8 +294,10 @@ public final class ErasureRenderer {
       BufferUploader.drawWithShader(builder.end());
    }
 
-   private static float[] ringVertices(ErasureStroke.Ring ring, Vec3 camera, boolean shell) {
-      float[] vertices = new float[(ErasureStroke.AROUND + 1) * 6];
+   private static final float[] RING_A = new float[(ErasureStroke.AROUND + 1) * 6];
+   private static final float[] RING_B = new float[(ErasureStroke.AROUND + 1) * 6];
+
+   private static float[] ringVertices(ErasureStroke.Ring ring, Vec3 camera, boolean shell, float[] vertices) {
       for (int k = 0; k <= ErasureStroke.AROUND; k++) {
          double rx = ring.n().x * RING_COS[k] + ring.b().x * RING_SIN[k];
          double ry = ring.n().y * RING_COS[k] + ring.b().y * RING_SIN[k];
