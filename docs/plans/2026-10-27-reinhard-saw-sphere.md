@@ -62,3 +62,9 @@ hovers there and the crown disc stays above his head (the headroom rule already 
 - [x] Clip, first-person offsets, icon, lang (11 files), credits, migration.
 - [x] Tests: choreography, shell, packets, hands, migration, sounds, release; existing Rain tests moved over.
 - [ ] `runClient` visual / audio acceptance: no display or audio in this environment.
+
+## Follow-up (core 1.45.0)
+- [x] Two-handed Reid strikes, sprint carry and Saw Sphere in third and first person.
+- [x] `saw_shatter` remade from four CC0 Freesound glass recordings (pinned SHA-256, credited).
+- [x] Sphere visuals: fresnel shell, hex lattice with pulses, glowing seams, triangular shards; CPU preview tool.
+- [ ] `runClient` visual / audio acceptance.

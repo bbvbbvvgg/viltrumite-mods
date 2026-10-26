@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Saw Sphere (Reinhard item 19): the hum, grind, finale and shatter cues.
 
-Fully original, deterministic synthesis (seeded numpy noise and oscillators, no recording, no download), CC0-1.0.
-Four mono 44.1 kHz cues; the sword swings reuse the existing cinematic sweep file and are not made here.
+saw_hum, saw_grind and saw_finale are fully original, deterministic synthesis (seeded numpy noise and oscillators,
+no recording and no download), CC0-1.0. saw_shatter (reworked after the owner's playtest: the synthetic grains
+sounded like beeps, not glass) layers four CC0 1.0 Freesound recordings (FREESOUND below, fetched as the public
+HQ Ogg previews into ~/.cache/viltrumite-sfx/freesound and checked by SHA-256; raw files are never committed)
+over a synthesized sub boom and a faint crystal ring. Four mono 44.1 kHz cues; the sword swings reuse the existing
+cinematic sweep file and are not made here.
 
   saw_hum      4.0 s seamless loop (every partial completes whole cycles in the loop, the noise is circular):
                a 55 Hz drone with detuned harmonics (slow beating), a band-passed whirr amplitude-modulated at
@@ -12,8 +16,10 @@ Four mono 44.1 kHz cues; the sword swings reuse the existing cinematic sweep fil
                four inharmonic metal partials and a short rock crunch below 600 Hz. Rate-limited by the client.
   saw_finale   3.0 s accent of the last great swing: a sub thump, a rising-then-falling air sweep and a long
                ringing metal chord (inharmonic, slow decay).
-  saw_shatter  3.6 s crystalline break-up of the shell: a sharp crack, a dense cloud of short glass grains
-               (2-9 kHz) thinning out, a low thump and a shimmering tail.
+  saw_shatter  3.6 s break-up of the shell: the crack of a pane (unfa 221528, high-passed 700 Hz), a dense
+               smash (chewiesmissus 244238), shards raining down (221Beimesche 336425, from 0.1 s), a slowed
+               shatter shimmer (bevibeldesign 349905, above 1.8 kHz, -11 dB), a 90 -> 42 Hz sub boom and a faint
+               E6 crystal ring; each recording is trimmed at its onset and normalized before the layer gain.
 
 Each cue is DC-free, faded (except the loop), set to its 100 ms momentary max target (BS.1770 K-weighting, the meter
 of tools/sfx/reinhard_strikes.py) under TRUE_PEAK and packaged through the sound-design helper (Vorbis q5, .ogg.b64).
@@ -25,6 +31,7 @@ of tools/sfx/reinhard_strikes.py) under TRUE_PEAK and packaged through the sound
 Measured numbers only: the sandbox that wrote this has no audio playback, so the cues were not auditioned.
 """
 import argparse
+import hashlib
 import math
 import os
 import subprocess
@@ -41,6 +48,19 @@ SR = meter.SR
 SEED = 20261027
 TRUE_PEAK = -1.0
 MAX_LIMIT = 3.0
+# Freesound id -> (creator, title, HQ preview, SHA-256 of the preview). All CC0 1.0, checked on the live pages
+# (https://freesound.org/s/<id>/, 2026-10-27).
+FREESOUND = {
+    "221528": ("unfa", "Glass Break", "https://cdn.freesound.org/previews/221/221528_1038806-hq.ogg",
+               "5335c238731731b8efcb5b2bd81071432786c93fded88db6f8bc4090feb74f76"),
+    "244238": ("chewiesmissus", "Glass Smash.wav", "https://cdn.freesound.org/previews/244/244238_3156517-hq.ogg",
+               "7b50e61a9b9575bc12444053eec8e1dacb8bfc7a75eaa662b0856d34a836fd3a"),
+    "336425": ("221Beimesche", "Glass Shattering and Falling", "https://cdn.freesound.org/previews/336/336425_4663534-hq.ogg",
+               "bd1ba2cd799d63e169c8f15a1b216a133e86f503981d613ddb8f7a82e66847d8"),
+    "349905": ("bevibeldesign", "Slow Motion Glass Shatter", "https://cdn.freesound.org/previews/349/349905_4557960-hq.ogg",
+               "e73b9631b028b58b875b62d7c93bd539c5c467c5487a85beb23b05832174cde0"),
+}
+FREESOUND_CACHE = os.path.join(os.path.expanduser("~"), ".cache", "viltrumite-sfx", "freesound")
 # name -> (length s, 100 ms momentary max target LUFS, loop)
 CUES = {
     "saw_hum": (4.0, -16.0, True),
@@ -144,29 +164,55 @@ def finale(rng, length):
     return thump * db(-2) + sweep * db(-3) + ring * db(-7)
 
 
+def recording(sound_id):
+    """Mono 44.1 kHz float samples of a FREESOUND preview (downloaded once, SHA-256 checked)."""
+    _, _, url, sha = FREESOUND[sound_id]
+    path = os.path.join(FREESOUND_CACHE, os.path.basename(url))
+    if not os.path.isfile(path):
+        os.makedirs(FREESOUND_CACHE, exist_ok=True)
+        import urllib.request
+        request = urllib.request.Request(url, headers={"User-Agent": "viltrumite-sfx/1.0"})
+        with urllib.request.urlopen(request, timeout=60) as response, open(path + ".part", "wb") as out:
+            out.write(response.read())
+        os.replace(path + ".part", path)
+    with open(path, "rb") as f:
+        if hashlib.sha256(f.read()).hexdigest() != sha:
+            raise SystemExit(f"{path}: SHA-256 mismatch (expected {sha})")
+    pcm = subprocess.run(["ffmpeg", "-v", "error", "-nostdin", "-i", path, "-ac", "1", "-ar", str(SR), "-f", "f32le", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(pcm, dtype="<f4").astype(np.float64)
+
+
+def take(sound_id, length, lo=None, hi=None):
+    """The recording from 4 ms before its onset (first sample above 10% of the peak), filtered, normalized."""
+    x = recording(sound_id)
+    start = max(0, int(np.argmax(np.abs(x) > 0.1 * np.abs(x).max())) - int(0.004 * SR))
+    x = x[start:start + int(length * SR)]
+    return norm(filt(x, lo, hi) if lo or hi else x)
+
+
 def shatter(rng, length):
     n = int(round(length * SR))
     t = np.arange(n) / SR
-    crack = norm(filt(rng.standard_normal(n), 1500, None)) * np.exp(-t / 0.012)
-    thump = np.sin(2 * math.pi * np.cumsum(50 + 40 * np.exp(-t / 0.1)) / SR) * env(t, 0.003, 0.3)
-    grains = np.zeros(n)
-    at = 0.0
-    while at < 2.6:
-        at += rng.exponential(1 / (260 * math.exp(-at / 0.45) + 6))
-        i = int(at * SR)
-        size = int(rng.uniform(0.02, 0.09) * SR)
-        if i + size >= n:
-            break
-        gt = np.arange(size) / SR
-        f = rng.uniform(2000, 9000)
-        g = np.sin(2 * math.pi * f * gt) + 0.5 * np.sin(2 * math.pi * f * rng.uniform(1.4, 2.3) * gt)
-        grains[i:i + size] += g * env(gt, 0.0005, rng.uniform(0.008, 0.03)) * rng.uniform(0.3, 1.0) * math.exp(-at / 0.9)
-    grains = norm(grains)
-    tail = np.zeros(n)
-    for f in (2093, 3136, 4186.5):
-        tail += np.sin(2 * math.pi * f * t + 0.4 * np.sin(2 * math.pi * 5.1 * t)) * np.exp(-t / 1.1)
-    tail = norm(tail) * np.clip((t - 0.05) / 0.3, 0, 1)
-    return crack * db(-2) + thump * db(-6) + grains * db(0) + tail * db(-18)
+
+    def at(x, seconds, gain):
+        out = np.zeros(n)
+        i = int(seconds * SR)
+        k = min(len(x), n - i)
+        out[i:i + k] = x[:k] * db(gain)
+        return out
+
+    crack = take("221528", length, 700)
+    smash = take("244238", length, 120)
+    fall = take("336425", length, 250)
+    slow = take("349905", length, 1800)
+    boom = np.tanh(1.6 * np.sin(2 * math.pi * np.cumsum(42 + 48 * np.exp(-t / 0.09)) / SR)) * env(t, 0.002, 0.45)
+    ring = np.zeros(n)
+    for f, gain in ((1318.5, 0), (1975.5, -3), (2637, -6), (3951, -9)):
+        ring += np.sin(2 * math.pi * f * t + 0.3 * np.sin(2 * math.pi * 4.3 * t)) * db(gain) * np.exp(-t / 1.0)
+    ring = norm(ring) * np.clip((t - 0.04) / 0.25, 0, 1)
+    return (at(crack, 0, 0) + at(smash, 0.008, -2) + at(fall, 0.10, -3) + at(slow, 0.05, -11)
+            + boom * db(-5) + ring * db(-24))
 
 
 SYNTH = {"saw_hum": hum, "saw_grind": grind, "saw_finale": finale, "saw_shatter": shatter}
@@ -205,6 +251,24 @@ def seam(x):
     return abs(x[0] - x[-1]) / (inner + 1e-12)
 
 
+# Cues mixed from FREESOUND recordings: not "own", and the helper only takes Openverse ids (its API was down),
+# so they are encoded like the helper does it (mono 44.1 kHz Vorbis q5, base64 under binassets).
+RECORDED = {"saw_shatter"}
+
+
+def package_recorded(wav, name):
+    import base64
+    import tempfile
+    out = os.path.join(ROOT, "viltrumitecore", "src", "main", "binassets", "assets", "viltrumitecore", "sounds",
+                       "reinhard", name + ".ogg.b64")
+    with tempfile.TemporaryDirectory(prefix="viltrumite-sfx-") as tmp:
+        ogg = os.path.join(tmp, name + ".ogg")
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-i", wav, "-map", "0:a:0", "-vn",
+                        "-ac", "1", "-ar", "44100", "-c:a", "libvorbis", "-q:a", "5", "-f", "ogg", ogg], check=True)
+        with open(ogg, "rb") as f, open(out, "wb") as dst:
+            dst.write(base64.encodebytes(f.read()))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out", default=os.path.join(os.path.expanduser("~"), ".cache", "viltrumite-sfx", "work", "mix", "reinhard"))
@@ -229,8 +293,11 @@ def main():
         extra = f", seam {seam(x):.2f}" if CUES[name][2] else ""
         print(f"{name}: {len(x) / SR:.3f} s, M100 {meter.momentary_max(x):.1f} LUFS, TP {meter.true_peak(x):.1f} dBTP{extra} -> {wav}")
         if not args.no_package:
-            subprocess.run([sys.executable, HELPER, "package", "--input", wav, "--module", "core", "--name", "reinhard/" + name,
-                            "--event", "reinhard_" + name, "--own", "--replace"], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+            if name in RECORDED:
+                package_recorded(wav, name)
+            else:
+                subprocess.run([sys.executable, HELPER, "package", "--input", wav, "--module", "core", "--name", "reinhard/" + name,
+                                "--event", "reinhard_" + name, "--own", "--replace"], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
     sys.exit(1 if failed else 0)
 
 

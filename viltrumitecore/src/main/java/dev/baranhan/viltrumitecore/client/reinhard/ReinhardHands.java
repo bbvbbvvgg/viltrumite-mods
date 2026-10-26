@@ -10,8 +10,9 @@ import javax.annotation.Nullable;
  * <li>the SHEATH owns it only while Reid is in the sheath or travelling through it (draw, sheathe);
  * it never claims the hand while Reid is drawn, the sheath is empty then;</li>
  * <li>the HILT (pommel) owns it while the drawn sword is held in two hands;</li>
- * <li>otherwise the hand is FREE and its own animation clip owns it: the sprint pump, a one-handed
- * stroke, Lethal Chop, an off-hand swing or the Blessing's defense reaction.</li>
+ * <li>otherwise the hand is FREE and its own animation clip owns it: a left punch, Lethal Chop, an
+ * off-hand swing or the Blessing's defense reaction. Sword strokes and the drawn sprint never free it
+ * (owner, after item 19: Reid is always held in both hands).</li>
  * </ul>
  * A release fades the hilt (or the sheath) out and back in; the released hand never jumps to the
  * other weapon part, so no two systems drive the same arm towards different targets.
@@ -22,18 +23,20 @@ final class ReinhardHands {
    /** Weights (0..1) of the two weapon owners of the support hand; the rest is the clip's. */
    record Support(float sheath, float hilt) {}
 
-   /** Actions that wield Reid in BOTH hands: the support hand stays on the hilt through them. */
+   /** Actions that wield Reid in BOTH hands: the support hand stays on the hilt through them. Every
+    * sword stroke is two-handed (owner, after item 19): the drawn strokes, the Saw Sphere swings and
+    * the World Cuts / World Erasure. */
    static boolean twoHanded(@Nullable ReinhardAbility action) {
-      return action==ReinhardAbility.WORLD_CUT
+      return action==ReinhardAbility.REID_STRIKE || action==ReinhardAbility.SAW_SPHERE || action==ReinhardAbility.WORLD_CUT
          || action==ReinhardAbility.DIAGONAL_WORLD_CUT || action==ReinhardAbility.WORLD_ERASURE;
    }
 
-   /** The support hand during {@code action}: drawn strokes are one-handed, and any other action
-    * whose clip animates the left arm (a left strike) takes the hand for its own motion. Reid's
+   /** The support hand during {@code action}: sword strokes keep it on the pommel; any other action
+    * whose clip animates the left arm (a left punch) takes the hand for its own motion. Reid's
     * draw/sheathe and Sheath Strike own their grips themselves. 0 held .. 1 free. */
    static float actionRelease(@Nullable ReinhardAbility action,boolean clipMovesLeftArm,double ticks,int length) {
       if(action==null || action==ReinhardAbility.REID || action==ReinhardAbility.SHEATH_STRIKE || twoHanded(action)) return 0;
-      return action==ReinhardAbility.REID_STRIKE || clipMovesLeftArm ? ReinhardSword.strikeRelease(ticks,length) : 0;
+      return clipMovesLeftArm ? ReinhardSword.strikeRelease(ticks,length) : 0;
    }
 
    /** The strongest of the claims on the free hand this frame (each 0..1). */

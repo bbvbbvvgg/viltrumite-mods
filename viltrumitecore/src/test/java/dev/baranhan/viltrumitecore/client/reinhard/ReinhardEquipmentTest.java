@@ -11,13 +11,11 @@ import java.lang.Math;
 import org.junit.jupiter.api.Test;
 
 class ReinhardEquipmentTest {
-   /** Ordinary drawn strokes, the sprint carry and the left-hand Lethal Chop are one-handed: the
-    * released support palm follows its own clip (3b item 2: never the empty scabbard). */
+   /** Only the left-hand Lethal Chop releases the support palm (it then follows its own clip, 3b item 2:
+    * never the empty scabbard); Reid strokes, the sprint carry and the Saw swings are two-handed. */
    static float oneHand(String clip,double ticks,double lengthTicks) {
-      if(clip.startsWith("reid_slash"))return ReinhardSword.strikeRelease(ticks,(int)Math.round(lengthTicks));
-      if(clip.equals("chop_left"))return ReinhardSword.chopRelease(ticks/lengthTicks);
-      if(clip.equals("saw_sphere"))return ReinhardSword.strikeRelease(ticks,(int)Math.round(lengthTicks));
-      return clip.equals("drawn_run")?1:0;
+      // Sword strokes, the Saw swings and the drawn sprint are two-handed (owner, after item 19).
+      return clip.equals("chop_left")?ReinhardSword.chopRelease(ticks/lengthTicks):0;
    }
    static BakedGeoModel weapon(String name)throws Exception {
       return BakedGeoModel.parse(JsonParser.parseString(Files.readString(Path.of("src/main/resources/assets/viltrumitecore/geo/reinhard/"+name+".geo.json"))).getAsJsonObject());

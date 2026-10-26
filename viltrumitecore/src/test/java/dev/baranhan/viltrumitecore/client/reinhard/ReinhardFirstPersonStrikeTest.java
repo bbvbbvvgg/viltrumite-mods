@@ -62,8 +62,6 @@ class ReinhardFirstPersonStrikeTest {
       for (int move = 0; move < MeleeMoves.REID.length; move++) {
          assertEquals(ReinhardFirstPersonPose.DRAWN_GUARD, ReinhardFirstPersonPose.reidStrike(move, 0), "move " + move);
          assertEquals(ReinhardFirstPersonPose.DRAWN_GUARD, ReinhardFirstPersonPose.reidStrike(move, MeleeMoves.REID[move].ticks()), "move " + move);
-         var rest = ReinhardFirstPersonPose.reidSupport(move, 0);
-         assertEquals(0, rest.x() + rest.y() + rest.z() + rest.pitch() + rest.yaw() + rest.roll(), 1e-5, "support rests at zero");
       }
    }
 

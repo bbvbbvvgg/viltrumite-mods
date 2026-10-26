@@ -353,3 +353,13 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - Barrier `SawShell` (half-block surface cells above Y0, flood-fill activation once, never healed) is real collision through `SawShellCollisionMixin` (`Entity#collide` shape list, caster exempt) and blocks teleports (`SawSphereManager`, commands exempt). Registries per side in `SawShells`.
 - Scene `SawSphereScene`: region tickets, watchdog, invulnerable hovering caster, cuts via `HeroDestruction.setAir(CLEAR_FLAGS)` + `BreakEvent`, loot extracted first (`SawLoot`), mortals `Annihilation.strike`, heroes 20 % max HP per hit. Tick phase `SAW_SPHERE` before `CARVE`. Every interruption = `end(true)`.
 - `reinhard:cut_rain` migrates to `reinhard:saw_sphere`. Sounds `tools/sfx/reinhard_saw_sphere.py` (own synthesis, not auditioned). Plan: `docs/plans/2026-10-27-reinhard-saw-sphere.md`.
+
+## Core 1.45.0 (two hands, shatter, lattice sphere)
+- Reinhard always holds and strikes with TWO hands while the sword is drawn: `ReinhardHands.twoHanded` covers every
+  Reid strike, the sprint carry and the Saw Sphere. Third-person grips are fitted so forearms and blade clear the head
+  and body (`ReinhardEquipmentTest`); first person keeps the right-arm strike rows and carries the left palm to the
+  pommel (`ReinhardFirstPersonPose.support` = NONE for two-handed abilities, `sawSphere(ticks)` absolute keys).
+- Sphere visuals: fresnel shell, Goldberg hex lattice with rising pulses, glowing seams at mask holes, triangular
+  spinning shards (`SawSphereRenderer`; CPU preview `SawSpherePreviewTest` with `SAW_PREVIEW=1` +
+  `tools/preview_saw_sphere.py`).
+- Released as GitHub release `v1.45.0-reinhard` together with flight 1.10.1; the overhaul stack (#47–#54) merged to main.

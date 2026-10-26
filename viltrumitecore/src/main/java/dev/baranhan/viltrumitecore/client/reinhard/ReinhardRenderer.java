@@ -132,7 +132,7 @@ public final class ReinhardRenderer {
       org.joml.Matrix4f[] equipment=ReinhardSword.equipment(body,reidPhase,reidTicks,
          snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),swordTicks,
          weights[ReinhardMode.HOLY_SWORD.ordinal()],
-         supportRelease(player,snapshot,swordTicks,runCarry(pose,motion),partialTick,false));
+         supportRelease(player,snapshot,swordTicks,partialTick,false));
       ReinhardDefense.body(player,snapshot,body);
       int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
       stack.pushPose();
@@ -352,15 +352,7 @@ public final class ReinhardRenderer {
       float holy = StanceBlend.weights(player, ReinhardView.mode(snapshot), now)[ReinhardMode.HOLY_SWORD.ordinal()];
       double reidTicks = dev.baranhan.viltrumitecore.client.reinhard.reid.ReidClock.ticks(player, reid, frameTime);
       return ReinhardHands.support(reid, reidTicks, holy,
-         supportRelease(player, snapshot, actionTicks, firstPersonRunCarry(player, snapshot, frameTime, now), frameTime, true)).hilt();
-   }
-
-   /** The drawn sprint carry in first person (its own motion smoothing, see firstPersonKey). */
-   static float firstPersonRunCarry(AbstractClientPlayer player, HeroPublicSnapshot snapshot, float partialTick, long now) {
-      boolean airborne = !player.onGround() && !player.isPassenger() && player.getSwimAmount(partialTick) < .1F && !player.isFallFlying();
-      float[] motion = ReinhardMotion.sample(ReinhardRecovery.firstPersonKey(player), player.isCrouching(), player.isSprinting(),
-         airborne, player.getDeltaMovement().y > 0, now);
-      return runCarry(pose(player, snapshot, partialTick), motion);
+         supportRelease(player, snapshot, actionTicks, frameTime, true)).hilt();
    }
 
    static ReinhardFirstPersonPose.Offset firstPersonOffset(AbstractClientPlayer player, HeroPublicSnapshot snapshot, HumanoidArm side) {
@@ -382,15 +374,16 @@ public final class ReinhardRenderer {
       boolean cut = cinematic == ReinhardAbility.WORLD_CUT || cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT;
       ReinhardFirstPersonPose.Offset action = cut || physicalLeft && ReinhardHands.twoHanded(cinematic)
          ? ReinhardFirstPersonPose.Offset.NONE
-         : cinematic == ReinhardAbility.SAW_SPHERE ? ReinhardFirstPersonPose.sawSphere(cinematicTicks,physicalLeft)
+         : cinematic == ReinhardAbility.SAW_SPHERE ? ReinhardFirstPersonPose.sawSphere(cinematicTicks)
          : cinematic == ReinhardAbility.WORLD_ERASURE
             ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
             : actionArm ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
       if (!actionArm && cinematic == null) action = ReinhardFirstPersonPose.support(
          actionAbility,snapshot.variant(),cinematicTicks,snapshot.actionLength());
-      if (actionAbility == ReinhardAbility.REID_STRIKE) {
-         // Drawn strokes are absolute rows that start and end at the guard.
-         if (physicalLeft) action = ReinhardFirstPersonPose.reidSupport(snapshot.variant(),cinematicTicks);
+      if (actionAbility == ReinhardAbility.REID_STRIKE || cinematic == ReinhardAbility.SAW_SPHERE) {
+         // Drawn strokes and the Saw swings are absolute rows that start and end at the guard; both
+         // hands stay on the hilt (the support pass carries the free arm to the pommel and solves it).
+         if (physicalLeft) action = ReinhardFirstPersonPose.Offset.NONE;
       } else if (cut) {
          action = guard;
       } else if (actionAbility != null && actionAbility != ReinhardAbility.REID) {
@@ -564,10 +557,10 @@ public final class ReinhardRenderer {
 
    /**
     * REINHARD OVERHAUL 3b item 2: every claim on the support (left) hand this frame, the same in
-    * both views ({@link ReinhardHands}): a one-handed stroke or a clip that swings the left arm,
-    * the drawn sprint carry, a left Lethal Chop, a left vanilla swing and the defense reaction.
+    * both views ({@link ReinhardHands}): a clip that swings the left arm (not a sword stroke: those
+    * are two-handed), a left Lethal Chop, a left vanilla swing and the defense reaction.
     */
-   static float supportRelease(AbstractClientPlayer player, HeroPublicSnapshot snapshot, double actionTicks, float runCarry,
+   static float supportRelease(AbstractClientPlayer player, HeroPublicSnapshot snapshot, double actionTicks,
       float partialTick, boolean firstPerson) {
       ReinhardAbility action = ReinhardPoses.action(snapshot.actionId());
       boolean clipMovesLeftArm = false;
@@ -589,12 +582,13 @@ public final class ReinhardRenderer {
          float swing = player.getAttackAnim(partialTick);
          if (clip != null && swing > 0) melee = ReinhardPlayback.weight(swing * clip.lengthSeconds(), clip.lengthSeconds());
       }
+      // The drawn sprint carry is two-handed (owner, after item 19): it no longer frees the hand.
       return ReinhardHands.release(ReinhardHands.actionRelease(action, clipMovesLeftArm, actionTicks, snapshot.actionLength()),
-         reid == ReinhardPoses.ReidPhase.DRAWN ? runCarry : 0, chop, melee,
+         chop, melee,
          ReinhardDefense.handWeight(player, true, firstPerson));
    }
 
-   /** Weight of the one-handed sprint carry (also releases the support hand by the same weight). */
+   /** Weight of the two-handed drawn sprint carry over the drawn walk. */
    static float runCarry(ReinhardPoses.Pose pose, float[] motion) {
       return Math.max(0,Math.min(1,pose.walk()))*Math.max(0,Math.min(1,motion[1]))*ReinhardMotion.ground(motion);
    }

@@ -109,9 +109,9 @@ public final class ReinhardSword {
       return new org.joml.Matrix4f(blade).rotateY(drawnRoll(phase,ticks));
    }
 
-   /** Ordinary drawn strokes are one-handed: the left palm leaves the pommel during the first
-    * ticks and returns over the last ones (REINHARD OVERHAUL 3b item 2: it is free meanwhile,
-    * never sent to the empty scabbard). */
+   /** A left-arm action (a left punch) frees the support palm: it leaves the pommel during the first
+    * ticks and returns over the last ones (REINHARD OVERHAUL 3b item 2: it is free meanwhile, never
+    * sent to the empty scabbard). Sword strokes no longer use it: they are two-handed. */
    public static float strikeRelease(double ticks,int length) {
       if(!Double.isFinite(ticks) || length<=0) return 0;
       return smooth(ticks/2.5)*smooth((length-ticks)/3);

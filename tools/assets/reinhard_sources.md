@@ -108,22 +108,34 @@ of the cut (positional, linear 320-block attenuation, gain 0.85). `python3 tools
 re-synthesizes and compares with the committed file. Measured numbers only, **not a listening test**: the sandbox
 has no audio playback.
 
-## Saw Sphere — original synthesis (2026-10-27)
+## Saw Sphere — synthesis and CC0 glass recordings (2026-10-27)
 
 `saw_hum`, `saw_grind`, `saw_finale` and `saw_shatter` (events `reinhard.saw_*`, item 19) are written only by
-`tools/sfx/reinhard_saw_sphere.py`: deterministic synthesis from seeded numpy noise and oscillators,
-**no recording and no download**, CC0-1.0, packaged with the sound-design helper (`package --own`, mono 44.1 kHz
-Vorbis q5). The swing (`reinhard.saw_swing`) reuses `cut_cinematic_sweep` and adds no file.
+`tools/sfx/reinhard_saw_sphere.py`. The first three are deterministic synthesis from seeded numpy noise and
+oscillators, **no recording and no download**, CC0-1.0, packaged with the sound-design helper (`package --own`, mono
+44.1 kHz Vorbis q5). `saw_shatter` was redone after the owner's playtest (the synthetic glass grains sounded like
+beeps): it layers four **CC0 1.0** Freesound recordings, fetched by the script as the public HQ Ogg previews (cached
+outside the repo, SHA-256 pinned in the script, never committed) and checked on their live pages on 2026-10-27,
+over a synthesized sub boom and crystal ring; the script encodes it like the helper (mono 44.1 kHz Vorbis q5, base64).
+Changes: trimmed at the onset / filtered / layered / normalized. The swing (`reinhard.saw_swing`) reuses
+`cut_cinematic_sweep` and adds no file.
+
+| Freesound id — title | Author | License | Page | Layer in saw_shatter |
+|---|---|---|---|---|
+| [221528](https://freesound.org/people/unfa/sounds/221528/) — Glass Break | unfa | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/unfa/sounds/221528/ | the crack, high-passed 700 Hz, 0 dB |
+| [244238](https://freesound.org/people/chewiesmissus/sounds/244238/) — Glass Smash.wav | chewiesmissus | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/chewiesmissus/sounds/244238/ | the dense smash, high-passed 120 Hz, -2 dB at 8 ms |
+| [336425](https://freesound.org/people/221Beimesche/sounds/336425/) — Glass Shattering and Falling | 221Beimesche | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/221Beimesche/sounds/336425/ | shards raining down, high-passed 250 Hz, -3 dB from 0.1 s |
+| [349905](https://freesound.org/people/bevibeldesign/sounds/349905/) — Slow Motion Glass Shatter | bevibeldesign | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://freesound.org/people/bevibeldesign/sounds/349905/ | shimmer above 1.8 kHz, -11 dB from 50 ms |
 
 | Cue | Recipe | Role | Level (100 ms max / true peak before encoding) |
 |---|---|---|---|
 | saw_hum | 4.0 s seamless loop: 55 Hz drone with detuned harmonics, tanh drive, 300-1400 Hz whirr pulsed at ~7 Hz, faint 1.76 / 2.64 kHz shimmer; every partial completes whole cycles, the noise is filtered circularly | bed of the whole scene; the client rises it (pitch 0.6 -> 1.0, volume) while the shell grows | -16 LUFS / -9.3 dBTP, never limited (seam step 0.38 of the largest inner step) |
 | saw_grind | 0.55 s toothed noise 2-7 kHz (95 Hz tooth rate), four inharmonic metal partials, a short rock crunch below 600 Hz | one disc biting stone, rate-limited to one per 3 ticks per scene | -14 LUFS / -8.3 dBTP |
 | saw_finale | 3.0 s sub thump 94 -> 34 Hz, an air sweep peaking at 0.25 s, a long inharmonic metal chord from 392 Hz | the last great swing | -9 LUFS / -1.1 dBTP |
-| saw_shatter | 3.6 s crack, a dense cloud of 2-9 kHz glass grains thinning out over 2.6 s, low thump, shimmering tail | the shell breaking up | -10 LUFS / -2.4 dBTP |
+| saw_shatter | 3.6 s the four recordings above (crack, smash, falling shards, slowed shimmer) + a 90 -> 42 Hz tanh sub boom (-5 dB) + a faint E6 crystal ring (-24 dB) | the shell breaking up | -10 LUFS / -3.0 dBTP |
 
-`python3 tools/sfx/reinhard_saw_sphere.py --check` re-synthesizes and compares with the committed files (correlation
->= 0.95). Measured numbers only, **not a listening test**: the sandbox has no audio playback.
+`python3 tools/sfx/reinhard_saw_sphere.py --check` re-synthesizes / re-mixes and compares with the committed files
+(correlation >= 0.95; saw_shatter 0.98 against its own Vorbis encode). Measured numbers only, **not a listening test**: the sandbox has no audio playback.
 
 ## REINHARD OVERHAUL strike sounds (CC0 1.0, Freesound via Openverse)
 

@@ -10,7 +10,7 @@ class ReinhardReleaseTest {
    @Test void overhaulIsAFeatureRelease() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.44.0", version.group(1), "the Saw Sphere (item 19) is a feature release over 1.43.0");
+      assertEquals("1.45.0", version.group(1), "two-handed Reinhard strikes, the recorded shatter and the lattice sphere are a feature release over 1.44.0");
    }
    @Test void snapshotCapacityUpgradeRejectsOldNetworkPeers() throws Exception {
       String source = Files.readString(Path.of("../viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));

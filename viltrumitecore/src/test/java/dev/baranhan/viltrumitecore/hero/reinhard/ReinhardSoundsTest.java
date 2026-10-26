@@ -327,13 +327,19 @@ class ReinhardSoundsTest {
       int rate = (bytes[id + 12] & 0xFF) | (bytes[id + 13] & 0xFF) << 8 | (bytes[id + 14] & 0xFF) << 16 | (bytes[id + 15] & 0xFF) << 24;
       assertEquals(44100, rate);
    }
-   /** The Saw Sphere cues are original synthesis: one script writes them, both credit files name it, every language subtitles them. */
+   /** The Saw Sphere cues: one script writes them (synthesis, the shatter from pinned CC0 recordings), both credit files name it and the recordings, every language subtitles them. */
    @Test void sawSphereCuesAreOriginalCreditedAndSubtitled() throws Exception {
       String sources = text("tools/assets/reinhard_sources.md"), credits = text("CREDITS.md");
       String section = sources.substring(sources.indexOf("## Saw Sphere"));
       assertTrue(section.contains("tools/sfx/reinhard_saw_sphere.py") && section.contains("no recording and no download"));
       assertTrue(section.contains("not a listening test"), "No listening claim without playback");
       assertTrue(credits.contains("tools/sfx/reinhard_saw_sphere.py"));
+      String script = text("tools/sfx/reinhard_saw_sphere.py");
+      for (String id : new String[]{"221528", "244238", "336425", "349905"}) {
+         assertTrue(script.contains("\"" + id + "\""), "pinned in the script: " + id);
+         assertTrue(section.contains("sounds/" + id + "/") && credits.contains("sounds/" + id + "/"), "credited: " + id);
+      }
+      assertTrue(section.contains("CC0 1.0") && !section.substring(0, section.indexOf("| Cue |")).contains("CC-BY"), "CC0 recordings only");
       assertTrue(Files.isRegularFile(REPO.resolve("tools/sfx/reinhard_saw_sphere.py")));
       try (var langs = Files.list(Path.of("src/main/resources/assets/viltrumitecore/lang"))) {
          for (Path lang : langs.toList()) {
