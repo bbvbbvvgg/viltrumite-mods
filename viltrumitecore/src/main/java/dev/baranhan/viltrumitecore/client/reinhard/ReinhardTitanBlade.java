@@ -99,6 +99,16 @@ public final class ReinhardTitanBlade {
       return (float)(t * t * (3 - 2 * t));
    }
 
+   /**
+    * REINHARD OVERHAUL 3b item 5: the clip tick that poses the projection. It follows the hands up to
+    * the BLAST, where it lays its edge into the trench, and stays there while it fades: the hands'
+    * follow-through (the clip's inertia past the cut line) must not drive the 96-block blade into
+    * the ground.
+    */
+   static double poseTick(double ticks) {
+      return Math.min(ticks, ReinhardRules.WORLD_CUT_BLAST);
+   }
+
    static float grow(double ticks) {
       return (float)Math.max(0, Math.min(1, (ticks - VISIBLE_FROM) / 28.0));
    }
@@ -158,7 +168,7 @@ public final class ReinhardTitanBlade {
    public static void render(Vec3 origin,Vec3 direction,int[] surface,int sweep,double ticks,Vec3 eye) {
       if(ticks<VISIBLE_FROM||ticks>VISIBLE_TO||surface.length==0)return;
       String name=clip(sweep);
-      Matrix4f frame=gripFrame(name,ticks),impact=gripFrame(name,ReinhardRules.WORLD_CUT_BLAST);
+      Matrix4f frame=gripFrame(name,poseTick(ticks)),impact=gripFrame(name,ReinhardRules.WORLD_CUT_BLAST);
       if(frame==null||impact==null)return;
       var blade=AnimCache.model(ReinhardAssets.BLADE);if(blade==null)return;
       Placement placement=placement(origin,direction,surface[Math.min(surface.length-1,AIM_ALONG)]+1.0,ticks,frame,impact,

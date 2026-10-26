@@ -28,7 +28,8 @@ public final class WorldCutScene {
       new ResourceLocation("viltrumitecore","reinhard.world_cut_pulse"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_blade"),
       new ResourceLocation("viltrumitecore","reinhard.world_cut_impact"),
-      new ResourceLocation("viltrumitecore","reinhard.world_cut_strike_voice"));
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_strike_voice"),
+      new ResourceLocation("viltrumitecore","reinhard.world_cut_explosion"));
    private WorldCutScene() {}
    public static final class Active {
       public final WorldCutS2CPacket packet;
@@ -42,6 +43,14 @@ public final class WorldCutScene {
       /** Shoulder of this cast (same bit as the caster's synced action phase). */
       public final int sweep;
       public boolean blastReceived() { return blastReceived; }
+      /**
+       * True once per cast: on the BLAST tick or within CATCH_UP of it. Repeated packets of a cast share this
+       * scene, so they never replay the strike, the explosion or the jolt; a viewer who joins later skips them.
+       */
+      boolean admitImpact(double elapsed) {
+         if(impactPlayed || !impactDue(elapsed)) return false;
+         impactPlayed=true; return true;
+      }
       /** Admits the current pulse once, on time or within CATCH_UP; true when its voice should start now. */
       boolean admitPulse(long elapsed) {
          double accepted=acceptedUntil();
@@ -86,7 +95,7 @@ public final class WorldCutScene {
    public static boolean shakeCaster(boolean caster) { return true; }
    public static void clear() {
       for(Active a:SCENES.values()) { SoundDuck.INSTANCE.release(a.packet.castId());CutAtmosphere.release(a.packet.castId()); }
-      SCENES.clear(); refresh(); WorldCutFov.reset(); WorldCutAudio.clear();
+      SCENES.clear(); refresh(); WorldCutFov.reset(); WorldCutAudio.clear(); WorldCutJolt.clear();
    }
    public static void prune(long now) {
       SCENES.values().removeIf(a -> {
@@ -120,7 +129,8 @@ public final class WorldCutScene {
          }
          Vec3 nearest=nearest(scene,mc.player.position());
          if(inRange && !scene.bladePlayed && bladeDue(t)) { scene.bladePlayed=true; WorldCutAudio.blade(bladeRing(scene),now); }
-         if(inRange && !scene.impactPlayed && impactDue(t)) { scene.impactPlayed=true; WorldCutAudio.strike(scene.packet.castId(),distance,t,now); }
+         // Strike voice, explosion and camera jolt start together on the BLAST tick, once per cast.
+         if(inRange && scene.admitImpact(t) && WorldCutAudio.strike(scene.packet.castId(),nearest,distance,t,now)) WorldCutJolt.kick(nearest,now);
          // One admitted beat drives voice, hum swell, shake and dust; a beat joined too late drives none.
          boolean beat=scene.admitPulse((long)t);
          float pulse=WorldCutPulse.envelope(scene.pulsePhase(t));

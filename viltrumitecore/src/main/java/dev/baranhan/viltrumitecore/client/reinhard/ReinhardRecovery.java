@@ -11,16 +11,18 @@ import org.joml.Matrix4f;
 final class ReinhardRecovery {
    private static final Map<Object, Bones> BODY=new WeakHashMap<>(), ARMS=new WeakHashMap<>();
    private static final Map<Object, OffsetState[]> FP=new WeakHashMap<>();
-   private static final Map<Object, WeaponState> WEAPONS=new WeakHashMap<>();
    private static final Map<Object, Long> VISIBLE_UNTIL=new WeakHashMap<>();
    private static final Map<Object, Object> FP_WEAPON_KEYS=new WeakHashMap<>();
+   private static final Map<Object, ViewState> CUT_VIEW=new WeakHashMap<>();
    private ReinhardRecovery() {}
 
    static boolean visible(Object player,boolean active,long now) {
       if(active) VISIBLE_UNTIL.put(player,now+300_000_000L);
       return active || now<VISIBLE_UNTIL.getOrDefault(player,Long.MIN_VALUE);
    }
-   static Object firstPersonWeaponKey(Object player) { return FP_WEAPON_KEYS.computeIfAbsent(player,p->new Object()); }
+   /** The first-person view's own state key per player (its motion smoothing must not share the
+    * third-person body's, which the inventory paper doll also advances). */
+   static Object firstPersonKey(Object player) { return FP_WEAPON_KEYS.computeIfAbsent(player,p->new Object()); }
    static float remaining(long since,long now) {
       double seconds=Math.max(0,(now-since)/1E9);
       return seconds>=.30 ? 0 : (float)Math.exp(-24*seconds);
@@ -56,16 +58,20 @@ final class ReinhardRecovery {
          target.yaw()+(from.yaw()-target.yaw())*w,target.roll()+(from.roll()-target.roll())*w);
       return state.last;
    }
-   static Matrix4f[] weapons(Object player,int key,Matrix4f sheath,Matrix4f blade,long now) {
-      WeaponState state=WEAPONS.computeIfAbsent(player,p->new WeaponState(key,sheath,blade));
+   /** First-person rig motion of a World Cut (ReinhardFirstPersonPose.cutView, null = none):
+    * an interrupted cut eases back to the guard like the shoulder offsets, it never snaps. */
+   static Matrix4f cutView(Object player,int key,@javax.annotation.Nullable Matrix4f target,long now) {
+      Matrix4f to=target!=null?target:new Matrix4f();
+      ViewState state=CUT_VIEW.computeIfAbsent(player,p->new ViewState(key));
       if(state.key!=key) {state.key=key;state.since=key<0?now:Long.MIN_VALUE/2;state.from=state.last;}
       float w=remaining(state.since,now);
-      state.last=new Matrix4f[]{ReinhardSword.interpolate(sheath,state.from[0],w),ReinhardSword.interpolate(blade,state.from[1],w)};
-      return state.last;
+      state.last=w>0?ReinhardSword.interpolate(to,state.from,w):new Matrix4f(to);
+      return new Matrix4f(state.last);
    }
    static void reset(Object player) {
-      BODY.remove(player);ARMS.remove(player);FP.remove(player);WEAPONS.remove(player);VISIBLE_UNTIL.remove(player);
-      Object fp=FP_WEAPON_KEYS.remove(player);if(fp!=null) WEAPONS.remove(fp);
+      CUT_VIEW.remove(player);
+      BODY.remove(player);ARMS.remove(player);FP.remove(player);VISIBLE_UNTIL.remove(player);
+      Object fp=FP_WEAPON_KEYS.remove(player);if(fp!=null) ReinhardMotion.reset(fp);
    }
    private static class Bones {
       int key;long since=Long.MIN_VALUE/2;Map<String,float[]> last=Map.of(),from=Map.of();
@@ -76,8 +82,8 @@ final class ReinhardRecovery {
       ReinhardFirstPersonPose.Offset from=ReinhardFirstPersonPose.Offset.NONE,last=from;
       OffsetState(int key){this.key=key;}
    }
-   private static class WeaponState {
-      int key;long since=Long.MIN_VALUE/2;Matrix4f[] from,last;
-      WeaponState(int key,Matrix4f sheath,Matrix4f blade){this.key=key;last=new Matrix4f[]{new Matrix4f(sheath),new Matrix4f(blade)};from=last;}
+   private static class ViewState {
+      int key;long since=Long.MIN_VALUE/2;Matrix4f from=new Matrix4f(),last=new Matrix4f();
+      ViewState(int key){this.key=key;}
    }
 }

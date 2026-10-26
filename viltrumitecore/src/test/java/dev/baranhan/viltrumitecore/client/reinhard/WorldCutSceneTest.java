@@ -31,10 +31,11 @@ class WorldCutSceneTest {
    }
    @Test void clipAndBothHands() {
       assertEquals(List.of("world_cut","world_cut_from_left"),ReinhardClips.names(ReinhardAbility.WORLD_CUT)); // item 13: both shoulders
-      assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(10,false));
-      assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(10,true));
-      assertNotEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(60,false));
-      assertEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.worldCut(100,false));
+      // 3b item 5: first person moves the whole two-handed rig (cutView); no per-arm offset.
+      assertEquals(ReinhardFirstPersonPose.Offset.NONE,ReinhardFirstPersonPose.of(ReinhardAbility.WORLD_CUT,0,10));
+      assertNotNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.WORLD_CUT,0,10));
+      assertNotNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.WORLD_CUT,0,60));
+      assertNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.WORLD_CUT,0,100));
    }
    @Test void reorderedStartCannotUndoBlast() {
       UUID cast=UUID.randomUUID(), caster=UUID.randomUUID(); WorldCutShape shape=new WorldCutShape(Vec3.ZERO,new Vec3(0,0,1),1);

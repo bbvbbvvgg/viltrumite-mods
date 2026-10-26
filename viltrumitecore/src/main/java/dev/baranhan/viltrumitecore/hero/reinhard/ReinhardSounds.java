@@ -83,6 +83,12 @@ public final class ReinhardSounds {
     * sound before a public release and keep the BLAST timing (tools/assets/reinhard_sources.md).
     */
    public static final RegistryObject<SoundEvent> WORLD_CUT_STRIKE_VOICE = reg("reinhard.world_cut_strike_voice");
+   /**
+    * The heavy explosion under the strike voice on the BLAST of the normal World Cut: low boom, roar and a
+    * rolling decay, original synthesis (tools/sfx/reinhard_explosion.py, CC0). Mono, positioned at the nearest
+    * point of the cut and started by the same {@code WorldCutAudio.strike} call as the voice.
+    */
+   public static final RegistryObject<SoundEvent> WORLD_CUT_EXPLOSION = reg("reinhard.world_cut_explosion");
 
    public static final RegistryObject<SoundEvent> ERASE_CRACK = reg("reinhard.erase_crack");
    public static final RegistryObject<SoundEvent> ERASE_INHALE = reg("reinhard.erase_inhale");

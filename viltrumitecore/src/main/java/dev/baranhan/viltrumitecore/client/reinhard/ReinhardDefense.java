@@ -49,6 +49,13 @@ final class ReinhardDefense {
    static boolean recordsContact(Object player,HeroPublicSnapshot snapshot,boolean left) {
       return DefenseReaction.kind(snapshot.heroFlags())!=DefenseReaction.Kind.NONE && contactLeft(player,snapshot,true)==left;
    }
+   /** Weight of the reaction that constrains THIS hand (0 = none, another hand or an evade),
+    * read from the state already advanced this frame: the reaction owns that hand meanwhile
+    * (ReinhardHands releases it from the hilt or the sheath instead of fighting over it). */
+   static float handWeight(Object player,boolean left,boolean fp) {
+      State s=(fp?FIRST:THIRD).get(player);
+      return s==null || s.left!=left || s.kind==DefenseReaction.Kind.NONE || s.kind==DefenseReaction.Kind.EVADE ? 0 : s.weight;
+   }
    static boolean visible(Object player,HeroPublicSnapshot snapshot,boolean left) {
       var state=sample(player,snapshot,true);
       return active(snapshot,left) || state.left==left && state.weight>.01F;

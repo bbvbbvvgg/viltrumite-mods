@@ -10,7 +10,7 @@ class ReinhardReleaseTest {
    @Test void overhaulIsAFeatureRelease() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.40.0", version.group(1), "REINHARD OVERHAUL is a feature release over 1.39.x");
+      assertEquals("1.42.0", version.group(1), "the combined Reid draw and playtest changes are a feature release over 1.41.0");
    }
    @Test void snapshotCapacityUpgradeRejectsOldNetworkPeers() throws Exception {
       String source = Files.readString(Path.of("../viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));

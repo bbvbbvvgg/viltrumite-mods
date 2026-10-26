@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.client.reinhard;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
@@ -13,6 +14,7 @@ import dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut;
 import dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
 /** Item 13: the normal World Cut comes down from either shoulder, chosen automatically, and every layer agrees. */
@@ -69,12 +71,12 @@ class WorldCutSweepTest {
       assertEquals(0, rightGrip.getAsJsonObject(contact).getAsJsonArray("vector").get(2).getAsDouble(), 1E-9, "square on the trench");
       assertEquals(0, rightGrip.getAsJsonObject("1.0").getAsJsonArray("vector").get(2).getAsDouble(), 1E-9, "raised upright first");
       assertEquals(-12, rightGrip.getAsJsonObject("1.5").getAsJsonArray("vector").get(2).getAsDouble(), 1E-9, "then settles over the right shoulder");
-      assertEquals(-12, rightGrip.getAsJsonObject("3.3").getAsJsonArray("vector").get(2).getAsDouble(), 1E-9, "and holds there");
+      assertEquals(-12, rightGrip.getAsJsonObject("3.2").getAsJsonArray("vector").get(2).getAsDouble(), 1E-9, "and holds there");
       // The chest turns and bends toward the raised shoulder (mirrored), the head stays level.
       JsonObject rightBody = right.getAsJsonObject("bones").getAsJsonObject("body").getAsJsonObject("rotation");
       JsonObject leftBody = left.getAsJsonObject("bones").getAsJsonObject("body").getAsJsonObject("rotation");
-      var hold = rightBody.getAsJsonObject("3.3").getAsJsonArray("vector");
-      var mirror = leftBody.getAsJsonObject("3.3").getAsJsonArray("vector");
+      var hold = rightBody.getAsJsonObject("3.2").getAsJsonArray("vector");
+      var mirror = leftBody.getAsJsonObject("3.2").getAsJsonArray("vector");
       assertEquals(12, hold.get(1).getAsDouble(), 1E-9);
       assertEquals(-6, hold.get(2).getAsDouble(), 1E-9);
       assertEquals(-hold.get(1).getAsDouble(), mirror.get(1).getAsDouble(), 1E-9);
@@ -83,25 +85,23 @@ class WorldCutSweepTest {
       assertTrue(bones.has("left_leg") && bones.has("right_leg") && bones.has("body") && bones.has("head"));
    }
 
+   /** 3b item 5: first person moves the whole two-handed rig (both arms and the blade) by one rigid
+    * view-space motion per shoulder; the old per-arm offsets are gone. */
    @Test
    void firstPersonFollowsTheSameShoulder() {
       double hold = ReinhardRules.WORLD_CUT_BLAST - 20, contact = ReinhardRules.WORLD_CUT_BLAST;
-      var plain = ReinhardFirstPersonPose.worldCut(hold, false);
-      var fromRight = ReinhardFirstPersonPose.worldCut(hold, false, WorldCutSweep.FROM_RIGHT);
-      var fromLeft = ReinhardFirstPersonPose.worldCut(hold, false, WorldCutSweep.FROM_LEFT);
-      assertTrue(fromRight.x() > plain.x() && fromLeft.x() < plain.x(), "the arm is raised toward the shoulder");
-      assertEquals(plain.yaw() - fromRight.yaw(), fromLeft.yaw() - plain.yaw(), 1E-4, "mirror images");
-      assertEquals(plain.roll() - fromRight.roll(), fromLeft.roll() - plain.roll(), 1E-4);
-      assertTrue(Math.abs(fromRight.roll() - plain.roll()) > 15, "readable lean");
+      Vector3f pivot = ReinhardFirstPersonPose.CUT_PIVOT;
+      Vector3f fromRight = guard(WorldCutSweep.FROM_RIGHT, hold), fromLeft = guard(WorldCutSweep.FROM_LEFT, hold);
+      assertTrue(fromRight.x > pivot.x - .3F && fromLeft.x < fromRight.x - .5F, "the rig is raised toward the shoulder: " + fromRight + " " + fromLeft);
+      assertEquals(0, guard(WorldCutSweep.FROM_RIGHT, contact).distance(guard(WorldCutSweep.FROM_LEFT, contact)), 1E-3, "one contact point");
       for (int sweep : new int[]{WorldCutSweep.FROM_RIGHT, WorldCutSweep.FROM_LEFT}) {
-         var hit = ReinhardFirstPersonPose.worldCut(contact, false, sweep);
-         var square = ReinhardFirstPersonPose.worldCut(contact, false);
-         assertEquals(square.yaw(), hit.yaw(), 1E-4, "square at the contact");
-         assertEquals(square.roll(), hit.roll(), 1E-4);
-         assertEquals(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.worldCut(0, false, sweep));
-         assertEquals(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.worldCut(ReinhardRules.WORLD_CUT_BLAST + 20, false, sweep));
+         assertNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.WORLD_CUT, sweep, 0));
+         assertNull(ReinhardFirstPersonPose.cutView(ReinhardAbility.WORLD_CUT, sweep, ReinhardRules.WORLD_CUT_BLAST + 20));
+         assertEquals(ReinhardFirstPersonPose.Offset.NONE, ReinhardFirstPersonPose.of(ReinhardAbility.WORLD_CUT, sweep, hold), "no per-arm offset");
       }
-      assertEquals(ReinhardFirstPersonPose.worldCut(hold, false, WorldCutSweep.FROM_LEFT),
-         ReinhardFirstPersonPose.of(ReinhardAbility.WORLD_CUT, WorldCutSweep.FROM_LEFT, hold), "of() reads the phase");
+   }
+
+   private static Vector3f guard(int sweep, double ticks) {
+      return ReinhardFirstPersonPose.cutView(ReinhardAbility.WORLD_CUT, sweep, ticks).transformPosition(new Vector3f(ReinhardFirstPersonPose.CUT_PIVOT));
    }
 }
