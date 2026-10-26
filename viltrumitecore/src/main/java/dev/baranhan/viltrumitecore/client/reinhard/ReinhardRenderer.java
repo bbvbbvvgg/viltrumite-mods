@@ -382,7 +382,7 @@ public final class ReinhardRenderer {
       boolean cut = cinematic == ReinhardAbility.WORLD_CUT || cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT;
       ReinhardFirstPersonPose.Offset action = cut || physicalLeft && ReinhardHands.twoHanded(cinematic)
          ? ReinhardFirstPersonPose.Offset.NONE
-         : cinematic == ReinhardAbility.CUT_RAIN ? ReinhardFirstPersonPose.rain(cinematicTicks,physicalLeft)
+         : cinematic == ReinhardAbility.SAW_SPHERE ? ReinhardFirstPersonPose.sawSphere(cinematicTicks,physicalLeft)
          : cinematic == ReinhardAbility.WORLD_ERASURE
             ? ReinhardFirstPersonPose.worldErasure(cinematicTicks, physicalLeft)
             : actionArm ? firstPersonAction(player, snapshot) : ReinhardFirstPersonPose.Offset.NONE;
@@ -665,6 +665,9 @@ public final class ReinhardRenderer {
     */
    static void setupRotations(AbstractClientPlayer player, PoseStack stack, float partialTick, float swim) {
       float bodyYaw = Mth.rotLerp(partialTick, player.yBodyRotO, player.yBodyRot);
+      // Saw Sphere: only the model spins (anchor yaw + the scene's spin); camera and server yaw stay free.
+      float spin = dev.baranhan.viltrumitecore.client.reinhard.saw.SawSphereClient.modelYaw(player, partialTick);
+      if (!Float.isNaN(spin)) bodyYaw = spin;
       if (player.hasPose(net.minecraft.world.entity.Pose.SLEEPING)) {
          Direction bed = player.getBedOrientation();
          if (bed != null) {
@@ -713,6 +716,11 @@ public final class ReinhardRenderer {
 
       float yaw = Mth.wrapDegrees(Mth.rotLerp(partialTick, player.yHeadRotO, player.yHeadRot) - Mth.rotLerp(partialTick, player.yBodyRotO, player.yBodyRot));
       float pitch = Mth.lerp(partialTick, player.xRotO, player.getXRot());
+      // Spinning in the Saw Sphere the head turns with the body; the look stays the player's camera.
+      if (!Float.isNaN(dev.baranhan.viltrumitecore.client.reinhard.saw.SawSphereClient.modelYaw(player, partialTick))) {
+         yaw = 0.0F;
+         pitch *= 0.35F;
+      }
       head.rotY += (float) Math.toRadians(-yaw);
       head.rotX += (float) Math.toRadians(-pitch);
    }
@@ -764,7 +772,7 @@ public final class ReinhardRenderer {
          if (elbow!=null) elbow.rotX=(float)Math.toRadians(7);
       }
       // Stance elbows first (Reid's draw / sheathe / drawn idle), then the action's own forearm
-      // channels over them: a clip that leaves an elbow alone (the World Cuts, Cut Rain, a chop by
+      // channels over them: a clip that leaves an elbow alone (the World Cuts, a chop by
       // the other hand) keeps the stance elbow instead of snapping to the bare default. Drawn
       // strokes keep the drawn-idle elbow entirely: their first-person rows are fitted on it.
       float frame = Minecraft.getInstance().getFrameTime();

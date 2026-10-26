@@ -338,9 +338,6 @@ CLIPS['diagonal_world_cut'] = action(100,
     **cut_legs(([-10,0,5],[-8,0,5],[-18,0,5],[-20,0,5]),([-5,4,-5],[-6,5,-5],[12,-4,-5],[14,-5,-5]),
                ([6,0,0],[5,0,0],[20,0,0],[24,0,0]),([6,0,0],[6,0,0],[14,0,0],[16,0,0])))
 pos(CLIPS['diagonal_world_cut'],'body',CUT_BODY_DROP)
-CLIPS['cut_rain'] = action(46,
-    body=[(0,[0,0,0]),(4,[-4,0,0])]+[(7+i*3,[4,(-1)**i*7,0]) for i in range(12)]+[(46,[0,0,0])],
-    head=[(0,[0,0,0]),(7,[-3,0,0]),(40,[-3,0,0]),(46,[0,0,0])])
 CLIPS['world_erasure'] = action(150,
     right_arm=[(0,[-26,-10,6]),(15,[-115,-12,8]),(30,[-115,-12,8],'easeInCubic'),(40,[-45,-52,-8],'easeOutCubic'),(150,[-45,-52,-8])],
     right_forearm=[(0,[-18,0,0]),(15,[-38,0,0]),(30,[-38,0,0]),(40,[-8,0,0]),(150,[-8,0,0])],
@@ -444,14 +441,6 @@ weapon(CLIPS['light_punch'],[(0,*READY),(2,[1,20,-6],[275,0,0]),
 # Preserve the ability's existing timelines, hit events and world effects.
 weapon(CLIPS['sheath_strike'],[(0,*HIP),(3,[0,18,-6],[270,0,0]),(4,[4,18,-7],[270,0,0]),
     (7,[5,18,-8],[270,0,0]),(12,*HIP)])
-RAIN_WEAPON=[(0,*READY),(4,[0,20,-6.5],[320,0,0])]
-for i in range(12):
-    t=7+i*3
-    sign=(-1)**i
-    RAIN_WEAPON.extend([(t-1.5,[0,20,-6.5],[320,0,sign*10]),
-                        (t,[1,20,-6.5],[260,0,-sign*10])])
-RAIN_WEAPON.append((46,*READY))
-weapon(CLIPS['cut_rain'],RAIN_WEAPON)
 
 # Lethal Chop. The right-hand chop carries Reid down with the hand that holds it. The
 # left-hand chop is the free support hand: it lets go of the pommel (ReinhardHands /
@@ -608,6 +597,68 @@ for name,m in REID_STRIKES.items():
     if 'body_pos' in m: pos(CLIPS[name],'body',m['body_pos'])
     weapon(CLIPS[name],m['grip'])
 
+# Saw Sphere (item 19, SawChoreography): 260 ticks, airborne the whole time while the server holds him
+# on the hover curve and the renderer spins the body yaw. ONE-handed (the clip owns the left arm, so the
+# support palm lets go: ReinhardHands): the left arm is held out for balance and the right hand flings a
+# saw on every swing, alternating forehand (right -> left, the reid_slash_sweep path) and backhand (the
+# same chest-high path back, left -> right: the arc is proven clear of head and body by the sweep) every
+# SAW_PERIOD ticks from SAW_LAUNCH to SAW_LAST; then the big final forehand at SAW_FINAL and the descent.
+SAW_LENGTH, SAW_RISE, SAW_LAUNCH, SAW_PERIOD, SAW_LAST, SAW_FINAL, SAW_DESCEND = 260, 24, 44, 4, 224, 232, 246
+# reid_slash_sweep key times 3 .. 8.2 and their palm rows, body / head twist and forearm (interpolated).
+_SWEEP_T = [3, 4.2, 5.2, 6.2, 7.2, 8.2]
+_SWEEP_PALM = [([9.2,21.2,-4.6],[404,0,-90]),([8.4,21,-6.6],[372,0,-90]),([7,20.8,-8],[330,0,-90]),
+               ([4.8,20.8,-8.4],[276,0,-90]),([2.8,20.8,-7.9],[226,0,-90]),([1.8,20.8,-6.8],[194,0,-90])]
+_SWEEP_BODY = [[0,28,0],[0,20,0],[2,8,0],[3,-6,0],[3,-20,0],[3,-28,0]]
+_SWEEP_HEAD = [[0,-20,0],[0,-14,0],[0,-6,0],[0,4,0],[0,14,0],[0,16,0]]
+_SWEEP_FORE = [-50,-36,-22,-8,-12,-16]
+SAW_LEGS = dict(right_leg=[-25,0,4], left_leg=[12,0,-4], right_shin=[38,0,0], left_shin=[20,0,0])
+def _saw_sweep(start, length, backhand):
+    """(t, index) of the sweep keys over [start, start+length]; a backhand runs them in reverse."""
+    span = _SWEEP_T[-1] - _SWEEP_T[0]
+    order = range(len(_SWEEP_T) - 1, -1, -1) if backhand else range(len(_SWEEP_T))
+    return [(round(start + (abs(_SWEEP_T[i] - (_SWEEP_T[-1] if backhand else _SWEEP_T[0])) / span) * length, 3), i)
+            for i in order]
+def _saw_clip():
+    grip, body, head, fore = [(0, READY)], [(0,[0,0,0])], [(0,[0,0,0])], [(0,[-18,0,0])]
+    # the rise: the blade drawn back to the loaded forehand pose (sweep start), chest turned right
+    for t in (SAW_RISE, SAW_LAUNCH - SAW_PERIOD / 2):
+        grip.append((t, list(_SWEEP_PALM[0][0]), list(_SWEEP_PALM[0][1])))
+        body.append((t, [-4, 24, 0])); head.append((t, [-6, -18, 0])); fore.append((t, [-46, 0, 0]))
+    swing = 0
+    for contact in range(SAW_LAUNCH, SAW_LAST + 1, SAW_PERIOD):
+        start = contact - SAW_PERIOD / 2
+        for t, i in _saw_sweep(start, SAW_PERIOD, swing % 2 == 1)[1:]:
+            grip.append((t, *_SWEEP_PALM[i])); body.append((t, _SWEEP_BODY[i])); head.append((t, _SWEEP_HEAD[i]))
+            fore.append((t, [_SWEEP_FORE[i], 0, 0]))
+        swing += 1
+    # SAW_LAST was a backhand: the hand is back on the right; coil a little deeper and hold
+    assert swing % 2 == 0
+    coil = SAW_FINAL - 3
+    grip.append((coil, list(_SWEEP_PALM[0][0]), list(_SWEEP_PALM[0][1])))
+    body.append((coil, [-6, 30, 0])); head.append((coil, [-8, -20, 0])); fore.append((coil, [-52, 0, 0]))
+    final = _saw_sweep(SAW_FINAL - 1.5, 4, False)[1:]
+    for t, i in final:
+        grip.append((t, *_SWEEP_PALM[i])); body.append((t, [b + (4 if k == 0 else 0) for k, b in enumerate(_SWEEP_BODY[i])]))
+        head.append((t, _SWEEP_HEAD[i])); fore.append((t, [_SWEEP_FORE[i], 0, 0]))
+    carry = ([2,20.6,-6.2],[186,0,-84])
+    grip.append((SAW_FINAL + 6, *carry)); grip.append((SAW_DESCEND, *carry))
+    body.append((SAW_FINAL + 6, [4, -30, 0])); body.append((SAW_DESCEND, [2, -24, 0]))
+    head.append((SAW_FINAL + 6, [0, 20, 0])); head.append((SAW_DESCEND, [0, 16, 0]))
+    fore.append((SAW_FINAL + 6, [-24, 0, 0])); fore.append((SAW_DESCEND, [-22, 0, 0]))
+    grip.append((SAW_LENGTH, READY)); body.append((SAW_LENGTH, [0,0,0])); head.append((SAW_LENGTH, [0,0,0]))
+    fore.append((SAW_LENGTH, [-18,0,0]))
+    bones = dict(body=body, head=head, right_forearm=fore,
+        left_arm=[(0,[0,0,-4]),(SAW_RISE,[-12,0,-68]),(SAW_LAUNCH,[-10,0,-74])]
+            + [(t,[-10,0,-74+(3 if (t//SAW_PERIOD)%2 else -3)]) for t in range(SAW_LAUNCH+SAW_PERIOD,SAW_LAST+1,SAW_PERIOD*4)]
+            + [(SAW_FINAL-3,[-16,0,-80]),(SAW_FINAL+6,[-6,0,-62]),(SAW_DESCEND,[-8,0,-50]),(SAW_LENGTH,[0,0,-4])],
+        left_forearm=[(0,[-8,0,0]),(SAW_RISE,[-14,0,0]),(SAW_FINAL+6,[-20,0,0]),(SAW_LENGTH,[-8,0,0])])
+    for leg, v in SAW_LEGS.items():
+        bones[leg] = [(0,[0,0,0]),(SAW_RISE,v),(SAW_DESCEND,v),(SAW_LENGTH - 4,[x * .4 for x in v]),(SAW_LENGTH,[0,0,0])]
+    clip = action(SAW_LENGTH, **bones)
+    weapon(clip, palm_rows(grip))
+    return clip
+CLIPS['saw_sphere'] = _saw_clip()
+
 # Sword Drawn state: the stance itself (body/legs, only while standing), its own gait
 # (combat walk: shorter steps, bent knees, steady two-hand guard; run: shoulder carry,
 # the blade trailing back above the legs), and the ground<->air transitions.
@@ -646,7 +697,7 @@ pos(CLIPS['land'],'body',[(0,[0,0,0]),(2,[0,-1,-.4]),(8,[0,0,0])])
 
 # Bounded C1 curves only for strikes: no per-segment ease restart at contacts.
 # Draw/sheath cinematics retain their protected paths and free-blade roll.
-for name in ['light_punch','light_punch_left','light_hook','combo_1','combo_2','combo_3','sheath_strike','cut_rain','chop_left','chop_right',*REID_STRIKES]:
+for name in ['light_punch','light_punch_left','light_hook','combo_1','combo_2','combo_3','sheath_strike','saw_sphere','chop_left','chop_right',*REID_STRIKES]:
     for bone in CLIPS[name]['bones'].values():
         for channel_data in bone.values():
             if isinstance(channel_data, dict):
