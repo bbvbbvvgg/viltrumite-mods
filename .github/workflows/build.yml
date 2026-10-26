@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,3 +32,37 @@ jobs:
           path: |
             viltrumiteflight/build/libs/*.jar
             viltrumitecore/build/libs/*.jar
+
+      - name: Publish v1.45.0-reinhard
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release-v1.45.0]')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > release-notes.md <<'EOF'
+          Рейнхард — большое обновление (REINHARD OVERHAUL, PR #47–#54).
+
+          Что вошло:
+          - выживание: криперы боятся Рейнхарда, иммунитет к отбрасыванию, сытость, безлимитные воздушные шаги, исправлен случайный креатив-полёт;
+          - бой: обычные атаки кулаками и мечом, режим «меч извлечён» со своей стойкой, ходьбой и бегом, клинок Рейда длиннее, звуки ударов;
+          - World Cut: тяжёлые разрезы мира с замахом и доводкой, колоссальная диагональная рана, взрыв и тряска камеры, одно непрерывное Стирание мира;
+          - сцена извлечения Dragon Sword Reid и правки по плейтесту;
+          - новые иконки всех способностей в стиле значка Земли;
+          - Сфера пил вместо Дождя разрезов: купол-барьер из пил, который режет всё внутри, настоящая коллизия, лут не теряется;
+          - Рейнхард теперь всегда держит меч и бьёт ДВУМЯ руками — от 1-го и от 3-го лица (все удары Рейда, бег с мечом, Сфера пил);
+          - новый звук разрушения барьера Сферы (настоящее стекло: треск, удар, осыпающиеся осколки, медленный хвост);
+          - сфера красивее: светящийся край, шестиугольная решётка с бегущими импульсами, светящиеся швы, вращающиеся треугольные осколки при разрушении.
+
+          Установка: положить оба JAR в `mods/` вместе (старые удалить). Forge 1.20.1. Сетевой протокол 7: клиент и сервер должны быть одной версии.
+
+          Сборка соответствует main после merge PR #54: 1f34ada8c9b3fdb8aab3582d25d4be460212e4df.
+
+          EOF
+
+          gh release create v1.45.0-reinhard \
+            viltrumitecore/build/libs/reforgedcodex-core-1.45.0.jar \
+            viltrumiteflight/build/libs/reforgedcodex-flight-1.10.1.jar \
+            --repo "$GITHUB_REPOSITORY" \
+            --target 1f34ada8c9b3fdb8aab3582d25d4be460212e4df \
+            --title "Reinhard — reforgedcodex-core 1.45.0 + reforgedcodex-flight 1.10.1" \
+            --latest \
+            --notes-file release-notes.md
