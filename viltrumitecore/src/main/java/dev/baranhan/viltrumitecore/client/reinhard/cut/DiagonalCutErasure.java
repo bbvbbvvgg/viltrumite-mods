@@ -4,11 +4,9 @@ import dev.baranhan.viltrumitecore.client.render.erasure.ErasurePath;
 import dev.baranhan.viltrumitecore.client.render.erasure.ErasureRenderer;
 import dev.baranhan.viltrumitecore.client.render.erasure.ErasureStroke;
 import dev.baranhan.viltrumitecore.client.render.erasure.ErasureStyle;
-import dev.baranhan.viltrumitecore.client.render.erasure.ErasureTestSwipe;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules;
 import dev.baranhan.viltrumitecore.hero.reinhard.cut.DiagonalCutGeometry;
 import dev.baranhan.viltrumitecore.network.packet.DiagonalCutS2CPacket;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,27 +20,41 @@ import net.minecraft.world.phys.Vec3;
  * REINHARD OVERHAUL item 10: the wound of the diagonal World Cut is the existing The Hand erasure of
  * {@code /erasuretest} (the friend's shader, PR #43), in place of the narrow aperture rift.
  *
- * <p>The stroke is the original sandbox swipe of {@link ErasureTestSwipe} at {@link #SCALE}: the same path, tube,
- * glass, shell and aura in the original proportions, so its volume and depth are the original ones, only large
- * enough to span the cut. Its chord is laid on the cut's span (it is cut from the upper right to the lower left, the
- * way the blade comes down) and its bow on the cut's forward axis, so it lies in the diagonal plane of
- * {@link DiagonalCutGeometry}, 30 to 36 blocks ahead of the caster. It starts on the BLAST of the shared server clock
- * (the impact, not the swing), is cut in {@link #REVEAL} seconds, stays open {@link #HOLD} seconds with slow pulses
- * and a soft cyan-green shimmer of its colours, then zips shut from the tail over {@link #CLOSE} seconds: gone ten
- * seconds after the impact.
+ * <p>Playtest item 4 (3b): the wound spans the cut's whole diagonal sweep. PR #49 laid the /erasuretest swipe at
+ * scale 16.5 on the cut, 30 to 36 blocks ahead: scaling the swipe about the eyes keeps its angular size, so it
+ * covered a third of the diagonal the blade cuts (42 blocks of a 56-block-wide cut, a short horn from most angles).
+ * Now it is one arc in the cut plane ({@link #path}): its tips at {@link #REACH} of the cut's local half width on
+ * either side (from the upper right, where the blade starts, to the lower left), {@link #TIP_ALONG} blocks ahead where
+ * the cut has its full width, its middle bowed {@link #BOW} blocks further along the cut like the sweep of a blade.
+ * The transverse sweep is what grew (tip to tip about 50 blocks); the forward reach stays in the first fifth of the
+ * cut. From the caster's eyes the plane is seen edge on, so the wound crosses the whole screen diagonally; from any
+ * other point it is a crescent about 75 blocks long and {@link #SCALE} makes it about 8.8 blocks thick. The tail opens
+ * and the body grows over a short share of the arc ({@link #PROFILE}), so nearly all of it is at full width; the head
+ * keeps the original round cap.
+ *
+ * <p>It starts on the BLAST of the shared server clock (the impact, not the swing), is cut in {@link #REVEAL}
+ * seconds, stays open {@link #HOLD} seconds with slow pulses and a soft cyan-green shimmer of its colours, then zips
+ * shut from the tail over {@link #CLOSE} seconds: gone ten seconds after the impact.
  *
  * <p>Client only and cosmetic: no packet, damage, hitbox or audio change (the diagonal cut keeps its own sounds).
  * A wound is kept from any packet of its cast (late trackers included) independently of the scene's own pruning,
  * dropped once shut, on a level change, on unload or disconnect; at most {@link #MAX}. The renderer culls it by
- * distance and frustum like every stroke.
+ * distance and frustum like every stroke; it is one stroke, one draw per pass.
  */
 public final class DiagonalCutErasure implements ErasureRenderer.Provider {
    public static final DiagonalCutErasure INSTANCE = new DiagonalCutErasure();
-   /**
-    * The /erasuretest swipe at this scale spans the cut: about 42 blocks end to end (its chord ends 20.9 blocks
-    * either side of the axis, inside the narrowest width the cut can have, 28 * 0.76), a tube about 5.6 blocks thick.
-    */
-   static final float SCALE = 16.5F;
+   /** About 8.8 blocks thick: the original proportions (about 8.5 widths long) for a 75-block arc. */
+   static final float SCALE = 26F;
+   /** Tips of the arc this far along the cut: past the cut's opening taper (full width from 16 blocks on). */
+   static final double TIP_ALONG = 18;
+   /** The middle of the arc leads its tips by this much along the cut. */
+   static final double BOW = 22;
+   /** Tips at this share of the cut's local half width: inside the cut, nearly edge to edge. */
+   static final double REACH = 0.93;
+   /** Control points of the arc, smoothed by Catmull-Rom. */
+   static final int ARC_POINTS = 24;
+   /** Width along the arc: the tail opens over 17 %, the body grows from 70 % to full by 65 %; the original ripple. */
+   static final ErasureStroke.Profile PROFILE = new ErasureStroke.Profile(0.17F, 0.7F, 0.08F, 0.65F, 0.04F, 7.5F);
    /** Seconds the head takes from the upper right to the lower left. */
    static final float REVEAL = 0.25F;
    /** Seconds open after the impact, then seconds zipping shut. */
@@ -104,7 +116,7 @@ public final class DiagonalCutErasure implements ErasureRenderer.Provider {
    static @Nullable ErasureStroke stroke(Wound wound, float since) {
       if (!(since >= 0) || since > HOLD + CLOSE) return null;
       float length = wound.path().length();
-      return new ErasureStroke(wound.path(), 0F, length, SCALE, wound.seed(), style(since, wound.seed()), false)
+      return new ErasureStroke(wound.path(), 0F, length, SCALE, wound.seed(), style(since, wound.seed()), false, PROFILE)
          .updateHeld(since, length * reveal(since), REVEAL, HOLD, CLOSE, swell(since, wound.seed()));
    }
 
@@ -130,24 +142,19 @@ public final class DiagonalCutErasure implements ErasureRenderer.Provider {
       return ErasureStyle.shimmer(lift * in, shift * in);
    }
 
-   /** The original swipe, its chord rotated onto the cut's span and its bow along the cut, in the cut plane. */
+   /**
+    * The arc in the cut plane, from the upper right (+span, where the blade starts) to the lower left: at angle
+    * theta from 0 to pi it is {@link #TIP_ALONG} + {@link #BOW} sin(theta) along the cut and {@link #REACH} of the
+    * local half width times cos(theta) across it, so every point stays inside the cut whatever its wiggle.
+    */
    static Vec3[] path(DiagonalCutGeometry shape) {
-      Vec3[] swipe = ErasureTestSwipe.originalSwipe();
-      Vec3 first = swipe[0], last = swipe[swipe.length - 1];
-      double angle = Math.atan2(first.y - last.y, first.x - last.x), cos = Math.cos(angle), sin = Math.sin(angle);
-      double middle = 0, chord = 0;
-      for (Vec3 p : new Vec3[]{first, last}) {
-         middle += 0.5 * (p.x * cos + p.y * sin);
-         chord += 0.5 * (-p.x * sin + p.y * cos);
+      Vec3[] points = new Vec3[ARC_POINTS + 1];
+      for (int i = 0; i <= ARC_POINTS; i++) {
+         double theta = Math.PI * i / ARC_POINTS;
+         double along = TIP_ALONG + BOW * Math.sin(theta);
+         points[i] = shape.point(along, REACH * shape.width(along) * Math.cos(theta), 0);
       }
-      List<Vec3> points = new ArrayList<>(swipe.length);
-      for (Vec3 p : swipe) {
-         double along = p.x * cos + p.y * sin - middle, off = -p.x * sin + p.y * cos - chord;
-         // View right -> the span (upper right); view up -> the plane normal's opposite (upper left); view forward
-         // -> the cut's forward axis. The original sits about two blocks ahead of the eyes: here 30 to 36 of the cut.
-         points.add(shape.point(p.z * SCALE, along * SCALE, -off * SCALE));
-      }
-      return points.toArray(Vec3[]::new);
+      return points;
    }
 
    /** Middle of the stroke along the cut, blocks: the cut's wave sets off from here. */
