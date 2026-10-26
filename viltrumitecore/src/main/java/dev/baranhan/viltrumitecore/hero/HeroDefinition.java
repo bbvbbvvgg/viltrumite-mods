@@ -382,6 +382,50 @@ public interface HeroDefinition {
       return false;
    }
 
+   /**
+    * Server, type filter: mobs of this type may flee this hero the way a creeper
+    * flees a cat ({@link HeroMobFear} gives them a vanilla AvoidEntityGoal when they
+    * join a level). Asked once per mob, so it must be a pure type check.
+    */
+   default boolean scaresMobType(net.minecraft.world.entity.EntityType<?> type) {
+      return false;
+   }
+
+   /** Server: does this mob flee this player right now (it avoids him and never targets him). */
+   default boolean scaresMob(Player self, net.minecraft.world.entity.Mob mob) {
+      return false;
+   }
+
+   /**
+    * Both sides: full knockback immunity ({@link HeroKnockback}). Vanilla knockback,
+    * explosion pushes and the hurt velocity resync are skipped; hero pushes ask
+    * IMPULSE through {@link #allowsExternalControl}. The hero's own motion is untouched.
+    */
+   default boolean knockbackImmune(Player player) {
+      return false;
+   }
+
+   /**
+    * Server: long airborne stretches are legitimate movement (unlimited air steps),
+    * so the vanilla "flying is not enabled" kick never counts them.
+    */
+   default boolean sustainsAirborne(Player player) {
+      return false;
+   }
+
+   /**
+    * Both sides: air acceleration while airborne and not flying (vanilla 0.02, sprint
+    * 0.026); 0 keeps vanilla. The client predicts the movement, so it must agree.
+    */
+   default float airControl(Player player) {
+      return 0.0F;
+   }
+
+   /** Client: minimum ticks between two predicted air jumps (0 = any fresh press). */
+   default int airJumpInterval(Player player) {
+      return 0;
+   }
+
    /** May the hero start or continue this action right now. */
    boolean canAct(ServerPlayer player, HeroAction action);
 

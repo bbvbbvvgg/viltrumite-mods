@@ -23,6 +23,9 @@ public final class ReinhardRules {
    public static final float REGEN_PER_SECOND = 1.0F;
    public static final int REGEN_INTERVAL = 20;
    public static final double KNOCKBACK_RESISTANCE = 1.0;
+   /** Overhaul item 16: hunger and saturation are refilled while Reinhard is active. */
+   public static final int FOOD_FULL = 20;
+   public static final float SATURATION_FULL = 20.0F;
    /** Blocks under the world's bottom at which the air step lifts him out (vanilla void damage starts at 64). */
    public static final int VOID_RESCUE_DEPTH = 8;
    /** Radius of the search for ground when the column above the fall point is empty. */
@@ -121,10 +124,24 @@ public final class ReinhardRules {
    public static final int PARRY_POSE_TICKS = 8;
 
    // ---- Divine Protection of the Cloudy Sky (spec §4.4) ----
-   /** Air steps in a row before touching ground, water, lava or a ladder again. */
-   public static final int AIR_STEPS = 5;
+   /** Air steps in a row: unlimited (overhaul item 8); ground, water, lava or a ladder still reset the count. */
+   public static final int AIR_STEPS = Integer.MAX_VALUE;
    /** Vertical velocity of one air step (blocks/tick; ~2.5 blocks from a standstill). */
    public static final double AIR_STEP_VELOCITY = 0.62;
+   /** Client: minimum ticks between two air steps, so each one reads as a jump (no hover spam). */
+   public static final int AIR_STEP_INTERVAL = 4;
+   /** Speed one step adds along the input direction (blocks/tick); momentum builds over steps. */
+   public static final double AIR_STEP_ACCEL = 0.36;
+   /** Horizontal speed cap of the air steps (blocks/tick, ~22 blocks/s). */
+   public static final double AIR_STEP_MAX_SPEED = 1.1;
+   /** Share of the sideways momentum a step keeps: a turn bends over two steps instead of snapping. */
+   public static final double AIR_STEP_LATERAL_KEEP = 0.4;
+   /** Share of the momentum against the input a step keeps: a reversal brakes first, then turns. */
+   public static final double AIR_STEP_REVERSE_KEEP = 0.3;
+   /** Share of the momentum a step without input keeps (inertia, no stop in the air). */
+   public static final double AIR_STEP_COAST_KEEP = 0.85;
+   /** Air acceleration between steps (vanilla 0.02, sprint 0.026): smooth steering in the air. */
+   public static final float AIR_CONTROL = 0.034F;
    /** Super jump launch velocity (~22 blocks, HeroSuperJump.apex). */
    public static final float SUPER_JUMP_VELOCITY = 2.2F;
 

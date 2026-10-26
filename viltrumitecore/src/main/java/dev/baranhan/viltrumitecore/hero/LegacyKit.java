@@ -27,6 +27,17 @@ public final class LegacyKit {
    private LegacyKit() {
    }
 
+   /**
+    * The kit grants vanilla {@code mayfly} on the server only; the client takes it from the
+    * abilities packet. A client-side grant raced the hero sync: a fresh LocalPlayer (login,
+    * respawn, dimension change) starts with the default hero id (the kit hero), so its first
+    * ticks set a local mayfly that nothing ever cleared once the real hero (Reinhard) arrived
+    * — survival double-tap flight "at random". Pure.
+    */
+   public static boolean forcesMayfly(boolean serverSide, boolean kitUser, boolean mayflyNow) {
+      return serverSide && kitUser && !mayflyNow;
+   }
+
    /** May this player start the given kit ability right now (both sides). */
    public static boolean allows(Player player, String abilityId) {
       return player != null && HeroRegistry.get(player).allowsLegacyAbility(player, abilityId);

@@ -25,6 +25,8 @@ public final class AirJumpClient {
    private static int used;
    private static boolean jumpWasDown;
    private static boolean groundAtStart;
+   /** Client tick of the last predicted step (HeroDefinition.airJumpInterval). */
+   private static int lastStepTick = Integer.MIN_VALUE / 2;
 
    private AirJumpClient() {
    }
@@ -59,6 +61,10 @@ public final class AirJumpClient {
          return;
       }
 
+      if (player.tickCount - lastStepTick < hero.airJumpInterval(player) && player.tickCount >= lastStepTick) {
+         return;
+      }
+
       boolean anchored = SuperJumpClient.anchored(player, player instanceof HeroPlayer heroPlayer ? heroPlayer.getHeroSnapshot() : null);
       boolean canAct = player.isAlive() && !player.isSpectator();
       if (!AirJumpRules.allow(used, max, reset, anchored, canAct)) {
@@ -69,6 +75,7 @@ public final class AirJumpClient {
       player.setDeltaMovement(hero.airJumpMotion(player,v));
       player.resetFallDistance();
       used++;
+      lastStepTick = player.tickCount;
       AirStepVfx.spawn(player);
       CoreMessages.sendToServer(new HeroInputC2SPacket(HeroAction.AIR_STEP, true));
    }

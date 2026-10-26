@@ -173,11 +173,10 @@ public abstract class PlayerStatsMixin implements ViltrumiteStatHolder {
    private void onTick(CallbackInfo ci) {
       Player player = (Player)(Object)this;
       if (((ViltrumiteCorePlayer)player).isViltrumite()) {
-         if (!player.getAbilities().mayfly) {
+         // Server only (LegacyKit.forcesMayfly): the client gets mayfly from the abilities packet.
+         if (dev.baranhan.viltrumitecore.hero.LegacyKit.forcesMayfly(player instanceof ServerPlayer, true, player.getAbilities().mayfly)) {
             player.getAbilities().mayfly = true;
-            if (player instanceof ServerPlayer serverPlayer) {
-               serverPlayer.onUpdateAbilities();
-            }
+            ((ServerPlayer)player).onUpdateAbilities();
          }
 
          if (!player.level().isClientSide() && player.getHealth() < player.getMaxHealth() && player.tickCount % 40 == 0

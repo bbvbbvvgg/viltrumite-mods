@@ -193,10 +193,52 @@ public final class ReinhardHero implements HeroDefinition {
       return ReinhardAbilities.icon(abilityId, snapshot == null ? 0 : snapshot.heroFlags(),player.isShiftKeyDown());
    }
 
-   /** The spec gives Reinhard no immunity to control; knockback is the attribute (chassis). */
+   /**
+    * Grabs, freezes and stasis still apply; IMPULSE (hero knocks, pushes, throws) does not:
+    * knockback immunity is total (overhaul item 17, {@link #knockbackImmune}).
+    */
    @Override
    public boolean allowsExternalControl(LivingEntity target, ControlKind kind) {
+      return kind != ControlKind.IMPULSE;
+   }
+
+   /** Overhaul item 17: 100 % knockback resistance from mobs, players, explosions and hero pushes (both sides). */
+   @Override
+   public boolean knockbackImmune(Player player) {
       return true;
+   }
+
+   /** Overhaul item 1: creepers flee Reinhard like a cat (vanilla AvoidEntityGoal, HeroMobFear). */
+   @Override
+   public boolean scaresMobType(net.minecraft.world.entity.EntityType<?> type) {
+      return type == net.minecraft.world.entity.EntityType.CREEPER;
+   }
+
+   @Override
+   public boolean scaresMob(Player self, net.minecraft.world.entity.Mob mob) {
+      return mob instanceof net.minecraft.world.entity.monster.Creeper;
+   }
+
+   /** Overhaul item 16: no hunger while Reinhard is active; {@link #tick} keeps the bar full. */
+   @Override
+   public boolean preventsExhaustion(Player player) {
+      return true;
+   }
+
+   /** Unlimited air steps are movement, not flight (vanilla floating kick). */
+   @Override
+   public boolean sustainsAirborne(Player player) {
+      return true;
+   }
+
+   @Override
+   public float airControl(Player player) {
+      return ReinhardRules.AIR_CONTROL;
+   }
+
+   @Override
+   public int airJumpInterval(Player player) {
+      return ReinhardRules.AIR_STEP_INTERVAL;
    }
 
    /** Spec §5: MMB cycles the mode (both sides; the client cancels pick-block). */
@@ -287,6 +329,11 @@ public final class ReinhardHero implements HeroDefinition {
       if (player.tickCount % ReinhardRules.WIND_SCAN_INTERVAL == 0) {
          WindReading.scan(player, state);
       }
+      keepFed(player.getFoodData());
+      if (player.tickCount % 20 == 0) {
+         AttributeInstance knockback = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+         if (knockback != null && knockback.getModifier(KNOCKBACK_MODIFIER_ID) == null) applyKnockbackResistance(knockback);
+      }
       if (player.isAlive() && ++state.regenTicks >= ReinhardRules.REGEN_INTERVAL) {
          state.regenTicks = 0;
          if (player.getHealth() < player.getMaxHealth()) {
@@ -356,6 +403,13 @@ public final class ReinhardHero implements HeroDefinition {
       Detox.cleanse(player);
    }
 
+   /** Overhaul item 16: server, every tick: full food bar and saturation, no exhaustion left over. */
+   static void keepFed(net.minecraft.world.food.FoodData food) {
+      if (food.getFoodLevel() < ReinhardRules.FOOD_FULL) food.setFoodLevel(ReinhardRules.FOOD_FULL);
+      if (food.getSaturationLevel() < ReinhardRules.SATURATION_FULL) food.setSaturation(ReinhardRules.SATURATION_FULL);
+      if (food.getExhaustionLevel() > 0.0F) food.setExhaustion(0.0F);
+   }
+
    /** Mana Absorption (spec §4.7): non-allied players nearby refill their own resource at half speed. */
    @Override
    public float foreignResourceRegenFactor(Player self, Player other) {
@@ -379,10 +433,10 @@ public final class ReinhardHero implements HeroDefinition {
       respawn(chassisBody(player));
    }
 
-   /** Cloudy Sky (spec §4.4): five air steps (both sides). */
+   /** Cloudy Sky (spec §4.4, overhaul item 8): unlimited air steps steered by the movement input (both sides). */
    @Override
    public net.minecraft.world.phys.Vec3 airJumpMotion(Player player, net.minecraft.world.phys.Vec3 current) {
-      return CloudStep.motion(current,player.getLookAngle(),player.getYRot(),airJumpVelocity(player),false);
+      return CloudStep.step(current,player.getYRot(),airJumpVelocity(player),player.xxa,player.zza);
    }
 
    @Override
