@@ -11,9 +11,11 @@ import java.lang.Math;
 import org.junit.jupiter.api.Test;
 
 class ReinhardEquipmentTest {
-   /** Ordinary drawn strokes and the sprint carry are one-handed (left palm on the scabbard). */
+   /** Ordinary drawn strokes, the sprint carry and the left-hand Lethal Chop are one-handed: the
+    * released support palm follows its own clip (3b item 2: never the empty scabbard). */
    static float oneHand(String clip,double ticks,double lengthTicks) {
       if(clip.startsWith("reid_slash"))return ReinhardSword.strikeRelease(ticks,(int)Math.round(lengthTicks));
+      if(clip.equals("chop_left"))return ReinhardSword.chopRelease(ticks/lengthTicks);
       return clip.equals("drawn_run")?1:0;
    }
    static BakedGeoModel weapon(String name)throws Exception {
@@ -67,7 +69,7 @@ class ReinhardEquipmentTest {
             float one=oneHand(name,t,clips.get(name).lengthSeconds()*20);
             var f=ReinhardSword.equipment(b,ReinhardPoses.ReidPhase.DRAWN,0,false,0,1,one);
             for(boolean left:new boolean[]{false,true}) {
-               if(left && one>0)continue; // the support palm is on the scabbard mouth, not the pommel
+               if(left && one>0)continue; // the released support palm follows its own clip, not the pommel
                var target=ReinhardSword.gripAt(f[1],left?-8.5F:0).transformPosition(new Vector3f(ReinhardGrip.HANDLE));
                if(ReinhardGrip.point(b,left).distance(target)*16>.05 && bad.size()<20)bad.add(name+" "+t+" left="+left+" residual="+ReinhardGrip.point(b,left).distance(target)*16);
             }

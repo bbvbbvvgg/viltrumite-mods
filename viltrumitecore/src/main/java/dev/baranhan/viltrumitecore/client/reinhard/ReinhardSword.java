@@ -112,11 +112,19 @@ public final class ReinhardSword {
       return new org.joml.Matrix4f(blade).rotateY(drawnRoll(phase,ticks));
    }
 
-   /** Ordinary drawn strokes are one-handed: the left palm leaves the pommel for the
-    * scabbard mouth during the first ticks and returns over the last ones. */
+   /** Ordinary drawn strokes are one-handed: the left palm leaves the pommel during the first
+    * ticks and returns over the last ones (REINHARD OVERHAUL 3b item 2: it is free meanwhile,
+    * never sent to the empty scabbard). */
    public static float strikeRelease(double ticks,int length) {
       if(!Double.isFinite(ticks) || length<=0) return 0;
       return smooth(ticks/2.5)*smooth((length-ticks)/3);
+   }
+
+   /** Lethal Chop by the support hand: it lets go of the hilt (or the sheath) for the chop and
+    * takes it again after the follow-through. {@code time01} is the chop's 0..1 clip time. */
+   public static float chopRelease(double time01) {
+      if(!Double.isFinite(time01) || time01<=0 || time01>=1) return 0;
+      return smooth(time01/.12)*smooth((1-time01)/.3);
    }
 
    static org.joml.Matrix4f[] equipment(BakedGeoModel body,ReinhardPoses.ReidPhase phase,
@@ -126,9 +134,9 @@ public final class ReinhardSword {
 
    /** TP choreography: one sampled grip bone, then both wrist constraints, then one
     * immutable pair of mesh frames. Never recompute the weapon from the solved arm.
-    * {@code oneHand} (0..1) releases the support hand from the pommel (strikeRelease). */
+    * {@code release} (0..1, {@link ReinhardHands}) frees the support hand for its own clip. */
    static org.joml.Matrix4f[] equipment(BakedGeoModel body,ReinhardPoses.ReidPhase phase,
-      double ticks,boolean strike,double actionTicks,float holyWeight,float oneHand) {
+      double ticks,boolean strike,double actionTicks,float holyWeight,float release) {
       org.joml.Matrix4f hip=hip(body), blade=new org.joml.Matrix4f(hip);
       if(phase!=ReinhardPoses.ReidPhase.SHEATHED || strike) {
          PoseStack anchor=new PoseStack();ReinhardRenderer.boneFrame(anchor,body.getBone("reid_grip"));
@@ -150,21 +158,24 @@ public final class ReinhardSword {
          leftBlade=1-smooth((drawTick-94)/6);
          gripWeight=leftBlade*smooth((drawTick-12)/12);
       }
-      // Left hand grips the actual hilt until hand-off, then supports the sheath
-      // mouth. It does not disappear because an unrelated action overlay is active.
+      // ONE owner of the left hand (ReinhardHands): the sheath while Reid is in it or passing
+      // through it (it grips the hilt until the hand-off, then the sheath mouth), the pommel
+      // while the drawn sword is held in two hands, else its own clip. The empty sheath of a
+      // drawn Reid never claims it: a released hand follows its clip and comes back.
+      ReinhardHands.Support hands=ReinhardHands.support(phase,ticks,holyWeight,release);
       if(strike) {
          right=smooth((actionTicks-2)/2)*smooth((12-actionTicks)/3);
          ReinhardGrip.solve(body,blade,1-right,true);
-      } else {
+      } else if(hands.sheath()>0) {
          org.joml.Matrix4f support=new org.joml.Matrix4f(hip).translate(0,3.3F/16,0);
          org.joml.Matrix4f leftTarget=interpolate(support,blade,leftBlade);
-         ReinhardGrip.support(body,leftTarget,holyWeight,gripWeight);
+         ReinhardGrip.support(body,leftTarget,hands.sheath(),gripWeight);
       }
       // The short native hilt has two distinct grips: main hand by the guard,
       // support hand by the pommel. Never stack two glove centres at HANDLE.
       float pairedGrip=strike?0:twoHandWeight(phase,ticks);
-      float twoHands=pairedGrip*(1-Math.max(0,Math.min(1,oneHand)));
-      if(twoHands>0)ReinhardGrip.paired(body,gripAt(blade,-8.5F),holyWeight*twoHands,true);
+      float twoHands=pairedGrip*(1-Math.max(0,Math.min(1,release)));
+      if(!strike && hands.hilt()>0)ReinhardGrip.paired(body,gripAt(blade,-8.5F),hands.hilt(),true);
       if(right>0) {
          // The main hand stays by the guard while the support hand lets go:
          // releasing the pommel must not slide the right glove along the hilt.
@@ -183,24 +194,40 @@ public final class ReinhardSword {
       drawFrame(ReinhardAssets.BLADE,stack,frames[1],buffers,light,overlay);
    }
 
-   /** Both meshes have a frame every render, so interruptions can recover without duplication. */
-   static void drawAttached(Object player, PoseStack stack, org.joml.Matrix4f hip, org.joml.Matrix4f hand,
-      ReinhardPoses.ReidPhase phase, double ticks, boolean strike, double actionTicks, int key,
-      MultiBufferSource buffers, int light, int overlay) {
-      drawAttached(player,stack,hip,hand,phase,ticks,strike,actionTicks,key,buffers,light,overlay,false);
+   /** First-person axial roll of the drawn blade: half of the third-person quarter turn, so the
+    * camera sees the broad face along its diagonal instead of a thin edge (CPU preview fit). */
+   static final float FIRST_PERSON_ROLL = .5F;
+   /** How far (blocks, down the view) the first-person sheath drops at full hand weight. */
+   static final float FIRST_PERSON_SHEATH_DROP = 1.5F;
+
+   /** REINHARD OVERHAUL 3b item 1: the first-person sheath exists only while it is in use (draw,
+    * sheathe, Sheath Strike). With Reid drawn it hangs empty at the hip, outside the camera view,
+    * so it is not drawn at all (the third-person sheath is unaffected). */
+   static boolean firstPersonSheathVisible(ReinhardPoses.ReidPhase phase, boolean strike) {
+      return strike || phase != ReinhardPoses.ReidPhase.DRAWN;
    }
 
-   static void drawAttached(Object player, PoseStack stack, org.joml.Matrix4f hip, org.joml.Matrix4f hand,
-      ReinhardPoses.ReidPhase phase, double ticks, boolean strike, double actionTicks, int key,
-      MultiBufferSource buffers, int light, int overlay, boolean physicalGrip) {
-      org.joml.Matrix4f[] target=frames(hip,hand,phase,ticks,strike,actionTicks);
-      if(physicalGrip && (phase==ReinhardPoses.ReidPhase.DRAWING || phase==ReinhardPoses.ReidPhase.SHEATHING))
+   /** While the blade travels the hand-relative first-person sheath sinks out of the view as the
+    * hand rises into the guard (and back as it comes down to sheathe), so it never pops. */
+   static float firstPersonSheathDrop(ReinhardPoses.ReidPhase phase, double ticks, boolean strike) {
+      if (strike || (phase != ReinhardPoses.ReidPhase.DRAWING && phase != ReinhardPoses.ReidPhase.SHEATHING)) return 0;
+      return FIRST_PERSON_SHEATH_DROP * handWeight(phase, ticks);
+   }
+
+   /** First person: the blade bound to the right palm through the draw, with the first-person
+    * roll; the sheath ({@code sheathShift} = its stack-space drop, null = hidden). Returns the
+    * blade frame before its roll: the support hand grips that handle. */
+   static org.joml.Matrix4f drawFirstPerson(PoseStack stack, org.joml.Matrix4f belt, org.joml.Matrix4f hand,
+      ReinhardPoses.ReidPhase phase, double ticks, boolean strike, double actionTicks,
+      @javax.annotation.Nullable org.joml.Matrix4f sheathShift, MultiBufferSource buffers, int light, int overlay) {
+      org.joml.Matrix4f[] target=frames(belt,hand,phase,ticks,strike,actionTicks);
+      if(phase==ReinhardPoses.ReidPhase.DRAWING || phase==ReinhardPoses.ReidPhase.SHEATHING)
          target[1]=bindGrip(target[1],hand);
-      if(!strike)target[1]=rollDrawnBlade(target[1],phase,ticks);
-      org.joml.Matrix4f[] frames = physicalGrip || (phase==ReinhardPoses.ReidPhase.SHEATHED && !strike) ? target
-         : ReinhardRecovery.weapons(player,key,target[0],target[1],net.minecraft.Util.getNanos());
-      drawFrame(ReinhardAssets.SHEATH, stack,frames[0],buffers,light,overlay);
-      drawFrame(ReinhardAssets.BLADE, stack,frames[1],buffers,light,overlay);
+      org.joml.Matrix4f blade=new org.joml.Matrix4f(target[1]);
+      if(!strike)target[1].rotateY(drawnRoll(phase,ticks)*FIRST_PERSON_ROLL);
+      if(sheathShift!=null)drawFrame(ReinhardAssets.SHEATH,stack,new org.joml.Matrix4f(sheathShift).mul(target[0]),buffers,light,overlay);
+      drawFrame(ReinhardAssets.BLADE,stack,target[1],buffers,light,overlay);
+      return blade;
    }
 
    static org.joml.Matrix4f[] frames(org.joml.Matrix4f hip,org.joml.Matrix4f hand,

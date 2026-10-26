@@ -59,6 +59,11 @@ final class ReinhardGrip {
       if(gripWeight>0)orientWrist(model,mount,weight*gripWeight,true);
    }
    static float solve(BakedGeoModel model,Matrix4f mount,float weight,boolean left) {return solve(model,mount,weight,left,true);}
+   /** Upper arm of the body rig, or of the first-person arms rig (armorLeftArm / armorRightArm). */
+   static GeoBone upper(BakedGeoModel model,boolean left) {
+      GeoBone bone=model.getBone(left?ReinhardAssets.LEFT_ARM:ReinhardAssets.RIGHT_ARM);
+      return bone!=null?bone:model.getBone(left?"armorLeftArm":"armorRightArm");
+   }
    /** Pronation belongs to the forearm, not a dislocated 90-degree wrist.
     * Rotate about elbow-to-palm: the palm and elbow positions stay unchanged. */
    static void paired(BakedGeoModel model,Matrix4f mount,float weight,boolean left) {
@@ -89,7 +94,7 @@ final class ReinhardGrip {
       wrist.rotX*=1-twistWeight;wrist.rotY*=1-twistWeight;wrist.rotZ*=1-twistWeight;
    }
    private static float solve(BakedGeoModel model,Matrix4f mount,float weight,boolean left,boolean alignWrist) {
-      GeoBone upper=model.getBone(left?"left_arm":ReinhardAssets.RIGHT_ARM),lower=model.getBone(left?"left_forearm":"right_forearm");
+      GeoBone upper=upper(model,left),lower=model.getBone(left?"left_forearm":"right_forearm");
       if(upper==null || lower==null || weight<=0) return 0;
       Vector3f target=point(model,left).lerp(mount.transformPosition(new Vector3f(HANDLE)),weight);
       float[] angles={upper.rotX,upper.rotY,upper.rotZ,lower.rotX,lower.rotY,lower.rotZ};

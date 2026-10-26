@@ -47,15 +47,16 @@ public final class ReinhardFirstPersonPose {
       key(2,-18,48,-8,-.28F,.15F,-.18F),key(6,-12,-30,20,.12F,.15F,-.12F)};
    private static final float[][] SHEATH = {under(0),key(4,-46,-42,-12,.16F,.18F,.08F),
       key(6,-8,48,12,-.30F,.04F,-.18F),key(8,-6,52,12,-.24F,.02F,-.14F),under(12)};
-   private static final float[][] WORLD_CUT = {under(0),key(10,-100,8,0,-.08F,.45F,-.12F),
-      key(66,-105,8,0,-.08F,.47F,-.12F),key(80,25,8,0,-.08F,-.18F,-.42F),
-      key(86,25,8,0,-.08F,-.18F,-.42F),under(100)};
    /**
-    * Drawn Reid in first person: the hand low right, the blade on a rising diagonal across
-    * the view towards the crosshair like the third-person guard (guard at NDC ≈(.67,-.73),
-    * tip ≈(.21,.52)), never a vertical bar over the screen. Applied while Reid is in hand.
+    * Drawn Reid in first person (REINHARD OVERHAUL 3b item 1): a two-handed guard. The right
+    * palm holds the guard end of the hilt low right of the crosshair (NDC ≈(.54,-.47)), the
+    * left palm the pommel just below it, and the blade rises across the view to the upper left
+    * (tip ≈(-.16,.66)) showing its broad face: a huge sword held in front of the chest, not a
+    * stick along the right edge. Fitted in the CPU preview (tools/preview_reinhard_fp.py) with
+    * both arm roots below the frame; 28° from the old one-handed guard, so the drawn strokes
+    * that start and end here keep short transitions.
     */
-   public static final Offset DRAWN_GUARD = new Offset(.20F,.20F,-.10F,-25,0,-45);
+   public static final Offset DRAWN_GUARD = new Offset(-.276F,.310F,-.061F,-10.5F,-19.7F,-28.5F);
    public static Offset drawnGuard(ReinhardPoses.ReidPhase phase,double ticks) {
       float w=ReinhardSword.handWeight(phase,ticks);
       return w>0.001F?DRAWN_GUARD.scaled(Math.min(1,w)):Offset.NONE;
@@ -213,8 +214,7 @@ public final class ReinhardFirstPersonPose {
          case REFLECT -> sample(phase==ReinhardClips.PHASE_SNAP && ticks<ReinhardRules.REFLECT_SNAP_TICKS ? SWAT : GUARD,ticks).scaled(windowFade(ticks,length));
          case SHEATH_STRIKE -> strike(SHEATH,ticks);
          case CUT_RAIN -> strike(RAIN,ticks);
-         case WORLD_CUT -> worldCut(ticks,false,phase);
-         case DIAGONAL_WORLD_CUT -> diagonal(ticks,false);
+         // Both World Cuts move the whole two-handed rig in view space (cutView), not one arm.
          case WORLD_ERASURE -> worldErasure(ticks,false);
          default -> Offset.NONE;
       };
@@ -250,35 +250,83 @@ public final class ReinhardFirstPersonPose {
       return length>0 ? smooth((length-ticks)/2) : 1;
    }
 
-   public static Offset worldCut(double ticks,boolean physicalLeft) {
-      if (!Double.isFinite(ticks) || ticks<=0 || ticks>=ReinhardRules.WORLD_CUT_BLAST+20) return Offset.NONE;
-      Offset right=sample(WORLD_CUT,ticks);
-      return physicalLeft ? new Offset(right.x()-.10F,right.y(),right.z(),right.pitch(),-right.yaw(),right.roll()) : right;
-   }
+   /**
+    * View-space pivot of {@link #cutView}: the right palm (blade guard) of the {@link #DRAWN_GUARD}
+    * rig, so the hilt travels on a straight line while the rig turns about it.
+    */
+   static final org.joml.Vector3f CUT_PIVOT = new org.joml.Vector3f(.700F,-.345F,-1.043F);
+   /** Rigid keys of the two-handed rig {tick, rx, ry, rz (XYZ degrees), dx, dy, dz (pivot travel),
+    * ease into the key: 0 smooth, 1 accelerating, 2 decelerating}. Beats of the third-person clips:
+    * raised by 18, hold, the anticipation (coil back) 64..74, an accelerating 6-tick swing whose
+    * contact is the BLAST tick 80, overshoot 84, settle 90, back in the guard at 100. Picked in the
+    * CPU preview with both arm roots off screen and no turn above 155° between keys. */
+   private static final float[][] CUT_FROM_RIGHT = {{0,0,0,0,0,0,0,0},
+      {18,37.2F,28.2F,-61.3F,-.177F,.065F,.043F,0},{64,40.9F,27.7F,-61.8F,-.158F,.090F,.043F,0},
+      {74,49.4F,26.6F,-62.7F,-.115F,.149F,.043F,0},{80,41.8F,-70.1F,66.0F,-.412F,.014F,-.007F,1},
+      {84,26.1F,-36.3F,88.2F,-.676F,-.134F,.093F,2},{90,40.4F,-47.5F,85.7F,-.575F,-.089F,.043F,0},{100,0,0,0,0,0,0,0}};
+   /** Raised over the left shoulder; the contact meets the same square cut line. */
+   private static final float[][] CUT_FROM_LEFT = {{0,0,0,0,0,0,0,0},
+      {18,29.6F,11.7F,-39.5F,-1.173F,.065F,.043F,0},{64,32.8F,13.7F,-39.4F,-1.188F,.090F,.043F,0},
+      {74,40.2F,18.4F,-39.0F,-1.223F,.149F,.043F,0},{80,53.9F,-67.8F,78.3F,-.412F,.014F,-.007F,1},
+      {84,26.1F,-36.3F,88.2F,-.676F,-.134F,.093F,2},{90,40.4F,-47.5F,85.7F,-.575F,-.089F,.043F,0},{100,0,0,0,0,0,0,0}};
+   /** Loaded high over the right shoulder, cut down across the view to the lower left. */
+   private static final float[][] CUT_DIAGONAL = {{0,0,0,0,0,0,0,0},
+      {18,93.3F,51.6F,-116.4F,-.077F,.205F,.043F,0},{64,95.1F,49.7F,-115.4F,-.059F,.226F,.043F,0},
+      {74,99.2F,45.3F,-113.1F,-.015F,.275F,.043F,0},{80,-6.9F,-28.6F,37.0F,-.543F,.014F,-.007F,1},
+      {84,8.2F,-24.1F,73.8F,-.818F,-.121F,.093F,2},{90,17.4F,-38.3F,64.4F,-.700F,-.075F,.043F,0},{100,0,0,0,0,0,0,0}};
 
    /**
-    * Normal World Cut of a {@link dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep}: the arm is raised
-    * toward that shoulder through the hold, comes down square at the contact (tick 80) and follows through a little
-    * past the centre, the same path as the third-person clip. View-space offsets like {@link #diagonal}.
+    * REINHARD OVERHAUL 3b item 5: both World Cuts in first person as ONE rigid view-space motion of
+    * the whole two-handed rig (both camera arms, both palms on the hilt, the blade) on top of the
+    * drawn guard. The hands never separate and no arm is re-aimed alone; null outside the cast.
+    * {@code sweep} is the normal cut's {@link dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep}.
     */
-   public static Offset worldCut(double ticks,boolean physicalLeft,int sweep) {
-      Offset o=worldCut(ticks,physicalLeft);
-      if(o==Offset.NONE) return o;
-      float side=dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep.side(sweep);
-      // Same beats as the clip: raised upright by tick 20, settled over the shoulder by tick 30.
-      float w=smooth((ticks-16)/14)*(1-smooth((ticks-86)/14));
-      float lean=1-smooth((ticks-(ReinhardRules.WORLD_CUT_BLAST-14))/14);
-      float through=smooth((ticks-ReinhardRules.WORLD_CUT_BLAST)/4)*(1-smooth((ticks-88)/10));
-      float lateral=(lean-.3F*through)*side*w;
-      return new Offset(o.x()+.12F*lateral,o.y(),o.z(),o.pitch(),o.yaw()-20*lateral,o.roll()-24*lateral);
+   @Nullable
+   public static org.joml.Matrix4f cutView(@Nullable ReinhardAbility cinematic,int sweep,double ticks) {
+      float[][] keys=cutKeys(cinematic,sweep);
+      if(keys==null || !Double.isFinite(ticks) || ticks<=0 || ticks>=CUT_LENGTH) return null;
+      org.joml.Matrix4f rig=sampleCut(keys,(float)ticks);
+      float dip=cutDip(keys,ticks);
+      return dip==0 ? rig : new org.joml.Matrix4f().translation(0,-dip,CUT_DIP_BACK*dip).mul(rig);
+   }
+   /** Drop of the whole rig (blocks, down and a little toward the camera) while the normal cut turns
+    * it: the right arm turns with the rig and its shoulder end would otherwise cross the bottom of the
+    * view (CPU preview: 76.6..80.2 through the swing, the edge through the raise from the left). The
+    * diagonal turns the arm the other way and needs none. Smooth, zero outside the two windows. */
+   static float cutDip(float[][] keys,double ticks) {
+      if(keys==CUT_DIAGONAL) return 0;
+      return CUT_RAISE_DIP*smooth((ticks-6)/6)*(1-smooth((ticks-14)/6))
+         +CUT_SWING_DIP*smooth((ticks-74)/4)*(1-smooth((ticks-81)/7));
+   }
+   static final float CUT_RAISE_DIP=.04F, CUT_SWING_DIP=.2F, CUT_DIP_BACK=.3F;
+   static final int CUT_LENGTH=ReinhardRules.WORLD_CUT_BLAST+20;
+   @Nullable
+   static float[][] cutKeys(@Nullable ReinhardAbility cinematic,int sweep) {
+      if(cinematic==ReinhardAbility.DIAGONAL_WORLD_CUT) return CUT_DIAGONAL;
+      if(cinematic!=ReinhardAbility.WORLD_CUT) return null;
+      return dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep.side(sweep)<0 ? CUT_FROM_LEFT : CUT_FROM_RIGHT;
+   }
+   private static org.joml.Matrix4f sampleCut(float[][] keys,float t) {
+      int i=1;
+      while(i<keys.length-1 && t>keys[i][0]) i++;
+      float[] a=keys[i-1],b=keys[i];
+      float f=Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0])));
+      f=b[7]==1?f*f*f:b[7]==2?1-(1-f)*(1-f)*(1-f):f*f*(3-2*f);
+      org.joml.Quaternionf q=cutRotation(a).slerp(cutRotation(b),f);
+      org.joml.Vector3f p=CUT_PIVOT;
+      return new org.joml.Matrix4f().translation(p.x+a[4]+(b[4]-a[4])*f,p.y+a[5]+(b[5]-a[5])*f,p.z+a[6]+(b[6]-a[6])*f)
+         .rotate(q).translate(-p.x,-p.y,-p.z);
+   }
+   /** Puts a rigid {@link #cutView} on a pose stack as translation + rotation, so the normal
+    * matrix turns with it (PoseStack.mulPoseMatrix alone would leave the lighting behind). */
+   public static void applyCut(com.mojang.blaze3d.vertex.PoseStack stack,org.joml.Matrix4f cut) {
+      stack.translate(cut.m30(),cut.m31(),cut.m32());
+      stack.mulPose(cut.getUnnormalizedRotation(new org.joml.Quaternionf()).normalize());
+   }
+   private static org.joml.Quaternionf cutRotation(float[] k) {
+      return new org.joml.Quaternionf().rotationXYZ((float)Math.toRadians(k[1]),(float)Math.toRadians(k[2]),(float)Math.toRadians(k[3]));
    }
 
-   public static Offset diagonal(double ticks,boolean physicalLeft) {
-      Offset o=worldCut(ticks,physicalLeft);
-      float w=smooth(ticks/16)*(1-smooth((ticks-86)/14));
-      float sweep=smooth((ticks-66)/14);
-      return new Offset(o.x()+(.12F-.24F*sweep)*w,o.y(),o.z(),o.pitch(),o.yaw()+(-24+48*sweep)*w,o.roll()+(-22+44*sweep)*w);
-   }
    public static Offset rain(double ticks,boolean physicalLeft) {
       Offset o=strike(RAIN,ticks);
       return physicalLeft ? new Offset(o.x()-.1F,o.y(),o.z(),o.pitch(),-o.yaw(),o.roll()) : o;
