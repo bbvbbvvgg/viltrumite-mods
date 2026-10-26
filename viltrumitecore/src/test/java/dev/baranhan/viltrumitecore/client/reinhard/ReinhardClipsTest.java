@@ -56,6 +56,7 @@ class ReinhardClipsTest {
       t.put(ReinhardClips.SHEATH_STRIKE, ReinhardRules.SHEATH_TICKS);
       t.put(ReinhardClips.CUT_RAIN, ReinhardRules.CUT_TICKS);
       t.put(ReinhardClips.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST+20);
+      t.put(ReinhardClips.WORLD_CUT_FROM_LEFT, ReinhardRules.WORLD_CUT_BLAST+20);
       t.put("diagonal_world_cut",ReinhardRules.WORLD_CUT_BLAST+20);
       t.put("world_erasure", ReinhardRules.ERASE_LENGTH);
       t.put(ReinhardClips.CHOP_LEFT,20); t.put(ReinhardClips.CHOP_RIGHT,20);
@@ -90,7 +91,7 @@ class ReinhardClipsTest {
          }
       }
 
-      assertEquals(30, checked, "registered abilities and their action clips");
+      assertEquals(31, checked, "registered abilities and their action clips");
       // Every ordinary strike ends exactly on its lock: the chain never starts over a running clip.
       for (var moves : java.util.List.of(dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves.FIST, dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves.REID))
          for (var move : moves) {

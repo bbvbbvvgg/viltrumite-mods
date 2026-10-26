@@ -307,7 +307,7 @@ public final class ReinhardRenderer {
       ReinhardFirstPersonPose.Offset guard = physicalLeft ? ReinhardFirstPersonPose.Offset.NONE
          : ReinhardFirstPersonPose.drawnGuard(reid, reidTicks);
       ReinhardFirstPersonPose.Offset action = cinematic == ReinhardAbility.WORLD_CUT
-         ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft)
+         ? ReinhardFirstPersonPose.worldCut(cinematicTicks, physicalLeft, snapshot.variant())
          : cinematic == ReinhardAbility.DIAGONAL_WORLD_CUT ? ReinhardFirstPersonPose.diagonal(cinematicTicks,physicalLeft)
          : cinematic == ReinhardAbility.CUT_RAIN ? ReinhardFirstPersonPose.rain(cinematicTicks,physicalLeft)
          : cinematic == ReinhardAbility.WORLD_ERASURE

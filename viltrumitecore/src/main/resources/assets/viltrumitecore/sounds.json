@@ -996,6 +996,14 @@
       }
     ]
   },
+  "reinhard.world_cut_strike_voice": {
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/sword_strike_voice",
+        "stream": true
+      }
+    ]
+  },
   "reinhard.fist_swing": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.reinhard_fist_swing",

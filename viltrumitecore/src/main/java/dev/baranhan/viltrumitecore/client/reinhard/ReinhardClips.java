@@ -51,12 +51,20 @@ public final class ReinhardClips {
    public static final String SHEATH_STRIKE = "sheath_strike";
    /** Rain of Cuts: a fast fan of slashes, one per cut. */
    public static final String CUT_RAIN = "cut_rain";
+   /** Normal World Cut from the right shoulder (right to left); its mirror comes from the left shoulder. */
    public static final String WORLD_CUT = "world_cut";
+   public static final String WORLD_CUT_FROM_LEFT = "world_cut_from_left";
    public static final String WORLD_ERASURE = "world_erasure";
    /** Phase 1 of a window (catch / reflect) and of the grab = the snap / the throw. */
    public static final int PHASE_SNAP = dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline.PHASE_SNAP;
 
    private ReinhardClips() {
+   }
+
+   /** Clip of the normal World Cut for a {@link dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep}. */
+   public static String worldCut(int sweep) {
+      return dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep.ofPhase(sweep)
+         == dev.baranhan.viltrumitecore.hero.reinhard.cut.WorldCutSweep.FROM_LEFT ? WORLD_CUT_FROM_LEFT : WORLD_CUT;
    }
 
    /** Every clip of an ability (each one must exist in the animation file); empty for later stages. */
@@ -75,7 +83,7 @@ public final class ReinhardClips {
          case REID -> List.of(REID_DRAW, REID_SHEATHE, IDLE_HOLY_DRAWN);
          case SHEATH_STRIKE -> List.of(SHEATH_STRIKE);
          case CUT_RAIN -> List.of(CUT_RAIN);
-         case WORLD_CUT -> List.of(WORLD_CUT);
+         case WORLD_CUT -> List.of(WORLD_CUT, WORLD_CUT_FROM_LEFT);
          case DIAGONAL_WORLD_CUT -> List.of("diagonal_world_cut");
          case WORLD_ERASURE -> List.of(WORLD_ERASURE);
          default -> List.of();
@@ -98,6 +106,8 @@ public final class ReinhardClips {
          // The kick clip starts at the contact tick; before it the toss plays.
          case SKY_KICK -> ticks < ReinhardRules.KICK_TOSS_TICKS ? new ReinhardPoses.Clip(KICK_TOSS, seconds)
             : new ReinhardPoses.Clip(KICK, (ticks - ReinhardRules.KICK_TOSS_TICKS) / 20.0);
+         // The synced phase is the WorldCutSweep: the shoulder the cut comes down from.
+         case WORLD_CUT -> new ReinhardPoses.Clip(worldCut(phase), seconds);
          default -> {
             List<String> names = names(ability);
             yield names.isEmpty() ? null : new ReinhardPoses.Clip(names.get(0), seconds);
