@@ -436,7 +436,7 @@ public final class MjolnirWorld {
             state.hammerDetached = false;
          }
          case IN_HAND -> {
-            state.hammer = state.hammer == HammerState.HOLSTERED ? HammerState.HOLSTERED : HammerState.IN_HAND;
+            state.hammer = inHandProjection(state.hammer, technicalSwap(state));
             state.hammerDetached = false;
             if (player.distanceToSqr(record.x, record.y, record.z) > 1.0 || !dim(player.level()).equals(record.dimension)) {
                record.place(dim(player.level()), player.getX(), player.getY(), player.getZ());
@@ -450,6 +450,22 @@ public final class MjolnirWorld {
       }
    }
 
+   /**
+    * Pure: the projection of a world hammer in the active Thor's hand. The
+    * store has no belt phase (an item in the hand only moves the drawn
+    * attachment, MjolnirPlace.BELT), so HOLSTERED survives only while a
+    * technical DRAW / HOLSTER swaps belt and hand; any other HOLSTERED (an
+    * End-return clone, an old save, a dev write) is corrected to IN_HAND
+    * instead of stranding Mjölnir on the belt with no way back (RC-2).
+    */
+   public static HammerState inHandProjection(HammerState current, boolean technicalSwap) {
+      return current == HammerState.HOLSTERED && technicalSwap ? HammerState.HOLSTERED : HammerState.IN_HAND;
+   }
+
+   private static boolean technicalSwap(ThorState state) {
+      return state.timeline.is(ThorMove.DRAW) || state.timeline.is(ThorMove.HOLSTER);
+   }
+
    /** Bridge HammerAccess (installed by MjolnirModule): read-only copy for B / C. */
    public static HammerView view(UUID thor, @Nullable ThorState state) {
       MinecraftServer server = server();
@@ -461,7 +477,7 @@ public final class MjolnirWorld {
       boolean owner = thor.equals(record.activeOwner);
       HammerState phase;
       if (owner && record.phase == MjolnirPhase.IN_HAND) {
-         phase = state != null && state.hammer == HammerState.HOLSTERED ? HammerState.HOLSTERED : HammerState.IN_HAND;
+         phase = state == null ? HammerState.IN_HAND : inHandProjection(state.hammer, technicalSwap(state));
       } else {
          phase = record.phase == MjolnirPhase.IN_HAND ? HammerState.HOLSTERED : record.phase.personal();
       }

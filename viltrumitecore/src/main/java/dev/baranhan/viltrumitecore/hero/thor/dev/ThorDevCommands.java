@@ -5,7 +5,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.baranhan.viltrumitecore.hero.thor.HammerState;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMode;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
@@ -17,8 +16,10 @@ import java.util.Map;
 import java.util.function.UnaryOperator;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -131,12 +132,14 @@ public final class ThorDevCommands {
 
    private static void registerFoundation() {
       CHILDREN.put("foundation state", new Child(FOUNDATION, "foundation state", node -> node.executes(ThorDevCommands::state)));
-      CHILDREN.put("foundation hammer", new Child(FOUNDATION, "foundation hammer", node -> node.then(Commands.argument("place", StringArgumentType.word())
-         .executes(c -> hammer(c, StringArgumentType.getString(c, "place"))))));
+      // Read-only: the world hammer store (session A, /thor debug hammer ...) is the one writer of where Mjölnir is.
+      CHILDREN.put("foundation hammer", new Child(FOUNDATION, "foundation hammer", node -> node.executes(ThorDevCommands::hammer)));
       CHILDREN.put("foundation mode", new Child(FOUNDATION, "foundation mode", node -> node.then(Commands.argument("mode", StringArgumentType.word())
          .executes(c -> mode(c, StringArgumentType.getString(c, "mode"))))));
+      // The window always names its target: the paired GRAB refuses a partner-less start (StagedTimeline).
       CHILDREN.put("foundation grab_window", new Child(FOUNDATION, "foundation grab_window", node -> node.then(
-         Commands.argument("ticks", IntegerArgumentType.integer(1, 200)).executes(c -> grabWindow(c, IntegerArgumentType.getInteger(c, "ticks"))))));
+         Commands.argument("ticks", IntegerArgumentType.integer(1, 200)).then(Commands.argument("target", EntityArgument.entity())
+            .executes(c -> grabWindow(c, IntegerArgumentType.getInteger(c, "ticks"), EntityArgument.getEntity(c, "target")))))));
       CHILDREN.put("foundation release_locks", new Child(FOUNDATION, "foundation release_locks", node -> node.executes(ThorDevCommands::releaseLocks)));
    }
 
@@ -162,15 +165,15 @@ public final class ThorDevCommands {
       return 1;
    }
 
-   private static int hammer(CommandContext<CommandSourceStack> context, String key) throws CommandSyntaxException {
+   private static int hammer(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
       ThorState state = thor(context);
       if (state == null) {
          return 0;
       }
 
-      HammerState place = HammerState.fromKey(key.toLowerCase(Locale.ROOT));
-      state.hammer = place;
-      context.getSource().sendSuccess(() -> Component.literal("hammer = " + place.key()), false);
+      ServerPlayer player = context.getSource().getPlayerOrException();
+      String text = "hammer = " + ThorBridge.hammer(player.getUUID(), state) + " (move it with /thor debug hammer throw|recall|spawn)";
+      context.getSource().sendSuccess(() -> Component.literal(text), false);
       return 1;
    }
 
@@ -185,13 +188,13 @@ public final class ThorDevCommands {
       return 1;
    }
 
-   private static int grabWindow(CommandContext<CommandSourceStack> context, int ticks) throws CommandSyntaxException {
+   private static int grabWindow(CommandContext<CommandSourceStack> context, int ticks, Entity target) throws CommandSyntaxException {
       ThorState state = thor(context);
       if (state == null) {
          return 0;
       }
 
-      ThorBridge.openGrabWindow(state, ticks);
+      ThorBridge.openGrabWindow(state, ticks, target.getId());
       context.getSource().sendSuccess(() -> Component.literal("grab window = " + state.grabWindow), false);
       return 1;
    }

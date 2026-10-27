@@ -62,9 +62,10 @@ class ThorControlsTest {
       assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.THROWN, true, false)));
       assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.RETURNING, false, false)));
       assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.IN_HAND, true, false)));
-      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.HOLSTERED, true, false)));
       assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.IN_HAND, false, false)));
-      assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.HOLSTERED, false, false)));
+      // F-M13 (rewritten, it pinned the bug): Mjölnir only on the belt offers no hammer move (no blow, no throw from the belt).
+      assertNull(ThorControls.resolve(ThorInput.HAMMER, with(HammerState.HOLSTERED, true, false)));
+      assertNull(ThorControls.resolve(ThorInput.HAMMER, with(HammerState.HOLSTERED, false, false)));
    }
 
    @Test

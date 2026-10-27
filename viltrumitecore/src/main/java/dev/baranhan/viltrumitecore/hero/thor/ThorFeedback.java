@@ -12,6 +12,8 @@ public final class ThorFeedback {
    public static final String HANDS_BUSY = "hud.viltrumitecore.thor.hands_busy";
    public static final String BUSY = "hud.viltrumitecore.thor.busy";
    public static final String CONTROLS = "hud.viltrumitecore.thor.controls";
+   /** "Mjölnir is not with you" (the same key session A uses for its own refusals). */
+   public static final String NO_HAMMER = "hud.viltrumitecore.thor.no_hammer";
 
    private ThorFeedback() {
    }

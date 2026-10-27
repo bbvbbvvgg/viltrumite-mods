@@ -45,16 +45,38 @@ public final class ThorControls {
       return !context.fistChainOpen() && context.hammer() == HammerState.IN_HAND && context.handFree() ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
    }
 
-   /** MMB, the one decision point: grab window &gt; recall &gt; melee (enemy within 4 blocks) &gt; throw. */
+   /**
+    * MMB, the one decision point: grab window &gt; recall &gt; (no hammer at
+    * hand: nothing) &gt; melee (enemy within 4 blocks) &gt; throw.
+    */
+   @Nullable
    public static ThorMove hammer(ThorContext context) {
       if (context.grabWindow()) {
          return ThorMove.GRAB;
       } else if (context.hammerAway()) {
          // Out of the hand in any world phase (thrown, returning, resting, falling, ...).
          return ThorMove.RECALL;
+      } else if (beltOnly(context)) {
+         // OPEN(owner): how Mjölnir gets from the belt into the hand (design §10, no DRAW key). Conservative: no
+         // hammer move from the belt (no throw "from the belt", no hammer blow); the server answers "not with you".
+         return null;
       }
 
       return context.enemyNear() ? ThorMove.HAMMER_STRIKE : ThorMove.HAMMER_THROW;
+   }
+
+   /**
+    * Mjölnir neither in the hand nor away: on the belt by a technical
+    * HOLSTER, or no world hammer exists yet. Session A's store never keeps
+    * this state outside a technical DRAW / HOLSTER (MjolnirWorld.project).
+    */
+   static boolean beltOnly(ThorContext context) {
+      return context.hammer() == HammerState.HOLSTERED && !context.hammerAway();
+   }
+
+   /** MMB resolved to nothing because Mjölnir is only on the belt (outside full flight): the press deserves an answer. */
+   public static boolean onBelt(ThorInput input, ThorContext context) {
+      return input == ThorInput.HAMMER && !context.flying() && !context.grabWindow() && beltOnly(context);
    }
 
    /** Drawing or throwing Mjölnir takes the right hand (ThorActions.gate refuses it while an item is there). */
