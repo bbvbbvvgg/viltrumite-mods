@@ -100,7 +100,7 @@ class ThorActionsTest {
       ThorActions.stop(state);
       assertFalse(state.timeline.running());
       assertSame(HammerState.IN_HAND, state.hammer, "stopping never teleports the hammer");
-      assertFalse(ThorBridge.grabWindowOpen(state));
+      assertFalse(ThorBridge.grabWindowActive(state));
       assertFalse(ThorBridge.sceneLocked(state));
       assertNull(ThorActions.release(state, ThorInput.HAMMER), "a stop forgets held presses");
    }
@@ -162,10 +162,10 @@ class ThorActionsTest {
       ThorState state = new ThorState();
       ThorBridge.openGrabWindow(state, 2);
       assertSame(ThorMove.GRAB, ThorControls.resolve(ThorInput.HAMMER,
-         new ThorContext(state.hammer, state.mode, true, false, false, false, true, ThorBridge.grabWindowOpen(state))));
+         new ThorContext(state.hammer, state.mode, true, false, false, false, true, ThorBridge.grabWindowActive(state))));
       advance(state, 1, true);
-      assertTrue(ThorBridge.grabWindowOpen(state));
+      assertTrue(ThorBridge.grabWindowActive(state));
       advance(state, 1, true);
-      assertFalse(ThorBridge.grabWindowOpen(state));
+      assertFalse(ThorBridge.grabWindowActive(state));
    }
 }

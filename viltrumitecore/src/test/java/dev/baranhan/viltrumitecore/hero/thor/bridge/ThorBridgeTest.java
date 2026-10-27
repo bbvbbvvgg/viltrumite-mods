@@ -15,12 +15,13 @@ import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.dev.ThorDevCommands;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-/** The no-op session bridge: read-only view, grab window, scene lock, typed events with dedupe, dev gate. */
+/** The no-op session bridge: hammer access, read-only state, grab window, scene lock, camera lease, events, dev registry. */
 class ThorBridgeTest {
    private static final UUID THOR = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
@@ -28,52 +29,87 @@ class ThorBridgeTest {
    void reset() {
       ThorEvents.resetForTests();
       ThorMoves.resetForTests();
+      ThorBridge.resetForTests();
+      ThorDevCommands.resetForTests();
    }
 
    private static ThorEvent event(long id, ThorEventType type) {
-      return new ThorEvent(id, type, THOR, null, ThorMove.HAMMER_COMBO, 0);
+      return new ThorEvent(id, type, THOR, null, ThorMove.HAMMER_COMBO, 1, true, 4.0F, false);
    }
 
    @Test
-   void viewIsAReadOnlyCopyOfTheState() {
+   void foundationHammerAccessIsASafeReadOnlyDefault() {
+      assertNull(ThorBridge.hammerAccessOwner());
       ThorState state = new ThorState();
-      HammerView idle = ThorBridge.view(state);
-      assertEquals(new HammerView(HammerState.HOLSTERED, ThorMode.NORMAL, null, null, 0, 0, null), idle);
+      assertEquals(new HammerView(null, THOR, HammerState.HOLSTERED, false, null, null), ThorBridge.hammer(THOR, state));
+      state.hammer = HammerState.IN_HAND;
+      HammerView inHand = ThorBridge.hammer(THOR, state);
+      assertTrue(inHand.inHand());
+      assertNull(inHand.logicalId(), "no world hammer before A");
+      assertSame(HammerState.HOLSTERED, ThorBridge.hammer(THOR, null).phase(), "unknown state reads as on the belt");
+      state.hammer = HammerState.THROWN;
+      assertTrue(ThorBridge.hammer(THOR, state).flying());
+      assertFalse(inHand.flying(), "an old view never changes");
+   }
+
+   @Test
+   void onlyOneSessionInstallsTheHammerAccess() {
+      UUID logical = UUID.fromString("00000000-0000-0000-0000-0000000000aa");
+      ThorBridge.installHammerAccess("A", (thor, state) -> new HammerView(logical, thor, HammerState.THROWN, false, null, null));
+      assertEquals("A", ThorBridge.hammerAccessOwner());
+      assertEquals(logical, ThorBridge.hammer(THOR, new ThorState()).logicalId());
+      assertThrows(IllegalStateException.class, () -> ThorBridge.installHammerAccess("B", HammerAccess.FOUNDATION));
+      assertThrows(IllegalArgumentException.class, () -> new HammerView(null, THOR, null, false, null, null));
+   }
+
+   @Test
+   void stateViewIsAReadOnlyCopy() {
+      ThorState state = new ThorState();
+      ThorStateView idle = ThorBridge.state(state);
+      assertEquals(new ThorStateView(ThorMode.NORMAL, null, null, 0, 0, null, null), idle);
 
       ThorActions.start(state, ThorMove.DRAW, true);
       ThorActions.advance(state, true, false);
       state.mode = ThorMode.ELECTRIC;
-      HammerView running = ThorBridge.view(state);
+      ThorStateView running = ThorBridge.state(state);
       assertSame(ThorMove.DRAW, running.move());
       assertSame(MovePhase.INTRO, running.phase());
       assertEquals(1, running.moveElapsed());
       assertSame(ThorMode.ELECTRIC, running.mode());
-      assertEquals(idle, new HammerView(HammerState.HOLSTERED, ThorMode.NORMAL, null, null, 0, 0, null), "an old view never changes");
+      assertEquals(new ThorStateView(ThorMode.NORMAL, null, null, 0, 0, null, null), idle);
    }
 
    @Test
    void grabWindowOpensExtendsAndCloses() {
       ThorState state = new ThorState();
-      assertFalse(ThorBridge.grabWindowOpen(state));
+      assertFalse(ThorBridge.grabWindowActive(state));
       ThorBridge.openGrabWindow(state, 5);
       ThorBridge.openGrabWindow(state, 3);
-      assertEquals(5, ThorBridge.view(state).grabWindowTicks(), "a shorter open never shortens the window");
+      assertEquals(5, ThorBridge.state(state).grabWindowTicks(), "a shorter open never shortens the window");
       ThorBridge.closeGrabWindow(state);
-      assertFalse(ThorBridge.view(state).grabWindowOpen());
+      assertFalse(ThorBridge.state(state).grabWindowActive());
       assertThrows(IllegalArgumentException.class, () -> ThorBridge.openGrabWindow(state, 0));
    }
 
    @Test
-   void sceneLockHasOneOwner() {
+   void sceneLockAndCameraLeaseHaveOneOwnerEachAndDropOnStop() {
       ThorState state = new ThorState();
-      assertTrue(ThorBridge.lockScene(state, "A"));
-      assertTrue(ThorBridge.lockScene(state, "A"), "re-entrant for its owner");
-      assertFalse(ThorBridge.lockScene(state, "B"));
-      assertFalse(ThorBridge.unlockScene(state, "B"), "only the owner unlocks");
-      assertEquals("A", ThorBridge.view(state).sceneLockOwner());
-      assertTrue(ThorBridge.unlockScene(state, "A"));
-      assertFalse(ThorBridge.sceneLocked(state));
+      assertTrue(ThorBridge.lockScene(state, "C"));
+      assertTrue(ThorBridge.lockScene(state, "C"), "re-entrant for its owner");
+      assertFalse(ThorBridge.lockScene(state, "A"));
+      assertFalse(ThorBridge.unlockScene(state, "A"), "only the owner unlocks");
+      assertTrue(ThorBridge.acquireCamera(state, "C"));
+      assertFalse(ThorBridge.acquireCamera(state, "B"));
+      assertFalse(ThorBridge.releaseCamera(state, "B"));
+      assertEquals("C", ThorBridge.state(state).cameraLeaseOwner());
+      assertTrue(ThorBridge.releaseCamera(state, "C"));
+      assertTrue(ThorBridge.acquireCamera(state, "C"));
+
+      ThorActions.stop(state);
+      assertFalse(ThorBridge.sceneLocked(state), "logout / death / dimension / hero change drop the lock");
+      assertFalse(ThorBridge.cameraLeased(state), "and the camera lease");
       assertThrows(IllegalArgumentException.class, () -> ThorBridge.lockScene(state, " "));
+      assertThrows(IllegalArgumentException.class, () -> ThorBridge.acquireCamera(state, null));
    }
 
    @Test
@@ -87,12 +123,12 @@ class ThorBridgeTest {
    @Test
    void theSameEventIdIsDeliveredOnce() {
       List<Long> seen = new ArrayList<>();
-      ThorEvents.subscribe("B", ThorEventType.HIT, e -> seen.add(e.id()));
+      ThorEvents.subscribe("C", ThorEventType.MELEE_HIT, e -> seen.add(e.eventId()));
       long id = ThorEvents.nextId();
-      assertTrue(ThorEvents.post(event(id, ThorEventType.HIT)));
-      assertFalse(ThorEvents.post(event(id, ThorEventType.HIT)), "duplicate");
-      assertFalse(ThorEvents.post(event(id, ThorEventType.LETHAL)), "the id is the key, not the type");
-      assertTrue(ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.HIT)));
+      assertTrue(ThorEvents.post(event(id, ThorEventType.MELEE_HIT)));
+      assertFalse(ThorEvents.post(event(id, ThorEventType.MELEE_HIT)), "duplicate");
+      assertFalse(ThorEvents.post(event(id, ThorEventType.LETHAL_HIT)), "the id is the key, not the type");
+      assertTrue(ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.MELEE_HIT)));
       assertEquals(2, seen.size());
       assertTrue(ThorEvents.nextId() > id, "ids grow");
    }
@@ -100,50 +136,67 @@ class ThorBridgeTest {
    @Test
    void dedupeForgetsOnlyBeyondItsWindow() {
       long first = ThorEvents.nextId();
-      ThorEvents.post(event(first, ThorEventType.HIT));
+      ThorEvents.post(event(first, ThorEventType.MELEE_HIT));
       for (int i = 0; i < ThorEvents.DEDUPE_WINDOW - 1; i++) {
-         ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.HIT));
+         ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.MELEE_HIT));
       }
 
-      assertFalse(ThorEvents.post(event(first, ThorEventType.HIT)), "still inside the window");
-      ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.HIT));
-      assertTrue(ThorEvents.post(event(first, ThorEventType.HIT)), "evicted after the window");
+      assertFalse(ThorEvents.post(event(first, ThorEventType.MELEE_HIT)), "still inside the window");
+      ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.MELEE_HIT));
+      assertTrue(ThorEvents.post(event(first, ThorEventType.MELEE_HIT)), "evicted after the window");
    }
 
    @Test
    void ownersListenIndependently() {
       List<String> calls = new ArrayList<>();
-      ThorEvents.subscribe("A", ThorEventType.CATCH, e -> calls.add("A"));
-      ThorEvents.subscribe("C", ThorEventType.CATCH, e -> {
-         throw new IllegalStateException("C broke");
-      });
       ThorEvents.subscribe("B", ThorEventType.CATCH, e -> calls.add("B"));
-      ThorEvents.subscribe("B", ThorEventType.COMBO_END, e -> calls.add("B-combo"));
-      assertThrows(IllegalStateException.class, () -> ThorEvents.subscribe("B", ThorEventType.CATCH, e -> { }), "one subscription per owner and type");
-      assertEquals(List.of("A", "C", "B"), ThorEvents.owners(ThorEventType.CATCH));
+      ThorEvents.subscribe("X", ThorEventType.CATCH, e -> {
+         throw new IllegalStateException("X broke");
+      });
+      ThorEvents.subscribe("C", ThorEventType.CATCH, e -> calls.add("C"));
+      ThorEvents.subscribe("C", ThorEventType.COMBO_END, e -> calls.add("C-combo"));
+      assertThrows(IllegalStateException.class, () -> ThorEvents.subscribe("C", ThorEventType.CATCH, e -> { }), "one subscription per owner and type");
+      assertEquals(List.of("B", "X", "C"), ThorEvents.owners(ThorEventType.CATCH));
 
       assertThrows(IllegalStateException.class, () -> ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.CATCH)));
-      assertEquals(List.of("A", "B"), calls, "a failing listener does not stop the others; other types are not called");
+      assertEquals(List.of("B", "C"), calls, "a failing listener does not stop the others; other types are not called");
    }
 
    @Test
-   void eventsAreValidated() {
-      assertThrows(IllegalArgumentException.class, () -> new ThorEvent(1, null, THOR, null, null, 0));
-      assertThrows(IllegalArgumentException.class, () -> new ThorEvent(1, ThorEventType.HIT, null, null, null, 0));
-      assertThrows(IllegalArgumentException.class, () -> ThorEvents.subscribe("", ThorEventType.HIT, e -> { }));
-      assertNull(new ThorEvent(1, ThorEventType.THROW, THOR, null, null, 0).target());
+   void hitEventsCarryTheHitTimeSnapshot() {
+      List<ThorEvent> seen = new ArrayList<>();
+      ThorEvents.subscribe("C", ThorEventType.LETHAL_HIT, seen::add);
+      UUID victim = UUID.fromString("00000000-0000-0000-0000-000000000002");
+      ThorEvents.post(new ThorEvent(ThorEvents.nextId(), ThorEventType.LETHAL_HIT, THOR, victim, ThorMove.HAMMER_COMBO, 3, true, 20.0F, false));
+      assertEquals(1, seen.size());
+      assertEquals(victim, seen.get(0).targetId());
+      assertEquals(3, seen.get(0).attackId());
+      assertTrue(seen.get(0).hammerInHand());
+      assertThrows(IllegalArgumentException.class, () -> new ThorEvent(1, null, THOR, null, null, 0, false, 0, false));
+      assertThrows(IllegalArgumentException.class, () -> new ThorEvent(1, ThorEventType.THROW, null, null, null, 0, false, 0, false));
+      assertThrows(IllegalArgumentException.class, () -> ThorEvents.subscribe("", ThorEventType.THROW, e -> { }));
    }
 
    @Test
    void eventTypesAreAppendOnly() {
-      assertEquals(List.of("HIT", "LETHAL", "COMBO_END", "THROW", "RECALL", "CATCH"),
-         java.util.Arrays.stream(ThorEventType.values()).map(Enum::name).toList());
+      assertEquals(List.of("MELEE_HIT", "LETHAL_HIT", "COMBO_END", "THROW", "RECALL", "CATCH", "HAMMER_STATE_CHANGED"),
+         Arrays.stream(ThorEventType.values()).map(Enum::name).toList());
    }
 
    @Test
-   void devCommandsOnlyOutsideProduction() {
+   void devRootIsSharedChildrenAreUniqueAndOnlyOutsideProduction() {
       assertFalse(ThorDevCommands.enabled(true));
       assertTrue(ThorDevCommands.enabled(false));
       assertEquals(2, ThorDevCommands.PERMISSION, "operators only");
+      List<String> foundation = ThorDevCommands.paths();
+      assertTrue(foundation.stream().allMatch(path -> path.startsWith("foundation ")), "the foundation only adds its fixtures");
+
+      ThorDevCommands.registerChild("A", "debug hammer", node -> node);
+      ThorDevCommands.registerChild("B", "debug  Combat", node -> node);
+      ThorDevCommands.registerChild("C", "grab", node -> node);
+      assertEquals("B", ThorDevCommands.owner("debug combat"));
+      assertThrows(IllegalStateException.class, () -> ThorDevCommands.registerChild("C", "debug hammer", node -> node), "one owner per path");
+      assertThrows(IllegalArgumentException.class, () -> ThorDevCommands.registerChild("C", "bad/path", node -> node));
+      assertEquals(foundation.size() + 3, ThorDevCommands.paths().size());
    }
 }

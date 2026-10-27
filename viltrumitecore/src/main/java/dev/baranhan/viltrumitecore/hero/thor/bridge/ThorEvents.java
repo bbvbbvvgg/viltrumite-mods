@@ -10,8 +10,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Typed event bus between the Thor sessions. No listener is registered by the
- * foundation: posting is a no-op until a session subscribes. Listeners of
+ * Typed event bus between the Thor sessions (the contract's onMeleeHit /
+ * onLethalHit / onComboEnd / onThrow / onRecall / onCatch /
+ * onHammerStateChanged are {@code subscribe(owner, type, listener)}). No
+ * listener is registered by the foundation: posting is a no-op until a
+ * session subscribes. Listeners of
  * different owners are independent; one owner subscribes at most once per
  * type. Server main thread.
  */
@@ -72,11 +75,11 @@ public final class ThorEvents {
    public static boolean post(ThorEvent event) {
       List<Subscription> targets;
       synchronized (ThorEvents.class) {
-         if (!SEEN.add(event.id())) {
+         if (!SEEN.add(event.eventId())) {
             return false;
          }
 
-         ORDER.addLast(event.id());
+         ORDER.addLast(event.eventId());
          if (ORDER.size() > DEDUPE_WINDOW) {
             SEEN.remove(ORDER.removeFirst());
          }

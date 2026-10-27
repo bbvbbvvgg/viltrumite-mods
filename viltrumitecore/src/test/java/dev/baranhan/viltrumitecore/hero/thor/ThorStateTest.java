@@ -75,12 +75,15 @@ class ThorStateTest {
    void flagsRoundTripEveryState() {
       for (HammerState hammer : HammerState.values()) {
          for (ThorMode mode : ThorMode.values()) {
-            for (boolean window : new boolean[]{false, true}) {
-               int flags = ThorFlags.compose(hammer, mode, window);
+            for (int bits = 0; bits < 4; bits++) {
+               boolean window = (bits & 1) != 0;
+               boolean camera = (bits & 2) != 0;
+               int flags = ThorFlags.compose(hammer, mode, window, camera);
                assertSame(hammer, ThorFlags.hammer(flags));
                assertSame(mode, ThorFlags.mode(flags));
                assertEquals(window, ThorFlags.grabWindow(flags));
-               assertEquals(0, flags & ~0b1111, "bits 4+ are free");
+               assertEquals(camera, ThorFlags.cameraLease(flags));
+               assertEquals(0, flags & ~0b11111, "bits 5+ are free");
             }
          }
       }
