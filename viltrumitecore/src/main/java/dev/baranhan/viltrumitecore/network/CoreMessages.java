@@ -295,6 +295,11 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::new)
          .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::handle).add();
+      // Thor integration: a refused, already predicted dash is stopped on the client.
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

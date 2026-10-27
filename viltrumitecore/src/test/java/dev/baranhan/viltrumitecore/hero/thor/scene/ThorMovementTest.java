@@ -29,6 +29,21 @@ class ThorMovementTest {
    }
 
    @Test
+   void theServerUndoesARefusedPredictedDash() throws java.io.IOException {
+      assertTrue(ThorDash.accepted(0, true, 100L, null));
+      assertTrue(ThorDash.accepted(3, true, 100L, 100L), "the cooldown is over at its tick");
+      assertFalse(ThorDash.accepted(1, false, 100L, null), "not allowed now (full flight, scene, held, anchored)");
+      assertFalse(ThorDash.accepted(2, true, 99L, 100L), "on cooldown");
+      assertFalse(ThorDash.accepted(-1, true, 100L, null));
+      assertFalse(ThorDash.accepted(4, true, 100L, null));
+      String dash = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/dev/baranhan/viltrumitecore/hero/thor/scene/ThorDash.java"));
+      assertTrue(dash.contains("player.connection.teleport("), "a refused dash snaps the player back to the server position");
+      assertTrue(dash.contains("new ThorDashS2CPacket()"), "and the client stops the burst");
+      String messages = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));
+      assertTrue(messages.contains("ThorDashS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT"));
+   }
+
+   @Test
    void noAttackInFullFlightOrScene() {
       assertTrue(ThorMovementRules.attacksAllowed(false, false));
       assertFalse(ThorMovementRules.attacksAllowed(true, false), "decisions 22 / 34: full flight is movement only");

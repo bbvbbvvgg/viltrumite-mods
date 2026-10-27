@@ -4,9 +4,12 @@ import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
+import dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket;
+import dev.baranhan.viltrumitecore.network.CoreMessages;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 
@@ -14,7 +17,10 @@ import net.minecraft.sounds.SoundEvents;
  * Server side of the double-WASD dash (decisions 110, 135): the client moves
  * the local player at once (its own movement), the server checks that a
  * dash is allowed now (ground or HOVER, never full flight, no scene, not
- * held) and on cooldown, and plays it for everyone around.
+ * held) and on cooldown, and plays it for everyone around. A refused dash is
+ * undone: the player snaps back to the server position (the DASH packet
+ * arrives before the first dashed movement packet, so that position is the
+ * pre-dash one) and the client stops the burst (ThorDashS2CPacket).
  */
 final class ThorDash {
    private static final Map<UUID, Long> NEXT = new HashMap<>();
@@ -29,19 +35,36 @@ final class ThorDash {
    }
 
    static void onDash(ServerPlayer player, int direction) {
-      if (direction < 0 || direction > 3 || !allowed(player)) {
+      if (ThorState.of(player) == null) {
          return;
       }
 
       long now = player.level().getGameTime();
-      Long next = NEXT.get(player.getUUID());
-      if (next != null && now < next) {
+      if (!accepted(direction, allowed(player), now, NEXT.get(player.getUUID()))) {
+         refuse(player);
          return;
       }
 
       NEXT.put(player.getUUID(), now + Math.max(1, ThorSceneConfig.dashCooldown - 2));
       HeroFx.airTrail(player, player);
       SceneFx.sound(player, player.position(), SoundEvents.PLAYER_ATTACK_SWEEP, 0.6F, 1.5F);
+   }
+
+   /** Pure: the server's verdict on a dash the client has already started (a known direction, allowed now, off cooldown). */
+   public static boolean accepted(int direction, boolean allowed, long now, @Nullable Long next) {
+      return direction >= 0 && direction <= 3 && allowed && (next == null || now >= next);
+   }
+
+   /** Undo a predicted dash: back to the server position (velocity cleared by the absolute teleport), the client stops the burst. */
+   private static void refuse(ServerPlayer player) {
+      if (player.hasDisconnected()) {
+         return;
+      }
+
+      if (!player.isPassenger()) {
+         player.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+      }
+      CoreMessages.sendToPlayer(new ThorDashS2CPacket(), player);
    }
 
    static void forget(UUID player) {
