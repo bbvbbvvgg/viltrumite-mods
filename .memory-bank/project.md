@@ -373,3 +373,11 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - A lethal B melee blow can start C's fatality inside the hit (`LETHAL_HIT`). `MeleeMoves.landStrike` then stops at once: no push, no other targets, no hit-stop, shockwave or crater.
 - `HeroRegistry.changeHero`: A's `admitsEntry` first, then C's `HeroChangeDeferral` (returns true = accepted, the change runs after the scene).
 - Integration checks: `ThorIntegrationSeamsTest`.
+- Move lifecycle: sessions start moves only with `ThorBridge.start` / `startCutting` (= `ThorActions.begin`) and stop them with `ThorBridge.interrupt` / `end`. Order: gate → `admits` → onStop(replaced, also a same-move restart) → onStart → onPhase(entry event when intro = 0). A buffered press gets `onQueued`, its step later `onPhase(CHAIN)` then the entry event. `ThorState.lastMove` lets the tick deliver a missed onStop once. `ThorActions.start` is pure bookkeeping only (tests).
+- Lifecycle stop (`ThorActions.stop(player, state, cause)`): onStop → `ThorLifecycle` listeners (B clears `ThorCombatState`) → bridge flags dropped. The foundation never calls a session directly.
+- Forced releases (`HeldInputs.releaseAll`: death, logout, hero change, erasure, anchoring, suit off) reach `HeroDefinition.handleForcedRelease` (default = plain release). Thor maps it to `ReleaseCause.FORCED`; `ThorMoveHandler.onRelease(ctx, ticks, cause)` drops it by default (no charged throw); B's storm cancels quietly.
+- Client mouse claim is read on the press edge only; a held button is latched while the key is down (`HeroMouseInput.held`).
+- `ThorEvents.post` and `ThorLifecycle.post` log a throwing listener and continue (never rethrow into the damage path or the hammer store).
+- Thor cooldowns use the shared `PersistentCooldowns` (keys and snapshot indices in `ThorCooldowns`; survive relog, hero change and death — death reset is OPEN). The snapshot `cooldowns[2]` = ultimate slot.
+- One target rule: `HeroTargets.canHit` (resolver enemy, B hits, A throw / return). Villagers and passive mobs are still valid targets (OPEN).
+- Session A's store has no belt phase: `MjolnirWorld.inHandProjection` keeps HOLSTERED only during a technical DRAW / HOLSTER. MMB from the belt resolves to nothing (DRAW key is OPEN, design §10).
