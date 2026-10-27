@@ -21,7 +21,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Server grabs (decisions 15, 35, 52, 57, 60-64, 117-126). Thor holds the
+ * Server grabs (decisions 15, 59-62, 64, 65, 88, 117, 122-126). Thor holds the
  * victim in front of him with the shared PULL control (no second hold
  * system) and the shared held-target seam (the victim's client and every
  * tracker render the same anchor); the victim can only look and press its

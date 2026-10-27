@@ -139,6 +139,12 @@ public final class ThorHero implements HeroDefinition {
       return ThorControls.claimedMouse(button, context(player));
    }
 
+   /** No vanilla hit in full flight (decisions 22, 34) or while a scene owns the mouse. */
+   @Override
+   public boolean allowsVanillaAttack(Player player) {
+      return ThorMovementRules.attacksAllowed(ThorScenes.fullFlight(player), ThorScenes.claimsMouse(player));
+   }
+
    /** Both sides: the body a scene holds (grab, fatality), or -1. */
    @Override
    public int heldTargetId(Player holder) {

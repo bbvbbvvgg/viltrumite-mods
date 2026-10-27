@@ -26,7 +26,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * Server half of the V point selection (decisions 14, 29, 41-48): the scene
+ * Server half of the V point selection (decisions 14, 29, 41-47, 71, 72, 120): the scene
  * lock and camera lease are held, Thor stays put and takes no damage, the
  * world goes on; the client's pick is judged again here (solid top,
  * SafeSpot, inside the camera's area, visible from the camera point).
@@ -126,6 +126,14 @@ final class TeleportSessions {
    static void confirm(ServerPlayer thor, BlockPos pos) {
       Session session = SESSIONS.get(thor.getUUID());
       if (session == null) {
+         return;
+      }
+
+      HammerView hammer = ThorBridge.hammer(thor);
+      if (hammer == null || !hammer.inHand()) {
+         // Decision 42: Mjölnir must still be in the hand when the point is confirmed.
+         end(thor, session);
+         ThorFeedback.refuse(thor, Component.translatable("hud.viltrumitecore.thor.teleport.refused.no_hammer"));
          return;
       }
 

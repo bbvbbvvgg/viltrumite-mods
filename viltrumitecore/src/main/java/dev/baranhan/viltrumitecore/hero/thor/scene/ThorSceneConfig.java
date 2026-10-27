@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  * packet or the same defaults).
  */
 public final class ThorSceneConfig {
-   // --- grab window (decisions 35, 52, 57) ---
+   // --- grab window (decisions 35, 52, 57, 58, 106) ---
    /** PLACEHOLDER: chance per landed hit of a normal LMB/RMB combo that the (once per combo) window opens. */
    public static float grabWindowChance = 0.3F;
    /** APPROVED (52, 57): "около 1 секунды". */
@@ -27,7 +27,7 @@ public final class ThorSceneConfig {
    /** PLACEHOLDER: how far the remembered window target may be when MMB is pressed (blocks, eye to box). */
    public static double grabReach = 4.5;
 
-   // --- hold and resistance (decisions 60-64, 117-121) ---
+   // --- hold and resistance (decisions 59-61, 123, 124, 150, 151) ---
    /** PLACEHOLDER: the longest hold without a chosen action (ticks); the victim drops after it. */
    public static int holdMaxTicks = 300;
    /** PLACEHOLDER: escape meter per accepted press of the shown key (1 = free). */
@@ -39,7 +39,7 @@ public final class ThorSceneConfig {
    /** PLACEHOLDER: the hold ends when the pair drifts this far apart (teleport, knockback by a third party). */
    public static double holdBreakDistance = 8.0;
 
-   // --- grab actions (decisions 122-126) ---
+   // --- grab actions (decisions 62, 64, 87, 122, 125) ---
    /** PLACEHOLDER: LMB ground slam: impact tick, damage, crater radius, recovery. */
    public static int slamImpactTick = 12;
    public static float slamDamage = 12.0F;
@@ -58,7 +58,7 @@ public final class ThorSceneConfig {
    /** PLACEHOLDER: Thor's follow-through after the victim left the hand (ticks). */
    public static int grabRecoverTicks = 8;
 
-   // --- fatality (decisions 53, 66, 85-96, 106, 110) ---
+   // --- fatality (decisions 53, 66, 68-70, 85-96, 118, 119) ---
    /** PLACEHOLDER: search radius for a safe scene spot when the hit spot does not fit. */
    public static double fatalityRelocateRadius = 6.0;
    /** PLACEHOLDER: intro bounds (ticks) and the fastest a body moves / turns in a contextual intro. */
@@ -79,7 +79,7 @@ public final class ThorSceneConfig {
    /** PLACEHOLDER: the farthest selectable point from the camera's column (horizontal blocks). */
    public static double teleportMaxRadius = 96.0;
 
-   // --- dash (decisions 5, 20) ---
+   // --- dash (decisions 110, 135) ---
    /** PLACEHOLDER: double-tap window, dash speed (blocks/tick), ticks re-applied, cooldown. */
    public static int dashTapWindow = 7;
    public static double dashSpeed = 1.5;
