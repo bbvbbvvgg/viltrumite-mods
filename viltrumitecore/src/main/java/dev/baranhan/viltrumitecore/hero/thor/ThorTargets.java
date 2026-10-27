@@ -21,7 +21,7 @@ public final class ThorTargets {
          .stream().min(Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
    }
 
-   static boolean isEnemy(Player player, LivingEntity entity) {
+   public static boolean isEnemy(Player player, LivingEntity entity) {
       return entity != player && entity.isAlive() && entity.isAttackable() && !entity.isSpectator() && !(entity instanceof ArmorStand)
          && !player.isAlliedTo(entity);
    }

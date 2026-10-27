@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.network.packet;
 
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
@@ -47,7 +48,13 @@ public class HeroChoiceC2SPacket {
             corePlayer.setChosenRace(true);
          }
 
-         HeroRegistry.changeHero(player, id);
+         if (!HeroRegistry.changeHero(player, id) && HeroRegistry.get(player).id() != id && player instanceof ViltrumiteCorePlayer corePlayer) {
+            // Refused (e.g. a one-holder hero slot is taken): the choice stays open.
+            corePlayer.setChosenRace(false);
+            CoreMessages.sendToPlayer(new OpenRaceScreenS2CPacket(), player);
+            return;
+         }
+
          HeroRegistry.repairLoadout(player);
       });
       context.setPacketHandled(true);
