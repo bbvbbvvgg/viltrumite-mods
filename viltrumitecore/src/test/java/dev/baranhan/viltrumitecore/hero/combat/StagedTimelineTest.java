@@ -269,4 +269,23 @@ class StagedTimelineTest {
       assertFalse(MovePhase.INTRO.atLeast(MovePhase.MAIN));
       assertFalse(MovePhase.FINISH.atLeast(null));
    }
+
+   @Test
+   void skipToJumpsOnlyForwardIntoAPhaseWithTicks() {
+      StagedTimeline<Move> timeline = new StagedTimeline<>();
+      assertEquals(StagedTimeline.Event.NONE, timeline.skipTo(MovePhase.MAIN), "idle: nothing to skip");
+      timeline.request(WALK, -1);
+      assertEquals(StagedTimeline.Event.ENTER_MAIN, timeline.skipTo(MovePhase.MAIN));
+      assertEquals(MovePhase.MAIN, timeline.phase());
+      assertEquals(WALK.intro(), timeline.elapsed(), "first tick of MAIN");
+      assertEquals(StagedTimeline.Event.NONE, timeline.skipTo(MovePhase.MAIN), "never the current phase");
+      assertEquals(StagedTimeline.Event.NONE, timeline.skipTo(MovePhase.INTRO), "never backwards");
+      assertEquals(StagedTimeline.Event.ENTER_FINISH, timeline.skipTo(MovePhase.FINISH));
+      assertEquals(WALK.intro() + WALK.main(), timeline.elapsed());
+
+      StagedTimeline<Move> noFinish = new StagedTimeline<>();
+      noFinish.request(move(7, 1, 1, 1, 0, null), -1);
+      assertEquals(StagedTimeline.Event.NONE, noFinish.skipTo(MovePhase.FINISH), "a phase without ticks is not entered");
+      assertEquals(MovePhase.INTRO, noFinish.phase());
+   }
 }
