@@ -117,6 +117,8 @@ public class ViltrumiteCore {
       ViltrumiteEffects.register(modEventBus);
       ViltrumiteBlocks.register(modEventBus);
       ViltrumitePotions.register(modEventBus);
+      // Thor session A: world Mjölnir moves, hammer access and dev commands on the shared bridge.
+      dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirModule.bootstrap();
    }
 
    private void commonSetup(FMLCommonSetupEvent event) {
@@ -124,6 +126,8 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatConfig.load();
+         dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatModule.install();
          dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes.bootstrap();
       });
    }

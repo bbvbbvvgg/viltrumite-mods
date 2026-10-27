@@ -88,20 +88,30 @@ public final class HeroRegistry {
 
    /**
     * Explicit hero transition: full lifecycle. No-op when the id is unchanged,
-    * so selecting the current hero is never an exit/re-entry exploit.
+    * so selecting the current hero is never an exit/re-entry exploit. False
+    * when nothing changed: same id, or the new hero refused the entry
+    * (HeroDefinition.admitsEntry, checked before any cleanup). True when the
+    * change ran, or when a scene deferred it (HeroChangeDeferral: the scene
+    * calls this again at its end, so admitsEntry is checked again then).
     */
-   public static void changeHero(ServerPlayer player, HeroId id) {
+   public static boolean changeHero(ServerPlayer player, HeroId id) {
       if (!(player instanceof HeroPlayer heroPlayer)) {
-         return;
+         return false;
       }
 
       HeroId current = heroPlayer.getHeroId();
       if (!isRealTransition(current, id)) {
-         return;
+         return false;
       }
 
+      if (!get(id).admitsEntry(player)) {
+         return false;
+      }
+
+      // Session C: a running scene (fatality) takes the change over and applies it at its end (#216).
+      // Accepted, not refused: the choice screen must not reopen (HeroChoiceC2SPacket).
       if (HeroChangeDeferral.defer(player, id)) {
-         return;
+         return true;
       }
 
       dev.baranhan.viltrumitecore.hero.control.WorldPause.ownerLeft(player.getServer(),player.getUUID());
@@ -129,6 +139,7 @@ public final class HeroRegistry {
       get(id).enter(player);
       HeroFlightGrant.sync(player);
       syncSnapshot(player);
+      return true;
    }
 
    /**
