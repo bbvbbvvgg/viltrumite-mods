@@ -4,71 +4,96 @@ import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.combat.InterruptReason;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveContext;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves;
+import javax.annotation.Nullable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Server press and tick flow: resolve the context move, gate it (shipped,
- * hands, busy), play it on the timeline and apply its phase effects. The
- * flow itself is pure ({@link #start}, {@link #advance}); the ServerPlayer
- * wrappers only read the world and give feedback. Stage 1 effect: Mjölnir
- * changes place at the start of the MAIN phase of DRAW / HOLSTER.
+ * Server press / release / tick flow: resolve the context move, gate it
+ * (authored, hands, scene lock, busy), play it on the timeline and hand its
+ * events to the move's registered handler. The flow is pure ({@link #start},
+ * {@link #release(ThorState, ThorInput)}, {@link #advance}); the ServerPlayer
+ * wrappers read the world and give feedback. Without registrations nothing
+ * reachable from a key starts: every press is refused as not ready.
  */
 public final class ThorActions {
    /** Why a resolved move does not start. */
    public enum Refusal {
       NONE,
-      /** The move belongs to a later stage. */
+      /** No session has registered the move. */
       NOT_READY,
       /** An item occupies the right hand (drawing Mjölnir needs it free). */
       HANDS_BUSY,
-      /** Another move runs and does not give way (priority, cancel window, full buffer). */
+      /** Another move runs and does not give way, or a scene holds the lock. */
       BUSY
+   }
+
+   /** What a release reached: the move chosen on the press and how long the key was held. */
+   public record Release(ThorMove move, int heldTicks) {
    }
 
    private ThorActions() {
    }
 
    /** Pure gate before the timeline (the timeline adds BUSY). */
-   public static Refusal gate(ThorMove move, boolean handFree) {
-      if (!move.shipped()) {
+   public static Refusal gate(ThorState state, ThorMove move, boolean handFree) {
+      if (!move.authored()) {
          return Refusal.NOT_READY;
+      } else if (ThorBridge.sceneLocked(state)) {
+         return Refusal.BUSY;
       }
 
       return move == ThorMove.DRAW && !handFree ? Refusal.HANDS_BUSY : Refusal.NONE;
    }
 
-   /** Server context of a player: live state, held items, movement. */
-   public static ThorContext context(ServerPlayer player, ThorState state) {
-      // hasTarget / flying / guarding / grabbing arrive with the stages that need them (2, 4, 5).
-      return new ThorContext(state.hammer, state.mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(),
-         false, false, false, false);
+   /** Server context of a player: live state, held items, movement, the nearest enemy. */
+   public static ThorContext context(ServerPlayer player, ThorState state, @Nullable LivingEntity enemy) {
+      return new ThorContext(state.hammer, state.mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, enemy != null,
+         ThorBridge.grabWindowOpen(state));
    }
 
    /** A press of one of Thor's inputs (already past canAct). */
    public static void press(ServerPlayer player, ThorState state, ThorInput input) {
-      ThorContext context = context(player, state);
+      LivingEntity enemy = ThorTargets.nearestEnemy(player, ThorRules.MELEE_ENEMY_RADIUS);
+      ThorContext context = context(player, state, enemy);
       ThorMove move = ThorControls.resolve(input, context);
       if (move == null) {
          return;
       }
 
       HammerState before = state.hammer;
-      switch (start(state, move, context.handFree())) {
+      ThorMove previous = state.timeline.move();
+      switch (start(state, input, move, context.handFree())) {
          case NOT_READY -> ThorFeedback.refuse(player, ThorFeedback.notReady(move));
          case HANDS_BUSY -> ThorFeedback.refuse(player, Component.translatable(ThorFeedback.HANDS_BUSY));
          case BUSY -> ThorFeedback.refuse(player, Component.translatable(ThorFeedback.BUSY));
-         case NONE -> ThorFeedback.hammerMoved(player, before, state.hammer);
+         case NONE -> {
+            if (previous != null && previous != state.timeline.move()) {
+               ThorMoves.handler(previous).onStop(new ThorMoveContext(player, state, previous, null));
+            }
+
+            ThorMoves.handler(move).onStart(new ThorMoveContext(player, state, move, move == ThorMove.HAMMER_STRIKE ? enemy : null));
+            ThorFeedback.hammerMoved(player, before, state.hammer);
+         }
       }
+   }
+
+   /** Pure press flow without an input (technical starts by a session). */
+   public static Refusal start(ThorState state, ThorMove move, boolean handFree) {
+      return start(state, null, move, handFree);
    }
 
    /**
     * Pure press flow: gate the move, then admit it on the timeline (it starts,
-    * cancels the running one, chains or is buffered). A move that starts in
-    * its MAIN phase applies the effect at once.
+    * cancels the running one, chains or is buffered). An admitted press
+    * remembers its move for the release of {@code input}.
     */
-   public static Refusal start(ThorState state, ThorMove move, boolean handFree) {
-      Refusal gate = gate(move, handFree);
+   public static Refusal start(ThorState state, @Nullable ThorInput input, ThorMove move, boolean handFree) {
+      Refusal gate = gate(state, move, handFree);
       if (gate != Refusal.NONE) {
          return gate;
       }
@@ -78,6 +103,11 @@ public final class ThorActions {
          return Refusal.BUSY;
       }
 
+      if (input != null) {
+         state.pressed.put(input, move);
+         state.heldTicks.put(input, 0);
+      }
+
       if (admission.started()) {
          apply(state, state.timeline.entryEvent());
       }
@@ -85,19 +115,47 @@ public final class ThorActions {
       return Refusal.NONE;
    }
 
+   /** Release of a held input (HeldInputs always delivers it to the started action). */
+   public static void release(ServerPlayer player, ThorState state, ThorInput input) {
+      Release release = release(state, input);
+      if (release != null) {
+         ThorMoves.handler(release.move()).onRelease(new ThorMoveContext(player, state, release.move(), null), release.heldTicks());
+      }
+   }
+
+   /** Pure release: the move chosen on the press, or null when the press started nothing. */
+   @Nullable
+   public static Release release(ThorState state, ThorInput input) {
+      ThorMove move = state.pressed.remove(input);
+      Integer held = state.heldTicks.remove(input);
+      return move == null ? null : new Release(move, held == null ? 0 : held);
+   }
+
    /** One server tick of the move flow. */
    public static void tick(ServerPlayer player, ThorState state) {
       HammerState before = state.hammer;
-      advance(state, ThorHands.free(player), !player.isAlive() || HeroDamage.isAnchored(player));
+      ThorMove running = state.timeline.move();
+      StagedTimeline.Event event = advance(state, ThorHands.free(player), !player.isAlive() || HeroDamage.isAnchored(player));
+      if (running != null && event == StagedTimeline.Event.NONE && !state.timeline.running()) {
+         ThorMoves.handler(running).onStop(new ThorMoveContext(player, state, running, null));
+      } else if (event != StagedTimeline.Event.NONE) {
+         ThorMove owner = event == StagedTimeline.Event.END ? running : state.timeline.move();
+         if (owner != null) {
+            ThorMoves.handler(owner).onPhase(new ThorMoveContext(player, state, owner, null), event);
+         }
+      }
+
       ThorFeedback.hammerMoved(player, before, state.hammer);
    }
 
    /**
-    * Pure tick flow. {@code controlled}: dead or held by external control,
-    * which stops the move. An item taken into the right hand before the grip
-    * cancels a draw; Mjölnir never shares the hand with an item.
+    * Pure tick flow; returns the timeline event of this tick. {@code
+    * controlled}: dead or held by external control, which stops the move. An
+    * item taken into the right hand before the grip cancels a draw; Mjölnir
+    * never shares the hand with an item. Held inputs count up, the grab
+    * window counts down.
     */
-   public static void advance(ThorState state, boolean handFree, boolean controlled) {
+   public static StagedTimeline.Event advance(ThorState state, boolean handFree, boolean controlled) {
       if (controlled) {
          state.timeline.interrupt(InterruptReason.CONTROL);
       }
@@ -106,8 +164,15 @@ public final class ThorActions {
          state.timeline.interrupt(InterruptReason.INPUT);
       }
 
-      apply(state, state.timeline.tick());
+      if (state.grabWindow > 0) {
+         state.grabWindow--;
+      }
+
+      state.heldTicks.replaceAll((input, ticks) -> ticks + 1);
+      StagedTimeline.Event event = state.timeline.tick();
+      apply(state, event);
       state.hammer = settle(state.hammer, handFree);
+      return event;
    }
 
    /** Mjölnir cannot share the right hand with an item: it goes back to the belt at once. */
@@ -115,7 +180,7 @@ public final class ThorActions {
       return hammer == HammerState.IN_HAND && !handFree ? HammerState.HOLSTERED : hammer;
    }
 
-   /** Pure: where Mjölnir is after a move's MAIN phase began. */
+   /** Pure: where Mjölnir is after a technical DRAW / HOLSTER MAIN phase began. */
    public static HammerState afterMain(ThorMove move, HammerState hammer) {
       return switch (move) {
          case DRAW -> hammer == HammerState.HOLSTERED ? HammerState.IN_HAND : hammer;
@@ -124,7 +189,7 @@ public final class ThorActions {
       };
    }
 
-   /** Phase effects of one timeline event (a chained step may start in MAIN). */
+   /** Foundation phase effects of one timeline event (a chained step may start in MAIN). */
    private static void apply(ThorState state, StagedTimeline.Event event) {
       if (event == StagedTimeline.Event.CHAIN) {
          event = state.timeline.entryEvent();
@@ -136,8 +201,18 @@ public final class ThorActions {
       }
    }
 
-   /** Death, logout, dimension or hero change: stop the move (the hammer stays where it is). */
+   /** Lifecycle stop with the player at hand: the stopped move's handler hears onStop. */
+   public static void stop(ServerPlayer player, ThorState state) {
+      ThorMove running = state.timeline.move();
+      stop(state);
+      if (running != null) {
+         ThorMoves.handler(running).onStop(new ThorMoveContext(player, state, running, null));
+      }
+   }
+
+   /** Death, logout, dimension or hero change: stop the move, drop the bridge flags (the hammer stays where it is). */
    public static void stop(ThorState state) {
       state.timeline.interrupt(InterruptReason.LIFECYCLE);
+      state.clearTransient();
    }
 }

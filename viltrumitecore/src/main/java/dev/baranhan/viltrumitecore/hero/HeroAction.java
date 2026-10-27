@@ -64,12 +64,14 @@ public enum HeroAction {
    AIR_STEP,
    /** Reinhard cinematic Z; appended to preserve existing wire ordinals. */
    DIAGONAL_WORLD_CUT,
-   /** Context slot key "power" (Thor: electric mode / lightning call by state). */
+   /** Slot key 1 (Thor R: toggle the electric mode). */
    CONTEXT_POWER,
-   /** Context slot key "mobility" (Thor: dash / teleport strike / dive slam by state). */
+   /** Slot key 2 (Thor Y: pull to the thrown Mjölnir). */
    CONTEXT_MOBILITY,
-   /** Separate ultimate key (Thor: Wrath). */
-   ULTIMATE;
+   /** Separate ultimate key (Thor; default key not approved, slot 3). */
+   ULTIMATE,
+   /** Slot key 4 (Thor V: choose the teleport point). */
+   CONTEXT_TELEPORT;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

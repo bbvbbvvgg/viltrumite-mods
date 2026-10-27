@@ -12,19 +12,23 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Thor's three panel slots: two context keys and the separate ultimate. The
- * mouse buttons are not slots. A slot is lit only while its input can start a
- * shipped move (none in stage 1: all three are greyed and refuse with an
- * "in development" message).
+ * Thor's four panel slots, in key order: R (electric mode toggle), Y (pull to
+ * the thrown Mjölnir), the ultimate (slot 3, default Z, key not approved) and
+ * V (teleport point, slot 4). The mouse buttons are not slots. A slot is lit
+ * only while its input can start an authored move (none in the foundation:
+ * all are greyed and refuse with an "in development" message). The ids are
+ * internal, not approved ability names.
  */
 public final class ThorAbilities {
-   /** Slot 1 (R): electric mode / lightning call. */
+   /** Slot 1 (R): toggle the electric mode. */
    public static final String THUNDER = "thor:thunder";
-   /** Slot 2 (Y): lightning dash / teleport strike / dive slam. */
+   /** Slot 2 (Y): pull to Mjölnir flying after a throw. */
    public static final String ONSLAUGHT = "thor:onslaught";
-   /** Slot 3 (Z): Wrath of Thor, the ultimate. */
+   /** Slot 3 (Z, temporary default): the ultimate. */
    public static final String WRATH = "thor:wrath";
-   private static final String[] OWN = {THUNDER, ONSLAUGHT, WRATH};
+   /** Slot 4 (V): choose the teleport point. */
+   public static final String TELEPORT = "thor:teleport";
+   private static final String[] OWN = {THUNDER, ONSLAUGHT, WRATH, TELEPORT};
 
    private ThorAbilities() {
    }
@@ -52,8 +56,10 @@ public final class ThorAbilities {
          return HeroAction.CONTEXT_POWER;
       } else if (ONSLAUGHT.equals(abilityId)) {
          return HeroAction.CONTEXT_MOBILITY;
+      } else if (WRATH.equals(abilityId)) {
+         return HeroAction.ULTIMATE;
       } else {
-         return WRATH.equals(abilityId) ? HeroAction.ULTIMATE : null;
+         return TELEPORT.equals(abilityId) ? HeroAction.CONTEXT_TELEPORT : null;
       }
    }
 
@@ -69,7 +75,7 @@ public final class ThorAbilities {
       return list;
    }
 
-   /** Grey while the input has no shipped move, or while a move runs. */
+   /** Grey while the input has no authored move, or while a move runs. */
    public static boolean slotGrey(Player player, @Nullable ThorInput input) {
       if (input == null || !(player instanceof HeroPlayer heroPlayer)) {
          return true;
@@ -80,7 +86,7 @@ public final class ThorAbilities {
    }
 
    static boolean slotGrey(@Nullable HeroPublicSnapshot snapshot, ThorInput input) {
-      return !ThorControls.anyShipped(input) || snapshot == null || snapshot.actionBusy();
+      return !ThorControls.anyAuthored(input) || snapshot == null || snapshot.actionBusy();
    }
 
    public static String[] defaultLoadout() {

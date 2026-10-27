@@ -10,8 +10,8 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Third-person keys per Thor move: the animation extension point. A later
- * stage authors a move on the server (phase ticks) and registers its clip
+ * Third-person keys per Thor move: the animation extension point. A session
+ * registers a move on the server (ThorMoves, phase ticks) and its clip
  * here; ThorPoser plays whatever is registered on the snapshot clock, so the
  * poser itself never changes. Rows are additive PoseKeys rows; key ticks must
  * end at the move's server length (tested). Clips may differ per combo step.

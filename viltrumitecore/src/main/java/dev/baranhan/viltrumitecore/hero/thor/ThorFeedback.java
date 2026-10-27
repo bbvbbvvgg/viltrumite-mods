@@ -16,9 +16,9 @@ public final class ThorFeedback {
    private ThorFeedback() {
    }
 
-   /** "&lt;move&gt;: in development (stage N)". */
+   /** "&lt;move&gt;: in development". */
    public static Component notReady(ThorMove move) {
-      return Component.translatable(NOT_READY, Component.translatable(move.translationKey()), move.stage());
+      return Component.translatable(NOT_READY, Component.translatable(move.translationKey()));
    }
 
    public static void refuse(ServerPlayer player, Component message) {

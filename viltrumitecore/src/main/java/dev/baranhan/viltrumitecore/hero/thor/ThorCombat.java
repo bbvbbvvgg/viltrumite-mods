@@ -7,8 +7,8 @@ import java.util.Set;
 
 /**
  * Thor's combat presence for the shared interaction rules: Mjölnir in the
- * hand, or bare fists. Stance stays NONE until guard / strikes ship (stage 2);
- * a thrown hammer (stage 3) will carry its own presence with stance THROWN.
+ * hand, or bare fists. Stance stays NONE until a session authors strikes;
+ * a thrown hammer will carry its own presence with stance THROWN.
  */
 public final class ThorCombat {
    public static final String MJOLNIR_ID = "thor:mjolnir";

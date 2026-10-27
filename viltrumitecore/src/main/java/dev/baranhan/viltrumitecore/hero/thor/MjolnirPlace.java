@@ -4,7 +4,7 @@ package dev.baranhan.viltrumitecore.hero.thor;
 public enum MjolnirPlace {
    HAND,
    BELT,
-   /** Away from Thor (thrown / returning): drawn by its own entity in stage 3. */
+   /** Away from Thor (thrown / returning): drawn by its own entity once the throw is authored. */
    HIDDEN;
 
    /** An item in the right hand always wins over the hammer, which then shows on the belt. */

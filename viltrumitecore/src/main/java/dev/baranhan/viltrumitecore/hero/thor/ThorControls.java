@@ -5,9 +5,12 @@ import dev.baranhan.viltrumitecore.hero.MouseButton;
 import javax.annotation.Nullable;
 
 /**
- * Context controls (spec §5): one key, different moves by state. Pure; the
- * single source for the server press, the client mouse claim and the panel
- * grey-out. Order of the checks is the priority of the contexts.
+ * Context controls: one key, a move id by state. Pure; the single resolver
+ * for the server press, the client mouse claim and the panel grey-out. The
+ * order of the checks is the priority of the contexts. It only routes: a
+ * move does something only once a session registers it (ThorMoves).
+ * Retired ids (guard, air strike, dash, teleport strike, dive slam, manual
+ * lightning call, grab slam) are never returned.
  */
 public final class ThorControls {
    private ThorControls() {
@@ -16,37 +19,33 @@ public final class ThorControls {
    /** The move an input means right now, or null when it means nothing for Thor. */
    @Nullable
    public static ThorMove resolve(ThorInput input, ThorContext context) {
-      boolean inHand = context.hammer() == HammerState.IN_HAND;
       return switch (input) {
-         case STRIKE -> {
-            if (context.grabbing()) {
-               yield context.sneaking() ? ThorMove.FATALITY : ThorMove.GRAB_SLAM;
-            } else if (context.guarding()) {
-               yield ThorMove.HAMMER_THROW;
-            } else if (context.flying()) {
-               yield ThorMove.AIR_STRIKE;
-            } else if (context.mode() == ThorMode.ELECTRIC) {
-               yield ThorMove.ELECTRIC_COMBO;
-            }
-
-            yield inHand ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
-         }
-         case STANCE -> inHand ? ThorMove.GUARD : context.hasTarget() ? ThorMove.GRAB : null;
-         case HAMMER -> switch (context.hammer()) {
-            case IN_HAND -> ThorMove.HOLSTER;
-            case HOLSTERED -> ThorMove.DRAW;
-            case THROWN, RETURNING -> ThorMove.RECALL;
-         };
-         case POWER -> context.mode() == ThorMode.ELECTRIC && inHand && !context.sneaking() ? ThorMove.LIGHTNING_CALL : ThorMove.ELECTRIC_MODE;
-         case MOBILITY -> context.airborne() ? ThorMove.DIVE_SLAM : context.hasTarget() ? ThorMove.TELEPORT_STRIKE : ThorMove.LIGHTNING_DASH;
+         // No attacks in full flight.
+         case STRIKE -> context.flying() ? null
+            : context.mode() == ThorMode.ELECTRIC ? ThorMove.ELECTRIC_COMBO
+            : context.hammer() == HammerState.IN_HAND ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
+         // RMB routing is not part of the bridge: vanilla until its session defines it.
+         case STANCE -> null;
+         case HAMMER -> hammer(context);
+         case POWER -> ThorMove.ELECTRIC_MODE;
+         case MOBILITY -> context.hammer() == HammerState.THROWN ? ThorMove.HAMMER_PULL : null;
+         case TELEPORT -> ThorMove.TELEPORT_SELECT;
          case ULTIMATE -> ThorMove.WRATH;
       };
    }
 
-   /**
-    * Mouse claim: only a button whose move is shipped is taken from vanilla.
-    * LMB / RMB keep vanilla attack and use until their moves ship (stage 2).
-    */
+   /** MMB, the one decision point: grab window &gt; recall &gt; melee (enemy within 4 blocks) &gt; throw. */
+   public static ThorMove hammer(ThorContext context) {
+      if (context.grabWindow()) {
+         return ThorMove.GRAB;
+      } else if (context.hammer().away()) {
+         return ThorMove.RECALL;
+      }
+
+      return context.enemyNear() ? ThorMove.HAMMER_STRIKE : ThorMove.HAMMER_THROW;
+   }
+
+   /** Mouse claim: only a button whose resolved move is authored is taken from vanilla. */
    @Nullable
    public static HeroAction claimedMouse(MouseButton button, ThorContext context) {
       ThorInput input = ThorInput.of(button);
@@ -55,13 +54,13 @@ public final class ThorControls {
       }
 
       ThorMove move = resolve(input, context);
-      return move != null && move.shipped() ? input.action() : null;
+      return move != null && move.authored() ? input.action() : null;
    }
 
-   /** Can this input start any shipped move in some context (panel slot lit)? */
-   public static boolean anyShipped(ThorInput input) {
+   /** Can this input start any authored move in some context (panel slot lit)? */
+   public static boolean anyAuthored(ThorInput input) {
       for (ThorMove move : candidates(input)) {
-         if (move.shipped()) {
+         if (move.authored()) {
             return true;
          }
       }
@@ -69,15 +68,15 @@ public final class ThorControls {
       return false;
    }
 
-   /** Every move an input can resolve to (documentation, tests, grey-out). */
+   /** Every move an input can resolve to, in resolver order (tests, grey-out). */
    public static ThorMove[] candidates(ThorInput input) {
       return switch (input) {
-         case STRIKE -> new ThorMove[]{ThorMove.FATALITY, ThorMove.GRAB_SLAM, ThorMove.HAMMER_THROW, ThorMove.AIR_STRIKE, ThorMove.ELECTRIC_COMBO,
-            ThorMove.HAMMER_COMBO, ThorMove.FIST_COMBO};
-         case STANCE -> new ThorMove[]{ThorMove.GUARD, ThorMove.GRAB};
-         case HAMMER -> new ThorMove[]{ThorMove.HOLSTER, ThorMove.DRAW, ThorMove.RECALL};
-         case POWER -> new ThorMove[]{ThorMove.LIGHTNING_CALL, ThorMove.ELECTRIC_MODE};
-         case MOBILITY -> new ThorMove[]{ThorMove.DIVE_SLAM, ThorMove.TELEPORT_STRIKE, ThorMove.LIGHTNING_DASH};
+         case STRIKE -> new ThorMove[]{ThorMove.ELECTRIC_COMBO, ThorMove.HAMMER_COMBO, ThorMove.FIST_COMBO};
+         case STANCE -> new ThorMove[0];
+         case HAMMER -> new ThorMove[]{ThorMove.GRAB, ThorMove.RECALL, ThorMove.HAMMER_STRIKE, ThorMove.HAMMER_THROW};
+         case POWER -> new ThorMove[]{ThorMove.ELECTRIC_MODE};
+         case MOBILITY -> new ThorMove[]{ThorMove.HAMMER_PULL};
+         case TELEPORT -> new ThorMove[]{ThorMove.TELEPORT_SELECT};
          case ULTIMATE -> new ThorMove[]{ThorMove.WRATH};
       };
    }

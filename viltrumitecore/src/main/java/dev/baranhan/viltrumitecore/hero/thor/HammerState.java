@@ -11,9 +11,9 @@ public enum HammerState {
    HOLSTERED,
    /** In the right hand. */
    IN_HAND,
-   /** Flying away (stage 3, not produced yet). */
+   /** Flying away after a throw (not produced yet). */
    THROWN,
-   /** Flying back to the hand (stage 3, not produced yet). */
+   /** Flying back to the hand (not produced yet). */
    RETURNING;
 
    private static final HammerState[] VALUES = values();
