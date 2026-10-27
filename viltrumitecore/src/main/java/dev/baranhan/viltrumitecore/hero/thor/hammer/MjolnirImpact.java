@@ -13,6 +13,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -36,6 +37,15 @@ final class MjolnirImpact {
       }
 
       return (int)Math.round(Math.sqrt(r2 - h2) * MjolnirTuning.CRATER_DEPTH);
+   }
+
+   /**
+    * Pure, A-m2: damage without an attacker skips vanilla's PvP rule, so
+    * with PvP off it spares players. OPEN(owner): whether the world event
+    * (first fall) is exempt; conservative: it spares them too.
+    */
+   static boolean spared(boolean victimIsPlayer, boolean attackerKnown, boolean pvpAllowed) {
+      return victimIsPlayer && !attackerKnown && !pvpAllowed;
    }
 
    /** The first appearance: huge direct damage, shock wave, crater; the hammer then lies on its side at the bottom. */
@@ -95,7 +105,7 @@ final class MjolnirImpact {
       DamageSource source = level.damageSources().thrown(hammer == null ? null : hammer, null);
       AABB box = new AABB(at, at).inflate(radius);
       for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && !e.isSpectator())) {
-         if (living.getUUID().equals(spare)) {
+         if (living.getUUID().equals(spare) || spared(living instanceof Player, false, level.getServer().isPvpAllowed())) {
             continue;
          }
 

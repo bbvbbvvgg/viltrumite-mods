@@ -57,6 +57,8 @@ public final class MjolnirWorld {
    public static final String RECALL_WAIT = "hud.viltrumitecore.thor.recall_wait";
    static final String OVERWORLD = "minecraft:overworld";
    private static final Logger LOGGER = LogUtils.getLogger();
+   /** A-m3: bridge events wait here until the change that caused them is fully written ({@link #flush}). */
+   private static final MjolnirEventQueue<ThorEvent> EVENTS = new MjolnirEventQueue<>();
 
    /** Outcome of a recall press. */
    public enum Recall {
@@ -106,16 +108,37 @@ public final class MjolnirWorld {
          return false;
       }
 
-      dirty(server);
-      post(ThorEventType.HAMMER_STATE_CHANGED, record, null, next == MjolnirPhase.IN_HAND);
+      announce(server, record);
       return true;
    }
 
+   /** The phase changed: saved, and HAMMER_STATE_CHANGED queued (delivered by {@link #flush}). */
+   private static void announce(MinecraftServer server, MjolnirRecord record) {
+      dirty(server);
+      post(ThorEventType.HAMMER_STATE_CHANGED, record, null, record.phase == MjolnirPhase.IN_HAND);
+   }
+
+   /**
+    * Queue a bridge event; it is delivered by {@link #flush} once the whole
+    * change is written (A-m3). A-m4: the bridge names a Thor as
+    * {@code attackerId}, so only the active holder is named; while nobody
+    * holds the slot (the first fall, an ownerless hammer) no event is posted.
+    */
    static void post(ThorEventType type, MjolnirRecord record, @Nullable ThorMove move, boolean inHand) {
-      UUID actor = record.activeOwner != null ? record.activeOwner : record.lastOwner != null ? record.lastOwner : record.logicalId;
+      UUID actor = record.activeOwner;
       if (actor != null) {
-         ThorEvents.post(new ThorEvent(ThorEvents.nextId(), type, actor, null, move, 0, inHand, 0.0F, true));
+         EVENTS.add(new ThorEvent(ThorEvents.nextId(), type, actor, null, move, 0, inHand, 0.0F, true));
       }
+   }
+
+   /** Deliver the queued events: at the end of every public entry point and of the world / body tick. */
+   static void flush() {
+      EVENTS.flush(ThorEvents::post);
+   }
+
+   /** Server stopped: nothing of the old world is delivered into the next one. */
+   public static void clearTransient() {
+      EVENTS.clear();
    }
 
    // --- dimensions / bodies ---
@@ -256,17 +279,34 @@ public final class MjolnirWorld {
       }
    }
 
-   /** The previous holder is gone: an attached or homing hammer falls first (№3.2: no instant re-aim). */
+   /**
+    * The previous holder is gone: an attached, thrown or homing hammer falls
+    * first (№3.2 / №213: no instant re-aim, nobody inherits a flight, no
+    * ownerless hits). Rules: {@link MjolnirOwnership#loosen}.
+    */
    private static void loosen(MinecraftServer server, MjolnirRecord record) {
-      if (record.phase == MjolnirPhase.IN_HAND || record.phase.homing()) {
-         record.velocity(0.0, -0.4, 0.0);
-         if (go(server, record, MjolnirPhase.FALLING)) {
-            record.lying = false;
-            MjolnirEntity hammer = entity(server, record);
-            if (hammer == null) {
-               materialize(server, record);
-            }
+      if (MjolnirOwnership.loosen(record)) {
+         announce(server, record);
+         materialize(server, record);
+      }
+   }
+
+   /** Somebody else takes the slot: the old holder's flight falls and his pending recall is forgotten. */
+   private static void changeOwner(MinecraftServer server, MjolnirRecord record) {
+      MjolnirPhase before = record.phase;
+      if (MjolnirOwnership.changeOwner(record)) {
+         dirty(server);
+         if (record.phase != before) {
+            announce(server, record);
+            materialize(server, record);
          }
+      }
+   }
+
+   /** The body found its thrower gone (logout / hero change between two world ticks): it falls at once. */
+   static void throwerGone(MinecraftServer server, MjolnirRecord record) {
+      if (record.phase == MjolnirPhase.THROWN && owner(server, record) == null) {
+         loosen(server, record);
       }
    }
 
@@ -276,15 +316,19 @@ public final class MjolnirWorld {
     * is cancelled for good (№191); an existing one is called by the scene.
     */
    public static void onEnter(ServerPlayer player, ThorState state) {
-      MinecraftServer server = player.server;
-      MjolnirRecord record = record(server);
-      if (!player.getUUID().equals(record.activeOwner)) {
-         loosen(server, record);
-      }
+      try {
+         MinecraftServer server = player.server;
+         MjolnirRecord record = record(server);
+         if (!player.getUUID().equals(record.activeOwner)) {
+            changeOwner(server, record);
+         }
 
-      claim(server, record, player);
-      if (!record.exists()) {
-         createInHand(server, record, player, state);
+         claim(server, record, player);
+         if (!record.exists()) {
+            createInHand(server, record, player, state);
+         }
+      } finally {
+         flush();
       }
    }
 
@@ -303,6 +347,14 @@ public final class MjolnirWorld {
 
    /** Login: arm the first fall; a returning Thor takes a free slot, or yields to the active one. */
    public static void onLogin(ServerPlayer player) {
+      try {
+         login(player);
+      } finally {
+         flush();
+      }
+   }
+
+   private static void login(ServerPlayer player) {
       MinecraftServer server = player.server;
       MjolnirRecord record = record(server);
       MjolnirFirstFall.arm(server, record);
@@ -317,7 +369,7 @@ public final class MjolnirWorld {
       }
 
       if (!player.getUUID().equals(record.activeOwner)) {
-         loosen(server, record);
+         changeOwner(server, record);
       }
 
       claim(server, record, player);
@@ -343,8 +395,16 @@ public final class MjolnirWorld {
       player.displayClientMessage(Component.translatable(SLOT_TAKEN_LOGIN), false);
    }
 
-   /** Death / logout / hero change of the active Thor (§3.5). */
+   /** Death / logout / hero change of the active Thor (§3.5). Rules: {@link MjolnirOwnership#onCleanup}. */
    public static void onCleanup(ServerPlayer player, ThorState state, CleanupReason reason) {
+      try {
+         cleanup(player, state, reason);
+      } finally {
+         flush();
+      }
+   }
+
+   private static void cleanup(ServerPlayer player, ThorState state, CleanupReason reason) {
       MinecraftServer server = player.server;
       MjolnirRecord record = record(server);
       if (!player.getUUID().equals(record.activeOwner)) {
@@ -353,49 +413,46 @@ public final class MjolnirWorld {
 
       ServerLevel level = player.serverLevel();
       Vec3 at = player.position().add(0.0, 1.0, 0.0);
-      switch (reason) {
-         case DEATH, ERASED -> {
-            if (record.phase == MjolnirPhase.IN_HAND) {
-               // Approved: death with the hammer in the hand drops it at the death point (MjolnirTuning.DEATH_IN_HAND_DROPS).
-               if (MjolnirTuning.DEATH_IN_HAND_DROPS) {
-                  release(server, record, level, at, -0.2);
-               }
-            } else if (record.phase == MjolnirPhase.RETURNING) {
-               // №169: on to the fixed death point, then the strike.
-               record.death = new double[]{player.getX(), player.getY(), player.getZ()};
-               record.deathDimension = dim(level);
-               go(server, record, MjolnirPhase.DEATH_IMPACT);
-            }
-
+      switch (MjolnirOwnership.onCleanup(record.phase, reason, MjolnirTuning.DEATH_IN_HAND_DROPS)) {
+         // Approved: death with the hammer in the hand drops it at the death point (MjolnirTuning.DEATH_IN_HAND_DROPS);
+         // a logout drops it heavily where he left; a hero change briefly and heavily nearby (№207).
+         case DROP -> release(server, record, level, reason == CleanupReason.HERO_CHANGE ? dropNear(player, level, at) : at, switch (reason) {
+            case DEATH, ERASED -> -0.2;
+            case DISCONNECT -> -0.6;
+            case HERO_CHANGE -> -0.8;
+         });
+         case DEATH_STRIKE -> {
+            // №169: on to the fixed death point, then the strike.
+            record.death = new double[]{player.getX(), player.getY(), player.getZ()};
+            record.deathDimension = dim(level);
+            go(server, record, MjolnirPhase.DEATH_IMPACT);
+         }
+         case LOOSEN -> loosen(server, record);
+         case NONE -> {
             // The dead / erased Thor comes back as Thor (№208): the slot stays his, the hammer waits for his recall.
          }
-         case DISCONNECT -> {
-            // Falls heavily where he left.
-            if (record.phase == MjolnirPhase.IN_HAND) {
-               release(server, record, level, at, -0.6);
-            } else {
-               loosen(server, record);
-            }
+      }
 
-            record.activeOwner = null;
-         }
-         case HERO_CHANGE -> {
-            // Falls briefly and heavily nearby (№207).
-            if (record.phase == MjolnirPhase.IN_HAND) {
-               Vec3 look = player.getLookAngle().multiply(1.0, 0.0, 1.0);
-               Vec3 near = look.lengthSqr() < 1.0E-6 ? at : at.add(look.normalize().scale(MjolnirTuning.DROP_NEAR));
-               release(server, record, level, near, -0.8);
-            } else {
-               loosen(server, record);
-            }
-
-            record.activeOwner = null;
-         }
+      if (MjolnirOwnership.freesSlot(reason)) {
+         record.activeOwner = null;
       }
 
       dirty(server);
       state.hammer = HammerState.HOLSTERED;
       state.hammerDetached = record.exists();
+   }
+
+   /** №207 drop point in front of him, never inside the wall he faces (A-m10). */
+   private static Vec3 dropNear(ServerPlayer player, ServerLevel level, Vec3 at) {
+      Vec3 look = player.getLookAngle().multiply(1.0, 0.0, 1.0);
+      if (look.lengthSqr() < 1.0E-6) {
+         return at;
+      }
+
+      Vec3 dir = look.normalize();
+      Vec3 near = at.add(dir.scale(MjolnirTuning.DROP_NEAR));
+      BlockHitResult blocked = level.clip(new ClipContext(at, near, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+      return blocked.getType() == HitResult.Type.MISS ? near : blocked.getLocation().subtract(dir.scale(0.3));
    }
 
    /** The attached hammer leaves the hand and falls from {@code at}. */
@@ -410,14 +467,18 @@ public final class MjolnirWorld {
 
    /** The attached hammer goes along with its Thor. */
    public static void onDimensionChange(ServerPlayer player, ThorState state) {
-      MinecraftServer server = player.server;
-      MjolnirRecord record = record(server);
-      if (player.getUUID().equals(record.activeOwner) && record.phase == MjolnirPhase.IN_HAND) {
-         record.place(dim(player.level()), player.getX(), player.getY(), player.getZ());
-         dirty(server);
-      }
+      try {
+         MinecraftServer server = player.server;
+         MjolnirRecord record = record(server);
+         if (player.getUUID().equals(record.activeOwner) && record.phase == MjolnirPhase.IN_HAND) {
+            record.place(dim(player.level()), player.getX(), player.getY(), player.getZ());
+            dirty(server);
+         }
 
-      project(player, state);
+         project(player, state);
+      } finally {
+         flush();
+      }
    }
 
    /** Every tick: the Thor's synced hammer state is a projection of the world hammer. */
@@ -491,6 +552,14 @@ public final class MjolnirWorld {
 
    /** Mjölnir leaves the active Thor's hand (HAMMER_THROW release). */
    public static boolean launch(ServerPlayer thor, ThorState state, boolean charged) {
+      try {
+         return throwOut(thor, state, charged);
+      } finally {
+         flush();
+      }
+   }
+
+   private static boolean throwOut(ServerPlayer thor, ThorState state, boolean charged) {
       MinecraftServer server = thor.server;
       MjolnirRecord record = record(server);
       if (!thor.getUUID().equals(record.activeOwner) || record.phase != MjolnirPhase.IN_HAND) {
@@ -515,6 +584,7 @@ public final class MjolnirWorld {
       record.charged = charged;
       record.lying = false;
       record.recallPending = false;
+      record.clearFlight();
       if (!go(server, record, MjolnirPhase.THROWN)) {
          return false;
       }
@@ -534,12 +604,28 @@ public final class MjolnirWorld {
 
    /** MMB with the hammer away: call it from any distance, chunk or dimension (§5.1). */
    public static Recall recall(ServerPlayer thor) {
+      try {
+         return call(thor);
+      } finally {
+         flush();
+      }
+   }
+
+   private static Recall call(ServerPlayer thor) {
       MinecraftServer server = thor.server;
       MjolnirRecord record = record(server);
       if (!record.exists()) {
          return Recall.NO_HAMMER;
       } else if (!thor.getUUID().equals(record.activeOwner)) {
          return Recall.NOT_OWNER;
+      }
+
+      if (MjolnirOwnership.landsOnRecall(record.phase, entity(server, record) != null)) {
+         // A-M1: nobody simulates this first fall (its chunk does not tick): it is put on the ground now, then called.
+         ServerLevel level = level(server, record);
+         if (level != null && MjolnirOwnership.remoteFallStep(record, firstFallGround(level, record), true)) {
+            landFirstFall(server, record, level);
+         }
       }
 
       switch (record.phase) {
@@ -561,11 +647,14 @@ public final class MjolnirWorld {
       record.recallPending = false;
       record.lying = false;
       record.charged = false;
+      // A-m13: the flight facts live in the record, so a body spawned later keeps them (hit list, rip).
+      record.clearFlight();
+      record.ripPending = ripped;
       if (!dim(thor.level()).equals(record.dimension)) {
          transfer(server, record, thor);
       } else if (go(server, record, MjolnirPhase.RETURNING)) {
          if (hammer != null) {
-            hammer.beginReturn(ripped);
+            hammer.beginReturn();
          }
       } else {
          return Recall.ALREADY;
@@ -585,6 +674,7 @@ public final class MjolnirWorld {
       }
 
       unload(server, record);
+      record.clearFlight();
       ServerLevel level = thor.serverLevel();
       Vec3 at = MjolnirFlight.transferPoint(thor.position(), thor.getYRot());
       double y = Mth.clamp(at.y, level.getMinBuildHeight() + 2.0, level.getMaxBuildHeight() - 2.0);
@@ -593,7 +683,7 @@ public final class MjolnirWorld {
       go(server, record, MjolnirPhase.RETURNING);
       MjolnirEntity hammer = materialize(server, record);
       if (hammer != null) {
-         hammer.beginReturn(false);
+         hammer.beginReturn();
       }
    }
 
@@ -605,6 +695,8 @@ public final class MjolnirWorld {
 
       record.place(dim(thor.level()), thor.getX(), thor.getY(), thor.getZ());
       record.velocity(0.0, 0.0, 0.0);
+      record.clearFlight();
+      record.voidAttempts = 0;
       hammer.discard();
       ThorState state = ThorState.of(thor);
       if (state != null) {
@@ -624,19 +716,29 @@ public final class MjolnirWorld {
 
    /** RMB on the resting model by the active Thor: he simply picks it up (§3.4). */
    static boolean pickUp(ServerPlayer thor, MjolnirEntity hammer) {
+      try {
+         return takeUp(thor, hammer);
+      } finally {
+         flush();
+      }
+   }
+
+   private static boolean takeUp(ServerPlayer thor, MjolnirEntity hammer) {
       MinecraftServer server = thor.server;
       MjolnirRecord record = record(server);
       if (!thor.getUUID().equals(record.activeOwner) || record.phase != MjolnirPhase.RESTING || !hammer.getUUID().equals(record.logicalId)) {
          return false;
       }
 
-      MjolnirLift.rip(server, hammer.position());
+      // №212 / A-m16: only the recall rips it from a lifter; a lift attempt simply ends when the body is gone (MjolnirLift.tick).
       if (!go(server, record, MjolnirPhase.IN_HAND)) {
          return false;
       }
 
       record.lying = false;
       record.embedded = false;
+      record.clearFlight();
+      record.voidAttempts = 0;
       record.place(dim(thor.level()), thor.getX(), thor.getY(), thor.getZ());
       hammer.discard();
       ThorState state = ThorState.of(thor);
@@ -654,6 +756,14 @@ public final class MjolnirWorld {
 
    /** Once per server tick (MjolnirEvents): first fall, owner check, unloaded flight, transfers, recovery. */
    public static void tick(MinecraftServer server) {
+      try {
+         worldTick(server);
+      } finally {
+         flush();
+      }
+   }
+
+   private static void worldTick(MinecraftServer server) {
       MjolnirRecord record = record(server);
       if (record.activeOwner != null && server.getPlayerList().getPlayer(record.activeOwner) == null) {
          // Offline: the slot is free (crash without a logout event).
@@ -710,12 +820,21 @@ public final class MjolnirWorld {
          case DEATH_IMPACT -> deathFlight(server, record, level, hammer);
          case VOID_RECOVERY -> recover(server, record);
          case THROWN -> {
-            if (hammer == null && materialize(server, record) == null) {
+            if (owner == null) {
+               // A-M6 / №213: the thrower left or is not Thor any more: the throw falls, nobody inherits it.
+               loosen(server, record);
+            } else if (hammer == null && materialize(server, record) == null) {
                // Out of the loaded world: the throw ends, it drops when its chunk loads again.
                go(server, record, MjolnirPhase.FALLING);
             }
          }
-         case WORLD_FALLING, FALLING, RESTING -> {
+         case WORLD_FALLING -> {
+            if (hammer == null && materialize(server, record) == null) {
+               // A-M1: no body (nobody near): the fall goes on in the store and always ends on the ground.
+               remoteFirstFall(server, record, level, owner);
+            }
+         }
+         case FALLING, RESTING -> {
             if (hammer == null) {
                materialize(server, record);
             }
@@ -729,8 +848,37 @@ public final class MjolnirWorld {
       }
    }
 
+   /** A-M1: one step of a first fall without a body; on the ground it settles like the visible one. */
+   private static void remoteFirstFall(MinecraftServer server, MjolnirRecord record, ServerLevel level, @Nullable ServerPlayer owner) {
+      boolean landed = MjolnirOwnership.remoteFallStep(record, firstFallGround(level, record), record.recallPending && owner != null);
+      dirty(server);
+      if (landed) {
+         landFirstFall(server, record, level);
+      }
+   }
+
+   /** Where a first fall without a body ends: the live surface when its chunk is loaded, else the site surface saved at the start. */
+   static double firstFallGround(ServerLevel level, MjolnirRecord record) {
+      BlockPos column = BlockPos.containing(record.x, record.y, record.z);
+      if (level.isLoaded(column)) {
+         return level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+      }
+
+      // MjolnirFirstFall.tryStart saved the site surface (top block + 1) as the origin.
+      return record.originY;
+   }
+
+   /** The first fall reached the ground without a body: the impact where the chunk is loaded, then it rests (fall done). */
+   private static void landFirstFall(MinecraftServer server, MjolnirRecord record, ServerLevel level) {
+      Vec3 at = position(record);
+      Vec3 rest = level.isLoaded(BlockPos.containing(at)) ? MjolnirImpact.firstFall(level, null, at) : at;
+      settle(server, record, level, rest);
+   }
+
    /** Far return through chunks that do not tick: straight line, simplified, no physics (§5.1). */
    private static void remoteReturn(MinecraftServer server, MjolnirRecord record, ServerPlayer owner, ServerLevel level) {
+      // Out of its block remotely: a body spawned later does not play the rip in mid-air.
+      record.ripPending = false;
       Vec3 from = position(record);
       Vec3 palm = MjolnirFlight.palm(owner.getEyePosition(), owner.getYRot());
       double distance = from.distanceTo(palm);
@@ -797,6 +945,8 @@ public final class MjolnirWorld {
       record.embedded = false;
       record.safe = new double[]{rest.x, rest.y, rest.z};
       record.safeDimension = dim(level);
+      record.voidAttempts = 0;
+      record.parked = false;
       if (record.phase == MjolnirPhase.WORLD_FALLING) {
          record.fallDone = true;
       }
@@ -824,39 +974,152 @@ public final class MjolnirWorld {
       }
    }
 
+   /**
+    * One void recovery (A-m17, №217 open, PLACEHOLDER): back to the last
+    * resting point, then to the world spawn, and when that fails too it is
+    * parked at the spawn (rests without support until recalled), so a void
+    * below every target never loops forever. A real landing resets the ladder.
+    */
    private static void recover(MinecraftServer server, MjolnirRecord record) {
-      ServerLevel level = record.safe != null && record.safeDimension != null ? level(server, keyed(record.safeDimension)) : null;
+      record.voidAttempts++;
+      ServerLevel safeLevel = record.safe != null && record.safeDimension != null ? level(server, keyed(record.safeDimension)) : null;
+      MjolnirOwnership.VoidStep step = MjolnirOwnership.voidStep(record.voidAttempts, safeLevel != null);
+      ServerLevel level;
       Vec3 at;
-      if (level != null) {
+      if (step == MjolnirOwnership.VoidStep.SAFE) {
+         level = safeLevel;
          at = new Vec3(record.safe[0], record.safe[1] + 1.0, record.safe[2]);
       } else {
          level = server.overworld();
          BlockPos spawn = level.getSharedSpawnPos();
          int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.getX(), spawn.getZ());
-         at = new Vec3(spawn.getX() + 0.5, top + 1.0, spawn.getZ() + 0.5);
+         at = new Vec3(spawn.getX() + 0.5, Math.max(top, level.getMinBuildHeight() + 1) + 1.0, spawn.getZ() + 0.5);
       }
 
       record.place(dim(level), at.x, at.y, at.z);
-      record.velocity(0.0, -0.2, 0.0);
-      record.lying = false;
-      go(server, record, MjolnirPhase.FALLING);
+      record.velocity(0.0, step == MjolnirOwnership.VoidStep.PARK ? 0.0 : -0.2, 0.0);
+      record.lying = step == MjolnirOwnership.VoidStep.PARK;
+      if (step == MjolnirOwnership.VoidStep.PARK) {
+         // OPEN(owner): №217 the last-resort place of a hammer the void keeps taking (parked at the spawn, recall works).
+         LOGGER.warn("Mjolnir: void recovery failed {} times, parked at the world spawn {}", record.voidAttempts - 1, at);
+         go(server, record, MjolnirPhase.RESTING);
+         record.parked = true;
+      } else {
+         go(server, record, MjolnirPhase.FALLING);
+      }
+
       materialize(server, record);
+   }
+
+   // --- operator recovery (production) ---
+
+   /** Outcome of {@code /mjolnir recover}. */
+   public enum Recovery {
+      NO_HAMMER,
+      ALREADY_IN_HAND,
+      /** Put on the ground at the active Thor and called back to him. */
+      CALLED_TO_OWNER,
+      /** No active Thor online: put on the ground at its last resting point (or the world spawn). */
+      SETTLED
+   }
+
+   /**
+    * Operator recovery of the one logical hammer (A-M1, production safe):
+    * whatever limbo it is in (a flight nobody simulates, a pending fall, a
+    * lost transfer), the same record is settled on firm ground and, when its
+    * active Thor is online, called back to him. Never creates a second
+    * hammer, never changes the owner.
+    */
+   public static Recovery forceRecover(MinecraftServer server) {
+      try {
+         return rescue(server);
+      } finally {
+         flush();
+      }
+   }
+
+   private static Recovery rescue(MinecraftServer server) {
+      MjolnirRecord record = record(server);
+      if (!record.exists()) {
+         return Recovery.NO_HAMMER;
+      } else if (record.phase == MjolnirPhase.IN_HAND) {
+         return Recovery.ALREADY_IN_HAND;
+      }
+
+      unload(server, record);
+      if (record.phase == MjolnirPhase.DIMENSION_TRANSFER) {
+         go(server, record, MjolnirPhase.RETURNING);
+      }
+
+      ServerPlayer owner = owner(server, record);
+      ServerLevel level;
+      Vec3 at;
+      if (owner != null) {
+         level = owner.serverLevel();
+         at = owner.position();
+      } else if (record.safe != null && record.safeDimension != null && level(server, keyed(record.safeDimension)) != null) {
+         level = level(server, keyed(record.safeDimension));
+         at = new Vec3(record.safe[0], record.safe[1], record.safe[2]);
+      } else {
+         level = server.overworld();
+         BlockPos spawn = level.getSharedSpawnPos();
+         int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.getX(), spawn.getZ());
+         at = new Vec3(spawn.getX() + 0.5, top, spawn.getZ() + 0.5);
+      }
+
+      record.recallPending = false;
+      record.death = null;
+      record.deathDimension = null;
+      record.clearFlight();
+      if (record.phase != MjolnirPhase.RESTING) {
+         settle(server, record, level, at);
+      } else {
+         record.place(dim(level), at.x, at.y, at.z);
+         record.velocity(0.0, 0.0, 0.0);
+         record.embedded = false;
+         dirty(server);
+      }
+
+      if (record.phase != MjolnirPhase.RESTING) {
+         LOGGER.warn("Mjolnir: recovery could not settle the hammer from {}", record.phase);
+         return Recovery.SETTLED;
+      }
+
+      if (owner != null) {
+         call(owner);
+         return Recovery.CALLED_TO_OWNER;
+      }
+
+      materialize(server, record);
+      return Recovery.SETTLED;
    }
 
    // --- dev ---
 
    /** Dev: the first fall now (skips the timer; still once per save). */
    public static boolean forceFirstFall(MinecraftServer server, ServerPlayer near) {
-      MjolnirRecord record = record(server);
-      if (record.exists() || record.fallCancelled) {
-         return false;
-      }
+      try {
+         MjolnirRecord record = record(server);
+         if (record.exists() || record.fallCancelled) {
+            return false;
+         }
 
-      return MjolnirFirstFall.tryStart(server, record, near);
+         return MjolnirFirstFall.tryStart(server, record, near);
+      } finally {
+         flush();
+      }
    }
 
    /** Dev: put the hammer at a point (created there when it never existed). Same hammer, never a second one. */
    public static void place(ServerPlayer near, Vec3 at) {
+      try {
+         put(near, at);
+      } finally {
+         flush();
+      }
+   }
+
+   private static void put(ServerPlayer near, Vec3 at) {
       MinecraftServer server = near.server;
       MjolnirRecord record = record(server);
       if (!record.exists()) {

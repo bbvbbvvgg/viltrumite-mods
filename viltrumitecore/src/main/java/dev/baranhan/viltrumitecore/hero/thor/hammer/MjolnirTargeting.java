@@ -23,6 +23,17 @@ public final class MjolnirTargeting {
       return origin.distanceToSqr(point) <= MjolnirTuning.THROW_RANGE * MjolnirTuning.THROW_RANGE;
    }
 
+   /** A-m14: cheap pre-filter of the launch aim (cone and range only), checked before any line-of-sight ray. */
+   public static boolean inCone(Vec3 origin, Vec3 look, Vec3 point) {
+      if (look.lengthSqr() < 1.0E-8 || !inRange(origin, point)) {
+         return false;
+      }
+
+      Vec3 to = point.subtract(origin);
+      double distance = to.length();
+      return distance >= 1.0E-6 && to.scale(1.0 / distance).dot(look.normalize()) >= MjolnirTuning.AIM_CONE_COS;
+   }
+
    /** Launch target: inside the aim cone and the range; the one closest to the aim line wins, then the nearest. */
    @Nullable
    public static Candidate aim(Vec3 origin, Vec3 look, List<Candidate> candidates) {

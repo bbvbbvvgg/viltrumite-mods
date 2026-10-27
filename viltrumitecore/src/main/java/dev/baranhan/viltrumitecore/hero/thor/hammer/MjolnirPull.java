@@ -101,9 +101,17 @@ public final class MjolnirPull {
    /** Ends the pull (move stop, death, logout, dimension); the fall grace starts. */
    public static synchronized void stop(ServerPlayer thor) {
       if (ACTIVE.remove(thor.getUUID()) != null) {
-         GRACE.put(thor.getUUID(), thor.serverLevel().getGameTime() + MjolnirTuning.PULL_FALL_GRACE);
+         long now = thor.serverLevel().getGameTime();
+         // A-N4: expired graces go when a new one starts, so the table never grows past the recent pullers.
+         prune(GRACE, now);
+         GRACE.put(thor.getUUID(), now + MjolnirTuning.PULL_FALL_GRACE);
          thor.fallDistance = 0.0F;
       }
+   }
+
+   /** Pure: drop the graces that ended before {@code now}. */
+   static void prune(Map<UUID, Long> graces, long now) {
+      graces.values().removeIf(until -> until <= now);
    }
 
    public static synchronized boolean graced(Player player) {

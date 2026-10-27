@@ -202,7 +202,8 @@ public final class MjolnirModule {
          return 0;
       }
 
-      context.getSource().sendSuccess(() -> Component.literal("Mjolnir: thrown" + (charged ? " (charged)" : "")), false);
+      // A-N2: a dev fixture: no move timeline, no scene lock and no free-hand check (the store's own owner / phase checks still hold).
+      context.getSource().sendSuccess(() -> Component.literal("Mjolnir: thrown" + (charged ? " (charged)" : "") + " (dev: bypasses the move gate)"), false);
       return 1;
    }
 

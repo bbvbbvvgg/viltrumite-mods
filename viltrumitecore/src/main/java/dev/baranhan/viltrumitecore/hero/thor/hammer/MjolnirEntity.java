@@ -63,14 +63,15 @@ public class MjolnirEntity extends Entity {
    private static final EntityDataAccessor<CompoundTag> LIFTERS = SynchedEntityData.defineId(MjolnirEntity.class, EntityDataSerializers.COMPOUND_TAG);
    private static final MjolnirPhase[] PHASES = MjolnirPhase.values();
 
-   /** Entities hit by the running throw / return (never twice, №33). */
-   private final Set<Integer> hit = new HashSet<>();
+   /**
+    * Entities hit by the running throw / return (never twice, №33): the
+    * record's set (A-m13), so a body spawned again mid-flight keeps it.
+    */
+   private Set<Integer> hit = new HashSet<>();
    @Nullable
    private LivingEntity target;
-   private int flightTicks;
    private int broken;
    private long lastBreakSound;
-   private boolean ripPending;
    private boolean clientSound;
 
    public MjolnirEntity(EntityType<? extends MjolnirEntity> type, Level level) {
@@ -222,6 +223,7 @@ public class MjolnirEntity extends Entity {
          MinecraftServer server = this.getServer();
          if (server != null) {
             MjolnirWorld.voidFall(server, MjolnirWorld.record(server));
+            MjolnirWorld.flush();
          }
       }
    }
@@ -251,19 +253,26 @@ public class MjolnirEntity extends Entity {
 
    // --- flight starts (MjolnirWorld) ---
 
+   /** The record already started the flight (hit list and clock cleared, MjolnirRecord.clearFlight). */
    void beginThrow(ServerPlayer thor, Vec3 origin, Vec3 look, boolean charged) {
-      this.hit.clear();
-      this.flightTicks = 0;
+      this.attach();
       this.broken = 0;
       this.target = this.aimTarget(thor, origin, look);
       this.entityData.set(CHARGED, charged);
    }
 
-   void beginReturn(boolean ripped) {
-      this.hit.clear();
+   /** The record already started the return (hit list cleared, rip pending when it was embedded). */
+   void beginReturn() {
+      this.attach();
       this.target = null;
-      this.flightTicks = 0;
-      this.ripPending = ripped;
+   }
+
+   /** Use the record's flight facts (A-m13). */
+   private void attach() {
+      MinecraftServer server = this.getServer();
+      if (server != null) {
+         this.hit = MjolnirWorld.record(server).flightHits;
+      }
    }
 
    // --- tick ---
@@ -283,9 +292,19 @@ public class MjolnirEntity extends Entity {
       }
 
       MjolnirRecord record = MjolnirWorld.record(server);
+      this.hit = record.flightHits;
       this.syncFrom(record);
       this.syncLifters(MjolnirLift.lifterIds(this));
       ServerLevel level = (ServerLevel)this.level();
+      try {
+         this.serverTick(server, record, level);
+      } finally {
+         // A-m3: what the body changed is announced after the change.
+         MjolnirWorld.flush();
+      }
+   }
+
+   private void serverTick(MinecraftServer server, MjolnirRecord record, ServerLevel level) {
       switch (record.phase) {
          case WORLD_FALLING -> this.firstFall(server, record, level);
          case THROWN -> this.thrown(server, record, level);
@@ -354,8 +373,15 @@ public class MjolnirEntity extends Entity {
 
    /** Autonomous flight after a throw (§4). */
    private void thrown(MinecraftServer server, MjolnirRecord record, ServerLevel level) {
-      this.flightTicks++;
       ServerPlayer thrower = MjolnirWorld.owner(server, record);
+      if (thrower == null) {
+         // A-M6 / №213: the thrower is gone: it falls now, it never hits for nobody.
+         MjolnirWorld.throwerGone(server, record);
+         this.syncFrom(record);
+         return;
+      }
+
+      record.flightTicks++;
       Vec3 origin = new Vec3(record.originX, record.originY, record.originZ);
       Vec3 velocity = this.getDeltaMovement();
       double speed = record.charged ? MjolnirTuning.THROW_SPEED_CHARGED : MjolnirTuning.THROW_SPEED;
@@ -373,34 +399,50 @@ public class MjolnirEntity extends Entity {
       Vec3 from = this.position();
       Vec3 to = from.add(velocity);
       this.spinTrail(level, from, record.charged);
-      boolean pierced = false;
-      for (LivingEntity victim : this.sweep(from, to, thrower)) {
-         float damage = record.charged ? MjolnirTuning.THROW_DAMAGE_CHARGED : MjolnirTuning.THROW_DAMAGE;
-         this.strike(victim, thrower, damage, velocity);
-         pierced = true;
-      }
-
-      if (pierced && thrower != null) {
-         this.target = this.nextTarget(thrower, origin);
-      }
-
+      // Blocks first (A-m11): nothing behind the wall is pierced on the last segment.
       BlockHitResult block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
       int brokenNow = 0;
+      boolean refused = false;
       while (block.getType() != HitResult.Type.MISS && record.charged && this.broken < MjolnirTuning.CHARGED_BREAK_TOTAL
          && brokenNow < MjolnirTuning.CHARGED_BREAK_PER_TICK) {
          // №11: a charged throw breaks the blocks it is allowed to; a protected one stops it.
          if (!this.smash(level, block.getBlockPos())) {
+            refused = true;
             break;
          }
 
          brokenNow++;
          velocity = velocity.scale(MjolnirTuning.CHARGED_BREAK_DRAG);
+         // A-m12: the drag shortens this tick's segment too.
+         to = from.add(velocity);
          block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+      }
+
+      Vec3 end = block.getType() == HitResult.Type.MISS ? to : block.getLocation();
+      boolean pierced = false;
+      for (LivingEntity victim : this.sweep(from, end, thrower)) {
+         float damage = record.charged ? MjolnirTuning.THROW_DAMAGE_CHARGED : MjolnirTuning.THROW_DAMAGE;
+         this.strike(victim, thrower, damage, velocity);
+         pierced = true;
+      }
+
+      if (pierced) {
+         this.target = this.nextTarget(thrower, origin);
+      }
+
+      Vec3 dir = velocity.lengthSqr() < 1.0E-6 ? new Vec3(0.0, -1.0, 0.0) : velocity.normalize();
+      if (block.getType() != HitResult.Type.MISS && MjolnirFlight.pausesAtBlock(record.charged, refused, this.broken, brokenNow)) {
+         // A-m12: this tick's break budget is spent but the charged throw's total is not: it waits at the block and breaks on next tick.
+         Vec3 at = block.getLocation().subtract(dir.scale(0.25));
+         this.face(velocity);
+         this.setPos(at);
+         this.setDeltaMovement(velocity);
+         MjolnirWorld.track(this);
+         return;
       }
 
       if (block.getType() != HitResult.Type.MISS) {
          // A normal throw sticks in the block (head first).
-         Vec3 dir = velocity.lengthSqr() < 1.0E-6 ? new Vec3(0.0, -1.0, 0.0) : velocity.normalize();
          Vec3 at = block.getLocation().subtract(dir.scale(0.25));
          this.face(dir);
          this.setPos(at);
@@ -418,7 +460,7 @@ public class MjolnirEntity extends Entity {
       this.setPos(to);
       this.setDeltaMovement(velocity);
       MjolnirWorld.track(this);
-      if (this.flightTicks > MjolnirTuning.THROW_MAX_TICKS) {
+      if (record.flightTicks > MjolnirTuning.THROW_MAX_TICKS) {
          MjolnirWorld.go(server, record, MjolnirPhase.FALLING);
       }
    }
@@ -431,9 +473,9 @@ public class MjolnirEntity extends Entity {
       }
 
       Vec3 from = this.position();
-      if (this.ripPending) {
+      if (record.ripPending) {
          // №158: out of the block with a jerk, particles and its own sound.
-         this.ripPending = false;
+         record.ripPending = false;
          BlockPos in = BlockPos.containing(from);
          BlockState state = level.getBlockState(in);
          level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state.isAir() ? level.getBlockState(in.below()) : state), from.x, from.y,
@@ -452,7 +494,8 @@ public class MjolnirEntity extends Entity {
       }
 
       Vec3 to = MjolnirFlight.step(from, palm, speed);
-      this.breakAlong(level, from, to, MjolnirTuning.RETURN_BREAK_PER_TICK);
+      // A-m12: a spent break budget shortens the step to the last block it dealt with (never through unbroken blocks).
+      to = from.add(to.subtract(from).scale(this.breakAlong(level, from, to, MjolnirTuning.RETURN_BREAK_PER_TICK)));
       for (LivingEntity victim : this.sweep(from, to, owner)) {
          this.strike(victim, owner, MjolnirTuning.RETURN_DAMAGE, to.subtract(from));
       }
@@ -485,7 +528,9 @@ public class MjolnirEntity extends Entity {
 
       this.setYRot(this.random.nextFloat() * 360.0F);
       this.setXRot(0.0F);
-      Vec3 rest = ground.getDirection() == net.minecraft.core.Direction.UP ? at : at.add(0.0, -0.3, 0.0);
+      // A-m10: off a side face it settles out of the block (then slides down), never inside it.
+      net.minecraft.core.Direction face = ground.getDirection();
+      Vec3 rest = face == net.minecraft.core.Direction.UP ? at : at.add(face.getStepX() * 0.3, face.getStepY() * 0.3, face.getStepZ() * 0.3);
       this.setPos(rest);
       this.setDeltaMovement(Vec3.ZERO);
       MjolnirWorld.settle(server, record, level, rest);
@@ -494,7 +539,8 @@ public class MjolnirEntity extends Entity {
 
    /** Lies / sticks; falls when the support is gone (an explosion never moves it, a missing floor does). */
    private void resting(MinecraftServer server, MjolnirRecord record, ServerLevel level) {
-      if (this.tickCount % 5 != 0) {
+      if (this.tickCount % 5 != 0 || record.parked) {
+         // A parked hammer (last-resort void recovery) rests without support until it is recalled.
          return;
       }
 
@@ -531,7 +577,7 @@ public class MjolnirEntity extends Entity {
       }
 
       Vec3 to = MjolnirFlight.step(from, point, speed);
-      this.breakAlong(level, from, to, MjolnirTuning.RETURN_BREAK_PER_TICK);
+      to = from.add(to.subtract(from).scale(this.breakAlong(level, from, to, MjolnirTuning.RETURN_BREAK_PER_TICK)));
       for (LivingEntity victim : this.sweep(from, to, null)) {
          if (!victim.getUUID().equals(record.activeOwner)) {
             this.strike(victim, null, MjolnirTuning.RETURN_DAMAGE, to.subtract(from));
@@ -585,6 +631,12 @@ public class MjolnirEntity extends Entity {
 
    private void strike(LivingEntity victim, @Nullable Entity attacker, float damage, Vec3 direction) {
       this.hit.add(victim.getId());
+      MinecraftServer server = this.getServer();
+      if (MjolnirImpact.spared(victim instanceof Player, attacker != null, server == null || server.isPvpAllowed())) {
+         // A-m2: a hit with no attacker would skip the PvP rule: with PvP off it spares players.
+         return;
+      }
+
       if (victim.hurt(this.damageSources().thrown(this, attacker), damage) && HeroRegistry.allowsImpulse(victim) && direction.lengthSqr() > 1.0E-6) {
          Vec3 push = direction.normalize().scale(0.8);
          victim.push(push.x, 0.25, push.z);
@@ -612,44 +664,64 @@ public class MjolnirEntity extends Entity {
       return true;
    }
 
-   /** Return path: every collidable block on the straight segment that may break, breaks; protected ones are passed through. */
-   private void breakAlong(ServerLevel level, Vec3 from, Vec3 to, int budget) {
+   /**
+    * Return path: every collidable block on the straight segment that may
+    * break, breaks; protected ones are passed through. Returns the share of
+    * the segment it may move this tick: 1, or less when the budget ran out
+    * before the next breakable block (A-m12: it never flies through blocks
+    * it did not break; the rest is broken next tick).
+    */
+   private double breakAlong(ServerLevel level, Vec3 from, Vec3 to, int budget) {
       Vec3 delta = to.subtract(from);
       int steps = Math.max(1, (int)Math.ceil(delta.length() / 0.4));
       BlockPos last = null;
       int broken = 0;
-      for (int i = 1; i <= steps && broken < budget; i++) {
+      double reached = 0.0;
+      for (int i = 1; i <= steps; i++) {
          BlockPos pos = BlockPos.containing(from.add(delta.scale((double)i / steps)));
-         if (pos.equals(last)) {
-            continue;
+         if (!pos.equals(last)) {
+            last = pos;
+            if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty() && HeroDestruction.canDestroy(level, pos)) {
+               if (broken >= budget) {
+                  return reached;
+               }
+
+               if (this.smash(level, pos)) {
+                  broken++;
+               }
+            }
          }
 
-         last = pos;
-         if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty() && this.smash(level, pos)) {
-            broken++;
-         }
+         reached = (double)i / steps;
       }
+
+      return 1.0;
    }
 
    @Nullable
    private LivingEntity aimTarget(ServerPlayer thor, Vec3 origin, Vec3 look) {
-      List<LivingEntity> enemies = this.enemies(thor, origin, origin, MjolnirTuning.THROW_RANGE);
+      // A-m14: only candidates inside the aim cone pay for the line-of-sight ray.
+      List<LivingEntity> enemies = this.enemies(thor, origin, origin, MjolnirTuning.THROW_RANGE,
+         e -> MjolnirTargeting.inCone(origin, look, e.getBoundingBox().getCenter()));
       MjolnirTargeting.Candidate best = MjolnirTargeting.aim(origin, look, candidates(enemies));
       return best == null ? null : byId(enemies, best.id());
    }
 
    @Nullable
    private LivingEntity nextTarget(ServerPlayer thor, Vec3 origin) {
-      List<LivingEntity> enemies = this.enemies(thor, origin, this.position(), MjolnirTuning.NEXT_TARGET_RADIUS);
+      Vec3 around = this.position();
+      double r2 = MjolnirTuning.NEXT_TARGET_RADIUS * MjolnirTuning.NEXT_TARGET_RADIUS;
+      List<LivingEntity> enemies = this.enemies(thor, origin, around, MjolnirTuning.NEXT_TARGET_RADIUS,
+         e -> !this.hit.contains(e.getId()) && around.distanceToSqr(e.getBoundingBox().getCenter()) <= r2);
       MjolnirTargeting.Candidate next = MjolnirTargeting.next(this.position(), origin, this.hit, candidates(enemies));
       return next == null ? null : byId(enemies, next.id());
    }
 
    /** Visible enemies of the thrower around a point (line of sight from that point). */
-   private List<LivingEntity> enemies(ServerPlayer thor, Vec3 origin, Vec3 around, double radius) {
+   private List<LivingEntity> enemies(ServerPlayer thor, Vec3 origin, Vec3 around, double radius, java.util.function.Predicate<LivingEntity> cheap) {
       AABB box = new AABB(around, around).inflate(radius);
-      return this.level().getEntitiesOfClass(LivingEntity.class, box, e -> ThorTargets.isEnemy(thor, e)
-         && MjolnirTargeting.inRange(origin, e.getBoundingBox().getCenter())
+      return this.level().getEntitiesOfClass(LivingEntity.class, box, e -> MjolnirTargeting.inRange(origin, e.getBoundingBox().getCenter())
+         && cheap.test(e) && ThorTargets.isEnemy(thor, e)
          && this.level().clip(new ClipContext(around, e.getBoundingBox().getCenter(), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this))
             .getType() == HitResult.Type.MISS);
    }

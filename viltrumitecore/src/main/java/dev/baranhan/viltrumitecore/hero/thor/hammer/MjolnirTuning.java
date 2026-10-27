@@ -45,6 +45,11 @@ public final class MjolnirTuning {
    public static final double FREE_FALL_MAX = 2.5;
    /** PLACEHOLDER: below the world bottom by this much the void recovery starts. */
    public static final int VOID_MARGIN = 16;
+   /**
+    * PLACEHOLDER (№217 open): void recoveries to the last resting point, then as many to the world spawn,
+    * before the hammer is parked at the spawn (A-m17: never an endless recovery loop).
+    */
+   public static final int VOID_RETRIES = 3;
    // --- PLACEHOLDER: throw ---
    public static final double THROW_SPEED = 2.2;
    public static final double THROW_SPEED_CHARGED = 3.2;

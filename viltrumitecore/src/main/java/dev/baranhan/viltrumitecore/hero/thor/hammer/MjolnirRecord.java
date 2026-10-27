@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
@@ -78,6 +80,18 @@ public final class MjolnirRecord {
    /** Orientation of a resting hammer (embedded head-first / lying on its side). */
    float yaw;
    float pitch;
+
+   // --- transient (never saved): facts of the running flight that must outlive a body re-spawn (A-m13) ---
+   /** Entity ids hit by the running throw / return (never twice, №33), kept when the body is spawned again. */
+   final Set<Integer> flightHits = new HashSet<>();
+   /** Ticks of the running throw (THROW_MAX_TICKS), kept when the body is spawned again. */
+   int flightTicks;
+   /** The recall ripped it out of a block: the body plays the rip when it next ticks (№158), also after a far recall. */
+   boolean ripPending;
+   /** Void recoveries since the last real landing (A-m17: no endless recovery loop). */
+   int voidAttempts;
+   /** Parked by the last-resort void recovery: rests without support until it is recalled ({@link MjolnirOwnership#voidStep}). */
+   boolean parked;
 
    public boolean exists() {
       return this.logicalId != null && this.phase != MjolnirPhase.NOT_CREATED;
@@ -163,9 +177,17 @@ public final class MjolnirRecord {
       this.phase = next;
       if (next != MjolnirPhase.RESTING) {
          this.embedded = false;
+         this.parked = false;
       }
 
       return true;
+   }
+
+   /** A new flight starts (throw, return, owner change): forget the hits and the flight clock. */
+   void clearFlight() {
+      this.flightHits.clear();
+      this.flightTicks = 0;
+      this.ripPending = false;
    }
 
    /** First creation (NOT_CREATED only): the logical id is chosen here, once per save. */

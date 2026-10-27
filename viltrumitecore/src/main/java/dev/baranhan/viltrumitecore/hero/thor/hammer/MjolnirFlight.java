@@ -81,4 +81,14 @@ public final class MjolnirFlight {
       Vec3 look = new Vec3(-Mth.sin(yaw), 0.0, Mth.cos(yaw));
       return eye.add(right.scale(0.38)).add(look.scale(0.25)).add(0.0, -0.55, 0.0);
    }
+
+   /**
+    * A-m12: a charged throw that met a block it may break, spent this tick's
+    * break budget but not its total, waits at the block instead of sticking
+    * in it (it breaks on next tick). A protected block or a spent total, or
+    * a normal throw, sticks.
+    */
+   public static boolean pausesAtBlock(boolean charged, boolean refused, int brokenTotal, int brokenThisTick) {
+      return charged && !refused && brokenTotal < MjolnirTuning.CHARGED_BREAK_TOTAL && brokenThisTick >= MjolnirTuning.CHARGED_BREAK_PER_TICK;
+   }
 }

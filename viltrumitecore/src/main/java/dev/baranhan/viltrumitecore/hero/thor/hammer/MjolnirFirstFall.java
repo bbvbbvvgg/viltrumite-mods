@@ -106,12 +106,33 @@ final class MjolnirFirstFall {
          int x = (int)Math.floor(chosen.getX() + Math.cos(angle) * distance);
          int z = (int)Math.floor(chosen.getZ() + Math.sin(angle) * distance);
          BlockPos surface = surface(level, x, z);
-         if (surface != null && open(level, surface) && clear(level, surface)) {
+         if (surface != null && !spawnProtected(level, surface) && open(level, surface) && clear(level, surface)) {
             return surface;
          }
       }
 
       return null;
+   }
+
+   /**
+    * A-m8 / §3.3.3: the crater never reaches into the server's spawn
+    * protection (a dedicated server protects the overworld spawn); the fall
+    * then waits for another site. OPEN(owner): claim / protection mods
+    * (the project has no protection API yet).
+    */
+   private static boolean spawnProtected(ServerLevel level, BlockPos surface) {
+      if (!level.getServer().isDedicatedServer() || level.dimension() != net.minecraft.world.level.Level.OVERWORLD) {
+         return false;
+      }
+
+      BlockPos spawn = level.getSharedSpawnPos();
+      return spawnProtected(surface.getX() - spawn.getX(), surface.getZ() - spawn.getZ(), level.getServer().getSpawnProtectionRadius(),
+         MjolnirTuning.CRATER_RADIUS);
+   }
+
+   /** Pure: does a crater of {@code craterRadius} at this offset from the spawn touch the protected square (vanilla: max(|dx|, |dz|) <= radius)? */
+   static boolean spawnProtected(int dx, int dz, int protection, int craterRadius) {
+      return protection > 0 && Math.max(Math.abs(dx), Math.abs(dz)) <= protection + craterRadius;
    }
 
    @Nullable
