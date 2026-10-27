@@ -39,7 +39,7 @@ public final class ThorPoser {
 
       float partialTick = minecraft.getFrameTime();
       ActionClock clock = CLOCKS.computeIfAbsent(entity, e -> new ActionClock());
-      ThorClips.Clip clip = ThorClips.of(ThorView.move(snapshot), ThorView.step(snapshot));
+      ThorClips.Clip clip = ThorClips.of(ThorView.move(snapshot), ThorView.step(snapshot), snapshot.resource());
       double time = clock.sample(clip == null ? -1 : snapshot.actionId(), snapshot.variant(), snapshot.actionElapsed(), snapshot.actionLength(),
          player.tickCount + partialTick);
       boolean holding = ThorView.place(snapshot, player) == MjolnirPlace.HAND;

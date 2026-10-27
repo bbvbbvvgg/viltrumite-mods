@@ -97,6 +97,12 @@ public final class ThorHero implements HeroDefinition {
       return false;
    }
 
+   /** RMB on a block stays vanilla (use / place / open); RMB in the air feeds the combos (on a lying Mjölnir: OPEN). */
+   @Override
+   public boolean claimsBlockUse(Player player) {
+      return false;
+   }
+
    /** Both sides: only buttons whose context move is authored leave vanilla (none in the foundation). */
    @Override
    public HeroAction mouseAction(MouseButton button, Player player) {
@@ -193,11 +199,12 @@ public final class ThorHero implements HeroDefinition {
       return composeSnapshot(state == null ? new ThorState() : state);
    }
 
-   /** Pure wire composer: running move as actionId/elapsed/length/variant, the partner as controlTargetId. */
+   /** Pure wire composer: running move as actionId/elapsed/length/variant, the partner as controlTargetId, the session strike pose as resource. */
    static HeroPublicSnapshot composeSnapshot(ThorState state) {
       var timeline = state.timeline;
       return new HeroPublicSnapshot(HeroId.THOR, timeline.wireId(), timeline.elapsed(), timeline.length(), 0, false, 0, 0, false, false, 0, 0,
-         timeline.partnerId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], timeline.running(), -1, null, 0, false,
+         timeline.partnerId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], timeline.running(), -1, null, timeline.running() ? state.combatPose : 0,
+         false,
          ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0, state.cameraLease != null), new int[0], timeline.variant(), 0);
    }
 
