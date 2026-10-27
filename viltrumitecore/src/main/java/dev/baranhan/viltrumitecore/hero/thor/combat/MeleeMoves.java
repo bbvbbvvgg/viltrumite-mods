@@ -118,7 +118,7 @@ public final class MeleeMoves {
          ThorCombatState combat = ThorCombatState.of(context.state());
          if (event == StagedTimeline.Event.ENTER_MAIN) {
             List<LivingEntity> hits = landStrike(player, context.state(), combat, ThorMove.HAMMER_STRIKE, combat.strikeAttackId);
-            if (context.state().mode == ThorMode.ELECTRIC) {
+            if (context.state().mode == ThorMode.ELECTRIC && !ThorBridge.sceneLocked(context.state())) {
                // The same blow, no extra electric damage: only an MMB_STRIKE action for the recognizer (#147).
                ElectricCombos.strikeAction(player, context.state(), combat, hits);
             }
@@ -253,7 +253,8 @@ public final class MeleeMoves {
       }
 
       List<LivingEntity> hits = landStrike(player, state, combat, move, combat.strikeAttackId);
-      if (!hits.isEmpty()) {
+      if (!hits.isEmpty() && !ThorBridge.sceneLocked(state)) {
+         // (A scene started by this blow has already closed the chain: nothing to remember.)
          combat.chainTarget = hits.get(0).getUUID();
       }
    }
@@ -271,6 +272,12 @@ public final class MeleeMoves {
       for (LivingEntity target : CombatHits.strikeTargets(player, strike)) {
          if (CombatHits.hit(player, target, damage, move, attackId)) {
             landed.add(target);
+            if (ThorBridge.sceneLocked(state)) {
+               // Integration: this lethal blow started a scene (LETHAL_HIT -> session C's fatality, which already stopped the
+               // combo). The scene owns Thor and the victim now: no push, no further targets, no hit-stop, shockwave or crater.
+               return landed;
+            }
+
             CombatHits.push(target, player.position(), strike.knockback(), strike.lift());
             Vec3 at = target.getBoundingBox().getCenter();
             level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 8, 0.3, 0.3, 0.3, 0.3);
