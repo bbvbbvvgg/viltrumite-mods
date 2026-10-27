@@ -13,6 +13,9 @@ import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirPull;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirWorld;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.ThorTransform;
+import dev.baranhan.viltrumitecore.hero.thor.scene.ThorMovementRules;
+import dev.baranhan.viltrumitecore.hero.thor.scene.ThorSceneView;
+import dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -26,9 +29,11 @@ import net.minecraft.world.entity.player.Player;
  * staged move timeline, the combat presence and the session bridge
  * (hero/thor/bridge). No move reachable from a key is authored here: every
  * press resolves by context and is refused as "in development" until a
- * session registers it. No kit, no flight, vanilla chassis. Session A: the
+ * session registers it. No kit, vanilla chassis. Session A: the
  * one world Mjölnir (hero/thor/hammer) is entered, projected, dropped and
- * claimed from the lifecycle hooks below.
+ * claimed from the lifecycle hooks below. Flight (session C): the
+ * original Viltrumite Flight with Mjölnir in the hand, HOVER only without it,
+ * none while a scene holds Thor (hero/thor/scene).
  */
 public final class ThorHero implements HeroDefinition {
    public static final ThorHero INSTANCE = new ThorHero();
@@ -41,10 +46,33 @@ public final class ThorHero implements HeroDefinition {
       return HeroId.THOR;
    }
 
-   /** No flight in the foundation. */
+   /** Both sides: flight unless a scene holds Thor (the client reads the synced scene flag). */
    @Override
    public boolean allowsFlight(Player player) {
-      return false;
+      return ThorMovementRules.allowsFlight(player != null, player != null && ThorScenes.claimsMouse(player));
+   }
+
+   /** Server: vanilla mayfly for the flight toggle while flight is allowed. */
+   @Override
+   public boolean grantsFlightAbility(Player player) {
+      return ThorState.of(player) != null && this.allowsFlight(player);
+   }
+
+   /** Both sides: the original flight with Mjölnir in the hand, otherwise hover only. */
+   @Override
+   public dev.baranhan.viltrumiteflight.util.FlightProfile flightProfile(Player player) {
+      return player == null ? null : ThorMovementRules.profile(hammer(player) == HammerState.IN_HAND);
+   }
+
+   /** Where Mjölnir is: live state on the server, the synced flags on the client. */
+   static HammerState hammer(Player player) {
+      if (player.level().isClientSide) {
+         HeroPublicSnapshot snapshot = player instanceof HeroPlayer heroPlayer ? heroPlayer.getHeroSnapshot() : null;
+         return snapshot != null && snapshot.heroId() == HeroId.THOR ? ThorFlags.hammer(snapshot.heroFlags()) : HammerState.HOLSTERED;
+      }
+
+      ThorState state = ThorState.of(player);
+      return state == null ? HammerState.HOLSTERED : state.hammer;
    }
 
    @Override
@@ -97,10 +125,10 @@ public final class ThorHero implements HeroDefinition {
       return true;
    }
 
-   /** LMB on a block always mines, also once hammer strikes ship. */
+   /** LMB on a block mines, except while a scene owns the mouse (grab choice, teleport confirm). */
    @Override
    public boolean claimsBlockAttack(Player player) {
-      return false;
+      return ThorScenes.claimsMouse(player);
    }
 
    /** RMB on a block stays vanilla (use / place / open); RMB in the air feeds the combos (on a lying Mjölnir: OPEN). */
@@ -109,10 +137,41 @@ public final class ThorHero implements HeroDefinition {
       return false;
    }
 
-   /** Both sides: only buttons whose context move is authored leave vanilla (none in the foundation). */
+   /**
+    * Both sides: only buttons whose context move is authored leave vanilla;
+    * while a scene holds Thor every mouse button goes to the scene.
+    */
    @Override
    public HeroAction mouseAction(MouseButton button, Player player) {
+      if (ThorScenes.claimsMouse(player)) {
+         ThorInput input = ThorInput.of(button);
+         return input == null ? null : input.action();
+      }
+
       return ThorControls.claimedMouse(button, context(player));
+   }
+
+   /** No vanilla hit in full flight (decisions 22, 34) or while a scene owns the mouse. */
+   @Override
+   public boolean allowsVanillaAttack(Player player) {
+      return ThorMovementRules.attacksAllowed(ThorScenes.fullFlight(player), ThorScenes.claimsMouse(player));
+   }
+
+   /** Both sides: the body a scene holds (grab, fatality), or -1. */
+   @Override
+   public int heldTargetId(Player holder) {
+      return holder.level().isClientSide ? ThorSceneView.heldId(holder) : ThorScenes.heldId(holder);
+   }
+
+   @Override
+   public net.minecraft.world.phys.Vec3 heldTargetPosition(Player holder, net.minecraft.world.entity.Entity target, float partialTick) {
+      return holder.level().isClientSide ? ThorSceneView.heldPosition(holder, target, partialTick) : ThorScenes.heldPosition(holder, target);
+   }
+
+   /** A body in Thor's scene presses nothing of its own. */
+   @Override
+   public boolean anchorsHeldTarget(Player holder) {
+      return true;
    }
 
    /** Claim context: live state on the server, the synced snapshot on the client. */
@@ -140,7 +199,8 @@ public final class ThorHero implements HeroDefinition {
       }
 
       boolean enemyNear = ThorTargets.nearestEnemy(player, ThorRules.MELEE_ENEMY_RADIUS) != null;
-      return new ThorContext(hammer, mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, enemyNear, grabWindow, detached, false);
+      return new ThorContext(hammer, mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), ThorScenes.fullFlight(player), enemyNear,
+         grabWindow, detached, false);
    }
 
    @Override
@@ -181,6 +241,11 @@ public final class ThorHero implements HeroDefinition {
             ThorActions.release(player, state, input);
          }
 
+         return;
+      }
+
+      ThorState current = ThorState.of(player);
+      if (current != null && player.isAlive() && ThorScenes.routeInput(player, current, input, true)) {
          return;
       }
 
@@ -250,8 +315,8 @@ public final class ThorHero implements HeroDefinition {
       return new HeroPublicSnapshot(HeroId.THOR, timeline.wireId(), timeline.elapsed(), timeline.length(), 0, false, 0, 0, false, false, 0, 0,
          timeline.partnerId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], timeline.running(), -1, null, timeline.running() ? state.combatPose : 0,
          false,
-         ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0, state.cameraLease != null, state.hammerDetached), new int[0],
-         timeline.variant(), 0);
+         ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0, state.cameraLease != null, state.hammerDetached, state.sceneLock != null),
+         new int[0], timeline.variant(), 0);
    }
 
    @Override

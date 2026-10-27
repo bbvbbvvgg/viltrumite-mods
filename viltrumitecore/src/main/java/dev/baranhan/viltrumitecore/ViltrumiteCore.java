@@ -128,6 +128,7 @@ public class ViltrumiteCore {
          HeroRegistry.registerDefaults();
          dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatConfig.load();
          dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatModule.install();
+         dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes.bootstrap();
       });
    }
 

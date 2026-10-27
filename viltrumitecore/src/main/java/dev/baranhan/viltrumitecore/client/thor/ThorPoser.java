@@ -31,21 +31,38 @@ public final class ThorPoser {
    }
 
    public static void poseThirdPerson(PlayerModel<?> model, LivingEntity entity) {
+      boolean scene = poseInner(model, entity);
+      // Session C: no snap when the pose source switches (combo -> fatality, scene end, flight arms).
+      dev.baranhan.viltrumitecore.client.thor.scene.ScenePoseFade.apply(model, entity, scene, entity.tickCount + Minecraft.getInstance().getFrameTime());
+   }
+
+   /** True when a session C scene / flight pose posed the model. */
+   private static boolean poseInner(PlayerModel<?> model, LivingEntity entity) {
+      // Session C first: scene bodies (also non-Thor victims) and Thor's flight arms.
+      Minecraft scene = Minecraft.getInstance();
+      boolean sceneFirstPerson = entity == scene.player && scene.options.getCameraType().isFirstPerson()
+         && !dev.baranhan.viltrumitecore.client.thor.scene.ThorSceneCamera.active();
+      if (!sceneFirstPerson && dev.baranhan.viltrumitecore.client.thor.scene.ThorScenePoser.pose(model, entity)) {
+         CLOCKS.remove(entity);
+         return true;
+      }
+
+      // Session A: anyone straining at the lying hammer (also non-Thor players).
       if (entity instanceof Player lifter && MjolnirClient.lifting(lifter)) {
          poseLift(model, lifter);
-         return;
+         return false;
       }
 
       HeroPublicSnapshot snapshot = ThorView.of(entity);
       if (snapshot == null || !(entity instanceof AbstractClientPlayer player)) {
          CLOCKS.remove(entity);
-         return;
+         return false;
       }
 
       Minecraft minecraft = Minecraft.getInstance();
       boolean localFirstPerson = entity == minecraft.player && minecraft.options.getCameraType().isFirstPerson();
       if (localFirstPerson && !ShaderCompat.isShadowPass()) {
-         return;
+         return false;
       }
 
       float partialTick = minecraft.getFrameTime();
@@ -59,12 +76,12 @@ public final class ThorPoser {
       MjolnirEntity called = clip == null && !holding ? MjolnirClient.calledBy(player) : null;
       if (called != null) {
          poseReach(model, player, called, partialTick);
-         return;
+         return false;
       }
 
       boolean reaching = clip == null && !holding && ThorFlags.hammer(snapshot.heroFlags()) == HammerState.RETURNING;
       if (clip == null && !holding && !reaching) {
-         return;
+         return false;
       }
 
       PoseRig rig = PoseRig.begin(model, entity, 1.0F, null);
@@ -85,6 +102,7 @@ public final class ThorPoser {
       }
 
       rig.finish();
+      return false;
    }
 
    /** №190: anyone straining at the lying hammer: both arms down-forward, torso bent, a tremble. */

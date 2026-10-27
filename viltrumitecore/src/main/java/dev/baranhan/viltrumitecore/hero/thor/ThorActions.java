@@ -66,8 +66,9 @@ public final class ThorActions {
 
    /** Server context of a player: live state, held items, movement, the nearest enemy. */
    public static ThorContext context(ServerPlayer player, ThorState state, @Nullable LivingEntity enemy) {
-      return new ThorContext(state.hammer, state.mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, enemy != null,
-         ThorBridge.grabWindowActive(state), state.hammerDetached, fistChainOpen(state));
+      return new ThorContext(state.hammer, state.mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(),
+         dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes.fullFlight(player), enemy != null, ThorBridge.grabWindowActive(state),
+         state.hammerDetached, fistChainOpen(state));
    }
 
    /** An unarmed chain (session B's combo window) is still open: LMB / RMB finish it first (#166). */
@@ -117,12 +118,17 @@ public final class ThorActions {
     * remembers its move for the release of {@code input}.
     */
    public static Refusal start(ThorState state, @Nullable ThorInput input, ThorMove move, boolean handFree) {
+      return start(state, input, move, handFree, move.paired() ? ThorBridge.grabTarget(state) : -1);
+   }
+
+   /** Press flow with an explicit partner entity id (paired moves: the grab target, the fatality victim; -1 = none). */
+   public static Refusal start(ThorState state, @Nullable ThorInput input, ThorMove move, boolean handFree, int partnerId) {
       Refusal gate = gate(state, move, handFree);
       if (gate != Refusal.NONE || overlay(move)) {
          return gate;
       }
 
-      StagedTimeline.Admission admission = state.timeline.request(move, -1);
+      StagedTimeline.Admission admission = state.timeline.request(move, partnerId);
       if (admission == StagedTimeline.Admission.REFUSE) {
          return Refusal.BUSY;
       }
