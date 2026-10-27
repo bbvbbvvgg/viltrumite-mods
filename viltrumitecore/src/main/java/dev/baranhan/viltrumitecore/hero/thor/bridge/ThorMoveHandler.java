@@ -11,6 +11,15 @@ public interface ThorMoveHandler {
    ThorMoveHandler NONE = new ThorMoveHandler() {
    };
 
+   /**
+    * Last say before the timeline (cooldowns, conditions of the owning
+    * session): false refuses the press quietly, the handler gives its own
+    * feedback. Default: always.
+    */
+   default boolean admits(ThorMoveContext context) {
+      return true;
+   }
+
    /** The press was admitted on the timeline (started, chained or buffered). */
    default void onStart(ThorMoveContext context) {
    }
