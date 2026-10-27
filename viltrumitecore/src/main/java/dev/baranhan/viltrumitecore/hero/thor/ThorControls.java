@@ -21,17 +21,20 @@ public final class ThorControls {
    public static ThorMove resolve(ThorInput input, ThorContext context) {
       return switch (input) {
          // No attacks in full flight.
-         case STRIKE -> context.flying() ? null
-            : context.mode() == ThorMode.ELECTRIC ? ThorMove.ELECTRIC_COMBO
-            : context.hammer() == HammerState.IN_HAND ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
-         // RMB routing is not part of the bridge: vanilla until its session defines it.
-         case STANCE -> null;
+         case STRIKE -> context.flying() ? null : context.mode() == ThorMode.ELECTRIC ? ThorMove.ELECTRIC_COMBO : melee(context);
+         // RMB (session B): the same combo flow as LMB (the rhythm of both buttons picks the strikes), the wave / storm in the electric mode.
+         case STANCE -> context.flying() ? null : context.mode() == ThorMode.ELECTRIC ? ThorMove.ELECTRIC_WAVE : melee(context);
          case HAMMER -> hammer(context);
          case POWER -> ThorMove.ELECTRIC_MODE;
          case MOBILITY -> context.hammer() == HammerState.THROWN ? ThorMove.HAMMER_PULL : null;
          case TELEPORT -> ThorMove.TELEPORT_SELECT;
          case ULTIMATE -> ThorMove.WRATH;
       };
+   }
+
+   /** LMB / RMB outside the electric mode: an open unarmed chain finishes first (#166), then Mjölnir in the hand, else fists. */
+   private static ThorMove melee(ThorContext context) {
+      return !context.fistChainOpen() && context.hammer() == HammerState.IN_HAND ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
    }
 
    /** MMB, the one decision point: grab window &gt; recall &gt; melee (enemy within 4 blocks) &gt; throw. */
@@ -83,7 +86,7 @@ public final class ThorControls {
    public static ThorMove[] candidates(ThorInput input) {
       return switch (input) {
          case STRIKE -> new ThorMove[]{ThorMove.ELECTRIC_COMBO, ThorMove.HAMMER_COMBO, ThorMove.FIST_COMBO};
-         case STANCE -> new ThorMove[0];
+         case STANCE -> new ThorMove[]{ThorMove.ELECTRIC_WAVE, ThorMove.HAMMER_COMBO, ThorMove.FIST_COMBO};
          case HAMMER -> new ThorMove[]{ThorMove.GRAB, ThorMove.RECALL, ThorMove.HAMMER_STRIKE, ThorMove.HAMMER_THROW};
          case POWER -> new ThorMove[]{ThorMove.ELECTRIC_MODE};
          case MOBILITY -> new ThorMove[]{ThorMove.HAMMER_PULL};

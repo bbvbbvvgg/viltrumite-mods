@@ -53,7 +53,12 @@ public enum ThorMove implements StagedMove {
    /** Y: pull Thor to Mjölnir flying after a throw. */
    HAMMER_PULL(ThorRules.PRIORITY_HEAVY, false, false),
    /** V: choose the teleport point (top-down camera). */
-   TELEPORT_SELECT(ThorRules.PRIORITY_UTILITY, false, false);
+   TELEPORT_SELECT(ThorRules.PRIORITY_UTILITY, false, false),
+   // --- appended by session B (combat) ---
+   /** RMB in the electric mode: circular electric wave on a tap (a held RMB grows into ELECTRIC_STORM). */
+   ELECTRIC_WAVE(ThorRules.PRIORITY_ATTACK, false, false),
+   /** Held RMB in the electric mode: the expanding storm around Thor, ends on release. */
+   ELECTRIC_STORM(ThorRules.PRIORITY_HEAVY, false, false);
 
    private static final ThorMove[] VALUES = values();
 

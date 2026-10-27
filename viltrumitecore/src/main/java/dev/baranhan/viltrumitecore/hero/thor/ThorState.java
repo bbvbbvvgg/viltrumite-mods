@@ -34,6 +34,13 @@ public final class ThorState {
    /** Bridge camera lease owner, null when free (ThorBridge); transient. */
    @Nullable
    public String cameraLease;
+   /** Combo window (session B, ThorBridge): the chain's move, null when closed; transient. */
+   @Nullable
+   public ThorMove comboMove;
+   /** Combo window ticks left; transient. */
+   public int comboWindow;
+   /** Session-owned strike pose id of the running move (0 = default clip), synced as snapshot resource; transient. */
+   public int combatPose;
    /** Move chosen on the press of a held input, with ticks held; the release goes to it. Transient. */
    final EnumMap<ThorInput, ThorMove> pressed = new EnumMap<>(ThorInput.class);
    final EnumMap<ThorInput, Integer> heldTicks = new EnumMap<>(ThorInput.class);
@@ -65,6 +72,9 @@ public final class ThorState {
       this.grabWindow = 0;
       this.sceneLock = null;
       this.cameraLease = null;
+      this.comboMove = null;
+      this.comboWindow = 0;
+      this.combatPose = 0;
       this.pressed.clear();
       this.heldTicks.clear();
    }
