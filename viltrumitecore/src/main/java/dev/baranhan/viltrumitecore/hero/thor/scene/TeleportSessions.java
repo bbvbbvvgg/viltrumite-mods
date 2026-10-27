@@ -4,7 +4,6 @@ import dev.baranhan.viltrumitecore.hero.SafeSpot;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFeedback;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
-import dev.baranhan.viltrumitecore.hero.thor.bridge.HammerView;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,8 +64,7 @@ final class TeleportSessions {
    }
 
    static TeleportRules.Refusal gate(ServerPlayer thor, ThorState state) {
-      HammerView hammer = ThorBridge.hammer(thor);
-      return TeleportRules.gate(hammer != null && hammer.inHand(), ThorScenes.fullFlight(thor), ThorBridge.sceneLocked(state));
+      return TeleportRules.gate(ThorBridge.hammerHeld(thor), ThorScenes.fullFlight(thor), ThorBridge.sceneLocked(state));
    }
 
    /** Begin (TELEPORT_SELECT admitted): false with feedback when refused. */
@@ -129,8 +127,7 @@ final class TeleportSessions {
          return;
       }
 
-      HammerView hammer = ThorBridge.hammer(thor);
-      if (hammer == null || !hammer.inHand()) {
+      if (!ThorBridge.hammerHeld(thor)) {
          // Decision 42: Mjölnir must still be in the hand when the point is confirmed.
          end(thor, session);
          ThorFeedback.refuse(thor, Component.translatable("hud.viltrumitecore.thor.teleport.refused.no_hammer"));

@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor.bridge;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorHands;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import java.util.UUID;
@@ -52,6 +53,17 @@ public final class ThorBridge {
    public static HammerView hammer(Player player) {
       ThorState state = ThorState.of(player);
       return state == null ? null : hammer(player.getUUID(), state);
+   }
+
+   /**
+    * Mjölnir really in Thor's right hand: attached (HammerView.inHand) and the
+    * hand free. With an item there it rides the belt (MjolnirPlace.BELT,
+    * ThorCombat.presence): no hammer blow, fatality or teleport (integration
+    * rule shared by sessions B and C).
+    */
+   public static boolean hammerHeld(Player player) {
+      HammerView view = hammer(player);
+      return view != null && view.inHand() && ThorHands.free(player);
    }
 
    // --- read-only state ---

@@ -2,7 +2,6 @@ package dev.baranhan.viltrumitecore.hero.thor.combat;
 
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
-import dev.baranhan.viltrumitecore.hero.thor.bridge.HammerView;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
@@ -145,10 +144,13 @@ public final class CombatHits {
 
    // --- the hit ---
 
-   /** Mjölnir in the hand right now, read only through the bridge. */
+   /**
+    * Mjölnir in the hand right now, read through the bridge: attached to Thor
+    * and the right hand free (an item there keeps it on the belt, the same
+    * rule as MjolnirPlace and ThorCombat.presence).
+    */
    public static boolean hammerInHand(ServerPlayer player) {
-      HammerView view = ThorBridge.hammer(player);
-      return view != null && view.inHand();
+      return ThorBridge.hammerHeld(player);
    }
 
    /**

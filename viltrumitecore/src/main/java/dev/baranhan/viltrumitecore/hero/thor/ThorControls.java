@@ -24,17 +24,25 @@ public final class ThorControls {
          case STRIKE -> context.flying() ? null : context.mode() == ThorMode.ELECTRIC ? ThorMove.ELECTRIC_COMBO : melee(context);
          // RMB (session B): the same combo flow as LMB (the rhythm of both buttons picks the strikes), the wave / storm in the electric mode.
          case STANCE -> context.flying() ? null : context.mode() == ThorMode.ELECTRIC ? ThorMove.ELECTRIC_WAVE : melee(context);
-         case HAMMER -> hammer(context);
+         // MMB in full flight: only the recall (not an attack); grab, melee and throw wait for the landing / HOVER (decisions 22, 34).
+         case HAMMER -> context.flying() ? context.hammerAway() ? ThorMove.RECALL : null : hammer(context);
          case POWER -> ThorMove.ELECTRIC_MODE;
          case MOBILITY -> context.hammer() == HammerState.THROWN ? ThorMove.HAMMER_PULL : null;
+         // Stays routed in flight: session C's gate refuses it there with its own message (decision 48).
          case TELEPORT -> ThorMove.TELEPORT_SELECT;
-         case ULTIMATE -> ThorMove.WRATH;
+         // The ultimate is an attack: none in full flight (decisions 22, 34; its own flight rule is still open in the canon).
+         case ULTIMATE -> context.flying() ? null : ThorMove.WRATH;
       };
    }
 
-   /** LMB / RMB outside the electric mode: an open unarmed chain finishes first (#166), then Mjölnir in the hand, else fists. */
+   /**
+    * LMB / RMB outside the electric mode: an open unarmed chain finishes
+    * first (#166), then Mjölnir really in the right hand, else fists. An item
+    * in the right hand keeps Mjölnir on the belt (MjolnirPlace.BELT,
+    * ThorCombat.presence): those are fist strikes, never hammer combos.
+    */
    private static ThorMove melee(ThorContext context) {
-      return !context.fistChainOpen() && context.hammer() == HammerState.IN_HAND ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
+      return !context.fistChainOpen() && context.hammer() == HammerState.IN_HAND && context.handFree() ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
    }
 
    /** MMB, the one decision point: grab window &gt; recall &gt; melee (enemy within 4 blocks) &gt; throw. */

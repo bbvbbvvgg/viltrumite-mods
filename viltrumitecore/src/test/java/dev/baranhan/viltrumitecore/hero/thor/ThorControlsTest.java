@@ -100,11 +100,11 @@ class ThorControlsTest {
       for (ThorContext context : everyContext()) {
          assertSame(ThorMove.ELECTRIC_MODE, ThorControls.resolve(ThorInput.POWER, context), "R only toggles the electric mode");
          assertSame(ThorMove.TELEPORT_SELECT, ThorControls.resolve(ThorInput.TELEPORT, context));
-         assertSame(ThorMove.WRATH, ThorControls.resolve(ThorInput.ULTIMATE, context));
+         assertSame(context.flying() ? null : ThorMove.WRATH, ThorControls.resolve(ThorInput.ULTIMATE, context), "the ultimate is an attack: none in full flight");
          assertSame(context.hammer() == HammerState.THROWN ? ThorMove.HAMMER_PULL : null, ThorControls.resolve(ThorInput.MOBILITY, context),
             "Y pulls only to the hammer flying after a throw");
          ThorMove rmb = context.flying() ? null : context.mode() == ThorMode.ELECTRIC ? ThorMove.ELECTRIC_WAVE
-            : !context.fistChainOpen() && context.hammer() == HammerState.IN_HAND ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
+            : !context.fistChainOpen() && context.hammer() == HammerState.IN_HAND && context.handFree() ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
          assertSame(rmb, ThorControls.resolve(ThorInput.STANCE, context), "RMB: combos, the electric wave, nothing in full flight");
       }
    }
@@ -116,6 +116,35 @@ class ThorControlsTest {
       assertSame(ThorMove.ELECTRIC_COMBO, ThorControls.resolve(ThorInput.STRIKE, ThorContext.grounded(HammerState.IN_HAND, ThorMode.ELECTRIC)));
       ThorContext flying = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, true, false, true, true, true, false);
       assertNull(ThorControls.resolve(ThorInput.STRIKE, flying));
+   }
+
+   @Test
+   void fullFlightKeepsOnlyTheRecallOnMmb() {
+      for (ThorContext context : everyContext()) {
+         if (!context.flying()) {
+            continue;
+         }
+
+         ThorMove mmb = ThorControls.resolve(ThorInput.HAMMER, context);
+         assertSame(context.hammerAway() ? ThorMove.RECALL : null, mmb, "no grab, melee or throw in full flight: " + context);
+         assertNull(ThorControls.resolve(ThorInput.STRIKE, context));
+         assertNull(ThorControls.resolve(ThorInput.STANCE, context));
+         assertNull(ThorControls.resolve(ThorInput.ULTIMATE, context));
+         assertSame(ThorMove.TELEPORT_SELECT, ThorControls.resolve(ThorInput.TELEPORT, context), "routed; session C refuses it in flight with its message");
+      }
+
+      ThorContext hover = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, true, false, true, false, true, false);
+      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, hover), "HOVER is not full flight");
+      assertSame(ThorMove.WRATH, ThorControls.resolve(ThorInput.ULTIMATE, hover));
+   }
+
+   @Test
+   void anItemInTheRightHandMeansFistsNotHammerCombos() {
+      ThorContext busy = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, false, false, false, false, false, false);
+      assertSame(ThorMove.FIST_COMBO, ThorControls.resolve(ThorInput.STRIKE, busy), "Mjölnir rides the belt while an item is in the hand");
+      assertSame(ThorMove.FIST_COMBO, ThorControls.resolve(ThorInput.STANCE, busy));
+      assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, busy), "MMB still routes; ThorActions.gate refuses the throw (HANDS_BUSY)");
+      assertTrue(ThorControls.needsHand(ThorMove.HAMMER_THROW));
    }
 
    @Test
