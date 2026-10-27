@@ -14,13 +14,13 @@ import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorRules;
 import org.junit.jupiter.api.Test;
 
-/** The animation extension point: every shipped move has keys that end with its server length. */
+/** The animation extension point: every authored move with a clip ends at its server length; unauthored moves never pose. */
 class ThorClipsTest {
    @Test
-   void everyShippedMoveHasAClipOfItsServerLength() {
+   void everyAuthoredMoveHasAClipOfItsServerLength() {
       for (ThorMove move : ThorMove.values()) {
          ThorClips.Clip clip = ThorClips.of(move, 0);
-         if (move.shipped()) {
+         if (move.authored()) {
             assertNotNull(clip, move + " needs a clip");
             for (int step = 0; step < move.maxSteps(); step++) {
                assertEquals(move.length(), ThorClips.of(move, step).lastTick(), 1.0E-6, move + " step " + step);

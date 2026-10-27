@@ -81,7 +81,7 @@ class ThorAssetsTest {
 
       assertEquals(png("textures/entity/thor/mjolnir.png").getWidth(), png("textures/entity/thor/mjolnir_glow.png").getWidth(),
          "the glow pass shares the hammer UVs");
-      for (String icon : new String[]{"thunder", "onslaught", "wrath"}) {
+      for (String icon : new String[]{"thunder", "onslaught", "wrath", "teleport"}) {
          BufferedImage image = png("textures/gui/ability/thor/" + icon + ".png");
          // A 32-pixel grid upscaled 2x nearest, like the other heroes' panel icons.
          assertEquals(64, image.getWidth(), icon);
