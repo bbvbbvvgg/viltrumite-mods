@@ -111,6 +111,8 @@ public final class HeroMouseInput {
       var hero=HeroRegistry.get(player);
       if(button==MouseButton.PRIMARY && !hero.claimsBlockAttack(player)
          && Minecraft.getInstance().hitResult!=null && Minecraft.getInstance().hitResult.getType()==net.minecraft.world.phys.HitResult.Type.BLOCK) return null;
+      if(button==MouseButton.SECONDARY && !hero.claimsBlockUse(player)
+         && Minecraft.getInstance().hitResult!=null && Minecraft.getInstance().hitResult.getType()==net.minecraft.world.phys.HitResult.Type.BLOCK) return null;
       return hero.mouseAction(button, player);
    }
 }
