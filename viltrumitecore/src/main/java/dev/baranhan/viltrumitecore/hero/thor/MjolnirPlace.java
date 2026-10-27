@@ -4,12 +4,17 @@ package dev.baranhan.viltrumitecore.hero.thor;
 public enum MjolnirPlace {
    HAND,
    BELT,
-   /** Away from Thor (thrown / returning): drawn by its own entity once the throw is authored. */
+   /** Away from Thor (thrown / returning / lying in the world): drawn by its own entity (MjolnirEntity). */
    HIDDEN;
 
    /** An item in the right hand always wins over the hammer, which then shows on the belt. */
    public static MjolnirPlace of(HammerState hammer, boolean handFree) {
-      if (hammer.away()) {
+      return of(hammer, handFree, false);
+   }
+
+   /** {@code detached}: the world hammer lies / falls elsewhere (ThorFlags.hammerDetached). */
+   public static MjolnirPlace of(HammerState hammer, boolean handFree, boolean detached) {
+      if (hammer.away() || detached) {
          return HIDDEN;
       }
 
