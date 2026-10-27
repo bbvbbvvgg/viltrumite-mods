@@ -7,12 +7,16 @@ import dev.baranhan.viltrumitecore.hero.thor.HammerState;
 import dev.baranhan.viltrumitecore.hero.thor.MjolnirPlace;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFlags;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
+import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirEntity;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Thor third-person poses (setupAnim TAIL, ThorModelMixin): the running
@@ -27,6 +31,11 @@ public final class ThorPoser {
    }
 
    public static void poseThirdPerson(PlayerModel<?> model, LivingEntity entity) {
+      if (entity instanceof Player lifter && MjolnirClient.lifting(lifter)) {
+         poseLift(model, lifter);
+         return;
+      }
+
       HeroPublicSnapshot snapshot = ThorView.of(entity);
       if (snapshot == null || !(entity instanceof AbstractClientPlayer player)) {
          CLOCKS.remove(entity);
@@ -46,7 +55,14 @@ public final class ThorPoser {
          player.tickCount + partialTick);
       boolean holding = ThorView.place(snapshot, player) == MjolnirPlace.HAND;
       // #154 / #155: while Mjölnir flies back, the arm reaches for it, but only once the current strike is over.
-      boolean reaching = clip == null && ThorFlags.hammer(snapshot.heroFlags()) == HammerState.RETURNING;
+      // Aim at the real hammer (session A) when this client tracks it; the view-pitch reach (session B) is the fallback.
+      MjolnirEntity called = clip == null && !holding ? MjolnirClient.calledBy(player) : null;
+      if (called != null) {
+         poseReach(model, player, called, partialTick);
+         return;
+      }
+
+      boolean reaching = clip == null && !holding && ThorFlags.hammer(snapshot.heroFlags()) == HammerState.RETURNING;
       if (clip == null && !holding && !reaching) {
          return;
       }
@@ -69,5 +85,30 @@ public final class ThorPoser {
       }
 
       rig.finish();
+   }
+
+   /** №190: anyone straining at the lying hammer: both arms down-forward, torso bent, a tremble. */
+   private static void poseLift(PlayerModel<?> model, Player player) {
+      float shake = Mth.sin((player.tickCount + Minecraft.getInstance().getFrameTime()) * 2.3F) * 2.5F;
+      PoseRig rig = PoseRig.begin(model, player, 1.0F, null);
+      rig.add(model.body, 25.0F, 0.0F, 0.0F);
+      rig.add(model.rightArm, -55.0F + shake, 0.0F, 8.0F);
+      rig.add(model.leftArm, -55.0F - shake, 0.0F, -8.0F);
+      rig.finish();
+   }
+
+   /** №55: the free arm reaches out to the returning hammer while it flies back. */
+   private static void poseReach(PlayerModel<?> model, Player player, MjolnirEntity hammer, float partialTick) {
+      Vec3 eye = player.getEyePosition(partialTick);
+      Vec3 to = hammer.getPosition(partialTick).subtract(eye);
+      double flat = Math.sqrt(to.x * to.x + to.z * to.z);
+      float elevation = (float)Math.toDegrees(Math.atan2(to.y, Math.max(flat, 1.0E-4)));
+      float heading = (float)Math.toDegrees(Math.atan2(-to.x, to.z));
+      float yaw = Mth.clamp(Mth.wrapDegrees(heading - Mth.lerp(partialTick, player.yBodyRotO, player.yBodyRot)), -60.0F, 60.0F);
+      model.rightArm.xRot = (float)Math.toRadians(Mth.clamp(-90.0F - elevation, -170.0F, -20.0F));
+      model.rightArm.yRot = (float)Math.toRadians(yaw);
+      model.rightArm.zRot = 0.0F;
+      PoseRig.markDirty(model);
+      PoseRig.copyLayers(model);
    }
 }
