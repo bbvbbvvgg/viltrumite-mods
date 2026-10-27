@@ -6,7 +6,8 @@ import javax.annotation.Nullable;
  * Pure state of one grab (decisions 59-62, 123-125, 150): HOLD (Thor walks, the
  * victim may resist with its one key) → ACTION (committed: no resistance,
  * plays to the release) → RECOVER (victim out of the hand, Thor finishes)
- * → DONE. An escape or the hold limit ends HOLD directly.
+ * → DONE. Only an escape (the victim's presses) or Thor's one action ends
+ * HOLD: there is no hold time limit (spec §9 / decisions 59, 124, 125).
  */
 public final class GrabFlow {
    public enum Stage {
@@ -20,8 +21,6 @@ public final class GrabFlow {
       NONE,
       /** The meter filled: the victim breaks free. */
       ESCAPED,
-      /** No action within the hold limit: the victim drops. */
-      TIMEOUT,
       /** A barrage punch lands ({@link #punch()}). */
       PUNCH,
       /** The victim leaves the hand: slam impact, throw launch or barrage finisher. */
@@ -106,7 +105,7 @@ public final class GrabFlow {
       this.stage = Stage.DONE;
    }
 
-   public Outcome tick(float decay, int holdMax, int recoverTicks) {
+   public Outcome tick(float decay, int recoverTicks) {
       this.punch = -1;
       if (++this.secondTicks >= 20) {
          this.secondTicks = 0;
@@ -122,11 +121,6 @@ public final class GrabFlow {
             }
 
             this.meter = Math.max(0.0F, this.meter - decay);
-            if (this.ticks >= holdMax) {
-               this.stage = Stage.DONE;
-               return Outcome.TIMEOUT;
-            }
-
             return Outcome.NONE;
          }
          case ACTION -> {

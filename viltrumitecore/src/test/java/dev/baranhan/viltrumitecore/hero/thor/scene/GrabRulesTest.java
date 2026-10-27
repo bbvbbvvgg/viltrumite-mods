@@ -55,7 +55,7 @@ class GrabRulesTest {
       }
       assertEquals(14, accepted, "at most maxPerSecond presses in one second");
       for (int i = 0; i < 20; i++) {
-         flow.tick(0.0F, 1000, 8);
+         flow.tick(0.0F, 8);
       }
       assertTrue(flow.resist(ResistKey.A, 0.01F, 14), "the cap resets after a second");
    }
@@ -64,23 +64,32 @@ class GrabRulesTest {
    void fullMeterEscapesAndDecayPullsItBack() {
       GrabFlow flow = new GrabFlow(ResistKey.SPACE);
       flow.resist(ResistKey.SPACE, 0.5F, 14);
-      flow.tick(0.1F, 1000, 8);
+      flow.tick(0.1F, 8);
       assertEquals(0.4F, flow.meter(), 1.0E-6);
       flow.resist(ResistKey.SPACE, 0.7F, 14);
-      assertSame(GrabFlow.Outcome.ESCAPED, flow.tick(0.1F, 1000, 8));
+      assertSame(GrabFlow.Outcome.ESCAPED, flow.tick(0.1F, 8));
       assertSame(GrabFlow.Stage.DONE, flow.stage());
    }
 
    @Test
-   void mobsCannotResistAndTheHoldTimesOut() {
+   void mobsCannotResistAndTheHoldNeverRunsOut() {
       GrabFlow flow = new GrabFlow(null);
       assertFalse(flow.resistible());
       assertFalse(flow.resist(ResistKey.W, 1.0F, 14));
-      GrabFlow.Outcome last = GrabFlow.Outcome.NONE;
-      for (int i = 0; i < 5 && last == GrabFlow.Outcome.NONE; i++) {
-         last = flow.tick(0.0F, 5, 8);
+      for (int i = 0; i < 20 * 60 * 10; i++) {
+         assertSame(GrabFlow.Outcome.NONE, flow.tick(0.0F, 8), "no hold time limit: only an escape or Thor's action ends a grab");
       }
-      assertSame(GrabFlow.Outcome.TIMEOUT, last);
+      assertSame(GrabFlow.Stage.HOLD, flow.stage());
+   }
+
+   @Test
+   void unresistedPlayerStaysHeldUntilThorActs() {
+      GrabFlow flow = new GrabFlow(ResistKey.W);
+      for (int i = 0; i < 20 * 60 * 10; i++) {
+         assertSame(GrabFlow.Outcome.NONE, flow.tick(0.006F, 8));
+      }
+      assertSame(GrabFlow.Stage.HOLD, flow.stage());
+      assertTrue(flow.commit(GrabAction.BARRAGE));
    }
 
    @Test
@@ -99,7 +108,7 @@ class GrabRulesTest {
       flow.commit(GrabAction.THROW);
       int release = -1;
       for (int i = 1; i <= 100; i++) {
-         if (flow.tick(0, 1000, 8) == GrabFlow.Outcome.RELEASE) {
+         if (flow.tick(0, 8) == GrabFlow.Outcome.RELEASE) {
             release = i;
             break;
          }
@@ -108,7 +117,7 @@ class GrabRulesTest {
       assertSame(GrabFlow.Stage.RECOVER, flow.stage());
       GrabFlow.Outcome last = GrabFlow.Outcome.NONE;
       for (int i = 0; i < 8; i++) {
-         last = flow.tick(0, 1000, 8);
+         last = flow.tick(0, 8);
       }
       assertSame(GrabFlow.Outcome.END, last);
    }
@@ -120,7 +129,7 @@ class GrabRulesTest {
       int punches = 0;
       GrabFlow.Outcome outcome;
       do {
-         outcome = flow.tick(0, 1000, 8);
+         outcome = flow.tick(0, 8);
          if (outcome == GrabFlow.Outcome.PUNCH) {
             assertEquals(punches, flow.punch());
             punches++;

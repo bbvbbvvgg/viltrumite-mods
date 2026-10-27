@@ -113,9 +113,7 @@ public final class ThorScenes {
 
       @Override
       public void onPhase(ThorMoveContext context, StagedTimeline.Event event) {
-         if (event == StagedTimeline.Event.END && context.player() != null) {
-            GrabSessions.endFor(context.player());
-         }
+         // The timeline running out does not end a grab: only an escape or Thor's one action does (no hold time limit).
       }
 
       @Override

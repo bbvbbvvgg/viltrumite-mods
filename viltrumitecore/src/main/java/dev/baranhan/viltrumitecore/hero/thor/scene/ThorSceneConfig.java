@@ -28,8 +28,6 @@ public final class ThorSceneConfig {
    public static double grabReach = 4.5;
 
    // --- hold and resistance (decisions 59-61, 123, 124, 150, 151) ---
-   /** PLACEHOLDER: the longest hold without a chosen action (ticks); the victim drops after it. */
-   public static int holdMaxTicks = 300;
    /** PLACEHOLDER: escape meter per accepted press of the shown key (1 = free). */
    public static float resistPerPress = 0.085F;
    /** PLACEHOLDER: meter decay per tick. */
@@ -96,7 +94,6 @@ public final class ThorSceneConfig {
       i("grab_window_ticks", () -> grabWindowTicks, v -> grabWindowTicks = v);
       i("combo_idle_ticks", () -> comboIdleTicks, v -> comboIdleTicks = v);
       d("grab_reach", () -> grabReach, v -> grabReach = v);
-      i("hold_max_ticks", () -> holdMaxTicks, v -> holdMaxTicks = v);
       f("resist_per_press", () -> resistPerPress, v -> resistPerPress = v);
       f("resist_decay", () -> resistDecay, v -> resistDecay = v);
       i("resist_max_per_second", () -> resistMaxPerSecond, v -> resistMaxPerSecond = v);

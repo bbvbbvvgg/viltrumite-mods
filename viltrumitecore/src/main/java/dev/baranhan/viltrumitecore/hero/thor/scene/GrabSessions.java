@@ -51,6 +51,8 @@ final class GrabSessions {
    }
 
    private static final Map<UUID, Session> SESSIONS = new HashMap<>();
+   /** The shared PULL control is leased in slices and renewed while the grab lasts (no hold time limit). */
+   private static final long CONTROL_LEASE = 200L;
 
    private GrabSessions() {
    }
@@ -98,7 +100,7 @@ final class GrabSessions {
 
       ResistKey key = target instanceof ServerPlayer ? ResistKey.pick(thor.getRandom().nextInt()) : null;
       Session session = new Session(thor, target, new GrabFlow(key));
-      long expiry = thor.level().getGameTime() + ThorSceneConfig.holdMaxTicks + 400L;
+      long expiry = thor.level().getGameTime() + CONTROL_LEASE;
       if (!ControlManager.get(session.level).tryAcquire(target, thor.getUUID(), session.effectId, ControlKind.PULL, expiry)) {
          return false;
       }
@@ -158,14 +160,10 @@ final class GrabSessions {
          }
 
          GrabFlow.Stage before = session.flow.stage();
-         GrabFlow.Outcome outcome = session.flow.tick(ThorSceneConfig.resistDecay, ThorSceneConfig.holdMaxTicks, ThorSceneConfig.grabRecoverTicks);
+         GrabFlow.Outcome outcome = session.flow.tick(ThorSceneConfig.resistDecay, ThorSceneConfig.grabRecoverTicks);
          switch (outcome) {
             case ESCAPED -> {
                escape(thor, session, victim);
-               continue;
-            }
-            case TIMEOUT -> {
-               end(thor, session, ReleaseReason.EXPIRED);
                continue;
             }
             case PUNCH -> SceneFx.barragePunch(thor, victim, session.flow.punch());
@@ -179,6 +177,10 @@ final class GrabSessions {
          }
 
          if (holding(session) && victim != null) {
+            if (session.flow.ticks() % 20 == 0) {
+               ControlManager.get(session.level).refresh(session.victim, session.thor, session.effectId, ControlKind.PULL,
+                  session.level.getGameTime() + CONTROL_LEASE);
+            }
             hold(thor, session, victim);
          }
 
