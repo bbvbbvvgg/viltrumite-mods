@@ -455,6 +455,9 @@ public interface HeroDefinition {
    /** Both sides: authoritative hold anchor. partialTick only interpolates the client presentation. */
    default net.minecraft.world.phys.Vec3 heldTargetPosition(Player holder, net.minecraft.world.entity.Entity target, float partialTick) { return null; }
 
+   /** Server: does this hero's hold anchor its held target (damage queues like under an anchor control)? Default: no. */
+   default boolean anchorsHeldTarget(Player holder) { return false; }
+
    /** Server-authoritative public snapshot; written to the synced data for all trackers. */
    HeroPublicSnapshot snapshot(Player player);
 
