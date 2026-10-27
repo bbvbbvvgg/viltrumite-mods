@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.hero.thor;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
+import java.util.EnumMap;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
@@ -16,10 +17,18 @@ public final class ThorState {
    static final String HAMMER_KEY = "Hammer";
 
    public HammerState hammer = HammerState.HOLSTERED;
-   /** Transient (stage 3 makes it timed). */
+   /** Transient. */
    public ThorMode mode = ThorMode.NORMAL;
    /** The one staged move player; transient. */
    public final StagedTimeline<ThorMove> timeline = new StagedTimeline<>();
+   /** Bridge grab window, ticks left (ThorBridge); transient. */
+   public int grabWindow;
+   /** Bridge scene lock owner, null when free (ThorBridge); transient. */
+   @Nullable
+   public String sceneLock;
+   /** Move chosen on the press of a held input, with ticks held; the release goes to it. Transient. */
+   final EnumMap<ThorInput, ThorMove> pressed = new EnumMap<>(ThorInput.class);
+   final EnumMap<ThorInput, Integer> heldTicks = new EnumMap<>(ThorInput.class);
 
    public void save(CompoundTag nbt) {
       CompoundTag tag = new CompoundTag();
@@ -31,12 +40,21 @@ public final class ThorState {
    public void load(CompoundTag nbt) {
       this.timeline.clear();
       this.mode = ThorMode.NORMAL;
+      this.clearTransient();
       if (!nbt.contains(KEY, 10)) {
          return;
       }
 
       HammerState saved = HammerState.fromKey(nbt.getCompound(KEY).getString(HAMMER_KEY));
       this.hammer = saved.away() ? HammerState.IN_HAND : saved;
+   }
+
+   /** Drop the bridge flags and held presses (never saved). */
+   void clearTransient() {
+      this.grabWindow = 0;
+      this.sceneLock = null;
+      this.pressed.clear();
+      this.heldTicks.clear();
    }
 
    /** A fresh body: Mjölnir on the belt, normal mode, nothing running. */

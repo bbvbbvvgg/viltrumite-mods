@@ -18,10 +18,11 @@ import net.minecraft.world.entity.player.Player;
 
 /**
  * Thor, God of War Ragnarök (spec docs/design/2026-10-27-thor-design.md).
- * Stage 1 = foundation: identity, skin and Mjölnir on the body, context
- * controls, the staged move timeline and the combat presence. Shipped move:
- * draw / holster Mjölnir (MMB). Every other move resolves by context and is
- * refused as "in development". No kit, no flight, vanilla chassis.
+ * Foundation: identity, skin and Mjölnir on the body, context routing, the
+ * staged move timeline, the combat presence and the session bridge
+ * (hero/thor/bridge). No move reachable from a key is authored here: every
+ * press resolves by context and is refused as "in development" until a
+ * session registers it. No kit, no flight, vanilla chassis.
  */
 public final class ThorHero implements HeroDefinition {
    public static final ThorHero INSTANCE = new ThorHero();
@@ -34,7 +35,7 @@ public final class ThorHero implements HeroDefinition {
       return HeroId.THOR;
    }
 
-   /** Flight arrives in stage 4. */
+   /** No flight in the foundation. */
    @Override
    public boolean allowsFlight(Player player) {
       return false;
@@ -96,7 +97,7 @@ public final class ThorHero implements HeroDefinition {
       return false;
    }
 
-   /** Both sides: only buttons whose context move is shipped leave vanilla (stage 1: MMB). */
+   /** Both sides: only buttons whose context move is authored leave vanilla (none in the foundation). */
    @Override
    public HeroAction mouseAction(MouseButton button, Player player) {
       return ThorControls.claimedMouse(button, context(player));
@@ -106,21 +107,25 @@ public final class ThorHero implements HeroDefinition {
    static ThorContext context(Player player) {
       HammerState hammer = HammerState.HOLSTERED;
       ThorMode mode = ThorMode.NORMAL;
+      boolean grabWindow = false;
       if (player.level().isClientSide) {
          HeroPublicSnapshot snapshot = player instanceof HeroPlayer heroPlayer ? heroPlayer.getHeroSnapshot() : null;
          if (snapshot != null && snapshot.heroId() == HeroId.THOR) {
             hammer = ThorFlags.hammer(snapshot.heroFlags());
             mode = ThorFlags.mode(snapshot.heroFlags());
+            grabWindow = ThorFlags.grabWindow(snapshot.heroFlags());
          }
       } else {
          ThorState state = ThorState.of(player);
          if (state != null) {
             hammer = state.hammer;
             mode = state.mode;
+            grabWindow = state.grabWindow > 0;
          }
       }
 
-      return new ThorContext(hammer, mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, false, false, false);
+      boolean enemyNear = ThorTargets.nearestEnemy(player, ThorRules.MELEE_ENEMY_RADIUS) != null;
+      return new ThorContext(hammer, mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, enemyNear, grabWindow);
    }
 
    @Override
@@ -138,11 +143,24 @@ public final class ThorHero implements HeroDefinition {
       ThorActions.tick(player, ThorState.ensure(player));
    }
 
-   /** Slot keys arrive here without canAct (HeroInputC2SPacket): gate every press again. */
+   /**
+    * Slot keys arrive here without canAct (HeroInputC2SPacket): gate every
+    * press again. Releases (HeldInputs, always delivered) go to the move the
+    * press chose, e.g. a charged MMB throw.
+    */
    @Override
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
       ThorInput input = ThorInput.of(action);
-      if (input == null || !pressed) {
+      if (input == null) {
+         return;
+      }
+
+      if (!pressed) {
+         ThorState state = ThorState.of(player);
+         if (state != null) {
+            ThorActions.release(player, state, input);
+         }
+
          return;
       }
 
@@ -158,6 +176,7 @@ public final class ThorHero implements HeroDefinition {
    public void enter(ServerPlayer player) {
       ThorState state = ThorState.ensure(player);
       state.timeline.clear();
+      state.clearTransient();
       state.hammer = HammerState.HOLSTERED;
       state.mode = ThorMode.NORMAL;
       player.displayClientMessage(Component.translatable(ThorFeedback.CONTROLS), false);
@@ -179,7 +198,7 @@ public final class ThorHero implements HeroDefinition {
       var timeline = state.timeline;
       return new HeroPublicSnapshot(HeroId.THOR, timeline.wireId(), timeline.elapsed(), timeline.length(), 0, false, 0, 0, false, false, 0, 0,
          timeline.partnerId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], timeline.running(), -1, null, 0, false,
-         ThorFlags.compose(state.hammer, state.mode), new int[0], timeline.variant(), 0);
+         ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0), new int[0], timeline.variant(), 0);
    }
 
    @Override
@@ -207,7 +226,7 @@ public final class ThorHero implements HeroDefinition {
    public void onDimensionChange(ServerPlayer player) {
       ThorState state = ThorState.of(player);
       if (state != null) {
-         ThorActions.stop(state);
+         ThorActions.stop(player, state);
       }
    }
 
@@ -218,7 +237,7 @@ public final class ThorHero implements HeroDefinition {
          return;
       }
 
-      ThorActions.stop(state);
+      ThorActions.stop(player, state);
       if (reason == CleanupReason.ERASED && player instanceof HeroPlayer heroPlayer) {
          heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
       }

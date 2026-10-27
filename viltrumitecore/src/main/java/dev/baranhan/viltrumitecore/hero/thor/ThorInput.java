@@ -5,7 +5,7 @@ import dev.baranhan.viltrumitecore.hero.MouseButton;
 import javax.annotation.Nullable;
 
 /**
- * Thor's six physical inputs. Each one resolves to a different move by state
+ * Thor's seven physical inputs. Each one resolves to a different move by state
  * (ThorControls); the HeroAction is only the wire name of the key.
  */
 public enum ThorInput {
@@ -15,12 +15,14 @@ public enum ThorInput {
    STANCE(HeroAction.SECONDARY_USE),
    /** MMB (the heart key mapping, default middle mouse). */
    HAMMER(HeroAction.TOOL_CYCLE),
-   /** Slot key 1 (default R). */
+   /** Slot key 1 (default R): toggle the electric mode. */
    POWER(HeroAction.CONTEXT_POWER),
-   /** Slot key 2 (default Y). */
+   /** Slot key 2 (default Y): pull to the thrown Mjölnir. */
    MOBILITY(HeroAction.CONTEXT_MOBILITY),
-   /** Slot key 3 (default Z): the separate ultimate key. */
-   ULTIMATE(HeroAction.ULTIMATE);
+   /** Slot key 3 (Z, a temporary foundation default): the separate ultimate key. */
+   ULTIMATE(HeroAction.ULTIMATE),
+   /** Slot key 4 (default V): choose the teleport point. */
+   TELEPORT(HeroAction.CONTEXT_TELEPORT);
 
    private final HeroAction action;
 

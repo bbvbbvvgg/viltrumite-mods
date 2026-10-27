@@ -5,11 +5,8 @@ package dev.baranhan.viltrumitecore.hero.thor;
  * Pure constants only.
  */
 public final class ThorRules {
-   /**
-    * Last shipped development stage. Moves of later stages resolve normally
-    * (context controls) but are refused with an "in development" message.
-    */
-   public static final int SHIPPED_STAGE = 1;
+   /** MMB melee branch: any enemy this close (blocks, eye to bounding box). */
+   public static final double MELEE_ENEMY_RADIUS = 4.0;
 
    /** Draw Mjölnir from the belt: reach (intro), grip — the hammer changes place here (main), settle (finish). */
    public static final int DRAW_INTRO = 4;
@@ -22,7 +19,7 @@ public final class ThorRules {
 
    /**
     * Priority tiers of the staged moves: a higher tier interrupts a lower one
-    * outside its cancel window. Planned for later stages, tuned there.
+    * outside its cancel window. Tuned by the sessions that author the moves.
     */
    public static final int PRIORITY_UTILITY = 1;
    public static final int PRIORITY_ATTACK = 2;
