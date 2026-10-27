@@ -1,7 +1,10 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.CarveJobs;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -70,31 +73,41 @@ final class MjolnirImpact {
       return rest;
    }
 
-   /** A bowl of radius r under {@code surface}; returns where the hammer lies (bottom middle). */
-   static Vec3 crater(ServerLevel level, BlockPos surface, int radius) {
+   /** Shares the Thor carve priority (ElectricFx.CARVE_PRIORITY): below Reinhard's cuts. */
+   static final int CRATER_PRIORITY = 5;
+
+   /** Pure: the blocks of a bowl of radius r under {@code surface} (top of the ground), column by column. */
+   static List<BlockPos> craterBlocks(BlockPos surface, int radius) {
+      List<BlockPos> out = new ArrayList<>();
       for (int dx = -radius; dx <= radius; dx++) {
          for (int dz = -radius; dz <= radius; dz++) {
             int depth = bowlDepth(radius, dx, dz);
-            if (depth < 0) {
-               continue;
-            }
-
-            for (int dy = -depth + 1; dy <= 2; dy++) {
-               BlockPos pos = surface.offset(dx, dy, dz);
-               if (!level.getBlockState(pos).isAir()) {
-                  HeroDestruction.clearBlock(level, pos);
-               }
+            for (int dy = -depth + 1; depth >= 0 && dy <= 2; dy++) {
+               out.add(surface.offset(dx, dy, dz));
             }
          }
       }
 
-      // Rest on whatever is left under the middle (protected blocks may remain).
+      return out;
+   }
+
+   /**
+    * A bowl of radius r under {@code surface}; returns where the hammer lies
+    * (bottom middle, on whatever the carve leaves: protected blocks stay).
+    * A-m7: the blocks go through the shared carve budget (CarveJobs), quiet
+    * removal as before; the rest point is known before the carve runs.
+    */
+   static Vec3 crater(ServerLevel level, BlockPos surface, int radius) {
+      List<BlockPos> blocks = craterBlocks(surface, radius);
+      int bottom = surface.getY() - bowlDepth(radius, 0, 0) + 1;
       BlockPos probe = surface.above(2);
       int floor = level.getMinBuildHeight();
-      while (probe.getY() > floor && level.getBlockState(probe).getCollisionShape(level, probe).isEmpty()) {
+      while (probe.getY() > floor && (level.getBlockState(probe).getCollisionShape(level, probe).isEmpty()
+         || probe.getY() >= bottom && HeroDestruction.canDestroy(level, probe))) {
          probe = probe.below();
       }
 
+      CarveJobs.submit(level, new CarveJobs.BlockList(blocks, CRATER_PRIORITY, HeroDestruction::clearBlock));
       double top = level.getBlockState(probe).getCollisionShape(level, probe).isEmpty() ? probe.getY() : probe.getY()
          + level.getBlockState(probe).getCollisionShape(level, probe).max(net.minecraft.core.Direction.Axis.Y);
       return new Vec3(surface.getX() + 0.5, top, surface.getZ() + 0.5);

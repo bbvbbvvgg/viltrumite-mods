@@ -125,4 +125,28 @@ class MjolnirRound2Test {
          }
       }
    }
+
+   /** A-m7: the crater is a block list for the shared carve budget: the same bowl as before, every block once. */
+   @Test
+   void theCraterIsOneBowlForTheSharedCarveBudget() {
+      net.minecraft.core.BlockPos surface = new net.minecraft.core.BlockPos(10, 64, -3);
+      int r = MjolnirTuning.CRATER_RADIUS;
+      List<net.minecraft.core.BlockPos> blocks = MjolnirImpact.craterBlocks(surface, r);
+      int expected = 0;
+      for (int dx = -r; dx <= r; dx++) {
+         for (int dz = -r; dz <= r; dz++) {
+            int depth = MjolnirImpact.bowlDepth(r, dx, dz);
+            expected += depth < 0 ? 0 : depth + 2;
+         }
+      }
+
+      assertEquals(expected, blocks.size());
+      assertEquals(blocks.size(), new java.util.HashSet<>(blocks).size(), "no block twice");
+      assertTrue(blocks.contains(surface), "the impact block goes");
+      assertTrue(blocks.contains(surface.above(2)), "and the air above it is part of the bowl");
+      assertTrue(blocks.contains(surface.below(MjolnirImpact.bowlDepth(r, 0, 0) - 1)), "the bottom middle");
+      assertFalse(blocks.contains(surface.below(MjolnirImpact.bowlDepth(r, 0, 0))), "the floor under the bottom stays");
+      assertTrue(new dev.baranhan.viltrumitecore.hero.CarveJobs.BlockList(blocks, 5, (level, pos) -> true).step(null, 10),
+         "a job of an unloaded level is dropped");
+   }
 }

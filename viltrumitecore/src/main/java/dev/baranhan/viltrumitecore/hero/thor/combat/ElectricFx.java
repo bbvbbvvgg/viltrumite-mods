@@ -148,45 +148,6 @@ public final class ElectricFx {
          return;
       }
 
-      CarveJobs.submit(level, new Removal(blocks));
-   }
-
-   /** One CarveJobs job: removes the listed blocks a budget at a time. */
-   private static final class Removal implements CarveJobs.Job {
-      private final List<BlockPos> blocks;
-      private int next;
-
-      Removal(List<BlockPos> blocks) {
-         this.blocks = List.copyOf(blocks);
-      }
-
-      @Override
-      public boolean step(@Nullable ServerLevel level, int budget) {
-         if (level == null) {
-            return true;
-         }
-
-         int used = 0;
-         while (this.next < this.blocks.size() && used < budget) {
-            BlockPos pos = this.blocks.get(this.next++);
-            // Never load or generate a chunk for a carve (same rule as HeroDestruction.clearBlock).
-            if (level.isLoaded(pos) && !level.getBlockState(pos).isAir()) {
-               HeroDestruction.destroyBlock(level, pos);
-               used++;
-            }
-         }
-
-         return this.next >= this.blocks.size();
-      }
-
-      @Override
-      public int priority() {
-         return CARVE_PRIORITY;
-      }
-
-      @Override
-      public int remainingWork() {
-         return this.blocks.size() - this.next;
-      }
+      CarveJobs.submit(level, new CarveJobs.BlockList(blocks, CARVE_PRIORITY, HeroDestruction::destroyBlock));
    }
 }
