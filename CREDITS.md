@@ -74,3 +74,12 @@ CGEffex 93835 and Robinhood76 378199 are **CC-BY-NC 4.0** on the live pages. No 
 ### TEMPORARY test asset — license NOT verified
 
 `sword_strike_voice` (the BLAST of the normal World Cut, REINHARD OVERHAUL item 12) is the owner-confirmed sound of Reinhard's strike on Theresia from Re:Zero Season 3 Episode 14 (reference: https://www.youtube.com/watch?v=GtFqJpCrwCQ), copied unmodified from the owner's Codex-Superheroes repository for testing. Its rights are **not verified** and no license is claimed; it must be replaced with a licensed or original sound before a public release. Details and digest: `tools/assets/reinhard_sources.md`.
+
+## Thor (God of War Ragnarök)
+
+Sources list: `tools/assets/thor_sources.md`. From the user's archive of **God of War HeroPack 3.0.0** (Fisk's Superheroes) by **SymbioteSpidey**. Permission of the authors: **not verified** — required before a public release.
+- **TechnoGhosty** — Thor skin.
+- **Szombie** — Mjölnir model and textures.
+- **FatherKhimsky** — Thor's belly and beard models and textures.
+- **JxkeXD** — Thor concept skin (reference only, not imported).
+- Own work (CC0): Thor panel icons (`tools/assets/make_thor_icons.py`). Sounds: vanilla only.
