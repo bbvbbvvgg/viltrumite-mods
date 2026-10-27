@@ -168,8 +168,9 @@ public final class ThorCombatClips {
 
    /**
     * Pure: the open right arm raised along the view while Mjölnir flies back
-    * (#154; look up and the arm goes higher). PLACEHOLDER until A gives the
-    * client a hammer position to aim at.
+    * (#154; look up and the arm goes higher). Integrated: only the fallback
+    * when this client does not track the hammer entity; ThorPoser aims at the
+    * real hammer through session A's MjolnirClient otherwise.
     */
    public static float[][] reach(float viewPitch) {
       float pitch = Math.max(-170.0F, Math.min(-30.0F, -90.0F + viewPitch));
