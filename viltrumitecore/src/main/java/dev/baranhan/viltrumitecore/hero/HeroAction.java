@@ -63,7 +63,13 @@ public enum HeroAction {
    /** Any hero with airJumps > 0: jump in the air (HeroAirJump; no slot, not an ability). */
    AIR_STEP,
    /** Reinhard cinematic Z; appended to preserve existing wire ordinals. */
-   DIAGONAL_WORLD_CUT;
+   DIAGONAL_WORLD_CUT,
+   /** Context slot key "power" (Thor: electric mode / lightning call by state). */
+   CONTEXT_POWER,
+   /** Context slot key "mobility" (Thor: dash / teleport strike / dive slam by state). */
+   CONTEXT_MOBILITY,
+   /** Separate ultimate key (Thor: Wrath). */
+   ULTIMATE;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

@@ -11,7 +11,9 @@ public enum HeroId {
    /** Tony Stark: nano Mark 50, marks, Hulkbuster (spec docs/design/2026-10-09-ironman-design.md). */
    IRON_MAN("ironman"),
    /** Reinhard van Astrea (spec docs/design/2026-10-11-reinhard-design.md). */
-   REINHARD("reinhard");
+   REINHARD("reinhard"),
+   /** Thor, God of War Ragnarök (spec docs/design/2026-10-27-thor-design.md). */
+   THOR("thor");
 
    private final String key;
 

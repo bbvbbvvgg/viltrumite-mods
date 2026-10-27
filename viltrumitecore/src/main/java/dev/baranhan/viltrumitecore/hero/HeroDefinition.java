@@ -227,6 +227,16 @@ public interface HeroDefinition {
       return false;
    }
 
+   /**
+    * What this player brings into a weapon interaction right now: weapon id,
+    * tags/traits and stance (shared {@code hero.combat} seam). Both sides,
+    * synced data only on the client. Not consulted by runtime hits yet (Thor
+    * stage 2 wires clash/block resolution); default: no presence.
+    */
+   default dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      return dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
+   }
+
    /** Hidden from target-acquiring senses (Homelander focus skips this player). Server side. */
    default boolean hiddenFromFocus(Player self) {
       return false;
