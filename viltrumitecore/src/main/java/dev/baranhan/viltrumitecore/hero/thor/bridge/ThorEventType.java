@@ -14,7 +14,11 @@ public enum ThorEventType {
     * snapshot.
     */
    LETHAL_HIT,
-   /** A combo chain ended; success = it completed (B; C's sky lightning listens for a successful electric combo). */
+   /**
+    * A combo chain ended; success = it completed (B). A successful electric
+    * combo (move ELECTRIC_COMBO) triggers B's own automatic sky lightning;
+    * other sessions may listen too.
+    */
    COMBO_END,
    /** Mjölnir left the hand (A). */
    THROW,
