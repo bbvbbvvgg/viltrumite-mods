@@ -15,8 +15,8 @@ public class RaceSelectionScreen extends Screen {
    private static final ResourceLocation HOMELANDER_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/homelander.png");
    private static final ResourceLocation REGULUS_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/regulus.png");
    private static final ResourceLocation IRON_MAN_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/ironman.png");
-   private static final HeroId[] HEROES = {HeroId.HOMELANDER, HeroId.REGULUS, HeroId.IRON_MAN, HeroId.REINHARD};
-   private static final String[] LABELS = {"become_homelander", "become_regulus", "become_ironman", "become_reinhard"};
+   private static final HeroId[] HEROES = {HeroId.HOMELANDER, HeroId.REGULUS, HeroId.IRON_MAN, HeroId.REINHARD, HeroId.THOR};
+   private static final String[] LABELS = {"become_homelander", "become_regulus", "become_ironman", "become_reinhard", "become_thor"};
    private HeroChoiceLayout.Layout layout = HeroChoiceLayout.of(0, 0, HEROES.length);
 
    public RaceSelectionScreen() {
