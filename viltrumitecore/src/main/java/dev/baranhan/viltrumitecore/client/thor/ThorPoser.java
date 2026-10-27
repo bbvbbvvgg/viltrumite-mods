@@ -25,6 +25,15 @@ public final class ThorPoser {
    }
 
    public static void poseThirdPerson(PlayerModel<?> model, LivingEntity entity) {
+      // Session C first: scene bodies (also non-Thor victims) and Thor's flight arms.
+      Minecraft scene = Minecraft.getInstance();
+      boolean sceneFirstPerson = entity == scene.player && scene.options.getCameraType().isFirstPerson()
+         && !dev.baranhan.viltrumitecore.client.thor.scene.ThorSceneCamera.active();
+      if (!sceneFirstPerson && dev.baranhan.viltrumitecore.client.thor.scene.ThorScenePoser.pose(model, entity)) {
+         CLOCKS.remove(entity);
+         return;
+      }
+
       HeroPublicSnapshot snapshot = ThorView.of(entity);
       if (snapshot == null || !(entity instanceof AbstractClientPlayer player)) {
          CLOCKS.remove(entity);

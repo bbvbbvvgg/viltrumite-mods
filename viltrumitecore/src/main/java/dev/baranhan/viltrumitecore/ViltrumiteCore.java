@@ -124,6 +124,7 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes.bootstrap();
       });
    }
 
