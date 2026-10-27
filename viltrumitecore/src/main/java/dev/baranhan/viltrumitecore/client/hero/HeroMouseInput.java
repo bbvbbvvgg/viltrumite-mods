@@ -20,8 +20,10 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
  * Client half of the mouse seam (spec §6.1). When the local hero claims a
  * button, the vanilla attack / use / pick-block is cancelled (no swing, no
  * survival hotbar swap from MMB) and press/release edges go to the server.
- * Releases come from a tick watching isDown(): a screen opening, the window
- * losing focus or the claim disappearing while held also sends the release.
+ * Releases come from a tick watching isDown(): a screen opening or the
+ * window losing focus also sends the release. The claim is read on the press
+ * only: a claim that disappears while held does not cut the hold (see
+ * {@link #held}).
  * MIDDLE is the heart key mapping (default MMB); it wins over pick-block only
  * when both share the key.
  */
@@ -52,7 +54,8 @@ public final class HeroMouseInput {
          return;
       }
 
-      if (claim(player, button) != null) {
+      // A latched hold keeps vanilla away too (no mining / use under a held hero button).
+      if (SENT_DOWN[button.ordinal()] || claim(player, button) != null) {
          event.setCanceled(true);
          event.setSwingHand(false);
          if (button != MouseButton.MIDDLE) {
@@ -99,12 +102,29 @@ public final class HeroMouseInput {
          };
          boolean clicked = button == MouseButton.MIDDLE ? heartClicked : CLICKED[i];
          CLICKED[i] = false;
-         boolean down = focused && key != null && (key.isDown() || clicked) && claim(player, button) != null;
+         boolean keyDown = key != null && key.isDown();
+         boolean down = held(SENT_DOWN[i], focused, keyDown, clicked, !SENT_DOWN[i] && claim(player, button) != null);
          if (down != SENT_DOWN[i]) {
             SENT_DOWN[i] = down;
             CoreMessages.sendToServer(new HeroMouseC2SPacket(button, down));
          }
       }
+   }
+
+   /**
+    * Pure: is the button down for the server this tick? The claim is read
+    * only on the press edge; once the press went out the hold is latched
+    * while the key stays physically down and the window focused, so a claim
+    * that flips mid-hold (crosshair onto a block, full flight, mode or
+    * context change) never sends a release the player did not make (the
+    * server ends a hold that cannot continue by a forced release).
+    */
+   static boolean held(boolean sentDown, boolean focused, boolean keyDown, boolean clicked, boolean claimedOnPress) {
+      if (!focused) {
+         return false;
+      }
+
+      return sentDown ? keyDown : (keyDown || clicked) && claimedOnPress;
    }
 
    private static HeroAction claim(Player player, MouseButton button) {
