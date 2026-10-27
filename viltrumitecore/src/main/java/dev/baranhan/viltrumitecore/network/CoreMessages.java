@@ -286,6 +286,15 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.SawSphereEndS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.SawSphereEndS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.SawSphereEndS2CPacket::handle).add();
+      // Thor session C: scene sync and scene input.
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
