@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor.bridge;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -158,7 +159,8 @@ class ThorBridgeTest {
       assertThrows(IllegalStateException.class, () -> ThorEvents.subscribe("C", ThorEventType.CATCH, e -> { }), "one subscription per owner and type");
       assertEquals(List.of("B", "X", "C"), ThorEvents.owners(ThorEventType.CATCH));
 
-      assertThrows(IllegalStateException.class, () -> ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.CATCH)));
+      // F-M10: a failing listener is logged, never rethrown into the poster (damage path, hammer store transition).
+      assertTrue(assertDoesNotThrow(() -> ThorEvents.post(event(ThorEvents.nextId(), ThorEventType.CATCH))));
       assertEquals(List.of("B", "C"), calls, "a failing listener does not stop the others; other types are not called");
    }
 

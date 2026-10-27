@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Typed event bus between the Thor sessions (the contract's onMeleeHit /
@@ -30,6 +32,7 @@ public final class ThorEvents {
    /** How many recent event ids are remembered for dedupe. */
    public static final int DEDUPE_WINDOW = 512;
 
+   private static final Logger LOGGER = LoggerFactory.getLogger("viltrumitecore/thor");
    private static final Map<ThorEventType, List<Subscription>> LISTENERS = new EnumMap<>(ThorEventType.class);
    private static final Set<Long> SEEN = new HashSet<>();
    private static final ArrayDeque<Long> ORDER = new ArrayDeque<>();
@@ -70,7 +73,9 @@ public final class ThorEvents {
    /**
     * Deliver to every listener of the type. False when the id was already
     * posted (nothing delivered again). A throwing listener does not stop the
-    * others.
+    * others and never reaches the poster: posters sit on the damage path and
+    * in the middle of hammer-store transitions, so the failure is logged
+    * (owner, type, event id, stack) and delivery goes on.
     */
    public static boolean post(ThorEvent event) {
       List<Subscription> targets;
@@ -87,28 +92,20 @@ public final class ThorEvents {
          targets = new ArrayList<>(LISTENERS.getOrDefault(event.type(), Collections.emptyList()));
       }
 
-      RuntimeException failure = null;
       for (Subscription subscription : targets) {
          try {
             subscription.listener().on(event);
          } catch (RuntimeException e) {
-            if (failure == null) {
-               failure = e;
-            } else {
-               failure.addSuppressed(e);
-            }
+            LOGGER.error("Thor bridge listener of owner {} failed on {} (event {})", subscription.owner(), event.type(), event.eventId(), e);
          }
-      }
-
-      if (failure != null) {
-         throw failure;
       }
 
       return true;
    }
 
-   /** Tests only. */
+   /** Tests only (also clears the lifecycle bus, ThorLifecycle). */
    public static synchronized void resetForTests() {
+      ThorLifecycle.resetForTests();
       LISTENERS.clear();
       SEEN.clear();
       ORDER.clear();
