@@ -78,12 +78,33 @@ class ThorActionsTest {
    }
 
    @Test
-   void mjolnirNeverSharesTheHandWithAnItem() {
+   void anItemInTheHandNeverRewritesTheWorldHammer() {
+      // Session A: the world store is the one writer of the hammer state; an item only moves the drawn attachment.
+      for (HammerState hammer : HammerState.values()) {
+         ThorState state = new ThorState();
+         state.hammer = hammer;
+         ThorActions.advance(state, false, false);
+         assertSame(hammer, state.hammer, hammer.name());
+      }
+   }
+
+   @Test
+   void throwingNeedsTheHandAndTheRecallIsAnOverlay() {
+      ThorMoves.register("A", ThorMove.HAMMER_THROW, new ThorMoveDefinition(4, 40, 8, null, 1), ThorMoveHandler.NONE);
+      ThorMoves.register("A", ThorMove.RECALL, new ThorMoveDefinition(0, 1, 0, null, 1), ThorMoveHandler.NONE);
       ThorState state = new ThorState();
       state.hammer = HammerState.IN_HAND;
-      ThorActions.advance(state, false, false);
-      assertSame(HammerState.HOLSTERED, state.hammer);
-      assertSame(HammerState.THROWN, ThorActions.settle(HammerState.THROWN, false), "a thrown hammer is not in the hand");
+      assertSame(ThorActions.Refusal.HANDS_BUSY, ThorActions.gate(state, ThorMove.HAMMER_THROW, false));
+      assertSame(ThorActions.Refusal.NONE, ThorActions.gate(state, ThorMove.HAMMER_THROW, true));
+
+      state.hammer = HammerState.THROWN;
+      ThorActions.start(state, ThorMove.DRAW, true);
+      ThorMove running = state.timeline.move();
+      assertTrue(ThorActions.overlay(ThorMove.RECALL));
+      assertFalse(ThorActions.overlay(ThorMove.HAMMER_THROW));
+      assertSame(ThorActions.Refusal.NONE, ThorActions.start(state, ThorInput.HAMMER, ThorMove.RECALL, false), "the recall needs no free hand");
+      assertSame(running, state.timeline.move(), "the recall neither cuts nor replaces the running move");
+      assertNull(ThorActions.release(state, ThorInput.HAMMER), "an overlay press keeps no release");
    }
 
    @Test
