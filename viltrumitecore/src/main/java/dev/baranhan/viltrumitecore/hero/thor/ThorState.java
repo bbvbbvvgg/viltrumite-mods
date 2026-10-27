@@ -26,6 +26,9 @@ public final class ThorState {
    /** Bridge scene lock owner, null when free (ThorBridge); transient. */
    @Nullable
    public String sceneLock;
+   /** Bridge camera lease owner, null when free (ThorBridge); transient. */
+   @Nullable
+   public String cameraLease;
    /** Move chosen on the press of a held input, with ticks held; the release goes to it. Transient. */
    final EnumMap<ThorInput, ThorMove> pressed = new EnumMap<>(ThorInput.class);
    final EnumMap<ThorInput, Integer> heldTicks = new EnumMap<>(ThorInput.class);
@@ -53,6 +56,7 @@ public final class ThorState {
    void clearTransient() {
       this.grabWindow = 0;
       this.sceneLock = null;
+      this.cameraLease = null;
       this.pressed.clear();
       this.heldTicks.clear();
    }

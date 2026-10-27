@@ -53,7 +53,7 @@ public final class ThorActions {
    /** Server context of a player: live state, held items, movement, the nearest enemy. */
    public static ThorContext context(ServerPlayer player, ThorState state, @Nullable LivingEntity enemy) {
       return new ThorContext(state.hammer, state.mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, enemy != null,
-         ThorBridge.grabWindowOpen(state));
+         ThorBridge.grabWindowActive(state));
    }
 
    /** A press of one of Thor's inputs (already past canAct). */

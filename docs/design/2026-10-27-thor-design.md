@@ -43,11 +43,12 @@
 - Тайминги 4/2/4 т зарегистрированы фундаментом; молот меняет место в начале MAIN. Ни одна клавиша их не запускает; wire id 0/1 сохранены.
 - Предмет взят в руку до хвата → DRAW прерван. Предмет в правой руке при молоте в руке → молот сразу на пояс.
 
-### 4.2 Мост (`hero/thor/bridge/`)
-- `ThorMoves.register(owner, move, ThorMoveDefinition, ThorMoveHandler)` — один владелец на приём, повтор → исключение, retired → исключение.
-- `ThorBridge`: `view` (read-only `HammerView`), окно захвата (`openGrabWindow/closeGrabWindow`, флаг бит 3), scene lock (`lockScene/unlockScene`: пока держится — все нажатия «не сейчас»).
-- `ThorEvents`: HIT, LETHAL, COMBO_END, THROW, RECALL, CATCH; `subscribe(owner, type, listener)`, `post` с дедупликацией по `eventId` (окно 512). Фундамент ни на что не подписан и ничего не постит.
-- `/thor state|hammer|mode|grab_window|unlock_scene` — только вне production и только оператору (уровень 2).
+### 4.2 Мост (`hero/thor/bridge/`, по `thor_foundation_api_contract_v4_1.md`)
+- `ThorMoves.register(owner, move, ThorMoveDefinition, ThorMoveHandler)` — независимый per-move gate вместо `SHIPPED_STAGE`; один владелец на приём, retired → исключение.
+- `ThorBridge`: `installHammerAccess` (A, один раз) / `hammer` → `HammerView` (по умолчанию без мирового молота), `state` → `ThorStateView`, окно захвата (бит 3), scene lock, camera lease (бит 4; сбрасываются при выходе/смерти/смене измерения/героя).
+- `ThorEvents`: MELEE_HIT, LETHAL_HIT (до окончательной смерти), COMBO_END, THROW, RECALL, CATCH, HAMMER_STATE_CHANGED; дедупликация по `eventId`; фундамент ни на что не подписан и ничего не постит.
+- Ближний удар СКМ = обработчик `HAMMER_STRIKE` (B); резолвер СКМ один (A).
+- `/thor` — один dev-only корень (вне production, оператор): A/B/C добавляют дочерние через `ThorDevCommands.registerChild`; фикстуры фундамента — `/thor foundation ...`.
 
 ## 5. Общие системы (`hero/combat/`)
 ### 5.1 Поэтапные приёмы — `StagedTimeline`

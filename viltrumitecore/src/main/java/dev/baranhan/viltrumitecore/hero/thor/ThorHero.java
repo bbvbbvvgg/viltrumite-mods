@@ -198,7 +198,7 @@ public final class ThorHero implements HeroDefinition {
       var timeline = state.timeline;
       return new HeroPublicSnapshot(HeroId.THOR, timeline.wireId(), timeline.elapsed(), timeline.length(), 0, false, 0, 0, false, false, 0, 0,
          timeline.partnerId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], timeline.running(), -1, null, 0, false,
-         ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0), new int[0], timeline.variant(), 0);
+         ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0, state.cameraLease != null), new int[0], timeline.variant(), 0);
    }
 
    @Override

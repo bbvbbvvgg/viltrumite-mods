@@ -11,21 +11,27 @@ Spec: `docs/design/2026-10-27-thor-design.md`. Branch `feat/thor-foundation` fro
 ## Bridge (pre-flight for sessions A/B/C)
 Approved layout replaces the old contexts (see design §4). `ThorRules.SHIPPED_STAGE` and `ThorMove.stage()` are gone: a move can start only once registered.
 
-| Need | FQCN / signature |
-|---|---|
-| Author a move | `dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves.register(String owner, ThorMove move, ThorMoveDefinition def, ThorMoveHandler handler)` |
-| Timing | `...bridge.ThorMoveDefinition(int intro, int main, int finish, @Nullable MovePhase cancellableFrom, int maxSteps)` |
-| Behaviour | `...bridge.ThorMoveHandler`: `onStart(ThorMoveContext)`, `onPhase(ThorMoveContext, StagedTimeline.Event)`, `onRelease(ThorMoveContext, int heldTicks)`, `onStop(ThorMoveContext)` |
-| MMB melee callback | handler of `ThorMove.HAMMER_STRIKE`; `ThorMoveContext.target()` = nearest enemy within 4 blocks |
-| Hammer snapshot | `...bridge.ThorBridge.view(ThorState)` / `view(Player)` → `HammerView(hammer, mode, move, phase, moveElapsed, grabWindowTicks, sceneLockOwner)` |
-| Grab window | `ThorBridge.openGrabWindow(ThorState, int ticks)`, `closeGrabWindow`, `grabWindowOpen`; synced as `ThorFlags.GRAB_WINDOW` (bit 3) |
-| Scene lock | `ThorBridge.lockScene(ThorState, String owner)`, `unlockScene`, `sceneLocked` |
-| Events | `...bridge.ThorEvents.subscribe(String owner, ThorEventType, Listener)`, `post(ThorEvent)` (false = duplicate id), `nextId()`; `ThorEvent(long id, ThorEventType type, UUID source, @Nullable UUID target, @Nullable ThorMove move, float amount)`; types HIT, LETHAL, COMBO_END, THROW, RECALL, CATCH |
-| Dev fixtures | `...hero.thor.dev.ThorDevCommands`: `/thor state`, `hammer <holstered|in_hand|thrown|returning>`, `mode <normal|electric>`, `grab_window <ticks>`, `unlock_scene`; dev env + op 2 only |
+Contract mapping (`thor_foundation_api_contract_v4_1.md` §3), package `dev.baranhan.viltrumitecore.hero.thor.bridge` unless noted:
+
+| Contract channel | FQCN / signature | Owner |
+|---|---|---|
+| Integration bridge | `ThorBridge` (static facade, server main thread) | foundation |
+| Per-move gate / authoring | `ThorMoves.register(String owner, ThorMove move, ThorMoveDefinition def, ThorMoveHandler handler)`; `authored/definition/handler/owner`; retired ids throw | A/B/C, own moves only |
+| Timing | `ThorMoveDefinition(int intro, int main, int finish, @Nullable MovePhase cancellableFrom, int maxSteps)` | |
+| Behaviour + edge release | `ThorMoveHandler.onStart(ThorMoveContext)`, `onPhase(ThorMoveContext, StagedTimeline.Event)`, `onRelease(ThorMoveContext, int heldTicks)`, `onStop(ThorMoveContext)`; `ThorMoveContext(ServerPlayer player, ThorState state, ThorMove move, @Nullable LivingEntity target)` | |
+| MMB dispatch | `hero.thor.ThorControls.hammer(ThorContext)`: GRAB > RECALL > HAMMER_STRIKE (enemy ≤ 4) > HAMMER_THROW; release via `HeldInputs` → `ThorHero.handleInput(..., false)` → `ThorActions.release` | A |
+| onMmbMeleeRequested | handler of `ThorMove.HAMMER_STRIKE` (`onStart`, `context.target()` = nearest enemy) | B |
+| HammerAccess / HammerView | `HammerAccess.view(UUID thor, @Nullable ThorState)`; `ThorBridge.installHammerAccess(String owner, HammerAccess)` (once), `ThorBridge.hammer(UUID, ThorState)` / `hammer(Player)` → `HammerView(@Nullable UUID logicalId, @Nullable UUID activeOwnerId, HammerState phase, boolean inHand, @Nullable ResourceKey<Level> dimension, @Nullable Vec3 position)`; default `HammerAccess.FOUNDATION` (no world hammer) | A writes, B/C read |
+| Thor state view | `ThorBridge.state(ThorState)` / `state(Player)` → `ThorStateView(mode, move, phase, moveElapsed, grabWindowTicks, sceneLockOwner, cameraLeaseOwner)` | |
+| grabWindowActive | `ThorBridge.openGrabWindow(ThorState, int ticks)`, `closeGrabWindow`, `grabWindowActive`; synced `ThorFlags.GRAB_WINDOW` (bit 3) | C |
+| Scene lock | `ThorBridge.lockScene(ThorState, String owner)`, `unlockScene`, `sceneLocked` (all Thor presses refused while held) | C |
+| Camera lease | `ThorBridge.acquireCamera(ThorState, String owner)`, `releaseCamera`, `cameraLeased`; synced `ThorFlags.CAMERA_LEASE` (bit 4); dropped by `ThorActions.stop` (logout, death, dimension, hero change) | C |
+| Events | `ThorEvents.subscribe(String owner, ThorEventType, Listener)`, `post(ThorEvent)` (false = duplicate `eventId`, window 512), `nextId()`; `ThorEvent(long eventId, ThorEventType type, UUID attackerId, @Nullable UUID targetId, @Nullable ThorMove move, int attackId, boolean hammerInHand, float amount, boolean success)`; types `MELEE_HIT`, `LETHAL_HIT` (post before the death is final), `COMBO_END`, `THROW`, `RECALL`, `CATCH`, `HAMMER_STATE_CHANGED` | B: hits/combo; A: hammer |
+| Dev registry | `hero.thor.dev.ThorDevCommands.registerChild(String owner, String path, UnaryOperator<LiteralArgumentBuilder<CommandSourceStack>> leaf)`; one `/thor` root, dev env + op 2 only; foundation fixtures `/thor foundation state|hammer|mode|grab_window|release_locks` | A/B/C |
 
 Appended ids: `HeroAction.CONTEXT_TELEPORT`; `ThorMove.HAMMER_STRIKE`, `HAMMER_PULL`, `TELEPORT_SELECT`; `ThorInput.TELEPORT`; panel slot `thor:teleport` (slot 4, V).
 
-Not ready / risks: nothing produces THROWN, ELECTRIC, grab window or events yet; no player path puts Mjölnir in the hand (DRAW/HOLSTER have no key; dev `/thor hammer in_hand`); RMB is not routed; double-tap WASD dash and the automatic sky lightning are outside the slot routing; ultimate key not approved (Z default); `thor_foundation_api_contract_v4_1.md` was not available when the bridge was written — signatures are this repo's, align the A/B/C specs to them.
+Not ready / risks: nothing produces THROWN, ELECTRIC, grab window or events yet; no global SavedData hammer and no "one active Thor" rule (A); `ThorState.load/respawnCopy/enter` still reset the hammer and `ThorActions.settle` still writes `ThorState.hammer` (A must take over); no hit/lethal hook exists in the damage path yet (B posts from `HeroDefinition.onHurt/clampFinalDamage`); no player path puts Mjölnir in the hand (DRAW/HOLSTER have no key; dev `/thor hammer in_hand`); RMB is not routed; double-tap WASD dash and the automatic sky lightning are outside the slot routing; ultimate key not approved (Z default); Bridge aligned to `thor_foundation_api_contract_v4_1.md`.
 
 ## Where to start next
 1. Author a move: `ThorMoves.register(owner, move, definition, handler)` from the session's own class; effects live in the handler; register its clip in `ThorClips` (test checks clip length == server length).
