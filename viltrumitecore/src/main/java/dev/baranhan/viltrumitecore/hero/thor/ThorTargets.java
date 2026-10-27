@@ -3,7 +3,7 @@ package dev.baranhan.viltrumitecore.hero.thor;
 import java.util.Comparator;
 import javax.annotation.Nullable;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.decoration.ArmorStand;
+import dev.baranhan.viltrumitecore.hero.HeroTargets;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 
@@ -21,8 +21,8 @@ public final class ThorTargets {
          .stream().min(Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
    }
 
+   /** The shared hero target rule (HeroTargets.canHit): no allies, own pets, own mount, protected players. */
    public static boolean isEnemy(Player player, LivingEntity entity) {
-      return entity != player && entity.isAlive() && entity.isAttackable() && !entity.isSpectator() && !(entity instanceof ArmorStand)
-         && !player.isAlliedTo(entity);
+      return HeroTargets.canHit(player, entity);
    }
 }

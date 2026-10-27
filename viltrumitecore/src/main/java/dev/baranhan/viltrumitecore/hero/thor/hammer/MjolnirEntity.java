@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.hero.HeroTargets;
 import dev.baranhan.viltrumitecore.hero.thor.ThorTargets;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -558,12 +559,18 @@ public class MjolnirEntity extends Entity {
       level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, strong ? 6 : 3, 0.15, 0.15, 0.15, 0.05);
    }
 
-   /** Living bodies the segment passes through this tick, not hit yet by this flight; never the owner. */
+   /**
+    * Living bodies the segment passes through this tick, not hit yet by this
+    * flight; never the owner. With a Thor behind the flight (throw, return)
+    * only what his attacks may hit (HeroTargets.canHit: no allies, own pets,
+    * own mount). OPEN(owner): the return / death-impact damage policy (A-M7);
+    * conservative: the same filter on the return, unfiltered without a Thor.
+    */
    private List<LivingEntity> sweep(Vec3 from, Vec3 to, @Nullable ServerPlayer owner) {
       List<LivingEntity> out = new ArrayList<>();
       AABB box = this.getBoundingBox().expandTowards(to.subtract(from)).inflate(0.6);
       for (LivingEntity living : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && !e.isSpectator() && !(e instanceof ArmorStand))) {
-         if (living == owner || this.hit.contains(living.getId())) {
+         if (living == owner || this.hit.contains(living.getId()) || owner != null && !HeroTargets.canHit(owner, living)) {
             continue;
          }
 

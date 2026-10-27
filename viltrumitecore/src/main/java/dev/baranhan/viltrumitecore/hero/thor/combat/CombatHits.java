@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.hero.HeroTargets;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent;
@@ -45,9 +46,9 @@ public final class CombatHits {
 
    // --- who ---
 
+   /** The shared hero target rule (HeroTargets.canHit), the same one the MMB resolver and Mjölnir use. */
    public static boolean isEnemy(Player player, Entity entity) {
-      return entity instanceof LivingEntity living && living != player && living.isAlive() && living.isAttackable() && !living.isSpectator()
-         && !(living instanceof ArmorStand) && !player.isAlliedTo(living);
+      return HeroTargets.canHit(player, entity);
    }
 
    /** Enemies a melee strike reaches from the player's view (line of sight required). */
