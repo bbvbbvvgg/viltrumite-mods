@@ -162,6 +162,9 @@ public interface HeroDefinition {
    /** Opt-in policy for claimed LMB; melee-only heroes leave vanilla block mining alone. */
    default boolean claimsBlockAttack(Player player) { return true; }
 
+   /** Opt-in policy for claimed RMB aimed at a block; false leaves vanilla use / place / open on blocks alone. */
+   default boolean claimsBlockUse(Player player) { return true; }
+
    /** Optional physical catch. True transfers temporary projectile ownership to the hero. */
    default boolean captureProjectile(ServerPlayer self, net.minecraft.world.entity.projectile.Projectile projectile) { return false; }
 

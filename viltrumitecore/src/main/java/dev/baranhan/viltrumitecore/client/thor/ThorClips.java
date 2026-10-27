@@ -6,6 +6,7 @@ import static dev.baranhan.viltrumitecore.client.anim.pose.PoseKeys.under;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorRules;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -29,6 +30,8 @@ public final class ThorClips {
    public static final float[][] HOLD = {key(0, HOLD_PITCH, 0, 0)};
 
    private static final Map<ThorMove, Clip[]> CLIPS = new EnumMap<>(ThorMove.class);
+   /** Session strike poses (snapshot resource): one clip per pose id of a move, over the per-step clips. */
+   private static final Map<ThorMove, Map<Integer, Clip>> POSES = new EnumMap<>(ThorMove.class);
 
    /** Keys of one move step; null parts stay on the pose underneath. */
    public record Clip(float[][] rightArm, @Nullable float[][] leftArm, @Nullable float[][] body) {
@@ -74,10 +77,36 @@ public final class ThorClips {
       CLIPS.put(move, steps.clone());
    }
 
-   /** Clip for a move step, or null when the move has none (it then plays on the pose underneath). */
+   /** Registers the clip of one session strike pose ({@code pose} &gt; 0, synced as snapshot resource) of a move. */
+   public static void registerPose(ThorMove move, int pose, Clip clip) {
+      if (pose <= 0 || clip == null) {
+         throw new IllegalArgumentException("pose ids start at 1: " + move);
+      }
+
+      POSES.computeIfAbsent(move, m -> new HashMap<>()).put(pose, clip);
+   }
+
+   /**
+    * Clip for a move step, or null when the move has none or is not authored
+    * (it then plays on the pose underneath).
+    */
    @Nullable
    public static Clip of(@Nullable ThorMove move, int step) {
-      Clip[] steps = move == null ? null : CLIPS.get(move);
+      Clip[] steps = move == null || !move.authored() ? null : CLIPS.get(move);
       return steps == null ? null : steps[Math.min(Math.max(0, step), steps.length - 1)];
+   }
+
+   /** Clip of a strike pose when registered, else the step clip. */
+   @Nullable
+   public static Clip of(@Nullable ThorMove move, int step, int pose) {
+      if (move != null && pose > 0 && move.authored()) {
+         Map<Integer, Clip> poses = POSES.get(move);
+         Clip clip = poses == null ? null : poses.get(pose);
+         if (clip != null) {
+            return clip;
+         }
+      }
+
+      return of(move, step);
    }
 }
