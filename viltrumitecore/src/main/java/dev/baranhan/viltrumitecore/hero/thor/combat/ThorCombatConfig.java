@@ -26,10 +26,8 @@ public final class ThorCombatConfig {
    // --- melee (PLACEHOLDER) ---
    /** Multiplier over the per-strike damage of ThorStrike. */
    public float meleeDamageScale = 1.0F;
-   /** Ground slams crack a shallow crater of ordinary blocks (mobGriefing and protected blocks respected). */
+   /** Slams, the strongest combo and the full storm crack craters of ordinary blocks (mobGriefing and protected blocks respected). */
    public boolean meleeBreaksBlocks = true;
-   /** Extra lightning damage of an MMB strike in the electric mode. */
-   public float electricStrikeBonus = 4.0F;
 
    // --- electric LMB discharge (PLACEHOLDER) ---
    public double dischargeRange = 16.0;
@@ -51,6 +49,10 @@ public final class ThorCombatConfig {
    public int stormBoltTicks = 10;
    public float stormBurstDamage = 12.0F;
    public int stormCooldownTicks = 160;
+   /** Charge stages of the storm (#81): each one a cue and a stronger burst. */
+   public int stormStages = 3;
+   /** Crater of the burst at the last stage (#18, #30: destruction grows with power); 0 = none. */
+   public int stormFullCraterRadius = 3;
 
    // --- six electric combos (PLACEHOLDER sequences, effects and numbers) ---
    /** Max ticks between two actions of one electric combo. */

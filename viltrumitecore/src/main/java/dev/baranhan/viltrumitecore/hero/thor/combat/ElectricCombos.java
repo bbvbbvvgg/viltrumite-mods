@@ -56,15 +56,11 @@ public final class ElectricCombos {
       }
    }
 
-   /** The MMB melee strike in the electric mode: a charged blow, then an MMB_STRIKE action. */
-   static void strikeCharge(ServerPlayer player, ThorState state, ThorCombatState combat, List<LivingEntity> hits) {
-      ServerLevel level = player.serverLevel();
+   /** The MMB melee strike in the electric mode: its hits become an MMB_STRIKE action (no bonus damage, no new mechanic). */
+   static void strikeAction(ServerPlayer player, ThorState state, ThorCombatState combat, List<LivingEntity> hits) {
       combat.actionPrimary.clear();
       combat.actionAll.clear();
       for (LivingEntity target : hits) {
-         ElectricFx.arc(level, ElectricFx.hand(player), target.getBoundingBox().getCenter());
-         ElectricFx.crackle(level, target.getBoundingBox().getCenter(), 10);
-         CombatHits.hit(player, target, ThorCombatConfig.get().electricStrikeBonus, ThorMove.ELECTRIC_COMBO, combat.strikeAttackId);
          combat.actionPrimary.add(target.getUUID());
          combat.actionAll.add(target.getUUID());
       }

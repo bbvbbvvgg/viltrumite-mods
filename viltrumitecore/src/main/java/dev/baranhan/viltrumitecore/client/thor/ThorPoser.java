@@ -3,7 +3,9 @@ package dev.baranhan.viltrumitecore.client.thor;
 import dev.baranhan.viltrumitecore.client.anim.pose.ActionClock;
 import dev.baranhan.viltrumitecore.client.anim.pose.PoseRig;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
+import dev.baranhan.viltrumitecore.hero.thor.HammerState;
 import dev.baranhan.viltrumitecore.hero.thor.MjolnirPlace;
+import dev.baranhan.viltrumitecore.hero.thor.ThorFlags;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -43,7 +45,9 @@ public final class ThorPoser {
       double time = clock.sample(clip == null ? -1 : snapshot.actionId(), snapshot.variant(), snapshot.actionElapsed(), snapshot.actionLength(),
          player.tickCount + partialTick);
       boolean holding = ThorView.place(snapshot, player) == MjolnirPlace.HAND;
-      if (clip == null && !holding) {
+      // #154 / #155: while Mjölnir flies back, the arm reaches for it, but only once the current strike is over.
+      boolean reaching = clip == null && ThorFlags.hammer(snapshot.heroFlags()) == HammerState.RETURNING;
+      if (clip == null && !holding && !reaching) {
          return;
       }
 
@@ -58,6 +62,8 @@ public final class ThorPoser {
          if (clip.body() != null) {
             rig.body(clip.body(), t, 1.0F, true);
          }
+      } else if (reaching) {
+         rig.mainArm(ThorCombatClips.reach(player.getViewXRot(partialTick)), 0.0F, 1.0F, true);
       } else {
          rig.mainArm(ThorClips.HOLD, 0.0F, 1.0F, true);
       }

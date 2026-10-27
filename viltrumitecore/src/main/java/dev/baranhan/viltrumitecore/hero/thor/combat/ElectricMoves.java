@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -318,6 +319,7 @@ public final class ElectricMoves {
       ThorCombatConfig config = ThorCombatConfig.get();
       combat.stormTicks = 0;
       combat.stormRadius = config.stormStartRadius;
+      combat.stormStage = 1;
       combat.strikeAttackId = combat.nextAttackId();
       state.combatPose = 1;
       ServerLevel level = player.serverLevel();
@@ -341,6 +343,16 @@ public final class ElectricMoves {
       combat.stormTicks++;
       combat.stormRadius = StormCurve.radius(combat.stormTicks, ThorCombatTimings.STORM_MAX_TICKS, config.stormStartRadius, config.stormMaxRadius);
       Vec3 center = player.position();
+      int stage = StormCurve.stage(combat.stormTicks, ThorCombatTimings.STORM_MAX_TICKS, config.stormStages);
+      if (stage > combat.stormStage) {
+         // A new charge stage: a clear cue (sound, ring, flash), the burst grows (#81).
+         combat.stormStage = stage;
+         ElectricFx.sound(level, center, SoundEvents.LIGHTNING_BOLT_THUNDER, 0.5F + 0.2F * stage, 1.6F - 0.2F * stage);
+         ElectricFx.ring(level, center, combat.stormRadius);
+         ElectricFx.crackle(level, center.add(0.0, 1.0, 0.0), 20 * stage);
+         HeroFx.flash(player, center.add(0.0, 1.0, 0.0), 0.6F + 0.3F * stage);
+      }
+
       if (combat.stormTicks % 2 == 0) {
          ElectricFx.ring(level, center, combat.stormRadius);
          double angle = random.nextDouble() * Math.PI * 2.0;
@@ -350,6 +362,10 @@ public final class ElectricMoves {
 
       if (config.stormPulseTicks > 0 && combat.stormTicks % config.stormPulseTicks == 0) {
          for (LivingEntity target : CombatHits.around(player, center, combat.stormRadius, 4.0)) {
+            if (!player.hasLineOfSight(target)) {
+               continue;
+            }
+
             ElectricFx.arc(level, center.add(0.0, 1.2, 0.0), target.getBoundingBox().getCenter());
             if (CombatHits.hit(player, target, config.stormPulseDamage, ThorMove.ELECTRIC_STORM, combat.strikeAttackId)) {
                CombatHits.push(target, center, 0.2, 0.0);
@@ -397,8 +413,13 @@ public final class ElectricMoves {
       ServerLevel level = player.serverLevel();
       Vec3 center = player.position();
       double radius = combat.stormRadius;
-      float damage = StormCurve.burst(config.stormBurstDamage, radius, config.stormMaxRadius);
+      int stages = Math.max(1, config.stormStages);
+      float damage = StormCurve.burstAtStage(config.stormBurstDamage, combat.stormStage, stages);
       for (LivingEntity target : CombatHits.around(player, center, radius, 4.0)) {
+         if (!player.hasLineOfSight(target)) {
+            continue;
+         }
+
          ElectricFx.arc(level, center.add(0.0, 1.2, 0.0), target.getBoundingBox().getCenter());
          if (CombatHits.hit(player, target, damage, ThorMove.ELECTRIC_STORM, combat.strikeAttackId)) {
             CombatHits.push(target, center, 1.5, 0.4);
@@ -415,8 +436,14 @@ public final class ElectricMoves {
       HeroFx.flash(player, center.add(0.0, 1.0, 0.0), 1.2F);
       ElectricFx.sound(level, center, SoundEvents.GENERIC_EXPLODE, 1.0F, 1.2F);
       ElectricFx.sound(level, center, SoundEvents.LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
+      if (combat.stormStage >= stages && config.stormFullCraterRadius > 0 && config.meleeBreaksBlocks) {
+         // Only the fully charged storm scars the ground (#18, #30); ordinary blocks only.
+         ElectricFx.carve(level, ElectricFx.crater(BlockPos.containing(center).below(), config.stormFullCraterRadius, 0.5));
+      }
+
       combat.startCooldown(ThorCombatState.Cooldown.STORM, config.stormCooldownTicks);
       combat.stormTicks = -1;
+      combat.stormStage = 1;
    }
 
    @Nullable

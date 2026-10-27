@@ -277,4 +277,42 @@ class ThorCombatRulesTest {
       assertEquals(24, ElectricFx.column(net.minecraft.core.BlockPos.ZERO, 24).size());
       assertTrue(ElectricFx.column(net.minecraft.core.BlockPos.ZERO, 24).stream().allMatch(p -> p.getY() > 0), "only above the target");
    }
+
+   @Test
+   void meleeChainsNeverReportElectricSuccess() {
+      UUID thor = UUID.randomUUID();
+      var end = MeleeMoves.meleeComboEnd(thor, null, ThorMove.HAMMER_COMBO, 3, true);
+      assertSame(dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType.COMBO_END, end.type());
+      assertFalse(end.success(), "contract: success = true only for a completed electric combo");
+      assertSame(ThorMove.HAMMER_COMBO, end.move());
+   }
+
+   @Test
+   void aFistBlowIsNeverAHammerBlow() {
+      assertTrue(CombatHits.hammerBlow(ThorMove.HAMMER_COMBO, true));
+      assertTrue(CombatHits.hammerBlow(ThorMove.HAMMER_STRIKE, true));
+      assertFalse(CombatHits.hammerBlow(ThorMove.HAMMER_STRIKE, false));
+      assertFalse(CombatHits.hammerBlow(ThorMove.FIST_COMBO, true), "#166: a fist chain finishing after the catch is not a hammer blow");
+   }
+
+   @Test
+   void theStormChargesInStages() {
+      assertEquals(1, StormCurve.stage(0, 100, 3));
+      assertEquals(1, StormCurve.stage(33, 100, 3));
+      assertEquals(2, StormCurve.stage(34, 100, 3));
+      assertEquals(3, StormCurve.stage(67, 100, 3));
+      assertEquals(3, StormCurve.stage(100, 100, 3));
+      assertEquals(3, StormCurve.stage(900, 100, 3));
+      assertEquals(1, StormCurve.stage(50, 100, 1));
+      assertTrue(StormCurve.burstAtStage(12.0F, 3, 3) > StormCurve.burstAtStage(12.0F, 2, 3));
+      assertTrue(StormCurve.burstAtStage(12.0F, 2, 3) > StormCurve.burstAtStage(12.0F, 1, 3));
+      assertEquals(12.0F, StormCurve.burstAtStage(12.0F, 3, 3), 1.0E-6);
+   }
+
+   @Test
+   void theThunderRingStartsOnTheGround() {
+      ElectricRecognizer recognizer = new ElectricRecognizer();
+      assertNull(recognizer.push(act(Kind.RMB, MoveDirection.NONE, true, 0), 30, false));
+      assertNull(recognizer.push(act(Kind.RMB, MoveDirection.NONE, true, 10), 30, false), "two airborne waves are no combo");
+   }
 }
