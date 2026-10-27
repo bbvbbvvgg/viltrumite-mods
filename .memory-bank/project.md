@@ -363,3 +363,13 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   spinning shards (`SawSphereRenderer`; CPU preview `SawSpherePreviewTest` with `SAW_PREVIEW=1` +
   `tools/preview_saw_sphere.py`).
 - Released as GitHub release `v1.45.0-reinhard` together with flight 1.10.1; the overhaul stack (#47–#54) merged to main.
+
+## Thor A+B+C integration (core 1.48.0, protocol 8; flight unchanged 1.10.1)
+- Branch `feat/thor-integration-abc` merges sessions A (hammer), B (combat) and C (scenes) onto `feat/thor-foundation`. Never merge it to main without the owner.
+- `ThorContext` has 10 components; the 8-arg constructor keeps `hammerDetached = false` and `fistChainOpen = false`. Server: `ThorActions.context`. Client claim: `ThorHero.context`.
+- `ThorFlags`: bit 5 = `HAMMER_DETACHED` (A), bit 6 = `SCENE` (C). Use the 6-arg `compose` only.
+- One rule for "Mjölnir in the hand": `ThorBridge.hammerHeld(player)` = attached and right hand free. An item in the right hand keeps Mjölnir on the belt (`MjolnirPlace.BELT`). Then LMB / RMB resolve to `FIST_COMBO`, no hammer blow, no fatality, no teleport.
+- Full flight (CRUISE / SONIC): `ThorControls` returns no attack (LMB, RMB, MMB grab / melee / throw, ultimate). The MMB recall, R, Y and V stay routed (C refuses V in flight).
+- A lethal B melee blow can start C's fatality inside the hit (`LETHAL_HIT`). `MeleeMoves.landStrike` then stops at once: no push, no other targets, no hit-stop, shockwave or crater.
+- `HeroRegistry.changeHero`: A's `admitsEntry` first, then C's `HeroChangeDeferral` (returns true = accepted, the change runs after the scene).
+- Integration checks: `ThorIntegrationSeamsTest`.
