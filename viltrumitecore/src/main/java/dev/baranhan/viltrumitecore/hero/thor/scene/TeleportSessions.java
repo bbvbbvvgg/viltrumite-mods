@@ -211,7 +211,7 @@ final class TeleportSessions {
          if (state != null) {
             ThorBridge.unlockScene(state, ThorScenes.OWNER);
             ThorBridge.releaseCamera(state, ThorScenes.OWNER);
-            ThorScenes.stopMove(state, ThorScenes.TELEPORT);
+            ThorScenes.stopMove(thor, state, ThorScenes.TELEPORT);
          }
          ThorScenes.send(thor, null, SceneSync.end(SceneSync.Kind.TELEPORT, session.thorId, -1));
       }

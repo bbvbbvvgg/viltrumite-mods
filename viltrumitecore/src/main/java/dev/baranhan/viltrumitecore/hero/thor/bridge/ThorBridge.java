@@ -1,10 +1,13 @@
 package dev.baranhan.viltrumitecore.hero.thor.bridge;
 
+import dev.baranhan.viltrumitecore.hero.combat.InterruptReason;
+import dev.baranhan.viltrumitecore.hero.thor.ThorActions;
 import dev.baranhan.viltrumitecore.hero.thor.ThorHands;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -64,6 +67,45 @@ public final class ThorBridge {
    public static boolean hammerHeld(Player player) {
       HammerView view = hammer(player);
       return view != null && view.inHand() && ThorHands.free(player);
+   }
+
+   // --- move lifecycle (every session start / stop goes through here) ---
+
+   /**
+    * Start {@code move} for this Thor with its handler lifecycle (gate →
+    * admits → timeline → onStop of the replaced move → onStart → entry
+    * phase); {@code partnerId} is the partner of a paired move (-1 none).
+    * NOT_READY when the player is not Thor.
+    */
+   public static ThorActions.Refusal start(ServerPlayer player, ThorMove move, int partnerId) {
+      ThorState state = ThorState.of(player);
+      return state == null ? ThorActions.Refusal.NOT_READY : start(player, state, move, partnerId);
+   }
+
+   public static ThorActions.Refusal start(ServerPlayer player, ThorState state, ThorMove move, int partnerId) {
+      return ThorActions.begin(player, state, move, partnerId, null, null, null);
+   }
+
+   /**
+    * Start a scene-like move at once: a different running move is first
+    * stopped with {@code cut} (its owner hears onStop), whatever its priority.
+    */
+   public static ThorActions.Refusal startCutting(ServerPlayer player, ThorState state, ThorMove move, int partnerId, InterruptReason cut) {
+      return ThorActions.begin(player, state, move, partnerId, null, null, cut);
+   }
+
+   /**
+    * Stop the running move with {@code reason} unless it resists; its owner
+    * hears onStop. Never touches the scene lock, the camera lease or the
+    * windows (they belong to their owners). True when a move stopped.
+    */
+   public static boolean interrupt(@Nullable ServerPlayer player, ThorState state, InterruptReason reason) {
+      return ThorActions.interrupt(player, state, reason);
+   }
+
+   /** An owner ends its own {@code move} (no-op when another move runs); the handler hears onStop. */
+   public static boolean end(@Nullable ServerPlayer player, ThorState state, ThorMove move) {
+      return ThorActions.end(player, state, move);
    }
 
    // --- read-only state ---

@@ -40,8 +40,8 @@ public final class WrathMove {
 
          ThorCombatState combat = ThorCombatState.of(context.state());
          Component name = Component.translatable(context.move().translationKey());
-         if (!combat.ready(ThorCombatState.Cooldown.WRATH)) {
-            int seconds = (combat.cooldownLeft(ThorCombatState.Cooldown.WRATH) + 19) / 20;
+         if (!combat.ready(player, ThorCombatState.Cooldown.WRATH)) {
+            int seconds = (combat.cooldownLeft(player, ThorCombatState.Cooldown.WRATH) + 19) / 20;
             ThorFeedback.refuse(player, Component.translatable(RECHARGING, name, seconds));
             return false;
          } else if (ThorCombatConfig.get().wrathRequiresHammer && !CombatHits.hammerInHand(player)) {
@@ -56,7 +56,7 @@ public final class WrathMove {
       public void onStart(ThorMoveContext context) {
          ServerPlayer player = context.player();
          ThorCombatState combat = ThorCombatState.of(context.state());
-         combat.startCooldown(ThorCombatState.Cooldown.WRATH, ThorCombatConfig.get().wrathCooldownTicks);
+         combat.startCooldown(player, ThorCombatState.Cooldown.WRATH, ThorCombatConfig.get().wrathCooldownTicks);
          combat.strikeAttackId = combat.nextAttackId();
          combat.wrathAim = null;
          context.state().combatPose = 1;

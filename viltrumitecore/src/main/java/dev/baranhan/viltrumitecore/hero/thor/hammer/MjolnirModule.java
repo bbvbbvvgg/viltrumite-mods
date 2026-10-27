@@ -2,7 +2,6 @@ package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.baranhan.viltrumitecore.hero.combat.InterruptReason;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFeedback;
@@ -90,7 +89,7 @@ public final class MjolnirModule {
          this.thrown.remove(id);
          MjolnirRecord record = MjolnirWorld.record(context.player().server);
          if (!context.player().getUUID().equals(record.activeOwner) || record.phase != MjolnirPhase.IN_HAND) {
-            context.state().timeline.interrupt(InterruptReason.LIFECYCLE);
+            ThorBridge.end(context.player(), context.state(), ThorMove.HAMMER_THROW);
             ThorFeedback.refuse(context.player(), Component.translatable(MjolnirWorld.NO_HAMMER));
          }
       }
@@ -133,7 +132,7 @@ public final class MjolnirModule {
          this.thrown.add(player.getUUID());
          this.early.remove(player.getUUID());
          if (!MjolnirWorld.launch(player, context.state(), charged)) {
-            context.state().timeline.interrupt(InterruptReason.LIFECYCLE);
+            ThorBridge.end(player, context.state(), ThorMove.HAMMER_THROW);
             return;
          }
 
@@ -166,7 +165,7 @@ public final class MjolnirModule {
       @Override
       public void onStart(ThorMoveContext context) {
          if (!MjolnirPull.start(context.player())) {
-            context.state().timeline.interrupt(InterruptReason.LIFECYCLE);
+            ThorBridge.end(context.player(), context.state(), ThorMove.HAMMER_PULL);
          }
       }
 

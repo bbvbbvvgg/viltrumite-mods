@@ -69,12 +69,14 @@ final class ThorSceneCommands {
          return fail(context, "cannot grab: " + (refusal == null ? "scene running" : refusal));
       }
 
-      if (ThorActions.start(state, null, ThorScenes.GRAB, ThorHands.free(player), target.getId()) != ThorActions.Refusal.NONE) {
-         return fail(context, "the timeline refused GRAB");
+      // The window names the target; the GRAB handler (onStart) then starts the session like an MMB press would.
+      ThorBridge.openGrabWindow(state, 1, target.getId());
+      ThorActions.Refusal started = ThorBridge.start(player, state, ThorScenes.GRAB, target.getId());
+      if (started != ThorActions.Refusal.NONE) {
+         return fail(context, "the timeline refused GRAB: " + started);
       }
 
-      if (!GrabSessions.start(player, state, target)) {
-         ThorScenes.stopMove(state, ThorScenes.GRAB);
+      if (GrabSessions.of(player.getUUID()) == null) {
          return fail(context, "the shared control refused the target");
       }
 

@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.hero.thor.combat;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvents;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorLifecycle;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveHandler;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves;
 import dev.baranhan.viltrumitecore.hero.thor.dev.ThorDevCommands;
@@ -53,6 +54,7 @@ public final class ThorCombatModule {
       ThorEvents.subscribe(OWNER, ThorEventType.THROW, ElectricCombos::onHammerEvent);
       ThorEvents.subscribe(OWNER, ThorEventType.RECALL, ElectricCombos::onHammerEvent);
       ThorEvents.subscribe(OWNER, ThorEventType.CATCH, ThorCombatRuntime::onCatch);
+      ThorLifecycle.subscribe(OWNER, ThorCombatRuntime::onLifecycleStop);
       ThorDevCommands.registerChild(OWNER, "debug combat", ThorCombatCommands::build);
       installed = true;
    }

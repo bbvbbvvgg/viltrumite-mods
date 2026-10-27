@@ -267,12 +267,18 @@ class ThorCombatRulesTest {
 
    @Test
    void cooldownsAndCraters() {
+      // B-M3: cooldowns are PersistentCooldowns ticks (online time), not a per-body counter; the player-less store is for tests.
       ThorCombatState combat = new ThorCombatState();
-      assertTrue(combat.ready(ThorCombatState.Cooldown.WRATH));
-      combat.startCooldown(ThorCombatState.Cooldown.WRATH, 10);
-      assertFalse(combat.ready(ThorCombatState.Cooldown.WRATH));
+      assertTrue(combat.ready(null, ThorCombatState.Cooldown.WRATH));
+      combat.startCooldown(null, ThorCombatState.Cooldown.WRATH, 10);
+      assertFalse(combat.ready(null, ThorCombatState.Cooldown.WRATH));
       combat.ticks += 10;
-      assertTrue(combat.ready(ThorCombatState.Cooldown.WRATH));
+      assertFalse(combat.ready(null, ThorCombatState.Cooldown.WRATH), "the body's own counter no longer drives cooldowns");
+      for (int i = 0; i < 10; i++) {
+         combat.tickLocalCooldowns();
+      }
+
+      assertTrue(combat.ready(null, ThorCombatState.Cooldown.WRATH));
       assertFalse(ElectricFx.crater(net.minecraft.core.BlockPos.ZERO, 3, 0.5).isEmpty());
       assertEquals(24, ElectricFx.column(net.minecraft.core.BlockPos.ZERO, 24).size());
       assertTrue(ElectricFx.column(net.minecraft.core.BlockPos.ZERO, 24).stream().allMatch(p -> p.getY() > 0), "only above the target");

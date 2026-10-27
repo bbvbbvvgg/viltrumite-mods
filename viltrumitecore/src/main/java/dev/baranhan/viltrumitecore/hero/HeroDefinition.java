@@ -447,6 +447,17 @@ public interface HeroDefinition {
    void handleInput(ServerPlayer player, HeroAction action, boolean pressed);
 
    /**
+    * A held input ended by force, not by the player (HeldInputs.releaseAll:
+    * death, disconnect, hero change, erasure, anchoring / control, suit off).
+    * Default: the same as the player's release, so heroes that do not care
+    * keep their behaviour; a hero whose release fires a charged action
+    * overrides it to cancel instead.
+    */
+   default void handleForcedRelease(ServerPlayer player, HeroAction action) {
+      this.handleInput(player, action, false);
+   }
+
+   /**
     * Enter the hero after an actual id change (not on restore/clone): default
     * loadout, grants, baseline snapshot. Never called when the id is unchanged.
     */

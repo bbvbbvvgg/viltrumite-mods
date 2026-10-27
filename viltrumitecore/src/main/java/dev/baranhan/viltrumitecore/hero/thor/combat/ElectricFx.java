@@ -169,7 +169,8 @@ public final class ElectricFx {
          int used = 0;
          while (this.next < this.blocks.size() && used < budget) {
             BlockPos pos = this.blocks.get(this.next++);
-            if (!level.getBlockState(pos).isAir()) {
+            // Never load or generate a chunk for a carve (same rule as HeroDestruction.clearBlock).
+            if (level.isLoaded(pos) && !level.getBlockState(pos).isAir()) {
                HeroDestruction.destroyBlock(level, pos);
                used++;
             }

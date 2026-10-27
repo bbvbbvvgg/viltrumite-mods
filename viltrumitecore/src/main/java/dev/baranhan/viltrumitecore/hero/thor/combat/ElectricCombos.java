@@ -153,7 +153,7 @@ public final class ElectricCombos {
          case THUNDER_RING -> {
             Vec3 center = player.position();
             ElectricMoves.ring(player, combat, center, 9.0, 11.0F * scale, 1.6, 0.5, true);
-            combat.schedule(6, () -> {
+            combat.schedule(6, player, () -> {
                if (player.isAlive()) {
                   ElectricMoves.ring(player, combat, center, 12.0, 7.0F * scale, 1.0, 0.2, false);
                }
@@ -282,7 +282,7 @@ public final class ElectricCombos {
       Vec3 fallback = combat.skyFallback.remove(event.attackId());
       UUID targetId = event.targetId();
       int attackId = event.attackId();
-      combat.schedule(ThorCombatConfig.get().skyStrikeDelayTicks, () -> skyStrike(player, combat, targetId, fallback, attackId));
+      combat.schedule(ThorCombatConfig.get().skyStrikeDelayTicks, player, () -> skyStrike(player, combat, targetId, fallback, attackId));
    }
 
    static void skyStrike(ServerPlayer player, ThorCombatState combat, @Nullable UUID targetId, @Nullable Vec3 fallback, int attackId) {

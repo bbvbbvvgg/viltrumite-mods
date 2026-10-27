@@ -10,6 +10,8 @@ import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.MouseButton;
 import dev.baranhan.viltrumitecore.hero.combat.CombatPresence;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ReleaseCause;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorLifecycle;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirPull;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirWorld;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.ThorTransform;
@@ -228,6 +230,20 @@ public final class ThorHero implements HeroDefinition {
     * press again. Releases (HeldInputs, always delivered) go to the move the
     * press chose, e.g. a charged MMB throw.
     */
+   /**
+    * A forced release (death, logout, hero change, erasure, anchoring) is
+    * never the player's: the move hears it as {@link ReleaseCause#FORCED}
+    * (a charged throw does not fire, the storm cancels quietly).
+    */
+   @Override
+   public void handleForcedRelease(ServerPlayer player, HeroAction action) {
+      ThorInput input = ThorInput.of(action);
+      ThorState state = input == null ? null : ThorState.of(player);
+      if (state != null) {
+         ThorActions.release(player, state, input, ReleaseCause.FORCED);
+      }
+   }
+
    @Override
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
       ThorInput input = ThorInput.of(action);
@@ -306,14 +322,23 @@ public final class ThorHero implements HeroDefinition {
    @Override
    public HeroPublicSnapshot snapshot(Player player) {
       ThorState state = ThorState.of(player);
-      return composeSnapshot(state == null ? new ThorState() : state);
+      return composeSnapshot(state == null ? new ThorState() : state, ThorCooldowns.wire(player));
    }
 
-   /** Pure wire composer: running move as actionId/elapsed/length/variant, the partner as controlTargetId, the session strike pose as resource. */
+   /** Pure wire composer without cooldowns (all ready). */
    static HeroPublicSnapshot composeSnapshot(ThorState state) {
+      return composeSnapshot(state, new int[HeroPublicSnapshot.COOLDOWN_COUNT]);
+   }
+
+   /**
+    * Pure wire composer: running move as actionId/elapsed/length/variant, the
+    * partner as controlTargetId, the session strike pose as resource, the
+    * session cooldowns at their ThorCooldowns indices.
+    */
+   static HeroPublicSnapshot composeSnapshot(ThorState state, int[] cooldowns) {
       var timeline = state.timeline;
       return new HeroPublicSnapshot(HeroId.THOR, timeline.wireId(), timeline.elapsed(), timeline.length(), 0, false, 0, 0, false, false, 0, 0,
-         timeline.partnerId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], timeline.running(), -1, null, timeline.running() ? state.combatPose : 0,
+         timeline.partnerId(), cooldowns.clone(), timeline.running(), -1, null, timeline.running() ? state.combatPose : 0,
          false,
          ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0, state.cameraLease != null, state.hammerDetached, state.sceneLock != null),
          new int[0], timeline.variant(), 0);
@@ -332,10 +357,21 @@ public final class ThorHero implements HeroDefinition {
       ThorState.ensure(player).load(nbt);
    }
 
+   /**
+    * Every clone (respawn after death, End return): the old body's move and
+    * the sessions' transient state are stopped (on a death clone the cleanup
+    * already did it; stopping twice is a no-op), and the new body starts as a
+    * fresh one that keeps the hammer projection of the old body. Session A's
+    * world store stays the truth and re-projects on the first tick.
+    */
    @Override
    public void cloneHeroState(Player original, Player clone) {
       ThorState previous = ThorState.of(original);
       if (previous != null && clone instanceof HeroPlayer heroPlayer) {
+         if (original instanceof ServerPlayer old) {
+            ThorActions.stop(old, previous, ThorLifecycle.Cause.CLONE);
+         }
+
          heroPlayer.viltrumitecore$setHeroState(previous.respawnCopy());
       }
    }
@@ -344,7 +380,7 @@ public final class ThorHero implements HeroDefinition {
    public void onDimensionChange(ServerPlayer player) {
       ThorState state = ThorState.of(player);
       if (state != null) {
-         ThorActions.stop(player, state);
+         ThorActions.stop(player, state, ThorLifecycle.Cause.DIMENSION_CHANGE);
          MjolnirPull.stop(player);
          MjolnirWorld.onDimensionChange(player, state);
       }
@@ -357,7 +393,7 @@ public final class ThorHero implements HeroDefinition {
          return;
       }
 
-      ThorActions.stop(player, state);
+      ThorActions.stop(player, state, ThorLifecycle.Cause.of(reason));
       MjolnirPull.stop(player);
       ThorTransform.stop(player, state);
       MjolnirWorld.onCleanup(player, state, reason);

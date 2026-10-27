@@ -59,14 +59,16 @@ class ThorStateTest {
    }
 
    @Test
-   void freshBodiesStartWithTheHammerOnTheBelt() {
+   void freshBodiesKeepOnlyTheHammerProjection() {
+      // F-M11 (rewritten, it pinned the bug): a fresh HOLSTERED body after an End return stranded Mjölnir on the belt.
+      // The copy keeps the last projection; session A's store re-projects it on the first tick.
       ThorState state = new ThorState();
       state.hammer = HammerState.IN_HAND;
       state.mode = ThorMode.ELECTRIC;
       state.timeline.request(ThorMove.HOLSTER, -1);
       for (ThorState copy : new ThorState[]{state.respawnCopy(), state.erasedCopy()}) {
          assertNotSame(state, copy);
-         assertSame(HammerState.HOLSTERED, copy.hammer);
+         assertSame(HammerState.IN_HAND, copy.hammer);
          assertSame(ThorMode.NORMAL, copy.mode);
          assertFalse(copy.timeline.running());
       }

@@ -46,6 +46,13 @@ public final class ThorState {
    /** Move chosen on the press of a held input, with ticks held; the release goes to it. Transient. */
    final EnumMap<ThorInput, ThorMove> pressed = new EnumMap<>(ThorInput.class);
    final EnumMap<ThorInput, Integer> heldTicks = new EnumMap<>(ThorInput.class);
+   /**
+    * The move the flow last handed to a handler (ThorActions): a tick that finds
+    * the timeline on another move knows the remembered one was stopped outside
+    * the lifecycle API and still owes it onStop. Transient.
+    */
+   @Nullable
+   ThorMove lastMove;
 
    public void save(CompoundTag nbt) {
       CompoundTag tag = new CompoundTag();
@@ -60,6 +67,7 @@ public final class ThorState {
     */
    public void load(CompoundTag nbt) {
       this.timeline.clear();
+      this.lastMove = null;
       this.mode = ThorMode.NORMAL;
       this.clearTransient();
       if (!nbt.contains(KEY, 10)) {
@@ -82,9 +90,17 @@ public final class ThorState {
       this.heldTicks.clear();
    }
 
-   /** A fresh body: Mjölnir on the belt, normal mode, nothing running. */
+   /**
+    * A fresh body: normal mode, nothing running, no bridge flags; the hammer
+    * projection (where Mjölnir is, attached or detached) is carried over as
+    * the last projection: the world store (session A) re-projects it on the
+    * first tick, and a carried IN_HAND never strands Mjölnir on the belt.
+    */
    public ThorState respawnCopy() {
-      return new ThorState();
+      ThorState copy = new ThorState();
+      copy.hammer = this.hammer;
+      copy.hammerDetached = this.hammerDetached;
+      return copy;
    }
 
    /** Same-entity death keeps nothing of the body either. */

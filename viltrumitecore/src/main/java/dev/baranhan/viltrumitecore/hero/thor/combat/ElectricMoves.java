@@ -1,12 +1,14 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
+import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroShockwave;
 import dev.baranhan.viltrumitecore.hero.combat.InterruptReason;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorActions;
-import dev.baranhan.viltrumitecore.hero.thor.ThorHands;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ReleaseCause;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMode;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
@@ -43,10 +45,6 @@ public final class ElectricMoves {
       @Override
       public void onStart(ThorMoveContext context) {
          ThorState state = context.state();
-         if (state.timeline.queued() == context.move()) {
-            return;
-         }
-
          state.mode = state.mode == ThorMode.ELECTRIC ? ThorMode.NORMAL : ThorMode.ELECTRIC;
          ThorCombatState combat = ThorCombatState.of(state);
          combat.recognizer.clear();
@@ -72,7 +70,7 @@ public final class ElectricMoves {
    public static final ThorMoveHandler DISCHARGE = new ThorMoveHandler() {
       @Override
       public void onStart(ThorMoveContext context) {
-         if (context.player() != null && context.state().timeline.queued() != context.move()) {
+         if (context.player() != null) {
             begin(context.player(), context.state());
          }
       }
@@ -119,9 +117,15 @@ public final class ElectricMoves {
       public void onStart(ThorMoveContext context) {
          ThorCombatState combat = ThorCombatState.of(context.state());
          combat.rmbHeld = true;
-         if (context.player() != null && context.state().timeline.queued() != context.move()) {
+         if (context.player() != null) {
             begin(context.player(), context.state(), combat);
          }
+      }
+
+      /** A buffered RMB press: still held when its step begins, it may grow into the storm. */
+      @Override
+      public void onQueued(ThorMoveContext context) {
+         ThorCombatState.of(context.state()).rmbHeld = true;
       }
 
       @Override
@@ -136,7 +140,7 @@ public final class ElectricMoves {
          switch (event) {
             case CHAIN -> begin(player, state, combat);
             case ENTER_MAIN -> {
-               if (combat.rmbHeld && combat.ready(ThorCombatState.Cooldown.STORM) && startStorm(player, state, combat)) {
+               if (combat.rmbHeld && combat.ready(player, ThorCombatState.Cooldown.STORM) && startStorm(player, state, combat)) {
                   return;
                }
 
@@ -151,10 +155,15 @@ public final class ElectricMoves {
 
       @Override
       public void onRelease(ThorMoveContext context, int heldTicks) {
+         this.onRelease(context, heldTicks, ReleaseCause.PLAYER);
+      }
+
+      @Override
+      public void onRelease(ThorMoveContext context, int heldTicks, ReleaseCause cause) {
          ThorCombatState combat = ThorCombatState.of(context.state());
          combat.rmbHeld = false;
          if (context.player() != null && context.state().timeline.is(ThorMove.ELECTRIC_STORM)) {
-            releaseStorm(context.player(), context.state(), combat);
+            releaseStorm(context.player(), context.state(), combat, cause);
          }
       }
 
@@ -175,6 +184,28 @@ public final class ElectricMoves {
 
    /** ELECTRIC_STORM: grows while RMB is held, bursts on release or at full size. */
    public static final ThorMoveHandler STORM = new ThorMoveHandler() {
+      /** Started by the held wave (ThorBridge.start from WAVE's ENTER_MAIN): the storm's setup. */
+      @Override
+      public void onStart(ThorMoveContext context) {
+         ThorState state = context.state();
+         ThorCombatState combat = ThorCombatState.of(state);
+         ThorCombatConfig config = ThorCombatConfig.get();
+         combat.stormTicks = 0;
+         combat.stormRadius = config.stormStartRadius;
+         combat.stormStage = 1;
+         combat.strikeAttackId = combat.nextAttackId();
+         state.combatPose = 1;
+         combat.actionPrimary.clear();
+         combat.actionAll.clear();
+         ServerPlayer player = context.player();
+         if (player != null) {
+            ServerLevel level = player.serverLevel();
+            ElectricFx.sound(level, player.position(), SoundEvents.LIGHTNING_BOLT_THUNDER, 0.6F, 1.4F);
+            ElectricFx.sound(level, player.position(), SoundEvents.BEACON_POWER_SELECT, 0.8F, 0.7F);
+            ElectricCombos.push(player, state, combat, ElectricAction.Kind.HOLD_RMB);
+         }
+      }
+
       @Override
       public void onPhase(ThorMoveContext context, StagedTimeline.Event event) {
          if (context.player() != null && event == StagedTimeline.Event.ENTER_FINISH) {
@@ -186,8 +217,13 @@ public final class ElectricMoves {
 
       @Override
       public void onRelease(ThorMoveContext context, int heldTicks) {
+         this.onRelease(context, heldTicks, ReleaseCause.PLAYER);
+      }
+
+      @Override
+      public void onRelease(ThorMoveContext context, int heldTicks, ReleaseCause cause) {
          if (context.player() != null) {
-            releaseStorm(context.player(), context.state(), ThorCombatState.of(context.state()));
+            releaseStorm(context.player(), context.state(), ThorCombatState.of(context.state()), cause);
          }
       }
 
@@ -195,7 +231,7 @@ public final class ElectricMoves {
       public void onStop(ThorMoveContext context) {
          ThorCombatState combat = ThorCombatState.of(context.state());
          if (combat.stormTicks >= 0) {
-            combat.startCooldown(ThorCombatState.Cooldown.STORM, ThorCombatConfig.get().stormCooldownTicks);
+            combat.startCooldown(context.player(), ThorCombatState.Cooldown.STORM, ThorCombatConfig.get().stormCooldownTicks);
             combat.stormTicks = -1;
          }
 
@@ -305,30 +341,15 @@ public final class ElectricMoves {
       int steps = Math.max(1, (int)Math.ceil(radius));
       for (int i = 1; i <= steps; i++) {
          double r = radius * i / steps;
-         combat.schedule(i - 1, () -> ElectricFx.ring(level, center, r));
+         combat.schedule(i - 1, player, () -> ElectricFx.ring(level, center, r));
       }
    }
 
    // --- held RMB: storm ---
 
+   /** The held wave grows into the storm: one lifecycle start (WAVE hears onStop, STORM onStart does the setup). */
    static boolean startStorm(ServerPlayer player, ThorState state, ThorCombatState combat) {
-      if (ThorActions.start(state, ThorMove.ELECTRIC_STORM, ThorHands.free(player)) != ThorActions.Refusal.NONE) {
-         return false;
-      }
-
-      ThorCombatConfig config = ThorCombatConfig.get();
-      combat.stormTicks = 0;
-      combat.stormRadius = config.stormStartRadius;
-      combat.stormStage = 1;
-      combat.strikeAttackId = combat.nextAttackId();
-      state.combatPose = 1;
-      ServerLevel level = player.serverLevel();
-      ElectricFx.sound(level, player.position(), SoundEvents.LIGHTNING_BOLT_THUNDER, 0.6F, 1.4F);
-      ElectricFx.sound(level, player.position(), SoundEvents.BEACON_POWER_SELECT, 0.8F, 0.7F);
-      combat.actionPrimary.clear();
-      combat.actionAll.clear();
-      ElectricCombos.push(player, state, combat, ElectricAction.Kind.HOLD_RMB);
-      return true;
+      return ThorBridge.start(player, state, ThorMove.ELECTRIC_STORM, -1) == ThorActions.Refusal.NONE && state.timeline.is(ThorMove.ELECTRIC_STORM);
    }
 
    /** Server tick of a running storm (MAIN phase): grow, pulse, bolts. */
@@ -392,15 +413,40 @@ public final class ElectricMoves {
       }
    }
 
-   /** RMB released: the storm bursts and ends. */
-   static void releaseStorm(ServerPlayer player, ThorState state, ThorCombatState combat) {
+   /**
+    * RMB released: the player's release of a free Thor bursts the storm and
+    * ends it; any other release (forced: death, logout, hero change, control;
+    * or a Thor no longer free to act) takes the quiet cancel of STORM.onStop:
+    * cooldown, no damage, no crater.
+    */
+   static void releaseStorm(ServerPlayer player, ThorState state, ThorCombatState combat, ReleaseCause cause) {
       if (!state.timeline.is(ThorMove.ELECTRIC_STORM) || combat.stormTicks < 0) {
          return;
       }
 
+      if (!bursts(cause, holderFree(player, state))) {
+         ThorBridge.interrupt(player, state, InterruptReason.LIFECYCLE);
+         return;
+      }
+
       burst(player, combat);
-      state.timeline.interrupt(InterruptReason.INPUT);
+      ThorBridge.interrupt(player, state, InterruptReason.INPUT);
       state.combatPose = 0;
+   }
+
+   /**
+    * Pure: does a storm release burst? Only the player's own release while
+    * Thor is free to act. OPEN(owner): a forced release (death, logout, grab
+    * by another hero, hero change) fizzles; conservative default (no
+    * combat-log nuke).
+    */
+   public static boolean bursts(ReleaseCause cause, boolean holderFree) {
+      return cause == ReleaseCause.PLAYER && holderFree;
+   }
+
+   /** Alive, online, not anchored by external control, not held by a scene. */
+   static boolean holderFree(ServerPlayer player, ThorState state) {
+      return player.isAlive() && !player.hasDisconnected() && !HeroDamage.isAnchored(player) && !ThorBridge.sceneLocked(state);
    }
 
    /** The closing burst at the storm's current size. */
@@ -441,7 +487,7 @@ public final class ElectricMoves {
          ElectricFx.carve(level, ElectricFx.crater(BlockPos.containing(center).below(), config.stormFullCraterRadius, 0.5));
       }
 
-      combat.startCooldown(ThorCombatState.Cooldown.STORM, config.stormCooldownTicks);
+      combat.startCooldown(player, ThorCombatState.Cooldown.STORM, config.stormCooldownTicks);
       combat.stormTicks = -1;
       combat.stormStage = 1;
    }

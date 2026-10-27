@@ -151,7 +151,7 @@ final class FatalitySessions {
       if (ThorScenes.begin(thor, state, ThorScenes.FATALITY, victim.getId()) != ThorActions.Refusal.NONE
          || !ThorBridge.lockScene(state, ThorScenes.OWNER)) {
          control.release(victim.getUUID(), session.effectId, ReleaseReason.INTERRUPTED);
-         ThorScenes.stopMove(state, ThorScenes.FATALITY);
+         ThorScenes.stopMove(thor, state, ThorScenes.FATALITY);
          return false;
       }
 
@@ -306,7 +306,7 @@ final class FatalitySessions {
          if (state != null) {
             ThorBridge.unlockScene(state, ThorScenes.OWNER);
             ThorBridge.releaseCamera(state, ThorScenes.OWNER);
-            ThorScenes.stopMove(state, ThorScenes.FATALITY);
+            ThorScenes.stopMove(thor, state, ThorScenes.FATALITY);
          }
          ThorScenes.send(thor, victim, SceneSync.end(SceneSync.Kind.FATALITY, session.thorId, session.victimId));
       } else if (victim instanceof ServerPlayer player) {

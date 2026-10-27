@@ -41,13 +41,17 @@ public final class MeleeMoves {
          }
 
          ThorCombatState combat = ThorCombatState.of(context.state());
-         ComboBook.Button button = context.input() == ThorInput.STANCE ? ComboBook.Button.RMB : ComboBook.Button.LMB;
-         if (context.state().timeline.queued() == context.move()) {
-            combat.pendingButton = button;
-            return;
-         }
+         beginStep(player, context.state(), combat, context.move(), button(context));
+      }
 
-         beginStep(player, context.state(), combat, context.move(), button);
+      /** A buffered press: its button waits for the CHAIN event. */
+      @Override
+      public void onQueued(ThorMoveContext context) {
+         ThorCombatState.of(context.state()).pendingButton = button(context);
+      }
+
+      private ComboBook.Button button(ThorMoveContext context) {
+         return context.input() == ThorInput.STANCE ? ComboBook.Button.RMB : ComboBook.Button.LMB;
       }
 
       @Override

@@ -273,7 +273,7 @@ final class GrabSessions {
          ThorState state = ThorState.of(thor);
          if (state != null) {
             ThorBridge.unlockScene(state, ThorScenes.OWNER);
-            ThorScenes.stopMove(state, ThorScenes.GRAB);
+            ThorScenes.stopMove(thor, state, ThorScenes.GRAB);
          }
          ThorScenes.send(thor, entity, SceneSync.end(SceneSync.Kind.GRAB, session.thorId, session.victimId));
       }

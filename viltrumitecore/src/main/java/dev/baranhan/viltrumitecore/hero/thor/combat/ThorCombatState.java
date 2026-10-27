@@ -1,32 +1,58 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
+import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCooldowns;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * Session B's transient per-player combat state, keyed by the foundation
  * ThorState (a new body gets a fresh one). Never saved: no world hammer, no
- * SavedData of B.
+ * SavedData of B. The foundation lifecycle (ThorLifecycle) clears it on a
+ * dimension change and drops it with the body (death, logout, hero change,
+ * clone). Cooldowns are not here: they live in the shared
+ * {@link PersistentCooldowns} (relog, hero change and death keep them).
  */
 public final class ThorCombatState {
    private static final Map<ThorState, ThorCombatState> STATES = new WeakHashMap<>();
 
    /** Cooldown keys (no mana, only cooldowns, #82). */
    public enum Cooldown {
-      STORM,
-      WRATH
+      STORM(ThorCooldowns.STORM),
+      WRATH(ThorCooldowns.WRATH);
+
+      private final String key;
+
+      Cooldown(String key) {
+         this.key = key;
+      }
+
+      /** PersistentCooldowns key (foundation-allocated, ThorCooldowns). */
+      public String key() {
+         return this.key;
+      }
    }
 
-   /** A delayed server effect (expanding rings, the sky strike). */
-   public record Scheduled(int dueTick, Runnable action) {
+   /**
+    * A delayed server effect (expanding rings, the sky strike), bound to the
+    * dimension it was scheduled in (null: any, pure tests). It runs only while
+    * its Thor is still alive, online, in that dimension and not held by a
+    * scene ({@link ThorCombatRuntime#runs}).
+    */
+   public record Scheduled(int dueTick, @Nullable ResourceKey<Level> dimension, Runnable action) {
    }
 
    // --- melee chain ---
@@ -76,10 +102,11 @@ public final class ThorCombatState {
    @Nullable
    public Vec3 lastPosition;
    public Vec3 velocity = Vec3.ZERO;
-   public final EnumMap<Cooldown, Integer> cooldownUntil = new EnumMap<>(Cooldown.class);
+   /** Cooldowns of a body without a player (pure tests only); a real Thor uses PersistentCooldowns. */
+   private final CompoundTag localCooldowns = new CompoundTag();
    public final List<Scheduled> scheduled = new ArrayList<>();
    /** Where the sky lightning of a successful combo falls when no entity is chosen (by COMBO_END attackId). */
-   public final Map<Integer, Vec3> skyFallback = new java.util.HashMap<>();
+   public final Map<Integer, Vec3> skyFallback = new HashMap<>();
    /** Last hit ids of the current electric action (filled by the action, read by the recognizer). */
    public final List<UUID> actionPrimary = new ArrayList<>();
    public final List<UUID> actionAll = new ArrayList<>();
@@ -93,6 +120,11 @@ public final class ThorCombatState {
       return STATES.get(state);
    }
 
+   /** The body is gone (death, logout, hero change, clone): forget its combat state. */
+   public static synchronized void forget(ThorState state) {
+      STATES.remove(state);
+   }
+
    public static synchronized void clearAll() {
       STATES.clear();
    }
@@ -101,20 +133,63 @@ public final class ThorCombatState {
       return ++this.attackCounter;
    }
 
-   public boolean ready(Cooldown cooldown) {
-      return this.cooldownLeft(cooldown) <= 0;
+   public boolean ready(@Nullable Player player, Cooldown cooldown) {
+      return this.cooldownLeft(player, cooldown) <= 0;
    }
 
-   public int cooldownLeft(Cooldown cooldown) {
-      return Math.max(0, this.cooldownUntil.getOrDefault(cooldown, 0) - this.ticks);
+   /** Ticks left (online time, PersistentCooldowns); {@code player} null only in pure tests. */
+   public int cooldownLeft(@Nullable Player player, Cooldown cooldown) {
+      return player == null ? PersistentCooldowns.get(this.localCooldowns, cooldown.key()) : PersistentCooldowns.get(player, cooldown.key());
    }
 
-   public void startCooldown(Cooldown cooldown, int ticks) {
-      this.cooldownUntil.put(cooldown, this.ticks + Math.max(0, ticks));
+   public void startCooldown(@Nullable ServerPlayer player, Cooldown cooldown, int ticks) {
+      if (player == null) {
+         PersistentCooldowns.set(this.localCooldowns, cooldown.key(), ticks);
+      } else {
+         PersistentCooldowns.set(player, cooldown.key(), ticks);
+      }
    }
 
-   public void schedule(int delay, Runnable action) {
-      this.scheduled.add(new Scheduled(this.ticks + Math.max(0, delay), action));
+   /** Dev reset of every B cooldown. */
+   public void clearCooldowns(@Nullable ServerPlayer player) {
+      for (Cooldown cooldown : Cooldown.values()) {
+         this.startCooldown(player, cooldown, 0);
+      }
+   }
+
+   /** Pure tests: one tick of the player-less cooldowns (a real Thor is ticked by HeroEvents). */
+   void tickLocalCooldowns() {
+      PersistentCooldowns.tickTag(this.localCooldowns);
+   }
+
+   /** Schedule an effect bound to the player's current dimension. */
+   public void schedule(int delay, ServerPlayer player, Runnable action) {
+      this.scheduled.add(new Scheduled(this.ticks + Math.max(0, delay), player.level().dimension(), action));
+   }
+
+   /** Pure tests: an effect bound to no dimension. */
+   void schedule(int delay, Runnable action) {
+      this.scheduled.add(new Scheduled(this.ticks + Math.max(0, delay), null, action));
+   }
+
+   /**
+    * Lifecycle stop (ThorLifecycle): every delayed effect, the sky fallbacks,
+    * a running storm, the held RMB, the recognizer and the chain are dropped.
+    * Cooldowns stay (PersistentCooldowns).
+    */
+   public void cancelTransient() {
+      this.scheduled.clear();
+      this.skyFallback.clear();
+      this.stormTicks = -1;
+      this.stormStage = 1;
+      this.rmbHeld = false;
+      this.recognizer.clear();
+      this.resetChain();
+      this.strike = null;
+      this.finisherTick = -1;
+      this.wrathAim = null;
+      this.actionPrimary.clear();
+      this.actionAll.clear();
    }
 
    /** Forget the melee chain (new chain on the next press). */

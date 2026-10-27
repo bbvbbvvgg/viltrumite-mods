@@ -4,8 +4,11 @@ import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorLifecycle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
@@ -50,14 +53,44 @@ public final class ThorCombatRuntime {
       Vec3 position = player.position();
       combat.velocity = combat.lastPosition == null ? Vec3.ZERO : position.subtract(combat.lastPosition);
       combat.lastPosition = position;
-      runScheduled(combat);
+      runScheduled(combat, task -> runs(player.isAlive(), !player.hasDisconnected(),
+         task.dimension() == null || task.dimension() == player.level().dimension(), ThorBridge.sceneLocked(state)));
       MeleeMoves.tick(player, state, combat);
       ElectricMoves.tickStorm(player, state, combat);
       WrathMove.tick(player, state, combat);
    }
 
-   /** Runs the delayed effects that are due (pure over the state, the actions touch the world). */
+   /**
+    * Pure: may a due delayed effect still run? Its Thor is alive, online, in
+    * the dimension it was scheduled in and not held by a scene; otherwise it
+    * is dropped (never lands in another dimension at stale coordinates).
+    */
+   static boolean runs(boolean alive, boolean online, boolean sameDimension, boolean sceneLocked) {
+      return alive && online && sameDimension && !sceneLocked;
+   }
+
+   /**
+    * Lifecycle stop (ThorLifecycle listener of B): drop the transient combat
+    * state; the body itself is forgotten unless only the dimension changed.
+    */
+   static void onLifecycleStop(@Nullable ServerPlayer player, ThorState state, ThorLifecycle.Cause cause) {
+      ThorCombatState combat = ThorCombatState.peek(state);
+      if (combat != null) {
+         combat.cancelTransient();
+      }
+
+      if (cause != ThorLifecycle.Cause.DIMENSION_CHANGE) {
+         ThorCombatState.forget(state);
+      }
+   }
+
+   /** Runs the delayed effects that are due (all of them: pure tests). */
    static void runScheduled(ThorCombatState combat) {
+      runScheduled(combat, task -> true);
+   }
+
+   /** Runs the due effects the guard allows, drops the due ones it refuses (pure over the state, the actions touch the world). */
+   static void runScheduled(ThorCombatState combat, Predicate<ThorCombatState.Scheduled> guard) {
       if (combat.scheduled.isEmpty()) {
          return;
       }
@@ -72,7 +105,9 @@ public final class ThorCombatRuntime {
          return false;
       });
       for (ThorCombatState.Scheduled task : due) {
-         task.action().run();
+         if (guard.test(task)) {
+            task.action().run();
+         }
       }
    }
 

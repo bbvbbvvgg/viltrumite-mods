@@ -10,7 +10,6 @@ import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
 import dev.baranhan.viltrumitecore.hero.thor.ThorActions;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFeedback;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFlags;
-import dev.baranhan.viltrumitecore.hero.thor.ThorHands;
 import dev.baranhan.viltrumitecore.hero.thor.ThorInput;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
@@ -106,7 +105,7 @@ public final class ThorScenes {
          LivingEntity target = entity instanceof LivingEntity living ? living : null;
          if (target == null || !inReach(thor, target) || !GrabSessions.start(thor, context.state(), target)) {
             ThorBridge.closeGrabWindow(context.state());
-            stopMove(context.state(), GRAB);
+            stopMove(thor, context.state(), GRAB);
             ThorFeedback.refuse(thor, Component.translatable("hud.viltrumitecore.thor.grab.missed"));
          }
       }
@@ -145,7 +144,7 @@ public final class ThorScenes {
       public void onStart(ThorMoveContext context) {
          ServerPlayer thor = context.player();
          if (thor != null && TeleportSessions.of(thor.getUUID()) == null && !TeleportSessions.start(thor, context.state())) {
-            stopMove(context.state(), TELEPORT);
+            stopMove(thor, context.state(), TELEPORT);
          }
       }
 
@@ -226,16 +225,7 @@ public final class ThorScenes {
     * its owner hears onStop) with a partner entity id.
     */
    static ThorActions.Refusal begin(ServerPlayer thor, ThorState state, ThorMove move, int partnerId) {
-      ThorMove previous = state.timeline.move();
-      if (previous != null && previous != move) {
-         state.timeline.interrupt(InterruptReason.INTERACTION);
-      }
-
-      ThorActions.Refusal refusal = ThorActions.start(state, null, move, ThorHands.free(thor), partnerId);
-      if (previous != null && previous != move) {
-         ThorMoves.handler(previous).onStop(new ThorMoveContext(thor, state, previous, null));
-      }
-
+      ThorActions.Refusal refusal = ThorBridge.startCutting(thor, state, move, partnerId, InterruptReason.INTERACTION);
       return refusal == ThorActions.Refusal.NONE && !state.timeline.is(move) ? ThorActions.Refusal.BUSY : refusal;
    }
 
@@ -263,10 +253,9 @@ public final class ThorScenes {
       return ThorMovementRules.fullFlight(flightState(player));
    }
 
-   static void stopMove(ThorState state, ThorMove move) {
-      if (state.timeline.is(move)) {
-         state.timeline.interrupt(InterruptReason.LIFECYCLE);
-      }
+   /** A C session ends its own scene move (the handler's onStop runs; every C onStop is idempotent). */
+   static void stopMove(@Nullable ServerPlayer thor, ThorState state, ThorMove move) {
+      ThorBridge.end(thor, state, move);
    }
 
    /** Is this entity in any C scene (Thor or victim)? */

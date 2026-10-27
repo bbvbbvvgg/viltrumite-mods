@@ -5,12 +5,9 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.baranhan.viltrumitecore.hero.thor.ThorActions;
-import dev.baranhan.viltrumitecore.hero.thor.ThorHands;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
-import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveContext;
-import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves;
 import java.util.Locale;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -56,18 +53,12 @@ public final class ThorCombatCommands {
       }
 
       ServerPlayer player = context.getSource().getPlayerOrException();
-      ThorMove previous = state.timeline.move();
-      ThorActions.Refusal refusal = ThorActions.start(state, ThorMove.HAMMER_STRIKE, ThorHands.free(player));
+      ThorActions.Refusal refusal = ThorBridge.start(player, state, ThorMove.HAMMER_STRIKE, -1);
       if (refusal != ThorActions.Refusal.NONE) {
          context.getSource().sendFailure(Component.literal("HAMMER_STRIKE refused: " + refusal));
          return 0;
       }
 
-      if (previous != null && previous != ThorMove.HAMMER_STRIKE) {
-         ThorMoves.handler(previous).onStop(new ThorMoveContext(player, state, previous, null));
-      }
-
-      ThorMoves.handler(ThorMove.HAMMER_STRIKE).onStart(new ThorMoveContext(player, state, ThorMove.HAMMER_STRIKE, null));
       context.getSource().sendSuccess(() -> Component.literal("HAMMER_STRIKE injected"), false);
       return 1;
    }
@@ -84,7 +75,7 @@ public final class ThorCombatCommands {
          + " chain=" + combat.chainMove + (combat.chainRoute == null ? "" : "/" + combat.chainRoute.id()) + " " + combat.chainButtons
          + " window=" + ThorBridge.comboWindow(state) + " mode=" + state.mode + " hammer=" + ThorBridge.hammer(player)
          + " actions=" + combat.recognizer.history().stream().map(a -> a.kind() + ":" + a.direction()).toList()
-         + " storm=" + combat.cooldownLeft(ThorCombatState.Cooldown.STORM) + " wrath=" + combat.cooldownLeft(ThorCombatState.Cooldown.WRATH)
+         + " storm=" + combat.cooldownLeft(context.getSource().getPlayer(), ThorCombatState.Cooldown.STORM) + " wrath=" + combat.cooldownLeft(context.getSource().getPlayer(), ThorCombatState.Cooldown.WRATH)
          + " policy=" + ThorCombatConfig.get().skyTargetPolicy;
       context.getSource().sendSuccess(() -> Component.literal(text), false);
       return 1;
@@ -96,7 +87,7 @@ public final class ThorCombatCommands {
          return 0;
       }
 
-      ThorCombatState.of(state).cooldownUntil.clear();
+      ThorCombatState.of(state).clearCooldowns(context.getSource().getPlayerOrException());
       context.getSource().sendSuccess(() -> Component.literal("cooldowns cleared"), false);
       return 1;
    }

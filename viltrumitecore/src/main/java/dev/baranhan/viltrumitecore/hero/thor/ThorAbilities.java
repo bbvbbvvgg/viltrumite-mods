@@ -75,7 +75,7 @@ public final class ThorAbilities {
       return list;
    }
 
-   /** Grey while the input has no authored move, or while a move runs. */
+   /** Grey while the input has no authored move, while a move runs, or while its slot recharges (ThorCooldowns). */
    public static boolean slotGrey(Player player, @Nullable ThorInput input) {
       if (input == null || !(player instanceof HeroPlayer heroPlayer)) {
          return true;
@@ -86,7 +86,7 @@ public final class ThorAbilities {
    }
 
    static boolean slotGrey(@Nullable HeroPublicSnapshot snapshot, ThorInput input) {
-      return !ThorControls.anyAuthored(input) || snapshot == null || snapshot.actionBusy();
+      return !ThorControls.anyAuthored(input) || snapshot == null || snapshot.actionBusy() || ThorCooldowns.recharging(snapshot.cooldowns(), input);
    }
 
    public static String[] defaultLoadout() {
