@@ -3,7 +3,7 @@ package dev.baranhan.viltrumitecore.hero.thor;
 /**
  * Everything the context controls read. Built from synced data on the client
  * (claims) and from the live state on the server; the same pure resolver
- * runs on both. {@code flying} stays false until flight exists.
+ * runs on both. {@code flying}: full flight (CRUISE / SONIC; HOVER is not).
  * {@code enemyNear}: any enemy within ThorRules.MELEE_ENEMY_RADIUS.
  * {@code grabWindow}: the bridge grab window is open (ThorBridge).
  * {@code hammerDetached}: the world Mjölnir rests / falls away from Thor

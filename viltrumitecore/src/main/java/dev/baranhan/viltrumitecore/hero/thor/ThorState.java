@@ -28,6 +28,8 @@ public final class ThorState {
    public final StagedTimeline<ThorMove> timeline = new StagedTimeline<>();
    /** Bridge grab window, ticks left (ThorBridge); transient. */
    public int grabWindow;
+   /** Bridge grab window target entity id, -1 when none (ThorBridge); transient. */
+   public int grabTarget = -1;
    /** Bridge scene lock owner, null when free (ThorBridge); transient. */
    @Nullable
    public String sceneLock;
@@ -70,6 +72,7 @@ public final class ThorState {
    /** Drop the bridge flags and held presses (never saved). */
    void clearTransient() {
       this.grabWindow = 0;
+      this.grabTarget = -1;
       this.sceneLock = null;
       this.cameraLease = null;
       this.comboMove = null;

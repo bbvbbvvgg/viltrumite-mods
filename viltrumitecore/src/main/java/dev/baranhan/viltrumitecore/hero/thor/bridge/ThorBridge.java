@@ -102,8 +102,23 @@ public final class ThorBridge {
       state.grabWindow = Math.max(state.grabWindow, ticks);
    }
 
+   /**
+    * Open the window on one target (the enemy whose hit opened it): the
+    * paired GRAB move then starts with it as the partner.
+    */
+   public static void openGrabWindow(ThorState state, int ticks, int targetId) {
+      openGrabWindow(state, ticks);
+      state.grabTarget = targetId;
+   }
+
+   /** Entity id the open grab window is for, -1 when none. */
+   public static int grabTarget(ThorState state) {
+      return state.grabWindow > 0 ? state.grabTarget : -1;
+   }
+
    public static void closeGrabWindow(ThorState state) {
       state.grabWindow = 0;
+      state.grabTarget = -1;
    }
 
    public static boolean grabWindowActive(ThorState state) {

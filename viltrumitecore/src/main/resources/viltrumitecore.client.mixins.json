@@ -46,6 +46,8 @@
     "InGameHudMixin",
     "IronManModelMixin",
     "ThorModelMixin",
+    "ThorSceneCameraMixin",
+    "ThorSceneMouseMixin",
     "ItemInHandRendererMixin",
     "MinecraftClientMixin",
     "MouseMixin",

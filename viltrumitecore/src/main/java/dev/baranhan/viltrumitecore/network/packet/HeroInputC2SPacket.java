@@ -45,6 +45,11 @@ public class HeroInputC2SPacket {
             return;
          }
 
+         // A body held by an anchoring hold presses nothing (releases still pass).
+         if (this.pressed && dev.baranhan.viltrumitecore.hero.HeroHeldTargets.anchored(player)) {
+            return;
+         }
+
          if (action == HeroAction.JUMP) {
             if (this.pressed) {
                HeroSuperJump.onInput(player);

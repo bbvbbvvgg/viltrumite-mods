@@ -1,0 +1,28 @@
+package dev.baranhan.viltrumitecore.client.mixin;
+
+import dev.baranhan.viltrumitecore.client.thor.scene.ThorSceneCamera;
+import net.minecraft.client.MouseHandler;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/** The fatality camera owns the look: mouse movement is dropped (not stored) while it runs. */
+@Mixin(MouseHandler.class)
+public abstract class ThorSceneMouseMixin {
+   @Shadow
+   private double accumulatedDX;
+
+   @Shadow
+   private double accumulatedDY;
+
+   @Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
+   private void viltrumitecore$thorSceneLook(CallbackInfo ci) {
+      if (ThorSceneCamera.locksLook()) {
+         this.accumulatedDX = 0.0;
+         this.accumulatedDY = 0.0;
+         ci.cancel();
+      }
+   }
+}
