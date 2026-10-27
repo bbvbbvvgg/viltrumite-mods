@@ -101,9 +101,16 @@ public final class ThorTransform {
       int carved = 0;
       for (int y = from; y > head.getY(); y--) {
          BlockPos pos = new BlockPos(head.getX(), y, head.getZ());
-         if (!level.getBlockState(pos).isAir() && HeroDestruction.canDestroy(level, pos) && HeroDestruction.destroyBlock(level, pos)) {
-            carved++;
+         if (level.getBlockState(pos).isAir()) {
+            continue;
          }
+
+         if (!HeroDestruction.canDestroy(level, pos) || !HeroDestruction.destroyBlock(level, pos)) {
+            // A protected / unbreakable block (or griefing off): the shaft stops here, nothing below it is opened ([ОТКРЫТО] roof).
+            break;
+         }
+
+         carved++;
       }
 
       return carved;

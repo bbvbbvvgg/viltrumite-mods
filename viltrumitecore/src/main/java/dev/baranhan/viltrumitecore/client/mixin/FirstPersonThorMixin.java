@@ -21,6 +21,7 @@ public abstract class FirstPersonThorMixin {
       at = {@At(
          value = "INVOKE",
          target = "Lcom/mojang/blaze3d/vertex/PoseStack;pushPose()V",
+         ordinal = 0,
          shift = Shift.AFTER
       )}
    )

@@ -1,6 +1,5 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
-import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -130,7 +129,7 @@ final class MjolnirFirstFall {
    private static boolean open(ServerLevel level, BlockPos surface) {
       BlockState ground = level.getBlockState(surface);
       if (!ground.isFaceSturdy(level, surface, Direction.UP) || !level.getFluidState(surface).isEmpty()
-         || !level.getFluidState(surface.above()).isEmpty() || !HeroDestruction.canDestroy(level, surface)) {
+         || !level.getFluidState(surface.above()).isEmpty() || ground.getDestroySpeed(level, surface) < 0.0F) {
          return false;
       }
 

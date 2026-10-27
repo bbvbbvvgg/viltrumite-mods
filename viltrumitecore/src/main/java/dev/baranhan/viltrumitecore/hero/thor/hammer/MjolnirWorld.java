@@ -363,9 +363,7 @@ public final class MjolnirWorld {
                go(server, record, MjolnirPhase.DEATH_IMPACT);
             }
 
-            if (reason == CleanupReason.ERASED) {
-               record.activeOwner = null;
-            }
+            // The dead / erased Thor comes back as Thor (№208): the slot stays his, the hammer waits for his recall.
          }
          case DISCONNECT -> {
             // Falls heavily where he left.
@@ -680,12 +678,13 @@ public final class MjolnirWorld {
             }
          }
          case DIMENSION_TRANSFER -> {
-            if (owner != null) {
-               record.phase = MjolnirPhase.RESTING;
-               transfer(server, record, owner);
-            } else {
-               record.phase = MjolnirPhase.RETURNING;
-               loosen(server, record);
+            // Saved mid-hop (crash): finish it through the state machine, never by a raw write.
+            if (go(server, record, MjolnirPhase.RETURNING)) {
+               if (owner != null) {
+                  transfer(server, record, owner);
+               } else {
+                  loosen(server, record);
+               }
             }
          }
          case DEATH_IMPACT -> deathFlight(server, record, level, hammer);

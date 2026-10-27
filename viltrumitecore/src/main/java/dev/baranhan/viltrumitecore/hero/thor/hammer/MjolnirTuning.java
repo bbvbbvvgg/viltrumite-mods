@@ -95,7 +95,7 @@ public final class MjolnirTuning {
 
    // --- PLACEHOLDER: death point impact (№169/№209: stronger than the first fall) ---
    public static final int DEATH_IMPACT_RADIUS = 8;
-   public static final float DEATH_IMPACT_DAMAGE = 40.0F;
+   public static final float DEATH_IMPACT_DAMAGE = 80.0F;
    public static final double DEATH_WAVE_RADIUS = 18.0;
 
    // --- PLACEHOLDER: drops ---
