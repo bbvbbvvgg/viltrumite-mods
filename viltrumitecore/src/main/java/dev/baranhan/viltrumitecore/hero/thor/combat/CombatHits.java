@@ -152,6 +152,16 @@ public final class CombatHits {
    }
 
    /**
+    * Pure: the hit-time snapshot the bridge events carry: Mjölnir in the
+    * hand and the blow is not a bare-fist strike (a fist chain finishing
+    * right after the catch, #166, is not a hammer blow, so it can never
+    * qualify for a fatality).
+    */
+   public static boolean hammerBlow(ThorMove move, boolean inHand) {
+      return inHand && move != ThorMove.FIST_COMBO;
+   }
+
+   /**
     * One hit: false when it did not land (i-frames restored). A landed melee
     * hit posts MELEE_HIT; a lethal one has posted LETHAL_HIT already, from
     * the damage path, before the death.
@@ -161,7 +171,7 @@ public final class CombatHits {
          return false;
       }
 
-      boolean hammer = hammerInHand(player);
+      boolean hammer = hammerBlow(move, hammerInHand(player));
       Scope previous = SCOPE.get();
       SCOPE.set(new Scope(player, target, move, attackId, hammer));
       int saved = target.invulnerableTime;

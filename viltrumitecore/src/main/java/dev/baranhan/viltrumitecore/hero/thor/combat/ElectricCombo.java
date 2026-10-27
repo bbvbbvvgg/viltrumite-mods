@@ -15,7 +15,8 @@ public enum ElectricCombo {
    /** Step back + LMB, then forward + LMB: a long ricochet chain. */
    RICOCHET(false, step(Kind.LMB, MoveDirection.BACK), step(Kind.LMB, MoveDirection.FORWARD)),
    /** RMB on the ground, then RMB in a jump: a double thunder ring. */
-   THUNDER_RING(false, step(Kind.RMB), ElectricCombo.<ElectricAction>all(a -> a.kind() == Kind.RMB && a.airborne())),
+   THUNDER_RING(false, ElectricCombo.<ElectricAction>all(a -> a.kind() == Kind.RMB && !a.airborne()),
+      ElectricCombo.<ElectricAction>all(a -> a.kind() == Kind.RMB && a.airborne())),
    /** LMB, then the MMB melee strike: Mjölnir conducts a cone blast. Needs Mjölnir in the hand. */
    CONDUIT_SMASH(true, step(Kind.LMB), step(Kind.MMB_STRIKE)),
    /** Hold RMB (storm), then throw Mjölnir: a lightning lance from the hand along the view. Needs Mjölnir in the hand. */

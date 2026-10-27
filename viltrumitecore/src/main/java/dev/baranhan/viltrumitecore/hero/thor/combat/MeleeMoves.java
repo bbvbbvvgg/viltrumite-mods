@@ -119,7 +119,8 @@ public final class MeleeMoves {
          if (event == StagedTimeline.Event.ENTER_MAIN) {
             List<LivingEntity> hits = landStrike(player, context.state(), combat, ThorMove.HAMMER_STRIKE, combat.strikeAttackId);
             if (context.state().mode == ThorMode.ELECTRIC) {
-               ElectricCombos.strikeCharge(player, context.state(), combat, hits);
+               // The same blow, no extra electric damage: only an MMB_STRIKE action for the recognizer (#147).
+               ElectricCombos.strikeAction(player, context.state(), combat, hits);
             }
          } else if (event == StagedTimeline.Event.END) {
             context.state().combatPose = 0;
@@ -213,13 +214,17 @@ public final class MeleeMoves {
       }
    }
 
-   /** Close the chain: COMBO_END once (success = its route completed), the combo window closes. */
+   /**
+    * Close the chain: COMBO_END once, the combo window closes. A melee chain
+    * never reports success: by the contract success = true only for a
+    * completed electric combo (the sky lightning trigger).
+    */
    static void endChain(ServerPlayer player, ThorState state, ThorCombatState combat) {
       ThorMove move = combat.chainMove;
       if (move != null && !combat.chainPosted) {
          combat.chainPosted = true;
-         ThorEvents.post(CombatHits.event(ThorEventType.COMBO_END, player.getUUID(), combat.chainTarget, move, combat.strikeAttackId,
-            CombatHits.hammerInHand(player), 0.0F, combat.chainLast && combat.chainCompleted));
+         ThorEvents.post(meleeComboEnd(player.getUUID(), combat.chainTarget, move, combat.strikeAttackId,
+            CombatHits.hammerBlow(move, CombatHits.hammerInHand(player))));
       }
 
       if (move != null && ThorBridge.comboWindow(state) == move) {
@@ -227,6 +232,12 @@ public final class MeleeMoves {
       }
 
       combat.resetChain();
+   }
+
+   /** Pure: the COMBO_END of a melee chain (success always false; only electric combos succeed). */
+   public static dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent meleeComboEnd(java.util.UUID thor, @Nullable java.util.UUID target, ThorMove move,
+      int attackId, boolean hammerInHand) {
+      return CombatHits.event(ThorEventType.COMBO_END, thor, target, move, attackId, hammerInHand, 0.0F, false);
    }
 
    /** Chain grace ran out (server tick). */

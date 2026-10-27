@@ -64,6 +64,8 @@ public final class ThorCombatState {
    /** Ticks of the running storm, -1 when none. */
    public int stormTicks = -1;
    public double stormRadius;
+   /** Charge stage of the running storm (1..stormStages). */
+   public int stormStage = 1;
    public int electricStep;
    @Nullable
    public Vec3 wrathAim;

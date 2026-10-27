@@ -79,4 +79,13 @@ class ThorCombatClipsTest {
       assertNull(ThorClips.of(ThorMove.HAMMER_COMBO, 0, ThorStrike.SPIN.pose()), "not authored: no pose");
       assertNull(ThorClips.of(ThorMove.WRATH, 0));
    }
+
+   @Test
+   void theArmReachesHigherWhenLookingUp() {
+      float level = ThorCombatClips.reach(0.0F)[0][1];
+      float up = ThorCombatClips.reach(-45.0F)[0][1];
+      assertEquals(-90.0F, level, 1.0E-6);
+      assertTrue(up < level, "looking up raises the arm");
+      assertTrue(ThorCombatClips.reach(-120.0F)[0][1] >= -170.0F && ThorCombatClips.reach(90.0F)[0][1] <= -30.0F, "clamped");
+   }
 }

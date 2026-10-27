@@ -165,4 +165,14 @@ public final class ThorCombatClips {
       return new ThorClips.Clip(rows(d, HOLD, a(-185, 0, 0), a(-80, 0, 0)), rows(d, REST, a(-40, 0, -20), a(-20, 0, -10)),
          rows(d, REST, a(-12, 0, 0), a(25, 0, 0)));
    }
+
+   /**
+    * Pure: the open right arm raised along the view while Mjölnir flies back
+    * (#154; look up and the arm goes higher). PLACEHOLDER until A gives the
+    * client a hammer position to aim at.
+    */
+   public static float[][] reach(float viewPitch) {
+      float pitch = Math.max(-170.0F, Math.min(-30.0F, -90.0F + viewPitch));
+      return new float[][]{key(0, pitch, 0, -6.0F)};
+   }
 }
