@@ -43,9 +43,9 @@ class ThorControlsTest {
       List<ThorContext> all = new ArrayList<>();
       for (HammerState hammer : HammerState.values()) {
          for (ThorMode mode : ThorMode.values()) {
-            for (int bits = 0; bits < 1 << 6; bits++) {
+            for (int bits = 0; bits < 1 << 7; bits++) {
                all.add(new ThorContext(hammer, mode, (bits & 1) != 0, (bits & 2) != 0, (bits & 4) != 0, (bits & 8) != 0, (bits & 16) != 0,
-                  (bits & 32) != 0));
+                  (bits & 32) != 0, (bits & 64) != 0));
             }
          }
       }
@@ -65,6 +65,26 @@ class ThorControlsTest {
       assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.HOLSTERED, true, false)));
       assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.IN_HAND, false, false)));
       assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.HOLSTERED, false, false)));
+   }
+
+   @Test
+   void aDetachedHammerIsRecalledByMmbWhateverItsProjection() {
+      for (HammerState hammer : HammerState.values()) {
+         for (boolean enemy : new boolean[]{false, true}) {
+            ThorContext detached = new ThorContext(hammer, ThorMode.NORMAL, true, false, false, false, enemy, false, true);
+            assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, detached), hammer + " enemy=" + enemy);
+            ThorContext window = new ThorContext(hammer, ThorMode.NORMAL, true, false, false, false, enemy, true, true);
+            assertSame(ThorMove.GRAB, ThorControls.resolve(ThorInput.HAMMER, window), "the grab window still wins");
+         }
+      }
+   }
+
+   @Test
+   void yPullsOnlyToTheHammerInThrowFlightNotToALyingOne() {
+      ThorContext lying = new ThorContext(HammerState.HOLSTERED, ThorMode.NORMAL, true, false, false, false, false, false, true);
+      assertNull(ThorControls.resolve(ThorInput.MOBILITY, lying));
+      assertNull(ThorControls.resolve(ThorInput.MOBILITY, ground(HammerState.RETURNING)), "no pull towards a returning hammer");
+      assertSame(ThorMove.HAMMER_PULL, ThorControls.resolve(ThorInput.MOBILITY, ground(HammerState.THROWN)));
    }
 
    @Test
@@ -183,7 +203,9 @@ class ThorControlsTest {
       for (Path source : sources) {
          String name = source.getFileName().toString();
          String text = Files.readString(source);
-         if (!name.equals("ThorControls.java") && !name.equals("ThorMove.java")) {
+         // Session A owns its moves: it registers / implements / animates them by name, but never routes MMB.
+         boolean owner = name.equals("MjolnirModule.java") || name.equals("MjolnirWorld.java") || name.equals("MjolnirClient.java");
+         if (!name.equals("ThorControls.java") && !name.equals("ThorMove.java") && !owner) {
             for (String branch : new String[]{"ThorMove.GRAB,", "ThorMove.GRAB;", "ThorMove.GRAB)", "ThorMove.RECALL", "ThorMove.HAMMER_THROW"}) {
                assertFalse(text.contains(branch), name + " decides an MMB branch (" + branch + ")");
             }

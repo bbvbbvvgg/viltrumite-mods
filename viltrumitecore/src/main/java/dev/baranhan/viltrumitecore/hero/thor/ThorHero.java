@@ -10,6 +10,10 @@ import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.MouseButton;
 import dev.baranhan.viltrumitecore.hero.combat.CombatPresence;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
+import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirPull;
+import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirWorld;
+import dev.baranhan.viltrumitecore.hero.thor.hammer.ThorTransform;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,7 +26,9 @@ import net.minecraft.world.entity.player.Player;
  * staged move timeline, the combat presence and the session bridge
  * (hero/thor/bridge). No move reachable from a key is authored here: every
  * press resolves by context and is refused as "in development" until a
- * session registers it. No kit, no flight, vanilla chassis.
+ * session registers it. No kit, no flight, vanilla chassis. Session A: the
+ * one world Mjölnir (hero/thor/hammer) is entered, projected, dropped and
+ * claimed from the lifecycle hooks below.
  */
 public final class ThorHero implements HeroDefinition {
    public static final ThorHero INSTANCE = new ThorHero();
@@ -108,12 +114,14 @@ public final class ThorHero implements HeroDefinition {
       HammerState hammer = HammerState.HOLSTERED;
       ThorMode mode = ThorMode.NORMAL;
       boolean grabWindow = false;
+      boolean detached = false;
       if (player.level().isClientSide) {
          HeroPublicSnapshot snapshot = player instanceof HeroPlayer heroPlayer ? heroPlayer.getHeroSnapshot() : null;
          if (snapshot != null && snapshot.heroId() == HeroId.THOR) {
             hammer = ThorFlags.hammer(snapshot.heroFlags());
             mode = ThorFlags.mode(snapshot.heroFlags());
             grabWindow = ThorFlags.grabWindow(snapshot.heroFlags());
+            detached = ThorFlags.hammerDetached(snapshot.heroFlags());
          }
       } else {
          ThorState state = ThorState.of(player);
@@ -121,11 +129,12 @@ public final class ThorHero implements HeroDefinition {
             hammer = state.hammer;
             mode = state.mode;
             grabWindow = state.grabWindow > 0;
+            detached = state.hammerDetached;
          }
       }
 
       boolean enemyNear = ThorTargets.nearestEnemy(player, ThorRules.MELEE_ENEMY_RADIUS) != null;
-      return new ThorContext(hammer, mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, enemyNear, grabWindow);
+      return new ThorContext(hammer, mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, enemyNear, grabWindow, detached);
    }
 
    @Override
@@ -140,7 +149,12 @@ public final class ThorHero implements HeroDefinition {
 
    @Override
    public void tick(ServerPlayer player) {
-      ThorActions.tick(player, ThorState.ensure(player));
+      ThorState state = ThorState.ensure(player);
+      MjolnirWorld.project(player, state);
+      ThorActions.tick(player, state);
+      MjolnirPull.tick(player, state);
+      ThorTransform.tick(player, state);
+      MjolnirWorld.project(player, state);
    }
 
    /**
@@ -172,14 +186,45 @@ public final class ThorHero implements HeroDefinition {
       ThorActions.press(player, ThorState.ensure(player), input);
    }
 
+   /** One active Thor (session A №3.5): the first successful choice holds the slot while online. */
+   @Override
+   public boolean admitsEntry(ServerPlayer player) {
+      if (MjolnirWorld.admits(player)) {
+         return true;
+      }
+
+      ThorFeedback.refuse(player, Component.translatable(MjolnirWorld.SLOT_TAKEN));
+      return false;
+   }
+
+   /**
+    * The hammer is not reset here: the world store claims the slot, creates
+    * Mjölnir in the hand when it never existed (the first fall is then
+    * cancelled for good) or calls the existing one back after the
+    * transformation scene.
+    */
    @Override
    public void enter(ServerPlayer player) {
       ThorState state = ThorState.ensure(player);
       state.timeline.clear();
       state.clearTransient();
-      state.hammer = HammerState.HOLSTERED;
       state.mode = ThorMode.NORMAL;
+      MjolnirWorld.onEnter(player, state);
+      ThorTransform.begin(player, state);
+      MjolnirWorld.project(player, state);
       player.displayClientMessage(Component.translatable(ThorFeedback.CONTROLS), false);
+   }
+
+   /** The transformation scene protects the new Thor (№215). */
+   @Override
+   public float clampFinalDamage(ServerPlayer self, DamageSource source, float afterArmor) {
+      return ThorTransform.shielded(self) ? 0.0F : afterArmor;
+   }
+
+   /** No fall damage while pulled to the flying hammer and shortly after (Y, №220; PLACEHOLDER grace). */
+   @Override
+   public boolean cancelsFallDamage(Player player) {
+      return MjolnirPull.graced(player);
    }
 
    @Override
@@ -198,7 +243,8 @@ public final class ThorHero implements HeroDefinition {
       var timeline = state.timeline;
       return new HeroPublicSnapshot(HeroId.THOR, timeline.wireId(), timeline.elapsed(), timeline.length(), 0, false, 0, 0, false, false, 0, 0,
          timeline.partnerId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], timeline.running(), -1, null, 0, false,
-         ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0, state.cameraLease != null), new int[0], timeline.variant(), 0);
+         ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0, state.cameraLease != null, state.hammerDetached), new int[0],
+         timeline.variant(), 0);
    }
 
    @Override
@@ -227,6 +273,8 @@ public final class ThorHero implements HeroDefinition {
       ThorState state = ThorState.of(player);
       if (state != null) {
          ThorActions.stop(player, state);
+         MjolnirPull.stop(player);
+         MjolnirWorld.onDimensionChange(player, state);
       }
    }
 
@@ -238,6 +286,9 @@ public final class ThorHero implements HeroDefinition {
       }
 
       ThorActions.stop(player, state);
+      MjolnirPull.stop(player);
+      ThorTransform.stop(player, state);
+      MjolnirWorld.onCleanup(player, state, reason);
       if (reason == CleanupReason.ERASED && player instanceof HeroPlayer heroPlayer) {
          heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
       }

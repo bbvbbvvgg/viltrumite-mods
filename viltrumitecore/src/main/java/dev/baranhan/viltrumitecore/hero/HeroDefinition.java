@@ -449,6 +449,16 @@ public interface HeroDefinition {
     */
    void enter(ServerPlayer player);
 
+   /**
+    * Server: may this player become this hero now? Checked by
+    * HeroRegistry.changeHero before any cleanup; a refusing hero tells the
+    * player why. Default: always (a hero with a one-holder slot refuses
+    * while another player holds it).
+    */
+   default boolean admitsEntry(ServerPlayer player) {
+      return true;
+   }
+
    /** Both sides: entity held by this hero, or -1. Never infer a hold from a generic PULL lease. */
    default int heldTargetId(Player holder) { return -1; }
 

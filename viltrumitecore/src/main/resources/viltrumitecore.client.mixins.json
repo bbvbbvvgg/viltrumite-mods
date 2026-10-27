@@ -29,6 +29,7 @@
     "FirstPersonChop2Mixin",
     "FirstPersonChopMixin",
     "FirstPersonGrabMixin",
+    "FirstPersonThorMixin",
     "FirstPersonGunMixin",
     "FirstPersonHomelanderMixin",
     "FirstPersonPunchMixin",

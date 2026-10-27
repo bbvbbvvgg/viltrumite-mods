@@ -31,7 +31,7 @@ public final class ThorView {
    }
 
    public static MjolnirPlace place(HeroPublicSnapshot snapshot, Player player) {
-      return MjolnirPlace.of(ThorFlags.hammer(snapshot.heroFlags()), ThorHands.free(player));
+      return MjolnirPlace.of(ThorFlags.hammer(snapshot.heroFlags()), ThorHands.free(player), ThorFlags.hammerDetached(snapshot.heroFlags()));
    }
 
    /** The running move, or null. */

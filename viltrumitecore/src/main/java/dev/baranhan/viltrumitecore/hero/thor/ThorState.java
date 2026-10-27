@@ -10,13 +10,18 @@ import net.minecraft.world.entity.player.Player;
 
 /**
  * Server-side per-player Thor state. Saved under NBT key {@code Thor}: only
- * where Mjölnir is. The mode and the running move are transient.
+ * where Mjölnir is, as last projected. The world hammer store
+ * (hero/thor/hammer/MjolnirWorld, SavedData) is the one truth and the only
+ * writer of {@link #hammer} / {@link #hammerDetached} between the world and
+ * Thor (only the technical DRAW / HOLSTER swap belt and hand). The mode and the running move are transient.
  */
 public final class ThorState {
    static final String KEY = "Thor";
    static final String HAMMER_KEY = "Hammer";
 
    public HammerState hammer = HammerState.HOLSTERED;
+   /** Projected by the world store: the hammer lies / falls in the world away from Thor (ThorFlags bit 5). Transient. */
+   public boolean hammerDetached;
    /** Transient. */
    public ThorMode mode = ThorMode.NORMAL;
    /** The one staged move player; transient. */
@@ -39,7 +44,11 @@ public final class ThorState {
       nbt.put(KEY, tag);
    }
 
-   /** A hammer saved in flight (logout mid-throw) is back in the hand; the mode starts normal. */
+   /**
+    * The saved projection is kept as it was (a hammer saved in flight is not
+    * put back into the hand): the world store corrects it on the first tick.
+    * The mode starts normal.
+    */
    public void load(CompoundTag nbt) {
       this.timeline.clear();
       this.mode = ThorMode.NORMAL;
@@ -48,8 +57,7 @@ public final class ThorState {
          return;
       }
 
-      HammerState saved = HammerState.fromKey(nbt.getCompound(KEY).getString(HAMMER_KEY));
-      this.hammer = saved.away() ? HammerState.IN_HAND : saved;
+      this.hammer = HammerState.fromKey(nbt.getCompound(KEY).getString(HAMMER_KEY));
    }
 
    /** Drop the bridge flags and held presses (never saved). */
