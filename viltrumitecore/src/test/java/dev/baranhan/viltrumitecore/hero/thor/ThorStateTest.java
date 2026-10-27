@@ -30,7 +30,7 @@ class ThorStateTest {
    }
 
    @Test
-   void aHammerSavedInFlightLoadsInTheHand() {
+   void aHammerSavedInFlightKeepsItsProjectionUntilTheWorldStoreSpeaks() {
       for (HammerState away : new HammerState[]{HammerState.THROWN, HammerState.RETURNING}) {
          ThorState state = new ThorState();
          state.hammer = away;
@@ -38,7 +38,8 @@ class ThorStateTest {
          state.save(nbt);
          ThorState loaded = new ThorState();
          loaded.load(nbt);
-         assertSame(HammerState.IN_HAND, loaded.hammer, away.name());
+         assertSame(away, loaded.hammer, away.name() + ": session A re-projects it from the world store on login");
+         assertFalse(loaded.hammerDetached, "the detached flag is transient");
       }
    }
 

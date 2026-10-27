@@ -38,11 +38,22 @@ public final class ThorControls {
    public static ThorMove hammer(ThorContext context) {
       if (context.grabWindow()) {
          return ThorMove.GRAB;
-      } else if (context.hammer().away()) {
+      } else if (context.hammerAway()) {
+         // Out of the hand in any world phase (thrown, returning, resting, falling, ...).
          return ThorMove.RECALL;
       }
 
       return context.enemyNear() ? ThorMove.HAMMER_STRIKE : ThorMove.HAMMER_THROW;
+   }
+
+   /** Drawing or throwing Mjölnir takes the right hand (ThorActions.gate refuses it while an item is there). */
+   public static boolean needsHand(ThorMove move) {
+      return move == ThorMove.DRAW || move == ThorMove.HAMMER_THROW;
+   }
+
+   /** The MMB recall is an overlay: it runs beside the current move and never takes the timeline (ThorActions.start). */
+   public static boolean overlay(ThorMove move) {
+      return move == ThorMove.RECALL;
    }
 
    /** Mouse claim: only a button whose resolved move is authored is taken from vanilla. */

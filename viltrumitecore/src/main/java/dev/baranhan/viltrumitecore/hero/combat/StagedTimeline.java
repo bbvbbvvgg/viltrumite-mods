@@ -246,6 +246,23 @@ public final class StagedTimeline<M extends StagedMove> {
       return current;
    }
 
+   /**
+    * Jump the running step forward to the first tick of a later phase (a
+    * held step released early, e.g. a throw whose hold ends on the release).
+    * Returns the event of the phase now entered, NONE when idle, when the
+    * phase is not later than the current one or has no ticks.
+    */
+   public Event skipTo(MovePhase target) {
+      M current = this.move;
+      if (current == null || target.ordinal() <= this.phase.ordinal() || current.ticks(target) <= 0) {
+         return Event.NONE;
+      }
+
+      this.elapsed = phaseStart(current, target);
+      this.phase = target;
+      return target == MovePhase.MAIN ? Event.ENTER_MAIN : Event.ENTER_FINISH;
+   }
+
    /** Idle, no buffer, no partner. */
    public void clear() {
       this.move = null;
