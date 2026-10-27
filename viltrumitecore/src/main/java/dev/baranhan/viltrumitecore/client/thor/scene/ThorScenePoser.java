@@ -8,6 +8,7 @@ import dev.baranhan.viltrumitecore.hero.HeroPlayer;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.thor.HammerState;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFlags;
+import dev.baranhan.viltrumitecore.hero.thor.ThorHands;
 import dev.baranhan.viltrumitecore.hero.thor.scene.FatalityPlan;
 import dev.baranhan.viltrumitecore.hero.thor.scene.FatalityScene;
 import dev.baranhan.viltrumitecore.hero.thor.scene.GrabAction;
@@ -20,6 +21,7 @@ import dev.baranhan.viltrumiteflight.util.ViltrumiteFlightPlayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * Scene and flight poses (absolute PoseKeys rows, degrees). Runs first in
@@ -143,7 +145,8 @@ public final class ThorScenePoser {
          return false;
       }
 
-      boolean hammer = ThorFlags.hammer(snapshot.heroFlags()) == HammerState.IN_HAND;
+      // A-M2: the swinging-Mjölnir arms only with Mjölnir really in the hand (an item keeps it on the belt).
+      boolean hammer = ThorHands.holds(ThorFlags.hammer(snapshot.heroFlags()), !(entity instanceof Player player) || ThorHands.free(player));
       float t = entity.tickCount + partial;
       PoseRig rig = PoseRig.begin(model, entity, 1.0F, null);
       switch (state) {

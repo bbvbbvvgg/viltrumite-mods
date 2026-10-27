@@ -60,10 +60,16 @@ public final class ThorHero implements HeroDefinition {
       return ThorState.of(player) != null && this.allowsFlight(player);
    }
 
-   /** Both sides: the original flight with Mjölnir in the hand, otherwise hover only. */
+   /**
+    * Both sides: the original flight with Mjölnir really in the hand
+    * (attached and the right hand free, ThorHands.holds), otherwise hover
+    * only. OPEN(owner): A-M2, whether the original flight needs Mjölnir in
+    * the hand or only attached; conservative: the shared "in the hand" rule
+    * (design: an item in the hand always wins).
+    */
    @Override
    public dev.baranhan.viltrumiteflight.util.FlightProfile flightProfile(Player player) {
-      return player == null ? null : ThorMovementRules.profile(hammer(player) == HammerState.IN_HAND);
+      return player == null ? null : ThorMovementRules.profile(ThorHands.holds(hammer(player), ThorHands.free(player)));
    }
 
    /** Where Mjölnir is: live state on the server, the synced flags on the client. */

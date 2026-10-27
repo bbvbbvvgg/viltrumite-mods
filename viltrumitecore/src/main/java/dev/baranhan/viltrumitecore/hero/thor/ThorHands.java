@@ -17,6 +17,16 @@ public final class ThorHands {
       return player.getMainArm() == HumanoidArm.RIGHT ? player.getMainHandItem() : player.getOffhandItem();
    }
 
+   /**
+    * Pure, the one rule for "Mjölnir really in the hand" on wire values
+    * (both sides; the server twin over the world store is
+    * ThorBridge.hammerHeld): attached (IN_HAND) and the right hand free. An
+    * item in the right hand keeps it drawn on the belt (A-M2 / X5).
+    */
+   public static boolean holds(HammerState attached, boolean handFree) {
+      return attached == HammerState.IN_HAND && handFree;
+   }
+
    /** May Mjölnir be in the right hand now? */
    public static boolean free(Player player) {
       return hammerHandItem(player).isEmpty();
