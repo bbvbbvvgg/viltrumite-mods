@@ -210,6 +210,12 @@ public final class ThorSceneClient {
       return snapshot != null && snapshot.heroId() == HeroId.THOR;
    }
 
+   /** The server refused the predicted dash (ThorDashS2CPacket): stop the burst; the server already snapped the position back. */
+   public static void dashRefused() {
+      dashLeft = 0;
+      dashVelocity = Vec3.ZERO;
+   }
+
    /** Double-tap W/A/S/D: a short burst on the ground or in HOVER (predicted here, confirmed by the server). */
    private static void dash(Minecraft minecraft, LocalPlayer player, @Nullable ThorSceneView.Live own) {
       if (dashLeft > 0) {
