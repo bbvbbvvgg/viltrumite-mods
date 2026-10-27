@@ -67,7 +67,12 @@ public final class ThorActions {
    /** Server context of a player: live state, held items, movement, the nearest enemy. */
    public static ThorContext context(ServerPlayer player, ThorState state, @Nullable LivingEntity enemy) {
       return new ThorContext(state.hammer, state.mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(), false, enemy != null,
-         ThorBridge.grabWindowActive(state), state.hammerDetached);
+         ThorBridge.grabWindowActive(state), state.hammerDetached, fistChainOpen(state));
+   }
+
+   /** An unarmed chain (session B's combo window) is still open: LMB / RMB finish it first (#166). */
+   public static boolean fistChainOpen(ThorState state) {
+      return ThorBridge.comboWindow(state) == ThorMove.FIST_COMBO;
    }
 
    /** A press of one of Thor's inputs (already past canAct). */
@@ -76,6 +81,11 @@ public final class ThorActions {
       ThorContext context = context(player, state, enemy);
       ThorMove move = ThorControls.resolve(input, context);
       if (move == null) {
+         return;
+      }
+
+      LivingEntity target = move == ThorMove.HAMMER_STRIKE ? enemy : null;
+      if (move.authored() && !ThorMoves.handler(move).admits(new ThorMoveContext(player, state, move, target, input))) {
          return;
       }
 
@@ -90,7 +100,7 @@ public final class ThorActions {
                ThorMoves.handler(previous).onStop(new ThorMoveContext(player, state, previous, null));
             }
 
-            ThorMoves.handler(move).onStart(new ThorMoveContext(player, state, move, move == ThorMove.HAMMER_STRIKE ? enemy : null));
+            ThorMoves.handler(move).onStart(new ThorMoveContext(player, state, move, target, input));
             ThorFeedback.hammerMoved(player, before, state.hammer);
          }
       }
@@ -182,6 +192,10 @@ public final class ThorActions {
 
       if (state.grabWindow > 0) {
          state.grabWindow--;
+      }
+
+      if (state.comboWindow > 0 && --state.comboWindow == 0) {
+         state.comboMove = null;
       }
 
       state.heldTicks.replaceAll((input, ticks) -> ticks + 1);

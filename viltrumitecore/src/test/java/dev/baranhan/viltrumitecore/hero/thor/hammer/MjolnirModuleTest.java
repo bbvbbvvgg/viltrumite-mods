@@ -48,7 +48,7 @@ class MjolnirModuleTest {
       ThorContext inHand = ThorContext.grounded(HammerState.IN_HAND, ThorMode.NORMAL);
       assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, inHand));
       assertTrue(ThorControls.claimedMouse(MouseButton.MIDDLE, inHand) != null);
-      ThorContext lying = new ThorContext(HammerState.HOLSTERED, ThorMode.NORMAL, true, false, false, false, false, false, true);
+      ThorContext lying = new ThorContext(HammerState.HOLSTERED, ThorMode.NORMAL, true, false, false, false, false, false, true, false);
       assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, lying));
       assertTrue(ThorControls.claimedMouse(MouseButton.MIDDLE, lying) != null);
       ThorContext enemy = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, true, false, false, false, true, false);

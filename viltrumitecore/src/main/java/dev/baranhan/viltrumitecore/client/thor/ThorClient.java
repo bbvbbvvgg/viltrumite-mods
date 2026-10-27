@@ -46,5 +46,6 @@ public final class ThorClient {
       HeroHeadPreviews.register(HeroId.THOR, HeroHeadPreviews.skinFace(SKIN));
       PlayerGeoLayer.register(new ThorParts());
       MjolnirClient.init();
+      ThorCombatClient.init();
    }
 }

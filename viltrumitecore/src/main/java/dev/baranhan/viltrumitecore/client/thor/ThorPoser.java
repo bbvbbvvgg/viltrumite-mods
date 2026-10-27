@@ -3,7 +3,9 @@ package dev.baranhan.viltrumitecore.client.thor;
 import dev.baranhan.viltrumitecore.client.anim.pose.ActionClock;
 import dev.baranhan.viltrumitecore.client.anim.pose.PoseRig;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
+import dev.baranhan.viltrumitecore.hero.thor.HammerState;
 import dev.baranhan.viltrumitecore.hero.thor.MjolnirPlace;
+import dev.baranhan.viltrumitecore.hero.thor.ThorFlags;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirEntity;
 import java.util.Map;
@@ -48,16 +50,20 @@ public final class ThorPoser {
 
       float partialTick = minecraft.getFrameTime();
       ActionClock clock = CLOCKS.computeIfAbsent(entity, e -> new ActionClock());
-      ThorClips.Clip clip = ThorClips.of(ThorView.move(snapshot), ThorView.step(snapshot));
+      ThorClips.Clip clip = ThorClips.of(ThorView.move(snapshot), ThorView.step(snapshot), snapshot.resource());
       double time = clock.sample(clip == null ? -1 : snapshot.actionId(), snapshot.variant(), snapshot.actionElapsed(), snapshot.actionLength(),
          player.tickCount + partialTick);
       boolean holding = ThorView.place(snapshot, player) == MjolnirPlace.HAND;
-      if (clip == null && !holding) {
-         MjolnirEntity called = MjolnirClient.calledBy(player);
-         if (called != null) {
-            poseReach(model, player, called, partialTick);
-         }
+      // #154 / #155: while Mjölnir flies back, the arm reaches for it, but only once the current strike is over.
+      // Aim at the real hammer (session A) when this client tracks it; the view-pitch reach (session B) is the fallback.
+      MjolnirEntity called = clip == null && !holding ? MjolnirClient.calledBy(player) : null;
+      if (called != null) {
+         poseReach(model, player, called, partialTick);
+         return;
+      }
 
+      boolean reaching = clip == null && !holding && ThorFlags.hammer(snapshot.heroFlags()) == HammerState.RETURNING;
+      if (clip == null && !holding && !reaching) {
          return;
       }
 
@@ -72,6 +78,8 @@ public final class ThorPoser {
          if (clip.body() != null) {
             rig.body(clip.body(), t, 1.0F, true);
          }
+      } else if (reaching) {
+         rig.mainArm(ThorCombatClips.reach(player.getViewXRot(partialTick)), 0.0F, 1.0F, true);
       } else {
          rig.mainArm(ThorClips.HOLD, 0.0F, 1.0F, true);
       }

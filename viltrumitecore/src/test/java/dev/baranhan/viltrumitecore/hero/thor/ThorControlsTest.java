@@ -43,9 +43,9 @@ class ThorControlsTest {
       List<ThorContext> all = new ArrayList<>();
       for (HammerState hammer : HammerState.values()) {
          for (ThorMode mode : ThorMode.values()) {
-            for (int bits = 0; bits < 1 << 7; bits++) {
+            for (int bits = 0; bits < 1 << 8; bits++) {
                all.add(new ThorContext(hammer, mode, (bits & 1) != 0, (bits & 2) != 0, (bits & 4) != 0, (bits & 8) != 0, (bits & 16) != 0,
-                  (bits & 32) != 0, (bits & 64) != 0));
+                  (bits & 32) != 0, (bits & 64) != 0, (bits & 128) != 0));
             }
          }
       }
@@ -71,9 +71,9 @@ class ThorControlsTest {
    void aDetachedHammerIsRecalledByMmbWhateverItsProjection() {
       for (HammerState hammer : HammerState.values()) {
          for (boolean enemy : new boolean[]{false, true}) {
-            ThorContext detached = new ThorContext(hammer, ThorMode.NORMAL, true, false, false, false, enemy, false, true);
+            ThorContext detached = new ThorContext(hammer, ThorMode.NORMAL, true, false, false, false, enemy, false, true, false);
             assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, detached), hammer + " enemy=" + enemy);
-            ThorContext window = new ThorContext(hammer, ThorMode.NORMAL, true, false, false, false, enemy, true, true);
+            ThorContext window = new ThorContext(hammer, ThorMode.NORMAL, true, false, false, false, enemy, true, true, false);
             assertSame(ThorMove.GRAB, ThorControls.resolve(ThorInput.HAMMER, window), "the grab window still wins");
          }
       }
@@ -81,7 +81,7 @@ class ThorControlsTest {
 
    @Test
    void yPullsOnlyToTheHammerInThrowFlightNotToALyingOne() {
-      ThorContext lying = new ThorContext(HammerState.HOLSTERED, ThorMode.NORMAL, true, false, false, false, false, false, true);
+      ThorContext lying = new ThorContext(HammerState.HOLSTERED, ThorMode.NORMAL, true, false, false, false, false, false, true, false);
       assertNull(ThorControls.resolve(ThorInput.MOBILITY, lying));
       assertNull(ThorControls.resolve(ThorInput.MOBILITY, ground(HammerState.RETURNING)), "no pull towards a returning hammer");
       assertSame(ThorMove.HAMMER_PULL, ThorControls.resolve(ThorInput.MOBILITY, ground(HammerState.THROWN)));
@@ -103,7 +103,9 @@ class ThorControlsTest {
          assertSame(ThorMove.WRATH, ThorControls.resolve(ThorInput.ULTIMATE, context));
          assertSame(context.hammer() == HammerState.THROWN ? ThorMove.HAMMER_PULL : null, ThorControls.resolve(ThorInput.MOBILITY, context),
             "Y pulls only to the hammer flying after a throw");
-         assertNull(ThorControls.resolve(ThorInput.STANCE, context), "RMB is not routed by the bridge");
+         ThorMove rmb = context.flying() ? null : context.mode() == ThorMode.ELECTRIC ? ThorMove.ELECTRIC_WAVE
+            : !context.fistChainOpen() && context.hammer() == HammerState.IN_HAND ? ThorMove.HAMMER_COMBO : ThorMove.FIST_COMBO;
+         assertSame(rmb, ThorControls.resolve(ThorInput.STANCE, context), "RMB: combos, the electric wave, nothing in full flight");
       }
    }
 
@@ -114,6 +116,21 @@ class ThorControlsTest {
       assertSame(ThorMove.ELECTRIC_COMBO, ThorControls.resolve(ThorInput.STRIKE, ThorContext.grounded(HammerState.IN_HAND, ThorMode.ELECTRIC)));
       ThorContext flying = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, true, false, true, true, true, false);
       assertNull(ThorControls.resolve(ThorInput.STRIKE, flying));
+   }
+
+   @Test
+   void anOpenUnarmedChainFinishesBeforeHammerStrikes() {
+      ThorContext open = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, true, false, false, false, false, false, false, true);
+      assertSame(ThorMove.FIST_COMBO, ThorControls.resolve(ThorInput.STRIKE, open), "#166: the unarmed chain finishes first");
+      assertSame(ThorMove.FIST_COMBO, ThorControls.resolve(ThorInput.STANCE, open));
+      assertSame(ThorMove.HAMMER_COMBO, ThorControls.resolve(ThorInput.STRIKE, ground(HammerState.IN_HAND)));
+      ThorContext electric = new ThorContext(HammerState.IN_HAND, ThorMode.ELECTRIC, true, false, false, false, false, false, false, true);
+      assertSame(ThorMove.ELECTRIC_COMBO, ThorControls.resolve(ThorInput.STRIKE, electric));
+      assertSame(ThorMove.ELECTRIC_WAVE, ThorControls.resolve(ThorInput.STANCE, electric));
+      ThorContext flying = new ThorContext(HammerState.IN_HAND, ThorMode.ELECTRIC, true, false, true, true, false, false, false, true);
+      assertNull(ThorControls.resolve(ThorInput.STANCE, flying), "no attacks in full flight");
+      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, true, false,
+         false, false, true, false, false, true)), "an open chain never changes the MMB branch");
    }
 
    @Test
