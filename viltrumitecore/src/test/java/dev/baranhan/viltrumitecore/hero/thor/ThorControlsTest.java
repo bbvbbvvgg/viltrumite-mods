@@ -236,7 +236,15 @@ class ThorControlsTest {
       assertTrue(ThorControls.anyAuthored(ThorInput.HAMMER));
    }
 
-   /** The MMB decision has one home: no other Thor source names the MMB branches or reads the middle button. */
+   /**
+    * The MMB decision has one home (F-B3 / A-N3): the test checks decision
+    * acts, not file names or move names. Outside ThorControls / ThorInput /
+    * ThorContext nobody reads the middle button, routes ThorInput.HAMMER,
+    * reads the MMB context facts (enemy near, grab window, hammer away) or
+    * asks the resolver; the one caller of ThorControls.resolve is
+    * ThorActions.press. Sessions may name, register, implement and animate
+    * their moves freely.
+    */
    @Test
    void mmbResolverIsUnique() throws IOException {
       Path root = Path.of("src/main/java/dev/baranhan/viltrumitecore");
@@ -247,25 +255,27 @@ class ThorControlsTest {
          }
       }
 
+      List<String> home = List.of("ThorControls.java", "ThorInput.java", "ThorContext.java");
+      String[] acts = {"MouseButton.MIDDLE", "ThorInput.HAMMER", ".enemyNear()", ".grabWindow()", ".hammerAway()", "ThorControls.hammer("};
+      int resolveCalls = 0;
       for (Path source : sources) {
          String name = source.getFileName().toString();
+         if (home.contains(name)) {
+            continue;
+         }
+
          String text = Files.readString(source);
-         // Session A owns its moves: it registers / implements / animates them by name, but never routes MMB.
-         boolean owner = name.equals("MjolnirModule.java") || name.equals("MjolnirWorld.java") || name.equals("MjolnirClient.java");
-         if (!name.equals("ThorControls.java") && !name.equals("ThorMove.java") && !owner) {
-            for (String branch : new String[]{"ThorMove.GRAB,", "ThorMove.GRAB;", "ThorMove.GRAB)", "ThorMove.RECALL", "ThorMove.HAMMER_THROW"}) {
-               assertFalse(text.contains(branch), name + " decides an MMB branch (" + branch + ")");
-            }
+         for (String act : acts) {
+            assertFalse(text.contains(act), name + " decides MMB outside the resolver (" + act + ")");
          }
 
-         if (!name.equals("ThorInput.java")) {
-            assertFalse(text.contains("MouseButton.MIDDLE"), name + " reads MMB outside ThorInput");
-         }
-
-         if (!name.equals("ThorControls.java") && !name.equals("ThorInput.java")) {
-            assertFalse(text.contains("ThorInput.HAMMER"), name + " routes MMB outside ThorControls");
+         if (text.contains("ThorControls.resolve(")) {
+            assertEquals("ThorActions.java", name, name + " calls the MMB resolver");
+            resolveCalls++;
          }
       }
+
+      assertEquals(1, resolveCalls, "ThorActions.press is the one caller of the resolver");
    }
 
    @Test
