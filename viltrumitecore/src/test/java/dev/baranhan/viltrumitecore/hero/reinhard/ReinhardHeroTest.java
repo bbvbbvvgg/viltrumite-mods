@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Test;
 class ReinhardHeroTest {
 
    @Test
-   void reinhardIsLastOrdinal() {
-      HeroId[] values = HeroId.values();
-      assertSame(HeroId.REINHARD, values[values.length - 1]);
+   void reinhardKeepsItsOrdinal() {
+      // Saved/wire ordinals: heroes added later (Thor) are appended after Reinhard.
+      assertSame(HeroId.REINHARD, HeroId.values()[5]);
    }
 
    @Test

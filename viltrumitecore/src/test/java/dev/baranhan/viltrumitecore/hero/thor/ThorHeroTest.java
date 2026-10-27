@@ -1,0 +1,204 @@
+package dev.baranhan.viltrumitecore.hero.thor;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import dev.baranhan.viltrumitecore.ability.ViltrumiteAbility;
+import dev.baranhan.viltrumitecore.hero.HeroAction;
+import dev.baranhan.viltrumitecore.hero.HeroId;
+import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
+import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.hero.combat.CombatPresence;
+import dev.baranhan.viltrumitecore.hero.combat.CombatStance;
+import dev.baranhan.viltrumitecore.hero.combat.CombatTags;
+import dev.baranhan.viltrumitecore.hero.combat.InteractionKind;
+import dev.baranhan.viltrumitecore.hero.combat.InteractionRules;
+import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
+import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
+import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+
+/** Thor identity, registration, chassis, panel, wire snapshot, combat presence and texts. */
+class ThorHeroTest {
+   private static final ThorHero HERO = ThorHero.INSTANCE;
+
+   @Test
+   void thorIsAppendedAfterEveryExistingHero() {
+      assertSame(HeroId.THOR, HeroId.values()[6]);
+      assertSame(HeroId.REINHARD, HeroId.values()[5]);
+      assertSame(HeroId.THOR, HeroId.fromKey("thor"));
+      assertSame(HeroId.THOR, HeroId.legacySet(HeroId.THOR, true), "the legacy boolean never converts Thor");
+      assertSame(HeroId.THOR, HeroId.legacySet(HeroId.THOR, false));
+   }
+
+   @Test
+   void registeredUnderItsId() {
+      HeroRegistry.registerDefaults();
+      assertSame(HERO, HeroRegistry.get(HeroId.THOR));
+      assertSame(HeroId.THOR, HERO.id());
+   }
+
+   @Test
+   void vanillaChassisInStageOne() {
+      assertFalse(HERO.allowsFlight(null), "flight is stage 4");
+      assertFalse(HERO.allowsLegacyAbilities(null));
+      assertFalse(HERO.allowsAbilityPages(null));
+      assertTrue(HERO.hasAbilityPanel(null));
+      assertFalse(HERO.claimsBlockAttack(null), "LMB on a block always mines");
+   }
+
+   @Test
+   void newHeroActionsKeepEveryExistingOrdinal() {
+      assertEquals(HeroAction.DIAGONAL_WORLD_CUT.ordinal() + 1, HeroAction.CONTEXT_POWER.ordinal());
+      assertEquals(HeroAction.CONTEXT_POWER.ordinal() + 1, HeroAction.CONTEXT_MOBILITY.ordinal());
+      assertEquals(HeroAction.CONTEXT_MOBILITY.ordinal() + 1, HeroAction.ULTIMATE.ordinal());
+      assertSame(HeroAction.ULTIMATE, HeroAction.values()[HeroAction.values().length - 1]);
+   }
+
+   @Test
+   void threePanelSlotsTwoContextKeysAndTheUltimate() {
+      assertArrayEquals(new String[]{ThorAbilities.THUNDER, ThorAbilities.ONSLAUGHT, ThorAbilities.WRATH}, HERO.heroInputSlots());
+      assertSame(HeroAction.CONTEXT_POWER, HERO.heroActionFor(ThorAbilities.THUNDER));
+      assertSame(HeroAction.CONTEXT_MOBILITY, HERO.heroActionFor(ThorAbilities.ONSLAUGHT));
+      assertSame(HeroAction.ULTIMATE, HERO.heroActionFor(ThorAbilities.WRATH));
+      assertNull(HERO.heroActionFor("reinhard:world_cut"));
+      assertTrue(HERO.ownsAbility(ThorAbilities.WRATH));
+      assertFalse(HERO.ownsAbility("thor:mjolnir"));
+      assertFalse(HERO.ownsAbility(null));
+      assertEquals("textures/gui/ability/thor/thunder.png", HERO.abilityIcon(ThorAbilities.THUNDER).getPath());
+      assertNull(HERO.abilityIcon("homelander:laser"));
+
+      String[] loadout = HERO.defaultLoadout();
+      assertEquals(18, loadout.length);
+      assertArrayEquals(HERO.heroInputSlots(), new String[]{loadout[0], loadout[1], loadout[2]});
+      for (int i = 3; i < loadout.length; i++) {
+         assertEquals("", loadout[i]);
+      }
+
+      List<ViltrumiteAbility> panel = HERO.panelAbilities();
+      assertEquals(3, panel.size());
+      for (int i = 0; i < panel.size(); i++) {
+         assertEquals(HERO.heroInputSlots()[i], panel.get(i).getId());
+         assertEquals(HERO.abilityIcon(panel.get(i).getId()), panel.get(i).getIcon());
+      }
+   }
+
+   @Test
+   void slotsStayGreyUntilTheirMovesShip() {
+      HeroPublicSnapshot idle = ThorHero.composeSnapshot(new ThorState());
+      for (String slot : ThorAbilities.slotIds()) {
+         ThorInput input = ThorInput.of(ThorAbilities.actionFor(slot));
+         assertTrue(ThorAbilities.slotGrey(idle, input), slot + " has no shipped move in stage 1");
+      }
+
+      assertFalse(ThorAbilities.slotGrey(idle, ThorInput.HAMMER), "a live input lights while idle");
+      ThorState drawing = new ThorState();
+      drawing.timeline.request(ThorMove.DRAW, -1);
+      assertTrue(ThorAbilities.slotGrey(ThorHero.composeSnapshot(drawing), ThorInput.HAMMER), "grey while a move runs");
+      assertTrue(ThorAbilities.slotGrey((HeroPublicSnapshot)null, ThorInput.HAMMER));
+   }
+
+   @Test
+   void snapshotCarriesTheHammerAndTheRunningMove() {
+      HeroPublicSnapshot idle = ThorHero.composeSnapshot(new ThorState());
+      assertSame(HeroId.THOR, idle.heroId());
+      assertEquals(-1, idle.actionId());
+      assertFalse(idle.actionBusy());
+      assertEquals(0, idle.heroFlags());
+      assertEquals(-1, idle.controlTargetId());
+
+      ThorState state = new ThorState();
+      state.hammer = HammerState.IN_HAND;
+      state.timeline.request(ThorMove.HOLSTER, -1);
+      for (int i = 0; i < ThorRules.HOLSTER_INTRO + 1; i++) {
+         state.timeline.tick();
+      }
+
+      HeroPublicSnapshot running = HeroPublicSnapshot.decode(ThorHero.composeSnapshot(state).encode());
+      assertSame(HeroId.THOR, running.heroId());
+      assertSame(ThorMove.HOLSTER, ThorMove.byWireId(running.actionId()));
+      assertEquals(ThorRules.HOLSTER_INTRO + 1, running.actionElapsed());
+      assertEquals(ThorMove.HOLSTER.length(), running.actionLength());
+      assertTrue(running.actionBusy());
+      assertSame(HammerState.IN_HAND, ThorFlags.hammer(running.heroFlags()));
+      assertSame(MovePhase.MAIN, StagedTimeline.phaseOf(running.variant()));
+      assertEquals(0, StagedTimeline.stepOf(running.variant()));
+   }
+
+   @Test
+   void presenceIsMjolnirInAFreeHandOtherwiseFists() {
+      assertSame(ThorCombat.MJOLNIR, ThorCombat.presence(HammerState.IN_HAND, true));
+      assertSame(ThorCombat.FISTS, ThorCombat.presence(HammerState.IN_HAND, false));
+      assertSame(ThorCombat.FISTS, ThorCombat.presence(HammerState.HOLSTERED, true));
+      assertSame(ThorCombat.FISTS, ThorCombat.presence(HammerState.THROWN, true));
+
+      CombatPresence mjolnir = ThorCombat.MJOLNIR;
+      for (String tag : new String[]{CombatTags.WEAPON, CombatTags.WEAPON_HAMMER, CombatTags.ELEMENT_LIGHTNING, CombatTags.TRAIT_DIVINE,
+         CombatTags.TRAIT_THROWABLE, CombatTags.TRAIT_RETURNING, CombatTags.TRAIT_UNBREAKABLE}) {
+         assertTrue(mjolnir.has(tag), tag);
+      }
+
+      assertTrue(ThorCombat.FISTS.has(CombatTags.BODY));
+      assertFalse(ThorCombat.FISTS.has(CombatTags.WEAPON));
+      assertSame(CombatStance.NONE, mjolnir.stance(), "no stance until strikes and guard ship");
+   }
+
+   @Test
+   void mjolnirJoinsTheGenericRulesByItsTags() {
+      // Any other weapon is described by tags only; no rule names Thor or Mjölnir.
+      CombatPresence axe = new CombatPresence("test:axe", Set.of(CombatTags.WEAPON_AXE, CombatTags.ELEMENT_FROST), CombatStance.GUARD, 0);
+      InteractionRules rules = InteractionRules.defaults();
+      assertSame(InteractionKind.BLOCK, rules.resolve(ThorCombat.MJOLNIR.withStance(CombatStance.ACTIVE), axe).orElseThrow().kind());
+      assertSame(InteractionKind.BLOCK, rules.resolve(ThorCombat.FISTS.withStance(CombatStance.ACTIVE), axe).orElseThrow().kind());
+      assertTrue(rules.resolve(ThorCombat.MJOLNIR, axe).isEmpty(), "a carried hammer does not interact");
+   }
+
+   @Test
+   void otherHeroesBringNoPresenceYet() {
+      assertSame(CombatPresence.NONE, ReinhardHero.INSTANCE.combatPresence(null));
+   }
+
+   @Test
+   void everyLocaleHasEveryThorText() throws IOException {
+      List<String> keys = new ArrayList<>(List.of("gui.viltrumitecore.race_selection.become_thor", ThorFeedback.NOT_READY, ThorFeedback.HANDS_BUSY,
+         ThorFeedback.BUSY, ThorFeedback.CONTROLS));
+      for (String slot : ThorAbilities.slotIds()) {
+         String name = "ability.viltrumitecore.thor_" + slot.substring(slot.indexOf(':') + 1);
+         keys.add(name + ".name");
+         keys.add(name + ".desc");
+      }
+
+      for (ThorMove move : ThorMove.values()) {
+         keys.add(move.translationKey());
+      }
+
+      List<Path> locales;
+      try (Stream<Path> files = Files.list(Path.of("src/main/resources/assets/viltrumitecore/lang"))) {
+         locales = files.filter(path -> path.toString().endsWith(".json")).sorted().toList();
+      }
+
+      assertTrue(locales.size() >= 11, "every shipped locale");
+      for (Path locale : locales) {
+         JsonObject lang = JsonParser.parseString(Files.readString(locale)).getAsJsonObject();
+         for (String key : keys) {
+            assertTrue(lang.has(key) && !lang.get(key).getAsString().isBlank(), locale.getFileName() + " misses " + key);
+         }
+
+         assertTrue(lang.get(ThorFeedback.NOT_READY).getAsString().contains("%1$s") || lang.get(ThorFeedback.NOT_READY).getAsString().contains("%s"),
+            locale.getFileName() + ": the refusal names the move");
+      }
+   }
+}
