@@ -2,7 +2,7 @@ package dev.baranhan.viltrumitecore.hero.thor.scene;
 
 /**
  * The victim's state when a fatality begins; picks the short contextual
- * intro (decision 89 / spec §10: back turned, running, falling, airborne,
+ * intro (decisions 90, 91 / spec §10: back turned, running, falling, airborne,
  * otherwise placed). Pure.
  */
 public enum SceneEntry {

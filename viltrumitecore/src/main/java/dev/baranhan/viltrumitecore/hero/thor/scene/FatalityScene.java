@@ -4,7 +4,7 @@ import dev.baranhan.viltrumitecore.hero.thor.scene.SceneFrame.Offset;
 import javax.annotation.Nullable;
 
 /**
- * The three staged fatalities (decisions 85-88): (1) the head crushed with
+ * The three staged fatalities (decisions 68, 85, 89): (1) the head crushed with
  * Mjölnir, (2) the chest punched through and the heart torn out, (3) an
  * aerial finisher with a monstrous hammer blow. Each is a shared main part
  * plus a finish, after the contextual intro. All ticks are PLACEHOLDER

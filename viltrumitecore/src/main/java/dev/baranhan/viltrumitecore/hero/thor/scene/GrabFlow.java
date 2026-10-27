@@ -3,7 +3,7 @@ package dev.baranhan.viltrumitecore.hero.thor.scene;
 import javax.annotation.Nullable;
 
 /**
- * Pure state of one grab (decisions 60-64, 117-126): HOLD (Thor walks, the
+ * Pure state of one grab (decisions 59-62, 123-125, 150): HOLD (Thor walks, the
  * victim may resist with its one key) → ACTION (committed: no resistance,
  * plays to the release) → RECOVER (victim out of the hand, Thor finishes)
  * → DONE. An escape or the hold limit ends HOLD directly.

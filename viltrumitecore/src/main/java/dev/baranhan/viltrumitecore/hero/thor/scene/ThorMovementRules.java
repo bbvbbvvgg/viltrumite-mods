@@ -26,6 +26,11 @@ public final class ThorMovementRules {
       return state == FlightState.CRUISE || state == FlightState.SONIC;
    }
 
+   /** Decisions 22 / 34: no attack at all in full flight (also no vanilla hit); none of Thor's own while a scene owns the mouse. */
+   public static boolean attacksAllowed(boolean fullFlight, boolean sceneLocked) {
+      return !fullFlight && !sceneLocked;
+   }
+
    public static boolean allowsFlight(boolean thor, boolean sceneLocked) {
       return thor && !sceneLocked;
    }

@@ -3,7 +3,7 @@ package dev.baranhan.viltrumitecore.hero.thor.scene;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * V teleport point selection (decisions 14, 29, 41-48): Mjölnir in the hand,
+ * V teleport point selection (decisions 14, 29, 41-48, 71, 72, 120): Mjölnir in the hand,
  * not in full flight; the camera rises ~80 blocks and then stays; the point
  * is picked with the crosshair inside the area the camera sees and must be a
  * safe solid surface; LMB confirms, Escape cancels, 10 s limit. Thor stands

@@ -13,7 +13,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
-/** Flight / hover / dash rules (decisions 5, 13, 20-22, 34, 48), the V teleport (53, 57-59, 65-72) and the scene wire. */
+/** Flight / hover / dash rules (decisions 5, 13, 20-22, 34, 48, 110, 135), the V teleport (14, 29, 41-47, 71, 72, 120) and the scene wire. */
 class ThorMovementTest {
    @Test
    void fullFlightOnlyWithMjolnirInHand() {
@@ -26,6 +26,32 @@ class ThorMovementTest {
       assertTrue(ThorMovementRules.fullFlight(FlightState.SONIC));
       assertFalse(ThorMovementRules.fullFlight(FlightState.HOVER));
       assertFalse(ThorMovementRules.fullFlight(null));
+   }
+
+   @Test
+   void noAttackInFullFlightOrScene() {
+      assertTrue(ThorMovementRules.attacksAllowed(false, false));
+      assertFalse(ThorMovementRules.attacksAllowed(true, false), "decisions 22 / 34: full flight is movement only");
+      assertFalse(ThorMovementRules.attacksAllowed(false, true), "a scene owns the mouse");
+   }
+
+   @Test
+   void poseFadeIsSmoothAndTakesTheShortWayRound() {
+      assertEquals(0.0F, PoseBlend.weight(0.0F, 6.0F), 1.0E-6);
+      assertEquals(0.5F, PoseBlend.weight(3.0F, 6.0F), 1.0E-6);
+      assertEquals(1.0F, PoseBlend.weight(6.0F, 6.0F), 1.0E-6);
+      assertEquals(1.0F, PoseBlend.weight(1.0F, 0.0F), 1.0E-6, "no fade length = the new pose at once");
+      float[] from = new float[PoseBlend.STRIDE];
+      float[] to = new float[PoseBlend.STRIDE];
+      from[0] = (float)Math.toRadians(170);
+      to[0] = (float)Math.toRadians(-170);
+      from[3] = 0.0F;
+      to[3] = 2.0F;
+      float[] half = PoseBlend.blend(from, to, 0.5F);
+      assertEquals(180.0, Math.abs(Math.toDegrees(half[0])), 1.0E-3, "through 180, not through 0");
+      assertEquals(1.0F, half[3], 1.0E-6, "pivots blend linearly");
+      float[] done = PoseBlend.blend(from, to, 0.0F);
+      assertEquals(from[0], done[0], 1.0E-6);
    }
 
    @Test

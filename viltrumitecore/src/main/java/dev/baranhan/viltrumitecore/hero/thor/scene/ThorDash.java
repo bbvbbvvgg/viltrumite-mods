@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 
 /**
- * Server side of the double-WASD dash (decisions 5, 20): the client moves
+ * Server side of the double-WASD dash (decisions 110, 135): the client moves
  * the local player at once (its own movement), the server checks that a
  * dash is allowed now (ground or HOVER, never full flight, no scene, not
  * held) and on cooldown, and plays it for everyone around.

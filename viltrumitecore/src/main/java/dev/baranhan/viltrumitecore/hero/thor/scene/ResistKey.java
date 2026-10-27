@@ -2,7 +2,7 @@ package dev.baranhan.viltrumitecore.hero.thor.scene;
 
 import javax.annotation.Nullable;
 
-/** The one resist key of a grab, picked at random and kept for the whole hold (decision 62). */
+/** The one resist key of a grab, picked at random and kept for the whole hold (decisions 123, 150, 151). */
 public enum ResistKey {
    W,
    A,

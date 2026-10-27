@@ -4,7 +4,7 @@ import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
 import javax.annotation.Nullable;
 
 /**
- * Who gets a fatality and which one (decisions 53, 66, 85-88, 93): only a
+ * Who gets a fatality and which one (decisions 53, 66, 86, 93, 95, 118): only a
  * LETHAL_HIT, only with Mjölnir in the hand at the hit (a thrown or
  * returning hammer never starts one), only on players / heroes, never twice
  * for one victim; the scene is random with no direct repeat and does not

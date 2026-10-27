@@ -4,7 +4,7 @@ import dev.baranhan.viltrumitecore.hero.thor.ThorInput;
 import javax.annotation.Nullable;
 
 /**
- * The three actions while holding (decision 122-126): LMB ground slam, RMB
+ * The three actions while holding (decisions 62, 87, 122, 125): LMB ground slam, RMB
  * far throw, MMB staged fist barrage (one series = one action). One action
  * per grab.
  */

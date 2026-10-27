@@ -16,7 +16,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Scene cameras of the local player (decisions 89-96, 133-135): the
+ * Scene cameras of the local player (decisions 41, 43, 44, 70, 72): the
  * fatality shots (Thor: a slow orbit around the scene anchor; the victim:
  * a low side shot facing Thor) blended in from and back out to the normal
  * camera, and the V teleport camera (rise above Thor, then fixed; the look
