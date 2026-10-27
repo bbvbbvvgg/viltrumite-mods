@@ -124,6 +124,8 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatConfig.load();
+         dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatModule.install();
       });
    }
 
