@@ -29,7 +29,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Server fatalities (decisions 53, 66, 85-96, 106, 110). The death is
+ * Server fatalities (decisions 53, 66, 69, 85, 90-94, 96, 216). The death is
  * decided at the scene start: the victim is doomed (no other damage, no
  * escape, logout = death) and dies exactly once, by Thor's hand, when the
  * scene ends (or at once when the scene breaks off). Both bodies move only
@@ -67,7 +67,7 @@ final class FatalitySessions {
    /** The one kill in progress: its death event passes. */
    private static final Set<UUID> EXECUTING = new HashSet<>();
    private static final Map<UUID, FatalityScene> LAST = new HashMap<>();
-   /** Hero changes asked for during a scene, applied at its end (decision: deferred to the scene end). */
+   /** Hero changes asked for during a scene, applied at its end (decision 216: deferred to the scene end). */
    private static final Map<UUID, HeroId> DEFERRED = new LinkedHashMap<>();
 
    private FatalitySessions() {

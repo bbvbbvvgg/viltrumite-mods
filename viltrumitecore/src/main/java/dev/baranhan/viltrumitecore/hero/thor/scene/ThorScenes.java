@@ -202,7 +202,7 @@ public final class ThorScenes {
       }
    }
 
-   /** Decision 41-48 / 150: only from a lethal hammer-in-hand hit of B's combat on a player (any hero); never from a key. */
+   /** Decisions 53, 66, 86, 93: only from a lethal hammer-in-hand hit of B's combat on a player (any hero); never from a key. */
    private static void onLethalHit(ThorEvent event) {
       ServerPlayer thor = player(event.attackerId());
       ThorState state = thor == null ? null : ThorState.of(thor);
@@ -297,9 +297,8 @@ public final class ThorScenes {
          if (action != null) {
             GrabSessions.choose(thor, grab, action);
          }
-      } else if (input == ThorInput.TELEPORT && TeleportSessions.of(thor.getUUID()) != null) {
-         TeleportSessions.cancel(thor);
       }
+      // Teleport selection: LMB confirms and Escape cancels on the scene's own path (controls canon); V does nothing here.
 
       return true;
    }
@@ -416,6 +415,83 @@ public final class ThorScenes {
       }
 
       if (cancel) {
+         event.setCanceled(true);
+      }
+   }
+
+   /**
+    * Server: a held body or a fatality participant uses nothing of its own
+    * (decision 61: the victim only looks and resists; PULL alone would leave
+    * items, pearls and block interaction open).
+    */
+   static boolean bound(@Nullable Entity entity) {
+      if (entity == null || entity.level().isClientSide) {
+         return false;
+      }
+
+      GrabSessions.Session held = GrabSessions.victimOf(entity.getUUID());
+      return held != null && GrabSessions.holding(held) || FatalitySessions.participant(entity.getUUID());
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onAttackEntity(net.minecraftforge.event.entity.player.AttackEntityEvent event) {
+      if (bound(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onArrowLoose(net.minecraftforge.event.entity.player.ArrowLooseEvent event) {
+      if (bound(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onUseItem(net.minecraftforge.event.entity.living.LivingEntityUseItemEvent.Start event) {
+      if (bound(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onRightClickItem(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem event) {
+      if (bound(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onRightClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+      if (bound(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onLeftClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event) {
+      if (bound(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onEntityInteract(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
+      if (bound(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onEntityInteractSpecific(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteractSpecific event) {
+      if (bound(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGH)
+   public static void onBreak(net.minecraftforge.event.level.BlockEvent.BreakEvent event) {
+      if (bound(event.getPlayer())) {
          event.setCanceled(true);
       }
    }
