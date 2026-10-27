@@ -380,4 +380,11 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - `ThorEvents.post` and `ThorLifecycle.post` log a throwing listener and continue (never rethrow into the damage path or the hammer store).
 - Thor cooldowns use the shared `PersistentCooldowns` (keys and snapshot indices in `ThorCooldowns`; survive relog, hero change and death — death reset is OPEN). The snapshot `cooldowns[2]` = ultimate slot.
 - One target rule: `HeroTargets.canHit` (resolver enemy, B hits, A throw / return). Villagers and passive mobs are still valid targets (OPEN).
+- One logical Mjölnir: one `MjolnirSavedData` record (overworld), body UUID = logical id, entity type `noSave`, a stray body discards itself (`MjolnirWorld.owns`), one Thor slot (`activeOwner`, never reserved offline). `MjolnirWorld` is the only writer; ownership / limbo rules are pure in `MjolnirOwnership` (table test `MjolnirOwnershipTest`).
+- No hammer phase may wait for a visitor: a first fall without a body continues in the store and lands (live surface, else the saved site surface `originY`); a recall lands it at once. Void recovery: safe point, then spawn, then parked at spawn (`VOID_RETRIES`, №217 open). Operators: `/mjolnir recover` (level 2, production).
+- Owner change (logout, hero change, new Thor, offline owner) drops IN_HAND / THROWN / homing to FALLING and forgets a pending recall: nobody inherits a throw, no ownerless throw hits.
+- Store events are queued and delivered after the change (`MjolnirEventQueue`, `MjolnirWorld.flush` at the end of every public entry and of the world / body tick). Events name only the active holder (`attackerId`); without one nothing is posted.
+- Flight facts (hit list, flight ticks, rip) are transient fields of `MjolnirRecord`, so a re-spawned body keeps them.
+- Transform bolt (№214 placeholder) carves only a column of natural ground; a build, fluid or protected block anywhere = no shaft.
+- Plain block-list carves use `CarveJobs.BlockList` (Mjölnir craters, B's lightning removal).
 - Session A's store has no belt phase: `MjolnirWorld.inHandProjection` keeps HOLSTERED only during a technical DRAW / HOLSTER. MMB from the belt resolves to nothing (DRAW key is OPEN, design §10).
