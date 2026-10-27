@@ -328,7 +328,11 @@ public final class MjolnirWorld {
       project(player, state);
    }
 
-   /** A former Thor logged in while another Thor holds the slot: he is not Thor any more and may choose again. */
+   /**
+    * Approved by the author (session A review): a former Thor who logs in
+    * while another Thor holds the slot becomes Human and gets the race
+    * screen to choose again (№211: he never displaces the active Thor).
+    */
    private static void demote(ServerPlayer player) {
       HeroRegistry.changeHero(player, HeroId.HUMAN);
       if (player instanceof ViltrumiteCorePlayer corePlayer) {
@@ -352,7 +356,7 @@ public final class MjolnirWorld {
       switch (reason) {
          case DEATH, ERASED -> {
             if (record.phase == MjolnirPhase.IN_HAND) {
-               // PLACEHOLDER for the [ОТКРЫТО] death with the hammer in the hand (MjolnirTuning.DEATH_IN_HAND_DROPS).
+               // Approved: death with the hammer in the hand drops it at the death point (MjolnirTuning.DEATH_IN_HAND_DROPS).
                if (MjolnirTuning.DEATH_IN_HAND_DROPS) {
                   release(server, record, level, at, -0.2);
                }

@@ -102,8 +102,8 @@ public final class MjolnirTuning {
    /** PLACEHOLDER: hero change — "falls briefly and heavily nearby" (№207), offset from the body. */
    public static final double DROP_NEAR = 1.2;
    /**
-    * PLACEHOLDER for the [ОТКРЫТО] "Thor dies with Mjölnir in the hand": the
-    * hammer drops where he died. Not the recall behaviour; change when decided.
+    * Approved by the author (session A review): a Thor who dies with Mjölnir
+    * in the hand drops it where he died; after the respawn he recalls it.
     */
    public static final boolean DEATH_IN_HAND_DROPS = true;
 
