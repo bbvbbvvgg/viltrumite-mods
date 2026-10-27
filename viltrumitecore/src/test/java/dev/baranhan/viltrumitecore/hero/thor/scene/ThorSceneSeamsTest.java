@@ -69,7 +69,8 @@ class ThorSceneSeamsTest {
 
    @Test
    void sceneFlagIsItsOwnBit() {
-      int flags = ThorFlags.compose(HammerState.IN_HAND, ThorMode.ELECTRIC, true, true, true);
+      int flags = ThorFlags.compose(HammerState.IN_HAND, ThorMode.ELECTRIC, true, true, false, true);
+      assertFalse(ThorFlags.hammerDetached(flags), "the scene bit is not the detached-hammer bit");
       assertTrue(ThorFlags.scene(flags));
       assertTrue(ThorFlags.grabWindow(flags));
       assertTrue(ThorFlags.cameraLease(flags));

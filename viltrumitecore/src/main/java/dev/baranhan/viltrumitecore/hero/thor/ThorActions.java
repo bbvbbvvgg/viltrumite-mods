@@ -47,13 +47,33 @@ public final class ThorActions {
          return Refusal.BUSY;
       }
 
-      return move == ThorMove.DRAW && !handFree ? Refusal.HANDS_BUSY : Refusal.NONE;
+      return needsHand(move) && !handFree ? Refusal.HANDS_BUSY : Refusal.NONE;
+   }
+
+   /** Drawing or throwing Mjölnir takes the right hand: an item there refuses it. */
+   static boolean needsHand(ThorMove move) {
+      return ThorControls.needsHand(move);
+   }
+
+   /**
+    * Overlay moves never take the timeline: the recall runs beside the
+    * current strike (the strike finishes, the arm reaches for the hammer,
+    * the fight goes on), so it neither cuts nor waits for a move.
+    */
+   public static boolean overlay(ThorMove move) {
+      return ThorControls.overlay(move);
    }
 
    /** Server context of a player: live state, held items, movement, the nearest enemy. */
    public static ThorContext context(ServerPlayer player, ThorState state, @Nullable LivingEntity enemy) {
       return new ThorContext(state.hammer, state.mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(),
-         dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes.fullFlight(player), enemy != null, ThorBridge.grabWindowActive(state));
+         dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes.fullFlight(player), enemy != null, ThorBridge.grabWindowActive(state),
+         state.hammerDetached, fistChainOpen(state));
+   }
+
+   /** An unarmed chain (session B's combo window) is still open: LMB / RMB finish it first (#166). */
+   public static boolean fistChainOpen(ThorState state) {
+      return ThorBridge.comboWindow(state) == ThorMove.FIST_COMBO;
    }
 
    /** A press of one of Thor's inputs (already past canAct). */
@@ -62,6 +82,11 @@ public final class ThorActions {
       ThorContext context = context(player, state, enemy);
       ThorMove move = ThorControls.resolve(input, context);
       if (move == null) {
+         return;
+      }
+
+      LivingEntity target = move == ThorMove.HAMMER_STRIKE ? enemy : null;
+      if (move.authored() && !ThorMoves.handler(move).admits(new ThorMoveContext(player, state, move, target, input))) {
          return;
       }
 
@@ -76,7 +101,7 @@ public final class ThorActions {
                ThorMoves.handler(previous).onStop(new ThorMoveContext(player, state, previous, null));
             }
 
-            ThorMoves.handler(move).onStart(new ThorMoveContext(player, state, move, move == ThorMove.HAMMER_STRIKE ? enemy : null));
+            ThorMoves.handler(move).onStart(new ThorMoveContext(player, state, move, target, input));
             ThorFeedback.hammerMoved(player, before, state.hammer);
          }
       }
@@ -99,7 +124,7 @@ public final class ThorActions {
    /** Press flow with an explicit partner entity id (paired moves: the grab target, the fatality victim; -1 = none). */
    public static Refusal start(ThorState state, @Nullable ThorInput input, ThorMove move, boolean handFree, int partnerId) {
       Refusal gate = gate(state, move, handFree);
-      if (gate != Refusal.NONE) {
+      if (gate != Refusal.NONE || overlay(move)) {
          return gate;
       }
 
@@ -156,9 +181,11 @@ public final class ThorActions {
    /**
     * Pure tick flow; returns the timeline event of this tick. {@code
     * controlled}: dead or held by external control, which stops the move. An
-    * item taken into the right hand before the grip cancels a draw; Mjölnir
-    * never shares the hand with an item. Held inputs count up, the grab
-    * window counts down.
+    * item taken into the right hand before the grip cancels a draw. The
+    * hammer state is not touched here: the world store (session A) is its
+    * one writer, and an item in the hand only changes where clients draw an
+    * attached hammer (MjolnirPlace). Held inputs count up, the grab window
+    * counts down.
     */
    public static StagedTimeline.Event advance(ThorState state, boolean handFree, boolean controlled) {
       if (controlled) {
@@ -173,16 +200,14 @@ public final class ThorActions {
          state.grabWindow--;
       }
 
+      if (state.comboWindow > 0 && --state.comboWindow == 0) {
+         state.comboMove = null;
+      }
+
       state.heldTicks.replaceAll((input, ticks) -> ticks + 1);
       StagedTimeline.Event event = state.timeline.tick();
       apply(state, event);
-      state.hammer = settle(state.hammer, handFree);
       return event;
-   }
-
-   /** Mjölnir cannot share the right hand with an item: it goes back to the belt at once. */
-   public static HammerState settle(HammerState hammer, boolean handFree) {
-      return hammer == HammerState.IN_HAND && !handFree ? HammerState.HOLSTERED : hammer;
    }
 
    /** Pure: where Mjölnir is after a technical DRAW / HOLSTER MAIN phase began. */

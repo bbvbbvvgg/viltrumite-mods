@@ -7,8 +7,12 @@ package dev.baranhan.viltrumitecore.hero.thor;
  *   <li>bit 2: electric mode;</li>
  *   <li>bit 3: grab window open (the client MMB claim reads it);</li>
  *   <li>bit 4: camera lease held (the client camera of the leasing session);</li>
- *   <li>bit 5: scene lock held (a scene owns Thor's mouse and flight).</li>
+ *   <li>bit 5: Mjölnir lies / falls in the world away from Thor (session A;
+ *   bits 0-1 then read HOLSTERED, the MMB claim reads RECALL);</li>
+ *   <li>bit 6: scene lock held (session C: a scene owns Thor's mouse and flight).</li>
  * </ul>
+ * The two session bits are independent: a scene can run while the world
+ * hammer lies away (a fist grab), so both can be set at once.
  * The running move is not a flag: it travels as actionId / variant
  * (phase | step &lt;&lt; 2).
  */
@@ -17,7 +21,8 @@ public final class ThorFlags {
    public static final int ELECTRIC = 2;
    public static final int GRAB_WINDOW = 3;
    public static final int CAMERA_LEASE = 4;
-   public static final int SCENE = 5;
+   public static final int HAMMER_DETACHED = 5;
+   public static final int SCENE = 6;
 
    private ThorFlags() {
    }
@@ -27,10 +32,15 @@ public final class ThorFlags {
    }
 
    public static int compose(HammerState hammer, ThorMode mode, boolean grabWindow, boolean cameraLease) {
-      return compose(hammer, mode, grabWindow, cameraLease, false);
+      return compose(hammer, mode, grabWindow, cameraLease, false, false);
    }
 
-   public static int compose(HammerState hammer, ThorMode mode, boolean grabWindow, boolean cameraLease, boolean scene) {
+   /**
+    * The full layout. There is deliberately no five-argument overload: the
+    * sessions once gave it two meanings (detached hammer / scene lock), so
+    * every caller names both session bits.
+    */
+   public static int compose(HammerState hammer, ThorMode mode, boolean grabWindow, boolean cameraLease, boolean hammerDetached, boolean scene) {
       int flags = hammer.ordinal() & HAMMER_MASK;
       if (mode == ThorMode.ELECTRIC) {
          flags |= 1 << ELECTRIC;
@@ -42,6 +52,10 @@ public final class ThorFlags {
 
       if (cameraLease) {
          flags |= 1 << CAMERA_LEASE;
+      }
+
+      if (hammerDetached) {
+         flags |= 1 << HAMMER_DETACHED;
       }
 
       if (scene) {
@@ -65,6 +79,10 @@ public final class ThorFlags {
 
    public static boolean cameraLease(int flags) {
       return (flags & 1 << CAMERA_LEASE) != 0;
+   }
+
+   public static boolean hammerDetached(int flags) {
+      return (flags & 1 << HAMMER_DETACHED) != 0;
    }
 
    public static boolean scene(int flags) {
