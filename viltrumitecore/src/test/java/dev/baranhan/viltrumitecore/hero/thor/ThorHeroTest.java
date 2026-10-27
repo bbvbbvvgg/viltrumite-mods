@@ -52,8 +52,8 @@ class ThorHeroTest {
    }
 
    @Test
-   void vanillaChassisInStageOne() {
-      assertFalse(HERO.allowsFlight(null), "flight is stage 4");
+   void vanillaChassisInTheFoundation() {
+      assertFalse(HERO.allowsFlight(null), "no flight in the foundation");
       assertFalse(HERO.allowsLegacyAbilities(null));
       assertFalse(HERO.allowsAbilityPages(null));
       assertTrue(HERO.hasAbilityPanel(null));
@@ -65,12 +65,14 @@ class ThorHeroTest {
       assertEquals(HeroAction.DIAGONAL_WORLD_CUT.ordinal() + 1, HeroAction.CONTEXT_POWER.ordinal());
       assertEquals(HeroAction.CONTEXT_POWER.ordinal() + 1, HeroAction.CONTEXT_MOBILITY.ordinal());
       assertEquals(HeroAction.CONTEXT_MOBILITY.ordinal() + 1, HeroAction.ULTIMATE.ordinal());
-      assertSame(HeroAction.ULTIMATE, HeroAction.values()[HeroAction.values().length - 1]);
+      assertEquals(HeroAction.ULTIMATE.ordinal() + 1, HeroAction.CONTEXT_TELEPORT.ordinal());
+      assertSame(HeroAction.CONTEXT_TELEPORT, HeroAction.values()[HeroAction.values().length - 1]);
    }
 
    @Test
-   void threePanelSlotsTwoContextKeysAndTheUltimate() {
-      assertArrayEquals(new String[]{ThorAbilities.THUNDER, ThorAbilities.ONSLAUGHT, ThorAbilities.WRATH}, HERO.heroInputSlots());
+   void fourPanelSlotsInKeyOrderRYUltimateV() {
+      assertArrayEquals(new String[]{ThorAbilities.THUNDER, ThorAbilities.ONSLAUGHT, ThorAbilities.WRATH, ThorAbilities.TELEPORT}, HERO.heroInputSlots());
+      assertSame(HeroAction.CONTEXT_TELEPORT, HERO.heroActionFor(ThorAbilities.TELEPORT));
       assertSame(HeroAction.CONTEXT_POWER, HERO.heroActionFor(ThorAbilities.THUNDER));
       assertSame(HeroAction.CONTEXT_MOBILITY, HERO.heroActionFor(ThorAbilities.ONSLAUGHT));
       assertSame(HeroAction.ULTIMATE, HERO.heroActionFor(ThorAbilities.WRATH));
@@ -83,13 +85,14 @@ class ThorHeroTest {
 
       String[] loadout = HERO.defaultLoadout();
       assertEquals(18, loadout.length);
-      assertArrayEquals(HERO.heroInputSlots(), new String[]{loadout[0], loadout[1], loadout[2]});
-      for (int i = 3; i < loadout.length; i++) {
+      // Slots 1-4 are the keys R, Y, Z (temporary ultimate default), V.
+      assertArrayEquals(HERO.heroInputSlots(), new String[]{loadout[0], loadout[1], loadout[2], loadout[3]});
+      for (int i = 4; i < loadout.length; i++) {
          assertEquals("", loadout[i]);
       }
 
       List<ViltrumiteAbility> panel = HERO.panelAbilities();
-      assertEquals(3, panel.size());
+      assertEquals(4, panel.size());
       for (int i = 0; i < panel.size(); i++) {
          assertEquals(HERO.heroInputSlots()[i], panel.get(i).getId());
          assertEquals(HERO.abilityIcon(panel.get(i).getId()), panel.get(i).getIcon());
@@ -97,18 +100,25 @@ class ThorHeroTest {
    }
 
    @Test
-   void slotsStayGreyUntilTheirMovesShip() {
+   void slotsStayGreyUntilASessionAuthorsTheirMove() {
       HeroPublicSnapshot idle = ThorHero.composeSnapshot(new ThorState());
-      for (String slot : ThorAbilities.slotIds()) {
-         ThorInput input = ThorInput.of(ThorAbilities.actionFor(slot));
-         assertTrue(ThorAbilities.slotGrey(idle, input), slot + " has no shipped move in stage 1");
+      for (ThorInput input : ThorInput.values()) {
+         assertTrue(ThorAbilities.slotGrey(idle, input), input + " has no authored move in the foundation");
       }
 
-      assertFalse(ThorAbilities.slotGrey(idle, ThorInput.HAMMER), "a live input lights while idle");
-      ThorState drawing = new ThorState();
-      drawing.timeline.request(ThorMove.DRAW, -1);
-      assertTrue(ThorAbilities.slotGrey(ThorHero.composeSnapshot(drawing), ThorInput.HAMMER), "grey while a move runs");
-      assertTrue(ThorAbilities.slotGrey((HeroPublicSnapshot)null, ThorInput.HAMMER));
+      try {
+         dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves.register("test", ThorMove.ELECTRIC_MODE,
+            new dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveDefinition(0, 1, 0, null, 1),
+            dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveHandler.NONE);
+         assertFalse(ThorAbilities.slotGrey(idle, ThorInput.POWER), "an authored input lights while idle");
+         assertTrue(ThorAbilities.slotGrey(idle, ThorInput.MOBILITY), "other slots are untouched");
+         ThorState running = new ThorState();
+         running.timeline.request(ThorMove.DRAW, -1);
+         assertTrue(ThorAbilities.slotGrey(ThorHero.composeSnapshot(running), ThorInput.POWER), "grey while a move runs");
+         assertTrue(ThorAbilities.slotGrey((HeroPublicSnapshot)null, ThorInput.POWER));
+      } finally {
+         dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves.resetForTests();
+      }
    }
 
    @Test
@@ -136,6 +146,9 @@ class ThorHeroTest {
       assertSame(HammerState.IN_HAND, ThorFlags.hammer(running.heroFlags()));
       assertSame(MovePhase.MAIN, StagedTimeline.phaseOf(running.variant()));
       assertEquals(0, StagedTimeline.stepOf(running.variant()));
+
+      dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge.openGrabWindow(state, 4);
+      assertTrue(ThorFlags.grabWindow(HeroPublicSnapshot.decode(ThorHero.composeSnapshot(state).encode()).heroFlags()), "the client claim sees the grab window");
    }
 
    @Test

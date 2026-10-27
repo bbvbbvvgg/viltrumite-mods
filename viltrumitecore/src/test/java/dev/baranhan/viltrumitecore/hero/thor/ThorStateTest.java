@@ -75,14 +75,17 @@ class ThorStateTest {
    void flagsRoundTripEveryState() {
       for (HammerState hammer : HammerState.values()) {
          for (ThorMode mode : ThorMode.values()) {
-            int flags = ThorFlags.compose(hammer, mode);
-            assertSame(hammer, ThorFlags.hammer(flags));
-            assertSame(mode, ThorFlags.mode(flags));
-            assertEquals(0, flags & ~0b111, "bits 3+ are reserved for later stages");
+            for (boolean window : new boolean[]{false, true}) {
+               int flags = ThorFlags.compose(hammer, mode, window);
+               assertSame(hammer, ThorFlags.hammer(flags));
+               assertSame(mode, ThorFlags.mode(flags));
+               assertEquals(window, ThorFlags.grabWindow(flags));
+               assertEquals(0, flags & ~0b1111, "bits 4+ are free");
+            }
          }
       }
 
-      assertEquals(0, ThorFlags.compose(HammerState.HOLSTERED, ThorMode.NORMAL), "an empty snapshot shows the hammer on the belt");
+      assertEquals(0, ThorFlags.compose(HammerState.HOLSTERED, ThorMode.NORMAL, false), "an empty snapshot shows the hammer on the belt");
       assertTrue(HammerState.values().length <= ThorFlags.HAMMER_MASK + 1);
    }
 

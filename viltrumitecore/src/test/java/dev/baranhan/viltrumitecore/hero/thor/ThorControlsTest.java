@@ -8,32 +8,44 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.MouseButton;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveDefinition;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveHandler;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-/** Context controls (spec §5): one key, a move by state; claims follow shipped moves only. */
+/** Approved routing: one resolver, one move id per input and state; claims follow registrations only. */
 class ThorControlsTest {
+   @AfterEach
+   void reset() {
+      ThorMoves.resetForTests();
+   }
+
    private static ThorContext ground(HammerState hammer) {
       return ThorContext.grounded(hammer, ThorMode.NORMAL);
    }
 
-   private static ThorContext with(HammerState hammer, ThorMode mode, boolean sneaking, boolean airborne, boolean flying, boolean hasTarget,
-                                   boolean guarding, boolean grabbing) {
-      return new ThorContext(hammer, mode, true, sneaking, airborne, flying, hasTarget, guarding, grabbing);
+   private static ThorContext with(HammerState hammer, boolean enemyNear, boolean grabWindow) {
+      return new ThorContext(hammer, ThorMode.NORMAL, true, false, false, false, enemyNear, grabWindow);
    }
 
-   /** Every context the resolver can see (hand free or not). */
+   /** Every context the resolver can see. */
    private static List<ThorContext> everyContext() {
       List<ThorContext> all = new ArrayList<>();
       for (HammerState hammer : HammerState.values()) {
          for (ThorMode mode : ThorMode.values()) {
-            for (int bits = 0; bits < 1 << 7; bits++) {
+            for (int bits = 0; bits < 1 << 6; bits++) {
                all.add(new ThorContext(hammer, mode, (bits & 1) != 0, (bits & 2) != 0, (bits & 4) != 0, (bits & 8) != 0, (bits & 16) != 0,
-                  (bits & 32) != 0, (bits & 64) != 0));
+                  (bits & 32) != 0));
             }
          }
       }
@@ -42,53 +54,72 @@ class ThorControlsTest {
    }
 
    @Test
-   void hammerKeyDrawsHolstersOrRecalls() {
-      assertSame(ThorMove.DRAW, ThorControls.resolve(ThorInput.HAMMER, ground(HammerState.HOLSTERED)));
-      assertSame(ThorMove.HOLSTER, ThorControls.resolve(ThorInput.HAMMER, ground(HammerState.IN_HAND)));
-      assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, ground(HammerState.THROWN)));
-      assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, ground(HammerState.RETURNING)));
+   void mmbIsGrabWindowThenRecallThenMeleeThenThrow() {
+      for (HammerState hammer : HammerState.values()) {
+         assertSame(ThorMove.GRAB, ThorControls.resolve(ThorInput.HAMMER, with(hammer, true, true)), "the grab window wins: " + hammer);
+      }
+
+      assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.THROWN, true, false)));
+      assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.RETURNING, false, false)));
+      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.IN_HAND, true, false)));
+      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.HOLSTERED, true, false)));
+      assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.IN_HAND, false, false)));
+      assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, with(HammerState.HOLSTERED, false, false)));
    }
 
    @Test
-   void strikeFollowsTheContextPriority() {
-      HammerState hand = HammerState.IN_HAND;
-      assertSame(ThorMove.HAMMER_COMBO, ThorControls.resolve(ThorInput.STRIKE, ground(hand)));
+   void mmbNeverMeansDrawOrHolster() {
+      for (ThorContext context : everyContext()) {
+         ThorMove move = ThorControls.resolve(ThorInput.HAMMER, context);
+         assertTrue(move != ThorMove.DRAW && move != ThorMove.HOLSTER, context.toString());
+      }
+   }
+
+   @Test
+   void keysFollowTheApprovedLayout() {
+      for (ThorContext context : everyContext()) {
+         assertSame(ThorMove.ELECTRIC_MODE, ThorControls.resolve(ThorInput.POWER, context), "R only toggles the electric mode");
+         assertSame(ThorMove.TELEPORT_SELECT, ThorControls.resolve(ThorInput.TELEPORT, context));
+         assertSame(ThorMove.WRATH, ThorControls.resolve(ThorInput.ULTIMATE, context));
+         assertSame(context.hammer() == HammerState.THROWN ? ThorMove.HAMMER_PULL : null, ThorControls.resolve(ThorInput.MOBILITY, context),
+            "Y pulls only to the hammer flying after a throw");
+         assertNull(ThorControls.resolve(ThorInput.STANCE, context), "RMB is not routed by the bridge");
+      }
+   }
+
+   @Test
+   void lmbCombosAndNoAttackInFlight() {
+      assertSame(ThorMove.HAMMER_COMBO, ThorControls.resolve(ThorInput.STRIKE, ground(HammerState.IN_HAND)));
       assertSame(ThorMove.FIST_COMBO, ThorControls.resolve(ThorInput.STRIKE, ground(HammerState.HOLSTERED)));
-      assertSame(ThorMove.ELECTRIC_COMBO, ThorControls.resolve(ThorInput.STRIKE, ThorContext.grounded(hand, ThorMode.ELECTRIC)));
-      assertSame(ThorMove.AIR_STRIKE, ThorControls.resolve(ThorInput.STRIKE, with(hand, ThorMode.ELECTRIC, false, true, true, false, false, false)));
-      assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.STRIKE, with(hand, ThorMode.NORMAL, false, true, true, false, true, false)));
-      assertSame(ThorMove.GRAB_SLAM, ThorControls.resolve(ThorInput.STRIKE, with(hand, ThorMode.NORMAL, false, false, false, true, true, true)));
-      assertSame(ThorMove.FATALITY, ThorControls.resolve(ThorInput.STRIKE, with(hand, ThorMode.NORMAL, true, false, false, true, false, true)));
+      assertSame(ThorMove.ELECTRIC_COMBO, ThorControls.resolve(ThorInput.STRIKE, ThorContext.grounded(HammerState.IN_HAND, ThorMode.ELECTRIC)));
+      ThorContext flying = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, true, false, true, true, true, false);
+      assertNull(ThorControls.resolve(ThorInput.STRIKE, flying));
    }
 
    @Test
-   void stanceGuardsWithTheHammerOrGrabsATarget() {
-      assertSame(ThorMove.GUARD, ThorControls.resolve(ThorInput.STANCE, ground(HammerState.IN_HAND)));
-      assertSame(ThorMove.GRAB, ThorControls.resolve(ThorInput.STANCE, with(HammerState.HOLSTERED, ThorMode.NORMAL, false, false, false, true, false, false)));
-      assertNull(ThorControls.resolve(ThorInput.STANCE, ground(HammerState.HOLSTERED)), "empty hands and no target: RMB means nothing");
-   }
-
-   @Test
-   void powerTogglesTheModeOrCallsLightning() {
-      assertSame(ThorMove.ELECTRIC_MODE, ThorControls.resolve(ThorInput.POWER, ground(HammerState.IN_HAND)));
-      assertSame(ThorMove.LIGHTNING_CALL, ThorControls.resolve(ThorInput.POWER, ThorContext.grounded(HammerState.IN_HAND, ThorMode.ELECTRIC)));
-      assertSame(ThorMove.ELECTRIC_MODE, ThorControls.resolve(ThorInput.POWER, with(HammerState.IN_HAND, ThorMode.ELECTRIC, true, false, false, false, false, false)),
-         "sneak + power leaves the electric mode");
-      assertSame(ThorMove.ELECTRIC_MODE, ThorControls.resolve(ThorInput.POWER, ThorContext.grounded(HammerState.HOLSTERED, ThorMode.ELECTRIC)));
-   }
-
-   @Test
-   void mobilityDependsOnAirAndTarget() {
-      assertSame(ThorMove.LIGHTNING_DASH, ThorControls.resolve(ThorInput.MOBILITY, ground(HammerState.IN_HAND)));
-      assertSame(ThorMove.TELEPORT_STRIKE, ThorControls.resolve(ThorInput.MOBILITY, with(HammerState.IN_HAND, ThorMode.NORMAL, false, false, false, true, false, false)));
-      assertSame(ThorMove.DIVE_SLAM, ThorControls.resolve(ThorInput.MOBILITY, with(HammerState.IN_HAND, ThorMode.NORMAL, false, true, false, true, false, false)));
-      assertSame(ThorMove.WRATH, ThorControls.resolve(ThorInput.ULTIMATE, ground(HammerState.HOLSTERED)));
-   }
-
-   @Test
-   void everyResolutionIsADeclaredCandidate() {
+   void retiredMovesAreNeverResolved() {
       for (ThorInput input : ThorInput.values()) {
-         Set<ThorMove> candidates = EnumSet.copyOf(Arrays.asList(ThorControls.candidates(input)));
+         for (ThorContext context : everyContext()) {
+            ThorMove move = ThorControls.resolve(input, context);
+            assertTrue(move == null || !move.retired(), input + " → " + move);
+         }
+
+         for (ThorMove move : ThorControls.candidates(input)) {
+            assertFalse(move.retired(), input + " lists " + move);
+         }
+      }
+
+      for (ThorMove retired : new ThorMove[]{ThorMove.GUARD, ThorMove.AIR_STRIKE, ThorMove.DIVE_SLAM, ThorMove.TELEPORT_STRIKE,
+         ThorMove.LIGHTNING_DASH, ThorMove.LIGHTNING_CALL, ThorMove.GRAB_SLAM}) {
+         assertTrue(retired.retired(), retired.name());
+      }
+   }
+
+   @Test
+   void everyResolutionIsADeclaredCandidateAndEveryCandidateIsReachable() {
+      for (ThorInput input : ThorInput.values()) {
+         Set<ThorMove> candidates = EnumSet.noneOf(ThorMove.class);
+         candidates.addAll(Arrays.asList(ThorControls.candidates(input)));
          Set<ThorMove> seen = EnumSet.noneOf(ThorMove.class);
          for (ThorContext context : everyContext()) {
             ThorMove move = ThorControls.resolve(input, context);
@@ -103,40 +134,69 @@ class ThorControlsTest {
    }
 
    @Test
-   void everyMoveBelongsToSomeInput() {
+   void inputReachesNoTechnicalOrEventOnlyMove() {
       Set<ThorMove> reachable = EnumSet.noneOf(ThorMove.class);
       for (ThorInput input : ThorInput.values()) {
          reachable.addAll(Arrays.asList(ThorControls.candidates(input)));
       }
 
-      assertEquals(EnumSet.allOf(ThorMove.class), reachable);
-   }
-
-   @Test
-   void onlyTheHammerKeyIsLiveInStageOne() {
-      assertTrue(ThorControls.anyShipped(ThorInput.HAMMER));
-      for (ThorInput input : ThorInput.values()) {
-         if (input != ThorInput.HAMMER) {
-            assertFalse(ThorControls.anyShipped(input), input.name());
-         }
+      for (ThorMove move : new ThorMove[]{ThorMove.DRAW, ThorMove.HOLSTER, ThorMove.FATALITY}) {
+         assertFalse(reachable.contains(move), move + " has no key");
       }
    }
 
    @Test
-   void mouseClaimsOnlyShippedMoves() {
-      for (ThorContext context : everyContext()) {
-         assertNull(ThorControls.claimedMouse(MouseButton.PRIMARY, context), "LMB stays vanilla attack");
-         assertNull(ThorControls.claimedMouse(MouseButton.SECONDARY, context), "RMB stays vanilla use");
-         assertNull(ThorControls.claimedMouse(MouseButton.GUARD, context), "F stays vanilla swap");
-         HeroAction middle = ThorControls.claimedMouse(MouseButton.MIDDLE, context);
-         if (context.hammer().away()) {
-            assertNull(middle, "recall is not shipped");
-         } else {
-            assertSame(HeroAction.TOOL_CYCLE, middle);
+   void noMouseClaimInTheFoundation() {
+      for (MouseButton button : MouseButton.values()) {
+         for (ThorContext context : everyContext()) {
+            assertNull(ThorControls.claimedMouse(button, context), button + " stays vanilla until a session authors its move");
          }
       }
 
       assertNull(ThorControls.claimedMouse(null, ground(HammerState.HOLSTERED)));
+      for (ThorInput input : ThorInput.values()) {
+         assertFalse(ThorControls.anyAuthored(input), input.name());
+      }
+   }
+
+   @Test
+   void aRegistrationClaimsMmbOnlyWhereItsBranchIsChosen() {
+      ThorMoves.register("A", ThorMove.HAMMER_THROW, new ThorMoveDefinition(2, 2, 2, null, 1), ThorMoveHandler.NONE);
+      assertSame(HeroAction.TOOL_CYCLE, ThorControls.claimedMouse(MouseButton.MIDDLE, with(HammerState.IN_HAND, false, false)));
+      assertNull(ThorControls.claimedMouse(MouseButton.MIDDLE, with(HammerState.IN_HAND, true, false)), "melee branch not authored");
+      assertNull(ThorControls.claimedMouse(MouseButton.MIDDLE, with(HammerState.THROWN, false, false)), "recall branch not authored");
+      assertNull(ThorControls.claimedMouse(MouseButton.PRIMARY, with(HammerState.IN_HAND, false, false)));
+      assertTrue(ThorControls.anyAuthored(ThorInput.HAMMER));
+   }
+
+   /** The MMB decision has one home: no other Thor source names the MMB branches or reads the middle button. */
+   @Test
+   void mmbResolverIsUnique() throws IOException {
+      Path root = Path.of("src/main/java/dev/baranhan/viltrumitecore");
+      List<Path> sources = new ArrayList<>();
+      for (String dir : new String[]{"hero/thor", "client/thor"}) {
+         try (Stream<Path> files = Files.walk(root.resolve(dir))) {
+            files.filter(path -> path.toString().endsWith(".java")).forEach(sources::add);
+         }
+      }
+
+      for (Path source : sources) {
+         String name = source.getFileName().toString();
+         String text = Files.readString(source);
+         if (!name.equals("ThorControls.java") && !name.equals("ThorMove.java")) {
+            for (String branch : new String[]{"ThorMove.GRAB,", "ThorMove.GRAB;", "ThorMove.GRAB)", "ThorMove.RECALL", "ThorMove.HAMMER_THROW"}) {
+               assertFalse(text.contains(branch), name + " decides an MMB branch (" + branch + ")");
+            }
+         }
+
+         if (!name.equals("ThorInput.java")) {
+            assertFalse(text.contains("MouseButton.MIDDLE"), name + " reads MMB outside ThorInput");
+         }
+
+         if (!name.equals("ThorControls.java") && !name.equals("ThorInput.java")) {
+            assertFalse(text.contains("ThorInput.HAMMER"), name + " routes MMB outside ThorControls");
+         }
+      }
    }
 
    @Test
@@ -145,6 +205,10 @@ class ThorControlsTest {
          assertSame(input, ThorInput.of(input.action()));
       }
 
+      assertSame(HeroAction.CONTEXT_POWER, ThorInput.POWER.action());
+      assertSame(HeroAction.CONTEXT_MOBILITY, ThorInput.MOBILITY.action());
+      assertSame(HeroAction.ULTIMATE, ThorInput.ULTIMATE.action());
+      assertSame(HeroAction.CONTEXT_TELEPORT, ThorInput.TELEPORT.action());
       assertSame(ThorInput.STRIKE, ThorInput.of(MouseButton.PRIMARY));
       assertSame(ThorInput.STANCE, ThorInput.of(MouseButton.SECONDARY));
       assertSame(ThorInput.HAMMER, ThorInput.of(MouseButton.MIDDLE));
