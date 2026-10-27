@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor.bridge;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -65,6 +66,29 @@ public final class ThorBridge {
    public static ThorStateView state(Player player) {
       ThorState state = ThorState.of(player);
       return state == null ? null : state(state);
+   }
+
+   // --- combo window (session B publishes, others read) ---
+
+   /** Open (or extend to) the combo window of a chain of {@code move} for {@code ticks}. */
+   public static void openComboWindow(ThorState state, ThorMove move, int ticks) {
+      if (move == null || ticks <= 0) {
+         throw new IllegalArgumentException("move and ticks > 0 are required");
+      }
+
+      state.comboWindow = state.comboMove == move ? Math.max(state.comboWindow, ticks) : ticks;
+      state.comboMove = move;
+   }
+
+   public static void closeComboWindow(ThorState state) {
+      state.comboMove = null;
+      state.comboWindow = 0;
+   }
+
+   /** The move of the open combo chain, or null. */
+   @Nullable
+   public static ThorMove comboWindow(ThorState state) {
+      return state.comboWindow > 0 ? state.comboMove : null;
    }
 
    // --- grab window ---
