@@ -28,6 +28,8 @@ public class ClientModEvents {
       event.registerEntityRenderer(ViltrumiteEntities.FLARE.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
       dev.baranhan.viltrumitecore.client.ironman.mark.MarkVisuals.registerRenderers(event);
       dev.baranhan.viltrumitecore.client.ironman.mark.sig.SignatureVisuals.registerRenderers(event);
+      // Sinclair's eight entity types (docs/design/2026-10-28-sinclair-design.md §11).
+      dev.baranhan.viltrumitecore.client.sinclair.SinclairEntityRenderers.register(event);
    }
 
    @SubscribeEvent
