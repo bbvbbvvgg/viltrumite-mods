@@ -76,3 +76,72 @@ R3/R4/R5 идут параллельно с R1. Каждая — своя вет
 - Код/тесты: длины клипов = серверные длины, контактные тики, хитбокс туда-обратно, ничего не пересекается (скан мешей), `./gradlew build` зелёный (кроме известного `RegulusVisualContractTest` на arm64).
 - Покадровые превью (`tools/preview_*`): каждый клип — контакт-лист спереди/сбоку/сзади + FP.
 - В игре (sandbox llvmpipe ~5 FPS, xdotool): скриншоты ключевых поз FP/TP; финальная оценка ощущения — плейтест пользователя.
+
+## 11. Приложение R2a: таблица атак, тайминги, схема клипов
+Источник истины — `hero/thor/combat/ThorAttacks` (по образцу `hero/reinhard/melee/MeleeMoves`): одна строка на атаку = хитбокс (`ThorStrike`, числа урона/дальности не менялись), id клипа 3-го лица, id клипа 1-го лица, трейл (yaw/pitch от→до относительно взгляда на контакте), id звукового cue (R5, фасад `ThorSounds`), id VFX контакта (R4), фазы windup/contact/recovery (= intro/main/finish таймлайна).
+
+**Как играется.** Шаг комбо стартует с огибающей приёма (`ThorCombatTimings`), в момент выбора удара `StagedTimeline.retime` даёт шагу фазы его строки. Урон — на первом тике контакта (`ENTER_MAIN`, тик = windup). Буфер следующего нажатия открыт с recovery (`cancellableFrom FINISH`), то есть ритм цепочки ≈ windup+contact, если жать заранее. Окно продолжения после конца шага: молот 10 т, кулаки 11 т (было 6 т на оба; пересчёт пропорционально средней длине шага). Кулдауны и урон не менялись.
+
+### Тайминги: было → стало (тики, 20 т = 1 с)
+| Клип | Приём / удар | Было (w/c/r) | Стало (w/c/r) | Контакт (тик урона) |
+|---|---|---|---|---|
+| `draw` | DRAW | 10 (4/2/4) | **34** (14/4/16) = 1.70 с | 14 |
+| `holster` | HOLSTER | 10 (4/2/4) | **32** (14/4/14) = 1.60 с | 14 |
+| `hammer_swing_right` | HAMMER_COMBO SWING_RIGHT | 16 (5/3/8), контакт 5 | **26** (10/3/13) = 1.30 с | 10 (0.50 с) |
+| `hammer_swing_backhand` | HAMMER_COMBO SWING_BACKHAND | 16 (5/3/8), контакт 5 | **26** (10/3/13) = 1.30 с | 10 (0.50 с) |
+| `hammer_overhead` | HAMMER_COMBO OVERHEAD | 16 (5/3/8), контакт 5 | **28** (11/3/14) = 1.40 с | 11 (0.55 с) |
+| `hammer_spin` | HAMMER_COMBO SPIN | 16 (5/3/8), контакт 5 | **30** (12/3/15) = 1.50 с | 12 (0.60 с) |
+| `hammer_uppercut` | HAMMER_COMBO UPPERCUT | 16 (5/3/8), контакт 5 | **28** (11/3/14) = 1.40 с | 11 (0.55 с) |
+| `hammer_rising` | HAMMER_COMBO RISING | 16 (5/3/8), контакт 5 | **26** (10/3/13) = 1.30 с | 10 (0.50 с) |
+| `hammer_ground_slam` | HAMMER_COMBO GROUND_SLAM | 16 (5/3/8), контакт 5 | **30** (12/3/15) = 1.50 с | 12 (0.60 с) |
+| `hammer_heavy_down` | HAMMER_COMBO HEAVY_DOWN | 16 (5/3/8), контакт 5 | **28** (11/3/14) = 1.40 с | 11 (0.55 с) |
+| `hammer_heavy_reverse` | HAMMER_COMBO HEAVY_REVERSE | 16 (5/3/8), контакт 5 | **28** (11/3/14) = 1.40 с | 11 (0.55 с) |
+| `hammer_heavy_spin` | HAMMER_COMBO HEAVY_SPIN | 16 (5/3/8), контакт 5 | **30** (12/3/15) = 1.50 с | 12 (0.60 с) |
+| `hammer_pommel` | HAMMER_COMBO POMMEL | 16 (5/3/8), контакт 5 | **24** (9/3/12) = 1.20 с | 9 (0.45 с) |
+| `hammer_double_swing` | HAMMER_COMBO DOUBLE_SWING | 16 (5/3/8), контакт 5 | **30** (12/3/15) = 1.50 с | 12 (0.60 с) |
+| `hammer_thrust` | HAMMER_COMBO THRUST | 16 (5/3/8), контакт 5 | **28** (11/3/14) = 1.40 с | 11 (0.55 с) |
+| `hammer_lunge` | HAMMER_COMBO LUNGE | 16 (5/3/8), контакт 5 | **24** (9/3/12) = 1.20 с | 9 (0.45 с) |
+| `hammer_lunge_finish` | HAMMER_COMBO LUNGE_FINISH | 16 (5/3/8), контакт 5 | **30** (12/3/15) = 1.50 с | 12 (0.60 с) |
+| `hammer_falling_slam` | HAMMER_COMBO FALLING_SLAM | 16 (5/3/8), контакт 5 | **26** (9/3/14) = 1.30 с | 9 (0.45 с) |
+| `hammer_low_sweep` | HAMMER_COMBO LOW_SWEEP | 16 (5/3/8), контакт 5 | **24** (9/3/12) = 1.20 с | 9 (0.45 с) |
+| `hammer_sweep_launch` | HAMMER_COMBO SWEEP_LAUNCH | 16 (5/3/8), контакт 5 | **28** (11/3/14) = 1.40 с | 11 (0.55 с) |
+| `fist_jab` | FIST_COMBO JAB | 11 (3/2/6), контакт 3 | **18** (7/2/9) = 0.90 с | 7 (0.35 с) |
+| `fist_cross` | FIST_COMBO CROSS | 11 (3/2/6), контакт 3 | **18** (7/2/9) = 0.90 с | 7 (0.35 с) |
+| `fist_hook` | FIST_COMBO HOOK | 11 (3/2/6), контакт 3 | **20** (8/2/10) = 1.00 с | 8 (0.40 с) |
+| `fist_uppercut` | FIST_COMBO FIST_UPPERCUT | 11 (3/2/6), контакт 3 | **22** (9/2/11) = 1.10 с | 9 (0.45 с) |
+| `fist_haymaker` | FIST_COMBO HAYMAKER | 11 (3/2/6), контакт 3 | **22** (9/2/11) = 1.10 с | 9 (0.45 с) |
+| `fist_hammer_fist` | FIST_COMBO HAMMER_FIST | 11 (3/2/6), контакт 3 | **18** (7/2/9) = 0.90 с | 7 (0.35 с) |
+| `fist_hammer_fist_left` | FIST_COMBO HAMMER_FIST_LEFT | 11 (3/2/6), контакт 3 | **18** (7/2/9) = 0.90 с | 7 (0.35 с) |
+| `fist_ground_pound` | FIST_COMBO GROUND_POUND | 11 (3/2/6), контакт 3 | **22** (9/2/11) = 1.10 с | 9 (0.45 с) |
+| `fist_body_blow` | FIST_COMBO BODY_BLOW | 11 (3/2/6), контакт 3 | **18** (7/2/9) = 0.90 с | 7 (0.35 с) |
+| `fist_elbow` | FIST_COMBO ELBOW | 11 (3/2/6), контакт 3 | **18** (7/2/9) = 0.90 с | 7 (0.35 с) |
+| `fist_push_kick` | FIST_COMBO PUSH_KICK | 11 (3/2/6), контакт 3 | **20** (8/2/10) = 1.00 с | 8 (0.40 с) |
+| `fist_tackle` | FIST_COMBO TACKLE | 11 (3/2/6), контакт 3 | **20** (8/2/10) = 1.00 с | 8 (0.40 с) |
+| `fist_tackle_hook` | FIST_COMBO TACKLE_HOOK | 11 (3/2/6), контакт 3 | **22** (9/2/11) = 1.10 с | 9 (0.45 с) |
+| `hammer_strike_blow` | HAMMER_STRIKE MMB_BLOW | 18 (6/3/9), контакт 6 | **30** (12/3/15) = 1.50 с | 12 (0.60 с) |
+| `hammer_strike_finisher` | HAMMER_STRIKE MMB_FINISHER | 18 (6/3/9), контакт 6 | **30** (12/3/15) = 1.50 с | 12 (0.60 с) |
+| `electric_mode` | ELECTRIC_MODE | 4 (0/4/0) | 4 (0/4/0), без изменений | 0 |
+| `electric_discharge_right` / `_left` | ELECTRIC_COMBO, поза 1 / 2 | 12 (3/2/7) | 12 (3/2/7), без изменений | 3 |
+| `electric_wave` | ELECTRIC_WAVE | 18 (7/3/8) | 18 (7/3/8), без изменений | 7 |
+| `electric_storm` | ELECTRIC_STORM | 112 (0/100/12) | 112 (0/100/12), без изменений (контакт = рост, до отпускания) | 0 |
+| `wrath` | WRATH | 52 (24/8/20) | **128** (72/10/46) = 6.40 с | 72 (3.60 с) |
+
+Бросок/возврат/притягивание (`MjolnirModule.DEFINITIONS`, владелец R3) в §4 не названы и не менялись; это не строки таблицы атак.
+
+### Маршруты комбо
+- Молот: `thunder_chain` ЛЛЛЛ — горизонтальный `swing_right` → диагональ сверху `swing_backhand` → апперкот `uppercut` → финишер в землю `ground_slam`; `thunder_spin` ЛЛЛП — то же, финиш `spin`; бывший маршрут «uppercut» ЛЛП теперь `overhead` (финиш `overhead`). Остальные (ЛПП, ППП, ПЛЛ, ПЛП, спринт ЛЛ, в воздухе Л, присед ПП) без изменений.
+- Кулаки: `boxer` ЛЛЛ — `jab` → `cross` → `uppercut` (3 удара); `hook` остаётся строкой без маршрута. Остальные маршруты — по 3 удара, как были.
+
+### Схема имён клипов
+Файл один: `assets/viltrumitecore/animations/thor/thor.animation.json`. Имя = `clip` строки, клип 1-го лица = то же имя + `_fp`.
+- `draw`, `holster`;
+- `hammer_<удар>` для HAMMER_COMBO (`hammer_swing_right`, …);
+- `fist_<удар>` для FIST_COMBO, префикс `FIST_` удара не дублируется (`FIST_UPPERCUT` → `fist_uppercut`);
+- `hammer_strike_<удар>` для удара на СКМ, префикс `MMB_` снимается (`hammer_strike_blow`, `hammer_strike_finisher`);
+- `electric_mode`, `electric_discharge_right` / `electric_discharge_left`, `electric_wave`, `electric_storm`;
+- `wrath`.
+
+Контракт (тест `client/thor/ThorClipContractTest`): у каждой строки есть оба клипа; `animation_length` = длина строки / 20 с (±0.0001); `loop` не `true` (`hold_on_last_frame` можно); ровно одна инструкция `"timeline"` `contact` на `windup / 20` с — тик урона сервера; одни и те же часы у TP и FP. Маркер `contact` зарезервирован: у клипов вне таблицы (idle/walk/run/stance, подъём, полёт, бросок…) его нет. Пока файла нет, проверка файла помечается пропущенной (abort с числом ожидаемых клипов), а не пройденной; сам проверяющий всегда тестируется на эталоне из таблицы и на поломках.
+
+### Звук и VFX по фазам (для R4/R5)
+Cue строки играет три такта: замах — начало windup, удар — тик `contact`, хвост — начало recovery. VFX строки — на тике `contact`. Id: cue `thor.draw`, `thor.holster`, `thor.hammer_swing`, `thor.hammer_heavy`, `thor.hammer_spin`, `thor.hammer_slam`, `thor.fist`, `thor.fist_heavy`, `thor.fist_slam`, `thor.hammer_strike`, `thor.electric_mode`, `thor.discharge`, `thor.electric_wave`, `thor.electric_storm`, `thor.wrath`; VFX `none`, `thor.hammer_hit`, `thor.hammer_heavy_hit`, `thor.ground_slam`, `thor.fist_hit`, `thor.fist_heavy_hit`, `thor.electric_mode`, `thor.discharge`, `thor.electric_wave`, `thor.electric_storm`, `thor.wrath_strike`. Это ключи, а не регистрации: R4/R5 сами решают, чем их наполнить.
