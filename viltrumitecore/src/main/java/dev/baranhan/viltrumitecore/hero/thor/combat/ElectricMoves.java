@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroShockwave;
 import dev.baranhan.viltrumitecore.hero.combat.InterruptReason;
@@ -23,7 +25,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -56,7 +57,7 @@ public final class ElectricMoves {
 
          ServerLevel level = player.serverLevel();
          boolean on = state.mode() == ThorMode.ELECTRIC;
-         ElectricFx.sound(level, player.position(), on ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE, 0.8F, on ? 1.6F : 1.2F);
+         ThorSounds.play(player, on ? ThorCue.ELECTRIC_ON : ThorCue.ELECTRIC_OFF);
          if (on) {
             ElectricFx.crackle(level, player.position().add(0.0, 1.0, 0.0), 30);
             ElectricFx.arc(level, ElectricFx.hand(player), ElectricFx.hand(player).add(0.0, 1.6, 0.0));
@@ -90,6 +91,7 @@ public final class ElectricMoves {
                discharge(player, combat);
                ElectricCombos.push(player, context.state(), combat, ElectricAction.Kind.LMB);
             }
+            case ENTER_FINISH -> ThorSounds.play(player, ThorCue.ELECTRIC_TAIL);
             case END -> context.state().setCombatPose(0);
             default -> {
             }
@@ -109,7 +111,7 @@ public final class ElectricMoves {
          state.setCombatPose(1 + (combat.electricStep & 1));
          combat.strikeAttackId = combat.nextAttackId();
          MeleeMoves.captureStep(player, combat);
-         ElectricFx.sound(player.serverLevel(), player.position(), SoundEvents.FIRECHARGE_USE, 0.3F, 1.8F);
+         ThorSounds.play(player, ThorCue.DISCHARGE_WINDUP);
       }
    };
 
@@ -149,6 +151,7 @@ public final class ElectricMoves {
                wave(player, combat);
                ElectricCombos.push(player, state, combat, ElectricAction.Kind.RMB);
             }
+            case ENTER_FINISH -> ThorSounds.play(player, ThorCue.ELECTRIC_TAIL);
             case END -> state.setCombatPose(0);
             default -> {
             }
@@ -181,6 +184,7 @@ public final class ElectricMoves {
          combat.strikeAttackId = combat.nextAttackId();
          MeleeMoves.captureStep(player, combat);
          ElectricFx.crackle(player.serverLevel(), player.position().add(0.0, 1.0, 0.0), 12);
+         ThorSounds.play(player, ThorCue.WAVE_WINDUP);
       }
    };
 
@@ -202,8 +206,8 @@ public final class ElectricMoves {
          ServerPlayer player = context.player();
          if (player != null) {
             ServerLevel level = player.serverLevel();
-            ElectricFx.sound(level, player.position(), SoundEvents.LIGHTNING_BOLT_THUNDER, 0.6F, 1.4F);
-            ElectricFx.sound(level, player.position(), SoundEvents.BEACON_POWER_SELECT, 0.8F, 0.7F);
+            ThorSounds.play(player, ThorCue.STORM_START);
+            ThorSounds.play(player, ThorCue.STORM_CHARGE);
             ElectricCombos.push(player, state, combat, ElectricAction.Kind.HOLD_RMB);
          }
       }
@@ -226,6 +230,10 @@ public final class ElectricMoves {
          if (combat.stormTicks >= 0) {
             combat.startCooldown(context.player(), ThorCombatState.Cooldown.STORM, ThorCombatConfig.get().stormCooldownTicks);
             combat.stormTicks = -1;
+            if (context.player() != null) {
+               // A cancelled storm cuts its riser (a burst has already done it).
+               ThorSounds.stop(context.player().serverLevel(), context.player().position(), ThorCue.STORM_CHARGE);
+            }
          }
 
          context.state().setCombatPose(0);
@@ -245,7 +253,7 @@ public final class ElectricMoves {
       combat.actionAll.clear();
       Vec3 from = ElectricFx.hand(player);
       LivingEntity first = CombatHits.alongRay(player, player.getEyePosition(), player.getLookAngle(), config.dischargeRange, 0.6);
-      ElectricFx.sound(level, from, SoundEvents.LIGHTNING_BOLT_IMPACT, 0.7F, 1.5F + level.getRandom().nextFloat() * 0.3F);
+      ThorSounds.playAt(level, from, ThorCue.DISCHARGE);
       if (first == null) {
          Vec3 end = ElectricFx.aim(player, config.dischargeRange);
          ElectricFx.arc(level, from, end);
@@ -309,7 +317,7 @@ public final class ElectricMoves {
       Vec3 center = player.position();
       ring(player, combat, center, config.waveRadius, config.waveDamage, config.waveKnockback, 0.3, true);
       HeroFx.shockwave(player, center, 0.5F, HeroShockwave.groundUnder(level, player), (float)config.waveRadius);
-      ElectricFx.sound(level, center, SoundEvents.TRIDENT_THUNDER, 0.5F, 1.6F);
+      ThorSounds.playAt(level, center, ThorCue.WAVE);
    }
 
    /** Damage + push in a ring, with an expanding spark ring over a few ticks. */
@@ -361,7 +369,7 @@ public final class ElectricMoves {
       if (stage > combat.stormStage) {
          // A new charge stage: a clear cue (sound, ring, flash), the burst grows (#81).
          combat.stormStage = stage;
-         ElectricFx.sound(level, center, SoundEvents.LIGHTNING_BOLT_THUNDER, 0.5F + 0.2F * stage, 1.6F - 0.2F * stage);
+         ThorSounds.playAt(level, center, ThorCue.STORM_STAGE, 0.6F + 0.2F * stage, 1.1F - 0.1F * stage);
          ElectricFx.ring(level, center, combat.stormRadius);
          ElectricFx.crackle(level, center.add(0.0, 1.0, 0.0), 20 * stage);
          HeroFx.flash(player, center.add(0.0, 1.0, 0.0), 0.6F + 0.3F * stage);
@@ -402,7 +410,7 @@ public final class ElectricMoves {
       }
 
       if (combat.stormTicks % 20 == 0) {
-         ElectricFx.sound(level, center, SoundEvents.BEACON_AMBIENT, 0.8F, 1.6F);
+         ThorSounds.playAt(level, center, ThorCue.STORM_CRACKLE);
       }
    }
 
@@ -473,8 +481,8 @@ public final class ElectricMoves {
 
       HeroFx.shockwave(player, center, 1.0F, HeroShockwave.groundUnder(level, player), (float)radius);
       HeroFx.flash(player, center.add(0.0, 1.0, 0.0), 1.2F);
-      ElectricFx.sound(level, center, SoundEvents.GENERIC_EXPLODE, 1.0F, 1.2F);
-      ElectricFx.sound(level, center, SoundEvents.LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
+      ThorSounds.stop(level, center, ThorCue.STORM_CHARGE);
+      ThorSounds.playAt(level, center, ThorCue.STORM_BURST);
       if (combat.stormStage >= stages && config.stormFullCraterRadius > 0 && config.meleeBreaksBlocks) {
          // Only the fully charged storm scars the ground (#18, #30); ordinary blocks only.
          ElectricFx.carve(level, ElectricFx.crater(BlockPos.containing(center).below(), config.stormFullCraterRadius, 0.5));

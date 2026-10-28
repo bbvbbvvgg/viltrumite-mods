@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor.scene;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.HeroHeldTargets;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
@@ -15,7 +16,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -156,7 +156,7 @@ final class GrabSessions {
       }
 
       SESSIONS.put(session.thor, session);
-      SceneFx.sound(thor, thor.position(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0F, 0.6F);
+      SceneFx.sound(thor, thor.position(), ThorCue.GRAB);
       sync(thor, session);
       ThorScenes.postScene(ThorEventType.SCENE_START, session.thor, thor, session.victim, target, ThorScenes.GRAB, true);
       return true;
@@ -165,7 +165,7 @@ final class GrabSessions {
    /** Thor's mouse press while holding: the one action. */
    static void choose(ServerPlayer thor, Session session, GrabAction action) {
       if (session.flow.commit(action)) {
-         SceneFx.sound(thor, thor.position(), SoundEvents.PLAYER_ATTACK_SWEEP, 0.8F, 0.7F);
+         SceneFx.sound(thor, thor.position(), ThorCue.GRAB_ACTION);
          sync(thor, session);
       }
    }
@@ -274,7 +274,7 @@ final class GrabSessions {
          Vec3 away = SceneFrame.forward(thor.getYRot()).scale(0.7).add(0, 0.3, 0);
          SceneFx.move(victim, away);
       }
-      SceneFx.sound(thor, thor.position(), SoundEvents.SHIELD_BLOCK, 0.9F, 0.8F);
+      SceneFx.sound(thor, thor.position(), ThorCue.GRAB_BREAK);
    }
 
    /** The action's release beat: slam impact, throw launch or barrage finisher. The victim leaves the hand. */

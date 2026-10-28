@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.HeroShockwave;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMode;
@@ -16,7 +18,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -131,7 +132,7 @@ public final class ElectricCombos {
       ServerLevel level = player.serverLevel();
       Vec3 hand = ElectricFx.hand(player);
       Vec3 look = player.getLookAngle();
-      ElectricFx.sound(level, player.position(), SoundEvents.TRIDENT_THUNDER, 0.9F, 1.0F);
+      ThorSounds.play(player, ThorCue.COMBO);
       switch (combo) {
          case RICOCHET -> {
             LivingEntity first = ElectricMoves.firstOnRay(player, look, 20.0);
@@ -256,7 +257,7 @@ public final class ElectricCombos {
                ElectricFx.carve(level, ElectricFx.crater(BlockPos.containing(front).below(), 3, 0.6));
             }
 
-            ElectricFx.sound(level, center, SoundEvents.GENERIC_EXPLODE, 1.2F, 0.8F);
+            ThorSounds.playAt(level, front, ThorCue.COMBO_SLAM);
             return front;
          }
       }
