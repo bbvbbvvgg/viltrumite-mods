@@ -119,7 +119,16 @@ def solve_arm(pose, chain, target, pole, ham=None, wrist=None, side=1.0, tilt_li
     wrist = extra local hand turn (bb degrees) for an empty fist. Returns the miss (px)."""
     hand_local = np.eye(3)
     up = chain.upper
-    for _ in range(4):
+    best, best_rot = math.inf, None
+    for i in range(8):
+        if i >= 4:
+            # The wrist turn and the elbow feed each other; past four rounds keep the closest round.
+            pose.touch()
+            miss = float(np.linalg.norm(pose.point(chain.tip) - target))
+            if miss < best - 1e-4:
+                best, best_rot = miss, {b: pose.rot[b].copy() for b in (up, chain.lower, chain.end)}
+            if miss <= 0.05:
+                break
         pose.touch()
         S = pose.point(up)
         parent = pose.parent_frame(up)[:3, :3]
@@ -149,7 +158,13 @@ def solve_arm(pose, chain, target, pole, ham=None, wrist=None, side=1.0, tilt_li
             hand_local = np.eye(3)
         pose.set_world_rot(chain.end, fore_rot @ hand_local)
     pose.touch()
-    return float(np.linalg.norm(pose.point(chain.tip) - target))
+    miss = float(np.linalg.norm(pose.point(chain.tip) - target))
+    if best_rot is not None and best < miss:
+        for b, r in best_rot.items():
+            pose.rot[b] = r
+        pose.touch()
+        miss = best
+    return miss
 
 
 def aim_grip(pose, ham, grip="mjolnir_grip"):
