@@ -165,6 +165,13 @@ public interface HeroDefinition {
    /** Opt-in policy for claimed RMB aimed at a block; false leaves vanilla use / place / open on blocks alone. */
    default boolean claimsBlockUse(Player player) { return true; }
 
+   /**
+    * Opt-in RMB arbitration (VanillaUse): true = this hero takes a claimed
+    * right click only when vanilla would not use it (both hands empty, not on
+    * a block, not on an interactive entity). Default false: unchanged claim.
+    */
+   default boolean yieldsToVanillaUse(Player player) { return false; }
+
    /** Optional physical catch. True transfers temporary projectile ownership to the hero. */
    default boolean captureProjectile(ServerPlayer self, net.minecraft.world.entity.projectile.Projectile projectile) { return false; }
 

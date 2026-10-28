@@ -133,6 +133,9 @@ public final class HeroMouseInput {
          && Minecraft.getInstance().hitResult!=null && Minecraft.getInstance().hitResult.getType()==net.minecraft.world.phys.HitResult.Type.BLOCK) return null;
       if(button==MouseButton.SECONDARY && !hero.claimsBlockUse(player)
          && Minecraft.getInstance().hitResult!=null && Minecraft.getInstance().hitResult.getType()==net.minecraft.world.phys.HitResult.Type.BLOCK) return null;
+      // RMB arbitration (VanillaUse): an opted-in hero never takes a click vanilla would use (items, blocks, villagers, mounts, ...).
+      if(button==MouseButton.SECONDARY && hero.yieldsToVanillaUse(player)
+         && dev.baranhan.viltrumitecore.hero.VanillaUse.vanillaOwns(player, Minecraft.getInstance().hitResult)) return null;
       return hero.mouseAction(button, player);
    }
 }

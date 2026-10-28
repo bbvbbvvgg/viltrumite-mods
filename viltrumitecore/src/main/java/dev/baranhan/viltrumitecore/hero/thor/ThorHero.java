@@ -139,10 +139,25 @@ public final class ThorHero implements HeroDefinition {
       return ThorScenes.claimsMouse(player);
    }
 
-   /** RMB on a block stays vanilla (use / place / open); RMB in the air feeds the combos (on a lying Mjölnir: OPEN). */
+   /**
+    * RMB on a block stays vanilla (use / place / open), except while a scene
+    * owns the mouse (grab throw facing a door, C-M15).
+    */
    @Override
    public boolean claimsBlockUse(Player player) {
-      return false;
+      return ThorScenes.claimsMouse(player);
+   }
+
+   /**
+    * B-B1: outside a scene Thor takes RMB only when vanilla would not use it
+    * (VanillaUse: both hands empty, not on a block, not on a villager / mount
+    * / pet / armor stand / non-living entity such as a lying Mjölnir or an
+    * ally). OPEN(owner): RMB priority on a lying Mjölnir; conservative = the
+    * entity's own interaction (session A's pick-up).
+    */
+   @Override
+   public boolean yieldsToVanillaUse(Player player) {
+      return !ThorScenes.claimsMouse(player);
    }
 
    /**
@@ -163,6 +178,16 @@ public final class ThorHero implements HeroDefinition {
    @Override
    public boolean allowsVanillaAttack(Player player) {
       return ThorMovementRules.attacksAllowed(ThorScenes.fullFlight(player), ThorScenes.claimsMouse(player));
+   }
+
+   /**
+    * Server (C-M5): while a teleport selection or a fatality holds Thor in
+    * place (possibly above the ground, from HOVER), the vanilla
+    * "flying is not enabled" counter does not count it.
+    */
+   @Override
+   public boolean sustainsAirborne(Player player) {
+      return ThorScenes.holdsInPlace(player);
    }
 
    /** Both sides: the body a scene holds (grab, fatality), or -1. */
