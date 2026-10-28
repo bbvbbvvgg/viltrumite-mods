@@ -79,11 +79,29 @@ public interface HeroDefinition {
 
    /**
     * Hitbox and eye height factor of this player (both sides, Forge
-    * EntityEvent.Size in HeroSizeEvents). Call refreshDimensions() when it
-    * changes. Default 1 = vanilla.
+    * EntityEvent.Size in HeroSizeEvents, per-pose table in HeroBodySize).
+    * HeroBodyTracker refreshes dimensions when it changes. Default 1 = vanilla.
     */
    default float bodyScale(Player player) {
       return 1.0F;
+   }
+
+   /**
+    * Hitbox width factor (HeroBodySize; both sides). Default: the same as {@link #bodyScale}.
+    * HeroBodyTracker refreshes dimensions when either factor changes.
+    */
+   default float bodyWidthScale(Player player) {
+      return this.bodyScale(player);
+   }
+
+   /** Extra entity / block reach (blocks) of a big body: a transient attribute modifier (HeroBodyTracker). */
+   default double bodyReachBonus(Player player) {
+      return 0.0;
+   }
+
+   /** Extra step height (blocks) of a big body: a transient attribute modifier (HeroBodyTracker). */
+   default double bodyStepBonus(Player player) {
+      return 0.0;
    }
 
    /**

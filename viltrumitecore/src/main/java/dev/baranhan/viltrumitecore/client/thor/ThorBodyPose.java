@@ -28,6 +28,9 @@ public final class ThorBodyPose {
    /** BakedGeoModel's internal frame is the vanilla model frame turned 180° about Z (x and y flipped). */
    private static final Quaternionfc FLIP = new Quaternionf().rotationZ((float)Math.PI);
 
+   /** Clip source (tests read thor.animation.json from disk instead of the resource cache). */
+   static java.util.function.Function<String, Animation> clips = name -> AnimCache.animation(ThorAssets.ANIMATIONS, name);
+
    private ThorBodyPose() {
    }
 
@@ -98,7 +101,7 @@ public final class ThorBodyPose {
          return;
       }
 
-      Animation clip = AnimCache.animation(ThorAssets.ANIMATIONS, name);
+      Animation clip = clips.apply(name);
       if (clip != null) {
          AnimationController.additive(clip, model, 0.0, weight);
       }
@@ -106,7 +109,7 @@ public final class ThorBodyPose {
 
    /** The lift squat clip over the current pose at {@code seconds}, by weight. */
    public static void liftClip(BakedGeoModel model, double seconds, float weight) {
-      Animation clip = AnimCache.animation(ThorAssets.ANIMATIONS, ThorAssets.CLIP_LIFT);
+      Animation clip = clips.apply(ThorAssets.CLIP_LIFT);
       if (clip != null && weight > 0.0F) {
          double length = Math.max(1.0E-3, clip.lengthSeconds());
          AnimationController.overlay(clip, model, seconds % length, weight);

@@ -21,6 +21,7 @@ import argparse
 import base64
 import io
 import json
+import math
 import os
 import random
 
@@ -296,42 +297,86 @@ def key(v, easing="easeInOutSine"):
     return {"vector": v, "easing": easing}
 
 
+# Lift (a bent-over pull, like a deadlift from the floor): the hips go back and down, the knees
+# bend, the back leans in ~72° over the hammer and the head looks up at the handle. Fists low on a
+# 0.8-block handle in front of a 3.2-block body need that lean; an upright sumo squat crushed the
+# belly into the thighs. Feet stay flat on the ground (ThorBodyGeometryTest.feetOnTheGround).
+# The arms are IK (ThorLift.solveThor); the clip only seeds them. Loop 1.2 s: strained tremble
+# and a heave (at 0.6 s the hips rise and the back rounds a little more: a failed pull).
+# Values were searched offline against the mesh scan (no arm through the body, fists on the
+# handle) and then checked in tools/preview_thor.py.
+LIFT = {"drop": 5.5, "back": 7.9, "lean": 71.9, "head": -50.0, "beard": -20.0, "thigh": 71.2, "spread": 18.4, "belly": -6.0, "shin": 84.4}
+THIGH_PX, SHIN_PX, HIP_PX = 10.0, 11.0, 21.0
+CROUCH = {"pos": [0, -3.77, 1.5], "lean": 10.3, "head": -30.0, "thigh": 63.6, "shin": 112.8, "arm": 0.0, "abduct": 1.8, "forearm": -12.0}
+SIT = {"arm": -20.0, "abduct": 10.0, "forearm": -25.0}
+
+
+def shin_for(drop, thigh, spread):
+    """Shin rotation (deg, back) that puts the sole back on the ground for a hip `drop` px down."""
+    hip = HIP_PX - drop
+    knee = hip - THIGH_PX * math.cos(math.radians(thigh)) * math.cos(math.radians(spread))
+    reach = max(-1.0, min(1.0, knee / (SHIN_PX * math.cos(math.radians(spread)))))
+    return thigh + math.degrees(math.acos(reach))
+
+
+def lift_squat():
+    p = LIFT
+
+    def shin_at(h):
+        # The searched shin at rest; the heave changes it like the planar estimate does.
+        base = shin_for(p["drop"], p["thigh"], p["spread"])
+        return p["shin"] + shin_for(p["drop"] - 1.2 * h, p["thigh"] - 6.0 * h, p["spread"]) - base
+    times = ("0.0", "0.3", "0.6", "0.9", "1.2")
+    heave = (0.0, 0.25, 1.0, 0.25, 0.0)       # hips up at 0.6 s
+    sway = (0.0, 0.8, 0.0, -0.8, 0.0)         # tremble side to side (deg)
+    def series(f):
+        return {t: key([round(v, 3) for v in f(h, w)]) for t, h, w in zip(times, heave, sway)}
+    pos = series(lambda h, w: [0, -p["drop"] + 1.2 * h, p["back"]])
+    bones = {
+        "body": {"position": pos, "rotation": series(lambda h, w: [p["lean"] + 3.0 * h, w, 0])},
+        "head": {"rotation": series(lambda h, w: [p["head"] - 4.0 * h, 0, 0])},
+        "belly": rot([p["belly"], 0, 0]),
+        "beard": rot([p["beard"], 0, 0]),
+    }
+    for side, sign in (("right", 1), ("left", -1)):
+        bones[side + "_leg"] = {"position": pos, "rotation": series(
+            lambda h, w, sign=sign: [-(p["thigh"] - 6.0 * h), 0, sign * p["spread"]])}
+        bones[side + "_shin"] = {"rotation": series(
+            lambda h, w, sign=sign: [shin_at(h), 0, -sign * p["spread"] * 0.4])}
+        bones[side + "_arm"] = rot([-30, 0, sign * 12])
+        bones[side + "_forearm"] = rot([-10, 0, 0])
+    return {"loop": True, "animation_length": 1.2, "bones": bones}
+
+
+def rot(v):
+    return {"rotation": {"0.0": key(v)}}
+
+
 def clips():
     still = lambda bones: {"loop": True, "animation_length": 0.05, "bones": bones}
     def rot(v):
         return {"rotation": {"0.0": key(v)}}
     crouch = still({
         # Additive over the vanilla pose bridge (which already leans the body by crouch's 28.6°):
-        # hips sink, thighs flex and knees bend so the crown stays under the 2.625-block crouch box.
-        "body": {"position": {"0.0": key([0, -4.5, 1.5])}, "rotation": {"0.0": key([-8, 0, 0])}},
-        "head": rot([-14, 0, 0]),
-        "right_leg": {"position": {"0.0": key([0, -4.5, 1.5])}, "rotation": {"0.0": key([-34, 0, 0])}},
-        "left_leg": {"position": {"0.0": key([0, -4.5, 1.5])}, "rotation": {"0.0": key([-34, 0, 0])}},
-        "right_shin": rot([62, 0, 0]),
-        "left_shin": rot([62, 0, 0]),
-        "right_forearm": rot([-12, 0, 0]),
-        "left_forearm": rot([-12, 0, 0]),
+        # hips sink a little, knees bend deep and the back leans in, so the crown stays under the
+        # 2.625-block crouch box while the soles stay on the ground.
+        "body": {"position": {"0.0": key(CROUCH["pos"])}, "rotation": {"0.0": key([CROUCH["lean"], 0, 0])}},
+        "head": rot([CROUCH["head"], 0, 0]),
+        "right_leg": {"position": {"0.0": key(CROUCH["pos"])}, "rotation": {"0.0": key([-CROUCH["thigh"], 0, 0])}},
+        "left_leg": {"position": {"0.0": key(CROUCH["pos"])}, "rotation": {"0.0": key([-CROUCH["thigh"], 0, 0])}},
+        "right_shin": rot([CROUCH["shin"], 0, 0]),
+        "left_shin": rot([CROUCH["shin"], 0, 0]),
+        "right_arm": rot([CROUCH["arm"], 0, CROUCH["abduct"]]),
+        "left_arm": rot([CROUCH["arm"], 0, -CROUCH["abduct"]]),
+        "right_forearm": rot([CROUCH["forearm"], 0, 0]),
+        "left_forearm": rot([CROUCH["forearm"], 0, 0]),
     })
-    # Additive over the bridge's riding pose (thighs forward): knees bend, shins hang.
-    sit = still({"right_shin": rot([70, 0, 0]), "left_shin": rot([70, 0, 0])})
-    # Lift: deep squat, straight back leaning in, head up to the handle. The arms are IK (ThorLift):
-    # this clip only gives them a seed. Loop: a strained tremble and a breathing heave of the torso.
-    lift = {"loop": True, "animation_length": 1.2, "bones": {
-        "body": {"position": {"0.0": key([0, -9.5, -3.0]), "0.6": key([0, -9.0, -3.0]), "1.2": key([0, -9.5, -3.0])},
-                 "rotation": {"0.0": key([34, 0, 0]), "0.3": key([33, 0.6, 0]), "0.6": key([31, 0, 0]), "0.9": key([33, -0.6, 0]), "1.2": key([34, 0, 0])}},
-        "head": {"rotation": {"0.0": key([-26, 0, 0]), "0.6": key([-30, 0, 0]), "1.2": key([-26, 0, 0])}},
-        "belly": rot([-4, 0, 0]),
-        "right_leg": {"position": {"0.0": key([0, -9.5, -3.0]), "0.6": key([0, -9.0, -3.0]), "1.2": key([0, -9.5, -3.0])},
-                      "rotation": {"0.0": key([-62, 0, 14])}},
-        "left_leg": {"position": {"0.0": key([0, -9.5, -3.0]), "0.6": key([0, -9.0, -3.0]), "1.2": key([0, -9.5, -3.0])},
-                     "rotation": {"0.0": key([-62, 0, -14])}},
-        "right_shin": rot([96, 0, -6]),
-        "left_shin": rot([96, 0, 6]),
-        "right_arm": rot([-40, 0, 10]),
-        "left_arm": rot([-40, 0, -10]),
-        "right_forearm": rot([-20, 0, 0]),
-        "left_forearm": rot([-20, 0, 0]),
-    }}
+    # Additive over the bridge's riding pose (thighs forward): knees bend, shins hang, the arms
+    # open a little and the forearms rest above the thighs instead of sinking into them.
+    sit = still({"right_shin": rot([70, 0, 0]), "left_shin": rot([70, 0, 0]),
+                 "right_arm": rot([SIT["arm"], 0, SIT["abduct"]]), "left_arm": rot([SIT["arm"], 0, -SIT["abduct"]]),
+                 "right_forearm": rot([SIT["forearm"], 0, 0]), "left_forearm": rot([SIT["forearm"], 0, 0])})
+    lift = lift_squat()
     return {"format_version": "1.8.0", "animations": {"crouch": crouch, "sit": sit, "lift_squat": lift}}
 
 
