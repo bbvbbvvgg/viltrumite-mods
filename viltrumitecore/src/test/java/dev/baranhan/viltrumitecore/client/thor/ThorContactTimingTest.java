@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvents;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorAttacks;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatModule;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatTimings;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorStrike;
@@ -37,7 +38,7 @@ class ThorContactTimingTest {
    @Test
    void everyStrikeClipHitsOnTheDamageTick() {
       for (ThorStrike strike : ThorStrike.values()) {
-         int damageTick = ThorCombatTimings.of(strike.move()).intro();
+         int damageTick = ThorAttacks.of(strike).phases().contactTick();
          ThorClips.Clip clip = ThorClips.of(strike.move(), 0, strike.pose());
          float[][] arm = clip.rightArm();
          assertEquals(damageTick, arm[2][0], 1.0E-6, strike + " contact key");
@@ -47,16 +48,22 @@ class ThorContactTimingTest {
 
    @Test
    void firstPersonThrustHitsOnTheDamageTick() {
-      for (ThorMove move : new ThorMove[]{ThorMove.HAMMER_COMBO, ThorMove.FIST_COMBO, ThorMove.HAMMER_STRIKE}) {
-         float[][] rows = ThorFirstPerson.rows(move, ThorStrike.SWING_RIGHT.pose());
-         assertEquals(ThorCombatTimings.of(move).intro(), rows[ThorFirstPerson.STRIKE_CONTACT][0], 1.0E-6, move.name());
+      for (ThorStrike strike : ThorStrike.values()) {
+         if (strike.hand() == ThorStrike.Hand.LEFT) {
+            continue;
+         }
+
+         float[][] rows = ThorFirstPerson.rows(strike.move(), strike.pose());
+         assertEquals(ThorAttacks.of(strike).phases().contactTick(), rows[ThorFirstPerson.STRIKE_CONTACT][0], 1.0E-6, strike.name());
          for (int i = 1; i < rows.length; i++) {
-            assertTrue(rows[i][0] > rows[i - 1][0], move + " keys stay ordered");
+            assertTrue(rows[i][0] > rows[i - 1][0], strike + " keys stay ordered");
          }
       }
 
       float[][] discharge = ThorFirstPerson.rows(ThorMove.ELECTRIC_COMBO, 1);
       assertEquals(ThorCombatTimings.of(ThorMove.ELECTRIC_COMBO).intro(), discharge[ThorFirstPerson.DISCHARGE_CONTACT][0], 1.0E-6);
+      assertEquals(ThorCombatTimings.of(ThorMove.WRATH).intro(), ThorFirstPerson.wrathRows()[ThorFirstPerson.WRATH_CONTACT][0], 1.0E-6,
+         "the ultimate drives down on the server's strike tick");
    }
 
    @Test

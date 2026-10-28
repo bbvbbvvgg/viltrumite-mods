@@ -6,10 +6,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.baranhan.viltrumitecore.client.anim.pose.FirstPersonArm;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
-import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveDefinition;
-import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatTimings;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorAttacks;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorStrike;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -64,10 +63,18 @@ public final class ThorFirstPerson {
       strikeRows = rows(move, resource);
    }
 
+   /** The ultimate's row on the server clock (tests). */
+   static float[][] wrathRows() {
+      return WRATH_ON_CONTACT;
+   }
+
    /** Key index of the contact (the thrust) in {@link #STRIKE} and {@link #DISCHARGE}. */
    static final int STRIKE_CONTACT = 2;
    static final int DISCHARGE_CONTACT = 1;
-   private static final Map<ThorMove, float[][]> STRIKES = new EnumMap<>(ThorMove.class);
+   private static final Map<ThorAttacks.Attack, float[][]> STRIKES = new HashMap<>();
+   /** WRATH_KEY drives down on the server's strike tick (the end of the long charge). */
+   static final int WRATH_CONTACT = 3;
+   private static final float[][] WRATH_ON_CONTACT = align(WRATH, WRATH_CONTACT, ThorAttacks.envelope(ThorMove.WRATH).phases().contactTick());
 
    /**
     * Pure: the strike row of a strike pose (tests). The contact key lands on
@@ -76,18 +83,16 @@ public final class ThorFirstPerson {
     */
    static float[][] rows(ThorMove move, int resource) {
       if (move == ThorMove.ELECTRIC_COMBO) {
-         return resource == ThorCombatClips.LEFT_HAND ? GUARD : contactAligned(move, DISCHARGE, DISCHARGE_CONTACT);
+         return resource == ThorCombatClips.LEFT_HAND ? GUARD : contactAligned(ThorAttacks.of(move, resource), DISCHARGE, DISCHARGE_CONTACT);
       }
 
       ThorStrike pose = ThorStrike.byPose(resource);
-      return pose != null && pose.hand() == ThorStrike.Hand.LEFT ? GUARD : contactAligned(move, STRIKE, STRIKE_CONTACT);
+      return pose != null && pose.hand() == ThorStrike.Hand.LEFT ? GUARD : contactAligned(ThorAttacks.of(move, resource), STRIKE, STRIKE_CONTACT);
    }
 
-   private static float[][] contactAligned(ThorMove move, float[][] base, int contactKey) {
-      return STRIKES.computeIfAbsent(move, m -> {
-         ThorMoveDefinition d = ThorCombatTimings.DEFINITIONS.get(m);
-         return d == null ? base : align(base, contactKey, d.intro());
-      });
+   /** The row's own damage tick (each strike has its own windup, ThorAttacks). */
+   private static float[][] contactAligned(@Nullable ThorAttacks.Attack attack, float[][] base, int contactKey) {
+      return attack == null ? base : STRIKES.computeIfAbsent(attack, a -> align(base, contactKey, a.phases().contactTick()));
    }
 
    /** Retime {@code rows} so key {@code contactKey} sits at {@code contactTick}: keys before it scale, keys after it shift. */
@@ -124,7 +129,7 @@ public final class ThorFirstPerson {
          float t = player.tickCount + partialTick;
          ARM.add((float)Math.sin(t * 1.9F) * 1.6F, 0.0F, (float)Math.cos(t * 2.3F) * 1.4F, 0.0F, 0.0F, 0.0F);
       } else if (move == ThorMove.WRATH) {
-         ARM.blend(WRATH, elapsed, 1.0F);
+         ARM.blend(WRATH_ON_CONTACT, elapsed, 1.0F);
       } else if (strikeRows != null) {
          float since = player.tickCount - strikeStart + partialTick;
          if (since >= 0.0F && since <= strikeRows[strikeRows.length - 1][0]) {

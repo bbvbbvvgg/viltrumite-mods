@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvents;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorAttacks;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatModule;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorStrike;
 import dev.baranhan.viltrumitecore.hero.thor.dev.ThorDevCommands;
@@ -63,7 +64,8 @@ class ThorCombatClipsTest {
       for (ThorStrike strike : ThorStrike.values()) {
          ThorClips.Clip clip = ThorClips.of(strike.move(), 0, strike.pose());
          assertNotNull(clip, strike.name());
-         assertEquals(strike.move().length(), clip.lastTick(), 1.0E-6, strike.name());
+         // R2a: a strike's clip ends at its own row (the step is retimed to it on the server).
+         assertEquals(ThorAttacks.of(strike).length(), clip.lastTick(), 1.0E-6, strike.name());
          ordered(clip, strike.name());
       }
 

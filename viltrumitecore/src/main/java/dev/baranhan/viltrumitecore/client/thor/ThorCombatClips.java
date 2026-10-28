@@ -4,6 +4,7 @@ import static dev.baranhan.viltrumitecore.client.anim.pose.PoseKeys.key;
 
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveDefinition;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorAttacks;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatTimings;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorStrike;
 import java.util.EnumMap;
@@ -13,7 +14,7 @@ import javax.annotation.Nullable;
 /**
  * Session B's third-person clips: one per strike pose (ThorStrike, the
  * snapshot resource) and one default per move (pose 0), all keyed to the
- * server phases of ThorCombatTimings (wind-up at the end of the intro, the
+ * server phases of the strike's ThorAttacks row (wind-up at the end of the intro, the
  * hit at the end of the main phase, recovery to the move's length).
  * PLACEHOLDER art: angles are not approved animations and were not checked
  * in a running client.
@@ -118,7 +119,7 @@ public final class ThorCombatClips {
     * through main → rest at the end of the move.
     */
    static ThorClips.Clip clip(ThorStrike strike) {
-      ThorMoveDefinition d = ThorCombatTimings.of(strike.move());
+      ThorMoveDefinition d = ThorCombatTimings.of(ThorAttacks.of(strike));
       Swing swing = SWINGS.get(strike);
       boolean fist = strike.move() == ThorMove.FIST_COMBO;
       float[] rest = fist ? GUARD : HOLD;
