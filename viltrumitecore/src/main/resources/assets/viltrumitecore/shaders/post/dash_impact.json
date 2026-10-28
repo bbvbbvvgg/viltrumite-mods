@@ -146,6 +146,24 @@
           "values": [
             0.0
           ]
+        },
+        {
+          "name": "TimeStopGrey",
+          "values": [
+            0.0
+          ]
+        },
+        {
+          "name": "TimeStopInvert",
+          "values": [
+            0.0
+          ]
+        },
+        {
+          "name": "TimeStopRipple",
+          "values": [
+            0.0
+          ]
         }
       ]
     },
