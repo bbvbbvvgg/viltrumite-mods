@@ -196,6 +196,21 @@ public final class HeroImpactFx {
 
       play(recipe, packet.origin, target, dev.baranhan.viltrumitecore.hero.fx.HeroFx.clampPresetScale(packet.power), packet.blockStateId == 0 ? null : material,
          seed * 0x5DEECE66DL + 11L);
+      for (PresetListener listener : PRESET_LISTENERS) {
+         listener.onPreset(recipe.preset(), packet.origin, target);
+      }
+   }
+
+   private static final java.util.List<PresetListener> PRESET_LISTENERS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+   /** State-driven FX that follow a server preset (the WRATH storm tail moves to the strike point). */
+   public static void addPresetListener(PresetListener listener) {
+      PRESET_LISTENERS.add(listener);
+   }
+
+   @FunctionalInterface
+   public interface PresetListener {
+      void onPreset(FxPreset preset, Vec3 at, Vec3 target);
    }
 
    /** Client entry point: plays a preset locally (state-driven FX, a packet). Unknown recipes are ignored. */
@@ -259,7 +274,7 @@ public final class HeroImpactFx {
 
             float height = Math.min(dev.baranhan.viltrumitecore.hero.fx.HeroFx.BOLT_MAX_HEIGHT, layer.size());
             Vec3 top = ground.add((random.nextDouble() - 0.5) * height * 0.15, height, (random.nextDouble() - 0.5) * height * 0.15);
-            ElectricVfx.bolt(top, ground, 0.14F * layer.width() * s, layer.count(), layer.life(), p.seed);
+            ElectricVfx.bolt(top, ground, FxRecipe.BOLT_CORE_HALF_WIDTH * layer.width() * s, layer.count(), layer.life(), p.seed);
          }
          case ARC -> ElectricVfx.arc(at, p.target, layer.width() * s, layer.life(), layer.count(), p.seed);
          case RING -> {
