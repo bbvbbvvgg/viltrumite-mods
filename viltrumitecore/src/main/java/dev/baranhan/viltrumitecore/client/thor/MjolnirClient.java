@@ -12,12 +12,6 @@ import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirTuning;
 import java.util.EnumMap;
 import java.util.Map;
 import javax.annotation.Nullable;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
-import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 
@@ -97,51 +91,6 @@ public final class MjolnirClient {
 
    /** Called by MjolnirEntity on its first client tick. */
    public static void flightSound(MjolnirEntity hammer) {
-      Minecraft.getInstance().getSoundManager().play(new FlightSound(hammer));
-   }
-
-   /**
-    * №162 / §5.2: positional sound bound to the real hammer: distance
-    * attenuation only (vanilla never muffles by walls), low far hum turning
-    * into a rising whistle as it nears and speeds up.
-    */
-   static final class FlightSound extends AbstractTickableSoundInstance {
-      private final MjolnirEntity hammer;
-
-      FlightSound(MjolnirEntity hammer) {
-         super(SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
-         this.hammer = hammer;
-         this.looping = true;
-         this.delay = 0;
-         this.volume = 0.01F;
-         this.attenuation = SoundInstance.Attenuation.LINEAR;
-         this.x = hammer.getX();
-         this.y = hammer.getY();
-         this.z = hammer.getZ();
-      }
-
-      @Override
-      public void tick() {
-         if (this.hammer.isRemoved()) {
-            this.stop();
-            return;
-         }
-
-         this.x = this.hammer.getX();
-         this.y = this.hammer.getY();
-         this.z = this.hammer.getZ();
-         MjolnirPhase phase = this.hammer.phase();
-         boolean flying = phase == MjolnirPhase.THROWN || phase == MjolnirPhase.RETURNING || phase == MjolnirPhase.DEATH_IMPACT
-            || phase == MjolnirPhase.WORLD_FALLING;
-         float speed = (float)this.hammer.getDeltaMovement().length();
-         // Volume above 1 widens the hearing range (LINEAR: 16 blocks per unit); loudness is capped at 1.
-         this.volume = flying ? Mth.clamp(speed / 2.0F, 0.2F, 1.0F) * 4.0F : 0.0F;
-         this.pitch = Mth.clamp(0.45F + speed * 0.18F, 0.45F, 1.6F);
-      }
-
-      @Override
-      public boolean canStartSilent() {
-         return true;
-      }
+      ThorSoundLoops.hammerFlight(hammer);
    }
 }
