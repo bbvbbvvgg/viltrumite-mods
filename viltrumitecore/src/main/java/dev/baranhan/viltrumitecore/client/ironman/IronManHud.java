@@ -120,6 +120,7 @@ public final class IronManHud {
          graphics.fill(x, hulkY, x + Math.round(WIDTH * hulkFrac), hulkY + 2, hulkFrac < 0.25F ? (blink ? 0xFFFF4030 : 0xFFFFB020) : 0xFFE0A030);
          graphics.drawString(font, Math.round(hulkFrac * 100.0F) + "%", x + WIDTH + 4, hulkY - 2, 0xFFFFFF, true);
          below += 16;
+         below += dev.baranhan.viltrumitecore.client.ironman.hulkbuster.HulkbusterHud.draw(graphics, font, snapshot, x, below);
       }
 
       // Stage 3 (spec §15.2): without the closed helmet only energy, durability and the panel.
