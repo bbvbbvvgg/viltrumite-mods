@@ -83,6 +83,26 @@ processResources {
     filesMatching('META-INF/mods.toml') {
         filter { line -> line.replace('@MOD_VERSION@', project.version.toString()) }
     }
+    // Lang overlays: src/main/lang-overlays/<part>/<locale>.json is merged into
+    // assets/viltrumitecore/lang/<locale>.json. A locale file past ~60 KB cannot be
+    // pushed in one GitHub MCP request (ru_ru.json), so new keys for it go here.
+    def overlays = file('src/main/lang-overlays')
+    inputs.dir(overlays).optional().withPropertyName('langOverlays')
+    doLast {
+        if (!overlays.isDirectory()) {
+            return
+        }
+        def slurper = new groovy.json.JsonSlurper()
+        fileTree(overlays) { include '*/*.json' }.files.sort { it.path }.each { extra ->
+            def target = new File(destinationDir, "assets/viltrumitecore/lang/${extra.name}")
+            if (!target.isFile()) {
+                throw new GradleException("lang overlay ${extra} has no base locale file")
+            }
+            def merged = new LinkedHashMap(slurper.parse(target, 'UTF-8'))
+            merged.putAll(slurper.parse(extra, 'UTF-8'))
+            target.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(merged)), 'UTF-8')
+        }
+    }
 }
 
 // Binary assets (sounds, textures) are stored as base64 text under

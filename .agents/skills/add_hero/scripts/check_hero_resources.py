@@ -57,12 +57,25 @@ def check_mod(mod, hero, problems):
     mod_dir = mod
     lang_dir = os.path.join(mod_dir, "src/main/resources/assets", mod, "lang")
     en = {}
+    # Lang overlays (src/main/lang-overlays/<part>/<locale>.json) are merged into
+    # the locale file by processResources: locales too big for one push grow there.
+    overlay_dir = os.path.join(mod_dir, "src/main/lang-overlays")
+
+    def load_locale(name):
+        data = dict(load_json(os.path.join(lang_dir, name)))
+        if os.path.isdir(overlay_dir):
+            for part in sorted(os.listdir(overlay_dir)):
+                extra = os.path.join(overlay_dir, part, name)
+                if os.path.isfile(extra):
+                    data.update(load_json(extra))
+        return data
+
     if os.path.isdir(lang_dir):
-        en = load_json(os.path.join(lang_dir, "en_us.json"))
+        en = load_locale("en_us.json")
         for name in sorted(os.listdir(lang_dir)):
             if not name.endswith(".json") or name == "en_us.json":
                 continue
-            other = load_json(os.path.join(lang_dir, name))
+            other = load_locale(name)
             missing = sorted(set(en) - set(other))
             extra = sorted(set(other) - set(en))
             for key in missing:

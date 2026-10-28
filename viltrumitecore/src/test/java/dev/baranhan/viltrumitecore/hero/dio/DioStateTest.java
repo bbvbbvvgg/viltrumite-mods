@@ -119,6 +119,20 @@ class DioStateTest {
       assertEquals(12, files.size());
       for (java.nio.file.Path file : files) {
          com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(file)).getAsJsonObject();
+         // Overlays (src/main/lang-overlays/<part>/<locale>.json) are merged into the locale by processResources.
+         java.nio.file.Path overlays = java.nio.file.Path.of("src/main/lang-overlays");
+         if (java.nio.file.Files.isDirectory(overlays)) {
+            try (var parts = java.nio.file.Files.list(overlays)) {
+               for (java.nio.file.Path part : parts.toList()) {
+                  java.nio.file.Path extra = part.resolve(file.getFileName().toString());
+                  if (java.nio.file.Files.isRegularFile(extra)) {
+                     com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(extra)).getAsJsonObject().entrySet()
+                        .forEach(e -> json.add(e.getKey(), e.getValue()));
+                  }
+               }
+            }
+         }
+
          for (String key : keys) {
             assertTrue(json.has(key) && !json.get(key).getAsString().isBlank(), file.getFileName() + " " + key);
          }
