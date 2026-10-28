@@ -111,6 +111,7 @@ public final class MeleeMoves {
          }
 
          combat.strike = finisher ? ThorStrike.MMB_FINISHER : ThorStrike.MMB_BLOW;
+         retime(state, combat.strike);
          combat.strikeAttackId = combat.nextAttackId();
          captureStep(player, combat);
          state.setCombatPose(combat.strike.pose());
@@ -189,6 +190,7 @@ public final class MeleeMoves {
       combat.chainCompleted = match.completed();
       combat.chainOpenUntil = Integer.MAX_VALUE;
       combat.strike = match.strike();
+      retime(state, match.strike());
       combat.strikeAttackId = combat.nextAttackId();
       captureStep(player, combat);
       state.setCombatPose(match.strike().pose());
@@ -196,11 +198,21 @@ public final class MeleeMoves {
          // The route ends with this strike: presses now belong to a new chain (with Mjölnir back in the hand: hammer strikes, #166).
          ThorBridge.closeComboWindow(state);
       } else {
-         ThorBridge.openComboWindow(state, move, move.length() + ThorCombatTimings.COMBO_GRACE);
+         ThorBridge.openComboWindow(state, move, ThorAttacks.of(match.strike()).length() + ThorCombatTimings.comboGrace(move));
       }
 
       lunge(player, match.strike());
       swingSound(player, match.strike());
+   }
+
+   /**
+    * The step plays its strike's own phases (ThorAttacks row, rework spec §4):
+    * the damage lands on the row's windup tick, the next press chains from its
+    * recovery. Called on the step's first tick, right after the strike is chosen.
+    */
+   static void retime(ThorState state, ThorStrike strike) {
+      ThorAttacks.Phases phases = ThorAttacks.of(strike).phases();
+      state.timeline.retime(phases.windup(), phases.contact(), phases.recovery());
    }
 
    private static void restartChain(ServerPlayer player, ThorState state, ThorCombatState combat, ThorMove move) {
@@ -221,7 +233,7 @@ public final class MeleeMoves {
       if (combat.chainLast) {
          endChain(player, state, combat);
       } else {
-         combat.chainOpenUntil = combat.ticks + ThorCombatTimings.COMBO_GRACE;
+         combat.chainOpenUntil = combat.ticks + ThorCombatTimings.comboGrace(combat.chainMove);
       }
    }
 

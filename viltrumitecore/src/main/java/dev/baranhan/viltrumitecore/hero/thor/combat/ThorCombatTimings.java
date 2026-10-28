@@ -5,33 +5,55 @@ import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveDefinition;
 import java.util.EnumMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Phase ticks of session B's moves (intro, main, finish, cancel window,
- * combo steps). All PLACEHOLDER: the author has not approved windows,
- * priorities of cancels or recovery (spec §6 "[ОТКРЫТО]"). Constants, not
- * config: the client clips are keyed to the same lengths.
+ * Move-level timings of session B's moves: cancel window and combo steps
+ * (mechanics, unchanged) around the phase ticks of {@link ThorAttacks}
+ * (rework spec §4). A combo move's definition is its envelope, the row of
+ * its opener; each step is retimed to the row of the strike it plays.
+ * Constants, not config: the clips are keyed to the same lengths.
  */
 public final class ThorCombatTimings {
    /** Combo steps on the timeline; the routes (ComboBook) are shorter, a finished route starts a new one. */
    public static final int COMBO_STEPS = 8;
-   /** Ticks a combo chain stays open after its step (the window to continue it). */
-   public static final int COMBO_GRACE = 6;
+   /**
+    * Ticks a melee chain stays open after its step ends (the window to continue it). Scaled with the
+    * rework's step lengths (spec §4 "окна комбо пропорционально"): 6 ticks after a 16-tick hammer step
+    * and an 11-tick fist step became 10 after ~26 and 11 after ~20.
+    */
+   public static final int HAMMER_COMBO_GRACE = 10;
+   public static final int FIST_COMBO_GRACE = 11;
    /** Ticks of the storm's main phase (its maximum growth time). */
    public static final int STORM_MAX_TICKS = 100;
 
    public static final Map<ThorMove, ThorMoveDefinition> DEFINITIONS = new EnumMap<>(ThorMove.class);
 
    static {
-      DEFINITIONS.put(ThorMove.HAMMER_COMBO, new ThorMoveDefinition(5, 3, 8, MovePhase.FINISH, COMBO_STEPS));
-      DEFINITIONS.put(ThorMove.FIST_COMBO, new ThorMoveDefinition(3, 2, 6, MovePhase.FINISH, COMBO_STEPS));
-      DEFINITIONS.put(ThorMove.HAMMER_STRIKE, new ThorMoveDefinition(6, 3, 9, MovePhase.FINISH, 1));
-      DEFINITIONS.put(ThorMove.ELECTRIC_MODE, new ThorMoveDefinition(0, 4, 0, MovePhase.MAIN, 1));
-      DEFINITIONS.put(ThorMove.ELECTRIC_COMBO, new ThorMoveDefinition(3, 2, 7, MovePhase.FINISH, COMBO_STEPS));
+      put(ThorMove.HAMMER_COMBO, MovePhase.FINISH, COMBO_STEPS);
+      put(ThorMove.FIST_COMBO, MovePhase.FINISH, COMBO_STEPS);
+      put(ThorMove.HAMMER_STRIKE, MovePhase.FINISH, 1);
+      put(ThorMove.ELECTRIC_MODE, MovePhase.MAIN, 1);
+      put(ThorMove.ELECTRIC_COMBO, MovePhase.FINISH, COMBO_STEPS);
       // The intro is the hold threshold: RMB still down when it ends grows the wave into the storm.
-      DEFINITIONS.put(ThorMove.ELECTRIC_WAVE, new ThorMoveDefinition(7, 3, 8, MovePhase.FINISH, COMBO_STEPS));
-      DEFINITIONS.put(ThorMove.ELECTRIC_STORM, new ThorMoveDefinition(0, STORM_MAX_TICKS, 12, null, 1));
-      DEFINITIONS.put(ThorMove.WRATH, new ThorMoveDefinition(24, 8, 20, null, 1));
+      put(ThorMove.ELECTRIC_WAVE, MovePhase.FINISH, COMBO_STEPS);
+      put(ThorMove.ELECTRIC_STORM, null, 1);
+      put(ThorMove.WRATH, null, 1);
+   }
+
+   private static void put(ThorMove move, @Nullable MovePhase cancellableFrom, int maxSteps) {
+      DEFINITIONS.put(move, ThorAttacks.envelope(move).phases().definition(cancellableFrom, maxSteps));
+   }
+
+   /** The grace window of a melee chain of {@code move} (0 for other moves). */
+   public static int comboGrace(@Nullable ThorMove move) {
+      return move == ThorMove.HAMMER_COMBO ? HAMMER_COMBO_GRACE : move == ThorMove.FIST_COMBO ? FIST_COMBO_GRACE : 0;
+   }
+
+   /** The definition of one row: its own phases with the move's cancel window and steps. */
+   public static ThorMoveDefinition of(ThorAttacks.Attack attack) {
+      ThorMoveDefinition move = of(attack.move());
+      return attack.phases().definition(move.cancellableFrom(), move.maxSteps());
    }
 
    private ThorCombatTimings() {

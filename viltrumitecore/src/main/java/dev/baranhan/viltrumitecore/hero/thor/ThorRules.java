@@ -1,21 +1,26 @@
 package dev.baranhan.viltrumitecore.hero.thor;
 
 /**
- * Thor numbers (spec docs/design/2026-10-27-thor-design.md, "Сводка чисел").
+ * Thor numbers (spec docs/design/2026-10-27-thor-design.md, "Сводка чисел";
+ * timings: docs/design/2026-10-28-thor-rework.md §4).
  * Pure constants only.
  */
 public final class ThorRules {
    /** MMB melee branch: any enemy this close (blocks, eye to bounding box). */
    public static final double MELEE_ENEMY_RADIUS = 4.0;
 
-   /** Draw Mjölnir from the belt: reach (intro), grip — the hammer changes place here (main), settle (finish). */
-   public static final int DRAW_INTRO = 4;
-   public static final int DRAW_MAIN = 2;
-   public static final int DRAW_FINISH = 4;
-   /** Holster Mjölnir on the belt, same three phases. */
-   public static final int HOLSTER_INTRO = 4;
-   public static final int HOLSTER_MAIN = 2;
-   public static final int HOLSTER_FINISH = 4;
+   /**
+    * Draw Mjölnir from the belt: reach (intro), grip — the hammer changes place here (main), settle (finish).
+    * Rework spec §4: 30–40 ticks, the weight of the hammer pulls the arm down and it settles slowly (was 4/2/4).
+    * The clips "draw" / "draw_fp" have the same length (ThorAttacks, ThorClipContractTest).
+    */
+   public static final int DRAW_INTRO = 14;
+   public static final int DRAW_MAIN = 4;
+   public static final int DRAW_FINISH = 16;
+   /** Holster Mjölnir on the belt, same three phases (was 4/2/4). */
+   public static final int HOLSTER_INTRO = 14;
+   public static final int HOLSTER_MAIN = 4;
+   public static final int HOLSTER_FINISH = 14;
 
    /**
     * Priority tiers of the staged moves: a higher tier interrupts a lower one

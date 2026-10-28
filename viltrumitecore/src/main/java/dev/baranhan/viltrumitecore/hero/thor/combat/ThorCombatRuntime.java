@@ -121,7 +121,7 @@ public final class ThorCombatRuntime {
 
       ThorCombatState combat = ThorCombatState.of(state);
       if (combat.chainMove == ThorMove.FIST_COMBO && !combat.chainLast) {
-         ThorBridge.openComboWindow(state, combat.chainMove, ThorCombatTimings.COMBO_GRACE * 2);
+         ThorBridge.openComboWindow(state, combat.chainMove, ThorCombatTimings.FIST_COMBO_GRACE * 2);
       }
    }
 }
