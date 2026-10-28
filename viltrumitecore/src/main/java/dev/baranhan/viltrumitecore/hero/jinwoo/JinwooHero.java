@@ -229,6 +229,9 @@ public final class JinwooHero implements HeroDefinition {
 
    @Override
    public void onRespawn(ServerPlayer player) {
+      if (player == null) {
+         return;
+      }
       applyChassis(player, true);
       JinwooState state = JinwooState.of(player);
       if (state != null) {
