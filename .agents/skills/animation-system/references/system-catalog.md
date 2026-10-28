@@ -168,6 +168,15 @@ body itself stays the player model with a skin.
 - Passes: `Pass.cutout(tex)` (lit, `entityCutoutNoCull`) and
   `Pass.glow(tex[, r, g, b])` (`eyes`, full bright, skipped in the shadow
   pass). Glow textures must be black where nothing glows (premultiply alpha).
+  `Pass.translucent(tex, alpha)` (`entityTranslucent`, no shadow) draws
+  ghost copies: motion blur of a spinning part is extra `Part`s of the same
+  geo posed at trailing angles with fading alpha (Thor `ThorParts` +
+  `MjolnirSpin`, FX id `thor:hammer_spin`: only the `MjolnirBody` bone turns
+  about the fist, arm poses untouched).
+- `Part(geo, passes, pose, frame)`: the optional `FrameSink` gets the real
+  draw frame of each mapped top-level bone (not in the shadow pass) for VFX
+  anchors on the posed geo; convert with `HeroDefenseContacts.viewToWorld`
+  (+ camera position), as `ThorAnchors` does for the hammer head and grip.
 - First person: `PlayerGeoHandMixin` (`renderHand` TAIL) draws the arm bones
   on the first-person arm (`firstPerson = true` in `collect`).
 - Layer registration: `ViltrumiteCoreClient.onAddLayers` (both skins).
@@ -243,6 +252,7 @@ For new effects, age by ticks with partialTick (Thunderclap pattern). Do not use
 
 - Server code sends impact FX with `hero/fx/HeroFx` (`shards`, `shockwave`, `slam`, `blade`, `launch`, `flash`). It sends `HeroFxS2CPacket`; `client/render/vfx/HeroImpactFx` draws it for every hero. Do not add a hero-specific packet for these shapes.
 - Camera shake goes through `client/render/vfx/CameraShake` (`addAt` with distance falloff, `add` for local). Do not add a second shake accumulator.
+- Named layered presets (R4 Thor): `HeroFx.preset(source, FxPreset, at, target, scale, material, hitStopTicks, ids...)` → client `FxRecipe` (timed layers: bolt, arc, ring, crackle, crawl, sparks, light pool, sky flash, screen flash, scorch, dust, debris, shockwave, flash, shake). Attack tables reference effects by preset id (`ThorFx`); tune the look in the recipe, not in the move. Lightning for any hero: `client/render/vfx/ElectricVfx` (+ pure `BoltShape`). State-driven effects (storm build-up, charge aura) run on every client from the synced snapshot (`ThorStormVfx`, pure curve `WrathStormCurve`), no packets per tick.
 - Full API list: `.agents/skills/add_hero/references/shared-toolkit.md`.
 
 ### 7.3 Mark skins and pieces (Iron Man stage 4)
