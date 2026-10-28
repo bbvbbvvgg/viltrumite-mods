@@ -82,7 +82,22 @@ public final class ThorSceneClient {
       new ResourceLocation("viltrumitecore", "textures/gui/thor/scene/throw.png"),
       new ResourceLocation("viltrumitecore", "textures/gui/thor/scene/barrage.png")
    };
-   private static final Object DUCK = new Object();
+   /** M9: the background categories a fatality ducks (never MASTER, never PLAYERS where the scene plays). */
+   static final SoundSource[] DUCKED = {SoundSource.AMBIENT, SoundSource.WEATHER, SoundSource.MUSIC, SoundSource.RECORDS, SoundSource.HOSTILE,
+      SoundSource.NEUTRAL, SoundSource.BLOCKS};
+   private static final Object[] DUCK_OWNERS = new Object[DUCKED.length];
+
+   static {
+      for (int i = 0; i < DUCK_OWNERS.length; i++) {
+         DUCK_OWNERS[i] = new Object();
+      }
+   }
+
+   private static void releaseDuck() {
+      for (Object owner : DUCK_OWNERS) {
+         SoundDuck.INSTANCE.release(owner);
+      }
+   }
    private static final Set<Integer> ROTATED = new HashSet<>();
    private static final DoubleTap TAPS = new DoubleTap();
    private static final boolean[] RESIST_DOWN = new boolean[ResistKey.values().length];
@@ -125,9 +140,12 @@ public final class ThorSceneClient {
       }
 
       if (want && !ducked) {
-         SoundDuck.INSTANCE.duck(DUCK, SoundSource.MASTER, 0.25F, 10, Set.of());
+         // M9: only the background goes quiet; the scene's own sounds (PLAYERS: blows, crunch, heartbeat, thunder) stay at full volume.
+         for (int i = 0; i < DUCKED.length; i++) {
+            SoundDuck.INSTANCE.duck(DUCK_OWNERS[i], DUCKED[i], 0.25F, 10, Set.of());
+         }
       } else if (!want && ducked) {
-         SoundDuck.INSTANCE.release(DUCK);
+         releaseDuck();
       }
       ducked = want;
    }
@@ -265,7 +283,8 @@ public final class ThorSceneClient {
          return;
       }
 
-      BlockHitResult hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+      // M3: the same fluid rule as the server (a lake bottom is not a pick).
+      BlockHitResult hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, player));
       if (hit.getType() != HitResult.Type.BLOCK) {
          aim = null;
          return;
@@ -276,8 +295,11 @@ public final class ThorSceneClient {
       Vec3 feet = Vec3.atBottomCenterOf(pos.above());
       boolean solid = level.getBlockState(pos).isFaceSturdy(level, pos, Direction.UP);
       boolean room = level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()
-         && level.getBlockState(pos.above(2)).getCollisionShape(level, pos.above(2)).isEmpty();
-      aimValid = solid && room && TeleportRules.inView(camera, feet, ThorSceneConfig.teleportMaxRadius);
+         && level.getBlockState(pos.above(2)).getCollisionShape(level, pos.above(2)).isEmpty()
+         && level.getFluidState(pos.above()).isEmpty() && level.getFluidState(pos.above(2)).isEmpty();
+      boolean height = TeleportRules.heightAllowed(feet.y, player.getBbHeight(), level.getMinBuildHeight(), level.getMaxBuildHeight(),
+         level.dimensionType().hasCeiling(), level.dimensionType().logicalHeight());
+      aimValid = solid && room && height && TeleportRules.inView(camera, feet, ThorSceneConfig.teleportMaxRadius);
    }
 
    @Nullable
@@ -338,7 +360,8 @@ public final class ThorSceneClient {
    @SubscribeEvent
    public static void onScreen(ScreenEvent.Opening event) {
       Minecraft minecraft = Minecraft.getInstance();
-      if (minecraft.player != null && event.getScreen() instanceof PauseScreen && teleporting(minecraft.player)) {
+      // MINOR-11: only the player's Escape cancels; the automatic pause on a lost window focus does not.
+      if (minecraft.player != null && event.getScreen() instanceof PauseScreen && teleporting(minecraft.player) && minecraft.isWindowActive()) {
          event.setCanceled(true);
          CoreMessages.sendToServer(new ThorSceneC2SPacket(ThorSceneC2SPacket.Op.TELEPORT_CANCEL, 0, BlockPos.ZERO));
       }
@@ -375,12 +398,20 @@ public final class ThorSceneClient {
       }
    }
 
+   /** M10: a Thor leaving the client level (out of tracking, unloaded) takes his scene copy with him. */
+   @SubscribeEvent
+   public static void onEntityLeave(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
+      if (event.getLevel().isClientSide()) {
+         ThorSceneView.forgetEntity(event.getEntity().getId());
+      }
+   }
+
    @SubscribeEvent
    public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
       ThorSceneView.clear();
       ThorSceneCamera.reset();
       if (ducked) {
-         SoundDuck.INSTANCE.release(DUCK);
+         releaseDuck();
          ducked = false;
       }
       ROTATED.clear();
@@ -444,7 +475,8 @@ public final class ThorSceneClient {
       entity.yHeadRotO = yaw;
    }
 
-   @SubscribeEvent
+   /** MINOR-12: hears a Post even when another mod cancelled the Pre, so the pushed pose is always popped. */
+   @SubscribeEvent(receiveCanceled = true)
    public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
       if (ROTATED.remove(event.getEntity().getId())) {
          event.getPoseStack().popPose();

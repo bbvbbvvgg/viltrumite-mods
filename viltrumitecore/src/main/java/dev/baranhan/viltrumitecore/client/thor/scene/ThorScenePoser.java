@@ -43,6 +43,11 @@ public final class ThorScenePoser {
       key(42, -120, 0, 0), key(46, -40, 0, 0)};
    private static final float[][] UPPERCUT = {key(0, -20, 0, 0), key(4, 20, 0, 0), key(7, -170, 0, 0), key(20, -175, 0, 0), key(24, -160, 0, 0),
       key(27, -20, 0, 0), key(40, -30, 0, 0)};
+   /** C-M12: the victim's body follows FatalityScene.Body (kneeling legs forward under the lowered anchor, limp arms, flat when lying). */
+   private static final float[][] KNEEL_LEGS = {key(0, -85, 0, 8)};
+   private static final float[][] LIMP_ARMS = {key(0, -12, 0, 8)};
+   private static final float[][] LYING_ARMS = {key(0, -6, 0, 14)};
+   private static final float[][] LYING_LEGS = {key(0, 0, 0, 4)};
    private static final float[][] HOVER_ARM = {key(0, -30, 0, 70)};
    private static final float[][] CRUISE_ARM = {key(0, -150, 0, 0)};
    private static final float[][] SONIC_ARM = {key(0, -180, 0, 0)};
@@ -60,6 +65,23 @@ public final class ThorScenePoser {
       }
 
       ThorSceneView.Live victim = ThorSceneView.victimOf(entity.getId());
+      FatalityPlan victimPlan = victim != null && victim.sync().kind() == SceneSync.Kind.FATALITY ? victim.sync().plan() : null;
+      if (victimPlan != null) {
+         FatalityScene.Body body = victimPlan.victimBody(Math.min(ThorSceneView.tick(victim, partial), victimPlan.length()));
+         if (body != FatalityScene.Body.STAND && body != FatalityScene.Body.AIRBORNE) {
+            PoseRig rig = PoseRig.begin(model, entity, 1.0F, null);
+            boolean kneel = body == FatalityScene.Body.KNEEL;
+            float[][] arms = kneel ? LIMP_ARMS : LYING_ARMS;
+            float[][] legs = kneel ? KNEEL_LEGS : LYING_LEGS;
+            rig.mainArm(arms, 0, 1.0F, false);
+            rig.offArm(arms, 0, 1.0F, true);
+            rig.mainLeg(legs, 0, 1.0F, false);
+            rig.offLeg(legs, 0, 1.0F, true);
+            rig.finish();
+            return true;
+         }
+      }
+
       if (victim != null && ThorSceneView.holds(victim.sync())) {
          PoseRig rig = PoseRig.begin(model, entity, 1.0F, null);
          float t = (float)((entity.tickCount + partial) % 20);
@@ -107,11 +129,13 @@ public final class ThorScenePoser {
                return false;
             }
 
-            rig = PoseRig.begin(model, entity, 1.0F, null);
             float t = (float)plan.mainTick(tick);
             if (t < 0) {
+               // MINOR-13: decided before the rig begins (no rig begun and dropped).
                return false;
             }
+
+            rig = PoseRig.begin(model, entity, 1.0F, null);
 
             switch (plan.scene()) {
                case HEAD_CRUSH -> {
