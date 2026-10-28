@@ -16,8 +16,10 @@ class ReinhardHeroTest {
 
    @Test
    void reinhardIsLastOrdinal() {
+      // Wire ordinal of Reinhard is frozen; later heroes (Jinwoo, ...) are appended after it.
       HeroId[] values = HeroId.values();
-      assertSame(HeroId.REINHARD, values[values.length - 1]);
+      assertSame(HeroId.REINHARD, values[5]);
+      assertSame(HeroId.JINWOO, values[6]);
    }
 
    @Test
