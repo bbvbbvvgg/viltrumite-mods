@@ -151,12 +151,13 @@ def main():
     ap.add_argument("--glow", action="store_true")
     ap.add_argument("--flames", action="store_true")
     ap.add_argument("--geo", default=GEO)
+    ap.add_argument("--anim", default=ANIM)
     args = ap.parse_args()
     with open(args.geo, encoding="utf-8") as f:
         geo = json.load(f)
     clip = None
     if args.clip:
-        with open(ANIM, encoding="utf-8") as f:
+        with open(args.anim, encoding="utf-8") as f:
             clip = json.load(f)["animations"][args.clip]
     tex = png("textures/entity/ironman/hulkbuster.png")
     glow = png("textures/entity/ironman/hulkbuster_glow.png") if args.glow else None

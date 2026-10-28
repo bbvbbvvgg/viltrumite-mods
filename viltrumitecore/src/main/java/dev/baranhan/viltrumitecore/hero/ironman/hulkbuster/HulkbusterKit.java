@@ -1,118 +1,153 @@
 package dev.baranhan.viltrumitecore.hero.ironman.hulkbuster;
 
+import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.world.phys.Vec3;
 
 /**
- * Transient Hulkbuster kit state (spec §14.3, plan stage 5 Tasks 6-7) and
- * its pure rules. Cooldowns of the slam and the hop persist through the
- * layer's life only (they are short); the layer cooldown is in HulkbusterLayer.
+ * Transient Hulkbuster kit state (rework spec §6–7): the move timeline, the grab, the movement and the
+ * ability cooldowns. Lives while the suit is on; the layer (HulkbusterLayer) owns durability and save data.
  */
 public final class HulkbusterKit {
-   public static final float PUNCH_DAMAGE = 14.0F;
-   public static final int PUNCH_CADENCE = 12;
-   public static final double PUNCH_REACH = 4.5;
-   public static final double PUNCH_KNOCKBACK = 1.8;
-   public static final double JACKHAMMER_RANGE = 3.5;
-   public static final int JACKHAMMER_INTERVAL = 4;
-   public static final float JACKHAMMER_DAMAGE = 4.0F;
-   public static final int JACKHAMMER_MAX = 60;
-   public static final double JACKHAMMER_RELEASE_KNOCKBACK = 1.6;
-   public static final int SLOW_REPULSOR_CHARGE = 30;
-   public static final float SLOW_REPULSOR_DAMAGE = 14.0F;
-   public static final float SLOW_REPULSOR_COST = 10.0F;
-   public static final double GRAB_RANGE = 3.5;
-   public static final double THROW_SPEED = 2.2;
-   public static final float THROW_IMPACT_DAMAGE = 8.0F;
-   /** Longest carry (4 s): the target drops after it (no endless carry in PvP). */
-   public static final int GRAB_MAX_TICKS = 80;
-   public static final int THROW_TRACK_TICKS = 40;
-   public static final int SLAM_COOLDOWN = 200;
-   public static final double SLAM_RADIUS = 6.0;
-   public static final float SLAM_DAMAGE = 10.0F;
-   public static final int SLAM_ARM_TICKS = 60;
-   public static final int HOP_COOLDOWN = 80;
-   public static final float HOP_COST = 8.0F;
-   public static final int HOP_TICKS = 10;
-   public static final float SHIELD_STRENGTH = 1.5F;
-
-   public int punchCooldown;
-   public boolean punchRight;
-   /** Jackhammer: ticks held (-1 idle), pinned target id. */
-   public int jackhammerTicks = -1;
-   public int jackhammerTarget = -1;
-   /** Slow repulsor charge ticks (-1 idle). */
-   public int charge = -1;
-   /** Grab: carried entity id and its control effect id. */
-   public int grabbedId = -1;
-   /** UUID of the carried target: the control is released by it even when the entity is gone. */
+   public final StagedTimeline<HulkMove> timeline = new StagedTimeline<>();
+   public final HulkbusterMotion motion = new HulkbusterMotion();
+   public final Grab grab = new Grab();
+   /** LMB press waiting for the tap / hold decision (-1 = none). */
+   public int lmbHeld = -1;
+   /** Ticks since the last combo step ended (chain restarts after HulkbusterRules.COMBO_CHAIN_WINDOW). */
+   public int comboIdle = 1000;
+   public int comboNext;
+   public boolean comboBuffered;
+   /** Charged punch: the INTRO ticks held at the release (level from HulkbusterRules.chargeLevel). */
+   public int chargeHeld;
+   public int blockTicks;
+   /** Walked distance since the last heavy step. */
+   public double stepDistance;
+   public boolean blockHeld;
+   public int riftWindow;
+   public int repulsorsCooldown;
+   public int riftCooldown;
+   public int cageCooldown;
+   public int ultimateCooldown;
+   public int grabCooldown;
+   /** Ultimate: the captured target (id) and the dive start height. */
+   public int ultTarget = -1;
    @Nullable
-   public UUID grabbedUuid;
+   public UUID ultEffect;
    @Nullable
-   public UUID grabEffect;
-   public int grabTicks;
-   /** Thrown entities: id → ticks left of the impact check. */
+   public UUID ultTargetUuid;
+   @Nullable
+   public Vec3 ultDir;
+   /** Suit-up scene: the player's feet when it began and the frame's facing (HulkbusterSuitUp.path). */
+   @Nullable
+   public Vec3 sceneStart;
+   public float sceneYaw;
+   /** Thrown bodies: id -> ticks left of the impact check. */
    public final Map<Integer, Integer> thrown = new HashMap<>();
-   public int slamCooldown;
-   public boolean slamArmed;
-   public int slamTicks;
-   public int hopCooldown;
-   public int hopTicks;
+   /** Veronica's cage of this Hulkbuster (one at a time). */
+   @Nullable
+   public HulkbusterCage cage;
+   /** Last durability fraction seen (damage-stage FX edges). */
+   public int lastStage;
 
-   /** Punch ready: cadence passed. */
-   public boolean punchReady() {
-      return this.punchCooldown <= 0;
-   }
+   /** The grabbed victim (spec §6.2). */
+   public static final class Grab {
+      public int victimId = -1;
+      @Nullable
+      public UUID victimUuid;
+      @Nullable
+      public UUID effect;
+      public int held;
+      public int punches;
+      public float escape;
+      public boolean strong;
 
-   /** Jackhammer hit on this held tick. */
-   public static boolean jackhammerHit(int heldTicks) {
-      return heldTicks > 0 && heldTicks % JACKHAMMER_INTERVAL == 0;
-   }
-
-   public static boolean slowRepulsorCharged(int chargeTicks) {
-      return chargeTicks >= SLOW_REPULSOR_CHARGE;
-   }
-
-   /** Slam ring damage with distance falloff (full at the centre, half at the edge). */
-   public static float slamDamage(double distance) {
-      if (distance > SLAM_RADIUS) {
-         return 0.0F;
+      public boolean active() {
+         return this.victimId >= 0;
       }
 
-      return (float)(SLAM_DAMAGE * (1.0 - 0.5 * distance / SLAM_RADIUS));
+      public void clear() {
+         this.victimId = -1;
+         this.victimUuid = null;
+         this.effect = null;
+         this.held = 0;
+         this.punches = 0;
+         this.escape = 0.0F;
+         this.strong = false;
+      }
    }
 
    public void tickCooldowns() {
-      if (this.punchCooldown > 0) {
-         this.punchCooldown--;
+      if (this.repulsorsCooldown > 0) {
+         this.repulsorsCooldown--;
       }
 
-      if (this.slamCooldown > 0) {
-         this.slamCooldown--;
+      if (this.riftCooldown > 0) {
+         this.riftCooldown--;
       }
 
-      if (this.hopCooldown > 0) {
-         this.hopCooldown--;
+      if (this.cageCooldown > 0) {
+         this.cageCooldown--;
       }
+
+      if (this.ultimateCooldown > 0) {
+         this.ultimateCooldown--;
+      }
+
+      if (this.grabCooldown > 0) {
+         this.grabCooldown--;
+      }
+
+      if (this.riftWindow > 0) {
+         this.riftWindow--;
+      }
+
+      if (this.comboIdle < 1000) {
+         this.comboIdle++;
+      }
+
+      this.motion.tickRecharge();
    }
 
-   /** Every channel off (layer gone, control, death). Cooldowns stay. */
+   /** Every channel off (suit gone, control, death). Cooldowns stay. */
    public void stopChannels() {
-      this.jackhammerTicks = -1;
-      this.jackhammerTarget = -1;
-      this.charge = -1;
-      this.slamArmed = false;
-      this.slamTicks = 0;
-      this.hopTicks = 0;
+      this.timeline.clear();
+      this.lmbHeld = -1;
+      this.comboBuffered = false;
+      this.blockHeld = false;
+      this.blockTicks = 0;
+      this.chargeHeld = 0;
+      this.ultTarget = -1;
+      this.ultDir = null;
+      this.motion.set(HulkbusterMotion.State.NONE);
    }
 
    public void reset() {
       this.stopChannels();
-      this.punchCooldown = 0;
-      this.slamCooldown = 0;
-      this.hopCooldown = 0;
+      this.repulsorsCooldown = 0;
+      this.riftCooldown = 0;
+      this.cageCooldown = 0;
+      this.ultimateCooldown = 0;
+      this.grabCooldown = 0;
+      this.riftWindow = 0;
+      this.comboIdle = 1000;
+      this.comboNext = 0;
       this.thrown.clear();
+      this.motion.reset();
+   }
+
+   /** Cooldown ticks of an input (HulkbusterControls). */
+   public int cooldown(HulkbusterControls.Input input) {
+      return switch (input) {
+         case RMB -> this.grabCooldown;
+         case SLOT_1 -> this.repulsorsCooldown;
+         case SLOT_2 -> this.riftCooldown;
+         case SLOT_3 -> this.cageCooldown;
+         case ULTIMATE -> this.ultimateCooldown;
+         default -> 0;
+      };
    }
 }

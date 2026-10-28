@@ -56,23 +56,83 @@ public class IronManHero implements HeroDefinition {
       return IronManFlags.get(heroPlayer.getHeroSnapshot().heroFlags(), IronManFlags.Field.HULKBUSTER_PHASE);
    }
 
-   /** Hulkbuster Mark 48 body (spec §14.1): hitbox and eye height ×1.7 while on and climbing out. Both sides. */
+   /** Hulkbuster Mark 48 body (rework spec §2): 1.3 x 3.2 from the torso closing to the end of the exit. Both sides. */
    @Override
    public float bodyScale(Player player) {
+      return hulkBig(player) ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.HEIGHT_SCALE : 1.0F;
+   }
+
+   @Override
+   public float bodyWidthScale(Player player) {
+      return hulkBig(player) ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.WIDTH_SCALE : 1.0F;
+   }
+
+   static boolean hulkBig(Player player) {
       if (player == null) {
-         return 1.0F;
+         return false;
       }
 
-      boolean big;
       if (player.level().isClientSide()) {
          int phase = hulkPhase(player);
-         big = phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ACTIVE.ordinal() || phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING.ordinal();
-      } else {
-         IronManState state = IronManState.of(player);
-         big = state != null && state.hulkbuster.big();
+         if (phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ACTIVE.ordinal() || phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING.ordinal()) {
+            return true;
+         }
+
+         if (phase != dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING.ordinal() || !(player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer)) {
+            return false;
+         }
+
+         int[] extra = heroPlayer.getHeroSnapshot().extraCooldowns();
+         int scene = extra.length > dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE ? extra[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] : 0;
+         return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.sceneAssemble(scene) >= dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.TORSO_TICK;
       }
 
-      return big ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.SCALE : 1.0F;
+      IronManState state = IronManState.of(player);
+      return state != null && state.hulkbuster.big();
+   }
+
+   /** The giant's own thrusters keep it up during jumps, hover, the scene and the ultimate (no fly kick). */
+   @Override
+   public boolean sustainsAirborne(Player player) {
+      IronManState state = player.level().isClientSide() ? null : IronManState.of(player);
+      return state != null && state.hulkbuster.present();
+   }
+
+   /** The Mark 48 in combat (tags body.mech.heavy, weapon.fist.jackhammer, trait.armored); otherwise the suit's own presence. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      IronManState state = player.level().isClientSide() ? null : IronManState.of(player);
+      if (state != null && state.hulkbuster.active()) {
+         return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterTags.presence(dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCombat.blocking(state), state.hulkKit.timeline.running());
+      }
+
+      return dev.baranhan.viltrumitecore.hero.HeroDefinition.super.combatPresence(player);
+   }
+
+   /** Mouse-held victim of the Hulkbuster (grab or the ultimate's captive): the shared held-target seam. */
+   @Override
+   public int heldTargetId(Player player) {
+      if (player.level().isClientSide()) {
+         if (hulkPhase(player) != dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ACTIVE.ordinal() || !(player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer)) {
+            return -1;
+         }
+
+         int[] extra = heroPlayer.getHeroSnapshot().extraCooldowns();
+         return extra.length > dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.VICTIM ? extra[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.VICTIM] - 1 : -1;
+      }
+
+      IronManState state = IronManState.of(player);
+      if (state == null || !state.hulkbuster.active()) {
+         return -1;
+      }
+
+      return state.hulkKit.grab.active() ? state.hulkKit.grab.victimId : state.hulkKit.ultTarget;
+   }
+
+   @Override
+   public net.minecraft.world.phys.Vec3 heldTargetPosition(Player player, net.minecraft.world.entity.Entity target, float partialTick) {
+      return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCombat.anchor(player.getPosition(partialTick), net.minecraft.util.Mth.rotLerp(partialTick, player.yRotO, player.getYRot()),
+         target.getBbWidth(), target.getBbHeight());
    }
 
    @Override
@@ -314,7 +374,6 @@ public class IronManHero implements HeroDefinition {
          return switch (button) {
             case PRIMARY -> HeroAction.PRIMARY_ATTACK;
             case SECONDARY -> player.isShiftKeyDown() ? null : HeroAction.SECONDARY_USE;
-            case MIDDLE -> HeroAction.TOOL_CYCLE;
             default -> null;
          };
       }
@@ -600,51 +659,46 @@ public class IronManHero implements HeroDefinition {
       }
    }
 
-   /** Hulkbuster kit (spec §14.3): slots 1–3 are grab, jump slam, hop; LMB punches; RMB jackhammer / slow repulsors. */
+   /** Hulkbuster kit (rework spec §6–7): every press goes through HulkbusterControls (one resolver). */
    private static boolean hulkInput(ServerPlayer player, IronManState state, HeroAction action) {
-      switch (action) {
-         case PRIMARY_ATTACK -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.punch(player, state);
-         case SECONDARY_USE -> {
-            state.heldTool = state.rightTool;
-            if (state.rightTool == dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.HULK_REPULSOR) {
-               dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.chargePress(state);
-            } else {
-               state.heldTool = dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.JACKHAMMER;
-               dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.jackhammerPress(player, state);
-            }
-         }
-         case TOOL_CYCLE -> {
-            if (state.heldTool == null) {
-               state.rightTool = state.rightTool == dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.JACKHAMMER
-                  ? dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.HULK_REPULSOR
-                  : dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.JACKHAMMER;
-            }
-         }
-         case UNIBEAM -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.grabPress(player, state);
-         case MISSILES -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.slamPress(player, state);
-         case NANO_ARSENAL -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.hopPress(player, state);
-         case HELMET -> {
-         }
-         default -> {
-            return false;
-         }
+      dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input input = hulkInputOf(action);
+      if (input != null) {
+         return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCombat.press(player, state, input);
       }
 
-      return true;
+      // The tool cycle, helmet and veronica keys have no meaning in the Mark 48.
+      return action == HeroAction.TOOL_CYCLE || action == HeroAction.HELMET || action == HeroAction.VERONICA;
+   }
+
+   @javax.annotation.Nullable
+   static dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input hulkInputOf(HeroAction action) {
+      return switch (action) {
+         case PRIMARY_ATTACK -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input.LMB;
+         case SECONDARY_USE -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input.RMB;
+         case GUARD -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input.GUARD;
+         case UNIBEAM -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input.SLOT_1;
+         case MISSILES -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input.SLOT_2;
+         case NANO_ARSENAL -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input.SLOT_3;
+         case COUNTERMEASURES -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input.SLOT_4;
+         case SIGNATURE -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input.ULTIMATE;
+         default -> null;
+      };
    }
 
    /** Releases always pass (channels must stop); without the suit they cancel without a shot. */
    private static void release(ServerPlayer player, IronManState state, HeroAction action) {
+      dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterControls.Input hulkInput = hulkInputOf(action);
+      if (hulkInput != null && state.hulkbuster.present()) {
+         dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCombat.release(player, state, hulkInput);
+         return;
+      }
+
       boolean live = state.suit.worn() && !controlled(player);
       switch (action) {
          case SECONDARY_USE -> {
             dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool tool = state.heldTool;
             state.heldTool = null;
-            if (tool == dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.JACKHAMMER) {
-               dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.jackhammerRelease(player, state);
-            } else if (tool == dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.HULK_REPULSOR) {
-               dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.chargeRelease(player, state);
-            } else if (tool == dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.REPULSOR) {
+            if (tool == dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.REPULSOR) {
                if (live) {
                   IronManCombat.fire(player, state, state.repulsor.release(state.energy));
                } else {
@@ -731,7 +785,7 @@ public class IronManHero implements HeroDefinition {
          }
       }
 
-      dev.baranhan.viltrumitecore.hero.DamageAbsorb hulk = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.absorb(state, source, raw);
+      dev.baranhan.viltrumitecore.hero.DamageAbsorb hulk = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.absorb(player, state, source, raw);
       if (hulk.absorbed()) {
          return hulk;
       }
@@ -813,26 +867,11 @@ public class IronManHero implements HeroDefinition {
          actionId = HeroAction.SUIT.ordinal();
          elapsed = hulk.ticks();
          length = hulk.phaseLength();
-      } else if (hulk.active() && kit.jackhammerTicks >= 0) {
-         actionId = HeroAction.SECONDARY_USE.ordinal();
-         elapsed = kit.jackhammerTicks;
-         length = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterKit.JACKHAMMER_MAX;
-      } else if (hulk.active() && kit.charge >= 0) {
-         actionId = HeroAction.SECONDARY_USE.ordinal();
-         elapsed = kit.charge;
-         length = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterKit.SLOW_REPULSOR_CHARGE;
-      } else if (hulk.active() && kit.grabbedId >= 0) {
-         actionId = HeroAction.UNIBEAM.ordinal();
-         elapsed = kit.grabTicks;
-         length = 1;
-      } else if (hulk.active() && kit.slamArmed) {
-         actionId = HeroAction.MISSILES.ordinal();
-         elapsed = kit.slamTicks;
-         length = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterKit.SLAM_ARM_TICKS;
-      } else if (hulk.active() && kit.hopTicks > 0) {
-         actionId = HeroAction.NANO_ARSENAL.ordinal();
-         elapsed = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterKit.HOP_TICKS - kit.hopTicks;
-         length = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterKit.HOP_TICKS;
+      } else if (hulk.active() && kit.timeline.running()) {
+         // Hulkbuster move: actionId = HulkMove.WIRE_OFFSET + wire id, phase and step in HulkbusterWire.MOVE_VARIANT.
+         actionId = kit.timeline.move().wire();
+         elapsed = kit.timeline.elapsed();
+         length = kit.timeline.length();
       } else if (suit.transitioning()) {
          actionId = HeroAction.SUIT.ordinal();
          elapsed = suit.ticks();
@@ -884,14 +923,15 @@ public class IronManHero implements HeroDefinition {
          length = IronManRules.SCAN_TICKS;
       }
 
-      // [4] reserved, [5] slam, [6] hop, [7] reserved, [8] Hulkbuster cooldown (plan stage 5).
-      int[] extra = extraCooldowns(suit.nanoLockTicks(), state.countermeasures.cooldown(), state.veronicaCooldown, state.signature.cooldown,
-         0, kit.slamCooldown, kit.hopCooldown, 0, hulk.cooldown());
+      // [4]-[7] reserved, [8] Hulkbuster cooldown, [9..] the Hulkbuster block (HulkbusterWire).
+      int[] extra = extraCooldowns(hulkExtra(state, suit.nanoLockTicks(), state.countermeasures.cooldown(), state.veronicaCooldown, state.signature.cooldown, hulk.cooldown()));
       // controlTargetId = the entity being scanned (reticle), -1 otherwise.
       int scanTarget = state.scan.active() ? state.scan.targetId() : -1;
       net.minecraft.world.phys.Vec3 target;
       if (suit.equipping() || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.DROPPING || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING) {
          target = state.equipSource;
+      } else if (hulk.active()) {
+         target = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCage.point(state);
       } else if (state.unibeam.phase() == dev.baranhan.viltrumitecore.hero.ironman.combat.UnibeamTimeline.Phase.BEAM) {
          target = state.beamEnd;
       } else {
@@ -904,6 +944,44 @@ public class IronManHero implements HeroDefinition {
       return new HeroPublicSnapshot(HeroId.IRON_MAN, actionId, elapsed, length,
          0, false, 0, 0, false, false, 0, 0, scanTarget, new int[HeroPublicSnapshot.COOLDOWN_COUNT], false,
          -1, target, Math.round(state.energy.value() * 10.0F), state.energy.weaponsLocked(), flags, extra, variant, durability);
+   }
+
+   /** The Iron Man extra values with the Hulkbuster block from index HulkbusterWire.BASE (zeros when it is off). */
+   static int[] hulkExtra(IronManState state, int nano, int countermeasures, int veronica, int signature, int hulkCooldown) {
+      dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer hulk = state.hulkbuster;
+      dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterKit kit = state.hulkKit;
+      int[] out = new int[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SIZE];
+      out[0] = nano;
+      out[1] = countermeasures;
+      out[2] = veronica;
+      out[3] = signature;
+      out[8] = hulkCooldown;
+      if (hulk.busy()) {
+         out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.scene(hulk.sceneTick(), hulk.air() ? 1 : 2, kit.sceneYaw,
+            hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING ? hulk.ticks() : -1);
+      }
+
+      if (!hulk.active()) {
+         return out;
+      }
+
+      dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterMotion m = kit.motion;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.MOVE_VARIANT] = kit.timeline.variant();
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.MOTION] = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.motion(m.state, m.direction, m.dashCharges,
+         dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.damageStage(hulk.fraction()), hulk.spareUsed(), dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.chargeLevel(kit.chargeHeld));
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.MOTION_TICKS] = Math.min(4095, m.ticks);
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.CD_REPULSORS] = kit.repulsorsCooldown;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.CD_RIFT] = kit.riftCooldown;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.CD_CAGE] = kit.cageCooldown;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.CD_SPARE_ARM] = hulk.spareUsed() ? 1 : 0;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.CD_ULTIMATE] = kit.ultimateCooldown;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.CD_GRAB] = kit.grabCooldown;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.DASH_RECHARGE] = m.dashRecharge;
+      int victim = kit.grab.active() ? kit.grab.victimId : kit.ultTarget;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.VICTIM] = victim + 1;
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.ESCAPE] = Math.round(Math.min(100.0F, kit.grab.escape));
+      out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.CAGE] = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCage.wire(state);
+      return out;
    }
 
    /** extraCooldowns: [0] nano lock, [1] countermeasures, [2] Veronica, [3] signature; trailing zeros dropped. */

@@ -24,7 +24,7 @@ public enum HulkMove implements StagedMove {
    /** The victim in the left fist, lifted (INTRO) and held (MAIN). Its length is the 6 s hold cap. */
    GRAB_HOLD(5, 4, MovePhase.MAIN, true, new int[][]{{8, HulkbusterRules.GRAB_HOLD_MAX - 8, 0}}, "grab_hold"),
    /** LMB in the hold: the jackhammer into the face, four escalating steps (18 → 15 t). */
-   GRAB_PUNCH(6, 4, null, true, new int[][]{{10, 2, 6}, {9, 2, 6}, {9, 2, 5}, {8, 2, 5}}, "grab_punch"),
+   GRAB_PUNCH(6, 4, null, true, new int[][]{{10, 2, 6}, {9, 2, 6}, {9, 2, 5}, {8, 2, 5}}, "grab_punch_1", "grab_punch_2", "grab_punch_3", "grab_punch_4"),
    /** Fifth punch: wind-up behind the head, the piston fires, the victim flies. */
    GRAB_FINISH(7, 5, null, true, new int[][]{{26, 2, 12}}, "grab_finish"),
    /** RMB in the hold: throw along the look. */
@@ -46,7 +46,9 @@ public enum HulkMove implements StagedMove {
    /** Ultimate: jet ram. INTRO thrusters open, MAIN dash + candle + dive (contact at its end), FINISH the long tail. */
    JET_RAM(16, 6, null, false, new int[][]{{30, 80, 50}}, "jet_ram"),
    /** LMB out of a forward dash: the punch carried by the dash. */
-   DASH_STRIKE(17, 3, MovePhase.FINISH, false, new int[][]{{6, 3, 15}}, "dash_strike");
+   DASH_STRIKE(17, 3, MovePhase.FINISH, false, new int[][]{{6, 3, 15}}, "dash_strike"),
+   /** End of the air suit-up (spec §4.4): the fall (INTRO, ends on the ground), fist and knee into the ground, the slow rise. */
+   HERO_LANDING(18, 6, null, false, new int[][]{{40, 2, 26}}, "hero_landing");
 
    private static final HulkMove[] VALUES = values();
    /** Snapshot actionId of a Hulkbuster move = OFFSET + wireId (never collides with HeroAction ordinals). */
@@ -118,6 +120,7 @@ public enum HulkMove implements StagedMove {
 
       return switch (this) {
          case JET_RAM -> phase != MovePhase.FINISH;
+         case HERO_LANDING -> true;
          case GRAB_FINISH -> phase != MovePhase.FINISH && reason != InterruptReason.CONTROL;
          default -> false;
       };
@@ -130,6 +133,50 @@ public enum HulkMove implements StagedMove {
       }
 
       return this.resists(InterruptReason.HIT, phase);
+   }
+
+   /**
+    * Clip of one phase. Most moves play one clip over the whole step; the moves whose INTRO or MAIN has no
+    * fixed length (a hold, a fall, a charge released by the button) split into a loop and a fixed tail.
+    */
+   public String clip(int step, MovePhase phase) {
+      return switch (this) {
+         case CHARGED -> phase == MovePhase.INTRO ? "charged_windup" : "charged_release";
+         case HERO_LANDING -> phase == MovePhase.INTRO ? "hero_fall" : "hero_landing";
+         case BLOCK -> phase == MovePhase.INTRO ? "block_raise" : phase == MovePhase.MAIN ? "block_hold" : "block_lower";
+         case GRAB_HOLD -> phase == MovePhase.INTRO ? "grab_lift" : "grab_hold";
+         default -> this.clip(step);
+      };
+   }
+
+   /** Ticks into {@link #clip(int, MovePhase)} at a phase and the ticks spent in it. */
+   public int clipTicks(int step, MovePhase phase, int phaseElapsed) {
+      return switch (this) {
+         case CHARGED, HERO_LANDING -> phase == MovePhase.INTRO ? phaseElapsed
+            : phase == MovePhase.MAIN ? phaseElapsed : this.ticks(MovePhase.MAIN, step) + phaseElapsed;
+         case BLOCK, GRAB_HOLD -> phaseElapsed;
+         default -> dev.baranhan.viltrumitecore.hero.combat.StagedTimeline.phaseStart(this, phase, step) + phaseElapsed;
+      };
+   }
+
+   /** The split clips that loop (hold / fall); every other clip holds its last frame. */
+   public static boolean loops(String clip) {
+      return clip.equals("hero_fall") || clip.equals("block_hold") || clip.equals("grab_hold");
+   }
+
+   /** Ticks a clip must last (HulkbusterClipsTest): the step, or the fixed segment of a split move; 0 = a loop. */
+   public int clipLength(int step, MovePhase phase) {
+      String clip = this.clip(step, phase);
+      if (loops(clip)) {
+         return 0;
+      }
+
+      return switch (this) {
+         case CHARGED, HERO_LANDING -> phase == MovePhase.INTRO ? this.ticks(MovePhase.INTRO, step)
+            : this.ticks(MovePhase.MAIN, step) + this.ticks(MovePhase.FINISH, step);
+         case BLOCK, GRAB_HOLD -> this.ticks(phase, step);
+         default -> this.length(step);
+      };
    }
 
    /** Clip name of combo step {@code step} (one clip per step, same length as the step). */
