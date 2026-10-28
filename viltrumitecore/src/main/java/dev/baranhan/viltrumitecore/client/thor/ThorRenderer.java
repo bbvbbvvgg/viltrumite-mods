@@ -132,7 +132,7 @@ public final class ThorRenderer {
 
       if (lift != null) {
          Vec3 shift = lift.root().subtract(player.getPosition(partialTick));
-         stack.translate(shift.x, shift.y, shift.z);
+         stack.translate(shift.x, shift.y + crouchCancel(player, lift), shift.z);
       }
 
       if (player.hasPose(Pose.SLEEPING)) {
@@ -214,16 +214,26 @@ public final class ThorRenderer {
          return;
       }
 
-      ThorBodyPose.liftClip(body, lift.seconds(), lift.weight());
-      Vec3 root = renderRoot(player, lift);
-      Vec3[] palms = ThorLift.thorPalms(lift.grip());
-      Vector3f up = ThorLift.toModel(root.add(lift.grip().up()), root, lift.yaw());
-      ThorLift.solveThor(body, ThorLift.toModel(palms[0], root, lift.yaw()), ThorLift.toModel(palms[1], root, lift.yaw()), up, lift.weight());
+      ThorLift.poseThor(body, lift.grip(), renderRoot(player, lift), lift.yaw(), lift.seconds(), lift.weight());
    }
 
-   /** Where the model's origin really is: the lift root plus PlayerRenderer's crouch offset. */
+   /**
+    * Where the model's origin really is: the lift root plus PlayerRenderer's crouch offset. Thor's
+    * own body cancels that offset as the lift blends in ({@link #crouchCancel}): its squat clip
+    * stands on the ground itself.
+    */
    static Vec3 renderRoot(AbstractClientPlayer player, ThorLift.Frame lift) {
-      return player.isCrouching() ? lift.root().add(0.0, CROUCH_OFFSET, 0.0) : lift.root();
+      if (!player.isCrouching()) {
+         return lift.root();
+      }
+
+      double offset = lift.thorBody() ? CROUCH_OFFSET * (1.0F - lift.weight()) : CROUCH_OFFSET;
+      return lift.root().add(0.0, offset, 0.0);
+   }
+
+   /** Third person: the part of the dispatcher's crouch offset Thor's lift takes back (see {@link #renderRoot}). */
+   static double crouchCancel(AbstractClientPlayer player, @Nullable ThorLift.Frame lift) {
+      return lift != null && lift.thorBody() && player.isCrouching() ? -CROUCH_OFFSET * lift.weight() : 0.0;
    }
 
    /** LivingEntityRenderer.render's body yaw and net head yaw (with the riding clamp). */
