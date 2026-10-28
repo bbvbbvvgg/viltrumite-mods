@@ -26,6 +26,7 @@ import java.util.Map;
 final class ThorClipContract {
    static final Path FILE = Path.of("src/main/resources/assets/viltrumitecore/animations/thor/thor.animation.json");
    static final double EPSILON = 1.0E-4;
+   static final String FP_SUFFIX = ThorAttacks.FP_SUFFIX;
 
    private ThorClipContract() {
    }
