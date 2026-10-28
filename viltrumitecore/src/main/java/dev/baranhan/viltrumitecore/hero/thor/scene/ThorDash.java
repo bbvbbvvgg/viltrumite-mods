@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor.scene;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
@@ -11,7 +12,6 @@ import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 
 /**
  * Server side of the double-WASD dash (decisions 110, 135): the client moves
@@ -47,7 +47,7 @@ final class ThorDash {
 
       NEXT.put(player.getUUID(), now + Math.max(1, ThorSceneConfig.dashCooldown - 2));
       HeroFx.airTrail(player, player);
-      SceneFx.sound(player, player.position(), SoundEvents.PLAYER_ATTACK_SWEEP, 0.6F, 1.5F);
+      SceneFx.sound(player, player.position(), ThorCue.DASH);
    }
 
    /** Pure: the server's verdict on a dash the client has already started (a known direction, allowed now, off cooldown). */

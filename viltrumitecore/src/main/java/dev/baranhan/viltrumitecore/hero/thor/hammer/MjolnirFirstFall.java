@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -8,9 +10,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -89,7 +90,7 @@ final class MjolnirFirstFall {
       MjolnirWorld.dirty(server);
       MjolnirWorld.post(dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType.HAMMER_STATE_CHANGED, record, null, false);
       // Heard by the whole dimension: thunder seconds before the impact (§3.3.4).
-      level.playSound(null, x, site.getY(), z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 10000.0F, 0.5F);
+      ThorSounds.playAt(level, new Vec3(x, site.getY(), z), ThorCue.FIRST_FALL_THUNDER, 10000.0F, 1.0F);
       MjolnirWorld.materialize(server, record);
       return true;
    }

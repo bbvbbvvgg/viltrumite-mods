@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
@@ -46,7 +47,8 @@ public final class ThorTransform {
 
       // The transformation bolt is a visual: drawn by the clients (no LightningBolt entity, so no copper
       // scraping, lightning rod, sculk event or world-wide thunder; same contract as session B's bolts).
-      HeroFx.electricBolt(level, player.position(), 48.0F, 2.0F);
+      HeroFx.electricBolt(level, player.position(), 48.0F, 2.0F, ThorSounds.boltCrack());
+      ThorSounds.bolt(level, player.position(), 2.0F);
    }
 
    /** Damage immunity during the scene (ThorHero.clampFinalDamage). */
