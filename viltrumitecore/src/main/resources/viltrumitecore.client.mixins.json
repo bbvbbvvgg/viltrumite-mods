@@ -34,6 +34,7 @@
     "FirstPersonPunchMixin",
     "FirstPersonThunderclapMixin",
     "GameRendererAccessor",
+    "GuiTimersAccessor",
     "GameRendererDashMixin",
     "GrabbedEntityPositionMixin",
     "GrabbedEntityRendererMixin2",
