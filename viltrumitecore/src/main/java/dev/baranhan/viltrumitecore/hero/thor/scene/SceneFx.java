@@ -57,11 +57,15 @@ final class SceneFx {
    /** Allowed destruction of a small bowl around a point. */
    static void crater(ServerPlayer thor, BlockPos center, int radius) {
       ServerLevel level = thor.serverLevel();
+      java.util.List<BlockPos> blocks = new java.util.ArrayList<>();
       for (BlockPos pos : BlockPos.betweenClosed(center.offset(-radius, -1, -radius), center.offset(radius, 0, radius))) {
-         if (pos.distSqr(center) <= radius * radius + 1 && level.isLoaded(pos) && level.mayInteract(thor, pos) && HeroDestruction.canDestroy(level, pos)) {
-            HeroDestruction.destroyBlock(level, pos.immutable());
+         if (pos.distSqr(center) <= radius * radius + 1 && level.isLoaded(pos) && level.mayInteract(thor, pos)) {
+            blocks.add(pos.immutable());
          }
       }
+
+      // MINOR-7: through the shared block budget (CarveJobs), HeroDestruction decides each block (mobGriefing, protected).
+      dev.baranhan.viltrumitecore.hero.thor.combat.ElectricFx.carve(level, blocks);
    }
 
    @Nullable

@@ -441,6 +441,8 @@ final class FatalitySessions {
       SESSIONS.clear();
       DOOMED.clear();
       EXECUTING.clear();
+      // NIT-2: the no-repeat memory does not carry over into another world.
+      LAST.clear();
       DEFERRED.clear();
    }
 
