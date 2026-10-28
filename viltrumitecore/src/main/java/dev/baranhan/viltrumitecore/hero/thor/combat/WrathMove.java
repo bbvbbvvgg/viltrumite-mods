@@ -1,20 +1,20 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
-import dev.baranhan.viltrumitecore.hero.HeroShockwave;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFeedback;
+import dev.baranhan.viltrumitecore.hero.thor.ThorFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveContext;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveHandler;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
@@ -89,21 +89,21 @@ public final class WrathMove {
       }
    };
 
+   /** Radius the thor:wrath_strike recipe is drawn for at scale 1 (scaled to the configured blast). */
+   static final double WRATH_FX_RADIUS = 7.0;
+   /** Contact hit-stop of the strike, ticks. */
+   static final int WRATH_HIT_STOP = 5;
+
    private WrathMove() {
    }
 
-   /** Charge visuals during the intro (server tick). */
+   /**
+    * Intro (server tick). The build-up visuals (storm cloud, sky arcs into
+    * the hammer, rumble, ground crawlers) are drawn by each client from the
+    * synced move state (FX id {@code thor:wrath_storm}, ThorStormVfx), so the
+    * server sends nothing here.
+    */
    static void tick(ServerPlayer player, ThorState state, ThorCombatState combat) {
-      if (!state.timeline.is(ThorMove.WRATH) || state.timeline.phase() != MovePhase.INTRO || state.timeline.elapsed() % 3 != 0) {
-         return;
-      }
-
-      ServerLevel level = player.serverLevel();
-      RandomSource random = level.getRandom();
-      Vec3 hand = ElectricFx.hand(player).add(0.0, 0.8, 0.0);
-      Vec3 sky = player.position().add((random.nextDouble() - 0.5) * 8.0, 10.0 + random.nextDouble() * 4.0, (random.nextDouble() - 0.5) * 8.0);
-      ElectricFx.arc(level, sky, hand);
-      ElectricFx.crackle(level, hand, 8);
    }
 
    /** The concentrated strike where the crosshair points. */
@@ -112,13 +112,8 @@ public final class WrathMove {
       ServerLevel level = player.serverLevel();
       Vec3 aim = ElectricFx.ground(level, ElectricFx.aim(player, config.wrathRange), 16);
       combat.wrathAim = aim;
-      ElectricFx.bolt(level, aim);
-      for (int i = 0; i < 4; i++) {
-         double angle = Math.PI / 2.0 * i + Math.PI / 4.0;
-         ElectricFx.bolt(level, aim.add(Math.cos(angle) * 0.8, 0.0, Math.sin(angle) * 0.8));
-      }
-
-      ElectricFx.arc(level, ElectricFx.hand(player), aim.add(0.0, 0.5, 0.0));
+      IntArrayList struck = new IntArrayList();
+      struck.add(player.getId());
       for (LivingEntity target : CombatHits.around(player, aim, config.wrathRadius, 4.0)) {
          if (!visibleFrom(level, aim.add(0.0, 1.0, 0.0), target)) {
             // B-m5: no hit through walls and floors (the wave and the storm check line of sight too).
@@ -129,12 +124,14 @@ public final class WrathMove {
          float damage = damageAt(distance, config.wrathCoreRadius, config.wrathRadius, config.wrathDamage);
          if (CombatHits.hit(player, target, damage, ThorMove.WRATH, combat.strikeAttackId)) {
             CombatHits.push(target, aim, 2.2, 0.8);
+            struck.add(target.getId());
          }
       }
 
-      HeroFx.slam(player, aim, HeroShockwave.groundUnder(level, player), (float)config.wrathRadius);
-      HeroFx.flash(player, aim.add(0.0, 1.0, 0.0), 2.0F);
-      ElectricFx.crackle(level, aim.add(0.0, 1.0, 0.0), 80);
+      // One layered preset (R4): main + satellite bolts, sky flash, screen flash, slam, dust, debris,
+      // ground crawlers, scorch and the long tail; hit-stop for Thor and everyone struck.
+      HeroFx.preset(player, ThorFx.WRATH_STRIKE, aim, ElectricFx.hand(player), (float)(config.wrathRadius / WRATH_FX_RADIUS),
+         level.getBlockState(BlockPos.containing(aim).below()), WRATH_HIT_STOP, struck.toIntArray());
       ElectricFx.sound(level, aim, SoundEvents.GENERIC_EXPLODE, 2.0F, 0.6F);
       ElectricFx.sound(level, aim, SoundEvents.LIGHTNING_BOLT_THUNDER, 3.0F, 0.7F);
       if (config.meleeBreaksBlocks) {
