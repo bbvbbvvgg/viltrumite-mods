@@ -36,6 +36,7 @@ public final class ReinhardClient {
       dev.baranhan.viltrumitecore.client.render.erasure.ErasureRenderer.register(dev.baranhan.viltrumitecore.client.reinhard.cut.DiagonalCutErasure.INSTANCE);
       PanelStyles.register(HeroId.REINHARD, ReinhardPanelStyle.INSTANCE);
       HeroHeadPreviews.register(HeroId.REINHARD, ReinhardHeadPreview.INSTANCE);
+      dev.baranhan.viltrumitecore.client.hero.speech.HeroPortraits.register(HeroId.REINHARD, ReinhardPortrait.INSTANCE);
       OutlineTargets.register(WindReadingClient::colorOf);
       MinecraftForge.EVENT_BUS.addListener(StepDashClient::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(DashBehindClient::onClientTick);

@@ -113,6 +113,15 @@ public interface HeroDefinition {
    }
 
    /**
+    * Spoken lines of this hero (cinematic subtitles) and their triggers. The
+    * server reads them when an ability starts or a hero event fires
+    * ({@link dev.baranhan.viltrumitecore.hero.speech.HeroSpeech}). Default: none.
+    */
+   default dev.baranhan.viltrumitecore.hero.speech.HeroLines lines() {
+      return dev.baranhan.viltrumitecore.hero.speech.HeroLines.NONE;
+   }
+
+   /**
     * Chassis numbers for a legacy-kit hero, or null to keep the synced
     * Viltrumite stats (config defaults: base 19, 97 % reduction). A hero that
     * must not be a full Viltrumite tank or one-shot puncher returns its own.
