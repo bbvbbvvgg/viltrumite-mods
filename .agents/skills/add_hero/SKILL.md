@@ -51,6 +51,7 @@ Reference implementation: Regulus (`hero/regulus/`, `client/regulus/`, design `d
 3. Poses and VFX: follow `animation-system`. Use `PixelVfx`, `HeroImpactFx`, `CameraShake` before making new renderers. Pose offsets are additive; do not zero other parts' rotations (breaks flight poses). Pose weight caches are cleared when the entity is no longer the hero.
 4. Effects that come from a body part (eye beams, glowing eyes) take positions from the rendered model (`HomelanderEyesLayer`), not from `getEyePosition`: otherwise they float in the air in flight poses. Glow belongs on the model, not as free billboards.
 5. Movement that the player feels (dash, jump, knockback of self) is client-authoritative: apply velocity on the client too.
+6. Spoken lines (cinematic subtitles): declare `HeroLine`s in `hero/<id>/<Id>Lines`, return the table from `HeroDefinition.lines()`, call `HeroSpeech.ability/trigger` once when the action is accepted (never per tick), `HeroSpeech.interrupt` when it is cancelled. Text keys `subtitle.viltrumitecore.<id>.*`, name `subtitle.viltrumitecore.speaker.<id>` in all locales. Player-model heroes get the bust portrait automatically; custom models register `HeroPortraits.register` in `<Id>Client.init()`. See `docs/plans/2026-10-28-hero-subtitles.md`.
 
 ### 6. Reuse the shared toolkit
 Use `references/shared-toolkit.md`. Typical mapping:

@@ -28,6 +28,7 @@ Default hooks (override only when needed):
 | `meleeDamageFactor(Player)` | 1.0 |
 | `cancelsFallDamage(Player)` | false |
 | `onLanded(ServerPlayer, float fallDistance)` | nothing; called from `HeroEvents.onLivingFall` |
+| `lines()` | `HeroLines.NONE`; spoken lines for cinematic subtitles (`hero/speech/`) |
 | `superJumpVelocity(Player)` | 0 (no super jump); both sides |
 | `onSuperJump(ServerPlayer)` | nothing (hero sounds) |
 | `preventsExhaustion(Player)` | false |
@@ -86,6 +87,7 @@ New behaviour that shared code must ask about → add a new default hook here. D
 | Poses / VFX | `client/<id>/`, `client/render/vfx/` (follow `animation-system`) |
 | Key mappings | `client/ViltrumiteCoreClient.java` (lang `key.viltrumitecore.*`) |
 | Sounds | `ViltrumiteCore.SOUND_EVENTS`, `assets/viltrumitecore/sounds.json`, `src/main/binassets/**.ogg.b64` |
+| Spoken lines / subtitle portrait | `hero/<id>/<Id>Lines` → `HeroDefinition.lines()`; `client/hero/speech/HeroPortraits.register` for custom models |
 | Lang | `assets/viltrumitecore/lang/*.json` (all locales) |
 | Mixins | `viltrumitecore.mixins.json`, `viltrumitecore.client.mixins.json` (only if no hook exists) |
 | Tests | `src/test/java/dev/baranhan/viltrumitecore/hero/<id>/` |
