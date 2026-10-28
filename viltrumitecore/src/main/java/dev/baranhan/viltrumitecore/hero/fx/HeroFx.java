@@ -128,6 +128,58 @@ public final class HeroFx {
       }
    }
 
+   /** Scale range of a preset (1 = sized for a 3.2-block hero). */
+   public static final float PRESET_MIN_SCALE = 0.25F;
+   public static final float PRESET_MAX_SCALE = 4.0F;
+   /** Hit-stop a preset may ask for (ticks). */
+   public static final int PRESET_MAX_HIT_STOP = 10;
+
+   /**
+    * A named layered FX recipe at {@code at} (looking at / reaching to
+    * {@code target}, or none), for every player tracking the source and the
+    * source itself. {@code hitStopTicks} > 0 freezes {@code entityIds} on
+    * every client for that long (contact hit-stop). Gameplay never waits for
+    * it. The recipe lives on the client ({@code client.render.vfx.FxRecipe}).
+    */
+   public static void preset(ServerPlayer source, FxPreset preset, Vec3 at, @Nullable Vec3 target, float scale, @Nullable BlockState material,
+      int hitStopTicks, int... entityIds) {
+      int stateId = material == null ? 0 : Block.getId(material);
+      CoreMessages.sendToTrackingAndSelf(presetPacket(preset, at, target, scale, stateId, source.getRandom().nextInt(65536), hitStopTicks, entityIds), source);
+   }
+
+   /** A preset with no tracking source (hammer in the world, environment), sent within {@link #BOLT_FX_RANGE}. */
+   public static void preset(net.minecraft.server.level.ServerLevel level, FxPreset preset, Vec3 at, @Nullable Vec3 target, float scale,
+      @Nullable BlockState material) {
+      HeroFxS2CPacket packet = presetPacket(preset, at, target, scale, material == null ? 0 : Block.getId(material), level.getRandom().nextInt(65536), 0);
+      for (ServerPlayer viewer : level.players()) {
+         if (viewer.position().distanceToSqr(at) <= BOLT_FX_RANGE * BOLT_FX_RANGE) {
+            CoreMessages.sendToPlayer(packet, viewer);
+         }
+      }
+   }
+
+   /** Pure: the preset packet (tests, both senders). */
+   public static HeroFxS2CPacket presetPacket(FxPreset preset, Vec3 at, @Nullable Vec3 target, float scale, int stateId, int seed, int hitStopTicks,
+      int... entityIds) {
+      Vec3 to = target == null ? at : target;
+      int[] ids = entityIds == null ? new int[0] : entityIds;
+      int count = Math.min(ids.length, 62);
+      float[] points = new float[6 + count * 3];
+      points[0] = preset.netId();
+      points[1] = seed & 0xFFFF;
+      points[2] = Math.max(0, Math.min(PRESET_MAX_HIT_STOP, hitStopTicks));
+      points[3] = (float)to.x;
+      points[4] = (float)to.y;
+      points[5] = (float)to.z;
+      float[] encoded = encodeIds(java.util.Arrays.copyOf(ids, count));
+      System.arraycopy(encoded, 0, points, 6, encoded.length);
+      return new HeroFxS2CPacket(HeroFxS2CPacket.PRESET, at, clampPresetScale(scale), stateId, points, -1);
+   }
+
+   public static float clampPresetScale(float scale) {
+      return Float.isFinite(scale) ? Math.max(PRESET_MIN_SCALE, Math.min(PRESET_MAX_SCALE, scale)) : 1.0F;
+   }
+
    /** Hit-stop (spec §9.3): the listed entities hold still on every client for {@code ticks}. */
    public static void hitStop(ServerPlayer source, Vec3 at, int ticks, int... entityIds) {
       send(source, HeroFxS2CPacket.HIT_STOP, at, ticks, null, encodeIds(entityIds), null);

@@ -43,6 +43,14 @@ public class HeroFxS2CPacket {
     * scales the brightness (0.25..2).
     */
    public static final byte ELECTRIC_BOLT = 12;
+   /**
+    * A named layered recipe ({@link dev.baranhan.viltrumitecore.hero.fx.FxPreset}), played by
+    * {@code HeroImpactFx}. {@code power} = scale (0.25..4), {@code blockStateId} = ground
+    * material. Points: [0] = {net id, seed 0..65535, hit-stop ticks}, [1] = target or direction
+    * point (the origin when none), [2..] = entity ids (HeroFx.encodeIds) frozen by the hit-stop.
+    * Old clients ignore an unknown kind, so the wire layout stays the same.
+    */
+   public static final byte PRESET = 13;
 
    private static final int MAX_POINTS = 64;
 
