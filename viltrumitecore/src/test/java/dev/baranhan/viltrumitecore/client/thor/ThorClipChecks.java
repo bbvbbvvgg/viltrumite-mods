@@ -15,8 +15,8 @@ import java.util.List;
  */
 final class ThorClipChecks {
    /** R1's Thor body (set from R1's skeleton doc). */
-   static final Path BODY = ThorRig.GEO.resolve("thor/thor.geo.json");
-   static final Path HAMMER = ThorRig.GEO.resolve("thor/mjolnir_hand.geo.json");
+   static final Path BODY = ThorClipRig.GEO.resolve("thor/thor.geo.json");
+   static final Path HAMMER = ThorClipRig.GEO.resolve("thor/mjolnir_hand.geo.json");
    /** R1's right-hand grip bone; the hand model is drawn in its frame. */
    static final String GRIP_BONE = "right_hand";
    /** R1's left hand: it may hold the handle in two-handed clips (lift, overhead, slam). */
@@ -34,11 +34,11 @@ final class ThorClipChecks {
    }
 
    /** Posed boxes of the body (+ the hammer in the grip bone) at a clip second. */
-   static List<ThorRig.Box> pose(BakedGeoModel body, BakedGeoModel hammer, String gripBone, Animation clip, double seconds, boolean withHammer) {
+   static List<ThorClipRig.Box> pose(BakedGeoModel body, BakedGeoModel hammer, String gripBone, Animation clip, double seconds, boolean withHammer) {
       AnimationController.seek(clip, body, seconds);
-      List<ThorRig.Box> boxes = new ArrayList<>(ThorRig.boxes(ThorIntersection.BODY, body, new org.joml.Matrix4f()));
+      List<ThorClipRig.Box> boxes = new ArrayList<>(ThorClipRig.boxes(ThorIntersection.BODY, body, new org.joml.Matrix4f()));
       if (withHammer && hammer != null) {
-         boxes.addAll(ThorRig.attached(HAMMER_LABEL, hammer, body, gripBone));
+         boxes.addAll(ThorClipRig.attached(HAMMER_LABEL, hammer, body, gripBone));
       }
 
       return boxes;

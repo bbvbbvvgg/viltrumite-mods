@@ -42,7 +42,7 @@ class ThorClipPreviewTest {
    void export() throws Exception {
       String bodyEnv = System.getenv("THOR_PREVIEW_BODY");
       Path bodyPath = bodyEnv != null ? Path.of(bodyEnv) : Files.exists(ThorClipChecks.BODY) ? ThorClipChecks.BODY : null;
-      BakedGeoModel body = bodyPath != null ? ThorRig.load(bodyPath) : ThorRig.parse(ThorRig.standIn());
+      BakedGeoModel body = bodyPath != null ? ThorClipRig.load(bodyPath) : ThorClipRig.parse(ThorClipRig.standIn());
       String bodyName = bodyPath != null ? bodyPath.toString() : "stand-in (vanilla proportions, not Thor)";
       String grip = env("THOR_PREVIEW_GRIP", bodyPath != null ? ThorClipChecks.GRIP_BONE : "right_arm");
       String offHand = bodyPath != null ? ThorClipChecks.OFF_HAND_BONE : "left_arm";
@@ -52,10 +52,10 @@ class ThorClipPreviewTest {
       Map<String, Animation> clips = AnimationParser.parse(animations);
       String filter = System.getenv("THOR_PREVIEW_CLIPS");
       List<String> wanted = filter == null || filter.isBlank() ? null : List.of(filter.split(","));
-      BakedGeoModel hammer = ThorRig.load(ThorClipChecks.HAMMER);
+      BakedGeoModel hammer = ThorClipRig.load(ThorClipChecks.HAMMER);
       ThorIntersection rules = ThorClipChecks.rules(grip, offHand);
       body.resetBones();
-      rules.rest(ThorRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
+      rules.rest(ThorClipRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
       Files.createDirectories(OUT);
       int written = 0;
       for (Map.Entry<String, Animation> entry : clips.entrySet()) {
@@ -86,17 +86,17 @@ class ThorClipPreviewTest {
 
          GeoBone head = body.getBone("head");
          if (head != null) {
-            out.add("eye", vec(new Vector3f(head.pivotX, head.pivotY + 4.0F, head.pivotZ).mul(ThorRig.PX)));
+            out.add("eye", vec(new Vector3f(head.pivotX, head.pivotY + 4.0F, head.pivotZ).mul(ThorClipRig.PX)));
          }
 
          JsonArray frames = new JsonArray();
          for (ThorClipBeats.Beat beat : beats) {
-            List<ThorRig.Box> boxes = ThorClipChecks.pose(body, hammer, grip, clip, beat.seconds(), withHammer);
+            List<ThorClipRig.Box> boxes = ThorClipChecks.pose(body, hammer, grip, clip, beat.seconds(), withHammer);
             JsonObject frame = new JsonObject();
             frame.addProperty("tick", beat.tick());
             frame.addProperty("beat", beat.name());
             JsonArray boxArray = new JsonArray();
-            for (ThorRig.Box box : boxes) {
+            for (ThorClipRig.Box box : boxes) {
                JsonObject b = new JsonObject();
                b.addProperty("m", box.model());
                b.addProperty("b", box.bone());
@@ -116,7 +116,7 @@ class ThorClipPreviewTest {
                   JsonObject h = new JsonObject();
                   h.addProperty("a", hit.a().id());
                   h.addProperty("b", hit.b().id());
-                  h.addProperty("px", Math.round(hit.depth() / ThorRig.PX * 100.0F) / 100.0F);
+                  h.addProperty("px", Math.round(hit.depth() / ThorClipRig.PX * 100.0F) / 100.0F);
                   hits.add(h);
                }
             }

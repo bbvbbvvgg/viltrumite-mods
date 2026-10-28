@@ -27,14 +27,14 @@ class ThorClipBodyTest {
    void authoredClipsKeepHandsAndHammerOutOfTheBody() throws Exception {
       Assumptions.assumeTrue(Files.exists(ThorClipChecks.BODY), () -> ThorClipChecks.BODY + " (R1's body) is not on this branch yet");
       Assumptions.assumeTrue(Files.exists(ThorClipContract.FILE), () -> ThorClipContract.FILE + " is not authored yet (R2b)");
-      BakedGeoModel body = ThorRig.load(ThorClipChecks.BODY);
-      BakedGeoModel hammer = ThorRig.load(ThorClipChecks.HAMMER);
+      BakedGeoModel body = ThorClipRig.load(ThorClipChecks.BODY);
+      BakedGeoModel hammer = ThorClipRig.load(ThorClipChecks.HAMMER);
       assertNotNull(body.getBone(ThorClipChecks.GRIP_BONE), "set ThorClipChecks.GRIP_BONE to R1's grip bone");
       assertNotNull(body.getBone(ThorClipChecks.OFF_HAND_BONE), "set ThorClipChecks.OFF_HAND_BONE to R1's left hand bone");
       Map<String, Animation> clips = AnimationParser.parse(JsonParser.parseString(Files.readString(ThorClipContract.FILE)).getAsJsonObject());
       ThorIntersection rules = ThorClipChecks.rules(ThorClipChecks.GRIP_BONE, ThorClipChecks.OFF_HAND_BONE);
       body.resetBones();
-      rules.rest(ThorRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
+      rules.rest(ThorClipRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
       List<String> failures = new ArrayList<>();
       int frames = 0;
       for (Map.Entry<String, Animation> entry : clips.entrySet()) {
@@ -47,7 +47,7 @@ class ThorClipBodyTest {
          int ticks = (int)Math.round(clip.lengthSeconds() * 20.0);
          boolean withHammer = ThorClipChecks.hammerInHand(name);
          for (int tick = 0; tick <= ticks; tick++) {
-            List<ThorRig.Box> boxes = ThorClipChecks.pose(body, hammer, ThorClipChecks.GRIP_BONE, clip, tick / 20.0, withHammer);
+            List<ThorClipRig.Box> boxes = ThorClipChecks.pose(body, hammer, ThorClipChecks.GRIP_BONE, clip, tick / 20.0, withHammer);
             List<ThorIntersection.Hit> hits = rules.check(boxes);
             frames++;
             if (!hits.isEmpty() && failures.size() < MAX_LINES) {

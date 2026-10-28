@@ -13,15 +13,15 @@ import org.junit.jupiter.api.Test;
 
 /** The penetration calculation itself (R2b tooling), on boxes and on the vanilla-proportion stand-in. */
 class ThorIntersectionTest {
-   private static ThorRig.Box box(String model, String bone, float x, float y, float z, float hx, float hy, float hz, float yaw) {
+   private static ThorClipRig.Box box(String model, String bone, float x, float y, float z, float hx, float hy, float hz, float yaw) {
       Matrix4f m = new Matrix4f().rotateY(yaw);
       Vector3f[] axes = {m.transformDirection(new Vector3f(1, 0, 0)), m.transformDirection(new Vector3f(0, 1, 0)), m.transformDirection(new Vector3f(0, 0, 1))};
-      return new ThorRig.Box(model, bone, new Vector3f(x, y, z), axes, new float[]{hx, hy, hz}, new Vector3f(x, y + hy + 10, z));
+      return new ThorClipRig.Box(model, bone, new Vector3f(x, y, z), axes, new float[]{hx, hy, hz}, new Vector3f(x, y + hy + 10, z));
    }
 
    @Test
    void separatingAxesMeasureOverlap() {
-      ThorRig.Box a = box("a", "a", 0, 0, 0, 1, 1, 1, 0);
+      ThorClipRig.Box a = box("a", "a", 0, 0, 0, 1, 1, 1, 0);
       assertTrue(ThorIntersection.sat(a, box("b", "b", 3, 0, 0, 1, 1, 1, 0)) < 0, "apart");
       assertEquals(0.0F, ThorIntersection.sat(a, box("b", "b", 2, 0, 0, 1, 1, 1, 0)), 1.0E-6, "touching");
       assertEquals(0.5F, ThorIntersection.sat(a, box("b", "b", 1.5F, 0, 0, 1, 1, 1, 0)), 1.0E-6, "half a block deep");
@@ -29,7 +29,7 @@ class ThorIntersectionTest {
       assertTrue(ThorIntersection.sat(a, box("b", "b", 2.3F, 0, 0, 1, 1, 1, (float)Math.toRadians(45))) > 0, "rotated corner overlaps");
       assertTrue(ThorIntersection.sat(a, box("b", "b", 2.5F, 0, 0, 1, 1, 1, (float)Math.toRadians(45))) < 0, "rotated corner clear");
       // Edge-edge: two long bars crossed diagonally above each other.
-      ThorRig.Box bar = box("a", "a", 0, 0, 0, 3, 0.2F, 0.2F, (float)Math.toRadians(45));
+      ThorClipRig.Box bar = box("a", "a", 0, 0, 0, 3, 0.2F, 0.2F, (float)Math.toRadians(45));
       assertTrue(ThorIntersection.sat(bar, box("b", "b", 0, 0.3F, 0, 3, 0.2F, 0.2F, (float)Math.toRadians(-45))) > 0);
       assertTrue(ThorIntersection.sat(bar, box("b", "b", 0, 0.5F, 0, 3, 0.2F, 0.2F, (float)Math.toRadians(-45))) < 0);
    }
@@ -37,24 +37,24 @@ class ThorIntersectionTest {
    @Test
    void jointTrimCutsTheSocketEndOnly() {
       // An upper arm hanging from its shoulder pivot at the top: the top 3 px are cut.
-      ThorRig.Box arm = new ThorRig.Box("body", "arm", new Vector3f(0, -6 * ThorRig.PX, 0),
+      ThorClipRig.Box arm = new ThorClipRig.Box("body", "arm", new Vector3f(0, -6 * ThorClipRig.PX, 0),
          new Vector3f[]{new Vector3f(1, 0, 0), new Vector3f(0, 1, 0), new Vector3f(0, 0, 1)},
-         new float[]{2 * ThorRig.PX, 6 * ThorRig.PX, 2 * ThorRig.PX}, new Vector3f(0, 0, 0));
-      ThorRig.Box trimmed = ThorIntersection.trim(arm);
-      assertEquals(4.5F * ThorRig.PX, trimmed.half()[1], 1.0E-6);
-      assertEquals(-7.5F * ThorRig.PX, trimmed.center().y, 1.0E-6, "cut at the shoulder end");
+         new float[]{2 * ThorClipRig.PX, 6 * ThorClipRig.PX, 2 * ThorClipRig.PX}, new Vector3f(0, 0, 0));
+      ThorClipRig.Box trimmed = ThorIntersection.trim(arm);
+      assertEquals(4.5F * ThorClipRig.PX, trimmed.half()[1], 1.0E-6);
+      assertEquals(-7.5F * ThorClipRig.PX, trimmed.center().y, 1.0E-6, "cut at the shoulder end");
       // A torso turning about its own centre is not cut.
-      ThorRig.Box torso = new ThorRig.Box("body", "torso", new Vector3f(), arm.axes(), new float[]{4 * ThorRig.PX, 6 * ThorRig.PX, 2 * ThorRig.PX},
+      ThorClipRig.Box torso = new ThorClipRig.Box("body", "torso", new Vector3f(), arm.axes(), new float[]{4 * ThorClipRig.PX, 6 * ThorClipRig.PX, 2 * ThorClipRig.PX},
          new Vector3f());
       assertEquals(torso, ThorIntersection.trim(torso));
    }
 
    @Test
    void allowedPairsAndAttachmentsAreSkipped() {
-      ThorRig.Box hand = box("body", "right_hand", 0, 0, 0, 1, 1, 1, 0);
-      ThorRig.Box offHand = box("body", "left_hand", 0.5F, 0, 0, 1, 1, 1, 0);
-      ThorRig.Box handle = box("mjolnir", "handle", 0, 0.5F, 0, 0.2F, 2, 0.2F, 0);
-      ThorRig.Box head = box("mjolnir", "hammer", 0, 0.5F, 0.5F, 1, 1, 1, 0);
+      ThorClipRig.Box hand = box("body", "right_hand", 0, 0, 0, 1, 1, 1, 0);
+      ThorClipRig.Box offHand = box("body", "left_hand", 0.5F, 0, 0, 1, 1, 1, 0);
+      ThorClipRig.Box handle = box("mjolnir", "handle", 0, 0.5F, 0, 0.2F, 2, 0.2F, 0);
+      ThorClipRig.Box head = box("mjolnir", "hammer", 0, 0.5F, 0.5F, 1, 1, 1, 0);
       ThorIntersection rules = ThorClipChecks.rules("right_hand", "left_hand");
       List<ThorIntersection.Hit> hits = rules.check(List.of(hand, handle, head, offHand));
       // hand ↔ hammer: the grip; handle ↔ hammer head: one model; left hand ↔ handle: the second palm.
@@ -66,21 +66,21 @@ class ThorIntersectionTest {
 
    @Test
    void restOverlapIsTheBaseline() {
-      ThorRig.Box chest = box("body", "chest", 0, 0, 0, 1, 1, 1, 0);
-      ThorRig.Box beard = box("body", "beard", 0, 0, 0.9F, 0.5F, 0.5F, 0.5F, 0);
+      ThorClipRig.Box chest = box("body", "chest", 0, 0, 0, 1, 1, 1, 0);
+      ThorClipRig.Box beard = box("body", "beard", 0, 0, 0.9F, 0.5F, 0.5F, 0.5F, 0);
       ThorIntersection rules = new ThorIntersection().rest(List.of(chest, beard));
       assertTrue(rules.check(List.of(chest, beard)).isEmpty(), "modelled overlap");
       assertFalse(rules.check(List.of(chest, box("body", "beard", 0, 0, 0.5F, 0.5F, 0.5F, 0.5F, 0))).isEmpty(), "deeper than modelled");
    }
 
    private static BakedGeoModel standIn() {
-      return ThorRig.parse(ThorRig.standIn());
+      return ThorClipRig.parse(ThorClipRig.standIn());
    }
 
    private static List<ThorIntersection.Hit> hits(BakedGeoModel body, BakedGeoModel hammer, ThorIntersection rules) {
-      List<ThorRig.Box> boxes = new java.util.ArrayList<>(ThorRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
+      List<ThorClipRig.Box> boxes = new java.util.ArrayList<>(ThorClipRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
       if (hammer != null) {
-         boxes.addAll(ThorRig.attached(ThorClipChecks.HAMMER_LABEL, hammer, body, "right_arm"));
+         boxes.addAll(ThorClipRig.attached(ThorClipChecks.HAMMER_LABEL, hammer, body, "right_arm"));
       }
 
       return rules.check(boxes);
@@ -89,10 +89,10 @@ class ThorIntersectionTest {
    @Test
    void standInRestAndNaturalPosesAreClean() throws Exception {
       BakedGeoModel body = standIn();
-      BakedGeoModel hammer = ThorRig.load(ThorClipChecks.HAMMER);
+      BakedGeoModel hammer = ThorClipRig.load(ThorClipChecks.HAMMER);
       ThorIntersection rules = ThorClipChecks.rules("right_arm", "left_arm");
       body.resetBones();
-      rules.rest(ThorRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
+      rules.rest(ThorClipRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
       assertEquals(List.of(), hits(body, hammer, rules), "rest pose with Mjölnir in the hand");
 
       // A step (legs ±35° in their hip sockets), a raised sword-arm, a turned head.
@@ -109,15 +109,15 @@ class ThorIntersectionTest {
       BakedGeoModel body = standIn();
       ThorIntersection rules = ThorClipChecks.rules("right_arm", "left_arm");
       body.resetBones();
-      rules.rest(ThorRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
+      rules.rest(ThorClipRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
       GeoBone arm = body.getBone("right_arm");
       int caught = 0;
       for (float sign : new float[]{1, -1}) {
          body.resetBones();
          arm.rotZ = sign * (float)Math.toRadians(90);
          // The arm points across the body when its far end moves toward the centre line.
-         Vector3f tip = ThorRig.boneMatrix(arm).transformPosition(new Vector3f(arm.pivotX * ThorRig.PX, 12 * ThorRig.PX, 0));
-         boolean across = Math.signum(arm.pivotX) * tip.x < Math.abs(arm.pivotX) * ThorRig.PX;
+         Vector3f tip = ThorClipRig.boneMatrix(arm).transformPosition(new Vector3f(arm.pivotX * ThorClipRig.PX, 12 * ThorClipRig.PX, 0));
+         boolean across = Math.signum(arm.pivotX) * tip.x < Math.abs(arm.pivotX) * ThorClipRig.PX;
          List<ThorIntersection.Hit> hits = hits(body, null, rules);
          if (across) {
             caught++;
@@ -133,10 +133,10 @@ class ThorIntersectionTest {
    @Test
    void theHammerSwungIntoTheBodyIsCaught() throws Exception {
       BakedGeoModel body = standIn();
-      BakedGeoModel hammer = ThorRig.load(ThorClipChecks.HAMMER);
+      BakedGeoModel hammer = ThorClipRig.load(ThorClipChecks.HAMMER);
       ThorIntersection rules = ThorClipChecks.rules("right_arm", "left_arm");
       body.resetBones();
-      rules.rest(ThorRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
+      rules.rest(ThorClipRig.boxes(ThorIntersection.BODY, body, new Matrix4f()));
       // Sweep the arm through every direction: some poses must drive Mjölnir into the stand-in, others must not.
       int bad = 0;
       int clean = 0;
