@@ -315,7 +315,8 @@ public final class JinwooSkills {
    static boolean exchange(ServerPlayer player, JinwooState state) {
       ShadowSoldierEntity partner = ShadowArmy.exchangePartner(player, state);
       if (partner == null) {
-         hint(player, "message.viltrumitecore.jinwoo.no_shadow");
+         hint(player, ShadowArmy.active(player, state).isEmpty()
+            ? "message.viltrumitecore.jinwoo.no_shadow" : "message.viltrumitecore.jinwoo.no_exchange_target");
          return false;
       }
       state.start(JinwooMove.EXCHANGE, partner.getId());

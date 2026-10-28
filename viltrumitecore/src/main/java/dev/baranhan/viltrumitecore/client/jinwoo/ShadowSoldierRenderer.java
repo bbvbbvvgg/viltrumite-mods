@@ -70,6 +70,9 @@ public class ShadowSoldierRenderer extends EntityRenderer<ShadowSoldierEntity> {
       if (e.isInvisible()) {
          return; // a hidden sentinel: only its puddle shows (JinwooVfx)
       }
+      if (e.getBoundingBox().inflate(0.35).contains(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition())) {
+         return; // a soldier walking through the camera would fill the whole screen with black
+      }
       ShadowKind kind = e.kind();
       BakedGeoModel model = AnimCache.model(GEO[kind.ordinal()]);
       if (model == null) {
