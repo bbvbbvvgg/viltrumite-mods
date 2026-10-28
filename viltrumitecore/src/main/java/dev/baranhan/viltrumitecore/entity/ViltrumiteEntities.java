@@ -45,6 +45,12 @@ public class ViltrumiteEntities {
       "rocket_fist", () -> EntityType.Builder.<RocketFistEntity>of(RocketFistEntity::new, MobCategory.MISC).sized(0.4F, 0.4F).clientTrackingRange(8).updateInterval(1).build("rocket_fist")
    );
 
+   /** Jinwoo's army (spec docs/design/2026-10-28-jinwoo-design.md §6): never saved to the world. */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity>> SHADOW_SOLDIER = ENTITIES.register(
+      "shadow_soldier", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity>of(dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity::new, MobCategory.MISC)
+         .sized(0.62F, 1.9F).clientTrackingRange(10).updateInterval(2).fireImmune().noSave().build("shadow_soldier")
+   );
+
    public static void register(IEventBus eventBus) {
       ENTITIES.register(eventBus);
    }
