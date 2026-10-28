@@ -498,5 +498,14 @@
   "ability.viltrumitecore.reinhard_diagonal_world_cut.name": "Diagonal World Cut",
   "ability.viltrumitecore.reinhard_diagonal_world_cut.desc": "Reid drawn: a tilted three-dimensional rupture cuts air, mountains and buildings. Shares the two-cut limit with Ground World Cut.",
   "ability.viltrumitecore.reinhard_lethal_chop.desc": "Reid must be fully sheathed. A decisive lethal hand chop; unavailable while drawing, drawn or sheathing.",
-  "hud.viltrumitecore.reinhard.mouse": "LMB: attack   RMB: grab / throw"
+  "hud.viltrumitecore.reinhard.mouse": "LMB: attack   RMB: grab / throw",
+  "subtitle.viltrumitecore.speaker.reinhard": "Reinhard",
+  "subtitle.viltrumitecore.reinhard.world_cut": "Mein Schwert spaltet selbst die Welt.\nWeder Entfernung noch Raum\nwerden diesem Hieb im Weg stehen.",
+  "subtitle.viltrumitecore.preview.short": "Eine kurze Zeile: ein bis zwei Reihen, sofort lesbar.",
+  "subtitle.viltrumitecore.preview.long.1": "Dies ist eine Vorschau einer langen Heldenzeile. Langer Text wird an Satzenden in kurze Seiten geteilt, damit das Feld nie zu groß wird. Jede Seite bleibt lange genug sichtbar, um sie in Ruhe zu lesen, und die nächste blendet sanft ein.",
+  "subtitle.viltrumitecore.preview.long.2": "Wenn die Zeile vorbei ist, blendet das Feld leise aus.",
+  "commands.viltrumitecore.herolines.unknown": "Unbekannte Heldenzeile: %s",
+  "commands.viltrumitecore.herolines.skipped": "Heldenzeile nicht abgespielt (läuft bereits, Abklingzeit oder der Sprecher kann nicht sprechen): %s",
+  "commands.viltrumitecore.herolines.played": "Heldenzeile abgespielt: %s",
+  "commands.viltrumitecore.herolines.stopped": "Heldenzeilen gestoppt"
 }
