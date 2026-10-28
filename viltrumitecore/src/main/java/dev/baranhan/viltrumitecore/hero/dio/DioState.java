@@ -87,10 +87,11 @@ public final class DioState {
       }
    }
 
-   /** Death keeps the cooldowns, not the blood. */
+   /** Death keeps the cooldowns and half the blood (spec §7); channels and the stand never carry over. */
    public DioState respawnCopy() {
       DioState copy = new DioState();
       System.arraycopy(this.cooldowns, 0, copy.cooldowns, 0, this.cooldowns.length);
+      copy.blood = DioRules.clampBlood(this.blood / 2);
       return copy;
    }
 

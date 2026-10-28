@@ -13,7 +13,7 @@ samples, models, textures or recordings were downloaded, traced or converted. Ra
 | `geo/dio/road_roller.geo.json`, `textures/entity/dio/road_roller{,_glow}.png.b64` | same | volumetric road roller: polygonal cylindrical drums, yoke, body, hood, cab roof |
 | `geo/dio/dio_outfit.geo.json`, `textures/entity/dio/dio_outfit.png.b64` | same | DIO's outfit overlay on the player bones: headband with heart, gold collar and shoulder pads, jacket stripes, heart knee and toe caps |
 | `textures/entity/hero/dio.png.b64` | same (`dio_lib/skin.py`) | 64×64 DIO player skin |
-| `textures/gui/ability/dio/{the_world,muda,knives,time_stop,drain,road_roller}.png.b64` | same | ability icons |
+| `textures/gui/ability/dio/{the_world,muda_barrage,knives,time_stop,vampire_drain,road_roller}.png.b64` | same | ability icons |
 
 `python3 tools/assets/make_dio_assets.py --check` regenerates everything and fails on any byte difference.
 
