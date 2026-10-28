@@ -22,6 +22,28 @@ public final class IronManHulkbusterSounds {
    public static final RegistryObject<SoundEvent> THROW = reg("ironman_hulkbuster_throw");
    public static final RegistryObject<SoundEvent> SLAM = reg("ironman_hulkbuster_slam");
    public static final RegistryObject<SoundEvent> HOP = reg("ironman_hulkbuster_hop");
+   // Rework 2026-10-28 (cue sheet docs/plans/2026-10-28-hulkbuster-cues.md); played only through HulkbusterSounds.
+   public static final RegistryObject<SoundEvent> SCREECH = reg("ironman_hulkbuster_screech");
+   public static final RegistryObject<SoundEvent> SWING = reg("ironman_hulkbuster_swing");
+   public static final RegistryObject<SoundEvent> HAMMER = reg("ironman_hulkbuster_hammer");
+   public static final RegistryObject<SoundEvent> CHARGE = reg("ironman_hulkbuster_charge");
+   public static final RegistryObject<SoundEvent> CHARGED_PUNCH = reg("ironman_hulkbuster_charged_punch");
+   public static final RegistryObject<SoundEvent> FINISH_PUNCH = reg("ironman_hulkbuster_finish_punch");
+   public static final RegistryObject<SoundEvent> CLAMP = reg("ironman_hulkbuster_clamp");
+   public static final RegistryObject<SoundEvent> BLOCK_HIT = reg("ironman_hulkbuster_block_hit");
+   public static final RegistryObject<SoundEvent> REPULSOR_CHARGE = reg("ironman_hulkbuster_repulsor_charge");
+   public static final RegistryObject<SoundEvent> REPULSOR_BEAM = reg("ironman_hulkbuster_repulsor_beam");
+   public static final RegistryObject<SoundEvent> DASH = reg("ironman_hulkbuster_dash");
+   public static final RegistryObject<SoundEvent> COUGH = reg("ironman_hulkbuster_cough");
+   public static final RegistryObject<SoundEvent> LAND = reg("ironman_hulkbuster_land");
+   public static final RegistryObject<SoundEvent> ULT_IGNITE = reg("ironman_hulkbuster_ult_ignite");
+   public static final RegistryObject<SoundEvent> ULT_IMPACT = reg("ironman_hulkbuster_ult_impact");
+   public static final RegistryObject<SoundEvent> REFUSE = reg("ironman_hulkbuster_refuse");
+   /** Client loops (HulkbusterLoops): servo hum, thrusters, elbow / repulsor charge, damage sparks. */
+   public static final RegistryObject<SoundEvent> SERVO_LOOP = reg("ironman_hulkbuster_servo_loop");
+   public static final RegistryObject<SoundEvent> THRUSTER_LOOP = reg("ironman_hulkbuster_thruster_loop");
+   public static final RegistryObject<SoundEvent> CHARGE_LOOP = reg("ironman_hulkbuster_charge_loop");
+   public static final RegistryObject<SoundEvent> SPARK_LOOP = reg("ironman_hulkbuster_spark_loop");
 
    private IronManHulkbusterSounds() {
    }

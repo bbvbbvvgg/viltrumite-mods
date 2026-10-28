@@ -31,9 +31,10 @@ public final class BodyScaleClient {
       }
 
       for (Player player : client.level.players()) {
-         float scale = HeroRegistry.get(player).bodyScale(player);
+         // Height and width factors together: either one changing refreshes the box.
+         float scale = HeroRegistry.get(player).bodyScale(player) * 1024.0F + HeroRegistry.get(player).bodyWidthScale(player);
          Float previous = LAST.put(player.getId(), scale);
-         if (previous != null && previous != scale || previous == null && scale != 1.0F) {
+         if (previous != null && previous != scale || previous == null && scale != 1025.0F) {
             player.refreshDimensions();
          }
       }

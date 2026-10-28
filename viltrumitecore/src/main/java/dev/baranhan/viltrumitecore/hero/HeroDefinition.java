@@ -87,6 +87,15 @@ public interface HeroDefinition {
    }
 
    /**
+    * Hitbox width factor (both sides, HeroSizeEvents). Default = {@link #bodyScale}:
+    * a uniform scale. A hero with a broader body (Hulkbuster 1.3 x 3.2) returns its
+    * own width factor; it changes only together with bodyScale (the caller refreshes then).
+    */
+   default float bodyWidthScale(Player player) {
+      return this.bodyScale(player);
+   }
+
+   /**
     * Factor on the legacy flight speed (no profile): CRUISE/SONIC velocity uses
     * the player's max flight speed × this. Both sides (movement is client-side).
     */

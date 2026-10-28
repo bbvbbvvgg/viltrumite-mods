@@ -21,13 +21,19 @@ public final class HeroSizeEvents {
          return;
       }
 
-      float scale = HeroRegistry.get(player).bodyScale(player);
+      HeroDefinition hero = HeroRegistry.get(player);
+      float scale = hero.bodyScale(player);
       if (scale == 1.0F || !Float.isFinite(scale) || scale <= 0.0F) {
          return;
       }
 
+      float width = hero.bodyWidthScale(player);
+      if (!Float.isFinite(width) || width <= 0.0F) {
+         width = scale;
+      }
+
       float eye = event.getNewEyeHeight();
-      event.setNewSize(event.getNewSize().scale(scale));
+      event.setNewSize(event.getNewSize().scale(width, scale));
       event.setNewEyeHeight(eye * scale);
    }
 }
