@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 /**
  * File-level contract for the Regulus presentation layer (plan Task 6):
  * shader uniform parity, mixin registration, HUD/ability texture existence
- * and dims, and lang key parity across all 11 locale files.
+ * and dims, and lang key parity across all 12 locale files.
  */
 class RegulusVisualContractTest {
 
@@ -220,7 +220,7 @@ class RegulusVisualContractTest {
       try (var listing = Files.list(langDir)) {
          files = listing.filter(path -> path.toString().endsWith(".json")).sorted().toArray(Path[]::new);
       }
-      assertEquals(11, files.length, "expected 11 lang files");
+      assertEquals(12, files.length, "expected 12 lang files");
 
       String[] requiredKeys = {
          "ability.viltrumitecore.lions_heart.name",
