@@ -54,11 +54,12 @@ public final class ThorHero implements HeroDefinition {
    /**
     * Rework R1 (spec §1): the 3.2-block GoW body has a matching hitbox, both sides.
     * Standing 1.8 × 1.75 = 3.15 tall (eye 2.835), crouching 2.625 (eye 2.22), crawling 0.9.
-    * Width 0.6 × 1.6 = 0.96: below the spec's 1.0–1.2 on purpose, so Thor still walks through
-    * one-block doors and crawls through one-block holes (a 1.0+ box cannot enter either).
+    * Width 0.6 × 10/3 = 2.0: the model's own width, arms included (geo x span ±1.03). Owner's
+    * playtest 2026-10-28: the hitbox must match the model; a narrower box (0.96, kept for one-block
+    * doors) read as "a normal human's hitbox". Thor no longer fits one-block doors.
     */
    public static final float BODY_HEIGHT_SCALE = 1.75F;
-   public static final float BODY_WIDTH_SCALE = 1.6F;
+   public static final float BODY_WIDTH_SCALE = 10.0F / 3.0F;
    /** A long arm: +1 block of entity / block reach. +0.4 step (0.6 → 1.0): a 3-block body walks up one block instead of snagging its feet. */
    public static final double BODY_REACH_BONUS = 1.0;
    public static final double BODY_STEP_BONUS = 0.4;
