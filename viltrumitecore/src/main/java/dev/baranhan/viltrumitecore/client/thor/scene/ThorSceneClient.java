@@ -255,7 +255,8 @@ public final class ThorSceneClient {
       }
 
       FlightState state = player instanceof ViltrumiteFlightPlayer flight ? flight.getFlightState() : null;
-      if (!ThorMovementRules.dashAllowed(ThorScenes.claimsMouse(player), HeroHeldTargets.holder(player) != null, state, player.onGround())) {
+      if (!ThorMovementRules.dashAllowed(ThorScenes.claimsMouse(player), HeroHeldTargets.holder(player) != null, state, player.onGround(),
+         dev.baranhan.viltrumitecore.hero.thor.ThorHero.hammerInHand(player))) {
          return;
       }
 

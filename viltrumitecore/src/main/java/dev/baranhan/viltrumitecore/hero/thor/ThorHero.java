@@ -36,9 +36,9 @@ import net.minecraft.world.entity.player.Player;
  * press resolves by context and is refused as "in development" until a
  * session registers it. No kit, vanilla chassis. Session A: the
  * one world Mjölnir (hero/thor/hammer) is entered, projected, dropped and
- * claimed from the lifecycle hooks below. Flight (session C): the
- * original Viltrumite Flight with Mjölnir in the hand, HOVER only without it,
- * none while a scene holds Thor (hero/thor/scene).
+ * claimed from the lifecycle hooks below. Flight (session C, rework §5):
+ * the original Viltrumite Flight only with Mjölnir in the hand, no flight
+ * at all without it, none while a scene holds Thor (hero/thor/scene).
  */
 public final class ThorHero implements HeroDefinition {
    public static final ThorHero INSTANCE = new ThorHero();
@@ -51,10 +51,16 @@ public final class ThorHero implements HeroDefinition {
       return HeroId.THOR;
    }
 
-   /** Both sides: flight unless a scene holds Thor (the client reads the synced scene flag). */
+   /**
+    * Both sides: flight only with Mjölnir really in the hand and no scene
+    * holding Thor (rework spec §5; the client reads the synced hammer and
+    * scene flags, the server its projected state). When it turns false
+    * mid-flight the shared flight module resets the flight and the mayfly
+    * grant is withdrawn (HeroFlightGrant): Thor falls normally.
+    */
    @Override
    public boolean allowsFlight(Player player) {
-      return ThorMovementRules.allowsFlight(player != null, player != null && ThorScenes.claimsMouse(player));
+      return ThorMovementRules.allowsFlight(player != null, player != null && ThorScenes.claimsMouse(player), player != null && hammerInHand(player));
    }
 
    /** Server: vanilla mayfly for the flight toggle while flight is allowed. */
@@ -64,15 +70,12 @@ public final class ThorHero implements HeroDefinition {
    }
 
    /**
-    * Both sides: the original flight with Mjölnir really in the hand
-    * (attached and the right hand free, ThorHands.holds), otherwise hover
-    * only. OPEN(owner): A-M2, whether the original flight needs Mjölnir in
-    * the hand or only attached; conservative: the shared "in the hand" rule
-    * (design: an item in the hand always wins).
+    * Both sides: Mjölnir really in the hand (attached and the right hand
+    * free, ThorHands.holds) on the same wire values the flight permission
+    * reads. The original flight is the only flight Thor has (null profile).
     */
-   @Override
-   public dev.baranhan.viltrumiteflight.util.FlightProfile flightProfile(Player player) {
-      return player == null ? null : ThorMovementRules.profile(ThorHands.holds(hammer(player), ThorHands.free(player)));
+   public static boolean hammerInHand(Player player) {
+      return ThorHands.holds(hammer(player), ThorHands.free(player));
    }
 
    /** Where Mjölnir is: live state on the server, the synced flags on the client. */

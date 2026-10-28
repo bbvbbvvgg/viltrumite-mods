@@ -2,7 +2,6 @@ package dev.baranhan.viltrumitecore.hero.thor.scene;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,19 +12,32 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
-/** Flight / hover / dash rules (decisions 5, 13, 20-22, 34, 48, 110, 135), the V teleport (14, 29, 41-47, 71, 72, 120) and the scene wire. */
+/** Flight / hover / dash rules (decisions 5, 13, 20-22, 34, 48, 110, 135; rework §5), the V teleport (14, 29, 41-47, 71, 72, 120) and the scene wire. */
 class ThorMovementTest {
    @Test
-   void fullFlightOnlyWithMjolnirInHand() {
-      assertNull(ThorMovementRules.profile(true), "the original flight");
-      assertSame(ThorMovementRules.HOVER_ONLY, ThorMovementRules.profile(false));
-      assertEquals(0.0F, ThorMovementRules.HOVER_ONLY.throttleUpPerTick(), "hover-only can never build throttle");
-      assertTrue(ThorMovementRules.allowsFlight(true, false));
-      assertFalse(ThorMovementRules.allowsFlight(true, true), "no flight while a scene holds Thor");
+   void noFlightAtAllWithoutMjolnirInHand() {
+      assertTrue(ThorMovementRules.allowsFlight(true, false, true), "the original flight with Mjölnir in the hand");
+      assertFalse(ThorMovementRules.allowsFlight(true, false, false), "rework §5: no CRUISE / SONIC and no HOVER without Mjölnir");
+      assertFalse(ThorMovementRules.allowsFlight(true, true, true), "no flight while a scene holds Thor");
+      assertFalse(ThorMovementRules.allowsFlight(false, false, true), "not Thor");
       assertTrue(ThorMovementRules.fullFlight(FlightState.CRUISE));
       assertTrue(ThorMovementRules.fullFlight(FlightState.SONIC));
       assertFalse(ThorMovementRules.fullFlight(FlightState.HOVER));
       assertFalse(ThorMovementRules.fullFlight(null));
+   }
+
+   @Test
+   void theFlightPermissionFollowsTheHammerOnBothSides() throws java.io.IOException {
+      String hero = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/dev/baranhan/viltrumitecore/hero/thor/ThorHero.java"));
+      assertTrue(hero.contains("ThorMovementRules.allowsFlight(player != null, player != null && ThorScenes.claimsMouse(player), player != null && hammerInHand(player))"),
+         "allowsFlight (both sides, the FlightPermissions policy) asks the hammer");
+      assertTrue(hero.contains("return ThorHands.holds(hammer(player), ThorHands.free(player));"), "one 'in the hand' rule on the synced wire values");
+      assertFalse(hero.contains("flightProfile("), "no hover-only profile: the original flight or none");
+      String rules = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/dev/baranhan/viltrumitecore/hero/thor/scene/ThorMovementRules.java"));
+      assertFalse(rules.contains("HOVER_ONLY"));
+      String dash = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/dev/baranhan/viltrumitecore/hero/thor/scene/ThorDash.java"));
+      String client = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/dev/baranhan/viltrumitecore/client/thor/scene/ThorSceneClient.java"));
+      assertTrue(dash.contains("ThorHero.hammerInHand(player)") && client.contains("ThorHero.hammerInHand(player)"), "server and client dash gates read the same hammer rule");
    }
 
    @Test
@@ -70,15 +82,18 @@ class ThorMovementTest {
    }
 
    @Test
-   void dashesOnTheGroundAndInHoverOnly() {
-      assertTrue(ThorMovementRules.dashAllowed(false, false, FlightState.NONE, true));
-      assertTrue(ThorMovementRules.dashAllowed(false, false, null, true));
-      assertTrue(ThorMovementRules.dashAllowed(false, false, FlightState.HOVER, false));
-      assertFalse(ThorMovementRules.dashAllowed(false, false, FlightState.NONE, false), "not mid-jump");
-      assertFalse(ThorMovementRules.dashAllowed(false, false, FlightState.CRUISE, false));
-      assertFalse(ThorMovementRules.dashAllowed(false, false, FlightState.SONIC, false));
-      assertFalse(ThorMovementRules.dashAllowed(true, false, FlightState.NONE, true), "scene");
-      assertFalse(ThorMovementRules.dashAllowed(false, true, FlightState.NONE, true), "held / anchored");
+   void dashesOnTheGroundAndInHoverWithTheHammerOnly() {
+      for (boolean hammer : new boolean[]{true, false}) {
+         assertTrue(ThorMovementRules.dashAllowed(false, false, FlightState.NONE, true, hammer), "the ground dash stays with or without Mjölnir");
+         assertTrue(ThorMovementRules.dashAllowed(false, false, null, true, hammer));
+         assertFalse(ThorMovementRules.dashAllowed(false, false, FlightState.NONE, false, hammer), "not mid-jump / falling");
+         assertFalse(ThorMovementRules.dashAllowed(false, false, FlightState.CRUISE, false, hammer));
+         assertFalse(ThorMovementRules.dashAllowed(false, false, FlightState.SONIC, false, hammer));
+         assertFalse(ThorMovementRules.dashAllowed(true, false, FlightState.NONE, true, hammer), "scene");
+         assertFalse(ThorMovementRules.dashAllowed(false, true, FlightState.NONE, true, hammer), "held / anchored");
+      }
+      assertTrue(ThorMovementRules.dashAllowed(false, false, FlightState.HOVER, false, true));
+      assertFalse(ThorMovementRules.dashAllowed(false, false, FlightState.HOVER, false, false), "no air dash without Mjölnir (a stale HOVER tick)");
       assertEquals(0.0F, ThorMovementRules.dashYawOffset(0));
       assertEquals(-90.0F, ThorMovementRules.dashYawOffset(1));
       assertEquals(180.0F, ThorMovementRules.dashYawOffset(2));

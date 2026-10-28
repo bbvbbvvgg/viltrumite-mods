@@ -406,3 +406,10 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - Forge calls every channel's version acceptor with `NetworkRegistry.ABSENT.version()` / `ACCEPTVANILLA` for each status ping (server every 5 s, client server list). These calls are probes, not peers: log them at debug.
 - A Thor who dies with a thrown hammer respawns without it: the hammer stays `resting` until he recalls it (MMB). This is the approved behavior (`MjolnirTuning.DEATH_IN_HAND_DROPS` comment), not a bug.
 - Sandbox (arm64, llvmpipe, ~5 FPS): `RegulusVisualContractTest` fails with `liblwjgl.so` missing (no arm64 natives on the test classpath). Environment only. xdotool taps of 50 ms are often lost; use key holds of 120 ms or more.
+
+## Thor rework R3 (flight rule, planted Mjölnir)
+- Thor's flight permission = Thor && no scene && Mjölnir in the hand (`ThorHero.allowsFlight`, both sides; `HOVER_ONLY` profile removed). The shared flight module resets a flight whose permission turns false; `HeroFlightGrant` withdraws mayfly. HOVER dash also needs the hammer.
+- Record key `lying` (synced `LYING`) now means "planted upright", not "on its side"; old saves load planted on the same rest point. `MjolnirPose.planted` = RESTING && (lying || !embedded): only a throw stuck in a wall/ceiling keeps the along-throw pose.
+- `MjolnirEntity.getDimensions` switches to `MjolnirPose.UPRIGHT` (0.7 × 0.82) while planted; `onSyncedDataUpdated` refreshes the box on both sides (noPhysics, so the resize never moves it). Planted support = probe under the buried head, not the box.
+- Crack decal is drawn by `MjolnirRenderer` (`MjolnirCracks`), so it lives exactly as long as the planted body; texture source `tools/assets/make_mjolnir_cracks.py`.
+- Lift anchor API: common `MjolnirPose.handleTop/upperPalm/lowerPalm`, server `MjolnirEntity.handleTop`, client `client.thor.MjolnirAnchors` (handle axis always world +Y).

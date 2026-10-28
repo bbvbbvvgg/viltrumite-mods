@@ -8,6 +8,7 @@ import dev.baranhan.viltrumitecore.client.anim.render.AnimRenderer;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirEntity;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirFlight;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirPhase;
+import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirPose;
 import java.util.UUID;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -23,8 +24,9 @@ import net.minecraft.world.phys.Vec3;
 /**
  * The world Mjölnir: the hand prop's own cubes recentred
  * (tools/assets/make_mjolnir_world.py), same size, so the catch has no
- * model jump. Lies on its side when resting, sticks head first after a
- * throw, tumbles in flight and turns the handle to the palm over the last
+ * model jump. Stands upright at rest, head buried in the ground with a
+ * crack decal around it (MjolnirPose, rework §6), sticks head first along
+ * the throw in a wall, comes down head first, tumbles in flight and turns the handle to the palm over the last
  * metres of a return (№157). The runes glow.
  */
 public final class MjolnirRenderer extends EntityRenderer<MjolnirEntity> {
@@ -33,8 +35,7 @@ public final class MjolnirRenderer extends EntityRenderer<MjolnirEntity> {
    private static final ResourceLocation GLOW = new ResourceLocation("viltrumitecore", "textures/entity/thor/mjolnir_glow.png");
    /** Tumble speed in flight (deg / tick, visual). */
    private static final float SPIN = 38.0F;
-   /** Half the thickness of the head: lying on its side it rests on this. */
-   private static final float LIE_HEIGHT = 0.15F;
+   private static final ResourceLocation CRACKS = new ResourceLocation("viltrumitecore", "textures/entity/thor/mjolnir_cracks.png");
 
    public MjolnirRenderer(Context context) {
       super(context);
@@ -53,10 +54,12 @@ public final class MjolnirRenderer extends EntityRenderer<MjolnirEntity> {
       float yaw = Mth.rotLerp(partialTick, hammer.yRotO, hammer.getYRot());
       float pitch = Mth.lerp(partialTick, hammer.xRotO, hammer.getXRot());
       float age = hammer.tickCount + partialTick;
-      if (phase == MjolnirPhase.RESTING && hammer.lying()) {
-         stack.translate(0.0F, LIE_HEIGHT, 0.0F);
+      if (hammer.planted()) {
+         // Upright: head down (model +Y turned to -Y), buried MjolnirPose.BURY into the ground, handle straight up.
+         MjolnirCracks.render(hammer, partialTick, stack, buffers.getBuffer(RenderType.entityTranslucent(CRACKS)));
+         stack.translate(0.0F, (float)MjolnirPose.MODEL_OFFSET, 0.0F);
          stack.mulPose(Axis.YP.rotationDegrees(-yaw));
-         stack.mulPose(Axis.XP.rotationDegrees(90.0F));
+         stack.mulPose(Axis.XP.rotationDegrees(180.0F));
       } else if (phase == MjolnirPhase.RESTING) {
          // Stuck head first along the throw (entity yaw / pitch = the flight direction).
          stack.translate(0.0F, hammer.getBbHeight() * 0.5F, 0.0F);

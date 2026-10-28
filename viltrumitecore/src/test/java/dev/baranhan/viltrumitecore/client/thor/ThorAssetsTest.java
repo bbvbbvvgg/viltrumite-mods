@@ -21,7 +21,7 @@ import javax.imageio.ImageIO;
 import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
-/** Converted Thor assets parse, sit on the right body parts and have their textures. */
+/** Converted Thor assets parse, carry their bones and have their textures. */
 class ThorAssetsTest {
    private static final Path RES = Path.of("src/main/resources/assets/viltrumitecore");
    private static final Path BIN = Path.of("src/main/binassets/assets/viltrumitecore");
@@ -51,10 +51,12 @@ class ThorAssetsTest {
 
    @Test
    void partsHangOnTheirPlayerBones() throws IOException {
-      assertRoot(ThorParts.MJOLNIR_HAND, "armorRightArm", PlayerBoneMap.Part.RIGHT_ARM);
-      assertRoot(ThorParts.MJOLNIR_BELT, "armorBody", PlayerBoneMap.Part.BODY);
-      assertRoot(ThorParts.BEARD, "armorHead", PlayerBoneMap.Part.HEAD);
-      assertRoot(ThorParts.BELLY, "armorBody", PlayerBoneMap.Part.BODY);
+      // ThorRenderer draws the hammer by its "mjolnir" subtree at Thor's own grip / belt locators.
+      assertRoot(ThorAssets.MJOLNIR_HAND, "armorRightArm", PlayerBoneMap.Part.RIGHT_ARM);
+      assertRoot(ThorAssets.MJOLNIR_BELT, "armorBody", PlayerBoneMap.Part.BODY);
+      for (ResourceLocation hammer : List.of(ThorAssets.MJOLNIR_HAND, ThorAssets.MJOLNIR_BELT)) {
+         assertNotNull(load(hammer).getBone(ThorAssets.MJOLNIR_BONE), hammer.getPath());
+      }
    }
 
    private static void assertRoot(ResourceLocation location, String root, PlayerBoneMap.Part part) throws IOException {
@@ -66,7 +68,7 @@ class ThorAssetsTest {
 
    @Test
    void handAndBeltCarryTheSameHammer() throws IOException {
-      assertEquals(cubes(load(ThorParts.MJOLNIR_HAND)), cubes(load(ThorParts.MJOLNIR_BELT)));
+      assertEquals(cubes(load(ThorAssets.MJOLNIR_HAND)), cubes(load(ThorAssets.MJOLNIR_BELT)));
    }
 
    @Test
@@ -79,6 +81,10 @@ class ThorAssetsTest {
          assertEquals(texture.getWidth(), texture.getHeight(), name + " is square like its UV space");
       }
 
+      // R1 body atlas (tools/assets/make_thor_body.py): skin, beard and belly in one 128x64 sheet.
+      BufferedImage body = png(ThorAssets.TEXTURE.getPath());
+      assertEquals(128, body.getWidth());
+      assertEquals(64, body.getHeight());
       assertEquals(png("textures/entity/thor/mjolnir.png").getWidth(), png("textures/entity/thor/mjolnir_glow.png").getWidth(),
          "the glow pass shares the hammer UVs");
       for (String icon : new String[]{"thunder", "onslaught", "wrath", "teleport"}) {

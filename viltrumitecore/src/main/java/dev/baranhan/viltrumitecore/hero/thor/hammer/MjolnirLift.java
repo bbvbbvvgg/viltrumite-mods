@@ -49,7 +49,8 @@ public final class MjolnirLift {
          return InteractionResult.CONSUME;
       }
 
-      if (player.distanceTo(hammer) > MjolnirTuning.LIFT_REACH + hammer.getBbWidth()) {
+      // Eye to the hammer's real box (upright when planted, MjolnirPose), the vanilla interaction distance rule.
+      if (hammer.getBoundingBox().distanceToSqr(player.getEyePosition()) > MjolnirTuning.LIFT_REACH * MjolnirTuning.LIFT_REACH) {
          return InteractionResult.PASS;
       }
 

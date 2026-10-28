@@ -58,7 +58,12 @@ public final class MjolnirRecord {
    boolean fallCancelled;
    /** Stuck in a block after a normal throw (rip on recall, №158). */
    boolean embedded;
-   /** Lies on its side (first fall №194 and every rest after a fall). */
+   /**
+    * Landed: stands planted upright, head in the ground (rework §6,
+    * MjolnirPose; first fall №194, every rest after a fall, a throw into the
+    * top of a block). Key "lying" kept for old saves: a saved lying hammer
+    * loads planted on the same rest point.
+    */
    boolean lying;
    /** The running throw is charged. */
    boolean charged;
@@ -77,7 +82,7 @@ public final class MjolnirRecord {
    String safeDimension;
    /** Recall asked while the hammer could not leave yet (first fall still in the air). */
    boolean recallPending;
-   /** Orientation of a resting hammer (embedded head-first / lying on its side). */
+   /** Orientation of a resting hammer (embedded head-first along the throw; planted: only the yaw of the head). */
    float yaw;
    float pitch;
 
