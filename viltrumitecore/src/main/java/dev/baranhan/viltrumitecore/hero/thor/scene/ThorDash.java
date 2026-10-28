@@ -16,7 +16,7 @@ import net.minecraft.sounds.SoundEvents;
 /**
  * Server side of the double-WASD dash (decisions 110, 135): the client moves
  * the local player at once (its own movement), the server checks that a
- * dash is allowed now (ground or HOVER, never full flight, no scene, not
+ * dash is allowed now (ground, or HOVER with Mjölnir in the hand; never full flight, no scene, not
  * held) and on cooldown, and plays it for everyone around. A refused dash is
  * undone: the player snaps back to the server position (the DASH packet
  * arrives before the first dashed movement packet, so that position is the
@@ -31,7 +31,8 @@ final class ThorDash {
    static boolean allowed(ServerPlayer player) {
       ThorState state = ThorState.of(player);
       return state != null && player.isAlive()
-         && ThorMovementRules.dashAllowed(ThorBridge.sceneLocked(state), HeroDamage.isAnchored(player) || dev.baranhan.viltrumitecore.hero.HeroHeldTargets.holder(player) != null, ThorScenes.flightState(player), player.onGround());
+         && ThorMovementRules.dashAllowed(ThorBridge.sceneLocked(state), HeroDamage.isAnchored(player) || dev.baranhan.viltrumitecore.hero.HeroHeldTargets.holder(player) != null, ThorScenes.flightState(player), player.onGround(),
+         dev.baranhan.viltrumitecore.hero.thor.ThorHero.hammerInHand(player));
    }
 
    static void onDash(ServerPlayer player, int direction) {

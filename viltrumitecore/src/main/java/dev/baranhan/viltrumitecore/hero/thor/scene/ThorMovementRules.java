@@ -1,24 +1,21 @@
 package dev.baranhan.viltrumitecore.hero.thor.scene;
 
-import dev.baranhan.viltrumiteflight.util.FlightProfile;
 import dev.baranhan.viltrumiteflight.util.FlightState;
 import javax.annotation.Nullable;
 
 /**
- * Flight, hover and dashes on the shared Viltrumite Flight module (decisions
- * 5, 13, 20-22, 34, 48): with Mjölnir in the hand Thor gets the full original
- * flight; without it only HOVER (a profile with no thrust can never reach
- * CRUISE) and dashes. No flight while a scene holds Thor. Double-WASD dashes
- * on the ground and in HOVER, never in full flight. Pure.
+ * Flight and dashes on the shared Viltrumite Flight module (decisions 5, 13,
+ * 20-22, 34, 48; rework spec 2026-10-28 §5): Thor flies only with Mjölnir
+ * really in the hand (ThorHands.holds: attached and the right hand free)
+ * and gets the original flight then. Without it there is no flight at all:
+ * no CRUISE / SONIC, no HOVER, no dash in the air. When Mjölnir leaves the
+ * hand mid-flight (throw, drop, belt, a scene) the flight permission goes
+ * false and the shared flight module resets the flight on both sides, so
+ * Thor falls like anyone else (vanilla fall damage). No flight while a
+ * scene holds Thor. Double-WASD dashes on the ground always; in HOVER only
+ * with Mjölnir in the hand; never in full flight. Pure.
  */
 public final class ThorMovementRules {
-   /**
-    * Hover-only tuning: no throttle gain and no speed lock, so the flight
-    * state stays HOVER; a fast throttle loss brings an ongoing cruise down to
-    * HOVER when Mjölnir leaves the hand mid-flight.
-    */
-   public static final FlightProfile HOVER_ONLY = new FlightProfile(1.0F, 0.0F, 0.08F, 0.0F, 0.85F, 12.0F, 12.0F, 0.2F, false, 0.0F);
-
    private ThorMovementRules() {
    }
 
@@ -31,22 +28,21 @@ public final class ThorMovementRules {
       return !fullFlight && !sceneLocked;
    }
 
-   public static boolean allowsFlight(boolean thor, boolean sceneLocked) {
-      return thor && !sceneLocked;
+   /** Spec §5: any mod flight (HOVER included) needs Mjölnir in the hand; none while a scene holds Thor. */
+   public static boolean allowsFlight(boolean thor, boolean sceneLocked, boolean hammerInHand) {
+      return thor && !sceneLocked && hammerInHand;
    }
 
-   /** Null = the original full flight. */
-   @Nullable
-   public static FlightProfile profile(boolean hammerInHand) {
-      return hammerInHand ? null : HOVER_ONLY;
-   }
-
-   public static boolean dashAllowed(boolean sceneLocked, boolean anchored, @Nullable FlightState state, boolean onGround) {
+   /**
+    * Double-WASD dash: on the ground (not flying), or in HOVER with Mjölnir
+    * in the hand; never mid-jump / falling, never in full flight.
+    */
+   public static boolean dashAllowed(boolean sceneLocked, boolean anchored, @Nullable FlightState state, boolean onGround, boolean hammerInHand) {
       if (sceneLocked || anchored) {
          return false;
       }
 
-      return state == FlightState.HOVER || (state == null || state == FlightState.NONE) && onGround;
+      return state == FlightState.HOVER && hammerInHand || (state == null || state == FlightState.NONE) && onGround;
    }
 
    /** Direction 0 forward (W), 1 left (A), 2 back (S), 3 right (D) to a yaw offset in degrees. */
