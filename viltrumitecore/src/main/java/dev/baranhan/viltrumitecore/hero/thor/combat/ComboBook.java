@@ -51,10 +51,15 @@ public final class ComboBook {
    private static final Button L = Button.LMB;
    private static final Button R = Button.RMB;
 
-   /** Mjölnir in the hand: 9 routes (PLACEHOLDER). */
+   /**
+    * Mjölnir in the hand: 10 routes (PLACEHOLDER). The main LMB chain is the rework's
+    * four trajectories (spec §3): horizontal, diagonal from above, uppercut, finisher
+    * into the ground; LLL+R ends in the spin instead, LL+R in the overhead.
+    */
    public static final List<Route> ARMED = List.of(
-      route("thunder_chain", ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, L, L), List.of(SWING_RIGHT, SWING_BACKHAND, OVERHEAD, SPIN)),
-      route("uppercut", ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, R), List.of(SWING_RIGHT, SWING_BACKHAND, UPPERCUT)),
+      route("thunder_chain", ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, L, L), List.of(SWING_RIGHT, SWING_BACKHAND, UPPERCUT, GROUND_SLAM)),
+      route("thunder_spin", ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, L, R), List.of(SWING_RIGHT, SWING_BACKHAND, UPPERCUT, SPIN)),
+      route("overhead", ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, R), List.of(SWING_RIGHT, SWING_BACKHAND, OVERHEAD)),
       route("earthbreaker", ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, R, R), List.of(SWING_RIGHT, RISING, GROUND_SLAM)),
       route("heavy_spin", ThorMove.HAMMER_COMBO, Starter.ANY, List.of(R, R, R), List.of(HEAVY_DOWN, HEAVY_REVERSE, HEAVY_SPIN)),
       route("pommel_sweep", ThorMove.HAMMER_COMBO, Starter.ANY, List.of(R, L, L), List.of(HEAVY_DOWN, POMMEL, DOUBLE_SWING)),
@@ -63,13 +68,22 @@ public final class ComboBook {
       route("falling_slam", ThorMove.HAMMER_COMBO, Starter.AIRBORNE, List.of(L), List.of(FALLING_SLAM)),
       route("low_sweep", ThorMove.HAMMER_COMBO, Starter.SNEAK, List.of(R, R), List.of(LOW_SWEEP, SWEEP_LAUNCH)));
 
-   /** Bare fists: 5 routes (PLACEHOLDER). */
+   /**
+    * Bare fists: 5 routes of 3 heavy strikes (PLACEHOLDER; rework spec §3). The hook
+    * left the boxer chain when it became three strikes: {@link #UNROUTED}.
+    */
    public static final List<Route> UNARMED = List.of(
-      route("boxer", ThorMove.FIST_COMBO, Starter.ANY, List.of(L, L, L, L), List.of(JAB, CROSS, HOOK, FIST_UPPERCUT)),
+      route("boxer", ThorMove.FIST_COMBO, Starter.ANY, List.of(L, L, L), List.of(JAB, CROSS, FIST_UPPERCUT)),
       route("haymaker", ThorMove.FIST_COMBO, Starter.ANY, List.of(L, L, R), List.of(JAB, CROSS, HAYMAKER)),
       route("ground_pound", ThorMove.FIST_COMBO, Starter.ANY, List.of(R, R, R), List.of(HAMMER_FIST, HAMMER_FIST_LEFT, GROUND_POUND)),
       route("brawler", ThorMove.FIST_COMBO, Starter.ANY, List.of(R, L, R), List.of(HAMMER_FIST, ELBOW, PUSH_KICK)),
       route("tackle", ThorMove.FIST_COMBO, Starter.SPRINT, List.of(L, L, L), List.of(TACKLE, BODY_BLOW, TACKLE_HOOK)));
+
+   /**
+    * Strikes no route plays any more; kept because pose ids are ordinals
+    * (append only) and the clip contract still names them.
+    */
+   public static final java.util.Set<ThorStrike> UNROUTED = java.util.Set.of(HOOK);
 
    private ComboBook() {
    }

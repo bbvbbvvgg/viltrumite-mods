@@ -33,8 +33,15 @@ class ThorCombatRulesTest {
          route.strikes().forEach(strike -> assertSame(ThorMove.HAMMER_COMBO, strike.move(), route.id()));
       }
 
+      for (ComboBook.Route route : ComboBook.ARMED) {
+         if (route.starter() == Starter.ANY) {
+            assertTrue(route.length() >= 3 && route.length() <= 4, route.id() + ": rework spec §3, 3–4 hammer strikes");
+         }
+      }
+
       for (ComboBook.Route route : ComboBook.UNARMED) {
          assertSame(ThorMove.FIST_COMBO, route.move());
+         assertEquals(3, route.length(), route.id() + ": rework spec §3, 3 fist strikes");
          route.strikes().forEach(strike -> assertSame(ThorMove.FIST_COMBO, strike.move(), route.id()));
       }
    }
@@ -79,13 +86,23 @@ class ThorCombatRulesTest {
 
    @Test
    void rhythmAndContextPickTheStrikes() {
-      assertSame(ThorStrike.SPIN, ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, L, L)).strike());
+      // Rework spec §3: the main LMB chain is horizontal, diagonal from above, uppercut, finisher into the ground.
+      List<ThorStrike> main = List.of(ThorStrike.SWING_RIGHT, ThorStrike.SWING_BACKHAND, ThorStrike.UPPERCUT, ThorStrike.GROUND_SLAM);
+      for (int n = 1; n <= main.size(); n++) {
+         assertSame(main.get(n - 1), ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, L, L).subList(0, n)).strike(), "step " + n);
+      }
+
       assertTrue(ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, L, L)).last());
-      ComboBook.Match uppercut = ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, R));
-      assertSame(ThorStrike.UPPERCUT, uppercut.strike());
-      assertTrue(uppercut.last() && uppercut.completed());
+      assertFalse(ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, L)).last(), "LLL continues into LLLL / LLLR");
+      assertSame(ThorStrike.SPIN, ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, L, R)).strike());
+      ComboBook.Match overhead = ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L, R));
+      assertSame(ThorStrike.OVERHEAD, overhead.strike());
+      assertTrue(overhead.last() && overhead.completed());
       ComboBook.Match open = ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, L));
       assertFalse(open.last(), "LL continues into LLL / LLR");
+      ComboBook.Match boxer = ComboBook.match(ThorMove.FIST_COMBO, Starter.ANY, List.of(L, L, L));
+      assertSame(ThorStrike.FIST_UPPERCUT, boxer.strike());
+      assertTrue(boxer.last() && boxer.completed(), "rework spec §3: three fist strikes");
       assertNull(ComboBook.match(ThorMove.HAMMER_COMBO, Starter.ANY, List.of(L, R, L)), "no route: the press starts a new chain");
       assertSame(ThorStrike.LUNGE, ComboBook.match(ThorMove.HAMMER_COMBO, Starter.SPRINT, List.of(L)).strike());
       assertSame(ThorStrike.FALLING_SLAM, ComboBook.match(ThorMove.HAMMER_COMBO, Starter.AIRBORNE, List.of(L)).strike());
@@ -108,7 +125,8 @@ class ThorCombatRulesTest {
       ComboBook.ARMED.forEach(route -> used.addAll(route.strikes()));
       ComboBook.UNARMED.forEach(route -> used.addAll(route.strikes()));
       for (ThorStrike strike : ThorStrike.values()) {
-         assertTrue(used.contains(strike) || strike.move() == ThorMove.HAMMER_STRIKE, strike + " is never played");
+         assertTrue(used.contains(strike) || strike.move() == ThorMove.HAMMER_STRIKE || ComboBook.UNROUTED.contains(strike), strike + " is never played");
+         assertFalse(used.contains(strike) && ComboBook.UNROUTED.contains(strike), strike + " is routed: not UNROUTED");
       }
    }
 
