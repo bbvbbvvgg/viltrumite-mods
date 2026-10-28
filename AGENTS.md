@@ -145,6 +145,8 @@ Done means all of these are true: the design spec is fully implemented; each new
 
 ## 14. Git workflow and GitHub
 
+**MANDATORY — COMMIT AND PUSH IMMEDIATELY:** Whenever any task-related work is completed or changed (code, tests, configuration, documentation, assets, or anything else), commit it and push it to GitHub immediately. Do not wait until the end of the task or session. If the task continues, push the completed increment first, then continue working. Nothing completed may remain only on the local PC. After pushing, verify that the commit is visible on GitHub. If a push fails, resolve the problem and retry; never claim success until the remote commit is verified.
+
 GitHub is the only home of the work. Work on one branch per task. Make small logical commits in English, conventional style: `feat(scope): ...`, `fix(scope): ...`, `docs(scope): ...`. Ship each finished task as its own PR. Nothing task-related stays only on a local machine.
 
 PR format:
