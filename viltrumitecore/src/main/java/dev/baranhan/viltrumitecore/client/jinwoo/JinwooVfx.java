@@ -696,6 +696,10 @@ public final class JinwooVfx {
             if (t < 0 || t >= 1) {
                continue;
             }
+            // an afterimage around the eye would cover the whole first-person view
+            if (g.pos.add(0, 1.4, 0).distanceToSqr(cam) < 2.6 * 2.6) {
+               continue;
+            }
             body.resetBones();
             if (step != null) {
                AnimationController.overlay(step, body, 0.15, 1.0F);
