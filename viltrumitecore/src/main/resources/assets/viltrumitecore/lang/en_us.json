@@ -498,5 +498,14 @@
   "ability.viltrumitecore.reinhard_diagonal_world_cut.name": "Diagonal World Cut",
   "ability.viltrumitecore.reinhard_diagonal_world_cut.desc": "Reid drawn: a tilted three-dimensional rupture cuts air, mountains and buildings. Shares the two-cut limit with Ground World Cut.",
   "ability.viltrumitecore.reinhard_lethal_chop.desc": "Reid must be fully sheathed. A decisive lethal hand chop; unavailable while drawing, drawn or sheathing.",
-  "hud.viltrumitecore.reinhard.mouse": "LMB: attack   RMB: grab / throw"
+  "hud.viltrumitecore.reinhard.mouse": "LMB: attack   RMB: grab / throw",
+  "subtitle.viltrumitecore.speaker.reinhard": "Reinhard",
+  "subtitle.viltrumitecore.reinhard.world_cut": "My sword can cleave the world itself.\nNeither distance nor space\nwill stand in the way of this strike.",
+  "subtitle.viltrumitecore.preview.short": "A short line: one or two rows, read at a glance.",
+  "subtitle.viltrumitecore.preview.long.1": "This is a preview of a long hero line. Long text is split into short pages at sentence ends, so the panel never grows too large. Each page stays on screen long enough to be read calmly, and the next one fades in softly.",
+  "subtitle.viltrumitecore.preview.long.2": "When the line is over, the panel quietly fades away.",
+  "commands.viltrumitecore.herolines.unknown": "Unknown hero line: %s",
+  "commands.viltrumitecore.herolines.skipped": "Hero line not played (already playing, on cooldown, or the speaker cannot speak): %s",
+  "commands.viltrumitecore.herolines.played": "Hero line played: %s",
+  "commands.viltrumitecore.herolines.stopped": "Hero lines stopped"
 }
