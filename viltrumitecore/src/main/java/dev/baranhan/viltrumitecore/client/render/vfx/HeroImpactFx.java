@@ -128,8 +128,64 @@ public final class HeroImpactFx {
                AirTrailVfx.trail(id);
             }
          }
+         case HeroFxS2CPacket.ELECTRIC_ARC -> {
+            if (packet.points.length >= 3) {
+               electricArc(level, packet.origin, new Vec3(packet.points[0], packet.points[1], packet.points[2]));
+            }
+         }
+         case HeroFxS2CPacket.ELECTRIC_RING -> {
+            if (packet.points.length >= 1) {
+               electricRing(level, packet.origin, Math.min(64.0, packet.points[0]));
+            }
+         }
+         case HeroFxS2CPacket.ELECTRIC_CRACKLE -> {
+            RandomSource random = level.random;
+            int count = Math.max(1, Math.min(64, Math.round(packet.power)));
+            for (int i = 0; i < count; i++) {
+               level.addParticle(ParticleTypes.ELECTRIC_SPARK, packet.origin.x + random.nextGaussian() * 0.4, packet.origin.y + random.nextGaussian() * 0.6,
+                  packet.origin.z + random.nextGaussian() * 0.4, random.nextGaussian() * 0.1, random.nextGaussian() * 0.1, random.nextGaussian() * 0.1);
+            }
+         }
          default -> {
          }
+      }
+   }
+
+   /** Thor's spark arc, drawn locally (what the server used to send spark by spark). */
+   private static void electricArc(ClientLevel level, Vec3 from, Vec3 to) {
+      RandomSource random = level.random;
+      double length = Math.min(96.0, from.distanceTo(to));
+      int pieces = Math.max(2, (int)Math.ceil(length * 1.5));
+      Vec3 previous = from;
+      for (int i = 1; i <= pieces; i++) {
+         Vec3 point = from.lerp(to, i / (double)pieces);
+         if (i < pieces) {
+            point = point.add((random.nextDouble() - 0.5) * 0.5, (random.nextDouble() - 0.5) * 0.5, (random.nextDouble() - 0.5) * 0.5);
+         }
+
+         int dots = Math.max(2, (int)(previous.distanceTo(point) * 5));
+         for (int d = 0; d < dots; d++) {
+            Vec3 at = previous.lerp(point, d / (double)dots);
+            level.addParticle(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 0.0, 0.0, 0.0);
+         }
+
+         previous = point;
+      }
+
+      for (int i = 0; i < 3; i++) {
+         level.addParticle(ParticleTypes.END_ROD, to.x + random.nextGaussian() * 0.1, to.y + random.nextGaussian() * 0.1, to.z + random.nextGaussian() * 0.1,
+            random.nextGaussian() * 0.02, random.nextGaussian() * 0.02, random.nextGaussian() * 0.02);
+      }
+   }
+
+   /** Thor's spark ring, drawn locally. */
+   private static void electricRing(ClientLevel level, Vec3 center, double radius) {
+      int points = Math.max(12, (int)(radius * 10));
+      RandomSource random = level.random;
+      for (int i = 0; i < points; i++) {
+         double angle = Math.PI * 2.0 * i / points;
+         level.addParticle(ParticleTypes.ELECTRIC_SPARK, center.x + Math.cos(angle) * radius, center.y + 0.2 + random.nextGaussian() * 0.15,
+            center.z + Math.sin(angle) * radius, 0.0, random.nextGaussian() * 0.02, 0.0);
       }
    }
 

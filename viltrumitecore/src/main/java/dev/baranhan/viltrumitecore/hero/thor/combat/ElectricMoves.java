@@ -261,7 +261,7 @@ public final class ElectricMoves {
       }
 
       ElectricFx.arc(level, from, first.getBoundingBox().getCenter());
-      if (CombatHits.hit(player, first, config.dischargeDamage, ThorMove.ELECTRIC_COMBO, combat.strikeAttackId)) {
+      if (CombatHits.hitArea(player, first, config.dischargeDamage, ThorMove.ELECTRIC_COMBO, combat.strikeAttackId)) {
          combat.actionPrimary.add(first.getUUID());
          combat.actionAll.add(first.getUUID());
          CombatHits.push(first, player.position(), 0.4, 0.0);
@@ -295,7 +295,7 @@ public final class ElectricMoves {
 
          ElectricFx.arc(level, current.getBoundingBox().getCenter(), next.getBoundingBox().getCenter());
          hit.add(next.getUUID());
-         if (CombatHits.hit(player, next, amount, move, combat.strikeAttackId)) {
+         if (CombatHits.hitArea(player, next, amount, move, combat.strikeAttackId)) {
             combat.actionAll.add(next.getUUID());
             CombatHits.push(next, current.position(), 0.3, 0.0);
          }
@@ -328,7 +328,7 @@ public final class ElectricMoves {
          }
 
          ElectricFx.arc(level, center.add(0.0, 1.0, 0.0), target.getBoundingBox().getCenter());
-         if (CombatHits.hit(player, target, damage, ThorMove.ELECTRIC_WAVE, combat.strikeAttackId)) {
+         if (CombatHits.hitArea(player, target, damage, ThorMove.ELECTRIC_WAVE, combat.strikeAttackId)) {
             if (primary) {
                combat.actionPrimary.add(target.getUUID());
             }
@@ -388,7 +388,7 @@ public final class ElectricMoves {
             }
 
             ElectricFx.arc(level, center.add(0.0, 1.2, 0.0), target.getBoundingBox().getCenter());
-            if (CombatHits.hit(player, target, config.stormPulseDamage, ThorMove.ELECTRIC_STORM, combat.strikeAttackId)) {
+            if (CombatHits.hitArea(player, target, config.stormPulseDamage, ThorMove.ELECTRIC_STORM, combat.strikeAttackId)) {
                CombatHits.push(target, center, 0.2, 0.0);
             }
          }
@@ -467,7 +467,7 @@ public final class ElectricMoves {
          }
 
          ElectricFx.arc(level, center.add(0.0, 1.2, 0.0), target.getBoundingBox().getCenter());
-         if (CombatHits.hit(player, target, damage, ThorMove.ELECTRIC_STORM, combat.strikeAttackId)) {
+         if (CombatHits.hitArea(player, target, damage, ThorMove.ELECTRIC_STORM, combat.strikeAttackId)) {
             CombatHits.push(target, center, 1.5, 0.4);
          }
       }

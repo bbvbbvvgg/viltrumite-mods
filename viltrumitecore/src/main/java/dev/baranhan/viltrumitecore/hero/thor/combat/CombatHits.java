@@ -170,6 +170,24 @@ public final class CombatHits {
     * the damage path, before the death.
     */
    public static boolean hit(ServerPlayer player, LivingEntity target, float damage, ThorMove move, int attackId) {
+      return hit(player, target, damage, move, attackId, true);
+   }
+
+   /**
+    * An electric area / ranged hit (LMB discharge and its chain, RMB wave,
+    * storm pulses and burst, sky splash): the target's vanilla i-frames
+    * apply (B-M5). Only authored strikes and combo finishers skip them.
+    */
+   public static boolean hitArea(ServerPlayer player, LivingEntity target, float damage, ThorMove move, int attackId) {
+      return hit(player, target, damage, move, attackId, false);
+   }
+
+   /** Pure: may a hit skip the target's i-frames? Authored strikes / finishers yes, electric area and ranged hits no (B-M5). */
+   public static boolean skipsIFrames(boolean authoredStrike) {
+      return authoredStrike;
+   }
+
+   private static boolean hit(ServerPlayer player, LivingEntity target, float damage, ThorMove move, int attackId, boolean authoredStrike) {
       if (damage <= 0.0F || !target.isAlive()) {
          return false;
       }
@@ -178,7 +196,9 @@ public final class CombatHits {
       Scope previous = SCOPE.get();
       SCOPE.set(new Scope(player, target, move, attackId, hammer));
       int saved = target.invulnerableTime;
-      target.invulnerableTime = 0;
+      if (skipsIFrames(authoredStrike)) {
+         target.invulnerableTime = 0;
+      }
       boolean landed;
       try {
          landed = target.hurt(player.damageSources().playerAttack(player), damage);

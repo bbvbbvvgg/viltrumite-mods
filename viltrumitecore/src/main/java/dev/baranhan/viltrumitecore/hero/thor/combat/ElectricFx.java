@@ -2,16 +2,15 @@ package dev.baranhan.viltrumitecore.hero.thor.combat;
 
 import dev.baranhan.viltrumitecore.hero.CarveJobs;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
+import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.ClipContext;
@@ -41,44 +40,34 @@ public final class ElectricFx {
       return player.getEyePosition().add(look.scale(0.6)).add(right.scale(0.35)).add(0.0, -0.35, 0.0);
    }
 
-   /** A jagged spark line. */
+   /**
+    * A jagged spark line. One compact FX packet per viewer (B-M8); each
+    * client draws the sparks itself ({@code HeroImpactFx}, same look as the
+    * old server particles: ~5 sparks a block plus an END_ROD tip).
+    */
    public static void arc(ServerLevel level, Vec3 from, Vec3 to) {
-      RandomSource random = level.getRandom();
-      double length = from.distanceTo(to);
-      int pieces = Math.max(2, (int)Math.ceil(length * 1.5));
-      Vec3 previous = from;
-      for (int i = 1; i <= pieces; i++) {
-         double t = i / (double)pieces;
-         Vec3 point = from.lerp(to, t);
-         if (i < pieces) {
-            point = point.add((random.nextDouble() - 0.5) * 0.5, (random.nextDouble() - 0.5) * 0.5, (random.nextDouble() - 0.5) * 0.5);
-         }
-
-         int dots = Math.max(2, (int)(previous.distanceTo(point) * 5));
-         for (int d = 0; d < dots; d++) {
-            Vec3 at = previous.lerp(point, d / (double)dots);
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 1, 0.0, 0.0, 0.0, 0.0);
-         }
-
-         previous = point;
-      }
-
-      level.sendParticles(ParticleTypes.END_ROD, to.x, to.y, to.z, 3, 0.1, 0.1, 0.1, 0.02);
+      HeroFx.electricArc(level, from, to);
    }
 
-   /** A flat ring of sparks. */
+   /** A flat ring of sparks (one packet per viewer, drawn by the client). */
    public static void ring(ServerLevel level, Vec3 center, double radius) {
-      int points = Math.max(12, (int)(radius * 10));
-      for (int i = 0; i < points; i++) {
-         double angle = Math.PI * 2.0 * i / points;
-         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, center.x + Math.cos(angle) * radius, center.y + 0.2, center.z + Math.sin(angle) * radius, 1, 0.0,
-            0.15, 0.0, 0.02);
-      }
+      HeroFx.electricRing(level, center, radius);
    }
 
-   /** Sparks crawling on an entity / point. */
+   /** Sparks crawling on an entity / point (one packet per viewer). */
    public static void crackle(ServerLevel level, Vec3 at, int count) {
-      level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, count, 0.4, 0.6, 0.4, 0.1);
+      HeroFx.electricCrackle(level, at, count);
+   }
+
+   /** Pure: sparks the client draws along one arc (the old server count: ~5 a block, at least 2 per piece). */
+   public static int arcSparks(double length) {
+      int pieces = Math.max(2, (int)Math.ceil(length * 1.5));
+      return Math.max(pieces * 2, (int)Math.ceil(length * 5.0));
+   }
+
+   /** Pure: sparks of one ring of {@code radius} (the old server count). */
+   public static int ringSparks(double radius) {
+      return Math.max(12, (int)(radius * 10));
    }
 
    /** Vanilla lightning visual only: no fire, no vanilla damage (Thor's damage is dealt separately). */
@@ -140,6 +129,53 @@ public final class ElectricFx {
       }
 
       return blocks;
+   }
+
+   /**
+    * The sky bolt's path above {@code from}: air passes, ordinary blocks are
+    * carved, and the first block it may not break (unbreakable, protected,
+    * mobGriefing off) or an unloaded position ends the path; nothing above
+    * it is cut (blocked, not jumped over).
+    */
+   public static List<BlockPos> skyPath(ServerLevel level, BlockPos from, int height) {
+      List<BlockPos> path = new ArrayList<>();
+      for (BlockPos pos : column(from, height)) {
+         if (!level.isLoaded(pos) || pos.getY() >= level.getMaxBuildHeight()) {
+            break;
+         }
+
+         if (level.getBlockState(pos).isAir()) {
+            continue;
+         }
+
+         if (!HeroDestruction.canDestroy(level, pos)) {
+            break;
+         }
+
+         path.add(pos);
+      }
+
+      return path;
+   }
+
+   /** Pure twin of {@link #skyPath} over a per-block verdict (tests): AIR passes, BREAK is cut, STOP ends the path. */
+   public enum PathBlock {
+      AIR,
+      BREAK,
+      STOP
+   }
+
+   public static int skyPathLength(List<PathBlock> column) {
+      int cut = 0;
+      for (PathBlock block : column) {
+         if (block == PathBlock.STOP) {
+            break;
+         } else if (block == PathBlock.BREAK) {
+            cut++;
+         }
+      }
+
+      return cut;
    }
 
    /** Queue the removal of ordinary blocks (HeroDestruction decides each one). */

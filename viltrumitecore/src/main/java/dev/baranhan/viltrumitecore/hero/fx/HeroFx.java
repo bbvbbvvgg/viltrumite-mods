@@ -63,6 +63,42 @@ public final class HeroFx {
          if (viewer.position().distanceToSqr(at) <= 96 * 96) CoreMessages.sendToPlayer(packet, viewer);
    }
 
+   /** Radius in which level-anchored electric FX are sent (the vanilla particle range is 32; sparks are small). */
+   public static final double ELECTRIC_FX_RANGE = 48.0;
+
+   /**
+    * A jagged electric arc from {@code from} to {@code to}, drawn by each
+    * client from one packet (Thor B-M8: was one particle packet per spark
+    * per viewer). The wire cost is one packet per viewer per arc.
+    */
+   public static void electricArc(net.minecraft.server.level.ServerLevel level, Vec3 from, Vec3 to) {
+      sendNear(level, from.lerp(to, 0.5), new HeroFxS2CPacket(HeroFxS2CPacket.ELECTRIC_ARC, from, 1.0F, 0,
+         new float[]{(float)to.x, (float)to.y, (float)to.z}, -1));
+   }
+
+   /** A flat electric ring, drawn by each client from one packet. */
+   public static void electricRing(net.minecraft.server.level.ServerLevel level, Vec3 center, double radius) {
+      sendNear(level, center, new HeroFxS2CPacket(HeroFxS2CPacket.ELECTRIC_RING, center, 1.0F, 0, new float[]{(float)radius, 0.0F, 0.0F}, -1));
+   }
+
+   /** Sparks crawling on a point, drawn by each client from one packet. */
+   public static void electricCrackle(net.minecraft.server.level.ServerLevel level, Vec3 at, int count) {
+      sendNear(level, at, new HeroFxS2CPacket(HeroFxS2CPacket.ELECTRIC_CRACKLE, at, count, 0, null, -1));
+   }
+
+   /** Pure: does a viewer at {@code viewer} get a level-anchored FX at {@code at}? */
+   public static boolean inElectricRange(Vec3 viewer, Vec3 at) {
+      return viewer.distanceToSqr(at) <= ELECTRIC_FX_RANGE * ELECTRIC_FX_RANGE;
+   }
+
+   private static void sendNear(net.minecraft.server.level.ServerLevel level, Vec3 at, HeroFxS2CPacket packet) {
+      for (ServerPlayer viewer : level.players()) {
+         if (inElectricRange(viewer.position(), at)) {
+            CoreMessages.sendToPlayer(packet, viewer);
+         }
+      }
+   }
+
    /** Hit-stop (spec §9.3): the listed entities hold still on every client for {@code ticks}. */
    public static void hitStop(ServerPlayer source, Vec3 at, int ticks, int... entityIds) {
       send(source, HeroFxS2CPacket.HIT_STOP, at, ticks, null, encodeIds(entityIds), null);

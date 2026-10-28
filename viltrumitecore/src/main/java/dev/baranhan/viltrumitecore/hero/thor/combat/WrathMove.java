@@ -118,6 +118,11 @@ public final class WrathMove {
 
       ElectricFx.arc(level, ElectricFx.hand(player), aim.add(0.0, 0.5, 0.0));
       for (LivingEntity target : CombatHits.around(player, aim, config.wrathRadius, 4.0)) {
+         if (!visibleFrom(level, aim.add(0.0, 1.0, 0.0), target)) {
+            // B-m5: no hit through walls and floors (the wave and the storm check line of sight too).
+            continue;
+         }
+
          double distance = target.position().distanceTo(aim);
          float damage = damageAt(distance, config.wrathCoreRadius, config.wrathRadius, config.wrathDamage);
          if (CombatHits.hit(player, target, damage, ThorMove.WRATH, combat.strikeAttackId)) {
@@ -130,7 +135,22 @@ public final class WrathMove {
       ElectricFx.crackle(level, aim.add(0.0, 1.0, 0.0), 80);
       ElectricFx.sound(level, aim, SoundEvents.GENERIC_EXPLODE, 2.0F, 0.6F);
       ElectricFx.sound(level, aim, SoundEvents.LIGHTNING_BOLT_THUNDER, 3.0F, 0.7F);
-      ElectricFx.carve(level, ElectricFx.crater(BlockPos.containing(aim).below(), config.wrathCraterRadius, 0.7));
+      if (config.meleeBreaksBlocks) {
+         // B-m5: the ultimate's crater honours the same block switch as every other crater.
+         ElectricFx.carve(level, ElectricFx.crater(BlockPos.containing(aim).below(), config.wrathCraterRadius, 0.7));
+      }
+   }
+
+   /** The strike point sees the target's body (eye or centre). */
+   static boolean visibleFrom(ServerLevel level, Vec3 from, LivingEntity target) {
+      for (Vec3 to : new Vec3[]{target.getEyePosition(), target.getBoundingBox().getCenter()}) {
+         if (level.clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+            net.minecraft.world.level.ClipContext.Fluid.NONE, target)).getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    /** Pure: full damage in the core, falling to a fifth at the edge, nothing outside. */

@@ -28,6 +28,12 @@ public class HeroFxS2CPacket {
    public static final byte SONIC_RING = 7;
    /** A white air trail behind each entity id in {@code points} (client AirTrailVfx). */
    public static final byte AIR_TRAIL = 8;
+   /** A jagged electric spark line from the origin to {@code points[0..2]}; drawn locally (one packet, not one per spark). */
+   public static final byte ELECTRIC_ARC = 9;
+   /** A flat ring of electric sparks of radius {@code points[0]} around the origin; drawn locally. */
+   public static final byte ELECTRIC_RING = 10;
+   /** Sparks crawling around the origin, {@code power} = spark count (capped on the client). */
+   public static final byte ELECTRIC_CRACKLE = 11;
 
    private static final int MAX_POINTS = 64;
 

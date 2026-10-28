@@ -217,7 +217,70 @@ class ThorCombatRulesTest {
       assertNull(SkyTargetPolicy.AIM_POINT.select(List.of(a), List.of(a)));
       assertSame(c, SkyTargetPolicy.LAST_PRIMARY_HIT.select(List.of(), List.of(c)));
       assertNull(SkyTargetPolicy.LAST_PRIMARY_HIT.select(List.of(), List.of()));
-      assertSame(SkyTargetPolicy.LAST_PRIMARY_HIT, new ThorCombatConfig().skyTargetPolicy, "PLACEHOLDER default");
+      assertFalse(SkyTargetPolicy.LAST_PRIMARY_HIT.allowsPoint(), "only the dev aim point may fall without an enemy");
+      assertTrue(SkyTargetPolicy.AIM_POINT.allowsPoint());
+   }
+
+   /** B-B2 / B-M4: the default strikes only the one enemy a combo struck; zero or several = no sky strike. */
+   @Test
+   void skyStrikesOnlyTheOneStruckEnemy() {
+      UUID a = UUID.randomUUID();
+      UUID b = UUID.randomUUID();
+      assertSame(SkyTargetPolicy.SINGLE_TARGET_ONLY, new ThorCombatConfig().skyTargetPolicy, "safe default");
+      assertSame(a, SkyTargetPolicy.SINGLE_TARGET_ONLY.select(List.of(a), List.of(a)));
+      assertSame(a, SkyTargetPolicy.SINGLE_TARGET_ONLY.select(List.of(a, a), List.of(a, a, a)), "one enemy struck several times is one target");
+      assertNull(SkyTargetPolicy.SINGLE_TARGET_ONLY.select(List.of(a), List.of(a, b)), "a chain onto a second enemy is ambiguous: no strike");
+      assertNull(SkyTargetPolicy.SINGLE_TARGET_ONLY.select(List.of(), List.of()), "THUNDER_RING with no hit: no strike");
+      assertFalse(SkyTargetPolicy.SINGLE_TARGET_ONLY.allowsPoint());
+      // The COMBO_END listener: no chosen enemy and no dev point = no sky strike at all (never Thor's feet, never a wall).
+      assertFalse(ElectricCombos.skyStrikes(true, null, false));
+      assertTrue(ElectricCombos.skyStrikes(true, a, false));
+      assertFalse(ElectricCombos.skyStrikes(false, a, false), "a failed combo never strikes");
+      assertTrue(ElectricCombos.skyStrikes(true, null, true), "dev aim point only");
+   }
+
+   /** B-B2: the bolt's path is blocked by the first block it may not break; nothing above it is cut. */
+   @Test
+   void skyPathStopsAtTheFirstProtectedBlock() {
+      var air = ElectricFx.PathBlock.AIR;
+      var cut = ElectricFx.PathBlock.BREAK;
+      var stop = ElectricFx.PathBlock.STOP;
+      assertEquals(2, ElectricFx.skyPathLength(List.of(air, cut, air, cut)));
+      assertEquals(1, ElectricFx.skyPathLength(List.of(cut, stop, cut, cut, cut)), "bedrock / protected block: blocked, not jumped over");
+      assertEquals(0, ElectricFx.skyPathLength(List.of(stop, cut)));
+   }
+
+   /** B-M4: an old config file with the old sky default is migrated to the safe one; nonsense numbers are clamped. */
+   @Test
+   void oldConfigFilesGetTheSafeSkyDefault() {
+      ThorCombatConfig old = new ThorCombatConfig();
+      old.configVersion = 0;
+      old.skyTargetPolicy = SkyTargetPolicy.LAST_PRIMARY_HIT;
+      old.chainFalloff = 1.5F;
+      old.stormPulseTicks = 0;
+      ThorCombatConfig migrated = ThorCombatConfig.migrate(old);
+      assertSame(SkyTargetPolicy.SINGLE_TARGET_ONLY, migrated.skyTargetPolicy);
+      assertEquals(1.0F, migrated.chainFalloff, "a chain never grows its damage");
+      assertEquals(1, migrated.stormPulseTicks);
+      ThorCombatConfig current = new ThorCombatConfig();
+      current.skyTargetPolicy = SkyTargetPolicy.AIM_POINT;
+      assertSame(SkyTargetPolicy.AIM_POINT, ThorCombatConfig.migrate(current).skyTargetPolicy, "a current file keeps a deliberate dev switch");
+   }
+
+   /** B-M5: electric area / ranged hits keep the target's i-frames; only authored strikes skip them. */
+   @Test
+   void electricAreaHitsKeepIFrames() {
+      assertFalse(CombatHits.skipsIFrames(false));
+      assertTrue(CombatHits.skipsIFrames(true));
+   }
+
+   /** B-M8: arcs and rings are one FX packet each; the client draws the sparks the server used to send one by one. */
+   @Test
+   void electricFxIsOnePacketPerEffect() {
+      assertTrue(ElectricFx.arcSparks(16.0) >= 80, "the client keeps the old density");
+      assertEquals(160, ElectricFx.ringSparks(16.0));
+      assertTrue(dev.baranhan.viltrumitecore.hero.fx.HeroFx.inElectricRange(Vec3.ZERO, new Vec3(40, 0, 0)));
+      assertFalse(dev.baranhan.viltrumitecore.hero.fx.HeroFx.inElectricRange(Vec3.ZERO, new Vec3(60, 0, 0)));
    }
 
    @Test
