@@ -326,7 +326,9 @@ public abstract class GameRendererDashMixin {
          }
 
          ErasureUniforms erasure = ErasurePost.uniforms(partialTicks);
+         float[] timeStop = dev.baranhan.viltrumitecore.client.dio.TimeStopClient.screen(partialTicks);
          boolean anyEffect = ErasurePost.active() || dashProgress > 0.0F
+            || timeStop[0] + timeStop[1] + timeStop[2] > 0.0F
             || punchIntensity > 0.0F
             || shakeIntensity > 0.0F
             || this.currentLockIntensity > 0.01F
@@ -351,6 +353,12 @@ public abstract class GameRendererDashMixin {
                   if (rebuildErase != null) rebuildErase.set(erasure.rebuild());
                   Uniform seedErase = pass.getEffect().getUniform("EraseSeed");
                   if (seedErase != null) seedErase.set(erasure.seed());
+                  Uniform tsGrey = pass.getEffect().getUniform("TimeStopGrey");
+                  if (tsGrey != null) tsGrey.set(timeStop[0]);
+                  Uniform tsInvert = pass.getEffect().getUniform("TimeStopInvert");
+                  if (tsInvert != null) tsInvert.set(timeStop[1]);
+                  Uniform tsRipple = pass.getEffect().getUniform("TimeStopRipple");
+                  if (tsRipple != null) tsRipple.set(timeStop[2]);
                   Uniform dashUniform = pass.getEffect().getUniform("DashIntensity");
                   if (dashUniform != null) {
                      dashUniform.set(Math.max(0.0F, Math.min(1.0F, dashProgress)));
