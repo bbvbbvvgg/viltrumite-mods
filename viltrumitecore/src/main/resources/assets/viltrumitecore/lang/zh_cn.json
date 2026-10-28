@@ -498,5 +498,14 @@
   "ability.viltrumitecore.reinhard_diagonal_world_cut.name": "Diagonal World Cut",
   "ability.viltrumitecore.reinhard_diagonal_world_cut.desc": "Reid drawn: a tilted three-dimensional rupture cuts air, mountains and buildings. Shares the two-cut limit with Ground World Cut.",
   "ability.viltrumitecore.reinhard_lethal_chop.desc": "Reid must be fully sheathed. A decisive lethal hand chop; unavailable while drawing, drawn or sheathing.",
-  "hud.viltrumitecore.reinhard.mouse": "LMB: attack   RMB: grab / throw"
+  "hud.viltrumitecore.reinhard.mouse": "LMB: attack   RMB: grab / throw",
+  "subtitle.viltrumitecore.speaker.reinhard": "莱因哈鲁特",
+  "subtitle.viltrumitecore.reinhard.world_cut": "我的剑足以斩开这个世界。\n无论距离还是空间，\n都无法阻挡这一击。",
+  "subtitle.viltrumitecore.preview.short": "短台词：一到两行，一眼就能读完。",
+  "subtitle.viltrumitecore.preview.long.1": "这是长篇英雄台词的预览。长文本会在句末拆分成简短的页面，因此面板不会变得过大。每一页都会停留足够的时间，让你从容读完，下一页会柔和地淡入。",
+  "subtitle.viltrumitecore.preview.long.2": "台词结束后，面板会悄然淡出。",
+  "commands.viltrumitecore.herolines.unknown": "未知的英雄台词：%s",
+  "commands.viltrumitecore.herolines.skipped": "英雄台词未播放（正在播放、冷却中或说话者无法说话）：%s",
+  "commands.viltrumitecore.herolines.played": "已播放英雄台词：%s",
+  "commands.viltrumitecore.herolines.stopped": "已停止英雄台词"
 }
