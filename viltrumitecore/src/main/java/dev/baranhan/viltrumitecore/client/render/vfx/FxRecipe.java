@@ -19,6 +19,8 @@ import javax.annotation.Nullable;
  */
 public record FxRecipe(FxPreset preset, List<Layer> layers) {
    private static final Map<Integer, FxRecipe> BY_NET = new LinkedHashMap<>();
+   /** Core half-width (blocks) of a BOLT layer of width 1 at scale 1: a 0.28-block white core for the 3.2-block Thor. */
+   public static final float BOLT_CORE_HALF_WIDTH = 0.14F;
 
    public FxRecipe {
       Objects.requireNonNull(preset, "preset");
