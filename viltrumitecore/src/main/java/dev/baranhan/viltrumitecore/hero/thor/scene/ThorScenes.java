@@ -66,8 +66,12 @@ public final class ThorScenes {
    public static final ThorMove TELEPORT = ThorMove.TELEPORT_SELECT;
    /** Timeline length of every scene move: the session ends it (the timeline is only the lock-step and the wire id). */
    static final int SCENE_MOVE_TICKS = 1200;
+   /** The grab's timeline move: effectively unbounded (about 14 hours); only an escape or Thor's action ends a grab. */
+   static final int GRAB_MOVE_TICKS = 1_000_000;
 
    private static final Map<UUID, GrabWindowRule.Combo> COMBOS = new HashMap<>();
+   /** Fatality candidates of this tick (C-B1: the scene starts in the real death, after the totem check). */
+   static final FatalityTrigger TRIGGER = new FatalityTrigger();
    private static boolean bootstrapped;
 
    private ThorScenes() {
@@ -80,7 +84,8 @@ public final class ThorScenes {
       }
 
       bootstrapped = true;
-      ThorMoves.register(OWNER, GRAB, new ThorMoveDefinition(0, SCENE_MOVE_TICKS, 0, null, 1), new GrabHandler());
+      // MINOR-4: a grab has no hold time limit, so its timeline move never runs out under it (the session ends it).
+      ThorMoves.register(OWNER, GRAB, new ThorMoveDefinition(0, GRAB_MOVE_TICKS, 0, null, 1), new GrabHandler());
       ThorMoves.register(OWNER, FATALITY, new ThorMoveDefinition(0, SCENE_MOVE_TICKS, 0, null, 1), new FatalityHandler());
       ThorMoves.register(OWNER, TELEPORT, new ThorMoveDefinition(0, SCENE_MOVE_TICKS, 0, null, 1), new TeleportHandler());
       ThorEvents.subscribe(OWNER, ThorEventType.MELEE_HIT, ThorScenes::onMeleeHit);
@@ -199,7 +204,13 @@ public final class ThorScenes {
       }
    }
 
-   /** Decisions 53, 66, 86, 93: only from a lethal hammer-in-hand hit of B's combat on a player (any hero); never from a key. */
+   /**
+    * Decisions 53, 66, 86, 93: only from a lethal hammer-in-hand hit of B's
+    * combat on a player (any hero); never from a key. C-B1 / C-M13: the
+    * LETHAL_HIT only marks a candidate; the scene starts in the victim's real
+    * death ({@link #onDeath}), after vanilla's Totem of Undying check, and
+    * never re-enters B's damage loop before the blow is final.
+    */
    private static void onLethalHit(ThorEvent event) {
       ServerPlayer thor = player(event.attackerId());
       ThorState state = thor == null ? null : ThorState.of(thor);
@@ -214,8 +225,33 @@ public final class ThorScenes {
          return;
       }
 
+      TRIGGER.mark(victim.getUUID(), thor.getUUID(), victim.level().getGameTime());
+   }
+
+   /** The victim's real death claims a candidate of this tick: the death is held and the scene starts (true), else the death goes on. */
+   static boolean startFromDeath(ServerPlayer victim, @Nullable Entity killer) {
+      UUID thorId = TRIGGER.claim(victim.getUUID(), killer == null ? null : killer.getUUID(), victim.level().getGameTime());
+      ServerPlayer thor = thorId == null ? null : player(thorId);
+      ThorState state = thor == null ? null : ThorState.of(thor);
+      if (state == null || thor == victim || thor.level() != victim.level()) {
+         return false;
+      }
+
+      FatalityRules.Verdict verdict = FatalityRules.decide(ThorEventType.LETHAL_HIT, true, true, true, inScene(victim.getUUID()),
+         ThorBridge.sceneLocked(state) || inScene(thor.getUUID()));
+      if (verdict != FatalityRules.Verdict.START) {
+         return false;
+      }
+
+      float health = victim.getHealth();
+      victim.setHealth(1.0F);
       FatalityScene scene = FatalityRules.pick(FatalitySessions.last(thor.getUUID()), thor.getRandom().nextInt());
-      FatalitySessions.start(thor, state, victim, scene, false);
+      if (FatalitySessions.start(thor, state, victim, scene, false)) {
+         return true;
+      }
+
+      victim.setHealth(health);
+      return false;
    }
 
    // --- shared helpers of the C sessions ---
@@ -262,6 +298,11 @@ public final class ThorScenes {
    public static boolean inScene(UUID entity) {
       return GrabSessions.of(entity) != null || GrabSessions.victimOf(entity) != null || FatalitySessions.participant(entity)
          || TeleportSessions.of(entity) != null;
+   }
+
+   /** Server: a teleport selection or a fatality holds this player in place. */
+   public static boolean holdsInPlace(@Nullable Player player) {
+      return player != null && !player.level().isClientSide && (TeleportSessions.of(player.getUUID()) != null || FatalitySessions.participant(player.getUUID()));
    }
 
    /** Server: does a C scene hold this Thor? */
@@ -318,7 +359,8 @@ public final class ThorScenes {
    public static Vec3 heldPosition(Player thor, Entity target) {
       GrabSessions.Session grab = GrabSessions.of(thor.getUUID());
       if (grab != null && grab.victimId == target.getId() && thor instanceof ServerPlayer player && target instanceof LivingEntity living) {
-         return GrabSessions.anchor(player, grab, living);
+         Vec3 placed = GrabSessions.heldPoint(grab);
+         return placed != null ? placed : GrabSessions.anchor(player, grab, living);
       }
 
       FatalitySessions.Session fatality = FatalitySessions.of(thor.getUUID());
@@ -366,6 +408,8 @@ public final class ThorScenes {
       FatalitySessions.tick(event.getServer());
       TeleportSessions.tick(event.getServer());
       ThrownBodies.tick(event.getServer());
+      // A candidate nobody's death claimed this tick: the victim lived (totem, absorption, a cancelled death).
+      TRIGGER.expire();
    }
 
    /** A decided victim dies once, by the scene's own kill; any other death during the scene is held. */
@@ -379,6 +423,77 @@ public final class ThorScenes {
       if (FatalitySessions.victimOf(entity.getUUID()) != null || FatalitySessions.doomed(entity.getUUID())) {
          event.setCanceled(true);
          entity.setHealth(1.0F);
+         return;
+      }
+
+      // C-B1: vanilla reaches this event only when no totem saved the victim; the fatality holds this very death.
+      if (entity instanceof ServerPlayer victim && startFromDeath(victim, event.getSource().getEntity())) {
+         event.setCanceled(true);
+      }
+   }
+
+   /** M1: nobody leaves a fatality through a portal or a cross-dimension teleport (the death was decided here). */
+   @SubscribeEvent(priority = EventPriority.HIGHEST)
+   public static void onTravel(net.minecraftforge.event.entity.EntityTravelToDimensionEvent event) {
+      if (!event.getEntity().level().isClientSide && FatalitySessions.participant(event.getEntity().getUUID())) {
+         event.setCanceled(true);
+      }
+   }
+
+   /** M10: a player who starts tracking a Thor in a scene gets the scene now (not only at the next periodic sync). */
+   @SubscribeEvent
+   public static void onStartTracking(PlayerEvent.StartTracking event) {
+      if (event.getTarget() instanceof ServerPlayer thor && event.getEntity() instanceof ServerPlayer viewer) {
+         resyncTo(thor, viewer);
+      }
+   }
+
+   /** M10: the tracker stops seeing this Thor: its client copy of the scene ends (no glued body, no endless duck). */
+   @SubscribeEvent
+   public static void onStopTracking(PlayerEvent.StopTracking event) {
+      if (event.getTarget() instanceof ServerPlayer thor && event.getEntity() instanceof ServerPlayer viewer && heldId(thor) != viewer.getId()) {
+         SceneSync sync = currentSync(thor);
+         if (sync != null) {
+            CoreMessages.sendToPlayer(new ThorSceneS2CPacket(SceneSync.end(sync.kind(), thor.getId(), sync.victimId())), viewer);
+         }
+      }
+   }
+
+   static void resyncTo(ServerPlayer thor, ServerPlayer viewer) {
+      SceneSync sync = currentSync(thor);
+      if (sync != null) {
+         CoreMessages.sendToPlayer(new ThorSceneS2CPacket(sync), viewer);
+      }
+   }
+
+   @Nullable
+   static SceneSync currentSync(ServerPlayer thor) {
+      GrabSessions.Session grab = GrabSessions.of(thor.getUUID());
+      if (grab != null) {
+         return SceneSync.grab(grab.thorId, grab.victimId, grab.flow);
+      }
+
+      FatalitySessions.Session fatality = FatalitySessions.of(thor.getUUID());
+      if (fatality != null) {
+         return SceneSync.fatality(fatality.thorId, fatality.victimId, fatality.plan, fatality.tick, fatality.rehearsal);
+      }
+
+      return null;
+   }
+
+   /** M16 / M5: a stopping server ends every scene before the save (decided deaths happen, AI flags, controls, locks restored). */
+   @SubscribeEvent
+   public static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+      FatalitySessions.abortAll(event.getServer());
+      GrabSessions.endAll(event.getServer());
+      TeleportSessions.endAll(event.getServer());
+   }
+
+   /** M16: a victim whose decided death was cut off by a restart or crash dies on login. */
+   @SubscribeEvent
+   public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+      if (event.getEntity() instanceof ServerPlayer player) {
+         FatalitySessions.recoverDoomed(player);
       }
    }
 
@@ -392,7 +507,6 @@ public final class ThorScenes {
       UUID id = entity.getUUID();
       boolean cancel = FatalitySessions.victimOf(id) != null
          || ThorSceneConfig.fatalityThorInvulnerable && FatalitySessions.of(id) != null
-         || TeleportSessions.of(id) != null
          || GrabSessions.victimOf(id) != null && event.getSource().is(DamageTypes.IN_WALL);
       Entity source = event.getSource().getEntity();
       if (!cancel && source != null && source != entity) {
@@ -493,10 +607,11 @@ public final class ThorScenes {
       // Leaving mid-fatality does not save the victim: the abort still executes a decided death.
       FatalitySessions.abortFor(id);
       GrabSessions.endFor(player);
-      GrabSessions.endVictim(id, ReleaseReason.CASTER_DISCONNECT);
+      GrabSessions.endVictim(id, ReleaseReason.TARGET_LOST);
       TeleportSessions.endFor(player);
       ThorDash.forget(id);
       COMBOS.remove(id);
+      TRIGGER.forget(id);
    }
 
    @SubscribeEvent
@@ -520,5 +635,6 @@ public final class ThorScenes {
       TeleportSessions.clear();
       ThrownBodies.clear();
       COMBOS.clear();
+      TRIGGER.expire();
    }
 }

@@ -70,6 +70,14 @@ final class FatalitySessions {
    /** Hero changes asked for during a scene, applied at its end (decision 216: deferred to the scene end). */
    private static final Map<UUID, HeroId> DEFERRED = new LinkedHashMap<>();
 
+   /**
+    * Persistent marker of a decided death on the victim (C-M1 / C-M16,
+    * decision 69): written when the scene starts (the vanilla death already
+    * happened and was held), removed by the one kill. A victim that comes
+    * back with it (server restart or crash mid-scene) dies on login.
+    */
+   static final String DOOMED_TAG = "viltrumitecore.thor_doomed_by";
+
    private FatalitySessions() {
    }
 
@@ -126,7 +134,8 @@ final class FatalitySessions {
       }
 
       Vec3 victimPos = victim.position();
-      Vec3 velocity = victim.getDeltaMovement();
+      // M8: a player's server-side deltaMovement is unreliable (the client moves the player); use the last tick's real motion.
+      Vec3 velocity = victim instanceof ServerPlayer ? victimPos.subtract(victim.xo, victim.yo, victim.zo) : victim.getDeltaMovement();
       double above = victimPos.y - SceneFx.ground(thor.serverLevel(), victimPos).y;
       float toThor = SceneFrame.yawTo(victimPos, thor.position());
       SceneEntry entry = SceneEntry.classify(victim.onGround(), above, velocity.y, velocity.horizontalDistance(), victim.getYRot(), toThor);
@@ -142,6 +151,11 @@ final class FatalitySessions {
 
       FatalityPlan plan = FatalityPlan.of(scene, entry, thor.position(), thor.getYRot(), victimPos, victim.getYRot(), velocity, origin.get(), frameYaw,
          ThorSceneConfig.fatalityIntroMin, ThorSceneConfig.fatalityIntroMax, ThorSceneConfig.fatalityMaxStep, ThorSceneConfig.fatalityTurnRate);
+      if (!FatalityPlan.stepsWithin(plan, ThorSceneConfig.fatalityMaxStep) || !pathClear(thor.serverLevel(), thor, victim, plan)) {
+         // MINOR-14 / M6: no jump over the step limit and no body through blocks; without a clean path the hit kills normally.
+         return false;
+      }
+
       Session session = new Session(thor, victim, plan, rehearsal);
       ControlManager control = ControlManager.get(session.level);
       if (!control.tryAcquire(victim, thor.getUUID(), session.effectId, ControlKind.PULL, thor.level().getGameTime() + plan.length() + 200L)) {
@@ -159,8 +173,13 @@ final class FatalitySessions {
       ThorBridge.closeGrabWindow(state);
       ThorScenes.stopFlight(thor);
       ThorScenes.stopFlight(victim);
+      // M2: no body stays in a saddle (Vehicle.positionRider would override the plan).
+      thor.stopRiding();
+      victim.stopRiding();
+      victim.ejectPassengers();
       if (!rehearsal) {
          DOOMED.add(victim.getUUID());
+         victim.getPersistentData().putUUID(DOOMED_TAG, thor.getUUID());
       }
 
       if (victim.getHealth() <= 0.0F) {
@@ -176,7 +195,9 @@ final class FatalitySessions {
    /** Where the main part plays: Thor's spot when the scene fits there, else the nearest safe spot within the radius. */
    private static Optional<Vec3> origin(ServerPlayer thor, LivingEntity victim, FatalityScene scene) {
       ServerLevel level = thor.serverLevel();
-      Vec3 start = thor.position();
+      // M7: the main part plays on the ground; Thor hovering above it does not stage a scene in the air.
+      Vec3 floor0 = SceneFx.ground(level, thor.position());
+      Vec3 start = thor.position().y - floor0.y <= MAX_ORIGIN_HOVER ? thor.position() : floor0;
       SafeSpot.Probe probe = new SafeSpot.Probe() {
          @Override
          public boolean fits(Vec3 feet) {
@@ -198,7 +219,7 @@ final class FatalitySessions {
             return level.isLoaded(below) && !level.getBlockState(below).getCollisionShape(level, below).isEmpty();
          }
       };
-      if (SafeSpot.ok(start, probe)) {
+      if (SafeSpot.ok(start, probe) && start.y - SceneFx.ground(level, start).y <= MAX_ORIGIN_HOVER) {
          return Optional.of(start);
       }
 
@@ -207,6 +228,31 @@ final class FatalitySessions {
          Vec3 snapped = SceneFx.ground(level, spot.add(0, 0.5, 0));
          return new Vec3(Math.floor(spot.x) + 0.5, snapped.y, Math.floor(spot.z) + 0.5);
       });
+   }
+
+   /** M7: Thor's scene spot is at most this far above the ground. */
+   static final double MAX_ORIGIN_HOVER = 0.6;
+
+   /**
+    * M6 / C-B2: both bodies stay in free space along the whole plan (every
+    * tick, the same plan every client draws). The victim's pose offsets that
+    * sink into the floor (kneel, lying) are checked at floor height.
+    */
+   static boolean pathClear(ServerLevel level, ServerPlayer thor, LivingEntity victim, FatalityPlan plan) {
+      for (int t = 0; t <= plan.length(); t++) {
+         Vec3 thorAt = plan.thorAt(t);
+         Vec3 victimAt = plan.victimAt(t);
+         double floor = t < plan.intro() ? Math.min(plan.victimStart().y, plan.origin().y) : plan.origin().y;
+         if (victimAt.y < floor) {
+            victimAt = new Vec3(victimAt.x, floor, victimAt.z);
+         }
+
+         if (!SceneSpace.boxFree(level, thor, thorAt) || !SceneSpace.boxFree(level, victim, victimAt)) {
+            return false;
+         }
+      }
+
+      return true;
    }
 
    /** Both bodies fit along the frame and the scene's headroom is free. */
@@ -235,6 +281,13 @@ final class FatalitySessions {
          }
 
          session.tick++;
+         // M6: the server owns Thor's scene position; a client that does not follow the plan is put back on it.
+         Vec3 thorAt = session.plan.thorAt(session.tick);
+         if (thor.position().distanceToSqr(thorAt) > THOR_DRIFT * THOR_DRIFT) {
+            float yaw = session.plan.thorYawAt(session.tick);
+            thor.connection.teleport(thorAt.x, thorAt.y, thorAt.z, yaw, thor.getXRot());
+         }
+
          Vec3 at = session.plan.victimAt(session.tick);
          victim.setPos(at.x, at.y, at.z);
          victim.setDeltaMovement(Vec3.ZERO);
@@ -258,6 +311,9 @@ final class FatalitySessions {
       }
    }
 
+   /** M6: how far Thor may stray from the plan before the server puts him back. */
+   static final double THOR_DRIFT = 1.0;
+
    private static void finish(ServerPlayer thor, Session session, LivingEntity victim) {
       close(thor, session);
       if (!session.rehearsal) {
@@ -273,8 +329,9 @@ final class FatalitySessions {
       }
 
       close(thor, session);
-      Entity entity = session.level.getEntity(session.victim);
-      if (!session.rehearsal && entity instanceof LivingEntity victim && victim.isAlive()) {
+      // M1: the victim may already be in another dimension (a command, another mod): find it wherever it is.
+      LivingEntity victim = victimAnywhere(session);
+      if (!session.rehearsal && victim != null && victim.isAlive()) {
          execute(thor, victim);
       }
       DOOMED.remove(session.victim);
@@ -291,6 +348,38 @@ final class FatalitySessions {
          MinecraftServer server = session.level.getServer();
          abort(server.getPlayerList().getPlayer(session.thor), session);
       }
+   }
+
+   /** The victim entity in the scene's level, or (a player) wherever it is now. */
+   @Nullable
+   static LivingEntity victimAnywhere(Session session) {
+      Entity entity = session.level.getEntity(session.victim);
+      if (entity instanceof LivingEntity living) {
+         return living;
+      }
+
+      ServerPlayer player = session.level.getServer().getPlayerList().getPlayer(session.victim);
+      return player;
+   }
+
+   /** Every scene ends now (server stopping, before the save): decided deaths happen, controls are released. */
+   static void abortAll(MinecraftServer server) {
+      for (Session session : new ArrayList<>(SESSIONS.values())) {
+         abort(server.getPlayerList().getPlayer(session.thor), session);
+      }
+   }
+
+   /**
+    * Login (C-M16): a victim whose decided death was cut off by a restart or
+    * a crash dies now, once (credited to its Thor when he is online).
+    */
+   static void recoverDoomed(ServerPlayer player) {
+      if (!player.getPersistentData().hasUUID(DOOMED_TAG) || participant(player.getUUID())) {
+         return;
+      }
+
+      UUID thor = player.getPersistentData().getUUID(DOOMED_TAG);
+      execute(player.server.getPlayerList().getPlayer(thor), player);
    }
 
    private static void close(@Nullable ServerPlayer thor, Session session) {
@@ -320,13 +409,16 @@ final class FatalitySessions {
    static void execute(@Nullable ServerPlayer thor, LivingEntity victim) {
       UUID id = victim.getUUID();
       DOOMED.remove(id);
+      victim.getPersistentData().remove(DOOMED_TAG);
       if (!victim.isAlive()) {
          return;
       }
 
       EXECUTING.add(id);
       try {
-         DamageSource source = thor != null ? victim.damageSources().playerAttack(thor) : victim.damageSources().generic();
+         // C-B1: the vanilla death already happened (after its totem check) and was held for the scene; this is that same
+         // death completed, the tail of LivingEntity.hurt (health 0, then die), not a second kill and no fresh totem check.
+         DamageSource source = thor != null && thor.level() == victim.level() ? victim.damageSources().playerAttack(thor) : victim.damageSources().generic();
          victim.setHealth(0.0F);
          victim.die(source);
       } finally {

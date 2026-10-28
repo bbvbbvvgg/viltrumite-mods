@@ -46,6 +46,11 @@ public record FatalityPlan(
       }
    }
 
+   /** MINOR-14: the intro moves neither body more than {@code maxStep} blocks a tick (a far victim gets no scene). */
+   public static boolean stepsWithin(FatalityPlan plan, double maxStep) {
+      return plan.maxIntroStep() <= maxStep + 1.0E-6;
+   }
+
    public FatalityPlan withIntro(int ticks) {
       return new FatalityPlan(this.scene, this.entry, this.thorStart, this.thorStartYaw, this.victimStart, this.victimStartYaw, this.victimVelocity, this.origin,
          this.frameYaw, Math.max(1, ticks));
