@@ -82,4 +82,4 @@ Sources list: `tools/assets/thor_sources.md`. From the user's archive of **God o
 - **Szombie** — Mjölnir model and textures.
 - **FatherKhimsky** — Thor's belly and beard models and textures.
 - **JxkeXD** — Thor concept skin (reference only, not imported).
-- Own work (CC0): Thor panel icons (`tools/assets/make_thor_icons.py`). Sounds: vanilla only.
+- Own work (CC0): Thor panel icons (`tools/assets/make_thor_icons.py`) and all Thor sounds (R5: 56 files, deterministic synthesis by `tools/sfx/thor.py`, no recordings; list and cue table in `tools/assets/thor_sources.md`). No vanilla sounds.
