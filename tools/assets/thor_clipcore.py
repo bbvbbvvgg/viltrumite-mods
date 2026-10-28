@@ -199,7 +199,7 @@ def reach(pose, chain, target, pole, capped, **kw):
     return miss
 
 
-CLEAR_STEPS = 4
+CLEAR_STEPS = 8
 CLEAR_MARGIN = 0.6  # px kept between a swinging arm / the hammer and the body
 CORE = ("body", "belly", "beard", "head", "right_leg", "left_leg", "right_shin", "left_shin")
 ARM_PARTS = {"r": ("right_arm", "right_forearm", "right_hand"), "l": ("left_arm", "left_forearm", "left_hand")}
@@ -213,6 +213,8 @@ def clearance(pose, hammer, belt=False):
         RULES = tp_rules()
     bs = K.tp_boxes(pose, hammer)
     out = {"r": np.zeros(3), "l": np.zeros(3)}
+    acc = {"r": np.zeros(3), "l": np.zeros(3)}
+    deep = {"r": 0.0, "l": 0.0}
     if belt:
         # The fist or forearm in the hanging belt hammer (mesh depth, coarse grid): out, away from its centre.
         d = M.belt_depth(pose, BELT, fixed=("right_forearm", "right_hand"), step=0.7)
@@ -239,7 +241,13 @@ def clearance(pose, hammer, belt=False):
             d = RULES.depth(a, b) - RULES.baseline.get((i, j), 0.0)
             if d > -CLEAR_MARGIN:
                 n = x.center - y.center
-                out[side] += (d + CLEAR_MARGIN) * n / max(float(np.linalg.norm(n)), 1e-6)
+                acc[side] += (d + CLEAR_MARGIN) * n / max(float(np.linalg.norm(n)), 1e-6)
+                deep[side] = max(deep[side], d + CLEAR_MARGIN)
+    # Many small cubes (the hammer's) touch at once: the push is the deepest one, along their mean direction.
+    for side in ("r", "l"):
+        n = float(np.linalg.norm(acc[side]))
+        if n > 1e-6:
+            out[side] += acc[side] / n * deep[side]
     return out
 
 
@@ -272,22 +280,162 @@ def belt_boxes(pose):
     return R.boxes("belt", R.Pose(BELT), frame, BELT.subtree(root))
 
 
-BELT_SWAY_MAX = 40.0  # deg: the belt hammer swings out at most this far
-BELT_SWAY_STEP = 2.0
+BELT_SWAY_MAX = 44.0  # deg: the belt hammer swings out / forward at most this far
+BELT_SWAY_RING = 3.0  # deg: search step round the previous swing
 BELT_SWAY_DECAY = 0.75  # per tick: a pushed hammer falls back, it does not snap back
+_BELT_CLOUD = {}
 
 
-def belt_sway(pose, start=0.0):
-    """Rolls the belt locator outward (about the torso's forward axis) just enough that the thigh and the
-    shin do not go through the hanging hammer: the hammer is pushed by the leg, then swings back."""
+def _belt_cloud(step=0.5):
+    """The belt hammer's sample points (coarse grid) in the mjolnir_belt locator frame (it is rigid there)."""
+    c = _BELT_CLOUD.get(step)
+    if c is None:
+        rest = R.Pose(K.BODY)
+        frame = rest.pivot_frame("mjolnir_belt")
+        inv = np.linalg.inv(frame)
+        pts = np.vstack([part.pts for part in M.hammer_parts(BELT, frame, "belt", step).values()])
+        c = (np.hstack([pts, np.ones((len(pts), 1))]) @ inv.T)
+        _BELT_CLOUD[step] = c
+    return c
+
+
+def belt_leg_depth(pose, fixed=("right_leg", "right_shin")):
+    """Deepest coarse penetration (px) of the belt hammer into the given bones (the solver's fast test)."""
+    pts = (_belt_cloud() @ pose.pivot_frame("mjolnir_belt").T)
+    best = 0.0
+    for f in fixed:
+        for m, lo, hi in M.cube_frames(pose.model, f, pose.frame(f)):
+            loc = (pts @ np.linalg.inv(m).T)[:, :3]
+            d = np.minimum(loc - lo, hi - loc).min(axis=1)
+            best = max(best, float(d.max()))
+    return best
+
+
+def _set_sway(pose, roll, pitch):
     b = pose.model.bones["mjolnir_belt"]
-    ang = max(0.0, start)
-    while True:
-        pose.rot["mjolnir_belt"] = b.init + np.array([0.0, 0.0, math.radians(ang)])
+    pose.rot["mjolnir_belt"] = b.init + np.array([math.radians(pitch), 0.0, math.radians(roll)])
+    pose.touch()
+
+
+def belt_sway(pose, prev=(0.0, 0.0), floor=0.0):
+    """Swings the belt locator (outward roll about the torso's forward axis, pitch about its side axis) just
+    enough that the thigh and the shin do not go through the hanging hammer: the leg pushes the hammer, which
+    then falls back (decay). Searches rings round the decayed previous swing; returns (roll, pitch) degrees."""
+    r0, p0 = max(floor, prev[0] * BELT_SWAY_DECAY), prev[1] * BELT_SWAY_DECAY
+    _set_sway(pose, r0, p0)
+    if belt_leg_depth(pose) <= 0.02:
+        return r0, p0
+    best, best_d = (r0, p0), belt_leg_depth(pose)
+    for ring in range(1, int(2 * BELT_SWAY_MAX / BELT_SWAY_RING) + 1):
+        rad = ring * BELT_SWAY_RING
+        found = None
+        for k in range(16):
+            th = 2 * math.pi * k / 16
+            r, p = r0 + rad * math.cos(th), p0 + rad * math.sin(th)
+            if r < floor - 1e-6 or r > BELT_SWAY_MAX or abs(p) > BELT_SWAY_MAX:
+                continue
+            _set_sway(pose, r, p)
+            d = belt_leg_depth(pose)
+            if d <= 0.02:
+                if found is None or math.hypot(r, p) < math.hypot(*found):
+                    found = (r, p)
+            elif d < best_d:
+                best, best_d = (r, p), d
+        if found is not None:
+            _set_sway(pose, *found)
+            return found
+    _set_sway(pose, *best)
+    return best
+
+
+# ------------------------------------------------------------------------------------------- legs
+KNEE_OUT_STEP = 6.0  # deg: a shin that would go into the belly / body swings out round the hip-foot line
+KNEE_OUT_MAX = 60.0
+LEAN_RELIEF_STEP = 3.0  # deg: then the torso leans this much less per round (the belly lifts off the knees)
+LEAN_RELIEF_MAX = 24.0
+HIP_UP_STEP = 0.4  # px: past the widest knees the pelvis rises (a shallower squat)
+HIP_UP_MAX = 3.0
+SOLE_SINK = 0.25  # px: the lowest corner of a planted sole sits this far in the ground (scan tolerance 0.5)
+SOLE_FADE = 1.5  # px: a lifted foot (planned this high or more) is not corrected (only kept above the ground)
+
+
+def _out_pole(pole, H, foot, s, Rs, out):
+    """The knee pole turned `out` degrees outward round the hip-foot line."""
+    if out <= 1e-6:
+        return pole
+    a = unit(foot - H)
+    p = pole - a * (a @ pole)
+    p = unit(p)
+    o = Rs @ np.array([1.0 if s == "r" else -1.0, 0.0, 0.0])
+    o = o - a * (a @ o) - p * (p @ o)
+    if np.linalg.norm(o) < 1e-6:
+        return pole
+    o = unit(o)
+    r = math.radians(out)
+    return unit(math.cos(r) * p + math.sin(r) * o)
+
+
+def _plant(pose, chain, foot, pole, want):
+    """Leg IK with the sole: no ankle, so a bent knee tilts the foot; a planted foot gets its lowest corner on
+    the ground (a hair in it), a lifted one keeps the planned height (faded) and only stays above the ground."""
+    miss = K.solve_leg(pose, chain, foot, pole)
+    w = min(1.0, max(0.0, 1.0 - want / SOLE_FADE))
+    goal = want - SOLE_SINK
+    target = foot
+    if w > 0.0:
+        f = foot
+        for _ in range(6):
+            low = sole(pose, chain.lower)
+            if abs(low - goal) < 0.03:
+                break
+            # Raise for a tilted sole; never sink the target more than 1 px (a leg that cannot reach stays a miss).
+            f = f + np.array([0.0, goal - low, 0.0])
+            f[1] = max(f[1], foot[1] - 1.0)
+            K.solve_leg(pose, chain, f, pole)
+        target = foot + w * (f - foot)
+        miss = K.solve_leg(pose, chain, target, pole)
+    for _ in range(6):
+        low = sole(pose, chain.lower)
+        if low >= -SOLE_SINK - 0.03:
+            break
+        target = target + np.array([0.0, -SOLE_SINK - low, 0.0])
+        miss = K.solve_leg(pose, chain, target, pole)
+    return miss
+
+
+def shin_depth(pose, shin, step=0.5):
+    """Deepest coarse penetration (px) of a shin into the belly and the body."""
+    m = M.Part("body", pose.model, shin, pose.frame(shin), step)
+    return max(M.depth(m, M.Part("body", pose.model, f, pose.frame(f), step)) for f in ("belly", "body"))
+
+
+def place_legs(pose, it, Rs, hip, kout, legs):
+    """Pelvis and legs. Returns (misses, knee-out per leg, shins still in the belly)."""
+    misses, need, still = {}, {}, False
+    for s, chain, leg in (("r", K.RIGHT_LEG, "right_leg"), ("l", K.LEFT_LEG, "left_leg")):
+        L = K.BODY.bones[leg].pivot
+        off = Rs @ L - L + hip
+        pose.pos[leg] = np.array([-off[0], off[1], off[2]])
         pose.touch()
-        if ang >= BELT_SWAY_MAX or M.belt_depth(pose, BELT) <= 0.05:
-            return ang
-        ang = min(BELT_SWAY_MAX, ang + BELT_SWAY_STEP)
+        if legs:
+            # Free legs (flight): direct thigh / shin turns, no ground.
+            pose.set_bb(leg, rot=legs[s + "leg"])
+            pose.set_bb(chain.lower, rot=legs[s + "shin"])
+            need[s] = 0.0
+            continue
+        foot = Rs @ (FEET[s] + P(*it[s + "ft"]))
+        pole0 = Rs @ unit(P(*it[s + "k"]))
+        want = foot[1] - FEET[s][1]
+        out = float(kout.get(s, 0.0))
+        H = pose.point(chain.upper)
+        while True:
+            misses[s + "foot"] = _plant(pose, chain, foot, _out_pole(pole0, H, foot, s, Rs, out), want)
+            if shin_depth(pose, chain.lower) <= 0.02 or out >= KNEE_OUT_MAX:
+                break
+            out = min(KNEE_OUT_MAX, out + KNEE_OUT_STEP)
+        need[s] = out
+        still = still or shin_depth(pose, chain.lower) > 0.02
+    return misses, need, still
 
 
 def solve(it, ref=None, hammer=False, belt=False):
@@ -299,42 +447,46 @@ def solve(it, ref=None, hammer=False, belt=False):
     spin = float(it["spin"])
     hip = P(*it["hip"])
     lean, twist, side = it["tor"]
-    pose.set_bb("body", rot=(lean, twist + spin, side), pos=(-hip[0], hip[1], hip[2]))
-    pose.rot["body"] = R.euler_near(R.rzyx(pose.rot["body"]), ref.rot["body"] if ref is not None else np.zeros(3))
     Rs = R.ry(math.radians(-spin))
     legs = it.get("legs")
-    for s, chain, leg in (("r", K.RIGHT_LEG, "right_leg"), ("l", K.LEFT_LEG, "left_leg")):
-        L = K.BODY.bones[leg].pivot
-        off = Rs @ L - L + hip
-        pose.pos[leg] = np.array([-off[0], off[1], off[2]])
-        pose.touch()
-        if legs:
-            # Free legs (flight): direct thigh / shin turns, no ground.
-            pose.set_bb(leg, rot=legs[s + "leg"])
-            pose.set_bb(chain.lower, rot=legs[s + "shin"])
-            continue
-        foot = Rs @ (FEET[s] + P(*it[s + "ft"]))
-        pole = Rs @ unit(P(*it[s + "k"]))
-        misses[s + "foot"] = K.solve_leg(pose, chain, foot, pole)
-        # No ankle: a bent knee tilts the foot, so the lowest corner of the sole (not the ankle) goes on
-        # the planned height (the ground, or the step's arc).
-        want = foot[1] - FEET[s][1]
-        for _ in range(3):
-            low = sole(pose, chain.lower)
-            if abs(low - want) < 0.05:
-                break
-            foot = foot + np.array([0.0, want - low, 0.0])
-            K.solve_leg(pose, chain, foot, pole)
+    kout = dict(it.get("kout") or {})
+    hu = float(it.get("hu") or 0.0)
+    lr = float(it.get("lr") or 0.0)
+    # Shins clear of the belly: knees out first (place_legs), then a more upright torso, then a shallower squat.
+    while True:
+        h = hip + np.array([0.0, hu, 0.0])
+        pose.set_bb("body", rot=(lean - min(lr, max(0.0, lean)), twist + spin, side), pos=(-h[0], h[1], h[2]))
+        pose.rot["body"] = R.euler_near(R.rzyx(pose.rot["body"]), ref.rot["body"] if ref is not None else np.zeros(3))
+        leg_miss, need, still = place_legs(pose, it, Rs, h, kout, legs)
+        if not still:
+            break
+        if lr < LEAN_RELIEF_MAX - 1e-6 and lean - lr > 1e-6:
+            lr = min(LEAN_RELIEF_MAX, lr + LEAN_RELIEF_STEP)
+        elif hu < HIP_UP_MAX - 1e-6 and max(leg_miss.values() or [0.0]) < 0.3:
+            hu = min(HIP_UP_MAX, hu + HIP_UP_STEP)
+        else:
+            break
+        kout = need
+    if hu > 0.0 and max(leg_miss.values() or [0.0]) > 0.3 and not legs:
+        # The pelvis rose past the legs' reach: one step back (the feet stay on the ground).
+        hu = max(0.0, hu - HIP_UP_STEP)
+        h = hip + np.array([0.0, hu, 0.0])
+        pose.set_bb("body", rot=(lean - min(lr, max(0.0, lean)), twist + spin, side), pos=(-h[0], h[1], h[2]))
+        pose.rot["body"] = R.euler_near(R.rzyx(pose.rot["body"]), ref.rot["body"] if ref is not None else np.zeros(3))
+        leg_miss, need, still = place_legs(pose, it, Rs, h, need, legs)
+    misses.update(leg_miss)
+    pose.need = {"kr": need.get("r", 0.0), "kl": need.get("l", 0.0), "hu": hu, "lr": lr, "bsr": 0.0, "bsp": 0.0}
     if belt or it.get("ra") == "belt" or (isinstance(it.get("ra"), tuple) and it["ra"] and it["ra"][0] == "mix"):
-        prev = 0.0
+        prev = (0.0, 0.0)
         if ref is not None:
-            prev = math.degrees(float(ref.rot["mjolnir_belt"][2] - pose.model.bones["mjolnir_belt"].init[2]))
+            d = ref.rot["mjolnir_belt"] - pose.model.bones["mjolnir_belt"].init
+            prev = (math.degrees(float(d[2])), math.degrees(float(d[0])))
         # "bp" / "bs": the hand lifts the hammer off the hip on the belt (draw / holster grab): an offset
         # (right, up, forward px in the torso frame) and an outward roll (degrees).
         bp = P(*(it.get("bp") or (0.0, 0.0, 0.0)))
         pose.pos["mjolnir_belt"] = np.array([-bp[0], bp[1], bp[2]])
         pose.touch()
-        belt_sway(pose, max(prev * BELT_SWAY_DECAY, float(it.get("bs") or 0.0)))
+        pose.need["bsr"], pose.need["bsp"] = belt_sway(pose, prev, float(it.get("bs") or 0.0))
     T = pose.frame("body")
     Rt = T[:3, :3]
     held = _dir(it["hm"], pose, Rt)
@@ -489,14 +641,48 @@ class Clip:
         return it
 
 
+ANTICIPATE = 4  # ticks: knees swing out / the pelvis rises this early (and settles this late), no pops
+
+
+def _tent(values, length, loop, radius=ANTICIPATE):
+    """max over u of v(u) * tent(|t - u|): a need at one tick ramps in and out over `radius` ticks."""
+    n = len(values)
+    out = [0.0] * n
+    for u, v in enumerate(values):
+        if v <= 1e-6:
+            continue
+        for t in range(n):
+            d = abs(t - u)
+            if loop:
+                d = min(d, length - d)
+            if d <= radius:
+                out[t] = max(out[t], v * (1.0 - d / (radius + 1.0)))
+    return out
+
+
 def bake_tp(clip, step=1):
-    """Solves every tick: [(tick, pose, misses)]."""
-    out = []
-    ref = None
-    for t in range(0, clip.length + 1, step):
-        pose, misses = solve(clip.intent(t), ref, clip.hammer_at(t), clip.belt_at(t))
-        out.append((t, pose, misses))
-        ref = pose
+    """Solves every tick: [(tick, pose, misses)]. A first pass finds where the knees must swing out (or the
+    pelvis rise) to keep the shins out of the belly; the second pass eases those in and out round the need."""
+    plan = None
+    for _ in range(2):
+        out = []
+        ref = None
+        for i, t in enumerate(range(0, clip.length + 1, step)):
+            it = clip.intent(t)
+            if plan is not None:
+                it = dict(it)
+                it["kout"] = {"r": plan["kr"][i], "l": plan["kl"][i]}
+                it["hu"] = plan["hu"][i]
+                it["lr"] = plan["lr"][i]
+            pose, misses = solve(it, ref, clip.hammer_at(t), clip.belt_at(t))
+            out.append((t, pose, misses))
+            ref = pose
+        if plan is not None:
+            break
+        needs = {k: [p.need[k] for _, p, _ in out] for k in ("kr", "kl", "hu", "lr")}
+        if not any(v > 1e-6 for vs in needs.values() for v in vs):
+            break
+        plan = {k: _tent(v, clip.length, clip.loop) for k, v in needs.items()}
     return out
 
 
@@ -596,7 +782,7 @@ def write_channels(ch, length_ticks, keep, tol_rot=0.2, tol_pos=0.03):
 
 
 # ------------------------------------------------------------------------------------------- first person
-FP_HAMMER_R = np.array([0.40, -0.46, -0.80])
+FP_HAMMER_R = np.array([0.43, -0.48, -0.80])
 FP_HAMMER_DIR = unit(np.array([-0.28, 0.90, -0.33]))
 FP_FIST_R = np.array([0.40, -0.44, -0.72])
 FP_GUARD_R = np.array([0.36, -0.36, -0.70])
@@ -702,10 +888,7 @@ def fp_bake(clip, tp_samples, plan, proxy_samples=None):
                 r[3] = r[3] + corr * w
             else:
                 r[1] = r[1] + corr * w
-    for t, rt, ham, lt, act in targets:
-        rt, lt = clamp_view(rt), clamp_view(lt, 0.40)
-        if plan.custom is not None:
-            rt, ham, lt = plan.custom(t, rt, ham, lt)
+    def pose_at(t, rt, ham, lt):
         pose = K.fp_rest()
         miss = K.solve_fp_arm(pose, False, rt, ham=ham)
         lham = None
@@ -717,13 +900,85 @@ def fp_bake(clip, tp_samples, plan, proxy_samples=None):
                 lham = -ham
                 on_handle = True
         miss_l = K.solve_fp_arm(pose, True, lt, ham=lham)
+        return pose, {"fp_r": miss, "fp_l": miss_l, "on_handle": on_handle}
+
+    rows = []
+    for t, rt, ham, lt, act in targets:
+        rt, lt = clamp_view(rt), clamp_view(lt, 0.40)
+        if plan.custom is not None:
+            rt, ham, lt = plan.custom(t, rt, ham, lt)
+        rows.append([t, np.array(rt, float), ham, np.array(lt, float)])
+    _fp_clear(clip, rows, pose_at, uses_left)
+    for t, rt, ham, lt in rows:
+        pose, info = pose_at(t, rt, ham, lt)
         if prev is not None:
             for bn in FP_BONES:
                 pose.rot[bn] = R.euler_near(R.rzyx(pose.rot[bn]), prev.rot[bn])
             pose.touch()
-        out.append((t, pose, {"fp_r": miss, "fp_l": miss_l, "on_handle": on_handle}))
+        out.append((t, pose, info))
         prev = pose
     return out
+
+
+FP_CLEAR_STEP = 0.03  # view units a covering / cut hand target moves per try
+FP_CLEAR_TRIES = 10
+
+
+def _fp_bad(pose, hammer, left, side):
+    """(covers the crosshair, the near plane cuts it) for one camera arm (and the hammer with the right)."""
+    boxes = K.fp_boxes(pose, hammer and side == "r", (side,))
+    return any(ray_hits(bx) for bx in boxes), any(near_cut(bx) for bx in boxes)
+
+
+def _fp_clear(clip, rows, pose_at, uses_left):
+    """Outside the contact window (contact +-1) no camera arm / hammer covers the crosshair or meets the near
+    plane: a covering hand target moves out from the screen centre (a cut one away from the camera), and the
+    moves ease in and out over the neighbouring ticks (the contact pass itself stays as it is: a fast pass)."""
+    n = len(rows)
+    window = set()
+    if clip.contact is not None:
+        window = {clip.contact - 1, clip.contact, clip.contact + 1}
+    for side, idx in (("r", 1), ("l", 3)):
+        if side == "l" and not uses_left:
+            continue
+        need = [np.zeros(3) for _ in range(n)]
+        for i, row in enumerate(rows):
+            t = row[0]
+            hammer = clip.hammer_at(t)
+            base = row[idx].copy()
+            off = np.zeros(3)
+            for _ in range(FP_CLEAR_TRIES + 1):
+                trial = list(row)
+                trial[idx] = clamp_view(base + off, 0.42 if side == "r" else 0.40)
+                pose, _ = pose_at(trial[0], trial[1], trial[2], trial[3])
+                cov, cut = _fp_bad(pose, hammer, uses_left, side)
+                if t in window:
+                    cov = False
+                if not cov and not cut:
+                    break
+                v = np.array([base[0] + off[0], base[1] + off[1] + 0.04, 0.0])
+                if np.linalg.norm(v) < 1e-3:
+                    v = np.array([1.0 if side == "r" else -1.0, -1.0, 0.0])
+                step = (FP_CLEAR_STEP * unit(v)) if cov else np.zeros(3)
+                if cut:
+                    step = step + np.array([0.0, 0.0, -FP_CLEAR_STEP])
+                off = off + step
+            need[i] = off
+        if not any(np.linalg.norm(v) > 1e-6 for v in need):
+            continue
+        # Ease: each tick takes the strongest neighbouring move, faded by distance (not into the window).
+        eased = []
+        for i in range(n):
+            best, bw = np.zeros(3), 0.0
+            for j in range(max(0, i - 2), min(n, i + 3)):
+                w = 1.0 - abs(i - j) / 3.0
+                if np.linalg.norm(need[j]) * w > bw:
+                    best, bw = need[j] * w, np.linalg.norm(need[j]) * w
+            if rows[i][0] in window and np.linalg.norm(need[i]) < 1e-6:
+                best = np.zeros(3)
+            eased.append(best)
+        for i in range(n):
+            rows[i][idx] = clamp_view(rows[i][idx] + eased[i], 0.42 if side == "r" else 0.40)
 
 
 NEAR = 0.05  # GameRenderer's near plane (blocks)
