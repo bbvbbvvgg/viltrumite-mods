@@ -9,7 +9,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The one door for every Hulkbuster sound (rework spec §1.3.11, §10): a cue names the event, its
- * loudness and pitch spread. No vanilla SoundEvents. Server cues play for everyone around (one
+ * loudness and pitch spread. No vanilla sound events. Server cues play for everyone around (one
  * playSound, no client duplicate); client loops go through client.ironman.hulkbuster.HulkbusterLoops.
  * The event behind a cue comes from IronManHulkbusterSounds (sound-design skill, cue sheet
  * docs/plans/2026-10-28-hulkbuster-cues.md).
