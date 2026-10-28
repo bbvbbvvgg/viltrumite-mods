@@ -10,10 +10,12 @@ import java.nio.file.Path;
 import java.util.function.Predicate;
 import net.minecraft.world.entity.LivingEntity;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /** Shared action lock (spec docs/design/2026-10-28-sinclair-design.md §7, §11). */
 class ActionLocksTest {
+   @BeforeEach
    @AfterEach
    void reset() {
       ActionLocks.clearForTests();
