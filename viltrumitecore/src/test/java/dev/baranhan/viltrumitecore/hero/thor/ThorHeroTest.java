@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor;
 
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -131,7 +132,7 @@ class ThorHeroTest {
       assertEquals(-1, idle.controlTargetId());
 
       ThorState state = new ThorState();
-      state.hammer = HammerState.IN_HAND;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
       state.timeline.request(ThorMove.HOLSTER, -1);
       for (int i = 0; i < ThorRules.HOLSTER_INTRO + 1; i++) {
          state.timeline.tick();

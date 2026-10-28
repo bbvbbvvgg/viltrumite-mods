@@ -3,12 +3,17 @@ package dev.baranhan.viltrumitecore.hero.thor;
 import dev.baranhan.viltrumitecore.hero.combat.CombatPresence;
 import dev.baranhan.viltrumitecore.hero.combat.CombatStance;
 import dev.baranhan.viltrumitecore.hero.combat.CombatTags;
+import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
- * Thor's combat presence for the shared interaction rules: Mjölnir in the
- * hand, or bare fists. Stance stays NONE until a session authors strikes;
- * a thrown hammer will carry its own presence with stance THROWN.
+ * Thor's combat presence for the shared interaction rules
+ * ({@link dev.baranhan.viltrumitecore.hero.combat.HeroInteractions}): Mjölnir
+ * in the free hand, or bare fists; the stance is ACTIVE inside the effective
+ * part (MAIN) of a strike, NONE otherwise. What a CLASH / BLOCK does to the
+ * hit is not approved yet (OPEN DESIGN, foundation m8): only the rule
+ * lookup is wired.
  */
 public final class ThorCombat {
    public static final String MJOLNIR_ID = "thor:mjolnir";
@@ -23,5 +28,24 @@ public final class ThorCombat {
 
    public static CombatPresence presence(HammerState hammer, boolean handFree) {
       return hammer == HammerState.IN_HAND && handFree ? MJOLNIR : FISTS;
+   }
+
+   /** Presence with the running move's stance. */
+   public static CombatPresence presence(HammerState hammer, boolean handFree, @Nullable ThorMove move, @Nullable MovePhase phase) {
+      CombatPresence base = presence(hammer, handFree);
+      CombatStance stance = stance(move, phase);
+      return stance == base.stance() ? base : base.withStance(stance);
+   }
+
+   /** ACTIVE only in the MAIN phase of a striking move (the server's damage window). */
+   public static CombatStance stance(@Nullable ThorMove move, @Nullable MovePhase phase) {
+      if (move == null || phase != MovePhase.MAIN) {
+         return CombatStance.NONE;
+      }
+
+      return switch (move) {
+         case HAMMER_COMBO, FIST_COMBO, HAMMER_STRIKE, ELECTRIC_COMBO, WRATH -> CombatStance.ACTIVE;
+         default -> CombatStance.NONE;
+      };
    }
 }

@@ -182,7 +182,7 @@ class StagedTimelineTest {
    }
 
    @Test
-   void comboChainsInsideTheWindowAndRestartsAfterTheLastStep() {
+   void comboChainsInsideTheWindowAndWrapsAfterTheLastStep() {
       StagedTimeline<Move> timeline = new StagedTimeline<>();
       timeline.request(COMBO, -1);
       ticks(timeline, 2);
@@ -193,8 +193,24 @@ class StagedTimelineTest {
       assertEquals(2, timeline.step());
 
       ticks(timeline, 2);
-      assertEquals(StagedTimeline.Admission.INTERRUPT, timeline.request(COMBO, -1), "after the last step a press starts over");
+      assertEquals(StagedTimeline.Admission.CHAIN, timeline.request(COMBO, -1), "after the last step the chain wraps (B-m2), never overflows");
       assertEquals(0, timeline.step());
+   }
+
+   @Test
+   void aPressBeforeTheWindowOfTheLastStepStillBuffers() {
+      StagedTimeline<Move> timeline = new StagedTimeline<>();
+      timeline.request(COMBO, -1);
+      for (int step = 1; step < COMBO.maxSteps(); step++) {
+         ticks(timeline, 2);
+         assertEquals(StagedTimeline.Admission.CHAIN, timeline.request(COMBO, -1));
+      }
+
+      assertEquals(COMBO.maxSteps() - 1, timeline.step());
+      assertEquals(StagedTimeline.Admission.QUEUE, timeline.request(COMBO, -1), "the last step buffers like any other (no BUSY)");
+      assertEquals(StagedTimeline.Admission.REFUSE, timeline.request(COMBO, -1), "still one buffered press only");
+      ticks(timeline, 3);
+      assertEquals(0, timeline.step(), "the buffered press wrapped to the first step");
    }
 
    @Test

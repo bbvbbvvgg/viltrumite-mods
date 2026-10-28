@@ -42,7 +42,7 @@ public final class ElectricCombos {
 
    static void push(ServerPlayer player, ThorState state, ThorCombatState combat, ElectricAction.Kind kind, MoveDirection direction, boolean airborne,
       boolean hammerAtAction) {
-      if (state.mode != ThorMode.ELECTRIC) {
+      if (state.mode() != ThorMode.ELECTRIC) {
          return;
       }
 
@@ -71,7 +71,7 @@ public final class ElectricCombos {
    static void onHammerEvent(ThorEvent event) {
       ServerPlayer player = player(event.attackerId());
       ThorState state = player == null ? null : ThorState.of(player);
-      if (state == null || state.mode != ThorMode.ELECTRIC) {
+      if (state == null || state.mode() != ThorMode.ELECTRIC) {
          return;
       }
 
@@ -95,7 +95,7 @@ public final class ElectricCombos {
       ServerLevel level = player.serverLevel();
       if (!result.fires()) {
          // Needs Mjölnir in the hand: nothing happens, nothing is recalled (#148), and no hint of the sequence either (#131, B-m13).
-         ThorEvents.post(CombatHits.event(ThorEventType.COMBO_END, player.getUUID(), null, ThorMove.ELECTRIC_COMBO, attackId, false, 0.0F, false));
+         ThorEvents.post(CombatHits.event(ThorEventType.COMBO_END, player.getUUID(), null, ThorMove.ELECTRIC_COMBO, attackId, false, 0.0F, false).at(ThorEvent.Where.of(player, null)));
          return;
       }
 
@@ -121,7 +121,7 @@ public final class ElectricCombos {
          combat.skyFallback.put(attackId, ElectricFx.aim(player, 32.0));
       }
       ThorEvents.post(CombatHits.event(ThorEventType.COMBO_END, player.getUUID(), target, ThorMove.ELECTRIC_COMBO, attackId,
-         CombatHits.hammerInHand(player), result.combo().ordinal(), true));
+         CombatHits.hammerInHand(player), 0.0F, true).at(ThorEvent.Where.of(player, null)).withDetail(result.combo().ordinal()));
    }
 
    /** The combo's own effect; returns its centre (the sky lightning's fallback point). */

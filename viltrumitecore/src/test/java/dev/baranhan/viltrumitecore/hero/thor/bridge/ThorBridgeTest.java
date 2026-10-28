@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor.bridge;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorStateFixtures;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -43,12 +44,12 @@ class ThorBridgeTest {
       assertNull(ThorBridge.hammerAccessOwner());
       ThorState state = new ThorState();
       assertEquals(new HammerView(null, THOR, HammerState.HOLSTERED, false, null, null), ThorBridge.hammer(THOR, state));
-      state.hammer = HammerState.IN_HAND;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
       HammerView inHand = ThorBridge.hammer(THOR, state);
       assertTrue(inHand.inHand());
       assertNull(inHand.logicalId(), "no world hammer before A");
       assertSame(HammerState.HOLSTERED, ThorBridge.hammer(THOR, null).phase(), "unknown state reads as on the belt");
-      state.hammer = HammerState.THROWN;
+      ThorStateFixtures.hammer(state, HammerState.THROWN);
       assertTrue(ThorBridge.hammer(THOR, state).flying());
       assertFalse(inHand.flying(), "an old view never changes");
    }
@@ -67,17 +68,17 @@ class ThorBridgeTest {
    void stateViewIsAReadOnlyCopy() {
       ThorState state = new ThorState();
       ThorStateView idle = ThorBridge.state(state);
-      assertEquals(new ThorStateView(ThorMode.NORMAL, null, null, 0, 0, null, null), idle);
+      assertEquals(ThorStateView.idle(ThorMode.NORMAL), idle);
 
       ThorActions.start(state, ThorMove.DRAW, true);
       ThorActions.advance(state, true, false);
-      state.mode = ThorMode.ELECTRIC;
+      state.setMode(ThorMode.ELECTRIC);
       ThorStateView running = ThorBridge.state(state);
       assertSame(ThorMove.DRAW, running.move());
       assertSame(MovePhase.INTRO, running.phase());
       assertEquals(1, running.moveElapsed());
       assertSame(ThorMode.ELECTRIC, running.mode());
-      assertEquals(new ThorStateView(ThorMode.NORMAL, null, null, 0, 0, null, null), idle);
+      assertEquals(ThorStateView.idle(ThorMode.NORMAL), idle);
    }
 
    @Test
@@ -181,7 +182,8 @@ class ThorBridgeTest {
 
    @Test
    void eventTypesAreAppendOnly() {
-      assertEquals(List.of("MELEE_HIT", "LETHAL_HIT", "COMBO_END", "THROW", "RECALL", "CATCH", "HAMMER_STATE_CHANGED"),
+      assertEquals(List.of("MELEE_HIT", "LETHAL_HIT", "COMBO_END", "THROW", "RECALL", "CATCH", "HAMMER_STATE_CHANGED", "HAMMER_OWNER_CHANGED",
+         "STRIKE_START", "STRIKE_END", "SCENE_START", "SCENE_END"),
          Arrays.stream(ThorEventType.values()).map(Enum::name).toList());
    }
 

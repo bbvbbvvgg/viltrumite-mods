@@ -193,6 +193,16 @@ public interface HeroDefinition {
    }
 
    /**
+    * Actions that only ever arrive through {@link HeldInputs} (a claimed mouse
+    * button): the key packet (HeroInputC2SPacket) drops their presses and
+    * releases, so a modified client cannot skip the claim, the held-repeat
+    * guard or the block-attack rule by sending them as keys. Default: none.
+    */
+   default boolean mouseOnly(HeroAction action) {
+      return false;
+   }
+
+   /**
     * Action for the guard key (vanilla swap-hands, default F) right now, or
     * null for the vanilla swap. Both sides, synced data only on the client:
     * when non-null the client consumes the swap key and sends held edges.

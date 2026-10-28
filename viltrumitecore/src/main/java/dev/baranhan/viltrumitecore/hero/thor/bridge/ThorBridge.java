@@ -19,6 +19,8 @@ import net.minecraft.world.entity.player.Player;
  * {@link ThorMoves}. Server main thread.
  */
 public final class ThorBridge {
+   /** The one writer of the bridge flags; every write below is owner-checked. */
+   private static final ThorState.BridgeWriter FLAGS = ThorState.claimBridgeWriter("foundation:bridge");
    private static HammerAccess hammerAccess = HammerAccess.FOUNDATION;
    @Nullable
    private static String hammerAccessOwner;
@@ -112,8 +114,8 @@ public final class ThorBridge {
 
    public static ThorStateView state(ThorState state) {
       var timeline = state.timeline;
-      return new ThorStateView(state.mode, timeline.move(), timeline.running() ? timeline.phase() : null, timeline.elapsed(), state.grabWindow,
-         state.sceneLock, state.cameraLease);
+      return new ThorStateView(state.mode(), timeline.move(), timeline.running() ? timeline.phase() : null, timeline.elapsed(), state.grabWindowTicks(),
+         state.sceneLock(), state.cameraLease(), timeline.step(), timeline.partnerId(), timeline.queued(), state.hammerDetached());
    }
 
    @Nullable
@@ -130,19 +132,17 @@ public final class ThorBridge {
          throw new IllegalArgumentException("move and ticks > 0 are required");
       }
 
-      state.comboWindow = state.comboMove == move ? Math.max(state.comboWindow, ticks) : ticks;
-      state.comboMove = move;
+      FLAGS.comboWindow(state, move, state.comboMove() == move ? Math.max(state.comboWindow(), ticks) : ticks);
    }
 
    public static void closeComboWindow(ThorState state) {
-      state.comboMove = null;
-      state.comboWindow = 0;
+      FLAGS.comboWindow(state, null, 0);
    }
 
    /** The move of the open combo chain, or null. */
    @Nullable
    public static ThorMove comboWindow(ThorState state) {
-      return state.comboWindow > 0 ? state.comboMove : null;
+      return state.comboWindow() > 0 ? state.comboMove() : null;
    }
 
    // --- grab window ---
@@ -153,7 +153,7 @@ public final class ThorBridge {
          throw new IllegalArgumentException("ticks <= 0");
       }
 
-      state.grabWindow = Math.max(state.grabWindow, ticks);
+      FLAGS.grabWindow(state, Math.max(state.grabWindowTicks(), ticks), state.grabWindowTicks() > 0 ? state.grabTarget() : -1);
    }
 
    /**
@@ -161,22 +161,24 @@ public final class ThorBridge {
     * paired GRAB move then starts with it as the partner.
     */
    public static void openGrabWindow(ThorState state, int ticks, int targetId) {
-      openGrabWindow(state, ticks);
-      state.grabTarget = targetId;
+      if (ticks <= 0) {
+         throw new IllegalArgumentException("ticks <= 0");
+      }
+
+      FLAGS.grabWindow(state, Math.max(state.grabWindowTicks(), ticks), targetId);
    }
 
    /** Entity id the open grab window is for, -1 when none. */
    public static int grabTarget(ThorState state) {
-      return state.grabWindow > 0 ? state.grabTarget : -1;
+      return state.grabWindowTicks() > 0 ? state.grabTarget() : -1;
    }
 
    public static void closeGrabWindow(ThorState state) {
-      state.grabWindow = 0;
-      state.grabTarget = -1;
+      FLAGS.grabWindow(state, 0, -1);
    }
 
    public static boolean grabWindowActive(ThorState state) {
-      return state.grabWindow > 0;
+      return state.grabWindowTicks() > 0;
    }
 
    // --- scene lock ---
@@ -184,26 +186,31 @@ public final class ThorBridge {
    /** Take the scene lock; false when another owner holds it. Re-entrant for the same owner. */
    public static boolean lockScene(ThorState state, String owner) {
       requireOwner(owner);
-      if (state.sceneLock != null && !state.sceneLock.equals(owner)) {
+      if (state.sceneLock() != null && !state.sceneLock().equals(owner)) {
          return false;
       }
 
-      state.sceneLock = owner;
+      FLAGS.sceneLock(state, owner);
       return true;
    }
 
    /** Release the lock; false when this owner does not hold it. */
    public static boolean unlockScene(ThorState state, String owner) {
-      if (state.sceneLock == null || !state.sceneLock.equals(owner)) {
+      if (state.sceneLock() == null || !state.sceneLock().equals(owner)) {
          return false;
       }
 
-      state.sceneLock = null;
+      FLAGS.sceneLock(state, null);
       return true;
    }
 
    public static boolean sceneLocked(ThorState state) {
-      return state.sceneLock != null;
+      return state.sceneLock() != null;
+   }
+
+   /** True when {@code owner} holds the scene lock (the owner-scoped question every session asks). */
+   public static boolean sceneLockedBy(ThorState state, String owner) {
+      return owner != null && owner.equals(state.sceneLock());
    }
 
    // --- camera lease ---
@@ -211,25 +218,36 @@ public final class ThorBridge {
    /** Take the camera lease (synced as ThorFlags.CAMERA_LEASE); false when another owner holds it. */
    public static boolean acquireCamera(ThorState state, String owner) {
       requireOwner(owner);
-      if (state.cameraLease != null && !state.cameraLease.equals(owner)) {
+      if (state.cameraLease() != null && !state.cameraLease().equals(owner)) {
          return false;
       }
 
-      state.cameraLease = owner;
+      FLAGS.cameraLease(state, owner);
       return true;
    }
 
    public static boolean releaseCamera(ThorState state, String owner) {
-      if (state.cameraLease == null || !state.cameraLease.equals(owner)) {
+      if (state.cameraLease() == null || !state.cameraLease().equals(owner)) {
          return false;
       }
 
-      state.cameraLease = null;
+      FLAGS.cameraLease(state, null);
       return true;
    }
 
    public static boolean cameraLeased(ThorState state) {
-      return state.cameraLease != null;
+      return state.cameraLease() != null;
+   }
+
+   /**
+    * Lifecycle end of the bridge flags (ThorActions.stop, after the move and
+    * the lifecycle listeners heard the stop): lock, lease and windows drop.
+    */
+   public static void dropFlags(ThorState state) {
+      FLAGS.grabWindow(state, 0, -1);
+      FLAGS.sceneLock(state, null);
+      FLAGS.cameraLease(state, null);
+      FLAGS.comboWindow(state, null, 0);
    }
 
    /** Tests only. */

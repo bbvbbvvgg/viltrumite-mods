@@ -112,7 +112,7 @@ class ThorRound1SafetyTest {
       // INT-12 / F-m11: the dev grab window names its target; the dev hammer fixture no longer writes the projection.
       String dev = read("hero/thor/dev/ThorDevCommands.java");
       assertTrue(dev.contains("openGrabWindow(state, ticks, target.getId())"));
-      assertFalse(dev.contains("state.hammer ="));
+      assertFalse(dev.contains("state.hammer =") || dev.contains("project("));
    }
 
    private static String read(String relative) throws IOException {

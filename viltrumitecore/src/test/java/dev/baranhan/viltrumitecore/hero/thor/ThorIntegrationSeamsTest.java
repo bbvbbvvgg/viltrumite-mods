@@ -60,10 +60,10 @@ class ThorIntegrationSeamsTest {
    @Test
    void everySessionFlagSurvivesTheWireAtOnce() {
       ThorState state = new ThorState();
-      state.hammer = HammerState.HOLSTERED;
-      state.hammerDetached = true;
-      state.mode = ThorMode.ELECTRIC;
-      state.grabWindow = 5;
+      ThorStateFixtures.hammer(state, HammerState.HOLSTERED);
+      ThorStateFixtures.detached(state, true);
+      state.setMode(ThorMode.ELECTRIC);
+      ThorBridge.openGrabWindow(state, 5);
       assertTrue(ThorBridge.acquireCamera(state, ThorScenes.OWNER));
       assertTrue(ThorBridge.lockScene(state, ThorScenes.OWNER));
 

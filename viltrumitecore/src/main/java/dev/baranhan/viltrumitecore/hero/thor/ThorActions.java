@@ -78,9 +78,19 @@ public final class ThorActions {
 
    /** Server context of a player: live state, held items, movement, the nearest enemy. */
    public static ThorContext context(ServerPlayer player, ThorState state, @Nullable LivingEntity enemy) {
-      return new ThorContext(state.hammer, state.mode, ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(),
+      return new ThorContext(state.hammer(), state.mode(), ThorHands.free(player), player.isShiftKeyDown(), !player.onGround(),
          ThorScenes.fullFlight(player), enemy != null, ThorBridge.grabWindowActive(state),
-         state.hammerDetached, fistChainOpen(state));
+         state.hammerDetached(), fistChainOpen(state));
+   }
+
+   /**
+    * B-m2: clicking a chain faster than it buffers (the one buffer slot of
+    * the running chained move is already taken) is ordinary combat input,
+    * not a refusal worth a "Not now": it is dropped silently. Any other BUSY
+    * (a different move blocked by the running one) still tells the player.
+    */
+   static boolean quietBusy(ThorState state, ThorMove move) {
+      return move.maxSteps() > 1 && state.timeline.is(move) && state.timeline.queued() == move;
    }
 
    /** An unarmed chain (session B's combo window) is still open: LMB / RMB finish it first (#166). */
@@ -106,7 +116,11 @@ public final class ThorActions {
       switch (begin(player, state, move, move.paired() ? ThorBridge.grabTarget(state) : -1, input, target, null)) {
          case NOT_READY -> ThorFeedback.refuse(player, ThorFeedback.notReady(move));
          case HANDS_BUSY -> ThorFeedback.refuse(player, Component.translatable(ThorFeedback.HANDS_BUSY));
-         case BUSY -> ThorFeedback.refuse(player, Component.translatable(ThorFeedback.BUSY));
+         case BUSY -> {
+            if (!quietBusy(state, move)) {
+               ThorFeedback.refuse(player, Component.translatable(ThorFeedback.BUSY));
+            }
+         }
          default -> {
          }
       }
@@ -143,7 +157,7 @@ public final class ThorActions {
          return Refusal.DECLINED;
       }
 
-      HammerState before = state.hammer;
+      HammerState before = state.hammer();
       if (overlay(move)) {
          handler.onStart(context);
          hammerMoved(player, before, state);
@@ -213,7 +227,7 @@ public final class ThorActions {
 
    private static void hammerMoved(@Nullable ServerPlayer player, HammerState before, ThorState state) {
       if (player != null) {
-         ThorFeedback.hammerMoved(player, before, state.hammer);
+         ThorFeedback.hammerMoved(player, before, state.hammer());
       }
    }
 
@@ -293,7 +307,7 @@ public final class ThorActions {
     * event when it starts past its intro.
     */
    static void tick(@Nullable ServerPlayer player, ThorState state, boolean handFree, boolean controlled) {
-      HammerState before = state.hammer;
+      HammerState before = state.hammer();
       ThorMove remembered = state.lastMove;
       ThorMove running = state.timeline.move();
       if (remembered != null && remembered != running) {
@@ -341,13 +355,7 @@ public final class ThorActions {
          state.timeline.interrupt(InterruptReason.INPUT);
       }
 
-      if (state.grabWindow > 0) {
-         state.grabWindow--;
-      }
-
-      if (state.comboWindow > 0 && --state.comboWindow == 0) {
-         state.comboMove = null;
-      }
+      state.tickWindows();
 
       state.heldTicks.replaceAll((input, ticks) -> ticks + 1);
       StagedTimeline.Event event = state.timeline.tick();
@@ -372,7 +380,7 @@ public final class ThorActions {
 
       ThorMove move = state.timeline.move();
       if (event == StagedTimeline.Event.ENTER_MAIN && move != null) {
-         state.hammer = afterMain(move, state.hammer);
+         state.projectTechnical(afterMain(move, state.hammer()));
       }
    }
 

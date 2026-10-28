@@ -12,8 +12,9 @@ import java.util.Optional;
  * holds only generic tag fallbacks (weapon clash, block); special matchups are
  * added later as more specific tag rules, never as hero-pair checks.
  *
- * Not wired to runtime hits yet (Thor stage 2): heroes already publish their
- * presence through {@code HeroDefinition.combatPresence}.
+ * The mod's one instance lives in {@link HeroInteractions}; heroes publish
+ * their presence through {@code HeroDefinition.combatPresence}. What a
+ * resolved CLASH / BLOCK does to a hit is per-matchup design (OPEN).
  */
 public final class InteractionRules {
    private final List<InteractionRule> rules = new ArrayList<>();

@@ -14,7 +14,7 @@ import javax.annotation.Nullable;
 public interface HammerAccess {
    /** Safe default: the per-player state only, no world hammer. */
    HammerAccess FOUNDATION = (thor, state) -> new HammerView(null, thor,
-      state == null ? HammerState.HOLSTERED : state.hammer, state != null && state.hammer == HammerState.IN_HAND, null, null);
+      state == null ? HammerState.HOLSTERED : state.hammer(), state != null && state.hammer() == HammerState.IN_HAND, null, null);
 
    /** Mjölnir as seen for this Thor player; {@code state} may be null when unknown. */
    HammerView view(UUID thor, @Nullable ThorState state);

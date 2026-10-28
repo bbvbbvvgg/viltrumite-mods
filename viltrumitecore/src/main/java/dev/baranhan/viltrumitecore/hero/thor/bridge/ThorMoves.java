@@ -69,6 +69,53 @@ public final class ThorMoves {
       return entry == null ? null : entry.owner();
    }
 
+   /**
+    * Deterministic fingerprint of the whole move table, the contract client
+    * and server must share (review foundation M2): every ThorMove in wire
+    * (ordinal) order with its identity (name, priority, pairing, retired)
+    * and, when authored, its owner and phase timings. EnumMap / ordinal order
+    * only, no hash-map iteration; SHA-256, first 16 hex digits.
+    */
+   public static synchronized String fingerprint() {
+      return digest(table());
+   }
+
+   /** The canonical text the fingerprint hashes (tests, mismatch logs). */
+   public static synchronized String table() {
+      StringBuilder text = new StringBuilder("thor-moves/1");
+      for (ThorMove move : ThorMove.values()) {
+         text.append('|').append(move.ordinal()).append(':').append(move.name()).append(':').append(move.priority()).append(':')
+            .append(move.paired() ? 'P' : '-').append(move.retired() ? 'R' : '-');
+         Entry entry = ENTRIES.get(move);
+         if (entry != null) {
+            ThorMoveDefinition d = entry.definition();
+            text.append('=').append(entry.owner()).append(',').append(d.intro()).append(',').append(d.main()).append(',').append(d.finish()).append(',')
+               .append(d.cancellableFrom() == null ? "-" : d.cancellableFrom().name()).append(',').append(d.maxSteps());
+         }
+      }
+
+      return text.toString();
+   }
+
+   static String digest(String table) {
+      try {
+         byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(table.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+         StringBuilder hex = new StringBuilder();
+         for (int i = 0; i < 8; i++) {
+            hex.append(String.format(java.util.Locale.ROOT, "%02x", hash[i]));
+         }
+
+         return hex.toString();
+      } catch (java.security.NoSuchAlgorithmException e) {
+         throw new IllegalStateException("SHA-256 missing", e);
+      }
+   }
+
+   /** Handshake rule: both sides must carry the same fingerprint (an absent channel is a mismatch). */
+   public static boolean compatible(String local, @Nullable String remote) {
+      return local != null && local.equals(remote);
+   }
+
    /** Tests only: back to the foundation state (DRAW / HOLSTER). */
    public static synchronized void resetForTests() {
       ENTRIES.clear();

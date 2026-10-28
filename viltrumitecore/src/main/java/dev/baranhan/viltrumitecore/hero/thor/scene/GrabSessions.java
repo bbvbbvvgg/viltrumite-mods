@@ -7,6 +7,7 @@ import dev.baranhan.viltrumitecore.hero.control.ControlManager;
 import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -157,6 +158,7 @@ final class GrabSessions {
       SESSIONS.put(session.thor, session);
       SceneFx.sound(thor, thor.position(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0F, 0.6F);
       sync(thor, session);
+      ThorScenes.postScene(ThorEventType.SCENE_START, session.thor, thor, session.victim, target, ThorScenes.GRAB, true);
       return true;
    }
 
@@ -374,6 +376,8 @@ final class GrabSessions {
          }
          ThorScenes.send(thor, entity, SceneSync.end(SceneSync.Kind.GRAB, session.thorId, session.victimId));
       }
+
+      ThorScenes.postScene(ThorEventType.SCENE_END, session.thor, thor, session.victim, entity, ThorScenes.GRAB, reason == ReleaseReason.NORMAL_END);
    }
 
    static void endFor(ServerPlayer thor) {

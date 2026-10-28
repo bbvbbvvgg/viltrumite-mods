@@ -5,9 +5,11 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dev.baranhan.viltrumitecore.hero.thor.ThorActions;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMode;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorLifecycle;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.Map;
 import java.util.function.UnaryOperator;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,7 +33,8 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
  * {@link #registerChild} (e.g. A: "debug hammer", B: "debug combat", C:
  * "grab", "fatality", "debug grab-window"); paths are unique per owner-free
  * registry and merge under the root. The whole tree is added to the
- * dispatcher only outside production and only for operators (level 2).
+ * dispatcher outside production (or in a QA build started with
+ * {@code -Dviltrumitecore.thor.qa=true}) and only for operators (level 2).
  * Foundation fixtures live under {@code /thor foundation}: they set bridge
  * state directly; they never start a move, spawn a hammer or stand in for a
  * mechanic.
@@ -40,7 +44,7 @@ public final class ThorDevCommands {
    public static final int PERMISSION = 2;
    public static final String FOUNDATION = "foundation";
 
-   private record Child(String owner, String path, UnaryOperator<LiteralArgumentBuilder<CommandSourceStack>> leaf) {
+   record Child(String owner, String path, UnaryOperator<LiteralArgumentBuilder<CommandSourceStack>> leaf) {
    }
 
    private static final Map<String, Child> CHILDREN = new LinkedHashMap<>();
@@ -52,9 +56,16 @@ public final class ThorDevCommands {
    private ThorDevCommands() {
    }
 
-   /** Pure gate: dev / test environment only. */
+   /** System property that also enables the tree in a production build (QA builds, like reinhardqa). */
+   public static final String QA_PROPERTY = "viltrumitecore.thor.qa";
+
+   /** Pure gate: dev / test environment, or a production build started with -Dviltrumitecore.thor.qa=true. */
+   public static boolean enabled(boolean production, boolean qa) {
+      return !production || qa;
+   }
+
    public static boolean enabled(boolean production) {
-      return !production;
+      return enabled(production, Boolean.getBoolean(QA_PROPERTY));
    }
 
    /**
@@ -72,6 +83,11 @@ public final class ThorDevCommands {
       Child existing = CHILDREN.get(key);
       if (existing != null) {
          throw new IllegalStateException("/thor " + key + " already registered by " + existing.owner());
+      }
+
+      String conflict = conflict(owner, key, CHILDREN.values());
+      if (conflict != null) {
+         throw new IllegalStateException("/thor " + key + " collides with " + conflict);
       }
 
       CHILDREN.put(key, new Child(owner, key, leaf));
@@ -119,6 +135,30 @@ public final class ThorDevCommands {
       return node;
    }
 
+   /**
+    * The foundation's root literal is reserved for the foundation, and one
+    * owner's path is never a prefix of another owner's (a leaf of one owner
+    * cannot hide another owner's subtree). Shared intermediate literals
+    * ("debug") stay allowed. Null when the path is free.
+    */
+   static String conflict(String owner, String key, Iterable<Child> existing) {
+      if (!FOUNDATION.equals(owner) && (key.equals(FOUNDATION) || key.startsWith(FOUNDATION + " "))) {
+         return "the reserved '" + FOUNDATION + "' root";
+      }
+
+      for (Child child : existing) {
+         if (child.owner().equals(owner)) {
+            continue;
+         }
+
+         if (key.startsWith(child.path() + " ") || child.path().startsWith(key + " ")) {
+            return child.path() + " of " + child.owner();
+         }
+      }
+
+      return null;
+   }
+
    private static String normalize(String path) {
       String key = path.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
       if (!key.matches("[a-z0-9_\\-]+( [a-z0-9_\\-]+)*")) {
@@ -135,12 +175,34 @@ public final class ThorDevCommands {
       // Read-only: the world hammer store (session A, /thor debug hammer ...) is the one writer of where Mjölnir is.
       CHILDREN.put("foundation hammer", new Child(FOUNDATION, "foundation hammer", node -> node.executes(ThorDevCommands::hammer)));
       CHILDREN.put("foundation mode", new Child(FOUNDATION, "foundation mode", node -> node.then(Commands.argument("mode", StringArgumentType.word())
+         .suggests((c, builder) -> SharedSuggestionProvider.suggest(modeKeys(), builder))
          .executes(c -> mode(c, StringArgumentType.getString(c, "mode"))))));
       // The window always names its target: the paired GRAB refuses a partner-less start (StagedTimeline).
       CHILDREN.put("foundation grab_window", new Child(FOUNDATION, "foundation grab_window", node -> node.then(
          Commands.argument("ticks", IntegerArgumentType.integer(1, 200)).then(Commands.argument("target", EntityArgument.entity())
             .executes(c -> grabWindow(c, IntegerArgumentType.getInteger(c, "ticks"), EntityArgument.getEntity(c, "target")))))));
       CHILDREN.put("foundation release_locks", new Child(FOUNDATION, "foundation release_locks", node -> node.executes(ThorDevCommands::releaseLocks)));
+   }
+
+   /** Lower-case keys of the Thor modes. */
+   public static List<String> modeKeys() {
+      List<String> keys = new ArrayList<>();
+      for (ThorMode mode : ThorMode.values()) {
+         keys.add(mode.name().toLowerCase(Locale.ROOT));
+      }
+
+      return keys;
+   }
+
+   /** Null for an unknown word (never silently NORMAL). */
+   public static ThorMode parseMode(String key) {
+      for (ThorMode mode : ThorMode.values()) {
+         if (mode.name().equalsIgnoreCase(key)) {
+            return mode;
+         }
+      }
+
+      return null;
    }
 
    private static ThorState thor(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -183,8 +245,14 @@ public final class ThorDevCommands {
          return 0;
       }
 
-      state.mode = "electric".equalsIgnoreCase(key) ? ThorMode.ELECTRIC : ThorMode.NORMAL;
-      context.getSource().sendSuccess(() -> Component.literal("mode = " + state.mode), false);
+      ThorMode mode = parseMode(key);
+      if (mode == null) {
+         context.getSource().sendFailure(Component.literal("Unknown mode '" + key + "', expected one of " + modeKeys()));
+         return 0;
+      }
+
+      state.setMode(mode);
+      context.getSource().sendSuccess(() -> Component.literal("mode = " + state.mode()), false);
       return 1;
    }
 
@@ -195,7 +263,7 @@ public final class ThorDevCommands {
       }
 
       ThorBridge.openGrabWindow(state, ticks, target.getId());
-      context.getSource().sendSuccess(() -> Component.literal("grab window = " + state.grabWindow), false);
+      context.getSource().sendSuccess(() -> Component.literal("grab window = " + state.grabWindowTicks()), false);
       return 1;
    }
 
@@ -205,9 +273,13 @@ public final class ThorDevCommands {
          return 0;
       }
 
-      state.sceneLock = null;
-      state.cameraLease = null;
-      context.getSource().sendSuccess(() -> Component.literal("scene lock and camera lease released"), false);
+      ServerPlayer player = context.getSource().getPlayerOrException();
+      String lock = state.sceneLock();
+      String lease = state.cameraLease();
+      // A lifecycle stop: the running move hears onStop and every session drops what it owns
+      // (scenes end, the lease owner lets go) before the flags clear; nothing vanishes behind an owner.
+      ThorActions.stop(player, state, ThorLifecycle.Cause.DEV_RESET);
+      context.getSource().sendSuccess(() -> Component.literal("lifecycle reset: scene lock " + lock + ", camera lease " + lease + " released through their owners"), false);
       return 1;
    }
 }

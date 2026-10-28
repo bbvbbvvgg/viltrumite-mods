@@ -29,7 +29,13 @@ public final class ThorLifecycle {
       /** Death without a replacement entity (erasure / limbo). */
       ERASED,
       /** The body is replaced by a clone (respawn, End return): the old state is left behind. */
-      CLONE;
+      CLONE,
+      /**
+       * Dev / QA reset (/thor foundation release_locks): the running move,
+       * the sessions' transient state and the lock / lease owners are told,
+       * exactly as on a lifecycle stop, instead of their flags vanishing.
+       */
+      DEV_RESET;
 
       public static Cause of(CleanupReason reason) {
          return switch (reason) {

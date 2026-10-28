@@ -72,6 +72,10 @@ public final class ThorCombatState {
    @Nullable
    public ThorStrike strike;
    public int strikeAttackId;
+   /** The swing inside its effective part (STRIKE_START posted, STRIKE_END owed); 0 when none. */
+   public int openStrike;
+   @javax.annotation.Nullable
+   public ThorMove openStrikeMove;
    /** First enemy hit by the chain's latest strike (COMBO_END targetId). */
    @Nullable
    public UUID chainTarget;

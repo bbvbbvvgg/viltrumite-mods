@@ -265,6 +265,13 @@ public final class ThorScenes {
       return refusal == ThorActions.Refusal.NONE && !state.timeline.is(move) ? ThorActions.Refusal.BUSY : refusal;
    }
 
+   /** Bridge SCENE_START / SCENE_END of a paired scene (C, ThorEventType). */
+   static void postScene(ThorEventType type, UUID thor, @Nullable ServerPlayer thorBody, UUID partner, @Nullable Entity partnerBody, ThorMove move,
+      boolean success) {
+      ThorEvent event = new ThorEvent(ThorEvents.nextId(), type, thor, partner, move, 0, false, 0.0F, success);
+      ThorEvents.post(thorBody == null ? event : event.at(ThorEvent.Where.of(thorBody, partnerBody)));
+   }
+
    static void send(ServerPlayer thor, @Nullable Entity victim, SceneSync sync) {
       ThorSceneS2CPacket packet = new ThorSceneS2CPacket(sync);
       CoreMessages.sendToTrackingAndSelf(packet, thor);
@@ -307,7 +314,7 @@ public final class ThorScenes {
 
    /** Server: does a C scene hold this Thor? */
    public static boolean sceneLocked(ThorState state) {
-      return OWNER.equals(state.sceneLock);
+      return ThorBridge.sceneLockedBy(state, OWNER);
    }
 
    /**

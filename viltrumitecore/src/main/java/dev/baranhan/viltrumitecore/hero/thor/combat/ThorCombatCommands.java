@@ -71,9 +71,9 @@ public final class ThorCombatCommands {
 
       ServerPlayer player = context.getSource().getPlayerOrException();
       ThorCombatState combat = ThorCombatState.of(state);
-      String text = "move=" + state.timeline.move() + " step=" + state.timeline.step() + " pose=" + state.combatPose
+      String text = "move=" + state.timeline.move() + " step=" + state.timeline.step() + " pose=" + state.combatPose()
          + " chain=" + combat.chainMove + (combat.chainRoute == null ? "" : "/" + combat.chainRoute.id()) + " " + combat.chainButtons
-         + " window=" + ThorBridge.comboWindow(state) + " mode=" + state.mode + " hammer=" + ThorBridge.hammer(player)
+         + " window=" + ThorBridge.comboWindow(state) + " mode=" + state.mode() + " hammer=" + ThorBridge.hammer(player)
          + " actions=" + combat.recognizer.history().stream().map(a -> a.kind() + ":" + a.direction()).toList()
          + " storm=" + combat.cooldownLeft(context.getSource().getPlayer(), ThorCombatState.Cooldown.STORM) + " wrath=" + combat.cooldownLeft(context.getSource().getPlayer(), ThorCombatState.Cooldown.WRATH)
          + " policy=" + ThorCombatConfig.get().skyTargetPolicy;

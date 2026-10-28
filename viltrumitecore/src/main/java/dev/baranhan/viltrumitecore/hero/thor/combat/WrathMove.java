@@ -59,7 +59,7 @@ public final class WrathMove {
          combat.startCooldown(player, ThorCombatState.Cooldown.WRATH, ThorCombatConfig.get().wrathCooldownTicks);
          combat.strikeAttackId = combat.nextAttackId();
          combat.wrathAim = null;
-         context.state().combatPose = 1;
+         context.state().setCombatPose(1);
          if (player != null) {
             ServerLevel level = player.serverLevel();
             ElectricFx.sound(level, player.position(), SoundEvents.BEACON_ACTIVATE, 1.0F, 0.6F);
@@ -77,13 +77,13 @@ public final class WrathMove {
          if (event == StagedTimeline.Event.ENTER_MAIN) {
             strike(player, ThorCombatState.of(context.state()));
          } else if (event == StagedTimeline.Event.END) {
-            context.state().combatPose = 0;
+            context.state().setCombatPose(0);
          }
       }
 
       @Override
       public void onStop(ThorMoveContext context) {
-         context.state().combatPose = 0;
+         context.state().setCombatPose(0);
       }
    };
 

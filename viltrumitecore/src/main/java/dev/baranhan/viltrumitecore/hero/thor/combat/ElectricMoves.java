@@ -45,7 +45,7 @@ public final class ElectricMoves {
       @Override
       public void onStart(ThorMoveContext context) {
          ThorState state = context.state();
-         state.mode = state.mode == ThorMode.ELECTRIC ? ThorMode.NORMAL : ThorMode.ELECTRIC;
+         state.setMode(state.mode() == ThorMode.ELECTRIC ? ThorMode.NORMAL : ThorMode.ELECTRIC);
          ThorCombatState combat = ThorCombatState.of(state);
          combat.recognizer.clear();
          combat.rmbHeld = false;
@@ -55,7 +55,7 @@ public final class ElectricMoves {
          }
 
          ServerLevel level = player.serverLevel();
-         boolean on = state.mode == ThorMode.ELECTRIC;
+         boolean on = state.mode() == ThorMode.ELECTRIC;
          ElectricFx.sound(level, player.position(), on ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE, 0.8F, on ? 1.6F : 1.2F);
          if (on) {
             ElectricFx.crackle(level, player.position().add(0.0, 1.0, 0.0), 30);
@@ -82,6 +82,7 @@ public final class ElectricMoves {
             return;
          }
 
+         CombatHits.strikePhase(player, ThorCombatState.of(context.state()), ThorMove.ELECTRIC_COMBO, ThorCombatState.of(context.state()).strikeAttackId, event);
          switch (event) {
             case CHAIN -> begin(player, context.state());
             case ENTER_MAIN -> {
@@ -89,7 +90,7 @@ public final class ElectricMoves {
                discharge(player, combat);
                ElectricCombos.push(player, context.state(), combat, ElectricAction.Kind.LMB);
             }
-            case END -> context.state().combatPose = 0;
+            case END -> context.state().setCombatPose(0);
             default -> {
             }
          }
@@ -97,14 +98,15 @@ public final class ElectricMoves {
 
       @Override
       public void onStop(ThorMoveContext context) {
-         context.state().combatPose = 0;
+         CombatHits.strikeEnd(context.player(), ThorCombatState.of(context.state()));
+         context.state().setCombatPose(0);
       }
 
       private void begin(ServerPlayer player, ThorState state) {
          ThorCombatState combat = ThorCombatState.of(state);
          combat.electricStep++;
          // Poses 1 / 2: right / left hand in turn.
-         state.combatPose = 1 + (combat.electricStep & 1);
+         state.setCombatPose(1 + (combat.electricStep & 1));
          combat.strikeAttackId = combat.nextAttackId();
          MeleeMoves.captureStep(player, combat);
          ElectricFx.sound(player.serverLevel(), player.position(), SoundEvents.FIRECHARGE_USE, 0.3F, 1.8F);
@@ -147,7 +149,7 @@ public final class ElectricMoves {
                wave(player, combat);
                ElectricCombos.push(player, state, combat, ElectricAction.Kind.RMB);
             }
-            case END -> state.combatPose = 0;
+            case END -> state.setCombatPose(0);
             default -> {
             }
          }
@@ -170,12 +172,12 @@ public final class ElectricMoves {
       @Override
       public void onStop(ThorMoveContext context) {
          if (!context.state().timeline.is(ThorMove.ELECTRIC_STORM)) {
-            context.state().combatPose = 0;
+            context.state().setCombatPose(0);
          }
       }
 
       private void begin(ServerPlayer player, ThorState state, ThorCombatState combat) {
-         state.combatPose = 1;
+         state.setCombatPose(1);
          combat.strikeAttackId = combat.nextAttackId();
          MeleeMoves.captureStep(player, combat);
          ElectricFx.crackle(player.serverLevel(), player.position().add(0.0, 1.0, 0.0), 12);
@@ -194,7 +196,7 @@ public final class ElectricMoves {
          combat.stormRadius = config.stormStartRadius;
          combat.stormStage = 1;
          combat.strikeAttackId = combat.nextAttackId();
-         state.combatPose = 1;
+         state.setCombatPose(1);
          combat.actionPrimary.clear();
          combat.actionAll.clear();
          ServerPlayer player = context.player();
@@ -211,7 +213,7 @@ public final class ElectricMoves {
          if (context.player() != null && event == StagedTimeline.Event.ENTER_FINISH) {
             burst(context.player(), ThorCombatState.of(context.state()));
          } else if (event == StagedTimeline.Event.END) {
-            context.state().combatPose = 0;
+            context.state().setCombatPose(0);
          }
       }
 
@@ -235,7 +237,7 @@ public final class ElectricMoves {
             combat.stormTicks = -1;
          }
 
-         context.state().combatPose = 0;
+         context.state().setCombatPose(0);
       }
    };
 
@@ -431,7 +433,7 @@ public final class ElectricMoves {
 
       burst(player, combat);
       ThorBridge.interrupt(player, state, InterruptReason.INPUT);
-      state.combatPose = 0;
+      state.setCombatPose(0);
    }
 
    /**

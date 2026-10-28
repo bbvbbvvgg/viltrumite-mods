@@ -41,7 +41,7 @@ class ThorSceneSeamsTest {
       assertEquals(-1, ThorBridge.grabTarget(state), "an expired window has no target");
       ThorBridge.openGrabWindow(state, 20, 7);
       ThorBridge.closeGrabWindow(state);
-      assertEquals(-1, state.grabTarget);
+      assertEquals(-1, state.grabTarget());
    }
 
    @Test
@@ -104,6 +104,6 @@ class ThorSceneSeamsTest {
       ThorState state = new ThorState();
       ThorBridge.openGrabWindow(state, 20, 3);
       state.load(new net.minecraft.nbt.CompoundTag());
-      assertEquals(-1, state.grabTarget);
+      assertEquals(-1, state.grabTarget());
    }
 }

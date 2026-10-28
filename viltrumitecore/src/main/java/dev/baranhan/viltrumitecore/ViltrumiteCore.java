@@ -7,6 +7,10 @@ import dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig;
 import dev.baranhan.viltrumitecore.effect.ViltrumiteEffects;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteEntities;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatConfig;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatModule;
+import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirModule;
+import dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes;
 import dev.baranhan.viltrumitecore.item.ViltrumiteCreativeTabs;
 import dev.baranhan.viltrumitecore.item.ViltrumiteItems;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
@@ -118,7 +122,7 @@ public class ViltrumiteCore {
       ViltrumiteBlocks.register(modEventBus);
       ViltrumitePotions.register(modEventBus);
       // Thor session A: world Mjölnir moves, hammer access and dev commands on the shared bridge.
-      dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirModule.bootstrap();
+      MjolnirModule.bootstrap();
    }
 
    private void commonSetup(FMLCommonSetupEvent event) {
@@ -126,9 +130,11 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
-         dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatConfig.load();
-         dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatModule.install();
-         dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes.bootstrap();
+         ThorCombatConfig.load();
+         ThorCombatModule.install();
+         ThorScenes.bootstrap();
+         // Last: the move table is complete, its fingerprint goes into the login handshake.
+         CoreMessages.registerThorMoveHandshake();
       });
    }
 

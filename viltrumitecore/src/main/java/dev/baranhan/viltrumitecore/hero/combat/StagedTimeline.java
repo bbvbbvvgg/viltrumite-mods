@@ -141,7 +141,9 @@ public final class StagedTimeline<M extends StagedMove> {
       }
 
       boolean window = this.phase.atLeast(current.cancellableFrom());
-      if (next == current && this.step + 1 < current.maxSteps()) {
+      // A chain of steps never overflows: past the last step the count wraps to 0 (review B-m2),
+      // so the n-th press of a long chain buffers like any other instead of being refused.
+      if (next == current && current.maxSteps() > 1) {
          if (window) {
             return Admission.CHAIN;
          }
@@ -169,7 +171,7 @@ public final class StagedTimeline<M extends StagedMove> {
       Admission admission = this.admit(next, partnerId);
       switch (admission) {
          case START, INTERRUPT -> this.begin(next, partnerId, 0);
-         case CHAIN -> this.begin(next, partnerId < 0 ? this.partnerId : partnerId, this.step + 1);
+         case CHAIN -> this.begin(next, partnerId < 0 ? this.partnerId : partnerId, this.nextStep(next));
          case QUEUE -> {
             this.queued = next;
             this.queuedPartner = partnerId < 0 ? this.partnerId : partnerId;
@@ -179,6 +181,11 @@ public final class StagedTimeline<M extends StagedMove> {
       }
 
       return admission;
+   }
+
+   /** The step after the current one, wrapping inside {@code move}'s step count. */
+   private int nextStep(M move) {
+      return (this.step + 1) % Math.max(1, move.maxSteps());
    }
 
    /** The phase event a freshly started step stands in (ENTER_MAIN for a move without intro), NONE for INTRO or idle. */
@@ -202,14 +209,14 @@ public final class StagedTimeline<M extends StagedMove> {
       }
 
       if (this.queued != null && this.phase.atLeast(current.cancellableFrom())) {
-         this.begin(this.queued, this.queuedPartner, this.step + 1);
+         this.begin(this.queued, this.queuedPartner, this.nextStep(this.queued));
          return Event.CHAIN;
       }
 
       this.elapsed++;
       if (this.elapsed >= current.length()) {
          if (this.queued != null) {
-            this.begin(this.queued, this.queuedPartner, this.step + 1);
+            this.begin(this.queued, this.queuedPartner, this.nextStep(this.queued));
             return Event.CHAIN;
          }
 

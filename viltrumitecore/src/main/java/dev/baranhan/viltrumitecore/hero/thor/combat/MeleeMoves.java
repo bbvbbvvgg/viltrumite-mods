@@ -9,12 +9,14 @@ import dev.baranhan.viltrumitecore.hero.thor.ThorMode;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvents;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveContext;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -62,6 +64,7 @@ public final class MeleeMoves {
          }
 
          ThorCombatState combat = ThorCombatState.of(context.state());
+         CombatHits.strikePhase(player, combat, context.move(), combat.strikeAttackId, event);
          switch (event) {
             case CHAIN -> {
                ComboBook.Button button = combat.pendingButton == null ? ComboBook.Button.LMB : combat.pendingButton;
@@ -78,7 +81,8 @@ public final class MeleeMoves {
       @Override
       public void onStop(ThorMoveContext context) {
          ThorCombatState combat = ThorCombatState.of(context.state());
-         context.state().combatPose = 0;
+         CombatHits.strikeEnd(context.player(), combat);
+         context.state().setCombatPose(0);
          combat.finisherTick = combat.chainMove != null ? combat.ticks : -1;
          if (context.player() != null) {
             endChain(context.player(), context.state(), combat);
@@ -108,7 +112,7 @@ public final class MeleeMoves {
          combat.strike = finisher ? ThorStrike.MMB_FINISHER : ThorStrike.MMB_BLOW;
          combat.strikeAttackId = combat.nextAttackId();
          captureStep(player, combat);
-         state.combatPose = combat.strike.pose();
+         state.setCombatPose(combat.strike.pose());
          swingSound(player, combat.strike);
       }
 
@@ -120,20 +124,22 @@ public final class MeleeMoves {
          }
 
          ThorCombatState combat = ThorCombatState.of(context.state());
+         CombatHits.strikePhase(player, combat, ThorMove.HAMMER_STRIKE, combat.strikeAttackId, event);
          if (event == StagedTimeline.Event.ENTER_MAIN) {
             List<LivingEntity> hits = landStrike(player, context.state(), combat, ThorMove.HAMMER_STRIKE, combat.strikeAttackId);
-            if (context.state().mode == ThorMode.ELECTRIC && !ThorBridge.sceneLocked(context.state())) {
+            if (context.state().mode() == ThorMode.ELECTRIC && !ThorBridge.sceneLocked(context.state())) {
                // The same blow, no extra electric damage: only an MMB_STRIKE action for the recognizer (#147).
                ElectricCombos.strikeAction(player, context.state(), combat, hits);
             }
          } else if (event == StagedTimeline.Event.END) {
-            context.state().combatPose = 0;
+            context.state().setCombatPose(0);
          }
       }
 
       @Override
       public void onStop(ThorMoveContext context) {
-         context.state().combatPose = 0;
+         CombatHits.strikeEnd(context.player(), ThorCombatState.of(context.state()));
+         context.state().setCombatPose(0);
       }
    };
 
@@ -173,7 +179,7 @@ public final class MeleeMoves {
 
       if (match == null) {
          combat.strike = null;
-         state.combatPose = 0;
+         state.setCombatPose(0);
          return;
       }
 
@@ -184,7 +190,7 @@ public final class MeleeMoves {
       combat.strike = match.strike();
       combat.strikeAttackId = combat.nextAttackId();
       captureStep(player, combat);
-      state.combatPose = match.strike().pose();
+      state.setCombatPose(match.strike().pose());
       if (match.last()) {
          // The route ends with this strike: presses now belong to a new chain (with Mjölnir back in the hand: hammer strikes, #166).
          ThorBridge.closeComboWindow(state);
@@ -210,7 +216,7 @@ public final class MeleeMoves {
 
    /** The step finished with nothing buffered: a finished route ends now, an open one waits the grace window. */
    static void stepEnded(ServerPlayer player, ThorState state, ThorCombatState combat) {
-      state.combatPose = 0;
+      state.setCombatPose(0);
       if (combat.chainLast) {
          endChain(player, state, combat);
       } else {
@@ -228,7 +234,7 @@ public final class MeleeMoves {
       if (move != null && !combat.chainPosted) {
          combat.chainPosted = true;
          ThorEvents.post(meleeComboEnd(player.getUUID(), combat.chainTarget, move, combat.strikeAttackId,
-            CombatHits.hammerBlow(move, CombatHits.hammerInHand(player))));
+            CombatHits.hammerBlow(move, CombatHits.hammerInHand(player))).at(ThorEvent.Where.of(player, null)));
       }
 
       if (move != null && ThorBridge.comboWindow(state) == move) {
@@ -239,7 +245,7 @@ public final class MeleeMoves {
    }
 
    /** Pure: the COMBO_END of a melee chain (success always false; only electric combos succeed). */
-   public static dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent meleeComboEnd(java.util.UUID thor, @Nullable java.util.UUID target, ThorMove move,
+   public static ThorEvent meleeComboEnd(UUID thor, @Nullable UUID target, ThorMove move,
       int attackId, boolean hammerInHand) {
       return CombatHits.event(ThorEventType.COMBO_END, thor, target, move, attackId, hammerInHand, 0.0F, false);
    }

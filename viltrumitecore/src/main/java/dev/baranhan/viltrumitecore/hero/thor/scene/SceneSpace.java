@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.scene;
 
 import javax.annotation.Nullable;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -97,5 +98,25 @@ public final class SceneSpace {
    public static boolean boxFree(Level level, Entity body, Vec3 feet) {
       AABB box = body.getBoundingBox().move(feet.subtract(body.position()));
       return level.getWorldBorder().isWithinBounds(box) && level.noCollision(body, box);
+   }
+
+   /** Max a lowered scene body rises back onto its floor (the deepest pose offset is 0.85). */
+   static final double STAND_UP_MAX = 1.0;
+
+   /**
+    * Where a body lowered into the floor by a scene pose stands again: the
+    * top of the floor it sank into, when it is at most {@link #STAND_UP_MAX}
+    * above and the box there is free; otherwise where it is.
+    */
+   public static Vec3 standUp(ServerLevel level, Entity body) {
+      Vec3 at = body.position();
+      Vec3 top = SceneFx.ground(level, at.add(0.0, STAND_UP_MAX, 0.0));
+      return standUp(at, top, boxFree(level, body, top));
+   }
+
+   /** Pure rule of {@link #standUp(ServerLevel, Entity)}. */
+   static Vec3 standUp(Vec3 at, Vec3 floorTop, boolean free) {
+      double rise = floorTop.y - at.y;
+      return free && rise > 0.0 && rise <= STAND_UP_MAX + 1.0E-6 ? floorTop : at;
    }
 }

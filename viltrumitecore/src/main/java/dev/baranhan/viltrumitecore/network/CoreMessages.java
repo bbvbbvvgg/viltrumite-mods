@@ -38,12 +38,51 @@ import net.minecraftforge.network.simple.SimpleChannel;
 public class CoreMessages {
    // v3 clients clamp extra cooldowns at 16 and misread the following phase fields.
    // v4 clients lack ServerRulesS2CPacket and send the merged dash key's Dash Behind as Step Dash.
-   private static final String PROTOCOL_VERSION = "9";
+   // v10 (Thor round 3): HeroFx ELECTRIC_BOLT, the dash config sync and the scene contract changes; the
+   // Thor move table is checked separately by the viltrumitecore:thor_moves channel (its fingerprint).
+   private static final String PROTOCOL_VERSION = "10";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
    private static int id() {
       return packetId++;
+   }
+
+   /** Channel whose version is the Thor move-table fingerprint (ThorMoves.fingerprint). */
+   public static final ResourceLocation THOR_MOVES_CHANNEL = new ResourceLocation("viltrumitecore", "thor_moves");
+   private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("viltrumitecore/network");
+   @javax.annotation.Nullable
+   private static SimpleChannel thorMoves;
+
+   /**
+    * Foundation M2: after every session registered its Thor moves (common
+    * setup), a carrier channel advertises the move-table fingerprint. Forge
+    * compares it in the login handshake: a client and server with different
+    * move tables are refused before play, the disconnect screen names
+    * {@code viltrumitecore:thor_moves}, and both logs name both fingerprints.
+    * Forge reads the version once when the channel is built, so this must run
+    * after the last ThorMoves.register.
+    */
+   public static void registerThorMoveHandshake() {
+      if (thorMoves != null) {
+         return;
+      }
+
+      String local = dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves.fingerprint();
+      thorMoves = ChannelBuilder.named(THOR_MOVES_CHANNEL)
+         .networkProtocolVersion(() -> local)
+         .clientAcceptedVersions(remote -> acceptsThorMoves("server", local, remote))
+         .serverAcceptedVersions(remote -> acceptsThorMoves("client", local, remote))
+         .simpleChannel();
+   }
+
+   static boolean acceptsThorMoves(String side, String local, String remote) {
+      boolean ok = dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves.compatible(local, remote);
+      if (!ok) {
+         LOGGER.error("Thor move table mismatch: local {} vs {} {}; client and server must run the same viltrumitecore build", local, side, remote);
+      }
+
+      return ok;
    }
 
    public static void register() {

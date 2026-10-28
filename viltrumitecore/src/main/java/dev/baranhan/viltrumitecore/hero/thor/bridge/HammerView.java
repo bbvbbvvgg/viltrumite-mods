@@ -20,7 +20,9 @@ public record HammerView(
    HammerState phase,
    boolean inHand,
    @Nullable ResourceKey<Level> dimension,
-   @Nullable Vec3 position
+   @Nullable Vec3 position,
+   boolean detached,
+   boolean airborne
 ) {
    public HammerView {
       if (phase == null) {
@@ -28,8 +30,22 @@ public record HammerView(
       }
    }
 
-   /** Flying after a throw (Y pulls to it). */
+   /** Per-player view without world facts (detached / airborne derived from the phase only). */
+   public HammerView(@Nullable UUID logicalId, @Nullable UUID activeOwnerId, HammerState phase, boolean inHand, @Nullable ResourceKey<Level> dimension,
+      @Nullable Vec3 position) {
+      this(logicalId, activeOwnerId, phase, inHand, dimension, position, false, phase == HammerState.THROWN || phase == HammerState.RETURNING);
+   }
+
+   /**
+    * Flying after a throw, the one phase Y pulls to (review m6: not "any
+    * flight"; for any flight read {@link #airborne()}).
+    */
    public boolean flying() {
       return this.phase == HammerState.THROWN;
+   }
+
+   /** On the belt for real: attached to Thor and not in the hand (HOLSTERED and not detached). */
+   public boolean onBelt() {
+      return this.phase == HammerState.HOLSTERED && !this.detached;
    }
 }

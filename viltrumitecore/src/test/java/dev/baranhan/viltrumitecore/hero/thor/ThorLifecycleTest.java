@@ -121,7 +121,7 @@ class ThorLifecycleTest {
    }
 
    @Test
-   void anImmediateChainIsAStartAndASameMoveRestartStopsFirst() {
+   void anImmediateChainIsAStartAndTheLastStepWrapsWithoutAStop() {
       List<String> calls = new ArrayList<>();
       register(calls, ThorMove.FIST_COMBO, new ThorMoveDefinition(1, 1, 3, MovePhase.FINISH, 2));
       ThorState state = new ThorState();
@@ -137,10 +137,19 @@ class ThorLifecycleTest {
       tick(state);
       tick(state);
       calls.clear();
-      // Last step in its window: the same move restarts at step 0 (INTERRUPT) — onStop, then onStart.
+      // Last step in its window: the chain wraps to step 0 (B-m2, no step overflow); it is a chain step, so
+      // onStart only — the owner's own chain book decides where one combo ends and the next begins.
       begin(state, ThorMove.FIST_COMBO);
-      assertEquals(List.of("FIST_COMBO:admits", "FIST_COMBO:stop", "FIST_COMBO:start"), calls);
+      assertEquals(List.of("FIST_COMBO:admits", "FIST_COMBO:start"), calls);
       assertEquals(0, state.timeline.step());
+
+      // A different move cutting in inside the window still stops the chain first.
+      register(calls, ThorMove.WRATH, new ThorMoveDefinition(1, 1, 1, null, 1));
+      tick(state);
+      tick(state);
+      calls.clear();
+      begin(state, ThorMove.WRATH);
+      assertEquals(List.of("WRATH:admits", "FIST_COMBO:stop", "WRATH:start"), calls);
    }
 
    @Test
@@ -248,10 +257,10 @@ class ThorLifecycleTest {
       ThorMoves.register("T", ThorMove.GRAB, new ThorMoveDefinition(0, 1200, 0, null, 1), new ThorMoveHandler() {
          @Override
          public void onStop(ThorMoveContext context) {
-            calls.add("onStop lock=" + context.state().sceneLock);
+            calls.add("onStop lock=" + context.state().sceneLock());
          }
       });
-      ThorLifecycle.subscribe("B", (player, s, cause) -> calls.add("B " + cause + " lock=" + s.sceneLock + " running=" + s.timeline.running()));
+      ThorLifecycle.subscribe("B", (player, s, cause) -> calls.add("B " + cause + " lock=" + s.sceneLock() + " running=" + s.timeline.running()));
       ThorActions.begin(null, state, ThorMove.GRAB, 7, null, null, null);
       ThorBridge.lockScene(state, "C");
       ThorBridge.openGrabWindow(state, 10, 7);
@@ -296,16 +305,16 @@ class ThorLifecycleTest {
    @Test
    void theCloneKeepsTheHammerProjectionAndNothingElse() {
       ThorState state = new ThorState();
-      state.hammer = HammerState.IN_HAND;
-      state.mode = ThorMode.ELECTRIC;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
+      state.setMode(ThorMode.ELECTRIC);
       ThorBridge.lockScene(state, "C");
       ThorState copy = state.respawnCopy();
-      assertSame(HammerState.IN_HAND, copy.hammer, "F-M11: an End return never strands Mjölnir on the belt");
-      assertFalse(copy.hammerDetached);
-      assertSame(ThorMode.NORMAL, copy.mode);
+      assertSame(HammerState.IN_HAND, copy.hammer(), "F-M11: an End return never strands Mjölnir on the belt");
+      assertFalse(copy.hammerDetached());
+      assertSame(ThorMode.NORMAL, copy.mode());
       assertFalse(ThorBridge.sceneLocked(copy));
-      state.hammer = HammerState.THROWN;
-      state.hammerDetached = true;
-      assertTrue(state.respawnCopy().hammerDetached);
+      ThorStateFixtures.hammer(state, HammerState.THROWN);
+      ThorStateFixtures.detached(state, true);
+      assertTrue(state.respawnCopy().hammerDetached());
    }
 }

@@ -9,8 +9,11 @@ import dev.baranhan.viltrumitecore.hero.HeroPlayer;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.MouseButton;
 import dev.baranhan.viltrumitecore.hero.combat.CombatPresence;
+import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
+import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ReleaseCause;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorLifecycle;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirPull;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirWorld;
@@ -80,7 +83,7 @@ public final class ThorHero implements HeroDefinition {
       }
 
       ThorState state = ThorState.of(player);
-      return state == null ? HammerState.HOLSTERED : state.hammer;
+      return state == null ? HammerState.HOLSTERED : state.hammer();
    }
 
    @Override
@@ -174,6 +177,12 @@ public final class ThorHero implements HeroDefinition {
       return ThorControls.claimedMouse(button, context(player));
    }
 
+   /** LMB, RMB and MMB inputs reach Thor only through HeldInputs (review foundation m5). */
+   @Override
+   public boolean mouseOnly(HeroAction action) {
+      return ThorInput.mouseOnly(action);
+   }
+
    /** No vanilla hit in full flight (decisions 22, 34) or while a scene owns the mouse. */
    @Override
    public boolean allowsVanillaAttack(Player player) {
@@ -224,10 +233,10 @@ public final class ThorHero implements HeroDefinition {
       } else {
          ThorState state = ThorState.of(player);
          if (state != null) {
-            hammer = state.hammer;
-            mode = state.mode;
-            grabWindow = state.grabWindow > 0;
-            detached = state.hammerDetached;
+            hammer = state.hammer();
+            mode = state.mode();
+            grabWindow = ThorBridge.grabWindowActive(state);
+            detached = state.hammerDetached();
          }
       }
 
@@ -326,7 +335,7 @@ public final class ThorHero implements HeroDefinition {
       ThorState state = ThorState.ensure(player);
       state.timeline.clear();
       state.clearTransient();
-      state.mode = ThorMode.NORMAL;
+      state.setMode(ThorMode.NORMAL);
       MjolnirWorld.onEnter(player, state);
       ThorTransform.begin(player, state);
       MjolnirWorld.project(player, state);
@@ -347,7 +356,24 @@ public final class ThorHero implements HeroDefinition {
 
    @Override
    public CombatPresence combatPresence(Player player) {
-      return ThorCombat.presence(context(player).hammer(), ThorHands.free(player));
+      // No context(): that scans for enemies; the presence needs the hammer and the running move only.
+      ThorMove move = null;
+      MovePhase phase = null;
+      if (player.level().isClientSide) {
+         HeroPublicSnapshot snapshot = player instanceof HeroPlayer heroPlayer ? heroPlayer.getHeroSnapshot() : null;
+         if (snapshot != null && snapshot.heroId() == HeroId.THOR) {
+            move = ThorMove.byWireId(snapshot.actionId());
+            phase = StagedTimeline.phaseOf(snapshot.variant());
+         }
+      } else {
+         ThorState state = ThorState.of(player);
+         if (state != null && state.timeline.running()) {
+            move = state.timeline.move();
+            phase = state.timeline.phase();
+         }
+      }
+
+      return ThorCombat.presence(hammer(player), ThorHands.free(player), move, phase);
    }
 
    @Override
@@ -369,9 +395,9 @@ public final class ThorHero implements HeroDefinition {
    static HeroPublicSnapshot composeSnapshot(ThorState state, int[] cooldowns) {
       var timeline = state.timeline;
       return new HeroPublicSnapshot(HeroId.THOR, timeline.wireId(), timeline.elapsed(), timeline.length(), 0, false, 0, 0, false, false, 0, 0,
-         timeline.partnerId(), cooldowns.clone(), timeline.running(), -1, null, timeline.running() ? state.combatPose : 0,
+         timeline.partnerId(), cooldowns.clone(), timeline.running(), -1, null, timeline.running() ? state.combatPose() : 0,
          false,
-         ThorFlags.compose(state.hammer, state.mode, state.grabWindow > 0, state.cameraLease != null, state.hammerDetached, state.sceneLock != null),
+         ThorFlags.compose(state.hammer(), state.mode(), ThorBridge.grabWindowActive(state), ThorBridge.cameraLeased(state), state.hammerDetached(), ThorBridge.sceneLocked(state)),
          new int[0], timeline.variant(), 0);
    }
 

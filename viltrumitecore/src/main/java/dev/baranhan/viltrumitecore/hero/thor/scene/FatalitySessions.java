@@ -9,6 +9,9 @@ import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
 import dev.baranhan.viltrumitecore.hero.thor.ThorActions;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
+import dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket;
+import dev.baranhan.viltrumitecore.network.CoreMessages;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -189,6 +192,7 @@ final class FatalitySessions {
       LAST.put(thor.getUUID(), scene);
       SESSIONS.put(thor.getUUID(), session);
       sync(thor, session);
+      ThorScenes.postScene(ThorEventType.SCENE_START, thor.getUUID(), thor, victim.getUUID(), victim, ThorScenes.FATALITY, true);
       return true;
    }
 
@@ -315,7 +319,7 @@ final class FatalitySessions {
    static final double THOR_DRIFT = 1.0;
 
    private static void finish(ServerPlayer thor, Session session, LivingEntity victim) {
-      close(thor, session);
+      close(thor, session, true);
       if (!session.rehearsal) {
          execute(thor, victim);
       }
@@ -328,7 +332,7 @@ final class FatalitySessions {
          return;
       }
 
-      close(thor, session);
+      close(thor, session, false);
       // M1: the victim may already be in another dimension (a command, another mod): find it wherever it is.
       LivingEntity victim = victimAnywhere(session);
       if (!session.rehearsal && victim != null && victim.isAlive()) {
@@ -382,12 +386,18 @@ final class FatalitySessions {
       execute(player.server.getPlayerList().getPlayer(thor), player);
    }
 
-   private static void close(@Nullable ServerPlayer thor, Session session) {
+   private static void close(@Nullable ServerPlayer thor, Session session, boolean completed) {
       SESSIONS.remove(session.thor);
       ControlManager.get(session.level).release(session.victim, session.effectId, ReleaseReason.NORMAL_END);
       Entity victim = session.level.getEntity(session.victim);
-      if (victim instanceof ServerPlayer player && session.rehearsal) {
-         player.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+      if (session.rehearsal && victim instanceof LivingEntity body && body.isAlive()) {
+         // C-NIT8: a rehearsal body was lowered into a kneel / face-down pose: it stands back up on the floor it sank into.
+         Vec3 stand = SceneSpace.standUp(session.level, body);
+         if (body instanceof ServerPlayer player) {
+            player.connection.teleport(stand.x, stand.y, stand.z, player.getYRot(), player.getXRot());
+         } else {
+            body.teleportTo(stand.x, stand.y, stand.z);
+         }
       }
 
       if (thor != null) {
@@ -399,10 +409,10 @@ final class FatalitySessions {
          }
          ThorScenes.send(thor, victim, SceneSync.end(SceneSync.Kind.FATALITY, session.thorId, session.victimId));
       } else if (victim instanceof ServerPlayer player) {
-         dev.baranhan.viltrumitecore.network.CoreMessages.sendToPlayer(
-            new dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket(SceneSync.end(SceneSync.Kind.FATALITY, session.thorId, session.victimId)),
-            player);
+         CoreMessages.sendToPlayer(new ThorSceneS2CPacket(SceneSync.end(SceneSync.Kind.FATALITY, session.thorId, session.victimId)), player);
       }
+
+      ThorScenes.postScene(ThorEventType.SCENE_END, session.thor, thor, session.victim, victim, ThorScenes.FATALITY, completed);
    }
 
    /** The single kill of a decided death, credited to Thor when he is still here. */

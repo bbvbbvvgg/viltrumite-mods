@@ -34,15 +34,23 @@ public enum ThorInput {
       return this.action;
    }
 
+   private static final ThorInput[] VALUES = values();
+
    @Nullable
    public static ThorInput of(@Nullable HeroAction action) {
-      for (ThorInput input : values()) {
+      for (ThorInput input : VALUES) {
          if (input.action == action) {
             return input;
          }
       }
 
       return null;
+   }
+
+   /** The wire action of a mouse input (STRIKE / STANCE / HAMMER): it must come through HeldInputs. */
+   public static boolean mouseOnly(@Nullable HeroAction action) {
+      ThorInput input = of(action);
+      return input == STRIKE || input == STANCE || input == HAMMER;
    }
 
    /** Mouse button → input; the guard key (F) stays vanilla for Thor. */

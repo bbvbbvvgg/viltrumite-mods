@@ -4,6 +4,7 @@ import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.HeroTargets;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
+import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvents;
@@ -216,7 +217,8 @@ public final class CombatHits {
       }
 
       if (MELEE.contains(move)) {
-         ThorEvents.post(event(ThorEventType.MELEE_HIT, player.getUUID(), target.getUUID(), move, attackId, hammer, damage, true));
+         ThorEvents.post(event(ThorEventType.MELEE_HIT, player.getUUID(), target.getUUID(), move, attackId, hammer, damage, true)
+            .at(ThorEvent.Where.of(player, target)));
       }
 
       return true;
@@ -231,7 +233,7 @@ public final class CombatHits {
       }
 
       ThorEvents.post(event(ThorEventType.LETHAL_HIT, scope.attacker().getUUID(), victim.getUUID(), scope.move(), scope.attackId(),
-         scope.hammerInHand(), event.getAmount(), true));
+         scope.hammerInHand(), event.getAmount(), true).at(ThorEvent.Where.of(scope.attacker(), victim)));
    }
 
    /** Pure: the final damage (after absorption) takes the last health. */
@@ -243,6 +245,40 @@ public final class CombatHits {
    public static ThorEvent event(ThorEventType type, UUID attacker, @Nullable UUID target, @Nullable ThorMove move, int attackId, boolean hammerInHand,
       float amount, boolean success) {
       return new ThorEvent(ThorEvents.nextId(), type, attacker, target, move, attackId, hammerInHand, amount, success);
+   }
+
+   /**
+    * Bridge STRIKE_START once per swing as it enters its effective part (the
+    * server's damage window); a swing still open is closed first, so START /
+    * END always pair.
+    */
+   public static void strikeStart(ServerPlayer player, ThorCombatState combat, ThorMove move, int attackId) {
+      strikeEnd(player, combat);
+      combat.openStrike = attackId;
+      combat.openStrikeMove = move;
+      ThorEvents.post(event(ThorEventType.STRIKE_START, player.getUUID(), null, move, attackId, hammerInHand(player), 0.0F, true)
+         .at(ThorEvent.Where.of(player, null)));
+   }
+
+   /** STRIKE_END of the open swing, if any (phase change, chain, stop). Pure state clear when the player is gone. */
+   public static void strikeEnd(@Nullable ServerPlayer player, ThorCombatState combat) {
+      int attackId = combat.openStrike;
+      ThorMove move = combat.openStrikeMove;
+      combat.openStrike = 0;
+      combat.openStrikeMove = null;
+      if (attackId != 0 && player != null) {
+         ThorEvents.post(event(ThorEventType.STRIKE_END, player.getUUID(), null, move, attackId, hammerInHand(player), 0.0F, true)
+            .at(ThorEvent.Where.of(player, null)));
+      }
+   }
+
+   /** Phase hook of every striking move: ENTER_MAIN opens its swing, any other edge closes it. */
+   public static void strikePhase(ServerPlayer player, ThorCombatState combat, ThorMove move, int attackId, StagedTimeline.Event event) {
+      if (event == StagedTimeline.Event.ENTER_MAIN) {
+         strikeStart(player, combat, move, attackId);
+      } else if (event != StagedTimeline.Event.NONE) {
+         strikeEnd(player, combat);
+      }
    }
 
    /** Push away from {@code from} with an optional lift; only for targets that accept impulses (no stun, no hold). */

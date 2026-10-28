@@ -14,8 +14,8 @@ class ThorStateTest {
    @Test
    void savesOnlyTheHammer() {
       ThorState state = new ThorState();
-      state.hammer = HammerState.IN_HAND;
-      state.mode = ThorMode.ELECTRIC;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
+      state.setMode(ThorMode.ELECTRIC);
       state.timeline.request(ThorMove.HOLSTER, -1);
       CompoundTag nbt = new CompoundTag();
       state.save(nbt);
@@ -24,8 +24,8 @@ class ThorStateTest {
 
       ThorState loaded = new ThorState();
       loaded.load(nbt);
-      assertSame(HammerState.IN_HAND, loaded.hammer);
-      assertSame(ThorMode.NORMAL, loaded.mode, "the mode is transient");
+      assertSame(HammerState.IN_HAND, loaded.hammer());
+      assertSame(ThorMode.NORMAL, loaded.mode(), "the mode is transient");
       assertFalse(loaded.timeline.running(), "the running move is transient");
    }
 
@@ -33,13 +33,13 @@ class ThorStateTest {
    void aHammerSavedInFlightKeepsItsProjectionUntilTheWorldStoreSpeaks() {
       for (HammerState away : new HammerState[]{HammerState.THROWN, HammerState.RETURNING}) {
          ThorState state = new ThorState();
-         state.hammer = away;
+         ThorStateFixtures.hammer(state, away);
          CompoundTag nbt = new CompoundTag();
          state.save(nbt);
          ThorState loaded = new ThorState();
          loaded.load(nbt);
-         assertSame(away, loaded.hammer, away.name() + ": session A re-projects it from the world store on login");
-         assertFalse(loaded.hammerDetached, "the detached flag is transient");
+         assertSame(away, loaded.hammer(), away.name() + ": session A re-projects it from the world store on login");
+         assertFalse(loaded.hammerDetached(), "the detached flag is transient");
       }
    }
 
@@ -47,15 +47,15 @@ class ThorStateTest {
    void missingOrUnknownDataLoadsOnTheBelt() {
       ThorState loaded = new ThorState();
       loaded.load(new CompoundTag());
-      assertSame(HammerState.HOLSTERED, loaded.hammer);
+      assertSame(HammerState.HOLSTERED, loaded.hammer());
 
       CompoundTag nbt = new CompoundTag();
       CompoundTag thor = new CompoundTag();
       thor.putString(ThorState.HAMMER_KEY, "lost_in_niflheim");
       nbt.put(ThorState.KEY, thor);
-      loaded.hammer = HammerState.IN_HAND;
+      ThorStateFixtures.hammer(loaded, HammerState.IN_HAND);
       loaded.load(nbt);
-      assertSame(HammerState.HOLSTERED, loaded.hammer);
+      assertSame(HammerState.HOLSTERED, loaded.hammer());
    }
 
    @Test
@@ -63,13 +63,13 @@ class ThorStateTest {
       // F-M11 (rewritten, it pinned the bug): a fresh HOLSTERED body after an End return stranded Mjölnir on the belt.
       // The copy keeps the last projection; session A's store re-projects it on the first tick.
       ThorState state = new ThorState();
-      state.hammer = HammerState.IN_HAND;
-      state.mode = ThorMode.ELECTRIC;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
+      state.setMode(ThorMode.ELECTRIC);
       state.timeline.request(ThorMove.HOLSTER, -1);
       for (ThorState copy : new ThorState[]{state.respawnCopy(), state.erasedCopy()}) {
          assertNotSame(state, copy);
-         assertSame(HammerState.IN_HAND, copy.hammer);
-         assertSame(ThorMode.NORMAL, copy.mode);
+         assertSame(HammerState.IN_HAND, copy.hammer());
+         assertSame(ThorMode.NORMAL, copy.mode());
          assertFalse(copy.timeline.running());
       }
    }

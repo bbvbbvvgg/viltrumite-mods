@@ -77,7 +77,7 @@ class ThorCombatSeamTest {
       }
 
       ThorState state = new ThorState();
-      state.mode = ThorMode.ELECTRIC;
+      state.setMode(ThorMode.ELECTRIC);
       assertSame(ThorActions.Refusal.NONE, ThorActions.start(state, ThorInput.STANCE, ThorMove.ELECTRIC_WAVE, true));
       assertSame(ThorActions.Refusal.NONE, ThorActions.start(state, ThorMove.ELECTRIC_STORM, true), "outside the wave's cancel window too");
       assertTrue(state.timeline.is(ThorMove.ELECTRIC_STORM));
@@ -88,7 +88,7 @@ class ThorCombatSeamTest {
    @Test
    void comboWindowRoutesAnOpenUnarmedChainAndClosesByItself() {
       ThorState state = new ThorState();
-      state.hammer = HammerState.IN_HAND;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
       assertFalse(ThorActions.fistChainOpen(state));
       ThorBridge.openComboWindow(state, ThorMove.FIST_COMBO, 3);
       assertTrue(ThorActions.fistChainOpen(state));
@@ -108,9 +108,9 @@ class ThorCombatSeamTest {
    @Test
    void theSnapshotCarriesTheStrikePoseOnlyWhileAMoveRuns() {
       ThorState state = new ThorState();
-      state.combatPose = 7;
+      state.setCombatPose(7);
       assertEquals(0, ThorHero.composeSnapshot(state).resource(), "idle: no pose");
-      state.hammer = HammerState.IN_HAND;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
       assertSame(ThorActions.Refusal.NONE, ThorActions.start(state, ThorInput.STRIKE, ThorMove.HAMMER_COMBO, true));
       assertEquals(7, ThorHero.composeSnapshot(state).resource());
       assertEquals(ThorMove.HAMMER_COMBO.wireId(), ThorHero.composeSnapshot(state).actionId());
@@ -139,7 +139,7 @@ class ThorCombatSeamTest {
          ThorMoves.handler(move).onStop(context);
       }
 
-      assertEquals(0, state.combatPose);
+      assertEquals(0, state.combatPose());
    }
 
    @Test

@@ -51,9 +51,9 @@ class ThorActionsTest {
       ThorState state = new ThorState();
       assertSame(ThorActions.Refusal.NONE, ThorActions.start(state, ThorMove.DRAW, true));
       advance(state, ThorRules.DRAW_INTRO - 1, true);
-      assertSame(HammerState.HOLSTERED, state.hammer, "still reaching");
+      assertSame(HammerState.HOLSTERED, state.hammer(), "still reaching");
       assertSame(StagedTimeline.Event.ENTER_MAIN, ThorActions.advance(state, true, false));
-      assertSame(HammerState.IN_HAND, state.hammer, "grip at the start of MAIN");
+      assertSame(HammerState.IN_HAND, state.hammer(), "grip at the start of MAIN");
       advance(state, ThorRules.DRAW_MAIN + ThorRules.DRAW_FINISH - 1, true);
       assertSame(StagedTimeline.Event.END, ThorActions.advance(state, true, false));
       assertFalse(state.timeline.running());
@@ -62,10 +62,10 @@ class ThorActionsTest {
    @Test
    void technicalHolsterReturnsMjolnirToTheBelt() {
       ThorState state = new ThorState();
-      state.hammer = HammerState.IN_HAND;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
       assertSame(ThorActions.Refusal.NONE, ThorActions.start(state, ThorMove.HOLSTER, true));
       advance(state, ThorRules.HOLSTER_INTRO, true);
-      assertSame(HammerState.HOLSTERED, state.hammer);
+      assertSame(HammerState.HOLSTERED, state.hammer());
    }
 
    @Test
@@ -74,7 +74,7 @@ class ThorActionsTest {
       ThorActions.start(state, ThorMove.DRAW, true);
       advance(state, 1, false);
       assertFalse(state.timeline.running());
-      assertSame(HammerState.HOLSTERED, state.hammer);
+      assertSame(HammerState.HOLSTERED, state.hammer());
    }
 
    @Test
@@ -82,9 +82,9 @@ class ThorActionsTest {
       // Session A: the world store is the one writer of the hammer state; an item only moves the drawn attachment.
       for (HammerState hammer : HammerState.values()) {
          ThorState state = new ThorState();
-         state.hammer = hammer;
+         ThorStateFixtures.hammer(state, hammer);
          ThorActions.advance(state, false, false);
-         assertSame(hammer, state.hammer, hammer.name());
+         assertSame(hammer, state.hammer(), hammer.name());
       }
    }
 
@@ -93,11 +93,11 @@ class ThorActionsTest {
       ThorMoves.register("A", ThorMove.HAMMER_THROW, new ThorMoveDefinition(4, 40, 8, null, 1), ThorMoveHandler.NONE);
       ThorMoves.register("A", ThorMove.RECALL, new ThorMoveDefinition(0, 1, 0, null, 1), ThorMoveHandler.NONE);
       ThorState state = new ThorState();
-      state.hammer = HammerState.IN_HAND;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
       assertSame(ThorActions.Refusal.HANDS_BUSY, ThorActions.gate(state, ThorMove.HAMMER_THROW, false));
       assertSame(ThorActions.Refusal.NONE, ThorActions.gate(state, ThorMove.HAMMER_THROW, true));
 
-      state.hammer = HammerState.THROWN;
+      ThorStateFixtures.hammer(state, HammerState.THROWN);
       ThorActions.start(state, ThorMove.DRAW, true);
       ThorMove running = state.timeline.move();
       assertTrue(ThorActions.overlay(ThorMove.RECALL));
@@ -114,13 +114,13 @@ class ThorActionsTest {
       ThorActions.advance(state, true, true);
       assertFalse(state.timeline.running());
 
-      state.hammer = HammerState.IN_HAND;
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
       ThorActions.start(state, ThorInput.HAMMER, ThorMove.HOLSTER, true);
       ThorBridge.openGrabWindow(state, 10);
       ThorBridge.lockScene(state, "A");
       ThorActions.stop(state);
       assertFalse(state.timeline.running());
-      assertSame(HammerState.IN_HAND, state.hammer, "stopping never teleports the hammer");
+      assertSame(HammerState.IN_HAND, state.hammer(), "stopping never teleports the hammer");
       assertFalse(ThorBridge.grabWindowActive(state));
       assertFalse(ThorBridge.sceneLocked(state));
       assertNull(ThorActions.release(state, ThorInput.HAMMER), "a stop forgets held presses");
@@ -142,14 +142,14 @@ class ThorActionsTest {
    void theReleaseReachesTheMoveChosenOnThePressWithItsHeldTicks() {
       ThorMoves.register("A", ThorMove.HAMMER_THROW, new ThorMoveDefinition(20, 2, 2, null, 1), ThorMoveHandler.NONE);
       ThorState state = new ThorState();
-      state.hammer = HammerState.IN_HAND;
-      ThorContext context = ThorContext.grounded(state.hammer, state.mode);
+      ThorStateFixtures.hammer(state, HammerState.IN_HAND);
+      ThorContext context = ThorContext.grounded(state.hammer(), state.mode());
       ThorMove pressed = ThorControls.resolve(ThorInput.HAMMER, context);
       assertSame(ThorMove.HAMMER_THROW, pressed);
       assertSame(ThorActions.Refusal.NONE, ThorActions.start(state, ThorInput.HAMMER, pressed, true));
       advance(state, 7, true);
       // The context changes while held (an enemy walks in): the release still goes to the throw.
-      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, new ThorContext(state.hammer, state.mode, true, false, false, false, true, false)));
+      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, new ThorContext(state.hammer(), state.mode(), true, false, false, false, true, false)));
       assertEquals(new ThorActions.Release(ThorMove.HAMMER_THROW, 7), ThorActions.release(state, ThorInput.HAMMER));
       assertNull(ThorActions.release(state, ThorInput.HAMMER), "one release per press");
       assertNull(ThorActions.release(state, ThorInput.STRIKE), "other inputs are independent");
@@ -183,7 +183,7 @@ class ThorActionsTest {
       ThorState state = new ThorState();
       ThorBridge.openGrabWindow(state, 2);
       assertSame(ThorMove.GRAB, ThorControls.resolve(ThorInput.HAMMER,
-         new ThorContext(state.hammer, state.mode, true, false, false, false, true, ThorBridge.grabWindowActive(state))));
+         new ThorContext(state.hammer(), state.mode(), true, false, false, false, true, ThorBridge.grabWindowActive(state))));
       advance(state, 1, true);
       assertTrue(ThorBridge.grabWindowActive(state));
       advance(state, 1, true);

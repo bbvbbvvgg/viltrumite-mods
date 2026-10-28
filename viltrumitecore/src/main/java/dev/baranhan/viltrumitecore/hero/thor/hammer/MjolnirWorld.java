@@ -57,6 +57,8 @@ public final class MjolnirWorld {
    public static final String RECALL_WAIT = "hud.viltrumitecore.thor.recall_wait";
    static final String OVERWORLD = "minecraft:overworld";
    private static final Logger LOGGER = LogUtils.getLogger();
+   /** The one writer of where Mjölnir is on Thor's state (ThorState.HammerWriter, claimed once). */
+   private static final ThorState.HammerWriter HAMMER = ThorState.claimHammerWriter(OWNER);
    /** A-m3: bridge events wait here until the change that caused them is fully written ({@link #flush}). */
    private static final MjolnirEventQueue<ThorEvent> EVENTS = new MjolnirEventQueue<>();
 
@@ -127,7 +129,10 @@ public final class MjolnirWorld {
    static void post(ThorEventType type, MjolnirRecord record, @Nullable ThorMove move, boolean inHand) {
       UUID actor = record.activeOwner;
       if (actor != null) {
-         EVENTS.add(new ThorEvent(ThorEvents.nextId(), type, actor, null, move, 0, inHand, 0.0F, true));
+         // Where: the hammer's own place (dimension, position); no entity ids (the body may be unloaded).
+         ThorEvent.Where where = record.dimension == null ? ThorEvent.Where.UNKNOWN
+            : new ThorEvent.Where(-1, -1, record.dimension, record.x, record.y, record.z);
+         EVENTS.add(new ThorEvent(ThorEvents.nextId(), type, actor, null, move, 0, inHand, 0.0F, true).at(where));
       }
    }
 
@@ -273,6 +278,12 @@ public final class MjolnirWorld {
    private static void claim(MinecraftServer server, MjolnirRecord record, ServerPlayer player) {
       UUID id = player.getUUID();
       if (!id.equals(record.activeOwner) || !id.equals(record.lastOwner)) {
+         UUID previous = record.activeOwner;
+         if (!id.equals(previous)) {
+            EVENTS.add(new ThorEvent(ThorEvents.nextId(), ThorEventType.HAMMER_OWNER_CHANGED, id, previous, null, 0, false, 0.0F, true)
+               .at(ThorEvent.Where.of(player, null)));
+         }
+
          record.activeOwner = id;
          record.lastOwner = id;
          dirty(server);
@@ -340,8 +351,7 @@ public final class MjolnirWorld {
       record.fallCancelled = !record.fallDone;
       record.place(dim(player.level()), player.getX(), player.getY(), player.getZ());
       dirty(server);
-      state.hammer = HammerState.IN_HAND;
-      state.hammerDetached = false;
+      HAMMER.project(state, HammerState.IN_HAND, false);
       post(ThorEventType.HAMMER_STATE_CHANGED, record, null, true);
    }
 
@@ -438,8 +448,7 @@ public final class MjolnirWorld {
       }
 
       dirty(server);
-      state.hammer = HammerState.HOLSTERED;
-      state.hammerDetached = record.exists();
+      HAMMER.project(state, HammerState.HOLSTERED, record.exists());
    }
 
    /** №207 drop point in front of him, never inside the wall he faces (A-m10). */
@@ -486,27 +495,23 @@ public final class MjolnirWorld {
       MinecraftServer server = player.server;
       MjolnirRecord record = record(server);
       if (!player.getUUID().equals(record.activeOwner)) {
-         state.hammer = HammerState.HOLSTERED;
-         state.hammerDetached = record.exists();
+         HAMMER.project(state, HammerState.HOLSTERED, record.exists());
          return;
       }
 
       switch (record.phase) {
          case NOT_CREATED -> {
-            state.hammer = HammerState.HOLSTERED;
-            state.hammerDetached = false;
+            HAMMER.project(state, HammerState.HOLSTERED, false);
          }
          case IN_HAND -> {
-            state.hammer = inHandProjection(state.hammer, technicalSwap(state));
-            state.hammerDetached = false;
+            HAMMER.project(state, inHandProjection(state.hammer(), technicalSwap(state)), false);
             if (player.distanceToSqr(record.x, record.y, record.z) > 1.0 || !dim(player.level()).equals(record.dimension)) {
                record.place(dim(player.level()), player.getX(), player.getY(), player.getZ());
                dirty(server);
             }
          }
          default -> {
-            state.hammer = record.phase.personal();
-            state.hammerDetached = record.phase.detached();
+            HAMMER.project(state, record.phase.personal(), record.phase.detached());
          }
       }
    }
@@ -538,14 +543,20 @@ public final class MjolnirWorld {
       boolean owner = thor.equals(record.activeOwner);
       HammerState phase;
       if (owner && record.phase == MjolnirPhase.IN_HAND) {
-         phase = state == null ? HammerState.IN_HAND : inHandProjection(state.hammer, technicalSwap(state));
+         phase = state == null ? HammerState.IN_HAND : inHandProjection(state.hammer(), technicalSwap(state));
       } else {
          phase = record.phase == MjolnirPhase.IN_HAND ? HammerState.HOLSTERED : record.phase.personal();
       }
 
       boolean inHand = owner && record.phase == MjolnirPhase.IN_HAND && phase == HammerState.IN_HAND;
+      // Detached: lying / falling in the world away from its Thor; airborne: any flight (thrown, homing, falling, first fall, death strike).
+      boolean detached = record.phase.detached();
+      boolean airborne = switch (record.phase) {
+         case WORLD_FALLING, THROWN, FALLING, RETURNING, DEATH_IMPACT, DIMENSION_TRANSFER, VOID_RECOVERY -> true;
+         default -> false;
+      };
       return new HammerView(record.logicalId, record.activeOwner, phase, inHand, record.exists() ? key(record.dimension) : null,
-         record.exists() ? position(record) : null);
+         record.exists() ? position(record) : null, detached, airborne);
    }
 
    // --- throw / recall / catch / pick up ---
@@ -589,8 +600,7 @@ public final class MjolnirWorld {
          return false;
       }
 
-      state.hammer = HammerState.THROWN;
-      state.hammerDetached = false;
+      HAMMER.project(state, HammerState.THROWN, false);
       MjolnirEntity hammer = materialize(server, record);
       if (hammer != null) {
          hammer.beginThrow(thor, eye, look, charged);
@@ -700,8 +710,7 @@ public final class MjolnirWorld {
       hammer.discard();
       ThorState state = ThorState.of(thor);
       if (state != null) {
-         state.hammer = HammerState.IN_HAND;
-         state.hammerDetached = false;
+         HAMMER.project(state, HammerState.IN_HAND, false);
       }
 
       thor.setDeltaMovement(thor.getDeltaMovement().scale(MjolnirTuning.CATCH_SLOW));
@@ -743,8 +752,7 @@ public final class MjolnirWorld {
       hammer.discard();
       ThorState state = ThorState.of(thor);
       if (state != null) {
-         state.hammer = HammerState.IN_HAND;
-         state.hammerDetached = false;
+         HAMMER.project(state, HammerState.IN_HAND, false);
       }
 
       thor.serverLevel().playSound(null, thor.getX(), thor.getY(), thor.getZ(), SoundEvents.ARMOR_EQUIP_NETHERITE, SoundSource.PLAYERS, 1.0F, 0.7F);
