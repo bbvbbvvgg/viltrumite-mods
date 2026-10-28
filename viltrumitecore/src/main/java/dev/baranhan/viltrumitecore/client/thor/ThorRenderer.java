@@ -206,6 +206,8 @@ public final class ThorRenderer {
       model.setupAnim(player, position, speed, bob, netHeadYaw, pitch);
       ThorBodyPose.bridge(body, ThorBodyPose.capture(model.head, model.body, model.rightArm, model.leftArm, model.rightLeg, model.leftLeg),
          lift == null || lift.weight() < 0.5F);
+      // R2b: the authored locomotion and attack clips (thor.animation.json) over the bridge.
+      ThorClipPlayer.applyBody(body, player, partialTick, sitting);
       ThorBodyPose.baseClips(body, player.isCrouching() ? 1.0F : 0.0F, sitting ? 1.0F : 0.0F);
       applyLift(body, player, lift);
    }
@@ -509,6 +511,9 @@ public final class ThorRenderer {
                elbow.rotX = (float)Math.toRadians(FP_ELBOW);
             }
          }
+
+         // R2b: the running move's _fp clip on the forearms / hands / grip.
+         ThorClipPlayer.applyArms(geo, player, Minecraft.getInstance().getFrameTime());
       });
       PoseStack stack = event.getPoseStack();
       PlayerGeoLayer.renderArmPart(stack, event.getMultiBufferSource(), event.getPackedLight(), model, arm, part);
