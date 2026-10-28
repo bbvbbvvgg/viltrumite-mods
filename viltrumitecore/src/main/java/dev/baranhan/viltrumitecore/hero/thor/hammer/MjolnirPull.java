@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
@@ -8,8 +10,6 @@ import java.util.Map;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
@@ -43,7 +43,7 @@ public final class MjolnirPull {
       }
 
       ACTIVE.put(thor.getUUID(), 0);
-      thor.serverLevel().playSound(null, thor.getX(), thor.getY(), thor.getZ(), SoundEvents.TRIDENT_RIPTIDE_2, SoundSource.PLAYERS, 1.0F, 0.8F);
+      ThorSounds.play(thor, ThorCue.PULL);
       return true;
    }
 

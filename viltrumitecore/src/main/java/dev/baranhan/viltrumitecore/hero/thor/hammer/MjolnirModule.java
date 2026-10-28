@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
@@ -91,6 +93,8 @@ public final class MjolnirModule {
          if (!context.player().getUUID().equals(record.activeOwner) || record.phase != MjolnirPhase.IN_HAND) {
             ThorBridge.end(context.player(), context.state(), ThorMove.HAMMER_THROW);
             ThorFeedback.refuse(context.player(), Component.translatable(MjolnirWorld.NO_HAMMER));
+         } else {
+            ThorSounds.play(context.player(), ThorCue.THROW_WINDUP);
          }
       }
 
@@ -154,6 +158,7 @@ public final class MjolnirModule {
             case PENDING -> player.displayClientMessage(Component.translatable(MjolnirWorld.RECALL_WAIT), true);
             case NOT_OWNER -> ThorFeedback.refuse(player, Component.translatable(MjolnirWorld.NOT_OWNER));
             case NO_HAMMER -> ThorFeedback.refuse(player, Component.translatable(MjolnirWorld.NO_HAMMER));
+            case STARTED -> ThorSounds.play(player, ThorCue.RECALL);
             default -> {
             }
          }

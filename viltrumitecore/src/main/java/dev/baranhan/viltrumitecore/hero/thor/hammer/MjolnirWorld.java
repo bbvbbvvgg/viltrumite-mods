@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import com.mojang.logging.LogUtils;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteEntities;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
@@ -27,8 +29,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -608,7 +608,7 @@ public final class MjolnirWorld {
       }
 
       thor.swing(InteractionHand.MAIN_HAND, true);
-      level.playSound(null, thor.getX(), thor.getEyeY(), thor.getZ(), SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 1.2F, charged ? 0.6F : 0.8F);
+      ThorSounds.playAt(level, thor.getEyePosition(), charged ? ThorCue.THROW_CHARGED : ThorCue.THROW);
       post(ThorEventType.THROW, record, ThorMove.HAMMER_THROW, false);
       return true;
    }
@@ -719,8 +719,7 @@ public final class MjolnirWorld {
       thor.hurtMarked = true;
       Vec3 palm = MjolnirFlight.palm(thor.getEyePosition(), thor.getYRot());
       ServerLevel level = thor.serverLevel();
-      level.playSound(null, palm.x, palm.y, palm.z, SoundEvents.TRIDENT_RETURN, SoundSource.PLAYERS, 1.6F, 0.6F);
-      level.playSound(null, palm.x, palm.y, palm.z, SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.5F, 0.5F);
+      ThorSounds.playAt(level, palm, ThorCue.CATCH);
       MjolnirFx.catchFlash(level, palm);
       post(ThorEventType.CATCH, record, ThorMove.RECALL, true);
    }
@@ -767,7 +766,7 @@ public final class MjolnirWorld {
          HAMMER.project(state, HammerState.IN_HAND, false);
       }
 
-      thor.serverLevel().playSound(null, thor.getX(), thor.getY(), thor.getZ(), SoundEvents.ARMOR_EQUIP_NETHERITE, SoundSource.PLAYERS, 1.0F, 0.7F);
+      ThorSounds.play(thor, ThorCue.PICKUP);
       post(ThorEventType.CATCH, record, null, true);
       return true;
    }

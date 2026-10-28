@@ -33,14 +33,7 @@ public final class ThorRules {
    public static final int PRIORITY_FATALITY = 5;
    public static final int PRIORITY_ULTIMATE = 6;
 
-   /** Refusal feedback (vanilla dispenser click, the project's refusal sound). */
-   public static final float REFUSE_VOLUME = 0.4F;
-   public static final float REFUSE_PITCH = 1.6F;
-   /** Draw / holster sounds (vanilla armour equip sounds, no imported audio). */
-   public static final float DRAW_VOLUME = 0.8F;
-   public static final float DRAW_PITCH = 0.8F;
-   public static final float HOLSTER_VOLUME = 0.7F;
-   public static final float HOLSTER_PITCH = 0.9F;
+   // Refusal and draw / holster sounds: ThorCue.REFUSE / DRAW / HOLSTER (R5).
 
    private ThorRules() {
    }

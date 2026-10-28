@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
@@ -14,7 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
@@ -64,8 +66,7 @@ public final class WrathMove {
          context.state().setCombatPose(1);
          if (player != null) {
             ServerLevel level = player.serverLevel();
-            ElectricFx.sound(level, player.position(), SoundEvents.BEACON_ACTIVATE, 1.0F, 0.6F);
-            ElectricFx.sound(level, player.position(), SoundEvents.TRIDENT_THUNDER, 0.8F, 0.6F);
+            ThorSounds.play(player, ThorCue.WRATH_WINDUP);
          }
       }
 
@@ -78,6 +79,8 @@ public final class WrathMove {
 
          if (event == StagedTimeline.Event.ENTER_MAIN) {
             strike(player, ThorCombatState.of(context.state()));
+         } else if (event == StagedTimeline.Event.ENTER_FINISH) {
+            ThorSounds.play(player, ThorCue.WRATH_TAIL);
          } else if (event == StagedTimeline.Event.END) {
             context.state().setCombatPose(0);
          }
@@ -86,6 +89,10 @@ public final class WrathMove {
       @Override
       public void onStop(ThorMoveContext context) {
          context.state().setCombatPose(0);
+         if (context.player() != null) {
+            // Cancelled in the windup: the riser stops with the move (after the contact it is already cut).
+            ThorSounds.stop(context.player().serverLevel(), context.player().position(), ThorCue.WRATH_WINDUP);
+         }
       }
    };
 
@@ -132,8 +139,9 @@ public final class WrathMove {
       // ground crawlers, scorch and the long tail; hit-stop for Thor and everyone struck.
       HeroFx.preset(player, ThorFx.WRATH_STRIKE, aim, ElectricFx.hand(player), (float)(config.wrathRadius / WRATH_FX_RADIUS),
          level.getBlockState(BlockPos.containing(aim).below()), WRATH_HIT_STOP, struck.toIntArray());
-      ElectricFx.sound(level, aim, SoundEvents.GENERIC_EXPLODE, 2.0F, 0.6F);
-      ElectricFx.sound(level, aim, SoundEvents.LIGHTNING_BOLT_THUNDER, 3.0F, 0.7F);
+      // R5: the windup loop stops on contact; the layered contact cue replaces the vanilla explode + thunder.
+      ThorSounds.stop(level, player.position(), ThorCue.WRATH_WINDUP);
+      ThorSounds.playAt(level, aim, ThorCue.WRATH_CONTACT);
       if (config.meleeBreaksBlocks) {
          // B-m5: the ultimate's crater honours the same block switch as every other crater.
          ElectricFx.carve(level, ElectricFx.crater(BlockPos.containing(aim).below(), config.wrathCraterRadius, 0.7));

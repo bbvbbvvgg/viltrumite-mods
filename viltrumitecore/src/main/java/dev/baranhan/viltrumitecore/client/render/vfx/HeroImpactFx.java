@@ -148,7 +148,7 @@ public final class HeroImpactFx {
          }
          case HeroFxS2CPacket.ELECTRIC_BOLT -> {
             float power = dev.baranhan.viltrumitecore.hero.fx.HeroFx.clampBoltPower(packet.power);
-            electricBolt(level, packet.origin, power);
+            electricBolt(level, packet.origin, power, whiz);
          }
          case HeroFxS2CPacket.ELECTRIC_CRACKLE -> {
             float scale = Mth.clamp(packet.power / 20.0F, 0.5F, 3.0F);
@@ -164,12 +164,18 @@ public final class HeroImpactFx {
     * Thor's lightning bolt packet (B-m6): the layered {@link ThorFx#BOLT}
     * recipe (power >= 1.5 plays {@link ThorFx#BOLT_HEAVY}) and the local
     * thunder clap whose loudness falls off with distance (WEATHER category,
-    * no world sky flash; sound unchanged until the Thor sound stage).
+    * no world sky flash). A hero thunder sound (Thor R5) replaces the vanilla pair.
     */
-   private static void electricBolt(ClientLevel level, Vec3 at, float power) {
+   private static void electricBolt(ClientLevel level, Vec3 at, float power, @Nullable SoundEvent thunder) {
       RandomSource random = level.random;
       boolean heavy = power >= ThorFx.HEAVY_BOLT_POWER;
       play(heavy ? ThorFx.BOLT_HEAVY : ThorFx.BOLT, at, at, heavy ? power / 2.0F : power, null, random.nextLong());
+      if (thunder != null) {
+         // The hero's own crack (Thor R5: ThorSounds.boltCrack); its impact and rumble come from the server.
+         level.playLocalSound(at.x, at.y, at.z, thunder, SoundSource.WEATHER, 3.0F * power, 0.9F + random.nextFloat() * 0.2F, true);
+         return;
+      }
+
       level.playLocalSound(at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 1.5F * power, 0.8F + random.nextFloat() * 0.2F, false);
       level.playLocalSound(at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 3.0F * power, 0.8F + random.nextFloat() * 0.2F, true);
    }

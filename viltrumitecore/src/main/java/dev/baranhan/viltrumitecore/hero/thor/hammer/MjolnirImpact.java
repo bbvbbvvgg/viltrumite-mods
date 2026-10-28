@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.CarveJobs;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
@@ -11,8 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -143,8 +143,7 @@ final class MjolnirImpact {
       level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, material.isAir() ? net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState() : material),
          at.x, at.y + 0.5, at.z, 160, radius * 0.25, 0.8, radius * 0.25, 0.4);
       level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y + 1.0, at.z, 80, radius * 0.2, 1.0, radius * 0.2, 0.6);
-      level.playSound(null, at.x, at.y, at.z, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, volume, 0.55F);
-      level.playSound(null, at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, volume, 0.7F);
+      ThorSounds.playAt(level, at, ThorCue.IMPACT, volume, 1.0F);
       MjolnirFx.slam(level, at, material, radius);
    }
 }

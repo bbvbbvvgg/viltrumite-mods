@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,8 +12,6 @@ import java.util.UUID;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -55,7 +55,7 @@ public final class MjolnirLift {
       }
 
       ATTEMPTS.put(id, new Attempt(player.position(), now + MjolnirTuning.LIFT_TICKS));
-      player.serverLevel().playSound(null, hammer.getX(), hammer.getY(), hammer.getZ(), SoundEvents.ARMOR_EQUIP_IRON, SoundSource.PLAYERS, 0.8F, 0.6F);
+      ThorSounds.playAt(player.serverLevel(), hammer.position(), ThorCue.LIFT_STRAIN);
       return InteractionResult.CONSUME;
    }
 
@@ -103,7 +103,7 @@ public final class MjolnirLift {
             it.remove();
             COOLDOWNS.put(entry.getKey(), now + MjolnirTuning.LIFT_COOLDOWN);
             player.displayClientMessage(Component.translatable(FAIL), true);
-            player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE, SoundSource.PLAYERS, 0.8F, 0.6F);
+            ThorSounds.play(player, ThorCue.LIFT_FAIL);
          }
       }
    }

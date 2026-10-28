@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
 import dev.baranhan.viltrumitecore.hero.CarveJobs;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
@@ -9,8 +10,6 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -78,11 +77,8 @@ public final class ElectricFx {
     * a visual (Thor's damage is dealt separately by the move).
     */
    public static void bolt(ServerLevel level, Vec3 at) {
-      HeroFx.electricBolt(level, at, BOLT_HEIGHT, 1.0F);
-   }
-
-   public static void sound(ServerLevel level, Vec3 at, SoundEvent sound, float volume, float pitch) {
-      level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
+      HeroFx.electricBolt(level, at, BOLT_HEIGHT, 1.0F, ThorSounds.boltCrack());
+      ThorSounds.bolt(level, at, 1.0F);
    }
 
    /** Where the view hits a block within {@code range}, or the end of the ray. */

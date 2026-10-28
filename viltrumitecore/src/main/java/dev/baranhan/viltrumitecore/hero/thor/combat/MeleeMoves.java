@@ -3,10 +3,10 @@ package dev.baranhan.viltrumitecore.hero.thor.combat;
 import dev.baranhan.viltrumitecore.hero.HeroShockwave;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
-import dev.baranhan.viltrumitecore.hero.thor.ThorFeedback;
 import dev.baranhan.viltrumitecore.hero.thor.ThorInput;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMode;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent;
@@ -22,7 +22,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -73,6 +72,7 @@ public final class MeleeMoves {
                beginStep(player, context.state(), combat, context.move(), button);
             }
             case ENTER_MAIN -> land(player, context.state(), combat, context.move());
+            case ENTER_FINISH -> ThorSounds.strikeTail(player, combat.strike);
             case END -> stepEnded(player, context.state(), combat);
             default -> {
             }
@@ -115,7 +115,7 @@ public final class MeleeMoves {
          combat.strikeAttackId = combat.nextAttackId();
          captureStep(player, combat);
          state.setCombatPose(combat.strike.pose());
-         swingSound(player, combat.strike);
+         ThorSounds.strikeWindup(player, combat.strike);
       }
 
       @Override
@@ -133,6 +133,8 @@ public final class MeleeMoves {
                // The same blow, no extra electric damage: only an MMB_STRIKE action for the recognizer (#147).
                ElectricCombos.strikeAction(player, context.state(), combat, hits);
             }
+         } else if (event == StagedTimeline.Event.ENTER_FINISH) {
+            ThorSounds.strikeTail(player, combat.strike);
          } else if (event == StagedTimeline.Event.END) {
             context.state().setCombatPose(0);
          }
@@ -202,7 +204,7 @@ public final class MeleeMoves {
       }
 
       lunge(player, match.strike());
-      swingSound(player, match.strike());
+      ThorSounds.strikeWindup(player, match.strike());
    }
 
    /**
@@ -320,15 +322,13 @@ public final class MeleeMoves {
          }
       }
 
-      boolean hammer = move != ThorMove.FIST_COMBO;
       if (!landed.isEmpty()) {
-         ThorFeedback.play(player, hammer ? SoundEvents.PLAYER_ATTACK_STRONG : SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0F, hammer ? 0.7F : 1.0F);
          if (strike.heavy()) {
-            ThorFeedback.play(player, SoundEvents.ANVIL_LAND, 0.35F, 0.6F);
             HeroFx.hitStop(player, landed.get(0).getBoundingBox().getCenter(), HIT_STOP_TICKS, hitStopIds(landed));
          }
       }
 
+      Vec3 shockCenter = null;
       if (strike.shockRadius() > 0) {
          Vec3 center = player.position().add(CombatHits.flat(player.getLookAngle()).scale(strike.shape() == ThorStrike.Shape.SLAM ? strike.reach() : 1.0));
          if (strike.crack() > 0) {
@@ -340,9 +340,10 @@ public final class MeleeMoves {
             HeroFx.shockwave(player, center, 0.6F, HeroShockwave.groundUnder(level, player), strike.shockRadius());
          }
 
-         ThorFeedback.play(player, SoundEvents.GENERIC_EXPLODE, 0.5F, 1.4F);
+         shockCenter = center;
       }
 
+      ThorSounds.strikeContact(player, strike, !landed.isEmpty(), shockCenter);
       return landed;
    }
 
@@ -372,15 +373,5 @@ public final class MeleeMoves {
       }
 
       player.hurtMarked = true;
-   }
-
-   private static void swingSound(ServerPlayer player, @Nullable ThorStrike strike) {
-      if (strike == null) {
-         return;
-      }
-
-      boolean fist = strike.move() == ThorMove.FIST_COMBO;
-      ThorFeedback.play(player, fist ? SoundEvents.PLAYER_ATTACK_WEAK : SoundEvents.PLAYER_ATTACK_SWEEP, fist ? 0.6F : 0.9F,
-         fist ? 1.2F : strike.heavy() ? 0.6F : 0.85F);
    }
 }

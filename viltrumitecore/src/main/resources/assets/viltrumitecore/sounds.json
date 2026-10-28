@@ -1190,5 +1190,395 @@
         "attenuation_distance": 128
       }
     ]
+  },
+  "thor.hammer_windup": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_windup",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_windup_1"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_windup_2"
+      }
+    ]
+  },
+  "thor.hammer_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_swing_1"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_swing_2"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_swing_3"
+      }
+    ]
+  },
+  "thor.hammer_metal": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_metal",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_metal_1"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_metal_2"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_metal_3"
+      }
+    ]
+  },
+  "thor.hammer_earth": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_earth",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_earth_1"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_earth_2"
+      }
+    ]
+  },
+  "thor.hammer_bass": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_bass",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_bass_1"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_bass_2"
+      }
+    ]
+  },
+  "thor.hammer_body": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_body",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_body_1"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_body_2"
+      }
+    ]
+  },
+  "thor.hammer_tail": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_tail",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_tail_1"
+      },
+      {
+        "name": "viltrumitecore:thor/hammer_tail_2"
+      }
+    ]
+  },
+  "thor.fist_windup": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_fist_windup",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/fist_windup"
+      }
+    ]
+  },
+  "thor.fist_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_fist_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/fist_swing_1"
+      },
+      {
+        "name": "viltrumitecore:thor/fist_swing_2"
+      },
+      {
+        "name": "viltrumitecore:thor/fist_swing_3"
+      }
+    ]
+  },
+  "thor.fist_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_fist_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/fist_hit_1"
+      },
+      {
+        "name": "viltrumitecore:thor/fist_hit_2"
+      },
+      {
+        "name": "viltrumitecore:thor/fist_hit_3"
+      }
+    ]
+  },
+  "thor.thunder_crack": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_thunder_crack",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/thunder_crack_1"
+      },
+      {
+        "name": "viltrumitecore:thor/thunder_crack_2"
+      },
+      {
+        "name": "viltrumitecore:thor/thunder_crack_3"
+      }
+    ]
+  },
+  "thor.thunder_impact": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_thunder_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/thunder_impact_1"
+      },
+      {
+        "name": "viltrumitecore:thor/thunder_impact_2"
+      }
+    ]
+  },
+  "thor.thunder_rumble": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_thunder_rumble",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/thunder_rumble_1"
+      },
+      {
+        "name": "viltrumitecore:thor/thunder_rumble_2"
+      }
+    ]
+  },
+  "thor.electric_on": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_electric_on",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/electric_on"
+      }
+    ]
+  },
+  "thor.electric_off": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_electric_off",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/electric_off"
+      }
+    ]
+  },
+  "thor.electric_loop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_electric_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/electric_loop"
+      }
+    ]
+  },
+  "thor.electric_zap": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_electric_zap",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/electric_zap_1"
+      },
+      {
+        "name": "viltrumitecore:thor/electric_zap_2"
+      },
+      {
+        "name": "viltrumitecore:thor/electric_zap_3"
+      }
+    ]
+  },
+  "thor.electric_tail": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_electric_tail",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/electric_tail"
+      }
+    ]
+  },
+  "thor.electric_wave": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_electric_wave",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/electric_wave"
+      }
+    ]
+  },
+  "thor.storm_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_storm_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/storm_charge"
+      }
+    ]
+  },
+  "thor.wrath_windup": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_wrath_windup",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/wrath_windup"
+      }
+    ]
+  },
+  "thor.hammer_spin_loop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_spin_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_spin_loop"
+      }
+    ]
+  },
+  "thor.flight_loop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_flight_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/flight_loop"
+      }
+    ]
+  },
+  "thor.hammer_fly_loop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_fly_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_fly_loop"
+      }
+    ]
+  },
+  "thor.hammer_throw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_throw"
+      }
+    ]
+  },
+  "thor.hammer_catch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_catch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_catch"
+      }
+    ]
+  },
+  "thor.hammer_recall": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_recall",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_recall"
+      }
+    ]
+  },
+  "thor.hammer_draw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_draw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_draw"
+      }
+    ]
+  },
+  "thor.hammer_holster": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_hammer_holster",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/hammer_holster"
+      }
+    ]
+  },
+  "thor.lift_strain": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_lift_strain",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/lift_strain"
+      }
+    ]
+  },
+  "thor.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_refuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/refuse"
+      }
+    ]
+  },
+  "thor.dash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_dash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/dash"
+      }
+    ]
+  },
+  "thor.pull": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_pull",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/pull"
+      }
+    ]
+  },
+  "thor.grab": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_grab",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/grab"
+      }
+    ]
+  },
+  "thor.bone_crunch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_bone_crunch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/bone_crunch"
+      }
+    ]
+  },
+  "thor.gore_squelch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_gore_squelch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/gore_squelch"
+      }
+    ]
+  },
+  "thor.heartbeat": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.thor_heartbeat",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thor/heartbeat"
+      }
+    ]
   }
 }
