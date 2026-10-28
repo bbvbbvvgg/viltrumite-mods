@@ -13,12 +13,11 @@ import thor_clipkit as K
 import thor_mesh as M
 
 OUT = os.path.join(K.RES, "animations/thor")
-FILE_LIMIT = 60000  # JSON-escaped bytes: one file per push request (65536 bytes)
+FILE_LIMIT = 10 ** 9  # one file: the runtime (ThorAssets.ANIMATIONS) and the contract tests read only thor.animation.json
 BASE_FILE = "thor.animation.json"
-GROUPS = (("thor.animation.json", ("idle", "walk", "run", "stance", "lift", "flight", "throw", "catch", "pull", "crouch", "sit")),
-          ("thor_draw_electric.animation.json", ("draw", "holster", "electric", "wrath")),
-          ("thor_hammer.animation.json", ("hammer_",)),
-          ("thor_fist.animation.json", ("fist_",)))
+# Every clip in thor.animation.json (the old push-size split into several files was never loaded by AnimCache).
+GROUPS = (("thor.animation.json", ("idle", "walk", "run", "stance", "lift", "flight", "throw", "catch", "pull", "crouch", "sit",
+                                   "draw", "holster", "electric", "wrath", "hammer_", "fist_")),)
 OWNERS = {
     "full": (C.TP_BONES, C.POS_BONES),
     "upper": (C.UPPER_BONES, ()),
