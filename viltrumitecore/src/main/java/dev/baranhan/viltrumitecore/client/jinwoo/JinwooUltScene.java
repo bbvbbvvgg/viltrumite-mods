@@ -349,7 +349,8 @@ public final class JinwooUltScene {
             var e = mc.level.getEntity(scene.caster);
             if (e != null) {
                Vec3 eye = e.getEyePosition(partial);
-               PixelVfx.crossGlow(b, cam, camera, eye, 0.25F + 0.35F * k, 120, 190, 255, (int)(200 * k));
+               Vec3 look = e.getViewVector(partial);
+               PixelVfx.crossGlow(b, cam, camera, eye.add(look.scale(0.3)), 0.06F + 0.12F * k, 150, 120, 255, (int)(170 * k));
             }
          }
       }

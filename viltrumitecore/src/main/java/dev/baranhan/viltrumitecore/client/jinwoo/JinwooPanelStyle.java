@@ -73,13 +73,12 @@ public final class JinwooPanelStyle implements PanelStyle {
       var font = Minecraft.getInstance().font;
       String mana = String.valueOf(Math.round(JinwooView.mana(s)));
       g.drawString(font, mana, x0 - font.width(mana) - 2, y - 2, 0xFFC7A8FF, true);
-      // army counter
+      // army counter and domain timer sit above the bar: the key labels own the column below it
       String army = JinwooView.active(s) + "/" + JinwooView.roster(s);
-      g.drawString(font, army, x1 - font.width(army), y + BAR_HEIGHT + 3, 0xFFB8C8FF, true);
-      // domain timer
+      g.drawString(font, army, x1 - font.width(army), y - 13, 0xFFB8C8FF, true);
       int domain = JinwooView.domainLeft(s);
       if (domain > 0) {
-         int dy = y + BAR_HEIGHT + 14;
+         int dy = y - 4;
          int w = Math.round(domain / (float)JinwooRules.ULT_DOMAIN * BAR_WIDTH);
          g.fill(x0 - 1, dy - 1, x1 + 1, dy + 3, 0xFF000000);
          g.fill(x0, dy, x0 + w, dy + 2, 0xFF5A8CFF);

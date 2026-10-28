@@ -53,7 +53,7 @@ public final class JinwooRenderer {
    static final float PLAYER_SCALE = 0.9375F;
    static final float TRANSLUCENT_ALPHA = 0.15F;
    /** Camera-space offset of the first-person arms model (blocks); keep in sync with tools/assets/jinwoo_fp_clips.py. */
-   public static final Vector3f FP_OFFSET = new Vector3f(0.0F, -1.66F, -0.30F);
+   public static final Vector3f FP_OFFSET = new Vector3f(0.0F, -1.72F, -0.38F);
    /** Dagger tip/base in model space (blocks), found once per baked model from the blade cubes. */
    private static final Map<GeoBone, Vector3f[]> BLADES = new IdentityHashMap<>();
 
@@ -205,7 +205,7 @@ public final class JinwooRenderer {
    }
 
    /**
-    * First person. Calm with an item: vanilla (the item shows). Daggers out, blocking or any move:
+    * First person. Calm (empty hand or item): vanilla hand with the Jinwoo skin. Daggers out, blocking or any move:
     * both vanilla hands are cancelled and the arms model is drawn once, in camera space.
     */
    @SubscribeEvent
@@ -222,8 +222,7 @@ public final class JinwooRenderer {
       }
       float partial = event.getPartialTick();
       double ticks = JinwooPose.actionTicks(player, s, partial);
-      boolean ours = JinwooPose.daggerScale(s, ticks) > 0.0F || s.actionId() >= 0 || JinwooView.flag(s, JinwooFlags.BLOCKING)
-         || (player.getMainHandItem().isEmpty() && !player.swinging);
+      boolean ours = JinwooPose.daggerScale(s, ticks) > 0.0F || s.actionId() >= 0 || JinwooView.flag(s, JinwooFlags.BLOCKING);
       if (!ours) {
          return;
       }
@@ -326,6 +325,9 @@ public final class JinwooRenderer {
    }
 
    private static void nameTag(AbstractClientPlayer player, PlayerRenderer renderer, PoseStack stack, MultiBufferSource buffers, int light, float partial) {
+      if (player == Minecraft.getInstance().player && JinwooUltScene.cameraActive()) {
+         return; // the own name stays hidden while the cinematic camera looks at the caster
+      }
       EntityRendererNameTagInvoker invoker = (EntityRendererNameTagInvoker)renderer;
       RenderNameTagEvent event = new RenderNameTagEvent(player, player.getDisplayName(), renderer, stack, buffers, light, partial);
       MinecraftForge.EVENT_BUS.post(event);
