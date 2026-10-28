@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.jinwoo;
 
+import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowKind;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowMode;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
@@ -23,6 +24,16 @@ import net.minecraft.world.phys.Vec3;
 /** Shadow Step, Mutilation, Ruler's Authority, Extraction, Exchange and the Monarch's Charge (spec §5.4-5.8, §5.13). */
 public final class JinwooSkills {
    private JinwooSkills() {
+   }
+
+   /** Literal keys so resource checks can see every translation (spec §5.7). */
+   static String extractedKey(ShadowKind kind, boolean elite) {
+      return switch (kind) {
+         case INFANTRY -> "message.viltrumitecore.jinwoo.extracted_infantry";
+         case KNIGHT -> elite ? "message.viltrumitecore.jinwoo.extracted_igris" : "message.viltrumitecore.jinwoo.extracted_knight";
+         case INSECT -> elite ? "message.viltrumitecore.jinwoo.extracted_beru" : "message.viltrumitecore.jinwoo.extracted_insect";
+         case BEAST -> elite ? "message.viltrumitecore.jinwoo.extracted_tank" : "message.viltrumitecore.jinwoo.extracted_beast";
+      };
    }
 
    static void hint(ServerPlayer player, String key) {
@@ -272,9 +283,7 @@ public final class JinwooSkills {
          }
          JinwooSounds.playAt(player, remnant.pos, JinwooSounds.EXTRACT_RISE, 1.2F, entry.elite ? 0.8F : 1.0F);
          ShadowSoldierEntity s = ShadowArmy.spawn(player, state, entry, remnant.pos, state.roster.activeCount());
-         hint(player, entry.elite && entry.kind.eliteName() != null
-            ? "message.viltrumitecore.jinwoo.extracted_" + entry.kind.eliteName()
-            : "message.viltrumitecore.jinwoo.extracted_" + entry.kind.key());
+         hint(player, extractedKey(entry.kind, entry.elite));
          if (s == null) {
             JinwooFx.around(player, JinwooFx.EXTRACT_FAIL, 1, remnant.pos, Vec3.ZERO);
          }
