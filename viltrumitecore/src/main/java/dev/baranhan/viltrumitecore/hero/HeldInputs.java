@@ -96,7 +96,8 @@ public final class HeldInputs {
 
          @Override
          public boolean canAct(HeroAction action) {
-            return player.isAlive() && hero.canAct(player, action);
+            // Spec 2026-10-28-sinclair §7: a locked body (rabbit hex) starts no held action.
+            return player.isAlive() && !ActionLocks.locked(player) && hero.canAct(player, action);
          }
 
          @Override

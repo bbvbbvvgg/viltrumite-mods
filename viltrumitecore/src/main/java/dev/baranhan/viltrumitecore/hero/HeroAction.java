@@ -63,7 +63,13 @@ public enum HeroAction {
    /** Any hero with airJumps > 0: jump in the air (HeroAirJump; no slot, not an ability). */
    AIR_STEP,
    /** Reinhard cinematic Z; appended to preserve existing wire ordinals. */
-   DIAGONAL_WORLD_CUT;
+   DIAGONAL_WORLD_CUT,
+   /** Sinclair (spec docs/design/2026-10-28-sinclair-design.md §5, §11); appended to keep wire ordinals. */
+   VEXING_BOLT,
+   SPECTRAL_ASSISTANT,
+   RABBIT_HEX,
+   MISDIRECTION,
+   AUDIENCE_PARTICIPATION;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

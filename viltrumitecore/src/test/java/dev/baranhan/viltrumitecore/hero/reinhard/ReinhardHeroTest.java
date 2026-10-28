@@ -15,9 +15,10 @@ import org.junit.jupiter.api.Test;
 class ReinhardHeroTest {
 
    @Test
-   void reinhardIsLastOrdinal() {
+   void reinhardKeepsItsOrdinal() {
+      // Sinclair (spec 2026-10-28) is appended after Reinhard; Reinhard's wire ordinal stays 5.
       HeroId[] values = HeroId.values();
-      assertSame(HeroId.REINHARD, values[values.length - 1]);
+      assertSame(HeroId.REINHARD, values[5]);
    }
 
    @Test

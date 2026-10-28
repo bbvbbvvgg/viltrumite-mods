@@ -122,6 +122,16 @@ public interface HeroDefinition {
    }
 
    /**
+    * Data-only description of this hero's ultimate for performers that copy it
+    * (Sinclair's Audience Participation, spec docs/design/2026-10-28-sinclair-design.md §6.2).
+    * Default: none. Must be pure: no side effects, no entity or state references in the result.
+    */
+   @javax.annotation.Nullable
+   default dev.baranhan.viltrumitecore.hero.act.StageAct signatureAct(Player self) {
+      return null;
+   }
+
+   /**
     * Chassis numbers for a legacy-kit hero, or null to keep the synced
     * Viltrumite stats (config defaults: base 19, 97 % reduction). A hero that
     * must not be a full Viltrumite tank or one-shot puncher returns its own.
