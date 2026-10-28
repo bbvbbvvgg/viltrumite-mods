@@ -58,7 +58,6 @@ public final class TheWorldRenderer {
    /** 40 model units tall → about 2.2 blocks: a head over DIO. */
    public static final float SCALE = 0.9F;
    private static final Set<String> ARM_BONES = Set.of("shoulder_R", "arm_R", "forearm_R", "hand_R", "shoulder_L", "arm_L", "forearm_L", "hand_L");
-   private static final Set<String> FIRST_PERSON_HIDDEN = Set.of("head", "neck", "hose_R", "hose_L");
    private static final Map<Integer, Stand> STANDS = new HashMap<>();
    private static ClientLevel lastLevel;
 
@@ -134,7 +133,7 @@ public final class TheWorldRenderer {
          }
 
          Stand stand = STANDS.computeIfAbsent(player.getId(), id -> new Stand());
-         if (update(stand, player, snapshot, partial, client) && !player.isInvisible()) {
+         if (update(stand, player, snapshot, partial, client) && !player.isInvisible() && (!firstPerson(player, client) || strikesAtCamera(stand.clip))) {
             render(stand, model, player, snapshot, partial, camera, stack, buffers, toWorld, client);
             drew = true;
          }
@@ -152,8 +151,17 @@ public final class TheWorldRenderer {
       }
    }
 
+   /**
+    * The clips drawn in first person (arms only, in front of the camera). Idle,
+    * summon and ZA WARUDO stay behind or around the camera, where the body would
+    * only fill the screen, so the local first person view skips them.
+    */
+   private static boolean strikesAtCamera(TheWorldClips.Clip clip) {
+      return clip.attack() || clip == TheWorldClips.Clip.GUARD || clip == TheWorldClips.Clip.ROLLER_BARRAGE;
+   }
+
    private static boolean firstPerson(Player player, Minecraft client) {
-      return player == client.player && client.options.getCameraType().isFirstPerson();
+      return player == client.player && client.getCameraEntity() == player && client.options.getCameraType().isFirstPerson();
    }
 
    /** Advances clocks, clip, alpha and placement; false when nothing is to be drawn. */
@@ -308,7 +316,7 @@ public final class TheWorldRenderer {
       Vec3 cam = camera.getPosition();
       float alpha = stand.alpha;
       if (fp) {
-         alpha *= stand.clip.attack() || stand.clip == TheWorldClips.Clip.GUARD || stand.clip == TheWorldClips.Clip.ROLLER_BARRAGE ? 0.86F : 0.6F;
+         alpha *= 0.86F;
       } else {
          alpha *= StandMotion.cameraFade(cam.distanceTo(stand.pos.add(0.0, 1.3, 0.0)));
       }
@@ -317,7 +325,8 @@ public final class TheWorldRenderer {
       int packed = LevelRenderer.getLightColor(player.level(), at);
       int light = LightTexture.pack(Math.max(LightTexture.block(packed), 9), LightTexture.sky(packed));
       if (fp) {
-         hide(model, FIRST_PERSON_HIDDEN, true);
+         // First person strikes: only the arms, coming from under the camera (the torso would fill the screen).
+         hideExcept(model, ARM_BONES);
       }
 
       // Main body, captured fist positions for the contact flashes.
@@ -467,15 +476,6 @@ public final class TheWorldRenderer {
          boolean left = stand.clip == TheWorldClips.Clip.JAB;
          float power = stand.clip == TheWorldClips.Clip.HOOK || stand.clip == TheWorldClips.Clip.FINISHER ? 1.5F : 1.0F;
          DioFxClient.fist(left ? stand.handL : stand.handR, forward, power);
-      }
-   }
-
-   private static void hide(BakedGeoModel model, Set<String> names, boolean hidden) {
-      for (String name : names) {
-         GeoBone bone = model.getBone(name);
-         if (bone != null) {
-            bone.hidden = hidden;
-         }
       }
    }
 

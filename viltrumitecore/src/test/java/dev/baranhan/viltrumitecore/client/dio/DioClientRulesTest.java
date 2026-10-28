@@ -20,7 +20,8 @@ class DioClientRulesTest {
       assertEquals(-0.65, o[2], 1.0E-9);
       assertTrue(o[1] > 0.0);
       double[] attack = StandMotion.offset(StandMotion.Mode.ATTACK, 90.0F);
-      assertEquals(-0.85, attack[0], 1.0E-9, "yaw 90 faces -X");
+      assertEquals(-StandMotion.Mode.ATTACK.forward, attack[0], 1.0E-9, "yaw 90 faces -X");
+      assertTrue(StandMotion.Mode.ATTACK.forward > 1.2 && StandMotion.Mode.ATTACK.forward < DioRules.STAND_REACH - 1.5, "fists land well inside the reach");
       assertEquals(0.0, attack[2], 1.0E-9);
       assertTrue(StandMotion.Mode.ATTACK.rate > StandMotion.Mode.IDLE.rate, "strikes snap, idle lags");
    }

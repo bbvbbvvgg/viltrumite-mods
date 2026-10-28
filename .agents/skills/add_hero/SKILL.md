@@ -75,6 +75,7 @@ Before sourcing or changing sounds, follow `../sound-design/SKILL.md` (CC0/own a
 
 ### 8. Lang
 Add every key to all locales in `assets/viltrumitecore/lang/` in the same change (en_us, de_de, es_*, tr_tr, zh_cn …). en_us is the source of truth.
+A locale file too big for one GitHub MCP push (~60 KB; `ru_ru.json` already is) gets its new keys in an overlay `viltrumitecore/src/main/lang-overlays/<hero>/<locale>.json`; `processResources`, the checker and the tests merge overlays into the locale.
 
 ### 9. Tests and checks
 1. JUnit tests for `<Id>Rules` and any pure toolkit math in `viltrumitecore/src/test/java/.../hero/<id>/`.
