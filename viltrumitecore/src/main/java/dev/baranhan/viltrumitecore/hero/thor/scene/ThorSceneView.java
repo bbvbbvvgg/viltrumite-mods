@@ -36,6 +36,29 @@ public final class ThorSceneView {
 
    public static void clientTick() {
       clientTicks++;
+      SCENES.values().removeIf(live -> expired(live.sync(), clientTicks - live.receivedAt()));
+   }
+
+   /** Client ticks a scene may go without a sync before its copy is dropped (grabs resync every 2 ticks, fatalities every 10, teleports every 20). */
+   static final int STALE_TICKS = 60;
+
+   /**
+    * Pure (M10): has a client copy outlived its scene? A fatality ends at
+    * its plan's length (plus slack); any scene unsynced for {@link #STALE_TICKS}
+    * is gone (a lost END, a tracker that left and came back).
+    */
+   public static boolean expired(SceneSync sync, long sinceSync) {
+      if (sinceSync > STALE_TICKS) {
+         return true;
+      }
+
+      FatalityPlan plan = sync.kind() == SceneSync.Kind.FATALITY ? sync.plan() : null;
+      return plan != null && sync.tick() + sinceSync > plan.length() + 20;
+   }
+
+   /** M10: an entity left the client level: scenes it leads end there. */
+   public static void forgetEntity(int entityId) {
+      SCENES.remove(entityId);
    }
 
    public static void clear() {
@@ -103,6 +126,10 @@ public final class ThorSceneView {
 
       float yaw = Mth.rotLerp(partial, holder.yRotO, holder.getYRot());
       Offset offset = GrabPose.at(sync.grabStage(), GrabAction.byId(sync.variant()), tick, target.getBbWidth(), target.getBbHeight());
-      return SceneFrame.world(holder.getPosition(partial), yaw, offset);
+      Vec3 feet = holder.getPosition(partial);
+      Vec3 wanted = SceneFrame.world(feet, yaw, offset);
+      // C-B2: the same collision-safe correction as the server; no free point = where the server put it.
+      Vec3 placed = SceneSpace.placeHeld(holder.level(), holder, target, feet, yaw, wanted);
+      return placed != null ? placed : target.getPosition(partial);
    }
 }

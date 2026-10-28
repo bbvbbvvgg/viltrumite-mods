@@ -39,6 +39,12 @@ final class GrabSessions {
       final ServerLevel level;
       final GrabFlow flow;
       boolean released;
+      /** The last collision-free point the body was placed at (C-B2); every release starts from it. */
+      @Nullable
+      Vec3 lastSafe;
+      /** A held mob's own NoAI flag, restored on release (MINOR-2: a held mob attacks nobody). */
+      boolean mobNoAi;
+      boolean aiFrozen;
 
       Session(ServerPlayer thor, LivingEntity victim, GrabFlow flow) {
          this.thor = thor.getUUID();
@@ -81,12 +87,36 @@ final class GrabSessions {
    static String refusal(ServerPlayer thor, @Nullable LivingEntity target) {
       if (target == null || !target.isAlive() || target == thor || target.level() != thor.level()) {
          return "target";
-      } else if (target.isSpectator() || HeroHeldTargets.holder(target) != null || ThorScenes.inScene(target.getUUID())) {
+      } else if (target.isSpectator() || HeroHeldTargets.holder(target) != null || ThorScenes.inScene(target.getUUID()) || target.isVehicle()
+         || HeroHeldTargets.holder(thor) != null || ControlManager.get(thor.serverLevel()).isControlled(thor)) {
+         // MINOR-3: a Thor held or controlled by another hero grabs nobody; M2: a body carrying passengers is not grabbed.
          return "busy";
       } else if (!HeroRegistry.allowsExternalControl(target, ControlKind.PULL)) {
          return "immune";
+      } else if (tooBig(target.getType().is(net.minecraftforge.common.Tags.EntityTypes.BOSSES), target.isMultipartEntity(), target.getBbWidth(),
+         target.getBbHeight())) {
+         // M11: bosses, multipart and giant bodies are refused (giants: OPEN decision 15; refusal is the conservative choice).
+         return "immune";
+      } else if (target instanceof net.minecraft.world.entity.player.Player player && !playerGrabbable(player.isCreative(),
+         thor.server.isPvpAllowed(), thor.canHarmPlayer(player))) {
+         // MINOR-1: creative players, PvP off, friendly fire off.
+         return "immune";
       }
       return null;
+   }
+
+   /** PLACEHOLDER: the largest body a grab takes (giant adaptations are OPEN, decision 15). */
+   static final double MAX_WIDTH = 2.0;
+   static final double MAX_HEIGHT = 3.0;
+
+   /** Pure (M11): bosses, multipart bodies and anything wider / taller than the limits are refused. */
+   static boolean tooBig(boolean boss, boolean multipart, double width, double height) {
+      return boss || multipart || width > MAX_WIDTH || height > MAX_HEIGHT;
+   }
+
+   /** Pure (MINOR-1): may Thor grab this player? */
+   static boolean playerGrabbable(boolean creative, boolean pvpAllowed, boolean canHarm) {
+      return !creative && pvpAllowed && canHarm;
    }
 
    /**
@@ -113,8 +143,15 @@ final class GrabSessions {
       ThorBridge.closeGrabWindow(state);
       ThorScenes.stopFlight(thor);
       ThorScenes.stopFlight(target);
+      // M2: nobody holds a body in a saddle, and Thor does not grab from one.
+      thor.stopRiding();
+      target.stopRiding();
+      session.lastSafe = SceneSpace.boxFree(session.level, target, target.position()) ? target.position() : null;
       if (target instanceof Mob mob) {
          mob.getNavigation().stop();
+         session.mobNoAi = mob.isNoAi();
+         session.aiFrozen = true;
+         mob.setNoAi(true);
       }
 
       SESSIONS.put(session.thor, session);
@@ -181,11 +218,14 @@ final class GrabSessions {
                ControlManager.get(session.level).refresh(session.victim, session.thor, session.effectId, ControlKind.PULL,
                   session.level.getGameTime() + CONTROL_LEASE);
             }
-            hold(thor, session, victim);
+            if (!hold(thor, session, victim)) {
+               continue;
+            }
          }
 
          boolean changed = before != session.flow.stage();
-         if (changed || session.flow.stage() == GrabFlow.Stage.HOLD && session.flow.ticks() % 2 == 0) {
+         // A slow keep-alive in every stage (M10: client copies expire without syncs).
+         if (changed || session.flow.stage() == GrabFlow.Stage.HOLD && session.flow.ticks() % 2 == 0 || session.flow.ticks() % 20 == 0) {
             sync(thor, session);
          }
       }
@@ -197,8 +237,24 @@ final class GrabSessions {
          GrabPose.at(session.flow.stage(), session.flow.action(), session.flow.ticks(), victim.getBbWidth(), victim.getBbHeight()));
    }
 
-   private static void hold(ServerPlayer thor, Session session, LivingEntity victim) {
-      Vec3 at = anchor(thor, session, victim);
+   /**
+    * C-B2: the body goes to the posed anchor pulled back until its box is
+    * free and Thor's chest sees it (never through a wall). With no free point
+    * at all it stays at its last safe point (Thor walks on; past the hold
+    * distance the grab ends); without even that the grab ends at once.
+    */
+   private static boolean hold(ServerPlayer thor, Session session, LivingEntity victim) {
+      Vec3 at = SceneSpace.placeHeld(session.level, thor, victim, thor.position(), thor.getYRot(), anchor(thor, session, victim));
+      if (at == null && session.lastSafe != null && SceneSpace.boxFree(session.level, victim, session.lastSafe)) {
+         at = session.lastSafe;
+      }
+
+      if (at == null) {
+         end(thor, session, ReleaseReason.INTERRUPTED);
+         return false;
+      }
+
+      session.lastSafe = at;
       victim.setPos(at.x, at.y, at.z);
       victim.setDeltaMovement(Vec3.ZERO);
       victim.resetFallDistance();
@@ -206,6 +262,8 @@ final class GrabSessions {
       if (victim instanceof Mob mob) {
          mob.getNavigation().stop();
       }
+
+      return true;
    }
 
    private static void escape(ServerPlayer thor, Session session, @Nullable LivingEntity victim) {
@@ -224,8 +282,8 @@ final class GrabSessions {
       }
 
       GrabAction action = session.flow.action();
-      Vec3 last = SceneFrame.world(thor.position(), thor.getYRot(),
-         GrabPose.at(GrabFlow.Stage.ACTION, action, action == null ? 0 : action.releaseTick(), victim.getBbWidth(), victim.getBbHeight()));
+      // C-B2: every action leaves from the last collision-free point the body was held at.
+      Vec3 last = session.lastSafe != null ? session.lastSafe : victim.position();
       releaseControl(session, victim, ReleaseReason.NORMAL_END);
       if (action == null) {
          return;
@@ -254,9 +312,48 @@ final class GrabSessions {
 
       session.released = true;
       ControlManager.get(session.level).release(session.victim, session.effectId, reason);
+      if (session.aiFrozen && victim instanceof Mob mob) {
+         mob.setNoAi(session.mobNoAi);
+         session.aiFrozen = false;
+      }
+
+      if (victim != null) {
+         settle(session, victim);
+      }
+
       if (victim instanceof ServerPlayer player) {
          // Hand prediction back: one teleport handshake to where the body is now.
          player.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+      }
+   }
+
+   /**
+    * C-B2: a released body never stays inside blocks: back to its last safe
+    * point, else the nearest safe spot (SafeSpot), else where it is.
+    */
+   static void settle(Session session, LivingEntity victim) {
+      if (victim.level() != session.level || SceneSpace.boxFree(session.level, victim, victim.position())) {
+         return;
+      }
+
+      Vec3 to = session.lastSafe != null && SceneSpace.boxFree(session.level, victim, session.lastSafe) ? session.lastSafe
+         : dev.baranhan.viltrumitecore.hero.SafeSpot.find(victim.position(), new dev.baranhan.viltrumitecore.hero.SafeSpot.LevelProbe(session.level, victim),
+            4.0, 0.5).orElse(null);
+      if (to != null) {
+         victim.setPos(to.x, to.y, to.z);
+      }
+   }
+
+   /** Server: where the held body is drawn (its last placed collision-free point). */
+   @Nullable
+   static Vec3 heldPoint(Session session) {
+      return session.lastSafe;
+   }
+
+   /** Every grab ends properly (server stopping: AI flags and controls restored before the save). */
+   static void endAll(net.minecraft.server.MinecraftServer server) {
+      for (Session session : new ArrayList<>(SESSIONS.values())) {
+         end(server.getPlayerList().getPlayer(session.thor), session, ReleaseReason.INTERRUPTED);
       }
    }
 

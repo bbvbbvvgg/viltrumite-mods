@@ -84,9 +84,14 @@ final class SceneFx {
       return at;
    }
 
+   /** MINOR-8: the slam drives the body at most this far down onto the ground; a deeper drop smashes it where it is. */
+   static final double SLAM_MAX_DROP = 1.5;
+
    static void slam(ServerPlayer thor, LivingEntity victim, Vec3 at) {
       ServerLevel level = thor.serverLevel();
-      Vec3 ground = ground(level, at);
+      Vec3 floor = ground(level, at);
+      // C-B2: only onto a free spot right below; never a long teleport down, never into blocks.
+      Vec3 ground = at.y - floor.y <= SLAM_MAX_DROP && SceneSpace.boxFree(level, victim, floor) ? floor : at;
       victim.setPos(ground.x, ground.y, ground.z);
       hurt(thor, victim, ThorSceneConfig.slamDamage);
       BlockState material = floor(level, ground);
