@@ -49,13 +49,13 @@ class HeroBodySizeTest {
       EntityDimensions standing = size(Pose.STANDING, THOR);
       assertEquals(3.15F, standing.height, EPS);
       assertTrue(standing.height >= 3.0F && standing.height <= 3.2F, "spec §1: ~3.0–3.2 tall");
-      assertEquals(0.96F, standing.width, EPS);
+      assertEquals(2.0F, standing.width, EPS);
       assertEquals(2.835F, eye(Pose.STANDING, THOR), EPS);
       assertEquals(2.625F, size(Pose.CROUCHING, THOR).height, EPS);
       assertEquals(2.2225F, eye(Pose.CROUCHING, THOR), EPS);
       for (Pose lying : new Pose[]{Pose.SWIMMING, Pose.FALL_FLYING, Pose.SPIN_ATTACK}) {
          assertEquals(0.9F, size(lying, THOR).height, EPS, lying.name());
-         assertEquals(0.96F, size(lying, THOR).width, EPS, lying.name());
+         assertEquals(2.0F, size(lying, THOR).width, EPS, lying.name());
          assertTrue(eye(lying, THOR) < size(lying, THOR).height, lying.name());
       }
 
@@ -101,15 +101,15 @@ class HeroBodySizeTest {
 
    @Test
    void passagesThorCanUse() {
-      // 1-wide 3-tall corridor / a door with a block above: walks.
-      assertTrue(fits(Pose.STANDING, 1.0, 4.0));
-      assertFalse(fits(Pose.STANDING, 1.0, 3.0), "3.15 > 3: a 3-tall opening needs a crouch");
-      assertTrue(fits(Pose.CROUCHING, 1.0, 3.0));
+      // Box = model width (2.0, owner 2026-10-28): a 2-wide 3-tall corridor / a door with a block above: walks.
+      assertTrue(fits(Pose.STANDING, 2.0, 4.0));
+      assertFalse(fits(Pose.STANDING, 2.0, 3.0), "3.15 > 3: a 3-tall opening needs a crouch");
+      assertTrue(fits(Pose.CROUCHING, 2.0, 3.0));
       // 2-block passage (doors, a 2-high tunnel): too low to crouch, so the vanilla pose logic crawls.
-      assertFalse(fits(Pose.CROUCHING, 1.0, 2.0));
-      assertTrue(fits(Pose.SWIMMING, 1.0, 2.0));
+      assertFalse(fits(Pose.CROUCHING, 2.0, 2.0));
+      assertTrue(fits(Pose.SWIMMING, 2.0, 2.0));
       // A 1-block hole: still crawls.
-      assertTrue(fits(Pose.SWIMMING, 1.0, 1.0));
+      assertTrue(fits(Pose.SWIMMING, 2.0, 1.0));
    }
 
    @Test
