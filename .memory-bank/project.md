@@ -363,3 +363,16 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   spinning shards (`SawSphereRenderer`; CPU preview `SawSpherePreviewTest` with `SAW_PREVIEW=1` +
   `tools/preview_saw_sphere.py`).
 - Released as GitHub release `v1.45.0-reinhard` together with flight 1.10.1; the overhaul stack (#47–#54) merged to main.
+
+## Core 1.50.0 (cinematic hero subtitles, protocol 11)
+- Shared spoken-line system: `hero/speech/` (`HeroLine`, `HeroLines`, `HeroLineTrigger`, pure `HeroSpeechRules`,
+  server `HeroSpeech`), packet `HeroLineS2CPacket`, client `client/hero/speech/` (pure `SubtitleLayout`,
+  `SubtitleTiming`, `SubtitleQueue`; `SubtitleRenderer`, `HeroPortraits`, `HeroSubtitles` overlay below chat).
+- A hero returns its table from `HeroDefinition.lines()`; speak on the server only when an action is accepted
+  (`HeroSpeech.ability/trigger`), never per tick. Text and speaker name are lang keys (`subtitle.viltrumitecore.*`).
+- One subtitle on screen; queue ≤ 3; same speaker or higher priority forces a short exit; panel size fixed per line.
+- Portraits: default live player bust (skin + outer layer); custom models register `HeroPortraits.register`
+  (`ReinhardPortrait` renders the geo body bone).
+- Reinhard: `ReinhardLines.WORLD_CUT` from `ReinhardActions.press`. Full monologue later = one `textSeries` line.
+- Version 1.50.0 / protocol 11 skip the numbers used by the parallel Thor branches (1.46–1.49, protocol 10).
+- Op test command `/herolines play|preview short|long|say|stop`. Plan: `docs/plans/2026-10-28-hero-subtitles.md`.
