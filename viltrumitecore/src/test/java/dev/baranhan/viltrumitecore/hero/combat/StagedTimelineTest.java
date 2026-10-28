@@ -304,4 +304,56 @@ class StagedTimelineTest {
       assertEquals(StagedTimeline.Event.NONE, noFinish.skipTo(MovePhase.FINISH), "a phase without ticks is not entered");
       assertEquals(MovePhase.INTRO, noFinish.phase());
    }
+
+   @Test
+   void retimeGivesOneStepItsOwnPhases() {
+      StagedTimeline<Move> timeline = new StagedTimeline<>();
+      assertFalse(timeline.retime(2, 2, 2), "idle: nothing to retime");
+      assertSame(StagedTimeline.Admission.START, timeline.request(COMBO, -1));
+      assertTrue(timeline.retime(3, 1, 4));
+      assertEquals(8, timeline.length());
+      assertEquals(3, timeline.stepTicks(MovePhase.INTRO));
+      ticks(timeline, 2);
+      assertSame(MovePhase.INTRO, timeline.phase());
+      assertSame(StagedTimeline.Event.ENTER_MAIN, timeline.tick(), "contact on the step's own intro end");
+      assertFalse(timeline.retime(1, 1, 1), "only on the first tick of a step");
+      assertSame(StagedTimeline.Event.ENTER_FINISH, timeline.tick());
+      assertEquals(0, timeline.phaseElapsed());
+      // The chain window (FINISH) opens on the retimed phase: the next step starts with the move's own ticks again.
+      assertSame(StagedTimeline.Admission.CHAIN, timeline.request(COMBO, -1));
+      assertEquals(1, timeline.step());
+      assertEquals(COMBO.length(), timeline.length(), "a new step drops the old retime");
+   }
+
+   @Test
+   void retimedStepEndsAndSkipsOnItsOwnTicks() {
+      StagedTimeline<Move> timeline = new StagedTimeline<>();
+      timeline.request(WALK, -1);
+      assertTrue(timeline.retime(1, 5, 2));
+      assertSame(StagedTimeline.Event.ENTER_FINISH, timeline.skipTo(MovePhase.FINISH));
+      assertEquals(6, timeline.elapsed(), "finish starts after the retimed intro + main");
+      ticks(timeline, 1);
+      assertSame(StagedTimeline.Event.END, timeline.tick());
+      assertFalse(timeline.running());
+      timeline.request(WALK, -1);
+      assertFalse(timeline.retime(0, 0, 0), "a step needs a tick");
+      assertFalse(timeline.retime(-1, 2, 2));
+      assertEquals(WALK.length(), timeline.length());
+      assertTrue(timeline.retime(0, 2, 1), "no intro: the step starts in MAIN");
+      assertSame(MovePhase.MAIN, timeline.phase());
+   }
+
+   @Test
+   void aBufferedStepReplacesARetimedOneAtItsWindow() {
+      StagedTimeline<Move> timeline = new StagedTimeline<>();
+      timeline.request(COMBO, -1);
+      timeline.retime(4, 2, 6);
+      assertSame(StagedTimeline.Admission.QUEUE, timeline.request(COMBO, -1));
+      ticks(timeline, 5);
+      assertSame(MovePhase.MAIN, timeline.phase());
+      assertSame(StagedTimeline.Event.ENTER_FINISH, timeline.tick(), "tick 6: the retimed finish begins");
+      assertSame(StagedTimeline.Event.CHAIN, timeline.tick(), "the buffered press chains in the retimed window");
+      assertEquals(1, timeline.step());
+      assertEquals(COMBO.length(), timeline.length());
+   }
 }

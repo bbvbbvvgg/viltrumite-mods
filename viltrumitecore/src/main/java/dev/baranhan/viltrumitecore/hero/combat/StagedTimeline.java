@@ -52,6 +52,9 @@ public final class StagedTimeline<M extends StagedMove> {
    @Nullable
    private M queued;
    private int queuedPartner = -1;
+   /** Own phase ticks of the current step (intro, main, finish), null = the move's. Set by {@link #retime}, dropped by every new step. */
+   @Nullable
+   private int[] stepTicks;
 
    public boolean running() {
       return this.move != null;
@@ -77,12 +80,48 @@ public final class StagedTimeline<M extends StagedMove> {
 
    /** Ticks of the current step, 0 when idle. */
    public int length() {
-      return this.move == null ? 0 : this.move.length();
+      if (this.move == null) {
+         return 0;
+      }
+
+      int total = 0;
+      for (MovePhase phase : MovePhase.values()) {
+         total += this.stepTicks(phase);
+      }
+
+      return total;
+   }
+
+   /** Ticks of one phase of the current step (its own ticks after {@link #retime}), 0 when idle. */
+   public int stepTicks(MovePhase phase) {
+      if (this.move == null) {
+         return 0;
+      }
+
+      return Math.max(0, this.stepTicks != null ? this.stepTicks[phase.ordinal()] : this.move.ticks(phase));
    }
 
    /** Ticks since the current phase began. */
    public int phaseElapsed() {
-      return this.move == null ? 0 : this.elapsed - phaseStart(this.move, this.phase);
+      return this.move == null ? 0 : this.elapsed - this.stepPhaseStart(this.phase);
+   }
+
+   /**
+    * Gives the current step its own phase ticks: a combo step whose content
+    * (chosen when the step starts) has its own length, e.g. a heavy finisher
+    * after a light opener. Only on the first tick of a step (a fresh start or
+    * a chained step); the move's priority, cancel window and step count stay.
+    * The next step starts with the move's ticks again. Returns false (and
+    * changes nothing) when idle, past the first tick, or for invalid ticks.
+    */
+   public boolean retime(int intro, int main, int finish) {
+      if (this.move == null || this.elapsed != 0 || intro < 0 || main < 0 || finish < 0 || intro + main + finish <= 0) {
+         return false;
+      }
+
+      this.stepTicks = new int[]{intro, main, finish};
+      this.phase = this.stepPhaseAt(0);
+      return true;
    }
 
    public int step() {
@@ -214,7 +253,7 @@ public final class StagedTimeline<M extends StagedMove> {
       }
 
       this.elapsed++;
-      if (this.elapsed >= current.length()) {
+      if (this.elapsed >= this.length()) {
          if (this.queued != null) {
             this.begin(this.queued, this.queuedPartner, this.nextStep(this.queued));
             return Event.CHAIN;
@@ -224,7 +263,7 @@ public final class StagedTimeline<M extends StagedMove> {
          return Event.END;
       }
 
-      MovePhase now = phaseAt(current, this.elapsed);
+      MovePhase now = this.stepPhaseAt(this.elapsed);
       if (now != this.phase) {
          this.phase = now;
          return now == MovePhase.MAIN ? Event.ENTER_MAIN : Event.ENTER_FINISH;
@@ -261,11 +300,11 @@ public final class StagedTimeline<M extends StagedMove> {
     */
    public Event skipTo(MovePhase target) {
       M current = this.move;
-      if (current == null || target.ordinal() <= this.phase.ordinal() || current.ticks(target) <= 0) {
+      if (current == null || target.ordinal() <= this.phase.ordinal() || this.stepTicks(target) <= 0) {
          return Event.NONE;
       }
 
-      this.elapsed = phaseStart(current, target);
+      this.elapsed = this.stepPhaseStart(target);
       this.phase = target;
       return target == MovePhase.MAIN ? Event.ENTER_MAIN : Event.ENTER_FINISH;
    }
@@ -279,6 +318,7 @@ public final class StagedTimeline<M extends StagedMove> {
       this.partnerId = -1;
       this.queued = null;
       this.queuedPartner = -1;
+      this.stepTicks = null;
    }
 
    private void begin(M next, int partner, int step) {
@@ -288,7 +328,33 @@ public final class StagedTimeline<M extends StagedMove> {
       this.elapsed = 0;
       this.queued = null;
       this.queuedPartner = -1;
+      this.stepTicks = null;
       this.phase = phaseAt(next, 0);
+   }
+
+   private MovePhase stepPhaseAt(int elapsed) {
+      int end = 0;
+      for (MovePhase phase : MovePhase.values()) {
+         end += this.stepTicks(phase);
+         if (elapsed < end) {
+            return phase;
+         }
+      }
+
+      return MovePhase.FINISH;
+   }
+
+   private int stepPhaseStart(MovePhase phase) {
+      int start = 0;
+      for (MovePhase earlier : MovePhase.values()) {
+         if (earlier == phase) {
+            break;
+         }
+
+         start += this.stepTicks(earlier);
+      }
+
+      return start;
    }
 
    /** Phase at a tick of one step: unauthored (0-tick) phases are skipped. */
