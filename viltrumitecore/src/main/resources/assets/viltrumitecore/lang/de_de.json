@@ -509,7 +509,7 @@
   "commands.viltrumitecore.herolines.played": "Heldenzeile abgespielt: %s",
   "commands.viltrumitecore.herolines.stopped": "Heldenzeilen gestoppt",
   "hero.viltrumitecore.jinwoo": "Sung Jinwoo",
-  "gui.viltrumitecore.race_selection.become_jinwoo": "Werde Sung Jinwoo",
+  "gui.viltrumitecore.race_selection.become_jinwoo": "Jinwoo werden",
   "entity.viltrumitecore.shadow_soldier": "Schattensoldat",
   "entity.viltrumitecore.shadow.igris": "Igris",
   "entity.viltrumitecore.shadow.beru": "Beru",
