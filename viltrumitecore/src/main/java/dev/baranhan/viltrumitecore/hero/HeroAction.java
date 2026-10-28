@@ -63,7 +63,19 @@ public enum HeroAction {
    /** Any hero with airJumps > 0: jump in the air (HeroAirJump; no slot, not an ability). */
    AIR_STEP,
    /** Reinhard cinematic Z; appended to preserve existing wire ordinals. */
-   DIAGONAL_WORLD_CUT;
+   DIAGONAL_WORLD_CUT,
+   /** DIO: summon / dismiss The World. */
+   THE_WORLD,
+   /** DIO: held MUDA barrage. */
+   MUDA_BARRAGE,
+   /** DIO: knife fan throw. */
+   KNIFE_THROW,
+   /** DIO: The World stops time (local field). */
+   TIME_STOP,
+   /** DIO: vampiric drain grab. */
+   VAMPIRE_DRAIN,
+   /** DIO ultimate: Road Roller. */
+   ROAD_ROLLER;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();
