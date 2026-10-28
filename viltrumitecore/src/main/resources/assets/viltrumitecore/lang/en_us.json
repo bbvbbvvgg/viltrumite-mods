@@ -588,5 +588,6 @@
   "subtitles.viltrumitecore.jinwoo_ult_charge": "Darkness gathers",
   "subtitles.viltrumitecore.jinwoo_ult_rise": "The legion rises",
   "subtitles.viltrumitecore.jinwoo_ult_roar": "The shadow army roars",
-  "subtitles.viltrumitecore.jinwoo_ult_wave": "The legion sweeps forward"
+  "subtitles.viltrumitecore.jinwoo_ult_wave": "The legion sweeps forward",
+  "message.viltrumitecore.jinwoo.no_exchange_target": "Aim at a shadow or post a sentinel"
 }
