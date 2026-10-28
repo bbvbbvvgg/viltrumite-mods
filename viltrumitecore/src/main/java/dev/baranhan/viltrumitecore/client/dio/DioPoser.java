@@ -35,7 +35,7 @@ public final class DioPoser {
       }
 
       Minecraft client = Minecraft.getInstance();
-      boolean localFirstPerson = entity == client.player && client.options.getCameraType().isFirstPerson();
+      boolean localFirstPerson = entity == client.player && client.getCameraEntity() == entity && client.options.getCameraType().isFirstPerson();
       return localFirstPerson && !ShaderCompat.isShadowPass() ? null : snapshot;
    }
 

@@ -11,10 +11,10 @@ public final class StandMotion {
    public enum Mode {
       /** Behind DIO's right shoulder. */
       IDLE(0.55, 0.15, -0.65, 9.0F),
-      /** In front of DIO, striking. */
-      ATTACK(0.0, 0.0, 0.85, 28.0F),
-      /** First person strikes: lower and closer so the arms read from the camera. */
-      ATTACK_FIRST_PERSON(0.0, -0.35, 0.55, 30.0F),
+      /** In front of DIO, striking: the fists land about 3 blocks out (reach 4.2). */
+      ATTACK(0.0, 0.0, 1.55, 28.0F),
+      /** First person strikes (arms only are drawn): shoulders under and ahead of the camera, so the arms cross the lower half of the view. */
+      ATTACK_FIRST_PERSON(0.0, -0.5, 0.9, 30.0F),
       /** Guard: right in front, arms crossed. */
       GUARD(0.0, 0.0, 0.7, 22.0F),
       /** ZA WARUDO: looming over DIO's back, arms spread. */

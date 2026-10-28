@@ -44,7 +44,9 @@ public final class DioQaCommands {
             .executes(c -> blood(c.getSource(), IntegerArgumentType.getInteger(c, "amount")))))
          .then(Commands.literal("reset").executes(c -> reset(c.getSource())))
          .then(Commands.literal("become").executes(c -> become(c.getSource())))
-         .then(Commands.literal("dummy").executes(c -> dummy(c.getSource())))
+         .then(Commands.literal("dummy").executes(c -> dummy(c.getSource(), 4.0))
+            .then(Commands.argument("distance", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(1.0, 16.0))
+               .executes(c -> dummy(c.getSource(), com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "distance")))))
          .then(Commands.literal("act").then(Commands.argument("action", StringArgumentType.word())
             .executes(c -> act(c.getSource(), StringArgumentType.getString(c, "action"), true))
             .then(Commands.argument("pressed", BoolArgumentType.bool())
@@ -75,15 +77,15 @@ public final class DioQaCommands {
       return 1;
    }
 
-   /** A still, silent zombie four blocks ahead: a target for combo / knife / drain screenshots. */
-   private static int dummy(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+   /** A still, silent zombie ahead (4 blocks by default): a target for combo / knife / drain screenshots. */
+   private static int dummy(CommandSourceStack source, double distance) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
       ServerPlayer player = source.getPlayerOrException();
       Mob mob = EntityType.ZOMBIE.create(player.serverLevel());
       if (mob == null) {
          return 0;
       }
 
-      Vec3 at = player.position().add(Vec3.directionFromRotation(0.0F, player.getYRot()).scale(4.0));
+      Vec3 at = player.position().add(Vec3.directionFromRotation(0.0F, player.getYRot()).scale(distance));
       mob.moveTo(at.x, at.y, at.z, player.getYRot() + 180.0F, 0.0F);
       mob.setNoAi(true);
       mob.setSilent(true);
