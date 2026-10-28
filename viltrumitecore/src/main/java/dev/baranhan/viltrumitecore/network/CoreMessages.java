@@ -291,6 +291,14 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
