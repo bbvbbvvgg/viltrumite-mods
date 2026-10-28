@@ -72,6 +72,27 @@ GUARD = key(C.BASE, hip=(0, -2.2, 0), tor=(6, 16, 0), rft=(0.5, 0, -2.5), lft=(-
             ra=(-28, -2, 13.5), rp=(0.5, -1, 0.3), la=(24, 4, 15.0), lp=(-0.5, -1, 0.3), rw=(-10, 0, 0), lw=(-10, 0, 0))
 
 
+def fp_track(keys, hammer=True):
+    """A first-person path of its own (draw / holster: the arm drops out of the view and comes back):
+    keys [(tick, fist target in the view, hammer direction or None)], smoothstep between keys."""
+    def custom(t, rt, ham, lt):
+        for (t0, r0, h0), (t1, r1, h1) in zip(keys, keys[1:]):
+            if t0 <= t <= t1:
+                f = C.smooth((t - t0) / max(1, t1 - t0))
+                r = np.asarray(r0, float) * (1 - f) + np.asarray(r1, float) * f
+                h = None if h0 is None and h1 is None else C.slerp(C.unit(np.asarray(h0 if h0 is not None else h1, float)),
+                                                                     C.unit(np.asarray(h1 if h1 is not None else h0, float)), f)
+                return r, h, C.FP_HIDDEN_L.copy()
+        r, h = keys[-1][1], keys[-1][2]
+        return np.asarray(r, float), None if h is None else C.unit(np.asarray(h, float)), C.FP_HIDDEN_L.copy()
+    return C.FpPlan(hammer=hammer, contact=None, left="never", custom=custom)
+
+
+FP_LOW = (0.50, -1.05, -0.58)          # the fist below the view (at the hip)
+FP_HANG = (0.15, -0.95, 0.25)          # the hammer hanging from the low fist
+FP_OUT = ((0.62, -0.62, -0.70), (0.75, 0.35, -0.55))  # rising on the far right, the head out to the side
+
+
 def strike(name, base, G, L, Cn, O, T, hammer=True, fp=None, owner="full", extra=(), ease=None, noise=None, fp_spin=0.35,
            end=None):
     w, c, r = TABLE[name]
@@ -372,23 +393,39 @@ def fist_clips():
 # ------------------------------------------------------------------------------------------- draw, electric, wrath
 def power_clips():
     out = []
-    # Draw: the hand finds the grip on the belt, rips the hammer up, its weight drops the arm, into the stance.
+    # Draw: the hand comes out round the hammer, snatches the grip (one tick: no fist through the handle),
+    # pulls the hammer off the hip, rips it up on the contact tick, its weight drops the arm, into the stance.
+    grip = dict(ra="belt", rp=(1, 0, 0.4), hm="belt", hf="belt_face")
+    near = dict(grip, ra="belt+5.0,0.5,0.0")
     out.append(strike("draw", IDLE,
-        G=dict(tor=(6, 12, -6), hip=(0, -2.0, 0), ra=(70, -84, 18.0), rp=(1, 0, 0.4)),
-        L=dict(tor=(7, 14, -10), hip=(0.4, -3.6, 0), ra="belt", rp=(1, 0, 0.4), hm="belt", hf="belt_face"),
-        Cn=dict(tor=(7, 14, -10), hip=(0.4, -3.6, 0), ra="belt", rp=(1, 0, 0.4), hm="belt", hf="belt_face"),
+        G=dict(tor=(5, 10, -4), hip=(0, -1.8, 0), ra=(78, -66, 17.0), rp=(1, 0.2, 0.2), hm="belt", hf="belt_face"),
+        L=dict(tor=(6, 14, -7), hip=(0.4, -2.8, 0), bs=10.0, bp=(3.0, 0.6, 0.4), **grip),
+        Cn=dict(tor=(6, 14, -7), hip=(0.4, -2.8, 0), bs=12.0, bp=(3.4, 1.0, 0.6), **grip),
         O=dict(tor=(4, 8, -2), hip=(0.2, -3.0, 0), ra=(44, -40, 17.0), rp=(1, -0.6, 0.3), hm=(20, 30), la=(-40, -60, 18)),
         T=dict(tor=(8, 10, 0), hip=(0, -3.4, 0), ra=(36, -56, 17.5), rp=(1, -0.8, 0.2), hm=(-4, 10), la=(-10, -40, 17)),
-        end=STANCE_H, fp=C.FpPlan(hammer=True, contact=None)))
-    # Holster: the hammer goes down to the belt, the hand lets go, the arm comes back along the body.
+        extra=((9, key(IDLE, tor=(6, 13, -6), hip=(0.3, -2.4, 0), **near), "linear"),
+               (10, key(IDLE, tor=(6, 14, -7), hip=(0.4, -2.6, 0), bs=4.0, bp=(2.7, 0.4, 0.2), **grip), "easeInOutSine")),
+        end=STANCE_H, fp=fp_track([(0, C.FP_FIST_R, None), (6, (0.52, -0.78, -0.62), None), (10, FP_LOW, None),
+                                   (TABLE["draw"][0], FP_LOW, FP_HANG), (20, FP_OUT[0], FP_OUT[1]),
+                                   (26, (0.46, -0.48, -0.80), (0.05, 0.95, -0.30)), (34, C.FP_HAMMER_R, C.FP_HAMMER_DIR)])))
+    out[-1].hand_span = (TABLE["draw"][0], 10 ** 6)  # ThorActions: the hammer leaves the belt on the contact tick
+    # Holster: the hammer comes down to the hip, the fist sets it in the loop, lets go on the contact tick,
+    # opens off the handle (one tick) and the arm comes back along the body while the hammer settles.
     out.append(strike("holster", STANCE_H,
         G=dict(tor=(6, 12, -4), hip=(0.2, -2.8, 0), ra=(56, -70, 18.5), rp=(1, -0.2, 0.4), hm=(30, -70), hf="belt_face",
                la=(-30, -60, 18)),
-        L=dict(tor=(7, 14, -10), hip=(0.4, -3.6, 0), ra="belt", rp=(1, 0, 0.4), hm="belt", hf="belt_face", la=(-40, -70, 18.5)),
-        Cn=dict(tor=(7, 14, -10), hip=(0.4, -3.8, 0), ra="belt", rp=(1, 0, 0.4), hm="belt", hf="belt_face", la=(-40, -70, 18.5)),
-        O=dict(tor=(6, 10, -6), hip=(0.3, -2.6, 0), ra=(72, -82, 17.5), rp=(1, 0, 0.4), la=(-50, -76, 19)),
+        L=dict(tor=(6, 14, -7), hip=(0.4, -2.8, 0), la=(-40, -70, 18.5), bs=12.0, bp=(3.4, 1.0, 0.6), **grip),
+        Cn=dict(tor=(6, 14, -7), hip=(0.4, -3.0, 0), la=(-40, -70, 18.5), bs=10.0, bp=(3.0, 0.6, 0.4), **grip),
+        O=dict(tor=(6, 10, -6), hip=(0.3, -2.6, 0), ra=(78, -66, 17.0), rp=(1, 0.2, 0.2), la=(-50, -76, 19)),
         T=dict(tor=(5, 4, -1), hip=(0, -1.2, 0), ra=(62, -80, 19.0), la=(-58, -80, 19.4)),
-        end=IDLE, fp=C.FpPlan(hammer=True, contact=None)))
+        extra=((15, key(STANCE_H, tor=(6, 14, -7), hip=(0.4, -3.0, 0), la=(-40, -70, 18.5), bs=6.0, bp=(2.7, 0.4, 0.2), **grip),
+                "linear"),
+               (16, key(STANCE_H, tor=(6, 13, -7), hip=(0.4, -2.9, 0), la=(-44, -72, 18.7), bp=(1.2, 0.2, 0.1), **near),
+                "easeInOutSine")),
+        end=IDLE, fp=fp_track([(0, C.FP_HAMMER_R, C.FP_HAMMER_DIR), (6, FP_OUT[0], FP_OUT[1]), (11, FP_LOW, FP_HANG),
+                               (TABLE["holster"][0], FP_LOW, FP_HANG), (18, FP_LOW, None), (26, (0.52, -0.62, -0.66), None),
+                               (32, C.FP_FIST_R, None)])))
+    out[-1].hand_span = (0, TABLE["holster"][0] - 1)  # back on the belt from the contact tick
     raised = key(STANCE_H, hip=(0, -1.6, 0), tor=(-6, 6, 0), ra=(16, 66, 18.8), rp=(1, 0.2, 0.3), hm=(8, 100), hf=(0, 0),
                  la=(-50, 10, 17.5))
     w, c, r = TABLE["electric_mode"]
@@ -487,13 +524,14 @@ def walk_keys(base, stride, lift, bob, twist, swing, arm_out, hammer):
     ks = []
     poses = [(+1, 0.0), (0, 1.0), (-1, 0.0), (0, -1.0)]  # (right foot fwd sign, right foot passing)
     for i, (sgn, passing) in enumerate(poses):
-        rf = (0.0, lift if passing > 0 else 0.0, stride * sgn)
-        lf = (0.0, lift if passing < 0 else 0.0, -stride * sgn)
+        # Passing: the foot swinging forward is the lifted one (the other is planted under the hips).
+        rf = (0.0, lift if passing < 0 else 0.0, stride * sgn)
+        lf = (0.0, lift if passing > 0 else 0.0, -stride * sgn)
         hip = (0.0, base["hip"][1] - (bob if sgn != 0 else 0.0), base["hip"][2])
         tw = twist * sgn
         ra = (arm_out, -90 - swing * sgn, base["ra"][2])
         la = (-arm_out, -90 + swing * sgn, base["la"][2])
-        it = key(base, rft=rf, lft=lf, hip=hip, tor=(base["tor"][0], tw, 0), ra=ra, la=la)
+        it = key(base, rft=rf, lft=lf, hip=hip, tor=(base["tor"][0], tw, 0), ra=ra, la=la, arc=False)
         if hammer:
             lag = [0.6, 1.0, -0.6, -1.0][i]
             it["hm"] = (10, -84 + 10 * lag)
@@ -529,17 +567,6 @@ def base_clips():
     squat = key(C.BASE, hip=(0, -9.5, 3.0), tor=(34, 0, 0), rft=(2.5, 0, 0), lft=(-2.5, 0, 0), rk=(0.9, 0, 1), lk=(-0.9, 0, 1),
                 ra=(10, -56, 15.0), la=(-10, -56, 15.0), rp=(1, -0.4, 0.3), lp=(-1, -0.4, 0.3))
 
-    def lift_noise(t, it):
-        it = tremble(t, it, 0.7)
-        ph = (t % 14) / 14.0  # an attempt every 0.7 s: a sharp heave, a slow sag
-        heave = math.sin(math.pi * min(1.0, ph / 0.25)) if ph < 0.25 else max(0.0, 1.0 - (ph - 0.25) / 0.5) * 0.0
-        heave = smooth_heave(ph)
-        it["hip"] = tuple(np.asarray(it["hip"], float) + np.array([0, 1.4 * heave, 0]))
-        it["tor"] = tuple(np.asarray(it["tor"], float) + np.array([-4.0 * heave, 0, 0]))
-        return it
-    lift = C.Clip("lift_squat", 42, [(0, squat, "linear"), (42, squat, "linear")], loop=True, hammer=False, noise=lift_noise,
-                  fp=None, owner="lift")
-    out.append(lift)
     # Thor pulls his own planted hammer: from the squat, yank, the hammer comes up in an arc, into the stance.
     held = key(squat, ra=(2, -60, 16.0), hm=(0, -88), hf=(0, 0), la="handle", lp=(-1, -0.4, 0.3))
     out.append(C.Clip("lift_thor", 24, [
@@ -563,6 +590,7 @@ def base_clips():
                                            (8, key(STANCE_H, hip=(-0.2, -3.0, -1.0), tor=(10, -12, 0), lft=(-0.5, 0, 6.0),
                                                    ra=(-6, -40, 18.5), la=(-50, -60, 17)), "linear")],
                       hammer=False, beats={"gather": 0, "settle": 8}, fp=C.FpPlan(hammer=False, contact=None, rest=C.FP_HAMMER_R)))
+    out[-1].away = True  # the hammer has left the hand (ThorRenderer draws the flying hammer)
     # Catch: the hammer slams into the open hand; the arm is thrown back, the knees take it.
     reach = key(STANCE_H, hip=(0, -2.0, 0), tor=(2, 6, 0), ra=(8, 14, 19.8), rp=(1, -0.4, 0.2), hm=(4, 30), hf=(0, 90),
                 la=(-40, -30, 17))
@@ -578,6 +606,7 @@ def base_clips():
     out.append(loop("pull", 20, [(0, brace, "easeInOutSine"), (10, key(brace, tor=(-7, 11, 0), ra=(4, 12, 20.1)), "easeInOutSine"),
                                  (20, brace, "easeInOutSine")], False, C.FpPlan(hammer=False, contact=None),
                     noise=lambda t, it: tremble(t, it, 0.5), owner="pull"))
+    out[-1].away = True
     # Flight: the hammer arm out ahead, nearly still; the wrist nudges the spin (the spin itself is the hammer's).
     legs_h = {"rleg": (-12, 0, 4), "rshin": (18, 0, 0), "lleg": (-4, 0, -4), "lshin": (10, 0, 0)}
     hover = key(C.BASE, tor=(2, 0, 0), ra=(26, 56, 19.8), rp=(1, -0.4, 0.4), hm=(26, 64), hf=(0, 0), la=(-60, -62, 19.0), legs=legs_h)
@@ -597,12 +626,6 @@ def base_clips():
     out.append(loop("flight_sonic", 20, [(0, sonic, "linear"), (20, sonic, "linear")], True, C.FpPlan(hammer=True, contact=None),
                     noise=wrist_nudge(5)))
     return out
-
-
-def smooth_heave(ph):
-    if ph < 0.18:
-        return C.smooth(ph / 0.18)
-    return 1.0 - C.smooth((ph - 0.18) / 0.55)
 
 
 def wrist_nudge(every):
