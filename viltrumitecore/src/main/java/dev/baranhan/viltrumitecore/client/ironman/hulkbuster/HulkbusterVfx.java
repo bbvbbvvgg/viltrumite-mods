@@ -12,7 +12,6 @@ import dev.baranhan.viltrumitecore.client.ironman.IronManView;
 import dev.baranhan.viltrumitecore.client.render.vfx.PixelVfx;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer;
-import dev.baranhan.viltrumitecore.hero.ironman.IronManHulkbusterSounds;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +23,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -34,9 +32,9 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 
 /**
- * Heavy Mark 48 steps: a local step sound and pixel dust at the feet, once per
- * stride (spec §14.3, plan Task 8). The stride cycle comes from the walk distance,
- * so it stays in step with the walk clip. Motes age by client ticks.
+ * Heavy Mark 48 steps: pixel dust at the feet, once per stride (the step sound is the
+ * server's HulkbusterSounds.Cue.STEP: no client duplicate). The stride comes from the walk
+ * distance (HulkbusterClips.STRIDE_UNITS), so it stays in step with the walk clip.
  */
 @EventBusSubscriber(modid = "viltrumitecore", bus = Bus.FORGE, value = {Dist.CLIENT})
 public final class HulkbusterVfx {
@@ -68,7 +66,7 @@ public final class HulkbusterVfx {
             continue;
          }
 
-         int cycle = (int)Math.floor(player.walkAnimation.position() / Math.PI);
+         int cycle = (int)Math.floor(player.walkAnimation.position() / (HulkbusterClips.STRIDE_UNITS / 2.0));
          Integer last = STRIDE.put(player.getId(), cycle);
          boolean big = HulkbusterView.phase(snapshot) == HulkbusterLayer.Phase.ACTIVE;
          if (last != null && last != cycle && big && player.onGround() && player.walkAnimation.speed() > 0.15F) {
@@ -88,7 +86,6 @@ public final class HulkbusterVfx {
    }
 
    private static void step(ClientLevel level, Vec3 feet) {
-      level.playLocalSound(feet.x, feet.y, feet.z, IronManHulkbusterSounds.STEP.get(), SoundSource.PLAYERS, 1.1F, 0.9F + RANDOM.nextFloat() * 0.2F, false);
       for (int i = 0; i < DUST_PER_STEP; i++) {
          double angle = RANDOM.nextDouble() * Math.PI * 2.0;
          double speed = 0.04 + RANDOM.nextDouble() * 0.05;

@@ -785,7 +785,7 @@ public class IronManHero implements HeroDefinition {
          }
       }
 
-      dev.baranhan.viltrumitecore.hero.DamageAbsorb hulk = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.absorb(player, state, source, raw);
+      dev.baranhan.viltrumitecore.hero.DamageAbsorb hulk = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.absorb(self, state, source, raw);
       if (hulk.absorbed()) {
          return hulk;
       }
