@@ -174,21 +174,33 @@ public final class StageLight {
       cone(c, SinclairVfx.pos(player, c.partialTick()), 1.2, in * out * bright);
    }
 
+   /**
+    * A soft follow-spot: fine motes along a narrow cone (faint at the lamp, brighter near the floor) and a lit
+    * pool of small dots. Playtest 2026-10-28: big 0.18-block squares read as a cloud of tiles, not light.
+    */
    private static void cone(SinclairVfx.Ctx c, Vec3 feet, double radius, float strength) {
       if (strength <= 0.01F) {
          return;
       }
 
-      Vec3 top = feet.add(0.0, 9.0, 0.0);
-      int alpha = (int) (34 * strength);
-      for (int i = 0; i < 14; i++) {
-         double a = Math.PI * 2.0 * i / 14.0 + c.seconds() * 0.15;
+      Vec3 top = feet.add(0.0, 7.0, 0.0);
+      int lines = 18;
+      for (int i = 0; i < lines; i++) {
+         double a = Math.PI * 2.0 * i / lines + c.seconds() * 0.15;
          Vec3 base = feet.add(Math.cos(a) * radius, 0.05, Math.sin(a) * radius);
-         c.line(top, base, 0.45F, 0.09F, SinclairPalette.IVORY, alpha);
+         for (int k = 3; k <= 28; k++) {
+            double u = k / 28.0;
+            double drift = Math.sin(c.seconds() * 1.7 + i * 0.9 + k * 0.37) * 0.015;
+            Vec3 p = top.lerp(base, u).add(drift, 0.0, -drift);
+            c.dot(p, 0.012F + 0.014F * (float) u, SinclairPalette.IVORY, (int) ((6 + 34 * u * u) * strength));
+         }
       }
 
-      c.ring(feet.add(0.0, 0.05, 0.0), radius, 30, c.seconds() * 0.3, 0.07F, SinclairPalette.IVORY, (int) (120 * strength));
-      c.dot(feet.add(0.0, 0.06, 0.0), (float) radius * 0.9F, SinclairPalette.IVORY, (int) (30 * strength));
+      for (int ring = 1; ring <= 4; ring++) {
+         double r = radius * ring / 4.0;
+         int count = 8 + ring * 8;
+         c.ring(feet.add(0.0, 0.04, 0.0), r, count, c.seconds() * 0.3 + ring, 0.035F, SinclairPalette.IVORY, (int) ((ring == 4 ? 110 : 45) * strength));
+      }
    }
 
    @Nullable

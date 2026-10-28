@@ -1,6 +1,6 @@
 {
   "hero.viltrumitecore.sinclair": "Великолепный Синклер",
-  "gui.viltrumitecore.race_selection.become_sinclair": "Стать Синклером",
+  "gui.viltrumitecore.race_selection.become_sinclair": "Синклер",
   "ability.viltrumitecore.sinclair_vexing_bolt.name": "Досадная молния",
   "ability.viltrumitecore.sinclair_vexing_bolt.desc": "Бросьте медленную призрачную молнию: урон растёт от 3 до 7 за время полёта, взрыв радиусом 2 блока и −25 % скорости. Повторное нажатие разворачивает её к прицелу. Саванна бросает вторую.",
   "ability.viltrumitecore.sinclair_spectral_assistant.name": "Призрачная ассистентка",

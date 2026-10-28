@@ -46,11 +46,21 @@ public final class SinclairVfx {
    private SinclairVfx() {
    }
 
+   static final double NEAR = 2.0;
+
    /** One batch of camera-facing pixels. */
    record Ctx(BufferBuilder buffer, Vec3 cam, Camera camera, float partialTick, float seconds) {
       void dot(Vec3 at, float size, int rgb, int alpha) {
          if (alpha > 2) {
-            PixelVfx.billboardPixel(this.buffer, this.cam, this.camera, at, size, SinclairPalette.r(rgb), SinclairPalette.g(rgb), SinclairPalette.b(rgb), Math.min(255, alpha));
+            // Near the lens (first-person wand/palm anchors) a pixel keeps the apparent size it has at
+            // NEAR blocks instead of filling the screen (playtest 2026-10-28, shots 06-09).
+            double d = at.distanceTo(this.cam);
+            if (d < 0.2) {
+               return;
+            }
+
+            float s = d < NEAR ? (float) (size * d / NEAR) : size;
+            PixelVfx.billboardPixel(this.buffer, this.cam, this.camera, at, s, SinclairPalette.r(rgb), SinclairPalette.g(rgb), SinclairPalette.b(rgb), Math.min(255, alpha));
          }
       }
 
@@ -355,7 +365,15 @@ public final class SinclairVfx {
                   float fade = 1.0F - b / 10.0F;
                   c.ring(at, ActScript.NOVA_RADIUS * Math.min(1.0, b / 5.0), 64, 0.0, 0.1F, color, (int) (230 * fade));
                   c.ring(at.add(0.0, 0.3, 0.0), ActScript.NOVA_RADIUS * Math.min(1.0, b / 7.0), 48, 0.3, 0.07F, SinclairPalette.GOLD, (int) (200 * fade));
-                  c.dot(at, 1.4F * fade, SinclairPalette.IVORY, (int) (120 * fade));
+                  // Burst flash as a starburst of fine motes (a single big billboard read as a flat square in playtest).
+                  double reach = 0.4 + 1.6 * Math.min(1.0, b / 4.0);
+                  for (int i = 0; i < 16; i++) {
+                     double a = i * (Math.PI * 2.0 / 16.0) + b * 0.15;
+                     for (int j = 1; j <= 3; j++) {
+                        double r = reach * j / 3.0;
+                        c.dot(at.add(Math.cos(a) * r, 0.5 + Math.sin(a * 2.0) * 0.2 * j, Math.sin(a) * r), 0.07F, SinclairPalette.IVORY, (int) (190 * fade));
+                     }
+                  }
                }
             }
          }
