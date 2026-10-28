@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.HeroTargets;
@@ -24,8 +26,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -339,7 +339,7 @@ public class MjolnirEntity extends Entity {
       level.sendParticles(ParticleTypes.ELECTRIC_SPARK, from.x, from.y, from.z, 12, 0.3, 1.2, 0.3, 0.2);
       level.sendParticles(ParticleTypes.END_ROD, from.x, from.y + 1.0, from.z, 3, 0.1, 1.5, 0.1, 0.01);
       if (this.tickCount % MjolnirTuning.FALL_THUNDER_GAP == 1) {
-         level.playSound(null, from.x, from.y, from.z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 8.0F, 0.6F);
+         ThorSounds.playAt(level, from, ThorCue.FIRST_FALL_TRAIL);
       }
 
       LivingEntity struck = this.firstVictim(from, to);
@@ -449,8 +449,7 @@ public class MjolnirEntity extends Entity {
          this.setDeltaMovement(Vec3.ZERO);
          BlockState state = level.getBlockState(block.getBlockPos());
          level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), at.x, at.y, at.z, 24, 0.2, 0.2, 0.2, 0.15);
-         level.playSound(null, at.x, at.y, at.z, SoundEvents.TRIDENT_HIT_GROUND, SoundSource.PLAYERS, 1.6F, 0.6F);
-         level.playSound(null, at.x, at.y, at.z, SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6F, 0.6F);
+         ThorSounds.playAt(level, at, ThorCue.STICK);
          MjolnirWorld.embed(server, record, this);
          this.syncFrom(record);
          return;
@@ -480,7 +479,7 @@ public class MjolnirEntity extends Entity {
          BlockState state = level.getBlockState(in);
          level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state.isAir() ? level.getBlockState(in.below()) : state), from.x, from.y,
             from.z, 30, 0.3, 0.3, 0.3, 0.25);
-         level.playSound(null, from.x, from.y, from.z, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.PLAYERS, 1.0F, 0.6F);
+         ThorSounds.playAt(level, from, ThorCue.RIP);
          this.move(from.add(0.0, MjolnirTuning.RIP_JERK, 0.0));
          return;
       }
@@ -521,7 +520,7 @@ public class MjolnirEntity extends Entity {
       double impact = -velocity.y;
       BlockState state = level.getBlockState(ground.getBlockPos());
       level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), at.x, at.y, at.z, 20 + (int)(impact * 20.0), 0.4, 0.1, 0.4, 0.15);
-      level.playSound(null, at.x, at.y, at.z, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.8F, 0.5F);
+      ThorSounds.playAt(level, at, ThorCue.LAND);
       if (impact > 1.0) {
          MjolnirFx.shockwave(level, at, (float)Math.min(1.0, impact / 2.5), state, 3.0F);
       }
@@ -645,7 +644,7 @@ public class MjolnirEntity extends Entity {
 
       Vec3 at = victim.getBoundingBox().getCenter();
       ((ServerLevel)this.level()).sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 16, 0.3, 0.4, 0.3, 0.3);
-      this.level().playSound(null, at.x, at.y, at.z, SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0F, 0.6F);
+      ThorSounds.playAt((ServerLevel)this.level(), at, ThorCue.THROWN_HIT);
    }
 
    /** One break: allowed blocks only (HeroDestruction), one universal heavy sound at most every few ticks (№161). */
@@ -658,7 +657,7 @@ public class MjolnirEntity extends Entity {
       long now = level.getGameTime();
       if (now - this.lastBreakSound >= MjolnirTuning.BREAK_SOUND_GAP) {
          this.lastBreakSound = now;
-         level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 0.7F, 1.5F);
+         ThorSounds.playAt(level, Vec3.atCenterOf(pos), ThorCue.BLOCK_SMASH);
       }
 
       return true;
