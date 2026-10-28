@@ -459,8 +459,7 @@ public final class HulkbusterVfx {
          add(new Mote(at, v, 20 + RANDOM.nextInt(12), 0.035F, 0.03F, mix(0x9AA0A6, 0xD5D9DD, RANDOM.nextFloat()), 255, false, 0.035F, 0.97F));
       }
 
-      add(new Mote(at, Vec3.ZERO, 3, 0.7F * power, 0.2F, 0xFFFFFF, 255, true, 0.0F, 1.0F));
-      add(new Mote(at, Vec3.ZERO, 6, 0.9F * power, 1.6F * power, 0xFFC56B, 120, true, 0.0F, 1.0F));
+      glowBurst(at, 0.35 * power, 0xFFFFFF, 0xFFC56B, Math.round(26 * power));
       ring(at, 0.2, 0.2 * power, 28, 7, 0xFFF0C8, 200, true);
       CameraShake.addAt(at, 0.5F * power, 20.0);
    }
@@ -496,7 +495,7 @@ public final class HulkbusterVfx {
                Vec3 from = palm.add(gauss(1.0), gauss(1.0), gauss(1.0));
                add(new Mote(from, palm.subtract(from).scale(0.12), 8, 0.05F, 0.02F, 0x9FE6FF, 230, true, 0.0F, 1.0F));
             }
-            add(new Mote(palm, Vec3.ZERO, 2, 0.25F + RANDOM.nextFloat() * 0.1F, 0.25F, 0xBDF1FF, 220, true, 0.0F, 1.0F));
+            glowBurst(palm, 0.12, 0xFFFFFF, 0xBDF1FF, 5);
          }
          return;
       }
@@ -517,12 +516,12 @@ public final class HulkbusterVfx {
             add(new Mote(p.add(gauss(0.08), gauss(0.08), gauss(0.08)), look.scale(0.05), 4, 0.32F, 0.2F, 0x56CFFF, 120, true, 0.0F, 1.0F));
          }
 
-         add(new Mote(palm, Vec3.ZERO, 2, 0.55F, 0.4F, 0xD8F6FF, 255, true, 0.0F, 1.0F));
+         glowBurst(palm, 0.25, 0xFFFFFF, 0xD8F6FF, 10);
          for (int i = 0; i < 6; i++) {
             add(new Mote(stop, new Vec3(gauss(0.2), 0.05 + RANDOM.nextDouble() * 0.2, gauss(0.2)), 10, 0.05F, 0.01F, 0xBDF1FF, 255, true, 0.02F,
                0.92F));
          }
-         add(new Mote(stop, Vec3.ZERO, 3, 0.8F, 0.4F, 0x8FE0FF, 180, true, 0.0F, 1.0F));
+         glowBurst(stop, 0.4, 0xD8F6FF, 0x8FE0FF, 14);
       }
 
       CameraShake.addAt(player.position(), 0.25F, 10.0);
@@ -596,7 +595,7 @@ public final class HulkbusterVfx {
          }
 
          if (RANDOM.nextFloat() < 0.35F) {
-            add(new Mote(at(player, 0.0, 2.25, 0.62), Vec3.ZERO, 2, 0.35F, 0.3F, 0x9FE6FF, 200, true, 0.0F, 1.0F));
+            glowBurst(at(player, 0.0, 2.25, 0.62), 0.12, 0xFFFFFF, 0x9FE6FF, 6);
          }
 
          if (RANDOM.nextFloat() < 0.3F) {
@@ -684,6 +683,20 @@ public final class HulkbusterVfx {
    }
 
    // ---------------------------------------------------------------- helpers
+
+   /**
+    * A soft flash: a cluster of small additive motes that bloom outward and fade, never one big flat
+    * square (the pixel pipeline draws hard-edged quads; in game a single 1.4-block square read as a cheap
+    * white panel, playtest 2026-10-28).
+    */
+   private static void glowBurst(Vec3 at, double radius, int core, int rim, int count) {
+      for (int i = 0; i < count; i++) {
+         Vec3 dir = new Vec3(gauss(1.0), gauss(1.0), gauss(1.0)).normalize();
+         double r = radius * Math.sqrt(RANDOM.nextDouble());
+         add(new Mote(at.add(dir.scale(r * 0.3)), dir.scale(r * 0.25), 3 + RANDOM.nextInt(3), 0.07F + 0.06F * RANDOM.nextFloat(), 0.02F,
+            i % 3 == 0 ? core : rim, 230, true, 0.0F, 0.8F));
+      }
+   }
 
    /** A flat ring of motes expanding outward (count 0 = a static outline of radius {@code radius}). */
    private static void ring(Vec3 c, double radius, double speed, int count, int life, int rgb, int a, boolean glow) {

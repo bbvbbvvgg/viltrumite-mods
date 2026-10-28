@@ -80,12 +80,18 @@ public final class HulkbusterHud {
          row = bar(graphics, font, Component.translatable(GRIP), x, row, grip, grip < 0.3F ? 0xFFFF4030 : GOLD);
       }
 
+      // The state column starts after the longest name (long locales: "Heavy repulsors" ran into "ready").
+      int stateX = x + WIDTH + 4;
+      for (HulkMove ability : ABILITIES) {
+         stateX = Math.max(stateX, x + font.width(Component.translatable(ability.translationKey())) + 6);
+      }
+
       for (int i = 0; i < ABILITIES.length; i++) {
          int ticks = HulkbusterView.extra(snapshot, COOLDOWNS[i]);
          Component name = Component.translatable(ABILITIES[i].translationKey());
          Component state2 = ticks > 0 ? Component.literal((ticks + 19) / 20 + "s") : Component.translatable(READY);
          graphics.drawString(font, name, x, row, ticks > 0 ? 0x808080 : 0xFFE0A0, true);
-         graphics.drawString(font, state2, x + WIDTH + 4, row, ticks > 0 ? 0xA0A0A0 : 0x80FF80, true);
+         graphics.drawString(font, state2, stateX, row, ticks > 0 ? 0xA0A0A0 : 0x80FF80, true);
          row += 9;
       }
 
