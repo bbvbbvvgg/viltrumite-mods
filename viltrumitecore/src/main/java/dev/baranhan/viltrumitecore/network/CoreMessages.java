@@ -78,11 +78,21 @@ public class CoreMessages {
 
    static boolean acceptsThorMoves(String side, String local, String remote) {
       boolean ok = dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves.compatible(local, remote);
-      if (!ok) {
+      if (!ok && isProbe(remote)) {
+         // Forge asks every channel about ABSENT / ACCEPTVANILLA for each status ping
+         // (server: every 5 s, client: server list). That is a probe, not a peer.
+         LOGGER.debug("Thor move table: {} probe {} refused", side, remote);
+      } else if (!ok) {
          LOGGER.error("Thor move table mismatch: local {} vs {} {}; client and server must run the same viltrumitecore build", local, side, remote);
       }
 
       return ok;
+   }
+
+   /** Forge's placeholder versions for "no channel" and "vanilla peer" (status pings, server list). */
+   static boolean isProbe(String remote) {
+      return net.minecraftforge.network.NetworkRegistry.ABSENT.version().equals(remote)
+         || net.minecraftforge.network.NetworkRegistry.ACCEPTVANILLA.equals(remote);
    }
 
    public static void register() {
