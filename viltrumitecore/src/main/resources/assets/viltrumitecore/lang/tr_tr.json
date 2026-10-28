@@ -498,5 +498,14 @@
   "ability.viltrumitecore.reinhard_diagonal_world_cut.name": "Diagonal World Cut",
   "ability.viltrumitecore.reinhard_diagonal_world_cut.desc": "Reid drawn: a tilted three-dimensional rupture cuts air, mountains and buildings. Shares the two-cut limit with Ground World Cut.",
   "ability.viltrumitecore.reinhard_lethal_chop.desc": "Reid must be fully sheathed. A decisive lethal hand chop; unavailable while drawing, drawn or sheathing.",
-  "hud.viltrumitecore.reinhard.mouse": "LMB: attack   RMB: grab / throw"
+  "hud.viltrumitecore.reinhard.mouse": "LMB: attack   RMB: grab / throw",
+  "subtitle.viltrumitecore.speaker.reinhard": "Reinhard",
+  "subtitle.viltrumitecore.reinhard.world_cut": "Kılıcım dünyayı bile ikiye bölebilir.\nNe mesafe ne de uzay\nbu darbeye engel olabilir.",
+  "subtitle.viltrumitecore.preview.short": "Kısa bir replik: bir ya da iki satır, bir bakışta okunur.",
+  "subtitle.viltrumitecore.preview.long.1": "Bu, uzun bir kahraman repliğinin önizlemesidir. Uzun metin cümle sonlarında kısa sayfalara bölünür, böylece panel asla fazla büyümez. Her sayfa rahatça okunacak kadar ekranda kalır ve sonraki yumuşakça belirir.",
+  "subtitle.viltrumitecore.preview.long.2": "Replik bittiğinde panel sessizce kaybolur.",
+  "commands.viltrumitecore.herolines.unknown": "Bilinmeyen kahraman repliği: %s",
+  "commands.viltrumitecore.herolines.skipped": "Kahraman repliği oynatılmadı (zaten oynuyor, bekleme süresinde veya konuşmacı konuşamıyor): %s",
+  "commands.viltrumitecore.herolines.played": "Kahraman repliği oynatıldı: %s",
+  "commands.viltrumitecore.herolines.stopped": "Kahraman replikleri durduruldu"
 }
