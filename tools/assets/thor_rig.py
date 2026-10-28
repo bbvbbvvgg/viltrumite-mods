@@ -1,7 +1,7 @@
 """Thor rework R2b: CPU pose of Thor's geo models, exactly in AnimRenderer's order.
 
 Mirror of the game path (BakedGeoModel parse + AnimationController.seek + AnimRenderer.renderBone)
-and of the test-side ThorRig / ThorIntersection, used by make_thor_clips.py to author clips by IK
+and of the test-side ThorClipRig / ThorIntersection, used by make_thor_clips.py to author clips by IK
 and to check them before the Java tests run. Internal frame = BakedGeoModel's: Bedrock x mirrored
 (+x = Thor's right), y up, front -Z; lengths in px (1/16 block).
 
