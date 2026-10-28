@@ -26,6 +26,7 @@ public class ClientModEvents {
       event.registerEntityRenderer(ViltrumiteEntities.REPULSOR_BLAST.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
       event.registerEntityRenderer(ViltrumiteEntities.MICRO_MISSILE.get(), dev.baranhan.viltrumitecore.client.ironman.MissileRenderer::new);
       event.registerEntityRenderer(ViltrumiteEntities.FLARE.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
+      event.registerEntityRenderer(ViltrumiteEntities.DIO_KNIFE.get(), dev.baranhan.viltrumitecore.client.dio.DioKnifeRenderer::new);
       dev.baranhan.viltrumitecore.client.ironman.mark.MarkVisuals.registerRenderers(event);
       dev.baranhan.viltrumitecore.client.ironman.mark.sig.SignatureVisuals.registerRenderers(event);
    }
