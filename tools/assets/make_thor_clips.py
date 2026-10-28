@@ -525,8 +525,9 @@ def walk_keys(base, stride, lift, bob, twist, swing, arm_out, hammer):
     poses = [(+1, 0.0), (0, 1.0), (-1, 0.0), (0, -1.0)]  # (right foot fwd sign, right foot passing)
     for i, (sgn, passing) in enumerate(poses):
         # Passing: the foot swinging forward is the lifted one (the other is planted under the hips).
-        rf = (0.0, lift if passing < 0 else 0.0, stride * sgn)
-        lf = (0.0, lift if passing > 0 else 0.0, -stride * sgn)
+        # The lifted foot passes a little behind the hips (the heel kicks up, the thigh stays low).
+        rf = (0.0, lift if passing < 0 else 0.0, stride * sgn - (0.35 * stride if passing < 0 else 0.0))
+        lf = (0.0, lift if passing > 0 else 0.0, -stride * sgn - (0.35 * stride if passing > 0 else 0.0))
         hip = (0.0, base["hip"][1] - (bob if sgn != 0 else 0.0), base["hip"][2])
         tw = twist * sgn
         ra = (arm_out, -90 - swing * sgn, base["ra"][2])
@@ -534,7 +535,7 @@ def walk_keys(base, stride, lift, bob, twist, swing, arm_out, hammer):
         it = key(base, rft=rf, lft=lf, hip=hip, tor=(base["tor"][0], tw, 0), ra=ra, la=la, arc=False)
         if hammer:
             lag = [0.6, 1.0, -0.6, -1.0][i]
-            it["hm"] = (10, -84 + 10 * lag)
+            it["hm"] = (18, -84 + 10 * lag)
         ks.append((i * 5, it, "linear"))
     ks.append((20, ks[0][1], "linear"))
     return ks
@@ -551,12 +552,12 @@ def base_clips():
     walk = key(IDLE, hip=(0, -0.8, 0), tor=(5, 0, 0))
     out.append(loop("walk", 20, walk_keys(walk, 6.5, 3.0, 1.0, 4.0, 16.0, 14.0, False), False, fp_loop(False, bob=0.014, sway=0.008, cycles=1)))
     walk_h = key(IDLE_H, hip=(0, -0.8, 0), tor=(5, 0, 0))
-    out.append(loop("walk_hammer", 20, walk_keys(walk_h, 6.5, 3.0, 1.0, 4.0, 9.0, 16.0, True), True,
+    out.append(loop("walk_hammer", 20, walk_keys(walk_h, 6.5, 3.0, 1.0, 4.0, 9.0, 24.0, True), True,
                     fp_loop(True, bob=0.014, sway=0.008, cycles=1)))
-    run = key(IDLE, hip=(0, -1.6, -0.8), tor=(14, 0, 0), ra=(20, -60, 13.0), la=(-20, -60, 13.0))
+    run = key(IDLE, hip=(0, -1.3, -0.6), tor=(11, 0, 0), ra=(20, -60, 13.0), la=(-20, -60, 13.0))
     rk = walk_keys(run, 9.0, 5.0, 1.4, 6.0, 34.0, 12.0, False)
     out.append(loop("run", 20, rk, False, fp_loop(False, bob=0.03, sway=0.014, cycles=1)))
-    run_h = key(IDLE_H, hip=(0, -1.6, -0.8), tor=(14, 0, 0), la=(-20, -60, 13.0))
+    run_h = key(IDLE_H, hip=(0, -1.3, -0.6), tor=(11, 0, 0), la=(-20, -60, 13.0))
     rkh = walk_keys(run_h, 9.0, 5.0, 1.4, 6.0, 12.0, 30.0, True)
     for _, it, _ in rkh:
         it["ra"] = (40, it["ra"][1] + 24, 18.5)
@@ -641,8 +642,29 @@ def wrist_nudge(every):
     return f
 
 
+WIDEN_FROM = 2.5  # px of squat: past it the feet step wider (the belly goes down between the knees)
+WIDEN_RATE = 1.4  # px of width per px of squat, each foot
+WIDEN_MAX = 5.5
+
+
+def widen(clip):
+    """A heavy, big-bellied body squats wide: every key deeper than WIDEN_FROM puts the feet further apart
+    (the steps between keys come from the foot arcs); flight keys (free legs) are left alone."""
+    keys = []
+    for t, it, e in clip.keys:
+        if not it.get("legs"):
+            w = min(WIDEN_MAX, max(0.0, WIDEN_RATE * (-float(it["hip"][1]) - WIDEN_FROM)))
+            if w > 0.0:
+                it = dict(it)
+                it["rft"] = tuple(np.asarray(it["rft"], float) + np.array([w, 0.0, 0.0]))
+                it["lft"] = tuple(np.asarray(it["lft"], float) - np.array([w, 0.0, 0.0]))
+        keys.append((t, it, e))
+    clip.keys = keys
+    return clip
+
+
 def all_clips():
-    return base_clips() + power_clips() + hammer_clips() + fist_clips()
+    return [widen(c) for c in base_clips() + power_clips() + hammer_clips() + fist_clips()]
 
 
 if __name__ == "__main__":

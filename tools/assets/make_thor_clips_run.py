@@ -131,7 +131,8 @@ def process(index):
             r, l = M.feet(pose)
             if min(r, l) < -1.0 or min(r, l) > 1.0:
                 ground.append((t, round(float(r), 2), round(float(l), 2)))
-    rep = {"length": clip.length, "misses": {k: round(v, 2) for k, v in miss.items()},
+    need = {k: round(max(float(getattr(p, "need", {}).get(k, 0.0)) for _, p, _ in tp), 1) for k in ("kr", "kl", "hu", "lr", "bsr", "bsp")}
+    rep = {"length": clip.length, "misses": {k: round(v, 2) for k, v in miss.items()}, "need": need,
            "hits": [(t, h[0], h[1], round(float(h[2]), 2)) for t, h in worst], "ground": ground}
     bones, pos = OWNERS[clip.owner]
     keep = sorted(set((clip.beats or {}).values())) if clip.beats else []
@@ -180,8 +181,9 @@ def process(index):
     for k, v in miss.items():
         if v > 0.6:
             problems.append("%s: %s misses its target by %.2f px" % (clip.name, k, v))
-    line = "%-26s %3dt hits:%-3d miss:%s fp:%s" % (clip.name, clip.length, len(worst),
-        {k: round(float(v), 1) for k, v in miss.items() if v > 0.3}, {k: rep.get(k) for k in ("fp_near", "fp_cut_ticks", "fp_cover_run")})
+    line = "%-26s %3dt hits:%-3d miss:%s fp:%s need:%s" % (clip.name, clip.length, len(worst),
+        {k: round(float(v), 1) for k, v in miss.items() if v > 0.3}, {k: rep.get(k) for k in ("fp_near", "fp_cut_ticks", "fp_cover_run")},
+        {k: v for k, v in need.items() if v})
     return clip.name, anims, rep, problems, line
 
 def write(anims):
