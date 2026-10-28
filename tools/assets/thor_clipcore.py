@@ -12,6 +12,7 @@ import math
 import numpy as np
 
 import thor_clipkit as K
+import thor_mesh as M
 import thor_rig as R
 
 TICK = 1.0 / 20.0
@@ -23,10 +24,11 @@ FEET = {"r": K.FOOT["r"] + np.array([1.5, 0.0, 0.0]), "l": K.FOOT["l"] + np.arra
 POMMEL_BONES = ("bottom", "cube_10", "cube_11", "cube_12", "cube_13", "cube_18", "cube_19", "cube_20", "cube_21",
                 "cube_26", "cube_27", "cube_28", "cube_29", "cube_30", "cube_31", "handle", "handle_plains")
 TP_BONES = ("body", "right_arm", "right_forearm", "right_hand", "mjolnir_grip", "left_arm", "left_forearm", "left_hand",
-            "right_leg", "right_shin", "left_leg", "left_shin")
+            "right_leg", "right_shin", "left_leg", "left_shin", "mjolnir_belt")
 UPPER_BONES = ("body", "right_arm", "right_forearm", "right_hand", "mjolnir_grip", "left_arm", "left_forearm", "left_hand")
-POS_BONES = ("body", "right_leg", "left_leg")
+POS_BONES = ("body", "right_leg", "left_leg", "mjolnir_belt")
 FP_BONES = ("armorRightArm", "right_forearm", "right_hand", "mjolnir_grip", "armorLeftArm", "left_forearm", "left_hand")
+FP_LEFT_BONES = ("armorLeftArm", "left_forearm", "left_hand")
 FP_POS_BONES = ("armorRightArm", "armorLeftArm")
 
 BELT = R.Model(K.GEO + "/mjolnir_belt.geo.json")
@@ -66,6 +68,7 @@ BASE = {
     "ra": (40.0, -82.0, 19.5), "rp": (1.0, -0.5, 0.6), "hm": None, "hf": None, "hr": 0.0, "rw": (0.0, 0.0, 0.0),
     "la": (-40.0, -82.0, 19.5), "lp": (-1.0, -0.5, 0.6), "lw": (0.0, 0.0, 0.0),
     "add": None,
+    "bs": 0.0, "bp": (0.0, 0.0, 0.0),
 }
 
 
@@ -100,6 +103,8 @@ def interpolate(a, b, f, lift=3.0):
         out[k] = _lerp(a.get(k), b.get(k), f)
     # A foot that travels lifts off the ground on the way (an arc, not a slide).
     for foot in ("rft", "lft"):
+        if a.get("arc") is False or b.get("arc") is False:
+            break  # the keys carry the steps themselves (walk / run cycles)
         fa, fb = np.asarray(a[foot], float), np.asarray(b[foot], float)
         d = math.hypot(fb[0] - fa[0], fb[2] - fa[2])
         if d > 2.0:
@@ -117,6 +122,10 @@ def _target(spec, pose, shoulder, Rt, ham_now=None):
         return a + (b - a) * spec[3]
     if spec == "belt":
         return (pose.pivot_frame("mjolnir_belt") @ np.append(BELT_GRIP, 1))[:3]
+    if isinstance(spec, str) and spec.startswith("belt+"):
+        # Next to the belt grip: an offset (right, up, forward px) in the torso frame.
+        off = P(*[float(v) for v in spec[5:].split(",")])
+        return (pose.pivot_frame("mjolnir_belt") @ np.append(BELT_GRIP, 1))[:3] + Rt @ off
     if isinstance(spec, str) and spec.startswith("handle"):
         off = float(spec.split(":")[1]) if ":" in spec else K.HANDLE_SPACING
         return pose.point("mjolnir_grip") - K.hammer_axis(pose) * off
@@ -196,13 +205,22 @@ CORE = ("body", "belly", "beard", "head", "right_leg", "left_leg", "right_shin",
 ARM_PARTS = {"r": ("right_arm", "right_forearm", "right_hand"), "l": ("left_arm", "left_forearm", "left_hand")}
 
 
-def clearance(pose, hammer):
-    """Per arm, the push (px, model space) that would clear its cubes (and Mjölnir for the right) off the core."""
+def clearance(pose, hammer, belt=False):
+    """Per arm, the push (px, model space) that would clear its cubes (and Mjölnir for the right) off the core
+    (and off the belt hammer when it hangs there)."""
     global RULES
     if RULES is None:
         RULES = tp_rules()
     bs = K.tp_boxes(pose, hammer)
     out = {"r": np.zeros(3), "l": np.zeros(3)}
+    if belt:
+        # The fist or forearm in the hanging belt hammer (mesh depth, coarse grid): out, away from its centre.
+        d = M.belt_depth(pose, BELT, fixed=("right_forearm", "right_hand"), step=0.7)
+        if d > 0.0:
+            centre = np.mean([b.center for b in belt_boxes(pose)], axis=0)
+            n = pose.point("right_hand") - centre
+            n[1] = 0.0
+            out["r"] += (d + 0.3) * unit(n)
     for i, j in RULES.pairs(bs):
         a, b = bs[i], bs[j]
         for x, y in ((a, b), (b, a)):
@@ -225,6 +243,19 @@ def clearance(pose, hammer):
     return out
 
 
+def sole(pose, shin):
+    """Lowest model-space y (px) of a shin's cubes (the foot)."""
+    f = pose.frame(shin)
+    low = math.inf
+    for lo, hi, cp, cr in pose.model.bones[shin].cubes:
+        m = f if not np.any(cr != 0) else f @ R.trans(cp) @ R.mat4(R.rzyx(cr)) @ R.trans(-cp)
+        for x in (lo[0], hi[0]):
+            for y in (lo[1], hi[1]):
+                for z in (lo[2], hi[2]):
+                    low = min(low, float(m[1, :3] @ np.array([x, y, z]) + m[1, 3]))
+    return low
+
+
 def orbit(S, target, push):
     """Moves a hand target by push across the shoulder's sphere (the reach stays)."""
     v = target - S
@@ -234,7 +265,32 @@ def orbit(S, target, push):
     return S + r * unit(v + perp)
 
 
-def solve(it, ref=None, hammer=False):
+def belt_boxes(pose):
+    """The belt hammer (MJOLNIR_BELT geo) on the mjolnir_belt locator, as ThorRenderer draws it."""
+    root = "mjolnir"
+    frame = pose.pivot_frame("mjolnir_belt") @ R.trans(-BELT.bones[root].pivot)
+    return R.boxes("belt", R.Pose(BELT), frame, BELT.subtree(root))
+
+
+BELT_SWAY_MAX = 40.0  # deg: the belt hammer swings out at most this far
+BELT_SWAY_STEP = 2.0
+BELT_SWAY_DECAY = 0.75  # per tick: a pushed hammer falls back, it does not snap back
+
+
+def belt_sway(pose, start=0.0):
+    """Rolls the belt locator outward (about the torso's forward axis) just enough that the thigh and the
+    shin do not go through the hanging hammer: the hammer is pushed by the leg, then swings back."""
+    b = pose.model.bones["mjolnir_belt"]
+    ang = max(0.0, start)
+    while True:
+        pose.rot["mjolnir_belt"] = b.init + np.array([0.0, 0.0, math.radians(ang)])
+        pose.touch()
+        if ang >= BELT_SWAY_MAX or M.belt_depth(pose, BELT) <= 0.05:
+            return ang
+        ang = min(BELT_SWAY_MAX, ang + BELT_SWAY_STEP)
+
+
+def solve(it, ref=None, hammer=False, belt=False):
     """Solves one intent; returns (pose, misses)."""
     pose = R.Pose(K.BODY)
     if ref is not None:
@@ -260,6 +316,25 @@ def solve(it, ref=None, hammer=False):
         foot = Rs @ (FEET[s] + P(*it[s + "ft"]))
         pole = Rs @ unit(P(*it[s + "k"]))
         misses[s + "foot"] = K.solve_leg(pose, chain, foot, pole)
+        # No ankle: a bent knee tilts the foot, so the lowest corner of the sole (not the ankle) goes on
+        # the planned height (the ground, or the step's arc).
+        want = foot[1] - FEET[s][1]
+        for _ in range(3):
+            low = sole(pose, chain.lower)
+            if abs(low - want) < 0.05:
+                break
+            foot = foot + np.array([0.0, want - low, 0.0])
+            K.solve_leg(pose, chain, foot, pole)
+    if belt or it.get("ra") == "belt" or (isinstance(it.get("ra"), tuple) and it["ra"] and it["ra"][0] == "mix"):
+        prev = 0.0
+        if ref is not None:
+            prev = math.degrees(float(ref.rot["mjolnir_belt"][2] - pose.model.bones["mjolnir_belt"].init[2]))
+        # "bp" / "bs": the hand lifts the hammer off the hip on the belt (draw / holster grab): an offset
+        # (right, up, forward px in the torso frame) and an outward roll (degrees).
+        bp = P(*(it.get("bp") or (0.0, 0.0, 0.0)))
+        pose.pos["mjolnir_belt"] = np.array([-bp[0], bp[1], bp[2]])
+        pose.touch()
+        belt_sway(pose, max(prev * BELT_SWAY_DECAY, float(it.get("bs") or 0.0)))
     T = pose.frame("body")
     Rt = T[:3, :3]
     held = _dir(it["hm"], pose, Rt)
@@ -295,7 +370,7 @@ def solve(it, ref=None, hammer=False):
     # Clearance: a hand, forearm or the hammer that would touch the body swings out round its shoulder.
     for _ in range(CLEAR_STEPS):
         moved = False
-        pushes = clearance(pose, hammer)
+        pushes = clearance(pose, hammer, belt)
         if _free(it["ra"]) and np.linalg.norm(pushes["r"]) > 1e-3:
             target = orbit(pose.point("right_arm"), target, pushes["r"])
             right(target)
@@ -390,6 +465,10 @@ class Clip:
             return False
         return span is None or span[0] <= t <= span[1]
 
+    def belt_at(self, t):
+        """Is Mjölnir on the belt at tick t (not in the fist and not away: thrown, flying back)?"""
+        return not self.hammer_at(t) and not getattr(self, "away", False)
+
     def intent(self, t):
         ks = self.keys
         if t <= ks[0][0]:
@@ -415,7 +494,7 @@ def bake_tp(clip, step=1):
     out = []
     ref = None
     for t in range(0, clip.length + 1, step):
-        pose, misses = solve(clip.intent(t), ref, clip.hammer_at(t))
+        pose, misses = solve(clip.intent(t), ref, clip.hammer_at(t), clip.belt_at(t))
         out.append((t, pose, misses))
         ref = pose
     return out
@@ -583,7 +662,9 @@ def fp_bake(clip, tp_samples, plan, proxy_samples=None):
     g0 = src[0][1].point("mjolnir_grip")
     l0 = src[0][1].point("left_grip")
     uses_left = plan.left == "always" or (plan.left == "auto" and max(
-        np.linalg.norm(p.point("left_grip") - l0) for _, p, _ in src) > 4.0)
+        np.linalg.norm(p.point("left_grip") - l0) for _, p, _ in src) > 4.0) or plan.hold_left is not None
+    # The camera left arm is drawn only by clips that move it (ThorFirstPerson: it keys armorLeftArm).
+    clip.fp_left = bool(uses_left)
     out = []
     prev = None
     targets = []
@@ -685,9 +766,9 @@ def near_cut(box):
     return True
 
 
-def check_fp(pose, hammer):
+def check_fp(pose, hammer, left=True):
     """(nearest corner z: info only, near plane visibly cuts a cube, the centre ray is covered)."""
-    boxes = K.fp_boxes(pose, hammer)
+    boxes = K.fp_boxes(pose, hammer, ("r", "l") if left else ("r",))
     near = max(c[2] for bx in boxes for c in bx.corners())
     cut = any(near_cut(bx) for bx in boxes)
     covered = any(ray_hits(bx) for bx in boxes)

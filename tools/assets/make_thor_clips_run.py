@@ -10,6 +10,7 @@ import numpy as np
 
 import thor_clipcore as C
 import thor_clipkit as K
+import thor_mesh as M
 
 OUT = os.path.join(K.RES, "animations/thor")
 FILE_LIMIT = 60000  # JSON-escaped bytes: one file per push request (65536 bytes)
@@ -117,15 +118,21 @@ def process(index):
     anims, problems = {}, []
     tp = C.bake_tp(clip)
     worst = []
+    ground = []
     miss = {}
     for t, pose, m in tp:
         for k, v in m.items():
             miss[k] = max(miss.get(k, 0.0), v)
-        hits = C.check_tp(pose, clip.hammer)
+        hits = M.scan(pose, K.HAMMER if clip.hammer_at(t) else None, belt_model=C.BELT if clip.belt_at(t) else None,
+                   belt_grip=C.BELT_GRIP)
         if hits:
             worst.append((t, hits[0]))
+        if not getattr(clip, "airborne", False) and not any(k[1].get("legs") for k in clip.keys):
+            r, l = M.feet(pose)
+            if min(r, l) < -1.0 or min(r, l) > 1.0:
+                ground.append((t, round(float(r), 2), round(float(l), 2)))
     rep = {"length": clip.length, "misses": {k: round(v, 2) for k, v in miss.items()},
-           "hits": [(t, h[0], h[1], round(float(h[2]), 2)) for t, h in worst]}
+           "hits": [(t, h[0], h[1], round(float(h[2]), 2)) for t, h in worst], "ground": ground}
     bones, pos = OWNERS[clip.owner]
     keep = sorted(set((clip.beats or {}).values())) if clip.beats else []
     extra = None
@@ -137,6 +144,7 @@ def process(index):
         plan = clip.fp
         if getattr(plan, "loop", None) is not None:
             fp = fp_loop_samples(clip, plan)
+            clip.fp_left = False
         else:
             proxy = None
             if any(abs(float(k[1].get("spin", 0.0))) > 1 for k in clip.keys):
@@ -147,7 +155,7 @@ def process(index):
             fp = C.fp_bake(clip, tp, plan, proxy)
         nears, covers, cuts, fmiss = [], [], [], 0.0
         for t, pose, m in fp:
-            n, cut, cov = C.check_fp(pose, clip.hammer)
+            n, cut, cov = C.check_fp(pose, clip.hammer_at(t), clip.fp_left)
             nears.append(n)
             covers.append(cov)
             if cut:
@@ -158,13 +166,17 @@ def process(index):
         rep["fp_cover_run"] = runs([c for (t, _, _), c in zip(fp, covers) if clip.contact is None or abs(t - clip.contact) > 1])
         rep["fp_cover_ticks"] = [t for (t, _, _), c in zip(fp, covers) if c]
         rep["fp_miss_px"] = round(float(fmiss), 2)
-        anims[clip.name + "_fp"] = clip_json(clip, fp, C.FP_BONES, C.FP_POS_BONES, clip.name in table, None, keep)
+        fp_bones = C.FP_BONES if clip.fp_left else tuple(b for b in C.FP_BONES if b not in C.FP_LEFT_BONES)
+        anims[clip.name + "_fp"] = clip_json(clip, fp, fp_bones, tuple(b for b in C.FP_POS_BONES if b in fp_bones),
+                                             clip.name in table, None, keep)
         if cuts:
             problems.append("%s_fp: the near plane cuts a cube on screen at ticks %s" % (clip.name, cuts))
         if rep["fp_cover_run"] > 2:
             problems.append("%s_fp: covers the crosshair %d ticks in a row" % (clip.name, rep["fp_cover_run"]))
     if worst:
         problems.append("%s: %d ticks with penetration, worst %s" % (clip.name, len(worst), max(rep["hits"], key=lambda h: h[3])))
+    if ground:
+        problems.append("%s: %d ticks with the feet off the ground (px), e.g. %s" % (clip.name, len(ground), ground[0]))
     for k, v in miss.items():
         if v > 0.6:
             problems.append("%s: %s misses its target by %.2f px" % (clip.name, k, v))
@@ -174,7 +186,7 @@ def process(index):
 
 def write(anims):
     base = json.load(open(os.path.join(OUT, BASE_FILE)))["animations"]
-    for keep in ("crouch", "sit"):
+    for keep in ("crouch", "sit", "lift_squat"):  # R1's clips, kept as R1 wrote them
         anims[keep] = base[keep]
     files = {}
     for name in sorted(anims, key=lambda n: (n.endswith("_fp"), n)):
