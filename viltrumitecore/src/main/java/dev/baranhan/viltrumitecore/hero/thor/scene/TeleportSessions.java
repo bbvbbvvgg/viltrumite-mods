@@ -26,9 +26,14 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * Server half of the V point selection (decisions 14, 29, 41-47, 71, 72, 120): the scene
- * lock and camera lease are held, Thor stays put and takes no damage, the
- * world goes on; the client's pick is judged again here (solid top,
- * SafeSpot, inside the camera's area, visible from the camera point).
+ * lock and camera lease are held, Thor stays put (held at his spot by the
+ * server, no NoGravity flag that could stick to a save, C-M5), the world
+ * goes on and he can be hurt (C-M4: invulnerability is not in the approved
+ * canon; OPEN(owner)). The selection is bounded (teleportLimitTicks). The
+ * client's pick is only an intent: the server judges it again (loaded,
+ * solid top, SafeSpot fit and border, no fluid and no hazard at the feet,
+ * under a ceiling dimension's roof, build height, inside the camera's area,
+ * the first thing the camera ray meets with fluids counted, C-M3).
  * Server main thread.
  */
 final class TeleportSessions {
@@ -39,7 +44,6 @@ final class TeleportSessions {
       final Vec3 origin;
       final Vec3 eye;
       final Vec3 camera;
-      final boolean noGravity;
       int tick;
 
       Session(ServerPlayer thor, Vec3 camera) {
@@ -49,7 +53,6 @@ final class TeleportSessions {
          this.origin = thor.position();
          this.eye = thor.getEyePosition();
          this.camera = camera;
-         this.noGravity = thor.isNoGravity();
       }
    }
 
@@ -81,8 +84,9 @@ final class TeleportSessions {
 
       ThorBridge.acquireCamera(state, ThorScenes.OWNER);
       ThorScenes.stopFlight(thor);
+      // M2: no teleport out of a saddle (the vehicle would pull the rider back).
+      thor.stopRiding();
       Session session = new Session(thor, TeleportRules.camera(thor.getEyePosition(), ThorSceneConfig.teleportCameraHeight, thor.level().getMaxBuildHeight()));
-      thor.setNoGravity(true);
       thor.setDeltaMovement(Vec3.ZERO);
       SESSIONS.put(session.thor, session);
       SceneFx.sound(thor, thor.position(), SoundEvents.BEACON_ACTIVATE, 0.6F, 1.6F);
@@ -142,6 +146,7 @@ final class TeleportSessions {
 
       Vec3 from = thor.position();
       end(thor, session);
+      thor.stopRiding();
       thor.teleportTo(feet.x, feet.y, feet.z);
       thor.resetFallDistance();
       HeroFx.flash(thor, from.add(0, 1, 0), 0.8F);
@@ -154,14 +159,16 @@ final class TeleportSessions {
    @Nullable
    static Vec3 judge(ServerPlayer thor, Session session, BlockPos pos) {
       ServerLevel level = session.level;
-      if (!level.isLoaded(pos)) {
+      if (!level.isLoaded(pos) || !level.isLoaded(pos.above(2))) {
          return null;
       }
 
       VoxelShape shape = level.getBlockState(pos).getCollisionShape(level, pos);
       boolean solid = !shape.isEmpty() && level.getBlockState(pos).isFaceSturdy(level, pos, Direction.UP);
       Vec3 feet = new Vec3(pos.getX() + 0.5, pos.getY() + (shape.isEmpty() ? 1.0 : shape.max(Direction.Axis.Y)), pos.getZ() + 0.5);
-      boolean safe = solid && SafeSpot.ok(feet, new SafeSpot.LevelProbe(level, thor));
+      boolean height = TeleportRules.heightAllowed(feet.y, thor.getBbHeight(), level.getMinBuildHeight(), level.getMaxBuildHeight(),
+         level.dimensionType().hasCeiling(), level.dimensionType().logicalHeight());
+      boolean safe = solid && height && SafeSpot.ok(feet, new SafeSpot.LevelProbe(level, thor)) && !hazard(level, pos);
       boolean inView = TeleportRules.inView(session.camera, feet, ThorSceneConfig.teleportMaxRadius);
       boolean visible = inView && visible(level, session.camera, pos, feet);
       return TeleportRules.judge(solid, safe, inView, visible) == TeleportRules.Target.OK ? feet : null;
@@ -175,8 +182,9 @@ final class TeleportSessions {
          return false;
       }
 
+      // M3: fluids count: a pick at the bottom of a lava or water lake is not what the camera sees (the surface is).
       BlockHitResult hit = level.clip(new ClipContext(start, target.add(target.subtract(start).normalize().scale(0.2)), ClipContext.Block.COLLIDER,
-         ClipContext.Fluid.NONE, null));
+         ClipContext.Fluid.ANY, null));
       return hit.getType() == HitResult.Type.BLOCK && hit.getBlockPos().equals(pos);
    }
 
@@ -200,20 +208,42 @@ final class TeleportSessions {
       return null;
    }
 
+   /**
+    * M3: fluid in the feet or head block, or a hurting block under / at the
+    * feet (lava, fire, magma, cactus, berry bush, powder snow, ...): the vanilla
+    * walk evaluator's damage types.
+    */
+   static boolean hazard(ServerLevel level, BlockPos ground) {
+      BlockPos feet = ground.above();
+      if (!level.getFluidState(feet).isEmpty() || !level.getFluidState(feet.above()).isEmpty()) {
+         return true;
+      }
+
+      net.minecraft.world.level.pathfinder.BlockPathTypes type = net.minecraft.world.level.pathfinder.WalkNodeEvaluator.getBlockPathTypeStatic(level,
+         feet.mutable());
+      return TeleportRules.hazardous(type);
+   }
+
+   /** Every selection ends (server stopping, before the save). */
+   static void endAll(MinecraftServer server) {
+      for (Session session : new ArrayList<>(SESSIONS.values())) {
+         end(server.getPlayerList().getPlayer(session.thor), session);
+      }
+   }
+
    private static void end(@Nullable ServerPlayer thor, Session session) {
       if (SESSIONS.remove(session.thor) == null) {
          return;
       }
 
       if (thor != null) {
-         thor.setNoGravity(session.noGravity);
          ThorState state = ThorState.of(thor);
          if (state != null) {
             ThorBridge.unlockScene(state, ThorScenes.OWNER);
             ThorBridge.releaseCamera(state, ThorScenes.OWNER);
             ThorScenes.stopMove(thor, state, ThorScenes.TELEPORT);
          }
-         ThorScenes.send(thor, null, SceneSync.end(SceneSync.Kind.TELEPORT, session.thorId, -1));
+         sendOwn(thor, SceneSync.end(SceneSync.Kind.TELEPORT, session.thorId, -1));
       }
    }
 
@@ -224,12 +254,17 @@ final class TeleportSessions {
       }
    }
 
+   private static void sendOwn(ServerPlayer thor, SceneSync sync) {
+      dev.baranhan.viltrumitecore.network.CoreMessages.sendToPlayer(new dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket(sync), thor);
+   }
+
    static void clear() {
       SESSIONS.clear();
    }
 
+   /** NIT-5: the selection camera is Thor's own; only his client gets it (no camera position leak to trackers). */
    private static void sync(ServerPlayer thor, Session session) {
-      ThorScenes.send(thor, null, SceneSync.teleport(session.thorId, session.eye, session.camera, session.tick, ThorSceneConfig.teleportRiseTicks,
+      sendOwn(thor, SceneSync.teleport(session.thorId, session.eye, session.camera, session.tick, ThorSceneConfig.teleportRiseTicks,
          ThorSceneConfig.teleportLimitTicks));
    }
 }
