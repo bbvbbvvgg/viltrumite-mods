@@ -47,9 +47,9 @@ public final class ThorPoser {
          return true;
       }
 
-      // Session A: anyone straining at the lying hammer (also non-Thor players).
-      if (entity instanceof Player lifter && MjolnirClient.lifting(lifter)) {
-         poseLift(model, lifter);
+      // R1: a vanilla-bodied player on a planted hammer's handle (Thor's own body lifts in ThorRenderer).
+      if (entity instanceof AbstractClientPlayer lifter && ThorRenderer.poseVanillaLift(model, lifter)) {
+         CLOCKS.remove(entity);
          return false;
       }
 
@@ -103,16 +103,6 @@ public final class ThorPoser {
 
       rig.finish();
       return false;
-   }
-
-   /** №190: anyone straining at the lying hammer: both arms down-forward, torso bent, a tremble. */
-   private static void poseLift(PlayerModel<?> model, Player player) {
-      float shake = Mth.sin((player.tickCount + Minecraft.getInstance().getFrameTime()) * 2.3F) * 2.5F;
-      PoseRig rig = PoseRig.begin(model, player, 1.0F, null);
-      rig.add(model.body, 25.0F, 0.0F, 0.0F);
-      rig.add(model.rightArm, -55.0F + shake, 0.0F, 8.0F);
-      rig.add(model.leftArm, -55.0F - shake, 0.0F, -8.0F);
-      rig.finish();
    }
 
    /** №55: the free arm reaches out to the returning hammer while it flies back. */

@@ -84,7 +84,9 @@
     "LevelRainMixin",
     "SoundEngineVolumeMixin",
     "ItemInHandRendererInvoker",
-    "DefendedArrowRendererMixin"
+    "DefendedArrowRendererMixin",
+    "LivingEntityRendererInvoker",
+    "PlayerRendererInvoker"
   ],
   "injectors": {
     "defaultRequire": 1
