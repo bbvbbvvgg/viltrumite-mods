@@ -305,7 +305,7 @@ For new effects, age by ticks with partialTick (Thunderclap pattern). Do not use
 ## 9. Screen effects
 
 Core shader: `viltrumitecore:shaders/post/dash_impact.json`, set in `GameRendererDashMixin` (`renderLevel` TAIL).
-Current uniforms (besides `ProjMat`/`OutSize`): `DashIntensity, PunchIntensity, ShakeIntensity, GrabIntensity, LockIntensity, Time, ChopIntensity, ChopType, ChopIsLeft, BarrageIntensity, BarrageIsLeft, ScourgeIntensity, ScourgeTurn, RegulusOverheat, RegulusHeartFlash, RegulusMadness, RegulusPulse, EraseCrack, EraseShatter, EraseDark, EraseRebuild, EraseSeed`. `ScreenEffectCatalogTest` fails when this list drifts from `program/dash_impact.json` or the post pass.
+Current uniforms (besides `ProjMat`/`OutSize`): `DashIntensity, PunchIntensity, ShakeIntensity, GrabIntensity, LockIntensity, Time, ChopIntensity, ChopType, ChopIsLeft, BarrageIntensity, BarrageIsLeft, ScourgeIntensity, ScourgeTurn, RegulusOverheat, RegulusHeartFlash, RegulusMadness, RegulusPulse, EraseCrack, EraseShatter, EraseDark, EraseRebuild, EraseSeed, TimeStopGrey, TimeStopInvert, TimeStopRipple`. DIO ZA WARUDO owns **TimeStopGrey, TimeStopInvert, TimeStopRipple** (all default 0, set every processed pass from `client/dio/TimeStopClient.screen`, part of the early-out). `ScreenEffectCatalogTest` fails when this list drifts from `program/dash_impact.json` or the post pass.
 
 To add a screen effect:
 1. Declare the uniform in `program/dash_impact.json` AND in the pass `uniforms` of `post/dash_impact.json`.

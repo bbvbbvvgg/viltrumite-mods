@@ -199,7 +199,7 @@ def icons():
         d.rectangle([x + 1, y + 2, x + 5, y + 2], fill=GOLD_D + (a,))
     d.line([2, 16, 8, 16], fill=(255, 255, 255, 160))
     d.line([24, 9, 29, 9], fill=(255, 255, 255, 160))
-    out["muda"] = im
+    out["muda_barrage"] = im
     # knives: fan of three blades
     im, d = _icon_base()
     for ang in (-24, 0, 24):
@@ -232,7 +232,7 @@ def icons():
     d.polygon([(14, 9), (12, 15), (14, 15)], fill=(240, 120, 120))
     d.polygon([(11, 24), (13, 29), (15, 24)], fill=(250, 250, 250))
     d.polygon([(17, 24), (19, 29), (21, 24)], fill=(250, 250, 250))
-    out["drain"] = im
+    out["vampire_drain"] = im
     # Road Roller
     im, d = _icon_base((240, 150, 30))
     d.ellipse([3, 15, 15, 27], fill=(70, 72, 80))
