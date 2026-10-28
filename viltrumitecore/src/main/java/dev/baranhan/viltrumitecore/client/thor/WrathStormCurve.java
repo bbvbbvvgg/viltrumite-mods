@@ -90,12 +90,12 @@ public record WrathStormCurve(int contact, int length) {
       return 15.0F + 5.0F * this.tail(elapsed);
    }
 
-   /** Ticks between sky arcs: 10 → 2 in the build-up, none during the strike, 5 → 16 over the tail; 0 = none. */
+   /** Ticks between sky arcs: 10 → 2 in the build-up, none during the strike, 4 → 12 over the tail; 0 = none. */
    public int arcInterval(float elapsed) {
       Phase phase = this.phase(elapsed);
       return switch (phase) {
          case GATHER, CHARGE -> Math.max(2, Math.round(10.0F - 8.0F * this.build(elapsed)));
-         case TAIL -> elapsed < this.tailEnd() ? Math.round(5.0F + 11.0F * this.tail(elapsed)) : 0;
+         case TAIL -> elapsed < this.tailEnd() ? Math.round(4.0F + 8.0F * this.tail(elapsed)) : 0;
          default -> 0;
       };
    }

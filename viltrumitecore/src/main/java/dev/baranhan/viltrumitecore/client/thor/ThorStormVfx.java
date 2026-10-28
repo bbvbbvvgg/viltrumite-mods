@@ -119,11 +119,12 @@ public final class ThorStormVfx {
          if (phase == WrathStormCurve.Phase.TAIL) {
             // Aftershocks: cloud to ground around the strike point, thinning out.
             Vec3 ground = base.add((random.nextDouble() - 0.5) * 12.0, 0.0, (random.nextDouble() - 0.5) * 12.0);
-            ElectricVfx.arc(from, ground, 0.06F + 0.05F * (1.0F - curve.tail(elapsed)), 7, 2, seed);
-            ElectricVfx.lightPool(ground, 4.0F, 0.5F, 7, seed);
+            ElectricVfx.arc(from, ground, 0.07F + 0.07F * (1.0F - curve.tail(elapsed)), 9, 2, seed);
+            ElectricVfx.lightPool(ground, 5.0F, 0.6F, 9, seed);
+            ElectricVfx.crackle(base.add(0.0, 0.6, 0.0), 1.2F, 4, 12, seed + 1);
          } else {
             float width = curve.arcWidth(elapsed);
-            ElectricVfx.arc(from, head, width, 6 + Math.round(4 * build), 2, seed);
+            ElectricVfx.arc(from, head, width, 8 + Math.round(4 * build), 2, seed);
             ElectricVfx.crackle(head, 0.3F + 0.4F * build, 2 + Math.round(4 * build), 8, seed + 1);
             ElectricVfx.sparks(head, 4 + Math.round(14 * build), 0.08F + 0.12F * build, 14, seed + 2);
             ElectricVfx.lightPool(feet, 4.0F + 6.0F * build, 0.35F + 0.8F * build, 6, seed);
@@ -198,18 +199,18 @@ public final class ThorStormVfx {
          // Micro arcs jumping over the hammer head, sparks dripping off it.
          Vec3 head = anchor.head();
          Vec3 from = head.add(jitter(random, 0.22 * scale));
-         ElectricVfx.arc(from, from.add(jitter(random, 0.45 * scale)), 0.022F * intensity, 4, 1, seed);
-         ElectricVfx.sparks(head, 2 * intensity, 0.07F, 12, seed + 1);
+         ElectricVfx.arc(from, from.add(jitter(random, 0.5 * scale)), 0.045F * intensity, 6, 1, seed);
+         ElectricVfx.sparks(head, 3 * intensity, 0.08F, 14, seed + 1);
       }
 
-      if (now % (inHand ? 7 : 5) == 0) {
+      if (now % (inHand ? 6 : 4) == 0) {
          // A discharge over the arm: hand to shoulder (both fists without the hammer).
-         ElectricVfx.arc(anchor.grip().add(jitter(random, 0.06 * scale)), shoulder(player).add(jitter(random, 0.08 * scale)), 0.02F * intensity, 4, 1,
+         ElectricVfx.arc(anchor.grip().add(jitter(random, 0.06 * scale)), shoulder(player).add(jitter(random, 0.08 * scale)), 0.05F * intensity, 6, 2,
             seed + 2);
          if (!inHand) {
             Vec3 left = mirror(player, anchor.grip());
-            ElectricVfx.arc(left, mirror(player, shoulder(player)), 0.02F * intensity, 4, 1, seed + 3);
-            ElectricVfx.sparks(anchor.grip(), intensity, 0.05F, 10, seed + 4);
+            ElectricVfx.arc(left, mirror(player, shoulder(player)), 0.05F * intensity, 6, 2, seed + 3);
+            ElectricVfx.sparks(anchor.grip(), 2 * intensity, 0.06F, 12, seed + 4);
          }
       }
 

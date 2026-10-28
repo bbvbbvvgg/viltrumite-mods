@@ -633,10 +633,13 @@ public final class ElectricVfx {
             double r = this.radius * (0.12 + 0.88 * ring);
             double y = (w - 0.5) * 2.4 + (1.0 - ring) * -1.6;
             Vec3 p = this.center.add(Math.cos(angle) * r, y, Math.sin(angle) * r);
-            float size = 0.7F + 1.1F * w;
+            // Puffs grow with the cloud so a wide storm stays one sheet, not scattered squares.
+            // Rim puffs are smaller and fainter, so the sheet has a ragged round edge instead of a box outline.
+            float rim = (float)ring;
+            float size = (0.7F + 1.1F * w) * Math.max(1.0F, this.radius / 6.0F) * (1.0F - 0.45F * rim * rim);
             if (glow) {
                float lit = this.flash * (BoltShape.hash01(this.seed + this.age / 2, i) > 0.6F ? 1.0F : 0.25F);
-               int alpha = (int)(120 * lit * this.density);
+               int alpha = (int)(120 * lit * this.density * (1.0F - 0.75F * rim));
                if (alpha > 2) {
                   PixelVfx.billboardPixel(buffer, cameraPos, camera, p.add(0, -0.2, 0), size * 0.9F, 140, 170, 255, alpha);
                }
