@@ -137,7 +137,8 @@ public final class HulkbusterMotion {
    }
 
    /** Low heavy jump (tap): vanilla 0.42 is too light for the machine. */
-   public static final double HEAVY_JUMP = 0.36;
+   /** Owner's playtest 2026-10-28: 0.36 (~0.6 block) could not clear one block; 0.46 rises ~1.4 blocks. */
+   public static final double HEAVY_JUMP = 0.46;
 
    /** Can a dive start here: airborne and high enough above the ground below. */
    public static boolean diveAllowed(boolean onGround, double heightAboveGround, State state) {

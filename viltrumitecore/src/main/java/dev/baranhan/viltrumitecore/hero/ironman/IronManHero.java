@@ -67,6 +67,12 @@ public class IronManHero implements HeroDefinition {
       return hulkBig(player) ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.WIDTH_SCALE : 1.0F;
    }
 
+   /** The 3.2-block suit walks up one block (step 0.6 -> 1.0), like Thor's body. Both sides. */
+   @Override
+   public double bodyStepBonus(Player player) {
+      return hulkBig(player) ? 0.4 : 0.0;
+   }
+
    static boolean hulkBig(Player player) {
       if (player == null) {
          return false;
