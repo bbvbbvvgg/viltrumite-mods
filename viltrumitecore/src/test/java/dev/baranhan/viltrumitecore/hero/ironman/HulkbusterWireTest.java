@@ -87,7 +87,7 @@ class HulkbusterWireTest {
       kit.cageCooldown = 499;
       kit.ultimateCooldown = 1800;
       kit.grabCooldown = 160;
-      state.hulkbuster.absorb(1000.0F);
+      state.hulkbuster.absorb(2000.0F);
       HeroPublicSnapshot snapshot = HeroPublicSnapshot.decode(IronManHero.snapshotOf(state).encode());
 
       assertSame(HulkbusterLayer.Phase.ACTIVE, HulkbusterView.phase(snapshot));
@@ -101,7 +101,7 @@ class HulkbusterWireTest {
       assertSame(HulkbusterMotion.State.HOVER, HulkbusterView.motion(snapshot));
       assertEquals(3, HulkbusterView.direction(snapshot));
       assertEquals(1, HulkbusterView.dashCharges(snapshot));
-      assertEquals(2, HulkbusterView.damageStage(snapshot), "1000 raw damage x plating leaves < 33 %");
+      assertEquals(2, HulkbusterView.damageStage(snapshot), "2000 raw damage x plating 0.36 leaves 10 % (< 33 %)");
       assertEquals(33, HulkbusterView.extra(snapshot, HulkbusterWire.DASH_RECHARGE));
       assertEquals(120, HulkbusterView.extra(snapshot, HulkbusterWire.CD_REPULSORS));
       assertEquals(77, HulkbusterView.extra(snapshot, HulkbusterWire.CD_RIFT));

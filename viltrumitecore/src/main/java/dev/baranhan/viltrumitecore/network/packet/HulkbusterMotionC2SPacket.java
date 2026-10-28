@@ -1,7 +1,5 @@
 package dev.baranhan.viltrumitecore.network.packet;
 
-import dev.baranhan.viltrumitecore.hero.HeroId;
-import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.ironman.IronManState;
 import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterMovement;
 import java.util.function.Supplier;
@@ -46,10 +44,7 @@ public class HulkbusterMotionC2SPacket {
             return;
          }
 
-         if (HeroRegistry.get(player).id() != HeroId.IRON_MAN) {
-            return;
-         }
-
+         // IronManState.of is null for every other hero (the hero check lives in the hero package).
          IronManState state = IronManState.of(player);
          if (state != null) {
             HulkbusterMovement.handle(player, state, this.op, this.arg);
