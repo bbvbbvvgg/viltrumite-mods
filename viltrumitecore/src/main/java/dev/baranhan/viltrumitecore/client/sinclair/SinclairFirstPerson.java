@@ -38,6 +38,12 @@ public final class SinclairFirstPerson {
          return;
       }
 
+      if (mc.getCameraEntity() != player) {
+         // Looking through another entity (spectating, a camera rig): no arms in front of that lens.
+         event.setCanceled(true);
+         return;
+      }
+
       boolean own = player.getMainHandItem().isEmpty() || snapshot.actionId() >= 0;
       if (!own) {
          return;

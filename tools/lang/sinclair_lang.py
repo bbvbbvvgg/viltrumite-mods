@@ -14,7 +14,7 @@ P = "viltrumitecore"
 
 ROWS = {
  f"hero.{P}.sinclair": ("The Magnificent Sinclair", "Великолепный Синклер", "Der Großartige Sinclair", "El Magnífico Sinclair", "Muhteşem Sinclair", "了不起的辛克莱"),
- f"gui.{P}.race_selection.become_sinclair": ("Become Sinclair", "Стать Синклером", "Sinclair werden", "Convertirse en Sinclair", "Sinclair ol", "成为辛克莱"),
+ f"gui.{P}.race_selection.become_sinclair": ("Become Sinclair", "Синклер", "Sinclair werden", "Convertirse en Sinclair", "Sinclair ol", "成为辛克莱"),
 
  f"ability.{P}.sinclair_vexing_bolt.name": ("Vexing Bolt", "Досадная молния", "Ärgerlicher Blitz", "Rayo Fastidioso", "Can Sıkıcı Şimşek", "恼人闪电"),
  f"ability.{P}.sinclair_vexing_bolt.desc": (

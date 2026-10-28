@@ -69,7 +69,7 @@ public final class SinclairAnchors {
    @Nullable
    private static Sample fresh(Entity entity) {
       Minecraft mc = Minecraft.getInstance();
-      if (entity == mc.player && mc.options.getCameraType().isFirstPerson()) {
+      if (entity == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
          return null;
       }
 
