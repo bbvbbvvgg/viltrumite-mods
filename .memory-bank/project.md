@@ -400,3 +400,9 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - V teleport: no NoGravity (held in place + `sustainsAirborne`), no invulnerability (OPEN), server judge: loaded, solid, fits + border, no fluid at feet/head, no hazardous floor (`TeleportRules.hazardous`), under a ceiling dimension's roof (`heightAllowed`), Fluid.ANY visibility. Syncs go to Thor only. Teleport cooldown is OPEN.
 - Client scene copies expire (`ThorSceneView.expired`, 60 ticks unsynced or past a fatality's plan); trackers get the scene on start / END on stop tracking. The fatality ducks AMBIENT/WEATHER/MUSIC/RECORDS/HOSTILE/NEUTRAL/BLOCKS, never MASTER/PLAYERS.
 - First person: `ThorFirstPerson` (strike / guard / discharge / wave / storm / wrath rows through `FirstPersonArm`), no vanilla swing. Keys PLACEHOLDER, not yet seen in game.
+
+## Thor playtest fixes (core 1.49.1)
+- Vanilla pickup puts a stack into the first empty slot. This is often the selected slot where Mjölnir is held, so any pickup put the hammer on the belt. `MjolnirHandGuard` moves that stack to another slot (server, right-handed only; a full inventory keeps the item in the hand).
+- Forge calls every channel's version acceptor with `NetworkRegistry.ABSENT.version()` / `ACCEPTVANILLA` for each status ping (server every 5 s, client server list). These calls are probes, not peers: log them at debug.
+- A Thor who dies with a thrown hammer respawns without it: the hammer stays `resting` until he recalls it (MMB). This is the approved behavior (`MjolnirTuning.DEATH_IN_HAND_DROPS` comment), not a bug.
+- Sandbox (arm64, llvmpipe, ~5 FPS): `RegulusVisualContractTest` fails with `liblwjgl.so` missing (no arm64 natives on the test classpath). Environment only. xdotool taps of 50 ms are often lost; use key holds of 120 ms or more.
