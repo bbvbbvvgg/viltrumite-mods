@@ -30,10 +30,19 @@ import org.joml.Vector3f;
  */
 public final class ThorLift {
    /** Thor fists on the handle (px below the handle top): two 4.75 px wide fists on a 7.85 px handle touch. */
-   public static final float THOR_UPPER_PX = 2.4F;
-   public static final float THOR_LOWER_PX = 6.4F;
+   public static final float THOR_UPPER_PX = 1.0F;
+   public static final float THOR_LOWER_PX = 5.6F;
    /** Horizontal distance (blocks) from the body root to the handle when gripping. */
-   public static final double THOR_DISTANCE = 0.62;
+   public static final double THOR_DISTANCE = 0.72;
+   /** Blend arc of the fists (model blocks): out and forward, peak at a third of the weight. */
+   static final float ARC_OUT = 9.0F / 16.0F;
+   static final float ARC_FORWARD = 10.0F / 16.0F;
+   /**
+    * Thor lift elbow pole, body space per right arm (x out, y up, z back; mirrored for the left):
+    * mostly forward of the bent-over chest, so the elbows bend out over the hammer, not into the belly.
+    * Searched together with lift_squat against ThorBodyGeometryTest's mesh scan.
+    */
+   static final Vector3f ELBOW_POLE = new Vector3f(-0.9F, 0.25F, -6.37F);
    public static final double VANILLA_DISTANCE = 0.16;
    /** Thor's ready hold: how close (horizontally, blocks) a crouching Thor must be to his planted hammer. */
    public static final double THOR_HOLD_RADIUS = 2.0;
@@ -179,6 +188,18 @@ public final class ThorLift {
    }
 
    /**
+    * The whole Thor-body lift over the current pose (third and first person): the lift_squat clip
+    * at {@code seconds}, then both fists solved onto the handle. {@code root} is the model origin
+    * in the world (the renderer's lift root, crouch offset included), {@code yaw} its facing.
+    */
+   public static void poseThor(BakedGeoModel body, MjolnirAnchors.Grip grip, Vec3 root, float yaw, double seconds, float weight) {
+      ThorBodyPose.liftClip(body, seconds, weight);
+      Vec3[] palms = thorPalms(grip);
+      Vector3f up = toModel(root.add(grip.up()), root, yaw);
+      solveThor(body, toModel(palms[0], root, yaw), toModel(palms[1], root, yaw), up, weight);
+   }
+
+   /**
     * Thor body: both arms onto the handle by {@code weight}. Targets are model space (right fist,
     * left fist), {@code up} the handle axis in model space. The fists turn so the handle runs
     * along their width (index to pinky), thumbs up; elbows bend out and back.
@@ -199,11 +220,14 @@ public final class ThorLift {
       Vector3f fk = GeoPose.point(t);
       Quaternionf fkHand = GeoPose.modelRotation(h);
       Vector3f goal = new Vector3f(fk).lerp(target, weight);
+      // Early in the blend (peak at 1/3) the fists swing out and forward around the thighs instead of cutting through them.
+      float arc = 6.75F * weight * (1.0F - weight) * (1.0F - weight);
+      goal.add(ARC_OUT * side * arc, 0.0F, -ARC_FORWARD * arc);
       Quaternionf grip = gripRotation(shoulder, target, up, GeoPose.modelRotation(model.getBone(ThorAssets.BODY_BONE)));
       Quaternionf rotation = new Quaternionf(fkHand).slerp(grip, weight);
       // Elbow side: out (internal +x is the right side) and back (+z), a little up.
       Quaternionf body = GeoPose.modelRotation(model.getBone(ThorAssets.BODY_BONE));
-      Vector3f pole = new Vector3f(shoulder).add(body.transform(new Vector3f(0.55F * side, 0.15F, 0.45F)));
+      Vector3f pole = new Vector3f(shoulder).add(body.transform(new Vector3f(ELBOW_POLE.x * side, ELBOW_POLE.y, ELBOW_POLE.z)));
       GeoPose.reach(a, f, h, t, goal, pole, rotation);
    }
 

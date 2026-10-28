@@ -52,6 +52,38 @@ public final class ThorHero implements HeroDefinition {
    }
 
    /**
+    * Rework R1 (spec §1): the 3.2-block GoW body has a matching hitbox, both sides.
+    * Standing 1.8 × 1.75 = 3.15 tall (eye 2.835), crouching 2.625 (eye 2.22), crawling 0.9.
+    * Width 0.6 × 1.6 = 0.96: below the spec's 1.0–1.2 on purpose, so Thor still walks through
+    * one-block doors and crawls through one-block holes (a 1.0+ box cannot enter either).
+    */
+   public static final float BODY_HEIGHT_SCALE = 1.75F;
+   public static final float BODY_WIDTH_SCALE = 1.6F;
+   /** A long arm: +1 block of entity / block reach. +0.4 step (0.6 → 1.0): a 3-block body walks up one block instead of snagging its feet. */
+   public static final double BODY_REACH_BONUS = 1.0;
+   public static final double BODY_STEP_BONUS = 0.4;
+
+   @Override
+   public float bodyScale(Player player) {
+      return BODY_HEIGHT_SCALE;
+   }
+
+   @Override
+   public float bodyWidthScale(Player player) {
+      return BODY_WIDTH_SCALE;
+   }
+
+   @Override
+   public double bodyReachBonus(Player player) {
+      return BODY_REACH_BONUS;
+   }
+
+   @Override
+   public double bodyStepBonus(Player player) {
+      return BODY_STEP_BONUS;
+   }
+
+   /**
     * Both sides: flight only with Mjölnir really in the hand and no scene
     * holding Thor (rework spec §5; the client reads the synced hammer and
     * scene flags, the server its projected state). When it turns false

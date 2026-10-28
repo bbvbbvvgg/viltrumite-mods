@@ -11,6 +11,7 @@
     "BlockDamageMixin",
     "CoreFlightHookMixin",
     "EntityCollisionMixin",
+    "EntityPoseBoxMixin",
     "EntityHurtSyncMixin",
     "EntityFireMixin",
     "EntityFreezeMixin",
