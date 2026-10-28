@@ -562,5 +562,7 @@
   "hud.viltrumitecore.thor.teleport.refused.no_hammer": "传送需要手持妙尔尼尔",
   "hud.viltrumitecore.thor.teleport.refused.full_flight": "全速飞行时无法传送",
   "hud.viltrumitecore.thor.teleport.refused.busy": "现在不行",
-  "hud.viltrumitecore.thor.scene.hero_change_deferred": "场景结束后更换英雄"
+  "hud.viltrumitecore.thor.scene.hero_change_deferred": "场景结束后更换英雄",
+  "death.attack.viltrumitecore.thor_lightning": "%1$s 被闪电击中",
+  "death.attack.viltrumitecore.thor_lightning.player": "%1$s 被 %2$s 的闪电击中"
 }

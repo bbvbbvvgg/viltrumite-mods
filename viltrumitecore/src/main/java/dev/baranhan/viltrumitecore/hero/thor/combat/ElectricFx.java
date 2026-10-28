@@ -11,8 +11,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -20,8 +18,9 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Session B's electric visuals and block work: zig-zag spark arcs, rings,
- * visual-only vanilla bolts (no fire, no vanilla damage, no weather change,
- * #137), and the controlled block damage (#6, #18, #30, #104): ordinary
+ * client-drawn lightning bolts (one FX packet; no LightningBolt entity, so no
+ * fire, vanilla damage, weather, copper, lightning rod, sculk event, sky
+ * flash or world-wide thunder, #137 / B-m6), and the controlled block damage (#6, #18, #30, #104): ordinary
  * blocks only, through HeroDestruction (mobGriefing, unbreakable and
  * protected blocks spared), spread over ticks by CarveJobs.
  */
@@ -70,14 +69,16 @@ public final class ElectricFx {
       return Math.max(12, (int)(radius * 10));
    }
 
-   /** Vanilla lightning visual only: no fire, no vanilla damage (Thor's damage is dealt separately). */
+   /** Height of the drawn bolt channel above the strike point. */
+   public static final float BOLT_HEIGHT = 40.0F;
+
+   /**
+    * A lightning bolt onto {@code at}, described by the server and drawn by
+    * each nearby client (B-m6): no entity, so nothing in the world reacts to
+    * a visual (Thor's damage is dealt separately by the move).
+    */
    public static void bolt(ServerLevel level, Vec3 at) {
-      LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
-      if (bolt != null) {
-         bolt.moveTo(at.x, at.y, at.z);
-         bolt.setVisualOnly(true);
-         level.addFreshEntity(bolt);
-      }
+      HeroFx.electricBolt(level, at, BOLT_HEIGHT, 1.0F);
    }
 
    public static void sound(ServerLevel level, Vec3 at, SoundEvent sound, float volume, float pitch) {

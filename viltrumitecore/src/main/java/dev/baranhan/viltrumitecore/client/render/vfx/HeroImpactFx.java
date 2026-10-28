@@ -21,6 +21,7 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -138,6 +139,11 @@ public final class HeroImpactFx {
                electricRing(level, packet.origin, Math.min(64.0, packet.points[0]));
             }
          }
+         case HeroFxS2CPacket.ELECTRIC_BOLT -> {
+            float height = dev.baranhan.viltrumitecore.hero.fx.HeroFx.clampBoltHeight(packet.points.length >= 1 ? packet.points[0] : 0.0F);
+            float power = dev.baranhan.viltrumitecore.hero.fx.HeroFx.clampBoltPower(packet.power);
+            electricBolt(level, listener, packet.origin, height, power);
+         }
          case HeroFxS2CPacket.ELECTRIC_CRACKLE -> {
             RandomSource random = level.random;
             int count = Math.max(1, Math.min(64, Math.round(packet.power)));
@@ -176,6 +182,33 @@ public final class HeroImpactFx {
          level.addParticle(ParticleTypes.END_ROD, to.x + random.nextGaussian() * 0.1, to.y + random.nextGaussian() * 0.1, to.z + random.nextGaussian() * 0.1,
             random.nextGaussian() * 0.02, random.nextGaussian() * 0.02, random.nextGaussian() * 0.02);
       }
+   }
+
+   /**
+    * Thor's lightning bolt, drawn locally (B-m6): a jagged channel from the
+    * sky to the point with two short side branches, a bright flash at the
+    * strike and a local thunder clap whose loudness falls off with distance
+    * (WEATHER category, no sky flash).
+    */
+   private static void electricBolt(ClientLevel level, Vec3 listener, Vec3 at, float height, float power) {
+      RandomSource random = level.random;
+      Vec3 top = at.add((random.nextDouble() - 0.5) * 2.0, height, (random.nextDouble() - 0.5) * 2.0);
+      electricArc(level, top, at);
+      for (int branch = 0; branch < 2; branch++) {
+         Vec3 from = top.lerp(at, 0.3 + random.nextDouble() * 0.4);
+         Vec3 to = from.add((random.nextDouble() - 0.5) * 6.0, -2.0 - random.nextDouble() * 4.0, (random.nextDouble() - 0.5) * 6.0);
+         electricArc(level, from, to);
+      }
+
+      for (int i = 0; i < 12; i++) {
+         level.addParticle(ParticleTypes.ELECTRIC_SPARK, at.x + random.nextGaussian() * 0.5, at.y + 0.1 + random.nextDouble() * 0.6,
+            at.z + random.nextGaussian() * 0.5, random.nextGaussian() * 0.15, random.nextDouble() * 0.2, random.nextGaussian() * 0.15);
+      }
+
+      FLASHES.add(new Flash(at.add(0.0, 1.0, 0.0), 1.6F * power, 5));
+      addShake(listener, at, 0.35F * power, 24.0);
+      level.playLocalSound(at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 1.5F * power, 0.8F + random.nextFloat() * 0.2F, false);
+      level.playLocalSound(at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 3.0F * power, 0.8F + random.nextFloat() * 0.2F, true);
    }
 
    /** Thor's spark ring, drawn locally. */

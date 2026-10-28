@@ -16,6 +16,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -144,8 +146,8 @@ public final class WrathMove {
    /** The strike point sees the target's body (eye or centre). */
    static boolean visibleFrom(ServerLevel level, Vec3 from, LivingEntity target) {
       for (Vec3 to : new Vec3[]{target.getEyePosition(), target.getBoundingBox().getCenter()}) {
-         if (level.clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER,
-            net.minecraft.world.level.ClipContext.Fluid.NONE, target)).getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+         if (level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER,
+            ClipContext.Fluid.NONE, target)).getType() == HitResult.Type.MISS) {
             return true;
          }
       }

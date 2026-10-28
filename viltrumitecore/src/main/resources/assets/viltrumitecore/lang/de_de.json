@@ -562,5 +562,7 @@
   "hud.viltrumitecore.thor.teleport.refused.no_hammer": "Teleport braucht Mjölnir in der Hand",
   "hud.viltrumitecore.thor.teleport.refused.full_flight": "Kein Teleport im vollen Flug",
   "hud.viltrumitecore.thor.teleport.refused.busy": "Gerade nicht möglich",
-  "hud.viltrumitecore.thor.scene.hero_change_deferred": "Heldenwechsel nach der Szene"
+  "hud.viltrumitecore.thor.scene.hero_change_deferred": "Heldenwechsel nach der Szene",
+  "death.attack.viltrumitecore.thor_lightning": "%1$s wurde vom Blitz getroffen",
+  "death.attack.viltrumitecore.thor_lightning.player": "%1$s wurde vom Blitz von %2$s getroffen"
 }

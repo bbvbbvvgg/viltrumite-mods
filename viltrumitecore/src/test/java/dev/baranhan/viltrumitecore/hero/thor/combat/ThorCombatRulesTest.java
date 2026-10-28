@@ -305,7 +305,7 @@ class ThorCombatRulesTest {
          previous = r;
       }
 
-      assertTrue(StormCurve.burst(12.0F, 16.0, 16.0) > StormCurve.burst(12.0F, 3.0, 16.0));
+      assertTrue(StormCurve.burstAtStage(12.0F, 3, 3) > StormCurve.burstAtStage(12.0F, 1, 3), "the burst the storm really deals grows with its stage");
    }
 
    @Test

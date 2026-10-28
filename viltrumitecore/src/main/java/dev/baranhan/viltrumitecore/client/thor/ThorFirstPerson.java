@@ -6,7 +6,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.baranhan.viltrumitecore.client.anim.pose.FirstPersonArm;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoveDefinition;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatTimings;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorStrike;
+import java.util.EnumMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.client.player.AbstractClientPlayer;
 
@@ -60,14 +64,46 @@ public final class ThorFirstPerson {
       strikeRows = rows(move, resource);
    }
 
-   /** Pure: the strike row of a strike pose (tests). */
+   /** Key index of the contact (the thrust) in {@link #STRIKE} and {@link #DISCHARGE}. */
+   static final int STRIKE_CONTACT = 2;
+   static final int DISCHARGE_CONTACT = 1;
+   private static final Map<ThorMove, float[][]> STRIKES = new EnumMap<>(ThorMove.class);
+
+   /**
+    * Pure: the strike row of a strike pose (tests). The contact key lands on
+    * the move's server damage tick (the end of its intro, B-m1), so the
+    * first-person thrust and the third-person clip hit together with the damage.
+    */
    static float[][] rows(ThorMove move, int resource) {
       if (move == ThorMove.ELECTRIC_COMBO) {
-         return resource == ThorCombatClips.LEFT_HAND ? GUARD : DISCHARGE;
+         return resource == ThorCombatClips.LEFT_HAND ? GUARD : contactAligned(move, DISCHARGE, DISCHARGE_CONTACT);
       }
 
       ThorStrike pose = ThorStrike.byPose(resource);
-      return pose != null && pose.hand() == ThorStrike.Hand.LEFT ? GUARD : STRIKE;
+      return pose != null && pose.hand() == ThorStrike.Hand.LEFT ? GUARD : contactAligned(move, STRIKE, STRIKE_CONTACT);
+   }
+
+   private static float[][] contactAligned(ThorMove move, float[][] base, int contactKey) {
+      return STRIKES.computeIfAbsent(move, m -> {
+         ThorMoveDefinition d = ThorCombatTimings.DEFINITIONS.get(m);
+         return d == null ? base : align(base, contactKey, d.intro());
+      });
+   }
+
+   /** Retime {@code rows} so key {@code contactKey} sits at {@code contactTick}: keys before it scale, keys after it shift. */
+   static float[][] align(float[][] rows, int contactKey, float contactTick) {
+      float at = rows[contactKey][0];
+      if (contactTick <= 0.0F || at <= 0.0F) {
+         return rows;
+      }
+
+      float[][] out = new float[rows.length][];
+      for (int i = 0; i < rows.length; i++) {
+         out[i] = rows[i].clone();
+         out[i][0] = i <= contactKey ? rows[i][0] * contactTick / at : rows[i][0] - at + contactTick;
+      }
+
+      return out;
    }
 
    /** FirstPersonThorMixin, right arm, after its pushPose. */

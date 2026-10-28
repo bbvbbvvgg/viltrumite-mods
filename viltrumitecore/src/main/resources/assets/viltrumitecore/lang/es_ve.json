@@ -562,5 +562,7 @@
   "hud.viltrumitecore.thor.teleport.refused.no_hammer": "El teletransporte necesita a Mjölnir en la mano",
   "hud.viltrumitecore.thor.teleport.refused.full_flight": "Sin teletransporte en vuelo completo",
   "hud.viltrumitecore.thor.teleport.refused.busy": "Ahora no",
-  "hud.viltrumitecore.thor.scene.hero_change_deferred": "Cambio de héroe después de la escena"
+  "hud.viltrumitecore.thor.scene.hero_change_deferred": "Cambio de héroe después de la escena",
+  "death.attack.viltrumitecore.thor_lightning": "%1$s fue alcanzado por un rayo",
+  "death.attack.viltrumitecore.thor_lightning.player": "%1$s fue alcanzado por el rayo de %2$s"
 }

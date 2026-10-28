@@ -30,9 +30,4 @@ public final class StormCurve {
       int n = Math.max(1, stages);
       return base * Math.max(1, Math.min(n, stage)) / n;
    }
-
-   /** Damage of the closing burst grows with the storm (PLACEHOLDER). */
-   public static float burst(float base, double radius, double max) {
-      return (float)(base * (0.5 + 0.5 * Math.min(1.0, radius / Math.max(1.0E-3, max))));
-   }
 }

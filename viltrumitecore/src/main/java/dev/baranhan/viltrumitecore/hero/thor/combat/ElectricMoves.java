@@ -217,17 +217,8 @@ public final class ElectricMoves {
          }
       }
 
-      @Override
-      public void onRelease(ThorMoveContext context, int heldTicks) {
-         this.onRelease(context, heldTicks, ReleaseCause.PLAYER);
-      }
-
-      @Override
-      public void onRelease(ThorMoveContext context, int heldTicks, ReleaseCause cause) {
-         if (context.player() != null) {
-            releaseStorm(context.player(), context.state(), ThorCombatState.of(context.state()), cause);
-         }
-      }
+      // No onRelease here: the RMB release always reaches the move its press started (WAVE, which grew into this
+      // storm), and WAVE.onRelease releases the storm (B NIT: the storm's own release hook was dead code).
 
       @Override
       public void onStop(ThorMoveContext context) {

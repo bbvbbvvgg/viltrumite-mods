@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.hammer;
 
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
+import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import java.util.ArrayList;
@@ -12,8 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -45,12 +44,9 @@ public final class ThorTransform {
          carve(player, level, head);
       }
 
-      LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
-      if (bolt != null) {
-         bolt.moveTo(player.getX(), player.getY(), player.getZ());
-         bolt.setVisualOnly(true);
-         level.addFreshEntity(bolt);
-      }
+      // The transformation bolt is a visual: drawn by the clients (no LightningBolt entity, so no copper
+      // scraping, lightning rod, sculk event or world-wide thunder; same contract as session B's bolts).
+      HeroFx.electricBolt(level, player.position(), 48.0F, 2.0F);
    }
 
    /** Damage immunity during the scene (ThorHero.clampFinalDamage). */

@@ -34,6 +34,15 @@ public class HeroFxS2CPacket {
    public static final byte ELECTRIC_RING = 10;
    /** Sparks crawling around the origin, {@code power} = spark count (capped on the client). */
    public static final byte ELECTRIC_CRACKLE = 11;
+   /**
+    * A lightning bolt striking the origin from {@code points[0]} blocks above
+    * (Thor B-m6): drawn and heard only on the client — a jagged branched
+    * channel, a local flash and a local thunder clap. No LightningBolt entity
+    * exists, so nothing vanilla happens (no copper scraping, no lightning rod,
+    * no sculk GameEvent, no sky flash, no 10000-volume thunder). {@code power}
+    * scales the brightness (0.25..2).
+    */
+   public static final byte ELECTRIC_BOLT = 12;
 
    private static final int MAX_POINTS = 64;
 

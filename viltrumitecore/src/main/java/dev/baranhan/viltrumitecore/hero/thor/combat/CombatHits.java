@@ -2,9 +2,10 @@ package dev.baranhan.viltrumitecore.hero.thor.combat;
 
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.HeroTargets;
-import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
-import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
+import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
+import dev.baranhan.viltrumitecore.hero.thor.ThorState;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvents;
@@ -15,7 +16,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -183,6 +189,37 @@ public final class CombatHits {
       return hit(player, target, damage, move, attackId, false);
    }
 
+   /** Thor's lightning damage type (data/viltrumitecore/damage_type, tagged minecraft:is_lightning); built lazily (registries). */
+   public static ResourceKey<DamageType> lightningType() {
+      return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("viltrumitecore", "thor_lightning"));
+   }
+
+   /** Pure: is this move's damage electric (B-m8)? Melee hammer / fist strikes stay a player attack. */
+   public static boolean electric(ThorMove move) {
+      return switch (move) {
+         case ELECTRIC_COMBO, ELECTRIC_WAVE, ELECTRIC_STORM, WRATH -> true;
+         default -> false;
+      };
+   }
+
+   /**
+    * The damage source of a Thor hit: electric moves deal {@code thor_lightning}
+    * caused by Thor (death messages, is_lightning tag, armour and mods see
+    * lightning), the rest a player attack. Both name Thor as the attacker, so
+    * PvP rules, kill credit and LETHAL_HIT scoping are unchanged.
+    */
+   static DamageSource source(ServerPlayer player, ThorMove move) {
+      if (electric(move)) {
+         var types = player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE);
+         var holder = types.getHolder(lightningType());
+         if (holder.isPresent()) {
+            return new DamageSource(holder.get(), player);
+         }
+      }
+
+      return player.damageSources().playerAttack(player);
+   }
+
    /** Pure: may a hit skip the target's i-frames? Authored strikes / finishers yes, electric area and ranged hits no (B-M5). */
    public static boolean skipsIFrames(boolean authoredStrike) {
       return authoredStrike;
@@ -197,12 +234,12 @@ public final class CombatHits {
       Scope previous = SCOPE.get();
       SCOPE.set(new Scope(player, target, move, attackId, hammer));
       int saved = target.invulnerableTime;
-      if (skipsIFrames(authoredStrike)) {
+      if (skipsIFrames(authoredStrike) && claimSkip(player, target, attackId)) {
          target.invulnerableTime = 0;
       }
       boolean landed;
       try {
-         landed = target.hurt(player.damageSources().playerAttack(player), damage);
+         landed = target.hurt(source(player, move), damage);
       } finally {
          if (previous == null) {
             SCOPE.remove();
@@ -222,6 +259,12 @@ public final class CombatHits {
       }
 
       return true;
+   }
+
+   /** B-M5: this swing may skip the target's i-frames now (once per swing, target and tick). */
+   private static boolean claimSkip(ServerPlayer player, LivingEntity target, int attackId) {
+      ThorState state = ThorState.of(player);
+      return state == null || ThorCombatState.of(state).claimSkip(target.getId(), attackId, player.level().getGameTime());
    }
 
    /** LivingDamageEvent (LOWEST, after every clamp): a Thor melee hit that would kill posts LETHAL_HIT before the death. */

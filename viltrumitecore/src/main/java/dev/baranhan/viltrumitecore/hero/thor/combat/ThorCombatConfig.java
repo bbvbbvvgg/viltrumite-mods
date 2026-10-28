@@ -2,11 +2,14 @@ package dev.baranhan.viltrumitecore.hero.thor.combat;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
+import javax.annotation.Nullable;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,9 +131,11 @@ public final class ThorCombatConfig {
    /** Reads the file (writes the defaults when missing); a broken file keeps the defaults. */
    public static void load() {
       File file = new File(FMLPaths.CONFIGDIR.get().toFile(), FILE);
+      JsonElement onDisk = null;
       if (file.exists()) {
          try (Reader reader = new FileReader(file)) {
-            ThorCombatConfig loaded = GSON.fromJson(reader, ThorCombatConfig.class);
+            onDisk = JsonParser.parseReader(reader);
+            ThorCombatConfig loaded = GSON.fromJson(onDisk, ThorCombatConfig.class);
             if (loaded != null) {
                instance = migrate(loaded);
             }
@@ -139,10 +144,21 @@ public final class ThorCombatConfig {
          }
       }
 
+      // B NIT: the file is (re)written only when it is missing or its content would change (new keys, a migration,
+      // a validated value); an unchanged config keeps the player's own formatting.
+      if (!needsWrite(onDisk, GSON.toJsonTree(instance))) {
+         return;
+      }
+
       try (Writer writer = new FileWriter(file)) {
          GSON.toJson(instance, writer);
       } catch (Exception e) {
          LOGGER.warn("Cannot write {}", FILE, e);
       }
+   }
+
+   /** Pure: write the file only when it is missing / unreadable or differs from the effective config. */
+   static boolean needsWrite(@Nullable JsonElement onDisk, JsonElement effective) {
+      return onDisk == null || !onDisk.equals(effective);
    }
 }

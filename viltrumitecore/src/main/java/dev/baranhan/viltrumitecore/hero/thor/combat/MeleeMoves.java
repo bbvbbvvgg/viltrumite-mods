@@ -23,6 +23,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -288,7 +289,20 @@ public final class MeleeMoves {
                return landed;
             }
 
-            CombatHits.push(target, player.position(), strike.knockback(), strike.lift());
+            Vec3 from = player.position();
+            if (strike.heavy()) {
+               // B-m9: the hit-stop holds the target on screen for HIT_STOP_TICKS; the launch lands after it (HitStop's
+               // contract), so the body does not freeze and then teleport. Dropped with the other delayed effects
+               // (death, logout, dimension, a scene taking Thor).
+               combat.schedule(HIT_STOP_TICKS, player, () -> {
+                  if (target.isAlive() && target.level() == player.level()) {
+                     CombatHits.push(target, from, strike.knockback(), strike.lift());
+                  }
+               });
+            } else {
+               CombatHits.push(target, from, strike.knockback(), strike.lift());
+            }
+
             Vec3 at = target.getBoundingBox().getCenter();
             level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 8, 0.3, 0.3, 0.3, 0.3);
          }
@@ -299,7 +313,7 @@ public final class MeleeMoves {
          ThorFeedback.play(player, hammer ? SoundEvents.PLAYER_ATTACK_STRONG : SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0F, hammer ? 0.7F : 1.0F);
          if (strike.heavy()) {
             ThorFeedback.play(player, SoundEvents.ANVIL_LAND, 0.35F, 0.6F);
-            HeroFx.hitStop(player, landed.get(0).getBoundingBox().getCenter(), 3, ids(player, landed));
+            HeroFx.hitStop(player, landed.get(0).getBoundingBox().getCenter(), HIT_STOP_TICKS, hitStopIds(landed));
          }
       }
 
@@ -320,11 +334,14 @@ public final class MeleeMoves {
       return landed;
    }
 
-   private static int[] ids(ServerPlayer player, List<LivingEntity> targets) {
-      int[] ids = new int[targets.size() + 1];
-      ids[0] = player.getId();
+   /** Ticks a heavy contact holds its targets (client HitStop) before their launch (server). */
+   static final int HIT_STOP_TICKS = 3;
+
+   /** The struck bodies only: Thor himself keeps moving under his own client prediction (B-m9). */
+   static int[] hitStopIds(List<? extends Entity> targets) {
+      int[] ids = new int[targets.size()];
       for (int i = 0; i < targets.size(); i++) {
-         ids[i + 1] = targets.get(i).getId();
+         ids[i] = targets.get(i).getId();
       }
 
       return ids;

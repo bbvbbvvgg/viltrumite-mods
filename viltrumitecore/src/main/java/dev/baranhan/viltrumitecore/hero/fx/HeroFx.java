@@ -86,6 +86,35 @@ public final class HeroFx {
       sendNear(level, at, new HeroFxS2CPacket(HeroFxS2CPacket.ELECTRIC_CRACKLE, at, count, 0, null, -1));
    }
 
+   /** Radius in which a lightning bolt FX is sent (the bolt is tall; still local atmosphere, #137). */
+   public static final double BOLT_FX_RANGE = 96.0;
+   /** Max channel height the client draws above the strike point. */
+   public static final float BOLT_MAX_HEIGHT = 64.0F;
+
+   /**
+    * A lightning bolt onto {@code at}, falling from {@code height} blocks
+    * above: one packet per viewer within {@link #BOLT_FX_RANGE}; each client
+    * draws the channel, the flash and plays the thunder itself.
+    */
+   public static void electricBolt(net.minecraft.server.level.ServerLevel level, Vec3 at, float height, float power) {
+      HeroFxS2CPacket packet = new HeroFxS2CPacket(HeroFxS2CPacket.ELECTRIC_BOLT, at, clampBoltPower(power), 0,
+         new float[]{clampBoltHeight(height), 0.0F, 0.0F}, -1);
+      for (ServerPlayer viewer : level.players()) {
+         if (viewer.position().distanceToSqr(at) <= BOLT_FX_RANGE * BOLT_FX_RANGE) {
+            CoreMessages.sendToPlayer(packet, viewer);
+         }
+      }
+   }
+
+   /** Pure, both sides: the drawn channel height (a hostile packet cannot ask for a kilometre-high bolt). */
+   public static float clampBoltHeight(float height) {
+      return Float.isFinite(height) ? Math.max(2.0F, Math.min(BOLT_MAX_HEIGHT, height)) : BOLT_MAX_HEIGHT;
+   }
+
+   public static float clampBoltPower(float power) {
+      return Float.isFinite(power) ? Math.max(0.25F, Math.min(2.0F, power)) : 1.0F;
+   }
+
    /** Pure: does a viewer at {@code viewer} get a level-anchored FX at {@code at}? */
    public static boolean inElectricRange(Vec3 viewer, Vec3 at) {
       return viewer.distanceToSqr(at) <= ELECTRIC_FX_RANGE * ELECTRIC_FX_RANGE;

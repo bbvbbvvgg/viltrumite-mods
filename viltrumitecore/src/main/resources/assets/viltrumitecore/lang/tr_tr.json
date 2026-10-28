@@ -562,5 +562,7 @@
   "hud.viltrumitecore.thor.teleport.refused.no_hammer": "Işınlanma için Mjölnir elde olmalı",
   "hud.viltrumitecore.thor.teleport.refused.full_flight": "Tam uçuşta ışınlanma yok",
   "hud.viltrumitecore.thor.teleport.refused.busy": "Şu an olmaz",
-  "hud.viltrumitecore.thor.scene.hero_change_deferred": "Kahraman değişimi sahneden sonra"
+  "hud.viltrumitecore.thor.scene.hero_change_deferred": "Kahraman değişimi sahneden sonra",
+  "death.attack.viltrumitecore.thor_lightning": "%1$s yıldırım çarptı",
+  "death.attack.viltrumitecore.thor_lightning.player": "%1$s, %2$s tarafından yıldırımla çarpıldı"
 }

@@ -112,7 +112,11 @@ public final class ThorCombatClips {
       ThorClips.register(ThorMove.WRATH, wrath());
    }
 
-   /** Rest → wind-up (end of intro) → hit (end of main) → rest (end of the move). */
+   /**
+    * Rest → wind-up peak → contact at the end of the intro (the tick the
+    * server lands the damage, ENTER_MAIN; review B-m1) → follow-through held
+    * through main → rest at the end of the move.
+    */
    static ThorClips.Clip clip(ThorStrike strike) {
       ThorMoveDefinition d = ThorCombatTimings.of(strike.move());
       Swing swing = SWINGS.get(strike);
@@ -125,11 +129,29 @@ public final class ThorCombatClips {
    }
 
    private static float[][] rows(ThorMoveDefinition d, float[] rest, float[] wind, float[] hit) {
-      int windAt = d.intro();
-      int hitAt = d.intro() + d.main();
+      int hitAt = contactTick(d);
+      float windAt = windTick(d);
+      int followAt = d.intro() + d.main();
+      if (followAt <= hitAt) {
+         return new float[][]{
+            key(0, rest[0], rest[1], rest[2]), key(windAt, wind[0], wind[1], wind[2]), key(hitAt, hit[0], hit[1], hit[2]), key(d.length(), rest[0], rest[1], rest[2])
+         };
+      }
+
       return new float[][]{
-         key(0, rest[0], rest[1], rest[2]), key(windAt, wind[0], wind[1], wind[2]), key(hitAt, hit[0], hit[1], hit[2]), key(d.length(), rest[0], rest[1], rest[2])
+         key(0, rest[0], rest[1], rest[2]), key(windAt, wind[0], wind[1], wind[2]), key(hitAt, hit[0], hit[1], hit[2]), key(followAt, hit[0], hit[1], hit[2]),
+         key(d.length(), rest[0], rest[1], rest[2])
       };
+   }
+
+   /** The clip's contact key: the server's damage tick (ENTER_MAIN = the end of the intro). */
+   static int contactTick(ThorMoveDefinition d) {
+      return d.intro();
+   }
+
+   /** Wind-up peak two thirds into the intro, strictly between rest and contact. */
+   static float windTick(ThorMoveDefinition d) {
+      return Math.max(0.5F, Math.min(d.intro() - 0.5F, d.intro() * 2.0F / 3.0F));
    }
 
    private static ThorClips.Clip mode() {

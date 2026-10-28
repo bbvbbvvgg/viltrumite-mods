@@ -74,7 +74,7 @@ public final class ThorCombatState {
    public int strikeAttackId;
    /** The swing inside its effective part (STRIKE_START posted, STRIKE_END owed); 0 when none. */
    public int openStrike;
-   @javax.annotation.Nullable
+   @Nullable
    public ThorMove openStrikeMove;
    /** First enemy hit by the chain's latest strike (COMBO_END targetId). */
    @Nullable
@@ -181,7 +181,30 @@ public final class ThorCombatState {
     * a running storm, the held RMB, the recognizer and the chain are dropped.
     * Cooldowns stay (PersistentCooldowns).
     */
+   /** Target entity id → {attackId, game tick} of its last i-frame-skipping hit (B-M5 one-hit accounting). */
+   private final Map<Integer, long[]> skipped = new HashMap<>();
+
+   /**
+    * B-M5: one swing skips a target's i-frames at most once per tick. A second
+    * skip of the same target by the same attack id in the same tick (two
+    * overlapping shapes of one strike, a re-entrant hit) is refused and falls
+    * back to the vanilla i-frames, so nothing can multiply one swing's damage.
+    * Different swings, and a later tick of the same swing (scheduled
+    * follow-ups), are untouched. Entries of past ticks are pruned on the way.
+    */
+   public boolean claimSkip(int targetId, int attackId, long tick) {
+      this.skipped.values().removeIf(entry -> entry[1] != tick);
+      long[] last = this.skipped.get(targetId);
+      if (last != null && last[0] == attackId) {
+         return false;
+      }
+
+      this.skipped.put(targetId, new long[]{attackId, tick});
+      return true;
+   }
+
    public void cancelTransient() {
+      this.skipped.clear();
       this.scheduled.clear();
       this.skyFallback.clear();
       this.stormTicks = -1;

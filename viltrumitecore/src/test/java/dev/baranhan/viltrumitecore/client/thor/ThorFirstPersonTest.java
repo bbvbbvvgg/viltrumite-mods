@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.client.thor;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,7 +14,9 @@ import org.junit.jupiter.api.Test;
 class ThorFirstPersonTest {
    @Test
    void electricHandsPickTheirRows() {
-      assertSame(ThorFirstPerson.DISCHARGE, ThorFirstPerson.rows(ThorMove.ELECTRIC_COMBO, 1));
+      float[][] discharge = ThorFirstPerson.rows(ThorMove.ELECTRIC_COMBO, 1);
+      assertEquals(ThorFirstPerson.DISCHARGE.length, discharge.length, "the discharge row, retimed");
+      assertEquals(ThorFirstPerson.DISCHARGE[ThorFirstPerson.DISCHARGE_CONTACT][1], discharge[ThorFirstPerson.DISCHARGE_CONTACT][1]);
       assertSame(ThorFirstPerson.GUARD, ThorFirstPerson.rows(ThorMove.ELECTRIC_COMBO, ThorCombatClips.LEFT_HAND));
    }
 
