@@ -548,35 +548,38 @@
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_drop",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_drop"
+      "viltrumitecore:ironman/hulkbuster/drop"
     ]
   },
   "ironman_hulkbuster_assemble": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_assemble",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_assemble"
+      "viltrumitecore:ironman/hulkbuster/assemble"
     ]
   },
   "ironman_hulkbuster_exit": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_exit",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_exit"
+      "viltrumitecore:ironman/hulkbuster/exit"
     ]
   },
   "ironman_hulkbuster_break": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_break",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_break"
+      "viltrumitecore:ironman/hulkbuster/break"
     ]
   },
   "ironman_hulkbuster_step": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_step",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_step"
+      "viltrumitecore:ironman/hulkbuster/step_1",
+      "viltrumitecore:ironman/hulkbuster/step_2",
+      "viltrumitecore:ironman/hulkbuster/step_3",
+      "viltrumitecore:ironman/hulkbuster/step_4"
     ]
   },
   "ironman_hulkbuster_servo": {
@@ -590,42 +593,48 @@
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_punch",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_punch"
+      "viltrumitecore:ironman/hulkbuster/punch_1",
+      "viltrumitecore:ironman/hulkbuster/punch_2",
+      "viltrumitecore:ironman/hulkbuster/punch_3"
     ]
   },
   "ironman_hulkbuster_jackhammer": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_jackhammer",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_jackhammer"
+      "viltrumitecore:ironman/hulkbuster/jackhammer_1",
+      "viltrumitecore:ironman/hulkbuster/jackhammer_2",
+      "viltrumitecore:ironman/hulkbuster/jackhammer_3"
     ]
   },
   "ironman_hulkbuster_grab": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_grab",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_grab"
+      "viltrumitecore:ironman/hulkbuster/grab_1",
+      "viltrumitecore:ironman/hulkbuster/grab_2"
     ]
   },
   "ironman_hulkbuster_throw": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_throw",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_throw"
+      "viltrumitecore:ironman/hulkbuster/throw"
     ]
   },
   "ironman_hulkbuster_slam": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_slam",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_slam"
+      "viltrumitecore:ironman/hulkbuster/slam_1",
+      "viltrumitecore:ironman/hulkbuster/slam_2"
     ]
   },
   "ironman_hulkbuster_hop": {
     "category": "player",
     "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_hop",
     "sounds": [
-      "viltrumitecore:ironman/hulkbuster_hop"
+      "viltrumitecore:ironman/hulkbuster/hop"
     ]
   },
   "reinhard.air_step": {
@@ -1578,6 +1587,174 @@
     "sounds": [
       {
         "name": "viltrumitecore:thor/heartbeat"
+      }
+    ]
+  },
+  "ironman_hulkbuster_screech": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_screech",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/screech_1",
+      "viltrumitecore:ironman/hulkbuster/screech_2",
+      "viltrumitecore:ironman/hulkbuster/screech_3",
+      "viltrumitecore:ironman/hulkbuster/screech_4",
+      "viltrumitecore:ironman/hulkbuster/screech_5"
+    ]
+  },
+  "ironman_hulkbuster_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_swing",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/swing_1",
+      "viltrumitecore:ironman/hulkbuster/swing_2",
+      "viltrumitecore:ironman/hulkbuster/swing_3"
+    ]
+  },
+  "ironman_hulkbuster_hammer": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_hammer",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/hammer_1",
+      "viltrumitecore:ironman/hulkbuster/hammer_2",
+      "viltrumitecore:ironman/hulkbuster/hammer_3"
+    ]
+  },
+  "ironman_hulkbuster_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_charge",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/charge"
+    ]
+  },
+  "ironman_hulkbuster_charged_punch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_charged_punch",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/charged_punch"
+    ]
+  },
+  "ironman_hulkbuster_finish_punch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_finish_punch",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/finish_punch"
+    ]
+  },
+  "ironman_hulkbuster_clamp": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_clamp",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/clamp_1",
+      "viltrumitecore:ironman/hulkbuster/clamp_2",
+      "viltrumitecore:ironman/hulkbuster/clamp_3",
+      "viltrumitecore:ironman/hulkbuster/clamp_4"
+    ]
+  },
+  "ironman_hulkbuster_block_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_block_hit",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/block_hit_1",
+      "viltrumitecore:ironman/hulkbuster/block_hit_2",
+      "viltrumitecore:ironman/hulkbuster/block_hit_3"
+    ]
+  },
+  "ironman_hulkbuster_repulsor_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_repulsor_charge",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/repulsor_charge"
+    ]
+  },
+  "ironman_hulkbuster_repulsor_beam": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_repulsor_beam",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/repulsor_beam"
+    ]
+  },
+  "ironman_hulkbuster_dash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_dash",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/dash_1",
+      "viltrumitecore:ironman/hulkbuster/dash_2"
+    ]
+  },
+  "ironman_hulkbuster_cough": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_cough",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/cough_1",
+      "viltrumitecore:ironman/hulkbuster/cough_2"
+    ]
+  },
+  "ironman_hulkbuster_land": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_land",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/land_1",
+      "viltrumitecore:ironman/hulkbuster/land_2"
+    ]
+  },
+  "ironman_hulkbuster_ult_ignite": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_ult_ignite",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/ult_ignite"
+    ]
+  },
+  "ironman_hulkbuster_ult_impact": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_ult_impact",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/ult_impact"
+    ]
+  },
+  "ironman_hulkbuster_refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_refuse",
+    "sounds": [
+      "viltrumitecore:ironman/hulkbuster/refuse"
+    ]
+  },
+  "ironman_hulkbuster_servo_loop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_servo_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/hulkbuster/servo_loop",
+        "stream": false
+      }
+    ]
+  },
+  "ironman_hulkbuster_thruster_loop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_thruster_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/hulkbuster/thruster_loop",
+        "stream": false
+      }
+    ]
+  },
+  "ironman_hulkbuster_charge_loop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_charge_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/hulkbuster/charge_loop",
+        "stream": false
+      }
+    ]
+  },
+  "ironman_hulkbuster_spark_loop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_hulkbuster_spark_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/hulkbuster/spark_loop",
+        "stream": false
       }
     ]
   }

@@ -13,6 +13,8 @@ Sources list: `tools/assets/ironman_sources.md`. Permission texts: `docs/license
 
 - Stage 4: suit interior skin, Veronica pod model and texture, Veronica and signature icons, Mark 15 camouflage shimmer (`tools/assets/make_ironman_stage4_assets.py`, `make_ironman_stage4_visuals.py`, `make_ironman_stage4_signatures.py`); the opening-shell interior atlas; the Veronica model after the Age of Ultron stills.
 
+- Hulkbuster Mark 48 rework (H6): the whole Hulkbuster sound kit, 56 files for 31 events (strikes, jackhammer, screech family, steps, clamps, thrusters, suit-up, Jet Ram, four client loops) — original synthesis, CC0 1.0, `tools/sfx/hulkbuster.py`; table in `tools/assets/ironman_sources.md`.
+
 ### Kenney — Sci-Fi Sounds 1.0 and Impact Sounds 1.0
 - Source: kenney.nl. License: CC0 1.0 (public domain; credit not required, given here).
 - Used: every Iron Man sound except the thruster loops — built by `tools/sfx/ironman_cc0.py` (layered, pitched, loudness-normalized).

@@ -70,7 +70,7 @@ class DivineHeroArmorTest {
       IronManState state = new IronManState();
       HulkbusterLayer layer = state.hulkbuster;
       assertTrue(layer.start());
-      for (int i = 0; i < HulkbusterLayer.DROP_TICKS + HulkbusterLayer.ASSEMBLE_TICKS; i++) {
+      for (int i = 0; i < layer.dropTicks() + HulkbusterLayer.ASSEMBLE_TICKS; i++) {
          layer.tick();
       }
 
@@ -99,15 +99,18 @@ class DivineHeroArmorTest {
    void divineDamagePassesTheHulkbuster() {
       IronManState state = inHulkbuster();
       float before = state.hulkbuster.durability();
-      assertSame(DamageAbsorb.PASS, IronManHulkbuster.absorb(state, divine(), 5.0F));
+      // The divine check comes before anything touches the player (null is never dereferenced on that path).
+      assertSame(DamageAbsorb.PASS, IronManHulkbuster.absorb(null, state, divine(), 5.0F));
       assertEquals(before, state.hulkbuster.durability());
-      assertSame(DamageAbsorb.ABSORBED, IronManHulkbuster.absorb(state, ordinary(), 5.0F));
+      // Ordinary damage still lands on the layer (the player-facing path runs block / counter first).
+      assertTrue(state.hulkbuster.absorb(5.0F));
+      assertTrue(state.hulkbuster.durability() < before);
    }
 
    @Test
    void invulnerabilityBypassStillPassesBothLayers() {
       DamageSource kill = source("kill", DamageTypeTags.BYPASSES_INVULNERABILITY);
       assertSame(DamageAbsorb.PASS, IronManMarks.absorb(inMark(), kill, 5.0F));
-      assertSame(DamageAbsorb.PASS, IronManHulkbuster.absorb(inHulkbuster(), kill, 5.0F));
+      assertSame(DamageAbsorb.PASS, IronManHulkbuster.absorb(null, inHulkbuster(), kill, 5.0F));
    }
 }

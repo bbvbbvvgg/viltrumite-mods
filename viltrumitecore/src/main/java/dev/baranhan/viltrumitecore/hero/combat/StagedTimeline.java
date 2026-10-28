@@ -98,7 +98,7 @@ public final class StagedTimeline<M extends StagedMove> {
          return 0;
       }
 
-      return Math.max(0, this.stepTicks != null ? this.stepTicks[phase.ordinal()] : this.move.ticks(phase));
+      return Math.max(0, this.stepTicks != null ? this.stepTicks[phase.ordinal()] : this.move.ticks(phase, this.step));
    }
 
    /** Ticks since the current phase began. */
@@ -222,6 +222,28 @@ public final class StagedTimeline<M extends StagedMove> {
       return admission;
    }
 
+   /**
+    * Like {@link #request} but a START / INTERRUPT begins at combo step {@code step}
+    * (a sequence whose step the hero counts itself, e.g. escalating grab punches).
+    * CHAIN and QUEUE keep the timeline's own step order.
+    */
+   public Admission requestAt(@Nullable M next, int partnerId, int step) {
+      Admission admission = this.admit(next, partnerId);
+      if (admission == Admission.START || admission == Admission.INTERRUPT) {
+         this.begin(next, partnerId, Math.max(0, step));
+         return admission;
+      }
+
+      if (admission == Admission.CHAIN) {
+         this.begin(next, partnerId < 0 ? this.partnerId : partnerId, this.nextStep(next));
+      } else if (admission == Admission.QUEUE) {
+         this.queued = next;
+         this.queuedPartner = partnerId < 0 ? this.partnerId : partnerId;
+      }
+
+      return admission;
+   }
+
    /** The step after the current one, wrapping inside {@code move}'s step count. */
    private int nextStep(M move) {
       return (this.step + 1) % Math.max(1, move.maxSteps());
@@ -329,7 +351,7 @@ public final class StagedTimeline<M extends StagedMove> {
       this.queued = null;
       this.queuedPartner = -1;
       this.stepTicks = null;
-      this.phase = phaseAt(next, 0);
+      this.phase = phaseAt(next, 0, this.step);
    }
 
    private MovePhase stepPhaseAt(int elapsed) {
@@ -359,9 +381,14 @@ public final class StagedTimeline<M extends StagedMove> {
 
    /** Phase at a tick of one step: unauthored (0-tick) phases are skipped. */
    public static MovePhase phaseAt(StagedMove move, int elapsed) {
+      return phaseAt(move, elapsed, 0);
+   }
+
+   /** Phase at a tick of combo step {@code step} ({@link StagedMove#ticks(MovePhase, int)}). */
+   public static MovePhase phaseAt(StagedMove move, int elapsed, int step) {
       int end = 0;
       for (MovePhase phase : MovePhase.values()) {
-         end += Math.max(0, move.ticks(phase));
+         end += Math.max(0, move.ticks(phase, step));
          if (elapsed < end) {
             return phase;
          }
@@ -372,13 +399,18 @@ public final class StagedTimeline<M extends StagedMove> {
 
    /** First tick of a phase within one step. */
    public static int phaseStart(StagedMove move, MovePhase phase) {
+      return phaseStart(move, phase, 0);
+   }
+
+   /** First tick of a phase within combo step {@code step}. */
+   public static int phaseStart(StagedMove move, MovePhase phase, int step) {
       int start = 0;
       for (MovePhase earlier : MovePhase.values()) {
          if (earlier == phase) {
             break;
          }
 
-         start += Math.max(0, move.ticks(earlier));
+         start += Math.max(0, move.ticks(earlier, step));
       }
 
       return start;

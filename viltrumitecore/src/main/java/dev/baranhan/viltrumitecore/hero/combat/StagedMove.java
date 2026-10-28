@@ -44,4 +44,22 @@ public interface StagedMove {
       }
       return total;
    }
+
+   /**
+    * Ticks of one phase of combo step {@code step} (0-based). Default: every
+    * step plays the same phases ({@link #ticks(MovePhase)}). A move whose steps
+    * differ (a three-strike combo of 24 / 26 / 36 ticks) overrides this.
+    */
+   default int ticks(MovePhase phase, int step) {
+      return this.ticks(phase);
+   }
+
+   /** Total ticks of combo step {@code step}. */
+   default int length(int step) {
+      int total = 0;
+      for (MovePhase phase : MovePhase.values()) {
+         total += Math.max(0, this.ticks(phase, step));
+      }
+      return total;
+   }
 }
