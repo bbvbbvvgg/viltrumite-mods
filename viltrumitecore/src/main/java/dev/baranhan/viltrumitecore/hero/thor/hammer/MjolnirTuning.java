@@ -116,6 +116,7 @@ public final class MjolnirTuning {
    public static final int LIFT_COOLDOWN = 20;
    /** PLACEHOLDER: the attempt stops when the lifter walks this far away from where it began. */
    public static final double LIFT_MOVE_CANCEL = 1.0;
+   /** Lifter eye to the hammer box (the upright box when planted), blocks. */
    public static final double LIFT_REACH = 3.5;
    /** PLACEHOLDER: push of the lifter when the active Thor recalls (№212). */
    public static final double LIFT_RIP_PUSH = 1.4;

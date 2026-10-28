@@ -49,7 +49,9 @@ import net.minecraftforge.fml.DistExecutor;
 /**
  * The physical body of the one Mjölnir while its chunk is loaded (§3.4):
  * own model, real position and collision, never pushed, never hurt, not
- * moved by explosions, not destroyed by lava; not an item. Never saved
+ * moved by explosions, not destroyed by lava; not an item. At rest it
+ * stands upright, head buried in the ground (MjolnirPose, rework §6); its
+ * box then covers the visible upright part. Never saved
  * (noSave type): MjolnirWorld respawns it from the record with the same
  * UUID, and any body that is not the saved hammer removes itself. Server
  * physics per phase; clients only draw it (MjolnirRenderer) and hear it.
@@ -73,6 +75,9 @@ public class MjolnirEntity extends Entity {
    private int broken;
    private long lastBreakSound;
    private boolean clientSound;
+   /** Client: the tick it became planted (the ground cracks grow from it); far in the past when it was planted on arrival. */
+   private float clientPlantedAt = -1000.0F;
+   private boolean clientPlanted;
 
    public MjolnirEntity(EntityType<? extends MjolnirEntity> type, Level level) {
       super(type, level);
@@ -97,8 +102,52 @@ public class MjolnirEntity extends Entity {
       return ordinal >= 0 && ordinal < PHASES.length ? PHASES[ordinal] : MjolnirPhase.RESTING;
    }
 
+   /** The record's "landed" flag (wire name LYING kept): with MjolnirPose it means planted upright. */
    public boolean lying() {
       return this.entityData.get(LYING);
+   }
+
+   /** Both sides: resting upright with the head in the ground (MjolnirPose.planted). */
+   public boolean planted() {
+      return MjolnirPose.planted(this.phase(), this.lying(), this.embedded());
+   }
+
+   /**
+    * Lift anchor: world position of the handle top while planted, else
+    * null. Both sides; {@code partialTick} interpolates a client body (the
+    * planted hammer does not move, so 1.0 is fine on the server).
+    */
+   @Nullable
+   public Vec3 handleTop(float partialTick) {
+      return this.planted() ? MjolnirPose.handleTop(this.getPosition(partialTick)) : null;
+   }
+
+   /** Client: ticks since it was planted (crack growth), large when it was planted before it came into view. */
+   public float plantedAge(float partialTick) {
+      return this.tickCount + partialTick - this.clientPlantedAt;
+   }
+
+   /** Planted: the upright box (MjolnirPose.UPRIGHT); in flight and stuck in a wall: the type's box. */
+   @Override
+   public net.minecraft.world.entity.EntityDimensions getDimensions(net.minecraft.world.entity.Pose pose) {
+      return this.planted() ? MjolnirPose.UPRIGHT : super.getDimensions(pose);
+   }
+
+   @Override
+   public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) {
+      super.onSyncedDataUpdated(accessor);
+      if (PHASE.equals(accessor) || LYING.equals(accessor) || EMBEDDED.equals(accessor)) {
+         // Both sides: the box follows the pose (noPhysics: the resize never moves the body).
+         this.refreshDimensions();
+         if (this.level().isClientSide) {
+            boolean planted = this.planted();
+            if (planted && !this.clientPlanted && this.tickCount > 0) {
+               this.clientPlantedAt = this.tickCount;
+            }
+
+            this.clientPlanted = planted;
+         }
+      }
    }
 
    public boolean embedded() {
@@ -442,8 +491,10 @@ public class MjolnirEntity extends Entity {
       }
 
       if (block.getType() != HitResult.Type.MISS) {
-         // A normal throw sticks in the block (head first).
-         Vec3 at = block.getLocation().subtract(dir.scale(0.25));
+         // A normal throw sticks in the block head first. Into the top of a block (the ground) it plants upright on
+         // the hit point (MjolnirPose); into a wall or a ceiling it stays along the throw.
+         boolean ground = block.getDirection() == net.minecraft.core.Direction.UP;
+         Vec3 at = ground ? block.getLocation() : block.getLocation().subtract(dir.scale(0.25));
          this.face(dir);
          this.setPos(at);
          this.setDeltaMovement(Vec3.ZERO);
@@ -452,6 +503,10 @@ public class MjolnirEntity extends Entity {
          level.playSound(null, at.x, at.y, at.z, SoundEvents.TRIDENT_HIT_GROUND, SoundSource.PLAYERS, 1.6F, 0.6F);
          level.playSound(null, at.x, at.y, at.z, SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6F, 0.6F);
          MjolnirWorld.embed(server, record, this);
+         if (ground) {
+            record.lying = true;
+         }
+
          this.syncFrom(record);
          return;
       }
@@ -518,6 +573,19 @@ public class MjolnirEntity extends Entity {
       }
 
       Vec3 at = ground.getLocation();
+      net.minecraft.core.Direction face = ground.getDirection();
+      if (face.getAxis().isHorizontal()) {
+         // Off a side face: out of the block by half its width, horizontal motion dropped, it keeps falling along the
+         // face and plants on whatever is below (MjolnirPose: every rest is upright on a top face).
+         Vec3 out = MjolnirPose.besideFace(at, face.getStepX(), face.getStepZ(), this.getBbWidth());
+         if (level.noCollision(this, this.getType().getDimensions().makeBoundingBox(out))) {
+            this.setPos(out);
+            this.setDeltaMovement(new Vec3(0.0, velocity.y, 0.0));
+            MjolnirWorld.track(this);
+            return;
+         }
+      }
+
       double impact = -velocity.y;
       BlockState state = level.getBlockState(ground.getBlockPos());
       level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), at.x, at.y, at.z, 20 + (int)(impact * 20.0), 0.4, 0.1, 0.4, 0.15);
@@ -526,10 +594,10 @@ public class MjolnirEntity extends Entity {
          MjolnirFx.shockwave(level, at, (float)Math.min(1.0, impact / 2.5), state, 3.0F);
       }
 
-      this.setYRot(this.random.nextFloat() * 360.0F);
+      // Head first into the ground: the yaw it fell with stays (no jump between the fall and the planted pose).
       this.setXRot(0.0F);
-      // A-m10: off a side face it settles out of the block (then slides down), never inside it.
-      net.minecraft.core.Direction face = ground.getDirection();
+      // A-m10: a side face with no room beside it (a corner) settles out of the block, never inside it; the support
+      // probe then drops it the rest of the way.
       Vec3 rest = face == net.minecraft.core.Direction.UP ? at : at.add(face.getStepX() * 0.3, face.getStepY() * 0.3, face.getStepZ() * 0.3);
       this.setPos(rest);
       this.setDeltaMovement(Vec3.ZERO);
@@ -537,14 +605,15 @@ public class MjolnirEntity extends Entity {
       this.syncFrom(record);
    }
 
-   /** Lies / sticks; falls when the support is gone (an explosion never moves it, a missing floor does). */
+   /** Stands planted / sticks; falls when the support is gone (an explosion never moves it, a missing floor does). */
    private void resting(MinecraftServer server, MjolnirRecord record, ServerLevel level) {
       if (this.tickCount % 5 != 0 || record.parked) {
          // A parked hammer (last-resort void recovery) rests without support until it is recalled.
          return;
       }
 
-      AABB touch = this.getBoundingBox().inflate(0.08);
+      // Planted: a block under the buried head holds it; stuck in a wall: anything touching the box.
+      AABB touch = this.planted() ? MjolnirPose.supportProbe(this.position()) : this.getBoundingBox().inflate(0.08);
       if (level.noCollision(this, touch)) {
          record.embedded = false;
          record.lying = false;

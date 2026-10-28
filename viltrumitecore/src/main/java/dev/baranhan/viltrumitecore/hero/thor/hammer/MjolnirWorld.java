@@ -19,6 +19,7 @@ import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -652,7 +653,8 @@ public final class MjolnirWorld {
       }
 
       MjolnirEntity hammer = entity(server, record);
-      boolean ripped = record.phase == MjolnirPhase.RESTING && record.embedded;
+      // Stuck in a block or planted head down in the ground (MjolnirPose): out with the rip jerk.
+      boolean ripped = record.phase == MjolnirPhase.RESTING && (record.embedded || record.lying);
       MjolnirLift.rip(server, position(record));
       record.recallPending = false;
       record.lying = false;
@@ -744,12 +746,22 @@ public final class MjolnirWorld {
          return false;
       }
 
+      boolean planted = hammer.planted();
+      Vec3 rest = hammer.position();
       record.lying = false;
       record.embedded = false;
       record.clearFlight();
       record.voidAttempts = 0;
       record.place(dim(thor.level()), thor.getX(), thor.getY(), thor.getZ());
       hammer.discard();
+      if (planted) {
+         // Out of the ground: a puff of the block it stood in (the cracks go with the body).
+         BlockState ground = thor.serverLevel().getBlockState(BlockPos.containing(rest.x, rest.y - 0.05, rest.z));
+         if (!ground.isAir()) {
+            thor.serverLevel().sendParticles(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK, ground),
+               rest.x, rest.y + 0.05, rest.z, 14, 0.2, 0.05, 0.2, 0.1);
+         }
+      }
       ThorState state = ThorState.of(thor);
       if (state != null) {
          HAMMER.project(state, HammerState.IN_HAND, false);
@@ -945,7 +957,7 @@ public final class MjolnirWorld {
       return probe;
    }
 
-   /** After a strike / landing: lies on its side at {@code rest}, the void-recovery point is updated. */
+   /** After a strike / landing: stands planted upright at {@code rest} (MjolnirPose; record.lying = planted), the void-recovery point is updated. */
    static void settle(MinecraftServer server, MjolnirRecord record, ServerLevel level, Vec3 rest) {
       record.place(dim(level), rest.x, rest.y, rest.z);
       record.velocity(0.0, 0.0, 0.0);
@@ -1085,6 +1097,7 @@ public final class MjolnirWorld {
          record.place(dim(level), at.x, at.y, at.z);
          record.velocity(0.0, 0.0, 0.0);
          record.embedded = false;
+         record.lying = true;
          dirty(server);
       }
 
