@@ -22,6 +22,11 @@ public final class ThorCombatConfig {
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final String FILE = "viltrumitecore-thor-combat.json";
    private static volatile ThorCombatConfig instance = new ThorCombatConfig();
+   /** File layout version; older files get the safety defaults re-applied (see {@link #migrate}). */
+   static final int CURRENT_VERSION = 2;
+
+   /** Version of the file this tuning came from (0 = written before versioning). */
+   public int configVersion = CURRENT_VERSION;
 
    // --- melee (PLACEHOLDER) ---
    /** Multiplier over the per-strike damage of ThorStrike. */
@@ -60,7 +65,8 @@ public final class ThorCombatConfig {
    public float electricComboDamageScale = 1.0F;
 
    // --- automatic sky lightning (PLACEHOLDER; target choice OPEN #75/#130/#149) ---
-   public SkyTargetPolicy skyTargetPolicy = SkyTargetPolicy.LAST_PRIMARY_HIT;
+   /** Default: only when exactly one distinct enemy was struck (B-B2 / B-M4); the others are dev switches. */
+   public SkyTargetPolicy skyTargetPolicy = SkyTargetPolicy.SINGLE_TARGET_ONLY;
    public int skyStrikeDelayTicks = 8;
    public float skyStrikeDamage = 14.0F;
    public double skyStrikeSplashRadius = 2.5;
@@ -78,6 +84,38 @@ public final class ThorCombatConfig {
    /** OPEN: whether the ultimate needs Mjölnir in the hand (not approved either way). */
    public boolean wrathRequiresHammer = false;
 
+   /**
+    * Pure: a loaded file brought to the current safety defaults. Files from
+    * before version 2 carried the old sky default (LAST_PRIMARY_HIT, B-M4):
+    * it is reset to SINGLE_TARGET_ONLY; out-of-range numbers are clamped
+    * (chain falloff above 1 would grow damage, negative radii, ...).
+    */
+   static ThorCombatConfig migrate(ThorCombatConfig loaded) {
+      if (loaded.skyTargetPolicy == null || loaded.configVersion < 2) {
+         loaded.skyTargetPolicy = SkyTargetPolicy.SINGLE_TARGET_ONLY;
+      }
+
+      loaded.configVersion = CURRENT_VERSION;
+      loaded.chainFalloff = Math.max(0.0F, Math.min(1.0F, loaded.chainFalloff));
+      loaded.chainJumps = Math.max(0, Math.min(16, loaded.chainJumps));
+      loaded.dischargeRange = Math.max(0.0, loaded.dischargeRange);
+      loaded.chainRadius = Math.max(0.0, loaded.chainRadius);
+      loaded.waveRadius = Math.max(0.0, loaded.waveRadius);
+      loaded.stormStartRadius = Math.max(0.0, loaded.stormStartRadius);
+      loaded.stormMaxRadius = Math.max(loaded.stormStartRadius, loaded.stormMaxRadius);
+      loaded.stormPulseTicks = Math.max(1, loaded.stormPulseTicks);
+      loaded.stormBoltTicks = Math.max(1, loaded.stormBoltTicks);
+      loaded.stormStages = Math.max(1, loaded.stormStages);
+      loaded.skyColumnHeight = Math.max(0, Math.min(64, loaded.skyColumnHeight));
+      loaded.skyStrikeSplashRadius = Math.max(0.0, loaded.skyStrikeSplashRadius);
+      loaded.skyMaxDistance = Math.max(0.0, loaded.skyMaxDistance);
+      loaded.wrathRadius = Math.max(0.0, loaded.wrathRadius);
+      loaded.wrathCoreRadius = Math.max(0.0, loaded.wrathCoreRadius);
+      loaded.wrathCraterRadius = Math.max(0, Math.min(12, loaded.wrathCraterRadius));
+      loaded.stormFullCraterRadius = Math.max(0, Math.min(12, loaded.stormFullCraterRadius));
+      return loaded;
+   }
+
    public static ThorCombatConfig get() {
       return instance;
    }
@@ -94,11 +132,7 @@ public final class ThorCombatConfig {
          try (Reader reader = new FileReader(file)) {
             ThorCombatConfig loaded = GSON.fromJson(reader, ThorCombatConfig.class);
             if (loaded != null) {
-               if (loaded.skyTargetPolicy == null) {
-                  loaded.skyTargetPolicy = SkyTargetPolicy.LAST_PRIMARY_HIT;
-               }
-
-               instance = loaded;
+               instance = migrate(loaded);
             }
          } catch (Exception e) {
             LOGGER.warn("Bad {}: defaults kept", FILE, e);

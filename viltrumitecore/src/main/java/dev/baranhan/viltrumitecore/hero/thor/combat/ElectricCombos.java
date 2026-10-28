@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -95,9 +94,7 @@ public final class ElectricCombos {
       int attackId = combat.nextAttackId();
       ServerLevel level = player.serverLevel();
       if (!result.fires()) {
-         // Needs Mjölnir in the hand: nothing happens, nothing is recalled (#148).
-         level.sendParticles(ParticleTypes.SMOKE, player.getX(), player.getY() + 1.2, player.getZ(), 6, 0.2, 0.2, 0.2, 0.01);
-         ElectricFx.sound(level, player.position(), SoundEvents.FIRE_EXTINGUISH, 0.3F, 1.6F);
+         // Needs Mjölnir in the hand: nothing happens, nothing is recalled (#148), and no hint of the sequence either (#131, B-m13).
          ThorEvents.post(CombatHits.event(ThorEventType.COMBO_END, player.getUUID(), null, ThorMove.ELECTRIC_COMBO, attackId, false, 0.0F, false));
          return;
       }
@@ -119,7 +116,10 @@ public final class ElectricCombos {
       combat.actionAll.clear();
       SkyTargetPolicy policy = ThorCombatConfig.get().skyTargetPolicy;
       UUID target = policy.select(primary, all);
-      combat.skyFallback.put(attackId, policy == SkyTargetPolicy.AIM_POINT ? ElectricFx.aim(player, 32.0) : point);
+      if (policy.allowsPoint()) {
+         // Dev switch only (never the default): the bolt may fall where Thor aims.
+         combat.skyFallback.put(attackId, ElectricFx.aim(player, 32.0));
+      }
       ThorEvents.post(CombatHits.event(ThorEventType.COMBO_END, player.getUUID(), target, ThorMove.ELECTRIC_COMBO, attackId,
          CombatHits.hammerInHand(player), result.combo().ordinal(), true));
    }
@@ -266,9 +266,18 @@ public final class ElectricCombos {
 
    // --- automatic sky lightning (#129, #104, #137) ---
 
-   /** B's COMBO_END listener: a successful electric combo drops a directed bolt from the sky. */
+   /**
+    * Pure (B-B2): does a successful combo get a sky strike? Only with a chosen
+    * struck enemy, or with an aim point of a dev policy; never on a fallback
+    * point of the combo (not on Thor, not on a wall).
+    */
+   static boolean skyStrikes(boolean success, @Nullable UUID target, boolean devPoint) {
+      return success && (target != null || devPoint);
+   }
+
+   /** B's COMBO_END listener: a successful electric combo drops a directed bolt from the sky onto its one struck enemy. */
    static void onComboEnd(ThorEvent event) {
-      if (!event.success() || event.move() != ThorMove.ELECTRIC_COMBO) {
+      if (event.move() != ThorMove.ELECTRIC_COMBO) {
          return;
       }
 
@@ -281,6 +290,10 @@ public final class ElectricCombos {
       ThorCombatState combat = ThorCombatState.of(state);
       Vec3 fallback = combat.skyFallback.remove(event.attackId());
       UUID targetId = event.targetId();
+      if (!skyStrikes(event.success(), targetId, fallback != null)) {
+         return;
+      }
+
       int attackId = event.attackId();
       combat.schedule(ThorCombatConfig.get().skyStrikeDelayTicks, player, () -> skyStrike(player, combat, targetId, fallback, attackId));
    }
@@ -293,24 +306,29 @@ public final class ElectricCombos {
       ThorCombatConfig config = ThorCombatConfig.get();
       ServerLevel level = player.serverLevel();
       Entity entity = targetId == null ? null : level.getEntity(targetId);
-      LivingEntity target = entity instanceof LivingEntity living && living.isAlive() && living.distanceTo(player) <= config.skyMaxDistance ? living : null;
-      Vec3 at = target != null ? target.position() : fallback;
-      if (at == null) {
+      LivingEntity target = entity instanceof LivingEntity living && living.isAlive() && living.distanceTo(player) <= config.skyMaxDistance
+         && CombatHits.isEnemy(player, living) ? living : null;
+      // A chosen enemy that died, left or went out of range: no strike (never the fallback point, B-B2). Only a dev aim point has none.
+      Vec3 at = target != null ? target.position() : targetId == null ? fallback : null;
+      if (at == null || !level.isLoaded(BlockPos.containing(at))) {
          return;
       }
 
       ElectricFx.bolt(level, at);
       HeroFx.flash(player, at.add(0.0, 1.0, 0.0), 1.4F);
       ElectricFx.crackle(level, at.add(0.0, 1.0, 0.0), 30);
-      // Through ordinary blocks above the target; protected / unbreakable blocks are spared (#104).
-      double top = target != null ? target.getBoundingBox().maxY : at.y + 1.0;
-      ElectricFx.carve(level, ElectricFx.column(BlockPos.containing(at.x, top, at.z).below(), config.skyColumnHeight));
+      // Through ordinary blocks above the struck enemy only; the path stops at the first block the bolt may not break
+      // (unbreakable, protected, mobGriefing off, unloaded): blocked, never jumped over (#104, B-B2). No column for a dev aim point.
+      if (target != null) {
+         double top = target.getBoundingBox().maxY;
+         ElectricFx.carve(level, ElectricFx.skyPath(level, BlockPos.containing(at.x, top, at.z).below(), config.skyColumnHeight));
+      }
       if (target != null && CombatHits.hit(player, target, config.skyStrikeDamage, ThorMove.ELECTRIC_COMBO, attackId)) {
          CombatHits.push(target, at.add(0.01, 0.0, 0.01), 0.8, 0.4);
       }
 
       for (LivingEntity other : CombatHits.around(player, at, config.skyStrikeSplashRadius, 2.0)) {
-         if (other != target && CombatHits.hit(player, other, config.skyStrikeDamage * 0.5F, ThorMove.ELECTRIC_COMBO, attackId)) {
+         if (other != target && CombatHits.hitArea(player, other, config.skyStrikeDamage * 0.5F, ThorMove.ELECTRIC_COMBO, attackId)) {
             CombatHits.push(other, at, 0.8, 0.3);
          }
       }
