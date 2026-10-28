@@ -5,12 +5,10 @@ import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFlags;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMode;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
-import dev.baranhan.viltrumitecore.hero.thor.combat.ThorStrike;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
@@ -18,7 +16,7 @@ import net.minecraftforge.event.TickEvent;
 
 /**
  * Session B client: registers the combat clips, gives the local first-person
- * view a vanilla arm swing per strike (third person plays ThorClips), adds
+ * arm its authored strike rows (ThorFirstPerson; third person plays ThorClips), adds
  * sparks around an electric Thor, and darkens only the local sky near a
  * storm or the ultimate (#83, #137: never the world weather).
  */
@@ -77,23 +75,19 @@ public final class ThorCombatClient {
          hand.z + (random.nextDouble() - 0.5) * 0.3, 0.0, 0.02, 0.0);
    }
 
-   /** First person only: one vanilla swing per new strike pose (the clips are third-person). */
+   /**
+    * First person (B-M10): a new strike pose starts its authored
+    * first-person row (ThorFirstPerson); no vanilla swing on top of an
+    * authored attack (animation-system §6).
+    */
    private static void swing(Minecraft minecraft, Player player, HeroPublicSnapshot snapshot, ThorMove move) {
       boolean strike = move == ThorMove.HAMMER_COMBO || move == ThorMove.FIST_COMBO || move == ThorMove.HAMMER_STRIKE || move == ThorMove.ELECTRIC_COMBO;
       int key = strike && snapshot.resource() > 0 ? snapshot.actionId() * 4096 + ThorView.step(snapshot) * 64 + snapshot.resource() : 0;
       Integer previous = LAST_STRIKE.put(player, key);
-      if (key == 0 || previous != null && previous == key || !minecraft.options.getCameraType().isFirstPerson()) {
+      if (previous != null && previous == key) {
          return;
       }
 
-      boolean left;
-      if (move == ThorMove.ELECTRIC_COMBO) {
-         left = snapshot.resource() == ThorCombatClips.LEFT_HAND;
-      } else {
-         ThorStrike pose = ThorStrike.byPose(snapshot.resource());
-         left = pose != null && pose.hand() == ThorStrike.Hand.LEFT;
-      }
-
-      player.swing(left ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, false);
+      ThorFirstPerson.onStrike(key, player.tickCount, move, snapshot.resource());
    }
 }

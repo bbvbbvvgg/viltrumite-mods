@@ -39,6 +39,8 @@ public abstract class FirstPersonThorMixin {
       CallbackInfo ci
    ) {
       if (hand == InteractionHand.MAIN_HAND) {
+         // B-M10: session B's authored attack arm first, then A's recall reach / catch kick on top.
+         dev.baranhan.viltrumitecore.client.thor.ThorFirstPerson.apply(player, partialTicks, poseStack);
          MjolnirFirstPerson.apply(player, partialTicks, poseStack);
       }
    }
