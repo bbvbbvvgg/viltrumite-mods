@@ -97,8 +97,16 @@ public final class HeroFx {
     * draws the channel, the flash and plays the thunder itself.
     */
    public static void electricBolt(net.minecraft.server.level.ServerLevel level, Vec3 at, float height, float power) {
+      electricBolt(level, at, height, power, null);
+   }
+
+   /**
+    * Same, with the hero's own thunder: each client plays {@code thunder} with the flash instead of the vanilla
+    * bolt sounds (null keeps the vanilla pair). Thor passes his crack (ThorSounds.boltCrack, R5).
+    */
+   public static void electricBolt(net.minecraft.server.level.ServerLevel level, Vec3 at, float height, float power, @Nullable SoundEvent thunder) {
       HeroFxS2CPacket packet = new HeroFxS2CPacket(HeroFxS2CPacket.ELECTRIC_BOLT, at, clampBoltPower(power), 0,
-         new float[]{clampBoltHeight(height), 0.0F, 0.0F}, -1);
+         new float[]{clampBoltHeight(height), 0.0F, 0.0F}, thunder == null ? -1 : BuiltInRegistries.SOUND_EVENT.getId(thunder));
       for (ServerPlayer viewer : level.players()) {
          if (viewer.position().distanceToSqr(at) <= BOLT_FX_RANGE * BOLT_FX_RANGE) {
             CoreMessages.sendToPlayer(packet, viewer);

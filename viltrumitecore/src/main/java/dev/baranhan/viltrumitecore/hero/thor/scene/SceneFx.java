@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.scene;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.entity.BloodDropEntity;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
@@ -8,9 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,8 +26,8 @@ final class SceneFx {
    private SceneFx() {
    }
 
-   static void sound(ServerPlayer source, Vec3 at, SoundEvent sound, float volume, float pitch) {
-      source.level().playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
+   static void sound(ServerPlayer source, Vec3 at, ThorCue cue) {
+      ThorSounds.playAt(source.serverLevel(), at, cue);
    }
 
    static void move(LivingEntity target, Vec3 velocity) {
@@ -104,8 +103,7 @@ final class SceneFx {
       HeroFx.slam(thor, ground, material, 2.5F);
       HeroFx.hitStop(thor, ground, 3, thor.getId(), victim.getId());
       blood(thor, ground.add(0, 0.3, 0), new Vec3(0, 0.25, 0), 8);
-      sound(thor, ground, SoundEvents.GENERIC_EXPLODE, 0.6F, 1.3F);
-      sound(thor, ground, SoundEvents.ANVIL_LAND, 0.7F, 0.6F);
+      sound(thor, ground, ThorCue.SLAM);
    }
 
    static void barragePunch(ServerPlayer thor, @Nullable LivingEntity victim, int index) {
@@ -117,7 +115,7 @@ final class SceneFx {
       Vec3 at = victim.position().add(0, victim.getBbHeight() * 0.7, 0);
       blood(thor, at, SceneFrame.forward(thor.getYRot()).scale(0.2), 2);
       HeroFx.hitStop(thor, at, 1, thor.getId(), victim.getId());
-      sound(thor, at, SoundEvents.PLAYER_ATTACK_STRONG, 0.9F, 0.8F + 0.06F * index);
+      ThorSounds.playAt(thor.serverLevel(), at, ThorCue.BARRAGE_HIT, 1.0F, 0.9F + 0.04F * index);
    }
 
    static void barrageFinisher(ServerPlayer thor, LivingEntity victim) {
@@ -125,7 +123,7 @@ final class SceneFx {
       Vec3 at = victim.position().add(0, victim.getBbHeight() * 0.6, 0);
       blood(thor, at, SceneFrame.forward(thor.getYRot()).scale(0.4), 6);
       HeroFx.flash(thor, at, 0.6F);
-      sound(thor, at, SoundEvents.PLAYER_ATTACK_CRIT, 1.0F, 0.6F);
+      sound(thor, at, ThorCue.BARRAGE_FINISH);
    }
 
    /** A thrown body met a surface. */
@@ -138,7 +136,7 @@ final class SceneFx {
       }
       HeroFx.shockwave(thor, at, 1.0F, floor(thor.serverLevel(), at), 2.0F);
       blood(thor, at.add(0, body.getBbHeight() * 0.5, 0), Vec3.ZERO, 5);
-      sound(thor, at, SoundEvents.GENERIC_EXPLODE, 0.5F, 1.4F);
+      sound(thor, at, ThorCue.BODY_IMPACT);
    }
 
    /** A thrown body ploughs into somebody else. */
@@ -147,7 +145,7 @@ final class SceneFx {
       if (dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsImpulse(other)) {
          move(other, velocity.scale(0.5).add(0, 0.3, 0));
       }
-      sound(thor, other.position(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, 0.9F, 0.8F);
+      sound(thor, other.position(), ThorCue.BODY_HIT);
    }
 
    // --- fatality beats (no damage: the death was decided at the scene start) ---
@@ -163,48 +161,43 @@ final class SceneFx {
             blood(thor, head, new Vec3(0, 0.3, 0), 26);
             HeroFx.slam(thor, feet, floor(level, feet), 2.5F);
             HeroFx.hitStop(thor, head, 4, thor.getId(), victim.getId());
-            sound(thor, head, SoundEvents.ANVIL_LAND, 1.0F, 0.5F);
-            sound(thor, head, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, 0.8F, 0.6F);
+            sound(thor, head, ThorCue.HEAD_CRUSH);
          }
          case CHEST_PUNCH -> {
             blood(thor, chest, forward.scale(0.45), 20);
             HeroFx.hitStop(thor, chest, 4, thor.getId(), victim.getId());
-            sound(thor, chest, SoundEvents.PLAYER_ATTACK_CRIT, 1.0F, 0.5F);
-            sound(thor, chest, SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR, 0.8F, 0.7F);
+            sound(thor, chest, ThorCue.CHEST_PUNCH);
          }
          case HEART_RIP -> {
             blood(thor, chest, forward.scale(-0.3).add(0, 0.2, 0), 16);
-            sound(thor, chest, SoundEvents.WARDEN_HEARTBEAT, 1.2F, 1.0F);
-            sound(thor, chest, SoundEvents.SLIME_SQUISH, 1.0F, 0.6F);
+            sound(thor, chest, ThorCue.HEART_RIP);
          }
          case HEART_CRUSH -> {
             Vec3 hand = thor.position().add(0, 1.5, 0).add(forward.scale(0.5));
             blood(thor, hand, new Vec3(0, -0.1, 0), 10);
-            sound(thor, hand, SoundEvents.SLIME_BLOCK_BREAK, 1.0F, 0.5F);
+            sound(thor, hand, ThorCue.HEART_CRUSH);
          }
          case UPPERCUT -> {
             blood(thor, head, new Vec3(0, 0.5, 0), 8);
             HeroFx.launch(thor, feet, 1.0F, floor(level, feet));
-            sound(thor, head, SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0F, 0.5F);
-            sound(thor, head, SoundEvents.ANVIL_PLACE, 0.7F, 0.6F);
+            sound(thor, head, ThorCue.UPPERCUT);
          }
          case AIR_BLOW -> {
             blood(thor, chest, new Vec3(0, -0.5, 0), 30);
             HeroFx.flash(thor, chest, 1.0F);
             HeroFx.hitStop(thor, chest, 5, thor.getId(), victim.getId());
-            sound(thor, chest, SoundEvents.LIGHTNING_BOLT_THUNDER, 0.9F, 0.9F);
-            sound(thor, chest, SoundEvents.ANVIL_LAND, 1.0F, 0.4F);
+            sound(thor, chest, ThorCue.AIR_BLOW);
          }
          case GROUND_SLAM -> {
             Vec3 ground = ground(level, feet);
             HeroFx.slam(thor, ground, floor(level, ground), 4.0F);
             blood(thor, ground.add(0, 0.3, 0), new Vec3(0, 0.15, 0), 18);
-            sound(thor, ground, SoundEvents.GENERIC_EXPLODE, 0.8F, 0.8F);
+            sound(thor, ground, ThorCue.GROUND_SLAM);
          }
          case THOR_LAND -> {
             Vec3 ground = ground(level, thor.position());
             HeroFx.slam(thor, ground, floor(level, ground), 2.5F);
-            sound(thor, ground, SoundEvents.ANVIL_LAND, 0.6F, 0.7F);
+            sound(thor, ground, ThorCue.THOR_LAND);
          }
       }
    }

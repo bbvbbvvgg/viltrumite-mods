@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.scene;
 
+import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
+import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.SafeSpot;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.thor.ThorFeedback;
@@ -16,7 +18,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
@@ -89,7 +90,7 @@ final class TeleportSessions {
       Session session = new Session(thor, TeleportRules.camera(thor.getEyePosition(), ThorSceneConfig.teleportCameraHeight, thor.level().getMaxBuildHeight()));
       thor.setDeltaMovement(Vec3.ZERO);
       SESSIONS.put(session.thor, session);
-      SceneFx.sound(thor, thor.position(), SoundEvents.BEACON_ACTIVATE, 0.6F, 1.6F);
+      SceneFx.sound(thor, thor.position(), ThorCue.TELEPORT_CHARGE);
       sync(thor, session);
       return true;
    }
@@ -151,8 +152,9 @@ final class TeleportSessions {
       thor.resetFallDistance();
       HeroFx.flash(thor, from.add(0, 1, 0), 0.8F);
       HeroFx.flash(thor, feet.add(0, 1, 0), 0.8F);
-      SceneFx.sound(thor, from, SoundEvents.LIGHTNING_BOLT_THUNDER, 0.5F, 1.4F);
-      SceneFx.sound(thor, feet, SoundEvents.LIGHTNING_BOLT_IMPACT, 0.8F, 1.0F);
+      ThorSounds.stop(thor.serverLevel(), from, ThorCue.TELEPORT_CHARGE);
+      SceneFx.sound(thor, from, ThorCue.TELEPORT_DEPART);
+      SceneFx.sound(thor, feet, ThorCue.TELEPORT_ARRIVE);
    }
 
    /** Feet position on the picked block, or null when the point fails a rule. */
