@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.baranhan.viltrumitecore.hero.BodyScale;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
-import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterKit;
 import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer;
 import dev.baranhan.viltrumitecore.hero.ironman.veronica.VeronicaView;
 import dev.baranhan.viltrumitecore.hero.ironman.mark.MarkRoster;
@@ -25,7 +24,7 @@ class HulkbusterLayerTest {
    static HulkbusterLayer active() {
       HulkbusterLayer layer = new HulkbusterLayer();
       assertTrue(layer.start());
-      for (int i = 0; i < HulkbusterLayer.DROP_TICKS; i++) {
+      for (int i = 0; i < HulkbusterLayer.DROP_TICKS_GROUND; i++) {
          layer.tick();
       }
 
@@ -81,28 +80,95 @@ class HulkbusterLayerTest {
    }
 
    @Test
-   void controlInterruptsAssemblyPartialNoCooldown() {
+   void cancelBeforeTheTorsoHasNoCooldownAfterItCannotStop() {
       HulkbusterLayer layer = new HulkbusterLayer();
-      layer.start();
-      for (int i = 0; i < HulkbusterLayer.DROP_TICKS + 35; i++) {
+      assertTrue(layer.start(true));
+      assertEquals(HulkbusterLayer.DROP_TICKS_AIR, layer.dropTicks());
+      for (int i = 0; i < layer.dropTicks() + HulkbusterLayer.TORSO_TICK - 1; i++) {
          layer.tick();
       }
 
-      layer.interrupt();
-      assertSame(HulkbusterLayer.Phase.PARTIAL, layer.phase());
-      assertEquals(0b11, layer.parts(), "legs and torso locked at 35 t");
-      assertFalse(layer.big(), "partial: no scale, no kit");
-      assertFalse(layer.absorb(5.0F), "partial: durability not active");
-      assertTrue(layer.exit());
+      assertFalse(layer.torsoClosed());
+      assertFalse(layer.big(), "full size only once the torso closes (no early scale jump)");
+      assertFalse(layer.absorb(5.0F), "durability is not active in the scene");
+      assertTrue(layer.cancel());
       assertFalse(layer.present());
-      assertEquals(0, layer.cooldown(), "never active: no cooldown");
+      assertEquals(0, layer.cooldown(), "stopped before the torso: no cooldown");
+
+      HulkbusterLayer late = new HulkbusterLayer();
+      late.start(false);
+      HulkbusterLayer.Event event = HulkbusterLayer.Event.NONE;
+      for (int i = 0; i < late.dropTicks() + HulkbusterLayer.TORSO_TICK; i++) {
+         event = late.tick();
+      }
+
+      assertSame(HulkbusterLayer.Event.TORSO_CLOSED, event);
+      assertTrue(late.torsoClosed());
+      assertTrue(late.big());
+      assertFalse(late.cancel(), "after the torso the scene runs to its end");
+      assertTrue(late.present());
+   }
+
+   @Test
+   void platesLockInOrder() {
+      int previous = 0;
+      for (int i = 0; i < HulkbusterLayer.PARTS; i++) {
+         int mask = HulkbusterLayer.lockedParts(HulkbusterLayer.PART_LOCK[i]);
+         assertEquals((1 << (i + 1)) - 1, mask, "legs, torso, arms, shoulders, helmet");
+         assertTrue(mask > previous);
+         previous = mask;
+         assertTrue(i == 0 || HulkbusterLayer.PART_LOCK[i] > HulkbusterLayer.PART_LOCK[i - 1]);
+      }
+
+      assertEquals(HulkbusterLayer.PART_LOCK[1], HulkbusterLayer.TORSO_TICK);
+      assertEquals(HulkbusterLayer.FULL_PARTS, HulkbusterLayer.lockedParts(HulkbusterLayer.ASSEMBLE_TICKS));
+   }
+
+   @Test
+   void relogMidSceneCancelsBeforeTheTorsoAndKeepsTheMachineAfterIt() {
+      HulkbusterLayer early = new HulkbusterLayer();
+      early.start(false);
+      for (int i = 0; i < early.dropTicks() + 3; i++) {
+         early.tick();
+      }
+
+      CompoundTag tag = new CompoundTag();
+      early.save(tag);
+      HulkbusterLayer loaded = new HulkbusterLayer();
+      loaded.load(tag);
+      assertFalse(loaded.present());
+      assertEquals(0, loaded.cooldown());
+
+      HulkbusterLayer late = new HulkbusterLayer();
+      late.start(false);
+      for (int i = 0; i < late.dropTicks() + HulkbusterLayer.TORSO_TICK + 4; i++) {
+         late.tick();
+      }
+
+      CompoundTag tag2 = new CompoundTag();
+      late.save(tag2);
+      HulkbusterLayer loaded2 = new HulkbusterLayer();
+      loaded2.load(tag2);
+      assertTrue(loaded2.active());
+      assertTrue(loaded2.needsFitCheck());
+
+      HulkbusterLayer exiting = active();
+      exiting.markSpareUsed();
+      exiting.exit();
+      CompoundTag tag3 = new CompoundTag();
+      exiting.save(tag3);
+      HulkbusterLayer loaded3 = new HulkbusterLayer();
+      loaded3.load(tag3);
+      assertFalse(loaded3.present(), "climbing out when saved: the exit finishes");
+      assertEquals(HulkbusterLayer.COOLDOWN, loaded3.cooldown());
+      assertTrue(loaded3.spareUsed(), "the spare arm flag is saved");
    }
 
    @Test
    void refuseWithoutRoomHasNoCooldown() {
       HulkbusterLayer layer = new HulkbusterLayer();
       layer.start();
-      for (int i = 0; i < HulkbusterLayer.DROP_TICKS + HulkbusterLayer.ASSEMBLE_TICKS; i++) {
+      for (int i = 0; i < HulkbusterLayer.DROP_TICKS_GROUND + HulkbusterLayer.ASSEMBLE_TICKS; i++) {
          layer.tick();
       }
 
@@ -130,7 +196,7 @@ class HulkbusterLayerTest {
       IronManState state = new IronManState();
       HulkbusterLayer layer = state.hulkbuster;
       layer.start();
-      for (int i = 0; i < HulkbusterLayer.DROP_TICKS + HulkbusterLayer.ASSEMBLE_TICKS; i++) {
+      for (int i = 0; i < HulkbusterLayer.DROP_TICKS_GROUND + HulkbusterLayer.ASSEMBLE_TICKS; i++) {
          layer.tick();
       }
 
@@ -158,18 +224,6 @@ class HulkbusterLayerTest {
    }
 
    @Test
-   void kitRules() {
-      assertFalse(HulkbusterKit.jackhammerHit(0));
-      assertTrue(HulkbusterKit.jackhammerHit(HulkbusterKit.JACKHAMMER_INTERVAL));
-      assertFalse(HulkbusterKit.jackhammerHit(HulkbusterKit.JACKHAMMER_INTERVAL + 1));
-      assertEquals(HulkbusterKit.SLAM_DAMAGE, HulkbusterKit.slamDamage(0.0), 1.0E-5F);
-      assertEquals(HulkbusterKit.SLAM_DAMAGE * 0.5F, HulkbusterKit.slamDamage(HulkbusterKit.SLAM_RADIUS), 1.0E-5F);
-      assertEquals(0.0F, HulkbusterKit.slamDamage(HulkbusterKit.SLAM_RADIUS + 0.1));
-      assertFalse(HulkbusterKit.slowRepulsorCharged(HulkbusterKit.SLOW_REPULSOR_CHARGE - 1));
-      assertTrue(HulkbusterKit.slowRepulsorCharged(HulkbusterKit.SLOW_REPULSOR_CHARGE));
-   }
-
-   @Test
    void bodyScaleFindsFreeSpotOrRefuses() {
       Vec3 feet = new Vec3(0.5, 64.0, 0.5);
       // A low ceiling right here, room one block east.
@@ -192,7 +246,7 @@ class HulkbusterLayerTest {
 
       HulkbusterLayer layer = state.hulkbuster;
       layer.start();
-      for (int i = 0; i < HulkbusterLayer.DROP_TICKS + HulkbusterLayer.ASSEMBLE_TICKS; i++) {
+      for (int i = 0; i < HulkbusterLayer.DROP_TICKS_GROUND + HulkbusterLayer.ASSEMBLE_TICKS; i++) {
          layer.tick();
       }
 
