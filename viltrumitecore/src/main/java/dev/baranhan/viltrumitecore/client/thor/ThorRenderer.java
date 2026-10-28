@@ -18,6 +18,8 @@ import dev.baranhan.viltrumitecore.client.reinhard.NameTagRules;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.thor.MjolnirPlace;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
+import dev.baranhan.viltrumiteflight.util.FlightState;
+import dev.baranhan.viltrumiteflight.util.ViltrumiteFlightPlayer;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.Util;
@@ -164,7 +166,7 @@ public final class ThorRenderer {
       if (passes.extras()) {
          MjolnirPlace place = ThorView.place(snapshot, player);
          if (place == MjolnirPlace.HAND) {
-            drawMjolnir(stack, locator(body, ThorAssets.MJOLNIR_GRIP), ThorAssets.MJOLNIR_HAND, buffers, light, overlay);
+            drawHeldMjolnir(player, partialTick, stack, locator(body, ThorAssets.MJOLNIR_GRIP), buffers, light, overlay);
          } else if (place == MjolnirPlace.BELT) {
             drawMjolnir(stack, locator(body, ThorAssets.MJOLNIR_BELT_BONE), ThorAssets.MJOLNIR_BELT, buffers, light, overlay);
          }
@@ -262,21 +264,93 @@ public final class ThorRenderer {
       return b == null ? new Matrix4f() : GeoPose.pivotFrame(b);
    }
 
+   private static final String SPIN_BONE = "MjolnirBody";
+
+   /**
+    * Mjölnir in the hand (both views), R4 on the R1 body: in flight only the MjolnirBody bone whirls
+    * about the fist (MjolnirSpin, FX id {@code thor:hammer_spin}), followed by translucent ghost
+    * copies as motion blur; the arm pose is never touched. The solid draw records the hammer
+    * anchors (ThorAnchors) on the real posed frame.
+    */
+   static void drawHeldMjolnir(AbstractClientPlayer player, float partialTick, PoseStack stack, Matrix4f at, MultiBufferSource buffers, int light,
+         int overlay) {
+      FlightState flight = player instanceof ViltrumiteFlightPlayer flyer ? flyer.getFlightState() : FlightState.NONE;
+      MjolnirSpin.State spin = MjolnirSpin.update(player, player.tickCount + (double)partialTick, MjolnirSpin.targetRps(flight, true));
+      if (!spin.spinning()) {
+         drawMjolnir(stack, at, ThorAssets.MJOLNIR_HAND, buffers, light, overlay, null, 1.0F, player);
+         return;
+      }
+
+      float angle = spin.angle;
+      float rps = spin.rps;
+      drawMjolnir(stack, at, ThorAssets.MJOLNIR_HAND, buffers, light, overlay, angle, 1.0F, player);
+      for (int i = 1; i <= MjolnirSpin.GHOSTS; i++) {
+         float alpha = MjolnirSpin.ghostAlpha(rps, i);
+         if (alpha >= 0.02F) {
+            drawMjolnir(stack, at, ThorAssets.MJOLNIR_HAND, buffers, light, overlay, MjolnirSpin.ghostAngle(angle, rps, i), alpha, null);
+         }
+      }
+   }
+
+   private static void spinBody(BakedGeoModel geo, float angle) {
+      GeoBone body = geo.getBone(SPIN_BONE);
+      if (body == null) {
+         return;
+      }
+
+      float[] pose = MjolnirSpin.bodyPose(angle);
+      body.rotX = body.initRotX + pose[0];
+      body.posX = pose[1];
+      body.posY = pose[2];
+      body.posZ = pose[3];
+   }
+
    /** The unchanged Mjölnir model ({@code mjolnir} subtree of its hand / belt geo) with its grip on {@code at}. */
    static void drawMjolnir(PoseStack stack, Matrix4f at, ResourceLocation geo, MultiBufferSource buffers, int light, int overlay) {
+      drawMjolnir(stack, at, geo, buffers, light, overlay, null, 1.0F, null);
+   }
+
+   /**
+    * As above; {@code spinAngle} turns MjolnirBody (R4 spin), {@code alpha} below 1 draws a lit
+    * translucent ghost (never in the shadow pass), a non-null {@code anchorOf} records its anchors.
+    */
+   static void drawMjolnir(PoseStack stack, Matrix4f at, ResourceLocation geo, MultiBufferSource buffers, int light, int overlay,
+         @Nullable Float spinAngle, float alpha, @Nullable AbstractClientPlayer anchorOf) {
       BakedGeoModel model = AnimCache.model(geo);
       GeoBone hammer = model == null ? null : model.getBone(ThorAssets.MJOLNIR_BONE);
       if (hammer == null) {
          return;
       }
 
+      boolean shadow = ShaderCompat.isShadowPass();
+      if (alpha < 1.0F && shadow) {
+         return;
+      }
+
       model.resetBones();
+      if (spinAngle != null) {
+         spinBody(model, spinAngle);
+      }
+
       stack.pushPose();
       stack.mulPoseMatrix(at);
       stack.translate(-hammer.pivotX / 16.0F, -hammer.pivotY / 16.0F, -hammer.pivotZ / 16.0F);
+      if (anchorOf != null) {
+         ThorAnchors.capture(anchorOf, stack, hammer);
+      }
+
+      if (alpha < 1.0F) {
+         AnimRenderer.renderBone(hammer, stack, buffers.getBuffer(RenderType.entityTranslucent(ThorAssets.MJOLNIR_TEXTURE)), light, overlay,
+            1.0F, 1.0F, 1.0F, alpha);
+         AnimRenderer.renderBone(hammer, stack, buffers.getBuffer(RenderType.eyes(ThorAssets.MJOLNIR_GLOW)), LightTexture.FULL_BRIGHT,
+            OverlayTexture.NO_OVERLAY, alpha, alpha, alpha, alpha);
+         stack.popPose();
+         return;
+      }
+
       AnimRenderer.renderBone(hammer, stack, buffers.getBuffer(RenderType.entityCutoutNoCull(ThorAssets.MJOLNIR_TEXTURE)), light, overlay,
          1.0F, 1.0F, 1.0F, 1.0F);
-      if (!ShaderCompat.isShadowPass()) {
+      if (!shadow) {
          AnimRenderer.renderBone(hammer, stack, buffers.getBuffer(RenderType.eyes(ThorAssets.MJOLNIR_GLOW)), LightTexture.FULL_BRIGHT,
             OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
       }
@@ -443,8 +517,8 @@ public final class ThorRenderer {
          if (arms != null) {
             stack.pushPose();
             PlayerGeoLayer.partFrame(stack, arm, PlayerBoneMap.Part.RIGHT_ARM);
-            drawMjolnir(stack, locator(arms, ThorAssets.MJOLNIR_GRIP), ThorAssets.MJOLNIR_HAND, event.getMultiBufferSource(), event.getPackedLight(),
-               OverlayTexture.NO_OVERLAY);
+            drawHeldMjolnir(player, Minecraft.getInstance().getFrameTime(), stack, locator(arms, ThorAssets.MJOLNIR_GRIP),
+               event.getMultiBufferSource(), event.getPackedLight(), OverlayTexture.NO_OVERLAY);
             stack.popPose();
          }
       }

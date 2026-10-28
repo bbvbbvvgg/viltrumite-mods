@@ -2,22 +2,19 @@ package dev.baranhan.viltrumitecore.client.thor;
 
 import dev.baranhan.viltrumitecore.client.render.vfx.SkyTint;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
-import dev.baranhan.viltrumitecore.hero.thor.ThorFlags;
-import dev.baranhan.viltrumitecore.hero.thor.ThorMode;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 
 /**
  * Session B client: registers the combat clips, gives the local first-person
- * arm its authored strike rows (ThorFirstPerson; third person plays ThorClips), adds
- * sparks around an electric Thor, and darkens only the local sky near a
+ * arm its authored strike rows (ThorFirstPerson; third person plays ThorClips), runs
+ * the state-driven Thor VFX (ThorStormVfx: WRATH storm, storm cloud, charge
+ * aura; recipes in ThorFxRecipes), and darkens only the local sky near a
  * storm or the ultimate (#83, #137: never the world weather).
  */
 public final class ThorCombatClient {
@@ -30,6 +27,8 @@ public final class ThorCombatClient {
 
    public static void init() {
       ThorCombatClips.registerAll();
+      ThorFxRecipes.init();
+      ThorStormVfx.init();
       MinecraftForge.EVENT_BUS.addListener(ThorCombatClient::onClientTick);
    }
 
@@ -51,9 +50,8 @@ public final class ThorCombatClient {
             stormy = true;
          }
 
-         if (ThorFlags.mode(snapshot.heroFlags()) == ThorMode.ELECTRIC && player.tickCount % 4 == 0) {
-            sparks(minecraft, player);
-         }
+         // thor:wrath_storm, the storm cloud and thor:charge_aura (R4): state-driven, every client.
+         ThorStormVfx.tick(minecraft.level, player, snapshot, move);
 
          if (player == minecraft.player) {
             swing(minecraft, player, snapshot, move);
@@ -65,14 +63,6 @@ public final class ThorCombatClient {
       } else {
          SkyTint.INSTANCE.remove(SKY_OWNER);
       }
-   }
-
-   private static void sparks(Minecraft minecraft, Player player) {
-      float yaw = (float)Math.toRadians(player.yBodyRot);
-      Vec3 hand = player.position().add(-Math.cos(yaw) * 0.4, 0.9, -Math.sin(yaw) * 0.4);
-      var random = player.getRandom();
-      minecraft.level.addParticle(ParticleTypes.ELECTRIC_SPARK, hand.x + (random.nextDouble() - 0.5) * 0.3, hand.y + random.nextDouble() * 0.3,
-         hand.z + (random.nextDouble() - 0.5) * 0.3, 0.0, 0.02, 0.0);
    }
 
    /**

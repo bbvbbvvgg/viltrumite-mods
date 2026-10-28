@@ -163,14 +163,20 @@ public class PlayerGeoLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
       poseStack.pushPose();
       partFrame(poseStack,modelPart,target);
       boolean shadow = ShaderCompat.isShadowPass();
+      if (!shadow && part.frame() != null) {
+         part.frame().onFrame(poseStack, bone);
+      }
+
       for (Pass pass : part.passes()) {
          boolean glow = pass.kind() == Pass.Kind.GLOW;
-         if (glow && shadow) {
-            // Emissive passes cast no shadow (animation-system §7).
+         boolean translucent = pass.kind() == Pass.Kind.TRANSLUCENT;
+         if ((glow || translucent) && shadow) {
+            // Emissive and ghost passes cast no shadow (animation-system §7).
             continue;
          }
 
-         VertexConsumer buffer = buffers.getBuffer(glow ? RenderType.eyes(pass.texture()) : RenderType.entityCutoutNoCull(pass.texture()));
+         VertexConsumer buffer = buffers.getBuffer(glow ? RenderType.eyes(pass.texture())
+            : translucent ? RenderType.entityTranslucent(pass.texture()) : RenderType.entityCutoutNoCull(pass.texture()));
          AnimRenderer.renderBone(bone, poseStack, buffer, glow ? LightTexture.FULL_BRIGHT : light, glow ? OverlayTexture.NO_OVERLAY : overlay,
             pass.r(), pass.g(), pass.b(), pass.a());
       }
@@ -211,18 +217,39 @@ public class PlayerGeoLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
    /**
     * One geo model on the player. {@code pose} runs after the bones are reset
     * and may set bone scale/rotation/hidden (for example flame length).
+    * {@code frame}, if set, receives the actual draw frame of each mapped
+    * top-level bone (not in the shadow pass), for VFX anchors on the posed geo.
     */
-   public record Part(ResourceLocation geo, List<Pass> passes, @Nullable Consumer<BakedGeoModel> pose) {
+   public record Part(ResourceLocation geo, List<Pass> passes, @Nullable Consumer<BakedGeoModel> pose, @Nullable FrameSink frame) {
       public Part(ResourceLocation geo, List<Pass> passes) {
-         this(geo, passes, null);
+         this(geo, passes, null, null);
+      }
+
+      public Part(ResourceLocation geo, List<Pass> passes, @Nullable Consumer<BakedGeoModel> pose) {
+         this(geo, passes, pose, null);
       }
    }
 
-   /** One draw of a part: cutout texture (lit) or glow texture (additive, full bright). */
+   /** Draw frame of a part's top-level bone: the stack is in geo model space, the bone is posed. Do not keep the stack. */
+   @FunctionalInterface
+   public interface FrameSink {
+      void onFrame(PoseStack frame, GeoBone topLevelBone);
+   }
+
+   /**
+    * One draw of a part: cutout texture (lit), glow texture (additive, full
+    * bright) or translucent (lit, alpha-blended: motion-blur ghost copies).
+    */
    public record Pass(ResourceLocation texture, Kind kind, float r, float g, float b, float a) {
       public enum Kind {
          CUTOUT,
-         GLOW
+         GLOW,
+         TRANSLUCENT
+      }
+
+      /** Alpha-blended pass (no shadow), for example motion-blur ghosts of a spinning part. */
+      public static Pass translucent(ResourceLocation texture, float alpha) {
+         return new Pass(texture, Kind.TRANSLUCENT, 1.0F, 1.0F, 1.0F, alpha);
       }
 
       public static Pass cutout(ResourceLocation texture) {
