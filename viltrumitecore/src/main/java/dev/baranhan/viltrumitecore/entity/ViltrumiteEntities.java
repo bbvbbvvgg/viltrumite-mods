@@ -53,6 +53,18 @@ public class ViltrumiteEntities {
          .sized(0.7F, 0.7F).clientTrackingRange(16).updateInterval(1).fireImmune().noSave().noSummon().build("mjolnir")
    );
 
+   /** DIO's thrown knife (hero/dio, spec docs/design/2026-10-28-dio-design.md). */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.hero.dio.DioKnifeEntity>> DIO_KNIFE = ENTITIES.register(
+      "dio_knife",
+      () -> Builder.<dev.baranhan.viltrumitecore.hero.dio.DioKnifeEntity>of(dev.baranhan.viltrumitecore.hero.dio.DioKnifeEntity::new, MobCategory.MISC).sized(0.25F, 0.25F).clientTrackingRange(8).updateInterval(1).fireImmune().noSave().build("dio_knife")
+   );
+
+   /** Jinwoo's army (spec docs/design/2026-10-28-jinwoo-design.md §6): never saved to the world. */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity>> SHADOW_SOLDIER = ENTITIES.register(
+      "shadow_soldier", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity>of(dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity::new, MobCategory.MISC)
+         .sized(0.62F, 1.9F).clientTrackingRange(10).updateInterval(2).fireImmune().noSave().build("shadow_soldier")
+   );
+
    public static void register(IEventBus eventBus) {
       ENTITIES.register(eventBus);
    }
