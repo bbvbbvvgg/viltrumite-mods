@@ -1770,5 +1770,385 @@
         "attenuation_distance": 32
       }
     ]
+  },
+  "jinwoo.air_step": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_air_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/air_step",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.authority_grip": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_authority_grip",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/authority_grip",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.authority_slam": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_authority_slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/authority_slam",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "jinwoo.block": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_block",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/block",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.command_attack": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_command_attack",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/command_attack",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.command_guard": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_command_guard",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/command_guard",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.command_sentinel": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_command_sentinel",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/command_sentinel",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.dagger_draw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_dagger_draw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/dagger_draw",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.dagger_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_dagger_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/dagger_hit_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "viltrumitecore:jinwoo/dagger_hit_2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "viltrumitecore:jinwoo/dagger_hit_3",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.dagger_sheath": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_dagger_sheath",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/dagger_sheath",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.dagger_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_dagger_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/dagger_swing_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "viltrumitecore:jinwoo/dagger_swing_2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "viltrumitecore:jinwoo/dagger_swing_3",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.dive": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_dive",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/dive",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.exchange": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_exchange",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/exchange",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.extract_channel": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_extract_channel",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/extract_channel",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.extract_fail": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_extract_fail",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/extract_fail",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.extract_rise": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_extract_rise",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/extract_rise",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "jinwoo.finisher": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_finisher",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/finisher",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.landing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_landing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/landing",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.monarch_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_monarch_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/monarch_charge",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "jinwoo.mutilation": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_mutilation",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/mutilation",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "jinwoo.parry": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_parry",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/parry",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.recall": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_recall",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/recall",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_refuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/refuse",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.shadow_claw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_shadow_claw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/shadow_claw",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.shadow_dissolve": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_shadow_dissolve",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/shadow_dissolve",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.shadow_rise": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_shadow_rise",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/shadow_rise",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.shadow_roar": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_shadow_roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/shadow_roar",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "jinwoo.shadow_slam": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_shadow_slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/shadow_slam",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "jinwoo.shadow_slash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_shadow_slash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/shadow_slash",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.spin": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_spin",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/spin",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.step": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/step",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "jinwoo.summon": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_summon",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/summon",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "jinwoo.ult_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_ult_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/ult_charge",
+        "attenuation_distance": 96,
+        "stream": false
+      }
+    ]
+  },
+  "jinwoo.ult_rise": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_ult_rise",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/ult_rise",
+        "attenuation_distance": 128,
+        "stream": false
+      }
+    ]
+  },
+  "jinwoo.ult_roar": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_ult_roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/ult_roar",
+        "attenuation_distance": 128,
+        "stream": false
+      }
+    ]
+  },
+  "jinwoo.ult_wave": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.jinwoo_ult_wave",
+    "sounds": [
+      {
+        "name": "viltrumitecore:jinwoo/ult_wave",
+        "attenuation_distance": 128,
+        "stream": false
+      }
+    ]
   }
 }
