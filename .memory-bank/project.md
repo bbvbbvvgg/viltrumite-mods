@@ -120,11 +120,24 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 
 ## Topic files
 - `decompile.md`: decompile artifacts and their fixes.
+- `heroes-integration.md`: the all-heroes merge (Thor #74 + DIO/Sinclair/Jinwoo #82): hero and action order, core 1.54.0 / protocol 14, where each hero's lang keys and sounds live.
 ## Ability icons (house style, core 1.46.0)
 - Every hero icon is 64×64 = 32×32 art ×2 in the Reinhard house style (`tools/assets/icon_art.py`: Earth frame re-tinted via `FRAMES`, charcoal backdrop, navy outline, Endesga palette, no smooth gradients). Reinhard icons are the reference; do not redraw them.
 - Regulus / Homelander / Iron Man: `python3 tools/assets/make_hero_icons.py [--hero X] [--only name]` writes `binassets/.../textures/gui/ability/<hero>/<name>.png.b64` and previews (`build/hero_icons/<hero>/`, sheet, HUD mock at GUI 2/3 via `icon_preview.py`). `--check` fails if a committed icon is stale. Art: `<hero>_icon_art.py` (`NAMES`, `FOLDER`, `PANEL`, `HUD`, `FLIGHT`).
 - Regulus icons moved from `resources/` PNGs (16×16) to `binassets/` b64. Homelander owns flight-bar ids `viltrumite:fast_takeoff` / `supersonic_flight` (own icons; `speed_lock` still falls back). Legacy Viltrumite `textures/gui/ability/*.png` are original JAR art shown for no current hero; untouched.
 - `HeroAbilityIconsTest` checks every hero icon id resolves to a 64×64 RGBA texture with transparent corners. Plan: `docs/plans/2026-10-28-hero-icons-redraw.md`; before/after: `docs/reports/hero-icons/*.svg`.
+## Core 1.50.0 (cinematic hero subtitles, protocol 11)
+- Shared spoken-line system: `hero/speech/` (`HeroLine`, `HeroLines`, `HeroLineTrigger`, pure `HeroSpeechRules`,
+  server `HeroSpeech`), packet `HeroLineS2CPacket`, client `client/hero/speech/` (pure `SubtitleLayout`,
+  `SubtitleTiming`, `SubtitleQueue`; `SubtitleRenderer`, `HeroPortraits`, `HeroSubtitles` overlay below chat).
+- A hero returns its table from `HeroDefinition.lines()`; speak on the server only when an action is accepted
+  (`HeroSpeech.ability/trigger`), never per tick. Text and speaker name are lang keys (`subtitle.viltrumitecore.*`).
+- One subtitle on screen; queue ≤ 3; same speaker or higher priority forces a short exit; panel size fixed per line.
+- Portraits: default live player bust (skin + outer layer); custom models register `HeroPortraits.register`
+  (`ReinhardPortrait` renders the geo body bone).
+- Reinhard: `ReinhardLines.WORLD_CUT` from `ReinhardActions.press`. Full monologue later = one `textSeries` line.
+- Version 1.50.0 / protocol 11 skip the numbers used by the parallel Thor branches (1.46–1.49, protocol 10).
+- Op test command `/herolines play|preview short|long|say|stop`. Plan: `docs/plans/2026-10-28-hero-subtitles.md`.
 ## Iron Man polish (core 1.24.1)
 - RMB: any item in either hand keeps vanilla use (`IronManHero.handsBusy`); NANO_BLADE has no RMB (dash removed from input).
 - Pages: 0-3 combat (Unibeam, missiles, arsenal, countermeasures), 6-9 scan, Veronica, helmet, suit. `HeroDefinition.previousDefaultLoadouts` + `HeroRegistry.isPreviousDefault`: an untouched old default is reset to the new one on login.
@@ -368,16 +381,3 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   spinning shards (`SawSphereRenderer`; CPU preview `SawSpherePreviewTest` with `SAW_PREVIEW=1` +
   `tools/preview_saw_sphere.py`).
 - Released as GitHub release `v1.45.0-reinhard` together with flight 1.10.1; the overhaul stack (#47–#54) merged to main.
-
-## Core 1.50.0 (cinematic hero subtitles, protocol 11)
-- Shared spoken-line system: `hero/speech/` (`HeroLine`, `HeroLines`, `HeroLineTrigger`, pure `HeroSpeechRules`,
-  server `HeroSpeech`), packet `HeroLineS2CPacket`, client `client/hero/speech/` (pure `SubtitleLayout`,
-  `SubtitleTiming`, `SubtitleQueue`; `SubtitleRenderer`, `HeroPortraits`, `HeroSubtitles` overlay below chat).
-- A hero returns its table from `HeroDefinition.lines()`; speak on the server only when an action is accepted
-  (`HeroSpeech.ability/trigger`), never per tick. Text and speaker name are lang keys (`subtitle.viltrumitecore.*`).
-- One subtitle on screen; queue ≤ 3; same speaker or higher priority forces a short exit; panel size fixed per line.
-- Portraits: default live player bust (skin + outer layer); custom models register `HeroPortraits.register`
-  (`ReinhardPortrait` renders the geo body bone).
-- Reinhard: `ReinhardLines.WORLD_CUT` from `ReinhardActions.press`. Full monologue later = one `textSeries` line.
-- Version 1.50.0 / protocol 11 skip the numbers used by the parallel Thor branches (1.46–1.49, protocol 10).
-- Op test command `/herolines play|preview short|long|say|stop`. Plan: `docs/plans/2026-10-28-hero-subtitles.md`.
