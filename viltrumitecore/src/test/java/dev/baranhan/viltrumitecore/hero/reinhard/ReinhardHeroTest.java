@@ -16,12 +16,13 @@ class ReinhardHeroTest {
 
    @Test
    void reinhardKeepsItsOrdinal() {
-      // Wire ordinal of Reinhard is frozen; later heroes are appended after it in merge order DIO, Sinclair, Jinwoo.
+      // Wire ordinal of Reinhard is frozen; later heroes follow it: Thor (#74), then DIO, Sinclair, Jinwoo (#82).
       HeroId[] values = HeroId.values();
       assertSame(HeroId.REINHARD, values[5]);
-      assertSame(HeroId.DIO, values[6]);
-      assertSame(HeroId.SINCLAIR, values[7]);
-      assertSame(HeroId.JINWOO, values[8]);
+      assertSame(HeroId.THOR, values[6]);
+      assertSame(HeroId.DIO, values[7]);
+      assertSame(HeroId.SINCLAIR, values[8]);
+      assertSame(HeroId.JINWOO, values[9]);
    }
 
    @Test

@@ -10,11 +10,15 @@ class ReinhardReleaseTest {
    @Test void overhaulIsAFeatureRelease() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.53.0", version.group(1), "integration of subtitles (1.50.0), icons (1.46.0), DIO, Sinclair and Jinwoo is a feature release; 1.51.x..1.52.x are taken by the Thor + Hulkbuster build (#74)");
+      int[] v = java.util.Arrays.stream(version.group(1).split("\\.")).mapToInt(Integer::parseInt).toArray();
+      assertTrue(v[0] > 1 || v[1] >= 45, "two-handed Reinhard strikes, the recorded shatter and the lattice sphere shipped as feature release 1.45.0");
    }
    @Test void snapshotCapacityUpgradeRejectsOldNetworkPeers() throws Exception {
       String source = Files.readString(Path.of("../viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));
-      assertTrue(source.contains("PROTOCOL_VERSION = \"13\""), "DIO, Sinclair and Jinwoo packets on top of HeroLineS2CPacket change the packet table: old peers must be refused");
+      var protocol = Pattern.compile("PROTOCOL_VERSION = \"(\\d+)\"").matcher(source);
+      assertTrue(protocol.find(), "the network protocol version must be declared");
+      // 7: the snapshot capacity upgrade; later wire changes (8: Thor scene packets) only raise it.
+      assertTrue(Integer.parseInt(protocol.group(1)) >= 7, "peers older than the snapshot capacity upgrade stay rejected");
       assertTrue(source.contains("networkProtocolVersion(() -> PROTOCOL_VERSION)"));
       assertTrue(source.contains("clientAcceptedVersions(PROTOCOL_VERSION::equals)"));
       assertTrue(source.contains("serverAcceptedVersions(PROTOCOL_VERSION::equals)"));

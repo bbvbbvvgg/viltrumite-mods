@@ -15,6 +15,8 @@ Sources list: `tools/assets/ironman_sources.md`. Permission texts: `docs/license
 
 - Stage 4: suit interior skin, Veronica pod model and texture, Veronica and signature icons, Mark 15 camouflage shimmer (`tools/assets/make_ironman_stage4_assets.py`, `make_ironman_stage4_visuals.py`, `make_ironman_stage4_signatures.py`); the opening-shell interior atlas; the Veronica model after the Age of Ultron stills.
 
+- Hulkbuster Mark 48 rework (H6): the whole Hulkbuster sound kit, 56 files for 31 events (strikes, jackhammer, screech family, steps, clamps, thrusters, suit-up, Jet Ram, four client loops) — original synthesis, CC0 1.0, `tools/sfx/hulkbuster.py`; table in `tools/assets/ironman_sources.md`.
+
 ### Kenney — Sci-Fi Sounds 1.0 and Impact Sounds 1.0
 - Source: kenney.nl. License: CC0 1.0 (public domain; credit not required, given here).
 - Used: every Iron Man sound except the thruster loops — built by `tools/sfx/ironman_cc0.py` (layered, pitched, loudness-normalized).
@@ -76,6 +78,15 @@ CGEffex 93835 and Robinhood76 378199 are **CC-BY-NC 4.0** on the live pages. No 
 ### TEMPORARY test asset — license NOT verified
 
 `sword_strike_voice` (the BLAST of the normal World Cut, REINHARD OVERHAUL item 12) is the owner-confirmed sound of Reinhard's strike on Theresia from Re:Zero Season 3 Episode 14 (reference: https://www.youtube.com/watch?v=GtFqJpCrwCQ), copied unmodified from the owner's Codex-Superheroes repository for testing. Its rights are **not verified** and no license is claimed; it must be replaced with a licensed or original sound before a public release. Details and digest: `tools/assets/reinhard_sources.md`.
+
+## Thor (God of War Ragnarök)
+
+Sources list: `tools/assets/thor_sources.md`. From the user's archive of **God of War HeroPack 3.0.0** (Fisk's Superheroes) by **SymbioteSpidey**. Permission of the authors: **not verified** — required before a public release.
+- **TechnoGhosty** — Thor skin.
+- **Szombie** — Mjölnir model and textures.
+- **FatherKhimsky** — Thor's belly and beard models and textures.
+- **JxkeXD** — Thor concept skin (reference only, not imported).
+- Own work (CC0): Thor panel icons (`tools/assets/make_thor_icons.py`) and all Thor sounds (R5: 56 files, deterministic synthesis by `tools/sfx/thor.py`, no recordings; list and cue table in `tools/assets/thor_sources.md`). No vanilla sounds.
 
 ## DIO — The World
 

@@ -12,6 +12,8 @@ public enum HeroId {
    IRON_MAN("ironman"),
    /** Reinhard van Astrea (spec docs/design/2026-10-11-reinhard-design.md). */
    REINHARD("reinhard"),
+   /** Thor, God of War Ragnarök (spec docs/design/2026-10-27-thor-design.md). */
+   THOR("thor"),
    /** DIO and The World (spec docs/design/2026-10-28-dio-design.md). */
    DIO("dio"),
    /** The Magnificent Sinclair (spec docs/design/2026-10-28-sinclair-design.md). */

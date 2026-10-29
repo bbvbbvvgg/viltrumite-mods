@@ -45,6 +45,14 @@ public class ViltrumiteEntities {
       "rocket_fist", () -> EntityType.Builder.<RocketFistEntity>of(RocketFistEntity::new, MobCategory.MISC).sized(0.4F, 0.4F).clientTrackingRange(8).updateInterval(1).build("rocket_fist")
    );
 
+   /** Session A: the one world Mjölnir's body (never saved: MjolnirWorld respawns it from the SavedData record). */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirEntity>> MJOLNIR = ENTITIES.register(
+      "mjolnir",
+      () -> EntityType.Builder.<dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirEntity>of(dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirEntity::new,
+            MobCategory.MISC)
+         .sized(0.7F, 0.7F).clientTrackingRange(16).updateInterval(1).fireImmune().noSave().noSummon().build("mjolnir")
+   );
+
    /** DIO's thrown knife (hero/dio, spec docs/design/2026-10-28-dio-design.md). */
    public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.hero.dio.DioKnifeEntity>> DIO_KNIFE = ENTITIES.register(
       "dio_knife",
