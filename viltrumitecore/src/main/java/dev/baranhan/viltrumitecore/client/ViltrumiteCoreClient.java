@@ -79,6 +79,9 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.homelander.HomelanderClient.registerSkins();
          dev.baranhan.viltrumitecore.client.ironman.IronManClient.registerSkins();
          dev.baranhan.viltrumitecore.client.reinhard.ReinhardClient.init();
+         dev.baranhan.viltrumitecore.client.dio.DioClient.init();
+         // The Magnificent Sinclair (docs/design/2026-10-28-sinclair-design.md §11).
+         dev.baranhan.viltrumitecore.client.sinclair.SinclairClient.init();
          dev.baranhan.viltrumitecore.client.jinwoo.JinwooClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();
