@@ -13,7 +13,9 @@ public enum HeroId {
    /** Reinhard van Astrea (spec docs/design/2026-10-11-reinhard-design.md). */
    REINHARD("reinhard"),
    /** DIO and The World (spec docs/design/2026-10-28-dio-design.md). */
-   DIO("dio");
+   DIO("dio"),
+   /** The Magnificent Sinclair (spec docs/design/2026-10-28-sinclair-design.md). */
+   SINCLAIR("sinclair");
 
    private final String key;
 

@@ -75,7 +75,13 @@ public enum HeroAction {
    /** DIO: vampiric drain grab. */
    VAMPIRE_DRAIN,
    /** DIO ultimate: Road Roller. */
-   ROAD_ROLLER;
+   ROAD_ROLLER,
+   /** Sinclair (spec docs/design/2026-10-28-sinclair-design.md §5, §11); appended to keep wire ordinals. */
+   VEXING_BOLT,
+   SPECTRAL_ASSISTANT,
+   RABBIT_HEX,
+   MISDIRECTION,
+   AUDIENCE_PARTICIPATION;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();
