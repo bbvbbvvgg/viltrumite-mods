@@ -74,7 +74,8 @@ public class AbilityInputManager {
       while (abilitySwapKey.consumeClick()) {
          Player player = client.player;
          if (player == null || !dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).allowsAbilityPages(player)) {
-            return;
+            // A hero without pages ignores Alt; the rest of this tick's input (dashboard key) still runs.
+            continue;
          }
 
          CoreMessages.sendToServer(new SwapAbilityBarC2SPacket());

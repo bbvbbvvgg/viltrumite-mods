@@ -251,6 +251,48 @@ def clearance(pose, hammer, belt=False):
     return out
 
 
+MESH_STEPS = 10
+MESH_TOL = 0.3  # px: under the scan's 0.5 tolerance
+
+
+def mesh_clearance(pose, hammer):
+    """Per arm, the push (px) that takes its forearm / fist (and Mjölnir for the right) out of the core, from the
+    exact mesh scan: the deepest hit's depth, along the mean direction from each hit core cube to the limb."""
+    hits = M.scan(pose, K.HAMMER if hammer else None, tolerance=MESH_TOL)
+    out = {"r": np.zeros(3), "l": np.zeros(3)}
+    if not hits:
+        return out
+    centres = {}
+    for b in K.tp_boxes(pose, False):
+        if b.model == "body":
+            centres.setdefault(b.bone, []).append(b.center)
+    acc = {"r": np.zeros(3), "l": np.zeros(3)}
+    deep = {"r": 0.0, "l": 0.0}
+    for mid, fid, d in hits:
+        ml, mb = mid.split(":", 1)
+        fl, fb = fid.split(":", 1)
+        if fl != "body" or fb not in centres:
+            continue
+        if fb not in CORE and not (ml == "mjolnir" and fb == "right_arm"):
+            continue
+        if ml == "mjolnir":
+            side, at = "r", pose.point("mjolnir_grip")
+        elif ml == "body" and mb in ARM_PARTS["r"]:
+            side, at = "r", np.mean(centres[mb], axis=0)
+        elif ml == "body" and mb in ARM_PARTS["l"]:
+            side, at = "l", np.mean(centres[mb], axis=0)
+        else:
+            continue
+        n = at - np.mean(centres[fb], axis=0)
+        acc[side] += (d + 0.4) * n / max(float(np.linalg.norm(n)), 1e-6)
+        deep[side] = max(deep[side], d + 0.4)
+    for side in ("r", "l"):
+        n = float(np.linalg.norm(acc[side]))
+        if n > 1e-6:
+            out[side] = acc[side] / n * deep[side]
+    return out
+
+
 def sole(pose, shin):
     """Lowest model-space y (px) of a shin's cubes (the foot)."""
     f = pose.frame(shin)
@@ -317,15 +359,15 @@ def _set_sway(pose, roll, pitch):
     pose.touch()
 
 
-def belt_sway(pose, prev=(0.0, 0.0), floor=0.0):
+def belt_sway(pose, prev=(0.0, 0.0), floor=0.0, fixed=("right_leg", "right_shin")):
     """Swings the belt locator (outward roll about the torso's forward axis, pitch about its side axis) just
     enough that the thigh and the shin do not go through the hanging hammer: the leg pushes the hammer, which
     then falls back (decay). Searches rings round the decayed previous swing; returns (roll, pitch) degrees."""
     r0, p0 = max(floor, prev[0] * BELT_SWAY_DECAY), prev[1] * BELT_SWAY_DECAY
     _set_sway(pose, r0, p0)
-    if belt_leg_depth(pose) <= 0.02:
+    if belt_leg_depth(pose, fixed) <= 0.02:
         return r0, p0
-    best, best_d = (r0, p0), belt_leg_depth(pose)
+    best, best_d = (r0, p0), belt_leg_depth(pose, fixed)
     for ring in range(1, int(2 * BELT_SWAY_MAX / BELT_SWAY_RING) + 1):
         rad = ring * BELT_SWAY_RING
         found = None
@@ -335,7 +377,7 @@ def belt_sway(pose, prev=(0.0, 0.0), floor=0.0):
             if r < floor - 1e-6 or r > BELT_SWAY_MAX or abs(p) > BELT_SWAY_MAX:
                 continue
             _set_sway(pose, r, p)
-            d = belt_leg_depth(pose)
+            d = belt_leg_depth(pose, fixed)
             if d <= 0.02:
                 if found is None or math.hypot(r, p) < math.hypot(*found):
                     found = (r, p)
@@ -348,13 +390,43 @@ def belt_sway(pose, prev=(0.0, 0.0), floor=0.0):
     return best
 
 
+BELT_OUT_STEP = 0.5  # px: a thigh that still goes through the hammer near its hook pushes the whole hammer out
+BELT_OUT_MAX = 5.0
+BELT_OUT_DECAY = 0.8  # per tick: it slides back onto the hip, it does not snap back
+# The thigh lifts the hammer as it pushes it: out (locator -x = the torso's right), a little up and back.
+BELT_OUT_DIR = np.array([-1.0, 0.6, 0.6]) / math.sqrt(1.72)
+
+
+def belt_clear(pose, prev_swing=(0.0, 0.0), prev_off=0.0, floor=0.0, fixed=("right_leg", "right_shin")):
+    """Keeps the thigh and the shin out of the hanging belt hammer: first the hammer swings (belt_sway); when its
+    top, next to the hook, still sits in the thigh, the hook slides out, up and back (BELT_OUT_DIR) a step at a time and
+    the swing is searched again. Both fall back slowly (decay). Returns (roll, pitch, offset px)."""
+    base = pose.pos["mjolnir_belt"].copy()
+    off = prev_off * BELT_OUT_DECAY
+    best = None
+    while True:
+        pose.pos["mjolnir_belt"] = base + off * BELT_OUT_DIR
+        pose.touch()
+        r, p = belt_sway(pose, prev_swing, floor, fixed)
+        d = belt_leg_depth(pose, fixed)
+        if best is None or d < best[0] - 1e-6:
+            best = (d, r, p, off)
+        if d <= 0.02 or off >= BELT_OUT_MAX - 1e-6:
+            break
+        off = min(BELT_OUT_MAX, off + BELT_OUT_STEP)
+    d, r, p, off = best
+    pose.pos["mjolnir_belt"] = base + off * BELT_OUT_DIR
+    _set_sway(pose, r, p)
+    return r, p, off
+
+
 # ------------------------------------------------------------------------------------------- legs
 KNEE_OUT_STEP = 6.0  # deg: a shin that would go into the belly / body swings out round the hip-foot line
-KNEE_OUT_MAX = 60.0
+KNEE_OUT_MAX = 80.0
 LEAN_RELIEF_STEP = 3.0  # deg: then the torso leans this much less per round (the belly lifts off the knees)
-LEAN_RELIEF_MAX = 24.0
+LEAN_RELIEF_MAX = 32.0
 HIP_UP_STEP = 0.4  # px: past the widest knees the pelvis rises (a shallower squat)
-HIP_UP_MAX = 3.0
+HIP_UP_MAX = 4.0
 SOLE_SINK = 0.25  # px: the lowest corner of a planted sole sits this far in the ground (scan tolerance 0.5)
 SOLE_FADE = 1.5  # px: a lifted foot (planned this high or more) is not corrected (only kept above the ground)
 
@@ -475,8 +547,10 @@ def solve(it, ref=None, hammer=False, belt=False):
         pose.rot["body"] = R.euler_near(R.rzyx(pose.rot["body"]), ref.rot["body"] if ref is not None else np.zeros(3))
         leg_miss, need, still = place_legs(pose, it, Rs, h, need, legs)
     misses.update(leg_miss)
-    pose.need = {"kr": need.get("r", 0.0), "kl": need.get("l", 0.0), "hu": hu, "lr": lr, "bsr": 0.0, "bsp": 0.0}
-    if belt or it.get("ra") == "belt" or (isinstance(it.get("ra"), tuple) and it["ra"] and it["ra"][0] == "mix"):
+    pose.need = {"kr": need.get("r", 0.0), "kl": need.get("l", 0.0), "hu": hu, "lr": lr, "bsr": 0.0, "bsp": 0.0, "bso": 0.0}
+    grabbing = it.get("ra") == "belt" or (isinstance(it.get("ra"), tuple) and it["ra"] and it["ra"][0] == "mix")
+    hanging = belt or grabbing
+    if hanging:
         prev = (0.0, 0.0)
         if ref is not None:
             d = ref.rot["mjolnir_belt"] - pose.model.bones["mjolnir_belt"].init
@@ -486,7 +560,9 @@ def solve(it, ref=None, hammer=False, belt=False):
         bp = P(*(it.get("bp") or (0.0, 0.0, 0.0)))
         pose.pos["mjolnir_belt"] = np.array([-bp[0], bp[1], bp[2]])
         pose.touch()
-        pose.need["bsr"], pose.need["bsp"] = belt_sway(pose, prev, float(it.get("bs") or 0.0))
+        prev_off = float(getattr(ref, "need", {}).get("bso", 0.0)) if ref is not None else 0.0
+        floor = float(it.get("bs") or 0.0)
+        pose.need["bsr"], pose.need["bsp"], pose.need["bso"] = belt_clear(pose, prev, prev_off, floor)
     T = pose.frame("body")
     Rt = T[:3, :3]
     held = _dir(it["hm"], pose, Rt)
@@ -536,6 +612,36 @@ def solve(it, ref=None, hammer=False, belt=False):
             moved = True
         if not moved:
             break
+    # Then the exact mesh (what the acceptance scan sees, the boxes above are coarse): a forearm, a fist or the
+    # hammer still in the torso, belly, beard, head or a thigh swings further out round its shoulder.
+    for _ in range(MESH_STEPS):
+        pushes = mesh_clearance(pose, hammer)
+        if on_handle and not _free(la):
+            # Both hands on the handle: the left forearm leaves the body when the hammer (the right fist) moves out.
+            pushes["r"] = pushes["r"] + pushes["l"]
+            pushes["l"] = np.zeros(3)
+        moved = False
+        if _free(it["ra"]) and np.linalg.norm(pushes["r"]) > 1e-3:
+            target = orbit(pose.point("right_arm"), target, pushes["r"])
+            right(target)
+            if on_handle:
+                ltarget = _target(la, pose, "left_arm", Rt)
+                left(ltarget)
+            moved = True
+        if _free(la) and np.linalg.norm(pushes["l"]) > 1e-3:
+            ltarget = orbit(pose.point("left_arm"), ltarget, pushes["l"])
+            left(ltarget)
+            moved = True
+        if not moved:
+            break
+    if hanging and not grabbing:
+        # The fist and forearm do not dodge the hanging hammer: the hammer is the passive one, it gets knocked aside.
+        hand_fixed = ("right_leg", "right_shin", "right_forearm", "right_hand")
+        if belt_leg_depth(pose, hand_fixed) > 0.02:
+            sw = (pose.need["bsr"], pose.need["bsp"])
+            pose.pos["mjolnir_belt"] = pose.pos["mjolnir_belt"] - pose.need["bso"] * BELT_OUT_DIR
+            pose.need["bsr"], pose.need["bsp"], pose.need["bso"] = belt_clear(pose, sw, pose.need["bso"] / BELT_OUT_DECAY,
+                                                                             float(it.get("bs") or 0.0), hand_fixed)
     for bone, rot in (it.get("add") or {}).items():
         pose.rot[bone] = pose.rot[bone] + np.radians([-rot[0], -rot[1], rot[2]])
     pose.touch()

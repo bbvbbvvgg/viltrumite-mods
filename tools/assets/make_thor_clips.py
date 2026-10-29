@@ -244,11 +244,11 @@ def hammer_clips():
         T=dict(hip=(0.2, -3.2, -0.3), tor=(10, 18, -1), ra=(34, -54, 17.5), hm=(20, -44), la=(-20, -40, 16))))
     # Pommel jab: hammer pulled in at the right side, head up behind, the butt driven forward.
     out.append(strike("hammer_pommel", S,
-        G=dict(hip=(0.3, -2.6, 0.8), tor=(4, 26, 0), ra=(70, -40, 11.0), rp=(1, -0.6, 0.6), hm=(176, 56), hf=(90, 0), la=(-10, -20, 16)),
-        L=dict(hip=(0.4, -2.8, 1.2), tor=(3, 32, 0), ra=(74, -36, 10.5), rp=(1, -0.6, 0.7), hm=(180, 60), hf=(90, 0), la=(-6, -14, 16)),
-        Cn=dict(hip=(-0.2, -2.8, -1.4), tor=(10, -6, 0), lft=(-0.5, 0, 5.0), ra=(4, -14, 19.4), rp=(1, -0.8, 0.2), hm=(180, 52),
+        G=dict(hip=(0.3, -2.6, 0.8), tor=(4, 26, 0), ra=(70, -40, 11.0), rp=(1, -0.6, 0.6), hm=(140, 62), hf=(90, 0), la=(-10, -20, 16)),
+        L=dict(hip=(0.4, -2.8, 1.2), tor=(3, 32, 0), ra=(74, -36, 10.5), rp=(1, -0.6, 0.7), hm=(144, 64), hf=(90, 0), la=(-6, -14, 16)),
+        Cn=dict(hip=(-0.2, -2.8, -1.4), tor=(10, -6, 0), lft=(-0.5, 0, 5.0), ra=(4, -14, 19.4), rp=(1, -0.8, 0.2), hm=(180, 74),
                 hf=(90, 0), la=(-70, -60, 17)),
-        O=dict(hip=(-0.2, -2.8, -1.4), tor=(11, -8, 0), lft=(-0.5, 0, 5.0), ra=(4, -12, 19.8), rp=(1, -0.8, 0.2), hm=(180, 50),
+        O=dict(hip=(-0.2, -2.8, -1.4), tor=(11, -8, 0), lft=(-0.5, 0, 5.0), ra=(4, -12, 19.8), rp=(1, -0.8, 0.2), hm=(180, 74),
                hf=(90, 0), la=(-70, -60, 17)),
         T=dict(hip=(0, -2.4, -0.5), tor=(7, 4, 0), ra=(20, -30, 16.5), hm=(30, 60), la=(-30, -40, 16))))
     # Double swing: right to left, the wrist turns, left to right (yaw 70 -> -70 and back).
@@ -264,15 +264,15 @@ def hammer_clips():
                la=(-40, -30, 16))))
     # Thrust: both hands, head first, a step in (pitch 0 -> -5).
     out.append(strike("hammer_thrust", S,
-        G=dict(hip=(0, -2.6, 1.2), tor=(0, 10, 0), ra=(-26, -14, 14.0), rp=(1, -0.8, 0.4), hm=(0, 2), hf=(0, 90), la="handle",
+        G=dict(hip=(0, -2.6, 1.2), tor=(0, 10, 0), ra=(-12, -14, 16.0), rp=(1, -0.8, 0.4), hm=(0, 2), hf=(0, 90), la="handle:-4.6",
                lp=(-1, -0.8, 0.4)),
-        L=dict(hip=(0, -2.8, 1.6), tor=(-3, 12, 0), ra=(-28, -12, 12.5), rp=(1, -0.8, 0.5), hm=(0, 4), hf=(0, 90), la="handle",
+        L=dict(hip=(0, -2.8, 1.6), tor=(-3, 12, 0), ra=(-14, -12, 15.0), rp=(1, -0.8, 0.5), hm=(0, 4), hf=(0, 90), la="handle:-4.6",
                lp=(-1, -0.8, 0.5)),
-        Cn=dict(hip=(0, -3.6, -2.4), tor=(14, -4, 0), lft=(-0.5, 0, 8.0), ra=(-28, -8, 19.8), rp=(1, -0.6, 0.2), hm=(-2, -4),
-                hf=(0, 90), la="handle", lp=(-1, -0.6, 0.2)),
-        O=dict(hip=(0, -3.8, -2.6), tor=(16, -4, 0), lft=(-0.5, 0, 8.0), ra=(-28, -10, 19.9), rp=(1, -0.6, 0.2), hm=(-2, -6),
-               hf=(0, 90), la="handle", lp=(-1, -0.6, 0.2)),
-        T=dict(hip=(0, -3.0, -1.0), tor=(8, 4, 0), ra=(-20, -24, 16.5), hm=(-6, 10), la="handle", lp=(-1, -0.8, 0.3)),
+        Cn=dict(hip=(0, -3.6, -2.4), tor=(14, -4, 0), lft=(-0.5, 0, 8.0), ra=(-16, -8, 19.8), rp=(1, -0.6, 0.2), hm=(-2, -4),
+                hf=(0, 90), la="handle:-4.6", lp=(-1, -0.6, 0.2)),
+        O=dict(hip=(0, -3.8, -2.6), tor=(16, -4, 0), lft=(-0.5, 0, 8.0), ra=(-16, -10, 19.9), rp=(1, -0.6, 0.2), hm=(-2, -6),
+               hf=(0, 90), la="handle:-4.6", lp=(-1, -0.6, 0.2)),
+        T=dict(hip=(0, -3.0, -1.0), tor=(8, 4, 0), ra=(-20, -24, 16.5), hm=(-6, 10), la="handle:-4.6", lp=(-1, -0.8, 0.3)),
         fp=C.FpPlan(hammer=True, hold_left=lambda t: 1.0 if 2 <= t <= 24 else 0.0)))
     # Lunge: short swing, long step (diagonal 40,30 -> -40,-20).
     out.append(strike("hammer_lunge", S,
@@ -369,8 +369,8 @@ def fist_clips():
         O=dict(tor=(8, -32, 0), hip=(0, -2.8, -1.0), la=(30, 14, 8.0), lp=(0.2, 0.3, -1)),
         T=dict(tor=(6, 4, 0), la=(24, 4, 14.0)), hammer=False, fp=fp("left")))
     out.append(strike("fist_push_kick", S,
-        G=dict(tor=(-4, 8, 0), hip=(0, -1.4, 0.6), rft=(0.5, 9.0, 6.0), rk=(0.2, 0.4, 1)),
-        L=dict(tor=(-8, 6, 0), hip=(0, -1.2, 0.8), rft=(0.5, 12.0, 5.0), rk=(0.2, 0.6, 1)),
+        G=dict(tor=(-6, 8, 0), hip=(0, -1.4, 0.6), rft=(0.8, 9.0, 7.5), rk=(0.4, 0.4, 1)),
+        L=dict(tor=(-11, 6, 0), hip=(0, -1.2, 0.8), rft=(0.8, 11.5, 8.0), rk=(0.4, 0.6, 1)),
         Cn=dict(tor=(-14, 2, 0), hip=(0, -1.0, 0.8), rft=(0.5, 11.5, 17.0), rk=(0.2, 1, 0.3), ra=(-20, -10, 14.0), la=(20, -10, 15.0)),
         O=dict(tor=(-15, 2, 0), hip=(0, -1.0, 0.8), rft=(0.5, 11.0, 17.5), rk=(0.2, 1, 0.3), ra=(-20, -10, 14.0), la=(20, -10, 15.0)),
         T=dict(tor=(-4, 10, 0), hip=(0, -1.8, 0.3), rft=(0.5, 5.0, 6.0), rk=(0.2, 0.4, 1)),
@@ -569,10 +569,10 @@ def base_clips():
                 ra=(10, -56, 15.0), la=(-10, -56, 15.0), rp=(1, -0.4, 0.3), lp=(-1, -0.4, 0.3))
 
     # Thor pulls his own planted hammer: from the squat, yank, the hammer comes up in an arc, into the stance.
-    held = key(squat, ra=(2, -60, 16.0), hm=(0, -88), hf=(0, 0), la="handle", lp=(-1, -0.4, 0.3))
+    held = key(squat, hm=(0, -88), hf=(0, 0), la="handle", ra=(4, -30, 18.5), rp=(0.4, 0.1, -1), lp=(-0.4, 0.1, -1))
     out.append(C.Clip("lift_thor", 24, [
         (0, held, "easeInCubic"),
-        (5, key(held, hip=(0, -5.0, 1.6), tor=(18, 0, 0), ra=(6, -48, 17.0), hm=(0, -70)), "easeOutCubic"),
+        (5, key(held, hip=(0, -5.0, 1.6), tor=(18, 0, 0), ra=(6, -38, 18.5), hm=(0, -70)), "easeOutCubic"),
         (11, key(STANCE_H, hip=(0, -1.6, 0.4), tor=(-6, 10, 0), ra=(30, 16, 17.5), rp=(1, -0.4, 0.3), hm=(16, 64), hf=(90, 0),
                  la=(-40, -20, 17)), "easeOutSine"),
         (17, key(STANCE_H, hip=(0, -3.0, 0), tor=(9, 12, 0), ra=(34, -50, 16.5), hm=(-12, 30)), "easeInOutSine"),
