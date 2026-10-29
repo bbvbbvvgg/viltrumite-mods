@@ -53,4 +53,11 @@ class HeroIdMigrationTest {
       assertSame(HeroId.REINHARD, HeroId.values()[5]);
       assertSame(HeroId.REINHARD, HeroId.fromKey("reinhard"));
    }
+
+   @Test
+   void sinclairAppendedAfterReinhard() {
+      assertSame(HeroId.SINCLAIR, HeroId.values()[6]);
+      assertSame(HeroId.SINCLAIR, HeroId.fromKey("sinclair"));
+      assertSame(HeroId.SINCLAIR, HeroId.legacySet(HeroId.SINCLAIR, true));
+   }
 }
