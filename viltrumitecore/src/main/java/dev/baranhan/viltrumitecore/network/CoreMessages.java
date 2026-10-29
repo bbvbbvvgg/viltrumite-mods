@@ -40,7 +40,11 @@ public class CoreMessages {
    // v4 clients lack ServerRulesS2CPacket and send the merged dash key's Dash Behind as Step Dash.
    // v10 (Thor round 3): HeroFx ELECTRIC_BOLT, the dash config sync and the scene contract changes; the
    // Thor move table is checked separately by the viltrumitecore:thor_moves channel (its fingerprint).
-   private static final String PROTOCOL_VERSION = "12";
+   // v11 adds HeroLineS2CPacket (hero subtitles). "12" = Thor + Hulkbuster build (#74) alone,
+   // "13" = integration/current-heroes (#82: DIO, Sinclair, Jinwoo) alone.
+   // v14 (integration/all-heroes-final): #74 + #82 together; Thor/Hulkbuster packets first, then
+   // HeroLineS2CPacket and the DIO / Jinwoo packets.
+   private static final String PROTOCOL_VERSION = "14";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -358,6 +362,22 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
