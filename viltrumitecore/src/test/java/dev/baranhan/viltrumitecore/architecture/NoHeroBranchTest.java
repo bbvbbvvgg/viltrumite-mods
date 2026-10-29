@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Test;
  */
 class NoHeroBranchTest {
    private static final Path ROOT = Path.of("src/main/java/dev/baranhan/viltrumitecore");
-   private static final Pattern BRANCH = Pattern.compile("HeroId\\.(VILTRUMITE|REGULUS|HOMELANDER|IRON_MAN|REINHARD|JINWOO)\\b");
+   private static final Pattern BRANCH = Pattern.compile("HeroId\\.(VILTRUMITE|REGULUS|HOMELANDER|IRON_MAN|REINHARD|DIO|JINWOO)\\b");
    private static final Pattern HERO_PLACE = Pattern.compile(
-      "(hero|client)/(regulus|homelander|viltrumite|ironman|reinhard|jinwoo)/.*|entity/jinwoo/.*|client/mixin/(Regulus|Homelander|IronMan|Reinhard|FirstPersonRegulus|FirstPersonHomelander)\\w*\\.java|client/render/vfx/(Regulus|Homelander|IronMan|Reinhard)\\w*\\.java"
+      "(hero|client)/(regulus|homelander|viltrumite|ironman|reinhard|dio|jinwoo)/.*|entity/jinwoo/.*|client/mixin/(Regulus|Homelander|IronMan|Reinhard|Dio|FirstPersonRegulus|FirstPersonHomelander|FirstPersonDio)\\w*\\.java|client/render/vfx/(Regulus|Homelander|IronMan|Reinhard)\\w*\\.java"
    );
    private static final Set<String> LEGACY = Set.of(
       "ability/ViltrumiteAbilities.java",
