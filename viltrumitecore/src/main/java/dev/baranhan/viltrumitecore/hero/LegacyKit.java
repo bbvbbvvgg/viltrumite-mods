@@ -40,7 +40,8 @@ public final class LegacyKit {
 
    /** May this player start the given kit ability right now (both sides). */
    public static boolean allows(Player player, String abilityId) {
-      return player != null && HeroRegistry.get(player).allowsLegacyAbility(player, abilityId);
+      // Spec 2026-10-28-sinclair §7: a locked body (rabbit hex) uses no kit ability.
+      return player != null && !ActionLocks.locked(player) && HeroRegistry.get(player).allowsLegacyAbility(player, abilityId);
    }
 
    /** Reset every kit action flag/timer and the owned strength modifier. */

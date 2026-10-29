@@ -181,6 +181,11 @@ public final class ReinhardHero implements HeroDefinition {
    }
 
    @Override
+   public dev.baranhan.viltrumitecore.hero.speech.HeroLines lines() {
+      return ReinhardLines.LINES;
+   }
+
+   @Override
    public net.minecraft.resources.ResourceLocation abilityIcon(String abilityId) {
       return ReinhardAbilities.icon(abilityId);
    }

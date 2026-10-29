@@ -35,6 +35,11 @@ uniform float EraseDark;
 uniform float EraseRebuild;
 uniform float EraseSeed;
 
+// DIO ZA WARUDO: stopped-time grade (0..1), the inverted flash of the wave (0..1) and the ring radius (0 = off).
+uniform float TimeStopGrey;
+uniform float TimeStopInvert;
+uniform float TimeStopRipple;
+
 in vec2 texCoord;
 out vec4 fragColor;
 
@@ -99,9 +104,12 @@ void main() {
     float safeEraseShatter = clamp(EraseShatter, 0.0, 1.0);
     float safeEraseDark = clamp(EraseDark, 0.0, 1.0);
     float safeEraseRebuild = clamp(EraseRebuild, 0.0, 1.0);
+    float safeTsGrey = clamp(TimeStopGrey, 0.0, 1.0);
+    float safeTsInvert = clamp(TimeStopInvert, 0.0, 1.0);
+    float safeTsRipple = clamp(TimeStopRipple, 0.0, 1.5);
 
     // Hiçbir efekt yoksa boş döndür (Performans)
-    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0) {
+    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0) {
         vec4 defaultColor = texture(DiffuseSampler, baseUv);
         defaultColor.a = 1.0;
         fragColor = defaultColor;
@@ -316,6 +324,31 @@ void main() {
         vec3 bloodTint = vec3(0.10, 0.01, 0.01) + finalColor.rgb * vec3(0.9, 0.3, 0.3);
         finalColor.rgb = mix(finalColor.rgb, bloodTint, safeMadness * 0.30 * (0.45 + 0.55 * safePulse));
         finalColor.rgb *= mix(1.0, 0.72 + 0.28 * vig, safeMadness * 0.35 * (0.6 + 0.4 * safePulse));
+    }
+
+    // DIO stopped time: a refracting ring sweeps out from the centre, the image inverts under the
+    // wave, then everything settles into a cold desaturated grade until colour returns.
+    if (safeTsGrey + safeTsInvert + safeTsRipple > 0.0) {
+        vec2 fromCenter = baseUv - vec2(0.5);
+        vec2 texSize = vec2(textureSize(DiffuseSampler, 0));
+        float aspect = texSize.x / max(texSize.y, 1.0);
+        float rDist = length(vec2(fromCenter.x * aspect, fromCenter.y));
+        if (safeTsRipple > 0.0) {
+            float ring = safeTsRipple * 1.1;
+            float band = exp(-pow((rDist - ring) / 0.045, 2.0));
+            vec2 dir = rDist > 0.0001 ? fromCenter / rDist : vec2(0.0);
+            vec3 bent = texture(DiffuseSampler, clamp(baseUv - dir * band * 0.03, 0.0, 1.0)).rgb;
+            finalColor.rgb = mix(finalColor.rgb, bent, band);
+            if (rDist < ring) finalColor.rgb = mix(finalColor.rgb, vec3(1.0) - finalColor.rgb, safeTsInvert * smoothstep(ring - 0.35, ring, rDist));
+            finalColor.rgb += vec3(0.25, 0.55, 0.5) * band * 0.35;
+        } else {
+            finalColor.rgb = mix(finalColor.rgb, vec3(1.0) - finalColor.rgb, safeTsInvert);
+        }
+
+        float luma = dot(finalColor.rgb, vec3(0.299, 0.587, 0.114));
+        vec3 cold = vec3(luma) * vec3(0.86, 0.95, 1.04) + vec3(0.02, 0.03, 0.05);
+        finalColor.rgb = mix(finalColor.rgb, cold, safeTsGrey * 0.88);
+        finalColor.rgb *= mix(1.0, 0.82 + 0.18 * smoothstep(0.95, 0.3, rDist), safeTsGrey);
     }
 
     // Priority cinematic. Black holes behind displaced cells; inverse mapping

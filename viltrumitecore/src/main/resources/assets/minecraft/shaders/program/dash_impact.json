@@ -225,6 +225,30 @@
       "values": [
         0.0
       ]
+    },
+    {
+      "name": "TimeStopGrey",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "TimeStopInvert",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "TimeStopRipple",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
     }
   ]
 }

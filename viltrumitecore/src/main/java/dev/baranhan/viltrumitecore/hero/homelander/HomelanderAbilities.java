@@ -60,10 +60,13 @@ public final class HomelanderAbilities {
       return false;
    }
 
-   /** Homelander draws every owned slot (own and kit) with his own icon. */
+   /**
+    * Homelander draws every owned slot with his own icon: own, kit and the two flight-bar
+    * indicators (fast_takeoff, supersonic_flight), art from tools/assets/make_hero_icons.py.
+    */
    @javax.annotation.Nullable
    public static net.minecraft.resources.ResourceLocation icon(String abilityId) {
-      if (!owns(abilityId) || java.util.Arrays.asList(UTILITY).contains(abilityId)) {
+      if (!owns(abilityId)) {
          return null;
       }
 

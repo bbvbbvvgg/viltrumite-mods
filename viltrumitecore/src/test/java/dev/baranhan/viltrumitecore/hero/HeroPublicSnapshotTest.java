@@ -169,7 +169,22 @@ class HeroPublicSnapshotTest {
    }
 
    @Test
-   void actionCountFitsMask() {
-      assertTrue(HeroAction.values().length <= 64, "HeroPublicSnapshot.availableActions is a long bit mask");
+   void actionsPastTheMaskDoNotAliasEarlierBits() {
+      // #74 + #82 together have more than 64 actions. Bits 0..63 stay exact; later actions never borrow bit (ordinal % 64).
+      HeroAction[] actions = HeroAction.values();
+      HeroAction first = actions[0];
+      long firstMask = HeroPublicSnapshot.actionMask(first);
+      for (HeroAction action : actions) {
+         if (action.ordinal() < HeroPublicSnapshot.MASK_BITS) {
+            assertEquals(1L << action.ordinal(), HeroPublicSnapshot.actionMask(action));
+            continue;
+         }
+         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> HeroPublicSnapshot.actionMask(action));
+         HeroPublicSnapshot masked = withMask(firstMask);
+         assertTrue(masked.actionAvailable(first));
+         assertFalse(masked.actionAvailable(action), action + " must not read " + first + "'s bit");
+         assertTrue(withMask(-1L).actionAvailable(action), "the all-actions mask still covers " + action);
+      }
    }
+
 }

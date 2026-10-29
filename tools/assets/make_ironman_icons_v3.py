@@ -4,6 +4,10 @@ the hero himself (posed Minecraft model rendered from the suit skins) doing the
 ability on a bright gradient tile with a bevelled border, dark outline and
 pixel effects. 64x64, own work. Replaces the stage 2-5 icon art.
 
+SUPERSEDED (core 1.46.0): the shipped icons come from
+`make_hero_icons.py --hero ironman` (`ironman_icon_art.py`, Reinhard house style).
+Kept for history; writing the old art needs `--legacy-overwrite`.
+
 Run: python3 tools/assets/make_ironman_icons_v3.py [--preview OUT.png]
 Writes base64 files under viltrumitecore/src/main/binassets/.../gui/ability/ironman.
 """
@@ -585,6 +589,8 @@ def main(argv):
             sheet.alpha_composite(img.resize((128, 128), Image.NEAREST), ((i % cols) * 136 + 4, (i // cols) * 136 + 4))
         sheet.save(preview)
         return
+    if "--legacy-overwrite" not in argv:
+        sys.exit("superseded: run make_hero_icons.py --hero ironman (pass --legacy-overwrite to write the old art)")
     os.makedirs(OUT, exist_ok=True)
     for name, img in images.items():
         buf = io.BytesIO()

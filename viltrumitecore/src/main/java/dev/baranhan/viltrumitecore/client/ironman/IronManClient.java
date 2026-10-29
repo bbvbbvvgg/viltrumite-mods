@@ -61,7 +61,6 @@ public final class IronManClient {
          }
       });
       PlayerGeoLayer.register(new IronManPartsProvider());
-      PlayerGeoLayer.register(new dev.baranhan.viltrumitecore.client.ironman.hulkbuster.HulkbusterDocking());
       dev.baranhan.viltrumitecore.client.ironman.mark.MarkVisuals.init();
       dev.baranhan.viltrumitecore.client.ironman.mark.sig.SignatureVisuals.init();
       dev.baranhan.viltrumitecore.client.render.vfx.OutlineTargets.register(ScanHighlight::colorOf);

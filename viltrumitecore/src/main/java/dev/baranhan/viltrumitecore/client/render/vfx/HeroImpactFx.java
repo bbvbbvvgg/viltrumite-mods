@@ -8,10 +8,13 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
+import dev.baranhan.viltrumitecore.hero.fx.FxPreset;
+import dev.baranhan.viltrumitecore.hero.thor.ThorFx;
 import dev.baranhan.viltrumitecore.network.packet.HeroFxS2CPacket;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -21,6 +24,7 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -55,6 +59,9 @@ public final class HeroImpactFx {
    private static final List<Blade> BLADES = new ArrayList<>();
    private static final List<Flash> FLASHES = new ArrayList<>();
    private static final List<Whiz> WHIZZES = new ArrayList<>();
+   /** Preset layers waiting for their delay (FxRecipe). */
+   private static final List<PendingLayer> PENDING = new ArrayList<>();
+   private static final int MAX_PENDING = 512;
    private static final int MAX_WHIZZES_PER_SPRAY = 3;
    private static final double WHIZ_RADIUS = 3.5;
    /** Blocks per tick of a drawn shard; server shards resolve instantly. */
@@ -128,8 +135,183 @@ public final class HeroImpactFx {
                AirTrailVfx.trail(id);
             }
          }
+         case HeroFxS2CPacket.ELECTRIC_ARC -> {
+            if (packet.points.length >= 3) {
+               play(ThorFx.ARC, packet.origin, new Vec3(packet.points[0], packet.points[1], packet.points[2]), 1.0F, null, level.random.nextLong());
+            }
+         }
+         case HeroFxS2CPacket.ELECTRIC_RING -> {
+            if (packet.points.length >= 1) {
+               double radius = Math.min(64.0, Math.max(0.5, packet.points[0]));
+               play(ThorFx.RING, packet.origin, packet.origin.add(radius, 0.0, 0.0), 1.0F, null, level.random.nextLong());
+            }
+         }
+         case HeroFxS2CPacket.ELECTRIC_BOLT -> {
+            float power = dev.baranhan.viltrumitecore.hero.fx.HeroFx.clampBoltPower(packet.power);
+            electricBolt(level, packet.origin, power, whiz);
+         }
+         case HeroFxS2CPacket.ELECTRIC_CRACKLE -> {
+            float scale = Mth.clamp(packet.power / 20.0F, 0.5F, 3.0F);
+            play(ThorFx.CRACKLE, packet.origin, packet.origin, scale, null, level.random.nextLong());
+         }
+         case HeroFxS2CPacket.PRESET -> playPacket(level, packet, material);
          default -> {
          }
+      }
+   }
+
+   /**
+    * Thor's lightning bolt packet (B-m6): the layered {@link ThorFx#BOLT}
+    * recipe (power >= 1.5 plays {@link ThorFx#BOLT_HEAVY}) and the local
+    * thunder clap whose loudness falls off with distance (WEATHER category,
+    * no world sky flash). A hero thunder sound (Thor R5) replaces the vanilla pair.
+    */
+   private static void electricBolt(ClientLevel level, Vec3 at, float power, @Nullable SoundEvent thunder) {
+      RandomSource random = level.random;
+      boolean heavy = power >= ThorFx.HEAVY_BOLT_POWER;
+      play(heavy ? ThorFx.BOLT_HEAVY : ThorFx.BOLT, at, at, heavy ? power / 2.0F : power, null, random.nextLong());
+      if (thunder != null) {
+         // The hero's own crack (Thor R5: ThorSounds.boltCrack); its impact and rumble come from the server.
+         level.playLocalSound(at.x, at.y, at.z, thunder, SoundSource.WEATHER, 3.0F * power, 0.9F + random.nextFloat() * 0.2F, true);
+         return;
+      }
+
+      level.playLocalSound(at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 1.5F * power, 0.8F + random.nextFloat() * 0.2F, false);
+      level.playLocalSound(at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 3.0F * power, 0.8F + random.nextFloat() * 0.2F, true);
+   }
+
+   private static void playPacket(ClientLevel level, HeroFxS2CPacket packet, BlockState material) {
+      if (packet.points.length < 6) {
+         return;
+      }
+
+      FxRecipe recipe = FxRecipe.byNetId(Math.round(packet.points[0]));
+      if (recipe == null) {
+         return;
+      }
+
+      long seed = Math.round(packet.points[1]);
+      int hitStop = Math.round(packet.points[2]);
+      Vec3 target = new Vec3(packet.points[3], packet.points[4], packet.points[5]);
+      if (hitStop > 0 && packet.points.length > 6) {
+         float[] ids = java.util.Arrays.copyOfRange(packet.points, 6, packet.points.length);
+         for (int id : dev.baranhan.viltrumitecore.hero.fx.HeroFx.decodeIds(ids)) {
+            HitStop.trigger(id, Math.min(dev.baranhan.viltrumitecore.hero.fx.HeroFx.PRESET_MAX_HIT_STOP, hitStop));
+         }
+      }
+
+      play(recipe, packet.origin, target, dev.baranhan.viltrumitecore.hero.fx.HeroFx.clampPresetScale(packet.power), packet.blockStateId == 0 ? null : material,
+         seed * 0x5DEECE66DL + 11L);
+      for (PresetListener listener : PRESET_LISTENERS) {
+         listener.onPreset(recipe.preset(), packet.origin, target);
+      }
+   }
+
+   private static final java.util.List<PresetListener> PRESET_LISTENERS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+   /** State-driven FX that follow a server preset (the WRATH storm tail moves to the strike point). */
+   public static void addPresetListener(PresetListener listener) {
+      PRESET_LISTENERS.add(listener);
+   }
+
+   @FunctionalInterface
+   public interface PresetListener {
+      void onPreset(FxPreset preset, Vec3 at, Vec3 target);
+   }
+
+   /** Client entry point: plays a preset locally (state-driven FX, a packet). Unknown recipes are ignored. */
+   public static void play(FxPreset preset, Vec3 at, Vec3 target, float scale, @Nullable BlockState material, long seed) {
+      FxRecipe recipe = FxRecipe.of(preset);
+      if (recipe != null) {
+         play(recipe, at, target, scale, material, seed);
+      }
+   }
+
+   public static void play(FxRecipe recipe, Vec3 at, Vec3 target, float scale, @Nullable BlockState material, long seed) {
+      Minecraft client = Minecraft.getInstance();
+      ClientLevel level = client.level;
+      if (level == null || !Double.isFinite(at.x) || !Double.isFinite(at.y) || !Double.isFinite(at.z)) {
+         return;
+      }
+
+      Vec3 to = Double.isFinite(target.x) && Double.isFinite(target.y) && Double.isFinite(target.z) && target.distanceToSqr(at) < 96.0 * 96.0 ? target : at;
+      BlockState ground = material != null ? material : groundMaterial(level, at);
+      List<FxRecipe.Layer> layers = recipe.layers();
+      for (int i = 0; i < layers.size(); i++) {
+         FxRecipe.Layer layer = layers.get(i);
+         PendingLayer pending = new PendingLayer(layer, at, to, scale, ground, seed * 131L + i, seed, layer.delay());
+         if (pending.delay <= 0) {
+            spawn(level, pending);
+         } else if (PENDING.size() < MAX_PENDING) {
+            PENDING.add(pending);
+         }
+      }
+   }
+
+   private static BlockState groundMaterial(ClientLevel level, Vec3 at) {
+      BlockPos pos = BlockPos.containing(at.x, at.y - 0.2, at.z);
+      for (int i = 0; i < 3; i++) {
+         BlockState state = level.getBlockState(pos);
+         if (!state.isAir()) {
+            return state;
+         }
+
+         pos = pos.below();
+      }
+
+      return Blocks.DIRT.defaultBlockState();
+   }
+
+   /** One recipe layer comes alive. Sizes scale with the preset scale, times do not. */
+   private static void spawn(ClientLevel level, PendingLayer p) {
+      FxRecipe.Layer layer = p.layer;
+      float s = p.scale;
+      Vec3 at = p.origin;
+      Vec3 listener = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+      java.util.Random random = new java.util.Random(p.seed);
+      switch (layer.kind()) {
+         case BOLT -> {
+            Vec3 ground = at;
+            if (layer.spread() > 0.0F) {
+               double angle = random.nextDouble() * Math.PI * 2.0;
+               double r = layer.spread() * s * (0.6 + random.nextDouble() * 0.6);
+               ground = ElectricVfx.onGround(level, at.add(Math.cos(angle) * r, 0.0, Math.sin(angle) * r), at.y);
+            }
+
+            float height = Math.min(dev.baranhan.viltrumitecore.hero.fx.HeroFx.BOLT_MAX_HEIGHT, layer.size());
+            Vec3 top = ground.add((random.nextDouble() - 0.5) * height * 0.15, height, (random.nextDouble() - 0.5) * height * 0.15);
+            ElectricVfx.bolt(top, ground, FxRecipe.BOLT_CORE_HALF_WIDTH * layer.width() * s, layer.count(), layer.life(), p.seed);
+         }
+         case ARC -> ElectricVfx.arc(at, p.target, layer.width() * s, layer.life(), layer.count(), p.seed);
+         case RING -> {
+            double radius = Math.hypot(p.target.x - at.x, p.target.z - at.z) * layer.size();
+            ElectricVfx.ring(level, at, radius < 0.5 ? 3.0 * s : radius, layer.width() * s, layer.count(), layer.life(), p.seed);
+         }
+         case CRACKLE -> ElectricVfx.crackle(at, layer.size() * s, Math.round(layer.count() * Math.max(1.0F, s)), layer.life(), p.seed);
+         case GROUND_CRAWL -> ElectricVfx.crawl(level, ElectricVfx.onGround(level, at, at.y), layer.size() * s, Math.round(layer.count() * (float)Math.sqrt(s)),
+            layer.life(), layer.width() * 0.5F * s, p.seed);
+         case SPARKS -> ElectricVfx.sparks(at.add(0.0, 0.1, 0.0), Math.round(layer.count() * s), layer.power() * (float)Math.sqrt(s), layer.life(), p.seed);
+         case LIGHT_POOL -> ElectricVfx.lightPool(ElectricVfx.onGround(level, at, at.y), layer.size() * s, layer.power(), layer.life(), p.recipeSeed);
+         case SKY_FLASH -> ElectricVfx.skyFlash(at.add(0.0, layer.size(), 0.0), layer.width() * s, layer.life(), p.recipeSeed);
+         case SCREEN_FLASH -> FlashOverlay.flash(layer.power() * CameraShake.falloff(listener.distanceTo(at), layer.size() * s), layer.life());
+         case SCORCH -> ElectricVfx.scorch(level, at, layer.size() * s, layer.count(), layer.life(), p.seed);
+         case DUST -> dust(level, at, p.material, layer.size() * s, Math.round(layer.count() * s));
+         case DEBRIS -> debris(level, at, p.material, Math.round(layer.count() * s), layer.size() * s, layer.power(), random);
+         case SHOCKWAVE -> RINGS.add(new Ring(ElectricVfx.onGround(level, at, at.y), layer.size() * s, p.material, layer.life(), layer.power() > 1.0F));
+         case FLASH -> FLASHES.add(new Flash(at, layer.size() * s, layer.life()));
+         case SHAKE -> addShake(listener, at, layer.power(), layer.size() * s);
+      }
+   }
+
+   /** Ground chunks thrown out of an impact (client-made shard ends). */
+   private static void debris(ClientLevel level, Vec3 at, BlockState material, int count, float distance, float lift, java.util.Random random) {
+      int color = material.getMapColor(level, BlockPos.containing(at)).col;
+      for (int i = 0; i < Math.min(48, count); i++) {
+         double angle = random.nextDouble() * Math.PI * 2.0;
+         double d = distance * (0.4 + random.nextDouble() * 0.6);
+         Vec3 end = at.add(Math.cos(angle) * d, lift * (0.5 + random.nextDouble() * 2.0), Math.sin(angle) * d);
+         Vec3 start = at.add((random.nextDouble() - 0.5) * 0.4, 0.1, (random.nextDouble() - 0.5) * 0.4);
+         SHARDS.add(new Shard(start, end, material, color, random.nextInt(3), 0.07F + random.nextFloat() * 0.06F));
       }
    }
 
@@ -236,6 +418,8 @@ public final class HeroImpactFx {
          BLADES.clear();
          FLASHES.clear();
          WHIZZES.clear();
+         PENDING.clear();
+         ElectricVfx.clear();
       }
       if (level == null || client.isPaused()) {
          return;
@@ -273,6 +457,22 @@ public final class HeroImpactFx {
          it.remove();
       }
 
+      if (!PENDING.isEmpty()) {
+         List<PendingLayer> due = new ArrayList<>();
+         for (Iterator<PendingLayer> it = PENDING.iterator(); it.hasNext();) {
+            PendingLayer pending = it.next();
+            if (--pending.delay <= 0) {
+               it.remove();
+               due.add(pending);
+            }
+         }
+
+         for (PendingLayer pending : due) {
+            spawn(level, pending);
+         }
+      }
+
+      ElectricVfx.tick(level);
       RINGS.removeIf(ring -> ++ring.age > ring.life);
       BLADES.removeIf(blade -> ++blade.age > 8);
       FLASHES.removeIf(flash -> ++flash.age > flash.life);
@@ -280,7 +480,7 @@ public final class HeroImpactFx {
 
    @SubscribeEvent
    public static void onRenderLevel(RenderLevelStageEvent event) {
-      if (event.getStage() != Stage.AFTER_LEVEL || (SHARDS.isEmpty() && RINGS.isEmpty() && BLADES.isEmpty() && FLASHES.isEmpty())) {
+      if (event.getStage() != Stage.AFTER_LEVEL || (SHARDS.isEmpty() && RINGS.isEmpty() && BLADES.isEmpty() && FLASHES.isEmpty() && !ElectricVfx.active())) {
          return;
       }
 
@@ -299,6 +499,8 @@ public final class HeroImpactFx {
       RenderSystem.setShader(GameRenderer::getPositionColorShader);
       Tesselator tessellator = Tesselator.getInstance();
       BufferBuilder buffer = tessellator.getBuilder();
+      ClientLevel renderLevel = Minecraft.getInstance().level;
+      long gameTime = renderLevel == null ? 0L : renderLevel.getGameTime();
       try {
          // Pass 1: solid-looking debris (normal alpha) — rock chunks, ground dust rings.
          RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
@@ -309,6 +511,7 @@ public final class HeroImpactFx {
          for (Ring ring : RINGS) {
             drawRing(buffer, cameraPos, camera, ring, partialTick, false);
          }
+         ElectricVfx.renderSolid(buffer, cameraPos, camera, gameTime, partialTick);
          tessellator.end();
 
          // Pass 2: additive heat — hot streaks, ring edges, the blade, flashes.
@@ -323,6 +526,7 @@ public final class HeroImpactFx {
          for (Blade blade : BLADES) {
             drawBlade(buffer, cameraPos, camera, blade, partialTick);
          }
+         ElectricVfx.renderGlow(buffer, cameraPos, camera, gameTime, partialTick);
          for (Flash flash : FLASHES) {
             float progress = (flash.age + partialTick) / flash.life;
             int alpha = (int)(255.0F * (1.0F - progress));
@@ -524,6 +728,28 @@ public final class HeroImpactFx {
          this.pos = pos;
          this.size = size;
          this.life = life;
+      }
+   }
+
+   private static final class PendingLayer {
+      final FxRecipe.Layer layer;
+      final Vec3 origin;
+      final Vec3 target;
+      final float scale;
+      final BlockState material;
+      final long seed;
+      final long recipeSeed;
+      int delay;
+
+      PendingLayer(FxRecipe.Layer layer, Vec3 origin, Vec3 target, float scale, BlockState material, long seed, long recipeSeed, int delay) {
+         this.layer = layer;
+         this.origin = origin;
+         this.target = target;
+         this.scale = scale;
+         this.material = material;
+         this.seed = seed;
+         this.recipeSeed = recipeSeed;
+         this.delay = delay;
       }
    }
 

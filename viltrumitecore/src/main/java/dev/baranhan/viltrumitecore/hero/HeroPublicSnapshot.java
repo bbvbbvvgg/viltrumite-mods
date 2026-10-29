@@ -104,14 +104,27 @@ public record HeroPublicSnapshot(
       return (this.heroFlags & (1 << bit)) != 0;
    }
 
+   /** Actions with an ordinal below this have their own bit in {@link #availableActions}. */
+   public static final int MASK_BITS = Long.SIZE;
+
+   /**
+    * One bit per action for ordinals below {@link #MASK_BITS}. The merged roster (#74 + #82) has more
+    * actions than a long has bits; a later action has no bit of its own and is available only under the
+    * "everything" mask {@code -1L} that every hero sends today. Java's {@code 1L << n} wraps n modulo 64,
+    * so without this guard action 64 would silently read action 0's bit.
+    */
    public boolean actionAvailable(HeroAction action) {
-      return (this.availableActions & (1L << action.ordinal())) != 0;
+      int ordinal = action.ordinal();
+      return ordinal < MASK_BITS ? (this.availableActions & (1L << ordinal)) != 0 : this.availableActions == -1L;
    }
 
-   /** Bit mask with one {@code 1L << ordinal} bit per action (Reinhard is the first real producer). */
+   /** Bit mask with one {@code 1L << ordinal} bit per action; actions past bit 63 cannot be masked individually. */
    public static long actionMask(HeroAction... actions) {
       long mask = 0L;
       for (HeroAction action : actions) {
+         if (action.ordinal() >= MASK_BITS) {
+            throw new IllegalArgumentException(action + " (ordinal " + action.ordinal() + ") has no bit in the 64-bit action mask");
+         }
          mask |= 1L << action.ordinal();
       }
       return mask;

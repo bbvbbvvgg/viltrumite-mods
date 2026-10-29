@@ -198,6 +198,8 @@ public final class ReinhardActions {
 
       // Starting an ability is combat (spec §7.3: the 60 s auto-return counts from the last fight).
       state.reid.combat();
+      // The ability's spoken line, if it has one (World Cut); only a successful start speaks.
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, ability.id());
       return true;
    }
 

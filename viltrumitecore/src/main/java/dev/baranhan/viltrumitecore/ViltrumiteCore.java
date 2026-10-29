@@ -7,6 +7,10 @@ import dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig;
 import dev.baranhan.viltrumitecore.effect.ViltrumiteEffects;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteEntities;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatConfig;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatModule;
+import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirModule;
+import dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes;
 import dev.baranhan.viltrumitecore.item.ViltrumiteCreativeTabs;
 import dev.baranhan.viltrumitecore.item.ViltrumiteItems;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
@@ -107,6 +111,11 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.ironman.IronManMarkSounds.init();
       dev.baranhan.viltrumitecore.hero.ironman.IronManHulkbusterSounds.init();
       dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds.init();
+      dev.baranhan.viltrumitecore.hero.thor.ThorSounds.init();
+      dev.baranhan.viltrumitecore.hero.dio.DioSounds.init();
+      // Spec 2026-10-28-sinclair §11: Sinclair sounds, his own entity register and the action lock.
+      dev.baranhan.viltrumitecore.hero.sinclair.SinclairSetup.init(modEventBus);
+      dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);
@@ -117,6 +126,8 @@ public class ViltrumiteCore {
       ViltrumiteEffects.register(modEventBus);
       ViltrumiteBlocks.register(modEventBus);
       ViltrumitePotions.register(modEventBus);
+      // Thor session A: world Mjölnir moves, hammer access and dev commands on the shared bridge.
+      MjolnirModule.bootstrap();
    }
 
    private void commonSetup(FMLCommonSetupEvent event) {
@@ -124,6 +135,11 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         ThorCombatConfig.load();
+         ThorCombatModule.install();
+         ThorScenes.bootstrap();
+         // Last: the move table is complete, its fingerprint goes into the login handshake.
+         CoreMessages.registerThorMoveHandshake();
       });
    }
 

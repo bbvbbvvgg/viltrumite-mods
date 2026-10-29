@@ -63,7 +63,42 @@ public enum HeroAction {
    /** Any hero with airJumps > 0: jump in the air (HeroAirJump; no slot, not an ability). */
    AIR_STEP,
    /** Reinhard cinematic Z; appended to preserve existing wire ordinals. */
-   DIAGONAL_WORLD_CUT;
+   DIAGONAL_WORLD_CUT,
+   /** Slot key 1 (Thor R: toggle the electric mode). */
+   CONTEXT_POWER,
+   /** Slot key 2 (Thor Y: pull to the thrown Mjölnir). */
+   CONTEXT_MOBILITY,
+   /** Separate ultimate key (Thor; default key not approved, slot 3). */
+   ULTIMATE,
+   /** Slot key 4 (Thor V: choose the teleport point). */
+   CONTEXT_TELEPORT,
+   /** DIO: summon / dismiss The World. */
+   THE_WORLD,
+   /** DIO: held MUDA barrage. */
+   MUDA_BARRAGE,
+   /** DIO: knife fan throw. */
+   KNIFE_THROW,
+   /** DIO: The World stops time (local field). */
+   TIME_STOP,
+   /** DIO: vampiric drain grab. */
+   VAMPIRE_DRAIN,
+   /** DIO ultimate: Road Roller. */
+   ROAD_ROLLER,
+   /** Sinclair (spec docs/design/2026-10-28-sinclair-design.md §5, §11); appended to keep wire ordinals. */
+   VEXING_BOLT,
+   SPECTRAL_ASSISTANT,
+   RABBIT_HEX,
+   MISDIRECTION,
+   AUDIENCE_PARTICIPATION,
+   /** Sung Jinwoo (spec docs/design/2026-10-28-jinwoo-design.md); appended, wire ordinals unchanged. */
+   DAGGER_RUSH,
+   SHADOW_EXTRACTION,
+   MONARCH_DOMAIN,
+   ARMY_SUMMON,
+   ARMY_ATTACK,
+   ARMY_GUARD,
+   ARMY_SENTINEL,
+   MONARCH_CHARGE;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

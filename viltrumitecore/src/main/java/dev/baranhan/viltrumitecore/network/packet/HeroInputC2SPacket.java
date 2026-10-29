@@ -45,6 +45,16 @@ public class HeroInputC2SPacket {
             return;
          }
 
+         // Mouse-only actions come through HeldInputs alone (claim, held-repeat guard, release pairing).
+         if (!acceptsKeyEdge(HeroRegistry.get(player), action)) {
+            return;
+         }
+
+         // A body held by an anchoring hold presses nothing (releases still pass).
+         if (this.pressed && dev.baranhan.viltrumitecore.hero.HeroHeldTargets.anchored(player)) {
+            return;
+         }
+
          if (action == HeroAction.JUMP) {
             if (this.pressed) {
                HeroSuperJump.onInput(player);
@@ -65,9 +75,20 @@ public class HeroInputC2SPacket {
             return;
          }
 
+         // Spec 2026-10-28-sinclair §7: a locked body (rabbit hex) starts nothing; releases still pass.
+         if (this.pressed && dev.baranhan.viltrumitecore.hero.ActionLocks.locked(player)) {
+            HeroRegistry.get(player).onInputRefused(player, action);
+            return;
+         }
+
          HeroRegistry.get(player).handleInput(player, action, this.pressed);
       });
       context.setPacketHandled(true);
+   }
+
+   /** False for an action the hero only takes through a claimed mouse button (HeldInputs). */
+   static boolean acceptsKeyEdge(dev.baranhan.viltrumitecore.hero.HeroDefinition hero, HeroAction action) {
+      return !hero.mouseOnly(action);
    }
 
    /** True when no hero slot maps to the action, or one that does sits on the active page. */

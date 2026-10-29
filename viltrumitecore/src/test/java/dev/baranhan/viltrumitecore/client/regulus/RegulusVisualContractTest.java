@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 /**
  * File-level contract for the Regulus presentation layer (plan Task 6):
  * shader uniform parity, mixin registration, HUD/ability texture existence
- * and dims, and lang key parity across all 11 locale files.
+ * and dims, and lang key parity across all 12 locale files.
  */
 class RegulusVisualContractTest {
 
@@ -196,11 +196,12 @@ class RegulusVisualContractTest {
       assertTextureSize("assets/viltrumitecore/textures/gui/hero/regulus_drop.png", 9, 9);
    }
 
+   /** House-style icons (tools/assets/make_hero_icons.py): 32x32 art saved 2x, like every hero's panel icons. */
    @Test
-   void regulusAbilityIconsAre16x16() throws IOException {
-      String[] names = {"lions_heart", "debris_kick", "mania", "greeds_embrace", "counter"};
+   void regulusAbilityIconsAre64x64() throws IOException {
+      String[] names = {"lions_heart", "debris_kick", "mania", "greeds_embrace", "counter", "punch"};
       for (String name : names) {
-         assertTextureSize("assets/viltrumitecore/textures/gui/ability/regulus/" + name + ".png", 16, 16);
+         assertTextureSize("assets/viltrumitecore/textures/gui/ability/regulus/" + name + ".png", 64, 64);
       }
    }
 
@@ -220,7 +221,7 @@ class RegulusVisualContractTest {
       try (var listing = Files.list(langDir)) {
          files = listing.filter(path -> path.toString().endsWith(".json")).sorted().toArray(Path[]::new);
       }
-      assertEquals(11, files.length, "expected 11 lang files");
+      assertEquals(12, files.length, "expected 12 lang files");
 
       String[] requiredKeys = {
          "ability.viltrumitecore.lions_heart.name",

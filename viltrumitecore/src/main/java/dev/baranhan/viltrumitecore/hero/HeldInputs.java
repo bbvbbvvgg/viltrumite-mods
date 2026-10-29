@@ -25,6 +25,11 @@ public final class HeldInputs {
 
       void handle(HeroAction action, boolean pressed);
 
+      /** A release that is not the player's (see {@link #releaseAll(Sink)}). Default: a plain release. */
+      default void forcedRelease(HeroAction action) {
+         this.handle(action, false);
+      }
+
       default void refused(HeroAction action) {
       }
    }
@@ -64,9 +69,13 @@ public final class HeldInputs {
       return true;
    }
 
+   /** Forced release of everything held: each started action hears {@link Sink#forcedRelease}. */
    public void releaseAll(Sink sink) {
       for (MouseButton button : MouseButton.values()) {
-         this.release(button, sink);
+         HeroAction action = this.held.remove(button);
+         if (action != null) {
+            sink.forcedRelease(action);
+         }
       }
    }
 
@@ -96,12 +105,18 @@ public final class HeldInputs {
 
          @Override
          public boolean canAct(HeroAction action) {
-            return player.isAlive() && hero.canAct(player, action);
+            // Spec 2026-10-28-sinclair §7: a locked body (rabbit hex) starts no held action.
+            return player.isAlive() && !ActionLocks.locked(player) && hero.canAct(player, action);
          }
 
          @Override
          public void handle(HeroAction action, boolean pressed) {
             hero.handleInput(player, action, pressed);
+         }
+
+         @Override
+         public void forcedRelease(HeroAction action) {
+            hero.handleForcedRelease(player, action);
          }
 
          @Override

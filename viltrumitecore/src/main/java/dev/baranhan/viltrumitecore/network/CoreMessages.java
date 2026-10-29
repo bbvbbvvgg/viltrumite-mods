@@ -38,12 +38,65 @@ import net.minecraftforge.network.simple.SimpleChannel;
 public class CoreMessages {
    // v3 clients clamp extra cooldowns at 16 and misread the following phase fields.
    // v4 clients lack ServerRulesS2CPacket and send the merged dash key's Dash Behind as Step Dash.
-   private static final String PROTOCOL_VERSION = "7";
+   // v10 (Thor round 3): HeroFx ELECTRIC_BOLT, the dash config sync and the scene contract changes; the
+   // Thor move table is checked separately by the viltrumitecore:thor_moves channel (its fingerprint).
+   // v11 adds HeroLineS2CPacket (hero subtitles). "12" = Thor + Hulkbuster build (#74) alone,
+   // "13" = integration/current-heroes (#82: DIO, Sinclair, Jinwoo) alone.
+   // v14 (integration/all-heroes-final): #74 + #82 together; Thor/Hulkbuster packets first, then
+   // HeroLineS2CPacket and the DIO / Jinwoo packets.
+   private static final String PROTOCOL_VERSION = "14";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
    private static int id() {
       return packetId++;
+   }
+
+   /** Channel whose version is the Thor move-table fingerprint (ThorMoves.fingerprint). */
+   public static final ResourceLocation THOR_MOVES_CHANNEL = new ResourceLocation("viltrumitecore", "thor_moves");
+   private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("viltrumitecore/network");
+   @javax.annotation.Nullable
+   private static SimpleChannel thorMoves;
+
+   /**
+    * Foundation M2: after every session registered its Thor moves (common
+    * setup), a carrier channel advertises the move-table fingerprint. Forge
+    * compares it in the login handshake: a client and server with different
+    * move tables are refused before play, the disconnect screen names
+    * {@code viltrumitecore:thor_moves}, and both logs name both fingerprints.
+    * Forge reads the version once when the channel is built, so this must run
+    * after the last ThorMoves.register.
+    */
+   public static void registerThorMoveHandshake() {
+      if (thorMoves != null) {
+         return;
+      }
+
+      String local = dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves.fingerprint();
+      thorMoves = ChannelBuilder.named(THOR_MOVES_CHANNEL)
+         .networkProtocolVersion(() -> local)
+         .clientAcceptedVersions(remote -> acceptsThorMoves("server", local, remote))
+         .serverAcceptedVersions(remote -> acceptsThorMoves("client", local, remote))
+         .simpleChannel();
+   }
+
+   static boolean acceptsThorMoves(String side, String local, String remote) {
+      boolean ok = dev.baranhan.viltrumitecore.hero.thor.bridge.ThorMoves.compatible(local, remote);
+      if (!ok && isProbe(remote)) {
+         // Forge asks every channel about ABSENT / ACCEPTVANILLA for each status ping
+         // (server: every 5 s, client: server list). That is a probe, not a peer.
+         LOGGER.debug("Thor move table: {} probe {} refused", side, remote);
+      } else if (!ok) {
+         LOGGER.error("Thor move table mismatch: local {} vs {} {}; client and server must run the same viltrumitecore build", local, side, remote);
+      }
+
+      return ok;
+   }
+
+   /** Forge's placeholder versions for "no channel" and "vanilla peer" (status pings, server list). */
+   static boolean isProbe(String remote) {
+      return net.minecraftforge.network.NetworkRegistry.ABSENT.version().equals(remote)
+         || net.minecraftforge.network.NetworkRegistry.ACCEPTVANILLA.equals(remote);
    }
 
    public static void register() {
@@ -286,6 +339,45 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.SawSphereEndS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.SawSphereEndS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.SawSphereEndS2CPacket::handle).add();
+      // Thor session C: scene sync and scene input.
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorSceneC2SPacket::handle).add();
+      // Hulkbuster rework (protocol 12): movement requests and refusals.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.HulkbusterMotionC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.HulkbusterMotionC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.HulkbusterMotionC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HulkbusterMotionC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.HulkbusterMotionS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.HulkbusterMotionS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.HulkbusterMotionS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HulkbusterMotionS2CPacket::handle).add();
+      // Thor integration: a refused, already predicted dash is stopped on the client.
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HeroLineS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

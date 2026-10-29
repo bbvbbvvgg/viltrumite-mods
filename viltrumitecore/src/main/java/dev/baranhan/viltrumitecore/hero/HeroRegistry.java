@@ -25,6 +25,11 @@ public final class HeroRegistry {
       register(new dev.baranhan.viltrumitecore.hero.homelander.HomelanderHero());
       register(new dev.baranhan.viltrumitecore.hero.ironman.IronManHero());
       register(dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero.INSTANCE);
+      register(dev.baranhan.viltrumitecore.hero.thor.ThorHero.INSTANCE);
+      register(dev.baranhan.viltrumitecore.hero.dio.DioHero.INSTANCE);
+      // Spec 2026-10-28-sinclair §11.
+      register(dev.baranhan.viltrumitecore.hero.sinclair.SinclairHero.INSTANCE);
+      register(dev.baranhan.viltrumitecore.hero.jinwoo.JinwooHero.INSTANCE);
       installFlightPolicy();
    }
 
@@ -87,16 +92,30 @@ public final class HeroRegistry {
 
    /**
     * Explicit hero transition: full lifecycle. No-op when the id is unchanged,
-    * so selecting the current hero is never an exit/re-entry exploit.
+    * so selecting the current hero is never an exit/re-entry exploit. False
+    * when nothing changed: same id, or the new hero refused the entry
+    * (HeroDefinition.admitsEntry, checked before any cleanup). True when the
+    * change ran, or when a scene deferred it (HeroChangeDeferral: the scene
+    * calls this again at its end, so admitsEntry is checked again then).
     */
-   public static void changeHero(ServerPlayer player, HeroId id) {
+   public static boolean changeHero(ServerPlayer player, HeroId id) {
       if (!(player instanceof HeroPlayer heroPlayer)) {
-         return;
+         return false;
       }
 
       HeroId current = heroPlayer.getHeroId();
       if (!isRealTransition(current, id)) {
-         return;
+         return false;
+      }
+
+      if (!get(id).admitsEntry(player)) {
+         return false;
+      }
+
+      // Session C: a running scene (fatality) takes the change over and applies it at its end (#216).
+      // Accepted, not refused: the choice screen must not reopen (HeroChoiceC2SPacket).
+      if (HeroChangeDeferral.defer(player, id)) {
+         return true;
       }
 
       dev.baranhan.viltrumitecore.hero.control.WorldPause.ownerLeft(player.getServer(),player.getUUID());
@@ -124,6 +143,7 @@ public final class HeroRegistry {
       get(id).enter(player);
       HeroFlightGrant.sync(player);
       syncSnapshot(player);
+      return true;
    }
 
    /**

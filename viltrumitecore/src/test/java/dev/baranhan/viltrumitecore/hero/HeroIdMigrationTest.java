@@ -53,4 +53,31 @@ class HeroIdMigrationTest {
       assertSame(HeroId.REINHARD, HeroId.values()[5]);
       assertSame(HeroId.REINHARD, HeroId.fromKey("reinhard"));
    }
+
+   @Test
+   void thorAppendedAfterReinhard() {
+      // all-heroes-final (#74 + #82): Thor 6, DIO 7, Sinclair 8, Jinwoo 9. Saves use keys, so only the wire order moves.
+      assertSame(HeroId.THOR, HeroId.values()[6]);
+      assertSame(HeroId.THOR, HeroId.fromKey("thor"));
+   }
+
+   @Test
+   void dioAppendedAfterThor() {
+      assertSame(HeroId.DIO, HeroId.values()[7]);
+      assertSame(HeroId.DIO, HeroId.fromKey("dio"));
+   }
+
+   @Test
+   void sinclairAppendedAfterDio() {
+      assertSame(HeroId.SINCLAIR, HeroId.values()[8]);
+      assertSame(HeroId.SINCLAIR, HeroId.fromKey("sinclair"));
+      assertSame(HeroId.SINCLAIR, HeroId.legacySet(HeroId.SINCLAIR, true));
+   }
+
+   @Test
+   void jinwooAppendedAfterSinclair() {
+      assertSame(HeroId.JINWOO, HeroId.values()[9]);
+      assertSame(HeroId.JINWOO, HeroId.fromKey("jinwoo"));
+      assertSame(HeroId.JINWOO, HeroId.legacySet(HeroId.JINWOO, false));
+   }
 }

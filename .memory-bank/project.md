@@ -120,10 +120,28 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 
 ## Topic files
 - `decompile.md`: decompile artifacts and their fixes.
+- `heroes-integration.md`: the all-heroes merge (Thor #74 + DIO/Sinclair/Jinwoo #82): hero and action order, core 1.54.0 / protocol 14, where each hero's lang keys and sounds live.
+## Ability icons (house style, core 1.46.0)
+- Every hero icon is 64×64 = 32×32 art ×2 in the Reinhard house style (`tools/assets/icon_art.py`: Earth frame re-tinted via `FRAMES`, charcoal backdrop, navy outline, Endesga palette, no smooth gradients). Reinhard icons are the reference; do not redraw them.
+- Regulus / Homelander / Iron Man: `python3 tools/assets/make_hero_icons.py [--hero X] [--only name]` writes `binassets/.../textures/gui/ability/<hero>/<name>.png.b64` and previews (`build/hero_icons/<hero>/`, sheet, HUD mock at GUI 2/3 via `icon_preview.py`). `--check` fails if a committed icon is stale. Art: `<hero>_icon_art.py` (`NAMES`, `FOLDER`, `PANEL`, `HUD`, `FLIGHT`).
+- Regulus icons moved from `resources/` PNGs (16×16) to `binassets/` b64. Homelander owns flight-bar ids `viltrumite:fast_takeoff` / `supersonic_flight` (own icons; `speed_lock` still falls back). Legacy Viltrumite `textures/gui/ability/*.png` are original JAR art shown for no current hero; untouched.
+- `HeroAbilityIconsTest` checks every hero icon id resolves to a 64×64 RGBA texture with transparent corners. Plan: `docs/plans/2026-10-28-hero-icons-redraw.md`; before/after: `docs/reports/hero-icons/*.svg`.
+## Core 1.50.0 (cinematic hero subtitles, protocol 11)
+- Shared spoken-line system: `hero/speech/` (`HeroLine`, `HeroLines`, `HeroLineTrigger`, pure `HeroSpeechRules`,
+  server `HeroSpeech`), packet `HeroLineS2CPacket`, client `client/hero/speech/` (pure `SubtitleLayout`,
+  `SubtitleTiming`, `SubtitleQueue`; `SubtitleRenderer`, `HeroPortraits`, `HeroSubtitles` overlay below chat).
+- A hero returns its table from `HeroDefinition.lines()`; speak on the server only when an action is accepted
+  (`HeroSpeech.ability/trigger`), never per tick. Text and speaker name are lang keys (`subtitle.viltrumitecore.*`).
+- One subtitle on screen; queue ≤ 3; same speaker or higher priority forces a short exit; panel size fixed per line.
+- Portraits: default live player bust (skin + outer layer); custom models register `HeroPortraits.register`
+  (`ReinhardPortrait` renders the geo body bone).
+- Reinhard: `ReinhardLines.WORLD_CUT` from `ReinhardActions.press`. Full monologue later = one `textSeries` line.
+- Version 1.50.0 / protocol 11 skip the numbers used by the parallel Thor branches (1.46–1.49, protocol 10).
+- Op test command `/herolines play|preview short|long|say|stop`. Plan: `docs/plans/2026-10-28-hero-subtitles.md`.
 ## Iron Man polish (core 1.24.1)
 - RMB: any item in either hand keeps vanilla use (`IronManHero.handsBusy`); NANO_BLADE has no RMB (dash removed from input).
 - Pages: 0-3 combat (Unibeam, missiles, arsenal, countermeasures), 6-9 scan, Veronica, helmet, suit. `HeroDefinition.previousDefaultLoadouts` + `HeroRegistry.isPreviousDefault`: an untouched old default is reset to the new one on login.
-- Icons: `tools/assets/make_ironman_icons_v3.py` (supersedes make_ironman_icons/stage2/4/5 icon art), renderer `tools/assets/icon_figure.py`.
+- Icons: `tools/assets/make_hero_icons.py --hero ironman` (`ironman_icon_art.py`, house style, core 1.46.0). `make_ironman_icons_v3.py` / `icon_figure.py` and the stage2/4/5 icon art are superseded (v3 refuses to write without `--legacy-overwrite`).
 - Scan locks once (`ScanProgress` lock + `IronManJarvis.lockCandidate`, cone `SCAN_LOCK_CONE_DEG`), no aim needed after.
 - Suit stats: `SUIT_HEALTH_BONUS` max-health modifier while armored; nano/mark armor and toughness doubled (armor capped 30), Hulkbuster 800/30.
 - Mark faceplate: rigid 90° turn about head centre (geo pivot 0,28,0); glow layer uses `HelmetAnim.progress` like the skin; `HelmetAnim` snaps (no close replay / gesture) for `SETTLE_TICKS` after a mark is fully on.
@@ -143,7 +161,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - Divine: damage type `viltrumitecore:divine` in damage-type tag `viltrumitecore:divine`; vanilla `bypasses_armor/shield/enchantments/effects` reference the tag `#viltrumitecore:divine` (optional entry), never `bypasses_invulnerability`; entity tag `viltrumitecore:divine`; `DivineTargets.verdict`; Regulus Lion's Heart = `isAbsolutelyInvulnerable`. Since core 1.39.1 Iron Man marks / Hulkbuster let divine hits through (`DivineDamage.piercesHeroArmor`: `bypasses_invulnerability` or divine).
 - Unit tests cannot load classes with `Registries` / `TagKey` / `ResourceKey` statics (no Bootstrap): keep pure rules in nested classes (`DivineTargets.Verdict.of`).
 - Reinhard: page = mode (`ReinhardMode.page()`), MMB = `MODE_CYCLE` (3 s cooldown, `extraCooldowns[14]`), mode in `heroFlags` bits 0-1. `ReinhardAbility` ordinal = `extraCooldowns` index; `ReinhardAbilities.SHIPPED_STAGE` gates loadout/owned ids (bump every stage). `HeroPublicSnapshot.availableActions` is a `long` mask now (actions ≥ 32 exist).
-- Knight HUD: `PanelStyle.drawAttachments`; mode icons sit LEFT of the ability bar (the bar is 5 px from the screen edge). Icons: `tools/assets/make_reinhard_icons.py --assets <unpacked reinhard_assets>`, sources in `tools/assets/reinhard_sources.md`. Ability icons (`textures/gui/ability/reinhard/`) are drawn by `tools/assets/reinhard_icon_art.py` on a 32×32 grid in the Earth (`blessing_bearer`) style: its frame pixels re-tinted per mode (Restrained silver, Knight blue, Holy Sword gold), charcoal radial backdrop, navy `#172038` outlines, Endesga 64 colours; saved 2× nearest as 64×64. Add a new icon as an `@art` function + `NAMES` entry; preview with `make_reinhard_icons.py --only <name>` (PNG in `build/reinhard_icons/`).
+- Knight HUD: `PanelStyle.drawAttachments`; mode icons sit LEFT of the ability bar (the bar is 5 px from the screen edge). Icons: `tools/assets/make_reinhard_icons.py --assets <unpacked reinhard_assets>`, sources in `tools/assets/reinhard_sources.md`. Ability icons (`textures/gui/ability/reinhard/`) are drawn by `tools/assets/reinhard_icon_art.py` on a 32×32 grid in the Earth (`blessing_bearer`) style: its frame pixels re-tinted per mode (Restrained silver, Knight blue, Holy Sword gold), charcoal radial backdrop, navy `#172038` outlines, Endesga 64 colours; saved 2× nearest as 64×64. Add a new icon as an `@art` function + `NAMES` entry; preview with `make_reinhard_icons.py --only <name>` (PNG in `build/reinhard_icons/`). Since core 1.46.0 the shared kit (palette, frames, sprites) lives in `tools/assets/icon_art.py`; Reinhard output is byte-identical.
 ## Reinhard stage 1b (visuals, first jar)
 - Model: `geo/reinhard/{reinhard,reinhard_arms,sheath,blade}.geo.json` from the archive via `tools/assets/convert_reinhard.py` → `tools/obj2geo.py` (rotated boxes become cube rotation/pivot; sword OBJs: drop `dragon_glow` overlay faces, vt from the top). Sword origin = hilt guard; sheathed blade offset (0, −14, 0) (`ReinhardAssets.SHEATHED_OFFSET` + bone `sheathed_offset`).
 - `ReinhardRenderer` (RenderPlayerEvent.Pre, always cancels for Reinhard, invisible included) + `ReinhardPoses` (pure) + `StanceBlend` + `ReinhardSword` (left hip, hilt up; quality-rework mount is a candidate, not native-accepted) + `ReinhardAuraVfx` (Knight wind motes, Holy Sword gold sparks). Clips: `tools/assets/reinhard_walk2anim.py` (walk = vanilla swing, 0.6662/(2π) s per walk unit), `tools/assets/make_reinhard_clips.py` (stances, knight hold, crouch/sit additive, swim).
@@ -363,3 +381,53 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
   spinning shards (`SawSphereRenderer`; CPU preview `SawSpherePreviewTest` with `SAW_PREVIEW=1` +
   `tools/preview_saw_sphere.py`).
 - Released as GitHub release `v1.45.0-reinhard` together with flight 1.10.1; the overhaul stack (#47–#54) merged to main.
+
+## Thor A+B+C integration (core 1.48.0, protocol 8; flight unchanged 1.10.1)
+- Branch `feat/thor-integration-abc` merges sessions A (hammer), B (combat) and C (scenes) onto `feat/thor-foundation`. Never merge it to main without the owner.
+- `ThorContext` has 10 components; the 8-arg constructor keeps `hammerDetached = false` and `fistChainOpen = false`. Server: `ThorActions.context`. Client claim: `ThorHero.context`.
+- `ThorFlags`: bit 5 = `HAMMER_DETACHED` (A), bit 6 = `SCENE` (C). Use the 6-arg `compose` only.
+- One rule for "Mjölnir in the hand": `ThorBridge.hammerHeld(player)` = attached and right hand free. An item in the right hand keeps Mjölnir on the belt (`MjolnirPlace.BELT`). Then LMB / RMB resolve to `FIST_COMBO`, no hammer blow, no fatality, no teleport.
+- Full flight (CRUISE / SONIC): `ThorControls` returns no attack (LMB, RMB, MMB grab / melee / throw, ultimate). The MMB recall, R, Y and V stay routed (C refuses V in flight).
+- A lethal B melee blow can start C's fatality inside the hit (`LETHAL_HIT`). `MeleeMoves.landStrike` then stops at once: no push, no other targets, no hit-stop, shockwave or crater.
+- `HeroRegistry.changeHero`: A's `admitsEntry` first, then C's `HeroChangeDeferral` (returns true = accepted, the change runs after the scene).
+- Integration checks: `ThorIntegrationSeamsTest`.
+- Move lifecycle: sessions start moves only with `ThorBridge.start` / `startCutting` (= `ThorActions.begin`) and stop them with `ThorBridge.interrupt` / `end`. Order: gate → `admits` → onStop(replaced, also a same-move restart) → onStart → onPhase(entry event when intro = 0). A buffered press gets `onQueued`, its step later `onPhase(CHAIN)` then the entry event. `ThorState.lastMove` lets the tick deliver a missed onStop once. `ThorActions.start` is pure bookkeeping only (tests).
+- Lifecycle stop (`ThorActions.stop(player, state, cause)`): onStop → `ThorLifecycle` listeners (B clears `ThorCombatState`) → bridge flags dropped. The foundation never calls a session directly.
+- Forced releases (`HeldInputs.releaseAll`: death, logout, hero change, erasure, anchoring, suit off) reach `HeroDefinition.handleForcedRelease` (default = plain release). Thor maps it to `ReleaseCause.FORCED`; `ThorMoveHandler.onRelease(ctx, ticks, cause)` drops it by default (no charged throw); B's storm cancels quietly.
+- Client mouse claim is read on the press edge only; a held button is latched while the key is down (`HeroMouseInput.held`).
+- `ThorEvents.post` and `ThorLifecycle.post` log a throwing listener and continue (never rethrow into the damage path or the hammer store).
+- Thor cooldowns use the shared `PersistentCooldowns` (keys and snapshot indices in `ThorCooldowns`; survive relog, hero change and death — death reset is OPEN). The snapshot `cooldowns[2]` = ultimate slot.
+- One target rule: `HeroTargets.canHit` (resolver enemy, B hits, A throw / return). Villagers and passive mobs are still valid targets (OPEN).
+- One logical Mjölnir: one `MjolnirSavedData` record (overworld), body UUID = logical id, entity type `noSave`, a stray body discards itself (`MjolnirWorld.owns`), one Thor slot (`activeOwner`, never reserved offline). `MjolnirWorld` is the only writer; ownership / limbo rules are pure in `MjolnirOwnership` (table test `MjolnirOwnershipTest`).
+- No hammer phase may wait for a visitor: a first fall without a body continues in the store and lands (live surface, else the saved site surface `originY`); a recall lands it at once. Void recovery: safe point, then spawn, then parked at spawn (`VOID_RETRIES`, №217 open). Operators: `/mjolnir recover` (level 2, production).
+- Owner change (logout, hero change, new Thor, offline owner) drops IN_HAND / THROWN / homing to FALLING and forgets a pending recall: nobody inherits a throw, no ownerless throw hits.
+- Store events are queued and delivered after the change (`MjolnirEventQueue`, `MjolnirWorld.flush` at the end of every public entry and of the world / body tick). Events name only the active holder (`attackerId`); without one nothing is posted.
+- Flight facts (hit list, flight ticks, rip) are transient fields of `MjolnirRecord`, so a re-spawned body keeps them.
+- Transform bolt (№214 placeholder) carves only a column of natural ground; a build, fluid or protected block anywhere = no shaft.
+- Plain block-list carves use `CarveJobs.BlockList` (Mjölnir craters, B's lightning removal).
+- Session A's store has no belt phase: `MjolnirWorld.inHandProjection` keeps HOLSTERED only during a technical DRAW / HOLSTER. MMB from the belt resolves to nothing (DRAW key is OPEN, design §10).
+
+## Thor review round 2 (core 1.49.0, protocol 9)
+- RMB arbitration is hero-neutral: `VanillaUse` + `HeroDefinition.yieldsToVanillaUse` (default false). Thor opts in outside scenes: RMB is his only with both hands empty, not on a block, not on a non-living entity (incl. a lying Mjölnir), villager, horse / saddleable, armor stand, own pet or anything `HeroTargets` refuses. During a scene Thor's `claimsBlockUse` is true (grab throw facing a door). RMB priority on a lying Mjölnir stays OPEN (conservative: the entity's own pick-up).
+- Sky lightning: default `SkyTargetPolicy.SINGLE_TARGET_ONLY` (exactly one distinct struck enemy, else nothing). No fallback point unless the dev `AIM_POINT` switch. The column is cut only above the enemy and stops at the first block `HeroDestruction` refuses (`ElectricFx.skyPath`). Config files carry `configVersion`; `ThorCombatConfig.migrate` resets pre-2 sky defaults and clamps numbers.
+- Electric FX are one `HeroFxS2CPacket` per effect (`ELECTRIC_ARC/RING/CRACKLE`, 48-block fan-out, drawn by `HeroImpactFx`). Never `sendParticles` per spark again.
+- `CombatHits.hitArea` keeps vanilla i-frames (discharge, chain, wave, storm, sky splash); `hit` (authored strikes, combo finishers) skips them. Discharge range / DPS numbers stay PLACEHOLDER (OPEN).
+- Fatality start = the victim's real `LivingDeathEvent` (after vanilla's totem check). `LETHAL_HIT` only marks a candidate in `FatalityTrigger` (same tick, same killer, claimed once, expired at the server tick end). The held death is completed once by `FatalitySessions.execute` (health 0, `die`). Decided deaths: persistent tag `viltrumitecore.thor_doomed_by` (removed by the kill, executed on login), scenes aborted on `ServerStoppingEvent`, participants cannot change dimension, abort finds the victim in any level.
+- A fatality needs a collision-free path for both bodies every tick (`pathClear`), intro steps within the limit, a ground spot (≤ 0.6 above floor); the server teleports a Thor who strays > 1 block from the plan.
+- Held bodies go through `SceneSpace.placeHeld` (server and client, same correction): pulled back until the box is free and Thor's chest sees it; else last safe point; else the grab ends. Releases start from the last safe point; `settle` moves a body out of blocks. Grab refuses bosses / multipart / > 2x3 bodies (giants OPEN), creative / PvP-off / team players, bodies with passengers, a held or controlled Thor. Held mobs get NoAI, restored on every end.
+- V teleport: no NoGravity (held in place + `sustainsAirborne`), no invulnerability (OPEN), server judge: loaded, solid, fits + border, no fluid at feet/head, no hazardous floor (`TeleportRules.hazardous`), under a ceiling dimension's roof (`heightAllowed`), Fluid.ANY visibility. Syncs go to Thor only. Teleport cooldown is OPEN.
+- Client scene copies expire (`ThorSceneView.expired`, 60 ticks unsynced or past a fatality's plan); trackers get the scene on start / END on stop tracking. The fatality ducks AMBIENT/WEATHER/MUSIC/RECORDS/HOSTILE/NEUTRAL/BLOCKS, never MASTER/PLAYERS.
+- First person: `ThorFirstPerson` (strike / guard / discharge / wave / storm / wrath rows through `FirstPersonArm`), no vanilla swing. Keys PLACEHOLDER, not yet seen in game.
+
+## Thor playtest fixes (core 1.49.1)
+- Vanilla pickup puts a stack into the first empty slot. This is often the selected slot where Mjölnir is held, so any pickup put the hammer on the belt. `MjolnirHandGuard` moves that stack to another slot (server, right-handed only; a full inventory keeps the item in the hand).
+- Forge calls every channel's version acceptor with `NetworkRegistry.ABSENT.version()` / `ACCEPTVANILLA` for each status ping (server every 5 s, client server list). These calls are probes, not peers: log them at debug.
+- A Thor who dies with a thrown hammer respawns without it: the hammer stays `resting` until he recalls it (MMB). This is the approved behavior (`MjolnirTuning.DEATH_IN_HAND_DROPS` comment), not a bug.
+- Sandbox (arm64, llvmpipe, ~5 FPS): `RegulusVisualContractTest` fails with `liblwjgl.so` missing (no arm64 natives on the test classpath). Environment only. xdotool taps of 50 ms are often lost; use key holds of 120 ms or more.
+
+## Thor rework R3 (flight rule, planted Mjölnir)
+- Thor's flight permission = Thor && no scene && Mjölnir in the hand (`ThorHero.allowsFlight`, both sides; `HOVER_ONLY` profile removed). The shared flight module resets a flight whose permission turns false; `HeroFlightGrant` withdraws mayfly. HOVER dash also needs the hammer.
+- Record key `lying` (synced `LYING`) now means "planted upright", not "on its side"; old saves load planted on the same rest point. `MjolnirPose.planted` = RESTING && (lying || !embedded): only a throw stuck in a wall/ceiling keeps the along-throw pose.
+- `MjolnirEntity.getDimensions` switches to `MjolnirPose.UPRIGHT` (0.7 × 0.82) while planted; `onSyncedDataUpdated` refreshes the box on both sides (noPhysics, so the resize never moves it). Planted support = probe under the buried head, not the box.
+- Crack decal is drawn by `MjolnirRenderer` (`MjolnirCracks`), so it lives exactly as long as the planted body; texture source `tools/assets/make_mjolnir_cracks.py`.
+- Lift anchor API: common `MjolnirPose.handleTop/upperPalm/lowerPalm`, server `MjolnirEntity.handleTop`, client `client.thor.MjolnirAnchors` (handle axis always world +Y).
