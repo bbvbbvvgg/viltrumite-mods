@@ -39,7 +39,9 @@ public class CoreMessages {
    // v3 clients clamp extra cooldowns at 16 and misread the following phase fields.
    // v4 clients lack ServerRulesS2CPacket and send the merged dash key's Dash Behind as Step Dash.
    // v11 adds HeroLineS2CPacket (hero subtitles); "8".."10" are reserved by parallel Thor branches.
-   private static final String PROTOCOL_VERSION = "11";
+   // v13 (integration/current-heroes): DIO, Sinclair and Jinwoo packets appended after HeroLineS2CPacket;
+   // "12" is used by the Thor + Hulkbuster build (#74).
+   private static final String PROTOCOL_VERSION = "13";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
