@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import dev.baranhan.viltrumitecore.ability.ViltrumiteAbility;
 import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroId;
@@ -23,13 +22,12 @@ import dev.baranhan.viltrumitecore.hero.combat.InteractionRules;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
 import dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero;
+import dev.baranhan.viltrumitecore.integration.ShippedLang;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /** Thor identity, registration, chassis, panel, wire snapshot, combat presence and texts. */
@@ -67,7 +65,8 @@ class ThorHeroTest {
       assertEquals(HeroAction.CONTEXT_POWER.ordinal() + 1, HeroAction.CONTEXT_MOBILITY.ordinal());
       assertEquals(HeroAction.CONTEXT_MOBILITY.ordinal() + 1, HeroAction.ULTIMATE.ordinal());
       assertEquals(HeroAction.ULTIMATE.ordinal() + 1, HeroAction.CONTEXT_TELEPORT.ordinal());
-      assertSame(HeroAction.CONTEXT_TELEPORT, HeroAction.values()[HeroAction.values().length - 1]);
+      // Heroes merged after Thor (DIO, Sinclair, Jinwoo) append their actions after CONTEXT_TELEPORT.
+      assertEquals(HeroAction.DIAGONAL_WORLD_CUT.ordinal() + 4, HeroAction.CONTEXT_TELEPORT.ordinal());
    }
 
    @Test
@@ -199,20 +198,17 @@ class ThorHeroTest {
          keys.add(move.translationKey());
       }
 
-      List<Path> locales;
-      try (Stream<Path> files = Files.list(Path.of("src/main/resources/assets/viltrumitecore/lang"))) {
-         locales = files.filter(path -> path.toString().endsWith(".json")).sorted().toList();
-      }
-
+      // Shipped strings = resources/lang + src/main/lang-overlays (merged by processResources).
+      Map<String, JsonObject> locales = ShippedLang.merged();
       assertTrue(locales.size() >= 11, "every shipped locale");
-      for (Path locale : locales) {
-         JsonObject lang = JsonParser.parseString(Files.readString(locale)).getAsJsonObject();
+      for (Map.Entry<String, JsonObject> locale : locales.entrySet()) {
+         JsonObject lang = locale.getValue();
          for (String key : keys) {
-            assertTrue(lang.has(key) && !lang.get(key).getAsString().isBlank(), locale.getFileName() + " misses " + key);
+            assertTrue(lang.has(key) && !lang.get(key).getAsString().isBlank(), locale.getKey() + " misses " + key);
          }
 
          assertTrue(lang.get(ThorFeedback.NOT_READY).getAsString().contains("%1$s") || lang.get(ThorFeedback.NOT_READY).getAsString().contains("%s"),
-            locale.getFileName() + ": the refusal names the move");
+            locale.getKey() + ": the refusal names the move");
       }
    }
 }

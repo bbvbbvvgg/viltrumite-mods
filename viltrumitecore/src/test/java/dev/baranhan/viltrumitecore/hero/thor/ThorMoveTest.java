@@ -48,7 +48,7 @@ class ThorMoveTest {
    void heroActionAndHammerOrdinalsAreStable() {
       HeroAction[] actions = HeroAction.values();
       assertEquals(List.of("DIAGONAL_WORLD_CUT", "CONTEXT_POWER", "CONTEXT_MOBILITY", "ULTIMATE", "CONTEXT_TELEPORT"),
-         Arrays.stream(actions, actions.length - 5, actions.length).map(Enum::name).toList());
+         Arrays.stream(actions, HeroAction.DIAGONAL_WORLD_CUT.ordinal(), HeroAction.DIAGONAL_WORLD_CUT.ordinal() + 5).map(Enum::name).toList());
       assertEquals(0, HeroAction.LIONS_HEART.ordinal());
       assertEquals(14, HeroAction.TOOL_CYCLE.ordinal());
       assertEquals(List.of("HOLSTERED", "IN_HAND", "THROWN", "RETURNING"), Arrays.stream(HammerState.values()).map(Enum::name).toList());

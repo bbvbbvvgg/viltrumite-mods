@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonParser;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
+import dev.baranhan.viltrumitecore.integration.ShippedLang;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,12 +31,11 @@ class ThorCombatRound3Test {
       String type = Files.readString(data.resolve("viltrumitecore/damage_type/thor_lightning.json"));
       assertTrue(JsonParser.parseString(type).getAsJsonObject().get("message_id").getAsString().equals("viltrumitecore.thor_lightning"));
       assertTrue(Files.readString(data.resolve("minecraft/tags/damage_type/is_lightning.json")).contains("viltrumitecore:thor_lightning"));
-      try (var langs = Files.list(Path.of("src/main/resources/assets/viltrumitecore/lang"))) {
-         for (Path lang : langs.toList()) {
-            var json = JsonParser.parseString(Files.readString(lang)).getAsJsonObject();
-            assertTrue(json.has("death.attack.viltrumitecore.thor_lightning"), lang.toString());
-            assertTrue(json.has("death.attack.viltrumitecore.thor_lightning.player"), lang.toString());
-         }
+      // Shipped strings = resources/lang + src/main/lang-overlays (merged by processResources).
+      for (var lang : ShippedLang.merged().entrySet()) {
+         var json = lang.getValue();
+         assertTrue(json.has("death.attack.viltrumitecore.thor_lightning"), lang.getKey());
+         assertTrue(json.has("death.attack.viltrumitecore.thor_lightning.player"), lang.getKey());
       }
    }
 

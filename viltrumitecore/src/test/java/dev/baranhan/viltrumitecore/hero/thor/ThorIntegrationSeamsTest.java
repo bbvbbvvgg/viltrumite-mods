@@ -20,6 +20,7 @@ import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirModule;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirWorld;
 import dev.baranhan.viltrumitecore.hero.thor.scene.FatalityRules;
 import dev.baranhan.viltrumitecore.hero.thor.scene.ThorScenes;
+import dev.baranhan.viltrumitecore.integration.ShippedLang;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -222,23 +222,19 @@ class ThorIntegrationSeamsTest {
 
    @Test
    void mergedLanguageFilesHaveNoDuplicateKeysAndTheSameKeys() throws IOException {
-      Path dir = Path.of("src/main/resources/assets/viltrumitecore/lang");
+      // Shipped strings = resources/lang + src/main/lang-overlays (merged by processResources):
+      // no key twice in one locale across its resources file and overlay parts.
       Pattern key = Pattern.compile("(?m)^\\s*\"([^\"]+)\"\\s*:");
       Map<String, Set<String>> keysByFile = new HashMap<>();
-      List<Path> files = new ArrayList<>();
-      try (Stream<Path> stream = Files.list(dir)) {
-         stream.filter(path -> path.toString().endsWith(".json")).forEach(files::add);
-      }
+      List<Path> files = new ArrayList<>(ShippedLang.sourceFiles());
 
       assertFalse(files.isEmpty());
       for (Path file : files) {
-         Set<String> keys = new HashSet<>();
+         Set<String> keys = keysByFile.computeIfAbsent(file.getFileName().toString(), name -> new HashSet<>());
          Matcher matcher = key.matcher(Files.readString(file));
          while (matcher.find()) {
-            assertTrue(keys.add(matcher.group(1)), file.getFileName() + " repeats " + matcher.group(1));
+            assertTrue(keys.add(matcher.group(1)), file + " repeats " + matcher.group(1));
          }
-
-         keysByFile.put(file.getFileName().toString(), keys);
       }
 
       Set<String> english = keysByFile.get("en_us.json");
