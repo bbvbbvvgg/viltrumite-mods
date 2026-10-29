@@ -45,6 +45,12 @@ public class ViltrumiteEntities {
       "rocket_fist", () -> EntityType.Builder.<RocketFistEntity>of(RocketFistEntity::new, MobCategory.MISC).sized(0.4F, 0.4F).clientTrackingRange(8).updateInterval(1).build("rocket_fist")
    );
 
+   /** DIO's thrown knife (hero/dio, spec docs/design/2026-10-28-dio-design.md). */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.hero.dio.DioKnifeEntity>> DIO_KNIFE = ENTITIES.register(
+      "dio_knife",
+      () -> Builder.<dev.baranhan.viltrumitecore.hero.dio.DioKnifeEntity>of(dev.baranhan.viltrumitecore.hero.dio.DioKnifeEntity::new, MobCategory.MISC).sized(0.25F, 0.25F).clientTrackingRange(8).updateInterval(1).fireImmune().noSave().build("dio_knife")
+   );
+
    public static void register(IEventBus eventBus) {
       ENTITIES.register(eventBus);
    }

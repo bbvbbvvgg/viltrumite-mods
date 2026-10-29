@@ -79,6 +79,7 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.homelander.HomelanderClient.registerSkins();
          dev.baranhan.viltrumitecore.client.ironman.IronManClient.registerSkins();
          dev.baranhan.viltrumitecore.client.reinhard.ReinhardClient.init();
+         dev.baranhan.viltrumitecore.client.dio.DioClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();
          ViltrumitePostProcessingConfig.load();

@@ -15,9 +15,11 @@ import org.junit.jupiter.api.Test;
 class ReinhardHeroTest {
 
    @Test
-   void reinhardIsLastOrdinal() {
+   void reinhardKeepsItsOrdinal() {
+      // Later heroes append after Reinhard; his ordinal (synced snapshots) never moves.
       HeroId[] values = HeroId.values();
-      assertSame(HeroId.REINHARD, values[values.length - 1]);
+      assertSame(HeroId.REINHARD, values[5]);
+      assertTrue(HeroId.REINHARD.ordinal() < HeroId.DIO.ordinal());
    }
 
    @Test
