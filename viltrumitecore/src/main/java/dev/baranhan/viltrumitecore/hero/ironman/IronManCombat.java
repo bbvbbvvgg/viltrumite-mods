@@ -718,7 +718,7 @@ public final class IronManCombat {
       }
 
       Vec3 toSource = source.getSourcePosition().subtract(self.getEyePosition());
-      float strength = state.hulkbuster.active() ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterKit.SHIELD_STRENGTH : state.spec().shieldMul();
+      float strength = state.hulkbuster.active() ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.BLOCK_FACTOR : state.spec().shieldMul();
       Shield.Block block = state.shield.hit(self.level().getGameTime(), self.getLookAngle(), toSource, state.energy, strength);
       if (block == Shield.Block.PASS) {
          return DamageAbsorb.PASS;

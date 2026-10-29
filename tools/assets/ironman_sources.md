@@ -39,3 +39,67 @@ One row per committed asset. Raw archives are never committed.
 | `viltrumitecore/src/main/resources/assets/viltrumitecore/geo/ironman/missiles/{forearm_launchers,forearm_rockets}.geo.json`, `viltrumitecore/src/main/binassets/assets/viltrumitecore/textures/entity/ironman/missiles/{forearm_launcher,forearm_rockets}.png.b64` | own work | `tools/assets/make_ironman_forearm_launchers.py` | Hoplite for grebeshok105 | forearm micro-missile pods with petals and rockets, grayscale (tinted to the mark in code); replace the Sind shoulder pods, which stay unused |
 | `viltrumitecore/src/main/resources/assets/viltrumitecore/geo/ironman/missiles/{shoulder_launchers,shoulder_rockets,arm_rocket,missile}.geo.json`, `viltrumitecore/src/main/resources/assets/viltrumitecore/animations/ironman/missiles.animation.json` | Sind Iron Man pack 2.2.0 (`IronMan_Hulkbuster_models.zip` → `source_original/Sind`) | `models/tabula/{cannons,rockets,armrocket}.tbl`, `models/animations/cannons.fsk` | Sind | pods and tips scaled 1.8x about each pod centre, panel clip baked and scaled; arm rocket 1.8x on the right forearm; projectile 2x; `tools/assets/convert_ironman_sind.py` |
 | `viltrumitecore/src/main/binassets/assets/viltrumitecore/textures/entity/ironman/missiles/{launcher,rocket_tips,rocket}.png.b64` | Sind Iron Man pack 2.2.0 (`IronMan_Hulkbuster_models.zip` → `source_original/Sind`) | `textures/heroes/mark7/mark7_cannon.png`, `textures/heroes/rockets.png`, `textures/heroes/mark42/mark42_rocket.png` | Sind | as is; same script |
+
+
+## Hulkbuster rework sounds (H6, 2026-10-28)
+
+All own synthesis, CC0 1.0, no recording and no download: `tools/sfx/hulkbuster.py` (deterministic; `--check` re-synthesizes and compares). Files: `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/ironman/hulkbuster/<file>.ogg.b64` (mono Vorbis 44.1 kHz). The 11 stage 5 `sounds/ironman/hulkbuster_*.ogg.b64` files they replace are deleted; `hulkbuster_servo` stays (event `ironman_hulkbuster_servo`).
+
+| File | Event | Class |
+|---|---|---|
+| `step_1` | `ironman_hulkbuster_step` | step |
+| `step_2` | `ironman_hulkbuster_step` | step |
+| `step_3` | `ironman_hulkbuster_step` | step |
+| `step_4` | `ironman_hulkbuster_step` | step |
+| `screech_1` | `ironman_hulkbuster_screech` | screech |
+| `screech_2` | `ironman_hulkbuster_screech` | screech |
+| `screech_3` | `ironman_hulkbuster_screech` | screech |
+| `screech_4` | `ironman_hulkbuster_screech` | screech |
+| `screech_5` | `ironman_hulkbuster_screech` | screech |
+| `swing_1` | `ironman_hulkbuster_swing` | swing |
+| `swing_2` | `ironman_hulkbuster_swing` | swing |
+| `swing_3` | `ironman_hulkbuster_swing` | swing |
+| `punch_1` | `ironman_hulkbuster_punch` | impact |
+| `punch_2` | `ironman_hulkbuster_punch` | impact |
+| `punch_3` | `ironman_hulkbuster_punch` | impact |
+| `hammer_1` | `ironman_hulkbuster_hammer` | impact |
+| `hammer_2` | `ironman_hulkbuster_hammer` | impact |
+| `hammer_3` | `ironman_hulkbuster_hammer` | impact |
+| `jackhammer_1` | `ironman_hulkbuster_jackhammer` | impact |
+| `jackhammer_2` | `ironman_hulkbuster_jackhammer` | impact |
+| `jackhammer_3` | `ironman_hulkbuster_jackhammer` | impact |
+| `finish_punch` | `ironman_hulkbuster_finish_punch` | heavy |
+| `charged_punch` | `ironman_hulkbuster_charged_punch` | heavy |
+| `charge` | `ironman_hulkbuster_charge` | riser |
+| `clamp_1` | `ironman_hulkbuster_clamp` | body |
+| `clamp_2` | `ironman_hulkbuster_clamp` | body |
+| `clamp_3` | `ironman_hulkbuster_clamp` | body |
+| `clamp_4` | `ironman_hulkbuster_clamp` | body |
+| `block_hit_1` | `ironman_hulkbuster_block_hit` | impact |
+| `block_hit_2` | `ironman_hulkbuster_block_hit` | impact |
+| `block_hit_3` | `ironman_hulkbuster_block_hit` | impact |
+| `repulsor_charge` | `ironman_hulkbuster_repulsor_charge` | riser |
+| `repulsor_beam` | `ironman_hulkbuster_repulsor_beam` | heavy |
+| `dash_1` | `ironman_hulkbuster_dash` | swing |
+| `dash_2` | `ironman_hulkbuster_dash` | swing |
+| `cough_1` | `ironman_hulkbuster_cough` | body |
+| `cough_2` | `ironman_hulkbuster_cough` | body |
+| `land_1` | `ironman_hulkbuster_land` | impact |
+| `land_2` | `ironman_hulkbuster_land` | impact |
+| `slam_1` | `ironman_hulkbuster_slam` | heavy |
+| `slam_2` | `ironman_hulkbuster_slam` | heavy |
+| `grab_1` | `ironman_hulkbuster_grab` | body |
+| `grab_2` | `ironman_hulkbuster_grab` | body |
+| `throw` | `ironman_hulkbuster_throw` | swing |
+| `hop` | `ironman_hulkbuster_hop` | impact |
+| `ult_ignite` | `ironman_hulkbuster_ult_ignite` | riser |
+| `ult_impact` | `ironman_hulkbuster_ult_impact` | heavy |
+| `refuse` | `ironman_hulkbuster_refuse` | ui |
+| `drop` | `ironman_hulkbuster_drop` | riser |
+| `exit` | `ironman_hulkbuster_exit` | body |
+| `assemble` | `ironman_hulkbuster_assemble` | riser |
+| `break` | `ironman_hulkbuster_break` | heavy |
+| `servo_loop` | `ironman_hulkbuster_servo_loop` | loop |
+| `thruster_loop` | `ironman_hulkbuster_thruster_loop` | loop |
+| `charge_loop` | `ironman_hulkbuster_charge_loop` | loop |
+| `spark_loop` | `ironman_hulkbuster_spark_loop` | loop |

@@ -3,9 +3,11 @@ package dev.baranhan.viltrumitecore.hero;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -45,6 +47,59 @@ public final class CarveJobs {
       /** Blocks still to do (the budget a step may use up); unknown = all of it. */
       default int remainingWork() {
          return Integer.MAX_VALUE;
+      }
+   }
+
+   /** Removes one block (the remover decides: HeroDestruction.destroyBlock, clearBlock, ...). */
+   @FunctionalInterface
+   public interface Remover {
+      boolean remove(ServerLevel level, BlockPos pos);
+   }
+
+   /**
+    * A fixed list of blocks removed a budget at a time, in list order. A
+    * block in an unloaded chunk is skipped (a carve never loads or
+    * generates a chunk); air costs nothing. Shared by the hero carves that
+    * are plain block lists (Thor's lightning, Mjölnir's craters).
+    */
+   public static final class BlockList implements Job {
+      private final List<BlockPos> blocks;
+      private final int priority;
+      private final Remover remover;
+      private int next;
+
+      public BlockList(List<BlockPos> blocks, int priority, Remover remover) {
+         this.blocks = List.copyOf(blocks);
+         this.priority = priority;
+         this.remover = remover;
+      }
+
+      @Override
+      public boolean step(@Nullable ServerLevel level, int budget) {
+         if (level == null) {
+            return true;
+         }
+
+         int used = 0;
+         while (this.next < this.blocks.size() && used < budget) {
+            BlockPos pos = this.blocks.get(this.next++);
+            if (level.isLoaded(pos) && !level.getBlockState(pos).isAir()) {
+               this.remover.remove(level, pos);
+               used++;
+            }
+         }
+
+         return this.next >= this.blocks.size();
+      }
+
+      @Override
+      public int priority() {
+         return this.priority;
+      }
+
+      @Override
+      public int remainingWork() {
+         return this.blocks.size() - this.next;
       }
    }
 

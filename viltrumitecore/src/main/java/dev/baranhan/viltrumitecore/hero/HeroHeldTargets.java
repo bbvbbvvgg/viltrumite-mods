@@ -15,4 +15,11 @@ public final class HeroHeldTargets {
       }
       return null;
    }
+
+   /** The target is held by a hero whose hold anchors it ({@link HeroDefinition#anchorsHeldTarget}). */
+   public static boolean anchored(Entity target) {
+      Player holder = holder(target);
+      HeroDefinition hero = holder == null ? null : HeroRegistry.get(holder);
+      return hero != null && hero.anchorsHeldTarget(holder);
+   }
 }

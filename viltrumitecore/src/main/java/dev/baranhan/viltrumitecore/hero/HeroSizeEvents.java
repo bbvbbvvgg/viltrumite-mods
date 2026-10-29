@@ -6,9 +6,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
- * Body scale seam (both sides): a hero may scale its player's hitbox and eye
- * height ({@link HeroDefinition#bodyScale}). The caller refreshes dimensions
- * when the scale changes; vanilla pose checks then use the scaled box.
+ * Body scale seam (both sides): a hero may scale its player's hitbox and eye height
+ * ({@link HeroDefinition#bodyScale}, {@link HeroDefinition#bodyWidthScale}; per-pose table in
+ * {@link HeroBodySize}). HeroBodyTracker refreshes dimensions when the scale changes; the pose fit
+ * checks use the same scaled boxes (EntityPoseBoxMixin).
  */
 @EventBusSubscriber(modid = "viltrumitecore")
 public final class HeroSizeEvents {
@@ -17,17 +18,17 @@ public final class HeroSizeEvents {
 
    @SubscribeEvent
    public static void onSize(EntityEvent.Size event) {
-      if (!(event.getEntity() instanceof Player player) || !(player instanceof HeroPlayer)) {
+      if (!(event.getEntity() instanceof Player player)) {
          return;
       }
 
-      float scale = HeroRegistry.get(player).bodyScale(player);
-      if (scale == 1.0F || !Float.isFinite(scale) || scale <= 0.0F) {
+      HeroBodySize.Scale scale = HeroBodySize.of(player);
+      if (scale.vanilla()) {
          return;
       }
 
       float eye = event.getNewEyeHeight();
-      event.setNewSize(event.getNewSize().scale(scale));
-      event.setNewEyeHeight(eye * scale);
+      event.setNewSize(HeroBodySize.dimensions(event.getNewSize(), event.getPose(), scale));
+      event.setNewEyeHeight(HeroBodySize.eyeHeight(eye, event.getPose(), scale));
    }
 }

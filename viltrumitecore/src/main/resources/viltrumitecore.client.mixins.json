@@ -31,6 +31,7 @@
     "FirstPersonChopMixin",
     "FirstPersonDioMixin",
     "FirstPersonGrabMixin",
+    "FirstPersonThorMixin",
     "FirstPersonGunMixin",
     "FirstPersonHomelanderMixin",
     "FirstPersonPunchMixin",
@@ -47,6 +48,9 @@
     "OutlineTeamColorMixin",
     "InGameHudMixin",
     "IronManModelMixin",
+    "ThorModelMixin",
+    "ThorSceneCameraMixin",
+    "ThorSceneMouseMixin",
     "ItemInHandRendererMixin",
     "MinecraftClientMixin",
     "MouseMixin",
@@ -83,7 +87,9 @@
     "LevelRainMixin",
     "SoundEngineVolumeMixin",
     "ItemInHandRendererInvoker",
-    "DefendedArrowRendererMixin"
+    "DefendedArrowRendererMixin",
+    "LivingEntityRendererInvoker",
+    "PlayerRendererInvoker"
   ],
   "injectors": {
     "defaultRequire": 1

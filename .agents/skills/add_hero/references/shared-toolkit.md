@@ -21,6 +21,8 @@ Sends `HeroFxS2CPacket` to players tracking the source; the client draws it in `
 
 `material` may be null (default stone colour). Sound args may be null.
 
+**Named FX presets** (`hero/fx/FxPreset`, R4 Thor): `FxPreset.register("hero:name", netId)` once per effect (ids namespaced, net ids 1..4095 unique, Thor uses 100–199, see `hero/thor/ThorFx`). Server: `HeroFx.preset(source, preset, at, target, scale, material, hitStopTicks, entityIds...)` — one `PRESET` packet (kind 13) to tracking players and self; `HeroFx.preset(level, preset, at, target, scale, material)` for sources without a player (within `BOLT_FX_RANGE`). `scale` 1 = sized for a 3.2-block hero, clamped 0.25–4; hit-stop ≤ `PRESET_MAX_HIT_STOP` (10 t). The look lives on the client: `client/render/vfx/FxRecipe.builder(preset)` with timed layers (`bolt`, `arc`, `ring`, `crackle`, `crawl`, `sparks`, `lightPool`, `skyFlash`, `screenFlash`, `scorch`, `dust`, `debris`, `shockwave`, `flash`, `shake`), registered with `FxRecipe.register` from the hero's client init (`ThorFxRecipes.init`). Client code may play a recipe locally with `HeroImpactFx.play(preset, at, target, scale, material, seed)` and observe incoming presets with `HeroImpactFx.addPresetListener`.
+
 ### `hero/HeroDebris` — flying blocks
 - `launchBlock(level, pos, state, velocity, hurtPerBlock, hurtMax)` — spawns a `FallingBlockEntity` (through `FallingBlockEntityInvoker`) with velocity, sets the source block to air, returns the entity. Velocity is rounded to 1/8000 so client and server match.
 - `canLaunch(level, pos, state)` — destroyable (`HeroDestruction`), no fluid, no block entity, not a door/bed half.
@@ -105,6 +107,9 @@ Detached execute effects may call `Annihilation.strike(null, target)`: the victi
 
 ### `client/render/vfx/HeroImpactFx`
 Receives `HeroFxS2CPacket` and renders all kinds above (pixel shards, rings, trails). No hero code needed. Shard speed constant `SHARD_VISUAL_SPEED`.
+
+### `client/render/vfx/ElectricVfx` and `BoltShape`
+Layered lightning for any hero: `bolt(top, ground, halfWidth, branches, life, seed)` (white core, inner and wide glow ribbons, forks, leader → return stroke → re-strikes → afterglow, pure `BoltShape.boltBrightness`), `arc`, `ring`, `crackle`, `crawl` (follows the terrain), `sparks`, `lightPool`, `skyFlash`, `scorch` (1/8-block decal cells, capped `ScorchBuffer`), `cloud(key, center, radius, density, flash)` (call every tick while it lives). Seeded shapes (`BoltShape.channel`, pure) look the same on every client. Drawn by `HeroImpactFx` in its two passes; capped channels/sparks/decals, cleared on level change.
 
 ### `client/render/vfx/CameraShake`
 - `addAt(at, power, range)` — shake with distance falloff; `add(power)` — local shake.

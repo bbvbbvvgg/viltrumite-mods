@@ -12,7 +12,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 
-/** Veronica card preview of the Mark 48 in its rest pose (feet at the origin, geo y up, the GUI y down). */
+/**
+ * Veronica card preview of the Mark 48 breathing in its idle (feet at the origin, geo y up, the GUI y down).
+ * The thruster flame bones are hidden: only the armour and the emissive mask are drawn.
+ */
 public final class HulkbusterPreview {
    /** Screen pixels per block for a 2-block body; the Sind model is 68 px tall. */
    private static final float SCALE = 17.0F * HulkbusterAssets.SIND_UNITS;
@@ -22,12 +25,18 @@ public final class HulkbusterPreview {
 
    public static void draw(PoseStack pose, MultiBufferSource buffers, float yawDegrees, float shade) {
       BakedGeoModel body = AnimCache.model(HulkbusterAssets.BODY);
-      Animation idle = AnimCache.animation(HulkbusterAssets.ANIMATIONS, HulkbusterPoses.Clip.IDLE.animation());
-      if (body == null || idle == null) {
+      Animation idle = AnimCache.animation(HulkbusterAssets.ANIMATIONS, HulkbusterClips.IDLE);
+      if (body == null) {
          return;
       }
 
-      AnimationController.seek(idle, body, 0.0);
+      if (idle != null) {
+         AnimationController.seek(idle, body, HulkbusterClips.wrap(yawDegrees / 40.0, idle.lengthSeconds()));
+      } else {
+         body.resetBones();
+      }
+
+      HulkbusterRenderer.hideFlames(body, true);
       pose.pushPose();
       pose.mulPose(Axis.YP.rotationDegrees(yawDegrees));
       pose.scale(-SCALE, -SCALE, SCALE);

@@ -32,7 +32,7 @@ public class HeroMouseC2SPacket {
       context.enqueueWork(() -> {
          ServerPlayer player = context.getSender();
          MouseButton button = MouseButton.byId(this.buttonOrdinal);
-         if (player != null && button != null) {
+         if (player != null && button != null && !(this.pressed && dev.baranhan.viltrumitecore.hero.HeroHeldTargets.anchored(player))) {
             HeldInputs.onPacket(player, button, this.pressed);
          }
       });

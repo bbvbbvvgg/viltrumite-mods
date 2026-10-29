@@ -79,11 +79,29 @@ public interface HeroDefinition {
 
    /**
     * Hitbox and eye height factor of this player (both sides, Forge
-    * EntityEvent.Size in HeroSizeEvents). Call refreshDimensions() when it
-    * changes. Default 1 = vanilla.
+    * EntityEvent.Size in HeroSizeEvents, per-pose table in HeroBodySize).
+    * HeroBodyTracker refreshes dimensions when it changes. Default 1 = vanilla.
     */
    default float bodyScale(Player player) {
       return 1.0F;
+   }
+
+   /**
+    * Hitbox width factor (HeroBodySize; both sides). Default: the same as {@link #bodyScale}.
+    * HeroBodyTracker refreshes dimensions when either factor changes.
+    */
+   default float bodyWidthScale(Player player) {
+      return this.bodyScale(player);
+   }
+
+   /** Extra entity / block reach (blocks) of a big body: a transient attribute modifier (HeroBodyTracker). */
+   default double bodyReachBonus(Player player) {
+      return 0.0;
+   }
+
+   /** Extra step height (blocks) of a big body: a transient attribute modifier (HeroBodyTracker). */
+   default double bodyStepBonus(Player player) {
+      return 0.0;
    }
 
    /**
@@ -181,6 +199,16 @@ public interface HeroDefinition {
    /** Opt-in policy for claimed LMB; melee-only heroes leave vanilla block mining alone. */
    default boolean claimsBlockAttack(Player player) { return true; }
 
+   /** Opt-in policy for claimed RMB aimed at a block; false leaves vanilla use / place / open on blocks alone. */
+   default boolean claimsBlockUse(Player player) { return true; }
+
+   /**
+    * Opt-in RMB arbitration (VanillaUse): true = this hero takes a claimed
+    * right click only when vanilla would not use it (both hands empty, not on
+    * a block, not on an interactive entity). Default false: unchanged claim.
+    */
+   default boolean yieldsToVanillaUse(Player player) { return false; }
+
    /** Optional physical catch. True transfers temporary projectile ownership to the hero. */
    default boolean captureProjectile(ServerPlayer self, net.minecraft.world.entity.projectile.Projectile projectile) { return false; }
 
@@ -199,6 +227,16 @@ public interface HeroDefinition {
     */
    default HeroAction mouseAction(MouseButton button, Player player) {
       return null;
+   }
+
+   /**
+    * Actions that only ever arrive through {@link HeldInputs} (a claimed mouse
+    * button): the key packet (HeroInputC2SPacket) drops their presses and
+    * releases, so a modified client cannot skip the claim, the held-repeat
+    * guard or the block-attack rule by sending them as keys. Default: none.
+    */
+   default boolean mouseOnly(HeroAction action) {
+      return false;
    }
 
    /**
@@ -244,6 +282,16 @@ public interface HeroDefinition {
     */
    default boolean isAbsolutelyInvulnerable(Player self) {
       return false;
+   }
+
+   /**
+    * What this player brings into a weapon interaction right now: weapon id,
+    * tags/traits and stance (shared {@code hero.combat} seam). Both sides,
+    * synced data only on the client. Not consulted by runtime hits yet (Thor
+    * stage 2 wires clash/block resolution); default: no presence.
+    */
+   default dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      return dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
    }
 
    /** Hidden from target-acquiring senses (Homelander focus skips this player). Server side. */
@@ -453,16 +501,40 @@ public interface HeroDefinition {
    void handleInput(ServerPlayer player, HeroAction action, boolean pressed);
 
    /**
+    * A held input ended by force, not by the player (HeldInputs.releaseAll:
+    * death, disconnect, hero change, erasure, anchoring / control, suit off).
+    * Default: the same as the player's release, so heroes that do not care
+    * keep their behaviour; a hero whose release fires a charged action
+    * overrides it to cancel instead.
+    */
+   default void handleForcedRelease(ServerPlayer player, HeroAction action) {
+      this.handleInput(player, action, false);
+   }
+
+   /**
     * Enter the hero after an actual id change (not on restore/clone): default
     * loadout, grants, baseline snapshot. Never called when the id is unchanged.
     */
    void enter(ServerPlayer player);
+
+   /**
+    * Server: may this player become this hero now? Checked by
+    * HeroRegistry.changeHero before any cleanup; a refusing hero tells the
+    * player why. Default: always (a hero with a one-holder slot refuses
+    * while another player holds it).
+    */
+   default boolean admitsEntry(ServerPlayer player) {
+      return true;
+   }
 
    /** Both sides: entity held by this hero, or -1. Never infer a hold from a generic PULL lease. */
    default int heldTargetId(Player holder) { return -1; }
 
    /** Both sides: authoritative hold anchor. partialTick only interpolates the client presentation. */
    default net.minecraft.world.phys.Vec3 heldTargetPosition(Player holder, net.minecraft.world.entity.Entity target, float partialTick) { return null; }
+
+   /** Server: does this hero's hold anchor its held target (damage queues like under an anchor control)? Default: no. */
+   default boolean anchorsHeldTarget(Player holder) { return false; }
 
    /** Server-authoritative public snapshot; written to the synced data for all trackers. */
    HeroPublicSnapshot snapshot(Player player);

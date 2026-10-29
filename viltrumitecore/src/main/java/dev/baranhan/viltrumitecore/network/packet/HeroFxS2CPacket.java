@@ -28,6 +28,29 @@ public class HeroFxS2CPacket {
    public static final byte SONIC_RING = 7;
    /** A white air trail behind each entity id in {@code points} (client AirTrailVfx). */
    public static final byte AIR_TRAIL = 8;
+   /** A jagged electric spark line from the origin to {@code points[0..2]}; drawn locally (one packet, not one per spark). */
+   public static final byte ELECTRIC_ARC = 9;
+   /** A flat ring of electric sparks of radius {@code points[0]} around the origin; drawn locally. */
+   public static final byte ELECTRIC_RING = 10;
+   /** Sparks crawling around the origin, {@code power} = spark count (capped on the client). */
+   public static final byte ELECTRIC_CRACKLE = 11;
+   /**
+    * A lightning bolt striking the origin from {@code points[0]} blocks above
+    * (Thor B-m6): drawn and heard only on the client — a jagged branched
+    * channel, a local flash and a local thunder clap. No LightningBolt entity
+    * exists, so nothing vanilla happens (no copper scraping, no lightning rod,
+    * no sculk GameEvent, no sky flash, no 10000-volume thunder). {@code power}
+    * scales the brightness (0.25..2).
+    */
+   public static final byte ELECTRIC_BOLT = 12;
+   /**
+    * A named layered recipe ({@link dev.baranhan.viltrumitecore.hero.fx.FxPreset}), played by
+    * {@code HeroImpactFx}. {@code power} = scale (0.25..4), {@code blockStateId} = ground
+    * material. Points: [0] = {net id, seed 0..65535, hit-stop ticks}, [1] = target or direction
+    * point (the origin when none), [2..] = entity ids (HeroFx.encodeIds) frozen by the hit-stop.
+    * Old clients ignore an unknown kind, so the wire layout stays the same.
+    */
+   public static final byte PRESET = 13;
 
    private static final int MAX_POINTS = 64;
 

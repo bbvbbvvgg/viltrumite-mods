@@ -3,12 +3,12 @@ package dev.baranhan.viltrumitecore.hero.ironman.hulkbuster;
 import net.minecraft.nbt.CompoundTag;
 
 /**
- * Hulkbuster Mark 48 as a layer over the current suit (spec §4.4, §14): the
- * suit under it is untouched and resumes after. Parts drop from Veronica,
- * assemble over Tony, then the layer is ACTIVE with its own durability; a
- * break or an exit starts the 10 min cooldown. Control during the assembly
- * keeps the locked parts as PARTIAL (no scale, no kit, no cooldown).
- * Persisted under {@code Hulkbuster}.
+ * Hulkbuster Mark 48 as a layer over the current suit (rework spec §4, §11): the suit under it is untouched
+ * and resumes after. The suit-up scene runs DROPPING (Veronica's capsule comes, opens; in the air variant the
+ * player flies up to it) then ASSEMBLING (the player backs into the open frame, the plates close one by one:
+ * legs, torso, arms, shoulders, helmet). The body grows when the torso closes; after that the scene cannot be
+ * stopped. ACTIVE has its own durability; a break or an exit starts the 10 min cooldown. A suit-up stopped
+ * before the torso closes costs no cooldown. Persisted under {@code Hulkbuster} (phase names unchanged).
  */
 public final class HulkbusterLayer {
    public static final String KEY = "Hulkbuster";
@@ -17,19 +17,27 @@ public final class HulkbusterLayer {
    /** Durability loss per point of an absorbed hit (heavier than any mark). */
    public static final float PLATING = 0.36F;
    public static final int COOLDOWN = 12000;
-   public static final int DROP_TICKS = 20;
-   public static final int ASSEMBLE_TICKS = 60;
-   public static final int EXIT_TICKS = 30;
-   /** Parts lock at these assemble ticks: legs, torso, arms, helmet (spec §14.1, plan Task 5). */
-   public static final int[] PART_LOCK = {15, 30, 45, 60};
+   /** Air variant: the capsule falls (0-20), opens (20-40) while the player flies up to it. */
+   public static final int DROP_TICKS_AIR = 40;
+   /** Ground variant: the capsule lands beside the player and opens. */
+   public static final int DROP_TICKS_GROUND = 30;
+   public static final int ASSEMBLE_TICKS = 50;
+   /** Exit (spec §3: 2.5 s): the back opens, Tony steps out. */
+   public static final int EXIT_TICKS = 50;
+   /** Plates lock at these assemble ticks: legs, torso, arms, shoulders, helmet (spec §4.3). */
+   public static final int[] PART_LOCK = {8, 18, 28, 36, 46};
+   /** Assemble tick at which the torso closes: the hitbox grows, the scene can no longer be stopped. */
+   public static final int TORSO_TICK = PART_LOCK[1];
    public static final int PARTS = PART_LOCK.length;
    public static final int FULL_PARTS = (1 << PARTS) - 1;
-   public static final float SCALE = 1.7F;
+   /** Height factor of the hitbox (bodyScale); the width has its own factor (HulkbusterRules.WIDTH_SCALE). */
+   public static final float SCALE = HulkbusterRules.HEIGHT_SCALE;
 
    public enum Phase {
       NONE,
       DROPPING,
       ASSEMBLING,
+      /** Legacy saves only (stage 5): loads as NONE. */
       PARTIAL,
       ACTIVE,
       EXITING
@@ -37,7 +45,9 @@ public final class HulkbusterLayer {
 
    public enum Event {
       NONE,
-      /** Assembly finished: the caller checks the space and calls activate() or refuse(). */
+      /** The torso just closed: the caller checks the space for the big body. */
+      TORSO_CLOSED,
+      /** The scene is done: the caller activates. */
       READY,
       EXITED
    }
@@ -47,9 +57,11 @@ public final class HulkbusterLayer {
    private float durability = DURABILITY;
    private int cooldown;
    private int parts;
-   private int startParts;
-   /** Loaded mid-assembly or ACTIVE: the first server tick checks the space (plan Task 1). */
+   private boolean air;
+   /** Loaded ACTIVE: the first server tick checks the space. */
    private boolean needsFitCheck;
+   /** Veronica already sent the spare arm during this suit-up (spec §6.8, saved). */
+   private boolean spareUsed;
 
    public Phase phase() {
       return this.phase;
@@ -71,6 +83,10 @@ public final class HulkbusterLayer {
       return this.parts;
    }
 
+   public boolean air() {
+      return this.air;
+   }
+
    public boolean active() {
       return this.phase == Phase.ACTIVE;
    }
@@ -80,45 +96,63 @@ public final class HulkbusterLayer {
       return this.phase != Phase.NONE;
    }
 
-   /** Assembly or exit running: rooted, no kit (plan Task 5). */
+   /** Suit-up scene or exit running: no kit. */
    public boolean busy() {
       return this.phase == Phase.DROPPING || this.phase == Phase.ASSEMBLING || this.phase == Phase.EXITING;
    }
 
-   /** Big body (bodyScale): only while fully on and while climbing out. */
+   /** The torso is closed: the big body, and the scene can no longer be stopped. */
+   public boolean torsoClosed() {
+      return this.phase == Phase.ASSEMBLING && this.ticks >= TORSO_TICK || this.phase == Phase.ACTIVE || this.phase == Phase.EXITING;
+   }
+
+   /** Big body (bodyScale): from the torso closing to the end of the exit. */
    public boolean big() {
-      return this.phase == Phase.ACTIVE || this.phase == Phase.EXITING;
+      return this.torsoClosed();
    }
 
    public boolean needsFitCheck() {
       return this.needsFitCheck;
    }
 
+   public int dropTicks() {
+      return this.air ? DROP_TICKS_AIR : DROP_TICKS_GROUND;
+   }
+
    public int phaseLength() {
       return switch (this.phase) {
-         case DROPPING -> DROP_TICKS;
+         case DROPPING -> this.dropTicks();
          case ASSEMBLING -> ASSEMBLE_TICKS;
          case EXITING -> EXIT_TICKS;
          default -> 0;
       };
    }
 
-   /** Drop the parts (from NONE, or PARTIAL: only the missing ones). Refused on cooldown. */
-   public boolean start() {
+   /** Scene tick from the delivery (DROPPING then ASSEMBLING), -1 outside the scene. */
+   public int sceneTick() {
+      return switch (this.phase) {
+         case DROPPING -> this.ticks;
+         case ASSEMBLING -> this.dropTicks() + this.ticks;
+         default -> -1;
+      };
+   }
+
+   /** Start the suit-up. Refused on cooldown or when anything is already on. */
+   public boolean start(boolean air) {
       if (this.cooldown > 0 || this.phase != Phase.NONE && this.phase != Phase.PARTIAL) {
          return false;
       }
 
-      if (this.phase == Phase.NONE) {
-         this.durability = DURABILITY;
-         this.startParts = 0;
-      } else {
-         this.startParts = this.parts;
-      }
-
-      this.parts = this.startParts;
+      this.durability = DURABILITY;
+      this.spareUsed = false;
+      this.parts = 0;
+      this.air = air;
       this.set(Phase.DROPPING);
       return true;
+   }
+
+   public boolean start() {
+      return this.start(false);
    }
 
    public Event tick() {
@@ -128,13 +162,17 @@ public final class HulkbusterLayer {
 
       switch (this.phase) {
          case DROPPING -> {
-            if (++this.ticks >= DROP_TICKS) {
+            if (++this.ticks >= this.dropTicks()) {
                this.set(Phase.ASSEMBLING);
             }
          }
          case ASSEMBLING -> {
             this.ticks++;
-            this.parts = this.startParts | lockedParts(this.ticks);
+            this.parts = lockedParts(this.ticks);
+            if (this.ticks == TORSO_TICK) {
+               return Event.TORSO_CLOSED;
+            }
+
             if (this.ticks >= ASSEMBLE_TICKS) {
                return Event.READY;
             }
@@ -171,30 +209,22 @@ public final class HulkbusterLayer {
       this.set(Phase.ACTIVE);
    }
 
-   /** No room for the big body: parts fly back, no cooldown (plan Global Constraints). */
+   /** No room for the big body: it goes back, no cooldown. */
    public void refuse() {
       this.clearToNone();
    }
 
-   /** Control interrupts the assembly: locked parts stay (PARTIAL), the rest fly back. */
-   public void interrupt() {
-      if (this.phase == Phase.DROPPING) {
-         this.parts = this.startParts;
-         if (this.parts == 0) {
-            this.clearToNone();
-         } else {
-            this.set(Phase.PARTIAL);
-         }
-      } else if (this.phase == Phase.ASSEMBLING) {
-         if (this.parts == 0) {
-            this.clearToNone();
-         } else {
-            this.set(Phase.PARTIAL);
-         }
+   /** Control or the suit key before the torso closes: the frame flies back, no cooldown (spec §4). */
+   public boolean cancel() {
+      if ((this.phase == Phase.DROPPING || this.phase == Phase.ASSEMBLING) && !this.torsoClosed()) {
+         this.clearToNone();
+         return true;
       }
+
+      return false;
    }
 
-   /** "Костюм": ACTIVE → climb out (cooldown after); PARTIAL → parts fly back without a cooldown. */
+   /** "Костюм": ACTIVE → climb out (cooldown after). */
    public boolean exit() {
       if (this.phase == Phase.ACTIVE) {
          this.set(Phase.EXITING);
@@ -209,13 +239,13 @@ public final class HulkbusterLayer {
       return false;
    }
 
-   /** Durability 0 or Tony died: it falls apart, cooldown starts (spec §14.1). */
+   /** Durability 0 or Tony died: it falls apart, cooldown starts once the torso was closed. */
    public void breakNow() {
       if (this.phase == Phase.NONE) {
          return;
       }
 
-      boolean wasOn = this.phase == Phase.ACTIVE || this.phase == Phase.EXITING;
+      boolean wasOn = this.torsoClosed();
       this.clearToNone();
       if (wasOn) {
          this.cooldown = COOLDOWN;
@@ -232,8 +262,45 @@ public final class HulkbusterLayer {
       return true;
    }
 
+   /** Spare arm: durability back, capped at the maximum. */
+   public void restore(float amount) {
+      if (this.phase == Phase.ACTIVE) {
+         this.durability = Math.min(DURABILITY, this.durability + Math.max(0.0F, amount));
+      }
+   }
+
+   /** Self damage of the ultimate (spec §7): never below 1 point (the ram itself does not break the suit). */
+   public void absorbSelf(float amount) {
+      if (this.phase == Phase.ACTIVE) {
+         this.durability = Math.max(1.0F, this.durability - Math.max(0.0F, amount));
+      }
+   }
+
+   public boolean spareUsed() {
+      return this.spareUsed;
+   }
+
+   public void markSpareUsed() {
+      this.spareUsed = true;
+   }
+
+   /** Durability as 0..1 of the maximum. */
+   public float fraction() {
+      return this.durability / DURABILITY;
+   }
+
    public boolean broken() {
       return this.phase == Phase.ACTIVE && this.durability <= 0.0F;
+   }
+
+   /** Dev command: durability set directly (clamped). */
+   public void setDurability(float value) {
+      this.durability = Math.max(0.0F, Math.min(DURABILITY, value));
+   }
+
+   /** Dev command: cooldown cleared. */
+   public void clearCooldown() {
+      this.cooldown = 0;
    }
 
    /** Hero change: everything off, no cooldown. */
@@ -241,12 +308,12 @@ public final class HulkbusterLayer {
       this.clearToNone();
       this.cooldown = 0;
       this.durability = DURABILITY;
+      this.spareUsed = false;
    }
 
    private void clearToNone() {
       this.set(Phase.NONE);
       this.parts = 0;
-      this.startParts = 0;
       this.needsFitCheck = false;
    }
 
@@ -257,16 +324,18 @@ public final class HulkbusterLayer {
 
    public void save(CompoundTag tag) {
       CompoundTag layer = new CompoundTag();
+      // Relog mid-scene (spec §4): before the torso closed = cancelled without cooldown; after = ACTIVE.
       Phase saved = switch (this.phase) {
-         case DROPPING, ASSEMBLING, ACTIVE -> Phase.ACTIVE;
-         case PARTIAL -> Phase.PARTIAL;
+         case ACTIVE -> Phase.ACTIVE;
+         case DROPPING, ASSEMBLING -> this.torsoClosed() ? Phase.ACTIVE : Phase.NONE;
          default -> Phase.NONE;
       };
       layer.putString("Phase", saved.name());
       layer.putFloat("Durability", this.durability);
       // Climbing out when saved: the exit finishes, the cooldown counts.
       layer.putInt("Cooldown", this.phase == Phase.EXITING ? COOLDOWN : this.cooldown);
-      layer.putInt("Parts", this.phase == Phase.PARTIAL ? this.parts : 0);
+      layer.putInt("Parts", 0);
+      layer.putBoolean("SpareUsed", this.spareUsed);
       tag.put(KEY, layer);
    }
 
@@ -287,16 +356,13 @@ public final class HulkbusterLayer {
       float durability = layer.getFloat("Durability");
       this.durability = Float.isFinite(durability) ? Math.max(0.0F, Math.min(DURABILITY, durability)) : DURABILITY;
       this.cooldown = Math.max(0, Math.min(COOLDOWN, layer.getInt("Cooldown")));
+      this.spareUsed = layer.getBoolean("SpareUsed");
       if (loaded == Phase.ACTIVE && this.durability > 0.0F) {
          this.parts = FULL_PARTS;
          this.set(Phase.ACTIVE);
          this.needsFitCheck = true;
-      } else if (loaded == Phase.PARTIAL) {
-         this.parts = layer.getInt("Parts") & FULL_PARTS;
-         if (this.parts != 0) {
-            this.set(Phase.PARTIAL);
-         }
       }
+      // PARTIAL (stage 5) and anything else: nothing on, no cooldown added.
    }
 
    public void copyCooldownFrom(HulkbusterLayer other) {
