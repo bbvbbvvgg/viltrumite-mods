@@ -64,6 +64,18 @@ public enum HeroAction {
    AIR_STEP,
    /** Reinhard cinematic Z; appended to preserve existing wire ordinals. */
    DIAGONAL_WORLD_CUT,
+   /** DIO: summon / dismiss The World. */
+   THE_WORLD,
+   /** DIO: held MUDA barrage. */
+   MUDA_BARRAGE,
+   /** DIO: knife fan throw. */
+   KNIFE_THROW,
+   /** DIO: The World stops time (local field). */
+   TIME_STOP,
+   /** DIO: vampiric drain grab. */
+   VAMPIRE_DRAIN,
+   /** DIO ultimate: Road Roller. */
+   ROAD_ROLLER,
    /** Sinclair (spec docs/design/2026-10-28-sinclair-design.md §5, §11); appended to keep wire ordinals. */
    VEXING_BOLT,
    SPECTRAL_ASSISTANT,

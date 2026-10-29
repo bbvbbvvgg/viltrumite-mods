@@ -16,9 +16,11 @@ class ReinhardHeroTest {
 
    @Test
    void reinhardKeepsItsOrdinal() {
-      // Sinclair (spec 2026-10-28) is appended after Reinhard; Reinhard's wire ordinal stays 5.
+      // Later heroes (DIO, Sinclair, ...) append after Reinhard; his ordinal (synced snapshots) never moves.
       HeroId[] values = HeroId.values();
       assertSame(HeroId.REINHARD, values[5]);
+      assertTrue(HeroId.REINHARD.ordinal() < HeroId.DIO.ordinal());
+      assertTrue(HeroId.REINHARD.ordinal() < HeroId.SINCLAIR.ordinal());
    }
 
    @Test
