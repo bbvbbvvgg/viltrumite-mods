@@ -26,11 +26,54 @@ final class ThorClipChecks {
    private ThorClipChecks() {
    }
 
-   /** Clips drawn with Mjölnir in the right hand (fists and hammerless loops are not). */
+   /** Clips drawn with Mjölnir in the right hand at some tick (fists and hammerless loops are not). */
    static boolean hammerInHand(String clip) {
+      return place(clip, 0) == Place.HAND || place(clip, Integer.MAX_VALUE) == Place.HAND;
+   }
+
+   /** Where Mjölnir is during a third-person clip (tools/assets/make_thor_clips.py: Clip.hammer / hand_span / away). */
+   enum Place {
+      HAND,
+      BELT,
+      /** Thrown, flying back, or planted in the ground (R1's lift squat): neither in the fist nor on the belt. */
+      AWAY
+   }
+
+   /** Draw / holster: the server switches the hammer place on the contact tick (ThorAttacks ENTER_MAIN, tick 14). */
+   static final int DRAW_SWITCH_TICK = 14;
+
+   /**
+    * Mjölnir's place at a tick of a clip, as the clip generator bakes it: draw = belt 0–13, hand 14+;
+    * holster = hand 0–13, belt 14+; pull / throw_release = away; fists and hammerless loops = belt.
+    * R1's crouch / sit keep the belt hammer, lift_squat has it planted in front. An unknown clip throws:
+    * a new clip must be classified here before the body check can judge it.
+    */
+   static Place place(String clip, int tick) {
       String tp = clip.endsWith("_fp") ? clip.substring(0, clip.length() - 3) : clip;
-      return tp.startsWith("hammer_") || tp.startsWith("electric_") || tp.equals("wrath") || tp.equals("draw") || tp.equals("holster")
-         || tp.endsWith("_hammer") || tp.startsWith("throw") || tp.startsWith("lift_thor") || tp.startsWith("flight");
+      switch (tp) {
+         case "draw":
+            return tick >= DRAW_SWITCH_TICK ? Place.HAND : Place.BELT;
+         case "holster":
+            return tick < DRAW_SWITCH_TICK ? Place.HAND : Place.BELT;
+         case "pull", "throw_release", "lift_squat":
+            return Place.AWAY;
+         case "catch", "wrath", "lift_thor", "throw_hold", "throw_windup":
+            return Place.HAND;
+         case "idle", "walk", "run", "stance", "crouch", "sit":
+            return Place.BELT;
+         default:
+            break;
+      }
+
+      if (tp.startsWith("hammer_") || tp.startsWith("electric_") || tp.startsWith("flight_") || tp.endsWith("_hammer")) {
+         return Place.HAND;
+      }
+
+      if (tp.startsWith("fist_")) {
+         return Place.BELT;
+      }
+
+      throw new IllegalArgumentException("clip " + clip + " has no Mjölnir place in ThorClipChecks.place");
    }
 
    /** Posed boxes of the body (+ the hammer in the grip bone) at a clip second. */
