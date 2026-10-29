@@ -81,7 +81,16 @@ public enum HeroAction {
    SPECTRAL_ASSISTANT,
    RABBIT_HEX,
    MISDIRECTION,
-   AUDIENCE_PARTICIPATION;
+   AUDIENCE_PARTICIPATION,
+   /** Sung Jinwoo (spec docs/design/2026-10-28-jinwoo-design.md); appended, wire ordinals unchanged. */
+   DAGGER_RUSH,
+   SHADOW_EXTRACTION,
+   MONARCH_DOMAIN,
+   ARMY_SUMMON,
+   ARMY_ATTACK,
+   ARMY_GUARD,
+   ARMY_SENTINEL,
+   MONARCH_CHARGE;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

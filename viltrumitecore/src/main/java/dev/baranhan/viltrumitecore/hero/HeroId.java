@@ -15,7 +15,9 @@ public enum HeroId {
    /** DIO and The World (spec docs/design/2026-10-28-dio-design.md). */
    DIO("dio"),
    /** The Magnificent Sinclair (spec docs/design/2026-10-28-sinclair-design.md). */
-   SINCLAIR("sinclair");
+   SINCLAIR("sinclair"),
+   /** Sung Jinwoo, the Shadow Monarch (spec docs/design/2026-10-28-jinwoo-design.md). */
+   JINWOO("jinwoo");
 
    private final String key;
 

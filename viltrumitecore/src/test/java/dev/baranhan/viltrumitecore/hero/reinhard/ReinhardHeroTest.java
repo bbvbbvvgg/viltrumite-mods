@@ -16,11 +16,12 @@ class ReinhardHeroTest {
 
    @Test
    void reinhardKeepsItsOrdinal() {
-      // Later heroes (DIO, Sinclair, ...) append after Reinhard; his ordinal (synced snapshots) never moves.
+      // Wire ordinal of Reinhard is frozen; later heroes are appended after it in merge order DIO, Sinclair, Jinwoo.
       HeroId[] values = HeroId.values();
       assertSame(HeroId.REINHARD, values[5]);
-      assertTrue(HeroId.REINHARD.ordinal() < HeroId.DIO.ordinal());
-      assertTrue(HeroId.REINHARD.ordinal() < HeroId.SINCLAIR.ordinal());
+      assertSame(HeroId.DIO, values[6]);
+      assertSame(HeroId.SINCLAIR, values[7]);
+      assertSame(HeroId.JINWOO, values[8]);
    }
 
    @Test
