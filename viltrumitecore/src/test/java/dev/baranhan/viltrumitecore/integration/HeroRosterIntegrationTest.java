@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Regression guard for the multi-hero integration build (subtitles #65, icons #64, DIO #73,
- * Sinclair #75, Jinwoo #76). Each hero branch was written alone on top of the same base, so
+ * Sinclair #75, Jinwoo #76 = #82, plus Thor + Hulkbuster #74). Each hero branch was written alone on top of the same base, so
  * a merge can silently drop a registration line, reorder wire ordinals or lose locale keys.
  * These checks look at the shared seams for all heroes at once.
  */
@@ -52,9 +52,13 @@ class HeroRosterIntegrationTest {
    void wireOrdinalsAreFrozenAndNewHeroesAppendInMergeOrder() {
       HeroId[] ids = HeroId.values();
       assertSame(HeroId.REINHARD, ids[5], "released heroes keep their ordinals");
-      assertSame(HeroId.DIO, ids[6]);
-      assertSame(HeroId.SINCLAIR, ids[7]);
-      assertSame(HeroId.JINWOO, ids[8]);
+      // all-heroes-final: Thor keeps #74's ordinal 6, the #82 heroes follow. Saves store keys (HeroSession "Id"),
+      // so only the in-memory / wire ordinal moves; the bumped protocol refuses mixed peers.
+      assertSame(HeroId.THOR, ids[6]);
+      assertSame(HeroId.DIO, ids[7]);
+      assertSame(HeroId.SINCLAIR, ids[8]);
+      assertSame(HeroId.JINWOO, ids[9]);
+      assertEquals(10, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
       Set<String> keys = new HashSet<>();
       for (HeroId id : ids) {
          assertTrue(keys.add(id.key()), "duplicate hero key " + id.key());
@@ -66,7 +70,9 @@ class HeroRosterIntegrationTest {
    void heroActionsKeepReleasedOrdinalsAndEachHeroBlockIsContiguous() {
       HeroAction[] actions = HeroAction.values();
       int reinhardLast = HeroAction.DIAGONAL_WORLD_CUT.ordinal();
-      assertEquals(reinhardLast + 1, HeroAction.THE_WORLD.ordinal(), "DIO block follows the released actions");
+      assertEquals(reinhardLast + 1, HeroAction.CONTEXT_POWER.ordinal(), "Thor block follows the released actions");
+      assertEquals(HeroAction.CONTEXT_POWER.ordinal() + 3, HeroAction.CONTEXT_TELEPORT.ordinal(), "Thor block is contiguous");
+      assertEquals(HeroAction.CONTEXT_TELEPORT.ordinal() + 1, HeroAction.THE_WORLD.ordinal(), "DIO block follows Thor");
       assertEquals(HeroAction.ROAD_ROLLER.ordinal() + 1, HeroAction.VEXING_BOLT.ordinal(), "Sinclair block follows DIO");
       assertEquals(HeroAction.AUDIENCE_PARTICIPATION.ordinal() + 1, HeroAction.DAGGER_RUSH.ordinal(), "Jinwoo block follows Sinclair");
       assertSame(HeroAction.MONARCH_CHARGE, actions[actions.length - 1]);
@@ -108,6 +114,7 @@ class HeroRosterIntegrationTest {
          }
       }
       for (HeroId id : List.of(HeroId.REINHARD, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO)) {
+         // Thor (#74) has no cinematic lines yet; his lines() may stay empty.
          assertFalse(HeroRegistry.get(id).lines().isEmpty(), id + " lost its cinematic lines");
       }
    }
@@ -150,11 +157,14 @@ class HeroRosterIntegrationTest {
       List<String> packets = new ArrayList<>();
       while (m.find()) packets.add(m.group(1).replaceAll(".*\\.", ""));
       assertEquals(new HashSet<>(packets).size(), packets.size(), "a packet is registered twice: " + packets);
-      for (String required : List.of("HeroLineS2CPacket", "DioTimeS2CPacket", "DioFxS2CPacket", "JinwooFxS2CPacket")) {
+      for (String required : List.of("HeroLineS2CPacket", "DioTimeS2CPacket", "DioFxS2CPacket", "JinwooFxS2CPacket",
+            "ThorSceneS2CPacket", "ThorSceneC2SPacket", "HulkbusterMotionC2SPacket", "HulkbusterMotionS2CPacket", "ThorDashS2CPacket")) {
          assertTrue(packets.contains(required), required + " is not registered");
       }
       assertTrue(packets.indexOf("HeroLineS2CPacket") < packets.indexOf("DioTimeS2CPacket"), "hero packets append after the subtitle packet");
-      assertTrue(source.contains("PROTOCOL_VERSION = \"13\""), "the merged packet table needs its own protocol version");
+      assertTrue(packets.indexOf("ThorDashS2CPacket") < packets.indexOf("HeroLineS2CPacket"), "Thor / Hulkbuster packets keep their #74 slots");
+      // 12 = #74 alone, 13 = #82 alone; the merged table must refuse both.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"14\""), "the merged packet table needs its own protocol version");
    }
 
    @Test

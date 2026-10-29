@@ -55,22 +55,28 @@ class HeroIdMigrationTest {
    }
 
    @Test
-   void dioAppendedAfterReinhard() {
-      assertSame(HeroId.DIO, HeroId.values()[6]);
+   void thorAppendedAfterReinhard() {
+      // all-heroes-final (#74 + #82): Thor 6, DIO 7, Sinclair 8, Jinwoo 9. Saves use keys, so only the wire order moves.
+      assertSame(HeroId.THOR, HeroId.values()[6]);
+      assertSame(HeroId.THOR, HeroId.fromKey("thor"));
+   }
+
+   @Test
+   void dioAppendedAfterThor() {
+      assertSame(HeroId.DIO, HeroId.values()[7]);
       assertSame(HeroId.DIO, HeroId.fromKey("dio"));
    }
 
    @Test
    void sinclairAppendedAfterDio() {
-      // Integration order (#73, #75, #76): DIO 6, Sinclair 7, Jinwoo 8. Saves use keys, so only the wire order moves.
-      assertSame(HeroId.SINCLAIR, HeroId.values()[7]);
+      assertSame(HeroId.SINCLAIR, HeroId.values()[8]);
       assertSame(HeroId.SINCLAIR, HeroId.fromKey("sinclair"));
       assertSame(HeroId.SINCLAIR, HeroId.legacySet(HeroId.SINCLAIR, true));
    }
 
    @Test
    void jinwooAppendedAfterSinclair() {
-      assertSame(HeroId.JINWOO, HeroId.values()[8]);
+      assertSame(HeroId.JINWOO, HeroId.values()[9]);
       assertSame(HeroId.JINWOO, HeroId.fromKey("jinwoo"));
       assertSame(HeroId.JINWOO, HeroId.legacySet(HeroId.JINWOO, false));
    }
