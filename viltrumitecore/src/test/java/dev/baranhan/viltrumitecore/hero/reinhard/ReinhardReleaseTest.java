@@ -10,7 +10,7 @@ class ReinhardReleaseTest {
    @Test void overhaulIsAFeatureRelease() throws Exception {
       var version = Pattern.compile("(?m)^version = '([^']+)'").matcher(Files.readString(Path.of("../viltrumitecore/build.gradle")));
       assertTrue(version.find(), "Core release version must be declared");
-      assertEquals("1.50.0", version.group(1), "cinematic hero subtitles are a feature release (1.46.0..1.49.x are taken by parallel Thor branches)");
+      assertEquals("1.46.0", version.group(1), "the hero ability icons redrawn in the Reinhard house style are a content release over 1.45.0");
    }
    @Test void snapshotCapacityUpgradeRejectsOldNetworkPeers() throws Exception {
       String source = Files.readString(Path.of("../viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/network/CoreMessages.java"));
