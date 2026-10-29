@@ -55,9 +55,23 @@ class HeroIdMigrationTest {
    }
 
    @Test
-   void sinclairAppendedAfterReinhard() {
-      assertSame(HeroId.SINCLAIR, HeroId.values()[6]);
+   void dioAppendedAfterReinhard() {
+      assertSame(HeroId.DIO, HeroId.values()[6]);
+      assertSame(HeroId.DIO, HeroId.fromKey("dio"));
+   }
+
+   @Test
+   void sinclairAppendedAfterDio() {
+      // Integration order (#73, #75, #76): DIO 6, Sinclair 7, Jinwoo 8. Saves use keys, so only the wire order moves.
+      assertSame(HeroId.SINCLAIR, HeroId.values()[7]);
       assertSame(HeroId.SINCLAIR, HeroId.fromKey("sinclair"));
       assertSame(HeroId.SINCLAIR, HeroId.legacySet(HeroId.SINCLAIR, true));
+   }
+
+   @Test
+   void jinwooAppendedAfterSinclair() {
+      assertSame(HeroId.JINWOO, HeroId.values()[8]);
+      assertSame(HeroId.JINWOO, HeroId.fromKey("jinwoo"));
+      assertSame(HeroId.JINWOO, HeroId.legacySet(HeroId.JINWOO, false));
    }
 }
