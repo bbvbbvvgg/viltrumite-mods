@@ -82,7 +82,7 @@ public final class IronManAbilities {
       return IronManFlags.get(snapshot.heroFlags(), IronManFlags.Field.HULKBUSTER_PHASE) == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ACTIVE.ordinal();
    }
 
-   /** Panel art of a mark signature: tools/assets/make_ironman_stage4_assets.py. */
+   /** Panel art of a mark signature: tools/assets/make_hero_icons.py (ironman_icon_art.py). */
    public static ResourceLocation signatureIcon(dev.baranhan.viltrumitecore.hero.ironman.mark.MarkId mark) {
       return new ResourceLocation("viltrumitecore", "textures/gui/ability/ironman/sig_" + mark.signatureKey() + ".png");
    }
@@ -93,7 +93,7 @@ public final class IronManAbilities {
          return null;
       }
 
-      // Panel art: tools/assets/make_ironman_icons.py.
+      // Panel art: tools/assets/make_hero_icons.py (ironman_icon_art.py).
       return new ResourceLocation("viltrumitecore", "textures/gui/ability/ironman/" + abilityId.substring(abilityId.indexOf(':') + 1) + ".png");
    }
 

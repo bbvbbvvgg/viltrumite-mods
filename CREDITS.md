@@ -9,6 +9,8 @@ Sources list: `tools/assets/ironman_sources.md`. Permission texts: `docs/license
 ### Own work
 - Tony Stark skin `textures/entity/hero/ironman.png` (from Stage 1b; the 1a file from Codex-Superheroes was a suit skin and is replaced), the suit ability icon and the two thruster loops (`tools/sfx/ironman_stage1.sh`, the only synthesized sounds left).
 
+- Ability icons (all 18, core 1.46.0, house style of the Reinhard icons): `tools/assets/make_hero_icons.py --hero ironman` (`ironman_icon_art.py`). They replace the icon art of stages 1b–5 listed below.
+
 - Stage 3: scan / countermeasures / helmet icons and the helmet HUD frame (`tools/assets/make_ironman_stage3_assets.py`).
 
 - Stage 4: suit interior skin, Veronica pod model and texture, Veronica and signature icons, Mark 15 camouflage shimmer (`tools/assets/make_ironman_stage4_assets.py`, `make_ironman_stage4_visuals.py`, `make_ironman_stage4_signatures.py`); the opening-shell interior atlas; the Veronica model after the Age of Ultron stills.

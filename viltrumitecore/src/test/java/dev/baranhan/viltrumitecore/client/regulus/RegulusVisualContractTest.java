@@ -196,11 +196,12 @@ class RegulusVisualContractTest {
       assertTextureSize("assets/viltrumitecore/textures/gui/hero/regulus_drop.png", 9, 9);
    }
 
+   /** House-style icons (tools/assets/make_hero_icons.py): 32x32 art saved 2x, like every hero's panel icons. */
    @Test
-   void regulusAbilityIconsAre16x16() throws IOException {
-      String[] names = {"lions_heart", "debris_kick", "mania", "greeds_embrace", "counter"};
+   void regulusAbilityIconsAre64x64() throws IOException {
+      String[] names = {"lions_heart", "debris_kick", "mania", "greeds_embrace", "counter", "punch"};
       for (String name : names) {
-         assertTextureSize("assets/viltrumitecore/textures/gui/ability/regulus/" + name + ".png", 16, 16);
+         assertTextureSize("assets/viltrumitecore/textures/gui/ability/regulus/" + name + ".png", 64, 64);
       }
    }
 
