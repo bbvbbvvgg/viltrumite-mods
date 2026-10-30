@@ -1,0 +1,62 @@
+{
+  "call": {
+    "category": "player",
+    "subtitle": "subtitles.od_lagna.call",
+    "sounds": [
+      {
+        "name": "od_lagna:call",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "granted": {
+    "category": "player",
+    "subtitle": "subtitles.od_lagna.granted",
+    "sounds": [
+      {
+        "name": "od_lagna:granted",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "return": {
+    "category": "player",
+    "subtitle": "subtitles.od_lagna.return",
+    "sounds": [
+      {
+        "name": "od_lagna:return",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "open": {
+    "category": "player",
+    "subtitle": "subtitles.od_lagna.open",
+    "sounds": [
+      {
+        "name": "od_lagna:open",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "select": {
+    "category": "player",
+    "subtitle": "subtitles.od_lagna.select",
+    "sounds": [
+      {
+        "name": "od_lagna:select",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "confirm": {
+    "category": "player",
+    "subtitle": "subtitles.od_lagna.confirm",
+    "sounds": [
+      {
+        "name": "od_lagna:confirm",
+        "attenuation_distance": 16
+      }
+    ]
+  }
+}

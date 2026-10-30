@@ -1,8 +1,6 @@
 package dev.baranhan.viltrumitecore.network.packet;
 
-import dev.baranhan.viltrumitecore.client.gui.RaceSelectionScreen;
 import java.util.function.Supplier;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent.Context;
 
@@ -27,8 +25,12 @@ public class OpenRaceScreenS2CPacket {
    }
 
    private static class ClientHandler {
+      /**
+       * The first hero choice is a wish now (Od Lagna's Wish, first-choice mode). RaceSelectionScreen stays
+       * in the code as the old fallback; it is no longer opened in normal play.
+       */
       public static void openScreen() {
-         Minecraft.getInstance().setScreen(new RaceSelectionScreen());
+         dev.baranhan.viltrumitecore.client.wish.WishScreens.open(true);
       }
    }
 }
