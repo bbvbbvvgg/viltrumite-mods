@@ -428,8 +428,12 @@ public final class HulkbusterRenderer {
       }
 
       HumanoidArm arm = event.getHand() == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
+      PoseStack stack = event.getPoseStack();
+      stack.pushPose();
+      HulkbusterFirstPerson.place(stack, arm == HumanoidArm.RIGHT);
       ((ItemInHandRendererInvoker)mc.getEntityRenderDispatcher().getItemInHandRenderer())
-         .viltrumite$renderPlayerArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), 0.0F, 0.0F, arm);
+         .viltrumite$renderPlayerArm(stack, event.getMultiBufferSource(), event.getPackedLight(), 0.0F, 0.0F, arm);
+      stack.popPose();
    }
 
    @SubscribeEvent
@@ -452,12 +456,13 @@ public final class HulkbusterRenderer {
       ModelPart arm = right ? model.rightArm : model.leftArm;
       float oldX = arm.x, oldY = arm.y, oldZ = arm.z, oldXRot = arm.xRot, oldYRot = arm.yRot, oldZRot = arm.zRot;
       // RenderArmEvent fires before renderHand's setupAnim: set the camera rest pose, never read the stale one.
-      arm.x = right ? -5.0F : 5.0F;
-      arm.y = 2.0F;
-      arm.z = 0.0F;
-      arm.xRot = 0.0F;
-      arm.yRot = 0.0F;
-      arm.zRot = right ? 0.1F : -0.1F;
+      HulkbusterFirstPerson.Rest rest = HulkbusterFirstPerson.rest(right);
+      arm.x = rest.x();
+      arm.y = rest.y();
+      arm.z = rest.z();
+      arm.xRot = rest.xRot();
+      arm.yRot = rest.yRot();
+      arm.zRot = rest.zRot();
       float partialTick = Minecraft.getInstance().getFrameTime();
       HulkbusterClips.Pose pose = pose(player, snapshot, partialTick);
       applyClips(geo, pose, true);

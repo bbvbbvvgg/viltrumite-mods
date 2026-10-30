@@ -8,6 +8,7 @@ Archive contains 17 original commits and 141 changed paths; their SHAs are **not
 - Alt page switching skips empty pages; resets on hero changes and repairs old saves.
 - Hulkbuster's ground jump fires on key press when jet charge is unavailable; the step bonus is centralized.
 - Unit tests for both fixes.
+- Mark 48 first-person arms moved down and out from the reticle (not yet visually verified).
 - Shared hero body dimensions, level-triggered hitbox healing, hero-data update refresh,
   consistent Hulkbuster snapshot sizing, dismount bounds and F3+B self-debug box.
 
