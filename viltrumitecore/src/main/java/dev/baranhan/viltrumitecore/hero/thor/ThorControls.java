@@ -32,6 +32,8 @@ public final class ThorControls {
          case TELEPORT -> ThorMove.TELEPORT_SELECT;
          // The ultimate is an attack: none in full flight (decisions 22, 34; its own flight rule is still open in the canon).
          case ULTIMATE -> context.flying() ? null : ThorMove.WRATH;
+         // B (v3 spec §1.1): the hammer blow, only with Mjölnir really in the hand; no attack in full flight.
+         case CRUSH -> context.flying() || !hammerAtHand(context) ? null : ThorMove.HAMMER_STRIKE;
       };
    }
 
@@ -46,8 +48,9 @@ public final class ThorControls {
    }
 
    /**
-    * MMB, the one decision point: grab window &gt; recall &gt; (no hammer at
-    * hand: nothing) &gt; melee (enemy within 4 blocks) &gt; throw.
+    * MMB is only Mjölnir (v3 spec §1.1): grab window &gt; recall &gt; (no
+    * hammer at hand: nothing) &gt; throw. An enemy nearby no longer turns the
+    * throw into a blow; the blow is its own key (CRUSH, B).
     */
    @Nullable
    public static ThorMove hammer(ThorContext context) {
@@ -62,7 +65,12 @@ public final class ThorControls {
          return null;
       }
 
-      return context.enemyNear() ? ThorMove.HAMMER_STRIKE : ThorMove.HAMMER_THROW;
+      return ThorMove.HAMMER_THROW;
+   }
+
+   /** Mjölnir really in the right hand (not away, not only on the belt, the hand free). */
+   static boolean hammerAtHand(ThorContext context) {
+      return context.hammer() == HammerState.IN_HAND && !context.hammerAway() && context.handFree();
    }
 
    /**
@@ -76,6 +84,9 @@ public final class ThorControls {
 
    /** MMB resolved to nothing because Mjölnir is only on the belt (outside full flight): the press deserves an answer. */
    public static boolean onBelt(ThorInput input, ThorContext context) {
+      if (input == ThorInput.CRUSH) {
+         return !context.flying() && !hammerAtHand(context);
+      }
       return input == ThorInput.HAMMER && !context.flying() && !context.grabWindow() && beltOnly(context);
    }
 
@@ -117,7 +128,8 @@ public final class ThorControls {
       return switch (input) {
          case STRIKE -> new ThorMove[]{ThorMove.ELECTRIC_COMBO, ThorMove.HAMMER_COMBO, ThorMove.FIST_COMBO};
          case STANCE -> new ThorMove[]{ThorMove.ELECTRIC_WAVE, ThorMove.HAMMER_COMBO, ThorMove.FIST_COMBO};
-         case HAMMER -> new ThorMove[]{ThorMove.GRAB, ThorMove.RECALL, ThorMove.HAMMER_STRIKE, ThorMove.HAMMER_THROW};
+         case HAMMER -> new ThorMove[]{ThorMove.GRAB, ThorMove.RECALL, ThorMove.HAMMER_THROW};
+         case CRUSH -> new ThorMove[]{ThorMove.HAMMER_STRIKE};
          case POWER -> new ThorMove[]{ThorMove.ELECTRIC_MODE};
          case MOBILITY -> new ThorMove[]{ThorMove.HAMMER_PULL};
          case TELEPORT -> new ThorMove[]{ThorMove.TELEPORT_SELECT};

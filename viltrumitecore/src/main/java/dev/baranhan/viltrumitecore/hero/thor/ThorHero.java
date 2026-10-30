@@ -163,8 +163,19 @@ public final class ThorHero implements HeroDefinition {
    }
 
    @Override
+   public dev.baranhan.viltrumitecore.hero.speech.HeroLines lines() {
+      return ThorLines.LINES;
+   }
+
+   @Override
    public String[] defaultLoadout() {
       return ThorAbilities.defaultLoadout();
+   }
+
+   /** v3 spec §1.1: the four-slot layout before Crush (B) joined; an untouched save gets the new default. */
+   @Override
+   public String[][] previousDefaultLoadouts() {
+      return ThorAbilities.previousDefaultLoadouts();
    }
 
    @Override

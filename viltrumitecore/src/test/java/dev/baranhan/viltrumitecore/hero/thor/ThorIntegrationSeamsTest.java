@@ -119,7 +119,7 @@ class ThorIntegrationSeamsTest {
                      ThorContext open = context(hammer, free, false, enemy, false, detached, chain);
                      // Belt only (HOLSTERED, attached): no hammer move (F-M13, OPEN design §10).
                      ThorMove expected = hammer.away() || detached ? ThorMove.RECALL
-                        : hammer == HammerState.HOLSTERED ? null : enemy ? ThorMove.HAMMER_STRIKE : ThorMove.HAMMER_THROW;
+                        : hammer == HammerState.HOLSTERED ? null : ThorMove.HAMMER_THROW;
                      assertSame(expected, ThorControls.resolve(ThorInput.HAMMER, open), open.toString());
                   }
                }
@@ -163,7 +163,8 @@ class ThorIntegrationSeamsTest {
    void aCatchMidFistChainFinishesTheChainFirst() {
       ThorContext caught = context(HammerState.IN_HAND, true, false, true, false, false, true);
       assertSame(ThorMove.FIST_COMBO, ThorControls.resolve(ThorInput.STRIKE, caught), "#166");
-      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, caught), "MMB is not part of the open chain");
+      assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, caught), "MMB is not part of the open chain");
+      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.CRUSH, caught), "B finishes with the blow");
       assertFalse(CombatHits.hammerBlow(ThorMove.FIST_COMBO, true), "a fist blow right after the catch is no hammer blow");
       ThorContext closed = context(HammerState.IN_HAND, true, false, true, false, false, false);
       assertSame(ThorMove.HAMMER_COMBO, ThorControls.resolve(ThorInput.STRIKE, closed));

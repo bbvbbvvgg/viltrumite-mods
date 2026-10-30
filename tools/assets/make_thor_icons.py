@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Thor ability icons (own pixel art, CC0 by the project): thunder, onslaught, wrath, teleport.
+"""Thor ability icons (own pixel art, CC0 by the project): thunder, onslaught, wrath, teleport, crush.
 
 Drawn on a 32x32 grid and scaled x2 (nearest) to the 64x64 panel size, written as
 base64 into binassets (decoded by Gradle at build time). Deterministic.
@@ -133,7 +133,38 @@ def teleport():
     return img
 
 
-ICONS = {"thunder": thunder, "onslaught": onslaught, "wrath": wrath, "teleport": teleport}
+def crush():
+    """B (v3 spec): Mjölnir slammed head-first into cracked ground, impact rays."""
+    img = background((170, 110, 40))
+    d = ImageDraw.Draw(img)
+    # Cracked ground slab along the bottom.
+    d.rectangle([2, 24, 29, 29], fill=(70, 58, 48, 255))
+    d.line([(2, 24), (29, 24)], fill=(118, 98, 76, 255))
+    for crack in (((16, 24), (12, 27), (9, 29)), ((17, 24), (21, 26), (24, 29)), ((16, 25), (16, 29)), ((13, 26), (5, 26))):
+        d.line(crack, fill=(26, 22, 20, 255))
+    # Impact rays and debris.
+    for (x0, y0, x1, y1) in ((10, 21, 4, 15), (22, 21, 28, 15), (8, 23, 3, 21), (24, 23, 29, 21)):
+        d.line([(x0, y0), (x1, y1)], fill=(255, 214, 150, 255))
+    sparks(img, [(6, 12), (26, 12), (4, 18), (28, 18)], (255, 236, 190, 255))
+    # Handle going up-right behind the head, leather wrap, pommel.
+    d.line([(18, 15), (26, 4)], fill=(104, 66, 38, 255), width=3)
+    for t in range(3):
+        x, y = 20 + t * 2, 11 - t * 3
+        d.point((x, y), fill=(140, 94, 56, 255))
+    d.rectangle([25, 2, 28, 5], fill=(150, 154, 166, 255))
+    # Mjölnir head, tilted only by its handle: flat face on the ground.
+    d.rectangle([9, 14, 23, 23], fill=(122, 128, 140, 255))
+    d.rectangle([9, 14, 23, 15], fill=(176, 182, 194, 255))
+    d.rectangle([9, 22, 23, 23], fill=(78, 82, 94, 255))
+    d.rectangle([9, 14, 10, 23], fill=(96, 100, 112, 255))
+    d.rectangle([22, 14, 23, 23], fill=(96, 100, 112, 255))
+    for x in (13, 16, 19):
+        d.line([(x, 17), (x + 1, 20)], fill=(120, 210, 255, 255))
+    frame(img)
+    return img
+
+
+ICONS = {"thunder": thunder, "onslaught": onslaught, "wrath": wrath, "teleport": teleport, "crush": crush}
 
 
 def render(name):
