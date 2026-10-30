@@ -64,91 +64,6 @@ public final class Evangelium {
       return true;
    }
 
-   /** Why the book refuses to open now (action-bar feedback), or null when it may. */
-   public enum Refusal {
-      ANCHORED("message.viltrumitecore.evangelium.refused.locked"),
-      CHANNELING("message.viltrumitecore.evangelium.refused.channeling"),
-      MADNESS("message.viltrumitecore.evangelium.refused.madness"),
-      COOLDOWN("message.viltrumitecore.evangelium.refused.cooldown"),
-      BUSY("message.viltrumitecore.evangelium.refused.locked");
-
-      public final String key;
-
-      Refusal(String key) {
-         this.key = key;
-      }
-   }
-
-   /** Pure: the first rule of {@link #canBegin} that fails, in the order a player can act on it. */
-   @javax.annotation.Nullable
-   static Refusal refusal(RegulusState state, boolean anchored) {
-      if (anchored) {
-         return Refusal.ANCHORED;
-      }
-      if (state.ritualTicks >= 0) {
-         return Refusal.CHANNELING;
-      }
-      if (state.madnessTicksLeft > 0) {
-         return Refusal.MADNESS;
-      }
-      if (state.cooldownOf(RegulusAbilities.EVANGELIUM) > 0) {
-         return Refusal.COOLDOWN;
-      }
-      if (state.busy() || state.channelTargetId != null) {
-         return Refusal.BUSY;
-      }
-      return null;
-   }
-
-   /** Server: tell the player why the book did not open (silent refusals read as "stuck" in playtests). */
-   public static void explainRefusal(ServerPlayer player) {
-      RegulusState state = RegulusHero.stateOf(player);
-      if (state == null) {
-         return;
-      }
-      Refusal refusal = refusal(state, HeroDamage.isAnchored(player));
-      if (refusal == null || refusal == Refusal.CHANNELING) {
-         return;
-      }
-      int seconds = (state.cooldownOf(RegulusAbilities.EVANGELIUM) + 19) / 20;
-      player.displayClientMessage(net.minecraft.network.chat.Component.translatable(refusal.key, seconds), true);
-   }
-
-   /**
-    * Item use passed the gate but vanilla did not start the channel (another
-    * mod or rule cancelled LivingEntityUseItemEvent.Start): undo the begin
-    * without the cancel fee, so the next click is a clean first activation.
-    */
-   public static void abortBegin(ServerPlayer player) {
-      RegulusState state = RegulusHero.stateOf(player);
-      if (state != null && state.ritualTicks == 0) {
-         state.ritualTicks = -1;
-      }
-   }
-
-   /**
-    * Mirrors the Evangelium cooldown onto the book as a vanilla item cooldown:
-    * the hotbar shows the sweep (the book had no visible timer, so the 400t
-    * cancel cooldown looked like a book that never opens again) and client and
-    * server refuse the click by the same rule. Ground truth stays RegulusState.
-    */
-   static void syncBookCooldown(ServerPlayer player, RegulusState state) {
-      int left = state.cooldownOf(RegulusAbilities.EVANGELIUM);
-      net.minecraft.world.item.Item book = ViltrumiteItems.EVANGELIUM.get();
-      boolean shown = player.getCooldowns().isOnCooldown(book);
-      if (bookCooldownNeedsPush(left, state.bookCooldownShown, shown)) {
-         player.getCooldowns().addCooldown(book, left);
-      } else if (left <= 0 && shown) {
-         player.getCooldowns().removeCooldown(book);
-      }
-      state.bookCooldownShown = left;
-   }
-
-   /** Pure: a new or longer cooldown (start, relog, respawn) must be pushed to the item. */
-   static boolean bookCooldownNeedsPush(int left, int lastShown, boolean shown) {
-      return left > 0 && (!shown || left > lastShown);
-   }
-
    /** The ritual needs an idle, unanchored Regulus who is not mad, not on cooldown and not channeling (spec 8.2). */
    static boolean canBegin(RegulusState state) {
       return canBegin(state, false);
@@ -256,7 +171,6 @@ public final class Evangelium {
    }
 
    public static void tick(ServerPlayer player, RegulusState state) {
-      syncBookCooldown(player, state);
       if (state.ritualTicks >= 0) {
          if (!player.isAlive()) {
             // Death drops the ritual quietly — a corpse must not pay the cancel fee.
@@ -293,10 +207,5 @@ public final class Evangelium {
     */
    public static void cleanup(ServerPlayer player, RegulusState state, CleanupReason reason) {
       RegulusPassives.removeMadness(player);
-      if (reason == CleanupReason.HERO_CHANGE) {
-         // The cooldown map is stashed with the hero; the book overlay must not outlive it.
-         player.getCooldowns().removeCooldown(ViltrumiteItems.EVANGELIUM.get());
-         state.bookCooldownShown = 0;
-      }
    }
 }
