@@ -57,6 +57,7 @@ public final class AirSeverance {
       }
 
       state.startMove(player.isCrouching() ? RegulusMove.AIR_CUT_VERTICAL : RegulusMove.AIR_CUT);
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, RegulusAbilities.AIR_SEVERANCE);
       state.severCooldown = RegulusRules.SEVER_COOLDOWN;
       RegulusSounds.play(player.level(), player.position().add(0.0, 1.2, 0.0), RegulusSounds.SEVER_CHARGE, 0.8F, 1.0F);
    }
