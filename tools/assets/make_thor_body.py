@@ -130,6 +130,8 @@ def bone(name, parent, pivot, cubes=(), rotation=None):
 LEG_X = 4.5          # hip joint x
 HIP_Y = 21.0
 KNEE_Y = 11.0
+ANKLE_Y = 2.0       # ankle joint y: the boot is its own bone so the sole can stay flat on the ground
+ANKLE_Z = -0.5
 SHOULDER = (-12.25, 37.5, 0.0)
 ELBOW = (-12.75, 28.5, 0.0)
 WRIST = (-12.75, 19.5, 0.0)
@@ -158,7 +160,7 @@ def leg_parts(region, pants):
     shin = cube((-8.0, 2.5, -3.25), (7.0, 9.0, 6.5), skin_faces(region, 6, 10, top="band", bottom=None))
     shin_o = cube((-8.0, 2.5, -3.25), (7.0, 9.0, 6.5), skin_faces(pants, 6, 10, top=None, bottom=None), inflate=0.3)
     boot = cube((-8.25, 0.0, -4.75), (7.5, 3.0, 8.0), skin_faces(region, 9, 12, top="band", bottom="skin"))
-    return [thigh, thigh_o], [shin, shin_o, boot]
+    return [thigh, thigh_o], [shin, shin_o], [boot]
 
 
 def body_geo():
@@ -215,15 +217,16 @@ def body_geo():
     bones.append(bone("mjolnir_belt", "body", BELT))
 
     for side in ("right", "left"):
-        thigh, shin = leg_parts(SKIN["right_leg"], SKIN["right_pants"])
+        thigh, shin, foot = leg_parts(SKIN["right_leg"], SKIN["right_pants"])
         if side == "left":
             lr, lp = SKIN["left_leg"], SKIN["left_pants"]
             def m(cs, ref_r=SKIN["right_leg"], ref_p=SKIN["right_pants"]):
                 return [mirror_cube(c, mirror_uv(c["uv"], lp if c.get("inflate") else lr, ref_p if c.get("inflate") else ref_r)) for c in cs]
-            thigh, shin = m(thigh), m(shin)
+            thigh, shin, foot = m(thigh), m(shin), m(foot)
         x = -LEG_X if side == "right" else LEG_X
         bones.append(bone(f"{side}_leg", None, (x, HIP_Y, 0), thigh))
         bones.append(bone(f"{side}_shin", f"{side}_leg", (x, KNEE_Y, 0), shin))
+        bones.append(bone(f"{side}_foot", f"{side}_shin", (x, ANKLE_Y, ANKLE_Z), foot))
     return geo("geometry.thor", bones, 6, 4)
 
 
@@ -307,7 +310,7 @@ def key(v, easing="easeInOutSine"):
 # handle) and then checked in tools/preview_thor.py.
 LIFT = {"drop": 5.5, "back": 7.9, "lean": 71.9, "head": -50.0, "beard": -20.0, "thigh": 71.2, "spread": 18.4, "belly": -6.0, "shin": 84.4}
 THIGH_PX, SHIN_PX, HIP_PX = 10.0, 11.0, 21.0
-CROUCH = {"pos": [0, -3.77, 1.5], "lean": 10.3, "head": -30.0, "thigh": 63.6, "shin": 112.8, "arm": 0.0, "abduct": 1.8, "forearm": -12.0}
+CROUCH = {"pos": [0, -3.77, 1.5], "lean": 10.3, "head": -10.3, "thigh": 63.6, "shin": 112.8, "arm": 0.0, "abduct": 1.8, "forearm": -12.0}
 SIT = {"arm": -20.0, "abduct": 10.0, "forearm": -25.0}
 
 

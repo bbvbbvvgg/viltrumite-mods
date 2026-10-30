@@ -22,9 +22,9 @@ import thor_rig as R
 
 STEP = 0.35
 TOLERANCE = 0.5
-TORSO = ("body", "belly", "head", "beard", "right_leg", "left_leg", "right_shin", "left_shin")
+TORSO = ("body", "belly", "head", "beard", "right_leg", "left_leg", "right_shin", "left_shin", "right_foot", "left_foot")
 ARMS = ("right_arm", "right_forearm", "right_hand", "left_arm", "left_forearm", "left_hand")
-LEGS = ("right_leg", "right_shin", "left_leg", "left_shin")
+LEGS = ("right_leg", "right_shin", "right_foot", "left_leg", "left_shin", "left_foot")
 # Mjölnir's handle group: the shaft, its bands, the leather wrap, the pommel and the strap (z > -5.7 in the hand geo).
 HANDLE = ("handle", "handle_plains", "bottom", "side1", "side2") + tuple("cube_%d" % i for i in range(5, 8)) \
     + tuple("cube_%d" % i for i in range(10, 32))
@@ -153,7 +153,7 @@ def scan(pose, hammer_model=None, grip="mjolnir_grip", belt_model=None, belt="mj
             if limb.endswith("_arm") and fixed == "body":
                 continue
             test(body[limb], body[fixed], tolerance)
-    for shin in ("right_shin", "left_shin"):
+    for shin in ("right_shin", "left_shin", "right_foot", "left_foot"):
         for fixed in ("belly", "body"):
             test(body[shin], body[fixed], tolerance)
     if hammer_model is not None:
@@ -181,11 +181,12 @@ def scan(pose, hammer_model=None, grip="mjolnir_grip", belt_model=None, belt="mj
 
 
 def feet(pose):
-    """Lowest point (px above the ground) of each shin."""
+    """Lowest point (px above the ground) of each lower leg (shin and foot)."""
     out = []
     for shin in ("right_shin", "left_shin"):
         lo = math.inf
-        for m, a, b in cube_frames(pose.model, shin, pose.frame(shin)):
+        parts = [b for b in (shin, shin.replace("shin", "foot")) if b in pose.model.bones]
+        for m, a, b in [c for part in parts for c in cube_frames(pose.model, part, pose.frame(part))]:
             for x in (a[0], b[0]):
                 for y in (a[1], b[1]):
                     for z in (a[2], b[2]):

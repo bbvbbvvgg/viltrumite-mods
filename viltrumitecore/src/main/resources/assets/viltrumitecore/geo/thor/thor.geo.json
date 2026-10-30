@@ -2120,7 +2120,18 @@
         }
        },
        "inflate": 0.3
-      },
+      }
+     ]
+    },
+    {
+     "name": "right_foot",
+     "pivot": [
+      -4.5,
+      2.0,
+      -0.5
+     ],
+     "parent": "right_shin",
+     "cubes": [
       {
        "origin": [
         -8.25,
@@ -2463,7 +2474,18 @@
         }
        },
        "inflate": 0.3
-      },
+      }
+     ]
+    },
+    {
+     "name": "left_foot",
+     "pivot": [
+      4.5,
+      2.0,
+      -0.5
+     ],
+     "parent": "left_shin",
+     "cubes": [
       {
        "origin": [
         0.75,
