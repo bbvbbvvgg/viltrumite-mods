@@ -68,22 +68,22 @@ public class ViltrumiteAbilityScreen extends Screen {
             String keyName = "";
             switch (i) {
                case 0:
-                  keyName = this.getShortKeyName(AbilityInputManager.abilityKey1.getTranslatedKeyMessage().getString());
+                  keyName = dev.baranhan.viltrumitecore.client.gui.KeyLabels.shortName(AbilityInputManager.abilityKey1);
                   break;
                case 1:
-                  keyName = this.getShortKeyName(AbilityInputManager.abilityKey2.getTranslatedKeyMessage().getString());
+                  keyName = dev.baranhan.viltrumitecore.client.gui.KeyLabels.shortName(AbilityInputManager.abilityKey2);
                   break;
                case 2:
-                  keyName = this.getShortKeyName(AbilityInputManager.abilityKey3.getTranslatedKeyMessage().getString());
+                  keyName = dev.baranhan.viltrumitecore.client.gui.KeyLabels.shortName(AbilityInputManager.abilityKey3);
                   break;
                case 3:
-                  keyName = this.getShortKeyName(AbilityInputManager.abilityKey4.getTranslatedKeyMessage().getString());
+                  keyName = dev.baranhan.viltrumitecore.client.gui.KeyLabels.shortName(AbilityInputManager.abilityKey4);
                   break;
                case 4:
-                  keyName = this.getShortKeyName(AbilityInputManager.abilityKey5.getTranslatedKeyMessage().getString());
+                  keyName = dev.baranhan.viltrumitecore.client.gui.KeyLabels.shortName(AbilityInputManager.abilityKey5);
                   break;
                case 5:
-                  keyName = this.getShortKeyName(AbilityInputManager.abilityKey6.getTranslatedKeyMessage().getString());
+                  keyName = dev.baranhan.viltrumitecore.client.gui.KeyLabels.shortName(AbilityInputManager.abilityKey6);
             }
 
             int textWidth = this.font.width(keyName);
@@ -283,44 +283,4 @@ public class ViltrumiteAbilityScreen extends Screen {
       return mouseX >= (double)boxX && mouseX < (double)(boxX + boxWidth) && mouseY >= (double)boxY && mouseY < (double)(boxY + boxHeight);
    }
 
-   private String getShortKeyName(String key) {
-      if (key == null) {
-         return "";
-      } else {
-         key = key.toUpperCase();
-         if (key.contains("MOUSE") || key.contains("BUTTON")) {
-            if (key.contains("1") || key.contains("LEFT")) {
-               return "M1";
-            }
-
-            if (key.contains("2") || key.contains("RIGHT")) {
-               return "M2";
-            }
-
-            if (key.contains("3") || key.contains("MIDDLE")) {
-               return "M3";
-            }
-
-            if (key.contains("4")) {
-               return "M4";
-            }
-
-            if (key.contains("5")) {
-               return "M5";
-            }
-         }
-
-         if (key.contains("SPACE")) {
-            return "SPC";
-         } else if (key.contains("SHIFT")) {
-            return "SHFT";
-         } else if (key.contains("CONTROL") || key.contains("CTRL")) {
-            return "CTRL";
-         } else if (key.contains("ALT")) {
-            return "ALT";
-         } else {
-            return !key.contains("ENTER") && !key.contains("RETURN") ? key.replace("KEYBOARD", "").replace("KEY", "").replace(".", "").trim() : "ENTR";
-         }
-      }
-   }
 }
