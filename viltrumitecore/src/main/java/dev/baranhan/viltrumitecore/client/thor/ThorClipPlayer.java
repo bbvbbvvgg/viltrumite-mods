@@ -9,6 +9,7 @@ import dev.baranhan.viltrumitecore.client.anim.pose.ActionClock;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.thor.MjolnirPlace;
+import dev.baranhan.viltrumitecore.hero.thor.ThorFlags;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import dev.baranhan.viltrumitecore.hero.thor.combat.ThorAttacks;
 import dev.baranhan.viltrumiteflight.util.FlightState;
@@ -52,11 +53,14 @@ public final class ThorClipPlayer {
    private static final double THROW_FADE = 1.5;
    /** Blend in / out of an attack clip (ticks). */
    private static final double BLEND = 2.0;
-   private static final String[] FP_BONES = {"left_forearm", "left_hand", "right_forearm", "right_hand", "mjolnir_grip"};
+   /** Guard pose blend in / out (ticks). */
+   private static final double GUARD_BLEND = 3.0;
    private static final Map<Entity, ActionClock> CLOCKS = new WeakHashMap<>();
    private static final Map<Entity, ActionClock> FP_CLOCKS = new WeakHashMap<>();
    private static final Map<Entity, Gait> GAITS = new WeakHashMap<>();
    private static final Map<Entity, double[]> THROW_REACHED = new WeakHashMap<>();
+   private static final Map<Entity, double[]> GUARD = new WeakHashMap<>();
+   private static final Map<Entity, double[]> FP_GUARD = new WeakHashMap<>();
 
    /** Distance walked on the ground (blocks), from the synced positions, so remote players get it too. */
    static final class Gait {
@@ -204,6 +208,21 @@ public final class ThorClipPlayer {
          }
       }
 
+      // Audit v3: the guard (F, ThorGuard) over the locomotion; walking or flying keeps its legs.
+      float guard = guardWeight(GUARD, player, snapshot, ticks);
+      Animation guardClip = guard > 0.0F && !sitting ? clip(guardClip(holding)) : null;
+      if (guardClip != null) {
+         boolean flying = player instanceof ViltrumiteFlightPlayer flyer && flyer.getFlightState() != FlightState.NONE;
+         float keep = flying ? 1.0F : stepping;
+         float[][] legs = keep > 0.0F ? save(body, LEG_BONES) : null;
+         float[][] pelvis = legs != null ? save(body, PELVIS) : null;
+         AnimationController.overlay(guardClip, body, clipSeconds(guardClip, ticks), guard);
+         if (legs != null) {
+            restore(body, LEG_BONES, legs, keep);
+            restorePosition(body, PELVIS, pelvis, keep);
+         }
+      }
+
       String name = actionClip(snapshot);
       ActionClock clock = CLOCKS.computeIfAbsent(player, e -> new ActionClock());
       Animation action = name == null ? null : clip(name);
@@ -278,50 +297,72 @@ public final class ThorClipPlayer {
    }
 
    /**
-    * First person: the running move's {@code _fp} clip on the forearms, hands and grip of the
-    * camera arms. The shoulders stay on ThorFirstPerson's rows (the vanilla arm the part rides).
+    * First person, audit v3 (item 3): the camera arms play the whole {@code _fp} clip, shoulders included
+    * (make_thor_clips.py solves each camera arm from its shoulder: the turn and the slide of armorRightArm /
+    * armorLeftArm are the motion, the forearm and hand only finish it). Before, the shoulders were restored to
+    * ThorFirstPerson's procedural rows, so only the forearms moved and the authored swings read as twitches.
+    * Under the move: the idle hold of the hand (with or without Mjölnir) and the guard.
     */
    public static void applyArms(BakedGeoModel arms, AbstractClientPlayer player, float partialTick) {
       HeroPublicSnapshot snapshot = ThorView.of(player);
-      String name = snapshot == null ? null : actionClip(snapshot);
-      Animation action = name == null ? null : clip(name + ThorAttacks.FP_SUFFIX);
-      ActionClock clock = FP_CLOCKS.computeIfAbsent(player, e -> new ActionClock());
-      double at = clock.sample(action == null ? -1 : snapshot.actionId(), snapshot == null ? 0 : snapshot.variant(),
-         snapshot == null ? 0 : snapshot.actionElapsed(), snapshot == null ? 0 : snapshot.actionLength(), player.tickCount + (double)partialTick);
-      if (action == null) {
+      if (snapshot == null) {
+         FP_CLOCKS.remove(player);
          return;
       }
 
-      // Save the bones the clip may not touch, overlay, restore them.
-      Map<String, float[]> saved = new java.util.HashMap<>();
-      for (GeoBone bone : arms.allBones()) {
-         if (!fpBone(bone.name)) {
-            saved.put(bone.name, new float[]{bone.rotX, bone.rotY, bone.rotZ, bone.posX, bone.posY, bone.posZ});
-         }
+      double ticks = player.tickCount + (double)partialTick;
+      boolean holding = ThorView.place(snapshot, player) == MjolnirPlace.HAND;
+      loop(arms, (holding ? "idle_hammer" : "idle") + ThorAttacks.FP_SUFFIX, ticks / 20.0, 1.0F);
+      float guard = guardWeight(FP_GUARD, player, snapshot, ticks);
+      if (guard > 0.0F) {
+         loop(arms, guardClip(holding) + ThorAttacks.FP_SUFFIX, ticks / 20.0, guard);
       }
 
-      AnimationController.overlay(action, arms, Math.min(action.lengthSeconds(), at / 20.0), weight(at, snapshot.actionLength()));
-      for (GeoBone bone : arms.allBones()) {
-         float[] s = saved.get(bone.name);
-         if (s != null) {
-            bone.rotX = s[0];
-            bone.rotY = s[1];
-            bone.rotZ = s[2];
-            bone.posX = s[3];
-            bone.posY = s[4];
-            bone.posZ = s[5];
-         }
+      String name = actionClip(snapshot);
+      Animation action = name == null ? null : clip(name + ThorAttacks.FP_SUFFIX);
+      ActionClock clock = FP_CLOCKS.computeIfAbsent(player, e -> new ActionClock());
+      double at = clock.sample(action == null ? -1 : snapshot.actionId(), snapshot.variant(), snapshot.actionElapsed(), snapshot.actionLength(), ticks);
+      if (action != null) {
+         Shot shot = shot(player, snapshot, name, at);
+         AnimationController.overlay(action, arms, clipSeconds(action, shot.ticks()), weight(at, snapshot.actionLength()));
       }
    }
 
-   private static boolean fpBone(String name) {
-      for (String bone : FP_BONES) {
-         if (bone.equals(name)) {
-            return true;
-         }
+   /** The running move has an authored first-person clip (ThorFirstPerson's procedural rows then stay out). */
+   public static boolean playsFpClip(@Nullable HeroPublicSnapshot snapshot) {
+      String name = snapshot == null ? null : actionClip(snapshot);
+      return name != null && clip(name + ThorAttacks.FP_SUFFIX) != null;
+   }
+
+   /** First person: the left camera arm is drawn while the guard or the running clip moves it (AlwaysVisibleOffhandMixin). */
+   public static boolean wantsOffhand(AbstractClientPlayer player) {
+      HeroPublicSnapshot snapshot = ThorView.of(player);
+      if (snapshot == null) {
+         return false;
       }
 
-      return false;
+      if (ThorFlags.guard(snapshot.heroFlags())) {
+         return true;
+      }
+
+      String name = actionClip(snapshot);
+      Animation action = name == null ? null : clip(name + ThorAttacks.FP_SUFFIX);
+      return action != null && action.boneAnimations().containsKey(ThorAssets.FP_LEFT_ARM);
+   }
+
+   static String guardClip(boolean holding) {
+      return holding ? "guard_hammer" : "guard_fist";
+   }
+
+   /** The guard pose's weight: up while the flag is set and no move runs, a short smooth blend either way. */
+   static float guardWeight(Map<Entity, double[]> blends, Entity entity, HeroPublicSnapshot snapshot, double ticks) {
+      boolean up = ThorFlags.guard(snapshot.heroFlags()) && ThorView.move(snapshot) == null;
+      double[] blend = blends.computeIfAbsent(entity, e -> new double[]{0.0, ticks});
+      double dt = Math.max(0.0, Math.min(5.0, ticks - blend[1]));
+      blend[1] = ticks;
+      blend[0] = up ? Math.min(1.0, blend[0] + dt / GUARD_BLEND) : Math.max(0.0, blend[0] - dt / GUARD_BLEND);
+      double x = blend[0];
+      return (float)(x * x * (3.0 - 2.0 * x));
    }
 
    private static void loop(BakedGeoModel model, String name, double seconds, float weight) {
