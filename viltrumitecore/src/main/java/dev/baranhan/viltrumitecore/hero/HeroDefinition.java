@@ -118,6 +118,16 @@ public interface HeroDefinition {
     * alwaysRenderOffhand). Heroes fight with both fists, so they keep it; an
     * ordinary human shows vanilla hands (only the main arm when empty).
     */
+   /**
+    * Debug (/hero cooldown reset): zero this hero's ability cooldowns. Only
+    * cooldown timers: running casts, channels, resources and active states
+    * stay as they are. Returns false when the hero has no reset of its own
+    * (the shared part still clears PersistentCooldowns and item cooldowns).
+    */
+   default boolean resetCooldowns(ServerPlayer player) {
+      return false;
+   }
+
    default boolean showsIdleOffhand(Player player) {
       return true;
    }
