@@ -47,9 +47,10 @@ class SinclairLangTest {
 
       for (ActShape shape : ActShape.values()) {
          keys.add(SinclairRepertoire.nameKey(shape));
+         keys.add(SinclairRepertoire.nameKey(shape) + ".desc");
       }
 
-      for (String hud : new String[]{"hexed", "window", "veil", "assistant", "ovation", "fallback"}) {
+      for (String hud : new String[]{"hexed", "window", "veil", "assistant", "ovation", "fallback", "card_title", "card_from"}) {
          keys.add("hud.viltrumitecore.sinclair." + hud);
       }
 
@@ -70,7 +71,7 @@ class SinclairLangTest {
    @Test
    void everyLocaleHasEveryKey() throws IOException {
       List<String> keys = requiredKeys();
-      assertEquals(78, keys.size(), "key table changed: update tools/lang/sinclair_lang.py");
+      assertEquals(86, keys.size(), "key table changed: update tools/lang/sinclair_lang.py");
       for (String locale : LOCALES) {
          JsonObject lang = read(OWN_LANG.resolve(locale + ".json"));
          for (String key : keys) {
