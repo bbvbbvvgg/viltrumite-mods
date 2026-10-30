@@ -113,6 +113,15 @@ public interface HeroDefinition {
    }
 
    /** Whether the legacy three-page ability bar swap is meaningful for this hero. */
+   /**
+    * First person: draw the empty off hand at rest (client option
+    * alwaysRenderOffhand). Heroes fight with both fists, so they keep it; an
+    * ordinary human shows vanilla hands (only the main arm when empty).
+    */
+   default boolean showsIdleOffhand(Player player) {
+      return true;
+   }
+
    default boolean allowsAbilityPages(Player player) {
       return this.allowsLegacyAbilities(player);
    }
