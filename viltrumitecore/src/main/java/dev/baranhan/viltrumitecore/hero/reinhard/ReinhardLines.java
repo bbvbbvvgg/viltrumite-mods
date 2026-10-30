@@ -51,7 +51,28 @@ public final class ReinhardLines {
       .range(ULT_RANGE)
       .build();
 
+   /** Pages of the World Erasure line (subtitle.viltrumitecore.reinhard.world_erasure.1..N). */
+   public static final int WORLD_ERASURE_PAGES = 3;
+   /**
+    * Whole World Erasure line, ticks: spoken over the speech pre-roll and the crack/shatter, the
+    * last page (plus its fade) gone before the dark phase (playtest: "before the black screen").
+    */
+   public static final int WORLD_ERASURE_TICKS = 90;
+
+   /** World Erasure (slot 6, N): spoken while the world is paused, before the crack turns dark. */
+   public static final HeroLine WORLD_ERASURE = HeroLine.builder(ReinhardAbility.WORLD_ERASURE.id())
+      .textSeries("subtitle.viltrumitecore.reinhard.world_erasure.", WORLD_ERASURE_PAGES)
+      .priority(HeroLine.Priority.ULTIMATE)
+      .duration(WORLD_ERASURE_TICKS)
+      .range(ULT_RANGE)
+      .activeWhile(player -> {
+         ReinhardState state = ReinhardState.of(player);
+         return state != null && state.worldErasure != null && !state.worldErasure.ended();
+      })
+      .build();
+
    public static final HeroLines LINES = HeroLines.builder()
+      .onAbility(ReinhardAbility.WORLD_ERASURE.id(), WORLD_ERASURE)
       .onAbility(ReinhardAbility.WORLD_CUT.id(), WORLD_CUT)
       .onAbility(ReinhardAbility.DIAGONAL_WORLD_CUT.id(), DIAGONAL_WORLD_CUT)
       .onEvent(BLAST_EVENT, BLAST)

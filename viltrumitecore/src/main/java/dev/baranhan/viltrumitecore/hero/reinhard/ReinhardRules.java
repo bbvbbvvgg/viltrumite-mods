@@ -287,6 +287,12 @@ public final class ReinhardRules {
 
    public static final int ERASE_RANGE = 64;
    public static final int ERASE_LENGTH = 150;
+   /**
+    * Playtest: Reinhard speaks before the erasure. The world is already paused and the caster held
+    * for this long, then the 150-tick cinematic (crack, shatter, dark, rebuild) runs as before; the
+    * line ends before the dark phase ({@link ReinhardLines#WORLD_ERASURE}).
+    */
+   public static final int ERASE_SPEECH_TICKS = 70;
    public static final int ERASE_CRACK_END = 30;
    public static final int ERASE_SHATTER_END = 70;
    public static final int ERASE_DARK_END = 110;

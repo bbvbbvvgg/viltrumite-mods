@@ -47,6 +47,10 @@ public final class WorldErasure implements AbilityHandler {
       return new WorldErasure(Objects.requireNonNull(verdict),Objects.requireNonNull(environment));
    }
    public boolean erase() {return verdict==DivineTargets.Verdict.MORTAL;}
+   /** Pause tick at which the cinematic (age 0) starts: after Reinhard's spoken line. */
+   public static int cinematicStart() {return ReinhardRules.ERASE_SPEECH_TICKS;}
+   /** Pure: cinematic age for a pause tick, negative while Reinhard is still speaking. */
+   public static int cinematicAge(int pauseElapsed) {return pauseElapsed-cinematicStart();}
    public boolean ended() {return ended;}
    public static boolean tryStart(ReinhardState state,Gate gate,BooleanSupplier beginPause) {
       if(!gate.target() || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn() || gate.chopping()
@@ -99,22 +103,36 @@ public final class WorldErasure implements AbilityHandler {
          player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core && core.getChopTicks()>0);
       if(target==null || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn() || gate.chopping()) return false;
       DivineTargets.Verdict frozen=DivineTargets.verdict(target);
-      if(!tryStart(state,gate,()->WorldPause.begin(server,player.getUUID(),ReinhardRules.ERASE_LENGTH,
+      if(!tryStart(state,gate,()->WorldPause.begin(server,player.getUUID(),cinematicStart()+ReinhardRules.ERASE_LENGTH,
          ReinhardRules.ERASE_PROTECT_FROZEN,ReinhardRules.ERASE_MOB_FREEZE_RADIUS))) return false;
-      state.action.start(ReinhardAbility.WORLD_ERASURE,ReinhardRules.ERASE_LENGTH,target.getId());
+      // Speech first (world paused, caster held, Reid at the guard): the pose and the client scene
+      // start with the cinematic, so the raise/crack stay in sync with the shader timeline.
+      state.action.cancel();
+      int targetId=target.getId();
       Live live=new Live(server,player,target,WorldPause.id(server));
       WorldErasure cast=timed(frozen,live); cast.pauseId=live.pauseId; state.worldErasure=cast;
       live.packet=new ErasureS2CPacket(live.pauseId,server.overworld().getGameTime(),target.level().dimension(),target.getId(),target.position(),
          target.getBbWidth(),target.getBbHeight(),target instanceof net.minecraft.world.entity.player.Player || target instanceof net.minecraft.world.entity.monster.Zombie || target instanceof net.minecraft.world.entity.monster.AbstractSkeleton || target instanceof net.minecraft.world.entity.monster.AbstractIllager || target instanceof net.minecraft.world.entity.monster.piglin.AbstractPiglin || target instanceof net.minecraft.world.entity.monster.Witch || target instanceof AbstractVillager,
          cast.erase(),0);
       WorldPause.listen(server,new WorldPause.Listener() {
-         public void tick(int elapsed) {live.holdCaster();cast.advance(elapsed);}
+         public void tick(int elapsed) {
+            live.holdCaster();
+            int age=cinematicAge(elapsed);
+            if(age<0) return;
+            if(age==0) {
+               if(!cast.ended) state.action.start(ReinhardAbility.WORLD_ERASURE,ReinhardRules.ERASE_LENGTH,targetId);
+               for(ServerPlayer viewer:server.getPlayerList().getPlayers()) CoreMessages.sendToPlayer(live.packet,viewer);
+            }
+            cast.advance(age);
+         }
          public void ended(WorldPause.EndReason reason) {
             cast.interrupt(reason); state.worldErasure=null; state.action.cancel();
          }
-         public void onJoin(ServerPlayer viewer,int elapsed) {CoreMessages.sendToPlayer(live.packet.withAge(elapsed),viewer);}
+         public void onJoin(ServerPlayer viewer,int elapsed) {
+            int age=cinematicAge(elapsed);
+            if(age>=0) CoreMessages.sendToPlayer(live.packet.withAge(age),viewer);
+         }
       });
-      for(ServerPlayer viewer:server.getPlayerList().getPlayers()) CoreMessages.sendToPlayer(live.packet,viewer);
       return true;
    }
    @Override public void cancel(ServerPlayer player,ReinhardState state,CleanupReason reason) {
