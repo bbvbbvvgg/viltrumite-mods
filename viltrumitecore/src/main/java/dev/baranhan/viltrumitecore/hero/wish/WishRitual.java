@@ -45,13 +45,11 @@ public final class WishRitual {
 
    static final class Ritual {
       final Wish wish;
-      final boolean firstChoice;
       int tick;
       boolean swapped;
 
-      Ritual(Wish wish, boolean firstChoice) {
+      Ritual(Wish wish) {
          this.wish = wish;
-         this.firstChoice = firstChoice;
       }
    }
 
@@ -78,13 +76,9 @@ public final class WishRitual {
       return player != null && RITUALS.containsKey(player.getUUID());
    }
 
-   /** The player may speak a wish: holds the item, or has not made the first hero choice yet. */
+   /** The player may speak a wish: only while holding the item (main hand or off hand). */
    static boolean mayWish(ServerPlayer player) {
-      return player.getMainHandItem().is(ViltrumiteItems.OD_LAGNA_WISH.get()) || player.getOffhandItem().is(ViltrumiteItems.OD_LAGNA_WISH.get()) || firstChoice(player);
-   }
-
-   static boolean firstChoice(ServerPlayer player) {
-      return player instanceof ViltrumiteCorePlayer core && !core.hasChosenRace();
+      return player.getMainHandItem().is(ViltrumiteItems.OD_LAGNA_WISH.get()) || player.getOffhandItem().is(ViltrumiteItems.OD_LAGNA_WISH.get());
    }
 
    /** WishChoiceC2SPacket: everything the client sent is checked here before anything starts. */
@@ -107,8 +101,7 @@ public final class WishRitual {
          refuse(player, REFUSED_NO_ITEM);
          return;
       }
-      boolean first = firstChoice(player);
-      if (!first && wish.grant().satisfied(player)) {
+      if (wish.grant().satisfied(player)) {
          refuse(player, REFUSED_ALREADY);
          return;
       }
@@ -120,7 +113,7 @@ public final class WishRitual {
          refuse(player, reason);
          return;
       }
-      Ritual ritual = new Ritual(wish, first);
+      Ritual ritual = new Ritual(wish);
       RITUALS.put(player.getUUID(), ritual);
       root(player, true);
       // Held mouse actions of the current hero stop now: the body is the ritual's until the end.
@@ -166,7 +159,7 @@ public final class WishRitual {
    }
 
    private static void swap(ServerPlayer player, Ritual ritual) {
-      String reason = ritual.firstChoice ? null : ritual.wish.grant().refusal(player);
+      String reason = ritual.wish.grant().refusal(player);
       if (reason != null) {
          abort(player, reason);
          return;

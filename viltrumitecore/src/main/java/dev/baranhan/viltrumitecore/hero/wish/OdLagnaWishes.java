@@ -29,7 +29,6 @@ public final class OdLagnaWishes {
       register(new Wish("death", "jinwoo", "shadow", WishGrant.hero("jinwoo")));
       register(new Wish("thunder", "thor", "thunder", WishGrant.hero("thor")));
       register(new Wish("reality", "sinclair", "cards", WishGrant.hero("sinclair")));
-      register(new Wish("indestructible", "ironman", "armor", dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWish.INSTANCE));
       register(new Wish("genius", "ironman", "tech", WishGrant.hero("ironman")));
       register(new Wish("crimson", "homelander", "crimson", WishGrant.hero("homelander")));
       register(new Wish("sword", "reinhard", "holy", WishGrant.hero("reinhard")));

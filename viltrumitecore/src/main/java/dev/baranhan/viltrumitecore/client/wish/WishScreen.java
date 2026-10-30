@@ -26,9 +26,6 @@ import org.lwjgl.glfw.GLFW;
  * title, a smooth-scrolled column of wish cards (hover glow, selection, «исполнено» for the hero the player
  * already is), the selected wish's echo line and «исполнить желание» / «отмена». Esc, «отмена» and a sent
  * wish fade the screen out. The client only sends the wish id; the server decides (WishRitual.request).
- *
- * <p>{@code first}: the world's first hero choice (replaces the old race screen), opened by the server; the
- * player needs no item then and the current hero is never marked as fulfilled.
  */
 public class WishScreen extends Screen {
    static final ResourceLocation HALO = new ResourceLocation("viltrumitecore", "textures/gui/od_lagna/halo.png");
@@ -36,7 +33,6 @@ public class WishScreen extends Screen {
    private static final int FADE_OUT = 5;
    private static final int MAX_MOTES = 48;
 
-   private final boolean first;
    private final List<Wish> wishes;
    private final boolean[] fulfilled;
    private final float[] hover;
@@ -53,21 +49,16 @@ public class WishScreen extends Screen {
    private int closing = -1;
    private boolean sent;
 
-   public WishScreen(boolean first) {
+   public WishScreen() {
       super(Component.translatable("gui.viltrumitecore.wish.title"));
-      this.first = first;
       this.wishes = OdLagnaWishes.all();
-      this.fulfilled = WishLayout.fulfilled(this.wishes, first ? null : currentHeroKey());
+      this.fulfilled = WishLayout.fulfilled(this.wishes, currentHeroKey());
       this.hover = new float[this.wishes.size()];
    }
 
    private static String currentHeroKey() {
       Minecraft mc = Minecraft.getInstance();
       return mc.player instanceof HeroPlayer hero && hero.getHeroId() != null ? hero.getHeroId().key() : null;
-   }
-
-   public boolean firstChoice() {
-      return this.first;
    }
 
    @Override

@@ -13,7 +13,6 @@ public enum WishStyle {
    SHADOW("shadow", 0x8A4DFF, 0x1A0A33, 0.62F, 0.5F, 0.95F, 0.55F, "jinwoo.monarch_charge", "jinwoo.ult_rise"),
    THUNDER("thunder", 0x7FD8FF, 0xFFFFFF, 0.6F, 0.7F, 0.95F, 0.45F, "thor.storm_charge", "thor.thunder_crack"),
    CARDS("cards", 0xFF3B5C, 0xFFF2D8, 1.0F, 0.85F, 0.9F, 0.15F, "sinclair.act_drumroll", "sinclair.tada"),
-   ARMOR("armor", 0xFF6A1F, 0xFFD27A, 1.0F, 0.75F, 0.55F, 0.25F, "ironman_nanite_form", "ironman_hammer_slam"),
    TECH("tech", 0x5FE6FF, 0xFF3A2A, 0.8F, 0.92F, 1.0F, 0.2F, "ironman_nano_deploy", "ironman_helmet_close"),
    CRIMSON("crimson", 0xFF2A2A, 0x3A7BFF, 1.0F, 0.55F, 0.5F, 0.35F, "homelander_laser_charge", "homelander_roar"),
    HOLY("holy", 0xFFF1B8, 0xFF9A3A, 1.0F, 0.95F, 0.8F, 0.0F, "reinhard.reid_choir", "reinhard.mode_holy_sword"),

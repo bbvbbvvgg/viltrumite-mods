@@ -230,17 +230,6 @@ public final class HulkbusterLayer {
       this.set(Phase.ACTIVE);
    }
 
-   /**
-    * Od Lagna's Wish (docs/design/2026-10-30-od-lagna-wish-design.md): the Mark 48 is simply there, whole
-    * and fresh, through the same ACTIVE + first-tick fit check a loaded save takes (no room = refuse).
-    */
-   public void grantByWish() {
-      this.durability = DURABILITY;
-      this.parts = FULL_PARTS;
-      this.set(Phase.ACTIVE);
-      this.needsFitCheck = true;
-   }
-
    /** No room for the big body: it goes back, no cooldown. */
    public void refuse() {
       this.clearToNone();
