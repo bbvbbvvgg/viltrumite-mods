@@ -33,8 +33,13 @@ public final class JinwooPose {
    static final float BLOCK_RATE = 22.0F;
    /** Vanilla limb swing units per full gait cycle (2 pi / 0.6662). */
    static final double GAIT_CYCLE = 9.4315;
-   /** Seconds an ended action clip fades out over the stance. */
+   /** Seconds an ended combo clip fades out over the stance. */
    static final double RELEASE = 0.12;
+   /**
+    * Seconds a long skill / the ult fades out (playtest: after the 5 s ult the body jumped from the
+    * last ult frame into the stance in 0.12 s, which read as a snap).
+    */
+   static final double SKILL_RELEASE = 0.35;
 
    static final class State {
       final float[] w = new float[STANCES.length];
@@ -43,6 +48,7 @@ public final class JinwooPose {
       float block;
       @Nullable Animation lastClip;
       double lastSeconds;
+      double lastRelease = RELEASE;
       long releaseStart = -1;
       // secondary motion (bedrock degrees)
       float tail, tailV, side, sideV, hair, hairV;
@@ -186,10 +192,12 @@ public final class JinwooPose {
          if (clip != null) {
             double ticks = sampleTicks(st, player, s, partial);
             double seconds = Math.min(ticks / 20.0, clip.lengthSeconds());
-            float w = move.isCombo() || move == JinwooMove.RIPOSTE ? 1.0F : (float)smooth(Math.min(1.0, ticks / 2.0));
+            boolean quick = move.isCombo() || move == JinwooMove.RIPOSTE;
+            float w = quick ? 1.0F : (float)smooth(Math.min(1.0, ticks / 2.0));
             AnimationController.overlay(clip, model, seconds, w);
             st.lastClip = clip;
             st.lastSeconds = seconds;
+            st.lastRelease = releaseSeconds(quick);
             st.releaseStart = -1;
          }
       } else if (st.lastClip != null) {
@@ -197,12 +205,17 @@ public final class JinwooPose {
             st.releaseStart = now;
          }
          double since = (now - st.releaseStart) / 1.0E9;
-         if (since >= RELEASE) {
+         if (since >= st.lastRelease) {
             st.lastClip = null;
          } else {
-            AnimationController.overlay(st.lastClip, model, st.lastSeconds, (float)smooth(1.0 - since / RELEASE));
+            AnimationController.overlay(st.lastClip, model, st.lastSeconds, (float)smooth(1.0 - since / st.lastRelease));
          }
       }
+   }
+
+   /** Pure: fade-out of an ended clip — short after a combo strike, longer after a skill or the ult. */
+   static double releaseSeconds(boolean quick) {
+      return quick ? RELEASE : SKILL_RELEASE;
    }
 
    /** Coat tails and hair: damped springs on forward speed, fall speed and turn rate (degrees). */
