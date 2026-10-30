@@ -88,6 +88,12 @@ public final class HeroSubtitles {
       Language language = Language.getInstance();
       List<String> fragments = new ArrayList<>(packet.fragments().size());
       for (String fragment : packet.fragments()) {
+         // A key missing from the client's lang (an older or partial resource pack) is skipped, never
+         // shown raw: Language falls back to en_us first, so only a key absent everywhere is dropped.
+         if (!packet.literal() && !language.has(fragment)) {
+            continue;
+         }
+
          String text = packet.literal() ? fragment : language.getOrDefault(fragment);
          if (!text.isBlank()) {
             fragments.add(text.replace("\\n", "\n"));
