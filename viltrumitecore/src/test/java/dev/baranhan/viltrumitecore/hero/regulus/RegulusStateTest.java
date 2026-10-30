@@ -18,7 +18,7 @@ class RegulusStateTest {
       state.lionCooldown = 11;
       state.sandCooldown = 22;
       state.severCooldown = 33;
-      state.processionCooldown = 44;
+      state.trampleCooldown = 44;
       state.replyCooldown = 55;
       state.ultCooldown = 1999;
       state.strain = 640;
@@ -30,7 +30,7 @@ class RegulusStateTest {
       assertEquals(11, back.lionCooldown);
       assertEquals(22, back.sandCooldown);
       assertEquals(33, back.severCooldown);
-      assertEquals(44, back.processionCooldown);
+      assertEquals(44, back.trampleCooldown);
       assertEquals(55, back.replyCooldown);
       assertEquals(1999, back.ultCooldown);
       assertEquals(640, back.strain);
@@ -69,7 +69,7 @@ class RegulusStateTest {
       assertEquals(5, state.lionCooldown);
       assertEquals(60, state.sandCooldown);
       assertEquals(70, state.severCooldown);
-      assertEquals(80, state.processionCooldown);
+      assertEquals(80, state.trampleCooldown);
       assertEquals(90, state.replyCooldown);
       assertEquals(1500, state.ultCooldown);
       // the next save writes only the new tag
@@ -152,11 +152,22 @@ class RegulusStateTest {
       state.lionCooldown = 1;
       state.sandCooldown = 2;
       state.severCooldown = 3;
-      state.processionCooldown = 4;
+      state.trampleCooldown = 4;
       state.replyCooldown = 5;
       state.ultCooldown = 6;
       for (int i = 0; i < 6; i++) {
          assertEquals(i + 1, state.cooldown(i));
       }
+   }
+
+   @Test
+   void processionCooldownCarriesIntoTrample() {
+      CompoundTag tag = new CompoundTag();
+      tag.putInt("Procession", 120);
+      CompoundTag nbt = new CompoundTag();
+      nbt.put(RegulusState.TAG, tag);
+      RegulusState state = new RegulusState();
+      state.load(nbt);
+      assertEquals(120, state.trampleCooldown);
    }
 }

@@ -33,7 +33,7 @@ class RegulusClientMathTest {
 
    @Test
    void onlyFullBodyMovesOwnTheLegs() {
-      assertFalse(RegulusPoser.legsWalk(RegulusMove.PROCESSION));
+      assertFalse(RegulusPoser.legsWalk(RegulusMove.TRAMPLE));
       assertFalse(RegulusPoser.legsWalk(RegulusMove.ULT));
       assertTrue(RegulusPoser.legsWalk(RegulusMove.SAND));
       assertTrue(RegulusPoser.legsWalk(null));
@@ -138,5 +138,13 @@ class RegulusClientMathTest {
       assertEquals(RegulusPalette.IVORY, RegulusHud.strainColour(0, false, false, 0L));
       assertEquals(RegulusPalette.GOLD, RegulusHud.strainColour(RegulusRules.STRAIN_MAX, false, false, 0L));
       assertTrue(RegulusHud.strainColour(800, true, false, 0L) != RegulusHud.strainColour(800, false, false, 0L));
+   }
+
+   @Test
+   void shockwaveRingGrowsThenStops() {
+      assertEquals(0.5, RegulusVfx.Shockwave.front(0, 0.9, 7.0), 1.0E-9);
+      assertEquals(0.5, RegulusVfx.Shockwave.front(-3, 0.9, 7.0), 1.0E-9);
+      assertEquals(1.4, RegulusVfx.Shockwave.front(1, 0.9, 7.0), 1.0E-9);
+      assertEquals(7.0, RegulusVfx.Shockwave.front(40, 0.9, 7.0), 1.0E-9);
    }
 }

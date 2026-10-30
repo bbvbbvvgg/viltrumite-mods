@@ -80,9 +80,10 @@ class RegulusRulesTest {
    void unbreakableBlocksStayUnbroken() {
       assertFalse(RegulusRules.breakable(-1.0F, 100.0F));
       assertTrue(RegulusRules.breakable(0.0F, RegulusRules.SAND_BLOCK_HARDNESS));
-      assertFalse(RegulusRules.breakable(50.0F, RegulusRules.PROCESSION_BLOCK_HARDNESS));
+      assertFalse(RegulusRules.breakable(50.0F, RegulusRules.TRAMPLE_HARDNESS_LION));
       assertTrue(RegulusRules.SAND_BLOCK_HARDNESS < RegulusRules.SEVER_BLOCK_HARDNESS);
-      assertTrue(RegulusRules.SEVER_BLOCK_HARDNESS < RegulusRules.PROCESSION_BLOCK_HARDNESS);
+      assertTrue(RegulusRules.TRAMPLE_HARDNESS < RegulusRules.SAND_BLOCK_HARDNESS);
+      assertTrue(RegulusRules.TRAMPLE_HARDNESS_LION < RegulusRules.SEVER_BLOCK_HARDNESS);
    }
 
    @Test
@@ -158,5 +159,36 @@ class RegulusRulesTest {
 
       assertEquals(null, RegulusMove.byId(-1));
       assertEquals(null, RegulusMove.byId(RegulusMove.values().length));
+   }
+
+   @Test
+   void trampleRingFinishesInsideTheMove() {
+      for (boolean lion : new boolean[]{false, true}) {
+         int travel = RegulusRules.trampleTravelTicks(lion);
+         assertTrue(travel > 0);
+         assertTrue(RegulusRules.TRAMPLE_IMPACT + travel < RegulusRules.TRAMPLE_TICKS, "lion=" + lion);
+      }
+      assertTrue(RegulusRules.trampleRadius(true) > RegulusRules.trampleRadius(false));
+      assertTrue(RegulusRules.trampleDamage(true) > RegulusRules.trampleDamage(false));
+      assertTrue(RegulusRules.trampleCraterRadius(true) > RegulusRules.trampleCraterRadius(false));
+      assertTrue(RegulusRules.trampleBlockBudget(true) > RegulusRules.trampleBlockBudget(false));
+   }
+
+   @Test
+   void trampleRingCatchesOnlyAtItsFrontAndOnTheGround() {
+      double below = RegulusRules.TRAMPLE_BAND_BELOW;
+      double above = RegulusRules.TRAMPLE_BAND_ABOVE;
+      assertTrue(RegulusRules.trampleCatches(3.0, 0.0, 2.5, 3.4, below, above));
+      // already passed / not reached yet
+      assertFalse(RegulusRules.trampleCatches(1.0, 0.0, 2.5, 3.4, below, above));
+      assertFalse(RegulusRules.trampleCatches(5.0, 0.0, 2.5, 3.4, below, above));
+      // the front has a little slack so a fast ring does not skip anyone
+      assertTrue(RegulusRules.trampleCatches(3.4 + RegulusRules.TRAMPLE_FRONT - 0.01, 0.0, 2.5, 3.4, below, above));
+      // jumping over the ring dodges it on the ground
+      assertFalse(RegulusRules.trampleCatches(3.0, 2.0, 2.5, 3.4, below, above));
+      assertFalse(RegulusRules.trampleCatches(3.0, -2.0, 2.5, 3.4, below, above));
+      // in the air the band is symmetric and wider
+      double air = RegulusRules.TRAMPLE_AIR_BAND;
+      assertTrue(RegulusRules.trampleCatches(3.0, -1.4, 2.5, 3.4, air, air));
    }
 }

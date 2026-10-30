@@ -40,7 +40,7 @@ class RegulusAbilitiesTest {
       assertEquals(RegulusFlags.COOLDOWN_LION, RegulusAbilities.cooldownIndex(RegulusAbilities.LIONS_HEART));
       assertEquals(RegulusFlags.COOLDOWN_SAND, RegulusAbilities.cooldownIndex(RegulusAbilities.STOPPED_SAND));
       assertEquals(RegulusFlags.COOLDOWN_SEVER, RegulusAbilities.cooldownIndex(RegulusAbilities.AIR_SEVERANCE));
-      assertEquals(RegulusFlags.COOLDOWN_PROCESSION, RegulusAbilities.cooldownIndex(RegulusAbilities.PROCESSION));
+      assertEquals(RegulusFlags.COOLDOWN_TRAMPLE, RegulusAbilities.cooldownIndex(RegulusAbilities.TRAMPLE));
       assertEquals(RegulusFlags.COOLDOWN_REPLY, RegulusAbilities.cooldownIndex(RegulusAbilities.RIGHT_OF_REPLY));
       assertEquals(RegulusFlags.COOLDOWN_ULT, RegulusAbilities.cooldownIndex(RegulusAbilities.KINGDOM_OF_ONE));
       assertEquals(-1, RegulusAbilities.cooldownIndex(null));
@@ -52,7 +52,15 @@ class RegulusAbilitiesTest {
          "regulus:evangelium", "regulus:punch", null, "thor:mjolnir"};
       RegulusAbilities.migrate(slots);
       assertArrayEquals(new String[]{RegulusAbilities.LIONS_HEART, RegulusAbilities.STOPPED_SAND, "", RegulusAbilities.AIR_SEVERANCE,
-         RegulusAbilities.PROCESSION, RegulusAbilities.RIGHT_OF_REPLY, RegulusAbilities.KINGDOM_OF_ONE, "", null, "thor:mjolnir"}, slots);
+         RegulusAbilities.TRAMPLE, RegulusAbilities.RIGHT_OF_REPLY, RegulusAbilities.KINGDOM_OF_ONE, "", null, "thor:mjolnir"}, slots);
+   }
+
+   @Test
+   void theRetiredProcessionBecomesTrample() {
+      String[] slots = {"regulus:procession", "regulus:procession"};
+      RegulusAbilities.migrate(slots);
+      assertArrayEquals(new String[]{RegulusAbilities.TRAMPLE, RegulusAbilities.TRAMPLE}, slots);
+      assertTrue(RegulusAbilities.owns(RegulusAbilities.TRAMPLE));
    }
 
    @Test
@@ -90,9 +98,10 @@ class RegulusAbilitiesTest {
       // the active Lion can always be released
       assertFalse(RegulusAbilities.grey(RegulusFlags.COOLDOWN_LION, lionCooling, lion));
       assertTrue(RegulusAbilities.grey(RegulusFlags.COOLDOWN_LION, none, RegulusFlags.with(0, RegulusFlags.LION_LOCKED, true)));
-      // Procession needs the Lion
-      assertTrue(RegulusAbilities.grey(RegulusFlags.COOLDOWN_PROCESSION, none, 0));
-      assertFalse(RegulusAbilities.grey(RegulusFlags.COOLDOWN_PROCESSION, none, lion));
+      // Trample works with and without the Lion
+      assertFalse(RegulusAbilities.grey(RegulusFlags.COOLDOWN_TRAMPLE, none, 0));
+      assertFalse(RegulusAbilities.grey(RegulusFlags.COOLDOWN_TRAMPLE, none, lion));
+      assertTrue(RegulusAbilities.grey(RegulusFlags.COOLDOWN_TRAMPLE, new int[]{0, 0, 0, 5, 0, 0}, lion));
       assertTrue(RegulusAbilities.grey(RegulusFlags.COOLDOWN_ULT, new int[]{0, 0, 0, 0, 0, 9}, lion));
       assertFalse(RegulusAbilities.grey(-1, none, RegulusFlags.with(0, RegulusFlags.SEIZED, true)));
    }
