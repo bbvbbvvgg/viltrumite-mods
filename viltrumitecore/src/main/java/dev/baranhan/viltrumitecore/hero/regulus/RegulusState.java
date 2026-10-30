@@ -242,7 +242,7 @@ public final class RegulusState {
       return Math.max(0, Math.min(20 * 60 * 10, ticks));
    }
 
-   /** What a new body inherits: cooldowns, strain, the lock. */
+   /** What a new body inherits: only the cooldowns (a new body has a rested heart: strain and lock reset). */
    public RegulusState respawnCopy() {
       RegulusState copy = new RegulusState();
       copy.lionCooldown = this.lionCooldown;
