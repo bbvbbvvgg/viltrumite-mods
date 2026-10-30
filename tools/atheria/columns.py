@@ -32,9 +32,10 @@ SOFTRE = re.compile(r'(leaves|glass_pane|iron_bars|fence|_wall$|^wall|lantern|be
 LIQ = re.compile(r'(^water$|^lava$|bubble_column|kelp_plant)')
 HAZ = re.compile(r'(fire$|magma|cactus|sweet_berry|powder_snow|lava_cauldron|wither_rose|campfire|sculk_sensor|'
     r'sculk_shrieker|pointed_dripstone|end_portal$|nether_portal|end_gateway)')
-ROAD = re.compile(r'(black_concrete$|gray_concrete$|black_terracotta|gray_terracotta|coal_block|black_wool|gray_wool|'
+# gray_* entries must not swallow the light_gray_* pavement blocks (PAVE lists light_gray_concrete)
+ROAD = re.compile(r'(black_concrete$|(?<!light_)gray_concrete$|black_terracotta|(?<!light_)gray_terracotta|coal_block|black_wool|(?<!light_)gray_wool|'
     r'polished_blackstone$|blackstone$|basalt|deepslate_tiles|polished_deepslate$|cobbled_deepslate$|'
-    r'black_concrete_powder|gray_concrete_powder|tuff$|gray_glazed|black_glazed|^deepslate$|smooth_basalt|'
+    r'black_concrete_powder|(?<!light_)gray_concrete_powder|tuff$|(?<!light_)gray_glazed|black_glazed|^deepslate$|smooth_basalt|'
     r'polished_blackstone_slab|blackstone_slab|deepslate_tile_slab|polished_deepslate_slab|cobbled_deepslate_slab)')
 MARK = re.compile(r'(white_concrete$|yellow_concrete$|yellow_terracotta|white_terracotta|yellow_wool|white_wool|quartz_slab|smooth_quartz_slab)')
 PAVE = re.compile(r'(smooth_stone|stone_brick|light_gray_concrete|andesite|diorite|granite|^stone$|stone_slab|'
