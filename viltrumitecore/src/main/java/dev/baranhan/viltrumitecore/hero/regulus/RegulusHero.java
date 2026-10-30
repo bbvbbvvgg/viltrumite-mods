@@ -490,7 +490,7 @@ public final class RegulusHero implements HeroDefinition {
          return ScanInfo.EMPTY;
       }
 
-      return new ScanInfo(List.of(ScanLine.of("scan.viltrumitecore.regulus.lion_heart")), List.of(), List.of());
+      return new ScanInfo(List.of(ScanLine.of("scan.viltrumitecore.regulus.stopped_time")), List.of(), List.of());
    }
 
    @Override

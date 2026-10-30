@@ -1,8 +1,7 @@
 {
   "hero.viltrumitecore.regulus": "Регулус Корнеас",
   "subtitle.viltrumitecore.speaker.regulus": "Регулус",
-  "key.viltrumitecore.assign_heart": "Регулус: Маленький король",
-  "scan.viltrumitecore.regulus.lion_heart": "Сердце льва: его время остановлено — до него ничто не доходит",
+  "scan.viltrumitecore.regulus.stopped_time": "Сердце льва: его время остановлено — до него ничто не доходит",
   "ability.viltrumitecore.regulus_lions_heart.name": "<gold>Сердце льва",
   "ability.viltrumitecore.regulus_lions_heart.desc": "<grey>Перезарядка: <lime>1 с\n<grey>Тип: <yellow>Переключение\n\n<grey>Остановите собственное время. До вас не доходят\n<grey>урон, толчки и эффекты; 30% удара возвращается\n<grey>нападающему, снаряды замирают в воздухе.\n<grey>Сердце тоже стоит: без живого носителя\n<grey>(Маленький король) растёт нагрузка, и через ~5 с\n<grey>сердце схватывает (Лев закрыт на 8 с).\n\n<blue>Регулус",
   "ability.viltrumitecore.regulus_stopped_sand.name": "<gold>Застывший песок",

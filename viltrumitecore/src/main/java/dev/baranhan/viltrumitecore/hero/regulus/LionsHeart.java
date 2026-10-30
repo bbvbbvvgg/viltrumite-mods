@@ -25,6 +25,8 @@ import net.minecraft.world.phys.Vec3;
  * price is the heart strain unless a Little King subject carries the heart (§5.0).
  */
 public final class LionsHeart {
+   /** walkDist between two footfalls: half the 1.25-block walk stride (walkDist grows 0.6 per block). */
+   static final float STEP_EVERY = 0.375F;
    static final UUID SPEED_ID = UUID.fromString("4e5a1c0b-7d3e-4a7c-9b1f-2c6d8e0f1a01");
 
    private LionsHeart() {
@@ -74,6 +76,7 @@ public final class LionsHeart {
          }
 
          player.clearFire();
+         stepSound(player, state);
          if (!hostAlive && state.lionTicks % 20 == 0) {
             RegulusSounds.play(player.level(), player.position().add(0.0, 1.4, 0.0), RegulusSounds.STRAIN, 0.35F + state.strain / 2000.0F,
                0.9F + state.strain / 2500.0F);
@@ -85,6 +88,20 @@ public final class LionsHeart {
       }
 
       speed(player, state.lion);
+   }
+
+   /** A stopped body steps like glass on stone: a dry tick on every footfall while the Lion holds. */
+   private static void stepSound(ServerPlayer player, RegulusState state) {
+      float walked = player.walkDist;
+      if (state.stepAt <= 0.0F || state.stepAt > walked + 2.0F || walked - state.stepAt > 2.0F) {
+         state.stepAt = walked + STEP_EVERY;
+         return;
+      }
+
+      if (player.onGround() && !player.isShiftKeyDown() && walked >= state.stepAt) {
+         state.stepAt = walked + STEP_EVERY;
+         RegulusSounds.play(player.level(), player.position(), RegulusSounds.STEP, 0.32F, 0.95F + player.getRandom().nextFloat() * 0.1F);
+      }
    }
 
    static void turnOff(ServerPlayer player, RegulusState state, boolean voluntary) {
