@@ -37,6 +37,7 @@
   "viltrumitecore.city.reset.no_pending": "No reset to confirm. Run /city reset first.",
   "viltrumitecore.city.reset.started": "Map restore started: %s blocks in %s chunks.",
   "viltrumitecore.city.reset.not_running": "No map restore is running.",
+  "viltrumitecore.city.reset.request_cancelled": "Reset request cancelled, the map stays as it is.",
   "viltrumitecore.city.reset.cancelled": "Map restore stopped, %s blocks are still changed (/city reset continues).",
   "viltrumitecore.city.reset.resumed": "Resuming the interrupted map restore: %s blocks left.",
   "viltrumitecore.city.reset.done": "Map restored: %s blocks in %s chunks, %s passes, %s s.",

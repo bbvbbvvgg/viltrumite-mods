@@ -266,9 +266,9 @@ public final class CityCommands {
 
    private static int resetCancel(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
       CityManager m = city(c);
-      PENDING_RESET.remove(who(c.getSource()));
+      Long pending = PENDING_RESET.remove(who(c.getSource()));
       if (!m.restore.running()) {
-         ok(c, line("viltrumitecore.city.reset.not_running"), false);
+         ok(c, line(pending != null && m.now() <= pending ? "viltrumitecore.city.reset.request_cancelled" : "viltrumitecore.city.reset.not_running"), false);
          return 0;
       }
 
