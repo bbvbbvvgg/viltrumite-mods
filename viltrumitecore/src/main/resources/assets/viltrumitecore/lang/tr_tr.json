@@ -681,6 +681,7 @@
   "hero.viltrumitecore.thor.move.hammer_strike": "Çekiç darbesi",
   "hero.viltrumitecore.thor.move.electric_wave": "Elektrik dalgası",
   "hero.viltrumitecore.thor.move.electric_storm": "Elektrik fırtınası",
+  "hero.viltrumitecore.thor.move.pickup": "Mjölnir'i kaldır",
   "hud.viltrumitecore.thor.electric_on": "Elektrik modu: açık",
   "hud.viltrumitecore.thor.electric_off": "Elektrik modu: kapalı",
   "hud.viltrumitecore.thor.recharging": "%s: dolarken (%s sn)",
@@ -793,5 +794,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.move.spare_arm": "Yedek kol",
   "hud.viltrumitecore.ironman.hulkbuster.move.jet_ram": "Jet koçbaşı",
   "hud.viltrumitecore.ironman.hulkbuster.move.dash_strike": "Atılma vuruşu",
-  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Kahraman inişi"
+  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Kahraman inişi",
+  "hud.viltrumitecore.ironman.hulkbuster.check.inbound": "VERONICA: MARK 48 GELİYOR",
+  "hud.viltrumitecore.ironman.hulkbuster.check.legs": "BACAK AKTÜATÖRLERİ ..... KİLİTLİ",
+  "hud.viltrumitecore.ironman.hulkbuster.check.torso": "GÖVDE CONTASI ..... MÜHÜRLÜ",
+  "hud.viltrumitecore.ironman.hulkbuster.check.arms": "KOL SERVOLARI ..... ÇEVRİMİÇİ",
+  "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "OMUZ ZIRHI ..... KİLİTLİ",
+  "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "KASK BAĞLANTISI ..... ÇEVRİMİÇİ",
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: TÜM SİSTEMLER HAZIR"
 }

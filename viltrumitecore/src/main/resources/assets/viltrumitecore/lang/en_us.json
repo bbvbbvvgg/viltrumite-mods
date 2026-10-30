@@ -681,6 +681,7 @@
   "hero.viltrumitecore.thor.move.hammer_strike": "Hammer strike",
   "hero.viltrumitecore.thor.move.electric_wave": "Electric wave",
   "hero.viltrumitecore.thor.move.electric_storm": "Electric storm",
+  "hero.viltrumitecore.thor.move.pickup": "Pick up Mjölnir",
   "hud.viltrumitecore.thor.electric_on": "Electric mode: on",
   "hud.viltrumitecore.thor.electric_off": "Electric mode: off",
   "hud.viltrumitecore.thor.recharging": "%s: recharging (%s s)",
@@ -793,5 +794,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.move.spare_arm": "Spare arm",
   "hud.viltrumitecore.ironman.hulkbuster.move.jet_ram": "Jet ram",
   "hud.viltrumitecore.ironman.hulkbuster.move.dash_strike": "Dash strike",
-  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Hero landing"
+  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Hero landing",
+  "hud.viltrumitecore.ironman.hulkbuster.check.inbound": "VERONICA: MARK 48 INBOUND",
+  "hud.viltrumitecore.ironman.hulkbuster.check.legs": "LEG ACTUATORS ..... LOCKED",
+  "hud.viltrumitecore.ironman.hulkbuster.check.torso": "TORSO SEAL ..... SEALED",
+  "hud.viltrumitecore.ironman.hulkbuster.check.arms": "ARM SERVOS ..... ONLINE",
+  "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "SHOULDER PLATING ..... LOCKED",
+  "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "HELMET LINK ..... ONLINE",
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: ALL SYSTEMS GO"
 }

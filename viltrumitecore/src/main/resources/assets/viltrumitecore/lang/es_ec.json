@@ -681,6 +681,7 @@
   "hero.viltrumitecore.thor.move.hammer_strike": "Golpe de martillo",
   "hero.viltrumitecore.thor.move.electric_wave": "Onda eléctrica",
   "hero.viltrumitecore.thor.move.electric_storm": "Tormenta eléctrica",
+  "hero.viltrumitecore.thor.move.pickup": "Levantar Mjölnir",
   "hud.viltrumitecore.thor.electric_on": "Modo eléctrico: activado",
   "hud.viltrumitecore.thor.electric_off": "Modo eléctrico: desactivado",
   "hud.viltrumitecore.thor.recharging": "%s: recargando (%s s)",
@@ -793,5 +794,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.move.spare_arm": "Brazo de repuesto",
   "hud.viltrumitecore.ironman.hulkbuster.move.jet_ram": "Embestida a reacción",
   "hud.viltrumitecore.ironman.hulkbuster.move.dash_strike": "Golpe de impulso",
-  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Aterrizaje heroico"
+  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Aterrizaje heroico",
+  "hud.viltrumitecore.ironman.hulkbuster.check.inbound": "VERONICA: MARK 48 EN CAMINO",
+  "hud.viltrumitecore.ironman.hulkbuster.check.legs": "ACTUADORES DE PIERNAS ..... FIJADOS",
+  "hud.viltrumitecore.ironman.hulkbuster.check.torso": "SELLO DEL TORSO ..... SELLADO",
+  "hud.viltrumitecore.ironman.hulkbuster.check.arms": "SERVOS DE BRAZOS ..... EN LÍNEA",
+  "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "BLINDAJE DE HOMBROS ..... FIJADO",
+  "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "ENLACE DEL CASCO ..... EN LÍNEA",
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: TODOS LOS SISTEMAS LISTOS"
 }

@@ -681,6 +681,7 @@
   "hero.viltrumitecore.thor.move.hammer_strike": "Hammerschlag",
   "hero.viltrumitecore.thor.move.electric_wave": "Elektrische Welle",
   "hero.viltrumitecore.thor.move.electric_storm": "Elektrischer Sturm",
+  "hero.viltrumitecore.thor.move.pickup": "Mjölnir aufheben",
   "hud.viltrumitecore.thor.electric_on": "Elektrischer Modus: an",
   "hud.viltrumitecore.thor.electric_off": "Elektrischer Modus: aus",
   "hud.viltrumitecore.thor.recharging": "%s: lädt auf (%s s)",
@@ -793,5 +794,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.move.spare_arm": "Ersatzarm",
   "hud.viltrumitecore.ironman.hulkbuster.move.jet_ram": "Düsenramme",
   "hud.viltrumitecore.ironman.hulkbuster.move.dash_strike": "Sprintschlag",
-  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Heldenlandung"
+  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Heldenlandung",
+  "hud.viltrumitecore.ironman.hulkbuster.check.inbound": "VERONICA: MARK 48 IM ANFLUG",
+  "hud.viltrumitecore.ironman.hulkbuster.check.legs": "BEINAKTUATOREN ..... VERRIEGELT",
+  "hud.viltrumitecore.ironman.hulkbuster.check.torso": "TORSODICHTUNG ..... DICHT",
+  "hud.viltrumitecore.ironman.hulkbuster.check.arms": "ARMSERVOS ..... ONLINE",
+  "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "SCHULTERPANZER ..... VERRIEGELT",
+  "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "HELMVERBINDUNG ..... ONLINE",
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: ALLE SYSTEME BEREIT"
 }

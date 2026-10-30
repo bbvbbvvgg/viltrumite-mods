@@ -681,6 +681,7 @@
   "hero.viltrumitecore.thor.move.hammer_strike": "战锤打击",
   "hero.viltrumitecore.thor.move.electric_wave": "电波",
   "hero.viltrumitecore.thor.move.electric_storm": "雷暴",
+  "hero.viltrumitecore.thor.move.pickup": "拾起雷神之锤",
   "hud.viltrumitecore.thor.electric_on": "电能模式：开启",
   "hud.viltrumitecore.thor.electric_off": "电能模式：关闭",
   "hud.viltrumitecore.thor.recharging": "%s：冷却中（%s 秒）",
@@ -793,5 +794,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.move.spare_arm": "备用手臂",
   "hud.viltrumitecore.ironman.hulkbuster.move.jet_ram": "喷射冲撞",
   "hud.viltrumitecore.ironman.hulkbuster.move.dash_strike": "冲刺重击",
-  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "英雄落地"
+  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "英雄落地",
+  "hud.viltrumitecore.ironman.hulkbuster.check.inbound": "VERONICA：MARK 48 投送中",
+  "hud.viltrumitecore.ironman.hulkbuster.check.legs": "腿部作动器 ..... 已锁定",
+  "hud.viltrumitecore.ironman.hulkbuster.check.torso": "躯干密封 ..... 已密封",
+  "hud.viltrumitecore.ironman.hulkbuster.check.arms": "手臂伺服 ..... 在线",
+  "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "肩部装甲 ..... 已锁定",
+  "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "头盔链路 ..... 在线",
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48：全系统就绪"
 }
