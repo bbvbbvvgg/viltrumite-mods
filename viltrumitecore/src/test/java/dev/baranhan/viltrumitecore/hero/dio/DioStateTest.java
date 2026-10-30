@@ -109,7 +109,7 @@ class DioStateTest {
          }
       }
 
-      assertEquals(27 + 25, keys.size(), "27 text keys + 25 dio sound subtitles (roller leap/fall/land added)");
+      assertEquals(36 + 25, keys.size(), "36 text keys (15 line fragments since the global subtitles expansion) + 25 dio sound subtitles");
       java.util.List<java.nio.file.Path> files;
       try (var listing = java.nio.file.Files.list(lang)) {
          files = listing.filter(p -> p.toString().endsWith(".json")).toList();
