@@ -1,8 +1,9 @@
 import sys, os, re, json
-sys.path.insert(0,'/data/vm/tools/atheria')
+sys.path.insert(0,os.path.join(os.path.dirname(os.path.abspath(__file__)),'..'))
 import nbt
 from multiprocessing import Pool
-W='/data/atheria/work/Atheria_1.20.1/region'
+W=os.path.join(sys.argv[1],'region') if len(sys.argv)>1 else '/data/atheria/work/Atheria_1.20.1/region'
+OUT=sys.argv[2] if len(sys.argv)>2 else '/data/atheria/work/an/signs.json'
 def txt(j):
     try:
         o=json.loads(j)
@@ -34,5 +35,5 @@ if __name__=='__main__':
     res=[]
     with Pool(2) as p:
         for o in p.imap_unordered(reg,fs): res+=o
-    json.dump(res,open('/data/atheria/work/an/signs.json','w'),ensure_ascii=False)
+    json.dump(res,open(OUT,'w'),ensure_ascii=False)
     print(len(res))
