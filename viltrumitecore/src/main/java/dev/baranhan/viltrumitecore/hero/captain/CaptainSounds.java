@@ -87,6 +87,6 @@ public final class CaptainSounds {
 
    /** Pitch jitter for repeated cues. */
    public static float jitter(Entity e, float base) {
-      return base + (e.getRandom().nextFloat() - 0.5F) * 0.12F;
+      return base + (e.level().random.nextFloat() - 0.5F) * 0.12F;
    }
 }
