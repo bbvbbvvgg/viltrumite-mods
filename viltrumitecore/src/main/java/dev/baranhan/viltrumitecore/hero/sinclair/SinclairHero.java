@@ -129,7 +129,7 @@ public final class SinclairHero implements HeroDefinition {
    @Override
    public void onInputRefused(ServerPlayer player, HeroAction action) {
       SinclairState state = SinclairState.of(player);
-      if (state != null && action != HeroAction.PRIMARY_ATTACK) {
+      if (state != null && action != HeroAction.PRIMARY_ATTACK && state.move != SinclairMove.COPY) {
          refuse(player, state);
       }
    }
@@ -147,7 +147,7 @@ public final class SinclairHero implements HeroDefinition {
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
       SinclairState state = SinclairState.ensure(player);
       if (action == HeroAction.PRIMARY_ATTACK) {
-         state.triggerHeld = pressed;
+         state.triggerHeld = pressed && state.move != SinclairMove.COPY;
          if (pressed) {
             Misdirection.breakVeil(player, state, true);
          }
@@ -155,7 +155,8 @@ public final class SinclairHero implements HeroDefinition {
          return;
       }
 
-      if (!pressed || !player.isAlive()) {
+      if (!pressed || !player.isAlive() || state.move == SinclairMove.COPY) {
+         // The copy cinematic holds the stage: inputs are swallowed silently, no refusal spam.
          return;
       }
 
@@ -224,6 +225,7 @@ public final class SinclairHero implements HeroDefinition {
          state.triggerHeld = false;
       }
 
+      state.cinema = SinclairCinema.enabled(player.getServer());
       Prestige.tick(player, state);
       SinclairMove move = state.move;
       if (move != null) {
@@ -232,7 +234,7 @@ public final class SinclairHero implements HeroDefinition {
             case SUMMON, SWAP -> Assistant.tickMove(player, state);
             case HEX_CAST -> RabbitHex.tickMove(player, state);
             case SNAP -> Misdirection.tickMove(player, state);
-            case CAPTURE, ACT_BEAM, ACT_NOVA, ACT_CUT, ACT_BARRAGE, ACT_AEGIS, ACT_FINALE -> AudienceParticipation.tickMove(player, state);
+            case CAPTURE, COPY, ACT_BEAM, ACT_NOVA, ACT_CUT, ACT_BARRAGE, ACT_AEGIS, ACT_FINALE -> AudienceParticipation.tickMove(player, state);
             default -> {
             }
          }
@@ -312,6 +314,7 @@ public final class SinclairHero implements HeroDefinition {
       flags = SinclairFlags.with(flags, SinclairFlags.HEXED, hexed);
       flags = SinclairFlags.with(flags, SinclairFlags.FROM_CONTRACT, state.capturedFrom == SinclairRepertoire.Source.CONTRACT && state.captured != null);
       flags = SinclairFlags.with(flags, SinclairFlags.FALLBACK, state.capturedFrom == SinclairRepertoire.Source.FALLBACK && state.captured != null);
+      flags = SinclairFlags.with(flags, SinclairFlags.STAGE_CAMERA, state.cinema);
       int[] extra = new int[SinclairFlags.EXTRA_COUNT];
       extra[SinclairFlags.EXTRA_SINCE_SHOT] = Math.min(999, state.sinceShot);
       extra[SinclairFlags.EXTRA_WINDOW] = state.window;
