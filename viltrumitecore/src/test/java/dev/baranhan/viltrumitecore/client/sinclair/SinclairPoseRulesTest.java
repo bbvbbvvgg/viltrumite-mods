@@ -27,6 +27,13 @@ class SinclairPoseRulesTest {
    }
 
    @Test
+   void novaTensionSpinsTheHatInTheHand() {
+      assertTrue(SinclairPoseRules.heldHat(HAT_OFF, SinclairMove.ACT_NOVA, ActScript.NOVA_HAT_OFF));
+      assertTrue(SinclairPoseRules.heldHat(HAT_OFF, SinclairMove.ACT_NOVA, ActScript.NOVA_THROW - 1));
+      assertFalse(SinclairPoseRules.headHat(HAT_OFF, SinclairMove.ACT_NOVA, 10));
+   }
+
+   @Test
    void everyBowSweepsTheHatOffAndBack() {
       for (SinclairMove move : SinclairMove.values()) {
          if (!move.isAct()) {
@@ -48,7 +55,11 @@ class SinclairPoseRulesTest {
       assertFalse(SinclairPoseRules.card(0, SinclairMove.CAPTURE, 10));
       assertTrue(SinclairPoseRules.card(0, SinclairMove.CAPTURE, 18));
       assertTrue(SinclairPoseRules.card(0, SinclairMove.ACT_BEAM, 20));
-      assertFalse(SinclairPoseRules.card(0, SinclairMove.ACT_BEAM, ActScript.BEAM_END));
+      // pass 2: the card stays up through the charge and the overdrive, then is pocketed
+      assertTrue(SinclairPoseRules.card(0, SinclairMove.ACT_BEAM, ActScript.BEAM_END));
+      assertFalse(SinclairPoseRules.card(0, SinclairMove.ACT_BEAM, ActScript.BEAM_BURST_END));
+      assertTrue(SinclairPoseRules.card(0, SinclairMove.COPY, 0));
+      assertTrue(SinclairPoseRules.card(0, SinclairMove.COPY, 30));
       assertFalse(SinclairPoseRules.card(0, SinclairMove.ACT_CUT, 5));
       assertFalse(SinclairPoseRules.card(0, null, 0));
    }

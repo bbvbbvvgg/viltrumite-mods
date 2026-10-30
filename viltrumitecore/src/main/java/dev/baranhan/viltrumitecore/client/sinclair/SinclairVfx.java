@@ -233,11 +233,92 @@ public final class SinclairVfx {
          c.ring(at.add(0.0, 1.0, 0.0), 0.8 - t * 0.08, 16, t * 0.9, 0.05F, SinclairPalette.LAVENDER, 180);
       }
 
+      tether(c, a, state, t);
+
       // Smoke trail under the dress: slow drifting wisps.
       for (int i = 0; i < 5; i++) {
          double ph = c.seconds() * 1.3 + i * 1.7 + a.getId();
          double h = (ph % 1.0);
          c.dot(at.add(Math.sin(ph * 2.0) * 0.25, 0.25 - h * 0.35, Math.cos(ph * 1.7) * 0.25), 0.07F, SinclairPalette.SAVANNAH, (int) (90 * (1.0 - h)));
+      }
+   }
+
+   /**
+    * The two spectral threads from Sinclair to Savannah ({@link SpectralTether}): they wind in with her
+    * appearance, flare during a swap and fade with her bow or death. Hidden from enemies while he is veiled.
+    */
+   private static void tether(Ctx c, AssistantEntity a, int state, float t) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level == null || !(mc.level.getEntity(a.ownerEntityId()) instanceof Player owner) || !owner.isAlive()) {
+         return;
+      }
+
+      HeroPublicSnapshot snapshot = SinclairView.of(owner);
+      if (snapshot == null) {
+         return;
+      }
+
+      boolean ally = mc.player != null && (mc.player == owner || mc.player.isSpectator() || owner.isAlliedTo(mc.player));
+      if (SinclairView.flag(snapshot, SinclairFlags.VEIL) && !ally) {
+         return;
+      }
+
+      float k = switch (state) {
+         case AssistantEntity.APPEAR -> Mth.clamp((t - 4.0F) / 10.0F, 0.0F, 1.0F);
+         case AssistantEntity.LEAVE, AssistantEntity.DEATH -> 1.0F - Mth.clamp(t / 12.0F, 0.0F, 1.0F);
+         default -> 1.0F;
+      };
+      if (k <= 0.01F) {
+         return;
+      }
+
+      boolean swap = state == AssistantEntity.SWAP_OUT || state == AssistantEntity.SWAP_IN;
+      float partial = c.partialTick();
+      Vec3 feet = owner.getPosition(partial);
+      Vec3 base = pos(a, partial);
+      float ownerYaw = Mth.rotLerp(partial, owner.yBodyRotO, owner.yBodyRot);
+      float herYaw = Mth.rotLerp(partial, a.yBodyRotO, a.yBodyRot);
+      if (feet.distanceTo(base) > SpectralTether.MAX_LENGTH) {
+         return;
+      }
+
+      double seconds = c.seconds() + a.getId() * 0.29;
+      for (int strand = 0; strand < 2; strand++) {
+         Vec3 from = SpectralTether.end(feet, SpectralTether.SINCLAIR_CHEST, ownerYaw, strand);
+         // Savannah faces him: her right is his left, so the threads do not cross at her end.
+         Vec3 to = SpectralTether.end(base, SpectralTether.SAVANNAH_CHEST, herYaw, 1 - strand);
+         double len = from.distanceTo(to);
+         int n = SpectralTether.dots(len);
+         // APPEAR: the threads grow from him to her.
+         double reach = state == AssistantEntity.APPEAR ? k : 1.0;
+         int color = strand == 0 ? SinclairPalette.SAVANNAH : SinclairPalette.LAVENDER;
+         int alpha = (int) ((swap ? 230 : 150) * k);
+         for (int i = 0; i <= n; i++) {
+            double u = i / (double) n;
+            if (u > reach) {
+               break;
+            }
+
+            double flicker = 0.8 + 0.2 * Math.sin(seconds * 6.0 + i * 0.7 + strand * 2.0);
+            c.dot(SpectralTether.point(from, to, u, strand, seconds), swap ? 0.05F : 0.035F, color, (int) (alpha * flicker));
+         }
+
+         // Soft halo and three bright beads running from Sinclair to Savannah.
+         for (int i = 0; i <= n; i += 3) {
+            double u = i / (double) n;
+            if (u > reach) {
+               break;
+            }
+
+            c.dot(SpectralTether.point(from, to, u, strand, seconds), 0.11F, SinclairPalette.GHOST, (int) (28 * k));
+         }
+
+         for (int bead = 0; bead < 3; bead++) {
+            double u = (seconds * 0.45 + bead / 3.0 + strand * 0.17) % 1.0;
+            if (u <= reach) {
+               c.dot(SpectralTether.point(from, to, u, strand, seconds), 0.07F, SinclairPalette.IVORY, (int) (200 * k * Math.sin(Math.PI * u)));
+            }
+         }
       }
    }
 
@@ -384,6 +465,19 @@ public final class SinclairVfx {
             if (s < ActScript.CUT.reveal()) {
                int pulse = (int) (120 + 80 * Math.sin(s * 1.4));
                c.line(ground, end.add(0.0, 0.06, 0.0), 0.3F, 0.06F, color, pulse);
+               // The two saw strokes: a bright tooth runs along the line and throws sparks.
+               for (int saw : ActScript.CUT_SAWS) {
+                  float d = s - saw;
+                  if (d >= 0.0F && d < 6.0F) {
+                     float k = d / 6.0F;
+                     Vec3 tooth = ground.add(dir.scale(prop.reach() * (saw == ActScript.CUT_SAWS[0] ? k : 1.0F - k)));
+                     c.dot(tooth.add(0.0, 0.1, 0.0), 0.22F, SinclairPalette.IVORY, 230);
+                     for (int i = 0; i < 8; i++) {
+                        double a = i * 0.785 + s;
+                        c.dot(tooth.add(Math.cos(a) * 0.3 * k, 0.15 + (i % 3) * 0.12 * (1.0F - k), Math.sin(a) * 0.3 * k), 0.05F, SinclairPalette.GOLD, (int) (220 * (1.0F - k)));
+                     }
+                  }
+               }
             } else if (s < ActScript.CUT.pauseEnd()) {
                float k = (s - ActScript.CUT.reveal()) / (ActScript.CUT.pauseEnd() - ActScript.CUT.reveal());
                float pass = Mth.clamp((s - ActScript.CUT.reveal()) / 4.0F, 0.0F, 1.0F);
@@ -410,6 +504,18 @@ public final class SinclairVfx {
                   c.ring(at.add(0.0, 0.2, 0.0), ActScript.AEGIS_RADIUS * Math.min(1.0, b / 4.0), 60, 0.0, 0.1F, SinclairPalette.VELVET, (int) (240 * fade));
                   c.ring(at.add(0.0, 1.0, 0.0), ActScript.AEGIS_RADIUS * Math.min(1.0, b / 5.0), 40, 0.2, 0.07F, SinclairPalette.GOLD, (int) (200 * fade));
                }
+
+               // Finish: velvet shreds and gold sequins rain down around the stage.
+               float rain = ActScript.AEGIS.pauseEnd() - reveal;
+               if (b < rain) {
+                  float k = b / rain;
+                  for (int i = 0; i < 36; i++) {
+                     double a = i * 2.399 + b * 0.05;
+                     double r = ActPropRenderer.CURTAIN_RADIUS + 0.4 + (i % 5) * 0.35 * k;
+                     double y = 2.8 - ((k * 2.6 + (i % 7) * 0.13) % 2.8);
+                     c.dot(at.add(Math.cos(a) * r, y, Math.sin(a) * r), i % 3 == 0 ? 0.08F : 0.05F, i % 3 == 0 ? SinclairPalette.GOLD : SinclairPalette.VELVET, (int) (220 * (1.0F - k)));
+                  }
+               }
             }
          }
          case ActPropEntity.FINALE_CHEST -> {
@@ -426,6 +532,17 @@ public final class SinclairVfx {
                      c.dot(at.add(Math.cos(a) * d * 0.2, 1.3 + d * 0.12, Math.sin(a) * d * 0.2), 0.06F, SinclairPalette.GOLD, (int) (220 * (1.0F - d / 5.0F)));
                   }
                }
+            }
+
+            float rattle = s - ActScript.FINALE.hushStart();
+            if (rattle >= 0.0F && s < ActScript.FINALE.reveal()) {
+               // The chest rattles in the hush: dust puffs at its feet, light leaks from the lid.
+               for (int i = 0; i < 12; i++) {
+                  double a = i * 0.524 + s * 0.7;
+                  c.dot(at.add(Math.cos(a) * 0.8, 0.08 + Math.abs(Math.sin(s * 2.0 + i)) * 0.2, Math.sin(a) * 0.8), 0.05F, SinclairPalette.IVORY, 120);
+               }
+
+               c.line(at.add(-0.6, 1.0, 0.0), at.add(0.6, 1.0, 0.0), 0.08F, 0.05F, SinclairPalette.GOLD, (int) (120 + 100 * Math.sin(s * 3.0)));
             }
 
             float b = s - ActScript.FINALE.reveal();
@@ -507,17 +624,53 @@ public final class SinclairVfx {
          case SWAP -> c.ring(SinclairVfx.pos(player, pt).add(0.0, 1.0, 0.0), 0.9 - t * 0.12, 20, t * 0.9, 0.05F, SinclairPalette.LAVENDER, 200);
          case REFUSE -> c.dot(tip, 0.12F, 0x8A8A9A, (int) (120 * (1.0 - t / 8.0)));
          case CAPTURE -> capture(c, player, snapshot, level, hand, t);
-         case ACT_BEAM -> beam(c, snapshot, hand, t, color);
+         case COPY -> copy(c, player, snapshot, level, hand, t);
+         case ACT_BEAM -> beam(c, player, snapshot, hand, t, color);
+         case ACT_NOVA -> {
+            // Tension: the hat spins on the fingers, gold rings wind up around it.
+            if (t >= ActScript.NOVA_HAT_OFF && t < ActScript.NOVA_THROW) {
+               float k = (float) ((t - ActScript.NOVA_HAT_OFF) / (ActScript.NOVA_THROW - ActScript.NOVA_HAT_OFF));
+               for (int i = 0; i < 14; i++) {
+                  double a = t * (0.5 + k * 0.9) + i * Math.PI * 2.0 / 14.0;
+                  c.dot(hand.add(Math.cos(a) * (0.32 + 0.1 * k), 0.12 + Math.sin(a * 2.0) * 0.04, Math.sin(a) * (0.32 + 0.1 * k)), 0.035F,
+                     i % 2 == 0 ? SinclairPalette.GOLD : color, (int) (120 + 110 * k));
+               }
+            }
+         }
+         case ACT_CUT -> {
+            // Tension and hush: the card blade glows at the wand tip, brightest before the grand cut.
+            if (t < ActScript.CUT.reveal()) {
+               boolean hush = t >= ActScript.CUT.hushStart();
+               float k = (float) Math.min(1.0, t / ActScript.CUT_TELEGRAPH);
+               c.dot(tip, (hush ? 0.16F : 0.08F) + 0.06F * k, SinclairPalette.VELVET, hush ? 220 : 150);
+               c.dot(tip, 0.05F, SinclairPalette.IVORY, 230);
+               if (hush) {
+                  c.ring(tip, 0.25 + 0.1 * Math.sin(t * 1.3), 10, t * 0.6, 0.03F, SinclairPalette.GOLD, 200);
+               }
+            }
+         }
          case ACT_BARRAGE -> {
             if (t < ActScript.BARRAGE.pauseStart()) {
                Vec3 look = player.getViewVector(pt);
                Vec3 right = new Vec3(-look.z, 0.0, look.x).normalize();
-               for (int i = 0; i < 9; i++) {
-                  double a = Math.toRadians(-60.0 + 15.0 * i);
-                  Vec3 p = hand.add(right.scale(Math.sin(a) * 0.35)).add(0.0, 0.2 + Math.cos(a) * 0.3, 0.0);
-                  boolean gone = t >= ActScript.BARRAGE_VOLLEYS[Math.min(2, i / 3)];
+               Vec3 crown = SinclairVfx.pos(player, pt).add(0.0, player.getBbHeight() + 0.9, 0.0);
+               int volleys = ActScript.BARRAGE_VOLLEYS.length;
+               for (int i = 0; i < volleys * 3; i++) {
+                  double a = Math.toRadians(-66.0 + 12.0 * i);
+                  float open = (float) Mth.clamp(t / ActScript.BARRAGE.main(), 0.0, 1.0);
+                  Vec3 p = hand.add(right.scale(Math.sin(a * open) * 0.38)).add(0.0, 0.2 + Math.cos(a * open) * 0.3, 0.0);
+                  int volley = Math.min(volleys - 1, i / 3);
+                  boolean gone = t >= ActScript.BARRAGE_VOLLEYS[volley];
+                  if (volley == volleys - 1 && t >= ActScript.BARRAGE.hushStart()) {
+                     // The last three gather overhead and spin in the hush.
+                     double k = Mth.clamp((t - ActScript.BARRAGE.hushStart()) / 5.0, 0.0, 1.0);
+                     double spin = t * 0.7 + (i % 3) * Math.PI * 2.0 / 3.0;
+                     p = p.lerp(crown.add(Math.cos(spin) * 0.35, Math.sin(t * 0.4) * 0.05, Math.sin(spin) * 0.35), k);
+                  }
+
                   if (!gone) {
                      c.dot(p, 0.05F, i % 2 == 0 ? SinclairPalette.IVORY : color, 200);
+                     c.dot(p, 0.11F, color, 40);
                   }
                }
             }
@@ -568,45 +721,153 @@ public final class SinclairVfx {
       }
    }
 
-   /** BEAM "Footlight Ray": the card as a mirror throws a ray from the left palm to the synced focus. */
-   private static void beam(Ctx c, HeroPublicSnapshot snapshot, Vec3 hand, double t, int color) {
+   /**
+    * BEAM "Footlight Ray": tension — motes rise from a ring of footlights at Sinclair's feet and pour into the
+    * card mirror in his left palm; main — the ray from the palm to the synced focus, a ripple runs along it on
+    * every damage pulse; hush — the ray thins to a quivering thread while the palm gathers light; climax —
+    * the overdrive flare, three times as wide, with a burst ring at the end; finish — embers drift down.
+    */
+   private static void beam(Ctx c, Player player, HeroPublicSnapshot snapshot, Vec3 hand, double t, int color) {
       Vec3 end = snapshot.actionTarget();
+      Vec3 feet = SinclairVfx.pos(player, c.partialTick());
+      if (t < ActScript.BEAM_START) {
+         float k = (float) (t / ActScript.BEAM_START);
+         for (int i = 0; i < 16; i++) {
+            double a = i * Math.PI * 2.0 / 16.0 + t * 0.05;
+            Vec3 lamp = feet.add(Math.cos(a) * 1.3, 0.08, Math.sin(a) * 1.3);
+            c.dot(lamp, 0.06F, SinclairPalette.GOLD, (int) (90 + 120 * k));
+            double u = (t * 0.06 + i * 0.37) % 1.0;
+            Vec3 p = lamp.lerp(hand, u * u).add(0.0, Math.sin(u * Math.PI) * 0.4, 0.0);
+            c.dot(p, 0.04F, i % 2 == 0 ? SinclairPalette.IVORY : color, (int) (220 * k * (0.4 + 0.6 * u)));
+         }
+
+         c.dot(hand, 0.1F + 0.3F * k, SinclairPalette.IVORY, (int) (200 * k));
+         c.dot(hand, 0.3F + 0.4F * k, color, (int) (70 * k));
+         return;
+      }
+
       if (end == null) {
          return;
       }
 
-      if (t < ActScript.BEAM_START) {
-         float k = (float) (t / ActScript.BEAM_START);
-         c.dot(hand, 0.1F + 0.25F * k, SinclairPalette.IVORY, (int) (200 * k));
-         return;
-      }
-
-      if (t >= ActScript.BEAM_END + 3) {
-         return;
-      }
-
-      float fade = t < ActScript.BEAM_END ? 1.0F : (float) (1.0 - (t - ActScript.BEAM_END) / 3.0);
-      float pulse = (float) (0.85 + 0.15 * Math.sin(t * 2.2));
-      c.line(hand, end, 0.12F, 0.07F * pulse, SinclairPalette.IVORY, (int) (240 * fade));
-      c.line(hand, end, 0.3F, 0.22F * pulse, color, (int) (110 * fade));
-      c.line(hand, end, 0.5F, 0.4F, SinclairPalette.GOLD, (int) (35 * fade));
       Vec3 dir = end.subtract(hand);
       double len = dir.length();
-      if (len > 1.0E-3) {
-         Vec3 n = dir.scale(1.0 / len);
-         Vec3 side = Math.abs(n.y) > 0.95 ? new Vec3(1.0, 0.0, 0.0) : n.cross(new Vec3(0.0, 1.0, 0.0)).normalize();
-         Vec3 up = side.cross(n);
+      Vec3 n = len > 1.0E-3 ? dir.scale(1.0 / len) : new Vec3(0.0, 0.0, 1.0);
+      Vec3 side = Math.abs(n.y) > 0.95 ? new Vec3(1.0, 0.0, 0.0) : n.cross(new Vec3(0.0, 1.0, 0.0)).normalize();
+      Vec3 up = side.cross(n);
+      if (t < ActScript.BEAM_END) {
+         float pulse = (float) (0.85 + 0.15 * Math.sin(t * 2.2));
+         float ignite = (float) Mth.clamp((t - ActScript.BEAM_START) / 3.0, 0.0, 1.0);
+         c.line(hand, hand.add(n.scale(len * ignite)), 0.12F, 0.07F * pulse, SinclairPalette.IVORY, 240);
+         c.line(hand, hand.add(n.scale(len * ignite)), 0.3F, 0.22F * pulse, color, 110);
+         c.line(hand, hand.add(n.scale(len * ignite)), 0.5F, 0.4F, SinclairPalette.GOLD, 35);
          for (int i = 0; i < 40; i++) {
-            double along = (i / 40.0) * len;
+            double along = (i / 40.0) * len * ignite;
             double a = along * 2.5 - t * 0.9;
-            Vec3 p = hand.add(n.scale(along)).add(side.scale(Math.cos(a) * 0.22)).add(up.scale(Math.sin(a) * 0.22));
-            c.dot(p, 0.035F, SinclairPalette.GOLD, (int) (200 * fade));
+            c.dot(hand.add(n.scale(along)).add(side.scale(Math.cos(a) * 0.22)).add(up.scale(Math.sin(a) * 0.22)), 0.035F, SinclairPalette.GOLD, 200);
+         }
+
+         // A ripple runs down the ray on each damage pulse.
+         double since = (t - ActScript.BEAM_START) % ActScript.BEAM_PERIOD;
+         Vec3 ripple = hand.add(n.scale(Math.min(len, since / ActScript.BEAM_PERIOD * len)));
+         for (int i = 0; i < 10; i++) {
+            double a = i * Math.PI / 5.0 + t;
+            c.dot(ripple.add(side.scale(Math.cos(a) * 0.32)).add(up.scale(Math.sin(a) * 0.32)), 0.05F, SinclairPalette.IVORY, (int) (200 * (1.0 - since / ActScript.BEAM_PERIOD)));
+         }
+
+         c.dot(end, 0.6F * pulse, color, 140);
+         c.dot(end, 0.25F, SinclairPalette.IVORY, 220);
+         c.dot(hand, 0.3F, SinclairPalette.IVORY, 160);
+         return;
+      }
+
+      if (t < ActScript.BEAM_BURST) {
+         // The hush: a thin quivering thread, the palm gathering light.
+         float k = (float) ((t - ActScript.BEAM_END) / (ActScript.BEAM_BURST - ActScript.BEAM_END));
+         for (int i = 0; i < 48; i++) {
+            double along = i / 48.0 * len;
+            double wob = Math.sin(along * 3.0 + t * 3.1) * 0.04 * (1.0 - k);
+            c.dot(hand.add(n.scale(along)).add(side.scale(wob)), 0.025F, SinclairPalette.IVORY, 200);
+         }
+
+         for (int i = 0; i < 12; i++) {
+            double a = i * Math.PI / 6.0 + t * 0.8;
+            double r = 0.7 * (1.0 - k) + 0.12;
+            c.dot(hand.add(side.scale(Math.cos(a) * r)).add(up.scale(Math.sin(a) * r)), 0.04F, SinclairPalette.GOLD, (int) (120 + 120 * k));
+         }
+
+         c.dot(hand, 0.2F + 0.5F * k, SinclairPalette.IVORY, (int) (120 + 120 * k));
+         return;
+      }
+
+      if (t < ActScript.BEAM_BURST_END) {
+         // The overdrive flare: wide, white-hot, fading out.
+         float b = (float) ((t - ActScript.BEAM_BURST) / (ActScript.BEAM_BURST_END - ActScript.BEAM_BURST));
+         float fade = 1.0F - b * b;
+         c.line(hand, end, 0.1F, 0.2F, SinclairPalette.IVORY, (int) (255 * fade));
+         c.line(hand, end, 0.25F, 0.55F, color, (int) (150 * fade));
+         c.line(hand, end, 0.45F, 1.0F, SinclairPalette.GOLD, (int) (60 * fade));
+         for (int i = 0; i < 64; i++) {
+            double along = (i / 64.0) * len;
+            double a = along * 1.6 - t * 1.4;
+            double r = 0.5 + 0.25 * Math.sin(t + i);
+            c.dot(hand.add(n.scale(along)).add(side.scale(Math.cos(a) * r)).add(up.scale(Math.sin(a) * r)), 0.06F, SinclairPalette.GOLD, (int) (220 * fade));
+         }
+
+         double ring = 0.4 + b * 2.4;
+         for (int i = 0; i < 28; i++) {
+            double a = i * Math.PI * 2.0 / 28.0;
+            c.dot(end.add(side.scale(Math.cos(a) * ring)).add(up.scale(Math.sin(a) * ring)), 0.09F, SinclairPalette.IVORY, (int) (230 * fade));
+         }
+
+         c.dot(end, 1.4F * fade, color, (int) (150 * fade));
+         c.dot(hand, 0.7F * fade, SinclairPalette.IVORY, (int) (220 * fade));
+         return;
+      }
+
+      if (t < ActScript.BEAM.pauseEnd() + 6) {
+         // Embers drifting down along where the ray was.
+         float k = (float) ((t - ActScript.BEAM_BURST_END) / (ActScript.BEAM.pauseEnd() + 6 - ActScript.BEAM_BURST_END));
+         for (int i = 0; i < 24; i++) {
+            double along = ((i * 0.618) % 1.0) * len;
+            c.dot(hand.add(n.scale(along)).add(0.0, -k * (0.6 + (i % 4) * 0.3), 0.0), 0.04F, i % 2 == 0 ? SinclairPalette.GOLD : color, (int) (180 * (1.0 - k)));
+         }
+      }
+   }
+
+   /**
+    * Copy cinematic in the world (what bystanders and the staged cameras see): the volunteer stands in a
+    * slowly turning lavender clock ring (held), a ribbon of motes runs from them into the card Sinclair holds
+    * high, and the card glows over his palm until it folds home.
+    */
+   private static void copy(Ctx c, Player player, HeroPublicSnapshot snapshot, ClientLevel level, Vec3 hand, double t) {
+      float in = (float) dev.baranhan.viltrumitecore.hero.sinclair.act.CopyCinematic.cameraWeight(t);
+      int color = SinclairView.color(snapshot);
+      Entity volunteer = snapshot.controlTargetId() >= 0 ? level.getEntity(snapshot.controlTargetId()) : null;
+      Vec3 feet = SinclairVfx.pos(player, c.partialTick());
+      c.ring(feet.add(0.0, 0.05, 0.0), 0.9, 28, -t * 0.03, 0.04F, SinclairPalette.GOLD, (int) (170 * in));
+      if (volunteer != null) {
+         Vec3 vf = SinclairVfx.pos(volunteer, c.partialTick());
+         double r = Math.max(0.8, volunteer.getBbWidth() * 1.2);
+         c.ring(vf.add(0.0, 0.05, 0.0), r, 36, t * 0.02, 0.045F, SinclairPalette.LAVENDER, (int) (190 * in));
+         for (int h = 0; h < 12; h++) {
+            double a = t * 0.02 + h * Math.PI / 6.0;
+            c.dot(vf.add(Math.cos(a) * r * 0.85, 0.05, Math.sin(a) * r * 0.85), 0.07F, SinclairPalette.IVORY, (int) (200 * in));
+         }
+
+         if (t < dev.baranhan.viltrumitecore.hero.sinclair.act.CopyCinematic.FOLD_START) {
+            Vec3 chest = vf.add(0.0, volunteer.getBbHeight() * 0.6, 0.0);
+            for (int i = 0; i < 18; i++) {
+               double u = (t * 0.035 + i / 18.0) % 1.0;
+               Vec3 p = chest.lerp(hand, u).add(0.0, Math.sin(u * Math.PI) * 0.9, 0.0);
+               c.dot(p, 0.045F, i % 3 == 0 ? SinclairPalette.GOLD : color, (int) (200 * in * Math.sin(u * Math.PI)));
+            }
          }
       }
 
-      c.dot(end, 0.6F * pulse, color, (int) (140 * fade));
-      c.dot(end, 0.25F, SinclairPalette.IVORY, (int) (220 * fade));
-      c.dot(hand, 0.3F, SinclairPalette.IVORY, (int) (160 * fade));
+      float fold = (float) dev.baranhan.viltrumitecore.hero.sinclair.act.CopyCinematic.cardFlight(t);
+      c.dot(hand.add(0.0, 0.18, 0.0), 0.35F * (1.0F - 0.6F * fold), color, (int) (110 * in));
+      c.dot(hand.add(0.0, 0.18, 0.0), 0.12F, SinclairPalette.IVORY, (int) (220 * in));
    }
 
    /** Shape of the snapshot's act (the poser uses the move, the HUD the shape). */

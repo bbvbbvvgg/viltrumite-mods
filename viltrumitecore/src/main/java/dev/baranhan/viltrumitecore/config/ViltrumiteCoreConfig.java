@@ -11,13 +11,19 @@ import net.minecraftforge.fml.loading.FMLPaths;
 public class ViltrumiteCoreConfig {
    public float damageReductionPercent = 97.0F;
    public float damageIgnoreThreshold = 0.5F;
-   public boolean shouldAskRace = true;
-   public boolean isViltrumiteByDefault = true;
+   public boolean shouldAskRace = false;
+   public boolean isViltrumiteByDefault = false;
    public float punchBlockDropChance = 40.0F;
    public float dashBlockDropChance = 40.0F;
    public double spaceLimitY = 1500.0;
    public float meteorSpawnChancePercent = 0.02F;
    public double meteorMinDistance = 500.0;
+   /**
+    * Automatic world events (Viltrumite conquest, Thula/Vidor/Lucan trio). Off by
+    * default: these characters appear only by {@code /viltrumite event start}.
+    * A config file without this field keeps the default (Gson field defaults).
+    */
+   public boolean worldEventsAutoStart = false;
    public float worldEventChancePercent = 0.004F;
    public int worldEventCooldownMinutes = 40;
    public boolean bloodEnabled = true;

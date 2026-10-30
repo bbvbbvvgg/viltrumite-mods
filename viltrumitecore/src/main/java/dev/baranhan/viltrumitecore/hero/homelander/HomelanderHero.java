@@ -211,6 +211,16 @@ public class HomelanderHero implements HeroDefinition {
    }
 
    @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      HomelanderState state = HomelanderState.of(player);
+      if (state == null) {
+         return false;
+      }
+      state.roarCooldown = 0;
+      return true;
+   }
+
+   @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       HomelanderState state = HomelanderState.of(player);
       if (state != null) {

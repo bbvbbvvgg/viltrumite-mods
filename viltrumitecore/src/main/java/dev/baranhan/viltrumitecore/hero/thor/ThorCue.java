@@ -22,18 +22,25 @@ import net.minecraft.sounds.SoundSource;
 public enum ThorCue {
    // --- melee: Mjölnir in the hand (HAMMER_COMBO, HAMMER_STRIKE) ---
    HAMMER_WINDUP("hammer.windup", L("hammer_swing", 0.9F, 0.9F)),
-   HAMMER_WINDUP_HEAVY("hammer.windup_heavy", L("hammer_windup", 0.8F, 1.0F), L("hammer_swing", 1.0F, 0.75F)),
+   // Audit v3: the windups are the swing whoosh only (the long creak of hammer_windup peaked after the new contact tick).
+   HAMMER_WINDUP_HEAVY("hammer.windup_heavy", L("hammer_swing", 1.0F, 0.78F), L("hammer_swing", 0.45F, 0.62F)),
    HAMMER_HIT("hammer.hit", L("hammer_metal", 0.8F, 1.0F), L("hammer_body", 1.0F, 1.0F), L("hammer_bass", 0.5F, 1.1F)),
    HAMMER_HIT_HEAVY("hammer.hit_heavy", L("hammer_metal", 1.0F, 0.9F), L("hammer_body", 1.3F, 0.9F), L("hammer_bass", 1.0F, 1.0F)),
    HAMMER_SLAM("hammer.slam", L("hammer_metal", 1.0F, 0.9F), L("hammer_earth", 1.6F, 1.0F), L("hammer_bass", 1.6F, 1.0F)),
    HAMMER_TAIL("hammer.tail", L("hammer_tail", 0.6F, 1.0F)),
    // --- melee: bare fists (FIST_COMBO) ---
    FIST_WINDUP("fist.windup", L("fist_swing", 0.6F, 1.1F)),
-   FIST_WINDUP_HEAVY("fist.windup_heavy", L("fist_windup", 0.6F, 1.0F), L("fist_swing", 0.8F, 0.9F)),
+   FIST_WINDUP_HEAVY("fist.windup_heavy", L("fist_swing", 0.8F, 0.9F)),
    FIST_HIT("fist.hit", L("fist_hit", 0.9F, 1.0F)),
    FIST_HIT_HEAVY("fist.hit_heavy", L("fist_hit", 1.1F, 0.9F), L("hammer_bass", 0.5F, 1.3F)),
    FIST_SLAM("fist.slam", L("fist_hit", 0.8F, 0.8F), L("hammer_earth", 1.3F, 1.1F), L("hammer_bass", 1.2F, 1.2F)),
    FIST_TAIL("fist.tail", L("hammer_tail", 0.3F, 1.3F)),
+   // --- guard (audit v3, ThorGuard: F) ---
+   GUARD_UP("guard.up", L("fist_windup", 0.5F, 1.25F)),
+   GUARD_BLOCK("guard.block", L("hammer_metal", 1.0F, 1.15F), L("hammer_body", 0.6F, 1.2F)),
+   GUARD_BLOCK_FIST("guard.block_fist", L("fist_hit", 0.8F, 1.25F)),
+   PARRY("guard.parry", L("hammer_metal", 1.3F, 1.3F), L("thunder_crack", 0.9F, 1.4F), L("electric_zap", 1.0F, 1.0F)),
+   PARRY_FIST("guard.parry_fist", L("fist_hit", 1.1F, 1.1F), L("hammer_bass", 0.6F, 1.4F)),
    // --- electric mode ---
    ELECTRIC_ON("electric.on", L("electric_on", 1.0F, 1.0F)),
    ELECTRIC_OFF("electric.off", L("electric_off", 0.8F, 1.0F)),
@@ -202,6 +209,25 @@ public enum ThorCue {
    /** INTRO (onStart / CHAIN): the swing leaves. */
    public static ThorCue windup(ThorStrike strike) {
       return fist(strike) ? strike.heavy() ? FIST_WINDUP_HEAVY : FIST_WINDUP : strike.heavy() ? HAMMER_WINDUP_HEAVY : HAMMER_WINDUP;
+   }
+
+   /** Seconds from the start of the swing sound (hammer_swing 0.17 s, fist_swing 0.10 s at pitch 1) to its whoosh peak. */
+   public static float whooshPeakSeconds(ThorCue windup) {
+      return switch (windup) {
+         case HAMMER_WINDUP -> 0.17F / 0.9F;
+         case HAMMER_WINDUP_HEAVY -> 0.17F / 0.78F;
+         case FIST_WINDUP -> 0.10F / 1.1F;
+         case FIST_WINDUP_HEAVY -> 0.10F / 0.9F;
+         default -> 0.0F;
+      };
+   }
+
+   /**
+    * Pure (audit v3, sound to contact sync): ticks to hold the swing sound so its whoosh peaks one
+    * tick before the contact tick {@code windup}; 0 = play at once.
+    */
+   public static int windupDelay(ThorCue windup, int windupTicks) {
+      return Math.max(0, Math.round(windupTicks - whooshPeakSeconds(windup) * 20.0F - 1.0F));
    }
 
    /** ENTER_MAIN, at least one body struck. */

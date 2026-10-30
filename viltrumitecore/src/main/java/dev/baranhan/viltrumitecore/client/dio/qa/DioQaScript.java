@@ -125,7 +125,205 @@ public final class DioQaScript {
       PENDING.clear();
    }
 
+   /** Client look + lock state, for the camera-lock checks (compare the yaw between two calls). */
+   private static void look(int tick, String label) {
+      at(tick, mc -> LOG.info("DIOQA look {} id={} yaw={} pitch={} clientFrozen={} locked={} alive={} level={}", label, mc.player.getId(),
+         String.format(java.util.Locale.ROOT, "%.2f", mc.player.getYRot()), String.format(java.util.Locale.ROOT, "%.2f", mc.player.getXRot()),
+         dev.baranhan.viltrumitecore.hero.control.TimeFreeze.clientFrozen(mc.player.getId()), dev.baranhan.viltrumitecore.client.hero.TimeFreezeView.locked(),
+         mc.player.isAlive(), mc.level.dimension().location()));
+   }
+
+   /**
+    * Real mouse path: feeds GLFW cursor positions into MouseHandler.onMove (the GLFW
+    * callback) so the move goes through accumulation and turnPlayer like a hand on the mouse.
+    */
+   private static double cursorX = 400.0;
+
+   private static void mouse(int tick, double dx) {
+      at(tick, mc -> {
+         try {
+            if (!mc.mouseHandler.isMouseGrabbed()) {
+               mc.mouseHandler.grabMouse();
+            }
+
+            java.lang.reflect.Method move = net.minecraft.client.MouseHandler.class.getDeclaredMethod("onMove", long.class, double.class, double.class);
+            move.setAccessible(true);
+            cursorX += dx;
+            move.invoke(mc.mouseHandler, mc.getWindow().getWindow(), cursorX, 300.0);
+         } catch (ReflectiveOperationException e) {
+            LOG.error("DIOQA mouse failed", e);
+         }
+      });
+   }
+
+   /** {@code -Dviltrumitecore.dio.qa.polish=true}: the DIO polish checks (foreign stop, camera lock, blood, roller). */
+   private static void polishScript() {
+      cmd(0, "gamerule doDaylightCycle false");
+      cmd(1, "gamerule doMobSpawning false");
+      cmd(2, "time set 18000");
+      cmd(3, "weather clear");
+      cmd(5, "effect give @s night_vision infinite 0 true");
+      cmd(6, "gamemode survival");
+      cmd(7, "difficulty easy");
+      at(8, mc -> mc.setScreen(null));
+      cmd(10, "tp @s ~ ~ ~ 0 0");
+      String stand = " {Invisible:1b,NoGravity:1b,Invulnerable:1b,Rotation:[%sf,10f]}";
+      cmd(12, "summon armor_stand ~9 ~2 ~3" + stand.formatted("90"));
+      cmd(13, "summon armor_stand ~-10 ~1 ~4 {Invisible:1b,NoGravity:1b,Invulnerable:1b,Rotation:[-90f,-28f]}");
+      cmd(14, "summon armor_stand ~ ~3 ~-9" + stand.formatted("0"));
+      view(20, CameraType.FIRST_PERSON);
+
+      // 1. Control: the scripted mouse turns an unfrozen player.
+      look(30, "control_before");
+      for (int i = 0; i < 5; i++) {
+         mouse(31 + i, 40.0);
+      }
+      look(38, "control_after");
+      cmd(40, "tp @s ~ ~ ~ 0 0");
+
+      // 2. Another DIO's stopped time freezes the player, a Jin-Woo shadow, a zombie, TNT, an item, sand, arrow, snowball.
+      cmd(50, "dioqa shadow");
+      cmd(52, "summon zombie ~8 ~ ~-4");
+      cmd(54, "summon tnt ~4 ~ ~6 {Fuse:80}");
+      cmd(56, "summon item ~-2 ~3 ~2 {Item:{id:\"minecraft:gold_ingot\",Count:1b},Motion:[0.0d,0.4d,0.0d]}");
+      cmd(58, "summon falling_block ~2 ~10 ~4 {BlockState:{Name:\"minecraft:sand\"},Time:1}");
+      cmd(59, "summon arrow ~-6 ~2 ~5 {Motion:[0.5d,0.25d,0.0d]}");
+      cmd(60, "summon snowball ~-6 ~3 ~6 {Motion:[0.4d,0.3d,0.0d]}");
+      cmd(61, "dioqa probe pre");
+      cmd(62, "dioqa foreignstop 140");
+      shot(66, "fstop_fp_start");
+      look(68, "frozen_before_mouse");
+      for (int i = 0; i < 6; i++) {
+         mouse(69 + i, 60.0);
+      }
+      look(77, "frozen_after_mouse");
+      at(78, mc -> mc.player.setYRot(mc.player.getYRot() + 90.0F));
+      look(80, "frozen_after_setyrot");
+      cmd(82, "dioqa probe during1");
+      cam(84, 9, 3);
+      shot(88, "fstop_side");
+      cam(92, -10, 4);
+      shot(96, "fstop_wide");
+      cam(98, 0, -9);
+      shot(102, "fstop_back");
+      view(106, CameraType.FIRST_PERSON);
+      cmd(122, "dioqa probe during2");
+      shot(126, "fstop_fp_late");
+      cmd(150, "dioqa foreignstop 0");
+      cmd(153, "dioqa probe after_end");
+      look(155, "released_before_mouse");
+      for (int i = 0; i < 5; i++) {
+         mouse(156 + i, 40.0);
+      }
+      look(163, "released_after_mouse");
+      cam(166, 9, 3);
+      shot(170, "after_side");
+      cmd(175, "dioqa probe after2");
+      view(178, CameraType.FIRST_PERSON);
+
+      // 3. Death while frozen: the lock must not survive the respawn.
+      cmd(200, "kill @e[type=!player,type=!armor_stand]");
+      cmd(204, "tp @s ~ ~ ~ 0 0");
+      cmd(208, "dioqa foreignstop 300");
+      look(214, "death_frozen");
+      cmd(220, "kill @s");
+      cmd(223, "dioqa probe after_kill");
+      at(228, mc -> LOG.info("DIOQA screen after kill: {} dead={}", mc.screen == null ? null : mc.screen.getClass().getSimpleName(), mc.player.isDeadOrDying()));
+      at(232, mc -> mc.player.respawn());
+      at(240, mc -> mc.setScreen(null));
+      cmd(242, "effect give @s night_vision infinite 0 true");
+      look(246, "death_respawned");
+      cmd(247, "dioqa probe respawned");
+      for (int i = 0; i < 5; i++) {
+         mouse(248 + i, 40.0);
+      }
+      look(256, "death_after_mouse");
+      cmd(258, "dioqa foreignstop 0");
+
+      // 4. Dimension change while frozen (The End spawn platform, slow falling).
+      cmd(270, "effect give @s slow_falling 60 0 true");
+      cmd(271, "effect give @s resistance 60 4 true");
+      cmd(272, "tp @s ~ ~ ~ 0 0");
+      cmd(274, "dioqa foreignstop 300");
+      look(280, "dim_frozen");
+      cmd(284, "execute in minecraft:the_end run tp @s 100 52 0");
+      at(296, mc -> mc.setScreen(null));
+      look(300, "dim_moved");
+      for (int i = 0; i < 5; i++) {
+         mouse(301 + i, 40.0);
+      }
+      look(308, "dim_after_mouse");
+      cmd(310, "dioqa foreignstop 0");
+      cmd(312, String.format(java.util.Locale.ROOT, "execute in minecraft:overworld run tp @s %.2f %.2f %.2f 0 0", origin.x, origin.y, origin.z));
+      at(326, mc -> mc.setScreen(null));
+
+      // 5. Blood debug commands (become DIO first).
+      cmd(390, "dioqa become");
+      cmd(432, "dioqa blood 7");
+      cmd(434, "dioqa state");
+      cmd(436, "dio blood fill");
+      cmd(438, "dioqa state");
+      cmd(440, "dio blood infinite on");
+      view(442, CameraType.THIRD_PERSON_BACK);
+      shot(450, "hud_infinite");
+      cmd(453, "summon zombie ~8 ~ ~-4");
+      cmd(454, "summon arrow ~-6 ~2 ~5 {Motion:[0.5d,0.25d,0.0d]}");
+      cmd(455, "dioqa act time_stop");
+      cmd(462, "dioqa state");
+      cmd(482, "dioqa probe dio_ts1");
+      shot(484, "dio_ts_f5");
+      cmd(502, "dioqa probe dio_ts2");
+      cmd(503, "dioqa state");
+      cam(504, 9, 3);
+      shot(508, "dio_ts_side");
+      view(512, CameraType.THIRD_PERSON_BACK);
+      cmd(690, "dioqa probe dio_ts_after");
+      cmd(692, "dioqa state");
+      cmd(694, "dio blood infinite off");
+      cmd(696, "dioqa state");
+      shot(700, "hud_normal");
+
+      // 6. ROAD ROLLER: the local cinematic camera (first person view handed to RollerCinema).
+      int r = 760;
+      cmd(r - 12, "kill @e[type=!player,type=!armor_stand]");
+      cmd(r - 8, "dioqa reset");
+      cmd(r - 7, "dio blood fill");
+      cmd(r - 6, "tp @s ~ ~ ~ 0 0");
+      cmd(r - 4, "dioqa dummy 8");
+      view(r - 2, CameraType.FIRST_PERSON);
+      cmd(r, "dioqa act road_roller");
+      int[] cine = {4, 12, 20, 26, 32, 40, 48, 56, 64, 72, 80, 90, 98, 110, 130, 150, 158, 164, 170, 176, 184};
+      for (int m : cine) {
+         shot(r + m, "roller_cine_" + (m < 10 ? "00" : m < 100 ? "0" : "") + m);
+      }
+      cmd(r + 100, "dioqa state");
+
+      // 7. Second ROAD ROLLER from a fixed wide camera: the leap and the fall seen from outside.
+      int q = r + 260;
+      cmd(q - 12, "kill @e[type=zombie]");
+      cmd(q - 8, "dioqa reset");
+      cmd(q - 7, "dio blood fill");
+      cmd(q - 4, "dioqa dummy 8");
+      cam(q - 2, -10, 4);
+      cmd(q, "dioqa act road_roller");
+      int[] wide = {16, 26, 32, 40, 50, 60, 70, 84, 96, 120, 160, 176};
+      for (int m : wide) {
+         shot(q + m, "roller_wide_" + (m < 10 ? "00" : m < 100 ? "0" : "") + m);
+      }
+
+      at(q + 200, mc -> {
+         LOG.info("DIOQA done");
+         mc.stop();
+      });
+      STEPS.sort(Comparator.comparingInt(Step::tick));
+   }
+
    private static void script() {
+      if (Boolean.getBoolean("viltrumitecore.dio.qa.polish")) {
+         polishScript();
+         return;
+      }
+
       // Setup: night + night vision (DIO burns in the sun), no spawns, survival.
       cmd(0, "gamerule doDaylightCycle false");
       cmd(1, "gamerule doMobSpawning false");

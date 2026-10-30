@@ -1,8 +1,6 @@
 package dev.baranhan.viltrumitecore.hero;
 
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
-import dev.baranhan.viltrumitecore.hero.regulus.RegulusHero;
-import dev.baranhan.viltrumitecore.hero.regulus.RegulusState;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -58,27 +56,15 @@ public final class HeroDamage {
       }
 
       try {
-         // Record a real living attacker once, including hits that get blocked.
-         // Self damage and non-living sources never arm the Counter.
-         LivingEntity attacker = source.getEntity() instanceof LivingEntity living ? living : null;
-         if (capturesAttacker(kind, attacker != null, attacker == target) && target instanceof ServerPlayer player) {
-            RegulusState state = RegulusHero.stateOf(player);
-            if (state != null) {
-               state.attackerId = attacker.getUUID();
-               state.attackerTick = target.level().getGameTime();
-               state.attackerLastPos = attacker.position();
-            }
-         }
-
          boolean anchored = false;
          ControlManager manager = null;
          if (target.level() instanceof ServerLevel serverLevel) {
             manager = ControlManager.get(serverLevel);
-            anchored = manager.isAnchored(target);
+            anchored = queuesUnderControl(manager.isAnchored(target), source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY));
          }
 
-         RegulusState state = target instanceof ServerPlayer player ? RegulusHero.stateOf(player) : null;
-         DamageResult result = decide(kind, true, anchored, state != null && state.lionActive, amount);
+         // Absolute protections (Regulus' Lion's Heart) answer in the hero's absorbIncoming layer.
+         DamageResult result = decide(kind, true, anchored, false, amount);
          if (result == DamageResult.QUEUED && manager != null) {
             manager.queueDamage(target, source, payableAmount(target, source, amount));
          }
@@ -111,6 +97,16 @@ public final class HeroDamage {
       }
 
       return DamageResult.PASS;
+   }
+
+   /**
+    * Anchored (frozen / stopped-time) victims bank hits for the release, but
+    * absolute damage — {@code /kill}, the void — must still land: the deferred
+    * cap would otherwise make a frozen victim unkillable and strand him (and
+    * his camera lock) in the field.
+    */
+   static boolean queuesUnderControl(boolean anchored, boolean bypassesInvulnerability) {
+      return anchored && !bypassesInvulnerability;
    }
 
    /** The Counter arms on external living-attacker hits only — never internal or self damage. */
@@ -172,14 +168,6 @@ public final class HeroDamage {
          return;
       }
 
-      // Internal drains are self-inflicted: Regulus's health-delta bookkeeping
-      // subtracts this share so it never reads as an interrupting hit (spec
-      // 7.1/10.4/11.1). Queued damage is not recorded — it applies as a payout.
-      RegulusState state = RegulusHero.stateOf(player);
-      if (state != null) {
-         state.internalDamage += amount;
-      }
-
       // Self-inflicted drains (overheat, blood price, backlash) never flinch:
       // no hurt animation, red flash or camera shake per drain tick.
       applyCleanDamage(player, player.damageSources().generic(), amount, false);
@@ -201,6 +189,7 @@ public final class HeroDamage {
 
       if (isProtected(target)) return;
 
+      HeroDamageLayers.notifyAttack(target, source);
       // No Forge damage event fires on this path: run the hero layers here, once.
       amount = HeroDamageLayers.onClean(target, source, amount);
       if (amount <= 0.0F) {

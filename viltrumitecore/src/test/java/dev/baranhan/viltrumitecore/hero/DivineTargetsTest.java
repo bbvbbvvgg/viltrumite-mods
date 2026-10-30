@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.baranhan.viltrumitecore.hero.regulus.RegulusHero;
-import dev.baranhan.viltrumitecore.hero.regulus.RegulusState;
 import org.junit.jupiter.api.Test;
 
 /** Divine targets and absolute invulnerability contract (spec §3.3). */
@@ -31,12 +30,11 @@ class DivineTargetsTest {
 
    @Test
    void regulusAbsoluteOnlyInLion() {
-      RegulusState state = new RegulusState();
-      assertFalse(RegulusHero.absolutelyInvulnerable(state));
-      state.lionActive = true;
-      assertTrue(RegulusHero.absolutelyInvulnerable(state));
-      assertFalse(RegulusHero.absolutelyInvulnerable(null));
-      assertFalse(new RegulusHero().isDivine(null));
+      assertFalse(RegulusHero.absolutelyInvulnerable(false, false));
+      assertTrue(RegulusHero.absolutelyInvulnerable(true, false), "the Lion's Heart stops his time: nothing touches him");
+      assertTrue(RegulusHero.absolutelyInvulnerable(false, true), "Kingdom of One plays with the Lion held");
+      assertFalse(RegulusHero.INSTANCE.isDivine(null));
+      assertFalse(RegulusHero.INSTANCE.isAbsolutelyInvulnerable(null));
    }
 
    /** Divine damage ignores armor/shield/enchantments/effects but never invulnerability: hero hooks still see it. */

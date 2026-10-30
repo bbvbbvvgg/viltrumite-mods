@@ -1,247 +1,193 @@
 package dev.baranhan.viltrumitecore.hero.regulus;
 
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
-import dev.baranhan.viltrumitecore.hero.HeroRegistry;
-import dev.baranhan.viltrumitecore.hero.control.ControlKind;
-import dev.baranhan.viltrumitecore.hero.control.ControlManager;
-import java.util.ArrayList;
-import java.util.List;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket;
+import dev.baranhan.viltrumitecore.hero.regulus.net.RegulusNet;
+import dev.baranhan.viltrumitecore.hero.speech.HeroLineTrigger;
+import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
+import java.util.UUID;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Lion's Heart (spec 6): 14t windup -> shrink-only window (60+40H) -> overheat.
- * While active: all external damage blocked, internal damage passes, hunger
- * frozen, negative effects stripped, projectiles within 4 blocks frozen,
- * movement and melee normal, all ability slots greyed except the off-toggle
- * and Evangelium. Off at HP<=4 (cd 600) or manually (cd 100); on off, frozen
- * projectiles drop and nearby opponents get a ~1.5 repulse impulse.
+ * «Сердце льва» (spec §5.1): the time of his own body is stopped. Absolute invulnerability, no
+ * control, no knockback, no healing, recoil to melee attackers and projectiles stopped dead; the
+ * price is the heart strain unless a Little King subject carries the heart (§5.0).
  */
 public final class LionsHeart {
+   /** walkDist between two footfalls: half the 1.25-block walk stride (walkDist grows 0.6 per block). */
+   static final float STEP_EVERY = 0.375F;
+   static final UUID SPEED_ID = UUID.fromString("4e5a1c0b-7d3e-4a7c-9b1f-2c6d8e0f1a01");
+
    private LionsHeart() {
    }
 
-   public static void toggle(ServerPlayer player, RegulusState state) {
-      if (state.lionActive) {
-         deactivate(player, state, false);
+   /** LIONS_HEART press: toggle (the off-toggle always reaches the running Lion). */
+   static void press(ServerPlayer player, RegulusState state) {
+      if (state.lion) {
+         turnOff(player, state, true);
          return;
       }
 
-      // Madness is a resolved effect and occupies no slot (spec 1.2.5): the
-      // action policy and HUD keep the toggle lit during madness, so the
-      // toggle must answer too — only an in-flight cast locks it out.
-      if (state.busy()) {
+      if (state.lionLock > 0) {
+         RegulusSounds.play(player.level(), player.position().add(0.0, 1.2, 0.0), RegulusSounds.LION_DENY, 0.7F, 1.0F);
+         RegulusHero.refuse(player, state);
          return;
       }
 
-      state.beginAction(RegulusHero.ACTION_LION, RegulusRules.LION_WINDUP_TICKS + 1, RegulusRules.LION_WINDUP_TICKS, RegulusRules.LION_WINDUP_TICKS);
-   }
-
-   /** Windup decision: fire the activation event exactly at the 14t mark. */
-   static boolean shouldActivate(RegulusState state) {
-      return RegulusHero.ACTION_LION.equals(state.actionId)
-         && !state.eventFired
-         && state.actionElapsed >= state.actionEventTick;
-   }
-
-   /** Per-tick window recompute: heart loss shortens, new hearts never extend. */
-   static void tickWindow(RegulusState state, int hearts) {
-      if (state.lionWindowFloorHearts < 0) {
-         state.lionWindowFloorHearts = hearts;
-      }
-
-      state.lionWindowMax = RegulusRules.shrinkLionWindow(state.lionWindowMax, state.lionWindowFloorHearts, hearts);
-      state.lionWindowFloorHearts = Math.min(state.lionWindowFloorHearts, hearts);
-   }
-
-   static boolean overheating(RegulusState state) {
-      return state.lionElapsed > state.lionWindowMax;
-   }
-
-   public static void tick(ServerPlayer player, RegulusState state) {
-      if (shouldActivate(state)) {
-         activate(player, state);
-      }
-
-      if (!state.lionActive) {
+      if (state.lionCooldown > 0 || state.busy() && state.move.locksCasting()) {
          return;
       }
 
-      state.lionElapsed++;
-      int windowBefore = state.lionWindowMax;
-      tickWindow(state, state.hearts());
-      if (state.lionWindowMax < windowBefore) {
-         // A burned heart never flips Lion straight into overheat: the player
-         // gets a short, announced grace instead of an instant HP drain.
-         state.lionWindowMax = RegulusRules.windowAfterHeartLoss(windowBefore, state.lionWindowMax, state.lionElapsed);
-         player.displayClientMessage(Component.translatable("message.viltrumitecore.lion.heart_lost"), true);
-      }
-      clearHarmfulEffects(player);
-      freezeNearbyProjectiles(player);
+      state.startMove(RegulusMove.LION_ON);
+      HeroSpeech.ability(player, RegulusAbilities.LIONS_HEART);
+   }
 
-      if (overheating(state)) {
-         state.overheatTicks++;
-         if (state.overheatTicks == 1) {
-            player.displayClientMessage(Component.translatable("message.viltrumitecore.lion.overheat"), true);
-            player.level().playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 1.0F, 0.6F);
+   static void tickMove(ServerPlayer player, RegulusState state) {
+      if (state.move == RegulusMove.LION_ON && state.moveTick == RegulusRules.LION_PROTECT_AT) {
+         state.lion = true;
+         state.lionTicks = 0;
+         state.strain = RegulusRules.strainAdd(state.strain, RegulusRules.STRAIN_LION_ON);
+         RegulusSounds.play(player.level(), player.position().add(0.0, 1.2, 0.0), RegulusSounds.LION_ON, 1.0F, 1.0F);
+         RegulusNet.fx((ServerLevel) player.level(), RegulusFxS2CPacket.LION_ON, player, -1, player.position().add(0.0, 1.0, 0.0));
+      }
+   }
+
+   /** Every tick: strain, speed, healing pause, seizure. */
+   static void tick(ServerPlayer player, RegulusState state) {
+      boolean hostAlive = LittleKing.hostAlive(player, state);
+      state.strain = RegulusRules.strainStep(state.strain, state.lion, hostAlive);
+      if (state.lion) {
+         state.lionTicks++;
+         state.lionHealth = state.lionTicks == 1 ? player.getHealth() : Math.min(state.lionHealth, player.getHealth());
+         if (player.getHealth() > state.lionHealth) {
+            // the body's time stands still: no healing while the Lion holds
+            player.setHealth(state.lionHealth);
          }
 
-         // One drain per second (no per-tick flinch), then Lion stops itself
-         // instead of bleeding the hero down to the 4 HP floor.
-         HeroDamage.applyInternal(player, RegulusRules.overheatDrain(state.overheatTicks));
-      }
-
-      // The HP collapse is checked FIRST: a drain that lands Regulus at <= 4 HP
-      // on the last overheat tick is a forced-off (600t), never a normal 100t end.
-      switch (RegulusRules.lionEndAfterTick(player.getHealth(), state.overheatTicks)) {
-         case FORCED -> deactivate(player, state, true);
-         case EXHAUSTED -> deactivate(player, state, false);
-         case NONE -> {
+         player.clearFire();
+         stepSound(player, state);
+         if (!hostAlive && state.lionTicks % 20 == 0) {
+            RegulusSounds.play(player.level(), player.position().add(0.0, 1.4, 0.0), RegulusSounds.STRAIN, 0.35F + state.strain / 2000.0F,
+               0.9F + state.strain / 2500.0F);
          }
-      }
-   }
 
-   private static void activate(ServerPlayer player, RegulusState state) {
-      state.eventFired = true;
-      state.clearAction();
-      state.lionActive = true;
-      state.lionWindowMax = RegulusRules.lionWindow(state.hearts());
-      state.lionElapsed = 0;
-      state.overheatTicks = 0;
-      state.lionStartTick = player.serverLevel().getGameTime();
-      state.lionWindowFloorHearts = state.hearts();
-      player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.0F, 0.8F);
-   }
-
-   /** forced=true on HP collapse (cd 600); forced=false on manual toggle (cd 100). */
-   public static void deactivate(ServerPlayer player, RegulusState state, boolean forced) {
-      if (!state.lionActive) {
-         return;
-      }
-
-      endLionState(state);
-      state.startCooldown(RegulusAbilities.LIONS_HEART, RegulusRules.lionCooldownBase(forced));
-      releaseFrozenProjectiles(player);
-      repulseOpponents(player, state);
-   }
-
-   /**
-    * Cleanup path (death/disconnect/hero change): state drops silently and the
-    * caster's frozen projectiles are restored; no cooldown, no repulse.
-    */
-   public static void forceOff(ServerPlayer player, RegulusState state) {
-      if (!state.lionActive) {
-         return;
-      }
-
-      endLionState(state);
-      releaseFrozenProjectiles(player);
-   }
-
-   private static void endLionState(RegulusState state) {
-      state.lionActive = false;
-      state.lionElapsed = 0;
-      state.overheatTicks = 0;
-      state.lionWindowMax = 0;
-      state.lionWindowFloorHearts = -1;
-   }
-
-   /** Negative effects do not survive on an active Lion's Heart (spec 6.2). */
-   private static void clearHarmfulEffects(ServerPlayer player) {
-      if (player.getActiveEffects().isEmpty()) {
-         return;
-      }
-
-      List<MobEffect> harmful = new ArrayList<>();
-      for (MobEffectInstance instance : player.getActiveEffects()) {
-         if (!instance.getEffect().isBeneficial()) {
-            harmful.add(instance.getEffect());
+         if (RegulusRules.seizes(state.strain)) {
+            seizure(player, state);
          }
       }
 
-      for (MobEffect effect : harmful) {
-         player.removeEffect(effect);
-      }
+      speed(player, state.lion);
    }
 
-   /**
-    * Projectiles inside the 4-block aura freeze mid-air: velocity zeroed and
-    * gravity suspended until the heart turns off (spec 6.2).
-    */
-   private static void freezeNearbyProjectiles(ServerPlayer player) {
-      if (!(player.level() instanceof ServerLevel level)) {
+   /** A stopped body steps like glass on stone: a dry tick on every footfall while the Lion holds. */
+   private static void stepSound(ServerPlayer player, RegulusState state) {
+      float walked = player.walkDist;
+      if (state.stepAt <= 0.0F || state.stepAt > walked + 2.0F || walked - state.stepAt > 2.0F) {
+         state.stepAt = walked + STEP_EVERY;
          return;
       }
 
-      ControlManager manager = ControlManager.get(level);
-      double radius = RegulusRules.LION_PROJECTILE_RADIUS;
-      AABB area = player.getBoundingBox().inflate(radius);
-      for (Projectile projectile : level.getEntitiesOfClass(Projectile.class, area)) {
-         if (projectile.distanceToSqr(player) <= radius * radius) {
-            manager.freezeProjectile(projectile, player.getUUID());
-         }
+      if (player.onGround() && !player.isShiftKeyDown() && walked >= state.stepAt) {
+         state.stepAt = walked + STEP_EVERY;
+         RegulusSounds.play(player.level(), player.position(), RegulusSounds.STEP, 0.32F, 0.95F + player.getRandom().nextFloat() * 0.1F);
       }
    }
 
-   private static void releaseFrozenProjectiles(ServerPlayer player) {
-      ControlManager.releaseProjectilesFor(player.getUUID());
-   }
-
-   /** On switch-off a ~1.5 impulse pushes the nearest opponents away (spec 6.4). */
-   private static void repulseOpponents(ServerPlayer player, RegulusState state) {
-      if (!(player.level() instanceof ServerLevel level)) {
+   static void turnOff(ServerPlayer player, RegulusState state, boolean voluntary) {
+      if (!state.lion) {
          return;
       }
 
-      Vec3 center = player.position();
-      AABB area = player.getBoundingBox().inflate(RegulusRules.LION_REPULSE_RADIUS);
-      ControlManager manager = ControlManager.get(level);
-      for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area, entity -> isOpponent(player, entity, state, manager))) {
-         Vec3 away = entity.position().subtract(center);
-         Vec3 push = new Vec3(away.x, 0.0, away.z);
-         if (push.lengthSqr() < 1.0E-4) {
-            Vec3 look = player.getLookAngle();
-            push = new Vec3(look.x, 0.0, look.z);
-         }
-
-         push = push.normalize().scale(RegulusRules.LION_RELEASE_IMPULSE);
-         entity.setDeltaMovement(entity.getDeltaMovement().add(push.x, 0.35, push.z));
-         entity.hasImpulse = true;
-         if (entity instanceof ServerPlayer targetPlayer) {
-            targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-         }
+      state.lion = false;
+      state.lionTicks = 0;
+      state.lionCooldown = RegulusRules.LION_COOLDOWN;
+      speed(player, false);
+      if (voluntary && !state.busy()) {
+         state.startMove(RegulusMove.LION_OFF);
       }
+
+      RegulusSounds.play(player.level(), player.position().add(0.0, 1.2, 0.0), RegulusSounds.LION_OFF, 0.9F, 1.0F);
+      RegulusNet.fx((ServerLevel) player.level(), RegulusFxS2CPacket.LION_OFF, player, -1, player.position().add(0.0, 1.0, 0.0));
    }
 
-   /**
-    * Opponents only (spec 6.4 "ближайших противников"): enemy players and
-    * hostile mobs — never the caster's allies, pets, or own heart carriers.
-    * The impulse policy still applies: the control-immune and already-anchored
-    * targets are not shoved.
-    */
-   private static boolean isOpponent(ServerPlayer player, LivingEntity entity, RegulusState state, ControlManager manager) {
-      if (entity == player) {
-         return false;
+   /** §5.0: the stopped heart gives out. Forced off, stunned, hurt, locked; strain drops to 400. */
+   static void seizure(ServerPlayer player, RegulusState state) {
+      boolean wasLion = state.lion;
+      state.lion = false;
+      state.lionTicks = 0;
+      speed(player, false);
+      state.startMove(RegulusMove.SEIZURE);
+      state.lionLock = RegulusRules.SEIZURE_LOCK;
+      state.strain = RegulusRules.SEIZURE_RESET;
+      state.lionCooldown = Math.max(state.lionCooldown, RegulusRules.LION_COOLDOWN);
+      player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2, false, false, true));
+      HeroDamage.applyInternal(player, RegulusRules.SEIZURE_DAMAGE);
+      RegulusSounds.play(player.level(), player.position().add(0.0, 1.4, 0.0), RegulusSounds.SEIZURE, 1.0F, 1.0F);
+      RegulusNet.fx((ServerLevel) player.level(), RegulusFxS2CPacket.SEIZURE, player, -1, player.position().add(0.0, 1.3, 0.0), Vec3.ZERO,
+         wasLion ? 1.0F : 0.0F, 0);
+      HeroSpeech.trigger(player, HeroLineTrigger.event(RegulusLines.EVENT_SEIZURE));
+   }
+
+   /** Melee recoil (§5.1): 30 % back to a living attacker that struck the Lion, at most once per 10 ticks. */
+   static void recoil(ServerPlayer self, RegulusState state, DamageSource source, float raw) {
+      if (state.recoilGap > 0 || !(source.getDirectEntity() instanceof LivingEntity attacker) || attacker == self || source.getEntity() != attacker) {
+         return;
       }
 
-      return RegulusRules.repulsePushable(
-         entity instanceof Player || entity instanceof Enemy,
-         player.isAlliedTo(entity),
-         state.carriers.contains(entity.getUUID()),
-         HeroRegistry.allowsExternalControl(entity, ControlKind.IMPULSE),
-         manager.isAnchored(entity)
-      );
+      state.recoilGap = RegulusRules.RECOIL_GAP;
+      state.recoilPulse++;
+      float back = RegulusRules.recoil(raw);
+      if (back > 0.0F) {
+         attacker.hurt(self.damageSources().thorns(self), back);
+         Vec3 away = attacker.position().subtract(self.position());
+         RegulusCombat.push(attacker, away, 0.6, 0.15);
+      }
+
+      Vec3 at = attacker.getBoundingBox().getCenter().lerp(self.getBoundingBox().getCenter(), 0.5);
+      RegulusSounds.play(self.level(), at, RegulusSounds.RECOIL, 0.9F, 0.95F + self.getRandom().nextFloat() * 0.1F);
+      RegulusNet.fx((ServerLevel) self.level(), RegulusFxS2CPacket.RECOIL, self, attacker.getId(), at);
+   }
+
+   /** A projectile that reaches the Lion stops dead in the air and drops (§5.1). */
+   static void stopProjectile(ServerPlayer self, RegulusState state, Projectile projectile) {
+      Vec3 v = projectile.getDeltaMovement();
+      Vec3 back = v.lengthSqr() < 1.0E-6 ? Vec3.ZERO : v.normalize().scale(-0.35);
+      projectile.setPos(projectile.position().add(back));
+      projectile.setDeltaMovement(0.0, -0.02, 0.0);
+      projectile.hasImpulse = true;
+      if (projectile instanceof AbstractHurtingProjectile hurting) {
+         hurting.xPower = 0.0;
+         hurting.yPower = -0.01;
+         hurting.zPower = 0.0;
+      }
+
+      state.recoilPulse++;
+      RegulusSounds.play(self.level(), projectile.position(), RegulusSounds.PROJECTILE_STOP, 0.8F, 0.9F + self.getRandom().nextFloat() * 0.2F);
+      RegulusNet.fx((ServerLevel) self.level(), RegulusFxS2CPacket.PROJECTILE_STOP, self, projectile.getId(), projectile.position());
+   }
+
+   static void speed(ServerPlayer player, boolean on) {
+      AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
+      if (speed == null) {
+         return;
+      }
+
+      boolean has = speed.getModifier(SPEED_ID) != null;
+      if (on && !has) {
+         speed.addTransientModifier(new AttributeModifier(SPEED_ID, "Regulus Lion's Heart", RegulusRules.LION_SPEED, AttributeModifier.Operation.MULTIPLY_BASE));
+      } else if (!on && has) {
+         speed.removeModifier(SPEED_ID);
+      }
    }
 }

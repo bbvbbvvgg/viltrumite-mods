@@ -60,4 +60,6 @@ class WorldErasureTest {
       public void erasePlayer(){order.add("cleanup");order.add("limbo");}
       public void end(WorldPause.EndReason reason){end=reason;}
    }
+   /** Playtest: the speech runs first (paused world), then the unchanged 150-tick cinematic. */
+   @Test void cinematicStartsAfterTheSpeech(){assertTrue(ReinhardRules.ERASE_SPEECH_TICKS>0);assertEquals(-ReinhardRules.ERASE_SPEECH_TICKS,WorldErasure.cinematicAge(0));assertEquals(0,WorldErasure.cinematicAge(WorldErasure.cinematicStart()));assertEquals(ReinhardRules.ERASE_LENGTH,WorldErasure.cinematicAge(ReinhardRules.ERASE_SPEECH_TICKS+ReinhardRules.ERASE_LENGTH));}
 }

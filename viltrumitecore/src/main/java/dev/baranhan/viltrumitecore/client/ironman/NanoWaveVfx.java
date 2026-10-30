@@ -96,7 +96,7 @@ public final class NanoWaveVfx {
       PoseStack modelViewStack = RenderSystem.getModelViewStack();
       modelViewStack.pushPose();
       modelViewStack.setIdentity();
-      PixelVfx.rotateCamera(modelViewStack, camera.getXRot(), camera.getYRot());
+      PixelVfx.levelView(modelViewStack, event);
       RenderSystem.applyModelViewMatrix();
       RenderSystem.enableBlend();
       RenderSystem.disableCull();

@@ -70,31 +70,25 @@ public class IronManHero implements HeroDefinition {
    /** The 3.2-block suit walks up one block (step 0.6 -> 1.0), like Thor's body. Both sides. */
    @Override
    public double bodyStepBonus(Player player) {
-      return hulkBig(player) ? 0.4 : 0.0;
+      return hulkBig(player) ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.STEP_BONUS : 0.0;
    }
 
+   /**
+    * Big Hulkbuster body, read from the synced public snapshot on BOTH sides (never the server's live
+    * layer): the client and the server must size the body from the same data, else they collide with
+    * different boxes and the server corrects the position (rubber-band at walls / steps, spec items 5
+    * and 9). The server snapshot is written at the end of its player tick (HeroRegistry.syncSnapshot),
+    * and that write resizes the body at once (HeroBodyTracker via onSyncedDataUpdated).
+    */
    static boolean hulkBig(Player player) {
-      if (player == null) {
+      if (!(player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer)) {
          return false;
       }
 
-      if (player.level().isClientSide()) {
-         int phase = hulkPhase(player);
-         if (phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ACTIVE.ordinal() || phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING.ordinal()) {
-            return true;
-         }
-
-         if (phase != dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING.ordinal() || !(player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer)) {
-            return false;
-         }
-
-         int[] extra = heroPlayer.getHeroSnapshot().extraCooldowns();
-         int scene = extra.length > dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE ? extra[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] : 0;
-         return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.sceneAssemble(scene) >= dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.TORSO_TICK;
-      }
-
-      IronManState state = IronManState.of(player);
-      return state != null && state.hulkbuster.big();
+      int phase = hulkPhase(player);
+      int[] extra = heroPlayer.getHeroSnapshot().extraCooldowns();
+      int scene = extra.length > dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE ? extra[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] : 0;
+      return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.bigOnWire(phase, scene);
    }
 
    /** The giant's own thrusters keep it up during jumps, hover, the scene and the ultimate (no fly kick). */
@@ -934,7 +928,8 @@ public class IronManHero implements HeroDefinition {
       // controlTargetId = the entity being scanned (reticle), -1 otherwise.
       int scanTarget = state.scan.active() ? state.scan.targetId() : -1;
       net.minecraft.world.phys.Vec3 target;
-      if (suit.equipping() || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.DROPPING || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING) {
+      if (suit.equipping() || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.DROPPING || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING
+         || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING) {
          target = state.equipSource;
       } else if (hulk.active()) {
          target = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCage.point(state);
@@ -962,7 +957,10 @@ public class IronManHero implements HeroDefinition {
       out[2] = veronica;
       out[3] = signature;
       out[8] = hulkCooldown;
-      if (hulk.busy()) {
+      if (hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING) {
+         out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.exitScene(
+            hulk.sceneTick(), kit.exitVeronica, kit.sceneYaw, kit.exitStepOut);
+      } else if (hulk.busy()) {
          out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.scene(hulk.sceneTick(), hulk.air() ? 1 : 2, kit.sceneYaw,
             hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING ? hulk.ticks() : -1);
       }
@@ -1083,6 +1081,23 @@ public class IronManHero implements HeroDefinition {
       dev.baranhan.viltrumitecore.hero.OwnerSection.MARKS,
       dev.baranhan.viltrumitecore.hero.OwnerSection.SCAN
    };
+
+   @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      IronManState state = IronManState.of(player);
+      if (state == null) {
+         return false;
+      }
+      state.countermeasures.setCooldown(0);
+      state.veronicaCooldown = 0;
+      state.signature.cooldown = 0;
+      state.flyByCooldown = 0;
+      state.repulsor.clearCooldown();
+      state.roster.clearCooldowns();
+      state.hulkbuster.clearCooldown();
+      state.hulkKit.clearCooldowns();
+      return true;
+   }
 
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {

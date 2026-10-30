@@ -22,7 +22,7 @@ public final class HulkbusterLayer {
    /** Ground variant: the capsule lands beside the player and opens. */
    public static final int DROP_TICKS_GROUND = 30;
    public static final int ASSEMBLE_TICKS = 50;
-   /** Exit (spec §3: 2.5 s): the back opens, Tony steps out. */
+   /** Exit (fix spec item 2: 2.5 s): vent, the chest opens, Tony steps out, the empty shell stands (HulkbusterExit). */
    public static final int EXIT_TICKS = 50;
    /** Plates lock at these assemble ticks: legs, torso, arms, shoulders, helmet (spec §4.3). */
    public static final int[] PART_LOCK = {8, 18, 28, 36, 46};
@@ -106,9 +106,29 @@ public final class HulkbusterLayer {
       return this.phase == Phase.ASSEMBLING && this.ticks >= TORSO_TICK || this.phase == Phase.ACTIVE || this.phase == Phase.EXITING;
    }
 
-   /** Big body (bodyScale): from the torso closing to the end of the exit. */
+   /** Big body (bodyScale): from the torso closing until Tony starts to step out of the exit (HulkbusterExit). */
    public boolean big() {
+      if (this.phase == Phase.EXITING) {
+         return HulkbusterExit.big(this.ticks);
+      }
+
       return this.torsoClosed();
+   }
+
+   /**
+    * {@link #big()} as both sides read it from the public snapshot: the phase ordinal
+    * (IronManFlags HULKBUSTER_PHASE) and the scene word (HulkbusterWire.SCENE).
+    */
+   public static boolean bigOnWire(int phaseOrdinal, int sceneWord) {
+      if (phaseOrdinal == Phase.ACTIVE.ordinal()) {
+         return true;
+      }
+
+      if (phaseOrdinal == Phase.EXITING.ordinal()) {
+         return HulkbusterExit.big(HulkbusterWire.sceneTick(sceneWord));
+      }
+
+      return phaseOrdinal == Phase.ASSEMBLING.ordinal() && HulkbusterWire.sceneAssemble(sceneWord) >= TORSO_TICK;
    }
 
    public boolean needsFitCheck() {
@@ -128,11 +148,12 @@ public final class HulkbusterLayer {
       };
    }
 
-   /** Scene tick from the delivery (DROPPING then ASSEMBLING), -1 outside the scene. */
+   /** Scene tick from the delivery (DROPPING then ASSEMBLING), the exit tick while EXITING, -1 otherwise. */
    public int sceneTick() {
       return switch (this.phase) {
          case DROPPING -> this.ticks;
          case ASSEMBLING -> this.dropTicks() + this.ticks;
+         case EXITING -> this.ticks;
          default -> -1;
       };
    }

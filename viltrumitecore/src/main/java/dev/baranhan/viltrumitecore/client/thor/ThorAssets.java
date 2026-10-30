@@ -35,6 +35,9 @@ public final class ThorAssets {
    public static final String LEFT_LEG = "left_leg";
    public static final String RIGHT_SHIN = "right_shin";
    public static final String LEFT_SHIN = "left_shin";
+   /** Ankle bones (owner playtest: Thor stood on his toes): the boots, turned so the soles stay flat. */
+   public static final String RIGHT_FOOT = "right_foot";
+   public static final String LEFT_FOOT = "left_foot";
    /** Locator (no cubes) at the right fist centre: Mjölnir's grip and the right hand's IK tip. */
    public static final String MJOLNIR_GRIP = "mjolnir_grip";
    /** Locator at the left fist centre: the left hand's IK tip and a second-hand grip. */
@@ -47,7 +50,7 @@ public final class ThorAssets {
 
    /** Every bone R2 may key, in hierarchy order (the bone contract test checks the geo against it). */
    public static final List<String> BONES = List.of(BODY_BONE, BELLY, HEAD, BEARD, RIGHT_ARM, RIGHT_FOREARM, RIGHT_HAND, MJOLNIR_GRIP,
-      LEFT_ARM, LEFT_FOREARM, LEFT_HAND, LEFT_GRIP, MJOLNIR_BELT_BONE, RIGHT_LEG, RIGHT_SHIN, LEFT_LEG, LEFT_SHIN);
+      LEFT_ARM, LEFT_FOREARM, LEFT_HAND, LEFT_GRIP, MJOLNIR_BELT_BONE, RIGHT_LEG, RIGHT_SHIN, RIGHT_FOOT, LEFT_LEG, LEFT_SHIN, LEFT_FOOT);
 
    /** Clips of thor.animation.json used by R1 (R2 adds the rest). */
    public static final String CLIP_CROUCH = "crouch";

@@ -44,6 +44,8 @@ public final class JinwooRules {
    public static final double DIVE_RADIUS = 3.0;
    public static final int DIVE_MAX_TICKS = 40;
    public static final int MARK_TICKS = 100;
+   /** How long whoever hit Jinwoo stays the army's target. */
+   public static final int ATTACKER_TICKS = 100;
 
    // §5.2 block / parry
    public static final double BLOCK_ARC_DEGREES = 120.0;

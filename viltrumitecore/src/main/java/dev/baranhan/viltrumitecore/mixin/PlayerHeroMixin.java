@@ -1,6 +1,5 @@
 package dev.baranhan.viltrumitecore.mixin;
 
-import dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroOwnerSnapshot;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
@@ -57,7 +56,8 @@ public abstract class PlayerHeroMixin implements HeroPlayer {
    @Inject(method = {"defineSynchedData"}, at = {@At("TAIL")})
    private void viltrumitecore$defineHeroData(CallbackInfo ci) {
       Player player = (Player)(Object)this;
-      int defaultId = ViltrumiteCoreConfig.INSTANCE.isViltrumiteByDefault ? HeroId.HOMELANDER.ordinal() : HeroId.HUMAN.ordinal();
+      // Every new player starts as a Human; a hero is chosen only with Od Lagna's Wish (the item).
+      int defaultId = HeroId.HUMAN.ordinal();
       player.getEntityData().define(HERO_ID, defaultId);
       player.getEntityData().define(HERO_SNAPSHOT, HeroPublicSnapshot.EMPTY.encode());
    }
@@ -129,6 +129,11 @@ public abstract class PlayerHeroMixin implements HeroPlayer {
       if (!encoded.equals(player.getEntityData().get(HERO_SNAPSHOT))) {
          player.getEntityData().set(HERO_SNAPSHOT, encoded);
       }
+   }
+
+   @Override
+   public boolean viltrumitecore$isBodyKey(net.minecraft.network.syncher.EntityDataAccessor<?> key) {
+      return HERO_ID.equals(key) || HERO_SNAPSHOT.equals(key);
    }
 
    @Inject(method = {"tick"}, at = {@At("TAIL")})

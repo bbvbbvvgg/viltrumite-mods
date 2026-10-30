@@ -13,12 +13,16 @@ from icon_art import registry, to64
 
 ICONS, art = registry()
 
-NAMES = ["lions_heart", "debris_kick", "mania", "greeds_embrace", "counter", "punch"]
+# Regulus Reborn: the six slotted powers first (RegulusAbilities.slotIds), then the two unslotted
+# ones (Greed's Touch on LMB, Little King on the heart key). The first kit's art stays below for
+# history but is no longer exported.
+NAMES = ["lions_heart", "stopped_sand", "air_severance", "trample", "right_of_reply", "kingdom_of_one",
+         "greeds_touch", "little_king"]
 # Asset folder under assets/viltrumitecore/ (the ids keep their existing paths).
 FOLDER = "textures/gui/ability/regulus/"
 PANEL = "default"
 # HUD mock: panel pages (RegulusAbilities.slotIds) and the three flight-bar slots (none owned).
-HUD = [NAMES]
+HUD = [NAMES[:6]]
 FLIGHT = (None, None, None)
 
 
@@ -403,4 +407,203 @@ def punch():
     gold_heart(ic, 23, 22)
     heart(ic, SMALL_HEART, 4, 21, (HEART[1], HEART[2], HEART[3], WHITE))
     ic.sparkle(10, 4, big=False)
+    return ic.image()
+
+
+# ---------------------------------------------------------------- Regulus Reborn
+def grain(ic, x, y, col=None, glint=True):
+    """One stopped grain: a gold pixel with an outline nub and a white glint above-left."""
+    ic.set(x, y, col or GOLD[2])
+    ic.set(x + 1, y, GOLD_R[0])
+    if glint:
+        ic.set(x - 1, y - 1, WHITE)
+
+
+def crack_star(ic, cx, cy, r, seed=3, col=WHITE, dim=PALE[1]):
+    """Hairline crack star: jagged rays (the stopped-time impact language, no fire, no bolts)."""
+    import random
+    rnd = random.Random(seed)
+    for i in range(6):
+        a = math.radians(i * 60 + rnd.uniform(-18, 18))
+        px, py = cx, cy
+        n = int(r)
+        for k in range(1, n + 1):
+            a += rnd.uniform(-0.35, 0.35)
+            nx, ny = cx + math.cos(a) * k, cy + math.sin(a) * k
+            ic.fill(line(px, py, nx, ny), col if k < n * 0.6 else dim)
+            px, py = nx, ny
+    ic.set(cx, cy, WHITE)
+
+
+def pane(ic, x0, y0, x1, y1):
+    """A pane of stopped air: glassy fill, bright top-left rims, ice bottom-right."""
+    m = rect(x0, y0, x1, y1)
+    ic.mix(m, ICE[2], 0.35)
+    ic.fill(line(x0, y0, x1, y0), ICE[3])
+    ic.fill(line(x0, y0, x0, y1), ICE[3])
+    ic.fill(line(x1, y0, x1, y1), ICE[1])
+    ic.fill(line(x0, y1, x1, y1), ICE[1])
+    ic.fill(line(x0 + 2, y0 + 3, x0 + 4, y0 + 1), WHITE)
+
+
+def flick_hand(ic, x, y):
+    """A white-gloved hand from the left, index finger flicking right."""
+    cuff = rect(x, y + 1, x + 1, y + 5)
+    sleeve = rect(x - 4, y, x - 1, y + 6)
+    coat_sleeve(ic, sleeve, cuff)
+    palm = rect(x + 2, y + 1, x + 5, y + 5)
+    ic.solid(palm, (SKIN_R[1], SKIN_R[2], SKIN_R[3]))
+    finger = rect(x + 6, y + 1, x + 9, y + 2)
+    ic.solid(finger, (SKIN_R[1], SKIN_R[2], SKIN_R[3]))
+    thumb = rect(x + 4, y - 1, x + 5, y)
+    ic.solid(thumb, (SKIN_R[1], SKIN_R[2], SKIN_R[3]))
+    return palm | finger
+
+
+@art
+def stopped_sand():
+    """A sweep of the hand throws a handful of dust; every grain stops in the air in a fan, each
+    glinting the instant it halted, the foe at the end of the fan pierced by the first ones."""
+    ic = Icon("regulus", center=(15, 16))
+    flick_hand(ic, 5, 20)
+    import random
+    rnd = random.Random(11)
+    for i in range(16):
+        a = math.radians(-58 + i * 4.2 + rnd.uniform(-2, 2))
+        d = 6 + rnd.uniform(0, 13) + i * 0.25
+        x, y = int(round(14 + math.cos(a) * d)), int(round(21 + math.sin(a) * d))
+        # the short travel trail that ends where time stopped the grain
+        tx, ty = int(round(14 + math.cos(a) * (d - 3))), int(round(21 + math.sin(a) * (d - 3)))
+        ic.mix(line(tx, ty, x, y), GOLD_R[2], 0.35)
+        grain(ic, x, y, GOLD[3] if i % 3 == 0 else GOLD[2])
+    foe(ic, 21, 5)
+    crack_star(ic, 24, 10, 3, seed=5)
+    return ic.image()
+
+
+@art
+def air_severance():
+    """A flat sheet of stopped air, thin as glass, widening as it flies, the foe cut clean across
+    it; behind the sheet the hairline scar it left in the air."""
+    ic = Icon("regulus", center=(16, 16))
+    sheet = poly([(4, 15), (27, 9), (27, 21), (4, 17)])
+    ic.mix(sheet, ICE[2], 0.4)
+    ic.fill(line(4, 15, 27, 9), WHITE)
+    ic.fill(line(4, 17, 27, 21), ICE[1])
+    ic.fill(line(6, 16, 26, 15), ICE[3])
+    for x in range(5, 18, 3):
+        ic.set(x, 16 + (x % 2), PALE[1])
+    top = foe(ic, 19, 3)
+    # the cut: a gap through the foe at the sheet's height
+    for x in range(17, 30):
+        ic.set(x, 13, WHITE)
+        ic.set(x, 14, BG[1])
+    ic.sparkle(27, 13, big=False, col=ICE[3])
+    return ic.image()
+
+
+@art
+def trample():
+    """Trample: a white-trousered leg brings the heel down; the ground caves under it and a flat
+    gold shock ring runs out across the floor, chips of earth jumping off the crater's rim."""
+    ic = Icon("regulus", center=(16, 18))
+    ground = 23
+    ic.fill(rect(2, ground, 29, 29), BG[3])
+    ic.fill(rect(2, ground, 29, ground), PALE[0])
+    # the crater and its cracks
+    pit = {(x, y) for x in range(32) for y in range(ground, ground + 4)
+           if ((x - 16) / 5.0) ** 2 + ((y - ground) / 2.6) ** 2 <= 1}
+    ic.fill(pit, INK)
+    for pts in (((11, 24), (7, 26), (4, 26)), ((21, 24), (25, 26), (28, 27)), ((14, 26), (12, 29)), ((18, 26), (20, 29))):
+        ic.fill(polyline(pts), INK)
+    # the shock rings: flat ellipses on the floor, the outer one brighter at its front
+    outer = ring_pts(16, ground + 1, 14, 3.4, 0, 360, 2)
+    inner = ring_pts(16, ground + 1, 9, 2.2, 0, 360, 3)
+    ic.fill({p for p in outer if p[1] >= ground}, GOLD_R[2])
+    ic.fill({p for p in outer if p[1] > ground + 2}, GOLD_R[3])
+    ic.fill({p for p in outer if p[1] < ground}, GOLD_R[1])
+    ic.fill({p for p in inner if p[1] >= ground - 1}, GOLD_R[3])
+    # the leg: white trouser down to a gold cuff, a dark boot heel-first into the pit
+    leg = poly([(14, 2), (19, 2), (19, 15), (14, 15)])
+    ic.solid(leg, [COAT[1], COAT[2], COAT[3], COAT[3]])
+    ic.fill(rect(14, 15, 19, 16), GOLD_R[2])
+    ic.set(14, 16, GOLD_R[1])
+    boot = poly([(14, 17), (19, 17), (19, 23), (9, 23), (9, 21), (14, 20)])
+    ic.solid(boot, [STONE[0], STONE[1], STONE[2], STONE[3]])
+    # speed streaks above the knee-down
+    for x, y0, y1 in ((11, 4, 11), (22, 3, 13), (24, 7, 12)):
+        ic.fill(line(x, y0, x, y1), PALE[1])
+    # chips of earth jumping off the rim
+    for (x, y) in ((5, 17), (26, 15), (8, 13), (24, 19)):
+        chip = {(x, y), (x + 1, y), (x, y + 1), (x + 1, y + 1)}
+        ic.fill(grow(chip) - chip, OUT)
+        ic.fill(chip, DIRT[2])
+        ic.set(x, y, DIRT[3])
+    ic.sparkle(27, 22, big=False)
+    ic.sparkle(4, 22, big=False)
+    return ic.image()
+
+
+@art
+def right_of_reply():
+    """Right of Reply: a pane of stopped air takes the foe's blow (the arrow snapped against it),
+    and the reply goes back along the same line in gold."""
+    ic = Icon("regulus", center=(16, 16))
+    pane(ic, 13, 5, 17, 26)
+    arrow(ic, 28, 12, 19, 14, col=ICE[1], head=ICE[3], fletch=ICE[2])
+    crack_star(ic, 18, 14, 3, seed=2)
+    ret = line(12, 20, 3, 23, w=1.2)
+    glow_line(ic, ret, core=WHITE, halo=GOLD[2], outer=GOLD_R[1])
+    ic.fill(line(4, 21, 3, 23) | line(5, 25, 3, 23), GOLD[3])
+    ic.sparkle(24, 24, big=False)
+    return ic.image()
+
+
+@art
+def kingdom_of_one():
+    """Kingdom of One: a single foe held in a dome of stopped air, five rings of gold grains
+    around it, the crown above: one subject, one judge."""
+    ic = Icon("regulus", center=(16, 17))
+    ground = 26
+    ic.fill(rect(2, ground + 1, 29, 29), BG[2])
+    ic.fill(rect(2, ground + 1, 29, ground + 1), BG[4])
+    cx, cy, rx, ry = 16, ground, 12.0, 17.0
+    dome = {(x, y) for x in range(32) for y in range(32) if y <= ground and ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1}
+    ic.mix(dome, ICE[2], 0.16)
+    for a in range(184, 357, 8):
+        x = int(round(cx + rx * math.cos(math.radians(a))))
+        y = int(round(cy + ry * math.sin(math.radians(a))))
+        ic.set(x, y, ICE[3] if x < cx else ICE[2])
+    foe(ic, 12, 12)
+    for k, r in enumerate((6.5, 9.0)):
+        for i in range(10):
+            a = math.radians(i * 36 + k * 18)
+            grain(ic, int(round(16 + math.cos(a) * r)), int(round(18 + math.sin(a) * r * 0.45)), glint=i % 2 == 0)
+    crown = rows_mask(CROWN, 13, 3)
+    ic.solid(crown, (GOLD[0], GOLD[2], GOLD[3]))
+    ic.set(13, 3, WHITE)
+    return ic.image()
+
+
+@art
+def greeds_touch():
+    """Greed's Touch: a bored flick of one finger; where it touched, the air cracks like glass."""
+    ic = Icon("regulus", center=(16, 16))
+    flick_hand(ic, 6, 14)
+    crack_star(ic, 20, 15, 7, seed=4)
+    ic.sparkle(26, 7, big=False)
+    return ic.image()
+
+
+@art
+def little_king():
+    """The Little King: his heart leaves the crown and travels into a subject's chest."""
+    ic = Icon("regulus", center=(16, 16))
+    crown = rows_mask(CROWN, 4, 6)
+    ic.solid(crown, (GOLD[0], GOLD[2], GOLD[3]))
+    foe(ic, 19, 11)
+    for i, (x, y) in enumerate(((9, 12), (12, 11), (15, 12))):
+        ic.set(x, y, GOLD[2] if i % 2 else PALE[2])
+    heart(ic, SMALL_HEART, 21, 15, HEART)
+    heart(ic, SMALL_HEART, 5, 13, (HEART[0], HEART[2], HEART[3], WHITE))
     return ic.image()

@@ -21,7 +21,7 @@ public final class HeroRegistry {
    public static void registerDefaults() {
       register(new HumanHero());
       register(new ViltrumiteHero());
-      register(new RegulusHero());
+      register(RegulusHero.INSTANCE);
       register(new dev.baranhan.viltrumitecore.hero.homelander.HomelanderHero());
       register(new dev.baranhan.viltrumitecore.hero.ironman.IronManHero());
       register(dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero.INSTANCE);
@@ -131,6 +131,9 @@ public final class HeroRegistry {
          }
 
          abilityUser.setOfferedAbilities(defaultIds(loadout));
+         // The new loadout starts on the first page: the old hero's page (Iron Man's second page,
+         // Reinhard's mode page) left a hero without pages on dead keys and Alt could not move it.
+         abilityUser.setActivePage(AbilityPages.FIRST);
       }
 
       heroPlayer.viltrumitecore$setHeroSession(new HeroSession(id, UUID.randomUUID(), false));
@@ -249,6 +252,12 @@ public final class HeroRegistry {
       String[] repaired = repairedSlots(slots, hero);
       if (repaired == null) {
          resetLoadout(player);
+         String[] reset = new String[18];
+         for (int slot = 0; slot < 18; slot++) {
+            reset[slot] = abilityUser.getAbilityInSlot(slot);
+         }
+
+         abilityUser.setActivePage(AbilityPages.settle(abilityUser.getActivePage(), reset));
          return;
       }
 
@@ -277,6 +286,12 @@ public final class HeroRegistry {
       java.util.Set<String> given = new java.util.LinkedHashSet<>(offered);
       given.addAll(defaultIds(defaults));
       abilityUser.setOfferedAbilities(given);
+      // A save left on an empty page (before the page reset on hero change) moves to a filled one.
+      int page = abilityUser.getActivePage();
+      int settled = AbilityPages.settle(page, filled);
+      if (settled != page) {
+         abilityUser.setActivePage(settled);
+      }
    }
 
    /**

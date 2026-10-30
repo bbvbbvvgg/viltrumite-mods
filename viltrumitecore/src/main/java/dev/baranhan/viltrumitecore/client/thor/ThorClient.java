@@ -45,5 +45,7 @@ public final class ThorClient {
       HeroHeadPreviews.register(HeroId.THOR, HeroHeadPreviews.skinFace(SKIN));
       MjolnirClient.init();
       ThorCombatClient.init();
+      MjolnirTrails.init();
+      WrathCamera.init();
    }
 }

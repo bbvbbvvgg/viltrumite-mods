@@ -47,17 +47,26 @@ class SinclairLangTest {
 
       for (ActShape shape : ActShape.values()) {
          keys.add(SinclairRepertoire.nameKey(shape));
+         keys.add(SinclairRepertoire.nameKey(shape) + ".desc");
       }
 
-      for (String hud : new String[]{"hexed", "window", "veil", "assistant", "ovation", "fallback"}) {
+      for (String hud : new String[]{"hexed", "window", "veil", "assistant", "ovation", "fallback", "card_title", "card_from"}) {
          keys.add("hud.viltrumitecore.sinclair." + hud);
       }
 
-      JsonObject sounds = read(RES.resolve("sounds.json"));
-      for (String event : sounds.keySet()) {
-         if (event.startsWith("sinclair.")) {
-            keys.add(sounds.getAsJsonObject(event).get("subtitle").getAsString());
+      // pass-1 events in the shared sounds.json, pass-2 events in Sinclair's own namespace (SinclairSounds.stage)
+      for (Path file : new Path[]{RES.resolve("sounds.json"), OWN_LANG.getParent().resolve("sounds.json")}) {
+         JsonObject sounds = read(file);
+         for (String event : sounds.keySet()) {
+            if (event.startsWith("sinclair.")) {
+               keys.add(sounds.getAsJsonObject(event).get("subtitle").getAsString());
+            }
          }
+      }
+
+      keys.addAll(dev.baranhan.viltrumitecore.hero.sinclair.act.CopyCard.allKeys());
+      for (String command : new String[]{"on", "off", "status", "state_on", "state_off"}) {
+         keys.add("commands.viltrumitecore.sinclair.cinematic." + command);
       }
 
       for (String entity : new String[]{"spark", "vexing_bolt", "assistant", "decoy", "hex_hat", "hex_mark", "act_prop", "act_card"}) {
@@ -70,7 +79,9 @@ class SinclairLangTest {
    @Test
    void everyLocaleHasEveryKey() throws IOException {
       List<String> keys = requiredKeys();
-      assertEquals(78, keys.size(), "key table changed: update tools/lang/sinclair_lang.py");
+      // Base 78; #92 adds 8 (six act descriptions, card_title, card_from) = 86; #91 adds 51 (copy cinematic, cinematic
+      // command, act parts, own-namespace subtitles) = 129; both together: 78 + 8 + 51 = 137.
+      assertEquals(137, keys.size(), "key table changed: update tools/lang/sinclair_lang.py");
       for (String locale : LOCALES) {
          JsonObject lang = read(OWN_LANG.resolve(locale + ".json"));
          for (String key : keys) {

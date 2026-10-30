@@ -244,7 +244,7 @@ public final class IronManCombatVfx {
       PoseStack modelViewStack = RenderSystem.getModelViewStack();
       modelViewStack.pushPose();
       modelViewStack.setIdentity();
-      PixelVfx.rotateCamera(modelViewStack, camera.getXRot(), camera.getYRot());
+      PixelVfx.levelView(modelViewStack, event);
       RenderSystem.applyModelViewMatrix();
       RenderSystem.enableBlend();
       RenderSystem.disableCull();
@@ -349,7 +349,7 @@ public final class IronManCombatVfx {
       int[] marks = ClientHeroData.section(OwnerSection.MARKS);
       for (int id : marks) {
          Entity target = level.getEntity(id);
-         if (target == null || target.isRemoved()) {
+         if (target == null || target.isRemoved() || !target.isAlive()) {
             continue;
          }
 

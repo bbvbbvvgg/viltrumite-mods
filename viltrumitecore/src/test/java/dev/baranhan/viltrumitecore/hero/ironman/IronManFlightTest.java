@@ -29,7 +29,7 @@ class IronManFlightTest {
    void profileNullForOtherHeroes() {
       assertNull(new HumanHero().flightProfile(null));
       assertNull(new HomelanderHero().flightProfile(null));
-      assertNull(new RegulusHero().flightProfile(null));
+      assertNull(RegulusHero.INSTANCE.flightProfile(null));
    }
 
    @Test

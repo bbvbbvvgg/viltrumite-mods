@@ -33,7 +33,7 @@ class ErasedLifecycleTest {
       switch(id) {
          case VILTRUMITE -> { for(String key:body.flags.keySet()) if(key.startsWith("set")) assertTrue(Boolean.FALSE.equals(body.flags.get(key))||Integer.valueOf(0).equals(body.flags.get(key)),key); }
          case HOMELANDER -> assertFresh(body.state,new HomelanderState(),Set.of());
-         case REGULUS -> { assertFresh(body.state,new RegulusState(),Set.of("cooldowns")); assertEquals(99,((RegulusState)body.state).cooldownOf("test")); }
+         case REGULUS -> { assertFresh(body.state,new RegulusState(),Set.of("sandCooldown","ultCooldown")); assertEquals(99,((RegulusState)body.state).sandCooldown); assertEquals(1200,((RegulusState)body.state).ultCooldown); }
          case IRON_MAN -> {assertFresh(body.state,new IronManState(),Set.of("roster","veronicaCooldown","podUuid","signature","countermeasures","suit","hulkbuster")); var s=(IronManState)body.state; assertEquals(SuitState.NONE,s.suit.state()); assertFalse(s.wantsFlight()); assertEquals(99,s.veronicaCooldown); assertEquals(IronManRules.ENERGY_MAX,s.energy.value()); assertEquals(0,s.overheat.count()); assertEquals(99,s.signature.cooldown); assertEquals(75,s.countermeasures.cooldown());}
          case REINHARD -> {assertFresh(body.state,new ReinhardState(),Set.of("mode","modeCooldown","cooldowns")); var s=(ReinhardState)body.state; assertEquals(ReinhardMode.HOLY_SWORD,s.mode); assertEquals(88,s.cooldowns[0]); assertFalse(s.busy());}
          default -> fail();
@@ -70,7 +70,7 @@ class ErasedLifecycleTest {
       Fake(HeroId hero){this.hero=hero;session=new HeroSession(hero,UUID.randomUUID(),true);held.press(MouseButton.PRIMARY,SINK);
          switch(hero){
             case HOMELANDER -> {var s=new HomelanderState(); s.laserHeld=true;s.laserAge=70;s.focusOn=true;s.focusTargets.add(7);s.roarAnim=10;s.roarCooldown=60;s.regen.onDamaged();s.heat.tick(true,true);state=s;}
-            case REGULUS -> {var s=new RegulusState();s.beginAction("test",40,10,30);s.carriers.add(UUID.randomUUID());s.carrierLevels.put(UUID.randomUUID(),new net.minecraft.resources.ResourceLocation("minecraft","overworld"));s.lionActive=true;s.channelTargetId=UUID.randomUUID();s.channelEffectId=UUID.randomUUID();s.madnessTicksLeft=40;s.cooldowns.put("test",99);state=s;}
+            case REGULUS -> {var s=new RegulusState();s.startMove(dev.baranhan.viltrumitecore.hero.regulus.RegulusMove.SAND);s.subjects.add(UUID.randomUUID());s.host=UUID.randomUUID();s.hopTimer=50;s.lion=true;s.lionTicks=40;s.strain=600;s.lionLock=30;s.comboStep=2;s.replyAttacker=UUID.randomUUID();s.sandCooldown=99;s.ultCooldown=1200;state=s;}
             case IRON_MAN -> {var s=new IronManState();s.suit.toggle();s.energy.drain(80);s.glide=true;s.heldTool=dev.baranhan.viltrumitecore.hero.ironman.combat.RightTool.NANO_HAMMER;s.repulsor.press();s.hulkKit.grab.victimId=7;s.hulkKit.grab.victimUuid=UUID.randomUUID();s.hulkKit.grab.effect=UUID.randomUUID();s.ramHits.put(UUID.randomUUID(),20L);s.threats.add(7);s.emptySuitId=8;s.veronicaCooldown=99;s.signature.cooldown=99;s.countermeasures.setCooldown(75);state=s;}
             case REINHARD -> {var s=new ReinhardState();s.mode=ReinhardMode.HOLY_SWORD;s.cooldowns[0]=88;s.modeCooldown=12;s.action.start(ReinhardAbility.LIGHT_PUNCH,10,-1);s.comboStep=2;s.comboQueued=true;s.catchWindow=10;s.reflectWindow=15;s.recentAttackers.put(UUID.randomUUID(),10L);state=s;}
             default -> {flags.put("setBarraging",true);flags.put("setBlocking",true);flags.put("setPunchTicks",10);}
@@ -78,7 +78,7 @@ class ErasedLifecycleTest {
       }
       public void cleanupHero(CleanupReason reason){assertEquals(CleanupReason.ERASED,reason);order.add("hero");switch(hero){
          case HOMELANDER -> state=((HomelanderState)state).erasedCopy();
-         case REGULUS -> {var s=(RegulusState)state;s.resetTransient(reason);assertNull(s.actionId);assertTrue(s.carrierLevels.isEmpty());state=s.erasedCopy();}
+         case REGULUS -> {var s=(RegulusState)state;s.resetTransient();assertNull(s.move);assertTrue(s.subjects.isEmpty());assertNull(s.host);assertFalse(s.lion);state=s.respawnCopy();}
          case IRON_MAN -> {var s=(IronManState)state;s.onCleanup(reason);assertEquals(SuitState.NONE,s.suit.state());state=s.erasedCopy();}
          case REINHARD -> state=((ReinhardState)state).erasedCopy();
          default -> {var core=new FakeCore(flags);LegacyKit.resetActions(core);}

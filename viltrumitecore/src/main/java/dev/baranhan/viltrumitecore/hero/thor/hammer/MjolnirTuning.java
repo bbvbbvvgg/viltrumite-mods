@@ -54,6 +54,16 @@ public final class MjolnirTuning {
    public static final double THROW_SPEED = 2.2;
    public static final double THROW_SPEED_CHARGED = 3.2;
    /** PLACEHOLDER: wind-up before the release, max hold (charging) and follow-through (move phases). */
+   /** Pick-up from the ground (PICKUP): bend and grip, heave (the hammer reaches the hand at its start), settle. */
+   public static final int PICKUP_REACH = 9;
+   public static final int PICKUP_HEAVE = 15;
+   public static final int PICKUP_SETTLE = 9;
+   /** Horizontal distance (blocks) from Thor's feet to the hammer at which the bend can still close on the handle. */
+   public static final double PICKUP_MAX_DISTANCE = 2.6;
+   /** Where Thor stands to grip a planted handle (horizontal blocks from the feet to the handle; ThorLift's grip distance). */
+   public static final double PICKUP_STAND = 0.72;
+   /** Ground friction of a walking player per tick (block 0.6 x 0.91): a step impulse v travels about v / (1 - this). */
+   static final double PICKUP_STEP_FRICTION = 0.546;
    public static final int THROW_WINDUP = 4;
    public static final int THROW_HOLD_MAX = 40;
    public static final int THROW_FOLLOW = 8;

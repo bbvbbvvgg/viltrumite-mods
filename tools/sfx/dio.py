@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """DIO / The World: fully original procedural SFX (own synthesis, CC0-1.0). No external samples.
 
+Every cue is loudness-matched by role (LOUDNESS); variants (_2, _3) rotate in the DIO sound overlay
+(viltrumitecore/src/main/sound-overlays/dio/sounds.json, merged into sounds.json at build).
+
 Usage: python3 tools/sfx/dio.py [--check] [--wav DIR]
 Deterministic numpy synthesis -> mono 44.1 kHz 16-bit -> ffmpeg libvorbis (bitexact) -> base64
 text assets in core binassets (decoded by Gradle decodeBinaryAssets). --check re-synthesises in a
@@ -210,7 +213,20 @@ def stand_dismiss():
 
 
 def stand_whoosh():
-    return finish(whoosh(0.28, 500, 3500, 30, 0.35) , -4)
+    # two bodies: the arm's low push and the Stand's thin golden air on top (louder than a vanilla swing)
+    d = 0.3
+    t = tt(d)
+    body = whoosh(d, 260, 1400, 30, 0.38)
+    air = whoosh(d, 1800, 6500, 31, 0.32) * 0.45
+    shimmer = filt(noise(d, 32), 6000, 12000) * env(np.maximum(t - 0.08, 0), 0.03, 0.08) * 0.12
+    return finish(body + air + shimmer, -3)
+
+
+def stand_hit_2():
+    d = 0.32
+    x = punch(d, 175, 60, 0.065, 1.0, 43)
+    x += whoosh(d, 900, 3200, 44, 0.05) * 0.15
+    return finish(reverb(x, 0.35, 45, 0.15))
 
 
 def stand_hit():
@@ -233,6 +249,14 @@ def stand_hook():
 def barrage_hit():
     d = 0.14
     return finish(punch(d, 200, 70, 0.035, 0.7, 60), -3)
+
+
+def barrage_hit_2():
+    return finish(punch(0.14, 225, 78, 0.03, 0.85, 61), -3)
+
+
+def barrage_hit_3():
+    return finish(punch(0.15, 180, 62, 0.04, 0.6, 62), -3)
 
 
 def barrage_rush():
@@ -285,13 +309,19 @@ def knife_throw():
     return finish(out, -3)
 
 
-def knife_hit():
+def knife_hit(seed=110, ring_f=2900):
+    # blade bites: a wooden "thock" body under the steel tick, so the hit reads at range
     d = 0.25
     t = tt(d)
-    th = thump(t, 300, 110, 0.04) * 0.7
-    tick = ring(t, [(2900, 1, 1), (4630, .6, .6), (6900, .4, .4)], 0.06, 110) * 0.4
-    sn = filt(noise(d, 111), 2000, 8000) * env(t, 0.0005, 0.008)
-    return finish(th + tick + sn * 0.5, -3)
+    th = thump(t, 300, 110, 0.04) * 0.8
+    thock = resonator(noise(d, seed + 2) * env(t, 0.0004, 0.006), 880, 9) * 3.0
+    tick = ring(t, [(ring_f, 1, 1), (ring_f * 1.597, .6, .6), (ring_f * 2.38, .4, .4)], 0.06, seed) * 0.4
+    sn = filt(noise(d, seed + 1), 2000, 8000) * env(t, 0.0005, 0.008)
+    return finish(tanh(th + thock * 0.5 + tick + sn * 0.5, 1.3), -3)
+
+
+def knife_hit_2():
+    return knife_hit(114, 3350)
 
 
 def knife_stop():
@@ -414,11 +444,21 @@ def roller_slam():
     return finish(reverb(x, 1.4, 213, 0.3))
 
 
-def roller_punch():
-    d = 0.2
+def roller_punch(seed=220, base=310):
+    # fist on the steel drum: knuckle punch + a dented-plate clang, three plate tunings rotate
+    d = 0.22
     t = tt(d)
-    clang = ring(t, [(310, 1, 1), (705, .8, .7), (1220, .6, .5), (1980, .4, .35)], 0.07, 220, 0.02)
-    return finish(tanh(punch(d, 170, 60, 0.04, 0.8, 221) * 0.8 + clang * 0.5, 1.6), -3)
+    clang = ring(t, [(base, 1, 1), (base * 2.27, .8, .7), (base * 3.94, .6, .5), (base * 6.39, .4, .35)], 0.07, seed, 0.02)
+    dent = filt(noise(d, seed + 5), 300, 2500) * env(t, 0.0008, 0.02) * 0.4
+    return finish(tanh(punch(d, 170, 60, 0.04, 0.8, seed + 1) * 0.8 + clang * 0.5 + dent, 1.6), -3)
+
+
+def roller_punch_2():
+    return roller_punch(224, 285)
+
+
+def roller_punch_3():
+    return roller_punch(228, 342)
 
 
 def roller_explode():
@@ -476,10 +516,71 @@ def deflect():
 
 
 def refuse():
-    d = 0.22
+    # "not enough blood": two dry descending pulses (low, short, never mistaken for a hit)
+    d = 0.3
     t = tt(d)
-    buzz = filt(sweep(t, 150, 110, shape="saw"), 80, 1200) * env(t, 0.005, 0.07)
-    return finish(buzz, -8)
+    out = np.zeros_like(t)
+    for at, f0 in ((0.0, 170), (0.12, 128)):
+        c = tt(0.12)
+        buzz = filt(sweep(c, f0, f0 * 0.82, shape="saw"), 70, 1600) * env(c, 0.004, 0.045)
+        place(out, buzz + thump(c, f0 * 0.6, f0 * 0.4, 0.03) * 0.6, at)
+    return finish(out, -6)
+
+
+def roller_leap():
+    """DIO kicks off the ground (tick 26): stone crack under the boots, then a rising wind with coat flutter."""
+    d = 0.95
+    t = tt(d)
+    kick = punch(0.5, 110, 38, 0.12, 0.9, 280, sub=1.3)
+    grit = np.zeros_like(t)
+    r = rng(281)
+    for i in range(18):
+        c = tt(0.03)
+        place(grit, filt(noise(0.03, 600 + i), 900, 6000) * env(c, 0.0005, 0.006) * r.uniform(0.2, 0.6), r.exponential(0.07))
+    rise = bandsweep(noise(d, 282), 150, 600, 1500, 6000, curve=0.6)
+    u = t / d
+    rise *= np.where(u < 0.4, (u / 0.4) ** 1.5, np.exp(-(u - 0.4) * 4.0))
+    flutter = filt(noise(d, 283), 250, 1800) * (0.5 + 0.5 * np.sin(2 * np.pi * (18 + 10 * u) * t)) ** 3
+    flutter *= env(t, 0.12, 0.35) * 0.35
+    x = np.zeros_like(t)
+    place(x, tanh(kick, 1.6), 0.0)
+    x += grit * 0.6 + rise * 0.75 + flutter
+    return finish(reverb(x, 0.9, 284, 0.22), -2, 0.002, 0.15)
+
+
+def roller_fall():
+    """The roller drops from the apex (tick 70) to the slam (tick 96, 1.3 s): an incoming whistle and a
+    wind rush that crescendo and cut a hair before the impact, so roller_slam owns the hit."""
+    d = 1.32
+    t = tt(d)
+    u = np.clip(t / 1.28, 0, 1)
+    whistle = sweep(t, 1900, 520, 1.3) + 0.35 * sweep(t, 2850, 780, 1.3)
+    whistle = filt(whistle, 300, 5000) * (0.15 + 0.85 * u ** 1.8)
+    rush = bandsweep(noise(d, 290), 300, 1200, 120, 3500, curve=0.8) * (0.1 + 0.9 * u ** 2.2)
+    mass = filt(noise(d, 291), 25, 160) * u ** 3 * 1.2
+    rpm = 12 + 10 * u
+    chug = (0.5 + 0.5 * np.sin(2 * np.pi * np.cumsum(rpm) / SR)) ** 5
+    engine = filt(noise(d, 292), 40, 380) * chug * 0.5 * u
+    x = whistle * 0.35 + rush * 0.7 + mass + engine
+    x *= np.where(t < 1.28, 1.0, np.clip(1 - (t - 1.28) / 0.04, 0, 1))
+    return finish(x, -2, 0.08, 0.01)
+
+
+def roller_land():
+    """DIO hops off the roller and lands (tick 174): boot thud, gravel and a cloth settle."""
+    d = 0.7
+    t = tt(d)
+    thud = punch(0.45, 130, 48, 0.09, 0.5, 300, sub=1.2)
+    gravel = np.zeros_like(t)
+    r = rng(301)
+    for i in range(22):
+        c = tt(0.025)
+        place(gravel, filt(noise(0.025, 700 + i), 1200, 7000) * env(c, 0.0005, 0.005) * r.uniform(0.15, 0.5), 0.01 + r.exponential(0.09))
+    cloth = filt(noise(d, 302), 400, 3000) * env(np.maximum(t - 0.05, 0), 0.04, 0.18) * 0.25
+    x = np.zeros_like(t)
+    place(x, tanh(thud, 1.5), 0.0)
+    x += gravel * 0.55 + cloth
+    return finish(reverb(x, 0.5, 303, 0.18), -2, 0.002, 0.1)
 
 
 def sun_sizzle():
@@ -503,7 +604,42 @@ CUES = {
     "roller_appear": roller_appear, "roller_slam": roller_slam, "roller_punch": roller_punch,
     "roller_explode": roller_explode, "wryyy": wryyy, "guard": guard, "deflect": deflect, "refuse": refuse,
     "sun_sizzle": sun_sizzle,
+    "stand_hit_2": stand_hit_2, "barrage_hit_2": barrage_hit_2, "barrage_hit_3": barrage_hit_3,
+    "knife_hit_2": knife_hit_2, "roller_punch_2": roller_punch_2, "roller_punch_3": roller_punch_3,
+    "roller_leap": roller_leap, "roller_fall": roller_fall, "roller_land": roller_land,
 }
+
+# Loudness matching (the 2026 polish): cues used to be peak-normalised only, which left a 13 dB spread
+# (knife_hit / stand_whoosh / sun_sizzle buried, roller_punch as loud as the slam). Each cue is now set
+# to a target momentary loudness (loudest 100 ms RMS, dBFS) by role, then soft-limited under the ceiling.
+# role targets: signature/heavy -8..-10, hits -10..-12.5, motion -11..-15, utility/loop -15..-17.
+LOUDNESS = {
+    "time_stop": -9.0, "roller_slam": -8.5, "roller_explode": -8.0, "finisher": -8.5, "stand_summon": -10.0,
+    "wryyy": -10.0, "ledger_burst": -9.5, "time_resume": -10.5,
+    "stand_hit": -10.0, "stand_hit_2": -10.0, "stand_hook": -9.0, "barrage_hit": -11.5, "barrage_hit_2": -11.5,
+    "barrage_hit_3": -11.5, "roller_punch": -11.5, "roller_punch_2": -11.5, "roller_punch_3": -11.5,
+    "knife_hit": -12.0, "knife_hit_2": -12.0, "guard": -12.0, "deflect": -12.0,
+    "stand_whoosh": -13.5, "knife_throw": -14.0, "knife_draw": -15.0, "barrage_rush": -12.0, "stand_dismiss": -13.0,
+    "roller_leap": -11.0, "roller_fall": -10.5, "roller_land": -11.5, "roller_appear": -11.0,
+    "drain_grab": -12.5, "drain_pulse": -12.5, "knife_stop": -15.0, "refuse": -15.0, "sun_sizzle": -16.0,
+    "time_tick": -17.0,
+}
+CEILING_DB = -1.5
+
+
+def momentary_db(x):
+    w = int(0.1 * SR)
+    c = np.convolve(x * x, np.ones(w) / w, "valid") if len(x) > w else np.array([np.mean(x * x)])
+    return 10 * np.log10(np.max(c) + 1e-12)
+
+
+def master(x, target):
+    ceil = 10 ** (CEILING_DB / 20)
+    for _ in range(3):
+        x = x * 10 ** ((target - momentary_db(x)) / 20)
+        if np.max(np.abs(x)) > ceil:
+            x = ceil * np.tanh(x / ceil)
+    return x
 
 
 # --- packaging ---------------------------------------------------------------------------------
@@ -530,7 +666,7 @@ def decoded_pcm(ogg):
 def build(tmp, wav_dir=None):
     res = {}
     for name, fn in CUES.items():
-        x = fn()
+        x = master(fn(), LOUDNESS[name])
         assert np.isfinite(x).all() and np.max(np.abs(x)) > 0.05, name
         w = Path(tmp) / (name + ".wav")
         o = Path(tmp) / (name + ".ogg")

@@ -4,7 +4,9 @@ import dev.baranhan.viltrumitecore.client.anim.geo.BakedGeoModel;
 import dev.baranhan.viltrumitecore.client.anim.geo.GeoBone;
 import dev.baranhan.viltrumitecore.client.anim.geo.GeoPose;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
+import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.thor.MjolnirPlace;
+import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
 import java.util.Map;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
@@ -33,7 +35,7 @@ public final class ThorLift {
    public static final float THOR_UPPER_PX = 1.0F;
    public static final float THOR_LOWER_PX = 5.6F;
    /** Horizontal distance (blocks) from the body root to the handle when gripping. */
-   public static final double THOR_DISTANCE = 0.72;
+   public static final double THOR_DISTANCE = dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirTuning.PICKUP_STAND;
    /** Blend arc of the fists (model blocks): out and forward, peak at a third of the weight. */
    static final float ARC_OUT = 9.0F / 16.0F;
    static final float ARC_FORWARD = 10.0F / 16.0F;
@@ -66,13 +68,18 @@ public final class ThorLift {
       MjolnirAnchors.Grip grip;
       int startTick;
       boolean active;
+      /** The grip belongs to Thor's PICKUP (kept through the fade-out, while the hammer rises in his hand). */
+      boolean pickup;
    }
 
    /**
     * One frame of the lift: the grip, its weight, the visual root (feet, world) and facing yaw.
     * {@code seconds} = time since the hold began (the lift_squat loop clock).
     */
-   public record Frame(MjolnirAnchors.Grip grip, float weight, Vec3 root, float yaw, double seconds, boolean thorBody) {
+   public record Frame(MjolnirAnchors.Grip grip, float weight, Vec3 root, float yaw, double seconds, boolean thorBody, boolean pickup) {
+      public Frame(MjolnirAnchors.Grip grip, float weight, Vec3 root, float yaw, double seconds, boolean thorBody) {
+         this(grip, weight, root, yaw, seconds, thorBody, false);
+      }
    }
 
    private ThorLift() {
@@ -87,6 +94,14 @@ public final class ThorLift {
       }
 
       HeroPublicSnapshot snapshot = ThorView.of(player);
+      if (snapshot != null && pickupReach(snapshot)) {
+         // PICKUP's bend (owner playtest: no instant pick-up): both hands go onto the handle before the hammer moves.
+         MjolnirAnchors.Grip nearest = MjolnirAnchors.nearest(player, partialTick);
+         if (nearest != null) {
+            return nearest;
+         }
+      }
+
       if (snapshot == null || !player.isCrouching() || ThorView.place(snapshot, player) == MjolnirPlace.HAND) {
          return null;
       }
@@ -99,6 +114,11 @@ public final class ThorLift {
       Vec3 feet = player.getPosition(partialTick);
       double dx = nearest.rest().x - feet.x, dz = nearest.rest().z - feet.z;
       return dx * dx + dz * dz <= THOR_HOLD_RADIUS * THOR_HOLD_RADIUS && Math.abs(nearest.rest().y - feet.y) < 1.0 ? nearest : null;
+   }
+
+   /** Thor is in PICKUP's bend (before the contact tick the hammer still rests where it stood). */
+   static boolean pickupReach(HeroPublicSnapshot snapshot) {
+      return ThorView.move(snapshot) == ThorMove.PICKUP && ThorView.phase(snapshot) == MovePhase.INTRO;
    }
 
    /** This frame's lift (weight ramps by real time), or null when the player is not holding a hammer. */
@@ -115,6 +135,8 @@ public final class ThorLift {
 
          blend.active = true;
          blend.grip = grip;
+         HeroPublicSnapshot snapshot = ThorView.of(player);
+         blend.pickup = snapshot != null && pickupReach(snapshot);
       } else {
          blend.active = false;
       }
@@ -134,7 +156,7 @@ public final class ThorLift {
       Vec3 visual = feet.add(root.subtract(feet).scale(w));
       float yaw = bodyYaw + Mth.wrapDegrees(face - bodyYaw) * w;
       double seconds = (player.tickCount - blend.startTick + partialTick) / 20.0;
-      return new Frame(blend.grip, w, visual, yaw, seconds, thorBody);
+      return new Frame(blend.grip, w, visual, yaw, seconds, thorBody, blend.pickup);
    }
 
    /** Pure: the weight one step on. */
@@ -193,10 +215,23 @@ public final class ThorLift {
     * in the world (the renderer's lift root, crouch offset included), {@code yaw} its facing.
     */
    public static void poseThor(BakedGeoModel body, MjolnirAnchors.Grip grip, Vec3 root, float yaw, double seconds, float weight) {
+      poseThor(body, grip, root, yaw, seconds, weight, false);
+   }
+
+   /**
+    * {@code pickup}: Thor's own PICKUP. The right fist takes the hammer the way it will carry it, head down (the
+    * held hammer hangs on the grip's -Z), so nothing turns on the contact tick when the hammer changes into the hand
+    * and the fade-out lifts it with the fist.
+    */
+   public static void poseThor(BakedGeoModel body, MjolnirAnchors.Grip grip, Vec3 root, float yaw, double seconds, float weight,
+      boolean pickup) {
       ThorBodyPose.liftClip(body, seconds, weight);
       Vec3[] palms = thorPalms(grip);
-      Vector3f up = toModel(root.add(grip.up()), root, yaw);
-      solveThor(body, toModel(palms[0], root, yaw), toModel(palms[1], root, yaw), up, weight);
+      Vector3f up = new Vector3f(toModel(root.add(grip.up()), root, yaw));
+      solveArm(body, ThorAssets.RIGHT_ARM, ThorAssets.RIGHT_FOREARM, ThorAssets.RIGHT_HAND, ThorAssets.MJOLNIR_GRIP, toModel(palms[0], root, yaw),
+         pickup ? new Vector3f(up).negate() : up, weight, 1.0F);
+      solveArm(body, ThorAssets.LEFT_ARM, ThorAssets.LEFT_FOREARM, ThorAssets.LEFT_HAND, ThorAssets.LEFT_GRIP, toModel(palms[1], root, yaw), up,
+         weight, -1.0F);
    }
 
    /**

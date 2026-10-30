@@ -33,6 +33,7 @@ def main():
     ap.add_argument("--ticks", help="comma list of ticks (overrides beats / every)")
     ap.add_argument("--out", default="/data/dbg")
     ap.add_argument("--cell", default="150x180")
+    ap.add_argument("--no-fp", action="store_true", help="third person only (faster)")
     a = ap.parse_args()
     cell = tuple(int(v) for v in a.cell.split("x"))
     allc = {c.name: c for c in M.all_clips()}
@@ -54,7 +55,7 @@ def main():
         frames = [frame(t, label.get(t, ""), boxes(t), hits(t), PX) for t in ticks]
         data = {"clip": name, "length": clip.length, "contact": clip.contact, "body": "R1 (python solver)", "frames": frames}
         PV.sheet(data, cell).save(os.path.join(a.out, name + ".png"))
-        if clip.fp is not None:
+        if clip.fp is not None and not a.no_fp:
             _, anims, rep, probs, _ = RUN.process(0)
             plan = clip.fp
             if getattr(plan, "loop", None) is not None:

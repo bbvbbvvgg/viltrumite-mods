@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.dio;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -30,8 +31,16 @@ public final class TimeStopField {
    public boolean resumeAnnounced;
    public boolean ended;
    final Set<UUID> living = new LinkedHashSet<>();
+   /** Living held by another control (not ours to anchor): only their tick stops. */
+   final Set<UUID> suspended = new LinkedHashSet<>();
    final Map<UUID, Thing> things = new HashMap<>();
+   /** Entity ids whose tick is skipped (TimeFreeze); ids, so a respawn/rejoin is never held. */
+   final IntOpenHashSet frozenIds = new IntOpenHashSet();
+   /** Motion (and a player's locked view) at capture, given back at the resume. */
+   final Map<UUID, Saved> saved = new HashMap<>();
    final Map<UUID, Ledger> ledger = new HashMap<>();
+   /** Victims who died in this stopped time: they come back free and are never captured again by it. */
+   final Set<UUID> exempt = new java.util.HashSet<>();
    /** Bumped whenever the frozen id list changes, so clients get a resend. */
    int version;
    int sentVersion = -1;
@@ -60,22 +69,25 @@ public final class TimeStopField {
    }
 
    public boolean isFrozen(UUID entity) {
-      return this.living.contains(entity) || this.things.containsKey(entity);
+      return this.living.contains(entity) || this.suspended.contains(entity) || this.things.containsKey(entity);
    }
 
-   /** Saved motion of a non-living thing. */
+   /** This exact entity (by entity id) skips its tick in this field. */
+   public boolean holds(int entityId) {
+      return !this.ended && this.frozenIds.contains(entityId);
+   }
+
+   /** A non-living thing held in the air; its own state is untouched (its tick just does not run). */
    static final class Thing {
       final Vec3 motion;
-      final boolean noGravity;
-      final double powerX, powerY, powerZ;
 
-      Thing(Vec3 motion, boolean noGravity, double powerX, double powerY, double powerZ) {
+      Thing(Vec3 motion) {
          this.motion = motion;
-         this.noGravity = noGravity;
-         this.powerX = powerX;
-         this.powerY = powerY;
-         this.powerZ = powerZ;
       }
+   }
+
+   /** Capture-time state of a frozen entity. */
+   record Saved(int entityId, Vec3 motion, float yaw, float pitch, boolean player) {
    }
 
    /** Damage and push DIO owes one frozen victim. */

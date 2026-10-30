@@ -115,6 +115,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.dio.DioSounds.init();
       // Spec 2026-10-28-sinclair §11: Sinclair sounds, his own entity register and the action lock.
       dev.baranhan.viltrumitecore.hero.sinclair.SinclairSetup.init(modEventBus);
+      // Regulus Reborn (docs/design/2026-10-30-regulus-reborn-design.md): his own sound holders.
+      dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
@@ -135,6 +137,10 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         // Od Lagna's Wish: after the heroes, the registry names them by key.
+         dev.baranhan.viltrumitecore.hero.wish.OdLagnaWishes.registerDefaults();
+         dev.baranhan.viltrumitecore.hero.wish.WishRitual.init();
+         dev.baranhan.viltrumitecore.hero.wish.qa.WishQaSelfTest.init();
          ThorCombatConfig.load();
          ThorCombatModule.install();
          ThorScenes.bootstrap();
@@ -145,5 +151,6 @@ public class ViltrumiteCore {
 
    private void onCommandRegister(RegisterCommandsEvent event) {
       CoreCommands.register(event.getDispatcher());
+      dev.baranhan.viltrumitecore.command.HeroCommands.register(event.getDispatcher());
    }
 }

@@ -45,6 +45,15 @@ public final class HulkbusterKit {
    @Nullable
    public Vec3 sceneStart;
    public float sceneYaw;
+   /** Exit (HulkbusterExit): Tony steps out forward (the spot is free), Veronica takes the empty shell (open sky). */
+   public boolean exitStepOut;
+   public boolean exitVeronica;
+   /** The empty shell after an exit: where it stands, its facing, ticks since the exit (-1 none), Veronica or crumble. */
+   @Nullable
+   public Vec3 shellAt;
+   public float shellYaw;
+   public int shellTicks = -1;
+   public boolean shellVeronica;
    /** Thrown bodies: id -> ticks left of the impact check. */
    public final Map<Integer, Integer> thrown = new HashMap<>();
    /** Veronica's cage of this Hulkbuster (one at a time). */
@@ -137,6 +146,15 @@ public final class HulkbusterKit {
       this.comboNext = 0;
       this.thrown.clear();
       this.motion.reset();
+   }
+
+   /** Debug reset: every Hulkbuster ability is ready. */
+   public void clearCooldowns() {
+      this.grabCooldown = 0;
+      this.repulsorsCooldown = 0;
+      this.riftCooldown = 0;
+      this.cageCooldown = 0;
+      this.ultimateCooldown = 0;
    }
 
    /** Cooldown ticks of an input (HulkbusterControls). */

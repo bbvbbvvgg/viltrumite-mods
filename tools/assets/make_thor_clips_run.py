@@ -11,13 +11,14 @@ import numpy as np
 import thor_clipcore as C
 import thor_clipkit as K
 import thor_mesh as M
+import thor_rig as R
 
 OUT = os.path.join(K.RES, "animations/thor")
 FILE_LIMIT = 10 ** 9  # one file: the runtime (ThorAssets.ANIMATIONS) and the contract tests read only thor.animation.json
 BASE_FILE = "thor.animation.json"
 # Every clip in thor.animation.json (the old push-size split into several files was never loaded by AnimCache).
 GROUPS = (("thor.animation.json", ("idle", "walk", "run", "stance", "lift", "flight", "throw", "catch", "pull", "crouch", "sit",
-                                   "draw", "holster", "electric", "wrath", "hammer_", "fist_")),)
+                                   "draw", "holster", "guard", "electric", "wrath", "hammer_", "fist_")),)
 OWNERS = {
     "full": (C.TP_BONES, C.POS_BONES),
     "upper": (C.UPPER_BONES, ()),
@@ -72,7 +73,19 @@ def main(all_clips, table):
     ap.add_argument("--only")
     ap.add_argument("--quiet", action="store_true")
     ap.add_argument("--report")
+    ap.add_argument("--partial", help="write this run's baked clips to a JSON file instead of the resources (chunked bakes)")
+    ap.add_argument("--merge", help="write the resources from every --partial JSON in this folder (no bake)")
     a = ap.parse_args()
+    if a.merge:
+        anims = {}
+        for f in sorted(os.listdir(a.merge)):
+            if f.startswith("part") and f.endswith(".json"):
+                anims.update(json.load(open(os.path.join(a.merge, f))))
+        names = [c.name for c in all_clips()]
+        lost = [n for n in names if n not in anims]
+        assert not lost, "clips missing from the partial bakes: %s" % lost
+        write(anims)
+        return
     clips = all_clips()
     names = [c.name for c in clips]
     assert len(set(names)) == len(names), "duplicate clip names"
@@ -102,6 +115,9 @@ def main(all_clips, table):
         print("PROBLEM", p)
     if a.report:
         json.dump(report, open(a.report, "w"), indent=1, default=float)
+    if a.partial:
+        json.dump(anims, open(a.partial, "w"), separators=(",", ":"))
+        return
     if a.check or a.only:
         return
     write(anims)
@@ -186,9 +202,12 @@ def process(index):
     return clip.name, anims, rep, problems, line
 
 def write(anims):
-    base = json.load(open(os.path.join(OUT, BASE_FILE)))["animations"]
-    for keep in ("crouch", "sit", "lift_squat"):  # R1's clips, kept as R1 wrote them
-        anims[keep] = base[keep]
+    import make_thor_body
+    base = make_thor_body.clips()["animations"]
+    for keep in ("crouch", "sit", "lift_squat"):  # R1's clips (make_thor_body), plus the ankle that keeps the soles flat
+        # sit is additive over the bridge's riding thighs (vanilla xRot -1.4137 rad, forward)
+        anims[keep] = with_ankles(base[keep], {"right_leg": [-81.0, 0, 0], "left_leg": [-81.0, 0, 0]} if keep == "sit" else None,
+                                  heel=keep == "lift_squat")
     files = {}
     for name in sorted(anims, key=lambda n: (n.endswith("_fp"), n)):
         stem = name[:-3] if name.endswith("_fp") else name
@@ -218,6 +237,66 @@ def write(anims):
             written.append((out, len(text), len(part)))
     for out, size, n in written:
         print("wrote %-40s %6d bytes %3d clips" % (out, size, n))
+
+
+def with_ankles(clip, under=None, heel=False):
+    """R1's leg clips had no ankle: the boot followed the shin and a bent knee stood it on its toes. Adds the foot
+    keys that put each sole back flat (the same flatten_foot the R2b solver uses), at every key time of the clip.
+    The crouch / sit clips are additive over the standing bridge, so the rest pose is their base."""
+    clip = json.loads(json.dumps(clip))
+    bones = clip["bones"]
+    times = sorted({t for b in bones.values() for ch in b.values() for t in ch}, key=float)
+    rest = {"right_foot": {}, "left_foot": {}}
+
+    def at(ch, t):
+        ks = sorted(ch.items(), key=lambda kv: float(kv[0]))
+        t = float(t)
+        for (t0, k0), (t1, k1) in zip(ks, ks[1:]):
+            if float(t0) <= t <= float(t1):
+                f = (t - float(t0)) / max(1e-9, float(t1) - float(t0))
+                return [a + (b - a) * f for a, b in zip(k0["vector"], k1["vector"])]
+        return list((ks[0] if t <= float(ks[0][0]) else ks[-1])[1]["vector"])
+
+    for t in times:
+        pose = R.Pose(K.BODY)
+        for name, v in (under or {}).items():
+            pose.set_bb(name, rot=v)
+        for name, b in bones.items():
+            if name in pose.model.bones and "rotation" in b:
+                v = at(b["rotation"], t)
+                if under and name in under:
+                    v = [a + c for a, c in zip(v, under[name])]
+                pose.set_bb(name, rot=v)
+        before = min([C.sole(pose, s + "_shin") for s in ("right", "left")])
+        for side in ("right", "left"):
+            shin = side + "_shin"
+            if shin not in bones:
+                continue
+            C.flatten_foot(pose, shin, 1.0, 0.0)
+            v = [round(float(x), 2) for x in pose.bb(side + "_foot")[0]]
+            rest[side + "_foot"][t] = {"vector": v, "easing": "easeInOutSine"}
+        # R1 put the lowest boot corner on the ground; the flat sole is higher by `sink`: lower the hips that much
+        # (body and both thighs hang from the same offset), so the soles stand on the ground again.
+        sink = min([C.sole(pose, s + "_shin") for s in ("right", "left")]) - before
+        if sink > 0.05 and heel:
+            # A deep squat over a handle (lift_squat): the heels come up and the balls of the feet keep the ground,
+            # so the hips (and the arms solved onto the handle from them) stay where R1 put them.
+            for side in ("right", "left"):
+                r = 0.0
+                while C.sole(pose, side + "_shin") - before > 0.05 and r > -C.FOOT_ROLL_MAX:
+                    r -= 1.0
+                    C.flatten_foot(pose, side + "_shin", 1.0, r)
+                v = [round(float(x), 2) for x in pose.bb(side + "_foot")[0]]
+                rest[side + "_foot"][t] = {"vector": v, "easing": "easeInOutSine"}
+        elif sink > 0.05:
+            for name in ("body", "right_leg", "left_leg"):
+                ch = bones.setdefault(name, {}).setdefault("position", {})
+                v = at(ch, t) if ch else [0.0, 0.0, 0.0]
+                ch[t] = {"vector": [round(v[0], 3), round(v[1] - sink, 3), round(v[2], 3)], "easing": "easeInOutSine"}
+    for foot, keys in rest.items():
+        if keys:
+            bones[foot] = {"rotation": keys}
+    return clip
 
 
 def dump(animations):

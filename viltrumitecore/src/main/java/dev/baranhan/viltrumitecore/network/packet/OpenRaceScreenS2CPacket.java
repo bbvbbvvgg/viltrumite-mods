@@ -1,8 +1,6 @@
 package dev.baranhan.viltrumitecore.network.packet;
 
-import dev.baranhan.viltrumitecore.client.gui.RaceSelectionScreen;
 import java.util.function.Supplier;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent.Context;
 
@@ -27,8 +25,11 @@ public class OpenRaceScreenS2CPacket {
    }
 
    private static class ClientHandler {
+      /**
+       * No automatic hero choice screen any more: a hero is chosen only with Od Lagna's Wish (the item, RMB).
+       * The packet stays registered so the protocol does not change; RaceSelectionScreen stays as old code.
+       */
       public static void openScreen() {
-         Minecraft.getInstance().setScreen(new RaceSelectionScreen());
       }
    }
 }

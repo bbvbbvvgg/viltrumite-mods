@@ -47,6 +47,8 @@ final class ThorDash {
       }
 
       NEXT.put(player.getUUID(), now + Math.max(1, ThorSceneConfig.dashCooldown - 2));
+      // Audit v3: a dash cuts a strike's recovery.
+      dev.baranhan.viltrumitecore.hero.thor.ThorActions.finishRecovery(player, ThorState.of(player));
       HeroFx.airTrail(player, player);
       SceneFx.sound(player, player.position(), ThorCue.DASH);
    }

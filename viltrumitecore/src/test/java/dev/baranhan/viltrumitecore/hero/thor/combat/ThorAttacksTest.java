@@ -39,38 +39,46 @@ class ThorAttacksTest {
 
    @Test
    void reworkTimings() {
-      // §4: DRAW / HOLSTER 30–40 ticks.
+      // Audit v3: the MMB draw is quick (16–22 ticks); HOLSTER keeps §4 (30–40 ticks).
+      assertTrue(ThorMove.DRAW.length() >= 16 && ThorMove.DRAW.length() <= 22, "draw " + ThorMove.DRAW.length());
+      assertTrue(ThorMove.HOLSTER.length() >= 30 && ThorMove.HOLSTER.length() <= 40, "holster " + ThorMove.HOLSTER.length());
       for (ThorMove move : new ThorMove[]{ThorMove.DRAW, ThorMove.HOLSTER}) {
-         assertTrue(move.length() >= 30 && move.length() <= 40, move + " " + move.length());
          assertEquals(move.length(), ThorAttacks.envelope(move).length());
       }
 
-      // §4: Mjölnir strikes 24–30 ticks, fists 18–22, HAMMER_STRIKE ~30.
+      // Audit v3: Mjölnir strikes 16–22 ticks, fists 12–15, the Crush blow 20–26 (the recovery is cancellable).
       for (ThorStrike strike : ThorStrike.values()) {
          int length = ThorAttacks.of(strike).length();
          switch (strike.move()) {
-            case HAMMER_COMBO -> assertTrue(length >= 24 && length <= 30, strike + " " + length);
-            case FIST_COMBO -> assertTrue(length >= 18 && length <= 22, strike + " " + length);
-            case HAMMER_STRIKE -> assertTrue(length >= 28 && length <= 32, strike + " " + length);
+            case HAMMER_COMBO -> assertTrue(length >= 16 && length <= 22, strike + " " + length);
+            case FIST_COMBO -> assertTrue(length >= 12 && length <= 15, strike + " " + length);
+            case HAMMER_STRIKE -> assertTrue(length >= 20 && length <= 26, strike + " " + length);
             default -> throw new AssertionError(strike.move());
          }
       }
 
-      // §4: WRATH 100–140 ticks, contact not before tick 60 (§3: 5–7 s, the strike not before ~3 s).
+      // v3: WRATH 3.5–5 s, the strike at ~2 s after a staged call (bolts every CALL_EVERY ticks), a tail for the aftershocks.
       ThorAttacks.Phases wrath = ThorAttacks.envelope(ThorMove.WRATH).phases();
-      assertTrue(wrath.length() >= 100 && wrath.length() <= 140, "wrath " + wrath.length());
-      assertTrue(wrath.contactTick() >= 60, "wrath contact " + wrath.contactTick());
-      assertTrue(wrath.recovery() >= 30, "a long tail after the strike");
+      assertTrue(wrath.length() >= 70 && wrath.length() <= 100, "wrath " + wrath.length());
+      assertTrue(wrath.contactTick() >= 30 && wrath.contactTick() <= 45, "wrath contact " + wrath.contactTick());
+      assertTrue(wrath.recovery() >= 25, "a tail after the strike");
    }
 
    @Test
-   void heavyShapeLongWindupShortContactLongRecovery() {
+   void responsiveShapeQuickContactWeightInTheRecovery() {
+      // Audit v3 item 1: Mjölnir lands on tick 5–6, fists on 3–4, the Crush blow on 7–8; the weight lives in the
+      // recovery (cancellable by movement / dash / the next strike, ThorActions.finishRecovery) and the impact.
       for (ThorStrike strike : ThorStrike.values()) {
          ThorAttacks.Phases p = ThorAttacks.of(strike).phases();
-         assertTrue(p.windup() >= 7, strike + ": a visible, heavy wind-up");
-         assertTrue(p.contact() <= 3 && p.contact() >= 1, strike + ": a short contact");
+         int windup = p.windup();
+         switch (strike.move()) {
+            case HAMMER_COMBO -> assertTrue(windup >= 5 && windup <= 6, strike + ": hammer contact on tick 5–6, " + windup);
+            case FIST_COMBO -> assertTrue(windup >= 3 && windup <= 4, strike + ": fist contact on tick 3–4, " + windup);
+            case HAMMER_STRIKE -> assertTrue(windup >= 7 && windup <= 8, strike + ": the Crush lands on tick 7–8, " + windup);
+            default -> throw new AssertionError(strike.move());
+         }
+         assertTrue(p.contact() >= 1 && p.contact() <= 4, strike + ": a short contact");
          assertTrue(p.recovery() >= p.windup(), strike + ": the recovery is at least as long as the wind-up");
-         assertTrue(p.windup() > p.contact() * 2, strike + ": wind-up dominates the contact");
       }
 
       for (ThorStrike strike : ThorStrike.values()) {
@@ -95,7 +103,7 @@ class ThorAttacksTest {
       assertEquals(ThorAttacks.of(ThorStrike.JAB).phases().definition(MovePhase.FINISH, ThorCombatTimings.COMBO_STEPS),
          ThorCombatTimings.of(ThorMove.FIST_COMBO));
       assertEquals(ThorAttacks.of(ThorStrike.MMB_BLOW).phases().definition(MovePhase.FINISH, 1), ThorCombatTimings.of(ThorMove.HAMMER_STRIKE));
-      assertEquals(new ThorMoveDefinition(72, 10, 46, null, 1), ThorCombatTimings.of(ThorMove.WRATH));
+      assertEquals(new ThorMoveDefinition(40, 12, 28, null, 1), ThorCombatTimings.of(ThorMove.WRATH));
       for (ThorMove move : ThorCombatTimings.DEFINITIONS.keySet()) {
          for (ThorAttacks.Attack row : ThorAttacks.rows(move)) {
             ThorMoveDefinition d = ThorCombatTimings.of(row);

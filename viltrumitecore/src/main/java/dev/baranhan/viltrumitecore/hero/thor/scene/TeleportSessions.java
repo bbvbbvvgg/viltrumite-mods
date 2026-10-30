@@ -155,6 +155,7 @@ final class TeleportSessions {
       ThorSounds.stop(thor.serverLevel(), from, ThorCue.TELEPORT_CHARGE);
       SceneFx.sound(thor, from, ThorCue.TELEPORT_DEPART);
       SceneFx.sound(thor, feet, ThorCue.TELEPORT_ARRIVE);
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(thor, dev.baranhan.viltrumitecore.hero.thor.ThorAbilities.TELEPORT);
    }
 
    /** Feet position on the picked block, or null when the point fails a rule. */

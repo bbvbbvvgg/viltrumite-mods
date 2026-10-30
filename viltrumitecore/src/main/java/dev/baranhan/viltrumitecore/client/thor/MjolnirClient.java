@@ -48,6 +48,9 @@ public final class MjolnirClient {
       out.put(ThorMove.HAMMER_PULL, new ThorClips.Clip(new float[][]{
          under(0), key(reach, -165.0F, 0.0F, 6.0F), key(letGo, -165.0F, 0.0F, 6.0F), under(length(ThorMove.HAMMER_PULL))
       }, null, new float[][]{under(0), key(reach, -12.0F, 0.0F, 0.0F), key(letGo, -12.0F, 0.0F, 0.0F), under(length(ThorMove.HAMMER_PULL))}));
+      // PICKUP: the body is the lift rig (both fists on the handle) and then lift_thor (ThorClipPlayer);
+      // the vanilla bridge underneath stays put.
+      out.put(ThorMove.PICKUP, new ThorClips.Clip(new float[][]{under(0), under(length(ThorMove.PICKUP))}, null, null));
       return out;
    }
 

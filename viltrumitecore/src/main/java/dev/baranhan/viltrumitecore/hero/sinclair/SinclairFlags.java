@@ -26,6 +26,8 @@ public final class SinclairFlags {
    public static final int FROM_CONTRACT = 7;
    /** The number is the fallback Metamorphosis. */
    public static final int FALLBACK = 8;
+   /** The server's cinematic switch is on: clients stage the act cameras ({@code /sinclair cinematic}). */
+   public static final int STAGE_CAMERA = 9;
 
    public static final int COOLDOWN_BOLT = 0;
    public static final int COOLDOWN_ASSIST = 1;

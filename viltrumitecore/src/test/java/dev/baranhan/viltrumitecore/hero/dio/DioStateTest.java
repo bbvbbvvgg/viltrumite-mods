@@ -102,15 +102,14 @@ class DioStateTest {
          keys.add("ability.viltrumitecore.dio_" + id + ".desc");
       }
 
-      com.google.gson.JsonObject sounds = com.google.gson.JsonParser.parseString(
-         java.nio.file.Files.readString(java.nio.file.Path.of("src/main/resources/assets/viltrumitecore/sounds.json"))).getAsJsonObject();
+      com.google.gson.JsonObject sounds = dev.baranhan.viltrumitecore.integration.ShippedSounds.merged();
       for (String name : sounds.keySet()) {
          if (name.startsWith("dio.")) {
             keys.add(sounds.getAsJsonObject(name).get("subtitle").getAsString());
          }
       }
 
-      assertEquals(27 + 22, keys.size());
+      assertEquals(27 + 25, keys.size(), "27 text keys + 25 dio sound subtitles (roller leap/fall/land added)");
       java.util.List<java.nio.file.Path> files;
       try (var listing = java.nio.file.Files.list(lang)) {
          files = listing.filter(p -> p.toString().endsWith(".json")).toList();

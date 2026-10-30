@@ -53,6 +53,9 @@ public final class ScanReticle {
       int height = graphics.guiHeight();
       float partialTick = event.getPartialTick();
       Entity target = snapshot.controlTargetId() < 0 ? null : client.level.getEntity(snapshot.controlTargetId());
+      if (target != null && (target.isRemoved() || !target.isAlive())) {
+         target = null;
+      }
       float progress = IronManView.progress(snapshot, HeroAction.SCAN, partialTick);
       if (target == null) {
          Component idle = Component.translatable("hud.viltrumitecore.ironman.scan_idle");

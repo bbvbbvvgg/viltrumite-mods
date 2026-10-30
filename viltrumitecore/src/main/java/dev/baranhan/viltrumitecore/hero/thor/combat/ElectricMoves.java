@@ -59,6 +59,9 @@ public final class ElectricMoves {
          boolean on = state.mode() == ThorMode.ELECTRIC;
          ThorSounds.play(player, on ? ThorCue.ELECTRIC_ON : ThorCue.ELECTRIC_OFF);
          if (on) {
+            dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, dev.baranhan.viltrumitecore.hero.thor.ThorAbilities.THUNDER);
+         }
+         if (on) {
             ElectricFx.crackle(level, player.position().add(0.0, 1.0, 0.0), 30);
             ElectricFx.arc(level, ElectricFx.hand(player), ElectricFx.hand(player).add(0.0, 1.6, 0.0));
          }

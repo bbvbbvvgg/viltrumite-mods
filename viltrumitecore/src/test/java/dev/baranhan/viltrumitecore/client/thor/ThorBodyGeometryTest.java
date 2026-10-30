@@ -37,7 +37,7 @@ class ThorBodyGeometryTest {
    private static final float BLEND_TOLERANCE = 1.0F;
    private static final String[] TORSO_ONLY = {ThorAssets.BODY_BONE, ThorAssets.BELLY};
    private static final String[] TORSO = {ThorAssets.BODY_BONE, ThorAssets.BELLY, ThorAssets.HEAD, ThorAssets.BEARD,
-      ThorAssets.RIGHT_LEG, ThorAssets.LEFT_LEG, ThorAssets.RIGHT_SHIN, ThorAssets.LEFT_SHIN};
+      ThorAssets.RIGHT_LEG, ThorAssets.LEFT_LEG, ThorAssets.RIGHT_SHIN, ThorAssets.LEFT_SHIN, ThorAssets.RIGHT_FOOT, ThorAssets.LEFT_FOOT};
    private static final String[][] ARMS = {
       {ThorAssets.RIGHT_ARM, ThorAssets.RIGHT_FOREARM, ThorAssets.RIGHT_HAND},
       {ThorAssets.LEFT_ARM, ThorAssets.LEFT_FOREARM, ThorAssets.LEFT_HAND}};
@@ -61,6 +61,7 @@ class ThorBodyGeometryTest {
          parents.put(side + "_hand", side + "_forearm");
          parents.put(side + "_leg", null);
          parents.put(side + "_shin", side + "_leg");
+         parents.put(side + "_foot", side + "_shin");
       }
 
       parents.put(ThorAssets.MJOLNIR_GRIP, ThorAssets.RIGHT_HAND);
@@ -195,12 +196,15 @@ class ThorBodyGeometryTest {
          pose.getValue().accept(body);
          boolean crouched = pose.getKey().equals("crouch");
          float ground = crouched ? (float)-ThorRenderer.CROUCH_OFFSET : 0.0F;
-         float right = (ThorRig.bottom(body, ThorAssets.RIGHT_SHIN) - ground) * 16.0F;
-         float left = (ThorRig.bottom(body, ThorAssets.LEFT_SHIN) - ground) * 16.0F;
+         float right = (ThorRig.bottom(body, ThorAssets.RIGHT_SHIN, ThorAssets.RIGHT_FOOT) - ground) * 16.0F;
+         float left = (ThorRig.bottom(body, ThorAssets.LEFT_SHIN, ThorAssets.LEFT_FOOT) - ground) * 16.0F;
          report.append(String.format(java.util.Locale.ROOT, "%s feet %.2f / %.2f px, crown %.2f px, hip %s%n", pose.getKey(), right, left,
             (ThorRig.top(body, ThorAssets.HEAD) - ground) * 16.0F, GeoPose.point(body.getBone(ThorAssets.BODY_BONE)).mul(16.0F)));
          boolean planted = pose.getKey().startsWith("rest") || pose.getKey().equals("crouch") || pose.getKey().startsWith("lift_");
-         if (planted && (Math.abs(right) > 1.0F || Math.abs(left) > 1.0F)) {
+         // lift_blend*: the ~0.3 s ramp into the squat also blends the ankle from flat to lift_squat's raised heel, so a
+         // passing frame may lift the soles a little more (owner playtest 2026-10-28: flat feet, no more tiptoes).
+         float feetAllowed = pose.getKey().startsWith("lift_blend") ? 1.25F : 1.0F;
+         if (planted && (Math.abs(right) > feetAllowed || Math.abs(left) > feetAllowed)) {
             failures.add(pose.getKey() + " " + right + " / " + left);
          }
       }

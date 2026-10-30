@@ -39,6 +39,7 @@ class HeroRosterIntegrationTest {
    private static final Path ASSETS = Path.of("src/main/resources/assets");
    private static final Path BINASSETS = Path.of("src/main/binassets/assets");
    private static final Path OVERLAYS = Path.of("src/main/lang-overlays");
+   private static final Path SOUND_OVERLAYS = Path.of("src/main/sound-overlays");
    private static final String[] LOCALES = {"de_de", "en_us", "es_ar", "es_cl", "es_ec", "es_es", "es_mx", "es_uy", "es_ve", "ru_ru", "tr_tr", "zh_cn"};
    /** Heroes a player can pick; HUMAN is the default and VILTRUMITE is the legacy alias of HOMELANDER. */
    private static final Set<HeroId> NOT_SELECTABLE = EnumSet.of(HeroId.HUMAN, HeroId.VILTRUMITE);
@@ -163,8 +164,13 @@ class HeroRosterIntegrationTest {
       }
       assertTrue(packets.indexOf("HeroLineS2CPacket") < packets.indexOf("DioTimeS2CPacket"), "hero packets append after the subtitle packet");
       assertTrue(packets.indexOf("ThorDashS2CPacket") < packets.indexOf("HeroLineS2CPacket"), "Thor / Hulkbuster packets keep their #74 slots");
-      // 12 = #74 alone, 13 = #82 alone; the merged table must refuse both.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"14\""), "the merged packet table needs its own protocol version");
+      // 12 = #74 alone, 13 = #82 alone, 14 = the merged table; 15 = each of #86 (Thor GUARD bit), #88
+      // (Od Lagna's wish packets) and #89 (Regulus Reborn) alone; 16 = the final table with all of them.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"16\""), "the merged packet table needs its own protocol version");
+      assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
+      assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
+         && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
+      assertEquals(packets.size() - 1, packets.indexOf("RegulusFxS2CPacket"), "Regulus Reborn's packet appends after the wish packets");
    }
 
    @Test
@@ -172,7 +178,13 @@ class HeroRosterIntegrationTest {
       Map<String, Map<String, String>> locales = mergedLocales();
       List<Path> soundFiles;
       try (Stream<Path> walk = Files.walk(ASSETS)) {
-         soundFiles = walk.filter(p -> p.getFileName().toString().equals("sounds.json")).toList();
+         soundFiles = new ArrayList<>(walk.filter(p -> p.getFileName().toString().equals("sounds.json")).toList());
+      }
+      // sound overlays are merged into sounds.json by processResources (build.gradle)
+      if (Files.isDirectory(SOUND_OVERLAYS)) {
+         try (Stream<Path> list = Files.list(SOUND_OVERLAYS)) {
+            soundFiles.addAll(list.filter(p -> p.toString().endsWith(".json")).sorted().toList());
+         }
       }
       assertFalse(soundFiles.isEmpty());
       // Missing legacy audio from the original JARs is tracked by the add_hero checker; do not hide new gaps.
@@ -182,7 +194,7 @@ class HeroRosterIntegrationTest {
       while (known.find()) knownMissing.add(known.group(1));
       int events = 0;
       for (Path file : soundFiles) {
-         JsonObject json = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+         JsonObject json = ShippedSounds.merged(file);
          for (Map.Entry<String, JsonElement> event : json.entrySet()) {
             events++;
             JsonObject body = event.getValue().getAsJsonObject();

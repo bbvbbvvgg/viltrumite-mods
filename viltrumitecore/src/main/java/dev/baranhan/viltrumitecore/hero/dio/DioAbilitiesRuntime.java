@@ -56,12 +56,12 @@ public final class DioAbilitiesRuntime {
    public static void startTimeStop(ServerPlayer player, DioState state) {
       DioCombat.summon(player, state);
       state.castBlood = state.blood;
-      state.blood = 0;
+      state.spendAllBlood();
       int duration = DioRules.timeStopDuration(state.castBlood);
       state.startAction(HeroAction.TIME_STOP, DioRules.TIME_STOP_CAST);
       state.cooldowns[DioRules.CD_TIME_STOP] = DioRules.TIME_STOP_COOLDOWN + duration + DioRules.TIME_STOP_CAPTURE;
       HeroSpeech.ability(player, DioAbilities.TIME_STOP);
-      DioSounds.play(player.serverLevel(), player.getEyePosition(), DioSounds.TIME_STOP, 2.0F, 1.0F);
+      DioSounds.playWide(player.serverLevel(), player.getEyePosition(), DioSounds.TIME_STOP, 2.0F, 1.0F, DioRules.TIME_STOP_RADIUS + 24.0);
    }
 
    public static void tickTimeStop(ServerPlayer player, DioState state) {
@@ -77,7 +77,7 @@ public final class DioAbilitiesRuntime {
    /** A cast that ends before the world stopped gives the blood back and cools down briefly. */
    public static void cancelTimeStop(ServerPlayer player, DioState state) {
       if (state.action == HeroAction.TIME_STOP && state.elapsed < DioRules.TIME_STOP_CAPTURE) {
-         state.blood = DioRules.clampBlood(state.blood + state.castBlood);
+         state.blood = state.infiniteBlood ? DioRules.BLOOD_MAX : DioRules.clampBlood(state.blood + state.castBlood);
          state.cooldowns[DioRules.CD_TIME_STOP] = 40;
          HeroSpeech.interrupt(player, DioAbilities.TIME_STOP);
       }
@@ -158,13 +158,13 @@ public final class DioAbilitiesRuntime {
 
    public static void startRoller(ServerPlayer player, DioState state) {
       DioCombat.dismiss(player, state);
-      state.blood = 0;
+      state.spendAllBlood();
       state.cooldowns[DioRules.CD_ROLLER] = DioRules.ROLLER_COOLDOWN;
       state.rollerStart = player.position();
       state.rollerTarget = DioTargets.rollerPoint(player);
       state.startAction(HeroAction.ROAD_ROLLER, DioRules.ROLLER_LENGTH);
       HeroSpeech.ability(player, DioAbilities.ROAD_ROLLER);
-      DioSounds.play(player.serverLevel(), player.getEyePosition(), DioSounds.TIME_STOP, 2.0F, 1.0F);
+      DioSounds.playWide(player.serverLevel(), player.getEyePosition(), DioSounds.TIME_STOP, 2.0F, 1.0F, DioRules.TIME_STOP_RADIUS + 24.0);
    }
 
    public static void tickRoller(ServerPlayer player, DioState state) {
@@ -176,8 +176,28 @@ public final class DioAbilitiesRuntime {
          DioTimeStop.start(player, player.position().add(0, 1.0, 0), DioRules.ROLLER_RADIUS, DioRules.ROLLER_RESUME - DioRules.ROLLER_CAPTURE + 4, true);
       }
 
-      if (t == 24) {
-         DioSounds.play(level, player.position().add(0, 3, 0), DioSounds.ROLLER_APPEAR, 1.4F, 1.0F);
+      Vec3 start = state.rollerStart != null ? state.rollerStart : player.position();
+      if (t == DioRules.ROLLER_CROUCH) {
+         DioSounds.play(level, start, DioSounds.STAND_WHOOSH, 0.9F, 0.6F);
+      }
+
+      if (t == DioRules.ROLLER_LEAP) {
+         // The launch must read from far away: ground burst, dust column, a heavy whoosh.
+         DioNet.fx(player, DioFxS2CPacket.ROLLER_LEAP, start, Vec3.ZERO, 2.0F, 0);
+         DioSounds.play(level, start, DioSounds.ROLLER_LEAP, 2.0F, 1.0F);
+      }
+
+      if (t == DioRules.ROLLER_APPEAR) {
+         DioSounds.playWide(level, player.position().add(0, 1.0, 0), DioSounds.ROLLER_APPEAR, 2.0F, 1.0F, DioRules.ROLLER_RADIUS + 32.0);
+      }
+
+      if (t == DioRules.ROLLER_HANG) {
+         DioSounds.playWide(level, player.position(), DioSounds.ROLLER_FALL, 2.2F, 1.0F, DioRules.ROLLER_RADIUS + 32.0);
+      }
+
+      if (t == DioRules.ROLLER_LAND) {
+         DioNet.fx(player, DioFxS2CPacket.ROLLER_LAND, target, Vec3.ZERO, 1.0F, 0);
+         DioSounds.play(level, target, DioSounds.ROLLER_LAND, 1.2F, 1.0F);
       }
 
       if (t == DioRules.ROLLER_SLAM) {
@@ -190,7 +210,7 @@ public final class DioAbilitiesRuntime {
          }
 
          DioNet.fx(player, DioFxS2CPacket.ROLLER_SLAM, target, Vec3.ZERO, 2.5F, 0);
-         DioSounds.play(level, target, DioSounds.ROLLER_SLAM, 2.4F, 1.0F);
+         DioSounds.playWide(level, target, DioSounds.ROLLER_SLAM, 2.4F, 1.0F, DioRules.ROLLER_RADIUS + 32.0);
       }
 
       if (DioRules.rollerPulseTick(t)) {
@@ -226,7 +246,7 @@ public final class DioAbilitiesRuntime {
          }
 
          DioNet.fx(player, DioFxS2CPacket.ROLLER_EXPLODE, target.add(0, 1.0, 0), Vec3.ZERO, 3.0F, 0);
-         DioSounds.play(level, target, DioSounds.ROLLER_EXPLODE, 3.0F, 1.0F);
+         DioSounds.playWide(level, target, DioSounds.ROLLER_EXPLODE, 3.0F, 1.0F, DioRules.ROLLER_RADIUS + 32.0);
       }
 
       if (t >= state.length) {

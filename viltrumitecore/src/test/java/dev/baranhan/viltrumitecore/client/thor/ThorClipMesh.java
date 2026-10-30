@@ -42,9 +42,9 @@ final class ThorClipMesh {
    static final float BELT_GRIP_OFFSET = 2.93F;
    static final String HAMMER_ROOT = "mjolnir";
 
-   static final List<String> TORSO = List.of("body", "belly", "head", "beard", "right_leg", "left_leg", "right_shin", "left_shin");
+   static final List<String> TORSO = List.of("body", "belly", "head", "beard", "right_leg", "left_leg", "right_shin", "left_shin", "right_foot", "left_foot");
    static final List<String> ARMS = List.of("right_arm", "right_forearm", "right_hand", "left_arm", "left_forearm", "left_hand");
-   static final List<String> LEGS = List.of("right_leg", "right_shin", "left_leg", "left_shin");
+   static final List<String> LEGS = List.of("right_leg", "right_shin", "right_foot", "left_leg", "left_shin", "left_foot");
    /** The handle group of the hand / belt geo: shaft, bands, leather wrap, pommel and strap. */
    static final Set<String> HANDLE = Stream.of(
       Stream.of("handle", "handle_plains", "bottom", "side1", "side2"),
@@ -175,7 +175,7 @@ final class ThorClipMesh {
     */
    static List<Hit> scan(BakedGeoModel body, BakedGeoModel hand, BakedGeoModel belt, Vector3f beltGrip) {
       Map<String, Part> parts = new LinkedHashMap<>();
-      for (String name : Stream.concat(ARMS.stream(), Stream.of("right_shin", "left_shin")).toList()) {
+      for (String name : Stream.concat(ARMS.stream(), Stream.of("right_shin", "left_shin", "right_foot", "left_foot")).toList()) {
          GeoBone bone = body.getBone(name);
          parts.put(name, Part.of("body:" + name, name, ThorRig.points(bone, new Matrix4f())));
       }
@@ -192,7 +192,7 @@ final class ThorClipMesh {
          }
       }
 
-      for (String shin : List.of("right_shin", "left_shin")) {
+      for (String shin : List.of("right_shin", "left_shin", "right_foot", "left_foot")) {
          for (String fixed : List.of("belly", "body")) {
             test(body, parts.get(shin), fixed, fixedBounds, hits);
          }

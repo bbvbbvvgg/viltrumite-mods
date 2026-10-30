@@ -55,8 +55,8 @@ class SinclairRulesTest {
 
    @Test
    void hexArea() {
-      assertEquals(50, SinclairRules.hexTicks(true));
-      assertEquals(70, SinclairRules.hexTicks(false));
+      assertEquals(80, SinclairRules.hexTicks(true), "4 s for players");
+      assertEquals(80, SinclairRules.hexTicks(false), "4 s for mobs");
       assertTrue(SinclairRules.inHexArea(3.4, 0.0, 0.0));
       assertTrue(SinclairRules.inHexArea(2.4, 2.5, 2.4));
       assertFalse(SinclairRules.inHexArea(2.5, 0.0, 2.5));

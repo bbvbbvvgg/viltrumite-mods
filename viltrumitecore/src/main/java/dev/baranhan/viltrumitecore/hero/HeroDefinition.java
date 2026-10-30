@@ -113,6 +113,25 @@ public interface HeroDefinition {
    }
 
    /** Whether the legacy three-page ability bar swap is meaningful for this hero. */
+   /**
+    * First person: draw the empty off hand at rest (client option
+    * alwaysRenderOffhand). Heroes fight with both fists, so they keep it; an
+    * ordinary human shows vanilla hands (only the main arm when empty).
+    */
+   /**
+    * Debug (/hero cooldown reset): zero this hero's ability cooldowns. Only
+    * cooldown timers: running casts, channels, resources and active states
+    * stay as they are. Returns false when the hero has no reset of its own
+    * (the shared part still clears PersistentCooldowns and item cooldowns).
+    */
+   default boolean resetCooldowns(ServerPlayer player) {
+      return false;
+   }
+
+   default boolean showsIdleOffhand(Player player) {
+      return true;
+   }
+
    default boolean allowsAbilityPages(Player player) {
       return this.allowsLegacyAbilities(player);
    }
@@ -359,6 +378,22 @@ public interface HeroDefinition {
 
    /** Server: hero-specific sound/FX after an accepted air jump (the shared ring is drawn by the clients). */
    default void onAirStep(ServerPlayer player) {
+   }
+
+   /**
+    * Server: a living {@code attacker} aimed a hit at this hero. Fires for every
+    * hit, also one that an absorb layer cancels and one on the direct path
+    * ({@link HeroDamage#applyCleanDamage}), which fires no Forge event and so
+    * never reaches {@link #onHurt}. No damage is decided here.
+    */
+   default void onAttacked(ServerPlayer self, LivingEntity attacker, net.minecraft.world.damagesource.DamageSource source) {
+   }
+
+   /**
+    * Server: this hero aimed a hit at {@code target} (same coverage as
+    * {@link #onAttacked}: absorbed, blocked and direct hits included).
+    */
+   default void onAttacking(ServerPlayer self, LivingEntity target, net.minecraft.world.damagesource.DamageSource source) {
    }
 
    /** Server: this hero player took damage (after armor, before health change). */

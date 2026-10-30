@@ -20,7 +20,9 @@ import dev.baranhan.viltrumitecore.client.reinhard.ReinhardPoses;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
 import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkMove;
+import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterExit;
 import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer;
+import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterSuitUp;
 import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterMotion;
 import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules;
 import dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire;
@@ -54,6 +56,7 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -63,7 +66,8 @@ import org.joml.Vector3f;
  * the name tag, invisibility (translucent for teammates, outline only when glowing), the shadow radius, the
  * shader shadow pass (no emissive), the held items in the fists, the armour, the emissive mask and the thruster
  * flames. Poses come only from clips (HulkbusterClips); third person and the first-person arms read the same
- * per-player {@link ActionClock}. EXITING draws the opening shell and lets vanilla draw Tony stepping out.
+ * per-player {@link ActionClock}. EXITING draws the opening shell at the frozen exit origin and facing
+ * (HulkbusterExit) and lets vanilla draw Tony on his step-out path once the chest is open.
  */
 @EventBusSubscriber(modid = "viltrumitecore", bus = Bus.FORGE, value = {Dist.CLIENT})
 public final class HulkbusterRenderer {
@@ -75,10 +79,6 @@ public final class HulkbusterRenderer {
    static final float TRANSLUCENT_ALPHA = 0.15F;
    static final float HEAD_YAW_LIMIT = 70.0F;
    static final float HEAD_PITCH_LIMIT = 45.0F;
-   /** Tony's step out of the open back (blocks, entity-local backwards) over the exit. */
-   static final float STEP_OUT_BLOCKS = 1.3F;
-   static final float STEP_OUT_START = 0.45F;
-   static final float STEP_OUT_TIME = 1.2F;
    /** Item in a fist: scale of a vanilla held item in the giant's hand. */
    static final float ITEM_SCALE = 1.7F;
    private static final Map<AbstractClientPlayer, Clocks> CLOCKS = new WeakHashMap<>();
@@ -107,7 +107,7 @@ public final class HulkbusterRenderer {
       HeroPublicSnapshot snapshot = IronManView.of(player);
       HulkbusterLayer.Phase phase = snapshot == null ? HulkbusterLayer.Phase.NONE : HulkbusterView.phase(snapshot);
       boolean shell = HulkbusterView.big(phase) || HulkbusterScene.bodyClosed(snapshot, phase);
-      shadow(event.getRenderer(), shell);
+      shadow(event.getRenderer(), shell && phase != HulkbusterLayer.Phase.EXITING);
       if (!shell) {
          if (phase == HulkbusterLayer.Phase.NONE) {
             CLOCKS.remove(player);
@@ -126,13 +126,27 @@ public final class HulkbusterRenderer {
       PoseStack stack = event.getPoseStack();
       MultiBufferSource buffers = event.getMultiBufferSource();
       int light = event.getPackedLight();
-      boolean exiting = phase == HulkbusterLayer.Phase.EXITING;
-      if (!exiting) {
-         // Tony walks out of the shell under his own name tag; the machine carries it otherwise.
-         nameTag(player, event.getRenderer(), stack, buffers, light, partialTick);
-         event.setCanceled(true);
+      if (phase == HulkbusterLayer.Phase.EXITING) {
+         // The empty shell is a world object from the exit start on (HulkbusterShells: same model, frozen origin and
+         // facing, it carries on after the exit). The player renderer only places Tony: sealed in until the chest is
+         // open, then on HulkbusterExit.tony. A world-space offset before vanilla's body rotation, so it follows the
+         // frozen facing and not world +Z, whatever the network position lags.
+         double exitTick = Math.min(HulkbusterLayer.EXIT_TICKS, snapshot.actionElapsed() + partialTick);
+         if (exitTick < HulkbusterExit.TONY_SHOWN) {
+            event.setCanceled(true);
+            return;
+         }
+
+         Vec3 origin = snapshot.actionTarget() != null ? snapshot.actionTarget() : player.getPosition(partialTick);
+         Vec3 renderPos = player.getPosition(partialTick);
+         Vec3 tony = tonyAt(snapshot, origin, exitTick);
+         event.getPoseStack().translate(tony.x - renderPos.x, tony.y - renderPos.y, tony.z - renderPos.z);
+         return;
       }
 
+      // The machine carries the name tag; vanilla draws nothing.
+      nameTag(player, event.getRenderer(), stack, buffers, light, partialTick);
+      event.setCanceled(true);
       ReinhardPoses.Passes passes = ReinhardPoses.passes(player.isInvisible(), mc.player != null && !player.isInvisibleTo(mc.player),
          mc.shouldEntityAppearGlowing(player));
       if (passes.body() || passes.outline()) {
@@ -147,21 +161,23 @@ public final class HulkbusterRenderer {
          }
 
          stack.scale(SCALE, SCALE, SCALE);
-         drawModel(body, stack, buffers, light, overlay, passes, glow(snapshot, player.tickCount + partialTick), flames, player.tickCount,
-            HulkbusterView.damageStage(snapshot));
-         if (passes.extras() && !exiting) {
+         // In the suit-up the reactor warms with the plates and flashes at the end (HulkbusterSuitUp.reactor).
+         float glow = HulkbusterScene.bodyClosed(snapshot, phase) ? HulkbusterSuitUp.reactor(HulkbusterScene.assemble(snapshot) + partialTick)
+            : glow(snapshot, player.tickCount + partialTick);
+         drawModel(body, stack, buffers, light, overlay, passes, glow, flames, player.tickCount, HulkbusterView.damageStage(snapshot));
+         if (passes.extras()) {
             heldItems(player, body, stack, buffers, light);
          }
 
          stack.popPose();
       }
+   }
 
-      if (exiting) {
-         // Entity-local offset before vanilla's body rotation: Tony backs out of the open shell.
-         float seconds = (snapshot.actionElapsed() + partialTick) / 20.0F;
-         float out = Mth.clamp((seconds - STEP_OUT_START) / STEP_OUT_TIME, 0.0F, 1.0F);
-         stack.translate(0.0, 0.0, STEP_OUT_BLOCKS * out * out * (3.0F - 2.0F * out));
-      }
+   /** Where vanilla Tony is drawn during the exit (feet, world). */
+   static Vec3 tonyAt(HeroPublicSnapshot snapshot, Vec3 origin, double exitTick) {
+      int word = HulkbusterView.sceneWord(snapshot);
+      Vec3 spot = HulkbusterExit.spot(origin, HulkbusterWire.sceneYaw(word), HulkbusterWire.exitStepOut(word));
+      return HulkbusterExit.tony(origin, spot, exitTick);
    }
 
    /** The armour, the emissive mask and the flames of a posed model (shared with the suit-up scene). */
@@ -268,7 +284,12 @@ public final class HulkbusterRenderer {
     * the clips but not the shoulder swing (it would throw the arm into the lens); the thrust is added separately.
     */
    static void applyClips(BakedGeoModel model, HulkbusterClips.Pose pose, boolean firstPerson) {
-      Animation idle = clip(pose.idle().clip());
+      applyClips(model, pose, firstPerson, HulkbusterRenderer::clip);
+   }
+
+   /** Same, with the clip lookup given (the first-person coverage test reads the parsed clip file). */
+   static void applyClips(BakedGeoModel model, HulkbusterClips.Pose pose, boolean firstPerson, java.util.function.Function<String, Animation> clips) {
+      Animation idle = clips.apply(pose.idle().clip());
       if (idle != null) {
          AnimationController.seek(idle, model, pose.idle().seconds());
       } else {
@@ -276,11 +297,11 @@ public final class HulkbusterRenderer {
       }
 
       if (!firstPerson) {
-         layer(model, pose.gait());
+         layer(model, pose.gait(), clips);
       }
 
-      layer(model, pose.motion());
-      layer(model, pose.move());
+      layer(model, pose.motion(), clips);
+      layer(model, pose.move(), clips);
       if (firstPerson) {
          for (String name : new String[]{"shoulder_r", "shoulder_l", "upper_arm_r", "upper_arm_l"}) {
             GeoBone bone = model.getBone(name);
@@ -291,8 +312,8 @@ public final class HulkbusterRenderer {
       }
    }
 
-   private static void layer(BakedGeoModel model, @Nullable HulkbusterClips.Layer layer) {
-      Animation animation = layer == null ? null : clip(layer.clip());
+   private static void layer(BakedGeoModel model, @Nullable HulkbusterClips.Layer layer, java.util.function.Function<String, Animation> clips) {
+      Animation animation = layer == null ? null : clips.apply(layer.clip());
       if (animation != null) {
          AnimationController.overlay(animation, model, layer.seconds(), layer.weight());
       }
@@ -418,7 +439,7 @@ public final class HulkbusterRenderer {
       Minecraft mc = Minecraft.getInstance();
       AbstractClientPlayer player = mc.player;
       HeroPublicSnapshot snapshot = IronManView.of(player);
-      if (snapshot == null || !HulkbusterView.big(HulkbusterView.phase(snapshot))) {
+      if (snapshot == null || !HulkbusterView.inside(snapshot)) {
          return;
       }
 
@@ -428,15 +449,60 @@ public final class HulkbusterRenderer {
       }
 
       HumanoidArm arm = event.getHand() == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
+      PoseStack stack = event.getPoseStack();
+      stack.pushPose();
+      HulkbusterFirstPerson.place(stack, arm == HumanoidArm.RIGHT);
       ((ItemInHandRendererInvoker)mc.getEntityRenderDispatcher().getItemInHandRenderer())
-         .viltrumite$renderPlayerArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), 0.0F, 0.0F, arm);
+         .viltrumite$renderPlayerArm(stack, event.getMultiBufferSource(), event.getPackedLight(), 0.0F, 0.0F, arm);
+      stack.popPose();
+   }
+
+   /**
+    * Spec 12: lift arms inside the machine. A scene that poses the arms in the world (Thor's Mjolnir lift) gets the
+    * Mark 48 first-person arms on the posed vanilla arm parts instead of the pilot's skin. False outside the machine:
+    * the caller then uses the Iron Man hand texture.
+    */
+   public static boolean drawLiftArms(AbstractClientPlayer player, PlayerModel<AbstractClientPlayer> model, PoseStack stack, MultiBufferSource buffers, int light) {
+      HeroPublicSnapshot snapshot = IronManView.of(player);
+      if (snapshot == null || !HulkbusterView.inside(snapshot)) {
+         return false;
+      }
+
+      BakedGeoModel geo = AnimCache.model(HulkbusterAssets.FP_ARMS);
+      if (geo == null) {
+         return false;
+      }
+
+      // Rest clips only: the lift scene owns the arm pose, no combat push.
+      geo.resetBones();
+      hideFlames(geo, true);
+      for (boolean right : new boolean[]{true, false}) {
+         GeoBone root = geo.getBone(right ? HulkbusterAssets.SHOULDER_R : HulkbusterAssets.SHOULDER_L);
+         if (root == null) {
+            continue;
+         }
+
+         stack.pushPose();
+         PlayerGeoLayer.partFrame(stack, right ? model.rightArm : model.leftArm, right ? PlayerBoneMap.Part.RIGHT_ARM : PlayerBoneMap.Part.LEFT_ARM);
+         AnimRenderer.renderBone(root, stack, buffers.getBuffer(RenderType.entityCutoutNoCull(HulkbusterAssets.TEXTURE)), light,
+            OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+         if (!ShaderCompat.isShadowPass()) {
+            float glow = glow(snapshot, player.tickCount);
+            AnimRenderer.renderBone(root, stack, buffers.getBuffer(RenderType.eyes(HulkbusterAssets.GLOW)), LightTexture.FULL_BRIGHT,
+               OverlayTexture.NO_OVERLAY, glow, glow, glow, 1.0F);
+         }
+
+         stack.popPose();
+      }
+
+      return true;
    }
 
    @SubscribeEvent
    public static void onRenderArm(RenderArmEvent event) {
       AbstractClientPlayer player = event.getPlayer();
       HeroPublicSnapshot snapshot = IronManView.of(player);
-      if (snapshot == null || !HulkbusterView.big(HulkbusterView.phase(snapshot))) {
+      if (snapshot == null || !HulkbusterView.inside(snapshot)) {
          return;
       }
 
@@ -452,12 +518,13 @@ public final class HulkbusterRenderer {
       ModelPart arm = right ? model.rightArm : model.leftArm;
       float oldX = arm.x, oldY = arm.y, oldZ = arm.z, oldXRot = arm.xRot, oldYRot = arm.yRot, oldZRot = arm.zRot;
       // RenderArmEvent fires before renderHand's setupAnim: set the camera rest pose, never read the stale one.
-      arm.x = right ? -5.0F : 5.0F;
-      arm.y = 2.0F;
-      arm.z = 0.0F;
-      arm.xRot = 0.0F;
-      arm.yRot = 0.0F;
-      arm.zRot = right ? 0.1F : -0.1F;
+      HulkbusterFirstPerson.Rest rest = HulkbusterFirstPerson.rest(right);
+      arm.x = rest.x();
+      arm.y = rest.y();
+      arm.z = rest.z();
+      arm.xRot = rest.xRot();
+      arm.yRot = rest.yRot();
+      arm.zRot = rest.zRot();
       float partialTick = Minecraft.getInstance().getFrameTime();
       HulkbusterClips.Pose pose = pose(player, snapshot, partialTick);
       applyClips(geo, pose, true);

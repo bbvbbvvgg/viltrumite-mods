@@ -294,7 +294,7 @@ public class MjolnirEntity extends Entity {
       }
 
       if (MjolnirWorld.isOwner(serverPlayer)) {
-         return MjolnirWorld.pickUp(serverPlayer, this) ? InteractionResult.CONSUME : InteractionResult.PASS;
+         return MjolnirWorld.beginPickUp(serverPlayer, this) ? InteractionResult.CONSUME : InteractionResult.PASS;
       }
 
       return MjolnirLift.begin(serverPlayer, this);

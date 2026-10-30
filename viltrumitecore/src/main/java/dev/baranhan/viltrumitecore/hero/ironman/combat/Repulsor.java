@@ -30,6 +30,11 @@ public final class Repulsor {
    private boolean charging;
    private int chargeTicks;
    private int cooldown;
+
+   /** Debug reset: ready to charge again (a charge in progress is untouched). */
+   public void clearCooldown() {
+      this.cooldown = 0;
+   }
    private boolean nextRight = true;
 
    /** True when a charge started (not while charging or cooling down). */

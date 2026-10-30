@@ -47,6 +47,9 @@ public final class MjolnirModule {
       out.put(ThorMove.HAMMER_THROW, new ThorMoveDefinition(MjolnirTuning.THROW_WINDUP, MjolnirTuning.THROW_HOLD_MAX, MjolnirTuning.THROW_FOLLOW,
          MovePhase.FINISH, 1));
       out.put(ThorMove.RECALL, new ThorMoveDefinition(0, 1, 0, MovePhase.INTRO, 1));
+      // Bend and grip, heave (the hammer is in the hand from its first tick), settle; a press may cut the settle.
+      out.put(ThorMove.PICKUP, new ThorMoveDefinition(MjolnirTuning.PICKUP_REACH, MjolnirTuning.PICKUP_HEAVE, MjolnirTuning.PICKUP_SETTLE,
+         MovePhase.FINISH, 1));
       out.put(ThorMove.HAMMER_PULL, new ThorMoveDefinition(2, MjolnirTuning.PULL_MAX_TICKS, 6, MovePhase.MAIN, 1));
       return out;
    }
@@ -62,11 +65,12 @@ public final class MjolnirModule {
       registerCommands();
    }
 
-   /** The three A moves on the shared registry (tests call it between ThorMoves resets). */
+   /** The A moves on the shared registry (tests call it between ThorMoves resets). */
    public static void registerMoves() {
       ThorMoves.register(MjolnirWorld.OWNER, ThorMove.HAMMER_THROW, DEFINITIONS.get(ThorMove.HAMMER_THROW), new Throw());
       ThorMoves.register(MjolnirWorld.OWNER, ThorMove.RECALL, DEFINITIONS.get(ThorMove.RECALL), new Recall());
       ThorMoves.register(MjolnirWorld.OWNER, ThorMove.HAMMER_PULL, DEFINITIONS.get(ThorMove.HAMMER_PULL), new Pull());
+      ThorMoves.register(MjolnirWorld.OWNER, ThorMove.PICKUP, DEFINITIONS.get(ThorMove.PICKUP), new Pickup());
    }
 
    /** Pure: a release after this many held ticks makes the throw charged (№98, PLACEHOLDER threshold). */
@@ -80,6 +84,28 @@ public final class MjolnirModule {
     * the hold (always charged). A release during the wind-up throws as soon
     * as the wind-up ends.
     */
+   /**
+    * RMB on the resting hammer (owner playtest: it must not jump into the hand). The click only starts the bend;
+    * the hammer is taken on the contact tick if it still rests within reach, else the move ends with nothing taken.
+    */
+   static final class Pickup implements ThorMoveHandler {
+      @Override
+      public void onStart(ThorMoveContext context) {
+         if (!MjolnirWorld.canPickUp(context.player())) {
+            ThorBridge.end(context.player(), context.state(), ThorMove.PICKUP);
+         } else {
+            MjolnirWorld.stepToHammer(context.player());
+         }
+      }
+
+      @Override
+      public void onPhase(ThorMoveContext context, StagedTimeline.Event event) {
+         if (event == StagedTimeline.Event.ENTER_MAIN && !MjolnirWorld.pickUpResting(context.player())) {
+            ThorBridge.end(context.player(), context.state(), ThorMove.PICKUP);
+         }
+      }
+   }
+
    static final class Throw implements ThorMoveHandler {
       private final Map<UUID, Boolean> early = new HashMap<>();
       private final Set<UUID> thrown = new HashSet<>();

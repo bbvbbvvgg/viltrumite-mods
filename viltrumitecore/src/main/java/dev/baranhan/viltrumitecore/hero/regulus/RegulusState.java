@@ -1,228 +1,283 @@
 package dev.baranhan.viltrumitecore.hero.regulus;
 
-import dev.baranhan.viltrumitecore.hero.CleanupReason;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import dev.baranhan.viltrumitecore.hero.HeroId;
+import dev.baranhan.viltrumitecore.hero.HeroPlayer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Server-only transient Regulus state. Persistent data (hero id, session id,
- * totem) lives on HeroPlayer/HeroData instead; the cooldown map rides along
- * through saveHeroData/loadHeroData; the rest of this object is rebuilt empty
- * on login and is discarded on death/disconnect/hero change.
+ * Server state of one Regulus (spec §5). Persistent: cooldowns, strain and the Lion lock (NBT
+ * compound {@value #TAG}); everything else is transient and dies with the body, the logout, a
+ * dimension change or a hero change. The first kit's {@code RegulusCooldowns} tag is read once as
+ * a migration and dropped on the next save.
  */
 public final class RegulusState {
-   /** HeroData key carrying the cooldown map across relog and respawn. */
-   public static final String COOLDOWNS_TAG = "RegulusCooldowns";
+   public static final String TAG = "RegulusReborn";
+   static final String LEGACY_TAG = "RegulusCooldowns";
 
-   // Timed action lock: the current cast. Event rules live in the abilities;
-   // until eventFired cancellation is free and starts no cooldown.
+   // persistent
+   public int lionCooldown;
+   public int sandCooldown;
+   public int severCooldown;
+   public int trampleCooldown;
+   public int replyCooldown;
+   public int ultCooldown;
+   public int strain;
+   public int lionLock;
+
+   // body
    @Nullable
-   public String actionId;
-   public int actionElapsed;
-   public int actionLength;
-   public int actionEventTick;
-   public int actionUnlockTick;
-   public boolean eventFired;
-   // Per-action context (dome point, counter target...) written by abilities.
-   public Vec3 actionPoint;
-   public UUID actionTargetId;
+   public RegulusMove move;
+   public int moveTick;
+   public int seed;
 
-   public final Map<String, Integer> cooldowns = new HashMap<>();
+   // Lion's Heart
+   public boolean lion;
+   public int lionTicks;
+   float lionHealth;
+   public int recoilGap;
+   float stepAt;
+   public int recoilPulse;
 
-   // Hearts (carriers are owner-private; only the count is public).
-   public final Set<UUID> carriers = new LinkedHashSet<>();
-   // The dimension each carrier was bound in: the heart lives there, so death
-   // checks resolve the carrier in its own level even when the owner is
-   // elsewhere (spec 5.3 — a death always burns, an unload drops silently).
-   public final Map<UUID, ResourceLocation> carrierLevels = new LinkedHashMap<>();
-   // Carriers the owner was last notified about; snapshot pushes dedupe on it.
-   public final Set<UUID> pushedCarriers = new LinkedHashSet<>();
-   public long nextCarrierScan;
+   // Greed's Touch
+   public int comboStep = -1;
+   public int chainLeft;
+   public boolean touchQueued;
+   final List<Rupture> ruptures = new ArrayList<>();
 
-   // Lion's Heart.
-   public boolean lionActive;
-   public int lionWindowMax;
-   public int lionElapsed;
-   public int overheatTicks;
-   public long lionStartTick;
-   public int lionWindowFloorHearts = -1;
-
-   // Attacker record for Counter: last real living damage source.
-   public UUID attackerId;
-   public long attackerTick = Long.MIN_VALUE;
-   public Vec3 attackerLastPos;
-   // Counter sequence: the thrown target, its launch start/apex and the dive.
-   public Vec3 counterLiftStart;
-   public double counterApexY;
-   public UUID counterDiveTargetId;
-   public int counterDiveTicks = -1;
-
-   // Evangelium / madness.
-   public int ritualTicks = -1;
-   public int madnessTicksLeft;
-
-   // Mania channel.
-   public UUID channelTargetId;
-   public UUID channelEffectId;
-   public int channelTicks;
-
-   // Super jump / landing.
-   public boolean wasOnGround = true;
-   public float lastFallDistance;
-
-   // Damage bookkeeping for interruption rules.
-   public float lastSeenHealth = -1.0F;
-   // Hero-internal damage applied since the last bookkeeping read (blood price,
-   // heart backlash, overheat). The read subtracts it from the observed loss so
-   // self-inflicted drains never count as an interrupting hit (spec 7.1/10/11).
-   public float internalDamage;
-   // A non-ambient (externally applied) Slowness stashed before an ability's
-   // own slow overwrites it, restored when that slow ends (a3 audit finding).
+   // Stopped Sand / Air Severance
+   final List<StoppedGrains.Grain> grains = new ArrayList<>();
+   final List<AirSeverance.Blade> blades = new ArrayList<>();
    @Nullable
-   public MobEffectInstance savedSlowness;
+   Vec3 castLook;
+   int castMaterial;
 
-   /**
-    * Action lock: busy while a cast runs before its event; once the event has
-    * fired and the unlock tick passed the remaining animation is free — the
-    * player may start another action while the tail plays out (spec 13.2).
-    */
+   /** Blocks the current grain volley / blade may still break. */
+   int debrisBudget;
+
+   // Trample
+   final Set<UUID> trampleHit = new HashSet<>();
+   @Nullable
+   Vec3 trampleCenter;
+   double trampleRadius;
+   boolean trampleAir;
+   boolean trampleLion;
+
+   // Right of Reply
+   @Nullable
+   public UUID replyAttacker;
+   public float replyBlocked;
+   public boolean replyLanded;
+
+   // Little King
+   public final List<UUID> subjects = new ArrayList<>();
+   @Nullable
+   public UUID host;
+   public int hopTimer;
+   public int hops;
+   @Nullable
+   UUID castSubject;
+
+   // Kingdom of One
+   @Nullable
+   KingdomOfOne.Scene ult;
+
+   record Rupture(UUID target, long at, float damage) {
+   }
+
+   @Nullable
+   public static RegulusState of(@Nullable Player player) {
+      if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REGULUS) {
+         Object state = heroPlayer.viltrumitecore$getHeroState();
+         return state instanceof RegulusState regulus ? regulus : null;
+      }
+
+      return null;
+   }
+
+   public static RegulusState ensure(Player player) {
+      HeroPlayer heroPlayer = (HeroPlayer) player;
+      if (heroPlayer.viltrumitecore$getHeroState() instanceof RegulusState state) {
+         return state;
+      }
+
+      RegulusState created = new RegulusState();
+      heroPlayer.viltrumitecore$setHeroState(created);
+      return created;
+   }
+
    public boolean busy() {
-      return this.actionId != null && !(this.eventFired && this.actionElapsed >= this.actionUnlockTick);
+      return this.move != null;
    }
 
-   public int hearts() {
-      return this.carriers.size();
+   public void startMove(RegulusMove next) {
+      this.move = next;
+      this.moveTick = 0;
+      this.seed = this.seed * 1103515245 + 12345 & 0x7FFF;
    }
 
-   public int cooldownOf(String abilityId) {
-      return this.cooldowns.getOrDefault(abilityId, 0);
+   public void clearMove() {
+      this.move = null;
+      this.moveTick = 0;
    }
 
-   public void startCooldown(String abilityId, int baseTicks) {
-      this.cooldowns.put(abilityId, RegulusRules.cooldown(baseTicks, this.hearts()));
-   }
-
-   public void tickCooldowns() {
-      this.cooldowns.replaceAll((id, ticks) -> Math.max(0, ticks - 1));
-   }
-
-   /** Cooldowns into HeroData; only unfinished, known regulus ids load back. */
-   public void saveHeroData(CompoundTag nbt) {
-      CompoundTag cooldowns = new CompoundTag();
-      for (Map.Entry<String, Integer> entry : this.cooldowns.entrySet()) {
-         if (entry.getValue() != null && entry.getValue() > 0) {
-            cooldowns.putInt(entry.getKey(), entry.getValue());
-         }
-      }
-
-      if (!cooldowns.isEmpty()) {
-         nbt.put(COOLDOWNS_TAG, cooldowns);
-      }
-   }
-
-   public void loadHeroData(CompoundTag nbt) {
-      if (!nbt.contains(COOLDOWNS_TAG)) {
-         return;
-      }
-
-      CompoundTag cooldowns = nbt.getCompound(COOLDOWNS_TAG);
-      for (String key : cooldowns.getAllKeys()) {
-         int ticks = cooldowns.getInt(key);
-         if (ticks > 0 && RegulusAbilities.isRegulusAbility(key)) {
-            this.cooldowns.put(key, ticks);
-         }
-      }
-   }
-
-   /** Respawn clone: duration bookkeeping carries over; combat state does not. */
-   public void inheritPersistent(RegulusState previous) {
-      this.cooldowns.putAll(previous.cooldowns);
-   }
-
-   public void clearAction() {
-      this.actionId = null;
-      this.actionElapsed = 0;
-      this.actionLength = 0;
-      this.actionEventTick = 0;
-      this.actionUnlockTick = 0;
-      this.eventFired = false;
-      this.actionPoint = null;
-      this.actionTargetId = null;
-   }
-
-   public void beginAction(String actionId, int length, int eventTick, int unlockTick) {
-      this.actionId = actionId;
-      this.actionElapsed = 0;
-      this.actionLength = length;
-      this.actionEventTick = eventTick;
-      this.actionUnlockTick = unlockTick;
-      this.eventFired = false;
-      this.actionPoint = null;
-      this.actionTargetId = null;
+   public boolean seized() {
+      return this.move == RegulusMove.SEIZURE;
    }
 
    /**
-    * Pure half of lifecycle cleanup: every transient combat field returns to
-    * its fresh-state default. Ability cleanups handle the Minecraft side
-    * (modifiers, control ownership, channel ends) before this runs; only a
-    * hero change or erasure clears the cast lock — on death/disconnect this object is
-    * discarded with the entity anyway. Cooldowns are duration bookkeeping:
-    * untouched here, persisted through saveHeroData into HeroData (relogin)
-    * and inheritPersistent (respawn clone).
+    * Debug reset (/hero cooldown reset, PR #87 carried over to Regulus Reborn): every ability timer
+    * ends now. Cooldown timers only: a running move, the Lion, strain, the Lion lock and subjects
+    * stay as they are.
     */
-   public void resetTransient(CleanupReason reason) {
-      if (reason == CleanupReason.HERO_CHANGE || reason == CleanupReason.ERASED) {
-         this.clearAction();
+   public void clearCooldowns() {
+      this.lionCooldown = 0;
+      this.sandCooldown = 0;
+      this.severCooldown = 0;
+      this.trampleCooldown = 0;
+      this.replyCooldown = 0;
+      this.ultCooldown = 0;
+   }
+
+   public int cooldown(int index) {
+      return switch (index) {
+         case RegulusFlags.COOLDOWN_LION -> this.lionCooldown;
+         case RegulusFlags.COOLDOWN_SAND -> this.sandCooldown;
+         case RegulusFlags.COOLDOWN_SEVER -> this.severCooldown;
+         case RegulusFlags.COOLDOWN_TRAMPLE -> this.trampleCooldown;
+         case RegulusFlags.COOLDOWN_REPLY -> this.replyCooldown;
+         case RegulusFlags.COOLDOWN_ULT -> this.ultCooldown;
+         default -> 0;
+      };
+   }
+
+   void tickCooldowns() {
+      if (this.lionCooldown > 0) {
+         this.lionCooldown--;
       }
 
-      this.carriers.clear();
-      this.carrierLevels.clear();
-      this.pushedCarriers.clear();
-      this.nextCarrierScan = 0L;
+      if (this.sandCooldown > 0) {
+         this.sandCooldown--;
+      }
 
-      this.lionActive = false;
-      this.lionWindowMax = 0;
-      this.lionElapsed = 0;
-      this.overheatTicks = 0;
-      this.lionStartTick = 0L;
-      this.lionWindowFloorHearts = -1;
+      if (this.severCooldown > 0) {
+         this.severCooldown--;
+      }
 
-      this.attackerId = null;
-      this.attackerTick = Long.MIN_VALUE;
-      this.attackerLastPos = null;
-      this.counterLiftStart = null;
-      this.counterApexY = 0.0;
-      this.counterDiveTargetId = null;
-      this.counterDiveTicks = -1;
+      if (this.trampleCooldown > 0) {
+         this.trampleCooldown--;
+      }
 
-      this.ritualTicks = -1;
-      this.madnessTicksLeft = 0;
+      if (this.replyCooldown > 0) {
+         this.replyCooldown--;
+      }
 
-      this.channelTargetId = null;
-      this.channelEffectId = null;
-      this.channelTicks = 0;
+      if (this.ultCooldown > 0 && this.ult == null) {
+         this.ultCooldown--;
+      }
 
-      this.wasOnGround = true;
-      this.lastFallDistance = 0.0F;
+      if (this.lionLock > 0) {
+         this.lionLock--;
+      }
 
-      this.lastSeenHealth = -1.0F;
-      this.internalDamage = 0.0F;
-      this.savedSlowness = null;
-   }
-   /** Same kept fields as a death clone; no stale action/channel state on the same body. */
-   public RegulusState erasedCopy() {
-      RegulusState fresh = new RegulusState();
-      fresh.inheritPersistent(this);
-      return fresh;
+      if (this.recoilGap > 0) {
+         this.recoilGap--;
+      }
+
+      if (this.chainLeft > 0) {
+         this.chainLeft--;
+      }
    }
 
+   /** Drops every transient effect (cooldowns, strain and the Lion lock stay). */
+   public void resetTransient() {
+      this.move = null;
+      this.moveTick = 0;
+      this.lion = false;
+      this.lionTicks = 0;
+      this.stepAt = 0.0F;
+      this.comboStep = -1;
+      this.chainLeft = 0;
+      this.touchQueued = false;
+      this.ruptures.clear();
+      this.grains.clear();
+      this.blades.clear();
+      this.castLook = null;
+      this.trampleHit.clear();
+      this.trampleCenter = null;
+      this.trampleRadius = 0.0;
+      this.replyAttacker = null;
+      this.replyBlocked = 0.0F;
+      this.replyLanded = false;
+      this.subjects.clear();
+      this.host = null;
+      this.hopTimer = 0;
+      this.castSubject = null;
+      this.ult = null;
+   }
+
+   public void save(CompoundTag nbt) {
+      CompoundTag tag = new CompoundTag();
+      tag.putInt("Lion", this.lionCooldown);
+      tag.putInt("Sand", this.sandCooldown);
+      tag.putInt("Sever", this.severCooldown);
+      tag.putInt("Trample", this.trampleCooldown);
+      tag.putInt("Reply", this.replyCooldown);
+      tag.putInt("Ult", this.ultCooldown);
+      tag.putInt("Strain", this.strain);
+      tag.putInt("LionLock", this.lionLock);
+      nbt.put(TAG, tag);
+      nbt.remove(LEGACY_TAG);
+   }
+
+   public void load(CompoundTag nbt) {
+      if (nbt.contains(TAG)) {
+         CompoundTag tag = nbt.getCompound(TAG);
+         this.lionCooldown = clampTicks(tag.getInt("Lion"));
+         this.sandCooldown = clampTicks(tag.getInt("Sand"));
+         this.severCooldown = clampTicks(tag.getInt("Sever"));
+         this.trampleCooldown = clampTicks(tag.getInt(tag.contains("Trample") ? "Trample" : "Procession"));
+         this.replyCooldown = clampTicks(tag.getInt("Reply"));
+         this.ultCooldown = clampTicks(tag.getInt("Ult"));
+         this.strain = Math.max(0, Math.min(RegulusRules.STRAIN_MAX, tag.getInt("Strain")));
+         this.lionLock = clampTicks(tag.getInt("LionLock"));
+      } else if (nbt.contains(LEGACY_TAG)) {
+         migrateLegacy(nbt.getCompound(LEGACY_TAG));
+      }
+   }
+
+   /** First kit → Reborn: the old cooldowns carry over to their successor slots (pure on the tag). */
+   void migrateLegacy(CompoundTag old) {
+      this.lionCooldown = clampTicks(old.getInt("regulus:lions_heart"));
+      this.sandCooldown = clampTicks(old.getInt("regulus:debris_kick"));
+      this.severCooldown = clampTicks(old.getInt("regulus:mania"));
+      this.trampleCooldown = clampTicks(old.getInt("regulus:greeds_embrace"));
+      this.replyCooldown = clampTicks(old.getInt("regulus:counter"));
+      this.ultCooldown = clampTicks(old.getInt("regulus:evangelium"));
+   }
+
+   private static int clampTicks(int ticks) {
+      return Math.max(0, Math.min(20 * 60 * 10, ticks));
+   }
+
+   /** What a new body inherits: only the cooldowns (a new body has a rested heart: strain and lock reset). */
+   public RegulusState respawnCopy() {
+      RegulusState copy = new RegulusState();
+      copy.lionCooldown = this.lionCooldown;
+      copy.sandCooldown = this.sandCooldown;
+      copy.severCooldown = this.severCooldown;
+      copy.trampleCooldown = this.trampleCooldown;
+      copy.replyCooldown = this.replyCooldown;
+      copy.ultCooldown = this.ultCooldown;
+      copy.strain = 0;
+      copy.lionLock = 0;
+      return copy;
+   }
 }

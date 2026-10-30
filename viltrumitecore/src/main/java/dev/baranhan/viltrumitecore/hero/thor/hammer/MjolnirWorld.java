@@ -9,6 +9,7 @@ import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.thor.HammerState;
 import dev.baranhan.viltrumitecore.hero.thor.ThorMove;
+import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.ThorState;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.HammerAccess;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.HammerView;
@@ -610,6 +611,7 @@ public final class MjolnirWorld {
       thor.swing(InteractionHand.MAIN_HAND, true);
       ThorSounds.playAt(level, thor.getEyePosition(), charged ? ThorCue.THROW_CHARGED : ThorCue.THROW);
       post(ThorEventType.THROW, record, ThorMove.HAMMER_THROW, false);
+      dev.baranhan.viltrumitecore.hero.thor.ThorLines.thrown(thor);
       return true;
    }
 
@@ -724,7 +726,79 @@ public final class MjolnirWorld {
       post(ThorEventType.CATCH, record, ThorMove.RECALL, true);
    }
 
-   /** RMB on the resting model by the active Thor: he simply picks it up (§3.4). */
+   /**
+    * RMB on the resting model by the active Thor (§3.4): starts the PICKUP move (bend, grip, heave). The hammer
+    * is taken on its contact tick ({@link #pickUpResting}); a refused start (busy, scene) takes nothing.
+    */
+   static boolean beginPickUp(ServerPlayer thor, MjolnirEntity hammer) {
+      if (!canPickUp(thor) || !hammer.getUUID().equals(record(thor.server).logicalId)) {
+         return false;
+      }
+
+      ThorState state = ThorState.of(thor);
+      return state != null && (state.timeline.is(ThorMove.PICKUP)
+         || ThorBridge.start(thor, state, ThorMove.PICKUP, -1) == dev.baranhan.viltrumitecore.hero.thor.ThorActions.Refusal.NONE);
+   }
+
+   /** The active Thor, the logical hammer resting in his level within {@link MjolnirTuning#PICKUP_MAX_DISTANCE}. */
+   static boolean canPickUp(ServerPlayer thor) {
+      return restingInReach(thor) != null;
+   }
+
+   @Nullable
+   private static MjolnirEntity restingInReach(ServerPlayer thor) {
+      MjolnirRecord record = record(thor.server);
+      if (!thor.getUUID().equals(record.activeOwner) || record.phase != MjolnirPhase.RESTING) {
+         return null;
+      }
+
+      MjolnirEntity hammer = entity(thor.server, record);
+      if (hammer == null || hammer.level() != thor.level()) {
+         return null;
+      }
+
+      double dx = hammer.getX() - thor.getX(), dz = hammer.getZ() - thor.getZ();
+      double reach = MjolnirTuning.PICKUP_MAX_DISTANCE;
+      return dx * dx + dz * dz <= reach * reach && Math.abs(hammer.getY() - thor.getY()) <= 2.0 ? hammer : null;
+   }
+
+   /**
+    * PICKUP's start: one step toward the handle (server velocity, so every client sees the same body), ending at
+    * {@link MjolnirTuning#PICKUP_STAND} from it, where the bend closes both hands on the handle.
+    */
+   static void stepToHammer(ServerPlayer thor) {
+      MjolnirEntity hammer = restingInReach(thor);
+      if (hammer == null || !thor.onGround()) {
+         return;
+      }
+
+      Vec3 step = pickupStep(thor.position(), hammer.position());
+      if (step.lengthSqr() > 1.0E-6) {
+         thor.setDeltaMovement(step.x, thor.getDeltaMovement().y, step.z);
+         thor.hurtMarked = true;
+      }
+   }
+
+   /** Pure: the horizontal step impulse that carries a grounded body from {@code feet} to the grip stand of {@code hammer}. */
+   static Vec3 pickupStep(Vec3 feet, Vec3 hammer) {
+      double dx = hammer.x - feet.x, dz = hammer.z - feet.z;
+      double flat = Math.sqrt(dx * dx + dz * dz);
+      double go = flat - MjolnirTuning.PICKUP_STAND;
+      if (flat < 1.0E-6 || go <= 0.05) {
+         return Vec3.ZERO;
+      }
+
+      double v = go * (1.0 - MjolnirTuning.PICKUP_STEP_FRICTION);
+      return new Vec3(dx / flat * v, 0.0, dz / flat * v);
+   }
+
+   /** PICKUP's contact tick: the hands are on the handle; take the hammer if it still rests within reach. */
+   static boolean pickUpResting(ServerPlayer thor) {
+      MjolnirEntity hammer = restingInReach(thor);
+      return hammer != null && pickUp(thor, hammer);
+   }
+
+   /** Takes the resting hammer into the hand now (PICKUP's contact tick). */
    static boolean pickUp(ServerPlayer thor, MjolnirEntity hammer) {
       try {
          return takeUp(thor, hammer);

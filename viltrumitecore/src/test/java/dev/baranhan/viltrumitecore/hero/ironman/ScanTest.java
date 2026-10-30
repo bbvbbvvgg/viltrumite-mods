@@ -144,9 +144,9 @@ class ScanTest {
    void regulusLionActiveVsInactive() {
       assertTrue(RegulusHero.scanInfoFor(false).isEmpty());
       ScanInfo active = RegulusHero.scanInfoFor(true);
-      assertEquals(List.of("scan.viltrumitecore.regulus.lion_heart"), keys(active.protections()));
+      assertEquals(List.of("scan.viltrumitecore.regulus.stopped_time"), keys(active.protections()));
       ScanTraits regulus = new ScanTraits(true, false, 0, false, 0, false, false, false, false, false, false, active);
-      assertTrue(keys(ScanAnalyzer.resists(regulus)).contains("scan.viltrumitecore.regulus.lion_heart"));
+      assertTrue(keys(ScanAnalyzer.resists(regulus)).contains("scan.viltrumitecore.regulus.stopped_time"));
    }
 
    @Test

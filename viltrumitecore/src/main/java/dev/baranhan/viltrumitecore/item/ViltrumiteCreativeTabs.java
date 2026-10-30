@@ -29,6 +29,17 @@ public class ViltrumiteCreativeTabs {
             .build()
    );
 
+   /** «Желания Од Лагуны»: one tab, one universal item. */
+   public static final RegistryObject<CreativeModeTab> OD_LAGNA_TAB = CREATIVE_MODE_TABS.register(
+      "od_lagna_tab",
+      () -> CreativeModeTab.builder()
+            .icon(() -> new ItemStack((ItemLike)ViltrumiteItems.OD_LAGNA_WISH.get()))
+            .title(Component.translatable("itemgroup.viltrumitecore.od_lagna_tab"))
+            .withTabsBefore(VILTRUMITE_TAB.getKey())
+            .displayItems((parameters, output) -> output.accept((ItemLike)ViltrumiteItems.OD_LAGNA_WISH.get()))
+            .build()
+   );
+
    public static void register(IEventBus eventBus) {
       CREATIVE_MODE_TABS.register(eventBus);
    }

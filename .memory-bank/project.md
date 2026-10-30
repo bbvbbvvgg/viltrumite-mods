@@ -92,7 +92,8 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 
 ## Iron Man Hulkbuster (Stage 5)
 - `hulkbuster/HulkbusterLayer` is a layer over the suit (NBT `Hulkbuster`): the suit under it is untouched. Saved DROPPING/ASSEMBLING become ACTIVE with `needsFitCheck`; the first server tick checks the room or refuses (no cooldown).
-- Size goes only through `HeroDefinition.bodyScale` (`HeroSizeEvents`, Forge `EntityEvent.Size`). Before growing, `IronManHulkbuster.freeSpot` checks the real final box (standing 0.6×1.8 × 1.7) with `level.noCollision`, searches 2 blocks, else refuses.
+- Size goes only through `HeroDefinition.bodyScale` (`HeroSizeEvents`, Forge `EntityEvent.Size`). The Hulkbuster scale is read from the public snapshot on both sides (`IronManHero.hulkBig` → `HulkbusterLayer.bigOnWire`), never the server live layer: both sides must size from the same synced data. Before growing, `IronManHulkbuster.freeSpot` checks the real final box (standing 0.6×1.8 × 1.7) with `level.noCollision`, searches 2 blocks, else refuses.
+- Hulkbuster exit (`HulkbusterExit`): the yaw is frozen and quantised to the wire byte at the start; the big box lasts only until Tony steps out (tick 24, `bigOnWire` reads the exit tick from the scene word); the server and the owner client move the player on one pure path, so the exit ends on the step-out spot with no snap.
 - Damage order: shield → Hulkbuster (whole hit, no spill) → mark → nano armor → Tony. The shield is ×1.5 inside.
 - Grab and throw use `ControlManager` PULL (acquire / release with an effect id); the Viltrumite legacy grab is not reused (decompiled, unverified). Every end of a carry calls `IronManHulkbuster.releaseGrab`.
 - Mark 48 art is Sind (native 68 px tall, drawn at 1.7 × 32/68). Clips are baked from the Sind `.fsk` scripts by `tools/fsk2anim.py`; the Fisk semantics of `animate2` and `curve` are assumed (unverified). The jackhammer is the Sind left-arm swap; `grab_hold` has no Sind source.
@@ -154,6 +155,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - AoE targets go through `IronManTargets.canHit` (allies and PvP-off players are skipped).
 - Shield perfect block: window counts from the first raise; re-raise needs `PERFECT_REARM_TICKS`.
 - Hulkbuster grab lasts at most `GRAB_MAX_TICKS`.
+- Hulkbuster first person: `HulkbusterFirstPerson` (camera placement before vanilla `renderPlayerArm` + arm rest pose) is shared by the renderer and `HulkbusterFirstPersonCoverageTest` (CPU replica of the hand pass; hand projection is a fixed 70 degrees, near 0.05, so FOV setting does not change it). Change the numbers only with that test.
 - Glide (0-energy) cannot climb: the flight mixin clamps a glide tick to `startY - glideSink` (vanilla Space lift).
 - Client float animation time: `client/anim/RealTime.seconds()` (wraps, keeps float precision).
 ## Reinhard stage 1 (foundation, no jar until 1b)
@@ -431,3 +433,18 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - `MjolnirEntity.getDimensions` switches to `MjolnirPose.UPRIGHT` (0.7 × 0.82) while planted; `onSyncedDataUpdated` refreshes the box on both sides (noPhysics, so the resize never moves it). Planted support = probe under the buried head, not the box.
 - Crack decal is drawn by `MjolnirRenderer` (`MjolnirCracks`), so it lives exactly as long as the planted body; texture source `tools/assets/make_mjolnir_cracks.py`.
 - Lift anchor API: common `MjolnirPose.handleTop/upperPalm/lowerPalm`, server `MjolnirEntity.handleTop`, client `client.thor.MjolnirAnchors` (handle axis always world +Y).
+
+## Hero body size (spec items 5/6/8/9, 2026-10-29)
+- `HeroBodyTracker` is level-triggered: each player tick it compares the live `dimensions`/`eyeHeight` with `HeroBodySize.matches` for the current pose and refreshes on a mismatch. Edge-triggered scale history alone missed sizes computed from other hero data (entity construction on respawn/relog/dimension change, a DATA_POSE refresh applied before the hero keys of the same packet); a crouch "fixed" them because DATA_POSE refreshes.
+- The hero size inputs (synced `HERO_ID`, `HERO_SNAPSHOT`; `HeroPlayer.viltrumitecore$isBodyKey`) call `HeroBodyTracker.sync` from `Entity.onSyncedDataUpdated` (`EntityPoseBoxMixin`) on the side where they change.
+- Forge 47 `Player.tick` order: `updatePlayerPose` → `PlayerTickEvent.END` → our `Player.tick` TAIL inject (hero tick, `syncSnapshot`). The END tracker runs before the hero tick.
+- Vanilla does not draw the camera entity's hitbox in first person; `client/debug/HeroHitboxDebug` draws it for scaled heroes with F3+B.
+
+
+## Thor v3 rework (core 1.55.0, protocol 15; PR #86 on top of #85)
+- Timings live in `ThorAttacks` (hammer 5-6/4/8-11, fists 3-4/3/6-7, WRATH 40/12/28, DRAW = ThorRules 6/3/9). After a table change rebake clips (`tools/assets/make_thor_clips.py`, `--partial` + merge) and update `docs/design/2026-10-28-thor-r2b-clip-plans.md` (ThorClipPlanTest).
+- Recovery is cut by movement / dash (`ThorActions.finishRecovery`); hitstop holds the timeline (`ThorState.holdTimeline`, `ThorActions.advance`).
+- Guard: `ThorGuard` on `MouseButton.GUARD` (F), state in `ThorCombatState` (guardTicks <0 = down), snapshot bit 7 `ThorFlags.GUARD`; absorb via `ThorHero.absorbIncoming` (guard first, then the WRATH shroud). `ThorVitality` attribute modifiers are re-applied every 20 t and removed on hero change.
+- FP: when `ThorClipPlayer.playsFpClip`, clips drive all FP bones incl. shoulders; `ThorFirstPerson` rows are only a fallback. `AlwaysVisibleOffhandMixin` asks `ThorClipPlayer.wantsOffhand`.
+- MMB with an item in the right hand = DRAW (`ThorHands.clearForMjolnir`), never a holster. `ThorClipChecks.place` needs a case for every new clip name.
+- Every `ThorCue` must be listed in `tools/assets/thor_sources.md` (ThorSoundsTest).

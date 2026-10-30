@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
-import dev.baranhan.viltrumitecore.hero.regulus.RegulusRules;
 import org.junit.jupiter.api.Test;
 
 class ControlManagerTest {
@@ -28,21 +27,21 @@ class ControlManagerTest {
    @Test
    void deferredQueueAccumulatesUpToTheCap() {
       // Freeze cap: 40% of max health (spec 8.3); dome cap: 35% (spec 9.2).
-      assertEquals(8.0F, RegulusRules.freezeDeferredCap(20.0F));
-      assertEquals(7.0F, RegulusRules.domeDeferredCap(20.0F));
-      assertEquals(40.0F, RegulusRules.freezeDeferredCap(100.0F));
-      assertEquals(35.0F, RegulusRules.domeDeferredCap(100.0F));
+      assertEquals(8.0F, ControlRules.freezeDeferredCap(20.0F));
+      assertEquals(7.0F, ControlRules.domeDeferredCap(20.0F));
+      assertEquals(40.0F, ControlRules.freezeDeferredCap(100.0F));
+      assertEquals(35.0F, ControlRules.domeDeferredCap(100.0F));
    }
 
    @Test
    void deferredAccumulateNeverCrossesTheCap() {
-      float cap = RegulusRules.freezeDeferredCap(100.0F);
-      assertEquals(10.0F, RegulusRules.deferredAccumulate(0.0F, 10.0F, cap));
-      assertEquals(30.0F, RegulusRules.deferredAccumulate(10.0F, 20.0F, cap));
-      assertEquals(cap, RegulusRules.deferredAccumulate(30.0F, 20.0F, cap));
-      assertEquals(cap, RegulusRules.deferredAccumulate(cap, 999.0F, cap));
+      float cap = ControlRules.freezeDeferredCap(100.0F);
+      assertEquals(10.0F, ControlRules.deferredAccumulate(0.0F, 10.0F, cap));
+      assertEquals(30.0F, ControlRules.deferredAccumulate(10.0F, 20.0F, cap));
+      assertEquals(cap, ControlRules.deferredAccumulate(30.0F, 20.0F, cap));
+      assertEquals(cap, ControlRules.deferredAccumulate(cap, 999.0F, cap));
       // Garbage in never produces negative queue.
-      assertEquals(0.0F, RegulusRules.deferredAccumulate(0.0F, -5.0F, cap));
+      assertEquals(0.0F, ControlRules.deferredAccumulate(0.0F, -5.0F, cap));
    }
 
    // --- acquire precedence --------------------------------------------------

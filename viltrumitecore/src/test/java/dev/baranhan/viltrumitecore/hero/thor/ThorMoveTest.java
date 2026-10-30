@@ -33,7 +33,7 @@ class ThorMoveTest {
    void wireOrdinalsAreStableAndAppendOnly() {
       assertEquals(List.of("DRAW", "HOLSTER", "HAMMER_COMBO", "FIST_COMBO", "GUARD", "HAMMER_THROW", "RECALL", "ELECTRIC_MODE", "ELECTRIC_COMBO",
             "LIGHTNING_CALL", "AIR_STRIKE", "LIGHTNING_DASH", "TELEPORT_STRIKE", "DIVE_SLAM", "GRAB", "GRAB_SLAM", "FATALITY", "WRATH",
-            "HAMMER_STRIKE", "HAMMER_PULL", "TELEPORT_SELECT", "ELECTRIC_WAVE", "ELECTRIC_STORM"),
+            "HAMMER_STRIKE", "HAMMER_PULL", "TELEPORT_SELECT", "ELECTRIC_WAVE", "ELECTRIC_STORM", "PICKUP"),
          Arrays.stream(ThorMove.values()).map(Enum::name).toList());
       for (ThorMove move : ThorMove.values()) {
          assertSame(move, ThorMove.byWireId(move.wireId()));

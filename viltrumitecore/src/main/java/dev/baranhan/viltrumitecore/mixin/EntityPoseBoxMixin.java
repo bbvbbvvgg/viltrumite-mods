@@ -1,6 +1,9 @@
 package dev.baranhan.viltrumitecore.mixin;
 
 import dev.baranhan.viltrumitecore.hero.HeroBodySize;
+import dev.baranhan.viltrumitecore.hero.HeroBodyTracker;
+import dev.baranhan.viltrumitecore.hero.HeroPlayer;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -8,6 +11,7 @@ import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
@@ -26,6 +30,13 @@ public abstract class EntityPoseBoxMixin {
       HeroBodySize.Scale scale = HeroBodySize.of(player);
       if (!scale.vanilla()) {
          cir.setReturnValue(HeroBodySize.box(player.position(), HeroBodySize.dimensions(player.getDimensions(pose), pose, scale)));
+      }
+   }
+
+   @Inject(method = "onSyncedDataUpdated(Lnet/minecraft/network/syncher/EntityDataAccessor;)V", at = @At("TAIL"))
+   private void viltrumitecore$heroSizeInputs(EntityDataAccessor<?> key, CallbackInfo ci) {
+      if ((Object)this instanceof Player player && player instanceof HeroPlayer hero && hero.viltrumitecore$isBodyKey(key)) {
+         HeroBodyTracker.sync(player);
       }
    }
 }

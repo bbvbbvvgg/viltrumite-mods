@@ -105,10 +105,16 @@ public final class ThorActions {
       ThorMove move = ThorControls.resolve(input, context);
       if (move == null) {
          if (ThorControls.onBelt(input, context)) {
-            // OPEN(owner): how Mjölnir gets from the belt into the hand (design §10, no DRAW key). Conservative: refuse with a message.
-            ThorFeedback.refuse(player, Component.translatable(ThorFeedback.NO_HAMMER));
+            // Mjölnir is not with him (another Thor's, not created yet): MMB answers; B says to take the hammer first.
+            ThorFeedback.refuse(player, Component.translatable(ThorControls.crushWaitsForTheHand(input, context) ? ThorFeedback.CRUSH_TAKE_FIRST : ThorFeedback.NO_HAMMER));
          }
 
+         return;
+      }
+
+      if (move == ThorMove.DRAW && !ThorHands.free(player) && !ThorHands.clearForMjolnir(player)) {
+         // Nowhere to put the item: say how to take the hammer instead of a silent no.
+         ThorFeedback.refuse(player, Component.translatable(ThorFeedback.DRAW_NO_SLOT));
          return;
       }
 
@@ -122,6 +128,10 @@ public final class ThorActions {
             }
          }
          default -> {
+            if (move == ThorMove.DRAW && state.timeline.is(ThorMove.DRAW) && state.timeline.phase() == MovePhase.INTRO) {
+               // Audit v3 (item 7): the freed hand reaches for the belt; Mjölnir stays drawn there until the grip (ENTER_MAIN).
+               state.projectTechnical(HammerState.HOLSTERED);
+            }
          }
       }
    }
@@ -218,6 +228,32 @@ public final class ThorActions {
       state.lastMove = state.timeline.move();
       ThorMoves.handler(stopped).onStop(new ThorMoveContext(player, state, stopped, null));
       return true;
+   }
+
+   /**
+    * Audit v3: a strike's recovery is the player's to cut. Movement, a dash or
+    * the next strike (the buffer, already from the first recovery tick) end it
+    * at once; the step ends as if it ran out (END, so a combo chain stays open
+    * for its grace), not as an interruption. Only MELEE moves, only in their
+    * FINISH, never with a press buffered (that one chains on its own). True
+    * when the recovery was cut.
+    */
+   public static boolean finishRecovery(@Nullable ServerPlayer player, ThorState state) {
+      ThorMove running = state.timeline.move();
+      if (!recoveryCuttable(running, state.timeline.phase(), state.timeline.queued() != null)) {
+         return false;
+      }
+
+      state.timeline.clear();
+      state.lastMove = null;
+      ThorMoves.handler(running).onPhase(new ThorMoveContext(player, state, running, null), StagedTimeline.Event.END);
+      return true;
+   }
+
+   /** Pure: may this running move's recovery be cut now. */
+   public static boolean recoveryCuttable(@Nullable ThorMove running, @Nullable MovePhase phase, boolean queued) {
+      return running != null && !queued && phase == MovePhase.FINISH
+         && (running == ThorMove.HAMMER_COMBO || running == ThorMove.FIST_COMBO || running == ThorMove.HAMMER_STRIKE);
    }
 
    /** An owner ends its own move (only when it is the one running); the handler hears onStop (keep it idempotent). */
@@ -353,6 +389,14 @@ public final class ThorActions {
 
       if (!handFree && state.timeline.is(ThorMove.DRAW) && state.timeline.phase() == MovePhase.INTRO) {
          state.timeline.interrupt(InterruptReason.INPUT);
+      }
+
+      if (state.hitStop > 0) {
+         // Audit v3 hit-stop: the move, its windows and held presses wait on the contact frame.
+         state.hitStop--;
+         if (state.timeline.running()) {
+            return StagedTimeline.Event.NONE;
+         }
       }
 
       state.tickWindows();

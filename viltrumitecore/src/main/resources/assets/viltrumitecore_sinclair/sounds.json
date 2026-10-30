@@ -1,0 +1,142 @@
+{
+  "sinclair.act_footlights": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_footlights",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_footlights",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_beam_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_beam_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_beam_charge",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_beam_burst": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_beam_burst",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_beam_burst",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_hat_spin": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_hat_spin",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_hat_spin",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_saw_rasp": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_saw_rasp",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_saw_rasp",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_cut_slash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_cut_slash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_cut_slash",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_card_fan": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_card_fan",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_card_fan",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_card_finale": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_card_finale",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_card_finale",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_curtain_rustle": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_curtain_rustle",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_curtain_rustle",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.act_chest_rattle": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_act_chest_rattle",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/act_chest_rattle",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.copy_sting": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_copy_sting",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/copy_sting",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.copy_unfold": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_copy_unfold",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/copy_unfold",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.copy_fold": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_copy_fold",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/copy_fold",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "sinclair.copy_return": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.sinclair_copy_return",
+    "sounds": [
+      {
+        "name": "viltrumitecore:sinclair/copy_return",
+        "attenuation_distance": 32
+      }
+    ]
+  }
+}

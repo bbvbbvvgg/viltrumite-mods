@@ -20,9 +20,7 @@ import dev.baranhan.viltrumitecore.hero.sinclair.ability.VexingBolt;
 import dev.baranhan.viltrumitecore.hero.sinclair.act.ActScene;
 import dev.baranhan.viltrumitecore.hero.sinclair.act.SinclairRepertoire;
 import dev.baranhan.viltrumitecore.hero.sinclair.entity.SinclairOwned;
-import dev.baranhan.viltrumitecore.hero.speech.HeroLineTrigger;
 import dev.baranhan.viltrumitecore.hero.speech.HeroLines;
-import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -129,7 +127,7 @@ public final class SinclairHero implements HeroDefinition {
    @Override
    public void onInputRefused(ServerPlayer player, HeroAction action) {
       SinclairState state = SinclairState.of(player);
-      if (state != null && action != HeroAction.PRIMARY_ATTACK) {
+      if (state != null && action != HeroAction.PRIMARY_ATTACK && state.move != SinclairMove.COPY) {
          refuse(player, state);
       }
    }
@@ -147,7 +145,7 @@ public final class SinclairHero implements HeroDefinition {
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
       SinclairState state = SinclairState.ensure(player);
       if (action == HeroAction.PRIMARY_ATTACK) {
-         state.triggerHeld = pressed;
+         state.triggerHeld = pressed && state.move != SinclairMove.COPY;
          if (pressed) {
             Misdirection.breakVeil(player, state, true);
          }
@@ -155,7 +153,8 @@ public final class SinclairHero implements HeroDefinition {
          return;
       }
 
-      if (!pressed || !player.isAlive()) {
+      if (!pressed || !player.isAlive() || state.move == SinclairMove.COPY) {
+         // The copy cinematic holds the stage: inputs are swallowed silently, no refusal spam.
          return;
       }
 
@@ -183,9 +182,9 @@ public final class SinclairHero implements HeroDefinition {
          }
 
          switch (started) {
-            case SUMMON -> HeroSpeech.ability(player, SinclairAbilities.SPECTRAL_ASSISTANT);
-            case HEX_CAST -> HeroSpeech.ability(player, SinclairAbilities.RABBIT_HEX);
-            case SNAP -> HeroSpeech.ability(player, SinclairAbilities.MISDIRECTION);
+            case SUMMON -> SinclairLines.ability(player, SinclairAbilities.SPECTRAL_ASSISTANT);
+            case HEX_CAST -> SinclairLines.ability(player, SinclairAbilities.RABBIT_HEX);
+            case SNAP -> SinclairLines.ability(player, SinclairAbilities.MISDIRECTION);
             default -> {
             }
          }
@@ -196,6 +195,7 @@ public final class SinclairHero implements HeroDefinition {
    public void tick(ServerPlayer player) {
       SinclairState state = SinclairState.ensure(player);
       applyPassives(player);
+      SinclairLines.tick(player);
       if (state.boltCooldown > 0) {
          state.boltCooldown--;
       }
@@ -224,6 +224,7 @@ public final class SinclairHero implements HeroDefinition {
          state.triggerHeld = false;
       }
 
+      state.cinema = SinclairCinema.enabled(player.getServer());
       Prestige.tick(player, state);
       SinclairMove move = state.move;
       if (move != null) {
@@ -232,7 +233,7 @@ public final class SinclairHero implements HeroDefinition {
             case SUMMON, SWAP -> Assistant.tickMove(player, state);
             case HEX_CAST -> RabbitHex.tickMove(player, state);
             case SNAP -> Misdirection.tickMove(player, state);
-            case CAPTURE, ACT_BEAM, ACT_NOVA, ACT_CUT, ACT_BARRAGE, ACT_AEGIS, ACT_FINALE -> AudienceParticipation.tickMove(player, state);
+            case CAPTURE, COPY, ACT_BEAM, ACT_NOVA, ACT_CUT, ACT_BARRAGE, ACT_AEGIS, ACT_FINALE -> AudienceParticipation.tickMove(player, state);
             default -> {
             }
          }
@@ -312,6 +313,7 @@ public final class SinclairHero implements HeroDefinition {
       flags = SinclairFlags.with(flags, SinclairFlags.HEXED, hexed);
       flags = SinclairFlags.with(flags, SinclairFlags.FROM_CONTRACT, state.capturedFrom == SinclairRepertoire.Source.CONTRACT && state.captured != null);
       flags = SinclairFlags.with(flags, SinclairFlags.FALLBACK, state.capturedFrom == SinclairRepertoire.Source.FALLBACK && state.captured != null);
+      flags = SinclairFlags.with(flags, SinclairFlags.STAGE_CAMERA, state.cinema);
       int[] extra = new int[SinclairFlags.EXTRA_COUNT];
       extra[SinclairFlags.EXTRA_SINCE_SHOT] = Math.min(999, state.sinceShot);
       extra[SinclairFlags.EXTRA_WINDOW] = state.window;
@@ -352,8 +354,21 @@ public final class SinclairHero implements HeroDefinition {
       }
    }
 
+   /** Debug (/hero cooldown reset, PR #87): Sinclair's ability timers end; the magazine, reload and a running act stay. */
+   @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      SinclairState state = SinclairState.of(player);
+      if (state == null) {
+         return false;
+      }
+
+      state.clearCooldowns();
+      return true;
+   }
+
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
+      SinclairLines.clear(player);
       SinclairState state = SinclairState.of(player);
       if (state != null) {
          clearStage(player, state);
@@ -470,7 +485,7 @@ public final class SinclairHero implements HeroDefinition {
          state.tadaWindow = 0;
          SinclairCombat.daze(target);
          SinclairSounds.play(attacker.level(), target.position().add(0.0, target.getBbHeight(), 0.0), SinclairSounds.TADA, 1.0F, 1.0F);
-         HeroSpeech.trigger(attacker, HeroLineTrigger.event(SinclairLines.EVENT_TADA));
+         SinclairLines.say(attacker, SinclairLines.EVENT_TADA, false);
          return amount + SinclairRules.VEIL_STRIKE_BONUS;
       }
 

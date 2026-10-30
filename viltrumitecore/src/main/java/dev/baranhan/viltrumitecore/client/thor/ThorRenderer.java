@@ -218,7 +218,7 @@ public final class ThorRenderer {
          return;
       }
 
-      ThorLift.poseThor(body, lift.grip(), renderRoot(player, lift), lift.yaw(), lift.seconds(), lift.weight());
+      ThorLift.poseThor(body, lift.grip(), renderRoot(player, lift), lift.yaw(), lift.seconds(), lift.weight(), lift.pickup());
    }
 
    /**
@@ -609,7 +609,18 @@ public final class ThorRenderer {
          stack.scale(-1.0F, -1.0F, 1.0F);
          stack.scale(ThorLift.VANILLA_SCALE, ThorLift.VANILLA_SCALE, ThorLift.VANILLA_SCALE);
          stack.translate(0.0F, -ThorLift.VANILLA_LIFT, 0.0F);
-         ResourceLocation skin = renderer.getTextureLocation(player);
+         // Spec 12: the hero's own first-person arms, never the vanilla skin on a suited hero.
+         dev.baranhan.viltrumitecore.client.hero.HeroLiftArms.Drawer drawer = dev.baranhan.viltrumitecore.client.hero.HeroLiftArms.drawer(player);
+         if (drawer != null && drawer.draw(player, model, stack, buffers, light)) {
+            for (int i = 0; i < parts.length; i++) {
+               parts[i].loadPose(saved[i]);
+            }
+
+            stack.popPose();
+            return;
+         }
+
+         ResourceLocation skin = dev.baranhan.viltrumitecore.client.hero.HeroLiftArms.handTexture(player, renderer.getTextureLocation(player));
          model.rightArm.render(stack, buffers.getBuffer(RenderType.entitySolid(skin)), light, OverlayTexture.NO_OVERLAY);
          model.leftArm.render(stack, buffers.getBuffer(RenderType.entitySolid(skin)), light, OverlayTexture.NO_OVERLAY);
          model.rightSleeve.render(stack, buffers.getBuffer(RenderType.entityTranslucent(skin)), light, OverlayTexture.NO_OVERLAY);

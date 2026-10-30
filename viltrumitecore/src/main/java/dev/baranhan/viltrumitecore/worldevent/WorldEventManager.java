@@ -36,6 +36,25 @@ public class WorldEventManager extends SavedData {
       }
    }
 
+   /** Operator start (command): the only way an event begins while automatic starts are off. */
+   public WorldEvent startManual(ServerLevel level, WorldEventType type, Vec3 origin, int warmupTicks) {
+      WorldEvent event = this.start(level, type, origin, warmupTicks);
+      if (event != null) {
+         event.markManual();
+      }
+
+      return event;
+   }
+
+   /**
+    * Pure: does a running event survive the current rules? With automatic starts
+    * disabled, an event that was not started by a command (a save from an older
+    * build, where the scheduler started it) is finished and its NPCs despawned.
+    */
+   public static boolean keepsEvent(boolean manual, boolean autoStartEnabled) {
+      return manual || autoStartEnabled;
+   }
+
    public boolean stop(ServerLevel level, WorldEventType type) {
       for (WorldEvent event : this.active) {
          if (event.type() == type && !event.isOver()) {
@@ -83,6 +102,15 @@ public class WorldEventManager extends SavedData {
 
          while (it.hasNext()) {
             WorldEvent event = it.next();
+            if (!keepsEvent(event.isManual(), dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig.INSTANCE.worldEventsAutoStart)) {
+               if (!event.isOver()) {
+                  event.finish(level);
+               }
+
+               it.remove();
+               continue;
+            }
+
             event.tick(level);
             if (event.isOver()) {
                it.remove();

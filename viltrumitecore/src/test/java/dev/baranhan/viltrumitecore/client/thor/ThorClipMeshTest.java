@@ -71,8 +71,11 @@ class ThorClipMeshTest {
 
    @Test
    void drawAndHolsterSwitchOnTheContactTick() {
-      assertEquals(ThorClipChecks.Place.BELT, ThorClipChecks.place("draw", 13));
-      assertEquals(ThorClipChecks.Place.HAND, ThorClipChecks.place("draw", 14));
+      int draw = dev.baranhan.viltrumitecore.hero.thor.combat.ThorAttacks.envelope(dev.baranhan.viltrumitecore.hero.thor.ThorMove.DRAW).phases().contactTick();
+      assertEquals(ThorClipChecks.Place.BELT, ThorClipChecks.place("draw", draw - 1));
+      assertEquals(ThorClipChecks.Place.HAND, ThorClipChecks.place("draw", draw));
+      assertEquals(ThorClipChecks.Place.BELT, ThorClipChecks.place("guard_fist", 0));
+      assertEquals(ThorClipChecks.Place.HAND, ThorClipChecks.place("guard_hammer", 0));
       assertEquals(ThorClipChecks.Place.HAND, ThorClipChecks.place("holster", 13));
       assertEquals(ThorClipChecks.Place.BELT, ThorClipChecks.place("holster", 14));
       assertEquals(ThorClipChecks.Place.HAND, ThorClipChecks.place("catch", 0));

@@ -24,7 +24,7 @@ FEET = {"r": K.FOOT["r"] + np.array([1.5, 0.0, 0.0]), "l": K.FOOT["l"] + np.arra
 POMMEL_BONES = ("bottom", "cube_10", "cube_11", "cube_12", "cube_13", "cube_18", "cube_19", "cube_20", "cube_21",
                 "cube_26", "cube_27", "cube_28", "cube_29", "cube_30", "cube_31", "handle", "handle_plains")
 TP_BONES = ("body", "right_arm", "right_forearm", "right_hand", "mjolnir_grip", "left_arm", "left_forearm", "left_hand",
-            "right_leg", "right_shin", "left_leg", "left_shin", "mjolnir_belt")
+            "right_leg", "right_shin", "right_foot", "left_leg", "left_shin", "left_foot", "mjolnir_belt")
 UPPER_BONES = ("body", "right_arm", "right_forearm", "right_hand", "mjolnir_grip", "left_arm", "left_forearm", "left_hand")
 POS_BONES = ("body", "right_leg", "left_leg", "mjolnir_belt")
 FP_BONES = ("armorRightArm", "right_forearm", "right_hand", "mjolnir_grip", "armorLeftArm", "left_forearm", "left_hand")
@@ -64,7 +64,7 @@ BELT_GRIP, BELT_AXIS, BELT_FACE = _belt_grip()
 # ------------------------------------------------------------------------------------------- intents
 BASE = {
     "hip": (0.0, 0.0, 0.0), "tor": (0.0, 0.0, 0.0), "spin": 0.0,
-    "rft": (0.0, 0.0, 0.0), "lft": (0.0, 0.0, 0.0), "rk": (0.1, 0.0, 1.0), "lk": (-0.1, 0.0, 1.0),
+    "rft": (0.0, 0.0, 0.0), "lft": (0.0, 0.0, 0.0), "rfr": 0.0, "lfr": 0.0, "rk": (0.1, 0.0, 1.0), "lk": (-0.1, 0.0, 1.0),
     "ra": (40.0, -82.0, 19.5), "rp": (1.0, -0.5, 0.6), "hm": None, "hf": None, "hr": 0.0, "rw": (0.0, 0.0, 0.0),
     "la": (-40.0, -82.0, 19.5), "lp": (-1.0, -0.5, 0.6), "lw": (0.0, 0.0, 0.0),
     "add": None,
@@ -293,8 +293,93 @@ def mesh_clearance(pose, hammer):
     return out
 
 
+def _quat(m):
+    """Unit quaternion (w, x, y, z) of a rotation matrix."""
+    t = m[0, 0] + m[1, 1] + m[2, 2]
+    if t > 0:
+        r = math.sqrt(1.0 + t) * 2
+        q = np.array([0.25 * r, (m[2, 1] - m[1, 2]) / r, (m[0, 2] - m[2, 0]) / r, (m[1, 0] - m[0, 1]) / r])
+    elif m[0, 0] > m[1, 1] and m[0, 0] > m[2, 2]:
+        r = math.sqrt(1.0 + m[0, 0] - m[1, 1] - m[2, 2]) * 2
+        q = np.array([(m[2, 1] - m[1, 2]) / r, 0.25 * r, (m[0, 1] + m[1, 0]) / r, (m[0, 2] + m[2, 0]) / r])
+    elif m[1, 1] > m[2, 2]:
+        r = math.sqrt(1.0 + m[1, 1] - m[0, 0] - m[2, 2]) * 2
+        q = np.array([(m[0, 2] - m[2, 0]) / r, (m[0, 1] + m[1, 0]) / r, 0.25 * r, (m[1, 2] + m[2, 1]) / r])
+    else:
+        r = math.sqrt(1.0 + m[2, 2] - m[0, 0] - m[1, 1]) * 2
+        q = np.array([(m[1, 0] - m[0, 1]) / r, (m[0, 2] + m[2, 0]) / r, (m[1, 2] + m[2, 1]) / r, 0.25 * r])
+    return q / np.linalg.norm(q)
+
+
+def _mat(q):
+    w, x, y, z = q
+    return np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+                     [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+                     [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
+
+
+def _qslerp(a, b, f):
+    d = float(a @ b)
+    if d < 0:
+        b, d = -b, -d
+    if d > 0.9995:
+        q = a + (b - a) * f
+        return q / np.linalg.norm(q)
+    th = math.acos(min(1.0, d))
+    return (math.sin((1 - f) * th) * a + math.sin(f * th) * b) / math.sin(th)
+
+
+FOOT_RELAX = 0.55  # a lifted foot keeps this much of the flat sole (the rest follows the shin: toes drop a little)
+FOOT_ROLL_MAX = 35.0  # deg: heel strike / toe-off roll of the sole
+
+
+def foot_bone(shin):
+    return shin.replace("shin", "foot")
+
+
+def flatten_foot(pose, shin, w=1.0, roll=0.0):
+    """The ankle (R1 had none, so a bent knee stood the boot on its toes): the foot bone turns so the sole lies
+    flat, toes along the knee's heading; `roll` (deg, + = toes up) tips it for heel strike / toe-off; `w` blends
+    from the shin-following foot (0) to the flat one (1)."""
+    foot = foot_bone(shin)
+    if foot not in pose.model.bones:
+        return
+    pose.rot[foot] = np.zeros(3)
+    pose.touch()
+    rs = pose.world_rot(shin)
+    fwd = rs @ np.array([0.0, 0.0, -1.0])
+    fwd[1] = 0.0
+    if np.linalg.norm(fwd) < 1e-4:
+        fwd = rs @ np.array([0.0, 1.0, 0.0])
+        fwd[1] = 0.0
+    if np.linalg.norm(fwd) < 1e-4:
+        return
+    flat = K.basis_map(np.array([0.0, 0.0, -1.0]), np.array([0.0, 1.0, 0.0]), unit(fwd), np.array([0.0, 1.0, 0.0]))
+    r = math.radians(max(-FOOT_ROLL_MAX, min(FOOT_ROLL_MAX, float(roll))))
+    if abs(r) > 1e-6:
+        c, sn = math.cos(r), math.sin(r)
+        flat = flat @ np.array([[1, 0, 0], [0, c, -sn], [0, sn, c]])
+    w = max(0.0, min(1.0, w))
+    target = flat if w >= 1.0 else _mat(_qslerp(_quat(rs), _quat(flat), w))
+    pose.set_world_rot(foot, target)
+
+
+def solve_leg(pose, chain, target, pole, w=1.0, roll=0.0):
+    miss = K.solve_leg(pose, chain, target, pole)
+    flatten_foot(pose, chain.lower, w, roll)
+    return miss
+
+
 def sole(pose, shin):
-    """Lowest model-space y (px) of a shin's cubes (the foot)."""
+    """Lowest model-space y (px) of the lower leg: the shin's cubes and its foot's."""
+    low = math.inf
+    for b in (shin, foot_bone(shin)):
+        if b in pose.model.bones:
+            low = min(low, _sole(pose, b))
+    return low
+
+
+def _sole(pose, shin):
     f = pose.frame(shin)
     low = math.inf
     for lo, hi, cp, cr in pose.model.bones[shin].cubes:
@@ -447,11 +532,16 @@ def _out_pole(pole, H, foot, s, Rs, out):
     return unit(math.cos(r) * p + math.sin(r) * o)
 
 
-def _plant(pose, chain, foot, pole, want):
-    """Leg IK with the sole: no ankle, so a bent knee tilts the foot; a planted foot gets its lowest corner on
-    the ground (a hair in it), a lifted one keeps the planned height (faded) and only stays above the ground."""
-    miss = K.solve_leg(pose, chain, foot, pole)
+def _plant(pose, chain, foot, pole, want, roll=0.0):
+    """Leg IK with the sole: the ankle keeps a planted sole flat (roll = heel strike / toe-off), its lowest point on
+    the ground (a hair in it); a lifted one keeps the planned height (faded) and only stays above the ground."""
     w = min(1.0, max(0.0, 1.0 - want / SOLE_FADE))
+    fw = w + (1.0 - w) * FOOT_RELAX
+
+    def solve_leg_(pose_, chain_, t_, pole_):
+        return solve_leg(pose_, chain_, t_, pole_, fw, roll)
+
+    miss = solve_leg_(pose, chain, foot, pole)
     goal = want - SOLE_SINK
     target = foot
     if w > 0.0:
@@ -463,15 +553,24 @@ def _plant(pose, chain, foot, pole, want):
             # Raise for a tilted sole; never sink the target more than 1 px (a leg that cannot reach stays a miss).
             f = f + np.array([0.0, goal - low, 0.0])
             f[1] = max(f[1], foot[1] - 1.0)
-            K.solve_leg(pose, chain, f, pole)
+            solve_leg_(pose, chain, f, pole)
         target = foot + w * (f - foot)
-        miss = K.solve_leg(pose, chain, target, pole)
+        miss = solve_leg_(pose, chain, target, pole)
+    if w > 0.5:
+        # A flat sole the leg cannot put down (a deep squat or a long lunge): the heel comes up and the toes take
+        # the ground, as a real foot does, instead of the whole foot hovering.
+        r = float(roll)
+        for _ in range(8):
+            if sole(pose, chain.lower) <= goal + 0.3 or r <= -FOOT_ROLL_MAX:
+                break
+            r = max(-FOOT_ROLL_MAX, r - 5.0)
+            flatten_foot(pose, chain.lower, fw, r)
     for _ in range(6):
         low = sole(pose, chain.lower)
         if low >= -SOLE_SINK - 0.03:
             break
         target = target + np.array([0.0, -SOLE_SINK - low, 0.0])
-        miss = K.solve_leg(pose, chain, target, pole)
+        miss = solve_leg_(pose, chain, target, pole)
     return miss
 
 
@@ -501,7 +600,7 @@ def place_legs(pose, it, Rs, hip, kout, legs):
         out = float(kout.get(s, 0.0))
         H = pose.point(chain.upper)
         while True:
-            misses[s + "foot"] = _plant(pose, chain, foot, _out_pole(pole0, H, foot, s, Rs, out), want)
+            misses[s + "foot"] = _plant(pose, chain, foot, _out_pole(pole0, H, foot, s, Rs, out), want, float(it.get(s + "fr", 0.0)))
             if shin_depth(pose, chain.lower) <= 0.02 or out >= KNEE_OUT_MAX:
                 break
             out = min(KNEE_OUT_MAX, out + KNEE_OUT_STEP)
@@ -588,7 +687,9 @@ def solve(it, ref=None, hammer=False, belt=False):
     def left(tgt):
         if on_handle:
             ax = K.hammer_axis(pose)
-            misses["la"] = K.solve_arm(pose, K.LEFT_ARM, tgt, lpole, ham=-ax if la != "free" else None)
+            # "handle~": the fist on the handle without turning the wrist round it (the forearm stays clear of a low grip).
+            loose = la == "free" or (isinstance(la, str) and la.startswith("handle~"))
+            misses["la"] = K.solve_arm(pose, K.LEFT_ARM, tgt, lpole, ham=None if loose else -ax)
         else:
             misses["la"] = reach(pose, K.LEFT_ARM, tgt, lpole, _free(la), wrist=it["lw"])
 
@@ -1036,10 +1137,21 @@ def _fp_bad(pose, hammer, left, side):
     return any(ray_hits(bx) for bx in boxes), any(near_cut(bx) for bx in boxes)
 
 
+def _fp_away(rt, ham):
+    """The hammer turned to point out from the screen centre past the fist (up and outward), so a hammer that would
+    lie across the crosshair swings to the edge instead."""
+    v = np.array([rt[0], rt[1] + 0.04, 0.0])
+    if np.linalg.norm(v) < 1e-3:
+        v = np.array([1.0, -1.0, 0.0])
+    v = unit(v)
+    return unit(np.array([v[0], max(v[1], 0.0) + 0.6, -0.35]))
+
+
 def _fp_clear(clip, rows, pose_at, uses_left):
     """Outside the contact window (contact +-1) no camera arm / hammer covers the crosshair or meets the near
-    plane: a covering hand target moves out from the screen centre (a cut one away from the camera), and the
-    moves ease in and out over the neighbouring ticks (the contact pass itself stays as it is: a fast pass)."""
+    plane: a covering hand target moves out from the screen centre (a cut one away from the camera), a hammer that
+    still lies across the centre turns out past the fist, and the moves ease in and out over the neighbouring ticks
+    (the contact pass itself stays as it is: a fast pass)."""
     n = len(rows)
     window = set()
     if clip.contact is not None:
@@ -1048,21 +1160,48 @@ def _fp_clear(clip, rows, pose_at, uses_left):
         if side == "l" and not uses_left:
             continue
         need = [np.zeros(3) for _ in range(n)]
+        turn = [0.0] * n
         for i, row in enumerate(rows):
             t = row[0]
             hammer = clip.hammer_at(t)
             base = row[idx].copy()
             off = np.zeros(3)
-            for _ in range(FP_CLEAR_TRIES + 1):
+            k = 0.0
+            phase = 0  # 0: out from the centre; 1: back toward the arm's own side (the arm crossing the view); 2: hammer turn
+            tries = 0
+            while True:
                 trial = list(row)
                 trial[idx] = clamp_view(base + off, 0.42 if side == "r" else 0.40)
+                if side == "r" and k > 0.0 and row[2] is not None:
+                    trial[2] = slerp(row[2], _fp_away(trial[1], row[2]), k)
                 pose, _ = pose_at(trial[0], trial[1], trial[2], trial[3])
                 cov, cut = _fp_bad(pose, hammer, uses_left, side)
                 if t in window:
                     cov = False
                 if not cov and not cut:
                     break
-                v = np.array([base[0] + off[0], base[1] + off[1] + 0.04, 0.0])
+                tries += 1
+                if tries > FP_CLEAR_TRIES:
+                    if phase == 0 and cov and not cut:
+                        phase, tries, off0 = 1, 0, off
+                        off = np.zeros(3)
+                        continue
+                    if phase in (0, 1) and side == "r" and row[2] is not None:
+                        if phase == 0:
+                            off0 = off
+                        phase, tries = 2, 0
+                        continue
+                    if phase >= 1 and (cut or phase == 1):
+                        off = off0 if phase == 1 else off  # nothing helped: keep the first answer
+                    break
+                if phase == 2:
+                    k = min(1.0, k + 0.1)
+                    continue
+                if phase == 1:
+                    corner = np.array([-0.35, 0.30]) if side == "r" else np.array([0.35, 0.30])
+                    v = np.array([base[0] + off[0] - corner[0], base[1] + off[1] - corner[1], 0.0])
+                else:
+                    v = np.array([base[0] + off[0], base[1] + off[1] + 0.04, 0.0])
                 if np.linalg.norm(v) < 1e-3:
                     v = np.array([1.0 if side == "r" else -1.0, -1.0, 0.0])
                 step = (FP_CLEAR_STEP * unit(v)) if cov else np.zeros(3)
@@ -1070,21 +1209,28 @@ def _fp_clear(clip, rows, pose_at, uses_left):
                     step = step + np.array([0.0, 0.0, -FP_CLEAR_STEP])
                 off = off + step
             need[i] = off
-        if not any(np.linalg.norm(v) > 1e-6 for v in need):
+            turn[i] = k
+        if not any(np.linalg.norm(v) > 1e-6 for v in need) and not any(turn):
             continue
         # Ease: each tick takes the strongest neighbouring move, faded by distance (not into the window).
-        eased = []
+        eased, eased_k = [], []
         for i in range(n):
-            best, bw = np.zeros(3), 0.0
+            best, bw, bk = np.zeros(3), 0.0, 0.0
             for j in range(max(0, i - 2), min(n, i + 3)):
                 w = 1.0 - abs(i - j) / 3.0
                 if np.linalg.norm(need[j]) * w > bw:
                     best, bw = need[j] * w, np.linalg.norm(need[j]) * w
+                bk = max(bk, turn[j] * w)
             if rows[i][0] in window and np.linalg.norm(need[i]) < 1e-6:
                 best = np.zeros(3)
+            if rows[i][0] in window and turn[i] <= 0.0:
+                bk = 0.0
             eased.append(best)
+            eased_k.append(bk)
         for i in range(n):
             rows[i][idx] = clamp_view(rows[i][idx] + eased[i], 0.42 if side == "r" else 0.40)
+            if side == "r" and eased_k[i] > 0.0 and rows[i][2] is not None:
+                rows[i][2] = slerp(rows[i][2], _fp_away(rows[i][1], rows[i][2]), eased_k[i])
 
 
 NEAR = 0.05  # GameRenderer's near plane (blocks)

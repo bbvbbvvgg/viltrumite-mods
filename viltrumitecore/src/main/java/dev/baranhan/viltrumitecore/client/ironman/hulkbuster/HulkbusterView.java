@@ -31,6 +31,13 @@ public final class HulkbusterView {
       return phase == HulkbusterLayer.Phase.ACTIVE || phase == HulkbusterLayer.Phase.EXITING;
    }
 
+   /** Tony is inside the machine (ACTIVE, or the exit before he steps out): the Mark 48 first-person arms. */
+   public static boolean inside(HeroPublicSnapshot snapshot) {
+      HulkbusterLayer.Phase phase = phase(snapshot);
+      return phase == HulkbusterLayer.Phase.ACTIVE
+         || phase == HulkbusterLayer.Phase.EXITING && dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterExit.big(snapshot.actionElapsed());
+   }
+
    /** The suit-up scene runs (capsule, open frame, plates closing). */
    public static boolean scene(HulkbusterLayer.Phase phase) {
       return phase == HulkbusterLayer.Phase.DROPPING || phase == HulkbusterLayer.Phase.ASSEMBLING;

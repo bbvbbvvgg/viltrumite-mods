@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -15,11 +16,19 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
- * Both sides, every player tick: keeps the scaled hero body in step with the hero.
+ * Both sides: keeps the scaled hero body in step with the hero.
  * <ul>
- * <li>Dimensions are refreshed when {@link HeroBodySize#of} changes and on the first sight of a
- * scaled body (login, respawn, a new client-side entity after a dimension change). Leaving the hero
- * changes the scale back to 1, so the box returns to vanilla the next tick.</li>
+ * <li>Level-triggered, not edge-triggered: every player tick the live body (Entity.dimensions and
+ * eyeHeight) is compared with what the size event gives for the current pose and hero scale
+ * ({@link HeroBodySize#matches}); a body that does not match is refreshed. A size computed from
+ * other hero data (entity construction on respawn / relog / dimension change, a pose refresh that
+ * ran before the hero data arrived, a refresh inside a half-applied entity data packet) is healed the
+ * same tick instead of sticking until the next pose change (the "shift fixes the hitbox" symptom).</li>
+ * <li>The hero inputs of the size (hero id and public snapshot, both synced entity data) call
+ * {@link #sync} the moment they change (EntityPoseBoxMixin, onSyncedDataUpdated): the server when
+ * it sets them, the client when the packet lands, so both sides resize on the same data.</li>
+ * <li>If a refresh cannot reach the expected size (another mod also edits the size event), the
+ * tracker stops retrying until the scale or the pose changes: no refresh every tick.</li>
  * <li>The body's reach and step bonuses ({@link HeroDefinition#bodyReachBonus},
  * {@link HeroDefinition#bodyStepBonus}) are transient attribute modifiers with fixed ids, removed
  * when the bonus is 0 (never saved; a fresh entity gets them again on its first tick).</li>
@@ -32,6 +41,8 @@ public final class HeroBodyTracker {
    static final UUID BLOCK_REACH_ID = UUID.fromString("5f0c6b1e-2d47-4a51-9c3e-7a1b8e40d202");
    static final UUID STEP_ID = UUID.fromString("5f0c6b1e-2d47-4a51-9c3e-7a1b8e40d203");
    private static final Map<Player, HeroBodySize.Scale> LAST = Collections.synchronizedMap(new WeakHashMap<>());
+   /** Scale + pose whose refresh did not reach the expected size (see the class note). */
+   private static final Map<Player, HealKey> GAVE_UP = Collections.synchronizedMap(new WeakHashMap<>());
 
    private HeroBodyTracker() {
    }
@@ -46,8 +57,18 @@ public final class HeroBodyTracker {
    public static void sync(Player player) {
       HeroBodySize.Scale scale = HeroBodySize.of(player);
       HeroBodySize.Scale previous = LAST.put(player, scale);
-      if (needsRefresh(previous, scale)) {
+      Pose pose = player.getPose();
+      HealKey key = new HealKey(scale, pose);
+      boolean matches = bodyMatches(player, pose, scale);
+      if (shouldRefresh(previous, scale, matches, key.equals(GAVE_UP.get(player)))) {
          player.refreshDimensions();
+         if (bodyMatches(player, pose, scale)) {
+            GAVE_UP.remove(player);
+         } else {
+            GAVE_UP.put(player, key);
+         }
+      } else if (matches) {
+         GAVE_UP.remove(player);
       }
 
       HeroDefinition hero = player instanceof HeroPlayer ? HeroRegistry.get(player) : null;
@@ -58,9 +79,24 @@ public final class HeroBodyTracker {
       modifier(player, ForgeMod.STEP_HEIGHT_ADDITION.get(), STEP_ID, "Hero body step", step);
    }
 
+   private static boolean bodyMatches(Player player, Pose pose, HeroBodySize.Scale scale) {
+      return HeroBodySize.matches(player.getBbWidth(), player.getBbHeight(), player.getEyeHeight(), player.getDimensions(pose), player.getEyeHeight(pose), pose, scale);
+   }
+
+   /**
+    * Refresh when the scale changed (or a scaled body is seen first), or when the live body does not
+    * match the expected size, unless that exact scale + pose already failed to heal.
+    */
+   static boolean shouldRefresh(@Nullable HeroBodySize.Scale previous, HeroBodySize.Scale now, boolean bodyMatches, boolean healGaveUp) {
+      return needsRefresh(previous, now) || !bodyMatches && !healGaveUp;
+   }
+
    /** First sight of a vanilla body needs nothing; any other first sight or change refreshes. */
    static boolean needsRefresh(@Nullable HeroBodySize.Scale previous, HeroBodySize.Scale now) {
       return previous == null ? !now.vanilla() : !previous.equals(now);
+   }
+
+   private record HealKey(HeroBodySize.Scale scale, Pose pose) {
    }
 
    private static void modifier(Player player, Attribute attribute, UUID id, String name, double amount) {
