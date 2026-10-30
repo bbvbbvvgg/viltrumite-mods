@@ -73,6 +73,11 @@ public final class SinclairState {
    public int window;
    @Nullable
    public ActScene scene;
+   /** The copy cinematic's local stop while the move COPY runs (design 2026-11-02 §2), else null. */
+   @Nullable
+   public dev.baranhan.viltrumitecore.hero.sinclair.act.CopyScene copy;
+   /** Server cinematic switch, mirrored each tick for the snapshot (SinclairFlags.STAGE_CAMERA). */
+   public boolean cinema = true;
    // Ovation
    public int ovationPulse;
    public int ovations;
@@ -122,6 +127,7 @@ public final class SinclairState {
       this.capturedFrom = SinclairRepertoire.Source.FALLBACK;
       this.window = 0;
       this.scene = null;
+      this.copy = null;
       this.ovationPulse = 0;
    }
 

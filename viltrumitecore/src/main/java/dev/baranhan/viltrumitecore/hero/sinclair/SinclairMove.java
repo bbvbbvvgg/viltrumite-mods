@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.hero.sinclair;
 
 import dev.baranhan.viltrumitecore.hero.act.ActShape;
+import dev.baranhan.viltrumitecore.hero.sinclair.act.ActScript;
+import dev.baranhan.viltrumitecore.hero.sinclair.act.CopyCinematic;
 import javax.annotation.Nullable;
 
 /**
@@ -15,13 +17,15 @@ public enum SinclairMove {
    HEX_CAST(SinclairRules.HEX_CAST, "hex_cast"),
    SNAP(SinclairRules.MIS_CAST, "snap"),
    CAPTURE(SinclairRules.ULT_CAPTURE, "capture"),
-   ACT_BEAM(70, "act_beam"),
-   ACT_NOVA(64, "act_nova"),
-   ACT_CUT(60, "act_cut"),
-   ACT_BARRAGE(62, "act_barrage"),
-   ACT_AEGIS(78, "act_aegis"),
-   ACT_FINALE(72, "act_finale"),
-   REFUSE(SinclairRules.REFUSE_TICKS, "refuse");
+   ACT_BEAM(ActScript.BEAM.length(), "act_beam"),
+   ACT_NOVA(ActScript.NOVA.length(), "act_nova"),
+   ACT_CUT(ActScript.CUT.length(), "act_cut"),
+   ACT_BARRAGE(ActScript.BARRAGE.length(), "act_barrage"),
+   ACT_AEGIS(ActScript.AEGIS.length(), "act_aegis"),
+   ACT_FINALE(ActScript.FINALE.length(), "act_finale"),
+   REFUSE(SinclairRules.REFUSE_TICKS, "refuse"),
+   /** The copy cinematic after a read card (design 2026-11-02 §2): both participants held, the card shown. */
+   COPY(CopyCinematic.LENGTH, "copy");
 
    private final int length;
    private final String clip;
@@ -43,9 +47,9 @@ public enum SinclairMove {
       return this.ordinal() >= ACT_BEAM.ordinal() && this.ordinal() <= ACT_FINALE.ordinal();
    }
 
-   /** Moves that may not be interrupted by another cast (the act and the capture own the body). */
+   /** Moves that may not be interrupted by another cast (the act, the capture and the copy cinematic own the body). */
    public boolean locksCasting() {
-      return this.isAct() || this == CAPTURE;
+      return this.isAct() || this == CAPTURE || this == COPY;
    }
 
    public static SinclairMove act(ActShape shape) {

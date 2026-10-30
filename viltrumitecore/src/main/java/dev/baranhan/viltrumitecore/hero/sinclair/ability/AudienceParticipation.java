@@ -12,7 +12,9 @@ import dev.baranhan.viltrumitecore.hero.sinclair.SinclairRules;
 import dev.baranhan.viltrumitecore.hero.sinclair.SinclairSounds;
 import dev.baranhan.viltrumitecore.hero.sinclair.SinclairState;
 import dev.baranhan.viltrumitecore.hero.sinclair.Stagecraft;
+import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
 import dev.baranhan.viltrumitecore.hero.sinclair.act.ActScene;
+import dev.baranhan.viltrumitecore.hero.sinclair.act.CopyScene;
 import dev.baranhan.viltrumitecore.hero.sinclair.act.SinclairRepertoire;
 import dev.baranhan.viltrumitecore.hero.sinclair.entity.AssistantEntity;
 import dev.baranhan.viltrumitecore.hero.speech.HeroLineTrigger;
@@ -137,12 +139,21 @@ public final class AudienceParticipation {
             state.capturedFrom = choice.source();
             SinclairSounds.play(player.level(), Stagecraft.leftHand(player), SinclairSounds.ULT_CARD, 1.0F, 1.0F);
          }
+      } else if (state.move == SinclairMove.COPY) {
+         if (state.copy == null || !state.copy.tick(player, state.moveTick)) {
+            // A participant was lost mid-scene: let go now, the card is already read.
+            state.clearMove();
+            endCopy(player, state, ReleaseReason.INTERRUPTED);
+         }
       } else if (state.move != null && state.move.isAct() && state.scene != null) {
          state.scene.tick(player, state, state.moveTick);
       }
    }
 
-   /** The capture move ended: the window opens with the card in the left hand. */
+   /**
+    * The capture move ended: with the cinematic on (and both bodies free to hold) the copy cinematic runs
+    * first; otherwise, or after it, the window opens with the card in the left hand.
+    */
    public static void onMoveEnd(ServerPlayer player, SinclairState state, SinclairMove move) {
       if (move == SinclairMove.CAPTURE && state.ult == SinclairState.Ult.CAPTURE) {
          if (state.captured == null) {
@@ -150,10 +161,36 @@ public final class AudienceParticipation {
             state.capturedFrom = SinclairRepertoire.Source.FALLBACK;
          }
 
-         state.ult = SinclairState.Ult.WINDOW;
-         state.window = SinclairRules.ULT_WINDOW;
+         CopyScene copy = CopyScene.tryStart(player, volunteerEntity(player, state));
+         if (copy != null) {
+            state.copy = copy;
+            state.triggerHeld = false;
+            state.startMove(SinclairMove.COPY);
+            return;
+         }
+
+         openWindow(state);
+      } else if (move == SinclairMove.COPY) {
+         endCopy(player, state, ReleaseReason.NORMAL_END);
       } else if (move.isAct() && state.ult == SinclairState.Ult.PERFORM) {
          finish(player, state);
+      }
+   }
+
+   private static void openWindow(SinclairState state) {
+      state.ult = SinclairState.Ult.WINDOW;
+      state.window = SinclairRules.ULT_WINDOW;
+   }
+
+   /** The cinematic is over (or cut short): both bodies are let go and the window opens. */
+   private static void endCopy(ServerPlayer player, SinclairState state, ReleaseReason reason) {
+      if (state.copy != null) {
+         state.copy.stop(player, reason);
+         state.copy = null;
+      }
+
+      if (state.ult == SinclairState.Ult.CAPTURE && state.captured != null) {
+         openWindow(state);
       }
    }
 
@@ -206,6 +243,11 @@ public final class AudienceParticipation {
 
    /** Interrupt (death, hero change, dimension): props go, the freeze lets go. */
    public static void abort(ServerPlayer player, SinclairState state) {
+      if (state.copy != null) {
+         state.copy.stop(player, ReleaseReason.INTERRUPTED);
+         state.copy = null;
+      }
+
       if (state.scene != null) {
          state.scene.stop(player, state);
       }

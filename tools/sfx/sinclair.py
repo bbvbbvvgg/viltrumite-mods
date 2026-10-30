@@ -7,6 +7,10 @@ returns mono 44.1 kHz float PCM; the script peak-normalises it, encodes Ogg Vorb
 decodeBinaryAssets pipeline. It also keeps the "sinclair.*" entries of sounds.json in step.
 Usage: python3 tools/sfx/sinclair.py [--check] [--only NAME ...] [--wav DIR]
 --check re-synthesises and compares against the committed files (decoded PCM correlation).
+
+Superseded 2026-11-02 by tools/sfx/sinclair_cc0.py (sound pass 2: Kenney CC0 layers + these primitives,
+45 events, loudness classes, release tails). This file now only provides the synthesis primitives and
+the pass-1 recipes for reference; it no longer installs files or edits sounds.json (use --wav to listen).
 """
 import argparse
 import base64
@@ -587,6 +591,11 @@ def main():
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--wav", help="also write plain .ogg files here for listening")
     args = ap.parse_args()
+    if args.check:
+        print("sinclair.py is superseded by sinclair_cc0.py; nothing to check")
+        return 0
+    if not args.wav:
+        ap.error("pass 1 is retired: use --wav DIR to listen, tools/sfx/sinclair_cc0.py to install")
     names = args.only or list(RECIPES)
     bad = []
     with tempfile.TemporaryDirectory() as tmp:
@@ -608,11 +617,8 @@ def main():
                 if abs(len(a) - len(b)) > SR * 0.01 or corr < 0.98:
                     bad.append("%s (corr %.3f)" % (name, corr))
                 continue
-            os.makedirs(OUT, exist_ok=True)
             with open(ogg, "rb") as fh:
                 data = fh.read()
-            with open(target, "wb") as fh:
-                fh.write(base64.encodebytes(data))
             if args.wav:
                 os.makedirs(args.wav, exist_ok=True)
                 with open(os.path.join(args.wav, name + ".ogg"), "wb") as fh:
@@ -622,8 +628,6 @@ def main():
         for b in bad:
             print("stale:", b)
         return 1 if bad else 0
-    if not args.only:
-        update_sounds_json()
     return 0
 
 
