@@ -135,5 +135,11 @@
   "subtitles.viltrumitecore.sinclair_act_card_fan": "Kartlar yelpaze gibi açılıyor",
   "subtitles.viltrumitecore.sinclair_act_card_finale": "Final yaylımı",
   "subtitles.viltrumitecore.sinclair_act_curtain_rustle": "Perde hışırdıyor",
-  "subtitles.viltrumitecore.sinclair_act_chest_rattle": "Sandık sarsılıyor"
+  "subtitles.viltrumitecore.sinclair_act_chest_rattle": "Sandık sarsılıyor",
+  "subtitle.viltrumitecore.sinclair.summon_b": "Güzel asistanım için bir alkış!",
+  "subtitle.viltrumitecore.sinclair.hex_b": "Ve işte — artık tüylüsün!",
+  "subtitle.viltrumitecore.sinclair.snap_b": "…ve şimdi görmüyorsunuz!",
+  "subtitle.viltrumitecore.sinclair.kill": "İşte buna kaybolma numarası denir!",
+  "subtitle.viltrumitecore.sinclair.low_health": "Gösteri devam etmeli…",
+  "subtitle.viltrumitecore.sinclair.enter": "Bayanlar ve baylar — Sinclair!"
 }

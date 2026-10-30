@@ -42,6 +42,15 @@ public final class SinclairLines {
    public static final HeroLine HEX = ability("sinclair:hex", "hex", 300);
    public static final HeroLine SNAP = ability("sinclair:snap", "snap", 300);
    public static final HeroLine TADA = ability("sinclair:tada", "tada", 200);
+   /** Second variants (rotation): the same trick never gets the same patter twice in a row. */
+   public static final HeroLine SUMMON_B = ability("sinclair:summon_b", "summon_b", 400);
+   public static final HeroLine HEX_B = ability("sinclair:hex_b", "hex_b", 300);
+   public static final HeroLine SNAP_B = ability("sinclair:snap_b", "snap_b", 300);
+   public static final HeroLine KILL = HeroLine.builder("sinclair:kill").text(PREFIX + "kill").priority(HeroLine.Priority.AMBIENT).range(24.0)
+      .duration(ABILITY_TICKS).cooldown(1200).build();
+   public static final HeroLine LOW_HEALTH = HeroLine.builder("sinclair:low_health").text(PREFIX + "low_health").priority(HeroLine.Priority.AMBIENT)
+      .range(24.0).duration(ABILITY_TICKS).cooldown(1800).build();
+   public static final HeroLine ENTER = ability("sinclair:enter", "enter", 1200);
 
    public static final String EVENT_BOW = "sinclair:bow";
    public static final String EVENT_WINDOW_LOST = "sinclair:window_lost";
@@ -62,11 +71,17 @@ public final class SinclairLines {
       .onAbility(SinclairAbilities.SPECTRAL_ASSISTANT, SUMMON)
       .onAbility(SinclairAbilities.RABBIT_HEX, HEX)
       .onAbility(SinclairAbilities.MISDIRECTION, SNAP)
+      .onAbility(SinclairAbilities.SPECTRAL_ASSISTANT, SUMMON_B)
+      .onAbility(SinclairAbilities.RABBIT_HEX, HEX_B)
+      .onAbility(SinclairAbilities.MISDIRECTION, SNAP_B)
+      .onEvent(dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.KILL, KILL)
+      .onEvent(dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.LOW_HEALTH, LOW_HEALTH)
+      .onEvent(dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.HERO_ENTER, ENTER)
       .build();
 
    /** Every line id with its lang key (lang tests and the checker). */
    public static final String[] KEYS = {"capture_a", "capture_b", "act_beam", "act_nova", "act_cut", "act_barrage", "act_aegis", "act_finale",
-      "bow", "window_lost", "summon", "hex", "snap", "tada"};
+      "bow", "window_lost", "summon", "hex", "snap", "tada", "summon_b", "hex_b", "snap_b", "kill", "low_health", "enter"};
 
    private static final Map<UUID, Pending> PENDING = new HashMap<>();
 

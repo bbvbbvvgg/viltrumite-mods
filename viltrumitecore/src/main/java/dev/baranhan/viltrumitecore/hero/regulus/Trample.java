@@ -31,6 +31,7 @@ public final class Trample {
       }
 
       state.startMove(RegulusMove.TRAMPLE);
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, RegulusAbilities.TRAMPLE);
       state.trampleCooldown = RegulusRules.TRAMPLE_COOLDOWN;
       state.trampleAir = !player.onGround();
       state.trampleLion = state.lion;

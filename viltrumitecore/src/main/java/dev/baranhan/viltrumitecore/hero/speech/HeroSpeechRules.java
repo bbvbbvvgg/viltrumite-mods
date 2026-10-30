@@ -5,11 +5,34 @@ import javax.annotation.Nullable;
 
 /** Pure server rules of {@link HeroSpeech}: start/skip decisions, variant rotation and line lifetime. */
 public final class HeroSpeechRules {
-   /** Server-side lifetime estimate of one fragment with an automatic duration (the client times the real pages). */
+   /**
+    * Server-side lifetime estimate of one auto-timed fragment whose text the server cannot read
+    * (missing key); the client times the real pages.
+    */
    public static final int ESTIMATE_TICKS_PER_FRAGMENT = 160;
+   /**
+    * Margin over the reading time of the server's (English) text: translations run longer (ru/de
+    * about 1.3x), long text wraps onto extra pages and players may slow subtitles down. Without a
+    * text-based estimate every short quip ("Mjolnir!", shown 2 s) held the speaker for 9 s and a
+    * kill remark right after it was skipped as BUSY while nothing was on screen.
+    */
+   public static final double ESTIMATE_TEXT_MARGIN = 1.5;
+   /** Mirrors the client's automatic page time (SubtitleTiming.autoPageTicks at scale 1). */
+   static final float ESTIMATE_BASE_TICKS = 18.0F;
+   static final float ESTIMATE_TICKS_PER_CHAR = 1.15F;
+   static final int ESTIMATE_MIN_PAGE = 40;
+   static final int ESTIMATE_MAX_PAGE = 240;
    /** Enter/exit fades on top of the spoken time. */
    public static final int FADE_GRACE_TICKS = 20;
    public static final String SPEAKER_KEY_PREFIX = "subtitle.viltrumitecore.speaker.";
+   /** An ability line is on screen at least this long before another ability line may replace it. */
+   public static final int MIN_SHOWN_BEFORE_REPLACE = 20;
+   /** Low-health remark threshold: the hit that takes the speaker to this share of max health or below. */
+   public static final float LOW_HEALTH_FRACTION = 0.3F;
+   /** A non-player victim is worth a kill line from this max health on (hostile mobs) ... */
+   public static final float NOTABLE_HOSTILE_HEALTH = 20.0F;
+   /** ... or from this max health on (any big creature). */
+   public static final float NOTABLE_ANY_HEALTH = 40.0F;
 
    public enum Decision {
       PLAY,
@@ -17,7 +40,13 @@ public final class HeroSpeechRules {
       REPLACE,
       ALREADY_ACTIVE,
       COOLDOWN,
-      OUTRANKED;
+      OUTRANKED,
+      /**
+       * Another line is still being read and this one may not cut it: an ambient remark (kill,
+       * low health) never interrupts, an ability line waits {@link #MIN_SHOWN_BEFORE_REPLACE} ticks.
+       * Skipped, not queued (a late combat quip is worse than none).
+       */
+      BUSY;
 
       public boolean starts() {
          return this == PLAY || this == REPLACE;
@@ -50,10 +79,81 @@ public final class HeroSpeechRules {
       return !force && now < cooldownUntil ? Decision.COOLDOWN : Decision.PLAY;
    }
 
-   /** Ticks the server treats the line as speaking: the explicit duration, else a per-fragment estimate, plus the fades. */
-   public static int lifetimeTicks(int durationTicks, int fragments) {
-      int spoken = durationTicks > 0 ? durationTicks : Math.max(1, fragments) * ESTIMATE_TICKS_PER_FRAGMENT;
+   /**
+    * {@link #decide(String, HeroLine.Priority, String, HeroLine.Priority, long, long, boolean)} with
+    * the active line's age: a higher rank still interrupts at once and an ultimate may hand over to
+    * the next ultimate phase, but an {@link HeroLine.Priority#AMBIENT} line never interrupts and an
+    * ability line replaces another ability line only after {@link #MIN_SHOWN_BEFORE_REPLACE} ticks
+    * (no flicker of two quips in one second). {@code activeAgeTicks} is ignored when nothing plays.
+    */
+   public static Decision decide(@Nullable String activeLineId, @Nullable HeroLine.Priority activePriority, long activeAgeTicks, String lineId,
+      HeroLine.Priority priority, long now, long cooldownUntil, boolean force) {
+      Decision legacy = decide(activeLineId, activePriority, lineId, priority, now, cooldownUntil, force);
+      if (force || activeLineId == null) {
+         return legacy;
+      }
+
+      // Another line is on screen: an ambient remark is skipped as BUSY whatever that line's rank
+      // (the legacy rule would call a remark under an ability line OUTRANKED; both skip it).
+      if (priority == HeroLine.Priority.AMBIENT && (legacy == Decision.REPLACE || legacy == Decision.OUTRANKED)) {
+         return Decision.BUSY;
+      }
+
+      if (legacy != Decision.REPLACE) {
+         return legacy;
+      }
+
+      if (priority == HeroLine.Priority.ABILITY && activePriority == HeroLine.Priority.ABILITY && activeAgeTicks < MIN_SHOWN_BEFORE_REPLACE) {
+         return Decision.BUSY;
+      }
+
+      return Decision.REPLACE;
+   }
+
+   /** Whether a kill is worth a remark: another player, a real hostile, or any big creature (never chickens or villagers). */
+   public static boolean notableKill(boolean victimIsPlayer, boolean victimHostile, float victimMaxHealth) {
+      return victimIsPlayer || victimHostile && victimMaxHealth >= NOTABLE_HOSTILE_HEALTH || victimMaxHealth >= NOTABLE_ANY_HEALTH;
+   }
+
+   /** Whether a survived hit took the speaker from above the low-health threshold to at or below it. */
+   public static boolean crossedLowHealth(float healthBefore, float damage, float maxHealth) {
+      if (!(maxHealth > 0.0F) || !(damage > 0.0F)) {
+         return false;
+      }
+
+      float after = healthBefore - damage;
+      float threshold = maxHealth * LOW_HEALTH_FRACTION;
+      return healthBefore > threshold && after > 0.0F && after <= threshold;
+   }
+
+   /**
+    * Ticks the server treats the line as speaking: the explicit duration, else a per-fragment estimate
+    * from the fragment's text length ({@code -1} = text unknown), plus the fades.
+    */
+   public static int lifetimeTicks(int durationTicks, int[] fragmentChars) {
+      int spoken;
+      if (durationTicks > 0) {
+         spoken = durationTicks;
+      } else if (fragmentChars.length == 0) {
+         spoken = ESTIMATE_TICKS_PER_FRAGMENT;
+      } else {
+         spoken = 0;
+         for (int chars : fragmentChars) {
+            spoken += estimateFragmentTicks(chars);
+         }
+      }
+
       return spoken + FADE_GRACE_TICKS;
+   }
+
+   /** Reading-time estimate of one auto-timed fragment of {@code chars} characters ({@code < 0} = unknown text). */
+   public static int estimateFragmentTicks(int chars) {
+      if (chars < 0) {
+         return ESTIMATE_TICKS_PER_FRAGMENT;
+      }
+
+      double page = Math.max(ESTIMATE_MIN_PAGE, Math.min(ESTIMATE_MAX_PAGE, ESTIMATE_BASE_TICKS + ESTIMATE_TICKS_PER_CHAR * chars));
+      return (int)Math.ceil(page * ESTIMATE_TEXT_MARGIN);
    }
 
    /** Next variant after {@code last} (-1 = none yet) that is ready, round robin; -1 when none is. */

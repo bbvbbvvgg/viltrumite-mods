@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
@@ -47,12 +46,11 @@ public class WorldEventManager extends SavedData {
    }
 
    /**
-    * Pure: does a running event survive the current rules? With automatic starts
-    * disabled, an event that was not started by a command (a save from an older
-    * build, where the scheduler started it) is finished and its NPCs despawned.
+    * Pure: does a running event survive? Only command-started events run. An event that a
+    * scheduler started (a save from an older build) is finished and its NPCs despawned.
     */
-   public static boolean keepsEvent(boolean manual, boolean autoStartEnabled) {
-      return manual || autoStartEnabled;
+   public static boolean keepsEvent(boolean manual) {
+      return manual;
    }
 
    public boolean stop(ServerLevel level, WorldEventType type) {
@@ -102,7 +100,7 @@ public class WorldEventManager extends SavedData {
 
          while (it.hasNext()) {
             WorldEvent event = it.next();
-            if (!keepsEvent(event.isManual(), dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig.INSTANCE.worldEventsAutoStart)) {
+            if (!keepsEvent(event.isManual())) {
                if (!event.isOver()) {
                   event.finish(level);
                }
@@ -121,19 +119,13 @@ public class WorldEventManager extends SavedData {
       }
    }
 
+   /**
+    * Events never resume from a save: the squad NPCs are not saved with the world, and a
+    * warmup that survived a restart would spawn them at server start without a command.
+    * A restart ends every event; an operator starts it again by command.
+    */
    public static WorldEventManager load(CompoundTag tag) {
       WorldEventManager manager = new WorldEventManager();
-
-      for (Tag element : tag.getList("Events", 10)) {
-         CompoundTag eventTag = (CompoundTag)element;
-         WorldEventType type = WorldEvents.byId(eventTag.getString("Id"));
-         if (type != null) {
-            WorldEvent event = type.create();
-            event.load(eventTag);
-            manager.active.add(event);
-         }
-      }
-
       manager.lastEventTime = tag.getLong("LastEventTime");
       return manager;
    }

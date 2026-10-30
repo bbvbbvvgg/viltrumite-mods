@@ -83,7 +83,7 @@ public final class FlyBy {
       LivingEntity best = null;
       double bestDist = Double.MAX_VALUE;
       // No fly-by hit through a wall.
-      for (Entity entity : player.level().getEntities(player, area, e -> valid(player, e) && player.hasLineOfSight(e))) {
+      for (Entity entity : player.level().getEntities(player, area, e -> valid(player, e) && !dev.baranhan.viltrumitecore.entity.Bystander.is(e) && player.hasLineOfSight(e))) {
          AABB box = entity.getBoundingBox().inflate(IronManRules.FLYBY_RADIUS);
          double dist = Math.min(clipDist(box, eye, eye.add(look)), clipDist(box, eye, eye.add(along)));
          if (dist < bestDist) {

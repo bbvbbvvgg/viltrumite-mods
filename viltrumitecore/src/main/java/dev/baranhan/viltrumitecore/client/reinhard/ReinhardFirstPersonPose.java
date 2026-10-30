@@ -346,12 +346,12 @@ public final class ReinhardFirstPersonPose {
    }
 
    public static Offset worldErasure(double ticks,boolean physicalLeft) {
-      if (!Double.isFinite(ticks) || ticks<=0 || ticks>=ReinhardRules.ERASE_LENGTH) return Offset.NONE;
-      float raise=smooth(ticks/15),cut=smooth((ticks-ReinhardRules.ERASE_CRACK_END)/10.0);
+      if (!Double.isFinite(ticks) || ticks<=0 || ticks>=ReinhardRules.ERASE_CLIP_LENGTH) return Offset.NONE;
+      float raise=smooth(ticks/15),cut=smooth((ticks-ReinhardRules.ERASE_CLIP_CUT)/10.0);
       return new Offset((physicalLeft ? .10F : -.22F)*raise+.40F*cut,
          .22F*raise-.30F*cut,-.14F*raise-.18F*cut,-20*raise+50*cut,
          (physicalLeft ? -8 : 10)*raise+45*cut,(physicalLeft ? -5 : 5)*raise+12*cut)
-         .scaled(windowFade(ticks,ReinhardRules.ERASE_LENGTH));
+         .scaled(windowFade(ticks,ReinhardRules.ERASE_CLIP_LENGTH));
    }
 
    private static float smooth(double value) {

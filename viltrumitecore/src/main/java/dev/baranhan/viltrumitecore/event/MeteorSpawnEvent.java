@@ -42,17 +42,34 @@ public class MeteorSpawnEvent {
          MeteorImpactData data = MeteorImpactData.get(level);
          if (data.isAreaClear(impactTarget, ViltrumiteCoreConfig.INSTANCE.meteorMinDistance)) {
             data.addImpact(impactTarget);
-            MeteorEntity meteor = (MeteorEntity)((EntityType)ViltrumiteEntities.METEOR.get()).create(level);
-            if (meteor != null) {
-               double distanceY = 250.0 - (double)groundY;
-               double ticksToFall = distanceY / 1.5;
-               double spawnX = (double)impactTarget.getX() - ticksToFall * 0.5;
-               double spawnZ = (double)impactTarget.getZ() - ticksToFall * 0.5;
-               meteor.moveTo(spawnX, 250.0, spawnZ);
-               meteor.setDeltaMovement(new Vec3(0.5, -1.5, 0.5));
-               level.addFreshEntity(meteor);
-            }
+            launch(level, impactTarget);
          }
       }
+   }
+
+   /** Spawn point of a meteor that lands on {@code impactTarget}: the fixed fall line from y 250. */
+   public static Vec3 spawnPoint(BlockPos impactTarget) {
+      double distanceY = 250.0 - (double)impactTarget.getY();
+      double ticksToFall = distanceY / 1.5;
+      return new Vec3((double)impactTarget.getX() - ticksToFall * 0.5, 250.0, (double)impactTarget.getZ() - ticksToFall * 0.5);
+   }
+
+   /** Launch one regular meteor at a surface point (shared by the random spawn and the meteor rain). */
+   public static MeteorEntity launch(ServerLevel level, BlockPos impactTarget) {
+      return launch(level, impactTarget, true);
+   }
+
+   /** {@code dropsLoot} false: the meteor rain, which must not pile up gun parts. */
+   public static MeteorEntity launch(ServerLevel level, BlockPos impactTarget, boolean dropsLoot) {
+      MeteorEntity meteor = (MeteorEntity)((EntityType)ViltrumiteEntities.METEOR.get()).create(level);
+      if (meteor != null) {
+         meteor.setDropsLoot(dropsLoot);
+         Vec3 spawn = spawnPoint(impactTarget);
+         meteor.moveTo(spawn.x, spawn.y, spawn.z);
+         meteor.setDeltaMovement(new Vec3(0.5, -1.5, 0.5));
+         level.addFreshEntity(meteor);
+      }
+
+      return meteor;
    }
 }

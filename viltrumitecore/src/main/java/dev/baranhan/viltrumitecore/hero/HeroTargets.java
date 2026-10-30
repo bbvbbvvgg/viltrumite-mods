@@ -31,6 +31,15 @@ public final class HeroTargets {
    private HeroTargets() {
    }
 
+   /**
+    * Automatic target selection (lock-on, "nearest enemy" resolvers, focus marks): a valid
+    * hit target that is not a bystander (city pedestrian). Bystanders can still be hit.
+    */
+   public static boolean canAutoTarget(Player attacker, @Nullable Entity entity) {
+      Entity target = entity instanceof PartEntity<?> part ? part.getParent() : entity;
+      return !dev.baranhan.viltrumitecore.entity.Bystander.is(target) && canHit(attacker, entity);
+   }
+
    public static boolean canHit(Player attacker, @Nullable Entity entity) {
       Entity target = entity instanceof PartEntity<?> part ? part.getParent() : entity;
       if (!(target instanceof LivingEntity living) || target == attacker || !living.isAlive() || !living.isAttackable() || living.isSpectator()

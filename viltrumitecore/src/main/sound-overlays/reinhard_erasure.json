@@ -1,0 +1,42 @@
+{
+  "reinhard.erase_tension": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_tension",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/erase_tension"
+      }
+    ]
+  },
+  "reinhard.erase_shatter": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_shatter",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/erase_shatter"
+      }
+    ]
+  },
+  "reinhard.erase_dissolve": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_dissolve",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/erase_dissolve"
+      }
+    ]
+  },
+  "reinhard.erase_snap": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_snap",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/erase_snap"
+      }
+    ]
+  },
+  "reinhard.erase_restore": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.erase_restore",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/erase_restore"
+      }
+    ]
+  }
+}

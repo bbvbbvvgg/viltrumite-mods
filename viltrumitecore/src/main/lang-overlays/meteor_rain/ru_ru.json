@@ -1,0 +1,11 @@
+{
+  "commands.viltrumitecore.meteor.already": "У %s уже идёт метеоритный дождь",
+  "commands.viltrumitecore.meteor.started": "Метеоритный дождь начался вокруг %s",
+  "commands.viltrumitecore.meteor.started.you": "Вокруг вас падают метеориты. Выживите! (/meteor stop)",
+  "commands.viltrumitecore.meteor.not_running": "У %s нет метеоритного дождя",
+  "commands.viltrumitecore.meteor.stopped": "Метеоритный дождь для %s остановлен: новых метеоритов не будет, летящие ещё упадут",
+  "commands.viltrumitecore.meteor.stopped_all": "Остановлено метеоритных дождей: %s",
+  "commands.viltrumitecore.meteor.none": "Метеоритный дождь не идёт",
+  "commands.viltrumitecore.meteor.entry": "%s: дождь в %s уже %s с, запущено метеоритов: %s, в воздухе: %s",
+  "commands.viltrumitecore.meteor.entry.paused": "%s: дождь в %s на паузе (игрок в другом мире), запущено: %s, в воздухе: %s"
+}

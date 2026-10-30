@@ -22,11 +22,14 @@ public class AntiCheatBypassMixin {
 
    /**
     * Unlimited air steps (HeroDefinition.sustainsAirborne) are legitimate movement: the vanilla
-    * floating counter (kick after 80 airborne ticks when allow-flight is off) never counts them.
+    * floating counter (kick after 80 airborne ticks when allow-flight is off) never counts them,
+    * nor a player the server holds still itself (world pause, Limbo void: WorldPause.holdsAirborne).
     */
    @Inject(method = "tick", at = @At("HEAD"))
    private void viltrumitecore$airStepsAreNotFlight(CallbackInfo ci) {
-      if (this.player != null && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(this.player).sustainsAirborne(this.player)) {
+      if (this.player != null && (dev.baranhan.viltrumitecore.hero.HeroRegistry.get(this.player).sustainsAirborne(this.player)
+         || dev.baranhan.viltrumitecore.hero.control.WorldPause.holdsAirborne(dev.baranhan.viltrumitecore.hero.control.WorldPause.active(this.player.server),
+            this.player.level().dimension().equals(dev.baranhan.viltrumitecore.hero.reinhard.limbo.Limbo.dimension())))) {
          this.aboveGroundTickCount = 0;
       }
    }

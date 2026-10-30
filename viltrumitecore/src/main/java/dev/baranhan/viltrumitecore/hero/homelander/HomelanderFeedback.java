@@ -17,5 +17,6 @@ final class HomelanderFeedback {
    /** Hiss of overheated eyes; everyone nearby hears it. Smoke is drawn on the client from the snapshot lock flag. */
    static void overheat(ServerPlayer player) {
       player.level().playSound(null, player.getX(), player.getEyeY(), player.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.8F, 1.4F);
+      HomelanderLines.say(player, HomelanderLines.EVENT_OVERHEAT);
    }
 }

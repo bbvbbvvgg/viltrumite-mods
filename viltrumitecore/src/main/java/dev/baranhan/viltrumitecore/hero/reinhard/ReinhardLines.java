@@ -71,12 +71,57 @@ public final class ReinhardLines {
       })
       .build();
 
+   public static final String HOLY_SWORD_EVENT = "reinhard:holy_sword";
+   public static final String PHOENIX_EVENT = "reinhard:phoenix";
+
+   /*
+    * Global subtitles expansion: short lines in his chivalrous manner, own phrasing. ReinhardActions.press
+    * already speaks the line of every accepted ability; these are bound to the abilities that matter
+    * (not punches, dashes or kicks) with long cooldowns. World Erasure (slot 6) keeps its line untouched.
+    */
+   public static final HeroLine REID = ability(ReinhardAbility.REID.id(), "reid", 20 * 60);
+   public static final HeroLine SHEATH_STRIKE = ability(ReinhardAbility.SHEATH_STRIKE.id(), "sheath_strike", 20 * 30);
+   public static final HeroLine SAW_SPHERE = ability(ReinhardAbility.SAW_SPHERE.id(), "saw_sphere", 20 * 30);
+   public static final HeroLine REFLECT = ability(ReinhardAbility.REFLECT.id(), "reflect", 20 * 30);
+   public static final HeroLine CATCH = ability(ReinhardAbility.CATCH.id(), "catch", 20 * 30);
+   /** The mode cycle reached Holy Sword (ReinhardHero mode change). */
+   public static final HeroLine HOLY_SWORD = ability(HOLY_SWORD_EVENT, "holy_sword", 20 * 60);
+   /** The Phoenix blessing saved him from a lethal divine hit (its own long cooldown keeps it rare). */
+   public static final HeroLine PHOENIX = HeroLine.builder(PHOENIX_EVENT).text("subtitle.viltrumitecore.reinhard.phoenix")
+      .priority(HeroLine.Priority.ULTIMATE).duration(60).cooldown(0).range(48.0).build();
+   public static final HeroLine KILL = ambient("reinhard:kill", "kill", 20 * 60);
+   public static final HeroLine LOW_HEALTH = ambient("reinhard:low_health", "low_health", 20 * 90);
+   public static final HeroLine ENTER = ability("reinhard:enter", "enter", 20 * 60);
+
    public static final HeroLines LINES = HeroLines.builder()
       .onAbility(ReinhardAbility.WORLD_ERASURE.id(), WORLD_ERASURE)
       .onAbility(ReinhardAbility.WORLD_CUT.id(), WORLD_CUT)
       .onAbility(ReinhardAbility.DIAGONAL_WORLD_CUT.id(), DIAGONAL_WORLD_CUT)
       .onEvent(BLAST_EVENT, BLAST)
+      .onAbility(ReinhardAbility.REID.id(), REID)
+      .onAbility(ReinhardAbility.SHEATH_STRIKE.id(), SHEATH_STRIKE)
+      .onAbility(ReinhardAbility.SAW_SPHERE.id(), SAW_SPHERE)
+      .onAbility(ReinhardAbility.REFLECT.id(), REFLECT)
+      .onAbility(ReinhardAbility.CATCH.id(), CATCH)
+      .onEvent(HOLY_SWORD_EVENT, HOLY_SWORD)
+      .onEvent(PHOENIX_EVENT, PHOENIX)
+      .onEvent(dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.KILL, KILL)
+      .onEvent(dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.LOW_HEALTH, LOW_HEALTH)
+      .onEvent(dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.HERO_ENTER, ENTER)
       .build();
+
+   /** A Reinhard event line; no-op for any other hero. */
+   public static void say(net.minecraft.server.level.ServerPlayer player, String event) {
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.trigger(player, dev.baranhan.viltrumitecore.hero.speech.HeroLineTrigger.event(event));
+   }
+
+   private static HeroLine ability(String id, String key, int cooldown) {
+      return HeroLine.builder(id).text("subtitle.viltrumitecore.reinhard." + key).priority(HeroLine.Priority.ABILITY).cooldown(cooldown).range(32.0).build();
+   }
+
+   private static HeroLine ambient(String id, String key, int cooldown) {
+      return HeroLine.builder(id).text("subtitle.viltrumitecore.reinhard." + key).priority(HeroLine.Priority.AMBIENT).cooldown(cooldown).range(24.0).build();
+   }
 
    private ReinhardLines() {
    }

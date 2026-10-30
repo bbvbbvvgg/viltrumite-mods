@@ -49,7 +49,7 @@ public class TargetLockManager {
                startPos,
                endVec,
                box,
-               entity -> entity instanceof LivingEntity && !entity.isSpectator() && entity != client.player,
+               entity -> entity instanceof LivingEntity && !entity.isSpectator() && entity != client.player && !dev.baranhan.viltrumitecore.entity.Bystander.is(entity),
                maxDistance * maxDistance
             );
             if (hitResult != null && hitResult.getEntity() instanceof LivingEntity living) {

@@ -193,6 +193,10 @@ final class FatalitySessions {
       SESSIONS.put(thor.getUUID(), session);
       sync(thor, session);
       ThorScenes.postScene(ThorEventType.SCENE_START, thor.getUUID(), thor, victim.getUUID(), victim, ThorScenes.FATALITY, true);
+      if (!rehearsal) {
+         dev.baranhan.viltrumitecore.hero.thor.ThorLines.say(thor, dev.baranhan.viltrumitecore.hero.thor.ThorLines.FATALITY_EVENT);
+      }
+
       return true;
    }
 

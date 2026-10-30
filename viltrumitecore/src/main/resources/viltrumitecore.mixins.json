@@ -7,6 +7,7 @@
   "plugin": "dev.baranhan.viltrumitecore.plugin.ViltrumiteMixinPlugin",
   "mixins": [
     "TimeFreezeLevelMixin",
+    "TimeFreezeBlockEntityMixin",
     "TimeFreezePlayerMixin",
     "TimeFreezeMoveMixin",
     "LivingEntityLerpAccessor",
@@ -42,6 +43,7 @@
     "SolidEntityBypassMixin",
     "WroughtnautDamageBypassMixin",
     "QuietBlockRemovalMixin",
+    "CityJournalMixin",
     "SawShellCollisionMixin",
     "EndDragonFightAccess",
     "PlayerRespawnLogicInvoker"

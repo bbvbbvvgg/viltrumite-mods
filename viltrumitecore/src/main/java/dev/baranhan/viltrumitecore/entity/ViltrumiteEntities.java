@@ -65,6 +65,12 @@ public class ViltrumiteEntities {
          .sized(0.62F, 1.9F).clientTrackingRange(10).updateInterval(2).fireImmune().noSave().build("shadow_soldier")
    );
 
+   /** Living city pedestrian (city/citizen): never saved, the city population manager refills the streets. */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>> CITIZEN = ENTITIES.register(
+      "citizen", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>of(dev.baranhan.viltrumitecore.city.citizen.CitizenEntity::new, MobCategory.MISC)
+         .sized(0.6F, 1.8F).clientTrackingRange(8).updateInterval(3).noSave().build("citizen")
+   );
+
    public static void register(IEventBus eventBus) {
       ENTITIES.register(eventBus);
    }

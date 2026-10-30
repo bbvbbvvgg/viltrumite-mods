@@ -1,0 +1,11 @@
+{
+  "commands.viltrumitecore.meteor.already": "%s ya tiene una lluvia de meteoritos",
+  "commands.viltrumitecore.meteor.started": "Lluvia de meteoritos iniciada alrededor de %s",
+  "commands.viltrumitecore.meteor.started.you": "Caen meteoritos a tu alrededor. ¡Sobrevive! (/meteor stop)",
+  "commands.viltrumitecore.meteor.not_running": "%s no tiene lluvia de meteoritos",
+  "commands.viltrumitecore.meteor.stopped": "Lluvia de meteoritos detenida para %s: no caerán nuevos, los que están en el aire aún impactan",
+  "commands.viltrumitecore.meteor.stopped_all": "Se detuvieron %s lluvias de meteoritos",
+  "commands.viltrumitecore.meteor.none": "No hay ninguna lluvia de meteoritos",
+  "commands.viltrumitecore.meteor.entry": "%s: lluvia en %s desde hace %ss, %s meteoritos lanzados, %s en el aire",
+  "commands.viltrumitecore.meteor.entry.paused": "%s: lluvia en %s en pausa (el jugador está en otro mundo), %s lanzados, %s en el aire"
+}

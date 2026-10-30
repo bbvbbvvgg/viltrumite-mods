@@ -46,6 +46,8 @@ class ReinhardSoundsTest {
    /** Original deterministic synthesis (tools/sfx/reinhard_explosion.py, CC0): positional mono, subtitled. */
    private static final Map<String, String> ORIGINAL = Map.of("world_cut_explosion", "world_cut_explosion");
    /** Saw Sphere (item 19): original deterministic synthesis (tools/sfx/reinhard_saw_sphere.py, CC0); event -> attenuation. */
+   /** World Erasure polish: original procedural cues (tools/sfx/reinhard_erasure.py), events in sound-overlays/reinhard_erasure.json. */
+   private static final Set<String> ERASURE = Set.of("erase_tension", "erase_shatter", "erase_dissolve", "erase_snap", "erase_restore");
    private static final Map<String, Integer> SAW = Map.of("saw_hum", 64, "saw_grind", 48, "saw_finale", 160, "saw_shatter", 160);
    private static final String TEMPORARY_SHA256 = "b7c97f3fb070687b8ae4252a627f4f9b932dd7975fb16cee1a3f4694b04ae1a6";
    private static final List<String> OVERHAUL_SOURCES = List.of(
@@ -238,7 +240,7 @@ class ReinhardSoundsTest {
    @Test void everyFileExists() throws Exception {
       allFileReferencesExist(sounds());
       Set<String> all=new HashSet<>(FINAL.values());all.addAll(CINEMATIC.values());all.addAll(DERIVED.values());
-      OVERHAUL.values().forEach(all::addAll); all.addAll(TEMPORARY.values()); all.addAll(DRAW.keySet()); all.addAll(ORIGINAL.values()); all.addAll(SAW.keySet());
+      OVERHAUL.values().forEach(all::addAll); all.addAll(TEMPORARY.values()); all.addAll(DRAW.keySet()); all.addAll(ORIGINAL.values()); all.addAll(SAW.keySet()); all.addAll(ERASURE);
       for (String f : all) {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));

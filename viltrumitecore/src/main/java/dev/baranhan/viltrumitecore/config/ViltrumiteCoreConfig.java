@@ -18,12 +18,8 @@ public class ViltrumiteCoreConfig {
    public double spaceLimitY = 1500.0;
    public float meteorSpawnChancePercent = 0.02F;
    public double meteorMinDistance = 500.0;
-   /**
-    * Automatic world events (Viltrumite conquest, Thula/Vidor/Lucan trio). Off by
-    * default: these characters appear only by {@code /viltrumite event start}.
-    * A config file without this field keeps the default (Gson field defaults).
-    */
-   public boolean worldEventsAutoStart = false;
+   // Viltrumite squad events (Conquest, Thula/Vidor/Lucan trio) start only by {@code /viltrumite event start}.
+   // There is no automatic start any more; an old config's "worldEventsAutoStart" is ignored by Gson.
    public float worldEventChancePercent = 0.004F;
    public int worldEventCooldownMinutes = 40;
    public boolean bloodEnabled = true;

@@ -58,6 +58,7 @@ public final class IronManVeronica {
       Vec3 ground = DropPoint.pick(player.getRandom(), player.position(), surface(level));
       state.podUuid = VeronicaPodEntity.drop(player, ground).getUUID();
       state.veronicaCooldown = COOLDOWN;
+      dev.baranhan.viltrumitecore.hero.ironman.IronManLines.say(player, dev.baranhan.viltrumitecore.hero.ironman.IronManLines.EVENT_VERONICA);
       if (old != null) {
          sendAway(player, old);
       }

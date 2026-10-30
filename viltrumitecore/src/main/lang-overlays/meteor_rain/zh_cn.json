@@ -1,0 +1,11 @@
+{
+  "commands.viltrumitecore.meteor.already": "%s 已经有一场流星雨",
+  "commands.viltrumitecore.meteor.started": "流星雨已在 %s 周围开始",
+  "commands.viltrumitecore.meteor.started.you": "陨石正在你周围坠落。活下去！(/meteor stop)",
+  "commands.viltrumitecore.meteor.not_running": "%s 没有流星雨",
+  "commands.viltrumitecore.meteor.stopped": "已停止 %s 的流星雨：不再生成新陨石，空中的陨石仍会落地",
+  "commands.viltrumitecore.meteor.stopped_all": "已停止 %s 场流星雨",
+  "commands.viltrumitecore.meteor.none": "当前没有流星雨",
+  "commands.viltrumitecore.meteor.entry": "%s：%s 中的流星雨已持续 %s 秒，已发射 %s 颗陨石，空中 %s 颗",
+  "commands.viltrumitecore.meteor.entry.paused": "%s：%s 中的流星雨已暂停（玩家不在该世界），已发射 %s 颗，空中 %s 颗"
+}

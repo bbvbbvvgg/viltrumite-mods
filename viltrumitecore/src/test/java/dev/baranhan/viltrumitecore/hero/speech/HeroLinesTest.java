@@ -64,7 +64,7 @@ class HeroLinesTest {
       assertEquals(List.of(ReinhardLines.BLAST), ReinhardLines.LINES.on(HeroLineTrigger.event(ReinhardLines.BLAST_EVENT)));
       assertEquals(HeroLine.Priority.ULTIMATE, ReinhardLines.BLAST.priority(), "same rank: waits for the first line instead of cutting it");
       assertTrue(ReinhardLines.BLAST.durationTicks() > dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.WORLD_CUT_WAVE_TICKS);
-      for (HeroLine line : ReinhardLines.LINES.all()) {
+      for (HeroLine line : List.of(ReinhardLines.WORLD_CUT, ReinhardLines.DIAGONAL_WORLD_CUT, ReinhardLines.BLAST, ReinhardLines.WORLD_ERASURE)) {
          assertTrue(line.range() >= 128 && line.range() <= HeroLine.MAX_RANGE, line.id() + " is seen by players watching the cut");
       }
    }

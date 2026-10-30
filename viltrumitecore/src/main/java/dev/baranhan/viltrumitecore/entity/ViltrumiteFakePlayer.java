@@ -69,12 +69,18 @@ public class ViltrumiteFakePlayer extends ServerPlayer {
       flight.setMaxFlightSpeed(maxFlightSpeed);
       flight.setThrottleSpeed(throttleSpeed);
       ViltrumiteCorePlayer core = (ViltrumiteCorePlayer)this;
-      core.setViltrumite(true);
+      // Squad NPCs (Conquest, Thula, Lucan, Vidor, spawner clones) are real Viltrumites: the legacy
+      // kit hero, not the player race. The legacy setViltrumite(true) adapter maps to HOMELANDER since
+      // Homelander replaced the race, and his skin provider then overrode the NPC's own skin, model and
+      // cape. Set below, once the connection exists: identity only, like a save restore (no hero lifecycle and no greeting).
       core.setChosenRace(true);
       core.setCloneScale(scale);
       this.getEntityData().set(Player.DATA_PLAYER_MODE_CUSTOMISATION, (byte)127);
       Connection dummyConnection = new Connection(PacketFlow.SERVERBOUND);
       this.connection = new ServerGamePacketListenerImpl(server, dummyConnection, this);
+      dev.baranhan.viltrumitecore.hero.ViltrumiteHero.becomeSquadNpc(this);
+      dev.baranhan.viltrumitecore.hero.HeroFlightGrant.sync(this);
+      dev.baranhan.viltrumitecore.hero.HeroRegistry.syncSnapshot(this);
       this.refreshDimensions();
       this.actionList.add(new BlockAction(this));
       if (this.getIntelligence() > 1) {

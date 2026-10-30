@@ -335,6 +335,7 @@ public final class IronManMarks {
          // The helmet closes last with a click and an eye flash (spec §12.4 step 3).
          state.helmet.reset();
          state.signature.clear();
+         dev.baranhan.viltrumitecore.hero.ironman.IronManLines.say(player, dev.baranhan.viltrumitecore.hero.ironman.IronManLines.EVENT_SUIT_UP);
       }
    }
 

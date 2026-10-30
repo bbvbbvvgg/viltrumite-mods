@@ -421,5 +421,7 @@ public abstract class GameRendererDashMixin {
             }
          }
       }
+      // World Erasure geometry (glass, shards, the target's dissolve) over the graded frame.
+      dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureScene.renderSeam(partialTicks);
    }
 }
