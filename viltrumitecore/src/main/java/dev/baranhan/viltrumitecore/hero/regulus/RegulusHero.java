@@ -1,67 +1,52 @@
 package dev.baranhan.viltrumitecore.hero.regulus;
 
+import dev.baranhan.viltrumitecore.ability.ViltrumiteAbility;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
+import dev.baranhan.viltrumitecore.hero.DamageAbsorb;
 import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroDefinition;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
-import dev.baranhan.viltrumitecore.hero.control.ControlManager;
-import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
-import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
+import dev.baranhan.viltrumitecore.hero.LegacyKit;
+import dev.baranhan.viltrumitecore.hero.MouseButton;
+import dev.baranhan.viltrumitecore.hero.ProjectileResponse;
+import dev.baranhan.viltrumitecore.hero.ScanInfo;
+import dev.baranhan.viltrumitecore.hero.ScanLine;
+import dev.baranhan.viltrumitecore.hero.control.ControlKind;
+import dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket;
+import dev.baranhan.viltrumitecore.hero.regulus.net.RegulusNet;
+import dev.baranhan.viltrumitecore.hero.speech.HeroLines;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.phys.Vec3;
 
 /**
- * Regulus hero: server-authoritative lifecycle and input. Abilities live in
- * dedicated classes; this class owns the action lock, the shared rules and the
- * dispatch on validated input edges.
+ * Regulus Corneas, Archbishop of Greed — the Reborn kit (spec docs/design/2026-10-30-regulus-reborn-design.md).
+ * Authority of Greed: he stops the time of his body (Lion's Heart) and of what he touches (sand, air,
+ * blocks), and hides his stopped heart in the living (Little King). Everything is resolved here on the
+ * server; clients draw what the snapshot and {@link RegulusFxS2CPacket} report.
  */
-public class RegulusHero implements HeroDefinition {
-   public static final String ACTION_LION = "lion";
-   public static final String ACTION_DEBRIS = "debris";
-   public static final String ACTION_MANIA = "mania";
-   public static final String ACTION_EMBRACE = "embrace";
-   public static final String ACTION_COUNTER = "counter";
-   public static final String ACTION_RITUAL = "ritual";
+public final class RegulusHero implements HeroDefinition {
+   public static final RegulusHero INSTANCE = new RegulusHero();
+   static final UUID HEALTH_ID = UUID.fromString("4e5a1c0b-7d3e-4a7c-9b1f-2c6d8e0f1b01");
+   static final UUID ARMOR_ID = UUID.fromString("4e5a1c0b-7d3e-4a7c-9b1f-2c6d8e0f1b02");
 
-   @Nullable
-   public static RegulusState stateOf(Player player) {
-      if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REGULUS) {
-         Object state = heroPlayer.viltrumitecore$getHeroState();
-         return state instanceof RegulusState regulus ? regulus : null;
-      }
-
-      return null;
-   }
-
-   /** Lion's Heart is absolute invulnerability (spec Reinhard §3.3). */
-   @Override
-   public boolean isAbsolutelyInvulnerable(Player self) {
-      return absolutelyInvulnerable(stateOf(self));
-   }
-
-   public static boolean absolutelyInvulnerable(@Nullable RegulusState state) {
-      return state != null && state.lionActive;
-   }
-
-   public static RegulusState ensureState(Player player) {
-      HeroPlayer heroPlayer = (HeroPlayer)player;
-      Object state = heroPlayer.viltrumitecore$getHeroState();
-      if (!(state instanceof RegulusState regulus)) {
-         RegulusState created = new RegulusState();
-         heroPlayer.viltrumitecore$setHeroState(created);
-         return created;
-      } else {
-         return regulus;
-      }
+   private RegulusHero() {
    }
 
    @Override
@@ -86,18 +71,22 @@ public class RegulusHero implements HeroDefinition {
 
    @Override
    public boolean ownsAbility(String abilityId) {
-      for (String id : RegulusAbilities.slotIds()) {
-         if (id.equals(abilityId)) {
-            return true;
-         }
-      }
+      return RegulusAbilities.owns(abilityId);
+   }
 
-      return false;
+   @Override
+   public List<ViltrumiteAbility> panelAbilities() {
+      return RegulusAbilities.panelAbilities();
+   }
+
+   @Override
+   public HeroLines lines() {
+      return RegulusLines.LINES;
    }
 
    @Override
    public String[] heroInputSlots() {
-      return RegulusAbilities.slotIds();
+      return RegulusAbilities.OWN.clone();
    }
 
    @Override
@@ -106,77 +95,122 @@ public class RegulusHero implements HeroDefinition {
    }
 
    @Override
+   public ResourceLocation abilityIcon(String abilityId) {
+      return RegulusAbilities.icon(abilityId);
+   }
+
+   @Override
    public String[] defaultLoadout() {
-      String[] loadout = new String[18];
-      String[] slots = RegulusAbilities.slotIds();
-      System.arraycopy(slots, 0, loadout, 0, slots.length);
-      return loadout;
+      return RegulusAbilities.defaultLoadout();
    }
 
    @Override
-   public boolean allowsExternalControl(LivingEntity target, dev.baranhan.viltrumitecore.hero.control.ControlKind kind) {
-      RegulusState state = target instanceof Player player ? stateOf(player) : null;
-      // An active Lion's Heart makes the hero immune to all control kinds.
-      return state == null || !state.lionActive;
+   public String[][] previousDefaultLoadouts() {
+      return RegulusAbilities.previousDefaultLoadouts();
    }
 
    @Override
-   public float meleeDamageFactor(Player player) {
-      RegulusState state = stateOf(player);
-      return state == null ? 1.0F : RegulusRules.heartBonus(state.hearts());
+   public String[] migrateLoadout(String[] slots) {
+      return RegulusAbilities.migrate(slots);
+   }
+
+   // --- protection -------------------------------------------------------------------------------
+   /** Lion's Heart and the judgement: the time of his body is stopped (both sides via the snapshot). */
+   static boolean stopped(@Nullable RegulusState state) {
+      return state != null && (state.lion || state.ult != null);
+   }
+
+   private static boolean stoppedOnWire(Player player) {
+      RegulusState state = RegulusState.of(player);
+      if (state != null) {
+         return stopped(state);
+      }
+
+      if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroSnapshot() != null && heroPlayer.getHeroSnapshot().heroId() == HeroId.REGULUS) {
+         HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
+         return snapshot.lionActive() || RegulusFlags.has(snapshot.heroFlags(), RegulusFlags.ULT);
+      }
+
+      return false;
+   }
+
+   /** Pure rule (tests): the Lion is absolute invulnerability. */
+   public static boolean absolutelyInvulnerable(boolean lion, boolean ult) {
+      return lion || ult;
+   }
+
+   @Override
+   public boolean isAbsolutelyInvulnerable(Player self) {
+      return self != null && stoppedOnWire(self);
+   }
+
+   @Override
+   public boolean allowsExternalControl(LivingEntity target, ControlKind kind) {
+      return !(target instanceof Player player) || !stoppedOnWire(player);
+   }
+
+   @Override
+   public boolean knockbackImmune(Player player) {
+      return player != null && stoppedOnWire(player);
    }
 
    @Override
    public boolean preventsExhaustion(Player player) {
-      RegulusState state = stateOf(player);
-      return state != null && state.lionActive;
+      return player != null && stoppedOnWire(player);
    }
 
    @Override
-   public boolean canAct(ServerPlayer player, HeroAction action) {
-      RegulusState state = ensureState(player);
-      if (HeroDamage.isAnchored(player)) {
-         return false;
+   public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
+      RegulusState state = RegulusState.of(self);
+      if (state == null) {
+         return DamageAbsorb.PASS;
       }
 
-      // A Mania channel grounds the caster (spec 8.2): no super jump.
-      if (action == HeroAction.JUMP && state.channelTargetId != null) {
-         return false;
+      if (stopped(state)) {
+         LionsHeart.recoil(self, state, source, raw);
+         return DamageAbsorb.ABSORBED;
       }
 
-      return actionPermitted(action, state.lionActive, state.busy(), state.channelTargetId != null, state.ritualTicks >= 0, state.madnessTicksLeft > 0);
+      if (RightOfReply.windowOpen(state) && source.getEntity() != self) {
+         RightOfReply.refuse(self, state, source, raw);
+         return DamageAbsorb.ABSORBED;
+      }
+
+      return DamageAbsorb.PASS;
    }
 
-   /**
-    * §6.2/§10-11/§16 input policy — pure so JUnit covers the whole matrix.
-    * Jump always passes; Lion leaves only the off-toggle; a busy cast, an
-    * open channel or a running ritual locks every slot; the Counter is a
-    * madness-only slot and the ritual cannot re-enter mid-madness.
-    */
-   static boolean actionPermitted(HeroAction action, boolean lionActive, boolean busy, boolean channelOpen, boolean ritualActive, boolean madnessActive) {
-      if (action == HeroAction.JUMP) {
-         return true;
+   @Override
+   public ProjectileResponse projectileResponse(ServerPlayer self, Projectile projectile) {
+      RegulusState state = RegulusState.of(self);
+      if (state == null || projectile == null || projectile.getOwner() == self) {
+         return ProjectileResponse.PASS;
       }
 
-      if (lionActive) {
-         return action == HeroAction.LIONS_HEART;
+      if (stopped(state)) {
+         return ProjectileResponse.CATCH;
       }
 
-      if (busy || channelOpen || ritualActive) {
+      return RightOfReply.windowOpen(state) ? ProjectileResponse.REFLECT : ProjectileResponse.PASS;
+   }
+
+   /** CATCH: the projectile stops dead in the air before him (fully handled here). */
+   @Override
+   public boolean captureProjectile(ServerPlayer self, Projectile projectile) {
+      RegulusState state = RegulusState.of(self);
+      if (state == null || !stopped(state)) {
          return false;
       }
 
-      if (action == HeroAction.COUNTER) {
-         return madnessActive;
-      }
-
-      if (action == HeroAction.RITUAL) {
-         return !madnessActive;
-      }
-
+      LionsHeart.stopProjectile(self, state, projectile);
       return true;
    }
 
+   @Override
+   public boolean interceptsProjectiles(Player self) {
+      return true;
+   }
+
+   // --- movement ---------------------------------------------------------------------------------
    @Override
    public boolean cancelsFallDamage(Player player) {
       return true;
@@ -184,9 +218,8 @@ public class RegulusHero implements HeroDefinition {
 
    @Override
    public void onLanded(ServerPlayer player, float fallDistance) {
-      RegulusState state = stateOf(player);
-      if (state != null) {
-         RegulusMovement.onLanding(player, state, fallDistance);
+      if (fallDistance > 3.0F && player.level() instanceof ServerLevel level) {
+         RegulusNet.fx(level, RegulusFxS2CPacket.LAND, player, -1, player.position(), Vec3.ZERO, Math.min(fallDistance, 40.0F), 0);
       }
    }
 
@@ -196,325 +229,322 @@ public class RegulusHero implements HeroDefinition {
    }
 
    @Override
-   public void onSuperJump(ServerPlayer player) {
-      RegulusMovement.onSuperJump(player);
+   public int airJumps(Player player) {
+      return player != null && stoppedOnWire(player) ? RegulusRules.LION_AIR_STEPS : 0;
    }
 
-   /** Heart key (MIDDLE = the heart key mapping, default MMB) beats vanilla pick-block. */
+   // --- input ------------------------------------------------------------------------------------
+   /** LMB with an empty main hand is Greed's Touch; MMB (the heart key) is the Little King. */
    @Override
-   public HeroAction mouseAction(dev.baranhan.viltrumitecore.hero.MouseButton button, Player player) {
-      return button == dev.baranhan.viltrumitecore.hero.MouseButton.MIDDLE ? HeroAction.ASSIGN_HEART : null;
+   public HeroAction mouseAction(MouseButton button, Player player) {
+      if (button == MouseButton.PRIMARY && player != null && player.getMainHandItem().isEmpty()) {
+         return HeroAction.PRIMARY_ATTACK;
+      }
+
+      return button == MouseButton.MIDDLE ? HeroAction.ASSIGN_HEART : null;
+   }
+
+   @Override
+   public boolean canAct(ServerPlayer player, HeroAction action) {
+      return player.isAlive() && (action != HeroAction.PRIMARY_ATTACK || player.getMainHandItem().isEmpty());
    }
 
    @Override
    public void onInputRefused(ServerPlayer player, HeroAction action) {
-      if (action == HeroAction.ASSIGN_HEART) {
-         player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.viltrumitecore.hearts.locked"), true);
+      RegulusState state = RegulusState.of(player);
+      if (state != null && action != HeroAction.PRIMARY_ATTACK) {
+         refuse(player, state);
+      }
+   }
+
+   /** The short dismissive gesture and a dry click: "no". */
+   static void refuse(ServerPlayer player, RegulusState state) {
+      if (!state.busy()) {
+         state.startMove(RegulusMove.REFUSE);
+      }
+
+      RegulusSounds.play(player.level(), player.position().add(0.0, 1.4, 0.0), RegulusSounds.REFUSE, 0.5F, 1.0F);
+      if (player.level() instanceof ServerLevel level) {
+         RegulusNet.fx(level, RegulusFxS2CPacket.REFUSE, player, -1, player.getEyePosition());
       }
    }
 
    @Override
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
-      RegulusState state = ensureState(player);
-      if (pressed) {
-         this.tryStart(player, state, action);
-      } else {
-         this.tryRelease(player, state, action);
+      if (!pressed || !player.isAlive()) {
+         return;
       }
-   }
 
-   private void tryStart(ServerPlayer player, RegulusState state, HeroAction action) {
-      if (action == HeroAction.ASSIGN_HEART) {
-         if (player.isAlive() && this.canAct(player, action)) {
-            RegulusHearts.assignLookedAt(player, state);
-         } else {
-            player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.viltrumitecore.hearts.locked"), true);
+      RegulusState state = RegulusState.ensure(player);
+      if (HeroDamage.isAnchored(player)) {
+         return;
+      }
+
+      // the Lion's off-toggle always reaches the body; everything else waits for a committed move
+      if (action == HeroAction.LIONS_HEART && state.lion && state.move != RegulusMove.ULT) {
+         LionsHeart.turnOff(player, state, true);
+         return;
+      }
+
+      if (state.move != null && state.move.locksCasting() && !(state.move == RegulusMove.PROCESSION && action == HeroAction.GREEDS_EMBRACE)) {
+         if (action != HeroAction.PRIMARY_ATTACK) {
+            refuse(player, state);
          }
-         return;
-      }
-      if (!this.canAct(player, action)) {
+
          return;
       }
 
-      String abilityId = RegulusAbilities.abilityFor(action);
-      // The Lion off-toggle is not a new cast: it reaches the running state
-      // even when the slot was re-equipped or the page changed mid-run, so the
-      // player can always turn Lion off with a second press (spec 6.4).
-      boolean lionOffToggle = action == HeroAction.LIONS_HEART && state.lionActive;
-      boolean equipped = abilityId != null && isEquippedOnActivePage(player, abilityId);
-      boolean onCooldown = abilityId != null && state.cooldownOf(abilityId) > 0;
-      if (abilityId == null || !RegulusRules.mayStartAbility(equipped, onCooldown, lionOffToggle)) {
-         return;
+      if (state.move == RegulusMove.REFUSE) {
+         state.clearMove();
       }
 
       switch (action) {
-         case LIONS_HEART -> LionsHeart.toggle(player, state);
-         case DEBRIS_KICK -> DebrisKick.start(player, state);
-         case MANIA -> Mania.start(player, state);
-         case GREEDS_EMBRACE -> GreedsEmbrace.start(player, state);
-         case COUNTER -> Counter.start(player, state);
+         case PRIMARY_ATTACK -> GreedsTouch.press(player, state);
+         case ASSIGN_HEART -> LittleKing.press(player, state);
+         case LIONS_HEART -> LionsHeart.press(player, state);
+         case DEBRIS_KICK -> StoppedSand.press(player, state);
+         case MANIA -> AirSeverance.press(player, state);
+         case GREEDS_EMBRACE -> Procession.press(player, state);
+         case COUNTER -> RightOfReply.press(player, state);
+         case ULTIMATE -> KingdomOfOne.press(player, state);
          default -> {
          }
       }
    }
 
-   private void tryRelease(ServerPlayer player, RegulusState state, HeroAction action) {
-      // Releases address the server's active cast, even if the client swapped
-      // pages or the slot contents changed mid-press.
-      if (action != HeroAction.MANIA) {
+   // --- tick -------------------------------------------------------------------------------------
+   @Override
+   public void tick(ServerPlayer player) {
+      RegulusState state = RegulusState.ensure(player);
+      applyPassives(player);
+      state.tickCooldowns();
+      if (!player.isAlive()) {
          return;
       }
 
-      if (state.channelTargetId != null) {
-         Mania.endChannel(player, state, ReleaseReason.NORMAL_END);
-      } else if (ACTION_MANIA.equals(state.actionId) && !state.eventFired) {
-         // Releasing during the windup cancels the cast for free (spec 8.1).
-         state.clearAction();
-      }
-   }
+      boolean anchored = HeroDamage.isAnchored(player);
+      LionsHeart.tick(player, state);
+      RegulusMove move = state.move;
+      if (move != null && !anchored) {
+         switch (move) {
+            case LION_ON -> LionsHeart.tickMove(player, state);
+            case TOUCH_BACKHAND, TOUCH_PALM, TOUCH_FLICK -> GreedsTouch.tickMove(player, state);
+            case SAND -> StoppedSand.tickMove(player, state);
+            case AIR_CUT, AIR_CUT_VERTICAL -> AirSeverance.tickMove(player, state);
+            case PROCESSION -> Procession.tickMove(player, state);
+            case REPLY, REPLY_STRIKE -> RightOfReply.tickMove(player, state);
+            case LITTLE_KING -> LittleKing.tickMove(player, state);
+            case ULT -> KingdomOfOne.tickMove(player, state);
+            default -> {
+            }
+         }
 
-   /**
-    * The fist joined the kit after release: an existing loadout with an empty
-    * sixth slot (the old heart key) gets the punch there once.
-    */
-   private static void ensurePunchSlot(ServerPlayer player) {
-      if (!(player instanceof ViltrumiteAbilityUser abilityUser)) {
-         return;
-      }
-
-      String current = abilityUser.getAbilityInSlot(5);
-      if (current == null || current.isEmpty()) {
-         abilityUser.setAbilityInSlot(5, RegulusAbilities.PUNCH);
-      }
-   }
-
-   /** The fist uses the free-cast policy of a normal ability (no Lion, cast, channel or ritual). */
-   public static boolean canPunch(ServerPlayer player) {
-      RegulusState state = stateOf(player);
-      if (state == null || HeroDamage.isAnchored(player)) {
-         return false;
-      }
-
-      return actionPermitted(HeroAction.DEBRIS_KICK, state.lionActive, state.busy(), state.channelTargetId != null, state.ritualTicks >= 0, state.madnessTicksLeft > 0);
-   }
-
-   public static boolean punchEquipped(ServerPlayer player) {
-      return isEquippedOnActivePage(player, RegulusAbilities.PUNCH);
-   }
-
-   private static boolean isEquippedOnActivePage(Player player, String abilityId) {
-      if (!(player instanceof ViltrumiteAbilityUser abilityUser)) {
-         return false;
-      }
-
-      int base = abilityUser.getActivePage() * 6;
-      for (int slot = base; slot < base + 6; slot++) {
-         if (abilityId.equals(abilityUser.getAbilityInSlot(slot))) {
-            return true;
+         if (state.move == move && ++state.moveTick >= move.length()) {
+            state.clearMove();
+            onMoveEnd(player, state, move);
          }
       }
 
-      return false;
+      GreedsTouch.tickRuptures(player, state);
+      StoppedGrains.tick(player, state);
+      AirSeverance.tick(player, state);
+      LittleKing.tick(player, state);
+      if (state.ult != null && state.move != RegulusMove.ULT) {
+         // a scene without its move (seizure, external clear): end it safely
+         KingdomOfOne.finish(player, state);
+      }
    }
 
+   private static void onMoveEnd(ServerPlayer player, RegulusState state, RegulusMove move) {
+      switch (move) {
+         case TOUCH_BACKHAND, TOUCH_PALM, TOUCH_FLICK -> GreedsTouch.onEnd(player, state, move);
+         case PROCESSION -> Procession.stop(player, state);
+         case REPLY, REPLY_STRIKE -> RightOfReply.onEnd(player, state, move);
+         case ULT -> KingdomOfOne.onEnd(player, state, move);
+         default -> {
+         }
+      }
+   }
+
+   // --- lifecycle --------------------------------------------------------------------------------
    @Override
    public void enter(ServerPlayer player) {
-      RegulusState state = ensureState(player);
-      RegulusPassives.apply(player);
+      RegulusState state = new RegulusState();
+      ((HeroPlayer) player).viltrumitecore$setHeroState(state);
+      applyPassives(player);
       player.setHealth(player.getMaxHealth());
-      Evangelium.grant(player);
-      state.lastSeenHealth = player.getHealth();
    }
 
    @Override
-   public void tick(ServerPlayer player) {
-      RegulusState state = ensureState(player);
-      // Madness: the authority runs wild — every cooldown runs at double speed.
-      int cooldownRate = state.madnessTicksLeft > 0 ? RegulusRules.MADNESS_COOLDOWN_RATE : 1;
-      for (int i = 0; i < cooldownRate; i++) {
-         state.tickCooldowns();
-      }
-      ensurePunchSlot(player);
-      this.tickActionLock(player, state);
-      this.tickDamageBookkeeping(player, state);
-      // Base passives are transient modifiers — vanilla never serializes them,
-      // so relogin/respawn strips them; apply() is idempotent and re-adds them
-      // every tick (spec §4: always-on while Regulus).
-      RegulusPassives.apply(player);
-      RegulusMovement.tick(player, state);
-      RegulusHearts.tick(player, state);
-      LionsHeart.tick(player, state);
-      DebrisKick.tick(player, state);
-      Mania.tick(player, state);
-      GreedsEmbrace.tick(player, state);
-      Counter.tick(player, state);
-      Evangelium.tick(player, state);
-   }
-
-   private void tickActionLock(ServerPlayer player, RegulusState state) {
-      if (state.actionId == null) {
-         return;
-      }
-
-      state.actionElapsed++;
-      if (state.actionElapsed >= state.actionLength) {
-         state.clearAction();
-      }
-   }
-
-   /**
-    * Actual EXTERNAL HP loss interrupts pre-event casts; self-inflicted
-    * internal drains (blood price, backlash, overheat) and blocked/queued hits
-    * never count as interrupting hits (spec 7.1/10.4/11.1).
-    */
-   private void tickDamageBookkeeping(ServerPlayer player, RegulusState state) {
-      float health = player.getHealth();
-      if (state.lastSeenHealth < 0.0F) {
-         state.lastSeenHealth = health;
-         state.internalDamage = 0.0F;
-         return;
-      }
-
-      float lost = RegulusRules.externalHealthLoss(state.lastSeenHealth, health, state.internalDamage);
-      state.lastSeenHealth = health;
-      state.internalDamage = 0.0F;
-
-      if (lost <= 0.0F) {
-         return;
-      }
-
-      // A real hit before the action's event cancels the cast for free.
-      // The Counter is the answer to a hit: it can never be knocked out of.
-      if (state.busy() && !state.eventFired && !ACTION_COUNTER.equals(state.actionId)) {
-         state.clearAction();
+   public void onRespawn(ServerPlayer player) {
+      if (player != null) {
+         // a fresh body starts whole
+         applyPassives(player);
+         player.setHealth(player.getMaxHealth());
       }
    }
 
    @Override
-   public void saveHeroState(Player player, CompoundTag nbt) {
-      RegulusState state = stateOf(player);
+   public void onDimensionChange(ServerPlayer player) {
+      RegulusState state = RegulusState.of(player);
       if (state != null) {
-         state.saveHeroData(nbt);
-      }
-   }
-
-   @Override
-   public void loadHeroState(Player player, CompoundTag nbt) {
-      ensureState(player).loadHeroData(nbt);
-   }
-
-   @Override
-   public void cloneHeroState(Player original, Player clone) {
-      // Death hands forward duration bookkeeping only: cooldowns carry over,
-      // combat state dies with the body (a2/a3 audit finding).
-      RegulusState previous = stateOf(original);
-      if (previous != null) {
-         ensureState(clone).inheritPersistent(previous);
+         clearTransient(player, state);
       }
    }
 
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
-      RegulusState state = stateOf(player);
-      if (state == null) {
-         return;
-      }
-
-      if (player.level() instanceof ServerLevel level) {
-         ControlManager.get(level).cleanupCaster(player.getUUID(), reason);
-      }
-
-      // Cleanup reasons map 1:1 onto release reasons so a death or disconnect
-      // never freezes the victim (spec 8.2: only a normal end freezes).
-      Mania.endChannel(player, state, ControlManager.cleanupReleaseReason(reason));
-      LionsHeart.forceOff(player, state);
-      RegulusHearts.releaseAll(player, state, reason);
-      GreedsEmbrace.cleanup(player, state, reason);
-      Evangelium.cleanup(player, state, reason);
-      state.resetTransient(reason);
-      if (reason == CleanupReason.ERASED && player instanceof HeroPlayer heroPlayer) {
-         heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
+      RegulusState state = RegulusState.of(player);
+      if (state != null) {
+         clearTransient(player, state);
+         if (reason == CleanupReason.ERASED) {
+            ((HeroPlayer) player).viltrumitecore$setHeroState(state.respawnCopy());
+         }
+      } else {
+         removeSpeed(player);
       }
 
       if (reason == CleanupReason.HERO_CHANGE) {
-         RegulusPassives.remove(player);
+         removePassives(player);
+         LegacyKit.reset(player);
       }
+   }
+
+   /** Every transient effect ends (scene, control, subjects, Lion, projectiles); cooldowns stay. Idempotent. */
+   static void clearTransient(ServerPlayer player, RegulusState state) {
+      KingdomOfOne.releaseEverywhere(player, state);
+      KingdomOfOne.finish(player, state);
+      if (state.lion && player.level() instanceof ServerLevel level) {
+         RegulusNet.fx(level, RegulusFxS2CPacket.LION_OFF, player, -1, player.position().add(0.0, 1.0, 0.0));
+      }
+
+      LittleKing.releaseAll(player, state, false);
+      state.resetTransient();
+      removeSpeed(player);
+   }
+
+   private static void removeSpeed(ServerPlayer player) {
+      LionsHeart.speed(player, false);
+      Procession.speed(player, false);
+      KingdomOfOne.lock(player, false);
+   }
+
+   @Override
+   public void saveHeroState(Player player, CompoundTag nbt) {
+      RegulusState state = RegulusState.of(player);
+      if (state != null) {
+         state.save(nbt);
+      }
+   }
+
+   @Override
+   public void loadHeroState(Player player, CompoundTag nbt) {
+      RegulusState.ensure(player).load(nbt);
+   }
+
+   @Override
+   public void cloneHeroState(Player original, Player clone) {
+      RegulusState previous = RegulusState.of(original);
+      if (previous != null && clone instanceof HeroPlayer heroPlayer) {
+         heroPlayer.viltrumitecore$setHeroState(previous.respawnCopy());
+      }
+   }
+
+   // --- passives ---------------------------------------------------------------------------------
+   static void applyPassives(ServerPlayer player) {
+      addModifier(player, Attributes.MAX_HEALTH, HEALTH_ID, "Regulus body", RegulusRules.BONUS_HEALTH);
+      addModifier(player, Attributes.ARMOR, ARMOR_ID, "Regulus body armor", RegulusRules.BONUS_ARMOR);
+   }
+
+   static void removePassives(ServerPlayer player) {
+      removeModifier(player, Attributes.MAX_HEALTH, HEALTH_ID);
+      removeModifier(player, Attributes.ARMOR, ARMOR_ID);
+      removeSpeed(player);
+      if (player.getHealth() > player.getMaxHealth()) {
+         player.setHealth(player.getMaxHealth());
+      }
+   }
+
+   private static void addModifier(ServerPlayer player, Attribute attribute, UUID id, String name, double amount) {
+      AttributeInstance instance = player.getAttribute(attribute);
+      if (instance != null && instance.getModifier(id) == null) {
+         instance.addPermanentModifier(new AttributeModifier(id, name, amount, AttributeModifier.Operation.ADDITION));
+      }
+   }
+
+   private static void removeModifier(ServerPlayer player, Attribute attribute, UUID id) {
+      AttributeInstance instance = player.getAttribute(attribute);
+      if (instance != null) {
+         instance.removeModifier(id);
+      }
+   }
+
+   // --- scan / snapshot --------------------------------------------------------------------------
+   @Override
+   public ScanInfo scanInfo(Player self) {
+      return scanInfoFor(self != null && stoppedOnWire(self));
+   }
+
+   public static ScanInfo scanInfoFor(boolean lionActive) {
+      if (!lionActive) {
+         return ScanInfo.EMPTY;
+      }
+
+      return new ScanInfo(List.of(ScanLine.of("scan.viltrumitecore.regulus.lion_heart")), List.of(), List.of());
    }
 
    @Override
    public HeroPublicSnapshot snapshot(Player player) {
-      RegulusState state = stateOf(player);
+      RegulusState state = RegulusState.of(player);
       if (state == null) {
-         return new HeroPublicSnapshot(HeroId.REGULUS, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1, new int[6], false);
+         return new HeroPublicSnapshot(HeroId.REGULUS, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1, new int[HeroPublicSnapshot.COOLDOWN_COUNT], false);
       }
 
-      int[] cooldowns = new int[6];
-      String[] ids = {RegulusAbilities.LIONS_HEART, RegulusAbilities.DEBRIS_KICK, RegulusAbilities.MANIA, RegulusAbilities.GREEDS_EMBRACE, RegulusAbilities.COUNTER, RegulusAbilities.EVANGELIUM};
-      for (int i = 0; i < ids.length; i++) {
-         cooldowns[i] = state.cooldownOf(ids[i]);
-      }
-
-      int controlTargetId = -1;
-      if (state.channelTargetId != null && player.level() instanceof ServerLevel level) {
-         Entity target = level.getEntity(state.channelTargetId);
-         if (target != null) {
-            controlTargetId = target.getId();
+      int hostId = -1;
+      boolean hostAlive = false;
+      if (player instanceof ServerPlayer server && state.host != null) {
+         var host = ((ServerLevel) server.level()).getEntity(state.host);
+         if (host != null) {
+            hostId = host.getId();
+            hostAlive = LittleKing.hostAlive(server, state);
          }
       }
 
-      int actionId = state.actionId == null ? -1 : actionOrdinalOf(state.actionId);
-      int windowLeft = state.lionActive ? Math.max(0, state.lionWindowMax - state.lionElapsed) : 0;
-      return new HeroPublicSnapshot(
-         HeroId.REGULUS,
-         actionId,
-         state.actionElapsed,
-         state.actionLength,
-         state.hearts(),
-         state.lionActive,
-         windowLeft,
-         state.lionWindowMax,
-         state.lionElapsed > state.lionWindowMax,
-         state.madnessTicksLeft > 0,
-         state.madnessTicksLeft,
-         state.ritualTicks,
-         controlTargetId,
-         cooldowns,
-         state.busy(),
-         -1,
-         state.actionPoint
-      );
+      return compose(state, hostId, hostAlive, KingdomOfOne.targetEntityId(state));
    }
 
-   private static int actionOrdinalOf(String actionId) {
-      return switch (actionId) {
-         case ACTION_LION -> HeroAction.LIONS_HEART.ordinal();
-         case ACTION_DEBRIS -> HeroAction.DEBRIS_KICK.ordinal();
-         case ACTION_MANIA -> HeroAction.MANIA.ordinal();
-         case ACTION_EMBRACE -> HeroAction.GREEDS_EMBRACE.ordinal();
-         case ACTION_COUNTER -> HeroAction.COUNTER.ordinal();
-         default -> HeroAction.RITUAL.ordinal();
-      };
-   }
-
-   @Nullable
-   public static UUID channelTarget(ServerPlayer player) {
-      RegulusState state = stateOf(player);
-      return state == null ? null : state.channelTargetId;
-   }
-
-   /** Scan: Lion's Heart blocks every external hit (the same state HeroDamage.decide reads). */
-   @Override
-   public dev.baranhan.viltrumitecore.hero.ScanInfo scanInfo(Player self) {
-      RegulusState state = stateOf(self);
-      return scanInfoFor(state != null && state.lionActive);
-   }
-
-   public static dev.baranhan.viltrumitecore.hero.ScanInfo scanInfoFor(boolean lionActive) {
-      if (!lionActive) {
-         return dev.baranhan.viltrumitecore.hero.ScanInfo.EMPTY;
+   /** Pure wire composer (tested); see {@link RegulusFlags} for the layout. */
+   static HeroPublicSnapshot compose(RegulusState state, int hostId, boolean hostAlive, int ultTargetId) {
+      int[] cooldowns = new int[HeroPublicSnapshot.COOLDOWN_COUNT];
+      for (int i = 0; i < cooldowns.length; i++) {
+         cooldowns[i] = state.cooldown(i);
       }
 
-      return new dev.baranhan.viltrumitecore.hero.ScanInfo(java.util.List.of(dev.baranhan.viltrumitecore.hero.ScanLine.of("scan.viltrumitecore.regulus.lion_heart")),
-         java.util.List.of(), java.util.List.of());
+      int flags = 0;
+      flags = RegulusFlags.with(flags, RegulusFlags.LION, state.lion);
+      flags = RegulusFlags.with(flags, RegulusFlags.HOST_ALIVE, hostAlive);
+      flags = RegulusFlags.with(flags, RegulusFlags.SEIZED, state.seized());
+      flags = RegulusFlags.with(flags, RegulusFlags.REPLY_WINDOW, RightOfReply.windowOpen(state));
+      flags = RegulusFlags.with(flags, RegulusFlags.PROCESSION, state.move == RegulusMove.PROCESSION);
+      flags = RegulusFlags.with(flags, RegulusFlags.ULT, state.ult != null);
+      flags = RegulusFlags.with(flags, RegulusFlags.TARGET_HELD, state.ult != null && (state.ult.frozen || state.ult.held));
+      flags = RegulusFlags.with(flags, RegulusFlags.STRAIN_WARN, state.strain >= RegulusRules.STRAIN_WARN);
+      flags = RegulusFlags.with(flags, RegulusFlags.LION_LOCKED, state.lionLock > 0);
+      flags = RegulusFlags.with(flags, RegulusFlags.REPLY_ARMED, state.move == RegulusMove.REPLY);
+      int[] extra = new int[RegulusFlags.EXTRA_COUNT];
+      extra[RegulusFlags.EXTRA_COMBO] = state.comboStep + 1;
+      extra[RegulusFlags.EXTRA_CHAIN] = state.chainLeft;
+      extra[RegulusFlags.EXTRA_SUBJECTS] = state.subjects.size();
+      extra[RegulusFlags.EXTRA_HOP] = state.hopTimer;
+      extra[RegulusFlags.EXTRA_LION_LOCK] = state.lionLock;
+      extra[RegulusFlags.EXTRA_RECOIL] = state.recoilPulse & 0xFFFF;
+      extra[RegulusFlags.EXTRA_SEED] = state.seed & 0x7FFF;
+      extra[RegulusFlags.EXTRA_LION_TICKS] = Math.min(30000, state.lionTicks);
+      extra[RegulusFlags.EXTRA_HOPS] = state.hops & 0xFFFF;
+      RegulusMove move = state.move;
+      Vec3 target = state.ult != null ? state.ult.anchor : null;
+      return new HeroPublicSnapshot(HeroId.REGULUS, move == null ? -1 : move.ordinal(), move == null ? 0 : state.moveTick, move == null ? 0 : move.length(),
+         state.subjects.size(), state.lion, 0, 0, false, false, 0, 0, hostId, cooldowns, move != null, -1L, target, state.strain,
+         state.lionLock > 0, flags, extra, 0, ultTargetId);
    }
 }
