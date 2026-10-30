@@ -101,6 +101,9 @@ public class QuinjetEntity extends Entity {
       super.tick();
       if (!this.level().isClientSide && (--this.life <= 0 || this.tickCount % 20 == 0 && !AvengersTeam.member(this))) {
          this.discard(); // a lost scene
+      } else if (!this.level().isClientSide && this.tickCount % 60 == 1) {
+         // engines: one 3.8 s pass every three seconds keeps the roar continuous while it flies and hovers
+         dev.baranhan.viltrumitecore.hero.captain.CaptainSounds.play(this, dev.baranhan.viltrumitecore.hero.captain.CaptainSounds.QUINJET, 3.0F, 1.0F);
       }
    }
 
