@@ -354,6 +354,18 @@ public final class SinclairHero implements HeroDefinition {
       }
    }
 
+   /** Debug (/hero cooldown reset, PR #87): Sinclair's ability timers end; the magazine, reload and a running act stay. */
+   @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      SinclairState state = SinclairState.of(player);
+      if (state == null) {
+         return false;
+      }
+
+      state.clearCooldowns();
+      return true;
+   }
+
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       SinclairLines.clear(player);

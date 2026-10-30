@@ -59,6 +59,11 @@ public final class KingdomOfOne {
    static void press(ServerPlayer player, RegulusState state) {
       if (state.ultCooldown > 0 || state.ult != null || state.busy()) {
          RegulusHero.refuse(player, state);
+         int seconds = refusalSeconds(state);
+         if (seconds > 0) {
+            // PR #87 fix 15 carried over: a silent refusal of the recharging ult read as "stuck" in playtests.
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.viltrumitecore.regulus.ult_refused.cooldown", seconds), true);
+         }
          return;
       }
 
@@ -86,6 +91,19 @@ public final class KingdomOfOne {
       RegulusNet.fx(level, RegulusFxS2CPacket.ULT_START, player, target.getId(), target.position(), dir, 1.0F, 0);
       RegulusSounds.play(level, player.position().add(0.0, 1.5, 0.0), RegulusSounds.ULT_ACCUSE, 1.2F, 1.0F);
       HeroSpeech.ability(player, RegulusAbilities.KINGDOM_OF_ONE);
+   }
+
+   /**
+    * Pure: whole seconds of recharge to name when the ult is refused, or 0 when the refusal is not about the
+    * cooldown (a scene still running, or another move holding the body). The cooldown only runs while no scene
+    * holds it, so an aborted or finished judgement always recharges and the ult opens again at 0.
+    */
+   static int refusalSeconds(RegulusState state) {
+      if (state.ult != null || state.ultCooldown <= 0) {
+         return 0;
+      }
+
+      return (state.ultCooldown + 19) / 20;
    }
 
    /** Runs on the scene ticks (state.moveTick of the ULT move; it does not advance while Regulus is anchored). */

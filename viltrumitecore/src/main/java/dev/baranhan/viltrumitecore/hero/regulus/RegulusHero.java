@@ -393,12 +393,13 @@ public final class RegulusHero implements HeroDefinition {
 
    @Override
    public boolean resetCooldowns(ServerPlayer player) {
-      RegulusState state = stateOf(player);
+      RegulusState state = RegulusState.of(player);
       if (state == null) {
          return false;
       }
-      // The Evangelium book overlay follows on the next tick (Evangelium.syncBookCooldown).
-      state.cooldowns.replaceAll((id, ticks) -> 0);
+      // Regulus Reborn keeps its timers in RegulusState (the HUD reads them from the snapshot that
+      // HeroCommands pushes right after); the old Evangelium book is an inert keepsake with no timer.
+      state.clearCooldowns();
       return true;
    }
 
