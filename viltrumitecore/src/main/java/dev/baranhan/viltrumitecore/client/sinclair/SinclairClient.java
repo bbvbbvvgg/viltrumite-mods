@@ -22,6 +22,7 @@ public final class SinclairClient {
       HeroPortraits.register(HeroId.SINCLAIR, SinclairPortrait.INSTANCE);
       MinecraftForge.EVENT_BUS.addListener(SinclairRenderer::onRenderPlayerPre);
       MinecraftForge.EVENT_BUS.addListener(SinclairFirstPerson::onRenderHand);
+      MinecraftForge.EVENT_BUS.addListener(SinclairFirstPerson::onRenderArm);
       MinecraftForge.EVENT_BUS.addListener(SinclairVfx::onRenderLevel);
       MinecraftForge.EVENT_BUS.addListener(StageLight::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(StageLight::onRenderGuiPre);
