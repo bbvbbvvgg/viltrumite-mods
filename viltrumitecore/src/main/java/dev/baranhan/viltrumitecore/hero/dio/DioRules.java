@@ -106,16 +106,32 @@ public final class DioRules {
    // --- road roller (ultimate) ----------------------------------------------------
    public static final int ROLLER_BLOOD = 100;
    public static final int ROLLER_COOLDOWN = 2400;
-   public static final int ROLLER_LENGTH = 120;
-   public static final int ROLLER_CAPTURE = 8;
-   public static final int ROLLER_LEAP = 14;
-   public static final int ROLLER_APEX = 30;
-   public static final int ROLLER_SLAM = 44;
-   public static final int ROLLER_BARRAGE_END = 96;
+   /**
+    * The 9-second ult (180 ticks), one authoritative timeline shared by the server
+    * hits/sounds and every client view: cast + capture, crouch, a big visible leap,
+    * the roller materialising at the top of the arc, a short hang, the fall, the
+    * slam, MUDA pulses on the roller, WRYYY, the resume blast and DIO hopping off.
+    */
+   public static final int ROLLER_LENGTH = 180;
+   public static final int ROLLER_CAPTURE = 10;
+   /** Knees bend from here to the leap (anticipation). */
+   public static final int ROLLER_CROUCH = 14;
+   public static final int ROLLER_LEAP = 26;
+   /** Server tick of the appear sound ("ROAD ROLLER DA!"); the model shows two ticks later. */
+   public static final int ROLLER_APPEAR = 46;
+   public static final int ROLLER_APEX = 60;
+   /** End of the hang at the top; the fall starts here. */
+   public static final int ROLLER_HANG = 70;
+   public static final int ROLLER_SLAM = 96;
+   public static final int ROLLER_BARRAGE_END = 148;
    public static final int ROLLER_PULSE = 4;
-   public static final int ROLLER_RESUME = 108;
+   public static final int ROLLER_RESUME = 160;
+   /** DIO's feet touch the ground again after the hop off the roller. */
+   public static final int ROLLER_LAND = 174;
    public static final double ROLLER_RADIUS = 32.0;
-   public static final double ROLLER_APEX_HEIGHT = 12.0;
+   public static final double ROLLER_APEX_HEIGHT = 16.0;
+   /** Extra float at the top of the arc during the hang. */
+   public static final double ROLLER_HANG_FLOAT = 0.45;
    public static final double ROLLER_REACH = 24.0;
    public static final double ROLLER_FALLBACK = 10.0;
    public static final float ROLLER_SLAM_DAMAGE = 14.0F;
@@ -137,7 +153,8 @@ public final class DioRules {
    public static final int EX_STAND_PHASE = 0, EX_STAND_ELAPSED = 1, EX_FIELD_LEFT = 2, EX_FIELD_TOTAL = 3, EX_COMBO_STEP = 4;
    public static final int EXTRA_COUNT = 5;
    /** heroFlags bits. */
-   public static final int FLAG_STAND = 0, FLAG_TIME_STOP = 1, FLAG_SUN = 2, FLAG_GUARD = 3, FLAG_RESUMING = 4, FLAG_ULT = 5, FLAG_FINISHER = 6, FLAG_DRAIN_HOLD = 7;
+   public static final int FLAG_STAND = 0, FLAG_TIME_STOP = 1, FLAG_SUN = 2, FLAG_GUARD = 3, FLAG_RESUMING = 4, FLAG_ULT = 5, FLAG_FINISHER = 6, FLAG_DRAIN_HOLD = 7,
+      FLAG_INFINITE_BLOOD = 8;
    /** Stand phases (extraCooldowns[EX_STAND_PHASE]). */
    public static final int STAND_NONE = 0, STAND_SUMMONING = 1, STAND_OUT = 2, STAND_DISMISSING = 3;
 
@@ -234,9 +251,11 @@ public final class DioRules {
    }
 
    /**
-    * DIO's scripted feet height above the start line during the ult, as a
-    * fraction path: 0 at the leap, ROLLER_APEX_HEIGHT at the apex, the seat
-    * height at the slam. {@code t} in ticks of the action.
+    * DIO's scripted feet height during the ult ({@code t} in action ticks): on the
+    * ground until the leap, a fast ease-out rise to ROLLER_APEX_HEIGHT, a short
+    * floating hang, an accelerating fall onto the seat at the slam, the seat until
+    * the resume, then a small hop back to the ground. Continuous everywhere; the
+    * slope changes at the apex/hang joints stay under 0.15 block/tick (no hitch).
     */
    public static double rollerHeight(double t, double startY, double landY) {
       if (t <= ROLLER_LEAP) {
@@ -251,8 +270,13 @@ public final class DioRules {
          return startY + (apexY - startY) * e;
       }
 
+      if (t <= ROLLER_HANG) {
+         double u = (t - ROLLER_APEX) / (double)(ROLLER_HANG - ROLLER_APEX);
+         return apexY + ROLLER_HANG_FLOAT * Math.sin(u * Math.PI) * (1.0 - 0.5 * u);
+      }
+
       if (t <= ROLLER_SLAM) {
-         double u = (t - ROLLER_APEX) / (double)(ROLLER_SLAM - ROLLER_APEX);
+         double u = (t - ROLLER_HANG) / (double)(ROLLER_SLAM - ROLLER_HANG);
          return apexY + (seatY - apexY) * u * u;
       }
 
@@ -260,9 +284,9 @@ public final class DioRules {
          return seatY;
       }
 
-      double u = Math.min(1.0, (t - ROLLER_RESUME) / (double)(ROLLER_LENGTH - ROLLER_RESUME));
-      // Hop off: a small arc back to the ground behind the roller.
-      return seatY + Math.sin(u * Math.PI) * 1.4 - (seatY - landY) * u;
+      double u = Math.min(1.0, (t - ROLLER_RESUME) / (double)(ROLLER_LAND - ROLLER_RESUME));
+      // Hop off: a small arc back down to the ground.
+      return seatY + Math.sin(u * Math.PI) * 1.6 - (seatY - landY) * u;
    }
 
    /** Horizontal progress 0..1 from the start to the landing point. */
