@@ -44,7 +44,7 @@ public final class HeroSpeech {
    private static int nextSerial = 1;
 
    private record Active(int serial, String lineId, HeroLine.Priority priority, WeakReference<ServerPlayer> entity, ResourceKey<Level> level,
-      @Nullable UUID session, List<UUID> audience, long until, @Nullable Predicate<ServerPlayer> activeWhile) {
+      @Nullable UUID session, List<UUID> audience, long started, long until, @Nullable Predicate<ServerPlayer> activeWhile) {
    }
 
    private HeroSpeech() {
@@ -152,12 +152,17 @@ public final class HeroSpeech {
       if (current != null && now >= current.until) {
          ACTIVE.remove(id);
          current = null;
+      } else if (current != null && !stillSpeaking(speaker, current)) {
+         // The previous hero's (or a cancelled channel's) line has not been swept by the tick yet.
+         ACTIVE.remove(id);
+         sendStop(speaker.server, current);
+         current = null;
       }
 
       Map<String, Long> cooldowns = COOLDOWNS.computeIfAbsent(id, key -> new HashMap<>());
       cooldowns.values().removeIf(until -> until <= now);
       HeroSpeechRules.Decision decision = HeroSpeechRules.decide(current == null ? null : current.lineId, current == null ? null : current.priority,
-         lineId, priority, now, cooldowns.getOrDefault(lineId, Long.MIN_VALUE), force);
+         current == null ? 0L : now - current.started, lineId, priority, now, cooldowns.getOrDefault(lineId, Long.MIN_VALUE), force);
       if (!decision.starts()) {
          return false;
       }
@@ -183,7 +188,7 @@ public final class HeroSpeech {
 
       long until = now + HeroSpeechRules.lifetimeTicks(durationTicks, fragments.size());
       ACTIVE.put(id, new Active(serial, lineId, priority, new WeakReference<>(speaker), speaker.level().dimension(), sessionOf(speaker), List.copyOf(listeners),
-         until, activeWhile));
+         now, until, activeWhile));
       cooldowns.put(lineId, until + cooldownTicks);
       return true;
    }

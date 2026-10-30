@@ -25,6 +25,11 @@ public class HomelanderHero implements HeroDefinition {
    }
 
    @Override
+   public dev.baranhan.viltrumitecore.hero.speech.HeroLines lines() {
+      return HomelanderLines.LINES;
+   }
+
+   @Override
    public boolean allowsFlight(Player player) {
       return true;
    }
