@@ -60,3 +60,11 @@ Remaining, in order:
    impact) through the `.ogg.b64` pipeline, subtitles in every locale.
 5. Tests (timeline beats, cue order, catch-up, cleanup, glass/dissolve curves), `./gradlew build`,
    runtime check (single player + dedicated server with two clients), PR.
+
+## Status (core 1.57.0)
+
+Items 1–4 are implemented: `ErasureScene` (one clock, beats, glass origin at the target, render
+seam after the grade, scene-owned target, `ErasureShake`, cleanup on every end reason),
+`CinematicHud`, grade-only `dash_impact.fsh`, five original sounds via the lang/sound overlays.
+Item 5: unit tests in `ErasureSceneTest`, `CinematicHudTest`, `SceneEntityHideTest`; build and runtime
+checks are recorded in the PR.

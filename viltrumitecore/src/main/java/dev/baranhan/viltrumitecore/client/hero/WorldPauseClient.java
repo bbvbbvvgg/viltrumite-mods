@@ -61,7 +61,9 @@ public final class WorldPauseClient {
    }
    /** Publish the stop to the shared TimeFreeze client flags (owner id resolves late after a join). */
    private static void publish() {
-      Minecraft mc=Minecraft.getInstance(); LocalPlayer player=mc.player;
+      Minecraft mc=Minecraft.getInstance();
+      if(mc==null) {hold=null; return;} // no client (unit tests): nothing to hold
+      LocalPlayer player=mc.player;
       boolean isolated=BodyIsolationClient.active(player);
       boolean on=holdsWorld(active(),isolated) && mc.level!=null;
       // Nobody is exempt: Reinhard stops in the pose of the press like everyone else.
