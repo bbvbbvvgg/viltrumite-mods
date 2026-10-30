@@ -4,9 +4,6 @@ import dev.baranhan.viltrumitecore.hero.control.ControlManager;
 import dev.baranhan.viltrumitecore.hero.reinhard.limbo.Limbo;
 import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.hero.control.HeroControlSync;
-import dev.baranhan.viltrumitecore.hero.regulus.Evangelium;
-import dev.baranhan.viltrumitecore.hero.regulus.RegulusHero;
-import dev.baranhan.viltrumitecore.hero.regulus.RegulusState;
 import dev.baranhan.viltrumitecore.item.ViltrumiteItems;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import net.minecraft.server.MinecraftServer;
@@ -99,45 +96,6 @@ public final class HeroEvents {
          // The hero's own cleanup runs before the death completes.
          HeldInputs.releaseAll(player);
          HeroRegistry.get(player).cleanup(player, CleanupReason.DEATH);
-      }
-
-      // A dead carrier costs its Regulus a heart (backlash handled inside).
-      // The owner may be in a different dimension than the dying carrier, so
-      // scan every online player — spec 5.3 burns the heart regardless.
-      MinecraftServer server = entity.getServer();
-      if (server != null) {
-         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            RegulusState state = RegulusHero.stateOf(player);
-            if (state != null && state.carriers.contains(entity.getUUID())) {
-               dev.baranhan.viltrumitecore.hero.regulus.RegulusHearts.onCarrierDeath(player, state, entity.getUUID());
-            }
-         }
-      }
-   }
-
-   /**
-    * A carrier that leaves the level without dying (unload, despawn, dimension
-    * change) drops the heart silently — no backlash (spec 5.3). Owners in
-    * other dimensions are included: the carrier-level prune would read the
-    * same departure as "gone" on its next scan either way.
-    */
-   @SubscribeEvent
-   public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
-      Entity entity = event.getEntity();
-      if (!(entity instanceof LivingEntity)) {
-         return;
-      }
-
-      MinecraftServer server = entity.getServer();
-      if (server == null) {
-         return;
-      }
-
-      for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-         RegulusState state = RegulusHero.stateOf(player);
-         if (state != null && state.carriers.contains(entity.getUUID())) {
-            dev.baranhan.viltrumitecore.hero.regulus.RegulusHearts.onCarrierLost(player, state, entity.getUUID());
-         }
       }
    }
 
@@ -331,13 +289,6 @@ public final class HeroEvents {
          public void resendOwner() {HeroRegistry.resendOwnerSnapshot(player);}
          public void heroRespawn() {HeroRegistry.get(player).onRespawn(player);}
          public void legacyRespawn() {
-            // The bound Evangelium returns on respawn when it is missing (spec 11.2).
-            if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.REGULUS) {
-               Evangelium.grant(player);
-               // Respawn is a fresh body: re-apply the chassis and start full.
-               dev.baranhan.viltrumitecore.hero.regulus.RegulusPassives.apply(player);
-               player.setHealth(player.getMaxHealth());
-            }
          }
       });
    }

@@ -59,7 +59,7 @@ class HeroKeyEdgesTest {
    }
 
    @Test void allOtherHeroSlotsRetainExactlyOnePressAndRelease() {
-      for (HeroDefinition hero : List.of(new HomelanderHero(), new RegulusHero(), new IronManHero())) {
+      for (HeroDefinition hero : List.of(new HomelanderHero(), RegulusHero.INSTANCE, new IronManHero())) {
          keys.clear(); held.clear(); tick(hero, "page");
          for (String id : hero.heroInputSlots()) {
             HeroAction action = hero.heroActionFor(id);

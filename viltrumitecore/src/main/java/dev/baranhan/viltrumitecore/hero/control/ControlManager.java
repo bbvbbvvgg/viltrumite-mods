@@ -3,7 +3,6 @@ package dev.baranhan.viltrumitecore.hero.control;
 import dev.baranhan.viltrumitecore.hero.BodyIsolation;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
-import dev.baranhan.viltrumitecore.hero.regulus.RegulusRules;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
 import dev.baranhan.viltrumiteflight.util.ViltrumiteFlightPlayer;
 import java.util.ArrayList;
@@ -295,8 +294,8 @@ public final class ControlManager {
       record.restore(target);
       // Clamp against the CURRENT max health, in case it changed mid-control.
       float cap = record.kind == ControlKind.STASIS
-         ? RegulusRules.domeDeferredCap(target.getMaxHealth())
-         : RegulusRules.freezeDeferredCap(target.getMaxHealth());
+         ? ControlRules.domeDeferredCap(target.getMaxHealth())
+         : ControlRules.freezeDeferredCap(target.getMaxHealth());
       float payable = Math.min(record.queuedDamage, cap);
       if (payable > 0.0F) {
          HeroDamage.applyCleanDamage(target, record.lastDamageSource == null ? target.damageSources().generic() : record.lastDamageSource, payable);
@@ -388,9 +387,9 @@ public final class ControlManager {
       }
 
       float cap = record.kind == ControlKind.STASIS
-         ? RegulusRules.domeDeferredCap(target.getMaxHealth())
-         : RegulusRules.freezeDeferredCap(target.getMaxHealth());
-      record.queuedDamage = RegulusRules.deferredAccumulate(record.queuedDamage, amount, cap);
+         ? ControlRules.domeDeferredCap(target.getMaxHealth())
+         : ControlRules.freezeDeferredCap(target.getMaxHealth());
+      record.queuedDamage = ControlRules.deferredAccumulate(record.queuedDamage, amount, cap);
       record.lastDamageSource = source;
       return true;
    }
@@ -617,7 +616,7 @@ public final class ControlManager {
             push = new Vec3(1.0, 0.0, 0.0);
          }
 
-         push = push.normalize().scale(RegulusRules.EMBRACE_RELEASE_IMPULSE);
+         push = push.normalize().scale(ControlRules.RELEASE_IMPULSE);
          target.setDeltaMovement(target.getDeltaMovement().add(push.x, 0.3, push.z));
          target.hasImpulse = true;
          if (target instanceof ServerPlayer sp) {

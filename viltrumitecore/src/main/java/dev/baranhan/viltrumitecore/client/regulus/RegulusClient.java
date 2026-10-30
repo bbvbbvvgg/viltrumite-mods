@@ -1,52 +1,33 @@
 package dev.baranhan.viltrumitecore.client.regulus;
 
-import dev.baranhan.viltrumitecore.client.hero.HeroSkins;
+import dev.baranhan.viltrumitecore.client.hero.HeroHeadPreviews;
+import dev.baranhan.viltrumitecore.client.hero.PanelStyles;
+import dev.baranhan.viltrumitecore.client.hero.speech.HeroPortraits;
 import dev.baranhan.viltrumitecore.hero.HeroId;
-import dev.baranhan.viltrumitecore.hero.HeroPlayer;
-import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
-import java.util.Optional;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 
+/**
+ * Client entry point of Regulus Corneas (called from ViltrumiteCoreClient's setup): panel style,
+ * race-screen head, subtitle portrait, the own body and first-person renderers, the world VFX and
+ * Kingdom of One's cameras. No mixins: everything hangs on Forge events.
+ */
 public final class RegulusClient {
-   private static final ResourceLocation DEFAULT_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/regulus.png");
-   private static final ResourceLocation MADNESS_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/regulus_madness.png");
-
    private RegulusClient() {
    }
 
-   public static void registerSkins() {
-      HeroSkins.register(HeroId.REGULUS, new HeroSkins.Provider() {
-         @Override
-         public ResourceLocation defaultSkin() {
-            return DEFAULT_SKIN;
-         }
-
-         @Override
-         public String defaultModelName() {
-            return "default";
-         }
-
-         @Override
-         public Optional<ResourceLocation> skinVariant(AbstractClientPlayer player) {
-            if (player instanceof HeroPlayer heroPlayer) {
-               HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
-               if (snapshot != null && snapshot.madness()) {
-                  return Optional.of(MADNESS_SKIN);
-               }
-            }
-            return Optional.empty();
-         }
-
-         @Override
-         public boolean suppressCosmetics(AbstractClientPlayer player) {
-            return true;
-         }
-
-         @Override
-         public boolean suppressCape(AbstractClientPlayer player) {
-            return true;
-         }
-      });
+   public static void init() {
+      PanelStyles.register(HeroId.REGULUS, RegulusPanelStyle.INSTANCE);
+      HeroHeadPreviews.register(HeroId.REGULUS, RegulusHeadPreview.INSTANCE);
+      HeroPortraits.register(HeroId.REGULUS, RegulusPortrait.INSTANCE);
+      MinecraftForge.EVENT_BUS.addListener(RegulusRenderer::onRenderPlayerPre);
+      MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, RegulusUltScene::onRenderHand);
+      MinecraftForge.EVENT_BUS.addListener(RegulusFirstPerson::onRenderHand);
+      MinecraftForge.EVENT_BUS.addListener(RegulusVfx::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(RegulusVfx::onRenderLevel);
+      MinecraftForge.EVENT_BUS.addListener(RegulusVfx::onLevelUnload);
+      MinecraftForge.EVENT_BUS.addListener(RegulusUltScene::onRenderGui);
+      MinecraftForge.EVENT_BUS.addListener(RegulusUltScene::onFov);
+      MinecraftForge.EVENT_BUS.addListener(RegulusUltScene::onCameraAngles);
    }
 }

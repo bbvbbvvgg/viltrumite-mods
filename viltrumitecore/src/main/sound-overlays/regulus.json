@@ -1,0 +1,427 @@
+{
+  "regulus.lion_on": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_lion_on",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/lion_on",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "regulus.lion_off": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_lion_off",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/lion_off",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "regulus.lion_deny": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_lion_deny",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/lion_deny",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "regulus.recoil": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_recoil",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/recoil0",
+        "attenuation_distance": 24,
+        "pitch": 0.97
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/recoil1",
+        "attenuation_distance": 24,
+        "pitch": 1.0
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/recoil2",
+        "attenuation_distance": 24,
+        "pitch": 1.03
+      }
+    ]
+  },
+  "regulus.projectile_stop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_projectile_stop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/projectile_stop",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "regulus.heartbeat": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_heartbeat",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/heartbeat0",
+        "attenuation_distance": 16,
+        "pitch": 0.985
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/heartbeat1",
+        "attenuation_distance": 16,
+        "pitch": 1.015
+      }
+    ]
+  },
+  "regulus.strain": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_strain",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/strain",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "regulus.seizure": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_seizure",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/seizure",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "regulus.touch_swish": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_touch_swish",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/touch_swish0",
+        "attenuation_distance": 16,
+        "pitch": 0.97
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/touch_swish1",
+        "attenuation_distance": 16,
+        "pitch": 1.0
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/touch_swish2",
+        "attenuation_distance": 16,
+        "pitch": 1.03
+      }
+    ]
+  },
+  "regulus.touch_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_touch_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/touch_hit0",
+        "attenuation_distance": 24,
+        "pitch": 0.97
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/touch_hit1",
+        "attenuation_distance": 24,
+        "pitch": 1.0
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/touch_hit2",
+        "attenuation_distance": 24,
+        "pitch": 1.03
+      }
+    ]
+  },
+  "regulus.rupture": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_rupture",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/rupture",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "regulus.sand_scoop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_sand_scoop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/sand_scoop",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "regulus.sand_release": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_sand_release",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/sand_release",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "regulus.grain_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_grain_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/grain_hit0",
+        "attenuation_distance": 24,
+        "pitch": 0.97
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/grain_hit1",
+        "attenuation_distance": 24,
+        "pitch": 1.0
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/grain_hit2",
+        "attenuation_distance": 24,
+        "pitch": 1.03
+      }
+    ]
+  },
+  "regulus.grain_stop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_grain_stop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/grain_stop0",
+        "attenuation_distance": 16,
+        "pitch": 0.97
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/grain_stop1",
+        "attenuation_distance": 16,
+        "pitch": 1.0
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/grain_stop2",
+        "attenuation_distance": 16,
+        "pitch": 1.03
+      }
+    ]
+  },
+  "regulus.sever_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_sever_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/sever_charge",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "regulus.sever_release": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_sever_release",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/sever_release",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "regulus.sever_cut": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_sever_cut",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/sever_cut0",
+        "attenuation_distance": 24,
+        "pitch": 0.985
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/sever_cut1",
+        "attenuation_distance": 24,
+        "pitch": 1.015
+      }
+    ]
+  },
+  "regulus.trample_lift": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_trample_lift",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/trample_lift",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "regulus.trample_stomp": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_trample_stomp",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/trample_stomp",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "regulus.trample_wave": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_trample_wave",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/trample_wave0",
+        "attenuation_distance": 24,
+        "pitch": 0.985
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/trample_wave1",
+        "attenuation_distance": 24,
+        "pitch": 1.015
+      }
+    ]
+  },
+  "regulus.reply_stance": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_reply_stance",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/reply_stance",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "regulus.reply_strike": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_reply_strike",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/reply_strike",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "regulus.king_bind": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_king_bind",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/king_bind",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "regulus.king_hop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_king_hop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/king_hop",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "regulus.king_release": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_king_release",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/king_release",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "regulus.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_refuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/refuse",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "regulus.ult_accuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_ult_accuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/ult_accuse",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "regulus.ult_scoop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_ult_scoop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/ult_scoop",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "regulus.ult_wave": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_ult_wave",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/ult_wave0",
+        "attenuation_distance": 40,
+        "pitch": 0.985
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/ult_wave1",
+        "attenuation_distance": 40,
+        "pitch": 1.015
+      }
+    ]
+  },
+  "regulus.ult_flick": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_ult_flick",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/ult_flick",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "regulus.ult_resolve": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_ult_resolve",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/ult_resolve",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "regulus.step": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.regulus_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:regulus/reborn/step0",
+        "attenuation_distance": 12,
+        "pitch": 0.955
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/step1",
+        "attenuation_distance": 12,
+        "pitch": 0.985
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/step2",
+        "attenuation_distance": 12,
+        "pitch": 1.015
+      },
+      {
+        "name": "viltrumitecore:regulus/reborn/step3",
+        "attenuation_distance": 12,
+        "pitch": 1.045
+      }
+    ]
+  }
+}

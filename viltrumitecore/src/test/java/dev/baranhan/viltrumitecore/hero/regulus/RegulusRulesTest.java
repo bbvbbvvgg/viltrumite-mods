@@ -6,191 +6,189 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+/** Pure combat rules of Regulus Reborn (design §5–§6). */
 class RegulusRulesTest {
 
    @Test
-   void cooldownFormulaHitsExactEndpoints() {
-      // cd = ceil(base * (1 - 0.03 * H)); H=0 -> base, H=12 -> base * 0.64
-      assertEquals(400, RegulusRules.cooldown(400, 0));
-      assertEquals(100, RegulusRules.cooldown(100, 0));
-      assertEquals(256, RegulusRules.cooldown(400, 12));   // 400 * 0.64 = 256
-      assertEquals(1152, RegulusRules.cooldown(1800, 12)); // 1800 * 0.64 = 1152
-      assertEquals(64, RegulusRules.cooldown(100, 12));    // 100 * 0.64 = 64
-      assertEquals(1, RegulusRules.cooldown(1, 5));        // ceil(0.85) = 1
+   void livingHostMakesTheLionFree() {
+      assertEquals(500, RegulusRules.strainStep(500, true, true));
    }
 
    @Test
-   void cooldownClampsOutOfRangeHearts() {
-      assertEquals(RegulusRules.cooldown(500, 0), RegulusRules.cooldown(500, -3));
-      assertEquals(RegulusRules.cooldown(500, 12), RegulusRules.cooldown(500, 99));
+   void hostlessLionStrainsAndRestingHeartRecovers() {
+      assertEquals(500 + RegulusRules.STRAIN_LION_TICK, RegulusRules.strainStep(500, true, false));
+      assertEquals(500 - RegulusRules.STRAIN_RECOVERY, RegulusRules.strainStep(500, false, false));
+      assertEquals(0, RegulusRules.strainStep(3, false, true));
+      assertEquals(RegulusRules.STRAIN_MAX, RegulusRules.strainStep(RegulusRules.STRAIN_MAX - 1, true, false));
    }
 
    @Test
-   void lionWindowScalesWithHearts() {
-      assertEquals(60, RegulusRules.lionWindow(0));
-      assertEquals(540, RegulusRules.lionWindow(12)); // 60 + 480
+   void strainIsClampedAndSeizesAtMax() {
+      assertEquals(RegulusRules.STRAIN_MAX, RegulusRules.strainAdd(990, RegulusRules.STRAIN_BACKLASH));
+      assertEquals(0, RegulusRules.strainAdd(10, -50));
+      assertTrue(RegulusRules.seizes(RegulusRules.STRAIN_MAX));
+      assertFalse(RegulusRules.seizes(RegulusRules.STRAIN_MAX - 1));
    }
 
    @Test
-   void lionWindowShrinksButNeverGrows() {
-      int window = RegulusRules.lionWindow(10);
-      int shrunk = RegulusRules.shrinkLionWindow(window, 10, 6);
-      assertEquals(window - 40 * 4, shrunk);
-      // gaining hearts mid-window does not extend it
-      assertEquals(window, RegulusRules.shrinkLionWindow(window, 10, 12));
-      // never below zero
-      assertEquals(0, RegulusRules.shrinkLionWindow(30, 12, 0));
+   void hostlessCountdownMatchesTheStrainSteps() {
+      for (int strain = 0; strain <= RegulusRules.STRAIN_MAX; strain += 7) {
+         int s = strain;
+         int ticks = 0;
+         while (!RegulusRules.seizes(s)) {
+            s = RegulusRules.strainStep(s, true, false);
+            ticks++;
+         }
+
+         assertEquals(ticks, RegulusRules.hostlessTicksLeft(strain), "strain " + strain);
+      }
    }
 
    @Test
-   void internalDamageIsNotAnInterruptingLoss() {
-      // Blood price (0.6 HP per 20t of madness), heart backlash and overheat are
-      // self-inflicted internal drains: they lower HP but must never read as an
-      // interrupting hit for casts or the ritual (spec 7.1/10.4/11.1).
-      assertEquals(0.0F, RegulusRules.externalHealthLoss(20.0F, 19.5F, 0.5F));
-      assertEquals(0.0F, RegulusRules.externalHealthLoss(20.0F, 19.4F, 0.6F), 1.0E-6);
-      // A real hit alongside the drain still counts for its own share.
-      assertEquals(5.0F, RegulusRules.externalHealthLoss(20.0F, 14.4F, 0.6F), 1.0E-6);
-      // No loss at all, healing or garbage input never produces an interrupt.
-      assertEquals(0.0F, RegulusRules.externalHealthLoss(20.0F, 20.0F, 0.0F));
-      assertEquals(0.0F, RegulusRules.externalHealthLoss(20.0F, 21.0F, 0.0F));
-      assertEquals(0.0F, RegulusRules.externalHealthLoss(20.0F, 19.0F, 5.0F));
-      // External loss without any internal damage passes through untouched.
-      assertEquals(3.5F, RegulusRules.externalHealthLoss(20.0F, 16.5F, 0.0F), 1.0E-6);
+   void aHostlessLionHoldsForSeveralSecondsFromRest() {
+      // canon limit: without a living heart he can stop his own for only a few seconds
+      int fromRest = RegulusRules.hostlessTicksLeft(RegulusRules.STRAIN_LION_ON);
+      assertTrue(fromRest >= 60 && fromRest <= 120, "hostless hold " + fromRest + "t");
    }
 
    @Test
-   void heartBonusIsTwoPercentPerHeart() {
-      assertEquals(1.0F, RegulusRules.heartBonus(0), 1.0E-6);
-      assertEquals(1.24F, RegulusRules.heartBonus(12), 1.0E-6);
+   void lionDoublesDamageAndSeveranceWidens() {
+      assertTrue(RegulusRules.sandDamage(true) > RegulusRules.sandDamage(false));
+      assertTrue(RegulusRules.severDamage(true) > RegulusRules.severDamage(false));
+      assertEquals(RegulusRules.SEVER_WIDTH_START, RegulusRules.severWidth(-4.0), 1.0E-9);
+      assertEquals(RegulusRules.SEVER_WIDTH_END, RegulusRules.severWidth(RegulusRules.SEVER_RANGE * 2), 1.0E-9);
+      assertEquals((RegulusRules.SEVER_WIDTH_START + RegulusRules.SEVER_WIDTH_END) / 2.0, RegulusRules.severWidth(RegulusRules.SEVER_RANGE / 2.0), 1.0E-9);
    }
 
    @Test
-   void debrisShardDamageIsFlatAndCappedPerTarget() {
-      assertEquals(2.0F, RegulusRules.debrisShardDamage(0, 0), 1.0E-6);
-      assertEquals(2.0F, RegulusRules.debrisShardDamage(3, 0), 1.0E-6);
-      assertEquals(0.0F, RegulusRules.debrisShardDamage(4, 0), 1.0E-6, "fifth shard on one target deals nothing");
-      assertEquals(2.0F * 1.24F, RegulusRules.debrisShardDamage(0, 12), 1.0E-5);
+   void recoilAndReplyScaleWithTheHit() {
+      assertEquals(3.0F, RegulusRules.recoil(10.0F), 1.0E-6F);
+      assertEquals(0.0F, RegulusRules.recoil(-5.0F), 1.0E-6F);
+      assertEquals(RegulusRules.REPLY_DAMAGE + 5.0F, RegulusRules.replyDamage(10.0F), 1.0E-6F);
+      assertEquals(RegulusRules.REPLY_DAMAGE, RegulusRules.replyDamage(-1.0F), 1.0E-6F);
    }
 
    @Test
-   void overheatDrainsOncePerSecondAndLionStopsAfterThreeDrains() {
-      assertEquals(0.0F, RegulusRules.overheatDrain(1), 1.0E-6);
-      assertEquals(0.0F, RegulusRules.overheatDrain(19), 1.0E-6);
-      assertEquals(1.5F, RegulusRules.overheatDrain(20), 1.0E-6);
-      assertEquals(2.0F, RegulusRules.overheatDrain(40), 1.0E-6);
-      assertFalse(RegulusRules.overheatExhausted(59));
-      assertTrue(RegulusRules.overheatExhausted(60));
+   void replyWindowIsHalfOpen() {
+      assertFalse(RegulusRules.replyWindow(RegulusRules.REPLY_WINDOW_START - 1));
+      assertTrue(RegulusRules.replyWindow(RegulusRules.REPLY_WINDOW_START));
+      assertTrue(RegulusRules.replyWindow(RegulusRules.REPLY_WINDOW_END - 1));
+      assertFalse(RegulusRules.replyWindow(RegulusRules.REPLY_WINDOW_END));
    }
 
    @Test
-   void hpCollapseOnTheLastOverheatTickIsAForcedOff() {
-      // Third drain lands Regulus at exactly 4 HP on overheat tick 60: the
-      // forced-off (600t) must win over the normal exhaustion end (100t).
-      assertEquals(RegulusRules.LionEnd.FORCED, RegulusRules.lionEndAfterTick(4.0F, 60));
-      assertEquals(RegulusRules.LionEnd.FORCED, RegulusRules.lionEndAfterTick(3.0F, 20));
-      assertEquals(RegulusRules.LionEnd.EXHAUSTED, RegulusRules.lionEndAfterTick(4.5F, 60));
-      assertEquals(RegulusRules.LionEnd.NONE, RegulusRules.lionEndAfterTick(10.0F, 59));
-      assertEquals(RegulusRules.LionEnd.NONE, RegulusRules.lionEndAfterTick(10.0F, 0));
+   void unbreakableBlocksStayUnbroken() {
+      assertFalse(RegulusRules.breakable(-1.0F, 100.0F));
+      assertTrue(RegulusRules.breakable(0.0F, RegulusRules.SAND_BLOCK_HARDNESS));
+      assertFalse(RegulusRules.breakable(50.0F, RegulusRules.TRAMPLE_HARDNESS_LION));
+      assertTrue(RegulusRules.SAND_BLOCK_HARDNESS < RegulusRules.SEVER_BLOCK_HARDNESS);
+      assertTrue(RegulusRules.TRAMPLE_HARDNESS < RegulusRules.SAND_BLOCK_HARDNESS);
+      assertTrue(RegulusRules.TRAMPLE_HARDNESS_LION < RegulusRules.SEVER_BLOCK_HARDNESS);
    }
 
    @Test
-   void heartLossLeavesAWarningGrace() {
-      // 2 hearts lost at elapsed 100 from a 140 window would cut to 60 (instant
-      // overheat); the grace keeps 40 ticks from now instead.
-      assertEquals(140, RegulusRules.windowAfterHeartLoss(220, 140, 100), "shrink above grace is kept");
-      assertEquals(140, RegulusRules.windowAfterHeartLoss(220, 60, 100), "grace = elapsed + 40");
-      assertEquals(110, RegulusRules.windowAfterHeartLoss(110, 30, 100), "grace never extends past the old window");
-      assertEquals(260, RegulusRules.windowAfterHeartLoss(220, 260, 100), "no loss, no change");
+   void ultTimelineIsOrdered() {
+      assertTrue(0 < RegulusRules.ULT_SCOOP);
+      assertTrue(RegulusRules.ULT_SCOOP < RegulusRules.ULT_SENTENCE);
+      assertTrue(RegulusRules.ULT_SENTENCE < RegulusRules.ULT_FLICK);
+      assertTrue(RegulusRules.ULT_FLICK < RegulusRules.ULT_FLICK_CONTACT);
+      assertTrue(RegulusRules.ULT_FLICK_CONTACT < RegulusRules.ULT_RESOLVE);
+      assertTrue(RegulusRules.ULT_RESOLVE < RegulusRules.ULT_LENGTH);
+      assertEquals(RegulusRules.UltPhase.ACCUSE, RegulusRules.ultPhase(0));
+      assertEquals(RegulusRules.UltPhase.SCOOP, RegulusRules.ultPhase(RegulusRules.ULT_SCOOP));
+      assertEquals(RegulusRules.UltPhase.SENTENCE, RegulusRules.ultPhase(RegulusRules.ULT_SENTENCE));
+      assertEquals(RegulusRules.UltPhase.FLICK, RegulusRules.ultPhase(RegulusRules.ULT_FLICK_CONTACT));
+      assertEquals(RegulusRules.UltPhase.RESOLVE, RegulusRules.ultPhase(RegulusRules.ULT_LENGTH - 1));
    }
 
    @Test
-   void counterDamageCapsAtFortyFiveAndScales() {
-      // min(45, 15 + 0.15 * maxHP) * (1 + 0.02H)
-      assertEquals(30.0F, RegulusRules.counterDamage(100.0F, 0), 1.0E-6);
-      assertEquals(45.0F, RegulusRules.counterDamage(400.0F, 0), 1.0E-6);
-      assertEquals(45.0F * 1.24F, RegulusRules.counterDamage(400.0F, 12), 1.0E-5);
+   void exactlyFiveWavesInsideTheSentence() {
+      int waves = 0;
+      for (int t = 0; t < RegulusRules.ULT_LENGTH; t++) {
+         if (RegulusRules.ultWaveTick(t)) {
+            waves++;
+            assertEquals(RegulusRules.UltPhase.SENTENCE, RegulusRules.ultPhase(t), "wave at " + t);
+         }
+      }
+
+      assertEquals(RegulusRules.ULT_WAVES, waves);
    }
 
    @Test
-   void overheatDpsStepsUpEveryFortyTicks() {
-      assertEquals(1.5F, RegulusRules.overheatDps(0), 1.0E-6);
-      assertEquals(1.5F, RegulusRules.overheatDps(39), 1.0E-6);
-      assertEquals(2.0F, RegulusRules.overheatDps(40), 1.0E-6);
-      assertEquals(3.0F, RegulusRules.overheatDps(120), 1.0E-6);
+   void invulnerabilityOnlyWhileTimeIsStopped() {
+      assertTrue(RegulusHero.absolutelyInvulnerable(true, false));
+      assertTrue(RegulusHero.absolutelyInvulnerable(false, true));
+      assertFalse(RegulusHero.absolutelyInvulnerable(false, false));
+      assertTrue(RegulusHero.scanInfoFor(false).protections().isEmpty());
+      assertFalse(RegulusHero.scanInfoFor(true).protections().isEmpty());
    }
 
    @Test
-   void deferredCapsMatchSpec() {
-      assertEquals(8.0F, RegulusRules.freezeDeferredCap(20.0F), 1.0E-6);
-      assertEquals(7.0F, RegulusRules.domeDeferredCap(20.0F), 1.0E-6);
+   void littleKingHostRule() {
+      assertTrue(LittleKing.hostValid(true, 10.0, false, 0));
+      assertTrue(LittleKing.hostValid(true, RegulusRules.KING_LEASH, false, 2));
+      assertFalse(LittleKing.hostValid(false, 1.0, false, 0));
+      assertFalse(LittleKing.hostValid(true, RegulusRules.KING_LEASH + 0.1, false, 0));
+      assertFalse(LittleKing.hostValid(true, 1.0, true, 0));
+      assertFalse(LittleKing.hostValid(true, 1.0, false, 3));
+      assertTrue(RegulusRules.KING_MAX_SUBJECTS >= 1);
    }
 
    @Test
-   void heartBacklashIsTenPercentMaxHealth() {
-      assertEquals(2.0F, RegulusRules.heartBacklash(20.0F), 1.0E-6);
+   void touchComboCyclesAndLionHitsHarder() {
+      assertEquals(RegulusMove.TOUCH_BACKHAND, RegulusMove.touch(0));
+      assertEquals(RegulusMove.TOUCH_PALM, RegulusMove.touch(1));
+      assertEquals(RegulusMove.TOUCH_FLICK, RegulusMove.touch(2));
+      assertEquals(RegulusMove.TOUCH_BACKHAND, RegulusMove.touch(3));
+      assertEquals(RegulusMove.TOUCH_FLICK, RegulusMove.touch(-1));
+      for (int i = 0; i < 3; i++) {
+         RegulusMove move = RegulusMove.touch(i);
+         assertTrue(move.touchDamage(true) > move.touchDamage(false));
+      }
+
+      assertEquals(0.0F, RegulusMove.SAND.touchDamage(true));
    }
 
    @Test
-   void superJumpReachesTwentyBlocks() {
-      double apex = dev.baranhan.viltrumitecore.hero.HeroSuperJump.apex(RegulusRules.SUPER_JUMP_VELOCITY);
-      assertTrue(apex >= 19.5 && apex <= 21.5, "super jump should peak ~20 blocks: " + apex);
+   void movesHaveContactInsideTheClip() {
+      for (RegulusMove move : RegulusMove.values()) {
+         assertTrue(move.length() > 0, move.name());
+         assertTrue(move.contact() < move.length(), move.name());
+         assertEquals(move, RegulusMove.byId(move.ordinal()));
+      }
+
+      assertEquals(null, RegulusMove.byId(-1));
+      assertEquals(null, RegulusMove.byId(RegulusMove.values().length));
    }
 
    @Test
-   void attackerRecordExpiresAfterTwoHundredFortyTicks() {
-      assertTrue(RegulusRules.attackerValid(1000, 1000 + 240));
-      assertTrue(RegulusRules.attackerValid(1000, 1000 + 241 - 1));
-      assertTrue(!RegulusRules.attackerValid(1000, 1000 + 241));
+   void trampleRingFinishesInsideTheMove() {
+      for (boolean lion : new boolean[]{false, true}) {
+         int travel = RegulusRules.trampleTravelTicks(lion);
+         assertTrue(travel > 0);
+         assertTrue(RegulusRules.TRAMPLE_IMPACT + travel < RegulusRules.TRAMPLE_TICKS, "lion=" + lion);
+      }
+      assertTrue(RegulusRules.trampleRadius(true) > RegulusRules.trampleRadius(false));
+      assertTrue(RegulusRules.trampleDamage(true) > RegulusRules.trampleDamage(false));
+      assertTrue(RegulusRules.trampleCraterRadius(true) > RegulusRules.trampleCraterRadius(false));
+      assertTrue(RegulusRules.trampleBlockBudget(true) > RegulusRules.trampleBlockBudget(false));
    }
 
    @Test
-   void repulsePushesOpponentsOnly() {
-      assertTrue(RegulusRules.repulseTarget(true, false, false));
-      // Allies (scoreboard team) are never opponents for the impulse.
-      assertTrue(!RegulusRules.repulseTarget(true, true, false));
-      // Own heart carriers are never pushed.
-      assertTrue(!RegulusRules.repulseTarget(true, false, true));
-      // Non-opponents (animals, decoration entities) are never pushed.
-      assertTrue(!RegulusRules.repulseTarget(false, false, false));
-   }
-
-   @Test
-   void repulsePushNeverMovesTheImmuneOrAnchored() {
-      // Spec 6.2/8.3: the impulse gate and the anchor guard cap the push even
-      // when the opponent filter passes.
-      assertTrue(RegulusRules.repulsePushable(true, false, false, true, false));
-      assertTrue(!RegulusRules.repulsePushable(true, false, false, false, false), "impulse-immune target");
-      assertTrue(!RegulusRules.repulsePushable(true, false, false, true, true), "already anchored");
-      // Opponent rules still gate first.
-      assertTrue(!RegulusRules.repulsePushable(false, false, false, true, false));
-      assertTrue(!RegulusRules.repulsePushable(true, true, false, true, false));
-      assertTrue(!RegulusRules.repulsePushable(true, false, true, true, false));
-   }
-
-   @Test
-   void shockwaveDamageIgnoresTheHeartBonus() {
-      // Spec 5.4 scopes the +2%/heart bonus to abilities and melee; the landing
-      // shockwave is a section-4 passive: its spec has no hearts input at all.
-      assertEquals(5.0F, RegulusRules.LANDING.damage(RegulusRules.LANDING.minFall(), 1.0), 1.0E-6F);
-   }
-
-   @Test
-   void savedSlownessRestoresOnlyItsRemainder() {
-      assertEquals(0, RegulusRules.slownessRemainder(10, 14));
-      assertEquals(46, RegulusRules.slownessRemainder(60, 14));
-      assertEquals(0, RegulusRules.slownessRemainder(60, 60));
-      assertEquals(0, RegulusRules.slownessRemainder(0, 0));
-   }
-
-   @Test
-   void lionOffToggleIgnoresEquipAndCooldown() {
-      // A second press while Lion runs reaches the toggle even with the slot
-      // unequipped and a cooldown set (spec 6.4).
-      assertTrue(RegulusRules.mayStartAbility(false, true, true));
-      assertTrue(RegulusRules.mayStartAbility(true, false, false));
-      // New casts still need the slot equipped and off cooldown.
-      assertTrue(!RegulusRules.mayStartAbility(false, false, false));
-      assertTrue(!RegulusRules.mayStartAbility(true, true, false));
+   void trampleRingCatchesOnlyAtItsFrontAndOnTheGround() {
+      double below = RegulusRules.TRAMPLE_BAND_BELOW;
+      double above = RegulusRules.TRAMPLE_BAND_ABOVE;
+      assertTrue(RegulusRules.trampleCatches(3.0, 0.0, 2.5, 3.4, below, above));
+      // already passed / not reached yet
+      assertFalse(RegulusRules.trampleCatches(1.0, 0.0, 2.5, 3.4, below, above));
+      assertFalse(RegulusRules.trampleCatches(5.0, 0.0, 2.5, 3.4, below, above));
+      // the front has a little slack so a fast ring does not skip anyone
+      assertTrue(RegulusRules.trampleCatches(3.4 + RegulusRules.TRAMPLE_FRONT - 0.01, 0.0, 2.5, 3.4, below, above));
+      // jumping over the ring dodges it on the ground
+      assertFalse(RegulusRules.trampleCatches(3.0, 2.0, 2.5, 3.4, below, above));
+      assertFalse(RegulusRules.trampleCatches(3.0, -2.0, 2.5, 3.4, below, above));
+      // in the air the band is symmetric and wider
+      double air = RegulusRules.TRAMPLE_AIR_BAND;
+      assertTrue(RegulusRules.trampleCatches(3.0, -1.4, 2.5, 3.4, air, air));
    }
 }

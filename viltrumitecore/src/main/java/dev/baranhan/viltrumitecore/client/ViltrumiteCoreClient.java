@@ -1,7 +1,6 @@
 package dev.baranhan.viltrumitecore.client;
 
 import dev.baranhan.viltrumitecore.client.gui.ViltrumiteAbilityScreen;
-import dev.baranhan.viltrumitecore.client.regulus.RegulusClient;
 import dev.baranhan.viltrumitecore.config.ViltrumiteCameraConfig;
 import dev.baranhan.viltrumitecore.config.ViltrumiteClientConfig;
 import dev.baranhan.viltrumitecore.config.ViltrumitePostProcessingConfig;
@@ -75,7 +74,6 @@ public class ViltrumiteCoreClient {
    @SubscribeEvent
    public static void onClientSetup(FMLClientSetupEvent event) {
       event.enqueueWork(() -> {
-         RegulusClient.registerSkins();
          dev.baranhan.viltrumitecore.client.homelander.HomelanderClient.registerSkins();
          dev.baranhan.viltrumitecore.client.ironman.IronManClient.registerSkins();
          dev.baranhan.viltrumitecore.client.reinhard.ReinhardClient.init();
@@ -83,6 +81,8 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.dio.DioClient.init();
          // The Magnificent Sinclair (docs/design/2026-10-28-sinclair-design.md §11).
          dev.baranhan.viltrumitecore.client.sinclair.SinclairClient.init();
+         // Regulus Reborn (docs/design/2026-10-30-regulus-reborn-design.md).
+         dev.baranhan.viltrumitecore.client.regulus.RegulusClient.init();
          dev.baranhan.viltrumitecore.client.jinwoo.JinwooClient.init();
          dev.baranhan.viltrumitecore.client.wish.WishSceneClient.init();
          CosmeticLoader.init();
@@ -295,24 +295,6 @@ public class ViltrumiteCoreClient {
                         CoreMessages.sendToServer(new dev.baranhan.viltrumitecore.network.packet.HeroInputC2SPacket(action, down));
                      }
                   });
-            }
-
-            if (client.player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer
-               && heroPlayer.getHeroId() == dev.baranhan.viltrumitecore.hero.HeroId.REGULUS) {
-               // The Viltrumite fist, recoloured for Regulus: same client start
-               // (local punch timer for the animation) and the same packet.
-               while (AbilityInputManager.consumeAbilityKeyPress(client.player, dev.baranhan.viltrumitecore.hero.regulus.RegulusAbilities.PUNCH)) {
-                  dev.baranhan.viltrumitecore.ability.ViltrumiteAbility punch = dev.baranhan.viltrumitecore.ability.ViltrumiteAbilities.get(dev.baranhan.viltrumitecore.hero.regulus.RegulusAbilities.PUNCH);
-                  if (client.player instanceof ViltrumiteCorePlayer regulusCore
-                     && (punch == null || !punch.isGrey(client.player))
-                     && regulusCore.getChopTicks() <= 0
-                     && ViltrumiteCoreClient.iAmBeingGrabbedBy == null) {
-                     boolean isLeft = client.level.random.nextBoolean();
-                     regulusCore.setLeftArmPunch(isLeft);
-                     regulusCore.setPunchTicks(20);
-                     CoreMessages.sendToServer(new PunchC2SPacket(isLeft));
-                  }
-               }
             }
 
             // Super jump (any hero with superJumpVelocity > 0): one press, instant launch.

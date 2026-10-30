@@ -7,8 +7,6 @@ import dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasurePost;
 import dev.baranhan.viltrumitecore.client.reinhard.erasure.ErasureUniforms;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Shadow;
-import dev.baranhan.viltrumitecore.client.regulus.RegulusClientFx;
-import dev.baranhan.viltrumitecore.client.regulus.RegulusVfxMath;
 import dev.baranhan.viltrumitecore.client.render.ViltrumiteShaders;
 import dev.baranhan.viltrumitecore.client.render.vfx.BlockVFXManager;
 import dev.baranhan.viltrumitecore.client.render.vfx.MeteorImpactVFXManager;
@@ -297,33 +295,7 @@ public abstract class GameRendererDashMixin {
          this.currentScourgeIntensity = Mth.lerp(0.08F, this.currentScourgeIntensity, targetScourge);
          float regulusHeartFlash = 0.0F;
          float regulusPulse = 0.0F;
-         if (minecraft.player instanceof HeroPlayer heroPlayer) {
-            HeroPublicSnapshot snapshot = heroPlayer.getHeroSnapshot();
-            if (snapshot != null && snapshot.heroId() == HeroId.REGULUS) {
-               float overheatTarget = snapshot.lionOverheat() ? 1.0F : 0.0F;
-               this.currentRegulusOverheat = Mth.lerp(0.12F, this.currentRegulusOverheat, overheatTarget);
-               float madnessTarget = snapshot.madness() ? 1.0F : 0.0F;
-               this.currentRegulusMadness = Mth.lerp(0.06F, this.currentRegulusMadness, madnessTarget);
-               if (minecraft.level != null) {
-                  float beatPhase = ((float)(minecraft.level.getGameTime() % RegulusVfxMath.HEARTBEAT_PERIOD_TICKS) + partialTicks) / (float)RegulusVfxMath.HEARTBEAT_PERIOD_TICKS;
-                  regulusPulse = snapshot.madness() ? RegulusVfxMath.madnessPulse(beatPhase) : 0.0F;
-               }
-            } else {
-               this.currentRegulusOverheat = Mth.lerp(0.12F, this.currentRegulusOverheat, 0.0F);
-               this.currentRegulusMadness = Mth.lerp(0.06F, this.currentRegulusMadness, 0.0F);
-            }
-         }
-
-         if (RegulusClientFx.heartFlashTicks > 0) {
-            regulusHeartFlash = RegulusVfxMath.heartFlashFactor((float)RegulusVfxMath.HEART_FLASH_TICKS - (float)RegulusClientFx.heartFlashTicks + partialTicks);
-         }
-
-         if (RegulusClientFx.debrisShakeTicks > 0) {
-            float debrisShake = RegulusClientFx.debrisShakePower
-               * ViltrumitePostProcessingConfig.INSTANCE.punchShakeMultiplier
-               * (RegulusClientFx.debrisShakeTicks / 10.0F);
-            shakeIntensity = Math.max(shakeIntensity, debrisShake);
-         }
+         // Regulus Reborn draws his own overlays (client.regulus); the first kit's uniforms stay at rest.
 
          ErasureUniforms erasure = ErasurePost.uniforms(partialTicks);
          float[] timeStop = dev.baranhan.viltrumitecore.client.dio.TimeStopClient.screen(partialTicks);
