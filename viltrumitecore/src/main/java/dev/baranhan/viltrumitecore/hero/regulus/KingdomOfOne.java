@@ -4,6 +4,7 @@ import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
 import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
+import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket;
 import dev.baranhan.viltrumitecore.hero.regulus.net.RegulusNet;
 import dev.baranhan.viltrumitecore.hero.speech.HeroLineTrigger;
@@ -123,7 +124,7 @@ public final class KingdomOfOne {
       }
 
       if (scene.held && target != null) {
-         hold(target, scene.anchor);
+         hold(player, target, scene.anchor);
       }
 
       if (RegulusRules.ultWaveTick(t) && target != null) {
@@ -212,8 +213,9 @@ public final class KingdomOfOne {
       }
    }
 
-   private static void hold(LivingEntity target, Vec3 anchor) {
-      if (HeroDamage.isAnchored(target)) {
+   private static void hold(ServerPlayer player, LivingEntity target, Vec3 anchor) {
+      // DIO's paused world (or an isolated body) is never moved by the scene: it waits with it
+      if (HeroDamage.isAnchored(target) || WorldPause.blocksMovement(player, target)) {
          return;
       }
 
