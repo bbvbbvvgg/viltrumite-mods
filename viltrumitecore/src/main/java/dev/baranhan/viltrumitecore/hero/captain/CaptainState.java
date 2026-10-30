@@ -18,6 +18,8 @@ public final class CaptainState {
    public int comboStep = -1;
    public int comboIdle = 1000;
    public boolean comboQueued;
+   /** The chain of the last finished combo hit: shield (true) or fists. */
+   public boolean lastChainShield = true;
    public final Set<Integer> hit = new HashSet<>();
    public Vec3 moveDir = Vec3.ZERO;
    public int tickCount;
@@ -28,6 +30,11 @@ public final class CaptainState {
    public boolean throwEmpowered;
    public int aimTicks;
    public boolean aimHeld;
+   /** Release mode chosen at the end of the aim: bank shot (true) or target chain (false). */
+   public boolean throwBank;
+   /** Aim preview point (bank-shot hold) for the owner's HUD line, null when not aiming. */
+   @Nullable public Vec3 aimPoint;
+   public int throwTarget = -1;
 
    // guard
    public boolean guarding;
