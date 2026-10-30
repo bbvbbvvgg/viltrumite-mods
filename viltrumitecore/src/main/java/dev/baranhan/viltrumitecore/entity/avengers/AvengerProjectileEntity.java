@@ -70,6 +70,17 @@ public class AvengerProjectileEntity extends Entity {
       return this.entityData.get(SHOOTER);
    }
 
+   /** A projectile hit; the mob turns on the Avenger who shot it. */
+   private static boolean hitBy(LivingEntity shooter, LivingEntity e, float damage) {
+      if (!CaptainTargets.strike(shooter, e, damage)) {
+         return false;
+      }
+      if (shooter instanceof AvengerEntity a && a.brain != null) {
+         a.brain.drawFire(e);
+      }
+      return true;
+   }
+
    @Nullable
    private AvengerEntity shooter() {
       return this.level().getEntity(this.shooterId()) instanceof AvengerEntity a && a.isAlive() ? a : null;
@@ -140,7 +151,7 @@ public class AvengerProjectileEntity extends Entity {
       for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, sweep, e -> shooter.mayHit(e) && !this.hit.contains(e.getId()))) {
          if (type == HAMMER) {
             this.hit.add(e.getId());
-            if (CaptainTargets.strike(shooter, e, this.damage)) {
+            if (hitBy(shooter, e, this.damage)) {
                CaptainTargets.push(e, v.normalize().scale(1.1).add(0, 0.35, 0));
                CaptainFx.around(this, CaptainFx.SHOCK, 0, e.getBoundingBox().getCenter(), this.position());
                CaptainSounds.playAt(this, e.position(), CaptainSounds.HAMMER_HIT, 1.0F, 1.0F);
@@ -164,7 +175,7 @@ public class AvengerProjectileEntity extends Entity {
             double radius = type == MISSILE ? 2.6 : 3.2;
             for (LivingEntity e : CaptainTargets.around(this, at, radius, shooter::mayHit)) {
                double d = Math.sqrt(e.getBoundingBox().distanceToSqr(at));
-               if (CaptainTargets.strike(shooter, e, (float)(this.damage * (1.0 - 0.5 * Math.min(1.0, d / radius))))) {
+               if (hitBy(shooter, e, (float)(this.damage * (1.0 - 0.5 * Math.min(1.0, d / radius))))) {
                   Vec3 away = e.position().subtract(at);
                   Vec3 h = away.lengthSqr() < 1.0E-4 ? Vec3.ZERO : away.normalize();
                   CaptainTargets.push(e, h.scale(0.6).add(0, 0.35, 0));
@@ -175,7 +186,7 @@ public class AvengerProjectileEntity extends Entity {
          }
          case ARROW_SHOCK -> {
             for (LivingEntity e : CaptainTargets.around(this, at, 2.2, shooter::mayHit)) {
-               if (CaptainTargets.strike(shooter, e, this.damage)) {
+               if (hitBy(shooter, e, this.damage)) {
                   CaptainTargets.stun(shooter, e, 40);
                   CaptainFx.around(this, CaptainFx.STUN, 40, e.getBoundingBox().getCenter(), Vec3.ZERO, e.getId());
                }
@@ -184,7 +195,7 @@ public class AvengerProjectileEntity extends Entity {
             CaptainSounds.playAt(this, at, CaptainSounds.SHOCK, 1.0F, 1.0F);
          }
          default -> {
-            if (direct != null && CaptainTargets.strike(shooter, direct, this.damage)) {
+            if (direct != null && hitBy(shooter, direct, this.damage)) {
                CaptainTargets.push(direct, this.getDeltaMovement().normalize().scale(0.35).add(0, 0.1, 0));
             }
             CaptainFx.near(level, at, 32, CaptainFx.CONTACT, this.getId(), 5, at, this.position());

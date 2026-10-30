@@ -14,7 +14,8 @@ import net.minecraft.world.phys.Vec3;
  * pound when surrounded and a roar that staggers everything around him.
  */
 final class HulkBrain extends AvengerBrain {
-   private static final int CD_MELEE = 0, CD_LEAP = 1, CD_POUND = 2, CD_ROAR = 3;
+   private static final int CD_MELEE = 0, CD_LEAP = 1, CD_POUND = 2, CD_ROAR = 3, CD_TAUNT = 4;
+   static final double TAUNT_RANGE = 12.0;
    private boolean airborne;
 
    HulkBrain(AvengerEntity self) {
@@ -30,6 +31,14 @@ final class HulkBrain extends AvengerBrain {
    protected void engage(LivingEntity t, ServerPlayer owner) {
       this.face(t);
       double gap = this.gap(t);
+      // the tank: when the mobs go for Steve, the chest beat and the roar pull them all onto Hulk
+      if (this.cd[CD_TAUNT] <= 0 && this.self.onGround()
+         && (this.huntingOwner(owner, TAUNT_RANGE) >= 2 || this.enemiesAround(this.self.position(), 8.0).size() >= 4)) {
+         this.cd[CD_TAUNT] = 300;
+         this.self.getNavigation().stop();
+         this.start(AvengerAction.SPECIAL_3, 40);
+         return;
+      }
       if (this.cd[CD_ROAR] <= 0 && gap < 10) {
          this.cd[CD_ROAR] = 500;
          this.start(AvengerAction.SPECIAL_2, 30);
@@ -97,6 +106,15 @@ final class HulkBrain extends AvengerBrain {
                this.smash(this.self.position(), 6.0, 14.0F, 0.9);
             }
          }
+         case SPECIAL_3 -> {
+            if (tick == 6 || tick == 11 || tick == 16 || tick == 21) {
+               CaptainSounds.play(this.self, CaptainSounds.HULK_CHEST, 1.3F, tick == 6 ? 1.0F : 0.94F);
+            } else if (tick == 28) {
+               this.taunt(TAUNT_RANGE);
+               CaptainSounds.play(this.self, CaptainSounds.HULK_ROAR, 1.8F, 0.9F);
+               CaptainFx.around(this.self, CaptainFx.GROUND, 4, this.self.position(), new Vec3(TAUNT_RANGE * 0.5, 0, 0));
+            }
+         }
          case SPECIAL_2 -> {
             if (tick == 8) {
                for (LivingEntity e : this.enemiesAround(this.self.position(), 9.0)) {
@@ -123,7 +141,7 @@ final class HulkBrain extends AvengerBrain {
    private void smash(Vec3 at, double radius, float damage, double lift) {
       for (LivingEntity e : this.enemiesAround(at.add(0, 0.5, 0), radius)) {
          double d = Math.sqrt(e.getBoundingBox().distanceToSqr(at));
-         if (CaptainTargets.strike(this.self, e, (float)(damage * (1.0 - 0.4 * Math.min(1.0, d / radius))))) {
+         if (this.hit(e, (float)(damage * (1.0 - 0.4 * Math.min(1.0, d / radius))))) {
             Vec3 away = e.position().subtract(at);
             Vec3 h = away.horizontalDistanceSqr() < 1.0E-4 ? Vec3.ZERO : new Vec3(away.x, 0, away.z).normalize();
             CaptainTargets.push(e, h.scale(0.6).add(0, lift * 0.6, 0));

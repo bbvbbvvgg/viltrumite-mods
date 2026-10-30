@@ -39,8 +39,10 @@ final class HawkeyeBrain extends AvengerBrain {
       if (gap < 2.2) {
          this.self.getNavigation().stop();
          if (this.cd[CD_MELEE] <= 0) {
-            this.cd[CD_MELEE] = 20;
-            this.start(AvengerAction.ATTACK_1, 10);
+            this.comboStep = (this.comboStep + 1) % 3;
+            this.cd[CD_MELEE] = this.comboStep == 2 ? 26 : 14;
+            this.start(this.comboStep == 0 ? AvengerAction.ATTACK_1 : this.comboStep == 1 ? AvengerAction.ATTACK_2 : AvengerAction.ATTACK_3,
+               this.comboStep == 2 ? 16 : 10);
             return;
          }
       }
@@ -148,9 +150,14 @@ final class HawkeyeBrain extends AvengerBrain {
    @Override
    protected void onAction(AvengerAction a, int tick) {
       switch (a) {
-         case ATTACK_1 -> {
-            if (tick == 4 && this.strikeArc(2.4, 100, 6.0F, 1.1, 0.3) > 0) {
-               CaptainSounds.play(this.self, CaptainSounds.WIDOW_STRIKE, 0.8F, 0.8F);
+         case ATTACK_1, ATTACK_2 -> {
+            if (tick == (a == AvengerAction.ATTACK_1 ? 4 : 5) && this.strikeArc(2.4, 100, 6.0F, 1.1, 0.3) > 0) {
+               CaptainSounds.play(this.self, CaptainSounds.WIDOW_STRIKE, 0.8F, a == AvengerAction.ATTACK_1 ? 0.8F : 0.9F);
+            }
+         }
+         case ATTACK_3 -> { // the kick that makes room for the next arrow
+            if (tick == 6 && this.strikeArc(2.5, 90, 5.0F, 1.8, 0.4) > 0) {
+               CaptainSounds.play(this.self, CaptainSounds.KICK, 0.9F, 0.9F);
             }
          }
          case SHOOT, SPECIAL_1, SPECIAL_2, SPECIAL_3 -> {

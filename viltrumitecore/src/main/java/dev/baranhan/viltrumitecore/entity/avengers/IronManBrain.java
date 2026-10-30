@@ -135,7 +135,7 @@ final class IronManBrain extends AvengerBrain {
                Vec3 end = this.rayEnd(from, from.add(this.beamDir.scale(26)));
                if (tick % 2 == 0) {
                   for (LivingEntity e : this.alongRay(from, end, 0.9)) {
-                     if (CaptainTargets.strike(this.self, e, 3.5F)) {
+                     if (this.hit(e, 3.5F)) {
                         CaptainTargets.push(e, this.beamDir.scale(0.25));
                      }
                   }
@@ -153,7 +153,7 @@ final class IronManBrain extends AvengerBrain {
       Vec3 to = t.getBoundingBox().getCenter();
       Vec3 end = this.rayEnd(from, to.add(to.subtract(from).normalize().scale(0.5)));
       boolean clear = end.distanceToSqr(from) >= to.distanceToSqr(from) - 1.0;
-      if (clear && CaptainTargets.strike(this.self, t, both ? 10.0F : 7.0F)) {
+      if (clear && this.hit(t, both ? 10.0F : 7.0F)) {
          CaptainTargets.push(t, to.subtract(from).normalize().scale(both ? 0.9 : 0.5).add(0, 0.2, 0));
       }
       CaptainFx.around(this.self, CaptainFx.REPULSOR, both ? 1 : 0, from, clear ? to : end);

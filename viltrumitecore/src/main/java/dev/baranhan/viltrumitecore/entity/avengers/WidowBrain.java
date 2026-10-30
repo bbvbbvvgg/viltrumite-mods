@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
  * electric dart that stuns), an acrobatic leap-kick onto a target and a back-flip when she gets hit.
  */
 final class WidowBrain extends AvengerBrain {
-   private static final int CD_MELEE = 0, CD_PISTOL = 1, CD_BITE = 2, CD_LEAP = 3, CD_DODGE = 4;
+   private static final int CD_MELEE = 0, CD_PISTOL = 1, CD_BITE = 2, CD_LEAP = 3, CD_DODGE = 4, CD_SWEEP = 5;
    private boolean airborne;
 
    WidowBrain(AvengerEntity self) {
@@ -39,6 +39,13 @@ final class WidowBrain extends AvengerBrain {
       this.face(t);
       double gap = this.gap(t);
       boolean sees = this.sees(t);
+      if (gap < 2.4 && this.cd[CD_SWEEP] <= 0 && this.enemiesAround(this.self.position(), 3.0).size() >= 2) {
+         this.cd[CD_SWEEP] = 120;
+         this.self.getNavigation().stop();
+         this.start(AvengerAction.SPECIAL_3, 40);
+         CaptainSounds.play(this.self, CaptainSounds.ACROBAT, 0.9F, 0.9F);
+         return;
+      }
       if (gap < 5.0 && sees && this.cd[CD_BITE] <= 0) {
          this.cd[CD_BITE] = 160;
          this.self.getNavigation().stop();
@@ -83,6 +90,16 @@ final class WidowBrain extends AvengerBrain {
                CaptainSounds.play(this.self, CaptainSounds.WIDOW_STRIKE, 0.9F, CaptainSounds.jitter(this.self, a == AvengerAction.ATTACK_1 ? 1.1F : 1.0F));
             }
          }
+         case SPECIAL_3 -> {
+            if (tick == 10 || tick == 16) { // low sweep: the scything leg goes all the way round
+               if (this.strikeArc(2.6, 360, 6.0F, 0.5, 0.2) > 0) {
+                  CaptainSounds.play(this.self, CaptainSounds.WIDOW_STRIKE, 1.0F, 0.8F);
+               }
+               for (LivingEntity e : this.enemiesAround(this.self.position(), 3.0)) {
+                  e.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 40, 2, false, false, true));
+               }
+            }
+         }
          case ATTACK_3 -> {
             if (tick == 7 && this.strikeArc(2.5, 120, 9.0F, 1.0, 0.45) > 0) {
                CaptainSounds.play(this.self, CaptainSounds.WIDOW_STRIKE, 1.0F, 0.85F);
@@ -101,7 +118,7 @@ final class WidowBrain extends AvengerBrain {
                boolean clear = end.distanceToSqr(to) < 0.25;
                CaptainFx.around(this.self, CaptainFx.BITE, 0, from, clear ? to : end, clear ? this.target.getId() : -1);
                CaptainSounds.play(this.self, CaptainSounds.WIDOW_BITE, 1.0F, 1.0F);
-               if (clear && CaptainTargets.strike(this.self, this.target, 5.0F)) {
+               if (clear && this.hit(this.target, 5.0F)) {
                   CaptainTargets.stun(this.self, this.target, 50);
                   CaptainFx.around(this.self, CaptainFx.STUN, 50, this.target.getBoundingBox().getCenter(), Vec3.ZERO, this.target.getId());
                }
@@ -147,7 +164,7 @@ final class WidowBrain extends AvengerBrain {
       }
       if (first != null) {
          end = first.getBoundingBox().getCenter();
-         CaptainTargets.strike(this.self, first, 3.5F);
+         this.hit(first, 3.5F);
       }
       CaptainFx.around(this.self, CaptainFx.SHOT, right ? 1 : 0, from, end);
       CaptainSounds.play(this.self, CaptainSounds.WIDOW_SHOT, 0.9F, CaptainSounds.jitter(this.self, 1.0F));
