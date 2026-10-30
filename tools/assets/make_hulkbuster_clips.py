@@ -439,21 +439,33 @@ def scene():
         (18, ("chest_flap_l", "chest_flap_r", "back_flap")),
         (28, ("upper_arm_l", "upper_arm_r", "forearm_l", "forearm_r", "fingers_l")),
         (36, ("shoulder_cap_l", "shoulder_cap_r")),
-        (46, ("visor", "helmet_l", "helmet_r", "head")),
+        (46, ("visor", "helmet_l", "helmet_r")),
     ]
     for lock, bones in groups:
         o = {b: opened[b] for b in bones}
         cl = {b: closed[b] for b in bones}
         over = {b: {"rotation": [-v * 0.06 for v in opened[b]["rotation"]]} for b in bones}
         c.at(T(max(0, lock - 6)), o, IN).at(T(lock), over, OUTQ).at(T(min(50, lock + 2)), cl, IO)
+    # The head (fix spec item 2): it hangs while the plates close, the helmet locks on the hanging head (46),
+    # then the machine lifts its head and looks up (49) just before the reactor flash (HulkbusterSuitUp.REACTOR_FLASH).
+    c.at(T(30), r(head=(-10, 0, 0))).at(T(40), r(head=(16, 0, 0)), IO).at(T(46), r(head=(16, 0, 0)))
+    c.at(T(49), r(head=(-14, 0, 0)), OUTC)
     c.at(T(50), merge(closed, STANCE))
-    # Exit (spec §3: 2.5 s): the back opens, the chest doors crack, the empty machine settles.
+    # Exit (fix spec 2026-10-28 item 2, 2.5 s = 50 t; HulkbusterExit holds the same tick table):
+    #  0-8   vent: the machine settles on its hydraulics, the head droops while the reactor dims;
+    #  8-24  the chest doors swing open on their hinges, the helmet opens and rises;
+    #  24-36 Tony steps out forward/down, the shell kneels (right knee down at 32 = the knee thud);
+    #  36-50 the empty shell stands up again, the doors and the helmet close from 42: it ends on STANCE,
+    #        the pose the empty shell keeps afterwards (HulkbusterShells).
+    vent = merge(STANCE, squat(2.0), r(torso=(6, 0, 0), head=(12, 0, 0), upper_arm_l=(6, 0, 3), upper_arm_r=(6, 0, -3)))
+    kneel = merge(STANCE, squat(10.0, side_bias=0.3), r(thigh_l=(8, 0, -4), shin_l=(-8, 0, 0), torso=(20, 0, 0), chest=(6, 0, 0), head=(-8, 0, 0),
+                                                       upper_arm_l=(-8, 0, -10), upper_arm_r=(-8, 0, 10), forearm_l=(-18, 0, 0), forearm_r=(-18, 0, 0)))
+    doors = r(chest_flap_l=(0, -78, 0), chest_flap_r=(0, 78, 0), visor=(-70, 0, 0), helmet_l=(0, -55, 0), helmet_r=(0, 55, 0))
+    shut = r(chest_flap_l=(0, 0, 0), chest_flap_r=(0, 0, 0), visor=(0, 0, 0), helmet_l=(0, 0, 0), helmet_r=(0, 0, 0))
     c = clip("exit", T(50))
-    c.at(0, STANCE).at(T(12), merge(STANCE, r(back_flap=(105, 0, 0), chest_flap_l=(0, -30, 0), chest_flap_r=(0, 30, 0), torso=(6, 0, 0))), OUTC)
-    c.at(T(30), merge(STANCE, squat(3.0), r(back_flap=(105, 0, 0), chest_flap_l=(0, -30, 0), chest_flap_r=(0, 30, 0), head=(16, 0, 0),
-                                              upper_arm_l=(10, 0, 6), upper_arm_r=(10, 0, -6))), IO)
-    c.at(T(50), merge(STANCE, squat(3.0), r(back_flap=(105, 0, 0), chest_flap_l=(0, -30, 0), chest_flap_r=(0, 30, 0), head=(20, 0, 0),
-                                              upper_arm_l=(12, 0, 6), upper_arm_r=(12, 0, -6))))
+    c.at(0, STANCE).at(T(8), vent, OUTQ).at(T(12), vent).at(T(24), merge(vent, r(head=(-14, 0, 0))), IO)
+    c.at(T(32), kneel, IO).at(T(36), kneel).at(T(46), merge(STANCE, squat(0.8)), IO).at(T(50), STANCE, IO)
+    c.at(0, shut).at(T(8), shut).at(T(20), doors, BACK).at(T(42), doors).at(T(49), shut, IN).at(T(50), shut)
 
 
 def main():
