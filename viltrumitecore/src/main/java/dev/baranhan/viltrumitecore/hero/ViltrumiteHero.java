@@ -12,6 +12,15 @@ import net.minecraft.world.entity.player.Player;
  */
 public class ViltrumiteHero implements HeroDefinition {
 
+   /**
+    * Squad NPC identity (Conquest, Thula, Lucan, Vidor, spawner clones): the legacy kit hero, not the
+    * player race that the legacy setViltrumite(true) adapter maps to (Homelander). Identity only, like a
+    * save restore: no hero lifecycle and no session greeting.
+    */
+   public static void becomeSquadNpc(ServerPlayer npc) {
+      HeroRegistry.restoreHero(npc, new HeroSession(HeroId.VILTRUMITE, java.util.UUID.randomUUID(), false));
+   }
+
    @Override
    public HeroId id() {
       return HeroId.VILTRUMITE;

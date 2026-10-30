@@ -78,9 +78,7 @@ public class ViltrumiteFakePlayer extends ServerPlayer {
       this.getEntityData().set(Player.DATA_PLAYER_MODE_CUSTOMISATION, (byte)127);
       Connection dummyConnection = new Connection(PacketFlow.SERVERBOUND);
       this.connection = new ServerGamePacketListenerImpl(server, dummyConnection, this);
-      dev.baranhan.viltrumitecore.hero.HeroRegistry.restoreHero(
-         this, new dev.baranhan.viltrumitecore.hero.HeroSession(dev.baranhan.viltrumitecore.hero.HeroId.VILTRUMITE, UUID.randomUUID(), false)
-      );
+      dev.baranhan.viltrumitecore.hero.ViltrumiteHero.becomeSquadNpc(this);
       dev.baranhan.viltrumitecore.hero.HeroFlightGrant.sync(this);
       dev.baranhan.viltrumitecore.hero.HeroRegistry.syncSnapshot(this);
       this.refreshDimensions();
