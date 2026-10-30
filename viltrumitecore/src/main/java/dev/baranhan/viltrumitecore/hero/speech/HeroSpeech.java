@@ -140,6 +140,18 @@ public final class HeroSpeech {
    public record Owned(HeroId hero, HeroLine line) {
    }
 
+   /** Playtest log only (SubtitleQaCommands): speaker -> line id, age and audience of every active line. */
+   public static String qaDump(MinecraftServer server) {
+      long now = server.getTickCount();
+      StringBuilder out = new StringBuilder("[");
+      ACTIVE.forEach((id, active) -> {
+         ServerPlayer player = server.getPlayerList().getPlayer(id);
+         out.append(player == null ? id.toString() : player.getGameProfile().getName()).append('=').append(active.lineId).append(" age=")
+            .append(now - active.started).append(" left=").append(active.until - now).append(" audience=").append(active.audience.size()).append("; ");
+      });
+      return out.append(']').toString();
+   }
+
    private static boolean start(ServerPlayer speaker, String lineId, HeroLine.Priority priority, List<String> fragments, boolean literal, String speakerKey,
       HeroId voice, int durationTicks, int cooldownTicks, double range, @Nullable Predicate<ServerPlayer> activeWhile, boolean force) {
       if (!canSpeak(speaker)) {
@@ -163,6 +175,11 @@ public final class HeroSpeech {
       cooldowns.values().removeIf(until -> until <= now);
       HeroSpeechRules.Decision decision = HeroSpeechRules.decide(current == null ? null : current.lineId, current == null ? null : current.priority,
          current == null ? 0L : now - current.started, lineId, priority, now, cooldowns.getOrDefault(lineId, Long.MIN_VALUE), force);
+      if (dev.baranhan.viltrumitecore.hero.speech.qa.SubtitleQaCommands.ENABLED) {
+         com.mojang.logging.LogUtils.getLogger().info("SPEECHQA t={} {} {} -> {} (active {})", now, speaker.getGameProfile().getName(), lineId, decision,
+            current == null ? "none" : current.lineId);
+      }
+
       if (!decision.starts()) {
          return false;
       }
