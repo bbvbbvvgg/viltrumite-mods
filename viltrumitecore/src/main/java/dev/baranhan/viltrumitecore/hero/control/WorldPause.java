@@ -64,6 +64,12 @@ public final class WorldPause {
       return true;
    }
    public static boolean active(MinecraftServer server) { return SESSIONS.get(server) != null; }
+   /**
+    * Players the server itself holds still (the world pause, the Limbo void) are not flying: the
+    * vanilla floating kick (80 airborne ticks without allow-flight) must not count them. An erased
+    * player hangs in the void for the whole Limbo stay; a player frozen mid-jump hangs for 205 ticks.
+    */
+   public static boolean holdsAirborne(boolean paused, boolean inLimbo) { return paused || inLimbo; }
    @Nullable public static UUID id(MinecraftServer server) { Session s=SESSIONS.get(server); return s==null?null:s.id; }
    public static int elapsed(MinecraftServer server) { Session s=SESSIONS.get(server); return s==null?0:s.age; }
    public static void listen(MinecraftServer server, Listener listener) {

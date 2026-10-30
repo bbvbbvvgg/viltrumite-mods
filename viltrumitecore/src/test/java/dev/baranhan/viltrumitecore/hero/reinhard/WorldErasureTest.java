@@ -64,4 +64,11 @@ class WorldErasureTest {
    }
    /** Polish: the scene starts on the press (world stopped at once); the line is spoken inside it, cracks start after it. */
    @Test void cinematicStartsOnThePress(){assertEquals(0,WorldErasure.cinematicStart());assertEquals(0,WorldErasure.cinematicAge(0));assertEquals(ERASE_LENGTH,WorldErasure.cinematicAge(ERASE_LENGTH));assertEquals(ReinhardRules.ERASE_SPEECH_TICKS,ReinhardRules.ERASE_CRACK_START);}
+   @Test void heldPlayersAreNeverKickedForFloating() throws Exception {
+      assertTrue(WorldPause.holdsAirborne(true, false), "frozen mid-air during the pause");
+      assertTrue(WorldPause.holdsAirborne(false, true), "an erased player hangs in the Limbo void");
+      assertFalse(WorldPause.holdsAirborne(false, false));
+      String mixin = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/dev/baranhan/viltrumitecore/mixin/AntiCheatBypassMixin.java"));
+      assertTrue(mixin.contains("WorldPause.holdsAirborne") && mixin.contains("Limbo.dimension()"), "the floating counter reset uses the hold predicate");
+   }
 }
