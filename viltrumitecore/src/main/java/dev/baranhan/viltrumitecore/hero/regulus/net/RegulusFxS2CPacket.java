@@ -14,9 +14,9 @@ import net.minecraftforge.network.NetworkEvent;
  */
 public record RegulusFxS2CPacket(int kind, int a, int b, double x, double y, double z, float dx, float dy, float dz, float power, int extra) {
    public static final int LION_ON = 0, LION_OFF = 1, RECOIL = 2, PROJECTILE_STOP = 3, SEIZURE = 4, TOUCH_HIT = 5, TOUCH_MISS = 6,
-      RUPTURE = 7, SAND_SHOT = 8, GRAIN_STOP = 9, GRAIN_HIT = 10, SEVER_SHOT = 11, SEVER_CUT = 12, PROCESSION_RAM = 13, BLOCK_STOP = 14,
+      RUPTURE = 7, SAND_SHOT = 8, GRAIN_STOP = 9, GRAIN_HIT = 10, SEVER_SHOT = 11, SEVER_CUT = 12, TRAMPLE_IMPACT = 13, BLOCK_STOP = 14,
       REPLY_BLOCK = 15, REPLY_STRIKE = 16, KING_BIND = 17, KING_HOP = 18, KING_RELEASE = 19, ULT_START = 20, ULT_SCOOP = 21,
-      ULT_WAVE = 22, ULT_FLICK = 23, ULT_END = 24, REFUSE = 25, LAND = 26;
+      ULT_WAVE = 22, ULT_FLICK = 23, ULT_END = 24, REFUSE = 25, LAND = 26, TRAMPLE_HIT = 27;
 
    public RegulusFxS2CPacket(FriendlyByteBuf b) {
       this(b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readDouble(), b.readDouble(), b.readDouble(), b.readFloat(), b.readFloat(), b.readFloat(),

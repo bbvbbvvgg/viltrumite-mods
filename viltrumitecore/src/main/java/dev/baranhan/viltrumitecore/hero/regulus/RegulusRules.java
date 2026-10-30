@@ -68,14 +68,67 @@ public final class RegulusRules {
    public static final int SEVER_SCAR_TICKS = 30;
    public static final int SEVER_COOLDOWN = 180;
 
-   // --- Procession (§5.5) ----------------------------------------------------------------------
-   public static final int PROCESSION_TICKS = 50;
-   public static final double PROCESSION_SPEED = 2.2;
-   public static final float PROCESSION_DAMAGE = 10.0F;
-   public static final int PROCESSION_HIT_GAP = 10;
-   public static final float PROCESSION_BLOCK_HARDNESS = 5.0F;
-   public static final int PROCESSION_BLOCK_BUDGET = 60;
-   public static final int PROCESSION_COOLDOWN = 240;
+   // --- Trample (§5.5) -------------------------------------------------------------------------
+   public static final int TRAMPLE_TICKS = 22;
+   /** The foot lands: crater, sound, the ring starts. */
+   public static final int TRAMPLE_IMPACT = 8;
+   public static final double TRAMPLE_START_RADIUS = 0.5;
+   /** Ring speed, blocks per tick. */
+   public static final double TRAMPLE_SPEED = 0.9;
+   public static final double TRAMPLE_RADIUS = 7.0;
+   public static final double TRAMPLE_RADIUS_LION = 10.0;
+   /** Horizontal slack of the ring front (entity width). */
+   public static final double TRAMPLE_FRONT = 0.6;
+   /** Feet height window over the impact plane: the ring hugs the ground, a jump clears it. */
+   public static final double TRAMPLE_BAND_BELOW = 1.0;
+   public static final double TRAMPLE_BAND_ABOVE = 1.25;
+   /** Stamped on stopped air: the ring is a flat shock in the air, as thick both ways. */
+   public static final double TRAMPLE_AIR_BAND = 1.5;
+   public static final float TRAMPLE_DAMAGE = 8.0F;
+   public static final float TRAMPLE_DAMAGE_LION = 12.0F;
+   public static final double TRAMPLE_PUSH = 0.45;
+   public static final double TRAMPLE_LIFT = 0.8;
+   public static final int TRAMPLE_SLOW_TICKS = 30;
+   public static final double TRAMPLE_CRATER = 2.5;
+   public static final double TRAMPLE_CRATER_LION = 3.5;
+   public static final float TRAMPLE_HARDNESS = 0.8F;
+   public static final float TRAMPLE_HARDNESS_LION = 2.0F;
+   public static final int TRAMPLE_BUDGET = 14;
+   public static final int TRAMPLE_BUDGET_LION = 30;
+   public static final int TRAMPLE_COOLDOWN = 160;
+
+   public static double trampleRadius(boolean lion) {
+      return lion ? TRAMPLE_RADIUS_LION : TRAMPLE_RADIUS;
+   }
+
+   public static float trampleDamage(boolean lion) {
+      return lion ? TRAMPLE_DAMAGE_LION : TRAMPLE_DAMAGE;
+   }
+
+   public static double trampleCraterRadius(boolean lion) {
+      return lion ? TRAMPLE_CRATER_LION : TRAMPLE_CRATER;
+   }
+
+   public static float trampleHardness(boolean lion) {
+      return lion ? TRAMPLE_HARDNESS_LION : TRAMPLE_HARDNESS;
+   }
+
+   public static int trampleBlockBudget(boolean lion) {
+      return lion ? TRAMPLE_BUDGET_LION : TRAMPLE_BUDGET;
+   }
+
+   /**
+    * Pure: does the ring front, moving this tick from {@code from} to {@code to} (blocks from the
+    * centre), catch something {@code distance} away whose feet are {@code feet} above the impact plane.
+    */
+   public static boolean trampleCatches(double distance, double feet, double from, double to, double below, double above) {
+      return distance >= from - TRAMPLE_FRONT && distance <= to + TRAMPLE_FRONT && feet >= -below && feet <= above;
+   }
+
+   /** Ticks the ring needs to reach its full radius. */
+   public static int trampleTravelTicks(boolean lion) {
+      return (int) Math.ceil((trampleRadius(lion) - TRAMPLE_START_RADIUS) / TRAMPLE_SPEED);
+   }
 
    // --- Right of Reply (§5.6) ------------------------------------------------------------------
    public static final int REPLY_TICKS = 16;

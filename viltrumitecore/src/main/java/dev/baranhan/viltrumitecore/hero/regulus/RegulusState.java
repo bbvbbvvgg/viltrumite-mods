@@ -3,9 +3,9 @@ package dev.baranhan.viltrumitecore.hero.regulus;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
@@ -26,7 +26,7 @@ public final class RegulusState {
    public int lionCooldown;
    public int sandCooldown;
    public int severCooldown;
-   public int processionCooldown;
+   public int trampleCooldown;
    public int replyCooldown;
    public int ultCooldown;
    public int strain;
@@ -59,9 +59,16 @@ public final class RegulusState {
    Vec3 castLook;
    int castMaterial;
 
-   // Procession
-   final Map<UUID, Long> rammed = new HashMap<>();
+   /** Blocks the current grain volley / blade may still break. */
    int debrisBudget;
+
+   // Trample
+   final Set<UUID> trampleHit = new HashSet<>();
+   @Nullable
+   Vec3 trampleCenter;
+   double trampleRadius;
+   boolean trampleAir;
+   boolean trampleLion;
 
    // Right of Reply
    @Nullable
@@ -130,7 +137,7 @@ public final class RegulusState {
          case RegulusFlags.COOLDOWN_LION -> this.lionCooldown;
          case RegulusFlags.COOLDOWN_SAND -> this.sandCooldown;
          case RegulusFlags.COOLDOWN_SEVER -> this.severCooldown;
-         case RegulusFlags.COOLDOWN_PROCESSION -> this.processionCooldown;
+         case RegulusFlags.COOLDOWN_TRAMPLE -> this.trampleCooldown;
          case RegulusFlags.COOLDOWN_REPLY -> this.replyCooldown;
          case RegulusFlags.COOLDOWN_ULT -> this.ultCooldown;
          default -> 0;
@@ -150,8 +157,8 @@ public final class RegulusState {
          this.severCooldown--;
       }
 
-      if (this.processionCooldown > 0) {
-         this.processionCooldown--;
+      if (this.trampleCooldown > 0) {
+         this.trampleCooldown--;
       }
 
       if (this.replyCooldown > 0) {
@@ -189,7 +196,9 @@ public final class RegulusState {
       this.grains.clear();
       this.blades.clear();
       this.castLook = null;
-      this.rammed.clear();
+      this.trampleHit.clear();
+      this.trampleCenter = null;
+      this.trampleRadius = 0.0;
       this.replyAttacker = null;
       this.replyBlocked = 0.0F;
       this.replyLanded = false;
@@ -205,7 +214,7 @@ public final class RegulusState {
       tag.putInt("Lion", this.lionCooldown);
       tag.putInt("Sand", this.sandCooldown);
       tag.putInt("Sever", this.severCooldown);
-      tag.putInt("Procession", this.processionCooldown);
+      tag.putInt("Trample", this.trampleCooldown);
       tag.putInt("Reply", this.replyCooldown);
       tag.putInt("Ult", this.ultCooldown);
       tag.putInt("Strain", this.strain);
@@ -220,7 +229,7 @@ public final class RegulusState {
          this.lionCooldown = clampTicks(tag.getInt("Lion"));
          this.sandCooldown = clampTicks(tag.getInt("Sand"));
          this.severCooldown = clampTicks(tag.getInt("Sever"));
-         this.processionCooldown = clampTicks(tag.getInt("Procession"));
+         this.trampleCooldown = clampTicks(tag.getInt(tag.contains("Trample") ? "Trample" : "Procession"));
          this.replyCooldown = clampTicks(tag.getInt("Reply"));
          this.ultCooldown = clampTicks(tag.getInt("Ult"));
          this.strain = Math.max(0, Math.min(RegulusRules.STRAIN_MAX, tag.getInt("Strain")));
@@ -235,7 +244,7 @@ public final class RegulusState {
       this.lionCooldown = clampTicks(old.getInt("regulus:lions_heart"));
       this.sandCooldown = clampTicks(old.getInt("regulus:debris_kick"));
       this.severCooldown = clampTicks(old.getInt("regulus:mania"));
-      this.processionCooldown = clampTicks(old.getInt("regulus:greeds_embrace"));
+      this.trampleCooldown = clampTicks(old.getInt("regulus:greeds_embrace"));
       this.replyCooldown = clampTicks(old.getInt("regulus:counter"));
       this.ultCooldown = clampTicks(old.getInt("regulus:evangelium"));
    }
@@ -250,7 +259,7 @@ public final class RegulusState {
       copy.lionCooldown = this.lionCooldown;
       copy.sandCooldown = this.sandCooldown;
       copy.severCooldown = this.severCooldown;
-      copy.processionCooldown = this.processionCooldown;
+      copy.trampleCooldown = this.trampleCooldown;
       copy.replyCooldown = this.replyCooldown;
       copy.ultCooldown = this.ultCooldown;
       copy.strain = 0;

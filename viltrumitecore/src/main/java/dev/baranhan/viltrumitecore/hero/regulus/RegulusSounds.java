@@ -35,8 +35,9 @@ public final class RegulusSounds {
    public static final RegistryObject<SoundEvent> SEVER_CHARGE = reg("regulus.sever_charge");
    public static final RegistryObject<SoundEvent> SEVER_RELEASE = reg("regulus.sever_release");
    public static final RegistryObject<SoundEvent> SEVER_CUT = reg("regulus.sever_cut");
-   public static final RegistryObject<SoundEvent> PROCESSION_STEP = reg("regulus.procession_step");
-   public static final RegistryObject<SoundEvent> PROCESSION_RAM = reg("regulus.procession_ram");
+   public static final RegistryObject<SoundEvent> TRAMPLE_LIFT = reg("regulus.trample_lift");
+   public static final RegistryObject<SoundEvent> TRAMPLE_STOMP = reg("regulus.trample_stomp");
+   public static final RegistryObject<SoundEvent> TRAMPLE_WAVE = reg("regulus.trample_wave");
    public static final RegistryObject<SoundEvent> REPLY_STANCE = reg("regulus.reply_stance");
    public static final RegistryObject<SoundEvent> REPLY_STRIKE = reg("regulus.reply_strike");
    public static final RegistryObject<SoundEvent> KING_BIND = reg("regulus.king_bind");
@@ -54,7 +55,7 @@ public final class RegulusSounds {
    public static final List<String> NAMES = List.of(
       "lion_on", "lion_off", "lion_deny", "recoil", "projectile_stop", "heartbeat", "strain", "seizure", "touch_swish", "touch_hit",
       "rupture", "sand_scoop", "sand_release", "grain_hit", "grain_stop", "sever_charge", "sever_release", "sever_cut",
-      "procession_step", "procession_ram", "reply_stance", "reply_strike", "king_bind", "king_hop", "king_release", "refuse",
+      "trample_lift", "trample_stomp", "trample_wave", "reply_stance", "reply_strike", "king_bind", "king_hop", "king_release", "refuse",
       "ult_accuse", "ult_scoop", "ult_wave", "ult_flick", "ult_resolve", "step");
 
    private RegulusSounds() {
