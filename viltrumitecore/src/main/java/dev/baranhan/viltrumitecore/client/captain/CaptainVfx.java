@@ -144,6 +144,9 @@ public final class CaptainVfx {
             }
          }
          case CaptainFx.ASSEMBLE -> {
+            if (arg == 0) {
+               CaptainUltScene.assemble(sourceId, a, b);
+            }
             level.addParticle(ParticleTypes.FLASH, a.x, a.y + 1.5, a.z, 0, 0, 0);
             ring(level, STAR_WHITE, a.add(0, 0.1, 0), 3.0, 48);
             ring(level, STAR_BLUE, a.add(0, 0.1, 0), 2.2, 36);
