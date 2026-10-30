@@ -135,5 +135,11 @@
   "subtitles.viltrumitecore.sinclair_act_card_fan": "Карты раскрываются веером",
   "subtitles.viltrumitecore.sinclair_act_card_finale": "Финальный залп",
   "subtitles.viltrumitecore.sinclair_act_curtain_rustle": "Шуршит занавес",
-  "subtitles.viltrumitecore.sinclair_act_chest_rattle": "Сундук дрожит"
+  "subtitles.viltrumitecore.sinclair_act_chest_rattle": "Сундук дрожит",
+  "subtitle.viltrumitecore.sinclair.summon_b": "Аплодисменты моей очаровательной ассистентке!",
+  "subtitle.viltrumitecore.sinclair.hex_b": "И вот вы уже пушистый!",
+  "subtitle.viltrumitecore.sinclair.snap_b": "…а теперь — нет!",
+  "subtitle.viltrumitecore.sinclair.kill": "Вот это номер с исчезновением!",
+  "subtitle.viltrumitecore.sinclair.low_health": "Шоу должно продолжаться…",
+  "subtitle.viltrumitecore.sinclair.enter": "Дамы и господа — Синклер!"
 }
