@@ -26,6 +26,8 @@ public final class SinclairClient {
       MinecraftForge.EVENT_BUS.addListener(SinclairVfx::onRenderLevel);
       MinecraftForge.EVENT_BUS.addListener(StageLight::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(StageLight::onRenderGuiPre);
+      MinecraftForge.EVENT_BUS.addListener(ActCardPopup::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(ActCardPopup::onRenderGui);
       // Opt-in scripted playtest; inert unless -Dviltrumitecore.sinclair.playtest=true.
       dev.baranhan.viltrumitecore.client.sinclair.qa.SinclairPlaytest.init();
    }
