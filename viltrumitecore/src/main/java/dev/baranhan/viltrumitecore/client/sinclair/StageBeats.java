@@ -11,10 +11,13 @@ public final class StageBeats {
    /** Pure: the beat strength of an act on one tick: {shake, flash}; zeros when nothing happens. */
    public static float[] beat(ActShape shape, int tick) {
       return switch (shape) {
-         case BEAM -> tick == ActScript.BEAM_START ? new float[]{0.4F, 0.25F} : ActScript.beamPulse(tick) ? new float[]{0.12F, 0.0F} : NONE;
-         case NOVA -> tick == ActScript.NOVA.reveal() ? new float[]{1.0F, 0.45F} : tick == ActScript.NOVA_CATCH ? new float[]{0.2F, 0.0F} : NONE;
-         case CUT -> tick == ActScript.CUT.reveal() ? new float[]{0.9F, 0.3F} : tick == ActScript.CUT_TELEGRAPH ? new float[]{0.15F, 0.0F} : NONE;
-         case BARRAGE -> ActScript.barrageVolley(tick) ? new float[]{0.25F, 0.0F} : NONE;
+         case BEAM -> tick == ActScript.BEAM_BURST ? new float[]{1.0F, 0.5F} : tick == ActScript.BEAM_START ? new float[]{0.4F, 0.25F}
+            : ActScript.beamPulse(tick) ? new float[]{0.1F, 0.0F} : tick == ActScript.BEAM_END ? new float[]{0.12F, 0.0F} : NONE;
+         case NOVA -> tick == ActScript.NOVA.reveal() ? new float[]{1.0F, 0.45F} : tick == ActScript.NOVA_THROW || tick == ActScript.NOVA_CATCH
+            ? new float[]{0.2F, 0.0F} : NONE;
+         case CUT -> tick == ActScript.CUT.reveal() ? new float[]{0.95F, 0.35F} : ActScript.cutSaw(tick) ? new float[]{0.3F, 0.05F}
+            : tick == ActScript.CUT_TELEGRAPH ? new float[]{0.15F, 0.0F} : NONE;
+         case BARRAGE -> ActScript.barrageFinale(tick) ? new float[]{0.6F, 0.25F} : ActScript.barrageVolley(tick) ? new float[]{0.25F, 0.0F} : NONE;
          case AEGIS -> tick == ActScript.AEGIS.reveal() ? new float[]{0.9F, 0.35F} : tick == 1 ? new float[]{0.15F, 0.0F} : NONE;
          case FINALE -> tick == ActScript.FINALE.reveal() ? new float[]{1.0F, 0.45F} : tick == ActScript.FINALE_LAND ? new float[]{0.7F, 0.0F}
             : ActScript.finaleSword(tick) ? new float[]{0.3F, 0.0F} : NONE;
