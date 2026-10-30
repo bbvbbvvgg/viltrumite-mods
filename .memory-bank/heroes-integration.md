@@ -12,7 +12,7 @@
 - Packets: Thor/Hulkbuster (`ThorScene*`, `HulkbusterMotion*`, `ThorDashS2C`) before `HeroLineS2C`, then DIO
   and Jinwoo packets (`HeroRosterIntegrationTest` pins order and uniqueness).
 - Version numbers taken: 1.46-1.49 / protocol 8-10 (Thor stages), 1.50.0 / 11 (subtitles), 1.52.1 / 12 (#74 alone),
-  1.53.0 / 13 (#82 alone), 1.54.0 / 14 (both). Pick the next free pair for the next merge.
+  1.53.0 / 13 (#82 alone), 1.54.0 / 14 (both), 1.55.0 / 14 (DIO polish, no packet change). Pick the next free pair for the next merge.
 
 ## Where strings and sounds live
 - English and the 10 other base locales: `resources/assets/viltrumitecore/lang/<locale>.json` (Thor keys at
@@ -24,3 +24,8 @@
 - `sounds.json`: one file; the #82 events (dio.*, sinclair.*, jinwoo.*) sit after `ironman_pulse_unibeam`,
   Thor/Hulkbuster events at the end.
 - Report with the full merge account: `docs/reports/2026-10-29-all-heroes-integration.md`.
+
+## Stopped time across heroes (DIO polish)
+- `hero/control/TimeFreeze` is the seam every hero shares: a frozen entity's tick is skipped (server level, player
+  tick, client level) so other heroes' entities, summons and projectiles stop without hero-specific code. A hero
+  with level-wide timers (scene managers ticking from ServerTickEvent) must check `TimeFreeze.isFrozen` itself.

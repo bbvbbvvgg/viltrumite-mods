@@ -14,3 +14,13 @@ Durable sound knowledge. Main memory: `.memory-bank/project.md`. Skill: `.agents
 ## Pushing without git credentials
 - The GitHub connector refuses a request above 65536 bytes. Push in batches (`push_files`) under ~60 KB. Keep each `.ogg.b64` under ~60 KB (shorter or low-passed cue).
 - A text file above ~60 KB (for example `SESSION.md`, `.memory-bank/project.md`) cannot be updated through the connector. Put new durable notes in a topic file instead.
+
+## DIO (polish, core 1.55.0)
+- `tools/sfx/dio.py`: 30 events / 36 files, all own synthesis (CC0). Loudness is matched by role (`LOUDNESS`: loudest
+  100 ms RMS, heavy -8..-10 dBFS, hits -10..-12, motion -11..-15, utility/loop -15..-17), soft-limited at -1.5 dBFS.
+  Peak normalisation alone had left a 13 dB spread. Hits rotate variants (`stand_hit`, `barrage_hit`, `knife_hit`,
+  `roller_punch`).
+- Vanilla sends a variable-range event only to 16 x volume blocks: `DioSounds.playWide` broadcasts with an explicit
+  range (time stop / resume to the whole 40-block field, roller cues).
+- `dio.time_tick` loops on the client (`TimeStopClock`) while the camera is inside a running field.
+- Openverse API timed out (504) for the whole polish session: no CC0 recordings were added. Not auditioned.
