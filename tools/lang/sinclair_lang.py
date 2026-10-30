@@ -133,6 +133,74 @@ SOUNDS = {  # subtitles.viltrumitecore.sinclair_<name>; en mirrors tools/sfx/sin
 for name, row in SOUNDS.items():
     ROWS[f"subtitles.{P}.sinclair_{name}"] = row
 
+# Copy cinematic card (design 2026-11-02 §2.3) and the /sinclair cinematic debug command
+C = f"copy.{P}.sinclair."
+COPY = {
+ "header": ("Act copied!", "Номер скопирован!", "Nummer kopiert!", "¡Número copiado!", "Numara kopyalandı!", "节目已复制！"),
+ "header.volunteer": ("Your act — borrowed!", "Ваш номер — позаимствован!", "Deine Nummer — geborgt!", "¡Tu número, prestado!", "Numaran ödünç alındı!", "你的节目被借走了！"),
+ "header.fallback": ("Spare act", "Запасной номер", "Ersatznummer", "Número de reserva", "Yedek numara", "备用节目"),
+ "origin.fallback": ("Nothing to borrow — a trick of his own", "Копировать нечего — собственный фокус", "Nichts zu borgen — ein eigener Trick", "Nada que copiar: un truco propio", "Ödünç alınacak bir şey yok — kendi numarası", "无可借用——这是他自己的戏法"),
+ "origin.contract": ("Staged from the volunteer's signature move", "Поставлено по коронному приёму добровольца", "Inszeniert nach dem Markenzeichen des Freiwilligen", "Montado a partir del movimiento estrella del voluntario", "Gönüllünün imza hareketinden sahnelendi", "依照志愿者的招牌招式编排"),
+ "origin.homelander": ("after Heat Vision", "по мотивам «Теплового зрения»", "nach dem Hitzeblick", "inspirado en la Visión Calorífica", "Isı Görüşü'nden uyarlandı", "改编自热视线"),
+ "origin.reinhard": ("after World Cut", "по мотивам «Рассечения мира»", "nach dem Weltenschnitt", "inspirado en el Corte del Mundo", "Dünya Kesiği'nden uyarlandı", "改编自世界斩"),
+ "origin.ironman": ("after the Micro-missiles", "по мотивам «Микроракет»", "nach den Mikroraketen", "inspirado en los Micromisiles", "Mikro füzelerden uyarlandı", "改编自微型导弹"),
+ "origin.regulus": ("after an untouchable defence", "по мотивам неуязвимой защиты", "nach einer unantastbaren Abwehr", "inspirado en una defensa intocable", "dokunulmaz bir savunmadan uyarlandı", "改编自无懈可击的防御"),
+ "origin.mob.beam": ("after a creature's glare", "по мотивам взгляда существа", "nach dem Blick einer Kreatur", "inspirado en la mirada de una criatura", "bir yaratığın bakışından uyarlandı", "改编自生物的凝视"),
+ "origin.mob.nova": ("after a creature's blast", "по мотивам взрыва существа", "nach der Explosion einer Kreatur", "inspirado en el estallido de una criatura", "bir yaratığın patlamasından uyarlandı", "改编自生物的爆炸"),
+ "origin.mob.cut": ("after a creature's blade", "по мотивам клинка существа", "nach der Klinge einer Kreatur", "inspirado en la hoja de una criatura", "bir yaratığın bıçağından uyarlandı", "改编自生物的利刃"),
+ "origin.mob.barrage": ("after a creature's volley", "по мотивам залпа существа", "nach der Salve einer Kreatur", "inspirado en la ráfaga de una criatura", "bir yaratığın yaylımından uyarlandı", "改编自生物的齐射"),
+ "origin.mob.aegis": ("after a creature's shell", "по мотивам панциря существа", "nach dem Panzer einer Kreatur", "inspirado en el caparazón de una criatura", "bir yaratığın kabuğundan uyarlandı", "改编自生物的甲壳"),
+ "desc.beam": ("A footlight ray from the card, pulsing for two seconds, then an overdrive flash.", "Луч рампы из карты пульсирует две секунды, затем — вспышка на пределе.", "Ein Rampenstrahl aus der Karte pulsiert zwei Sekunden, dann ein greller Höhepunkt.", "Un rayo de candilejas sale de la carta durante dos segundos y termina en un destello.", "Karttan çıkan rampa ışını iki saniye atar, ardından son bir parlama.", "纸牌射出脚灯光束，脉动两秒后迸发强光。"),
+ "desc.nova": ("The top hat flies out, gathers everyone in and bursts into cards.", "Цилиндр улетает, стягивает всех к себе и взрывается картами.", "Der Zylinder fliegt los, zieht alle heran und zerplatzt in Karten.", "La chistera sale volando, atrae a todos y estalla en cartas.", "Silindir şapka uçar, herkesi içine çeker ve kartlara patlar.", "礼帽飞出，把众人吸拢，随后炸成纸牌。"),
+ "desc.cut": ("Two saw strokes along a line of cards, then the grand cut.", "Два взмаха пилы вдоль ряда карт — и большой распил.", "Zwei Sägezüge entlang einer Kartenreihe, dann der große Schnitt.", "Dos pasadas de sierra por una fila de cartas y luego el gran corte.", "Bir kart sırası boyunca iki testere darbesi, ardından büyük kesik.", "沿着一排纸牌锯两下，然后是致命一斩。"),
+ "desc.barrage": ("Three card volleys, then a finale volley from above.", "Три залпа картами и финальный залп сверху.", "Drei Kartensalven, dann eine Schlusssalve von oben.", "Tres ráfagas de cartas y una ráfaga final desde arriba.", "Üç kart yaylımı, ardından yukarıdan final yaylımı.", "三轮纸牌齐射，最后从头顶落下终幕一击。"),
+ "desc.aegis": ("A velvet curtain shields him, then flies open in a blast.", "Бархатный занавес укрывает его и распахивается взрывом.", "Ein Samtvorhang schützt ihn und fliegt dann krachend auf.", "Un telón de terciopelo lo protege y luego se abre de golpe.", "Kadife bir perde onu korur, sonra patlayarak açılır.", "天鹅绒幕布护住他，随后猛然炸开。"),
+ "desc.finale": ("A chest falls, three swords pierce it — and the volunteer is transformed.", "Падает сундук, его пронзают три меча — и доброволец преображается.", "Eine Truhe fällt, drei Schwerter durchbohren sie — und der Freiwillige verwandelt sich.", "Cae un baúl, tres espadas lo atraviesan y el voluntario se transforma.", "Bir sandık düşer, üç kılıç onu deler — ve gönüllü dönüşür.", "箱子落下，三把剑刺穿它——志愿者随之变形。"),
+ "volunteer": ("A volunteer from the audience", "Доброволец из зала", "Ein Freiwilliger aus dem Publikum", "Un voluntario del público", "Seyircilerden bir gönüllü", "一位观众志愿者"),
+ "hero.unknown": ("A mysterious guest", "Таинственный гость", "Ein geheimnisvoller Gast", "Un invitado misterioso", "Gizemli bir konuk", "神秘来宾"),
+ "hero.human": ("Human", "Человек", "Mensch", "Humano", "İnsan", "人类"),
+ "hero.viltrumite": ("Viltrumite", "Вилтрумит", "Viltrumit", "Viltrumita", "Viltrumit", "维尔特鲁姆人"),
+ "hero.regulus": ("Regulus", "Регулус", "Regulus", "Regulus", "Regulus", "雷古勒斯"),
+ "hero.homelander": ("Homelander", "Хоумлендер", "Homelander", "Homelander", "Homelander", "祖国人"),
+ "hero.ironman": ("Iron Man", "Железный человек", "Iron Man", "Iron Man", "Iron Man", "钢铁侠"),
+ "hero.reinhard": ("Reinhard van Astrea", "Рейнхард ван Астрея", "Reinhard van Astrea", "Reinhard van Astrea", "Reinhard van Astrea", "莱因哈鲁特·范·阿斯特雷亚"),
+ "hero.thor": ("Thor", "Тор", "Thor", "Thor", "Thor", "雷神"),
+ "hero.dio": ("DIO", "ДИО", "DIO", "DIO", "DIO", "DIO"),
+ "hero.sinclair": ("The Magnificent Sinclair", "Великолепный Синклер", "Der Großartige Sinclair", "El Magnífico Sinclair", "Muhteşem Sinclair", "了不起的辛克莱"),
+ "hero.jinwoo": ("Sung Jinwoo", "Сон Джину", "Sung Jinwoo", "Sung Jinwoo", "Sung Jinwoo", "成振宇"),
+}
+for key, row in COPY.items():
+    ROWS[C + key] = row
+
+K = f"commands.{P}.sinclair.cinematic."
+for key, row in {
+ "on": ("Sinclair's copy cinematic is on.", "Кинематографичное копирование Синклера включено.", "Sinclairs Kopier-Kinematik ist an.", "La cinemática de copia de Sinclair está activada.", "Sinclair'in kopyalama sineması açık.", "辛克莱的复制过场已开启。"),
+ "off": ("Sinclair's copy cinematic is off: copies happen instantly, without the card, camera or pause.", "Кинематографичное копирование Синклера выключено: копия мгновенная, без карты, камеры и паузы.", "Sinclairs Kopier-Kinematik ist aus: Kopien geschehen sofort, ohne Karte, Kamera und Pause.", "La cinemática de copia de Sinclair está desactivada: se copia al instante, sin carta, cámara ni pausa.", "Sinclair'in kopyalama sineması kapalı: kopya anında olur, kart, kamera ve duraklama olmadan.", "辛克莱的复制过场已关闭：立即复制，不显示卡牌、镜头和停顿。"),
+ "status": ("Sinclair's copy cinematic: %s", "Кинематографичное копирование Синклера: %s", "Sinclairs Kopier-Kinematik: %s", "Cinemática de copia de Sinclair: %s", "Sinclair'in kopyalama sineması: %s", "辛克莱的复制过场：%s"),
+ "state_on": ("on", "включено", "an", "activada", "açık", "开启"),
+ "state_off": ("off", "выключено", "aus", "desactivada", "kapalı", "关闭"),
+}.items():
+    ROWS[K + key] = row
+
+NEW_SOUNDS = {
+ "copy_sting": ("Magic sting: the act is copied", "Волшебный аккорд: номер скопирован", "Zauberakkord: Nummer kopiert", "Acorde mágico: número copiado", "Sihirli akor: numara kopyalandı", "魔法和弦：节目被复制"),
+ "copy_unfold": ("Card unfolds", "Карта раскрывается", "Karte entfaltet sich", "La carta se despliega", "Kart açılıyor", "纸牌展开"),
+ "copy_fold": ("Card folds away", "Карта складывается", "Karte faltet sich zusammen", "La carta se pliega", "Kart katlanıyor", "纸牌收起"),
+ "copy_return": ("Time flows again", "Время идёт дальше", "Die Zeit läuft weiter", "El tiempo vuelve a correr", "Zaman yeniden akıyor", "时间恢复流动"),
+ "act_footlights": ("Footlights flare up", "Вспыхивает рампа", "Rampenlicht flammt auf", "Se encienden las candilejas", "Rampa ışıkları parlıyor", "脚灯亮起"),
+ "act_beam_charge": ("Beam charges", "Луч набирает силу", "Strahl lädt auf", "El rayo se carga", "Işın güçleniyor", "光束蓄能"),
+ "act_beam_burst": ("Beam overdrive", "Луч на пределе", "Strahl-Überladung", "Rayo a máxima potencia", "Işın son güçte", "光束超载"),
+ "act_hat_spin": ("Hat spins", "Шляпа крутится", "Hut dreht sich", "El sombrero da vueltas", "Şapka dönüyor", "礼帽打转"),
+ "act_saw_rasp": ("Saw rasps", "Скрежет пилы", "Säge kratzt", "Raspa la sierra", "Testere hırıldıyor", "锯子刮擦"),
+ "act_cut_slash": ("Grand cut", "Большой распил", "Großer Schnitt", "Gran corte", "Büyük kesik", "致命一斩"),
+ "act_card_fan": ("Cards fan out", "Карты раскрываются веером", "Karten fächern sich auf", "Las cartas se abren en abanico", "Kartlar yelpaze gibi açılıyor", "纸牌展开成扇"),
+ "act_card_finale": ("Finale volley", "Финальный залп", "Schlusssalve", "Ráfaga final", "Final yaylımı", "终幕齐射"),
+ "act_curtain_rustle": ("Curtain rustles", "Шуршит занавес", "Vorhang raschelt", "Cruje el telón", "Perde hışırdıyor", "幕布沙沙作响"),
+ "act_chest_rattle": ("Chest rattles", "Сундук дрожит", "Truhe rappelt", "El baúl tiembla", "Sandık sarsılıyor", "箱子晃动"),
+}
+for name, row in NEW_SOUNDS.items():
+    ROWS[f"subtitles.{P}.sinclair_{name}"] = row
+
 COL = {"en_us": 0, "ru_ru": 1, "de_de": 2, "tr_tr": 4, "zh_cn": 5}
 for es in ("es_ar", "es_cl", "es_ec", "es_es", "es_mx", "es_uy", "es_ve"):
     COL[es] = 3

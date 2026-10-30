@@ -14,3 +14,7 @@ Durable sound knowledge. Main memory: `.memory-bank/project.md`. Skill: `.agents
 ## Pushing without git credentials
 - The GitHub connector refuses a request above 65536 bytes. Push in batches (`push_files`) under ~60 KB. Keep each `.ogg.b64` under ~60 KB (shorter or low-passed cue).
 - A text file above ~60 KB (for example `SESSION.md`, `.memory-bank/project.md`) cannot be updated through the connector. Put new durable notes in a topic file instead.
+
+## Sinclair (core 1.55.0)
+- See `.memory-bank/sinclair.md`. New cues of a hero whose shared sounds.json is too large to push go into the hero's own namespace sounds.json (`viltrumitecore_sinclair`), files stay in the shared sounds folder.
+- Loudness classes by active RMS (frequent −21, detail −20, ability −18, act −16.5, signature −15 dB), raised-cosine release, no tail above −30 dB: `tools/sfx/sinclair_cc0.py --audit`.
