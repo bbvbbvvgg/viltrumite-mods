@@ -1,326 +1,219 @@
 package dev.baranhan.viltrumitecore.hero.regulus;
 
 /**
- * Pure numeric rules for Regulus (spec §5-§12). No Minecraft objects in
- * signatures so JUnit exercises production math directly.
+ * Every number of Regulus Corneas Reborn (spec docs/design/2026-10-30-regulus-reborn-design.md).
+ * Ticks are server ticks (20 per second). The pure helpers here are what JUnit covers.
  */
 public final class RegulusRules {
-   public static final int MAX_HEARTS = 12;
-   public static final int HEART_SCAN_PERIOD = 20;
-   public static final double HEART_SCAN_RADIUS = 20.0;
-   public static final int WEAKNESS_TICKS_ON_HEART_DEATH = 60;
-   public static final String HEARTLESS_TAG = "heartless";
+   // --- chassis (§4) ---------------------------------------------------------------------------
+   public static final double BONUS_HEALTH = 20.0;
+   public static final double BONUS_ARMOR = 8.0;
+   public static final float SUPER_JUMP_VELOCITY = 1.5F;
 
-   /** Base chassis (user balance pass): 60 HP total, 20 armor, fist ~3. */
-   public static final double BASE_ARMOR = 20.0;
-   public static final double BONUS_MAX_HEALTH = 40.0;
-   public static final double BONUS_ATTACK = 2.0;
+   // --- heart strain (§5.0) --------------------------------------------------------------------
+   public static final int STRAIN_MAX = 1000;
+   public static final int STRAIN_LION_ON = 120;
+   public static final int STRAIN_LION_TICK = 10;
+   public static final int STRAIN_RECOVERY = 14;
+   public static final int STRAIN_BACKLASH = 350;
+   /** HUD/VFX warning threshold. */
+   public static final int STRAIN_WARN = 700;
+   public static final int SEIZURE_TICKS = 30;
+   public static final int SEIZURE_LOCK = 160;
+   public static final int SEIZURE_RESET = 400;
+   public static final float SEIZURE_DAMAGE = 4.0F;
 
-   public static final int LION_WINDUP_TICKS = 14;
-   /** Overheat drains once per second, never per tick. */
-   public static final int LION_OVERHEAT_PERIOD = 20;
-   /** Lion switches itself off after this much overheat (3 drains). */
-   public static final int LION_OVERHEAT_MAX_TICKS = 60;
-   /** A burned/lost heart never cuts the window to less than this from now. */
-   public static final int LION_HEART_LOSS_GRACE = 40;
-   public static final int LION_BASE_WINDOW = 60;
-   public static final int LION_WINDOW_PER_HEART = 40;
-   public static final int LION_MANUAL_COOLDOWN = 100;
-   public static final int LION_FORCED_COOLDOWN = 600;
-   public static final float LION_FORCED_OFF_HP = 4.0F;
-   public static final double LION_PROJECTILE_RADIUS = 4.0;
-   public static final double LION_REPULSE_RADIUS = 4.0;
-   public static final double LION_RELEASE_IMPULSE = 1.5;
+   // --- Lion's Heart (§5.1) --------------------------------------------------------------------
+   public static final int LION_ON_TICKS = 8;
+   public static final int LION_PROTECT_AT = 4;
+   public static final int LION_OFF_TICKS = 10;
+   public static final int LION_COOLDOWN = 20;
+   public static final double LION_SPEED = 0.30;
+   public static final int LION_AIR_STEPS = 2;
+   public static final float RECOIL_FACTOR = 0.30F;
+   public static final int RECOIL_GAP = 10;
 
-   public static final int DEBRIS_ANIM_TICKS = 44;
-   public static final int DEBRIS_EVENT_TICK = 14;
-   public static final int DEBRIS_RISE_TICK = 11;
-   public static final double DEBRIS_RANGE = 24.0;
-   /** Shotgun spray: shard count and a gaussian spread clamped to the cone. */
-   public static final int DEBRIS_SHARDS = 20;
-   public static final double DEBRIS_CONE_DEGREES = 50.0;
-   public static final double DEBRIS_YAW_SIGMA = 11.0;
-   public static final double DEBRIS_MIN_ELEVATION = -3.0;
-   public static final double DEBRIS_MAX_ELEVATION = 12.0;
-   public static final double DEBRIS_ELEVATION_SIGMA = 4.5;
-   /** Visual shard speed in blocks per tick (damage still resolves instantly). */
-   public static final double DEBRIS_VISUAL_SPEED = 7.0;
-   public static final float DEBRIS_PITCH_UP_LIMIT = -30.0F;
-   public static final float DEBRIS_PITCH_DOWN_LIMIT = 30.0F;
-   public static final int DEBRIS_SHARD_PIERCE = 2;
-   public static final float DEBRIS_SHARD_DAMAGE = 2.0F;
-   public static final int DEBRIS_MAX_SHARDS_PER_TARGET = 4;
-   public static final double DEBRIS_KNOCKBACK = 1.3;
-   public static final int DEBRIS_COOLDOWN = 400;
-   /** The kick rips a forward crater: its blocks fly out as real falling blocks. */
-   public static final dev.baranhan.viltrumitecore.hero.HeroDebris.Eruption KICK_ERUPTION = new dev.baranhan.viltrumitecore.hero.HeroDebris.Eruption(3.4, 2.2, 1.8, 30, 1.25, 1.0);
-   public static final float KICK_ERUPT_ENTITY_DAMAGE = 4.0F;
-   public static final double MADNESS_ERUPT_SCALE = 1.4;
+   // --- Greed's Touch (§5.2) -------------------------------------------------------------------
+   public static final double TOUCH_REACH = 3.6;
+   public static final double TOUCH_CONE_DEGREES = 70.0;
+   public static final int TOUCH_MAX_TARGETS = 3;
+   public static final int TOUCH_CHAIN_WINDOW = 10;
+   public static final float RUPTURE_DAMAGE = 8.0F;
+   public static final int RUPTURE_DELAY = 10;
 
-   public static final int MANIA_WINDUP_TICKS = 19;
-   public static final double MANIA_TARGET_RANGE = 100.0;
-   public static final double MANIA_PULL_PER_TICK = 0.6;
-   public static final int MANIA_CHANNEL_TICKS = 120;
-   public static final int MANIA_FREEZE_TICKS = 80;
-   public static final int MANIA_COOLDOWN = 500;
+   // --- Stopped Sand (§5.3) --------------------------------------------------------------------
+   public static final int SAND_RELEASE = 12;
+   public static final int SAND_GRAINS = 9;
+   public static final double SAND_SPREAD_DEGREES = 16.0;
+   public static final double SAND_SPEED = 3.2;
+   public static final double SAND_RANGE = 40.0;
+   public static final float SAND_DAMAGE = 4.0F;
+   public static final float SAND_DAMAGE_LION = 6.0F;
+   public static final int SAND_PIERCE = 3;
+   public static final float SAND_BLOCK_HARDNESS = 1.5F;
+   public static final int SAND_BLOCK_BUDGET = 24;
+   public static final int SAND_COOLDOWN = 120;
 
-   public static final int EMBRACE_LOCK_TICK = 13;
-   public static final int EMBRACE_APPEAR_TICK = 18;
-   public static final int EMBRACE_RECOVER_TICK = 32;
-   public static final double EMBRACE_RANGE = 40.0;
-   public static final double EMBRACE_RADIUS = 8.0;
-   public static final int EMBRACE_DURATION_TICKS = 80;
-   public static final int EMBRACE_COOLDOWN = 700;
-   public static final double EMBRACE_RELEASE_IMPULSE = 1.2;
+   // --- Air Severance (§5.4) -------------------------------------------------------------------
+   public static final int SEVER_RELEASE = 15;
+   public static final double SEVER_SPEED = 2.4;
+   public static final double SEVER_RANGE = 30.0;
+   public static final double SEVER_WIDTH_START = 3.0;
+   public static final double SEVER_WIDTH_END = 9.0;
+   public static final double SEVER_THICKNESS = 0.8;
+   public static final float SEVER_DAMAGE = 12.0F;
+   public static final float SEVER_DAMAGE_LION = 18.0F;
+   public static final float SEVER_BLOCK_HARDNESS = 3.0F;
+   public static final int SEVER_BLOCK_BUDGET = 48;
+   public static final int SEVER_SCAR_TICKS = 30;
+   public static final int SEVER_COOLDOWN = 180;
 
-   public static final int COUNTER_LIFT_TICKS = 20;
-   public static final int COUNTER_SLAM_TICKS = 7;
-   /** Uppercut lands on this tick and throws the target into the sky. */
-   public static final int COUNTER_LAUNCH_TICK = 3;
-   /** How high the target is thrown (blocks above its start). */
-   public static final double COUNTER_LAUNCH_HEIGHT = 14.0;
-   /** Speed of the slam dive, blocks per tick. */
-   public static final double COUNTER_DIVE_SPEED = 3.0;
-   /** Longest dive before the slam is resolved where the target is. */
-   public static final int COUNTER_DIVE_MAX_TICKS = 20;
-   /** Gaze fallback range when nobody attacked Regulus recently. */
-   public static final double COUNTER_GAZE_RANGE = 24.0;
-   public static final double COUNTER_BEHIND_DISTANCE = 1.5;
-   public static final int COUNTER_ATTACKER_WINDOW = 240;
-   public static final double COUNTER_RANGE = 40.0;
-   public static final int COUNTER_CRATER_DEPTH = 5;
-   public static final int COUNTER_CRATER_RADIUS = 3;
-   public static final int COUNTER_COOLDOWN = 800;
-   public static final float COUNTER_BASE_DAMAGE = 15.0F;
-   public static final float COUNTER_CAP = 45.0F;
+   // --- Procession (§5.5) ----------------------------------------------------------------------
+   public static final int PROCESSION_TICKS = 50;
+   public static final double PROCESSION_SPEED = 2.2;
+   public static final float PROCESSION_DAMAGE = 10.0F;
+   public static final int PROCESSION_HIT_GAP = 10;
+   public static final float PROCESSION_BLOCK_HARDNESS = 5.0F;
+   public static final int PROCESSION_BLOCK_BUDGET = 60;
+   public static final int PROCESSION_COOLDOWN = 240;
 
-   public static final int RITUAL_TICKS = 60;
-   public static final int RITUAL_CANCEL_COOLDOWN = 400;
-   public static final int MADNESS_TICKS = 900;
-   public static final float BLOOD_PRICE_PER_20_TICKS = 0.6F;
-   public static final int EVANGELIUM_COOLDOWN = 1800;
+   // --- Right of Reply (§5.6) ------------------------------------------------------------------
+   public static final int REPLY_TICKS = 16;
+   public static final int REPLY_WINDOW_START = 4;
+   public static final int REPLY_WINDOW_END = 14;
+   public static final int REPLY_STRIKE_TICKS = 10;
+   public static final int REPLY_STRIKE_CONTACT = 4;
+   public static final float REPLY_DAMAGE = 8.0F;
+   public static final float REPLY_RETURN_FACTOR = 0.5F;
+   public static final int REPLY_COOLDOWN_HIT = 120;
+   public static final int REPLY_COOLDOWN_MISS = 200;
 
-   /** One press, instant: v0 = 2.0 with vanilla gravity/drag peaks ~20 blocks up (HeroSuperJump.apex). */
-   public static final float SUPER_JUMP_VELOCITY = 2.0F;
-   /** Landing shockwave: from 8 blocks, radius 5→12 and damage 5→14 at 32 blocks; flat (no heart bonus, spec 5.4). */
-   public static final dev.baranhan.viltrumitecore.hero.HeroShockwave.Landing LANDING = new dev.baranhan.viltrumitecore.hero.HeroShockwave.Landing(8.0F, 32.0F, 5.0, 12.0, 5.0F, 14.0F);
+   // --- Little King (§5.7) ---------------------------------------------------------------------
+   public static final double KING_RANGE = 6.0;
+   public static final int KING_CAST = 16;
+   public static final int KING_BIND_AT = 10;
+   public static final int KING_MAX_SUBJECTS = 4;
+   public static final int KING_HOP_TICKS = 400;
+   public static final double KING_LEASH = 48.0;
+   public static final double KING_REVEAL_RANGE = 24.0;
 
-   /** Regulus fist (Viltrumite punch pipeline, own damage). */
-   public static final float PUNCH_DAMAGE = 14.0F;
-
-   /** Madness: the authority runs wild. */
-   public static final float MADNESS_PUNCH_MULTIPLIER = 1.5F;
-   public static final double MADNESS_SHOCKWAVE_MULTIPLIER = 1.5;
-   public static final double MADNESS_SHARD_MULTIPLIER = 1.5;
-   public static final int MADNESS_SHARD_PIERCE = 4;
-   /** Cooldowns run this many ticks per server tick while mad. */
-   public static final int MADNESS_COOLDOWN_RATE = 2;
-   /** Air blade: a punch in madness freezes the air in front into a blade. */
-   public static final double AIR_BLADE_RANGE = 22.0;
-   public static final double AIR_BLADE_HALF_WIDTH = 1.6;
-   public static final float AIR_BLADE_DAMAGE = 10.0F;
-   public static final int AIR_BLADE_CUT_DEPTH = 1;
+   // --- Kingdom of One (§6) --------------------------------------------------------------------
+   public static final double ULT_RANGE = 32.0;
+   public static final int ULT_LENGTH = 150;
+   public static final int ULT_SCOOP = 24;
+   public static final int ULT_SENTENCE = 50;
+   public static final int ULT_FLICK = 106;
+   public static final int ULT_RESOLVE = 126;
+   public static final int ULT_GRAINS = 64;
+   public static final double ULT_DOME_RADIUS = 6.0;
+   public static final int ULT_WAVES = 5;
+   public static final float ULT_WAVE_DAMAGE = 4.0F;
+   public static final float ULT_FLICK_DAMAGE = 16.0F;
+   public static final int ULT_FLICK_CONTACT = 112;
+   public static final double ULT_CRATER_RADIUS = 3.0;
+   public static final double ULT_LEASH = 48.0;
+   public static final int ULT_COOLDOWN = 2000;
+   public static final int ULT_BLEND = 6;
 
    private RegulusRules() {
    }
 
-   public static int clampHearts(int hearts) {
-      return Math.max(0, Math.min(MAX_HEARTS, hearts));
-   }
-
    /**
-    * Spec 5.1: a carrier is a vanilla living, non-player, non-hostile (Enemy or angry neutral), untagged
-    * real creature (Mob). Decoration entities like armor stands are not
-    * "живое существо" — otherwise they grant free permanent hearts.
+    * One tick of heart strain (§5.0, pure). The heart that beats in a living subject costs nothing;
+    * a stopped heart without one strains every tick; a beating one recovers.
     */
-   public static boolean carrierEligible(boolean vanillaNamespace, boolean player, boolean hostile, boolean heartless, boolean creature) {
-      // Peaceful and calm neutral mobs only: hostiles (Enemy) and neutrals
-      // that are currently angry are both reported as hostile and refused.
-      return vanillaNamespace && creature && !player && !hostile && !heartless;
-   }
-
-   /** Spec 6.4: the release impulse pushes opponents only, never allies or own carriers. */
-   public static boolean repulseTarget(boolean opponent, boolean allied, boolean ownCarrier) {
-      return opponent && !allied && !ownCarrier;
-   }
-
-   /**
-    * Full push gate for the Lion release impulse and equivalent shoves: the
-    * opponent filter must pass, the target must accept external impulses
-    * (spec 6.2 — a Lion-active Regulus is never shoved) and must not already
-    * be pinned by a control (spec 8.3/9.2).
-    */
-   public static boolean repulsePushable(boolean opponent, boolean allied, boolean ownCarrier, boolean impulseAllowed, boolean anchored) {
-      return repulseTarget(opponent, allied, ownCarrier) && impulseAllowed && !anchored;
-   }
-
-      public static int debrisShardCount(boolean madness) {
-      return madness ? (int)Math.round(DEBRIS_SHARDS * MADNESS_SHARD_MULTIPLIER) : DEBRIS_SHARDS;
-   }
-
-   public static int debrisPierce(boolean madness) {
-      return madness ? MADNESS_SHARD_PIERCE : DEBRIS_SHARD_PIERCE;
-   }
-
-   public static float punchDamage(int hearts, boolean madness) {
-      float damage = PUNCH_DAMAGE * heartBonus(hearts);
-      return madness ? damage * MADNESS_PUNCH_MULTIPLIER : damage;
-   }
-
-   public static float airBladeDamage(int hearts) {
-      return AIR_BLADE_DAMAGE * heartBonus(hearts);
-   }
-
-   /**
-    * Shotgun spread: a gaussian sample (sigma in degrees) clamped to
-    * [-limit, limit]. Pure so the spray shape is testable.
-    */
-   public static double clampedSpread(double gaussian, double sigma, double limit) {
-      return Math.max(-limit, Math.min(limit, gaussian * sigma));
-   }
-
-   /** Shard elevation: low and forward, a long tail of higher shards. */
-   public static double shardElevation(double gaussian) {
-      double e = DEBRIS_MIN_ELEVATION + 2.0 + gaussian * DEBRIS_ELEVATION_SIGMA;
-      return Math.max(DEBRIS_MIN_ELEVATION, Math.min(DEBRIS_MAX_ELEVATION, e));
-   }
-
-   /** Remaining ticks of a stashed external Slowness once our own slow ends. */
-   public static int slownessRemainder(int savedTicks, int elapsedTicks) {
-      return Math.max(0, savedTicks - elapsedTicks);
-   }
-
-   /**
-    * A new cast needs its slot equipped and off cooldown; the Lion off-toggle
-    * is not a new cast and always passes (spec 6.4 "повторное нажатие").
-    */
-   public static boolean mayStartAbility(boolean equippedOnActivePage, boolean onCooldown, boolean lionOffToggle) {
-      return lionOffToggle || (equippedOnActivePage && !onCooldown);
-   }
-
-   /** cd = ceil(base * (1 - 0.03 * H)), H sampled when the cooldown starts. */
-   public static int cooldown(int base, int hearts) {
-      int h = clampHearts(hearts);
-      return (int)Math.ceil(base * (1.0 - 0.03 * h));
-   }
-
-   public static float heartBonus(int hearts) {
-      return 1.0F + 0.02F * clampHearts(hearts);
-   }
-
-   public static int lionWindow(int hearts) {
-      return LION_BASE_WINDOW + LION_WINDOW_PER_HEART * clampHearts(hearts);
-   }
-
-   /** Recomputed every tick, shrink-only: lost hearts shorten, new never extend. */
-   public static int shrinkLionWindow(int currentWindow, int previousHearts, int newHearts) {
-      int lost = Math.max(0, clampHearts(previousHearts) - clampHearts(newHearts));
-      return Math.max(0, currentWindow - lost * LION_WINDOW_PER_HEART);
-   }
-
-   public static float overheatDps(int overheatTicks) {
-      return 1.5F + 0.5F * (float)(Math.max(0, overheatTicks) / 40);
-   }
-
-   /** Overheat drain due this tick: one second worth, on every full period. */
-   public static float overheatDrain(int overheatTicks) {
-      return overheatTicks > 0 && overheatTicks % LION_OVERHEAT_PERIOD == 0 ? overheatDps(overheatTicks) : 0.0F;
-   }
-
-   public static boolean overheatExhausted(int overheatTicks) {
-      return overheatTicks >= LION_OVERHEAT_MAX_TICKS;
-   }
-
-   /** How an active Lion's Heart ends after this tick's drains, if at all. */
-   public enum LionEnd {
-      NONE,
-      /** HP collapsed to the floor: forced off, LION_FORCED_COOLDOWN. */
-      FORCED,
-      /** Overheat ran its course with HP above the floor: LION_MANUAL_COOLDOWN. */
-      EXHAUSTED
-   }
-
-   /** HP collapse always wins over overheat exhaustion on the same tick. */
-   public static LionEnd lionEndAfterTick(float health, int overheatTicks) {
-      if (lionForcedOff(health)) {
-         return LionEnd.FORCED;
+   public static int strainStep(int strain, boolean lionActive, boolean hostAlive) {
+      int next;
+      if (lionActive) {
+         next = hostAlive ? strain : strain + STRAIN_LION_TICK;
+      } else {
+         next = strain - STRAIN_RECOVERY;
       }
 
-      return overheatExhausted(overheatTicks) ? LionEnd.EXHAUSTED : LionEnd.NONE;
+      return Math.max(0, Math.min(STRAIN_MAX, next));
    }
 
-   /** Heart loss shortens the window, but always leaves a short warning grace. */
-   public static int windowAfterHeartLoss(int previousWindow, int shrunkWindow, int elapsed) {
-      if (shrunkWindow >= previousWindow) {
-         return shrunkWindow;
+   /** Strain after an activation or a backlash, clamped (pure). */
+   public static int strainAdd(int strain, int amount) {
+      return Math.max(0, Math.min(STRAIN_MAX, strain + amount));
+   }
+
+   public static boolean seizes(int strain) {
+      return strain >= STRAIN_MAX;
+   }
+
+   /** Ticks a hostless Lion can still hold before the seizure (HUD countdown, pure). */
+   public static int hostlessTicksLeft(int strain) {
+      return Math.max(0, (STRAIN_MAX - strain + STRAIN_LION_TICK - 1) / STRAIN_LION_TICK);
+   }
+
+   /** Sand / severance / procession damage with and without Lion's Heart (pure). */
+   public static float sandDamage(boolean lion) {
+      return lion ? SAND_DAMAGE_LION : SAND_DAMAGE;
+   }
+
+   public static float severDamage(boolean lion) {
+      return lion ? SEVER_DAMAGE_LION : SEVER_DAMAGE;
+   }
+
+   /** Air Severance width at a travelled distance: widening from 3 to 9 blocks over the range (pure). */
+   public static double severWidth(double travelled) {
+      double k = Math.max(0.0, Math.min(1.0, travelled / SEVER_RANGE));
+      return SEVER_WIDTH_START + (SEVER_WIDTH_END - SEVER_WIDTH_START) * k;
+   }
+
+   /** Melee recoil returned to an attacker that strikes the Lion (pure). */
+   public static float recoil(float incoming) {
+      return Math.max(0.0F, incoming) * RECOIL_FACTOR;
+   }
+
+   /** Right of Reply strike damage after blocking {@code blocked} (pure). */
+   public static float replyDamage(float blocked) {
+      return REPLY_DAMAGE + Math.max(0.0F, blocked) * REPLY_RETURN_FACTOR;
+   }
+
+   public static boolean replyWindow(int moveTick) {
+      return moveTick >= REPLY_WINDOW_START && moveTick < REPLY_WINDOW_END;
+   }
+
+   /** Hardness gate shared by every block-breaking attack (pure; negative = unbreakable). */
+   public static boolean breakable(float hardness, float limit) {
+      return hardness >= 0.0F && hardness <= limit;
+   }
+
+   /** Ult phase at a scene tick (pure). */
+   public static UltPhase ultPhase(int tick) {
+      if (tick < ULT_SCOOP) {
+         return UltPhase.ACCUSE;
       }
 
-      return Math.max(shrunkWindow, Math.min(previousWindow, elapsed + LION_HEART_LOSS_GRACE));
-   }
-
-   public static boolean lionForcedOff(float health) {
-      return health <= LION_FORCED_OFF_HP;
-   }
-
-   public static int lionCooldownBase(boolean forced) {
-      return forced ? LION_FORCED_COOLDOWN : LION_MANUAL_COOLDOWN;
-   }
-
-   /**
-    * Damage of the n-th shard (0-based) that lands on one target in one kick:
-    * flat per shard, capped at DEBRIS_MAX_SHARDS_PER_TARGET, hearts scale it.
-    */
-   public static float debrisShardDamage(int shardsAlreadyLanded, int hearts) {
-      if (shardsAlreadyLanded < 0 || shardsAlreadyLanded >= DEBRIS_MAX_SHARDS_PER_TARGET) {
-         return 0.0F;
+      if (tick < ULT_SENTENCE) {
+         return UltPhase.SCOOP;
       }
 
-      return DEBRIS_SHARD_DAMAGE * heartBonus(hearts);
+      if (tick < ULT_FLICK) {
+         return UltPhase.SENTENCE;
+      }
+
+      return tick < ULT_RESOLVE ? UltPhase.FLICK : UltPhase.RESOLVE;
    }
 
-   /** min(45, 15 + 15% maxHP) * (1 + 0.02H) */
-   public static float counterDamage(float targetMaxHealth, int hearts) {
-      return Math.min(COUNTER_CAP, COUNTER_BASE_DAMAGE + 0.15F * targetMaxHealth) * heartBonus(hearts);
+   /** Ticks of the five sentence waves (pure). */
+   public static boolean ultWaveTick(int tick) {
+      if (tick < ULT_SENTENCE + 8 || tick >= ULT_FLICK) {
+         return false;
+      }
+
+      int span = (ULT_FLICK - 6 - (ULT_SENTENCE + 8)) / (ULT_WAVES - 1);
+      int rel = tick - (ULT_SENTENCE + 8);
+      return rel % span == 0 && rel / span < ULT_WAVES;
    }
 
-   public static float freezeDeferredCap(float maxHealth) {
-      return 0.4F * maxHealth;
-   }
-
-   public static float domeDeferredCap(float maxHealth) {
-      return 0.35F * maxHealth;
-   }
-
-   /** Deferred queue math: damage accumulates but never crosses the cap. */
-   public static float deferredAccumulate(float queued, float incoming, float cap) {
-      return Math.min(cap, Math.max(0.0F, queued + incoming));
-   }
-
-   /** Spec 8.2: the channel ends at 120 ticks at the latest. */
-   public static boolean maniaChannelDone(int channelTicks) {
-      return channelTicks >= MANIA_CHANNEL_TICKS;
-   }
-
-   /** Spec 8.2: only the fast flight states outrun the pull; hover/ground cannot. */
-   public static boolean pullEscapes(dev.baranhan.viltrumiteflight.util.FlightState state) {
-      return state == dev.baranhan.viltrumiteflight.util.FlightState.CRUISE
-         || state == dev.baranhan.viltrumiteflight.util.FlightState.SONIC;
-   }
-
-   public static float heartBacklash(float maxHealth) {
-      return 0.1F * maxHealth;
-   }
-
-   public static boolean attackerValid(long attackerTick, long nowTick) {
-      return nowTick - attackerTick <= COUNTER_ATTACKER_WINDOW;
-   }
-
-   /**
-    * HP lost to EXTERNAL causes only: hero-internal drains (blood price, heart
-    * backlash, overheat) recorded since the last read are subtracted so
-    * self-inflicted damage never passes as an interrupting hit (spec 7.1/10/11).
-    */
-   public static float externalHealthLoss(float previousHealth, float currentHealth, float internalDamage) {
-      return Math.max(0.0F, previousHealth - currentHealth - Math.max(0.0F, internalDamage));
+   public enum UltPhase {
+      ACCUSE,
+      SCOOP,
+      SENTENCE,
+      FLICK,
+      RESOLVE
    }
 }
