@@ -35,7 +35,7 @@ import org.slf4j.Logger;
  * client: {@code press <1-6> [ticks]} (the real ability key mappings), {@code key attack|use|pick|jump|sneak <ticks>},
  * {@code cmd <command>} (sent as a chat command), {@code shot <name>}, {@code cam fp|back|front},
  * {@code look <yaw> <pitch>}, {@code leave} (to the title screen), {@code world} (create or reopen the
- * singleplayer world {@code subtitle_playtest}), {@code close} (closes any screen).
+ * singleplayer world {@code subtitle_playtest}), {@code close} (closes any screen), {@code respawn} (from the death screen).
  * With {@code -Dviltrumitecore.subtitles.playtest.world=true} the title screen opens that world by itself.
  */
 public final class SubtitlePlaytest {
@@ -181,6 +181,11 @@ public final class SubtitlePlaytest {
          }
          case "world" -> openWorld(mc);
          case "close" -> mc.setScreen(null);
+         case "respawn" -> {
+            if (mc.player != null) {
+               mc.player.respawn();
+            }
+         }
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
          default -> LOG.warn("SUBPT unknown command '{}'", line);

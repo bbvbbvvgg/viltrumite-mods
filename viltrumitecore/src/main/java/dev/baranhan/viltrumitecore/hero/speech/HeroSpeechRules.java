@@ -5,8 +5,23 @@ import javax.annotation.Nullable;
 
 /** Pure server rules of {@link HeroSpeech}: start/skip decisions, variant rotation and line lifetime. */
 public final class HeroSpeechRules {
-   /** Server-side lifetime estimate of one fragment with an automatic duration (the client times the real pages). */
+   /**
+    * Server-side lifetime estimate of one auto-timed fragment whose text the server cannot read
+    * (missing key); the client times the real pages.
+    */
    public static final int ESTIMATE_TICKS_PER_FRAGMENT = 160;
+   /**
+    * Margin over the reading time of the server's (English) text: translations run longer (ru/de
+    * about 1.3x), long text wraps onto extra pages and players may slow subtitles down. Without a
+    * text-based estimate every short quip ("Mjolnir!", shown 2 s) held the speaker for 9 s and a
+    * kill remark right after it was skipped as BUSY while nothing was on screen.
+    */
+   public static final double ESTIMATE_TEXT_MARGIN = 1.5;
+   /** Mirrors the client's automatic page time (SubtitleTiming.autoPageTicks at scale 1). */
+   static final float ESTIMATE_BASE_TICKS = 18.0F;
+   static final float ESTIMATE_TICKS_PER_CHAR = 1.15F;
+   static final int ESTIMATE_MIN_PAGE = 40;
+   static final int ESTIMATE_MAX_PAGE = 240;
    /** Enter/exit fades on top of the spoken time. */
    public static final int FADE_GRACE_TICKS = 20;
    public static final String SPEAKER_KEY_PREFIX = "subtitle.viltrumitecore.speaker.";
@@ -111,10 +126,34 @@ public final class HeroSpeechRules {
       return healthBefore > threshold && after > 0.0F && after <= threshold;
    }
 
-   /** Ticks the server treats the line as speaking: the explicit duration, else a per-fragment estimate, plus the fades. */
-   public static int lifetimeTicks(int durationTicks, int fragments) {
-      int spoken = durationTicks > 0 ? durationTicks : Math.max(1, fragments) * ESTIMATE_TICKS_PER_FRAGMENT;
+   /**
+    * Ticks the server treats the line as speaking: the explicit duration, else a per-fragment estimate
+    * from the fragment's text length ({@code -1} = text unknown), plus the fades.
+    */
+   public static int lifetimeTicks(int durationTicks, int[] fragmentChars) {
+      int spoken;
+      if (durationTicks > 0) {
+         spoken = durationTicks;
+      } else if (fragmentChars.length == 0) {
+         spoken = ESTIMATE_TICKS_PER_FRAGMENT;
+      } else {
+         spoken = 0;
+         for (int chars : fragmentChars) {
+            spoken += estimateFragmentTicks(chars);
+         }
+      }
+
       return spoken + FADE_GRACE_TICKS;
+   }
+
+   /** Reading-time estimate of one auto-timed fragment of {@code chars} characters ({@code < 0} = unknown text). */
+   public static int estimateFragmentTicks(int chars) {
+      if (chars < 0) {
+         return ESTIMATE_TICKS_PER_FRAGMENT;
+      }
+
+      double page = Math.max(ESTIMATE_MIN_PAGE, Math.min(ESTIMATE_MAX_PAGE, ESTIMATE_BASE_TICKS + ESTIMATE_TICKS_PER_CHAR * chars));
+      return (int)Math.ceil(page * ESTIMATE_TEXT_MARGIN);
    }
 
    /** Next variant after {@code last} (-1 = none yet) that is ready, round robin; -1 when none is. */

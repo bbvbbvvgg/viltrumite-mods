@@ -26,8 +26,24 @@ class HeroSpeechRulesTest {
 
    @Test
    void lifetimeUsesTheExplicitDurationOrAnEstimate() {
-      assertEquals(200 + HeroSpeechRules.FADE_GRACE_TICKS, HeroSpeechRules.lifetimeTicks(200, 3));
-      assertEquals(3 * HeroSpeechRules.ESTIMATE_TICKS_PER_FRAGMENT + HeroSpeechRules.FADE_GRACE_TICKS, HeroSpeechRules.lifetimeTicks(0, 3));
+      assertEquals(200 + HeroSpeechRules.FADE_GRACE_TICKS, HeroSpeechRules.lifetimeTicks(200, new int[]{10, 20, 30}));
+      assertEquals(3 * HeroSpeechRules.ESTIMATE_TICKS_PER_FRAGMENT + HeroSpeechRules.FADE_GRACE_TICKS, HeroSpeechRules.lifetimeTicks(0, new int[]{-1, -1, -1}),
+         "unknown text keeps the flat per-fragment estimate");
+      assertEquals(HeroSpeechRules.ESTIMATE_TICKS_PER_FRAGMENT + HeroSpeechRules.FADE_GRACE_TICKS, HeroSpeechRules.lifetimeTicks(0, new int[0]));
+   }
+
+   @Test
+   void textEstimateCoversTheClientPageWithAMarginButFreesShortQuips() {
+      // "Mjolnir!": the client shows one 40-tick page; the server no longer holds the speaker for 9 s.
+      assertEquals(60, HeroSpeechRules.estimateFragmentTicks(8));
+      assertTrue(HeroSpeechRules.lifetimeTicks(0, new int[]{8}) < 100, "a kill remark right after a quip is not skipped as BUSY for long");
+      for (int chars = 0; chars <= 400; chars += 7) {
+         int clientPage = (int)Math.max(40, Math.min(240, Math.round(18.0 + 1.15 * chars)));
+         assertTrue(HeroSpeechRules.estimateFragmentTicks(chars) >= clientPage, "never shorter than the client's own page at scale 1: " + chars);
+         assertTrue(HeroSpeechRules.estimateFragmentTicks((int)Math.round(chars * 1.3)) >= clientPage, "covers a 1.3x longer translation: " + chars);
+      }
+
+      assertEquals(360, HeroSpeechRules.estimateFragmentTicks(1000), "capped like the client page");
    }
 
    @Test

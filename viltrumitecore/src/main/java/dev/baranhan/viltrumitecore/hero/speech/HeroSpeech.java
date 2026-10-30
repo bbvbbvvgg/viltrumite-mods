@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
+import net.minecraft.locale.Language;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -203,11 +204,28 @@ public final class HeroSpeech {
          listeners.add(listener.getUUID());
       }
 
-      long until = now + HeroSpeechRules.lifetimeTicks(durationTicks, fragments.size());
+      long until = now + HeroSpeechRules.lifetimeTicks(durationTicks, fragmentChars(fragments, literal));
       ACTIVE.put(id, new Active(serial, lineId, priority, new WeakReference<>(speaker), speaker.level().dimension(), sessionOf(speaker), List.copyOf(listeners),
          now, until, activeWhile));
       cooldowns.put(lineId, until + cooldownTicks);
       return true;
+   }
+
+   /** Text length of each fragment as the server reads it (English on a dedicated server), -1 when the key is unknown. */
+   private static int[] fragmentChars(List<String> fragments, boolean literal) {
+      Language language = Language.getInstance();
+      int[] chars = new int[fragments.size()];
+      for (int i = 0; i < chars.length; i++) {
+         String fragment = fragments.get(i);
+         if (literal) {
+            chars[i] = fragment.length();
+         } else {
+            String text = language.getOrDefault(fragment);
+            chars[i] = text.equals(fragment) ? -1 : text.length();
+         }
+      }
+
+      return chars;
    }
 
    private static boolean canSpeak(ServerPlayer speaker) {
