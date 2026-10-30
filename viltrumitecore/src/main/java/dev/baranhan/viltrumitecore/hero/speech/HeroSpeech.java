@@ -229,7 +229,15 @@ public final class HeroSpeech {
    }
 
    private static boolean canSpeak(ServerPlayer speaker) {
-      return !(speaker instanceof FakePlayer) && speaker.connection != null && speaker.isAlive() && !speaker.isSpectator();
+      return isRealPlayer(speaker) && speaker.isAlive() && !speaker.isSpectator();
+   }
+
+   /**
+    * A connected human: not a Forge fake player and not a Viltrumite squad NPC (a ServerPlayer
+    * with a dummy connection that is listed in level.players(); lines sent to it would only pile up).
+    */
+   static boolean isRealPlayer(ServerPlayer player) {
+      return !(player instanceof FakePlayer) && !(player instanceof dev.baranhan.viltrumitecore.entity.ViltrumiteFakePlayer) && player.connection != null;
    }
 
    /** The speaker and every real player in the same level within range. */
@@ -238,7 +246,7 @@ public final class HeroSpeech {
       audience.add(speaker);
       double rangeSq = range * range;
       for (ServerPlayer other : speaker.serverLevel().players()) {
-         if (other != speaker && !(other instanceof FakePlayer) && other.connection != null && other.distanceToSqr(speaker) <= rangeSq) {
+         if (other != speaker && isRealPlayer(other) && other.distanceToSqr(speaker) <= rangeSq) {
             audience.add(other);
          }
       }

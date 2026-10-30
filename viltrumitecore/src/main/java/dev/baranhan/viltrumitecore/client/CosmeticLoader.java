@@ -35,8 +35,10 @@ public class CosmeticLoader {
       loadFromFolder(capesDir, CAPES, "cape");
    }
 
+   // Every bundled skin the squad events use must be listed: Thula and Vidor were missing (already in the
+   // original 1.10.3 jar), so their files were never extracted and they fell back to the default skin.
    private static void extractDefaultCosmetics(File skinsDir, File capesDir) {
-      String[] defaultSkins = new String[]{"skin_lucan.png", "skin_omniman_1.png", "skin_omniman_2.png", "skin_conquest.png", "skin_viltrumite_1.png"};
+      String[] defaultSkins = new String[]{"skin_lucan.png", "skin_omniman_1.png", "skin_omniman_2.png", "skin_conquest.png", "skin_viltrumite_1.png", "skin_thula.png", "skin_vidor.png"};
       String[] defaultCapes = new String[]{"red.png"};
 
       for (String skin : defaultSkins) {

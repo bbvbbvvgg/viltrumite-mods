@@ -1,23 +1,12 @@
 package dev.baranhan.viltrumitecore.event;
 
-import dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig;
 import dev.baranhan.viltrumitecore.effect.ViltrumiteEffects;
-import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCosmeticsPlayer;
-import dev.baranhan.viltrumitecore.worldevent.WorldEventManager;
-import dev.baranhan.viltrumitecore.worldevent.WorldEventType;
-import dev.baranhan.viltrumitecore.worldevent.WorldEvents;
 import dev.baranhan.viltrumiteflight.util.ViltrumiteFlightPlayer;
-import java.util.ArrayList;
-import java.util.List;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.event.TickEvent.LevelTickEvent;
-import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.Clone;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
@@ -58,38 +47,8 @@ public class CoreEvents {
       }
    }
 
-   @SubscribeEvent
-   public static void onLevelTick(LevelTickEvent event) {
-      if (event.phase == Phase.END) {
-         if (event.level instanceof ServerLevel level) {
-            if (level.dimension() == Level.OVERWORLD) {
-               if (ViltrumiteCoreConfig.INSTANCE.worldEventsAutoStart && !level.players().isEmpty()) {
-                  WorldEventManager manager = WorldEventManager.get(level);
-                  if (manager.activeEvents().isEmpty()) {
-                     long cooldownTicks = (long)ViltrumiteCoreConfig.INSTANCE.worldEventCooldownMinutes * 60L * 20L;
-                     if (level.getGameTime() - manager.lastEventTime() >= cooldownTicks) {
-                        if (!(level.random.nextFloat() >= ViltrumiteCoreConfig.INSTANCE.worldEventChancePercent * 0.01F)) {
-                           List<WorldEventType> candidates = new ArrayList<>();
-
-                           for (WorldEventType type : WorldEvents.all()) {
-                              if (!manager.isRunning(type)) {
-                                 candidates.add(type);
-                              }
-                           }
-
-                           if (!candidates.isEmpty()) {
-                              WorldEventType chosen = candidates.get(level.random.nextInt(candidates.size()));
-                              ServerPlayer anchor = (ServerPlayer)level.players().get(level.random.nextInt(level.players().size()));
-                              manager.start(level, chosen, anchor.position(), chosen.defaultWarmupTicks());
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
+   // No automatic world events: the Viltrumite squad (Conquest, Thula, Lucan, Vidor) appears only by
+   // command (/viltrumite event start <id>). The old random scheduler lived here.
 
    @SubscribeEvent
    public static void onPlayerDeath(LivingDeathEvent event) {
