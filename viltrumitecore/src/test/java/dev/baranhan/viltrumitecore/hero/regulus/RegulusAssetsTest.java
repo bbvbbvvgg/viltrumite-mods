@@ -152,6 +152,23 @@ class RegulusAssetsTest {
    }
 
    @Test
+   void everySoundEventIsPlayedSomewhere() throws IOException {
+      StringBuilder code = new StringBuilder();
+      for (String dir : new String[]{"hero/regulus", "client/regulus"}) {
+         try (Stream<Path> files = Files.walk(JAVA.resolve(dir))) {
+            for (Path file : files.filter(p -> p.toString().endsWith(".java") && !p.endsWith("RegulusSounds.java")).toList()) {
+               code.append(Files.readString(file));
+            }
+         }
+      }
+
+      for (String name : soundNames()) {
+         assertTrue(code.indexOf("RegulusSounds." + name.toUpperCase() + ",") >= 0 || code.indexOf("RegulusSounds." + name.toUpperCase() + ".") >= 0
+            || code.indexOf("RegulusSounds." + name.toUpperCase() + ")") >= 0, "unused sound " + name);
+      }
+   }
+
+   @Test
    void everyLocaleCarriesEveryKey() throws IOException {
       JsonObject en = read(LANG.resolve("en_us.json"));
       Set<String> required = new HashSet<>();

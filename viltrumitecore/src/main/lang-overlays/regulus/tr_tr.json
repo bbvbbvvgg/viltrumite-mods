@@ -1,8 +1,7 @@
 {
   "hero.viltrumitecore.regulus": "Regulus Corneas",
   "subtitle.viltrumitecore.speaker.regulus": "Regulus",
-  "key.viltrumitecore.assign_heart": "Regulus: Küçük Kral",
-  "scan.viltrumitecore.regulus.lion_heart": "Aslan Yüreği: zamanı durmuş — hiçbir şey ona ulaşamaz",
+  "scan.viltrumitecore.regulus.stopped_time": "Aslan Yüreği: zamanı durmuş — hiçbir şey ona ulaşamaz",
   "ability.viltrumitecore.regulus_lions_heart.name": "<gold>Aslan Yüreği",
   "ability.viltrumitecore.regulus_lions_heart.desc": "<grey>Bekleme: <lime>1 sn\n<grey>Tür: <yellow>Aç/Kapa\n\n<grey>Kendi zamanını durdur. Hiçbir hasar, itme ya da etki\n<grey>sana ulaşmaz; darbenin %30'u saldırana döner,\n<grey>mermiler havada donar.\n<grey>Kalbin de durur: canlı bir taşıyıcı olmadan\n<grey>(Küçük Kral) yük artar ve ~5 sn sonra\n<grey>kalp kasılır (Aslan 8 sn kilitli).\n\n<blue>Regulus",
   "ability.viltrumitecore.regulus_stopped_sand.name": "<gold>Donmuş Kum",
