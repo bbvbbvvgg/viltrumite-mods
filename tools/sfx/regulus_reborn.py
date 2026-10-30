@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Regulus Reborn: fully original procedural SFX (own synthesis, CC0-1.0). No external samples.
+"""Regulus Reborn: procedural SFX (own synthesis, CC0-1.0) and the event table of the whole kit.
+
+The physical cues (steps, fists, cloth, rock, air) are mixed from CC0 / public-domain recordings by
+tools/sfx/regulus_samples.py, which layers the synthesised cue from here on top; this script writes
+and checks only the purely synthesised files, but --json still lists every event.
 
 Usage: python3 tools/sfx/regulus_reborn.py [--check] [--wav DIR] [--json]
 Deterministic numpy synthesis -> mono 44.1 kHz 16-bit -> ffmpeg libvorbis (bitexact) -> base64 text
@@ -491,8 +495,18 @@ CUES = {
 }
 
 
+def sampled():
+    """Cues mixed from recordings by tools/sfx/regulus_samples.py (this script leaves their files alone)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import regulus_samples
+    return regulus_samples.SAMPLED
+
+
 def files():
+    skip = sampled()
     for name, (fn, variants, _, _) in CUES.items():
+        if name in skip:
+            continue
         for v in range(variants):
             yield name, v, (name if variants == 1 else name + str(v)), fn
 
