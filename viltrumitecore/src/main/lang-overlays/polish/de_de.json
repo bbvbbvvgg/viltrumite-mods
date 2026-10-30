@@ -2,5 +2,14 @@
   "message.viltrumitecore.evangelium.refused.cooldown": "Das Evangelium lädt sich auf: %s s",
   "message.viltrumitecore.evangelium.refused.madness": "Der Wahnsinn ist bereits erwacht",
   "message.viltrumitecore.evangelium.refused.locked": "Das Evangelium lässt sich gerade nicht öffnen",
-  "message.viltrumitecore.evangelium.refused.channeling": "Das Ritual läuft bereits"
+  "message.viltrumitecore.evangelium.refused.channeling": "Das Ritual läuft bereits",
+  "commands.viltrumitecore.hero.unknown": "Unbekannter Held: %s",
+  "commands.viltrumitecore.hero.cooldown.reset.success": "Abklingzeiten zurückgesetzt: %s (%s)",
+  "commands.viltrumitecore.hero.cooldown.reset.shared_only": "Gemeinsame Abklingzeiten zurückgesetzt: %s (%s hat noch keinen eigenen Reset)",
+  "commands.viltrumitecore.hero.cooldown.reset.other_hero": "%s spielt %s, nicht %s: übersprungen",
+  "hero.viltrumitecore.human": "Mensch",
+  "hero.viltrumitecore.viltrumite": "Viltrumit",
+  "hero.viltrumitecore.regulus": "Regulus",
+  "hero.viltrumitecore.thor": "Thor",
+  "hero.viltrumitecore.sinclair": "Sinclair"
 }

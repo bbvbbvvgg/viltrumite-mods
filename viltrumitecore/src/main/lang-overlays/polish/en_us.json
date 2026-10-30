@@ -2,5 +2,14 @@
   "message.viltrumitecore.evangelium.refused.cooldown": "The Evangelium is recharging: %s s",
   "message.viltrumitecore.evangelium.refused.madness": "Madness is already awake",
   "message.viltrumitecore.evangelium.refused.locked": "The Evangelium can't be opened right now",
-  "message.viltrumitecore.evangelium.refused.channeling": "The ritual is already underway"
+  "message.viltrumitecore.evangelium.refused.channeling": "The ritual is already underway",
+  "commands.viltrumitecore.hero.unknown": "Unknown hero: %s",
+  "commands.viltrumitecore.hero.cooldown.reset.success": "Cooldowns reset: %s (%s)",
+  "commands.viltrumitecore.hero.cooldown.reset.shared_only": "Shared cooldowns reset: %s (%s has no hero-specific reset yet)",
+  "commands.viltrumitecore.hero.cooldown.reset.other_hero": "%s plays %s, not %s: skipped",
+  "hero.viltrumitecore.human": "Human",
+  "hero.viltrumitecore.viltrumite": "Viltrumite",
+  "hero.viltrumitecore.regulus": "Regulus",
+  "hero.viltrumitecore.thor": "Thor",
+  "hero.viltrumitecore.sinclair": "Sinclair"
 }

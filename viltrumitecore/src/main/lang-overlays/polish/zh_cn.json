@@ -2,5 +2,14 @@
   "message.viltrumitecore.evangelium.refused.cooldown": "福音书冷却中：%s 秒",
   "message.viltrumitecore.evangelium.refused.madness": "疯狂已然苏醒",
   "message.viltrumitecore.evangelium.refused.locked": "此刻无法翻开福音书",
-  "message.viltrumitecore.evangelium.refused.channeling": "仪式正在进行"
+  "message.viltrumitecore.evangelium.refused.channeling": "仪式正在进行",
+  "commands.viltrumitecore.hero.unknown": "未知英雄：%s",
+  "commands.viltrumitecore.hero.cooldown.reset.success": "冷却已重置：%s（%s）",
+  "commands.viltrumitecore.hero.cooldown.reset.shared_only": "已重置通用冷却：%s（%s 尚无专属重置）",
+  "commands.viltrumitecore.hero.cooldown.reset.other_hero": "%s 正在使用 %s，而非 %s：已跳过",
+  "hero.viltrumitecore.human": "人类",
+  "hero.viltrumitecore.viltrumite": "维尔特鲁姆人",
+  "hero.viltrumitecore.regulus": "雷古勒斯",
+  "hero.viltrumitecore.thor": "雷神",
+  "hero.viltrumitecore.sinclair": "辛克莱"
 }

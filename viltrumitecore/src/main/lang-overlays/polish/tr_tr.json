@@ -2,5 +2,14 @@
   "message.viltrumitecore.evangelium.refused.cooldown": "İncil yeniden doluyor: %s sn",
   "message.viltrumitecore.evangelium.refused.madness": "Delilik zaten uyandı",
   "message.viltrumitecore.evangelium.refused.locked": "İncil şu anda açılamaz",
-  "message.viltrumitecore.evangelium.refused.channeling": "Ritüel zaten sürüyor"
+  "message.viltrumitecore.evangelium.refused.channeling": "Ritüel zaten sürüyor",
+  "commands.viltrumitecore.hero.unknown": "Bilinmeyen kahraman: %s",
+  "commands.viltrumitecore.hero.cooldown.reset.success": "Bekleme süreleri sıfırlandı: %s (%s)",
+  "commands.viltrumitecore.hero.cooldown.reset.shared_only": "Ortak bekleme süreleri sıfırlandı: %s (%s için özel sıfırlama henüz yok)",
+  "commands.viltrumitecore.hero.cooldown.reset.other_hero": "%s, %s ile oynuyor, %s değil: atlandı",
+  "hero.viltrumitecore.human": "İnsan",
+  "hero.viltrumitecore.viltrumite": "Viltrumit",
+  "hero.viltrumitecore.regulus": "Regulus",
+  "hero.viltrumitecore.thor": "Thor",
+  "hero.viltrumitecore.sinclair": "Sinclair"
 }

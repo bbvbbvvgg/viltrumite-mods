@@ -902,6 +902,17 @@ public final class ReinhardHero implements HeroDefinition {
    }
 
    @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      ReinhardState state = ReinhardState.of(player);
+      if (state == null) {
+         return false;
+      }
+      java.util.Arrays.fill(state.cooldowns, 0);
+      state.modeCooldown = 0;
+      return true;
+   }
+
+   @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       ReinhardState state = ReinhardState.of(player);
       if (state != null) {

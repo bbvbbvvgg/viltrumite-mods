@@ -2,5 +2,14 @@
   "message.viltrumitecore.evangelium.refused.cooldown": "Евангелие перезаряжается: %s с",
   "message.viltrumitecore.evangelium.refused.madness": "Безумие уже пробудилось",
   "message.viltrumitecore.evangelium.refused.locked": "Сейчас Евангелие не открыть",
-  "message.viltrumitecore.evangelium.refused.channeling": "Ритуал уже идёт"
+  "message.viltrumitecore.evangelium.refused.channeling": "Ритуал уже идёт",
+  "commands.viltrumitecore.hero.unknown": "Неизвестный герой: %s",
+  "commands.viltrumitecore.hero.cooldown.reset.success": "Кулдауны сброшены: %s (%s)",
+  "commands.viltrumitecore.hero.cooldown.reset.shared_only": "Общие кулдауны сброшены: %s (у героя %s пока нет собственного сброса)",
+  "commands.viltrumitecore.hero.cooldown.reset.other_hero": "%s играет за героя %s, а не %s: пропущено",
+  "hero.viltrumitecore.human": "Человек",
+  "hero.viltrumitecore.viltrumite": "Вилтрумит",
+  "hero.viltrumitecore.regulus": "Регулус",
+  "hero.viltrumitecore.thor": "Тор",
+  "hero.viltrumitecore.sinclair": "Синклер"
 }

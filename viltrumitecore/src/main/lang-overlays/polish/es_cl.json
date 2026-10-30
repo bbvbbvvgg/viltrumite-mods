@@ -2,5 +2,14 @@
   "message.viltrumitecore.evangelium.refused.cooldown": "El Evangelio se está recargando: %s s",
   "message.viltrumitecore.evangelium.refused.madness": "La locura ya despertó",
   "message.viltrumitecore.evangelium.refused.locked": "Ahora no se puede abrir el Evangelio",
-  "message.viltrumitecore.evangelium.refused.channeling": "El ritual ya está en curso"
+  "message.viltrumitecore.evangelium.refused.channeling": "El ritual ya está en curso",
+  "commands.viltrumitecore.hero.unknown": "Héroe desconocido: %s",
+  "commands.viltrumitecore.hero.cooldown.reset.success": "Enfriamientos reiniciados: %s (%s)",
+  "commands.viltrumitecore.hero.cooldown.reset.shared_only": "Enfriamientos comunes reiniciados: %s (%s aún no tiene reinicio propio)",
+  "commands.viltrumitecore.hero.cooldown.reset.other_hero": "%s juega como %s, no %s: omitido",
+  "hero.viltrumitecore.human": "Humano",
+  "hero.viltrumitecore.viltrumite": "Viltrumita",
+  "hero.viltrumitecore.regulus": "Regulus",
+  "hero.viltrumitecore.thor": "Thor",
+  "hero.viltrumitecore.sinclair": "Sinclair"
 }

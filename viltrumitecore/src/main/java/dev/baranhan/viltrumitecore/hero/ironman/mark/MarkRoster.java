@@ -43,6 +43,15 @@ public final class MarkRoster {
       this.entry(id).durability = Math.max(0.0F, Math.min(this.maxDurability(id), durability));
    }
 
+   /** Debug reset: every mark's break cooldown ends now (durability returns as on a natural end). */
+   public void clearCooldowns() {
+      for (Entry entry : this.entries.values()) {
+         if (entry.cooldown > 0) {
+            entry.cooldown = 1;
+         }
+      }
+   }
+
    public int cooldown(MarkId id) {
       return this.entry(id).cooldown;
    }
