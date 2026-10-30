@@ -4,7 +4,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -52,10 +51,14 @@ public final class HeroLineEvents {
       }
    }
 
-   @SubscribeEvent(priority = EventPriority.LOWEST)
-   public static void onDamage(LivingDamageEvent event) {
-      if (event.getEntity() instanceof ServerPlayer player && !player.isCreative()
-         && HeroSpeechRules.crossedLowHealth(player.getHealth(), event.getAmount(), player.getMaxHealth())) {
+   /**
+    * Called by HeroEvents.onLivingDamage right after the damage layers set the final amount (same
+    * LOWEST step). A separate LOWEST subscriber here could run before that clamp (the order of two
+    * classes on one priority is not defined) and remark on damage a shield, a Hulkbuster or an HP
+    * floor would still absorb.
+    */
+   public static void damaged(ServerPlayer player, float finalAmount) {
+      if (!player.isCreative() && HeroSpeechRules.crossedLowHealth(player.getHealth(), finalAmount, player.getMaxHealth())) {
          fire(player, LOW_HEALTH);
       }
    }

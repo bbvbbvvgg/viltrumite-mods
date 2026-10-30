@@ -74,12 +74,18 @@ public final class HeroSpeechRules {
    public static Decision decide(@Nullable String activeLineId, @Nullable HeroLine.Priority activePriority, long activeAgeTicks, String lineId,
       HeroLine.Priority priority, long now, long cooldownUntil, boolean force) {
       Decision legacy = decide(activeLineId, activePriority, lineId, priority, now, cooldownUntil, force);
-      if (force || activeLineId == null || legacy != Decision.REPLACE) {
+      if (force || activeLineId == null) {
          return legacy;
       }
 
-      if (priority == HeroLine.Priority.AMBIENT) {
+      // Another line is on screen: an ambient remark is skipped as BUSY whatever that line's rank
+      // (the legacy rule would call a remark under an ability line OUTRANKED; both skip it).
+      if (priority == HeroLine.Priority.AMBIENT && (legacy == Decision.REPLACE || legacy == Decision.OUTRANKED)) {
          return Decision.BUSY;
+      }
+
+      if (legacy != Decision.REPLACE) {
+         return legacy;
       }
 
       if (priority == HeroLine.Priority.ABILITY && activePriority == HeroLine.Priority.ABILITY && activeAgeTicks < MIN_SHOWN_BEFORE_REPLACE) {

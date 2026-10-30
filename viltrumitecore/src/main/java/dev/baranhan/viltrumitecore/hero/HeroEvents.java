@@ -264,6 +264,7 @@ public final class HeroEvents {
    public static void onLivingDamage(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
       if (event.getEntity() instanceof ServerPlayer player && event.getAmount() > 0.0F) {
          event.setAmount(HeroDamageLayers.onDamage(player, event.getSource(), event.getAmount()));
+         dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.damaged(player, event.getAmount());
       }
    }
 
