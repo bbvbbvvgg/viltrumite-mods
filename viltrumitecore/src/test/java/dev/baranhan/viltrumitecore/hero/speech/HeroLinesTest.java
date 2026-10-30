@@ -50,7 +50,23 @@ class HeroLinesTest {
       List<HeroLine> lines = ReinhardLines.LINES.on(HeroLineTrigger.ability("reinhard:world_cut"));
       assertEquals(List.of(ReinhardLines.WORLD_CUT), lines);
       assertEquals(HeroLine.Priority.ULTIMATE, ReinhardLines.WORLD_CUT.priority());
-      assertEquals(List.of("subtitle.viltrumitecore.reinhard.world_cut"), ReinhardLines.WORLD_CUT.fragments());
+      assertEquals(List.of("subtitle.viltrumitecore.reinhard.world_cut.1", "subtitle.viltrumitecore.reinhard.world_cut.2"),
+         ReinhardLines.WORLD_CUT.fragments());
+   }
+
+   @Test
+   void theUltSubtitlesFollowTheSceneTimeline() {
+      // Playtest: the World Cut line must end on the blast and the blast line must not overlap it.
+      int blast = dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.WORLD_CUT_BLAST;
+      assertEquals(blast, ReinhardLines.WORLD_CUT.durationTicks());
+      assertEquals(blast, ReinhardLines.DIAGONAL_WORLD_CUT.durationTicks());
+      assertEquals(List.of(ReinhardLines.DIAGONAL_WORLD_CUT), ReinhardLines.LINES.on(HeroLineTrigger.ability("reinhard:diagonal_world_cut")));
+      assertEquals(List.of(ReinhardLines.BLAST), ReinhardLines.LINES.on(HeroLineTrigger.event(ReinhardLines.BLAST_EVENT)));
+      assertEquals(HeroLine.Priority.ULTIMATE, ReinhardLines.BLAST.priority(), "same rank: waits for the first line instead of cutting it");
+      assertTrue(ReinhardLines.BLAST.durationTicks() > dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.WORLD_CUT_WAVE_TICKS);
+      for (HeroLine line : ReinhardLines.LINES.all()) {
+         assertTrue(line.range() >= 128 && line.range() <= HeroLine.MAX_RANGE, line.id() + " is seen by players watching the cut");
+      }
    }
 
    @Test
@@ -61,22 +77,42 @@ class HeroLinesTest {
       keys.addAll(List.of("subtitle.viltrumitecore.preview.short", "subtitle.viltrumitecore.preview.long.1", "subtitle.viltrumitecore.preview.long.2",
          "commands.viltrumitecore.herolines.unknown", "commands.viltrumitecore.herolines.skipped", "commands.viltrumitecore.herolines.played",
          "commands.viltrumitecore.herolines.stopped"));
-      List<Path> files;
-      try (var listing = Files.list(LANG)) {
-         files = listing.filter(p -> p.toString().endsWith(".json")).toList();
-      }
-
-      assertTrue(files.stream().anyMatch(p -> p.endsWith("ru_ru.json")), "Russian is the reference language of the lines");
-      for (Path file : files) {
-         JsonObject lang = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+      // The shipped files: base lang + lang-overlays (new keys live in the overlays).
+      var merged = dev.baranhan.viltrumitecore.integration.ShippedLang.merged();
+      assertTrue(merged.containsKey("ru_ru.json") || merged.containsKey("ru_ru"), "Russian is the reference language of the lines");
+      for (var entry : merged.entrySet()) {
+         JsonObject lang = entry.getValue();
          for (String key : keys) {
-            assertTrue(lang.has(key) && !lang.get(key).getAsString().isBlank(), file.getFileName() + " " + key);
+            assertTrue(lang.has(key) && !lang.get(key).getAsString().isBlank(), entry.getKey() + " " + key);
          }
       }
 
-      JsonObject ru = JsonParser.parseString(Files.readString(LANG.resolve("ru_ru.json"))).getAsJsonObject();
+      JsonObject ru = merged.containsKey("ru_ru.json") ? merged.get("ru_ru.json") : merged.get("ru_ru");
       assertEquals("Мой меч способен рассечь сам мир.\nНи расстояние, ни пространство\nне станут преградой для этого удара.",
          ru.get("subtitle.viltrumitecore.reinhard.world_cut").getAsString());
       assertEquals("Рейнхард", ru.get("subtitle.viltrumitecore.speaker.reinhard").getAsString());
+   }
+
+   /** Playtest: Reinhard speaks before World Erasure (N), and the line is gone before the black screen. */
+   @Test
+   void worldErasureIsSpokenBeforeTheDarkPhase() throws java.io.IOException {
+      assertEquals(List.of(ReinhardLines.WORLD_ERASURE), ReinhardLines.LINES.on(HeroLineTrigger.ability("reinhard:world_erasure")));
+      assertEquals(HeroLine.Priority.ULTIMATE, ReinhardLines.WORLD_ERASURE.priority());
+      int dark = dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.ERASE_SPEECH_TICKS
+         + dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.ERASE_SHATTER_END;
+      var merged = dev.baranhan.viltrumitecore.integration.ShippedLang.merged();
+      for (var entry : merged.entrySet()) {
+         List<String> fragments = ReinhardLines.WORLD_ERASURE.fragments();
+         int[] chars = new int[fragments.size()];
+         for (int i = 0; i < chars.length; i++) {
+            chars[i] = entry.getValue().get(fragments.get(i)).getAsString().length();
+         }
+
+         int[] pages = dev.baranhan.viltrumitecore.client.hero.speech.SubtitleTiming.pageTicks(chars, ReinhardLines.WORLD_ERASURE.durationTicks(), 1.0);
+         assertTrue(dev.baranhan.viltrumitecore.client.hero.speech.SubtitleTiming.length(pages) <= dark, entry.getKey() + " ends before the dark phase");
+      }
+
+      assertEquals("Я и уничтожу вселенную и воссоздам её заново.",
+         (merged.containsKey("ru_ru.json") ? merged.get("ru_ru.json") : merged.get("ru_ru")).get("subtitle.viltrumitecore.reinhard.world_erasure.2").getAsString());
    }
 }

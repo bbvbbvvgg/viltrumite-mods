@@ -11,6 +11,12 @@ public class HumanHero implements HeroDefinition {
       return HeroId.HUMAN;
    }
 
+   /** A plain human holds no fighting stance: no extra empty off-hand arm in first person. */
+   @Override
+   public boolean showsIdleOffhand(Player player) {
+      return false;
+   }
+
    @Override
    public boolean allowsFlight(Player player) {
       return false;

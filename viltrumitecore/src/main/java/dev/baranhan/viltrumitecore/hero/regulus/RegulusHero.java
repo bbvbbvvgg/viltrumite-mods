@@ -414,6 +414,17 @@ public class RegulusHero implements HeroDefinition {
    }
 
    @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      RegulusState state = stateOf(player);
+      if (state == null) {
+         return false;
+      }
+      // The Evangelium book overlay follows on the next tick (Evangelium.syncBookCooldown).
+      state.cooldowns.replaceAll((id, ticks) -> 0);
+      return true;
+   }
+
+   @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       RegulusState state = stateOf(player);
       if (state == null) {

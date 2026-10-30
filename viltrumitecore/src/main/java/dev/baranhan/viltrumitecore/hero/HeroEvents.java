@@ -285,6 +285,9 @@ public final class HeroEvents {
    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
    public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
       if (HeroDamage.isProtected(event.getEntity())) {event.setCanceled(true); return;}
+      if (event.getAmount() > 0.0F) {
+         HeroDamageLayers.notifyAttack(event.getEntity(), event.getSource());
+      }
       if (event.getEntity() instanceof ServerPlayer player && event.getAmount() > 0.0F && HeroDamageLayers.onAttack(player, event.getSource(), event.getAmount())) {
          event.setCanceled(true);
       }

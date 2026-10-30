@@ -7,7 +7,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -106,6 +105,46 @@ public final class EyeLasers {
       return entity instanceof LivingEntity living ? living : null;
    }
 
+   /**
+    * Nearest entity whose hitbox the segment crosses, with the real contact point.
+    * Vanilla's level-based ProjectileUtil.getEntityHitResult returns a hit located
+    * at the entity's feet (EntityHitResult(entity) = entity.position()), so beam,
+    * sparks and the defence contact all landed at the target's feet instead of
+    * where the eyes aim (playtest: "laser magnets to the feet").
+    */
+   @Nullable
+   static EntityHitResult firstEntityOnSegment(Entity shooter, Vec3 from, Vec3 to, AABB box) {
+      Entity best = null;
+      Vec3 bestPoint = null;
+      double bestDistance = Double.MAX_VALUE;
+      for (Entity entity : shooter.level().getEntities(shooter, box,
+         e -> e.isPickable() && !e.isSpectator() && e.isAlive() && !(e instanceof ArmorStand))) {
+         Vec3 point = contactPoint(entity.getBoundingBox().inflate(entity.getPickRadius()), from, to);
+         if (point == null) {
+            continue;
+         }
+
+         double distance = from.distanceToSqr(point);
+         if (distance < bestDistance) {
+            best = entity;
+            bestPoint = point;
+            bestDistance = distance;
+         }
+      }
+
+      return best == null ? null : new EntityHitResult(best, bestPoint);
+   }
+
+   /** Pure: where the segment enters the box (the start itself when it begins inside), or null. */
+   @Nullable
+   static Vec3 contactPoint(AABB bounds, Vec3 from, Vec3 to) {
+      if (bounds.contains(from)) {
+         return from;
+      }
+
+      return bounds.clip(from, to).orElse(null);
+   }
+
    /** Shared ray: blocks (collider shape) then entities up to the block hit. Used on both sides. */
    public static HitResult ray(Entity shooter, double range) {
       Vec3 eye = shooter.getEyePosition();
@@ -114,8 +153,7 @@ public final class EyeLasers {
       Vec3 limit = blockHit.getType() == HitResult.Type.MISS ? end : blockHit.getLocation();
       AABB box = shooter.getBoundingBox().expandTowards(limit.subtract(eye)).inflate(1.0);
       // No aim assist: the beam hits only an entity whose exact hitbox the eye ray crosses.
-      EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(shooter.level(), shooter, eye, limit, box,
-         entity -> entity.isPickable() && !entity.isSpectator() && entity.isAlive() && !(entity instanceof ArmorStand), 0.0F);
+      EntityHitResult entityHit = firstEntityOnSegment(shooter, eye, limit, box);
       return entityHit != null ? entityHit : blockHit;
    }
 }

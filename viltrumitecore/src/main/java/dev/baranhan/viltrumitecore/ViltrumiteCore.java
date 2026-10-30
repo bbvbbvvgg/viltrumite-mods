@@ -149,5 +149,6 @@ public class ViltrumiteCore {
 
    private void onCommandRegister(RegisterCommandsEvent event) {
       CoreCommands.register(event.getDispatcher());
+      dev.baranhan.viltrumitecore.command.HeroCommands.register(event.getDispatcher());
    }
 }

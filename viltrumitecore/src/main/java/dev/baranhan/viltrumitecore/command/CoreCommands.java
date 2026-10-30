@@ -8,6 +8,7 @@ import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.OpenRaceScreenS2CPacket;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCosmeticsPlayer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -26,8 +27,7 @@ public class CoreCommands {
                               ServerPlayer playerEntity = ((CommandSourceStack)context.getSource()).getPlayerOrException();
                               ViltrumiteCosmeticsPlayer player = (ViltrumiteCosmeticsPlayer)playerEntity;
                               player.setViltrumiteSkin(skinName);
-                              String feedbackMsg = skinName.equalsIgnoreCase("off") ? "\u00a7cDISABLED" : "\u00a7e" + skinName;
-                              ((CommandSourceStack)context.getSource()).sendSuccess(() -> Component.literal("\u00a7fViltrumite skin: " + feedbackMsg), false);
+                              ((CommandSourceStack)context.getSource()).sendSuccess(() -> cosmetic("skin", skinName), false);
                               return 1;
                            }))))
                         .then(Commands.literal("cape").then(Commands.argument("name", StringArgumentType.string()).executes(context -> {
@@ -35,8 +35,7 @@ public class CoreCommands {
                            ServerPlayer playerEntity = ((CommandSourceStack)context.getSource()).getPlayerOrException();
                            ViltrumiteCosmeticsPlayer player = (ViltrumiteCosmeticsPlayer)playerEntity;
                            player.setViltrumiteCape(capeName);
-                           String feedbackMsg = capeName.equalsIgnoreCase("off") ? "\u00a7cDISABLED" : "\u00a7e" + capeName;
-                           ((CommandSourceStack)context.getSource()).sendSuccess(() -> Component.literal("\u00a7fViltrumite cape: " + feedbackMsg), false);
+                           ((CommandSourceStack)context.getSource()).sendSuccess(() -> cosmetic("cape", capeName), false);
                            return 1;
                         }))))
                      .then(Commands.literal("model").then(Commands.argument("name", StringArgumentType.string()).executes(context -> {
@@ -45,12 +44,12 @@ public class CoreCommands {
                         ViltrumiteCosmeticsPlayer player = (ViltrumiteCosmeticsPlayer)playerEntity;
                         if (!modelName.equals("default") && !modelName.equals("slim")) {
                            ((CommandSourceStack)context.getSource())
-                              .sendSuccess(() -> Component.literal("\u00a7cInvalid model! Use 'default' or 'slim'."), false);
+                              .sendSuccess(() -> Component.translatable("commands.viltrumitecore.model.invalid").withStyle(ChatFormatting.RED), false);
                            return 0;
                         } else {
                            player.setViltrumiteModel(modelName);
                            ((CommandSourceStack)context.getSource())
-                              .sendSuccess(() -> Component.literal("\u00a7fViltrumite model set to: \u00a7e" + modelName), false);
+                              .sendSuccess(() -> Component.translatable("commands.viltrumitecore.model.set", Component.literal(modelName).withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.WHITE), false);
                            return 1;
                         }
                      }))))
@@ -159,7 +158,7 @@ public class CoreCommands {
    private static int reopenChoice(CommandSourceStack source, ServerPlayer target) {
       ((ViltrumiteCorePlayer)target).setChosenRace(false);
       CoreMessages.sendToPlayer(new OpenRaceScreenS2CPacket(), target);
-      source.sendSuccess(() -> Component.literal("\u00a7fHero choice opened for \u00a7e" + target.getName().getString()), true);
+      source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.choose.opened", target.getDisplayName().copy().withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.WHITE), true);
       return 1;
    }
 
@@ -167,8 +166,8 @@ public class CoreCommands {
       if (target != null) {
          ViltrumiteCorePlayer corePlayer = (ViltrumiteCorePlayer)target;
          corePlayer.setViltrumite(true);
-         target.displayClientMessage(Component.literal("\u00a7fViltrumite powers \u00a7aENABLED"), true);
-         source.sendSuccess(() -> Component.literal("\u00a7fViltrumite powers for \u00a7e" + target.getName().getString() + "\u00a7f: \u00a7aENABLED"), false);
+         target.displayClientMessage(powerSelf(true), true);
+         source.sendSuccess(() -> powerFor(target, true), false);
       }
 
       return 1;
@@ -185,10 +184,31 @@ public class CoreCommands {
          }
 
          corePlayer.setSuperSpeed(false);
-         target.displayClientMessage(Component.literal("\u00a7fViltrumite powers \u00a7cDISABLED"), true);
-         source.sendSuccess(() -> Component.literal("\u00a7fViltrumite powers for \u00a7e" + target.getName().getString() + "\u00a7f: \u00a7cDISABLED"), false);
+         target.displayClientMessage(powerSelf(false), true);
+         source.sendSuccess(() -> powerFor(target, false), false);
       }
 
       return 1;
+   }
+
+   /** "Viltrumite skin/cape: <name>" or "...: disabled" for "off" (localized). */
+   static Component cosmetic(String what, String name) {
+      return name.equalsIgnoreCase("off")
+         ? Component.translatable("commands.viltrumitecore." + what + ".off").withStyle(ChatFormatting.WHITE)
+         : Component.translatable("commands.viltrumitecore." + what + ".set", Component.literal(name).withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.WHITE);
+   }
+
+   private static Component state(boolean on) {
+      return Component.translatable(on ? "commands.viltrumitecore.state.enabled" : "commands.viltrumitecore.state.disabled")
+         .withStyle(on ? ChatFormatting.GREEN : ChatFormatting.RED);
+   }
+
+   private static Component powerSelf(boolean on) {
+      return Component.translatable("commands.viltrumitecore.power.self", state(on)).withStyle(ChatFormatting.WHITE);
+   }
+
+   private static Component powerFor(ServerPlayer target, boolean on) {
+      return Component.translatable("commands.viltrumitecore.power.for", target.getDisplayName().copy().withStyle(ChatFormatting.YELLOW), state(on))
+         .withStyle(ChatFormatting.WHITE);
    }
 }

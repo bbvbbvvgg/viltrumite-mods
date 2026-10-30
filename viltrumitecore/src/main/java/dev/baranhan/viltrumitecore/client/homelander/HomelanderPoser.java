@@ -123,6 +123,8 @@ public final class HomelanderPoser {
       model.leftArm.xRot += rad(38.0F) * roar;
       model.rightArm.zRot += rad(32.0F) * roar;
       model.leftArm.zRot -= rad(32.0F) * roar;
+      // Roar head-up on top of looking up went past the neck (head folded into the back).
+      dev.baranhan.viltrumitecore.client.anim.pose.PoseRig.limitNeck(model);
       model.hat.copyFrom(model.head);
       model.jacket.copyFrom(model.body);
       model.rightSleeve.copyFrom(model.rightArm);

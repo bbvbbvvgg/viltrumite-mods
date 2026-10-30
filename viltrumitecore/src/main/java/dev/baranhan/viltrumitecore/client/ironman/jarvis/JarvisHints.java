@@ -1,13 +1,11 @@
 package dev.baranhan.viltrumitecore.client.ironman.jarvis;
 
-import dev.baranhan.viltrumitecore.client.hero.ClientHeroData;
 import dev.baranhan.viltrumitecore.client.ironman.IronManView;
 import dev.baranhan.viltrumitecore.client.render.vfx.ScreenProjector;
 import dev.baranhan.viltrumitecore.entity.FlareEntity;
 import dev.baranhan.viltrumitecore.entity.MicroMissileEntity;
 import dev.baranhan.viltrumitecore.entity.RepulsorBlastEntity;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
-import dev.baranhan.viltrumitecore.hero.OwnerSection;
 import dev.baranhan.viltrumitecore.hero.ironman.IronManRules;
 import dev.baranhan.viltrumitecore.hero.ironman.jarvis.ThreatScan;
 import net.minecraft.client.Minecraft;
@@ -17,7 +15,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -28,9 +25,9 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 
 /**
- * JARVIS hints (spec §11.1): small marks only, never a big UI. Threat
- * brackets on screen (amber mobs, red players and bosses), edge arrows for
- * threats out of view, red arrows for projectiles whose path passes close,
+ * JARVIS hints (spec §11.1): small marks only, never a big UI. No threat
+ * brackets on mobs (playtest: they read as amber squares hanging in the air);
+ * red marks/edge arrows for projectiles whose path passes close,
  * the subtitle of the current JARVIS line, and short warnings at the left edge.
  * Only with the suit ready and the helmet closed.
  */
@@ -40,7 +37,6 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
    value = {Dist.CLIENT}
 )
 public final class JarvisHints {
-   private static final int AMBER = 0xFFFFB020;
    private static final int RED = 0xFFFF4030;
    private static final int CYAN = 0xFF60E0FF;
 
@@ -64,17 +60,6 @@ public final class JarvisHints {
       int width = graphics.guiWidth();
       int height = graphics.guiHeight();
       float partialTick = event.getPartialTick();
-      boolean firstPerson = client.options.getCameraType().isFirstPerson();
-      for (int id : ClientHeroData.section(OwnerSection.THREATS)) {
-         Entity entity = client.level.getEntity(id);
-         if (entity == null || entity.isRemoved()) {
-            continue;
-         }
-
-         int color = entity instanceof Player || JarvisVoice.critical(entity) ? RED : AMBER;
-         threat(graphics, entity, partialTick, width, height, color, firstPerson);
-      }
-
       Vec3 centre = player.getPosition(partialTick).add(0.0, player.getBbHeight() * 0.5, 0.0);
       double range = IronManRules.THREAT_RANGE;
       for (Entity entity : client.level.getEntities(player, new AABB(centre, centre).inflate(range), e -> e instanceof Projectile)) {
@@ -105,41 +90,6 @@ public final class JarvisHints {
          graphics.fill(x - 4, y - 3, x - 2, y + 11, (a << 24) | (CYAN & 0xFFFFFF));
          graphics.drawString(font, line, x, y, (a << 24) | 0xBFF4FF, false);
       }
-   }
-
-   private static void threat(GuiGraphics graphics, Entity entity, float partialTick, int width, int height, int color, boolean firstPerson) {
-      Vec3 base = entity.getPosition(partialTick);
-      ScreenProjector.Point bottom = ScreenProjector.project(base, width, height);
-      ScreenProjector.Point top = ScreenProjector.project(base.add(0.0, entity.getBbHeight(), 0.0), width, height);
-      if (bottom == null || top == null) {
-         return;
-      }
-
-      if (!bottom.onScreen(width, height) || !top.onScreen(width, height)) {
-         ScreenProjector.Point centre = ScreenProjector.project(base.add(0.0, entity.getBbHeight() * 0.5, 0.0), width, height);
-         if (centre != null) {
-            edgeOrMark(graphics, centre, width, height, color, false);
-         }
-
-         return;
-      }
-
-      float h = Math.max(6.0F, bottom.y() - top.y());
-      float w = Math.max(5.0F, h * (entity.getBbWidth() / Math.max(0.1F, entity.getBbHeight())) * 1.2F);
-      int x0 = Math.round(bottom.x() - w * 0.5F - 2.0F);
-      int x1 = Math.round(bottom.x() + w * 0.5F + 2.0F);
-      int y0 = Math.round(top.y() - 2.0F);
-      int y1 = Math.round(bottom.y() + 2.0F);
-      int arm = Math.max(2, Math.min(6, (x1 - x0) / 4));
-      bracket(graphics, x0, y0, arm, 1, 1, color);
-      bracket(graphics, x1, y0, arm, -1, 1, color);
-      bracket(graphics, x0, y1, arm, 1, -1, color);
-      bracket(graphics, x1, y1, arm, -1, -1, color);
-   }
-
-   private static void bracket(GuiGraphics graphics, int x, int y, int arm, int dx, int dy, int color) {
-      graphics.fill(Math.min(x, x + dx * arm), y, Math.max(x, x + dx * arm) + 1, y + 1, color);
-      graphics.fill(x, Math.min(y, y + dy * arm), x + 1, Math.max(y, y + dy * arm) + 1, color);
    }
 
    /** On screen: a small diamond (projectiles) ; off screen: a triangle at the edge pointing to it. */

@@ -1083,6 +1083,23 @@ public class IronManHero implements HeroDefinition {
    };
 
    @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      IronManState state = IronManState.of(player);
+      if (state == null) {
+         return false;
+      }
+      state.countermeasures.setCooldown(0);
+      state.veronicaCooldown = 0;
+      state.signature.cooldown = 0;
+      state.flyByCooldown = 0;
+      state.repulsor.clearCooldown();
+      state.roster.clearCooldowns();
+      state.hulkbuster.clearCooldown();
+      state.hulkKit.clearCooldowns();
+      return true;
+   }
+
+   @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       IronManState state = IronManState.of(player);
       if (state != null) {

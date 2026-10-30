@@ -1,42 +1,42 @@
 {
   "punch_impact": {
     "category": "player",
-    "subtitle": "Viltrumite punch",
+    "subtitle": "subtitles.viltrumitecore.punch_impact",
     "sounds": [
       "viltrumitecore:punch4"
     ]
   },
   "dash": {
     "category": "player",
-    "subtitle": "Viltrumite dash",
+    "subtitle": "subtitles.viltrumitecore.dash",
     "sounds": [
       "viltrumitecore:dash1"
     ]
   },
   "takeoff": {
     "category": "player",
-    "subtitle": "Viltrumite take-off",
+    "subtitle": "subtitles.viltrumitecore.takeoff",
     "sounds": [
       "viltrumitecore:takeoff1"
     ]
   },
   "block": {
     "category": "player",
-    "subtitle": "Viltrumite block",
+    "subtitle": "subtitles.viltrumitecore.block",
     "sounds": [
       "viltrumitecore:block"
     ]
   },
   "infinity_gun_shoot": {
     "category": "player",
-    "subtitle": "Infinity gun shoot",
+    "subtitle": "subtitles.viltrumitecore.infinity_gun_shoot",
     "sounds": [
       "viltrumitecore:infinity_gun_shoot"
     ]
   },
   "regulus_shard_whiz": {
     "category": "player",
-    "subtitle": "Shard whizzes past",
+    "subtitle": "subtitles.viltrumitecore.regulus_shard_whiz",
     "sounds": [
       "viltrumitecore:regulus/shard_whiz0",
       "viltrumitecore:regulus/shard_whiz1",
@@ -45,7 +45,7 @@
   },
   "regulus_impact_heavy": {
     "category": "player",
-    "subtitle": "Heavy impact",
+    "subtitle": "subtitles.viltrumitecore.regulus_impact_heavy",
     "sounds": [
       "viltrumitecore:regulus/impact_heavy0",
       "viltrumitecore:regulus/impact_heavy1",
@@ -54,7 +54,7 @@
   },
   "regulus_kick_crack": {
     "category": "player",
-    "subtitle": "Ground cracks",
+    "subtitle": "subtitles.viltrumitecore.regulus_kick_crack",
     "sounds": [
       "viltrumitecore:regulus/kick_crack0",
       "viltrumitecore:regulus/kick_crack1",
@@ -63,7 +63,7 @@
   },
   "regulus_air_blade": {
     "category": "player",
-    "subtitle": "Frozen air slices",
+    "subtitle": "subtitles.viltrumitecore.regulus_air_blade",
     "sounds": [
       "viltrumitecore:regulus/air_blade0",
       "viltrumitecore:regulus/air_blade1"
@@ -71,7 +71,7 @@
   },
   "regulus_punch_hit": {
     "category": "player",
-    "subtitle": "Regulus punch",
+    "subtitle": "subtitles.viltrumitecore.regulus_punch_hit",
     "sounds": [
       "viltrumitecore:regulus/punch_hit0",
       "viltrumitecore:regulus/punch_hit1",
@@ -80,7 +80,7 @@
   },
   "regulus_jump_charge": {
     "category": "player",
-    "subtitle": "Regulus gathers strength",
+    "subtitle": "subtitles.viltrumitecore.regulus_jump_charge",
     "sounds": [
       "viltrumitecore:regulus/jump_charge"
     ]

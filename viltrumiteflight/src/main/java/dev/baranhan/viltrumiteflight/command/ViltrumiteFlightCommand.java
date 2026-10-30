@@ -2,6 +2,7 @@ package dev.baranhan.viltrumiteflight.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -39,9 +40,14 @@ public class ViltrumiteFlightCommand {
       }
 
       target.onUpdateAbilities();
-      String stateMsg = !currentFlightState ? "\u00a7aENABLED" : "\u00a7cDISABLED";
-      source.sendSystemMessage(Component.literal("\u00a7fViltrumite flight for \u00a7e" + target.getName().getString() + "\u00a7f: " + stateMsg));
-      target.displayClientMessage(Component.literal("\u00a7fViltrumite flight powers " + stateMsg), true);
+      // Localized by viltrumitecore's lang (commands.viltrumiteflight.*); English fallback when it is absent.
+      boolean on = !currentFlightState;
+      Component state = Component.translatableWithFallback(on ? "commands.viltrumitecore.state.enabled" : "commands.viltrumitecore.state.disabled",
+         on ? "ENABLED" : "DISABLED").withStyle(on ? ChatFormatting.GREEN : ChatFormatting.RED);
+      source.sendSystemMessage(Component.translatableWithFallback("commands.viltrumiteflight.flight.for", "Viltrumite flight for %s: %s",
+         target.getDisplayName().copy().withStyle(ChatFormatting.YELLOW), state).withStyle(ChatFormatting.WHITE));
+      target.displayClientMessage(Component.translatableWithFallback("commands.viltrumiteflight.flight.self", "Viltrumite flight powers %s", state)
+         .withStyle(ChatFormatting.WHITE), true);
       return 1;
    }
 }

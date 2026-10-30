@@ -63,7 +63,7 @@ public class CoreEvents {
       if (event.phase == Phase.END) {
          if (event.level instanceof ServerLevel level) {
             if (level.dimension() == Level.OVERWORLD) {
-               if (!level.players().isEmpty()) {
+               if (ViltrumiteCoreConfig.INSTANCE.worldEventsAutoStart && !level.players().isEmpty()) {
                   WorldEventManager manager = WorldEventManager.get(level);
                   if (manager.activeEvents().isEmpty()) {
                      long cooldownTicks = (long)ViltrumiteCoreConfig.INSTANCE.worldEventCooldownMinutes * 60L * 20L;

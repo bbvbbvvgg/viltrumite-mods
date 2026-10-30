@@ -34,6 +34,18 @@ public final class PersistentCooldowns {
       data.put(Player.PERSISTED_NBT_TAG, persisted);
    }
 
+   /** Debug reset (/hero cooldown reset): every persisted cooldown ends now. */
+   public static void clearAll(ServerPlayer player) {
+      CompoundTag data = player.getPersistentData();
+      if (!data.contains(Player.PERSISTED_NBT_TAG, Tag.TAG_COMPOUND)) {
+         return;
+      }
+
+      CompoundTag persisted = data.getCompound(Player.PERSISTED_NBT_TAG);
+      persisted.remove(KEY);
+      data.put(Player.PERSISTED_NBT_TAG, persisted);
+   }
+
    /** One online tick of every key. */
    public static void tick(ServerPlayer player) {
       CompoundTag data = player.getPersistentData();

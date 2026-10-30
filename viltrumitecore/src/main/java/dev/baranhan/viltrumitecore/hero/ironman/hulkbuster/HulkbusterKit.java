@@ -148,6 +148,15 @@ public final class HulkbusterKit {
       this.motion.reset();
    }
 
+   /** Debug reset: every Hulkbuster ability is ready. */
+   public void clearCooldowns() {
+      this.grabCooldown = 0;
+      this.repulsorsCooldown = 0;
+      this.riftCooldown = 0;
+      this.cageCooldown = 0;
+      this.ultimateCooldown = 0;
+   }
+
    /** Cooldown ticks of an input (HulkbusterControls). */
    public int cooldown(HulkbusterControls.Input input) {
       return switch (input) {

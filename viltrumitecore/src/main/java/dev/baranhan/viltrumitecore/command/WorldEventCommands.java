@@ -10,6 +10,7 @@ import dev.baranhan.viltrumitecore.worldevent.WorldEventManager;
 import dev.baranhan.viltrumitecore.worldevent.WorldEventType;
 import dev.baranhan.viltrumitecore.worldevent.WorldEvents;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -54,7 +55,7 @@ public final class WorldEventCommands {
             .then(Commands.literal("stopall").executes(ctx -> {
                ServerLevel level = ((CommandSourceStack)ctx.getSource()).getLevel();
                WorldEventManager.get(level).stopAll(level);
-               ((CommandSourceStack)ctx.getSource()).sendSuccess(() -> Component.literal("\u00a7fAll world events stopped."), true);
+               ((CommandSourceStack)ctx.getSource()).sendSuccess(() -> Component.translatable("commands.viltrumitecore.event.stopall").withStyle(ChatFormatting.WHITE), true);
                return 1;
             })))
          .then(Commands.literal("list").executes(ctx -> list((CommandSourceStack)ctx.getSource())));
@@ -63,19 +64,19 @@ public final class WorldEventCommands {
    private static int start(CommandSourceStack source, String id, int seconds) {
       WorldEventType type = WorldEvents.byId(id);
       if (type == null) {
-         source.sendFailure(Component.literal("\u00a7cUnknown event: " + id));
+         source.sendFailure(Component.translatable("commands.viltrumitecore.event.unknown", id).withStyle(ChatFormatting.RED));
          return 0;
       } else {
          ServerLevel level = source.getLevel();
          WorldEventManager manager = WorldEventManager.get(level);
          if (manager.isRunning(type)) {
-            source.sendFailure(Component.literal("\u00a7c'" + id + "' is already running."));
+            source.sendFailure(Component.translatable("commands.viltrumitecore.event.already_running", id).withStyle(ChatFormatting.RED));
             return 0;
          } else {
             int warmup = seconds >= 0 ? seconds * 20 : type.defaultWarmupTicks();
             Vec3 origin = source.getPosition();
-            manager.start(level, type, origin, warmup);
-            source.sendSuccess(() -> Component.literal("\u00a7fStarted '" + id + "' \u00a77(" + warmup / 20 + "s countdown)"), true);
+            manager.startManual(level, type, origin, warmup);
+            source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.event.started", id, warmup / 20).withStyle(ChatFormatting.WHITE), true);
             return 1;
          }
       }
@@ -84,15 +85,15 @@ public final class WorldEventCommands {
    private static int stop(CommandSourceStack source, String id) {
       WorldEventType type = WorldEvents.byId(id);
       if (type == null) {
-         source.sendFailure(Component.literal("\u00a7cUnknown event: " + id));
+         source.sendFailure(Component.translatable("commands.viltrumitecore.event.unknown", id).withStyle(ChatFormatting.RED));
          return 0;
       } else {
          ServerLevel level = source.getLevel();
          if (!WorldEventManager.get(level).stop(level, type)) {
-            source.sendFailure(Component.literal("\u00a7c'" + id + "' is not running."));
+            source.sendFailure(Component.translatable("commands.viltrumitecore.event.not_running", id).withStyle(ChatFormatting.RED));
             return 0;
          } else {
-            source.sendSuccess(() -> Component.literal("\u00a7fStopped '" + id + "'."), true);
+            source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.event.stopped", id).withStyle(ChatFormatting.WHITE), true);
             return 1;
          }
       }
@@ -102,12 +103,14 @@ public final class WorldEventCommands {
       ServerLevel level = source.getLevel();
       List<WorldEvent> events = WorldEventManager.get(level).activeEvents();
       if (events.isEmpty()) {
-         source.sendSuccess(() -> Component.literal("\u00a77No active world events."), false);
+         source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.event.none").withStyle(ChatFormatting.GRAY), false);
          return 0;
       } else {
          for (WorldEvent event : events) {
-            String state = event.hasBegun() ? "\u00a7aactive" : "\u00a7e" + Math.round((float)event.warmupTicks() / 20.0F) + "s left";
-            source.sendSuccess(() -> Component.literal("\u00a7f- " + event.type().id() + " \u00a77[" + state + "\u00a77]"), false);
+            Component state = event.hasBegun()
+               ? Component.translatable("commands.viltrumitecore.event.state.active").withStyle(ChatFormatting.GREEN)
+               : Component.translatable("commands.viltrumitecore.event.state.warmup", Math.round((float)event.warmupTicks() / 20.0F)).withStyle(ChatFormatting.YELLOW);
+            source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.event.entry", event.type().id(), state).withStyle(ChatFormatting.WHITE), false);
          }
 
          return events.size();

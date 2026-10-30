@@ -49,7 +49,8 @@ public abstract class AlwaysVisibleOffhandMixin {
    ) {
       if (hand == InteractionHand.OFF_HAND && stack.isEmpty() && !player.isInvisible()) {
          if (!(player.getMainHandItem().getItem() instanceof InfinityGunItem)) {
-            boolean shouldRender = ViltrumiteClientConfig.INSTANCE.alwaysRenderOffhand;
+            boolean shouldRender = ViltrumiteClientConfig.INSTANCE.alwaysRenderOffhand
+               && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).showsIdleOffhand(player);
             if (!shouldRender && player instanceof ViltrumiteCorePlayer corePlayer) {
                boolean isBlocking = corePlayer.isBlocking();
                boolean isGrabbing = corePlayer.isTryingToGrab() || corePlayer.getGrabbedTarget() != null;
