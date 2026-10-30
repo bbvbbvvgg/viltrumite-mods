@@ -28,7 +28,7 @@ public final class CitizenSkinPainter {
       new Outfit(TONES[6], 0xD8B46A, Hair.PONYTAIL, false, 0xC23B4E, 0xF2F2F2, Top.DRESS, 0xC23B4E, Bottom.SKIRT, 0x2A1A12),
       new Outfit(TONES[2], 0x241A14, Hair.SHORT, true, 0x5E7A4A, 0x2B2B2B, Top.JACKET, 0x3C3C40, Bottom.TROUSERS, 0x4A3222),
       new Outfit(TONES[4], 0x120E0C, Hair.CURLY, false, 0xF0C64A, 0xFFFFFF, Top.TEE, 0x3B4E7A, Bottom.JEANS, 0xF2F2F2),
-      new Outfit(TONES[0], 0x8A8A8A, Hair.BALD, true, 0x54575C, 0xE9E6DF, Top.SUIT, 0x54575C, Bottom.TROUSERS, 0x2A1A10),
+      new Outfit(TONES[0], 0x8A8A8A, Hair.BALD, true, 0x54575C, 0x2E4A7A, Top.SUIT, 0x54575C, Bottom.TROUSERS, 0x2A1A10),
       new Outfit(TONES[7], 0x2A1C14, Hair.BOB, false, 0x22262C, 0x8A1C2C, Top.SUIT, 0x22262C, Bottom.SKIRT, 0x101010),
       new Outfit(TONES[5], 0x0E0B0A, Hair.CAP, false, 0x2F6FB0, 0xF2F2F2, Top.TEE, 0x7A6A55, Bottom.SHORTS, 0x2B2B2B),
       new Outfit(TONES[2], 0x1C1410, Hair.LONG, false, 0x6C4A8E, 0x2A2A2A, Top.HOODIE, 0x1E1E22, Bottom.LEGGINGS, 0xEDEDED),
