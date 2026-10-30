@@ -240,6 +240,25 @@ public final class HeroDamageLayers {
       return finalDamageInScope(target(player, source), bypassesLayers(source), afterArmor);
    }
 
+   /**
+    * Every hit aimed at a living target, before any layer can cancel it
+    * (LivingAttackEvent and the direct path): the hero target's
+    * {@link HeroDefinition#onAttacked} and the hero attacker's
+    * {@link HeroDefinition#onAttacking}. Indirect sources (arrows, beams)
+    * count through their owner.
+    */
+   public static void notifyAttack(LivingEntity target, DamageSource source) {
+      if (target.level().isClientSide() || !(source.getEntity() instanceof LivingEntity attacker) || attacker == target) {
+         return;
+      }
+      if (target instanceof ServerPlayer self) {
+         HeroRegistry.get(self).onAttacked(self, attacker, source);
+      }
+      if (attacker instanceof ServerPlayer hero) {
+         HeroRegistry.get(hero).onAttacking(hero, target, source);
+      }
+   }
+
    /** Direct path used by {@link HeroDamage#applyCleanDamage}. */
    public static float onClean(LivingEntity target, DamageSource source, float amount) {
       Target layers = target instanceof ServerPlayer player ? target(player, source) : NO_LAYERS;

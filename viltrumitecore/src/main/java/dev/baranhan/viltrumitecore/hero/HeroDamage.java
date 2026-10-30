@@ -201,6 +201,7 @@ public final class HeroDamage {
 
       if (isProtected(target)) return;
 
+      HeroDamageLayers.notifyAttack(target, source);
       // No Forge damage event fires on this path: run the hero layers here, once.
       amount = HeroDamageLayers.onClean(target, source, amount);
       if (amount <= 0.0F) {

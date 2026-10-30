@@ -380,6 +380,22 @@ public interface HeroDefinition {
    default void onAirStep(ServerPlayer player) {
    }
 
+   /**
+    * Server: a living {@code attacker} aimed a hit at this hero. Fires for every
+    * hit, also one that an absorb layer cancels and one on the direct path
+    * ({@link HeroDamage#applyCleanDamage}), which fires no Forge event and so
+    * never reaches {@link #onHurt}. No damage is decided here.
+    */
+   default void onAttacked(ServerPlayer self, LivingEntity attacker, net.minecraft.world.damagesource.DamageSource source) {
+   }
+
+   /**
+    * Server: this hero aimed a hit at {@code target} (same coverage as
+    * {@link #onAttacked}: absorbed, blocked and direct hits included).
+    */
+   default void onAttacking(ServerPlayer self, LivingEntity target, net.minecraft.world.damagesource.DamageSource source) {
+   }
+
    /** Server: this hero player took damage (after armor, before health change). */
    default void onHurt(ServerPlayer player, net.minecraft.world.damagesource.DamageSource source, float amount) {
    }
