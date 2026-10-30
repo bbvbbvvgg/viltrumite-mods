@@ -80,8 +80,9 @@ class SinclairLangTest {
    void everyLocaleHasEveryKey() throws IOException {
       List<String> keys = requiredKeys();
       // Base 78; #92 adds 8 (six act descriptions, card_title, card_from) = 86; #91 adds 51 (copy cinematic, cinematic
-      // command, act parts, own-namespace subtitles) = 129; both together: 78 + 8 + 51 = 137.
-      assertEquals(137, keys.size(), "key table changed: update tools/lang/sinclair_lang.py");
+      // command, act parts, own-namespace subtitles) = 129; both together: 78 + 8 + 51 = 137;
+      // the global subtitles expansion adds 6 lines (summon_b, hex_b, snap_b, kill, low_health, enter) = 143.
+      assertEquals(143, keys.size(), "key table changed: update tools/lang/sinclair_lang.py");
       for (String locale : LOCALES) {
          JsonObject lang = read(OWN_LANG.resolve(locale + ".json"));
          for (String key : keys) {
