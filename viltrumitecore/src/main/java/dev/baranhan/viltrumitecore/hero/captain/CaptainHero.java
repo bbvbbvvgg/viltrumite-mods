@@ -130,6 +130,18 @@ public final class CaptainHero implements HeroDefinition {
       return false;
    }
 
+   /** Items and interactive things own RMB (the wish, food, chests, doors, villagers); see {@link CaptainUse}. */
+   @Override
+   public boolean yieldsToVanillaUse(Player player) {
+      return CaptainUse.yields(player);
+   }
+
+   /** A plain block under the crosshair does not stop the shield block; an interactive one (chest, door) does. */
+   @Override
+   public boolean claimsBlockUse(Player player) {
+      return !CaptainUse.yields(player);
+   }
+
    @Override
    public HeroAction mouseAction(MouseButton button, Player player) {
       return switch (button) {
