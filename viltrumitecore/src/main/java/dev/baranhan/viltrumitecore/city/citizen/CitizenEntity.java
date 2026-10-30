@@ -197,6 +197,12 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       return false;
    }
 
+   /** Never step down more than one block: bridge and terrace edges are not exits. */
+   @Override
+   public int getMaxFallDistance() {
+      return 1;
+   }
+
    @Override
    public boolean canBeLeashed(Player player) {
       return false;
