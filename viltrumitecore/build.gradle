@@ -31,7 +31,12 @@ minecraft {
                 viltrumiteflight { source project(':viltrumiteflight').sourceSets.main }
             }
         }
-        client {}
+        client {
+            // dev shortcut: ./gradlew runClient -Pquickplay=<save folder> opens that world directly
+            if (project.hasProperty('quickplay')) {
+                args '--quickPlaySingleplayer', project.property('quickplay')
+            }
+        }
         server { args '--nogui' }
     }
 }

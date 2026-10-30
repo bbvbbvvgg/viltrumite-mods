@@ -4,15 +4,18 @@
   without the "made for a newer version" warning;
 - assets/minecraft/shaders/core is dropped: core shader sources are version specific
   and a 1.21 shader breaks 1.20.1 entity rendering;
-- Windows/OneNote junk (Thumbs.db, *.onetoc2) is dropped.
+- Windows/OneNote junk (Thumbs.db, *.onetoc2) is dropped, and so are files under assets/
+  whose names are not valid resource locations (e.g. "white_carpet - kopia.json", a stray
+  Windows copy): Minecraft ignores them anyway and logs a warning for each.
 Textures, block and item models and sounds are copied unchanged (same formats in 1.20.1).
 
 Usage: python3 resourcepack.py <Atheria Resource Pack.zip> <out resources.zip>
 """
-import json, sys, zipfile
+import json, re, sys, zipfile
 
 DROP_PREFIX = ('assets/minecraft/shaders/core/',)
 DROP_NAME = ('thumbs.db', '.onetoc2', '.ds_store', 'desktop.ini')
+VALID = re.compile(r'^assets/[a-z0-9_.-]+/[a-z0-9_./-]+$')
 
 def main(src, dst):
     kept = dropped = 0
@@ -27,7 +30,8 @@ def main(src, dst):
                 continue
             rel = n[len(root):]
             low = rel.lower()
-            if rel.startswith(DROP_PREFIX) or low.endswith(DROP_NAME) or 'onenote table' in low:
+            if rel.startswith(DROP_PREFIX) or low.endswith(DROP_NAME) or 'onenote table' in low or \
+                    (rel.startswith('assets/') and not VALID.match(rel)):
                 dropped += 1
                 continue
             data = zi.read(n)

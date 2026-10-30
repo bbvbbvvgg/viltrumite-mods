@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
@@ -250,17 +252,27 @@ public final class CityManager {
          return;
       }
 
-      long ck = ChangeJournal.chunkKey(pos.getX() >> 4, pos.getZ() >> 4);
-      double[] b = m.bursts.get(ck);
-      if (b == null) {
-         b = new double[4];
-         m.bursts.put(ck, b);
+      boolean sameBlock = old.getBlock() == next.getBlock();
+      if (sameBlock && ambientOnly(old, next)) {
+         // daylight detectors, redstone power, leaf distance, crop growth...: the map living on its own
+         return;
       }
 
-      b[0] += pos.getX();
-      b[1] += pos.getY();
-      b[2] += pos.getZ();
-      b[3]++;
+      if (!sameBlock) {
+         // only real block replacements count as destruction for the danger heuristic
+         long ck = ChangeJournal.chunkKey(pos.getX() >> 4, pos.getZ() >> 4);
+         double[] b = m.bursts.get(ck);
+         if (b == null) {
+            b = new double[4];
+            m.bursts.put(ck, b);
+         }
+
+         b[0] += pos.getX();
+         b[1] += pos.getY();
+         b[2] += pos.getZ();
+         b[3]++;
+      }
+
       if (m.journal.contains(pos)) {
          return;
       }
@@ -278,6 +290,22 @@ public final class CityManager {
       }
 
       m.journal.record(pos.immutable(), old, be);
+   }
+
+   /** Properties that change by themselves (time of day, redstone, growth, leaf decay distance). */
+   private static final Set<String> AMBIENT = Set.of("power", "powered", "lit", "distance", "moisture", "age", "triggered",
+      "enabled", "signal_fire", "snowy", "stage", "bites", "level", "honey_level", "eggs", "hatch", "berries", "pickles",
+      "sculk_sensor_phase", "bloom", "shrieking", "can_summon", "note", "instrument", "tilt", "has_record", "has_book");
+
+   /** True when every property that differs between the two states of one block is an ambient one. */
+   static boolean ambientOnly(BlockState old, BlockState next) {
+      for (Map.Entry<Property<?>, Comparable<?>> e : old.getValues().entrySet()) {
+         if (!e.getValue().equals(next.getValue(e.getKey())) && !AMBIENT.contains(e.getKey().getName())) {
+            return false;
+         }
+      }
+
+      return true;
    }
 
    // ------------------------------------------------------------------ tick
