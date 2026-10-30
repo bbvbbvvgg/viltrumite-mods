@@ -132,6 +132,12 @@ public final class RegulusCombat {
          return false;
       }
 
+      // adventure mode, claims and protection mods: the same gates as his own hand breaking it
+      if (self.blockActionRestricted(level, pos, self.gameMode.getGameModeForPlayer())
+         || net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.level.BlockEvent.BreakEvent(level, pos, state, self))) {
+         return false;
+      }
+
       if (!HeroDestruction.destroyBlock(level, pos)) {
          return false;
       }

@@ -1,8 +1,7 @@
 {
   "hero.viltrumitecore.regulus": "Regulus Corneas",
   "subtitle.viltrumitecore.speaker.regulus": "Regulus",
-  "key.viltrumitecore.assign_heart": "Regulus: Kleiner König",
-  "scan.viltrumitecore.regulus.lion_heart": "Löwenherz: seine Zeit steht still — nichts erreicht ihn",
+  "scan.viltrumitecore.regulus.stopped_time": "Löwenherz: seine Zeit steht still — nichts erreicht ihn",
   "ability.viltrumitecore.regulus_lions_heart.name": "<gold>Löwenherz",
   "ability.viltrumitecore.regulus_lions_heart.desc": "<grey>Abklingzeit: <lime>1 s\n<grey>Typ: <yellow>Umschalten\n\n<grey>Halte deine eigene Zeit an. Kein Schaden, Stoß\n<grey>oder Effekt erreicht dich; 30% eines Schlags prallen\n<grey>auf den Angreifer zurück, Geschosse erstarren.\n<grey>Auch dein Herz steht still: ohne lebenden Wirt\n<grey>(Kleiner König) steigt die Last, nach ~5 s\n<grey>verkrampft das Herz (Löwe 8 s gesperrt).\n\n<blue>Regulus",
   "ability.viltrumitecore.regulus_stopped_sand.name": "<gold>Erstarrter Sand",

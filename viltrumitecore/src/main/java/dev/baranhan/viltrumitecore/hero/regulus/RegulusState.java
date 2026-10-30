@@ -43,6 +43,7 @@ public final class RegulusState {
    public int lionTicks;
    float lionHealth;
    public int recoilGap;
+   float stepAt;
    public int recoilPulse;
 
    // Greed's Touch
@@ -180,6 +181,7 @@ public final class RegulusState {
       this.moveTick = 0;
       this.lion = false;
       this.lionTicks = 0;
+      this.stepAt = 0.0F;
       this.comboStep = -1;
       this.chainLeft = 0;
       this.touchQueued = false;
