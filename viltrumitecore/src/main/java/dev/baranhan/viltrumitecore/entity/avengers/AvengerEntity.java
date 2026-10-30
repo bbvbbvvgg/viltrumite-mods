@@ -270,11 +270,28 @@ public class AvengerEntity extends PathfinderMob {
       if (target == this || !target.isAlive() || this.isAlliedTo(target) || HeroDamage.isProtected(target)) {
          return false;
       }
-      if (target instanceof net.minecraft.world.entity.npc.AbstractVillager || target instanceof net.minecraft.world.entity.animal.IronGolem
-         || target instanceof net.minecraft.world.entity.animal.SnowGolem) {
+      if (target instanceof net.minecraft.world.entity.npc.AbstractVillager) {
          return false;
       }
+      if ((target instanceof net.minecraft.world.entity.animal.AbstractGolem) && !this.turnedOnTeam(target)) {
+         return false; // village guards are spared until they turn on Steve or the team
+      }
       return CaptainTargets.mayHit(this.owner(), target);
+   }
+
+   /** The mob hunts Steve or the team, is angry at Steve, hit Steve lately, or Steve struck it himself. */
+   public boolean turnedOnTeam(LivingEntity e) {
+      ServerPlayer owner = this.owner();
+      if (owner == null) {
+         return false;
+      }
+      LivingEntity hunted = e instanceof net.minecraft.world.entity.Mob mob ? mob.getTarget() : null;
+      boolean huntsTeam = hunted != null && hunted.isAlive() && this.isAlliedTo(hunted);
+      boolean angry = e instanceof net.minecraft.world.entity.NeutralMob n && n.isAngryAt(owner);
+      dev.baranhan.viltrumitecore.hero.captain.CaptainState state = dev.baranhan.viltrumitecore.hero.captain.CaptainState.of(owner);
+      boolean hitOwner = state != null && state.lastAttackerTicks > 0 && state.lastAttackerId == e.getId();
+      boolean marked = state != null && state.markTicks > 0 && e.getUUID().equals(state.markTarget);
+      return AvengerBrain.hostileToTeam(huntsTeam, angry, hitOwner, marked);
    }
 
    @Override

@@ -210,6 +210,11 @@ public abstract class AvengerBrain {
       return s;
    }
 
+   /** Pure: a normally spared mob (golem, wolf...) becomes a legal target. */
+   static boolean hostileToTeam(boolean huntsTeam, boolean angryAtOwner, boolean hitOwner, boolean markedByOwner) {
+      return huntsTeam || angryAtOwner || hitOwner || markedByOwner;
+   }
+
    private boolean usable(ServerPlayer owner, LivingEntity e) {
       return e.isAlive() && this.self.mayHit(e) && e.distanceToSqr(owner) < CaptainRules.LEASH * CaptainRules.LEASH * 1.4;
    }
@@ -230,13 +235,12 @@ public abstract class AvengerBrain {
       return best;
    }
 
-   /** A monster, or any mob that hunts Steve or one of the team. */
+   /** A monster, or any mob (golems, wolves, bees, piglins...) that hunts or is angry at Steve or the team. */
    protected boolean hostile(LivingEntity e) {
       if (e instanceof Enemy) {
          return true;
       }
-      LivingEntity hunted = e instanceof Mob mob ? mob.getTarget() : null;
-      return hunted != null && hunted.isAlive() && this.self.isAlliedTo(hunted);
+      return this.self.turnedOnTeam(e);
    }
 
    protected List<LivingEntity> enemiesAround(Vec3 at, double radius) {
@@ -308,7 +312,7 @@ public abstract class AvengerBrain {
    protected int taunt(double radius) {
       int n = 0;
       for (Mob m : this.self.level().getEntitiesOfClass(Mob.class, this.self.getBoundingBox().inflate(radius),
-         m -> m instanceof Enemy && this.self.mayHit(m))) {
+         m -> (m instanceof Enemy || this.self.turnedOnTeam(m)) && this.self.mayHit(m))) {
          m.setTarget(this.self);
          n++;
       }
