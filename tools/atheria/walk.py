@@ -12,7 +12,9 @@ Algorithm (per region, with a 64-block halo from the neighbour regions):
  3. flood fill from the seeds across steps of at most one block, so ramps, stairs and
     hills stay connected while roofs, separated by walls, never join;
  4. small isolated pieces (yards, pockets between walls) are dropped;
- 5. class: roads and road markings are WALK (crossable), everything else is PREFERRED
+ 5. only the built-up area counts: tiles of 16x16 with at least a quarter of road or pavement
+    surfaces, grown by 32 blocks (urban_mask);
+ 6. class: roads and road markings are WALK (crossable), everything else is PREFERRED
     (sidewalks, plazas, parks: spawn and stroll targets).
 Water, lava, fire, magma and every column without two blocks of headroom were already
 rejected by stage 1. Material is only a hint for the class, the geometry decides.
@@ -32,6 +34,10 @@ GROUND_PCT = 20          # percentile of surface heights that is "the street"
 SEED_LO, SEED_HI = -2, 3  # half blocks around the local ground (-1 .. +1.5 blocks)
 STEP = 2                 # max step between neighbour cells, half blocks (one block)
 MIN_PIECE = 48           # cells
+ANCHOR_RANGE = 900       # blocks, district anchor reach
+URBAN_TILE = 16          # blocks per urban-mask tile
+URBAN_MIN = 0.25         # share of road/pavement/marking surfaces that makes a tile "built"
+URBAN_GROW = 2           # tiles added around built tiles (parks, yards, beaches next to streets)
 
 def load(cols, rx, rz):
     f = os.path.join(cols, 'r.%d.%d.npz' % (rx, rz))
@@ -79,8 +85,19 @@ def ground_level(H):
     g = np.repeat(np.repeat(g, T, 0), T, 1)
     return g
 
+def urban_mask(M):
+    """Built-up area: tiles with enough road/pavement surfaces, grown by a margin. Keeps the
+    pedestrians in the city instead of the forests, mountains and fields around it."""
+    S = M.shape[0]; T = URBAN_TILE; n = S // T
+    built = np.isin(M[:n * T, :n * T], (M_ROAD, M_PAVE, M_MARK)).reshape(n, T, n, T).mean((1, 3)) >= URBAN_MIN
+    k = 2 * URBAN_GROW + 1
+    grown = cv2.dilate(built.astype(np.uint8), np.ones((k, k), np.uint8)) > 0
+    out = np.zeros(M.shape, bool)
+    out[:n * T, :n * T] = np.repeat(np.repeat(grown, T, 0), T, 1)
+    return out
+
 def network(H, M):
-    valid = H != NONE
+    valid = (H != NONE) & urban_mask(M)
     g = ground_level(H)
     d = H.astype(np.float32) - g
     seeds = valid & ~np.isnan(g) & (d >= SEED_LO) & (d <= SEED_HI)
@@ -151,13 +168,13 @@ def main():
         C = network(H, M)[HALO:HALO + 512, HALO:HALO + 512]
         Hr = H[HALO:HALO + 512, HALO:HALO + 512]
         n, p = write_tile(os.path.join(wd, 'r.%d.%d.bin' % (rx, rz)), Hr, C)
-        total += n; pref += p
+        total += int(n); pref += int(p)
         if n:
             zz, xx = np.nonzero(C)
             bx, bz = rx * 512, rz * 512
-            bounds = [min(bounds[0], bx + xx.min()), min(bounds[1], bz + zz.min()), max(bounds[2], bx + xx.max()), max(bounds[3], bz + zz.max())]
+            bounds = [int(min(bounds[0], bx + xx.min())), int(min(bounds[1], bz + zz.min())), int(max(bounds[2], bx + xx.max())), int(max(bounds[3], bz + zz.max()))]
             for q, cnt in collections.Counter(zip((bx + xx) >> 7, (bz + zz) >> 7)).items():
-                density[q] = cnt
+                density[(int(q[0]), int(q[1]))] = int(cnt)
         if k % 25 == 0:
             print('%d/%d regions, %d cells' % (k, len(regs), total), flush=True)
     # arena: every region that has chunks (the whole map), full build height
@@ -165,7 +182,7 @@ def main():
                for f in glob.glob(os.path.join(a.world, 'region', 'r.*.mca')) if os.path.getsize(f) >= 8192]
     ax0 = min(r[0] for r in present) * 512; az0 = min(r[1] for r in present) * 512
     ax1 = max(r[0] for r in present) * 512 + 511; az1 = max(r[1] for r in present) * 512 + 511
-    districts = make_districts(density, a.districts)
+    districts = make_districts(density, a.districts, a.name)
     prof = {
         'format': 1, 'id': a.id, 'name': a.name, 'mapVersion': a.version, 'dimension': 'minecraft:overworld',
         'arena': {'minX': ax0, 'minY': -64, 'minZ': az0, 'maxX': ax1, 'maxY': 1023, 'maxZ': az1},
@@ -177,40 +194,45 @@ def main():
     json.dump(prof, open(os.path.join(out, 'profile.json'), 'w'), indent=1)
     print('done: %d cells (%d preferred), %d districts' % (total, pref, len(districts)))
 
-def make_districts(density, anchors_file):
-    """Districts = connected groups of dense 128x128 blocks; named after the nearest anchor."""
+def make_districts(density, anchors_file, city):
+    """Districts from the dense 128x128 blocks. With anchors ({name, x, z}, e.g. read from the
+    map's signs) every block joins the nearest anchor within ANCHOR_RANGE; the rest is named
+    after the city. Each connected group of same-named blocks becomes one box; boxes are
+    sorted smallest first so that the lookup (first box containing the point) prefers the
+    most specific one."""
     if not density:
         return []
+    anchors = json.load(open(anchors_file)) if anchors_file else []
     ks = np.array(list(density.keys())); x0, z0 = ks.min(0); x1, z1 = ks.max(0)
-    grid = np.zeros((z1 - z0 + 1, x1 - x0 + 1), np.int32)
+    grid = np.zeros((z1 - z0 + 1, x1 - x0 + 1), np.int64)
     for (qx, qz), c in density.items():
         grid[qz - z0, qx - x0] = c
-    dense = (grid >= 1500).astype(np.uint8)
-    dense = cv2.dilate(dense, np.ones((3, 3), np.uint8))
-    n, lab, stats, _ = cv2.connectedComponentsWithStats(dense, connectivity=8)
-    anchors = json.load(open(anchors_file)) if anchors_file else []
+    dense = grid >= 1500
+    owner = np.full(grid.shape, -1, np.int32)
+    zz, xx = np.nonzero(dense)
+    for z, x in zip(zz, xx):
+        cx = (x + x0) * 128 + 64; cz = (z + z0) * 128 + 64
+        best = ANCHOR_RANGE ** 2; o = len(anchors)
+        for ai, an in enumerate(anchors):
+            dd = (an['x'] - cx) ** 2 + (an['z'] - cz) ** 2
+            if dd < best:
+                best = dd; o = ai
+        owner[z, x] = o
     out = []
-    for i in range(1, n):
-        zz, xx = np.nonzero((lab == i) & (grid > 0))
-        if len(zz) < 4:
+    for o in range(len(anchors) + 1):
+        m = (owner == o).astype(np.uint8)
+        if not m.any():
             continue
-        cells = int(grid[zz, xx].sum())
-        bx0 = int((xx.min() + x0) * 128); bz0 = int((zz.min() + z0) * 128)
-        bx1 = int((xx.max() + x0) * 128 + 127); bz1 = int((zz.max() + z0) * 128 + 127)
-        cx = (bx0 + bx1) / 2; cz = (bz0 + bz1) / 2
-        name = None; best = 1e18
-        for an in anchors:
-            if bx0 - 64 <= an['x'] <= bx1 + 64 and bz0 - 64 <= an['z'] <= bz1 + 64:
-                dd = (an['x'] - cx) ** 2 + (an['z'] - cz) ** 2
-                if dd < best:
-                    best = dd; name = an['name']
-        out.append({'name': name, 'minX': bx0, 'minZ': bz0, 'maxX': bx1, 'maxZ': bz1, 'walkCells': cells})
-    out.sort(key=lambda d: -d['walkCells'])
-    seen = collections.Counter()
-    for i, d in enumerate(out):
-        base = d['name'] or 'District %d' % (i + 1)
-        seen[base] += 1
-        d['name'] = base if seen[base] == 1 else '%s %d' % (base, seen[base])
+        n, lab, stats, _ = cv2.connectedComponentsWithStats(m, connectivity=8)
+        for i in range(1, n):
+            cz, cx = np.nonzero((lab == i) & (owner == o))
+            if len(cz) < 2:
+                continue
+            out.append({'name': anchors[o]['name'] if o < len(anchors) else city,
+                        'minX': int((cx.min() + x0) * 128), 'minZ': int((cz.min() + z0) * 128),
+                        'maxX': int((cx.max() + x0) * 128 + 127), 'maxZ': int((cz.max() + z0) * 128 + 127),
+                        'walkCells': int(grid[cz, cx].sum())})
+    out.sort(key=lambda d: (d['maxX'] - d['minX']) * (d['maxZ'] - d['minZ']))
     return out
 
 if __name__ == '__main__':
