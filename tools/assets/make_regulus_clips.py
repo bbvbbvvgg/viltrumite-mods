@@ -191,7 +191,7 @@ def P(*parts, **bones):
 # the calm, upright stance: chest out, chin up, arms loose and slightly away from the coat
 UPPER_REST = P(arm("right", Z, [3, 4, 7], [-10, 0, 0], [0, 6, 0]), arm("left", Z, [3, 4, 7], [-10, 0, 0], [0, 6, 0]),
                torso=[-2, 0, 0], chest=[-2, 0, 0], neck=[2, 0, 0], head=[-5, 0, 0], hand_r="relaxed", hand_l="relaxed")
-# hands folded behind the back (procession, the walk of a king)
+# hands folded behind the back (trample, a king does not need his hands)
 BEHIND = P(arm("right", [0, 0, -2], [24, 18, 10], [-62, 0, 0], [0, 40, -20]), arm("left", [0, 0, -2], [26, 18, 10], [-58, 0, 0], [0, 40, -20]),
            hand_r="relaxed", hand_l="claw")
 
@@ -625,18 +625,28 @@ def air_cut(vertical):
     return c
 
 
-def procession():
-    """Walks through everything: a straight-backed glide, hands folded behind, feet together."""
-    c = Clip(50)
-    st = Stance(right=(-1.7, -0.3), left=(1.7, 0.5), hips_pos=(0, -0.15, 0))
-    st.hip(25, (0, -0.1, 0)).hip(50, (0, -0.15, 0))
-    st.bake(c, (0, 25, 50))
-    glide = rest(torso=[4, 0, 0], chest=[-4, 0, 0], neck=[2, 0, 0], head=[-8, 0, 0], **BEHIND)
-    c.poses([(0, rest()), (6, glide), (44, rest(**{**glide, "head": [-9, 0, 0]})), (50, rest())])
-    for t, k in ((0, 0), (8, 1), (42, 1), (50, 0)):
-        c.key("coat_back", "rotation", t, [22 * k, 0, 0]).key("coat_back_lower", "rotation", t, [16 * k, 0, 0])
-        c.key("coat_front_r", "rotation", t, [10 * k, 0, 4 * k]).key("coat_front_l", "rotation", t, [10 * k, 0, -4 * k])
-        c.key("hair", "rotation", t, [8 * k, 0, 0]).key("hair_back", "rotation", t, [10 * k, 0, 0])
+def trample():
+    """Trample: the right knee rises high and the heel comes down at tick 8; the whole body
+    sinks into the stamp, the coat and hair jump with the shock, hands stay behind the back."""
+    c = Clip(22)
+    st = stance_default().step("right", 1, 8, -2.1, -1.2, lift=5.6)
+    st.hip(5, (0, 0.2, 0.3), (0, -4, 0)).hip(8, (0, -0.9, -0.5), (0, 2, 0)).hip(10, (0, -1.6, -0.6), (0, 2, 0))
+    st.hip(13, (0, -1.4, -0.5), (0, 2, 0)).hip(19, (0, -0.4, -0.2), (0, 0, 0)).hip(22, (0, -0.2, 0))
+    st.bake(c, every(0, 22, 1))
+    lift = rest(torso=[-6, -4, 0], chest=[-4, -2, 0], neck=[2, 0, 0], head=[-10, 4, 0], **BEHIND)
+    stamp = rest(torso=[10, 2, 0], chest=[6, 0, 0], neck=[0, 0, 0], head=[-14, 0, 0], **BEHIND)
+    c.poses([(0, rest()), (4, lift), (7, rest(**{**lift, "torso": [-2, -2, 0]})), (9, stamp),
+             (13, rest(**{**stamp, "torso": [7, 2, 0], "head": [-12, 0, 0]})), (22, rest())])
+    # the shock: coat panels and hair jump on top of the leg-following coat keys
+    jolt = {0: 0, 7: -0.3, 8: 0.4, 9: 1, 10: 0.8, 12: 0.5, 16: 0.15, 22: 0}
+    for t in range(0, 23):
+        ks = sorted(jolt)
+        k = next(jolt[a] + (jolt[b] - jolt[a]) * (t - a) / (b - a) for a, b in zip(ks, ks[1:]) if a <= t <= b)
+        for bone, amp in (("coat_back", 22), ("coat_back_lower", 16), ("coat_front_r", 8), ("coat_front_l", 8)):
+            r = c.tracks[bone]["rotation"][t]
+            c.key(bone, "rotation", t, [r[0] + amp * k, r[1], r[2]])
+    for t, k in ((0, 0), (7, -0.3), (9, 1), (12, 0.5), (16, 0.15), (22, 0)):
+        c.key("hair", "rotation", t, [-6 * k, 0, 0]).key("hair_back", "rotation", t, [12 * k, 0, 0])
     return c
 
 
@@ -749,7 +759,7 @@ def ult():
 def moves():
     return {"lion_on": lion_on(), "lion_off": lion_off(), "seizure": seizure(), "touch_backhand": touch_backhand(),
             "touch_palm": touch_palm(), "touch_flick": touch_flick(), "sand": sand(), "air_cut": air_cut(False),
-            "air_cut_vertical": air_cut(True), "procession": procession(), "reply": reply(), "reply_strike": reply_strike(),
+            "air_cut_vertical": air_cut(True), "trample": trample(), "reply": reply(), "reply_strike": reply_strike(),
             "little_king": little_king(), "refuse": refuse(), "ult": ult()}
 
 
@@ -812,8 +822,9 @@ def fp_clips():
                                 (13, fp_rest(**fp("right", [-160, 0, 8], [-20, 0, 0], [0, -90, 0]), hand_r="palm")),
                                 (15, fp_rest(**fp("right", [-50, 0, 8], [-8, 0, 0], [0, -90, 0]), **fp("left", [-20, 0, 14], [-30, 0, 0], Z))),
                                 (19, fp_rest(**fp("right", [-40, 0, 10], [-10, 0, 0], [0, -90, 0]))), (26, fp_rest())])
-    mk("procession", 50, [(0, fp_rest()), (6, fp_rest(**fp("right", [-20, 10, 4], [-30, 0, 0], Z), **fp("left", [-20, 0, 10], [-30, 0, 0], Z))),
-                          (44, fp_rest(**fp("right", [-20, 10, 4], [-30, 0, 0], Z), **fp("left", [-20, 0, 10], [-30, 0, 0], Z))), (50, fp_rest())])
+    brace = fp_rest(**fp("right", [-30, 14, 10], [-36, 0, 0], Z), **fp("left", [-30, 4, 14], [-36, 0, 0], Z))
+    mk("trample", 22, [(0, fp_rest()), (6, brace), (8, fp_rest(**fp("right", [-22, 18, 16], [-30, 0, 0], Z), **fp("left", [-22, 8, 20], [-30, 0, 0], Z))),
+                       (12, brace), (22, fp_rest())])
     hold = fp_rest(**fp("right", [-94, -4, 6], [-8, 0, 0], [-70, 0, 0]), hand_r="palm")
     mk("reply", 16, [(0, fp_rest()), (4, hold), (14, hold), (16, fp_rest())])
     mk("reply_strike", 10, [(0, hold), (2, fp_rest(**fp("right", [-66, 20, 0], [-80, 0, 0], [-60, 0, 0]), hand_r="palm")),
@@ -859,7 +870,7 @@ def files():
     add("regulus_moves_a", {k: mv[k] for k in ("lion_on", "lion_off", "seizure")})
     add("regulus_touch", {k: mv[k] for k in ("touch_backhand", "touch_palm", "touch_flick")})
     add("regulus_moves_b", {k: mv[k] for k in ("sand", "air_cut", "air_cut_vertical")})
-    add("regulus_moves_c", {k: mv[k] for k in ("procession", "reply", "reply_strike", "little_king", "refuse")})
+    add("regulus_moves_c", {k: mv[k] for k in ("trample", "reply", "reply_strike", "little_king", "refuse")})
     add("regulus_ult", {"ult": mv["ult"]})
     fp_a = ("fp_idle", "fp_lion_on", "fp_lion_off", "fp_seizure", "fp_touch_backhand", "fp_touch_palm", "fp_touch_flick", "fp_sand")
     add("regulus_fp", {k: f[k] for k in fp_a})
