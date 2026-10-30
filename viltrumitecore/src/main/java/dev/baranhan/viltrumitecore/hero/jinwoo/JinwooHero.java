@@ -395,6 +395,21 @@ public final class JinwooHero implements HeroDefinition {
       return amount < raw ? DamageAbsorb.reduceTo(amount) : DamageAbsorb.PASS;
    }
 
+   /**
+    * Every hit Jinwoo lands (daggers, skills, plain melee, projectiles) marks
+    * that enemy for the army: shadows make it their priority target (playtest:
+    * shadows ignored whatever Jinwoo fought unless a dagger skill marked it).
+    */
+   @Override
+   public float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, DamageSource source, float amount) {
+      JinwooState state = JinwooState.of(attacker);
+      if (state != null && amount > 0.0F && target != attacker && target.isAlive() && !ShadowArmy.ally(attacker, target)) {
+         state.markTarget = target.getUUID();
+         state.markTicks = JinwooRules.MARK_TICKS;
+      }
+      return amount;
+   }
+
    @Override
    public void onHurt(ServerPlayer player, DamageSource source, float amount) {
       JinwooState state = JinwooState.of(player);

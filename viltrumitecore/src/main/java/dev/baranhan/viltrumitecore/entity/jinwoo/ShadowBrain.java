@@ -38,6 +38,16 @@ public final class ShadowBrain {
    private int provokerTicks;
    private int calm;
    private boolean sentinelHidden = true;
+   /** A target the shadow could not reach for a while is ignored for a short time (no endless chase). */
+   @Nullable
+   private UUID ignored;
+   private int ignoredTicks;
+   /** Ticks spent chasing the current target without closing in. */
+   private int stuckTicks;
+   private double bestGap = Double.MAX_VALUE;
+
+   static final int STUCK_LIMIT = 100;
+   static final int IGNORE_TICKS = 100;
 
    ShadowBrain(ShadowSoldierEntity self) {
       this.self = self;
@@ -60,7 +70,10 @@ public final class ShadowBrain {
       }
    }
 
-   /** Players are hit only by order, or when they attacked Jinwoo or this shadow (spec §6.2). */
+   /**
+    * Players are hit only by order, when Jinwoo himself is fighting them (his
+    * mark), or when they attacked Jinwoo or this shadow (spec §6.2).
+    */
    public boolean playerAllowed(Player player) {
       ServerPlayer owner = this.self.owner();
       JinwooState state = owner == null ? null : JinwooState.of(owner);
@@ -68,6 +81,7 @@ public final class ShadowBrain {
          return false;
       }
       return state.orderTargetId == player.getId() || (state.lastAttackerId == player.getId() && state.lastAttackerTicks > 0)
+         || (state.markTicks > 0 && player.getUUID().equals(state.markTarget))
          || (player.getUUID().equals(this.provoker) && this.provokerTicks > 0);
    }
 
@@ -87,6 +101,7 @@ public final class ShadowBrain {
       if (this.specialCooldown > 0) this.specialCooldown--;
       if (this.tauntCooldown > 0) this.tauntCooldown--;
       if (this.provokerTicks > 0) this.provokerTicks--;
+      if (this.ignoredTicks > 0 && --this.ignoredTicks == 0) this.ignored = null;
       s.setEmpowered(state.inDomain(s.position()));
 
       ShadowMode mode = s.mode();
@@ -105,8 +120,11 @@ public final class ShadowBrain {
          this.attackStep();
          return;
       }
-      if (s.tickCount % 5 == s.slot % 5 || this.target == null || !this.target.isAlive()) {
-         this.target = this.choose(owner, state, mode);
+      if (this.target != null && !this.keeps(owner, this.target)) {
+         this.forget();
+      }
+      if (s.tickCount % 5 == s.slot % 5 || this.target == null) {
+         this.retarget(this.choose(owner, state, mode));
       }
       if (this.target != null) {
          this.engage(this.target, state);
@@ -117,53 +135,153 @@ public final class ShadowBrain {
 
    // --- targets ---
 
+   /** Priority of a pick: the order and the owner's own fight outrank a shadow's local choice. */
+   private enum Pick {
+      ORDER, OWNER_FIGHT, LOCAL
+   }
+
+   private Pick pick = Pick.LOCAL;
+
+   /**
+    * A target stays only while it is alive, in this level, hittable and near
+    * the owner (leash + margin); a lost one is dropped at once instead of
+    * being chased across the map.
+    */
+   private boolean keeps(ServerPlayer owner, LivingEntity t) {
+      return keepsTarget(t.isAlive() && !t.isRemoved() && t.level() == this.self.level() && this.self.mayHit(t),
+         t.distanceToSqr(owner), !t.getUUID().equals(this.ignored));
+   }
+
+   /** Pure: a target is kept while valid, not ignored and within the leash (+8) of the owner. */
+   static boolean keepsTarget(boolean valid, double distanceToOwnerSqr, boolean notIgnored) {
+      double r = JinwooRules.LEASH + 8.0;
+      return valid && notIgnored && distanceToOwnerSqr <= r * r;
+   }
+
+   /** Switch only for a higher-priority pick or when the current target is gone; local picks never flap. */
+   private void retarget(@Nullable Choice next) {
+      if (next == null) {
+         // the order / the owner's fight ended: a still valid target is finished as a local one
+         this.pick = Pick.LOCAL;
+         return;
+      }
+      if (switches(this.target != null, next.target == this.target, next.pick.ordinal(), this.pick.ordinal(), next.pick == Pick.LOCAL)) {
+         if (next.target != this.target) {
+            this.stuckTicks = 0;
+            this.bestGap = Double.MAX_VALUE;
+         }
+         this.target = next.target;
+         this.pick = next.pick;
+      }
+   }
+
+   /**
+    * Pure: take the new pick when there is no target, it is the same one, it
+    * outranks the current pick, or it is an equal non-local pick (a new order,
+    * Jinwoo switched targets). Two local picks never flap between enemies.
+    */
+   static boolean switches(boolean hasTarget, boolean same, int nextRank, int currentRank, boolean nextLocal) {
+      return !hasTarget || same || nextRank < currentRank || nextRank == currentRank && !nextLocal;
+   }
+
+   private void forget() {
+      this.target = null;
+      this.pick = Pick.LOCAL;
+      this.stuckTicks = 0;
+      this.bestGap = Double.MAX_VALUE;
+   }
+
+   private record Choice(LivingEntity target, Pick pick) {
+   }
+
+   /**
+    * Target by priority (spec §6.2 + playtest): an explicit order, then the
+    * owner's fight — whoever Jinwoo is hitting (his mark) and whoever hits or
+    * hunts him — then whoever hit this shadow, then the nearest hostile.
+    * In Guard mode the owner's attacker comes before his own target.
+    */
    @Nullable
-   private LivingEntity choose(ServerPlayer owner, JinwooState state, ShadowMode mode) {
+   private Choice choose(ServerPlayer owner, JinwooState state, ShadowMode mode) {
       ServerLevel level = (ServerLevel)this.self.level();
       if (mode == ShadowMode.ATTACK) {
          Entity ordered = state.orderTargetId >= 0 ? level.getEntity(state.orderTargetId) : null;
-         if (ordered instanceof LivingEntity living && living.isAlive() && this.self.mayHit(living)) {
-            return living;
+         if (ordered instanceof LivingEntity living && this.usable(owner, living)) {
+            return new Choice(living, Pick.ORDER);
          }
          if (state.orderPoint != null) {
-            return this.nearestEnemy(state.orderPoint, JinwooRules.COMMAND_AREA);
+            LivingEntity near = this.nearestEnemy(state.orderPoint, JinwooRules.COMMAND_AREA);
+            if (near != null) {
+               return new Choice(near, Pick.ORDER);
+            }
          }
       }
+      LivingEntity marked = this.markOf(owner, level, state);
+      LivingEntity attacker = this.attackerOf(owner, level, state);
       if (mode == ShadowMode.GUARD) {
-         LivingEntity attacker = this.attackerOf(level, state);
          if (attacker != null) {
-            return attacker;
+            return new Choice(attacker, Pick.OWNER_FIGHT);
          }
-         return this.nearestEnemy(owner.position(), JinwooRules.GUARD_RADIUS * 2.0);
+         if (marked != null) {
+            return new Choice(marked, Pick.OWNER_FIGHT);
+         }
+         LivingEntity near = this.nearestEnemy(owner.position(), JinwooRules.GUARD_RADIUS * 2.0);
+         return near == null ? null : new Choice(near, Pick.LOCAL);
       }
-      LivingEntity attacker = this.attackerOf(level, state);
+      if (marked != null) {
+         return new Choice(marked, Pick.OWNER_FIGHT);
+      }
       if (attacker != null) {
-         return attacker;
+         return new Choice(attacker, Pick.OWNER_FIGHT);
       }
-      if (this.provoker != null && this.provokerTicks > 0 && level.getEntity(this.provoker) instanceof LivingEntity p && p.isAlive() && this.self.mayHit(p)
+      if (this.provoker != null && this.provokerTicks > 0 && level.getEntity(this.provoker) instanceof LivingEntity p && this.usable(owner, p)
          && p.distanceToSqr(owner) < 24 * 24) {
-         return p;
+         return new Choice(p, Pick.LOCAL);
       }
-      if (state.markTarget != null && state.markTicks > 0 && level.getEntity(state.markTarget) instanceof LivingEntity marked && marked.isAlive()
-         && this.self.mayHit(marked) && marked.distanceToSqr(owner) < JinwooRules.LEASH * JinwooRules.LEASH) {
-         return marked;
-      }
-      return this.nearestEnemy(owner.position(), JinwooRules.FOLLOW_TARGET_RANGE);
+      LivingEntity near = this.nearestEnemy(owner.position(), JinwooRules.FOLLOW_TARGET_RANGE);
+      return near == null ? null : new Choice(near, Pick.LOCAL);
    }
 
+   private boolean usable(ServerPlayer owner, LivingEntity e) {
+      return e.isAlive() && this.self.mayHit(e) && this.keeps(owner, e);
+   }
+
+   /** What Jinwoo is fighting right now (set by every hit he lands, JinwooHero.modifyOutgoingDamage). */
    @Nullable
-   private LivingEntity attackerOf(ServerLevel level, JinwooState state) {
-      if (state.lastAttackerId >= 0 && state.lastAttackerTicks > 0 && level.getEntity(state.lastAttackerId) instanceof LivingEntity a && a.isAlive()
-         && this.self.mayHit(a)) {
-         return a;
+   private LivingEntity markOf(ServerPlayer owner, ServerLevel level, JinwooState state) {
+      if (state.markTarget != null && state.markTicks > 0 && level.getEntity(state.markTarget) instanceof LivingEntity marked
+         && this.usable(owner, marked)) {
+         return marked;
       }
       return null;
+   }
+
+   /** Who hit Jinwoo recently, else the closest mob that is hunting him (targets him) nearby. */
+   @Nullable
+   private LivingEntity attackerOf(ServerPlayer owner, ServerLevel level, JinwooState state) {
+      if (state.lastAttackerId >= 0 && state.lastAttackerTicks > 0 && level.getEntity(state.lastAttackerId) instanceof LivingEntity a
+         && this.usable(owner, a)) {
+         return a;
+      }
+      if (this.self.tickCount % 10 != this.self.slot % 10) {
+         return null;
+      }
+      double r = JinwooRules.FOLLOW_TARGET_RANGE;
+      LivingEntity best = null;
+      double bestD = r * r;
+      for (Mob mob : level.getEntitiesOfClass(Mob.class, owner.getBoundingBox().inflate(r), m -> m.getTarget() == owner && m.isAlive())) {
+         double d = mob.distanceToSqr(owner);
+         if (d <= bestD && this.self.mayHit(mob)) {
+            best = mob;
+            bestD = d;
+         }
+      }
+      return best;
    }
 
    @Nullable
    private LivingEntity nearestEnemy(Vec3 at, double radius) {
       List<LivingEntity> list = this.self.level().getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(radius),
-         e -> e instanceof Enemy && e.isAlive() && this.self.mayHit(e));
+         e -> e instanceof Enemy && e.isAlive() && !e.getUUID().equals(this.ignored) && this.self.mayHit(e));
       LivingEntity best = null;
       double bestD = radius * radius;
       for (LivingEntity e : list) {
@@ -211,7 +329,7 @@ public final class ShadowBrain {
       s.getNavigation().stop();
       s.teleportTo(spot.x, spot.y, spot.z);
       s.level().broadcastEntityEvent(s, ShadowSoldierEntity.EVENT_RISE);
-      this.target = null;
+      this.forget();
       this.attackTick = -1;
    }
 
@@ -299,11 +417,24 @@ public final class ShadowBrain {
       }
       if (gap <= ShadowKind.REACH) {
          s.getNavigation().stop();
+         this.stuckTicks = 0;
+         this.bestGap = gap;
          if (this.attackCooldown <= 0) {
             this.startAttack(false);
          }
-      } else if (s.tickCount % 4 == s.slot % 4 || s.getNavigation().isDone()) {
-         s.getNavigation().moveTo(t, gap > 6 ? 1.5 : 1.25);
+      } else {
+         if (s.tickCount % 4 == s.slot % 4 || s.getNavigation().isDone()) {
+            s.getNavigation().moveTo(t, gap > 6 ? 1.5 : 1.25);
+         }
+         // Unreachable (no path, on a pillar, across water): give up after 5 s without closing in.
+         if (gap < this.bestGap - 0.5) {
+            this.bestGap = gap;
+            this.stuckTicks = 0;
+         } else if (++this.stuckTicks > STUCK_LIMIT) {
+            this.ignored = t.getUUID();
+            this.ignoredTicks = IGNORE_TICKS;
+            this.forget();
+         }
       }
    }
 
@@ -394,6 +525,7 @@ public final class ShadowBrain {
 
    /** Forget the current target (orders change). */
    public void reset() {
+      this.forget();
       this.target = null;
       this.attackTick = -1;
       this.sentinelHidden = true;
