@@ -177,7 +177,11 @@ public final class ShadowArmy {
       if (state.lastAttackerTicks > 0) {
          state.lastAttackerTicks--;
       }
-      if (!state.summonQueue.isEmpty() && --state.summonDelay <= 0) {
+      // During the ult the queue belongs to MonarchArise (free rise, one per 3 t). Draining it here as
+      // well charged summon mana from what the ult left and cleared the queue once that ran dry, so
+      // most of the roster never rose and only the dissolving ghosts were seen (playtest: shadows
+      // vanish after the ult).
+      if (!ultOwnsQueue(state.is(JinwooMove.ARISE)) && !state.summonQueue.isEmpty() && --state.summonDelay <= 0) {
          state.summonDelay = JinwooRules.SUMMON_STAGGER;
          int serial = state.summonQueue.remove(0);
          ShadowRoster.Entry entry = state.roster.bySerial(serial);
@@ -195,6 +199,11 @@ public final class ShadowArmy {
       if (owner.tickCount % 10 == 0) {
          reslot(owner, state);
       }
+   }
+
+   /** Pure: while «Армия теней, восстань!» runs, only its timeline raises queued shadows. */
+   static boolean ultOwnsQueue(boolean ultRunning) {
+      return ultRunning;
    }
 
    /** Dense formation slots in roster order. */
