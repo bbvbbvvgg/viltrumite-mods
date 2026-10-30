@@ -153,5 +153,6 @@
   "hud.viltrumitecore.ironman.hulkbuster.move.spare_arm": "Запасная рука",
   "hud.viltrumitecore.ironman.hulkbuster.move.jet_ram": "Реактивный таран",
   "hud.viltrumitecore.ironman.hulkbuster.move.dash_strike": "Удар с рывка",
-  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Геройское приземление"
+  "hud.viltrumitecore.ironman.hulkbuster.move.hero_landing": "Геройское приземление",
+  "hero.viltrumitecore.thor.move.pickup": "Поднять Мьёльнир"
 }

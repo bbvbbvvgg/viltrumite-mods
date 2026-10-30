@@ -58,7 +58,13 @@ public enum ThorMove implements StagedMove {
    /** RMB in the electric mode: circular electric wave on a tap (a held RMB grows into ELECTRIC_STORM). */
    ELECTRIC_WAVE(ThorRules.PRIORITY_ATTACK, false, false),
    /** Held RMB in the electric mode: the expanding storm around Thor, ends on release. */
-   ELECTRIC_STORM(ThorRules.PRIORITY_HEAVY, false, false);
+   ELECTRIC_STORM(ThorRules.PRIORITY_HEAVY, false, false),
+   // --- appended by the Thor animation pass (owner playtest 2026-10-28) ---
+   /**
+    * RMB on Mjölnir resting on the ground: Thor bends to it, closes both hands on the handle and heaves it up.
+    * The hammer changes place on the contact tick (ENTER_MAIN), never on the click.
+    */
+   PICKUP(ThorRules.PRIORITY_UTILITY, false, false);
 
    private static final ThorMove[] VALUES = values();
 
