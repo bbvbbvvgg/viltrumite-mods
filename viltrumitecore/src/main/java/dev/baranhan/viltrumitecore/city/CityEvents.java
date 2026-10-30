@@ -52,6 +52,16 @@ public final class CityEvents {
       }
    }
 
+   /** Autosave and /save-all write the chunks: write the journal with them, so a crash never leaves
+    *  changed chunks on disk whose original blocks were only in memory. */
+   @SubscribeEvent
+   public static void onLevelSave(LevelEvent.Save event) {
+      CityManager m = CityManager.active();
+      if (m != null && event.getLevel() == m.level() && m.journal().dirty()) {
+         m.saveJournal(false);
+      }
+   }
+
    @SubscribeEvent
    public static void onServerStopping(ServerStoppingEvent event) {
       CityManager.onServerStopping();
