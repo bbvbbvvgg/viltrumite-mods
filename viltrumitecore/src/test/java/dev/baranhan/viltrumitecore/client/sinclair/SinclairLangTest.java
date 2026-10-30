@@ -53,11 +53,19 @@ class SinclairLangTest {
          keys.add("hud.viltrumitecore.sinclair." + hud);
       }
 
-      JsonObject sounds = read(RES.resolve("sounds.json"));
-      for (String event : sounds.keySet()) {
-         if (event.startsWith("sinclair.")) {
-            keys.add(sounds.getAsJsonObject(event).get("subtitle").getAsString());
+      // pass-1 events in the shared sounds.json, pass-2 events in Sinclair's own namespace (SinclairSounds.stage)
+      for (Path file : new Path[]{RES.resolve("sounds.json"), OWN_LANG.getParent().resolve("sounds.json")}) {
+         JsonObject sounds = read(file);
+         for (String event : sounds.keySet()) {
+            if (event.startsWith("sinclair.")) {
+               keys.add(sounds.getAsJsonObject(event).get("subtitle").getAsString());
+            }
          }
+      }
+
+      keys.addAll(dev.baranhan.viltrumitecore.hero.sinclair.act.CopyCard.allKeys());
+      for (String command : new String[]{"on", "off", "status", "state_on", "state_off"}) {
+         keys.add("commands.viltrumitecore.sinclair.cinematic." + command);
       }
 
       for (String entity : new String[]{"spark", "vexing_bolt", "assistant", "decoy", "hex_hat", "hex_mark", "act_prop", "act_card"}) {
@@ -70,7 +78,7 @@ class SinclairLangTest {
    @Test
    void everyLocaleHasEveryKey() throws IOException {
       List<String> keys = requiredKeys();
-      assertEquals(78, keys.size(), "key table changed: update tools/lang/sinclair_lang.py");
+      assertEquals(129, keys.size(), "key table changed: update tools/lang/sinclair_lang.py");
       for (String locale : LOCALES) {
          JsonObject lang = read(OWN_LANG.resolve(locale + ".json"));
          for (String key : keys) {

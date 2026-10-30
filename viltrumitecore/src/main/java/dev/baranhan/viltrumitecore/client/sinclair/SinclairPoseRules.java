@@ -54,9 +54,13 @@ public final class SinclairPoseRules {
       return !SinclairFlags.has(flags, SinclairFlags.HAT_OFF) && !bowHatInHand(move, tick);
    }
 
-   /** Top hat in the left hand: Rabbit Hex cast (server HAT_OFF) and the bows. In NOVA's flight the hat is a world prop. */
+   /**
+    * Top hat in the left hand: Rabbit Hex cast (server HAT_OFF), NOVA's tension (spun on the fingers before the
+    * throw) and the bows. In NOVA's flight the hat is a world prop.
+    */
    public static boolean heldHat(int flags, @Nullable SinclairMove move, double tick) {
-      return SinclairFlags.has(flags, SinclairFlags.HAT_OFF) && move == SinclairMove.HEX_CAST || bowHatInHand(move, tick);
+      boolean off = SinclairFlags.has(flags, SinclairFlags.HAT_OFF);
+      return off && move == SinclairMove.HEX_CAST || off && move == SinclairMove.ACT_NOVA && tick < ActScript.NOVA_THROW || bowHatInHand(move, tick);
    }
 
    /** The volunteer's card in the left palm. */
@@ -69,8 +73,14 @@ public final class SinclairPoseRules {
          return tick >= CAPTURE_CARD_TICK + 3;
       }
 
+      if (move == SinclairMove.COPY) {
+         // Raised high while the card is shown on screen, back in the palm when it folds home.
+         return true;
+      }
+
       if (move == SinclairMove.ACT_BEAM) {
-         return tick < ActScript.BEAM_END;
+         // The mirror card burns out with the overdrive flare.
+         return tick < ActScript.BEAM_BURST_END;
       }
 
       return move == SinclairMove.ACT_BARRAGE && tick < ActScript.BARRAGE.pauseStart();
