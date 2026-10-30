@@ -51,8 +51,6 @@ public final class WorldErasure implements AbilityHandler {
    public static int cinematicStart() {return 0;}
    /** Pure: scene age for a pause tick. One clock: the WorldPause elapsed tick. */
    public static int cinematicAge(int pauseElapsed) {return pauseElapsed-cinematicStart();}
-   /** Pure: Reinhard's existing clip starts so its authored cut lands on the rupture. */
-   public static boolean poseStarts(int age) {return age==ReinhardRules.ERASE_POSE_START;}
    public boolean ended() {return ended;}
    public static boolean tryStart(ReinhardState state,Gate gate,BooleanSupplier beginPause) {
       if(!gate.target() || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn() || gate.chopping()
@@ -107,10 +105,10 @@ public final class WorldErasure implements AbilityHandler {
       DivineTargets.Verdict frozen=DivineTargets.verdict(target);
       if(!tryStart(state,gate,()->WorldPause.begin(server,player.getUUID(),ReinhardRules.ERASE_LENGTH,
          ReinhardRules.ERASE_PROTECT_FROZEN,ReinhardRules.ERASE_MOB_FREEZE_RADIUS))) return false;
-      // The world stops on the press (absolute stop, camera lock, HUD) and every client starts the
-      // scene now; Reinhard holds his guard until his clip's cut is due at the rupture.
+      // The world stops on the press (absolute stop, camera lock, HUD) for everyone, Reinhard
+      // included: no clip plays, his body stays in the exact pose of the press. Every client starts
+      // the scene now.
       state.action.cancel();
-      int targetId=target.getId();
       Live live=new Live(server,player,target,WorldPause.id(server));
       WorldErasure cast=timed(frozen,live); cast.pauseId=live.pauseId; state.worldErasure=cast;
       live.packet=new ErasureS2CPacket(live.pauseId,server.overworld().getGameTime(),target.level().dimension(),target.getId(),target.position(),
@@ -121,7 +119,6 @@ public final class WorldErasure implements AbilityHandler {
             live.holdCaster();
             int age=cinematicAge(elapsed);
             if(age<0) return;
-            if(poseStarts(age) && !cast.ended) state.action.start(ReinhardAbility.WORLD_ERASURE,ReinhardRules.ERASE_POSE_LENGTH,targetId);
             cast.advance(age);
          }
          public void ended(WorldPause.EndReason reason) {

@@ -318,11 +318,9 @@ public final class ReinhardRules {
    public static final int ERASE_DARK_END = 160;
    /** Last shard snaps home (final impact); cracks then close until {@link #ERASE_LENGTH}. */
    public static final int ERASE_REBUILD_END = 192;
-   /** Authored cut of the existing world_erasure clip (raise, hold, cut at 30..40). */
-   public static final int ERASE_POSE_CUT = 30;
-   /** Reinhard's clip starts here so its cut lands on the rupture. */
-   public static final int ERASE_POSE_START = ERASE_CRACK_END - ERASE_POSE_CUT;
-   public static final int ERASE_POSE_LENGTH = ERASE_LENGTH - ERASE_POSE_START;
+   /** Authored timing of the world_erasure gesture clip (raise, hold, cut at 30..40, 150 long). */
+   public static final int ERASE_CLIP_CUT = 30;
+   public static final int ERASE_CLIP_LENGTH = 150;
    public static final int ERASE_COOLDOWN = 4;
    public static final boolean ERASE_PROTECT_FROZEN = true;
    public static final int ERASE_MOB_FREEZE_RADIUS = 32;
