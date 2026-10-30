@@ -99,6 +99,7 @@ public final class CaptainRenderer {
       stack.pushPose();
       setupRotations(player, stack, partial, swim);
       stack.scale(PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
+      roll(player, s, stack, partial);
       Matrix4f[] shieldPose = new Matrix4f[1];
       Matrix3f[] shieldNormal = new Matrix3f[1];
       Matrix4f[] hand = new Matrix4f[1];
@@ -235,6 +236,35 @@ public final class CaptainRenderer {
          }
       }
       stack.popPose();
+   }
+
+   private static final java.util.Map<AbstractClientPlayer, Float> ROLL_YAW = new java.util.WeakHashMap<>();
+
+   /** Tactical Roll: wheel the body about the tuck centroid, facing the way the roll travels (side and back rolls too). */
+   static void roll(AbstractClientPlayer player, HeroPublicSnapshot s, PoseStack stack, float partial) {
+      if (CaptainView.move(s) != dev.baranhan.viltrumitecore.hero.captain.CaptainMove.ROLL || player.isPassenger() || player.deathTime > 0) {
+         ROLL_YAW.remove(player);
+         return;
+      }
+      Float yaw = ROLL_YAW.get(player);
+      if (yaw == null) {
+         float travel = CaptainRoll.travelYaw(player.getX() - player.xo, player.getZ() - player.zo);
+         if (!Float.isNaN(travel)) {
+            yaw = travel;
+            ROLL_YAW.put(player, yaw);
+         }
+      }
+      if (yaw != null) {
+         float bodyYaw = Mth.rotLerp(partial, player.yBodyRotO, player.yBodyRot);
+         stack.mulPose(Axis.YP.rotationDegrees(Mth.wrapDegrees(bodyYaw - yaw)));
+      }
+      float angle = CaptainRoll.angle(CaptainPose.actionTicks(player, s, partial));
+      if (angle <= 0.0F || angle >= 360.0F) {
+         return;
+      }
+      stack.translate(0.0F, (CaptainRoll.PIVOT_Y + CaptainRoll.lift(angle)) / 16.0F, CaptainRoll.PIVOT_Z / 16.0F);
+      stack.mulPose(Axis.XP.rotationDegrees(-angle));
+      stack.translate(0.0F, -CaptainRoll.PIVOT_Y / 16.0F, -CaptainRoll.PIVOT_Z / 16.0F);
    }
 
    static void setupRotations(AbstractClientPlayer player, PoseStack stack, float partial, float swim) {

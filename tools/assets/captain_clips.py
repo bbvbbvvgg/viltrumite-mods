@@ -167,12 +167,13 @@ def skills():
               left_arm=(-50, 60, 0), left_forearm=(-20, 0, 0), right_arm=(-30, 0, 40), right_forearm=(-20, 0, 0), **OPEN_R,
               right_leg=(-80, 10, 0), right_shin=(90, 0, 0), left_leg=(10, -10, 0), left_shin=(100, 0, 0))
     out.append(clip('slam_impact', 14, [(0, kneel), (6, kneel), (10, P(CROUCH, root=low(-3))), (14, COMBAT)]))
-    # Tactical Roll: forward roll (root pitch 360) with the shield over the back
-    tuck = P(CROUCH, waist=(40, 0, 0), torso=(40, 0, 0), head=(-10, 0, 0), right_leg=(-100, 0, 0), right_shin=(120, 0, 0),
-             left_leg=(-100, 0, 0), left_shin=(120, 0, 0), left_arm=(-60, 60, 0), left_forearm=(-80, 0, 0))
-    out.append(clip('roll', 10, [(0, P(tuck, root={'rot': (0, 0, 0), 'pos': (0, -4, 0)})), (3, P(tuck, root={'rot': (110, 0, 0), 'pos': (0, -8, -2)})),
-                                (6, P(tuck, root={'rot': (250, 0, 0), 'pos': (0, -8, -4)})), (9, P(CROUCH, root={'rot': (360, 0, 0), 'pos': (0, -3, 0)})),
-                                (10, P(CROUCH, root={'rot': (360, 0, 0), 'pos': (0, -3, 0)}))]))
+    # Tactical Roll: tucked into a ball, the shield over the back. The 360 itself is not keyed here: CaptainRenderer
+    # spins the whole body about the tuck centroid (ROLL_PIVOT) with the floor-contact lift table solved by
+    # captain_preview.py, so the body never sinks into the floor and the fade-out never unwinds a 360 backwards.
+    tuck = P(CROUCH, root=low(0), waist=(50, 0, 0), torso=(45, 0, 0), head=(30, 0, 0), right_leg=(-130, 0, 0), right_shin=(140, 0, 0),
+             left_leg=(-130, 0, 0), left_shin=(140, 0, 0), left_arm=(-60, 60, 0), left_forearm=(-80, 0, 0),
+             right_arm=(-80, 0, 10), right_forearm=(-90, 0, 0))
+    out.append(clip('roll', 10, [(0, P(CROUCH, root=low(-2))), (1, tuck), (8, tuck), (10, CROUCH)]))
     # superhero landing: drop to a knee, fist and shield to the ground, rise
     land = P(kneel, root=low(-8))
     out.append(clip('landing', 12, [(0, land), (5, land), (12, COMBAT)]))
