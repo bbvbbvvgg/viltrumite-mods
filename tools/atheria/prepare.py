@@ -71,13 +71,14 @@ def main():
         p = os.path.join(world, junk)
         if os.path.exists(p):
             os.remove(p)
-    out = os.path.join(w, FOLDER + '.zip')
+    out = os.path.join(w, FOLDER + '_Ready.zip')
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
         for root, _, files in os.walk(world):
             for f in files:
                 full = os.path.join(root, f)
                 arc = os.path.join(FOLDER, os.path.relpath(full, world))
-                z.write(full, arc, compress_type=zipfile.ZIP_STORED if f.endswith(('.mca', '.zip')) else zipfile.ZIP_DEFLATED)
+                # region files gain ~10% from deflate (sector padding); the pack zip is already packed
+                z.write(full, arc, compress_type=zipfile.ZIP_STORED if f.endswith('.zip') else zipfile.ZIP_DEFLATED)
     print('ready:', out, os.path.getsize(out) // (1 << 20), 'MiB')
 
 if __name__ == '__main__':
