@@ -27,6 +27,7 @@ public final class DioAbilitiesRuntime {
    public static void startKnives(ServerPlayer player, DioState state) {
       state.startAction(HeroAction.KNIFE_THROW, DioRules.KNIFE_LENGTH);
       state.cooldowns[DioRules.CD_KNIVES] = DioRules.KNIFE_COOLDOWN;
+      DioLines.say(player, DioLines.KNIVES_EVENT);
       DioSounds.play(player.serverLevel(), player.getEyePosition(), DioSounds.KNIFE_DRAW, 0.8F, 1.0F);
    }
 
@@ -54,13 +55,14 @@ public final class DioAbilitiesRuntime {
    // --- time stop cast --------------------------------------------------------------------
 
    public static void startTimeStop(ServerPlayer player, DioState state) {
+      // The cast line first: the stand's "The World!" summon line must not take the panel this tick.
+      HeroSpeech.ability(player, DioAbilities.TIME_STOP);
       DioCombat.summon(player, state);
       state.castBlood = state.blood;
       state.spendAllBlood();
       int duration = DioRules.timeStopDuration(state.castBlood);
       state.startAction(HeroAction.TIME_STOP, DioRules.TIME_STOP_CAST);
       state.cooldowns[DioRules.CD_TIME_STOP] = DioRules.TIME_STOP_COOLDOWN + duration + DioRules.TIME_STOP_CAPTURE;
-      HeroSpeech.ability(player, DioAbilities.TIME_STOP);
       DioSounds.playWide(player.serverLevel(), player.getEyePosition(), DioSounds.TIME_STOP, 2.0F, 1.0F, DioRules.TIME_STOP_RADIUS + 24.0);
    }
 
@@ -113,6 +115,7 @@ public final class DioAbilitiesRuntime {
       state.drainEffect = effect;
       state.drainOwnsControl = owns;
       DioSounds.play(level, target.getEyePosition(), DioSounds.DRAIN_GRAB, 1.0F, 1.0F);
+      DioLines.say(player, DioLines.DRAIN_EVENT);
       return true;
    }
 
@@ -189,6 +192,7 @@ public final class DioAbilitiesRuntime {
 
       if (t == DioRules.ROLLER_APPEAR) {
          DioSounds.playWide(level, player.position().add(0, 1.0, 0), DioSounds.ROLLER_APPEAR, 2.0F, 1.0F, DioRules.ROLLER_RADIUS + 32.0);
+         DioLines.say(player, DioLines.ROLLER_APPEAR_EVENT);
       }
 
       if (t == DioRules.ROLLER_HANG) {
@@ -211,6 +215,7 @@ public final class DioAbilitiesRuntime {
 
          DioNet.fx(player, DioFxS2CPacket.ROLLER_SLAM, target, Vec3.ZERO, 2.5F, 0);
          DioSounds.playWide(level, target, DioSounds.ROLLER_SLAM, 2.4F, 1.0F, DioRules.ROLLER_RADIUS + 32.0);
+         DioLines.say(player, DioLines.ROLLER_SLAM_EVENT);
       }
 
       if (DioRules.rollerPulseTick(t)) {
@@ -227,6 +232,7 @@ public final class DioAbilitiesRuntime {
 
       if (t == DioRules.ROLLER_BARRAGE_END) {
          DioSounds.play(level, player.getEyePosition(), DioSounds.WRYYY, 2.0F, 1.0F);
+         DioLines.say(player, DioLines.ROLLER_WRYYY_EVENT);
       }
 
       if (t == DioRules.ROLLER_RESUME) {
@@ -259,7 +265,11 @@ public final class DioAbilitiesRuntime {
    /** Interrupted ult: time moves again and the line stops. */
    public static void cancelRoller(ServerPlayer player, DioState state) {
       if (state.action == HeroAction.ROAD_ROLLER) {
-         HeroSpeech.interrupt(player, DioAbilities.ROAD_ROLLER);
+         // Whichever roller page is on screen stops (each page also checks the action itself).
+         for (String page : new String[]{DioAbilities.ROAD_ROLLER, DioLines.ROLLER_APPEAR_EVENT, DioLines.ROLLER_SLAM_EVENT, DioLines.ROLLER_WRYYY_EVENT}) {
+            HeroSpeech.interrupt(player, page);
+         }
+
          state.rollerStart = null;
          state.rollerTarget = null;
       }

@@ -40,4 +40,40 @@ class HeroSpeechRulesTest {
       assertEquals(-1, HeroSpeechRules.nextVariant(0, 3, i -> false));
       assertEquals("subtitle.viltrumitecore.speaker.reinhard", HeroSpeechRules.defaultSpeakerKey("reinhard"));
    }
+
+   @Test
+   void ambientRemarksNeverCutALineAndAbilityLinesDoNotFlicker() {
+      // An ambient remark (kill, low health) never interrupts, whatever is on screen.
+      assertEquals(BUSY, HeroSpeechRules.decide("d:knives", ABILITY, 200, "d:kill", AMBIENT, 1000, Long.MIN_VALUE, false));
+      assertEquals(BUSY, HeroSpeechRules.decide("d:other", AMBIENT, 200, "d:kill", AMBIENT, 1000, Long.MIN_VALUE, false));
+      assertEquals(PLAY, HeroSpeechRules.decide(null, null, 0, "d:kill", AMBIENT, 1000, Long.MIN_VALUE, false));
+      // Combat lines never override an ultimate line.
+      assertEquals(OUTRANKED, HeroSpeechRules.decide("d:roller", ULTIMATE, 5, "d:knives", ABILITY, 1000, Long.MIN_VALUE, false));
+      // An ability line replaces another ability line only once that one was readable for a moment.
+      assertEquals(BUSY, HeroSpeechRules.decide("d:knives", ABILITY, HeroSpeechRules.MIN_SHOWN_BEFORE_REPLACE - 1, "d:drain", ABILITY, 1000,
+         Long.MIN_VALUE, false));
+      assertEquals(REPLACE, HeroSpeechRules.decide("d:knives", ABILITY, HeroSpeechRules.MIN_SHOWN_BEFORE_REPLACE, "d:drain", ABILITY, 1000,
+         Long.MIN_VALUE, false));
+      // Ultimate phases hand over at once; a higher rank interrupts at once.
+      assertEquals(REPLACE, HeroSpeechRules.decide("d:roller", ULTIMATE, 0, "d:roller_appear", ULTIMATE, 1000, Long.MIN_VALUE, false));
+      assertEquals(REPLACE, HeroSpeechRules.decide("d:knives", ABILITY, 0, "d:roller", ULTIMATE, 1000, Long.MIN_VALUE, false));
+      // The rest is the legacy decision: same line, cooldown, operator force.
+      assertEquals(ALREADY_ACTIVE, HeroSpeechRules.decide("d:knives", ABILITY, 3, "d:knives", ABILITY, 1000, Long.MIN_VALUE, false));
+      assertEquals(COOLDOWN, HeroSpeechRules.decide(null, null, 0, "d:kill", AMBIENT, 1000, 1001, false));
+      assertEquals(REPLACE, HeroSpeechRules.decide("d:roller", ULTIMATE, 0, "d:kill", AMBIENT, 1000, 1001, true));
+   }
+
+   @Test
+   void onlyNotableKillsAndRealLowHealthCrossingsSpeak() {
+      assertTrue(HeroSpeechRules.notableKill(true, false, 20.0F), "another player");
+      assertTrue(HeroSpeechRules.notableKill(false, true, 20.0F), "a zombie-sized hostile");
+      assertFalse(HeroSpeechRules.notableKill(false, true, 8.0F), "a silverfish");
+      assertFalse(HeroSpeechRules.notableKill(false, false, 20.0F), "a villager or a civilian");
+      assertTrue(HeroSpeechRules.notableKill(false, false, 100.0F), "a big creature");
+      assertTrue(HeroSpeechRules.crossedLowHealth(20.0F, 15.0F, 20.0F));
+      assertFalse(HeroSpeechRules.crossedLowHealth(20.0F, 20.0F, 20.0F), "a lethal hit is not a remark");
+      assertFalse(HeroSpeechRules.crossedLowHealth(5.0F, 1.0F, 20.0F), "already low: no repeat on every hit");
+      assertFalse(HeroSpeechRules.crossedLowHealth(20.0F, 2.0F, 20.0F));
+      assertFalse(HeroSpeechRules.crossedLowHealth(20.0F, 0.0F, 20.0F));
+   }
 }
