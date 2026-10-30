@@ -8,6 +8,7 @@ import dev.baranhan.viltrumitecore.hero.act.ActShape;
 import dev.baranhan.viltrumitecore.hero.sinclair.SinclairMove;
 import dev.baranhan.viltrumitecore.hero.sinclair.SinclairSounds;
 import dev.baranhan.viltrumitecore.hero.sinclair.act.ActScript;
+import dev.baranhan.viltrumitecore.hero.sinclair.act.CopyCinematic;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -109,7 +110,7 @@ public final class StageLight {
       if (quiet && !ducking) {
          if (OWN_SOUNDS.isEmpty()) {
             for (String name : SinclairSounds.NAMES) {
-               OWN_SOUNDS.add(new ResourceLocation("viltrumitecore", "sinclair." + name));
+               OWN_SOUNDS.add(SinclairSounds.location(name));
             }
          }
 
@@ -158,6 +159,18 @@ public final class StageLight {
          Entity volunteer = snapshot.controlTargetId() >= 0 ? level.getEntity(snapshot.controlTargetId()) : null;
          if (volunteer != null) {
             cone(c, SinclairVfx.pos(volunteer, c.partialTick()), Math.max(0.7, volunteer.getBbWidth()), Mth.clamp((float) t / 4.0F, 0.0F, 1.0F));
+         }
+
+         return;
+      }
+
+      if (move == SinclairMove.COPY) {
+         // Two follow-spots on the stopped pair; they swell with the card and fade on the return.
+         float s = (float) (CopyCinematic.glow(t) * 0.6 + CopyCinematic.cameraWeight(t) * 0.5);
+         cone(c, SinclairVfx.pos(player, c.partialTick()), 1.0, Mth.clamp(s, 0.0F, 1.2F));
+         Entity volunteer = snapshot.controlTargetId() >= 0 ? level.getEntity(snapshot.controlTargetId()) : null;
+         if (volunteer != null) {
+            cone(c, SinclairVfx.pos(volunteer, c.partialTick()), Math.max(0.7, volunteer.getBbWidth()), Mth.clamp(s, 0.0F, 1.2F));
          }
 
          return;
