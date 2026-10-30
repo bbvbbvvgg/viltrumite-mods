@@ -42,5 +42,7 @@
   "subtitles.od_lagna.open": "A wish shimmers",
   "subtitles.od_lagna.select": "A wish chimes",
   "subtitles.od_lagna.confirm": "A wish is spoken",
-  "subtitles.od_lagna.return": "The light recedes"
+  "subtitles.od_lagna.return": "The light recedes",
+  "wish.viltrumitecore.shield": "I wish to stand up first and never give in",
+  "wish.viltrumitecore.shield.echo": "You will stand when everyone else has fallen."
 }

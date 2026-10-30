@@ -33,6 +33,7 @@ public final class OdLagnaWishes {
       register(new Wish("crimson", "homelander", "crimson", WishGrant.hero("homelander")));
       register(new Wish("sword", "reinhard", "holy", WishGrant.hero("reinhard")));
       register(new Wish("untouchable", "regulus", "still", WishGrant.hero("regulus")));
+      register(new Wish("shield", "captain", "shield", WishGrant.hero("captain")));
       register(new Wish(RETURN, HUMAN, "mortal", WishGrant.hero(HUMAN)));
    }
 
