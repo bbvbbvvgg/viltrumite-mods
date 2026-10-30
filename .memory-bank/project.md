@@ -121,6 +121,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 
 ## Topic files
 - `decompile.md`: decompile artifacts and their fixes.
+- `viltrumites-meteors.md`: squad NPC identity fix (Homelander override), manual-only world events, meteor rain, runtime harness.
 - `heroes-integration.md`: the all-heroes merge (Thor #74 + DIO/Sinclair/Jinwoo #82): hero and action order, core 1.54.0 / protocol 14, where each hero's lang keys and sounds live.
 ## Ability icons (house style, core 1.46.0)
 - Every hero icon is 64×64 = 32×32 art ×2 in the Reinhard house style (`tools/assets/icon_art.py`: Earth frame re-tinted via `FRAMES`, charcoal backdrop, navy outline, Endesga palette, no smooth gradients). Reinhard icons are the reference; do not redraw them.
