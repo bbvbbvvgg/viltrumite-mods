@@ -171,8 +171,55 @@ public final class PoseRig {
       return this;
    }
 
+   /**
+    * Head keys are small additive offsets on the look direction: always the Euler path. The
+    * quaternion round trip of {@link #slerp} picked the other Euler solution once the look plus
+    * the key passed ±90° pitch (head flipped/twisted for a frame); {@link #finish} then limits
+    * the neck against the torso.
+    */
    public void head(float[][] keys, float elapsed, float weight) {
+      boolean wasSlerp = this.slerp;
+      this.slerp = false;
       this.pose(this.model.head, Pivot.HEAD, keys, elapsed, weight, true);
+      this.slerp = wasSlerp;
+   }
+
+   /** Neck limits against the torso, radians: yaw (vanilla keeps the body within 75° of the head), pitch, roll. */
+   static final float NECK_YAW = (float)Math.toRadians(80.0);
+   static final float NECK_PITCH = (float)Math.toRadians(90.0);
+   static final float NECK_ROLL = (float)Math.toRadians(40.0);
+
+   /**
+    * Pure: the head angle relative to the torso clamped to ±limit (wrapped first, so a
+    * 350° yaw is read as -10°, not clamped to +limit); NaN collapses onto the torso.
+    */
+   static float neck(float head, float torso, float limit) {
+      if (Float.isNaN(head) || Float.isInfinite(head)) {
+         return torso;
+      }
+      float rel = Mth.wrapDegrees((float)Math.toDegrees(head - torso));
+      float lim = (float)Math.toDegrees(limit);
+      return torso + (float)Math.toRadians(Mth.clamp(rel, -lim, lim));
+   }
+
+   /**
+    * Layered twists/leans of the torso plus the look made owl necks: a strike twisting the body
+    * 40° while looking 60° aside, a forward lean while looking up. Only angles past a human
+    * neck are corrected, the look inside the limits is untouched.
+    */
+   private void neckLimit() {
+      limitNeck(this.model, this.vanillaPitch);
+   }
+
+   /** The same neck limits for posers outside the rig (e.g. Homelander's laser/roar layer). */
+   public static void limitNeck(PlayerModel<?> model) {
+      limitNeck(model, model.crouching ? 0.5F : 0.0F);
+   }
+
+   private static void limitNeck(PlayerModel<?> model, float vanillaPitch) {
+      model.head.yRot = neck(model.head.yRot, model.body.yRot, NECK_YAW);
+      model.head.xRot = neck(model.head.xRot, model.body.xRot - vanillaPitch, NECK_PITCH);
+      model.head.zRot = neck(model.head.zRot, model.body.zRot, NECK_ROLL);
    }
 
    public void body(float[][] keys, float elapsed, float weight, boolean additive) {
@@ -336,6 +383,7 @@ public final class PoseRig {
 
    /** Hip lock + outer layers, mandatory after every pose layer. */
    public void finish() {
+      this.neckLimit();
       this.hipLock(1.0F);
       DIRTY.add(this.model);
       copyLayers(this.model);

@@ -57,7 +57,11 @@ public abstract class SlowFlyingModelMixin<T extends LivingEntity> extends Human
             float hoverHeadPitch = headPitch * (float) (Math.PI / 180.0);
             float cruiseHeadPitch = (float)Math.toRadians(-90.0);
             float adjustedLookPitch = Mth.lerp(cruiseFactor, hoverHeadPitch, cruiseHeadPitch);
-            float lookYaw = netHeadYaw * (float) (Math.PI / 180.0);
+            // Neck fix: the look yaw is wrapped and limited like a human neck, and fades out in cruise.
+            // Lying prone in cruise the model's head yaw axis is the spine, so the look yaw rolled the
+            // head around the neck instead of turning it (wrong axis); the whole body already faces the
+            // flight direction there.
+            float lookYaw = (float)Math.toRadians(Mth.clamp(Mth.wrapDegrees(netHeadYaw), -75.0F, 75.0F)) * (1.0F - cruiseFactor);
             this.blendGuiBasePose(state.transition, lookYaw, adjustedLookPitch);
             float hoverPower = 1.0F - cruiseFactor;
             float hoverTransition = hoverPower * state.transition;
