@@ -1,0 +1,522 @@
+{
+  "captain.shield_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.shield_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/shield_swing",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.shield_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.shield_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/shield_hit",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.fist_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.fist_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/fist_swing",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.fist_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.fist_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/fist_hit",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.kick": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.kick",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/kick",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.finisher": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.finisher",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/finisher",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.counter": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.counter",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/counter",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.guard_up": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.guard_up",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/guard_up",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.block": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.block",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/block",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.parry": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.parry",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/parry",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.throw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/throw",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.shield_fly": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.shield_fly",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/shield_fly",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.ricochet": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.ricochet",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/ricochet",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.catch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.catch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/catch",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.recall": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.recall",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/recall",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.rush": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.rush",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/rush",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.rush_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.rush_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/rush_hit",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.slam_leap": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.slam_leap",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/slam_leap",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.slam_impact": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.slam_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/slam_impact",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "captain.slam_empowered": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.slam_empowered",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/slam_empowered",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "captain.roll": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.roll",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/roll",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.landing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.landing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/landing",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.refuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/refuse",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.charged": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.charged",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/charged",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "captain.assemble": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.captain.assemble",
+    "sounds": [
+      {
+        "name": "viltrumitecore:captain/assemble",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "avengers.quinjet_flyby": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.quinjet_flyby",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/quinjet_flyby",
+        "attenuation_distance": 128
+      }
+    ]
+  },
+  "avengers.quinjet_ramp": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.quinjet_ramp",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/quinjet_ramp",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "avengers.ironman_thrust": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.ironman_thrust",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/ironman_thrust",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "avengers.ironman_land": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.ironman_land",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/ironman_land",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "avengers.ironman_repulsor": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.ironman_repulsor",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/ironman_repulsor",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.ironman_missile": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.ironman_missile",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/ironman_missile",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.explosion": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.explosion",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/explosion",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "avengers.ironman_unibeam": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.ironman_unibeam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/ironman_unibeam",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "avengers.ironman_faceplate": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.ironman_faceplate",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/ironman_faceplate",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.hulk_roar": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.hulk_roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/hulk_roar",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "avengers.hulk_smash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.hulk_smash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/hulk_smash",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "avengers.hulk_punch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.hulk_punch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/hulk_punch",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.hulk_chest": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.hulk_chest",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/hulk_chest",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.thor_thunder": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.thor_thunder",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/thor_thunder",
+        "attenuation_distance": 128
+      }
+    ]
+  },
+  "avengers.thor_hammer_swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.thor_hammer_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/thor_hammer_swing",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.thor_hammer_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.thor_hammer_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/thor_hammer_hit",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "avengers.thor_hammer_spin": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.thor_hammer_spin",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/thor_hammer_spin",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.widow_shot": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.widow_shot",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/widow_shot",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.widow_bite": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.widow_bite",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/widow_bite",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.widow_strike": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.widow_strike",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/widow_strike",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.acrobat": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.acrobat",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/acrobat",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.hawkeye_draw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.hawkeye_draw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/hawkeye_draw",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.hawkeye_release": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.hawkeye_release",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/hawkeye_release",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.hawkeye_arrow_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.hawkeye_arrow_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/hawkeye_arrow_hit",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.shock": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.shock",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/shock",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "avengers.heavy_land": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.heavy_land",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/heavy_land",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "avengers.depart": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.avengers.depart",
+    "sounds": [
+      {
+        "name": "viltrumitecore:avengers/depart",
+        "attenuation_distance": 48
+      }
+    ]
+  }
+}

@@ -19,7 +19,8 @@ public enum HeroId {
    /** The Magnificent Sinclair (spec docs/design/2026-10-28-sinclair-design.md). */
    SINCLAIR("sinclair"),
    /** Sung Jinwoo, the Shadow Monarch (spec docs/design/2026-10-28-jinwoo-design.md). */
-   JINWOO("jinwoo");
+   JINWOO("jinwoo"),
+   CAPTAIN("captain");
 
    private final String key;
 

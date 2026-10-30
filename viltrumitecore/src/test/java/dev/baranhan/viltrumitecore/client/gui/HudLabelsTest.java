@@ -33,6 +33,24 @@ class HudLabelsTest {
    }
 
    @Test
+   void keyNamesAreEnglishOnEveryLanguage() {
+      assertEquals("LMB", KeyLabels.english("key.mouse.left"));
+      assertEquals("RMB", KeyLabels.english("key.mouse.right"));
+      assertEquals("MMB", KeyLabels.english("key.mouse.middle"));
+      assertEquals("M4", KeyLabels.english("key.mouse.4"));
+      assertEquals("SPACE", KeyLabels.english("key.keyboard.space"));
+      assertEquals("SHIFT", KeyLabels.english("key.keyboard.left.shift"));
+      assertEquals("ENTER", KeyLabels.english("key.keyboard.keypad.enter"));
+      assertEquals("INS", KeyLabels.english("key.keyboard.insert"));
+      assertEquals("PGUP", KeyLabels.english("key.keyboard.page.up"));
+      assertEquals("`", KeyLabels.english("key.keyboard.grave.accent"));
+      assertEquals("N+", KeyLabels.english("key.keyboard.keypad.add"));
+      assertEquals("WORLD", KeyLabels.english("key.keyboard.world.1").substring(0, 5));
+      assertNull(KeyLabels.english("key.keyboard.unknown"));
+      assertNull(KeyLabels.english("scancode.42"));
+   }
+
+   @Test
    void otherKeysUseAShortLocalizedName() {
       assertEquals("`", KeyLabels.fallback("`"));
       assertEquals("ВСТАВ", KeyLabels.fallback("Вставка"));

@@ -99,6 +99,12 @@ class WishClientMathTest {
    @Test
    void everyStyleIsKnownAndItsSoundsExist() throws IOException {
       JsonObject sounds = JsonParser.parseString(Files.readString(Path.of("src/main/resources/assets/viltrumitecore/sounds.json"))).getAsJsonObject();
+      // processResources merges the sound overlays (Regulus, Captain America, DIO polish) into sounds.json
+      try (var overlays = Files.walk(Path.of("src/main/sound-overlays"))) {
+         for (Path overlay : overlays.filter(p -> p.toString().endsWith(".json")).toList()) {
+            JsonParser.parseString(Files.readString(overlay)).getAsJsonObject().entrySet().forEach(e -> sounds.add(e.getKey(), e.getValue()));
+         }
+      }
       for (WishStyle style : WishStyle.values()) {
          assertEquals(style, WishStyle.of(style.key));
          for (String sound : new String[]{style.buildSound, style.climaxSound}) {
@@ -107,7 +113,7 @@ class WishClientMathTest {
             }
          }
       }
-      for (String key : new String[]{"time", "shadow", "thunder", "cards", "tech", "crimson", "holy", "still", "mortal"}) {
+      for (String key : new String[]{"time", "shadow", "thunder", "cards", "tech", "crimson", "holy", "still", "shield", "mortal"}) {
          assertEquals(key, WishStyle.of(key).key);
       }
       assertEquals(WishStyle.MORTAL, WishStyle.of("unknown"));
