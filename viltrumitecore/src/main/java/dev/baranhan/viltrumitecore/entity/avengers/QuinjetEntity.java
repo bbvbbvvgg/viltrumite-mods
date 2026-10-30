@@ -1,5 +1,10 @@
 package dev.baranhan.viltrumitecore.entity.avengers;
 
+import dev.baranhan.viltrumitecore.hero.captain.assemble.AvengersTeam;
+import java.util.UUID;
+import javax.annotation.Nullable;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -16,6 +21,8 @@ import net.minecraft.world.phys.Vec3;
 public class QuinjetEntity extends Entity {
    private static final EntityDataAccessor<Boolean> RAMP = SynchedEntityData.defineId(QuinjetEntity.class, EntityDataSerializers.BOOLEAN);
    private static final EntityDataAccessor<Float> THRUST = SynchedEntityData.defineId(QuinjetEntity.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<Integer> OWNER = SynchedEntityData.defineId(QuinjetEntity.class, EntityDataSerializers.INT);
+   @Nullable private UUID ownerUuid;
    /** Server: life guard; the scene discards it on time, this catches a lost scene. */
    public int life = 260;
    public int clientRampStart = -1000;
@@ -30,6 +37,24 @@ public class QuinjetEntity extends Entity {
    protected void defineSynchedData() {
       this.entityData.define(RAMP, false);
       this.entityData.define(THRUST, 1.0F);
+      this.entityData.define(OWNER, -1);
+   }
+
+   public void setOwner(ServerPlayer owner) {
+      this.ownerUuid = owner.getUUID();
+      this.entityData.set(OWNER, owner.getId());
+   }
+
+   public int ownerId() {
+      return this.entityData.get(OWNER);
+   }
+
+   @Nullable
+   public ServerPlayer owner() {
+      if (this.ownerUuid == null || !(this.level() instanceof ServerLevel level)) {
+         return null;
+      }
+      return level.getServer().getPlayerList().getPlayer(this.ownerUuid);
    }
 
    public boolean ramp() {
@@ -74,8 +99,8 @@ public class QuinjetEntity extends Entity {
    @Override
    public void tick() {
       super.tick();
-      if (!this.level().isClientSide && --this.life <= 0) {
-         this.discard();
+      if (!this.level().isClientSide && (--this.life <= 0 || this.tickCount % 20 == 0 && !AvengersTeam.member(this))) {
+         this.discard(); // a lost scene
       }
    }
 

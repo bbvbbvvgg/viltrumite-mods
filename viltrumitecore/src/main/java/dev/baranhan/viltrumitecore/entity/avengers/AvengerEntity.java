@@ -200,6 +200,10 @@ public class AvengerEntity extends PathfinderMob {
          this.getNavigation().stop();
          return;
       }
+      if (this.tickCount % 20 == 0 && !AvengersTeam.member(this)) {
+         this.vanish(); // a lost scene: never linger
+         return;
+      }
       if (this.isAlive() && this.brain != null) {
          this.brain.tick();
       }
@@ -275,6 +279,12 @@ public class AvengerEntity extends PathfinderMob {
 
    @Override
    public void die(DamageSource source) {
+      if (!this.level().isClientSide && !this.gone && this.phase() == PHASE_FIGHT) {
+         // spec §6: a beaten Avenger retreats (departure) instead of dying
+         this.setHealth(1.0F);
+         AvengersTeam.retreat(this);
+         return;
+      }
       super.die(source);
       this.setFlying(false);
    }
