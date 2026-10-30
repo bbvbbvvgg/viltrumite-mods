@@ -131,6 +131,11 @@ public abstract class PlayerHeroMixin implements HeroPlayer {
       }
    }
 
+   @Override
+   public boolean viltrumitecore$isBodyKey(net.minecraft.network.syncher.EntityDataAccessor<?> key) {
+      return HERO_ID.equals(key) || HERO_SNAPSHOT.equals(key);
+   }
+
    @Inject(method = {"tick"}, at = {@At("TAIL")})
    private void viltrumitecore$tickHero(CallbackInfo ci) {
       Player player = (Player)(Object)this;

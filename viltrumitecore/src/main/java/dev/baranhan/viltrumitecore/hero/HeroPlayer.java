@@ -37,6 +37,9 @@ public interface HeroPlayer {
 
    void viltrumitecore$setSyncedSnapshot(HeroPublicSnapshot snapshot);
 
+   /** Whether a synchronized entity-data key affects hero body dimensions. */
+   boolean viltrumitecore$isBodyKey(net.minecraft.network.syncher.EntityDataAccessor<?> key);
+
    /** True while vanilla mayfly was granted by HeroFlightGrant (NBT HeroGrantedMayfly). */
    boolean viltrumitecore$isMayflyGranted();
 

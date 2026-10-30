@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -32,6 +33,8 @@ public final class HeroBodyTracker {
    static final UUID BLOCK_REACH_ID = UUID.fromString("5f0c6b1e-2d47-4a51-9c3e-7a1b8e40d202");
    static final UUID STEP_ID = UUID.fromString("5f0c6b1e-2d47-4a51-9c3e-7a1b8e40d203");
    private static final Map<Player, HeroBodySize.Scale> LAST = Collections.synchronizedMap(new WeakHashMap<>());
+   /** A failed refresh for this scale and pose should not spin every tick. */
+   private static final Map<Player, HealKey> GAVE_UP = Collections.synchronizedMap(new WeakHashMap<>());
 
    private HeroBodyTracker() {
    }
@@ -46,8 +49,15 @@ public final class HeroBodyTracker {
    public static void sync(Player player) {
       HeroBodySize.Scale scale = HeroBodySize.of(player);
       HeroBodySize.Scale previous = LAST.put(player, scale);
-      if (needsRefresh(previous, scale)) {
+      Pose pose = player.getPose();
+      HealKey key = new HealKey(scale, pose);
+      boolean matches = bodyMatches(player, pose, scale);
+      if (shouldRefresh(previous, scale, matches, key.equals(GAVE_UP.get(player)))) {
          player.refreshDimensions();
+         if (bodyMatches(player, pose, scale)) GAVE_UP.remove(player);
+         else GAVE_UP.put(player, key);
+      } else if (matches) {
+         GAVE_UP.remove(player);
       }
 
       HeroDefinition hero = player instanceof HeroPlayer ? HeroRegistry.get(player) : null;
@@ -57,6 +67,19 @@ public final class HeroBodyTracker {
       modifier(player, ForgeMod.BLOCK_REACH.get(), BLOCK_REACH_ID, "Hero body block reach", reach);
       modifier(player, ForgeMod.STEP_HEIGHT_ADDITION.get(), STEP_ID, "Hero body step", step);
    }
+
+   /** Live dimensions and eye height must match the current hero snapshot, not just the cached scale. */
+   private static boolean bodyMatches(Player player, Pose pose, HeroBodySize.Scale scale) {
+      return HeroBodySize.matches(player.getBbWidth(), player.getBbHeight(), player.getEyeHeight(),
+         player.getDimensions(pose), player.getEyeHeight(pose), pose, scale);
+   }
+
+   static boolean shouldRefresh(@Nullable HeroBodySize.Scale previous, HeroBodySize.Scale now,
+                                boolean bodyMatches, boolean healGaveUp) {
+      return needsRefresh(previous, now) || !bodyMatches && !healGaveUp;
+   }
+
+   private record HealKey(HeroBodySize.Scale scale, Pose pose) {}
 
    /** First sight of a vanilla body needs nothing; any other first sight or change refreshes. */
    static boolean needsRefresh(@Nullable HeroBodySize.Scale previous, HeroBodySize.Scale now) {

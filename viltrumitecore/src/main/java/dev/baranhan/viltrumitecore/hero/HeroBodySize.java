@@ -75,9 +75,25 @@ public final class HeroBodySize {
       return base * heightFactor(pose, scale);
    }
 
+   /** Compare actual dimensions and eye height with the current hero's expected pose. */
+   public static final float MATCH_EPS = 1.0E-4F;
+
+   public static boolean matches(float width, float height, float eye, EntityDimensions base,
+                                 float baseEye, Pose pose, Scale scale) {
+      EntityDimensions expected = dimensions(base, pose, scale);
+      return Math.abs(width - expected.width) <= MATCH_EPS
+         && Math.abs(height - expected.height) <= MATCH_EPS
+         && Math.abs(eye - eyeHeight(baseEye, pose, scale)) <= MATCH_EPS;
+   }
+
    /** The box Entity.getBoundingBoxForPose builds, for the scaled dimensions. */
    public static AABB box(Vec3 feet, EntityDimensions dimensions) {
       double half = dimensions.width / 2.0;
       return new AABB(feet.x - half, feet.y, feet.z - half, feet.x + half, feet.y + dimensions.height, feet.z + half);
+   }
+
+   /** Dismount bounds, relative to the entity's feet. */
+   public static AABB localBox(EntityDimensions dimensions) {
+      return box(Vec3.ZERO, dimensions);
    }
 }

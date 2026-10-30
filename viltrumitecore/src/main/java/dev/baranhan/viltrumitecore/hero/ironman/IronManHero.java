@@ -73,28 +73,18 @@ public class IronManHero implements HeroDefinition {
       return hulkBig(player) ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.STEP_BONUS : 0.0;
    }
 
+   /** Same synced snapshot on both sides: prevents wall rubber-banding and stale camera size. */
    static boolean hulkBig(Player player) {
-      if (player == null) {
-         return false;
-      }
-
-      if (player.level().isClientSide()) {
-         int phase = hulkPhase(player);
-         if (phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ACTIVE.ordinal() || phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING.ordinal()) {
-            return true;
-         }
-
-         if (phase != dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING.ordinal() || !(player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer)) {
-            return false;
-         }
-
-         int[] extra = heroPlayer.getHeroSnapshot().extraCooldowns();
-         int scene = extra.length > dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE ? extra[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] : 0;
-         return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.sceneAssemble(scene) >= dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.TORSO_TICK;
-      }
-
-      IronManState state = IronManState.of(player);
-      return state != null && state.hulkbuster.big();
+      if (!(player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer)) return false;
+      int phase = hulkPhase(player);
+      if (phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ACTIVE.ordinal()
+         || phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING.ordinal()) return true;
+      if (phase != dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING.ordinal()) return false;
+      int[] extra = heroPlayer.getHeroSnapshot().extraCooldowns();
+      int scene = extra.length > dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE
+         ? extra[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] : 0;
+      return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.sceneAssemble(scene)
+         >= dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.TORSO_TICK;
    }
 
    /** The giant's own thrusters keep it up during jumps, hover, the scene and the ultimate (no fly kick). */
