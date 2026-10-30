@@ -67,6 +67,7 @@ public final class WrathMove {
          if (player != null) {
             ServerLevel level = player.serverLevel();
             ThorSounds.play(player, ThorCue.WRATH_WINDUP);
+            dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, dev.baranhan.viltrumitecore.hero.thor.ThorAbilities.WRATH);
          }
       }
 

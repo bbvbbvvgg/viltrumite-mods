@@ -116,6 +116,7 @@ public final class MeleeMoves {
          captureStep(player, combat);
          state.setCombatPose(combat.strike.pose());
          ThorSounds.strikeWindup(player, combat.strike);
+         dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, dev.baranhan.viltrumitecore.hero.thor.ThorAbilities.CRUSH);
       }
 
       @Override
