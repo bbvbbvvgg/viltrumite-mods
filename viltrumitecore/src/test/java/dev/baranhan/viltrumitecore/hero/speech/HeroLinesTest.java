@@ -92,4 +92,27 @@ class HeroLinesTest {
          ru.get("subtitle.viltrumitecore.reinhard.world_cut").getAsString());
       assertEquals("Рейнхард", ru.get("subtitle.viltrumitecore.speaker.reinhard").getAsString());
    }
+
+   /** Playtest: Reinhard speaks before World Erasure (N), and the line is gone before the black screen. */
+   @Test
+   void worldErasureIsSpokenBeforeTheDarkPhase() throws java.io.IOException {
+      assertEquals(List.of(ReinhardLines.WORLD_ERASURE), ReinhardLines.LINES.on(HeroLineTrigger.ability("reinhard:world_erasure")));
+      assertEquals(HeroLine.Priority.ULTIMATE, ReinhardLines.WORLD_ERASURE.priority());
+      int dark = dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.ERASE_SPEECH_TICKS
+         + dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.ERASE_SHATTER_END;
+      var merged = dev.baranhan.viltrumitecore.integration.ShippedLang.merged();
+      for (var entry : merged.entrySet()) {
+         List<String> fragments = ReinhardLines.WORLD_ERASURE.fragments();
+         int[] chars = new int[fragments.size()];
+         for (int i = 0; i < chars.length; i++) {
+            chars[i] = entry.getValue().get(fragments.get(i)).getAsString().length();
+         }
+
+         int[] pages = dev.baranhan.viltrumitecore.client.hero.speech.SubtitleTiming.pageTicks(chars, ReinhardLines.WORLD_ERASURE.durationTicks(), 1.0);
+         assertTrue(dev.baranhan.viltrumitecore.client.hero.speech.SubtitleTiming.length(pages) <= dark, entry.getKey() + " ends before the dark phase");
+      }
+
+      assertEquals("Я и уничтожу вселенную и воссоздам её заново.",
+         (merged.containsKey("ru_ru.json") ? merged.get("ru_ru.json") : merged.get("ru_ru")).get("subtitle.viltrumitecore.reinhard.world_erasure.2").getAsString());
+   }
 }
