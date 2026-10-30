@@ -14,3 +14,8 @@ Durable sound knowledge. Main memory: `.memory-bank/project.md`. Skill: `.agents
 ## Pushing without git credentials
 - The GitHub connector refuses a request above 65536 bytes. Push in batches (`push_files`) under ~60 KB. Keep each `.ogg.b64` under ~60 KB (shorter or low-passed cue).
 - A text file above ~60 KB (for example `SESSION.md`, `.memory-bank/project.md`) cannot be updated through the connector. Put new durable notes in a topic file instead.
+
+## Hulkbuster (fix spec item 3, 2026-10-30)
+- 56 files / 31 events from `tools/sfx/hulkbuster.py`: CC0 1.0 Freesound recordings (SOURCES table, 28 rows, hq MP3 previews in `~/.cache/viltrumite-sfx/work/raw/fs_<id>.mp3`, `--fetch` gets them) carry every cue; the H6 synthesis is the support layer. `--check` re-mixes and compares; `--sources` lists file -> ids. Not auditioned.
+- Openverse was unreachable (504 / timeout): sources come from Freesound search pages (`/search/?q=...&f=license:"Creative Commons 0"`, scrapeable) and landing pages (licence link, description for AI / parents). Credits are composed from the landing page and say so. The helper's `package` needs an Openverse `--source-id`, so the script encodes with the same ffmpeg settings itself.
+- Leveling lesson: recorded hits are crest-limited. Per-layer look-ahead limiting at 12 dB over the layer's loudest 100 ms RMS, a 38 Hz bus high-pass and a tanh bus knee (7–8 dB over RMS) let the impact class reach about −8.7 LUFS; after the limiter, each variant's gain is corrected so variants stay within 0.2 dB.

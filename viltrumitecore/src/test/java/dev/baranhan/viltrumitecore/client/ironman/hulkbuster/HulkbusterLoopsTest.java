@@ -103,4 +103,42 @@ class HulkbusterLoopsTest {
          }
       }
    }
+
+   /** Spec item 3: every Hulkbuster file is mono 44.1 kHz Vorbis, and every CC0 recording the mixer names is credited. */
+   @Test
+   void hulkbusterSoundsAreMonoVorbisAndEveryRecordingIsCredited() throws Exception {
+      Path dir = Path.of("src/main/binassets/assets/viltrumitecore/sounds/ironman/hulkbuster");
+      int files = 0;
+      try (var paths = Files.list(dir)) {
+         for (Path p : paths.filter(f -> f.toString().endsWith(".ogg.b64")).toList()) {
+            files++;
+            byte[] bytes = java.util.Base64.getMimeDecoder().decode(Files.readString(p).trim());
+            assertEquals("OggS", new String(bytes, 0, 4, java.nio.charset.StandardCharsets.US_ASCII), p.toString());
+            int id = -1;
+            for (int i = 0; i + 7 < bytes.length && id < 0; i++) {
+               if (bytes[i] == 1 && new String(bytes, i + 1, 6, java.nio.charset.StandardCharsets.US_ASCII).equals("vorbis")) id = i;
+            }
+            assertTrue(id >= 0, p + " Vorbis identification header");
+            assertEquals(1, bytes[id + 11], p + " mono");
+            int rate = (bytes[id + 12] & 0xFF) | (bytes[id + 13] & 0xFF) << 8 | (bytes[id + 14] & 0xFF) << 16 | (bytes[id + 15] & 0xFF) << 24;
+            assertEquals(44100, rate, p.toString());
+         }
+      }
+      assertEquals(56, files);
+      String script = Files.readString(Path.of("../tools/sfx/hulkbuster.py"));
+      String sources = Files.readString(Path.of("../tools/assets/ironman_sources.md"));
+      String credits = Files.readString(Path.of("../CREDITS.md"));
+      java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\((\\d{4,7}), \"([^\"]+)\", \"[^\"]*\", \"[^\"]+-hq\\.mp3\"\\)").matcher(script);
+      int recordings = 0;
+      while (m.find()) {
+         recordings++;
+         String page = "https://freesound.org/people/" + m.group(2) + "/sounds/" + m.group(1) + "/";
+         assertTrue(sources.contains("| " + m.group(1) + " | " + m.group(2) + " |") && sources.contains(page), "sources row " + m.group(1));
+         assertTrue(credits.contains("(" + page + ")"), "CREDITS " + m.group(1));
+      }
+      assertTrue(recordings >= 20, "recordings " + recordings);
+      assertTrue(sources.contains("creativecommons.org/publicdomain/zero/1.0"));
+      assertTrue(sources.contains("composed from that page"), "attribution provenance stated");
+      assertTrue(credits.contains("Openverse was unreachable"), "attribution provenance stated");
+   }
 }

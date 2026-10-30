@@ -41,65 +41,102 @@ One row per committed asset. Raw archives are never committed.
 | `viltrumitecore/src/main/binassets/assets/viltrumitecore/textures/entity/ironman/missiles/{launcher,rocket_tips,rocket}.png.b64` | Sind Iron Man pack 2.2.0 (`IronMan_Hulkbuster_models.zip` → `source_original/Sind`) | `textures/heroes/mark7/mark7_cannon.png`, `textures/heroes/rockets.png`, `textures/heroes/mark42/mark42_rocket.png` | Sind | as is; same script |
 
 
-## Hulkbuster rework sounds (H6, 2026-10-28)
+## Hulkbuster rework sounds (H6, 2026-10-28; CC0 recordings, fix spec item 3, 2026-10-30)
 
-All own synthesis, CC0 1.0, no recording and no download: `tools/sfx/hulkbuster.py` (deterministic; `--check` re-synthesizes and compares). Files: `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/ironman/hulkbuster/<file>.ogg.b64` (mono Vorbis 44.1 kHz). The 11 stage 5 `sounds/ironman/hulkbuster_*.ogg.b64` files they replace are deleted; `hulkbuster_servo` stays (event `ironman_hulkbuster_servo`).
+Mixed by `tools/sfx/hulkbuster.py` (`--fetch` downloads the previews, `--check` re-mixes and compares with the committed files, `--sources` lists file -> recordings). Files: `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/ironman/hulkbuster/<file>.ogg.b64` (mono Vorbis 44.1 kHz q5, base64). Every cue's body is a layer stack of the CC0 1.0 Freesound recordings below (attack / impact / tail); the script's own deterministic synthesis (Notion AI for grebeshok105, CC0 1.0) stays under them as a support layer (sub weight, servo whine, whistle, reactor hum). Loops: spectral freeze of a recording over exactly the loop length (`servo_loop`, `thruster_loop`, `charge_loop`); `spark_loop` folds the recording's own overlap onto its head so the crackle stays. The 11 stage 5 `sounds/ironman/hulkbuster_*.ogg.b64` files the kit replaced stay deleted; `hulkbuster_servo` stays (event `ironman_hulkbuster_servo`).
 
-| File | Event | Class |
-|---|---|---|
-| `step_1` | `ironman_hulkbuster_step` | step |
-| `step_2` | `ironman_hulkbuster_step` | step |
-| `step_3` | `ironman_hulkbuster_step` | step |
-| `step_4` | `ironman_hulkbuster_step` | step |
-| `screech_1` | `ironman_hulkbuster_screech` | screech |
-| `screech_2` | `ironman_hulkbuster_screech` | screech |
-| `screech_3` | `ironman_hulkbuster_screech` | screech |
-| `screech_4` | `ironman_hulkbuster_screech` | screech |
-| `screech_5` | `ironman_hulkbuster_screech` | screech |
-| `swing_1` | `ironman_hulkbuster_swing` | swing |
-| `swing_2` | `ironman_hulkbuster_swing` | swing |
-| `swing_3` | `ironman_hulkbuster_swing` | swing |
-| `punch_1` | `ironman_hulkbuster_punch` | impact |
-| `punch_2` | `ironman_hulkbuster_punch` | impact |
-| `punch_3` | `ironman_hulkbuster_punch` | impact |
-| `hammer_1` | `ironman_hulkbuster_hammer` | impact |
-| `hammer_2` | `ironman_hulkbuster_hammer` | impact |
-| `hammer_3` | `ironman_hulkbuster_hammer` | impact |
-| `jackhammer_1` | `ironman_hulkbuster_jackhammer` | impact |
-| `jackhammer_2` | `ironman_hulkbuster_jackhammer` | impact |
-| `jackhammer_3` | `ironman_hulkbuster_jackhammer` | impact |
-| `finish_punch` | `ironman_hulkbuster_finish_punch` | heavy |
-| `charged_punch` | `ironman_hulkbuster_charged_punch` | heavy |
-| `charge` | `ironman_hulkbuster_charge` | riser |
-| `clamp_1` | `ironman_hulkbuster_clamp` | body |
-| `clamp_2` | `ironman_hulkbuster_clamp` | body |
-| `clamp_3` | `ironman_hulkbuster_clamp` | body |
-| `clamp_4` | `ironman_hulkbuster_clamp` | body |
-| `block_hit_1` | `ironman_hulkbuster_block_hit` | impact |
-| `block_hit_2` | `ironman_hulkbuster_block_hit` | impact |
-| `block_hit_3` | `ironman_hulkbuster_block_hit` | impact |
-| `repulsor_charge` | `ironman_hulkbuster_repulsor_charge` | riser |
-| `repulsor_beam` | `ironman_hulkbuster_repulsor_beam` | heavy |
-| `dash_1` | `ironman_hulkbuster_dash` | swing |
-| `dash_2` | `ironman_hulkbuster_dash` | swing |
-| `cough_1` | `ironman_hulkbuster_cough` | body |
-| `cough_2` | `ironman_hulkbuster_cough` | body |
-| `land_1` | `ironman_hulkbuster_land` | impact |
-| `land_2` | `ironman_hulkbuster_land` | impact |
-| `slam_1` | `ironman_hulkbuster_slam` | heavy |
-| `slam_2` | `ironman_hulkbuster_slam` | heavy |
-| `grab_1` | `ironman_hulkbuster_grab` | body |
-| `grab_2` | `ironman_hulkbuster_grab` | body |
-| `throw` | `ironman_hulkbuster_throw` | swing |
-| `hop` | `ironman_hulkbuster_hop` | impact |
-| `ult_ignite` | `ironman_hulkbuster_ult_ignite` | riser |
-| `ult_impact` | `ironman_hulkbuster_ult_impact` | heavy |
-| `refuse` | `ironman_hulkbuster_refuse` | ui |
-| `drop` | `ironman_hulkbuster_drop` | riser |
-| `exit` | `ironman_hulkbuster_exit` | body |
-| `assemble` | `ironman_hulkbuster_assemble` | riser |
-| `break` | `ironman_hulkbuster_break` | heavy |
-| `servo_loop` | `ironman_hulkbuster_servo_loop` | loop |
-| `thruster_loop` | `ironman_hulkbuster_thruster_loop` | loop |
-| `charge_loop` | `ironman_hulkbuster_charge_loop` | loop |
-| `spark_loop` | `ironman_hulkbuster_spark_loop` | loop |
+**Provenance.** Openverse (the sound-design helper's search and download backend) timed out from the sandbox that built this kit (HTTP 504 / read timeout), so there is no Openverse UUID and no Openverse `attribution` field. Each source was found on Freesound, its licence was checked on its **Freesound landing page** on 2026-10-30 (the page links `creativecommons.org/publicdomain/zero/1.0`, and its description was read for AI generation and parent recordings), and the credits below were **composed from that page**, not copied from Openverse. The audio is the page's `-hq.mp3` preview, not the original master (the raw previews live in `~/.cache/viltrumite-sfx/work/raw/`, never committed). The helper's `package` step requires an Openverse `--source-id` (and `--own` would misstate provenance), so `hulkbuster.py` encodes with the helper's exact settings itself (`ffmpeg -ac 1 -ar 44100 -c:a libvorbis -q:a 5 -f ogg`, base64 into binassets). Rejected while searching: JSK_Productions 829068 (description reads as AI-generated), mokasza 810747 (AI-generated, CC BY 4.0), jesabat 119741 (CC BY 3.0), Artninja 705134 / 791339 (mixed CC BY-NC parents), warrenXG 278136 (parent not checked; not used), unfa 264827 and DJT4NN3R 347576 (synthesized, not recordings; not used).
+
+| Freesound id | Creator | Title (landing page) | Landing page | Licence | Preview used | Used in | Changes |
+|---|---|---|---|---|---|---|---|
+| 842171 | AardsReal | Basic Metal Clang Free | https://freesound.org/people/AardsReal/sounds/842171/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/842/842171_13307919-hq.mp3 | `clamp`, `exit` | trimmed / pitched / filtered / layered / level-matched |
+| 620077 | RyanKingArt | Metal Impact | https://freesound.org/people/RyanKingArt/sounds/620077/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/620/620077_11069322-hq.mp3 | `punch` ×2, `jackhammer` ×3, `finish_punch`, `block_hit` | trimmed / pitched / filtered / layered / level-matched |
+| 345080 | metrostock99 | FX METAL CLANKING ON CONCRETE 501.wav | https://freesound.org/people/metrostock99/sounds/345080/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/345/345080_1256155-hq.mp3 | `step` ×4, `hammer` ×3, `cough` ×2, `grab` ×2 | trimmed / pitched / filtered / layered / level-matched |
+| 125404 | jasonLON | Metallic Clang.aif | https://freesound.org/people/jasonLON/sounds/125404/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/125/125404_2279655-hq.mp3 | `clamp`, `block_hit`, `exit` | trimmed / pitched / filtered / layered / level-matched |
+| 386129 | ldezem | Anvil - Lokomo 125 kg - Hammer on 6mm steel 1 time | https://freesound.org/people/ldezem/sounds/386129/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/386/386129_1655965-hq.mp3 | `punch`, `charged_punch`, `clamp`, `block_hit`, `ult_impact`, `assemble` | trimmed / pitched / filtered / layered / level-matched |
+| 270589 | michorvath | Anvil Hit 1 | https://freesound.org/people/michorvath/sounds/270589/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/270/270589_3094998-hq.mp3 | `hammer`, `clamp` | trimmed / pitched / filtered / layered / level-matched |
+| 554012 | itinerantmonk108 | 2lb sledge on anvil.wav | https://freesound.org/people/itinerantmonk108/sounds/554012/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/554/554012_2397507-hq.mp3 | `hammer` ×2, `jackhammer` ×3 | trimmed / pitched / filtered / layered / level-matched |
+| 48980 | Lunardrive | Metal Door Slam_SoundSmith.wav | https://freesound.org/people/Lunardrive/sounds/48980/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/48/48980_120830-hq.mp3 | `punch` | trimmed / pitched / filtered / layered / level-matched |
+| 406197 | kyles | door metal big heavy close kinda slam thud echo offmic.wav | https://freesound.org/people/kyles/sounds/406197/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/406/406197_612689-hq.mp3 | `punch` ×2, `hammer` ×3, `finish_punch`, `charged_punch`, `charge`, `clamp` ×4, `block_hit` ×3, `repulsor_beam`, `land` ×2, `slam` ×2, `grab` ×2, `ult_ignite`, `ult_impact`, `refuse`, `drop`, `exit`, `break` | trimmed / pitched / filtered / layered / level-matched |
+| 640204 | 7of9Designs | Heavy Metal Thud on Ground | https://freesound.org/people/7of9Designs/sounds/640204/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/640/640204_12131847-hq.mp3 | `step` ×4, `punch` ×3, `dash` ×2, `land` ×2, `slam` ×2, `hop`, `ult_impact`, `drop`, `break` | trimmed / pitched / filtered / layered / level-matched |
+| 815039 | AudioPapkin | Big robot footstep 005 | https://freesound.org/people/AudioPapkin/sounds/815039/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/815/815039_8698658-hq.mp3 | `step` ×4, `land` ×2 | trimmed / pitched / filtered / layered / level-matched |
+| 504626 | leonelmail | BODY FALL - V HVY - DIRT | https://freesound.org/people/leonelmail/sounds/504626/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/504/504626_4437257-hq.mp3 | `jackhammer` ×3, `finish_punch`, `slam` ×2 | trimmed / pitched / filtered / layered / level-matched |
+| 703247 | xkeril | Big falling debris (crash) | https://freesound.org/people/xkeril/sounds/703247/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/703/703247_13504080-hq.mp3 | `punch` ×3, `finish_punch`, `charged_punch`, `land` ×2, `slam` ×2, `ult_impact`, `drop`, `break` | trimmed / pitched / filtered / layered / level-matched |
+| 560510 | Nox_Sound | Explosion_Debris_Short_Stereo.wav | https://freesound.org/people/Nox_Sound/sounds/560510/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/560/560510_9250976-hq.mp3 | `slam` ×2, `ult_impact` | trimmed / pitched / filtered / layered / level-matched |
+| 530075 | magnuswaker | Metal Scrape | https://freesound.org/people/magnuswaker/sounds/530075/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/530/530075_11537497-hq.mp3 | `screech` ×3, `block_hit` ×3 | trimmed / pitched / filtered / layered / level-matched |
+| 337835 | newagesoup | long-metal-scrape-05.wav | https://freesound.org/people/newagesoup/sounds/337835/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/337/337835_4067257-hq.mp3 | `screech` ×3, `dash` ×2, `break` | trimmed / pitched / filtered / layered / level-matched; cut from EpicWizard [SFX Metal Shed Door - Hits, Clangs, Rattle (264889)](https://freesound.org/people/EpicWizard/sounds/264889/) (CC0 1.0, checked) |
+| 154447 | lucaslara | Metal Latching_1-2.aif | https://freesound.org/people/lucaslara/sounds/154447/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/154/154447_2592491-hq.mp3 | `charge`, `clamp` ×4, `grab` ×2, `refuse`, `exit`, `assemble` | trimmed / pitched / filtered / layered / level-matched |
+| 457294 | brunoboselli | Air (or steam) pressure release | https://freesound.org/people/brunoboselli/sounds/457294/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/457/457294_300738-hq.mp3 | `exit`, `break` | trimmed / pitched / filtered / layered / level-matched |
+| 131302 | reg7783 | release_air_pffft.wav | https://freesound.org/people/reg7783/sounds/131302/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/131/131302_2394357-hq.mp3 | `step` ×2, `land`, `throw` | trimmed / pitched / filtered / layered / level-matched |
+| 871228 | qubodup | Short Machine Sound 4 (CC0 mix) | https://freesound.org/people/qubodup/sounds/871228/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/871/871228_71257-hq.mp3 | `step` ×2, `hammer` ×3, `clamp` ×4, `land`, `grab` ×2, `exit` | trimmed / pitched / filtered; mix of kyles [scissor lifts machines up down hydraulic movements2.flac (637811)](https://freesound.org/people/kyles/sounds/637811/) (CC0 1.0, checked), zaphod1984 [Freight Elevator (186731)](https://freesound.org/people/zaphod1984/sounds/186731/) (CC0 1.0, checked) |
+| 824121 | derjuli | ServoMotor.wav | https://freesound.org/people/derjuli/sounds/824121/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/824/824121_2573247-hq.mp3 | `charge`, `repulsor_charge`, `ult_ignite`, `assemble`, `servo_loop`, `charge_loop` | trimmed / pitched / filtered; spectral freeze (servo_loop, charge_loop) |
+| 322021 | Burningmonkey | Servo motor | https://freesound.org/people/Burningmonkey/sounds/322021/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/322/322021_813260-hq.mp3 | `swing` ×3, `punch` ×3, `finish_punch`, `grab` ×2, `throw` | trimmed / pitched / filtered / layered / level-matched |
+| 413312 | TiesWijnen | Afterburner | https://freesound.org/people/TiesWijnen/sounds/413312/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/413/413312_1511977-hq.mp3 | `charged_punch`, `repulsor_beam`, `dash` ×2, `hop`, `ult_ignite`, `thruster_loop` | trimmed / pitched / ramped; spectral freeze (thruster_loop) |
+| 162242 | surrey_film | Eurofighter afterburner woomph | https://freesound.org/people/surrey_film/sounds/162242/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/162/162242_1328296-hq.mp3 | `charge`, `repulsor_charge`, `ult_ignite`, `drop`, `charge_loop` | trimmed / ramped; spectral freeze (charge_loop) |
+| 244230 | SyntaxSeed | Gas Torch Burn | https://freesound.org/people/SyntaxSeed/sounds/244230/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/244/244230_4465058-hq.mp3 | `thruster_loop` | spectral freeze (thruster_loop) |
+| 395038 | AslakHostaker | Flamethrower_Weapon_Short_Medium_Bursts.wav | https://freesound.org/people/AslakHostaker/sounds/395038/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/395/395038_7487276-hq.mp3 | `dash` ×2, `cough` ×2, `hop` | trimmed / pitched / filtered / layered / level-matched |
+| 475135 | bolkmar | FX - Swoosh - Low Pitch | https://freesound.org/people/bolkmar/sounds/475135/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/475/475135_2927958-hq.mp3 | `swing` ×3, `punch` ×3, `finish_punch`, `throw` | trimmed / pitched / filtered / layered / level-matched |
+| 396240 | weaveofkev | Welding_Electric Sparks.wav | https://freesound.org/people/weaveofkev/sounds/396240/ | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://cdn.freesound.org/previews/396/396240_453602-hq.mp3 | `block_hit` ×3, `break`, `spark_loop` | trimmed / high-passed; folded into a seamless loop (spark_loop) |
+
+Per file (synthesis support under every one; ids are the recordings in that file):
+
+| File | Event | Loudness class | Recordings (Freesound ids) |
+|---|---|---|---|
+| `step_1` | `ironman_hulkbuster_step` | step | 640204, 815039, 131302, 345080 |
+| `step_2` | `ironman_hulkbuster_step` | step | 640204, 815039, 871228, 345080 |
+| `step_3` | `ironman_hulkbuster_step` | step | 640204, 815039, 131302, 345080 |
+| `step_4` | `ironman_hulkbuster_step` | step | 640204, 815039, 871228, 345080 |
+| `screech_1` | `ironman_hulkbuster_screech` | screech | 530075 |
+| `screech_2` | `ironman_hulkbuster_screech` | screech | 337835 |
+| `screech_3` | `ironman_hulkbuster_screech` | screech | 530075 |
+| `screech_4` | `ironman_hulkbuster_screech` | screech | 337835 |
+| `screech_5` | `ironman_hulkbuster_screech` | screech | 530075, 337835 |
+| `swing_1` | `ironman_hulkbuster_swing` | swing | 475135, 322021 |
+| `swing_2` | `ironman_hulkbuster_swing` | swing | 475135, 322021 |
+| `swing_3` | `ironman_hulkbuster_swing` | swing | 475135, 322021 |
+| `punch_1` | `ironman_hulkbuster_punch` | impact | 620077, 406197, 640204, 322021, 475135, 703247 |
+| `punch_2` | `ironman_hulkbuster_punch` | impact | 620077, 48980, 640204, 322021, 475135, 703247 |
+| `punch_3` | `ironman_hulkbuster_punch` | impact | 386129, 406197, 640204, 322021, 475135, 703247 |
+| `hammer_1` | `ironman_hulkbuster_hammer` | impact | 554012, 406197, 871228, 345080 |
+| `hammer_2` | `ironman_hulkbuster_hammer` | impact | 554012, 406197, 871228, 345080 |
+| `hammer_3` | `ironman_hulkbuster_hammer` | impact | 270589, 406197, 871228, 345080 |
+| `jackhammer_1` | `ironman_hulkbuster_jackhammer` | impact | 620077, 504626, 554012 |
+| `jackhammer_2` | `ironman_hulkbuster_jackhammer` | impact | 620077, 504626, 554012 |
+| `jackhammer_3` | `ironman_hulkbuster_jackhammer` | impact | 620077, 504626, 554012 |
+| `finish_punch` | `ironman_hulkbuster_finish_punch` | heavy | 406197, 620077, 504626, 703247, 322021, 475135 |
+| `charged_punch` | `ironman_hulkbuster_charged_punch` | heavy | 413312, 386129, 406197, 703247 |
+| `charge` | `ironman_hulkbuster_charge` | riser | 162242, 824121, 154447, 406197 |
+| `clamp_1` | `ironman_hulkbuster_clamp` | body | 871228, 842171, 406197, 154447 |
+| `clamp_2` | `ironman_hulkbuster_clamp` | body | 871228, 125404, 406197, 154447 |
+| `clamp_3` | `ironman_hulkbuster_clamp` | body | 871228, 386129, 406197, 154447 |
+| `clamp_4` | `ironman_hulkbuster_clamp` | body | 871228, 270589, 406197, 154447 |
+| `block_hit_1` | `ironman_hulkbuster_block_hit` | impact | 620077, 406197, 396240, 530075 |
+| `block_hit_2` | `ironman_hulkbuster_block_hit` | impact | 125404, 406197, 396240, 530075 |
+| `block_hit_3` | `ironman_hulkbuster_block_hit` | impact | 386129, 406197, 396240, 530075 |
+| `repulsor_charge` | `ironman_hulkbuster_repulsor_charge` | riser | 162242, 824121 |
+| `repulsor_beam` | `ironman_hulkbuster_repulsor_beam` | heavy | 413312, 406197 |
+| `dash_1` | `ironman_hulkbuster_dash` | swing | 395038, 413312, 640204, 337835 |
+| `dash_2` | `ironman_hulkbuster_dash` | swing | 395038, 413312, 640204, 337835 |
+| `cough_1` | `ironman_hulkbuster_cough` | body | 395038, 345080 |
+| `cough_2` | `ironman_hulkbuster_cough` | body | 395038, 345080 |
+| `land_1` | `ironman_hulkbuster_land` | impact | 640204, 815039, 406197, 703247, 131302 |
+| `land_2` | `ironman_hulkbuster_land` | impact | 640204, 815039, 406197, 703247, 871228 |
+| `slam_1` | `ironman_hulkbuster_slam` | heavy | 504626, 640204, 703247, 560510, 406197 |
+| `slam_2` | `ironman_hulkbuster_slam` | heavy | 504626, 640204, 703247, 560510, 406197 |
+| `grab_1` | `ironman_hulkbuster_grab` | body | 322021, 406197, 154447, 345080, 871228 |
+| `grab_2` | `ironman_hulkbuster_grab` | body | 322021, 406197, 154447, 345080, 871228 |
+| `throw` | `ironman_hulkbuster_throw` | swing | 475135, 322021, 131302 |
+| `hop` | `ironman_hulkbuster_hop` | impact | 413312, 395038, 640204 |
+| `ult_ignite` | `ironman_hulkbuster_ult_ignite` | riser | 162242, 413312, 824121, 406197 |
+| `ult_impact` | `ironman_hulkbuster_ult_impact` | heavy | 560510, 703247, 640204, 406197, 386129 |
+| `refuse` | `ironman_hulkbuster_refuse` | ui | 154447, 406197 |
+| `drop` | `ironman_hulkbuster_drop` | riser | 162242, 640204, 406197, 703247 |
+| `exit` | `ironman_hulkbuster_exit` | body | 457294, 871228, 842171, 125404, 154447, 406197 |
+| `assemble` | `ironman_hulkbuster_assemble` | riser | 824121, 386129, 154447 |
+| `break` | `ironman_hulkbuster_break` | heavy | 337835, 457294, 396240, 640204, 406197, 703247 |
+| `servo_loop` | `ironman_hulkbuster_servo_loop` | loop | 824121 |
+| `thruster_loop` | `ironman_hulkbuster_thruster_loop` | loop | 413312, 244230 |
+| `charge_loop` | `ironman_hulkbuster_charge_loop` | loop | 824121, 162242 |
+| `spark_loop` | `ironman_hulkbuster_spark_loop` | loop | 396240 |
+
+Loudness: every class is level-matched on the 100 ms K-weighted momentary maximum (BS.1770 meter of `tools/sfx/reinhard_strikes.py`) under a -1 dBTP ceiling (loops -2 dBTP), variants of one event within 0.2 dB. Measured on the decoded committed files: step -12.0…-12.1, screech -14.1…-14.3, swing -13.0…-13.1, impact -8.7…-8.9, heavy -7.9…-8.0, body -11.1…-11.3, riser -14.1…-14.3, ui -18.2, loop -18.1…-18.3 LUFS; highest true peak -1.0 dBTP (`repulsor_beam`). **Not auditioned**: the sandbox has no audio output; numbers are measured, not heard. The in-game balance still needs a listening pass.
