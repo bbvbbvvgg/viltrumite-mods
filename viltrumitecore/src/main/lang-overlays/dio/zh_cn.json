@@ -1,0 +1,9 @@
+{
+  "commands.viltrumitecore.dio.not_dio": "%s 不是DIO",
+  "commands.viltrumitecore.dio.blood.fill": "鲜血已补满：%s",
+  "commands.viltrumitecore.dio.blood.infinite.on": "无限鲜血已开启：%s",
+  "commands.viltrumitecore.dio.blood.infinite.off": "无限鲜血已关闭：%s",
+  "subtitles.viltrumitecore.dio_roller_leap": "DIO跃向天空",
+  "subtitles.viltrumitecore.dio_roller_fall": "压路机坠落",
+  "subtitles.viltrumitecore.dio_roller_land": "DIO落地"
+}

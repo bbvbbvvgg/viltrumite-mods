@@ -21,6 +21,13 @@ class HeroDamageTest {
    }
 
    @Test
+   void absoluteDamageIsNeverBankedUnderControl() {
+      assertTrue(HeroDamage.queuesUnderControl(true, false), "ordinary hits bank while frozen");
+      assertFalse(HeroDamage.queuesUnderControl(true, true), "/kill and the void land on a frozen victim");
+      assertFalse(HeroDamage.queuesUnderControl(false, false));
+   }
+
+   @Test
    void internalDamageQueuesUnderAnchorToo() {
       assertEquals(DamageResult.QUEUED, HeroDamage.decide(DamageKind.INTERNAL, true, true, false, 0.6F), "blood price still queues under anchor");
    }

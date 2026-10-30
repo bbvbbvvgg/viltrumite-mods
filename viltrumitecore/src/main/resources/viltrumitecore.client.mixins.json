@@ -6,6 +6,11 @@
   "refmap": "viltrumitecore.refmap.json",
   "plugin": "dev.baranhan.viltrumitecore.plugin.ViltrumiteMixinPlugin",
   "client": [
+    "TimeFreezeClientLevelMixin",
+    "DioSceneCameraMixin",
+    "TimeFreezeMouseMixin",
+    "TimeFreezeRenderMixin",
+    "TimeFreezeTeleportMixin",
     "AbstractClientPlayerMixin",
     "AlwaysVisibleOffhandMixin",
     "BarrageModelMixin",
