@@ -41,6 +41,7 @@ public final class EyeLasers {
 
       state.laserHeld = true;
       state.laserAge = 0;
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, HomelanderAbilities.LASERS);
       player.level().playSound(null, player.getX(), player.getEyeY(), player.getZ(),
          ViltrumiteCore.HOMELANDER_LASER_CHARGE.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
    }

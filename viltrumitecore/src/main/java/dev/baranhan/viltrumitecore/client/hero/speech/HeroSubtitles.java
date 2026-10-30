@@ -52,6 +52,12 @@ public final class HeroSubtitles {
    private static long lastFrame;
    /** ForgeGui left height right after an armor row that drew nothing (no armor), or -1. */
    private static int emptyArmorLeft = -1;
+   /** Opt-in playtest log (client.hero.speech.qa.SubtitlePlaytest); null in a normal game. */
+   @Nullable
+   public static java.util.function.Consumer<String> qaLog;
+   /** Last drawn "serial:page" reported to {@link #qaLog}. */
+   @Nullable
+   private static String qaShown;
 
    /** One received line, its text resolved in the client language at arrival. */
    record Cue(int serial, UUID speaker, int entityId, String name, @Nullable HeroId hero, String lineId, List<String> fragments, int priority,
@@ -68,16 +74,27 @@ public final class HeroSubtitles {
    public static void receive(HeroLineS2CPacket packet) {
       double now = now(0.0F);
       switch (packet.op()) {
-         case HeroLineS2CPacket.CLEAR -> clear();
-         case HeroLineS2CPacket.STOP -> QUEUE.stop(packet.serial(), now);
+         case HeroLineS2CPacket.CLEAR -> {
+            qa("recv CLEAR");
+            clear();
+         }
+         case HeroLineS2CPacket.STOP -> {
+            qa("recv STOP serial=" + packet.serial());
+            QUEUE.stop(packet.serial(), now);
+         }
          default -> {
             if (!ViltrumiteClientConfig.INSTANCE.heroSubtitles) {
+               qa("recv PLAY ignored (subtitles off) line=" + packet.lineId());
                return;
             }
 
             Cue cue = resolve(packet);
             if (cue != null) {
+               qa("recv PLAY serial=" + cue.serial() + " line=" + cue.lineId() + " hero=" + cue.hero() + " name=" + cue.name() + " own=" + cue.own()
+                  + " prio=" + cue.priority() + " dur=" + cue.durationTicks() + " text=" + cue.fragments());
                QUEUE.offer(cue, now);
+            } else {
+               qa("recv PLAY dropped (no resolvable text) line=" + packet.lineId() + " keys=" + packet.fragments());
             }
          }
       }
@@ -88,6 +105,12 @@ public final class HeroSubtitles {
       Language language = Language.getInstance();
       List<String> fragments = new ArrayList<>(packet.fragments().size());
       for (String fragment : packet.fragments()) {
+         // A key missing from the client's lang (an older or partial resource pack) is skipped, never
+         // shown raw: Language falls back to en_us first, so only a key absent everywhere is dropped.
+         if (!packet.literal() && !language.has(fragment)) {
+            continue;
+         }
+
          String text = packet.literal() ? fragment : language.getOrDefault(fragment);
          if (!text.isBlank()) {
             fragments.add(text.replace("\\n", "\n"));
@@ -108,6 +131,14 @@ public final class HeroSubtitles {
    public static void clear() {
       QUEUE.clear();
       shown = null;
+      qaShown = null;
+   }
+
+   private static void qa(String message) {
+      java.util.function.Consumer<String> log = qaLog;
+      if (log != null) {
+         log.accept(message);
+      }
    }
 
    private static double now(float partialTick) {
@@ -221,6 +252,16 @@ public final class HeroSubtitles {
       x = snap((float)Math.floor(x), scale);
       y = snap(y, scale);
       SubtitleLayout.Page page = layout.pages().get(Math.min(frame.page(), layout.pages().size() - 1));
+      if (qaLog != null) {
+         String key = slot.cue().serial() + ":" + frame.page();
+         if (!key.equals(qaShown)) {
+            qaShown = key;
+            qa("draw serial=" + slot.cue().serial() + " line=" + slot.cue().lineId() + " page=" + (Math.min(frame.page(), layout.pages().size() - 1) + 1) + "/"
+               + layout.pages().size() + " portrait=" + (layout.hasPortrait() ? String.valueOf(slot.cue().hero()) : "none") + " name=" + slot.cue().name()
+               + " pageTicks=" + java.util.Arrays.toString(current.pageTicks()));
+         }
+      }
+
       graphics.pose().pushPose();
       graphics.pose().translate(x, y, 0.0F);
       SubtitleRenderer.panel(graphics, layout.textWidth(), layout.height(), frame.alpha());

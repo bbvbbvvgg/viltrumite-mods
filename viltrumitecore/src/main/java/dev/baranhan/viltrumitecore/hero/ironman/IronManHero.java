@@ -32,6 +32,11 @@ public class IronManHero implements HeroDefinition {
       return HeroId.IRON_MAN;
    }
 
+   @Override
+   public dev.baranhan.viltrumitecore.hero.speech.HeroLines lines() {
+      return IronManLines.LINES;
+   }
+
    /**
     * Mod flight only while the suit is fully worn. Read on BOTH sides (the
     * flight mixin and input check the local player): the client reads the

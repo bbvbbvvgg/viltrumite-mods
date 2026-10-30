@@ -18,9 +18,9 @@
   "ability.viltrumitecore.regulus_greeds_touch.desc": "<grey>Abklingzeit: <lime>—\n<grey>Typ: <yellow>Kombo (LMT, leere Hand)\n\n<grey>Eine gelangweilte Berührung in erstarrter Zeit: Handrücken,\n<grey>Handfläche, Schnippen. Bis zu 3 Ziele vor dir; im Löwen\n<grey>hinterlässt das Schnippen einen Riss im Körper (8 nach 0,5 s).\n\n<blue>Regulus",
   "ability.viltrumitecore.regulus_little_king.name": "<gold>Kleiner König",
   "ability.viltrumitecore.regulus_little_king.desc": "<grey>Abklingzeit: <lime>—\n<grey>Typ: <yellow>Herztaste (MMT)\n\n<grey>Lege dein Herz in ein Lebewesen im Umkreis von 6 Blöcken\n<grey>(bis zu 4 Untertanen). Das Herz lebt in einem Wirt und\n<grey>wandert alle 20 s weiter; solange er lebt, hat der Löwe kein Zeitlimit.\n<grey>Erneut auf einen Untertan: freilassen; schleichen: alle.\n\n<blue>Regulus",
-  "subtitle.viltrumitecore.regulus.ult_accuse": "Du hast die ganze Zeit meine Rechte verletzt. Verstehst du das überhaupt?",
-  "subtitle.viltrumitecore.regulus.ult_sentence": "Ich bin zufrieden mit dem, was ich habe. Darum nimmst du mir kein einziges Korn.",
-  "subtitle.viltrumitecore.regulus.ult_flick": "Das ist alles. Ein einzelnes Wesen, in sich vollkommen.",
+  "subtitle.viltrumitecore.regulus.ult_accuse": "Du hast meine Rechte verletzt. Verstehst du das?",
+  "subtitle.viltrumitecore.regulus.ult_sentence": "Mir genügt, was ich habe. Kein Korn davon gehört dir.",
+  "subtitle.viltrumitecore.regulus.ult_flick": "Das ist alles. In mir selbst vollkommen.",
   "subtitle.viltrumitecore.regulus.lion": "Meine Zeit gehört mir allein.",
   "subtitle.viltrumitecore.regulus.seizure": "…Mein Herz. Nicht jetzt.",
   "subtitle.viltrumitecore.regulus.king": "Sei dankbar. Du darfst mein Herz tragen.",
@@ -66,5 +66,12 @@
   "subtitles.viltrumitecore.regulus_ult_wave": "Erstarrte Körner schlagen ein",
   "subtitles.viltrumitecore.regulus_ult_flick": "Ein Fingerschnippen",
   "subtitles.viltrumitecore.regulus_ult_resolve": "Das Urteil ist vollstreckt",
-  "subtitles.viltrumitecore.regulus_step": "Regulus' Schritte"
+  "subtitles.viltrumitecore.regulus_step": "Regulus' Schritte",
+  "subtitle.viltrumitecore.regulus.sand": "Sogar der Sand gehört mir.",
+  "subtitle.viltrumitecore.regulus.sever": "Du atmest meine Luft, ohne zu fragen.",
+  "subtitle.viltrumitecore.regulus.trample": "Steh mir nicht im Weg.",
+  "subtitle.viltrumitecore.regulus.kill_a": "Du hast dein Recht zu leben verwirkt.",
+  "subtitle.viltrumitecore.regulus.kill_b": "Was für eine Verschwendung meiner Zeit.",
+  "subtitle.viltrumitecore.regulus.low_health": "Du hast mich verletzt?! Das verletzt meine Rechte!",
+  "subtitle.viltrumitecore.regulus.enter": "Regulus Corneas, Erzbischof der Gier."
 }

@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
+import net.minecraft.locale.Language;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,7 +45,7 @@ public final class HeroSpeech {
    private static int nextSerial = 1;
 
    private record Active(int serial, String lineId, HeroLine.Priority priority, WeakReference<ServerPlayer> entity, ResourceKey<Level> level,
-      @Nullable UUID session, List<UUID> audience, long until, @Nullable Predicate<ServerPlayer> activeWhile) {
+      @Nullable UUID session, List<UUID> audience, long started, long until, @Nullable Predicate<ServerPlayer> activeWhile) {
    }
 
    private HeroSpeech() {
@@ -140,6 +141,18 @@ public final class HeroSpeech {
    public record Owned(HeroId hero, HeroLine line) {
    }
 
+   /** Playtest log only (SubtitleQaCommands): speaker -> line id, age and audience of every active line. */
+   public static String qaDump(MinecraftServer server) {
+      long now = server.getTickCount();
+      StringBuilder out = new StringBuilder("[");
+      ACTIVE.forEach((id, active) -> {
+         ServerPlayer player = server.getPlayerList().getPlayer(id);
+         out.append(player == null ? id.toString() : player.getGameProfile().getName()).append('=').append(active.lineId).append(" age=")
+            .append(now - active.started).append(" left=").append(active.until - now).append(" audience=").append(active.audience.size()).append("; ");
+      });
+      return out.append(']').toString();
+   }
+
    private static boolean start(ServerPlayer speaker, String lineId, HeroLine.Priority priority, List<String> fragments, boolean literal, String speakerKey,
       HeroId voice, int durationTicks, int cooldownTicks, double range, @Nullable Predicate<ServerPlayer> activeWhile, boolean force) {
       if (!canSpeak(speaker)) {
@@ -152,12 +165,22 @@ public final class HeroSpeech {
       if (current != null && now >= current.until) {
          ACTIVE.remove(id);
          current = null;
+      } else if (current != null && !stillSpeaking(speaker, current)) {
+         // The previous hero's (or a cancelled channel's) line has not been swept by the tick yet.
+         ACTIVE.remove(id);
+         sendStop(speaker.server, current);
+         current = null;
       }
 
       Map<String, Long> cooldowns = COOLDOWNS.computeIfAbsent(id, key -> new HashMap<>());
       cooldowns.values().removeIf(until -> until <= now);
       HeroSpeechRules.Decision decision = HeroSpeechRules.decide(current == null ? null : current.lineId, current == null ? null : current.priority,
-         lineId, priority, now, cooldowns.getOrDefault(lineId, Long.MIN_VALUE), force);
+         current == null ? 0L : now - current.started, lineId, priority, now, cooldowns.getOrDefault(lineId, Long.MIN_VALUE), force);
+      if (dev.baranhan.viltrumitecore.hero.speech.qa.SubtitleQaCommands.ENABLED) {
+         com.mojang.logging.LogUtils.getLogger().info("SPEECHQA t={} {} {} -> {} (active {})", now, speaker.getGameProfile().getName(), lineId, decision,
+            current == null ? "none" : current.lineId);
+      }
+
       if (!decision.starts()) {
          return false;
       }
@@ -181,11 +204,28 @@ public final class HeroSpeech {
          listeners.add(listener.getUUID());
       }
 
-      long until = now + HeroSpeechRules.lifetimeTicks(durationTicks, fragments.size());
+      long until = now + HeroSpeechRules.lifetimeTicks(durationTicks, fragmentChars(fragments, literal));
       ACTIVE.put(id, new Active(serial, lineId, priority, new WeakReference<>(speaker), speaker.level().dimension(), sessionOf(speaker), List.copyOf(listeners),
-         until, activeWhile));
+         now, until, activeWhile));
       cooldowns.put(lineId, until + cooldownTicks);
       return true;
+   }
+
+   /** Text length of each fragment as the server reads it (English on a dedicated server), -1 when the key is unknown. */
+   private static int[] fragmentChars(List<String> fragments, boolean literal) {
+      Language language = Language.getInstance();
+      int[] chars = new int[fragments.size()];
+      for (int i = 0; i < chars.length; i++) {
+         String fragment = fragments.get(i);
+         if (literal) {
+            chars[i] = fragment.length();
+         } else {
+            String text = language.getOrDefault(fragment);
+            chars[i] = text.equals(fragment) ? -1 : text.length();
+         }
+      }
+
+      return chars;
    }
 
    private static boolean canSpeak(ServerPlayer speaker) {

@@ -89,6 +89,7 @@ public final class WrathMove {
 
          if (event == StagedTimeline.Event.ENTER_MAIN) {
             strike(player, ThorCombatState.of(context.state()));
+            dev.baranhan.viltrumitecore.hero.thor.ThorLines.say(player, dev.baranhan.viltrumitecore.hero.thor.ThorLines.WRATH_STRIKE_EVENT);
          } else if (event == StagedTimeline.Event.ENTER_FINISH) {
             ThorSounds.play(player, ThorCue.WRATH_TAIL);
          } else if (event == StagedTimeline.Event.END) {
@@ -102,6 +103,8 @@ public final class WrathMove {
          if (context.player() != null) {
             // Cancelled in the windup: the riser stops with the move (after the contact it is already cut).
             ThorSounds.stop(context.player().serverLevel(), context.player().position(), ThorCue.WRATH_WINDUP);
+            // ...and so does the call to the sky (a finished windup has already handed over to the strike line).
+            dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.interrupt(context.player(), dev.baranhan.viltrumitecore.hero.thor.ThorAbilities.WRATH);
          }
       }
    };

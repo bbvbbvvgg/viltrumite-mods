@@ -204,6 +204,7 @@ public final class IronManCombat {
 
       if (state.unibeam.press(state.energy.weaponsLocked(), state.spec().unibeamCharge())) {
          sound(player, IronManCombatSounds.UNIBEAM_CHARGE.get(), 1.0F);
+         IronManLines.say(player, IronManLines.EVENT_UNIBEAM);
       } else if (state.energy.weaponsLocked() || state.unibeam.overheated()) {
          sound(player, IronManCombatSounds.REPULSOR_FIZZLE.get(), 0.8F);
       }
@@ -365,6 +366,7 @@ public final class IronManCombat {
       state.beamDir = null;
       state.beamEnd = null;
       sound(player, IronManCombatSounds.CORE_EXPLOSION.get(), 1.0F);
+      IronManLines.say(player, IronManLines.EVENT_CORE);
       level.explode(player, at.x, at.y, at.z, power, Level.ExplosionInteraction.MOB);
       double r = IronManRules.CORE_EXTRA_KNOCKBACK_RADIUS;
       for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r), e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
@@ -490,6 +492,7 @@ public final class IronManCombat {
       }
 
       sound(player, IronManCombatSounds.MISSILE_LAUNCH.get(), 1.0F);
+      IronManLines.say(player, IronManLines.EVENT_MISSILES);
    }
 
    // ---- nano arsenal (§8.4) ----

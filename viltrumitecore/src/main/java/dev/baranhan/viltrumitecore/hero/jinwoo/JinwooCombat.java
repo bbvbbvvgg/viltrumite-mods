@@ -229,6 +229,7 @@ public final class JinwooCombat {
          JinwooFx.around(player, JinwooFx.PARRY, 0, at, Vec3.ZERO);
          HeroFx.flash(player, at, 0.6F);
          JinwooSounds.play(player, JinwooSounds.PARRY, 1.0F, 1.0F);
+         JinwooLines.say(player, JinwooLines.EVENT_RIPOSTE);
          state.blocking = false;
          state.start(JinwooMove.RIPOSTE, attacker == null ? -1 : attacker.getId());
          return dev.baranhan.viltrumitecore.hero.DamageAbsorb.ABSORBED;

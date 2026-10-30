@@ -292,6 +292,7 @@ public final class JinwooSkills {
          remnant.busy = false;
          JinwooFx.around(player, JinwooFx.EXTRACT_FAIL, 0, remnant.pos, Vec3.ZERO);
          JinwooSounds.playAt(player, remnant.pos, JinwooSounds.EXTRACT_FAIL, 1.0F, 1.0F);
+         JinwooLines.say(player, JinwooLines.EVENT_EXTRACT_FAIL);
          if (remnant.failures >= JinwooRules.EXTRACT_ATTEMPTS) {
             Remnants.remove(level, remnant, 0);
             hint(player, "message.viltrumitecore.jinwoo.remnant_crumbled");

@@ -18,9 +18,9 @@
   "ability.viltrumitecore.regulus_greeds_touch.desc": "<grey>Bekleme: <lime>—\n<grey>Tür: <yellow>Kombo (sol tık, boş el)\n\n<grey>Durmuş zamanda sıkılmış bir dokunuş: el tersi, avuç, fiske.\n<grey>Önündeki en fazla 3 hedef; Aslan'da fiske\n<grey>bedende bir yırtık bırakır (0,5 sn sonra 8).\n\n<blue>Regulus",
   "ability.viltrumitecore.regulus_little_king.name": "<gold>Küçük Kral",
   "ability.viltrumitecore.regulus_little_king.desc": "<grey>Bekleme: <lime>—\n<grey>Tür: <yellow>Kalp tuşu (orta tık)\n\n<grey>Kalbini 6 blok içindeki canlı bir varlığa yerleştir\n<grey>(en fazla 4 tebaa). Kalp bir taşıyıcıda yaşar ve\n<grey>her 20 sn'de bir sonrakine geçer; o yaşadıkça Aslan'ın süre sınırı yoktur.\n<grey>Serbest bırakmak için tebaaya tekrar bas; eğilirsen hepsi.\n\n<blue>Regulus",
-  "subtitle.viltrumitecore.regulus.ult_accuse": "Bunca zamandır haklarımı çiğniyorsun. Bunun farkında mısın?",
-  "subtitle.viltrumitecore.regulus.ult_sentence": "Sahip olduklarımla yetiniyorum. Bu yüzden bir tanesini bile almana izin vermem.",
-  "subtitle.viltrumitecore.regulus.ult_flick": "Hepsi bu. Kendi içinde tamam, tek bir birey.",
+  "subtitle.viltrumitecore.regulus.ult_accuse": "Haklarımı çiğnedin. Anlıyor musun?",
+  "subtitle.viltrumitecore.regulus.ult_sentence": "Sahip olduklarım bana yeter. Bir zerresi bile senin değil.",
+  "subtitle.viltrumitecore.regulus.ult_flick": "Hepsi bu. Kendi içimde tamamım.",
   "subtitle.viltrumitecore.regulus.lion": "Zamanım yalnızca bana ait.",
   "subtitle.viltrumitecore.regulus.seizure": "…Kalbim. Şimdi olmaz.",
   "subtitle.viltrumitecore.regulus.king": "Minnettar ol. Kalbimi taşımana izin veriyorum.",
@@ -66,5 +66,12 @@
   "subtitles.viltrumitecore.regulus_ult_wave": "Durmuş taneler vurur",
   "subtitles.viltrumitecore.regulus_ult_flick": "Tek bir fiske",
   "subtitles.viltrumitecore.regulus_ult_resolve": "Yargı sona erdi",
-  "subtitles.viltrumitecore.regulus_step": "Regulus'un ayak sesleri"
+  "subtitles.viltrumitecore.regulus_step": "Regulus'un ayak sesleri",
+  "subtitle.viltrumitecore.regulus.sand": "Kum bile benim.",
+  "subtitle.viltrumitecore.regulus.sever": "Havamı izinsiz soluyorsun.",
+  "subtitle.viltrumitecore.regulus.trample": "Yoluma çıkmaya cüret etme.",
+  "subtitle.viltrumitecore.regulus.kill_a": "Yaşama hakkından kendin vazgeçtin.",
+  "subtitle.viltrumitecore.regulus.kill_b": "Zamanımın ne büyük israfı.",
+  "subtitle.viltrumitecore.regulus.low_health": "Beni yaraladın mı?! Bu haklarımın ihlali!",
+  "subtitle.viltrumitecore.regulus.enter": "Açgözlülüğün Başpiskoposu, Regulus Corneas."
 }

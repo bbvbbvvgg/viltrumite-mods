@@ -136,8 +136,13 @@ public final class RollerCinema {
       }
    }
 
+   /**
+    * Pre, under every HUD overlay (as the Jinwoo and Regulus letterboxes): the hero subtitle panel
+    * moves into the lower bar for the scene and has to draw over it. Drawn in Post the bar covered
+    * the lower half of the panel and its portrait (seen in a real client during "Муда-муда-муда!").
+    */
    @SubscribeEvent
-   public static void onRenderGui(RenderGuiEvent.Post event) {
+   public static void onRenderGui(RenderGuiEvent.Pre event) {
       float b = barsO + (bars - barsO) * event.getPartialTick();
       if (b <= 0.001F) {
          return;

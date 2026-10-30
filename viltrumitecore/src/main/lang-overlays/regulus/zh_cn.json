@@ -18,9 +18,9 @@
   "ability.viltrumitecore.regulus_greeds_touch.desc": "<grey>冷却: <lime>—\n<grey>类型: <yellow>连击（左键，空手）\n\n<grey>静止时间中的一次厌倦触碰：手背、掌、弹指。\n<grey>最多命中前方3个目标；狮子状态下弹指\n<grey>会在体内留下破裂（0.5秒后8点）。\n\n<blue>雷古勒斯",
   "ability.viltrumitecore.regulus_little_king.name": "<gold>小王",
   "ability.viltrumitecore.regulus_little_king.desc": "<grey>冷却: <lime>—\n<grey>类型: <yellow>心脏键（中键）\n\n<grey>将你的心脏放入6格内的生物体内\n<grey>（最多4名臣民）。心脏寄宿于一个宿主，\n<grey>每20秒转移一次；宿主存活时狮子没有时间限制。\n<grey>再次对臣民按下即释放；潜行释放全部。\n\n<blue>雷古勒斯",
-  "subtitle.viltrumitecore.regulus.ult_accuse": "你一直在侵犯我的权利。你明白吗？",
-  "subtitle.viltrumitecore.regulus.ult_sentence": "我满足于我所拥有的。所以我连一粒沙也不会让你夺走。",
-  "subtitle.viltrumitecore.regulus.ult_flick": "到此为止。一个自身即完满的个体。",
+  "subtitle.viltrumitecore.regulus.ult_accuse": "你一直在侵犯我的权利。明白吗？",
+  "subtitle.viltrumitecore.regulus.ult_sentence": "我满足于我所拥有的。一粒沙也不给你。",
+  "subtitle.viltrumitecore.regulus.ult_flick": "就这样。我自身即完满。",
   "subtitle.viltrumitecore.regulus.lion": "我的时间只属于我。",
   "subtitle.viltrumitecore.regulus.seizure": "……我的心脏。不是现在。",
   "subtitle.viltrumitecore.regulus.king": "心怀感激吧。你有资格承载我的心脏。",
@@ -66,5 +66,12 @@
   "subtitles.viltrumitecore.regulus_ult_wave": "静止沙粒袭击",
   "subtitles.viltrumitecore.regulus_ult_flick": "一记弹指",
   "subtitles.viltrumitecore.regulus_ult_resolve": "审判结束",
-  "subtitles.viltrumitecore.regulus_step": "雷古勒斯的脚步声"
+  "subtitles.viltrumitecore.regulus_step": "雷古勒斯的脚步声",
+  "subtitle.viltrumitecore.regulus.sand": "连沙子都是我的。",
+  "subtitle.viltrumitecore.regulus.sever": "你未经允许就呼吸我的空气。",
+  "subtitle.viltrumitecore.regulus.trample": "别挡我的路。",
+  "subtitle.viltrumitecore.regulus.kill_a": "是你自己放弃了活下去的权利。",
+  "subtitle.viltrumitecore.regulus.kill_b": "真是浪费我的时间。",
+  "subtitle.viltrumitecore.regulus.low_health": "你伤了我？！这是侵犯我的权利！",
+  "subtitle.viltrumitecore.regulus.enter": "强欲大罪司教，雷古勒斯·柯尔尼亚斯。"
 }

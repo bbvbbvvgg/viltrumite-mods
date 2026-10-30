@@ -398,6 +398,9 @@ public final class ReinhardHero implements HeroDefinition {
 
       setPage(player, state.mode.page());
       ReinhardSounds.play(player, ReinhardSounds.mode(state.mode), 1.0F, 1.0F);
+      if (state.mode == ReinhardMode.HOLY_SWORD) {
+         ReinhardLines.say(player, ReinhardLines.HOLY_SWORD_EVENT);
+      }
    }
 
    /** ACTIVE_PAGE is synced entity data: server only. */
@@ -618,6 +621,7 @@ public final class ReinhardHero implements HeroDefinition {
       boolean divine = isDivine(source);
       if (Phoenix.saves(divine, self.getHealth(), afterArmor, PersistentCooldowns.get(self, ReinhardRules.PHOENIX_KEY))) {
          Phoenix.revive(self, source.getEntity());
+         ReinhardLines.say(self, ReinhardLines.PHOENIX_EVENT);
          return 0.0F;
       }
 

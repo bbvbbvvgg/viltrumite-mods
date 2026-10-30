@@ -146,6 +146,9 @@ public final class HeroRegistry {
       get(id).enter(player);
       HeroFlightGrant.sync(player);
       syncSnapshot(player);
+      // The old hero's line ends with its session at once (not on the next sweep), then the new hero may greet.
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.interrupt(player, null);
+      dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.entered(player);
       return true;
    }
 

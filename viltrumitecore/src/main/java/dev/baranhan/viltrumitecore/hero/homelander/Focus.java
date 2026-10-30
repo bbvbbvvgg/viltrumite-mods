@@ -35,6 +35,7 @@ final class Focus {
       } else {
          state.focusOn = true;
          state.focusRefresh = 0;
+         dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, HomelanderAbilities.FOCUS);
       }
    }
 
