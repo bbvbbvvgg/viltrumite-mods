@@ -78,6 +78,14 @@ checks are recorded in the PR.
 - Multiplayer (dedicated server + 2 clients): caster and witness play the same beats in sync,
   glass origin at the target in each view, the witness has no HUD during the scene. A witness
   reconnecting mid-scene (joined during the dissolve) catches up and ends together with the caster.
+- Player target (MP): the target's camera and movement stay locked (mouse + S held), it lights
+  up and dissolves in both views, goes to Limbo at 150 and returns after the Limbo stay.
+- Moving target: a walking husk freezes mid-step and is erased in that pose.
+- Abort: the caster's client killed mid-scene (shatter) -> the witness's scene ends at once
+  (CANCEL), HUD back, the target survives.
+- Bug found and fixed: an erased player was kicked for "floating too long" in the Limbo void
+  (and a player frozen mid-air would be after 80 ticks): `WorldPause.holdsAirborne` resets the
+  vanilla floating counter in `AntiCheatBypassMixin`.
 - Bug found and fixed: the last dissolve motes (head) hung as a white blob through the rebuild
   (mote age was the gap to a stopped front); the body bloom stayed on after the removal.
 - Not verifiable here: audio (OpenAL device unavailable), real GPU performance.
