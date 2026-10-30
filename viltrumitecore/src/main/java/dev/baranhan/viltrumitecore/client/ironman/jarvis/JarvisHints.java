@@ -67,7 +67,7 @@ public final class JarvisHints {
       boolean firstPerson = client.options.getCameraType().isFirstPerson();
       for (int id : ClientHeroData.section(OwnerSection.THREATS)) {
          Entity entity = client.level.getEntity(id);
-         if (entity == null || entity.isRemoved()) {
+         if (entity == null || entity.isRemoved() || !entity.isAlive()) {
             continue;
          }
 
@@ -108,15 +108,19 @@ public final class JarvisHints {
    }
 
    private static void threat(GuiGraphics graphics, Entity entity, float partialTick, int width, int height, int color, boolean firstPerson) {
+      // The interpolated render box: the same frame position the entity is drawn at.
       Vec3 base = entity.getPosition(partialTick);
-      ScreenProjector.Point bottom = ScreenProjector.project(base, width, height);
-      ScreenProjector.Point top = ScreenProjector.project(base.add(0.0, entity.getBbHeight(), 0.0), width, height);
-      if (bottom == null || top == null) {
+      AABB box = entity.getBoundingBox().move(base.subtract(entity.position()));
+      ScreenProjector.Point[] corners = ScreenProjector.corners(box, width, height);
+      if (corners == null) {
          return;
       }
 
-      if (!bottom.onScreen(width, height) || !top.onScreen(width, height)) {
-         ScreenProjector.Point centre = ScreenProjector.project(base.add(0.0, entity.getBbHeight() * 0.5, 0.0), width, height);
+      // All eight corners, not only feet/head: looking down from flight, bottom and top project onto
+      // nearly the same point and the old feet-anchored bracket shrank away from the body.
+      float[] rect = ScreenProjector.bounds(corners);
+      if (rect == null || rect[2] < 0 || rect[3] < 0 || rect[0] > width || rect[1] > height) {
+         ScreenProjector.Point centre = ScreenProjector.project(box.getCenter(), width, height);
          if (centre != null) {
             edgeOrMark(graphics, centre, width, height, color, false);
          }
@@ -124,12 +128,10 @@ public final class JarvisHints {
          return;
       }
 
-      float h = Math.max(6.0F, bottom.y() - top.y());
-      float w = Math.max(5.0F, h * (entity.getBbWidth() / Math.max(0.1F, entity.getBbHeight())) * 1.2F);
-      int x0 = Math.round(bottom.x() - w * 0.5F - 2.0F);
-      int x1 = Math.round(bottom.x() + w * 0.5F + 2.0F);
-      int y0 = Math.round(top.y() - 2.0F);
-      int y1 = Math.round(bottom.y() + 2.0F);
+      int x0 = Math.round(Math.min(rect[0], (rect[0] + rect[2]) * 0.5F - 2.5F) - 2.0F);
+      int x1 = Math.round(Math.max(rect[2], (rect[0] + rect[2]) * 0.5F + 2.5F) + 2.0F);
+      int y0 = Math.round(Math.min(rect[1], (rect[1] + rect[3]) * 0.5F - 3.0F) - 2.0F);
+      int y1 = Math.round(Math.max(rect[3], (rect[1] + rect[3]) * 0.5F + 3.0F) + 2.0F);
       int arm = Math.max(2, Math.min(6, (x1 - x0) / 4));
       bracket(graphics, x0, y0, arm, 1, 1, color);
       bracket(graphics, x1, y0, arm, -1, 1, color);
