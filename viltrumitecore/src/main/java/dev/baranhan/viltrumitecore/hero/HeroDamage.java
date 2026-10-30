@@ -74,7 +74,7 @@ public final class HeroDamage {
          ControlManager manager = null;
          if (target.level() instanceof ServerLevel serverLevel) {
             manager = ControlManager.get(serverLevel);
-            anchored = manager.isAnchored(target);
+            anchored = queuesUnderControl(manager.isAnchored(target), source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY));
          }
 
          RegulusState state = target instanceof ServerPlayer player ? RegulusHero.stateOf(player) : null;
@@ -111,6 +111,16 @@ public final class HeroDamage {
       }
 
       return DamageResult.PASS;
+   }
+
+   /**
+    * Anchored (frozen / stopped-time) victims bank hits for the release, but
+    * absolute damage — {@code /kill}, the void — must still land: the deferred
+    * cap would otherwise make a frozen victim unkillable and strand him (and
+    * his camera lock) in the field.
+    */
+   static boolean queuesUnderControl(boolean anchored, boolean bypassesInvulnerability) {
+      return anchored && !bypassesInvulnerability;
    }
 
    /** The Counter arms on external living-attacker hits only — never internal or self damage. */
