@@ -359,7 +359,7 @@ public final class ActScene {
       double bestDist = Double.MAX_VALUE;
       for (LivingEntity e : SinclairCombat.enemiesNear(player, eye, this.act.reach())) {
          Vec3 to = e.getBoundingBox().getCenter().subtract(eye);
-         if (SinclairRules.inCone(look.x, look.y, look.z, to.x, to.y, to.z, 35.0) && player.hasLineOfSight(e) && to.lengthSqr() < bestDist) {
+         if (!dev.baranhan.viltrumitecore.entity.Bystander.is(e) && SinclairRules.inCone(look.x, look.y, look.z, to.x, to.y, to.z, 35.0) && player.hasLineOfSight(e) && to.lengthSqr() < bestDist) {
             bestDist = to.lengthSqr();
             best = e;
          }

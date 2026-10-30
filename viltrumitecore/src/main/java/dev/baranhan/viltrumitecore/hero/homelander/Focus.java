@@ -74,7 +74,7 @@ final class Focus {
       state.focusRefresh = HomelanderRules.FOCUS_REFRESH_TICKS - 1;
       double drop = HomelanderRules.FOCUS_DROP_RADIUS;
       List<FocusTargets.Candidate> candidates = new ArrayList<>();
-      for (LivingEntity living : player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(drop), e -> e.isAlive() && !e.isSpectator()
+      for (LivingEntity living : player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(drop), e -> e.isAlive() && !e.isSpectator() && !dev.baranhan.viltrumitecore.entity.Bystander.is(e)
          && !(e instanceof net.minecraft.world.entity.player.Player other && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(other).hiddenFromFocus(other)))) {
          candidates.add(new FocusTargets.Candidate(living.getId(), living.distanceTo(player), excluded(player, living)));
       }

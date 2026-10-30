@@ -16,7 +16,7 @@ public final class ThorTargets {
    @Nullable
    public static LivingEntity nearestEnemy(Player player, double radius) {
       AABB box = player.getBoundingBox().inflate(radius);
-      return player.level().getEntitiesOfClass(LivingEntity.class, box, entity -> isEnemy(player, entity)
+      return player.level().getEntitiesOfClass(LivingEntity.class, box, entity -> HeroTargets.canAutoTarget(player, entity)
             && entity.getBoundingBox().distanceToSqr(player.getEyePosition()) <= radius * radius)
          .stream().min(Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
    }
