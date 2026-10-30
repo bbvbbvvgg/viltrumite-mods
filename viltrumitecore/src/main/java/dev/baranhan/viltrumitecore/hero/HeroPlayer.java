@@ -37,7 +37,10 @@ public interface HeroPlayer {
 
    void viltrumitecore$setSyncedSnapshot(HeroPublicSnapshot snapshot);
 
-   /** Whether a synchronized entity-data key affects hero body dimensions. */
+   /**
+    * True for the synced entity data the hero body size reads (hero id, public snapshot):
+    * HeroBodyTracker resizes the moment one of them changes, on the side where it changed.
+    */
    boolean viltrumitecore$isBodyKey(net.minecraft.network.syncher.EntityDataAccessor<?> key);
 
    /** True while vanilla mayfly was granted by HeroFlightGrant (NBT HeroGrantedMayfly). */

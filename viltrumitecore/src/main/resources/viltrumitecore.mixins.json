@@ -12,6 +12,7 @@
     "CoreFlightHookMixin",
     "EntityCollisionMixin",
     "EntityPoseBoxMixin",
+    "LivingEntityPoseBoundsMixin",
     "EntityHurtSyncMixin",
     "EntityFireMixin",
     "EntityFreezeMixin",

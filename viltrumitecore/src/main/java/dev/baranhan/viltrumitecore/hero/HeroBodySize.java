@@ -75,15 +75,18 @@ public final class HeroBodySize {
       return base * heightFactor(pose, scale);
    }
 
-   /** Compare actual dimensions and eye height with the current hero's expected pose. */
+   /** Tolerance of {@link #matches}: float noise of EntityDimensions.scale, far below a visible difference. */
    public static final float MATCH_EPS = 1.0E-4F;
 
-   public static boolean matches(float width, float height, float eye, EntityDimensions base,
-                                 float baseEye, Pose pose, Scale scale) {
-      EntityDimensions expected = dimensions(base, pose, scale);
-      return Math.abs(width - expected.width) <= MATCH_EPS
-         && Math.abs(height - expected.height) <= MATCH_EPS
-         && Math.abs(eye - eyeHeight(baseEye, pose, scale)) <= MATCH_EPS;
+   /**
+    * True when the live body (Entity.dimensions / eyeHeight) is what the size event would give now
+    * for this pose and scale ({@code base} / {@code baseEye} = the vanilla Player values of the pose).
+    * HeroBodyTracker refreshes a body that does not match: a size computed earlier from other hero
+    * data (entity construction, a pose refresh before the hero data arrived) can never stick.
+    */
+   public static boolean matches(float width, float height, float eye, EntityDimensions base, float baseEye, Pose pose, Scale scale) {
+      EntityDimensions want = dimensions(base, pose, scale);
+      return Math.abs(width - want.width) <= MATCH_EPS && Math.abs(height - want.height) <= MATCH_EPS && Math.abs(eye - eyeHeight(baseEye, pose, scale)) <= MATCH_EPS;
    }
 
    /** The box Entity.getBoundingBoxForPose builds, for the scaled dimensions. */
@@ -92,7 +95,7 @@ public final class HeroBodySize {
       return new AABB(feet.x - half, feet.y, feet.z - half, feet.x + half, feet.y + dimensions.height, feet.z + half);
    }
 
-   /** Dismount bounds, relative to the entity's feet. */
+   /** The feet-origin box LivingEntity.getLocalBoundsForPose builds (dismount checks), scaled. */
    public static AABB localBox(EntityDimensions dimensions) {
       return box(Vec3.ZERO, dimensions);
    }

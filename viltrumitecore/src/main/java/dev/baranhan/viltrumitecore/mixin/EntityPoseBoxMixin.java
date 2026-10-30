@@ -33,11 +33,9 @@ public abstract class EntityPoseBoxMixin {
       }
    }
 
-   /** Refresh on the hero id or snapshot update on either logical side. */
    @Inject(method = "onSyncedDataUpdated(Lnet/minecraft/network/syncher/EntityDataAccessor;)V", at = @At("TAIL"))
    private void viltrumitecore$heroSizeInputs(EntityDataAccessor<?> key, CallbackInfo ci) {
-      if ((Object)this instanceof Player player && player instanceof HeroPlayer hero
-         && hero.viltrumitecore$isBodyKey(key)) {
+      if ((Object)this instanceof Player player && player instanceof HeroPlayer hero && hero.viltrumitecore$isBodyKey(key)) {
          HeroBodyTracker.sync(player);
       }
    }

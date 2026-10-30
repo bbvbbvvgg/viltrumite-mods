@@ -10,17 +10,23 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Dismount fit checks must use the scaled hero's own box. */
+/**
+ * Dismount fit checks (DismountHelper, vehicles' dismount spots) read
+ * LivingEntity.getLocalBoundsForPose: a scaled hero is placed only where its own box fits, not a
+ * vanilla 0.6 x 1.8 one (a 3-block hero left in a 2-block gap is pushed into the ceiling). Same
+ * table as the size event (HeroBodySize) and EntityPoseBoxMixin.
+ */
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityPoseBoundsMixin {
-   @Inject(method = "getLocalBoundsForPose(Lnet/minecraft/world/entity/Pose;)Lnet/minecraft/world/phys/AABB;",
-      at = @At("RETURN"), cancellable = true)
+   @Inject(method = "getLocalBoundsForPose(Lnet/minecraft/world/entity/Pose;)Lnet/minecraft/world/phys/AABB;", at = @At("RETURN"), cancellable = true)
    private void viltrumitecore$heroLocalBounds(Pose pose, CallbackInfoReturnable<AABB> cir) {
-      if (!((Object)this instanceof Player player)) return;
+      if (!((Object)this instanceof Player player)) {
+         return;
+      }
+
       HeroBodySize.Scale scale = HeroBodySize.of(player);
       if (!scale.vanilla()) {
-         cir.setReturnValue(HeroBodySize.localBox(
-            HeroBodySize.dimensions(player.getDimensions(pose), pose, scale)));
+         cir.setReturnValue(HeroBodySize.localBox(HeroBodySize.dimensions(player.getDimensions(pose), pose, scale)));
       }
    }
 }

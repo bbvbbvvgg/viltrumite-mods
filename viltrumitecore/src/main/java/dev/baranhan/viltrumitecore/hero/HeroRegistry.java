@@ -131,7 +131,8 @@ public final class HeroRegistry {
          }
 
          abilityUser.setOfferedAbilities(defaultIds(loadout));
-         // A new hero always starts on the first page, never on the previous hero's Alt page.
+         // The new loadout starts on the first page: the old hero's page (Iron Man's second page,
+         // Reinhard's mode page) left a hero without pages on dead keys and Alt could not move it.
          abilityUser.setActivePage(AbilityPages.FIRST);
       }
 
@@ -252,7 +253,10 @@ public final class HeroRegistry {
       if (repaired == null) {
          resetLoadout(player);
          String[] reset = new String[18];
-         for (int slot = 0; slot < 18; slot++) reset[slot] = abilityUser.getAbilityInSlot(slot);
+         for (int slot = 0; slot < 18; slot++) {
+            reset[slot] = abilityUser.getAbilityInSlot(slot);
+         }
+
          abilityUser.setActivePage(AbilityPages.settle(abilityUser.getActivePage(), reset));
          return;
       }
@@ -282,9 +286,12 @@ public final class HeroRegistry {
       java.util.Set<String> given = new java.util.LinkedHashSet<>(offered);
       given.addAll(defaultIds(defaults));
       abilityUser.setOfferedAbilities(given);
-      int currentPage = abilityUser.getActivePage();
-      int settledPage = AbilityPages.settle(currentPage, filled);
-      if (currentPage != settledPage) abilityUser.setActivePage(settledPage);
+      // A save left on an empty page (before the page reset on hero change) moves to a filled one.
+      int page = abilityUser.getActivePage();
+      int settled = AbilityPages.settle(page, filled);
+      if (settled != page) {
+         abilityUser.setActivePage(settled);
+      }
    }
 
    /**
