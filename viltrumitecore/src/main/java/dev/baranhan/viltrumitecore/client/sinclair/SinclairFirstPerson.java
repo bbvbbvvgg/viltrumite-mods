@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.baranhan.viltrumitecore.client.anim.AnimCache;
 import dev.baranhan.viltrumitecore.client.anim.geo.BakedGeoModel;
 import dev.baranhan.viltrumitecore.client.anim.render.AnimRenderer;
+import dev.baranhan.viltrumitecore.client.sinclair.stage.StageCamera;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.sinclair.SinclairFlags;
 import net.minecraft.client.Minecraft;
@@ -32,6 +33,13 @@ public final class SinclairFirstPerson {
 
    public static void onRenderHand(RenderHandEvent event) {
       Minecraft mc = Minecraft.getInstance();
+      if (StageCamera.staged()) {
+         // The copy cinematic or an act camera moved the lens behind the body (also for a volunteer who is
+         // not Sinclair): no first-person arms or held item in front of it.
+         event.setCanceled(true);
+         return;
+      }
+
       LocalPlayer player = mc.player;
       HeroPublicSnapshot snapshot = SinclairView.of(player);
       if (snapshot == null) {
