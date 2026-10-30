@@ -17,6 +17,15 @@ public final class PixelVfx {
    private PixelVfx() {
    }
 
+   /**
+    * The exact view rotation of the level frame (roll included: CameraShake, WorldCutJolt and
+    * the Jinwoo lean add roll in ComputeCameraAngles, which pitch/yaw alone miss, so world
+    * markers drawn with {@link #rotateCamera} slid off their entities during shakes).
+    */
+   public static void levelView(PoseStack stack, net.minecraftforge.client.event.RenderLevelStageEvent event) {
+      stack.mulPoseMatrix(event.getPoseStack().last().pose());
+   }
+
    public static void rotateCamera(PoseStack stack, float pitch, float yaw) {
       stack.mulPose(Axis.XP.rotationDegrees(pitch));
       stack.mulPose(Axis.YP.rotationDegrees(yaw + 180.0F));
