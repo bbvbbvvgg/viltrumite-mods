@@ -138,7 +138,7 @@ public final class ErasureDissolveRenderer {
       b.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
       float fx = (float)(focus.x - cam.x), fy = (float)(focus.y - cam.y), fz = (float)(focus.z - cam.z);
       // soft bloom around the body; the last spark when the final cell goes
-      float bloom = .3F * glow * (1 - .6F * Math.min(1, front));
+      float bloom = ErasureDissolve.bloom(t, erase);
       float spark = erase ? pulse(t, dev.baranhan.viltrumitecore.hero.reinhard.ReinhardRules.ERASE_REMOVE_TICK - 2, 2, 9) : 0;
       if (bloom > .005F) disc(b, fx, fy, fz, left, up, size * .85F + .5F, .92F, .95F, 1, bloom);
       if (bloom > .005F) disc(b, fx, fy, fz, left, up, size * .45F + .2F, 1, 1, 1, bloom * .8F);

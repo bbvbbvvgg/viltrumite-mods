@@ -47,12 +47,24 @@ public final class ErasureDissolve {
       h ^= h >>> 29; h *= 0xBF58476D1CE4E5B9L; h ^= h >>> 32;
       return (h >>> 40) / (float)(1 << 24);
    }
-   /** Age of a released cell in ticks (front passed its threshold), negative while it is still whole. */
+   /**
+    * Age of a released cell in ticks (front passed its threshold), negative while it is still whole.
+    * Erase: real ticks since the front crossed the cell, so every mote dies MOTE_LIFE after its
+    * release even once the front has stopped (the last cells must not hang in the air). Survivor:
+    * the gap to the front, so its light runs back into the body as the front returns.
+    */
    public static float released(float threshold, float t, boolean erase) {
       float f = front(t, erase);
       if (f <= threshold) return -1;
       float span = ERASE_REMOVE_TICK - 2 - ERASE_DISSOLVE_START;
-      return (f - threshold) / 1.12F * span;
+      if (!erase) return (f - threshold) / 1.12F * span;
+      return Math.max(0, t - (ERASE_DISSOLVE_START + span * easeInverse(clamp(threshold) / 1.12F)));
+   }
+   /** Soft bloom around the body 0..1: follows the light, dims as it comes apart, gone after the removal. */
+   public static float bloom(float t, boolean erase) {
+      float b = .3F * glow(t, erase) * (1 - .6F * Math.min(1, front(t, erase)));
+      if (!erase) return b;
+      return b * (1 - smooth((t - (ERASE_REMOVE_TICK - 2)) / 8));
    }
    /** Brightness of the hot band 0..1 (1 right at the front). */
    public static float edge(float threshold, float t, boolean erase) {
@@ -69,5 +81,7 @@ public final class ErasureDissolve {
    }
    static float clamp(float v) {return Float.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0;}
    static float smooth(float v) {float t = clamp(v); return t * t * (3 - 2 * t);}
+   /** Inverse of {@link #ease} on 0..1. */
+   static float easeInverse(float y) {float v = clamp(y); return v < .5F ? (float)Math.sqrt(v / 2) : 1 - (float)Math.sqrt((1 - v) / 2);}
    static float ease(float v) {float t = clamp(v); return t < .5F ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t);}
 }

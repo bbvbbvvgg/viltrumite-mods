@@ -151,6 +151,26 @@ class ErasureSceneTest {
       assertEquals(ErasureShake.at(last + .5F, Float.NaN), ErasureShake.at(last + .5F, 1));
    }
 
+   @Test void everyReleasedMoteDiesAfterItsLifeEvenWhenTheFrontHasStopped() {
+      for (float th : new float[]{0, .2F, .5F, .8F, .95F, 1}) {
+         float first = Float.NaN;
+         for (float t = ERASE_DISSOLVE_START; t < ERASE_LENGTH; t += .25F) {
+            float age = ErasureDissolve.released(th, t, true);
+            if (age >= 0 && Float.isNaN(first)) first = t;
+            if (age >= 0) assertEquals(t - first, age, .3F, "age is real time since the release");
+         }
+         assertFalse(Float.isNaN(first), "every cell is released, threshold " + th);
+         assertTrue(first < ERASE_REMOVE_TICK, "released before the removal");
+         float end = ErasureDissolve.released(th, ERASE_REMOVE_TICK + ErasureDissolve.MOTE_LIFE + 1, true);
+         assertTrue(end >= ErasureDissolve.MOTE_LIFE, "no mote hangs in the air after the removal");
+      }
+   }
+   @Test void bloomIsGoneAfterTheRemovalButASurvivorKeepsItsLight() {
+      assertTrue(ErasureDissolve.bloom(ERASE_DISSOLVE_START, true) > .1F);
+      assertEquals(0, ErasureDissolve.bloom(ERASE_REMOVE_TICK + 8, true), 1e-4F);
+      assertEquals(0, ErasureDissolve.bloom(ERASE_LENGTH - 1, true), 1e-4F);
+      assertTrue(ErasureDissolve.bloom(ERASE_REMOVE_TICK, false) > .1F);
+   }
    @Test void runtimeWiring() throws Exception {
       var s = Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/client/reinhard/erasure/ErasureScene.java"));
       for (String key : List.of("ScreenProjector.project", "SimpleSoundInstance.forUI", "WorldPauseClient.onEnd", "ErasurePost.bind",
