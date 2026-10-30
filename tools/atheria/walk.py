@@ -13,7 +13,7 @@ Algorithm (per region, with a 64-block halo from the neighbour regions):
     hills stay connected while roofs, separated by walls, never join;
  4. small isolated pieces (yards, pockets between walls) are dropped;
  5. only the built-up area counts: tiles of 16x16 with at least a quarter of road or pavement
-    surfaces, grown by 32 blocks (urban_mask);
+    surfaces and a street nearby, grown by 32 blocks (urban_mask);
  6. class: roads and road markings are WALK (crossable), everything else is PREFERRED
     (sidewalks, plazas, parks: spawn and stroll targets).
 Water, lava, fire, magma and every column without two blocks of headroom were already
@@ -38,6 +38,8 @@ ANCHOR_RANGE = 900       # blocks, district anchor reach
 URBAN_TILE = 16          # blocks per urban-mask tile
 URBAN_MIN = 0.25         # share of road/pavement/marking surfaces that makes a tile "built"
 URBAN_GROW = 2           # tiles added around built tiles (parks, yards, beaches next to streets)
+URBAN_ROAD = 0.10        # ...and a tile within two tiles must be at least 10% road: bare stone
+                         # mountains count as "pavement" by material but have no streets
 
 def load(cols, rx, rz):
     f = os.path.join(cols, 'r.%d.%d.npz' % (rx, rz))
@@ -89,7 +91,10 @@ def urban_mask(M):
     """Built-up area: tiles with enough road/pavement surfaces, grown by a margin. Keeps the
     pedestrians in the city instead of the forests, mountains and fields around it."""
     S = M.shape[0]; T = URBAN_TILE; n = S // T
-    built = np.isin(M[:n * T, :n * T], (M_ROAD, M_PAVE, M_MARK)).reshape(n, T, n, T).mean((1, 3)) >= URBAN_MIN
+    Mt = M[:n * T, :n * T]
+    built = np.isin(Mt, (M_ROAD, M_PAVE, M_MARK)).reshape(n, T, n, T).mean((1, 3)) >= URBAN_MIN
+    road = np.isin(Mt, (M_ROAD, M_MARK)).reshape(n, T, n, T).mean((1, 3)) >= URBAN_ROAD
+    built &= cv2.dilate(road.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
     k = 2 * URBAN_GROW + 1
     grown = cv2.dilate(built.astype(np.uint8), np.ones((k, k), np.uint8)) > 0
     out = np.zeros(M.shape, bool)
