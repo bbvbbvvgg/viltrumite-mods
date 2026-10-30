@@ -21,7 +21,7 @@ public final class HeroRegistry {
    public static void registerDefaults() {
       register(new HumanHero());
       register(new ViltrumiteHero());
-      register(new RegulusHero());
+      register(RegulusHero.INSTANCE);
       register(new dev.baranhan.viltrumitecore.hero.homelander.HomelanderHero());
       register(new dev.baranhan.viltrumitecore.hero.ironman.IronManHero());
       register(dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero.INSTANCE);

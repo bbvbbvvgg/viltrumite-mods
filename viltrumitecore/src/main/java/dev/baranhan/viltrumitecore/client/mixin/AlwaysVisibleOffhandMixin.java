@@ -1,7 +1,6 @@
 package dev.baranhan.viltrumitecore.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.baranhan.viltrumitecore.client.render.animation.RegulusAnimationManager;
 import dev.baranhan.viltrumitecore.config.ViltrumiteClientConfig;
 import dev.baranhan.viltrumitecore.item.InfinityGunItem;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
@@ -58,7 +57,7 @@ public abstract class AlwaysVisibleOffhandMixin {
                boolean isThunderclapping = corePlayer.getThunderclapTicks() > 0;
                boolean isBarraging = corePlayer.isBarraging();
                shouldRender = isBlocking || isGrabbing || isLeftPunching || isLeftChopping || isThunderclapping || isBarraging
-                  || RegulusAnimationManager.wantsOffhand(player) || dev.baranhan.viltrumitecore.client.ironman.IronManFirstPerson.wantsOffhand(player)
+                  || dev.baranhan.viltrumitecore.client.regulus.RegulusFirstPerson.wantsOffhand(player) || dev.baranhan.viltrumitecore.client.ironman.IronManFirstPerson.wantsOffhand(player)
                   || dev.baranhan.viltrumitecore.client.reinhard.ReinhardFirstPerson.wantsOffhand(player);
             }
 
