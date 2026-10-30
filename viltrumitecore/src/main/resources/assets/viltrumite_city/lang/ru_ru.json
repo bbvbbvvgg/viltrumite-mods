@@ -37,6 +37,7 @@
   "viltrumitecore.city.reset.no_pending": "Нечего подтверждать. Сначала выполните /city reset.",
   "viltrumitecore.city.reset.started": "Восстановление карты началось: %s блоков в %s чанках.",
   "viltrumitecore.city.reset.not_running": "Восстановление карты не идёт.",
+  "viltrumitecore.city.reset.request_cancelled": "Запрос на сброс отменён, карта остаётся как есть.",
   "viltrumitecore.city.reset.cancelled": "Восстановление остановлено, ещё изменено блоков: %s (/city reset продолжит).",
   "viltrumitecore.city.reset.resumed": "Продолжаю прерванное восстановление карты: осталось %s блоков.",
   "viltrumitecore.city.reset.done": "Карта восстановлена: %s блоков в %s чанках, проходов %s, %s с.",
