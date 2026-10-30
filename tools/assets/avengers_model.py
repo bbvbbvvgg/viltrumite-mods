@@ -292,45 +292,134 @@ def cape_fn(face, rgb, glow, rs):
     put(rgb, np.s_[-1:, :], TH_RED_LO, 0.6)
 
 
-def hammer_head_fn(face, rgb, glow, rs):
-    put(rgb, np.s_[:, :], '#8f969f', 1.0)
-    if face.w > 4 and face.h > 4:
-        put(rgb, np.s_[1:-1, 1:-1], '#a8aeb6', 0.8)
-        # Uru knotwork panel on the long faces
-        cx, cy = face.w / 2, face.h / 2
+def strands(lo, hi, wave=0.9, ends=True):
+    """Hair: soft strands running down the sides (random per-column tone that drifts slowly with the waves), lit
+    tops, darker tips; on the crown the strands run front to back."""
+    def fn(face, rgb, glow, rs):
         v, u = np.mgrid[0:face.h, 0:face.w]
-        knot = (np.abs(np.hypot(u - cx, v - cy) - min(cx, cy) * 0.55) < 0.9)
-        put(rgb, knot, '#6c727b', 0.9)
-    put(rgb, np.s_[0, :], '#c6cbd2', 0.5)
+        across, along = (v, u) if face.name in ('up', 'down') else (u, v)
+        n = int(across.max()) + 1
+        tone = rs.uniform(-1, 1, n + 2)
+        tone = (tone[:-2] + 2 * tone[1:-1] + tone[2:]) / 4 * 1.6
+        ph = rs.uniform(0, 6.28, n)
+        k = tone[across] + 0.45 * np.sin(along * 0.45 * wave + ph[across])
+        put(rgb, k > 0.5, hi, 0.4)
+        put(rgb, k < -0.5, lo, 0.5)
+        if face.name not in ('up', 'down'):
+            put(rgb, np.s_[0:1, :], hi, 0.3)
+            if ends and face.h > 4:
+                put(rgb, np.s_[-2:, :], lo, 0.45)
+    return fn
+
+
+URU, URU_HI, URU_LO, URU_LINE = '#8a9099', '#b9bfc7', '#5f656e', '#4b5059'
+
+
+def uru_shade(face, rgb):
+    """Brushed Uru metal: lighter towards the top, a faint horizontal brush grain."""
+    x, y, z = face.world()
+    if face.name in ('up', 'down'):
+        return
+    t = (y - y.min()) / max(1e-6, y.max() - y.min())
+    rgb *= (0.86 + 0.22 * t)[..., None]
+
+
+def knot(face, rgb, color):
+    """Celtic knot medallion (ring + interlaced triquetra) centred on the face."""
+    v, u = np.mgrid[0:face.h, 0:face.w]
+    cx, cy = (face.w - 1) / 2, (face.h - 1) / 2
+    r = min(face.w, face.h) * 0.42
+    d = np.hypot(u - cx, v - cy)
+    put(rgb, np.abs(d - r) < 0.55, color, 0.95)
+    for k in range(3):
+        a = math.radians(90 + 120 * k)
+        ox, oy = cx + math.cos(a) * r * 0.42, cy - math.sin(a) * r * 0.42
+        dd = np.hypot(u - ox, v - oy)
+        put(rgb, (np.abs(dd - r * 0.5) < 0.5) & (d < r - 0.6), color, 0.85)
+
+
+def hammer_head_fn(face, rgb, glow, rs):
+    uru_shade(face, rgb)
+    if face.w > 6 and face.h > 6:
+        # engraved frame one pixel in from the edge, the knot on the long sides
+        put(rgb, np.s_[1, 1:-1], URU_LINE, 0.7)
+        put(rgb, np.s_[-2, 1:-1], URU_LINE, 0.7)
+        put(rgb, np.s_[1:-1, 1], URU_LINE, 0.7)
+        put(rgb, np.s_[1:-1, -2], URU_LINE, 0.7)
+        if face.name in ('east', 'west'):
+            knot(face, rgb, URU_LINE)
+            put(rgb, np.s_[2:3, 2:-2], URU_HI, 0.35)
+    put(rgb, np.s_[0, :], URU_HI, 0.55)
+    put(rgb, np.s_[-1, :], URU_LO, 0.5)
     if glow is not None:
         glow[:] = [150, 200, 255, 0]
 
 
+def hammer_face_fn(face, rgb, glow, rs):
+    """Striking faces and bevels: polished, a soft centre highlight."""
+    uru_shade(face, rgb)
+    v, u = np.mgrid[0:face.h, 0:face.w]
+    d = np.hypot((u + 0.5) / face.w - 0.5, (v + 0.5) / face.h - 0.4)
+    put(rgb, d < 0.22, URU_HI, 0.35)
+    put(rgb, np.s_[0, :], URU_HI, 0.5)
+
+
+def rim_fn(face, rgb, glow, rs):
+    put(rgb, np.s_[0, :], URU_HI, 0.6)
+    put(rgb, np.s_[-1, :], URU_LO, 0.7)
+
+
 def handle_fn(face, rgb, glow, rs):
-    if face.h > 2:
-        for k in range(0, face.h, 2):
-            put(rgb, np.s_[k:k + 1, :], '#3a2414', 0.7)
+    """Leather wrap: diagonal turns with a dark seam and a lit edge."""
+    v, u = np.mgrid[0:face.h, 0:face.w]
+    k = (u + v * 2) % 5
+    put(rgb, k == 0, '#24150b', 0.85)
+    put(rgb, k == 1, '#7a5233', 0.45)
+
+
+def silver_fn(face, rgb, glow, rs):
+    put(rgb, np.s_[0, :], '#eef0f3', 0.6)
+    put(rgb, np.s_[-1, :], '#7c818a', 0.6)
 
 
 TH = {
     'disc': Mat(TH_SILVER, noise=0, edge=0.0, fn=disc_fn, grain=1),
     'cape': Mat(TH_RED, noise=5, edge=0.05, fn=cape_fn),
-    'hair': Mat(TH_HAIR, noise=10, edge=0.08, grain=1),
-    'hair_lo': Mat(TH_HAIR_LO, noise=8, edge=0.08, grain=1),
+    'hair': Mat(TH_HAIR, noise=6, edge=0.05, fn=strands(TH_HAIR_LO, '#f1d48a', wave=0.8), grain=1),
+    'hair_lo': Mat(TH_HAIR_LO, noise=6, edge=0.05, fn=strands('#7d5f27', TH_HAIR, wave=0.8), grain=1),
     'silver': Mat(TH_SILVER, noise=3, edge=0.15),
     'black': Mat(TH_BLACK, noise=3, edge=0.15),
-    'hammer': Mat('#8f969f', noise=3, edge=0.1, fn=hammer_head_fn, grain=1),
-    'handle': Mat('#5a3a22', noise=3, edge=0.05, fn=handle_fn, grain=1),
+    'hammer': Mat(URU, noise=3, edge=0.0, fn=hammer_head_fn, grain=1),
+    'hammer_face': Mat('#969ca5', noise=2, edge=0.12, fn=hammer_face_fn, grain=1),
+    'hammer_rim': Mat('#737983', noise=2, edge=0.0, fn=rim_fn, grain=1),
+    'handle': Mat('#4f3220', noise=3, edge=0.0, fn=handle_fn, grain=1),
+    'hammer_silver': Mat('#b4bac2', noise=2, edge=0.0, fn=silver_fn, grain=1),
     'strap': Mat('#3a2414', noise=2, edge=0.0),
 }
 
 
 def mjolnir(m, bone, gx, gy, gz):
-    """Handle through the fist along Y, the head below it (long axis front-back)."""
-    m.cube(bone, [gx - 0.45, gy - 4.6, gz - 0.45], [0.9, 6.2, 0.9], TH['handle'])
-    m.cube(bone, [gx - 0.55, gy + 1.5, gz - 0.55], [1.1, 0.7, 1.1], TH['silver'])
-    m.cube(bone, [gx - 0.15, gy + 1.6, gz + 0.4], [0.3, 0.3, 1.6], TH['strap'])
-    m.cube(bone, [gx - 1.35, gy - 7.4, gz - 2.35], [2.7, 2.8, 4.7], TH['hammer'])
+    """MCU Mjolnir, grip at (gx, gy, gz): the handle runs along Y through the fist, the pommel and the wrist strap
+    above it, the head below with its long axis front-back. The head is a chamfered block (two crossed cubes), with
+    raised rims at both ends, recessed striking faces, a knotwork medallion on the long sides and a collar where the
+    leather-wrapped handle enters it."""
+    hy0, hh, hl, hw = gy - 7.9, 3.4, 5.8, 3.2          # head bottom, height, length (z), width (x)
+    m.cube(bone, [gx - hw / 2, hy0 + 0.3, gz - hl / 2], [hw, hh - 0.6, hl], TH['hammer'])
+    m.cube(bone, [gx - hw / 2 + 0.3, hy0, gz - hl / 2], [hw - 0.6, hh, hl], TH['hammer_face'])
+    for z0 in (gz - hl / 2 - 0.05, gz + hl / 2 - 0.55):
+        m.cube(bone, [gx - hw / 2 - 0.12, hy0 + 0.18, z0], [hw + 0.24, hh - 0.36, 0.6], TH['hammer_rim'])
+    for z0 in (gz - hl / 2 - 0.3, gz + hl / 2 + 0.05):
+        m.cube(bone, [gx - hw / 2 + 0.45, hy0 + 0.45, z0], [hw - 0.9, hh - 0.9, 0.25], TH['hammer_face'])
+    m.cube(bone, [gx - 0.8, hy0 + hh, gz - 0.8], [1.6, 0.45, 1.6], TH['hammer_silver'])
+    m.cube(bone, [gx - 0.48, hy0 + hh + 0.45, gz - 0.48], [0.96, gy + 1.5 - (hy0 + hh + 0.45), 0.96], TH['handle'])
+    m.cube(bone, [gx - 0.62, gy + 1.5, gz - 0.62], [1.24, 0.35, 1.24], TH['hammer_silver'])
+    m.cube(bone, [gx - 0.52, gy + 1.85, gz - 0.52], [1.04, 0.55, 1.04], TH['hammer_silver'])
+    m.cube(bone, [gx - 0.3, gy + 2.4, gz - 0.3], [0.6, 0.3, 0.6], TH['hammer_silver'])
+    # the wrist strap loop hanging from the pommel
+    m.cube(bone, [gx - 0.12, gy - 0.9, gz + 0.55], [0.24, 2.95, 0.22], TH['strap'])
+    m.cube(bone, [gx - 0.12, gy - 0.9, gz + 1.55], [0.24, 2.6, 0.22], TH['strap'])
+    m.cube(bone, [gx - 0.12, gy - 1.12, gz + 0.55], [0.24, 0.22, 1.22], TH['strap'])
+    m.cube(bone, [gx - 0.12, gy + 1.78, gz + 0.5], [0.24, 0.22, 1.1], TH['strap'], rotation=[-25, 0, 0], pivot=[gx, gy + 1.9, gz + 0.5])
 
 
 def thor_gear():
@@ -363,7 +452,7 @@ def thor_gear():
 # =================================================================================== BLACK WIDOW
 BW_BLACK, BW_BLACK_HI = '#141519', '#2c2f38'
 BW_SILVER = '#b8bec8'
-BW_HAIR, BW_HAIR_LO = '#b3361f', '#7a2112'
+BW_HAIR, BW_HAIR_LO, BW_HAIR_HI = '#a8321d', '#6b1d10', '#d2583a'
 BW_SKIN = '#efcdb4'
 
 
@@ -440,7 +529,8 @@ def curls_fn(face, rgb, glow, rs):
 
 
 BW = {
-    'hair': Mat(BW_HAIR, noise=12, edge=0.05, fn=curls_fn, grain=1),
+    'hair': Mat(BW_HAIR, noise=6, edge=0.04, fn=strands(BW_HAIR_LO, BW_HAIR_HI, wave=1.3), grain=1),
+    'hair_curl': Mat(BW_HAIR, noise=6, edge=0.1, fn=strands(BW_HAIR_LO, BW_HAIR_HI, wave=1.8, ends=False), grain=1),
     'gun': Mat('#25272c', noise=3, edge=0.15),
     'gun_hi': Mat('#4a4e57', noise=2, edge=0.1),
     'holster': Mat('#111114', noise=2, edge=0.15),
@@ -460,13 +550,19 @@ def widow_gear():
     m.bone('hair', 'head', [0, 30, 0])
     m.bone('right_gun', 'right_hand', [-5.5, 12.6, 0])
     m.bone('left_gun', 'left_hand', [5.5, 12.6, 0])
-    # 2012 shoulder-length curled red hair
-    m.cube('hair', [-4.55, 30.2, -4.55], [9.1, 2.3, 9.1], BW['hair'])
-    m.cube('hair', [-4.8, 23.2, -0.2], [9.6, 7.4, 4.9], BW['hair'])
+    # 2012: shoulder-length red waves, parted on her left, volume at the sides, curled ends on the shoulders
+    m.cube('hair', [-4.5, 31.6, -4.5], [9.0, 1.0, 9.0], BW['hair'])                      # crown
+    m.cube('hair', [-4.7, 25.0, -1.2], [9.4, 7.0, 5.9], BW['hair'])                      # back
+    m.cube('hair', [-4.95, 22.4, 0.2], [9.9, 2.8, 4.9], BW['hair_curl'])                 # curls on the nape
     for sx in (-1, 1):
-        x0 = 4.0 if sx > 0 else -4.9
-        m.cube('hair', [x0, 23.4, -4.1], [0.9, 7.2, 4.0], BW['hair'])
-    m.cube('hair', [-4.3, 29.6, -4.75], [5.2, 1.9, 0.7], BW['hair'], rotation=[0, 0, 8], pivot=[-1.7, 30.4, -4.4])
+        x0 = 4.0 if sx > 0 else -5.0
+        m.cube('hair', [x0, 25.2, -4.3], [1.0, 6.6, 4.0], BW['hair'])                    # side volume
+        m.cube('hair', [x0 + (0.15 if sx > 0 else -0.35), 22.6, -3.9], [1.2, 2.9, 3.8], BW['hair_curl'])  # side curl
+        m.cube('hair', [x0 + (0.0 if sx > 0 else -0.1), 24.8, 0.0], [1.1, 1.4, 3.6], BW['hair_curl'])    # behind the ear
+    # the side part: a long swoop across the forehead and a short lock on the other side
+    m.cube('hair', [-4.45, 29.7, -4.85], [5.6, 2.0, 0.8], BW['hair'], rotation=[0, 0, 9], pivot=[-1.6, 30.6, -4.4])
+    m.cube('hair', [1.6, 30.3, -4.75], [2.9, 1.5, 0.7], BW['hair'], rotation=[0, 0, -14], pivot=[3.0, 31.0, -4.4])
+    m.cube('hair', [-4.6, 27.4, -4.65], [0.9, 2.6, 0.6], BW['hair_curl'])
     # thigh holsters
     for side, cx in (('right', -1.9), ('left', 1.9)):
         x0 = cx - 2.55 if side == 'right' else cx + 2.0
@@ -718,9 +814,7 @@ def projectiles():
     out = []
     m = Model('mjolnir_mcu', density=6, width=128, seed=23)
     m.bone('hammer', None, [0, 0, 0])
-    m.cube('hammer', [-0.45, -1.4, -0.45], [0.9, 6.2, 0.9], TH['handle'])
-    m.cube('hammer', [-0.55, 4.7, -0.55], [1.1, 0.7, 1.1], TH['silver'])
-    m.cube('hammer', [-1.35, -4.2, -2.35], [2.7, 2.8, 4.7], TH['hammer'])
+    mjolnir(m, 'hammer', 0.0, 3.2, 0.0)
     out.append(('mjolnir', m))
     for key, tipmat in (('arrow', HK['tip']), ('arrow_explosive', Mat('#b02a2a', noise=1, edge=0.0)),
                         ('arrow_shock', Mat('#58b6ff', noise=1, edge=0.0))):
