@@ -367,6 +367,9 @@ public final class CaptainHero implements HeroDefinition {
 
    @Override
    public boolean interceptsProjectiles(Player self) {
+      if (self == null) {
+         return true; // the hero can turn projectiles away (seam probe without a player)
+      }
       HeroPublicSnapshot s = self instanceof HeroPlayer hp ? hp.getHeroSnapshot() : null;
       if (!self.level().isClientSide) {
          CaptainState state = CaptainState.of(self);
