@@ -91,12 +91,21 @@ public final class RegulusFx {
             RegulusVfx.crack(at, 0.3, 20);
             shake(victim || mine, at, 0.45F, 16.0);
          }
-         case RegulusFxS2CPacket.PROCESSION_RAM -> {
+         case RegulusFxS2CPacket.TRAMPLE_IMPACT -> {
+            boolean air = p.dx() > 0.5F;
+            double radius = Math.max(1.0, p.power());
+            RegulusVfx.shockwave(at, radius, Math.max(0.1, p.dy()), air, p.extra());
+            RegulusVfx.crack(at.add(0.0, 0.15, 0.0), air ? 0.7 : 1.0, 34);
+            RegulusVfx.burst(at.add(0.0, 0.2, 0.0), air ? 10 : 18, 0.16, 4.0F, 30, air ? RegulusPalette.GLASS : RegulusVfx.blockColor(p.extra(),
+               RegulusPalette.GREY), 0.05F, 14.0, new Vec3(0.0, 0.8, 0.0));
+            RegulusVfx.ring(at.add(0.0, 0.1, 0.0), 1.8, 24, 3.0F, 26, RegulusPalette.GOLD);
+            shake(mine, at, mine ? 0.7F : 1.1F, radius + 6.0);
+         }
+         case RegulusFxS2CPacket.TRAMPLE_HIT -> {
             Vec3 f = safe(dir);
-            RegulusVfx.crack(at, 0.6, 26);
-            RegulusVfx.pane(at.subtract(f.scale(0.4)), f, 0.7, 18);
-            RegulusVfx.burst(at, 14, 0.18, 4.0F, 26, RegulusPalette.IVORY, 0.035F, -1.0, f);
-            shake(mine || victim, at, 0.9F, 24.0);
+            RegulusVfx.crack(at, 0.45, 22);
+            RegulusVfx.burst(at, 8, 0.12, 3.0F, 20, RegulusPalette.IVORY, 0.03F, 8.0, f.add(0.0, 1.2, 0.0).normalize());
+            shake(victim, at, 0.8F, 10.0);
          }
          case RegulusFxS2CPacket.BLOCK_STOP -> {
             RegulusVfx.fragments(at, p.extra());

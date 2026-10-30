@@ -54,7 +54,7 @@ public final class RegulusPoser {
 
    /** Pure: does the walk keep the legs during this move (upper-body moves) or does the clip own them. */
    static boolean legsWalk(@Nullable RegulusMove move) {
-      return move != RegulusMove.PROCESSION && move != RegulusMove.ULT;
+      return move != RegulusMove.TRAMPLE && move != RegulusMove.ULT;
    }
 
    /** Pure: stride (blocks per cycle) for the current blend of walk, run and sneak. */
@@ -107,7 +107,7 @@ public final class RegulusPoser {
       }
 
       float hipsYaw = Mth.lerp(s.walk, s.lagYaw(), s.walkYaw);
-      if (move == RegulusMove.PROCESSION || move == RegulusMove.ULT) {
+      if (move == RegulusMove.TRAMPLE || move == RegulusMove.ULT) {
          hipsYaw *= 1.0F - moveWeight;
       }
 
