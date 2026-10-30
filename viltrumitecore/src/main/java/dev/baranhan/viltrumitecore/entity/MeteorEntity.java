@@ -23,8 +23,33 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraftforge.event.ForgeEventFactory;
 
 public class MeteorEntity extends Projectile {
+   /** False for meteor-rain meteors: an endless rain must not pile up invulnerable gun parts. */
+   private boolean dropsLoot = true;
+
    public MeteorEntity(EntityType<? extends Projectile> pEntityType, Level pLevel) {
       super(pEntityType, pLevel);
+   }
+
+   public void setDropsLoot(boolean dropsLoot) {
+      this.dropsLoot = dropsLoot;
+   }
+
+   public boolean dropsLoot() {
+      return this.dropsLoot;
+   }
+
+   @Override
+   protected void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+      super.addAdditionalSaveData(tag);
+      if (!this.dropsLoot) {
+         tag.putBoolean("NoLoot", true);
+      }
+   }
+
+   @Override
+   protected void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+      super.readAdditionalSaveData(tag);
+      this.dropsLoot = !tag.getBoolean("NoLoot");
    }
 
    public void tick() {
@@ -74,19 +99,22 @@ public class MeteorEntity extends Projectile {
             }
          }
 
-         int randomPiece = this.random.nextInt(3);
+         if (this.dropsLoot) {
+            int randomPiece = this.random.nextInt(3);
 
-         Item droppedItem = switch (randomPiece) {
-            case 0 -> (Item)ViltrumiteItems.INFINITY_GUN_BASE.get();
-            case 1 -> (Item)ViltrumiteItems.INFINITY_GUN_HANDLE.get();
-            default -> (Item)ViltrumiteItems.INFINITY_GUN_BARREL.get();
-         };
-         ItemStack dropStack = new ItemStack(droppedItem, 1);
-         ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY() + 2.0, this.getZ(), dropStack);
-         itemEntity.setDeltaMovement(0.0, 0.4, 0.0);
-         itemEntity.setUnlimitedLifetime();
-         itemEntity.setInvulnerable(true);
-         this.level().addFreshEntity(itemEntity);
+            Item droppedItem = switch (randomPiece) {
+               case 0 -> (Item)ViltrumiteItems.INFINITY_GUN_BASE.get();
+               case 1 -> (Item)ViltrumiteItems.INFINITY_GUN_HANDLE.get();
+               default -> (Item)ViltrumiteItems.INFINITY_GUN_BARREL.get();
+            };
+            ItemStack dropStack = new ItemStack(droppedItem, 1);
+            ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY() + 2.0, this.getZ(), dropStack);
+            itemEntity.setDeltaMovement(0.0, 0.4, 0.0);
+            itemEntity.setUnlimitedLifetime();
+            itemEntity.setInvulnerable(true);
+            this.level().addFreshEntity(itemEntity);
+         }
+
          this.level().broadcastEntityEvent(this, (byte)77);
          this.discard();
       }

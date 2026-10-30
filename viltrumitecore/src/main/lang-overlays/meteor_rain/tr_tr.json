@@ -1,0 +1,11 @@
+{
+  "commands.viltrumitecore.meteor.already": "%s için zaten bir meteor yağmuru var",
+  "commands.viltrumitecore.meteor.started": "%s çevresinde meteor yağmuru başladı",
+  "commands.viltrumitecore.meteor.started.you": "Etrafına meteorlar düşüyor. Hayatta kal! (/meteor stop)",
+  "commands.viltrumitecore.meteor.not_running": "%s için meteor yağmuru yok",
+  "commands.viltrumitecore.meteor.stopped": "%s için meteor yağmuru durduruldu: yeni meteor yok, havadakiler yine düşecek",
+  "commands.viltrumitecore.meteor.stopped_all": "%s meteor yağmuru durduruldu",
+  "commands.viltrumitecore.meteor.none": "Aktif meteor yağmuru yok",
+  "commands.viltrumitecore.meteor.entry": "%s: %s içinde %ssn'dir yağmur, %s meteor atıldı, %s havada",
+  "commands.viltrumitecore.meteor.entry.paused": "%s: %s içindeki yağmur duraklatıldı (oyuncu başka yerde), %s atıldı, %s havada"
+}

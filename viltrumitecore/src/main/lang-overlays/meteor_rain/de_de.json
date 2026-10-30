@@ -1,0 +1,11 @@
+{
+  "commands.viltrumitecore.meteor.already": "%s hat bereits einen Meteoritenregen",
+  "commands.viltrumitecore.meteor.started": "Meteoritenregen um %s gestartet",
+  "commands.viltrumitecore.meteor.started.you": "Um dich herum fallen Meteoriten. Überlebe! (/meteor stop)",
+  "commands.viltrumitecore.meteor.not_running": "%s hat keinen Meteoritenregen",
+  "commands.viltrumitecore.meteor.stopped": "Meteoritenregen für %s gestoppt: keine neuen Meteoriten, fliegende schlagen noch ein",
+  "commands.viltrumitecore.meteor.stopped_all": "%s Meteoritenregen gestoppt",
+  "commands.viltrumitecore.meteor.none": "Kein Meteoritenregen aktiv",
+  "commands.viltrumitecore.meteor.entry": "%s: Regen in %s seit %ss, %s Meteoriten gestartet, %s in der Luft",
+  "commands.viltrumitecore.meteor.entry.paused": "%s: Regen in %s pausiert (Spieler woanders), %s gestartet, %s in der Luft"
+}

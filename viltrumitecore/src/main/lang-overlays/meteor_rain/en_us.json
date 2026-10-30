@@ -1,0 +1,11 @@
+{
+  "commands.viltrumitecore.meteor.already": "%s already has a meteor rain",
+  "commands.viltrumitecore.meteor.started": "Meteor rain started around %s",
+  "commands.viltrumitecore.meteor.started.you": "Meteors are falling around you. Survive! (/meteor stop)",
+  "commands.viltrumitecore.meteor.not_running": "%s has no meteor rain",
+  "commands.viltrumitecore.meteor.stopped": "Meteor rain stopped for %s: no new meteors, the ones in the air still land",
+  "commands.viltrumitecore.meteor.stopped_all": "Stopped %s meteor rains",
+  "commands.viltrumitecore.meteor.none": "No meteor rain is running",
+  "commands.viltrumitecore.meteor.entry": "%s: rain in %s for %ss, %s meteors launched, %s in the air",
+  "commands.viltrumitecore.meteor.entry.paused": "%s: rain in %s paused (player is elsewhere), %s meteors launched, %s in the air"
+}
