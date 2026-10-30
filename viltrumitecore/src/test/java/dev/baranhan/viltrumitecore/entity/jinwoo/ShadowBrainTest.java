@@ -42,4 +42,10 @@ class ShadowBrainTest {
    void stuckLimitsAreSane() {
       assertTrue(ShadowBrain.STUCK_LIMIT >= 60 && ShadowBrain.IGNORE_TICKS > 0);
    }
+
+   @Test
+   void ownerFightIsNotDroppedWhenUnreachable() {
+      assertTrue(ShadowBrain.dropsWhenStuck(true), "a local pick that cannot be reached is given up");
+      assertFalse(ShadowBrain.dropsWhenStuck(false), "the order / Jinwoo's fight is chased, not abandoned");
+   }
 }

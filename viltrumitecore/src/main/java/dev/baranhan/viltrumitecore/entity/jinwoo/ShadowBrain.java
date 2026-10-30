@@ -65,8 +65,14 @@ public final class ShadowBrain {
    public void onHurtBy(LivingEntity attacker) {
       this.provoker = attacker.getUUID();
       this.provokerTicks = 200;
-      if (this.target == null && this.self.mayHit(attacker)) {
+      // A shadow that is hit answers at once unless it serves an order or Jinwoo's own fight.
+      if ((this.target == null || this.pick == Pick.LOCAL) && this.attackTick < 0 && this.self.mayHit(attacker)) {
+         if (this.target != attacker) {
+            this.stuckTicks = 0;
+            this.bestGap = Double.MAX_VALUE;
+         }
          this.target = attacker;
+         this.pick = Pick.LOCAL;
       }
    }
 
@@ -281,7 +287,7 @@ public final class ShadowBrain {
    @Nullable
    private LivingEntity nearestEnemy(Vec3 at, double radius) {
       List<LivingEntity> list = this.self.level().getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(radius),
-         e -> e instanceof Enemy && e.isAlive() && !e.getUUID().equals(this.ignored) && this.self.mayHit(e));
+         e -> this.hostile(e) && e.isAlive() && !e.getUUID().equals(this.ignored) && this.self.mayHit(e));
       LivingEntity best = null;
       double bestD = radius * radius;
       for (LivingEntity e : list) {
@@ -292,6 +298,15 @@ public final class ShadowBrain {
          }
       }
       return best;
+   }
+
+   /** A monster, or any mob that hunts Jinwoo or one of his shadows (neutral mobs, modded NPCs). */
+   private boolean hostile(LivingEntity e) {
+      if (e instanceof Enemy) {
+         return true;
+      }
+      LivingEntity hunted = e instanceof Mob mob ? mob.getTarget() : null;
+      return hunted != null && hunted.isAlive() && this.self.isAlliedTo(hunted);
    }
 
    // --- movement ---
@@ -426,16 +441,28 @@ public final class ShadowBrain {
          if (s.tickCount % 4 == s.slot % 4 || s.getNavigation().isDone()) {
             s.getNavigation().moveTo(t, gap > 6 ? 1.5 : 1.25);
          }
-         // Unreachable (no path, on a pillar, across water): give up after 5 s without closing in.
+         // Unreachable (no path, on a pillar, across water): a local pick is given up after 5 s
+         // without closing in. The order and Jinwoo's own fight are never dropped for that (playtest:
+         // against a flying or retreating foe the army gave up and just trailed Jinwoo again).
          if (gap < this.bestGap - 0.5) {
             this.bestGap = gap;
             this.stuckTicks = 0;
          } else if (++this.stuckTicks > STUCK_LIMIT) {
-            this.ignored = t.getUUID();
-            this.ignoredTicks = IGNORE_TICKS;
-            this.forget();
+            if (dropsWhenStuck(this.pick == Pick.LOCAL)) {
+               this.ignored = t.getUUID();
+               this.ignoredTicks = IGNORE_TICKS;
+               this.forget();
+            } else {
+               this.stuckTicks = 0;
+               this.bestGap = gap;
+            }
          }
       }
+   }
+
+   /** Pure: only a shadow's own local pick is abandoned when it cannot be reached. */
+   static boolean dropsWhenStuck(boolean localPick) {
+      return localPick;
    }
 
    private void startAttack(boolean special) {
