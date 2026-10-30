@@ -80,8 +80,8 @@ public final class ReinhardQaCommands {
             arrow.pickup=net.minecraft.world.entity.projectile.AbstractArrow.Pickup.ALLOWED;arrow.setNoGravity(false);arrow.setDeltaMovement(facing.scale(-.8));p.serverLevel().addFreshEntity(arrow);
          }
          case "airblade" -> {
-            HeroRegistry.changeHero(actor,HeroId.REGULUS);var regulus=dev.baranhan.viltrumitecore.hero.regulus.RegulusHero.ensureState(actor);
-            regulus.madnessTicksLeft=60;dev.baranhan.viltrumitecore.hero.regulus.RegulusAirBlade.onPunch(actor,regulus);
+            // Regulus Reborn: the Air Severance sheet (released on its move's tick 15).
+            HeroRegistry.changeHero(actor,HeroId.REGULUS);dev.baranhan.viltrumitecore.hero.regulus.RegulusHero.INSTANCE.handleInput(actor,dev.baranhan.viltrumitecore.hero.HeroAction.MANIA,true);
          }
          case "wave" -> dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(p,p.damageSources().playerAttack(actor),10,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE);
          case "repulsor" -> dev.baranhan.viltrumitecore.entity.RepulsorBlastEntity.shoot(actor,actor.getEyePosition().add(0,-.2,0),facing.scale(-1),6,1,.2);
