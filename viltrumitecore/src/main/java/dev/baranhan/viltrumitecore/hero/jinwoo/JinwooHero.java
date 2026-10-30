@@ -402,12 +402,45 @@ public final class JinwooHero implements HeroDefinition {
     */
    @Override
    public float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, DamageSource source, float amount) {
+      if (amount > 0.0F) {
+         mark(attacker, target);
+      }
+      return amount;
+   }
+
+   /**
+    * Every swing counts, also one the target's shield or armor layer cancels
+    * (playtest: against heroes and NPCs whose layers eat the hit the army never
+    * learned what Jinwoo was fighting).
+    */
+   @Override
+   public void onAttacking(ServerPlayer self, LivingEntity target, DamageSource source) {
+      mark(self, target);
+   }
+
+   /**
+    * Every hit aimed at Jinwoo, also absorbed ones and direct-path hits that fire
+    * no LivingHurtEvent (NPC heroes strike that way): the army turns on the attacker.
+    */
+   @Override
+   public void onAttacked(ServerPlayer self, LivingEntity attacker, DamageSource source) {
+      rememberAttacker(self, attacker);
+   }
+
+   private static void mark(ServerPlayer attacker, LivingEntity target) {
       JinwooState state = JinwooState.of(attacker);
-      if (state != null && amount > 0.0F && target != attacker && target.isAlive() && !ShadowArmy.ally(attacker, target)) {
+      if (state != null && target != attacker && target.isAlive() && !ShadowArmy.ally(attacker, target)) {
          state.markTarget = target.getUUID();
          state.markTicks = JinwooRules.MARK_TICKS;
       }
-      return amount;
+   }
+
+   private static void rememberAttacker(ServerPlayer player, LivingEntity attacker) {
+      JinwooState state = JinwooState.of(player);
+      if (state != null && attacker != player && attacker.isAlive() && !ShadowArmy.ally(player, attacker)) {
+         state.lastAttackerId = attacker.getId();
+         state.lastAttackerTicks = JinwooRules.ATTACKER_TICKS;
+      }
    }
 
    @Override
@@ -417,10 +450,8 @@ public final class JinwooHero implements HeroDefinition {
          return;
       }
       state.sinceHurt = 0;
-      Entity attacker = source.getEntity();
-      if (attacker instanceof LivingEntity living && living != player && !ShadowArmy.ally(player, living)) {
-         state.lastAttackerId = living.getId();
-         state.lastAttackerTicks = 100;
+      if (source.getEntity() instanceof LivingEntity living) {
+         rememberAttacker(player, living);
       }
    }
 
