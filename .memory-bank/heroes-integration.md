@@ -13,8 +13,8 @@
   and Jinwoo packets (`HeroRosterIntegrationTest` pins order and uniqueness).
 - Version numbers taken: 1.46-1.49 / protocol 8-10 (Thor stages), 1.50.0 / 11 (subtitles), 1.52.1 / 12 (#74 alone),
   1.53.0 / 13 (#82 alone), 1.54.0 / 14 (both), 1.55.0 / 14 (DIO polish, no packet change). Pick the next free pair for the next merge.
-
-  1.53.0 / 13 (#82 alone), 1.54.0 / 14 (both), 1.55.0 / 15 (Regulus Reborn #89, `RegulusFxS2CPacket` appended after the Jinwoo packets). Pick the next free pair for the next merge.
+  1.55.0 / 15 was claimed in parallel by #86 (Thor GUARD bit), #88 (wish packets) and #89 (`RegulusFxS2CPacket`).
+  **1.56.0 / 16 = final integration of #85-#92** (all three tables together). Pick the next free pair (1.57.0 / 17).
 
 ## Where strings and sounds live
 - English and the 10 other base locales: `resources/assets/viltrumitecore/lang/<locale>.json` (Thor keys at
@@ -46,3 +46,17 @@
 
 - Regulus Reborn (1.55.0 / 15): topic file `.memory-bank/regulus.md`; its strings and sounds live in the overlays
   `src/main/lang-overlays/regulus/` and `src/main/sound-overlays/regulus.json`.
+
+## Final integration of #85-#92 (PR #85, core 1.56.0, protocol 16)
+- Packets after the Jinwoo packets: `WishChoiceC2S`, `WishSceneS2C` (#88), then `RegulusFxS2C` (#89); Thor's GUARD
+  state (#86) travels in the Thor snapshot. `HeroRosterIntegrationTest` pins the order, uniqueness and "16".
+- Regulus Reborn replaced the first kit, so #87's Evangelium fix lives in Kingdom of One: a refused ult names its
+  recharge (`message.viltrumitecore.regulus.ult_refused.cooldown`), an aborted scene recharges (cooldown ticks only
+  with no scene) and opens again; the Evangelium item is an inert keepsake for old saves; the first-kit
+  `RegulusCooldowns` tag is migrated once (`RegulusState`).
+- `/hero cooldown reset` (#87) reaches the own timers of every hero: `resetCooldowns` overrides in Regulus,
+  Homelander, Iron Man, Reinhard, Jinwoo, Thor v3 (`ThorCombatState.clearCooldowns`), DIO and Sinclair
+  (`HeroResetCoverageTest`).
+- Sinclair #91 + #92: `ActCardPopup` waits for the copy cinematic (no popup during CAPTURE / COPY, it opens with
+  the window and runs its full 6 s hold); `SinclairFirstPerson` keeps #92's arm replacement and #91's scene camera.
+- Report: `docs/reports/2026-10-30-all-pr-integration.md`.

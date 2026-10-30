@@ -173,6 +173,16 @@ public final class SinclairState {
       return Math.max(min, Math.min(max, value));
    }
 
+   /** Debug reset (/hero cooldown reset): ability timers only (bolt, assist, hex, misdirection, ult, burst). */
+   public void clearCooldowns() {
+      this.boltCooldown = 0;
+      this.assistCooldown = 0;
+      this.hexCooldown = 0;
+      this.misCooldown = 0;
+      this.ultCooldown = 0;
+      this.burstCooldown = 0;
+   }
+
    @Nullable
    public static SinclairState of(Player player) {
       if (player instanceof HeroPlayer heroPlayer && heroPlayer.getHeroId() == HeroId.SINCLAIR) {
