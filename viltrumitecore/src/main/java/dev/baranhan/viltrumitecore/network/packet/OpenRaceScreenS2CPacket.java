@@ -26,11 +26,10 @@ public class OpenRaceScreenS2CPacket {
 
    private static class ClientHandler {
       /**
-       * The first hero choice is a wish now (Od Lagna's Wish, first-choice mode). RaceSelectionScreen stays
-       * in the code as the old fallback; it is no longer opened in normal play.
+       * No automatic hero choice screen any more: a hero is chosen only with Od Lagna's Wish (the item, RMB).
+       * The packet stays registered so the protocol does not change; RaceSelectionScreen stays as old code.
        */
       public static void openScreen() {
-         dev.baranhan.viltrumitecore.client.wish.WishScreens.open(true);
       }
    }
 }

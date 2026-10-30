@@ -135,14 +135,6 @@ public final class WishQaSelfTest {
          if (wish.id().equals(OdLagnaWishes.RETURN)) {
             continue;
          }
-         if (wish.id().equals("genius") && "ironman".equals(OdLagnaWishes.byId("indestructible").heroKey())) {
-            // already Iron Man (in the Hulkbuster): the genius wish is answered «already granted»
-            STEPS.add(new Step("refuse: genius while already Iron Man", () -> {
-               hand(true);
-               WishRitual.request(player, "genius");
-            }, () -> false, 2, () -> !WishRitual.active(player) && WishRitual.REFUSED_ALREADY.equals(WishQaAccess.lastRefusal())));
-            addWish(OdLagnaWishes.byId(OdLagnaWishes.RETURN));
-         }
          addWish(wish);
       }
       // spam: a second request inside a running ritual is ignored, the clock is not reset
@@ -168,16 +160,18 @@ public final class WishQaSelfTest {
       pause("after the abort");
       // the return wish brings the human back
       addWish(OdLagnaWishes.byId(OdLagnaWishes.RETURN));
-      // the first hero choice needs no item and marks the choice made
-      STEPS.add(new Step("first choice without the item", () -> {
+      // a fresh player (no hero chosen yet) still needs the item: there is no free first choice any more
+      STEPS.add(new Step("refuse: fresh player without the item", () -> {
          hand(false);
          chosen(false);
          WishRitual.request(player, "sword");
-      }, () -> !WishRitual.active(player), WishTimeline.LENGTH + 20, () -> "reinhard".equals(hero()) && chosen()));
+      }, () -> false, 2, () -> !WishRitual.active(player) && "human".equals(hero()) && WishRitual.REFUSED_NO_ITEM.equals(WishQaAccess.lastRefusal())));
+      // with the item the fresh player gets the hero and the choice is marked made
+      addWish(OdLagnaWishes.byId("sword"));
       // the item is not consumed (the wish can be spoken again)
       STEPS.add(new Step("the item stays in hand", () -> hand(true), () -> true, 1,
          () -> player.getItemInHand(InteractionHand.MAIN_HAND).is(ViltrumiteItems.OD_LAGNA_WISH.get())));
-      pause("after the first choice");
+      pause("after the fresh player's wish");
       addWish(OdLagnaWishes.byId(OdLagnaWishes.RETURN));
    }
 

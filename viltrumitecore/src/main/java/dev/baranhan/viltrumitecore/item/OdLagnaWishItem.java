@@ -29,7 +29,7 @@ public class OdLagnaWishItem extends Item {
    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
       ItemStack stack = player.getItemInHand(hand);
       if (level.isClientSide() && !WishSceneView.active(player.getId())) {
-         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> dev.baranhan.viltrumitecore.client.wish.WishScreens.open(false));
+         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> dev.baranhan.viltrumitecore.client.wish.WishScreens.open());
       }
       return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
    }
