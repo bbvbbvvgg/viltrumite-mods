@@ -16,7 +16,7 @@ ICONS, art = registry()
 # Regulus Reborn: the six slotted powers first (RegulusAbilities.slotIds), then the two unslotted
 # ones (Greed's Touch on LMB, Little King on the heart key). The first kit's art stays below for
 # history but is no longer exported.
-NAMES = ["lions_heart", "stopped_sand", "air_severance", "procession", "right_of_reply", "kingdom_of_one",
+NAMES = ["lions_heart", "stopped_sand", "air_severance", "trample", "right_of_reply", "kingdom_of_one",
          "greeds_touch", "little_king"]
 # Asset folder under assets/viltrumitecore/ (the ids keep their existing paths).
 FOLDER = "textures/gui/ability/regulus/"
@@ -503,36 +503,44 @@ def air_severance():
 
 
 @art
-def procession():
-    """The Lion walks: an unhurried figure in white, behind him the air stays stopped in a trail of
-    still panes, in front of him a block shatters into frozen fragments."""
-    ic = Icon("regulus", center=(14, 16))
-    ground = 26
+def trample():
+    """Trample: a white-trousered leg brings the heel down; the ground caves under it and a flat
+    gold shock ring runs out across the floor, chips of earth jumping off the crater's rim."""
+    ic = Icon("regulus", center=(16, 18))
+    ground = 23
     ic.fill(rect(2, ground, 29, 29), BG[3])
     ic.fill(rect(2, ground, 29, ground), PALE[0])
-    for i, x in enumerate((3, 7)):
-        pane(ic, x, 12 + i, x + 2, 22 - i)
-    walker = [
-        "..jhhj..",
-        ".jhHhhj.",
-        ".jfefej.",
-        "..fffF..",
-        "..wwWw..",
-        ".wwgWww.",
-        "fwwGwwvf",
-        "..wgwwv.",
-        "..wwwwp.",
-        "..pp.pp.",
-        ".pp...pp",
-        ".pp...pp",
-        "kk.....kk",
-    ]
-    sprite(ic, walker, 11, 13, FIG)
-    block(ic, 22, 18, 6, top=STONE, side=STONE, cracked=True)
-    for (x, y) in ((21, 14), (25, 12), (28, 16), (20, 10)):
-        ic.fill({(x, y), (x + 1, y), (x, y + 1)}, STONE[3])
-        ic.set(x - 1, y - 1, WHITE)
-    crack_star(ic, 23, 20, 3, seed=9)
+    # the crater and its cracks
+    pit = {(x, y) for x in range(32) for y in range(ground, ground + 4)
+           if ((x - 16) / 5.0) ** 2 + ((y - ground) / 2.6) ** 2 <= 1}
+    ic.fill(pit, INK)
+    for pts in (((11, 24), (7, 26), (4, 26)), ((21, 24), (25, 26), (28, 27)), ((14, 26), (12, 29)), ((18, 26), (20, 29))):
+        ic.fill(polyline(pts), INK)
+    # the shock rings: flat ellipses on the floor, the outer one brighter at its front
+    outer = ring_pts(16, ground + 1, 14, 3.4, 0, 360, 2)
+    inner = ring_pts(16, ground + 1, 9, 2.2, 0, 360, 3)
+    ic.fill({p for p in outer if p[1] >= ground}, GOLD_R[2])
+    ic.fill({p for p in outer if p[1] > ground + 2}, GOLD_R[3])
+    ic.fill({p for p in outer if p[1] < ground}, GOLD_R[1])
+    ic.fill({p for p in inner if p[1] >= ground - 1}, GOLD_R[3])
+    # the leg: white trouser down to a gold cuff, a dark boot heel-first into the pit
+    leg = poly([(14, 2), (19, 2), (19, 15), (14, 15)])
+    ic.solid(leg, [COAT[1], COAT[2], COAT[3], COAT[3]])
+    ic.fill(rect(14, 15, 19, 16), GOLD_R[2])
+    ic.set(14, 16, GOLD_R[1])
+    boot = poly([(14, 17), (19, 17), (19, 23), (9, 23), (9, 21), (14, 20)])
+    ic.solid(boot, [STONE[0], STONE[1], STONE[2], STONE[3]])
+    # speed streaks above the knee-down
+    for x, y0, y1 in ((11, 4, 11), (22, 3, 13), (24, 7, 12)):
+        ic.fill(line(x, y0, x, y1), PALE[1])
+    # chips of earth jumping off the rim
+    for (x, y) in ((5, 17), (26, 15), (8, 13), (24, 19)):
+        chip = {(x, y), (x + 1, y), (x, y + 1), (x + 1, y + 1)}
+        ic.fill(grow(chip) - chip, OUT)
+        ic.fill(chip, DIRT[2])
+        ic.set(x, y, DIRT[3])
+    ic.sparkle(27, 22, big=False)
+    ic.sparkle(4, 22, big=False)
     return ic.image()
 
 
