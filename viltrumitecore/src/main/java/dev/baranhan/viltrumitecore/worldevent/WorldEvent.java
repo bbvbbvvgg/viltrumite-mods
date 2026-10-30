@@ -27,6 +27,8 @@ public abstract class WorldEvent {
    private int activeTicks;
    private boolean begun;
    private boolean over;
+   /** Started by an operator command; automatic starts stay off by default (playtest fix). */
+   private boolean manual;
    private final List<Integer> announced = new ArrayList<>();
    private Vec3 origin = Vec3.ZERO;
    protected final List<UUID> spawned = new ArrayList<>();
@@ -174,9 +176,18 @@ public abstract class WorldEvent {
       return count;
    }
 
+   public boolean isManual() {
+      return this.manual;
+   }
+
+   public void markManual() {
+      this.manual = true;
+   }
+
    public CompoundTag save() {
       CompoundTag tag = new CompoundTag();
       tag.putString("Id", this.type.id());
+      tag.putBoolean("Manual", this.manual);
       tag.putInt("Warmup", this.warmupTicks);
       tag.putInt("Active", this.activeTicks);
       tag.putBoolean("Begun", this.begun);
@@ -205,6 +216,7 @@ public abstract class WorldEvent {
    }
 
    public void load(CompoundTag tag) {
+      this.manual = tag.getBoolean("Manual");
       this.warmupTicks = tag.getInt("Warmup");
       this.activeTicks = tag.getInt("Active");
       this.begun = tag.getBoolean("Begun");

@@ -74,7 +74,7 @@ public final class WorldEventCommands {
          } else {
             int warmup = seconds >= 0 ? seconds * 20 : type.defaultWarmupTicks();
             Vec3 origin = source.getPosition();
-            manager.start(level, type, origin, warmup);
+            manager.startManual(level, type, origin, warmup);
             source.sendSuccess(() -> Component.literal("\u00a7fStarted '" + id + "' \u00a77(" + warmup / 20 + "s countdown)"), true);
             return 1;
          }
