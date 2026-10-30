@@ -420,7 +420,12 @@ public final class ThorHero implements HeroDefinition {
    @Override
    public void onRespawn(ServerPlayer player) {
       if (player != null) {
+         // A fresh body comes back with the vanilla 20 HP: full before the bonus means full after it.
+         boolean full = player.getHealth() >= player.getAttributeBaseValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
          ThorVitality.apply(player);
+         if (full) {
+            player.setHealth(player.getMaxHealth());
+         }
       }
    }
 
