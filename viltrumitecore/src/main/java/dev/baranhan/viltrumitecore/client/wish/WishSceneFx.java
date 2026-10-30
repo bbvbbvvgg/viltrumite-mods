@@ -61,9 +61,6 @@ final class WishSceneFx {
       if (scene.style == WishStyle.THUNDER && !scene.swapped && t == 30) {
          ElectricVfx.arc(c.add(0, 2.4, 0), c.add(0, 12, 0), 0.05F, 6, 2, scene.seed + 77);
       }
-      if (scene.style == WishStyle.ARMOR && t == WishTimeline.SWAP + 2) {
-         ElectricVfx.sparks(c.add(0, 0.2, 0), 18, 0.35F, 12, scene.seed + 5);
-      }
    }
 
    /** The server swapped the hero: the climax of the scene. */
@@ -78,7 +75,7 @@ final class WishSceneFx {
       }
       play(mc, scene, style == WishStyle.MORTAL ? WishSounds.RETURN : WishSounds.GRANTED, 1.0F, 1.0F);
       float shake = switch (style) {
-         case THUNDER, ARMOR, CRIMSON -> 0.9F;
+         case THUNDER, CRIMSON -> 0.9F;
          case HOLY, SHADOW, TIME -> 0.55F;
          case MORTAL -> 0.0F;
          default -> 0.35F;
@@ -120,7 +117,6 @@ final class WishSceneFx {
          case SHADOW -> shadow(b, cam, camera, scene, c, t, w, glow, s);
          case THUNDER -> thunder(b, cam, camera, c, t, w, glow, s);
          case CARDS -> cards(b, cam, camera, scene, c, t, w, glow, s);
-         case ARMOR -> armor(b, cam, camera, scene, c, t, w, glow, s);
          case TECH -> tech(b, cam, camera, scene, level, c, t, w, glow, s);
          case CRIMSON -> crimson(b, cam, camera, level, scene, c, t, w, glow, s);
          case HOLY -> holy(b, cam, camera, scene, c, t, w, glow, s);
@@ -279,39 +275,6 @@ final class WishSceneFx {
             Vec3 p = c.add(Math.cos(a) * 3.2 * burst, 1.2 + up * burst * 2 - 2.2 * burst * burst, Math.sin(a) * 3.2 * burst);
             int[] col = i % 3 == 0 ? new int[]{255, 80, 110} : i % 3 == 1 ? new int[]{255, 230, 120} : new int[]{140, 220, 255};
             PixelVfx.crossGlow(b, cam, camera, p, 0.05F, col[0], col[1], col[2], (int)(255 * (1 - burst)));
-         }
-      }
-   }
-
-   /** Hulkbuster: plates fly in from every side and lock onto the body; the ground answers the weight. */
-   private static void armor(BufferBuilder b, Vec3 cam, Camera camera, WishScene scene, Vec3 c, float t, float w, boolean glow, WishStyle s) {
-      if (w <= 0) {
-         return;
-      }
-      float u = WishScreen.smooth((t - WishTimeline.CALL_END) / (float)(WishTimeline.SWAP - WishTimeline.CALL_END));
-      for (int i = 0; i < 22; i++) {
-         double a = hash(scene.seed, i) * Math.PI * 2;
-         double h = 0.2 + 1.9 * hash(scene.seed, i + 50);
-         Vec3 from = c.add(Math.cos(a) * 5.0, h + 2.0 * hash(scene.seed, i + 90), Math.sin(a) * 5.0);
-         Vec3 to = c.add(Math.cos(a) * 0.55, h, Math.sin(a) * 0.55);
-         float delay = Mth.clamp(u * 1.3F - 0.3F * hash(scene.seed, i + 130), 0, 1);
-         Vec3 p = from.lerp(to, WishScreen.smooth(delay));
-         float locked = t >= WishTimeline.SWAP ? 1 - Math.min(1, (t - WishTimeline.SWAP) / 6.0F) : 1;
-         if (!glow) {
-            PixelVfx.billboardPixel(b, cam, camera, p, 0.12F, 150, 30, 20, (int)(235 * w * locked));
-            PixelVfx.billboardPixel(b, cam, camera, p, 0.06F, 230, 170, 60, (int)(235 * w * locked));
-         } else if (delay < 1) {
-            PixelVfx.beamDots(b, cam, camera, p, p.add(from.subtract(to).normalize().scale(0.6)), 0.12F, 0.03F, WishStyle.r(s.primary),
-               WishStyle.g(s.primary), WishStyle.b(s.primary), (int)(150 * w));
-         }
-      }
-      float dt = t - WishTimeline.SWAP;
-      if (dt >= 0 && dt < 14) {
-         float k = dt / 14;
-         if (!glow) {
-            ringH(b, cam, camera, c.add(0, 0.08, 0), 0.8F + 4.0F * k, 60, 0, 0.09F, 0x8A7A66, (int)(200 * (1 - k)));
-         } else {
-            ringH(b, cam, camera, c.add(0, 0.12, 0), 0.6F + 4.4F * k, 60, 0, 0.05F, s.secondary, (int)(200 * (1 - k)));
          }
       }
    }

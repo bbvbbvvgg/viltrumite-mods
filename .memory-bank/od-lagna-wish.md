@@ -5,9 +5,10 @@
   `wish.viltrumitecore.<id>` / `.echo` in `src/main/lang-overlays/od_lagna/*.json` + optionally a `WishStyle`.
 - Server: `WishRitual` (validate → root → START; tick; SWAP at 40 = `HeroRegistry.changeHero` via the grant; END at 64).
   Refused in a time stop / under control; aborted on death, logout, dimension change. The item is NOT given on login
-  (removed on request): creative tab / `/give` only. First choice (`!hasChosenRace`) needs no item.
-- Hulkbuster wish = `HulkbusterWish` (Iron Man + `HulkbusterLayer.grantByWish()`), refuses with no room.
+  (removed on request): creative tab / `/give` only. Always needs the item (no free first choice).
+  New players default to Human; no hero screen on login (`OpenRaceScreenS2CPacket` client handler is a no-op).
+- Hulkbuster wish removed on request (9 wishes; Iron Man = «genius» only).
 - Client: `client/wish/WishScreen` (GUI), `WishSceneClient` (beats, camera, input lock, HUD), `WishSceneFx` (VFX/sounds),
-  pure `WishLayout`/`WishCamera`/`WishTimeline` (tested). `OpenRaceScreenS2CPacket` opens `WishScreen(first=true)`.
+  pure `WishLayout`/`WishCamera`/`WishTimeline` (tested). The screen opens only from the item (`WishScreens.open()`).
 - Network: `WishChoiceC2SPacket`, `WishSceneS2CPacket` appended last; PROTOCOL_VERSION 15.
 - Assets: lang via lang-overlays (no edits to the big locale files); sounds in namespace `od_lagna`, client-only events.

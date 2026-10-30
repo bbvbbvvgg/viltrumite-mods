@@ -179,7 +179,6 @@ public final class WishSceneClient {
          }
          return;
       }
-      WishScreens.tick(mc);
       if (mc.isPaused()) {
          return;
       }
@@ -493,7 +492,6 @@ public final class WishSceneClient {
    }
 
    public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
-      WishScreens.clear();
       clear();
    }
 

@@ -116,7 +116,7 @@ public final class WishLayout {
 
    /**
     * «исполнено» marks: the wish whose hero the player already is. Only for heroes a single wish grants;
-    * wishes sharing a hero (the two Iron Man wishes) differ by more than the hero, so the server answers them.
+    * wishes sharing a hero (if a hero ever gets two wishes) differ by more than the hero, so the server answers them.
     */
    public static boolean[] fulfilled(List<Wish> wishes, String heroKey) {
       boolean[] out = new boolean[wishes.size()];
