@@ -31,7 +31,12 @@ minecraft {
                 viltrumiteflight { source project(':viltrumiteflight').sourceSets.main }
             }
         }
-        client {}
+        client {
+            // dev shortcut: ./gradlew runClient -Pquickplay=<save folder> opens that world directly
+            if (project.hasProperty('quickplay')) {
+                args '--quickPlaySingleplayer', project.property('quickplay')
+            }
+        }
         server { args '--nogui' }
     }
 }
@@ -79,6 +84,12 @@ processResources {
     from(rootProject.file('tools/assets/reinhard_sources.md')) {
         into 'META-INF/credits'
         rename { 'reinhard-sources.md' }
+    }
+    // Dedicated servers translate only from data packs (Forge LanguageHook reads data/<ns>/lang/en_us.json):
+    // mirror the city's English strings there so console and RCON show text instead of keys.
+    from('src/main/resources/assets/viltrumite_city/lang') {
+        include 'en_us.json'
+        into 'data/viltrumite_city/lang'
     }
     filesMatching('META-INF/mods.toml') {
         filter { line -> line.replace('@MOD_VERSION@', project.version.toString()) }
