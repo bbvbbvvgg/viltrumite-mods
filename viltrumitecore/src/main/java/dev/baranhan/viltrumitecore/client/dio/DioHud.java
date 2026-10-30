@@ -30,6 +30,10 @@ public final class DioHud {
 
    @SubscribeEvent
    public static void onRenderGui(RenderGuiEvent.Post event) {
+      if (RollerCinema.active()) {
+         return;
+      }
+
       Minecraft client = Minecraft.getInstance();
       if (client.options.hideGui || client.player == null || client.player.isSpectator()) {
          return;
@@ -52,6 +56,13 @@ public final class DioHud {
       g.fill(x, y, x + fill, y + 1, 0x50FFFFFF);
       int mark = x + fill(DioRules.TIME_STOP_MIN_BLOOD, WIDTH);
       g.fill(mark, y - 1, mark + 1, y + HEIGHT + 1, 0xC0FFE7A0);
+      if (snapshot.heroFlag(DioRules.FLAG_INFINITE_BLOOD)) {
+         // Debug infinite blood: a pulsing sheen over the full bar and an infinity mark.
+         int pulse = (int)(40 + 30 * Math.sin(client.player.tickCount * 0.25));
+         g.fill(x, y, x + WIDTH, y + HEIGHT, (pulse << 24) | 0xFFFFFF);
+         g.drawString(client.font, "\u221E", x + WIDTH + 4, y - 3, 0xFFE8B83A, true);
+      }
+
       int left = snapshot.extraCooldown(DioRules.EX_FIELD_LEFT), total = snapshot.extraCooldown(DioRules.EX_FIELD_TOTAL);
       if (snapshot.heroFlag(DioRules.FLAG_TIME_STOP) && total > 0) {
          int w = Math.round(WIDTH * Mth.clamp(left / (float)total, 0.0F, 1.0F));

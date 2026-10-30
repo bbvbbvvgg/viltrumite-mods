@@ -13,6 +13,7 @@ import dev.baranhan.viltrumitecore.client.render.vfx.CameraShake;
 import dev.baranhan.viltrumitecore.client.render.vfx.FlashOverlay;
 import dev.baranhan.viltrumitecore.client.render.vfx.HitStop;
 import dev.baranhan.viltrumitecore.client.render.vfx.PixelVfx;
+import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.dio.DioRules;
 import dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket;
@@ -289,6 +290,26 @@ public final class DioFxClient {
             CameraShake.addAt(at, 1.8F, 56.0);
             near(at, 28.0, 0.55F, 8);
          }
+         case DioFxS2CPacket.ROLLER_LEAP -> {
+            // Launch: a ground ring, a dust skirt and a column the leap tears up; it hangs
+            // in DIO's own stopped time, so the take-off point stays readable for the whole ult.
+            Vec3 ground = at.add(0, 0.05, 0);
+            dust(ground, 56, 0.42, 0.18, 0.15F, 150, 138, 120, 26);
+            debris(ground.add(0, 0.2, 0), 18, 0.32, 0.07F, 110, 104, 98);
+            ring(ground, new Vec3(0, 1, 0), 0.6, 44, 0.07F, 255, 236, 180, 220, 9);
+            for (int i = 0; i < 26; i++) {
+               add(new Mote(ground.add(rnd(0.35)), new Vec3(0, jitter(0.25, 0.75), 0).add(rnd(0.03)), (int)jitter(8, 16), (float)jitter(0.06, 0.12), 0.6F,
+                  200, 190, 170, 170, -0.01, 0.86, false, true));
+            }
+
+            CameraShake.addAt(at, 0.9F, 32.0);
+         }
+         case DioFxS2CPacket.ROLLER_LAND -> {
+            Vec3 ground = at.add(0, 0.05, 0);
+            dust(ground, 22, 0.25, 0.06, 0.1F, 150, 138, 120, 18);
+            ring(ground, new Vec3(0, 1, 0), 0.3, 20, 0.05F, 230, 220, 200, 160, 6);
+            CameraShake.addAt(at, 0.25F, 16.0);
+         }
          case DioFxS2CPacket.GUARD_BLOCK -> {
             burst(at, dir, 10, 0.25, 0.045F, 200, 225, 255);
             ring(at, dir, 0.2, 14, 0.04F, 220, 235, 255, 200, 5);
@@ -394,6 +415,10 @@ public final class DioFxClient {
             continue;
          }
 
+         if (DioView.is(snapshot, HeroAction.ROAD_ROLLER)) {
+            rollerTrail(player, snapshot.actionElapsed());
+         }
+
          if (snapshot.heroFlag(DioRules.FLAG_SUN)) {
             for (int i = 0; i < 2; i++) {
                Vec3 at = player.position().add(jitter(-0.3, 0.3), jitter(0.2, player.getBbHeight()), jitter(-0.3, 0.3));
@@ -412,6 +437,25 @@ public final class DioFxClient {
                double len = Math.max(0.2, d.length());
                add(new Mote(from, d.scale(0.2 / len), (int)Math.ceil(len / 0.2), 0.03F, 0, 170, 10, 20, 220, 0, 1, false, true));
             }
+         }
+      }
+   }
+
+   /**
+    * Road Roller arc: a pale trail left in stopped time while DIO rises, and wind
+    * streaks rushing up past him in the fall (every other tick).
+    */
+   private static void rollerTrail(Player player, int t) {
+      Vec3 feet = player.position();
+      if (t > DioRules.ROLLER_LEAP && t < DioRules.ROLLER_APEX) {
+         for (int i = 0; i < 3; i++) {
+            add(new Mote(feet.add(rnd(0.25)).add(0, jitter(0.0, 1.2), 0), rnd(0.01), (int)jitter(26, 40), (float)jitter(0.05, 0.09), 0.5F, 235, 228, 210, 150,
+               0, 0.9, false, true));
+         }
+      } else if (t > DioRules.ROLLER_HANG + 4 && t < DioRules.ROLLER_SLAM) {
+         for (int i = 0; i < 3; i++) {
+            Vec3 from = feet.add(jitter(-1.2, 1.2), jitter(-0.5, 2.0), jitter(-1.2, 1.2));
+            streak(from, new Vec3(0, 1, 0), jitter(1.2, 2.2), 6, 0.03F, 230, 236, 255, 150);
          }
       }
    }
