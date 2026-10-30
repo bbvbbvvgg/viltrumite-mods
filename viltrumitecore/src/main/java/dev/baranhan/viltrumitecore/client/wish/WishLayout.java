@@ -1,5 +1,10 @@
 package dev.baranhan.viltrumitecore.client.wish;
 
+import dev.baranhan.viltrumitecore.hero.wish.Wish;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Pure geometry of the «чего ты желаешь?» screen (no Minecraft types, unit-tested for every GUI scale):
  * title on top, a scrolled column of wish cards, the echo line of the selected wish, and the two
@@ -107,5 +112,25 @@ public final class WishLayout {
 
    static int clamp(int v, int lo, int hi) {
       return Math.max(lo, Math.min(hi, v));
+   }
+
+   /**
+    * «исполнено» marks: the wish whose hero the player already is. Only for heroes a single wish grants;
+    * wishes sharing a hero (the two Iron Man wishes) differ by more than the hero, so the server answers them.
+    */
+   public static boolean[] fulfilled(List<Wish> wishes, String heroKey) {
+      boolean[] out = new boolean[wishes.size()];
+      if (heroKey == null) {
+         return out;
+      }
+      Map<String, Integer> perHero = new HashMap<>();
+      for (Wish wish : wishes) {
+         perHero.merge(wish.heroKey(), 1, Integer::sum);
+      }
+      for (int i = 0; i < wishes.size(); i++) {
+         Wish wish = wishes.get(i);
+         out[i] = wish.heroKey().equals(heroKey) && perHero.get(wish.heroKey()) == 1;
+      }
+      return out;
    }
 }

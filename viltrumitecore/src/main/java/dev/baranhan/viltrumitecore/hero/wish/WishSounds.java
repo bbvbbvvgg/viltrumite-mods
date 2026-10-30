@@ -9,8 +9,8 @@ import net.minecraft.sounds.SoundEvent;
  *
  * <p>The scene is driven on every client from the synced timeline, so the server never sends these as packets and
  * they are not registry entries: each is defined in the separate {@code od_lagna} asset namespace
- * ({@code assets/od_lagna/sounds.json}, {@code assets/od_lagna/lang}) and played locally. Keeping every wish asset
- * in its own namespace leaves the shared {@code viltrumitecore} sounds.json and lang files untouched.
+ * ({@code assets/od_lagna/sounds.json}, audio in {@code binassets/assets/od_lagna/sounds}) and played locally; the
+ * subtitles live in {@code src/main/lang-overlays/od_lagna}. The shared sounds.json and lang files stay untouched.
  */
 public final class WishSounds {
    public static final String NAMESPACE = "od_lagna";

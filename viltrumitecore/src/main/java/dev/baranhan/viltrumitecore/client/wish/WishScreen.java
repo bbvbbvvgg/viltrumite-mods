@@ -9,9 +9,7 @@ import dev.baranhan.viltrumitecore.hero.wish.WishSounds;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.WishChoiceC2SPacket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -59,28 +57,8 @@ public class WishScreen extends Screen {
       super(Component.translatable("gui.viltrumitecore.wish.title"));
       this.first = first;
       this.wishes = OdLagnaWishes.all();
-      this.fulfilled = fulfilledMarks(this.wishes, first ? null : currentHeroKey());
+      this.fulfilled = WishLayout.fulfilled(this.wishes, first ? null : currentHeroKey());
       this.hover = new float[this.wishes.size()];
-   }
-
-   /**
-    * «исполнено» marks: the wish whose hero the player already is. Only for heroes a single wish grants;
-    * wishes sharing a hero (the two Iron Man wishes) differ by more than the hero, so the server answers them.
-    */
-   static boolean[] fulfilledMarks(List<Wish> wishes, String heroKey) {
-      boolean[] out = new boolean[wishes.size()];
-      if (heroKey == null) {
-         return out;
-      }
-      Map<String, Integer> perHero = new HashMap<>();
-      for (Wish wish : wishes) {
-         perHero.merge(wish.heroKey(), 1, Integer::sum);
-      }
-      for (int i = 0; i < wishes.size(); i++) {
-         Wish wish = wishes.get(i);
-         out[i] = wish.heroKey().equals(heroKey) && perHero.get(wish.heroKey()) == 1;
-      }
-      return out;
    }
 
    private static String currentHeroKey() {
