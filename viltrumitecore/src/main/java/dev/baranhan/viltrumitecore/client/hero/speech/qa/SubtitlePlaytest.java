@@ -35,7 +35,8 @@ import org.slf4j.Logger;
  * client: {@code press <1-6> [ticks]} (the real ability key mappings), {@code key attack|use|pick|jump|sneak <ticks>},
  * {@code cmd <command>} (sent as a chat command), {@code shot <name>}, {@code cam fp|back|front},
  * {@code look <yaw> <pitch>}, {@code leave} (to the title screen), {@code world} (create or reopen the
- * singleplayer world {@code subtitle_playtest}), {@code close} (closes any screen), {@code respawn} (from the death screen).
+ * singleplayer world {@code subtitle_playtest}), {@code close} (closes any screen), {@code button <n>} (presses the n-th button of the open
+ * screen), {@code respawn} (from the death screen). {@code key} also takes {@code swap} (ability page).
  * With {@code -Dviltrumitecore.subtitles.playtest.world=true} the title screen opens that world by itself.
  */
 public final class SubtitlePlaytest {
@@ -148,6 +149,7 @@ public final class SubtitlePlaytest {
                case "jump" -> mc.options.keyJump;
                case "sneak" -> mc.options.keyShift;
                case "forward" -> mc.options.keyUp;
+               case "swap" -> AbilityInputManager.abilitySwapKey;
                default -> throw new IllegalArgumentException("unknown key " + a[0]);
             };
             hold(key, a.length > 1 ? Integer.parseInt(a[1]) : 3);
@@ -181,6 +183,23 @@ public final class SubtitlePlaytest {
          }
          case "world" -> openWorld(mc);
          case "close" -> mc.setScreen(null);
+         case "button" -> {
+            // Presses the n-th button (0-based) of the open screen, e.g. "Continue" on the experimental-world warning.
+            if (mc.screen != null) {
+               List<net.minecraft.client.gui.components.Button> buttons = new ArrayList<>();
+               for (var child : mc.screen.children()) {
+                  if (child instanceof net.minecraft.client.gui.components.Button button) {
+                     buttons.add(button);
+                  }
+               }
+
+               int index = arg.isEmpty() ? 0 : Integer.parseInt(arg);
+               if (index < buttons.size()) {
+                  LOG.info("SUBPT t={} button {} '{}'", ticks, index, buttons.get(index).getMessage().getString());
+                  buttons.get(index).onPress();
+               }
+            }
+         }
          case "respawn" -> {
             if (mc.player != null) {
                mc.player.respawn();
