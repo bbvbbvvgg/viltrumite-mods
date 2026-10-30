@@ -48,6 +48,8 @@
     "OutlineTeamColorMixin",
     "InGameHudMixin",
     "IronManModelMixin",
+    "SinclairStageCameraMixin",
+    "SinclairStageMouseMixin",
     "ThorModelMixin",
     "ThorSceneCameraMixin",
     "ThorSceneMouseMixin",
