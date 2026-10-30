@@ -63,6 +63,7 @@ public final class SubtitlePlaytest {
       HeroSubtitles.qaLog = message -> LOG.info("SUBPT t={} {}", ticks, message);
       MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onRenderTick);
+      MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onPlaySound);
       LOG.info("SUBPT enabled (command file {})", commandFile().getAbsolutePath());
    }
 
@@ -203,6 +204,13 @@ public final class SubtitlePlaytest {
       KeyMapping.set(key.getKey(), true);
       KeyMapping.click(key.getKey());
       RELEASES.add(new Release(key, ticks + Math.max(1, holdTicks)));
+   }
+
+   /** Mod sounds the client engine was asked to play, with the client tick (line vs audio timing). */
+   private static void onPlaySound(net.minecraftforge.client.event.sound.PlaySoundEvent event) {
+      if (event.getSound() != null && !"minecraft".equals(event.getSound().getLocation().getNamespace())) {
+         LOG.info("SUBPT t={} sound {}", ticks, event.getSound().getLocation());
+      }
    }
 
    private static void onRenderTick(TickEvent.RenderTickEvent event) {
