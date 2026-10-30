@@ -91,3 +91,23 @@ if __name__ == '__main__':
     else:
         frames = [('front', {}, 0, 0), ('3/4', {}, 35, -10), ('side', {}, 90, 0), ('back', {}, 180, 0)]
     sheet(frames).save(out)
+
+
+AVENGER_RIG = {'iron_man': 'avenger', 'thor': 'avenger', 'hawkeye': 'avenger', 'black_widow': 'avenger_slim'}
+
+
+def avenger_quads(kind):
+    """Quads builder for an Avenger: shared body rig + kind skin + gear (Hulk uses his own model)."""
+    def build(pose, root=None):
+        if kind == 'hulk':
+            return jp.layered([(geo('avengers/hulk.geo.json'), tex('avengers/hulk.png'), None)], pose, root)
+        body, gear = geo(f'avengers/{AVENGER_RIG[kind]}.geo.json'), geo(f'avengers/{kind}_gear.geo.json')
+        return jp.layered([(body, tex(f'avengers/{kind}.png'), None),
+                           (gear, tex(f'avengers/{kind}_gear.png'), None)], pose, root)
+    return build
+
+
+def prop_quads(key):
+    def build(pose, root=None):
+        return jp.layered([(geo(f'avengers/{key}.geo.json'), tex(f'avengers/{key}.png'), None)], pose, root)
+    return build
