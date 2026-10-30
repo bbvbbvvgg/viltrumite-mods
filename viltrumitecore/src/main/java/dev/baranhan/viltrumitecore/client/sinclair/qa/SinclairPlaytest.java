@@ -6,8 +6,13 @@ import dev.baranhan.viltrumitecore.client.AbilityInputManager;
 import dev.baranhan.viltrumitecore.client.gui.RaceSelectionScreen;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.client.sinclair.SinclairView;
+import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.act.ActShape;
+import dev.baranhan.viltrumitecore.hero.control.ControlManager;
+import dev.baranhan.viltrumitecore.hero.sinclair.SinclairMove;
 import dev.baranhan.viltrumitecore.hero.sinclair.SinclairState;
+import dev.baranhan.viltrumitecore.hero.sinclair.act.ActScript;
 import dev.baranhan.viltrumitecore.hero.sinclair.act.SinclairRepertoire;
 import java.io.File;
 import java.util.ArrayList;
@@ -41,6 +46,7 @@ import org.slf4j.Logger;
  */
 public final class SinclairPlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.sinclair.playtest");
+   private static final boolean ULT_ONLY = Boolean.getBoolean("viltrumitecore.sinclair.playtest.ultOnly");
    private static final Logger LOG = LogUtils.getLogger();
    private static final String WORLD = "sinclair_playtest";
    private static final List<Step> STEPS = new ArrayList<>();
@@ -52,7 +58,10 @@ public final class SinclairPlaytest {
    private static String pendingShot;
    private static int shotDelayFrames;
 
-   private record Step(int delay, String label, Runnable action) {
+   private record Step(int delay, String label, Runnable action, @javax.annotation.Nullable java.util.function.BooleanSupplier ready) {
+      Step(int delay, String label, Runnable action) {
+         this(delay, label, action, null);
+      }
    }
 
    private SinclairPlaytest() {
@@ -231,6 +240,7 @@ public final class SinclairPlaytest {
          server(player -> HeroRegistry.changeHero(player, HeroId.SINCLAIR));
          stage(0.0F);
       });
+      int skipFrom = STEPS.size();
       at(40, "race screen", () -> Minecraft.getInstance().setScreen(new RaceSelectionScreen()));
       shot(20, "sinclair_01_race_selection");
       at(10, "close", () -> Minecraft.getInstance().setScreen(null));
@@ -364,7 +374,14 @@ public final class SinclairPlaytest {
       at(1, "side", () -> cam(-6.0, -58.4, 8.0, 0.5, -59.0, 9.0));
       shot(26, "sinclair_32_decoy_reveal");
 
-      // Audience Participation (§5.6): capture, window, then all six acts.
+      if (ULT_ONLY) {
+         // -Dviltrumitecore.sinclair.playtest.ultOnly=true: only the ultimate, the copy cinematic and the acts.
+         STEPS.subList(skipFrom, STEPS.size()).clear();
+         at(40, "close the race screen", () -> Minecraft.getInstance().setScreen(null));
+      }
+
+      // Audience Participation (§5.6) and the copy cinematic (design 2026-11-02 §2): capture, the cinematic
+      // seen by the performer and by a bystander, the window, then all six reworked acts.
       at(40, "ult setup", () -> {
          resetCooldowns();
          killMobs();
@@ -375,68 +392,182 @@ public final class SinclairPlaytest {
       at(20, "B capture", () -> press(AbilityInputManager.abilityKey5));
       shot(8, "sinclair_33_capture_spotlight");
       shot(8, "sinclair_34_capture_card");
-      at(10, "fp", () -> playerCam());
-      at(1, "fp", () -> camera(CameraType.FIRST_PERSON));
-      shot(8, "sinclair_35_fp_card_window");
+      at(1, "copy own view", () -> {
+         playerCam();
+         camera(CameraType.FIRST_PERSON);
+      });
+      shotAt(SinclairMove.COPY, 4, "sinclair_copy_01_camera_in");
+      shotAt(SinclairMove.COPY, 12, "sinclair_copy_02_unfold");
+      at(0, "try to walk", () -> {
+         START = Minecraft.getInstance().player.position();
+         hold(Minecraft.getInstance().options.keyUp, true);
+      });
+      shotAt(SinclairMove.COPY, 24, "sinclair_copy_03_card_hold");
+      at(0, "side", () -> cam(-5.0, -58.2, 4.0, 0.5, -59.0, 4.0));
+      shotAt(SinclairMove.COPY, 34, "sinclair_copy_04_bystander");
+      at(0, "own again", () -> {
+         hold(Minecraft.getInstance().options.keyUp, false);
+         LOG.info("SINCLAIR_PT copy freeze: moved {} blocks while W was held", String.format(java.util.Locale.ROOT, "%.3f",
+            Minecraft.getInstance().player.position().distanceTo(START)));
+         playerCam();
+         camera(CameraType.FIRST_PERSON);
+      });
+      shotAt(SinclairMove.COPY, 47, "sinclair_copy_05_fold");
+      shotAt(SinclairMove.COPY, 56, "sinclair_copy_06_return");
+      at(0, "wait copy end", () -> { });
+      untilIdle();
+      shot(4, "sinclair_35_fp_card_window");
 
-      int[][] beats = {
-         {8, 24, 45, 60}, // BEAM: prep, ray, pause, bow
-         {6, 18, 26, 52}, // NOVA: throw, whirl, burst, bow
-         {6, 15, 22, 50}, // CUT: blade, telegraph, saw, bow
-         {6, 19, 28, 52}, // BARRAGE: fan, volleys, pause, bow
-         {12, 40, 52, 68}, // AEGIS: curtain, held, open, bow
-         {8, 27, 46, 62}  // FINALE: chest falls, swords, open, bow
-      };
       ActShape[] shapes = {ActShape.BEAM, ActShape.NOVA, ActShape.CUT, ActShape.BARRAGE, ActShape.AEGIS, ActShape.FINALE};
-      String[] stages = {"a_prep", "b_reveal", "c_pause", "d_bow"};
-      int n = 36;
       for (int i = 0; i < shapes.length; i++) {
          ActShape shape = shapes[i];
+         ActScript script = ActScript.of(shape);
          String key = shape.key();
          boolean first = i == 0;
-         at(first ? 10 : 70, "act " + key + " setup", () -> {
-            if (!first) {
+         if (!first) {
+            at(70, "act " + key + " setup", () -> {
                resetCooldowns();
                killMobs();
                volunteer(7.5);
                stage(0.0F);
-            }
-
-            cam(-7.0, -57.6, 4.0, 0.5, -59.0, 4.0);
-         });
-         if (!first) {
+               playerCam();
+               camera(CameraType.FIRST_PERSON);
+            });
             at(20, "B capture " + key, () -> press(AbilityInputManager.abilityKey5));
+            // The card names the number on the card (forced shape, as below) while the cinematic runs.
+            untilMove(SinclairMove.COPY, 2);
+            at(0, "force " + key, () -> force(shape));
+            shotAt(SinclairMove.COPY, 26, "sinclair_copy_card_" + key);
+            untilIdle();
+         } else {
+            at(2, "force " + key, () -> force(shape));
          }
 
-         at(first ? 2 : 30, "force " + key, () -> server(player -> {
-            SinclairState state = SinclairState.ensure(player);
-            state.captured = SinclairRepertoire.standard(shape);
-            state.capturedFrom = SinclairRepertoire.Source.REPERTOIRE;
-         }));
+         at(2, "side " + key, () -> cam(-7.0, -57.6, 4.0, 0.5, -59.0, 4.0));
          at(4, "B perform " + key, () -> press(AbilityInputManager.abilityKey5));
-         int prev = 0;
-         for (int b = 0; b < 4; b++) {
-            shot(beats[i][b] - prev, "sinclair_" + (n++) + "_act_" + key + "_" + stages[b]);
-            prev = beats[i][b];
-            if (b == 1) {
-               // The performer's own view of the reveal.
-               at(1, "own view", () -> {
-                  playerCam();
-                  camera(CameraType.THIRD_PERSON_BACK);
-                  dumpNear();
-               });
-               shot(1, "sinclair_" + (n++) + "_act_" + key + "_b_reveal_own_view");
-               at(1, "side again", () -> cam(-7.0, -57.6, 4.0, 0.5, -59.0, 4.0));
-               prev += 3;
-            }
-         }
+         String p = "sinclair_act_" + key + "_";
+         shotAct(script.main() / 2, p + "1_tension");
+         shotAct((script.main() + script.hushStart()) / 2, p + "2_main");
+         ownView(true);
+         shotAct((script.main() + script.hushStart()) / 2 + 4, p + "2_main_own_view");
+         ownView(false);
+         // Shots land ~5 ticks after their gate at llvmpipe frame rates; the hush one aims early.
+         shotAct(script.hushStart() - 2, p + "3_hush");
+         shotAct(script.reveal() + 2, p + "4_reveal");
+         ownView(true);
+         shotAct(script.reveal() + 5, p + "4_reveal_own_view");
+         ownView(false);
+         shotAct((script.pauseStart() + script.pauseEnd()) / 2 + 2, p + "5_pause");
+         shotAct(script.bowStart() + 12, p + "6_bow");
+         at(0, "act end " + key, () -> { });
+         untilIdle();
       }
+
+      // The switch: with the cinematic off the capture opens the window at once (no freeze, no card scene).
+      at(40, "cinematic off", () -> {
+         cmd("sinclair cinematic off");
+         resetCooldowns();
+         killMobs();
+         volunteer(7.5);
+         stage(0.0F);
+         playerCam();
+         camera(CameraType.FIRST_PERSON);
+      });
+      at(20, "B capture (off)", () -> press(AbilityInputManager.abilityKey5));
+      at(30, "check off", () -> {
+         HeroPublicSnapshot s = SinclairView.of(Minecraft.getInstance().player);
+         LOG.info("SINCLAIR_PT cinematic off: move after capture = {}", s == null ? null : SinclairView.move(s));
+      });
+      shot(0, "sinclair_copy_07_off_window");
+
+      // Safe abort: the volunteer dies mid-scene; both must be let go at once.
+      at(260, "cinematic on", () -> {
+         cmd("sinclair cinematic on");
+         resetCooldowns();
+         killMobs();
+         volunteer(7.5);
+         stage(0.0F);
+      });
+      at(20, "B capture (abort)", () -> press(AbilityInputManager.abilityKey5));
+      untilMove(SinclairMove.COPY, 20);
+      // A frozen body queues its damage until the hold ends (shared control rule), so /kill cannot end the
+      // scene early; removing the volunteer (unload, logout, despawn) is the path that must abort it.
+      at(0, "remove volunteer", () -> server(player -> player.serverLevel()
+         .getEntities(net.minecraft.world.entity.EntityType.HUSK, e -> true).forEach(net.minecraft.world.entity.Entity::discard)));
+      // The server may run both queued tasks before its next tick, so the check waits a few ticks.
+      at(8, "check abort", () -> server(player -> {
+         SinclairState state = SinclairState.ensure(player);
+         boolean held = ControlManager.get(player.serverLevel()).isControlled(player);
+         long alive = player.serverLevel().getEntities(net.minecraft.world.entity.EntityType.HUSK, e -> e.isAlive()).size();
+         LOG.info("SINCLAIR_PT abort: move {} ult {} window {} controlled {} husks alive {}", state.move, state.ult, state.window, held, alive);
+      }));
+      shot(1, "sinclair_copy_08_abort");
 
       at(60, "done", () -> {
          LOG.info("SINCLAIR_PT done after {} ticks", ticks);
          SOUNDS.forEach((id, count) -> LOG.info("SINCLAIR_PT sound {} x{}", id, count));
          Minecraft.getInstance().stop();
       });
+   }
+
+   private static net.minecraft.world.phys.Vec3 START = net.minecraft.world.phys.Vec3.ZERO;
+
+   private static void force(ActShape shape) {
+      server(player -> {
+         SinclairState state = SinclairState.ensure(player);
+         state.captured = SinclairRepertoire.standard(shape);
+         state.capturedFrom = SinclairRepertoire.Source.REPERTOIRE;
+      });
+   }
+
+   private static void ownView(boolean own) {
+      at(0, own ? "own view" : "side again", () -> {
+         if (own) {
+            playerCam();
+            camera(CameraType.FIRST_PERSON);
+         } else {
+            cam(-7.0, -57.6, 4.0, 0.5, -59.0, 4.0);
+         }
+      });
+   }
+
+   /** Synced move and elapsed ticks of the local Sinclair (null move when idle). */
+   @javax.annotation.Nullable
+   private static SinclairMove localMove() {
+      Minecraft mc = Minecraft.getInstance();
+      HeroPublicSnapshot s = mc.player == null ? null : SinclairView.of(mc.player);
+      return s == null ? null : SinclairView.move(s);
+   }
+
+   private static int localElapsed() {
+      Minecraft mc = Minecraft.getInstance();
+      HeroPublicSnapshot s = mc.player == null ? null : SinclairView.of(mc.player);
+      return s == null || s.actionId() < 0 ? -1 : s.actionElapsed();
+   }
+
+   /** Blocks the script until the given move reaches the elapsed tick (timeout 300 ticks). */
+   private static void untilMove(SinclairMove move, int tick) {
+      STEPS.add(new Step(0, "until " + move + " " + tick, () -> { }, () -> localMove() == move && localElapsed() >= tick));
+   }
+
+   private static void untilIdle() {
+      STEPS.add(new Step(2, "until idle", () -> { }, () -> {
+         SinclairMove m = localMove();
+         return m == null || !(m.isAct() || m == SinclairMove.CAPTURE || m == SinclairMove.COPY);
+      }));
+   }
+
+   private static void shotAt(SinclairMove move, int tick, String name) {
+      untilMove(move, tick);
+      shot(0, name);
+   }
+
+   private static void shotAct(int tick, String name) {
+      STEPS.add(new Step(0, "until act " + tick, () -> { }, () -> {
+         SinclairMove m = localMove();
+         return m != null && m.isAct() && localElapsed() >= tick;
+      }));
+      shot(0, name);
    }
 
    // ---------------------------------------------------------------- driver
@@ -481,7 +612,12 @@ public final class SinclairPlaytest {
          return;
       }
 
-      if (wait < STEPS.get(stepIndex).delay()) {
+      Step next = STEPS.get(stepIndex);
+      if (wait < next.delay() || next.ready() != null && !next.ready().getAsBoolean() && wait < next.delay() + 300) {
+         if (next.ready() != null && wait == next.delay() + 299) {
+            LOG.warn("SINCLAIR_PT step '{}' timed out (move {} elapsed {})", next.label(), localMove(), localElapsed());
+         }
+
          wait++;
          return;
       }
