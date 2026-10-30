@@ -60,8 +60,8 @@ public final class SinclairRules {
    public static final double HEX_HAT_HEIGHT = 3.0;
    public static final double HEX_RADIUS = 3.5;
    public static final double HEX_VERTICAL = 2.5;
-   public static final int HEX_PLAYER_TICKS = 50;
-   public static final int HEX_MOB_TICKS = 70;
+   public static final int HEX_PLAYER_TICKS = 80;
+   public static final int HEX_MOB_TICKS = 80;
    public static final double HEX_SPEED = 0.36;
    public static final float HEX_DAMAGE_TAKEN = 1.15F;
    public static final float HEX_WIDTH = 0.45F;

@@ -161,7 +161,7 @@ public final class AudienceParticipation {
       if (state.ult == SinclairState.Ult.WINDOW && --state.window <= 0) {
          cancel(state);
          state.ultCooldown = SinclairRules.ULT_UNUSED_COOLDOWN;
-         HeroSpeech.trigger(player, HeroLineTrigger.event(SinclairLines.EVENT_WINDOW_LOST));
+         SinclairLines.say(player, SinclairLines.EVENT_WINDOW_LOST, true);
       }
    }
 
