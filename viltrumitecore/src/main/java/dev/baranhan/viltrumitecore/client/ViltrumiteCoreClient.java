@@ -84,6 +84,7 @@ public class ViltrumiteCoreClient {
          // The Magnificent Sinclair (docs/design/2026-10-28-sinclair-design.md §11).
          dev.baranhan.viltrumitecore.client.sinclair.SinclairClient.init();
          dev.baranhan.viltrumitecore.client.jinwoo.JinwooClient.init();
+         dev.baranhan.viltrumitecore.client.wish.WishSceneClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();
          ViltrumitePostProcessingConfig.load();

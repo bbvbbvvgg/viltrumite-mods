@@ -17,6 +17,8 @@ public class ViltrumiteItems {
    public static final RegistryObject<Item> HUMAN_BLOOD_SAMPLE = ITEMS.register("human_blood_sample", () -> new Item(new Properties().stacksTo(16)));
    public static final RegistryObject<Item> SCOURGE_CULTURE = ITEMS.register("scourge_culture", () -> new Item(new Properties().stacksTo(16)));
    public static final RegistryObject<Item> EVANGELIUM = ITEMS.register("evangelium", () -> new EvangeliumItem(new Properties().stacksTo(1)));
+   /** The universal transformation item (docs/design/2026-10-30-od-lagna-wish-design.md). */
+   public static final RegistryObject<Item> OD_LAGNA_WISH = ITEMS.register("od_lagna_wish", () -> new OdLagnaWishItem(new Properties().stacksTo(1).fireResistant()));
 
    public static void register(IEventBus eventBus) {
       ITEMS.register(eventBus);

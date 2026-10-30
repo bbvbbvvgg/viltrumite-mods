@@ -378,6 +378,15 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.JinwooFxS2CPacket::handle).add();
+      // Od Lagna's Wish (docs/design/2026-10-30-od-lagna-wish-design.md): appended, ids of older packets unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.WishChoiceC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.WishChoiceC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.WishChoiceC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.WishChoiceC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.WishSceneS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.WishSceneS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.WishSceneS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.WishSceneS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
