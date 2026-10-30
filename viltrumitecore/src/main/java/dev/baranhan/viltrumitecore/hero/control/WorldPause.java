@@ -20,6 +20,28 @@ import net.minecraft.world.phys.Vec3;
 /** A single, bounded, server-wide cinematic pause. Controls remain level-owned. */
 public final class WorldPause {
    private static final Coordinator<MinecraftServer> SESSIONS = new Coordinator<>();
+   /**
+    * Absolute stop: while a pause runs, every entity except its owner (and bodies in isolation,
+    * e.g. Limbo) skips its whole tick through the shared TimeFreeze mixins, and the level's
+    * scheduled block/fluid ticks, block events, random ticks and block entities wait too.
+    * Players keep their recorded view: the TimeFreeze move mixin pins it server-side.
+    */
+   private static final TimeFreeze.Source FREEZE = new TimeFreeze.Source() {
+      public boolean active() {return SESSIONS.any();}
+      public boolean freezes(Entity entity) {
+         if(!(entity.level() instanceof ServerLevel level)) return false;
+         Session s=SESSIONS.get(level.getServer());
+         return s!=null && s.stopsEntity(entity.getUUID(),BodyIsolation.active(entity));
+      }
+      public boolean stopsWorld(Level level) {
+         return level instanceof ServerLevel server && SESSIONS.get(server.getServer())!=null;
+      }
+      @Nullable public float[] lockedView(net.minecraft.world.entity.player.Player player) {
+         if(!(player.level() instanceof ServerLevel level) || BodyIsolation.active(player)) return null;
+         Session s=SESSIONS.get(level.getServer()); return s==null?null:s.view(player.getUUID());
+      }
+   };
+   static { TimeFreeze.register(FREEZE); }
    private WorldPause() {}
    public enum EndReason { DONE, OWNER_LEFT, SERVER_STOP, RELOAD, WATCHDOG }
    public interface Listener {
@@ -36,11 +58,18 @@ public final class WorldPause {
       Session session = SESSIONS.begin(server, owner, maxTicks, protect, mobRadius);
       if (session == null) return false;
       session.ownerLevel = caster.level().dimension();
+      session.views.put(owner,new float[]{caster.getYRot(),caster.getXRot()});
       session.sync(new LiveBackend(server));
       for (ServerPlayer player : server.getPlayerList().getPlayers()) sendState(player, session);
       return true;
    }
    public static boolean active(MinecraftServer server) { return SESSIONS.get(server) != null; }
+   /**
+    * Players the server itself holds still (the world pause, the Limbo void) are not flying: the
+    * vanilla floating kick (80 airborne ticks without allow-flight) must not count them. An erased
+    * player hangs in the void for the whole Limbo stay; a player frozen mid-jump hangs for 205 ticks.
+    */
+   public static boolean holdsAirborne(boolean paused, boolean inLimbo) { return paused || inLimbo; }
    @Nullable public static UUID id(MinecraftServer server) { Session s=SESSIONS.get(server); return s==null?null:s.id; }
    public static int elapsed(MinecraftServer server) { Session s=SESSIONS.get(server); return s==null?0:s.age; }
    public static void listen(MinecraftServer server, Listener listener) {
@@ -94,8 +123,12 @@ public final class WorldPause {
    }
    public static boolean isProtected(Entity entity) {
       if(!(entity.level() instanceof ServerLevel level)) return false;
-      Session s=SESSIONS.get(level.getServer()); return s!=null && s.protect && s.isPaused(entity.getUUID());
+      Session s=SESSIONS.get(level.getServer());
+      // Stopped entities (passive mobs, summons, players far away) are as untouchable as the tracked ones.
+      return s!=null && s.protect && (s.isPaused(entity.getUUID()) || s.stopsEntity(entity.getUUID(),BodyIsolation.active(entity)));
    }
+   /** Is the whole world stopped right now (server)? */
+   public static boolean stopsWorld(MinecraftServer server) {return server!=null && SESSIONS.get(server)!=null;}
    /** Suspend carry/terrain grind, without releasing or stealing its owner. */
    public static boolean blocksMovement(boolean actorPaused,boolean targetPaused,boolean actorIsolated,boolean targetIsolated) {
       return actorPaused || targetPaused || actorIsolated || targetIsolated;
@@ -141,6 +174,8 @@ public final class WorldPause {
       void freeze(Target target,UUID owner,UUID id,long until);
       void release(Target target,UUID id,ReleaseReason reason);
       @Nullable default Vec3 position(Target target) {return null;}
+      /** {yaw, pitch} of a player target, recorded once as its locked view. */
+      @Nullable default float[] view(Target target) {return null;}
       default void hold(Target target,Vec3 anchor) {}
    }
    static final class Coordinator<K> {
@@ -150,6 +185,7 @@ public final class WorldPause {
          Session s=new Session(owner,UUID.randomUUID(),ticks,protect,radius); sessions.put(key,s); return s;
       }
       Session get(K key) {return sessions.get(key);}
+      boolean any() {return !sessions.isEmpty();}
       Session remove(K key) {return sessions.remove(key);}
       Session end(K key,Backend env,EndReason reason) {Session s=remove(key); if(s!=null) s.end(env,reason); return s;}
    }
@@ -157,11 +193,16 @@ public final class WorldPause {
       final UUID owner,id; final int maxTicks,mobRadius; final boolean protect;
       final Set<Target> tracked=new HashSet<>(); Set<UUID> paused=Set.of();
       final Map<Target,Vec3> anchors=new HashMap<>();
+      /** Locked views by player id (owner included), recorded when first seen. */
+      final Map<UUID,float[]> views=new HashMap<>();
       ResourceKey<Level> ownerLevel; Listener listener; int age; boolean ended;
       Session(UUID owner,UUID id,int ticks,boolean protect,int radius) {
          this.owner=owner; this.id=id; this.maxTicks=ticks; this.protect=protect; this.mobRadius=radius;
       }
       boolean isPaused(UUID who) {return !ended && !owner.equals(who) && paused.contains(who);}
+      /** Pure: the absolute stop holds everything but the owner and isolated bodies. */
+      boolean stopsEntity(UUID who,boolean isolated) {return !ended && !owner.equals(who) && !isolated;}
+      @Nullable float[] view(UUID who) {float[] v=ended?null:views.get(who); return v==null?null:v.clone();}
       void sync(Backend env) {
          if(ended) return;
          List<Target> players=env.players().stream().filter(t->!owner.equals(t.id())).toList();
@@ -177,6 +218,8 @@ public final class WorldPause {
             Vec3 position=env.position(target);
             if(position==null) anchors.remove(target); // Limbo owns its own position/gravity.
             else anchors.putIfAbsent(target,position);
+            float[] view=env.view(target);
+            if(view!=null) views.putIfAbsent(target.id(),view);
             env.freeze(target,owner,id,env.now(target)+5);
             Vec3 anchor=anchors.get(target);
             if(anchor!=null) env.hold(target,anchor);
@@ -203,7 +246,7 @@ public final class WorldPause {
          if(ended) return; ended=true; paused=Set.of();
          ReleaseReason release=reason==EndReason.DONE?ReleaseReason.EXPIRED:ReleaseReason.INTERRUPTED;
          for(Target target:tracked) env.release(target,id,release);
-         tracked.clear(); anchors.clear();
+         tracked.clear(); anchors.clear(); views.clear();
       }
    }
    private record LiveBackend(MinecraftServer server) implements Backend {
@@ -228,6 +271,11 @@ public final class WorldPause {
          ServerLevel level=level(key.level()); Entity entity=level==null?null:level.getEntity(key.id());
          return entity instanceof ServerPlayer player && player.isAlive() && !BodyIsolation.active(player)
             ? player.position() : null;
+      }
+      public float[] view(Target key) {
+         ServerLevel level=level(key.level()); Entity entity=level==null?null:level.getEntity(key.id());
+         return entity instanceof ServerPlayer player && player.isAlive() && !BodyIsolation.active(player)
+            ? new float[]{player.getYRot(),player.getXRot()} : null;
       }
       public void hold(Target key,Vec3 anchor) {
          ServerLevel level=level(key.level()); Entity entity=level==null?null:level.getEntity(key.id());

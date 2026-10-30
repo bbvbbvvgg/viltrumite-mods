@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -28,5 +29,34 @@ public abstract class TimeFreezeRenderMixin {
          ci.cancel();
          this.renderEntity(entity, camX, camY, camZ, 0.0F, pose, buffers);
       }
+   }
+
+   /*
+    * Stopped world: the level renderer's own clock (rain, clouds, block-breaking cleanup) and the
+    * rain splash/sound tick wait, and weather/clouds are drawn at partial tick 0 so they stand
+    * exactly still instead of wobbling inside the last tick every frame.
+    */
+   @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+   private void viltrumitecore$stoppedClock(CallbackInfo ci) {
+      if (TimeFreeze.clientWorldStopped()) {
+         ci.cancel();
+      }
+   }
+
+   @Inject(method = "tickRain", at = @At("HEAD"), cancellable = true)
+   private void viltrumitecore$stoppedRain(net.minecraft.client.Camera camera, CallbackInfo ci) {
+      if (TimeFreeze.clientWorldStopped()) {
+         ci.cancel();
+      }
+   }
+
+   @ModifyVariable(method = "renderSnowAndRain", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+   private float viltrumitecore$stoppedWeather(float partialTick) {
+      return TimeFreeze.clientWorldStopped() ? 0.0F : partialTick;
+   }
+
+   @ModifyVariable(method = "renderClouds", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+   private float viltrumitecore$stoppedClouds(float partialTick) {
+      return TimeFreeze.clientWorldStopped() ? 0.0F : partialTick;
    }
 }

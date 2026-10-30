@@ -40,4 +40,12 @@ public abstract class TimeFreezeClientLevelMixin {
          passenger.setOldPosAndRot();
       }
    }
+
+   /** Stopped world: no new ambient block particles (torch smoke, portals) pile up motionless. */
+   @Inject(method = "animateTick", at = @At("HEAD"), cancellable = true)
+   private void viltrumitecore$stoppedAmbience(int x, int y, int z, CallbackInfo ci) {
+      if (TimeFreeze.clientWorldStopped()) {
+         ci.cancel();
+      }
+   }
 }

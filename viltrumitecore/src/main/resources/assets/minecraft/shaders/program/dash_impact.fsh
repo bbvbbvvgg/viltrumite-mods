@@ -43,44 +43,10 @@ uniform float TimeStopRipple;
 in vec2 texCoord;
 out vec4 fragColor;
 
-// Six deterministic sites: centre and five seeded impact points.
-vec2 eraseSite(int i) {
-    if (i == 0) return vec2(0.5);
-    float n = float(i) + clamp(EraseSeed, 0.0, 1.0) * 1024.0;
-    return vec2(0.08) + 0.84 * fract(sin(vec2(n * 12.9898, n * 78.233)) * 43758.5453);
-}
-float eraseDistance(vec2 a, vec2 b) {
-    vec2 size = vec2(textureSize(DiffuseSampler, 0));
-    vec2 metric = vec2(size.x / max(size.y, 1.0), 1.0);
-    vec2 delta = (a - b) * metric;
-    return dot(delta, delta);
-}
-int eraseNearest(vec2 uv) {
-    float best = 1000.0;
-    int cell = 0;
-    for (int i = 0; i < 6; i++) {
-        float d = eraseDistance(uv, eraseSite(i));
-        if (d < best) { best = d; cell = i; }
-    }
-    return cell;
-}
-vec3 eraseCracks(vec2 uv, float amount) {
-    float first = 1000.0, second = 1000.0;
-    int cell = 0;
-    for (int i = 0; i < 6; i++) {
-        float d = eraseDistance(uv, eraseSite(i));
-        if (d < first) { second = first; first = d; cell = i; }
-        else if (d < second) second = d;
-    }
-    float gap = sqrt(second) - sqrt(first);
-    float line = 1.0 - smoothstep(0.0015, 0.004, gap);
-    float reveal = 1.0 - smoothstep(max(0.0, amount - 0.06), max(0.001, amount), sqrt(first));
-    float edge = line * reveal * amount;
-    vec2 refract = normalize(uv - eraseSite(cell) + vec2(0.0001)) * edge * 0.006;
-    // Steel-blue fracture rim and a narrow white core; all other hero paths stay unchanged.
-    float rim = (1.0 - smoothstep(0.004, 0.012, gap)) * reveal * amount;
-    vec3 fracture = vec3(0.36, 0.58, 0.85) * rim * 0.35 + vec3(1.0, 0.95, 0.80) * edge * 0.65;
-    return texture(DiffuseSampler, clamp(uv + refract, 0.0, 1.0)).rgb + fracture;
+// World Erasure grades the frame only; cracks, shards and the rebuild are scene geometry
+// (client.reinhard.erasure.ErasureGlassRenderer), drawn after this pass.
+float eraseHash(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233)) + clamp(EraseSeed, 0.0, 1.0) * 61.7) * 43758.5453);
 }
 
 void main() {
@@ -351,31 +317,37 @@ void main() {
         finalColor.rgb *= mix(1.0, 0.82 + 0.18 * smoothstep(0.95, 0.3, rDist), safeTsGrey);
     }
 
-    // Priority cinematic. Black holes behind displaced cells; inverse mapping
-    // samples only the original cell, rather than stretching the whole image.
+    // World Erasure grade: tension drain + critical shimmer, rupture flash with a chromatic split,
+    // the void drain while the target is alone, shock pulses as the shards snap home.
     if (safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild > 0.0) {
-        vec3 erased = eraseCracks(texCoord, safeEraseCrack);
-        if (safeEraseShatter > 0.0 || safeEraseRebuild > 0.0) {
-            erased = vec3(0.0);
-            bool rebuilding = safeEraseRebuild > 0.0;
-            // Returning displacement decreases cubically: ease-out, reverse gravity.
-            float fall = rebuilding ? pow(safeEraseRebuild, 3.0) : safeEraseShatter * safeEraseShatter;
-            float rotation = rebuilding ? pow(safeEraseRebuild, 3.0) : safeEraseShatter;
-            float shade = 1.0 - 0.65 * (rebuilding ? safeEraseRebuild : safeEraseShatter);
-            for (int i = 0; i < 6; i++) {
-                vec2 site = eraseSite(i);
-                float random = fract(sin(float(i) * 31.7 + clamp(EraseSeed, 0.0, 1.0) * 79.3) * 24634.6345);
-                vec2 offset = vec2((site.x - 0.5) * 0.22, -(1.25 + 0.35 * random)) * fall;
-                float angle = (random - 0.5) * 0.44 * rotation;
-                float s = sin(-angle), c = cos(-angle);
-                vec2 local = texCoord - site - offset;
-                vec2 sourceUv = site + vec2(local.x*c - local.y*s, local.x*s + local.y*c);
-                if (all(greaterThanEqual(sourceUv, vec2(0.0))) && all(lessThanEqual(sourceUv, vec2(1.0))) && eraseNearest(sourceUv) == i) {
-                    erased = eraseCracks(sourceUv, safeEraseCrack) * shade;
-                }
-            }
+        vec2 size = vec2(textureSize(DiffuseSampler, 0));
+        vec2 fromCenter = (texCoord - 0.5) * vec2(size.x / max(size.y, 1.0), 1.0);
+        float eDist = length(fromCenter);
+        vec2 eDir = eDist > 0.0001 ? fromCenter / eDist : vec2(0.0);
+        vec3 graded = finalColor.rgb;
+        // rupture + shock: radial chromatic split of the frozen frame
+        float split = 0.006 * safeEraseShatter + 0.004 * safeEraseRebuild;
+        if (split > 0.0) {
+            vec2 off = eDir * split * (0.35 + eDist);
+            graded.r = texture(DiffuseSampler, clamp(texCoord + off, 0.0, 1.0)).r;
+            graded.b = texture(DiffuseSampler, clamp(texCoord - off, 0.0, 1.0)).b;
         }
-        finalColor.rgb = mix(erased, vec3(0.0), safeEraseDark);
+        // tension: cold desaturation, crushed edges, faint grain-like shimmer near the peak
+        float luma = dot(graded, vec3(0.299, 0.587, 0.114));
+        vec3 cold = vec3(luma) * vec3(0.84, 0.93, 1.06) + vec3(0.01, 0.015, 0.03);
+        graded = mix(graded, cold, 0.72 * safeEraseCrack + 0.2 * safeEraseDark);
+        float vignette = smoothstep(0.35, 1.05, eDist);
+        graded *= 1.0 - vignette * (0.45 * safeEraseCrack + 0.35 * safeEraseDark);
+        float shimmer = (eraseHash(floor(texCoord * size / 2.0) + floor(Time * 24.0)) - 0.5) * 0.05;
+        graded += shimmer * safeEraseCrack * safeEraseCrack;
+        // void: the frame left behind the shards sinks toward black-blue
+        graded = mix(graded, graded * vec3(0.25, 0.27, 0.36), 0.55 * safeEraseDark);
+        // rupture flash: white bloom from the centre outward
+        graded = mix(graded, vec3(1.0, 0.98, 0.95), safeEraseShatter * (0.85 - 0.35 * smoothstep(0.0, 1.0, eDist)));
+        // shock pulse: a bright ring travelling out from the centre
+        float ring = 1.0 - smoothstep(0.0, 0.08, abs(eDist - (1.0 - safeEraseRebuild) * 0.9));
+        graded += vec3(0.75, 0.85, 1.0) * ring * safeEraseRebuild * 0.35 + vec3(0.12) * safeEraseRebuild;
+        finalColor.rgb = clamp(graded, 0.0, 1.0);
     }
 
     finalColor.a = 1.0;

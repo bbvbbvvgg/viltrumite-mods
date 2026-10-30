@@ -47,9 +47,9 @@ public final class WorldErasure implements AbilityHandler {
       return new WorldErasure(Objects.requireNonNull(verdict),Objects.requireNonNull(environment));
    }
    public boolean erase() {return verdict==DivineTargets.Verdict.MORTAL;}
-   /** Pause tick at which the cinematic (age 0) starts: after Reinhard's spoken line. */
-   public static int cinematicStart() {return ReinhardRules.ERASE_SPEECH_TICKS;}
-   /** Pure: cinematic age for a pause tick, negative while Reinhard is still speaking. */
+   /** The scene starts with the press: the world stops on tick 0 and the line is spoken inside the scene. */
+   public static int cinematicStart() {return 0;}
+   /** Pure: scene age for a pause tick. One clock: the WorldPause elapsed tick. */
    public static int cinematicAge(int pauseElapsed) {return pauseElapsed-cinematicStart();}
    public boolean ended() {return ended;}
    public static boolean tryStart(ReinhardState state,Gate gate,BooleanSupplier beginPause) {
@@ -103,12 +103,12 @@ public final class WorldErasure implements AbilityHandler {
          player instanceof dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer core && core.getChopTicks()>0);
       if(target==null || gate.pauseActive() || gate.creative() || gate.spectator() || gate.limbo() || !gate.drawn() || gate.chopping()) return false;
       DivineTargets.Verdict frozen=DivineTargets.verdict(target);
-      if(!tryStart(state,gate,()->WorldPause.begin(server,player.getUUID(),cinematicStart()+ReinhardRules.ERASE_LENGTH,
+      if(!tryStart(state,gate,()->WorldPause.begin(server,player.getUUID(),ReinhardRules.ERASE_LENGTH,
          ReinhardRules.ERASE_PROTECT_FROZEN,ReinhardRules.ERASE_MOB_FREEZE_RADIUS))) return false;
-      // Speech first (world paused, caster held, Reid at the guard): the pose and the client scene
-      // start with the cinematic, so the raise/crack stay in sync with the shader timeline.
+      // The world stops on the press (absolute stop, camera lock, HUD) for everyone, Reinhard
+      // included: no clip plays, his body stays in the exact pose of the press. Every client starts
+      // the scene now.
       state.action.cancel();
-      int targetId=target.getId();
       Live live=new Live(server,player,target,WorldPause.id(server));
       WorldErasure cast=timed(frozen,live); cast.pauseId=live.pauseId; state.worldErasure=cast;
       live.packet=new ErasureS2CPacket(live.pauseId,server.overworld().getGameTime(),target.level().dimension(),target.getId(),target.position(),
@@ -119,10 +119,6 @@ public final class WorldErasure implements AbilityHandler {
             live.holdCaster();
             int age=cinematicAge(elapsed);
             if(age<0) return;
-            if(age==0) {
-               if(!cast.ended) state.action.start(ReinhardAbility.WORLD_ERASURE,ReinhardRules.ERASE_LENGTH,targetId);
-               for(ServerPlayer viewer:server.getPlayerList().getPlayers()) CoreMessages.sendToPlayer(live.packet,viewer);
-            }
             cast.advance(age);
          }
          public void ended(WorldPause.EndReason reason) {
@@ -133,6 +129,8 @@ public final class WorldErasure implements AbilityHandler {
             if(age>=0) CoreMessages.sendToPlayer(live.packet.withAge(age),viewer);
          }
       });
+      // Scene age 0 for everyone now (late joiners and dimension changes catch up with withAge).
+      for(ServerPlayer viewer:server.getPlayerList().getPlayers()) CoreMessages.sendToPlayer(live.packet,viewer);
       return true;
    }
    @Override public void cancel(ServerPlayer player,ReinhardState state,CleanupReason reason) {

@@ -17,6 +17,7 @@ public abstract class TimeFreezeTeleportMixin {
       var player = Minecraft.getInstance().player;
       if (player != null && Minecraft.getInstance().isSameThread()) {
          TimeFreezeView.acceptServerView(player.getYRot(), player.getXRot());
+         dev.baranhan.viltrumitecore.client.hero.WorldPauseClient.acceptServerPosition();
       }
    }
 }

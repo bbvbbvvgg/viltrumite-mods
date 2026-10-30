@@ -58,7 +58,7 @@ class ReinhardClipsTest {
       t.put(ReinhardClips.WORLD_CUT, ReinhardRules.WORLD_CUT_BLAST+20);
       t.put(ReinhardClips.WORLD_CUT_FROM_LEFT, ReinhardRules.WORLD_CUT_BLAST+20);
       t.put("diagonal_world_cut",ReinhardRules.WORLD_CUT_BLAST+20);
-      t.put("world_erasure", ReinhardRules.ERASE_LENGTH);
+      t.put("world_erasure", ReinhardRules.ERASE_CLIP_LENGTH);
       t.put(ReinhardClips.CHOP_LEFT,20); t.put(ReinhardClips.CHOP_RIGHT,20);
       return t;
    }

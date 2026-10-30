@@ -99,6 +99,12 @@ public final class ReinhardSounds {
 
    public static final RegistryObject<SoundEvent> ERASE_CRACK = reg("reinhard.erase_crack");
    public static final RegistryObject<SoundEvent> ERASE_INHALE = reg("reinhard.erase_inhale");
+   /** World Erasure scene cues (original procedural, tools/sfx/reinhard_erasure.py), on the ErasureScene beats. */
+   public static final RegistryObject<SoundEvent> ERASE_TENSION = reg("reinhard.erase_tension");
+   public static final RegistryObject<SoundEvent> ERASE_SHATTER = reg("reinhard.erase_shatter");
+   public static final RegistryObject<SoundEvent> ERASE_DISSOLVE = reg("reinhard.erase_dissolve");
+   public static final RegistryObject<SoundEvent> ERASE_SNAP = reg("reinhard.erase_snap");
+   public static final RegistryObject<SoundEvent> ERASE_RESTORE = reg("reinhard.erase_restore");
    public static final RegistryObject<SoundEvent> LIMBO_HEARTBEAT = reg("reinhard.limbo_heartbeat");
 
    private ReinhardSounds() {

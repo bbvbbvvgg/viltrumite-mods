@@ -33,11 +33,27 @@ public final class TimeFreeze {
       default float[] lockedView(Player player) {
          return null;
       }
+
+      /**
+       * Does this source stop the level itself (scheduled block/fluid ticks, block events,
+       * random ticks, block entities)? DIO's local fields do not; a world pause does.
+       */
+      default boolean stopsWorld(net.minecraft.world.level.Level level) {
+         return false;
+      }
    }
 
    private static final List<Source> SOURCES = new CopyOnWriteArrayList<>();
    /** Client knowledge (client thread only): entity ids frozen by any received field. */
    private static final IntOpenHashSet CLIENT = new IntOpenHashSet();
+   /**
+    * Client knowledge of a world-wide stop (WorldPauseClient): every entity but {@link #clientWorldExempt}
+    * (the pause owner, whose own cast still plays) is held, and the level's own clocks wait.
+    */
+   private static boolean clientWorld;
+   private static int clientWorldExempt = Integer.MIN_VALUE;
+   /** The local view is pinned (world pause), independent of whether the local player is "frozen". */
+   private static boolean clientViewLock;
 
    private TimeFreeze() {
    }
@@ -55,7 +71,7 @@ public final class TimeFreeze {
       }
 
       if (entity.level().isClientSide()) {
-         return !CLIENT.isEmpty() && CLIENT.contains(entity.getId());
+         return clientFrozen(entity.getId());
       }
 
       for (int i = 0; i < SOURCES.size(); i++) {
@@ -86,6 +102,22 @@ public final class TimeFreeze {
       return null;
    }
 
+   /** Is this level's own simulation stopped (block ticks, block entities, particles, weather clocks)? */
+   public static boolean worldStopped(net.minecraft.world.level.Level level) {
+      if (level.isClientSide()) {
+         return clientWorld;
+      }
+
+      for (int i = 0; i < SOURCES.size(); i++) {
+         Source source = SOURCES.get(i);
+         if (source.active() && source.stopsWorld(level)) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
    /** Pure: a frozen look differs enough from the lock to be corrected (wraps yaw). */
    public static boolean viewDrifted(float yaw, float pitch, float lockYaw, float lockPitch) {
       float dy = ((yaw - lockYaw) % 360.0F + 540.0F) % 360.0F - 180.0F;
@@ -100,9 +132,25 @@ public final class TimeFreeze {
    }
 
    public static boolean clientFrozen(int entityId) {
-      return !CLIENT.isEmpty() && CLIENT.contains(entityId);
+      return clientWorld && entityId != clientWorldExempt || !CLIENT.isEmpty() && CLIENT.contains(entityId);
    }
 
+   /** World pause (client thread): hold every entity but {@code exemptId}, and pin the local view. */
+   public static void setClientWorld(boolean frozen, int exemptId, boolean viewLock) {
+      clientWorld = frozen;
+      clientWorldExempt = frozen ? exemptId : Integer.MIN_VALUE;
+      clientViewLock = frozen && viewLock;
+   }
+
+   public static boolean clientWorldStopped() {
+      return clientWorld;
+   }
+
+   public static boolean clientViewLocked() {
+      return clientViewLock;
+   }
+
+   /** DIO's field set only; the world-pause flags have their own owner (WorldPauseClient). */
    public static void clearClient() {
       CLIENT.clear();
    }

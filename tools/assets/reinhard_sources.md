@@ -233,3 +233,14 @@ https://www.youtube.com/watch?v=GtFqJpCrwCQ). It is a **temporary test asset**:
   public release** and keep the timing: the replacement must put its transient within the first ~20 ms and be
   played from the same `WorldCutAudio.strike` call. `reinhard.world_cut_impact` (derived from the CC-BY 248150
   tail) stays registered as the licensed fallback.
+
+## World Erasure scene cues — original synthesis (2026-10-30)
+
+No new external recordings. `tools/sfx/reinhard_erasure.py` is the only writer of five original CC0-1.0 cues
+(seeded noise and oscillators, FFT band filters, noise-convolution tail; mono 44.1 kHz Vorbis through the
+sound-design helper). The existing `erase_crack` (Greg_Surr 554564, CC0) and `erase_inhale` stay and keep their beats.
+- `erase_tension`: 3.50 s, ticks 20→90; sub drone, strained-glass partials and creaks that thicken; cut at the shatter.
+- `erase_shatter`: 4.60 s, tick 90; falling sub boom under `erase_crack`.
+- `erase_dissolve`: 3.30 s, tick 112; rising bright chord, sparkles, last spark at ~tick 149.
+- `erase_snap`: 0.70 s, one per returning shard ring (ticks 168–184), pitch per ring in code.
+- `erase_restore`: 6.00 s, tick 192; final impact and a low open-fifth bloom.
