@@ -3,15 +3,16 @@ package dev.baranhan.viltrumitecore.client.dio;
 import dev.baranhan.viltrumitecore.hero.dio.DioRules;
 
 /**
- * Pure Road Roller staging over the 120-tick ult (unit tested). The roller
- * materialises under DIO just after the appear sound, rides his arc down nose
- * first, squashes on the slam tick, takes a dent on every server pulse, shakes
- * through WRYYY and is gone on the resume tick, where the server explosion fires.
+ * Pure Road Roller staging over the 180-tick ult (unit tested). The roller
+ * materialises under DIO near the top of his leap just after the appear sound,
+ * hangs with him, rides the fall down nose first, squashes on the slam tick,
+ * takes a dent on every server pulse, shakes through WRYYY and is gone on the
+ * resume tick, where the server explosion fires.
  */
 public final class RollerChoreo {
-   /** First visible tick (the server appear sound plays at 24). */
-   public static final int APPEAR = 26;
-   public static final int MATERIALIZE = 4;
+   /** First visible tick (the server appear sound plays at ROLLER_APPEAR). */
+   public static final int APPEAR = DioRules.ROLLER_APPEAR + 2;
+   public static final int MATERIALIZE = 6;
    /** Model scale (body top 39 units ≈ ROLLER_SEAT blocks). */
    public static final float SCALE = 0.95F;
    /** DIO stands this far in front of the roller origin along its nose (model -Z), blocks. */
@@ -57,10 +58,10 @@ public final class RollerChoreo {
       float grow = (float)(0.55 + 0.45 * (1.0 - (1.0 - m) * (1.0 - m)));
       boolean landed = t >= DioRules.ROLLER_SLAM;
       float pitch;
-      if (t < DioRules.ROLLER_APEX) {
-         pitch = (float)(4.0 * (t - APPEAR) / (DioRules.ROLLER_APEX - APPEAR));
+      if (t < DioRules.ROLLER_HANG) {
+         pitch = (float)(4.0 * Math.min(1.0, (t - APPEAR) / (double)(DioRules.ROLLER_APEX - APPEAR)));
       } else if (t < DioRules.ROLLER_SLAM - 3) {
-         double u = (t - DioRules.ROLLER_APEX) / (double)(DioRules.ROLLER_SLAM - 3 - DioRules.ROLLER_APEX);
+         double u = (t - DioRules.ROLLER_HANG) / (double)(DioRules.ROLLER_SLAM - 3 - DioRules.ROLLER_HANG);
          pitch = (float)(4.0 - 30.0 * u * u);
       } else if (t < DioRules.ROLLER_SLAM) {
          double u = (t - (DioRules.ROLLER_SLAM - 3)) / 3.0;

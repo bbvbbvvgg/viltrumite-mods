@@ -147,8 +147,27 @@ public final class DioPoser {
    }
 
    private static void roller(PlayerModel<?> model, double t) {
-      // Leap: knees tucked, arms up to bring the roller down.
-      float leap = window(t, DioRules.ROLLER_LEAP - 2.0, DioRules.ROLLER_SLAM + 1.0, 4.0);
+      // Anticipation: knees bend, torso pitches forward, arms swing back.
+      float crouch = window(t, DioRules.ROLLER_CROUCH - 2.0, DioRules.ROLLER_LEAP + 1.0, 4.0);
+      model.body.xRot += rad(24.0F) * crouch;
+      model.rightLeg.xRot = Mth.lerp(crouch, model.rightLeg.xRot, rad(-42.0F));
+      model.leftLeg.xRot = Mth.lerp(crouch, model.leftLeg.xRot, rad(-30.0F));
+      model.rightArm.xRot = Mth.lerp(crouch, model.rightArm.xRot, rad(38.0F));
+      model.leftArm.xRot = Mth.lerp(crouch, model.leftArm.xRot, rad(38.0F));
+      model.rightArm.zRot = Mth.lerp(crouch, model.rightArm.zRot, rad(14.0F));
+      model.leftArm.zRot = Mth.lerp(crouch, model.leftArm.zRot, rad(-14.0F));
+      model.head.xRot -= rad(14.0F) * crouch;
+      // Rise: a straight, stretched launch silhouette, one fist leading up.
+      float rise = window(t, DioRules.ROLLER_LEAP - 1.0, DioRules.ROLLER_APEX - 6.0, 4.0);
+      model.rightLeg.xRot = Mth.lerp(rise, model.rightLeg.xRot, rad(12.0F));
+      model.leftLeg.xRot = Mth.lerp(rise, model.leftLeg.xRot, rad(4.0F));
+      model.rightArm.xRot = Mth.lerp(rise, model.rightArm.xRot, rad(-172.0F));
+      model.rightArm.zRot = Mth.lerp(rise, model.rightArm.zRot, rad(-6.0F));
+      model.leftArm.xRot = Mth.lerp(rise, model.leftArm.xRot, rad(20.0F));
+      model.leftArm.zRot = Mth.lerp(rise, model.leftArm.zRot, rad(-24.0F));
+      model.head.xRot -= rad(20.0F) * rise;
+      // Top of the arc and the fall: knees tucked, arms up to bring the roller down.
+      float leap = window(t, DioRules.ROLLER_APEX - 8.0, DioRules.ROLLER_SLAM + 1.0, 5.0);
       model.rightLeg.xRot = Mth.lerp(leap, model.rightLeg.xRot, rad(-70.0F));
       model.leftLeg.xRot = Mth.lerp(leap, model.leftLeg.xRot, rad(-35.0F));
       model.rightArm.xRot = Mth.lerp(leap, model.rightArm.xRot, rad(-160.0F));
