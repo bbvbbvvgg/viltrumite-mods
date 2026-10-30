@@ -18,9 +18,9 @@
   "ability.viltrumitecore.regulus_greeds_touch.desc": "<grey>Enfriamiento: <lime>—\n<grey>Tipo: <yellow>Combo (clic izq., mano vacía)\n\n<grey>Un toque aburrido en el tiempo detenido: revés, palma,\n<grey>chasquido. Hasta 3 objetivos delante; en León el chasquido\n<grey>deja una ruptura en el cuerpo (8 tras 0,5 s).\n\n<blue>Regulus",
   "ability.viltrumitecore.regulus_little_king.name": "<gold>Pequeño Rey",
   "ability.viltrumitecore.regulus_little_king.desc": "<grey>Enfriamiento: <lime>—\n<grey>Tipo: <yellow>Tecla del corazón (clic central)\n\n<grey>Coloca tu corazón en un ser vivo a 6 bloques\n<grey>(hasta 4 súbditos). El corazón vive en un huésped y pasa\n<grey>al siguiente cada 20 s; mientras viva, el León no tiene límite.\n<grey>Pulsa de nuevo sobre un súbdito para liberarlo; agáchate: todos.\n\n<blue>Regulus",
-  "subtitle.viltrumitecore.regulus.ult_accuse": "Has estado violando mis derechos todo este tiempo. ¿Siquiera lo entiendes?",
-  "subtitle.viltrumitecore.regulus.ult_sentence": "Estoy satisfecho con lo que tengo. Por eso no dejaré que me quites ni un grano.",
-  "subtitle.viltrumitecore.regulus.ult_flick": "Eso es todo. Un solo individuo, completo en sí mismo.",
+  "subtitle.viltrumitecore.regulus.ult_accuse": "Has pisoteado mis derechos. ¿Lo entiendes?",
+  "subtitle.viltrumitecore.regulus.ult_sentence": "Me basta con lo que tengo. Ni un grano será tuyo.",
+  "subtitle.viltrumitecore.regulus.ult_flick": "Eso es todo. Completo en mí mismo.",
   "subtitle.viltrumitecore.regulus.lion": "Mi tiempo es solo mío.",
   "subtitle.viltrumitecore.regulus.seizure": "…Mi corazón. Ahora no.",
   "subtitle.viltrumitecore.regulus.king": "Agradécelo. Puedes llevar mi corazón.",
@@ -66,5 +66,12 @@
   "subtitles.viltrumitecore.regulus_ult_wave": "Golpean granos detenidos",
   "subtitles.viltrumitecore.regulus_ult_flick": "Un chasquido de dedo",
   "subtitles.viltrumitecore.regulus_ult_resolve": "El juicio ha terminado",
-  "subtitles.viltrumitecore.regulus_step": "Pasos de Regulus"
+  "subtitles.viltrumitecore.regulus_step": "Pasos de Regulus",
+  "subtitle.viltrumitecore.regulus.sand": "Hasta la arena es mía.",
+  "subtitle.viltrumitecore.regulus.sever": "Respiras mi aire sin pedir permiso.",
+  "subtitle.viltrumitecore.regulus.trample": "No te atrevas a cruzarte en mi camino.",
+  "subtitle.viltrumitecore.regulus.kill_a": "Renunciaste a tu derecho a vivir.",
+  "subtitle.viltrumitecore.regulus.kill_b": "Qué pérdida de mi tiempo.",
+  "subtitle.viltrumitecore.regulus.low_health": "¡¿Me heriste?! ¡Eso viola mis derechos!",
+  "subtitle.viltrumitecore.regulus.enter": "Regulus Corneas, arzobispo de la Codicia."
 }
