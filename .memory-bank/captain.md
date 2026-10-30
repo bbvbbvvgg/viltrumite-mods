@@ -20,3 +20,13 @@
 - Key names on the ability panel/screen are English on every language since 1.57.0 (`KeyLabels.english`), for all heroes.
 - Wish: `OdLagnaWishes` "shield" → captain, `WishStyle.SHIELD` (blue tint, `captain.charged` → `captain.parry`), motif
   `WishSceneFx.shield` (turning star shield of pixels, star flash, ground ring).
+- Tight spaces: `FormationPlanner.plan` falls back to `SafeSpot` with `SeenProbe` (line of sight to Steve's chest) before
+  the blind search, so a sealed room keeps the team inside; Hulk (3.1 high) cannot fit under a 3-block ceiling and
+  stands outside. Verified in game (5×3×5 stone box) on 2026-11-03.
+
+## Сессия 2026-11-03 (запись для SESSION.md)
+SESSION.md (~250 КБ) не обновлён: инструмент пуша принимает запросы до 64 КБ. Запись сессии:
+- Ветка feat/captain-america-2012 (от db636a40), продолжение: клиент (рендеры щита/Мстителей/снарядов/квинджета, панель `CaptainPanelStyle`, портрет, превью головы, VFX), иконки способностей, 52 собственных звука (`tools/sfx/captain.py`, без нарезок из фильма), строки на 12 локалей, желание Од Лагуны «Щит», имена клавиш в окне способностей всегда на английском (`KeyLabels.english`, для всех героев), версия core 1.57.0.
+- Исправлено по итогам игры: в замкнутой комнате запасные точки круга (`FormationPlanner.plan`) сначала ищутся в прямой видимости Стива (`SeenProbe`), иначе союзники вставали за стенами.
+- Проверки: полный `./gradlew build --offline` — BUILD SUCCESSFUL, 2248 тестов, 0 падений, 1 пропущен; `check_hero_resources.py --hero captain` — 0 новых проблем.
+- В игре (выделенный сервер + 1 клиент по сети, Xvfb, программный рендер, звук на устройстве No Output): выбор через предмет-желание, все способности, ультимейт в поле (квинджет, 5 прибытий, круг, бой 60 с, уход) и в каменной коробке 5×3×5 без неба (без квинджета, четверо в комнате, Халк 3,1 бл не помещается под потолок 3 бл и стоит снаружи). Сервер держит 20 TPS (проверено по gametime). Второй клиент не запускался: два клиента + сервер не помещаются в 4 ГБ (OOM). Звуки на слух не прослушаны.
