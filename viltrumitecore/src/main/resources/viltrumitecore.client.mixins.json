@@ -21,6 +21,7 @@
     "ClientPlayerEntityMixin",
     "DashModelMixin",
     "DioModelMixin",
+    "PlayerModelNeckResetMixin",
     "EntityRendererNameTagInvoker",
     "EntityShadowMixin",
     "FirstPersonBarrageMixin",

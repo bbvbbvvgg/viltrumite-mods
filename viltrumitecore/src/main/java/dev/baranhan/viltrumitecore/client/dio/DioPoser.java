@@ -95,7 +95,9 @@ public final class DioPoser {
          model.leftArm.xRot = Mth.lerp(jojo, model.leftArm.xRot, rad(-20.0F));
          model.leftArm.zRot = Mth.lerp(jojo, model.leftArm.zRot, rad(-28.0F));
          model.body.yRot += rad(14.0F) * jojo;
-         model.head.zRot += rad(10.0F) * jojo;
+         // Absolute tilt: vanilla never resets head.zRot, so "+=" here accumulated every frame on
+         // the shared PlayerModel (the head spun 90°+ and stayed twisted on other players).
+         model.head.zRot = rad(10.0F) * jojo;
          model.head.xRot -= rad(6.0F) * jojo;
          model.rightLeg.zRot += rad(5.0F) * jojo;
       }
@@ -143,6 +145,8 @@ public final class DioPoser {
          roller(model, t);
       }
 
+      // Posture + JoJo twist + ZA WARUDO / WRYYY head-back layered on the look made an owl neck.
+      dev.baranhan.viltrumitecore.client.anim.pose.PoseRig.limitNeck(model);
       copy(model);
    }
 
