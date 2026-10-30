@@ -233,7 +233,12 @@ public final class WishRitual {
       CoreMessages.sendToTrackingAndSelf(new WishSceneS2CPacket(phase, player.getId(), ritual.wish.id(), ritual.tick), player);
    }
 
+   /** The last refusal or interrupt key (the QA self-test reads it; fake players show no messages). */
+   @Nullable
+   static volatile String lastRefusal;
+
    private static void refuse(ServerPlayer player, String key) {
+      lastRefusal = key;
       player.displayClientMessage(Component.translatable(key).withStyle(ChatFormatting.GOLD), true);
    }
 
