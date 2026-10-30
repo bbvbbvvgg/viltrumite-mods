@@ -133,7 +133,11 @@ public final class FormationPlanner {
       for (AvengerKind k : AvengerKind.values()) {
          if (best[k.slot()] == null) {
             Vec3 want = slot(c, yawDeg, bestR, k.slot());
-            best[k.slot()] = SafeSpot.find(want, new BoxProbe(level, k), 3.0, 0.5)
+            // in sight of Steve first, so a sealed room never puts the team behind its walls
+            SafeSpot.Probe seen = new SeenProbe(new BoxProbe(level, k), level, steve.add(0, 1.2, 0));
+            best[k.slot()] = SafeSpot.find(want, seen, 3.0, 0.5)
+               .or(() -> SafeSpot.find(steve, seen, 3.0, 0.5))
+               .or(() -> SafeSpot.find(want, new BoxProbe(level, k), 3.0, 0.5))
                .or(() -> SafeSpot.find(steve, new BoxProbe(level, k), 3.0, 0.5))
                .orElse(steve);
          }
@@ -189,6 +193,24 @@ public final class FormationPlanner {
          return fallback;
       }
       return level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
+   }
+
+   /** A probe that also wants the spot's chest in line of sight of {@code eye} (no wall between). */
+   public record SeenProbe(SafeSpot.Probe inner, Level level, Vec3 eye) implements SafeSpot.Probe {
+      @Override
+      public boolean fits(Vec3 feet) {
+         return this.inner.fits(feet) && visible(this.level, this.eye, feet.add(0, 1.2, 0));
+      }
+
+      @Override
+      public boolean insideBorder(Vec3 feet) {
+         return this.inner.insideBorder(feet);
+      }
+
+      @Override
+      public boolean groundBelow(Vec3 feet, int maxDrop) {
+         return this.inner.groundBelow(feet, maxDrop);
+      }
    }
 
    /** Probe with the box of an Avenger kind (the entity does not exist yet). */
