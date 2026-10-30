@@ -18,7 +18,7 @@ public enum RegulusMove {
    SAND(24, RegulusRules.SAND_RELEASE, "sand"),
    AIR_CUT(26, RegulusRules.SEVER_RELEASE, "air_cut"),
    AIR_CUT_VERTICAL(26, RegulusRules.SEVER_RELEASE, "air_cut_vertical"),
-   PROCESSION(RegulusRules.PROCESSION_TICKS, -1, "procession"),
+   TRAMPLE(RegulusRules.TRAMPLE_TICKS, RegulusRules.TRAMPLE_IMPACT, "trample"),
    REPLY(RegulusRules.REPLY_TICKS, -1, "reply"),
    REPLY_STRIKE(RegulusRules.REPLY_STRIKE_TICKS, RegulusRules.REPLY_STRIKE_CONTACT, "reply_strike"),
    LITTLE_KING(RegulusRules.KING_CAST, RegulusRules.KING_BIND_AT, "little_king"),
@@ -53,7 +53,7 @@ public enum RegulusMove {
 
    /** Moves another cast may not interrupt (the body is committed). */
    public boolean locksCasting() {
-      return this == ULT || this == SEIZURE || this == LION_ON || this == PROCESSION;
+      return this == ULT || this == SEIZURE || this == LION_ON || this == TRAMPLE;
    }
 
    /** Touch combo step 0..2 → move. */

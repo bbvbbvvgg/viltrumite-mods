@@ -117,10 +117,6 @@ public final class LionsHeart {
          state.startMove(RegulusMove.LION_OFF);
       }
 
-      if (state.move == RegulusMove.PROCESSION) {
-         Procession.stop(player, state);
-      }
-
       RegulusSounds.play(player.level(), player.position().add(0.0, 1.2, 0.0), RegulusSounds.LION_OFF, 0.9F, 1.0F);
       RegulusNet.fx((ServerLevel) player.level(), RegulusFxS2CPacket.LION_OFF, player, -1, player.position().add(0.0, 1.0, 0.0));
    }
@@ -131,10 +127,6 @@ public final class LionsHeart {
       state.lion = false;
       state.lionTicks = 0;
       speed(player, false);
-      if (state.move == RegulusMove.PROCESSION) {
-         Procession.stop(player, state);
-      }
-
       state.startMove(RegulusMove.SEIZURE);
       state.lionLock = RegulusRules.SEIZURE_LOCK;
       state.strain = RegulusRules.SEIZURE_RESET;

@@ -11,7 +11,7 @@ public final class RegulusFlags {
    public static final int HOST_ALIVE = 1;
    public static final int SEIZED = 2;
    public static final int REPLY_WINDOW = 3;
-   public static final int PROCESSION = 4;
+   public static final int TRAMPLE = 4;
    public static final int ULT = 5;
    public static final int TARGET_HELD = 6;
    public static final int STRAIN_WARN = 7;
@@ -21,7 +21,7 @@ public final class RegulusFlags {
    public static final int COOLDOWN_LION = 0;
    public static final int COOLDOWN_SAND = 1;
    public static final int COOLDOWN_SEVER = 2;
-   public static final int COOLDOWN_PROCESSION = 3;
+   public static final int COOLDOWN_TRAMPLE = 3;
    public static final int COOLDOWN_REPLY = 4;
    public static final int COOLDOWN_ULT = 5;
 

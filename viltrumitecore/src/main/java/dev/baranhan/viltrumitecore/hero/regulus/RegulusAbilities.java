@@ -22,20 +22,21 @@ public final class RegulusAbilities {
    public static final String LIONS_HEART = "regulus:lions_heart";
    public static final String STOPPED_SAND = "regulus:stopped_sand";
    public static final String AIR_SEVERANCE = "regulus:air_severance";
-   public static final String PROCESSION = "regulus:procession";
+   public static final String TRAMPLE = "regulus:trample";
    public static final String RIGHT_OF_REPLY = "regulus:right_of_reply";
    public static final String KINGDOM_OF_ONE = "regulus:kingdom_of_one";
    /** Not slotted: the LMB combo and the heart key (lines and lang only). */
    public static final String GREEDS_TOUCH = "regulus:greeds_touch";
    public static final String LITTLE_KING = "regulus:little_king";
 
-   public static final String[] OWN = {LIONS_HEART, STOPPED_SAND, AIR_SEVERANCE, PROCESSION, RIGHT_OF_REPLY, KINGDOM_OF_ONE};
+   public static final String[] OWN = {LIONS_HEART, STOPPED_SAND, AIR_SEVERANCE, TRAMPLE, RIGHT_OF_REPLY, KINGDOM_OF_ONE};
 
    /** Retired ids of the first Regulus kit → their successors ("" = dropped). */
    static final Map<String, String> RETIRED = Map.of(
       "regulus:debris_kick", STOPPED_SAND,
       "regulus:mania", AIR_SEVERANCE,
-      "regulus:greeds_embrace", PROCESSION,
+      "regulus:greeds_embrace", TRAMPLE,
+      "regulus:procession", TRAMPLE,
       "regulus:counter", RIGHT_OF_REPLY,
       "regulus:evangelium", KINGDOM_OF_ONE,
       "regulus:punch", "");
@@ -57,7 +58,7 @@ public final class RegulusAbilities {
          case LIONS_HEART -> HeroAction.LIONS_HEART;
          case STOPPED_SAND -> HeroAction.DEBRIS_KICK;
          case AIR_SEVERANCE -> HeroAction.MANIA;
-         case PROCESSION -> HeroAction.GREEDS_EMBRACE;
+         case TRAMPLE -> HeroAction.GREEDS_EMBRACE;
          case RIGHT_OF_REPLY -> HeroAction.COUNTER;
          case KINGDOM_OF_ONE -> HeroAction.ULTIMATE;
          default -> null;
@@ -141,7 +142,7 @@ public final class RegulusAbilities {
       return list;
    }
 
-   /** Grey on cooldown, during a seizure, Lion locked, or Procession without the Lion. */
+   /** Grey on cooldown, during a seizure, or Lion locked. */
    public static boolean slotGrey(Player player, String abilityId) {
       if (!(player instanceof HeroPlayer heroPlayer)) {
          return false;
@@ -167,10 +168,6 @@ public final class RegulusAbilities {
 
       if (index == RegulusFlags.COOLDOWN_LION) {
          return RegulusFlags.has(flags, RegulusFlags.LION_LOCKED) || index < cooldowns.length && cooldowns[index] > 0 && !RegulusFlags.has(flags, RegulusFlags.LION);
-      }
-
-      if (index == RegulusFlags.COOLDOWN_PROCESSION && !RegulusFlags.has(flags, RegulusFlags.LION)) {
-         return true;
       }
 
       return index < cooldowns.length && cooldowns[index] > 0;

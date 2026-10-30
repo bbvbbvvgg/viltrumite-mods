@@ -286,7 +286,7 @@ public final class RegulusHero implements HeroDefinition {
          return;
       }
 
-      if (state.move != null && state.move.locksCasting() && !(state.move == RegulusMove.PROCESSION && action == HeroAction.GREEDS_EMBRACE)) {
+      if (state.move != null && state.move.locksCasting()) {
          if (action != HeroAction.PRIMARY_ATTACK) {
             refuse(player, state);
          }
@@ -304,7 +304,7 @@ public final class RegulusHero implements HeroDefinition {
          case LIONS_HEART -> LionsHeart.press(player, state);
          case DEBRIS_KICK -> StoppedSand.press(player, state);
          case MANIA -> AirSeverance.press(player, state);
-         case GREEDS_EMBRACE -> Procession.press(player, state);
+         case GREEDS_EMBRACE -> Trample.press(player, state);
          case COUNTER -> RightOfReply.press(player, state);
          case ULTIMATE -> KingdomOfOne.press(player, state);
          default -> {
@@ -331,7 +331,7 @@ public final class RegulusHero implements HeroDefinition {
             case TOUCH_BACKHAND, TOUCH_PALM, TOUCH_FLICK -> GreedsTouch.tickMove(player, state);
             case SAND -> StoppedSand.tickMove(player, state);
             case AIR_CUT, AIR_CUT_VERTICAL -> AirSeverance.tickMove(player, state);
-            case PROCESSION -> Procession.tickMove(player, state);
+            case TRAMPLE -> Trample.tickMove(player, state);
             case REPLY, REPLY_STRIKE -> RightOfReply.tickMove(player, state);
             case LITTLE_KING -> LittleKing.tickMove(player, state);
             case ULT -> KingdomOfOne.tickMove(player, state);
@@ -358,7 +358,6 @@ public final class RegulusHero implements HeroDefinition {
    private static void onMoveEnd(ServerPlayer player, RegulusState state, RegulusMove move) {
       switch (move) {
          case TOUCH_BACKHAND, TOUCH_PALM, TOUCH_FLICK -> GreedsTouch.onEnd(player, state, move);
-         case PROCESSION -> Procession.stop(player, state);
          case REPLY, REPLY_STRIKE -> RightOfReply.onEnd(player, state, move);
          case ULT -> KingdomOfOne.onEnd(player, state, move);
          default -> {
@@ -425,7 +424,6 @@ public final class RegulusHero implements HeroDefinition {
 
    private static void removeSpeed(ServerPlayer player) {
       LionsHeart.speed(player, false);
-      Procession.speed(player, false);
       KingdomOfOne.lock(player, false);
    }
 
@@ -525,7 +523,7 @@ public final class RegulusHero implements HeroDefinition {
       flags = RegulusFlags.with(flags, RegulusFlags.HOST_ALIVE, hostAlive);
       flags = RegulusFlags.with(flags, RegulusFlags.SEIZED, state.seized());
       flags = RegulusFlags.with(flags, RegulusFlags.REPLY_WINDOW, RightOfReply.windowOpen(state));
-      flags = RegulusFlags.with(flags, RegulusFlags.PROCESSION, state.move == RegulusMove.PROCESSION);
+      flags = RegulusFlags.with(flags, RegulusFlags.TRAMPLE, state.move == RegulusMove.TRAMPLE);
       flags = RegulusFlags.with(flags, RegulusFlags.ULT, state.ult != null);
       flags = RegulusFlags.with(flags, RegulusFlags.TARGET_HELD, state.ult != null && (state.ult.frozen || state.ult.held));
       flags = RegulusFlags.with(flags, RegulusFlags.STRAIN_WARN, state.strain >= RegulusRules.STRAIN_WARN);
