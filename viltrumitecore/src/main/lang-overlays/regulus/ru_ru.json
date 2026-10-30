@@ -18,9 +18,9 @@
   "ability.viltrumitecore.regulus_greeds_touch.desc": "<grey>Перезарядка: <lime>—\n<grey>Тип: <yellow>Комбо (ЛКМ, пустая рука)\n\n<grey>Скучающее касание в остановленном времени: тыльная сторона,\n<grey>ладонь, щелчок. До 3 целей перед вами; во Льве щелчок\n<grey>оставляет разрыв внутри тела (8 через 0,5 с).\n\n<blue>Регулус",
   "ability.viltrumitecore.regulus_little_king.name": "<gold>Маленький король",
   "ability.viltrumitecore.regulus_little_king.desc": "<grey>Перезарядка: <lime>—\n<grey>Тип: <yellow>Клавиша сердца (СКМ)\n\n<grey>Поместите своё сердце в живое существо в 6 блоках\n<grey>(до 4 подданных). Сердце живёт в одном носителе и переходит\n<grey>дальше каждые 20 с; пока он жив, у Льва нет предела времени.\n<grey>Нажмите на подданного ещё раз, чтобы отпустить; присед — всех.\n\n<blue>Регулус",
-  "subtitle.viltrumitecore.regulus.ult_accuse": "Ты всё это время посягал на мои права. Ты хоть понимаешь это?",
-  "subtitle.viltrumitecore.regulus.ult_sentence": "Я доволен тем, что имею. Поэтому не позволю тебе отнять ни песчинки.",
-  "subtitle.viltrumitecore.regulus.ult_flick": "Вот и всё. Одна личность, полная в самой себе.",
+  "subtitle.viltrumitecore.regulus.ult_accuse": "Ты посягал на мои права. Ты понимаешь?",
+  "subtitle.viltrumitecore.regulus.ult_sentence": "Мне хватает того, что есть. Не отдам ни песчинки.",
+  "subtitle.viltrumitecore.regulus.ult_flick": "Вот и всё. Я полон сам в себе.",
   "subtitle.viltrumitecore.regulus.lion": "Моё время принадлежит только мне.",
   "subtitle.viltrumitecore.regulus.seizure": "…Сердце. Не сейчас.",
   "subtitle.viltrumitecore.regulus.king": "Будь благодарна. Тебе позволено носить моё сердце.",
@@ -66,5 +66,12 @@
   "subtitles.viltrumitecore.regulus_ult_wave": "Бьют застывшие песчинки",
   "subtitles.viltrumitecore.regulus_ult_flick": "Один щелчок пальцем",
   "subtitles.viltrumitecore.regulus_ult_resolve": "Приговор исполнен",
-  "subtitles.viltrumitecore.regulus_step": "Шаги Регулуса"
+  "subtitles.viltrumitecore.regulus_step": "Шаги Регулуса",
+  "subtitle.viltrumitecore.regulus.sand": "Даже песок — моя собственность.",
+  "subtitle.viltrumitecore.regulus.sever": "Ты дышишь моим воздухом без спроса.",
+  "subtitle.viltrumitecore.regulus.trample": "Не смей стоять у меня на пути.",
+  "subtitle.viltrumitecore.regulus.kill_a": "Ты сам отказался от права жить.",
+  "subtitle.viltrumitecore.regulus.kill_b": "Какая трата моего времени.",
+  "subtitle.viltrumitecore.regulus.low_health": "Ты ранил меня?! Это нарушение моих прав!",
+  "subtitle.viltrumitecore.regulus.enter": "Регулус Корнеас, Архиепископ Греха Алчности."
 }

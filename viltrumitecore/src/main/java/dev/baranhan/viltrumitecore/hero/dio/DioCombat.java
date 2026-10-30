@@ -133,10 +133,12 @@ public final class DioCombat {
    // --- MUDA barrage -------------------------------------------------------------------
 
    public static void startBarrage(ServerPlayer player, DioState state) {
-      summon(player, state);
       state.startAction(HeroAction.MUDA_BARRAGE, DioRules.BARRAGE_WINDUP + DioRules.BARRAGE_MAX);
       state.barrageHeld = true;
       state.finisher = false;
+      // The rush line before the summon line: "MUDA!" wins the panel over "The World!".
+      DioLines.say(player, DioLines.BARRAGE_EVENT);
+      summon(player, state);
       DioSounds.play(player.serverLevel(), player.getEyePosition(), DioSounds.BARRAGE_RUSH, 1.0F, 1.0F);
    }
 
@@ -170,6 +172,7 @@ public final class DioCombat {
             state.length = DioRules.FINISHER_LENGTH;
             state.cooldowns[DioRules.CD_BARRAGE] = DioRules.BARRAGE_COOLDOWN;
             DioSounds.play(player.serverLevel(), player.getEyePosition(), DioSounds.STAND_WHOOSH, 1.0F, 0.7F);
+            DioLines.say(player, DioLines.FINISHER_EVENT);
          }
 
          return;
