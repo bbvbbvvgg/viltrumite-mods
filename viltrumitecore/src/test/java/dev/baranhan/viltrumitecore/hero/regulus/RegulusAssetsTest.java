@@ -263,4 +263,22 @@ class RegulusAssetsTest {
          assertTrue(line.chars().anyMatch(c -> c >= 0x0400 && c <= 0x04FF), key + ": " + line);
       }
    }
+
+   @Test
+   void everySoundEventIsInTheCueSheetAndRecordingsAreCredited() throws IOException {
+      String sheet = Files.readString(Path.of("../tools/assets/regulus_sources.md"));
+      String credits = Files.readString(Path.of("../CREDITS.md"));
+      String mixer = Files.readString(Path.of("../tools/sfx/regulus_samples.py"));
+      for (String name : soundNames()) {
+         assertTrue(sheet.contains("| `regulus." + name + "` |"), "cue sheet row for " + name);
+      }
+      // every recording family the mixer can pull from is credited, with its licence
+      for (String needle : new String[]{"Kenney", "Human heart rate", "Assorted gravel rock and stones", "Dull thud", "Earthquake",
+         "Explosion-LS100155", "qubodup", "bolkmar", "Kinoton"}) {
+         assertTrue(mixer.contains(needle), "mixer source " + needle);
+         assertTrue(credits.contains(needle), "CREDITS.md credits " + needle);
+         assertTrue(sheet.contains(needle), "cue sheet lists " + needle);
+      }
+      assertFalse(mixer.contains("CC BY"), "repo policy: CC0 / public domain recordings only");
+   }
 }

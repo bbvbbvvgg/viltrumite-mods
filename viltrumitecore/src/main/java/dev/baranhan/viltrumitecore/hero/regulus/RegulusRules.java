@@ -200,7 +200,7 @@ public final class RegulusRules {
       return Math.max(0, (STRAIN_MAX - strain + STRAIN_LION_TICK - 1) / STRAIN_LION_TICK);
    }
 
-   /** Sand / severance / procession damage with and without Lion's Heart (pure). */
+   /** Sand / severance damage with and without Lion's Heart (pure). */
    public static float sandDamage(boolean lion) {
       return lion ? SAND_DAMAGE_LION : SAND_DAMAGE;
    }
