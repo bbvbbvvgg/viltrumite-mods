@@ -27,7 +27,10 @@ public enum CaptainMove {
    ROLL("roll", CaptainRules.ROLL_TICKS, -1),
    PARRY("parry", 8, 0),
    ASSEMBLE_CALL("assemble_call", CaptainRules.CALL_TICKS, 8),
-   ASSEMBLE_STAND("assemble_stand", CaptainRules.FORM_DEADLINE + CaptainRules.CIRCLE_TICKS - CaptainRules.CALL_TICKS, -1),
+   /** Waiting for the team (looks up at the Quinjet, the arrivals); ends when the circle starts. */
+   ASSEMBLE_WAIT("assemble_wait", CaptainRules.FORM_DEADLINE - CaptainRules.CALL_TICKS, -1),
+   /** The circle: shield raised, the iconic 360 pose. */
+   ASSEMBLE_RAISE("assemble_raise", CaptainRules.CIRCLE_TICKS, 10),
    LANDING("landing", 12, 0),
    ROLL_SWEEP("roll_sweep", 12, 6);
 
@@ -65,18 +68,22 @@ public enum CaptainMove {
 
    /** Moves that knockback does not interrupt. */
    public boolean unstoppable() {
-      return this == RUSH || this == SLAM_LEAP || this == SLAM_IMPACT || this == ASSEMBLE_CALL || this == ASSEMBLE_STAND;
+      return this == RUSH || this == SLAM_LEAP || this == SLAM_IMPACT || this == ASSEMBLE_CALL || this == ASSEMBLE_WAIT || this == ASSEMBLE_RAISE;
+   }
+
+   public boolean ceremony() {
+      return this == ASSEMBLE_CALL || this == ASSEMBLE_WAIT || this == ASSEMBLE_RAISE;
    }
 
    /** Moves during which walking input is ignored (speed modifier). */
    public boolean roots() {
-      return this == ASSEMBLE_CALL || this == ASSEMBLE_STAND || this == SLAM_IMPACT || this == RUSH_BASH;
+      return this.ceremony() || this == SLAM_IMPACT || this == RUSH_BASH;
    }
 
    /** Moves that need the shield in the hand. */
    public boolean usesShield() {
       return switch (this) {
-         case SHIELD_1, SHIELD_2, SHIELD_3, SHIELD_4, COUNTER, THROW, AIM, RUSH_BASH, SLAM_LEAP, SLAM_IMPACT, PARRY, ASSEMBLE_STAND -> true;
+         case SHIELD_1, SHIELD_2, SHIELD_3, SHIELD_4, COUNTER, THROW, AIM, RUSH_BASH, SLAM_LEAP, SLAM_IMPACT, PARRY, ASSEMBLE_RAISE -> true;
          default -> false;
       };
    }
