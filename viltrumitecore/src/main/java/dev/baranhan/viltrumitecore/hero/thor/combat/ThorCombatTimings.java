@@ -20,10 +20,11 @@ public final class ThorCombatTimings {
    /**
     * Ticks a melee chain stays open after its step ends (the window to continue it). Scaled with the
     * rework's step lengths (spec §4 "окна комбо пропорционально"): 6 ticks after a 16-tick hammer step
-    * and an 11-tick fist step became 10 after ~26 and 11 after ~20.
+    * and an 11-tick fist step became 10 after ~26 and 11 after ~20; audit v3's quick steps (~19 / ~13 ticks)
+    * bring them back to 7 and 7.
     */
-   public static final int HAMMER_COMBO_GRACE = 10;
-   public static final int FIST_COMBO_GRACE = 11;
+   public static final int HAMMER_COMBO_GRACE = 7;
+   public static final int FIST_COMBO_GRACE = 7;
    /** Ticks of the storm's main phase (its maximum growth time). */
    public static final int STORM_MAX_TICKS = 100;
 

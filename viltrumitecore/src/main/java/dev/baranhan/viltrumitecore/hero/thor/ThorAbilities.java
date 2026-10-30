@@ -12,9 +12,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Thor's four panel slots, in key order: R (electric mode toggle), Y (pull to
- * the thrown Mjölnir), the ultimate (slot 3, default Z, key not approved) and
- * V (teleport point, slot 4). The mouse buttons are not slots. A slot is lit
+ * Thor's panel slots, in key order: R (electric mode toggle), Y (pull to
+ * the thrown Mjölnir), the ultimate (slot 3, default Z), V (teleport point,
+ * slot 4) and B (Crush, the hammer blow, slot 5; v3 spec §1.1). The mouse buttons are not slots. A slot is lit
  * only while its input can start an authored move (none in the foundation:
  * all are greyed and refuse with an "in development" message). The ids are
  * internal, not approved ability names.
@@ -28,7 +28,9 @@ public final class ThorAbilities {
    public static final String WRATH = "thor:wrath";
    /** Slot 4 (V): choose the teleport point. */
    public static final String TELEPORT = "thor:teleport";
-   private static final String[] OWN = {THUNDER, ONSLAUGHT, WRATH, TELEPORT};
+   /** Slot 5 (B, v3 spec §1.1): the Mjölnir blow (HAMMER_STRIKE), formerly MMB next to an enemy. */
+   public static final String CRUSH = "thor:crush";
+   private static final String[] OWN = {THUNDER, ONSLAUGHT, WRATH, TELEPORT, CRUSH};
 
    private ThorAbilities() {
    }
@@ -59,7 +61,10 @@ public final class ThorAbilities {
       } else if (WRATH.equals(abilityId)) {
          return HeroAction.ULTIMATE;
       } else {
-         return TELEPORT.equals(abilityId) ? HeroAction.CONTEXT_TELEPORT : null;
+         if (TELEPORT.equals(abilityId)) {
+            return HeroAction.CONTEXT_TELEPORT;
+         }
+         return CRUSH.equals(abilityId) ? HeroAction.SIGNATURE : null;
       }
    }
 
@@ -94,5 +99,13 @@ public final class ThorAbilities {
       Arrays.fill(loadout, "");
       System.arraycopy(OWN, 0, loadout, 0, OWN.length);
       return loadout;
+   }
+
+   /** Former defaults (v2: R, Y, Z, V; no Crush). */
+   public static String[][] previousDefaultLoadouts() {
+      String[] v2 = new String[18];
+      Arrays.fill(v2, "");
+      System.arraycopy(new String[]{THUNDER, ONSLAUGHT, WRATH, TELEPORT}, 0, v2, 0, 4);
+      return new String[][]{v2};
    }
 }

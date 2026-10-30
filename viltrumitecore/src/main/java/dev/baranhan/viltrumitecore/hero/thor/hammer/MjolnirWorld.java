@@ -611,6 +611,7 @@ public final class MjolnirWorld {
       thor.swing(InteractionHand.MAIN_HAND, true);
       ThorSounds.playAt(level, thor.getEyePosition(), charged ? ThorCue.THROW_CHARGED : ThorCue.THROW);
       post(ThorEventType.THROW, record, ThorMove.HAMMER_THROW, false);
+      dev.baranhan.viltrumitecore.hero.thor.ThorLines.thrown(thor);
       return true;
    }
 

@@ -148,8 +148,8 @@ class ThorActionsTest {
       assertSame(ThorMove.HAMMER_THROW, pressed);
       assertSame(ThorActions.Refusal.NONE, ThorActions.start(state, ThorInput.HAMMER, pressed, true));
       advance(state, 7, true);
-      // The context changes while held (an enemy walks in): the release still goes to the throw.
-      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.HAMMER, new ThorContext(state.hammer(), state.mode(), true, false, false, false, true, false)));
+      // The context changes while held (an enemy walks in, B would now swing): the release still goes to the throw.
+      assertSame(ThorMove.HAMMER_STRIKE, ThorControls.resolve(ThorInput.CRUSH, new ThorContext(state.hammer(), state.mode(), true, false, false, false, true, false)));
       assertEquals(new ThorActions.Release(ThorMove.HAMMER_THROW, 7), ThorActions.release(state, ThorInput.HAMMER));
       assertNull(ThorActions.release(state, ThorInput.HAMMER), "one release per press");
       assertNull(ThorActions.release(state, ThorInput.STRIKE), "other inputs are independent");

@@ -135,43 +135,43 @@ public final class ThorAttacks {
       //  move / pose / clip                         windup                 contact               recovery
       move(ThorMove.DRAW, 0, "draw", ThorRules.DRAW_INTRO, ThorRules.DRAW_MAIN, ThorRules.DRAW_FINISH, CUE_DRAW, VFX_NONE),
       move(ThorMove.HOLSTER, 0, "holster", ThorRules.HOLSTER_INTRO, ThorRules.HOLSTER_MAIN, ThorRules.HOLSTER_FINISH, CUE_HOLSTER, VFX_NONE),
-      // --- Mjölnir in the hand (HAMMER_COMBO): 24–30 ticks a strike ------------------------------------------------------------
+      // --- Mjölnir in the hand (HAMMER_COMBO), audit v3: contact on tick 5–6, the next strike from tick 8–10 ------------------------------------------------------------
       //  strike / clip                               wind con rec   trail: yaw, pitch from → to          cue               vfx
-      strike(SWING_RIGHT, "hammer_swing_right", 10, 3, 13, trail(60, -5, -60, -10), CUE_HAMMER, VFX_HAMMER),
-      strike(SWING_BACKHAND, "hammer_swing_backhand", 10, 3, 13, trail(-55, 45, 55, -30), CUE_HAMMER, VFX_HAMMER),
-      strike(OVERHEAD, "hammer_overhead", 11, 3, 14, trail(0, 80, 0, -45), CUE_HAMMER_HEAVY, VFX_HAMMER),
-      strike(SPIN, "hammer_spin", 12, 3, 15, trail(90, 0, -270, -5), CUE_HAMMER_SPIN, VFX_HAMMER_HEAVY),
-      strike(UPPERCUT, "hammer_uppercut", 11, 3, 14, trail(10, -50, -5, 70), CUE_HAMMER_HEAVY, VFX_HAMMER),
-      strike(RISING, "hammer_rising", 10, 3, 13, trail(35, -40, -30, 50), CUE_HAMMER, VFX_HAMMER),
-      strike(GROUND_SLAM, "hammer_ground_slam", 12, 3, 15, trail(0, 85, 0, -70), CUE_HAMMER_SLAM, VFX_GROUND),
-      strike(HEAVY_DOWN, "hammer_heavy_down", 11, 3, 14, trail(45, 60, -40, -40), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
-      strike(HEAVY_REVERSE, "hammer_heavy_reverse", 11, 3, 14, trail(-45, 55, 45, -40), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
-      strike(HEAVY_SPIN, "hammer_heavy_spin", 12, 3, 15, trail(100, 0, -260, -10), CUE_HAMMER_SPIN, VFX_HAMMER_HEAVY),
-      strike(POMMEL, "hammer_pommel", 9, 3, 12, trail(0, -10, 0, 5), CUE_HAMMER, VFX_HAMMER),
-      strike(DOUBLE_SWING, "hammer_double_swing", 12, 3, 15, trail(70, 5, -70, -5), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
-      strike(THRUST, "hammer_thrust", 11, 3, 14, trail(0, 0, 0, -5), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
-      strike(LUNGE, "hammer_lunge", 9, 3, 12, trail(40, 30, -40, -20), CUE_HAMMER, VFX_HAMMER),
-      strike(LUNGE_FINISH, "hammer_lunge_finish", 12, 3, 15, trail(0, 75, 0, -50), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
-      strike(FALLING_SLAM, "hammer_falling_slam", 9, 3, 14, trail(0, 85, 0, -80), CUE_HAMMER_SLAM, VFX_GROUND),
-      strike(LOW_SWEEP, "hammer_low_sweep", 9, 3, 12, trail(75, -35, -75, -40), CUE_HAMMER, VFX_HAMMER),
-      strike(SWEEP_LAUNCH, "hammer_sweep_launch", 11, 3, 14, trail(0, -60, 0, 70), CUE_HAMMER_HEAVY, VFX_HAMMER),
-      // --- bare fists (FIST_COMBO): 18–22 ticks a strike ----------------------------------------------------------------------
-      strike(JAB, "fist_jab", 7, 2, 9, trail(-10, 0, 0, 0), CUE_FIST, VFX_FIST),
-      strike(CROSS, "fist_cross", 7, 2, 9, trail(10, 0, 0, -2), CUE_FIST, VFX_FIST),
-      strike(HOOK, "fist_hook", 8, 2, 10, trail(-50, 0, 30, 0), CUE_FIST, VFX_FIST),
-      strike(FIST_UPPERCUT, "fist_uppercut", 9, 2, 11, trail(5, -40, 0, 40), CUE_FIST_HEAVY, VFX_FIST_HEAVY),
-      strike(HAYMAKER, "fist_haymaker", 9, 2, 11, trail(55, 10, -45, -5), CUE_FIST_HEAVY, VFX_FIST_HEAVY),
-      strike(HAMMER_FIST, "fist_hammer_fist", 7, 2, 9, trail(5, 60, 0, -35), CUE_FIST, VFX_FIST),
-      strike(HAMMER_FIST_LEFT, "fist_hammer_fist_left", 7, 2, 9, trail(-5, 60, 0, -35), CUE_FIST, VFX_FIST),
-      strike(GROUND_POUND, "fist_ground_pound", 9, 2, 11, trail(0, 80, 0, -80), CUE_FIST_SLAM, VFX_GROUND),
-      strike(BODY_BLOW, "fist_body_blow", 7, 2, 9, trail(10, -20, 0, -15), CUE_FIST, VFX_FIST),
-      strike(ELBOW, "fist_elbow", 7, 2, 9, trail(-40, 0, 20, 0), CUE_FIST, VFX_FIST),
-      strike(PUSH_KICK, "fist_push_kick", 8, 2, 10, trail(0, -40, 0, -20), CUE_FIST_HEAVY, VFX_FIST_HEAVY),
-      strike(TACKLE, "fist_tackle", 8, 2, 10, Trail.NONE, CUE_FIST_HEAVY, VFX_FIST_HEAVY),
-      strike(TACKLE_HOOK, "fist_tackle_hook", 9, 2, 11, trail(50, 0, -40, 0), CUE_FIST_HEAVY, VFX_FIST_HEAVY),
-      // --- MMB melee branch (HAMMER_STRIKE): ~30 ticks ------------------------------------------------------------------------
-      strike(MMB_BLOW, "hammer_strike_blow", 12, 3, 15, trail(55, 30, -50, -25), CUE_STRIKE, VFX_HAMMER_HEAVY),
-      strike(MMB_FINISHER, "hammer_strike_finisher", 12, 3, 15, trail(0, 85, 0, -60), CUE_STRIKE, VFX_GROUND),
+      strike(SWING_RIGHT, "hammer_swing_right", 5, 4, 9, trail(60, -5, -60, -10), CUE_HAMMER, VFX_HAMMER),
+      strike(SWING_BACKHAND, "hammer_swing_backhand", 5, 4, 9, trail(-55, 45, 55, -30), CUE_HAMMER, VFX_HAMMER),
+      strike(OVERHEAD, "hammer_overhead", 6, 4, 10, trail(0, 80, 0, -45), CUE_HAMMER_HEAVY, VFX_HAMMER),
+      strike(SPIN, "hammer_spin", 6, 4, 10, trail(90, 0, -270, -5), CUE_HAMMER_SPIN, VFX_HAMMER_HEAVY),
+      strike(UPPERCUT, "hammer_uppercut", 6, 4, 10, trail(10, -50, -5, 70), CUE_HAMMER_HEAVY, VFX_HAMMER),
+      strike(RISING, "hammer_rising", 5, 4, 9, trail(35, -40, -30, 50), CUE_HAMMER, VFX_HAMMER),
+      strike(GROUND_SLAM, "hammer_ground_slam", 6, 4, 11, trail(0, 85, 0, -70), CUE_HAMMER_SLAM, VFX_GROUND),
+      strike(HEAVY_DOWN, "hammer_heavy_down", 6, 4, 10, trail(45, 60, -40, -40), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
+      strike(HEAVY_REVERSE, "hammer_heavy_reverse", 6, 4, 10, trail(-45, 55, 45, -40), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
+      strike(HEAVY_SPIN, "hammer_heavy_spin", 6, 4, 10, trail(100, 0, -260, -10), CUE_HAMMER_SPIN, VFX_HAMMER_HEAVY),
+      strike(POMMEL, "hammer_pommel", 5, 3, 8, trail(0, -10, 0, 5), CUE_HAMMER, VFX_HAMMER),
+      strike(DOUBLE_SWING, "hammer_double_swing", 6, 4, 10, trail(70, 5, -70, -5), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
+      strike(THRUST, "hammer_thrust", 6, 4, 9, trail(0, 0, 0, -5), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
+      strike(LUNGE, "hammer_lunge", 5, 4, 8, trail(40, 30, -40, -20), CUE_HAMMER, VFX_HAMMER),
+      strike(LUNGE_FINISH, "hammer_lunge_finish", 6, 4, 11, trail(0, 75, 0, -50), CUE_HAMMER_HEAVY, VFX_HAMMER_HEAVY),
+      strike(FALLING_SLAM, "hammer_falling_slam", 5, 4, 10, trail(0, 85, 0, -80), CUE_HAMMER_SLAM, VFX_GROUND),
+      strike(LOW_SWEEP, "hammer_low_sweep", 5, 4, 8, trail(75, -35, -75, -40), CUE_HAMMER, VFX_HAMMER),
+      strike(SWEEP_LAUNCH, "hammer_sweep_launch", 6, 4, 10, trail(0, -60, 0, 70), CUE_HAMMER_HEAVY, VFX_HAMMER),
+      // --- bare fists (FIST_COMBO), audit v3: contact on tick 3–4, the next strike from tick 6–7 ----------------------------------------------------------------------
+      strike(JAB, "fist_jab", 3, 3, 6, trail(-10, 0, 0, 0), CUE_FIST, VFX_FIST),
+      strike(CROSS, "fist_cross", 3, 3, 6, trail(10, 0, 0, -2), CUE_FIST, VFX_FIST),
+      strike(HOOK, "fist_hook", 4, 3, 6, trail(-50, 0, 30, 0), CUE_FIST, VFX_FIST),
+      strike(FIST_UPPERCUT, "fist_uppercut", 4, 3, 7, trail(5, -40, 0, 40), CUE_FIST_HEAVY, VFX_FIST_HEAVY),
+      strike(HAYMAKER, "fist_haymaker", 4, 3, 7, trail(55, 10, -45, -5), CUE_FIST_HEAVY, VFX_FIST_HEAVY),
+      strike(HAMMER_FIST, "fist_hammer_fist", 3, 3, 6, trail(5, 60, 0, -35), CUE_FIST, VFX_FIST),
+      strike(HAMMER_FIST_LEFT, "fist_hammer_fist_left", 3, 3, 6, trail(-5, 60, 0, -35), CUE_FIST, VFX_FIST),
+      strike(GROUND_POUND, "fist_ground_pound", 4, 3, 7, trail(0, 80, 0, -80), CUE_FIST_SLAM, VFX_GROUND),
+      strike(BODY_BLOW, "fist_body_blow", 3, 3, 6, trail(10, -20, 0, -15), CUE_FIST, VFX_FIST),
+      strike(ELBOW, "fist_elbow", 3, 3, 6, trail(-40, 0, 20, 0), CUE_FIST, VFX_FIST),
+      strike(PUSH_KICK, "fist_push_kick", 4, 3, 6, trail(0, -40, 0, -20), CUE_FIST_HEAVY, VFX_FIST_HEAVY),
+      strike(TACKLE, "fist_tackle", 4, 3, 6, Trail.NONE, CUE_FIST_HEAVY, VFX_FIST_HEAVY),
+      strike(TACKLE_HOOK, "fist_tackle_hook", 4, 3, 7, trail(50, 0, -40, 0), CUE_FIST_HEAVY, VFX_FIST_HEAVY),
+      // --- B, Crush (HAMMER_STRIKE): the one heavy blow, contact on tick 7–8 ------------------------------------------------------------------------
+      strike(MMB_BLOW, "hammer_strike_blow", 7, 4, 11, trail(55, 30, -50, -25), CUE_STRIKE, VFX_HAMMER_HEAVY),
+      strike(MMB_FINISHER, "hammer_strike_finisher", 8, 4, 12, trail(0, 85, 0, -60), CUE_STRIKE, VFX_GROUND),
       // --- electric mode (timings unchanged by the rework) --------------------------------------------------------------------
       move(ThorMove.ELECTRIC_MODE, 0, "electric_mode", 0, 4, 0, CUE_ELECTRIC_MODE, VFX_ELECTRIC_MODE),
       move(ThorMove.ELECTRIC_COMBO, 1, "electric_discharge_right", 3, 2, 7, CUE_DISCHARGE, VFX_DISCHARGE),
@@ -180,8 +180,9 @@ public final class ThorAttacks {
       move(ThorMove.ELECTRIC_WAVE, 0, "electric_wave", 7, 3, 8, CUE_WAVE, VFX_WAVE),
       // The storm's contact is its growth (ends on release, at most this long): the clip covers the longest storm.
       move(ThorMove.ELECTRIC_STORM, 0, "electric_storm", 0, ThorCombatTimings.STORM_MAX_TICKS, 12, CUE_STORM, VFX_STORM),
-      // --- ultimate: 6.4 s; Mjölnir raised to the sky, the storm builds, the strike at 3.6 s, a long tail -----------------
-      move(ThorMove.WRATH, 0, "wrath", 72, 10, 46, CUE_WRATH, VFX_WRATH));
+      // --- ultimate, audit v3: 4 s; a 2 s build-up that already fights (called bolts, the shroud), the strike at 2 s, three
+      // aftershocks in the contact, the tail (was 72 / 10 / 46: a 3.6 s naked wind-up and one hit) ----------------------------
+      move(ThorMove.WRATH, 0, "wrath", 40, 12, 28, CUE_WRATH, VFX_WRATH));
 
    /** The row each move's timeline starts with (combo moves are then retimed to their strike). */
    private static final Map<ThorMove, Attack> ENVELOPES = new EnumMap<>(ThorMove.class);

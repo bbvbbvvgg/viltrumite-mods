@@ -20,8 +20,9 @@ import net.minecraft.client.player.AbstractClientPlayer;
  * discharge drive the right arm from the strike pose's hand (a left-hand
  * strike pulls the right arm back to guard); the wave pushes out, the storm
  * holds the arm raised with a tremble, the ultimate charges overhead and
- * drives down at the strike. All keys PLACEHOLDER (storyboards OPEN), tuned
- * like the other heroes' first-person rows; in-game check pending.
+ * drives down at the strike. Audit v3: these procedural rows are only the
+ * fallback for a move without a baked "_fp" clip; with a clip
+ * (ThorClipPlayer.playsFpClip) both arms incl. the shoulders follow the clip.
  */
 public final class ThorFirstPerson {
    /** Right-hand strike: short wind back, thrust, recover (ticks since the strike pose appeared). */
@@ -121,6 +122,12 @@ public final class ThorFirstPerson {
 
       ThorMove move = ThorView.move(snapshot);
       float elapsed = snapshot.actionElapsed() + partialTick;
+      if (ThorClipPlayer.playsFpClip(snapshot)) {
+         // Audit v3: the authored _fp clip moves the whole camera arm (ThorClipPlayer.applyArms); no second motion.
+         ARM.apply(stack, 1.0F);
+         return;
+      }
+
       if (move == ThorMove.ELECTRIC_WAVE) {
          ARM.blend(WAVE, elapsed, 1.0F);
       } else if (move == ThorMove.ELECTRIC_STORM) {

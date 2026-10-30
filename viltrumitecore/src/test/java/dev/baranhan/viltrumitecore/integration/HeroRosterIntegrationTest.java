@@ -164,7 +164,7 @@ class HeroRosterIntegrationTest {
       assertTrue(packets.indexOf("HeroLineS2CPacket") < packets.indexOf("DioTimeS2CPacket"), "hero packets append after the subtitle packet");
       assertTrue(packets.indexOf("ThorDashS2CPacket") < packets.indexOf("HeroLineS2CPacket"), "Thor / Hulkbuster packets keep their #74 slots");
       // 12 = #74 alone, 13 = #82 alone; the merged table must refuse both.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"14\""), "the merged packet table needs its own protocol version");
+      assertTrue(source.contains("PROTOCOL_VERSION = \"15\""), "the merged packet table needs its own protocol version");
    }
 
    @Test

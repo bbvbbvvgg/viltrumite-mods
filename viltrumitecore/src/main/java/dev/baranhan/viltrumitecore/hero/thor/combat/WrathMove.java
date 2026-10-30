@@ -23,12 +23,21 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * WRATH (internal id; name not approved): the ultimate on its own key
+ * Audit v3 (item 8), the staging: the ultimate is a short, protected build-up that already fights and a
+ * climax in three beats instead of a long, naked wind-up and one hit. Build-up ({@code 2 s}): Mjölnir to
+ * the sky, the storm gathers (ThorStormVfx), every {@link #CALL_EVERY} ticks a called bolt strikes an enemy
+ * around the aim (light damage, pinned by a short slow) and the storm shrouds Thor (incoming damage
+ * {@link #SHROUD_FACTOR}). Climax: the column onto the crosshair (the old strike, full damage), then
+ * {@link #AFTERSHOCKS} aftershock bolts onto the toughest survivors of the blast; the caster's camera
+ * narrows into the build-up and kicks out on the strike (client WrathCamera). The lines are ThorLines.
+ *
+ * <p>Before the audit: WRATH (internal id; name not approved): the ultimate on its own key
  * (Z is a temporary foundation default), aimed with the ordinary crosshair
  * (#136), concentrating the power in one point (#102), unlike the storm
  * around Thor. Key, duration, scale, damage, cooldown, use without Mjölnir
- * and in flight / grabs are OPEN: every value is PLACEHOLDER and the hammer
- * rule is a config switch, off by default (not decided).
+ * and in flight / grabs were OPEN. v3 settles the timing (40/12/28) and the
+ * staging above; damage, radius and cooldown stay config numbers (ThorCombatConfig,
+ * not author-approved) and the hammer rule is a config switch, off by default.
  */
 public final class WrathMove {
    public static final String RECHARGING = "hud.viltrumitecore.thor.recharging";
@@ -67,6 +76,7 @@ public final class WrathMove {
          if (player != null) {
             ServerLevel level = player.serverLevel();
             ThorSounds.play(player, ThorCue.WRATH_WINDUP);
+            dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, dev.baranhan.viltrumitecore.hero.thor.ThorAbilities.WRATH);
          }
       }
 
@@ -96,6 +106,19 @@ public final class WrathMove {
       }
    };
 
+   /** Build-up: a called bolt every this many ticks (not in the last {@link #CALL_QUIET} before the strike). */
+   public static final int CALL_EVERY = 8;
+   public static final int CALL_QUIET = 4;
+   public static final float CALL_DAMAGE = 3.0F;
+   /** Called bolts look this far round the aim (times the blast radius). */
+   public static final double CALL_REACH = 1.6;
+   public static final int CALL_PIN = 15;
+   /** Ticks after the contact the aftershock bolts fall, and their share of the full damage. */
+   public static final int[] AFTERSHOCKS = {3, 6, 9};
+   public static final float AFTERSHOCK_SHARE = 0.25F;
+   /** Incoming damage while the storm shrouds Thor (build-up and contact). */
+   public static final float SHROUD_FACTOR = 0.5F;
+
    /** Radius the thor:wrath_strike recipe is drawn for at scale 1 (scaled to the configured blast). */
    static final double WRATH_FX_RADIUS = 7.0;
    /** Contact hit-stop of the strike, ticks. */
@@ -111,6 +134,83 @@ public final class WrathMove {
     * server sends nothing here.
     */
    static void tick(ServerPlayer player, ThorState state, ThorCombatState combat) {
+      if (!state.timeline.is(ThorMove.WRATH)) {
+         return;
+      }
+
+      ThorAttacks.Phases phases = ThorAttacks.envelope(ThorMove.WRATH).phases();
+      int elapsed = state.timeline.elapsed();
+      if (state.timeline.phase() == MovePhase.INTRO && calls(elapsed, phases.windup())) {
+         call(player, combat);
+      } else if (state.timeline.phase() == MovePhase.MAIN && combat.wrathAim != null) {
+         int since = elapsed - phases.windup();
+         for (int i = 0; i < AFTERSHOCKS.length; i++) {
+            if (since == AFTERSHOCKS[i]) {
+               aftershock(player, combat, i);
+            }
+         }
+      }
+   }
+
+   /** Pure: does a called bolt fall on this build-up tick. */
+   public static boolean calls(int elapsed, int windup) {
+      return elapsed > 0 && elapsed % CALL_EVERY == 0 && elapsed < windup - CALL_QUIET;
+   }
+
+   /** Pure: the share of a hit that reaches a shrouded Thor ({@code 1} outside the build-up and the contact). */
+   public static float shroud(@javax.annotation.Nullable ThorMove running, @javax.annotation.Nullable MovePhase phase) {
+      return running == ThorMove.WRATH && (phase == MovePhase.INTRO || phase == MovePhase.MAIN) ? SHROUD_FACTOR : 1.0F;
+   }
+
+   /** A called bolt: an enemy round the aim (the nearest to it not struck by the last call), else the ground there. */
+   private static void call(ServerPlayer player, ThorCombatState combat) {
+      ThorCombatConfig config = ThorCombatConfig.get();
+      ServerLevel level = player.serverLevel();
+      Vec3 aim = ElectricFx.ground(level, ElectricFx.aim(player, config.wrathRange), 16);
+      LivingEntity pick = null;
+      for (LivingEntity target : CombatHits.around(player, aim, config.wrathRadius * CALL_REACH, 6.0)) {
+         if (visibleFrom(level, target.position().add(0.0, 8.0, 0.0), target)
+            && (pick == null || target.distanceToSqr(aim) < pick.distanceToSqr(aim)) && target.getId() != combat.wrathLastCall) {
+            pick = target;
+         }
+      }
+
+      RandomSource random = player.getRandom();
+      Vec3 at = pick != null ? pick.position()
+         : ElectricFx.ground(level, aim.add((random.nextDouble() - 0.5) * config.wrathRadius, 4.0, (random.nextDouble() - 0.5) * config.wrathRadius), 12);
+      combat.wrathLastCall = pick == null ? -1 : pick.getId();
+      bolt(level, at, 1.0F);
+      if (pick != null && CombatHits.hitArea(player, pick, CALL_DAMAGE, ThorMove.WRATH, combat.nextAttackId())) {
+         pick.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, CALL_PIN, 2, false, false,
+            true));
+      }
+   }
+
+   /** An aftershock: the toughest one still standing in the blast. */
+   private static void aftershock(ServerPlayer player, ThorCombatState combat, int index) {
+      ThorCombatConfig config = ThorCombatConfig.get();
+      ServerLevel level = player.serverLevel();
+      Vec3 aim = combat.wrathAim;
+      LivingEntity pick = null;
+      for (LivingEntity target : CombatHits.around(player, aim, config.wrathRadius * 1.2, 6.0)) {
+         if (target.isAlive() && visibleFrom(level, aim.add(0.0, 1.0, 0.0), target) && (pick == null || target.getHealth() > pick.getHealth())) {
+            pick = target;
+         }
+      }
+
+      RandomSource random = player.getRandom();
+      double angle = (index + random.nextDouble() * 0.5) * Math.PI * 2.0 / AFTERSHOCKS.length;
+      Vec3 at = pick != null ? pick.position()
+         : ElectricFx.ground(level, aim.add(Math.cos(angle) * config.wrathRadius * 0.6, 4.0, Math.sin(angle) * config.wrathRadius * 0.6), 12);
+      bolt(level, at, ThorFx.HEAVY_BOLT_POWER);
+      if (pick != null && CombatHits.hitArea(player, pick, config.wrathDamage * AFTERSHOCK_SHARE, ThorMove.WRATH, combat.nextAttackId())) {
+         CombatHits.push(pick, aim, 0.8, 0.4);
+      }
+   }
+
+   private static void bolt(ServerLevel level, Vec3 at, float power) {
+      HeroFx.electricBolt(level, at, ElectricFx.BOLT_HEIGHT, power, ThorSounds.boltCrack());
+      ThorSounds.bolt(level, at, power);
    }
 
    /** The concentrated strike where the crosshair points. */

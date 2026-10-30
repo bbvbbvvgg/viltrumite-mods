@@ -11,6 +11,10 @@ public final class ThorFeedback {
    public static final String CONTROLS = "hud.viltrumitecore.thor.controls";
    /** "Mjölnir is not with you" (the same key session A uses for its own refusals). */
    public static final String NO_HAMMER = "hud.viltrumitecore.thor.no_hammer";
+   /** Audit v3: MMB would take Mjölnir from the belt, but the inventory has no room for the item in the hand. */
+   public static final String DRAW_NO_SLOT = "hud.viltrumitecore.thor.draw.no_slot";
+   /** Audit v3: B (Crush) with Mjölnir on the belt behind an item: take it first with MMB. */
+   public static final String CRUSH_TAKE_FIRST = "hud.viltrumitecore.thor.crush.take_first";
 
    private ThorFeedback() {
    }

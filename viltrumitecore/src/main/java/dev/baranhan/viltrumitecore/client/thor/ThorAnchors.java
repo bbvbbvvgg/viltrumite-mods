@@ -51,7 +51,9 @@ public final class ThorAnchors {
       Minecraft minecraft = Minecraft.getInstance();
       // The local first-person arm is drawn with the hand projection: bring the point to the world projection.
       boolean firstPerson = player == minecraft.player && minecraft.options.getCameraType().isFirstPerson();
-      ANCHORS.put(player, new Anchor(world(stack, HEAD, firstPerson), world(stack, GRIP, firstPerson), player.level().getGameTime(), true));
+      Anchor anchor = new Anchor(world(stack, HEAD, firstPerson), world(stack, GRIP, firstPerson), player.level().getGameTime(), true);
+      ANCHORS.put(player, anchor);
+      MjolnirTrails.record(player, anchor.head(), anchor.grip());
    }
 
    private static Vec3 world(PoseStack stack, Vector3f local, boolean firstPerson) {

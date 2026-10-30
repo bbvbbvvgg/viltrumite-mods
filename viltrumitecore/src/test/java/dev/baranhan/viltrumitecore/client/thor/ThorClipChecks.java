@@ -40,7 +40,9 @@ final class ThorClipChecks {
    }
 
    /** Draw / holster: the server switches the hammer place on the contact tick (ThorAttacks ENTER_MAIN, tick 14). */
-   static final int DRAW_SWITCH_TICK = 14;
+   /** ThorActions: the hammer leaves the belt on the draw's contact tick, reaches it on the holster's. */
+   static final int DRAW_SWITCH_TICK = dev.baranhan.viltrumitecore.hero.thor.ThorRules.DRAW_INTRO;
+   static final int HOLSTER_SWITCH_TICK = dev.baranhan.viltrumitecore.hero.thor.ThorRules.HOLSTER_INTRO;
 
    /**
     * Mjölnir's place at a tick of a clip, as the clip generator bakes it: draw = belt 0–13, hand 14+;
@@ -54,12 +56,12 @@ final class ThorClipChecks {
          case "draw":
             return tick >= DRAW_SWITCH_TICK ? Place.HAND : Place.BELT;
          case "holster":
-            return tick < DRAW_SWITCH_TICK ? Place.HAND : Place.BELT;
+            return tick < HOLSTER_SWITCH_TICK ? Place.HAND : Place.BELT;
          case "pull", "throw_release", "lift_squat":
             return Place.AWAY;
          case "catch", "wrath", "lift_thor", "throw_hold", "throw_windup":
             return Place.HAND;
-         case "idle", "walk", "run", "stance", "crouch", "sit":
+         case "idle", "walk", "run", "stance", "crouch", "sit", "guard_fist":
             return Place.BELT;
          default:
             break;

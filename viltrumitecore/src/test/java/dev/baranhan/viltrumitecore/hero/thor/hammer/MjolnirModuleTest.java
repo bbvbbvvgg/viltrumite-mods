@@ -52,7 +52,10 @@ class MjolnirModuleTest {
       assertSame(ThorMove.RECALL, ThorControls.resolve(ThorInput.HAMMER, lying));
       assertTrue(ThorControls.claimedMouse(MouseButton.MIDDLE, lying) != null);
       ThorContext enemy = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, true, false, false, false, true, false);
-      assertEquals(null, ThorControls.claimedMouse(MouseButton.MIDDLE, enemy), "melee (B) stays vanilla until B registers it");
+      assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, enemy), "v3: an enemy nearby does not change MMB");
+      assertTrue(ThorControls.claimedMouse(MouseButton.MIDDLE, enemy) != null);
+      assertEquals(null, ThorControls.resolve(ThorInput.CRUSH, new ThorContext(HammerState.HOLSTERED, ThorMode.NORMAL, true, false, false, false, true,
+         false)), "B needs Mjölnir in the hand");
    }
 
    @Test

@@ -107,6 +107,21 @@ public final class ThorSounds {
       }
    }
 
+   /** The swing sound timed to the strike's contact (ThorCue.windupDelay); {@code later} runs a delayed play. */
+   public static void strikeWindup(ServerPlayer player, @Nullable ThorStrike strike, java.util.function.BiConsumer<Integer, Runnable> later) {
+      if (strike == null) {
+         return;
+      }
+
+      ThorCue cue = ThorCue.windup(strike);
+      int delay = ThorCue.windupDelay(cue, dev.baranhan.viltrumitecore.hero.thor.combat.ThorAttacks.of(strike).phases().windup());
+      if (delay <= 0) {
+         play(player, cue);
+      } else {
+         later.accept(delay, () -> play(player, cue));
+      }
+   }
+
    /** Contact: the body layers when something was struck, the ground layers at the shock centre. */
    public static void strikeContact(ServerPlayer player, ThorStrike strike, boolean landed, @Nullable Vec3 shockCenter) {
       if (landed) {

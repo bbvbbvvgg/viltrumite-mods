@@ -15,6 +15,7 @@ import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ReleaseCause;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorBridge;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorLifecycle;
+import dev.baranhan.viltrumitecore.hero.thor.combat.ThorGuard;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirPull;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.MjolnirWorld;
 import dev.baranhan.viltrumitecore.hero.thor.hammer.ThorTransform;
@@ -163,8 +164,19 @@ public final class ThorHero implements HeroDefinition {
    }
 
    @Override
+   public dev.baranhan.viltrumitecore.hero.speech.HeroLines lines() {
+      return ThorLines.LINES;
+   }
+
+   @Override
    public String[] defaultLoadout() {
       return ThorAbilities.defaultLoadout();
+   }
+
+   /** v3 spec §1.1: the four-slot layout before Crush (B) joined; an untouched save gets the new default. */
+   @Override
+   public String[][] previousDefaultLoadouts() {
+      return ThorAbilities.previousDefaultLoadouts();
    }
 
    @Override
@@ -283,7 +295,13 @@ public final class ThorHero implements HeroDefinition {
 
    @Override
    public boolean canAct(ServerPlayer player, HeroAction action) {
-      return player.isAlive() && !HeroDamage.isAnchored(player) && ThorInput.of(action) != null;
+      return player.isAlive() && !HeroDamage.isAnchored(player) && (ThorInput.of(action) != null || action == HeroAction.GUARD);
+   }
+
+   /** Audit v3: F is Thor's guard (ThorGuard); the server decides when it may be up. */
+   @Override
+   public HeroAction guardAction(Player player) {
+      return HeroAction.GUARD;
    }
 
    @Override
@@ -296,6 +314,11 @@ public final class ThorHero implements HeroDefinition {
       ThorState state = ThorState.ensure(player);
       MjolnirWorld.project(player, state);
       ThorActions.tick(player, state);
+      ThorGuard.tick(player, state);
+      if (player.tickCount % 20 == 0) {
+         ThorVitality.apply(player);
+      }
+
       MjolnirPull.tick(player, state);
       ThorTransform.tick(player, state);
       MjolnirWorld.project(player, state);
@@ -313,6 +336,15 @@ public final class ThorHero implements HeroDefinition {
     */
    @Override
    public void handleForcedRelease(ServerPlayer player, HeroAction action) {
+      if (action == HeroAction.GUARD) {
+         ThorState guard = ThorState.of(player);
+         if (guard != null) {
+            ThorGuard.hold(player, guard, false);
+         }
+
+         return;
+      }
+
       ThorInput input = ThorInput.of(action);
       ThorState state = input == null ? null : ThorState.of(player);
       if (state != null) {
@@ -322,6 +354,11 @@ public final class ThorHero implements HeroDefinition {
 
    @Override
    public void handleInput(ServerPlayer player, HeroAction action, boolean pressed) {
+      if (action == HeroAction.GUARD) {
+         ThorGuard.hold(player, ThorState.ensure(player), pressed && this.canAct(player, action));
+         return;
+      }
+
       ThorInput input = ThorInput.of(action);
       if (input == null) {
          return;
@@ -375,7 +412,39 @@ public final class ThorHero implements HeroDefinition {
       MjolnirWorld.onEnter(player, state);
       ThorTransform.begin(player, state);
       MjolnirWorld.project(player, state);
+      ThorVitality.apply(player);
+      player.setHealth(player.getMaxHealth());
       player.displayClientMessage(Component.translatable(ThorFeedback.CONTROLS), false);
+   }
+
+   @Override
+   public void onRespawn(ServerPlayer player) {
+      if (player != null) {
+         // A fresh body comes back with the vanilla 20 HP: full before the bonus means full after it.
+         boolean full = player.getHealth() >= player.getAttributeBaseValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+         ThorVitality.apply(player);
+         if (full) {
+            player.setHealth(player.getMaxHealth());
+         }
+      }
+   }
+
+   /** Audit v3: the guard (F) blocks and parries hits from the front; the storm of the ultimate's build-up shrouds Thor. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
+      ThorState state = ThorState.of(self);
+      if (state == null) {
+         return dev.baranhan.viltrumitecore.hero.DamageAbsorb.PASS;
+      }
+
+      dev.baranhan.viltrumitecore.hero.DamageAbsorb guard = ThorGuard.absorb(self, state, source, raw);
+      if (!guard.equals(dev.baranhan.viltrumitecore.hero.DamageAbsorb.PASS)) {
+         return guard;
+      }
+
+      float shroud = dev.baranhan.viltrumitecore.hero.thor.combat.WrathMove.shroud(state.timeline.move(), state.timeline.phase());
+      return shroud < 1.0F && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+         ? dev.baranhan.viltrumitecore.hero.DamageAbsorb.reduceTo(raw * shroud) : dev.baranhan.viltrumitecore.hero.DamageAbsorb.PASS;
    }
 
    /** The transformation scene protects the new Thor (№215). */
@@ -384,10 +453,13 @@ public final class ThorHero implements HeroDefinition {
       return ThorTransform.shielded(self) ? 0.0F : afterArmor;
    }
 
-   /** No fall damage while pulled to the flying hammer and shortly after (Y, №220; PLACEHOLDER grace). */
+   /**
+    * No fall damage while pulled to the flying hammer and shortly after (Y, №220), and (audit v3) never with
+    * Mjölnir in the hand: the god of thunder lands on his feet, the hammer takes the fall.
+    */
    @Override
    public boolean cancelsFallDamage(Player player) {
-      return MjolnirPull.graced(player);
+      return MjolnirPull.graced(player) || hammer(player) == HammerState.IN_HAND;
    }
 
    @Override
@@ -433,7 +505,8 @@ public final class ThorHero implements HeroDefinition {
       return new HeroPublicSnapshot(HeroId.THOR, timeline.wireId(), timeline.elapsed(), timeline.length(), 0, false, 0, 0, false, false, 0, 0,
          timeline.partnerId(), cooldowns.clone(), timeline.running(), -1, null, timeline.running() ? state.combatPose() : 0,
          false,
-         ThorFlags.compose(state.hammer(), state.mode(), ThorBridge.grabWindowActive(state), ThorBridge.cameraLeased(state), state.hammerDetached(), ThorBridge.sceneLocked(state)),
+         ThorFlags.compose(state.hammer(), state.mode(), ThorBridge.grabWindowActive(state), ThorBridge.cameraLeased(state), state.hammerDetached(), ThorBridge.sceneLocked(state))
+            | (ThorGuard.guarding(state) ? 1 << ThorFlags.GUARD : 0),
          new int[0], timeline.variant(), 0);
    }
 
@@ -463,6 +536,7 @@ public final class ThorHero implements HeroDefinition {
       if (previous != null && clone instanceof HeroPlayer heroPlayer) {
          if (original instanceof ServerPlayer old) {
             ThorActions.stop(old, previous, ThorLifecycle.Cause.CLONE);
+            ThorGuard.stop(old, previous);
          }
 
          heroPlayer.viltrumitecore$setHeroState(previous.respawnCopy());
@@ -474,6 +548,7 @@ public final class ThorHero implements HeroDefinition {
       ThorState state = ThorState.of(player);
       if (state != null) {
          ThorActions.stop(player, state, ThorLifecycle.Cause.DIMENSION_CHANGE);
+         ThorGuard.stop(player, state);
          MjolnirPull.stop(player);
          MjolnirWorld.onDimensionChange(player, state);
       }
@@ -487,6 +562,11 @@ public final class ThorHero implements HeroDefinition {
       }
 
       ThorActions.stop(player, state, ThorLifecycle.Cause.of(reason));
+      ThorGuard.stop(player, state);
+      if (reason == CleanupReason.HERO_CHANGE || reason == CleanupReason.ERASED) {
+         ThorVitality.remove(player);
+      }
+
       MjolnirPull.stop(player);
       ThorTransform.stop(player, state);
       MjolnirWorld.onCleanup(player, state, reason);

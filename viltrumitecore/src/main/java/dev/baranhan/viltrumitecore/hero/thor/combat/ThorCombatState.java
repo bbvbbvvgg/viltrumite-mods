@@ -99,6 +99,18 @@ public final class ThorCombatState {
    public int electricStep;
    @Nullable
    public Vec3 wrathAim;
+   /** The entity the last called bolt of the build-up struck (the next call picks another), -1 none. */
+   public int wrathLastCall = -1;
+
+   // --- guard (audit v3, ThorGuard) ---
+   /** F is held (the guard starts as soon as Thor is free). */
+   public boolean guardHeld;
+   /** Ticks the guard has been up, -1 = down. */
+   public int guardTicks = -1;
+   /** The parry window of this raise is still unused. */
+   public boolean parryOpen;
+   /** Ticks until a new raise opens a parry window again. */
+   public int parryRearm;
 
    // --- bookkeeping ---
    public int attackCounter;

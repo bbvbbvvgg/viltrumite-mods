@@ -71,6 +71,11 @@ STANCE_H = key(C.BASE, hip=(0, -2.2, 0), tor=(7, 12, 0), rft=(0.5, 0, -2.0), lft
 GUARD = key(C.BASE, hip=(0, -2.2, 0), tor=(6, 16, 0), rft=(0.5, 0, -2.5), lft=(-0.5, 0, 3.0),
             ra=(-28, -2, 13.5), rp=(0.5, -1, 0.3), la=(24, 4, 15.0), lp=(-0.5, -1, 0.3), rw=(-10, 0, 0), lw=(-10, 0, 0))
 
+# Audit v3 guards (ThorGuard): Mjölnir across the body / a high guard with both fists.
+GUARD_HAMMER = key(STANCE_H, hip=(0, -2.8, 0), tor=(9, 6, 0), ra=(4, -14, 14.5), rp=(1, -0.6, 0.3), hm=(-62, 38),
+                   la=(-6, -2, 13.5), lp=(-1, -0.6, 0.3))
+GUARD_FIST = key(GUARD, tor=(8, 4, 0), ra=(-14, 16, 12.0), la=(14, 16, 12.0), rw=(-20, 0, 0), lw=(-20, 0, 0))
+
 
 def fp_track(keys, hammer=True):
     """A first-person path of its own (draw / holster: the arm drops out of the view and comes back):
@@ -357,7 +362,8 @@ def hammer_clips():
         T=dict(hip=(0, -3.4, -1.5), tor=(12, -8, 0), lft=(-0.5, 0, 5.0), ra=(-10, -48, 17.5), hm=(-20, -40), la=(-60, -60, 17))))
     # Low sweep at shin height (yaw 75 -> -75): crouched, the head passes clear in front of the shins.
     out.append(strike("hammer_low_sweep", S,
-        G=dict(hip=(0.5, -7.0, 0.8), tor=(24, 38, -5), rft=(2.0, 0, -2.0), lft=(-2.0, 0, 3.5), ra=(96, -46, 19.4), rp=(0.4, -0.2, 1),
+        # Audit v3 (5-tick windup): the feet stay planted through the gather, the crouch comes on the load.
+        G=dict(hip=(0.5, -5.0, 0.8), tor=(24, 38, -5), ra=(96, -46, 19.4), rp=(0.4, -0.2, 1),
                hm=(112, -38), hf=(180, 0), la=(-40, -40, 16)),
         L=dict(hip=(0.6, -8.0, 1.0), tor=(26, 46, -6), rft=(2.0, 0, -2.0), lft=(-2.0, 0, 3.5), ra=(102, -42, 19.6), rp=(0.4, -0.2, 1),
                hm=(124, -34), hf=(180, 0), la=(-34, -36, 16)),
@@ -585,6 +591,13 @@ def loop(name, length, keys, hammer, fp, noise=None, owner="full"):
     return C.Clip(name, length, keys, loop=True, hammer=hammer, owner=owner, fp=fp, noise=noise)
 
 
+def fp_hold(hammer, right, ham, left):
+    """A held first-person pose (the guard): both arms on fixed view targets, the hammer on a fixed axis."""
+    def custom(t, rt, h, lt, length=None):
+        return np.asarray(right, float), None if ham is None else C.unit(np.asarray(ham, float)), np.asarray(left, float)
+    return C.FpPlan(hammer=hammer, contact=None, left="always", custom=custom)
+
+
 def fp_loop(hammer, bob=0.0, sway=0.0, cycles=1, breath=0.0):
     rest = C.FP_HAMMER_R if hammer else C.FP_FIST_R
 
@@ -672,6 +685,12 @@ def base_clips():
     out.append(loop("stance", 50, [(0, GUARD, "linear"), (50, GUARD, "linear")], False, fp_loop(False, breath=0.008), noise=breathe(1.2, 50)))
     out.append(loop("stance_hammer", 50, [(0, STANCE_H, "linear"), (50, STANCE_H, "linear")], True, fp_loop(True, breath=0.008),
                     noise=breathe(1.2, 50)))
+    # Audit v3 guard (F held, ThorGuard): Mjölnir raised across the body, head up and to the left, the left
+    # forearm braced behind it; bare-handed, a high guard with both fists by the face. Looped holds that breathe.
+    out.append(loop("guard_hammer", 40, [(0, GUARD_HAMMER, "linear"), (40, GUARD_HAMMER, "linear")], True,
+                    fp_hold(True, (0.30, -0.46, -0.72), (-0.55, 0.80, -0.25), (-0.34, -0.40, -0.72)), noise=breathe(0.8, 40)))
+    out.append(loop("guard_fist", 40, [(0, GUARD_FIST, "linear"), (40, GUARD_FIST, "linear")], False,
+                    fp_hold(False, (0.26, -0.12, -0.72), None, (-0.26, -0.12, -0.72)), noise=breathe(0.8, 40)))
     W, Rn = GAIT["walk"], GAIT["run"]
     walk = key(IDLE, hip=(0, 0.0, 0), tor=(6, 0, 0))
     out.append(loop("walk", W["length"], gait_keys(walk, W, 15.0, 14.0, False), False,

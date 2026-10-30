@@ -44,7 +44,7 @@ public class CoreMessages {
    // "13" = integration/current-heroes (#82: DIO, Sinclair, Jinwoo) alone.
    // v14 (integration/all-heroes-final): #74 + #82 together; Thor/Hulkbuster packets first, then
    // HeroLineS2CPacket and the DIO / Jinwoo packets.
-   private static final String PROTOCOL_VERSION = "14";
+   private static final String PROTOCOL_VERSION = "15";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 

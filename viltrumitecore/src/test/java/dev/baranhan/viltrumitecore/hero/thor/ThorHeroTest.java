@@ -70,8 +70,11 @@ class ThorHeroTest {
    }
 
    @Test
-   void fourPanelSlotsInKeyOrderRYUltimateV() {
-      assertArrayEquals(new String[]{ThorAbilities.THUNDER, ThorAbilities.ONSLAUGHT, ThorAbilities.WRATH, ThorAbilities.TELEPORT}, HERO.heroInputSlots());
+   void fivePanelSlotsInKeyOrderRYUltimateVB() {
+      assertArrayEquals(new String[]{ThorAbilities.THUNDER, ThorAbilities.ONSLAUGHT, ThorAbilities.WRATH, ThorAbilities.TELEPORT, ThorAbilities.CRUSH},
+         HERO.heroInputSlots());
+      assertSame(HeroAction.SIGNATURE, HERO.heroActionFor(ThorAbilities.CRUSH));
+      assertSame(ThorInput.CRUSH, ThorInput.of(HeroAction.SIGNATURE));
       assertSame(HeroAction.CONTEXT_TELEPORT, HERO.heroActionFor(ThorAbilities.TELEPORT));
       assertSame(HeroAction.CONTEXT_POWER, HERO.heroActionFor(ThorAbilities.THUNDER));
       assertSame(HeroAction.CONTEXT_MOBILITY, HERO.heroActionFor(ThorAbilities.ONSLAUGHT));
@@ -85,14 +88,16 @@ class ThorHeroTest {
 
       String[] loadout = HERO.defaultLoadout();
       assertEquals(18, loadout.length);
-      // Slots 1-4 are the keys R, Y, Z (temporary ultimate default), V.
-      assertArrayEquals(HERO.heroInputSlots(), new String[]{loadout[0], loadout[1], loadout[2], loadout[3]});
-      for (int i = 4; i < loadout.length; i++) {
+      // Slots 1-5 are the keys R, Y, Z (temporary ultimate default), V, B (Crush, v3).
+      assertArrayEquals(HERO.heroInputSlots(), new String[]{loadout[0], loadout[1], loadout[2], loadout[3], loadout[4]});
+      String[] v2 = HERO.previousDefaultLoadouts()[0];
+      assertEquals("", v2[4], "the v2 default had no Crush: an untouched save moves to the new default");
+      for (int i = 5; i < loadout.length; i++) {
          assertEquals("", loadout[i]);
       }
 
       List<ViltrumiteAbility> panel = HERO.panelAbilities();
-      assertEquals(4, panel.size());
+      assertEquals(5, panel.size());
       for (int i = 0; i < panel.size(); i++) {
          assertEquals(HERO.heroInputSlots()[i], panel.get(i).getId());
          assertEquals(HERO.abilityIcon(panel.get(i).getId()), panel.get(i).getIcon());
@@ -103,7 +108,9 @@ class ThorHeroTest {
    void slotsStayGreyUntilASessionAuthorsTheirMove() {
       HeroPublicSnapshot idle = ThorHero.composeSnapshot(new ThorState());
       for (ThorInput input : ThorInput.values()) {
-         assertTrue(ThorAbilities.slotGrey(idle, input), input + " has no authored move in the foundation");
+         // Audit v3: MMB's draw from the belt is the foundation's own technical move, so its slot is lit.
+         assertTrue(input == ThorInput.HAMMER ? !ThorAbilities.slotGrey(idle, input) : ThorAbilities.slotGrey(idle, input),
+            input + ": only the foundation's MMB draw is authored in the foundation");
       }
 
       try {

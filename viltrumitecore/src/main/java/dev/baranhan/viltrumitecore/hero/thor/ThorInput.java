@@ -22,7 +22,9 @@ public enum ThorInput {
    /** Slot key 3 (Z, a temporary foundation default): the separate ultimate key. */
    ULTIMATE(HeroAction.ULTIMATE),
    /** Slot key 4 (default V): choose the teleport point. */
-   TELEPORT(HeroAction.CONTEXT_TELEPORT);
+   TELEPORT(HeroAction.CONTEXT_TELEPORT),
+   /** Slot 5 (B, v3 spec §1.1): "Crush", the hammer blow. SIGNATURE is only Thor's input id here: routing goes through the current hero. */
+   CRUSH(HeroAction.SIGNATURE);
 
    private final HeroAction action;
 
