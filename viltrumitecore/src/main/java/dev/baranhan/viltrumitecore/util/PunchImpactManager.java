@@ -49,13 +49,6 @@ public class PunchImpactManager {
 
       float finalDamage = damage * 2.0F + punchStr * damage * 3.0F;
       float launchForce = 4.5F + punchStr * 5.5F;
-      // Regulus throws the same fist with his own numbers (hearts, madness).
-      dev.baranhan.viltrumitecore.hero.regulus.RegulusState regulus = dev.baranhan.viltrumitecore.hero.regulus.RegulusHero.stateOf(player);
-      if (regulus != null) {
-         finalDamage = dev.baranhan.viltrumitecore.hero.regulus.RegulusRules.punchDamage(regulus.hearts(), regulus.madnessTicksLeft > 0);
-         launchForce = regulus.madnessTicksLeft > 0 ? 3.2F : 2.4F;
-         dev.baranhan.viltrumitecore.hero.regulus.RegulusAirBlade.onPunch(player, regulus);
-      }
       double scale = 1.0 + (double)punchStr * 1.5;
       double rOut = 9.0 * scale;
       double rBase = 9.0 * scale;
