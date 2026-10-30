@@ -440,3 +440,11 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - Forge 47 `Player.tick` order: `updatePlayerPose` → `PlayerTickEvent.END` → our `Player.tick` TAIL inject (hero tick, `syncSnapshot`). The END tracker runs before the hero tick.
 - Vanilla does not draw the camera entity's hitbox in first person; `client/debug/HeroHitboxDebug` draws it for scaled heroes with F3+B.
 
+
+## Thor v3 rework (core 1.55.0, protocol 15; PR #86 on top of #85)
+- Timings live in `ThorAttacks` (hammer 5-6/4/8-11, fists 3-4/3/6-7, WRATH 40/12/28, DRAW = ThorRules 6/3/9). After a table change rebake clips (`tools/assets/make_thor_clips.py`, `--partial` + merge) and update `docs/design/2026-10-28-thor-r2b-clip-plans.md` (ThorClipPlanTest).
+- Recovery is cut by movement / dash (`ThorActions.finishRecovery`); hitstop holds the timeline (`ThorState.holdTimeline`, `ThorActions.advance`).
+- Guard: `ThorGuard` on `MouseButton.GUARD` (F), state in `ThorCombatState` (guardTicks <0 = down), snapshot bit 7 `ThorFlags.GUARD`; absorb via `ThorHero.absorbIncoming` (guard first, then the WRATH shroud). `ThorVitality` attribute modifiers are re-applied every 20 t and removed on hero change.
+- FP: when `ThorClipPlayer.playsFpClip`, clips drive all FP bones incl. shoulders; `ThorFirstPerson` rows are only a fallback. `AlwaysVisibleOffhandMixin` asks `ThorClipPlayer.wantsOffhand`.
+- MMB with an item in the right hand = DRAW (`ThorHands.clearForMjolnir`), never a holster. `ThorClipChecks.place` needs a case for every new clip name.
+- Every `ThorCue` must be listed in `tools/assets/thor_sources.md` (ThorSoundsTest).
