@@ -17,7 +17,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
- * Client half of the absolute stop. While a pause runs every entity but its owner is held
+ * Client half of the absolute stop. While a pause runs every entity (its owner too) is held
  * through the shared TimeFreeze client flag (no simulation, lerp, walk/idle or particle motion),
  * every player's view is pinned (owner included), input is dropped, and the local body is held
  * exactly where the stop found it (position and view bob), so the camera cannot drift.
@@ -64,9 +64,8 @@ public final class WorldPauseClient {
       Minecraft mc=Minecraft.getInstance(); LocalPlayer player=mc.player;
       boolean isolated=BodyIsolationClient.active(player);
       boolean on=holdsWorld(active(),isolated) && mc.level!=null;
-      int exempt=Integer.MIN_VALUE;
-      if(on && owner!=null) {var caster=mc.level.getPlayerByUUID(owner); if(caster!=null) exempt=caster.getId();}
-      TimeFreeze.setClientWorld(on,exempt,on);
+      // Nobody is exempt: Reinhard stops in the pose of the press like everyone else.
+      TimeFreeze.setClientWorld(on,Integer.MIN_VALUE,on);
       TimeFreezeView.refresh();
       if(!on || player==null) {hold=null; return;}
       if(hold==null || hold.entityId!=player.getId()) hold=Hold.of(player);
