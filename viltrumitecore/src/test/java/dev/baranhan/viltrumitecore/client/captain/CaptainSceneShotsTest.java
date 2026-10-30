@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class CaptainSceneShotsTest {
    private static final Vec3 STEVE = new Vec3(0.0, 64.0, 0.0);
    private static final Vec3 F = new Vec3(0.0, 0.0, 1.0);
-   private static final Vec3 CENTRE = STEVE.add(F.scale(CaptainRules.CIRCLE_AHEAD));
+   private static final Vec3 CENTRE = STEVE.subtract(F.scale(CaptainRules.CIRCLE_RADIUS));
 
    @Test
    void callLooksAtStevesFaceFromTheFront() {
@@ -27,7 +27,7 @@ class CaptainSceneShotsTest {
       Vec3 flat = new Vec3(s[0].x - CENTRE.x, 0.0, s[0].z - CENTRE.z);
       assertEquals(CaptainSceneShots.WIDE_RADIUS, flat.length(), 1.0E-6);
       assertTrue(s[0].y > STEVE.y + 3.0);
-      assertTrue(s[0].z < STEVE.z, "behind Steve over the landing site");
+      assertTrue(s[0].z > STEVE.z + 3.0, "in front of Steve, the landing site behind him");
    }
 
    @Test

@@ -19,8 +19,8 @@ public final class CaptainSceneShots {
    public static final int RETURN = CaptainRules.CIRCLE_TICKS - ORBIT_TICKS;
    /** Blend from the crane into the orbit. */
    public static final int BLEND = 16;
-   /** Wide shot start angle (degrees, 0 = ahead of Steve, 180 = behind him) and drift per tick. */
-   static final double WIDE_START = 205.0;
+   /** Wide shot start angle (degrees, 0 = where Steve faces, out of the circle) and drift per tick. */
+   static final double WIDE_START = 25.0;
    static final double WIDE_DRIFT = -0.3;
 
    private CaptainSceneShots() {
@@ -45,7 +45,7 @@ public final class CaptainSceneShots {
 
    /**
     * Raw shot of {@code move} at {@code age} ticks. {@code steve} is his feet, {@code centre} the circle centre,
-    * {@code f} his flat facing, {@code wideEnd} the crane angle when the circle began.
+    * {@code f} his flat facing (out of the circle), {@code wideEnd} the crane angle when the circle began.
     */
    public static Vec3[] shot(CaptainMove move, double age, Vec3 steve, Vec3 centre, Vec3 f, double wideEnd) {
       Vec3 r = new Vec3(-f.z, 0.0, f.x);
@@ -56,7 +56,7 @@ public final class CaptainSceneShots {
          return new Vec3[]{steve.add(f.scale(4.2 - 0.8 * u)).add(r.scale(1.1)).add(up.scale(1.35 + 0.1 * u)), steve.add(up.scale(1.45))};
       }
       if (move == CaptainMove.ASSEMBLE_WAIT) {
-         // wide and high behind him over the landing site: the sky, the jet, the drops
+         // wide and high in front of him, over the landing site behind him: the sky, the jet, the drops
          double lift = 4.6 - Math.min(1.2, age * 0.012);
          return new Vec3[]{centre.add(around(f, wideAngle(age)).scale(WIDE_RADIUS)).add(up.scale(lift)), centre.add(up.scale(2.2))};
       }

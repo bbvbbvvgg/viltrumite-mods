@@ -70,7 +70,8 @@ public final class CaptainUltScene {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.getId() == caster) {
          centre = circleCentre;
-         Vec3 d = new Vec3(circleCentre.x - steve.x, 0.0, circleCentre.z - steve.z);
+         // Steve stands on the rim facing out, the centre behind him
+         Vec3 d = new Vec3(steve.x - circleCentre.x, 0.0, steve.z - circleCentre.z);
          if (d.lengthSqr() > 0.25) {
             facing = d.normalize();
          }
@@ -123,7 +124,7 @@ public final class CaptainUltScene {
       }
       Vec3 steve = me.position();
       Vec3 f = facing != null ? facing : flat(me.getYRot());
-      Vec3 c = centre != null && centre.distanceToSqr(steve) < 16.0 * 16.0 ? centre : steve.add(f.scale(CaptainRules.CIRCLE_AHEAD));
+      Vec3 c = centre != null && centre.distanceToSqr(steve) < 16.0 * 16.0 ? centre : steve.subtract(f.scale(CaptainRules.CIRCLE_RADIUS));
       if (facing == null) {
          facing = f;
       }
