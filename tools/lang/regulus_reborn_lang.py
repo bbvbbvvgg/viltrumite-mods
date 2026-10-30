@@ -207,6 +207,10 @@ k(H + "seized", "Heart seized", "Сердце схвачено", "Herz verkrampf
 k(H + "reply", "Reply", "Ответ", "Antwort", "Réplica", "Cevap", "答辩")
 k(H + "judging", "Judging: %s", "Суд над: %s", "Urteil über: %s", "Juicio a: %s", "Yargılanan: %s", "审判：%s")
 
+# Action bar: a refused ultimate names its cooldown (PR #87 fix 15, carried over to Kingdom of One by the final integration)
+k("message.viltrumitecore.regulus.ult_refused.cooldown", "Kingdom of One is recharging: %s s", "Королевство одного перезаряжается: %s с",
+  "Königreich des Einen lädt nach: %s s", "Reino de uno se recarga: %s s", "Tek Kişilik Krallık yenileniyor: %s sn", "一人之国冷却中：%s秒")
+
 # sound subtitles (subtitles.viltrumitecore.regulus_<cue>)
 S = "subtitles.viltrumitecore.regulus_"
 for cue, en, ru, de, es, tr, zh in [
