@@ -84,6 +84,7 @@ public class ViltrumiteCoreClient {
          // Regulus Reborn (docs/design/2026-10-30-regulus-reborn-design.md).
          dev.baranhan.viltrumitecore.client.regulus.RegulusClient.init();
          dev.baranhan.viltrumitecore.client.jinwoo.JinwooClient.init();
+         dev.baranhan.viltrumitecore.client.captain.CaptainClient.init();
          dev.baranhan.viltrumitecore.client.wish.WishSceneClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();
