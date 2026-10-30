@@ -5,8 +5,8 @@
   `RegulusRules`, wire layout in `RegulusFlags`) and `client/regulus/` (view, poser, renderer, VFX, HUD, ult scene).
   Design: `docs/design/2026-10-30-regulus-reborn-design.md` (section numbers are quoted in code comments).
 - Slots (cooldown index = `RegulusFlags.COOLDOWN_*` = `RegulusAbilities.OWN` order): lions_heart, stopped_sand,
-  air_severance, procession, right_of_reply, kingdom_of_one. LMB = Greed's Touch combo, MMB (heart key) = Little King.
-  Actions reuse the old `HeroAction` ordinals (DEBRIS_KICK → sand, MANIA → severance, GREEDS_EMBRACE → procession,
+  air_severance, trample (V; replaced Procession), right_of_reply, kingdom_of_one. LMB = Greed's Touch combo, MMB (heart key) = Little King.
+  Actions reuse the old `HeroAction` ordinals (DEBRIS_KICK → sand, MANIA → severance, GREEDS_EMBRACE → trample,
   COUNTER → reply, ULTIMATE → ult): no HeroAction was added or removed.
 - `RegulusMove` ordinal = snapshot `actionId` (append only); its length is the clip length. `RegulusAssetsTest` pins
   every body clip and `fp_` arms clip to it. Clips and rig are generated: `tools/assets/make_regulus_clips.py`,
@@ -32,7 +32,17 @@
   by `RegulusAbilities.migrate` (`regulus:punch` is dropped). Death keeps only the cooldowns.
 
 ## Assets
-- Sounds: own synthesis `tools/sfx/regulus_reborn.py` (CC0, deterministic, `--check`) → `binassets/.../sounds/regulus/reborn/`.
+- Model: Minecraft-style body (`make_regulus_model.py`, references: Jinwoo / Reinhard models). **First-person arms are
+  frozen** (owner request): `regulus_arms.geo.json`, `regulus_fp.png.b64`, `regulus_fp_glow.png.b64` are sha256-pinned
+  in `RegulusAssetsTest.firstPersonArmsAreFrozen`; never regenerate or "improve" them.
+- Trample (`hero/regulus/Trample.java`): stomp at tick 8, crater + flat shockwave ring (`RegulusRules.TRAMPLE_*`,
+  `trampleCatches`), air variant hangs in place. Works without the Lion (the Lion makes it bigger).
+- Sounds: two families. Stopped-time cues = own synthesis `tools/sfx/regulus_reborn.py` (CC0, deterministic, `--check`);
+  body/matter cues (`regulus_samples.RECIPES`, 19 events) = CC0/PD recordings (Kenney packs, Wikimedia Commons,
+  Freesound via Openverse) mixed by `tools/sfx/regulus_samples.py` (`--fetch` first; raw files only in
+  `~/.cache/viltrumite-sfx/regulus`), level-matched to the synth cue. `regulus_reborn.py` skips the sampled cues.
+  Both → `binassets/.../sounds/regulus/reborn/`. Openverse from the sandbox is flaky (500/504 for minutes): the
+  helper token works with form-encoded POST; Kenney downloads need the page cookie + Referer for `/download-link/<id>`.
   Events live in `src/main/sound-overlays/regulus.json`, merged into sounds.json by processResources (an overlay may
   not redefine a base event). The old `regulus_*` events stay because Reinhard reuses some of them.
 - Strings: `tools/lang/regulus_reborn_lang.py` → `src/main/lang-overlays/regulus/<12 locales>.json`; base lang files
