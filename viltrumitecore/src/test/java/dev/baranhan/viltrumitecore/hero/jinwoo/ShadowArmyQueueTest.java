@@ -12,4 +12,11 @@ class ShadowArmyQueueTest {
       assertTrue(ShadowArmy.ultOwnsQueue(true));
       assertFalse(ShadowArmy.ultOwnsQueue(false));
    }
+
+   @Test
+   void theChargeAlsoStrikesEnemyPlayers() {
+      assertTrue(MonarchArise.waveHits(true, false));
+      assertTrue(MonarchArise.waveHits(false, true), "PvP rules are checked by JinwooCombat.mayHit");
+      assertFalse(MonarchArise.waveHits(false, false));
+   }
 }

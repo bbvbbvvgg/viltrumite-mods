@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -72,7 +73,7 @@ public final class MonarchArise {
       JinwooSounds.play(player, JinwooSounds.ULT_WAVE, 2.5F, 1.0F);
       JinwooFx.around(player, JinwooFx.WAVE, 3, center, new Vec3(JinwooRules.ULT_RADIUS, 0, 0));
       List<LivingEntity> hostile = JinwooTargets.around(player, center.add(0, 1, 0), JinwooRules.ULT_RADIUS,
-         e -> e instanceof Enemy && JinwooCombat.mayHit(player, e));
+         e -> waveHits(e instanceof Enemy, e instanceof Player) && JinwooCombat.mayHit(player, e));
       LivingEntity strongest = null;
       for (LivingEntity e : hostile) {
          JinwooCombat.strike(player, state, e, JinwooRules.ULT_DAMAGE, true, 2);
@@ -89,6 +90,15 @@ public final class MonarchArise {
       }
       state.order = JinwooState.ArmyOrder.FOLLOW;
       ShadowArmy.rally(player, state);
+   }
+
+   /**
+    * Pure: the charge strikes hostile mobs and, under the server's PvP rules (checked by
+    * {@link JinwooCombat#mayHit}), enemy players — the opponent caught in the scene was only a
+    * spectator before (playtest).
+    */
+   static boolean waveHits(boolean hostileMob, boolean player) {
+      return hostileMob || player;
    }
 
    /** Broken before the rise (control/anchor): line cut, half the mana back, Domain gone. */

@@ -32,6 +32,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Marker;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
@@ -44,7 +45,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 /**
  * «Армия теней, восстань!» on the client: the owner's three-shot cinematic through a client-only
  * camera entity (low frontal, side tracking over the rising army, high crane behind for the attack),
- * letterbox, FOV lean and shake for observers within 40 blocks, the sky darkening (SkyTint), other
+ * the target's own three shots for a non-allied player caught within the ult radius (over the
+ * shoulder on the Monarch, wide on the rising army, low into the charge; released after the charge,
+ * on death, spectator mode or when the cast is interrupted), letterbox, FOV lean and shake for observers within 40 blocks, the sky darkening (SkyTint), other
  * sounds ducked (SoundDuck), and up to {@link JinwooRules#ULT_GHOSTS} light ghost soldiers (no
  * entities) rising, charging and dissolving. Client only.
  */
@@ -60,6 +63,8 @@ public final class JinwooUltScene {
    private static float letterbox;
    private static float letterboxO;
    private static float lean;
+   /** Caster id whose ult the local player is caught in as a target (victim camera), or -1. */
+   private static int victimOf = -1;
 
    static final class Scene {
       final int caster;
@@ -141,11 +146,90 @@ public final class JinwooUltScene {
             SoundDuck.INSTANCE.release(DUCK, 20);
          }
       }
+      Scene victim = own == null ? victimScene(mc, seen, now) : null;
       if (own != null && mc.player != null && mc.player.isAlive()) {
-         updateCamera(mc, own, (int)(now - own.start));
+         updateCamera(mc, own, (int)(now - own.start), JinwooUltScene::shot, JinwooRules.ULT_LENGTH);
+      } else if (victim != null) {
+         updateCamera(mc, victim, (int)(now - victim.start), (sc, t) -> victimShot(sc, t, mc.player.position()), VICTIM_END);
       } else {
          releaseCamera(mc);
       }
+   }
+
+   /** The target's cut ends with the legion's charge: control returns before the settle. */
+   static final int VICTIM_END = JinwooRules.ULT_WAVE_END + 6;
+
+   /**
+    * The scene the local player is caught in as the Monarch's target: a running cast of a
+    * non-allied player within the ult radius, joined before the charge. Released on death,
+    * spectator mode, when the cast ends or is interrupted, or after the charge.
+    */
+   @Nullable
+   private static Scene victimScene(Minecraft mc, Set<Integer> casting, long now) {
+      Player me = mc.player;
+      if (me == null || !me.isAlive() || me.isSpectator()) {
+         victimOf = -1;
+         return null;
+      }
+      Scene scene = victimOf < 0 ? null : SCENES.get(victimOf);
+      if (scene != null && casting.contains(victimOf) && now - scene.start < VICTIM_END) {
+         return scene;
+      }
+      victimOf = -1;
+      for (Scene sc : SCENES.values()) {
+         Entity caster = mc.level.getEntity(sc.caster);
+         int t = (int)(now - sc.start);
+         if (caster instanceof Player cp && casting.contains(sc.caster)
+            && catches(cp == me, cp.isAlliedTo(me) || me.isAlliedTo(cp), me.position().distanceToSqr(sc.origin), t)) {
+            victimOf = sc.caster;
+            return sc;
+         }
+      }
+      return null;
+   }
+
+   /** Pure: a non-allied player inside the ult radius is pulled into the scene until the charge begins. */
+   static boolean catches(boolean self, boolean allied, double distanceSqr, int t) {
+      return !self && !allied && distanceSqr <= JinwooRules.ULT_RADIUS * JinwooRules.ULT_RADIUS && t >= 0 && t < JinwooRules.ULT_WAVE;
+   }
+
+   /**
+    * Pure-ish: the target's three shots, mirroring the owner's (same cuts and blends): over the
+    * target's shoulder on the Monarch, a wide side shot of the army rising behind him, then a low
+    * shot beside the target as the legion charges in.
+    */
+   static Vec3[] victimShot(Scene scene, int t, Vec3 victim) {
+      Vec3[] cur = rawVictimShot(scene, t, victim);
+      for (int cut : new int[]{JinwooRules.ULT_RISE_START, JinwooRules.ULT_WAVE}) {
+         if (t >= cut && t < cut + BLEND) {
+            Vec3[] prev = rawVictimShot(scene, cut - 1, victim);
+            float w = (float)JinwooPose.smooth((t - cut) / (double)BLEND);
+            return new Vec3[]{prev[0].lerp(cur[0], w), prev[1].lerp(cur[1], w)};
+         }
+      }
+      return cur;
+   }
+
+   private static Vec3[] rawVictimShot(Scene scene, int t, Vec3 victim) {
+      Vec3 p = scene.origin;
+      Vec3 flat = new Vec3(p.x - victim.x, 0, p.z - victim.z);
+      // toward the Monarch; standing on him falls back to his facing
+      Vec3 to = flat.lengthSqr() < 1.0E-4 ? new Vec3(Math.sin(Math.toRadians(scene.yaw)), 0, -Math.cos(Math.toRadians(scene.yaw))) : flat.normalize();
+      Vec3 r = new Vec3(-to.z, 0, to.x);
+      if (t < JinwooRules.ULT_RISE_START) {
+         double u = Math.max(0, t) / (double)JinwooRules.ULT_RISE_START;
+         // over the shoulder: the Monarch, slowly pushing in
+         return new Vec3[]{victim.subtract(to.scale(2.4 - 0.5 * u)).add(r.scale(0.9)).add(0, 2.0, 0), p.add(0, 1.6, 0)};
+      }
+      Vec3 mid = victim.lerp(p, 0.5);
+      if (t < JinwooRules.ULT_WAVE) {
+         double u = (t - JinwooRules.ULT_RISE_START) / (double)(JinwooRules.ULT_WAVE - JinwooRules.ULT_RISE_START);
+         // wide and high from the side: the army rising behind the Monarch, the target in frame
+         return new Vec3[]{mid.add(r.scale(9.0 + 2.0 * u)).add(0, 3.5 + 1.0 * u, 0), p.add(to.scale(2.0)).add(0, 1.0, 0)};
+      }
+      double u = Math.min(1, (t - JinwooRules.ULT_WAVE) / (double)(VICTIM_END - JinwooRules.ULT_WAVE));
+      // low beside the target, the charge rushing in
+      return new Vec3[]{victim.subtract(to.scale(1.6 + 0.8 * u)).add(r.scale(-1.3)).add(0, 0.5, 0), victim.add(to.scale(6.0)).add(0, 1.2, 0)};
    }
 
    private static Set<ResourceLocation> jinwooSounds() {
@@ -187,8 +271,12 @@ public final class JinwooUltScene {
 
    // ---------------------------------------------------------------- camera
 
-   private static void updateCamera(Minecraft mc, Scene scene, int t) {
-      if (t >= JinwooRules.ULT_LENGTH) {
+   interface Shots {
+      Vec3[] at(Scene scene, int t);
+   }
+
+   private static void updateCamera(Minecraft mc, Scene scene, int t, Shots shots, int end) {
+      if (t >= end) {
          releaseCamera(mc);
          return;
       }
@@ -199,10 +287,10 @@ public final class JinwooUltScene {
          savedType = mc.options.getCameraType();
          mc.options.setCameraType(CameraType.FIRST_PERSON);
          mc.setCameraEntity(camera);
-         Vec3[] shot = shot(scene, t);
+         Vec3[] shot = shots.at(scene, t);
          place(mc, camera, shot[0], shot[1], true);
       }
-      Vec3[] shot = shot(scene, t + 1);
+      Vec3[] shot = shots.at(scene, t + 1);
       place(mc, camera, shot[0], shot[1], false);
    }
 
@@ -384,6 +472,7 @@ public final class JinwooUltScene {
 
    static void clear() {
       SCENES.clear();
+      victimOf = -1;
       releaseCamera(Minecraft.getInstance());
       SkyTint.INSTANCE.remove(TINT);
       SoundDuck.INSTANCE.release(DUCK);
