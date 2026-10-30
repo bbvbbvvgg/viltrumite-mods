@@ -156,7 +156,7 @@ public final class HeroSubtitles {
    }
 
    /** The HUD layer (registered under the chat). */
-   static void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
+   public static void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null || mc.level == null || QUEUE.isEmpty()) {
          bottom = Float.NaN;
