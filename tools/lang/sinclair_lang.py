@@ -246,6 +246,17 @@ NEW_SOUNDS = {
 for name, row in NEW_SOUNDS.items():
     ROWS[f"subtitles.{P}.sinclair_{name}"] = row
 
+# Global subtitles expansion (core 1.57.0): second patter variants and the shared kill / low-health / hero-enter
+# remarks (SinclairLines). Appended last so the generated files keep their existing key order.
+ROWS.update({
+ f"subtitle.{P}.sinclair.summon_b": ("A round of applause for my lovely assistant!", "Аплодисменты моей очаровательной ассистентке!", "Applaus für meine reizende Assistentin!", "¡Un aplauso para mi encantadora asistente!", "Güzel asistanım için bir alkış!", "为我可爱的助手鼓掌！"),
+ f"subtitle.{P}.sinclair.hex_b": ("And just like that — you're fluffy!", "И вот вы уже пушистый!", "Und schon bist du flauschig!", "¡Y así, sin más, eres peludito!", "Ve işte — artık tüylüsün!", "就这样——你变毛茸茸了！"),
+ f"subtitle.{P}.sinclair.snap_b": ("…and now you don't!", "…а теперь — нет!", "…und jetzt nicht mehr!", "…¡y ahora no!", "…ve şimdi görmüyorsunuz!", "……现在看不见了！"),
+ f"subtitle.{P}.sinclair.kill": ("Now that's a disappearing act!", "Вот это номер с исчезновением!", "Das nenne ich einen Verschwindetrick!", "¡Eso sí es un acto de desaparición!", "İşte buna kaybolma numarası denir!", "这才叫消失魔术！"),
+ f"subtitle.{P}.sinclair.low_health": ("The show must go on…", "Шоу должно продолжаться…", "Die Show muss weitergehen…", "El espectáculo debe continuar…", "Gösteri devam etmeli…", "演出必须继续……"),
+ f"subtitle.{P}.sinclair.enter": ("Ladies and gentlemen — Sinclair!", "Дамы и господа — Синклер!", "Meine Damen und Herren — Sinclair!", "¡Damas y caballeros: Sinclair!", "Bayanlar ve baylar — Sinclair!", "女士们先生们——辛克莱！"),
+})
+
 COL = {"en_us": 0, "ru_ru": 1, "de_de": 2, "tr_tr": 4, "zh_cn": 5}
 for es in ("es_ar", "es_cl", "es_ec", "es_es", "es_mx", "es_uy", "es_ve"):
     COL[es] = 3
