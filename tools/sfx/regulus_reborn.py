@@ -310,23 +310,34 @@ def sever_cut(v):
     return finish(x, peak_db=-3)
 
 
-def procession_step(v):
-    d = 0.4
+def trample_lift(v):
+    """The knee comes up: a short coat-cloth rush and an indrawn breath of air."""
+    d = 0.42
     t = tt(d)
-    x = thump(t, (110, 100, 120)[v], 50, 0.09, 0.02) * 1.0
-    x += np.concatenate([crack(0.12, 260 + v, 500, 5000, 10, 0.02), np.zeros(len(t) - int(0.12 * SR))]) * 0.45
-    x += band(noise(d, 263 + v), 60, 400) * env(t, 0.003, 0.08) * 0.4
+    x = swish(d, 260, 300, 2600, peak=0.6) * 0.8
+    x += band(noise(d, 261), 120, 600) * env(t, 0.12, 0.12) * 0.25
+    return finish(x, peak_db=-6)
+
+
+def trample_stomp(v):
+    """The heel lands: a dry body-weight thump, the ground cracking under it and a rubble tail."""
+    d = 1.3
+    t = tt(d)
+    x = thump(t, 120, 38, 0.32, 0.06) * 1.2
+    x += thump(t, 70, 30, 0.6, 0.12) * 0.6
+    x += np.concatenate([crack(0.35, 262, 500, 7000, 34, 0.08), np.zeros(len(t) - int(0.35 * SR))]) * 0.8
+    x += band(noise(d, 263), 80, 1800) * env(t, 0.004, 0.35) * 0.55
+    return finish(reverb(x, 0.5, 264, 0.18)[: len(t)])
+
+
+def trample_wave(v):
+    """The ring reaches someone: a low shove of air and a short dull hit."""
+    d = 0.6
+    t = tt(d)
+    x = thump(t, (150, 135)[v], 60, 0.12, 0.03) * 0.9
+    x += band(noise(d, 265 + v), 150, 2500) * env(t, 0.003, 0.12) * 0.6
+    x += sweep(t, 900, 200, 0.6) * env(t, 0.01, 0.15) * 0.15
     return finish(x, peak_db=-4)
-
-
-def procession_ram(v):
-    d = 1.1
-    t = tt(d)
-    x = thump(t, 140, 42, 0.3, 0.05) * 1.1
-    x += band(noise(d, 270), 100, 2500) * env(t, 0.002, 0.15) * 0.8
-    x += np.concatenate([crack(0.3, 271, 600, 8000, 30, 0.06), np.zeros(len(t) - int(0.3 * SR))]) * 0.8
-    x += glass(t, 392.0, 0.5, 272) * 0.2
-    return finish(reverb(x, 0.6, 273, 0.2)[: len(t)])
 
 
 def reply_stance(v):
@@ -462,8 +473,9 @@ CUES = {
     "sever_charge": (sever_charge, 1, "The air goes still", 16),
     "sever_release": (sever_release, 1, "Severed air flies", 32),
     "sever_cut": (sever_cut, 2, "Stopped air cuts", 24),
-    "procession_step": (procession_step, 3, "Regulus walks through everything", 24),
-    "procession_ram": (procession_ram, 1, "Regulus walks into something", 32),
+    "trample_lift": (trample_lift, 1, "Regulus raises his foot", 16),
+    "trample_stomp": (trample_stomp, 1, "Regulus stamps", 40),
+    "trample_wave": (trample_wave, 2, "A shockwave hits", 24),
     "reply_stance": (reply_stance, 1, "Regulus waits for an answer", 16),
     "reply_strike": (reply_strike, 1, "Regulus replies", 24),
     "king_bind": (king_bind, 1, "A heart is given", 16),

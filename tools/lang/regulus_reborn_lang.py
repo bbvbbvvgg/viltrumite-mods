@@ -102,14 +102,20 @@ ability("air_severance", T("Air Severance", "Рассечение воздуха
     ["掷出一片薄如玻璃的静止空气：", "在30格内从3格扩展到9格，", "切开敌人（12，狮子中18）和石头以下的方块。",
      "潜行时为竖斩。"]))
 
-ability("procession", T("Procession", "Шествие", "Prozession", "Procesión", "Alay", "行进"),
-        T("12s", "12 с", "12 s", "12 s", "12 sn", "12秒"), CAST, T(
-    ["Lion only. Walk straight ahead for 2.5 s at your own", "unhurried pace: whatever stands in the way is struck (10)", "and blocks up to obsidian-weak break where allowed."],
-    ["Только во Льве. 2,5 с идите прямо своим неспешным", "шагом: всё на пути получает удар (10),", "а блоки ломаются, где это разрешено."],
-    ["Nur im Löwen. Gehe 2,5 s in deinem gemächlichen Schritt", "geradeaus: alles im Weg wird getroffen (10),", "Blöcke brechen, wo es erlaubt ist."],
-    ["Solo en León. Camina recto 2,5 s a tu paso sin prisa:", "todo lo que esté en el camino recibe un golpe (10)", "y los bloques se rompen donde se permita."],
-    ["Yalnızca Aslan'da. Kendi acelesiz adımınla 2,5 sn", "düz yürü: yoldaki her şey darbe alır (10),", "izin verilen yerde bloklar kırılır."],
-    ["仅限狮子状态。以从容的步伐直行2.5秒：", "挡路的一切都会受到打击（10），", "允许时方块会被破坏。"]))
+ability("trample", T("Trample", "Попрание", "Zertreten", "Pisotón", "Çiğneme", "践踏"),
+        T("8s", "8 с", "8 s", "8 s", "8 sn", "8秒"), CAST, T(
+    ["Stamp the ground: a crater opens under your heel and a", "shockwave runs 7 blocks out (10 in Lion), hitting (8, Lion 12),",
+     "throwing and slowing everyone on the ground it reaches.", "In the air you stop dead and the wave runs through the air."],
+    ["Топните: под каблуком проваливается воронка, а ударная", "волна расходится на 7 блоков (во Льве 10), бьёт (8, во Льве 12),",
+     "подбрасывает и замедляет всех на земле, кого достанет.", "В воздухе вы замираете, и волна идёт по воздуху."],
+    ["Stampfe auf: unter deiner Ferse bricht ein Krater ein und eine", "Druckwelle läuft 7 Blöcke weit (im Löwen 10), trifft (8, Löwe 12),",
+     "schleudert und verlangsamt alle am Boden, die sie erreicht.", "In der Luft erstarrst du und die Welle läuft durch die Luft."],
+    ["Pisa fuerte: bajo tu talón se hunde un cráter y una onda", "de choque recorre 7 bloques (10 en León), golpea (8, León 12),",
+     "lanza y ralentiza a todos los que alcance en el suelo.", "En el aire te quedas quieto y la onda viaja por el aire."],
+    ["Yere bas: topuğunun altında bir krater açılır ve şok dalgası", "7 blok yayılır (Aslan'da 10), vurur (8, Aslan'da 12),",
+     "ulaştığı yerdeki herkesi fırlatır ve yavaşlatır.", "Havadayken olduğun yerde durursun, dalga havada yayılır."],
+    ["践踏地面：脚跟下塌出一个坑，冲击波", "向外扩散7格（狮子中10格），造成伤害（8，狮子中12），",
+     "击飞并减速它波及的地面上的所有人。", "在空中时你会停住，冲击波在空中扩散。"]))
 
 ability("right_of_reply", T("Right of Reply", "Право на ответ", "Recht auf Antwort", "Derecho de réplica", "Cevap Hakkı", "答辩之权"),
         T("6s / 10s", "6 / 10 с", "6 / 10 s", "6 / 10 s", "6 / 10 sn", "6 / 10秒"), STANCE, T(
@@ -222,8 +228,9 @@ for cue, en, ru, de, es, tr, zh in [
     ("sever_charge", "The air goes still", "Воздух замирает", "Die Luft erstarrt", "El aire se queda quieto", "Hava durgunlaşır", "空气凝滞"),
     ("sever_release", "Severed air flies", "Летит рассечённый воздух", "Geschnittene Luft fliegt", "Vuela el aire cortado", "Yarılmış hava uçar", "断空飞出"),
     ("sever_cut", "Stopped air cuts", "Остановленный воздух режет", "Erstarrte Luft schneidet", "El aire detenido corta", "Durmuş hava keser", "静止空气切割"),
-    ("procession_step", "Regulus walks through everything", "Регулус идёт сквозь всё", "Regulus geht durch alles", "Regulus camina a través de todo", "Regulus her şeyin içinden yürür", "雷古勒斯穿行一切"),
-    ("procession_ram", "Regulus walks into something", "Регулус врезается во что-то", "Regulus läuft in etwas hinein", "Regulus choca con algo", "Regulus bir şeye çarpar", "雷古勒斯撞上了什么"),
+    ("trample_lift", "Regulus raises his foot", "Регулус заносит ногу", "Regulus hebt den Fuß", "Regulus levanta el pie", "Regulus ayağını kaldırır", "雷古勒斯抬起脚"),
+    ("trample_stomp", "Regulus stamps", "Регулус топает", "Regulus stampft auf", "Regulus da un pisotón", "Regulus yere basar", "雷古勒斯践踏地面"),
+    ("trample_wave", "A shockwave hits", "Ударная волна бьёт", "Eine Druckwelle trifft", "Una onda de choque golpea", "Şok dalgası çarpar", "冲击波命中"),
     ("reply_stance", "Regulus waits for an answer", "Регулус ждёт ответа", "Regulus wartet auf eine Antwort", "Regulus espera una respuesta", "Regulus bir cevap bekler", "雷古勒斯等待回应"),
     ("reply_strike", "Regulus replies", "Регулус отвечает", "Regulus antwortet", "Regulus responde", "Regulus cevap verir", "雷古勒斯回击"),
     ("king_bind", "A heart is given", "Сердце отдано", "Ein Herz wird verliehen", "Se entrega un corazón", "Bir kalp verilir", "心脏被赐予"),
