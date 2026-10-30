@@ -27,8 +27,11 @@ public final class ErasureGlassRenderer {
    private static final Vector3f LIGHT = new Vector3f(-.45F, .7F, .55F).normalize();
    private ErasureGlassRenderer() {}
 
-   /** Called from the renderLevel TAIL seam with the scene time (ticks + partial). */
-   static void render(ErasureGlass glass, float t) {
+   /**
+    * Called from the renderLevel TAIL seam with the scene time (ticks + partial) and the scene's
+    * shake of the glass plane (roll degrees, offset in plane units; all zero outside the shake).
+    */
+   static void render(ErasureGlass glass, float t, float roll, float dx, float dy) {
       boolean lines = ErasureGlass.linesVisible(t), shards = ErasureGlass.shardsVisible(t);
       if (!lines && !shards) return;
       Minecraft mc = Minecraft.getInstance();
@@ -42,6 +45,10 @@ public final class ErasureGlassRenderer {
       PoseStack modelView = RenderSystem.getModelViewStack();
       modelView.pushPose();
       modelView.setIdentity();
+      if (roll != 0 || dx != 0 || dy != 0) {
+         modelView.translate(dx, dy, 0);
+         modelView.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(roll));
+      }
       RenderSystem.applyModelViewMatrix();
       RenderSystem.setShaderColor(1, 1, 1, 1);
       RenderSystem.disableCull();
