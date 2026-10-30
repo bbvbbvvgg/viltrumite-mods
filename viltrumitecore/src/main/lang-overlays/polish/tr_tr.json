@@ -1,0 +1,6 @@
+{
+  "message.viltrumitecore.evangelium.refused.cooldown": "İncil yeniden doluyor: %s sn",
+  "message.viltrumitecore.evangelium.refused.madness": "Delilik zaten uyandı",
+  "message.viltrumitecore.evangelium.refused.locked": "İncil şu anda açılamaz",
+  "message.viltrumitecore.evangelium.refused.channeling": "Ritüel zaten sürüyor"
+}

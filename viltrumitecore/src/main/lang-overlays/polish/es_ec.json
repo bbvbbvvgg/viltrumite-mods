@@ -1,0 +1,6 @@
+{
+  "message.viltrumitecore.evangelium.refused.cooldown": "El Evangelio se está recargando: %s s",
+  "message.viltrumitecore.evangelium.refused.madness": "La locura ya despertó",
+  "message.viltrumitecore.evangelium.refused.locked": "Ahora no se puede abrir el Evangelio",
+  "message.viltrumitecore.evangelium.refused.channeling": "El ritual ya está en curso"
+}

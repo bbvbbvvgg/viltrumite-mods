@@ -1,0 +1,6 @@
+{
+  "message.viltrumitecore.evangelium.refused.cooldown": "Евангелие перезаряжается: %s с",
+  "message.viltrumitecore.evangelium.refused.madness": "Безумие уже пробудилось",
+  "message.viltrumitecore.evangelium.refused.locked": "Сейчас Евангелие не открыть",
+  "message.viltrumitecore.evangelium.refused.channeling": "Ритуал уже идёт"
+}

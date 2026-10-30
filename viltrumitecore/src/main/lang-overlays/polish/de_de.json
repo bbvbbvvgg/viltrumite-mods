@@ -1,0 +1,6 @@
+{
+  "message.viltrumitecore.evangelium.refused.cooldown": "Das Evangelium lädt sich auf: %s s",
+  "message.viltrumitecore.evangelium.refused.madness": "Der Wahnsinn ist bereits erwacht",
+  "message.viltrumitecore.evangelium.refused.locked": "Das Evangelium lässt sich gerade nicht öffnen",
+  "message.viltrumitecore.evangelium.refused.channeling": "Das Ritual läuft bereits"
+}

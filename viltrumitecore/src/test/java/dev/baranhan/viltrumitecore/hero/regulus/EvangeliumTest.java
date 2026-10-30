@@ -151,4 +151,59 @@ class EvangeliumTest {
       );
    }
 
+
+   /** Cancel -> cancel cooldown runs out -> a second, third... activation all open again (playtest blocker). */
+   @Test
+   void repeatedCancelsAlwaysReopenAfterTheCancelCooldown() {
+      RegulusState state = new RegulusState();
+      for (int round = 0; round < 3; round++) {
+         assertTrue(Evangelium.canBegin(state), "round " + round);
+         state.ritualTicks = 0;
+         state.ritualTicks = 25;
+         assertTrue(Evangelium.interruptState(state));
+         assertEquals(-1, state.ritualTicks);
+         assertEquals(Evangelium.Refusal.COOLDOWN, Evangelium.refusal(state, false));
+         for (int t = 0; t < RegulusRules.RITUAL_CANCEL_COOLDOWN; t++) {
+            state.tickCooldowns();
+         }
+         assertNull(Evangelium.refusal(state, false));
+      }
+   }
+
+   @Test
+   void fullUseThenReuseAfterMadnessAndCooldown() {
+      RegulusState state = new RegulusState();
+      state.ritualTicks = RegulusRules.RITUAL_TICKS;
+      assertTrue(Evangelium.beginMadnessState(state));
+      assertEquals(Evangelium.Refusal.MADNESS, Evangelium.refusal(state, false));
+      assertTrue(Evangelium.endMadnessState(state));
+      assertEquals(Evangelium.Refusal.COOLDOWN, Evangelium.refusal(state, false));
+      for (int t = 0; t < RegulusRules.EVANGELIUM_COOLDOWN; t++) {
+         state.tickCooldowns();
+      }
+      assertTrue(Evangelium.canBegin(state));
+   }
+
+   @Test
+   void refusalNamesTheBlockingRule() {
+      RegulusState state = new RegulusState();
+      assertNull(Evangelium.refusal(state, false));
+      assertEquals(Evangelium.Refusal.ANCHORED, Evangelium.refusal(state, true));
+      state.ritualTicks = 3;
+      assertEquals(Evangelium.Refusal.CHANNELING, Evangelium.refusal(state, false));
+      state.ritualTicks = -1;
+      state.channelTargetId = UUID.randomUUID();
+      assertEquals(Evangelium.Refusal.BUSY, Evangelium.refusal(state, false));
+      assertFalse(Evangelium.canBegin(state));
+   }
+
+   @Test
+   void bookOverlayFollowsTheStateCooldown() {
+      // start of a cooldown, relog/respawn (overlay missing) and a longer restart push it; the countdown does not
+      assertTrue(Evangelium.bookCooldownNeedsPush(400, 0, false));
+      assertTrue(Evangelium.bookCooldownNeedsPush(399, 400, false));
+      assertTrue(Evangelium.bookCooldownNeedsPush(1800, 10, true));
+      assertFalse(Evangelium.bookCooldownNeedsPush(399, 400, true));
+      assertFalse(Evangelium.bookCooldownNeedsPush(0, 1, true));
+   }
 }

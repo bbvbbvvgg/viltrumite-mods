@@ -69,6 +69,8 @@ public final class RegulusState {
    // Evangelium / madness.
    public int ritualTicks = -1;
    public int madnessTicksLeft;
+   /** Last Evangelium cooldown mirrored onto the book item (vanilla cooldown overlay); transient. */
+   public int bookCooldownShown;
 
    // Mania channel.
    public UUID channelTargetId;

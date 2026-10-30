@@ -32,8 +32,18 @@ public class EvangeliumItem extends Item {
       ItemStack stack = player.getItemInHand(hand);
       if (player instanceof ServerPlayer serverPlayer) {
          if (!Evangelium.beginRitual(serverPlayer)) {
+            Evangelium.explainRefusal(serverPlayer);
             return InteractionResultHolder.fail(stack);
          }
+
+         player.startUsingItem(hand);
+         if (!player.isUsingItem()) {
+            // Start event cancelled after the gate: no channel, so no cancel fee either.
+            Evangelium.abortBegin(serverPlayer);
+            return InteractionResultHolder.fail(stack);
+         }
+
+         return InteractionResultHolder.consume(stack);
       } else if (!clientUsable(player)) {
          return InteractionResultHolder.fail(stack);
       }
