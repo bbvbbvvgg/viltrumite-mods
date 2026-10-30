@@ -13,6 +13,8 @@ import dev.baranhan.viltrumitecore.entity.avengers.AvengerEntity;
 import dev.baranhan.viltrumitecore.entity.avengers.AvengerKind;
 import dev.baranhan.viltrumitecore.entity.avengers.AvengerProjectileEntity;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
+import java.util.Map;
+import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -92,9 +94,11 @@ public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
          return; // the camera inside the body would fill the screen
       }
       float age = e.tickCount + partial;
-      pose(body, e, kind, age, partial);
+      Handoff handoff = handoff(e, partial);
+      pose(body, e, kind, age, partial, handoff);
       if (gear != null) {
-         CaptainPose.copyPose(body, gear);
+         // the gear mesh has its own bones (Mjolnir, cape, bow, faceplate, pistols, hair): it plays the same clips
+         pose(gear, e, kind, age, partial, handoff);
          props(gear, e, kind, age);
       }
       int overlay = LivingEntityRenderer.getOverlayCoords(e, 0.0F);
@@ -132,7 +136,56 @@ public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
       return e.tickCount - e.clientActionStart + partial;
    }
 
+   /** The action that was cut by a new one: its frozen clip time and how far its fade-out is (0..1). */
+   record Handoff(AvengerAction action, double seconds, float weight) {
+   }
+
+   private static final class Track {
+      int start = Integer.MIN_VALUE;
+      int action;
+      AvengerAction prev = AvengerAction.NONE;
+      double prevSeconds;
+      int switchedAt;
+   }
+
+   private static final Map<AvengerEntity, Track> TRACKS = new WeakHashMap<>();
+   static final double HANDOFF_TICKS = 4.0;
+
+   /** Cross-fade between consecutive actions instead of snapping from one clip into the next. */
+   @Nullable
+   static Handoff handoff(AvengerEntity e, float partial) {
+      Track t = TRACKS.computeIfAbsent(e, k -> new Track());
+      if (t.start != e.clientActionStart || t.action != e.clientAction) {
+         if (t.start != Integer.MIN_VALUE && t.action != AvengerAction.NONE.ordinal()) {
+            AvengerAction old = AvengerAction.byOrdinal(t.action);
+            Animation clip = AnimCache.animation(ANIM[e.kind().ordinal()], old.clip());
+            double len = clip == null ? 0 : clip.lengthSeconds() * 20.0;
+            double ran = e.tickCount - t.start;
+            t.prev = ran <= len + RELEASE_TICKS ? old : AvengerAction.NONE;
+            t.prevSeconds = Math.min(ran, len) / 20.0;
+         } else {
+            t.prev = AvengerAction.NONE;
+         }
+         t.switchedAt = e.tickCount;
+         t.start = e.clientActionStart;
+         t.action = e.clientAction;
+      }
+      if (t.prev == AvengerAction.NONE) {
+         return null;
+      }
+      double since = e.tickCount - t.switchedAt + partial;
+      if (since >= HANDOFF_TICKS) {
+         t.prev = AvengerAction.NONE;
+         return null;
+      }
+      return new Handoff(t.prev, t.prevSeconds, (float)(1.0 - smooth(since / HANDOFF_TICKS)));
+   }
+
    static void pose(BakedGeoModel model, AvengerEntity e, AvengerKind kind, float age, float partial) {
+      pose(model, e, kind, age, partial, null);
+   }
+
+   static void pose(BakedGeoModel model, AvengerEntity e, AvengerKind kind, float age, float partial, @Nullable Handoff handoff) {
       ResourceLocation file = ANIM[kind.ordinal()];
       model.resetBones();
       boolean airborne = e.flying() && (kind == AvengerKind.IRON_MAN || kind == AvengerKind.THOR);
@@ -154,6 +207,12 @@ public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
             AnimationController.overlay(sprint, model, frac(gait * 1.4) * sprint.lengthSeconds(), w * run);
          }
       }
+      if (handoff != null) {
+         Animation old = AnimCache.animation(file, handoff.action().clip());
+         if (old != null) {
+            AnimationController.overlay(old, model, handoff.seconds(), handoff.weight());
+         }
+      }
       AvengerAction action = AvengerAction.byOrdinal(e.clientAction);
       if (action != AvengerAction.NONE) {
          Animation clip = AnimCache.animation(file, action.clip());
@@ -164,8 +223,9 @@ public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
             if (ticks > len) {
                w = (float)smooth(1.0 - (ticks - len) / RELEASE_TICKS);
             }
+            float in = handoff != null ? (float)smooth(Math.min(1.0, ticks / HANDOFF_TICKS)) : (float)smooth(Math.min(1.0, ticks / 2.0 + 0.3));
             if (w > 0.01F) {
-               AnimationController.overlay(clip, model, Math.min(ticks, len) / 20.0, w * (float)smooth(Math.min(1.0, ticks / 2.0 + 0.3)));
+               AnimationController.overlay(clip, model, Math.min(ticks, len) / 20.0, w * in);
             }
          }
       }

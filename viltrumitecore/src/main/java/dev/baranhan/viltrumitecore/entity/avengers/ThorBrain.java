@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
  * with a thunder ring.
  */
 final class ThorBrain extends AvengerBrain {
-   private static final int CD_MELEE = 0, CD_THROW = 1, CD_STORM = 2, CD_FLIGHT = 3;
+   private static final int CD_MELEE = 0, CD_THROW = 1, CD_STORM = 2, CD_FLIGHT = 3, CD_CLAP = 4;
    /** Tick of SPECIAL_1 at which the hammer leaves the hand (the renderer hides it from here). */
    static final int THROW_RELEASE = 7;
    @Nullable private AvengerProjectileEntity hammer;
@@ -43,6 +43,13 @@ final class ThorBrain extends AvengerBrain {
          this.self.getNavigation().stop();
          this.start(AvengerAction.SPECIAL_2, 34);
          CaptainSounds.play(this.self, CaptainSounds.HAMMER_SPIN, 1.2F, 0.9F);
+         return;
+      }
+      if (this.cd[CD_CLAP] <= 0 && this.self.onGround() && this.enemiesAround(this.self.position(), 4.5).size() >= 3) {
+         this.cd[CD_CLAP] = 200;
+         this.self.getNavigation().stop();
+         this.start(AvengerAction.SPECIAL_3, 40);
+         CaptainSounds.play(this.self, CaptainSounds.HAMMER_SWING, 1.1F, 0.7F);
          return;
       }
       if (gap > 10 && gap < 28 && this.cd[CD_FLIGHT] <= 0) {
@@ -101,7 +108,7 @@ final class ThorBrain extends AvengerBrain {
             if (tick == 11) {
                Vec3 at = this.self.position().add(this.flatLook().scale(2.0));
                for (LivingEntity e : this.enemiesAround(at.add(0, 0.5, 0), 3.0)) {
-                  if (CaptainTargets.strike(this.self, e, 15.0F)) {
+                  if (this.hit(e, 15.0F)) {
                      CaptainTargets.push(e, e.position().subtract(at).normalize().scale(0.5).add(0, 0.55, 0));
                      CaptainTargets.stun(this.self, e, 20);
                   }
@@ -140,6 +147,20 @@ final class ThorBrain extends AvengerBrain {
                this.storm(this.target.position());
             }
          }
+         case SPECIAL_3 -> {
+            if (tick == 12) { // thunder clap: Mjolnir into the ground, a shock ring
+               for (LivingEntity e : this.enemiesAround(this.self.position(), 5.5)) {
+                  if (this.hit(e, 12.0F)) {
+                     Vec3 away = e.position().subtract(this.self.position());
+                     Vec3 h = away.horizontalDistanceSqr() < 1.0E-4 ? this.flatLook() : new Vec3(away.x, 0, away.z).normalize();
+                     CaptainTargets.push(e, h.scale(1.1).add(0, 0.45, 0));
+                  }
+               }
+               CaptainFx.around(this.self, CaptainFx.GROUND, 0, this.self.position(), new Vec3(5.5, 0, 0));
+               CaptainSounds.play(this.self, CaptainSounds.THUNDER, 1.4F, 1.1F);
+               CaptainSounds.play(this.self, CaptainSounds.HAMMER_HIT, 1.4F, 0.7F);
+            }
+         }
          case LEAP -> this.flightTick(tick);
          default -> {
          }
@@ -155,7 +176,7 @@ final class ThorBrain extends AvengerBrain {
             break;
          }
          HeroFx.electricBolt(level, e.position(), 22.0F, 0.8F, CaptainSounds.THUNDER.get());
-         if (CaptainTargets.strike(this.self, e, 13.0F)) {
+         if (this.hit(e, 13.0F)) {
             CaptainTargets.stun(this.self, e, 24);
             CaptainFx.around(this.self, CaptainFx.STUN, 24, e.getBoundingBox().getCenter(), Vec3.ZERO, e.getId());
          }
@@ -199,7 +220,7 @@ final class ThorBrain extends AvengerBrain {
       }
       Vec3 at = this.self.position();
       for (LivingEntity e : this.enemiesAround(at.add(0, 0.5, 0), 4.0)) {
-         if (CaptainTargets.strike(this.self, e, 12.0F)) {
+         if (this.hit(e, 12.0F)) {
             CaptainTargets.push(e, e.position().subtract(at).normalize().scale(0.7).add(0, 0.45, 0));
          }
       }

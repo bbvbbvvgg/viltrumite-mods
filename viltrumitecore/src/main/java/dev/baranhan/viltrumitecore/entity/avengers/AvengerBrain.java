@@ -5,7 +5,10 @@ import dev.baranhan.viltrumitecore.hero.captain.CaptainFx;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainRules;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainState;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainTargets;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,6 +39,9 @@ public abstract class AvengerBrain {
    protected int comboStep;
    private int stuck;
    private double bestGap = Double.MAX_VALUE;
+   /** Targets this Avenger could not reach: entity id -> tick until which they are skipped (no endless chase). */
+   private final Map<Integer, Integer> ignored = new HashMap<>();
+   static final int IGNORE_TICKS = 100;
 
    protected AvengerBrain(AvengerEntity self) {
       this.self = self;
@@ -142,25 +148,66 @@ public abstract class AvengerBrain {
 
    // --- targets ---
 
+   /**
+    * Target choice (after the Jinwoo shadow brain): Steve's mark first, then a score over every threat around
+    * Steve — distance, minus bonuses for what hits Steve, what hunts Steve, who provoked this Avenger, plus a
+    * spread penalty for targets other Avengers already fight and a malus when out of sight. Targets that could
+    * not be reached are skipped for a while.
+    */
    @Nullable
    private LivingEntity choose(ServerPlayer owner) {
       ServerLevel level = (ServerLevel)this.self.level();
       CaptainState state = CaptainState.of(owner);
-      if (state != null) {
-         if (state.lastAttackerId >= 0 && level.getEntity(state.lastAttackerId) instanceof LivingEntity a && this.usable(owner, a)) {
-            return a;
-         }
-         if (state.markTarget != null && state.markTicks > 0 && level.getEntity(state.markTarget) instanceof LivingEntity m && this.usable(owner, m)) {
-            return m;
+      int now = this.self.tickCount;
+      for (Iterator<Map.Entry<Integer, Integer>> it = this.ignored.entrySet().iterator(); it.hasNext(); ) {
+         if (it.next().getValue() <= now) {
+            it.remove();
          }
       }
-      if (this.provoker != null && this.usable(owner, this.provoker)) {
-         return this.provoker;
+      if (state != null && state.markTarget != null && state.markTicks > 0 && level.getEntity(state.markTarget) instanceof LivingEntity m
+         && this.usable(owner, m)) {
+         return m;
       }
-      if (this.target != null && this.usable(owner, this.target)) {
-         return this.target;
+      int lastAttacker = state != null ? state.lastAttackerId : -1;
+      List<LivingEntity> list = this.self.level().getEntitiesOfClass(LivingEntity.class, owner.getBoundingBox().inflate(CaptainRules.TARGET_RANGE),
+         e -> (this.hostile(e) || e.getId() == lastAttacker || e == this.provoker) && this.usable(owner, e) && !this.ignored.containsKey(e.getId()));
+      if (list.isEmpty()) {
+         return null;
       }
-      return this.nearestHostile(owner.position(), CaptainRules.TARGET_RANGE);
+      List<AvengerEntity> team = this.self.level().getEntitiesOfClass(AvengerEntity.class, owner.getBoundingBox().inflate(CaptainRules.LEASH_TELEPORT),
+         a -> a != this.self && a.isAlliedTo(this.self) && a.brain != null);
+      LivingEntity best = null;
+      double bestScore = Double.MAX_VALUE;
+      for (LivingEntity e : list) {
+         LivingEntity hunted = e instanceof Mob mob ? mob.getTarget() : null;
+         int claimed = 0;
+         for (AvengerEntity a : team) {
+            if (a.brain.target() == e) {
+               claimed++;
+            }
+         }
+         double score = threatScore(this.self.distanceTo(e), e.getId() == lastAttacker, hunted == owner, hunted instanceof AvengerEntity,
+            e == this.provoker, e == this.target, claimed, list.size(), this.sees(e));
+         if (score < bestScore) {
+            bestScore = score;
+            best = e;
+         }
+      }
+      return best;
+   }
+
+   /** Pure: lower is more urgent. Claims only spread the team while there are enough threats to go round. */
+   static double threatScore(double distance, boolean hitSteve, boolean huntsSteve, boolean huntsAlly, boolean provoker, boolean current,
+                             int claimedByOthers, int threats, boolean visible) {
+      double s = distance;
+      if (hitSteve) s -= 14;
+      if (huntsSteve) s -= 10;
+      if (huntsAlly) s -= 3;
+      if (provoker) s -= 6;
+      if (current) s -= 4;
+      if (threats > 1) s += 5.0 * claimedByOthers;
+      if (!visible) s += 6;
+      return s;
    }
 
    private boolean usable(ServerPlayer owner, LivingEntity e) {
@@ -224,7 +271,53 @@ public abstract class AvengerBrain {
 
    /** Called when t cannot be reached on foot; default: forget it. */
    protected void unreachable(LivingEntity t) {
-      this.target = null;
+      this.ignore(t);
+   }
+
+   /** Skip this target for a while and pick another one. */
+   protected void ignore(LivingEntity t) {
+      this.ignored.put(t.getId(), this.self.tickCount + IGNORE_TICKS);
+      if (this.target == t) {
+         this.target = null;
+      }
+   }
+
+   /**
+    * A hit of this Avenger. A mob that was after Steve (or after nobody) turns on the Avenger who hit it, so
+    * the team draws the fire off Steve like the shadows do for Jinwoo.
+    */
+   protected boolean hit(LivingEntity e, float damage) {
+      if (!CaptainTargets.strike(this.self, e, damage)) {
+         return false;
+      }
+      this.drawFire(e);
+      return true;
+   }
+
+   /** The mob that was hit (melee or projectile) answers this Avenger instead of Steve. */
+   void drawFire(LivingEntity e) {
+      if (e instanceof Mob mob && e.isAlive() && this.self.mayHit(e)) {
+         LivingEntity hunted = mob.getTarget();
+         if (hunted == null || hunted == this.self.owner() || !hunted.isAlive()) {
+            mob.setTarget(this.self);
+         }
+      }
+   }
+
+   /** Every hostile mob around turns on this Avenger (Hulk's roar). Returns how many answered. */
+   protected int taunt(double radius) {
+      int n = 0;
+      for (Mob m : this.self.level().getEntitiesOfClass(Mob.class, this.self.getBoundingBox().inflate(radius),
+         m -> m instanceof Enemy && this.self.mayHit(m))) {
+         m.setTarget(this.self);
+         n++;
+      }
+      return n;
+   }
+
+   /** Hostile mobs near Steve that are hunting him right now. */
+   protected int huntingOwner(ServerPlayer owner, double radius) {
+      return this.self.level().getEntitiesOfClass(Mob.class, owner.getBoundingBox().inflate(radius), m -> m.getTarget() == owner && this.self.mayHit(m)).size();
    }
 
    protected void follow(ServerPlayer owner) {
@@ -276,7 +369,7 @@ public abstract class AvengerBrain {
          if (h.lengthSqr() > 0.04 && h.normalize().dot(look) < cos) {
             continue;
          }
-         if (CaptainTargets.strike(this.self, e, damage)) {
+         if (this.hit(e, damage)) {
             n++;
             CaptainTargets.push(e, look.scale(knockback).add(0, lift, 0));
             CaptainFx.around(this.self, CaptainFx.CONTACT, 6, e.getBoundingBox().getCenter(), this.self.getEyePosition());
