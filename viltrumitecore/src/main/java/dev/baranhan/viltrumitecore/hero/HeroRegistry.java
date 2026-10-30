@@ -30,6 +30,7 @@ public final class HeroRegistry {
       // Spec 2026-10-28-sinclair §11.
       register(dev.baranhan.viltrumitecore.hero.sinclair.SinclairHero.INSTANCE);
       register(dev.baranhan.viltrumitecore.hero.jinwoo.JinwooHero.INSTANCE);
+      register(dev.baranhan.viltrumitecore.hero.captain.CaptainHero.INSTANCE);
       installFlightPolicy();
    }
 
