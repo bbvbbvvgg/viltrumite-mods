@@ -29,7 +29,8 @@ public final class TimeFreezeView {
    /** Live: the local player is alive and frozen right now. */
    public static boolean locked() {
       LocalPlayer player = Minecraft.getInstance().player;
-      return player != null && player.isAlive() && !player.isSpectator() && TimeFreeze.clientFrozen(player.getId());
+      return player != null && player.isAlive() && !player.isSpectator()
+         && (TimeFreeze.clientFrozen(player.getId()) || TimeFreeze.clientViewLocked());
    }
 
    /** Called by the frozen-set owner after every change, and every tick. */
