@@ -528,6 +528,8 @@ AVENGERS = {
     'shock': shock, 'heavy_land': heavy_land, 'depart': depart,
 }
 RECIPES = {**{f'captain/{k}': v for k, v in CAPTAIN.items()}, **{f'avengers/{k}': v for k, v in AVENGERS.items()}}
+# shipped from CC0 recordings by tools/sfx/hulk_cc0.py: the synthesis here is only a fallback and is never packaged over them
+RECORDED = {'avengers/hulk_roar', 'avengers/hulk_punch', 'avengers/hulk_smash', 'avengers/hulk_chest'}
 
 
 def main(argv=None):
@@ -545,7 +547,7 @@ def main(argv=None):
         p.parent.mkdir(parents=True, exist_ok=True)
         write_wav(p, x)
         print(f'{name}: {len(x) / SR:.2f}s peak {np.max(np.abs(x)):.2f} rms {np.sqrt(np.mean(x ** 2)):.3f}', flush=True)
-        if a.package:
+        if a.package and name not in RECORDED:
             subprocess.run([sys.executable, str(PACKAGER), 'package', '--input', str(p), '--module', 'core', '--name', name,
                             '--event', name.replace('/', '_'), '--own', '--replace', '--repo', str(ROOT)], check=True,
                            capture_output=True)
