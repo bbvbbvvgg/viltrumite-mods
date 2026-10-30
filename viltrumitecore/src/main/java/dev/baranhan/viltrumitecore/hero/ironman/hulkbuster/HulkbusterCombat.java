@@ -276,6 +276,7 @@ public final class HulkbusterCombat {
             Vec3 flat = new Vec3(look.x, 0.0, look.z);
             kit.ultDir = flat.lengthSqr() < 1.0E-6 ? Vec3.directionFromRotation(0.0F, player.getYRot()) : flat.normalize();
             HulkbusterSounds.play(player, HulkbusterSounds.Cue.ULT_IGNITE);
+            dev.baranhan.viltrumitecore.hero.ironman.IronManLines.say(player, dev.baranhan.viltrumitecore.hero.ironman.IronManLines.EVENT_HULK_RAM);
             HeroFx.launch(player, player.position(), 1.2F, player.level().getBlockState(player.blockPosition().below()));
          }
          default -> {
@@ -664,15 +665,12 @@ public final class HulkbusterCombat {
    }
 
    /**
-    * A spoken line as text (spec §6.2.4 "Спи!"): no film audio. The hero-subtitles portrait channel lives on
-    * another branch; until it lands the line shows on the action bar of the owner and the victim.
+    * A spoken line as text (spec §6.2.4 "Спи!"): no film audio. Now a hero subtitle (IronManLines.HULK_SLEEP)
+    * with the portrait, seen by the owner and every player within 32 blocks (the victim included); before,
+    * it was an action-bar message of the owner and the victim only.
     */
    private static void line(ServerPlayer player, LivingEntity target, String key) {
-      Component text = Component.translatable(key);
-      player.displayClientMessage(text, true);
-      if (target instanceof ServerPlayer victim) {
-         victim.displayClientMessage(text, true);
-      }
+      dev.baranhan.viltrumitecore.hero.ironman.IronManLines.say(player, dev.baranhan.viltrumitecore.hero.ironman.IronManLines.EVENT_HULK_SLEEP);
    }
 
    private static void throwVictim(ServerPlayer player, IronManState state) {
