@@ -17,8 +17,6 @@ import dev.baranhan.viltrumitecore.hero.sinclair.entity.ActCardEntity;
 import dev.baranhan.viltrumitecore.hero.sinclair.entity.ActPropEntity;
 import dev.baranhan.viltrumitecore.hero.sinclair.entity.AssistantEntity;
 import dev.baranhan.viltrumitecore.hero.sinclair.entity.SinclairEntities;
-import dev.baranhan.viltrumitecore.hero.speech.HeroLineTrigger;
-import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -123,7 +121,8 @@ public final class ActScene {
 
       if (t == this.script.bowStart()) {
          SinclairSounds.play(player.level(), player.position().add(0.0, 1.0, 0.0), SinclairSounds.ACT_BOW, 1.0F, 1.0F);
-         HeroSpeech.trigger(player, HeroLineTrigger.event(SinclairLines.EVENT_BOW));
+         // waits for the act's line instead of cutting it (the line card stays readable)
+         SinclairLines.say(player, SinclairLines.EVENT_BOW, true);
          AssistantEntity assistant = Stagecraft.onStage(player, state);
          if (assistant != null) {
             assistant.setState(AssistantEntity.BOW, this.script.length() - this.script.bowStart());

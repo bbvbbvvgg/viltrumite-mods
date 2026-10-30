@@ -45,6 +45,19 @@ class SinclairRepertoireTest {
    }
 
    @Test
+   void newerHeroesHaveTheirOwnNumbers() {
+      assertSame(ActShape.NOVA, SinclairRepertoire.choose(null, true, "thor", null).act().shape());
+      assertSame(ActShape.BARRAGE, SinclairRepertoire.choose(null, true, "dio", null).act().shape());
+      assertSame(ActShape.CUT, SinclairRepertoire.choose(null, true, "jinwoo", null).act().shape());
+      assertEquals(SinclairRepertoire.STORM, SinclairRepertoire.choose(null, true, "thor", null).act().color());
+      assertEquals(SinclairRepertoire.WORLD, SinclairRepertoire.choose(null, true, "dio", null).act().color());
+      assertEquals(SinclairRepertoire.SHADOW, SinclairRepertoire.choose(null, true, "jinwoo", null).act().color());
+      for (String key : new String[]{"thor", "dio", "jinwoo"}) {
+         assertSame(Source.REPERTOIRE, SinclairRepertoire.choose(null, true, key, null).source(), key);
+      }
+   }
+
+   @Test
    void humansAndOtherSinclairsGetTheFallback() {
       for (String key : new String[]{"human", "viltrumite", "sinclair", "unknown_hero"}) {
          SinclairRepertoire.Choice choice = SinclairRepertoire.choose(null, true, key, null);

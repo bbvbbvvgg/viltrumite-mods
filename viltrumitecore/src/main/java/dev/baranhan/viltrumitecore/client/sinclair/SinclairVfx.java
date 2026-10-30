@@ -233,11 +233,92 @@ public final class SinclairVfx {
          c.ring(at.add(0.0, 1.0, 0.0), 0.8 - t * 0.08, 16, t * 0.9, 0.05F, SinclairPalette.LAVENDER, 180);
       }
 
+      tether(c, a, state, t);
+
       // Smoke trail under the dress: slow drifting wisps.
       for (int i = 0; i < 5; i++) {
          double ph = c.seconds() * 1.3 + i * 1.7 + a.getId();
          double h = (ph % 1.0);
          c.dot(at.add(Math.sin(ph * 2.0) * 0.25, 0.25 - h * 0.35, Math.cos(ph * 1.7) * 0.25), 0.07F, SinclairPalette.SAVANNAH, (int) (90 * (1.0 - h)));
+      }
+   }
+
+   /**
+    * The two spectral threads from Sinclair to Savannah ({@link SpectralTether}): they wind in with her
+    * appearance, flare during a swap and fade with her bow or death. Hidden from enemies while he is veiled.
+    */
+   private static void tether(Ctx c, AssistantEntity a, int state, float t) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level == null || !(mc.level.getEntity(a.ownerEntityId()) instanceof Player owner) || !owner.isAlive()) {
+         return;
+      }
+
+      HeroPublicSnapshot snapshot = SinclairView.of(owner);
+      if (snapshot == null) {
+         return;
+      }
+
+      boolean ally = mc.player != null && (mc.player == owner || mc.player.isSpectator() || owner.isAlliedTo(mc.player));
+      if (SinclairView.flag(snapshot, SinclairFlags.VEIL) && !ally) {
+         return;
+      }
+
+      float k = switch (state) {
+         case AssistantEntity.APPEAR -> Mth.clamp((t - 4.0F) / 10.0F, 0.0F, 1.0F);
+         case AssistantEntity.LEAVE, AssistantEntity.DEATH -> 1.0F - Mth.clamp(t / 12.0F, 0.0F, 1.0F);
+         default -> 1.0F;
+      };
+      if (k <= 0.01F) {
+         return;
+      }
+
+      boolean swap = state == AssistantEntity.SWAP_OUT || state == AssistantEntity.SWAP_IN;
+      float partial = c.partialTick();
+      Vec3 feet = owner.getPosition(partial);
+      Vec3 base = pos(a, partial);
+      float ownerYaw = Mth.rotLerp(partial, owner.yBodyRotO, owner.yBodyRot);
+      float herYaw = Mth.rotLerp(partial, a.yBodyRotO, a.yBodyRot);
+      if (feet.distanceTo(base) > SpectralTether.MAX_LENGTH) {
+         return;
+      }
+
+      double seconds = c.seconds() + a.getId() * 0.29;
+      for (int strand = 0; strand < 2; strand++) {
+         Vec3 from = SpectralTether.end(feet, SpectralTether.SINCLAIR_CHEST, ownerYaw, strand);
+         // Savannah faces him: her right is his left, so the threads do not cross at her end.
+         Vec3 to = SpectralTether.end(base, SpectralTether.SAVANNAH_CHEST, herYaw, 1 - strand);
+         double len = from.distanceTo(to);
+         int n = SpectralTether.dots(len);
+         // APPEAR: the threads grow from him to her.
+         double reach = state == AssistantEntity.APPEAR ? k : 1.0;
+         int color = strand == 0 ? SinclairPalette.SAVANNAH : SinclairPalette.LAVENDER;
+         int alpha = (int) ((swap ? 230 : 150) * k);
+         for (int i = 0; i <= n; i++) {
+            double u = i / (double) n;
+            if (u > reach) {
+               break;
+            }
+
+            double flicker = 0.8 + 0.2 * Math.sin(seconds * 6.0 + i * 0.7 + strand * 2.0);
+            c.dot(SpectralTether.point(from, to, u, strand, seconds), swap ? 0.05F : 0.035F, color, (int) (alpha * flicker));
+         }
+
+         // Soft halo and three bright beads running from Sinclair to Savannah.
+         for (int i = 0; i <= n; i += 3) {
+            double u = i / (double) n;
+            if (u > reach) {
+               break;
+            }
+
+            c.dot(SpectralTether.point(from, to, u, strand, seconds), 0.11F, SinclairPalette.GHOST, (int) (28 * k));
+         }
+
+         for (int bead = 0; bead < 3; bead++) {
+            double u = (seconds * 0.45 + bead / 3.0 + strand * 0.17) % 1.0;
+            if (u <= reach) {
+               c.dot(SpectralTether.point(from, to, u, strand, seconds), 0.07F, SinclairPalette.IVORY, (int) (200 * k * Math.sin(Math.PI * u)));
+            }
+         }
       }
    }
 

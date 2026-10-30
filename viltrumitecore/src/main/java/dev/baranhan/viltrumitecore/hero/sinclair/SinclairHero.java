@@ -20,9 +20,7 @@ import dev.baranhan.viltrumitecore.hero.sinclair.ability.VexingBolt;
 import dev.baranhan.viltrumitecore.hero.sinclair.act.ActScene;
 import dev.baranhan.viltrumitecore.hero.sinclair.act.SinclairRepertoire;
 import dev.baranhan.viltrumitecore.hero.sinclair.entity.SinclairOwned;
-import dev.baranhan.viltrumitecore.hero.speech.HeroLineTrigger;
 import dev.baranhan.viltrumitecore.hero.speech.HeroLines;
-import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -183,9 +181,9 @@ public final class SinclairHero implements HeroDefinition {
          }
 
          switch (started) {
-            case SUMMON -> HeroSpeech.ability(player, SinclairAbilities.SPECTRAL_ASSISTANT);
-            case HEX_CAST -> HeroSpeech.ability(player, SinclairAbilities.RABBIT_HEX);
-            case SNAP -> HeroSpeech.ability(player, SinclairAbilities.MISDIRECTION);
+            case SUMMON -> SinclairLines.ability(player, SinclairAbilities.SPECTRAL_ASSISTANT);
+            case HEX_CAST -> SinclairLines.ability(player, SinclairAbilities.RABBIT_HEX);
+            case SNAP -> SinclairLines.ability(player, SinclairAbilities.MISDIRECTION);
             default -> {
             }
          }
@@ -196,6 +194,7 @@ public final class SinclairHero implements HeroDefinition {
    public void tick(ServerPlayer player) {
       SinclairState state = SinclairState.ensure(player);
       applyPassives(player);
+      SinclairLines.tick(player);
       if (state.boltCooldown > 0) {
          state.boltCooldown--;
       }
@@ -354,6 +353,7 @@ public final class SinclairHero implements HeroDefinition {
 
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
+      SinclairLines.clear(player);
       SinclairState state = SinclairState.of(player);
       if (state != null) {
          clearStage(player, state);
@@ -470,7 +470,7 @@ public final class SinclairHero implements HeroDefinition {
          state.tadaWindow = 0;
          SinclairCombat.daze(target);
          SinclairSounds.play(attacker.level(), target.position().add(0.0, target.getBbHeight(), 0.0), SinclairSounds.TADA, 1.0F, 1.0F);
-         HeroSpeech.trigger(attacker, HeroLineTrigger.event(SinclairLines.EVENT_TADA));
+         SinclairLines.say(attacker, SinclairLines.EVENT_TADA, false);
          return amount + SinclairRules.VEIL_STRIKE_BONUS;
       }
 

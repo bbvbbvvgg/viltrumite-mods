@@ -18,12 +18,26 @@ public final class SinclairRepertoire {
    public static final int LAVENDER = 0xC9B6FF;
    public static final int CRIMSON = 0x8E1B2C;
    public static final int IVORY = 0xF3EBDD;
+   /** Thor's lightning blue, DIO's gold-yellow, Jinwoo's shadow violet (the newer heroes' numbers). */
+   public static final int STORM = 0x7FD4FF;
+   public static final int WORLD = 0xFFD23F;
+   public static final int SHADOW = 0x6A3CFF;
    /** Parodies of known heroes by their public HeroId key. */
    private static final Map<String, ActShape> HEROES = Map.of(
       "homelander", ActShape.BEAM,
       "reinhard", ActShape.CUT,
       "ironman", ActShape.BARRAGE,
-      "regulus", ActShape.AEGIS
+      "regulus", ActShape.AEGIS,
+      // Thor: Mjolnir thrown, the thunderclap ring; DIO: a volley of knives; Jinwoo: the dagger's cut.
+      "thor", ActShape.NOVA,
+      "dio", ActShape.BARRAGE,
+      "jinwoo", ActShape.CUT
+   );
+   /** Hero numbers staged in that hero's colour instead of the shape's default. */
+   private static final Map<String, Integer> HERO_COLORS = Map.of(
+      "thor", STORM,
+      "dio", WORLD,
+      "jinwoo", SHADOW
    );
    /** Parodies of mobs by entity type id. */
    private static final Map<String, ActShape> MOBS = Map.ofEntries(
@@ -77,7 +91,13 @@ public final class SinclairRepertoire {
          return new Choice(fallback(), Source.FALLBACK);
       }
 
-      return new Choice(standard(shape), Source.REPERTOIRE);
+      Integer color = heroKey != null ? HERO_COLORS.get(heroKey) : null;
+      StageAct act = standard(shape);
+      if (color != null) {
+         act = new StageAct(shape, act.power(), act.reach(), color, act.nameKey());
+      }
+
+      return new Choice(act, Source.REPERTOIRE);
    }
 
    /** Sinclair's own staging of a shape at nominal power. */
