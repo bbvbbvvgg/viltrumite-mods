@@ -33,6 +33,7 @@
   "hud.viltrumitecore.regulus.seized": "Corazón en espasmo",
   "hud.viltrumitecore.regulus.reply": "Réplica",
   "hud.viltrumitecore.regulus.judging": "Juicio a: %s",
+  "message.viltrumitecore.regulus.ult_refused.cooldown": "Reino de uno se recarga: %s s",
   "subtitles.viltrumitecore.regulus_lion_on": "El tiempo se detiene alrededor de Regulus",
   "subtitles.viltrumitecore.regulus_lion_off": "El tiempo de Regulus se reanuda",
   "subtitles.viltrumitecore.regulus_lion_deny": "El Corazón de León se niega",

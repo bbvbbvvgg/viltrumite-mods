@@ -33,6 +33,7 @@
   "hud.viltrumitecore.regulus.seized": "心脏痉挛",
   "hud.viltrumitecore.regulus.reply": "答辩",
   "hud.viltrumitecore.regulus.judging": "审判：%s",
+  "message.viltrumitecore.regulus.ult_refused.cooldown": "一人之国冷却中：%s秒",
   "subtitles.viltrumitecore.regulus_lion_on": "雷古勒斯周围的时间停止",
   "subtitles.viltrumitecore.regulus_lion_off": "雷古勒斯的时间恢复",
   "subtitles.viltrumitecore.regulus_lion_deny": "狮子之心拒绝",

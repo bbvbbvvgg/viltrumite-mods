@@ -33,6 +33,7 @@
   "hud.viltrumitecore.regulus.seized": "Kalp kasıldı",
   "hud.viltrumitecore.regulus.reply": "Cevap",
   "hud.viltrumitecore.regulus.judging": "Yargılanan: %s",
+  "message.viltrumitecore.regulus.ult_refused.cooldown": "Tek Kişilik Krallık yenileniyor: %s sn",
   "subtitles.viltrumitecore.regulus_lion_on": "Regulus'un çevresinde zaman durur",
   "subtitles.viltrumitecore.regulus_lion_off": "Regulus'un zamanı yeniden akar",
   "subtitles.viltrumitecore.regulus_lion_deny": "Aslan Yüreği reddeder",

@@ -33,6 +33,7 @@
   "hud.viltrumitecore.regulus.seized": "Heart seized",
   "hud.viltrumitecore.regulus.reply": "Reply",
   "hud.viltrumitecore.regulus.judging": "Judging: %s",
+  "message.viltrumitecore.regulus.ult_refused.cooldown": "Kingdom of One is recharging: %s s",
   "subtitles.viltrumitecore.regulus_lion_on": "Time stops around Regulus",
   "subtitles.viltrumitecore.regulus_lion_off": "Regulus's time resumes",
   "subtitles.viltrumitecore.regulus_lion_deny": "The Lion's Heart refuses",
