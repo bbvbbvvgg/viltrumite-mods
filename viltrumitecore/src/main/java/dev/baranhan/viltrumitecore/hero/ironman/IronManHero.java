@@ -73,18 +73,22 @@ public class IronManHero implements HeroDefinition {
       return hulkBig(player) ? dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterRules.STEP_BONUS : 0.0;
    }
 
-   /** Same synced snapshot on both sides: prevents wall rubber-banding and stale camera size. */
+   /**
+    * Big Hulkbuster body, read from the synced public snapshot on BOTH sides (never the server's live
+    * layer): the client and the server must size the body from the same data, else they collide with
+    * different boxes and the server corrects the position (rubber-band at walls / steps, spec items 5
+    * and 9). The server snapshot is written at the end of its player tick (HeroRegistry.syncSnapshot),
+    * and that write resizes the body at once (HeroBodyTracker via onSyncedDataUpdated).
+    */
    static boolean hulkBig(Player player) {
-      if (!(player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer)) return false;
+      if (!(player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer)) {
+         return false;
+      }
+
       int phase = hulkPhase(player);
-      if (phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ACTIVE.ordinal()
-         || phase == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING.ordinal()) return true;
-      if (phase != dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING.ordinal()) return false;
       int[] extra = heroPlayer.getHeroSnapshot().extraCooldowns();
-      int scene = extra.length > dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE
-         ? extra[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] : 0;
-      return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.sceneAssemble(scene)
-         >= dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.TORSO_TICK;
+      int scene = extra.length > dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE ? extra[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] : 0;
+      return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.bigOnWire(phase, scene);
    }
 
    /** The giant's own thrusters keep it up during jumps, hover, the scene and the ultimate (no fly kick). */
@@ -924,7 +928,8 @@ public class IronManHero implements HeroDefinition {
       // controlTargetId = the entity being scanned (reticle), -1 otherwise.
       int scanTarget = state.scan.active() ? state.scan.targetId() : -1;
       net.minecraft.world.phys.Vec3 target;
-      if (suit.equipping() || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.DROPPING || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING) {
+      if (suit.equipping() || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.DROPPING || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING
+         || hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING) {
          target = state.equipSource;
       } else if (hulk.active()) {
          target = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCage.point(state);
@@ -952,7 +957,10 @@ public class IronManHero implements HeroDefinition {
       out[2] = veronica;
       out[3] = signature;
       out[8] = hulkCooldown;
-      if (hulk.busy()) {
+      if (hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.EXITING) {
+         out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.exitScene(
+            hulk.sceneTick(), kit.exitVeronica, kit.sceneYaw, kit.exitStepOut);
+      } else if (hulk.busy()) {
          out[dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.SCENE] = dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterWire.scene(hulk.sceneTick(), hulk.air() ? 1 : 2, kit.sceneYaw,
             hulk.phase() == dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer.Phase.ASSEMBLING ? hulk.ticks() : -1);
       }

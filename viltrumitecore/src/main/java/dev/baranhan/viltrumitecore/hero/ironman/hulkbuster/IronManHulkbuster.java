@@ -101,7 +101,9 @@ public final class IronManHulkbuster {
       }
 
       HulkbusterLayer.Event event = layer.tick();
-      if (layer.busy()) {
+      if (layer.phase() == HulkbusterLayer.Phase.EXITING) {
+         HulkbusterExit.tick(player, state, layer.ticks());
+      } else if (layer.busy()) {
          HulkbusterSuitUp.tick(player, state);
       }
 
@@ -120,8 +122,10 @@ public final class IronManHulkbuster {
          state.helmet.reset();
          HulkbusterSuitUp.finish(player, state);
       } else if (event == HulkbusterLayer.Event.EXITED) {
-         HulkbusterSounds.play(player, HulkbusterSounds.Cue.EXIT);
+         HulkbusterExit.finish(player, state);
       }
+
+      HulkbusterExit.shellTick(player, state);
 
       if (layer.broken()) {
          breakHulkbuster(player, state);
@@ -193,6 +197,10 @@ public final class IronManHulkbuster {
       HulkbusterCombat.stopAll(player, state, ReleaseReason.INTERRUPTED);
       HulkbusterCage.release(player, state, ReleaseReason.INTERRUPTED);
       HulkbusterSuitUp.end(player, state);
+      if (layer.phase() == HulkbusterLayer.Phase.EXITING) {
+         state.equipSource = null;
+      }
+
       layer.breakNow();
       HeroFx.flash(player, player.position().add(0.0, 1.6, 0.0));
       HeroFx.shockwave(player, player.position(), 0.8F, null, BREAK_FX_RADIUS);
@@ -222,7 +230,7 @@ public final class IronManHulkbuster {
       if (layer.exit()) {
          HulkbusterCombat.stopAll(player, state, ReleaseReason.NORMAL_END);
          HulkbusterCage.release(player, state, ReleaseReason.NORMAL_END);
-         HulkbusterSounds.play(player, HulkbusterSounds.Cue.EXIT);
+         HulkbusterExit.begin(player, state);
       }
 
       return true;

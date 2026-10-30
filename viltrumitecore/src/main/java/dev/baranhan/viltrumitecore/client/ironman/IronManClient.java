@@ -65,5 +65,7 @@ public final class IronManClient {
       dev.baranhan.viltrumitecore.client.ironman.mark.sig.SignatureVisuals.init();
       dev.baranhan.viltrumitecore.client.render.vfx.OutlineTargets.register(ScanHighlight::colorOf);
       PanelStyles.register(HeroId.IRON_MAN, new IronManPanelStyle());
+      dev.baranhan.viltrumitecore.client.hero.HeroLiftArms.register(HeroId.IRON_MAN,
+         dev.baranhan.viltrumitecore.client.ironman.hulkbuster.HulkbusterRenderer::drawLiftArms);
    }
 }

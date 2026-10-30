@@ -31,6 +31,17 @@ public final class HulkbusterSuitUp {
    /** Ground variant: the frame stands this far behind the player. */
    public static final double GROUND_BACK = 2.0;
    public static final int RISE_TICKS = 30;
+   /**
+    * Segments that Veronica drops from the sky onto the frame (fix spec item 2), as part indices of
+    * HulkbusterLayer.PART_LOCK: legs, arms, shoulders, helmet. The torso core comes in the capsule.
+    */
+   public static final int[] SEGMENTS = {0, 2, 3, 4};
+   /** A segment falls this high above its place, over these ticks, and is docked when its plates start to close. */
+   public static final double SEGMENT_HEIGHT = 30.0;
+   public static final int SEGMENT_FLY = 12;
+   public static final int SEGMENT_DOCK_LEAD = 6;
+   /** Assemble tick of the final reactor flash (after the helmet locked and the head lifted). */
+   public static final int REACTOR_FLASH = 48;
    public static final int ENTRY_TICKS = 10;
    private static final double CORRECT = 1.0;
 
@@ -70,7 +81,8 @@ public final class HulkbusterSuitUp {
       return fit != null ? fit : player.position();
    }
 
-   static Vec3 forward(float yaw) {
+   /** Flat unit facing of a yaw (scenes, exit, the empty shell). */
+   public static Vec3 forward(float yaw) {
       Vec3 f = Vec3.directionFromRotation(0.0F, yaw);
       return new Vec3(f.x, 0.0, f.z).normalize();
    }
@@ -111,6 +123,55 @@ public final class HulkbusterSuitUp {
       }
 
       return assemble < HulkbusterLayer.TORSO_TICK ? inside : frame;
+   }
+
+   /** Scene tick at which a part's segment reaches its place (its plates then close until PART_LOCK). */
+   public static int segmentArrive(int part, int dropTicks) {
+      return dropTicks + HulkbusterLayer.PART_LOCK[part] - SEGMENT_DOCK_LEAD;
+   }
+
+   /**
+    * Blocks a segment still hangs above its place at a scene tick: -1 before Veronica drops it (not drawn), then
+    * falling and braking (cubic) into its place, 0 once docked. Parts that are not segments are always 0.
+    */
+   public static double segmentDrop(int part, double sceneTick, int dropTicks) {
+      boolean segment = false;
+      for (int s : SEGMENTS) {
+         segment |= s == part;
+      }
+
+      if (!segment) {
+         return 0.0;
+      }
+
+      double arrive = segmentArrive(part, dropTicks);
+      double launch = arrive - SEGMENT_FLY;
+      if (sceneTick < launch) {
+         return -1.0;
+      }
+
+      if (sceneTick >= arrive) {
+         return 0.0;
+      }
+
+      double left = 1.0 - (sceneTick - launch) / SEGMENT_FLY;
+      return SEGMENT_HEIGHT * left * left * left;
+   }
+
+   /**
+    * Reactor brightness during the suit-up (assemble ticks): dark until the torso seals, warming while the plates
+    * lock, then the final flash at {@link #REACTOR_FLASH} (values above 1 are clamped by the renderer colour).
+    */
+   public static float reactor(double assemble) {
+      if (assemble < HulkbusterLayer.TORSO_TICK) {
+         return 0.15F;
+      }
+
+      if (assemble < REACTOR_FLASH - 2) {
+         return (float)(0.15 + 0.4 * (assemble - HulkbusterLayer.TORSO_TICK) / (REACTOR_FLASH - 2 - HulkbusterLayer.TORSO_TICK));
+      }
+
+      return (float)Mth.clamp(0.55 + 0.45 * (assemble - REACTOR_FLASH + 2) / 2.0, 0.55, 1.0);
    }
 
    private static Vec3 lerp(Vec3 a, Vec3 b, double t) {
@@ -176,6 +237,18 @@ public final class HulkbusterSuitUp {
 
       if (assemble == HulkbusterLayer.TORSO_TICK + 2) {
          HulkbusterSounds.play(player, HulkbusterSounds.Cue.REACTOR, frame.add(0.0, 2.4, 0.0), 1.0F);
+      }
+
+      if (assemble == REACTOR_FLASH) {
+         // The head is up, the reactor comes to full power: the final flash at the chest.
+         HeroFx.flash(player, frame.add(0.0, 2.25, 0.0).add(forward(kit.sceneYaw).scale(0.62)), 1.0F);
+      }
+
+      for (int part : SEGMENTS) {
+         if (tick == segmentArrive(part, drop) - SEGMENT_FLY) {
+            // Veronica lets the segment go: it whooshes down onto the frame.
+            HulkbusterSounds.play(player, HulkbusterSounds.Cue.SWING, frame.add(0.0, 6.0, 0.0), 0.75F + 0.04F * part);
+         }
       }
    }
 

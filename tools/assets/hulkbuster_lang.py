@@ -34,6 +34,13 @@ T = {
  "move.jet_ram": ("Jet ram", "Düsenramme", "Embestida a reacción", "Jet koçbaşı", "喷射冲撞"),
  "move.dash_strike": ("Dash strike", "Sprintschlag", "Golpe de impulso", "Atılma vuruşu", "冲刺重击"),
  "move.hero_landing": ("Hero landing", "Heldenlandung", "Aterrizaje heroico", "Kahraman inişi", "英雄落地"),
+ "check.inbound": ("VERONICA: MARK 48 INBOUND", "VERONICA: MARK 48 IM ANFLUG", "VERONICA: MARK 48 EN CAMINO", "VERONICA: MARK 48 GELİYOR", "VERONICA：MARK 48 投送中"),
+ "check.legs": ("LEG ACTUATORS ..... LOCKED", "BEINAKTUATOREN ..... VERRIEGELT", "ACTUADORES DE PIERNAS ..... FIJADOS", "BACAK AKTÜATÖRLERİ ..... KİLİTLİ", "腿部作动器 ..... 已锁定"),
+ "check.torso": ("TORSO SEAL ..... SEALED", "TORSODICHTUNG ..... DICHT", "SELLO DEL TORSO ..... SELLADO", "GÖVDE CONTASI ..... MÜHÜRLÜ", "躯干密封 ..... 已密封"),
+ "check.arms": ("ARM SERVOS ..... ONLINE", "ARMSERVOS ..... ONLINE", "SERVOS DE BRAZOS ..... EN LÍNEA", "KOL SERVOLARI ..... ÇEVRİMİÇİ", "手臂伺服 ..... 在线"),
+ "check.shoulders": ("SHOULDER PLATING ..... LOCKED", "SCHULTERPANZER ..... VERRIEGELT", "BLINDAJE DE HOMBROS ..... FIJADO", "OMUZ ZIRHI ..... KİLİTLİ", "肩部装甲 ..... 已锁定"),
+ "check.helmet": ("HELMET LINK ..... ONLINE", "HELMVERBINDUNG ..... ONLINE", "ENLACE DEL CASCO ..... EN LÍNEA", "KASK BAĞLANTISI ..... ÇEVRİMİÇİ", "头盔链路 ..... 在线"),
+ "check.ready": ("MARK 48: ALL SYSTEMS GO", "MARK 48: ALLE SYSTEME BEREIT", "MARK 48: TODOS LOS SISTEMAS LISTOS", "MARK 48: TÜM SİSTEMLER HAZIR", "MARK 48：全系统就绪"),
 }
 COL = {"en_us": 0, "de_de": 1, "tr_tr": 3, "zh_cn": 4}
 for f in sorted(os.listdir(LANG)):

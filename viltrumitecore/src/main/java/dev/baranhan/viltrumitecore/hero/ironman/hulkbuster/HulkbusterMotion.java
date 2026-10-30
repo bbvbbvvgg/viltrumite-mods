@@ -140,12 +140,16 @@ public final class HulkbusterMotion {
    /** Owner's playtest 2026-10-28: 0.36 (~0.6 block) could not clear one block; 0.46 rises ~1.4 blocks. */
    public static final double HEAVY_JUMP = 0.46;
 
-   /** Jump immediately when a jet charge cannot start on this press. */
+   /**
+    * Jump key on the ground: the heavy jump waits for the release only while a jet charge could still
+    * follow (a hold of JET_TAP ticks); without one (no energy, a move running) it jumps on the press.
+    * Worst-case prep of the heavy jump = JET_TAP - 1 ticks (spec item 4: at most 4).
+    */
    public static boolean jumpAtPress(boolean jetPossible) {
       return !jetPossible;
    }
 
-   /** Worst-case preparation for a heavy tap jump. */
+   /** Worst-case ticks from the press to the heavy jump (the longest tap that is still a tap). */
    public static int worstJumpPrepTicks() {
       return HulkbusterRules.JET_TAP - 1;
    }

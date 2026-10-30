@@ -175,10 +175,12 @@ public final class HulkbusterMotionClient {
          spaceTicks = 0;
          pressFromGround = player.onGround();
          if (pressFromGround && HulkbusterMotion.jumpAtPress(jetPossible(player, snapshot)) && !busy(snapshot) && HeroHeldTargets.holder(player) == null) {
+            // No jet charge can follow this press: nothing to tell a tap from a hold, jump now (spec item 4: prep <= 4 ticks).
             heavyJump(player);
             pressFromGround = false;
             return;
          }
+
          if (!pressFromGround && !hovering && !diving && hoverAllowed(player, snapshot)) {
             hovering = true;
             hoverTicks = 0;
@@ -231,6 +233,7 @@ public final class HulkbusterMotionClient {
       player.hasImpulse = true;
    }
 
+   /** The jet charge could start from this press (same gate as the JET_TAP tick below). */
    private static boolean jetPossible(LocalPlayer player, HeroPublicSnapshot snapshot) {
       return player.onGround() && !busy(snapshot) && energy(snapshot, HulkbusterRules.JET_COST);
    }

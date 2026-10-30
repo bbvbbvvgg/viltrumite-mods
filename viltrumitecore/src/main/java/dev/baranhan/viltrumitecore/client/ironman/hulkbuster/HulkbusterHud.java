@@ -106,12 +106,65 @@ public final class HulkbusterHud {
       return y + 16;
    }
 
+   /** Suit-up system check (fix spec item 2): one line per docked part, typed out on the owner's helmet HUD. */
+   static final String CHECK = "hud.viltrumitecore.ironman.hulkbuster.check.";
+   static final String[] CHECK_LINES = {"inbound", "legs", "torso", "arms", "shoulders", "helmet", "ready"};
+   static final int CHARS_PER_TICK = 3;
+
+   /** Scene tick at which a check line starts typing: the delivery, each plate lock, the final reactor flash. */
+   static int checkStart(int line, int dropTicks) {
+      if (line == 0) {
+         return 0;
+      }
+
+      if (line <= HulkbusterLayer.PARTS) {
+         return dropTicks + HulkbusterLayer.PART_LOCK[line - 1];
+      }
+
+      return dropTicks + dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterSuitUp.REACTOR_FLASH;
+   }
+
+   /** Characters of a line shown at a scene tick (0 = not yet). */
+   static int checkChars(int line, double sceneTick, int dropTicks, int length) {
+      double since = sceneTick - checkStart(line, dropTicks);
+      return since < 0.0 ? 0 : Math.min(length, 1 + (int)(since * CHARS_PER_TICK));
+   }
+
+   private static void systemCheck(GuiGraphics graphics, Font font, HeroPublicSnapshot snapshot, float partialTick, int tickCount) {
+      HulkbusterLayer.Phase phase = HulkbusterView.phase(snapshot);
+      if (!HulkbusterView.scene(phase)) {
+         return;
+      }
+
+      int drop = HulkbusterView.sceneAir(snapshot) ? HulkbusterLayer.DROP_TICKS_AIR : HulkbusterLayer.DROP_TICKS_GROUND;
+      double tick = (phase == HulkbusterLayer.Phase.ASSEMBLING ? drop : 0) + snapshot.actionElapsed() + partialTick;
+      int x = 10;
+      int y = graphics.guiHeight() / 2 - 44;
+      for (int i = 0; i < CHECK_LINES.length; i++) {
+         String text = "> " + Component.translatable(CHECK + CHECK_LINES[i]).getString();
+         int shown = checkChars(i, tick, drop, text.length());
+         if (shown <= 0) {
+            break;
+         }
+
+         boolean last = i == CHECK_LINES.length - 1;
+         int colour = last ? (tickCount / 3 % 2 == 0 ? 0xFFFFFF : 0x9FE6FF) : shown < text.length() ? 0xE0F6FF : 0x7FD8FF;
+         graphics.drawString(font, text.substring(0, shown), x, y, colour, true);
+         y += 10;
+      }
+   }
+
    /** The victim's prompt: whoever is in a Hulkbuster's fist sees it, whatever the hero. */
    @SubscribeEvent
    public static void onRenderGui(RenderGuiEvent.Post event) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.options.hideGui || mc.player == null) {
          return;
+      }
+
+      HeroPublicSnapshot own = IronManView.of(mc.player);
+      if (own != null) {
+         systemCheck(event.getGuiGraphics(), mc.font, own, event.getPartialTick(), mc.player.tickCount);
       }
 
       Player holder = HeroHeldTargets.holder(mc.player);

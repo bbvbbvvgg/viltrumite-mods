@@ -197,7 +197,8 @@ public final class HulkbusterVfx {
          seen.add(player.getId());
          Track track = TRACKS.computeIfAbsent(player.getId(), id -> new Track());
          HulkbusterLayer.Phase phase = HulkbusterView.phase(snapshot);
-         if (!HulkbusterView.big(phase)) {
+         if (phase != HulkbusterLayer.Phase.ACTIVE) {
+            // The exit's steam and the empty shell are HulkbusterShells' (anchored on the frozen shell, not on Tony).
             track.stride = Integer.MIN_VALUE;
             continue;
          }
@@ -752,6 +753,70 @@ public final class HulkbusterVfx {
       }
 
       MOTES.add(mote);
+   }
+
+   // ---------------------------------------------------------------- scene helpers (suit-up, exit, empty shell)
+
+   /** Hydraulic vent: a jet of pale steam from a joint along {@code dir} (exit 0–0.4 s, plate docking). */
+   public static void steam(Vec3 at, Vec3 dir, float power) {
+      int n = Math.max(2, Math.round(8 * power));
+      for (int i = 0; i < n; i++) {
+         Vec3 v = dir.scale((0.06 + RANDOM.nextDouble() * 0.08) * power).add(gauss(0.02), 0.01 + RANDOM.nextDouble() * 0.02, gauss(0.02));
+         add(new Mote(at, v, 14 + RANDOM.nextInt(12), 0.07F, 0.3F, mix(0xDCE3E8, 0xFFFFFF, RANDOM.nextFloat()), 140, false, -0.002F, 0.9F));
+      }
+   }
+
+   /** Docking sparks: a short spray of hot sparks and a flash where a plate locks. */
+   public static void dockSparks(Vec3 at, float power) {
+      for (int i = 0; i < Math.round(22 * power); i++) {
+         Vec3 v = new Vec3(gauss(0.14), 0.04 + RANDOM.nextDouble() * 0.14, gauss(0.14)).scale(power);
+         add(new Mote(at, v, 6 + RANDOM.nextInt(10), 0.035F, 0.01F, mix(0xFFE9A8, 0xFFFFFF, RANDOM.nextFloat()), 255, true, 0.035F, 0.92F));
+      }
+
+      glowBurst(at, 0.22 * power, 0xFFFFFF, 0xFFC56B, Math.round(12 * power));
+   }
+
+   /** Reactor flash: a cyan-white burst and ring at the chest (end of the suit-up). */
+   public static void reactorFlash(Vec3 at) {
+      glowBurst(at, 0.6, 0xFFFFFF, 0x9FE6FF, 40);
+      ring(at, 0.15, 0.22, 36, 8, 0xBFF2FF, 210, true);
+   }
+
+   /** A thruster plume from a nozzle (the empty shell's modules flying back to Veronica). */
+   public static void exhaust(Vec3 nozzle, Vec3 dir, float power) {
+      ClientLevel level = Minecraft.getInstance().level;
+      if (level != null) {
+         plume(level, nozzle, dir, power);
+      }
+   }
+
+   /** Plates crumbling off a shell: grey plate chunks with sparks, and dust where they land. */
+   public static void plates(Vec3 at, double radius, float power) {
+      for (int i = 0; i < Math.round(26 * power); i++) {
+         Vec3 p = at.add(gauss(radius * 0.5), gauss(radius * 0.6), gauss(radius * 0.5));
+         Vec3 v = new Vec3(gauss(0.08), 0.05 + RANDOM.nextDouble() * 0.12, gauss(0.08));
+         add(new Mote(p, v, 26 + RANDOM.nextInt(16), 0.09F + 0.06F * RANDOM.nextFloat(), 0.07F, mix(0x5E1E1E, 0xA9A9B0, RANDOM.nextFloat()), 255,
+            false, 0.04F, 0.97F));
+      }
+
+      for (int i = 0; i < Math.round(14 * power); i++) {
+         Vec3 v = new Vec3(gauss(0.12), 0.03 + RANDOM.nextDouble() * 0.1, gauss(0.12));
+         add(new Mote(at.add(gauss(radius * 0.4), gauss(radius * 0.4), gauss(radius * 0.4)), v, 6 + RANDOM.nextInt(8), 0.035F, 0.01F, 0xFFD27A, 255,
+            true, 0.035F, 0.92F));
+      }
+   }
+
+   /** Ground dust ring (a kneeling knee, crumbled plates hitting the floor). */
+   public static void dust(Vec3 foot, float power) {
+      ClientLevel level = Minecraft.getInstance().level;
+      int colour = level == null ? 0xA08C6E : colourUnder(level, foot);
+      ring(foot.add(0.0, 0.04, 0.0), 0.4, 0.12 * power, 30, 12, shade(colour, 1.1F), 150, false);
+      for (int i = 0; i < Math.round(18 * power); i++) {
+         double a = RANDOM.nextDouble() * Math.PI * 2.0;
+         Vec3 v = new Vec3(Math.cos(a) * 0.08 * power, 0.02 + RANDOM.nextDouble() * 0.03, Math.sin(a) * 0.08 * power);
+         add(new Mote(foot.add(0.0, 0.05, 0.0), v, 20 + RANDOM.nextInt(14), 0.08F, 0.25F, shade(colour, 0.8F + 0.4F * RANDOM.nextFloat()), 170, false,
+            -0.0015F, 0.9F));
+      }
    }
 
    /** Live motes (tests, debug). */

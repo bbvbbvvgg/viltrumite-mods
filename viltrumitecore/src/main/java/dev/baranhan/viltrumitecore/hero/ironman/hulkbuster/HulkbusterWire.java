@@ -68,6 +68,22 @@ public final class HulkbusterWire {
       return Math.max(0, Math.min(255, tick)) | (kind & 3) << 8 | yawByte << 10 | Math.max(0, Math.min(127, assemble + 1)) << 18;
    }
 
+   /**
+    * Exit word (HulkbusterExit): the exit tick, kind 1 = Veronica takes the empty shell / 2 = it crumbles, the frozen
+    * facing, and in the assemble bits 1 when Tony steps out forward (0 = in place).
+    */
+   public static int exitScene(int tick, boolean veronica, float yaw, boolean stepOut) {
+      return scene(tick, veronica ? 1 : 2, yaw, stepOut ? 0 : -1);
+   }
+
+   public static boolean exitVeronica(int scene) {
+      return sceneKind(scene) == 1;
+   }
+
+   public static boolean exitStepOut(int scene) {
+      return sceneAssemble(scene) == 0;
+   }
+
    public static int sceneTick(int scene) {
       return scene & 0xFF;
    }
