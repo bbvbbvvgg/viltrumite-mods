@@ -10,6 +10,14 @@ public final class HeroSpeechRules {
    /** Enter/exit fades on top of the spoken time. */
    public static final int FADE_GRACE_TICKS = 20;
    public static final String SPEAKER_KEY_PREFIX = "subtitle.viltrumitecore.speaker.";
+   /** An ability line is on screen at least this long before another ability line may replace it. */
+   public static final int MIN_SHOWN_BEFORE_REPLACE = 20;
+   /** Low-health remark threshold: the hit that takes the speaker to this share of max health or below. */
+   public static final float LOW_HEALTH_FRACTION = 0.3F;
+   /** A non-player victim is worth a kill line from this max health on (hostile mobs) ... */
+   public static final float NOTABLE_HOSTILE_HEALTH = 20.0F;
+   /** ... or from this max health on (any big creature). */
+   public static final float NOTABLE_ANY_HEALTH = 40.0F;
 
    public enum Decision {
       PLAY,
@@ -17,7 +25,13 @@ public final class HeroSpeechRules {
       REPLACE,
       ALREADY_ACTIVE,
       COOLDOWN,
-      OUTRANKED;
+      OUTRANKED,
+      /**
+       * Another line is still being read and this one may not cut it: an ambient remark (kill,
+       * low health) never interrupts, an ability line waits {@link #MIN_SHOWN_BEFORE_REPLACE} ticks.
+       * Skipped, not queued (a late combat quip is worse than none).
+       */
+      BUSY;
 
       public boolean starts() {
          return this == PLAY || this == REPLACE;
@@ -48,6 +62,47 @@ public final class HeroSpeechRules {
       }
 
       return !force && now < cooldownUntil ? Decision.COOLDOWN : Decision.PLAY;
+   }
+
+   /**
+    * {@link #decide(String, HeroLine.Priority, String, HeroLine.Priority, long, long, boolean)} with
+    * the active line's age: a higher rank still interrupts at once and an ultimate may hand over to
+    * the next ultimate phase, but an {@link HeroLine.Priority#AMBIENT} line never interrupts and an
+    * ability line replaces another ability line only after {@link #MIN_SHOWN_BEFORE_REPLACE} ticks
+    * (no flicker of two quips in one second). {@code activeAgeTicks} is ignored when nothing plays.
+    */
+   public static Decision decide(@Nullable String activeLineId, @Nullable HeroLine.Priority activePriority, long activeAgeTicks, String lineId,
+      HeroLine.Priority priority, long now, long cooldownUntil, boolean force) {
+      Decision legacy = decide(activeLineId, activePriority, lineId, priority, now, cooldownUntil, force);
+      if (force || activeLineId == null || legacy != Decision.REPLACE) {
+         return legacy;
+      }
+
+      if (priority == HeroLine.Priority.AMBIENT) {
+         return Decision.BUSY;
+      }
+
+      if (priority == HeroLine.Priority.ABILITY && activePriority == HeroLine.Priority.ABILITY && activeAgeTicks < MIN_SHOWN_BEFORE_REPLACE) {
+         return Decision.BUSY;
+      }
+
+      return Decision.REPLACE;
+   }
+
+   /** Whether a kill is worth a remark: another player, a real hostile, or any big creature (never chickens or villagers). */
+   public static boolean notableKill(boolean victimIsPlayer, boolean victimHostile, float victimMaxHealth) {
+      return victimIsPlayer || victimHostile && victimMaxHealth >= NOTABLE_HOSTILE_HEALTH || victimMaxHealth >= NOTABLE_ANY_HEALTH;
+   }
+
+   /** Whether a survived hit took the speaker from above the low-health threshold to at or below it. */
+   public static boolean crossedLowHealth(float healthBefore, float damage, float maxHealth) {
+      if (!(maxHealth > 0.0F) || !(damage > 0.0F)) {
+         return false;
+      }
+
+      float after = healthBefore - damage;
+      float threshold = maxHealth * LOW_HEALTH_FRACTION;
+      return healthBefore > threshold && after > 0.0F && after <= threshold;
    }
 
    /** Ticks the server treats the line as speaking: the explicit duration, else a per-fragment estimate, plus the fades. */

@@ -18,9 +18,9 @@
   "ability.viltrumitecore.regulus_greeds_touch.desc": "<grey>Cooldown: <lime>—\n<grey>Type: <yellow>Combo (LMB, empty hand)\n\n<grey>A bored touch in stopped time: backhand, palm, flick.\n<grey>Up to 3 targets in front of you; in Lion the flick\n<grey>leaves a rupture inside the body (8 after 0.5 s).\n\n<blue>Regulus",
   "ability.viltrumitecore.regulus_little_king.name": "<gold>Little King",
   "ability.viltrumitecore.regulus_little_king.desc": "<grey>Cooldown: <lime>—\n<grey>Type: <yellow>Heart key (MMB)\n\n<grey>Place your heart in a living being within 6 blocks\n<grey>(up to 4 subjects). The heart lives in one host and moves\n<grey>on every 20 s; while it lives the Lion has no time limit.\n<grey>Press again on a subject to free it; sneak to free all.\n\n<blue>Regulus",
-  "subtitle.viltrumitecore.regulus.ult_accuse": "You have been infringing on my rights all this time. Do you even understand that?",
-  "subtitle.viltrumitecore.regulus.ult_sentence": "I am satisfied with what I have. That is why I will not let you take a grain of it.",
-  "subtitle.viltrumitecore.regulus.ult_flick": "That is all. A single individual, complete in himself.",
+  "subtitle.viltrumitecore.regulus.ult_accuse": "You trampled on my rights. Do you see that?",
+  "subtitle.viltrumitecore.regulus.ult_sentence": "I'm content with what I have. Not one grain is yours.",
+  "subtitle.viltrumitecore.regulus.ult_flick": "That is all. Complete in myself.",
   "subtitle.viltrumitecore.regulus.lion": "My time is mine alone.",
   "subtitle.viltrumitecore.regulus.seizure": "...My heart. Not now.",
   "subtitle.viltrumitecore.regulus.king": "Be grateful. You may carry my heart.",
@@ -66,5 +66,12 @@
   "subtitles.viltrumitecore.regulus_ult_wave": "Stopped grains strike",
   "subtitles.viltrumitecore.regulus_ult_flick": "One flick of a finger",
   "subtitles.viltrumitecore.regulus_ult_resolve": "The judgement is over",
-  "subtitles.viltrumitecore.regulus_step": "Regulus's footsteps"
+  "subtitles.viltrumitecore.regulus_step": "Regulus's footsteps",
+  "subtitle.viltrumitecore.regulus.sand": "Even the sand is mine.",
+  "subtitle.viltrumitecore.regulus.sever": "You breathe my air without asking.",
+  "subtitle.viltrumitecore.regulus.trample": "Do not stand in my way.",
+  "subtitle.viltrumitecore.regulus.kill_a": "You gave up your right to live.",
+  "subtitle.viltrumitecore.regulus.kill_b": "What a waste of my time.",
+  "subtitle.viltrumitecore.regulus.low_health": "You wounded me?! That violates my rights!",
+  "subtitle.viltrumitecore.regulus.enter": "Regulus Corneas, Archbishop of Greed."
 }

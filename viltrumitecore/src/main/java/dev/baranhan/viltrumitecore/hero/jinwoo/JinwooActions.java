@@ -61,6 +61,12 @@ public final class JinwooActions {
       state.cool(ability);
       state.comboStep = -1;
       state.comboQueued = false;
+      // The ability's line (JinwooLines), only once the server accepted it. Extraction and the ultimate
+      // speak inside their own start; the summon key speaks only for a real summon, not a recall.
+      if (ability != JinwooAbility.EXTRACTION && ability != JinwooAbility.MONARCH
+         && (ability != JinwooAbility.SUMMON || state.move == JinwooMove.SUMMON)) {
+         dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, ability.id());
+      }
    }
 
    private static boolean summon(ServerPlayer player, JinwooState state) {
