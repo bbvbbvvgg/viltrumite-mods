@@ -31,6 +31,7 @@ public final class StoppedSand {
       }
 
       state.startMove(RegulusMove.SAND);
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, RegulusAbilities.STOPPED_SAND);
       state.castMaterial = material;
       state.sandCooldown = RegulusRules.SAND_COOLDOWN;
       RegulusSounds.play(player.level(), player.position().add(0.0, 0.4, 0.0), RegulusSounds.SAND_SCOOP, 0.8F, 0.95F + player.getRandom().nextFloat() * 0.1F);
