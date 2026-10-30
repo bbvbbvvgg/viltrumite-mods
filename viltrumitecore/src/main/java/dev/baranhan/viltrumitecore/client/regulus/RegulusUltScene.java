@@ -1,17 +1,22 @@
 package dev.baranhan.viltrumitecore.client.regulus;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.baranhan.viltrumitecore.client.render.vfx.SoundDuck;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.regulus.RegulusMove;
 import dev.baranhan.viltrumitecore.hero.regulus.RegulusRules;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -25,6 +30,7 @@ import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ViewportEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * «Королевство одного» on the client (spec §5.8): two directed cameras through a client-only marker
@@ -54,6 +60,9 @@ public final class RegulusUltScene {
    private static float letterboxO;
    private static float lean;
    private static float kick;
+   private static final Object DUCK = new Object();
+   private static final Set<ResourceLocation> OWN_SOUNDS = new HashSet<>();
+   private static float ducked = 1.0F;
 
    enum Role {
       CASTER,
@@ -190,6 +199,7 @@ public final class RegulusUltScene {
       letterboxO = letterbox;
       letterbox += ((active != null ? 1.0F : 0.0F) - letterbox) * 0.25F;
       kick *= 0.8F;
+      duck(active != null && role != Role.OBSERVER ? 0.3F : active != null ? 0.6F : 1.0F);
       lean = active == null || role != Role.OBSERVER ? 0.0F : envelope(active.ticks);
       Entity casterEntity = active == null ? null : level.getEntity(active.caster);
       boolean wantCamera = active != null && casterEntity != null && me.isAlive() && !me.isRemoved()
@@ -444,9 +454,41 @@ public final class RegulusUltScene {
       }
    }
 
+   /** Mutes the world under the judgement (his own sounds stay); 1 releases. */
+   private static void duck(float target) {
+      SoundDuck duck = SoundDuck.INSTANCE;
+      if (target >= 1.0F) {
+         if (duck.holds(DUCK)) {
+            duck.release(DUCK, 16);
+         }
+
+         ducked = 1.0F;
+         return;
+      }
+
+      if (!duck.holds(DUCK) || ducked != target) {
+         duck.duck(DUCK, SoundSource.MASTER, target, 8, ownSounds());
+         ducked = target;
+      }
+   }
+
+   private static Set<ResourceLocation> ownSounds() {
+      if (OWN_SOUNDS.isEmpty()) {
+         for (ResourceLocation id : ForgeRegistries.SOUND_EVENTS.getKeys()) {
+            if (id.getNamespace().equals("viltrumitecore") && id.getPath().startsWith("regulus.")) {
+               OWN_SOUNDS.add(id);
+            }
+         }
+      }
+
+      return OWN_SOUNDS;
+   }
+
    static void clear() {
       SCENES.clear();
       ENDED.clear();
+      SoundDuck.INSTANCE.release(DUCK, 0);
+      ducked = 1.0F;
       releaseCamera(Minecraft.getInstance());
       letterbox = letterboxO = lean = kick = 0.0F;
    }
