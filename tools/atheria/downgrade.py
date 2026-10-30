@@ -622,7 +622,7 @@ def convert_region(args):
     global S, STATS
     if S is None:
         S = Schema(reports)
-        S.biomes = set('minecraft:' + b for b in open(os.path.join(reports, '..', '..', '..', 'biomes_1.20.1.txt')).read().split())
+        S.biomes = set('minecraft:' + b for b in open(os.path.join(reports, 'biomes.txt')).read().split())
     STATS = collections.Counter()
     out = []
     for i, ts, raw in nbt.read_region(src):
