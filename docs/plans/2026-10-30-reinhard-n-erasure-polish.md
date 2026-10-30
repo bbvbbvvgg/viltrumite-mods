@@ -38,3 +38,25 @@ Mechanisms (extend, no new engine):
 - Glass: pure `ErasureGlass` (seeded crack graph + shards), drawn after the existing `dash_impact` chain via the existing `GameRendererDashMixin` seam; shader keeps only full-screen grading/void/rebuild distortion.
 - Dissolve: real-model geometry captured from the entity renderer (same idea as `GuiEntitySilhouette`), replayed in world space.
 - Sound: existing crack/inhale kept; new original procedural cues for tension, shatter, dissolve and rebuild.
+
+## Status and remaining work (resumed at 2415714d)
+
+Done: absolute world freeze (server + client), view lock for everyone, one 205-tick scene clock
+(`ReinhardRules`), grading curves (`ErasureUniforms`), pure glass model (`ErasureGlass`) and its
+renderer, pure dissolve curves (`ErasureDissolve`) and the real-model dissolve renderer.
+
+Remaining, in order:
+1. `ErasureScene` on the one clock: glass seeded per scene, origin = target on screen; sound cues
+   on the beats; capture of the level projection/view; glass + dissolve drawn after the post chain
+   (`GameRendererDashMixin` renderLevel TAIL); target hidden from the level pass while the scene
+   owns it; scene-time camera shake (camera angles only, never the player's view); cleanup of the
+   frame copy and cells on every end reason.
+2. `CinematicHud` (client/hero): one gate that cancels `RenderGuiEvent.Pre` (vanilla, Forge and
+   hero HUDs, ability bar) and hands, and draws only hero subtitles + scene layers. Predicate-based:
+   nothing to restore, so cancel/death/logout/dimension change cannot leave the HUD hidden.
+3. `dash_impact.fsh`: the old 6-cell Voronoi crack/shard code is replaced by grading only
+   (tension drain, rupture flash + chromatic split, void drain, rebuild shock).
+4. Sounds: original procedural cues (tension build, shatter, dissolve shimmer, rebuild + final
+   impact) through the `.ogg.b64` pipeline, subtitles in every locale.
+5. Tests (timeline beats, cue order, catch-up, cleanup, glass/dissolve curves), `./gradlew build`,
+   runtime check (single player + dedicated server with two clients), PR.
