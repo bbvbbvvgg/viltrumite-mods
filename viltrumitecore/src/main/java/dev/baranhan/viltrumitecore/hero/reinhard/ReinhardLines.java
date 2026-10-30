@@ -17,17 +17,57 @@ import dev.baranhan.viltrumitecore.hero.speech.HeroLines;
  * Each fragment becomes its own page and is timed by its length.
  */
 public final class ReinhardLines {
-   /** The ultimate: World Cut. Spoken when the cut starts; the cast is never cancelled once started, so neither is the line. */
+   /** Players following the ult: the cut is seen up to 320 blocks along a 200-block line. */
+   static final double ULT_RANGE = 160.0;
+   /** Event fired when a World Cut / Diagonal World Cut blasts (WorldCut.Environment.blast). */
+   public static final String BLAST_EVENT = "reinhard:world_cut_blast";
+
+   /**
+    * The ultimate: World Cut. Two pages over the swing and the silence, timed to end on the blast
+    * (before: one three-row page with an automatic, longer duration that ran over the blast line).
+    * The cast is never cancelled once started, so neither is the line.
+    */
    public static final HeroLine WORLD_CUT = HeroLine.builder(ReinhardAbility.WORLD_CUT.id())
-      .text("subtitle.viltrumitecore.reinhard.world_cut")
+      .textSeries("subtitle.viltrumitecore.reinhard.world_cut.", 2)
       .priority(HeroLine.Priority.ULTIMATE)
-      .range(48.0)
+      .duration(ReinhardRules.WORLD_CUT_BLAST)
+      .range(ULT_RANGE)
+      .build();
+
+   /** Diagonal World Cut: same timeline (swing + silence, then the blast). */
+   public static final HeroLine DIAGONAL_WORLD_CUT = HeroLine.builder(ReinhardAbility.DIAGONAL_WORLD_CUT.id())
+      .textSeries("subtitle.viltrumitecore.reinhard.diagonal_cut.", 2)
+      .priority(HeroLine.Priority.ULTIMATE)
+      .duration(ReinhardRules.WORLD_CUT_BLAST)
+      .range(ULT_RANGE)
+      .build();
+
+   /** The blast itself: one short page while the wave runs (equal priority: it waits for the first line, never overlaps). */
+   public static final HeroLine BLAST = HeroLine.builder(BLAST_EVENT)
+      .text("subtitle.viltrumitecore.reinhard.world_cut.blast")
+      .priority(HeroLine.Priority.ULTIMATE)
+      .duration(ReinhardRules.WORLD_CUT_WAVE_TICKS + 20)
+      .cooldown(ReinhardRules.WORLD_CUT_WAVE_TICKS)
+      .range(ULT_RANGE)
       .build();
 
    public static final HeroLines LINES = HeroLines.builder()
       .onAbility(ReinhardAbility.WORLD_CUT.id(), WORLD_CUT)
+      .onAbility(ReinhardAbility.DIAGONAL_WORLD_CUT.id(), DIAGONAL_WORLD_CUT)
+      .onEvent(BLAST_EVENT, BLAST)
       .build();
 
    private ReinhardLines() {
+   }
+
+   /**
+    * The cut blasted: its caster speaks the blast line if still online, alive, in that level and
+    * still Reinhard (the cast is detached and may outlive all of that).
+    */
+   public static void blast(net.minecraft.server.level.ServerLevel level, java.util.UUID caster) {
+      net.minecraft.server.level.ServerPlayer player = level.getServer().getPlayerList().getPlayer(caster);
+      if (player != null && player.isAlive() && player.serverLevel() == level) {
+         dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.trigger(player, dev.baranhan.viltrumitecore.hero.speech.HeroLineTrigger.event(BLAST_EVENT));
+      }
    }
 }

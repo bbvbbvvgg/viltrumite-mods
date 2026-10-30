@@ -115,6 +115,7 @@ public final class WorldCut implements AbilityHandler {
       }
       public void blast() {
          send(WorldCutS2CPacket.BLAST);
+         ReinhardLines.blast(level, casterId);
          // Item 6: every column from its own top (plants, snow, bumps, trees) at the moment of the blast.
          carve=new WorldCutCarve(shape,surface,level.getMinBuildHeight(),level.getMaxBuildHeight(),
             WorldCutSurface.tops(heights(level,Heightmap.Types.WORLD_SURFACE),ReinhardRules.CUT_ABOVE),level.getWorldBorder()::isWithinBounds);

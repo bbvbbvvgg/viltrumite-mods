@@ -39,6 +39,7 @@ public final class DiagonalWorldCut implements AbilityHandler {
       public void blast() {
          carve=new WorldCutCarve(shape.wave(level.getMinBuildHeight(),level.getMaxBuildHeight()),null,shape.origin(),shape.forward());
          CarveJobs.submit(level,carve);send(1);
+         ReinhardLines.blast(level,caster);
       }
       public boolean pendingWork() { return carve!=null&&CarveJobs.pending(level,carve); }
       public int carveFront() { return carve==null?0:carve.frontAlong(); }
