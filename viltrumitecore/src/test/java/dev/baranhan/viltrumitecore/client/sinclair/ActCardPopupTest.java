@@ -20,6 +20,17 @@ class ActCardPopupTest {
    }
 
    @Test
+   void waitsForTheCopyCinematic() {
+      // #91 + #92: the popup never opens over the copy cinematic, and its clock is paused through the capture
+      assertFalse(ActCardPopup.cardOut(SinclairMove.COPY, SinclairRules.ULT_CARD_TICK + 5, false, true));
+      assertFalse(ActCardPopup.cardOut(SinclairMove.COPY, 0, true, true));
+      assertTrue(ActCardPopup.waiting(SinclairMove.CAPTURE));
+      assertTrue(ActCardPopup.waiting(SinclairMove.COPY));
+      assertFalse(ActCardPopup.waiting(null), "the window: the card runs its full hold");
+      assertFalse(ActCardPopup.waiting(SinclairMove.ACT_BEAM));
+   }
+
+   @Test
    void holdsAtLeastSixSecondsFullyVisible() {
       assertEquals(0.0F, ActCardPopup.alpha(-1.0F));
       assertEquals(0.5F, ActCardPopup.alpha(ActCardPopup.FADE_IN / 2.0F), 1.0E-4F);

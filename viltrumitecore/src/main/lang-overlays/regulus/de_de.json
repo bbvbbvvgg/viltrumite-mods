@@ -33,6 +33,7 @@
   "hud.viltrumitecore.regulus.seized": "Herz verkrampft",
   "hud.viltrumitecore.regulus.reply": "Antwort",
   "hud.viltrumitecore.regulus.judging": "Urteil über: %s",
+  "message.viltrumitecore.regulus.ult_refused.cooldown": "Königreich des Einen lädt nach: %s s",
   "subtitles.viltrumitecore.regulus_lion_on": "Die Zeit um Regulus steht still",
   "subtitles.viltrumitecore.regulus_lion_off": "Regulus' Zeit läuft wieder",
   "subtitles.viltrumitecore.regulus_lion_deny": "Das Löwenherz verweigert",

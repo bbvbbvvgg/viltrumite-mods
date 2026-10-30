@@ -33,6 +33,7 @@
   "hud.viltrumitecore.regulus.seized": "Сердце схвачено",
   "hud.viltrumitecore.regulus.reply": "Ответ",
   "hud.viltrumitecore.regulus.judging": "Суд над: %s",
+  "message.viltrumitecore.regulus.ult_refused.cooldown": "Королевство одного перезаряжается: %s с",
   "subtitles.viltrumitecore.regulus_lion_on": "Время вокруг Регулуса останавливается",
   "subtitles.viltrumitecore.regulus_lion_off": "Время Регулуса снова идёт",
   "subtitles.viltrumitecore.regulus_lion_deny": "Сердце льва не отзывается",

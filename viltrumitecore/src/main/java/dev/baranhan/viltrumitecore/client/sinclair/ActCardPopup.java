@@ -27,7 +27,9 @@ import net.minecraftforge.event.TickEvent;
  * The big "act copied" card of Audience Participation: when the volunteer's card reaches Sinclair's palm, a
  * readable card opens at the top of the screen with the act's name, whose ultimate it was, what the act does and
  * the window countdown. It holds {@link #HOLD} ticks (6 s) and fades; performing the act closes it early, and the
- * small HUD line ({@link SinclairHud}) stays for the rest of the window. Client-only, reads the local snapshot.
+ * small HUD line ({@link SinclairHud}) stays for the rest of the window. Final integration (#91 + #92): the card
+ * waits for the copy cinematic and opens with the window, so its full hold is readable after the scene.
+ * Client-only, reads the local snapshot.
  */
 public final class ActCardPopup {
    static final int FADE_IN = 6;
@@ -45,9 +47,26 @@ public final class ActCardPopup {
    private ActCardPopup() {
    }
 
-   /** Pure: the card is out once the capture reaches the card tick (the shape is synced) or while it is held. */
+   /**
+    * Pure: the card is out once the capture reaches the card tick (the shape is synced) or while it is held.
+    * Never during the copy cinematic (#91): the scene shows the card on stage and the popup waits for it.
+    */
    static boolean cardOut(@Nullable SinclairMove move, int elapsed, boolean cardHeld, boolean hasShape) {
+      if (move == SinclairMove.COPY) {
+         return false;
+      }
+
       return hasShape && (cardHeld || move == SinclairMove.CAPTURE && elapsed >= SinclairRules.ULT_CARD_TICK);
+   }
+
+   /**
+    * Pure: the popup clock is paused (age held at 0, nothing drawn) while the capture is still running — whether
+    * the copy cinematic (#91) follows is only known when the capture ends, and a card flashing in for the last
+    * capture ticks and vanishing under the cinematic read as a glitch. Without the cinematic the window opens on
+    * the next tick and the card runs its full {@link #HOLD} from there; with it, after the scene.
+    */
+   static boolean waiting(@Nullable SinclairMove move) {
+      return move == SinclairMove.CAPTURE || move == SinclairMove.COPY;
    }
 
    /** Pure: opacity 0..1 for the popup age in ticks (fade in, hold, fade out). */
@@ -92,6 +111,14 @@ public final class ActCardPopup {
          }
       }
 
+      if (move == SinclairMove.COPY) {
+         // The copy cinematic holds the stage: drop a pending card without a fade; it opens afresh with the window.
+         shown = false;
+         age = -1;
+         gone = 0;
+         return;
+      }
+
       if (out) {
          gone = 0;
          if (!shown) {
@@ -109,11 +136,13 @@ public final class ActCardPopup {
          }
       }
 
-      if (!shown && age < 0 && move != SinclairMove.CAPTURE) {
+      if (!shown && age < 0 && !waiting(move)) {
          from = null;
       }
 
-      if (age >= 0 && ++age >= TOTAL) {
+      if (age >= 0 && waiting(move)) {
+         age = 0;
+      } else if (age >= 0 && ++age >= TOTAL) {
          age = -1;
       }
    }
@@ -140,6 +169,10 @@ public final class ActCardPopup {
       }
 
       HeroPublicSnapshot snapshot = SinclairView.of(mc.player);
+      if (snapshot != null && waiting(SinclairView.move(snapshot))) {
+         return;
+      }
+
       ActShape shape = snapshot == null ? null : SinclairView.shape(snapshot);
       float a = alpha(age + event.getPartialTick());
       if (shape == null || a <= 0.05F) {
