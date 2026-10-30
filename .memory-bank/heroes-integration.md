@@ -15,7 +15,7 @@
   1.53.0 / 13 (#82 alone), 1.54.0 / 14 (both), 1.55.0 / 14 (DIO polish, no packet change). Pick the next free pair for the next merge.
   1.55.0 / 15 was claimed in parallel by #86 (Thor GUARD bit), #88 (wish packets) and #89 (`RegulusFxS2CPacket`).
   **1.56.0 / 16 = final integration of #85-#92** (all three tables together).
-  **1.57.0 / 17 = Captain America 2012** (`feat/captain-america-2012`, topic file `.memory-bank/captain.md`). Pick the next free pair (1.58.0 / 18).
+  **1.57.0 / 17 = Captain America 2012** (`feat/captain-america-2012`, topic file `.memory-bank/captain.md`); 1.57.1 / 17 = its polish (no packet change). Pick the next free pair (1.58.0 / 18).
 
 ## Where strings and sounds live
 - English and the 10 other base locales: `resources/assets/viltrumitecore/lang/<locale>.json` (Thor keys at

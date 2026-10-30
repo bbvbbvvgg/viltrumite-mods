@@ -1,6 +1,6 @@
 # Memory bank — Captain America (Steve Rogers, 2012) — branch feat/captain-america-2012
 
-- Design: `docs/design/2026-11-03-captain-america-design.md`. Core **1.57.0**, protocol **17**.
+- Design: `docs/design/2026-11-03-captain-america-design.md`. Core **1.57.1** (polish, no packet change), protocol **17**.
 - Order: `HeroId.CAPTAIN` = 10 (after Jinwoo); `HeroAction` CAPTAIN_THROW..CAPTAIN_ASSEMBLE (5, contiguous, last);
   `CaptainFxS2CPacket` appended last (`HeroRosterIntegrationTest` pins all three).
 - Server: `hero/captain/*` (rules, combat, skills, flags, sounds, lines), `hero/captain/assemble/AssembleScene` (ultimate
@@ -30,3 +30,18 @@ SESSION.md (~250 КБ) не обновлён: инструмент пуша пр
 - Исправлено по итогам игры: в замкнутой комнате запасные точки круга (`FormationPlanner.plan`) сначала ищутся в прямой видимости Стива (`SeenProbe`), иначе союзники вставали за стенами.
 - Проверки: полный `./gradlew build --offline` — BUILD SUCCESSFUL, 2248 тестов, 0 падений, 1 пропущен; `check_hero_resources.py --hero captain` — 0 новых проблем.
 - В игре (выделенный сервер + 1 клиент по сети, Xvfb, программный рендер, звук на устройстве No Output): выбор через предмет-желание, все способности, ультимейт в поле (квинджет, 5 прибытий, круг, бой 60 с, уход) и в каменной коробке 5×3×5 без неба (без квинджета, четверо в комнате, Халк 3,1 бл не помещается под потолок 3 бл и стоит снаружи). Сервер держит 20 TPS (проверено по gametime). Второй клиент не запускался: два клиента + сервер не помещаются в 4 ГБ (OOM). Звуки на слух не прослушаны.
+
+## Сессия 2026-11-03, продолжение (1.57.1)
+- Големы/нейтралы: `AvengerEntity.mayHit` щадит жителей всегда, `AbstractGolem` — пока тот не «повернулся против команды»
+  (`turnedOnTeam`: цель — Стив/союзник, NeutralMob злится на Стива, недавно бил Стива, метка Стива). `AvengerBrain.hostile()`
+  = Enemy || turnedOnTeam; чистая функция `AvengerBrain.hostileToTeam`, тест `AvengerGolemRuleTest`. В игре: злой голем
+  убит за ~3 с, мирный не тронут.
+- Кинематограф ультимейта (только у самого Стива): `client/captain/CaptainSceneShots` (чистые кадры CALL/WAIT/RAISE/RETURN,
+  тест `CaptainSceneShotsTest`) + `CaptainUltScene` (камера-маркер, леттербокс 11% с красно-бело-синими линиями, HUD/рука/
+  свой ник скрыты, FOV 58, камера не уходит в стены, отпускается при любой потере). Субтитры переезжают в нижнюю полосу.
+- Звуки Халка (`hulk_{roar,punch,smash,chest}`) сведены из CC0-записей Freesound (через Openverse): `tools/sfx/hulk_cc0.py`;
+  `tools/sfx/captain.py` их не перезаписывает; авторы — `CREDITS.md`, `tools/assets/captain_sources.md`.
+- Текстуры (`tools/assets/avengers_model.py`, запускать с `PYTHONHASHSEED=0` — иначе меняется шум всех скинов):
+  Мьёльнир как в MCU (`mjolnir()`, гранёный боёк, кельтский узел, кожаная рукоять, ремешок), волосы прядями `strands()`
+  (Тор, Вдова — заново, Халк, Хокай), мускулатура Халка (грудные, пресс, лопатки, вены).
+- Проверка в игре (Xvfb): ультимейт с камерой, новые модели/текстуры, ПКМ с желанием открывает окно желаний.
