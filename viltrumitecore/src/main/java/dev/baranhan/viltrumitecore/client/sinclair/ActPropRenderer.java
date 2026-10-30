@@ -130,7 +130,7 @@ public final class ActPropRenderer extends EntityRenderer<ActPropEntity> {
       stack.mulPose(Axis.YP.rotationDegrees(180.0F - actYaw));
       for (int i = 0; i < count; i++) {
          float along = (i + 0.5F) * reach / count;
-         float stand = smooth((s - telegraph - (cutAt - telegraph) * i / count) / 2.0F);
+         float stand = smooth((s - telegraph - (ActScript.CUT.main() - telegraph) * i / count) / 2.0F);
          float blade = cutAt + 4.0F * along / reach;
          float fall = smooth((s - blade) / 2.0F);
          if (stand <= 0.0F) {
