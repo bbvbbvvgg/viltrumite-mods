@@ -164,10 +164,13 @@ class HeroRosterIntegrationTest {
       }
       assertTrue(packets.indexOf("HeroLineS2CPacket") < packets.indexOf("DioTimeS2CPacket"), "hero packets append after the subtitle packet");
       assertTrue(packets.indexOf("ThorDashS2CPacket") < packets.indexOf("HeroLineS2CPacket"), "Thor / Hulkbuster packets keep their #74 slots");
-      // 12 = #74 alone, 13 = #82 alone, 14 = the merged table; 15 = Regulus Reborn's packet table
-      // (RegulusFxS2CPacket replaces the first kit's packets) must refuse all of them.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"15\""), "a changed packet table needs its own protocol version");
+      // 12 = #74 alone, 13 = #82 alone, 14 = the merged table; 15 = each of #86 (Thor GUARD bit), #88
+      // (Od Lagna's wish packets) and #89 (Regulus Reborn) alone; 16 = the final table with all of them.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"16\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
+      assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
+         && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
+      assertEquals(packets.size() - 1, packets.indexOf("RegulusFxS2CPacket"), "Regulus Reborn's packet appends after the wish packets");
    }
 
    @Test
@@ -191,7 +194,7 @@ class HeroRosterIntegrationTest {
       while (known.find()) knownMissing.add(known.group(1));
       int events = 0;
       for (Path file : soundFiles) {
-         JsonObject json = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+         JsonObject json = ShippedSounds.merged(file);
          for (Map.Entry<String, JsonElement> event : json.entrySet()) {
             events++;
             JsonObject body = event.getValue().getAsJsonObject();

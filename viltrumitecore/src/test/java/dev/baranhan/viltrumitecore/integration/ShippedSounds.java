@@ -10,8 +10,9 @@ import java.util.stream.Stream;
 
 /**
  * The sounds.json the jar ships. processResources merges every
- * {@code src/main/sound-overlays/<part>/sounds.json} into
- * {@code assets/viltrumitecore/sounds.json} (whole events, parts in path order): the
+ * {@code src/main/sound-overlays/<part>/sounds.json} (may replace whole base events) and every
+ * {@code src/main/sound-overlays/<part>.json} (adds events only) into
+ * {@code assets/viltrumitecore/sounds.json} (whole events, files in path order): the
  * base file is past the 64 KB GitHub MCP request cap, so new or reworked events live
  * in an overlay. A test that checks shipped events must read both places.
  */
@@ -36,7 +37,8 @@ public final class ShippedSounds {
 
       List<Path> parts;
       try (Stream<Path> listing = Files.list(OVERLAYS)) {
-         parts = listing.map(part -> part.resolve("sounds.json")).filter(Files::isRegularFile).sorted().toList();
+         parts = listing.map(part -> Files.isDirectory(part) ? part.resolve("sounds.json") : part)
+            .filter(part -> Files.isRegularFile(part) && part.getFileName().toString().endsWith(".json")).sorted().toList();
       }
 
       for (Path part : parts) {
