@@ -17,7 +17,70 @@ def spin(base, bone, t0, t1, axis, turns, rest=(0, 0, 0)):
         r = list(rest)
         r[axis] += a
         keys.append((t, P(base, **{bone: tuple(r)})))
+    # whole turns are the rest angle again: jump there right away so the next key never unwinds the spin
+    keys.append((t1 + 0.1, P(base, **{bone: tuple(rest)})))
     return keys
+
+
+def ss(x):
+    x = min(max(x, 0.0), 1.0)
+    return x * x * (3 - 2 * x)
+
+
+def wheel(base, t0, t1, deg, h, cz=0.0, drop=0.0, step=2, lift=0.0):
+    """Keys turning the whole body `deg` degrees of pitch (+ = forward) about its centre (h px above the feet,
+    cz px along z; the root pivot is at the feet, so the position compensates and the body tumbles about its
+    centre instead of sinking its head into the floor). `drop` lowers the whole ball (a tuck lifts the feet),
+    `lift` arcs it up mid-turn. Dense keys keep the centre still between keys."""
+    import math
+    keys = []
+    n = max(1, int(round((t1 - t0) / step)))
+    for i in range(n + 1):
+        f = i / n
+        a = deg * ss(f)
+        r = math.radians(-a)
+        ry = h * math.cos(r) - cz * math.sin(r)
+        rz = h * math.sin(r) + cz * math.cos(r)
+        up = lift * math.sin(math.pi * f) + drop * (1 if 0 < i < n else 0.5)
+        keys.append((t0 + (t1 - t0) * f, P(base, root={'rot': (round(a, 1), 0, 0), 'pos': (0, round(h - ry + up, 2), round(cz - rz, 2))})))
+    return keys
+
+
+def unwind(c, eps=0.005):
+    """A clip that ends a full turn away (360 pitch, 360 spin, 3 hammer turns) jumps to the equivalent
+    angle right after the turn ends, so the release / hand-off fades never unwind the turn backwards."""
+    def wrap(v):
+        return tuple(((x + 180.0) % 360.0) - 180.0 if abs(x) > 180.0 else x for x in v)
+    bones = []
+    for _, pose in c.frames:
+        for b in pose:
+            if b not in bones:
+                bones.append(b)
+    extra = []
+    for b in bones:
+        idx = [i for i, (_, pose) in enumerate(c.frames) if b in pose and 'rot' in pose[b]]
+        if not idx:
+            continue
+        last = c.frames[idx[-1]][1][b]['rot']
+        w = wrap(last)
+        if tuple(w) == tuple(last):
+            continue
+        hold = len(idx) - 1
+        while hold > 0 and tuple(c.frames[idx[hold - 1]][1][b]['rot']) == tuple(last):
+            hold -= 1
+        if hold < len(idx) - 1:
+            t_hold = c.frames[idx[hold]][0]
+            for i in idx[hold + 1:]:
+                t, pose = c.frames[i]
+                pose[b] = dict(pose[b], rot=w)
+            extra.append((t_hold + eps, {b: {'rot': w}}))
+        else:
+            t_end, pose = c.frames[idx[-1]]
+            pose[b] = dict(pose[b], rot=w)
+            extra.append((max(0.0, t_end - eps), {b: {'rot': last}}))
+    c.frames.extend(extra)
+    c.frames.sort(key=lambda f: f[0])
+    return c
 
 
 def common(out, idle, walk_a, walk_b, run_a, run_b, hurt, depart_keys, extra_idle=None):
@@ -67,7 +130,12 @@ def iron_man():
     # arrival: horizontal superman flight, arms back, then braking upright
     sup = P(hover, root={'rot': (70, 0, 0), 'pos': (0, 0, 0)}, head=(-60, 0, 0), right_arm=(20, 0, 10), left_arm=(20, 0, -10),
             right_hand=(70, 0, 0), left_hand=(70, 0, 0), back_flaps=(-40, 0, 0))
-    out.append(clip('arrive', 200, [(0, sup), (40, sup), (54, P(hover, root={'rot': (20, 0, 0), 'pos': (0, 0, 0)})), (200, hover)]))
+    brake = P(hover, root={'rot': (-14, 0, 0), 'pos': (0, 0, 0)}, head=(10, 0, 0), right_arm=(-50, 0, 30), right_forearm=(-10, 0, 0),
+              right_hand=(-80, 0, 0), left_arm=(-50, 0, -30), left_forearm=(-10, 0, 0), left_hand=(-80, 0, 0), back_flaps=(-50, 0, 0),
+              right_leg=(-20, 0, 2), right_shin=(30, 0, 0), left_leg=(6, 0, -2), left_shin=(20, 0, 0), **OPEN)
+    sup2 = P(sup, right_arm=(26, 0, 14), left_arm=(26, 0, -14), head=(-64, 0, 0))
+    out.append(clip('arrive', 200, [(0, sup), (14, sup2), (28, sup), (40, sup2), (50, P(hover, root={'rot': (24, 0, 0), 'pos': (0, 0, 0)})),
+                                    (60, brake), (80, P(brake, root={'rot': (-6, 0, 0), 'pos': (0, 0, 0)})), (110, hover), (200, hover)]))
     # three-point landing: knee and right fist to the ground, palm repulsor of the left hand back
     land = P(hover, **LAND3, right_arm=(-30, 0, 20), right_forearm=(-10, 0, 0), right_hand=(0, 0, 0), left_arm=(40, 0, -30),
              left_forearm=(-10, 0, 0), right_fingers=(0, 0, -95))
@@ -93,9 +161,19 @@ def iron_man():
     ub = P(hover, waist=(-10, 0, 0), torso=(-20, 0, 0), head=(10, 0, 0), right_arm=(40, 0, 30), right_forearm=(-20, 0, 0),
            left_arm=(40, 0, -30), left_forearm=(-20, 0, 0), right_hand=(0, 0, 0), left_hand=(0, 0, 0), **FIST)
     out.append(clip('special_2', 44, [(0, hover), (6, ub), (38, P(ub, torso=(-22, 0, 0))), (44, hover)]))
-    out.append(clip('special_3', 24, [(0, hover), (24, hover)]))
-    out.append(clip('dodge', 12, [(0, hover), (4, P(hover, root={'rot': (0, 0, 40), 'pos': (0, 0, 0)})), (12, hover)]))
-    out.append(clip('leap', 40, [(0, hover), (40, hover)]))
+    # ground blast: drops onto one knee, both palms to the ground (24 t, burst at 8)
+    gb = P(hover, **LAND3, right_arm=(-50, 0, 10), right_forearm=(0, 0, 0), right_hand=(-80, 0, 0), left_arm=(-50, 0, -10),
+           left_forearm=(0, 0, 0), left_hand=(-80, 0, 0), back_flaps=(-40, 0, 0), **OPEN)
+    out.append(clip('special_3', 24, [(0, hover), (5, P(gb, root=low(-4))), (8, gb), (16, gb), (24, idle)]))
+    # barrel roll dodge on the thrusters (12 t)
+    out.append(clip('dodge', 12, [(0, hover), (3, P(hover, root={'rot': (0, 0, 60), 'pos': (0, 1, 0)}, right_arm=(10, 0, 60), left_arm=(10, 0, -60))),
+                                  (6, P(hover, root={'rot': (0, 0, 180), 'pos': (0, 2, 0)}, right_arm=(10, 0, 60), left_arm=(10, 0, -60))),
+                                  (9, P(hover, root={'rot': (0, 0, 300), 'pos': (0, 1, 0)})), (12, P(hover, root={'rot': (0, 0, 360), 'pos': (0, 0, 0)}))]))
+    # boost take-off: crouch, thrusters lit, launch with the arms down (40 t)
+    out.append(clip('leap', 40, [(0, idle), (5, P(idle, root=low(-3), waist=(14, 0, 0), right_leg=(-30, 0, 0), right_shin=(50, 0, 0),
+                                                    left_leg=(-30, 0, 0), left_shin=(50, 0, 0), right_hand=(-80, 0, 0), left_hand=(-80, 0, 0))),
+                                 (10, P(hover, head=(-24, 0, 0), right_arm=(16, 0, 10), left_arm=(16, 0, -10), right_hand=(70, 0, 0), left_hand=(70, 0, 0),
+                                        back_flaps=(-40, 0, 0))), (40, hover)]))
     out.append(clip('shoot', 10, [(0, hover), (2, rp), (7, rp), (10, hover)]))
     return out
 
@@ -122,7 +200,9 @@ def thor():
     dep += [(34, spin_up), (90, spin_up)]
     common(out, combat, wa, wb, ra, rb, hurt, dep)
     out.append(clip('fly', 20, [(0, spin_up), (20, spin_up)], loop=True))
-    out.append(clip('arrive', 200, [(0, P(spin_up, root=low(0))), (200, spin_up)]))
+    # inside the bolt: Mjolnir up, cape whipping, lands hard at the end of the scene's bolt window
+    bolt = P(spin_up, cape=(50, 0, 0), cape_lower=(30, 0, 0), right_leg=(-30, 0, 0), right_shin=(50, 0, 0), left_leg=(6, 0, 0), left_shin=(30, 0, 0))
+    out.append(clip('arrive', 200, [(0, P(spin_up, root=low(0))), (6, bolt), (12, P(bolt, cape=(60, 0, 0))), (18, bolt), (200, bolt)]))
     # landing from the bolt: kneel, Mjolnir to the ground, rise slowly
     land = P(idle, **LAND3, right_arm=(-40, 0, 10), right_forearm=(-10, 0, 0), hammer=(70, 0, 0), left_arm=(10, 0, -30),
              cape=(-20, 0, 0), cape_lower=(-10, 0, 0))
@@ -150,14 +230,24 @@ def thor():
     sky = P(idle, torso=(-10, 0, 0), head=(-36, 0, 0), right_arm=(-176, 0, 0), right_forearm=(0, 0, 0), hammer=(180, 0, 0),
             left_arm=(-20, 0, -30), cape=(20, 0, 0))
     out.append(clip('special_2', 34, [(0, combat), (6, sky), (28, sky), (34, combat)]))
-    out.append(clip('special_3', 40, [(0, combat), (40, combat)]))
+    # thunder clap: Mjolnir driven into the ground with both hands (40 t, shock at 12)
+    clap_up = P(combat, root=low(1), waist=(-10, 0, 0), torso=(-16, 0, 0), head=(-24, 0, 0), right_arm=(-170, 0, 6), right_forearm=(-20, 0, 0),
+                left_arm=(-170, 0, -6), left_forearm=(-20, 0, 0), hammer=(150, 0, 0), cape=(30, 0, 0))
+    clap_dn = P(combat, root=low(-7), waist=(36, 0, 0), torso=(30, 0, 0), head=(-44, 0, 0), right_arm=(-60, 0, 6), right_forearm=(0, 0, 0),
+                left_arm=(-60, 0, -6), left_forearm=(0, 0, 0), hammer=(90, 0, 0), cape=(-30, 0, 0), cape_lower=(-20, 0, 0),
+                right_leg=(-70, 10, 0), right_shin=(80, 0, 0), left_leg=(20, -10, 0), left_shin=(90, 0, 0))
+    out.append(clip('special_3', 40, [(0, combat), (8, clap_up), (12, clap_dn), (26, clap_dn), (40, combat)]))
     # hammer flight onto a far target (60 t): spin, then pulled forward by the arm
     pull = P(idle, root={'rot': (60, 0, 0), 'pos': (0, 0, 0)}, head=(-50, 0, 0), right_arm=(-170, 0, 0), right_forearm=(0, 0, 0),
              hammer=(180, 0, 0), cape=(60, 0, 0), cape_lower=(30, 0, 0), right_leg=(10, 0, 0), left_leg=(-10, 0, 0))
     out.append(clip('leap', 60, spin(P(combat, right_arm=(-100, 0, 40), right_forearm=(0, 0, 0)), 'hammer', 0, 10, 1, 3) +
                     [(14, pull), (50, pull), (56, P(land, hammer=(90, 0, 0))), (60, P(land, hammer=(90, 0, 0)))]))
-    out.append(clip('dodge', 12, [(0, combat), (12, combat)]))
-    out.append(clip('shoot', 10, [(0, combat), (10, combat)]))
+    # side-step with a cape swirl (12 t)
+    out.append(clip('dodge', 12, [(0, combat), (3, P(combat, root=low(-2), waist=(6, -40, 0), cape=(50, 0, 0), right_leg=(-30, 0, 20), left_leg=(10, 0, -10))),
+                                  (8, P(combat, waist=(6, -10, 0), cape=(20, 0, 0))), (12, combat)]))
+    # lightning from the raised hammer at range (10 t)
+    out.append(clip('shoot', 10, [(0, combat), (3, P(combat, right_arm=(-150, 0, 20), right_forearm=(0, 0, 0), hammer=(160, 0, 0), head=(-20, 0, 0))),
+                                  (7, P(combat, right_arm=(-100, -10, 10), right_forearm=(0, 0, 0), hammer=(100, 0, 0))), (10, combat)]))
     return out
 
 
@@ -180,7 +270,12 @@ def hulk():
     airp = P(idle, root=low(0), waist=(-6, 0, 0), torso=(-10, 0, 0), head=(-20, 0, 0), right_arm=(-150, 0, 30), left_arm=(-150, 0, -30),
              right_forearm=(-10, 0, 0), left_forearm=(-10, 0, 0), right_leg=(-30, 0, 0), right_shin=(60, 0, 0), left_leg=(10, 0, 0), left_shin=(30, 0, 0))
     common(out, idle, wa, wb, ra, rb, hurt, [(0, idle), (14, crouch), (20, airp), (90, airp)])
-    out.append(clip('arrive', 200, [(0, airp), (200, airp)]))
+    # mid-leap: arms windmilling at the top, then both fists clasped overhead for the smash landing
+    flail = P(airp, right_arm=(-170, 0, 50), left_arm=(-120, 0, -50), right_leg=(-50, 0, 0), right_shin=(70, 0, 0), left_leg=(0, 0, 0), left_shin=(40, 0, 0))
+    clasp = P(airp, waist=(-8, 0, 0), torso=(-14, 0, 0), head=(-30, 0, 0), right_arm=(-172, 0, 12), left_arm=(-172, 0, -12),
+              right_forearm=(-40, 0, 0), left_forearm=(-40, 0, 0), right_leg=(-60, 0, 0), right_shin=(80, 0, 0), left_leg=(-40, 0, 0), left_shin=(70, 0, 0))
+    out.append(clip('arrive', 200, [(0, P(crouch, root=low(-4))), (6, airp), (16, flail), (26, P(flail, right_arm=(-120, 0, 50), left_arm=(-170, 0, -50))),
+                                    (36, clasp), (200, clasp)]))
     smashland = P(crouch, root=low(-8), right_arm=(-60, 0, 10), left_arm=(-60, 0, -10), right_forearm=(0, 0, 0), left_forearm=(0, 0, 0))
     out.append(clip('land', 20, [(0, smashland), (8, smashland), (20, idle)]))
     # circle: chest beat (alternating fists ticks 10-40), the roar (44-70)
@@ -203,10 +298,22 @@ def hulk():
     out.append(clip('attack_3', 18, [(0, idle), (6, up2), (10, dn2), (14, dn2), (18, idle)]))
     out.append(clip('special_1', 26, [(0, idle), (6, up2), (10, dn2), (14, up2), (18, dn2), (26, idle)]))  # ground pound
     out.append(clip('special_2', 30, [(0, idle), (6, roar), (24, P(roar, head=(-36, 0, 0))), (30, idle)]))  # roar
-    out.append(clip('special_3', 30, [(0, idle), (30, idle)]))
-    out.append(clip('leap', 40, [(0, idle), (8, crouch), (14, airp), (40, airp)]))
-    out.append(clip('dodge', 12, [(0, idle), (12, idle)]))
-    out.append(clip('shoot', 10, [(0, idle), (10, idle)]))
+    # taunt: chest pounding, then arms flung wide in a roar (40 t) — pulls the mobs onto Hulk
+    taunt = [(0, idle), (4, P(idle, torso=(0, 0, 0)))]
+    for i in range(4):
+        taunt += [(6 + i * 5, beat_r if i % 2 == 0 else beat_l), (8 + i * 5, P(idle, torso=(0, 0, 0)))]
+    wide = P(roar, right_arm=(-30, 0, 80), left_arm=(-30, 0, -80), right_forearm=(-30, 0, 0), left_forearm=(-30, 0, 0))
+    taunt += [(28, wide), (36, P(wide, head=(-40, 0, 0))), (40, idle)]
+    out.append(clip('special_3', 40, taunt))
+    out.append(clip('leap', 40, [(0, idle), (8, crouch), (14, airp), (24, flail), (32, clasp), (40, clasp)]))
+    # heavy side hop (12 t)
+    hop = P(crouch, root=low(-2), waist=(26, 0, 0), right_arm=(10, 0, 50), left_arm=(10, 0, -50))
+    out.append(clip('dodge', 12, [(0, idle), (3, P(crouch, root=low(-5))), (6, hop), (10, P(crouch, root=low(-4))), (12, idle)]))
+    # hurls a chunk of the ground: both hands under it, heave overhead, throw (20 t, release at 11)
+    heave = P(up2, right_forearm=(-50, 0, 0), left_forearm=(-50, 0, 0), right_arm=(-160, 0, 20), left_arm=(-160, 0, -20))
+    throw = P(idle, waist=(30, 0, 0), torso=(26, 0, 0), head=(-30, 0, 0), right_arm=(-70, 0, 10), left_arm=(-70, 0, -10),
+              right_forearm=(0, 0, 0), left_forearm=(0, 0, 0), **OPEN)
+    out.append(clip('shoot', 20, [(0, idle), (4, P(crouch, right_arm=(-40, 0, 0), left_arm=(-40, 0, 0))), (8, heave), (11, throw), (14, throw), (20, idle)]))
     return out
 
 
@@ -224,11 +331,11 @@ def widow():
     # falling out of the Quinjet: tucked somersault, then spread for the landing
     tuck = P(idle, waist=(40, 0, 0), torso=(30, 0, 0), right_leg=(-110, 0, 0), right_shin=(120, 0, 0), left_leg=(-110, 0, 0), left_shin=(120, 0, 0),
              right_arm=(-60, 0, 20), left_arm=(-60, 0, -20))
-    fall = [(0, P(idle, root={'rot': (0, 0, 0), 'pos': (0, 0, 0)}))]
-    for i in range(1, 5):
-        fall.append((i * 4, P(tuck, root={'rot': (90 * i, 0, 0), 'pos': (0, 0, 0)})))
-    fall += [(22, P(idle, root={'rot': (360, 0, 0), 'pos': (0, 0, 0)}, right_arm=(-90, 0, 60), left_arm=(-90, 0, -60))),
-             (200, P(idle, root={'rot': (360, 0, 0), 'pos': (0, 0, 0)}, right_arm=(-90, 0, 60), left_arm=(-90, 0, -60)))]
+    spread = P(idle, root={'rot': (360, 0, 0), 'pos': (0, 0, 0)}, waist=(0, 0, 0), torso=(-6, 0, 0), head=(-14, 0, 0),
+               right_arm=(-90, 0, 60), left_arm=(-90, 0, -60), right_forearm=(-10, 0, 0), left_forearm=(-10, 0, 0),
+               right_leg=(-30, 0, 4), right_shin=(50, 0, 0), left_leg=(10, 0, -4), left_shin=(30, 0, 0), hair=(-40, 0, 0))
+    fall = [(0, P(idle, root={'rot': (0, 0, 0), 'pos': (0, 0, 0)}, hair=(0, 0, 0)))] + wheel(P(tuck, hair=(-30, 0, 0)), 2, 18, 360, 15.3, cz=-10.7, step=1.5)
+    fall += [(24, spread), (40, P(spread, right_arm=(-100, 0, 50), left_arm=(-80, 0, -70), hair=(-50, 0, 0))), (60, spread), (200, spread)]
     out.append(clip('arrive', 200, fall))
     land = P(idle, **LAND3, right_arm=(-30, 0, 20), right_forearm=(-10, 0, 0), left_arm=(30, 0, -50), left_forearm=(0, 0, 0))
     out.append(clip('land', 20, [(0, land), (8, land), (20, idle)]))
@@ -246,23 +353,31 @@ def widow():
                                      (14, P(idle, root={'rot': (0, 360, 0), 'pos': (0, -1, 0)}))]))
     bite = P(idle, waist=(6, 20, 0), torso=(10, 16, 0), right_arm=(-90, -10, 0), right_forearm=(0, 0, 0), right_hand=(-30, 0, 0), right_fingers=(0, 0, 0))
     out.append(clip('special_1', 14, [(0, idle), (3, bite), (9, bite), (14, idle)]))
-    out.append(clip('special_2', 30, [(0, idle), (30, idle)]))
-    out.append(clip('special_3', 40, [(0, idle), (40, idle)]))
+    # double bite: both wrists forward, a crackle (30 t)
+    bite2 = P(idle, waist=(4, 0, 0), torso=(8, 0, 0), right_arm=(-90, -14, 0), right_forearm=(0, 0, 0), right_hand=(-30, 0, 0),
+              left_arm=(-90, 14, 0), left_forearm=(0, 0, 0), left_hand=(-30, 0, 0), right_fingers=(0, 0, 0), left_fingers=(0, 0, 0))
+    out.append(clip('special_2', 30, [(0, idle), (4, bite2), (20, P(bite2, torso=(12, 0, 0))), (30, idle)]))
+    # low sweep: drops into a crouch and spins on one hand, the leg scything round (40 t)
+    low_ = P(idle, root=low(-7), waist=(30, 0, 0), torso=(20, 0, 0), head=(-20, 0, 0), right_arm=(-60, 0, 20), right_forearm=(0, 0, 0),
+             left_arm=(10, 0, -40), right_leg=(-10, 0, 80), right_shin=(0, 0, 0), left_leg=(-90, 0, 0), left_shin=(130, 0, 0))
+    sw = [(0, idle), (4, P(low_, root={'rot': (0, 0, 0), 'pos': (0, -7, 0)}))]
+    for i in range(1, 5):
+        sw.append((4 + i * 3, P(low_, root={'rot': (0, 90 * i, 0), 'pos': (0, -7, 0)})))
+    sw += [(24, P(low_, root={'rot': (0, 360, 0), 'pos': (0, -7, 0)})), (32, P(idle, root={'rot': (0, 360, 0), 'pos': (0, -1, 0)})),
+           (40, P(idle, root={'rot': (0, 360, 0), 'pos': (0, -1, 0)}))]
+    out.append(clip('special_3', 40, sw))
     # pistols: alternating shots (18 t)
     gun = P(aim, right_arm=(-90, 10, 0), left_arm=(-90, -10, 0), head=(-6, 0, 0), waist=(0, 0, 0))
     out.append(clip('shoot', 18, [(0, idle), (3, gun), (5, P(gun, right_arm=(-104, 10, 0))), (8, gun), (10, P(gun, left_arm=(-104, -10, 0))),
                                   (13, gun), (15, P(gun, right_arm=(-104, 10, 0))), (18, gun)]))
     # acrobatic leap-kick: flip, both feet forward
-    flip = [(0, idle), (4, P(idle, root=low(-3)))]
-    for i in range(1, 4):
-        flip.append((4 + i * 3, P(tuck, root={'rot': (-120 * i, 0, 0), 'pos': (0, 2, 0)})))
-    flip += [(16, P(idle, root={'rot': (-360, 0, 0), 'pos': (0, 0, 0)}, right_leg=(-90, 0, 0), left_leg=(-80, 0, 0), right_shin=(0, 0, 0), left_shin=(0, 0, 0), torso=(-30, 0, 0))),
-             (40, P(idle, root={'rot': (-360, 0, 0), 'pos': (0, 0, 0)}, right_leg=(-90, 0, 0), left_leg=(-80, 0, 0), right_shin=(0, 0, 0), left_shin=(0, 0, 0), torso=(-30, 0, 0)))]
+    kick = P(idle, root={'rot': (360, 0, 0), 'pos': (0, 0, 0)}, right_leg=(-90, 0, 0), left_leg=(-80, 0, 0), right_shin=(0, 0, 0), left_shin=(0, 0, 0),
+             torso=(-30, 0, 0), hair=(-50, 0, 0))
+    flip = [(0, idle), (4, P(idle, root=low(-3)))] + wheel(P(tuck, hair=(-30, 0, 0)), 5, 16, 360, 15.3, cz=-10.7, drop=-5, step=1.5, lift=8)
+    flip += [(20, kick), (40, kick)]
     out.append(clip('leap', 40, flip))
     # back-flip dodge (14 t)
-    bf = [(0, idle), (2, P(idle, root=low(-3)))]
-    for i in range(1, 4):
-        bf.append((2 + i * 3, P(tuck, root={'rot': (-120 * i, 0, 0), 'pos': (0, 4, 2)})))
+    bf = [(0, idle), (2, P(idle, root=low(-3)))] + wheel(P(tuck, hair=(30, 0, 0)), 3, 12, -360, 15.3, cz=-10.7, drop=-5, step=1.5, lift=6)
     bf += [(14, P(idle, root={'rot': (-360, 0, 0), 'pos': (0, -1, 0)}))]
     out.append(clip('dodge', 14, bf))
     return out
@@ -291,15 +406,29 @@ def hawkeye():
     drawn = P(raise_, right_arm=(-90, 80, -20), right_forearm=(-120, 0, 0), bow_top=(-8, 0, 0), bow_bottom=(8, 0, 0))
     loose = P(raise_, right_arm=(-80, 100, -30), right_forearm=(-80, 0, 0), right_fingers=(0, 0, 0), arrow={'rot': (0, 0, 0), 'scale': (0, 0, 0)})
     shot = [(0, idle), (4, raise_), (10, drawn), (12, loose), (15, loose), (18, P(raise_, arrow=(0, 0, 0)))]
-    for name in ('shoot', 'special_1', 'special_2', 'special_3'):
-        out.append(clip(name, 18, shot))
+    out.append(clip('shoot', 18, shot))
+    # explosive arrow: lobbed high (bow raised), leaning back into the draw
+    hi = dict(left_arm=(-130, 70, 0), torso=(-14, -20, 0), head=(-30, 74, 0), waist=(-6, -60, 0))
+    out.append(clip('special_1', 18, [(0, idle), (4, P(raise_, **hi)), (10, P(drawn, **hi)), (12, P(loose, **hi)), (15, P(loose, **hi)),
+                                      (18, P(raise_, arrow=(0, 0, 0)))]))
+    # shock arrow: long careful draw, a pause on the anchor
+    out.append(clip('special_2', 18, [(0, idle), (3, raise_), (7, drawn), (11, P(drawn, right_arm=(-90, 84, -20), head=(-4, 76, 0))), (12, loose),
+                                      (15, loose), (18, P(raise_, arrow=(0, 0, 0)))]))
+    # three arrows at once: bow canted flat, string hand fanned
+    cant = dict(bow=(0, 0, -70), left_arm=(-90, 70, -20), torso=(4, -24, 0))
+    out.append(clip('special_3', 18, [(0, idle), (4, P(raise_, **cant)), (10, P(drawn, **cant, right_fingers=(0, 0, -30))), (12, P(loose, **cant)),
+                                      (15, P(loose, **cant)), (18, P(raise_, arrow=(0, 0, 0)))]))
     # circle: nocks and draws pointing up and out over the circle, holds
     up = P(drawn, left_arm=(-130, 70, 0), torso=(-10, -20, 0), head=(-30, 74, 0))
     out.append(clip('circle', 80, [(0, idle), (10, raise_), (24, drawn), (34, up), (72, up), (80, idle)]))
     st = P(idle, waist=(6, -30, 0), torso=(8, -20, 0), left_arm=(-90, -40, -20), left_forearm=(-10, 0, 0), bow=(0, 0, 90))
     out.append(clip('attack_1', 10, [(0, idle), (3, P(idle, waist=(4, 30, 0), left_arm=(-80, 80, 0), bow=(0, 0, 90))), (5, st), (7, st), (10, idle)]))
-    out.append(clip('attack_2', 10, [(0, idle), (10, idle)]))
-    out.append(clip('attack_3', 16, [(0, idle), (16, idle)]))
+    # backhand with the bow limb (10 t, hit at 4)
+    bh = P(idle, waist=(6, 40, 0), torso=(8, 24, 0), left_arm=(-90, 60, -30), left_forearm=(-10, 0, 0), bow=(0, 0, -90))
+    out.append(clip('attack_2', 10, [(0, idle), (3, P(idle, waist=(4, -30, 0), left_arm=(-60, -40, -20), bow=(0, 0, -90))), (5, bh), (7, bh), (10, idle)]))
+    # front kick that shoves the mob away, bow held back (16 t, hit at 6)
+    fk = P(idle, root=low(1), torso=(-16, 0, 0), right_leg=(-95, 0, 0), right_shin=(0, 0, 0), left_shin=(10, 0, 0), left_arm=(30, 0, -20))
+    out.append(clip('attack_3', 16, [(0, idle), (3, P(idle, right_leg=(-70, 0, 0), right_shin=(100, 0, 0))), (6, fk), (9, fk), (16, idle)]))
     out.append(clip('dodge', 12, [(0, idle), (3, P(idle, root=low(-2), torso=(-10, 0, 0), right_leg=(30, 0, 0), left_leg=(20, 0, 0))), (12, idle)]))
     # grapple: fires the line up (right arm), then hangs on it pulled up
     hang = P(idle, right_arm=(-170, 0, 10), right_forearm=(0, 0, 0), right_fingers=(0, 0, -95), head=(-30, 0, 0),
@@ -322,7 +451,7 @@ def quinjet():
 def main():
     for name, clips in (('iron_man', iron_man()), ('thor', thor()), ('hulk', hulk()), ('black_widow', widow()), ('hawkeye', hawkeye()),
                         ('quinjet', quinjet())):
-        size = write_anims(f'animations/avengers/{name}.animation.json', clips)
+        size = write_anims(f'animations/avengers/{name}.animation.json', [unwind(c) for c in clips])
         print(name, len(clips), 'clips', size, 'bytes')
 
 
