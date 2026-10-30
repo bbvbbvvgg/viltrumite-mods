@@ -1,8 +1,7 @@
 {
   "hero.viltrumitecore.regulus": "Regulus Corneas",
   "subtitle.viltrumitecore.speaker.regulus": "Regulus",
-  "key.viltrumitecore.assign_heart": "Regulus: Pequeño Rey",
-  "scan.viltrumitecore.regulus.lion_heart": "Corazón de León: su tiempo está detenido; nada lo alcanza",
+  "scan.viltrumitecore.regulus.stopped_time": "Corazón de León: su tiempo está detenido; nada lo alcanza",
   "ability.viltrumitecore.regulus_lions_heart.name": "<gold>Corazón de León",
   "ability.viltrumitecore.regulus_lions_heart.desc": "<grey>Enfriamiento: <lime>1 s\n<grey>Tipo: <yellow>Alternar\n\n<grey>Detén tu propio tiempo. Ningún daño, empuje o efecto\n<grey>te alcanza; el 30% del golpe rebota al atacante,\n<grey>los proyectiles se detienen en el aire.\n<grey>Tu corazón también se detiene: sin un huésped vivo\n<grey>(Pequeño Rey) la tensión sube y tras ~5 s\n<grey>el corazón sufre un espasmo (León bloqueado 8 s).\n\n<blue>Regulus",
   "ability.viltrumitecore.regulus_stopped_sand.name": "<gold>Arena detenida",
