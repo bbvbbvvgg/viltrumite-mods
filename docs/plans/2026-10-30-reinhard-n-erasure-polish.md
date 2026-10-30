@@ -68,3 +68,16 @@ seam after the grade, scene-owned target, `ErasureShake`, cleanup on every end r
 `CinematicHud`, grade-only `dash_impact.fsh`, five original sounds via the lang/sound overlays.
 Item 5: unit tests in `ErasureSceneTest`, `CinematicHudTest`, `SceneEntityHideTest`; build and runtime
 checks are recorded in the PR.
+
+## Runtime QA (dev client, Forge 1.20.1, llvmpipe, no audio device)
+
+- Single player (integrated server): full 205-tick scene on a husk; camera and movement locked
+  (mouse + W held during the scene change nothing), HUD and hand hidden, subtitles shown, husk
+  removed, HUD back at the end. Pause menu mid-scene freezes the scene; it resumes from the same
+  point. Third-person (F5) view locked as well.
+- Multiplayer (dedicated server + 2 clients): caster and witness play the same beats in sync,
+  glass origin at the target in each view, the witness has no HUD during the scene. A witness
+  reconnecting mid-scene (joined during the dissolve) catches up and ends together with the caster.
+- Bug found and fixed: the last dissolve motes (head) hung as a white blob through the rebuild
+  (mote age was the gap to a stopped front); the body bloom stayed on after the removal.
+- Not verifiable here: audio (OpenAL device unavailable), real GPU performance.
