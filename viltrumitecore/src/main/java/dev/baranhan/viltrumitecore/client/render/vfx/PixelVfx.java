@@ -23,7 +23,15 @@ public final class PixelVfx {
     * markers drawn with {@link #rotateCamera} slid off their entities during shakes).
     */
    public static void levelView(PoseStack stack, net.minecraftforge.client.event.RenderLevelStageEvent event) {
-      stack.mulPoseMatrix(event.getPoseStack().last().pose());
+      if (event.getStage() == net.minecraftforge.client.event.RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+         // Forge fires AFTER_LEVEL with GameRenderer's projection(+bob) stack, not the view stack:
+         // multiplying it in drew every Iron Man blast/missile/flare off-screen. Rebuild the view.
+         stack.mulPose(Axis.ZP.rotationDegrees(ScreenProjector.roll()));
+         rotateCamera(stack, event.getCamera().getXRot(), event.getCamera().getYRot());
+      } else {
+         // Stages inside LevelRenderer.renderLevel carry the real camera-view stack.
+         stack.mulPoseMatrix(event.getPoseStack().last().pose());
+      }
    }
 
    public static void rotateCamera(PoseStack stack, float pitch, float yaw) {

@@ -7,6 +7,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.event.ViewportEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import com.mojang.math.Axis;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -27,6 +30,8 @@ public final class ScreenProjector {
    private static final Matrix4f VIEW_PROJ = new Matrix4f();
    private static Vec3 camera = Vec3.ZERO;
    private static boolean valid;
+   /** Final camera roll of the current frame (shakes/jolts/leans add it in ComputeCameraAngles). */
+   private static float roll;
    /** The level the matrices belong to: a dimension change or relog must not reuse them. */
    @Nullable
    private static Object capturedLevel;
@@ -39,6 +44,25 @@ public final class ScreenProjector {
       public boolean onScreen(int width, int height) {
          return !this.behind && this.x >= 0 && this.y >= 0 && this.x <= width && this.y <= height;
       }
+   }
+
+   /** LOWEST: runs after every roll contributor (CameraShake, WorldCutJolt, JinwooUltScene). */
+   @SubscribeEvent(priority = EventPriority.LOWEST)
+   public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+      roll = event.getRoll();
+   }
+
+   /** Camera roll of the frame being rendered, degrees. */
+   public static float roll() {
+      return roll;
+   }
+
+   /**
+    * Camera view rotation exactly as GameRenderer builds it (roll, pitch, yaw+180). Needed
+    * because Forge fires AFTER_LEVEL with the projection pose stack, not the view stack.
+    */
+   public static Matrix4f viewRotation(float roll, float pitch, float yaw) {
+      return new Matrix4f().rotate(Axis.ZP.rotationDegrees(roll)).rotate(Axis.XP.rotationDegrees(pitch)).rotate(Axis.YP.rotationDegrees(yaw + 180.0F));
    }
 
    @SubscribeEvent
@@ -54,7 +78,8 @@ public final class ScreenProjector {
          return;
       }
 
-      VIEW_PROJ.set(event.getProjectionMatrix()).mul(event.getPoseStack().last().pose());
+      // AFTER_LEVEL's pose stack is the projection (+bob) stack, not the view: build the view here.
+      VIEW_PROJ.set(event.getProjectionMatrix()).mul(viewRotation(roll, event.getCamera().getXRot(), event.getCamera().getYRot()));
       camera = event.getCamera().getPosition();
       capturedLevel = mc.level;
       valid = true;
