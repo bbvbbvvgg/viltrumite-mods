@@ -9,6 +9,8 @@ public final class HulkbusterRules {
    /** Hitbox 1.3 x 3.2 blocks: factors on the vanilla standing box 0.6 x 1.8. */
    public static final float WIDTH_SCALE = 1.3F / 0.6F;
    public static final float HEIGHT_SCALE = 3.2F / 1.8F;
+   /** One-block step for the heavy suit (vanilla 0.6 + 0.4). */
+   public static final double STEP_BONUS = 0.4;
    /** Visual height 3.4 blocks: Sind units (68 px tall) x 32/68 x 1.7. */
    public static final float MODEL_SCALE = 1.7F * 32.0F / 68.0F;
    /** Knock-back from ordinary hits x 0.3 (spec §8). */

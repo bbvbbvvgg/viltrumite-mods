@@ -140,6 +140,16 @@ public final class HulkbusterMotion {
    /** Owner's playtest 2026-10-28: 0.36 (~0.6 block) could not clear one block; 0.46 rises ~1.4 blocks. */
    public static final double HEAVY_JUMP = 0.46;
 
+   /** Jump immediately when a jet charge cannot start on this press. */
+   public static boolean jumpAtPress(boolean jetPossible) {
+      return !jetPossible;
+   }
+
+   /** Worst-case preparation for a heavy tap jump. */
+   public static int worstJumpPrepTicks() {
+      return HulkbusterRules.JET_TAP - 1;
+   }
+
    /** Can a dive start here: airborne and high enough above the ground below. */
    public static boolean diveAllowed(boolean onGround, double heightAboveGround, State state) {
       return !onGround && heightAboveGround >= HulkbusterRules.DIVE_MIN_HEIGHT && state != State.DIVE && state != State.STAGGER;

@@ -131,6 +131,8 @@ public final class HeroRegistry {
          }
 
          abilityUser.setOfferedAbilities(defaultIds(loadout));
+         // A new hero always starts on the first page, never on the previous hero's Alt page.
+         abilityUser.setActivePage(AbilityPages.FIRST);
       }
 
       heroPlayer.viltrumitecore$setHeroSession(new HeroSession(id, UUID.randomUUID(), false));
@@ -249,6 +251,9 @@ public final class HeroRegistry {
       String[] repaired = repairedSlots(slots, hero);
       if (repaired == null) {
          resetLoadout(player);
+         String[] reset = new String[18];
+         for (int slot = 0; slot < 18; slot++) reset[slot] = abilityUser.getAbilityInSlot(slot);
+         abilityUser.setActivePage(AbilityPages.settle(abilityUser.getActivePage(), reset));
          return;
       }
 
@@ -277,6 +282,9 @@ public final class HeroRegistry {
       java.util.Set<String> given = new java.util.LinkedHashSet<>(offered);
       given.addAll(defaultIds(defaults));
       abilityUser.setOfferedAbilities(given);
+      int currentPage = abilityUser.getActivePage();
+      int settledPage = AbilityPages.settle(currentPage, filled);
+      if (currentPage != settledPage) abilityUser.setActivePage(settledPage);
    }
 
    /**
