@@ -525,6 +525,18 @@ public final class DioHero implements HeroDefinition {
       }
    }
 
+   /** Debug (/hero cooldown reset, PR #87): every DIO timer ends; a running stand, stop or drain stays as it is. */
+   @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      DioState state = DioState.of(player);
+      if (state == null) {
+         return false;
+      }
+
+      java.util.Arrays.fill(state.cooldowns, 0);
+      return true;
+   }
+
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       DioState state = rawState(player);

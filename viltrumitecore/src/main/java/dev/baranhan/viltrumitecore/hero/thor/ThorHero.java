@@ -554,6 +554,21 @@ public final class ThorHero implements HeroDefinition {
       }
    }
 
+   /**
+    * Debug (/hero cooldown reset, PR #87): every Thor v3 timer ends (the same reset as
+    * /thor combat reset_cooldowns); a running guard, throw or ultimate stays as it is.
+    */
+   @Override
+   public boolean resetCooldowns(ServerPlayer player) {
+      ThorState state = ThorState.of(player);
+      if (state == null) {
+         return false;
+      }
+
+      dev.baranhan.viltrumitecore.hero.thor.combat.ThorCombatState.of(state).clearCooldowns(player);
+      return true;
+   }
+
    @Override
    public void cleanup(ServerPlayer player, CleanupReason reason) {
       ThorState state = ThorState.of(player);

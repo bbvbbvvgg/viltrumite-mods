@@ -132,6 +132,20 @@ public final class RegulusState {
       return this.move == RegulusMove.SEIZURE;
    }
 
+   /**
+    * Debug reset (/hero cooldown reset, PR #87 carried over to Regulus Reborn): every ability timer
+    * ends now. Cooldown timers only: a running move, the Lion, strain, the Lion lock and subjects
+    * stay as they are.
+    */
+   public void clearCooldowns() {
+      this.lionCooldown = 0;
+      this.sandCooldown = 0;
+      this.severCooldown = 0;
+      this.trampleCooldown = 0;
+      this.replyCooldown = 0;
+      this.ultCooldown = 0;
+   }
+
    public int cooldown(int index) {
       return switch (index) {
          case RegulusFlags.COOLDOWN_LION -> this.lionCooldown;
