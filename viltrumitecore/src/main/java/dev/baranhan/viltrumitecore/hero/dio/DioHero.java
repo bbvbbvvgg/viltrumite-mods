@@ -278,6 +278,10 @@ public final class DioHero implements HeroDefinition {
 
    /** Sunlight, blood, regeneration. */
    private static void tickBody(ServerPlayer player, DioState state) {
+      if (state.infiniteBlood) {
+         state.blood = DioRules.BLOOD_MAX;
+      }
+
       boolean sun = player.isAlive() && !player.isSpectator() && inSunlight(player);
       state.inSun = sun;
       Level level = player.level();
@@ -285,7 +289,7 @@ public final class DioHero implements HeroDefinition {
          state.regenTimer = 0;
          if (++state.bloodTimer >= DioRules.BLOOD_SUN_INTERVAL) {
             state.bloodTimer = 0;
-            state.blood = DioRules.clampBlood(state.blood - 1);
+            state.blood = state.infiniteBlood ? DioRules.BLOOD_MAX : DioRules.clampBlood(state.blood - 1);
          }
 
          if (++state.burnTimer >= DioRules.SUN_BURN_INTERVAL) {
@@ -580,6 +584,7 @@ public final class DioHero implements HeroDefinition {
       if (state.action == HeroAction.ROAD_ROLLER) flags |= 1 << DioRules.FLAG_ULT;
       if (state.finisher) flags |= 1 << DioRules.FLAG_FINISHER;
       if (state.action == HeroAction.VAMPIRE_DRAIN) flags |= 1 << DioRules.FLAG_DRAIN_HOLD;
+      if (state.infiniteBlood) flags |= 1 << DioRules.FLAG_INFINITE_BLOOD;
       int[] extra = new int[DioRules.EXTRA_COUNT];
       extra[DioRules.EX_STAND_PHASE] = state.standPhase;
       extra[DioRules.EX_STAND_ELAPSED] = Mth.clamp(state.standElapsed, 0, 1000);

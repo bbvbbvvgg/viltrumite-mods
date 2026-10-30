@@ -8,6 +8,7 @@ import dev.baranhan.viltrumitecore.hero.ServerRules;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
 import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
+import dev.baranhan.viltrumitecore.hero.control.TimeFreeze;
 import dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket;
 import dev.baranhan.viltrumitecore.hero.dio.net.DioNet;
 import dev.baranhan.viltrumitecore.hero.dio.net.DioTimeS2CPacket;
@@ -19,19 +20,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.item.FallingBlockEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -45,6 +42,41 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class DioTimeStop {
    private static final Map<UUID, TimeStopField> FIELDS = new HashMap<>();
+
+   /** Stopped time is a shared TimeFreeze source: held entities skip their whole tick. */
+   private static final TimeFreeze.Source SOURCE = new TimeFreeze.Source() {
+      @Override
+      public boolean active() {
+         return !FIELDS.isEmpty();
+      }
+
+      @Override
+      public boolean freezes(Entity entity) {
+         for (TimeStopField field : FIELDS.values()) {
+            if (field.level == entity.level() && field.holds(entity.getId())) {
+               return true;
+            }
+         }
+
+         return false;
+      }
+
+      @Override
+      public float[] lockedView(Player player) {
+         for (TimeStopField field : FIELDS.values()) {
+            if (field.level == player.level() && field.holds(player.getId())) {
+               TimeStopField.Saved saved = field.saved.get(player.getUUID());
+               return saved == null ? null : new float[]{saved.yaw(), saved.pitch()};
+            }
+         }
+
+         return null;
+      }
+   };
+
+   static {
+      TimeFreeze.register(SOURCE);
+   }
 
    private DioTimeStop() {
    }
@@ -109,11 +141,10 @@ public final class DioTimeStop {
          capture(field, caster, field.front());
       }
 
-      hold(field);
       if (!field.scripted && !field.resumeAnnounced && field.left() <= DioRules.TIME_STOP_RESUME) {
          field.resumeAnnounced = true;
          HeroSpeech.trigger(caster, HeroLineTrigger.event(DioLines.RESUME_EVENT));
-         DioSounds.play(field.level, caster.position(), DioSounds.TIME_RESUME, 1.6F, 1.0F);
+         DioSounds.playWide(field.level, caster.position(), DioSounds.TIME_RESUME, 1.6F, 1.0F, DioRules.TIME_STOP_RADIUS + 24.0);
       }
 
       if (field.version != field.sentVersion || field.age % 10 == 0) {
@@ -162,50 +193,46 @@ public final class DioTimeStop {
          return HeroRegistry.allowsExternalControl(living, ControlKind.FREEZE) && !dev.baranhan.viltrumitecore.hero.BodyIsolation.active(living);
       }
 
-      return entity instanceof Projectile || entity instanceof ItemEntity || entity instanceof ExperienceOrb
-         || entity instanceof FallingBlockEntity || entity instanceof PrimedTnt;
+      // Everything else stops too: vanilla and hero projectiles, energy shots, hammers,
+      // pods, debris, items, TNT, minecarts... (their tick is skipped, not their state edited).
+      return !(entity instanceof Projectile projectile) || projectile.getDeltaMovement().lengthSqr() >= 1.0E-4;
    }
 
    private static void capture(TimeStopField field, ServerPlayer caster, double front) {
       ServerLevel level = field.level;
       ControlManager manager = ControlManager.get(level);
+      prune(field);
       double r2 = front * front;
       AABB box = new AABB(field.center, field.center).inflate(front);
       long expires = level.getGameTime() + field.duration - field.age + 40L;
       for (Entity entity : level.getEntities((Entity)null, box, e -> e.position().distanceToSqr(field.center) <= r2)) {
-         if (field.isFrozen(entity.getUUID()) || !stoppable(field, caster, entity)) {
+         if (field.isFrozen(entity.getUUID()) || field.exempt.contains(entity.getUUID()) || freezing(entity) != null || !stoppable(field, caster, entity)) {
             continue;
          }
 
+         Vec3 motion = entity.getDeltaMovement();
          if (entity instanceof LivingEntity living) {
             if (manager.tryAcquireRecoverableFreeze(living, caster.getUUID(), field.effectId, expires)) {
                field.living.add(living.getUUID());
-               field.version++;
-            }
-         } else {
-            if (entity instanceof Projectile projectile && projectile.getDeltaMovement().lengthSqr() < 1.0E-4) {
+            } else if (!(living instanceof Player) && !manager.isControlled(living)) {
+               continue;
+            } else if (!(living instanceof Player)) {
+               // Held by a foreign control (another hero's pull/freeze): its owner keeps the
+               // record, stopped time only stops the tick.
+               field.suspended.add(living.getUUID());
+            } else {
                continue;
             }
+         } else {
+            field.things.put(entity.getUUID(), new TimeStopField.Thing(motion));
+         }
 
-            double px = 0, py = 0, pz = 0;
-            if (entity instanceof AbstractHurtingProjectile hurting) {
-               px = hurting.xPower;
-               py = hurting.yPower;
-               pz = hurting.zPower;
-               hurting.xPower = 0;
-               hurting.yPower = 0;
-               hurting.zPower = 0;
-            }
-
-            field.things.put(entity.getUUID(), new TimeStopField.Thing(entity.getDeltaMovement(), entity.isNoGravity(), px, py, pz));
-            if (entity instanceof Projectile projectile) {
-               manager.freezeProjectile(projectile, caster.getUUID());
-            }
-
-            entity.setNoGravity(true);
-            entity.setDeltaMovement(Vec3.ZERO);
-            entity.hurtMarked = true;
-            field.version++;
+         field.saved.put(entity.getUUID(), new TimeStopField.Saved(entity.getId(), motion, entity.getYRot(), entity.getXRot(), entity instanceof Player));
+         field.frozenIds.add(entity.getId());
+         field.version++;
+         if (!(entity instanceof Player)) {
+            // Clients stop simulating it from the next packet on: pin them to the server's spot.
+            level.getChunkSource().broadcast(entity, new ClientboundTeleportEntityPacket(entity));
          }
       }
 
@@ -215,27 +242,22 @@ public final class DioTimeStop {
       }
    }
 
-   /** Things stay put every tick (fireballs accelerate, TNT burns, items drift otherwise). */
-   private static void hold(TimeStopField field) {
-      for (Map.Entry<UUID, TimeStopField.Thing> entry : field.things.entrySet()) {
+   /** Forget victims that left the level, died or were replaced (respawn/rejoin = new entity id). */
+   private static void prune(TimeStopField field) {
+      java.util.Iterator<Map.Entry<UUID, TimeStopField.Saved>> it = field.saved.entrySet().iterator();
+      while (it.hasNext()) {
+         Map.Entry<UUID, TimeStopField.Saved> entry = it.next();
          Entity entity = field.level.getEntity(entry.getKey());
-         if (entity == null) {
-            continue;
-         }
+         if (entity == null || entity.isRemoved() || !entity.isAlive() || entity.getId() != entry.getValue().entityId()) {
+            field.frozenIds.remove(entry.getValue().entityId());
+            field.suspended.remove(entry.getKey());
+            field.things.remove(entry.getKey());
+            if (entity == null || entity.getId() != entry.getValue().entityId()) {
+               field.living.remove(entry.getKey());
+            }
 
-         if (entity.getDeltaMovement().lengthSqr() > 0.0) {
-            entity.setDeltaMovement(Vec3.ZERO);
-            entity.hurtMarked = true;
-         }
-
-         if (entity instanceof PrimedTnt tnt) {
-            tnt.setFuse(tnt.getFuse() + 1);
-         }
-
-         if (entity instanceof AbstractHurtingProjectile hurting) {
-            hurting.xPower = 0;
-            hurting.yPower = 0;
-            hurting.zPower = 0;
+            it.remove();
+            field.version++;
          }
       }
    }
@@ -276,22 +298,17 @@ public final class DioTimeStop {
          manager.release(id, field.effectId, reason);
       }
 
-      ControlManager.releaseProjectilesFor(field.caster);
-      for (Map.Entry<UUID, TimeStopField.Thing> entry : field.things.entrySet()) {
+      field.frozenIds.clear();
+      for (Map.Entry<UUID, TimeStopField.Saved> entry : field.saved.entrySet()) {
          Entity entity = level.getEntity(entry.getKey());
-         if (entity == null) {
+         if (entity == null || entity.getId() != entry.getValue().entityId() || !entity.isAlive()) {
             continue;
          }
 
-         TimeStopField.Thing thing = entry.getValue();
-         entity.setNoGravity(thing.noGravity);
-         entity.setDeltaMovement(thing.motion);
+         // Momentum from before the stop comes back exactly (arrows fly on, a falling
+         // victim keeps falling); the knockback of DIO's ledger is added on top below.
+         entity.setDeltaMovement(entry.getValue().motion());
          entity.hurtMarked = true;
-         if (entity instanceof AbstractHurtingProjectile hurting) {
-            hurting.xPower = thing.powerX;
-            hurting.yPower = thing.powerY;
-            hurting.zPower = thing.powerZ;
-         }
       }
 
       Entity casterEntity = level.getEntity(field.caster);
@@ -342,27 +359,14 @@ public final class DioTimeStop {
    }
 
    private static void sync(TimeStopField field, boolean active) {
-      int[] ids = new int[Math.min(DioTimeS2CPacket.MAX_IDS, field.living.size() + field.things.size())];
+      int[] ids = new int[Math.min(DioTimeS2CPacket.MAX_IDS, field.frozenIds.size())];
       int n = 0;
-      for (UUID id : field.living) {
-         if (n >= ids.length) {
-            break;
-         }
-
-         Entity entity = field.level.getEntity(id);
-         if (entity != null) {
-            ids[n++] = entity.getId();
-         }
-      }
-
-      for (UUID id : field.things.keySet()) {
-         if (n >= ids.length) {
-            break;
-         }
-
-         Entity entity = field.level.getEntity(id);
-         if (entity != null) {
-            ids[n++] = entity.getId();
+      // Players first: their own client must always learn that its camera is locked.
+      for (int pass = 0; pass < 2; pass++) {
+         for (TimeStopField.Saved saved : field.saved.values()) {
+            if (n < ids.length && saved.player() == (pass == 0) && field.frozenIds.contains(saved.entityId())) {
+               ids[n++] = saved.entityId();
+            }
          }
       }
 
@@ -370,6 +374,37 @@ public final class DioTimeStop {
       DioTimeS2CPacket packet = new DioTimeS2CPacket(active, field.effectId, field.casterEntityId, field.center.x, field.center.y, field.center.z,
          (float)field.radius, field.duration, field.age, field.scripted, java.util.Arrays.copyOf(ids, n));
       DioNet.near(field.level, field.center, field.radius + 64.0, packet);
+   }
+
+   /**
+    * Victim lifecycle. A respawned player keeps his UUID and his entity id, so the
+    * field must drop him explicitly: on death or respawn he leaves every field for
+    * good (exempt, the owed ledger is forgotten), on a dimension change he is only
+    * released (walking back into the stopped area catches him again).
+    */
+   public static void releaseVictim(Entity entity, boolean forGood) {
+      UUID id = entity.getUUID();
+      for (TimeStopField field : FIELDS.values()) {
+         if (field.ended) {
+            continue;
+         }
+
+         boolean held = field.saved.remove(id) != null;
+         held |= field.living.remove(id);
+         held |= field.suspended.remove(id);
+         held |= field.things.remove(id) != null;
+         held |= field.frozenIds.remove(entity.getId());
+         if (forGood) {
+            field.exempt.add(id);
+            field.ledger.remove(id);
+         }
+
+         if (held) {
+            ControlManager.get(field.level).release(id, field.effectId, ReleaseReason.TARGET_LOST);
+            field.version++;
+            sync(field, true);
+         }
+      }
    }
 
    /** Caster lifecycle (death, logout, hero change, dimension change): time moves again at once. */

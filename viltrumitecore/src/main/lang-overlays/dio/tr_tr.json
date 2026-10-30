@@ -1,0 +1,9 @@
+{
+  "commands.viltrumitecore.dio.not_dio": "%s DIO değil",
+  "commands.viltrumitecore.dio.blood.fill": "Kan dolduruldu: %s",
+  "commands.viltrumitecore.dio.blood.infinite.on": "Sonsuz kan AÇIK: %s",
+  "commands.viltrumitecore.dio.blood.infinite.off": "Sonsuz kan KAPALI: %s",
+  "subtitles.viltrumitecore.dio_roller_leap": "DIO göğe sıçrıyor",
+  "subtitles.viltrumitecore.dio_roller_fall": "Yol silindiri düşüyor",
+  "subtitles.viltrumitecore.dio_roller_land": "DIO yere iniyor"
+}

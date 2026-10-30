@@ -1,0 +1,9 @@
+{
+  "commands.viltrumitecore.dio.not_dio": "%s ist nicht DIO",
+  "commands.viltrumitecore.dio.blood.fill": "Blut aufgefüllt: %s",
+  "commands.viltrumitecore.dio.blood.infinite.on": "Unendliches Blut AN: %s",
+  "commands.viltrumitecore.dio.blood.infinite.off": "Unendliches Blut AUS: %s",
+  "subtitles.viltrumitecore.dio_roller_leap": "DIO springt in den Himmel",
+  "subtitles.viltrumitecore.dio_roller_fall": "Straßenwalze stürzt herab",
+  "subtitles.viltrumitecore.dio_roller_land": "DIO landet"
+}

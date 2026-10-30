@@ -98,7 +98,16 @@ def check_mod(mod, hero, problems):
 
     sounds = os.path.join(mod_dir, "src/main/resources/assets", mod, "sounds.json")
     if os.path.isfile(sounds):
-        for event, spec in load_json(sounds).items():
+        events = dict(load_json(sounds))
+        # Sound overlays (src/main/sound-overlays/<part>/sounds.json) replace whole
+        # events at build time, exactly like processResources does.
+        sound_overlays = os.path.join(mod_dir, "src/main/sound-overlays")
+        if os.path.isdir(sound_overlays):
+            for part in sorted(os.listdir(sound_overlays)):
+                extra = os.path.join(sound_overlays, part, "sounds.json")
+                if os.path.isfile(extra):
+                    events.update(load_json(extra))
+        for event, spec in events.items():
             for entry in spec.get("sounds", []):
                 name = entry if isinstance(entry, str) else entry.get("name", "")
                 if isinstance(entry, dict) and entry.get("type") == "event":

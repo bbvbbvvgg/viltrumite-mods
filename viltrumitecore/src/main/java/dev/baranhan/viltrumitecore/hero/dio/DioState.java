@@ -12,6 +12,8 @@ import net.minecraft.world.phys.Vec3;
 /** Server-side per-player DIO state. Blood and cooldowns persist; channels never do. */
 public final class DioState {
    public int blood;
+   /** Debug ({@code /dio blood infinite on}): blood stays full and casts never spend it. Persists. */
+   public boolean infiniteBlood;
    public final int[] cooldowns = new int[6];
    // The World
    public int standPhase = DioRules.STAND_NONE;
@@ -51,6 +53,11 @@ public final class DioState {
    public int bloodTimer;
    public int burnTimer;
 
+   /** Every blood cost goes through here: the debug infinite mode keeps the bar full. */
+   public void spendAllBlood() {
+      this.blood = this.infiniteBlood ? DioRules.BLOOD_MAX : 0;
+   }
+
    public boolean standOut() {
       return this.standPhase == DioRules.STAND_SUMMONING || this.standPhase == DioRules.STAND_OUT;
    }
@@ -76,11 +83,13 @@ public final class DioState {
 
    public void save(CompoundTag nbt) {
       nbt.putInt("DioBlood", this.blood);
+      nbt.putBoolean("DioInfiniteBlood", this.infiniteBlood);
       nbt.putIntArray("DioCooldowns", this.cooldowns.clone());
    }
 
    public void load(CompoundTag nbt) {
       this.blood = DioRules.clampBlood(nbt.getInt("DioBlood"));
+      this.infiniteBlood = nbt.getBoolean("DioInfiniteBlood");
       int[] saved = nbt.getIntArray("DioCooldowns");
       for (int i = 0; i < this.cooldowns.length && i < saved.length; i++) {
          this.cooldowns[i] = Math.max(0, saved[i]);
@@ -91,7 +100,8 @@ public final class DioState {
    public DioState respawnCopy() {
       DioState copy = new DioState();
       System.arraycopy(this.cooldowns, 0, copy.cooldowns, 0, this.cooldowns.length);
-      copy.blood = DioRules.clampBlood(this.blood / 2);
+      copy.infiniteBlood = this.infiniteBlood;
+      copy.blood = this.infiniteBlood ? DioRules.BLOOD_MAX : DioRules.clampBlood(this.blood / 2);
       return copy;
    }
 

@@ -6,6 +6,10 @@
   "refmap": "viltrumitecore.refmap.json",
   "plugin": "dev.baranhan.viltrumitecore.plugin.ViltrumiteMixinPlugin",
   "mixins": [
+    "TimeFreezeLevelMixin",
+    "TimeFreezePlayerMixin",
+    "TimeFreezeMoveMixin",
+    "LivingEntityLerpAccessor",
     "AbstractArrowAccessor",
     "AntiCheatBypassMixin",
     "BlockDamageMixin",

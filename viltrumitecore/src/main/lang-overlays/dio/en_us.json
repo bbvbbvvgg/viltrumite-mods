@@ -1,0 +1,9 @@
+{
+  "commands.viltrumitecore.dio.not_dio": "%s is not DIO",
+  "commands.viltrumitecore.dio.blood.fill": "Blood filled: %s",
+  "commands.viltrumitecore.dio.blood.infinite.on": "Infinite blood ON: %s",
+  "commands.viltrumitecore.dio.blood.infinite.off": "Infinite blood OFF: %s",
+  "subtitles.viltrumitecore.dio_roller_leap": "DIO leaps skyward",
+  "subtitles.viltrumitecore.dio_roller_fall": "Road roller falls",
+  "subtitles.viltrumitecore.dio_roller_land": "DIO lands"
+}

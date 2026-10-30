@@ -28,6 +28,7 @@ public class ViltrumiteInGameHudMixin {
       Minecraft client = Minecraft.getInstance();
       Player player = client.player;
       if (dev.baranhan.viltrumitecore.client.hero.BodyIsolationClient.active(player)) return;
+      if (dev.baranhan.viltrumitecore.client.dio.RollerCinema.active()) return; // DIO's Road Roller cinematic owns the screen
       if (player != null && !client.options.hideGui) {
          if (player instanceof ViltrumiteAbilityUser abilityUser) {
             if (!dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).hasAbilityPanel(player)) {

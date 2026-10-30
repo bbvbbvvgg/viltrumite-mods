@@ -184,7 +184,7 @@ class HeroRosterIntegrationTest {
       while (known.find()) knownMissing.add(known.group(1));
       int events = 0;
       for (Path file : soundFiles) {
-         JsonObject json = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+         JsonObject json = ShippedSounds.merged(file);
          for (Map.Entry<String, JsonElement> event : json.entrySet()) {
             events++;
             JsonObject body = event.getValue().getAsJsonObject();

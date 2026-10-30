@@ -69,6 +69,8 @@ public final class TimeStopClient {
       double endedFor = -1.0;
       boolean abrupt;
       boolean flashed;
+      /** Client ticks since the last server packet; the server resends every 10. */
+      int silent;
 
       Field(UUID id) {
          this.id = id;
@@ -92,6 +94,7 @@ public final class TimeStopClient {
             field.frozen.clear();
          }
 
+         publish();
          return;
       }
 
@@ -111,6 +114,41 @@ public final class TimeStopClient {
       }
 
       field.frozen = ids;
+      field.silent = 0;
+      publish();
+   }
+
+   /**
+    * Hand the union of running fields to the shared TimeFreeze client set: those
+    * entities stop ticking here. A newly frozen living entity is first settled on
+    * the server position it was interpolating to (its lerp would never finish).
+    */
+   private static void publish() {
+      it.unimi.dsi.fastutil.ints.IntOpenHashSet all = new it.unimi.dsi.fastutil.ints.IntOpenHashSet();
+      for (Field field : FIELDS.values()) {
+         if (field.running()) {
+            all.addAll(field.frozen);
+         }
+      }
+
+      Minecraft client = Minecraft.getInstance();
+      if (client.level != null) {
+         for (int id : all) {
+            if (!dev.baranhan.viltrumitecore.hero.control.TimeFreeze.clientFrozen(id)
+               && client.level.getEntity(id) instanceof net.minecraft.world.entity.LivingEntity living && living != client.player) {
+               dev.baranhan.viltrumitecore.mixin.LivingEntityLerpAccessor lerp = (dev.baranhan.viltrumitecore.mixin.LivingEntityLerpAccessor)living;
+               if (lerp.viltrumitecore$getLerpSteps() > 0) {
+                  living.setPos(lerp.viltrumitecore$getLerpX(), lerp.viltrumitecore$getLerpY(), lerp.viltrumitecore$getLerpZ());
+                  lerp.viltrumitecore$setLerpSteps(0);
+               }
+
+               living.setOldPosAndRot();
+            }
+         }
+      }
+
+      dev.baranhan.viltrumitecore.hero.control.TimeFreeze.setClientFrozen(all);
+      dev.baranhan.viltrumitecore.client.hero.TimeFreezeView.refresh();
    }
 
    /** Any running field holds this entity (client knowledge, render and input only). */
@@ -217,6 +255,8 @@ public final class TimeStopClient {
       if (client.level != lastLevel) {
          lastLevel = client.level;
          FIELDS.clear();
+         publish();
+         TimeStopClock.clear();
       }
 
       if (client.level == null || client.isPaused()) {
@@ -227,6 +267,14 @@ public final class TimeStopClient {
       Iterator<Field> it = FIELDS.values().iterator();
       while (it.hasNext()) {
          Field field = it.next();
+         if (field.running() && ++field.silent > 60) {
+            // Out of the server's sync range or a lost end packet: never keep anyone frozen.
+            field.abrupt = true;
+            field.endedFor = 0.0;
+            field.frozen.clear();
+            publish();
+         }
+
          if (field.running()) {
             field.age += 1.0;
             if (!field.scripted && !field.flashed && field.left() <= TimeStopScreen.RESUME_TICKS * eye.distanceTo(field.center) / field.radius
@@ -246,11 +294,15 @@ public final class TimeStopClient {
             }
          }
       }
+
+      TimeStopClock.update(stoppedAt(eye));
    }
 
    @SubscribeEvent
    public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
       FIELDS.clear();
+      TimeStopClock.clear();
+      dev.baranhan.viltrumitecore.hero.control.TimeFreeze.clearClient();
    }
 
    private static boolean localFrozen() {

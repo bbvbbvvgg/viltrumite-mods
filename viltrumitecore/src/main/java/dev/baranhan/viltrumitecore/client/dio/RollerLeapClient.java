@@ -31,6 +31,17 @@ public final class RollerLeapClient {
    private RollerLeapClient() {
    }
 
+   /** Take-off point of the local DIO's running ult, or null. */
+   @Nullable
+   public static Vec3 start() {
+      return start;
+   }
+
+   /** Local ult clock in ticks (reconciled with the snapshot), or -1. */
+   public static double clock() {
+      return clock;
+   }
+
    private static boolean ulting(@Nullable LocalPlayer player) {
       HeroPublicSnapshot snapshot = DioView.of(player);
       return snapshot != null && DioView.is(snapshot, HeroAction.ROAD_ROLLER) && snapshot.actionTarget() != null;

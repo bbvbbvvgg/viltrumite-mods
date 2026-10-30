@@ -10,7 +10,7 @@ import net.minecraftforge.network.NetworkEvent;
 public record DioFxS2CPacket(int kind, int sourceId, double x, double y, double z, float dx, float dy, float dz, float power, int extra) {
    public static final int STAND_HIT = 0, STAND_MISS = 1, BARRAGE_HIT = 2, FINISHER = 3, KNIFE_HIT = 4, LEDGER_BURST = 5,
       DRAIN_PULSE = 6, ROLLER_SLAM = 7, ROLLER_PUNCH = 8, ROLLER_EXPLODE = 9, GUARD_BLOCK = 10, DEFLECT = 11, FROZEN_HIT = 12,
-      SUMMON = 13, KNIFE_STOP = 14;
+      SUMMON = 13, KNIFE_STOP = 14, ROLLER_LEAP = 15, ROLLER_LAND = 16;
 
    public DioFxS2CPacket(FriendlyByteBuf b) {
       this(b.readVarInt(), b.readVarInt(), b.readDouble(), b.readDouble(), b.readDouble(), b.readFloat(), b.readFloat(), b.readFloat(), b.readFloat(), b.readVarInt());

@@ -1,0 +1,9 @@
+{
+  "commands.viltrumitecore.dio.not_dio": "%s no es DIO",
+  "commands.viltrumitecore.dio.blood.fill": "Sangre llena: %s",
+  "commands.viltrumitecore.dio.blood.infinite.on": "Sangre infinita ACTIVADA: %s",
+  "commands.viltrumitecore.dio.blood.infinite.off": "Sangre infinita DESACTIVADA: %s",
+  "subtitles.viltrumitecore.dio_roller_leap": "DIO salta hacia el cielo",
+  "subtitles.viltrumitecore.dio_roller_fall": "Cae la apisonadora",
+  "subtitles.viltrumitecore.dio_roller_land": "DIO aterriza"
+}
