@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
 class EyeLasersTest {
@@ -29,5 +33,29 @@ class EyeLasersTest {
       assertFalse(EyeLasers.damageTick(5));
       assertTrue(EyeLasers.damageTick(8));
       assertFalse(EyeLasers.damageTick(-1));
+   }
+
+   /** A player-sized box 10 blocks ahead; the eye ray at chest height must hit the chest, not the feet. */
+   @Test
+   void contactIsWhereTheRayEntersTheHitbox() {
+      AABB body = new AABB(-0.3, 0.0, 9.7, 0.3, 1.8, 10.3);
+      Vec3 eye = new Vec3(0, 1.3, 0);
+      Vec3 contact = EyeLasers.contactPoint(body, eye, eye.add(0, 0, 64));
+      assertEquals(9.7, contact.z, 1.0E-6);
+      assertEquals(1.3, contact.y, 1.0E-6);
+   }
+
+   @Test
+   void rayStartingInsideHitsAtTheEye() {
+      AABB body = new AABB(-0.3, 0.0, -0.3, 0.3, 1.8, 0.3);
+      Vec3 eye = new Vec3(0, 1.0, 0);
+      assertEquals(eye, EyeLasers.contactPoint(body, eye, eye.add(0, 0, 10)));
+   }
+
+   @Test
+   void missReturnsNull() {
+      AABB body = new AABB(5, 0, 5, 6, 2, 6);
+      Vec3 eye = new Vec3(0, 1.0, 0);
+      assertNull(EyeLasers.contactPoint(body, eye, eye.add(0, 0, 10)));
    }
 }
