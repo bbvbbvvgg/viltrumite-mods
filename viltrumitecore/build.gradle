@@ -103,9 +103,12 @@ processResources {
             target.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(merged)), 'UTF-8')
         }
     }
-    // Sound overlays: src/main/sound-overlays/<part>.json (sound events) is merged into
-    // assets/viltrumitecore/sounds.json for the same reason (sounds.json is past ~80 KB).
-    // An overlay may add events but never redefine one of the base file.
+    // Sound overlays (same reason: the base sounds.json is past 64 KB), two layouts:
+    // - src/main/sound-overlays/<part>/sounds.json (DIO polish, #90) adds or replaces whole events
+    //   of assets/viltrumitecore/sounds.json (DIO's reworked hit variants replace the base events);
+    // - src/main/sound-overlays/<part>.json (Regulus Reborn, #89) may only add events and never
+    //   redefines one of the base file.
+    // No event may come from two overlays.
     def soundOverlays = file('src/main/sound-overlays')
     inputs.dir(soundOverlays).optional().withPropertyName('soundOverlays')
     doLast {
@@ -115,11 +118,17 @@ processResources {
         def slurper = new groovy.json.JsonSlurper()
         def target = new File(destinationDir, 'assets/viltrumitecore/sounds.json')
         def merged = new LinkedHashMap(slurper.parse(target, 'UTF-8'))
-        fileTree(soundOverlays) { include '*.json' }.files.sort { it.path }.each { extra ->
+        def fromOverlay = [:]
+        fileTree(soundOverlays) { include '*/sounds.json'; include '*.json' }.files.sort { it.path }.each { extra ->
+            def replaces = extra.name == 'sounds.json'
             slurper.parse(extra, 'UTF-8').each { key, value ->
-                if (merged.containsKey(key)) {
+                if (fromOverlay.containsKey(key)) {
+                    throw new GradleException("sound event ${key} is defined by two overlays: ${fromOverlay[key]} and ${extra}")
+                }
+                if (!replaces && merged.containsKey(key)) {
                     throw new GradleException("sound overlay ${extra.name} redefines ${key}")
                 }
+                fromOverlay[key] = extra.path
                 merged.put(key, value)
             }
         }

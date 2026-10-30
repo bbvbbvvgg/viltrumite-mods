@@ -12,6 +12,8 @@
 - Packets: Thor/Hulkbuster (`ThorScene*`, `HulkbusterMotion*`, `ThorDashS2C`) before `HeroLineS2C`, then DIO
   and Jinwoo packets (`HeroRosterIntegrationTest` pins order and uniqueness).
 - Version numbers taken: 1.46-1.49 / protocol 8-10 (Thor stages), 1.50.0 / 11 (subtitles), 1.52.1 / 12 (#74 alone),
+  1.53.0 / 13 (#82 alone), 1.54.0 / 14 (both), 1.55.0 / 14 (DIO polish, no packet change). Pick the next free pair for the next merge.
+
   1.53.0 / 13 (#82 alone), 1.54.0 / 14 (both), 1.55.0 / 15 (Regulus Reborn #89, `RegulusFxS2CPacket` appended after the Jinwoo packets). Pick the next free pair for the next merge.
 
 ## Where strings and sounds live
@@ -24,5 +26,23 @@
 - `sounds.json`: one file; the #82 events (dio.*, sinclair.*, jinwoo.*) sit after `ironman_pulse_unibeam`,
   Thor/Hulkbuster events at the end.
 - Report with the full merge account: `docs/reports/2026-10-29-all-heroes-integration.md`.
+
+## Sinclair polish (branch fix/sinclair-polish-20261030, on top of PR #88)
+- First person: `SinclairFirstPerson.onRenderArm` (RenderArmEvent) replaces every bare vanilla arm with the camera
+  arms model's arm (no wand/card/hat) — no human arm while an item is held (alwaysRenderOffhand is on by default).
+- Savannah: two spectral threads to Sinclair (`client/sinclair/SpectralTether`, drawn in `SinclairVfx.tether`).
+- Lines: fixed durations (`SinclairLines.ULT_TICKS` 80 / `ABILITY_TICKS` 70); `SinclairLines.say/ability/tick`
+  keep one Sinclair line from cutting another (ability lines skipped while busy, bow / window_lost wait).
+- Repertoire: thor → NOVA (STORM), dio → BARRAGE (WORLD), jinwoo → CUT (SHADOW). viltrumite stays fallback.
+- Rabbit Hex: 80 ticks for players and mobs.
+- Copied-act card: `client/sinclair/ActCardPopup` (client tick + RenderGuiEvent.Post) — big readable card at the
+  top of the screen when the capture card reaches the palm (act name in act colour, whose ultimate, `<act>.desc`,
+  window bar). 6 t in / 120 t hold / 16 t out; performing closes it early. Lang: 86 Sinclair keys.
+
+## Stopped time across heroes (DIO polish)
+- `hero/control/TimeFreeze` is the seam every hero shares: a frozen entity's tick is skipped (server level, player
+  tick, client level) so other heroes' entities, summons and projectiles stop without hero-specific code. A hero
+  with level-wide timers (scene managers ticking from ServerTickEvent) must check `TimeFreeze.isFrozen` itself.
+
 - Regulus Reborn (1.55.0 / 15): topic file `.memory-bank/regulus.md`; its strings and sounds live in the overlays
   `src/main/lang-overlays/regulus/` and `src/main/sound-overlays/regulus.json`.
