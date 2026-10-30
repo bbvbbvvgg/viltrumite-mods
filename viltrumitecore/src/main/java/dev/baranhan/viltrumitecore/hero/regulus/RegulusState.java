@@ -175,7 +175,7 @@ public final class RegulusState {
    }
 
    /** Drops every transient effect (cooldowns, strain and the Lion lock stay). */
-   void resetTransient() {
+   public void resetTransient() {
       this.move = null;
       this.moveTick = 0;
       this.lion = false;
@@ -243,7 +243,7 @@ public final class RegulusState {
    }
 
    /** What a new body inherits: cooldowns, strain, the lock. */
-   RegulusState respawnCopy() {
+   public RegulusState respawnCopy() {
       RegulusState copy = new RegulusState();
       copy.lionCooldown = this.lionCooldown;
       copy.sandCooldown = this.sandCooldown;
