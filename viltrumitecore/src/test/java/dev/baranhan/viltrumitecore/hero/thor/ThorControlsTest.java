@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.hero.thor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -90,10 +91,14 @@ class ThorControlsTest {
    }
 
    @Test
-   void mmbNeverMeansDrawOrHolster() {
+   void mmbDrawsOnlyAnAttachedHammerFromBehindAnItemAndNeverHolsters() {
+      // Audit v3 item 7: the one way from the belt into the hand is MMB with an item in the right hand.
       for (ThorContext context : everyContext()) {
          ThorMove move = ThorControls.resolve(ThorInput.HAMMER, context);
-         assertTrue(move != ThorMove.DRAW && move != ThorMove.HOLSTER, context.toString());
+         assertNotSame(ThorMove.HOLSTER, move, context.toString());
+         if (move == ThorMove.DRAW) {
+            assertTrue(context.hammer() == HammerState.IN_HAND && !context.hammerAway() && !context.handFree() && !context.grabWindow(), context.toString());
+         }
       }
    }
 
@@ -146,8 +151,9 @@ class ThorControlsTest {
       ThorContext busy = new ThorContext(HammerState.IN_HAND, ThorMode.NORMAL, false, false, false, false, false, false);
       assertSame(ThorMove.FIST_COMBO, ThorControls.resolve(ThorInput.STRIKE, busy), "Mjölnir rides the belt while an item is in the hand");
       assertSame(ThorMove.FIST_COMBO, ThorControls.resolve(ThorInput.STANCE, busy));
-      assertSame(ThorMove.HAMMER_THROW, ThorControls.resolve(ThorInput.HAMMER, busy), "MMB still routes; ThorActions.gate refuses the throw (HANDS_BUSY)");
+      assertSame(ThorMove.DRAW, ThorControls.resolve(ThorInput.HAMMER, busy), "audit v3: MMB takes Mjölnir from the belt (ThorActions.press frees the hand)");
       assertTrue(ThorControls.needsHand(ThorMove.HAMMER_THROW));
+      assertTrue(ThorControls.needsHand(ThorMove.DRAW));
    }
 
    @Test
@@ -211,22 +217,27 @@ class ThorControlsTest {
          reachable.addAll(Arrays.asList(ThorControls.candidates(input)));
       }
 
-      for (ThorMove move : new ThorMove[]{ThorMove.DRAW, ThorMove.HOLSTER, ThorMove.FATALITY}) {
+      for (ThorMove move : new ThorMove[]{ThorMove.HOLSTER, ThorMove.FATALITY}) {
          assertFalse(reachable.contains(move), move + " has no key");
       }
+      assertTrue(reachable.contains(ThorMove.DRAW), "audit v3: MMB draws Mjölnir from the belt");
    }
 
    @Test
    void noMouseClaimInTheFoundation() {
       for (MouseButton button : MouseButton.values()) {
          for (ThorContext context : everyContext()) {
-            assertNull(ThorControls.claimedMouse(button, context), button + " stays vanilla until a session authors its move");
+            // Audit v3: the one foundation move a key reaches is MMB's draw from the belt (its own technical move).
+            boolean draw = ThorInput.of(button) == ThorInput.HAMMER && ThorControls.resolve(ThorInput.HAMMER, context) == ThorMove.DRAW;
+            if (!draw) {
+               assertNull(ThorControls.claimedMouse(button, context), button + " stays vanilla until a session authors its move");
+            }
          }
       }
 
       assertNull(ThorControls.claimedMouse(null, ground(HammerState.HOLSTERED)));
       for (ThorInput input : ThorInput.values()) {
-         assertFalse(ThorControls.anyAuthored(input), input.name());
+         assertEquals(input == ThorInput.HAMMER, ThorControls.anyAuthored(input), input.name());
       }
    }
 

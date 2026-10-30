@@ -117,9 +117,9 @@ class ThorIntegrationSeamsTest {
                      ThorContext window = context(hammer, free, false, enemy, true, detached, chain);
                      assertSame(ThorMove.GRAB, ThorControls.resolve(ThorInput.HAMMER, window), "C's window wins: " + window);
                      ThorContext open = context(hammer, free, false, enemy, false, detached, chain);
-                     // Belt only (HOLSTERED, attached): no hammer move (F-M13, OPEN design §10).
+                     // Belt only (HOLSTERED, attached): no hammer move (F-M13); drawn behind an item: MMB draws it (audit v3).
                      ThorMove expected = hammer.away() || detached ? ThorMove.RECALL
-                        : hammer == HammerState.HOLSTERED ? null : ThorMove.HAMMER_THROW;
+                        : hammer == HammerState.HOLSTERED ? null : free ? ThorMove.HAMMER_THROW : ThorMove.DRAW;
                      assertSame(expected, ThorControls.resolve(ThorInput.HAMMER, open), open.toString());
                   }
                }

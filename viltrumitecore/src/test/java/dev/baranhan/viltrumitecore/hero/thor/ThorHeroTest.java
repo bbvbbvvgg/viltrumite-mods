@@ -108,7 +108,9 @@ class ThorHeroTest {
    void slotsStayGreyUntilASessionAuthorsTheirMove() {
       HeroPublicSnapshot idle = ThorHero.composeSnapshot(new ThorState());
       for (ThorInput input : ThorInput.values()) {
-         assertTrue(ThorAbilities.slotGrey(idle, input), input + " has no authored move in the foundation");
+         // Audit v3: MMB's draw from the belt is the foundation's own technical move, so its slot is lit.
+         assertTrue(input == ThorInput.HAMMER ? !ThorAbilities.slotGrey(idle, input) : ThorAbilities.slotGrey(idle, input),
+            input + ": only the foundation's MMB draw is authored in the foundation");
       }
 
       try {
