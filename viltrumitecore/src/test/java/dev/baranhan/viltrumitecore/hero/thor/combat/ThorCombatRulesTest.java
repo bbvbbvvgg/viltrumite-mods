@@ -285,11 +285,15 @@ class ThorCombatRulesTest {
       assertSame(SkyTargetPolicy.AIM_POINT, ThorCombatConfig.migrate(current).skyTargetPolicy, "a current file keeps a deliberate dev switch");
    }
 
-   /** B-M5: electric area / ranged hits keep the target's i-frames; only authored strikes skip them. */
+   /** Audit v3 (was B-M5): electric pulses land every pulse; the hammer throw keeps the vanilla i-frames. */
    @Test
-   void electricAreaHitsKeepIFrames() {
-      assertFalse(CombatHits.skipsIFrames(false));
-      assertTrue(CombatHits.skipsIFrames(true));
+   void electricPulsesSkipTheVanillaTimerOncePerPulse() {
+      // Audit v3: electric pulses skip the vanilla timer (one hit per pulse, target and tick); nothing else unauthored does.
+      assertTrue(CombatHits.skipsIFrames(false, ThorMove.ELECTRIC_STORM));
+      assertTrue(CombatHits.skipsIFrames(false, ThorMove.ELECTRIC_WAVE));
+      assertTrue(CombatHits.skipsIFrames(false, ThorMove.ELECTRIC_COMBO));
+      assertFalse(CombatHits.skipsIFrames(false, ThorMove.HAMMER_THROW));
+      assertTrue(CombatHits.skipsIFrames(true, ThorMove.HAMMER_COMBO));
    }
 
    /** B-M8: arcs and rings are one FX packet each; the client draws the sparks the server used to send one by one. */

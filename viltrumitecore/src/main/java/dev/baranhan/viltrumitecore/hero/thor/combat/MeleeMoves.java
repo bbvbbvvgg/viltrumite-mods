@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -115,7 +114,7 @@ public final class MeleeMoves {
          combat.strikeAttackId = combat.nextAttackId();
          captureStep(player, combat);
          state.setCombatPose(combat.strike.pose());
-         ThorSounds.strikeWindup(player, combat.strike);
+         ThorSounds.strikeWindup(player, combat.strike, (delay, run) -> combat.schedule(delay, player, run));
          dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.ability(player, dev.baranhan.viltrumitecore.hero.thor.ThorAbilities.CRUSH);
       }
 
@@ -205,7 +204,7 @@ public final class MeleeMoves {
       }
 
       lunge(player, match.strike());
-      ThorSounds.strikeWindup(player, match.strike());
+      ThorSounds.strikeWindup(player, match.strike(), (delay, run) -> combat.schedule(delay, player, run));
    }
 
    /**
@@ -268,9 +267,22 @@ public final class MeleeMoves {
 
    /** Chain grace ran out (server tick). */
    static void tick(ServerPlayer player, ThorState state, ThorCombatState combat) {
+      if (movingOut(combat.velocity)) {
+         // Audit v3: walking out of a strike cuts its recovery (the weight is in the clip and the impact, not in held controls).
+         dev.baranhan.viltrumitecore.hero.thor.ThorActions.finishRecovery(player, state);
+      }
+
       if (combat.chainMove != null && !state.timeline.is(combat.chainMove) && combat.ticks > combat.chainOpenUntil) {
          endChain(player, state, combat);
       }
+   }
+
+   /** Horizontal speed (blocks / tick) from which the player is walking out of a strike: a sneak is ~0.065, a walk ~0.2. */
+   static final double MOVE_CANCEL_SPEED = 0.08;
+
+   /** Pure: is this per-tick displacement a walk out of the strike. */
+   static boolean movingOut(Vec3 velocity) {
+      return velocity.x * velocity.x + velocity.z * velocity.z >= MOVE_CANCEL_SPEED * MOVE_CANCEL_SPEED;
    }
 
    static void land(ServerPlayer player, ThorState state, ThorCombatState combat, ThorMove move) {
@@ -305,28 +317,26 @@ public final class MeleeMoves {
             }
 
             Vec3 from = player.position();
-            if (strike.heavy()) {
-               // B-m9: the hit-stop holds the target on screen for HIT_STOP_TICKS; the launch lands after it (HitStop's
-               // contract), so the body does not freeze and then teleport. Dropped with the other delayed effects
-               // (death, logout, dimension, a scene taking Thor).
-               combat.schedule(HIT_STOP_TICKS, player, () -> {
-                  if (target.isAlive() && target.level() == player.level()) {
-                     CombatHits.push(target, from, strike.knockback(), strike.lift());
-                  }
-               });
-            } else {
-               CombatHits.push(target, from, strike.knockback(), strike.lift());
-            }
-
-            Vec3 at = target.getBoundingBox().getCenter();
-            level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 8, 0.3, 0.3, 0.3, 0.3);
+            // B-m9: the hit-stop holds the target on screen; the launch lands after it (HitStop's contract), so the
+            // body does not freeze and then teleport. Dropped with the other delayed effects (death, logout,
+            // dimension, a scene taking Thor).
+            combat.schedule(hitStopTicks(strike), player, () -> {
+               if (target.isAlive() && target.level() == player.level()) {
+                  CombatHits.push(target, from, strike.knockback(), strike.lift());
+               }
+            });
          }
       }
 
       if (!landed.isEmpty()) {
-         if (strike.heavy()) {
-            HeroFx.hitStop(player, landed.get(0).getBoundingBox().getCenter(), HIT_STOP_TICKS, hitStopIds(landed));
-         }
+         // Audit v3: one impact per strike (not per target) on the first body struck, the hit-stop on every struck body
+         // (client) and on Thor's own timeline (server: his clip holds on the contact frame for the same ticks).
+         int stop = hitStopTicks(strike);
+         Vec3 at = landed.get(0).getBoundingBox().getCenter();
+         ThorAttacks.Attack row = ThorAttacks.of(strike);
+         boolean electric = state.mode() == ThorMode.ELECTRIC;
+         HeroFx.preset(player, impact(row.vfx(), electric), at, player.getEyePosition(), impactScale(row.vfx()), null, stop, hitStopIds(landed));
+         state.holdTimeline(stop);
       }
 
       Vec3 shockCenter = null;
@@ -349,7 +359,33 @@ public final class MeleeMoves {
    }
 
    /** Ticks a heavy contact holds its targets (client HitStop) before their launch (server). */
-   static final int HIT_STOP_TICKS = 3;
+   static final int HIT_STOP_TICKS = 4;
+   /** Audit v3: a light contact holds for 2 ticks. */
+   static final int LIGHT_HIT_STOP_TICKS = 2;
+
+   static int hitStopTicks(ThorStrike strike) {
+      return strike.heavy() ? HIT_STOP_TICKS : LIGHT_HIT_STOP_TICKS;
+   }
+
+   /** Pure: the contact preset of a row's vfx id (a hammer blow in electric mode crackles; a ground finisher keeps its slam). */
+   static dev.baranhan.viltrumitecore.hero.fx.FxPreset impact(String vfx, boolean electric) {
+      return switch (vfx) {
+         case ThorAttacks.VFX_FIST, ThorAttacks.VFX_FIST_HEAVY -> dev.baranhan.viltrumitecore.hero.thor.ThorFx.IMPACT_FIST;
+         case ThorAttacks.VFX_HAMMER_HEAVY, ThorAttacks.VFX_GROUND -> electric ? dev.baranhan.viltrumitecore.hero.thor.ThorFx.IMPACT_ELECTRIC
+            : dev.baranhan.viltrumitecore.hero.thor.ThorFx.IMPACT_HAMMER_HEAVY;
+         default -> electric ? dev.baranhan.viltrumitecore.hero.thor.ThorFx.IMPACT_ELECTRIC : dev.baranhan.viltrumitecore.hero.thor.ThorFx.IMPACT_HAMMER;
+      };
+   }
+
+   /** Pure: preset scale (1 = sized for the 3.2-block Thor); heavy fists a little bigger, ground finishers have the slam too. */
+   static float impactScale(String vfx) {
+      return switch (vfx) {
+         case ThorAttacks.VFX_FIST -> 0.8F;
+         case ThorAttacks.VFX_FIST_HEAVY -> 1.1F;
+         case ThorAttacks.VFX_GROUND -> 0.8F;
+         default -> 1.0F;
+      };
+   }
 
    /** The struck bodies only: Thor himself keeps moving under his own client prediction (B-m9). */
    static int[] hitStopIds(List<? extends Entity> targets) {

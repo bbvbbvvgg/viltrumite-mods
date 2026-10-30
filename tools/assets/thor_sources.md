@@ -69,13 +69,13 @@ Phase cues start on move events, never on tick counts: windup on `onStart` / `CH
 | Cue id | Layers | When |
 |---|---|---|
 | `hammer.windup` | hammer_swing | HAMMER_COMBO / HAMMER_STRIKE step start (onStart, CHAIN) — light strikes |
-| `hammer.windup_heavy` | hammer_windup + hammer_swing | same, heavy strikes (`ThorStrike.heavy()`) |
+| `hammer.windup_heavy` | hammer_swing + hammer_swing (low, slow) | same, heavy strikes (`ThorStrike.heavy()`); swing only, delayed so the whoosh peak lands on the contact (`ThorCue.windupDelay`) |
 | `hammer.hit` | hammer_metal + hammer_body + hammer_bass | ENTER_MAIN, a body struck (light) |
 | `hammer.hit_heavy` | hammer_metal + hammer_body + hammer_bass | ENTER_MAIN, a body struck (heavy) |
 | `hammer.slam` | hammer_metal + hammer_earth + hammer_bass | ENTER_MAIN at the shock centre (`shockRadius > 0`) |
 | `hammer.tail` | hammer_tail | ENTER_FINISH of heavy strikes |
 | `fist.windup` | fist_swing | FIST_COMBO step start — light |
-| `fist.windup_heavy` | fist_windup + fist_swing | FIST_COMBO step start — heavy |
+| `fist.windup_heavy` | fist_swing | FIST_COMBO step start — heavy; delayed so the whoosh peak lands on the contact |
 | `fist.hit` | fist_hit | ENTER_MAIN, struck (light) |
 | `fist.hit_heavy` | fist_hit + hammer_bass | ENTER_MAIN, struck (heavy) |
 | `fist.slam` | fist_hit + hammer_earth + hammer_bass | ENTER_MAIN, GROUND_POUND shock centre |
@@ -96,6 +96,11 @@ Phase cues start on move events, never on tick counts: windup on `onStart` / `CH
 | `electric.combo.slam` | thunder_impact + hammer_earth + hammer_bass | the combo's ground slam |
 | `electric.bolt` | thunder_impact | every drawn bolt, server half (gated 2 t per level) |
 | `electric.bolt.rumble` | thunder_rumble | after bolts, at most once per 30 t per level |
+| `guard.up` | fist_windup | guard (F) raised |
+| `guard.block` | hammer_metal + hammer_body | a blow absorbed by the hammer guard |
+| `guard.block_fist` | fist_hit | a blow absorbed by the fist guard |
+| `guard.parry` | hammer_metal + thunder_crack + electric_zap | parry (block in the first 5 t of the guard) with Mjölnir |
+| `guard.parry_fist` | fist_hit + hammer_bass | parry with bare fists |
 | `wrath.windup` | wrath_windup + electric_on | WRATH onStart; stopped at contact and onStop |
 | `wrath.contact` | thunder_crack + thunder_impact + thunder_rumble + hammer_bass + hammer_earth | WRATH ENTER_MAIN at the aim |
 | `wrath.tail` | electric_tail + hammer_tail | WRATH ENTER_FINISH |

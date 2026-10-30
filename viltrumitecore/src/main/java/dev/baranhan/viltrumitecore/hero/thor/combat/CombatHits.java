@@ -182,8 +182,13 @@ public final class CombatHits {
 
    /**
     * An electric area / ranged hit (LMB discharge and its chain, RMB wave,
-    * storm pulses and burst, sky splash): the target's vanilla i-frames
-    * apply (B-M5). Only authored strikes and combo finishers skip them.
+    * storm pulses and burst, sky splash). Audit v3: the vanilla 10-tick
+    * i-frames ate every second storm pulse (5 ticks) and cut the burst to its
+    * difference, so these hits use Thor's own per-hit gate instead: one hit
+    * per pulse (attack id), target and tick (ThorCombatState.claimSkip), the
+    * same rule as the strikes. Other sources' i-frames are untouched (the
+    * gate is only for Thor's own hit, and a refused hit restores the target's
+    * timer).
     */
    public static boolean hitArea(ServerPlayer player, LivingEntity target, float damage, ThorMove move, int attackId) {
       return hit(player, target, damage, move, attackId, false);
@@ -220,9 +225,12 @@ public final class CombatHits {
       return player.damageSources().playerAttack(player);
    }
 
-   /** Pure: may a hit skip the target's i-frames? Authored strikes / finishers yes, electric area and ranged hits no (B-M5). */
-   public static boolean skipsIFrames(boolean authoredStrike) {
-      return authoredStrike;
+   /**
+    * Pure: may a hit skip the target's vanilla i-frames (then once per attack id, target and tick)? Authored strikes and
+    * finishers yes; electric area / ranged hits too since audit v3 (their pulses are faster than the vanilla timer).
+    */
+   public static boolean skipsIFrames(boolean authoredStrike, ThorMove move) {
+      return authoredStrike || electric(move);
    }
 
    private static boolean hit(ServerPlayer player, LivingEntity target, float damage, ThorMove move, int attackId, boolean authoredStrike) {
@@ -234,7 +242,7 @@ public final class CombatHits {
       Scope previous = SCOPE.get();
       SCOPE.set(new Scope(player, target, move, attackId, hammer));
       int saved = target.invulnerableTime;
-      if (skipsIFrames(authoredStrike) && claimSkip(player, target, attackId)) {
+      if (skipsIFrames(authoredStrike, move) && claimSkip(player, target, attackId)) {
          target.invulnerableTime = 0;
       }
       boolean landed;

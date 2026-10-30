@@ -18,7 +18,7 @@ FILE_LIMIT = 10 ** 9  # one file: the runtime (ThorAssets.ANIMATIONS) and the co
 BASE_FILE = "thor.animation.json"
 # Every clip in thor.animation.json (the old push-size split into several files was never loaded by AnimCache).
 GROUPS = (("thor.animation.json", ("idle", "walk", "run", "stance", "lift", "flight", "throw", "catch", "pull", "crouch", "sit",
-                                   "draw", "holster", "electric", "wrath", "hammer_", "fist_")),)
+                                   "draw", "holster", "guard", "electric", "wrath", "hammer_", "fist_")),)
 OWNERS = {
     "full": (C.TP_BONES, C.POS_BONES),
     "upper": (C.UPPER_BONES, ()),

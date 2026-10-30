@@ -46,7 +46,7 @@ class ThorClipContractTest {
 
       JsonObject wrongLength = ThorClipContract.reference();
       clip(wrongLength, wrath.clip()).addProperty("animation_length", 2.6);
-      assertViolation(wrongLength, "wrath: animation_length 2.6000 s, expected 6.4000 s (128 t)");
+      assertViolation(wrongLength, String.format(java.util.Locale.ROOT, "wrath: animation_length 2.6000 s, expected %.4f s (%d t)", wrath.length() / 20.0, wrath.length()));
 
       JsonObject looping = ThorClipContract.reference();
       clip(looping, slam.clip()).addProperty("loop", true);
@@ -60,7 +60,9 @@ class ThorClipContractTest {
       JsonObject timeline = new JsonObject();
       timeline.addProperty("0.75", "contact;");
       clip(lateContact, slam.clip()).add("timeline", timeline);
-      assertViolation(lateContact, slam.clip() + ": 'contact' at 0.7500 s, expected 0.6000 s (tick 12");
+      int contact = slam.phases().contactTick();
+      assertViolation(lateContact, slam.clip() + ": 'contact' at 0.7500 s, expected " + String.format(java.util.Locale.ROOT, "%.4f", contact / 20.0)
+         + " s (tick " + contact);
 
       JsonObject stray = ThorClipContract.reference();
       JsonObject idle = new JsonObject();

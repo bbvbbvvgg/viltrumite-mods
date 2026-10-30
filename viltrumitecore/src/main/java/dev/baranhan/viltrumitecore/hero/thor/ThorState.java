@@ -225,8 +225,21 @@ public final class ThorState {
       this.hammer = HammerState.fromKey(nbt.getCompound(KEY).getString(HAMMER_KEY));
    }
 
+   /** Audit v3: server hit-stop, ticks the running move's timeline holds on its contact frame (never saved). */
+   int hitStop;
+
+   /** Hold the running move for {@code ticks} (the longer of a running and a new hold). */
+   public void holdTimeline(int ticks) {
+      this.hitStop = Math.max(this.hitStop, Math.max(0, Math.min(10, ticks)));
+   }
+
+   public int hitStop() {
+      return this.hitStop;
+   }
+
    /** Drop the bridge flags and held presses (never saved). */
    void clearTransient() {
+      this.hitStop = 0;
       this.grabWindow = 0;
       this.grabTarget = -1;
       this.sceneLock = null;
