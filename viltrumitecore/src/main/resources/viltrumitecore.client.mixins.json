@@ -10,6 +10,8 @@
     "DioSceneCameraMixin",
     "TimeFreezeMouseMixin",
     "TimeFreezeRenderMixin",
+    "TimeFreezeParticleMixin",
+    "TimeFreezeTextureMixin",
     "TimeFreezeTeleportMixin",
     "AbstractClientPlayerMixin",
     "AlwaysVisibleOffhandMixin",

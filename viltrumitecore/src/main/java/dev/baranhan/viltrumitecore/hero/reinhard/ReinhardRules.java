@@ -286,17 +286,43 @@ public final class ReinhardRules {
    public static final int REFLECT_SNAP_TICKS = 6;
 
    public static final int ERASE_RANGE = 64;
-   public static final int ERASE_LENGTH = 150;
-   /**
-    * Playtest: Reinhard speaks before the erasure. The world is already paused and the caster held
-    * for this long, then the 150-tick cinematic (crack, shatter, dark, rebuild) runs as before; the
-    * line ends before the dark phase ({@link ReinhardLines#WORLD_ERASURE}).
+   /*
+    * World Erasure: ONE scene clock, the WorldPause elapsed tick (0 = the N press). The server
+    * (removal, pause end, Reinhard's pose), every client scene, the shader and the sounds read
+    * these beats; nothing else keeps its own timer.
+    *
+    *   0  absolute stop (world, camera, HUD)    20..80  slow crack growth (60 t)
+    *   80..90 critical rupture                  90      shatter: shards burst and fall
+    *   92..112 target glows white               112..150 target dissolves; 150 = removal
+    *   160..192 rebuild + shake                 192..205 cracks close; 205 = pause ends
     */
-   public static final int ERASE_SPEECH_TICKS = 70;
-   public static final int ERASE_CRACK_END = 30;
-   public static final int ERASE_SHATTER_END = 70;
-   public static final int ERASE_DARK_END = 110;
-   public static final int ERASE_REMOVE_TICK = 90;
+   /** Whole scene (pause length), ticks from the N press. */
+   public static final int ERASE_LENGTH = 205;
+   /**
+    * Absolute stop before the first crack. Reinhard's line starts with the press and runs on
+    * over the crack; its last page is gone by the shatter ({@link ReinhardLines#WORLD_ERASURE}).
+    */
+   public static final int ERASE_SPEECH_TICKS = 20;
+   public static final int ERASE_CRACK_START = ERASE_SPEECH_TICKS;
+   /** Slow growth ends (60 ticks); the critical rupture follows. */
+   public static final int ERASE_CRACK_END = 80;
+   /** The glass gives way: shards burst. */
+   public static final int ERASE_SHATTER_START = 90;
+   /** Last shard has fallen out of the void. */
+   public static final int ERASE_SHATTER_END = 135;
+   public static final int ERASE_GLOW_START = 92;
+   public static final int ERASE_DISSOLVE_START = 112;
+   /** Dissolve complete: the one removal attempt. */
+   public static final int ERASE_REMOVE_TICK = 150;
+   /** End of the empty void; the shards start to return. */
+   public static final int ERASE_DARK_END = 160;
+   /** Last shard snaps home (final impact); cracks then close until {@link #ERASE_LENGTH}. */
+   public static final int ERASE_REBUILD_END = 192;
+   /** Authored cut of the existing world_erasure clip (raise, hold, cut at 30..40). */
+   public static final int ERASE_POSE_CUT = 30;
+   /** Reinhard's clip starts here so its cut lands on the rupture. */
+   public static final int ERASE_POSE_START = ERASE_CRACK_END - ERASE_POSE_CUT;
+   public static final int ERASE_POSE_LENGTH = ERASE_LENGTH - ERASE_POSE_START;
    public static final int ERASE_COOLDOWN = 4;
    public static final boolean ERASE_PROTECT_FROZEN = true;
    public static final int ERASE_MOB_FREEZE_RADIUS = 32;

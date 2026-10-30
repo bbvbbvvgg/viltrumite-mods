@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -34,6 +35,40 @@ public abstract class TimeFreezeLevelMixin {
    @Inject(method = "tickPassenger", at = @At("HEAD"), cancellable = true)
    private void viltrumitecore$timeFrozenPassenger(Entity vehicle, Entity passenger, CallbackInfo ci) {
       if (!(passenger instanceof Player) && passenger.getVehicle() == vehicle && TimeFreeze.isFrozen(passenger)) {
+         ci.cancel();
+      }
+   }
+
+   /*
+    * A world pause stops the level's own clocks too (TimeFreeze.worldStopped): scheduled block and
+    * fluid ticks stay queued (they run, overdue, on the first tick after the stop), block events
+    * (pistons, note blocks) stay queued, and random ticks (fire, crops, leaves) wait. DIO's local
+    * fields never stop a level, so their behaviour is unchanged.
+    */
+   @Redirect(method = "tick", at = @At(value = "INVOKE",
+      target = "Lnet/minecraft/world/ticks/LevelTicks;tick(JILjava/util/function/BiConsumer;)V"))
+   private void viltrumitecore$stoppedTicks(net.minecraft.world.ticks.LevelTicks<?> ticks, long time, int max,
+      java.util.function.BiConsumer<net.minecraft.core.BlockPos, ?> runner) {
+      if (!TimeFreeze.worldStopped((ServerLevel)(Object)this)) {
+         viltrumitecore$run(ticks, time, max, runner);
+      }
+   }
+
+   @SuppressWarnings({"unchecked", "rawtypes"})
+   private static void viltrumitecore$run(net.minecraft.world.ticks.LevelTicks ticks, long time, int max, java.util.function.BiConsumer runner) {
+      ticks.tick(time, max, runner);
+   }
+
+   @Inject(method = "runBlockEvents", at = @At("HEAD"), cancellable = true)
+   private void viltrumitecore$stoppedBlockEvents(CallbackInfo ci) {
+      if (TimeFreeze.worldStopped((ServerLevel)(Object)this)) {
+         ci.cancel();
+      }
+   }
+
+   @Inject(method = "tickChunk", at = @At("HEAD"), cancellable = true)
+   private void viltrumitecore$stoppedRandomTicks(net.minecraft.world.level.chunk.LevelChunk chunk, int speed, CallbackInfo ci) {
+      if (TimeFreeze.worldStopped((ServerLevel)(Object)this)) {
          ci.cancel();
       }
    }
