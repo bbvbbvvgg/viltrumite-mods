@@ -58,5 +58,5 @@ key string. The hero files under parallel work (Thor, DIO, Sinclair) are not tou
 ## Old race screen
 
 `OpenRaceScreenS2CPacket` now opens the wish screen in first-choice mode. `RaceSelectionScreen`,
-`HeroChoiceC2SPacket` and the operator commands stay (debug and compatibility). A player gets one
-Wish on the first login (`PlayerPersisted` flag `ViltrumiteOdLagnaWishGiven`).
+`HeroChoiceC2SPacket` and the operator commands stay (debug and compatibility). The item is not
+given out on login: it comes from its creative tab or `/give`.
