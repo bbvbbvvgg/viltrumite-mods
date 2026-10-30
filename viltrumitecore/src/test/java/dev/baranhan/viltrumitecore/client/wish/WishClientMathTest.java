@@ -64,7 +64,7 @@ class WishClientMathTest {
 
    @Test
    void fulfilledMarksOnlyTheUniqueHeroWish() {
-      List<Wish> wishes = List.of(new Wish("time", "dio", "time", WishGrant.hero("dio")), new Wish("a", "ironman", "armor", WishGrant.hero("ironman")),
+      List<Wish> wishes = List.of(new Wish("time", "dio", "time", WishGrant.hero("dio")), new Wish("a", "ironman", "tech", WishGrant.hero("ironman")),
          new Wish("b", "ironman", "tech", WishGrant.hero("ironman")), new Wish("return", "human", "mortal", WishGrant.hero("human")));
       assertArrayEquals(new boolean[]{true, false, false, false}, WishLayout.fulfilled(wishes, "dio"));
       assertArrayEquals(new boolean[]{false, false, false, false}, WishLayout.fulfilled(wishes, "ironman"));
@@ -107,7 +107,7 @@ class WishClientMathTest {
             }
          }
       }
-      for (String key : new String[]{"time", "shadow", "thunder", "cards", "armor", "tech", "crimson", "holy", "still", "mortal"}) {
+      for (String key : new String[]{"time", "shadow", "thunder", "cards", "tech", "crimson", "holy", "still", "mortal"}) {
          assertEquals(key, WishStyle.of(key).key);
       }
       assertEquals(WishStyle.MORTAL, WishStyle.of("unknown"));

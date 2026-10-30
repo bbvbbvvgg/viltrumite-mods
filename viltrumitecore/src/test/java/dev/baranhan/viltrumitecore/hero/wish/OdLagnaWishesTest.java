@@ -36,7 +36,7 @@ class OdLagnaWishesTest {
    @Test
    void everyWishGrantsAKnownHeroAndTheReturnIsLast() {
       List<Wish> all = OdLagnaWishes.all();
-      assertTrue(all.size() >= 10, "the spec lists ten wishes");
+      assertTrue(all.size() >= 9, "the spec lists nine wishes");
       Set<String> ids = new HashSet<>();
       Set<String> heroes = new HashSet<>();
       for (Wish wish : all) {
