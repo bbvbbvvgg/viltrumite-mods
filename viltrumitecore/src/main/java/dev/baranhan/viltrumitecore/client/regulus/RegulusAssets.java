@@ -15,6 +15,12 @@ public final class RegulusAssets {
    public static final ResourceLocation ARMS = loc("geo/regulus/regulus_arms.geo.json");
    public static final ResourceLocation TEXTURE = loc("textures/entity/regulus/regulus.png");
    public static final ResourceLocation GLOW = loc("textures/entity/regulus/regulus_glow.png");
+   /**
+    * First-person arms keep their own frozen geometry and atlas (the first Reborn look, approved by the owner):
+    * the body was restyled to Minecraft proportions, the arms must not change. RegulusAssetsTest pins the hashes.
+    */
+   public static final ResourceLocation FP_TEXTURE = loc("textures/entity/regulus/regulus_fp.png");
+   public static final ResourceLocation FP_GLOW = loc("textures/entity/regulus/regulus_fp_glow.png");
    public static final ResourceLocation HERO_ICON = loc("textures/gui/ability/regulus/kingdom_of_one.png");
    public static final ResourceLocation EMBLEM = loc("textures/gui/ability/regulus/lions_heart.png");
 
@@ -31,9 +37,9 @@ public final class RegulusAssets {
       loc("animations/regulus/regulus_fp_b.animation.json"),
       loc("animations/regulus/regulus_fp_ult.animation.json"));
 
-   /** Model px from the ground to the eyes (first-person anchor). */
+   /** Model px from the ground to the eyes of the frozen first-person arms rig (first-person anchor). */
    public static final float EYE_PX = 26.9F;
-   /** Vanilla PlayerRenderer.scale: the 31 px tall body stands like a player. */
+   /** Vanilla PlayerRenderer.scale: the 32 px tall body stands like a player. */
    public static final float PLAYER_SCALE = 0.9375F;
 
    private RegulusAssets() {

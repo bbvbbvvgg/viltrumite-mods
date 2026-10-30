@@ -78,9 +78,9 @@ public final class RegulusFirstPerson {
       stack.pushPose();
       stack.translate(FP_X, FP_Y - RegulusAssets.EYE_PX / 16.0F, FP_Z);
       int light = event.getPackedLight();
-      AnimRenderer.render(arms, stack, null, buffers.getBuffer(RenderType.entityCutoutNoCull(RegulusAssets.TEXTURE)), light, OverlayTexture.NO_OVERLAY,
+      AnimRenderer.render(arms, stack, null, buffers.getBuffer(RenderType.entityCutoutNoCull(RegulusAssets.FP_TEXTURE)), light, OverlayTexture.NO_OVERLAY,
          1.0F, 1.0F, 1.0F, 1.0F, null);
-      AnimRenderer.render(arms, stack, null, buffers.getBuffer(RenderType.eyes(RegulusAssets.GLOW)), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
+      AnimRenderer.render(arms, stack, null, buffers.getBuffer(RenderType.eyes(RegulusAssets.FP_GLOW)), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
          1.0F, 1.0F, 1.0F, 1.0F, null);
       stack.popPose();
    }

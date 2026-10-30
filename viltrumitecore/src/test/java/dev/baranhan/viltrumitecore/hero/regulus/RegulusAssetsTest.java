@@ -107,6 +107,53 @@ class RegulusAssetsTest {
          "skin texture");
    }
 
+   /** The first-person arms are frozen (owner-approved look): the body restyle must never touch them. */
+   @Test
+   void firstPersonArmsAreFrozen() throws Exception {
+      Map<Path, String> frozen = Map.of(
+         ASSETS.resolve("geo/regulus/regulus_arms.geo.json"), "17e7358e8ec51dcb4a61aa35b43c34039537af9c0c84ec946261beda0840c7fa",
+         BIN.resolve("textures/entity/regulus/regulus_fp.png.b64"), "2c222b0d9e06ad764f17a1ffe777e5140e44e6dbca1520a3727b1e07f4e1d35e",
+         BIN.resolve("textures/entity/regulus/regulus_fp_glow.png.b64"), "df025314ab932457f9c9c77098d12ee19fcf725480dc431944ee77feb741085d");
+      for (Map.Entry<Path, String> e : frozen.entrySet()) {
+         byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(e.getKey()));
+         StringBuilder hex = new StringBuilder();
+         for (byte b : digest) {
+            hex.append(String.format("%02x", b));
+         }
+
+         assertEquals(e.getValue(), hex.toString(), e.getKey() + " changed: the first-person arms are frozen");
+      }
+
+      String fp = Files.readString(JAVA.resolve("client/regulus/RegulusFirstPerson.java"));
+      assertTrue(fp.contains("RegulusAssets.FP_TEXTURE") && fp.contains("RegulusAssets.FP_GLOW") && !fp.contains("RegulusAssets.TEXTURE)"),
+         "first person draws the frozen atlas");
+   }
+
+   /** The body is a Minecraft-proportioned hero: 8 px head, 8x12x4 torso, 32 px tall. */
+   @Test
+   void bodyHasMinecraftProportions() throws IOException {
+      JsonArray list = read(ASSETS.resolve("geo/regulus/regulus.geo.json")).getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject().getAsJsonArray("bones");
+      double top = 0.0;
+      for (JsonElement bone : list) {
+         JsonObject b = bone.getAsJsonObject();
+         if (!b.has("cubes")) {
+            continue;
+         }
+
+         for (JsonElement c : b.getAsJsonArray("cubes")) {
+            JsonArray o = c.getAsJsonObject().getAsJsonArray("origin");
+            JsonArray size = c.getAsJsonObject().getAsJsonArray("size");
+            if (b.get("name").getAsString().equals("head") && !c.getAsJsonObject().has("inflate")) {
+               assertEquals(8.0, size.get(0).getAsDouble(), 1.0E-6, "head width");
+               assertEquals(8.0, size.get(1).getAsDouble(), 1.0E-6, "head height");
+               top = Math.max(top, o.get(1).getAsDouble() + size.get(1).getAsDouble());
+            }
+         }
+      }
+
+      assertEquals(32.0, top, 1.0E-6, "head top");
+   }
+
    private static List<String> soundNames() throws IOException {
       String src = Files.readString(JAVA.resolve("hero/regulus/RegulusSounds.java"));
       Matcher block = Pattern.compile("NAMES = List\\.of\\((.*?)\\);", Pattern.DOTALL).matcher(src);
