@@ -28,7 +28,7 @@ import net.minecraft.world.level.Level;
  * an automatic hero target ({@link Bystander}), drops nothing.
  */
 public class CitizenEntity extends PathfinderMob implements Bystander {
-   public static final int SKINS = 12;
+   public static final int SKINS = CitizenSkinPainter.COUNT;
    /** Walk speed modifier on the 0.25 base speed; fleeing runs {@link #FLEE_FACTOR} times faster. */
    public static final double WALK_SPEED = 0.55;
    public static final double FLEE_FACTOR = 1.7;
