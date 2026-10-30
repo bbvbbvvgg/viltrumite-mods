@@ -128,8 +128,9 @@ class HeldInputsTest {
          }
       }
 
-      HeroDefinition regulus = new dev.baranhan.viltrumitecore.hero.regulus.RegulusHero();
+      HeroDefinition regulus = dev.baranhan.viltrumitecore.hero.regulus.RegulusHero.INSTANCE;
       assertEquals(HeroAction.ASSIGN_HEART, regulus.mouseAction(MouseButton.MIDDLE, null));
+      // without a player there is no empty hand to read: Greed's Touch is never claimed blind
       assertNull(regulus.mouseAction(MouseButton.PRIMARY, null));
       assertNull(regulus.mouseAction(MouseButton.SECONDARY, null));
    }
