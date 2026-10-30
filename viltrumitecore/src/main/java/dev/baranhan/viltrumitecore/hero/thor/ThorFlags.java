@@ -9,7 +9,8 @@ package dev.baranhan.viltrumitecore.hero.thor;
  *   <li>bit 4: camera lease held (the client camera of the leasing session);</li>
  *   <li>bit 5: Mjölnir lies / falls in the world away from Thor (session A;
  *   bits 0-1 then read HOLSTERED, the MMB claim reads RECALL);</li>
- *   <li>bit 6: scene lock held (session C: a scene owns Thor's mouse and flight).</li>
+ *   <li>bit 6: scene lock held (session C: a scene owns Thor's mouse and flight);</li>
+ *   <li>bit 7: the guard is up (audit v3, ThorGuard; the client plays the guard pose).</li>
  * </ul>
  * The two session bits are independent: a scene can run while the world
  * hammer lies away (a fist grab), so both can be set at once.
@@ -23,6 +24,7 @@ public final class ThorFlags {
    public static final int CAMERA_LEASE = 4;
    public static final int HAMMER_DETACHED = 5;
    public static final int SCENE = 6;
+   public static final int GUARD = 7;
 
    private ThorFlags() {
    }
@@ -71,6 +73,10 @@ public final class ThorFlags {
 
    public static ThorMode mode(int flags) {
       return (flags & 1 << ELECTRIC) != 0 ? ThorMode.ELECTRIC : ThorMode.NORMAL;
+   }
+
+   public static boolean guard(int flags) {
+      return (flags & 1 << GUARD) != 0;
    }
 
    public static boolean grabWindow(int flags) {
