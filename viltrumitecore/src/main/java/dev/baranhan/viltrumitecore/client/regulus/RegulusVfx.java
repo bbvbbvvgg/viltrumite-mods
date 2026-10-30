@@ -42,7 +42,8 @@ import org.joml.Vector3f;
  * viewers see the same beats and nothing appears that the server did not do: stilled motes that
  * halt mid-air, sand grains replayed from the shot packet and frozen where the server stopped
  * them, the air-cut glass sheet with its hairline scars, frozen block fragments, crack stars at
- * contacts, the heart glyph on its host, the Lion's trail of stopped air and the ultimate's dome.
+ * contacts, the trample's ground shockwave, the heart glyph on its host, the Lion's trail of stopped air
+ * and the ultimate's dome.
  */
 public final class RegulusVfx {
    static final int MAX_EFFECTS = 700;
@@ -432,6 +433,154 @@ public final class RegulusVfx {
       }
    }
 
+   /**
+    * «Попрание»: the shock running out over the ground (or the stopped air) from his foot. A flat
+    * ivory ring with a gold leading edge, hairline cracks lying on the ground behind it, and the
+    * dust of the struck ground lifted by the front and stopped in mid-rise before it settles.
+    * Pure timing in {@link #front}; deterministic per seed so every viewer sees the same cracks.
+    */
+   static final class Shockwave implements Effect {
+      static final int SEGMENTS = 56;
+      final double start;
+      final Vec3 center;
+      final double radius;
+      final double speed;
+      final boolean air;
+      final int dust;
+      final double[] crackAngle;
+      final double[] crackLen;
+      final long seed;
+      final double[][] motes;
+
+      Shockwave(double start, Vec3 center, double radius, double speed, boolean air, int dust, long seed) {
+         this.start = start;
+         this.center = center.add(0.0, air ? 0.0 : 0.04, 0.0);
+         this.radius = radius;
+         this.speed = speed;
+         this.air = air;
+         this.dust = dust;
+         this.seed = seed;
+         Random r = new Random(seed);
+         int rays = 9 + r.nextInt(4);
+         this.crackAngle = new double[rays];
+         this.crackLen = new double[rays];
+         for (int i = 0; i < rays; i++) {
+            this.crackAngle[i] = Math.PI * 2.0 * (i + r.nextDouble() * 0.7) / rays;
+            this.crackLen[i] = radius * (air ? 0.25 : 0.35 + r.nextDouble() * 0.35);
+         }
+
+         this.motes = new double[40][];
+         for (int i = 0; i < this.motes.length; i++) {
+            // angle, distance from the centre, rise height
+            this.motes[i] = new double[]{r.nextDouble() * Math.PI * 2.0, 0.6 + r.nextDouble() * (radius - 0.6), 0.25 + r.nextDouble() * 0.9};
+         }
+      }
+
+      /** Pure: ring radius at {@code age} ticks (starts at half a block, stops at the full radius). */
+      static double front(double age, double speed, double radius) {
+         return Math.min(radius, 0.5 + Math.max(0.0, age) * speed);
+      }
+
+      double life() {
+         return (this.radius - 0.5) / this.speed + 30.0;
+      }
+
+      @Override
+      public double start() {
+         return this.start;
+      }
+
+      @Override
+      public boolean draw(Ctx c, double age) {
+         double life = this.life();
+         if (age > life) {
+            return false;
+         }
+
+         double r = front(age, this.speed, this.radius);
+         double travel = (this.radius - 0.5) / this.speed;
+         float out = (float) Mth.clamp((life - age) / 14.0, 0.0, 1.0);
+         // the ring: bright while it runs, it fades once it reaches the edge
+         float ringFade = (float) Mth.clamp(1.0 - (age - travel) / 6.0, 0.0, 1.0);
+         if (ringFade > 0.0F) {
+            double w = 0.22 + 0.25 * (1.0 - r / this.radius);
+            int alpha = (int) (170 * ringFade);
+            for (int i = 0; i < SEGMENTS; i++) {
+               double a0 = Math.PI * 2.0 * i / SEGMENTS;
+               double a1 = Math.PI * 2.0 * (i + 1) / SEGMENTS;
+               Vec3 i0 = this.flat(a0, Math.max(0.0, r - w));
+               Vec3 i1 = this.flat(a1, Math.max(0.0, r - w));
+               Vec3 o0 = this.flat(a0, r);
+               Vec3 o1 = this.flat(a1, r);
+               c.quad(i0, o0, o1, i1, this.air ? RegulusPalette.GLASS : RegulusPalette.IVORY, alpha);
+               if (i % 2 == 0) {
+                  c.dot(o0.add(0.0, 0.05, 0.0), 0.05F, RegulusPalette.GOLD, (int) (150 * ringFade));
+               }
+            }
+
+            if (this.air) {
+               // a faint pane of stopped air under the ring
+               for (int i = 0; i < SEGMENTS; i += 4) {
+                  double a = Math.PI * 2.0 * i / SEGMENTS;
+                  c.segment(this.center, this.flat(a, r), 0.015F, RegulusPalette.GLASS, (int) (40 * ringFade));
+               }
+            }
+         }
+
+         // hairline cracks lying on the ground, growing with the ring and staying after it
+         int crack = (int) (210 * out);
+         for (int i = 0; i < this.crackAngle.length; i++) {
+            Random jr = new Random(this.seed + i * 31L);
+            double len = Math.min(this.crackLen[i], r);
+            Vec3 p = this.center;
+            double a = this.crackAngle[i];
+            for (int k = 0; k < 4; k++) {
+               a += (jr.nextDouble() - 0.5) * 0.6;
+               double d = len * (k + 1) / 4.0;
+               Vec3 q = this.flat(a, d);
+               c.quad(p.add(sideOf(p, q, 0.03)), q.add(sideOf(p, q, 0.015)), q.subtract(sideOf(p, q, 0.015)), p.subtract(sideOf(p, q, 0.03)),
+                  RegulusPalette.IVORY, crack);
+               p = q;
+            }
+         }
+
+         // dust lifted by the front, stopped in mid-rise, then released
+         int dustRgb = this.air ? RegulusPalette.GLASS : blockColor(this.dust, RegulusPalette.GREY);
+         double release = travel + 14.0;
+         for (double[] m : this.motes) {
+            double passed = age - (m[1] - 0.5) / this.speed;
+            if (passed < 0.0) {
+               continue;
+            }
+
+            double rise = m[2] * Math.min(1.0, passed / 4.0);
+            Vec3 p = this.flat(m[0], m[1]).add(0.0, this.air ? rise * 0.3 : rise, 0.0);
+            if (age > release) {
+               double f = age - release;
+               p = p.add(0.0, -0.03 * f * f, 0.0);
+            }
+
+            c.dot(p, 0.06F, dustRgb, (int) (200 * out));
+            if (passed >= 4.0 && passed < 7.0) {
+               c.dot(p, 0.15F, RegulusPalette.GOLD, (int) (90 * (1.0 - (passed - 4.0) / 3.0) * out));
+            }
+         }
+
+         return true;
+      }
+
+      Vec3 flat(double angle, double distance) {
+         return this.center.add(Math.cos(angle) * distance, 0.0, Math.sin(angle) * distance);
+      }
+
+      static Vec3 sideOf(Vec3 a, Vec3 b, double half) {
+         Vec3 d = b.subtract(a);
+         Vec3 s = new Vec3(-d.z, 0.0, d.x);
+         double len = s.length();
+         return len < 1.0E-6 ? Vec3.ZERO : s.scale(half / len);
+      }
+   }
+
    /** A heart glyph travelling from a to the entity {@code to} (bind, hop) or breaking (release). */
    record HeartTravel(double start, Vec3 from, int to, int life, boolean breaking) implements Effect {
       @Override
@@ -606,6 +755,12 @@ public final class RegulusVfx {
       }
    }
 
+   static void shockwave(Vec3 center, double radius, double speed, boolean air, int dustState) {
+      // seeded by the impact point: every viewer draws the same cracks
+      long seed = Double.doubleToLongBits(Math.floor(center.x * 16.0)) * 31L + Double.doubleToLongBits(Math.floor(center.z * 16.0));
+      add(new Shockwave(now(), center, radius, speed, air, dustState, seed));
+   }
+
    static void fragments(Vec3 center, int stateId) {
       add(new Fragments(now(), center, blockColor(stateId, RegulusPalette.GREY), 7, RNG.nextLong()));
    }
@@ -671,9 +826,7 @@ public final class RegulusVfx {
          // the Lion: the air he passes through stays stopped for a moment behind him
          if (lion && time % 2 == 0) {
             Vec3 c = player.position().add(0.0, player.getBbHeight() * 0.5, 0.0);
-            int n = move == RegulusMove.PROCESSION ? 6 : 2;
-            still(c, 0.4, n, move == RegulusMove.PROCESSION ? 22 : 14, move == RegulusMove.PROCESSION ? RegulusPalette.PALE_GOLD : RegulusPalette.IVORY,
-               0.03F);
+            still(c, 0.4, 2, 14, RegulusPalette.IVORY, 0.03F);
          }
 
          if (RegulusView.flag(s, RegulusFlags.SEIZED) && time % 3 == 0) {

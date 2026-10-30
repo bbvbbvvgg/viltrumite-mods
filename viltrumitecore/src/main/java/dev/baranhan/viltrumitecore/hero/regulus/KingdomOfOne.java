@@ -77,9 +77,6 @@ public final class KingdomOfOne {
       }
 
       scene.frozen = true;
-      if (state.move == RegulusMove.PROCESSION) {
-         Procession.stop(player, state);
-      }
 
       state.ult = scene;
       state.startMove(RegulusMove.ULT);
