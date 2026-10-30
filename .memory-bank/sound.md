@@ -15,6 +15,21 @@ Durable sound knowledge. Main memory: `.memory-bank/project.md`. Skill: `.agents
 - The GitHub connector refuses a request above 65536 bytes. Push in batches (`push_files`) under ~60 KB. Keep each `.ogg.b64` under ~60 KB (shorter or low-passed cue).
 - A text file above ~60 KB (for example `SESSION.md`, `.memory-bank/project.md`) cannot be updated through the connector. Put new durable notes in a topic file instead.
 
+## Hulkbuster (fix spec item 3, 2026-10-30)
+- 56 files / 31 events from `tools/sfx/hulkbuster.py`: CC0 1.0 Freesound recordings (SOURCES table, 28 rows, hq MP3 previews in `~/.cache/viltrumite-sfx/work/raw/fs_<id>.mp3`, `--fetch` gets them) carry every cue; the H6 synthesis is the support layer. `--check` re-mixes and compares; `--sources` lists file -> ids. Not auditioned.
+- Openverse was unreachable (504 / timeout): sources come from Freesound search pages (`/search/?q=...&f=license:"Creative Commons 0"`, scrapeable) and landing pages (licence link, description for AI / parents). Credits are composed from the landing page and say so. The helper's `package` needs an Openverse `--source-id`, so the script encodes with the same ffmpeg settings itself.
+- Leveling lesson: recorded hits are crest-limited. Per-layer look-ahead limiting at 12 dB over the layer's loudest 100 ms RMS, a 38 Hz bus high-pass and a tanh bus knee (7–8 dB over RMS) let the impact class reach about −8.7 LUFS; after the limiter, each variant's gain is corrected so variants stay within 0.2 dB.
+
+## DIO (polish, core 1.55.0)
+- `tools/sfx/dio.py`: 30 events / 36 files, all own synthesis (CC0). Loudness is matched by role (`LOUDNESS`: loudest
+  100 ms RMS, heavy -8..-10 dBFS, hits -10..-12, motion -11..-15, utility/loop -15..-17), soft-limited at -1.5 dBFS.
+  Peak normalisation alone had left a 13 dB spread. Hits rotate variants (`stand_hit`, `barrage_hit`, `knife_hit`,
+  `roller_punch`).
+- Vanilla sends a variable-range event only to 16 x volume blocks: `DioSounds.playWide` broadcasts with an explicit
+  range (time stop / resume to the whole 40-block field, roller cues).
+- `dio.time_tick` loops on the client (`TimeStopClock`) while the camera is inside a running field.
+- Openverse API timed out (504) for the whole polish session: no CC0 recordings were added. Not auditioned.
+
 ## Sinclair (core 1.55.0)
 - See `.memory-bank/sinclair.md`. New cues of a hero whose shared sounds.json is too large to push go into the hero's own namespace sounds.json (`viltrumitecore_sinclair`), files stay in the shared sounds folder.
 - Loudness classes by active RMS (frequent −21, detail −20, ability −18, act −16.5, signature −15 dB), raised-cosine release, no tail above −30 dB: `tools/sfx/sinclair_cc0.py --audit`.

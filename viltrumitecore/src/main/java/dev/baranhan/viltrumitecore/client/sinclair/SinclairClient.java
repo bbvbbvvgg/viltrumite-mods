@@ -24,9 +24,12 @@ public final class SinclairClient {
       HeroPortraits.register(HeroId.SINCLAIR, SinclairPortrait.INSTANCE);
       MinecraftForge.EVENT_BUS.addListener(SinclairRenderer::onRenderPlayerPre);
       MinecraftForge.EVENT_BUS.addListener(SinclairFirstPerson::onRenderHand);
+      MinecraftForge.EVENT_BUS.addListener(SinclairFirstPerson::onRenderArm);
       MinecraftForge.EVENT_BUS.addListener(SinclairVfx::onRenderLevel);
       MinecraftForge.EVENT_BUS.addListener(StageLight::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(StageLight::onRenderGuiPre);
+      MinecraftForge.EVENT_BUS.addListener(ActCardPopup::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(ActCardPopup::onRenderGui);
       // Copy cinematic and the act cameras (design 2026-11-02 §2, §3.2).
       MinecraftForge.EVENT_BUS.addListener(CopyCinematicClient::onMovement);
       MinecraftForge.EVENT_BUS.addListener(CopyCinematicClient::onInteraction);
