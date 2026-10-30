@@ -74,7 +74,9 @@ public final class CityEvents {
       }
 
       CityManager city = CityManager.of(level);
-      if (city != null) {
+      // A world pause (Reinhard's N erasure) stops time: the city waits too, so no citizen
+      // spawns, despawns or repath happens and no block is restored mid-scene.
+      if (city != null && !dev.baranhan.viltrumitecore.hero.control.TimeFreeze.worldStopped(level)) {
          city.tick();
       }
    }

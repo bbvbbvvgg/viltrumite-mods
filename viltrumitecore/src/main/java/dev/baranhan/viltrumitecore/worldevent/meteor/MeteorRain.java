@@ -136,7 +136,8 @@ public final class MeteorRain {
          prune(level, session);
          // The rain belongs to the world where it started: it pauses while the player is elsewhere,
          // in spectator or dead, and resumes on return.
-         if (owner.level() != level || !owner.isAlive() || owner.isSpectator()) {
+         // Stopped time (world pause) launches nothing either.
+         if (owner.level() != level || !owner.isAlive() || owner.isSpectator() || dev.baranhan.viltrumitecore.hero.control.TimeFreeze.worldStopped(level)) {
             continue;
          }
 
