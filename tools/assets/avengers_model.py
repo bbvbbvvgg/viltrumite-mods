@@ -578,21 +578,35 @@ HK_PURPLE = '#4b2f63'
 HK_SKIN = '#e3b996'
 
 
+HK_HAIR = strands('#5f4529', '#b08a5c', wave=1.6, ends=False)
+
+
 def hk_head(face, rgb, glow, rs):
     x, y, z = face.world()
+    tmp = rgb.copy()
+    put(tmp, np.s_[:, :], '#8a6a46', 1.0)
+    HK_HAIR(face, tmp, glow, rs)
     if face.name in ('up', 'south'):
-        put(rgb, np.s_[:, :], '#8a6a46', 1.0)
+        rgb[:] = tmp
+        if face.name == 'south':  # short tapered nape
+            put(rgb, (y < 25.4) & (np.abs(x) < 3.4), '#6e5236', 0.5)
         return
     if face.name in ('east', 'west'):
-        put(rgb, y > 29.4, '#8a6a46', 1.0)
+        m = (y > 29.4) | ((y > 27.0) & (np.abs(z - (face.oz + face.sz)) < 2.2))  # sideburn-free taper behind
+        rgb[m] = tmp[m]
+        put(rgb, (y > 26.0) & (y < 27.6) & (np.abs(z - (face.oz + 3.4)) < 0.5), '#c49a7c', 0.6)  # ear
         return
     if face.name == 'down':
         return
     ax = np.abs(x)
-    put(rgb, y > 30.4, '#8a6a46', 1.0)
+    m = (y > 30.4) | ((y > 29.9) & (np.sin(x * 2.1) > 0.4))  # short spiky fringe
+    rgb[m] = tmp[m]
+    put(rgb, (ax > 0.7) & (ax < 3.2) & (y > 28.8) & (y < 29.2), '#6e5236', 0.9)  # brows
     put(rgb, (ax > 0.7) & (ax < 3.2) & (y > 27.4) & (y < 28.7), '#141418', 1.0)  # tactical glasses
     put(rgb, (ax > 1.0) & (ax < 2.6) & (y > 27.9) & (y < 28.4), '#5b4a7a', 0.8)
+    put(rgb, (ax < 0.5) & (y > 26.2) & (y < 27.4), '#c9a07f', 0.5)               # nose
     put(rgb, (ax < 1.4) & (np.abs(y - 25.5) < 0.18), '#9b5a4c', 0.9)
+    put(rgb, (ax > 1.2) & (y < 25.0), '#b08868', 0.25)                           # stubble jaw
 
 
 def hk_torso(face, rgb, glow, rs):
@@ -692,47 +706,100 @@ HU_PANTS, HU_PANTS_LO = '#4c2c6b', '#311b47'
 
 
 def muscle_fn(face, rgb, glow, rs):
+    """Green skin: top-lit form shading, a rounded bulge per face, soft muscle striations and faint veins."""
     x, y, z = face.world()
     put(rgb, np.s_[:, :], HU_GREEN, 1.0)
     if sides(face) and face.w > 4 and face.h > 4:
         u, v = face.grid()
-        sh = 0.9 + 0.2 * np.sin(u * np.pi) * np.sin(v * np.pi)
+        t = (y - face.oy) / max(1e-6, face.sy)
+        sh = (0.80 + 0.30 * t) * (0.9 + 0.2 * np.sin(u * np.pi) * np.sin(v * np.pi))
         rgb[:] = rgb * sh[..., None]
-        for _ in range(max(1, face.w // 6)):
+        for _ in range(max(1, face.w // 5)):
             c = rs.randint(1, face.w - 1)
-            put(rgb, np.s_[:, c:c + 1], HU_GREEN_LO, 0.25)
+            put(rgb, np.s_[:, c:c + 1], HU_GREEN_LO, 0.18)
+        if face.h > 10 and rs.random() < 0.6:  # a faint wandering vein
+            c = rs.uniform(0.2, 0.8) * face.w
+            for r in range(face.h):
+                c += rs.uniform(-0.7, 0.7)
+                cc = int(min(face.w - 1, max(0, c)))
+                put(rgb, np.s_[r:r + 1, cc:cc + 1], '#4d7a33', 0.35)
+    if face.name == 'up':
+        put(rgb, np.s_[:, :], HU_GREEN_HI, 0.35)
     if face.name == 'down':
         put(rgb, np.s_[:, :], HU_GREEN_LO, 0.6)
+
+
+def bulge(rgb, mask, e, hi=0.14, rim=None):
+    """Lighten the inside of an elliptical muscle (e < 1) towards its centre."""
+    k = np.clip(1 - e, 0, 1) * mask
+    rgb[:] = rgb * (1 + hi * k)[..., None]
 
 
 def hulk_torso_fn(face, rgb, glow, rs):
     muscle_fn(face, rgb, glow, rs)
     x, y, z = face.world()
-    if face.name == 'north':
-        cy = face.oy + face.sy
-        put(rgb, (np.abs(x) < 0.2) & (y > face.oy + 3), HU_GREEN_LO, 0.6)  # sternum line
-        put(rgb, np.abs(y - (cy - 6.0)) < 0.25, HU_GREEN_LO, 0.55)        # pectorals
-        for yy in (cy - 9.0, cy - 11.5, cy - 14):
-            put(rgb, (np.abs(y - yy) < 0.2) & (np.abs(x) < 3.5), HU_GREEN_LO, 0.4)  # abs
+    upper = face.oy >= 27.5
+    if face.name == 'north' and upper:
+        for sx in (-1, 1):
+            e = ((x - sx * 5.2) / 5.6) ** 2 + ((y - 33.6) / 3.9) ** 2
+            bulge(rgb, 1.0, e, 0.16)
+            put(rgb, (e > 0.82) & (e < 1.15) & (y < 33.6), HU_GREEN_LO, 0.55)  # pectoral underside
+        put(rgb, (np.abs(x) < 0.25) & (y < 36.5), HU_GREEN_LO, 0.6)            # sternum groove
+        for sx in (-1, 1):  # deltoid edge where the chest meets the shoulder
+            put(rgb, np.abs(x - sx * 10.0) < 0.3, HU_GREEN_LO, 0.35)
+    elif face.name == 'north':
+        put(rgb, (np.abs(x) < 0.22) & (y > 21), HU_GREEN_LO, 0.55)              # linea alba
+        for yy in (22.6, 25.0, 27.3):
+            put(rgb, (np.abs(y - yy) < 0.2) & (np.abs(x) < 3.6), HU_GREEN_LO, 0.45)
+        for sx in (-1, 1):
+            for yc in (23.8, 26.2):
+                e = ((x - sx * 1.9) / 1.9) ** 2 + ((y - yc) / 1.2) ** 2
+                bulge(rgb, 1.0, e, 0.12)
+            put(rgb, np.abs(x - sx * 4.2) < 0.25, HU_GREEN_LO, 0.4)               # obliques
+    elif face.name == 'south' and upper:
+        put(rgb, np.abs(x) < 0.3, HU_GREEN_LO, 0.55)                            # spine
+        for sx in (-1, 1):
+            e = ((x - sx * 4.8) / 4.2) ** 2 + ((y - 33.0) / 3.4) ** 2           # shoulder blades
+            bulge(rgb, 1.0, e, 0.12)
+            put(rgb, (e > 0.85) & (e < 1.15), HU_GREEN_LO, 0.35)
+    elif face.name == 'south':
+        put(rgb, np.abs(x) < 0.3, HU_GREEN_LO, 0.5)
+        for sx in (-1, 1):
+            put(rgb, (np.abs(x - sx * 5.0) < 0.3) & (y > 23), HU_GREEN_LO, 0.3)  # lats
 
 
 def hulk_head_fn(face, rgb, glow, rs):
     x, y, z = face.world()
     put(rgb, np.s_[:, :], HU_GREEN, 1.0)
     top = face.oy + face.sy
+    hair = strands('#0b0907', '#3a3229', wave=1.3)
     if face.name in ('up', 'south'):
         put(rgb, np.s_[:, :], '#1a1712', 1.0)
+        hair(face, rgb, glow, rs)
         return
     if face.name in ('east', 'west'):
-        put(rgb, y > top - 2.2, '#1a1712', 1.0)
+        tmp = rgb.copy()
+        put(tmp, np.s_[:, :], '#1a1712', 1.0)
+        hair(face, tmp, glow, rs)
+        m = y > top - 2.2 - 0.6 * (np.sin(z * 1.7) > 0.3)
+        rgb[m] = tmp[m]
+        put(rgb, (y < top - 5.5) & (y > top - 7.0) & (np.abs(z - (face.oz + 2.0)) < 1.2), HU_GREEN_LO, 0.5)  # cheek
         return
     if face.name != 'north':
         return
     ax = np.abs(x)
-    put(rgb, y > top - 1.6, '#1a1712', 1.0)
+    tmp = rgb.copy()
+    put(tmp, np.s_[:, :], '#1a1712', 1.0)
+    hair(face, tmp, glow, rs)
+    m = y > top - 1.6 - 0.5 * (np.sin(x * 2.3) > 0.5)
+    rgb[m] = tmp[m]
     put(rgb, (ax > 0.6) & (ax < 3.2) & (np.abs(y - (top - 2.6)) < 0.35), HU_GREEN_LO, 1.0)  # heavy brow
+    put(rgb, (ax < 0.7) & (y > top - 3.2) & (y < top - 2.2), HU_GREEN_LO, 0.6)              # frown
     put(rgb, (ax > 1.0) & (ax < 2.7) & (y > top - 3.9) & (y < top - 3.0), '#e9e6c8', 1.0)
     put(rgb, (ax > 1.4) & (ax < 2.2) & (y > top - 3.9) & (y < top - 3.0), '#4f7a2a', 1.0)
+    put(rgb, (ax < 0.9) & (y > top - 5.4) & (y < top - 4.0), HU_GREEN_HI, 0.35)             # nose bridge
+    put(rgb, (ax > 0.5) & (ax < 1.2) & (np.abs(y - (top - 5.4)) < 0.25), HU_GREEN_LO, 0.8)  # nostrils
+    put(rgb, (ax > 2.6) & (y > top - 6.0) & (y < top - 4.6), HU_GREEN_LO, 0.35)             # cheekbones
     put(rgb, (ax < 2.4) & (y > top - 7.2) & (y < top - 6.2), '#2b1d16', 1.0)  # snarl
     put(rgb, (ax < 2.0) & (y > top - 6.9) & (y < top - 6.5), '#eae6d6', 1.0)  # teeth
 
@@ -763,7 +830,7 @@ HU = {
     'head': Mat(HU_GREEN, noise=3, edge=0.0, fn=hulk_head_fn, grain=1),
     'pants': Mat(HU_PANTS, noise=5, edge=0.05, fn=pants_fn),
     'pants_torn': Mat(HU_PANTS, noise=5, edge=0.05, fn=pants_fn, alpha_fn=torn_alpha),
-    'hair': Mat('#1a1712', noise=6, edge=0.05, grain=1),
+    'hair': Mat('#1a1712', noise=2, edge=0.05, fn=strands('#0b0907', '#3a3229', wave=1.3)),
     'nail': Mat('#3b4d2a', noise=2, edge=0.0),
 }
 
