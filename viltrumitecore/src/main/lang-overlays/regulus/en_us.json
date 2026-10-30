@@ -1,8 +1,7 @@
 {
   "hero.viltrumitecore.regulus": "Regulus Corneas",
   "subtitle.viltrumitecore.speaker.regulus": "Regulus",
-  "key.viltrumitecore.assign_heart": "Regulus: Little King",
-  "scan.viltrumitecore.regulus.lion_heart": "Lion's Heart: his time is stopped — nothing reaches him",
+  "scan.viltrumitecore.regulus.stopped_time": "Lion's Heart: his time is stopped — nothing reaches him",
   "ability.viltrumitecore.regulus_lions_heart.name": "<gold>Lion's Heart",
   "ability.viltrumitecore.regulus_lions_heart.desc": "<grey>Cooldown: <lime>1s\n<grey>Type: <yellow>Toggle\n\n<grey>Stop your own time. No damage, push or effect\n<grey>reaches you; blows recoil 30% onto the attacker,\n<grey>projectiles stop dead in the air.\n<grey>Your heart stops too: without a living host\n<grey>(Little King) strain rises and after ~5 s\n<grey>the heart seizes (Lion locked for 8 s).\n\n<blue>Regulus",
   "ability.viltrumitecore.regulus_stopped_sand.name": "<gold>Stopped Sand",

@@ -50,9 +50,9 @@ KEY = T("Heart key (MMB)", "Клавиша сердца (СКМ)", "Herztaste (M
 
 k("hero.viltrumitecore.regulus", "Regulus Corneas", "Регулус Корнеас", "Regulus Corneas", "Regulus Corneas", "Regulus Corneas", "雷古勒斯·柯尼亚斯")
 k("subtitle.viltrumitecore.speaker.regulus", "Regulus", "Регулус", "Regulus", "Regulus", "Regulus", "雷古勒斯")
-k("key.viltrumitecore.assign_heart", "Regulus: Little King", "Регулус: Маленький король", "Regulus: Kleiner König", "Regulus: Pequeño Rey",
-  "Regulus: Küçük Kral", "雷古勒斯：小王")
-k("scan.viltrumitecore.regulus.lion_heart", "Lion's Heart: his time is stopped — nothing reaches him",
+# key.viltrumitecore.assign_heart stays in the base files: the key is shared by every hero and
+# "mark heart carrier" is still what Little King does. Overlays never redefine base keys.
+k("scan.viltrumitecore.regulus.stopped_time", "Lion's Heart: his time is stopped — nothing reaches him",
   "Сердце льва: его время остановлено — до него ничто не доходит", "Löwenherz: seine Zeit steht still — nichts erreicht ihn",
   "Corazón de León: su tiempo está detenido; nada lo alcanza", "Aslan Yüreği: zamanı durmuş — hiçbir şey ona ulaşamaz",
   "狮子之心：他的时间已停止——任何东西都碰不到他")
