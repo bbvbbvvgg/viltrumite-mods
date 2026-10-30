@@ -135,6 +135,9 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         // Od Lagna's Wish: after the heroes, the registry names them by key.
+         dev.baranhan.viltrumitecore.hero.wish.OdLagnaWishes.registerDefaults();
+         dev.baranhan.viltrumitecore.hero.wish.WishRitual.init();
          ThorCombatConfig.load();
          ThorCombatModule.install();
          ThorScenes.bootstrap();
