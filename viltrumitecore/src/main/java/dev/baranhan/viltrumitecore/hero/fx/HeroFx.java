@@ -59,6 +59,7 @@ public final class HeroFx {
    /** Detached effects have no tracking source (offline caster, environment hazard). */
    public static void flash(net.minecraft.server.level.ServerLevel level, Vec3 at) {
       HeroFxS2CPacket packet = new HeroFxS2CPacket(HeroFxS2CPacket.FLASH, at, 1, 0, null, -1);
+      CombatNoise.emit(level, at, 16.0F);
       for (ServerPlayer viewer : level.players())
          if (viewer.position().distanceToSqr(at) <= 96 * 96) CoreMessages.sendToPlayer(packet, viewer);
    }
@@ -129,6 +130,7 @@ public final class HeroFx {
    }
 
    private static void sendNear(net.minecraft.server.level.ServerLevel level, Vec3 at, HeroFxS2CPacket packet) {
+      CombatNoise.emit(level, at, 16.0F);
       for (ServerPlayer viewer : level.players()) {
          if (inElectricRange(viewer.position(), at)) {
             CoreMessages.sendToPlayer(packet, viewer);
@@ -153,12 +155,14 @@ public final class HeroFx {
       int hitStopTicks, int... entityIds) {
       int stateId = material == null ? 0 : Block.getId(material);
       CoreMessages.sendToTrackingAndSelf(presetPacket(preset, at, target, scale, stateId, source.getRandom().nextInt(65536), hitStopTicks, entityIds), source);
+      CombatNoise.emit(source.serverLevel(), at, 16.0F * Math.max(1.0F, scale));
    }
 
    /** A preset with no tracking source (hammer in the world, environment), sent within {@link #BOLT_FX_RANGE}. */
    public static void preset(net.minecraft.server.level.ServerLevel level, FxPreset preset, Vec3 at, @Nullable Vec3 target, float scale,
       @Nullable BlockState material) {
       HeroFxS2CPacket packet = presetPacket(preset, at, target, scale, material == null ? 0 : Block.getId(material), level.getRandom().nextInt(65536), 0);
+      CombatNoise.emit(level, at, 16.0F * Math.max(1.0F, scale));
       for (ServerPlayer viewer : level.players()) {
          if (viewer.position().distanceToSqr(at) <= BOLT_FX_RANGE * BOLT_FX_RANGE) {
             CoreMessages.sendToPlayer(packet, viewer);
@@ -228,5 +232,6 @@ public final class HeroFx {
       int stateId = material == null ? 0 : Block.getId(material);
       int soundId = sound == null ? -1 : BuiltInRegistries.SOUND_EVENT.getId(sound);
       CoreMessages.sendToTrackingAndSelf(new HeroFxS2CPacket(kind, origin, power, stateId, points, soundId), source);
+      CombatNoise.emit(source.serverLevel(), origin, kind == HeroFxS2CPacket.LAUNCH ? 8.0F : 16.0F);
    }
 }
