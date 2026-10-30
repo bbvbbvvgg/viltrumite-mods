@@ -33,3 +33,6 @@
   keep one Sinclair line from cutting another (ability lines skipped while busy, bow / window_lost wait).
 - Repertoire: thor → NOVA (STORM), dio → BARRAGE (WORLD), jinwoo → CUT (SHADOW). viltrumite stays fallback.
 - Rabbit Hex: 80 ticks for players and mobs.
+- Copied-act card: `client/sinclair/ActCardPopup` (client tick + RenderGuiEvent.Post) — big readable card at the
+  top of the screen when the capture card reaches the palm (act name in act colour, whose ultimate, `<act>.desc`,
+  window bar). 6 t in / 120 t hold / 16 t out; performing closes it early. Lang: 86 Sinclair keys.
