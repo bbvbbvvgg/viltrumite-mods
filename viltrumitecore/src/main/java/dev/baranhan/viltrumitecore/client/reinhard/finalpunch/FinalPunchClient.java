@@ -16,6 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 
@@ -329,7 +330,34 @@ public final class FinalPunchClient {
    }
 
    /** Every scene ends now (world exit, server stop, disconnect, reload). */
+   // ------------------------------------------------------------------ the launched body
+
+   /** Death ticks hidden from the renderer for this frame (entity id -> real value). */
+   private static final Map<Integer, Integer> HELD_DEATH = new HashMap<>();
+
+   /** After the blow the scene's target keeps its pose (client visual): a dying body flies upright, never tips over into the lens. */
+   public static boolean holdsPose(LivingEntity entity) {
+      for (Scene scene : SCENES.values()) {
+         if (scene.targetId == entity.getId() && scene.impacted && scene.level == entity.level()) return true;
+      }
+      return false;
+   }
+
+   /** Lowest priority: a render another listener cancelled never reaches here (and never needs the restore). */
+   public static void onRenderLivingPre(RenderLivingEvent.Pre<?, ?> event) {
+      LivingEntity entity = event.getEntity();
+      if (entity.deathTime <= 0 || SCENES.isEmpty() || !holdsPose(entity)) return;
+      HELD_DEATH.put(entity.getId(), entity.deathTime);
+      entity.deathTime = 0;
+   }
+
+   public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
+      Integer death = HELD_DEATH.remove(event.getEntity().getId());
+      if (death != null) event.getEntity().deathTime = death;
+   }
+
    public static void clearAll() {
+      HELD_DEATH.clear();
       if (SCENES.isEmpty()) return;
       List<Scene> scenes = new ArrayList<>(SCENES.values());
       SCENES.clear();

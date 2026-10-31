@@ -46,6 +46,9 @@ public final class ReinhardClient {
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onLogout);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onUnload);
+      MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST,
+         dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onRenderLivingPre);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onRenderLivingPost);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchInput::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchInput::onMovementInput);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchVfx::onRenderLevel);

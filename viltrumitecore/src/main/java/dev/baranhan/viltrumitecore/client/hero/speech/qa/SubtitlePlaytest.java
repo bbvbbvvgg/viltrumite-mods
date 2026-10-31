@@ -321,6 +321,13 @@ public final class SubtitlePlaytest {
             }
          }
          LOG.info("SUBPT particles near target {}", counts);
+         if (mc.level != null) {
+            List<String> near = new ArrayList<>();
+            for (net.minecraft.world.entity.Entity e : mc.level.getEntities((net.minecraft.world.entity.Entity) null, new net.minecraft.world.phys.AABB(at, at).inflate(4.0), e -> true)) {
+               near.add(e.getType().toShortString() + "#" + e.getId() + "@" + String.format(java.util.Locale.ROOT, "%.2f,%.2f,%.2f", e.getX() - at.x, e.getY() - at.y, e.getZ() - at.z));
+            }
+            LOG.info("SUBPT entities near target {}", near);
+         }
       } catch (ReflectiveOperationException | RuntimeException e) {
          LOG.info("SUBPT particles n/a {}", e.toString());
       }

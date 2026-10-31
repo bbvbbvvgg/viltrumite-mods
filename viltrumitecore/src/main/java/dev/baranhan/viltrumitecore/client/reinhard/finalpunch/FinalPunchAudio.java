@@ -32,6 +32,11 @@ import net.minecraftforge.registries.RegistryObject;
 public final class FinalPunchAudio {
    /** The world's sounds during the silence (fraction of their volume). */
    static final float SILENCE_LEVEL = 0.03F;
+   /**
+    * Headroom of the scene mix: every layer is mastered near 0 dBFS, and the stacked loops and cues of
+    * Phase IV clipped the output in a real playtest (peaks 1.39 at full volume); 0.65 keeps it under 1.
+    */
+   static final float MIX = 0.65F;
    /** Listeners farther than this from the caster do not get the silence duck. */
    static final double DUCK_RANGE = 48.0;
 
@@ -99,7 +104,7 @@ public final class FinalPunchAudio {
 
       for (FinalPunchCues.Cue cue : FinalPunchCues.cuesAt(t)) {
          Vec3 at = cue.atFist() ? scene.fist(0.0F) : chest(scene);
-         SoundInstance shot = new SimpleSoundInstance(event(cue.sound()), SoundSource.PLAYERS, cue.volume(), cue.pitch(), RandomSource.create(scene.seed + t), at.x, at.y, at.z);
+         SoundInstance shot = new SimpleSoundInstance(event(cue.sound()), SoundSource.PLAYERS, MIX * cue.volume(), cue.pitch(), RandomSource.create(scene.seed + t), at.x, at.y, at.z);
          mc.getSoundManager().play(shot);
          if (cue.sound().equals("crackle")) v.crackle = shot;
          else if (t < FinalPunchRules.SILENCE) v.shots.add(shot);
@@ -185,7 +190,7 @@ public final class FinalPunchAudio {
             this.y = at.y;
             this.z = at.z;
          }
-         this.volume = Math.max(0.001F, (float) gain.applyAsDouble(scene.ticks));
+         this.volume = Math.max(0.001F, MIX * (float) gain.applyAsDouble(scene.ticks));
          this.pitch = (float) tone.applyAsDouble(scene.ticks);
       }
 
@@ -212,7 +217,7 @@ public final class FinalPunchAudio {
             this.z = at.z;
          }
          double t = this.scene.ticks;
-         this.volume = Math.max(0.0F, Math.min(1.5F, (float) this.gain.applyAsDouble(t)));
+         this.volume = Math.max(0.0F, Math.min(1.0F, MIX * (float) this.gain.applyAsDouble(t)));
          this.pitch = Math.max(0.5F, Math.min(2.0F, (float) this.tone.applyAsDouble(t)));
       }
    }

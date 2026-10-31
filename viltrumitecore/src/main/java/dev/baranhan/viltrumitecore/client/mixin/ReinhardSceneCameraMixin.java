@@ -34,11 +34,14 @@ public abstract class ReinhardSceneCameraMixin {
 
    @Inject(method = "setup", at = @At("TAIL"))
    private void viltrumitecore$finalPunch(BlockGetter level, Entity entity, boolean detached, boolean mirror, float partialTick, CallbackInfo ci) {
-      FinalPunchCamera.View view = FinalPunchCamera.apply(entity, partialTick, new FinalPunchCamera.View(this.getPosition(), this.getYRot(), this.getXRot()));
+      FinalPunchCamera.View vanilla = new FinalPunchCamera.View(this.getPosition(), this.getYRot(), this.getXRot());
+      FinalPunchCamera.View view = FinalPunchCamera.apply(entity, partialTick, vanilla);
       if (view != null) {
          this.setRotation(view.yaw(), view.pitch());
          this.setPosition(view.pos());
-         this.detached = true;
+         // From / back to first person the lens leaves and re-enters the head: his own body is drawn
+         // only once the lens is clear of it, so the blend never looks out from inside the head.
+         this.detached = detached || !FinalPunchCamera.nearEye(view.pos(), vanilla.pos());
       }
    }
 }

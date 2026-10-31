@@ -50,6 +50,13 @@ public final class FinalPunchCamera {
          Mth.lerp((float) w, vanilla.pitch(), pitch));
    }
 
+   /** The lens is still inside / against the caster's head (first-person blend in and out). */
+   static final double EYE_CLEARANCE = 0.65;
+
+   public static boolean nearEye(Vec3 lens, Vec3 eye) {
+      return lens.distanceToSqr(eye) < EYE_CLEARANCE * EYE_CLEARANCE;
+   }
+
    private static Vec3 jaw(FinalPunchClient.Scene scene, LivingEntity target, float partial) {
       // Not tied to the target: a body removed mid-flight must not move the shot back to the old jaw point.
       if (scene.time(partial) < FinalPunchRules.CONTACT) return scene.jawAt;
