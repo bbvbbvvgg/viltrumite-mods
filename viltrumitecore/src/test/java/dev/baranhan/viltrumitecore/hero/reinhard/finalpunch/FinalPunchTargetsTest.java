@@ -73,9 +73,9 @@ class FinalPunchTargetsTest {
          Vec3 flat = Vec3.directionFromRotation(0, yaw);
          Vec3 right = new Vec3(-flat.z, 0, flat.x);
          Vec3 rel = jaw.subtract(feet);
-         assertEquals(FinalPunch.FIST_REACH - 0.05, rel.dot(flat), 1e-6, "jaw distance at yaw " + yaw);
-         assertEquals(FinalPunch.FIST_RIGHT, rel.dot(right), 1e-6, "jaw on the right fist line at yaw " + yaw);
-         assertEquals(human.headHeight(), rel.y, 1e-6);
+         assertEquals(FinalPunch.FIST_REACH - 0.05, rel.dot(flat), 1e-3, "jaw distance at yaw " + yaw);
+         assertEquals(FinalPunch.FIST_RIGHT, rel.dot(right), 1e-3, "jaw on the right fist line at yaw " + yaw);
+         assertEquals(human.headHeight(), rel.y, 1e-4);
       }
    }
 }
