@@ -141,6 +141,14 @@ public final class ChitauriRules {
    }
 
    /** Pure: how many of a wave's units fit under the live caps. */
+   /**
+    * Damage a Leviathan takes from one hit: capped at {@code maxHit} so no single blow fells it,
+    * except command and void kills ({@code /kill}, falling out of the world), which must remove it.
+    */
+   public static float leviathanHit(float amount, float maxHit, boolean commandKill) {
+      return commandKill ? amount : Math.min(amount, maxHit);
+   }
+
    public static int fit(int wanted, int live, int cap) {
       return Math.max(0, Math.min(wanted, cap - live));
    }

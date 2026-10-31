@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriDestruction;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriInvasion;
+import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriRules;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSounds;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriTerrain;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket;
@@ -675,7 +676,7 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
          || source.is(DamageTypes.DROWN)) {
          return false;
       }
-      float dealt = Math.min(amount, MAX_HIT);
+      float dealt = ChitauriRules.leviathanHit(amount, MAX_HIT, source.is(DamageTypes.GENERIC_KILL) || source.is(DamageTypes.FELL_OUT_OF_WORLD));
       boolean hit = super.hurt(source, dealt);
       if (hit && this.level() instanceof ServerLevel level) {
          Vec3 at = this.lastHitAt != null ? this.lastHitAt : source.getSourcePosition() != null
