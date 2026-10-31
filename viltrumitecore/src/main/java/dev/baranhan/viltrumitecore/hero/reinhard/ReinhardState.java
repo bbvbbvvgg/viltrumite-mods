@@ -87,6 +87,11 @@ public final class ReinhardState {
    /** Overhaul item 19: the running Saw Sphere scene (level-owned), null outside it; transient. */
    public dev.baranhan.viltrumitecore.hero.reinhard.saw.SawSphereScene sawSphere;
 
+   /** The secret THE FINAL PUNCH scene (Shift + N), null outside it; transient. */
+   public dev.baranhan.viltrumitecore.hero.reinhard.finalpunch.FinalPunch.Scene finalPunch;
+   /** The Final Punch packet's target hint while its press is gated (−1 none); transient. */
+   public int finalPunchHint = -1;
+
    /** The Saw Sphere locks, protects and spins its caster for its whole 13 s. */
    public boolean sawSphereActive() {
       return this.sawSphere != null && !this.sawSphere.ended();
@@ -98,7 +103,8 @@ public final class ReinhardState {
       // A cast dropped with its level never blasts and must not lock the caster.
       return (worldErasure != null && !worldErasure.ended()) || this.reid.busy() || this.sawSphereActive()
          || (worldCut != null && !worldCut.blasted() && !worldCut.dropped())
-         || this.action.is(ReinhardAbility.WORLD_CUT) || this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT);
+         || this.action.is(ReinhardAbility.WORLD_CUT) || this.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT)
+         || this.finalPunch != null;
    }
 
    /** Leaving Holy Sword (spec §5): Reid goes back into the sheath. */
