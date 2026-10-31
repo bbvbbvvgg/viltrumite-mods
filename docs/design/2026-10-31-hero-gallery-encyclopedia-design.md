@@ -44,9 +44,10 @@ Long texts scroll; long list names are cut with "…".
   `docs/contextual-interactions.json` (if present) as `assets/viltrumitecore/codex/contextual_interactions.json`.
 - `CatalogParser` accepts schema 1 (`title_ru/_en`, `description_*`, `lore_*`, `discovery_hint_*`,
   `gameplay_result`, `visual_fx`, `sound`, free-text `participants`) and a nested `{ru, en}` text form.
+  A free-text participant links every article it names ("Iron Man or an Iron Legion suit" → two chips).
   Bad entries are skipped and logged; the screen shows "catalog unavailable" if nothing loads.
 - `secret: true` entries show "???" and the discovery hint until the player discovers them. The
-  current real catalog has no secret flag, so all 8 entries are shown open.
+  current real catalog (21 entries) has no secret flag, so all entries are shown open.
 - Nothing is invented: if the catalog file is absent the tab says so.
 - QA: `-Dviltrumitecore.codex.catalog=<file>` loads another catalog; its entries carry a TEST DATA badge.
   Test fixtures in `src/test/resources/codex/` are labelled TEST DATA.
