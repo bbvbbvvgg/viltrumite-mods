@@ -94,6 +94,9 @@ public final class ThanosEvent {
    @Nullable
    private UUID pauseId;
    private boolean ended;
+   /** Where he snapped (his feet, body yaw): the scene is staged there, also after he is gone. */
+   private Vec3 snapAt = Vec3.ZERO;
+   private float snapYaw;
 
    private ThanosEvent(MinecraftServer server, ServerLevel level, ThanosEntity thanos) {
       this.server = server;
@@ -256,6 +259,7 @@ public final class ThanosEvent {
       }
 
       this.stageTick++;
+      this.thanos.damageCap().advanceTo(this.server.getTickCount());
       this.heroes = this.findHeroes();
       switch (this.stage) {
          case INTRO -> this.tickIntro();
@@ -342,14 +346,15 @@ public final class ThanosEvent {
       }
 
       boolean paused = WorldPause.active(this.server);
+      // another system stopped time around him (DIO's field, a world stop): he waits, and so does his clock
+      boolean timeStopped = !paused && (TimeFreeze.isFrozen(this.thanos) || TimeFreeze.worldStopped(this.level));
       if (!paused) {
-         boolean timeStopped = TimeFreeze.isFrozen(this.thanos);
          boolean held = timeStopped || ControlManager.get(this.level).isControlled(this.thanos);
          this.combat.tick(held, timeStopped);
       }
 
       boolean defeated = this.thanos.defeated() || this.thanos.getHealth() <= 0.0F;
-      this.clock.advance(paused);
+      this.clock.advance(ThanosClock.holds(paused, timeStopped));
       float max = Math.max(1.0F, this.thanos.getMaxHealth());
       float fraction = Mth.clamp(this.thanos.getHealth() / max, 0.0F, 1.0F);
       ThanosPhase next = ThanosPhase.of(fraction, this.clock.elapsed(), this.clock.duration());
@@ -396,6 +401,9 @@ public final class ThanosEvent {
    private void beginVictory() {
       this.clock.stop();
       this.combat.clearAll();
+      // however the health reached 0 (a capped hit, a direct setHealth, /kill), no vanilla death runs:
+      // the defeat scene plays on a living body and the event removes him at its end
+      this.thanos.holdForDefeat();
       this.stage = Stage.VICTORY;
       this.stageTick = 0;
       this.thanos.setState(ThanosEntity.STATE_VICTORY);
@@ -417,6 +425,8 @@ public final class ThanosEvent {
    private void beginSnap() {
       this.clock.stop();
       this.combat.clearAll();
+      this.snapAt = this.thanos.position();
+      this.snapYaw = this.thanos.yBodyRot;
       this.stage = Stage.SNAP_WAIT;
       this.stageTick = 0;
       this.thanos.setState(ThanosEntity.STATE_SNAP);
@@ -591,8 +601,11 @@ public final class ThanosEvent {
       }
 
       boolean here = p.level() == this.level;
+      boolean scene = this.scene();
+      Vec3 at = scene || this.thanos.isRemoved() ? this.snapAt : this.thanos.position();
+      float yaw = scene || this.thanos.isRemoved() ? this.snapYaw : this.thanos.yBodyRot;
       CoreMessages.sendToPlayer(new ThanosStateS2CPacket(this.stageId(), this.thanos.isRemoved() ? -1 : this.thanos.getId(), this.clock.remaining(),
-         this.clock.duration(), this.phase.ordinal(), this.stageTick, here && this.sees(p)), p);
+         this.clock.duration(), this.phase.ordinal(), this.stageTick, here && this.sees(p), at.x, at.y, at.z, yaw, here), p);
    }
 
    private void broadcast(Component message) {

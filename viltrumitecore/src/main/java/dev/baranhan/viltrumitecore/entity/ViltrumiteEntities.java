@@ -74,7 +74,7 @@ public class ViltrumiteEntities {
    /** The Thanos city event's boss (worldevent/thanos): one at a time, never saved, no army. */
    public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity>> THANOS = ENTITIES.register(
       "thanos", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity>of(dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity::new, MobCategory.MISC)
-         .sized(1.6F, 3.8F).clientTrackingRange(16).updateInterval(2).fireImmune().noSave().build("thanos")
+         .sized(1.6F, 3.8F).clientTrackingRange(16).updateInterval(2).fireImmune().noSave().noSummon().build("thanos")
    );
 
    public static void register(IEventBus eventBus) {

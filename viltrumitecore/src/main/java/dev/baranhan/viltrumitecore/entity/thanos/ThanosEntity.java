@@ -240,7 +240,28 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
 
       float loss = this.cap.allow(current - health, this.getMaxHealth());
       this.cap.record(loss);
-      super.setHealth(current - loss);
+      float left = current - loss;
+      if (left <= 0.0F) {
+         // a direct health write that empties him is a defeat, never a vanilla death (which would
+         // remove him mid-scene): same end as die()
+         this.defeated = true;
+         super.setHealth(1.0F);
+         return;
+      }
+
+      super.setHealth(left);
+   }
+
+   /** The defeat scene starts: whatever emptied his health, he stays a living, still body until the event removes him. */
+   public void holdForDefeat() {
+      this.defeated = true;
+      if (this.getHealth() < 1.0F) {
+         super.setHealth(1.0F);
+      }
+
+      this.dead = false;
+      this.deathTime = 0;
+      this.hurtTime = 0;
    }
 
    /** Healing from the stones (Soul drain, Time Rewind): never above the max. */
@@ -290,7 +311,14 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
    public void tick() {
       super.tick();
       if (!this.level().isClientSide()) {
-         this.cap.tick();
+         // only the running event owns a Thanos: an orphan (no event, a stale copy) leaves at once
+         var event = dev.baranhan.viltrumitecore.worldevent.thanos.ThanosEvent.active();
+         if (this.tickCount > 2 && (event == null || event.thanos() != this)) {
+            this.discard();
+            return;
+         }
+
+         this.cap.advanceTo(this.level().getServer() == null ? this.tickCount : this.level().getServer().getTickCount());
          this.trail.push(this.getX(), this.getY(), this.getZ());
          if (this.threatTicks > 0) {
             this.threatTicks--;

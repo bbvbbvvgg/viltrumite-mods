@@ -2,8 +2,10 @@ package dev.baranhan.viltrumitecore.worldevent.thanos;
 
 /**
  * The event timer (pure). It counts ACTIVE ticks: one per server tick while the fight runs and
- * the world is not stopped by another pause (a stopped world stops Thanos too, so the heroes do
- * not lose time to it). Stopping it (victory, snap, /thanos stop) freezes the value.
+ * the world is not stopped by another system - a world pause (Reinhard's stop, a hero scene) or a
+ * time stop that holds Thanos himself (DIO's field). A stopped world stops Thanos too, so the
+ * heroes neither lose nor win time by it. Stopping it (victory, snap, /thanos stop) freezes the
+ * value.
  */
 public final class ThanosClock {
    private final int duration;
@@ -16,6 +18,11 @@ public final class ThanosClock {
       }
 
       this.duration = duration;
+   }
+
+   /** Does the clock wait this tick? A world pause, or another system's time stop holding him. */
+   public static boolean holds(boolean worldPaused, boolean timeStopped) {
+      return worldPaused || timeStopped;
    }
 
    /** One server tick. Returns true when this tick advanced the clock. */

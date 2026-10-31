@@ -14,6 +14,7 @@ public final class ThanosDamageCap {
    private final float[] recent = new float[ThanosRules.REWIND_WINDOW];
    private int recentIndex;
    private float total;
+   private long last = Long.MIN_VALUE;
 
    /** How much of {@code requested} may be taken now, given the max health. Never negative. */
    public float allow(float requested, float maxHealth) {
@@ -34,6 +35,25 @@ public final class ThanosDamageCap {
          this.recentWindow += taken;
          this.total += taken;
       }
+   }
+
+   /**
+    * Rolls both windows forward to server tick {@code now}. The body and the event both call it
+    * every tick (the second call of a tick does nothing), so the windows keep real time while a
+    * time stop holds the body: old hits still leave the window and the caps never lock him.
+    */
+   public void advanceTo(long now) {
+      if (this.last == Long.MIN_VALUE || now < this.last) {
+         this.last = now;
+         return;
+      }
+
+      long steps = Math.min(now - this.last, (long)Math.max(this.window.length, this.recent.length));
+      for (long i = 0; i < steps; i++) {
+         this.tick();
+      }
+
+      this.last = now;
    }
 
    /** One server tick passed: the oldest tick leaves both windows. */
