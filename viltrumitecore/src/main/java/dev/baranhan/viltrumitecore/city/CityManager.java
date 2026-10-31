@@ -57,7 +57,8 @@ public final class CityManager {
    });
 
    public static final double MAX_DENSITY = 2.5;
-   public static final int ABSOLUTE_MAX = 300;
+   /** Upper bound of the level cap and of /city populate, whatever the config says. */
+   public static final int ABSOLUTE_MAX = 640;
 
    final MinecraftServer server;
    final ServerLevel level;
@@ -68,6 +69,8 @@ public final class CityManager {
    final ChangeJournal journal;
    final RestoreQueue restore;
    final CityPopulation population;
+   final ThreatScan threats;
+   final dev.baranhan.viltrumitecore.city.citizen.CrowdIndex crowd = new dev.baranhan.viltrumitecore.city.citizen.CrowdIndex();
    final Set<CitizenEntity> citizens = new LinkedHashSet<>();
    boolean enabled;
    double density;
@@ -86,6 +89,7 @@ public final class CityManager {
       this.density = profile.defaultDensity;
       this.restore = new RestoreQueue(journal, this::restoreReport);
       this.population = new CityPopulation(this);
+      this.threats = new ThreatScan(this);
       this.loadState();
    }
 
@@ -158,6 +162,18 @@ public final class CityManager {
 
    public int citizenCount() {
       return this.citizens.size();
+   }
+
+   /** Citizens near each other (rebuilt every few ticks): panic spreading, crowd spacing. */
+   public dev.baranhan.viltrumitecore.city.citizen.CrowdIndex crowd() {
+      return this.crowd;
+   }
+
+   /** A shock wave: citizens close to it are knocked down (and the place becomes dangerous). */
+   public void blast(double x, double y, double z, float radius) {
+      if (radius > 0.0F) {
+         this.danger.blast(x, y, z, radius, this.now());
+      }
    }
 
    public void danger(double x, double y, double z, float radius, int lifetime) {
@@ -317,6 +333,9 @@ public final class CityManager {
             if (b[3] >= 6) {
                // many blocks changed in one chunk within one tick: destruction is happening there
                this.danger.add(b[0] / b[3], b[1] / b[3], b[2] / b[3], DangerMap.EXPLOSION_RADIUS, now, DangerMap.DEFAULT_LIFETIME);
+               if (b[3] >= 30) {
+                  this.danger.blast(b[0] / b[3], b[1] / b[3], b[2] / b[3], dev.baranhan.viltrumitecore.city.danger.ThreatRules.explosionBlast((int)b[3]), now);
+               }
             }
          }
 
@@ -333,6 +352,13 @@ public final class CityManager {
       }
 
       this.restore.tick(this.level, now);
+      if (!this.citizens.isEmpty()) {
+         this.threats.tick(now);
+         if (now % dev.baranhan.viltrumitecore.city.citizen.CrowdIndex.PERIOD == 0) {
+            this.crowd.rebuild(this.citizens, now);
+         }
+      }
+
       this.population.tick(now);
       long interval = this.journal.size() > 500_000 ? 6000 : 1200;
       if (this.journal.dirty() && (now - this.lastSave > interval || this.saveRequestedAt >= 0 && now - this.saveRequestedAt > 20)) {
