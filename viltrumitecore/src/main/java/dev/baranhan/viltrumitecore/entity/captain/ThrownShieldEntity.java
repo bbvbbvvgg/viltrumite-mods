@@ -6,6 +6,7 @@ import dev.baranhan.viltrumitecore.hero.captain.CaptainSkills;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainSounds;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainState;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainTargets;
+import dev.baranhan.viltrumitecore.hero.captain.ShieldFlight;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -28,10 +29,13 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Steve's thrown shield (spec §5.3): a real server entity, never saved. TARGET mode homes from enemy to
- * enemy (3 bounces, 5 empowered), BANK flies straight and reflects off blocks (up to 4 walls, every
- * wall adds damage), RETURN homes back to the owner's chest and passes through blocks so it can never
- * get stuck. Owner gone, other dimension or overtime: it is simply back in the hand.
+ * Steve's thrown shield (spec §5.3, rework §16): a real server entity, never saved. TARGET mode ricochets from
+ * enemy to enemy (5 bounces, 8 empowered) with a soft assist — the next enemy is the nearest one in a cone around
+ * the flight line, close to the hit point and to Steve, in sight; in flight the shield bends at most 20° a tick and
+ * gives up on an enemy it overshot. A free throw that hits a wall looks for an enemy off the wall. Every enemy is
+ * hit at most once on the way out (hit set). BANK flies straight and reflects off blocks (up to 4 walls, every wall
+ * adds damage), RETURN homes back to the owner's chest and passes through blocks so it can never get stuck. Owner
+ * gone, other dimension or overtime: it is simply back in the hand.
  */
 public class ThrownShieldEntity extends Entity {
    public static final int MODE_TARGET = 0;
@@ -43,7 +47,12 @@ public class ThrownShieldEntity extends Entity {
 
    @Nullable private UUID ownerUuid;
    private final Set<Integer> hit = new HashSet<>();
+   /** Enemies the shield gave up on this flight (overshot / out-ran it): never picked again. */
+   private final Set<Integer> skipped = new HashSet<>();
    private int bounces;
+   private int enemyHits;
+   private int chase;
+   private int offLine;
    private int walls;
    private int targetId = -1;
    private int age;
@@ -119,7 +128,7 @@ public class ThrownShieldEntity extends Entity {
          this.discard();
          return;
       }
-      if (this.age > CaptainRules.SHIELD_MAX_FLIGHT || this.travelled > CaptainRules.THROW_RANGE * 2.2) {
+      if (this.age > CaptainRules.SHIELD_MAX_FLIGHT || this.travelled > CaptainRules.THROW_RANGE * 2.2 + this.bounces * CaptainRules.BOUNCE_RADIUS) {
          this.recall();
       }
       if (this.age % 6 == 1) {
@@ -133,26 +142,49 @@ public class ThrownShieldEntity extends Entity {
    }
 
    private void tickTarget(ServerPlayer owner) {
-      Entity t = this.targetId >= 0 ? this.level().getEntity(this.targetId) : null;
-      Vec3 v = this.getDeltaMovement();
-      if (t instanceof LivingEntity living && living.isAlive()) {
-         Vec3 aim = living.getBoundingBox().getCenter().subtract(this.position());
-         if (aim.lengthSqr() > 1.0E-4) {
-            v = v.normalize().lerp(aim.normalize(), 0.55).normalize().scale(CaptainRules.SHIELD_SPEED);
+      LivingEntity target = this.liveTarget();
+      if (target == null && this.targetId >= 0) {
+         // the target died or vanished mid-flight: hop on to the next one, or come home
+         if (!this.nextTarget(owner, this.position(), this.getDeltaMovement())) {
+            this.recall();
+            return;
          }
-      } else if (this.targetId >= 0) {
-         this.nextTarget(owner, this.position());
+         target = this.liveTarget();
+      }
+      Vec3 v = this.getDeltaMovement();
+      if (target != null) {
+         Vec3 aim = target.getBoundingBox().getCenter().subtract(this.position());
+         if (aim.lengthSqr() > 1.0E-4) {
+            Vec3 dir = v.normalize();
+            this.chase++;
+            this.offLine = ShieldFlight.degrees(dir, aim) > CaptainRules.SHIELD_GIVE_UP_DEGREES ? this.offLine + 1 : 0;
+            if (this.offLine > CaptainRules.SHIELD_GIVE_UP_TICKS || this.chase > CaptainRules.SHIELD_CHASE_TICKS) {
+               // overshot or out-ran: no U-turn homing — the next enemy ahead, or home
+               this.skipped.add(target.getId());
+               if (!this.nextTarget(owner, this.position(), v)) {
+                  this.recall();
+                  return;
+               }
+               target = this.liveTarget();
+               v = this.getDeltaMovement();
+            } else {
+               v = ShieldFlight.steer(dir, aim, CaptainRules.SHIELD_TURN_DEGREES).scale(CaptainRules.SHIELD_SPEED);
+            }
+         }
       }
       if (this.moveAndCollide(owner, v)) {
          return;
       }
-      if (t instanceof LivingEntity living && living.isAlive() && this.getBoundingBox().inflate(0.45).intersects(living.getBoundingBox())) {
-         this.strike(owner, living, CaptainRules.bounceDamage(this.bounces));
+      if (target == null && this.targetId >= 0) {
+         target = this.liveTarget(); // a wall bounce found one
+      }
+      if (target != null && target.isAlive() && this.getBoundingBox().inflate(0.45).intersects(target.getBoundingBox())) {
+         Vec3 incoming = this.getDeltaMovement();
+         this.strike(owner, target, CaptainRules.bounceDamage(this.bounces));
          this.bounces++;
-         if (this.bounces >= CaptainRules.maxBounces(this.empowered())) {
+         if (this.bounces >= CaptainRules.maxBounces(this.empowered())
+            || !this.nextTarget(owner, target.getBoundingBox().getCenter(), incoming)) {
             this.recall();
-         } else {
-            this.nextTarget(owner, living.getBoundingBox().getCenter());
          }
          return;
       }
@@ -163,27 +195,45 @@ public class ThrownShieldEntity extends Entity {
       }
    }
 
-   private void nextTarget(ServerPlayer owner, Vec3 from) {
+   @Nullable
+   private LivingEntity liveTarget() {
+      Entity t = this.targetId >= 0 ? this.level().getEntity(this.targetId) : null;
+      return t instanceof LivingEntity living && living.isAlive() && !this.hit.contains(living.getId()) ? living : null;
+   }
+
+   /**
+    * Soft next-target assist (rework §16): the best-scored enemy (CaptainRules.bounceScore — nearest, a bit more
+    * when ahead) within BOUNCE_RADIUS of {@code from}, inside the cone around {@code incoming}, not too far above or
+    * below, within THROW_RANGE + BOUNCE_LEASH of Steve, in sight and not hit or skipped yet. Sends the shield at it.
+    */
+   private boolean nextTarget(ServerPlayer owner, Vec3 from, Vec3 incoming) {
+      Vec3 home = owner.position();
+      double leash = CaptainRules.THROW_RANGE + CaptainRules.BOUNCE_LEASH;
       LivingEntity best = null;
-      double bestD = CaptainRules.BOUNCE_RADIUS * CaptainRules.BOUNCE_RADIUS;
+      double bestScore = Double.POSITIVE_INFINITY;
       for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, new AABB(from, from).inflate(CaptainRules.BOUNCE_RADIUS),
-         e -> CaptainTargets.mayHit(owner, e) && !this.hit.contains(e.getId()))) {
-         double d = e.getBoundingBox().getCenter().distanceToSqr(from);
-         if (d < bestD && CaptainTargets.visible(this.level(), from, e.getBoundingBox().getCenter())) {
-            bestD = d;
+         e -> CaptainTargets.mayHit(owner, e) && !this.hit.contains(e.getId()) && !this.skipped.contains(e.getId()))) {
+         Vec3 c = e.getBoundingBox().getCenter();
+         Vec3 to = c.subtract(from);
+         double score = CaptainRules.bounceScore(to.length(), ShieldFlight.degrees(incoming, to), c.y - from.y);
+         if (score < bestScore && c.distanceTo(home) <= leash && CaptainTargets.visible(this.level(), from, c)) {
+            bestScore = score;
             best = e;
          }
       }
       if (best == null) {
-         this.recall();
-         return;
+         this.targetId = -1;
+         return false;
       }
       this.targetId = best.getId();
+      this.chase = 0;
+      this.offLine = 0;
       Vec3 dir = best.getBoundingBox().getCenter().subtract(from);
       if (dir.lengthSqr() > 1.0E-4) {
          this.setDeltaMovement(dir.normalize().scale(CaptainRules.SHIELD_SPEED));
          CaptainFx.around(this, CaptainFx.RICOCHET, 0, this.position(), dir.normalize());
       }
+      return true;
    }
 
    private void tickBank(ServerPlayer owner) {
@@ -210,10 +260,16 @@ public class ThrownShieldEntity extends Entity {
          this.walls++;
          CaptainFx.around(this, CaptainFx.RICOCHET, 1, at, n);
          CaptainSounds.playAt(this, at, CaptainSounds.RICOCHET, 0.9F, CaptainSounds.jitter(this, 1.1F));
-         CaptainSkills.ricochetHit(owner);
+         CaptainSkills.ricochetHit(owner, CaptainRules.wallGain(this.empowered()));
          if (this.walls > CaptainRules.WALL_BOUNCES) {
             this.recall();
             return true;
+         }
+         if (this.mode() == MODE_TARGET && this.targetId < 0) {
+            // a free throw off a wall: the soft assist looks for an enemy along the reflected line
+            this.setDeltaMovement(r);
+            this.nextTarget(owner, at, r);
+            return false;
          }
          if (this.mode() == MODE_TARGET && this.targetId >= 0) {
             // a wall between the shield and its target: aim off the wall at the target directly
@@ -249,7 +305,7 @@ public class ThrownShieldEntity extends Entity {
          Vec3 at = e.getBoundingBox().getCenter();
          CaptainFx.around(this, CaptainFx.RICOCHET, 2, at, v.normalize().scale(-1));
          CaptainSounds.playAt(this, at, CaptainSounds.RICOCHET, 1.0F, CaptainSounds.jitter(this, 1.0F));
-         CaptainSkills.ricochetHit(owner);
+         CaptainSkills.ricochetHit(owner, CaptainRules.bounceGain(this.enemyHits++, this.empowered()));
          if (this.empowered()) {
             CaptainTargets.stun(owner, e, 10);
          }
