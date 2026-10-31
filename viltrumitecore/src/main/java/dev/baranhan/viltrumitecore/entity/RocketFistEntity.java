@@ -1,7 +1,6 @@
 package dev.baranhan.viltrumitecore.entity;
 
 import dev.baranhan.viltrumitecore.hero.ironman.IronManMarkSounds;
-import dev.baranhan.viltrumitecore.hero.ironman.mark.sig.RocketFist;
 import dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureRules;
 import dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureTrace;
 import java.util.ArrayList;
@@ -10,7 +9,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,7 +38,8 @@ public class RocketFistEntity extends Entity {
       this.setNoGravity(true);
    }
 
-   public void setOwner(ServerPlayer owner) {
+   /** Tony, or a Legion suit (any {@link dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureActor}). */
+   public void setOwner(net.minecraft.world.entity.Entity owner) {
       this.ownerId = owner.getUUID();
    }
 
@@ -77,8 +76,8 @@ public class RocketFistEntity extends Entity {
          return;
       }
 
-      ServerPlayer owner = this.owner(serverLevel);
-      if (owner == null || !owner.isAlive()) {
+      dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureActor owner = this.owner(serverLevel);
+      if (owner == null || !owner.body().isAlive()) {
          this.discard();
          return;
       }
@@ -101,9 +100,9 @@ public class RocketFistEntity extends Entity {
       }
 
       if (this.returning) {
-         Vec3 home = SignatureTrace.hand(owner, true);
+         Vec3 home = owner.hand(true);
          if (SignatureRules.reached(this.position(), home, SignatureRules.FIST_REATTACH_RANGE)) {
-            RocketFist.reattach(owner);
+            owner.fistReturned();
             this.discard();
             return;
          }
@@ -124,32 +123,33 @@ public class RocketFistEntity extends Entity {
    }
 
    @Nullable
-   private ServerPlayer owner(ServerLevel level) {
+   private dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureActor owner(ServerLevel level) {
       if (this.ownerId == null) {
          return null;
       }
 
-      return level.getPlayerByUUID(this.ownerId) instanceof ServerPlayer player ? player : null;
+      net.minecraft.world.entity.Entity owner = level.getPlayerByUUID(this.ownerId);
+      return dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureActor.resolve(owner != null ? owner : level.getEntity(this.ownerId));
    }
 
    @Nullable
-   private LivingEntity target(ServerLevel level, ServerPlayer owner) {
+   private LivingEntity target(ServerLevel level, dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureActor owner) {
       if (this.targetId < 0 || !(level.getEntity(this.targetId) instanceof LivingEntity living) || !living.isAlive()) {
          return null;
       }
 
-      return living.distanceTo(owner) <= SignatureRules.FIST_RANGE + TARGET_MARGIN ? living : null;
+      return living.distanceTo(owner.body()) <= SignatureRules.FIST_RANGE + TARGET_MARGIN ? living : null;
    }
 
-   private void strike(ServerPlayer owner, LivingEntity target) {
-      Vec3 away = target.position().subtract(owner.position());
+   private void strike(dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureActor owner, LivingEntity target) {
+      Vec3 away = target.position().subtract(owner.body().position());
       Vec3 flat = new Vec3(away.x, 0.0, away.z);
       Vec3 dir = flat.lengthSqr() < 1.0E-4 ? Vec3.ZERO : flat.normalize();
-      if (SignatureTrace.shot(target, owner.damageSources().playerAttack(owner), SignatureRules.FIST_DAMAGE)) {
+      if (owner.mayStrike(target) && SignatureTrace.shot(target, owner.attack(), SignatureRules.FIST_DAMAGE)) {
          SignatureTrace.push(target, dir.scale(SignatureRules.FIST_KNOCKBACK).add(0.0, SignatureRules.FIST_KNOCKBACK_UP, 0.0));
       }
 
-      SignatureTrace.sound(owner, IronManMarkSounds.ROCKET_FIST_HIT.get(), 1.0F, 1.0F);
+      owner.sound(IronManMarkSounds.ROCKET_FIST_HIT.get(), 1.0F, 1.0F);
    }
 
    private void fly(Vec3 goal, double speed) {

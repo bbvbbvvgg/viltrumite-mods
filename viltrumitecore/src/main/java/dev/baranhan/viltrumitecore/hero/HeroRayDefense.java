@@ -15,8 +15,9 @@ public final class HeroRayDefense {
          return target != defender && (defender == null || target.getBoundingBox().getCenter().subtract(from).dot(end.subtract(from)) <= end.distanceToSqr(from));
       }
    }
-   public static Stop clip(ServerPlayer shooter, Vec3 from, Vec3 end, double radius, Predicate<LivingEntity> allowed) {
-      var candidates=shooter.serverLevel().getEntitiesOfClass(ServerPlayer.class,new AABB(from,end).inflate(radius+1),
+   /** The first defending hero player on the ray from {@code from} to {@code end}; any shooter (players and Legion suits). */
+   public static Stop clip(net.minecraft.world.entity.Entity shooter, Vec3 from, Vec3 end, double radius, Predicate<LivingEntity> allowed) {
+      var candidates=shooter.level().getEntitiesOfClass(ServerPlayer.class,new AABB(from,end).inflate(radius+1),
          p -> p != shooter && p.isAlive() && !p.isSpectator() && allowed.test(p)
             && p.getBoundingBox().inflate(radius).clip(from,end).isPresent());
       candidates.sort(Comparator.comparingDouble(p -> p.getBoundingBox().inflate(radius).clip(from,end).orElse(end).distanceToSqr(from)));

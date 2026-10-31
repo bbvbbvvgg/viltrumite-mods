@@ -98,7 +98,9 @@ public enum HeroAction {
    ARMY_ATTACK,
    ARMY_GUARD,
    ARMY_SENTINEL,
-   MONARCH_CHARGE;
+   MONARCH_CHARGE,
+   /** Iron Man stage 6: the Iron Legion menu (call / orders); appended, wire ordinals unchanged. */
+   LEGION;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

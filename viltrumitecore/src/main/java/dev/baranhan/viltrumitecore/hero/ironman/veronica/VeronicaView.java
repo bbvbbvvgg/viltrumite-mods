@@ -63,6 +63,11 @@ public record VeronicaView(int[] location, float[] durability, int[] cooldown, i
       return this.cooldown(id) <= 0 && this.durability(id) > 0.0F && (location == MarkLocation.STORED || location == MarkLocation.EMPTY);
    }
 
+   /** Same rule as MarkRoster.legionCallable (display only; the server re-checks). */
+   public boolean legionCallable(MarkId id) {
+      return this.location(id) == MarkLocation.STORED && this.cooldown(id) <= 0 && this.durability(id) > 0.0F;
+   }
+
    public void write(FriendlyByteBuf buffer) {
       buffer.writeVarInt(this.location.length);
       for (int i = 0; i < this.location.length; i++) {

@@ -68,7 +68,13 @@ public final class JarvisVoice {
       MARK_LOW(null, "jarvis.viltrumitecore.mark_low", 100, 1200),
       MARK_BROKEN(null, "jarvis.viltrumitecore.mark_broken", 120, 600),
       HULKBUSTER(null, "jarvis.viltrumitecore.hulkbuster", 100, 600),
-      HULKBUSTER_BROKEN(null, "jarvis.viltrumitecore.hulkbuster_broken", 100, 600);
+      HULKBUSTER_BROKEN(null, "jarvis.viltrumitecore.hulkbuster_broken", 100, 600),
+      /** Stage 6: the Iron Legion was called (server event, owner only). */
+      LEGION_ON(null, "jarvis.viltrumitecore.legion_on", 50, 200),
+      LEGION_THREE(null, "jarvis.viltrumitecore.legion_three", 60, 200),
+      LEGION_THREAT(null, "jarvis.viltrumitecore.legion_threat", 50, 400),
+      LEGION_CRITICAL(null, "jarvis.viltrumitecore.legion_critical", 70, 200),
+      LEGION_RETURN(null, "jarvis.viltrumitecore.legion_return", 60, 100);
 
       @Nullable
       private final Supplier<SoundEvent> sound;
@@ -159,15 +165,24 @@ public final class JarvisVoice {
       say(line, snapshot != null && HelmetAnim.closedFlag(snapshot));
    }
 
-   private static void say(Line line, boolean allowed) {
+   /**
+    * Stage 6: a Legion line from a server event. The Legion answers with or
+    * without the helmet (the suits report to Tony's earpiece); false when the
+    * gate is busy so the caller may retry.
+    */
+   public static boolean legion(Line line) {
+      return say(line, true);
+   }
+
+   private static boolean say(Line line, boolean allowed) {
       Minecraft client = Minecraft.getInstance();
       if (client.level == null || !allowed) {
-         return;
+         return false;
       }
 
       long now = client.level.getGameTime();
       if (!GATE.tryPlay(line.name(), now, line.duration, line.cooldown)) {
-         return;
+         return false;
       }
 
       SoundEvent sound = line.sound == null ? IronManCombatSounds.JARVIS_WARNING.get() : line.sound.get();
@@ -175,6 +190,7 @@ public final class JarvisVoice {
       subtitle = Component.translatable(line.subtitle);
       subtitleStart = now;
       subtitleUntil = now + Math.max(60, line.duration);
+      return true;
    }
 
    /** Game time restarts per world: gate, subtitle and card must not carry over to the next one. */

@@ -52,19 +52,36 @@ public final class SignatureTrace {
 
    /** Ray from the eye along {@code dir}: the first living target, or the block that stops it. */
    public static Hit shoot(ServerPlayer player, Vec3 dir, double range) {
-      Vec3 eye = player.getEyePosition();
+      return shoot(player.serverLevel(), player, player.getEyePosition(), dir, range);
+   }
+
+   /** Same ray for any shooter (Legion suits): from {@code eye}, ignoring the shooter itself. */
+   public static Hit shoot(SignatureActor actor, Vec3 dir, double range) {
+      return shoot(actor.level(), actor.body(), actor.eye(), dir, range);
+   }
+
+   private static Hit shoot(ServerLevel level, net.minecraft.world.entity.Entity shooter, Vec3 eye, Vec3 dir, double range) {
       Vec3 end = eye.add(dir.scale(range));
-      ServerLevel level = player.serverLevel();
-      BlockHitResult block = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+      BlockHitResult block = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter));
       boolean blocked = block.getType() == HitResult.Type.BLOCK;
       Vec3 to = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
-      EntityHitResult entity = ProjectileUtil.getEntityHitResult(player, eye, to, new AABB(eye, to).inflate(1.0),
-         e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator(), eye.distanceToSqr(to));
+      EntityHitResult entity = ProjectileUtil.getEntityHitResult(shooter, eye, to, new AABB(eye, to).inflate(1.0),
+         e -> rayCandidate(shooter, e), eye.distanceToSqr(to));
       if (entity != null && entity.getEntity() instanceof LivingEntity living) {
          return new Hit(living, entity.getLocation(), false);
       }
 
       return new Hit(null, to, blocked);
+   }
+
+   /**
+    * May a signature ray of {@code shooter} stop on {@code e}? Tony's own
+    * Legion (and Tony for his suits) is transparent: the ray goes on to the
+    * enemy behind it instead of ending on a hit that is refused anyway.
+    */
+   public static boolean rayCandidate(net.minecraft.world.entity.Entity shooter, net.minecraft.world.entity.Entity e) {
+      return e instanceof LivingEntity && e.isAlive() && e != shooter && !e.isSpectator()
+         && !dev.baranhan.viltrumitecore.hero.ironman.legion.LegionAllies.spares(shooter, e);
    }
 
    /** Direction turned by a random angle up to {@code degrees} around {@code look}. */

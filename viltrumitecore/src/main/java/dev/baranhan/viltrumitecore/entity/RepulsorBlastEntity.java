@@ -5,7 +5,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -34,7 +33,8 @@ public class RepulsorBlastEntity extends Projectile {
       this.noPhysics = true;
    }
 
-   public static RepulsorBlastEntity shoot(ServerPlayer owner, Vec3 from, Vec3 direction, float damage, float power, double knockback) {
+   /** Owner: Tony or a Legion suit (stage 6); bolts never touch the owner's side ({@link dev.baranhan.viltrumitecore.hero.ironman.legion.LegionAllies}). */
+   public static RepulsorBlastEntity shoot(LivingEntity owner, Vec3 from, Vec3 direction, float damage, float power, double knockback) {
       RepulsorBlastEntity blast = new RepulsorBlastEntity(ViltrumiteEntities.REPULSOR_BLAST.get(), owner.level());
       blast.setOwner(owner);
       blast.damage = damage;
@@ -83,7 +83,8 @@ public class RepulsorBlastEntity extends Projectile {
 
    @Override
    protected boolean canHitEntity(Entity entity) {
-      return super.canHitEntity(entity) && !(entity instanceof RepulsorBlastEntity) && !(entity instanceof MicroMissileEntity);
+      return super.canHitEntity(entity) && !(entity instanceof RepulsorBlastEntity) && !(entity instanceof MicroMissileEntity)
+         && !dev.baranhan.viltrumitecore.hero.ironman.legion.LegionAllies.spares(this.getOwner(), entity);
    }
 
    @Override
@@ -117,7 +118,7 @@ public class RepulsorBlastEntity extends Projectile {
    }
 
    private void impact(Vec3 at) {
-      if (this.getOwner() instanceof ServerPlayer owner) {
+      if (this.getOwner() instanceof LivingEntity owner && owner.level() instanceof net.minecraft.server.level.ServerLevel) {
          dev.baranhan.viltrumitecore.hero.fx.HeroFx.flash(owner, at);
       }
 

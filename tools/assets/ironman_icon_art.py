@@ -16,12 +16,13 @@ ICONS, art = registry()
 
 NAMES = ["unibeam", "missiles", "nano_arsenal", "countermeasures", "scan", "veronica", "helmet", "suit",
          "sig_micro_laser", "sig_rocket_fist", "sig_camouflage", "sig_starboost", "sig_pulse_unibeam",
-         "sig_shoulder_gun", "sig_slam", "hulk_grab", "hulk_slam", "hulk_hop"]
+         "sig_shoulder_gun", "sig_slam", "hulk_grab", "hulk_slam", "hulk_hop", "legion"]
 FOLDER = "textures/gui/ability/ironman/"
 PANEL = "ironman"
 # HUD mock: IronManAbilities pages 1 and 2 (four slots each), then a mark and the Hulkbuster on page 1.
 HUD = [["unibeam", "missiles", "nano_arsenal", "countermeasures", None, None],
        ["scan", "veronica", "helmet", "suit", None, None],
+       ["legion", None, None, None, None, None],
        ["unibeam", "missiles", "sig_rocket_fist", "countermeasures", None, None],
        ["hulk_grab", "hulk_slam", "hulk_hop", "countermeasures", None, None]]
 FLIGHT = (None, None, None)
@@ -447,6 +448,26 @@ def suit():
     ic.fill(disc(16, 22, 1.1), WHITE)
     ic.mix(disc(16, 22, 4.2) - disc(16, 22, 2.4), GLOW[2], 0.35)
     ic.sparkle(26, 6)
+    return ic.image()
+
+
+@art
+def legion():
+    """Iron Legion: three empty suits on boot flames drop in formation, a cyan JARVIS link above each."""
+    ic = Icon("ironman", center=(16, 15))
+    # wingmen first (higher, behind): War Machine left, Mark 42 right; Mark 7 leads in front
+    for (x, y, pal) in ((0, 5, WARMACHINE), (21, 5, MARK42)):
+        flame(ic, x + 4, y + 15, 90, 6, width=3.0)
+        flame(ic, x + 7, y + 15, 90, 6, width=3.0)
+        man(ic, FRONT, x, y, pal)
+    flame(ic, 14, 24, 90, 5, width=3.2)
+    flame(ic, 17, 24, 90, 5, width=3.2)
+    man(ic, FRONT, 10, 9, MARK7)
+    # link carets: one cyan chevron over each suit
+    for cx, cy in ((5, 2), (26, 2), (15, 6)):
+        ic.fill({(cx - 1, cy + 1), (cx, cy), (cx + 1, cy + 1)}, GLOW[1])
+        ic.set(cx, cy, GLOW[2])
+    ic.sparkle(29, 13, big=False, col=GLOW[2])
     return ic.image()
 
 

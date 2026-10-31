@@ -424,7 +424,7 @@ public final class IronManMarks {
    }
 
    /** Debris chunks for the parts in {@code mask} (at most {@code max}), placed on their bones. */
-   private static void debris(ServerPlayer player, MarkId mark, int mask, int max) {
+   public static void debris(net.minecraft.world.entity.LivingEntity player, MarkId mark, int mask, int max) {
       List<SuitPart> parts = SuitPart.of(mark);
       float yaw = player.yBodyRot * Mth.DEG_TO_RAD;
       Vec3 right = new Vec3(-Mth.cos(yaw), 0.0, -Mth.sin(yaw));

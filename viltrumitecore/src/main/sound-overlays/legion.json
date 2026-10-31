@@ -1,0 +1,122 @@
+{
+  "ironman_legion_signal": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_signal",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/signal",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "ironman_legion_engine": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_engine",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/engine",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ironman_legion_flyby": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_flyby",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/flyby",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "ironman_legion_brake": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_brake",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/brake",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ironman_legion_land": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_land",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/land",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ironman_legion_servo": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_servo",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/servo",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ironman_legion_repulsor": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_repulsor",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/repulsor",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ironman_legion_ignite": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_ignite",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/ignite",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ironman_legion_failure": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_failure",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/failure",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ironman_legion_crash": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_crash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/crash",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "ironman_legion_order": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_order",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/order",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "ironman_legion_hit": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.ironman_legion_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ironman/legion/hit",
+        "attenuation_distance": 16
+      }
+    ]
+  }
+}

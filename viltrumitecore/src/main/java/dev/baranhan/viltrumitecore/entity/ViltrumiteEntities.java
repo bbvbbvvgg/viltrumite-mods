@@ -65,6 +65,12 @@ public class ViltrumiteEntities {
          .sized(0.62F, 1.9F).clientTrackingRange(10).updateInterval(2).fireImmune().noSave().build("shadow_soldier")
    );
 
+   /** Iron Legion suit (stage 6, docs/design/2026-10-31-ironman-legion-design.md): never saved, the owner's roster keeps the mark. */
+   public static final RegistryObject<EntityType<LegionSuitEntity>> LEGION_SUIT = ENTITIES.register(
+      "legion_suit", () -> EntityType.Builder.<LegionSuitEntity>of(LegionSuitEntity::new, MobCategory.MISC)
+         .sized(0.6F, 1.8F).clientTrackingRange(10).updateInterval(2).fireImmune().noSave().noSummon().build("legion_suit")
+   );
+
    /** Living city pedestrian (city/citizen): never saved, the city population manager refills the streets. */
    public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>> CITIZEN = ENTITIES.register(
       "citizen", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>of(dev.baranhan.viltrumitecore.city.citizen.CitizenEntity::new, MobCategory.MISC)

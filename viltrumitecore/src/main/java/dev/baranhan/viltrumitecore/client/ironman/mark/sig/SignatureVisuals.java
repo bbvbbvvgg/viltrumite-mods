@@ -125,6 +125,59 @@ public final class SignatureVisuals {
       }
    }
 
+   /**
+    * Stage 6 seam: the same signature hardware on a body that is not a player
+    * (an Iron Legion suit). The caller copies its posed shell bones onto each
+    * part's top-level bones after {@code pose} ran. {@code blast} is the
+    * Mark 39 booster flame length 0..1 (0 = off), {@code open} the War Machine
+    * turret unfold 0..1 and {@code turretYaw}/{@code turretPitch} its gimbal
+    * in radians (bone signs, see {@link #turretYaw}).
+    */
+   public static void suitParts(MarkId mark, boolean active, boolean camo, float camoAlpha, boolean fistAway, float blast, float open,
+      float turretYaw, float turretPitch, float time, List<PlayerGeoLayer.Part> out) {
+      switch (mark) {
+         case MARK_7 -> out.add(new PlayerGeoLayer.Part(LASER, LASER_PASSES, active ? SignatureVisuals::laserOut : null));
+         case MARK_42 -> {
+            if (!fistAway) {
+               out.add(new PlayerGeoLayer.Part(GLOVE, GLOVE_PASSES));
+            }
+         }
+         case MARK_15 -> {
+            if (camo) {
+               out.add(new PlayerGeoLayer.Part(CAMO, List.of(new PlayerGeoLayer.Pass(texture("camo_ripple"), PlayerGeoLayer.Pass.Kind.GLOW, 0.75F, 0.92F, 1.0F,
+                  Mth.clamp(camoAlpha, 0.0F, 1.0F)))));
+            }
+         }
+         case MARK_39 -> {
+            out.add(new PlayerGeoLayer.Part(BOOSTER, BOOSTER_PASSES));
+            if (blast > 0.01F) {
+               ResourceLocation texture = ThrusterFlames.texture((int)(time * 0.75F));
+               List<PlayerGeoLayer.Pass> passes = List.of(PlayerGeoLayer.Pass.glow(texture, 0.85F, 0.95F, 1.0F), PlayerGeoLayer.Pass.glow(texture, 0.8F, 0.9F, 1.0F));
+               out.add(new PlayerGeoLayer.Part(BLAST, passes, geo -> {
+                  GeoBone flame = geo.getBone("boosterBlast");
+                  if (flame != null) {
+                     flame.scaleY = Mth.clamp(blast, 0.0F, 1.0F) * (0.9F + 0.1F * Mth.sin(time * 2.3F));
+                  }
+               }));
+            }
+         }
+         case WAR_MACHINE_MK2 -> out.add(new PlayerGeoLayer.Part(TURRET, TURRET_PASSES, geo -> {
+            Animation unfold = AnimCache.animation(TURRET_CLIPS, "start_on");
+            if (unfold != null && open > 0.0F) {
+               AnimationController.seek(unfold, geo, open * TURRET_UNFOLD_SECONDS);
+            }
+
+            GeoBone turret = geo.getBone("turret");
+            if (turret != null) {
+               turret.rotX = Mth.clamp(turretPitch, -TURRET_MAX_DOWN * Mth.DEG_TO_RAD, TURRET_MAX_UP * Mth.DEG_TO_RAD) * open;
+               turret.rotY = Mth.clamp(turretYaw, -TURRET_MAX_YAW * Mth.DEG_TO_RAD, TURRET_MAX_YAW * Mth.DEG_TO_RAD) * open;
+            }
+         }));
+         default -> {
+         }
+      }
+   }
+
    /** Booster flame: a cone that shrinks over the blast timeline, flickering like the thrusters. */
    private static PlayerGeoLayer.Part blast(HeroPublicSnapshot snapshot, float partialTick, AbstractClientPlayer player) {
       float progress = IronManView.progress(snapshot, HeroAction.SIGNATURE, partialTick);
