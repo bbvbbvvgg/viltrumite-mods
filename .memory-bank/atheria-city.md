@@ -39,6 +39,10 @@
   FAR=100) are removed while someone is in the level — they froze mid-flight and stayed "fleeing" forever.
   Lowering the density trims the automatic crowd above per-player x players (+25% + 4), farthest first, never
   within 40 blocks of a player (`CityPopulation.trimCount`). Console `/city populate` spawns at the world spawn.
+- `CitizenNodeEvaluator` keeps the air right above a lower grid cell (<= max fall distance) open, so paths can
+  step/drop down off raised cells (benches, planters, log tops are PREFERRED cells too). Before, 16 of 98 citizens
+  spawned there and never moved. Going up still needs a standable cell one block higher (vanilla jump).
+- `/kill` on a Leviathan: command and void kills bypass its per-hit cap (`ChitauriRules.leviathanHit`).
 - The Chitauri portal opening adds radius-0 curiosity zones (people stop and watch, ~95 of 106 alarmed in QA).
   During a full invasion no citizen spawns where a danger is noticed, so the streets around the fight empty out.
 - Config: `cityCrowdScale` (2.25, multiplies perPlayer and the profile cap) and `cityMaxCitizens` (480, hard cap);
