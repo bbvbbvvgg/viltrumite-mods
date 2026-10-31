@@ -29,6 +29,8 @@ final class CityPopulation {
    static final int NEAR = 64;
    static final int FAR = 100;
    static final int MANUAL_FAR = 128;
+   /** Trimming never removes a citizen this close to a player (it would vanish in plain sight). */
+   static final int TRIM_KEEP = 40;
    static final int SPAWNS_PER_PLAYER_PER_SECOND = 8;
    /** Share of spawns that bring one or two companions. */
    static final float GROUP_CHANCE = 0.3F;
@@ -77,6 +79,20 @@ final class CityPopulation {
       return bestSq > (double)far * far || !entityTicking;
    }
 
+   /**
+    * Automatic citizens to remove this second: everything above the level cap, and - when the
+    * density was lowered - the automatic crowd above what the players want (per player x
+    * players, a quarter more for the 64-100 block ring where walkers drift). Manual
+    * citizens (/city populate) count against the cap only.
+    */
+   static int trimCount(int total, int auto, int cap, int per, int players) {
+      int overCap = total > cap + 4 ? total - cap : 0;
+      int want = Math.min(cap, per * Math.max(0, players));
+      int keep = want + want / 4 + 4;
+      int overWant = auto > keep ? auto - keep : 0;
+      return Math.max(overCap, overWant);
+   }
+
    static double clampScale(double s) {
       return Double.isNaN(s) ? 1.0 : Math.max(0.0, Math.min(4.0, s));
    }
@@ -114,18 +130,43 @@ final class CityPopulation {
       int cap = levelCap(this.city.profile.maxTotal, this.city.density, cfg.cityCrowdScale, cfg.cityMaxCitizens);
       int per = Math.min(targetPerPlayer(this.city.profile.perPlayer, this.city.density, cfg.cityCrowdScale), cap);
       int total = this.city.citizenCount();
-      // density lowered: trim auto citizens nobody is looking at closely
-      if (total > cap + 4) {
-         int excess = total - cap;
+      int auto = 0;
+      for (CitizenEntity c : this.city.citizens()) {
+         if (!c.manual) {
+            auto++;
+         }
+      }
+
+      // density lowered (or above the level cap): trim automatic citizens nobody is looking
+      // at closely, the farthest first
+      int excess = trimCount(total, auto, cap, per, players.size());
+      if (excess > 0) {
+         List<CitizenEntity> spare = new ArrayList<>();
+         List<Double> dist = new ArrayList<>();
          for (CitizenEntity c : this.city.citizens()) {
-            if (excess <= 0) {
-               break;
+            if (c.manual) {
+               continue;
             }
 
-            if (!c.manual && level.getNearestPlayer(c, 40.0) == null) {
-               c.discard();
-               excess--;
+            double best = Double.MAX_VALUE;
+            for (ServerPlayer p : level.players()) {
+               best = Math.min(best, p.distanceToSqr(c));
             }
+
+            if (best > TRIM_KEEP * TRIM_KEEP) {
+               spare.add(c);
+               dist.add(best);
+            }
+         }
+
+         Integer[] order = new Integer[spare.size()];
+         for (int i = 0; i < order.length; i++) {
+            order[i] = i;
+         }
+
+         java.util.Arrays.sort(order, (a, b) -> Double.compare(dist.get(b), dist.get(a)));
+         for (int i = 0; i < order.length && i < excess; i++) {
+            spare.get(order[i]).discard();
          }
 
          return;

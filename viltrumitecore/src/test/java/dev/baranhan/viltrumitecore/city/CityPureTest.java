@@ -110,6 +110,22 @@ class CityPureTest {
    }
 
    @Test
+   void loweringDensityTrimsTheAutomaticCrowd() {
+      // regression (Atheria QA): density 2.5 -> 0.5 with one player kept 275 citizens, the
+      // crowd only shrank above the level cap (360)
+      assertEquals(275 - (45 + 11 + 4), CityPopulation.trimCount(275, 275, 360, 45, 1));
+      // steady crowds are left alone (density 1: ~100 of 90 wanted, 2.5: ~270 of 225)
+      assertEquals(0, CityPopulation.trimCount(100, 100, 360, 90, 1));
+      assertEquals(0, CityPopulation.trimCount(270, 270, 360, 225, 1));
+      // manual (/city populate) citizens count against the cap only
+      assertEquals(0, CityPopulation.trimCount(345, 45, 360, 45, 1));
+      assertEquals(556 - 360, CityPopulation.trimCount(556, 256, 360, 90, 1));
+      // two players want twice as many; density 0 empties the streets
+      assertEquals(0, CityPopulation.trimCount(200, 200, 360, 90, 2));
+      assertEquals(46, CityPopulation.trimCount(50, 50, 360, 0, 1));
+   }
+
+   @Test
    void citizensFrozenInNonTickingChunksDespawn() {
       // regression (Atheria QA): after a Chitauri invasion 66 citizens stayed "fleeing" forever -
       // they stood ~98 blocks away, inside FAR but in chunks beyond the simulation distance
