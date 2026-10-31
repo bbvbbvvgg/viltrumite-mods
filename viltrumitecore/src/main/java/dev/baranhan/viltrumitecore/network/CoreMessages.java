@@ -49,10 +49,10 @@ public class CoreMessages {
    // replaces the first kit's packets). v16 (final integration of #85-#92): all of them together;
    // the wish packets first, then RegulusFxS2CPacket, both after the Jinwoo packet. A client built
    // from any single "15" branch is refused.
-   // "17" is claimed by feat/captain-america-2012 (#96: CaptainFxS2CPacket after RegulusFxS2CPacket).
-   // v18 (feat/chitauri-invasion) alone: ChitauriPortalS2CPacket and ChitauriFxS2CPacket appended after
-   // RegulusFxS2CPacket, without the Captain packet; integrating both branches needs a new version.
-   private static final String PROTOCOL_VERSION = "18";
+   // v17 (feat/captain-america-2012): CaptainFxS2CPacket appended after RegulusFxS2CPacket.
+   // v19 (Thanos city event, after main's v18): ThanosFxS2CPacket and ThanosStateS2CPacket appended
+   // after CaptainFxS2CPacket. The Thanos branch's own "17" table is refused.
+   private static final String PROTOCOL_VERSION = "19";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -401,16 +401,22 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::handle)
          .add();
-      // Chitauri invasion (v18): the portal state, then one FX packet for every invasion effect.
-      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriPortalS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-         .decoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriPortalS2CPacket::new)
-         .encoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriPortalS2CPacket::toBytes)
-         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriPortalS2CPacket::handle)
+      // Captain America 2012 (v18): one FX packet for Steve, the shield and the summoned Avengers; after Regulus.
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.captain.net.CaptainFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.captain.net.CaptainFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.captain.net.CaptainFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.captain.net.CaptainFxS2CPacket::handle)
          .add();
-      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-         .decoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket::new)
-         .encoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket::toBytes)
-         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket::handle)
+      // Thanos city event (v19): his effects and the event state (HUD, music, scenes); appended last.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::handle)
          .add();
    }
 
