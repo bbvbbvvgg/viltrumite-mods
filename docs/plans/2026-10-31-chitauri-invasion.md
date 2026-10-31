@@ -1,6 +1,7 @@
 # Chitauri invasion (Avengers 2012) — plan
 
-Status: in progress on branch `feat/chitauri-invasion`. Core `1.58.0` → `1.59.0`.
+Status: implemented on branch `feat/chitauri-invasion` (PR to `main`, not merged). Core `1.58.0` → `1.59.0`,
+network PROTOCOL `16` → `18` (`17` is claimed by `feat/captain-america-2012`).
 
 ## Goal
 
@@ -78,7 +79,7 @@ Leviathan refuse PULL / VILTRUMITE_GRAB / IMPULSE but accept FREEZE / STASIS.
 
 ## Network
 
-`CoreMessages` PROTOCOL 16 → 17. New packets at the end:
+`CoreMessages` PROTOCOL 16 → 18 (17 belongs to the Captain America branch). New packets at the end:
 `ChitauriPortalS2CPacket` (portal state; resent on login / dimension change) and
 `ChitauriFxS2CPacket` (impacts, explosions, breakup, Leviathan hit/crash, portal
 strikes).
@@ -104,3 +105,20 @@ lang completeness.
 Build + tests; client run; all three creatures moving and fighting; front /
 side / back views; Leviathan between buildings; destruction + `/city reset`;
 stop / logout / death / server restart; dedicated server; FPS / TPS.
+
+## QA results (2026-10-31)
+
+- Build + tests: `ChitauriRulesTest`, `ChitauriPacketsTest`, `ChitauriAssetsTest`, `ChitauriClientMathTest`,
+  `LeviathanTrailTest`, `ChariotSteeringTest`, `CoverScoreTest` (timeline, waves vs caps, conflicts, packet
+  round trips, FX kinds, sounds registry ↔ overlay ↔ files ↔ subtitles, no vanilla `SoundEvents`, no chunk
+  tickets, 12 locales with equal keys/placeholders, clips ↔ bones, textures, loop/glare maths).
+- Singleplayer client (Xvfb, llvmpipe): full timeline 431 s, Russian bars/titles/chat/subtitles, caps held,
+  every `chitauri.*` sound captured through the OpenAL wave writer; conflicts with meteor rain both ways;
+  `/chitauri wave`, `phase`, `stop` (all entities gone, sky back); destruction → journal → `/city reset`
+  restored every tower block. 47 FPS idle → 14-15 FPS at full forces (software GL).
+- Dedicated server + 2 clients (ru_ru and en_us): each client gets its own language; boss bars, portal and
+  storm after a relog mid-invasion; server mean tick 3-10.5 ms (20 TPS) at 24 soldiers / 8 chariots /
+  2 Leviathans; server stop mid-invasion → after restart no invasion, no Chitauri entities, journal kept,
+  `/city reset` restored all 5651 blocks.
+- Fixed during QA: square storm clouds → soft puffs; beam whiteout at the anchor; engine loop churn (rank +
+  distance hysteresis); vanilla fall/death sounds; Leviathan runs now aim at towers.

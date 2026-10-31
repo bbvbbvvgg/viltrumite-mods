@@ -80,6 +80,18 @@ class ChitauriClientMathTest {
    }
 
    @Test
+   void engineRangeHasDistanceHysteresis() {
+      double start = ChitauriLoops.ENGINE_RANGE;
+      double keep = ChitauriLoops.ENGINE_KEEP;
+      assertTrue(keep > start);
+      assertTrue(ChitauriLoops.engineInRange(start, false));
+      assertFalse(ChitauriLoops.engineInRange(start + 0.5, false), "no new loop beyond the start range");
+      assertTrue(ChitauriLoops.engineInRange(start + 0.5, true), "a running loop is kept a little further");
+      assertTrue(ChitauriLoops.engineInRange(keep, true));
+      assertFalse(ChitauriLoops.engineInRange(keep + 0.5, true));
+   }
+
+   @Test
    void beamGlareFadesWhenTheEyeIsInsideTheColumn() {
       assertEquals(0.15F, ChitauriPortalClient.beamNearFade(0.0F), 1.0E-6F);
       assertEquals(0.15F, ChitauriPortalClient.beamNearFade(1.0F), 1.0E-6F);
