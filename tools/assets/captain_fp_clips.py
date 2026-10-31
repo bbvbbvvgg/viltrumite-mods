@@ -81,6 +81,9 @@ def fp_clips():
     # Thor's hammer on the shield (joint move): the shield is driven down toward the camera, then held up again
     c.append(clip('team_brace', 18, [(0, F(BLOCK, la=(-78, 90, 15), lf=(-96, 0, 0))), (3, F(BLOCK, la=(-82, 90, 15), lf=(-94, 0, 0))),
                                      (9, F(BLOCK, la=(-88, 90, 15))), (18, BLOCK)]))
+    # contextual interaction (reid_shatters_vibranium): the shield is torn out of the view to the left, comes back low
+    torn = F(GUARD, la=(-20, 40, -80), lf=(-40, 0, 0), ra=(-40, -6, 0))
+    c.append(clip('shield_shattered', 16, [(0, BLOCK), (2, torn), (8, F(torn, la=(-26, 50, -70))), (16, F(CALM, **FISTS))]))
     return c
 
 
