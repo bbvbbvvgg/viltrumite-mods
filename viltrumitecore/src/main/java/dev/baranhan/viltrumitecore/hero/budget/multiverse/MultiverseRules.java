@@ -19,6 +19,10 @@ public final class MultiverseRules {
    public static final int BOSS_RUSH_PAUSE_TICKS = 100;
    /** A player this close to a living event NPC still counts as in the arena (a chased boss may drift past ARENA_RADIUS). */
    public static final double ENGAGE_RADIUS = 48.0;
+   /** An event NPC knocked farther than this from its anchor (arena centre / Boss Rush player) is pulled back. */
+   public static final double LEASH_RADIUS = 40.0;
+   /** How close to the anchor a leashed NPC is put back. */
+   public static final double LEASH_RETURN = 6.0;
    /** Regular NPCs hit softer than players (a 40-damage Normal Punch would end every event). */
    public static final float FIGHTER_DAMAGE_SCALE = 0.35F;
    public static final float FIGHTER_COOLDOWN_SCALE = 1.5F;
@@ -70,6 +74,11 @@ public final class MultiverseRules {
          }
       }
       return true;
+   }
+
+   /** True when an NPC at this squared distance from its anchor must be pulled back. */
+   public static boolean beyondLeash(double distanceSqr) {
+      return distanceSqr > LEASH_RADIUS * LEASH_RADIUS;
    }
 
    public static int championCount(Set<ChaosModifier> mods) {

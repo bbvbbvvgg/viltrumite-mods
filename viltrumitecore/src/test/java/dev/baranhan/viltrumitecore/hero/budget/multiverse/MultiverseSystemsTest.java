@@ -194,4 +194,15 @@ class MultiverseSystemsTest {
       assertFalse(MultiverseRules.warSettled(EnumSet.of(BudgetFaction.ANIME, BudgetFaction.CHAOS)));
       assertFalse(MultiverseRules.warSettled(EnumSet.of(BudgetFaction.DEMONS, BudgetFaction.CHAOS)));
    }
+
+   @Test
+   void leashKeepsFightsInsideTheArena() {
+      assertTrue(MultiverseRules.LEASH_RADIUS < MultiverseRules.ENGAGE_RADIUS);
+      assertTrue(MultiverseRules.LEASH_RADIUS < MultiverseRules.ARENA_RADIUS);
+      assertTrue(MultiverseRules.LEASH_RETURN < MultiverseRules.LEASH_RADIUS);
+      assertFalse(MultiverseRules.beyondLeash(39.0 * 39.0));
+      assertFalse(MultiverseRules.beyondLeash(40.0 * 40.0));
+      assertTrue(MultiverseRules.beyondLeash(41.0 * 41.0));
+      assertTrue(MultiverseRules.beyondLeash(300.0 * 300.0));
+   }
 }

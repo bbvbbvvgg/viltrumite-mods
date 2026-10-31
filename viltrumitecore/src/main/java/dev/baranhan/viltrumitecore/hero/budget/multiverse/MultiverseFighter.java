@@ -91,6 +91,21 @@ public class MultiverseFighter extends PathfinderMob {
    // ---- spawning -------------------------------------------------------
 
    /** Spawns one fighter of {@code spec}; {@code boss} may be null for regular fighters. */
+   /**
+    * Arena leash: puts a knocked-away NPC back on the ground {@link MultiverseRules#LEASH_RETURN}
+    * blocks from {@code anchor} (with a portal puff at both ends). No blocks are touched.
+    */
+   public static void pullBack(ServerLevel level, net.minecraft.world.entity.Entity entity, net.minecraft.world.phys.Vec3 anchor, double angle) {
+      net.minecraft.core.BlockPos column = net.minecraft.core.BlockPos.containing(
+         anchor.x + Math.cos(angle) * MultiverseRules.LEASH_RETURN, anchor.y, anchor.z + Math.sin(angle) * MultiverseRules.LEASH_RETURN);
+      net.minecraft.core.BlockPos top = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column);
+      level.sendParticles(ParticleTypes.PORTAL, entity.getX(), entity.getY() + 1.0, entity.getZ(), 40, 0.4, 0.8, 0.4, 0.4);
+      entity.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+      entity.teleportTo(top.getX() + 0.5, top.getY(), top.getZ() + 0.5);
+      entity.fallDistance = 0.0F;
+      level.sendParticles(ParticleTypes.PORTAL, entity.getX(), entity.getY() + 1.0, entity.getZ(), 40, 0.4, 0.8, 0.4, 0.4);
+   }
+
    public static MultiverseFighter spawn(ServerLevel level, Vec3 pos, BudgetHeroSpec spec, int session, @Nullable MultiverseBoss boss,
       float healthFactor, float cooldownFactor, float specialFactor) {
       MultiverseFighter fighter = dev.baranhan.viltrumitecore.entity.ViltrumiteEntities.MULTIVERSE_FIGHTER.get().create(level);
