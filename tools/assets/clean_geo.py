@@ -66,15 +66,22 @@ class CleanModel(Model):
         return H
 
     def paint(self):
+        from pixel_shade import Scene, finish  # noqa: E402 (shaded materials: baked AO / light / hue shift)
         H = self.pack()
         base = np.zeros((H, self.width, 4), np.uint8)
         glow = np.zeros((H, self.width, 4), np.uint8)
+        scene = None
         for b in self.bones:
             for c in b.cubes:
                 for f, (x, y, w, h) in c.uv.items():
                     face = Face(c, f, w, h)
                     face.model = self
-                    col, gl = c.mat.paint(face, self.rng)
+                    if getattr(c.mat, 'shaded', False):
+                        if scene is None:
+                            scene = Scene(self)
+                        col, gl = finish(self, scene, c, c.mat.paint(face, self.rng))
+                    else:
+                        col, gl = c.mat.paint(face, self.rng)
                     base[y:y + h, x:x + w] = col
                     if gl is not None:
                         glow[y:y + h, x:x + w] = gl
