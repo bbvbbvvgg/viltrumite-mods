@@ -17,7 +17,25 @@ public enum BudgetScene {
    /** Superman: hovers in the air and fires a beam. */
    SUPERMAN(30, 5.0F, 0xFF3010, false, true),
    /** Shrek: a very loud roar. */
-   SHREK(20, 10.0F, 0x8AB830, false, false);
+   SHREK(20, 10.0F, 0x8AB830, false, false),
+   /** Aizen: a purple flash and a growing energy ring. */
+   AIZEN(30, 8.0F, 0xA020F0, true, false),
+   /** Ichigo: raises the arm, dark particles, then a huge dark beam. */
+   ICHIGO(40, 6.0F, 0x200020, false, true),
+   /** Vergil: everything stops, a series of simple slashes, a flash. */
+   VERGIL(40, 12.0F, 0x3050FF, true, false),
+   /** Eren: a (harmless) lightning strike, steam, then the stomp. */
+   EREN(30, 10.0F, 0xFFE080, true, false),
+   /** Ainz: ticking clock sounds, rising black smoke, then a pillar of light. */
+   AINZ(40, 4.0F, 0xF0F0FF, true, false),
+   /** Shadow: purple particles gather, then "I am atomic". */
+   SHADOW(40, 14.0F, 0x9040FF, true, false),
+   /** Escanor: hovers, a small sun of flame particles, then Cruel Sun. */
+   ESCANOR(30, 6.0F, 0xFF8010, false, true),
+   /** Multiverse Collapse: the rift opens (camera shake + purple flash, no hero). */
+   MULTIVERSE_RIFT(40, 16.0F, 0x9040FF, false, false),
+   /** Multiverse Collapse: a champion or the final boss arrives (white flash, no hero). */
+   MULTIVERSE_FLASH(20, 10.0F, 0xFFFFFF, false, false);
 
    public final int windup;
    public final float cameraYaw;
