@@ -32,6 +32,13 @@ GROUPS = {
     'hulk': [('avengers/hulk', 'avengers/hulk')],
     'iron_man_gear': [('avengers/iron_man_gear', 'avengers/iron_man_gear')],
     'mjolnir': [('avengers/mjolnir', 'avengers/mjolnir')],
+    'iron_man': [('avengers/avenger', 'avengers/iron_man', {'gutter': False}),
+                 ('avengers/iron_man_gear', 'avengers/iron_man_gear')],
+    'arrow': [('avengers/arrow', 'avengers/arrow')],
+    'arrow_explosive': [('avengers/arrow_explosive', 'avengers/arrow_explosive')],
+    'arrow_shock': [('avengers/arrow_shock', 'avengers/arrow_shock')],
+    'mini_missile': [('avengers/mini_missile', 'avengers/mini_missile')],
+    'quinjet': [('avengers/quinjet', 'avengers/quinjet')],
 }
 
 
@@ -127,19 +134,58 @@ def inside(pt, quad, n):
     return True
 
 
-def overlap(q1, q2, n):
-    for i in np.linspace(0.08, 0.92, 7):
-        for j in np.linspace(0.08, 0.92, 7):
-            p = q1[0] + (q1[1] - q1[0]) * i + (q1[3] - q1[0]) * j
-            if inside(p, q2, n):
-                return True
-    return False
+def _plane_2d(q, n):
+    a = np.array([1.0, 0.0, 0.0]) if abs(n[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+    e1 = np.cross(n, a)
+    e1 /= np.linalg.norm(e1)
+    e2 = np.cross(n, e1)
+    return [(float(np.dot(p, e1)), float(np.dot(p, e2))) for p in q]
+
+
+def _area(poly):
+    return 0.5 * abs(sum(poly[i][0] * poly[(i + 1) % len(poly)][1] - poly[(i + 1) % len(poly)][0] * poly[i][1]
+                         for i in range(len(poly))))
+
+
+def _clip(subject, clipper):
+    """Sutherland-Hodgman: intersection of two convex polygons (2D)."""
+    def ccw(poly):
+        s = sum(poly[i][0] * poly[(i + 1) % len(poly)][1] - poly[(i + 1) % len(poly)][0] * poly[i][1]
+                for i in range(len(poly)))
+        return poly if s > 0 else poly[::-1]
+    out = ccw(subject)
+    clipper = ccw(clipper)
+    for i in range(len(clipper)):
+        a, b = clipper[i], clipper[(i + 1) % len(clipper)]
+        inp, out = out, []
+        if not inp:
+            break
+
+        def side(p):
+            return (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+        for j in range(len(inp)):
+            p, q = inp[j], inp[(j + 1) % len(inp)]
+            sp, sq = side(p), side(q)
+            if sp >= 0:
+                out.append(p)
+            if (sp >= 0) != (sq >= 0):
+                t = sp / (sp - sq)
+                out.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+    return out
+
+
+def overlap(q1, q2, n, min_area=0.004):
+    """True when two coplanar quads share more than min_area (px^2) - thin slivers included."""
+    inter = _clip(_plane_2d(q1, n), _plane_2d(q2, n))
+    return len(inter) >= 3 and _area(inter) > min_area
 
 
 def lint_group(name, members):
     errors = []
     faces = []
-    for geo_rel, tex_rel in members:
+    for member in members:
+        geo_rel, tex_rel = member[:2]
+        gutters = len(member) < 3 or member[2].get('gutter', True)  # vanilla-layout skins have no gutters
         path = os.path.join(RES, 'geo', geo_rel + '.geo.json')
         if not os.path.exists(path):
             errors.append(f'{name}: missing {geo_rel}')
@@ -150,7 +196,10 @@ def lint_group(name, members):
         tex = load_tex(tex_rel)
         if tex is None:
             errors.append(f'{name}: missing texture {tex_rel}')
-        elif tex.shape[1] != tw or tex.shape[0] != th:
+        k = 1
+        if tex is not None and not gutters and tex.shape[1] % tw == 0 and tex.shape[1] // tw == tex.shape[0] // th:
+            k = tex.shape[1] // tw  # HD player-layout skin (e.g. 128 x 128 on a 64 x 64 geometry)
+        if tex is not None and (tex.shape[1] != tw * k or tex.shape[0] != th * k):
             errors.append(f'{name}: {geo_rel} declares {tw}x{th} but {tex_rel} is {tex.shape[1]}x{tex.shape[0]}')
         used = np.zeros((int(th), int(tw)), np.int32)
         frames = bone_frames(g['bones'])
@@ -161,10 +210,17 @@ def lint_group(name, members):
                 if not isinstance(uvs, dict):
                     errors.append(f'{name}: {geo_rel} {b["name"]}#{ci} box UV (expected per-face)')
                     continue
+                clear = set()
                 for f, spec in uvs.items():
                     (u, v), (w, h) = spec['uv'], spec['uv_size']
                     if w <= 0 or h <= 0 or u < 0 or v < 0 or u + w > tw or v + h > th:
                         errors.append(f'{name}: {geo_rel} {b["name"]}#{ci}.{f} uv out of bounds {u},{v} {w}x{h}')
+                        continue
+                    if not gutters:
+                        # player-layout skin: joint caps reuse the box caps by design, no gutters
+                        u, v, w, h = int(u * k), int(v * k), int(math.ceil(w * k)), int(math.ceil(h * k))
+                        if tex is not None and (tex[v:v + h, u:u + w][..., 3] == 0).all():
+                            clear.add(f)
                         continue
                     u, v, w, h = int(u), int(v), int(math.ceil(w)), int(math.ceil(h))
                     if (used[v:v + h, u:u + w] > 0).any():
@@ -181,9 +237,9 @@ def lint_group(name, members):
                         if u + w < tw and not np.array_equal(tex[v:v + h, u + w], isl[:, -1]):
                             errors.append(f'{name}: {geo_rel} {b["name"]}#{ci}.{f} right gutter differs (bleeding)')
                         if (isl[..., 3] == 0).all():
-                            continue  # fully transparent face: never drawn, cannot z-fight
+                            clear.add(f)  # fully transparent face: never drawn, cannot z-fight
                 for fn, quad, n, area in cube_faces(c, R, t):
-                    if area > 1e-6:
+                    if area > 1e-6 and fn not in clear:
                         faces.append((f'{geo_rel}:{b["name"]}#{ci}.{fn}', quad, n))
     # z-fighting: same plane, same facing, overlapping area
     for i in range(len(faces)):
@@ -195,7 +251,7 @@ def lint_group(name, members):
                 continue
             if abs(di - float(np.dot(mn, qj[0]))) > 0.015:
                 continue
-            if overlap(qi, qj, nn) or overlap(qj, qi, nn):
+            if overlap(qi, qj, nn):
                 errors.append(f'{name}: z-fight {ni} / {nj}')
     return errors
 

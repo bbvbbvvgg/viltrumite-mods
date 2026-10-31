@@ -340,7 +340,7 @@ def body_model():
     # torso: suit body, chest plate (star), collar ring, lats
     c('torso', [-4, 12, -2], [8, 12, 4], M['torso'])
     c('torso', [-3.7, 18.2, -2.55], [7.4, 5.3, 0.7], M['plate'])
-    c('torso', [-3.5, 13.3, -2.25], [7.0, 4.95, 0.4], M['abs'])
+    c('torso', [-3.5, 13.3, -2.25], [7.0, 4.9, 0.4], M['abs'])
     c('torso', [-2.6, 23.4, -2.2], [5.2, 0.9, 4.4], M['collar'])
     c('torso', [-4.15, 21.6, 2.0], [8.3, 2.3, 0.25], M['yoke'], faces=('south', 'east', 'west', 'up', 'down'))
     for s in (-1, 1):
@@ -394,9 +394,9 @@ def gear_model():
         side = 'left' if s > 0 else 'right'
         ax0 = side_x(s, 3.7, 4.6)
         c(f'{side}_forearm', [ax0, 14.7, -2.3], [4.6, 1.9, 4.6], M['cuff'])
-        c(f'{side}_shin', [side_x(s, -0.05, 4.2), 0.0, -2.15], [4.2, 3.7, 4.3], M['boot'])
-        c(f'{side}_shin', [side_x(s, -0.15, 4.4), 3.55, -2.25], [4.4, 0.85, 4.5], M['cuff'])
-        c(f'{side}_shin', [side_x(s, 0.1, 3.8), 0.0, -2.75], [3.8, 1.5, 0.65], M['toe'])
+        c(f'{side}_shin', [side_x(s, 0.03, 4.12), 0.0, -2.15], [4.12, 3.7, 4.3], M['boot'])
+        c(f'{side}_shin', [side_x(s, 0.06, 4.24), 3.55, -2.25], [4.24, 0.85, 4.5], M['cuff'])
+        c(f'{side}_shin', [side_x(s, 0.1, 3.8), 0.0, -2.8], [3.8, 1.5, 0.65], M['toe'])
     return m
 
 
