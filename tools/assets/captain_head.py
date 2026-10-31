@@ -27,10 +27,12 @@ import json
 import math
 import os
 import subprocess
+import sys
 
 import numpy as np
 from PIL import Image
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 BASE = '9f15f6c0'
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 GEO = 'viltrumitecore/src/main/resources/assets/viltrumitecore/geo/captain/'
@@ -323,7 +325,9 @@ def gear():
 
 
 def main():
+    import remove_fingers  # the body comes from BASE: drop its finger / thumb cubes again (see remove_fingers.py)
     nb = body()
+    remove_fingers.run('captain/captain.geo.json')
     ng = gear()
     print('captain head pass: head %d cubes (face %dx%d), helmet %d cubes' % (nb, round(2 * HX * FACE_PX),
                                                                             round((HY1 - HY0) * FACE_PX), ng))
