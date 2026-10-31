@@ -40,7 +40,8 @@ public final class FinalPunchCamera {
 
       Vec3 feet = mc.player.getPosition(partial);
       LivingEntity target = scene.target();
-      FinalPunchShots.Frame frame = new FinalPunchShots.Frame(feet, scene.yaw, scene.fistSmooth(), jaw(scene, target, partial), scene.targetCentre(partial));
+      FinalPunchShots.Frame frame = new FinalPunchShots.Frame(feet, scene.yaw, scene.fistSmooth(), jaw(scene, target, partial), scene.targetCentre(partial),
+         target != null ? target.getBbWidth() * 0.5 : scene.lastRadius);
       FinalPunchShots.Shot shot = FinalPunchShots.at(t, frame);
       Vec3 pos = clip(mc.level, shot.focus(), shot.pos());
       float yaw = FinalPunchShots.yaw(pos, shot.focus());

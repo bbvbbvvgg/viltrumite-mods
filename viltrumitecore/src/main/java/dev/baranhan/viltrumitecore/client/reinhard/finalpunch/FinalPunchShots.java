@@ -11,7 +11,21 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class FinalPunchShots {
    /** Where things are this frame (world). {@code target} may be null (lost or far). */
-   public record Frame(Vec3 feet, float yaw, Vec3 fist, Vec3 jaw, Vec3 target) {
+   public record Frame(Vec3 feet, float yaw, Vec3 fist, Vec3 jaw, Vec3 target, double targetRadius) {
+      public Frame(Vec3 feet, float yaw, Vec3 fist, Vec3 jaw, Vec3 target) {
+         this(feet, yaw, fist, jaw, target, HUMAN_RADIUS);
+      }
+   }
+
+   /** Half the width of a person-sized target; the close shots are framed for it. */
+   static final double HUMAN_RADIUS = 0.3;
+
+   /**
+    * How much further the close shots on the jaw stand off a target wider than a person: an iron
+    * golem's arms reach ~0.8 from its axis and would fill the lens at the person-sized distance.
+    */
+   static double girth(Frame f) {
+      return 1.6 * Math.max(0.0, Math.min(1.5, f.targetRadius()) - HUMAN_RADIUS);
    }
 
    /** Camera position and the point it looks at. */
@@ -72,10 +86,10 @@ public final class FinalPunchShots {
       // 6 – the strike: a side tracking shot riding with the fist towards the jaw.
       (t, f) -> {
          Vec3 mid = f.fist().lerp(f.jaw(), 0.4);
-         return new Shot(mid.add(right(f).scale(1.6)).add(0, 0.15, 0).add(forward(f).scale(-0.25)), f.fist().lerp(f.jaw(), 0.55));
+         return new Shot(mid.add(right(f).scale(1.6 + girth(f))).add(0, 0.15, 0).add(forward(f).scale(-0.25)), f.fist().lerp(f.jaw(), 0.55));
       },
       // 7 – contact (hit-stop): a close profile on the fist in the jaw.
-      (t, f) -> new Shot(f.jaw().add(right(f).scale(1.25)).add(forward(f).scale(0.35)).add(0, 0.05, 0), f.jaw()),
+      (t, f) -> new Shot(f.jaw().add(right(f).scale(1.25 + girth(f))).add(forward(f).scale(0.35)).add(0, 0.05, 0), f.jaw()),
       // 8 – the launch: pull back wide and follow the body.
       (t, f) -> {
          double p = FinalPunchCues.smooth(FinalPunchCues.ramp(t, FinalPunchRules.LAUNCH, FinalPunchRules.CAMERA_OUT));
@@ -110,7 +124,7 @@ public final class FinalPunchShots {
       }
       // A blend between two sides of him travels round the bodies, never through them.
       Vec3 pos = clear(shot.pos(), f.feet());
-      if (f.target() != null) pos = clear(pos, f.target());
+      if (f.target() != null) pos = clear(pos, f.target(), Math.max(CLEARANCE, f.targetRadius() + 0.55));
       return pos == shot.pos() ? shot : new Shot(pos, shot.focus());
    }
 
@@ -134,17 +148,21 @@ public final class FinalPunchShots {
    static final double CLEARANCE = 0.85;
 
    static Vec3 clear(Vec3 pos, Vec3 feet) {
+      return clear(pos, feet, CLEARANCE);
+   }
+
+   static Vec3 clear(Vec3 pos, Vec3 feet, double clearance) {
       if (pos.y < feet.y - 0.2 || pos.y > feet.y + 2.3) return pos;
       double dx = pos.x - feet.x;
       double dz = pos.z - feet.z;
       double d = Math.sqrt(dx * dx + dz * dz);
-      if (d >= CLEARANCE) return pos;
+      if (d >= clearance) return pos;
       if (d < 1.0E-4) {
          dx = 1;
          dz = 0;
          d = 1;
       }
-      double k = CLEARANCE / d;
+      double k = clearance / d;
       return new Vec3(feet.x + dx * k, pos.y, feet.z + dz * k);
    }
 

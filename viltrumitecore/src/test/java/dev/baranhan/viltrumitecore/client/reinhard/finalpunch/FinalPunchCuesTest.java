@@ -99,6 +99,10 @@ class FinalPunchCuesTest {
    }
 
    private static FinalPunchShots.Frame frame(double t) {
+      return frame(t, FinalPunchShots.HUMAN_RADIUS);
+   }
+
+   private static FinalPunchShots.Frame frame(double t, double radius) {
       Vec3 feet = new Vec3(100.5, 64, -20.5);
       float yaw = 37.0F;
       Vec3 fist = FinalPunchFist.world(feet, yaw, t);
@@ -106,7 +110,29 @@ class FinalPunchCuesTest {
       Vec3 right = new Vec3(-fw.z, 0, fw.x);
       Vec3 jaw = feet.add(fw.scale(0.95)).add(right.scale(0.13)).add(0, 1.406, 0);
       Vec3 target = jaw.add(fw.scale(Math.max(0, t - FinalPunchRules.LAUNCH) * 0.6)).subtract(0, 1.406, 0);
-      return new FinalPunchShots.Frame(feet, yaw, fist, jaw, target);
+      return new FinalPunchShots.Frame(feet, yaw, fist, jaw, target, radius);
+   }
+
+   @Test
+   void theContactShotStandsOffAnIronGolemsArms() {
+      double golem = 0.7;
+      for (double t = FinalPunchRules.STRIKE + 6; t < FinalPunchRules.LAUNCH; t += 0.5) {
+         FinalPunchShots.Frame f = frame(t, golem);
+         Vec3 p = FinalPunchShots.at(t, f).pos();
+         double axis = Math.hypot(p.x - f.target().x, p.z - f.target().z);
+         assertTrue(axis > 1.6, "lens " + axis + " from the golem's axis at " + t);
+         // A person-sized target keeps the original framing.
+         Vec3 person = FinalPunchShots.at(t, frame(t)).pos();
+         assertTrue(Math.hypot(person.x - f.target().x, person.z - f.target().z) < axis, "the golem is framed from further at " + t);
+      }
+      FinalPunchShots.Shot before = FinalPunchShots.at(0, frame(0, golem));
+      for (double t = 0.25; t <= FinalPunchRules.LENGTH; t += 0.25) {
+         FinalPunchShots.Shot shot = FinalPunchShots.at(t, frame(t, golem));
+         boolean cut = false;
+         for (int c : FinalPunchCues.CUTS) cut |= t > c - 0.25 && t <= c;
+         if (!cut) assertTrue(shot.pos().distanceTo(before.pos()) < 0.45, "camera jump at " + t + " (golem)");
+         before = shot;
+      }
    }
 
    @Test

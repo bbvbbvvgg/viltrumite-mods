@@ -61,6 +61,8 @@ public final class FinalPunchClient {
       /** The target's centre when last seen: the camera keeps following a launched body after it is removed. */
       @Nullable
       Vec3 lastTarget;
+      /** Half width of the target as last seen (the camera frames a big body from further away). */
+      double lastRadius = 0.3;
       long fistFrame = -1;
       final List<Vec3> trail = new ArrayList<>();
       final FinalPunchAudio.Voices audio = new FinalPunchAudio.Voices();
@@ -299,7 +301,10 @@ public final class FinalPunchClient {
 
          if (scene.isLocalCaster() && mc.player != null && mc.player.isDeadOrDying()) cancel(scene);
          LivingEntity seen = scene.target();
-         if (seen != null) scene.lastTarget = seen.position().add(0, seen.getBbHeight() * 0.6, 0);
+         if (seen != null) {
+            scene.lastTarget = seen.position().add(0, seen.getBbHeight() * 0.6, 0);
+            scene.lastRadius = seen.getBbWidth() * 0.5;
+         }
          Vec3 fist = scene.fist(0.0F);
          scene.fistSmooth = scene.fistSmooth == null ? fist : scene.fistSmooth.lerp(fist, 0.35);
          if (scene.ticks >= FinalPunchRules.STRIKE - 2 && scene.ticks <= FinalPunchRules.CONTACT + 4) {
