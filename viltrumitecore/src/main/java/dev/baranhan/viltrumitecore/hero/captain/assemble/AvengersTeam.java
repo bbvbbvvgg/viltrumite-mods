@@ -87,6 +87,16 @@ public final class AvengersTeam {
       return state == null ? null : state.scene;
    }
 
+   /** Operator playtest (/hero team): the joint move to try at the next chance; false without a fighting team. */
+   public static boolean forceTeamMove(ServerPlayer player, int move) {
+      AssembleScene scene = sceneOf(player);
+      if (scene == null || scene.fightLeft() <= 0) {
+         return false;
+      }
+      scene.moves().force(move);
+      return true;
+   }
+
    /** An Avenger is still part of a live scene (otherwise it leaves). */
    public static boolean member(AvengerEntity a) {
       AssembleScene scene = sceneOf(a.owner());

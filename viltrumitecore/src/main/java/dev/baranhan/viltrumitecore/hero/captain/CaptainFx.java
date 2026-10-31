@@ -52,6 +52,13 @@ public final class CaptainFx {
    public static final int SHOCK = 28;
    /** Thrusters burst at a (Iron Man take-off / braking). */
    public static final int THRUST = 29;
+   /**
+    * Joint moves (rework §15): arg 0 the vault launch at a (Natasha's hands); 1 Thor's lightning a (Mjolnir) -> b
+    * (Tony's chest); 2 the charged unibeam a -> b; 3 the shield-strike shockwave at a, b.x radius; 4 Mjolnir
+    * crackling with gathered lightning at a.
+    */
+   public static final int TEAM = 30;
+   public static final int TEAM_VAULT = 0, TEAM_CHANNEL = 1, TEAM_BEAM = 2, TEAM_SHOCKWAVE = 3, TEAM_CRACKLE = 4;
 
    private CaptainFx() {
    }

@@ -5,7 +5,7 @@
   "subtitle.viltrumitecore.captain.assemble": "Avengers, sammeln!",
   "subtitle.viltrumitecore.captain.all_day": "Das kann ich den ganzen Tag.",
   "ability.viltrumitecore.captain_ricochet.name": "Querschläger",
-  "ability.viltrumitecore.captain_ricochet.desc": "Wirf den Schild auf das Ziel im Visier: Er prallt zwischen bis zu 3 Gegnern ab (5 ab 50 kinetischer Ladung, verbraucht 50), 9 Schaden, −15 % pro Abpraller, und fliegt zurück. Halten zielt einen Bandenwurf über Wände (bis zu 4 Abpraller). Erneut drücken ruft ihn zurück und trifft Gegner auf dem Weg. Fang ihn im Combo für einen Rückkehrschlag.",
+  "ability.viltrumitecore.captain_ricochet.desc": "Wirf den Schild auf das Ziel im Visier: Er prallt zwischen bis zu 5 Gegnern ab (8 ab 50 kinetischer Ladung, verbraucht 50), 9 Schaden, −15 % pro Abpraller, und fliegt zurück. Halten zielt einen Bandenwurf über Wände (bis zu 4 Abpraller). Erneut drücken ruft ihn zurück und trifft Gegner auf dem Weg. Fang ihn im Combo für einen Rückkehrschlag.",
   "ability.viltrumitecore.captain_shield_rush.name": "Schildansturm",
   "ability.viltrumitecore.captain_shield_rush.desc": "Stürme bis zu 9 Blöcke hinter dem Schild vor: Gegner auf dem Weg erleiden 6 und werden beiseitegestoßen; der erste große Gegner oder eine Wand stoppt dich mit 10 Schaden und 1,25 s Betäubung. Der nächste Angriff setzt den Combo mit dem Aufwärtshaken fort. Ohne Schild: Schulterstoß für 8.",
   "ability.viltrumitecore.captain_vibranium_slam.name": "Vibranium-Schlag",
@@ -13,7 +13,7 @@
   "ability.viltrumitecore.captain_tactical_roll.name": "Taktische Rolle",
   "ability.viltrumitecore.captain_tactical_roll.desc": "Rolle 4,5 Blöcke in Laufrichtung (oder zurück), kurz unverwundbar. Direkt danach angreifen = Fegetritt. Eine Rolle zum fliegenden Schild fängt ihn früher.",
   "ability.viltrumitecore.captain_assemble.name": "Avengers, sammeln!",
-  "ability.viltrumitecore.captain_assemble.desc": "Ultimate. Heb den Schild und ruf das Team: Der Quinjet setzt Black Widow und Hawkeye ab, Iron Man landet aus dem Himmel, Thor erscheint im Blitz und Hulk springt herbei. Zu sechst bildet ihr einen Kreis, dann kämpfen die Avengers 60 Sekunden an deiner Seite. Abklingzeit 5 Minuten.",
+  "ability.viltrumitecore.captain_assemble.desc": "Ultimate. Heb den Schild und ruf das Team: Der Quinjet setzt Black Widow und Hawkeye ab, Iron Man landet aus dem Himmel, Thor erscheint im Blitz und Hulk springt herbei. Zu sechst bildet ihr einen Kreis, dann kämpfen die Avengers 60 Sekunden an deiner Seite, mit Teamangriffen: Widow katapultiert Hawkeye in die Luft, Thor lädt Iron Mans Unibeam auf, und Thor schlägt auf deinen erhobenen Schild – eine Schockwelle. Abklingzeit 5 Minuten.",
   "entity.viltrumitecore.captain_shield": "Captain Americas Schild",
   "entity.viltrumitecore.avenger": "Avenger",
   "entity.viltrumitecore.avenger_projectile": "Avenger-Geschoss",
@@ -74,5 +74,12 @@
   "subtitles.viltrumitecore.avengers.hawkeye_arrow_hit": "Pfeil trifft",
   "subtitles.viltrumitecore.avengers.shock": "Stromschlag",
   "subtitles.viltrumitecore.avengers.heavy_land": "Schwere Landung",
-  "subtitles.viltrumitecore.avengers.depart": "Avenger bricht auf"
+  "subtitles.viltrumitecore.avengers.depart": "Avenger bricht auf",
+  "subtitle.viltrumitecore.captain.team_shield": "Hey, Cap, heb deinen Schild! Ich lade den Schlag auf!",
+  "subtitle.viltrumitecore.captain.team_beam": "Ladung auf vierhundert Prozent!",
+  "hint.viltrumitecore.captain.team_shield": "Halte %s in Richtung Thor, um den Schild zu heben",
+  "commands.viltrumitecore.hero.team.unknown": "Unbekannter Teamangriff: %s (vault, beam, shield)",
+  "commands.viltrumitecore.hero.team.no_fight": "%s hat gerade keine kämpfenden Avengers",
+  "commands.viltrumitecore.hero.team.forced": "Die Avengers versuchen „%s“ bei der nächsten Gelegenheit",
+  "subtitle.viltrumitecore.captain.enter": "Captain Rogers meldet sich zum Dienst."
 }

@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.entity.avengers.AvengerAction;
 import dev.baranhan.viltrumitecore.entity.avengers.AvengerEntity;
 import dev.baranhan.viltrumitecore.entity.avengers.AvengerKind;
 import dev.baranhan.viltrumitecore.entity.avengers.QuinjetEntity;
+import dev.baranhan.viltrumitecore.entity.avengers.TeamMoves;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainAbility;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainFx;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainMove;
@@ -49,15 +50,22 @@ public final class AssembleScene {
    private int departStart = Integer.MAX_VALUE;
    private boolean pickupPlanned;
    private boolean finished;
+   /** The joint moves of the fight (rework §15). */
+   private final TeamMoves moves;
 
    AssembleScene(ServerPlayer owner, CaptainState state) {
       this.owner = owner;
       this.state = state;
       this.level = (ServerLevel)owner.level();
+      this.moves = new TeamMoves(owner);
    }
 
    public ServerPlayer owner() {
       return this.owner;
+   }
+
+   public TeamMoves moves() {
+      return this.moves;
    }
 
    public ServerLevel level() {
@@ -270,6 +278,7 @@ public final class AssembleScene {
             this.beginFight();
          }
          if (t == this.departStart) {
+            this.moves.cancel();
             this.beginDeparture();
          }
          if (t >= this.departStart) {
@@ -282,7 +291,10 @@ public final class AssembleScene {
                this.finished = true;
             }
          } else if (c > CaptainRules.CIRCLE_TICKS && this.alive() == 0) {
+            this.moves.cancel();
             this.finished = true; // the whole team retreated
+         } else if (c > CaptainRules.CIRCLE_TICKS) {
+            this.moves.tick(this.fighters());
          }
       }
    }
@@ -558,6 +570,17 @@ public final class AssembleScene {
       }
    }
 
+   /** The Avengers still in the fight (not gone, not leaving), for the joint moves. */
+   private Map<AvengerKind, AvengerEntity> fighters() {
+      Map<AvengerKind, AvengerEntity> out = new EnumMap<>(AvengerKind.class);
+      for (Member m : this.members.values()) {
+         if (!m.gone && m.e != null && m.departAt < 0) {
+            out.put(m.kind, m.e);
+         }
+      }
+      return out;
+   }
+
    @Nullable
    private AvengerEntity body(AvengerKind k) {
       Member m = this.members.get(k);
@@ -766,6 +789,7 @@ public final class AssembleScene {
 
    /** Removes everything now (no departure). */
    void dispose(boolean unused) {
+      this.moves.cancel();
       this.finished = true;
       for (Member m : this.members.values()) {
          if (m.e != null && !m.e.isRemoved()) {
