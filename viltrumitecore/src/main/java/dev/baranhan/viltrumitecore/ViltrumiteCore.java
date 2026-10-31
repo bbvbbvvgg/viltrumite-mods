@@ -121,6 +121,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
       dev.baranhan.viltrumitecore.hero.captain.CaptainSounds.init();
+      // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
+      dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);
