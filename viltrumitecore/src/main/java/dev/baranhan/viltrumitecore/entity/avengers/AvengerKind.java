@@ -7,7 +7,7 @@ package dev.baranhan.viltrumitecore.entity.avengers;
 public enum AvengerKind {
    IRON_MAN("iron_man", 140.0F, 14.0, 0.34, 0.7F, 2.0F, 0.8),
    THOR("thor", 180.0F, 14.0, 0.34, 0.72F, 2.05F, 0.9),
-   HULK("hulk", 300.0F, 10.0, 0.4, 1.4F, 3.1F, 1.0),
+   HULK("hulk", 300.0F, 10.0, 0.4, 1.6F, 3.3F, 1.0),
    BLACK_WIDOW("black_widow", 80.0F, 5.0, 0.42, 0.6F, 1.8F, 0.2),
    HAWKEYE("hawkeye", 80.0F, 5.0, 0.36, 0.6F, 1.85F, 0.2);
 

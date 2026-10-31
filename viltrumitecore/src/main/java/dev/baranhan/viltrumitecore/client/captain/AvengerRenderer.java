@@ -30,16 +30,14 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The five summoned Avengers. Iron Man, Thor, Widow and Hawkeye share the player-shaped rig (Widow on the slim
- * arms) with their own skin and gear mesh (helmet + faceplate hinge, cape + Mjolnir, hair + pistols, bow +
- * quiver); Hulk has his own model. Locomotion blends idle/walk/run (fly for an airborne Iron Man / Thor), the
+ * The five summoned Avengers. Thor, Widow, Hawkeye and Hulk draw their own shaded body meshes; Iron Man keeps the
+ * player-shaped rig under his armour skin ({@link AvengerModels} owns the choice). Each kind but Hulk adds a gear
+ * mesh with its own bones (helmet + faceplate hinge, cape + Mjolnir, hair + pistols, bow + quiver). Locomotion blends idle/walk/run (fly for an airborne Iron Man / Thor), the
  * synced action plays its clip on the action clock and fades out when it ends. Client only.
  */
 public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
    private static final int N = AvengerKind.values().length;
-   private static final ResourceLocation RIG = CaptainView.rl("geo/avengers/avenger.geo.json");
-   private static final ResourceLocation RIG_SLIM = CaptainView.rl("geo/avengers/avenger_slim.geo.json");
-   private static final ResourceLocation HULK = CaptainView.rl("geo/avengers/hulk.geo.json");
+   private static final ResourceLocation[] BODY = new ResourceLocation[N];
    private static final ResourceLocation[] SKIN = new ResourceLocation[N];
    private static final ResourceLocation[] GEAR = new ResourceLocation[N];
    private static final ResourceLocation[] GEAR_TEX = new ResourceLocation[N];
@@ -50,15 +48,14 @@ public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
    static {
       for (AvengerKind kind : AvengerKind.values()) {
          int i = kind.ordinal();
-         String k = kind.key();
-         ANIM[i] = CaptainView.rl("animations/avengers/" + k + ".animation.json");
-         SKIN[i] = CaptainView.rl("textures/entity/avengers/" + k + ".png");
-         if (kind == AvengerKind.HULK) {
-            GLOW[i] = CaptainView.rl("textures/entity/avengers/hulk_glow.png");
-         } else {
-            GEAR[i] = CaptainView.rl("geo/avengers/" + k + "_gear.geo.json");
-            GEAR_TEX[i] = CaptainView.rl("textures/entity/avengers/" + k + "_gear.png");
-            GLOW[i] = CaptainView.rl("textures/entity/avengers/" + k + "_gear_glow.png");
+         BODY[i] = CaptainView.rl(AvengerModels.body(kind));
+         ANIM[i] = CaptainView.rl(AvengerModels.clips(kind));
+         SKIN[i] = CaptainView.rl(AvengerModels.skin(kind));
+         GLOW[i] = CaptainView.rl(AvengerModels.glow(kind));
+         String gear = AvengerModels.gear(kind);
+         if (gear != null) {
+            GEAR[i] = CaptainView.rl(gear);
+            GEAR_TEX[i] = CaptainView.rl(AvengerModels.gearTexture(kind));
          }
       }
    }
@@ -74,18 +71,14 @@ public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
    }
 
    static float scale(AvengerKind kind) {
-      return switch (kind) {
-         case HULK, THOR -> 1.0F;
-         case IRON_MAN -> 0.97F;
-         default -> 0.9375F;
-      };
+      return AvengerModels.scale(kind);
    }
 
    @Override
    public void render(AvengerEntity e, float yaw, float partial, PoseStack stack, MultiBufferSource buffers, int light) {
       AvengerKind kind = e.kind();
       int i = kind.ordinal();
-      BakedGeoModel body = AnimCache.model(kind == AvengerKind.HULK ? HULK : kind == AvengerKind.BLACK_WIDOW ? RIG_SLIM : RIG);
+      BakedGeoModel body = AnimCache.model(BODY[i]);
       BakedGeoModel gear = GEAR[i] == null ? null : AnimCache.model(GEAR[i]);
       if (body == null) {
          return;
@@ -309,6 +302,6 @@ public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
 
    @Nullable
    static BakedGeoModel model(AvengerKind kind) {
-      return AnimCache.model(kind == AvengerKind.HULK ? HULK : kind == AvengerKind.BLACK_WIDOW ? RIG_SLIM : RIG);
+      return AnimCache.model(BODY[kind.ordinal()]);
    }
 }
