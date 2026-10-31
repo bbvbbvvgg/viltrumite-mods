@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ultimate Hero Expansion roster generator.
 
-Single source of truth for the 30 expansion heroes. Writes
+Single source of truth for the 48 expansion heroes and their factions. Writes
   - viltrumitecore/.../hero/budget/BudgetRoster.java  (server + client data table)
   - assets/viltrumite_expansion/lang/en_us.json and ru_ru.json
 
@@ -186,8 +186,123 @@ hero("shrek", "SHREK", "Shrek", "Шрек",
       ("D", "swamp_power", "Swamp Power", "Сила болота", 0, 300, "6a8a20", "strength"),
       ("E", "ogre_roar", "Ogre Roar", "Рёв огра", 18, 200, "a0d040", "ring")], "SHREK")
 
-assert len(H) == 30, len(H)
-assert len({h['key'] for h in H}) == 30 and all(len(h['key']) <= 32 for h in H)
+# ---- MULTIVERSE EXPANSION PHASE II (heroes 31-36) ----------------------
+hero("aizen", "AIZEN", "Sosuke Aizen", "Сосукэ Айдзен",
+     look(PALE, "5a3a20", "f0f0f0", "f0f0f0", "202020", eyes="6a4a2a", details=["sword_hip:202020"]),
+     [("A", "reiatsu_strike", "Reiatsu Strike", "Удар реяцу", 13, 24, "8a40d0", ""),
+      ("B", "black_coffin", "Hado #90: Black Coffin", "Хадо №90: Чёрный гроб", 15, 50, "301040", ""),
+      ("D", "kyoka_suigetsu", "Kyoka Suigetsu", "Кёка Суйгэцу", 0, 300, "b070ff", "resistance"),
+      ("E", "hogyoku_ascension", "Hogyoku Ascension", "Вознесение Хогёку", 35, 240, "a020f0", "ring")], "AIZEN")
+hero("ichigo", "ICHIGO", "Ichigo Kurosaki", "Ичиго Куросаки",
+     look(PALE, "ff8020", "151515", "151515", "f0f0f0", eyes="5a3a20", details=["spiky:ff8020", "katana_back:151515"]),
+     [("B", "getsuga_tensho", "Getsuga Tensho", "Гецуга Тэнсё", 14, 40, "60a0ff", ""),
+      ("C", "shunpo", "Shunpo", "Сюнпо", 0, 30, "ffffff", ""),
+      ("D", "bankai", "Bankai: Tensa Zangetsu", "Банкай: Тэнса Дзангэцу", 0, 300, "202030", "speed"),
+      ("E", "mugetsu", "Mugetsu", "Мугэцу", 40, 260, "100010", "beam")], "ICHIGO")
+hero("dante", "DANTE", "Dante", "Данте",
+     look(PALE, "f0f0f0", "a01818", "2a2a2a", "3a2a1a", eyes="4080d0", details=["spiky:f0f0f0", "cape:a01818", "big_sword:c0c0c8"]),
+     [("A", "rebellion", "Rebellion Slash", "Удар Ребеллиона", 13, 20, "e0e0f0", ""),
+      ("B", "ebony_ivory", "Ebony & Ivory", "Эбони и Айвори", 8, 16, "ffd060", ""),
+      ("D", "devil_trigger", "Devil Trigger", "Триггер дьявола", 0, 300, "e02020", "strength")])
+hero("vergil", "VERGIL", "Vergil", "Вергилий",
+     look(PALE, "e8e8f0", "2040a0", "202020", "202020", eyes="4080d0", details=["cape:2040a0", "sword_hip:303030"]),
+     [("A", "yamato_slash", "Yamato Slash", "Удар Ямато", 12, 20, "80c0ff", ""),
+      ("B", "judgement_cut", "Judgement Cut", "Разрез правосудия", 14, 40, "4060ff", ""),
+      ("C", "air_trick", "Air Trick", "Воздушный трюк", 0, 30, "a0c0ff", ""),
+      ("E", "judgement_cut_end", "Judgement Cut End", "Конец правосудия", 38, 260, "3050ff", "ring")], "VERGIL")
+hero("guts", "GUTS", "Guts", "Гатс",
+     look(TAN, "151515", "2a2a30", "2a2a30", "1a1a1a", eyes="303030", face=["scar:a04040", "metal_arms:6a6a70"], details=["big_sword:8a8a90"]),
+     [("A", "dragon_slayer", "Dragon Slayer", "Убийца драконов", 20, 40, "b0b0b8", ""),
+      ("B", "cannon_arm", "Cannon Arm", "Рука-пушка", 12, 60, "ff8030", ""),
+      ("D", "berserker_armor", "Berserker Armor", "Доспех берсерка", 0, 300, "601010", "strength")])
+hero("sans", "SANS", "Sans", "Санс",
+     look("f0f0f0", "f0f0f0", "2a50b0", "202020", "ff80c0", eyes="f0f0f0", face=["bald"]),
+     [("A", "bone_attack", "Bone Attack", "Костяная атака", 1, 10, "f0f0f0", ""),
+      ("C", "shortcut", "Shortcut", "Короткий путь", 0, 20, "60c0ff", ""),
+      ("E", "gaster_blaster", "Gaster Blaster", "Гастер-бластер", 30, 200, "ffffff", "beam")])
+# ---- ULTIMATE MULTIVERSE EXPANSION PHASE II (heroes 37-48) -------------
+hero("eren", "EREN", "Eren Yeager", "Эрен Йегер",
+     look(PALE, "3a2a1a", "6a4a2a", "e8e0d0", "3a2a1a", eyes="30a080", details=["bun:3a2a1a"]),
+     [("A", "titan_punch", "Attack Titan Punch", "Удар Атакующего титана", 16, 30, "d08060", ""),
+      ("C", "odm_gear", "ODM Gear", "УПМ", 0, 30, "c0c0c0", ""),
+      ("D", "titan_hardening", "Titan Hardening", "Затвердение титана", 0, 300, "a0e0ff", "resistance"),
+      ("E", "the_rumbling", "The Rumbling", "Гул земли", 45, 300, "c06030", "ring")], "EREN")
+hero("levi", "LEVI", "Levi Ackerman", "Леви Аккерман",
+     look(PALE, "151515", "6a4a2a", "e8e0d0", "3a2a1a", eyes="6a6a70", face=["tie:f0f0f0"], details=["cape:2a6a3a"]),
+     [("A", "spinning_slash", "Spinning Slash", "Вращающийся разрез", 15, 20, "e0e0e0", ""),
+      ("C", "odm_maneuver", "ODM Maneuver", "Манёвр УПМ", 0, 20, "c0c0c0", ""),
+      ("D", "ackerman_power", "Ackerman Awakening", "Пробуждение Аккерманов", 0, 300, "e0e0ff", "speed")])
+hero("denji", "DENJI", "Denji", "Дэндзи",
+     look(PALE, "e8c040", "f0f0f0", "151515", "3a2a1a", eyes="8a6a30", face=["tie:151515"], details=["chainsaw:c0c0c0"]),
+     [("A", "chainsaw_rip", "Chainsaw Rip", "Разрыв бензопилой", 14, 20, "e02020", ""),
+      ("C", "pull_cord", "Pull Cord", "Дёрнуть шнур", 0, 40, "ffa040", ""),
+      ("D", "blood_frenzy", "Blood Frenzy", "Кровавое безумие", 0, 300, "c01010", "strength")])
+hero("makima", "MAKIMA", "Makima", "Макима",
+     look(PALE, "c86040", "f0f0f0", "151515", "151515", eyes="e0c020", face=["tie:151515"], details=["long_hair:c86040"]),
+     [("B", "bang", "Bang", "Бах", 18, 40, "e01010", ""),
+      ("D", "control_devil", "Control Devil", "Демон контроля", 0, 300, "e0c020", "resistance"),
+      ("E", "domination", "Domination", "Господство", 30, 240, "a01010", "ring")])
+hero("power", "POWER", "Power", "Пауэр",
+     look(PALE, "f0a0b0", "f0f0f0", "151515", "151515", eyes="e0a020", face=["tie:151515"], details=["long_hair:f0a0b0", "horns:c01010"]),
+     [("A", "blood_hammer", "Blood Hammer", "Кровавый молот", 17, 30, "c01010", ""),
+      ("B", "blood_spear", "Blood Spear", "Кровавое копьё", 12, 30, "e01020", ""),
+      ("D", "greatest", "I Am The Greatest", "Я величайшая", 0, 300, "ff4060", "strength")])
+hero("alucard", "ALUCARD", "Alucard", "Алукард",
+     look(PALE, "151515", "a01818", "151515", "151515", eyes="e01010", details=["wide_hat:a01818", "glasses:e08020", "cape:a01818"]),
+     [("B", "jackal", "Jackal", "Шакал", 13, 24, "c0c0c0", ""),
+      ("C", "shadow_form", "Shadow Form", "Теневая форма", 0, 40, "300010", ""),
+      ("D", "release_restraint", "Release Restraint: Level Zero", "Снятие печати: нулевой уровень", 0, 300, "e01010", "strength"),
+      ("E", "familiars", "Hellhound Familiars", "Адские фамильяры", 32, 240, "200010", "ring")])
+hero("rimuru", "RIMURU", "Rimuru Tempest", "Римуру Темпест",
+     look(PALE, "70b0e0", "202030", "202030", "151515", eyes="e0b020", details=["long_hair:70b0e0"]),
+     [("B", "water_blade", "Water Blade", "Водяной клинок", 12, 30, "60b0ff", ""),
+      ("D", "predator", "Predator", "Хищник", 0, 300, "4080d0", "resistance"),
+      ("E", "beelzebuth", "Beelzebuth", "Вельзевул", 34, 260, "3040a0", "ring")])
+hero("ainz", "AINZ", "Ainz Ooal Gown", "Айнз Оал Гоун",
+     look("e8e4d0", "e8e4d0", "2a1040", "2a1040", "151515", eyes="e01010", face=["bald", "armor:d0b040"], details=["horns:d0b040", "cape:2a1040"]),
+     [("B", "grasp_heart", "Grasp Heart", "Хватка сердца", 16, 50, "6a2a8a", ""),
+      ("D", "dark_wisdom", "Dark Wisdom", "Тёмная мудрость", 0, 300, "8a40d0", "resistance"),
+      ("E", "fallen_down", "Fallen Down", "Падение небес", 50, 300, "f0f0ff", "beam")], "AINZ")
+hero("shadow", "SHADOW", "Cid Kagenou / Shadow", "Сид Кагэно / Шэдоу",
+     look(PALE, "151515", "151515", "151515", "151515", eyes="c01010", face=["domino:202020"], details=["cape:151515", "sword_hip:202020"]),
+     [("A", "slime_sword", "Slime Sword", "Слизневой меч", 13, 20, "6a40c0", ""),
+      ("C", "eminence_step", "Eminence Step", "Шаг Тени", 0, 30, "4a2a8a", ""),
+      ("E", "i_am_atomic", "I Am Atomic", "Я атомный", 45, 300, "9040ff", "ring")], "SHADOW")
+hero("mob", "MOB", "Mob", "Моб",
+     look(PALE, "151515", "151515", "151515", "151515", eyes="151515"),
+     [("B", "psychic_blast", "Psychic Blast", "Психический взрыв", 12, 30, "c060ff", ""),
+      ("D", "hundred_percent", "100%", "100%", 0, 300, "e080ff", "strength"),
+      ("E", "question_percent", "???%", "???%", 48, 300, "ffffff", "ring")])
+hero("escanor", "ESCANOR", "Escanor", "Эсканор",
+     look(TAN, "151515", "f0f0f0", "6a4a2a", "3a2a1a", eyes="4a3a20", face=["beard:151515"], details=["big_sword:e0a020"]),
+     [("A", "rhitta_strike", "Divine Axe Rhitta", "Божественный топор Рита", 18, 30, "ffb020", ""),
+      ("D", "sunshine", "Sunshine", "Солнечный свет", 0, 300, "ffd040", "strength"),
+      ("E", "cruel_sun", "Cruel Sun", "Жестокое солнце", 42, 280, "ff8010", "ring")], "ESCANOR")
+hero("meliodas", "MELIODAS", "Meliodas", "Мелиодас",
+     look(PALE, "f0d040", "f0f0f0", "202020", "202020", eyes="30a040", face=["marks:151515"], details=["spiky:f0d040", "sword_hip:3a3a3a"]),
+     [("A", "full_counter", "Full Counter", "Полный контрудар", 14, 24, "a0a0ff", ""),
+      ("B", "hellblaze", "Hellblaze", "Адское пламя", 13, 40, "202020", ""),
+      ("D", "demon_mode", "Demon Mode", "Режим демона", 0, 300, "303030", "strength"),
+      ("E", "revenge_counter", "Revenge Counter", "Ответный удар мести", 36, 240, "8080ff", "beam")])
+
+# Five-faction war system: every playable hero (including the historical ones,
+# matched by key, never by HeroId constant) belongs to one faction.
+FACTION = {}
+for _f, _keys in {
+    "ANIME": ["itadori", "megumi", "yuta", "nanami", "goku", "vegeta", "naruto", "sasuke", "luffy", "zoro", "sanji",
+              "genos", "ichigo", "levi", "denji", "rimuru", "mob"],
+    "COMICS": ["superman", "batman", "flash", "green_lantern", "aquaman", "spider_man", "wolverine"],
+    "DEMONS": ["sukuna", "geto", "mahito", "choso", "dante", "vergil", "makima", "power", "alucard", "ainz", "meliodas"],
+    "GODS": ["gojo", "saitama", "kratos", "aizen", "escanor"],
+    "CHAOS": ["toji", "madara", "deadpool", "shrek", "guts", "sans", "eren", "shadow"],
+}.items():
+    for _k in _keys:
+        FACTION[_k] = _f
+
+assert len(H) == 48, len(H)
+assert len({h['key'] for h in H}) == 48 and all(len(h['key']) <= 32 for h in H)
+assert all(h['key'] in FACTION for h in H), [h['key'] for h in H if h['key'] not in FACTION]
+assert all(len({m[0] for m in h['moves']}) == len(h['moves']) for h in H), "one move per mechanic"
 
 TYPE_EN = {"A": "Strike", "B": "Energy projectile", "C": "Dash", "D": "Power-up", "E": "Ultimate"}
 TYPE_RU = {"A": "Удар", "B": "Энергетический снаряд", "C": "Рывок", "D": "Усиление", "E": "Ультимейт"}
@@ -198,6 +313,16 @@ SCENE_LINES = {
     "GOKU": ("Ka... me... ha... me... HA!", "Ка... ме... ха... ме... ХА!"),
     "SUPERMAN": ("This is for Earth.", "Это ради Земли."),
     "SHREK": ("WHAT ARE YOU DOING IN MY SWAMP?!", "ЧТО ВЫ ДЕЛАЕТЕ В МОЁМ БОЛОТЕ?!"),
+    "AIZEN": ("Since when were you under the impression that I wasn't using Kyoka Suigetsu?",
+              "С каких пор тебе казалось, что я не использую Кёка Суйгэцу?"),
+    "ICHIGO": ("This is the final Getsuga Tensho.", "Это последняя Гецуга Тэнсё."),
+    "VERGIL": ("You're not worthy as my opponent.", "Ты недостоин быть моим противником."),
+    "EREN": ("I will destroy them all. Every last one.", "Я уничтожу их всех. До последнего."),
+    "AINZ": ("Know despair.", "Познай отчаяние."),
+    "SHADOW": ("I am... ATOMIC.", "Я... АТОМНЫЙ."),
+    "ESCANOR": ("Who decided that?", "Кто так решил?"),
+    "MULTIVERSE_RIFT": ("REALITY INTEGRITY: CRITICAL", "REALITY INTEGRITY: CRITICAL"),
+    "MULTIVERSE_FLASH": ("DIMENSIONAL THREAT DETECTED", "DIMENSIONAL THREAT DETECTED"),
 }
 
 
@@ -230,7 +355,7 @@ def java():
     out.append("package dev.baranhan.viltrumitecore.hero.budget;\n")
     out.append("import dev.baranhan.viltrumitecore.hero.HeroId;\n")
     out.append("/**\n * GENERATED by tools/budget/make_budget_roster.py - do not edit by hand.\n"
-               " * Ultimate Hero Expansion roster: 30 heroes on the shared budget chassis.\n */")
+               " * Ultimate Hero Expansion roster: 48 heroes on the shared budget chassis.\n */")
     out.append("public final class BudgetRoster {")
     out.append("   private BudgetRoster() {\n   }\n")
     out.append("   public static final BudgetHeroSpec[] ALL = {")
@@ -249,11 +374,108 @@ def java():
             f"         new BudgetLook(0x{l['skin']}, 0x{l['hair']}, 0x{l['shirt']}, 0x{l['pants']}, 0x{l['shoes']}, 0x{l['eyes']},\n"
             f"            new String[]{{{face}}}, new String[]{{{det}}}),\n"
             f"         new BudgetMove[]{{\n" + ",\n".join(moves) + "\n         },\n"
-            f"         BudgetScene.{h['scene']})")
+            f"         BudgetScene.{h['scene']},\n"
+            f"         BudgetFaction.{FACTION[h['key']]})")
     out.append(",\n".join(rows))
     out.append("   };")
     out.append("}")
     return "\n".join(out) + "\n"
+
+
+# MULTIVERSE COLLAPSE / BOSS RUSH / FACTIONS (same lang files, en + ru)
+BOSSES = {
+    "king_of_curses": ("King of Curses", "Король проклятий"),
+    "lord_of_illusions": ("Lord of Illusions", "Владыка иллюзий"),
+    "lord_of_death": ("Lord of Death", "Повелитель смерти"),
+    "titan_destroyer": ("Titan Destroyer", "Титан-разрушитель"),
+    "absolute_power": ("Absolute Power", "Абсолютная сила"),
+    "demon_king": ("Demon King", "Король демонов"),
+    "atomic_shadow": ("Atomic Shadow", "Атомный Шэдоу"),
+    "final_champion": ("Final Champion of the Multiverse", "Финальный чемпион мультивселенной"),
+}
+FACTION_NAMES = {
+    "anime": ("Anime Universes", "Аниме-вселенные"),
+    "comics": ("Comic Heroes", "Герои комиксов"),
+    "demons": ("Demons & Curses", "Демоны и проклятия"),
+    "gods": ("Gods & Legends", "Боги и легенды"),
+    "chaos": ("Multiverse Chaos", "Хаос мультивселенной"),
+}
+MODIFIER_NAMES = {
+    "double_trouble": ("Double Trouble", "Двойная угроза"),
+    "boss_mayhem": ("Boss Mayhem", "Нашествие боссов"),
+    "ultimate_chaos": ("Ultimate Chaos", "Абсолютный хаос"),
+    "random_champions": ("Random Champions", "Случайные чемпионы"),
+}
+MV = {  # key: (en, ru)
+    "entity.viltrumitecore.multiverse_fighter": ("Multiverse Fighter", "Боец мультивселенной"),
+    "multiverse.viltrumitecore.title.initiated": ("MULTIVERSE COLLAPSE INITIATED", "MULTIVERSE COLLAPSE INITIATED"),
+    "multiverse.viltrumitecore.sub.rift": ("Phase 1: Reality Rift", "Фаза 1: разлом реальности"),
+    "multiverse.viltrumitecore.integrity.critical": ("REALITY INTEGRITY: CRITICAL", "REALITY INTEGRITY: CRITICAL"),
+    "multiverse.viltrumitecore.integrity.restored": ("REALITY INTEGRITY: RESTORED", "REALITY INTEGRITY: RESTORED"),
+    "multiverse.viltrumitecore.title.threat": ("DIMENSIONAL THREAT DETECTED", "DIMENSIONAL THREAT DETECTED"),
+    "multiverse.viltrumitecore.sub.invasion": ("Phase 2: First Invasions", "Фаза 2: первые вторжения"),
+    "multiverse.viltrumitecore.title.war": ("WAR OF THE MULTIVERSES", "WAR OF THE MULTIVERSES"),
+    "multiverse.viltrumitecore.sub.war": ("Phase 3: The factions collide", "Фаза 3: фракции сталкиваются"),
+    "multiverse.viltrumitecore.title.champions": ("CHAMPIONS HAVE ARRIVED", "CHAMPIONS HAVE ARRIVED"),
+    "multiverse.viltrumitecore.sub.champions": ("Phase 4: Arrival of the Champions", "Фаза 4: прибытие чемпионов"),
+    "multiverse.viltrumitecore.title.final": ("FINAL CHAMPION APPROACHING", "FINAL CHAMPION APPROACHING"),
+    "multiverse.viltrumitecore.sub.final": ("Phase 5: Final Collapse", "Фаза 5: финальный коллапс"),
+    "multiverse.viltrumitecore.title.saved": ("THE MULTIVERSE IS SAVED", "THE MULTIVERSE IS SAVED"),
+    "multiverse.viltrumitecore.sub.closing": ("The rift is closing", "Разлом закрывается"),
+    "multiverse.viltrumitecore.title.fallen": ("THE MULTIVERSE HAS FALLEN", "THE MULTIVERSE HAS FALLEN"),
+    "multiverse.viltrumitecore.sub.fallen": ("No defenders remained near the rift", "У разлома не осталось защитников"),
+    "multiverse.viltrumitecore.ended": ("Multiverse Collapse is over. The rift has closed.", "Коллапс мультивселенной завершён. Разлом закрыт."),
+    "multiverse.viltrumitecore.failed": ("Multiverse Collapse failed. The rift swallowed everything.", "Коллапс мультивселенной проигран. Разлом поглотил всё."),
+    "multiverse.viltrumitecore.stopped": ("Multiverse Collapse stopped by an operator.", "Коллапс мультивселенной остановлен оператором."),
+    "multiverse.viltrumitecore.started": ("Multiverse Collapse started.", "Коллапс мультивселенной запущен."),
+    "multiverse.viltrumitecore.already": ("A Multiverse Collapse is already running.", "Коллапс мультивселенной уже идёт."),
+    "multiverse.viltrumitecore.none": ("Nothing is running.", "Ничего не запущено."),
+    "multiverse.viltrumitecore.status": ("Phase %s (%s), enemies alive: %s, modifiers: %s", "Фаза %s (%s), живых противников: %s, модификаторы: %s"),
+    "multiverse.viltrumitecore.stop_report": ("Stopped: event %s, boss rush runs %s, NPCs removed %s", "Остановлено: событие %s, забегов Boss Rush %s, удалено NPC %s"),
+    "multiverse.viltrumitecore.modifiers": ("Chaos modifiers:%s", "Модификаторы хаоса:%s"),
+    "multiverse.viltrumitecore.unknown_modifier": ("Unknown modifier: %s", "Неизвестный модификатор: %s"),
+    "multiverse.viltrumitecore.unknown_boss": ("Unknown boss: %s", "Неизвестный босс: %s"),
+    "multiverse.viltrumitecore.unknown_faction": ("Unknown faction", "Неизвестная фракция"),
+    "multiverse.viltrumitecore.faction_arrives": ("%s enter the war!", "%s вступают в войну!"),
+    "multiverse.viltrumitecore.faction_wins": ("%s win the faction war!", "%s побеждают в войне фракций!"),
+    "multiverse.viltrumitecore.boss_arrives": ("%s has arrived!", "%s прибывает!"),
+    "multiverse.viltrumitecore.clash": ("Faction clash: %s vs %s (%s fighters)", "Столкновение фракций: %s против %s (бойцов: %s)"),
+    "multiverse.viltrumitecore.enraged": ("%s IS ENRAGED!", "%s В ЯРОСТИ!"),
+    "multiverse.viltrumitecore.special.shrine": ("DOMAIN EXPANSION", "РАСШИРЕНИЕ ТЕРРИТОРИИ"),
+    "multiverse.viltrumitecore.special.illusion": ("COMPLETE HYPNOSIS", "ПОЛНЫЙ ГИПНОЗ"),
+    "multiverse.viltrumitecore.special.summon": ("RISE, MY SERVANTS", "ВОССТАНЬТЕ, СЛУГИ"),
+    "multiverse.viltrumitecore.special.titan": ("TITAN STOMP", "ТОПОТ ТИТАНА"),
+    "multiverse.viltrumitecore.special.punch_charge": ("SERIOUS SERIES...", "СЕРЬЁЗНАЯ СЕРИЯ..."),
+    "multiverse.viltrumitecore.special.punch": ("SERIOUS PUNCH", "СЕРЬЁЗНЫЙ УДАР"),
+    "multiverse.viltrumitecore.special.counter": ("FULL COUNTER", "ПОЛНЫЙ КОНТРУДАР"),
+    "multiverse.viltrumitecore.special.atomic_charge": ("I AM...", "Я..."),
+    "multiverse.viltrumitecore.special.atomic": ("ATOMIC", "АТОМНЫЙ"),
+    "multiverse.viltrumitecore.title.bossrush": ("BOSS RUSH", "BOSS RUSH"),
+    "multiverse.viltrumitecore.sub.bossrush": ("%s multiverse bosses. No mercy.", "Боссов мультивселенной: %s. Без пощады."),
+    "multiverse.viltrumitecore.title.wave": ("NEW CHALLENGER", "NEW CHALLENGER"),
+    "multiverse.viltrumitecore.sub.wave": ("Wave %s/%s: %s", "Волна %s/%s: %s"),
+    "multiverse.viltrumitecore.wave": ("WAVE %s/%s - %s", "ВОЛНА %s/%s - %s"),
+    "multiverse.viltrumitecore.wave_cleared": ("Wave %s/%s cleared!", "Волна %s/%s пройдена!"),
+    "multiverse.viltrumitecore.next_boss": ("Next boss in %s s", "Следующий босс через %s с"),
+    "multiverse.viltrumitecore.title.bossrush_done": ("MULTIVERSE CHAMPION", "MULTIVERSE CHAMPION"),
+    "multiverse.viltrumitecore.sub.bossrush_done": ("All %s multiverse bosses defeated", "Все %s боссов мультивселенной повержены"),
+    "multiverse.viltrumitecore.title.bossrush_failed": ("BOSS RUSH FAILED", "BOSS RUSH FAILED"),
+    "multiverse.viltrumitecore.title.bossrush_cancelled": ("BOSS RUSH CANCELLED", "BOSS RUSH CANCELLED"),
+    "multiverse.viltrumitecore.bossrush_already": ("Your Boss Rush is already running.", "Ваш Boss Rush уже идёт."),
+    "multiverse.viltrumitecore.bossrush_stopped": ("Boss Rush stopped.", "Boss Rush остановлен."),
+}
+
+
+def multiverse_lang(ru):
+    i = 1 if ru else 0
+    d = {k: v[i] for k, v in MV.items()}
+    for k, v in BOSSES.items():
+        d[f"boss.viltrumitecore.multiverse.{k}"] = v[i]
+    for k, v in FACTION_NAMES.items():
+        d[f"faction.viltrumitecore.{k}"] = v[i]
+    for k, v in MODIFIER_NAMES.items():
+        d[f"multiverse.viltrumitecore.modifier.{k}"] = v[i]
+    return d
 
 
 def lang(ru):
@@ -267,7 +489,7 @@ def lang(ru):
     for scene, (en, r) in SCENE_LINES.items():
         d[f"scene.viltrumitecore.budget.{scene.lower()}"] = r if ru else en
     ui_en = {
-        "gui.viltrumitecore.expansion.title": "Viltrumite Mods - Ultimate Hero Expansion",
+        "gui.viltrumitecore.expansion.title": "Viltrumite Mods - Ultimate Multiverse Expansion",
         "gui.viltrumitecore.expansion.open": "Ultimate Hero Expansion >>",
         "gui.viltrumitecore.expansion.page": "Page %s / %s",
         "gui.viltrumitecore.expansion.prev": "< Prev",
@@ -282,7 +504,7 @@ def lang(ru):
         "commands.viltrumitecore.hero.unknown": "Unknown hero: %s",
     }
     ui_ru = {
-        "gui.viltrumitecore.expansion.title": "Viltrumite Mods - Ultimate Hero Expansion",
+        "gui.viltrumitecore.expansion.title": "Viltrumite Mods - Ultimate Multiverse Expansion",
         "gui.viltrumitecore.expansion.open": "Ultimate Hero Expansion >>",
         "gui.viltrumitecore.expansion.page": "Страница %s / %s",
         "gui.viltrumitecore.expansion.prev": "< Назад",
@@ -297,6 +519,7 @@ def lang(ru):
         "commands.viltrumitecore.hero.unknown": "Неизвестный герой: %s",
     }
     d.update(ui_ru if ru else ui_en)
+    d.update(multiverse_lang(ru))
     return d
 
 
