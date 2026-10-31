@@ -15,8 +15,12 @@ Design: `docs/design/2026-10-31-ironman-legion-design.md` (Russian, accepted as 
 
 ## AI (server)
 - `LegionSquad` (one per owner, coordinator round every 10 t shifted by owner) builds the threat board (`ThreatScore`: attackers of Tony/suits remembered 200 t, danger, distance, line of sight, health/armour, priority) and assigns roles (`LegionTactics.assign`: VANGUARD / FLANKER / OVERWATCH / GUARDIAN by `LegionProfile`, overkill spread, interception of whoever hits Tony). Retreat < 30 %, return to Veronica < 12 % (`RETURN_FRACTION`).
-- `LegionSuitBrain` ticks every 2 t shifted by slot; flight is pure math in `LegionSteering` (accel limits, wedge/ring/trio formations, 3 block feelers ±35°, separation, strafing, projectile dodge, anti-stuck 60 t, teleport only > 64 blocks and ≤ once per 10 s).
-- Friendly fire: one rule `LegionAllies.spares/mayHit/splashAllowed` used by `RepulsorBlastEntity`, `MicroMissileEntity` splash and the `LegionEvents.onAttack` (`LivingAttackEvent`, HIGH) safety net. Villagers/neutral only on ATTACK; players only with server PvP.
+- `LegionSuitBrain` ticks every 2 t shifted by slot; flight is pure math in `LegionSteering` (accel limits, wedge/ring/trio formations, 3 block feelers ±35°, separation, strafing, projectile dodge, anti-stuck 60 t, teleport only > 64 blocks (`TELEPORT_DISTANCE` 72) and ≤ once per 10 s).
+- Friendly fire: one rule `LegionAllies.spares/mayHit/splashAllowed` used by `RepulsorBlastEntity`, `MicroMissileEntity` splash and the `LegionEvents.onAttack` (`LivingAttackEvent`, HIGH) safety net. Villagers/neutral only on ATTACK; players only with server PvP. Another player's suit has its owner's relation (`LegionAllies.relation`); suit durability loss from a player or from another player's Legion passes `LegionAllies.playerDamageAllowed` (server PvP + `canHarmPlayer` both ways + not spectator; ownerless suits deal none).
+- Rays: `SignatureTrace.rayCandidate` (also used by `IronManCombat.aimPoint/entityInReach`) skips Tony's own suits, so his rays reach the enemy behind them.
+- Server gate: `IronManLegion.mayCommand` (Iron Man + alive + `canAct(LEGION)` + no `ActionLocks` + not held by an anchoring hero) guards both `LegionCallC2SPacket` and `LegionOrderC2SPacket`.
+- ATTACK: the ordered target is added to the threat board even outside the 28-block scan box (`LegionSquad.withOrdered`); it stays valid up to `ORDER_REACH + 16` from Tony.
+- HOLD: the far-distance teleport fallback measures from the held point (`LegionSuitBrain.fallbackAnchor`) and only targets a loaded chunk. If the held point unloads, the suits unload too (`shouldBeSaved` false) and go back to the roster as STORED with their durability.
 - Signatures reuse the stage-4 cores through `SignatureActor` (player or suit; `LegionSuitEntity implements SignatureActor.Provider`), no copies: micro laser, rocket fist (`RocketFistEntity`), camouflage, starboost, pulse unibeam, shoulder gun, slam.
 
 ## Client
