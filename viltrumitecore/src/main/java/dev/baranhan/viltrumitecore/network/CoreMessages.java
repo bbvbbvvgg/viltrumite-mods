@@ -56,7 +56,7 @@ public class CoreMessages {
    // table is refused. v20 (final integration of #101/#99/#98): the existing table is kept as is, then
    // ChitauriPortalS2CPacket and ChitauriFxS2CPacket, then the four Iron Legion packets, are appended last.
    // The Iron Legion branch's own "17" table (Legion packets right after Regulus) is refused.
-   private static final String PROTOCOL_VERSION = "20";
+   private static final String PROTOCOL_VERSION = "21";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
