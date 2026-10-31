@@ -5,7 +5,7 @@
   "subtitle.viltrumitecore.captain.assemble": "Avengers, assemble!",
   "subtitle.viltrumitecore.captain.all_day": "I can do this all day.",
   "ability.viltrumitecore.captain_ricochet.name": "Ricochet",
-  "ability.viltrumitecore.captain_ricochet.desc": "Throw the shield at the target in your sights: it ricochets between up to 3 enemies (5 with 50+ kinetic charge, spends 50) for 9 damage, -15% per bounce, and flies back to you. Hold to aim a bank shot off walls (up to 4 bounces). Press again in flight to recall it, hitting enemies on the way. Catch it during a combo for a Return Strike.",
+  "ability.viltrumitecore.captain_ricochet.desc": "Throw the shield at the target in your sights: it ricochets between up to 5 enemies (8 with 50+ kinetic charge, spends 50) for 9 damage, -15% per bounce, and flies back to you. Hold to aim a bank shot off walls (up to 4 bounces). Press again in flight to recall it, hitting enemies on the way. Catch it during a combo for a Return Strike.",
   "ability.viltrumitecore.captain_shield_rush.name": "Shield Rush",
   "ability.viltrumitecore.captain_shield_rush.desc": "Charge up to 9 blocks behind the shield: enemies on the path take 6 and are swept aside; the first big enemy or a wall stops you with a 10-damage bash and a 1.25 s stun. Your next attack continues the combo from the uppercut. Without the shield: a shoulder charge for 8.",
   "ability.viltrumitecore.captain_vibranium_slam.name": "Vibranium Slam",
@@ -13,7 +13,7 @@
   "ability.viltrumitecore.captain_tactical_roll.name": "Tactical Roll",
   "ability.viltrumitecore.captain_tactical_roll.desc": "Roll 4.5 blocks the way you move (or back), untouchable for a moment. Attack right after for a sweeping kick. Rolling toward the flying shield catches it sooner.",
   "ability.viltrumitecore.captain_assemble.name": "Avengers, Assemble!",
-  "ability.viltrumitecore.captain_assemble.desc": "Ultimate. Raise the shield and call the team: the Quinjet drops Black Widow and Hawkeye, Iron Man lands from the sky, Thor arrives in lightning and the Hulk leaps in. The six of you stand in a circle, then the Avengers fight at your side for 60 seconds. Cooldown 5 minutes.",
+  "ability.viltrumitecore.captain_assemble.desc": "Ultimate. Raise the shield and call the team: the Quinjet drops Black Widow and Hawkeye, Iron Man lands from the sky, Thor arrives in lightning and the Hulk leaps in. The six of you stand in a circle, then the Avengers fight at your side for 60 seconds and pull off joint moves: Widow vaults Hawkeye into the air, Thor overcharges Iron Man's unibeam, and Thor strikes your raised shield for a shockwave. Cooldown 5 minutes.",
   "entity.viltrumitecore.captain_shield": "Captain America's Shield",
   "entity.viltrumitecore.avenger": "Avenger",
   "entity.viltrumitecore.avenger_projectile": "Avenger Projectile",
@@ -74,5 +74,12 @@
   "subtitles.viltrumitecore.avengers.hawkeye_arrow_hit": "Arrow hits",
   "subtitles.viltrumitecore.avengers.shock": "Electric shock",
   "subtitles.viltrumitecore.avengers.heavy_land": "Heavy landing",
-  "subtitles.viltrumitecore.avengers.depart": "Avenger departs"
+  "subtitles.viltrumitecore.avengers.depart": "Avenger departs",
+  "subtitle.viltrumitecore.captain.team_shield": "Hey, Cap, raise your shield! I'll charge the strike!",
+  "subtitle.viltrumitecore.captain.team_beam": "Charging at four hundred percent!",
+  "hint.viltrumitecore.captain.team_shield": "Hold %s facing Thor to raise the shield",
+  "commands.viltrumitecore.hero.team.unknown": "Unknown joint move: %s (vault, beam, shield)",
+  "commands.viltrumitecore.hero.team.no_fight": "%s has no Avengers fighting right now",
+  "commands.viltrumitecore.hero.team.forced": "The Avengers will try \"%s\" at the next chance",
+  "subtitle.viltrumitecore.captain.enter": "Captain Rogers, reporting for duty."
 }

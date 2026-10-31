@@ -5,7 +5,7 @@
   "subtitle.viltrumitecore.captain.assemble": "¡Vengadores, reuníos!",
   "subtitle.viltrumitecore.captain.all_day": "Puedo hacer esto todo el día.",
   "ability.viltrumitecore.captain_ricochet.name": "Rebote",
-  "ability.viltrumitecore.captain_ricochet.desc": "Lanza el escudo al objetivo en la mira: rebota entre hasta 3 enemigos (5 con 50+ de carga cinética, gasta 50), 9 de daño, −15 % por rebote, y vuelve a ti. Mantén para apuntar un tiro con rebotes en paredes (hasta 4). Pulsa otra vez en vuelo para recuperarlo y golpear enemigos en el camino. Atrápalo en un combo para un Golpe de retorno.",
+  "ability.viltrumitecore.captain_ricochet.desc": "Lanza el escudo al objetivo en la mira: rebota entre hasta 5 enemigos (8 con 50+ de carga cinética, gasta 50), 9 de daño, −15 % por rebote, y vuelve a ti. Mantén para apuntar un tiro con rebotes en paredes (hasta 4). Pulsa otra vez en vuelo para recuperarlo y golpear enemigos en el camino. Atrápalo en un combo para un Golpe de retorno.",
   "ability.viltrumitecore.captain_shield_rush.name": "Embestida con escudo",
   "ability.viltrumitecore.captain_shield_rush.desc": "Carga hasta 9 bloques tras el escudo: los enemigos en el camino reciben 6 y salen despedidos; el primer enemigo grande o una pared te detiene con un golpe de 10 y aturdimiento de 1,25 s. El siguiente ataque sigue el combo desde el gancho. Sin escudo: carga con el hombro de 8.",
   "ability.viltrumitecore.captain_vibranium_slam.name": "Golpe de vibranio",
@@ -13,7 +13,7 @@
   "ability.viltrumitecore.captain_tactical_roll.name": "Voltereta táctica",
   "ability.viltrumitecore.captain_tactical_roll.desc": "Rueda 4,5 bloques hacia donde te mueves (o atrás), invulnerable un instante. Ataca justo después para una barrida. Rodar hacia el escudo en vuelo lo atrapa antes.",
   "ability.viltrumitecore.captain_assemble.name": "¡Vengadores, reuníos!",
-  "ability.viltrumitecore.captain_assemble.desc": "Definitiva. Alza el escudo y llama al equipo: el Quinjet deja a Viuda Negra y Ojo de Halcón, Iron Man aterriza desde el cielo, Thor llega en un rayo y Hulk cae de un salto. Los seis forman un círculo y luego los Vengadores luchan a tu lado 60 segundos. Recarga 5 minutos.",
+  "ability.viltrumitecore.captain_assemble.desc": "Definitiva. Alza el escudo y llama al equipo: el Quinjet deja a Viuda Negra y Ojo de Halcón, Iron Man aterriza desde el cielo, Thor llega en un rayo y Hulk cae de un salto. Los seis forman un círculo y luego los Vengadores luchan a tu lado 60 segundos con ataques en equipo: la Viuda lanza a Ojo de Halcón por los aires, Thor sobrecarga el unirrayo de Iron Man y Thor golpea tu escudo alzado para una onda de choque. Recarga 5 minutos.",
   "entity.viltrumitecore.captain_shield": "Escudo del Capitán América",
   "entity.viltrumitecore.avenger": "Vengador",
   "entity.viltrumitecore.avenger_projectile": "Proyectil de Vengador",
@@ -74,5 +74,12 @@
   "subtitles.viltrumitecore.avengers.hawkeye_arrow_hit": "Impacto de flecha",
   "subtitles.viltrumitecore.avengers.shock": "Descarga eléctrica",
   "subtitles.viltrumitecore.avengers.heavy_land": "Aterrizaje pesado",
-  "subtitles.viltrumitecore.avengers.depart": "Un Vengador se marcha"
+  "subtitles.viltrumitecore.avengers.depart": "Un Vengador se marcha",
+  "subtitle.viltrumitecore.captain.team_shield": "¡Eh, Cap, alza el escudo! ¡Cargaré el golpe!",
+  "subtitle.viltrumitecore.captain.team_beam": "¡Carga al cuatrocientos por ciento!",
+  "hint.viltrumitecore.captain.team_shield": "Mantén %s mirando a Thor para alzar el escudo",
+  "commands.viltrumitecore.hero.team.unknown": "Ataque en equipo desconocido: %s (vault, beam, shield)",
+  "commands.viltrumitecore.hero.team.no_fight": "%s no tiene Vengadores luchando ahora",
+  "commands.viltrumitecore.hero.team.forced": "Los Vengadores intentarán «%s» en la próxima ocasión",
+  "subtitle.viltrumitecore.captain.enter": "Capitán Rogers, presentándose para el servicio."
 }
