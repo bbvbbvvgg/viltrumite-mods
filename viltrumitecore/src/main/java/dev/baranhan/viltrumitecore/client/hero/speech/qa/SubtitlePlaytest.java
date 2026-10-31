@@ -225,7 +225,21 @@ public final class SubtitlePlaytest {
          case "mouse" -> {
             String[] a = arg.split(" ");
             double scale = mc.getWindow().getGuiScale();
-            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), Double.parseDouble(a[0]) * scale, Double.parseDouble(a[1]) * scale);
+            double wx = Double.parseDouble(a[0]) * scale;
+            double wy = Double.parseDouble(a[1]) * scale;
+            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), wx, wy);
+            // Xvfb sends no cursor callback for a warp: set the handler's position too (first two doubles: xpos, ypos)
+            try {
+               int n = 0;
+               for (java.lang.reflect.Field f : net.minecraft.client.MouseHandler.class.getDeclaredFields()) {
+                  if (f.getType() == double.class && n < 2) {
+                     f.setAccessible(true);
+                     f.setDouble(mc.mouseHandler, n++ == 0 ? wx : wy);
+                  }
+               }
+            } catch (ReflectiveOperationException e) {
+               LOG.warn("SUBPT mouse: {}", e.toString());
+            }
          }
          case "scroll" -> {
             String[] a = arg.split(" ");
