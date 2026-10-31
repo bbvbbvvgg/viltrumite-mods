@@ -77,6 +77,9 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    private double lastX;
    private double lastZ;
    private int stillTicks;
+   /** Client-only animation memory (state weights, gesture); opaque to the common side. */
+   @Nullable
+   public Object clientAnim;
 
    public CitizenEntity(EntityType<? extends CitizenEntity> type, Level level) {
       super(type, level);
