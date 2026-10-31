@@ -1,0 +1,72 @@
+{
+  "interaction.shield_shatter": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.shield_shatter",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/shield_shatter",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "interaction.storm_shield": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.storm_shield",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/storm_shield",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "interaction.meteor_burst": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.meteor_burst",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/meteor_burst",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "interaction.meteor_split": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.meteor_split",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/meteor_split",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "interaction.overcharge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.overcharge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/overcharge",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "interaction.divine_clash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.divine_clash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/divine_clash",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "interaction.titan_fling": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.titan_fling",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/titan_fling",
+        "attenuation_distance": 24
+      }
+    ]
+  }
+}

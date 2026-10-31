@@ -201,6 +201,9 @@ public final class CaptainHero implements HeroDefinition {
    public void tick(ServerPlayer player) {
       CaptainState state = CaptainState.ensure(player);
       state.tickCount++;
+      if (state.shieldBroken == 1) {
+         CaptainSounds.play(player, CaptainSounds.GUARD_UP, 0.6F, 1.4F); // the arm can raise the shield again
+      }
       state.tickTimers();
       if (player.isAlive() && state.sinceHurt >= CaptainRules.REGEN_DELAY && ++state.regenTicks >= CaptainRules.REGEN_INTERVAL) {
          state.regenTicks = 0;
@@ -431,6 +434,50 @@ public final class CaptainHero implements HeroDefinition {
       return amount < raw ? DamageAbsorb.reduceTo(amount) : DamageAbsorb.PASS;
    }
 
+   // --- contextual interactions (interaction/) ---
+
+   /** The raised, intact vibranium shield: {@code weapon.shield} in GUARD. Server side; NONE otherwise. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      CaptainState state = player.level().isClientSide() ? null : CaptainState.of(player);
+      if (state != null && state.guarding && state.shieldInHand() && state.shieldBroken == 0) {
+         return SHIELD_GUARD;
+      }
+      return dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
+   }
+
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence SHIELD_GUARD = new dev.baranhan.viltrumitecore.hero.combat.CombatPresence(
+      "viltrumitecore:vibranium_shield", java.util.Set.of(dev.baranhan.viltrumitecore.hero.combat.CombatTags.WEAPON_SHIELD,
+         dev.baranhan.viltrumitecore.hero.combat.CombatTags.WEAPON_SHIELD + ".vibranium"),
+      dev.baranhan.viltrumitecore.hero.combat.CombatStance.GUARD, 0);
+
+   @Override
+   public boolean guardFaces(ServerPlayer self, Vec3 from) {
+      CaptainState state = CaptainState.of(self);
+      return state != null && state.guarding && state.shieldInHand() && state.shieldBroken == 0 && CaptainCombat.frontal(self, from);
+   }
+
+   @Override
+   public boolean react(ServerPlayer self, dev.baranhan.viltrumitecore.interaction.InteractionReaction reaction,
+      dev.baranhan.viltrumitecore.interaction.InteractionContext ctx) {
+      CaptainState state = CaptainState.of(self);
+      if (state == null || !state.guarding || !state.shieldInHand()) {
+         return false;
+      }
+      switch (reaction) {
+         case GUARD_SHATTERED -> CaptainCombat.shatterGuard(self, state, dev.baranhan.viltrumitecore.interaction.InteractionTuning.SHATTER_TICKS);
+         case GUARD_BRACED -> {
+            CaptainCombat.teamBrace(self, state, dev.baranhan.viltrumitecore.interaction.InteractionTuning.STORM_KINETIC);
+            dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.say(self, CaptainLines.STORM_SHIELD);
+         }
+         case METEOR_STOPPED -> CaptainCombat.teamBrace(self, state, dev.baranhan.viltrumitecore.interaction.InteractionTuning.METEOR_KINETIC);
+         default -> {
+            return false;
+         }
+      }
+      return true;
+   }
+
    /** Every hit Steve lands marks that enemy for the team. */
    @Override
    public float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, DamageSource source, float amount) {
@@ -497,6 +544,7 @@ public final class CaptainHero implements HeroDefinition {
       flags = CaptainFlags.set(flags, CaptainFlags.TEAM_ACTIVE, state.scene != null);
       flags = CaptainFlags.set(flags, CaptainFlags.AIMING, state.is(CaptainMove.AIM));
       flags = CaptainFlags.set(flags, CaptainFlags.IFRAMES, state.iframes > 0);
+      flags = CaptainFlags.set(flags, CaptainFlags.SHIELD_BROKEN, state.shieldBroken > 0);
       CaptainMove move = state.move;
       int teamLeft = state.scene == null ? 0 : state.scene.fightLeft();
       return new HeroPublicSnapshot(HeroId.CAPTAIN, move == null ? -1 : move.ordinal(), state.elapsed, move == null ? 0 : move.length,
