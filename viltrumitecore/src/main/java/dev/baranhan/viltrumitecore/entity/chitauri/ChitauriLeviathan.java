@@ -519,15 +519,20 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
             continue;
          }
          double y = anchor.y + 10.0 + this.random.nextDouble() * 16.0;
+         // towers pull it in: aim at their upper floors so the run tears through them
+         double tower = Math.min(30.0, Math.max(0.0, s - (anchor.y + 12.0)));
          if (ChitauriDestruction.exhausted()) {
             y = Math.max(y, s + 6.0);
+            tower = 0.0;
+         } else if (tower > 0.0) {
+            y = Math.min(y, s - 3.0);
          }
          Vec3 p = new Vec3(x, y, z);
          double dist = horizontal(c, p);
          Vec3 dir = p.subtract(c).normalize();
          double turn = Math.acos(Mth.clamp(dir.dot(this.heading), -1.0, 1.0));
          // long straight legs, no hairpins: wide paths over the city
-         double score = -Math.abs(dist - 55.0) * 0.05 - Math.max(0.0, turn - 1.6) * 3.0;
+         double score = -Math.abs(dist - 55.0) * 0.05 - Math.max(0.0, turn - 1.6) * 3.0 + tower * 0.035;
          if (score > bestScore) {
             bestScore = score;
             best = p;
