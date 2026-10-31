@@ -22,6 +22,10 @@ public class ViltrumiteCoreConfig {
    // There is no automatic start any more; an old config's "worldEventsAutoStart" is ignored by Gson.
    public float worldEventChancePercent = 0.004F;
    public int worldEventCooldownMinutes = 40;
+   /** Living city: citizens per player = profile perPlayer x /city density x this crowd scale. */
+   public double cityCrowdScale = 2.25;
+   /** Living city: hard cap of citizens in the city level (any density, any number of players). */
+   public int cityMaxCitizens = 480;
    public boolean bloodEnabled = true;
    public boolean shouldHumansBleed = true;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
