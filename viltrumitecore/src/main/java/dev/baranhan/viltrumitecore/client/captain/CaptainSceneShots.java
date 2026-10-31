@@ -33,6 +33,9 @@ public final class CaptainSceneShots {
    /** Close-up lens distance from the face and its swing off the line to the circle (degrees). */
    static final double CLOSE_DIST = 3.0;
    static final double CLOSE_SWING = 38.0;
+   /** Lens height over the feet once down, and how far under the face it rides the fall. */
+   static final double CLOSE_FACE = 1.15;
+   static final double CLOSE_BELOW = 1.4;
 
    private CaptainSceneShots() {
    }
@@ -46,19 +49,18 @@ public final class CaptainSceneShots {
    }
 
    /**
-    * Close-up on a dropping Avenger: a short lens beside the line from {@code subject} to the circle centre
-    * (Natasha from Steve's left, Clint from his right), low on the ground so the drop comes down into the frame;
-    * the lens follows the fall only halfway so the landing reads as an impact. {@code u} 0..1 through the shot
-    * adds a slow push-in.
+    * Close-up on a dropping Avenger: a short lens in front of the subject ({@code facing}, locked when the shot starts),
+    * swung 38 degrees to one side (Natasha to her right, Clint to his left), riding the fall a little below the face
+    * so the drop fills the frame, and stopping at face height over the ground ({@code ground}) so the landing reads
+    * as an impact. {@code u} 0..1 through the shot adds a slow push-in.
     */
-   public static Vec3[] closeShot(Vec3 subject, Vec3 centre, Vec3 f, int who, double u) {
-      Vec3 toCentre = new Vec3(centre.x - subject.x, 0.0, centre.z - subject.z);
-      Vec3 dir = toCentre.lengthSqr() > 0.04 ? toCentre.normalize() : f;
-      Vec3 side = around(dir, who == 1 ? -CLOSE_SWING : CLOSE_SWING);
-      double ground = centre.y;
-      double above = Math.max(0.0, subject.y - ground);
+   public static Vec3[] closeShot(Vec3 subject, Vec3 facing, double ground, int who, double u) {
+      Vec3 front = new Vec3(facing.x, 0.0, facing.z);
+      front = front.lengthSqr() > 1.0E-4 ? front.normalize() : new Vec3(0.0, 0.0, 1.0);
+      Vec3 side = around(front, who == 1 ? -CLOSE_SWING : CLOSE_SWING);
       double dist = CLOSE_DIST - 0.5 * Math.min(1.0, Math.max(0.0, u));
-      Vec3 lens = new Vec3(subject.x, ground + 1.15 + 0.5 * above, subject.z).add(side.scale(dist));
+      double y = Math.max(ground + CLOSE_FACE, subject.y + CLOSE_FACE - CLOSE_BELOW);
+      Vec3 lens = new Vec3(subject.x, y, subject.z).add(side.scale(dist));
       return new Vec3[]{lens, subject.add(0.0, 1.35, 0.0)};
    }
 
