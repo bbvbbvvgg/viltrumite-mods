@@ -17,7 +17,8 @@
   **1.56.0 / 16 = final integration of #85-#92** (all three tables together).
   **1.57.0 / 17 = Captain America 2012** (`feat/captain-america-2012`, topic file `.memory-bank/captain.md`); 1.57.1 / 17 = its polish (no packet change). 1.58.0 / 16 went to the Viltrumites/meteor integration (#97, main without Captain).
   **1.59.0 / 17 = Captain on top of 1.58.0** (`integ/captain-america-main`); **1.60.0 / 18 = Captain/Avengers finishing
-  rework** (new `CaptainFx.TEAM` joint-move FX type, so the protocol moves). Pick the next free pair (1.61.0 / 19).
+  rework** (new `CaptainFx.TEAM` joint-move FX type, so the protocol moves). **1.61.0 / 19 = Thanos event**
+  (`feat/thanos-six-stones-event`, `.memory-bank/thanos.md`): ThanosFx + ThanosState after CaptainFx. Pick the next free pair (1.62.0 / 20).
 
 ## Where strings and sounds live
 - English and the 10 other base locales: `resources/assets/viltrumitecore/lang/<locale>.json` (Thor keys at

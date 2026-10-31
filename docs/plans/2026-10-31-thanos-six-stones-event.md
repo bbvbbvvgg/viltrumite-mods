@@ -6,7 +6,8 @@ Design: `docs/design/2026-10-31-thanos-six-stones-design.md`. Pushed in small in
 1. Pure rules + tests: `ThanosRules`, `ThanosClock`, `ThanosOutcome`, `ThanosPhase`, `ThanosMove`,
    `ThanosStone`, `ThanosBrain`, `ThanosDamageCap`, `ThanosSceneTimeline` (JUnit 5, no Minecraft).
 2. Server: `ThanosEntity` + registration, `ThanosEvent` (session, participants, boss bar, cleanup),
-   stone executors, `ThanosCommands`, `WorldPause.beginEvent`, packets (protocol 16 -> 17), tags.
+   stone executors, `ThanosCommands`, `WorldPause.beginEvent`, packets (protocol 16 -> 17 on the
+   branch; 19 after merging main's 18), tags.
 3. Assets tooling: `tools/assets/thanos_model.py` (geo + atlas + glow), `thanos_clips.py`
    (walk, turns, punches, each stone, hurt, stun, victory, defeat, snap), Od Lagna look texture,
    preview renders for review.
