@@ -332,7 +332,8 @@ public class IronManHero implements HeroDefinition {
       }
 
       return switch (action) {
-         case SUIT, VERONICA -> true;
+         // The Legion can be called and commanded without armor and from the Hulkbuster (design §2).
+         case SUIT, VERONICA, LEGION -> true;
          case SECONDARY_USE, TOOL_CYCLE, UNIBEAM, MISSILES, NANO_ARSENAL, GUARD, HELMET, SCAN, COUNTERMEASURES -> {
             IronManState state = IronManState.of(player);
             yield state != null && state.suit.worn();
@@ -567,6 +568,7 @@ public class IronManHero implements HeroDefinition {
       dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.tick(player, state, controlled);
       dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.tick(player, state, controlled);
       dev.baranhan.viltrumitecore.hero.ironman.veronica.IronManVeronica.tick(player, state);
+      dev.baranhan.viltrumitecore.hero.ironman.legion.IronManLegion.tick(player, state);
 
       if (state.flyByCooldown > 0) {
          state.flyByCooldown--;
@@ -655,6 +657,7 @@ public class IronManHero implements HeroDefinition {
             }
          }
          case VERONICA -> dev.baranhan.viltrumitecore.hero.ironman.veronica.IronManVeronica.press(player, state);
+         case LEGION -> dev.baranhan.viltrumitecore.hero.ironman.legion.IronManLegion.press(player, state);
          case GUARD -> IronManCombat.guardPress(player, state);
          case HELMET -> IronManJarvis.helmetPress(player, state);
          case SCAN -> IronManJarvis.scanPress(player, state);
@@ -810,6 +813,7 @@ public class IronManHero implements HeroDefinition {
       if (state != null) {
          IronManCombat.onHurt(player, state, amount);
          IronManJarvis.onHurt(player, state, source);
+         dev.baranhan.viltrumitecore.hero.ironman.legion.IronManLegion.onOwnerHurt(player, source);
       }
    }
 
@@ -928,8 +932,11 @@ public class IronManHero implements HeroDefinition {
          length = IronManRules.SCAN_TICKS;
       }
 
-      // [4]-[7] reserved, [8] Hulkbuster cooldown, [9..] the Hulkbuster block (HulkbusterWire).
-      int[] extra = extraCooldowns(hulkExtra(state, suit.nanoLockTicks(), state.countermeasures.cooldown(), state.veronicaCooldown, state.signature.cooldown, hulk.cooldown()));
+      // [4] Legion call cooldown, [5]-[7] reserved, [8] Hulkbuster cooldown, [9..] the Hulkbuster block (HulkbusterWire).
+      int[] extraValues = hulkExtra(state, suit.nanoLockTicks(), state.countermeasures.cooldown(), state.veronicaCooldown, state.signature.cooldown, hulk.cooldown());
+      // [4] Iron Legion call cooldown (stage 6).
+      extraValues[4] = state.legionCooldown;
+      int[] extra = extraCooldowns(extraValues);
       // controlTargetId = the entity being scanned (reticle), -1 otherwise.
       int scanTarget = state.scan.active() ? state.scan.targetId() : -1;
       net.minecraft.world.phys.Vec3 target;
@@ -993,7 +1000,7 @@ public class IronManHero implements HeroDefinition {
       return out;
    }
 
-   /** extraCooldowns: [0] nano lock, [1] countermeasures, [2] Veronica, [3] signature; trailing zeros dropped. */
+   /** extraCooldowns: [0] nano lock, [1] countermeasures, [2] Veronica, [3] signature, [4] Legion call; trailing zeros dropped. */
    static int[] extraCooldowns(int... values) {
       int length = values.length;
       while (length > 0 && values[length - 1] <= 0) {
@@ -1101,6 +1108,7 @@ public class IronManHero implements HeroDefinition {
       state.roster.clearCooldowns();
       state.hulkbuster.clearCooldown();
       state.hulkKit.clearCooldowns();
+      dev.baranhan.viltrumitecore.hero.ironman.legion.IronManLegion.clearCooldown(player, state);
       return true;
    }
 
@@ -1116,6 +1124,8 @@ public class IronManHero implements HeroDefinition {
             case HERO_CHANGE -> dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.IronManHulkbuster.releaseGrab(player, state, dev.baranhan.viltrumitecore.hero.control.ReleaseReason.HERO_CHANGE);
          }
 
+         // Before the state's cleanup recalls the roster: the suits still know their bodies.
+         dev.baranhan.viltrumitecore.hero.ironman.legion.IronManLegion.onCleanup(player, reason);
          state.onCleanup(reason);
          if (reason == CleanupReason.ERASED && player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer heroPlayer) {
             heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
@@ -1146,6 +1156,7 @@ public class IronManHero implements HeroDefinition {
       if (state != null) {
          dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.stopSignature(player, state);
          dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks.onDimensionChange(player, state);
+         dev.baranhan.viltrumitecore.hero.ironman.legion.IronManLegion.onDimensionChange(player, state);
          // Entity ids of the old level mean other entities here.
          state.threats.clear();
          state.scan.cancel();
