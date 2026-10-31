@@ -247,6 +247,11 @@ public final class HeroEvents {
       if (event.getAmount() > 0.0F) {
          HeroDamageLayers.notifyAttack(event.getEntity(), event.getSource());
       }
+      // Contextual interactions (interaction/): a special matchup may consume the hit before any layer sees it.
+      if (event.getAmount() > 0.0F && dev.baranhan.viltrumitecore.interaction.ContextualInteractions.onAttack(event.getEntity(), event.getSource(), event.getAmount())) {
+         event.setCanceled(true);
+         return;
+      }
       if (event.getEntity() instanceof ServerPlayer player && event.getAmount() > 0.0F && HeroDamageLayers.onAttack(player, event.getSource(), event.getAmount())) {
          event.setCanceled(true);
       }
@@ -256,6 +261,7 @@ public final class HeroEvents {
    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
    public static void onLivingHurtLayers(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
       if (!event.getEntity().level().isClientSide() && event.getAmount() > 0.0F) {
+         event.setAmount(dev.baranhan.viltrumitecore.interaction.ContextualInteractions.onHurt(event.getEntity(), event.getSource(), event.getAmount()));
          event.setAmount(HeroDamageLayers.onHurt(event.getEntity(), event.getSource(), event.getAmount()));
       }
    }
@@ -389,6 +395,10 @@ public final class HeroEvents {
 
    @SubscribeEvent
    public static void onProjectileImpact(net.minecraftforge.event.entity.ProjectileImpactEvent event) {
+      if (dev.baranhan.viltrumitecore.interaction.ContextualInteractions.onProjectile(event.getProjectile(), event.getRayTraceResult())) {
+         event.setImpactResult(net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
+         return;
+      }
       HeroProjectiles.onImpact(event);
    }
 
@@ -396,6 +406,7 @@ public final class HeroEvents {
    @SubscribeEvent
    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
       LiftLeases.SERVER.clear();
+      dev.baranhan.viltrumitecore.interaction.ContextualInteractions.reset();
    }
 
    @SubscribeEvent

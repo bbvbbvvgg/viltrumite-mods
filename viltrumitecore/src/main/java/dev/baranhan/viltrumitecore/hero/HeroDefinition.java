@@ -313,6 +313,24 @@ public interface HeroDefinition {
       return dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
    }
 
+   /**
+    * Contextual interactions seam ({@code interaction/}): does this player's raised guard cover a blow coming
+    * from {@code from} right now? Server side. Default: no guard.
+    */
+   default boolean guardFaces(ServerPlayer self, net.minecraft.world.phys.Vec3 from) {
+      return false;
+   }
+
+   /**
+    * Contextual interactions seam: play this hero's side of an interaction (state, pose, line). The shared
+    * interaction code never names a hero; it asks the participant. True = the hero played it; a defender that
+    * returns false makes the interaction fall through to the normal mechanic. Server side. Default: no reaction.
+    */
+   default boolean react(ServerPlayer self, dev.baranhan.viltrumitecore.interaction.InteractionReaction reaction,
+      dev.baranhan.viltrumitecore.interaction.InteractionContext ctx) {
+      return false;
+   }
+
    /** Hidden from target-acquiring senses (Homelander focus skips this player). Server side. */
    default boolean hiddenFromFocus(Player self) {
       return false;
