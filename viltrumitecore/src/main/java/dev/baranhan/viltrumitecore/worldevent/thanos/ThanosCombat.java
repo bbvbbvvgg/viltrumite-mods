@@ -76,14 +76,20 @@ public final class ThanosCombat {
       return this.moves;
    }
 
-   /** One fight tick. {@code frozen}: Thanos himself is held (time stop, control). */
-   public void tick(boolean frozen) {
-      this.power.tick();
-      this.space.tick();
-      this.reality.tick();
-      this.time.tick();
-      this.mind.tick();
-      this.soul.tick();
+   /**
+    * One fight tick. {@code frozen}: Thanos himself is held (a hero's time stop or control);
+    * {@code worldStopped}: a time stop holds the world too, so his lingering effects wait as well.
+    */
+   public void tick(boolean frozen, boolean worldStopped) {
+      if (!worldStopped) {
+         this.power.tick();
+         this.space.tick();
+         this.reality.tick();
+         this.time.tick();
+         this.mind.tick();
+         this.soul.tick();
+      }
+
       if (frozen) {
          this.frozenFor++;
          this.thanos.getNavigation().stop();
