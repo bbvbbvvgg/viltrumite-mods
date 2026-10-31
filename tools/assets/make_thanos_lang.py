@@ -126,6 +126,9 @@ T = {
     "commands.viltrumitecore.thanos.skipped": (
         "Timer set: %s left until the snap.", "Таймер переставлен: до щелчка %s.", "Timer gesetzt: noch %s bis zum Schnippen.",
         "Temporizador ajustado: quedan %s para el chasquido.", "Zamanlayıcı ayarlandı: şıklatmaya %s kaldı.", "计时器已调整：距离响指还剩 %s。"),
+    "commands.viltrumitecore.thanos.queued": (
+        "Thanos uses %s next.", "Следующим приёмом Таноса будет %s.", "Als Nächstes setzt Thanos %s ein.",
+        "Lo próximo que usará Thanos es %s.", "Thanos'un sıradaki hamlesi: %s.", "灭霸的下一招将是 %s。"),
     "commands.viltrumitecore.thanos.status": (
         "Thanos: %1$s, %2$s until the snap, health %3$s, heroes %4$s, phase: %5$s, moves: %6$s",
         "Танос: %1$s, до щелчка %2$s, здоровье %3$s, героев: %4$s, фаза: %5$s, приёмов: %6$s",
