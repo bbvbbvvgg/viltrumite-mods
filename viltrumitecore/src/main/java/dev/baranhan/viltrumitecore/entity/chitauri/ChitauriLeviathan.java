@@ -40,7 +40,7 @@ import net.minecraftforge.entity.PartEntity;
  * control, falls, crashes into a crater and its segments come down one after another. Hitboxes:
  * the head (this entity), a snout part, ten segment parts and the tail part.
  */
-public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResistant {
+public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResistant, net.minecraft.world.entity.monster.Enemy {
    private static final EntityDataAccessor<Byte> STATE = SynchedEntityData.defineId(ChitauriLeviathan.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> STAGGER = SynchedEntityData.defineId(ChitauriLeviathan.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Integer> FOCUS = SynchedEntityData.defineId(ChitauriLeviathan.class, EntityDataSerializers.INT);
