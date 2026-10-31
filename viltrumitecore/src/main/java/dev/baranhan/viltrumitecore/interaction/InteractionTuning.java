@@ -39,4 +39,54 @@ public final class InteractionTuning {
 
    private InteractionTuning() {
    }
+
+   // ---- stage 2 ----
+   /** mjolnir_rebounds_off_shield: shove of the guard and of the ring around it. */
+   public static final double REBOUND_PUSH = 0.9;
+   public static final double REBOUND_RING_RADIUS = 4.5;
+   public static final double REBOUND_RING_PUSH = 0.9;
+   /** viltrumite_fist_meets_vibranium: the striker is thrown back and stunned. */
+   public static final double FIST_RECOIL_PUSH = 1.5;
+   public static final int FIST_RECOIL_STUN = 24;
+   /** repulsor_splits_on_vibranium: shards, cone, range, share of the bolt's damage per shard. */
+   public static final int SPLIT_SHARDS = 3;
+   public static final double SPLIT_CONE_COS = 0.62;
+   public static final double SPLIT_RANGE = 18.0;
+   public static final float SPLIT_SHARE = 0.6F;
+   public static final float SPLIT_MIN_DAMAGE = 3.0F;
+   /** time_stone_rewinds_ledger: share of the erased ledger Thanos gets back, push of the caster. */
+   public static final float REWIND_HEAL_SHARE = 0.5F;
+   public static final double REWIND_PUSH = 1.3;
+   public static final double REWIND_RANGE = 24.0;
+   /** reid_strains_lions_heart: heart strain a Reid stroke adds (max 1000, seizure at the top). */
+   public static final int REID_STRAIN = 420;
+   /** titan_breaks_guard: the bearer is thrown back. */
+   public static final double CRUSH_PUSH = 1.7;
+   public static final double CRUSH_LIFT = 0.35;
+   /** reid_cleaves_meteor: halves fly off at this angle (degrees) and keep this share of the speed. */
+   public static final double CLEAVE_ANGLE = 34.0;
+   public static final double CLEAVE_SPEED = 0.85;
+   /** viltrumite_hurls_meteor: thrown speed (blocks/tick, at least the incoming speed), catch recoil. */
+   public static final double HURL_SPEED = 2.6;
+   public static final double HURL_RECOIL = 0.8;
+   /** shadow_exchange_meteor: furthest shadow the exchange reaches. */
+   public static final double EXCHANGE_RANGE = 48.0;
+   /** meteor_downs_leviathan: hit (capped by the Leviathan) and stagger. */
+   public static final float METEOR_LEVIATHAN_DAMAGE = 120.0F;
+   public static final int METEOR_LEVIATHAN_STAGGER = 80;
+   /** thunder_charges_legion: discharge targets, reach, damage. */
+   public static final int DISCHARGE_TARGETS = 3;
+   public static final double DISCHARGE_RANGE = 10.0;
+   public static final float DISCHARGE_DAMAGE = 7.0F;
+   /** lightning_runs_the_leviathan: reach around every segment, damage on riders, stagger. */
+   public static final double SPINE_REACH = 4.5;
+   public static final float SPINE_DAMAGE = 9.0F;
+   public static final int SPINE_MAX_TARGETS = 16;
+   public static final int SPINE_STAGGER = 60;
+   /** heavy_hitter_halts_leviathan: stagger, rider shake-off radius and push, striker recoil. */
+   public static final int HALT_STAGGER = 70;
+   public static final double HALT_RADIUS = 6.0;
+   public static final double HALT_PUSH = 1.4;
+   public static final double HALT_RECOIL = 0.9;
+   public static final float HALT_MIN_DAMAGE = 4.0F;
 }
