@@ -1,6 +1,10 @@
 package dev.baranhan.viltrumitecore.client.wish;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import dev.baranhan.viltrumitecore.client.codex.CodexClientState;
+import dev.baranhan.viltrumitecore.client.codex.CodexPortraits;
+import dev.baranhan.viltrumitecore.client.codex.CodexScreen;
+import dev.baranhan.viltrumitecore.client.hero.speech.HeroPortraits;
 import dev.baranhan.viltrumitecore.client.render.vfx.PixelVfx;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
 import dev.baranhan.viltrumitecore.hero.wish.OdLagnaWishes;
@@ -32,6 +36,11 @@ public class WishScreen extends Screen {
    private static final int FADE_IN = 7;
    private static final int FADE_OUT = 5;
    private static final int MAX_MOTES = 48;
+   /** Encyclopedia button (top-left corner) and the hero badge on the cards of heroes this player has chosen. */
+   static final int CODEX_X = 6;
+   static final int CODEX_Y = 6;
+   static final int CODEX_SIZE = 18;
+   static final int BADGE = 20;
 
    private final List<Wish> wishes;
    private final boolean[] fulfilled;
@@ -213,9 +222,43 @@ public class WishScreen extends Screen {
       this.drawButton(g, l.cancelX, l.buttonY, l.buttonW, Component.translatable("gui.viltrumitecore.wish.cancel"), this.closing < 0,
          this.closing < 0 && l.overCancel(mouseX, mouseY), false, a, time);
 
+      boolean codexHot = this.closing < 0 && !this.sent && overCodex(mouseX, mouseY);
+      this.drawCodexButton(g, codexHot, a, time);
+
       if (tooltipWish != null && a > 0.9F) {
          g.renderTooltip(this.font, this.font.split(Component.translatable(tooltipWish.textKey()), Math.max(120, l.cardW)), mouseX, mouseY);
+      } else if (codexHot && a > 0.9F) {
+         g.renderTooltip(this.font, Component.translatable("codex.viltrumitecore.gui.open"), mouseX, mouseY);
       }
+   }
+
+   static boolean overCodex(double mouseX, double mouseY) {
+      return WishLayout.inside(mouseX, mouseY, CODEX_X, CODEX_Y, CODEX_SIZE, CODEX_SIZE);
+   }
+
+   /** The small encyclopedia button: the wish button look with a gold book glyph. */
+   private void drawCodexButton(GuiGraphics g, boolean hot, float a, float time) {
+      boolean active = this.closing < 0 && !this.sent;
+      int x = CODEX_X;
+      int y = CODEX_Y;
+      int s = CODEX_SIZE;
+      int fill = !active ? 0x1A1A22 : mix(0x181C2C, 0x3A2A0E, hot ? 1 : 0.25F + 0.15F * Mth.sin(time * 0.15F));
+      g.fill(x, y, x + s, y + s, argb((active ? 0xD0 : 0x80) * a, fill));
+      int edge = argb((active ? (hot ? 255 : 150) : 60) * a, WishStyle.GOLD);
+      g.fill(x, y, x + s, y + 1, edge);
+      g.fill(x, y + s - 1, x + s, y + s, edge);
+      g.fill(x, y, x + 1, y + s, edge);
+      g.fill(x + s - 1, y, x + s, y + s, edge);
+      // open book: two pages and the spine
+      int page = argb((active ? (hot ? 255 : 220) : 90) * a, 0xFFE6A8);
+      int line = argb((active ? 200 : 70) * a, 0x6A4A12);
+      g.fill(x + 4, y + 5, x + 8, y + 13, page);
+      g.fill(x + 10, y + 5, x + 14, y + 13, page);
+      g.fill(x + 8, y + 6, x + 10, y + 14, argb((active ? 255 : 90) * a, WishStyle.GOLD));
+      g.fill(x + 5, y + 7, x + 7, y + 8, line);
+      g.fill(x + 5, y + 9, x + 7, y + 10, line);
+      g.fill(x + 11, y + 7, x + 13, y + 8, line);
+      g.fill(x + 11, y + 9, x + 13, y + 10, line);
    }
 
    /** One wish card; returns true when its text was cut (the hover tooltip then shows it whole). */
@@ -243,6 +286,14 @@ public class WishScreen extends Screen {
       }
       int textX = x + 10 + Math.round(3 * Math.max(h, s));
       int right = x + w - 8;
+      if (CodexClientState.hasHero(wish.heroKey())) {
+         // this player has chosen this hero before: their subtitle portrait in a small panel
+         int bx = x + w - 4 - BADGE;
+         int by = y + (WishLayout.ROW - BADGE) / 2;
+         HeroPortraits.withOuterClip(0, l.listTop, this.width, l.listBottom,
+            () -> CodexPortraits.heroBadge(g, wish.heroKey(), bx, by, BADGE, a * (done ? 0.6F : 1.0F)));
+         right = bx - 6;
+      }
       Component mark = done ? Component.translatable("gui.viltrumitecore.wish.fulfilled") : null;
       if (mark != null) {
          int mw = this.font.width(mark);
@@ -287,6 +338,10 @@ public class WishScreen extends Screen {
          return super.mouseClicked(mouseX, mouseY, button);
       }
       WishLayout l = this.layout;
+      if (!this.sent && overCodex(mouseX, mouseY) && this.minecraft != null) {
+         this.minecraft.setScreen(new CodexScreen(this));
+         return true;
+      }
       int row = l.rowAt(mouseX, mouseY, this.scroll);
       if (row >= 0) {
          this.select(row);
