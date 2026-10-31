@@ -280,5 +280,11 @@ class CityPureTest {
       }
 
       assertEquals(CitizenState.IDLE, CitizenState.of(99));
+      // panic hearsay: first hand and one retelling spread, a third-hand or stale panic does not
+      assertTrue(dev.baranhan.viltrumitecore.city.citizen.PanicRules.spreads(0, 100, 150));
+      assertTrue(dev.baranhan.viltrumitecore.city.citizen.PanicRules.spreads(1, 100, 150));
+      assertFalse(dev.baranhan.viltrumitecore.city.citizen.PanicRules.spreads(2, 100, 150));
+      assertFalse(dev.baranhan.viltrumitecore.city.citizen.PanicRules.spreads(0, 100, 100 + 400));
+      assertFalse(dev.baranhan.viltrumitecore.city.citizen.PanicRules.spreads(0, Long.MIN_VALUE, 150));
    }
 }
