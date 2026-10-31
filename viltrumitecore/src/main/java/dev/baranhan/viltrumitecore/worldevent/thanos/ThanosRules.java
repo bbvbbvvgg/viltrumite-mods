@@ -62,6 +62,15 @@ public final class ThanosRules {
    public static final int TIME_STOP_REACTION_TICKS = 40;
    /** Incoming projectiles (within 12 blocks, closing in) that make him raise the Space ward. */
    public static final int PROJECTILE_THREAT = 2;
+   /** At least this many ticks between two moves that carry him through space (no teleport spam). */
+   public static final int TELEPORT_GAP_TICKS = 10 * TPS;
+   public static final int TELEPORT_GAP_FINAL_TICKS = 7 * TPS;
+   /** Time Rewind needs this share of the max health lost recently... */
+   public static final float REWIND_MIN_DAMAGE = 0.03F;
+   /** ...or only this much right after a time stop or a strong hit (the answer the rules ask for). */
+   public static final float REWIND_MIN_DAMAGE_REACTION = 0.01F;
+   /** A target but no move for this long (everything gated, a lost path): the fight recovers. */
+   public static final int IDLE_RECOVER_TICKS = 8 * TPS;
    /** FINAL: telegraphs x0.8 (never under {@link #MIN_TELEGRAPH_FINAL}), cooldowns x0.7. */
    public static final float FINAL_TELEGRAPH = 0.8F;
    public static final float FINAL_COOLDOWN = 0.7F;
@@ -121,5 +130,10 @@ public final class ThanosRules {
    /** Time Rewind heal for {@code recentDamage} taken in the window. */
    public static float rewindHeal(float recentDamage, float maxHealth) {
       return Math.max(0.0F, Math.min(recentDamage * REWIND_HEAL_SHARE, maxHealth * REWIND_HEAL_CAP));
+   }
+
+   /** Ticks between two teleports in a phase. */
+   public static int teleportGap(ThanosPhase phase) {
+      return phase == ThanosPhase.FINAL ? TELEPORT_GAP_FINAL_TICKS : TELEPORT_GAP_TICKS;
    }
 }

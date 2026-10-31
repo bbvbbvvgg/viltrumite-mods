@@ -8,21 +8,25 @@ import java.util.SplittableRandom;
  * "stalk the target". Weights are the move's base weight multiplied by the rules below; a move
  * with weight 0 is never chosen.
  * <ul>
- * <li>gates: cooldown, phase, the stone gap between two stone moves, range band (defensive moves
- * work at any range);</li>
+ * <li>hard rules ({@link #allowed}): cooldown, the stone gap between two stone moves, never the
+ * same move twice in a row, never one stone in three moves in a row (combos count every stone
+ * they use), at least {@link ThanosRules#teleportGap} ticks between two teleports;</li>
+ * <li>gates: phase, range band (defensive moves work at any range), a target behind cover only
+ * gets moves that reach it there ({@link ThanosMove#throughCover});</li>
  * <li>situation: flying targets favour moves that reach the air, a crowd close by favours area
  * moves, incoming projectiles raise the Space ward, a hero's time stop or a strong hit favour
- * defensive answers, Time Rewind only after real recent damage;</li>
+ * defensive answers (rewind, step, illusions), Time Rewind only after real recent damage, a
+ * hidden target favours the Space step to it;</li>
  * <li>follow-ups: a pull, a step or a dome make the next close strike likelier (effective
  * combinations); combos grow likelier with the phase;</li>
- * <li>anti-repeat: never the same move twice in a row, the move before last is damped, the same
- * lead stone three times in a row is damped hard.</li>
+ * <li>variety: the move before last is damped.</li>
  * </ul>
  */
 public final class ThanosBrain {
    /** What the event sees this tick. Fractions are 0..1 of the max health. */
-   public record Situation(ThanosPhase phase, boolean hasTarget, double distance, boolean targetAirborne, int heroes, int heroesClose,
-      int incomingProjectiles, boolean recentlyTimeStopped, boolean threatened, float healthFraction, float recentDamageFraction) {
+   public record Situation(ThanosPhase phase, boolean hasTarget, double distance, boolean targetAirborne, boolean targetVisible, int heroes,
+      int heroesClose, int incomingProjectiles, boolean recentlyTimeStopped, boolean threatened, float healthFraction,
+      float recentDamageFraction) {
    }
 
    private static final ThanosMove[] MOVES = ThanosMove.values();
@@ -31,6 +35,8 @@ public final class ThanosBrain {
    private final ThanosMove[] history = new ThanosMove[3];
    private final SplittableRandom random;
    private int stoneGap;
+   /** Ticks since the last teleport started. */
+   private int sinceTeleport = 1 << 20;
 
    public ThanosBrain(long seed) {
       this.random = new SplittableRandom(seed);
@@ -47,6 +53,10 @@ public final class ThanosBrain {
       if (this.stoneGap > 0) {
          this.stoneGap--;
       }
+
+      if (this.sinceTeleport < 1 << 20) {
+         this.sinceTeleport++;
+      }
    }
 
    public int cooldown(ThanosMove move) {
@@ -59,6 +69,23 @@ public final class ThanosBrain {
 
    public ThanosMove last() {
       return this.history[0];
+   }
+
+   /**
+    * The hard rules, whatever the situation: off cooldown and past the stone gap, not the last
+    * move again, no stone in a third move in a row, no teleport within the gap of the last one.
+    * Forced moves (unstuck, recovery) obey them too.
+    */
+   public boolean allowed(ThanosMove move, ThanosPhase phase) {
+      if (!this.ready(move) || move == this.history[0]) {
+         return false;
+      }
+
+      if (this.history[0] != null && this.history[1] != null && (move.stones & this.history[0].stones & this.history[1].stones) != 0) {
+         return false;
+      }
+
+      return !move.teleports() || this.sinceTeleport >= ThanosRules.teleportGap(phase);
    }
 
    /** The move chosen now, or null to stalk. Does not commit it. */
@@ -104,6 +131,10 @@ public final class ThanosBrain {
          this.stoneGap = move.length(phase) + ThanosRules.STONE_GAP_TICKS;
       }
 
+      if (move.teleports()) {
+         this.sinceTeleport = 0;
+      }
+
       this.history[2] = this.history[1];
       this.history[1] = this.history[0];
       this.history[0] = move;
@@ -111,12 +142,16 @@ public final class ThanosBrain {
 
    /** Weight of one move in a situation (0 = never). Public for the tests. */
    public double weight(ThanosMove move, Situation s) {
-      if (!this.ready(move) || !s.phase().atLeast(move.minPhase)) {
+      if (!this.allowed(move, s.phase()) || !s.phase().atLeast(move.minPhase)) {
          return 0.0;
       }
 
       boolean defensive = move.kind == ThanosMove.Kind.DEFENSE;
       if (!defensive && !move.inRange(s.distance())) {
+         return 0.0;
+      }
+
+      if (!s.targetVisible() && !move.throughCover()) {
          return 0.0;
       }
 
@@ -130,7 +165,8 @@ public final class ThanosBrain {
       }
 
       if (move == ThanosMove.TIME_REWIND) {
-         if (s.recentDamageFraction() < 0.03F) {
+         boolean reaction = s.recentlyTimeStopped() || s.threatened();
+         if (s.recentDamageFraction() < (reaction ? ThanosRules.REWIND_MIN_DAMAGE_REACTION : ThanosRules.REWIND_MIN_DAMAGE)) {
             return 0.0;
          }
 
@@ -145,6 +181,11 @@ public final class ThanosBrain {
 
       if (s.targetAirborne()) {
          w *= move.air ? 1.5 : 0.1;
+      }
+
+      if (!s.targetVisible() && move == ThanosMove.SPACE_STEP) {
+         // behind a wall: go to him through space rather than wait
+         w *= 4.0;
       }
 
       if (move.kind == ThanosMove.Kind.MELEE && s.distance() <= ThanosRules.CLOSE_RANGE) {
@@ -164,12 +205,12 @@ public final class ThanosBrain {
       }
 
       if (s.recentlyTimeStopped()) {
-         // Someone stopped his time: the Time stone answers first, everything else waits.
+         // Someone stopped his time: rewind or step away first, everything else waits.
          w *= switch (move) {
-            case TIME_REWIND -> 10.0;
-            case SPACE_STEP -> 4.0;
-            case TIME_DOME -> 3.0;
-            default -> 0.4;
+            case TIME_REWIND -> 14.0;
+            case SPACE_STEP -> 5.0;
+            case TIME_DOME -> 2.0;
+            default -> 0.3;
          };
       }
 
@@ -193,18 +234,8 @@ public final class ThanosBrain {
       }
 
       w *= this.followUp(move);
-      ThanosMove last = this.history[0];
-      if (move == last) {
-         return 0.0;
-      }
-
       if (move == this.history[1]) {
          w *= 0.35;
-      }
-
-      ThanosStone lead = move.lead();
-      if (lead != null && last != null && this.history[1] != null && last.lead() == lead && this.history[1].lead() == lead) {
-         w *= 0.25;
       }
 
       return Math.max(0.0, w);

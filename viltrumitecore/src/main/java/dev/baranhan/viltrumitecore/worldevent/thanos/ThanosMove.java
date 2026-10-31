@@ -112,6 +112,20 @@ public enum ThanosMove {
       return ThanosRules.telegraph(this.telegraph, phase) + this.active + this.recovery;
    }
 
+   /** Carries Thanos himself through space (the rules keep a gap between two of these). */
+   public boolean teleports() {
+      return this == SPACE_STEP || this == COMBO_MIND_STEP;
+   }
+
+   /**
+    * Usable on a target he cannot see: a portal or a step through space, reality warped where the
+    * target stands, a psychic wave through matter, or no attack at all. Everything else needs a
+    * clear line (no attacks through walls).
+    */
+   public boolean throughCover() {
+      return this.kind == Kind.DEFENSE || this == SPACE_STEP || this == COMBO_PORTAL_PUNCH || this == REALITY_ZONE || this == MIND_PULSE;
+   }
+
    public boolean inRange(double distance) {
       return distance >= this.minRange && distance <= this.maxRange;
    }

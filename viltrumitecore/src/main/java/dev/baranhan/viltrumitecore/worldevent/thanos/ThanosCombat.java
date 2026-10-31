@@ -61,6 +61,8 @@ public final class ThanosCombat {
    private int stuckTicks;
    private int bulldozes;
    private int moves;
+   /** Free ticks with a target but no move chosen (the recovery watchdog). */
+   private int idle;
 
    public ThanosCombat(ThanosEvent event, ServerLevel level, ThanosEntity thanos, long seed) {
       this.event = event;
@@ -125,6 +127,32 @@ public final class ThanosCombat {
       ThanosMove next = this.brain.choose(this.situation());
       if (next != null) {
          this.start(next);
+      } else if (this.target != null && ++this.idle >= ThanosRules.IDLE_RECOVER_TICKS) {
+         this.idle = 0;
+         this.recover();
+      }
+   }
+
+   /**
+    * Nothing to do for a while with a target in reach of the fight (all moves gated, a path that
+    * does not lead anywhere): step to the target through space if the rules allow it, else break
+    * the way open, else ask for a fresh path.
+    */
+   private void recover() {
+      LivingEntity t = this.target;
+      if (t == null) {
+         return;
+      }
+
+      ThanosPhase phase = this.thanos.phase();
+      double d = Math.sqrt(this.thanos.distanceToSqr(t));
+      if (d >= ThanosMove.SPACE_STEP.minRange && phase.atLeast(ThanosMove.SPACE_STEP.minPhase) && this.brain.allowed(ThanosMove.SPACE_STEP, phase)) {
+         this.start(ThanosMove.SPACE_STEP);
+      } else if (!this.sees(t)) {
+         this.bulldoze();
+      } else {
+         this.thanos.getNavigation().stop();
+         this.thanos.getNavigation().moveTo(t, 1.0);
       }
    }
 
@@ -184,9 +212,23 @@ public final class ThanosCombat {
       }
 
       float max = this.thanos.getMaxHealth();
-      return new ThanosBrain.Situation(this.thanos.phase(), t != null, distance, t != null && airborne(t), this.event.heroCount(), close,
+      return new ThanosBrain.Situation(this.thanos.phase(), t != null, distance, t != null && airborne(t), t != null && this.sees(t),
+         this.event.heroCount(), close,
          this.incomingProjectiles(), this.releasedAgo <= ThanosRules.TIME_STOP_REACTION_TICKS, this.thanos.threatened(),
          this.thanos.getHealth() / max, this.thanos.damageCap().recent() / max);
+   }
+
+   /**
+    * A clear line (blocks only) from his eyes to the target's eyes or from his chest to its middle:
+    * without one, only moves that reach behind cover are chosen (no attacks through walls).
+    */
+   public boolean sees(LivingEntity t) {
+      Vec3 middle = t.position().add(0.0, t.getBbHeight() * 0.5, 0.0);
+      return this.clear(this.thanos.getEyePosition(), t.getEyePosition()) || this.clear(this.chest(), middle);
+   }
+
+   private boolean clear(Vec3 from, Vec3 to) {
+      return this.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this.thanos)).getType() == HitResult.Type.MISS;
    }
 
    /** Off the ground and well above it (flying heroes). */
@@ -254,7 +296,8 @@ public final class ThanosCombat {
             this.bulldozes++;
          } else {
             this.bulldozes = 0;
-            if (this.brain.ready(ThanosMove.SPACE_STEP) && this.thanos.phase().atLeast(ThanosMove.SPACE_STEP.minPhase)) {
+            ThanosPhase phase = this.thanos.phase();
+            if (phase.atLeast(ThanosMove.SPACE_STEP.minPhase) && this.brain.allowed(ThanosMove.SPACE_STEP, phase)) {
                this.start(ThanosMove.SPACE_STEP);
             }
          }
@@ -291,6 +334,7 @@ public final class ThanosCombat {
       this.movePhase = this.thanos.phase();
       this.telegraph = ThanosRules.telegraph(next.telegraph, this.movePhase);
       this.brain.commit(next, this.movePhase);
+      this.idle = 0;
       this.thanos.startMove(next);
       this.thanos.getNavigation().stop();
       this.channelStart = this.thanos.damageCap().total();
