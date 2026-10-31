@@ -62,6 +62,7 @@ public final class CaptainUltScene {
    private static float barsO;
    /** Arrival close-up state: who the lens is on (0 = crane), ticks since that cut, the lens it blends from. */
    private static int closeWho;
+   private static Vec3 closeFacing = new Vec3(0.0, 0.0, 1.0);
    private static int closeAge;
    @Nullable
    private static Vec3[] closeFrom;
@@ -179,13 +180,14 @@ public final class CaptainUltScene {
          closeFrom = current();
          closeWho = now;
          closeAge = 0;
+         closeFacing = subject == null ? f : Vec3.directionFromRotation(0.0F, subject.yBodyRot);
       } else {
          closeAge++;
       }
       Vec3[] shot = wide;
       if (subject != null) {
          int start = who == 1 ? CaptainSceneShots.WIDOW_CLOSE : CaptainSceneShots.CLINT_CLOSE;
-         shot = CaptainSceneShots.closeShot(subject.position(), c, f, who, (sceneT - start) / (double)CaptainSceneShots.CLOSE_TICKS);
+         shot = CaptainSceneShots.closeShot(subject.position(), closeFacing, c.y, who, (sceneT - start) / (double)CaptainSceneShots.CLOSE_TICKS);
       }
       if (closeFrom != null && closeAge < CaptainSceneShots.CLOSE_BLEND) {
          float w = (float)CaptainSceneShots.smooth((closeAge + 1.0) / CaptainSceneShots.CLOSE_BLEND);
