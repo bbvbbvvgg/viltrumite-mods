@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
  * that moment.
  */
 public final class CitizenSkins {
-   static final int MAX = 192;
+   static final int MAX = 320;
    static final int UPLOADS_PER_TICK = 10;
    private static final Map<Integer, ResourceLocation> CACHE = new LinkedHashMap<>(256, 0.75F, true);
    private static int next;
