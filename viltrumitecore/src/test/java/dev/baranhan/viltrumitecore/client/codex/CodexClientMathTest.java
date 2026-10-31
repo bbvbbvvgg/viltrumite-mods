@@ -62,6 +62,24 @@ class CodexClientMathTest {
    }
 
    @Test
+   void freeTextParticipantsLinkEveryNamedArticle() {
+      // participant strings in the style of docs/contextual-interactions.json (schema 1, free text)
+      assertEquals(List.of("thor"), ids("Thor (Mjolnir in hand, striking)"));
+      assertEquals(List.of("ironman", "iron_legion"), ids("Iron Man or an Iron Legion suit (repulsor bolt)"));
+      assertEquals(List.of("thor", "avenger_thor"), ids("Thor or the summoned NPC Thor (lightning)"));
+      assertEquals(List.of("avenger_hulk", "ironman", "homelander"), ids("NPC Hulk, Hulkbuster or a Viltrumite (heavy fist)"));
+      assertEquals(List.of("chitauri_soldier"), ids("Chitauri riders"));
+      assertEquals(List.of("iron_legion", "shadow_army"), ids("Hero summons (Iron Legion suits, Avengers, Jinwoo's shadows)"));
+      assertEquals(List.of("meteor_fall"), ids("Meteor (world event, or thrown by a hero)"));
+      assertEquals(List.of(), ids("Any lightning attacker"));
+      assertEquals(List.of(), ids(null));
+   }
+
+   private static List<String> ids(String raw) {
+      return CodexEntries.resolveAll(raw).stream().map(CodexEntry::id).toList();
+   }
+
+   @Test
    void articleTable() {
       List<CodexEntry> heroes = CodexEntries.of(Category.HEROES);
       List<CodexEntry> npcs = CodexEntries.of(Category.NPCS);

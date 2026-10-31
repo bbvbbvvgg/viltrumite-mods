@@ -717,11 +717,15 @@ public class CodexScreen extends Screen {
          b.header("participants");
          List<Object[]> chips = new ArrayList<>();
          for (CatalogInteraction.Participant p : i.participants()) {
-            CodexEntry target = CodexEntries.byAlias(p.id());
             String raw = this.text(p.name(), p.id());
-            String label = target != null ? I18n.get(target.nameKey()) : raw;
-            chips.add(new Object[]{label, target != null ? this.accent(target) : 0x8C93B8, target != null ? target.id() : null,
-               raw.equals(label) ? null : raw});
+            List<CodexEntry> targets = this.participantEntries(p);
+            if (targets.isEmpty()) {
+               chips.add(new Object[]{raw, 0x8C93B8, null, null});
+            }
+            for (CodexEntry target : targets) {
+               String label = I18n.get(target.nameKey());
+               chips.add(new Object[]{label, this.accent(target), target.id(), raw.equals(label) ? null : raw});
+            }
          }
          b.chips(chips);
       }
@@ -793,8 +797,14 @@ public class CodexScreen extends Screen {
       }
       List<String> names = new ArrayList<>();
       for (CatalogInteraction.Participant p : i.participants()) {
-         CodexEntry target = CodexEntries.byAlias(p.id());
-         names.add(target != null ? I18n.get(target.nameKey()) : this.text(p.name(), p.id()));
+         List<CodexEntry> targets = this.participantEntries(p);
+         if (targets.isEmpty()) {
+            names.add(this.text(p.name(), p.id()));
+         } else {
+            List<String> alt = new ArrayList<>();
+            targets.forEach(t -> alt.add(I18n.get(t.nameKey())));
+            names.add(String.join(" / ", alt));
+         }
       }
       return String.join(" × ", names);
    }
@@ -869,12 +879,21 @@ public class CodexScreen extends Screen {
          return null;
       }
       for (CatalogInteraction.Participant p : i.participants()) {
-         CodexEntry e = CodexEntries.byAlias(p.id());
-         if (e != null) {
-            return e;
+         List<CodexEntry> e = this.participantEntries(p);
+         if (!e.isEmpty()) {
+            return e.get(0);
          }
       }
       return null;
+   }
+
+   /** Articles of one catalog participant: by id, else the parts of its free-text name ("Iron Man or an Iron Legion suit"). */
+   private List<CodexEntry> participantEntries(CatalogInteraction.Participant p) {
+      CodexEntry direct = CodexEntries.byAlias(p.id());
+      if (direct != null) {
+         return List.of(direct);
+      }
+      return CodexEntries.resolveAll(p.name().isEmpty() ? p.id() : p.name().resolve("en_us", k -> null));
    }
 
    private Component catalogMessage() {
