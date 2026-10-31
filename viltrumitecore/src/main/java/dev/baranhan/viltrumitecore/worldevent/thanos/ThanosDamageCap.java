@@ -13,6 +13,7 @@ public final class ThanosDamageCap {
    private float recentWindow;
    private final float[] recent = new float[ThanosRules.REWIND_WINDOW];
    private int recentIndex;
+   private float total;
 
    /** How much of {@code requested} may be taken now, given the max health. Never negative. */
    public float allow(float requested, float maxHealth) {
@@ -31,6 +32,7 @@ public final class ThanosDamageCap {
          this.sum += taken;
          this.recent[this.recentIndex] += taken;
          this.recentWindow += taken;
+         this.total += taken;
       }
    }
 
@@ -52,6 +54,11 @@ public final class ThanosDamageCap {
    /** Damage within the rewind window (last 4 s). */
    public float recent() {
       return this.recentWindow;
+   }
+
+   /** Everything taken since the spawn (channel interrupts compare two readings). */
+   public float total() {
+      return this.total;
    }
 
    /** Time Rewind consumed the window. */
