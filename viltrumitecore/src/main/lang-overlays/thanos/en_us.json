@@ -21,6 +21,7 @@
   "commands.viltrumitecore.thanos.none": "No Thanos event is running.",
   "commands.viltrumitecore.thanos.not_fighting": "Thanos is not fighting right now.",
   "commands.viltrumitecore.thanos.skipped": "Timer set: %s left until the snap.",
+  "commands.viltrumitecore.thanos.queued": "Thanos uses %s next.",
   "commands.viltrumitecore.thanos.status": "Thanos: %1$s, %2$s until the snap, health %3$s, heroes %4$s, phase: %5$s, moves: %6$s",
   "commands.viltrumitecore.thanos.stage.intro": "arriving",
   "commands.viltrumitecore.thanos.stage.fight": "fighting",

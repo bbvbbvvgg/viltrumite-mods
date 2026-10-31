@@ -21,6 +21,7 @@
   "commands.viltrumitecore.thanos.none": "Es läuft kein Thanos-Ereignis.",
   "commands.viltrumitecore.thanos.not_fighting": "Thanos kämpft gerade nicht.",
   "commands.viltrumitecore.thanos.skipped": "Timer gesetzt: noch %s bis zum Schnippen.",
+  "commands.viltrumitecore.thanos.queued": "Als Nächstes setzt Thanos %s ein.",
   "commands.viltrumitecore.thanos.status": "Thanos: %1$s, noch %2$s bis zum Schnippen, Leben %3$s, Helden: %4$s, Phase: %5$s, Angriffe: %6$s",
   "commands.viltrumitecore.thanos.stage.intro": "erscheint",
   "commands.viltrumitecore.thanos.stage.fight": "kämpft",
