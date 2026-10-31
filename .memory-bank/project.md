@@ -374,3 +374,6 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - FP: when `ThorClipPlayer.playsFpClip`, clips drive all FP bones incl. shoulders; `ThorFirstPerson` rows are only a fallback. `AlwaysVisibleOffhandMixin` asks `ThorClipPlayer.wantsOffhand`.
 - MMB with an item in the right hand = DRAW (`ThorHands.clearForMjolnir`), never a holster. `ThorClipChecks.place` needs a case for every new clip name.
 - Every `ThorCue` must be listed in `tools/assets/thor_sources.md` (ThorSoundsTest).
+
+## Hero gallery / encyclopedia (branch feat/hero-gallery-encyclopedia-20261031)
+- Codex screen from the Od Lagna wish menu; per-player progress in `ViltrumiteCodex` persisted NBT, own channel `viltrumitecore:codex`. Details: `.memory-bank/codex.md`.
