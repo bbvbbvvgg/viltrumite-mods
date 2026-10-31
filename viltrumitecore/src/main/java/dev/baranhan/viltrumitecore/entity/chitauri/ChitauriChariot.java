@@ -620,7 +620,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob {
       ChitauriBolt.shoot(level, this, from, aim.subtract(from), 2.8, 2.0F, 1.4F);
       this.cannonCooldown = 7;
       this.level().broadcastEntityEvent(this, EVENT_CANNON);
-      ChitauriSounds.play(level, from, ChitauriSounds.CANNON_FIRE, 1.5F, 0.95F + this.random.nextFloat() * 0.1F);
+      ChitauriSounds.play(level, from, ChitauriSounds.CANNON_FIRE, 3.0F, 0.95F + this.random.nextFloat() * 0.1F);
       ChitauriDestruction.danger(level, aim, 18.0F, 80);
    }
 
@@ -786,7 +786,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob {
 
    @Override
    protected net.minecraft.sounds.SoundEvent getHurtSound(DamageSource source) {
-      return ChitauriSounds.LEVIATHAN_HIT.get();
+      return ChitauriSounds.CHARIOT_HIT.get();
    }
 
    @Override
@@ -796,6 +796,6 @@ public class ChitauriChariot extends Mob implements ChitauriMob {
 
    @Override
    public float getVoicePitch() {
-      return 1.6F;
+      return 0.9F + this.random.nextFloat() * 0.2F;
    }
 }

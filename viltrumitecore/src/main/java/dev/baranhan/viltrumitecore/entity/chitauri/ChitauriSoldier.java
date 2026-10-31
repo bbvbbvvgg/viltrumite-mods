@@ -296,7 +296,7 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       float spread = (float)(1.6 + dist * 0.06) * (this.mounted() ? 2.0F : 1.0F);
       ChitauriBolt.shoot(level, this, from, aim.subtract(from), 2.4, 1.0F, spread);
       this.level().broadcastEntityEvent(this, EVENT_SHOOT);
-      ChitauriSounds.play(level, from, ChitauriSounds.RIFLE_FIRE, 1.0F, 0.92F + this.random.nextFloat() * 0.16F);
+      ChitauriSounds.play(level, from, ChitauriSounds.RIFLE_FIRE, 2.0F, 0.92F + this.random.nextFloat() * 0.16F);
       ChitauriDestruction.danger(level, this.position(), 14.0F, 80);
    }
 
