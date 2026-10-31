@@ -3,7 +3,13 @@ package dev.baranhan.viltrumitecore.hero.ironman.legion;
 import dev.baranhan.viltrumitecore.entity.LegionSuitEntity;
 import dev.baranhan.viltrumitecore.entity.VeronicaPodEntity;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteEntities;
+import dev.baranhan.viltrumitecore.hero.ActionLocks;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
+import dev.baranhan.viltrumitecore.hero.HeroAction;
+import dev.baranhan.viltrumitecore.hero.HeroDefinition;
+import dev.baranhan.viltrumitecore.hero.HeroHeldTargets;
+import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.hero.ironman.IronManHero;
 import dev.baranhan.viltrumitecore.hero.ironman.IronManLegionSounds;
 import dev.baranhan.viltrumitecore.hero.ironman.IronManState;
 import dev.baranhan.viltrumitecore.hero.ironman.mark.IronManMarks;
@@ -166,7 +172,7 @@ public final class IronManLegion {
    /** The selection from the menu: up to three callable marks fly in. */
    public static void call(ServerPlayer player, int[] marks) {
       IronManState state = IronManState.of(player);
-      if (state == null || !player.isAlive()) {
+      if (state == null || !mayCommand(player)) {
          return;
       }
 
@@ -255,7 +261,7 @@ public final class IronManLegion {
     */
    public static void order(ServerPlayer player, int orderId, int priorityId) {
       LegionSquad squad = squad(player);
-      if (squad == null || !squad.active() || IronManState.of(player) == null || !player.isAlive()) {
+      if (squad == null || !squad.active() || !mayCommand(player)) {
          return;
       }
 
@@ -307,6 +313,21 @@ public final class IronManLegion {
       squad.dirty = true;
       player.playNotifySound(IronManLegionSounds.ORDER.get(), SoundSource.PLAYERS, 0.7F, 1.0F);
       sendStatus(player, squad);
+   }
+
+   /**
+    * The same gate as the LEGION key (Codex review #5): an order or a call
+    * packet re-checks it on the server, so a menu left open while Tony becomes
+    * anchored, a spectator, locked or another hero sends nothing.
+    */
+   static boolean mayCommand(ServerPlayer player) {
+      HeroDefinition hero = HeroRegistry.get(player);
+      return commandAllowed(IronManState.of(player) != null && hero instanceof IronManHero, player.isAlive(),
+         hero.canAct(player, HeroAction.LEGION), ActionLocks.locked(player), HeroHeldTargets.anchored(player));
+   }
+
+   static boolean commandAllowed(boolean ironMan, boolean alive, boolean canAct, boolean locked, boolean held) {
+      return ironMan && alive && canAct && !locked && !held;
    }
 
    @Nullable

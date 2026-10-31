@@ -218,6 +218,10 @@ public final class LegionSquad {
 
       List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, box,
          e -> e.isAlive() && e != owner && !(e instanceof LegionSuitEntity) && !e.isSpectator());
+      // ATTACK may pick a target up to ORDER_REACH away: it joins the board even outside the scan box.
+      Entity ordered = this.orderedTargetId >= 0 ? level.getEntity(this.orderedTargetId) : null;
+      candidates = withOrdered(candidates, ordered instanceof LivingEntity living && living.isAlive() && living != owner
+         && !(living instanceof LegionSuitEntity) && !living.isSpectator() ? living : null);
       candidates.sort((a, b) -> Double.compare(a.distanceToSqr(anchor), b.distanceToSqr(anchor)));
       int tonyTarget = owner.getLastHurtMob() != null && owner.tickCount - owner.getLastHurtMobTimestamp() < TONY_TARGET_MEMORY
          ? owner.getLastHurtMob().getId() : -1;
@@ -252,6 +256,16 @@ public final class LegionSquad {
          double score = ThreatScore.score(threat, this.priority, radius);
          boolean onOwner = toOwner <= LegionRules.INTERRUPT_RADIUS && (sinceOwner < LegionRules.INTERRUPT_WINDOW || onTony && toOwner < 4.0);
          out.add(new LegionTactics.Target(e.getId(), score, threat.effectiveHealth(), e.position(), toOwner, onOwner, threat.flying()));
+      }
+
+      return out;
+   }
+
+   /** The scan result plus the ordered target when the scan box missed it (no duplicate). */
+   static <T> List<T> withOrdered(List<T> candidates, @Nullable T ordered) {
+      List<T> out = new ArrayList<>(candidates);
+      if (ordered != null && !out.contains(ordered)) {
+         out.add(ordered);
       }
 
       return out;

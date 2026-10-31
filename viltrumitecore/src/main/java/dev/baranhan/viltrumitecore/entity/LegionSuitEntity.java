@@ -352,7 +352,8 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
          return false;
       }
 
-      if (attacker instanceof Player other && (!owner.server.isPvpAllowed() || !owner.canHarmPlayer(other) || other.isSpectator())) {
+      // A player or another player's Legion (direct hit, missile, splash): the server PvP and team rules of the two owners decide.
+      if (!LegionAllies.playerDamageAllowed(owner, attacker, source.getDirectEntity())) {
          return false;
       }
 
