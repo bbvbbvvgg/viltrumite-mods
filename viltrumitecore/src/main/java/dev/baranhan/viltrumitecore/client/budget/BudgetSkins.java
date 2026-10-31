@@ -96,7 +96,6 @@ public final class BudgetSkins {
          px(image, 12, 14, shade(look.skin(), -40));
       }
 
-      roughen(image);
       return image;
    }
 
@@ -233,23 +232,5 @@ public final class BudgetSkins {
       int g = Math.max(0, Math.min(255, (rgb >> 8 & 255) + delta));
       int b = Math.max(0, Math.min(255, (rgb & 255) + delta));
       return r << 16 | g << 8 | b;
-   }
-
-   /** Fixed per-pixel jitter: the flat colours get the usual hand-painted unevenness. */
-   private static void roughen(NativeImage image) {
-      for (int y = 0; y < 64; y++) {
-         for (int x = 0; x < 64; x++) {
-            int abgr = image.getPixelRGBA(x, y);
-            if ((abgr >>> 24) == 0) {
-               continue;
-            }
-
-            int jitter = ((x * 73 + y * 151) % 7) * 3 - 9;
-            int r = Math.max(0, Math.min(255, (abgr & 255) + jitter));
-            int g = Math.max(0, Math.min(255, (abgr >> 8 & 255) + jitter));
-            int b = Math.max(0, Math.min(255, (abgr >> 16 & 255) + jitter));
-            image.setPixelRGBA(x, y, 0xFF000000 | b << 16 | g << 8 | r);
-         }
-      }
    }
 }

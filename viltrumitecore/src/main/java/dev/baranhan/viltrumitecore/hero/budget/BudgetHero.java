@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.LivingEntity;
@@ -91,7 +90,7 @@ public final class BudgetHero implements HeroDefinition {
          int slot = i;
          String lang = this.spec.abilityLangKey(move);
          list.add(new ViltrumiteAbility(this.slotIds[i],
-            new ResourceLocation("viltrumitecore", "textures/gui/ability/" + move.type().icon() + ".png"),
+            BudgetHeroes.icon(this.spec, move),
             lang + ".name", lang + ".desc", 0, player -> this.slotGrey(player, slot)));
       }
 
