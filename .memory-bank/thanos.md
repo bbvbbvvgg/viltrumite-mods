@@ -40,6 +40,17 @@
 - The scene camera is a client `Marker`. Vanilla then draws the local player, so `ThanosSceneClient` cancels the own
   body render when the camera is inside the hitbox (`hidesSelf`) and denies the own name tag (`RenderNameTagEvent`).
 
+## HUD next to a hero HUD
+- `ThanosHudLayout` (pure, `ThanosHudLayoutTest`): the timer panel stays centred under the boss bar unless the local
+  player's hero HUD (bottom-right: ability bar column, emblem, page badge, and the style's attachments from
+  `PanelStyle.attachmentsLeft/Up`, default 80/24, Reinhard 168/30 for his mouse hint) reaches its rows. That happens at a
+  GUI height near 240: the automatic GUI scale at 1280×720, 1920×1200, 2560×1440 and 3840×2160. Then the panel moves left
+  of it, the warning strip narrows (left of it), wraps its hint (up to 3 lines) and shrinks a long move name.
+- Before (2026-10-31): at 320×240 and 426×240 the stone row crossed Reinhard's hint and the strip covered gauges and
+  portraits. Verified in game after the fix: 320×240 (Captain en, Reinhard ru), 426×240 (Reinhard ru), 640×360 (centred,
+  one-line strip as before).
+- Shared code must not branch on hero ids (`NoHeroBranchTest`): hero-specific HUD extents go through `PanelStyle`.
+
 ## QA
 - Op commands: `/thanos start|stop|status`, `/thanos skip <seconds>` (sets the time left), `/thanos move <move>`
   (starts it as his next move instead of the brain's choice). Logs: logger `viltrumitecore/thanos`; INFO for arrival, phase and end,
@@ -49,6 +60,5 @@
   (`/subtitleqa hero <targets> <hero>` sets any hero).
 
 ## Known limits (2026-10-31)
-- 640×480 window only: Reinhard's mouse-hint line overlaps the timer's stone row. No overlap at 1280×720.
 - One native client crash (SIGSEGV in libc, Render thread) during the tests; not reproduced; cause unknown (unverified).
 - Not verified in game: every hero's parry/guard against every move, large hero crowds, live-player dodging of each move.

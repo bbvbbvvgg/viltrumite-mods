@@ -24,6 +24,17 @@ public final class ReinhardPanelStyle implements PanelStyle {
    private ReinhardPanelStyle() {
    }
 
+   /** The mode icons, the Reid bar and the mouse hint left of them ({@link ReinhardHud#HINT_LEFT}). */
+   @Override
+   public int attachmentsLeft() {
+      return ReinhardHud.HINT_LEFT + 4;
+   }
+
+   @Override
+   public int attachmentsUp() {
+      return ReinhardHud.HINT_RISE + 2;
+   }
+
    @Override
    public void drawFrames(GuiGraphics graphics, Bounds flightBar, Bounds abilityBar) {
       frame(graphics, flightBar);
