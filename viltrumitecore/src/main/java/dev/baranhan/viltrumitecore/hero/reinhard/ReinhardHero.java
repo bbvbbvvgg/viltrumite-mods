@@ -954,7 +954,7 @@ public final class ReinhardHero implements HeroDefinition {
     */
    @Override
    public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
-      ReinhardState state = player.level().isClientSide() ? null : ReinhardState.of(player);
+      ReinhardState state = player == null || player.level().isClientSide() ? null : ReinhardState.of(player);
       if (state == null || !state.reid.drawn()) {
          return dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
       }
