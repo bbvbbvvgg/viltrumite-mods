@@ -50,6 +50,8 @@ public final class MultiverseCollapse {
 
    private final ResourceKey<Level> dimension;
    private final Vec3 origin;
+   /** Everyone who took part (was in the arena at some point): they hear how the event ended even from afar. */
+   private final Set<UUID> participants = new java.util.HashSet<>();
    private final Vec3 portal;
    private final Set<ChaosModifier> mods;
    private final int session;
@@ -102,7 +104,7 @@ public final class MultiverseCollapse {
       MultiverseCleanup.discardSession(server, event.session);
       ServerLevel level = server.getLevel(event.dimension);
       if (reasonKey != null && level != null) {
-         MultiverseHud.chat(MultiverseHud.near(level, event.origin, 256.0), Component.translatable(reasonKey).withStyle(ChatFormatting.LIGHT_PURPLE));
+         MultiverseHud.chat(event.audience(level), Component.translatable(reasonKey).withStyle(ChatFormatting.LIGHT_PURPLE));
       }
 
       return true;
@@ -171,8 +173,22 @@ public final class MultiverseCollapse {
       return players;
    }
 
+   /** Players near the arena plus every online participant of this event in its dimension. */
+   private List<ServerPlayer> audience(ServerLevel level) {
+      List<ServerPlayer> players = new ArrayList<>(MultiverseHud.near(level, this.origin, 256.0));
+      for (ServerPlayer player : level.players()) {
+         if (!players.contains(player) && this.participants.contains(player.getUUID())) {
+            players.add(player);
+         }
+      }
+      return players;
+   }
+
    private void tick(ServerLevel level) {
       List<ServerPlayer> players = this.arenaPlayers(level);
+      for (ServerPlayer player : players) {
+         this.participants.add(player.getUUID());
+      }
       this.updateIntegrity(level, players);
       if (players.stream().noneMatch(p -> p.isAlive() && !p.isSpectator())) {
          if (++this.noPlayerTicks > MultiverseRules.NO_PLAYER_FAIL_TICKS) {
@@ -405,7 +421,7 @@ public final class MultiverseCollapse {
    }
 
    private void fall(ServerLevel level) {
-      List<ServerPlayer> players = MultiverseHud.near(level, this.origin, 256.0);
+      List<ServerPlayer> players = this.audience(level);
       MultiverseHud.title(players, "multiverse.viltrumitecore.title.fallen", "multiverse.viltrumitecore.sub.fallen", ChatFormatting.DARK_RED);
       stop(level.getServer(), "multiverse.viltrumitecore.failed");
    }
