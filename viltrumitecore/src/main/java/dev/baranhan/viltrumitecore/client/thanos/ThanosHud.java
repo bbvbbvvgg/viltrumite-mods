@@ -1,18 +1,23 @@
 package dev.baranhan.viltrumitecore.client.thanos;
 
 import dev.baranhan.viltrumitecore.client.hero.CinematicHud;
+import dev.baranhan.viltrumitecore.client.hero.PanelStyle;
+import dev.baranhan.viltrumitecore.client.hero.PanelStyles;
 import dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity;
 import dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosMove;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosPhase;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosRules;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosStone;
+import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
@@ -26,7 +31,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
  * and the timer pulse red, the title changes), the last ten seconds' pop, and a warning strip for
  * every dangerous ability while it winds up - its name in its stone's colour and how to survive
  * it. Nothing is drawn outside the fight, while a cinematic owns the screen, or with F1; the strip
- * goes as soon as the move's active part is over.
+ * goes as soon as the move's active part is over. On a small GUI both keep left of the hero's own HUD
+ * ({@link ThanosHudLayout}); the strip then wraps its hint.
  */
 @EventBusSubscriber(modid = "viltrumitecore", value = Dist.CLIENT)
 public final class ThanosHud {
@@ -94,8 +100,12 @@ public final class ThanosHud {
       Font font = mc.font;
       int w = 118;
       int h = 40;
-      int x = (width - w) / 2;
       int y = Math.round(Math.max(bossBottom, 12.0F)) + 2;
+      boolean heroPanel = heroPanel(mc.player);
+      PanelStyle style = heroPanel ? PanelStyles.of(mc.player) : null;
+      int reachLeft = style == null ? 0 : style.attachmentsLeft();
+      int reachUp = style == null ? 0 : style.attachmentsUp();
+      int x = ThanosHudLayout.panelX(width, w, ThanosHudLayout.maxRight(width, height, y + h, heroPanel, reachLeft, reachUp));
       float pulse = late ? 0.5F + 0.5F * (float)Math.sin(time * 0.32F) : 0.0F;
       panel(g, x, y, w, h, late, pulse);
       Component title = Component.translatable(late ? "hud.viltrumitecore.thanos.final" : "hud.viltrumitecore.thanos.until_snap");
@@ -118,8 +128,15 @@ public final class ThanosHud {
       ThanosEntity thanos = ThanosClient.thanos();
       pips(g, thanos, x + w / 2, y + h - 6, time, late);
       if (stage == ThanosStateS2CPacket.FIGHT) {
-         warningStrip(g, font, thanos, x + w / 2, y + h + 3, width, time);
+         int stripY = y + h + 3;
+         int stripRight = ThanosHudLayout.maxRight(width, height, stripY + ThanosHudLayout.maxStripHeight(), heroPanel, reachLeft, reachUp);
+         warningStrip(g, font, thanos, x + w / 2, stripY, width, stripRight, time);
       }
+   }
+
+   /** The local player shows a hero ability panel (the same test as the hero HUD itself). */
+   private static boolean heroPanel(Player player) {
+      return player != null && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).hasAbilityPanel(player);
    }
 
    private static void panel(GuiGraphics g, int x, int y, int w, int h, boolean late, float pulse) {
@@ -158,7 +175,7 @@ public final class ThanosHud {
    }
 
    /** The dangerous-ability strip: the name in the lead stone's colour and the counterplay. */
-   private static void warningStrip(GuiGraphics g, Font font, ThanosEntity thanos, int cx, int y, int width, float time) {
+   private static void warningStrip(GuiGraphics g, Font font, ThanosEntity thanos, int cx, int y, int width, int maxRight, float time) {
       if (thanos == null) {
          return;
       }
@@ -174,9 +191,16 @@ public final class ThanosHud {
       int rgb = lead == null ? 0xE9C46A : lead.rgb & 0xFFFFFF;
       Component name = Component.translatable(moveKey(move));
       Component hint = Component.translatable(hintKey(move));
-      int w = Math.min(width - 20, Math.max(font.width(name) + 24, Math.round(font.width(hint) * 0.75F) + 16));
-      int h = 22;
-      int x = cx - w / 2;
+      int nameWidth = font.width(name);
+      int want = Math.max(nameWidth + 24, Math.round(font.width(hint) * 0.75F) + 16);
+      int w = ThanosHudLayout.stripWidth(want, width, maxRight);
+      List<FormattedCharSequence> lines = w >= want ? List.of(hint.getVisualOrderText()) : font.split(hint, Math.max(40, (int)((w - 18) / 0.75F)));
+      if (lines.size() > ThanosHudLayout.MAX_HINT_LINES) {
+         lines = lines.subList(0, ThanosHudLayout.MAX_HINT_LINES);
+      }
+
+      int h = ThanosHudLayout.stripHeight(lines.size());
+      int x = ThanosHudLayout.stripX(cx, w, maxRight);
       int a = Math.round(k * 255.0F);
       boolean winding = age < ThanosRules.telegraph(move.telegraph, ThanosClient.phase());
       float blink = winding ? 0.65F + 0.35F * (float)Math.sin(time * 0.8F) : 1.0F;
@@ -190,12 +214,19 @@ public final class ThanosHud {
          g.fill(gx + 3 - i / 2, gy + i, gx + 4 + i / 2, gy + i + 1, Math.round(a * blink) << 24 | rgb);
       }
 
-      g.drawString(font, name, x + 16, y + 2, a << 24 | mix(rgb, 0xFFFFFF, 0.35F), true);
+      float nameScale = nameWidth + 22 > w ? Math.max(0.6F, (w - 22) / (float)nameWidth) : 1.0F;
       g.pose().pushPose();
-      g.pose().translate(x + 16, y + 12.5F, 0.0F);
-      g.pose().scale(0.75F, 0.75F, 1.0F);
-      g.drawString(font, hint, 0, 0, a << 24 | 0xD8D2C8, true);
+      g.pose().translate(x + 16, y + 2 + (1.0F - nameScale) * 4.0F, 0.0F);
+      g.pose().scale(nameScale, nameScale, 1.0F);
+      g.drawString(font, name, 0, 0, a << 24 | mix(rgb, 0xFFFFFF, 0.35F), true);
       g.pose().popPose();
+      for (int i = 0; i < lines.size(); i++) {
+         g.pose().pushPose();
+         g.pose().translate(x + 16, y + 12.5F + 7.0F * i, 0.0F);
+         g.pose().scale(0.75F, 0.75F, 1.0F);
+         g.drawString(font, lines.get(i), 0, 0, a << 24 | 0xD8D2C8, true);
+         g.pose().popPose();
+      }
    }
 
    private static void diamond(GuiGraphics g, int cx, int cy, int r, int color) {

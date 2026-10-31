@@ -33,6 +33,21 @@ public interface PanelStyle {
    default void drawAttachments(GuiGraphics graphics, Bounds abilityBar, Player player, HeroPublicSnapshot snapshot) {
    }
 
+   /**
+    * How far {@link #drawAttachments} reaches: up to this many px left of the ability bar, from
+    * {@link #attachmentsUp()} px above the bar's top down to the bottom of the screen (the emblem and page badge
+    * over the bar are common to every style). Other HUDs keep out of it (the Thanos timer, ThanosHudLayout).
+    * Default: a gauge left of the bar's top with its number and a short label (Captain, Jinwoo, Regulus, Sinclair).
+    */
+   default int attachmentsLeft() {
+      return 80;
+   }
+
+   /** See {@link #attachmentsLeft()}. */
+   default int attachmentsUp() {
+      return 24;
+   }
+
    record Bounds(int x, int y, int width, int height) {
    }
 }

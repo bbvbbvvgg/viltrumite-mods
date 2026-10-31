@@ -21,6 +21,9 @@ public final class ReinhardHud {
    public static final int GAP = 2;
    public static final int BAR_WIDTH = 3 * ICON + 2 * GAP;
    public static final int BAR_HEIGHT = 3;
+   /** The mouse hint: this many px left of the ability bar, 10 px above the icon row (= this many px above the bar). */
+   public static final int HINT_LEFT = 164;
+   public static final int HINT_RISE = 1 + BAR_HEIGHT + GAP + ICON + 10;
    private static final int GOLD = 0xFFE8C15A;
    private static final int BAR_BACK = 0xA0101830;
    private static final ResourceLocation PHOENIX_ICON = new ResourceLocation("viltrumitecore", "textures/gui/reinhard/blessing_bearer.png");
@@ -84,7 +87,7 @@ public final class ReinhardHud {
 
       Layout layout = layout(abilityBar);
       graphics.pose().pushPose();
-      graphics.pose().translate(Math.max(2, abilityBar.x() - 164), Math.max(2, layout.icons()[0].y() - 10), 0);
+      graphics.pose().translate(Math.max(2, abilityBar.x() - HINT_LEFT), Math.max(2, layout.icons()[0].y() - 10), 0);
       graphics.pose().scale(.65F, .65F, 1);
       graphics.drawString(net.minecraft.client.Minecraft.getInstance().font,
          net.minecraft.network.chat.Component.translatable("hud.viltrumitecore.reinhard.mouse"), 0, 0, LABEL_COLOR, true);
