@@ -12,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -225,6 +226,48 @@ public class ChitauriChariot extends Mob implements ChitauriMob {
          this.clientRollO = this.clientRoll;
          this.clientRoll += (this.syncedRoll() - this.clientRoll) * 0.35F;
          this.clientSpeed = new Vec3(this.getX() - this.xo, this.getY() - this.yo, this.getZ() - this.zo).length();
+         this.clientEffects();
+      }
+   }
+
+   /** Client: damage smoke from the engines, sparks when nearly down, a fire and smoke trail while falling. */
+   private void clientEffects() {
+      Level level = this.level();
+      float hp = Mth.clamp(this.getHealth() / this.getMaxHealth(), 0.0F, 1.0F);
+      float yaw = this.getYRot() * Mth.DEG_TO_RAD;
+      double fx = -Mth.sin(yaw);
+      double fz = Mth.cos(yaw);
+      Vec3 c = this.position().add(0, 0.7, 0);
+      if (this.dying() || !this.isAlive()) {
+         for (int i = 0; i < 3; i++) {
+            double ox = (this.random.nextDouble() - 0.5) * 1.4;
+            double oz = (this.random.nextDouble() - 0.5) * 1.4;
+            level.addAlwaysVisibleParticle(ParticleTypes.LARGE_SMOKE, true, c.x + ox - fx * 0.8, c.y + this.random.nextDouble() * 0.4, c.z + oz - fz * 0.8,
+               0.0, 0.04, 0.0);
+         }
+         level.addAlwaysVisibleParticle(ParticleTypes.FLAME, true, c.x + (this.random.nextDouble() - 0.5), c.y + 0.2, c.z + (this.random.nextDouble() - 0.5),
+            (this.random.nextDouble() - 0.5) * 0.05, 0.03, (this.random.nextDouble() - 0.5) * 0.05);
+         if (this.tickCount % 2 == 0) {
+            level.addParticle(ParticleTypes.LAVA, c.x, c.y, c.z, 0.0, 0.0, 0.0);
+         }
+         if (this.tickCount % 3 == 0) {
+            level.addAlwaysVisibleParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE, true, c.x, c.y + 0.3, c.z, 0.0, 0.02, 0.0);
+         }
+         return;
+      }
+      if (hp < 0.65F && this.random.nextFloat() < (0.65F - hp) * 1.8F) {
+         double side = this.random.nextBoolean() ? 0.78 : -0.78;
+         double rx = -Mth.cos(yaw) * side;
+         double rz = -Mth.sin(yaw) * side;
+         level.addParticle(hp < 0.35F ? ParticleTypes.LARGE_SMOKE : ParticleTypes.SMOKE, c.x + rx - fx * 1.3, c.y - 0.1, c.z + rz - fz * 1.3,
+            -fx * 0.05, 0.03, -fz * 0.05);
+      }
+      if (hp < 0.35F && this.random.nextFloat() < 0.3F) {
+         level.addParticle(ParticleTypes.ELECTRIC_SPARK, c.x + (this.random.nextDouble() - 0.5) * 1.6, c.y + this.random.nextDouble() * 0.5,
+            c.z + (this.random.nextDouble() - 0.5) * 1.6, (this.random.nextDouble() - 0.5) * 0.3, 0.1, (this.random.nextDouble() - 0.5) * 0.3);
+      }
+      if (hp < 0.2F && this.random.nextFloat() < 0.35F) {
+         level.addParticle(ParticleTypes.FLAME, c.x - fx * 1.2, c.y, c.z - fz * 1.2, -fx * 0.04, 0.02, -fz * 0.04);
       }
    }
 
