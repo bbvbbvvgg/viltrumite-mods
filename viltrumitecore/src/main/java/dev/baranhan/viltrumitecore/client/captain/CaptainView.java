@@ -19,7 +19,10 @@ public final class CaptainView {
    public static final ResourceLocation ARMS_GEAR = rl("geo/captain/captain_arms_gear.geo.json");
    public static final ResourceLocation SHIELD = rl("geo/captain/captain_shield.geo.json");
    /** HD suit skin (128x128) on the Steve layout; the geo UVs are in 64 space. */
+   /** Atlas of the body model (per-face UVs, not a skin layout). */
    public static final ResourceLocation SKIN = rl("textures/entity/captain/captain.png");
+   /** The same suit as a vanilla 64x64 skin: the vanilla hand in first person and anything that draws the player skin. */
+   public static final ResourceLocation VANILLA_SKIN = rl("textures/entity/captain/captain_skin.png");
    public static final ResourceLocation GEAR_TEX = rl("textures/entity/captain/captain_gear.png");
    public static final ResourceLocation GEAR_GLOW = rl("textures/entity/captain/captain_gear_glow.png");
    public static final ResourceLocation SHIELD_TEX = rl("textures/entity/captain/captain_shield.png");

@@ -17,7 +17,7 @@ public final class CaptainClient {
       HeroSkins.register(HeroId.CAPTAIN, new HeroSkins.Provider() {
          @Override
          public ResourceLocation defaultSkin() {
-            return CaptainView.SKIN;
+            return CaptainView.VANILLA_SKIN;
          }
 
          @Override

@@ -1,9 +1,12 @@
 """The summoned Avengers of «Avengers, assemble!» (2012 line-up) — own procedural models and pixel art, CC0.
 
-Iron Man Mark VII, Thor (MCU 2012, not the God of War Thor), Black Widow and Hawkeye wear HD skins on the split-limb
-player rig (tools/assets/jinwoo_model.py; Widow on the slim rig) plus a gear model per hero (same bone names, own
-atlas + glow). Hulk has his own oversized body. Also Mjolnir, the arrows, the mini missile and the Quinjet (built at
-quarter scale, the renderer scales it x4). Writes geo/avengers/*.geo.json and textures/entity/avengers/*.png.
+Rebuilt on the clean builder (tools/assets/clean_geo.py): flat saturated colours, 1 px gutters, no coplanar faces
+(tools/assets/geo_lint.py), hand-drawn 16 px faces. Thor, Black Widow (slim arms) and Hawkeye have their own bodies
+on the player skeleton (same bone names / pivots as before, so the clips keep working) plus a gear model per hero
+(same skeleton + props: Mjolnir, cape, hair, pistols, bow, quiver). Hulk has his own, larger body with extra bones
+(jaw, thumbs, chest, feet). Iron Man keeps his Mark VII geometry (player rig skin + gear) and is only repainted
+cleanly. Also Mjolnir (thrown), the arrows, the mini missile and the Quinjet (quarter scale, the renderer scales x4).
+Writes geo/avengers/*.geo.json and textures/entity/avengers/*.png.
 """
 import math
 import os
@@ -13,9 +16,11 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
-from jinwoo_geo import Mat, Model, put, write_json, write_png, RES  # noqa: E402
-from jinwoo_model import body_model, skeleton  # noqa: E402
-from captain_model import paint_skin, sides, star_mask, clear_alpha  # noqa: E402
+from clean_geo import (CleanModel, Flat, Face, glow_put, mix, poly_mask, put, sides, star_mask,  # noqa: E402
+                       write_json, write_model, write_png, RES)
+from jinwoo_model import body_model  # noqa: E402  (Iron Man keeps the player-rig skin layout)
+
+D = 2
 
 
 def W(x):
@@ -26,158 +31,268 @@ def T(x):
     return os.path.join('textures/entity/avengers', x)
 
 
-def band(face, rgb, ys, color, w=0.2, amount=0.8):
-    x, y, z = face.world()
-    for yy in ys:
-        put(rgb, np.abs(y - yy) < w, color, amount)
+def side_x(s, x0, w):
+    """Origin x of a part spanning [x0, x0 + w] on the left (s = 1) or mirrored on the right (s = -1)."""
+    return x0 if s > 0 else -(x0 + w)
 
 
-# =================================================================================== IRON MAN MARK VII
-IM_RED, IM_RED_HI, IM_RED_LO = '#b3171c', '#d8343a', '#6e0d10'
-IM_GOLD, IM_GOLD_LO = '#d6a23b', '#9c6f1f'
-IM_SILVER = '#9aa1ab'
-TONY_SKIN = '#e0b48f'
+def sname(s):
+    return 'left' if s > 0 else 'right'
+
+
+def pixel_map(face, rgb, rows, pal):
+    h, w = rgb.shape[:2]
+    for r, line in enumerate(rows):
+        for col, ch in enumerate(line):
+            colr = pal.get(ch)
+            if colr is not None and r < h and col < w:
+                put(rgb, np.s_[r:r + 1, col:col + 1], colr)
+
+
+def solid(colour):
+    def fn(face, rgb, glow, rs):
+        put(rgb, np.ones(rgb.shape[:2], bool), colour)
+    return fn
+
+
+def disc_alpha(face, rs):
+    """Round cut-out on the faces of a thin disc cube (whichever two faces are the large ones)."""
+    u, v = face.grid()
+    a = np.zeros((face.h, face.w), np.uint8)
+    a[np.hypot(u - 0.5, v - 0.5) <= 0.5] = 255
+    return a
+
+
+# ============================================================================================ rig
+def rig(m, slim=False):
+    aw = 3 if slim else 4
+    cx = 4 + aw / 2
+    m.bone('root', None, [0, 0, 0])
+    m.bone('waist', 'root', [0, 12, 0])
+    m.bone('torso', 'waist', [0, 12, 0])
+    m.bone('collar', 'torso', [0, 24, 0])
+    m.bone('head', 'torso', [0, 24, 0])
+    for s in (-1, 1):
+        side = sname(s)
+        m.bone(f'{side}_arm', 'torso', [s * 5, 22, 0])
+        m.bone(f'{side}_forearm', f'{side}_arm', [s * cx, 18, 0])
+        m.bone(f'{side}_hand', f'{side}_forearm', [s * cx, 15, 0])
+        m.bone(f'{side}_fingers', f'{side}_hand', [s * 4, 13, 0])
+        m.bone(f'{side}_thumb', f'{side}_hand', [s * 4, 14, -1])
+    for s in (-1, 1):
+        side = sname(s)
+        m.bone(f'{side}_leg', 'root', [s * 1.9, 12, 0])
+        m.bone(f'{side}_shin', f'{side}_leg', [s * 1.9, 6, 0])
+    return aw
+
+
+def base_body(m, mats, slim=False, thumbs=True):
+    """Head, torso, split arms (upper / forearm / hand / fingers / thumb) and legs (thigh / shin)."""
+    aw = 3 if slim else 4
+    c = m.cube
+    c('head', [-4, 24, -4], [8, 8, 8], mats['head'])
+    c('torso', [-4, 12, -2], [8, 12, 4], mats['torso'])
+    c('torso', [-1.6, 23.2, -1.6], [3.2, 1.0, 3.2], mats.get('neck', mats['head']))
+    for s in (-1, 1):
+        side = sname(s)
+        x0 = side_x(s, 4.0, aw)
+        c(f'{side}_arm', [x0, 18, -2], [aw, 6, 4], mats['arm'])
+        c(f'{side}_forearm', [x0 + 0.1, 15, -1.9], [aw - 0.2, 3, 3.8], mats['forearm'])
+        c(f'{side}_hand', [x0, 13, -2], [aw, 2, 4], mats['hand'])
+        c(f'{side}_fingers', [x0 + 0.1, 12, -1.9], [aw - 0.2, 1, 3.8], mats.get('fingers', mats['hand']))
+        if thumbs:
+            c(f'{side}_thumb', [side_x(s, 3.6, 1.0), 12.9, -2.45], [1.0, 1.6, 1.1], mats.get('fingers', mats['hand']))
+        c(f'{side}_leg', [side_x(s, 0.05, 3.95), 6, -2], [3.95, 6, 4], mats['leg'])
+        c(f'{side}_shin', [side_x(s, 0.15, 3.75), 0.1, -1.9], [3.75, 5.9, 3.8], mats['shin'])
+    return aw
+
+
+def face_material(base, rows, pal, sides_col=None, back_col=None, top_col=None):
+    def fn(face, rgb, glow, rs):
+        if face.name == 'north':
+            pixel_map(face, rgb, rows, pal)
+        elif face.name == 'up' and top_col:
+            put(rgb, np.ones(rgb.shape[:2], bool), top_col)
+        elif face.name == 'south' and back_col:
+            put(rgb, np.ones(rgb.shape[:2], bool), back_col)
+        elif face.name in ('east', 'west') and sides_col:
+            x, y, z = face.world()
+            put(rgb, y > 27.5, sides_col)
+            put(rgb, (y > 25.0) & (z > 0.5), sides_col)
+    return Flat(base, fn)
+
+
+# ============================================================================================ IRON MAN MARK VII
+# Geometry unchanged (player-rig skin + the Mark VII gear: helmet + faceplate hinge, shoulders, back flaps,
+# gauntlets, boots); only the paint is new: flat red / gold / silver blocks, no noise, no panel-line bands.
+IM_RED, IM_RED_HI, IM_RED_LO = '#c2161d', '#de3a3f', '#8a0f14'
+IM_GOLD, IM_GOLD_HI, IM_GOLD_LO = '#e0aa3e', '#f2c766', '#a87a24'
+IM_SILVER, IM_SILVER_LO = '#b3bac4', '#8a929d'
+TONY_SKIN, TONY_HAIR = '#e2b58f', '#2b1d14'
 
 
 def im_head(face, rgb, glow, rs):
-    """Layer 0 = Tony Stark's face (seen when the faceplate lifts): dark hair, goatee."""
+    """Tony Stark (seen while the faceplate is up): dark hair, brown eyes, goatee."""
     x, y, z = face.world()
     if face.name in ('up', 'south'):
-        put(rgb, np.s_[:, :], '#2a1d14', 1.0)
+        put(rgb, np.ones(rgb.shape[:2], bool), TONY_HAIR)
         return
     if face.name in ('east', 'west'):
-        put(rgb, y > 29.0, '#2a1d14', 1.0)
-        put(rgb, (y > 26.5) & (np.abs(z) < 0.8), '#2a1d14', 0.9)
+        put(rgb, y > 29.0, TONY_HAIR)
+        put(rgb, (y > 26.5) & (z > 0.5), TONY_HAIR)
         return
-    if face.name == 'down':
+    if face.name != 'north':
         return
-    ax = np.abs(x)
-    put(rgb, y > 30.0, '#2a1d14', 1.0)
-    put(rgb, (ax > 0.8) & (ax < 3.0) & (np.abs(y - 28.85) < 0.2), '#2a1d14', 0.95)
-    put(rgb, (ax > 0.9) & (ax < 2.8) & (y > 27.6) & (y < 28.4), '#f1ede6', 1.0)
-    put(rgb, (ax > 1.4) & (ax < 2.2) & (y > 27.6) & (y < 28.4), '#5b3a22', 1.0)
-    put(rgb, (ax < 1.3) & (y < 26.0) & (y > 24.0), '#2a1d14', 0.95)  # goatee
-    put(rgb, (ax < 1.0) & (np.abs(y - 25.6) < 0.2), '#8a4c40', 0.9)
-    put(rgb, (ax > 1.0) & (ax < 1.6) & (np.abs(y - 26.2) < 0.25), '#2a1d14', 0.9)  # moustache ends
-
-
-def im_armor(face, rgb, glow, rs, gold_zone=None):
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], IM_RED, 1.0)
-    if gold_zone is not None:
-        put(rgb, gold_zone(x, y, z), IM_GOLD, 1.0)
-    if sides(face) and face.w > 3:
-        put(rgb, np.s_[:, 0], IM_RED_LO, 0.5)
-        put(rgb, np.s_[:, -1], IM_RED_LO, 0.5)
-    n = rs.uniform(0, 1, x.shape)
-    put(rgb, n > 0.97, IM_RED_HI, 0.35)
+    pixel_map(face, rgb, [
+        'HHHHHHHHHHHHHHHH',
+        'HHHHHHHHHHHHHHHH',
+        'HHHHHHHHHHHHHHHH',
+        'HHsssssssssssHHH',
+        'Hsssssssssssssss',
+        'sssbbbbssbbbbsss',
+        'ssssWEssssEWssss',
+        'ssssWPssssPWssss',
+        'ssssssssssssssss',
+        'sssssssnnsssssss',
+        'ssssssssssssssss',
+        'ssssHHHHHHHHssss',
+        'sssssHLLLLHsssss',
+        'sssssHHHHHHsssss',
+        'ssssssHHHHssssss',
+        'sssssssHHsssssss',
+    ], {'H': TONY_HAIR, 'b': TONY_HAIR, 'W': '#f4f0ea', 'E': '#6b4124', 'P': '#2a1a10', 'n': '#c79570', 'L': '#a8685a'})
 
 
 def im_torso(face, rgb, glow, rs):
     x, y, z = face.world()
-    im_armor(face, rgb, glow, rs, lambda x, y, z: (y < 17.0) & (np.abs(x) < 2.8) & (face.name == 'north'))
     if face.name == 'north':
-        band(face, rgb, (22.6, 19.4, 17.0, 14.6), IM_RED_LO, 0.16, 0.8)
-        put(rgb, (np.abs(x) < 0.16) & (y < 19.2), IM_GOLD_LO, 0.7)
-        put(rgb, (np.hypot(x, y - 20.6) < 1.5), IM_SILVER, 1.0)
-    if face.name == 'south':
-        put(rgb, (np.abs(x) > 0.8) & (np.abs(x) < 3.3) & (y > 15) & (y < 22.5), IM_RED_LO, 0.35)
-        band(face, rgb, (19.0,), IM_RED_LO, 0.16, 0.8)
-    if face.name in ('east', 'west'):
-        put(rgb, y < 18, IM_SILVER, 0.65)
+        put(rgb, (y < 17.0) & (np.abs(x) < 2.9), IM_GOLD)                 # gold abdomen
+        put(rgb, (y < 17.0) & (np.abs(x) < 2.9) & (np.abs(x) > 2.4), IM_GOLD_LO)
+        put(rgb, np.hypot(x, y - 20.6) < 1.6, IM_SILVER)                   # reactor housing
+    elif face.name in ('east', 'west'):
+        put(rgb, (y < 18.0) & (y > 13.0), IM_SILVER_LO)
+    elif face.name == 'south':
+        put(rgb, (y < 15.0), IM_RED_LO, 0.5)
 
 
 def im_arm(face, rgb, glow, rs):
     x, y, z = face.world()
-    im_armor(face, rgb, glow, rs, lambda x, y, z: (y < 17.6) & (y > 15.0))
-    band(face, rgb, (20.5, 17.6), IM_RED_LO, 0.16, 0.8)
-    put(rgb, y < 15.0, IM_RED, 1.0)
-    put(rgb, (y < 15.0) & (y > 13.3), IM_SILVER, 0.5)
-    if face.name == 'down' and glow is not None:
-        pass
+    put(rgb, (y < 17.8) & (y > 15.0), IM_GOLD)
+    put(rgb, (y < 15.0) & (y > 13.4), IM_SILVER, 0.55)
 
 
 def im_leg(face, rgb, glow, rs):
     x, y, z = face.world()
-    im_armor(face, rgb, glow, rs, lambda x, y, z: (y > 7.0) & (y < 11.0) & (face.name in ('north', 'east', 'west')))
-    band(face, rgb, (6.4, 11.4, 2.8), IM_RED_LO, 0.16, 0.8)
-    put(rgb, y < 2.8, IM_SILVER, 0.55)
-    put(rgb, (y < 6.2) & (y > 4.0) & (face.name == 'north'), IM_GOLD, 0.8)
+    if face.name in ('north', 'east', 'west'):
+        put(rgb, (y > 7.2) & (y < 10.8), IM_GOLD)
+    put(rgb, y < 2.8, IM_SILVER)
+    if face.name == 'north':
+        put(rgb, (y < 6.0) & (y > 4.2), IM_GOLD)
+
+
+def clear_alpha(face, rs):
+    return np.zeros((face.h, face.w), np.uint8)
 
 
 IM_MATS = {
-    ('head', 0): Mat(TONY_SKIN, noise=2, edge=0.0, fn=im_head),
-    ('head', 1): Mat(IM_RED, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('torso', 0): Mat(IM_RED, noise=4, edge=0.0, fn=im_torso),
-    ('torso', 1): Mat(IM_RED, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('arm', 0): Mat(IM_RED, noise=4, edge=0.0, fn=im_arm),
-    ('arm', 1): Mat(IM_RED, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('leg', 0): Mat(IM_RED, noise=4, edge=0.0, fn=im_leg),
-    ('leg', 1): Mat(IM_RED, noise=0, edge=0.0, alpha_fn=clear_alpha),
+    ('head', 0): Flat(TONY_SKIN, im_head, light=False),
+    ('head', 1): Flat(IM_RED, alpha_fn=clear_alpha, light=False),
+    ('torso', 0): Flat(IM_RED, im_torso, light=False),
+    ('torso', 1): Flat(IM_RED, alpha_fn=clear_alpha, light=False),
+    ('arm', 0): Flat(IM_RED, im_arm, light=False),
+    ('arm', 1): Flat(IM_RED, alpha_fn=clear_alpha, light=False),
+    ('leg', 0): Flat(IM_RED, im_leg, light=False),
+    ('leg', 1): Flat(IM_RED, alpha_fn=clear_alpha, light=False),
 }
+
+
+class _Box:
+    def __init__(self, origin, size):
+        self.origin, self.size = origin, size
+
+
+def group(bone):
+    if bone in ('head', 'torso'):
+        return bone
+    return 'arm' if any(p in bone for p in ('arm', 'hand', 'fingers')) else 'leg'
+
+
+def paint_skin(model, mats, seed=2012):
+    """Paints every full skin box of a split-limb player rig into a 128 x 128 HD skin (Steve layout)."""
+    rng = random.Random(seed)
+    img = np.zeros((64 * D, 64 * D, 4), np.uint8)
+    for origin, size, (u, v), layer, bone in model.skin_boxes:
+        mat = mats[(group(bone), layer)]
+        w, h, d = size
+        rects = {'west': (u, v + d, d, h), 'north': (u + d, v + d, w, h), 'east': (u + d + w, v + d, d, h),
+                 'south': (u + d + w + d, v + d, w, h), 'up': (u + d, v, w, d), 'down': (u + d + w, v, w, d)}
+        box = _Box(origin, size)
+        for name, (x, y, rw, rh) in rects.items():
+            face = Face(box, name, int(round(rw * D)), int(round(rh * D)))
+            col, _ = mat.paint(face, rng)
+            img[int(y * D):int(y * D) + face.h, int(x * D):int(x * D) + face.w] = col
+    return img
 
 
 def faceplate_fn(face, rgb, glow, rs):
     x, y, z = face.world()
-    put(rgb, np.s_[:, :], IM_GOLD, 1.0)
     if face.name == 'north':
         ax = np.abs(x)
         eye = (ax > 0.8) & (ax < 2.8) & (np.abs(y - (28.2 + (ax - 0.8) * 0.12)) < 0.28)
-        put(rgb, eye, '#f4fbff', 1.0)
-        put(rgb, (ax < 1.6) & (np.abs(y - 25.3) < 0.14), IM_GOLD_LO, 0.9)
-        put(rgb, (np.abs(ax - 1.0) < 0.12) & (y < 27.0), IM_GOLD_LO, 0.6)
-        put(rgb, (ax > 3.2), IM_RED, 1.0)
-        if glow is not None:
-            glow[eye] = [200, 240, 255, 255]
+        put(rgb, ax > 3.2, IM_RED)
+        put(rgb, (ax < 1.6) & (np.abs(y - 25.3) < 0.14), IM_GOLD_LO)       # mouth slit
+        put(rgb, eye, '#f4fbff')
+        glow_put(glow, eye, (200, 240, 255, 255))
 
 
 def helmet_fn(face, rgb, glow, rs):
     x, y, z = face.world()
-    put(rgb, np.s_[:, :], IM_RED, 1.0)
     if face.name == 'up':
-        put(rgb, np.abs(x) < 0.5, IM_RED_LO, 0.6)
+        put(rgb, np.abs(x) < 0.5, IM_RED_HI, 0.6)
     if face.name in ('east', 'west'):
-        put(rgb, (np.abs(z) < 0.9) & (np.abs(y - 27.5) < 0.9), IM_SILVER, 0.6)
+        put(rgb, (np.abs(z) < 0.9) & (np.abs(y - 27.5) < 0.9), IM_SILVER)
 
 
-def glow_disc(color, radius_frac=0.5):
+def glow_disc(colour, rim_col=IM_SILVER):
     def fn(face, rgb, glow, rs):
-        h, w = face.h, face.w
-        v, u = np.mgrid[0:h, 0:w]
-        r = np.hypot((u + 0.5) / w - 0.5, (v + 0.5) / h - 0.5) * 2
-        put(rgb, np.s_[:, :], '#cfe9ff', 1.0)
-        put(rgb, r > 0.75, IM_SILVER, 1.0)
-        if glow is not None:
-            glow[r < 0.85] = list(color) + [255]
+        u, v = face.grid()
+        r = np.hypot(u - 0.5, v - 0.5) * 2
+        put(rgb, np.ones(r.shape, bool), '#d8efff')
+        put(rgb, r > 0.75, rim_col)
+        glow_put(glow, r < 0.85, tuple(colour) + (255,))
     return fn
 
 
 IM = {
-    'faceplate': Mat(IM_GOLD, noise=3, edge=0.1, fn=faceplate_fn, grain=1),
-    'helmet': Mat(IM_RED, noise=4, edge=0.12, fn=helmet_fn),
-    'plate': Mat(IM_RED, noise=4, edge=0.2),
-    'gold': Mat(IM_GOLD, noise=4, edge=0.2),
-    'silver': Mat(IM_SILVER, noise=4, edge=0.2),
-    'reactor': Mat('#cfe9ff', noise=0, edge=0.0, fn=glow_disc((170, 230, 255)), grain=1),
-    'repulsor': Mat('#cfe9ff', noise=0, edge=0.0, fn=glow_disc((170, 230, 255)), grain=1),
-    'jet': Mat('#2a2d33', noise=2, edge=0.1, fn=glow_disc((255, 190, 120)), grain=1),
+    'faceplate': Flat(IM_GOLD, faceplate_fn),
+    'helmet': Flat(IM_RED, helmet_fn),
+    'plate': Flat(IM_RED),
+    'gold': Flat(IM_GOLD),
+    'silver': Flat(IM_SILVER),
+    'reactor': Flat('#d8efff', glow_disc((170, 230, 255)), light=False),
+    'repulsor': Flat('#d8efff', glow_disc((170, 230, 255)), light=False),
+    'jet': Flat('#2a2d33', glow_disc((255, 190, 120), '#2a2d33'), light=False),
 }
 
 
+def player_skeleton(m):
+    rig(m, False)
+    for side, s in (('right', -1), ('left', 1)):
+        pass
+
+
 def ironman_gear():
-    m = Model('ironman_mk7_gear', density=4, width=128, seed=7)
-    skeleton(m, False)
+    m = CleanModel('ironman_mk7_gear', density=4, width=128, seed=7)
+    rig(m, False)
     m.bone('helmet', 'head', [0, 24, 0])
     m.bone('faceplate', 'helmet', [0, 32.3, -4.4])
     m.bone('shoulder_right', 'torso', [-5.6, 23.6, 0])
     m.bone('shoulder_left', 'torso', [5.6, 23.6, 0])
     m.bone('back_flaps', 'torso', [0, 22, 2.2])
-    # helmet shell (back + sides + crown), face plate on its own hinge
     m.cube('helmet', [-4.45, 24.0, -3.6], [8.9, 8.45, 8.05], IM['helmet'], faces=('south', 'east', 'west', 'up'))
-    m.cube('helmet', [-4.45, 24.0, 4.0], [8.9, 1.2, 0.5], IM['silver'])
+    m.cube('helmet', [-4.5, 24.0, 4.0], [9.0, 1.2, 0.6], IM['silver'])
     m.cube('faceplate', [-4.35, 24.1, -4.5], [8.7, 8.1, 0.9], IM['faceplate'], faces=('north', 'east', 'west', 'down'))
     m.cube('faceplate', [-1.2, 23.6, -4.65], [2.4, 1.2, 1.2], IM['gold'])
-    # chest: arc reactor + gold abdomen plates, collar
     m.cube('torso', [-1.05, 19.55, -2.35], [2.1, 2.1, 0.3], IM['reactor'], faces=('north',))
     m.cube('torso', [-4.25, 22.3, -2.25], [8.5, 1.9, 4.5], IM['plate'])
     for sx, bone in ((-1, 'shoulder_right'), (1, 'shoulder_left')):
@@ -186,7 +301,6 @@ def ironman_gear():
         m.cube(bone, [x0 + 0.4, 24.0, -2.0], [3.8, 0.7, 4.0], IM['gold'])
     m.cube('back_flaps', [-3.2, 15.5, 2.0], [2.6, 6.0, 0.6], IM['plate'])
     m.cube('back_flaps', [0.6, 15.5, 2.0], [2.6, 6.0, 0.6], IM['plate'])
-    # forearm gauntlets, repulsor palms, boots with jets
     for side, cx in (('right', -6.0), ('left', 6.0)):
         m.cube(f'{side}_forearm', [cx - 2.0, 15.2, -2.0], [4.0, 3.0, 4.0], IM['gold'], inflate=0.3)
         m.cube(f'{side}_fingers', [cx - 0.9, 11.98, -0.9], [1.8, 0.02, 1.8], IM['repulsor'], faces=('down',))
@@ -199,213 +313,169 @@ def ironman_gear():
     return m
 
 
-# =================================================================================== THOR 2012
-TH_BLACK, TH_BLACK_HI = '#1c1d22', '#33353d'
-TH_MAIL = '#7c818a'
-TH_SILVER = '#c3c8d0'
-TH_RED, TH_RED_LO = '#a3161c', '#690c11'
-TH_HAIR, TH_HAIR_LO = '#d8b25e', '#a3803a'
-TH_SKIN = '#e7bf9a'
+# ============================================================================================ THOR (2012)
+TH_ARMOR, TH_ARMOR_HI, TH_ARMOR_LO = '#2b2e36', '#424652', '#1b1d23'
+TH_MAIL, TH_MAIL_LO = '#7d838e', '#646a74'
+TH_SILVER, TH_SILVER_LO = '#d3d8df', '#a2a9b3'
+TH_RED, TH_RED_HI, TH_RED_LO = '#b3171f', '#cf2f33', '#7e0f16'
+TH_SKIN, TH_SKIN_LO, TH_SKIN_SH = '#efc6a3', '#d9a885', '#c4906f'
+TH_HAIR, TH_HAIR_HI, TH_HAIR_LO = '#e3bb5e', '#f3d488', '#b98f3c'
+TH_BEARD = '#c29445'
+TH_PANTS = '#30333b'
+URU, URU_HI, URU_LO = '#8f959e', '#b5bbc3', '#666c75'
+LEATHER_BROWN, LEATHER_BROWN_LO = '#6e4a2c', '#4f331d'
 
-
-def th_head(face, rgb, glow, rs):
-    x, y, z = face.world()
-    if face.name in ('up', 'south'):
-        put(rgb, np.s_[:, :], TH_HAIR, 1.0)
-        return
-    if face.name in ('east', 'west'):
-        put(rgb, (y > 27.0) | (z > 0.5), TH_HAIR, 1.0)
-        put(rgb, (y <= 27.0) & (z <= 0.5) & (y > 24.0), '#b58b55', 0.5)  # stubble
-        return
-    if face.name == 'down':
-        put(rgb, np.s_[:, :], '#b58b55', 0.6)
-        return
-    ax = np.abs(x)
-    put(rgb, y > 30.2, TH_HAIR, 1.0)
-    put(rgb, ax > 3.4, TH_HAIR, 1.0)
-    put(rgb, (ax > 0.8) & (ax < 3.0) & (np.abs(y - 28.9) < 0.22), '#9b7637', 1.0)
-    put(rgb, (ax > 0.9) & (ax < 2.8) & (y > 27.6) & (y < 28.4), '#f3efe8', 1.0)
-    put(rgb, (ax > 1.4) & (ax < 2.2) & (y > 27.6) & (y < 28.4), '#3b78c8', 1.0)
-    put(rgb, (y < 26.4) & (ax < 3.3), '#b58b55', 0.55)  # beard stubble
-    put(rgb, (ax < 1.5) & (np.abs(y - 25.5) < 0.18), '#8d4f43', 0.9)
+THOR_FACE = [
+    'HHHHHHHHHHHHHHHH',
+    'HHHHHHHHHHHHHHHH',
+    'HHHHHHHHHHHHHHHH',
+    'HHHHHHHHHHHHHHHH',
+    'Hsssssssssssssss',
+    'ssssssssssssssss',
+    'ssbbbbbssbbbbbss',
+    'ssssWIIssIIWssss',
+    'ssssWIPssPIWssss',
+    'sssssssssssssss s'[:16],
+    'ssssssshhsssssss',
+    'sBssssnnnnssssBs',
+    'sBBBBsLLLLsBBBBs',
+    'sBBBBBBBBBBBBBBs',
+    'ssBBBBBBBBBBBBss',
+    'sssBBBBBBBBBBsss',
+]
+THOR_PAL = {'H': TH_HAIR, 'b': TH_HAIR_LO, 'W': '#f6f6f8', 'I': '#4f86d6', 'P': '#1f3157', 'h': '#f8d6b6',
+            'n': TH_SKIN_SH, 'L': '#b0705f', 'B': TH_BEARD}
 
 
 def th_torso(face, rgb, glow, rs):
     x, y, z = face.world()
-    put(rgb, np.s_[:, :], TH_BLACK, 1.0)
     if face.name == 'north':
-        # quilted leather, silver ribs at the waist
-        put(rgb, (np.mod(x + y, 1.6) < 0.16) & (y > 18), TH_BLACK_HI, 0.6)
-        band(face, rgb, (13.5, 14.5, 15.5, 16.5), TH_SILVER, 0.15, 0.55)
-    if face.name in ('east', 'west', 'south'):
-        put(rgb, np.mod(y, 1.4) < 0.16, TH_BLACK_HI, 0.6)
+        put(rgb, y < 16.6, TH_MAIL)                         # mail skirt above the belt
+        u, v = face.grid()
+        chk = ((np.floor(u * face.w) + np.floor(v * face.h)) % 2) == 0
+        put(rgb, (y < 16.6) & chk, TH_MAIL_LO, 0.35)
+    elif face.name in ('east', 'west'):
+        put(rgb, y < 16.6, TH_MAIL)
 
 
-def th_arm(face, rgb, glow, rs):
+def th_plate(face, rgb, glow, rs):
     x, y, z = face.world()
-    put(rgb, np.s_[:, :], TH_MAIL, 1.0)
-    ring = (np.mod(np.floor(y * 2) + np.floor(x * 2 + z * 2), 2) == 0)
-    put(rgb, ring, '#5b6068', 0.55)
-    put(rgb, y > 21.0, TH_BLACK, 1.0)
-    put(rgb, (y < 17.5) & (y > 14.6), TH_BLACK_HI, 1.0)  # bracer
-    band(face, rgb, (16.0,), TH_SILVER, 0.2, 0.8)
-    put(rgb, y <= 14.6, TH_SKIN, 1.0)
-    put(rgb, (y <= 14.6) & (y > 13.6), '#2d2e33', 0.9)
+    if face.name == 'north':
+        put(rgb, np.abs(x) < 0.3, TH_ARMOR_LO)               # centre seam between the two disc columns
+        put(rgb, y > 23.0, TH_ARMOR_HI, 0.6)
 
 
-def th_leg(face, rgb, glow, rs):
+def mail_fn(face, rgb, glow, rs):
+    """Chain-mail sleeve: fine 1 px checker at low contrast (reads as mail, never as stripes)."""
+    if sides(face):
+        u, v = face.grid()
+        chk = ((np.floor(u * face.w) + np.floor(v * face.h)) % 2) == 0
+        put(rgb, chk, TH_MAIL_LO, 0.35)
+
+
+def bracer_fn(face, rgb, glow, rs):
+    if sides(face):
+        put(rgb, np.s_[:1, :], TH_SILVER_LO, 0.9)
+        put(rgb, np.s_[-1:, :], TH_SILVER_LO, 0.9)
+        h, w = rgb.shape[:2]
+        for col in range(1, w, 3):
+            put(rgb, np.s_[h // 2:h // 2 + 1, col:col + 1], TH_SILVER)
+
+
+def boot_fn_thor(face, rgb, glow, rs):
     x, y, z = face.world()
-    put(rgb, np.s_[:, :], TH_BLACK, 1.0)
-    put(rgb, np.mod(y, 1.2) < 0.14, TH_BLACK_HI, 0.5)
-    put(rgb, y < 6.0, '#2b2522', 1.0)  # boots
-    band(face, rgb, (6.0, 3.0), TH_SILVER, 0.18, 0.6)
-    put(rgb, y < 0.5, '#100e0d', 1.0)
-
-
-TH_MATS = {
-    ('head', 0): Mat(TH_SKIN, noise=2, edge=0.0, fn=th_head),
-    ('head', 1): Mat(TH_HAIR, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('torso', 0): Mat(TH_BLACK, noise=4, edge=0.0, fn=th_torso),
-    ('torso', 1): Mat(TH_BLACK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('arm', 0): Mat(TH_MAIL, noise=3, edge=0.0, fn=th_arm),
-    ('arm', 1): Mat(TH_MAIL, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('leg', 0): Mat(TH_BLACK, noise=4, edge=0.0, fn=th_leg),
-    ('leg', 1): Mat(TH_BLACK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-}
-
-
-def disc_fn(face, rgb, glow, rs):
-    h, w = face.h, face.w
-    v, u = np.mgrid[0:h, 0:w]
-    r = np.hypot((u + 0.5) / w - 0.5, (v + 0.5) / h - 0.5) * 2
-    put(rgb, np.s_[:, :], TH_SILVER, 1.0)
-    put(rgb, r < 0.55, '#e4e7ec', 1.0)
-    put(rgb, r > 0.9, '#868b94', 1.0)
+    if sides(face):
+        put(rgb, y < 0.6, TH_ARMOR_LO)
+        put(rgb, (y > 3.6) & (y < 4.1), TH_SILVER_LO)
+    if face.name == 'down':
+        put(rgb, np.ones(rgb.shape[:2], bool), TH_ARMOR_LO)
 
 
 def cape_fn(face, rgb, glow, rs):
     x, y, z = face.world()
-    if sides(face) and face.w > 3:
-        for _ in range(max(1, face.w // 3)):
-            c = rs.randint(0, face.w)
-            put(rgb, np.s_[:, c:c + 1], TH_RED_LO, 0.45)
-    put(rgb, np.s_[-1:, :], TH_RED_LO, 0.6)
+    if face.name == 'north':
+        put(rgb, np.ones(rgb.shape[:2], bool), TH_RED_LO)   # inner side of the cape
+    elif face.name == 'south':
+        put(rgb, y < 3.0, TH_RED_LO, 0.35)
+    elif face.name in ('east', 'west', 'down'):
+        put(rgb, np.ones(rgb.shape[:2], bool), TH_RED_LO)
 
 
-def strands(lo, hi, wave=0.9, ends=True):
-    """Hair: soft strands running down the sides (random per-column tone that drifts slowly with the waves), lit
-    tops, darker tips; on the crown the strands run front to back."""
+def hair_fn(lo, hi):
     def fn(face, rgb, glow, rs):
-        v, u = np.mgrid[0:face.h, 0:face.w]
-        across, along = (v, u) if face.name in ('up', 'down') else (u, v)
-        n = int(across.max()) + 1
-        tone = rs.uniform(-1, 1, n + 2)
-        tone = (tone[:-2] + 2 * tone[1:-1] + tone[2:]) / 4 * 1.6
-        ph = rs.uniform(0, 6.28, n)
-        k = tone[across] + 0.45 * np.sin(along * 0.45 * wave + ph[across])
-        put(rgb, k > 0.5, hi, 0.4)
-        put(rgb, k < -0.5, lo, 0.5)
-        if face.name not in ('up', 'down'):
-            put(rgb, np.s_[0:1, :], hi, 0.3)
-            if ends and face.h > 4:
-                put(rgb, np.s_[-2:, :], lo, 0.45)
+        x, y, z = face.world()
+        if face.name == 'up':
+            put(rgb, np.ones(rgb.shape[:2], bool), hi, 0.4)
+        elif sides(face):
+            put(rgb, np.s_[-1:, :], lo, 0.7)                  # tips
     return fn
 
 
-URU, URU_HI, URU_LO, URU_LINE = '#8a9099', '#b9bfc7', '#5f656e', '#4b5059'
+def knot_fn(face, rgb, glow, rs):
+    """Uru head: knot-work medallion on the long sides (one closed ring + cross), polished upper edge."""
+    u, v = face.grid()
+    if face.name in ('east', 'west', 'up', 'down') and face.w > 8 and face.h > 6:
+        r = np.hypot((u - 0.5) * face.w / max(face.w, face.h), (v - 0.5) * face.h / max(face.w, face.h)) * 2
+        ring = np.abs(r - 0.62) < 0.09
+        cross = ((np.abs(u - 0.5) < 0.04) | (np.abs(v - 0.5) < 0.06)) & (r < 0.62)
+        put(rgb, ring | cross, URU_HI, 0.85)
+        put(rgb, np.abs(r - 0.62) < 0.18, URU_LO, 0.25)
+    if sides(face):
+        put(rgb, np.s_[:1, :], URU_HI, 0.5)
 
 
-def uru_shade(face, rgb):
-    """Brushed Uru metal: lighter towards the top, a faint horizontal brush grain."""
-    x, y, z = face.world()
-    if face.name in ('up', 'down'):
-        return
-    t = (y - y.min()) / max(1e-6, y.max() - y.min())
-    rgb *= (0.86 + 0.22 * t)[..., None]
-
-
-def knot(face, rgb, color):
-    """Celtic knot medallion (ring + interlaced triquetra) centred on the face."""
-    v, u = np.mgrid[0:face.h, 0:face.w]
-    cx, cy = (face.w - 1) / 2, (face.h - 1) / 2
-    r = min(face.w, face.h) * 0.42
-    d = np.hypot(u - cx, v - cy)
-    put(rgb, np.abs(d - r) < 0.55, color, 0.95)
-    for k in range(3):
-        a = math.radians(90 + 120 * k)
-        ox, oy = cx + math.cos(a) * r * 0.42, cy - math.sin(a) * r * 0.42
-        dd = np.hypot(u - ox, v - oy)
-        put(rgb, (np.abs(dd - r * 0.5) < 0.5) & (d < r - 0.6), color, 0.85)
-
-
-def hammer_head_fn(face, rgb, glow, rs):
-    uru_shade(face, rgb)
-    if face.w > 6 and face.h > 6:
-        # engraved frame one pixel in from the edge, the knot on the long sides
-        put(rgb, np.s_[1, 1:-1], URU_LINE, 0.7)
-        put(rgb, np.s_[-2, 1:-1], URU_LINE, 0.7)
-        put(rgb, np.s_[1:-1, 1], URU_LINE, 0.7)
-        put(rgb, np.s_[1:-1, -2], URU_LINE, 0.7)
-        if face.name in ('east', 'west'):
-            knot(face, rgb, URU_LINE)
-            put(rgb, np.s_[2:3, 2:-2], URU_HI, 0.35)
-    put(rgb, np.s_[0, :], URU_HI, 0.55)
-    put(rgb, np.s_[-1, :], URU_LO, 0.5)
-    if glow is not None:
-        glow[:] = [150, 200, 255, 0]
-
-
-def hammer_face_fn(face, rgb, glow, rs):
-    """Striking faces and bevels: polished, a soft centre highlight."""
-    uru_shade(face, rgb)
-    v, u = np.mgrid[0:face.h, 0:face.w]
-    d = np.hypot((u + 0.5) / face.w - 0.5, (v + 0.5) / face.h - 0.4)
-    put(rgb, d < 0.22, URU_HI, 0.35)
-    put(rgb, np.s_[0, :], URU_HI, 0.5)
-
-
-def rim_fn(face, rgb, glow, rs):
-    put(rgb, np.s_[0, :], URU_HI, 0.6)
-    put(rgb, np.s_[-1, :], URU_LO, 0.7)
+def face_inset_fn(face, rgb, glow, rs):
+    if face.name in ('north', 'south'):
+        put(rgb, np.s_[1:-1, 1:-1], URU_LO, 0.6)
 
 
 def handle_fn(face, rgb, glow, rs):
-    """Leather wrap: diagonal turns with a dark seam and a lit edge."""
-    v, u = np.mgrid[0:face.h, 0:face.w]
-    k = (u + v * 2) % 5
-    put(rgb, k == 0, '#24150b', 0.85)
-    put(rgb, k == 1, '#7a5233', 0.45)
-
-
-def silver_fn(face, rgb, glow, rs):
-    put(rgb, np.s_[0, :], '#eef0f3', 0.6)
-    put(rgb, np.s_[-1, :], '#7c818a', 0.6)
+    """Leather wrap: a low-contrast spiral (two tones), no hard bands."""
+    if sides(face):
+        x, y, z = face.world()
+        u, v = face.grid()
+        s = np.mod(y * 1.6 + u * 1.2, 1.0) < 0.5
+        put(rgb, s, LEATHER_BROWN_LO, 0.35)
 
 
 TH = {
-    'disc': Mat(TH_SILVER, noise=0, edge=0.0, fn=disc_fn, grain=1),
-    'cape': Mat(TH_RED, noise=5, edge=0.05, fn=cape_fn),
-    'hair': Mat(TH_HAIR, noise=6, edge=0.05, fn=strands(TH_HAIR_LO, '#f1d48a', wave=0.8), grain=1),
-    'hair_lo': Mat(TH_HAIR_LO, noise=6, edge=0.05, fn=strands('#7d5f27', TH_HAIR, wave=0.8), grain=1),
-    'silver': Mat(TH_SILVER, noise=3, edge=0.15),
-    'black': Mat(TH_BLACK, noise=3, edge=0.15),
-    'hammer': Mat(URU, noise=3, edge=0.0, fn=hammer_head_fn, grain=1),
-    'hammer_face': Mat('#969ca5', noise=2, edge=0.12, fn=hammer_face_fn, grain=1),
-    'hammer_rim': Mat('#737983', noise=2, edge=0.0, fn=rim_fn, grain=1),
-    'handle': Mat('#4f3220', noise=3, edge=0.0, fn=handle_fn, grain=1),
-    'hammer_silver': Mat('#b4bac2', noise=2, edge=0.0, fn=silver_fn, grain=1),
-    'strap': Mat('#3a2414', noise=2, edge=0.0),
+    'head': face_material(TH_SKIN, THOR_FACE, THOR_PAL, sides_col=TH_HAIR, back_col=TH_HAIR, top_col=TH_HAIR),
+    'neck': Flat(TH_SKIN_LO),
+    'torso': Flat(TH_ARMOR, th_torso),
+    'plate': Flat(TH_ARMOR, th_plate),
+    'arm': Flat(TH_MAIL, mail_fn),
+    'forearm': Flat(TH_SKIN),
+    'hand': Flat(TH_SKIN),
+    'fingers': Flat(TH_SKIN_LO),
+    'leg': Flat(TH_PANTS),
+    'shin': Flat(TH_PANTS),
+    'shoulder': Flat(TH_ARMOR, lambda f, r, g, s: put(r, np.s_[:1, :], TH_SILVER_LO, 0.8) if sides(f) else None),
+    'bracer': Flat(TH_ARMOR_LO, bracer_fn),
+    'belt': Flat(TH_ARMOR_LO, lambda f, r, g, s: put(r, np.s_[:1, :], TH_SILVER_LO, 0.7) if sides(f) else None),
+    'buckle': Flat(TH_SILVER),
+    'boot': Flat(TH_ARMOR, boot_fn_thor),
+    'collar': Flat(TH_ARMOR_HI),
+    'disc': Flat(TH_SILVER, lambda f, r, g, s: put(r, np.hypot(*(np.array(f.grid()) - 0.5)) < 0.22, TH_SILVER_LO, 0.8),
+                 alpha_fn=disc_alpha),
+    'cape': Flat(TH_RED, cape_fn),
+    'hair': Flat(TH_HAIR, hair_fn(TH_HAIR_LO, TH_HAIR_HI)),
+    'hair_lo': Flat(TH_HAIR_LO, hair_fn(TH_HAIR_LO, TH_HAIR)),
+    'hammer': Flat(URU, knot_fn),
+    'hammer_face': Flat(URU, face_inset_fn),
+    'hammer_rim': Flat(URU_HI),
+    'hammer_silver': Flat(TH_SILVER),
+    'handle': Flat(LEATHER_BROWN, handle_fn),
+    'strap': Flat(LEATHER_BROWN_LO),
 }
 
 
 def mjolnir(m, bone, gx, gy, gz):
-    """MCU Mjolnir, grip at (gx, gy, gz): the handle runs along Y through the fist, the pommel and the wrist strap
-    above it, the head below with its long axis front-back. The head is a chamfered block (two crossed cubes), with
-    raised rims at both ends, recessed striking faces, a knotwork medallion on the long sides and a collar where the
-    leather-wrapped handle enters it."""
-    hy0, hh, hl, hw = gy - 7.9, 3.4, 5.8, 3.2          # head bottom, height, length (z), width (x)
-    m.cube(bone, [gx - hw / 2, hy0 + 0.3, gz - hl / 2], [hw, hh - 0.6, hl], TH['hammer'])
-    m.cube(bone, [gx - hw / 2 + 0.3, hy0, gz - hl / 2], [hw - 0.6, hh, hl], TH['hammer_face'])
+    """MCU Mjolnir, grip at (gx, gy, gz): the handle runs along Y through the fist with the pommel and the wrist
+    strap above it and the head below, long axis front-back. Chamfered head (two crossed blocks), raised rims at
+    both ends, recessed striking faces, knot-work medallions, a silver collar, leather-wrapped handle."""
+    hy0, hh, hl, hw = gy - 7.9, 3.4, 5.8, 3.2
+    m.cube(bone, [gx - hw / 2, hy0 + 0.3, gz - hl / 2 + 0.05], [hw, hh - 0.6, hl - 0.1], TH['hammer'])
+    m.cube(bone, [gx - hw / 2 + 0.3, hy0, gz - hl / 2 + 0.05], [hw - 0.6, hh, hl - 0.1], TH['hammer'])
     for z0 in (gz - hl / 2 - 0.05, gz + hl / 2 - 0.55):
         m.cube(bone, [gx - hw / 2 - 0.12, hy0 + 0.18, z0], [hw + 0.24, hh - 0.36, 0.6], TH['hammer_rim'])
     for z0 in (gz - hl / 2 - 0.3, gz + hl / 2 + 0.05):
@@ -415,621 +485,54 @@ def mjolnir(m, bone, gx, gy, gz):
     m.cube(bone, [gx - 0.62, gy + 1.5, gz - 0.62], [1.24, 0.35, 1.24], TH['hammer_silver'])
     m.cube(bone, [gx - 0.52, gy + 1.85, gz - 0.52], [1.04, 0.55, 1.04], TH['hammer_silver'])
     m.cube(bone, [gx - 0.3, gy + 2.4, gz - 0.3], [0.6, 0.3, 0.6], TH['hammer_silver'])
-    # the wrist strap loop hanging from the pommel
     m.cube(bone, [gx - 0.12, gy - 0.9, gz + 0.55], [0.24, 2.95, 0.22], TH['strap'])
     m.cube(bone, [gx - 0.12, gy - 0.9, gz + 1.55], [0.24, 2.6, 0.22], TH['strap'])
-    m.cube(bone, [gx - 0.12, gy - 1.12, gz + 0.55], [0.24, 0.22, 1.22], TH['strap'])
+    m.cube(bone, [gx - 0.12, gy - 1.12, gz + 0.77], [0.24, 0.22, 0.78], TH['strap'])
     m.cube(bone, [gx - 0.12, gy + 1.78, gz + 0.5], [0.24, 0.22, 1.1], TH['strap'], rotation=[-25, 0, 0], pivot=[gx, gy + 1.9, gz + 0.5])
 
 
+def thor_body():
+    m = CleanModel('thor', density=D, width=128, seed=11, light=(32.0, 0.0, 0.05))
+    rig(m)
+    base_body(m, TH)
+    c = m.cube
+    c('torso', [-3.9, 16.6, -2.5], [7.8, 7.0, 0.5], TH['plate'])
+    c('torso', [-3.0, 23.4, -2.3], [6.0, 0.9, 4.6], TH['collar'])
+    c('torso', [-4.3, 11.8, -2.3], [8.6, 1.5, 4.6], TH['belt'])
+    c('torso', [-1.0, 11.85, -2.55], [2.0, 1.4, 0.3], TH['buckle'], faces=('north', 'east', 'west', 'up', 'down'))
+    for s in (-1, 1):
+        side = sname(s)
+        c(f'{side}_arm', [side_x(s, 4.15, 4.15), 21.4, -2.25], [4.15, 2.85, 4.5], TH['shoulder'])
+        c(f'{side}_forearm', [side_x(s, 3.75, 4.5), 14.6, -2.25], [4.5, 3.1, 4.5], TH['bracer'])
+        c(f'{side}_shin', [side_x(s, -0.1, 4.3), 0.0, -2.2], [4.3, 6.2, 4.4], TH['boot'])
+        c(f'{side}_shin', [side_x(s, 0.2, 3.7), 0.0, -2.7], [3.7, 1.4, 0.6], TH['boot'])
+    return m
+
+
 def thor_gear():
-    m = Model('thor_mcu_gear', density=4, width=128, seed=11)
-    skeleton(m, False)
+    m = CleanModel('thor_gear', density=D, width=128, seed=13, light=(32.0, 0.0, 0.05))
+    rig(m)
     m.bone('cape', 'torso', [0, 23.6, 2.4])
-    m.bone('cape_lower', 'cape', [0, 15.0, 2.7])
+    m.bone('cape_lower', 'cape', [0, 15, 2.7])
     m.bone('hair', 'head', [0, 30, 0])
-    m.bone('hammer', 'right_hand', [-6.0, 13.2, 0])
-    for row, y in enumerate((21.4, 18.9, 16.4)):
-        for sx in (-1, 1):
-            m.cube('torso', [sx * 2.0 - 0.95, y - 0.95, -2.42], [1.9, 1.9, 0.4], TH['disc'])
-    # shoulder pauldrons holding the cape
-    for sx in (-1, 1):
-        x0 = 3.6 if sx > 0 else -8.4
-        m.cube('torso', [x0, 22.3, -2.3], [4.8, 2.0, 4.6], TH['silver'], rotation=[0, 0, -12 * sx], pivot=[sx * 6, 23, 0])
-    m.cube('cape', [-4.6, 15.0, 2.3], [9.2, 8.6, 0.5], TH['cape'])
-    m.cube('cape_lower', [-4.9, 4.2, 2.45], [9.8, 10.8, 0.5], TH['cape'])
-    # long blond hair: crown volume and locks to the shoulders
-    m.cube('hair', [-4.6, 30.4, -4.6], [9.2, 2.2, 9.2], TH['hair'])
-    m.cube('hair', [-4.7, 23.0, 1.0], [9.4, 8.0, 3.8], TH['hair_lo'])
-    for sx in (-1, 1):
-        x0 = 4.05 if sx > 0 else -4.85
-        m.cube('hair', [x0, 22.6, -3.8], [0.8, 8.6, 5.0], TH['hair'])
-    m.cube('hair', [-4.3, 30.0, -4.75], [8.6, 1.6, 0.6], TH['hair'])
-    mjolnir(m, 'hammer', -6.0, 13.2, 0)
+    m.bone('hammer', 'right_hand', [-6, 13.2, 0])
+    c = m.cube
+    # six silver discs on the chest plate, two cape clasp discs on the collar bones
+    for x in (-1.95, 1.95):
+        for y in (21.2, 18.9, 16.9):
+            c('torso', [x - 0.9, y - 0.9, -3.05], [1.8, 1.8, 0.3], TH['disc'], faces=('north', 'south'))
+    for s in (-1, 1):
+        c('torso', [side_x(s, 2.6, 1.6), 22.4, -2.75], [1.6, 1.6, 0.3], TH['disc'], faces=('north', 'south'))
+    # cape: shoulder piece and three hanging folds
+    c('cape', [-4.6, 15.0, 2.45], [9.2, 8.6, 0.45], TH['cape'])
+    for x0, w, dz, y0 in ((-4.9, 3.3, 0.0, 1.6), (-1.6, 3.2, 0.15, 1.3), (1.6, 3.3, 0.0, 1.6)):
+        c('cape_lower', [x0, y0, 2.6 + dz], [w, 15.0 - y0 + 0.4, 0.45], TH['cape'])
+    # hair: crown, fringe, long sides, back, two front locks
+    c('hair', [-4.45, 30.9, -4.45], [8.9, 1.7, 8.9], TH['hair'])
+    c('hair', [-4.45, 29.6, -4.65], [8.9, 1.4, 0.9], TH['hair'])
+    for s in (-1, 1):
+        c('hair', [side_x(s, 4.05, 0.9), 22.2, -3.4], [0.9, 9.0, 7.6], TH['hair'])
+        c('hair', [side_x(s, 3.25, 1.6), 22.6, -4.6], [1.6, 7.2, 0.95], TH['hair_lo'])
+    c('hair', [-4.45, 21.4, 4.05], [8.9, 9.8, 0.9], TH['hair'])
+    mjolnir(m, 'hammer', -6.0, 13.2, 0.0)
     return m
-
-
-# =================================================================================== BLACK WIDOW
-BW_BLACK, BW_BLACK_HI = '#141519', '#2c2f38'
-BW_SILVER = '#b8bec8'
-BW_HAIR, BW_HAIR_LO, BW_HAIR_HI = '#a8321d', '#6b1d10', '#d2583a'
-BW_SKIN = '#efcdb4'
-
-
-def bw_head(face, rgb, glow, rs):
-    x, y, z = face.world()
-    if face.name in ('up', 'south'):
-        put(rgb, np.s_[:, :], BW_HAIR, 1.0)
-        return
-    if face.name in ('east', 'west'):
-        put(rgb, (y > 26.0) | (z > 0.0), BW_HAIR, 1.0)
-        return
-    if face.name == 'down':
-        return
-    ax = np.abs(x)
-    put(rgb, y > 30.0, BW_HAIR, 1.0)
-    put(rgb, (ax > 3.2) & (y > 25.0), BW_HAIR, 1.0)
-    put(rgb, (ax > 0.9) & (ax < 2.8) & (np.abs(y - 28.9) < 0.18), '#7a2a1a', 1.0)
-    put(rgb, (ax > 0.95) & (ax < 2.7) & (y > 27.6) & (y < 28.4), '#f4f0ea', 1.0)
-    put(rgb, (ax > 1.4) & (ax < 2.2) & (y > 27.6) & (y < 28.4), '#4f7a4a', 1.0)
-    put(rgb, (ax > 0.8) & (ax < 2.9) & (np.abs(y - 28.42) < 0.12), '#1b0f0c', 1.0)  # lashes
-    put(rgb, (ax < 1.3) & (np.abs(y - 25.5) < 0.22), '#b3454a', 1.0)
-
-
-def bw_torso(face, rgb, glow, rs):
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], BW_BLACK, 1.0)
-    if face.name == 'north':
-        put(rgb, (np.abs(x) < 0.15) & (y > 16), BW_SILVER, 0.8)  # zipper
-        put(rgb, (np.abs(np.abs(x) - 2.5) < 0.14), BW_BLACK_HI, 0.7)
-        band(face, rgb, (12.7,), BW_SILVER, 0.5, 1.0)  # belt
-        hour = (np.abs(y - 12.7) < 0.5) & (np.abs(x) < 0.7) & (np.abs(x) < 0.2 + np.abs(y - 12.7) * 1.0)
-        put(rgb, hour, '#d02020', 1.0)
-    else:
-        band(face, rgb, (12.7,), BW_SILVER, 0.5, 1.0)
-        put(rgb, np.abs(y - 18) < 0.14, BW_BLACK_HI, 0.7)
-
-
-def bw_arm(face, rgb, glow, rs):
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], BW_BLACK, 1.0)
-    put(rgb, np.abs(y - 20.5) < 0.14, BW_BLACK_HI, 0.8)
-    put(rgb, (y < 16.4) & (y > 15.0), BW_SILVER, 1.0)  # Widow's Bite bracelets
-    put(rgb, (np.abs(y - 15.7) < 0.2), '#7fc6ff', 1.0)
-    if glow is not None:
-        glow[(np.abs(y - 15.7) < 0.2)] = [120, 200, 255, 255]
-    put(rgb, y < 13.0, '#1f2026', 1.0)
-
-
-def bw_leg(face, rgb, glow, rs):
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], BW_BLACK, 1.0)
-    put(rgb, (np.abs(z) < 0.14) & (face.name in ('east', 'west')), BW_BLACK_HI, 0.7)
-    put(rgb, y < 5.0, '#0b0b0e', 1.0)
-    band(face, rgb, (5.0,), BW_BLACK_HI, 0.15, 0.8)
-
-
-BW_MATS = {
-    ('head', 0): Mat(BW_SKIN, noise=2, edge=0.0, fn=bw_head),
-    ('head', 1): Mat(BW_HAIR, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('torso', 0): Mat(BW_BLACK, noise=3, edge=0.0, fn=bw_torso),
-    ('torso', 1): Mat(BW_BLACK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('arm', 0): Mat(BW_BLACK, noise=3, edge=0.0, fn=bw_arm),
-    ('arm', 1): Mat(BW_BLACK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('leg', 0): Mat(BW_BLACK, noise=3, edge=0.0, fn=bw_leg),
-    ('leg', 1): Mat(BW_BLACK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-}
-
-
-def curls_fn(face, rgb, glow, rs):
-    if face.w > 2 and face.h > 2:
-        for _ in range(max(2, face.w * face.h // 10)):
-            px, py = rs.randint(0, face.w), rs.randint(0, face.h)
-            put(rgb, np.s_[py:py + 1, px:px + 2], BW_HAIR_LO, 0.6)
-
-
-BW = {
-    'hair': Mat(BW_HAIR, noise=6, edge=0.04, fn=strands(BW_HAIR_LO, BW_HAIR_HI, wave=1.3), grain=1),
-    'hair_curl': Mat(BW_HAIR, noise=6, edge=0.1, fn=strands(BW_HAIR_LO, BW_HAIR_HI, wave=1.8, ends=False), grain=1),
-    'gun': Mat('#25272c', noise=3, edge=0.15),
-    'gun_hi': Mat('#4a4e57', noise=2, edge=0.1),
-    'holster': Mat('#111114', noise=2, edge=0.15),
-    'bite': Mat('#b8bec8', noise=1, edge=0.0, fn=glow_disc((120, 200, 255), 0.6), grain=1),
-}
-
-
-def pistol(m, bone, gx, gy, gz):
-    """Grip in the fist, barrel along hand -Z (forward when the arm is levelled)."""
-    m.cube(bone, [gx - 0.35, gy - 0.9, gz - 0.4], [0.7, 1.9, 0.8], BW['gun'])
-    m.cube(bone, [gx - 0.4, gy + 0.9, gz - 3.0], [0.8, 0.9, 3.6], BW['gun_hi'])
-
-
-def widow_gear():
-    m = Model('black_widow_gear', density=4, width=128, seed=13)
-    skeleton(m, True)
-    m.bone('hair', 'head', [0, 30, 0])
-    m.bone('right_gun', 'right_hand', [-5.5, 12.6, 0])
-    m.bone('left_gun', 'left_hand', [5.5, 12.6, 0])
-    # 2012: shoulder-length red waves, parted on her left, volume at the sides, curled ends on the shoulders
-    m.cube('hair', [-4.5, 31.6, -4.5], [9.0, 1.0, 9.0], BW['hair'])                      # crown
-    m.cube('hair', [-4.7, 25.0, -1.2], [9.4, 7.0, 5.9], BW['hair'])                      # back
-    m.cube('hair', [-4.95, 22.4, 0.2], [9.9, 2.8, 4.9], BW['hair_curl'])                 # curls on the nape
-    for sx in (-1, 1):
-        x0 = 4.0 if sx > 0 else -5.0
-        m.cube('hair', [x0, 25.2, -4.3], [1.0, 6.6, 4.0], BW['hair'])                    # side volume
-        m.cube('hair', [x0 + (0.15 if sx > 0 else -0.35), 22.6, -3.9], [1.2, 2.9, 3.8], BW['hair_curl'])  # side curl
-        m.cube('hair', [x0 + (0.0 if sx > 0 else -0.1), 24.8, 0.0], [1.1, 1.4, 3.6], BW['hair_curl'])    # behind the ear
-    # the side part: a long swoop across the forehead and a short lock on the other side
-    m.cube('hair', [-4.45, 29.7, -4.85], [5.6, 2.0, 0.8], BW['hair'], rotation=[0, 0, 9], pivot=[-1.6, 30.6, -4.4])
-    m.cube('hair', [1.6, 30.3, -4.75], [2.9, 1.5, 0.7], BW['hair'], rotation=[0, 0, -14], pivot=[3.0, 31.0, -4.4])
-    m.cube('hair', [-4.6, 27.4, -4.65], [0.9, 2.6, 0.6], BW['hair_curl'])
-    # thigh holsters
-    for side, cx in (('right', -1.9), ('left', 1.9)):
-        x0 = cx - 2.55 if side == 'right' else cx + 2.0
-        m.cube(f'{side}_leg', [x0, 6.5, -1.2], [0.55, 3.4, 2.4], BW['holster'])
-    pistol(m, 'right_gun', -5.5, 12.6, 0)
-    pistol(m, 'left_gun', 5.5, 12.6, 0)
-    return m
-
-
-# =================================================================================== HAWKEYE
-HK_DARK, HK_DARK_HI = '#1d1a22', '#3a3346'
-HK_PURPLE = '#4b2f63'
-HK_SKIN = '#e3b996'
-
-
-HK_HAIR = strands('#5f4529', '#b08a5c', wave=1.6, ends=False)
-
-
-def hk_head(face, rgb, glow, rs):
-    x, y, z = face.world()
-    tmp = rgb.copy()
-    put(tmp, np.s_[:, :], '#8a6a46', 1.0)
-    HK_HAIR(face, tmp, glow, rs)
-    if face.name in ('up', 'south'):
-        rgb[:] = tmp
-        if face.name == 'south':  # short tapered nape
-            put(rgb, (y < 25.4) & (np.abs(x) < 3.4), '#6e5236', 0.5)
-        return
-    if face.name in ('east', 'west'):
-        m = (y > 29.4) | ((y > 27.0) & (np.abs(z - (face.oz + face.sz)) < 2.2))  # sideburn-free taper behind
-        rgb[m] = tmp[m]
-        put(rgb, (y > 26.0) & (y < 27.6) & (np.abs(z - (face.oz + 3.4)) < 0.5), '#c49a7c', 0.6)  # ear
-        return
-    if face.name == 'down':
-        return
-    ax = np.abs(x)
-    m = (y > 30.4) | ((y > 29.9) & (np.sin(x * 2.1) > 0.4))  # short spiky fringe
-    rgb[m] = tmp[m]
-    put(rgb, (ax > 0.7) & (ax < 3.2) & (y > 28.8) & (y < 29.2), '#6e5236', 0.9)  # brows
-    put(rgb, (ax > 0.7) & (ax < 3.2) & (y > 27.4) & (y < 28.7), '#141418', 1.0)  # tactical glasses
-    put(rgb, (ax > 1.0) & (ax < 2.6) & (y > 27.9) & (y < 28.4), '#5b4a7a', 0.8)
-    put(rgb, (ax < 0.5) & (y > 26.2) & (y < 27.4), '#c9a07f', 0.5)               # nose
-    put(rgb, (ax < 1.4) & (np.abs(y - 25.5) < 0.18), '#9b5a4c', 0.9)
-    put(rgb, (ax > 1.2) & (y < 25.0), '#b08868', 0.25)                           # stubble jaw
-
-
-def hk_torso(face, rgb, glow, rs):
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], HK_DARK, 1.0)
-    if face.name == 'north':
-        put(rgb, (x > -1.2) & (x < 4.0) & (y > 14), HK_PURPLE, 0.75)  # asymmetrical vest panel
-        put(rgb, np.abs(x + 1.2) < 0.18, HK_DARK_HI, 1.0)
-        band(face, rgb, (13.0,), '#2c2c30', 0.45, 1.0)
-    else:
-        band(face, rgb, (13.0,), '#2c2c30', 0.45, 1.0)
-        put(rgb, np.abs(y - 19) < 0.15, HK_DARK_HI, 0.6)
-
-
-def hk_arm(face, rgb, glow, rs):
-    x, y, z = face.world()
-    right = face.ox + face.sx / 2 < 0
-    put(rgb, np.s_[:, :], HK_DARK, 1.0)
-    if right:  # sleeveless right arm with an arm guard
-        put(rgb, y < 21.0, HK_SKIN, 1.0)
-        put(rgb, (y < 17.6) & (y > 14.6), '#2c2c30', 1.0)
-    else:
-        put(rgb, np.abs(y - 20.0) < 0.14, HK_DARK_HI, 0.8)
-    put(rgb, y < 14.6, '#25222b', 1.0)  # gloves
-    if right:
-        put(rgb, (y < 13.0) & (face.name == 'north'), HK_SKIN, 0.9)  # shooting-glove fingers
-
-
-def hk_leg(face, rgb, glow, rs):
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], HK_DARK, 1.0)
-    put(rgb, (np.abs(y - 8.5) < 1.2) & (face.name == 'north'), '#2c2a33', 1.0)
-    put(rgb, y < 5.4, '#111015', 1.0)
-    band(face, rgb, (5.4, 2.6), HK_DARK_HI, 0.15, 0.8)
-
-
-HK_MATS = {
-    ('head', 0): Mat(HK_SKIN, noise=2, edge=0.0, fn=hk_head),
-    ('head', 1): Mat(HK_DARK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('torso', 0): Mat(HK_DARK, noise=3, edge=0.0, fn=hk_torso),
-    ('torso', 1): Mat(HK_DARK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('arm', 0): Mat(HK_DARK, noise=3, edge=0.0, fn=hk_arm),
-    ('arm', 1): Mat(HK_DARK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-    ('leg', 0): Mat(HK_DARK, noise=3, edge=0.0, fn=hk_leg),
-    ('leg', 1): Mat(HK_DARK, noise=0, edge=0.0, alpha_fn=clear_alpha),
-}
-
-
-def fletch_fn(face, rgb, glow, rs):
-    put(rgb, np.s_[:, :], HK_PURPLE, 1.0)
-    if face.h > 2:
-        put(rgb, np.s_[::2, :], '#2b1a3a', 0.6)
-
-
-HK = {
-    'bow': Mat('#26232b', noise=3, edge=0.1),
-    'bow_hi': Mat('#5a4b6e', noise=2, edge=0.1),
-    'string': Mat('#d8d8dc', noise=0, edge=0.0),
-    'quiver': Mat('#2a2530', noise=3, edge=0.15),
-    'shaft': Mat('#3c3c44', noise=1, edge=0.0),
-    'fletch': Mat(HK_PURPLE, noise=2, edge=0.0, fn=fletch_fn, grain=1),
-    'tip': Mat('#c4c9d2', noise=1, edge=0.0),
-    'guard': Mat('#2c2c30', noise=2, edge=0.15),
-}
-
-
-def hawkeye_gear():
-    m = Model('hawkeye_gear', density=4, width=128, seed=17)
-    skeleton(m, False)
-    m.bone('bow', 'left_hand', [6.0, 13.6, 0])
-    m.bone('bow_top', 'bow', [6.0, 13.6, -1.0])
-    m.bone('bow_bottom', 'bow', [6.0, 13.6, 1.0])
-    m.bone('arrow', 'right_hand', [-6.0, 12.8, 0])
-    m.bone('quiver', 'torso', [0, 18, 2.4])
-    # recurve compound bow: riser in the fist, limbs along hand Z, cams at the tips
-    m.cube('bow', [5.55, 12.6, -1.0], [0.9, 2.2, 2.0], HK['bow_hi'])
-    m.cube('bow_top', [5.65, 13.1, -9.0], [0.7, 1.0, 8.0], HK['bow'], rotation=[-12, 0, 0], pivot=[6.0, 13.6, -1.0])
-    m.cube('bow_bottom', [5.65, 13.1, 1.0], [0.7, 1.0, 8.0], HK['bow'], rotation=[12, 0, 0], pivot=[6.0, 13.6, 1.0])
-    m.cube('bow_top', [5.6, 14.6, -9.4], [0.8, 1.4, 1.0], HK['bow_hi'])
-    m.cube('bow_bottom', [5.6, 14.6, 8.4], [0.8, 1.4, 1.0], HK['bow_hi'])
-    m.cube('bow', [5.95, 15.6, -8.8], [0.1, 0.1, 17.6], HK['string'])
-    # nocked arrow in the right hand (shaft along hand -Z)
-    m.cube('arrow', [-6.15, 12.65, -10.0], [0.3, 0.3, 11.0], HK['shaft'])
-    m.cube('arrow', [-6.3, 12.5, -11.0], [0.6, 0.6, 1.2], HK['tip'])
-    m.cube('arrow', [-6.05, 12.2, 0.2], [0.1, 1.2, 1.6], HK['fletch'])
-    # quiver on the back with a fan of fletchings
-    m.cube('quiver', [-1.4, 13.4, 2.1], [2.8, 9.2, 1.9], HK['quiver'], rotation=[0, 0, -20], pivot=[0, 18, 2.4])
-    for i, (dx, rz) in enumerate(((-1.6, -26), (-0.6, -20), (0.4, -16), (1.3, -10))):
-        m.cube('quiver', [dx + 1.6, 22.4, 2.4], [0.5, 2.0, 1.0], HK['fletch'], rotation=[0, 0, rz], pivot=[0, 18, 2.4])
-    m.cube('right_forearm', [-8.0, 15.0, -2.0], [4.0, 2.6, 4.0], HK['guard'], inflate=0.25)
-    return m
-
-
-# =================================================================================== HULK
-HU_GREEN, HU_GREEN_HI, HU_GREEN_LO = '#5f8a3a', '#7aa54b', '#3e5f26'
-HU_PANTS, HU_PANTS_LO = '#4c2c6b', '#311b47'
-
-
-def muscle_fn(face, rgb, glow, rs):
-    """Green skin: top-lit form shading, a rounded bulge per face, soft muscle striations and faint veins."""
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], HU_GREEN, 1.0)
-    if sides(face) and face.w > 4 and face.h > 4:
-        u, v = face.grid()
-        t = (y - face.oy) / max(1e-6, face.sy)
-        sh = (0.80 + 0.30 * t) * (0.9 + 0.2 * np.sin(u * np.pi) * np.sin(v * np.pi))
-        rgb[:] = rgb * sh[..., None]
-        for _ in range(max(1, face.w // 5)):
-            c = rs.randint(1, face.w - 1)
-            put(rgb, np.s_[:, c:c + 1], HU_GREEN_LO, 0.18)
-        if face.h > 10 and rs.random() < 0.6:  # a faint wandering vein
-            c = rs.uniform(0.2, 0.8) * face.w
-            for r in range(face.h):
-                c += rs.uniform(-0.7, 0.7)
-                cc = int(min(face.w - 1, max(0, c)))
-                put(rgb, np.s_[r:r + 1, cc:cc + 1], '#4d7a33', 0.35)
-    if face.name == 'up':
-        put(rgb, np.s_[:, :], HU_GREEN_HI, 0.35)
-    if face.name == 'down':
-        put(rgb, np.s_[:, :], HU_GREEN_LO, 0.6)
-
-
-def bulge(rgb, mask, e, hi=0.14, rim=None):
-    """Lighten the inside of an elliptical muscle (e < 1) towards its centre."""
-    k = np.clip(1 - e, 0, 1) * mask
-    rgb[:] = rgb * (1 + hi * k)[..., None]
-
-
-def hulk_torso_fn(face, rgb, glow, rs):
-    muscle_fn(face, rgb, glow, rs)
-    x, y, z = face.world()
-    upper = face.oy >= 27.5
-    if face.name == 'north' and upper:
-        for sx in (-1, 1):
-            e = ((x - sx * 5.2) / 5.6) ** 2 + ((y - 33.6) / 3.9) ** 2
-            bulge(rgb, 1.0, e, 0.16)
-            put(rgb, (e > 0.82) & (e < 1.15) & (y < 33.6), HU_GREEN_LO, 0.55)  # pectoral underside
-        put(rgb, (np.abs(x) < 0.25) & (y < 36.5), HU_GREEN_LO, 0.6)            # sternum groove
-        for sx in (-1, 1):  # deltoid edge where the chest meets the shoulder
-            put(rgb, np.abs(x - sx * 10.0) < 0.3, HU_GREEN_LO, 0.35)
-    elif face.name == 'north':
-        put(rgb, (np.abs(x) < 0.22) & (y > 21), HU_GREEN_LO, 0.55)              # linea alba
-        for yy in (22.6, 25.0, 27.3):
-            put(rgb, (np.abs(y - yy) < 0.2) & (np.abs(x) < 3.6), HU_GREEN_LO, 0.45)
-        for sx in (-1, 1):
-            for yc in (23.8, 26.2):
-                e = ((x - sx * 1.9) / 1.9) ** 2 + ((y - yc) / 1.2) ** 2
-                bulge(rgb, 1.0, e, 0.12)
-            put(rgb, np.abs(x - sx * 4.2) < 0.25, HU_GREEN_LO, 0.4)               # obliques
-    elif face.name == 'south' and upper:
-        put(rgb, np.abs(x) < 0.3, HU_GREEN_LO, 0.55)                            # spine
-        for sx in (-1, 1):
-            e = ((x - sx * 4.8) / 4.2) ** 2 + ((y - 33.0) / 3.4) ** 2           # shoulder blades
-            bulge(rgb, 1.0, e, 0.12)
-            put(rgb, (e > 0.85) & (e < 1.15), HU_GREEN_LO, 0.35)
-    elif face.name == 'south':
-        put(rgb, np.abs(x) < 0.3, HU_GREEN_LO, 0.5)
-        for sx in (-1, 1):
-            put(rgb, (np.abs(x - sx * 5.0) < 0.3) & (y > 23), HU_GREEN_LO, 0.3)  # lats
-
-
-def hulk_head_fn(face, rgb, glow, rs):
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], HU_GREEN, 1.0)
-    top = face.oy + face.sy
-    hair = strands('#0b0907', '#3a3229', wave=1.3)
-    if face.name in ('up', 'south'):
-        put(rgb, np.s_[:, :], '#1a1712', 1.0)
-        hair(face, rgb, glow, rs)
-        return
-    if face.name in ('east', 'west'):
-        tmp = rgb.copy()
-        put(tmp, np.s_[:, :], '#1a1712', 1.0)
-        hair(face, tmp, glow, rs)
-        m = y > top - 2.2 - 0.6 * (np.sin(z * 1.7) > 0.3)
-        rgb[m] = tmp[m]
-        put(rgb, (y < top - 5.5) & (y > top - 7.0) & (np.abs(z - (face.oz + 2.0)) < 1.2), HU_GREEN_LO, 0.5)  # cheek
-        return
-    if face.name != 'north':
-        return
-    ax = np.abs(x)
-    tmp = rgb.copy()
-    put(tmp, np.s_[:, :], '#1a1712', 1.0)
-    hair(face, tmp, glow, rs)
-    m = y > top - 1.6 - 0.5 * (np.sin(x * 2.3) > 0.5)
-    rgb[m] = tmp[m]
-    put(rgb, (ax > 0.6) & (ax < 3.2) & (np.abs(y - (top - 2.6)) < 0.35), HU_GREEN_LO, 1.0)  # heavy brow
-    put(rgb, (ax < 0.7) & (y > top - 3.2) & (y < top - 2.2), HU_GREEN_LO, 0.6)              # frown
-    put(rgb, (ax > 1.0) & (ax < 2.7) & (y > top - 3.9) & (y < top - 3.0), '#e9e6c8', 1.0)
-    put(rgb, (ax > 1.4) & (ax < 2.2) & (y > top - 3.9) & (y < top - 3.0), '#4f7a2a', 1.0)
-    put(rgb, (ax < 0.9) & (y > top - 5.4) & (y < top - 4.0), HU_GREEN_HI, 0.35)             # nose bridge
-    put(rgb, (ax > 0.5) & (ax < 1.2) & (np.abs(y - (top - 5.4)) < 0.25), HU_GREEN_LO, 0.8)  # nostrils
-    put(rgb, (ax > 2.6) & (y > top - 6.0) & (y < top - 4.6), HU_GREEN_LO, 0.35)             # cheekbones
-    put(rgb, (ax < 2.4) & (y > top - 7.2) & (y < top - 6.2), '#2b1d16', 1.0)  # snarl
-    put(rgb, (ax < 2.0) & (y > top - 6.9) & (y < top - 6.5), '#eae6d6', 1.0)  # teeth
-
-
-def pants_fn(face, rgb, glow, rs):
-    x, y, z = face.world()
-    put(rgb, np.s_[:, :], HU_PANTS, 1.0)
-    if sides(face) and face.w > 2:
-        for _ in range(max(1, face.w // 3)):
-            c = rs.randint(0, face.w)
-            put(rgb, np.s_[:, c:c + 1], HU_PANTS_LO, 0.5)
-
-
-def torn_alpha(face, rs):
-    h, w = face.h, face.w
-    a = np.full((h, w), 255, np.uint8)
-    if sides(face):
-        for c in range(w):
-            cut = rs.randint(0, max(1, h // 4))
-            if cut:
-                a[h - cut:, c] = 0
-    return a
-
-
-HU = {
-    'skin': Mat(HU_GREEN, noise=5, edge=0.05, fn=muscle_fn),
-    'torso': Mat(HU_GREEN, noise=5, edge=0.05, fn=hulk_torso_fn),
-    'head': Mat(HU_GREEN, noise=3, edge=0.0, fn=hulk_head_fn, grain=1),
-    'pants': Mat(HU_PANTS, noise=5, edge=0.05, fn=pants_fn),
-    'pants_torn': Mat(HU_PANTS, noise=5, edge=0.05, fn=pants_fn, alpha_fn=torn_alpha),
-    'hair': Mat('#1a1712', noise=2, edge=0.05, fn=strands('#0b0907', '#3a3229', wave=1.3)),
-    'nail': Mat('#3b4d2a', noise=2, edge=0.0),
-}
-
-
-def hulk_model():
-    """Hulk: own proportions (≈ 2.9 blocks), same bone names as the player rig so the clip code is shared."""
-    m = Model('hulk', density=3, width=256, seed=19)
-    m.bone('root', None, [0, 0, 0])
-    m.bone('waist', 'root', [0, 17, 0])
-    m.bone('torso', 'waist', [0, 18, 0])
-    m.bone('head', 'torso', [0, 38, -2.5])
-    m.bone('right_arm', 'torso', [-11.5, 35, 0])
-    m.bone('right_forearm', 'right_arm', [-13.5, 25, 0])
-    m.bone('right_hand', 'right_forearm', [-14.0, 15, 0])
-    m.bone('right_fingers', 'right_hand', [-14.0, 11, 0])
-    m.bone('left_arm', 'torso', [11.5, 35, 0])
-    m.bone('left_forearm', 'left_arm', [13.5, 25, 0])
-    m.bone('left_hand', 'left_forearm', [14.0, 15, 0])
-    m.bone('left_fingers', 'left_hand', [14.0, 11, 0])
-    m.bone('right_leg', 'root', [-4.2, 17, 0])
-    m.bone('right_shin', 'right_leg', [-4.4, 8.5, 0])
-    m.bone('left_leg', 'root', [4.2, 17, 0])
-    m.bone('left_shin', 'left_leg', [4.4, 8.5, 0])
-    # hunched torso: hips, waist, massive chest and trapezius
-    m.cube('waist', [-7.5, 15.5, -4.5], [15, 4.5, 9], HU['pants'])
-    m.cube('torso', [-8.5, 20, -5.0], [17, 8, 10], HU['torso'])
-    m.cube('torso', [-11.0, 28, -6.5], [22, 9.5, 12.5], HU['torso'])
-    m.cube('torso', [-6.5, 36.5, -3.5], [13, 3.0, 8], HU['skin'])  # trapezius
-    # small head forward of the shoulders
-    m.cube('head', [-4.0, 37.2, -7.5], [8, 8.4, 8], HU['head'])
-    m.cube('head', [-4.3, 44.0, -7.8], [8.6, 1.8, 8.6], HU['hair'])
-    m.cube('head', [-3.2, 36.8, -8.0], [6.4, 2.2, 1.0], HU['skin'])  # jaw
-    for side, sx in (('right', -1), ('left', 1)):
-        ax = sx * 13.5
-        m.cube(f'{side}_arm', [ax - 4.5, 25.0, -4.5], [9, 12, 9], HU['skin'])          # deltoid + biceps
-        m.cube(f'{side}_forearm', [ax - 4.0 + sx * 0.3, 15.0, -4.2], [8.0, 10.5, 8.4], HU['skin'])
-        m.cube(f'{side}_hand', [ax - 3.2 + sx * 0.5, 11.0, -3.4], [6.4, 4.2, 6.8], HU['skin'])
-        m.cube(f'{side}_fingers', [ax - 3.0 + sx * 0.5, 7.4, -3.2], [6.0, 3.8, 6.4], HU['skin'])
-        lx = sx * 4.3
-        m.cube(f'{side}_leg', [lx - 4.0, 8.5, -4.2], [8.0, 9.0, 8.4], HU['pants'])
-        m.cube(f'{side}_shin', [lx - 3.7, 3.2, -3.8], [7.4, 5.6, 7.6], HU['pants_torn'])
-        m.cube(f'{side}_shin', [lx - 3.4, 0.0, -4.6], [6.8, 3.4, 8.0], HU['skin'])     # bare feet
-    return m
-
-
-# =================================================================================== MJOLNIR (thrown), ARROWS, MISSILE
-def projectiles():
-    out = []
-    m = Model('mjolnir_mcu', density=6, width=128, seed=23)
-    m.bone('hammer', None, [0, 0, 0])
-    mjolnir(m, 'hammer', 0.0, 3.2, 0.0)
-    out.append(('mjolnir', m))
-    for key, tipmat in (('arrow', HK['tip']), ('arrow_explosive', Mat('#b02a2a', noise=1, edge=0.0)),
-                        ('arrow_shock', Mat('#58b6ff', noise=1, edge=0.0))):
-        a = Model(key, density=6, width=64, seed=29)
-        a.bone('arrow', None, [0, 0, 0])
-        a.cube('arrow', [-0.15, -0.15, -5.5], [0.3, 0.3, 11.0], HK['shaft'])
-        a.cube('arrow', [-0.35, -0.35, -6.9], [0.7, 0.7, 1.5], tipmat)
-        a.cube('arrow', [-0.05, -0.6, 4.0], [0.1, 1.2, 1.6], HK['fletch'])
-        a.cube('arrow', [-0.6, -0.05, 4.0], [1.2, 0.1, 1.6], HK['fletch'])
-        out.append((key, a))
-    mi = Model('mini_missile', density=6, width=64, seed=31)
-    mi.bone('missile', None, [0, 0, 0])
-    mi.cube('missile', [-0.5, -0.5, -2.5], [1.0, 1.0, 5.0], IM['silver'])
-    mi.cube('missile', [-0.4, -0.4, -3.2], [0.8, 0.8, 0.7], IM['plate'])
-    for rz in (0, 90):
-        mi.cube('missile', [-1.0, -0.05, 1.4], [2.0, 0.1, 1.0], IM['plate'], rotation=[0, 0, rz], pivot=[0, 0, 0])
-    mi.cube('missile', [-0.45, -0.45, 2.5], [0.9, 0.9, 0.2], IM['jet'], faces=('south',))
-    out.append(('mini_missile', mi))
-    return out
-
-
-# =================================================================================== QUINJET (quarter scale)
-QJ, QJ_HI, QJ_LO = '#4a525c', '#68717d', '#30363e'
-
-
-def hull_fn(face, rgb, glow, rs):
-    x, y, z = face.world()
-    if sides(face) or face.name in ('up', 'down'):
-        if face.w > 6 and face.h > 4:
-            for k in range(2, face.w, 6):
-                put(rgb, np.s_[:, k:k + 1], QJ_LO, 0.35)
-            for k in range(2, face.h, 5):
-                put(rgb, np.s_[k:k + 1, :], QJ_LO, 0.25)
-        put(rgb, rs.uniform(0, 1, x.shape) > 0.985, QJ_HI, 0.5)
-    if face.name == 'down':
-        put(rgb, np.s_[:, :], QJ_LO, 0.4)
-
-
-def glass_fn(face, rgb, glow, rs):
-    put(rgb, np.s_[:, :], '#0e1c2a', 1.0)
-    if face.h > 2:
-        put(rgb, np.s_[:1, :], '#5d8cb5', 0.6)
-    if glow is not None:
-        glow[:] = [40, 90, 140, 90]
-
-
-def engine_fn(face, rgb, glow, rs):
-    put(rgb, np.s_[:, :], '#262a30', 1.0)
-    if face.name in ('down', 'south'):
-        h, w = face.h, face.w
-        v, u = np.mgrid[0:h, 0:w]
-        r = np.hypot((u + 0.5) / w - 0.5, (v + 0.5) / h - 0.5) * 2
-        put(rgb, r < 0.8, '#9fdcff', 1.0)
-        if glow is not None:
-            glow[r < 0.8] = [130, 210, 255, 255]
-
-
-def emblem_fn(face, rgb, glow, rs):
-    hull_fn(face, rgb, glow, rs)
-    if face.name in ('east', 'west') and face.w > 6:
-        h, w = face.h, face.w
-        v, u = np.mgrid[0:h, 0:w]
-        cx, cy = w * 0.5, h * 0.5
-        r = np.hypot(u - cx, v - cy) / (min(w, h) * 0.38)
-        put(rgb, (r < 1.0) & (r > 0.78), '#c9ced6', 1.0)  # S.H.I.E.L.D.-style roundel (own simple design)
-        put(rgb, (r < 0.6) & (np.abs(u - cx) < (0.6 - r) * w * 0.4 + 0.5), '#c9ced6', 1.0)
-
-
-def light_fn(color):
-    def fn(face, rgb, glow, rs):
-        put(rgb, np.s_[:, :], color, 1.0)
-        if glow is not None:
-            c = np.array([int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)])
-            glow[:] = list(c) + [255]
-    return fn
-
-
-QM = {
-    'hull': Mat(QJ, noise=4, edge=0.12, fn=hull_fn),
-    'hull_hi': Mat(QJ_HI, noise=4, edge=0.12, fn=hull_fn),
-    'emblem': Mat(QJ, noise=4, edge=0.12, fn=emblem_fn),
-    'glass': Mat('#0e1c2a', noise=2, edge=0.0, fn=glass_fn, grain=1),
-    'engine': Mat('#262a30', noise=2, edge=0.1, fn=engine_fn, grain=1),
-    'ramp': Mat(QJ_LO, noise=4, edge=0.15, fn=hull_fn),
-    'red': Mat('#ff3030', noise=0, edge=0.0, fn=light_fn('#ff3030'), grain=1),
-    'green': Mat('#30ff60', noise=0, edge=0.0, fn=light_fn('#30ff60'), grain=1),
-}
-
-
-def quinjet():
-    m = Model('quinjet', density=2, width=256, seed=37)
-    m.bone('root', None, [0, 0, 0])
-    m.bone('body', 'root', [0, 4, 0])
-    m.bone('ramp', 'body', [0, 2.0, 15.0])
-    m.bone('engine_right', 'body', [-7.5, 6.0, 1.0])
-    m.bone('engine_left', 'body', [7.5, 6.0, 1.0])
-    m.bone('fin_right', 'body', [-3.5, 8.0, 13.0])
-    m.bone('fin_left', 'body', [3.5, 8.0, 13.0])
-    # fuselage: blended body, tapering nose, tail boom
-    m.cube('body', [-5.0, 2.0, -12.0], [10.0, 6.0, 27.0], QM['hull'])
-    m.cube('body', [-4.0, 8.0, -9.0], [8.0, 1.6, 22.0], QM['hull_hi'])
-    m.cube('body', [-3.6, 2.6, -19.0], [7.2, 4.6, 7.0], QM['hull'])
-    m.cube('body', [-2.4, 3.2, -24.0], [4.8, 3.2, 5.0], QM['hull_hi'])
-    m.cube('body', [-1.2, 3.8, -26.5], [2.4, 1.8, 2.5], QM['hull'])
-    m.cube('body', [-3.0, 7.2, -18.5], [6.0, 1.6, 7.0], QM['glass'], rotation=[-12, 0, 0], pivot=[0, 7.2, -11.5])
-    m.cube('body', [-2.2, 6.0, -23.0], [4.4, 1.2, 4.6], QM['glass'], rotation=[-16, 0, 0], pivot=[0, 6.0, -18.5])
-    # wings: swept main wings with intakes, smaller canards
-    for sx in (-1, 1):
-        x0 = 5.0 if sx > 0 else -20.0
-        m.cube('body', [x0, 4.4, -2.0], [15.0, 1.2, 10.0], QM['hull'], rotation=[0, sx * -24, sx * -4], pivot=[sx * 5.0, 5.0, 0])
-        m.cube('body', [x0 + (11.0 if sx > 0 else 0), 4.6, 4.0], [4.0, 1.0, 5.0], QM['hull_hi'],
-               rotation=[0, sx * -24, sx * -4], pivot=[sx * 5.0, 5.0, 0])
-        c0 = 3.6 if sx > 0 else -9.6
-        m.cube('body', [c0, 4.6, -16.0], [6.0, 0.8, 3.6], QM['hull'], rotation=[0, sx * -30, 0], pivot=[sx * 3.6, 5.0, -15.0])
-        tip = 19.0 if sx > 0 else -20.0
-        m.cube('body', [tip, 4.4, 2.0], [1.0, 1.0, 1.0], QM['green'] if sx > 0 else QM['red'])
-    # V-tail fins with the roundel
-    m.cube('fin_right', [-4.0, 8.0, 9.0], [1.0, 8.0, 6.0], QM['emblem'], rotation=[-18, 0, -28], pivot=[-3.5, 8.0, 13.0])
-    m.cube('fin_left', [3.0, 8.0, 9.0], [1.0, 8.0, 6.0], QM['emblem'], rotation=[-18, 0, 28], pivot=[3.5, 8.0, 13.0])
-    # tilting engine pods (VTOL) and the rear ramp
-    for side, sx in (('right', -1), ('left', 1)):
-        m.cube(f'engine_{side}', [sx * 7.5 - 2.2, 3.8, -3.0], [4.4, 4.4, 8.0], QM['engine'])
-        m.cube(f'engine_{side}', [sx * 7.5 - 1.6, 4.4, 5.0], [3.2, 3.2, 0.4], QM['engine'], faces=('south',))
-    m.cube('ramp', [-3.6, 1.4, 6.0], [7.2, 0.6, 9.0], QM['ramp'])
-    m.cube('body', [-3.8, 2.0, 5.8], [7.6, 0.3, 9.4], Mat('#1a1d22', noise=2, edge=0.0), faces=('down',))
-    return m
-
-
-# =================================================================================== OUTPUT
-def main():
-    rig = {False: body_model(False), True: body_model(True)}
-    rig[False].identifier = 'avenger'
-    write_json(os.path.join(RES, W('avenger.geo.json')), rig[False].geo_json())
-    rig[True].identifier = 'avenger_slim'
-    write_json(os.path.join(RES, W('avenger_slim.geo.json')), rig[True].geo_json())
-    for key, mats, slim in (('iron_man', IM_MATS, False), ('thor', TH_MATS, False), ('black_widow', BW_MATS, True),
-                            ('hawkeye', HK_MATS, False)):
-        write_png(T(f'{key}.png'), paint_skin(rig[slim], mats, seed=hash(key) & 0xffff))
-    for key, gear in (('iron_man', ironman_gear()), ('thor', thor_gear()), ('black_widow', widow_gear()),
-                      ('hawkeye', hawkeye_gear())):
-        gear.write(W(f'{key}_gear.geo.json'), T(f'{key}_gear.png'), T(f'{key}_gear_glow.png'))
-    hulk_model().write(W('hulk.geo.json'), T('hulk.png'), T('hulk_glow.png'))
-    for key, m in projectiles():
-        m.write(W(f'{key}.geo.json'), T(f'{key}.png'), T(f'{key}_glow.png'))
-    q = quinjet()
-    q.write(W('quinjet.geo.json'), T('quinjet.png'), T('quinjet_glow.png'))
-    print('quinjet atlas', q.width, q.height)
-
-
-if __name__ == '__main__':
-    main()
