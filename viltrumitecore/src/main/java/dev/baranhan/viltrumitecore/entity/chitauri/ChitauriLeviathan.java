@@ -94,6 +94,11 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
    public int clientStateStart;
    public float clientRoll;
    public float clientRollO;
+   /** Client: the skull turns towards the focus (degrees off the heading, smoothed per tick). */
+   public float clientLookYaw;
+   public float clientLookYawO;
+   public float clientLookPitch;
+   public float clientLookPitchO;
 
    public ChitauriLeviathan(EntityType<? extends ChitauriLeviathan> type, Level level) {
       super(type, level);
@@ -303,6 +308,21 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
             want = (this.tickCount - this.clientStateStart) * 2.5F;
          }
          this.clientRoll += (want - this.clientRoll) * 0.2F;
+         this.clientLookYawO = this.clientLookYaw;
+         this.clientLookPitchO = this.clientLookPitch;
+         float wantYaw = 0.0F;
+         float wantPitch = 0.0F;
+         Entity focus = this.state() == ALIVE && this.focusId() >= 0 ? this.level().getEntity(this.focusId()) : null;
+         if (focus != null) {
+            Vec3 to = focus.getEyePosition().subtract(c);
+            double h = Math.sqrt(to.x * to.x + to.z * to.z);
+            float yawTo = (float)(Mth.atan2(-to.x, to.z) * Mth.RAD_TO_DEG);
+            float pitchTo = (float)(Mth.atan2(to.y, Math.max(1.0E-3, h)) * Mth.RAD_TO_DEG);
+            wantYaw = Mth.clamp(Mth.wrapDegrees(yawTo - this.getYRot()), -38.0F, 38.0F);
+            wantPitch = Mth.clamp(pitchTo + this.getXRot(), -28.0F, 28.0F);
+         }
+         this.clientLookYaw += (wantYaw - this.clientLookYaw) * 0.12F;
+         this.clientLookPitch += (wantPitch - this.clientLookPitch) * 0.12F;
       }
    }
 
