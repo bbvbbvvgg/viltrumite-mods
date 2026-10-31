@@ -1241,10 +1241,17 @@ def main():
     tb, tg = avengers_thor.build()
     write_model(tb, W('thor.geo.json'), T('thor.png'))
     write_model(tg, W('thor_gear.geo.json'), T('thor_gear.png'), T('thor_gear_glow.png'))
-    for key, body, gear in (('black_widow', widow_body, widow_gear), ('hawkeye', hawkeye_body, hawkeye_gear)):
-        write_model(body(), W(f'{key}.geo.json'), T(f'{key}.png'))
-        write_model(gear(), W(f'{key}_gear.geo.json'), T(f'{key}_gear.png'), T(f'{key}_gear_glow.png'))
-    write_model(hulk_model(), W('hulk.geo.json'), T('hulk.png'), T('hulk_glow.png'))
+    # Widow, Hawkeye and Hulk live in their shaded-pipeline modules now; the clean-builder versions above
+    # (widow_body, hawkeye_body, hulk_model) are kept for reference only and must not overwrite them.
+    import avengers_black_widow
+    import avengers_hawkeye
+    import avengers_hulk
+    for key, mod in (('black_widow', avengers_black_widow), ('hawkeye', avengers_hawkeye)):
+        body, gear = mod.build()
+        write_model(body, W(f'{key}.geo.json'), T(f'{key}.png'))
+        write_model(gear, W(f'{key}_gear.geo.json'), T(f'{key}_gear.png'), T(f'{key}_gear_glow.png'))
+    for key, m in avengers_hulk.build():
+        write_model(m, W(f'{key}.geo.json'), T(f'{key}.png'), T(f'{key}_glow.png'))
     for key, m in props():
         write_model(m, W(f'{key}.geo.json'), T(f'{key}.png'), T(f'{key}_glow.png'))
     write_model(quinjet(), W('quinjet.geo.json'), T('quinjet.png'), T('quinjet_glow.png'))
