@@ -57,6 +57,9 @@ public final class FinalPunchClient {
       @Nullable
       Vec3 fist;
       Vec3 fistSmooth;
+      /** The target's centre when last seen: the camera keeps following a launched body after it is removed. */
+      @Nullable
+      Vec3 lastTarget;
       long fistFrame = -1;
       final List<Vec3> trail = new ArrayList<>();
       final FinalPunchAudio.Voices audio = new FinalPunchAudio.Voices();
@@ -138,6 +141,14 @@ public final class FinalPunchClient {
 
       public List<Vec3> trail() {
          return this.trail;
+      }
+
+      /** The target's centre (0.6 of its height) this frame, or where it was last seen once it is gone after the blow. */
+      @Nullable
+      public Vec3 targetCentre(float partial) {
+         LivingEntity target = this.target();
+         if (target != null) return target.getPosition(partial).add(0, target.getBbHeight() * 0.6, 0);
+         return this.impacted ? this.lastTarget : null;
       }
    }
 
@@ -286,6 +297,8 @@ public final class FinalPunchClient {
          }
 
          if (scene.isLocalCaster() && mc.player != null && mc.player.isDeadOrDying()) cancel(scene);
+         LivingEntity seen = scene.target();
+         if (seen != null) scene.lastTarget = seen.position().add(0, seen.getBbHeight() * 0.6, 0);
          Vec3 fist = scene.fist(0.0F);
          scene.fistSmooth = scene.fistSmooth == null ? fist : scene.fistSmooth.lerp(fist, 0.35);
          if (scene.ticks >= FinalPunchRules.STRIKE - 2 && scene.ticks <= FinalPunchRules.CONTACT + 4) {

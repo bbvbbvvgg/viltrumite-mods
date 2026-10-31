@@ -40,8 +40,7 @@ public final class FinalPunchCamera {
 
       Vec3 feet = mc.player.getPosition(partial);
       LivingEntity target = scene.target();
-      FinalPunchShots.Frame frame = new FinalPunchShots.Frame(feet, scene.yaw, scene.fistSmooth(), jaw(scene, target, partial), target == null ? null
-         : target.getPosition(partial).add(0, target.getBbHeight() * 0.6, 0));
+      FinalPunchShots.Frame frame = new FinalPunchShots.Frame(feet, scene.yaw, scene.fistSmooth(), jaw(scene, target, partial), scene.targetCentre(partial));
       FinalPunchShots.Shot shot = FinalPunchShots.at(t, frame);
       Vec3 pos = clip(mc.level, shot.focus(), shot.pos());
       float yaw = FinalPunchShots.yaw(pos, shot.focus());
@@ -52,7 +51,8 @@ public final class FinalPunchCamera {
    }
 
    private static Vec3 jaw(FinalPunchClient.Scene scene, LivingEntity target, float partial) {
-      if (target == null || scene.time(partial) < FinalPunchRules.CONTACT) return scene.jawAt;
+      // Not tied to the target: a body removed mid-flight must not move the shot back to the old jaw point.
+      if (scene.time(partial) < FinalPunchRules.CONTACT) return scene.jawAt;
       return scene.impactAt != null ? scene.impactAt : scene.jawAt;
    }
 

@@ -199,17 +199,19 @@ public final class FinalPunch implements AbilityHandler {
       int t = state.action.elapsed();
       Entity entity = scene.level.getEntity(scene.targetUuid);
       LivingEntity target = entity instanceof LivingEntity living && living.isAlive() ? living : null;
+      // After the blow a body that is dying still flies: its death pose lasts 20 ticks before it is removed.
+      LivingEntity body = entity instanceof LivingEntity living && !living.isRemoved() ? living : null;
       switch (FinalPunchRules.beat(t)) {
          case HOLD -> hold(player, state, scene, target, t);
          case CONTACT -> contact(player, scene, target);
          case HIT_STOP -> {
-            if (target != null && HeroRegistry.allowsImpulse(target)) move(target, Vec3.ZERO);
+            if (body != null && HeroRegistry.allowsImpulse(body)) move(body, Vec3.ZERO);
          }
-         case LAUNCH -> launch(player, scene, target);
+         case LAUNCH -> launch(player, scene, body);
          default -> {
          }
       }
-      sustain(scene, target);
+      sustain(scene, body);
    }
 
    private static void hold(ServerPlayer player, ReinhardState state, Scene scene, @Nullable LivingEntity target, int t) {

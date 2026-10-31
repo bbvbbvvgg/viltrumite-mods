@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import dev.baranhan.viltrumitecore.client.AbilityInputManager;
 import dev.baranhan.viltrumitecore.client.gui.RaceSelectionScreen;
 import dev.baranhan.viltrumitecore.client.hero.speech.HeroSubtitles;
+import dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +39,8 @@ import org.slf4j.Logger;
  * singleplayer world {@code subtitle_playtest}), {@code close} (closes any screen), {@code button <n>} (presses the n-th button of the open
  * screen), {@code respawn} (from the death screen). {@code key} also takes {@code swap} (ability page).
  * With {@code -Dviltrumitecore.subtitles.playtest.world=true} the title screen opens that world by itself.
+ * {@code fpshots <prefix> <t1,t2,...>} takes screenshots on the Final Punch scene clock (first scene on the client)
+ * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}).
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -49,6 +52,8 @@ public final class SubtitlePlaytest {
    private static boolean worldRequested;
    private static String pendingShot;
    private static int shotDelayFrames;
+   private static final List<Integer> SCENE_SHOTS = new ArrayList<>();
+   private static String sceneShotPrefix = "fp";
 
    private record Release(KeyMapping key, int at) {
    }
@@ -100,6 +105,17 @@ public final class SubtitlePlaytest {
       });
       if (ticks % 5 == 0) {
          readCommands(mc);
+      }
+
+      if (ticks % 20 == 0 && FinalPunchClient.any()) {
+         for (FinalPunchClient.Scene scene : FinalPunchClient.all()) {
+            var target = scene.target();
+            var caster = scene.caster();
+            LOG.info("SUBPT t={} fp scene={} caster={} target={} targetPos={} casterPos={} impacted={} cancelled={} cam={}", ticks,
+               String.format(java.util.Locale.ROOT, "%.0f", scene.time(0.0F)), scene.casterId, scene.targetId,
+               target == null ? "-" : target.position(), caster == null ? "-" : caster.position(), scene.impacted(), scene.cancelled(),
+               mc.options.getCameraType());
+         }
       }
    }
 
@@ -205,6 +221,16 @@ public final class SubtitlePlaytest {
                mc.player.respawn();
             }
          }
+         case "fpshots" -> {
+            String[] a = arg.split(" ");
+            sceneShotPrefix = a[0];
+            SCENE_SHOTS.clear();
+            for (String t : a[1].split(",")) {
+               SCENE_SHOTS.add(Integer.parseInt(t.trim()));
+            }
+
+            SCENE_SHOTS.sort(Integer::compare);
+         }
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
          default -> LOG.warn("SUBPT unknown command '{}'", line);
@@ -238,6 +264,25 @@ public final class SubtitlePlaytest {
    }
 
    private static void onRenderTick(TickEvent.RenderTickEvent event) {
+      if (event.phase == TickEvent.Phase.END && pendingShot == null && !SCENE_SHOTS.isEmpty() && FinalPunchClient.any()) {
+         double time = FinalPunchClient.all().iterator().next().time(event.renderTickTime);
+         if (time >= SCENE_SHOTS.get(0)) {
+            int at = SCENE_SHOTS.remove(0);
+            FinalPunchClient.Scene scene = FinalPunchClient.all().iterator().next();
+            Minecraft mc = Minecraft.getInstance();
+            var camera = mc.gameRenderer.getMainCamera();
+            var target = scene.target();
+            var caster = scene.caster();
+            LOG.info("SUBPT t={} fp shot at scene {} (clock {}) cam={} yaw={} pitch={} toTarget={} toCaster={} fov={}", ticks, at,
+               String.format(java.util.Locale.ROOT, "%.2f", time), camera.getPosition(), camera.getYRot(), camera.getXRot(),
+               target == null ? -1.0 : camera.getPosition().distanceTo(target.position().add(0, target.getBbHeight() * 0.5, 0)),
+               caster == null ? -1.0 : camera.getPosition().distanceTo(caster.position().add(0, 1.0, 0)), mc.options.fov().get());
+            if (target != null) logParticlesNear(mc, target.position());
+            pendingShot = sceneShotPrefix + "_" + at;
+            shotDelayFrames = 0;
+         }
+      }
+
       if (event.phase != TickEvent.Phase.END || pendingShot == null) {
          return;
       }
@@ -250,6 +295,35 @@ public final class SubtitlePlaytest {
       String name = pendingShot + ".png";
       pendingShot = null;
       Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), message -> LOG.info("SUBPT shot {} -> {}", name, message.getString()));
+   }
+
+   /** QA: vanilla particles within 3 blocks of a point, by class (reflection on the engine's private map). */
+   private static void logParticlesNear(Minecraft mc, net.minecraft.world.phys.Vec3 at) {
+      try {
+         java.lang.reflect.Field field = null;
+         for (java.lang.reflect.Field f : net.minecraft.client.particle.ParticleEngine.class.getDeclaredFields()) {
+            if (java.util.Map.class.isAssignableFrom(f.getType())) {
+               f.setAccessible(true);
+               Object value = f.get(mc.particleEngine);
+               if (value instanceof java.util.Map<?, ?> map && !map.isEmpty() && map.values().iterator().next() instanceof java.util.Collection<?>) {
+                  field = f;
+                  break;
+               }
+            }
+         }
+         if (field == null) return;
+         java.util.Map<String, Integer> counts = new java.util.TreeMap<>();
+         for (Object queue : ((java.util.Map<?, ?>) field.get(mc.particleEngine)).values()) {
+            for (Object o : (java.util.Collection<?>) queue) {
+               if (o instanceof net.minecraft.client.particle.Particle particle && particle.getBoundingBox().getCenter().distanceTo(at) < 4.0) {
+                  counts.merge(o.getClass().getSimpleName(), 1, Integer::sum);
+               }
+            }
+         }
+         LOG.info("SUBPT particles near target {}", counts);
+      } catch (ReflectiveOperationException | RuntimeException e) {
+         LOG.info("SUBPT particles n/a {}", e.toString());
+      }
    }
 
    private static void openWorld(Minecraft mc) {
