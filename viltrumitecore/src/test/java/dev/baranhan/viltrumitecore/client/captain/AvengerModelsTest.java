@@ -47,8 +47,8 @@ class AvengerModelsTest {
    }
 
    /**
-    * UVs are normalised by the model's texture size, so a texture may be an exact integer multiple of it (Iron
-    * Man's 128x128 armour skin over the 64x64 rig layout); dedicated meshes must match exactly.
+    * UVs are normalised by the model's texture size, so a texture may be an exact integer multiple of it (a
+    * high-resolution skin over the 64x64 rig layout); dedicated meshes must match exactly.
     */
    private static void assertUv(String model, String texture, boolean exact) throws IOException {
       JsonObject d = geometry(model).getAsJsonObject("description");
@@ -84,7 +84,21 @@ class AvengerModelsTest {
       for (AvengerKind kind : List.of(AvengerKind.THOR, AvengerKind.BLACK_WIDOW, AvengerKind.HAWKEYE, AvengerKind.HULK)) {
          assertNotEquals(AvengerModels.SHARED_RIG, AvengerModels.body(kind), kind + " fell back to the shared rig");
       }
-      assertEquals(AvengerModels.SHARED_RIG, AvengerModels.body(AvengerKind.IRON_MAN), "Iron Man's armour skin is painted for the rig");
+      assertEquals(AvengerModels.SHARED_RIG, AvengerModels.body(AvengerKind.IRON_MAN), "Iron Man's Mark 42 skin is a player skin (rig layout)");
+   }
+
+   /** Iron Man is the hero's Mark 42 (its plates and atlas), not a separate hand-made armour. */
+   @Test
+   void ironManWearsTheHeroMark42() throws IOException {
+      assertEquals("textures/entity/ironman/mark_42/pieces.png", AvengerModels.gearTexture(AvengerKind.IRON_MAN));
+      Set<String> gear = bones(AvengerModels.gear(AvengerKind.IRON_MAN));
+      assertTrue(gear.containsAll(List.of("helmet", "faceplate", "shoulder_right", "shoulder_left", "right_forearm", "right_shin")), "plates on the rig");
+      int cubes = 0;
+      for (JsonElement b : geometry(AvengerModels.gear(AvengerKind.IRON_MAN)).getAsJsonArray("bones")) {
+         JsonArray c = b.getAsJsonObject().getAsJsonArray("cubes");
+         cubes += c == null ? 0 : c.size();
+      }
+      assertTrue(cubes >= 100, "all 14 Sind pieces: " + cubes + " cubes");
    }
 
    @Test

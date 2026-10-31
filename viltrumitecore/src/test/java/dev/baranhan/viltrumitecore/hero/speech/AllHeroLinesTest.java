@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.baranhan.viltrumitecore.hero.captain.CaptainLines;
 import dev.baranhan.viltrumitecore.hero.dio.DioLines;
 import dev.baranhan.viltrumitecore.hero.dio.DioRules;
 import dev.baranhan.viltrumitecore.hero.homelander.HomelanderLines;
@@ -44,6 +45,7 @@ class AllHeroLinesTest {
       tables.put("sinclair", SinclairLines.LINES);
       tables.put("homelander", HomelanderLines.LINES);
       tables.put("ironman", IronManLines.LINES);
+      tables.put("captain", CaptainLines.LINES);
       return tables;
    }
 
