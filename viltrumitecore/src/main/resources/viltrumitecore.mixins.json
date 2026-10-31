@@ -47,7 +47,8 @@
     "SawShellCollisionMixin",
     "EndDragonFightAccess",
     "PlayerRespawnLogicInvoker",
-    "ThanosMaxHealthMixin"
+    "ThanosMaxHealthMixin",
+    "LevelPartQueryMixin"
   ],
   "injectors": {
     "defaultRequire": 1
