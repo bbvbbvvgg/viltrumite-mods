@@ -119,6 +119,8 @@ public final class SpaceStone {
       this.pullTick = 0;
       this.pullTicks = Math.max(1, ticks);
       ThanosTargets.fx(this.c.level, ThanosFxS2CPacket.SPACE_PULL, this.c.thanos.getId(), target.getId(), target.position(), Vec3.ZERO, 1.0F, ticks);
+      // heard where the victim is: the air rushes past them toward the fist
+      ThanosSounds.play(this.c.level, target.position(), ThanosSounds.SPACE_PULL, 1.8F, 1.0F, 64.0);
    }
 
    private void tickPull() {

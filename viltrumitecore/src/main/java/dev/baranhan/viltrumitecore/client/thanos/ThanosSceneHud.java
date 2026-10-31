@@ -134,7 +134,12 @@ final class ThanosSceneHud {
          return;
       }
 
-      int total = text.codePointCount(0, text.length());
+      // count what is drawn: the splitter drops the spaces it breaks at
+      int total = 0;
+      for (String s : wrapped) {
+         total += s.codePointCount(0, s.length());
+      }
+
       int shown = Mth.clamp(Mth.ceil(total * ThanosSceneTimeline.lineReveal(t)), 0, total);
       int ta = Math.max(4, Math.round(textAlpha * 255.0F));
       int row = ty + 13;
