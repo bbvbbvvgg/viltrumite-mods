@@ -4,22 +4,26 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dev.baranhan.viltrumitecore.worldevent.WorldEventConflicts;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosEvent;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosMove;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosRules;
+import java.util.List;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
- * {@code /thanos start} (operator: Thanos appears 12 blocks ahead of the caller), {@code /thanos
+ * {@code /thanos start [force]} (operator: Thanos appears 12 blocks ahead of the caller; refused
+ * while the Chitauri invasion runs unless {@code force}, see WorldEventConflicts), {@code /thanos
  * stop} (operator), {@code /thanos status} (everyone), {@code /thanos skip <seconds>}
  * (operator, QA: leave that many seconds on the clock; 0 runs straight into the snap) and
  * {@code /thanos move <move>} (operator, QA: the named move is his next one, past the brain).
@@ -32,7 +36,8 @@ public final class ThanosCommands {
    @SubscribeEvent
    public static void register(RegisterCommandsEvent event) {
       event.getDispatcher().register(Commands.literal("thanos")
-         .then(Commands.literal("start").requires(s -> s.hasPermission(2)).executes(ThanosCommands::start))
+         .then(Commands.literal("start").requires(s -> s.hasPermission(2)).executes(c -> start(c, false))
+            .then(Commands.literal("force").executes(c -> start(c, true))))
          .then(Commands.literal("stop").requires(s -> s.hasPermission(2)).executes(ThanosCommands::stop))
          .then(Commands.literal("status").executes(ThanosCommands::status))
          .then(Commands.literal("skip").requires(s -> s.hasPermission(2))
@@ -44,8 +49,15 @@ public final class ThanosCommands {
                .executes(c -> move(c, StringArgumentType.getString(c, "move"))))));
    }
 
-   private static int start(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+   private static int start(CommandContext<CommandSourceStack> c, boolean force) throws CommandSyntaxException {
       ServerPlayer player = c.getSource().getPlayerOrException();
+      // the Chitauri invasion owns the city: no Thanos over it without an explicit force
+      List<Component> conflicts = WorldEventConflicts.invasion(player.serverLevel());
+      if (!ThanosEvent.running() && !WorldEventConflicts.mayStart(conflicts.size(), force)) {
+         c.getSource().sendFailure(Component.translatable("commands.viltrumitecore.chitauri.conflict", ComponentUtils.formatList(conflicts, Component.literal(", "))));
+         return 0;
+      }
+
       ThanosEvent.StartResult result = ThanosEvent.start(player);
       switch (result) {
          case STARTED -> {
