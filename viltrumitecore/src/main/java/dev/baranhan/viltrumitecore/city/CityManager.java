@@ -232,7 +232,7 @@ public final class CityManager {
       if (!lost.isEmpty()) {
          // restored chunks of the last session that the world may not have saved (a crash)
          LOG.info("City reset recovery: checking {} restored blocks in {} chunks", lost.size(), lost.chunkCount());
-         m.recovery = new RestoreQueue(lost, journal, msg -> LOG.info("City reset recovery {}", msg));
+         m.recovery = new RestoreQueue(lost, journal, msg -> LOG.info("City reset recovery {}", recoveryText(msg)));
          m.recoverIn = 100;
       }
    }
@@ -501,6 +501,12 @@ public final class CityManager {
       this.population.clearAll();
       this.restore.start(this.now());
       this.saveJournal(false);
+   }
+
+   /** Log text of a recovery report ("done:blocks:chunks:passes:secs:left"). */
+   static String recoveryText(String msg) {
+      String[] p = msg.split(":");
+      return p.length >= 6 && p[0].equals("done") ? "done: " + p[1] + " blocks checked in " + p[2] + " chunks, " + p[3] + " passes, " + p[4] + " s" : msg;
    }
 
    private void restoreReport(String msg) {

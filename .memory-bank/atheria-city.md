@@ -35,6 +35,12 @@
 - Client poses: `client/city/CitizenPoser` on the shared `PoseRig` (one weight per state, exponential smoothing on
   the age clock, `rig.finish()` once); knock-down tilt is in `CitizenRenderer.setupRotations` (seed bit 29 = back
   or front). Model `CitizenModel` = PlayerModel + child cubes (hair, hats, skirt, bags, shoes, collar).
+- Population rules: citizens in chunks that stopped ticking entities (beyond the simulation distance, inside
+  FAR=100) are removed while someone is in the level — they froze mid-flight and stayed "fleeing" forever.
+  Lowering the density trims the automatic crowd above per-player x players (+25% + 4), farthest first, never
+  within 40 blocks of a player (`CityPopulation.trimCount`). Console `/city populate` spawns at the world spawn.
+- The Chitauri portal opening adds radius-0 curiosity zones (people stop and watch, ~95 of 106 alarmed in QA).
+  During a full invasion no citizen spawns where a danger is noticed, so the streets around the fight empty out.
 - Config: `cityCrowdScale` (2.25, multiplies perPlayer and the profile cap) and `cityMaxCitizens` (480, hard cap);
   `CityManager.ABSOLUTE_MAX` = 640. `/city status` prints a crowd line (calm/alarmed/fleeing/hiding/threats).
 
@@ -53,6 +59,15 @@
   untouched copy (`tools/atheria/analysis/compare.py`). Entities (item frames, paintings, armor stands) are not
   journaled and are not restored.
 - `MeteorSpawnEvent` (random, config `meteorSpawnChancePercent`) also hits the city; reset repairs the craters.
+- Crash safety (settling): a restored chunk keeps its originals in the journal's `settling` set until the 2nd
+  `LevelEvent.Save` after its restore (Forge posts the event after the chunk save, the 1st one may race). A start
+  with settling originals runs a quiet recovery `RestoreQueue` 100 ticks after load (`journal.recovery()` skips
+  positions with newer main records). Changes of positions being restored are not journaled.
+  Verified on Atheria: `kill -9` 6 s after "Map restored" (world on disk still destroyed) → recovery put back
+  15895 blocks, 0 real differences; reset interrupted by `stop` → resumed on the next start, 0 real differences;
+  signs/banners/pots got their NBT back, a chest placed on original air vanished without dropping its items.
+- Ambient noise on an untouched map: grass→dirt, tall grass→air (a few dozen blocks the first minutes) are journaled;
+  redstone ore `lit`, daylight detector `power`, leaves `distance` are AMBIENT and not restored (compare shows them).
 
 ## Walk network
 - Tiles `viltrumite_city/walk/r.X.Z.bin`: int magic 0x56435731 ("VCW1"), int version 1, then zlib of a 128-byte
@@ -75,5 +90,10 @@
 - Smoke test without the licensed map: a flat world plus a synthetic `viltrumite_city/profile.json` and walk tiles
   (`tools/city/smoke_flat_city.py`, RCON client `tools/city/rcon.py`; flat surface feet y = -60, h2 = -120). A world with no players stops ticking
   entities after 300 ticks: `/forceload add` the test area before `/city populate`.
+- QA on the real map (2 CPU / 4.2 GB box): direct server + GUI client launched from captured Gradle argv; run
+  them from a copy of the compiled classes, recompiling under a running game crashes it (ClassNotFoundException).
+  Server (1.8 GB RSS) + one client fit; a second client or Gradle next to both gets the server OOM-killed.
+  Measured (1 player, Downtown): density 1 → ~100 citizens 10–13 ms/tick; 2.5 → ~270, 17–20 ms; 300 populated
+  19–21 ms; full Chitauri invasion worst mean 31–37 ms, always 20 TPS.
 - The prepared world has a custom dimension height (datapack `atheria_height`): Minecraft shows the
   "experimental settings" warning once per world. This is expected.
