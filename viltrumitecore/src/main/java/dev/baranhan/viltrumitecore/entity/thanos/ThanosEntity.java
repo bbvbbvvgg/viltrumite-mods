@@ -338,6 +338,28 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
    public void knockback(double strength, double x, double z) {
    }
 
+   // ---- sounds: all of his voice and steps are the event's own (client: ThanosFx) -------------
+   @Override
+   @Nullable
+   protected net.minecraft.sounds.SoundEvent getHurtSound(DamageSource source) {
+      return null;
+   }
+
+   @Override
+   @Nullable
+   protected net.minecraft.sounds.SoundEvent getDeathSound() {
+      return null;
+   }
+
+   @Override
+   protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+   }
+
+   @Override
+   public boolean isSilent() {
+      return true;
+   }
+
    @Override
    public boolean isPushable() {
       return false;

@@ -58,7 +58,6 @@ public final class ThanosCombat {
    private Vec3 stuckAnchor = Vec3.ZERO;
    private int stuckTicks;
    private int bulldozes;
-   private int stepSound;
    private int moves;
 
    public ThanosCombat(ThanosEvent event, ServerLevel level, ThanosEntity thanos, long seed) {
@@ -238,10 +237,7 @@ public final class ThanosCombat {
          this.thanos.getNavigation().moveTo(t, 1.0);
       }
 
-      if (++this.stepSound >= 14 && this.thanos.getDeltaMovement().horizontalDistanceSqr() > 0.004) {
-         this.stepSound = 0;
-         ThanosSounds.play(this.level, this.thanos.position(), ThanosSounds.STEP, 1.2F, 0.85F + this.level.random.nextFloat() * 0.1F, 32.0);
-      }
+      // footfalls are played by the clients in step with his walk cycle (ThanosFx)
 
       // Stuck in the city: push through soft obstacles, then let the Space stone carry him.
       if (this.thanos.position().distanceToSqr(this.stuckAnchor) > 1.0) {
