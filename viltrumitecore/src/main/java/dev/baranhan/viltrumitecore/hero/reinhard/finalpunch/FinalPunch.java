@@ -275,13 +275,14 @@ public final class FinalPunch implements AbilityHandler {
       CoreMessages.sendToTrackingAndSelf(impact, player);
       if (target instanceof ServerPlayer victim && !victim.hasDisconnected()) CoreMessages.sendToPlayer(impact, victim);
       HeroFx.hitStop(player, at, FinalPunchRules.HIT_STOP_TICKS, player.getId(), target.getId());
-      HeroFx.flash(player, at, 3.0F);
+      // No HeroFx.flash: the scene draws its own soft impact light, shake and screen flash on every
+      // tracking client (FinalPunchVfx.impact); the shared pixel flash was a hard white square in the close-up.
       HeroFx.sonicRing(player, at);
       BlockState ground = scene.level.getBlockState(target.blockPosition().below());
       HeroFx.shockwave(player, target.position(), 2.5F, ground.isAir() ? null : ground, 9.0F);
       ReinhardSounds.playAt(player, at, ReinhardSounds.FINAL_PUNCH_IMPACT.get(), 4.0F, 1.0F);
       ReinhardSounds.playAt(player, at, scene.entry.kind() == FinalPunchTargets.Kind.GOLEM
-         ? ReinhardSounds.FINAL_PUNCH_CLANG.get() : ReinhardSounds.FINAL_PUNCH_JAW.get(), 0.6F, 1.0F);
+         ? ReinhardSounds.FINAL_PUNCH_CLANG.get() : ReinhardSounds.FINAL_PUNCH_JAW.get(), 0.5F, 1.0F);
    }
 
    private static void launch(ServerPlayer player, Scene scene, @Nullable LivingEntity target) {
