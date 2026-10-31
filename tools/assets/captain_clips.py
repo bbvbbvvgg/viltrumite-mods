@@ -196,6 +196,14 @@ def skills():
               right_leg=(-50, 10, 6), right_shin=(70, 0, 0), left_leg=(-20, -10, -6), left_shin=(60, 0, 0))
     out.append(clip('team_brace', 18, [(0, P(brace, root=low(-3))), (2, brace), (6, P(brace, root=low(-4.6))), (12, P(BLOCK, root=low(-3))),
                                        (18, BLOCK)]))
+    # contextual interaction (reid_shatters_vibranium): the Dragon Sword's stroke tears the raised shield aside —
+    # the shield arm is flung out and back, Steve reels a step, then the shield hangs low (16 t, started at the hit)
+    torn = P(COMBAT, root=low(-2.4), waist=(-10, -26, 0), torso=(-14, -18, 0), head=(-18, 20, 0),
+             left_arm=(-30, 110, -60), left_forearm=(-10, 0, 0), left_hand=(0, 0, -20),
+             right_arm=(-20, 10, 30), right_forearm=(-40, 0, 0),
+             right_leg=(-30, 18, 6), right_shin=(40, 0, 0), left_leg=(20, 14, -4), left_shin=(30, 0, 0), **OPEN_L)
+    reel = P(torn, root=low(-3.2), waist=(4, -12, 0), torso=(6, -8, 0), head=(-6, 10, 0), left_arm=(-20, 90, -30), left_forearm=(-20, 0, 0))
+    out.append(clip('shield_shattered', 16, [(0, P(BLOCK, root=low(-2))), (2, torn), (7, reel), (16, P(COMBAT, **SH_CARRY))]))
     return out
 
 
