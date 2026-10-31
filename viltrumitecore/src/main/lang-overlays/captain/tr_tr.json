@@ -5,7 +5,7 @@
   "subtitle.viltrumitecore.captain.assemble": "Yenilmezler, toplanın!",
   "subtitle.viltrumitecore.captain.all_day": "Bunu bütün gün yapabilirim.",
   "ability.viltrumitecore.captain_ricochet.name": "Seken Kalkan",
-  "ability.viltrumitecore.captain_ricochet.desc": "Kalkanı nişangâhtaki hedefe fırlat: 3 düşman arasında seker (50+ kinetik yükte 5, 50 harcar), 9 hasar, her sekişte −%15, sonra geri döner. Basılı tut: duvarlardan sekme yolu nişanla (en fazla 4). Uçarken tekrar bas: geri çağır, yoldaki düşmanlara çarpar. Kombo sırasında yakala: Dönüş Darbesi.",
+  "ability.viltrumitecore.captain_ricochet.desc": "Kalkanı nişangâhtaki hedefe fırlat: 5 düşman arasında seker (50+ kinetik yükte 8, 50 harcar), 9 hasar, her sekişte −%15, sonra geri döner. Basılı tut: duvarlardan sekme yolu nişanla (en fazla 4). Uçarken tekrar bas: geri çağır, yoldaki düşmanlara çarpar. Kombo sırasında yakala: Dönüş Darbesi.",
   "ability.viltrumitecore.captain_shield_rush.name": "Kalkan Hücumu",
   "ability.viltrumitecore.captain_shield_rush.desc": "Kalkanın arkasında 9 bloka kadar hücum et: yoldaki düşmanlar 6 hasar alıp savrulur; ilk büyük düşman ya da duvar seni 10 hasarlık darbe ve 1,25 sn sersemletmeyle durdurur. Sonraki saldırı komboya aparkattan devam eder. Kalkansız: 8 hasarlık omuz hücumu.",
   "ability.viltrumitecore.captain_vibranium_slam.name": "Vibranyum Darbesi",
@@ -13,7 +13,7 @@
   "ability.viltrumitecore.captain_tactical_roll.name": "Taktik Yuvarlanma",
   "ability.viltrumitecore.captain_tactical_roll.desc": "Hareket yönüne (ya da geriye) 4,5 blok yuvarlan, kısa süre dokunulmaz ol. Hemen ardından saldır: süpürme tekmesi. Uçan kalkana doğru yuvarlanmak onu daha erken yakalar.",
   "ability.viltrumitecore.captain_assemble.name": "Yenilmezler, Toplanın!",
-  "ability.viltrumitecore.captain_assemble.desc": "Nihai. Kalkanı kaldır ve takımı çağır: Quinjet Kara Dul ve Şahingöz'ü bırakır, Demir Adam gökten iner, Thor yıldırımla gelir, Hulk sıçrayarak düşer. Altınız bir çember kurar, ardından Yenilmezler 60 saniye yanında savaşır. Bekleme 5 dakika.",
+  "ability.viltrumitecore.captain_assemble.desc": "Nihai. Kalkanı kaldır ve takımı çağır: Quinjet Kara Dul ve Şahingöz'ü bırakır, Demir Adam gökten iner, Thor yıldırımla gelir, Hulk sıçrayarak düşer. Altınız bir çember kurar, ardından Yenilmezler 60 saniye yanında savaşır ve ortak hamleler yapar: Dul Kadın Şahin Göz'ü havaya fırlatır, Thor Iron Man'in tek ışınını aşırı yükler, Thor kaldırdığın kalkana vurup şok dalgası yaratır. Bekleme 5 dakika.",
   "entity.viltrumitecore.captain_shield": "Kaptan Amerika'nın Kalkanı",
   "entity.viltrumitecore.avenger": "Yenilmez",
   "entity.viltrumitecore.avenger_projectile": "Yenilmez Mermisi",
@@ -74,5 +74,12 @@
   "subtitles.viltrumitecore.avengers.hawkeye_arrow_hit": "Ok isabet eder",
   "subtitles.viltrumitecore.avengers.shock": "Elektrik şoku",
   "subtitles.viltrumitecore.avengers.heavy_land": "Ağır iniş",
-  "subtitles.viltrumitecore.avengers.depart": "Yenilmez ayrılır"
+  "subtitles.viltrumitecore.avengers.depart": "Yenilmez ayrılır",
+  "subtitle.viltrumitecore.captain.team_shield": "Hey, Kaptan, kalkanını kaldır! Saldırıyı ben yükleyeceğim!",
+  "subtitle.viltrumitecore.captain.team_beam": "Yükleme yüzde dört yüz!",
+  "hint.viltrumitecore.captain.team_shield": "Kalkanı kaldırmak için Thor'a dönüp %s tuşunu basılı tut",
+  "commands.viltrumitecore.hero.team.unknown": "Bilinmeyen ortak hamle: %s (vault, beam, shield)",
+  "commands.viltrumitecore.hero.team.no_fight": "%s şu anda savaşan Yenilmezlere sahip değil",
+  "commands.viltrumitecore.hero.team.forced": "Yenilmezler ilk fırsatta \"%s\" hamlesini deneyecek",
+  "subtitle.viltrumitecore.captain.enter": "Kaptan Rogers göreve hazır."
 }

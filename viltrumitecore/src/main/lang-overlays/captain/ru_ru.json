@@ -5,7 +5,7 @@
   "subtitle.viltrumitecore.captain.assemble": "Мстители, общий сбор!",
   "subtitle.viltrumitecore.captain.all_day": "Я могу так весь день.",
   "ability.viltrumitecore.captain_ricochet.name": "Рикошет",
-  "ability.viltrumitecore.captain_ricochet.desc": "Бросок щита в цель под прицелом: щит рикошетит между 3 врагами (5 при кинетическом заряде от 50, тратит 50), 9 урона, −15 % за каждый отскок, и возвращается. Удержание — прицел броска с отскоками от стен (до 4). Повторное нажатие в полёте — отзыв: щит летит назад и задевает врагов. Поймай щит во время комбо — «Удар с возврата».",
+  "ability.viltrumitecore.captain_ricochet.desc": "Бросок щита в цель под прицелом: щит рикошетит между 5 врагами (8 при кинетическом заряде от 50, тратит 50), 9 урона, −15 % за каждый отскок, и возвращается. Удержание — прицел броска с отскоками от стен (до 4). Повторное нажатие в полёте — отзыв: щит летит назад и задевает врагов. Поймай щит во время комбо — «Удар с возврата».",
   "ability.viltrumitecore.captain_shield_rush.name": "Таран щитом",
   "ability.viltrumitecore.captain_shield_rush.desc": "Рывок до 9 блоков за щитом: враги на пути получают 6 урона и отлетают в сторону; первый крупный враг или стена останавливает рывок ударом на 10 и оглушением на 1,25 с. Следующий удар продолжает комбо с апперкота. Без щита — таран плечом на 8.",
   "ability.viltrumitecore.captain_vibranium_slam.name": "Удар вибраниума",
@@ -13,7 +13,7 @@
   "ability.viltrumitecore.captain_tactical_roll.name": "Тактический перекат",
   "ability.viltrumitecore.captain_tactical_roll.desc": "Перекат на 4,5 блока в сторону движения (или назад), короткая неуязвимость. Удар сразу после — подсечка. Перекат навстречу летящему щиту ловит его раньше.",
   "ability.viltrumitecore.captain_assemble.name": "Мстители, общий сбор!",
-  "ability.viltrumitecore.captain_assemble.desc": "Ультимейт. Стив поднимает щит и зовёт команду: квинджет высаживает Чёрную вдову и Соколиного глаза, Железный человек приземляется с неба, Тор является в молнии, Халк прилетает прыжком. Шестеро встают в круг, затем Мстители 60 секунд сражаются рядом с тобой. Перезарядка 5 минут.",
+  "ability.viltrumitecore.captain_assemble.desc": "Ультимейт. Стив поднимает щит и зовёт команду: квинджет высаживает Чёрную вдову и Соколиного глаза, Железный человек приземляется с неба, Тор является в молнии, Халк прилетает прыжком. Шестеро встают в круг, затем Мстители 60 секунд сражаются рядом с тобой и проводят совместные приёмы: Вдова подбрасывает Соколиного глаза, Тор заряжает юнилуч Старка молнией, а Тор бьёт Мьёльниром в поднятый щит — ударная волна. Перезарядка 5 минут.",
   "entity.viltrumitecore.captain_shield": "Щит Капитана Америки",
   "entity.viltrumitecore.avenger": "Мститель",
   "entity.viltrumitecore.avenger_projectile": "Снаряд Мстителя",
@@ -74,5 +74,12 @@
   "subtitles.viltrumitecore.avengers.hawkeye_arrow_hit": "Попадание стрелы",
   "subtitles.viltrumitecore.avengers.shock": "Электрический разряд",
   "subtitles.viltrumitecore.avengers.heavy_land": "Тяжёлое приземление",
-  "subtitles.viltrumitecore.avengers.depart": "Мститель улетает"
+  "subtitles.viltrumitecore.avengers.depart": "Мститель улетает",
+  "subtitle.viltrumitecore.captain.team_shield": "Эй, кеп, подставь щит! Я заряжу атаку!",
+  "subtitle.viltrumitecore.captain.team_beam": "Заряд — четыреста процентов!",
+  "hint.viltrumitecore.captain.team_shield": "Удерживай %s лицом к Тору, чтобы подставить щит",
+  "commands.viltrumitecore.hero.team.unknown": "Неизвестный совместный приём: %s (vault, beam, shield)",
+  "commands.viltrumitecore.hero.team.no_fight": "У %s сейчас нет сражающихся Мстителей",
+  "commands.viltrumitecore.hero.team.forced": "Мстители попробуют «%s» при первой возможности",
+  "subtitle.viltrumitecore.captain.enter": "Капитан Роджерс прибыл для прохождения службы."
 }
