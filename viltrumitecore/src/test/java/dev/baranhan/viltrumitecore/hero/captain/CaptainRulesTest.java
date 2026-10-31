@@ -71,14 +71,14 @@ class CaptainRulesTest {
    }
 
    @Test
-   void fightFollowFanStaysOutOfStevesView() {
-      double prev = -1;
+   void fightFollowSpotsStayOutOfStevesViewAndTheCameraLine() {
       for (int i = 0; i < 5; i++) {
          double b = CaptainRules.followBearing(i);
-         assertTrue(b >= 100.0 && b <= 260.0, "avenger " + i + " beside / behind Steve, not ahead: " + b);
-         assertTrue(b - prev >= 30.0, "spread apart");
-         prev = b;
+         assertTrue(Math.abs(b) >= 35.0 && Math.abs(360.0 - b) >= 35.0, "avenger " + i + " not in his line of sight: " + b);
+         assertTrue(Math.abs(b - 180.0) >= 35.0, "avenger " + i + " not between him and the third-person camera: " + b);
+         for (int j = 0; j < i; j++) {
+            assertTrue(Math.abs(b - CaptainRules.followBearing(j)) >= 35.0, "spots " + j + " and " + i + " apart");
+         }
       }
-      assertEquals(180.0, CaptainRules.followBearing(2), 1.0E-9, "the middle one right behind him");
    }
 }

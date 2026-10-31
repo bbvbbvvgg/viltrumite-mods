@@ -108,4 +108,23 @@ public final class TeamDamage {
             b.maxHealth, String.format(java.util.Locale.ROOT, "%.2f", (target.level().getGameTime() - b.first) / 20.0));
       }
    }
+
+   /**
+    * Server, any death (playtest log only): a target the team had hit logs its kill time even when the last blow
+    * was not a team hit (Steve's shield, fire, a vanilla mob), with the killing source.
+    */
+   public static void onDeath(LivingEntity target, net.minecraft.world.damagesource.DamageSource source) {
+      if (!QA) {
+         return;
+      }
+      Bucket b = BUCKETS.get(target);
+      if (b != null && !b.logged) {
+         b.logged = true;
+         net.minecraft.world.entity.Entity by = source.getEntity();
+         LOGGER.info("TEAMKILL {} maxHp={} killed {} s after the first team hit (last blow {} by {})",
+            net.minecraft.world.entity.EntityType.getKey(target.getType()), b.maxHealth,
+            String.format(java.util.Locale.ROOT, "%.2f", (target.level().getGameTime() - b.first) / 20.0),
+            source.getMsgId(), by == null ? "-" : net.minecraft.world.entity.EntityType.getKey(by.getType()));
+      }
+   }
 }

@@ -307,11 +307,14 @@ public final class CaptainRules {
    }
 
    /**
-    * Fight-follow bearing (degrees from Steve's facing, 0 = straight ahead) of the i-th avenger (0..4): a fan from
-    * 110 to 250 degrees, beside and behind him, so nobody parks in his line of sight (Hulk used to stand 4 blocks
-    * dead ahead and fill the screen after the ultimate).
+    * Fight-follow bearing (degrees from Steve's facing, 0 = straight ahead) of the i-th avenger in kind order (Iron
+    * Man, Thor, Hulk, Natasha, Clint), all at least 35 degrees off both his line of sight and the third-person camera
+    * line behind him: Hulk used to stand 4 blocks dead ahead and fill the screen after the ultimate, and a plain
+    * "behind" spot puts him between Steve and the over-the-shoulder camera. Hulk takes the wide right flank.
     */
    public static double followBearing(int index) {
-      return 110.0 + 35.0 * Math.max(0, Math.min(4, index));
+      return FOLLOW_BEARINGS[Math.max(0, Math.min(FOLLOW_BEARINGS.length - 1, index))];
    }
+
+   private static final double[] FOLLOW_BEARINGS = {60.0, 145.0, 265.0, 215.0, 100.0};
 }
