@@ -134,6 +134,18 @@ public class ThanosRenderer extends EntityRenderer<ThanosEntity> {
       return ANCHORS.get(id);
    }
 
+   /** Render frame counter of the anchors ({@link #newFrame}). */
+   public static long frame() {
+      return frame;
+   }
+
+   /** Anchors of a Thanos drawn in the last few frames, else null (culled, out of range). */
+   @Nullable
+   public static Anchors fresh(int id) {
+      Anchors a = ANCHORS.get(id);
+      return a != null && frame - a.frame() <= 4 ? a : null;
+   }
+
    /** Called once per frame by the effects: anchors older than a second are dropped. */
    public static void newFrame() {
       frame++;
