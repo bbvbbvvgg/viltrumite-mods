@@ -76,7 +76,9 @@ class HeroRosterIntegrationTest {
       assertEquals(HeroAction.CONTEXT_TELEPORT.ordinal() + 1, HeroAction.THE_WORLD.ordinal(), "DIO block follows Thor");
       assertEquals(HeroAction.ROAD_ROLLER.ordinal() + 1, HeroAction.VEXING_BOLT.ordinal(), "Sinclair block follows DIO");
       assertEquals(HeroAction.AUDIENCE_PARTICIPATION.ordinal() + 1, HeroAction.DAGGER_RUSH.ordinal(), "Jinwoo block follows Sinclair");
-      assertSame(HeroAction.MONARCH_CHARGE, actions[actions.length - 1]);
+      // Iron Man stage 6 appends the Iron Legion after the Jinwoo block (released ordinals unchanged).
+      assertEquals(HeroAction.MONARCH_CHARGE.ordinal() + 1, HeroAction.LEGION.ordinal(), "Iron Legion appends after Jinwoo");
+      assertSame(HeroAction.LEGION, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
