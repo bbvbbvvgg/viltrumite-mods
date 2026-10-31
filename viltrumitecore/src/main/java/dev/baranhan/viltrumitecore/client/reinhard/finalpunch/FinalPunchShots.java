@@ -25,6 +25,9 @@ public final class FinalPunchShots {
       Shot at(double t, Frame f);
    }
 
+   /** The launch shot looks along the flight at most this far from the jaw, so Reinhard stays in frame. */
+   static final double FOLLOW_REACH = 5.0;
+
    private static final int[] START = {0, 58, 150, 245, 330, FinalPunchRules.SILENCE, FinalPunchRules.STRIKE, FinalPunchRules.CONTACT, FinalPunchRules.LAUNCH};
    /** Blend into each segment (0 = hard cut). */
    private static final int[] BLEND = {0, 22, 24, 20, 18, 0, 6, 0, 4};
@@ -76,12 +79,19 @@ public final class FinalPunchShots {
       // 8 – the launch: pull back wide and follow the body.
       (t, f) -> {
          double p = FinalPunchCues.smooth(FinalPunchCues.ramp(t, FinalPunchRules.LAUNCH, FinalPunchRules.CAMERA_OUT));
-         Vec3 follow = f.target() == null ? f.jaw() : f.jaw().lerp(f.target(), Math.min(1.0, 0.75 * p));
+         Vec3 follow = f.target() == null ? f.jaw() : f.jaw().add(toward(f.jaw(), f.target(), FOLLOW_REACH).scale(Math.min(1.0, 0.75 * p)));
          return new Shot(local(f, -1.2 - 0.8 * p, 2.0 + 0.4 * p, 3.6 + 0.6 * p), f.jaw().lerp(follow, p));
       }
    };
 
    private FinalPunchShots() {
+   }
+
+   /** {@code to - from}, shortened to {@code reach}. */
+   static Vec3 toward(Vec3 from, Vec3 to, double reach) {
+      Vec3 d = to.subtract(from);
+      double length = d.length();
+      return length <= reach ? d : d.scale(reach / length);
    }
 
    public static int segment(double t) {

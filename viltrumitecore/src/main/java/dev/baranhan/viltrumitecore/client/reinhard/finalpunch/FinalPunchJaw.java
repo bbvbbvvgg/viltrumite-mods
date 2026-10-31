@@ -261,7 +261,7 @@ public final class FinalPunchJaw {
          stack.popPose();
       }
       for (Wound w : WOUNDS) {
-         if (!(level.getEntity(w.targetId) instanceof LivingEntity target) || target.isRemoved() || target.deathTime > 0) continue;
+         if (!(level.getEntity(w.targetId) instanceof LivingEntity target) || target.isRemoved() || target.deathTime > 0 && !FinalPunchClient.holdsPose(target)) continue;
          if (target == mc.player && mc.options.getCameraType().isFirstPerson()) continue;
          Vec3 feet = target.getPosition(partial);
          if (feet.distanceToSqr(cam) > 64 * 64) continue;

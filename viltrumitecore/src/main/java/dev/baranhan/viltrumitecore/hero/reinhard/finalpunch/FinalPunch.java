@@ -281,7 +281,7 @@ public final class FinalPunch implements AbilityHandler {
       HeroFx.shockwave(player, target.position(), 2.5F, ground.isAir() ? null : ground, 9.0F);
       ReinhardSounds.playAt(player, at, ReinhardSounds.FINAL_PUNCH_IMPACT.get(), 4.0F, 1.0F);
       ReinhardSounds.playAt(player, at, scene.entry.kind() == FinalPunchTargets.Kind.GOLEM
-         ? ReinhardSounds.FINAL_PUNCH_CLANG.get() : ReinhardSounds.FINAL_PUNCH_JAW.get(), 2.0F, 1.0F);
+         ? ReinhardSounds.FINAL_PUNCH_CLANG.get() : ReinhardSounds.FINAL_PUNCH_JAW.get(), 0.6F, 1.0F);
    }
 
    private static void launch(ServerPlayer player, Scene scene, @Nullable LivingEntity target) {
