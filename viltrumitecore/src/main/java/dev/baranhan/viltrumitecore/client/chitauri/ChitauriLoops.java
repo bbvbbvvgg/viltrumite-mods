@@ -42,6 +42,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 public final class ChitauriLoops {
    public static final int MAX_ENGINES = 4;
    public static final double ENGINE_RANGE = 56.0;
+   /** A running engine loop keeps playing out to here (distance hysteresis against start/stop churn at the edge). */
+   public static final double ENGINE_KEEP = ENGINE_RANGE + 8.0;
    public static final double LEVIATHAN_RANGE = 150.0;
    public static final double FLYBY_RANGE = 14.0;
    public static final float FADE_UP = 0.06F;
@@ -181,8 +183,10 @@ public final class ChitauriLoops {
    }
 
    private static void engines(Minecraft mc, Vec3 eye) {
-      AABB box = new AABB(eye, eye).inflate(ENGINE_RANGE);
-      List<ChitauriChariot> near = new ArrayList<>(mc.level.getEntitiesOfClass(ChitauriChariot.class, box, c -> c.isAlive() || c.dying()));
+      // ranked inside the keep sphere only (the box corners reach ~1.7x further and made far chariots churn)
+      AABB box = new AABB(eye, eye).inflate(ENGINE_KEEP);
+      List<ChitauriChariot> near = new ArrayList<>(mc.level.getEntitiesOfClass(ChitauriChariot.class, box,
+         c -> (c.isAlive() || c.dying()) && c.distanceToSqr(eye) <= ENGINE_KEEP * ENGINE_KEEP));
       near.sort(Comparator.comparingDouble(c -> c.distanceToSqr(eye)));
       RANK.clear();
       for (int i = 0; i < near.size(); i++) {
@@ -199,7 +203,7 @@ public final class ChitauriLoops {
             mc.getSoundManager().play(new SimpleSoundInstance(ChitauriSounds.CHARIOT_FLYBY.get(), SoundSource.HOSTILE, 1.0F,
                0.9F + (float)Math.min(0.25, speed * 0.15), SoundInstance.createUnseededRandom(), chariot.getX(), chariot.getY() + 0.6, chariot.getZ()));
          }
-         if (startEngine(RANK.get(id), ENGINES.size()) && !ENGINES.containsKey(id) && !RETRY_AT.containsKey(id)) {
+         if (engineInRange(d, false) && startEngine(RANK.get(id), ENGINES.size()) && !ENGINES.containsKey(id) && !RETRY_AT.containsKey(id)) {
             Loop loop = new Loop(ChitauriSounds.CHARIOT_ENGINE.get(), SoundSource.HOSTILE, chariot, false) {
                @Override
                Target target() {
@@ -227,8 +231,12 @@ public final class ChitauriLoops {
          return false;
       }
       Vec3 eye = mc.gameRenderer.getMainCamera().getPosition();
-      double d = chariot.distanceToSqr(eye);
-      return d <= ENGINE_RANGE * ENGINE_RANGE && keepEngine(RANK.getOrDefault(chariot.getId(), Integer.MAX_VALUE));
+      return engineInRange(Math.sqrt(chariot.distanceToSqr(eye)), true) && keepEngine(RANK.getOrDefault(chariot.getId(), Integer.MAX_VALUE));
+   }
+
+   /** Pure: an engine loop starts within {@link #ENGINE_RANGE} and, once running, keeps playing out to {@link #ENGINE_KEEP}. */
+   public static boolean engineInRange(double distance, boolean running) {
+      return distance <= (running ? ENGINE_KEEP : ENGINE_RANGE);
    }
 
    /**
