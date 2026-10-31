@@ -148,7 +148,9 @@ processResources {
 }
 
 // Binary assets (sounds, textures) are stored as base64 text under
-// src/main/binassets/<resource path>.b64 and decoded into generated resources.
+// src/main/binassets/<resource path>.b64 and decoded into generated resources. A file whose text
+// would pass one GitHub push request (~60 KB, the Thanos music) is split at line boundaries into
+// <resource path>.b64.part0..N, joined in numeric order before decoding.
 def binAssetsSrc = file('src/main/binassets')
 def binAssetsOut = layout.buildDirectory.dir('generated/binassets')
 def decodeBinaryAssets = tasks.register('decodeBinaryAssets') {
@@ -158,13 +160,28 @@ def decodeBinaryAssets = tasks.register('decodeBinaryAssets') {
         def out = binAssetsOut.get().asFile
         project.delete(out)
         out.mkdirs()
+        def parts = [:]
         binAssetsSrc.eachFileRecurse(groovy.io.FileType.FILES) { f ->
+            def rel = binAssetsSrc.toPath().relativize(f.toPath()).toString()
             if (f.name.endsWith('.b64')) {
-                def rel = binAssetsSrc.toPath().relativize(f.toPath()).toString()
                 def target = new File(out, rel.substring(0, rel.length() - 4))
                 target.parentFile.mkdirs()
                 target.bytes = Base64.mimeDecoder.decode(f.getText('US-ASCII').trim())
+            } else {
+                def m = rel =~ /^(.*)\.b64\.part(\d+)$/
+                if (m.matches()) {
+                    parts.computeIfAbsent(m.group(1)) { [:] }.put(m.group(2) as int, f)
+                }
             }
+        }
+        parts.each { rel, chunks ->
+            if (chunks.keySet() != (0..<chunks.size()).toSet()) {
+                throw new GradleException("binary asset ${rel}: parts ${chunks.keySet().sort()} are not 0..${chunks.size() - 1}")
+            }
+            def target = new File(out, rel)
+            target.parentFile.mkdirs()
+            def text = (0..<chunks.size()).collect { chunks[it].getText('US-ASCII') }.join('')
+            target.bytes = Base64.mimeDecoder.decode(text.trim())
         }
     }
 }
