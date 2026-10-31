@@ -332,6 +332,14 @@ public final class FinalPunchClient {
    /** Every scene ends now (world exit, server stop, disconnect, reload). */
    // ------------------------------------------------------------------ the launched body
 
+   /** Is this entity the target of a running scene (its freeze is the scene's, not a stun). */
+   public static boolean isTarget(int entityId) {
+      for (Scene scene : SCENES.values()) {
+         if (scene.targetId == entityId) return true;
+      }
+      return false;
+   }
+
    /** Death ticks hidden from the renderer for this frame (entity id -> real value). */
    private static final Map<Integer, Integer> HELD_DEATH = new HashMap<>();
 
