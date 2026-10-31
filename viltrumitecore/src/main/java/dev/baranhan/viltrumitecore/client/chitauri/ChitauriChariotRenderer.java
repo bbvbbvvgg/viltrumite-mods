@@ -50,6 +50,12 @@ public class ChitauriChariotRenderer extends EntityRenderer<ChitauriChariot> {
       if (model == null) {
          return;
       }
+      // a chariot still inside the portal tube is hidden until its nose crosses the opening
+      ChitauriPortalClient.Plane portal = ChitauriPortalClient.plane();
+      if (portal != null && !portal.inFront(Mth.lerp(partial, e.xo, e.getX()), Mth.lerp(partial, e.yo, e.getY()) + 0.55,
+            Mth.lerp(partial, e.zo, e.getZ()), 1.6)) {
+         return;
+      }
       float age = e.tickCount + partial;
       float roll = Mth.lerp(partial, e.clientRollO, e.clientRoll);
       float speed = (float)e.clientSpeed;

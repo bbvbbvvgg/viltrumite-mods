@@ -56,6 +56,12 @@ public class ChitauriSoldierRenderer extends EntityRenderer<ChitauriSoldier> {
       if (model == null) {
          return;
       }
+      // riders of a chariot still inside the portal tube stay hidden with it
+      ChitauriPortalClient.Plane portal = ChitauriPortalClient.plane();
+      if (portal != null && e.getVehicle() != null && !portal.inFront(Mth.lerp(partial, e.xo, e.getX()), Mth.lerp(partial, e.yo, e.getY()) + 1.0,
+            Mth.lerp(partial, e.zo, e.getZ()), 1.6)) {
+         return;
+      }
       float age = e.tickCount + partial;
       float dying = e.deathTime > 0 ? e.deathTime - 1 + partial : -1.0F;
       pose(model, e, partial, age, dying);
