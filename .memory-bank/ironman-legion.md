@@ -33,8 +33,9 @@ Design: `docs/design/2026-10-31-ironman-legion-design.md` (Russian, accepted as 
 
 ## Scripted playtest (review of PR #98)
 - `client/ironman/legion/qa/LegionPlaytest` (`-Dviltrumitecore.legion.playtest=true`, plain `runClient`): loads save `run/saves/legion` (superflat, cheats; not in git), resets the roster by a hero change, drives the real key → screen → C2S path, logs `LEGION_PT CHECK PASS/FAIL` and `LEGION_PT DONE pass= fail= sounds={...}`, screenshots `run/screenshots/legion_*.png`. Last run: 35/35.
+- Multiplayer: `.playtest.mp=localhost:25565` (dedicated server with `-Dviltrumitecore.subtitles.qa=true`, players in `ops.json`) → owner checks 8/8; a second client `.playtest.watcher=true --username Watcher` → 4/4 (foreign suits tracked/rendered, no own HUD, `pvp=false` hits keep the suit's durability). With 4 GB RAM launch the server/client JVMs directly (command line from `/proc/<pid>/cmdline`), not through two Gradle daemons, or the OOM killer takes the server.
 - Pitfalls: `cmd(...)` inside `server(...)` runs one task later (it killed the freshly spawned ATTACK target once); no-AI zombies still burn in daylight (give them a helmet); `ironman_legion_land` plays only if a suit ends BRAKE on the ground, so it is rarely heard on flat arrivals.
 - `LegionScreen` call grid must fit 240 scaled px (1280×720 auto scale 3, default 854×480 window); `LegionClientRulesTest` checks both menu heights.
 
 ## Not verified in game (as of the review)
-- Listening by ear (only an OpenAL wave capture: no clipping, peak −1.6 dBFS), two clients on a dedicated server, other players' Legions in multiplayer, HUD at GUI scale 3–4 (the test window maxes at 2).
+- Listening by ear (only an OpenAL wave capture: no clipping, peak −1.6 dBFS), cross-Legion PvP with server `pvp=true` (unit tests only), HUD at GUI scale 3–4 (the test window maxes at 2).
