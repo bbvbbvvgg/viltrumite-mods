@@ -18,7 +18,7 @@ import net.minecraft.network.chat.Component;
  * last page. Hulk is interface-only (no HeroId), so saves never see it.
  */
 public class ExpansionHeroScreen extends Screen {
-   static final int BUTTON_W = 110;
+   static final int BUTTON_W = 130;
    static final int BUTTON_H = 20;
    static final int ICON = 16;
    static final int CELL_W = BUTTON_W + ICON + 6;

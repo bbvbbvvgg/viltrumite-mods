@@ -25,6 +25,26 @@ public enum HeroId {
    MEGUMI("megumi"),
    /** Ultimate Hero Expansion: Toji Fushiguro. */
    TOJI("toji"),
+   /** Ultimate Hero Expansion: Suguru Geto. */
+   GETO("geto"),
+   /** Ultimate Hero Expansion: Kento Nanami. */
+   NANAMI("nanami"),
+   /** Ultimate Hero Expansion: Mahito. */
+   MAHITO("mahito"),
+   /** Ultimate Hero Expansion: Yuta Okkotsu. */
+   YUTA("yuta"),
+   /** Ultimate Hero Expansion: Choso. */
+   CHOSO("choso"),
+   /** Ultimate Hero Expansion: Goku. */
+   GOKU("goku"),
+   /** Ultimate Hero Expansion: Vegeta. */
+   VEGETA("vegeta"),
+   /** Ultimate Hero Expansion: Naruto. */
+   NARUTO("naruto"),
+   /** Ultimate Hero Expansion: Sasuke. */
+   SASUKE("sasuke"),
+   /** Ultimate Hero Expansion: Madara. */
+   MADARA("madara"),
    // END ULTIMATE HERO EXPANSION
    ;
 

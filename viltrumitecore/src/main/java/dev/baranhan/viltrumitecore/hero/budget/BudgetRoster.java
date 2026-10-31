@@ -56,6 +56,96 @@ public final class BudgetRoster {
             new BudgetMove(BudgetMoveType.C, "restriction_dash", 0.0F, 30, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
             new BudgetMove(BudgetMoveType.D, "physical_gift", 0.0F, 300, 0xcc3333, BudgetShape.BEAM, BudgetBuff.STRENGTH)
          },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.GETO,
+         new BudgetLook(0xf0c8a0, 0x151515, 0x2b2b2b, 0x2b2b2b, 0x111111, 0x303030,
+            new String[]{}, new String[]{"bun:151515"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.B, "cursed_spirit", 11.0F, 40, 0x5a1a7a, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "manipulation", 0.0F, 300, 0x6a2a8a, BudgetShape.BEAM, BudgetBuff.RESISTANCE),
+            new BudgetMove(BudgetMoveType.E, "uzumaki", 28.0F, 220, 0x3a0a5a, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.NANAMI,
+         new BudgetLook(0xf0c8a0, 0xe8d070, 0xe8e0b0, 0xe8e0b0, 0x6a4a2a, 0x2b5cd6,
+            new String[]{"tie:4a6a3a"}, new String[]{"glasses:3a2a10"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "ratio", 16.0F, 30, 0xf0e080, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "overtime", 0.0F, 300, 0xe0a020, BudgetShape.BEAM, BudgetBuff.STRENGTH)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.MAHITO,
+         new BudgetLook(0xb8c8d0, 0x6a8aa8, 0x3a4a5a, 0x3a4a5a, 0x222222, 0x80a0c0,
+            new String[]{"stitches:303030"}, new String[]{}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "idle_transfiguration", 10.0F, 20, 0x7aa0c0, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "soul_shift", 0.0F, 40, 0xaaccee, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.E, "self_embodiment", 26.0F, 220, 0x4a7aa0, BudgetShape.RING, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.YUTA,
+         new BudgetLook(0xf0c8a0, 0x151515, 0xf0f0f0, 0xf0f0f0, 0x222222, 0x203040,
+            new String[]{}, new String[]{"katana_back:222222"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "katana_slash", 11.0F, 20, 0xe0e0ff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "rika", 13.0F, 50, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "copy", 0.0F, 300, 0xaaaaff, BudgetShape.BEAM, BudgetBuff.SPEED),
+            new BudgetMove(BudgetMoveType.E, "pure_love", 32.0F, 240, 0xff80c0, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.CHOSO,
+         new BudgetLook(0xf0c8a0, 0x151515, 0x4a3a6a, 0x2a2a2a, 0x111111, 0x602020,
+            new String[]{"blood_line:6a1010"}, new String[]{"bun:151515"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.B, "piercing_blood", 15.0F, 50, 0x8a0a0a, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "blood_manipulation", 0.0F, 300, 0xaa1010, BudgetShape.BEAM, BudgetBuff.RESISTANCE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.GOKU,
+         new BudgetLook(0xf0c8a0, 0x121212, 0xf07a10, 0xf07a10, 0x2040a0, 0x111111,
+            new String[]{"belt:2050c0"}, new String[]{"spiky:121212"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "ki_punch", 10.0F, 20, 0xffe080, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "ki_blast", 12.0F, 30, 0x80d0ff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "instant_transmission", 0.0F, 40, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.E, "kamehameha", 40.0F, 240, 0x60c0ff, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.GOKU),
+      new BudgetHeroSpec(HeroId.VEGETA,
+         new BudgetLook(0xf0c8a0, 0x121212, 0x2040b0, 0x2040b0, 0xf0f0f0, 0x111111,
+            new String[]{"armor:f0f0f0"}, new String[]{"tall_spiky:121212"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.B, "galick_gun", 13.0F, 40, 0xb060ff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "saiyan_pride", 0.0F, 300, 0xffe040, BudgetShape.BEAM, BudgetBuff.STRENGTH),
+            new BudgetMove(BudgetMoveType.E, "final_flash", 36.0F, 240, 0xfff060, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.NARUTO,
+         new BudgetLook(0xf0c8a0, 0xf8d030, 0xf07a10, 0xf07a10, 0x2040a0, 0x2060e0,
+            new String[]{"whiskers:5a3a20"}, new String[]{"spiky:f8d030", "headband:3060c0"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "chakra_punch", 8.0F, 16, 0xffb040, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "shadow_clone_dash", 0.0F, 40, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.E, "rasengan", 24.0F, 180, 0x60a0ff, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.SASUKE,
+         new BudgetLook(0xf0c8a0, 0x15152a, 0xe8e8f0, 0x3a2a5a, 0x2a2a2a, 0xc01010,
+            new String[]{}, new String[]{"spiky:15152a", "sword_hip:2a2a2a"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.B, "chidori", 14.0F, 40, 0x80e0ff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "lightning_step", 0.0F, 40, 0xc0f0ff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.E, "amaterasu", 27.0F, 220, 0x100010, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.MADARA,
+         new BudgetLook(0xf0c8a0, 0x151515, 0xa01818, 0x3a1010, 0x2a2a2a, 0xc01010,
+            new String[]{}, new String[]{"long_hair:151515"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "gunbai_strike", 12.0F, 24, 0xd02020, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "susanoo", 0.0F, 300, 0x4060ff, BudgetShape.BEAM, BudgetBuff.RESISTANCE),
+            new BudgetMove(BudgetMoveType.E, "meteor", 38.0F, 260, 0xff7020, BudgetShape.RING, BudgetBuff.NONE)
+         },
          BudgetScene.NONE)
    };
 }
