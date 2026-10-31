@@ -23,7 +23,12 @@ public enum ReinhardAbility {
    WORLD_CUT(ReinhardMode.HOLY_SWORD, 4, HeroAction.WORLD_CUT, 5),
    WORLD_ERASURE(ReinhardMode.HOLY_SWORD, 5, HeroAction.WORLD_ERASURE, 6),
    DIAGONAL_WORLD_CUT(ReinhardMode.HOLY_SWORD, 2, HeroAction.DIAGONAL_WORLD_CUT, 6),
-   REID_STRIKE(ReinhardMode.HOLY_SWORD, 0, HeroAction.PRIMARY_ATTACK, 6);
+   REID_STRIKE(ReinhardMode.HOLY_SWORD, 0, HeroAction.PRIMARY_ATTACK, 6),
+   /**
+    * Secret (Shift + N, every mode): never on a page, never active, never in the panel or the
+    * loadout (slot −1). Started only by ReinhardFinalPunchC2SPacket; see finalpunch/FinalPunch.
+    */
+   FINAL_PUNCH(ReinhardMode.RESTRAINED, -1, HeroAction.FINAL_PUNCH, 6);
 
    private final String name;
    private final String id;
