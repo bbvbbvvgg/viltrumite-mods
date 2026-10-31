@@ -57,21 +57,43 @@ public final class MicroLaser implements MarkSignature {
       state.energy.drain(SignatureRules.LASER_COST);
       int tick = sig.ticks;
       sig.ticks++;
-      SignatureTrace.Hit hit = SignatureTrace.shoot(player, player.getLookAngle(), SignatureRules.LASER_RANGE);
-      sig.point = hit.end();
-      if (hit.target() instanceof ServerPlayer defender && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender)
-         .blocksContinuousRay(defender, player.getEyePosition(), hit.end())) {
-         var palm=dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender).defenseContact(defender);
-         if(palm!=null)sig.point=palm;return;
+      Beam beam = beam(SignatureActor.of(player), player.getLookAngle());
+      if (beam.point() != null) {
+         sig.point = beam.point();
       }
-      if (hit.target() != null) {
-         breakShield(hit.target());
-         SignatureTrace.strike(hit.target(), player.damageSources().playerAttack(player), SignatureRules.LASER_DAMAGE);
+
+      if (beam.blocked()) {
+         return;
       }
 
       if (tick % SignatureRules.LASER_SOUND_INTERVAL == 0 && tick > 0) {
          SignatureTrace.sound(player, IronManMarkSounds.MICRO_LASER.get(), 0.6F, 1.0F);
       }
+   }
+
+   /** One beam tick: where it ends (null = keep the last point) and whether a hero defense stopped it. */
+   public record Beam(@javax.annotation.Nullable net.minecraft.world.phys.Vec3 point, boolean blocked) {
+   }
+
+   /**
+    * Shared beam kernel (Tony and the Iron Legion's Mark 7): ray from the actor's
+    * eye, a hero defense may stop it at the palm, else the first target takes
+    * the tick damage and loses its shield.
+    */
+   public static Beam beam(SignatureActor actor, net.minecraft.world.phys.Vec3 dir) {
+      SignatureTrace.Hit hit = SignatureTrace.shoot(actor, dir, SignatureRules.LASER_RANGE);
+      if (hit.target() instanceof ServerPlayer defender && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender)
+         .blocksContinuousRay(defender, actor.eye(), hit.end())) {
+         var palm = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(defender).defenseContact(defender);
+         return new Beam(palm != null ? palm : hit.end(), true);
+      }
+
+      if (hit.target() != null && actor.mayStrike(hit.target())) {
+         breakShield(hit.target());
+         SignatureTrace.strike(hit.target(), actor.attack(), SignatureRules.LASER_DAMAGE);
+      }
+
+      return new Beam(hit.end(), false);
    }
 
    /** Vanilla shield goes on the axe-style cooldown; an Iron Man shield drops at once. */

@@ -63,13 +63,18 @@ public final class ShoulderGun implements MarkSignature {
          return;
       }
 
-      Vec3 dir = SignatureTrace.spread(player.getLookAngle(), player.getRandom(), SignatureRules.GUN_SPREAD_DEG);
-      SignatureTrace.Hit hit = SignatureTrace.shoot(player, dir, SignatureRules.GUN_RANGE);
-      sig.point = hit.end();
-      if (hit.target() != null) {
-         SignatureTrace.shot(hit.target(), player.damageSources().playerAttack(player), SignatureRules.GUN_DAMAGE);
+      sig.point = round(SignatureActor.of(player), player.getLookAngle());
+   }
+
+   /** Shared round kernel (Tony and the Legion's War Machine): spread, ray, hit, report. Returns the impact point. */
+   public static Vec3 round(SignatureActor actor, Vec3 aim) {
+      Vec3 dir = SignatureTrace.spread(aim, actor.random(), SignatureRules.GUN_SPREAD_DEG);
+      SignatureTrace.Hit hit = SignatureTrace.shoot(actor, dir, SignatureRules.GUN_RANGE);
+      if (hit.target() != null && actor.mayStrike(hit.target())) {
+         SignatureTrace.shot(hit.target(), actor.attack(), SignatureRules.GUN_DAMAGE);
       }
 
-      SignatureTrace.sound(player, IronManMarkSounds.SHOULDER_GUN.get(), 0.6F, 0.95F + player.getRandom().nextFloat() * 0.1F);
+      actor.sound(IronManMarkSounds.SHOULDER_GUN.get(), 0.6F, 0.95F + actor.random().nextFloat() * 0.1F);
+      return hit.end();
    }
 }
