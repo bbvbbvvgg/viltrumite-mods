@@ -1,7 +1,7 @@
 # Hero gallery / encyclopedia (Кодекс) — design
 
 Base: `main` @ `cb5d602` (MC 1.20.1, Forge 47.3.0, core 1.62.0, protocol 20).
-Branch: `feat/hero-gallery-encyclopedia-20261031`.
+Branch: `feat/hero-gallery-encyclopedia-20261031`. Ships as core 1.63.0 (protocol stays 20).
 
 ## Goal
 An in-game gallery and encyclopedia of the mod: heroes, NPC and bosses, world events and contextual

@@ -1,6 +1,6 @@
 # Hero gallery / encyclopedia ("Кодекс")
 
-Branch `feat/hero-gallery-encyclopedia-20261031`. Design: `docs/design/2026-10-31-hero-gallery-encyclopedia-design.md`.
+Branch `feat/hero-gallery-encyclopedia-20261031`, core 1.63.0, protocol 20 unchanged. Design: `docs/design/2026-10-31-hero-gallery-encyclopedia-design.md`.
 
 ## Entry point (the only two Od Lagna menu changes)
 - `client/wish/WishScreen`: small book button top-left (`CODEX_X/Y = 6`, `CODEX_SIZE = 18`), tooltip `codex.viltrumitecore.gui.open`, disabled while the wish is closing/sent. Opens `new CodexScreen(this)`; Esc / back returns to the same WishScreen instance (state untouched).
@@ -27,3 +27,6 @@ Branch `feat/hero-gallery-encyclopedia-20261031`. Design: `docs/design/2026-10-3
 
 ## QA harness (SubtitlePlaytest, `-Dviltrumitecore.subtitles.qa=true`)
 - `wish`, `click x y`, `mouse x y`, `scroll x y d`, `keypress esc|down|…|<glfw>`, `codex <tab> <index> [scroll]`, `guiscale n`, `window w h`, `lang code`, `codexstate`.
+
+## Verified (2026-10-31)
+- Dedicated server + 2 clients (Alice/Bob): Alice wish → Thor badge only for Alice; Bob → DIO only for Bob; `/codex discover Alice …` not visible to Bob; playerdata NBT holds separate records.
