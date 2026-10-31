@@ -38,12 +38,12 @@ public class MicroMissileEntity extends Projectile implements Homing {
       this.noPhysics = true;
    }
 
-   public static MicroMissileEntity launch(ServerPlayer owner, Vec3 from, Vec3 direction, @Nullable Entity target) {
+   public static MicroMissileEntity launch(LivingEntity owner, Vec3 from, Vec3 direction, @Nullable Entity target) {
       return launch(owner, from, direction, target, 1.0F);
    }
 
-   /** {@code damageMul}: suit missile factor (spec §13.7: War Machine ×1.4). */
-   public static MicroMissileEntity launch(ServerPlayer owner, Vec3 from, Vec3 direction, @Nullable Entity target, float damageMul) {
+   /** {@code damageMul}: suit missile factor (spec §13.7: War Machine ×1.4). Owner: Tony or a Legion suit. */
+   public static MicroMissileEntity launch(LivingEntity owner, Vec3 from, Vec3 direction, @Nullable Entity target, float damageMul) {
       MicroMissileEntity missile = new MicroMissileEntity(ViltrumiteEntities.MICRO_MISSILE.get(), owner.level());
       missile.damageMul = damageMul;
       missile.setOwner(owner);
@@ -125,7 +125,8 @@ public class MicroMissileEntity extends Projectile implements Homing {
 
    @Override
    protected boolean canHitEntity(Entity entity) {
-      return super.canHitEntity(entity) && entity != this.getOwner() && !(entity instanceof MicroMissileEntity) && !(entity instanceof RepulsorBlastEntity);
+      return super.canHitEntity(entity) && entity != this.getOwner() && !(entity instanceof MicroMissileEntity) && !(entity instanceof RepulsorBlastEntity)
+         && !dev.baranhan.viltrumitecore.hero.ironman.legion.LegionAllies.spares(this.getOwner(), entity);
    }
 
    @Override
@@ -171,7 +172,9 @@ public class MicroMissileEntity extends Projectile implements Homing {
       }
 
       AABB box = new AABB(at, at).inflate(IronManRules.MISSILE_SPLASH_RADIUS);
-      for (LivingEntity near : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e != direct && e != owner && e.isAlive())) {
+      // The splash spares the owner's side: Tony, his Legion suits and, for a suit, its ally rule.
+      for (LivingEntity near : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e != direct && e != owner && e.isAlive()
+         && !dev.baranhan.viltrumitecore.hero.ironman.legion.LegionAllies.spares(owner, e) && dev.baranhan.viltrumitecore.hero.ironman.legion.LegionAllies.splashAllowed(owner, e))) {
          if (near.position().distanceTo(at) <= IronManRules.MISSILE_SPLASH_RADIUS + near.getBbWidth() && sees(at, near)) {
             if (near.hurt(this.damageSources().explosion(this, shooter), IronManRules.MISSILE_SPLASH * this.damageMul)
                && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsImpulse(near)) {
@@ -182,9 +185,9 @@ public class MicroMissileEntity extends Projectile implements Homing {
          }
       }
 
-      if (owner instanceof ServerPlayer player) {
-         dev.baranhan.viltrumitecore.hero.fx.HeroFx.flash(player, at);
-         dev.baranhan.viltrumitecore.hero.fx.HeroFx.shockwave(player, at, 0.9F, null, (float)IronManRules.MISSILE_SPLASH_RADIUS);
+      if (owner instanceof LivingEntity source && source.level() instanceof net.minecraft.server.level.ServerLevel) {
+         dev.baranhan.viltrumitecore.hero.fx.HeroFx.flash(source, at);
+         dev.baranhan.viltrumitecore.hero.fx.HeroFx.shockwave(source, at, 0.9F, null, (float)IronManRules.MISSILE_SPLASH_RADIUS);
       }
 
       this.level().playSound(null, at.x, at.y, at.z, IronManCombatSounds.MISSILE_EXPLODE.get(), SoundSource.PLAYERS, 1.2F,

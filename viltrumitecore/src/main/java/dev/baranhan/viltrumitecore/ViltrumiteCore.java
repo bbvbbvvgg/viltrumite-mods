@@ -110,15 +110,20 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.ironman.IronManJarvisSounds.init();
       dev.baranhan.viltrumitecore.hero.ironman.IronManMarkSounds.init();
       dev.baranhan.viltrumitecore.hero.ironman.IronManHulkbusterSounds.init();
+      dev.baranhan.viltrumitecore.hero.ironman.IronManLegionSounds.init();
       dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds.init();
       dev.baranhan.viltrumitecore.hero.thor.ThorSounds.init();
       dev.baranhan.viltrumitecore.hero.dio.DioSounds.init();
       // Spec 2026-10-28-sinclair §11: Sinclair sounds, his own entity register and the action lock.
       dev.baranhan.viltrumitecore.hero.sinclair.SinclairSetup.init(modEventBus);
+      // Thanos city event (docs/design/2026-10-31-thanos-six-stones-design.md): his sound holders.
+      dev.baranhan.viltrumitecore.worldevent.thanos.ThanosSounds.init();
       // Regulus Reborn (docs/design/2026-10-30-regulus-reborn-design.md): his own sound holders.
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
       dev.baranhan.viltrumitecore.hero.captain.CaptainSounds.init();
+      // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
+      dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);

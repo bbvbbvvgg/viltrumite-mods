@@ -48,7 +48,7 @@ class HeroAbilityIconsTest {
       for (String hulk : new String[]{"hulk_grab", "hulk_slam", "hulk_hop"}) {
          icons.add(new ResourceLocation("viltrumitecore", "textures/gui/ability/ironman/" + hulk + ".png"));
       }
-      assertEquals(18, icons.size());
+      assertEquals(19, icons.size(), "9 kit slots (incl. the Iron Legion) + 7 signatures + 3 Hulkbuster");
       for (ResourceLocation icon : icons) {
          assertHouseIcon(icon);
       }

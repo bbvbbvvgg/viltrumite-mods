@@ -1,0 +1,444 @@
+{
+  "thanos.arrival": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.arrival",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/arrival",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos.step": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/step",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "viltrumitecore:thanos/step_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "thanos.swing": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/swing",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "thanos.slam": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/slam",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.hit": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/hit",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "thanos.hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/hurt",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "thanos.stun": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.stun",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/stun",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.power_charge": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.power_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/power_charge",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.power_impact": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.power_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/power_impact",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.power_wave": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.power_wave",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/power_wave",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.space_open": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.space_open",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/space_open",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.space_step": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.space_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/space_step",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.space_pull": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.space_pull",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/space_pull",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.space_ward": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.space_ward",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/space_ward",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.reality_warp": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.reality_warp",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/reality_warp",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.reality_mirage": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.reality_mirage",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/reality_mirage",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.time_dome": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.time_dome",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/time_dome",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.time_rewind": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.time_rewind",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/time_rewind",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.mind_gaze": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.mind_gaze",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/mind_gaze",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.mind_pulse": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.mind_pulse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/mind_pulse",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.soul_tether": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.soul_tether",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/soul_tether",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.soul_nova": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.soul_nova",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/soul_nova",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos.stones_flare": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.stones_flare",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/stones_flare",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos.phase": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.phase",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/phase",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos.combo_portal_punch": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_portal_punch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_portal_punch",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos.combo_time_crush": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_time_crush",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_time_crush",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos.combo_soul_mirage": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_soul_mirage",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_soul_mirage",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos.combo_mind_step": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_mind_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_mind_step",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos.combo_trinity": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_trinity",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_trinity",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos.combo_eternity": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_eternity",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_eternity",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos.world_stop": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.world_stop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/world_stop",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.gauntlet_raise": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.gauntlet_raise",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/gauntlet_raise",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.stone_light": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.stone_light",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/stone_light",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.fingers": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.fingers",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/fingers",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.snap_click": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.snap_click",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/snap_click",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.dissolve": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.dissolve",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/dissolve",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.void": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.void",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/void",
+        "stream": true
+      }
+    ]
+  },
+  "thanos.od_lagna_arrive": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.od_lagna_arrive",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/od_lagna_arrive",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.od_lagna_line": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.od_lagna_line",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/od_lagna_line",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.restore": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.restore",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/restore",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "thanos.victory": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.victory",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/victory",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos.music_battle": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/music_battle",
+        "stream": true
+      }
+    ]
+  },
+  "thanos.music_final": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/music_final",
+        "stream": true
+      }
+    ]
+  },
+  "thanos.countdown": {
+    "category": "master",
+    "subtitle": "subtitles.viltrumitecore.thanos.countdown",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/countdown",
+        "attenuation_distance": 16
+      }
+    ]
+  }
+}

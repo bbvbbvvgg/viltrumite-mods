@@ -63,6 +63,22 @@ public final class WorldPause {
       for (ServerPlayer player : server.getPlayerList().getPlayers()) sendState(player, session);
       return true;
    }
+   /**
+    * A pause owned by a world event rather than a player (the Thanos snap): nobody is exempt,
+    * every player is held, and there is no owner who could leave. It still ends by itself at
+    * its watchdog (maxTicks + 40), on a server stop or a reload.
+    */
+   public static boolean beginEvent(MinecraftServer server, ResourceKey<Level> level, int maxTicks, boolean protect, int mobRadius) {
+      Session session = SESSIONS.begin(server, UUID.randomUUID(), maxTicks, protect, mobRadius);
+      if (session == null) return false;
+      session.event = true;
+      session.ownerLevel = level;
+      session.sync(new LiveBackend(server));
+      for (ServerPlayer player : server.getPlayerList().getPlayers()) sendState(player, session);
+      return true;
+   }
+   /** Is the running pause a world event's (no owning player)? */
+   public static boolean eventOwned(MinecraftServer server) { Session s=SESSIONS.get(server); return s!=null && s.event; }
    public static boolean active(MinecraftServer server) { return SESSIONS.get(server) != null; }
    /**
     * Players the server itself holds still (the world pause, the Limbo void) are not flying: the
@@ -78,11 +94,15 @@ public final class WorldPause {
    public static void tick(MinecraftServer server) {
       Session s=SESSIONS.get(server); if(s==null) return;
       ServerPlayer owner=server.getPlayerList().getPlayer(s.owner);
-      if(owner==null || !owner.isAlive() || !owner.level().dimension().equals(s.ownerLevel)) {
+      if(ownerGone(s.event,owner!=null,owner!=null && owner.isAlive(),owner!=null && owner.level().dimension().equals(s.ownerLevel))) {
          end(server,EndReason.OWNER_LEFT); return;
       }
       if(s.tick(new LiveBackend(server))) { finish(server,s,EndReason.WATCHDOG); return; }
       if(s.listener!=null) s.listener.tick(s.age);
+   }
+   /** Pure: a player-owned pause ends when its owner is gone, dead or elsewhere; an event's never does. */
+   static boolean ownerGone(boolean event,boolean online,boolean alive,boolean sameLevel) {
+      return !event && (!online || !alive || !sameLevel);
    }
    public static void ownerLeft(MinecraftServer server,UUID owner) {
       Session s=SESSIONS.get(server); if(s!=null && s.owner.equals(owner)) end(server,EndReason.OWNER_LEFT);
@@ -196,6 +216,8 @@ public final class WorldPause {
       /** Locked views by player id (owner included), recorded when first seen. */
       final Map<UUID,float[]> views=new HashMap<>();
       ResourceKey<Level> ownerLevel; Listener listener; int age; boolean ended;
+      /** Owned by a world event: the random owner id matches no player, so nobody is exempt. */
+      boolean event;
       Session(UUID owner,UUID id,int ticks,boolean protect,int radius) {
          this.owner=owner; this.id=id; this.maxTicks=ticks; this.protect=protect; this.mobRadius=radius;
       }

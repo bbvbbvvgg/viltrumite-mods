@@ -96,6 +96,9 @@ public final class IronManState {
    @Nullable
    public net.minecraft.world.phys.Vec3 equipSource;
 
+   /** Transient mirror of the Iron Legion call cooldown (IronManLegion keeps the squad), for the snapshot extra [4]. */
+   public int legionCooldown;
+
    // ---- Stage 5: Hulkbuster Mark 48 ----
    /** Persisted (NBT Hulkbuster): phase, durability, cooldown, partial parts. */
    public final dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer hulkbuster = new dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterLayer();

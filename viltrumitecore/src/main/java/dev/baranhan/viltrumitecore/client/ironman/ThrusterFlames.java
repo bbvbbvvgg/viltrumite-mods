@@ -138,7 +138,7 @@ public final class ThrusterFlames {
    }
 
    /** Length along the flame axis (bone Y) plus a small width wobble; each side out of phase. */
-   private static void flicker(BakedGeoModel geo, float length, float time, String... bones) {
+   public static void flicker(BakedGeoModel geo, float length, float time, String... bones) {
       for (int i = 0; i < bones.length; i++) {
          GeoBone bone = geo.getBone(bones[i]);
          if (bone == null) {

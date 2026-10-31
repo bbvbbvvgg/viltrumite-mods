@@ -104,7 +104,9 @@ public enum HeroAction {
    CAPTAIN_RUSH,
    CAPTAIN_SLAM,
    CAPTAIN_ROLL,
-   CAPTAIN_ASSEMBLE;
+   CAPTAIN_ASSEMBLE,
+   /** Iron Man stage 6: the Iron Legion menu (call / orders); appended after Captain America, wire ordinals unchanged. */
+   LEGION;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

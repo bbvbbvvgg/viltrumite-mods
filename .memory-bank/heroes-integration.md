@@ -17,7 +17,8 @@
   **1.56.0 / 16 = final integration of #85-#92** (all three tables together).
   **1.57.0 / 17 = Captain America 2012** (`feat/captain-america-2012`, topic file `.memory-bank/captain.md`); 1.57.1 / 17 = its polish (no packet change). 1.58.0 / 16 went to the Viltrumites/meteor integration (#97, main without Captain).
   **1.59.0 / 17 = Captain on top of 1.58.0** (`integ/captain-america-main`); **1.60.0 / 18 = Captain/Avengers finishing
-  rework** (new `CaptainFx.TEAM` joint-move FX type, so the protocol moves). Pick the next free pair (1.61.0 / 19).
+  rework** (new `CaptainFx.TEAM` joint-move FX type, so the protocol moves). **1.61.0 / 19 = Thanos event**
+  (`feat/thanos-six-stones-event`, `.memory-bank/thanos.md`): ThanosFx + ThanosState after CaptainFx. Pick the next free pair (1.62.0 / 20).
 
 ## Where strings and sounds live
 - English and the 10 other base locales: `resources/assets/viltrumitecore/lang/<locale>.json` (Thor keys at
@@ -63,3 +64,13 @@
 - Sinclair #91 + #92: `ActCardPopup` waits for the copy cinematic (no popup during CAPTURE / COPY, it opens with
   the window and runs its full 6 s hold); `SinclairFirstPerson` keeps #92's arm replacement and #91's scene camera.
 - Report: `docs/reports/2026-10-30-all-pr-integration.md`.
+
+## Final integration #101 + #99 + #98 (2026-10-31, core 1.62.0, protocol 20)
+- Packet tail order: Regulus → Captain → Thanos FX/State → Chitauri Portal/FX → Legion Menu/Call/Order/Status.
+- `HeroAction.LEGION` follows `CAPTAIN_ASSEMBLE` (not `MONARCH_CHARGE` as on the #98 branch).
+- `entity/SummonOwners`: a hero summon (Legion suit, Avenger, Quinjet, Jinwoo shadow) answers for its owner;
+  `LegionAllies` and `CaptainTargets` apply the owner's PvP/team rule to it. Add new summon types there.
+- Event exclusivity: the Chitauri invasion refuses Thanos/meteor/trio/conquest and they refuse it (`force` overrides);
+  Thanos and meteor rain may run together.
+- All Chitauri creatures and Thanos are `Enemy` (hero auto-targeting depends on it).
+- Report: `docs/reports/2026-10-31-final-integration-legion-chitauri-thanos.md`.

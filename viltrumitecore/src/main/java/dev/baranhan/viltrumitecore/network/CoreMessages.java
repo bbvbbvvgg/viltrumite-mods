@@ -50,7 +50,13 @@ public class CoreMessages {
    // the wish packets first, then RegulusFxS2CPacket, both after the Jinwoo packet. A client built
    // from any single "15" branch is refused.
    // v17 (feat/captain-america-2012): CaptainFxS2CPacket appended after RegulusFxS2CPacket.
-   private static final String PROTOCOL_VERSION = "18";
+   // v19 (Thanos city event, after main's v18): ThanosFxS2CPacket and ThanosStateS2CPacket appended
+   // after CaptainFxS2CPacket. The Thanos branch's own "17" table is refused.
+   // v18 on feat/chitauri-invasion alone had the Chitauri packets right after RegulusFxS2CPacket; that
+   // table is refused. v20 (final integration of #101/#99/#98): the existing table is kept as is, then
+   // ChitauriPortalS2CPacket and ChitauriFxS2CPacket, then the four Iron Legion packets, are appended last.
+   // The Iron Legion branch's own "17" table (Legion packets right after Regulus) is refused.
+   private static final String PROTOCOL_VERSION = "20";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -399,12 +405,51 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::handle)
          .add();
-      // Captain America 2012: one FX packet for Steve, the shield and the summoned Avengers; appended last.
+      // Captain America 2012 (v17/v18): one FX packet for Steve, the shield and the summoned Avengers; after Regulus.
       net.messageBuilder(dev.baranhan.viltrumitecore.hero.captain.net.CaptainFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
          .decoder(dev.baranhan.viltrumitecore.hero.captain.net.CaptainFxS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.hero.captain.net.CaptainFxS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.hero.captain.net.CaptainFxS2CPacket::handle)
          .add();
+      // Thanos city event (v19): his effects and the event state (HUD, music, scenes); appended last.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::handle)
+         .add();
+      // Chitauri invasion (v20, after Thanos): the portal state, then one FX packet for every invasion effect.
+      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriPortalS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriPortalS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriPortalS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriPortalS2CPacket::handle)
+         .add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket::handle)
+         .add();
+      // Iron Man stage 6, the Iron Legion (docs/design/2026-10-31-ironman-legion-design.md), v20: appended after the Chitauri packets, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
