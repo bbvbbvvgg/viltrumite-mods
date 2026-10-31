@@ -75,6 +75,7 @@ public class AvengerProjectileEntity extends Entity {
       if (!CaptainTargets.strike(shooter, e, TeamDamage.take(e, damage))) {
          return false;
       }
+      TeamDamage.afterHit(e);
       if (shooter instanceof AvengerEntity a && a.brain != null) {
          a.brain.drawFire(e);
       }

@@ -216,6 +216,15 @@ final class HawkeyeBrain extends AvengerBrain {
       }
    }
 
+   /** Joint vault (TeamMoves): one arrow at {@code t} from wherever Clint is (in the air above Natasha). */
+   void looseAt(LivingEntity t, int type, float damage) {
+      LivingEntity keep = this.target;
+      this.target = t;
+      this.loose(type, 0.0, damage);
+      this.target = keep;
+      CaptainSounds.play(this.self, CaptainSounds.BOW_RELEASE, 1.0F, CaptainSounds.jitter(this.self, 1.05F));
+   }
+
    private void loose(int type, double yawOffset, float damage) {
       Vec3 from = this.hand(false).add(0, 0.15, 0);
       Vec3 aim = this.target.getBoundingBox().getCenter();

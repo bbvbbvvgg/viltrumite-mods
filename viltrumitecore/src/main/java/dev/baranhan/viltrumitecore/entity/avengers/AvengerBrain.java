@@ -43,6 +43,8 @@ public abstract class AvengerBrain {
    /** Targets this Avenger could not reach: entity id -> tick until which they are skipped (no endless chase). */
    private final Map<Integer, Integer> ignored = new HashMap<>();
    static final int IGNORE_TICKS = 100;
+   /** The joint move this Avenger takes part in (TeamMoves drives the body meanwhile), or null. */
+   @Nullable TeamMoves.Move joint;
 
    protected AvengerBrain(AvengerEntity self) {
       this.self = self;
@@ -68,7 +70,9 @@ public abstract class AvengerBrain {
          this.provoker = attacker;
          this.provokerTicks = 120;
       }
-      this.onHurt(attacker);
+      if (this.joint == null) {
+         this.onHurt(attacker); // no dodge out of a joint move
+      }
    }
 
    protected void onHurt(LivingEntity attacker) {
@@ -88,6 +92,9 @@ public abstract class AvengerBrain {
       }
       if (this.provokerTicks > 0 && --this.provokerTicks == 0) {
          this.provoker = null;
+      }
+      if (this.joint != null) {
+         return; // a joint move (TeamMoves) drives the body
       }
       double toOwner = this.self.distanceToSqr(owner);
       if (toOwner > CaptainRules.LEASH_TELEPORT * CaptainRules.LEASH_TELEPORT) {
@@ -148,6 +155,19 @@ public abstract class AvengerBrain {
 
    protected boolean busy() {
       return this.actionTick >= 0;
+   }
+
+   /** Free for a joint move: no action running, not in one already. */
+   boolean freeForTeam() {
+      return this.joint == null && this.actionTick < 0;
+   }
+
+   /** Taken into a joint move: the current action is dropped, the body stops. */
+   void joinTeam(TeamMoves.Move move) {
+      this.joint = move;
+      this.actionTick = -1;
+      this.action = AvengerAction.NONE;
+      this.self.getNavigation().stop();
    }
 
    protected abstract void engage(LivingEntity t, ServerPlayer owner);
@@ -343,6 +363,7 @@ public abstract class AvengerBrain {
       if (!CaptainTargets.strike(this.self, e, TeamDamage.take(e, damage))) {
          return false;
       }
+      TeamDamage.afterHit(e);
       this.drawFire(e);
       return true;
    }

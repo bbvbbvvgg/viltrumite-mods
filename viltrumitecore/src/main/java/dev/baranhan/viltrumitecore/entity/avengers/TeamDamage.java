@@ -1,8 +1,10 @@
 package dev.baranhan.viltrumitecore.entity.avengers;
 
+import com.mojang.logging.LogUtils;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.world.entity.LivingEntity;
+import org.slf4j.Logger;
 
 /**
  * Damage pacing of the summoned team: every Avenger hit (melee, area, projectile, joint move) goes through
@@ -28,6 +30,9 @@ public final class TeamDamage {
    public static final float GLANCE = 0.5F;
 
    private static final Map<LivingEntity, Bucket> BUCKETS = new WeakHashMap<>();
+   private static final Logger LOGGER = LogUtils.getLogger();
+   /** Playtest log (-Dviltrumite.qa.team=true): time from a target's first team hit to its death. */
+   private static final boolean QA = Boolean.getBoolean("viltrumite.qa.team");
 
    private TeamDamage() {
    }
@@ -55,13 +60,16 @@ public final class TeamDamage {
    /** The team budget of one target (pure: time is the caller's game tick). */
    public static final class Bucket {
       private final float maxHealth;
+      private final long first;
       private double tokens;
       private long at;
+      private boolean logged;
 
       public Bucket(float maxHealth, long now) {
          this.maxHealth = maxHealth;
          this.tokens = burst(maxHealth);
          this.at = now;
+         this.first = now;
       }
 
       /** Damage a hit of {@code raw} may deal at tick {@code now}; spends it (a glance runs a small debt). */
@@ -86,5 +94,18 @@ public final class TeamDamage {
          BUCKETS.put(target, b);
       }
       return b.spend(now, raw);
+   }
+
+   /** Server, after a team hit landed: logs the kill time of the target in a playtest (see {@link #QA}). */
+   public static void afterHit(LivingEntity target) {
+      if (!QA || target.isAlive()) {
+         return;
+      }
+      Bucket b = BUCKETS.get(target);
+      if (b != null && !b.logged) {
+         b.logged = true;
+         LOGGER.info("TEAMKILL {} maxHp={} killed {} s after the first team hit", net.minecraft.world.entity.EntityType.getKey(target.getType()),
+            b.maxHealth, String.format(java.util.Locale.ROOT, "%.2f", (target.level().getGameTime() - b.first) / 20.0));
+      }
    }
 }

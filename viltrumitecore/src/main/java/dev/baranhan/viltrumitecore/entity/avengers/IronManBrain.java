@@ -42,7 +42,17 @@ final class IronManBrain extends AvengerBrain {
       this.self.getLookControl().setLookAt(owner.getX() + owner.getLookAngle().x * 10, owner.getEyeY(), owner.getZ() + owner.getLookAngle().z * 10);
    }
 
-   private void fly(Vec3 goal, double maxSpeed) {
+   /** Joint charged unibeam (TeamMoves): the plain unibeam waits its full cooldown afterwards. */
+   void unibeamUsed() {
+      this.cd[CD_UNIBEAM] = 340;
+   }
+
+   /** Joint moves need the unibeam roughly ready (not just fired). */
+   boolean unibeamNearlyReady() {
+      return this.cd[CD_UNIBEAM] <= 140;
+   }
+
+   void fly(Vec3 goal, double maxSpeed) {
       Vec3 at = this.self.position();
       // keep clear of the ground and of walls: rise while something blocks the way
       if (!this.self.level().noCollision(this.self, this.self.getBoundingBox().move(goal.subtract(at).normalize().scale(0.8)))) {
@@ -92,7 +102,7 @@ final class IronManBrain extends AvengerBrain {
       this.fly(goal, gap > 14 ? 0.9 : 0.55);
    }
 
-   private Vec3 chest() {
+   Vec3 chest() {
       return this.self.position().add(0, this.self.getBbHeight() * 0.7, 0).add(this.flatLook().scale(0.3));
    }
 
