@@ -128,6 +128,19 @@ public final class CaptainRules {
    public static final double LEASH = 24.0;
    public static final double LEASH_TELEPORT = 40.0;
    public static final double TARGET_RANGE = 24.0;
+   // --- Avengers' targets (out of reach = filtered out, not only scored lower) ---
+   /** Search radius around the Avenger itself; {@link #TARGET_RANGE} around Steve bounds the field. */
+   public static final double TARGET_SEARCH = 26.0;
+   /** Height window around Steve's feet: below it are cave and under-floor mobs, above it cliff tops. */
+   public static final double TARGET_DROP = 6.0;
+   public static final double TARGET_RISE = 8.0;
+   /** Height window around a walking Avenger's own feet (it can drop down a ledge, not climb a wall). */
+   public static final double TARGET_SELF_DROP = 8.0;
+   public static final double TARGET_SELF_RISE = 5.0;
+   /** Iron Man and Thor fly: a wide window around themselves (Steve's window still applies). */
+   public static final double TARGET_FLYER_WINDOW = 14.0;
+   /** A current target out of sight (of the Avenger and of Steve) this long is dropped and skipped for a while. */
+   public static final int TARGET_UNSEEN_TICKS = 40;
    public static final double OBSERVER_RANGE = 96.0;
 
    // --- ability cooldown slots (extraCooldowns indices) ---

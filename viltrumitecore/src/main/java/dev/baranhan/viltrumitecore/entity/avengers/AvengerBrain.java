@@ -38,6 +38,7 @@ public abstract class AvengerBrain {
    private int provokerTicks;
    protected int comboStep;
    private int stuck;
+   private int unseen;
    private double bestGap = Double.MAX_VALUE;
    /** Targets this Avenger could not reach: entity id -> tick until which they are skipped (no endless chase). */
    private final Map<Integer, Integer> ignored = new HashMap<>();
@@ -97,11 +98,21 @@ public abstract class AvengerBrain {
          || this.target.distanceToSqr(owner) > CaptainRules.LEASH * CaptainRules.LEASH * 1.6)) {
          this.target = null;
       }
+      if (this.target != null && this.self.tickCount % 5 == this.self.getId() % 5) {
+         // a target that went behind a wall or under the floor is dropped, not chased forever
+         if (this.reachable(owner, this.target)) {
+            this.unseen = 0;
+         } else if ((this.unseen += 5) >= CaptainRules.TARGET_UNSEEN_TICKS) {
+            this.unseen = 0;
+            this.ignore(this.target);
+         }
+      }
       if (this.self.tickCount % 10 == this.self.getId() % 10 || this.target == null && this.self.tickCount % 4 == 0) {
          LivingEntity next = this.choose(owner);
          if (next != this.target) {
             this.target = next;
             this.stuck = 0;
+            this.unseen = 0;
             this.bestGap = Double.MAX_VALUE;
          }
       }
@@ -151,8 +162,9 @@ public abstract class AvengerBrain {
    /**
     * Target choice (after the Jinwoo shadow brain): Steve's mark first, then a score over every threat around
     * Steve — distance, minus bonuses for what hits Steve, what hunts Steve, who provoked this Avenger, plus a
-    * spread penalty for targets other Avengers already fight and a malus when out of sight. Targets that could
-    * not be reached are skipped for a while.
+    * spread penalty for targets other Avengers already fight and a malus when only Steve sees it. Targets out of
+    * reach (nobody sees them, outside the height windows, too far: {@link #reachable}) are never candidates;
+    * targets that could not be reached on foot are skipped for a while.
     */
    @Nullable
    private LivingEntity choose(ServerPlayer owner) {
@@ -165,12 +177,13 @@ public abstract class AvengerBrain {
          }
       }
       if (state != null && state.markTarget != null && state.markTicks > 0 && level.getEntity(state.markTarget) instanceof LivingEntity m
-         && this.usable(owner, m)) {
+         && this.usable(owner, m) && !this.ignored.containsKey(m.getId()) && this.reachable(owner, m)) {
          return m;
       }
       int lastAttacker = state != null ? state.lastAttackerId : -1;
       List<LivingEntity> list = this.self.level().getEntitiesOfClass(LivingEntity.class, owner.getBoundingBox().inflate(CaptainRules.TARGET_RANGE),
-         e -> (this.hostile(e) || e.getId() == lastAttacker || e == this.provoker) && this.usable(owner, e) && !this.ignored.containsKey(e.getId()));
+         e -> (this.hostile(e) || e.getId() == lastAttacker || e == this.provoker) && this.usable(owner, e) && !this.ignored.containsKey(e.getId())
+            && this.reachable(owner, e));
       if (list.isEmpty()) {
          return null;
       }
@@ -210,6 +223,41 @@ public abstract class AvengerBrain {
       return s;
    }
 
+   /**
+    * Pure: a candidate is out of reach — filtered out, not only scored lower — when neither this Avenger nor Steve
+    * has a clear line to it, when it is outside Steve's height window (caves under him, cliff tops), outside the
+    * Avenger's own window (fliers get a wide one) or beyond the search radius.
+    */
+   static boolean reachable(double distance, double dySelf, double dyOwner, boolean seenBySelf, boolean seenByOwner, boolean flyer) {
+      if (!seenBySelf && !seenByOwner || distance > CaptainRules.TARGET_SEARCH) {
+         return false;
+      }
+      if (dyOwner < -CaptainRules.TARGET_DROP || dyOwner > CaptainRules.TARGET_RISE) {
+         return false;
+      }
+      double drop = flyer ? CaptainRules.TARGET_FLYER_WINDOW : CaptainRules.TARGET_SELF_DROP;
+      double rise = flyer ? CaptainRules.TARGET_FLYER_WINDOW : CaptainRules.TARGET_SELF_RISE;
+      return dySelf >= -drop && dySelf <= rise;
+   }
+
+   /** {@link #reachable(double, double, double, boolean, boolean, boolean)} for a live candidate. */
+   protected boolean reachable(ServerPlayer owner, LivingEntity e) {
+      double distance = this.self.distanceTo(e);
+      double dySelf = e.getY() - this.self.getY();
+      double dyOwner = e.getY() - owner.getY();
+      boolean flyer = this.self.kind() == AvengerKind.IRON_MAN || this.self.kind() == AvengerKind.THOR;
+      if (!reachable(distance, dySelf, dyOwner, true, true, flyer)) {
+         return false; // geometry rules it out before any ray is cast
+      }
+      return this.seesFrom(this.self.getEyePosition(), e) || this.seesFrom(owner.getEyePosition(), e);
+   }
+
+   /** A clear line from {@code eye} to the target's eyes or body centre (solid blocks stop it, glass too). */
+   protected boolean seesFrom(Vec3 eye, LivingEntity t) {
+      var level = this.self.level();
+      return CaptainTargets.visible(level, eye, t.getEyePosition()) || CaptainTargets.visible(level, eye, t.getBoundingBox().getCenter());
+   }
+
    /** Pure: a normally spared mob (golem, wolf...) becomes a legal target. */
    static boolean hostileToTeam(boolean huntsTeam, boolean angryAtOwner, boolean hitOwner, boolean markedByOwner) {
       return huntsTeam || angryAtOwner || hitOwner || markedByOwner;
@@ -221,8 +269,9 @@ public abstract class AvengerBrain {
 
    @Nullable
    protected LivingEntity nearestHostile(Vec3 at, double radius) {
+      ServerPlayer owner = this.self.owner();
       List<LivingEntity> list = this.self.level().getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(radius),
-         e -> this.hostile(e) && this.self.mayHit(e));
+         e -> this.hostile(e) && this.self.mayHit(e) && (owner == null || this.reachable(owner, e)));
       LivingEntity best = null;
       double bestD = radius * radius;
       for (LivingEntity e : list) {
@@ -257,7 +306,7 @@ public abstract class AvengerBrain {
       return CaptainTargets.visible(this.self.level(), this.self.getEyePosition(), t.getBoundingBox().getCenter());
    }
 
-   /** Walks towards t; a target that cannot be reached for 6 s is dropped for a while. */
+   /** Walks towards t; a target that cannot be reached for 4 s is dropped for a while. */
    protected void approach(LivingEntity t, double speed) {
       double gap = this.gap(t);
       if (this.self.tickCount % 4 == 0 || this.self.getNavigation().isDone()) {
@@ -266,7 +315,7 @@ public abstract class AvengerBrain {
       if (gap < this.bestGap - 0.5) {
          this.bestGap = gap;
          this.stuck = 0;
-      } else if (++this.stuck > 120) {
+      } else if (++this.stuck > 80) {
          this.stuck = 0;
          this.bestGap = Double.MAX_VALUE;
          this.unreachable(t);
@@ -287,11 +336,11 @@ public abstract class AvengerBrain {
    }
 
    /**
-    * A hit of this Avenger. A mob that was after Steve (or after nobody) turns on the Avenger who hit it, so
-    * the team draws the fire off Steve like the shadows do for Jinwoo.
+    * A hit of this Avenger, paced by {@link TeamDamage}. A mob that was after Steve (or after nobody) turns on
+    * the Avenger who hit it, so the team draws the fire off Steve like the shadows do for Jinwoo.
     */
    protected boolean hit(LivingEntity e, float damage) {
-      if (!CaptainTargets.strike(this.self, e, damage)) {
+      if (!CaptainTargets.strike(this.self, e, TeamDamage.take(e, damage))) {
          return false;
       }
       this.drawFire(e);

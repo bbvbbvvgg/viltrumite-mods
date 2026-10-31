@@ -70,9 +70,9 @@ public class AvengerProjectileEntity extends Entity {
       return this.entityData.get(SHOOTER);
    }
 
-   /** A projectile hit; the mob turns on the Avenger who shot it. */
+   /** A projectile hit (paced by {@link TeamDamage}); the mob turns on the Avenger who shot it. */
    private static boolean hitBy(LivingEntity shooter, LivingEntity e, float damage) {
-      if (!CaptainTargets.strike(shooter, e, damage)) {
+      if (!CaptainTargets.strike(shooter, e, TeamDamage.take(e, damage))) {
          return false;
       }
       if (shooter instanceof AvengerEntity a && a.brain != null) {
