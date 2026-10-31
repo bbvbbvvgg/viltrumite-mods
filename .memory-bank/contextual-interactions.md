@@ -49,4 +49,6 @@ while broken (REFUSE sound), GUARD_UP cue when it heals. Combo B reuses `Captain
 
 ## Not verified
 No in-game client / multiplayer playtest was run (no display in the agent sandbox): only unit tests, full gradle build
-and a dedicated-server boot smoke (`runServer`), which proves registration/loading, not gameplay.
+and a dedicated-server boot smoke (`runServer`), which proves registration/loading, not gameplay. Player-free runtime
+check: with `JAVA_TOOL_OPTIONS=-Dviltrumitecore.interactions.trace=true`, RCON `summon viltrumitecore:meteor` above a
+NoAI `chitauri_leviathan` logs `INTERACTION meteor_downs_leviathan fired` (HP 1024 -> 917.4). Hero combos need players.
