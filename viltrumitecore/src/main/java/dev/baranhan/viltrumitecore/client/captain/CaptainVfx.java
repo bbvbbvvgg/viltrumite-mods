@@ -38,7 +38,8 @@ import org.joml.Vector3f;
 
 /**
  * Captain / Avengers world VFX: vibranium sparks and star flashes, slam and landing rings, stun stars, repulsor
- * and unibeam beams, pistol tracers, Widow's Bite and shock arcs, grapple lines, explosions and thruster bursts.
+ * and unibeam beams, pistol tracers, Widow's Bite and shock arcs, grapple lines, explosions, thruster bursts and
+ * the team's joint moves (the vault puff, Thor's lightning into the unibeam, Mjolnir's shockwave off the shield).
  * Beams/arcs/lines are additive pixel billboards drawn after the particles; the rest are vanilla particles and
  * the shared {@link HeroImpactFx} ground rings. Camera shake falls off with distance. Client only.
  */
@@ -226,6 +227,71 @@ public final class CaptainVfx {
             burst(level, ParticleTypes.FLAME, a, 10, 0.12);
             burst(level, ParticleTypes.CLOUD, a, 6, 0.1);
             shake(a, 0.25F, 14);
+         }
+         case CaptainFx.TEAM -> team(level, arg, a, b);
+         default -> {
+         }
+      }
+   }
+
+   /** The team's joint moves (rework §15): Natasha's heave, Thor's charge into the unibeam, Mjolnir on the shield. */
+   private static void team(ClientLevel level, int kind, Vec3 a, Vec3 b) {
+      switch (kind) {
+         case CaptainFx.TEAM_VAULT -> { // the heave: a puff off her hands, dust under her feet, a rush of air up
+            burst(level, ParticleTypes.CLOUD, a, 8, 0.07);
+            dust(level, a.add(0, -0.7, 0), 1.2F, 14);
+            for (int i = 0; i < 7; i++) {
+               level.addParticle(ParticleTypes.CLOUD, a.x + (RANDOM.nextDouble() - 0.5) * 0.4, a.y + 0.5 + i * 0.6, a.z + (RANDOM.nextDouble() - 0.5) * 0.4,
+                  0, 0.12, 0);
+            }
+            shake(a, 0.25F, 12);
+         }
+         case CaptainFx.TEAM_CHANNEL -> { // lightning from Mjolnir into the arc reactor
+            BEAMS.add(new Beam(a, b, -1, 3, 140, 200, 255, 0.075F, true, RANDOM.nextLong()));
+            BEAMS.add(new Beam(a, b, -1, 2, 235, 245, 255, 0.035F, true, RANDOM.nextLong()));
+            burst(level, ParticleTypes.ELECTRIC_SPARK, a, 4, 0.2);
+            burst(level, ParticleTypes.ELECTRIC_SPARK, b, 7, 0.28);
+            if (RANDOM.nextInt(3) == 0) {
+               level.addParticle(ParticleTypes.FLASH, b.x, b.y, b.z, 0, 0, 0);
+            }
+         }
+         case CaptainFx.TEAM_BEAM -> { // the charged unibeam: twice as thick, wrapped in lightning
+            BEAMS.add(new Beam(a, b, -1, 3, 190, 235, 255, 0.36F, false, 0));
+            BEAMS.add(new Beam(a, b, -1, 3, 140, 200, 255, 0.05F, true, RANDOM.nextLong()));
+            BEAMS.add(new Beam(a, b, -1, 2, 140, 200, 255, 0.04F, true, RANDOM.nextLong()));
+            burst(level, ParticleTypes.END_ROD, b, 8, 0.2);
+            burst(level, ParticleTypes.ELECTRIC_SPARK, b, 8, 0.3);
+            burst(level, ParticleTypes.ELECTRIC_SPARK, a, 3, 0.15);
+            if (RANDOM.nextInt(2) == 0) {
+               level.addParticle(ParticleTypes.FLASH, b.x, b.y, b.z, 0, 0, 0);
+            }
+            shake(a, 0.3F, 24);
+         }
+         case CaptainFx.TEAM_SHOCKWAVE -> { // Mjolnir meets the shield: a flash, a ring along the ground, radial arcs
+            float r = (float)Math.max(2.0, b.x);
+            Vec3 ground = new Vec3(a.x, b.y + 0.1, a.z);
+            level.addParticle(ParticleTypes.FLASH, a.x, a.y, a.z, 0, 0, 0);
+            level.addParticle(ParticleTypes.EXPLOSION, a.x, a.y, a.z, 0, 0, 0);
+            burst(level, ParticleTypes.ELECTRIC_SPARK, a, 30, 0.6);
+            burst(level, ParticleTypes.CRIT, a, 16, 0.5);
+            burst(level, STAR_WHITE, a, 10, 0.35);
+            HeroImpactFx.shockwaveVisual(ground, r);
+            dust(level, ground, r * 0.7F, 50);
+            ring(level, ParticleTypes.ELECTRIC_SPARK, ground.add(0, 0.2, 0), r * 0.5, 30);
+            ring(level, ParticleTypes.ELECTRIC_SPARK, ground.add(0, 0.2, 0), r, 50);
+            for (int i = 0; i < 8; i++) {
+               double ang = Math.PI * 2 * i / 8 + RANDOM.nextDouble() * 0.4;
+               double d = r * (0.7 + RANDOM.nextDouble() * 0.3);
+               BEAMS.add(new Beam(a, ground.add(Math.cos(ang) * d, 0.3, Math.sin(ang) * d), -1, 6, 140, 200, 255, 0.05F, true, RANDOM.nextLong()));
+            }
+            shake(a, 1.4F, 32);
+         }
+         case CaptainFx.TEAM_CRACKLE -> { // lightning gathering on the raised hammer
+            burst(level, ParticleTypes.ELECTRIC_SPARK, a, 6, 0.18);
+            if (RANDOM.nextInt(2) == 0) {
+               Vec3 end = a.add((RANDOM.nextDouble() - 0.5) * 1.6, (RANDOM.nextDouble() - 0.2) * 1.2, (RANDOM.nextDouble() - 0.5) * 1.6);
+               BEAMS.add(new Beam(a, end, -1, 3, 150, 205, 255, 0.03F, true, RANDOM.nextLong()));
+            }
          }
          default -> {
          }

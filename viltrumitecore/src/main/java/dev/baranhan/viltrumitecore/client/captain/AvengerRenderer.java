@@ -250,6 +250,8 @@ public class AvengerRenderer extends EntityRenderer<AvengerEntity> {
             boolean nocked = switch (action) {
                case SHOOT, SPECIAL_1, SPECIAL_2, SPECIAL_3 -> ticks < 30;
                case CIRCLE -> ticks >= 8 && ticks < 76;
+               case TEAM_1 -> ticks >= 12; // the vault: drawn at the top of the flip
+               case TEAM_2 -> ticks < 9; // the air shot looses at 8
                default -> false;
             };
             hide(gear, "arrow", !nocked);

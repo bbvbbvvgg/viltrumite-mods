@@ -22,7 +22,16 @@ public enum AvengerAction {
    DODGE("dodge", 12),
    DEPART("depart", 90),
    SHOOT("shoot", 10),
-   HURT("hurt", 8);
+   HURT("hurt", 8),
+   /**
+    * Joint moves (TeamMoves, rework §15), clip per kind: Natasha cups her hands / Clint springs off them and flips up;
+    * Thor channels the lightning into Iron Man / Tony takes the charge.
+    */
+   TEAM_1("team_1", 40),
+   /** Natasha's heave / Clint's shot from the air; Thor raises Mjolnir for the shield strike / Tony's charged unibeam. */
+   TEAM_2("team_2", 30),
+   /** Clint drops back down; Thor's hammer blow on Steve's shield. */
+   TEAM_3("team_3", 24);
 
    private final String clip;
    public final int length;

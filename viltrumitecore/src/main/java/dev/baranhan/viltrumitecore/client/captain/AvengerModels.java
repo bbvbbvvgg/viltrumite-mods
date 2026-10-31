@@ -5,12 +5,14 @@ import javax.annotation.Nullable;
 
 /**
  * Which files draw each Avenger (resource paths inside the {@code viltrumitecore} namespace). Thor, Black Widow,
- * Hawkeye and Hulk have their own shaded body meshes (UV 128x256 / 256x512, the size of their skins); only Iron
- * Man keeps the shared player rig, because his armour skin is painted in that rig's layout. Pure, so
+ * Hawkeye and Hulk have their own shaded body meshes (UV 128x256 / 256x512, the size of their skins); Iron Man is
+ * the hero's own Mark 42: the shared player rig wears the Mark 42 skin (with Tony's face under the faceplate) and
+ * his gear mesh is the hero's Sind Mark 42 plates re-parented onto the rig (tools/assets/avengers_ironman_mk42.py),
+ * drawn with the hero's 160 px plate atlas. Pure, so
  * {@code AvengerModelsTest} can pin the choice: a dedicated body must never fall back to the shared rig again.
  */
 public final class AvengerModels {
-   /** The shared player-shaped rig (64x64 UV layout); Iron Man's 128x128 armour skin is painted for it. */
+   /** The shared player-shaped rig (64x64 UV = the player skin layout); Iron Man's Mark 42 skin is a player skin. */
    public static final String SHARED_RIG = "geo/avengers/avenger.geo.json";
 
    private AvengerModels() {
@@ -35,14 +37,26 @@ public final class AvengerModels {
       return kind == AvengerKind.HULK ? null : "geo/avengers/" + kind.key() + "_gear.geo.json";
    }
 
+   /** The hero's Mark 42 plate atlas and its emissive mask (eyes, arc reactor, palms). */
+   public static final String MARK_42_PLATES = "textures/entity/ironman/mark_42/pieces.png";
+   public static final String MARK_42_GLOW = "textures/entity/ironman/mark_42/pieces_glow.png";
+
    @Nullable
    public static String gearTexture(AvengerKind kind) {
-      return kind == AvengerKind.HULK ? null : "textures/entity/avengers/" + kind.key() + "_gear.png";
+      return switch (kind) {
+         case HULK -> null;
+         case IRON_MAN -> MARK_42_PLATES;
+         default -> "textures/entity/avengers/" + kind.key() + "_gear.png";
+      };
    }
 
    /** Emissive mask drawn over the gear mesh (over the body for Hulk: his eyes). */
    public static String glow(AvengerKind kind) {
-      return kind == AvengerKind.HULK ? "textures/entity/avengers/hulk_glow.png" : "textures/entity/avengers/" + kind.key() + "_gear_glow.png";
+      return switch (kind) {
+         case HULK -> "textures/entity/avengers/hulk_glow.png";
+         case IRON_MAN -> MARK_42_GLOW;
+         default -> "textures/entity/avengers/" + kind.key() + "_gear_glow.png";
+      };
    }
 
    /**
