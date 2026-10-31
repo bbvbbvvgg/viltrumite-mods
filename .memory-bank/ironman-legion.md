@@ -31,5 +31,10 @@ Design: `docs/design/2026-10-31-ironman-legion-design.md` (Russian, accepted as 
 - Sounds: own numpy synthesis `tools/sfx/ironman_legion.py` (12 cues `ironman_legion_*`, events in `sound-overlays/legion.json`, subtitles in `lang-overlays/legion/*`, 12 locales). Not auditioned in game yet.
 - Icon: `legion` in `tools/assets/ironman_icon_art.py` (three suits on boot flames).
 
-## Not verified in game (as of the PR)
-- Look of the clips and VFX, the arrival paths, sound mix, the HUD layout at GUI scales, multiplayer tracking of other players' Legions.
+## Scripted playtest (review of PR #98)
+- `client/ironman/legion/qa/LegionPlaytest` (`-Dviltrumitecore.legion.playtest=true`, plain `runClient`): loads save `run/saves/legion` (superflat, cheats; not in git), resets the roster by a hero change, drives the real key → screen → C2S path, logs `LEGION_PT CHECK PASS/FAIL` and `LEGION_PT DONE pass= fail= sounds={...}`, screenshots `run/screenshots/legion_*.png`. Last run: 35/35.
+- Pitfalls: `cmd(...)` inside `server(...)` runs one task later (it killed the freshly spawned ATTACK target once); no-AI zombies still burn in daylight (give them a helmet); `ironman_legion_land` plays only if a suit ends BRAKE on the ground, so it is rarely heard on flat arrivals.
+- `LegionScreen` call grid must fit 240 scaled px (1280×720 auto scale 3, default 854×480 window); `LegionClientRulesTest` checks both menu heights.
+
+## Not verified in game (as of the review)
+- Listening by ear (only an OpenAL wave capture: no clipping, peak −1.6 dBFS), two clients on a dedicated server, other players' Legions in multiplayer, HUD at GUI scale 3–4 (the test window maxes at 2).

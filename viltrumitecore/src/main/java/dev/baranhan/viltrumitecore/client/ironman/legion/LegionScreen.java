@@ -43,10 +43,19 @@ import org.lwjgl.glfw.GLFW;
  */
 public final class LegionScreen extends net.minecraft.client.gui.screens.Screen {
    private static final int CARD_W = 84;
-   private static final int CARD_H = 96;
+   /** Tall enough for the status line (y + 81, 9 px font); the call grid must fit a 240-px-high GUI. */
+   private static final int CARD_H = 92;
    private static final int GAP = 6;
    private static final int COLS = 4;
    private static final int ROWS = 2;
+   /** Title strip above the cards and the hint strip below them (call mode). */
+   private static final int CALL_HEADER = 24;
+   private static final int CALL_FOOTER = 20;
+   /**
+    * The smallest common GUI height: 1280×720 at auto scale 3 and the default
+    * 854×480 window at scale 2 are both 240 scaled pixels high.
+    */
+   static final int MIN_GUI_HEIGHT = 240;
    private static final int ORDER_W = 176;
    private static final int ORDER_H = 22;
    private static final int SUIT_W = 150;
@@ -102,7 +111,7 @@ public final class LegionScreen extends net.minecraft.client.gui.screens.Screen 
       super.init();
       this.preview = new PlayerModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.PLAYER), false);
       this.left = (this.width - panelWidth()) / 2;
-      this.top = (this.height - panelHeight()) / 2;
+      this.top = Math.max(0, (this.height - panelHeight()) / 2);
    }
 
    private int panelWidth() {
@@ -110,7 +119,15 @@ public final class LegionScreen extends net.minecraft.client.gui.screens.Screen 
    }
 
    private int panelHeight() {
-      return this.command ? 30 + ORDERS.length * (ORDER_H + 4) + ORDER_H + 18 : 30 + ROWS * CARD_H + (ROWS - 1) * GAP + 26;
+      return this.command ? commandPanelHeight() : callPanelHeight();
+   }
+
+   static int callPanelHeight() {
+      return CALL_HEADER + ROWS * CARD_H + (ROWS - 1) * GAP + CALL_FOOTER;
+   }
+
+   static int commandPanelHeight() {
+      return 30 + ORDERS.length * (ORDER_H + 4) + ORDER_H + 18;
    }
 
    private int cardX(int index) {
@@ -118,7 +135,7 @@ public final class LegionScreen extends net.minecraft.client.gui.screens.Screen 
    }
 
    private int cardY(int index) {
-      return this.top + 30 + index / COLS * (CARD_H + GAP);
+      return this.top + CALL_HEADER + index / COLS * (CARD_H + GAP);
    }
 
    private int orderY(int index) {
@@ -233,7 +250,7 @@ public final class LegionScreen extends net.minecraft.client.gui.screens.Screen 
 
       graphics.fill(x + 8, y + 58, x + CARD_W - 8, y + 78, ok ? (hover ? 0xE060D8FF : 0xB040A8D0) : 0x60203040);
       drawFitted(graphics, Component.translatable("gui.viltrumitecore.legion.call"), x + CARD_W / 2, y + 64, ok ? 0xFF06141C : DIM);
-      drawFitted(graphics, Component.translatable("gui.viltrumitecore.legion.hint_enter"), x + CARD_W / 2, y + 84, DIM);
+      drawFitted(graphics, Component.translatable("gui.viltrumitecore.legion.hint_enter"), x + CARD_W / 2, y + 82, DIM);
    }
 
    private void toggle(MarkId mark) {

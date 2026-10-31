@@ -68,4 +68,11 @@ class LegionClientRulesTest {
       assertEquals(0, LegionHud.cooldownLeft(200, Long.MAX_VALUE), "no level: nothing to show");
       assertEquals(200, LegionHud.cooldownLeft(200, -5L), "a clock going back does not add time");
    }
+
+   @Test
+   void bothMenusFitTheSmallestCommonGuiHeight() {
+      // 1280x720 at auto scale 3 and the default 854x480 window are 240 scaled px high; the call grid used to be 254 and lost its top edge.
+      assertTrue(LegionScreen.callPanelHeight() <= LegionScreen.MIN_GUI_HEIGHT, "call menu " + LegionScreen.callPanelHeight());
+      assertTrue(LegionScreen.commandPanelHeight() <= LegionScreen.MIN_GUI_HEIGHT, "orders menu " + LegionScreen.commandPanelHeight());
+   }
 }
