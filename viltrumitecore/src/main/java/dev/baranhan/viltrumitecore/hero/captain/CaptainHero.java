@@ -439,7 +439,7 @@ public final class CaptainHero implements HeroDefinition {
    /** The raised, intact vibranium shield: {@code weapon.shield} in GUARD. Server side; NONE otherwise. */
    @Override
    public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
-      CaptainState state = player.level().isClientSide() ? null : CaptainState.of(player);
+      CaptainState state = player == null || player.level().isClientSide() ? null : CaptainState.of(player);
       if (state != null && state.guarding && state.shieldInHand() && state.shieldBroken == 0) {
          return SHIELD_GUARD;
       }
