@@ -17,7 +17,7 @@ public final class LeviathanTrail {
    public static final double HEAD_GAP = 3.6;
    /** Segment spacing at scale 1 (blocks). */
    public static final double SPACING = 2.3;
-   public static final double TAIL_GAP = 2.4;
+   public static final double TAIL_GAP = 1.5;
 
    private final int cap;
    private final double[] x;

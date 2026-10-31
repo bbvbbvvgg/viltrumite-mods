@@ -43,7 +43,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob {
    public static final byte STATE_FLY = 0, STATE_DYING = 1;
    public static final byte EVENT_CANNON = 75;
    /** Seat offsets (right, up, forward) in blocks from the hull centre. */
-   static final double[][] SEATS = {{0.0, 0.42, -0.95}, {-0.5, 0.42, 0.45}, {0.5, 0.42, 0.45}};
+   static final double[][] SEATS = {{0.0, 0.42, 0.75}, {-0.5, 0.42, -0.55}, {0.5, 0.42, -0.55}};
 
    enum Mode { ENTRY, PATROL, ATTACK, DROP, EVADE }
 
