@@ -43,6 +43,11 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
    /** Short reactions shown by the client: hurt flinch, stun stagger. */
    private static final EntityDataAccessor<Byte> REACTION = SynchedEntityData.defineId(ThanosEntity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> REACTION_SERIAL = SynchedEntityData.defineId(ThanosEntity.class, EntityDataSerializers.INT);
+   /**
+    * His max health. Vanilla clamps the max-health attribute at 1024, far below 3000 x heroes, so
+    * the attribute is not used: getMaxHealth() answers this synced value (see {@link #thanosMaxHealth}).
+    */
+   private static final EntityDataAccessor<Float> MAX_HEALTH = SynchedEntityData.defineId(ThanosEntity.class, EntityDataSerializers.FLOAT);
    public static final byte REACT_HURT = 1;
    /** Blocks walked per gait cycle (two steps of a 3.75-block titan). */
    public static final double STRIDE = 3.4;
@@ -78,6 +83,7 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
 
    public static AttributeSupplier.Builder createAttributes() {
       return PathfinderMob.createMobAttributes()
+         // vanilla clamps this attribute at 1024: the real max is the synced MAX_HEALTH
          .add(Attributes.MAX_HEALTH, ThanosRules.BASE_HEALTH)
          .add(Attributes.ARMOR, 10.0)
          .add(Attributes.ARMOR_TOUGHNESS, 8.0)
@@ -97,6 +103,16 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
       this.entityData.define(TARGET, -1);
       this.entityData.define(REACTION, (byte)0);
       this.entityData.define(REACTION_SERIAL, 0);
+      this.entityData.define(MAX_HEALTH, ThanosRules.BASE_HEALTH);
+   }
+
+   /**
+    * The synced max (see {@link #MAX_HEALTH}). {@code LivingEntity.getMaxHealth()} is final, so
+    * {@code ThanosMaxHealthMixin} answers it from here: vanilla's health clamp and every share of
+    * the max (hit cap, threat, rewind) see the real value.
+    */
+   public float thanosMaxHealth() {
+      return this.entityData.get(MAX_HEALTH);
    }
 
    @Override
@@ -274,12 +290,8 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
    /** Scales the max health keeping the fraction (more heroes joined early). */
    public void scaleMaxHealth(float max) {
       float fraction = this.getMaxHealth() <= 0.0F ? 1.0F : this.getHealth() / this.getMaxHealth();
-      var attribute = this.getAttribute(Attributes.MAX_HEALTH);
-      if (attribute != null) {
-         attribute.setBaseValue(max);
-      }
-
-      super.setHealth(Math.max(1.0F, max * fraction));
+      this.entityData.set(MAX_HEALTH, Math.max(1.0F, max));
+      super.setHealth(Math.max(1.0F, this.getMaxHealth() * fraction));
    }
 
    @Override

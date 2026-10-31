@@ -46,7 +46,8 @@
     "CityJournalMixin",
     "SawShellCollisionMixin",
     "EndDragonFightAccess",
-    "PlayerRespawnLogicInvoker"
+    "PlayerRespawnLogicInvoker",
+    "ThanosMaxHealthMixin"
   ],
   "injectors": {
     "defaultRequire": 1
