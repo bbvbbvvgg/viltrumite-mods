@@ -37,6 +37,11 @@ public final class AvengersTeam {
          state.scene = null;
          return;
       }
+      if (dev.baranhan.viltrumitecore.hero.control.TimeFreeze.worldStopped(player.level())) {
+         // A world pause / time stop (Reinhard's erasure, DIO) stops the team like every other clock: the
+         // Avengers and the Quinjet are frozen entities, so the scene's own schedule waits for them too.
+         return;
+      }
       scene.tick();
       if (scene.done()) {
          scene.dispose(false);
