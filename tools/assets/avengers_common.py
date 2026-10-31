@@ -89,7 +89,6 @@ def seam_h(ctx, y0, dark=-0.12, lit=0.06, colour=None):
     """Horizontal seam on side faces at world y0: a dark texel row with a lit row under it (bevel)."""
     if not ctx.side:
         return
-    t = 0.5 / max(1, ctx.h) * (ctx.face.sy if hasattr(ctx.face, 'sy') else 1)
     row = near(ctx.y, y0, 0.26)
     ctx.light(row, dark)
     if colour is not None:

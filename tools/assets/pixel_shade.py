@@ -225,9 +225,14 @@ WARM = np.array([1.07, 1.03, 0.90])
 SKIN_SHADOW = np.array([1.02, 0.84, 0.86])
 
 
-def shade(rgb, L, cool=COOL, warm=WARM, hue=1.0):
+SPEC = np.array([255.0, 246.0, 226.0])
+
+
+def shade(rgb, L, cool=COOL, warm=WARM, hue=1.0, spec=0.0):
     k = (L - 1.0)[..., None]
     out = rgb * L[..., None]
+    if spec:
+        out = out + np.clip(k, 0, None) * spec * SPEC     # highlights lift towards a warm white (dark metals shine)
     td = np.clip(-k * 2.2 * hue, 0, 1)
     tl = np.clip(k * 2.6 * hue, 0, 1)
     out = out * (1 + (cool - 1) * td) * (1 + (warm - 1) * tl)
@@ -318,17 +323,17 @@ class Ctx:
 
 
 KIND = {
-    #            grad   cyl   edge_hi edge_lo edge_side  micro
-    'cloth':   (0.10, 0.08, 0.05, 0.07, 0.03, 'weave'),
-    'suit':    (0.10, 0.10, 0.06, 0.07, 0.03, 'scale'),
-    'leather': (0.10, 0.08, 0.07, 0.08, 0.04, 'mottle'),
-    'metal':   (0.16, 0.12, 0.12, 0.10, 0.05, 'brushed'),
-    'skin':    (0.08, 0.10, 0.03, 0.05, 0.02, 'skin'),
-    'hair':    (0.12, 0.06, 0.04, 0.06, 0.02, 'hair'),
-    'paint':   (0.08, 0.03, 0.06, 0.06, 0.03, 'paint'),
-    'rubber':  (0.05, 0.04, 0.03, 0.05, 0.02, None),
-    'glass':   (0.10, 0.00, 0.10, 0.00, 0.00, None),
-    'flat':    (0.00, 0.00, 0.00, 0.00, 0.00, None),
+    #            grad   cyl   edge_hi edge_lo edge_side  micro     spec
+    'cloth':   (0.16, 0.16, 0.07, 0.10, 0.05, 'weave',   0.10),
+    'suit':    (0.16, 0.18, 0.09, 0.10, 0.05, 'scale',   0.22),
+    'leather': (0.16, 0.16, 0.10, 0.12, 0.06, 'mottle',  0.28),
+    'metal':   (0.22, 0.20, 0.18, 0.14, 0.08, 'brushed', 0.60),
+    'skin':    (0.12, 0.16, 0.04, 0.07, 0.04, 'skin',    0.08),
+    'hair':    (0.20, 0.10, 0.06, 0.10, 0.03, 'hair',    0.30),
+    'paint':   (0.14, 0.10, 0.10, 0.10, 0.05, 'paint',   0.40),
+    'rubber':  (0.08, 0.08, 0.05, 0.08, 0.03, None,      0.10),
+    'glass':   (0.14, 0.00, 0.14, 0.00, 0.00, None,      0.70),
+    'flat':    (0.00, 0.00, 0.00, 0.00, 0.00, None,      0.00),
 }
 
 
@@ -339,7 +344,7 @@ class Mat:
     shaded = True
 
     def __init__(self, base, kind='cloth', fn=None, ao=0.5, hue=1.0, quant=0.05, cool=None, warm=None,
-                 alpha_fn=None, sheen=None, edges=True, micro=1.0, light=True, grad=None, cyl=None):
+                 alpha_fn=None, sheen=None, edges=True, micro=1.0, light=True, grad=None, cyl=None, spec=None):
         self.base, self.kind, self.fn = base, kind, fn
         self.ao, self.hue, self.quant = ao, hue, quant
         self.cool = COOL if cool is None else np.array(cool)
@@ -347,9 +352,10 @@ class Mat:
         if kind == 'skin' and cool is None:
             self.cool = SKIN_SHADOW
         self.alpha_fn, self.sheen, self.edges, self.micro, self.light = alpha_fn, sheen, edges, micro, light
-        g, c, eh, el, es, mk = KIND[kind]
+        g, c, eh, el, es, mk, sp = KIND[kind]
         self.grad = g if grad is None else grad
         self.cyl = c if cyl is None else cyl
+        self.spec = sp if spec is None else spec
         self.edge_hi, self.edge_lo, self.edge_side, self.micro_kind = eh, el, es, mk
 
     def paint(self, face, rng):
@@ -394,8 +400,8 @@ def micro(ctx, kind, amt):
 
 
 def hair_locks(ctx, amt):
-    """Locks of hair: columns grouped 2-3 texels wide with their own tone, dark partings between them,
-    darker roots under the crown, lighter tips; on caps the locks run front to back."""
+    """Locks of hair: columns grouped 2-4 texels wide with their own tone, dark partings between them,
+    darker roots under the crown, lighter tips, a wavy sheen band; on caps the locks run front to back."""
     h, w = ctx.h, ctx.w
     along_u = ctx.name in ('up', 'down')
     n = h if along_u else w
@@ -404,20 +410,26 @@ def hair_locks(ctx, amt):
     i = 0
     while i < n:
         lw = int(ctx.rs.choice([2, 2, 3, 3, 4]))
-        tone[i:i + lw] = ctx.rs.uniform(-0.05, 0.06)
-        edge[min(n - 1, i + lw - 1)] = lw >= 3 and i + lw < n
+        tone[i:i + lw] = ctx.rs.uniform(-0.07, 0.08)
+        if lw >= 3:
+            tone[i] += 0.04                     # each lock is lit on one side ...
+            tone[min(n - 1, i + lw - 1)] -= 0.05  # ... and shaded on the other
+        edge[min(n - 1, i + lw - 1)] = lw >= 2 and i + lw < n
         i += lw
     t = tone[:, None] if along_u else tone[None, :]
     e = edge[:, None] if along_u else edge[None, :]
-    jitter = smooth_noise(ctx.rs, h, w, 2.0, 0.025)
+    jitter = smooth_noise(ctx.rs, h, w, 2.0, 0.03)
     ctx.L += amt * (t + jitter)
-    ctx.L += amt * np.where(np.broadcast_to(e, (h, w)), -0.09, 0.0)
+    ctx.L += amt * np.where(np.broadcast_to(e, (h, w)), -0.12, 0.0)
     if ctx.side and h >= 4:
-        ctx.L[-1:, :] += amt * 0.04          # tips catch light
+        ctx.L[-1:, :] += amt * 0.06          # tips catch light
     sheen = ctx.mat.sheen
     if sheen is not None and ctx.side:
-        band = np.abs(ctx.y - sheen) < 0.35
-        ctx.L[band] += amt * 0.09
+        coord = ctx.u * ctx.w
+        wave = sheen + 0.45 * np.sin(coord * 1.1 + ctx.rs.uniform(0, 6.28))
+        band = np.abs(ctx.y - wave) < 0.4
+        ctx.L[band] += amt * 0.13
+        ctx.L[np.abs(ctx.y - wave + 0.6) < 0.25] += amt * 0.05
 
 
 def finish(model, scene, cube, ctx):
@@ -425,6 +437,7 @@ def finish(model, scene, cube, ctx):
     face = ctx.face
     h, w = ctx.h, ctx.w
     box = scene.by_cube[id(cube)]
+    ctx.L += 1.0                       # painters wrote offsets; shading works on a brightness multiplier
     L = ctx.L
     # form light
     if mat.light:
@@ -465,7 +478,7 @@ def finish(model, scene, cube, ctx):
         L -= mat.ao * ao
     L = quantise(L, mat.quant)
     L = np.clip(L, 0.35, 1.45)
-    out = shade(ctx.rgb, L, mat.cool, mat.warm, mat.hue)
+    out = shade(ctx.rgb, L, mat.cool, mat.warm, mat.hue, mat.spec)
     keep = ctx.flat | (ctx.glow[..., 3] > 0)
     out[keep] = ctx.rgb[keep]
     col = np.zeros((h, w, 4), np.uint8)

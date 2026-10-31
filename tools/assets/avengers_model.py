@@ -1060,10 +1060,8 @@ def hulk_model():
 # ============================================================================================ PROPS
 def props():
     out = []
-    m = CleanModel('mjolnir_mcu', density=6, width=128, seed=43)
-    m.bone('hammer', None, [0, 0, 0])
-    mjolnir(m, 'hammer', 0.0, 3.2, 0.0)
-    out.append(('mjolnir', m))
+    import avengers_thor
+    out.append(('mjolnir', avengers_thor.thrown_mjolnir()))
     tips = {'arrow': Flat('#b8bec8'), 'arrow_explosive': Flat('#c0342c', glow=lambda f, g, s: glow_put(g, np.ones(g.shape[:2], bool), (255, 110, 60, 200))),
             'arrow_shock': Flat('#5ab8ff', glow=lambda f, g, s: glow_put(g, np.ones(g.shape[:2], bool), (110, 200, 255, 230)))}
     for key, tip in tips.items():
@@ -1239,8 +1237,11 @@ def main():
     write_json(os.path.join(RES, W('avenger.geo.json')), rig_model.geo_json())
     write_png(T('iron_man.png'), paint_skin(rig_model, IM_MATS))
     write_model(ironman_gear(), W('iron_man_gear.geo.json'), T('iron_man_gear.png'), T('iron_man_gear_glow.png'))
-    for key, body, gear in (('thor', thor_body, thor_gear), ('black_widow', widow_body, widow_gear),
-                            ('hawkeye', hawkeye_body, hawkeye_gear)):
+    import avengers_thor
+    tb, tg = avengers_thor.build()
+    write_model(tb, W('thor.geo.json'), T('thor.png'))
+    write_model(tg, W('thor_gear.geo.json'), T('thor_gear.png'), T('thor_gear_glow.png'))
+    for key, body, gear in (('black_widow', widow_body, widow_gear), ('hawkeye', hawkeye_body, hawkeye_gear)):
         write_model(body(), W(f'{key}.geo.json'), T(f'{key}.png'))
         write_model(gear(), W(f'{key}_gear.geo.json'), T(f'{key}_gear.png'), T(f'{key}_gear_glow.png'))
     write_model(hulk_model(), W('hulk.geo.json'), T('hulk.png'), T('hulk_glow.png'))
