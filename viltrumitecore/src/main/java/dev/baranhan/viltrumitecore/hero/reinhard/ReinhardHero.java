@@ -938,4 +938,26 @@ public final class ReinhardHero implements HeroDefinition {
          }
       }
    }
+
+   // --- contextual interactions (interaction/) ---
+
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence REID_DRAWN = new dev.baranhan.viltrumitecore.hero.combat.CombatPresence(
+      "viltrumitecore:reid", java.util.Set.of(dev.baranhan.viltrumitecore.hero.combat.CombatTags.WEAPON_SWORD,
+         dev.baranhan.viltrumitecore.hero.combat.CombatTags.TRAIT_DIVINE, dev.baranhan.viltrumitecore.hero.combat.CombatTags.TRAIT_ANNIHILATING),
+      dev.baranhan.viltrumitecore.hero.combat.CombatStance.NONE, 0);
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence REID_STROKE =
+      REID_DRAWN.withStance(dev.baranhan.viltrumitecore.hero.combat.CombatStance.ACTIVE);
+
+   /**
+    * The drawn Dragon Sword Reid: {@code weapon.sword}, {@code trait.divine}, {@code trait.annihilating}; ACTIVE while
+    * an ordinary stroke (REID_STRIKE) runs. Server side; NONE with the sword sheathed.
+    */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      ReinhardState state = player == null || player.level().isClientSide() ? null : ReinhardState.of(player);
+      if (state == null || !state.reid.drawn()) {
+         return dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
+      }
+      return state.action.is(ReinhardAbility.REID_STRIKE) ? REID_STROKE : REID_DRAWN;
+   }
 }

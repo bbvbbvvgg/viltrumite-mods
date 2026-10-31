@@ -46,6 +46,11 @@ public class RepulsorBlastEntity extends Projectile {
       return blast;
    }
 
+   /** Damage this bolt carries (contextual interactions split it). */
+   public float damage() {
+      return this.damage;
+   }
+
    public float power() {
       return this.entityData.get(POWER);
    }

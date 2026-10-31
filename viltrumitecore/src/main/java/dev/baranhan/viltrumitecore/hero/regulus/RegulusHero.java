@@ -557,4 +557,31 @@ public final class RegulusHero implements HeroDefinition {
          state.subjects.size(), state.lion, 0, 0, false, false, 0, 0, hostId, cooldowns, move != null, -1L, target, state.strain,
          state.lionLock > 0, flags, extra, 0, ultTargetId);
    }
+
+   // --- contextual interactions ------------------------------------------------------------------
+
+   /**
+    * reid_strains_lions_heart: a Reid stroke does not wound the stopped body, it strains the stopped heart. The
+    * strain may tip into the seizure (§5.0): the Lion gives out, he reels and is locked. Only the Lion (the
+    * ultimate's own stop is untouched).
+    */
+   @Override
+   public boolean react(ServerPlayer self, dev.baranhan.viltrumitecore.interaction.InteractionReaction reaction,
+      dev.baranhan.viltrumitecore.interaction.InteractionContext ctx) {
+      RegulusState state = RegulusState.of(self);
+      if (reaction != dev.baranhan.viltrumitecore.interaction.InteractionReaction.LION_STRAINED || state == null || !state.lion || state.ult != null) {
+         return false;
+      }
+      state.strain = strainedBy(state.strain, dev.baranhan.viltrumitecore.interaction.InteractionTuning.REID_STRAIN);
+      RegulusSounds.play(self.level(), self.position().add(0.0, 1.4, 0.0), RegulusSounds.STRAIN, 1.2F, 0.7F);
+      if (RegulusRules.seizes(state.strain)) {
+         LionsHeart.seizure(self, state);
+      }
+      return true;
+   }
+
+   /** Pure rule (tests): the strain a Reid stroke leaves on the stopped heart. */
+   public static int strainedBy(int strain, int amount) {
+      return RegulusRules.strainAdd(strain, amount);
+   }
 }

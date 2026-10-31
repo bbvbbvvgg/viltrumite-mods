@@ -39,6 +39,8 @@ public final class CaptainState {
    // guard
    public boolean guarding;
    public int guardTicks;
+   /** Ticks the guard stays broken after a contextual interaction (Reid's stroke); 0 = the shield can be raised. */
+   public int shieldBroken;
 
    // resources and windows
    public int kinetic;
@@ -100,6 +102,7 @@ public final class CaptainState {
       if (this.rushFollow > 0) this.rushFollow--;
       if (this.rollFollow > 0) this.rollFollow--;
       if (this.iframes > 0) this.iframes--;
+      if (this.shieldBroken > 0) this.shieldBroken--;
       if (this.markTicks > 0 && --this.markTicks == 0) this.markTarget = null;
       if (this.lastAttackerTicks > 0 && --this.lastAttackerTicks == 0) this.lastAttackerId = -1;
       if (this.comboIdle < 1000) this.comboIdle++;

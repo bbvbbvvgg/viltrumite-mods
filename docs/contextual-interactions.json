@@ -1,0 +1,665 @@
+{
+  "schema": 1,
+  "about": "Catalog of contextual interactions (special matchups of heroes, weapons, mobs and world events). Must match ContextualInteractions.builtins() exactly: checked by ContextualInteractionCatalogTest.",
+  "interactions": [
+    {
+      "id": "reid_shatters_vibranium",
+      "title_ru": "Рейд против вибраниума",
+      "title_en": "Reid Against Vibranium",
+      "participants": [
+        "Reinhard (Reid drawn)",
+        "Captain America (raised shield)"
+      ],
+      "trigger": "HIT",
+      "priority": 100,
+      "cooldown_ticks": 40,
+      "aftermath_ticks": 10,
+      "conditions": [
+        "Attacker presence has trait.annihilating in ACTIVE stance (an ordinary Reid stroke, REID_STRIKE)",
+        "Defender presence has weapon.shield in GUARD (shield raised, in hand, not broken)",
+        "The defender faces the attacker (frontal guard arc)",
+        "The two players are rivals (PvP allowed, not team mates)"
+      ],
+      "gameplay_result": "The stroke is consumed by the shield but the guard breaks: the shield cannot be raised for 8 s (160 ticks), the stored kinetic charge and the counter window are lost, Captain reels (synced move SHIELD_SHATTERED), is thrown back and slowed. The shield item is not destroyed. Following Reid strokes land normally.",
+      "visual_fx": "viltrumitecore:interaction_shield_shatter (white flash, thrown sparks, ring, shockwave, debris, heavy shake) + hit stop on both",
+      "sound": "viltrumitecore:interaction.shield_shatter (Reid heavy hit + vibranium ring + falling sub crack); Captain line captain:shield_shattered",
+      "description_ru": "Обычный удар обнажённого Рейда по поднятому щиту Капитана Америка не проходит, но ломает защиту: щит нельзя поднять 8 секунд, кинетический заряд пропадает, Стив отшатывается и замедляется.",
+      "description_en": "An ordinary stroke of the drawn Reid on Captain America's raised shield does not get through, but it breaks the guard: the shield cannot be raised for 8 seconds, the kinetic charge is lost, Steve reels and is slowed.",
+      "lore_ru": "Вибраниум гасит любую кинетическую силу, но Меч Дракона не бьёт — он отрицает. Щит выдерживает, а рука, что его держит, — нет.",
+      "lore_en": "Vibranium soaks any kinetic force, but the Dragon Sword does not strike — it denies. The shield holds; the arm behind it does not.",
+      "discovery_hint_ru": "Сражаясь Рейнхардом, ударь обнажённым Рейдом Капитана, который закрылся щитом.",
+      "discovery_hint_en": "As Reinhard, strike a Captain hiding behind his shield with the drawn Reid.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ReidShattersVibranium.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/captain/CaptainCombat.java#shatterGuard",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/captain/CaptainHero.java#react",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/reinhard/ReinhardHero.java#combatPresence"
+      ]
+    },
+    {
+      "id": "mjolnir_meets_vibranium",
+      "title_ru": "Мьёльнир о вибраниум",
+      "title_en": "Mjolnir Meets Vibranium",
+      "participants": [
+        "Thor (Mjolnir in hand, striking)",
+        "Captain America (raised shield)"
+      ],
+      "trigger": "HIT",
+      "priority": 100,
+      "cooldown_ticks": 40,
+      "aftermath_ticks": 14,
+      "conditions": [
+        "Attacker presence has weapon.hammer and element.lightning in ACTIVE stance (main phase of a hammer/electric strike)",
+        "Defender presence has weapon.shield in GUARD and the shield faces the striker",
+        "Rivals, or allies/PvP off: the strike resolution reports the touched spared player (friendly contact)"
+      ],
+      "gameplay_result": "Neither takes damage from the strike (hit consumed, the rest of the stroke swallowed by a 14-tick aftermath). Both are thrown apart; an electric shockwave (radius 7) throws everyone else around and deals lightning damage only to targets the striker may hurt (not allies, not their summons, not PvP-protected players). Captain braces under the blow (synced TEAM_BRACE move, short invulnerability) and gains kinetic charge.",
+      "visual_fx": "viltrumitecore:interaction_storm_shield (blinding flash, sky flash, light pool, crackle shell, double ring, crawlers, dust) + electric ring and arc + hit stop",
+      "sound": "viltrumitecore:interaction.storm_shield (hammer metal + sung vibranium parry + thunder impact + electric wave); Captain line captain:storm_shield",
+      "description_ru": "Удар Мьёльнира по поднятому щиту рождает электрическую ударную волну: Тора и Капитана отбрасывает в разные стороны без урона, всех вокруг раскидывает, а врагов бьёт током.",
+      "description_en": "Mjolnir striking a raised shield releases an electric shockwave: Thor and Captain are thrown apart unharmed, everyone around is scattered and enemies are shocked.",
+      "lore_ru": "Как в Нью-Йорке 2012-го: сила, что раскалывает горы, встречает металл, который не знает усталости, — и энергии некуда деться, кроме как наружу.",
+      "lore_en": "Just like New York, 2012: a force that splits mountains meets a metal that never tires — and the energy has nowhere to go but out.",
+      "discovery_hint_ru": "Капитан, подними щит навстречу Тору. Тор, ударь молотом прямо в щит — союзнику или сопернику.",
+      "discovery_hint_en": "Captain, raise your shield towards Thor. Thor, bring the hammer down right on the shield — friend or foe.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MjolnirMeetsVibranium.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MjolnirMeetsVibranium.java#shockwave",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/thor/combat/MeleeMoves.java#landStrike",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/thor/combat/CombatHits.java#sparedPlayersReached",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/captain/CaptainCombat.java#teamBrace"
+      ]
+    },
+    {
+      "id": "reid_strains_lions_heart",
+      "title_ru": "Меч против остановленного сердца",
+      "title_en": "The Sword Against a Stopped Heart",
+      "participants": [
+        "Reinhard (Reid stroke)",
+        "Regulus (Lion's Heart)"
+      ],
+      "trigger": "HIT",
+      "priority": 99,
+      "cooldown_ticks": 100,
+      "aftermath_ticks": 14,
+      "conditions": [
+        "Reinhard hits Regulus hand to hand with a Reid stroke (Reid drawn, striking window)",
+        "Regulus is absolutely invulnerable under Lion's Heart (not the ultimate's stop)",
+        "Not a friendly contact"
+      ],
+      "gameplay_result": "The stroke still does not wound and Lion's Heart does not recoil it, but the stopped heart takes +420 strain (max 1000). Two or three strokes tip it into the seizure: Lion's Heart is forced off, Regulus reels, takes the seizure damage and is locked out of the Lion.",
+      "visual_fx": "viltrumitecore:interaction_lion_strain (white flash, sparks, tight ring, shake)",
+      "sound": "viltrumitecore:interaction.lion_strain + Regulus's own strain sound",
+      "description_ru": "Удар Рейдом не ранит Регулуса под «Сердцем льва», но надрывает остановленное сердце: +420 напряжения. Пара-тройка ударов — и сердце не выдерживает, у Регулуса припадок.",
+      "description_en": "A Reid stroke does not wound Regulus under Lion's Heart, but it strains the stopped heart: +420 strain. Two or three strokes and the heart gives out — Regulus seizes.",
+      "lore_ru": "Власть Жадности останавливает время тела, а Рейд рубит то, что не рубится. Неуязвимость держится — но держится ценой сердца.",
+      "lore_en": "Greed's authority stops the time of the body, and Reid cuts what cannot be cut. The invulnerability holds — at the price of the heart.",
+      "discovery_hint_ru": "Бей Рейдом по Регулусу, пока у него включено «Сердце льва».",
+      "discovery_hint_en": "Strike Regulus with Reid while his Lion's Heart is on.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ReidStrainsLionsHeart.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ReidStrainsLionsHeart.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/regulus/RegulusHero.java#react"
+      ]
+    },
+    {
+      "id": "mjolnir_rebounds_off_shield",
+      "title_ru": "Мьёльнир отскакивает от щита",
+      "title_en": "Mjolnir Rebounds Off the Shield",
+      "participants": [
+        "Thor (thrown Mjolnir)",
+        "Captain America (raised vibranium shield)"
+      ],
+      "trigger": "HIT",
+      "priority": 96,
+      "cooldown_ticks": 40,
+      "aftermath_ticks": 10,
+      "conditions": [
+        "A thrown Mjolnir in its flight (phase THROWN) hits a player",
+        "The player holds a raised vibranium shield facing the hammer",
+        "A real hit (PvP allows it), not a friendly contact"
+      ],
+      "gameplay_result": "The hit is consumed. The hammer rings off the shield and flies straight back to Thor (his own recall on the tick's end). The bearer is driven back a step, the guard braces and stores the blow (kinetic charge), a thunder ring shoves everyone close except the two of them and their allies.",
+      "visual_fx": "viltrumitecore:interaction_storm_rebound (flash, crackle shell, ring, sparks, shockwave)",
+      "sound": "viltrumitecore:interaction.storm_rebound + Captain's line «Now that's a hit!»",
+      "description_ru": "Брошенный Мьёльнир, попав в поднятый щит, не ранит: звенит, отскакивает и сам летит обратно в руку Тора. Щит копит заряд удара.",
+      "description_en": "A thrown Mjolnir that meets a raised shield deals no damage: it rings, rebounds and flies straight back to Thor's hand. The shield keeps the charge.",
+      "lore_ru": "Вибраниум гасит удар, а молот всегда возвращается к хозяину — так что он возвращается сразу.",
+      "lore_en": "Vibranium drinks the blow, and the hammer always returns to its master — so it returns at once.",
+      "discovery_hint_ru": "Брось Мьёльнир в Капитана, держащего щит.",
+      "discovery_hint_en": "Throw Mjolnir at a Captain holding up his shield.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MjolnirReboundsOffShield.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MjolnirReboundsOffShield.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/thor/hammer/MjolnirWorld.java#recall"
+      ]
+    },
+    {
+      "id": "divine_weapon_clash",
+      "title_ru": "Столкновение божественного оружия",
+      "title_en": "Clash of Divine Weapons",
+      "participants": [
+        "Reinhard (Reid stroke)",
+        "Thor (Mjolnir strike)"
+      ],
+      "trigger": "HIT",
+      "priority": 90,
+      "cooldown_ticks": 30,
+      "aftermath_ticks": 10,
+      "conditions": [
+        "One side has trait.annihilating ACTIVE, the other element.lightning ACTIVE with a hammer (either direction)",
+        "Both strike at the same time (the struck one is mid-strike)",
+        "Rivals"
+      ],
+      "gameplay_result": "Neither blow lands: both strikers are thrown back and the clash is held for a few frames (hit stop).",
+      "visual_fx": "viltrumitecore:interaction_divine_clash (flash, sparks, ring, shockwave, crackle) + electric arc between the two",
+      "sound": "viltrumitecore:interaction.divine_clash (Reid hit + hammer metal + zap + far thunder crack)",
+      "description_ru": "Если Рейд и Мьёльнир бьют одновременно, удары гасят друг друга: обоих отбрасывает, время на миг замирает.",
+      "description_en": "When Reid and Mjolnir strike at the same moment, the blows cancel out: both are thrown back and time freezes for an instant.",
+      "lore_ru": "Меч, выбирающий достойного, и молот, выбирающий достойного, — ни один не уступит другому.",
+      "lore_en": "A sword that chooses the worthy and a hammer that chooses the worthy — neither will yield to the other.",
+      "discovery_hint_ru": "Рейнхард и Тор: атакуйте друг друга одновременно.",
+      "discovery_hint_en": "Reinhard and Thor: attack each other at the same time.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/DivineWeaponClash.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/DivineWeaponClash.java#apply"
+      ]
+    },
+    {
+      "id": "viltrumite_fist_meets_vibranium",
+      "title_ru": "Кулак вилтрумита против вибраниума",
+      "title_en": "Viltrumite Fist Against Vibranium",
+      "participants": [
+        "Viltrumite (squad NPC or Viltrumite hero)",
+        "Captain America (raised vibranium shield)"
+      ],
+      "trigger": "HIT",
+      "priority": 88,
+      "cooldown_ticks": 30,
+      "aftermath_ticks": 10,
+      "conditions": [
+        "A Viltrumite hits hand to hand",
+        "The target holds a raised vibranium shield facing him",
+        "Not a friendly contact"
+      ],
+      "gameplay_result": "The punch is consumed: the shield braces and stores it (kinetic charge, Captain's line). The Viltrumite is thrown back and stunned for 24 ticks.",
+      "visual_fx": "viltrumitecore:interaction_vibranium_ring (hard flash, shockwave ring, sparks, dust, shake)",
+      "sound": "viltrumitecore:interaction.vibranium_ring",
+      "description_ru": "Удар вилтрумита в поднятый щит не проходит: вибраниум забирает энергию, а вилтрумита отбрасывает и оглушает.",
+      "description_en": "A Viltrumite's punch into a raised shield does not get through: vibranium takes the energy, the Viltrumite is thrown back and stunned.",
+      "lore_ru": "Самый сильный кулак во вселенной встречает металл, который пьёт кинетическую энергию.",
+      "lore_en": "The strongest fist in the universe meets the metal that drinks kinetic energy.",
+      "discovery_hint_ru": "Прими удар вилтрумита на поднятый щит.",
+      "discovery_hint_en": "Take a Viltrumite's punch on your raised shield.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ViltrumiteFistMeetsVibranium.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ViltrumiteFistMeetsVibranium.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/ViltrumiteHero.java#react"
+      ]
+    },
+    {
+      "id": "repulsor_splits_on_vibranium",
+      "title_ru": "Репульсор раскалывается о щит",
+      "title_en": "Repulsor Splits on the Shield",
+      "participants": [
+        "Iron Man or an Iron Legion suit (repulsor bolt)",
+        "Captain America (raised vibranium shield)"
+      ],
+      "trigger": "PROJECTILE",
+      "priority": 86,
+      "cooldown_ticks": 10,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A repulsor bolt hits a player who did not fire it",
+        "The player holds a raised vibranium shield facing the bolt"
+      ],
+      "gameplay_result": "The bolt is consumed and splits into 3 shards along the bearer's aim (cone ~52°, 18 blocks): each strikes one enemy in line of sight for 60% of the bolt's damage (min 3), the shooter first if he is an enemy. Never the bearer's allies, summons or PvP-spared players; shards without a target fan out into the air. Counts as a blocked projectile (charge, parry window).",
+      "visual_fx": "viltrumitecore:interaction_repulsor_split (flash, light pool, sparks, ring) + viltrumitecore:interaction_repulsor_shard per shard (arc)",
+      "sound": "viltrumitecore:interaction.repulsor_split",
+      "description_ru": "Репульсорный выстрел, попав в поднятый щит, раскалывается на три осколка, которые летят туда, куда смотрит Капитан, и бьют врагов. Выстрел союзника превращается в оружие команды.",
+      "description_en": "A repulsor bolt on a raised shield splits into three shards that fly where the Captain aims and strike enemies. An ally's bolt becomes the team's weapon.",
+      "lore_ru": "Тони и Стив отрабатывали этот трюк ещё со времён битвы за Нью-Йорк.",
+      "lore_en": "Tony and Steve have practised this trick since the Battle of New York.",
+      "discovery_hint_ru": "Подставь щит под репульсор Железного человека и смотри на врагов.",
+      "discovery_hint_en": "Put your shield in front of Iron Man's repulsor while looking at the enemies.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/RepulsorSplitsOnVibranium.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/RepulsorSplitsOnVibranium.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/captain/CaptainHero.java#react"
+      ]
+    },
+    {
+      "id": "time_stone_rewinds_ledger",
+      "title_ru": "Камень Времени против «Za Warudo»",
+      "title_en": "The Time Stone Against The World",
+      "participants": [
+        "DIO (time stop ledger)",
+        "Thanos (Time Stone)"
+      ],
+      "trigger": "HIT",
+      "priority": 84,
+      "cooldown_ticks": 100,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "DIO's time stop ends and its ledger is paid",
+        "The ledger target is Thanos, still in the fight (not defeated)"
+      ],
+      "gameplay_result": "The whole ledger payout on Thanos is consumed — none of the stopped seconds' blows land. DIO is thrown back from Thanos (within 24 blocks). Hits in moving time are ordinary.",
+      "visual_fx": "viltrumitecore:interaction_time_rewind (light pool, two rings, screen flash, flash)",
+      "sound": "viltrumitecore:interaction.time_rewind",
+      "description_ru": "DIO может остановить время и для Таноса, но когда время идёт снова, Камень Времени отматывает остановленные секунды: накопленный урон не наносится, а DIO отбрасывает.",
+      "description_en": "DIO can stop time for Thanos too, but when time moves again the Time Stone rewinds the stopped seconds: the stored damage never lands and DIO is thrown back.",
+      "lore_ru": "Остановить время — сильно. Владеть им — сильнее.",
+      "lore_en": "Stopping time is strong. Owning it is stronger.",
+      "discovery_hint_ru": "Останови время и избей Таноса, пока он стоит.",
+      "discovery_hint_en": "Stop time and beat Thanos while he stands still.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/TimeStoneRewindsLedger.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/TimeStoneRewindsLedger.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/dio/DioTimeStop.java#paying"
+      ]
+    },
+    {
+      "id": "vibranium_stops_meteor",
+      "title_ru": "Щит против метеора",
+      "title_en": "Shield Against the Meteor",
+      "participants": [
+        "Captain America (raised shield)",
+        "Meteor (world event)"
+      ],
+      "trigger": "PROJECTILE",
+      "priority": 80,
+      "cooldown_ticks": 20,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A meteor entity hits a player",
+        "The player's hero reports a raised guard facing the meteor's flight"
+      ],
+      "gameplay_result": "The meteor bursts on the shield in the air: no crater, no magma; the blast only throws creatures around. Captain is driven back along the flight, braces (TEAM_BRACE) and the shield is fully charged with kinetic energy. A meteor that carries loot drops its Infinity Gun piece at his feet.",
+      "visual_fx": "viltrumitecore:interaction_meteor_burst (fire-white flash, light pool, shockwave, debris, dust, long shake) + the meteor's own impact VFX (entity event 77)",
+      "sound": "viltrumitecore:interaction.meteor_burst (slam + earth + vibranium clang + long rumble)",
+      "description_ru": "Поднятый щит Капитана останавливает падающий метеор: камень разлетается в воздухе, без кратера и магмы, а щит заряжается до предела.",
+      "description_en": "Captain's raised shield stops a falling meteor: the rock bursts in the air with no crater and no magma, and the shield is charged to the limit.",
+      "lore_ru": "Вибраниум сам когда-то упал с неба. Он помнит, как гасить такие удары.",
+      "lore_en": "Vibranium itself once fell from the sky. It remembers how to swallow such blows.",
+      "discovery_hint_ru": "Во время метеоритного дождя встань под метеор с поднятым щитом.",
+      "discovery_hint_en": "During a meteor fall, stand under a meteor with your shield raised.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/VibraniumStopsMeteor.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MeteorBursts.java#burst",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/captain/CaptainHero.java#guardFaces"
+      ]
+    },
+    {
+      "id": "reid_cleaves_meteor",
+      "title_ru": "Святой меча рассекает метеорит",
+      "title_en": "The Sword Saint Cleaves a Meteor",
+      "participants": [
+        "Reinhard (Reid drawn)",
+        "Meteor (world event)"
+      ],
+      "trigger": "PROJECTILE",
+      "priority": 79,
+      "cooldown_ticks": 20,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A meteor hits a player who did not throw it",
+        "The player has Reid drawn"
+      ],
+      "gameplay_result": "The meteor is cut in two: two meteor halves fly on, each turned 34° to its side of the cut at 85% speed, and crater the ground there; Reinhard is untouched. The star iron stays in one half.",
+      "visual_fx": "viltrumitecore:interaction_meteor_cleave (flash, screen flash, scorch rays, sparks, debris, ring)",
+      "sound": "viltrumitecore:interaction.meteor_cleave",
+      "description_ru": "Метеорит, падающий на Рейнхарда с обнажённым Рейдом, рассечён надвое: половинки пролетают по обе стороны и падают в стороне.",
+      "description_en": "A meteor falling on Reinhard with Reid drawn is cut in two: the halves fly past on either side and crater the ground there.",
+      "lore_ru": "Он не уклоняется и не останавливает — он режет.",
+      "lore_en": "He does not dodge and does not stop it — he cuts.",
+      "discovery_hint_ru": "Встань под метеоритный дождь с обнажённым Рейдом.",
+      "discovery_hint_en": "Stand under the meteor rain with Reid drawn.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ReidCleavesMeteor.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ReidCleavesMeteor.java#apply"
+      ]
+    },
+    {
+      "id": "viltrumite_hurls_meteor",
+      "title_ru": "Вилтрумит швыряет метеорит",
+      "title_en": "A Viltrumite Hurls the Meteor",
+      "participants": [
+        "Viltrumite (squad NPC or Viltrumite hero)",
+        "Meteor (world event)"
+      ],
+      "trigger": "PROJECTILE",
+      "priority": 78,
+      "cooldown_ticks": 20,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A meteor hits a Viltrumite who did not throw it",
+        "The Viltrumite is free (not anchored, accepts impulses)"
+      ],
+      "gameplay_result": "The impact is consumed: the Viltrumite catches the meteor, is shoved back along its flight and throws it along his aim (never below 0.15 up), at least 2.6 blocks/tick. The meteor is his and craters where it lands; a Leviathan in its way triggers meteor_downs_leviathan credited to him.",
+      "visual_fx": "viltrumitecore:interaction_meteor_hurl (fire flash, screen flash, light pool, shockwave, dust, debris, shake)",
+      "sound": "viltrumitecore:interaction.meteor_hurl",
+      "description_ru": "Вилтрумит ловит метеорит голыми руками и швыряет его дальше — туда, куда смотрит.",
+      "description_en": "A Viltrumite catches a meteor bare-handed and throws it on — wherever he is looking.",
+      "lore_ru": "Для вилтрумита падающая звезда — просто снаряд.",
+      "lore_en": "To a Viltrumite a falling star is just ammunition.",
+      "discovery_hint_ru": "Посмотри, что сделает вилтрумит во время метеоритного дождя.",
+      "discovery_hint_en": "Watch what a Viltrumite does in the meteor rain.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ViltrumiteHurlsMeteor.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ViltrumiteHurlsMeteor.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/ViltrumiteHero.java#react"
+      ]
+    },
+    {
+      "id": "shadow_exchange_meteor",
+      "title_ru": "Обмен с тенью под метеоритом",
+      "title_en": "Shadow Exchange Under a Meteor",
+      "participants": [
+        "Sung Jinwoo (shadows out)",
+        "Meteor (world event)",
+        "Shadow soldier (summon)"
+      ],
+      "trigger": "PROJECTILE",
+      "priority": 77,
+      "cooldown_ticks": 20,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A meteor hits Jinwoo while at least one of his shadows is out (not hidden, not dissolving)",
+        "A shadow stands beyond the meteor's blast (6 blocks) and within 48 blocks of him",
+        "Jinwoo is not anchored"
+      ],
+      "gameplay_result": "Jinwoo swaps places with the shadow furthest from the impact. The meteor bursts on the shadow where he stood (no crater; the blast throws everyone but him and his army) and the shadow dissolves back into the roster.",
+      "visual_fx": "viltrumitecore:interaction_shadow_exchange at both ends + viltrumitecore:interaction_meteor_burst",
+      "sound": "viltrumitecore:interaction.shadow_exchange",
+      "description_ru": "Метеорит падает на Джинву — он меняется местами со своей тенью, и метеорит принимает тень.",
+      "description_en": "A meteor falls on Jinwoo — he swaps places with one of his shadows, and the shadow takes the meteor.",
+      "lore_ru": "Обмен тенью: Монарх всегда там, где ему нужно быть.",
+      "lore_en": "Shadow Exchange: the Monarch is always where he needs to be.",
+      "discovery_hint_ru": "Призови теней и попади под метеоритный дождь.",
+      "discovery_hint_en": "Summon your shadows and get caught in the meteor rain.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ShadowExchangeMeteor.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ShadowExchangeMeteor.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MeteorBursts.java#burst"
+      ]
+    },
+    {
+      "id": "titan_breaks_guard",
+      "title_ru": "«Я могу так весь день»",
+      "title_en": "\"I Can Do This All Day\"",
+      "participants": [
+        "Thanos (boss, melee move)",
+        "Captain America (raised vibranium shield)"
+      ],
+      "trigger": "HIT",
+      "priority": 76,
+      "cooldown_ticks": 100,
+      "aftermath_ticks": 10,
+      "conditions": [
+        "Thanos hits hand to hand during a melee move (cleave, hammer fist, Power punch)",
+        "The target holds a raised, unbroken vibranium shield facing him"
+      ],
+      "gameplay_result": "The shield takes the whole blow (consumed) but the guard is crushed: broken for 160 ticks (no raise, no parry, kinetic charge lost), the bearer is thrown back across the field and answers «I can do this all day». Thanos's area and ranged moves are ordinary hits.",
+      "visual_fx": "viltrumitecore:interaction_shield_crush (flash, shockwave, debris, dust, sparks, heavy shake)",
+      "sound": "viltrumitecore:interaction.shield_crush + Captain's line «I can do this all day»",
+      "description_ru": "Удар Таноса в ближнем бою проламывает защиту Капитана: щит выдерживает удар, но защита сломана на 8 секунд, а Капитана отбрасывает.",
+      "description_en": "Thanos's melee blow crushes the Captain's guard: the shield holds the blow, but the guard is broken for 8 seconds and the Captain is thrown back.",
+      "lore_ru": "Финальная битва: щит раскалывается, а Стив встаёт.",
+      "lore_en": "The final battle: the shield breaks, and Steve gets up.",
+      "discovery_hint_ru": "Прими на щит удар Таноса в ближнем бою.",
+      "discovery_hint_en": "Take Thanos's melee blow on your shield.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/TitanBreaksGuard.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/TitanBreaksGuard.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/captain/CaptainCombat.java#shatterGuard"
+      ]
+    },
+    {
+      "id": "meteor_downs_leviathan",
+      "title_ru": "Метеорит сбивает Левиафана",
+      "title_en": "A Meteor Downs a Leviathan",
+      "participants": [
+        "Meteor (world event, or thrown by a hero)",
+        "Chitauri Leviathan (invasion boss)"
+      ],
+      "trigger": "PROJECTILE",
+      "priority": 72,
+      "cooldown_ticks": 20,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A meteor hits a living Chitauri Leviathan (body or any segment)"
+      ],
+      "gameplay_result": "The Leviathan takes 120 explosion damage (its per-hit cap) credited to the meteor's thrower, if any, and is staggered for 80 ticks (out of its dive). The meteor bursts on its plates instead of cratering: the blast throws the riders off (sparing the thrower's side).",
+      "visual_fx": "viltrumitecore:interaction_leviathan_impact (big flash, screen and sky flash, shockwave, debris, sparks, dust, long shake)",
+      "sound": "viltrumitecore:interaction.leviathan_impact",
+      "description_ru": "Метеорит, врезавшийся в Левиафана, наносит ему максимальный урон и сбивает с курса; взрыв сбрасывает читаури с его спины.",
+      "description_en": "A meteor that slams into a Leviathan deals it the heaviest hit and knocks it off course; the blast throws the Chitauri off its back.",
+      "lore_ru": "Когда два конца света встречаются в небе, побеждает тот, что тяжелее.",
+      "lore_en": "When two ends of the world meet in the sky, the heavier one wins.",
+      "discovery_hint_ru": "Метеоритный дождь во время вторжения… или вилтрумит, который целится.",
+      "discovery_hint_en": "Meteor rain during the invasion… or a Viltrumite taking aim.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MeteorDownsLeviathan.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MeteorDownsLeviathan.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/entity/chitauri/ChitauriLeviathan.java#staggerBy"
+      ]
+    },
+    {
+      "id": "mjolnir_shatters_meteor",
+      "title_ru": "Молния раскалывает метеор",
+      "title_en": "Lightning Splits the Meteor",
+      "participants": [
+        "Thor (Mjolnir in hand)",
+        "Meteor (world event)"
+      ],
+      "trigger": "PROJECTILE",
+      "priority": 70,
+      "cooldown_ticks": 20,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A meteor entity hits a player whose presence has weapon.hammer and element.lightning (Mjolnir in the hand)"
+      ],
+      "gameplay_result": "Lightning answers from the sky and splits the meteor mid-air: no damage to Thor, no crater, no magma; the blast throws creatures around. A loot meteor drops its piece at Thor's feet.",
+      "visual_fx": "viltrumitecore:interaction_meteor_split (sky bolt, sky flash, shockwave, debris, sparks) + electric bolt and arc",
+      "sound": "viltrumitecore:interaction.meteor_split (thunder crack + earth burst + zap + rumble)",
+      "description_ru": "Метеор, летящий в Тора с Мьёльниром в руке, раскалывает молния ещё в воздухе.",
+      "description_en": "A meteor flying at Thor with Mjolnir in hand is split by lightning while still in the air.",
+      "lore_ru": "Бог грома не уворачивается от неба. Небо уворачивается от него.",
+      "lore_en": "The god of thunder does not dodge the sky. The sky dodges him.",
+      "discovery_hint_ru": "Во время метеоритного дождя попадись под метеор, держа Мьёльнир.",
+      "discovery_hint_en": "During a meteor fall, get in a meteor's way while holding Mjolnir.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MjolnirShattersMeteor.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/MeteorBursts.java#burst"
+      ]
+    },
+    {
+      "id": "thunder_overcharges_armor",
+      "title_ru": "Перезарядка от молнии",
+      "title_en": "Thunder Overcharge",
+      "participants": [
+        "Any lightning attacker (Thor's electric moves, storms, called bolts)",
+        "Iron Man (flight suit worn)"
+      ],
+      "trigger": "HIT",
+      "priority": 60,
+      "cooldown_ticks": 60,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "The damage source is tagged is_lightning and has an attacker",
+        "The target presence has armor.powered (Iron Man's suit worn, not the Hulkbuster)",
+        "At most once per 3 s per attacker/target pair"
+      ],
+      "gameplay_result": "The lightning hit is absorbed and the arc reactor gains 40 energy (clamped to the maximum; lifts the empty-reactor weapon lock when enough). Between charges lightning hurts the suit normally.",
+      "visual_fx": "viltrumitecore:interaction_overcharge (crackle shell, flash, reactor glow, sparks) + electric crackle",
+      "sound": "viltrumitecore:interaction.overcharge (zap + repulsor riser + electric tail)",
+      "description_ru": "Молния, ударившая в броню Железного человека, не ранит, а заряжает реактор: +40 энергии раз в 3 секунды.",
+      "description_en": "Lightning striking Iron Man's armour does not hurt, it charges the reactor: +40 energy once every 3 seconds.",
+      "lore_ru": "«Ты вообще знаешь, что такое заземление?» — Тони Старк, Германия, 2012.",
+      "lore_en": "\"Do you even know what grounding is?\" — Tony Stark, Germany, 2012.",
+      "discovery_hint_ru": "Тор, ударь молнией Железного человека в броне.",
+      "discovery_hint_en": "Thor, hit an armoured Iron Man with lightning.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ThunderOverchargesArmor.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/ironman/IronManHero.java#react",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/ironman/Energy.java#charge"
+      ]
+    },
+    {
+      "id": "thunder_charges_legion",
+      "title_ru": "Гром заряжает Легион",
+      "title_en": "Thunder Charges the Legion",
+      "participants": [
+        "Thor (lightning, or Mjolnir in its strike window)",
+        "Iron Legion suit (summon)"
+      ],
+      "trigger": "HIT",
+      "priority": 59,
+      "cooldown_ticks": 100,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A lightning hit (lightning damage type, or a lightning weapon in its striking window) lands on an Iron Legion suit"
+      ],
+      "gameplay_result": "The hit is consumed: the suit soaks the lightning and discharges it in up to 3 arcs (7 damage each, 10 blocks, line of sight) into enemies of its commander — monsters, players only as PvP rivals of the commander. Without a commander online it only soaks the charge.",
+      "visual_fx": "viltrumitecore:interaction_overcharge on the suit + viltrumitecore:interaction_legion_discharge per arc",
+      "sound": "viltrumitecore:interaction.legion_discharge",
+      "description_ru": "Молния Тора по костюму Железного легиона не ломает его: костюм впитывает заряд и разряжает его в ближайших врагов своего командира.",
+      "description_en": "Thor's lightning on an Iron Legion suit does not break it: the suit soaks the charge and throws it into its commander's nearest enemies.",
+      "lore_ru": "Четыреста процентов заряда — и это не предел.",
+      "lore_en": "Four hundred percent charge — and that is not the limit.",
+      "discovery_hint_ru": "Ударь молнией по костюму Железного легиона рядом с врагами.",
+      "discovery_hint_en": "Strike an Iron Legion suit with lightning near enemies.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ThunderChargesLegion.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/ThunderChargesLegion.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/Leviathans.java#lightning"
+      ]
+    },
+    {
+      "id": "lightning_runs_the_leviathan",
+      "title_ru": "Молния по хребту Левиафана",
+      "title_en": "Lightning Runs the Leviathan",
+      "participants": [
+        "Thor or the summoned NPC Thor (lightning)",
+        "Chitauri Leviathan (invasion boss)",
+        "Chitauri riders"
+      ],
+      "trigger": "HURT",
+      "priority": 56,
+      "cooldown_ticks": 200,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A lightning hit lands on a living Leviathan: lightning damage type, Mjolnir in its strike window, or the NPC Thor during his hammer throw / storm"
+      ],
+      "gameplay_result": "The hit lands as usual. The bolt runs down the whole spine segment by segment; every Chitauri within 4.5 blocks of the body (up to 16) takes 9 damage from the attacker; the Leviathan is staggered for 60 ticks (out of its dive).",
+      "visual_fx": "viltrumitecore:interaction_spine_arc between every two segments + electric crackle on the riders",
+      "sound": "viltrumitecore:interaction.spine_lightning",
+      "description_ru": "Молния, попавшая в Левиафана, пробегает по всему его телу: читаури на спине получают разряд, а самого Левиафана сводит судорогой.",
+      "description_en": "Lightning that hits a Leviathan runs down its whole body: the Chitauri riding it are shocked and the Leviathan convulses.",
+      "lore_ru": "Бронированный зверь длиной в квартал — лучший громоотвод в Нью-Йорке.",
+      "lore_en": "An armoured beast a block long is the best lightning rod in New York.",
+      "discovery_hint_ru": "Ударь Левиафана молнией — или позови Тора из Мстителей.",
+      "discovery_hint_en": "Hit a Leviathan with lightning — or call Thor of the Avengers.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/LightningRunsTheLeviathan.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/LightningRunsTheLeviathan.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/Leviathans.java#riders"
+      ]
+    },
+    {
+      "id": "heavy_hitter_halts_leviathan",
+      "title_ru": "«Халк, крушить!»",
+      "title_en": "\"Hulk… Smash.\"",
+      "participants": [
+        "NPC Hulk, Hulkbuster or a Viltrumite (heavy fist)",
+        "Chitauri Leviathan (invasion boss)",
+        "Chitauri riders"
+      ],
+      "trigger": "HURT",
+      "priority": 54,
+      "cooldown_ticks": 160,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "A hand-to-hand hit of at least 4 damage on a living Leviathan",
+        "The striker is the summoned Hulk, the Hulkbuster (body.mech.heavy) or a Viltrumite (body.viltrumite)",
+        "The Leviathan is not already staggered"
+      ],
+      "gameplay_result": "The hit lands as usual. The Leviathan is halted: staggered for 70 ticks and thrown out of its dive; every Chitauri within 6 blocks of the impact point is thrown off the plates; the striker rebounds off the armour.",
+      "visual_fx": "viltrumitecore:interaction_leviathan_halt (flash, shockwave, debris, sparks, shake)",
+      "sound": "viltrumitecore:interaction.leviathan_halt",
+      "description_ru": "Тяжёлый удар Халка, Халкбастера или вилтрумита останавливает Левиафана: он замирает и выходит из пике, а читаури слетают с его спины.",
+      "description_en": "A heavy punch from the Hulk, the Hulkbuster or a Viltrumite halts a Leviathan: it reels out of its dive and the Chitauri fall off its back.",
+      "lore_ru": "Нью-Йорк, 2012: один удар — и Левиафан стоит.",
+      "lore_en": "New York, 2012: one punch and the Leviathan stops.",
+      "discovery_hint_ru": "Ударь Левиафана Халкбастером — или дай Халку из Мстителей до него дотянуться.",
+      "discovery_hint_en": "Punch a Leviathan in the Hulkbuster — or let the Avengers' Hulk reach it.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/HeavyHitterHaltsLeviathan.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/HeavyHitterHaltsLeviathan.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/Leviathans.java#nearest"
+      ]
+    },
+    {
+      "id": "legion_vs_chitauri",
+      "title_ru": "Протокол «Битва за Нью-Йорк»",
+      "title_en": "Battle of New York Protocol",
+      "participants": [
+        "Iron Legion suit (summon)",
+        "Chitauri creature (invasion)"
+      ],
+      "trigger": "HURT",
+      "priority": 50,
+      "cooldown_ticks": 0,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "The attacker is an Iron Legion suit (repulsor or missile damage)",
+        "The target is a Chitauri creature",
+        "The Chitauri invasion is running"
+      ],
+      "gameplay_result": "The hit deals 1.5x damage. A targeting arc marks the hit at most once a second per suit.",
+      "visual_fx": "viltrumitecore:interaction_legion_mark (small flash, sparks, crackle), throttled",
+      "sound": "none (the suit's own weapon sound)",
+      "description_ru": "Во время вторжения читаури костюмы Железного легиона наносят читаури полуторный урон.",
+      "description_en": "During the Chitauri invasion, Iron Legion suits deal one and a half times damage to the Chitauri.",
+      "lore_ru": "Тони строил Легион, потому что видел, что пришло из портала. Эти костюмы были созданы для этой войны.",
+      "lore_en": "Tony built the Legion because he saw what came through the portal. These suits were made for this war.",
+      "discovery_hint_ru": "Вызови Железный легион во время вторжения читаури.",
+      "discovery_hint_en": "Summon the Iron Legion during the Chitauri invasion.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/LegionVsChitauri.java#matches",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/LegionVsChitauri.java#apply"
+      ]
+    },
+    {
+      "id": "titan_scatters_summons",
+      "title_ru": "Титан разбрасывает призванных",
+      "title_en": "The Titan Scatters the Summoned",
+      "participants": [
+        "Thanos (boss)",
+        "Hero summons (Iron Legion suits, Avengers, Jinwoo's shadows)"
+      ],
+      "trigger": "HURT",
+      "priority": 40,
+      "cooldown_ticks": 10,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "The attacker is Thanos",
+        "The target is a summon of a player (SummonOwners)",
+        "The summon accepts an impulse"
+      ],
+      "gameplay_result": "Damage unchanged, but the summon is hurled far away with a ground burst instead of the usual short knockback.",
+      "visual_fx": "viltrumitecore:interaction_titan_fling (shake, shockwave, dust, debris)",
+      "sound": "viltrumitecore:interaction.titan_fling (body thud + earth + whoosh)",
+      "description_ru": "Танос не тратит время на призванных: его удар отшвыривает их далеко в сторону.",
+      "description_en": "Thanos does not waste time on the summoned: his blow hurls them far away.",
+      "lore_ru": "«Я — неизбежность». Слуги героев — лишь пыль на пути.",
+      "lore_en": "\"I am inevitable.\" The heroes' servants are only dust on the way.",
+      "discovery_hint_ru": "Отправь своих призванных на Таноса и смотри, как они летят.",
+      "discovery_hint_en": "Send your summons at Thanos and watch them fly.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/TitanScattersSummons.java#apply"
+      ]
+    }
+  ]
+}

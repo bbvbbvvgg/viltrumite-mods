@@ -86,6 +86,8 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.jinwoo.JinwooClient.init();
          dev.baranhan.viltrumitecore.client.hero.speech.qa.SubtitlePlaytest.init();
          dev.baranhan.viltrumitecore.client.captain.CaptainClient.init();
+         // Contextual interactions (docs/contextual-interactions.json): FX recipes of the shared presets 600+.
+         dev.baranhan.viltrumitecore.client.interaction.InteractionFxRecipes.init();
          dev.baranhan.viltrumitecore.client.wish.WishSceneClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();

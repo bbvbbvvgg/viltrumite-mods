@@ -329,6 +329,13 @@ public final class DioTimeStop {
       }
    }
 
+   /** True while the ledger of an ending field is being paid (the blow is DIO's stopped seconds, not a new hit). */
+   public static boolean paying() {
+      return paying > 0;
+   }
+
+   private static int paying;
+
    private static void pay(@Nullable ServerPlayer caster, LivingEntity target, TimeStopField.Ledger entry) {
       float amount = DioRules.ledgerPayout(entry.damage, target.getMaxHealth(), target instanceof Player);
       if (amount <= 0.0F) {
@@ -337,7 +344,13 @@ public final class DioTimeStop {
 
       DamageSource source = caster != null ? caster.damageSources().playerAttack(caster) : target.damageSources().magic();
       target.invulnerableTime = 0;
-      boolean hurt = target.hurt(source, amount);
+      boolean hurt;
+      paying++;
+      try {
+         hurt = target.hurt(source, amount);
+      } finally {
+         paying--;
+      }
       if (hurt && entry.push.lengthSqr() > 1.0E-4 && HeroRegistry.allowsImpulse(target) && !HeroDamage.isAnchored(target)) {
          Vec3 push = entry.push;
          double strength = Math.min(DioRules.LEDGER_MAX_KNOCKBACK, push.length());

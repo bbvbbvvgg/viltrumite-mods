@@ -34,7 +34,9 @@ public enum CaptainMove {
    LANDING("landing", 12, 0),
    ROLL_SWEEP("roll_sweep", 12, 6),
    /** Joint move with Thor (rework §15.3): Mjolnir hits the raised shield, Steve braces under the blow. */
-   TEAM_BRACE("team_brace", 18, 0);
+   TEAM_BRACE("team_brace", 18, 0),
+   /** Contextual interaction {@code reid_shatters_vibranium}: the raised shield is torn aside, Steve reels (no input lock). */
+   SHIELD_SHATTERED("shield_shattered", 16, 0);
 
    private final String clip;
    public final int length;
@@ -79,7 +81,7 @@ public enum CaptainMove {
 
    /** Moves during which walking input is ignored (speed modifier). */
    public boolean roots() {
-      return this.ceremony() || this == SLAM_IMPACT || this == RUSH_BASH;
+      return this.ceremony() || this == SLAM_IMPACT || this == RUSH_BASH || this == SHIELD_SHATTERED;
    }
 
    /** Moves that need the shield in the hand. */

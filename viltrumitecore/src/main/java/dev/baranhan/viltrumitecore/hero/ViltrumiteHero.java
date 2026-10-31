@@ -81,4 +81,32 @@ public class ViltrumiteHero implements HeroDefinition {
    public HeroPublicSnapshot snapshot(Player player) {
       return HeroPublicSnapshot.EMPTY;
    }
+
+   /** A Viltrumite body (squad NPCs and anyone wearing this hero): tag rules of the contextual interactions. */
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence VILTRUMITE_BODY = new dev.baranhan.viltrumitecore.hero.combat.CombatPresence(
+      "viltrumitecore:viltrumite_body", java.util.Set.of(dev.baranhan.viltrumitecore.hero.combat.CombatTags.BODY_VILTRUMITE),
+      dev.baranhan.viltrumitecore.hero.combat.CombatStance.NONE, 0);
+
+   @Override
+   public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      return player == null ? dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE : VILTRUMITE_BODY;
+   }
+
+   /**
+    * viltrumite_hurls_meteor (METEOR_CAUGHT) and viltrumite_fist_meets_vibranium (STRIKE_RECOILED): a Viltrumite
+    * that is awake and free takes the meteor or the recoil; the interaction itself moves the bodies.
+    */
+   @Override
+   public boolean react(ServerPlayer self, dev.baranhan.viltrumitecore.interaction.InteractionReaction reaction,
+      dev.baranhan.viltrumitecore.interaction.InteractionContext ctx) {
+      if (self == null || !self.isAlive() || self.isSpectator()) {
+         return false;
+      }
+      return switch (reaction) {
+         case METEOR_CAUGHT -> !dev.baranhan.viltrumitecore.hero.HeroDamage.isAnchored(self)
+            && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsExternalControl(self, ControlKind.IMPULSE);
+         case STRIKE_RECOILED -> true;
+         default -> false;
+      };
+   }
 }

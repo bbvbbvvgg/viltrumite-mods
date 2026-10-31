@@ -646,6 +646,18 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
       this.level().broadcastEntityEvent(this, EVENT_DEPLOY);
    }
 
+   /**
+    * Outside stagger (contextual interactions: a meteor, a heavy fist, lightning down the spine). False when the
+    * body is not alive or already reeling.
+    */
+   public boolean staggerBy(int ticks) {
+      if (!(this.level() instanceof ServerLevel level) || this.state() != ALIVE || !this.isAlive() || this.staggerTicks() > 0 || ticks <= 0) {
+         return false;
+      }
+      this.stagger(level, ticks);
+      return true;
+   }
+
    private void stagger(ServerLevel level, int ticks) {
       if (this.staggerTicks() > 0) {
          return;
