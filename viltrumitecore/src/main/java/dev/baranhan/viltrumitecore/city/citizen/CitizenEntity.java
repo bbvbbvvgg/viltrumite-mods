@@ -16,43 +16,64 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 /**
- * A city pedestrian: walks the prepared sidewalk network, idles, and flees from danger
- * zones. Never saved (the population manager refills the streets around players), never
- * an automatic hero target ({@link Bystander}), drops nothing.
+ * A city pedestrian: walks the prepared sidewalk network, idles, chats, and reacts to
+ * danger (Living City 2.0: notices, flinches, runs, hides, falls, recovers; see
+ * {@link CitizenBrain}). Never saved (the population manager refills the streets around
+ * players), never an automatic hero target ({@link Bystander}), drops nothing. Its looks
+ * and its personality both come from one synced seed ({@link CitizenLook},
+ * {@link CitizenTraits}).
  */
 public class CitizenEntity extends PathfinderMob implements Bystander {
-   public static final int SKINS = CitizenSkinPainter.COUNT;
    /** Walk speed modifier on the 0.25 base speed; fleeing runs {@link #FLEE_FACTOR} times faster. */
    public static final double WALK_SPEED = 0.55;
-   public static final double FLEE_FACTOR = 1.7;
+   public static final double FLEE_FACTOR = 1.75;
+   /** Recovering people walk slower and look around more. */
+   public static final double RECOVER_FACTOR = 0.8;
    private static final EntityDataAccessor<Integer> SKIN = SynchedEntityData.defineId(CitizenEntity.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Byte> STATE = SynchedEntityData.defineId(CitizenEntity.class, EntityDataSerializers.BYTE);
-
-   public enum State {
-      WALKING,
-      IDLE,
-      FLEEING;
-
-      static State of(int b) {
-         return b >= 0 && b < values().length ? values()[b] : IDLE;
-      }
-   }
 
    /** Spawned by /city populate: exempt from density trimming. */
    public boolean manual;
    /** Ticks to stay idle before the next stroll. */
    int idleTicks;
-   /** Set by damage: flee immediately on the next goal tick. */
-   int panicTicks;
+   /** Set by damage: counts as standing inside a danger for a few seconds. */
+   int hurtTicks;
    int offGridTicks;
    int stuckStrikes;
+   int stateTicks;
+   int calmTicks;
+   int recoverTicks;
+   int fallTicks;
+   int fallCooldown;
+   int legs;
+   /** The danger this citizen reacts to (look at it, run away from it). */
+   double threatX;
+   double threatY;
+   double threatZ;
+   float threatRadius;
+   private boolean threat;
+   /** Where the last danger was: strolling avoids it for a while (cautious return). */
+   double memX;
+   double memZ;
+   long memUntil = Long.MIN_VALUE;
+   /** Destination of the current flight (crowd spreading counts these). */
+   @Nullable
+   BlockPos fleeTarget;
+   @Nullable
+   CitizenEntity talkPartner;
+   /** A companion this citizen walks with (spawned as a small group), or null. */
+   @Nullable
+   CitizenEntity leader;
+   @Nullable
+   private CitizenTraits traits;
+   @Nullable
+   private CitizenLook look;
    private double lastX;
    private double lastZ;
    private int stillTicks;
@@ -68,24 +89,26 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       return PathfinderMob.createMobAttributes()
          .add(Attributes.MAX_HEALTH, 10.0)
          .add(Attributes.MOVEMENT_SPEED, 0.25)
-         .add(Attributes.FOLLOW_RANGE, 40.0);
+         .add(Attributes.FOLLOW_RANGE, 48.0);
    }
 
    @Override
    protected void defineSynchedData() {
       super.defineSynchedData();
       this.entityData.define(SKIN, 0);
-      this.entityData.define(STATE, (byte)State.IDLE.ordinal());
+      this.entityData.define(STATE, (byte)CitizenState.IDLE.ordinal());
    }
 
    @Override
    protected void registerGoals() {
       this.goalSelector.addGoal(0, new FloatGoal(this));
-      this.goalSelector.addGoal(1, new CitizenGoals.Flee(this));
-      this.goalSelector.addGoal(2, new CitizenGoals.ReturnToGrid(this));
-      this.goalSelector.addGoal(3, new CitizenGoals.Stroll(this));
-      this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
-      this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+      this.goalSelector.addGoal(1, new CitizenGoals.Panic(this));
+      this.goalSelector.addGoal(2, new CitizenGoals.Alert(this));
+      this.goalSelector.addGoal(3, new CitizenGoals.ReturnToGrid(this));
+      this.goalSelector.addGoal(4, new CitizenGoals.Talk(this));
+      this.goalSelector.addGoal(5, new CitizenGoals.Stroll(this));
+      this.goalSelector.addGoal(6, new CitizenGoals.Gaze(this, 8.0F));
+      this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
    }
 
    @Override
@@ -93,27 +116,98 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       return new CitizenNavigation(this, level);
    }
 
+   /** The appearance and personality seed (any int; synced). */
    public int skin() {
-      return Math.floorMod(this.entityData.get(SKIN), SKINS);
+      return this.entityData.get(SKIN);
    }
 
-   public void setSkin(int skin) {
-      this.entityData.set(SKIN, Math.floorMod(skin, SKINS));
+   public void setSkin(int seed) {
+      this.entityData.set(SKIN, seed);
+      this.traits = null;
    }
 
-   /** Odd skins use the slim (3 px arm) model. */
-   public boolean slim() {
-      return (this.skin() & 1) == 1;
-   }
-
-   public State state() {
-      return State.of(this.entityData.get(STATE));
-   }
-
-   void setState(State s) {
-      if (this.state() != s) {
-         this.entityData.set(STATE, (byte)s.ordinal());
+   public CitizenTraits traits() {
+      CitizenTraits t = this.traits;
+      if (t == null) {
+         t = CitizenTraits.of(this.skin());
+         this.traits = t;
       }
+
+      return t;
+   }
+
+   /** The decoded appearance (cached per seed). */
+   public CitizenLook look() {
+      CitizenLook l = this.look;
+      int seed = this.skin();
+      if (l == null || l.seed() != seed) {
+         l = CitizenLook.of(seed);
+         this.look = l;
+      }
+
+      return l;
+   }
+
+   /** Slim (3 px) arms: from the look. */
+   public boolean slim() {
+      return this.look().slim();
+   }
+
+   public CitizenState citizenState() {
+      return CitizenState.of(this.entityData.get(STATE));
+   }
+
+   void setCitizenState(CitizenState s) {
+      if (this.citizenState() != s) {
+         this.entityData.set(STATE, (byte)s.ordinal());
+         this.stateTicks = 0;
+         if (s != CitizenState.FLEEING) {
+            this.fleeTarget = null;
+         }
+
+         if (s != CitizenState.TALKING) {
+            this.talkPartner = null;
+         }
+      }
+   }
+
+   public boolean hasThreat() {
+      return this.threat;
+   }
+
+   void setThreat(double x, double y, double z, float radius) {
+      this.threat = true;
+      this.threatX = x;
+      this.threatY = y;
+      this.threatZ = z;
+      this.threatRadius = radius;
+   }
+
+   void clearThreat() {
+      this.threat = false;
+   }
+
+   /** Walks with this companion (spawned together as a small group). */
+   public void leaderFollow(CitizenEntity lead) {
+      if (lead != this && lead.leader != this) {
+         this.leader = lead;
+      }
+   }
+
+   void remember(double x, double z, long now) {
+      this.memX = x;
+      this.memZ = z;
+      this.memUntil = now + CitizenBrain.MEMORY;
+   }
+
+   /** Walking speed modifier of this person (traits pace, slower while recovering). */
+   double walkSpeed() {
+      double v = WALK_SPEED * this.traits().pace();
+      return this.citizenState() == CitizenState.RECOVERING ? v * RECOVER_FACTOR : v;
+   }
+
+   double runSpeed() {
+      return WALK_SPEED * FLEE_FACTOR * (0.92 + this.traits().pace() * 0.12);
    }
 
    @Override
@@ -123,8 +217,17 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
          return;
       }
 
-      if (this.panicTicks > 0) {
-         this.panicTicks--;
+      if (this.hurtTicks > 0) {
+         this.hurtTicks--;
+      }
+
+      if (this.recoverTicks > 0) {
+         this.recoverTicks--;
+      }
+
+      CityManager city = CityManager.of(this.level());
+      if (city != null) {
+         CitizenBrain.tick(this, city);
       }
 
       // stuck detection: navigating but not moving for 3 s -> give up this path
@@ -166,15 +269,43 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    @Override
    public boolean hurt(DamageSource source, float amount) {
       boolean hurt = super.hurt(source, amount);
-      if (!this.level().isClientSide && this.isAlive()) {
-         this.panicTicks = 100;
+      if (!this.level().isClientSide && hurt) {
          CityManager city = CityManager.of(this.level());
          if (city != null) {
-            city.danger(this.getX(), this.getY(), this.getZ(), 12.0F, 200);
+            // run away from whoever or whatever did it; a hurt person is also a sight for others
+            net.minecraft.world.phys.Vec3 from = source.getSourcePosition();
+            if (from == null && source.getEntity() != null) {
+               from = source.getEntity().position();
+            }
+
+            if (from == null) {
+               from = this.position();
+            }
+
+            city.danger(from.x, from.y, from.z, 12.0F, 200);
+            if (this.isAlive()) {
+               this.hurtTicks = 100;
+               this.setThreat(from.x, from.y, from.z, 12.0F);
+               CitizenState s = this.citizenState();
+               if (s != CitizenState.FALLEN && s != CitizenState.GETTING_UP && s != CitizenState.FLEEING) {
+                  this.legs = 0;
+                  this.setCitizenState(CitizenState.FLEEING);
+               }
+            }
          }
       }
 
       return hurt;
+   }
+
+   @Override
+   public void die(DamageSource source) {
+      super.die(source);
+      CityManager city = CityManager.of(this.level());
+      if (city != null && !this.level().isClientSide) {
+         // somebody died here: everybody around notices, the closest run
+         city.dangerMap().add(this.getX(), this.getY(), this.getZ(), 10.0F, 36.0F, city.now(), 240);
+      }
    }
 
    @Override
