@@ -12,18 +12,25 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 class ThanosBrainTest {
    static ThanosBrain.Situation at(ThanosPhase phase, double distance) {
-      return new ThanosBrain.Situation(phase, true, distance, false, 1, 1, 0, false, false, 1.0F, 0.0F);
+      return new ThanosBrain.Situation(phase, true, distance, false, true, 1, 1, 0, false, false, 1.0F, 0.0F);
+   }
+
+   /** The same, with the target behind a wall. */
+   static ThanosBrain.Situation hidden(ThanosBrain.Situation s) {
+      return new ThanosBrain.Situation(s.phase(), true, s.distance(), s.targetAirborne(), false, s.heroes(), s.heroesClose(), s.incomingProjectiles(),
+         s.recentlyTimeStopped(), s.threatened(), s.healthFraction(), s.recentDamageFraction());
    }
 
    static ThanosBrain.Situation with(ThanosBrain.Situation s, boolean air, int close, int projectiles, boolean timeStopped, boolean threat,
       float health, float recent) {
-      return new ThanosBrain.Situation(s.phase(), true, s.distance(), air, Math.max(1, close), close, projectiles, timeStopped, threat, health, recent);
+      return new ThanosBrain.Situation(s.phase(), true, s.distance(), air, true, Math.max(1, close), close, projectiles, timeStopped, threat, health,
+         recent);
    }
 
    @Test
    void noTargetMeansStalk() {
       ThanosBrain brain = new ThanosBrain(1);
-      assertNull(brain.choose(new ThanosBrain.Situation(ThanosPhase.FINAL, false, 3, false, 1, 1, 0, false, false, 1, 0)));
+      assertNull(brain.choose(new ThanosBrain.Situation(ThanosPhase.FINAL, false, 3, false, true, 1, 1, 0, false, false, 1, 0)));
    }
 
    @Test
@@ -185,23 +192,148 @@ class ThanosBrainTest {
       assertEquals(3.0 * before, brain.weight(ThanosMove.POWER_PUNCH, at(ThanosPhase.OPENING, 3)), 1.0E-9);
    }
 
+   private static void idle(ThanosBrain brain, int ticks) {
+      for (int i = 0; i < ticks; i++) {
+         brain.tick();
+      }
+   }
+
    @Test
-   void sameStoneThreeTimesIsDamped() {
+   void oneStoneIsNeverUsedThreeTimesInARow() {
       ThanosBrain brain = new ThanosBrain(4);
       brain.commit(ThanosMove.POWER_WAVE, ThanosPhase.FINAL);
       brain.commit(ThanosMove.POWER_PUNCH, ThanosPhase.FINAL);
-      for (int i = 0; i < 2000; i++) {
-         brain.tick();
-      }
-
-      ThanosBrain fresh = new ThanosBrain(4);
-      fresh.commit(ThanosMove.CLEAVE, ThanosPhase.FINAL);
-      for (int i = 0; i < 2000; i++) {
-         fresh.tick();
-      }
-
+      idle(brain, 2000);
       ThanosBrain.Situation s = at(ThanosPhase.FINAL, 8);
-      assertEquals(0.25 * fresh.weight(ThanosMove.COMBO_TRINITY, s), brain.weight(ThanosMove.COMBO_TRINITY, s), 1.0E-9);
+      // every move with the Power stone is out, combos included; the others are not
+      for (ThanosMove move : ThanosMove.values()) {
+         if (move.uses(ThanosStone.POWER)) {
+            assertEquals(0.0, brain.weight(move, s), move.toString());
+            assertFalse(brain.allowed(move, ThanosPhase.FINAL), move.toString());
+         }
+      }
+
+      assertTrue(brain.weight(ThanosMove.COMBO_ETERNITY, s) > 0.0);
+      // a plain strike in between breaks the streak
+      brain.commit(ThanosMove.CLEAVE, ThanosPhase.FINAL);
+      idle(brain, 2000);
+      assertTrue(brain.weight(ThanosMove.COMBO_TRINITY, s) > 0.0);
+   }
+
+   @Test
+   void teleportsKeepTheirGap() {
+      ThanosBrain brain = new ThanosBrain(12);
+      ThanosBrain.Situation far = at(ThanosPhase.ONSLAUGHT, 20);
+      brain.commit(ThanosMove.SPACE_STEP, ThanosPhase.ONSLAUGHT);
+      brain.commit(ThanosMove.CLEAVE, ThanosPhase.ONSLAUGHT);
+      idle(brain, ThanosRules.TELEPORT_GAP_TICKS - 1);
+      assertEquals(0.0, brain.weight(ThanosMove.COMBO_MIND_STEP, far), "a second teleport inside the gap");
+      brain.tick();
+      assertTrue(brain.weight(ThanosMove.COMBO_MIND_STEP, far) > 0.0, "after the gap");
+      assertTrue(ThanosRules.teleportGap(ThanosPhase.FINAL) < ThanosRules.teleportGap(ThanosPhase.ONSLAUGHT));
+      assertTrue(ThanosMove.SPACE_STEP.teleports() && ThanosMove.COMBO_MIND_STEP.teleports() && !ThanosMove.SPACE_PULL.teleports());
+   }
+
+   @Test
+   void noAttacksThroughWalls() {
+      for (ThanosPhase phase : ThanosPhase.values()) {
+         for (double distance : new double[]{3, 8, 15, 30}) {
+            ThanosBrain brain = new ThanosBrain(3);
+            ThanosBrain.Situation s = hidden(with(at(phase, distance), false, 2, 2, false, true, 0.5F, 0.05F));
+            for (ThanosMove move : ThanosMove.values()) {
+               if (brain.weight(move, s) > 0.0) {
+                  assertTrue(move.throughCover(), move + " chosen against a hidden target at " + distance + " in " + phase);
+               }
+            }
+         }
+      }
+
+      // the step to a hidden target is much likelier than to a visible one
+      ThanosBrain brain = new ThanosBrain(3);
+      ThanosBrain.Situation open = at(ThanosPhase.ESCALATION, 20);
+      assertTrue(brain.weight(ThanosMove.SPACE_STEP, hidden(open)) > 3.5 * brain.weight(ThanosMove.SPACE_STEP, open));
+      int step = 0;
+      for (int seed = 0; seed < 200; seed++) {
+         ThanosMove move = new ThanosBrain(seed).choose(hidden(open));
+         assertTrue(move == null || move.throughCover(), String.valueOf(move));
+         if (move == ThanosMove.SPACE_STEP) {
+            step++;
+         }
+      }
+
+      assertTrue(step > 110, "steps to the hidden target " + step + "/200");
+   }
+
+   @Test
+   void afterATimeStopRewindOrStepLead() {
+      // released from a time stop at 10 blocks with a little damage taken meanwhile
+      ThanosBrain.Situation released = with(at(ThanosPhase.ESCALATION, 10.0), false, 1, 0, true, false, 0.8F, 0.015F);
+      int answers = 0;
+      for (int seed = 0; seed < 300; seed++) {
+         ThanosMove move = new ThanosBrain(seed).choose(released);
+         if (move == ThanosMove.TIME_REWIND || move == ThanosMove.SPACE_STEP) {
+            answers++;
+         }
+      }
+
+      assertTrue(answers > 180, "rewind or step " + answers + "/300");
+      // the same little damage without a time stop is not worth a rewind
+      ThanosBrain brain = new ThanosBrain(1);
+      assertEquals(0.0, brain.weight(ThanosMove.TIME_REWIND, with(at(ThanosPhase.ESCALATION, 10.0), false, 1, 0, false, false, 0.8F, 0.015F)));
+   }
+
+   /** Thousands of choices over random situations: the hard rules hold every time. */
+   @Test
+   void hardRulesHoldOverALongFight() {
+      java.util.SplittableRandom r = new java.util.SplittableRandom(99);
+      for (int fight = 0; fight < 20; fight++) {
+         ThanosBrain brain = new ThanosBrain(fight);
+         java.util.List<ThanosMove> moves = new java.util.ArrayList<>();
+         java.util.List<Integer> at = new java.util.ArrayList<>();
+         int tick = 0;
+         for (int step = 0; step < 400; step++) {
+            ThanosPhase phase = ThanosPhase.byIndex(step * 4 / 400);
+            ThanosBrain.Situation s = new ThanosBrain.Situation(phase, true, 2 + r.nextDouble() * 40, r.nextInt(5) == 0, r.nextInt(6) != 0,
+               1 + r.nextInt(5), r.nextInt(4), r.nextInt(4), r.nextInt(8) == 0, r.nextInt(6) == 0, 0.2F + r.nextFloat() * 0.8F, r.nextFloat() * 0.1F);
+            ThanosMove move = brain.choose(s);
+            if (move != null) {
+               if (!s.targetVisible()) {
+                  assertTrue(move.throughCover(), move + " through a wall");
+               }
+
+               if (!moves.isEmpty()) {
+                  ThanosMove last = moves.get(moves.size() - 1);
+                  assertNotEquals(last, move, "the same move twice");
+                  if (moves.size() >= 2) {
+                     assertEquals(0, move.stones & last.stones & moves.get(moves.size() - 2).stones, "one stone three times: " + moves.subList(moves.size() - 2,
+                        moves.size()) + " + " + move);
+                  }
+               }
+
+               if (move.teleports()) {
+                  for (int i = moves.size() - 1; i >= 0; i--) {
+                     if (moves.get(i).teleports()) {
+                        assertTrue(tick - at.get(i) >= ThanosRules.teleportGap(phase), "teleport spam " + moves.get(i) + " -> " + move);
+                        break;
+                     }
+                  }
+               }
+
+               brain.commit(move, phase);
+               moves.add(move);
+               at.add(tick);
+               int busy = move.length(phase) + ThanosRules.BREATHER_TICKS;
+               idle(brain, busy);
+               tick += busy;
+            } else {
+               idle(brain, 10);
+               tick += 10;
+            }
+         }
+
+         assertTrue(moves.size() > 120, "he keeps fighting: " + moves.size());
+         assertTrue(new java.util.HashSet<>(moves).size() >= 12, "variety " + new java.util.HashSet<>(moves));
+      }
    }
 
    @Test
