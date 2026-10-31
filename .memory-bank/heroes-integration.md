@@ -64,3 +64,13 @@
 - Sinclair #91 + #92: `ActCardPopup` waits for the copy cinematic (no popup during CAPTURE / COPY, it opens with
   the window and runs its full 6 s hold); `SinclairFirstPerson` keeps #92's arm replacement and #91's scene camera.
 - Report: `docs/reports/2026-10-30-all-pr-integration.md`.
+
+## Final integration #101 + #99 + #98 (2026-10-31, core 1.62.0, protocol 20)
+- Packet tail order: Regulus → Captain → Thanos FX/State → Chitauri Portal/FX → Legion Menu/Call/Order/Status.
+- `HeroAction.LEGION` follows `CAPTAIN_ASSEMBLE` (not `MONARCH_CHARGE` as on the #98 branch).
+- `entity/SummonOwners`: a hero summon (Legion suit, Avenger, Quinjet, Jinwoo shadow) answers for its owner;
+  `LegionAllies` and `CaptainTargets` apply the owner's PvP/team rule to it. Add new summon types there.
+- Event exclusivity: the Chitauri invasion refuses Thanos/meteor/trio/conquest and they refuse it (`force` overrides);
+  Thanos and meteor rain may run together.
+- All Chitauri creatures and Thanos are `Enemy` (hero auto-targeting depends on it).
+- Report: `docs/reports/2026-10-31-final-integration-legion-chitauri-thanos.md`.
