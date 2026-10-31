@@ -398,6 +398,23 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::handle)
          .add();
+      // Iron Man stage 6, the Iron Legion (docs/design/2026-10-31-ironman-legion-design.md): appended, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
