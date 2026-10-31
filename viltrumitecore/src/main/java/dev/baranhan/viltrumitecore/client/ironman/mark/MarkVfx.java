@@ -89,7 +89,7 @@ public final class MarkVfx {
       }
    }
 
-   static void spawn(Vec3 pos, Vec3 vel, int r, int g, int b, int life) {
+   public static void spawn(Vec3 pos, Vec3 vel, int r, int g, int b, int life) {
       if (MOTES.size() < MAX_MOTES) {
          MOTES.add(new Mote(pos, vel, r, g, b, life));
       }
