@@ -35,6 +35,22 @@ class FinalPunchTargetsTest {
       }
    }
 
+   /** Final integration #109 + #110: a city citizen is punched at its own drawn height and build. */
+   @Test
+   void citizensAreSizedToTheirOwnBody() {
+      FinalPunchTargets.Entry base = FinalPunchTargets.of("viltrumitecore:citizen");
+      assertNotNull(base);
+      FinalPunchTargets.Entry tall = FinalPunchTargets.sized(base, 1.075F, 1.1F);
+      assertEquals(base.headHeight() * 1.075F, tall.headHeight(), 1.0E-5);
+      assertEquals(base.faceDepth() * 1.1F, tall.faceDepth(), 1.0E-5);
+      assertEquals(base.jaw(), tall.jaw());
+      assertEquals(base.kind(), tall.kind());
+      assertTrue(FinalPunchTargets.sized(base, 1.0F, 1.0F) == base, "a standard body keeps the registry entry");
+      assertTrue(FinalPunchTargets.sized(base, 0.0F, Float.NaN) == base, "a broken look never moves the jaw");
+      FinalPunchTargets.Entry small = FinalPunchTargets.sized(base, 0.95F, 0.9F);
+      assertTrue(small.headHeight() < base.headHeight() && small.headHeight() > 1.0F);
+   }
+
    @Test
    void picksTheCandidateClosestToTheLook() {
       List<FinalPunchTargets.Candidate> c = List.of(

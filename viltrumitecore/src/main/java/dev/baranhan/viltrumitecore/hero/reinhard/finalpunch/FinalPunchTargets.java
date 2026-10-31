@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.reinhard.finalpunch;
 
+import dev.baranhan.viltrumitecore.city.citizen.CitizenEntity;
+import dev.baranhan.viltrumitecore.city.citizen.CitizenLook;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,7 +16,8 @@ import net.minecraft.world.phys.Vec3;
  * The explicit registry of what the Final Punch may hit (never "any LivingEntity"): people
  * (every player, whatever hero they chose; civilian humans; human-like hero NPCs) and the iron
  * golem. Animals, Chitauri, leviathans, monsters, the dragon and everything else are refused.
- * {@link Jaw} picks how the client builds the knocked-off jaw. Pure except {@link #of(Entity)}.
+ * {@link Jaw} picks how the client builds the knocked-off jaw. Pure except {@link #of(Entity)}, which also
+ * sizes a city citizen's entry to its own height and build.
  */
 public final class FinalPunchTargets {
    /** What kind of body takes the punch (server: sounds/FX; client: bone jaw or a metal one). */
@@ -68,7 +71,20 @@ public final class FinalPunchTargets {
    public static Entry of(@Nullable Entity entity) {
       if (entity == null) return null;
       ResourceLocation key = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-      return key == null ? null : of(key.toString());
+      Entry entry = key == null ? null : of(key.toString());
+      if (entry != null && entity instanceof CitizenEntity citizen) {
+         // Living City 2.0 citizens are drawn at their own height and build (CitizenRenderer.scale), from the
+         // synced look seed, so server and every client agree: the jaw and the fist line follow the real head.
+         CitizenLook look = citizen.look();
+         return sized(entry, look.height(), look.width());
+      }
+      return entry;
+   }
+
+   /** Pure: an entry for a body drawn {@code height} times taller and {@code width} times wider than the standard one. */
+   public static Entry sized(Entry entry, float height, float width) {
+      if (!(height > 0.0F) || !(width > 0.0F) || height == 1.0F && width == 1.0F) return entry;
+      return new Entry(entry.typeId(), entry.kind(), entry.jaw(), entry.headHeight() * height, entry.faceDepth() * width);
    }
 
    public static List<Entry> all() {

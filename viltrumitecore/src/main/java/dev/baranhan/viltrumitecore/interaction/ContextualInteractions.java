@@ -193,6 +193,7 @@ public final class ContextualInteractions {
          }
          if (out.fired()) {
             GUARD.fired(spec, a, b, ctx.now());
+            InteractionDiscovery.fired(spec, ctx);
             if (TRACE) {
                LOGGER.info("INTERACTION {} fired: {} -> {} (cancel={}, scale={})", spec.id(), ctx.attacker(), ctx.target(), out.cancel(), out.scale());
             }
