@@ -169,13 +169,16 @@ class HeroRosterIntegrationTest {
       assertTrue(packets.indexOf("ThorDashS2CPacket") < packets.indexOf("HeroLineS2CPacket"), "Thor / Hulkbuster packets keep their #74 slots");
       // 12 = #74 alone, 13 = #82 alone, 14 = the merged table; 15 = each of #86 (Thor GUARD bit), #88
       // (Od Lagna's wish packets) and #89 (Regulus Reborn) alone; 16 = the final table with all of them;
-      // 17 = Captain America's CaptainFxS2CPacket appended last; 18 = its TEAM (joint move) event type.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"18\""), "the merged packet table needs its own protocol version");
+      // 17 = Captain America's CaptainFxS2CPacket appended last; 18 = its TEAM (joint move) event type;
+      // 19 = the Thanos event's ThanosFxS2CPacket and ThanosStateS2CPacket appended after Captain's.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"19\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
-      assertEquals(packets.size() - 2, packets.indexOf("RegulusFxS2CPacket"), "Regulus Reborn's packet appends after the wish packets");
-      assertEquals(packets.size() - 1, packets.indexOf("CaptainFxS2CPacket"), "Captain America's packet appends last");
+      assertEquals(packets.size() - 4, packets.indexOf("RegulusFxS2CPacket"), "Regulus Reborn's packet appends after the wish packets");
+      assertEquals(packets.size() - 3, packets.indexOf("CaptainFxS2CPacket"), "Captain America's packet appends after Regulus's");
+      assertEquals(packets.size() - 2, packets.indexOf("ThanosFxS2CPacket"), "the Thanos packets append after Captain's");
+      assertEquals(packets.size() - 1, packets.indexOf("ThanosStateS2CPacket"), "the Thanos state packet appends last");
    }
 
    @Test
@@ -220,7 +223,9 @@ class HeroRosterIntegrationTest {
                String path = name.substring(name.indexOf(':') + 1) + ".ogg";
                Path plain = ASSETS.resolve(ns).resolve("sounds").resolve(path);
                Path encoded = BINASSETS.resolve(ns).resolve("sounds").resolve(path + ".b64");
-               assertTrue(Files.isRegularFile(plain) || Files.isRegularFile(encoded), event.getKey() + " has no audio file " + name);
+               // big files are split into <file>.b64.part0..N (joined by the build's binary-asset step)
+               Path split = BINASSETS.resolve(ns).resolve("sounds").resolve(path + ".b64.part0");
+               assertTrue(Files.isRegularFile(plain) || Files.isRegularFile(encoded) || Files.isRegularFile(split), event.getKey() + " has no audio file " + name);
             }
          }
       }
