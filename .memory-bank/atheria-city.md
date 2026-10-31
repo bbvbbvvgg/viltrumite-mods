@@ -73,7 +73,7 @@
 - `./gradlew runServer` does not forward stdin to the server: use RCON (`enable-rcon=true` in `run/server.properties`).
 - `./gradlew :viltrumitecore:runClient -Pquickplay=<save>` opens a save directly (dev property).
 - Smoke test without the licensed map: a flat world plus a synthetic `viltrumite_city/profile.json` and walk tiles
-  (generator in the PR description; flat surface feet y = -60, h2 = -120). A world with no players stops ticking
+  (`tools/city/smoke_flat_city.py`, RCON client `tools/city/rcon.py`; flat surface feet y = -60, h2 = -120). A world with no players stops ticking
   entities after 300 ticks: `/forceload add` the test area before `/city populate`.
 - The prepared world has a custom dimension height (datapack `atheria_height`): Minecraft shows the
   "experimental settings" warning once per world. This is expected.
