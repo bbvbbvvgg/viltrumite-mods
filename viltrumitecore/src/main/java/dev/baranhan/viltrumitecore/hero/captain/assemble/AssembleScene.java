@@ -241,8 +241,10 @@ public final class AssembleScene {
       this.t++;
       int t = this.t;
       if (t == CaptainRules.CALL_TICKS && this.state.is(CaptainMove.ASSEMBLE_CALL)) {
-         // No cutscene: after the 1.5 s call Steve is free (moves, fights, camera his own) while the team arrives.
-         this.state.endMove();
+         this.state.start(CaptainMove.ASSEMBLE_WAIT);
+      }
+      if (this.circleStart < 0 && this.inCeremonyGuard()) {
+         this.state.start(CaptainMove.ASSEMBLE_WAIT); // something knocked Steve out of the pose
       }
       this.tickQuinjet(t);
       for (Member m : this.members.values()) {
@@ -283,6 +285,10 @@ public final class AssembleScene {
             this.finished = true; // the whole team retreated
          }
       }
+   }
+
+   private boolean inCeremonyGuard() {
+      return this.t > CaptainRules.CALL_TICKS && (this.state.move == null || !this.state.move.ceremony());
    }
 
    private void tickQuinjet(int t) {
@@ -481,7 +487,7 @@ public final class AssembleScene {
    private void beginCircle(int t) {
       this.circleStart = t;
       this.departStart = t + CaptainRules.CIRCLE_TICKS + CaptainRules.FIGHT_TICKS;
-      // Steve keeps control during the circle (no forced pose / cutscene); the five Avengers still pose.
+      this.state.start(CaptainMove.ASSEMBLE_RAISE);
       for (Member m : this.members.values()) {
          if (m.gone) {
             continue;
