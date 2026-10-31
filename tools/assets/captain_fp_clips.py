@@ -78,6 +78,9 @@ def fp_clips():
     c.append(clip('assemble_call', 30, [(0, GUARD), (5, raise_), (20, raise_), (30, GUARD)]))
     c.append(clip('assemble_wait', 120, [(0, GUARD), (60, GUARD_B), (120, GUARD)]))
     c.append(clip('assemble_raise', 80, [(0, GUARD), (10, BLOCK), (70, BLOCK), (80, GUARD)]))
+    # Thor's hammer on the shield (joint move): the shield is driven down toward the camera, then held up again
+    c.append(clip('team_brace', 18, [(0, F(BLOCK, la=(-78, 90, 15), lf=(-96, 0, 0))), (3, F(BLOCK, la=(-82, 90, 15), lf=(-94, 0, 0))),
+                                     (9, F(BLOCK, la=(-88, 90, 15))), (18, BLOCK)]))
     return c
 
 

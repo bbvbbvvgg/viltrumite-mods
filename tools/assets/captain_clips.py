@@ -190,6 +190,12 @@ def skills():
     hero = P(CALM, root=low(0), torso=(-6, 0, 0), head=(-6, 0, 0), right_arm=(6, 0, 12), right_forearm=(-10, 0, 0), **SH_BLOCK)
     hero2 = P(hero, root=low(-0.8), torso=(2, 10, 0), head=(-4, -10, 0), left_arm=(-80, 70, 0), left_forearm=(-56, 0, 0))
     out.append(clip('assemble_raise', 80, [(0, COMBAT), (10, hero), (40, hero2), (70, hero2), (80, COMBAT)]))
+    # joint move (rework §15): Mjolnir lands on the raised shield — Steve sinks under the blow with the shield held
+    # toward Thor, slides a little and straightens up (18 t, started at the impact)
+    brace = P(BLOCK, root=low(-5), waist=(14, 18, 0), torso=(14, 10, 0), head=(-6, -24, 0),
+              right_leg=(-50, 10, 6), right_shin=(70, 0, 0), left_leg=(-20, -10, -6), left_shin=(60, 0, 0))
+    out.append(clip('team_brace', 18, [(0, P(brace, root=low(-3))), (2, brace), (6, P(brace, root=low(-4.6))), (12, P(BLOCK, root=low(-3))),
+                                       (18, BLOCK)]))
     return out
 
 
