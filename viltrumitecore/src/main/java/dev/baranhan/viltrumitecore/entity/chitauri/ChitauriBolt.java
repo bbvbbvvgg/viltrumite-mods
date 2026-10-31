@@ -125,10 +125,10 @@ public class ChitauriBolt extends Projectile {
       if (power >= 2.0F) {
          ChitauriDestruction.blastEntities(level, at, 3.0, 4.0F, this.getOwner(), this);
          ChitauriNet.fx(level, new ChitauriFxS2CPacket(ChitauriFxS2CPacket.CANNON_IMPACT, at, d, power, this.random.nextInt()), at, 96);
-         ChitauriSounds.play(level, at, ChitauriSounds.EXPLOSION, 1.6F, 1.25F + this.random.nextFloat() * 0.2F);
+         ChitauriSounds.play(level, at, ChitauriSounds.EXPLOSION, 3.0F, 1.25F + this.random.nextFloat() * 0.2F);
       } else {
          ChitauriNet.fx(level, new ChitauriFxS2CPacket(ChitauriFxS2CPacket.BOLT_IMPACT, at, d, power, this.random.nextInt()), at, 64);
-         ChitauriSounds.play(level, at, ChitauriSounds.BOLT_IMPACT, 0.8F, 0.9F + this.random.nextFloat() * 0.25F);
+         ChitauriSounds.play(level, at, ChitauriSounds.BOLT_IMPACT, 1.2F, 0.9F + this.random.nextFloat() * 0.25F);
       }
       this.discard();
    }

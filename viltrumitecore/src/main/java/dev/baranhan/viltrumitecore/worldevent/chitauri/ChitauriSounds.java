@@ -25,6 +25,7 @@ public final class ChitauriSounds {
    public static final RegistryObject<SoundEvent> EXPLOSION = reg("chitauri.explosion");
    public static final RegistryObject<SoundEvent> CHARIOT_ENGINE = reg("chitauri.chariot_engine");
    public static final RegistryObject<SoundEvent> CHARIOT_FLYBY = reg("chitauri.chariot_flyby");
+   public static final RegistryObject<SoundEvent> CHARIOT_HIT = reg("chitauri.chariot_hit");
    public static final RegistryObject<SoundEvent> CHARIOT_EXPLODE = reg("chitauri.chariot_explode");
    public static final RegistryObject<SoundEvent> SOLDIER_CHATTER = reg("chitauri.soldier_chatter");
    public static final RegistryObject<SoundEvent> SOLDIER_HURT = reg("chitauri.soldier_hurt");
@@ -47,7 +48,7 @@ public final class ChitauriSounds {
 
    /** Every registered name (tests: registry, sounds.json, files and subtitles stay in step). */
    public static final List<String> NAMES = List.of("rifle_fire", "rifle_charge", "bolt_impact", "cannon_fire", "explosion", "chariot_engine",
-      "chariot_flyby", "chariot_explode", "soldier_chatter", "soldier_hurt", "soldier_death", "soldier_step", "soldier_melee", "leviathan_roar",
+      "chariot_flyby", "chariot_hit", "chariot_explode", "soldier_chatter", "soldier_hurt", "soldier_death", "soldier_step", "soldier_melee", "leviathan_roar",
       "leviathan_loop", "leviathan_hit", "leviathan_smash", "leviathan_crash", "leviathan_death", "portal_open", "portal_loop", "portal_thunder",
       "portal_close", "debris", "phase_horn", "sever");
 
@@ -62,7 +63,10 @@ public final class ChitauriSounds {
    public static void init() {
    }
 
-   /** Positional one-shot for everyone nearby (vanilla range: 16 x volume). */
+   /**
+    * Positional one-shot for everyone nearby. The server sends it within 16 x max(volume, 1) blocks and the client
+    * rolls it off over attenuation_distance x max(volume, 1): a volume above 1 only widens the range.
+    */
    public static void play(ServerLevel level, Vec3 at, RegistryObject<SoundEvent> sound, float volume, float pitch) {
       level.playSound(null, at.x, at.y, at.z, sound.get(), SoundSource.HOSTILE, volume, pitch);
    }
