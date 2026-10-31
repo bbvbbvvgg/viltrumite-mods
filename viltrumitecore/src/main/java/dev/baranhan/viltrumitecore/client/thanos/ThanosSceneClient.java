@@ -29,6 +29,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Marker;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -38,8 +39,10 @@ import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import org.joml.Matrix4f;
@@ -387,6 +390,30 @@ public final class ThanosSceneClient {
       cam.setPos(pos);
       cam.setYRot(cam.yRotO + Mth.wrapDegrees(yaw - cam.yRotO));
       cam.setXRot(pitch);
+   }
+
+   /** How close the scene camera may come to the hero's own body before it is no longer drawn. */
+   static final double SELF_CLEARANCE = 0.45;
+
+   /**
+    * The way back ends in the hero's own eyes: the last ticks of it would fly through his head
+    * (the scene camera draws his body). Once the camera is that close the body is not drawn, as
+    * in first person.
+    */
+   static boolean hidesSelf(Vec3 cam, AABB body) {
+      return body.inflate(SELF_CLEARANCE).contains(cam);
+   }
+
+   @SubscribeEvent(priority = EventPriority.HIGHEST)
+   public static void onRenderPlayer(RenderPlayerEvent.Pre event) {
+      Minecraft mc = Minecraft.getInstance();
+      if (!running || camera == null || mc.getCameraEntity() != camera || event.getEntity() != mc.player) {
+         return;
+      }
+
+      if (hidesSelf(mc.gameRenderer.getMainCamera().getPosition(), mc.player.getBoundingBox())) {
+         event.setCanceled(true);
+      }
    }
 
    static void releaseCamera(Minecraft mc) {

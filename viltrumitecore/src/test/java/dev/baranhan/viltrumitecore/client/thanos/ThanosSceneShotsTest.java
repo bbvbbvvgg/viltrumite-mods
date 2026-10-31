@@ -9,6 +9,8 @@ import dev.baranhan.viltrumitecore.client.thanos.ThanosSceneShots.V;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosSceneTimeline;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -118,6 +120,36 @@ class ThanosSceneShotsTest {
 
          assertTrue(ThanosSceneShots.cutBetween(nearPlan, ThanosSceneTimeline.SPEECH_END - 0.5F, ThanosSceneTimeline.SPEECH_END));
          assertTrue(!ThanosSceneShots.cutBetween(nearPlan, 0.0F, 1.0F), "the start blends");
+      }
+   }
+   /**
+    * Found in a real game: the last ticks of the way back flew through the hero's own head (his
+    * face filled the screen for a moment). Wherever the camera is inside or right at his head on
+    * the way out or back, his body is not drawn; on the wide shots it is.
+    */
+   @Test
+   void theHeroIsNotDrawnWhereTheCameraPassesHisHead() {
+      for (Frame f : new Frame[]{near(), far()}) {
+         V e = f.eye();
+         AABB body = new AABB(e.x() - 0.3, e.y() - 1.62, e.z() - 0.3, e.x() + 0.3, e.y() + 0.18, e.z() + 0.3);
+         int hidden = 0;
+         for (float t = 0.0F; t <= ThanosSceneTimeline.LENGTH; t += 0.25F) {
+            Shot s = ThanosSceneShots.at(f, t);
+            Vec3 cam = new Vec3(s.pos().x(), s.pos().y(), s.pos().z());
+            boolean atHead = s.pos().sub(e).length() < 0.6;
+            if (atHead) {
+               assertTrue(ThanosSceneClient.hidesSelf(cam, body), (f.near() ? "near" : "far") + " t=" + t + ": the camera is at his head, his body must not be drawn");
+               hidden++;
+            }
+
+            if (t > ThanosSceneShots.LEAVE + 1.0F && t < ThanosSceneShots.BACK_START) {
+               assertTrue(!ThanosSceneClient.hidesSelf(cam, body) || s.pos().sub(e).length() < 1.5, "t=" + t + ": a wide shot shows him");
+            }
+         }
+
+         assertTrue(hidden > 0, "the camera does reach his eyes");
+         assertTrue(ThanosSceneClient.hidesSelf(new Vec3(e.x(), e.y(), e.z()), body));
+         assertTrue(!ThanosSceneClient.hidesSelf(new Vec3(e.x(), e.y(), e.z() + 3.0), body));
       }
    }
 }
