@@ -111,7 +111,29 @@ public class IronManHero implements HeroDefinition {
          return dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterTags.presence(dev.baranhan.viltrumitecore.hero.ironman.hulkbuster.HulkbusterCombat.blocking(state), state.hulkKit.timeline.running());
       }
 
+      if (state != null && state.wantsFlight()) {
+         return POWERED_ARMOR;
+      }
+
       return dev.baranhan.viltrumitecore.hero.HeroDefinition.super.combatPresence(player);
+   }
+
+   /** The worn flight suit (not the Hulkbuster): {@code armor.powered} — the arc reactor can take a charge. */
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence POWERED_ARMOR = new dev.baranhan.viltrumitecore.hero.combat.CombatPresence(
+      "viltrumitecore:iron_man_suit", java.util.Set.of(dev.baranhan.viltrumitecore.hero.combat.CombatTags.ARMOR_POWERED),
+      dev.baranhan.viltrumitecore.hero.combat.CombatStance.NONE, 0);
+
+   /** Contextual interaction thunder_overcharges_armor: the lightning hit refills the reactor instead of hurting. */
+   @Override
+   public boolean react(ServerPlayer self, dev.baranhan.viltrumitecore.interaction.InteractionReaction reaction,
+      dev.baranhan.viltrumitecore.interaction.InteractionContext ctx) {
+      IronManState state = IronManState.of(self);
+      if (reaction != dev.baranhan.viltrumitecore.interaction.InteractionReaction.OVERCHARGED || state == null || !state.wantsFlight()) {
+         return false;
+      }
+
+      state.energy.charge(dev.baranhan.viltrumitecore.interaction.InteractionTuning.OVERCHARGE_ENERGY);
+      return true;
    }
 
    /** Mouse-held victim of the Hulkbuster (grab or the ultimate's captive): the shared held-target seam. */
