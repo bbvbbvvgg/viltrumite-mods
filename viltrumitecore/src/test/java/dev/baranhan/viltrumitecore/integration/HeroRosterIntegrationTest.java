@@ -79,7 +79,9 @@ class HeroRosterIntegrationTest {
       assertEquals(HeroAction.AUDIENCE_PARTICIPATION.ordinal() + 1, HeroAction.DAGGER_RUSH.ordinal(), "Jinwoo block follows Sinclair");
       assertEquals(HeroAction.MONARCH_CHARGE.ordinal() + 1, HeroAction.CAPTAIN_THROW.ordinal(), "Captain block follows Jinwoo");
       assertEquals(HeroAction.CAPTAIN_THROW.ordinal() + 4, HeroAction.CAPTAIN_ASSEMBLE.ordinal(), "Captain block is contiguous");
-      assertSame(HeroAction.CAPTAIN_ASSEMBLE, actions[actions.length - 1]);
+      // Iron Man stage 6 appends the Iron Legion after the Captain block (released ordinals unchanged).
+      assertEquals(HeroAction.CAPTAIN_ASSEMBLE.ordinal() + 1, HeroAction.LEGION.ordinal(), "Iron Legion appends after Captain America");
+      assertSame(HeroAction.LEGION, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
@@ -172,6 +174,7 @@ class HeroRosterIntegrationTest {
       // 17 = Captain America's CaptainFxS2CPacket appended last; 18 = its TEAM (joint move) event type;
       // 19 = the Thanos event's ThanosFxS2CPacket and ThanosStateS2CPacket appended after Captain's;
       // 18 was also used by feat/chitauri-invasion alone (portal + FX packets after Regulus) and is refused;
+      // 17 was also used by the Iron Legion branch alone (its four packets after Regulus) and is refused;
       // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets.
       assertTrue(source.contains("PROTOCOL_VERSION = \"20\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
@@ -184,6 +187,9 @@ class HeroRosterIntegrationTest {
       assertEquals(regulus + 3, packets.indexOf("ThanosStateS2CPacket"), "the Thanos state packet follows the Thanos FX packet");
       assertEquals(regulus + 4, packets.indexOf("ChitauriPortalS2CPacket"), "the Chitauri portal packet appends after the Thanos packets");
       assertEquals(regulus + 5, packets.indexOf("ChitauriFxS2CPacket"), "the Chitauri FX packet follows the portal packet");
+      List<String> legion = List.of("LegionMenuS2CPacket", "LegionCallC2SPacket", "LegionOrderC2SPacket", "LegionStatusS2CPacket");
+      assertEquals(legion, packets.subList(regulus + 6, regulus + 6 + legion.size()), "the Iron Legion packets append after the Chitauri packets");
+      assertEquals(regulus + 6 + legion.size(), packets.size(), "the Iron Legion packets are the last ones (v20)");
    }
 
    @Test
