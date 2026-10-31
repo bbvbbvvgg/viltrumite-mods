@@ -98,7 +98,13 @@ public enum HeroAction {
    ARMY_ATTACK,
    ARMY_GUARD,
    ARMY_SENTINEL,
-   MONARCH_CHARGE;
+   MONARCH_CHARGE,
+   /** Captain America (spec docs/design/2026-11-03-captain-america-design.md); appended, wire ordinals unchanged. */
+   CAPTAIN_THROW,
+   CAPTAIN_RUSH,
+   CAPTAIN_SLAM,
+   CAPTAIN_ROLL,
+   CAPTAIN_ASSEMBLE;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

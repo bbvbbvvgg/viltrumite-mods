@@ -65,7 +65,7 @@ public final class VanillaUse {
       return decide(aim(player, hit), handsEmpty) == Owner.VANILLA;
    }
 
-   static Aim aim(Player player, @Nullable HitResult hit) {
+   public static Aim aim(Player player, @Nullable HitResult hit) {
       if (hit == null || hit.getType() == HitResult.Type.MISS) {
          return Aim.NOTHING;
       } else if (hit.getType() == HitResult.Type.BLOCK) {

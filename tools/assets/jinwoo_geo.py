@@ -128,6 +128,8 @@ class Model:
                     rects.append((h, w, c, f))
         rects.sort(key=lambda r: (-r[0], -r[1]))
         x = y = shelf = 0
+        while rects and max(r[1] for r in rects) > self.width:
+            self.width *= 2  # a face wider than the atlas: grow instead of overflowing
         W = self.width
         for h, w, c, f in rects:
             if x + w > W:

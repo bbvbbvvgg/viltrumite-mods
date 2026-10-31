@@ -59,7 +59,8 @@ class HeroRosterIntegrationTest {
       assertSame(HeroId.DIO, ids[7]);
       assertSame(HeroId.SINCLAIR, ids[8]);
       assertSame(HeroId.JINWOO, ids[9]);
-      assertEquals(10, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
+      assertSame(HeroId.CAPTAIN, ids[10], "Captain America appends after Jinwoo");
+      assertEquals(11, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
       Set<String> keys = new HashSet<>();
       for (HeroId id : ids) {
          assertTrue(keys.add(id.key()), "duplicate hero key " + id.key());
@@ -76,7 +77,9 @@ class HeroRosterIntegrationTest {
       assertEquals(HeroAction.CONTEXT_TELEPORT.ordinal() + 1, HeroAction.THE_WORLD.ordinal(), "DIO block follows Thor");
       assertEquals(HeroAction.ROAD_ROLLER.ordinal() + 1, HeroAction.VEXING_BOLT.ordinal(), "Sinclair block follows DIO");
       assertEquals(HeroAction.AUDIENCE_PARTICIPATION.ordinal() + 1, HeroAction.DAGGER_RUSH.ordinal(), "Jinwoo block follows Sinclair");
-      assertSame(HeroAction.MONARCH_CHARGE, actions[actions.length - 1]);
+      assertEquals(HeroAction.MONARCH_CHARGE.ordinal() + 1, HeroAction.CAPTAIN_THROW.ordinal(), "Captain block follows Jinwoo");
+      assertEquals(HeroAction.CAPTAIN_THROW.ordinal() + 4, HeroAction.CAPTAIN_ASSEMBLE.ordinal(), "Captain block is contiguous");
+      assertSame(HeroAction.CAPTAIN_ASSEMBLE, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
@@ -114,7 +117,7 @@ class HeroRosterIntegrationTest {
             }
          }
       }
-      for (HeroId id : List.of(HeroId.REINHARD, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO)) {
+      for (HeroId id : List.of(HeroId.REINHARD, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO, HeroId.CAPTAIN)) {
          // Thor (#74) has no cinematic lines yet; his lines() may stay empty.
          assertFalse(HeroRegistry.get(id).lines().isEmpty(), id + " lost its cinematic lines");
       }
@@ -165,12 +168,14 @@ class HeroRosterIntegrationTest {
       assertTrue(packets.indexOf("HeroLineS2CPacket") < packets.indexOf("DioTimeS2CPacket"), "hero packets append after the subtitle packet");
       assertTrue(packets.indexOf("ThorDashS2CPacket") < packets.indexOf("HeroLineS2CPacket"), "Thor / Hulkbuster packets keep their #74 slots");
       // 12 = #74 alone, 13 = #82 alone, 14 = the merged table; 15 = each of #86 (Thor GUARD bit), #88
-      // (Od Lagna's wish packets) and #89 (Regulus Reborn) alone; 16 = the final table with all of them.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"16\""), "the merged packet table needs its own protocol version");
+      // (Od Lagna's wish packets) and #89 (Regulus Reborn) alone; 16 = the final table with all of them;
+      // 17 = Captain America's CaptainFxS2CPacket appended last.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"17\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
-      assertEquals(packets.size() - 1, packets.indexOf("RegulusFxS2CPacket"), "Regulus Reborn's packet appends after the wish packets");
+      assertEquals(packets.size() - 2, packets.indexOf("RegulusFxS2CPacket"), "Regulus Reborn's packet appends after the wish packets");
+      assertEquals(packets.size() - 1, packets.indexOf("CaptainFxS2CPacket"), "Captain America's packet appends last");
    }
 
    @Test

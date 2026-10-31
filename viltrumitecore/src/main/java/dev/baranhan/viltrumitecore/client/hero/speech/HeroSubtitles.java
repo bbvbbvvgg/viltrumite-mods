@@ -236,8 +236,8 @@ public final class HeroSubtitles {
       boolean itemName = timers.viltrumitecore$toolHighlightTimer() > 0 && !timers.viltrumitecore$lastToolHighlight().isEmpty();
       boolean survival = mc.gameMode != null && mc.gameMode.canHurtPlayer();
       int target = SubtitleLayout.bottom(height, bars, actionBar, itemName, survival);
-      if (dev.baranhan.viltrumitecore.client.dio.RollerCinema.active()) {
-         // DIO's Road Roller cinematic: the panel sits in the lower letterbox bar, off the subject.
+      if (dev.baranhan.viltrumitecore.client.dio.RollerCinema.active() || dev.baranhan.viltrumitecore.client.captain.CaptainUltScene.active()) {
+         // DIO's Road Roller / Captain's assemble cinematic: the panel sits in the lower letterbox bar, off the subject.
          target = height - 4;
       }
 
