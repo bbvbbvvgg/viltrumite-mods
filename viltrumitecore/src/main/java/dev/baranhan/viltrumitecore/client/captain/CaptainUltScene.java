@@ -180,7 +180,7 @@ public final class CaptainUltScene {
          closeFrom = current();
          closeWho = now;
          closeAge = 0;
-         closeFacing = subject == null ? f : Vec3.directionFromRotation(0.0F, subject.yBodyRot);
+         closeFacing = subject == null ? f : Vec3.directionFromRotation(0.0F, subject.getYHeadRot());
       } else {
          closeAge++;
       }

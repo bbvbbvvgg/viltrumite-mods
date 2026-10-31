@@ -69,4 +69,16 @@ class CaptainRulesTest {
       }
       assertEquals(0.0, ShieldFlight.degrees(d, side), 1.0E-6);
    }
+
+   @Test
+   void fightFollowFanStaysOutOfStevesView() {
+      double prev = -1;
+      for (int i = 0; i < 5; i++) {
+         double b = CaptainRules.followBearing(i);
+         assertTrue(b >= 100.0 && b <= 260.0, "avenger " + i + " beside / behind Steve, not ahead: " + b);
+         assertTrue(b - prev >= 30.0, "spread apart");
+         prev = b;
+      }
+      assertEquals(180.0, CaptainRules.followBearing(2), 1.0E-9, "the middle one right behind him");
+   }
 }

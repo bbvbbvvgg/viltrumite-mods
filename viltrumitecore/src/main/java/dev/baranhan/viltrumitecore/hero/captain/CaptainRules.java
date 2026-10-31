@@ -305,4 +305,13 @@ public final class CaptainRules {
    public static double slotAngle(int index) {
       return 60.0 * (index + 1);
    }
+
+   /**
+    * Fight-follow bearing (degrees from Steve's facing, 0 = straight ahead) of the i-th avenger (0..4): a fan from
+    * 110 to 250 degrees, beside and behind him, so nobody parks in his line of sight (Hulk used to stand 4 blocks
+    * dead ahead and fill the screen after the ultimate).
+    */
+   public static double followBearing(int index) {
+      return 110.0 + 35.0 * Math.max(0, Math.min(4, index));
+   }
 }

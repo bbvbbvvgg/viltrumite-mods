@@ -33,6 +33,7 @@ public final class CaptainSceneShots {
    /** Close-up lens distance from the face and its swing off the line to the circle (degrees). */
    static final double CLOSE_DIST = 3.0;
    static final double CLOSE_SWING = 38.0;
+   static final double CLINT_SWING = 50.0;
    /** Lens height over the feet once down, and how far under the face it rides the fall. */
    static final double CLOSE_FACE = 1.15;
    static final double CLOSE_BELOW = 1.4;
@@ -50,14 +51,15 @@ public final class CaptainSceneShots {
 
    /**
     * Close-up on a dropping Avenger: a short lens in front of the subject ({@code facing}, locked when the shot starts),
-    * swung 38 degrees to one side (Natasha to her right, Clint to his left), riding the fall a little below the face
+    * swung to one side (Natasha 38 degrees to her left, Clint 50 degrees to his right, away from the bow arm he
+    * extends along his gaze, so it never covers his face), riding the fall a little below the face
     * so the drop fills the frame, and stopping at face height over the ground ({@code ground}) so the landing reads
     * as an impact. {@code u} 0..1 through the shot adds a slow push-in.
     */
    public static Vec3[] closeShot(Vec3 subject, Vec3 facing, double ground, int who, double u) {
       Vec3 front = new Vec3(facing.x, 0.0, facing.z);
       front = front.lengthSqr() > 1.0E-4 ? front.normalize() : new Vec3(0.0, 0.0, 1.0);
-      Vec3 side = around(front, who == 1 ? -CLOSE_SWING : CLOSE_SWING);
+      Vec3 side = around(front, who == 1 ? -CLOSE_SWING : CLINT_SWING);
       double dist = CLOSE_DIST - 0.5 * Math.min(1.0, Math.max(0.0, u));
       double y = Math.max(ground + CLOSE_FACE, subject.y + CLOSE_FACE - CLOSE_BELOW);
       Vec3 lens = new Vec3(subject.x, y, subject.z).add(side.scale(dist));

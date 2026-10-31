@@ -407,9 +407,9 @@ public abstract class AvengerBrain {
       }
    }
 
-   /** Fight-follow place around Steve: the circle slot, 4 blocks out, rotated with Steve's facing. */
+   /** Fight-follow place around Steve: 4 blocks out on the fan beside / behind him, rotated with his facing. */
    protected Vec3 followPoint(ServerPlayer owner) {
-      double ang = Math.toRadians(owner.getYRot() + 180.0 + CaptainRules.slotAngle(this.self.kind().ordinal()));
+      double ang = Math.toRadians(owner.getYRot() + CaptainRules.followBearing(this.self.kind().ordinal()));
       return owner.position().add(-Math.sin(ang) * 4.0, 0, Math.cos(ang) * 4.0);
    }
 
