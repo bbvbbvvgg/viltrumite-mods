@@ -175,6 +175,22 @@ def iron_man():
                                  (10, P(hover, head=(-24, 0, 0), right_arm=(16, 0, 10), left_arm=(16, 0, -10), right_hand=(70, 0, 0), left_hand=(70, 0, 0),
                                         back_flaps=(-40, 0, 0))), (40, hover)]))
     out.append(clip('shoot', 10, [(0, hover), (2, rp), (7, rp), (10, hover)]))
+    # joint move (rework §15), Thor's lightning into the arc reactor: arms flung wide and back, chest out to the
+    # arc, the suit shuddering under the charge (36 t) ...
+    take = P(hover, waist=(-12, 0, 0), torso=(-22, 0, 0), head=(14, 0, 0), right_arm=(30, 0, 70), right_forearm=(-10, 0, 0), right_hand=(40, 0, 0),
+             left_arm=(30, 0, -70), left_forearm=(-10, 0, 0), left_hand=(40, 0, 0), back_flaps=(-40, 0, 0),
+             right_leg=(10, 0, 6), right_shin=(20, 0, 0), left_leg=(-4, 0, -6), left_shin=(14, 0, 0), **OPEN)
+    jolt = P(take, torso=(-26, 0, 3), head=(18, 0, -4), right_arm=(34, 0, 76), left_arm=(34, 0, -64))
+    keys = [(0, hover), (6, take)]
+    for i, tt in enumerate(range(10, 34, 3)):
+        keys.append((tt, jolt if i % 2 == 0 else take))
+    keys += [(36, take), (40, take)]
+    out.append(clip('team_1', 40, keys))
+    # ... then the charged unibeam: braced in the air, fists back, everything into the chest (30 t)
+    cb = P(ub, waist=(-14, 0, 0), torso=(-26, 0, 0), head=(14, 0, 0), right_arm=(50, 0, 36), left_arm=(50, 0, -36), right_forearm=(-30, 0, 0),
+           left_forearm=(-30, 0, 0), right_leg=(-10, 0, 4), right_shin=(30, 0, 0), left_leg=(14, 0, -4), left_shin=(20, 0, 0), back_flaps=(-50, 0, 0))
+    out.append(clip('team_2', 30, [(0, take), (4, cb), (10, P(cb, torso=(-29, 0, 0))), (16, cb), (22, P(cb, torso=(-28, 0, 0))), (27, cb), (30, hover)]))
+    out.append(clip('team_3', 24, [(0, hover), (24, hover)]))  # no third joint move for Tony
     return out
 
 
@@ -197,12 +213,19 @@ def thor():
     spin_up = P(idle, right_arm=(-170, 0, 10), right_forearm=(0, 0, 0), head=(-30, 0, 0), cape=(30, 0, 0))
     dep = [(0, idle), (6, P(idle, right_arm=(-100, 0, 40), right_forearm=(0, 0, 0)))]
     dep += spin(P(idle, right_arm=(-100, 0, 40), right_forearm=(0, 0, 0)), 'hammer', 6, 30, 1, 6)
-    dep += [(34, spin_up), (90, spin_up)]
+    dep += [(34, P(spin_up, hair=(30, 0, 0))), (40, P(spin_up, hair=(44, 0, 4))), (46, P(spin_up, hair=(32, 0, -4))),
+            (52, P(spin_up, hair=(46, 0, 4))), (58, P(spin_up, hair=(34, 0, 0))), (90, P(spin_up, hair=(40, 0, 0)))]
     common(out, combat, wa, wb, ra, rb, hurt, dep)
-    out.append(clip('fly', 20, [(0, spin_up), (20, spin_up)], loop=True))
+    # flight: hair and cape stream behind him and flutter in the wind (rework §7, hair animated in flight)
+    fly_a = P(spin_up, hair=(34, 0, 4), cape=(42, 0, 0), cape_lower=(22, 0, 0))
+    fly_b = P(spin_up, hair=(48, 0, -4), cape=(56, 0, 0), cape_lower=(34, 0, 0))
+    out.append(clip('fly', 20, [(0, fly_a), (5, fly_b), (10, fly_a), (15, fly_b), (20, fly_a)], loop=True))
     # inside the bolt: Mjolnir up, cape whipping, lands hard at the end of the scene's bolt window
     bolt = P(spin_up, cape=(50, 0, 0), cape_lower=(30, 0, 0), right_leg=(-30, 0, 0), right_shin=(50, 0, 0), left_leg=(6, 0, 0), left_shin=(30, 0, 0))
-    out.append(clip('arrive', 200, [(0, P(spin_up, root=low(0))), (6, bolt), (12, P(bolt, cape=(60, 0, 0))), (18, bolt), (200, bolt)]))
+    bolt = P(bolt, hair=(46, 0, 0))
+    gust = P(bolt, cape=(60, 0, 0), cape_lower=(40, 0, 0), hair=(58, 0, 5))
+    out.append(clip('arrive', 200, [(0, P(spin_up, root=low(0), hair=(20, 0, 0)))] + [(t, gust if (t // 6) % 2 else bolt) for t in range(6, 200, 6)]
+                    + [(200, bolt)]))
     # landing from the bolt: kneel, Mjolnir to the ground, rise slowly
     land = P(idle, **LAND3, right_arm=(-40, 0, 10), right_forearm=(-10, 0, 0), hammer=(70, 0, 0), left_arm=(10, 0, -30),
              cape=(-20, 0, 0), cape_lower=(-10, 0, 0))
@@ -239,15 +262,45 @@ def thor():
     out.append(clip('special_3', 40, [(0, combat), (8, clap_up), (12, clap_dn), (26, clap_dn), (40, combat)]))
     # hammer flight onto a far target (60 t): spin, then pulled forward by the arm
     pull = P(idle, root={'rot': (60, 0, 0), 'pos': (0, 0, 0)}, head=(-50, 0, 0), right_arm=(-170, 0, 0), right_forearm=(0, 0, 0),
-             hammer=(180, 0, 0), cape=(60, 0, 0), cape_lower=(30, 0, 0), right_leg=(10, 0, 0), left_leg=(-10, 0, 0))
+             hammer=(180, 0, 0), cape=(60, 0, 0), cape_lower=(30, 0, 0), right_leg=(10, 0, 0), left_leg=(-10, 0, 0), hair=(62, 0, 0))
+    pull2 = P(pull, hair=(74, 0, 6), cape=(70, 0, 0), cape_lower=(42, 0, 0))
     out.append(clip('leap', 60, spin(P(combat, right_arm=(-100, 0, 40), right_forearm=(0, 0, 0)), 'hammer', 0, 10, 1, 3) +
-                    [(14, pull), (50, pull), (56, P(land, hammer=(90, 0, 0))), (60, P(land, hammer=(90, 0, 0)))]))
+                    [(14, pull), (20, pull2), (26, pull), (32, pull2), (38, pull), (44, pull2), (50, pull), (56, P(land, hammer=(90, 0, 0))), (60, P(land, hammer=(90, 0, 0)))]))
     # side-step with a cape swirl (12 t)
     out.append(clip('dodge', 12, [(0, combat), (3, P(combat, root=low(-2), waist=(6, -40, 0), cape=(50, 0, 0), right_leg=(-30, 0, 20), left_leg=(10, 0, -10))),
                                   (8, P(combat, waist=(6, -10, 0), cape=(20, 0, 0))), (12, combat)]))
     # lightning from the raised hammer at range (10 t)
     out.append(clip('shoot', 10, [(0, combat), (3, P(combat, right_arm=(-150, 0, 20), right_forearm=(0, 0, 0), hammer=(160, 0, 0), head=(-20, 0, 0))),
                                   (7, P(combat, right_arm=(-100, -10, 10), right_forearm=(0, 0, 0), hammer=(100, 0, 0))), (10, combat)]))
+    # joint move (rework §15), the charge: Mjolnir to the sky for the bolt (10), then levelled at Tony overhead,
+    # the arc streaming into his chest (14-36), the arm shaking with it
+    point = P(sky, torso=(-14, 0, 0), head=(-28, 0, 0), right_arm=(-132, 0, 26), right_forearm=(-6, 0, 0), hammer=(140, 0, 0),
+              left_arm=(-30, 10, -30), cape=(24, 0, 0), hair=(10, 0, 0),
+              right_leg=(-10, 0, 8), right_shin=(12, 0, 0), left_leg=(14, 0, -8), left_shin=(10, 0, 0))
+    shake = P(point, torso=(-16, 0, 2), right_arm=(-136, 0, 29), hair=(14, 0, 0))
+    keys = [(0, combat), (6, P(sky, hair=(10, 0, 0))), (10, P(sky, torso=(-12, 0, 0), hair=(20, 0, 0))), (12, P(sky, hair=(10, 0, 0))), (15, point)]
+    for i, tt in enumerate(range(18, 36, 3)):
+        keys.append((tt, shake if i % 2 == 0 else point))
+    keys += [(36, point), (40, combat)]
+    out.append(clip('team_1', 40, keys))
+    # the shield strike, call: Mjolnir raised and held, feet planted, lightning gathering until Steve raises the
+    # shield (held up to SHIELD_WINDOW 80 t, so the clip is long)
+    hold = P(sky, root=low(-1), torso=(-8, 0, 0), head=(-14, 0, 0), right_leg=(16, 0, 10), right_shin=(14, 0, 0), left_leg=(-16, 0, -10),
+             left_shin=(14, 0, 0), left_arm=(-20, 0, -40), left_forearm=(-20, 0, 0), cape=(26, 0, 0), hair=(6, 0, 0))
+    keys = [(0, combat), (8, hold)]
+    for i in range(1, 8):
+        keys.append((8 + i * 12, P(hold, right_arm=(-178, 0, 2), torso=(-9, 0, 0)) if i % 2 else hold))
+    keys += [(100, hold)]
+    out.append(clip('team_2', 100, keys))
+    # the blow: from the raised hammer down onto the shield in front of him (impact at SHIELD_IMPACT 7), the hop
+    # into it, the recoil and back to the stance (24 t)
+    up = P(hold, waist=(-10, 0, 0), torso=(-18, 0, 0), right_arm=(-176, 0, 6), right_forearm=(-30, 0, 0), left_arm=(-150, 0, -6),
+           left_forearm=(-40, 0, 0), hammer=(150, 0, 0), cape=(30, 0, 0))
+    blow = P(combat, root=low(-2.4), waist=(22, 0, 0), torso=(22, 0, 0), head=(-28, 0, 0), right_arm=(-86, 0, 4), right_forearm=(0, 0, 0),
+             left_arm=(-70, 0, -6), left_forearm=(-20, 0, 0), hammer=(90, 0, 0), cape=(-24, 0, 0), cape_lower=(-14, 0, 0), hair=(-16, 0, 0),
+             right_leg=(-44, 0, 4), right_shin=(44, 0, 0), left_leg=(22, 0, -4), left_shin=(24, 0, 0))
+    recoil = P(blow, root=low(-2.0), torso=(16, 0, 0), right_arm=(-100, 0, 6), hammer=(100, 0, 0), hair=(6, 0, 0))
+    out.append(clip('team_3', 24, [(0, hold), (4, up), (7, blow), (10, recoil), (15, blow), (24, combat)]))
     return out
 
 
@@ -314,7 +367,62 @@ def hulk():
     throw = P(idle, waist=(30, 0, 0), torso=(26, 0, 0), head=(-30, 0, 0), right_arm=(-70, 0, 10), left_arm=(-70, 0, -10),
               right_forearm=(0, 0, 0), left_forearm=(0, 0, 0), **OPEN)
     out.append(clip('shoot', 20, [(0, idle), (4, P(crouch, right_arm=(-40, 0, 0), left_arm=(-40, 0, 0))), (8, heave), (11, throw), (14, throw), (20, idle)]))
-    return out
+    for name, ticks in (('team_1', 40), ('team_2', 30), ('team_3', 24)):  # Hulk has no joint move (yet)
+        out.append(clip(name, ticks, [(0, idle), (ticks, idle)]))
+    return [hulk_face_feet(c) for c in out]
+
+
+def hulk_foot(pose, side, extra=0.0):
+    """Foot pitch that keeps the sole flat under the leg chain (+ toes down)."""
+    leg = pose.get(f'{side}_leg', (0, 0, 0))
+    shin = pose.get(f'{side}_shin', (0, 0, 0))
+    leg = leg['rot'] if isinstance(leg, dict) else leg
+    shin = shin['rot'] if isinstance(shin, dict) else shin
+    return (round(-(leg[0] + shin[0]) + extra, 1), 0, 0)
+
+
+def foot_roll(name, pose, side):
+    """Walk / run foot roll on top of the flat sole: the trailing foot pushes off on its toes (up to +25), the
+    leading foot strikes with the heel, toes up (down to -8). Leg +X = swung back, -X = forward."""
+    if name not in ('walk', 'run'):
+        return 0.0
+    leg = pose.get(f'{side}_leg', (0, 0, 0))
+    leg = (leg['rot'] if isinstance(leg, dict) else leg)[0]
+    if leg > 0:
+        return min(1.0, leg / 20.0) * 25.0
+    return max(-1.0, leg / 20.0) * 8.0
+
+
+def hulk_face_feet(c):
+    """Hulk's jaw, chest and feet (spec §8): the jaw opens in the roars, the chest heaves on the beats and the
+    roars, the feet stay flat on the ground (toes down when airborne). Added to every key of every clip from the
+    pose it already has, so the clips above stay readable."""
+    roar = c.name in ('special_2',) or c.name == 'circle'
+    for i, (t, pose) in enumerate(c.frames):
+        torso = pose.get('torso', (0, 0, 0))
+        torso = torso['rot'] if isinstance(torso, dict) else torso
+        head = pose.get('head', (0, 0, 0))
+        head = head['rot'] if isinstance(head, dict) else head
+        # a roar throws the head back: the jaw drops with it, a growl otherwise
+        jaw = 4.0
+        if head[0] <= -29 and (roar or c.name in ('special_3', 'depart', 'arrive')):
+            jaw = 30.0
+        elif c.name == 'hurt' and 0 < t < 0.4:
+            jaw = 16.0
+        elif c.name in ('attack_3', 'special_1', 'shoot') and torso[0] >= 25:
+            jaw = 20.0
+        pose.setdefault('jaw', (jaw, 0, 0))
+        # beats / roars: the chest swells
+        swell = torso[0] <= 0 and c.name in ('circle', 'special_3', 'special_2')
+        # (the clip writer keeps one decimal: the chest pushes 10 % forward, width and height stay)
+        pose.setdefault('chest', {'rot': (-4 if swell else 0, 0, 0), 'scale': (1, 1, 1.1) if swell else (1, 1, 1)})
+        root = pose.get('root', {})
+        rleg = pose.get('right_leg', (0, 0, 0))
+        rleg = rleg['rot'] if isinstance(rleg, dict) else rleg
+        air = c.name in ('arrive', 'leap', 'depart') and isinstance(root, dict) and root.get('pos', (0, 0, 0))[1] >= 0 and rleg[0] <= -20
+        for side in ('right', 'left'):
+            pose.setdefault(f'{side}_foot', (30, 0, 0) if air else hulk_foot(pose, side, foot_roll(c.name, pose, side)))
+    return c
 
 
 # =================================================================================== BLACK WIDOW
@@ -380,6 +488,19 @@ def widow():
     bf = [(0, idle), (2, P(idle, root=low(-3)))] + wheel(P(tuck, hair=(30, 0, 0)), 3, 12, -360, 15.3, cz=-10.7, drop=-5, step=1.5, lift=6)
     bf += [(14, P(idle, root={'rot': (-360, 0, 0), 'pos': (0, -1, 0)}))]
     out.append(clip('dodge', 14, bf))
+    # joint move (rework §15), the vault: squared up to Clint, deep crouch, hands cupped low in front for his foot
+    # (held while he runs in, up to VAULT_RUN_TICKS) ...
+    cup = P(idle, root=low(-5), waist=(26, 0, 0), torso=(18, 0, 0), head=(-34, 0, 0), right_arm=(-44, 0, -16), right_forearm=(-36, 0, 0),
+            right_hand=(0, 0, 0), left_arm=(-44, 0, 16), left_forearm=(-36, 0, 0), left_hand=(0, 0, 0), right_fingers=(0, 0, -40),
+            left_fingers=(0, 0, 40), right_leg=(-56, 0, 8), right_shin=(80, 0, 0), left_leg=(-30, 0, -8), left_shin=(70, 0, 0), hair=(10, 0, 0))
+    out.append(clip('team_1', 40, [(0, idle), (6, cup), (22, P(cup, root=low(-5.4), head=(-36, 0, 0))), (40, cup)]))
+    # ... and the heave: the whole body uncoils, arms thrown up over the head, Clint launched (20 t)
+    heave = P(idle, root=low(1), waist=(-8, 0, 0), torso=(-14, 0, 0), head=(-40, 0, 0), right_arm=(-170, 0, -10), right_forearm=(-10, 0, 0),
+              left_arm=(-170, 0, 10), left_forearm=(-10, 0, 0), right_leg=(0, 0, 4), right_shin=(0, 0, 0), left_leg=(0, 0, -4), left_shin=(0, 0, 0),
+              hair=(-30, 0, 0), **OPEN)
+    out.append(clip('team_2', 20, [(0, cup), (3, P(cup, root=low(-3), right_arm=(-90, 0, -16), left_arm=(-90, 0, 16))), (6, heave), (11, heave),
+                                   (20, idle)]))
+    out.append(clip('team_3', 24, [(0, idle), (24, idle)]))  # no third joint move for Natasha
     return out
 
 
@@ -434,6 +555,24 @@ def hawkeye():
     hang = P(idle, right_arm=(-170, 0, 10), right_forearm=(0, 0, 0), right_fingers=(0, 0, -95), head=(-30, 0, 0),
              right_leg=(-20, 0, 0), right_shin=(40, 0, 0), left_leg=(10, 0, 0), left_shin=(20, 0, 0))
     out.append(clip('leap', 40, [(0, idle), (4, P(hang, right_fingers=(0, 0, 0))), (10, hang), (34, hang), (40, idle)]))
+    # joint move (rework §15), the vault: a step onto Natasha's hands, a tucked front flip on the way up, and the
+    # bow comes up at the top, leaning out over the enemies (18 t; the rise is ~13 t)
+    air = dict(waist=(24, -60, 0), torso=(16, -20, 0), right_leg=(-44, 0, 4), right_shin=(70, 0, 0), left_leg=(-14, 0, -4), left_shin=(44, 0, 0))
+    tuck = P(idle, waist=(40, 0, 0), torso=(30, 0, 0), head=(-20, 0, 0), right_leg=(-110, 0, 0), right_shin=(120, 0, 0), left_leg=(-110, 0, 0),
+             left_shin=(120, 0, 0), right_arm=(-60, 0, 20), left_arm=(-60, 0, -20))
+    step = P(idle, root=low(-2), waist=(14, 0, 0), right_leg=(-60, 0, 0), right_shin=(60, 0, 0), left_leg=(20, 0, 0), left_shin=(30, 0, 0))
+    a_raise, a_drawn, a_loose = P(raise_, **air), P(drawn, **air), P(loose, **air)
+    flip = [(0, step), (2, P(idle, root=low(0), right_leg=(-10, 0, 0), right_shin=(10, 0, 0), left_leg=(30, 0, 0), left_shin=(40, 0, 0)))]
+    flip += wheel(tuck, 3, 11, 360, 15.3, cz=-10.7, step=1)
+    flip += [(13, P(a_raise, root={'rot': (360, 0, 0), 'pos': (0, 0, 0)})), (16, P(a_drawn, root={'rot': (360, 0, 0), 'pos': (0, 0, 0)})),
+             (18, P(a_drawn, root={'rot': (360, 0, 0), 'pos': (0, 0, 0)}))]
+    out.append(clip('team_1', 18, flip))
+    # the shot from the air, back to back every 12 t while he hangs (draw, loose at VAULT_AIR_RELEASE 8)
+    out.append(clip('team_2', 12, [(0, a_raise), (5, a_drawn), (8, a_loose), (10, a_loose), (12, P(a_raise, arrow=(0, 0, 0)))]))
+    # the drop beside Natasha: bow arm out for balance, legs ready for the landing
+    drop = P(idle, waist=(6, 0, 0), right_arm=(-120, 0, 40), right_forearm=(-20, 0, 0), left_arm=(-60, 0, -50), left_forearm=(-10, 0, 0),
+             right_leg=(-30, 0, 4), right_shin=(50, 0, 0), left_leg=(-6, 0, -4), left_shin=(30, 0, 0), **OPEN)
+    out.append(clip('team_3', 30, [(0, a_loose), (5, drop), (18, P(drop, right_arm=(-130, 0, 46), left_arm=(-56, 0, -56))), (30, drop)]))
     return out
 
 
