@@ -7,5 +7,18 @@
   "subtitles.viltrumitecore.interaction.divine_clash": "Chocan armas divinas",
   "subtitles.viltrumitecore.interaction.titan_fling": "El titán aparta una invocación",
   "subtitle.viltrumitecore.captain.shield_shattered": "Esta espada... no es de nuestro mundo.",
-  "subtitle.viltrumitecore.captain.storm_shield": "¡Eso sí que es un golpe!"
+  "subtitle.viltrumitecore.captain.storm_shield": "¡Eso sí que es un golpe!",
+  "subtitles.viltrumitecore.interaction.storm_rebound": "Mjolnir rebota en el escudo",
+  "subtitles.viltrumitecore.interaction.vibranium_ring": "Puño viltrumita resuena en el vibranio",
+  "subtitles.viltrumitecore.interaction.repulsor_split": "El repulsor se divide en el escudo",
+  "subtitles.viltrumitecore.interaction.time_rewind": "La Gema del Tiempo rebobina el tiempo detenido",
+  "subtitles.viltrumitecore.interaction.lion_strain": "Reid fuerza el corazón detenido",
+  "subtitles.viltrumitecore.interaction.shield_crush": "El Titán aplasta la guardia",
+  "subtitles.viltrumitecore.interaction.meteor_cleave": "Reid parte un meteorito",
+  "subtitles.viltrumitecore.interaction.meteor_hurl": "Un viltrumita lanza el meteorito",
+  "subtitles.viltrumitecore.interaction.shadow_exchange": "Intercambio de sombra bajo el meteorito",
+  "subtitles.viltrumitecore.interaction.leviathan_impact": "Un meteorito golpea a un Leviatán",
+  "subtitles.viltrumitecore.interaction.legion_discharge": "Traje de la Legión descarga el rayo",
+  "subtitles.viltrumitecore.interaction.spine_lightning": "El rayo recorre el lomo del Leviatán",
+  "subtitles.viltrumitecore.interaction.leviathan_halt": "Un puño pesado detiene a un Leviatán"
 }

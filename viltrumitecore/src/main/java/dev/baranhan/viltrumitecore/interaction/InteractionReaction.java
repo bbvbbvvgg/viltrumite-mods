@@ -19,5 +19,13 @@ public enum InteractionReaction {
    /** Lightning poured into powered armour: reactor overcharged. */
    OVERCHARGED,
    /** Two divine weapons met mid-strike: both strikers recoil. */
-   CLASH_RECOIL
+   CLASH_RECOIL,
+   /** An energy bolt split on the raised guard (the guard's own block: charge, parry window). */
+   GUARD_DEFLECTED,
+   /** A titan's blow crushed the raised guard: broken like {@link #GUARD_SHATTERED}, but the bearer stands up to it. */
+   GUARD_CRUSHED,
+   /** A blade that cuts what cannot be cut met a body whose time is stopped: the stopped heart takes the strain. */
+   LION_STRAINED,
+   /** A falling meteor was caught bare-handed: the catcher braces and throws it on. */
+   METEOR_CAUGHT
 }
