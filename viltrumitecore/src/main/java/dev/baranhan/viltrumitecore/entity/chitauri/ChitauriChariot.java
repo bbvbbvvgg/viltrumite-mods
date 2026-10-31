@@ -789,6 +789,12 @@ public class ChitauriChariot extends Mob implements ChitauriMob {
       return ChitauriSounds.CHARIOT_HIT.get();
    }
 
+   /** No generic vanilla death cry: {@link #die} plays the chariot's own explosion. */
+   @Override
+   protected net.minecraft.sounds.SoundEvent getDeathSound() {
+      return null;
+   }
+
    @Override
    protected float getSoundVolume() {
       return 0.6F;

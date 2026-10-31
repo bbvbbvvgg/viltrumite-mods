@@ -464,6 +464,17 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       return super.causeFallDamage(Math.max(0.0F, distance - 5.0F), multiplier * 0.5F, source);
    }
 
+   /** A hard landing is the armour's own clank (no vanilla hostile fall thud). */
+   @Override
+   public LivingEntity.Fallsounds getFallSounds() {
+      return new LivingEntity.Fallsounds(ChitauriSounds.SOLDIER_STEP.get(), ChitauriSounds.SOLDIER_STEP.get());
+   }
+
+   @Override
+   protected void playBlockFallSound() {
+      this.playSound(ChitauriSounds.SOLDIER_STEP.get(), 0.6F, 0.75F + this.random.nextFloat() * 0.1F);
+   }
+
    @Override
    public boolean isAlliedTo(Entity other) {
       return ChitauriMob.is(other) || super.isAlliedTo(other);
