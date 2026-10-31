@@ -78,7 +78,7 @@ public final class FinalPunchClient {
          Vec3 flat = Vec3.directionFromRotation(0, this.yaw);
          Vec3 right = new Vec3(-flat.z, 0, flat.x);
          // The caster's feet, back from the jaw point (FinalPunch.anchor / jawPoint).
-         this.feet = this.jawAt.subtract(flat.scale(0.95)).subtract(right.scale(0.13)).subtract(0, headHeight(this.kind), 0);
+         this.feet = this.jawAt.subtract(flat.scale(0.95)).subtract(right.scale(0.13)).subtract(0, headHeight(this.kind, this.jaw), 0);
          this.fistSmooth = FinalPunchFist.estimate(this, startTick);
       }
 
@@ -148,8 +148,10 @@ public final class FinalPunchClient {
    private FinalPunchClient() {
    }
 
-   static float headHeight(FinalPunchTargets.Kind kind) {
-      return kind == FinalPunchTargets.Kind.GOLEM ? 2.0625F : 1.406F;
+   /** The target's jaw height above the feet (FinalPunchTargets: golem, Avengers, people). */
+   static float headHeight(FinalPunchTargets.Kind kind, FinalPunchTargets.Jaw jaw) {
+      if (kind == FinalPunchTargets.Kind.GOLEM) return 2.0625F;
+      return jaw == FinalPunchTargets.Jaw.GENERIC ? 1.5F : 1.406F;
    }
 
    // ------------------------------------------------------------------ packets
