@@ -41,6 +41,46 @@ CUES = {
     # Thanos swats a summon away: body thud, earth, whoosh
     'titan_fling': (1.6, [('thor/hammer_body_1', 0, 0.0, 0.8, None), ('thor/hammer_earth_1', 0, -3.0, 1.0, 1.4),
                           ('thor/dash', 40, -6.0, 0.9, None)]),
+    # --- stage 2 ---
+    # thrown Mjolnir rebounds off the shield: metal ring, parry, thunder crack, the hammer's whoosh back
+    'storm_rebound': (2.6, [('thor/hammer_metal_3', 0, -1.0, 1.05, None), ('captain/parry', 0, -3.0, 1.0, None),
+                            ('thor/thunder_crack_3', 30, -6.0, 1.0, 2.0), ('thor/dash', 160, -5.0, 0.85, None)]),
+    # a Viltrumite fist on vibranium: body slam, the shield's deep clang, a sub thud
+    'vibranium_ring': (2.0, [('thor/hammer_body_2', 0, 0.0, 0.85, None), ('captain/block', 0, -1.0, 0.7, None),
+                             ('captain/slam_impact', 20, -5.0, 0.8, None), ('captain/parry', 90, -10.0, 0.6, None)]),
+    # a repulsor bolt splits on the shield: the shot, the shield's ring, a volley of shards
+    'repulsor_split': (1.8, [('ironman/repulsor_shot', 0, -1.0, 0.9, None), ('captain/parry', 0, -3.0, 1.15, None),
+                             ('ironman/repulsor_volley', 50, -4.0, 1.1, None), ('thor/electric_zap_1', 40, -10.0, 1.3, None)]),
+    # the Time Stone rewinds DIO's ledger: the ledger burst run through Thanos's rewind and the clock
+    'time_rewind': (2.6, [('thanos/time_rewind', 0, -1.0, 1.0, 2.4), ('dio/time_tick', 0, -4.0, 0.8, None),
+                          ('dio/ledger_burst', 0, -9.0, 0.7, None), ('thanos/stone_light', 120, -6.0, 1.0, None)]),
+    # Reid strains the stopped heart: the blade's hit, glass of stopped time cracking
+    'lion_strain': (2.2, [('reinhard/reid_hit_2', 0, 0.0, 1.0, None), ('reinhard/erase_shatter', 20, -4.0, 1.3, 1.6),
+                          ('regulus/impact_heavy1', 0, -6.0, 0.8, None), ('dio/time_tick', 120, -8.0, 0.6, None)]),
+    # Thanos crushes the guard: his hit and slam, the shield's broken clang
+    'shield_crush': (2.4, [('thanos/hit', 0, 0.0, 1.0, None), ('thanos/slam', 0, -4.0, 1.0, None),
+                           ('captain/block', 10, -2.0, 0.6, None), ('captain/slam_impact', 40, -7.0, 0.75, None)]),
+    # Reid cleaves a meteor: the world-cut stroke, the rock split, two earth bursts far apart
+    'meteor_cleave': (3.0, [('reinhard/reid_heavy_2', 0, 0.0, 1.0, None), ('reinhard/saw_shatter', 20, -4.0, 0.8, 1.8),
+                            ('thor/hammer_earth_2', 400, -6.0, 0.9, None), ('thor/hammer_earth_1', 650, -7.0, 0.85, None)]),
+    # a Viltrumite catches and hurls a meteor: body catch, strain, the rock whooshing away, a far rumble
+    'meteor_hurl': (2.8, [('captain/slam_impact', 0, 0.0, 0.7, None), ('thor/hammer_body_1', 0, -3.0, 0.75, None),
+                          ('thor/dash', 120, -2.0, 0.7, None), ('thor/thunder_rumble_1', 200, -9.0, 0.8, 2.4)]),
+    # shadow exchange: the swap, the shadow's dissolve under the meteor's slam
+    'shadow_exchange': (2.6, [('jinwoo/exchange', 0, 0.0, 1.0, None), ('captain/slam_impact', 60, -3.0, 0.8, None),
+                              ('jinwoo/shadow_dissolve', 120, -4.0, 1.0, None), ('chitauri/explosion', 60, -8.0, 0.9, 2.2)]),
+    # a meteor slams into a Leviathan: rock blast, the Leviathan's hit and roar
+    'leviathan_impact': (3.2, [('chitauri/explosion_2', 0, 0.0, 0.9, None), ('chitauri/leviathan_hit', 0, -2.0, 0.9, None),
+                               ('chitauri/leviathan_roar', 250, -6.0, 0.9, 2.6), ('chitauri/debris', 100, -6.0, 1.0, None)]),
+    # thunder discharged from a Legion suit: zap, the suit's repulsor riser, a crack
+    'legion_discharge': (2.0, [('thor/electric_zap_3', 0, 0.0, 1.0, None), ('ironman/repulsor_charge', 0, -5.0, 1.4, 1.2),
+                               ('thor/electric_wave', 60, -5.0, 1.1, None), ('ironman/repulsor_shot', 20, -10.0, 1.3, None)]),
+    # lightning runs a Leviathan's spine: crack, a long electric wave, the beast's hit
+    'spine_lightning': (3.2, [('thor/thunder_crack_2', 0, 0.0, 1.0, None), ('thor/electric_wave', 30, -2.0, 0.9, None),
+                              ('chitauri/leviathan_hit', 120, -4.0, 1.0, None), ('thor/electric_tail', 300, -5.0, 0.9, 2.4)]),
+    # a heavy fist halts a Leviathan: punch, the beast's smash, debris
+    'leviathan_halt': (2.8, [('ironman/hulkbuster/finish_punch', 0, 0.0, 1.0, None), ('chitauri/leviathan_smash', 20, -2.0, 1.0, None),
+                             ('chitauri/leviathan_hit', 60, -5.0, 0.85, None), ('chitauri/debris_2', 90, -7.0, 1.0, None)]),
 }
 
 

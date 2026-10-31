@@ -68,5 +68,135 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "interaction.storm_rebound": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.storm_rebound",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/storm_rebound",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "interaction.vibranium_ring": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.vibranium_ring",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/vibranium_ring",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "interaction.repulsor_split": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.repulsor_split",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/repulsor_split",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "interaction.time_rewind": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.time_rewind",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/time_rewind",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "interaction.lion_strain": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.lion_strain",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/lion_strain",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "interaction.shield_crush": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.shield_crush",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/shield_crush",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "interaction.meteor_cleave": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.meteor_cleave",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/meteor_cleave",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "interaction.meteor_hurl": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.meteor_hurl",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/meteor_hurl",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "interaction.shadow_exchange": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.shadow_exchange",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/shadow_exchange",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "interaction.leviathan_impact": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.leviathan_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/leviathan_impact",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "interaction.legion_discharge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.legion_discharge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/legion_discharge",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "interaction.spine_lightning": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.spine_lightning",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/spine_lightning",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "interaction.leviathan_halt": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.interaction.leviathan_halt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:interaction/leviathan_halt",
+        "attenuation_distance": 80
+      }
+    ]
   }
 }
