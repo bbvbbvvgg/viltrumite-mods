@@ -31,5 +31,13 @@ public final class CaptainClient {
       MinecraftForge.EVENT_BUS.addListener(CaptainVfx::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(CaptainVfx::onRenderLevel);
       MinecraftForge.EVENT_BUS.addListener(CaptainVfx::onLevelUnload);
+      MinecraftForge.EVENT_BUS.addListener(CaptainUltScene::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(CaptainUltScene::onRenderLevel);
+      MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, CaptainUltScene::onRenderHand);
+      MinecraftForge.EVENT_BUS.addListener(CaptainUltScene::onOverlay);
+      MinecraftForge.EVENT_BUS.addListener(CaptainUltScene::onRenderGui);
+      MinecraftForge.EVENT_BUS.addListener(CaptainUltScene::onFov);
+      MinecraftForge.EVENT_BUS.addListener(CaptainUltScene::onNameTag);
+      MinecraftForge.EVENT_BUS.addListener(CaptainUltScene::onLevelUnload);
    }
 }
