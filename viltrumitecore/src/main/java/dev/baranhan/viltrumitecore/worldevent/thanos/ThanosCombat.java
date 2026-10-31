@@ -14,12 +14,14 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.RegistryObject;
 
 /**
  * Thanos's fight on the server: target choice, stalking, the brain's moves (telegraph -> active
@@ -377,6 +379,11 @@ public final class ThanosCombat {
    }
 
    private void onTelegraph(ThanosMove m, int t) {
+      RegistryObject<SoundEvent> combo = ThanosSounds.combo(m);
+      if (combo != null && t == Math.max(0, this.telegraph - ThanosSounds.comboLead(m))) {
+         ThanosSounds.play(this.level, this.thanos.position(), combo, 2.4F, 1.0F, 96.0);
+      }
+
       if (this.target != null && m != ThanosMove.TIME_REWIND && m != ThanosMove.SPACE_WARD) {
          this.thanos.faceTowards(this.target.position(), 6.0F);
       }

@@ -386,6 +386,8 @@ public final class ThanosEvent {
 
       if (next == ThanosPhase.FINAL) {
          ThanosSounds.play(this.level, this.thanos.position(), ThanosSounds.STONES_FLARE, 3.0F, 0.8F, 160.0);
+      } else if (key != null) {
+         ThanosSounds.play(this.level, this.thanos.position(), ThanosSounds.PHASE, 3.0F, 1.0F, 160.0);
       }
    }
 
