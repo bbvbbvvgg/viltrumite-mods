@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.worldevent.chitauri;
 
 import dev.baranhan.viltrumitecore.city.CityManager;
+import dev.baranhan.viltrumitecore.city.danger.DangerMap;
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriMob;
 import dev.baranhan.viltrumitecore.hero.CarveJobs;
 import dev.baranhan.viltrumitecore.hero.HeroDebris;
@@ -217,6 +218,14 @@ public final class ChitauriDestruction {
       CityManager city = CityManager.of(level);
       if (city != null) {
          city.danger(at.x, at.y, at.z, radius, lifetime);
+      }
+   }
+
+   /** Something to look at, not to run from (the portal): citizens up to the max notice range stop and watch. */
+   public static void spectacle(ServerLevel level, Vec3 at, int lifetime) {
+      CityManager city = CityManager.of(level);
+      if (city != null) {
+         city.dangerMap().add(at.x, at.y, at.z, 0.0F, DangerMap.MAX_NOTICE, city.now(), lifetime);
       }
    }
 
