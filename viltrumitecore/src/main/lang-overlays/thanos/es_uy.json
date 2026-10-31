@@ -21,6 +21,7 @@
   "commands.viltrumitecore.thanos.none": "No hay ningún evento de Thanos en curso.",
   "commands.viltrumitecore.thanos.not_fighting": "Thanos no está luchando ahora.",
   "commands.viltrumitecore.thanos.skipped": "Temporizador ajustado: quedan %s para el chasquido.",
+  "commands.viltrumitecore.thanos.queued": "Lo próximo que usará Thanos es %s.",
   "commands.viltrumitecore.thanos.status": "Thanos: %1$s, %2$s para el chasquido, salud %3$s, héroes: %4$s, fase: %5$s, ataques: %6$s",
   "commands.viltrumitecore.thanos.stage.intro": "llegando",
   "commands.viltrumitecore.thanos.stage.fight": "luchando",
