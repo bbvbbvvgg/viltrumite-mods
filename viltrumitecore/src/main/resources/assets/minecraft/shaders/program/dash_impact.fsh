@@ -40,6 +40,15 @@ uniform float TimeStopGrey;
 uniform float TimeStopInvert;
 uniform float TimeStopRipple;
 
+// Thanos snap (client.thanos.ThanosSceneClient): the flash and the shock ring leave the gauntlet's
+// place on screen, the golden light of Od Lagna and the restore, the void's vignette and grain.
+uniform float SnapFlash;   // 0..1
+uniform float SnapShock;   // ring radius 0..1.5 (0 = none)
+uniform float SnapCenterX; // gauntlet on screen, texture coordinates
+uniform float SnapCenterY;
+uniform float SnapGold;    // 0..1
+uniform float SnapVoid;    // 0..1
+
 in vec2 texCoord;
 out vec4 fragColor;
 
@@ -73,9 +82,13 @@ void main() {
     float safeTsGrey = clamp(TimeStopGrey, 0.0, 1.0);
     float safeTsInvert = clamp(TimeStopInvert, 0.0, 1.0);
     float safeTsRipple = clamp(TimeStopRipple, 0.0, 1.5);
+    float safeSnapFlash = clamp(SnapFlash, 0.0, 1.0);
+    float safeSnapShock = clamp(SnapShock, 0.0, 1.5);
+    float safeSnapGold = clamp(SnapGold, 0.0, 1.0);
+    float safeSnapVoid = clamp(SnapVoid, 0.0, 1.0);
 
     // Hiçbir efekt yoksa boş döndür (Performans)
-    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0) {
+    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0) {
         vec4 defaultColor = texture(DiffuseSampler, baseUv);
         defaultColor.a = 1.0;
         fragColor = defaultColor;
@@ -348,6 +361,46 @@ void main() {
         float ring = 1.0 - smoothstep(0.0, 0.08, abs(eDist - (1.0 - safeEraseRebuild) * 0.9));
         graded += vec3(0.75, 0.85, 1.0) * ring * safeEraseRebuild * 0.35 + vec3(0.12) * safeEraseRebuild;
         finalColor.rgb = clamp(graded, 0.0, 1.0);
+    }
+
+    // Thanos snap: shock ring refraction with a chromatic split, the white-gold flash, the golden
+    // bloom of Od Lagna's light, the void's vignette and fine grain.
+    if (safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid > 0.0) {
+        vec2 size = vec2(textureSize(DiffuseSampler, 0));
+        float aspect = size.x / max(size.y, 1.0);
+        vec2 centre = vec2(clamp(SnapCenterX, -0.5, 1.5), clamp(SnapCenterY, -0.5, 1.5));
+        vec2 rel = (texCoord - centre) * vec2(aspect, 1.0);
+        float sDist = length(rel);
+        vec2 sDir = sDist > 0.0001 ? rel / sDist : vec2(0.0);
+        vec3 snapCol = finalColor.rgb;
+        if (safeSnapShock > 0.0) {
+            float band = exp(-pow((sDist - safeSnapShock) / 0.05, 2.0));
+            float fade = 1.0 - smoothstep(0.9, 1.5, safeSnapShock);
+            vec2 push = sDir / vec2(aspect, 1.0) * band * 0.035 * fade;
+            snapCol.r = texture(DiffuseSampler, clamp(texCoord - push * 1.25, 0.0, 1.0)).r;
+            snapCol.g = texture(DiffuseSampler, clamp(texCoord - push, 0.0, 1.0)).g;
+            snapCol.b = texture(DiffuseSampler, clamp(texCoord - push * 0.75, 0.0, 1.0)).b;
+            snapCol += vec3(1.0, 0.78, 0.45) * band * 0.45 * fade;
+        }
+        if (safeSnapGold > 0.0) {
+            float lumG = dot(snapCol, vec3(0.299, 0.587, 0.114));
+            vec3 warm = snapCol * vec3(1.08, 0.98, 0.82) + vec3(0.10, 0.075, 0.03) * smoothstep(0.35, 1.0, lumG);
+            snapCol = mix(snapCol, warm, safeSnapGold);
+            snapCol += vec3(1.0, 0.82, 0.45) * safeSnapGold * 0.10 * smoothstep(1.1, 0.0, sDist);
+        }
+        if (safeSnapVoid > 0.0) {
+            vec2 fromMid = (texCoord - 0.5) * vec2(aspect, 1.0);
+            float vig = smoothstep(0.45, 1.15, length(fromMid));
+            snapCol *= 1.0 - vig * 0.55 * safeSnapVoid;
+            float grain = fract(sin(dot(floor(texCoord * size / 1.5) + floor(Time * 30.0), vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+            snapCol += grain * 0.03 * safeSnapVoid;
+        }
+        if (safeSnapFlash > 0.0) {
+            float core = smoothstep(1.4, 0.0, sDist);
+            vec3 flash = mix(vec3(1.0, 0.93, 0.78), vec3(1.0), core);
+            snapCol = mix(snapCol, flash, safeSnapFlash * (0.55 + 0.45 * core));
+        }
+        finalColor.rgb = clamp(snapCol, 0.0, 1.0);
     }
 
     finalColor.a = 1.0;

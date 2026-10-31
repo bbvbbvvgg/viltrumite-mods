@@ -115,6 +115,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.dio.DioSounds.init();
       // Spec 2026-10-28-sinclair §11: Sinclair sounds, his own entity register and the action lock.
       dev.baranhan.viltrumitecore.hero.sinclair.SinclairSetup.init(modEventBus);
+      // Thanos city event (docs/design/2026-10-31-thanos-six-stones-design.md): his sound holders.
+      dev.baranhan.viltrumitecore.worldevent.thanos.ThanosSounds.init();
       // Regulus Reborn (docs/design/2026-10-30-regulus-reborn-design.md): his own sound holders.
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();

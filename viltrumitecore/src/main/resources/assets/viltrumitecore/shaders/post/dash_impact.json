@@ -1,181 +1,217 @@
 {
-  "targets": [
-    "swap",
-    "prev"
-  ],
-  "passes": [
-    {
-      "name": "dash_impact",
-      "intarget": "minecraft:main",
-      "outtarget": "swap",
-      "auxtargets": [
+    "targets": [
+        "swap",
+        "prev"
+    ],
+    "passes": [
         {
-          "name": "PrevSampler",
-          "id": "prev"
+            "name": "dash_impact",
+            "intarget": "minecraft:main",
+            "outtarget": "swap",
+            "auxtargets": [
+                {
+                    "name": "PrevSampler",
+                    "id": "prev"
+                }
+            ],
+            "uniforms": [
+                {
+                    "name": "DashIntensity",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "PunchIntensity",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "ShakeIntensity",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "GrabIntensity",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "LockIntensity",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "Time",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "ChopIntensity",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "ChopType",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "ChopIsLeft",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "BarrageIntensity",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "BarrageIsLeft",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "ScourgeIntensity",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "ScourgeTurn",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "RegulusOverheat",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "RegulusHeartFlash",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "RegulusMadness",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "RegulusPulse",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "EraseCrack",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "EraseShatter",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "EraseDark",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "EraseRebuild",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "EraseSeed",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "TimeStopGrey",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "TimeStopInvert",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "TimeStopRipple",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "SnapFlash",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "SnapShock",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "SnapCenterX",
+                    "values": [
+                        0.5
+                    ]
+                },
+                {
+                    "name": "SnapCenterY",
+                    "values": [
+                        0.5
+                    ]
+                },
+                {
+                    "name": "SnapGold",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "SnapVoid",
+                    "values": [
+                        0.0
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "blit",
+            "intarget": "swap",
+            "outtarget": "minecraft:main"
+        },
+        {
+            "name": "blit",
+            "intarget": "swap",
+            "outtarget": "prev"
         }
-      ],
-      "uniforms": [
-        {
-          "name": "DashIntensity",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "PunchIntensity",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "ShakeIntensity",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "GrabIntensity",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "LockIntensity",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "Time",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "ChopIntensity",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "ChopType",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "ChopIsLeft",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "BarrageIntensity",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "BarrageIsLeft",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "ScourgeIntensity",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "ScourgeTurn",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "RegulusOverheat",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "RegulusHeartFlash",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "RegulusMadness",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "RegulusPulse",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "EraseCrack",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "EraseShatter",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "EraseDark",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "EraseRebuild",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "EraseSeed",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "TimeStopGrey",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "TimeStopInvert",
-          "values": [
-            0.0
-          ]
-        },
-        {
-          "name": "TimeStopRipple",
-          "values": [
-            0.0
-          ]
-        }
-      ]
-    },
-    {
-      "name": "blit",
-      "intarget": "swap",
-      "outtarget": "minecraft:main"
-    },
-    {
-      "name": "blit",
-      "intarget": "swap",
-      "outtarget": "prev"
-    }
-  ]
+    ]
 }
