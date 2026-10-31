@@ -79,6 +79,10 @@ public final class CityManager {
    private long lastSave;
    private long saveRequestedAt = -1;
    private int resumeIn = -1;
+   /** Crash recovery: settling originals of the last session put back where the disk lost them. */
+   @Nullable
+   RestoreQueue recovery;
+   private int recoverIn = -1;
 
    private CityManager(MinecraftServer server, ServerLevel level, Path folder, CityProfile profile, ChangeJournal journal) {
       this.server = server;
@@ -223,6 +227,14 @@ public final class CityManager {
       if (journal.restoring && !journal.isEmpty()) {
          m.resumeIn = 100;
       }
+
+      ChangeJournal lost = journal.recovery();
+      if (!lost.isEmpty()) {
+         // restored chunks of the last session that the world may not have saved (a crash)
+         LOG.info("City reset recovery: checking {} restored blocks in {} chunks", lost.size(), lost.chunkCount());
+         m.recovery = new RestoreQueue(lost, journal, msg -> LOG.info("City reset recovery {}", msg));
+         m.recoverIn = 100;
+      }
    }
 
    static void onLevelUnload(ServerLevel level) {
@@ -243,6 +255,11 @@ public final class CityManager {
       if (this.restore.running()) {
          this.restore.abort();
          this.journal.restoring = true; // resume after the next start
+      }
+
+      if (this.recovery != null) {
+         this.recovery.abort(); // its originals stay in the settling set: the next start checks again
+         this.recovery = null;
       }
 
       this.saveJournal(true);
@@ -290,7 +307,8 @@ public final class CityManager {
          b[3]++;
       }
 
-      if (m.journal.contains(pos)) {
+      if (m.journal.contains(pos) || m.restore.pending(pos) || m.recovery != null && m.recovery.pending(pos)) {
+         // already journaled, or its original is being written back right now
          return;
       }
 
@@ -353,6 +371,16 @@ public final class CityManager {
       }
 
       this.restore.tick(this.level, now);
+      if (this.recovery != null) {
+         if (this.recoverIn > 0 && --this.recoverIn == 0) {
+            this.recovery.start(now);
+         }
+
+         this.recovery.tick(this.level, now);
+         if (this.recoverIn <= 0 && !this.recovery.running()) {
+            this.recovery = null;
+         }
+      }
       if (!this.citizens.isEmpty()) {
          this.threats.tick(now);
          if (now % dev.baranhan.viltrumitecore.city.citizen.CrowdIndex.PERIOD == 0) {
@@ -369,6 +397,17 @@ public final class CityManager {
       this.population.tick(now);
       long interval = this.journal.size() > 500_000 ? 6000 : 1200;
       if (this.journal.dirty() && (now - this.lastSave > interval || this.saveRequestedAt >= 0 && now - this.saveRequestedAt > 20)) {
+         this.saveJournal(false);
+      }
+   }
+
+   /** The world wrote its chunks (Forge posts the save event after the chunk save). */
+   void onWorldSaved() {
+      if (this.recovery == null) {
+         this.journal.worldSaved();
+      }
+
+      if (this.journal.dirty()) {
          this.saveJournal(false);
       }
    }

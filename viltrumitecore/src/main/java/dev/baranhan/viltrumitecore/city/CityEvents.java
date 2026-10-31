@@ -57,8 +57,8 @@ public final class CityEvents {
    @SubscribeEvent
    public static void onLevelSave(LevelEvent.Save event) {
       CityManager m = CityManager.active();
-      if (m != null && event.getLevel() == m.level() && m.journal().dirty()) {
-         m.saveJournal(false);
+      if (m != null && event.getLevel() == m.level()) {
+         m.onWorldSaved();
       }
    }
 

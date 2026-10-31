@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.city.restore;
 
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -26,6 +27,11 @@ import net.minecraft.world.level.block.state.BlockState;
  * entity data); later writes to the same position are ignored. /city reset puts the
  * originals back and empties the journal. Persisted (gzip NBT, atomic replace) next to
  * the profile so a restart, or a reset interrupted by a restart, loses nothing.
+ *
+ * <p>Restored chunks stay in a separate <i>settling</i> set until the world has written
+ * them to disk ({@link #worldSaved()} twice): a crash right after a reset can leave the
+ * damaged chunk on disk, and the settling originals let the next start put it back
+ * ({@link #recovery()}) instead of losing them with the emptied journal.
  */
 public final class ChangeJournal {
    public static final String FILE = "journal.dat";
@@ -40,6 +46,11 @@ public final class ChangeJournal {
    private final Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<Entry>> chunks = new Long2ObjectOpenHashMap<>();
    private long size;
    private boolean dirty;
+   /** Originals of restored chunks whose restored blocks may not be on disk yet. */
+   private final Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<Entry>> settling = new Long2ObjectOpenHashMap<>();
+   /** World save count at the last restore of each settling chunk. */
+   private final Long2IntOpenHashMap settledAt = new Long2IntOpenHashMap();
+   private int worldSaves;
    /** A /city reset was running when the journal was last saved: resume it on load. */
    public boolean restoring;
 
@@ -110,6 +121,82 @@ public final class ChangeJournal {
       this.dirty = true;
    }
 
+   /**
+    * The restore queue wrote these originals back into one chunk: keep them until the
+    * world has saved that chunk (a crash before that leaves the damaged chunk on disk).
+    */
+   public void settle(long chunkKey, Long2ObjectOpenHashMap<Entry> originals) {
+      Long2ObjectOpenHashMap<Entry> m = this.settling.get(chunkKey);
+      if (m == null) {
+         this.settling.put(chunkKey, new Long2ObjectOpenHashMap<>(originals));
+      } else {
+         for (Long2ObjectMap.Entry<Entry> e : originals.long2ObjectEntrySet()) {
+            m.putIfAbsent(e.getLongKey(), e.getValue()); // the first original wins, as in the journal
+         }
+      }
+
+      this.settledAt.put(chunkKey, this.worldSaves);
+      this.dirty = true;
+   }
+
+   /**
+    * The world saved its chunks (Forge posts the save event after the chunk save). A settling
+    * chunk is dropped at the second save after its restore: the first one wrote it, the
+    * second one is late enough that the chunk IO of the first has finished.
+    */
+   public void worldSaved() {
+      if (!this.settling.isEmpty()) {
+         var it = this.settling.long2ObjectEntrySet().iterator();
+         while (it.hasNext()) {
+            long key = it.next().getLongKey();
+            if (this.settledAt.get(key) < this.worldSaves) {
+               it.remove();
+               this.settledAt.remove(key);
+               this.dirty = true;
+            }
+         }
+      }
+
+      this.worldSaves++;
+   }
+
+   public long settlingSize() {
+      long n = 0;
+      for (Long2ObjectOpenHashMap<Entry> m : this.settling.values()) {
+         n += m.size();
+      }
+
+      return n;
+   }
+
+   /**
+    * The settling originals of positions the journal has no newer record for, as a journal
+    * of their own (after a load: a crash may have kept the damaged chunks on disk). Putting
+    * them back is a no-op where the restored blocks did reach the disk. The settling set
+    * itself is kept until the world saves again.
+    */
+   public ChangeJournal recovery() {
+      ChangeJournal r = new ChangeJournal();
+      for (Long2ObjectMap.Entry<Long2ObjectOpenHashMap<Entry>> ce : this.settling.long2ObjectEntrySet()) {
+         Long2ObjectOpenHashMap<Entry> own = this.chunks.get(ce.getLongKey());
+         for (Long2ObjectMap.Entry<Entry> e : ce.getValue().long2ObjectEntrySet()) {
+            if (own == null || !own.containsKey(e.getLongKey())) {
+               r.recordRaw(ce.getLongKey(), e.getLongKey(), e.getValue());
+            }
+         }
+      }
+
+      r.dirty = false;
+      return r;
+   }
+
+   private void recordRaw(long chunkKey, long pos, Entry e) {
+      Long2ObjectOpenHashMap<Entry> m = this.chunks.computeIfAbsent(chunkKey, k -> new Long2ObjectOpenHashMap<>());
+      if (m.putIfAbsent(pos, e) == null) {
+         this.size++;
+      }
+   }
+
    public boolean hasChunk(long chunkKey) {
       return this.chunks.containsKey(chunkKey);
    }
@@ -149,8 +236,19 @@ public final class ChangeJournal {
       CompoundTag root = new CompoundTag();
       root.putInt("format", FORMAT);
       root.putBoolean("restoring", this.restoring);
+      root.put("chunks", writeChunks(this.chunks));
+      if (!this.settling.isEmpty()) {
+         root.put("settling", writeChunks(this.settling));
+      }
+
+      root.putLong("size", this.size);
+      this.dirty = false;
+      return root;
+   }
+
+   private static ListTag writeChunks(Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<Entry>> chunks) {
       ListTag list = new ListTag();
-      for (Long2ObjectMap.Entry<Long2ObjectOpenHashMap<Entry>> ce : this.chunks.long2ObjectEntrySet()) {
+      for (Long2ObjectMap.Entry<Long2ObjectOpenHashMap<Entry>> ce : chunks.long2ObjectEntrySet()) {
          Long2ObjectOpenHashMap<Entry> m = ce.getValue();
          if (m.isEmpty()) {
             continue;
@@ -196,10 +294,7 @@ public final class ChangeJournal {
          list.add(c);
       }
 
-      root.put("chunks", list);
-      root.putLong("size", this.size);
-      this.dirty = false;
-      return root;
+      return list;
    }
 
    public static void write(CompoundTag snapshot, Path file) throws IOException {
@@ -221,7 +316,18 @@ public final class ChangeJournal {
 
       CompoundTag root = NbtIo.readCompressed(file.toFile());
       j.restoring = root.getBoolean("restoring");
-      ListTag list = root.getList("chunks", Tag.TAG_COMPOUND);
+      j.size = readChunks(root.getList("chunks", Tag.TAG_COMPOUND), blocks, j.chunks);
+      readChunks(root.getList("settling", Tag.TAG_COMPOUND), blocks, j.settling);
+      for (long key : j.settling.keySet()) {
+         j.settledAt.put(key, 0);
+      }
+
+      j.dirty = false;
+      return j;
+   }
+
+   private static long readChunks(ListTag list, HolderGetter<Block> blocks, Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<Entry>> into) {
+      long size = 0;
       for (int k = 0; k < list.size(); k++) {
          CompoundTag c = list.getCompound(k);
          long ck = chunkKey(c.getInt("x"), c.getInt("z"));
@@ -251,12 +357,11 @@ public final class ChangeJournal {
          }
 
          if (!m.isEmpty()) {
-            j.chunks.put(ck, m);
-            j.size += m.size();
+            into.put(ck, m);
+            size += m.size();
          }
       }
 
-      j.dirty = false;
-      return j;
+      return size;
    }
 }
