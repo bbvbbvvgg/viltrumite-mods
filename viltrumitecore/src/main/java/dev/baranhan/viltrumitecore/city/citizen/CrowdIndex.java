@@ -92,6 +92,7 @@ public final class CrowdIndex {
       int bz1 = (int)Math.floor(self.getZ() + r) >> SHIFT;
       CitizenEntity best = null;
       double bestD = r * r;
+      long now = self.level().getGameTime();
       for (int bx = bx0; bx <= bx1; bx++) {
          for (int bz = bz0; bz <= bz1; bz++) {
             List<CitizenEntity> l = this.buckets.get(key(bx, bz));
@@ -105,7 +106,7 @@ public final class CrowdIndex {
                }
 
                CitizenState s = o.citizenState();
-               boolean match = panic ? s.contagious() && o.hasThreat() : s == CitizenState.IDLE && o.talkPartner == null;
+               boolean match = panic ? s.contagious() && o.hasThreat() && PanicRules.spreads(o.hops, o.sightedAt, now) : s == CitizenState.IDLE && o.talkPartner == null;
                if (match) {
                   double d = o.distanceToSqr(self);
                   if (d < bestD) {

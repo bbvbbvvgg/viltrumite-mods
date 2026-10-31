@@ -100,6 +100,11 @@ final class CitizenBrain {
          runner = city.crowd().panickingNear(c, CONTAGION_RANGE);
       }
 
+      if (danger || c.hurtTicks > 0) {
+         c.hops = 0;
+         c.sightedAt = now;
+      }
+
       if (danger) {
          c.setThreat(z.x, z.y, z.z, z.radius);
          c.calmTicks = 0;
@@ -173,6 +178,8 @@ final class CitizenBrain {
 
    /** Take over the danger a running neighbour is running from (or the runner itself, seen from here). */
    private static void adopt(CitizenEntity c, CitizenEntity runner, long now) {
+      c.hops = runner.hops + 1;
+      c.sightedAt = runner.sightedAt;
       if (runner.hasThreat()) {
          c.setThreat(runner.threatX, runner.threatY, runner.threatZ, Math.max(runner.threatRadius, 8.0F));
       } else {

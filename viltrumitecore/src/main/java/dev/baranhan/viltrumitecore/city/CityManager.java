@@ -74,6 +74,7 @@ public final class CityManager {
    final Set<CitizenEntity> citizens = new LinkedHashSet<>();
    boolean enabled;
    double density;
+   private boolean crowdWasFull;
    private final Long2ObjectOpenHashMap<double[]> bursts = new Long2ObjectOpenHashMap<>();
    private long lastSave;
    private long saveRequestedAt = -1;
@@ -357,7 +358,13 @@ public final class CityManager {
          if (now % dev.baranhan.viltrumitecore.city.citizen.CrowdIndex.PERIOD == 0) {
             this.crowd.rebuild(this.citizens, now);
          }
+      } else if (this.crowdWasFull) {
+         // the last citizen left (clear, reset, despawn): empty the index once so /city status is not stale
+         this.crowd.rebuild(this.citizens, now);
+         this.threats.lastFound = 0;
       }
+
+      this.crowdWasFull = !this.citizens.isEmpty();
 
       this.population.tick(now);
       long interval = this.journal.size() > 500_000 ? 6000 : 1200;

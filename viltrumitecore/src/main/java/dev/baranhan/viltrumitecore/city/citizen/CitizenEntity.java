@@ -62,6 +62,13 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    double memX;
    double memZ;
    long memUntil = Long.MIN_VALUE;
+   /**
+    * Hearsay depth of the current panic: 0 = saw (or felt) the danger, n = caught it from someone
+    * at depth n-1. Only shallow, fresh panics spread ({@link PanicRules#MAX_HOPS},
+    * {@link PanicRules#RUMOR_TICKS}), so a dense crowd cannot keep itself running forever.
+    */
+   int hops;
+   long sightedAt = Long.MIN_VALUE;
    /** Destination of the current flight (crowd spreading counts these). */
    @Nullable
    BlockPos fleeTarget;
