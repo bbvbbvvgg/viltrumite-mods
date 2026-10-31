@@ -41,7 +41,8 @@ is invulnerable and the other branch can never start (no snap after a victory, o
 
 `maxHealth = 3000 * (1 + 0.6 * (heroes - 1))`, heroes = participants at the start (1..8 counted),
 re-scaled upward (keeping the health fraction) if more heroes join in the first 30 s.
-Per-hit cap 6 % of max health (≥ 40), per-second cap 12 % of max: one-shot abilities
+Per-hit cap 2.5 % of max health (≥ 40), per-second cap 2.5 % of max (a solo kill takes at
+least 40 s of perfect damage): one-shot abilities
 (`HeroDamage.applyCleanDamage`, Annihilation's MAX hurt, `setHealth(0)` paths) are clamped in
 `setHealth`/`die` overrides; `/kill` (`AdminKill`) still works. Thanos is `divine` (Annihilation
 and World Erasure spare him) and a `forge:bosses` member (too big to grab). Knockback resistance
