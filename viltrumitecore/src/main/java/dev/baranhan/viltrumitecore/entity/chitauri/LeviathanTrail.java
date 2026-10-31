@@ -14,10 +14,10 @@ public final class LeviathanTrail {
    public static final float[] SCALE = {1.0F, 0.98F, 0.95F, 0.9F, 0.85F, 0.79F, 0.72F, 0.65F, 0.58F, 0.51F};
    public static final float TAIL_SCALE = 0.46F;
    /** Head centre to the first segment centre (blocks). */
-   public static final double HEAD_GAP = 4.4;
+   public static final double HEAD_GAP = 3.6;
    /** Segment spacing at scale 1 (blocks). */
-   public static final double SPACING = 2.55;
-   public static final double TAIL_GAP = 2.9;
+   public static final double SPACING = 2.3;
+   public static final double TAIL_GAP = 2.4;
 
    private final int cap;
    private final double[] x;
