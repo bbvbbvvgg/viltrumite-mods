@@ -24,9 +24,18 @@ cooldown/aftermath, every bilingual field, `code_refs` = `path#method` that must
   Sounds `InteractionSounds` (`interaction.*`), overlay `sound-overlays/interactions.json`, subtitles + Captain lines in
   `lang-overlays/interactions/` (12 locales). Sound mixes `tools/sfx/interactions.py`, ledger `tools/assets/interaction_sources.md`.
 
-## Built-ins
-reid_shatters_vibranium (A), mjolnir_meets_vibranium (B), divine_weapon_clash, vibranium_stops_meteor,
+## Built-ins (21, priority order = `ContextualInteractions.builtins()`; matrix `docs/contextual-interactions-matrix.md`)
+Stage 1: reid_shatters_vibranium (A), mjolnir_meets_vibranium (B), divine_weapon_clash, vibranium_stops_meteor,
 mjolnir_shatters_meteor, thunder_overcharges_armor, legion_vs_chitauri, titan_scatters_summons.
+Stage 2: reid_strains_lions_heart (Regulus `LION_STRAINED` +420 strain), mjolnir_rebounds_off_shield (`GUARD_DEFLECTED`),
+viltrumite_fist_meets_vibranium, repulsor_splits_on_vibranium, time_stone_rewinds_ledger (`DioTimeStop.paying()`),
+reid_cleaves_meteor, viltrumite_hurls_meteor (`METEOR_CAUGHT`), shadow_exchange_meteor, titan_breaks_guard
+(`GUARD_CRUSHED`, line `CaptainLines.ALL_DAY`), meteor_downs_leviathan, thunder_charges_legion,
+lightning_runs_the_leviathan, heavy_hitter_halts_leviathan (`ChitauriLeviathan.staggerBy`). Helpers `Leviathans`,
+`MeteorBursts.burst(@Nullable stopper)`. Presence tags: `CombatTags.BODY_VILTRUMITE` (`ViltrumiteHero.VILTRUMITE_BODY`).
+FX net ids 600-621, 21 `interaction.*` sounds. Tests: `StageTwoInteractionRulesTest` (priorities, conflicts, ally guard).
+Known gaps: hurled meteor's vanilla explosion is not ally-filtered; allied lightning is filtered so
+thunder_charges_legion mostly fires in PvP; Homelander laser has no interaction yet.
 
 ## Captain side
 `CaptainState.shieldBroken` (ticks, not persisted), `CaptainFlags.SHIELD_BROKEN = 10`, move `CaptainMove.SHIELD_SHATTERED`
@@ -39,4 +48,5 @@ while broken (REFUSE sound), GUARD_UP cue when it heals. Combo B reuses `Captain
 3. Hero-specific state goes through `react`. 4. Catalog entry in `docs/contextual-interactions.json` (test fails otherwise).
 
 ## Not verified
-No in-game / multiplayer playtest was run for this branch (only unit tests + full gradle build).
+No in-game client / multiplayer playtest was run (no display in the agent sandbox): only unit tests, full gradle build
+and a dedicated-server boot smoke (`runServer`), which proves registration/loading, not gameplay.

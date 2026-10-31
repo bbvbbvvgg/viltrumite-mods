@@ -61,7 +61,7 @@ class ContextualInteractionRulesTest {
    @Test
    void builtinsAreUniqueAndRegistryOrdersByPriority() {
       List<ContextualInteraction> all = ContextualInteractions.builtins();
-      assertEquals(8, all.size());
+      assertEquals(21, all.size());
       assertEquals(all.size(), all.stream().map(i -> i.spec().id()).distinct().count());
       for (int i = 1; i < all.size(); i++) {
          assertTrue(all.get(i - 1).spec().priority() >= all.get(i).spec().priority(), "catalog order follows priority: " + all.get(i).spec().id());
