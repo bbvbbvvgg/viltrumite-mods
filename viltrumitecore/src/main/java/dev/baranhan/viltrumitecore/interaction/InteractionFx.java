@@ -8,7 +8,7 @@ import dev.baranhan.viltrumitecore.hero.fx.FxPreset;
  * {@code client.interaction.InteractionFxRecipes}.
  */
 public final class InteractionFx {
-   /** Reid cuts through a raised vibranium guard: white-gold flash, shards, ring, heavy shake. */
+   /** Reid cuts through a raised vibranium guard: hard white flash, thrown sparks, ring, heavy shake. */
    public static final FxPreset SHIELD_SHATTER = FxPreset.register("viltrumitecore:interaction_shield_shatter", 600);
    /** Mjolnir on a raised shield: blinding flash, lightning shell, double ground ring, crawlers. */
    public static final FxPreset STORM_SHIELD = FxPreset.register("viltrumitecore:interaction_storm_shield", 601);
@@ -24,6 +24,10 @@ public final class InteractionFx {
    public static final FxPreset LEGION_MARK = FxPreset.register("viltrumitecore:interaction_legion_mark", 606);
    /** Thanos swats a hero summon away: dust burst, ring, shake. */
    public static final FxPreset TITAN_FLING = FxPreset.register("viltrumitecore:interaction_titan_fling", 607);
+
+   /** Every preset of the interactions, in net id order. */
+   public static final java.util.List<FxPreset> PRESETS = java.util.List.of(SHIELD_SHATTER, STORM_SHIELD, METEOR_BURST, METEOR_SPLIT, OVERCHARGE,
+      DIVINE_CLASH, LEGION_MARK, TITAN_FLING);
 
    private InteractionFx() {
    }
