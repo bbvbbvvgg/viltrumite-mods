@@ -245,7 +245,38 @@ class ReinhardSoundsTest {
          byte[] bytes = Base64.getMimeDecoder().decode(Files.readString(BIN.resolve(f + ".ogg.b64")).trim());
          assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII));
       }
-      try (var paths = Files.list(BIN)) { assertEquals(all, paths.map(p -> p.getFileName().toString().replace(".ogg.b64", "")).collect(java.util.stream.Collectors.toSet())); }
+      // THE FINAL PUNCH keeps its 13 cues in their own folder (finalPunchCuesAssembleFromTheirChunks).
+      try (var paths = Files.list(BIN)) { assertEquals(all, paths.filter(Files::isRegularFile).map(p -> p.getFileName().toString().replace(".ogg.b64", "")).collect(java.util.stream.Collectors.toSet())); }
+   }
+   /** THE FINAL PUNCH: 13 cues, each one whole file or numbered .b64.partN chunks that join into one Ogg stream. */
+   @Test void finalPunchCuesAssembleFromTheirChunks() throws Exception {
+      Path dir = BIN.resolve("final_punch");
+      var overlay = com.google.gson.JsonParser.parseString(Files.readString(Path.of("src/main/sound-overlays/reinhard_final_punch.json"))).getAsJsonObject();
+      Set<String> names = new java.util.TreeSet<>();
+      for (String event : overlay.keySet()) {
+         String name = event.substring("reinhard.final_punch_".length());
+         names.add(name);
+         assertEquals("viltrumitecore:reinhard/final_punch/" + name,
+            overlay.getAsJsonObject(event).getAsJsonArray("sounds").get(0).getAsJsonObject().get("name").getAsString(), event);
+         assertEquals("subtitles.viltrumitecore.reinhard.final_punch_" + name, overlay.getAsJsonObject(event).get("subtitle").getAsString(), event);
+         StringBuilder b64 = new StringBuilder();
+         if (Files.exists(dir.resolve(name + ".ogg.b64"))) {
+            b64.append(Files.readString(dir.resolve(name + ".ogg.b64")));
+            assertFalse(Files.exists(dir.resolve(name + ".ogg.b64.part0")), name + ": whole file and chunks");
+         } else {
+            int part = 0;
+            while (Files.exists(dir.resolve(name + ".ogg.b64.part" + part))) b64.append(Files.readString(dir.resolve(name + ".ogg.b64.part" + part++)));
+            assertTrue(part >= 2, name + " has no audio");
+         }
+         byte[] bytes = Base64.getMimeDecoder().decode(b64.toString().trim());
+         assertEquals("OggS", new String(bytes, 0, 4, StandardCharsets.US_ASCII), name);
+         assertTrue(bytes.length > 2000, name + " is too short: " + bytes.length);
+      }
+      assertEquals(13, names.size(), names.toString());
+      try (var paths = Files.list(dir)) {
+         Set<String> files = paths.filter(Files::isRegularFile).map(p -> p.getFileName().toString().replaceAll("\\.ogg\\.b64(\\.part\\d+)?$", "")).collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+         assertEquals(names, files, "no stray audio in final_punch/");
+      }
    }
    @Test void everySoundCredited() throws Exception { validateCredits(text("tools/assets/reinhard_sources.md"), text("CREDITS.md"), text("docs/design/2026-10-11-reinhard-design.md")); }
    @Test void blockedSourcesAreNotShippedAndOriginalSynthesisReplacesPlaceholders() throws Exception {

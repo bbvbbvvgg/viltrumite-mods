@@ -106,6 +106,20 @@ public final class ReinhardSounds {
    public static final RegistryObject<SoundEvent> ERASE_SNAP = reg("reinhard.erase_snap");
    public static final RegistryObject<SoundEvent> ERASE_RESTORE = reg("reinhard.erase_restore");
    public static final RegistryObject<SoundEvent> LIMBO_HEARTBEAT = reg("reinhard.limbo_heartbeat");
+   /** Final Punch secret scene cues (original procedural CC0, tools/sfx/reinhard_final_punch.py; no voice). */
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_MUSIC = reg("reinhard.final_punch_music");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_WIND = reg("reinhard.final_punch_wind");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_HUM = reg("reinhard.final_punch_hum");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_IGNITE = reg("reinhard.final_punch_ignite");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_SPARK = reg("reinhard.final_punch_spark");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_RING = reg("reinhard.final_punch_ring");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_PRESSURE = reg("reinhard.final_punch_pressure");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_CRACKLE = reg("reinhard.final_punch_crackle");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_WHOOSH = reg("reinhard.final_punch_whoosh");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_IMPACT = reg("reinhard.final_punch_impact");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_JAW = reg("reinhard.final_punch_jaw");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_CLANG = reg("reinhard.final_punch_clang");
+   public static final RegistryObject<SoundEvent> FINAL_PUNCH_SMOKE = reg("reinhard.final_punch_smoke");
 
    private ReinhardSounds() {
    }

@@ -332,7 +332,9 @@ public final class ReinhardRules {
          case DASH_BEHIND -> BEHIND_COOLDOWN; case STOMP -> STOMP_COOLDOWN;
          case REFLECT -> REFLECT_COOLDOWN; case SHEATH_STRIKE -> SHEATH_COOLDOWN;
          case SAW_SPHERE -> SAW_COOLDOWN; case WORLD_CUT, DIAGONAL_WORLD_CUT -> WORLD_CUT_COOLDOWN;
-         case WORLD_ERASURE -> ERASE_COOLDOWN; default -> 0;
+         case WORLD_ERASURE -> ERASE_COOLDOWN;
+         case FINAL_PUNCH -> dev.baranhan.viltrumitecore.hero.reinhard.finalpunch.FinalPunchRules.cooldownTicks(dev.baranhan.viltrumitecore.hero.reinhard.finalpunch.FinalPunchRules.MAX_COOLDOWN_SECONDS);
+         default -> 0;
       };
    }
 

@@ -56,7 +56,10 @@ public class CoreMessages {
    // table is refused. v20 (final integration of #101/#99/#98): the existing table is kept as is, then
    // ChitauriPortalS2CPacket and ChitauriFxS2CPacket, then the four Iron Legion packets, are appended last.
    // The Iron Legion branch's own "17" table (Legion packets right after Regulus) is refused.
-   private static final String PROTOCOL_VERSION = "21";
+   // v21 was used twice, by two branches alone: Living City 2.0 (#110, citizen entity syncs a new STATE byte)
+   // and Reinhard's THE FINAL PUNCH (#109, C2S chord + S2C beats appended after the Legion packets).
+   // v22 (final integration of #107/#108/#110/#109): both changes together; a "21" client is refused.
+   private static final String PROTOCOL_VERSION = "22";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -450,6 +453,15 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::handle).add();
+      // Reinhard's secret THE FINAL PUNCH (docs/design/2026-10-31-reinhard-final-punch.md), v21: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

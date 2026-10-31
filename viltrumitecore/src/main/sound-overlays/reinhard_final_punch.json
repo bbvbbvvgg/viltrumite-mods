@@ -1,0 +1,106 @@
+{
+  "reinhard.final_punch_music": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_music",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/music"
+      }
+    ]
+  },
+  "reinhard.final_punch_wind": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_wind",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/wind"
+      }
+    ]
+  },
+  "reinhard.final_punch_hum": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/hum"
+      }
+    ]
+  },
+  "reinhard.final_punch_ignite": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_ignite",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/ignite"
+      }
+    ]
+  },
+  "reinhard.final_punch_spark": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_spark",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/spark"
+      }
+    ]
+  },
+  "reinhard.final_punch_ring": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_ring",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/ring"
+      }
+    ]
+  },
+  "reinhard.final_punch_pressure": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_pressure",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/pressure"
+      }
+    ]
+  },
+  "reinhard.final_punch_crackle": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_crackle",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/crackle"
+      }
+    ]
+  },
+  "reinhard.final_punch_whoosh": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_whoosh",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/whoosh"
+      }
+    ]
+  },
+  "reinhard.final_punch_impact": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/impact"
+      }
+    ]
+  },
+  "reinhard.final_punch_jaw": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_jaw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/jaw"
+      }
+    ]
+  },
+  "reinhard.final_punch_clang": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_clang",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/clang"
+      }
+    ]
+  },
+  "reinhard.final_punch_smoke": {
+    "subtitle": "subtitles.viltrumitecore.reinhard.final_punch_smoke",
+    "sounds": [
+      {
+        "name": "viltrumitecore:reinhard/final_punch/smoke"
+      }
+    ]
+  }
+}

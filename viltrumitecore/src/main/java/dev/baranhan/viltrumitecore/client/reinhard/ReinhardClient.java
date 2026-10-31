@@ -41,7 +41,21 @@ public final class ReinhardClient {
       OutlineTargets.register(WindReadingClient::colorOf);
       MinecraftForge.EVENT_BUS.addListener(StepDashClient::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(DashBehindClient::onClientTick);
-      dev.baranhan.viltrumitecore.client.hero.HeroClientInput.register(HeroId.REINHARD, DashBehindClient::intercept);
+      dev.baranhan.viltrumitecore.client.hero.HeroClientInput.register(HeroId.REINHARD, (player, action, down) ->
+         dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchInput.intercept(player, action, down) || DashBehindClient.intercept(player, action, down));
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onLogout);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onUnload);
+      MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST,
+         dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onRenderLivingPre);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::onRenderLivingPost);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchInput::onClientTick);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchInput::onMovementInput);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchVfx::onRenderLevel);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchJaw::onRenderLevel);
+      MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchCamera::onFov);
+      dev.baranhan.viltrumitecore.client.hero.CinematicHud.hideWhile(dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient::cinematic,
+         dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchScreen::bars);
       MinecraftForge.EVENT_BUS.addListener(dev.baranhan.viltrumitecore.client.reinhard.reid.ReidDrawInput::onMovementInput);
    }
 }

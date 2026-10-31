@@ -81,7 +81,9 @@ class HeroRosterIntegrationTest {
       assertEquals(HeroAction.CAPTAIN_THROW.ordinal() + 4, HeroAction.CAPTAIN_ASSEMBLE.ordinal(), "Captain block is contiguous");
       // Iron Man stage 6 appends the Iron Legion after the Captain block (released ordinals unchanged).
       assertEquals(HeroAction.CAPTAIN_ASSEMBLE.ordinal() + 1, HeroAction.LEGION.ordinal(), "Iron Legion appends after Captain America");
-      assertSame(HeroAction.LEGION, actions[actions.length - 1]);
+      // Reinhard's secret THE FINAL PUNCH appends after the Iron Legion (released ordinals unchanged).
+      assertEquals(HeroAction.LEGION.ordinal() + 1, HeroAction.FINAL_PUNCH.ordinal(), "THE FINAL PUNCH appends after the Iron Legion");
+      assertSame(HeroAction.FINAL_PUNCH, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
@@ -176,8 +178,9 @@ class HeroRosterIntegrationTest {
       // 18 was also used by feat/chitauri-invasion alone (portal + FX packets after Regulus) and is refused;
       // 17 was also used by the Iron Legion branch alone (its four packets after Regulus) and is refused;
       // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets;
-      // 21 = Living City 2.0: same packet table, but the citizen entity syncs a new STATE byte (entity data layout).
-      assertTrue(source.contains("PROTOCOL_VERSION = \"21\""), "the merged packet table needs its own protocol version");
+      // 21 = Living City 2.0 alone (citizen STATE byte) and THE FINAL PUNCH alone (its packets appended last): refused;
+      // 22 = the final integration of #107/#108/#110/#109 with both.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"22\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -190,7 +193,8 @@ class HeroRosterIntegrationTest {
       assertEquals(regulus + 5, packets.indexOf("ChitauriFxS2CPacket"), "the Chitauri FX packet follows the portal packet");
       List<String> legion = List.of("LegionMenuS2CPacket", "LegionCallC2SPacket", "LegionOrderC2SPacket", "LegionStatusS2CPacket");
       assertEquals(legion, packets.subList(regulus + 6, regulus + 6 + legion.size()), "the Iron Legion packets append after the Chitauri packets");
-      assertEquals(regulus + 6 + legion.size(), packets.size(), "the Iron Legion packets are the last ones (v20)");
+      assertEquals(List.of("ReinhardFinalPunchC2SPacket", "ReinhardFinalPunchS2CPacket"),
+         packets.subList(regulus + 6 + legion.size(), packets.size()), "THE FINAL PUNCH packets append after the Iron Legion packets (v21)");
    }
 
    @Test

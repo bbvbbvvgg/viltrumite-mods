@@ -23,7 +23,9 @@ public final class ReinhardFlags {
    // 15-27: DefenseReaction (kind, yaw, pitch, hand).
    /** The caster's Saw Sphere scene runs (overhaul item 19): slot grey, model spin, invulnerable. */
    public static final int SAW_SPHERE_ACTIVE = 28;
-   // 29-31 reserved.
+   /** The secret Final Punch holds its frozen target face to face (until the contact). */
+   public static final int FINAL_PUNCH_HOLD = 29;
+   // 30-31 reserved.
 
    /** extraCooldowns: 0-13 = ability cooldowns by ReinhardAbility ordinal, then these. */
    public static final int EXTRA_MODE_CD = 14;

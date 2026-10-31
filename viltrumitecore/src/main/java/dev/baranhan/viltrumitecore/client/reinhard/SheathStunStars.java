@@ -60,6 +60,8 @@ public final class SheathStunStars {
       try {
          for (HeroControlS2CPacket.ControlInfo control : ClientHeroData.controls()) {
             if(dev.baranhan.viltrumitecore.client.hero.WorldPauseClient.hidesAnchor(control.effectId())) continue;
+            // The Final Punch holds its target face to face with a freeze too, but that target is not stunned.
+            if (dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient.isTarget(control.entityId())) continue;
             Player caster = control.caster() == null ? null : level.getPlayerByUUID(control.caster());
             if (!SheathStrike.showsStars(control.kindOrdinal(), caster != null && ReinhardView.of(caster) != null)) {
                continue;

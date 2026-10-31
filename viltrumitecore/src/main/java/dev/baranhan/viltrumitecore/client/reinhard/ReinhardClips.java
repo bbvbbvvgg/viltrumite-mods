@@ -55,6 +55,8 @@ public final class ReinhardClips {
    public static final String WORLD_CUT = "world_cut";
    public static final String WORLD_CUT_FROM_LEFT = "world_cut_from_left";
    public static final String WORLD_ERASURE = "world_erasure";
+   /** THE FINAL PUNCH: the 24 s take lives in its own file (final_punch.animation.json, FinalPunchPose plays it on the scene clock). */
+   public static final String FINAL_PUNCH = "final_punch";
    /** Phase 1 of a window (catch / reflect) and of the grab = the snap / the throw. */
    public static final int PHASE_SNAP = dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline.PHASE_SNAP;
 
@@ -86,6 +88,7 @@ public final class ReinhardClips {
          case WORLD_CUT -> List.of(WORLD_CUT, WORLD_CUT_FROM_LEFT);
          case DIAGONAL_WORLD_CUT -> List.of("diagonal_world_cut");
          case WORLD_ERASURE -> List.of(WORLD_ERASURE);
+         case FINAL_PUNCH -> List.of(FINAL_PUNCH);
          default -> List.of();
       };
    }

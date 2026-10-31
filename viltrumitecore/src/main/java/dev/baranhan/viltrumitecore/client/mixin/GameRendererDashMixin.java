@@ -301,6 +301,19 @@ public abstract class GameRendererDashMixin {
          float[] timeStop = dev.baranhan.viltrumitecore.client.dio.TimeStopClient.screen(partialTicks);
          // Thanos snap scene: flash, shock ring, its centre on screen, golden restore, the void
          float[] snap = dev.baranhan.viltrumitecore.client.thanos.ThanosSceneClient.screen(partialTicks);
+         // Reinhard's Final Punch: grey silence, vignette and the impact shock ring share DIO's and Thanos' uniforms
+         float[] finalPunch = dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchScreen.grade(partialTicks);
+         if (finalPunch[0] > 0.0F || finalPunch[1] > 0.0F || finalPunch[4] > 0.0F) {
+            timeStop = timeStop.clone();
+            snap = snap.clone();
+            timeStop[0] = Math.max(timeStop[0], finalPunch[0]);
+            snap[5] = Math.max(snap[5], finalPunch[4]);
+            if (snap[1] <= 0.0F && finalPunch[1] > 0.0F) {
+               snap[1] = finalPunch[1];
+               snap[2] = finalPunch[2];
+               snap[3] = finalPunch[3];
+            }
+         }
          boolean anyEffect = ErasurePost.active() || dashProgress > 0.0F
             || timeStop[0] + timeStop[1] + timeStop[2] > 0.0F
             || snap[0] + snap[1] + snap[4] + snap[5] > 0.0F
