@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 public class CoreCommands {
    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+      dev.baranhan.viltrumitecore.hero.budget.multiverse.MultiverseCommands.register(dispatcher);
       dispatcher.register(
          (LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)Commands.literal(
                                  "viltrumite"

@@ -2,8 +2,8 @@ package dev.baranhan.viltrumitecore.hero.budget;
 
 import dev.baranhan.viltrumitecore.hero.HeroId;
 
-/** Everything one expansion hero is: id, look, 2-4 moves, optional ultimate scene. */
-public record BudgetHeroSpec(HeroId id, BudgetLook look, BudgetMove[] moves, BudgetScene scene) {
+/** Everything one expansion hero is: id, look, 2-4 moves, optional ultimate scene, war faction. */
+public record BudgetHeroSpec(HeroId id, BudgetLook look, BudgetMove[] moves, BudgetScene scene, BudgetFaction faction) {
    public BudgetHeroSpec {
       if (moves.length < 2 || moves.length > 4) {
          throw new IllegalArgumentException(id + " needs 2-4 moves, has " + moves.length);

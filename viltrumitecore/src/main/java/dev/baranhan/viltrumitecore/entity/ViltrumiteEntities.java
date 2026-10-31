@@ -53,6 +53,14 @@ public class ViltrumiteEntities {
          .sized(0.7F, 0.7F).clientTrackingRange(16).updateInterval(1).fireImmune().noSave().noSummon().build("mjolnir")
    );
 
+   /** Multiverse Collapse / Boss Rush NPC: never saved, the events respawn nothing on reload. */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.hero.budget.multiverse.MultiverseFighter>> MULTIVERSE_FIGHTER = ENTITIES.register(
+      "multiverse_fighter",
+      () -> EntityType.Builder.<dev.baranhan.viltrumitecore.hero.budget.multiverse.MultiverseFighter>of(
+            dev.baranhan.viltrumitecore.hero.budget.multiverse.MultiverseFighter::new, MobCategory.MISC)
+         .sized(0.6F, 1.8F).clientTrackingRange(10).updateInterval(2).noSave().build("multiverse_fighter")
+   );
+
    public static void register(IEventBus eventBus) {
       ENTITIES.register(eventBus);
    }

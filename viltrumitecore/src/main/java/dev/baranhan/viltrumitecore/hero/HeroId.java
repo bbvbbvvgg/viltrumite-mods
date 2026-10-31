@@ -75,6 +75,42 @@ public enum HeroId {
    KRATOS("kratos"),
    /** Ultimate Hero Expansion: Shrek. */
    SHREK("shrek"),
+   /** Ultimate Hero Expansion: Sosuke Aizen. */
+   AIZEN("aizen"),
+   /** Ultimate Hero Expansion: Ichigo Kurosaki. */
+   ICHIGO("ichigo"),
+   /** Ultimate Hero Expansion: Dante. */
+   DANTE("dante"),
+   /** Ultimate Hero Expansion: Vergil. */
+   VERGIL("vergil"),
+   /** Ultimate Hero Expansion: Guts. */
+   GUTS("guts"),
+   /** Ultimate Hero Expansion: Sans. */
+   SANS("sans"),
+   /** Ultimate Hero Expansion: Eren Yeager. */
+   EREN("eren"),
+   /** Ultimate Hero Expansion: Levi Ackerman. */
+   LEVI("levi"),
+   /** Ultimate Hero Expansion: Denji. */
+   DENJI("denji"),
+   /** Ultimate Hero Expansion: Makima. */
+   MAKIMA("makima"),
+   /** Ultimate Hero Expansion: Power. */
+   POWER("power"),
+   /** Ultimate Hero Expansion: Alucard. */
+   ALUCARD("alucard"),
+   /** Ultimate Hero Expansion: Rimuru Tempest. */
+   RIMURU("rimuru"),
+   /** Ultimate Hero Expansion: Ainz Ooal Gown. */
+   AINZ("ainz"),
+   /** Ultimate Hero Expansion: Cid Kagenou / Shadow. */
+   SHADOW("shadow"),
+   /** Ultimate Hero Expansion: Mob. */
+   MOB("mob"),
+   /** Ultimate Hero Expansion: Escanor. */
+   ESCANOR("escanor"),
+   /** Ultimate Hero Expansion: Meliodas. */
+   MELIODAS("meliodas"),
    // END ULTIMATE HERO EXPANSION
    ;
 
