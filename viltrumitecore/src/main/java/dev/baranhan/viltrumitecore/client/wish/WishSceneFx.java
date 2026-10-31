@@ -121,6 +121,7 @@ final class WishSceneFx {
          case CRIMSON -> crimson(b, cam, camera, level, scene, c, t, w, glow, s);
          case HOLY -> holy(b, cam, camera, scene, c, t, w, glow, s);
          case STILL -> still(b, cam, camera, scene, c, t, w, glow, s);
+         case SHIELD -> shield(b, cam, camera, c, t, w, glow, s);
          case MORTAL -> mortal(b, cam, camera, scene, c, t, w, glow, s);
       }
    }
@@ -363,6 +364,53 @@ final class WishSceneFx {
          }
          PixelVfx.crossGlow(b, cam, camera, c.add(0, 0.1, 0), 0.5F + 1.2F * k, WishStyle.r(s.secondary), WishStyle.g(s.secondary),
             WishStyle.b(s.secondary), (int)(200 * k * w));
+      }
+   }
+
+   /**
+    * Captain America: blue light and a turning star shield of pixels at chest height (red-white-red rings, blue
+    * field, white star); on the swap the star flashes and a blue ring runs over the ground like a shield's chime.
+    */
+   private static void shield(BufferBuilder b, Vec3 cam, Camera camera, Vec3 c, float t, float w, boolean glow, WishStyle s) {
+      if (!glow || w <= 0) {
+         return;
+      }
+      float settle = WishScreen.smooth((t - WishTimeline.CALL_END) / (float)(WishTimeline.SWAP - WishTimeline.CALL_END));
+      double yaw = t * (0.22 - 0.18 * settle);
+      Vec3 u = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
+      Vec3 centre = c.add(0, 1.25 + 0.08 * Math.sin(t * 0.12), 0);
+      float[] radii = {0.92F, 0.74F, 0.56F};
+      int[] colours = {0xD8283C, 0xF2F4FA, 0xD8283C};
+      for (int ring = 0; ring < radii.length; ring++) {
+         int n = 22 - ring * 4;
+         for (int i = 0; i < n; i++) {
+            double a = i * Math.PI * 2 / n;
+            Vec3 p = centre.add(u.scale(Math.cos(a) * radii[ring])).add(0, Math.sin(a) * radii[ring], 0);
+            PixelVfx.billboardPixel(b, cam, camera, p, 0.05F, WishStyle.r(colours[ring]), WishStyle.g(colours[ring]), WishStyle.b(colours[ring]),
+               (int)(230 * w));
+         }
+      }
+      for (int i = 0; i < 10; i++) {
+         double a = i * Math.PI * 2 / 10;
+         double r = 0.2 + 0.12 * hash(7L, i);
+         Vec3 p = centre.add(u.scale(Math.cos(a) * r)).add(0, Math.sin(a) * r, 0);
+         PixelVfx.billboardPixel(b, cam, camera, p, 0.06F, WishStyle.r(s.primary), WishStyle.g(s.primary), WishStyle.b(s.primary), (int)(220 * w));
+      }
+      // the star: five points and the centre
+      for (int i = 0; i < 5; i++) {
+         double a = Math.PI / 2 + i * Math.PI * 2 / 5;
+         for (int k = 0; k <= 3; k++) {
+            double r = 0.3 * k / 3.0;
+            Vec3 p = centre.add(u.scale(Math.cos(a) * r)).add(0, Math.sin(a) * r, 0);
+            PixelVfx.billboardPixel(b, cam, camera, p, 0.045F, 255, 255, 255, (int)(250 * w));
+         }
+      }
+      float dt = t - WishTimeline.SWAP;
+      if (dt >= -2) {
+         float k = dt < 0 ? (dt + 2) / 2 : Math.max(0, 1 - dt / 14);
+         PixelVfx.crossGlow(b, cam, camera, centre, 0.4F + 1.1F * k, 255, 255, 255, (int)(230 * k * w));
+         float run = Math.max(0, dt) / 14.0F;
+         ringH(b, cam, camera, c.add(0, 0.08, 0), 0.6F + 4.5F * run, 40, 0, 0.05F, s.primary, (int)(230 * (1 - run) * w));
       }
    }
 

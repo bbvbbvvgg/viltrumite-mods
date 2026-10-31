@@ -90,6 +90,7 @@ public final class HeroEvents {
       if (entity.level().isClientSide()) {
          return;
       }
+      dev.baranhan.viltrumitecore.entity.avengers.TeamDamage.onDeath(entity, event.getSource());
 
       if (entity instanceof ServerPlayer player && player instanceof HeroPlayer heroPlayer) {
          WorldPause.ownerLeft(player.getServer(),player.getUUID());

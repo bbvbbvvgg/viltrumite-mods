@@ -1,0 +1,12 @@
+# Model rework checklist
+- [ ] Reference studied, part list + palette written down
+- [ ] Bone names / pivots unchanged (grep Java `getBone("...")`, clip tools)
+- [ ] Geometry: multi-part, rounded where needed, proportions vs torso checked
+- [ ] Face: pixel map + nose / chin / cheek geometry, young/old read correct
+- [ ] Textures: no flat areas, AO, seams, hue shift, whites not grey
+- [ ] `geo_lint.py <group>` = 0 problems (body+gear, FP arms, props)
+- [ ] Previews: front / side / back / 3-4 + close-up; before/after sheet for reworks
+- [ ] FP arms + vanilla skin regenerated
+- [ ] `./gradlew build` green, tests pass, CI green
+- [ ] Real Minecraft client (Xvfb): lighting, motion, abilities, first person, multiplayer if possible; screenshots saved
+- [ ] Checkpoint pushed, local SHA == remote SHA

@@ -16,6 +16,7 @@ public enum WishStyle {
    TECH("tech", 0x5FE6FF, 0xFF3A2A, 0.8F, 0.92F, 1.0F, 0.2F, "ironman_nano_deploy", "ironman_helmet_close"),
    CRIMSON("crimson", 0xFF2A2A, 0x3A7BFF, 1.0F, 0.55F, 0.5F, 0.35F, "homelander_laser_charge", "homelander_roar"),
    HOLY("holy", 0xFFF1B8, 0xFF9A3A, 1.0F, 0.95F, 0.8F, 0.0F, "reinhard.reid_choir", "reinhard.mode_holy_sword"),
+   SHIELD("shield", 0x3A78FF, 0xFFFFFF, 0.78F, 0.85F, 1.0F, 0.25F, "captain.charged", "captain.parry"),
    STILL("still", 0xE8EEF5, 0x9FB2C8, 0.8F, 0.82F, 0.88F, 0.3F, null, "regulus_impact_heavy"),
    MORTAL("mortal", 0xFFE3A3, 0xFFFFFF, 1.0F, 0.95F, 0.85F, 0.0F, null, null);
 

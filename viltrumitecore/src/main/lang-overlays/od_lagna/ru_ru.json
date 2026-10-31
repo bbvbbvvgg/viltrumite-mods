@@ -42,5 +42,7 @@
   "subtitles.od_lagna.open": "Мерцание желания",
   "subtitles.od_lagna.select": "Звон желания",
   "subtitles.od_lagna.confirm": "Желание произнесено",
-  "subtitles.od_lagna.return": "Свет отступает"
+  "subtitles.od_lagna.return": "Свет отступает",
+  "wish.viltrumitecore.shield": "я желаю вставать первым и никогда не сдаваться",
+  "wish.viltrumitecore.shield.echo": "Ты будешь стоять, даже когда все остальные упадут."
 }

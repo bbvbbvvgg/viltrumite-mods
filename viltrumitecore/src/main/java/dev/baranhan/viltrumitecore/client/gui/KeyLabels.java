@@ -2,7 +2,6 @@ package dev.baranhan.viltrumitecore.client.gui;
 
 import javax.annotation.Nullable;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.network.chat.Component;
 
 /**
  * Short key labels beside the ability slots. Built from the bound key's id
@@ -11,7 +10,9 @@ import net.minecraft.network.chat.Component;
  * text, so in Russian «Левая кнопка мыши» or «Пробел» showed up as long
  * untranslated strings. Mouse buttons and named keys get translatable labels
  * ({@code hud.viltrumitecore.key.*}); letters, digits and F-keys stay as printed
- * on the keyboard. Display only — the bindings themselves are untouched.
+ * on the keyboard. Since Captain America (2012) the panel shows English names
+ * for every key on every game language ({@link #english}); the translatable
+ * labels stay for compatibility. Display only — the bindings are untouched.
  */
 public final class KeyLabels {
    static final String PREFIX = "hud.viltrumitecore.key.";
@@ -28,11 +29,78 @@ public final class KeyLabels {
       if (literal != null) {
          return literal;
       }
-      String label = labelKey(id);
-      if (label != null) {
-         return Component.translatable(label).getString();
+      // English on every game language (owner's request): the panel speaks keyboard, not locale
+      String english = english(id);
+      if (english != null) {
+         return english;
       }
       return fallback(mapping.getTranslatedKeyMessage().getString());
+   }
+
+   /**
+    * Pure: the English short label of a mouse button or any non-letter keyboard key, independent of the
+    * game language (LMB, SPACE, ENTER, PGUP, `...); null only for ids that are neither mouse nor keyboard.
+    */
+   @Nullable
+   static String english(String id) {
+      String mouse = strip(id, "key.mouse.");
+      if (mouse != null) {
+         return switch (mouse) {
+            case "left" -> "LMB";
+            case "right" -> "RMB";
+            case "middle" -> "MMB";
+            default -> mouse.matches("[0-9]+") ? "M" + mouse : fallback(mouse);
+         };
+      }
+      String k = strip(id, "key.keyboard.");
+      if (k == null) {
+         return null;
+      }
+      return switch (k) {
+         case "space" -> "SPACE";
+         case "left.shift", "right.shift" -> "SHIFT";
+         case "left.control", "right.control" -> "CTRL";
+         case "left.alt", "right.alt" -> "ALT";
+         case "left.win", "right.win" -> "WIN";
+         case "enter", "keypad.enter" -> "ENTER";
+         case "tab" -> "TAB";
+         case "caps.lock" -> "CAPS";
+         case "backspace" -> "BKSP";
+         case "escape" -> "ESC";
+         case "insert" -> "INS";
+         case "delete" -> "DEL";
+         case "home" -> "HOME";
+         case "end" -> "END";
+         case "page.up" -> "PGUP";
+         case "page.down" -> "PGDN";
+         case "print.screen" -> "PRTSC";
+         case "scroll.lock" -> "SCRLK";
+         case "num.lock" -> "NUMLK";
+         case "pause" -> "PAUSE";
+         case "menu" -> "MENU";
+         case "up" -> "\u2191";
+         case "down" -> "\u2193";
+         case "left" -> "\u2190";
+         case "right" -> "\u2192";
+         case "grave.accent" -> "`";
+         case "minus" -> "-";
+         case "equal" -> "=";
+         case "left.bracket" -> "[";
+         case "right.bracket" -> "]";
+         case "backslash" -> "\\";
+         case "semicolon" -> ";";
+         case "apostrophe" -> "'";
+         case "comma" -> ",";
+         case "period" -> ".";
+         case "slash" -> "/";
+         case "keypad.add" -> "N+";
+         case "keypad.subtract" -> "N-";
+         case "keypad.multiply" -> "N*";
+         case "keypad.divide" -> "N/";
+         case "keypad.decimal" -> "N.";
+         case "keypad.equal" -> "N=";
+         default -> k.equals("unknown") ? null : fallback(k.replace(".", ""));
+      };
    }
 
    /** Pure: letters, digits, F-keys and keypad digits as printed; null for everything else. */
