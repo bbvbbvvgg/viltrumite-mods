@@ -170,15 +170,20 @@ class HeroRosterIntegrationTest {
       // 12 = #74 alone, 13 = #82 alone, 14 = the merged table; 15 = each of #86 (Thor GUARD bit), #88
       // (Od Lagna's wish packets) and #89 (Regulus Reborn) alone; 16 = the final table with all of them;
       // 17 = Captain America's CaptainFxS2CPacket appended last; 18 = its TEAM (joint move) event type;
-      // 19 = the Thanos event's ThanosFxS2CPacket and ThanosStateS2CPacket appended after Captain's.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"19\""), "the merged packet table needs its own protocol version");
+      // 19 = the Thanos event's ThanosFxS2CPacket and ThanosStateS2CPacket appended after Captain's;
+      // 18 was also used by feat/chitauri-invasion alone (portal + FX packets after Regulus) and is refused;
+      // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"20\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
-      assertEquals(packets.size() - 4, packets.indexOf("RegulusFxS2CPacket"), "Regulus Reborn's packet appends after the wish packets");
-      assertEquals(packets.size() - 3, packets.indexOf("CaptainFxS2CPacket"), "Captain America's packet appends after Regulus's");
-      assertEquals(packets.size() - 2, packets.indexOf("ThanosFxS2CPacket"), "the Thanos packets append after Captain's");
-      assertEquals(packets.size() - 1, packets.indexOf("ThanosStateS2CPacket"), "the Thanos state packet appends last");
+      int regulus = packets.indexOf("RegulusFxS2CPacket");
+      assertEquals(packets.indexOf("WishSceneS2CPacket") + 1, regulus, "Regulus Reborn's packet appends after the wish packets");
+      assertEquals(regulus + 1, packets.indexOf("CaptainFxS2CPacket"), "Captain America's packet appends after Regulus's");
+      assertEquals(regulus + 2, packets.indexOf("ThanosFxS2CPacket"), "the Thanos packets append after Captain's");
+      assertEquals(regulus + 3, packets.indexOf("ThanosStateS2CPacket"), "the Thanos state packet follows the Thanos FX packet");
+      assertEquals(regulus + 4, packets.indexOf("ChitauriPortalS2CPacket"), "the Chitauri portal packet appends after the Thanos packets");
+      assertEquals(regulus + 5, packets.indexOf("ChitauriFxS2CPacket"), "the Chitauri FX packet follows the portal packet");
    }
 
    @Test
