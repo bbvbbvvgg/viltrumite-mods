@@ -53,6 +53,10 @@ public final class MultiverseBossRush {
       return true;
    }
 
+   public static boolean anyRunning() {
+      return !RUNS.isEmpty();
+   }
+
    public static boolean running(UUID player) {
       return RUNS.containsKey(player);
    }

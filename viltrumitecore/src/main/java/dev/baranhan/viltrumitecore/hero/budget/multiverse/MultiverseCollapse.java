@@ -149,8 +149,30 @@ public final class MultiverseCollapse {
 
    // ---- state machine --------------------------------------------------
 
+   /**
+    * Players of the event: inside the arena, or close to one of its living
+    * NPCs (a boss fight may drift past the arena edge; that is not a defeat).
+    */
+   private List<ServerPlayer> arenaPlayers(ServerLevel level) {
+      List<ServerPlayer> players = new ArrayList<>(MultiverseHud.near(level, this.origin, MultiverseRules.ARENA_RADIUS));
+      double engage = MultiverseRules.ENGAGE_RADIUS * MultiverseRules.ENGAGE_RADIUS;
+      for (ServerPlayer player : level.players()) {
+         if (players.contains(player)) {
+            continue;
+         }
+         for (UUID id : this.wave) {
+            Entity entity = level.getEntity(id);
+            if (entity != null && entity.isAlive() && entity.distanceToSqr(player) < engage) {
+               players.add(player);
+               break;
+            }
+         }
+      }
+      return players;
+   }
+
    private void tick(ServerLevel level) {
-      List<ServerPlayer> players = MultiverseHud.near(level, this.origin, MultiverseRules.ARENA_RADIUS);
+      List<ServerPlayer> players = this.arenaPlayers(level);
       this.updateIntegrity(level, players);
       if (players.stream().noneMatch(p -> p.isAlive() && !p.isSpectator())) {
          if (++this.noPlayerTicks > MultiverseRules.NO_PLAYER_FAIL_TICKS) {
@@ -195,8 +217,8 @@ public final class MultiverseCollapse {
    private void enter(ServerLevel level, Phase phase) {
       this.phase = phase;
       this.phaseTicks = 0;
+      List<ServerPlayer> players = this.arenaPlayers(level);
       this.wave.clear();
-      List<ServerPlayer> players = MultiverseHud.near(level, this.origin, MultiverseRules.ARENA_RADIUS);
       switch (phase) {
          case RIFT -> {
             MultiverseHud.title(players, "multiverse.viltrumitecore.title.initiated", "multiverse.viltrumitecore.sub.rift", ChatFormatting.DARK_PURPLE);
@@ -279,8 +301,7 @@ public final class MultiverseCollapse {
    }
 
    private void spawnWar(ServerLevel level) {
-      List<BudgetFaction> factions = new ArrayList<>(List.of(BudgetFaction.values()));
-      java.util.Collections.shuffle(factions, this.random);
+      List<BudgetFaction> factions = MultiverseRules.warFactions(this.random);
       int size = MultiverseRules.warGroupSize(this.mods);
       for (int g = 0; g < MultiverseRules.warGroups(); g++) {
          BudgetFaction faction = factions.get(g);
@@ -309,15 +330,35 @@ public final class MultiverseCollapse {
          }
       }
 
-      if (standing.size() <= 1 || this.phaseTicks > MultiverseRules.warTimeout(this.mods)) {
-         if (standing.size() == 1) {
-            BudgetFaction winner = standing.iterator().next();
+      if (MultiverseRules.warSettled(standing) || this.phaseTicks > MultiverseRules.warTimeout(this.mods)) {
+         BudgetFaction winner = this.strongest(level, standing);
+         if (winner != null) {
             MultiverseHud.chat(MultiverseHud.near(level, this.origin, MultiverseRules.ARENA_RADIUS),
                Component.translatable("multiverse.viltrumitecore.faction_wins", Component.translatable(winner.langKey()))
                   .withStyle(style -> style.withColor(winner.color).withBold(true)));
          }
          this.next();
       }
+   }
+
+   /** The standing faction with the most living fighters (the winner of a settled war). */
+   @Nullable
+   private BudgetFaction strongest(ServerLevel level, Set<BudgetFaction> standing) {
+      BudgetFaction best = null;
+      int bestCount = 0;
+      for (BudgetFaction faction : standing) {
+         int count = 0;
+         for (UUID id : this.wave) {
+            if (level.getEntity(id) instanceof MultiverseFighter fighter && fighter.isAlive() && fighter.faction() == faction) {
+               count++;
+            }
+         }
+         if (count > bestCount) {
+            best = faction;
+            bestCount = count;
+         }
+      }
+      return best;
    }
 
    private void tickCollapse(ServerLevel level, List<ServerPlayer> players) {

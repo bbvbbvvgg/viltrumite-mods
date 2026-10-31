@@ -61,7 +61,7 @@ public class CoreEvents {
             if (level.dimension() == Level.OVERWORLD) {
                if (!level.players().isEmpty()) {
                   WorldEventManager manager = WorldEventManager.get(level);
-                  if (manager.activeEvents().isEmpty()) {
+                  if (manager.activeEvents().isEmpty() && !dev.baranhan.viltrumitecore.hero.budget.multiverse.MultiverseEvents.busy()) {
                      long cooldownTicks = (long)ViltrumiteCoreConfig.INSTANCE.worldEventCooldownMinutes * 60L * 20L;
                      if (level.getGameTime() - manager.lastEventTime() >= cooldownTicks) {
                         if (!(level.random.nextFloat() >= ViltrumiteCoreConfig.INSTANCE.worldEventChancePercent * 0.01F)) {

@@ -174,4 +174,24 @@ class MultiverseSystemsTest {
          assertNotNull(spec, boss.id());
       }
    }
+
+   @Test
+   void warAlwaysHasAHostileSide() {
+      for (int seed = 0; seed < 500; seed++) {
+         List<BudgetFaction> war = MultiverseRules.warFactions(new Random(seed));
+         assertEquals(MultiverseRules.warGroups(), war.size());
+         assertEquals(war.size(), new HashSet<>(war).size(), "factions are distinct");
+         assertTrue(war.stream().anyMatch(f -> !f.heroic()), "seed " + seed + ": three neutral hero factions never fight");
+         assertFalse(MultiverseRules.warSettled(EnumSet.copyOf(war)), "a fresh war is not settled");
+      }
+   }
+
+   @Test
+   void warSettlesWhenNoHostilePairStands() {
+      assertTrue(MultiverseRules.warSettled(EnumSet.noneOf(BudgetFaction.class)));
+      assertTrue(MultiverseRules.warSettled(EnumSet.of(BudgetFaction.DEMONS)));
+      assertTrue(MultiverseRules.warSettled(EnumSet.of(BudgetFaction.ANIME, BudgetFaction.GODS)));
+      assertFalse(MultiverseRules.warSettled(EnumSet.of(BudgetFaction.ANIME, BudgetFaction.CHAOS)));
+      assertFalse(MultiverseRules.warSettled(EnumSet.of(BudgetFaction.DEMONS, BudgetFaction.CHAOS)));
+   }
 }

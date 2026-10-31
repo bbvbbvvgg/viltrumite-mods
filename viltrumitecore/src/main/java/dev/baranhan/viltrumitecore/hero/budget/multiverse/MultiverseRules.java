@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.budget.multiverse;
 
+import dev.baranhan.viltrumitecore.hero.budget.BudgetFaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -16,6 +17,8 @@ public final class MultiverseRules {
    public static final int NO_PLAYER_FAIL_TICKS = 600;
    public static final double ARENA_RADIUS = 96.0;
    public static final int BOSS_RUSH_PAUSE_TICKS = 100;
+   /** A player this close to a living event NPC still counts as in the arena (a chased boss may drift past ARENA_RADIUS). */
+   public static final double ENGAGE_RADIUS = 48.0;
    /** Regular NPCs hit softer than players (a 40-damage Normal Punch would end every event). */
    public static final float FIGHTER_DAMAGE_SCALE = 0.35F;
    public static final float FIGHTER_COOLDOWN_SCALE = 1.5F;
@@ -35,6 +38,38 @@ public final class MultiverseRules {
 
    public static int warGroups() {
       return 3;
+   }
+
+   /**
+    * The factions of phase 3. Three "hero" factions are mutually neutral and
+    * would only stare at each other until the timeout, so a draw of three
+    * heroic factions trades its last one for a hostile faction.
+    */
+   public static List<BudgetFaction> warFactions(Random random) {
+      List<BudgetFaction> all = new ArrayList<>(List.of(BudgetFaction.values()));
+      java.util.Collections.shuffle(all, random);
+      List<BudgetFaction> picked = new ArrayList<>(all.subList(0, Math.min(warGroups(), all.size())));
+      if (picked.stream().allMatch(BudgetFaction::heroic)) {
+         for (BudgetFaction faction : all) {
+            if (!faction.heroic()) {
+               picked.set(picked.size() - 1, faction);
+               break;
+            }
+         }
+      }
+      return picked;
+   }
+
+   /** The war is over when no two standing factions are hostile to each other. */
+   public static boolean warSettled(Set<BudgetFaction> standing) {
+      for (BudgetFaction a : standing) {
+         for (BudgetFaction b : standing) {
+            if (a.hostileTo(b)) {
+               return false;
+            }
+         }
+      }
+      return true;
    }
 
    public static int championCount(Set<ChaosModifier> mods) {

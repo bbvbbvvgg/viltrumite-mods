@@ -15,6 +15,16 @@ public final class MultiverseEvents {
    private MultiverseEvents() {
    }
 
+   /**
+    * True while a Multiverse Collapse or a Boss Rush runs. The legacy random
+    * world events (Conquest, Viltrumite Trio) do not roll on top of them: a
+    * Conquest dropped into the arena digs it up with its crater punches and
+    * throws players into the void mid-fight.
+    */
+   public static boolean busy() {
+      return MultiverseCollapse.active() != null || MultiverseBossRush.anyRunning();
+   }
+
    @SubscribeEvent
    public static void onServerTick(TickEvent.ServerTickEvent event) {
       if (event.phase == TickEvent.Phase.END && event.getServer() != null) {
