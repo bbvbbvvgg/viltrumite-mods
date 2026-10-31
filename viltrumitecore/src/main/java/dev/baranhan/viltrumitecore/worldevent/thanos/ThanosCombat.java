@@ -63,6 +63,9 @@ public final class ThanosCombat {
    private int moves;
    /** Free ticks with a target but no move chosen (the recovery watchdog). */
    private int idle;
+   /** QA ({@code /thanos move}): the next move, past the brain's choice and the breather. */
+   @Nullable
+   private ThanosMove queued;
 
    public ThanosCombat(ThanosEvent event, ServerLevel level, ThanosEntity thanos, long seed) {
       this.event = event;
@@ -77,6 +80,10 @@ public final class ThanosCombat {
 
    public int movesStarted() {
       return this.moves;
+   }
+
+   public void queue(ThanosMove move) {
+      this.queued = move;
    }
 
    /**
@@ -119,6 +126,14 @@ public final class ThanosCombat {
 
       this.updateTarget();
       this.stalk();
+      if (this.queued != null) {
+         ThanosMove q = this.queued;
+         this.queued = null;
+         this.breather = 0;
+         this.start(q);
+         return;
+      }
+
       if (this.breather > 0) {
          this.breather--;
          return;
@@ -341,6 +356,13 @@ public final class ThanosCombat {
       this.aim = this.target == null ? this.thanos.position() : this.target.position();
       this.aux = this.aim;
       this.moves++;
+      if (ThanosEvent.LOG.isDebugEnabled()) {
+         LivingEntity t = this.target;
+         ThanosEvent.LOG.debug("Thanos move #{} {} in {}: target {} at {} blocks, seen {}, telegraph {}", this.moves, next, this.movePhase,
+            t == null ? "-" : t.getName().getString(), t == null ? "-" : String.format(java.util.Locale.ROOT, "%.1f", Math.sqrt(this.thanos.distanceToSqr(t))),
+            t != null && this.sees(t), this.telegraph);
+      }
+
       ThanosTargets.fx(this.level, ThanosFxS2CPacket.TELEGRAPH, this.thanos.getId(), this.target == null ? -1 : this.target.getId(), this.aim,
          Vec3.ZERO, this.telegraph, next.ordinal());
       this.onBegin(next);
@@ -631,6 +653,7 @@ public final class ThanosCombat {
       this.mind.clear();
       this.soul.clear();
       this.move = null;
+      this.queued = null;
       this.thanos.startMove(null);
       this.thanos.getNavigation().stop();
    }

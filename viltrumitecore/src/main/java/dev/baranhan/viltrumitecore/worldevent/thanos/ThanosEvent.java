@@ -30,6 +30,8 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Thanos city event ({@code /thanos start}): one Thanos with the six stones, no army. A
@@ -70,6 +72,7 @@ public final class ThanosEvent {
       SERVER
    }
 
+   static final Logger LOG = LoggerFactory.getLogger("viltrumitecore/thanos");
    /** No hero within reach for this long: Thanos leaves. */
    public static final int ABANDON_TICKS = 30 * ThanosRules.TPS;
    private static final int SYNC_EVERY = 10;
@@ -191,6 +194,17 @@ public final class ThanosEvent {
       return true;
    }
 
+   /** QA: {@code move} is his next one (after the running move), whatever the brain would pick. */
+   public static boolean queueMove(ThanosMove move) {
+      ThanosEvent e = active;
+      if (e == null || e.ended || e.stage != Stage.FIGHT) {
+         return false;
+      }
+
+      e.combat.queue(move);
+      return true;
+   }
+
    public Stage stage() {
       return this.stage;
    }
@@ -245,6 +259,8 @@ public final class ThanosEvent {
       ThanosSounds.play(this.level, this.thanos.position(), ThanosSounds.ARRIVAL, 3.0F, 1.0F, 160.0);
       this.broadcast(Component.translatable("event.viltrumitecore.thanos.arrived").withStyle(ChatFormatting.DARK_PURPLE));
       this.sync(true);
+      LOG.info("Thanos arrived in {} at {} for {} hero(es), max health {}", this.dimension.location(), this.thanos.blockPosition().toShortString(),
+         this.counted, this.thanos.getMaxHealth());
    }
 
    private void tick() {
@@ -357,15 +373,17 @@ public final class ThanosEvent {
       this.clock.advance(ThanosClock.holds(paused, timeStopped));
       float max = Math.max(1.0F, this.thanos.getMaxHealth());
       float fraction = Mth.clamp(this.thanos.getHealth() / max, 0.0F, 1.0F);
+      ThanosOutcome outcome = ThanosOutcome.resolve(defeated, this.clock.expired());
       ThanosPhase next = ThanosPhase.of(fraction, this.clock.elapsed(), this.clock.duration());
-      if (next.ordinal() > this.phase.ordinal()) {
+      // the fight ends this tick (a kill drops him below every threshold at once): no new phase is announced over its end
+      if (outcome.phaseMayAdvance() && next.ordinal() > this.phase.ordinal()) {
          this.phase = next;
          this.thanos.setPhase(next);
          this.announce(next);
       }
 
       this.bar.setProgress(fraction);
-      switch (ThanosOutcome.resolve(defeated, this.clock.expired())) {
+      switch (outcome) {
          case VICTORY -> this.beginVictory();
          case SNAP -> this.beginSnap();
          default -> {
@@ -374,6 +392,8 @@ public final class ThanosEvent {
    }
 
    private void announce(ThanosPhase next) {
+      LOG.info("Thanos phase {} ({} left, health {}/{})", next, ThanosRules.clock(this.clock.remaining()), Math.round(this.thanos.getHealth()),
+         Math.round(this.thanos.getMaxHealth()));
       String key = switch (next) {
          case ESCALATION -> "event.viltrumitecore.thanos.phase.escalation";
          case ONSLAUGHT -> "event.viltrumitecore.thanos.phase.onslaught";
@@ -495,6 +515,8 @@ public final class ThanosEvent {
       if (active == this) {
          active = null;
       }
+
+      LOG.info("Thanos event ended: {} (stage {}, {} moves, {} left)", kind, this.stage, this.combat.movesStarted(), ThanosRules.clock(this.clock.remaining()));
 
       try {
          this.combat.clearAll();

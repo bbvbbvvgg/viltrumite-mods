@@ -15,6 +15,11 @@ public enum ThanosOutcome {
     * @param defeated Thanos is dead or at 0 health after this tick's damage
     * @param expired  the clock reached its duration (after this tick's advance)
     */
+   /** Only a running fight changes phase: no phase announcement over a defeat or the snap. */
+   public boolean phaseMayAdvance() {
+      return this == FIGHT;
+   }
+
    public static ThanosOutcome resolve(boolean defeated, boolean expired) {
       if (defeated) {
          return VICTORY;
