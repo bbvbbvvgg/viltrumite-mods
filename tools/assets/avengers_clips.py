@@ -8,12 +8,13 @@ from jinwoo_poses import P, low, mirror, FIST, RELAX, OPEN, OPEN_L, OPEN_R  # no
 
 
 def spin(base, bone, t0, t1, axis, turns, rest=(0, 0, 0)):
-    """Keys spinning one bone `turns` full revolutions between t0 and t1 (90 degrees per key)."""
+    """Keys spinning one bone `turns` full revolutions between t0 and t1 (180 degrees per key: GeckoLib lerps the
+    Euler angles, so evenly spaced keys give an even spin with half the keys of a 90-degree step)."""
     keys = []
-    n = int(turns * 4)
+    n = int(turns * 2)
     for i in range(n + 1):
         t = t0 + (t1 - t0) * i / n
-        a = -90 * i
+        a = -180 * i
         r = list(rest)
         r[axis] += a
         keys.append((t, P(base, **{bone: tuple(r)})))
@@ -213,8 +214,7 @@ def thor():
     spin_up = P(idle, right_arm=(-170, 0, 10), right_forearm=(0, 0, 0), head=(-30, 0, 0), cape=(30, 0, 0))
     dep = [(0, idle), (6, P(idle, right_arm=(-100, 0, 40), right_forearm=(0, 0, 0)))]
     dep += spin(P(idle, right_arm=(-100, 0, 40), right_forearm=(0, 0, 0)), 'hammer', 6, 30, 1, 6)
-    dep += [(34, P(spin_up, hair=(30, 0, 0))), (40, P(spin_up, hair=(44, 0, 4))), (46, P(spin_up, hair=(32, 0, -4))),
-            (52, P(spin_up, hair=(46, 0, 4))), (58, P(spin_up, hair=(34, 0, 0))), (90, P(spin_up, hair=(40, 0, 0)))]
+    dep += [(34, P(spin_up, hair=(30, 0, 0))), (44, P(spin_up, hair=(46, 0, 4))), (54, P(spin_up, hair=(32, 0, 0))), (90, P(spin_up, hair=(40, 0, 0)))]
     common(out, combat, wa, wb, ra, rb, hurt, dep)
     # flight: hair and cape stream behind him and flutter in the wind (rework §7, hair animated in flight)
     fly_a = P(spin_up, hair=(34, 0, 4), cape=(42, 0, 0), cape_lower=(22, 0, 0))
@@ -224,7 +224,7 @@ def thor():
     bolt = P(spin_up, cape=(50, 0, 0), cape_lower=(30, 0, 0), right_leg=(-30, 0, 0), right_shin=(50, 0, 0), left_leg=(6, 0, 0), left_shin=(30, 0, 0))
     bolt = P(bolt, hair=(46, 0, 0))
     gust = P(bolt, cape=(60, 0, 0), cape_lower=(40, 0, 0), hair=(58, 0, 5))
-    out.append(clip('arrive', 200, [(0, P(spin_up, root=low(0), hair=(20, 0, 0)))] + [(t, gust if (t // 6) % 2 else bolt) for t in range(6, 200, 6)]
+    out.append(clip('arrive', 200, [(0, P(spin_up, root=low(0), hair=(20, 0, 0)))] + [(t, gust if (t // 8) % 2 else bolt) for t in range(8, 57, 8)]
                     + [(200, bolt)]))
     # landing from the bolt: kneel, Mjolnir to the ground, rise slowly
     land = P(idle, **LAND3, right_arm=(-40, 0, 10), right_forearm=(-10, 0, 0), hammer=(70, 0, 0), left_arm=(10, 0, -30),
@@ -265,7 +265,7 @@ def thor():
              hammer=(180, 0, 0), cape=(60, 0, 0), cape_lower=(30, 0, 0), right_leg=(10, 0, 0), left_leg=(-10, 0, 0), hair=(62, 0, 0))
     pull2 = P(pull, hair=(74, 0, 6), cape=(70, 0, 0), cape_lower=(42, 0, 0))
     out.append(clip('leap', 60, spin(P(combat, right_arm=(-100, 0, 40), right_forearm=(0, 0, 0)), 'hammer', 0, 10, 1, 3) +
-                    [(14, pull), (20, pull2), (26, pull), (32, pull2), (38, pull), (44, pull2), (50, pull), (56, P(land, hammer=(90, 0, 0))), (60, P(land, hammer=(90, 0, 0)))]))
+                    [(14, pull), (24, pull2), (34, pull), (44, pull2), (50, pull), (56, P(land, hammer=(90, 0, 0))), (60, P(land, hammer=(90, 0, 0)))]))
     # side-step with a cape swirl (12 t)
     out.append(clip('dodge', 12, [(0, combat), (3, P(combat, root=low(-2), waist=(6, -40, 0), cape=(50, 0, 0), right_leg=(-30, 0, 20), left_leg=(10, 0, -10))),
                                   (8, P(combat, waist=(6, -10, 0), cape=(20, 0, 0))), (12, combat)]))
@@ -279,7 +279,7 @@ def thor():
               right_leg=(-10, 0, 8), right_shin=(12, 0, 0), left_leg=(14, 0, -8), left_shin=(10, 0, 0))
     shake = P(point, torso=(-16, 0, 2), right_arm=(-136, 0, 29), hair=(14, 0, 0))
     keys = [(0, combat), (6, P(sky, hair=(10, 0, 0))), (10, P(sky, torso=(-12, 0, 0), hair=(20, 0, 0))), (12, P(sky, hair=(10, 0, 0))), (15, point)]
-    for i, tt in enumerate(range(18, 36, 3)):
+    for i, tt in enumerate(range(18, 36, 4)):
         keys.append((tt, shake if i % 2 == 0 else point))
     keys += [(36, point), (40, combat)]
     out.append(clip('team_1', 40, keys))
