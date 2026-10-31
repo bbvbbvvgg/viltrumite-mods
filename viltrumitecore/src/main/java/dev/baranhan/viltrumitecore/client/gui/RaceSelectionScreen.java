@@ -38,6 +38,10 @@ public class RaceSelectionScreen extends Screen {
          this.sendHeroChoice(HeroId.HUMAN);
          this.onClose();
       }).bounds(this.layout.humanX(), this.layout.humanY(), HeroChoiceLayout.BUTTON_W, HeroChoiceLayout.BUTTON_H).build());
+      // Ultimate Hero Expansion: the 30 new heroes live on their own paged screen.
+      this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.expansion.open"),
+         button -> this.minecraft.setScreen(new ExpansionHeroScreen(this)))
+         .bounds(this.width / 2 - 80, Math.min(this.height - 24, this.layout.humanY() + HeroChoiceLayout.BUTTON_H + 6), 160, HeroChoiceLayout.BUTTON_H).build());
    }
 
    private void sendLegacyChoice(boolean choseViltrumite) {
