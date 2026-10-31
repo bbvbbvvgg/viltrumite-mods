@@ -18,7 +18,7 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Lightning (Mjolnir's electric strikes, Thor's storms, a natural bolt) strikes powered armour with a reactor. The
+ * Lightning with an attacker (Mjolnir's electric strikes, Thor's storms and called bolts) strikes powered armour with a reactor. The
  * suit soaks the bolt: the hit is absorbed and the reactor gains {@link InteractionTuning#OVERCHARGE_ENERGY}. Once
  * per {@code cooldownTicks} per pair, so lightning still hurts the armour between charges.
  */

@@ -196,6 +196,11 @@ public final class CaptainCombat {
 
    public static void guard(ServerPlayer player, CaptainState state, boolean pressed) {
       if (pressed) {
+         if (state.shieldBroken > 0) {
+            // the guard was broken (Reid's stroke): the arm cannot raise the shield yet
+            CaptainSounds.play(player, CaptainSounds.REFUSE, 0.6F, 0.8F);
+            return;
+         }
          if (state.running() && !(state.move.isCombo() || state.move == CaptainMove.CATCH || state.move == CaptainMove.LANDING
             || state.move == CaptainMove.PARRY)) {
             return;
@@ -240,6 +245,23 @@ public final class CaptainCombat {
          CaptainFx.around(player, CaptainFx.CHARGED, 0, player.position(), Vec3.ZERO);
          CaptainSounds.play(player, CaptainSounds.CHARGED, 0.8F, 1.0F);
       }
+   }
+
+   /**
+    * Contextual interaction {@code reid_shatters_vibranium}: a blade that annihilates rather than strikes met the
+    * raised shield. The guard breaks for {@code ticks} (no raise, no parry), the stored kinetic charge and the
+    * counter window are lost and Steve reels (his own synced move SHIELD_SHATTERED). The shield item stays.
+    */
+   public static void shatterGuard(ServerPlayer player, CaptainState state, int ticks) {
+      endGuard(state);
+      state.shieldBroken = Math.max(state.shieldBroken, ticks);
+      state.kinetic = 0;
+      state.kineticIdle = 0;
+      state.counterLeft = 0;
+      state.idle = 0;
+      state.start(CaptainMove.SHIELD_SHATTERED);
+      CaptainSounds.play(player, CaptainSounds.REFUSE, 0.9F, 0.6F);
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.say(player, CaptainLines.SHIELD_SHATTERED);
    }
 
    /** True when {@code from} lies in the frontal guard arc of the player. */
