@@ -35,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
  * clearance above the surface, and it never flies into unloaded chunks. Death: smoke spiral,
  * explosion on impact, breakup into falling wreck pieces (client).
  */
-public class ChitauriChariot extends Mob implements ChitauriMob {
+public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.world.entity.monster.Enemy {
    private static final EntityDataAccessor<Byte> KIND = SynchedEntityData.defineId(ChitauriChariot.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Byte> STATE = SynchedEntityData.defineId(ChitauriChariot.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Float> ROLL = SynchedEntityData.defineId(ChitauriChariot.class, EntityDataSerializers.FLOAT);
