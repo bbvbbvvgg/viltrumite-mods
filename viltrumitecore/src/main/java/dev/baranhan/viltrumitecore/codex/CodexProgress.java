@@ -67,9 +67,16 @@ public final class CodexProgress {
       data.put(Player.PERSISTED_NBT_TAG, persisted);
    }
 
+   /** The id a hero is saved as (the legacy Viltrumite id loads as Homelander), or null. */
+   @Nullable
+   static HeroId canonical(@Nullable HeroId hero) {
+      return hero == null ? null : HeroId.fromKey(hero.key());
+   }
+
    /** The player has really become this hero (HeroRegistry.changeHero). The hero's wish card gets its icon. */
    public static void heroChosen(ServerPlayer player, @Nullable HeroId hero) {
-      if (hero == null || hero == HeroId.VILTRUMITE || !isRealPlayer(player)) {
+      hero = canonical(hero);
+      if (hero == null || !isRealPlayer(player)) {
          return;
       }
       CodexRecord record = read(player);
@@ -116,8 +123,9 @@ public final class CodexProgress {
     * by default never chose anything (the human card gets its icon only after the return wish).
     */
    private static void migrateCurrentHero(ServerPlayer player, CodexRecord record) {
-      if (player instanceof HeroPlayer hero && hero.getHeroId() != null && hero.getHeroId() != HeroId.HUMAN && hero.getHeroId() != HeroId.VILTRUMITE) {
-         if (record.addHero(hero.getHeroId().key())) {
+      HeroId current = player instanceof HeroPlayer hero ? canonical(hero.getHeroId()) : null;
+      if (current != null && current != HeroId.HUMAN) {
+         if (record.addHero(current.key())) {
             write(player, record);
          }
       }
