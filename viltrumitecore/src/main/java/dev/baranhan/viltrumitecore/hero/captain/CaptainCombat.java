@@ -215,6 +215,33 @@ public final class CaptainCombat {
       state.guardTicks = 0;
    }
 
+   /** Joint move check (server): {@code from} lies in Steve's frontal guard arc. */
+   public static boolean facing(ServerPlayer player, Vec3 from) {
+      return frontal(player, from);
+   }
+
+   /**
+    * Joint move with Thor (rework §15.3): Mjolnir struck the raised shield. Steve braces under the blow (his own
+    * move, synced to every client like the rest of his timeline), the lightning leaves kinetic charge in the
+    * shield and a short invulnerability covers the shockwave.
+    */
+   public static void teamBrace(ServerPlayer player, CaptainState state, int kinetic) {
+      boolean was = CaptainRules.empowered(state.kinetic);
+      endGuard(state);
+      state.start(CaptainMove.TEAM_BRACE);
+      state.kinetic = CaptainRules.gain(state.kinetic, kinetic);
+      state.kineticIdle = 0;
+      state.idle = 0;
+      state.iframes = Math.max(state.iframes, 12);
+      Vec3 look = flat(player.getLookAngle());
+      Vec3 at = player.getEyePosition().add(look.scale(0.7)).add(0, -0.35, 0);
+      CaptainFx.around(player, CaptainFx.PARRY, 0, at, look);
+      if (!was && CaptainRules.empowered(state.kinetic)) {
+         CaptainFx.around(player, CaptainFx.CHARGED, 0, player.position(), Vec3.ZERO);
+         CaptainSounds.play(player, CaptainSounds.CHARGED, 0.8F, 1.0F);
+      }
+   }
+
    /** True when {@code from} lies in the frontal guard arc of the player. */
    static boolean frontal(ServerPlayer player, Vec3 from) {
       Vec3 look = flat(player.getLookAngle());
