@@ -191,4 +191,18 @@ class RegulusRulesTest {
       double air = RegulusRules.TRAMPLE_AIR_BAND;
       assertTrue(RegulusRules.trampleCatches(3.0, -1.4, 2.5, 3.4, air, air));
    }
+
+   @Test
+   void onlyOverwhelmingHitsStrainTheStoppedHeart() {
+      // global rebalance: the hosted Lion is still absolute against everyone but the S+ hero
+      assertEquals(500, RegulusRules.strainFromHit(500, false));
+      assertEquals(500 + dev.baranhan.viltrumitecore.balance.BalanceTable.DIVINE_LION_STRAIN, RegulusRules.strainFromHit(500, true));
+      int strain = 0;
+      int hits = 0;
+      while (!RegulusRules.seizes(strain)) {
+         strain = RegulusRules.strainStep(RegulusRules.strainFromHit(strain, true), true, true);
+         hits++;
+      }
+      assertEquals(7, hits, "the Sword Saint forces the seizure through a living host in seven hits");
+   }
 }

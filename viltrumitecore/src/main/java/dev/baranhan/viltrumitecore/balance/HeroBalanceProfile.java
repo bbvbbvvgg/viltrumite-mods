@@ -39,6 +39,11 @@ public record HeroBalanceProfile(HeroTier tier, float resilience, float hitCap, 
 
    /** Resilience for one hit of this kind (exempt and PvP hits keep it all). */
    public float resilienceFor(IncomingKind kind) {
-      return kind == IncomingKind.EXEMPT || kind == IncomingKind.PVP ? 0.0F : this.resilience;
+      return switch (kind) {
+         case EXEMPT, PVP -> 0.0F;
+         // Gunfire stays a real threat to heroes: half the body layer (BalanceRules.PROJECTILE_RESILIENCE_SHARE).
+         case PROJECTILE -> this.resilience * BalanceRules.PROJECTILE_RESILIENCE_SHARE;
+         default -> this.resilience;
+      };
    }
 }

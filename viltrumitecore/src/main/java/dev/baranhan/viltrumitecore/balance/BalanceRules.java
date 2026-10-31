@@ -32,6 +32,8 @@ public final class BalanceRules {
 
    /** Raw (pre-armor) amount from which a mob melee hit counts as heavy (a charged Viltrumite punch). */
    public static final float HEAVY_RAW = 100.0F;
+   /** Share of a hero's resilience that applies to projectiles (Chitauri fire must stay a threat). */
+   public static final float PROJECTILE_RESILIENCE_SHARE = 0.5F;
 
    /** Regeneration I (amplifier 0): one heart-half every 50 ticks. */
    public static final int REGEN_I_INTERVAL = 50;

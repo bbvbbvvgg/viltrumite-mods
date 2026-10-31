@@ -18,7 +18,7 @@ public final class BalanceTable {
    /** Sung Jinwoo, the Shadow Monarch. */
    public static final HeroBalanceProfile MONARCH = new HeroBalanceProfile(HeroTier.A_PLUS, 0.80F, 0.25F, 0.45F, 0.40F);
    /** Thor (God of War Ragnarök). */
-   public static final HeroBalanceProfile THUNDER_GOD = new HeroBalanceProfile(HeroTier.A, 0.80F, 0.25F, 0.45F, 0.40F);
+   public static final HeroBalanceProfile THUNDER_GOD = new HeroBalanceProfile(HeroTier.A, 0.85F, 0.25F, 0.45F, 0.40F);
    /**
     * Iron Man in an intact suit (nano Mark 50 or a mark). The suit's armor 28 already
     * removes up to 80 % of small hits, so the body layer is lighter; the cap is what keeps
@@ -32,7 +32,7 @@ public final class BalanceTable {
    /** Homelander: the legacy 40 % chassis plus this layer. */
    public static final HeroBalanceProfile SUPE = new HeroBalanceProfile(HeroTier.B_PLUS, 0.50F, 0.30F, 0.50F, 0.50F);
    /** The Magnificent Sinclair. */
-   public static final HeroBalanceProfile SHOWMAN = new HeroBalanceProfile(HeroTier.B, 0.40F, 0.35F, 0.55F, 0.55F);
+   public static final HeroBalanceProfile SHOWMAN = new HeroBalanceProfile(HeroTier.B, 0.50F, 0.30F, 0.50F, 0.50F);
 
    // ---- hero support system (HeroSustain) ----------------------------------------------------
 
