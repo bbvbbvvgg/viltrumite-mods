@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.client.thanos;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -178,7 +179,7 @@ public class ThanosRenderer extends EntityRenderer<ThanosEntity> {
       drawGlow(model, stack, buffers, look, alpha, r, g, b);
    }
 
-   private static void drawGlow(BakedGeoModel model, PoseStack stack, MultiBufferSource buffers, Look look, float alpha, float r, float g, float b) {
+   static void drawGlow(BakedGeoModel model, PoseStack stack, MultiBufferSource buffers, Look look, float alpha, float r, float g, float b) {
       GeoBone[] stones = stoneBones(model);
       VertexConsumer glowBuffer = buffers.getBuffer(RenderType.eyes(ThanosView.GLOW));
       for (GeoBone bone : stones) {
@@ -226,15 +227,35 @@ public class ThanosRenderer extends EntityRenderer<ThanosEntity> {
    public static void drawCells(BakedGeoModel model, PoseStack stack, MultiBufferSource buffers, int light, int overlay, Look look, Matrix3f toWorld,
       Vec3 cam, ThanosCells.Rule rule, float front, float edge, int edgeRgb, float hot, float ash, boolean forming, long seed,
       List<ThanosCells.Mote> motes) {
-      VertexConsumer body = buffers.getBuffer(RenderType.entityCutoutNoCull(ThanosView.TEXTURE));
-      VertexConsumer shell = buffers.getBuffer(RenderType.eyes(WHITE));
-      ThanosCells cells = new ThanosCells(body, shell, toWorld, cam.x, cam.y, cam.z, rule, front, edge, edgeRgb, hot, ash, forming, seed, motes);
-      AnimRenderer.render(model, stack, null, cells, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F, null);
+      drawCells(model, ThanosView.TEXTURE, stack, buffers, light, overlay, toWorld, cam, rule, front, edge, edgeRgb, hot, ash, forming, seed, motes);
       float whole = 1.0F - Mth.clamp(front * 1.6F, 0.0F, 1.0F);
-      if (!forming && whole > 0.02F) {
+      if (!forming && whole > 0.02F && look != null) {
          drawGlow(model, stack, buffers, look, whole, 1.0F, 1.0F, 1.0F);
       }
    }
+
+   /**
+    * Any model in any skin through the cell dissolve. The hot shell goes to its own immediate
+    * buffer: the level's buffer source shares one builder between the entity render types, so
+    * two of them written in turn would end up in one draw. The body batch is drawn first, the
+    * additive shell over it.
+    */
+   public static void drawCells(BakedGeoModel model, ResourceLocation texture, PoseStack stack, MultiBufferSource buffers, int light, int overlay,
+      Matrix3f toWorld, Vec3 cam, ThanosCells.Rule rule, float front, float edge, int edgeRgb, float hot, float ash, boolean forming, long seed,
+      List<ThanosCells.Mote> motes) {
+      RenderType bodyType = RenderType.entityCutoutNoCull(texture);
+      VertexConsumer body = buffers.getBuffer(bodyType);
+      VertexConsumer shell = SHELL.getBuffer(RenderType.eyes(WHITE));
+      ThanosCells cells = new ThanosCells(body, shell, toWorld, cam.x, cam.y, cam.z, rule, front, edge, edgeRgb, hot, ash, forming, seed, motes);
+      AnimRenderer.render(model, stack, null, cells, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F, null);
+      if (buffers instanceof MultiBufferSource.BufferSource source) {
+         source.endBatch(bodyType);
+      }
+
+      SHELL.endBatch();
+   }
+
+   private static final MultiBufferSource.BufferSource SHELL = MultiBufferSource.immediate(new BufferBuilder(1 << 16));
 
    private static final Map<BakedGeoModel, GeoBone[]> STONE_BONES = new HashMap<>();
 

@@ -299,8 +299,11 @@ public abstract class GameRendererDashMixin {
 
          ErasureUniforms erasure = ErasurePost.uniforms(partialTicks);
          float[] timeStop = dev.baranhan.viltrumitecore.client.dio.TimeStopClient.screen(partialTicks);
+         // Thanos snap scene: flash, shock ring, its centre on screen, golden restore, the void
+         float[] snap = dev.baranhan.viltrumitecore.client.thanos.ThanosSceneClient.screen(partialTicks);
          boolean anyEffect = ErasurePost.active() || dashProgress > 0.0F
             || timeStop[0] + timeStop[1] + timeStop[2] > 0.0F
+            || snap[0] + snap[1] + snap[4] + snap[5] > 0.0F
             || punchIntensity > 0.0F
             || shakeIntensity > 0.0F
             || this.currentLockIntensity > 0.01F
@@ -331,6 +334,18 @@ public abstract class GameRendererDashMixin {
                   if (tsInvert != null) tsInvert.set(timeStop[1]);
                   Uniform tsRipple = pass.getEffect().getUniform("TimeStopRipple");
                   if (tsRipple != null) tsRipple.set(timeStop[2]);
+                  Uniform snapFlash = pass.getEffect().getUniform("SnapFlash");
+                  if (snapFlash != null) snapFlash.set(snap[0]);
+                  Uniform snapShock = pass.getEffect().getUniform("SnapShock");
+                  if (snapShock != null) snapShock.set(snap[1]);
+                  Uniform snapCenterX = pass.getEffect().getUniform("SnapCenterX");
+                  if (snapCenterX != null) snapCenterX.set(snap[2]);
+                  Uniform snapCenterY = pass.getEffect().getUniform("SnapCenterY");
+                  if (snapCenterY != null) snapCenterY.set(snap[3]);
+                  Uniform snapGold = pass.getEffect().getUniform("SnapGold");
+                  if (snapGold != null) snapGold.set(snap[4]);
+                  Uniform snapVoid = pass.getEffect().getUniform("SnapVoid");
+                  if (snapVoid != null) snapVoid.set(snap[5]);
                   Uniform dashUniform = pass.getEffect().getUniform("DashIntensity");
                   if (dashUniform != null) {
                      dashUniform.set(Math.max(0.0F, Math.min(1.0F, dashProgress)));
