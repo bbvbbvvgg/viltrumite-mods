@@ -49,7 +49,9 @@ public class CoreMessages {
    // replaces the first kit's packets). v16 (final integration of #85-#92): all of them together;
    // the wish packets first, then RegulusFxS2CPacket, both after the Jinwoo packet. A client built
    // from any single "15" branch is refused.
-   private static final String PROTOCOL_VERSION = "16";
+   // v17 (core 1.59.0, Iron Man stage 6): the four Iron Legion packets appended after the v16 table,
+   // MarkLocation.LEGION on the Veronica view wire and the legion_suit entity's synced data.
+   private static final String PROTOCOL_VERSION = "17";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
