@@ -28,6 +28,14 @@ public final class ThanosSceneTimeline {
    /** World pause length requested for the scene (its watchdog adds 40 ticks). */
    public static final int PAUSE_TICKS = LENGTH + 10;
 
+   // ---- client clock --------------------------------------------------------------------------
+   /** Ticks a client runs a stage clock past the last state packet before it waits for the next. */
+   public static final int ESTIMATE_TICKS = 30;
+   /** Share of the scene clock's error corrected per tick. */
+   public static final float SYNC_RATE = 0.15F;
+   /** A client behind the server by more than this jumps forward at once. */
+   public static final float SYNC_JUMP = 12.0F;
+
    // ---- victory ---------------------------------------------------------------------------------
    public static final int VICTORY_STAGGER_END = 30;
    public static final int VICTORY_KNEEL_END = 60;
@@ -229,5 +237,36 @@ public final class ThanosSceneTimeline {
    public static float ease(float v) {
       float t = clamp(v);
       return t < 0.5F ? 2.0F * t * t : 1.0F - 2.0F * (1.0F - t) * (1.0F - t);
+   }
+
+   // ---- client clock --------------------------------------------------------------------------
+
+   /**
+    * A stage clock estimated between state packets: the server's tick plus the local ticks since,
+    * capped at {@link #ESTIMATE_TICKS} so a server that stops answering (a lag spike) holds the
+    * scene where it is instead of running it ahead of the server.
+    */
+   public static float estimate(int stageTick, long sinceTicks, float partial) {
+      if (sinceTicks >= ESTIMATE_TICKS) {
+         return stageTick + ESTIMATE_TICKS;
+      }
+
+      return stageTick + Math.max(0L, sinceTicks) + Math.min(1.0F, Math.max(0.0F, partial));
+   }
+
+   /**
+    * The client's scene clock one tick on, pulled toward the server's: behind by more than
+    * {@link #SYNC_JUMP} it jumps forward at once; ahead it slows down to a hold and never rewinds,
+    * so after a lag spike the scene waits for the server rather than replaying a stretch.
+    */
+   public static float follow(float clock, float target) {
+      float next = clock + 1.0F;
+      float error = target - next;
+      return jumps(clock, target) ? target : Math.max(clock, next + error * SYNC_RATE);
+   }
+
+   /** Does {@link #follow} jump (a cut of the camera instead of a glide)? */
+   public static boolean jumps(float clock, float target) {
+      return target - (clock + 1.0F) > SYNC_JUMP;
    }
 }

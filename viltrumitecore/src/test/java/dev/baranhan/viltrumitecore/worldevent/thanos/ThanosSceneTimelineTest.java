@@ -104,4 +104,30 @@ class ThanosSceneTimelineTest {
       assertEquals(0.0F, victoryCrumble(VICTORY_CRUMBLE_START - 1));
       assertEquals(1.0F, victoryCrumble(VICTORY_LENGTH - 20), 1.0E-6F);
    }
+
+   @Test
+   void clientClockHoldsThroughALagSpikeAndNeverRewinds() {
+      // between packets the estimate runs on; once the server is silent it waits for the next one
+      assertEquals(105.5F, estimate(100, 5, 0.5F), 1.0E-4F);
+      assertEquals(100.0F, estimate(100, -3, 0.0F), 1.0E-4F);
+      assertEquals(100.0F + ESTIMATE_TICKS, estimate(100, ESTIMATE_TICKS, 0.9F), 1.0E-4F);
+      assertEquals(100.0F + ESTIMATE_TICKS, estimate(100, 400, 0.0F), 1.0E-4F);
+      // ahead of a server that lagged: the scene holds instead of replaying, and never goes back
+      float clock = 400.0F;
+      for (int i = 0; i < 80; i++) {
+         float target = 330.0F + i;
+         assertFalse(jumps(clock, target));
+         float next = follow(clock, target);
+         assertTrue(next >= clock, "rewound at " + i);
+         clock = next;
+      }
+
+      assertTrue(clock < 412.0F, "ran on while the server was behind: " + clock);
+      // in step it moves one tick; a little behind it glides; far behind it jumps forward
+      assertEquals(11.0F, follow(10.0F, 11.0F), 1.0E-4F);
+      float glide = follow(10.0F, 16.0F);
+      assertTrue(glide > 11.0F && glide < 16.0F);
+      assertTrue(jumps(10.0F, 40.0F));
+      assertEquals(40.0F, follow(10.0F, 40.0F), 1.0E-4F);
+   }
 }

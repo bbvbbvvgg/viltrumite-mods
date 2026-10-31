@@ -22,6 +22,8 @@ public final class ThanosRules {
    public static final double PARTICIPANT_RADIUS = 160.0;
    /** He is spawned this far in front of the starting player. */
    public static final double SPAWN_DISTANCE = 12.0;
+   /** How far below a flying starter his landing ground is searched. */
+   public static final double START_DROP = 64.0;
 
    // ---- health --------------------------------------------------------------------------------
    public static final float BASE_HEALTH = 3000.0F;
