@@ -110,6 +110,24 @@ class CityPureTest {
    }
 
    @Test
+   void citizensFrozenInNonTickingChunksDespawn() {
+      // regression (Atheria QA): after a Chitauri invasion 66 citizens stayed "fleeing" forever -
+      // they stood ~98 blocks away, inside FAR but in chunks beyond the simulation distance
+      double near = 30.0 * 30.0;
+      double between = 110.0 * 110.0;
+      double beyond = 130.0 * 130.0;
+      assertFalse(CityPopulation.shouldDespawn(false, near, true));
+      assertTrue(CityPopulation.shouldDespawn(false, near, false));
+      assertTrue(CityPopulation.shouldDespawn(true, near, false));
+      assertTrue(CityPopulation.shouldDespawn(false, between, true));
+      assertFalse(CityPopulation.shouldDespawn(true, between, true));
+      assertTrue(CityPopulation.shouldDespawn(true, beyond, true));
+      // console populate with nobody online: manual citizens wait, automatic ones go
+      assertFalse(CityPopulation.shouldDespawn(true, Double.MAX_VALUE, false));
+      assertTrue(CityPopulation.shouldDespawn(false, Double.MAX_VALUE, false));
+   }
+
+   @Test
    void populationTargets() {
       assertEquals(40, CityPopulation.targetPerPlayer(40, 1.0));
       assertEquals(0, CityPopulation.targetPerPlayer(40, 0.0));

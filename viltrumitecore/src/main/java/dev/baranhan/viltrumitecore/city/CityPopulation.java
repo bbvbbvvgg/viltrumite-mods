@@ -22,7 +22,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * walls, water or a danger anybody can see), capped per level (config
  * {@code cityMaxCitizens}, at most {@link CityManager#ABSOLUTE_MAX}). Some arrive as small
  * groups that walk together. Citizens more than {@link #FAR} blocks (manual: 128) from
- * every player are removed; chunk unloads remove them too (they are never saved), so a
+ * every player, or left in chunks that stopped ticking entities, are removed; chunk unloads remove them too (they are never saved), so a
  * long session never accumulates entities.
  */
 final class CityPopulation {
@@ -59,6 +59,24 @@ final class CityPopulation {
       return hardCap > 0 ? Math.min(cap, hardCap) : cap;
    }
 
+   /**
+    * Whether a citizen goes away: farther than {@link #FAR} (manual: {@link #MANUAL_FAR}) from
+    * every player, or standing in a chunk that does not tick entities (loaded beyond the
+    * simulation distance) while somebody is in the level - such citizens would freeze
+    * mid-flight, stay "fleeing" forever and count against the cap. Console
+    * {@code /city populate} with nobody online: manual citizens wait for the first player.
+    *
+    * @param bestSq squared distance to the nearest player, {@link Double#MAX_VALUE} with nobody in the level
+    */
+   static boolean shouldDespawn(boolean manual, double bestSq, boolean entityTicking) {
+      if (bestSq == Double.MAX_VALUE) {
+         return !manual;
+      }
+
+      int far = manual ? MANUAL_FAR : FAR;
+      return bestSq > (double)far * far || !entityTicking;
+   }
+
    static double clampScale(double s) {
       return Double.isNaN(s) ? 1.0 : Math.max(0.0, Math.min(4.0, s));
    }
@@ -83,9 +101,7 @@ final class CityPopulation {
             best = Math.min(best, p.distanceToSqr(c));
          }
 
-         int far = c.manual ? MANUAL_FAR : FAR;
-         // console /city populate with nobody online: manual citizens wait for the first player
-         if (best > (double)far * far && !(c.manual && best == Double.MAX_VALUE)) {
+         if (shouldDespawn(c.manual, best, level.isPositionEntityTicking(c.blockPosition()))) {
             c.discard();
          }
       }
