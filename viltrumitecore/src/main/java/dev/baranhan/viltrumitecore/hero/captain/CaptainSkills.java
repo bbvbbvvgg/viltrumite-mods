@@ -169,12 +169,12 @@ public final class CaptainSkills {
       CaptainSounds.play(player, CaptainSounds.CATCH, 1.0F, CaptainSounds.jitter(player, 1.0F));
    }
 
-   /** Kinetic gain from a ricochet hit (called by the entity). */
-   public static void ricochetHit(ServerPlayer player) {
+   /** Kinetic gain from a ricochet hit or wall bounce (called by the entity; amount from CaptainRules.bounceGain / wallGain). */
+   public static void ricochetHit(ServerPlayer player, int amount) {
       CaptainState state = CaptainState.of(player);
       if (state != null) {
          boolean was = CaptainRules.empowered(state.kinetic);
-         state.kinetic = CaptainRules.gain(state.kinetic, CaptainRules.GAIN_RICOCHET);
+         state.kinetic = CaptainRules.gain(state.kinetic, amount);
          state.kineticIdle = 0;
          state.idle = 0;
          if (!was && CaptainRules.empowered(state.kinetic)) {

@@ -24,6 +24,9 @@ public final class CaptainRules {
    public static final int GAIN_BLOCK = 6;
    public static final int GAIN_PARRY = 30;
    public static final int GAIN_RICOCHET = 8;
+   /** Gain of the 4th and later enemy hit of one flight, and of every wall bounce (see bounceGain). */
+   public static final int GAIN_RICOCHET_TAIL = 2;
+   public static final int GAIN_WALL = 2;
    public static final int GAIN_COMBO = 3;
    public static final int KINETIC_IDLE = 120;
    public static final int KINETIC_DECAY_INTERVAL = 20;
@@ -58,9 +61,27 @@ public final class CaptainRules {
    // --- ricochet throw (§5.3) ---
    public static final double SHIELD_SPEED = 1.4;
    public static final double RETURN_SPEED = 1.5;
-   public static final int BOUNCES = 3;
-   public static final int BOUNCES_EMPOWERED = 5;
+   // Ricochet chain (rework §16): 5 bounces, 8 empowered (was 3 / 5). With the 15 % falloff a full chain deals
+   // 9 + 7.7 + 6.5 + 5.5 + 4.7 ≈ 33 spread over five different enemies (≈ 44 over eight when empowered) — enough to
+   // break up a small pack, while the per-flight hit set keeps every enemy at one outgoing hit, so a lone boss still
+   // takes a single 9. The kinetic gain of the extra bounces is cut (bounceGain), so the longer chain cannot refill
+   // the charge it spends: an empowered throw returns at most ≈ 21 of its 50.
+   public static final int BOUNCES = 5;
+   public static final int BOUNCES_EMPOWERED = 8;
    public static final double BOUNCE_RADIUS = 10.0;
+   /** Next-target assist: half-angle of the cone around the incoming flight line the next enemy must be in. */
+   public static final double BOUNCE_ASSIST_DEGREES = 135.0;
+   /** ... at most this far above / below the hit point ... */
+   public static final double BOUNCE_MAX_DY = 6.0;
+   /** ... and never further than THROW_RANGE + this from Steve (no homing across the map). */
+   public static final double BOUNCE_LEASH = 6.0;
+   /** Soft homing: the flying shield bends at most this much per tick toward its target. */
+   public static final double SHIELD_TURN_DEGREES = 20.0;
+   /** A target that stays further than this off the flight line for SHIELD_GIVE_UP_TICKS is skipped (no U-turns). */
+   public static final double SHIELD_GIVE_UP_DEGREES = 80.0;
+   public static final int SHIELD_GIVE_UP_TICKS = 6;
+   /** Longest chase of one target before the shield gives up on it. */
+   public static final int SHIELD_CHASE_TICKS = 40;
    public static final double THROW_RANGE = 24.0;
    public static final float SHIELD_HIT_DAMAGE = 9.0F;
    public static final float BOUNCE_FALLOFF = 0.15F;
@@ -183,6 +204,29 @@ public final class CaptainRules {
 
    public static int maxBounces(boolean empowered) {
       return empowered ? BOUNCES_EMPOWERED : BOUNCES;
+   }
+
+   /** Kinetic gain of the {@code hit}-th enemy hit of one flight (0 = first): 8 / 8 / 8, then 2; halved when empowered. */
+   public static int bounceGain(int hit, boolean empowered) {
+      int g = hit < 3 ? GAIN_RICOCHET : GAIN_RICOCHET_TAIL;
+      return empowered ? Math.max(1, g / 2) : g;
+   }
+
+   /** Kinetic gain of a wall bounce. */
+   public static int wallGain(boolean empowered) {
+      return empowered ? Math.max(1, GAIN_WALL / 2) : GAIN_WALL;
+   }
+
+   /**
+    * Next-bounce score of an enemy (lower is better): the nearest one wins, enemies ahead of the flight a little more.
+    * +∞ outside the assist limits — further than {@link #BOUNCE_RADIUS}, outside the {@link #BOUNCE_ASSIST_DEGREES}
+    * cone around the incoming flight line or more than {@link #BOUNCE_MAX_DY} above / below the hit point.
+    */
+   public static double bounceScore(double distance, double angleDegrees, double dy) {
+      if (distance > BOUNCE_RADIUS || angleDegrees > BOUNCE_ASSIST_DEGREES || Math.abs(dy) > BOUNCE_MAX_DY) {
+         return Double.POSITIVE_INFINITY;
+      }
+      return distance * (1.0 + 0.5 * angleDegrees / 90.0);
    }
 
    /** Fall damage factor: none up to {@link #SAFE_FALL}, then reduced. */
