@@ -106,61 +106,7 @@ public class CoreConfigScreen extends Screen {
          .addEntry(
             new CoreConfigScreen.TextFieldEntry(Component.translatable("gui.viltrumitecore.config.core.world_event_cooldown"), this.worldEventCooldownField)
          );
-      Button shouldAskRaceBtn = Button.builder(
-            Component.translatable(
-               "gui.viltrumitecore.config.core.ask_race",
-               new Object[]{
-                  Component.translatable(
-                     ViltrumiteCoreConfig.INSTANCE.shouldAskRace ? "gui.viltrumitecore.config.generic.on" : "gui.viltrumitecore.config.generic.off"
-                  )
-               }
-            ),
-            button -> {
-               ViltrumiteCoreConfig.INSTANCE.shouldAskRace = !ViltrumiteCoreConfig.INSTANCE.shouldAskRace;
-               button.setMessage(
-                  Component.translatable(
-                     "gui.viltrumitecore.config.core.ask_race",
-                     new Object[]{
-                        Component.translatable(
-                           ViltrumiteCoreConfig.INSTANCE.shouldAskRace ? "gui.viltrumitecore.config.generic.on" : "gui.viltrumitecore.config.generic.off"
-                        )
-                     }
-                  )
-               );
-            }
-         )
-         .bounds(0, 0, 200, 20)
-         .build();
-      shouldAskRaceBtn.active = isOp;
-      Button viltrumiteDefaultBtn = Button.builder(
-            Component.translatable(
-               "gui.viltrumitecore.config.core.default_race",
-               new Object[]{
-                  Component.translatable(
-                     ViltrumiteCoreConfig.INSTANCE.isViltrumiteByDefault ? "gui.viltrumitecore.config.generic.on" : "gui.viltrumitecore.config.generic.off"
-                  )
-               }
-            ),
-            button -> {
-               ViltrumiteCoreConfig.INSTANCE.isViltrumiteByDefault = !ViltrumiteCoreConfig.INSTANCE.isViltrumiteByDefault;
-               button.setMessage(
-                  Component.translatable(
-                     "gui.viltrumitecore.config.core.default_race",
-                     new Object[]{
-                        Component.translatable(
-                           ViltrumiteCoreConfig.INSTANCE.isViltrumiteByDefault
-                              ? "gui.viltrumitecore.config.generic.on"
-                              : "gui.viltrumitecore.config.generic.off"
-                        )
-                     }
-                  )
-               );
-            }
-         )
-         .bounds(0, 0, 200, 20)
-         .build();
-      viltrumiteDefaultBtn.active = isOp;
-      this.listWidget.addEntry(new CoreConfigScreen.DoubleButtonEntry(shouldAskRaceBtn, viltrumiteDefaultBtn));
+      // "Ask race on join" / "Viltrumite by default" toggles are gone: the hero choice is never forced on join.
       Button bloodEnabledBtn = Button.builder(
             Component.translatable(
                "gui.viltrumitecore.config.core.blood_enabled",
