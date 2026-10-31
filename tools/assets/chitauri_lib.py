@@ -437,8 +437,8 @@ def preview(out, items, views=('front', 'side', 'back'), scale=6, bg=(40, 44, 52
         pts = [view(c) for quads, *_ in loaded for corners, _ in quads for c in corners] or [(0, 0, 0)]
         minx, maxx = min(p[0] for p in pts), max(p[0] for p in pts)
         miny, maxy = min(p[1] for p in pts), max(p[1] for p in pts)
-        w = int((maxx - minx) * scale) + 2 * scale
-        h = int((maxy - miny) * scale) + 2 * scale
+        w = int((maxx - minx) * scale + 2 * scale)
+        h = int((maxy - miny) * scale + 2 * scale)
         img = Image.new('RGBA', (max(w, 8), max(h, 8)), bg)
         zbuf = [[-1e9] * img.size[0] for _ in range(img.size[1])]
         ox, oy = scale - minx * scale, scale + maxy * scale
