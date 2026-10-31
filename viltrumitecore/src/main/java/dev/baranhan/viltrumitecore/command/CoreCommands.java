@@ -164,9 +164,7 @@ public class CoreCommands {
          .then(Commands.argument("key", StringArgumentType.word())
             .suggests((context, builder) -> {
                for (dev.baranhan.viltrumitecore.hero.HeroId id : dev.baranhan.viltrumitecore.hero.HeroId.values()) {
-                  if (id != dev.baranhan.viltrumitecore.hero.HeroId.VILTRUMITE) {
-                     builder.suggest(id.key());
-                  }
+                  builder.suggest(id.key());
                }
                builder.suggest("hulk");
                return builder.buildFuture();
