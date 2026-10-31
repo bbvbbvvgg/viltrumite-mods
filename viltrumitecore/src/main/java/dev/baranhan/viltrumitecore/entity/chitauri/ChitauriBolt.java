@@ -30,8 +30,9 @@ import net.minecraftforge.event.ForgeEventFactory;
 public class ChitauriBolt extends Projectile {
    private static final EntityDataAccessor<Float> POWER = SynchedEntityData.defineId(ChitauriBolt.class, EntityDataSerializers.FLOAT);
    public static final int MAX_LIFE = 60;
-   public static final float RIFLE_DAMAGE = 5.0F;
-   public static final float CANNON_DAMAGE = 9.0F;
+   /** Global balance table: 5 Normal-difficulty hits on an unarmored human. */
+   public static final float RIFLE_DAMAGE = dev.baranhan.viltrumitecore.balance.BalanceTable.CHITAURI_RIFLE;
+   public static final float CANNON_DAMAGE = dev.baranhan.viltrumitecore.balance.BalanceTable.CHITAURI_CANNON;
 
    // client trail: last positions, newest first
    public final double[] trail = new double[24];

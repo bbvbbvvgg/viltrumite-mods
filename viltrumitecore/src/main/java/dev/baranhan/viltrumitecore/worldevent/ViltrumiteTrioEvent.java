@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.worldevent;
 
+import dev.baranhan.viltrumitecore.balance.BalanceTable;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteFakePlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -22,10 +23,10 @@ public class ViltrumiteTrioEvent extends WorldEvent {
          0.91F,
          1,
          ViltrumiteFakePlayer.TargetMode.AGGRESSIVE_NO_ALLIES,
-         18.0F,
-         0.2F,
-         95.5F,
-         0.25F,
+         BalanceTable.THULA.baseDamage(),
+         BalanceTable.THULA.ignoreThreshold(),
+         BalanceTable.THULA.reductionPercent(),
+         BalanceTable.THULA.healFactor(),
          12.0F,
          0.025F
       );
@@ -39,10 +40,10 @@ public class ViltrumiteTrioEvent extends WorldEvent {
          1.073F,
          1,
          ViltrumiteFakePlayer.TargetMode.AGGRESSIVE_NO_ALLIES,
-         25.0F,
-         0.4F,
-         96.2F,
-         0.2F,
+         BalanceTable.LUCAN.baseDamage(),
+         BalanceTable.LUCAN.ignoreThreshold(),
+         BalanceTable.LUCAN.reductionPercent(),
+         BalanceTable.LUCAN.healFactor(),
          9.0F,
          0.018F
       );
@@ -56,10 +57,10 @@ public class ViltrumiteTrioEvent extends WorldEvent {
          1.01F,
          2,
          ViltrumiteFakePlayer.TargetMode.AGGRESSIVE_NO_ALLIES,
-         22.0F,
-         0.3F,
-         95.9F,
-         0.2F,
+         BalanceTable.VIDOR.baseDamage(),
+         BalanceTable.VIDOR.ignoreThreshold(),
+         BalanceTable.VIDOR.reductionPercent(),
+         BalanceTable.VIDOR.healFactor(),
          10.5F,
          0.02F
       );

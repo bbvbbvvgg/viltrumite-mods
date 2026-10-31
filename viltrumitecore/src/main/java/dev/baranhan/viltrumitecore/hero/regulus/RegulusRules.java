@@ -191,6 +191,15 @@ public final class RegulusRules {
       return Math.max(0, Math.min(STRAIN_MAX, strain + amount));
    }
 
+   /**
+    * Strain after a hit lands on the stopped heart (pure). Only an overwhelming hit (divine
+    * damage, or the S+ hero's) strains it, host or no host: the hosted Lion stays absolute against everyone else,
+    * but the Sword Saint forces the seizure in {@code ceil(1000 / DIVINE_LION_STRAIN)} hits.
+    */
+   public static int strainFromHit(int strain, boolean overwhelming) {
+      return overwhelming ? strainAdd(strain, dev.baranhan.viltrumitecore.balance.BalanceTable.DIVINE_LION_STRAIN) : strain;
+   }
+
    public static boolean seizes(int strain) {
       return strain >= STRAIN_MAX;
    }

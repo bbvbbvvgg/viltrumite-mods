@@ -77,6 +77,7 @@ public final class HeroDamageLayers {
    /** Logout: drop a partial-absorb scale that no LivingHurtEvent consumed. */
    public static void forget(ServerPlayer player) {
       PENDING_SCALE.remove(player.getUUID());
+      dev.baranhan.viltrumitecore.balance.CombatBalance.forget(player.getUUID());
    }
 
    // ---- pure pipeline ----
@@ -237,7 +238,9 @@ public final class HeroDamageLayers {
 
    /** LivingDamageEvent for a player target. */
    public static float onDamage(ServerPlayer player, DamageSource source, float afterArmor) {
-      return finalDamageInScope(target(player, source), bypassesLayers(source), afterArmor);
+      float afterLayers = finalDamageInScope(target(player, source), bypassesLayers(source), afterArmor);
+      // Global balance model: the hero's PvE profile (resilience, anti one-shot caps).
+      return dev.baranhan.viltrumitecore.balance.CombatBalance.onHeroDamage(player, source, afterLayers);
    }
 
    /**
@@ -264,6 +267,7 @@ public final class HeroDamageLayers {
       Target layers = target instanceof ServerPlayer player ? target(player, source) : NO_LAYERS;
       ServerPlayer heroAttacker = heroAttacker(target, source);
       Attacker attacker = heroAttacker == null ? NO_ATTACKER : attacker(heroAttacker, target, source);
-      return clean(layers, attacker, bypassesLayers(source), unflooredScope(), amount);
+      float hp = clean(layers, attacker, bypassesLayers(source), unflooredScope(), amount);
+      return target instanceof ServerPlayer player ? dev.baranhan.viltrumitecore.balance.CombatBalance.onHeroCleanDamage(player, source, amount, hp) : hp;
    }
 }

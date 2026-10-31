@@ -6,10 +6,10 @@ package dev.baranhan.viltrumitecore.hero.sinclair;
  */
 public final class SinclairRules {
    // Chassis (§4)
-   public static final double BONUS_HEALTH = 6.0;
+   public static final double BONUS_HEALTH = dev.baranhan.viltrumitecore.balance.BalanceTable.SINCLAIR_BONUS_HEALTH;
    public static final double BONUS_ARMOR = 4.0;
    // Prestige (§5.0)
-   public static final float SPARK_DAMAGE = 2.0F;
+   public static final float SPARK_DAMAGE = dev.baranhan.viltrumitecore.balance.BalanceTable.SINCLAIR_SPARK;
    public static final float SPARK_SPEED = 3.2F;
    public static final float SPARK_RANGE = 48.0F;
    public static final float SPARK_SPREAD_DEGREES = 0.7F;

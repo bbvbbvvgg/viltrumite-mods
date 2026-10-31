@@ -8,7 +8,7 @@ public final class HomelanderRules {
    // Eye lasers (§5.1)
    public static final int LASER_CHARGE_TICKS = 4;
    public static final double LASER_RANGE = 64.0;
-   public static final float LASER_DAMAGE = 1.5F;
+   public static final float LASER_DAMAGE = dev.baranhan.viltrumitecore.balance.BalanceTable.HOMELANDER_LASER;
    public static final int LASER_DAMAGE_INTERVAL = 4;
    public static final int LASER_FIRE_TICKS = 80;
    public static final int SCORCH_LIFETIME = 600;

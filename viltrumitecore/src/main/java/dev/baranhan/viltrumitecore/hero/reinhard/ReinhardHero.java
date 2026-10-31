@@ -73,6 +73,12 @@ public final class ReinhardHero implements HeroDefinition {
       return false;
    }
 
+   /** Global balance profile (BalanceTable): Reinhard: his own Divine Protection rules; tier S+. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.BalanceTable.SWORD_SAINT;
+   }
+
    /**
     * Lethal Chop (spec §7.2): of the kit only {@code viltrumite:chop}, and not while Reid is
     * being drawn or sheathed. Server: never over a running World Erasure (the caster stays

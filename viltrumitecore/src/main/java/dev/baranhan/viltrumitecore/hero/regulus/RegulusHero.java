@@ -64,6 +64,12 @@ public final class RegulusHero implements HeroDefinition {
       return false;
    }
 
+   /** Global balance profile (BalanceTable): Regulus outside the stopped heart (the Lion absorbs by itself); tier S. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.BalanceTable.LION;
+   }
+
    @Override
    public boolean allowsAbilityPages(Player player) {
       return false;
@@ -167,6 +173,9 @@ public final class RegulusHero implements HeroDefinition {
       }
 
       if (stopped(state)) {
+         // Global balance (BalanceTable.DIVINE_LION_STRAIN): divine hits, and every hit of the one
+         // hero ranked above S (the Sword Saint), strain even a hosted heart.
+         state.strain = RegulusRules.strainFromHit(state.strain, overwhelms(source));
          LionsHeart.recoil(self, state, source, raw);
          return DamageAbsorb.ABSORBED;
       }
@@ -177,6 +186,16 @@ public final class RegulusHero implements HeroDefinition {
       }
 
       return DamageAbsorb.PASS;
+   }
+
+   /** Divine damage, or a hit of a hero whose balance tier is above S (tier S+). */
+   static boolean overwhelms(DamageSource source) {
+      if (dev.baranhan.viltrumitecore.hero.DivineDamage.isDivine(source)) {
+         return true;
+      }
+
+      return source.getEntity() instanceof Player attacker && dev.baranhan.viltrumitecore.hero.HeroRegistry.get(attacker).balanceProfile(attacker).tier()
+         .above(dev.baranhan.viltrumitecore.balance.HeroTier.S);
    }
 
    @Override
