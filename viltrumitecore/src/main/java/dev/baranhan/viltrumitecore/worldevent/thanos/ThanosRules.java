@@ -24,9 +24,9 @@ public final class ThanosRules {
    public static final double SPAWN_DISTANCE = 12.0;
 
    // ---- health --------------------------------------------------------------------------------
-   public static final float BASE_HEALTH = 4000.0F;
+   public static final float BASE_HEALTH = 3000.0F;
    /** Each hero past the first adds this share of the base health. */
-   public static final float HEALTH_PER_EXTRA_HERO = 0.55F;
+   public static final float HEALTH_PER_EXTRA_HERO = 0.6F;
    /** Heroes counted for the scaling (more heroes still fight, the health stops growing). */
    public static final int MAX_COUNTED_HEROES = 8;
    /** Heroes who join within this window after the start raise the health (fraction kept). */

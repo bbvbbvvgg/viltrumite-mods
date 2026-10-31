@@ -33,9 +33,10 @@ class ThanosPhaseTest {
 
    @Test
    void healthScalesWithTheGroupAndStops() {
-      assertEquals(4000.0F, ThanosRules.maxHealth(0));
-      assertEquals(4000.0F, ThanosRules.maxHealth(1));
-      assertEquals(6200.0F, ThanosRules.maxHealth(2), 0.01F);
+      assertEquals(3000.0F, ThanosRules.maxHealth(0));
+      assertEquals(3000.0F, ThanosRules.maxHealth(1));
+      assertEquals(4800.0F, ThanosRules.maxHealth(2), 0.01F);
+      assertEquals(3000.0F * (1.0F + 0.6F * 7.0F), ThanosRules.maxHealth(8), 0.01F);
       assertEquals(ThanosRules.maxHealth(8), ThanosRules.maxHealth(20));
       assertTrue(ThanosRules.damageScale(4) > ThanosRules.damageScale(1));
    }

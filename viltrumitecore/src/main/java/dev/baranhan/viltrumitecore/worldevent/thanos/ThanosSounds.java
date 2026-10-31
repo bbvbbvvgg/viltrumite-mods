@@ -40,10 +40,15 @@ public final class ThanosSounds {
    public static final RegistryObject<SoundEvent> SOUL_TETHER = reg("thanos.soul_tether");
    public static final RegistryObject<SoundEvent> SOUL_NOVA = reg("thanos.soul_nova");
    public static final RegistryObject<SoundEvent> STONES_FLARE = reg("thanos.stones_flare");
+   public static final RegistryObject<SoundEvent> WORLD_STOP = reg("thanos.world_stop");
+   public static final RegistryObject<SoundEvent> GAUNTLET_RAISE = reg("thanos.gauntlet_raise");
+   public static final RegistryObject<SoundEvent> STONE_LIGHT = reg("thanos.stone_light");
+   public static final RegistryObject<SoundEvent> FINGERS = reg("thanos.fingers");
    public static final RegistryObject<SoundEvent> SNAP_CLICK = reg("thanos.snap_click");
    public static final RegistryObject<SoundEvent> DISSOLVE = reg("thanos.dissolve");
    public static final RegistryObject<SoundEvent> VOID = reg("thanos.void");
    public static final RegistryObject<SoundEvent> OD_LAGNA_ARRIVE = reg("thanos.od_lagna_arrive");
+   public static final RegistryObject<SoundEvent> OD_LAGNA_LINE = reg("thanos.od_lagna_line");
    public static final RegistryObject<SoundEvent> RESTORE = reg("thanos.restore");
    public static final RegistryObject<SoundEvent> VICTORY = reg("thanos.victory");
    public static final RegistryObject<SoundEvent> MUSIC_BATTLE = reg("thanos.music_battle");
