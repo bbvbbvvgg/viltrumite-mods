@@ -8,7 +8,7 @@ plugins {
 // core uses classes from viltrumiteflight
 evaluationDependsOn(':viltrumiteflight')
 
-version = '1.62.0'
+version = '1.64.0'
 group = 'dev.baranhan.viltrumitecore'
 base { archivesName = 'reforgedcodex-core' }
 
@@ -90,6 +90,13 @@ processResources {
     from('src/main/resources/assets/viltrumite_city/lang') {
         include 'en_us.json'
         into 'data/viltrumite_city/lang'
+    }
+    // Encyclopedia: the contextual-interaction catalog (docs/contextual-interactions.json) travels in the
+    // jar; while it is not in the repository the screen says so (CodexCatalog).
+    from(rootProject.file('docs')) {
+        include 'contextual-interactions.json'
+        into 'assets/viltrumitecore/codex'
+        rename { 'contextual_interactions.json' }
     }
     filesMatching('META-INF/mods.toml') {
         filter { line -> line.replace('@MOD_VERSION@', project.version.toString()) }

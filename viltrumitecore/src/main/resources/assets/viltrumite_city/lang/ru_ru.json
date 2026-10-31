@@ -21,6 +21,7 @@
   "viltrumitecore.city.status.districts": "Активные районы: %s - всего районов %s",
   "viltrumitecore.city.status.districts_none": "Активные районы: нет (всего районов %s)",
   "viltrumitecore.city.status.danger": "Зоны опасности: %s",
+  "viltrumitecore.city.status.crowd": "Толпа: спокойны %s, встревожены %s, бегут %s, прячутся %s (движущихся угроз: %s)",
   "viltrumitecore.city.status.restore_clean": "Карта: нетронута, восстанавливать нечего",
   "viltrumitecore.city.status.restore_dirty": "Карта: изменено блоков: %s, чанков: %s (/city reset вернёт их)",
   "viltrumitecore.city.status.restore_running": "Восстановление: готово блоков: %s, осталось чанков: %s (проход %s)",

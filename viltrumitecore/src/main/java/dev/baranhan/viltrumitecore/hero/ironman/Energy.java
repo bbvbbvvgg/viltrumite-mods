@@ -38,6 +38,13 @@ public final class Energy {
       this.idleTicks = 0;
    }
 
+   /** Outside charge (contextual interaction: lightning into the arc reactor); clamps at the maximum, lifts the lock. */
+   public void charge(float amount) {
+      if (amount > 0.0F) {
+         this.set(this.value + amount);
+      }
+   }
+
    public void tick() {
       this.tick(1.0F);
    }

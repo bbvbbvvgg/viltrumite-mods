@@ -187,8 +187,11 @@ class ThorHeroTest {
    }
 
    @Test
-   void otherHeroesBringNoPresenceYet() {
+   void presenceWithoutAPlayerIsNone() {
+      // Reinhard (drawn Reid) and Captain (raised shield) bring presences since the contextual interactions; with no
+      // player (seam probe) there is nothing to present.
       assertSame(CombatPresence.NONE, ReinhardHero.INSTANCE.combatPresence(null));
+      assertSame(CombatPresence.NONE, dev.baranhan.viltrumitecore.hero.captain.CaptainHero.INSTANCE.combatPresence(null));
    }
 
    @Test

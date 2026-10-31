@@ -1,0 +1,32 @@
+{
+  "_comment": "TEST DATA for the encyclopedia UI only (CatalogParserTest, -Dviltrumitecore.codex.catalog). Not game content: the real catalog is docs/contextual-interactions.json from the contextual-interactions branch.",
+  "interactions": [
+    {
+      "id": "test_open_pair",
+      "name": {"ru_ru": "ТЕСТ: открытое взаимодействие", "en_us": "TEST: open interaction"},
+      "participants": ["homelander", {"id": "viltrumitecore:conquest", "name": {"en_us": "Conquest"}}],
+      "description": {"ru_ru": "Тестовое описание для проверки интерфейса.", "en_us": "Test description to check the screen."},
+      "conditions": [{"ru_ru": "Тестовое условие", "en_us": "Test condition"}, "Second test condition"],
+      "mechanic": {"en_us": "Test mechanic text."},
+      "visuals": "Test visuals text.",
+      "events": ["conquest_arrival"],
+      "secret": false
+    },
+    {
+      "id": "test_secret_pair",
+      "name": {"ru_ru": "ТЕСТ: секретное взаимодействие", "en_us": "TEST: secret interaction"},
+      "participants": ["dio", "thanos"],
+      "description": {"en_us": "Hidden until discovered."},
+      "hint": {"ru_ru": "Тестовая подсказка: остановите время рядом с Таносом.", "en_us": "Test hint: stop time near Thanos."},
+      "secret": true
+    },
+    {
+      "id": "test_unknown_participant",
+      "title": "TEST: unknown participant",
+      "actors": ["someone_not_in_the_codex", "jinwoo"],
+      "summary": "Participants the encyclopedia does not know are shown as plain text."
+    },
+    {"name": "entry without id is skipped"},
+    {"id": "test_open_pair", "name": "duplicate id is skipped"}
+  ]
+}

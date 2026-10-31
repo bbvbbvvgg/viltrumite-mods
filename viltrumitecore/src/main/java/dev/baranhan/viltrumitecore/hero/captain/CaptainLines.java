@@ -51,11 +51,31 @@ public final class CaptainLines {
       .range(32.0)
       .build();
 
+   /** Contextual interaction reid_shatters_vibranium: «Этот меч... не из нашего мира.» — the guard is broken. */
+   public static final HeroLine SHIELD_SHATTERED = HeroLine.builder("captain:shield_shattered")
+      .text("subtitle.viltrumitecore.captain.shield_shattered")
+      .speaker("subtitle.viltrumitecore.speaker.captain")
+      .priority(HeroLine.Priority.ABILITY)
+      .cooldown(20 * 30)
+      .range(32.0)
+      .build();
+
+   /** Contextual interaction mjolnir_meets_vibranium: «Вот это удар!» — Steve braced under Mjolnir. */
+   public static final HeroLine STORM_SHIELD = HeroLine.builder("captain:storm_shield")
+      .text("subtitle.viltrumitecore.captain.storm_shield")
+      .speaker("subtitle.viltrumitecore.speaker.captain")
+      .priority(HeroLine.Priority.ABILITY)
+      .cooldown(20 * 30)
+      .range(32.0)
+      .build();
+
    public static final HeroLines LINES = HeroLines.builder()
       .onAbility(CaptainAbility.ASSEMBLE.id(), ASSEMBLE)
       .add(ALL_DAY)
       .add(TEAM_SHIELD)
       .add(TEAM_BEAM)
+      .add(SHIELD_SHATTERED)
+      .add(STORM_SHIELD)
       .onEvent(HeroLineEvents.HERO_ENTER, ENTER)
       .build();
 

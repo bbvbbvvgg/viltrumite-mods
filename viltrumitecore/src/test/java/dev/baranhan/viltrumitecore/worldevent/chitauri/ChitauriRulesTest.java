@@ -15,6 +15,14 @@ class ChitauriRulesTest {
    private static final ChitauriPhase[] FIGHTING = {ChitauriPhase.GROUND_ASSAULT, ChitauriPhase.AIR_ASSAULT, ChitauriPhase.LEVIATHAN, ChitauriPhase.CLIMAX};
 
    @Test
+   void commandKillIsNotCappedLikeAHit() {
+      // regression (Atheria QA): /kill on a Leviathan said "Killed" but it kept 784 health
+      assertEquals(120.0F, ChitauriRules.leviathanHit(Float.MAX_VALUE, 120.0F, false));
+      assertEquals(Float.MAX_VALUE, ChitauriRules.leviathanHit(Float.MAX_VALUE, 120.0F, true));
+      assertEquals(40.0F, ChitauriRules.leviathanHit(40.0F, 120.0F, false));
+   }
+
+   @Test
    void phasesRunInOrderAndRoundTripTheirIds() {
       ChitauriPhase p = ChitauriPhase.OPENING;
       int steps = 0;

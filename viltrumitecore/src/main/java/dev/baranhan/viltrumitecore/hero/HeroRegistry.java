@@ -154,6 +154,8 @@ public final class HeroRegistry {
       // The old hero's line ends with its session at once (not on the next sweep), then the new hero may greet.
       dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.interrupt(player, null);
       dev.baranhan.viltrumitecore.hero.speech.HeroLineEvents.entered(player);
+      // Encyclopedia: the hero was really chosen, its wish card shows its small portrait from now on.
+      dev.baranhan.viltrumitecore.codex.CodexProgress.heroChosen(player, id);
       return true;
    }
 

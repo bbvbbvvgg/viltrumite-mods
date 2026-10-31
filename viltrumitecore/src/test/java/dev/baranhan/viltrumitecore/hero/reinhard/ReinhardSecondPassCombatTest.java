@@ -48,7 +48,8 @@ class ReinhardSecondPassCombatTest {
       var loaded=new ReinhardState();loaded.load(nbt);
       assertEquals(ReinhardRules.MODE_COOLDOWN,loaded.modeCooldown);
       for(ReinhardAbility ability:ReinhardAbility.values())
-         assertEquals(ReinhardRules.cooldownLimit(ability),loaded.cooldowns[ability.ordinal()]);
+         // a saved cooldown is capped at the ability's limit (THE FINAL PUNCH's limit is above 1200: kept)
+         assertEquals(Math.min(1200,ReinhardRules.cooldownLimit(ability)),loaded.cooldowns[ability.ordinal()],ability.name());
       assertEquals(0,loaded.cooldowns[ReinhardAbility.LIGHT_PUNCH.ordinal()]);
       assertEquals(0,loaded.cooldowns[ReinhardAbility.FIST_COMBO.ordinal()]);
    }

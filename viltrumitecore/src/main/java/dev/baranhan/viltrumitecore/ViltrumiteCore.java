@@ -122,6 +122,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
       dev.baranhan.viltrumitecore.hero.captain.CaptainSounds.init();
+      // Contextual interactions (docs/contextual-interactions.json): their own sound holders.
+      dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();
       // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
       dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
@@ -150,6 +152,8 @@ public class ViltrumiteCore {
          ThorCombatConfig.load();
          ThorCombatModule.install();
          ThorScenes.bootstrap();
+         // Contextual interactions: after the heroes (their combat rules join the shared rule set).
+         dev.baranhan.viltrumitecore.interaction.ContextualInteractions.bootstrap();
          // Last: the move table is complete, its fingerprint goes into the login handshake.
          CoreMessages.registerThorMoveHandshake();
       });

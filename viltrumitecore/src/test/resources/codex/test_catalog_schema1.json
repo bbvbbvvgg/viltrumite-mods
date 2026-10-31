@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "about": "TEST DATA for CatalogParserTest only: the field layout of docs/contextual-interactions.json (schema 1, suffixed locales, free-text participants) with invented test texts. Not game content.",
+  "interactions": [
+    {
+      "id": "test_schema_pair",
+      "title_ru": "ТЕСТ: пара по схеме 1",
+      "title_en": "TEST: schema 1 pair",
+      "participants": ["Thor (test qualifier)", "Captain America (test qualifier)", "Someone unknown (test)"],
+      "trigger": "HIT",
+      "priority": 1,
+      "conditions": ["Test condition one", "Test condition two"],
+      "gameplay_result": "Test result text.",
+      "visual_fx": "Test visuals text.",
+      "sound": "test sound",
+      "description_ru": "Тестовое описание.",
+      "description_en": "Test description.",
+      "lore_ru": "Тестовый лор.",
+      "lore_en": "Test lore.",
+      "discovery_hint_ru": "Тестовая подсказка.",
+      "discovery_hint_en": "Test hint.",
+      "code_refs": ["nowhere"]
+    }
+  ]
+}

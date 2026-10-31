@@ -26,7 +26,9 @@ class ReinhardClipsTest {
 
    private static Map<String, Animation> clips() throws IOException {
       AnimationParser.lastWarnings.clear();
-      Map<String, Animation> clips = AnimationParser.parse(JsonParser.parseString(Files.readString(ROOT.resolve(ReinhardAssets.ANIMATIONS.getPath()))).getAsJsonObject());
+      Map<String, Animation> clips = new HashMap<>(AnimationParser.parse(JsonParser.parseString(Files.readString(ROOT.resolve(ReinhardAssets.ANIMATIONS.getPath()))).getAsJsonObject()));
+      // THE FINAL PUNCH keeps its 24 s take in its own file (FinalPunchPose).
+      clips.putAll(AnimationParser.parse(JsonParser.parseString(Files.readString(ROOT.resolve(FinalPunchPose.CLIP.getPath()))).getAsJsonObject()));
       assertTrue(AnimationParser.lastWarnings.isEmpty(), AnimationParser.lastWarnings.toString());
       return clips;
    }
@@ -59,6 +61,7 @@ class ReinhardClipsTest {
       t.put(ReinhardClips.WORLD_CUT_FROM_LEFT, ReinhardRules.WORLD_CUT_BLAST+20);
       t.put("diagonal_world_cut",ReinhardRules.WORLD_CUT_BLAST+20);
       t.put("world_erasure", ReinhardRules.ERASE_CLIP_LENGTH);
+      t.put(ReinhardClips.FINAL_PUNCH, dev.baranhan.viltrumitecore.hero.reinhard.finalpunch.FinalPunchRules.LENGTH);
       t.put(ReinhardClips.CHOP_LEFT,20); t.put(ReinhardClips.CHOP_RIGHT,20);
       return t;
    }
@@ -91,7 +94,7 @@ class ReinhardClipsTest {
          }
       }
 
-      assertEquals(31, checked, "registered abilities and their action clips");
+      assertEquals(32, checked, "registered abilities and their action clips");
       // Every ordinary strike ends exactly on its lock: the chain never starts over a running clip.
       for (var moves : java.util.List.of(dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves.FIST, dev.baranhan.viltrumitecore.hero.reinhard.melee.MeleeMoves.REID))
          for (var move : moves) {

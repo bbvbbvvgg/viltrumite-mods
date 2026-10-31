@@ -307,6 +307,10 @@ public final class MeleeMoves {
 
       ServerLevel level = player.serverLevel();
       float damage = strike.damage() * ThorCombatConfig.get().meleeDamageScale;
+      // Contextual interactions: an ally's raised shield answers the blow (no damage to spared players).
+      for (LivingEntity spared : CombatHits.sparedPlayersReached(player, strike)) {
+         dev.baranhan.viltrumitecore.interaction.ContextualInteractions.onFriendlyContact(player, spared);
+      }
       for (LivingEntity target : CombatHits.strikeTargets(player, strike)) {
          if (CombatHits.hit(player, target, damage, move, attackId)) {
             landed.add(target);

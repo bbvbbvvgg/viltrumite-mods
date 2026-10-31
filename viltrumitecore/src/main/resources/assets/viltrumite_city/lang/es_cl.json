@@ -21,6 +21,7 @@
   "viltrumitecore.city.status.districts": "Active districts: %s - %s districts in total",
   "viltrumitecore.city.status.districts_none": "Active districts: none (%s districts in total)",
   "viltrumitecore.city.status.danger": "Danger zones: %s",
+  "viltrumitecore.city.status.crowd": "Multitud: %s tranquilos, %s alarmados, %s huyendo, %s escondidos (amenazas móviles: %s)",
   "viltrumitecore.city.status.restore_clean": "Map: untouched, nothing to restore",
   "viltrumitecore.city.status.restore_dirty": "Map: %s changed blocks in %s chunks (/city reset restores them)",
   "viltrumitecore.city.status.restore_running": "Restoring: %s blocks done, %s chunks left (pass %s)",

@@ -17,6 +17,8 @@ public final class CombatTags {
    public static final String WEAPON_HAMMER = "weapon.hammer";
    public static final String WEAPON_AXE = "weapon.axe";
    public static final String WEAPON_SWORD = "weapon.sword";
+   /** A carried shield (raised = GUARD stance). */
+   public static final String WEAPON_SHIELD = "weapon.shield";
    /** Elemental charge of an attack or a weapon. */
    public static final String ELEMENT = "element";
    public static final String ELEMENT_LIGHTNING = "element.lightning";
@@ -27,9 +29,17 @@ public final class CombatTags {
    public static final String TRAIT_THROWABLE = "trait.throwable";
    public static final String TRAIT_RETURNING = "trait.returning";
    public static final String TRAIT_UNBREAKABLE = "trait.unbreakable";
+   /** A blade whose cut severs anything mortal (contextual interactions: breaks a raised guard). */
+   public static final String TRAIT_ANNIHILATING = "trait.annihilating";
+   /** Worn armour. */
+   public static final String ARMOR = "armor";
+   /** Powered armour with a reactor (soaks lightning into energy). */
+   public static final String ARMOR_POWERED = "armor.powered";
    /** Unarmed body. */
    public static final String BODY = "body";
    public static final String BODY_BARE = "body.bare";
+   /** A Viltrumite body: flies, takes meteors bare-handed, punches like a falling star. */
+   public static final String BODY_VILTRUMITE = "body.viltrumite";
 
    private CombatTags() {
    }

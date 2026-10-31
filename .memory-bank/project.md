@@ -66,6 +66,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - `decompile.md`: decompile artifacts and their fixes.
 - `viltrumites-meteors.md`: squad NPC identity fix (Homelander override), manual-only world events, meteor rain, runtime harness.
 - `ironman.md`, `ironman-legion.md`: Iron Man (see the Iron Man section).
+- `contextual-interactions.md`: hero-vs-hero/mob/event combos (`interaction/`, catalog `docs/contextual-interactions.json`), core 1.63.0.
 - `heroes-integration.md`: the all-heroes merge (Thor #74 + DIO/Sinclair/Jinwoo #82): hero and action order, core 1.54.0 / protocol 14, where each hero's lang keys and sounds live.
 ## Ability icons (house style, core 1.46.0)
 - Every hero icon is 64×64 = 32×32 art ×2 in the Reinhard house style (`tools/assets/icon_art.py`: Earth frame re-tinted via `FRAMES`, charcoal backdrop, navy outline, Endesga palette, no smooth gradients). Reinhard icons are the reference; do not redraw them.
@@ -374,3 +375,6 @@ Stage 6 final review fixes: server UUID/dimension position overlay freezes non-c
 - FP: when `ThorClipPlayer.playsFpClip`, clips drive all FP bones incl. shoulders; `ThorFirstPerson` rows are only a fallback. `AlwaysVisibleOffhandMixin` asks `ThorClipPlayer.wantsOffhand`.
 - MMB with an item in the right hand = DRAW (`ThorHands.clearForMjolnir`), never a holster. `ThorClipChecks.place` needs a case for every new clip name.
 - Every `ThorCue` must be listed in `tools/assets/thor_sources.md` (ThorSoundsTest).
+
+## Hero gallery / encyclopedia (branch feat/hero-gallery-encyclopedia-20261031)
+- Codex screen from the Od Lagna wish menu; per-player progress in `ViltrumiteCodex` persisted NBT, own channel `viltrumitecore:codex`. Details: `.memory-bank/codex.md`.

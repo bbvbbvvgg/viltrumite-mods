@@ -315,7 +315,8 @@ public final class ReinhardHero implements HeroDefinition {
    }
 
    public static boolean cinematicRoot(ReinhardState state) {
-      return state.action.is(ReinhardAbility.WORLD_CUT) || state.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT);
+      return state.action.is(ReinhardAbility.WORLD_CUT) || state.action.is(ReinhardAbility.DIAGONAL_WORLD_CUT)
+         || state.action.is(ReinhardAbility.FINAL_PUNCH);
    }
 
    /** A refused press always gives feedback (add_hero §4.4). */
@@ -820,15 +821,22 @@ public final class ReinhardHero implements HeroDefinition {
    public int heldTargetId(Player player) {
       if (player.level().isClientSide) {
          HeroPublicSnapshot view = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer hp ? hp.getHeroSnapshot() : null;
-         return view != null && view.heroId() == id() && ReinhardFlags.has(view.heroFlags(), ReinhardFlags.GRAB_HOLDING)
-            ? view.controlTargetId() : -1;
+         return view != null && view.heroId() == id() && (ReinhardFlags.has(view.heroFlags(), ReinhardFlags.GRAB_HOLDING)
+            || ReinhardFlags.has(view.heroFlags(), ReinhardFlags.FINAL_PUNCH_HOLD)) ? view.controlTargetId() : -1;
       }
       ReinhardState state = ReinhardState.of(player);
+      if (state != null && state.finalPunch != null && state.finalPunch.holding()) return state.finalPunch.targetId();
       return state == null || state.grab == null ? -1 : state.grab.targetId();
    }
 
    @Override
    public net.minecraft.world.phys.Vec3 heldTargetPosition(Player player, net.minecraft.world.entity.Entity target, float partialTick) {
+      if (finalPunchHolding(player)) {
+         // Face to face with Reinhard, its face on the fist line (the server froze it on the same point).
+         var entry = dev.baranhan.viltrumitecore.hero.reinhard.finalpunch.FinalPunchTargets.of(target);
+         return dev.baranhan.viltrumitecore.hero.reinhard.finalpunch.FinalPunch.anchor(player.getPosition(partialTick),
+            net.minecraft.util.Mth.rotLerp(partialTick, player.yRotO, player.getYRot()), entry == null ? 0.25F : entry.faceDepth());
+      }
       return dev.baranhan.viltrumitecore.hero.reinhard.ability.GrabThrow.anchor(
          player.getPosition(partialTick), net.minecraft.util.Mth.rotLerp(partialTick, player.yRotO, player.getYRot()), target.getBbWidth(), target.getBbHeight());
    }
@@ -872,6 +880,15 @@ public final class ReinhardHero implements HeroDefinition {
          action.targetId(), new int[HeroPublicSnapshot.COOLDOWN_COUNT], action.running(), -1, state.defense.palm(), state.reid.idleLeft(), false, flags, extra, action.phase(), state.arrowCapture.entityId());
    }
 
+   private static boolean finalPunchHolding(Player player) {
+      if (player.level().isClientSide) {
+         HeroPublicSnapshot view = player instanceof dev.baranhan.viltrumitecore.hero.HeroPlayer hp ? hp.getHeroSnapshot() : null;
+         return view != null && ReinhardFlags.has(view.heroFlags(), ReinhardFlags.FINAL_PUNCH_HOLD);
+      }
+      ReinhardState state = ReinhardState.of(player);
+      return state != null && state.finalPunch != null && state.finalPunch.holding();
+   }
+
    /** Stage 3 window / hold bits of the snapshot (catch, reflect, grab, hit-stop). */
    static int stateFlags(ReinhardState state, int flags) {
       if (CatchWindow.isOpen(state)) {
@@ -888,6 +905,7 @@ public final class ReinhardHero implements HeroDefinition {
 
       if(state.worldErasure!=null && !state.worldErasure.ended()) flags|=1<<ReinhardFlags.WORLD_ERASURE_ACTIVE;
       if(state.sawSphereActive()) flags|=1<<ReinhardFlags.SAW_SPHERE_ACTIVE;
+      if(state.finalPunch!=null && state.finalPunch.holding()) flags|=1<<ReinhardFlags.FINAL_PUNCH_HOLD;
       return flags;
    }
 
@@ -937,5 +955,27 @@ public final class ReinhardHero implements HeroDefinition {
             removeKnockbackResistance(knockback);
          }
       }
+   }
+
+   // --- contextual interactions (interaction/) ---
+
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence REID_DRAWN = new dev.baranhan.viltrumitecore.hero.combat.CombatPresence(
+      "viltrumitecore:reid", java.util.Set.of(dev.baranhan.viltrumitecore.hero.combat.CombatTags.WEAPON_SWORD,
+         dev.baranhan.viltrumitecore.hero.combat.CombatTags.TRAIT_DIVINE, dev.baranhan.viltrumitecore.hero.combat.CombatTags.TRAIT_ANNIHILATING),
+      dev.baranhan.viltrumitecore.hero.combat.CombatStance.NONE, 0);
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence REID_STROKE =
+      REID_DRAWN.withStance(dev.baranhan.viltrumitecore.hero.combat.CombatStance.ACTIVE);
+
+   /**
+    * The drawn Dragon Sword Reid: {@code weapon.sword}, {@code trait.divine}, {@code trait.annihilating}; ACTIVE while
+    * an ordinary stroke (REID_STRIKE) runs. Server side; NONE with the sword sheathed.
+    */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      ReinhardState state = player == null || player.level().isClientSide() ? null : ReinhardState.of(player);
+      if (state == null || !state.reid.drawn()) {
+         return dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
+      }
+      return state.action.is(ReinhardAbility.REID_STRIKE) ? REID_STROKE : REID_DRAWN;
    }
 }

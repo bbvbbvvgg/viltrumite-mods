@@ -34,6 +34,9 @@ public final class HeroPortraits {
    private static final Vector3f KEY_LIGHT = new Vector3f(-0.3F, -1.0F, 0.6F).normalize();
    private static final Vector3f FILL_LIGHT = new Vector3f(-0.2F, -0.2F, 1.0F).normalize();
    private static final Map<HeroId, Portrait> PORTRAITS = new EnumMap<>(HeroId.class);
+   /** GUI box (x0, y0, x1, y1) the caller has scissored to (GuiGraphics#enableScissor), or null. */
+   @Nullable
+   private static int[] outerClip;
 
    private HeroPortraits() {
    }
@@ -55,6 +58,27 @@ public final class HeroPortraits {
 
    public static synchronized void register(HeroId hero, Portrait portrait) {
       PORTRAITS.put(Objects.requireNonNull(hero, "hero"), Objects.requireNonNull(portrait, "portrait"));
+   }
+
+   /** The portrait a hero registered, or null when it uses the default bust. */
+   @Nullable
+   public static synchronized Portrait registered(@Nullable HeroId hero) {
+      return hero == null ? null : PORTRAITS.get(hero);
+   }
+
+   /**
+    * Runs {@code draw} with every portrait also clipped to the GUI box (x0, y0)-(x1, y1), which the caller
+    * has already scissored to with GuiGraphics#enableScissor (a scrolled list): the portrait's own scissor is
+    * intersected with it and the box is scissored again afterwards instead of switching the scissor off.
+    */
+   public static void withOuterClip(int x0, int y0, int x1, int y1, Runnable draw) {
+      int[] previous = outerClip;
+      outerClip = new int[]{x0, y0, x1, y1};
+      try {
+         draw.run();
+      } finally {
+         outerClip = previous;
+      }
    }
 
    public static synchronized Portrait resolve(@Nullable HeroId hero) {
@@ -86,9 +110,18 @@ public final class HeroPortraits {
       Minecraft mc = Minecraft.getInstance();
       double scale = mc.getWindow().getGuiScale();
       int x0 = (int)Math.round(frame.x() * scale);
+      int y0 = (int)Math.round(frame.y() * scale);
+      int x1 = x0 + (int)Math.round(frame.width() * scale);
       int y1 = (int)Math.round((frame.y() + frame.height()) * scale);
-      int w = (int)Math.round(frame.width() * scale);
-      int h = (int)Math.round(frame.height() * scale);
+      int[] outer = outerClip;
+      if (outer != null) {
+         x0 = Math.max(x0, (int)(outer[0] * scale));
+         y0 = Math.max(y0, (int)(outer[1] * scale));
+         x1 = Math.min(x1, (int)(outer[2] * scale));
+         y1 = Math.min(y1, (int)(outer[3] * scale));
+      }
+      int w = x1 - x0;
+      int h = y1 - y0;
       if (w <= 0 || h <= 0 || frame.alpha() <= 0.004F) {
          return;
       }
@@ -115,7 +148,16 @@ public final class HeroPortraits {
          RenderSystem.colorMask(true, true, true, true);
          // The bust must not hide later HUD layers (chat) behind its depth.
          RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
-         RenderSystem.disableScissor();
+         if (outer != null) {
+            // same box GuiGraphics#enableScissor set for the caller
+            int ox = (int)(outer[0] * scale);
+            int oy = (int)(outer[1] * scale);
+            int ow = Math.max(0, (int)(outer[2] * scale) - ox);
+            int oh = Math.max(0, (int)(outer[3] * scale) - oy);
+            RenderSystem.enableScissor(ox, mc.getWindow().getHeight() - oy - oh, ow, oh);
+         } else {
+            RenderSystem.disableScissor();
+         }
          Lighting.setupFor3DItems();
       }
    }

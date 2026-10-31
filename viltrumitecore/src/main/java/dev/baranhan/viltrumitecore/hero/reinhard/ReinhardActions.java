@@ -49,6 +49,7 @@ public final class ReinhardActions {
       register(ReinhardAbility.SAW_SPHERE, new dev.baranhan.viltrumitecore.hero.reinhard.saw.SawSphere());
       register(ReinhardAbility.WORLD_CUT, new dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldCut());
       register(ReinhardAbility.WORLD_ERASURE, new dev.baranhan.viltrumitecore.hero.reinhard.ability.WorldErasure());
+      register(ReinhardAbility.FINAL_PUNCH, new dev.baranhan.viltrumitecore.hero.reinhard.finalpunch.FinalPunch());
    }
 
    private ReinhardActions() {
@@ -175,7 +176,8 @@ public final class ReinhardActions {
    }
 
    static ReinhardMode contextualMode(ReinhardAbility ability, ReinhardMode mode) {
-      return ability == ReinhardAbility.STEP_DASH || ability == ReinhardAbility.GRAB_THROW && mode == ReinhardMode.RESTRAINED
+      // The secret Final Punch works in every mode.
+      return ability == ReinhardAbility.STEP_DASH || ability == ReinhardAbility.FINAL_PUNCH || ability == ReinhardAbility.GRAB_THROW && mode == ReinhardMode.RESTRAINED
          ? mode : ability.mode();
    }
 
@@ -217,6 +219,18 @@ public final class ReinhardActions {
          press(player, state, ability, handler);
       } finally {
          state.behindRequest = null;
+      }
+   }
+
+   /** The secret Shift + N chord (ReinhardFinalPunchC2SPacket): the hint rides in the state while the gate and tryStart run. */
+   public static void handleFinalPunch(ServerPlayer player, ReinhardState state, int hint) {
+      AbilityHandler handler = HANDLERS.get(ReinhardAbility.FINAL_PUNCH);
+      if (handler == null) return;
+      state.finalPunchHint = hint;
+      try {
+         press(player, state, ReinhardAbility.FINAL_PUNCH, handler);
+      } finally {
+         state.finalPunchHint = -1;
       }
    }
 

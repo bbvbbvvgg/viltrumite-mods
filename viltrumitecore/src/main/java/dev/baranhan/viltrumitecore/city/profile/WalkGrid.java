@@ -97,6 +97,21 @@ public final class WalkGrid {
       return c != 0 && WalkTile.feetY(c) == feetY;
    }
 
+   /**
+    * Air above a lower grid cell of this column, at most {@code maxDrop} blocks up: a path may
+    * step or drop down through it (off a bench, a planter or a log top, down a curb). The
+    * landing itself must still be {@link #standable}.
+    */
+   public boolean dropTo(int x, int y, int z, int maxDrop) {
+      int c = this.cell(x, z);
+      if (c == 0) {
+         return false;
+      }
+
+      int dy = y - WalkTile.feetY(c);
+      return dy > 0 && dy <= maxDrop;
+   }
+
    public boolean preferred(int x, int z) {
       int c = this.cell(x, z);
       return c != 0 && WalkTile.cls(c) == WalkTile.PREFERRED;

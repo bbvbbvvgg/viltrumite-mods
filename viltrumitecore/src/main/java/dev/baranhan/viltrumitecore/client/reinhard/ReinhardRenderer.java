@@ -95,6 +95,8 @@ public final class ReinhardRenderer {
       if (body == null) {
          return;
       }
+      dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient.Scene finalPunch = FinalPunchPose.scene(player);
+      if (finalPunch != null) FinalPunchPose.face(player, finalPunch);
 
       event.setCanceled(true);
       Minecraft mc = Minecraft.getInstance();
@@ -128,8 +130,12 @@ public final class ReinhardRenderer {
       applyHead(body, player, partialTick);
       ReinhardRecovery.body(player,body,recoveryKey(snapshot),Util.getNanos());
       ReinhardDefense.torso(player,snapshot,body);
+      // THE FINAL PUNCH owns the whole body on its own clock; Reid rests in its sheath meanwhile.
+      boolean finalPunchPose=finalPunch!=null && FinalPunchPose.apply(body,finalPunch,partialTick);
       double swordTicks=actionTicks(player,snapshot,partialTick);
-      org.joml.Matrix4f[] equipment=ReinhardSword.equipment(body,reidPhase,reidTicks,
+      org.joml.Matrix4f[] equipment=finalPunchPose
+         ? ReinhardSword.equipment(body,ReinhardPoses.ReidPhase.SHEATHED,0,false,0,0,1)
+         : ReinhardSword.equipment(body,reidPhase,reidTicks,
          snapshot.actionId()==ReinhardAbility.SHEATH_STRIKE.ordinal(),swordTicks,
          weights[ReinhardMode.HOLY_SWORD.ordinal()],
          supportRelease(player,snapshot,swordTicks,partialTick,false));
@@ -138,6 +144,13 @@ public final class ReinhardRenderer {
       stack.pushPose();
       setupRotations(player, stack, partialTick, swim);
       stack.scale(PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
+      if(finalPunchPose && !ShaderCompat.isShadowPass()) {
+         // The burning fist, the trail and the camera follow the hand that is actually drawn.
+         var v=stack.last().pose().transformPosition(ReinhardGrip.point(body,false));
+         var camera=Minecraft.getInstance().gameRenderer.getMainCamera();
+         var world=dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.viewToWorld(new net.minecraft.world.phys.Vec3(v.x,v.y,v.z),camera.rotation());
+         dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient.recordFist(player.getId(),camera.getPosition().add(world));
+      }
       if(!dev.baranhan.viltrumiteflight.client.util.ShaderCompat.isShadowPass() && dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.kind(snapshot.heroFlags())!=dev.baranhan.viltrumitecore.hero.reinhard.blessing.DefenseReaction.Kind.NONE) {
          var p=ReinhardGrip.point(body,ReinhardDefense.contactLeft(player,snapshot,false));
          var v=stack.last().pose().transformPosition(p);

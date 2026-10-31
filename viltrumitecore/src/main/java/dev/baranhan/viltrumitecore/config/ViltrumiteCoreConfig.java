@@ -22,8 +22,18 @@ public class ViltrumiteCoreConfig {
    // There is no automatic start any more; an old config's "worldEventsAutoStart" is ignored by Gson.
    public float worldEventChancePercent = 0.004F;
    public int worldEventCooldownMinutes = 40;
+   /** Living city: citizens per player = profile perPlayer x /city density x this crowd scale. */
+   public double cityCrowdScale = 2.25;
+   /** Living city: hard cap of citizens in the city level (any density, any number of players). */
+   public int cityMaxCitizens = 480;
    public boolean bloodEnabled = true;
    public boolean shouldHumansBleed = true;
+   // Reinhard's secret Final Punch (Shift + N): balance knobs, clamped by FinalPunchRules.
+   public float reinhardFinalPunchDamage = 40.0F;
+   public double reinhardFinalPunchLaunchSpeed = 4.2;
+   public double reinhardFinalPunchLaunchUp = 0.55;
+   public int reinhardFinalPunchLaunchTicks = 10;
+   public int reinhardFinalPunchCooldownSeconds = 300;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -37,6 +47,13 @@ public class ViltrumiteCoreConfig {
             }
          } catch (Exception var5) {
             var5.printStackTrace();
+         }
+         // Files written before a knob existed get it added once (defaults; nothing else changes).
+         try {
+            if (!java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("reinhardFinalPunchDamage")) {
+               save();
+            }
+         } catch (IOException ignored) {
          }
       } else {
          save();

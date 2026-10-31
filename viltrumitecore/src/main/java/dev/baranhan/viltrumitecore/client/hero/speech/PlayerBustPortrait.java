@@ -63,6 +63,16 @@ public final class PlayerBustPortrait implements HeroPortraits.Portrait {
          }
       }
 
+      this.draw(graphics, frame, skin, slimArms, hat, jacket, sleeves);
+   }
+
+   /** Bust of a fixed skin (encyclopedia: hero skins, NPC skins), every layer shown. */
+   public void renderSkin(GuiGraphics graphics, HeroPortraits.Frame frame, ResourceLocation skin, boolean slimArms) {
+      this.draw(graphics, frame, skin, slimArms, true, true, true);
+   }
+
+   private void draw(GuiGraphics graphics, HeroPortraits.Frame frame, ResourceLocation skin, boolean slimArms, boolean hat, boolean jacket,
+      boolean sleeves) {
       PlayerModel<AbstractClientPlayer> model = this.model(slimArms);
       model.head.resetPose();
       model.head.yRot = HeroPortraits.swayYaw(frame.seconds());

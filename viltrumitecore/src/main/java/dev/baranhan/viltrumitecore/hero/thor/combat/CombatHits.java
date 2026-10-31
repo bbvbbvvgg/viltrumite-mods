@@ -60,12 +60,23 @@ public final class CombatHits {
 
    /** Enemies a melee strike reaches from the player's view (line of sight required). */
    public static List<LivingEntity> strikeTargets(ServerPlayer player, ThorStrike strike) {
+      return strikeTargets(player, strike, e -> isEnemy(player, e));
+   }
+
+   /**
+    * Players the strike reaches that the target rule spares (allies, PvP off): the contextual interactions may
+    * still react to the touch (Mjolnir on an ally's raised shield). No damage is ever dealt to them here.
+    */
+   public static List<LivingEntity> sparedPlayersReached(ServerPlayer player, ThorStrike strike) {
+      return strikeTargets(player, strike, e -> e instanceof ServerPlayer && e != player && !isEnemy(player, e));
+   }
+
+   private static List<LivingEntity> strikeTargets(ServerPlayer player, ThorStrike strike, java.util.function.Predicate<LivingEntity> filter) {
       Vec3 eye = player.getEyePosition();
       Vec3 look = flat(player.getLookAngle());
       double reach = strike.shape() == ThorStrike.Shape.SLAM ? strike.reach() + strike.shockRadius() : strike.reach();
       List<LivingEntity> found = new ArrayList<>();
-      for (LivingEntity entity : player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(reach + 1.0),
-         e -> isEnemy(player, e))) {
+      for (LivingEntity entity : player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(reach + 1.0), filter)) {
          if (!player.hasLineOfSight(entity)) {
             continue;
          }
