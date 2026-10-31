@@ -66,12 +66,22 @@ public final class SignatureTrace {
       boolean blocked = block.getType() == HitResult.Type.BLOCK;
       Vec3 to = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
       EntityHitResult entity = ProjectileUtil.getEntityHitResult(shooter, eye, to, new AABB(eye, to).inflate(1.0),
-         e -> e instanceof LivingEntity && e.isAlive() && e != shooter && !e.isSpectator(), eye.distanceToSqr(to));
+         e -> rayCandidate(shooter, e), eye.distanceToSqr(to));
       if (entity != null && entity.getEntity() instanceof LivingEntity living) {
          return new Hit(living, entity.getLocation(), false);
       }
 
       return new Hit(null, to, blocked);
+   }
+
+   /**
+    * May a signature ray of {@code shooter} stop on {@code e}? Tony's own
+    * Legion (and Tony for his suits) is transparent: the ray goes on to the
+    * enemy behind it instead of ending on a hit that is refused anyway.
+    */
+   public static boolean rayCandidate(net.minecraft.world.entity.Entity shooter, net.minecraft.world.entity.Entity e) {
+      return e instanceof LivingEntity && e.isAlive() && e != shooter && !e.isSpectator()
+         && !dev.baranhan.viltrumitecore.hero.ironman.legion.LegionAllies.spares(shooter, e);
    }
 
    /** Direction turned by a random angle up to {@code degrees} around {@code look}. */

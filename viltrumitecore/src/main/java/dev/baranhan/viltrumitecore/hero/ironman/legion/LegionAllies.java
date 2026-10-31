@@ -37,12 +37,16 @@ public final class LegionAllies {
 
    /** A hit from {@code source} must not touch {@code target}: Tony and his suits never hurt each other. */
    public static boolean spares(@Nullable Entity source, @Nullable Entity target) {
-      if (source == null || target == null || !(source instanceof LegionSuitEntity) && !(target instanceof LegionSuitEntity)) {
+      if (source == null || target == null) {
          return false;
       }
 
-      UUID a = commander(source);
-      return a != null && a.equals(commander(target));
+      return sameSquad(commander(source), source instanceof LegionSuitEntity, commander(target), target instanceof LegionSuitEntity);
+   }
+
+   /** Pure form of {@link #spares}: one side is a suit and both answer to the same commander. */
+   static boolean sameSquad(@Nullable UUID source, boolean sourceSuit, @Nullable UUID target, boolean targetSuit) {
+      return (sourceSuit || targetSuit) && source != null && source.equals(target);
    }
 
    /** What {@code target} is to the owner of a suit (owner may be null while he is offline: then everything but monsters is spared). */
@@ -57,6 +61,12 @@ public final class LegionAllies {
 
       if (spares(suit, target)) {
          return Relation.ALLY;
+      }
+
+      if (target instanceof LegionSuitEntity foreign) {
+         // Another player's suit is worth exactly what its owner is worth (PvP, teams); no owner online: spared.
+         ServerPlayer foreignOwner = foreign.owner();
+         return foreignOwner == null || owner == null ? Relation.PROTECTED : relation(owner, suit, foreignOwner);
       }
 
       if (owner != null && (owner.isAlliedTo(target) || target.isAlliedTo(owner))) {
@@ -102,6 +112,43 @@ public final class LegionAllies {
    /** Missile splash of a suit: the same rule (Tony's own missiles keep the stage 3 behaviour). */
    public static boolean splashAllowed(@Nullable Entity owner, Entity target) {
       return !(owner instanceof LegionSuitEntity suit) || mayHit(suit, target);
+   }
+
+   /**
+    * The player responsible for a hit: a player himself, or the owner of the
+    * Legion suit that fired it (directly or through its projectile); null
+    * when no player is behind it or the suit's owner is offline.
+    */
+   @Nullable
+   public static Player playerBehind(@Nullable Entity attacker, @Nullable Entity direct) {
+      if (attacker instanceof Player player) {
+         return player;
+      }
+
+      LegionSuitEntity suit = suitOf(attacker, direct);
+      return suit == null ? null : suit.owner();
+   }
+
+   /**
+    * May a hit from {@code attacker}/{@code direct} take durability from a
+    * suit of {@code owner}? Hits that come from no player pass. Hits from a
+    * player, or from another player's Legion, follow the server PvP switch,
+    * teams ({@code canHarmPlayer}) and spectator rules (Codex review #4).
+    */
+   public static boolean playerDamageAllowed(ServerPlayer owner, @Nullable Entity attacker, @Nullable Entity direct) {
+      boolean fromLegion = suitOf(attacker, direct) != null;
+      Player other = playerBehind(attacker, direct);
+      if (other == null) {
+         // A suit whose owner is gone cannot claim PvP rights.
+         return !fromLegion;
+      }
+
+      return pvpAllowed(other == owner, owner.server.isPvpAllowed(), owner.canHarmPlayer(other) && other.canHarmPlayer(owner), other.isSpectator());
+   }
+
+   /** Pure PvP rule shared by direct and Legion hits between two owners. */
+   static boolean pvpAllowed(boolean sameOwner, boolean serverPvp, boolean teamsAllow, boolean spectator) {
+      return !sameOwner && serverPvp && teamsAllow && !spectator;
    }
 
    /** The suit behind a damage source: the direct attacker or the owner of its projectile. */

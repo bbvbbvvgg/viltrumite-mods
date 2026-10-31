@@ -94,7 +94,7 @@ public final class IronManCombat {
       BlockHitResult block = player.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
       Vec3 to = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
       EntityHitResult entity = ProjectileUtil.getEntityHitResult(player, eye, to,
-         new AABB(eye, to).inflate(1.0), e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator(), eye.distanceToSqr(to));
+         new AABB(eye, to).inflate(1.0), e -> dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureTrace.rayCandidate(player, e), eye.distanceToSqr(to));
       return entity != null ? entity.getLocation() : to;
    }
 
@@ -105,7 +105,7 @@ public final class IronManCombat {
       BlockHitResult block = player.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
       Vec3 to = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
       EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, to,
-         new AABB(eye, to).inflate(1.0), e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator(), eye.distanceToSqr(to));
+         new AABB(eye, to).inflate(1.0), e -> dev.baranhan.viltrumitecore.hero.ironman.mark.sig.SignatureTrace.rayCandidate(player, e), eye.distanceToSqr(to));
       return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
    }
 
