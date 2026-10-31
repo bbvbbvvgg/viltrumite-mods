@@ -54,7 +54,8 @@ public class CoreMessages {
    // after CaptainFxS2CPacket. The Thanos branch's own "17" table is refused.
    // v18 on feat/chitauri-invasion alone had the Chitauri packets right after RegulusFxS2CPacket; that
    // table is refused. v20 (final integration of #101/#99/#98): the existing table is kept as is, then
-   // ChitauriPortalS2CPacket and ChitauriFxS2CPacket, then the Iron Legion packets, are appended last.
+   // ChitauriPortalS2CPacket and ChitauriFxS2CPacket, then the four Iron Legion packets, are appended last.
+   // The Iron Legion branch's own "17" table (Legion packets right after Regulus) is refused.
    private static final String PROTOCOL_VERSION = "20";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
@@ -432,6 +433,23 @@ public class CoreMessages {
          .encoder(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket::handle)
          .add();
+      // Iron Man stage 6, the Iron Legion (docs/design/2026-10-31-ironman-legion-design.md), v20: appended after the Chitauri packets, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionMenuS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionCallC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionOrderC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.LegionStatusS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
