@@ -29,12 +29,18 @@ final class GlowDraw {
     * radius, fading to zero at the rim. 16 sectors.
     */
    static void disc(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f ax, Vector3f bx, float radius, float core, int r, int g, int b, int a) {
+      disc(vc, m, c, ax, bx, radius, core, 16, r, g, b, a);
+   }
+
+   /** {@link #disc} with 8, 16, 32 or 64 sectors (cheap far shapes such as cloud puffs use 8). */
+   static void disc(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f ax, Vector3f bx, float radius, float core, int sectors, int r, int g, int b, int a) {
       if (a <= 0 || radius <= 0.0F) {
          return;
       }
-      int step = 64 / 16;
+      int n = sectors <= 8 ? 8 : sectors <= 16 ? 16 : sectors <= 32 ? 32 : 64;
+      int step = 64 / n;
       float rc = radius * Mth.clamp(core, 0.05F, 0.95F);
-      for (int i = 0; i < 16; i++) {
+      for (int i = 0; i < n; i++) {
          int i0 = i * step;
          int i1 = i0 + step;
          float c0 = COS[i0], s0 = SIN[i0], c1 = COS[i1], s1 = SIN[i1];

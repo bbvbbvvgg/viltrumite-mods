@@ -401,7 +401,10 @@ public final class ChitauriPortalClient {
       }
    }
 
-   /** Storm vortex around the opening: dark puffs (normal pass) and their portal-lit undersides (glow pass). */
+   /**
+    * Storm vortex around the opening: dark puffs (normal pass) and their portal-lit undersides (glow pass). Each puff
+    * is two soft overlapping discs (a body and an offset lobe) so the ring reads as billowing cloud, not as tiles.
+    */
    private static void clouds(BufferBuilder buf, Frame f, boolean glow) {
       float density = Math.max(f.dark, f.open);
       if (density <= 0.01F) {
@@ -419,20 +422,34 @@ public final class ChitauriPortalClient {
          double angle = h2 * Math.PI * 2.0 + f.time * (0.03 + 0.16 * (1.0 - ring)) + ring * 1.8;
          double lift = (h3 - 0.5) * 7.0 + (1.0 - ring) * 2.0;
          Vector3f p = f.at(Math.cos(angle) * r, Math.sin(angle) * r, lift);
-         float size = (5.0F + 8.0F * h4) * (0.7F + 0.5F * ring);
+         float size = (6.0F + 9.0F * h4) * (0.7F + 0.5F * ring);
+         // the lobe sits along the swirl direction, so neighbouring puffs merge into curved bands
+         double lobeAngle = angle + (0.35 + 0.4 * h3) * size / Math.max(8.0, r);
+         Vector3f lobe = f.at(Math.cos(lobeAngle) * r, Math.sin(lobeAngle) * r, lift + 1.0);
+         float fade = puffFade(p, size);
+         if (fade <= 0.01F) {
+            continue;
+         }
          if (glow) {
             float lit = f.open * (1.0F - ring) * (1.0F - ring);
             float flash = hash(seed + clock / 3, i) > 0.97F ? 1.0F : 0.0F;
-            int a = (int)(70 * lit + 90 * flash * f.dark);
+            int a = (int)((60 * lit + 80 * flash * f.dark) * fade);
             if (a > 2) {
-               square(buf, f.m, p, left, up, size * 0.85F, 70, 115, 230, a);
+               GlowDraw.disc(buf, f.m, p, left, up, size * 0.9F, 0.25F, 8, 70, 115, 230, a);
             }
          } else {
             int shade = 24 + (int)(20 * h3);
-            int a = (int)(185 * density * (0.55F + 0.45F * ring));
-            square(buf, f.m, p, left, up, size, shade, shade + 3, shade + 12, a);
+            int a = (int)(175 * density * (0.55F + 0.45F * ring) * fade);
+            GlowDraw.disc(buf, f.m, p, left, up, size, 0.45F, 8, shade, shade + 3, shade + 12, a);
+            GlowDraw.disc(buf, f.m, lobe, left, up, size * (0.55F + 0.25F * h2), 0.4F, 8, shade + 6, shade + 9, shade + 18, (int)(a * 0.8F));
          }
       }
+   }
+
+   /** Pure: puffs thin out when the eye is inside or right next to one, so flying through the storm never blanks the view. */
+   static float puffFade(Vector3f rel, float size) {
+      float d = rel.length();
+      return Mth.clamp((d - size * 0.6F) / (size * 1.6F), 0.0F, 1.0F);
    }
 
    /** The dark of space inside the opening, and the darkening lens while the sky tears. */
@@ -637,21 +654,40 @@ public final class ChitauriPortalClient {
       }
       Vector3f p0 = rel(from, f.eye);
       Vector3f p1 = rel(to, f.eye);
-      Vector3f mid = new Vector3f(p0).add(p1).mul(0.5F);
-      Vector3f toCam = new Vector3f(mid).negate();
+      // face the ribbon to the closest point of the beam (the midpoint twists it edge-on near the base) and thin it out
+      // when the eye stands in it: an additive white column a block from the camera would blank the whole screen
+      Vector3f closest = closestOnSegment(p0, p1);
+      float near = beamNearFade(closest.length());
+      Vector3f toCam = new Vector3f(closest).negate();
       float pulse = 0.9F + 0.1F * Mth.sin(f.time * 9.0F);
-      GlowDraw.ribbon(buf, f.m, p0, p1, toCam, 3.4F * pulse, 4.2F * pulse, 60, 120, 255, 70, 50);
-      GlowDraw.ribbon(buf, f.m, p0, p1, toCam, 1.15F, 1.4F, 120, 180, 255, 170, 150);
-      GlowDraw.ribbon(buf, f.m, p0, p1, toCam, 0.34F, 0.4F, 235, 245, 255, 255, 255);
+      GlowDraw.ribbon(buf, f.m, p0, p1, toCam, 3.4F * pulse, 4.2F * pulse, 60, 120, 255, (int)(70 * near), (int)(50 * near));
+      GlowDraw.ribbon(buf, f.m, p0, p1, toCam, 1.15F, 1.4F, 120, 180, 255, (int)(170 * near), (int)(150 * near));
+      GlowDraw.ribbon(buf, f.m, p0, p1, toCam, 0.34F, 0.4F, 235, 245, 255, (int)(255 * near), (int)(255 * near));
       Vector3f left = f.camera.getLeftVector();
       Vector3f up = f.camera.getUpVector();
       for (int k = 0; k < 5; k++) {
          float u = (f.time * 0.9F + k / 5.0F) % 1.0F;
          Vector3f p = new Vector3f(p0).lerp(p1, u);
-         GlowDraw.billboard(buf, f.m, p, left, up, 1.5F, 0.3F, 160, 210, 255, (int)(150 * Mth.sin(u * Mth.PI)));
+         float pf = beamNearFade(p.length());
+         GlowDraw.billboard(buf, f.m, p, left, up, 1.5F, 0.3F, 160, 210, 255, (int)(150 * Mth.sin(u * Mth.PI) * pf));
       }
-      GlowDraw.billboard(buf, f.m, p0, left, up, 4.0F, 0.15F, 90, 150, 255, 120);
-      GlowDraw.billboard(buf, f.m, p0, left, up, 1.4F, 0.45F, 225, 240, 255, 230);
+      float base = beamNearFade(p0.length() - 2.0F);
+      GlowDraw.billboard(buf, f.m, p0, left, up, 4.0F, 0.15F, 90, 150, 255, (int)(120 * base));
+      GlowDraw.billboard(buf, f.m, p0, left, up, 1.4F, 0.45F, 225, 240, 255, (int)(230 * base));
+   }
+
+   /** Pure: beam brightness by the eye's distance to it — 0.15 inside the column, full from 9 blocks out. */
+   static float beamNearFade(float distance) {
+      float t = Mth.clamp((distance - 1.0F) / 8.0F, 0.0F, 1.0F);
+      return 0.15F + 0.85F * t * t * (3.0F - 2.0F * t);
+   }
+
+   /** Pure: the point of segment p0–p1 (camera-relative) closest to the eye at the origin. */
+   static Vector3f closestOnSegment(Vector3f p0, Vector3f p1) {
+      Vector3f d = new Vector3f(p1).sub(p0);
+      float len2 = d.lengthSquared();
+      float t = len2 < 1.0E-6F ? 0.0F : Mth.clamp(-p0.dot(d) / len2, 0.0F, 1.0F);
+      return new Vector3f(p0).add(d.mul(t));
    }
 
    // ------------------------------------------------------------------ shape helpers
@@ -746,15 +782,6 @@ public final class ChitauriPortalClient {
       f.vertex(buf, c0 * rOut, s0 * rOut, lift, r, g, b, 0);
       f.vertex(buf, c1 * rOut, s1 * rOut, lift, r, g, b, 0);
       f.vertex(buf, c1 * peak1, s1 * peak1, lift, r, g, b, a1);
-   }
-
-   private static void square(BufferBuilder buf, Matrix4f m, Vector3f p, Vector3f left, Vector3f up, float size, int r, int g, int b, int a) {
-      float lx = left.x * size, ly = left.y * size, lz = left.z * size;
-      float ux = up.x * size, uy = up.y * size, uz = up.z * size;
-      GlowDraw.vertex(buf, m, p.x - lx - ux, p.y - ly - uy, p.z - lz - uz, r, g, b, a);
-      GlowDraw.vertex(buf, m, p.x + lx - ux, p.y + ly - uy, p.z + lz - uz, r, g, b, a);
-      GlowDraw.vertex(buf, m, p.x + lx + ux, p.y + ly + uy, p.z + lz + uz, r, g, b, a);
-      GlowDraw.vertex(buf, m, p.x - lx + ux, p.y - ly + uy, p.z - lz + uz, r, g, b, a);
    }
 
    private static void squareInPlane(BufferBuilder buf, Frame f, Vector3f p, float size, int r, int g, int b, int a) {

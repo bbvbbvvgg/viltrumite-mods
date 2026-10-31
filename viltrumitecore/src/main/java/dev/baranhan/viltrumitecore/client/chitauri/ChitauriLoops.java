@@ -6,11 +6,10 @@ import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSounds;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
@@ -54,6 +53,8 @@ public final class ChitauriLoops {
    private static final Map<Integer, Loop> LEVIATHANS = new HashMap<>();
    private static final Map<Integer, Integer> RETRY_AT = new HashMap<>();
    private static final Map<Integer, Double> LAST_DIST = new HashMap<>();
+   /** Distance rank (0 = nearest) of the chariots in engine range this tick. */
+   private static final Map<Integer, Integer> RANK = new HashMap<>();
    private static final Map<Integer, Integer> FLYBY_AT = new HashMap<>();
    private static Loop portal;
    private static int portalRetry;
@@ -183,9 +184,9 @@ public final class ChitauriLoops {
       AABB box = new AABB(eye, eye).inflate(ENGINE_RANGE);
       List<ChitauriChariot> near = new ArrayList<>(mc.level.getEntitiesOfClass(ChitauriChariot.class, box, c -> c.isAlive() || c.dying()));
       near.sort(Comparator.comparingDouble(c -> c.distanceToSqr(eye)));
-      Set<Integer> wanted = new HashSet<>();
-      for (int i = 0; i < near.size() && i < MAX_ENGINES; i++) {
-         wanted.add(near.get(i).getId());
+      RANK.clear();
+      for (int i = 0; i < near.size(); i++) {
+         RANK.put(near.get(i).getId(), i);
       }
       for (ChitauriChariot chariot : near) {
          int id = chariot.getId();
@@ -198,7 +199,7 @@ public final class ChitauriLoops {
             mc.getSoundManager().play(new SimpleSoundInstance(ChitauriSounds.CHARIOT_FLYBY.get(), SoundSource.HOSTILE, 1.0F,
                0.9F + (float)Math.min(0.25, speed * 0.15), SoundInstance.createUnseededRandom(), chariot.getX(), chariot.getY() + 0.6, chariot.getZ()));
          }
-         if (wanted.contains(id) && !ENGINES.containsKey(id) && !RETRY_AT.containsKey(id)) {
+         if (startEngine(RANK.get(id), ENGINES.size()) && !ENGINES.containsKey(id) && !RETRY_AT.containsKey(id)) {
             Loop loop = new Loop(ChitauriSounds.CHARIOT_ENGINE.get(), SoundSource.HOSTILE, chariot, false) {
                @Override
                Target target() {
@@ -227,17 +228,23 @@ public final class ChitauriLoops {
       }
       Vec3 eye = mc.gameRenderer.getMainCamera().getPosition();
       double d = chariot.distanceToSqr(eye);
-      if (d > ENGINE_RANGE * ENGINE_RANGE) {
-         return false;
-      }
-      // still among the nearest few: count the chariots that are closer
-      int closer = 0;
-      for (Loop other : ENGINES.values()) {
-         if (other.entity != chariot && !other.entity.isRemoved() && other.entity.distanceToSqr(eye) < d) {
-            closer++;
-         }
-      }
-      return closer < MAX_ENGINES;
+      return d <= ENGINE_RANGE * ENGINE_RANGE && keepEngine(RANK.getOrDefault(chariot.getId(), Integer.MAX_VALUE));
+   }
+
+   /**
+    * Pure: a new engine loop starts for one of the {@link #MAX_ENGINES} nearest chariots while fewer than
+    * MAX_ENGINES + 1 loops are tracked (the spare slot lets a newcomer fade in while a farther one fades out).
+    */
+   public static boolean startEngine(@Nullable Integer rank, int tracked) {
+      return rank != null && rank < MAX_ENGINES && tracked < MAX_ENGINES + 1;
+   }
+
+   /**
+    * Pure: a running engine loop keeps playing while its chariot ranks inside MAX_ENGINES + 1 (one rank of
+    * hysteresis): chariots swapping places at the edge of the set no longer restart their loops every few ticks.
+    */
+   public static boolean keepEngine(int rank) {
+      return rank < MAX_ENGINES + 1;
    }
 
    private static void leviathans(Minecraft mc, Vec3 eye) {
@@ -288,6 +295,7 @@ public final class ChitauriLoops {
       ENGINES.clear();
       LEVIATHANS.clear();
       RETRY_AT.clear();
+      RANK.clear();
       LAST_DIST.clear();
       FLYBY_AT.clear();
       portal = null;
