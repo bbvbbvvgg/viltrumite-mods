@@ -253,6 +253,11 @@ public final class CaptainCombat {
     * counter window are lost and Steve reels (his own synced move SHIELD_SHATTERED). The shield item stays.
     */
    public static void shatterGuard(ServerPlayer player, CaptainState state, int ticks) {
+      shatterGuard(player, state, ticks, CaptainLines.SHIELD_SHATTERED);
+   }
+
+   /** {@link #shatterGuard(ServerPlayer, CaptainState, int)} with Steve's own answer to who broke it. */
+   public static void shatterGuard(ServerPlayer player, CaptainState state, int ticks, dev.baranhan.viltrumitecore.hero.speech.HeroLine line) {
       endGuard(state);
       state.shieldBroken = Math.max(state.shieldBroken, ticks);
       state.kinetic = 0;
@@ -261,7 +266,7 @@ public final class CaptainCombat {
       state.idle = 0;
       state.start(CaptainMove.SHIELD_SHATTERED);
       CaptainSounds.play(player, CaptainSounds.REFUSE, 0.9F, 0.6F);
-      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.say(player, CaptainLines.SHIELD_SHATTERED);
+      dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.say(player, line);
    }
 
    /** True when {@code from} lies in the frontal guard arc of the player. */
