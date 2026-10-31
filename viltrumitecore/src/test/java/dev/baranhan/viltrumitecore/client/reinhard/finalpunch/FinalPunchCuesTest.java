@@ -23,7 +23,7 @@ class FinalPunchCuesTest {
    @Test
    void everyLayerStaysInRangeAndIsGoneAfterTheScene() {
       DoubleUnaryOperator[] layers = {FinalPunchCues::sparks, FinalPunchCues::fire, FinalPunchCues::rings, FinalPunchCues::arcs,
-         FinalPunchCues::concentration, FinalPunchCues::sun, FinalPunchCues::compress, FinalPunchCues::trail, FinalPunchCues::impact,
+         FinalPunchCues::concentration, FinalPunchCues::sun, FinalPunchCues::compress, FinalPunchCues::trail,
          FinalPunchCues::afterglow, FinalPunchCues::smoke, FinalPunchCues::storm, FinalPunchCues::debris, FinalPunchCues::letterbox,
          t -> FinalPunchCues.grey(t), t -> FinalPunchCues.vignette(t), t -> FinalPunchCues.music(t), t -> FinalPunchCues.wind(t),
          t -> FinalPunchCues.hum(t), t -> FinalPunchCues.bodyWeight(t), t -> FinalPunchCues.aim(t)};
@@ -36,7 +36,7 @@ class FinalPunchCuesTest {
       }
       assertEquals(0.0, FinalPunchCues.letterbox(0), 1.0E-9, "the bars slide in");
       assertEquals(1.0, FinalPunchCues.letterbox(200), 1.0E-9);
-      assertTrue(FinalPunchCues.shake(FinalPunchRules.CONTACT + 1) > 0, "the hit shakes the camera");
+      assertTrue(FinalPunchCues.shake(FinalPunchRules.CONTACT) > 0.9, "the hit shakes the camera");
       assertEquals(0.0, FinalPunchCues.shake(FinalPunchRules.SILENCE + 4), 1.0E-9, "the silence is still");
    }
 
@@ -48,7 +48,10 @@ class FinalPunchCuesTest {
       assertTrue(FinalPunchCues.arcs(FinalPunchRules.ARCS + 20) > 0);
       assertTrue(FinalPunchCues.sun(FinalPunchRules.SUN + 20) > 0.5, "a small sun before the silence");
       assertTrue(FinalPunchCues.ringCount(FinalPunchRules.SUN) >= FinalPunchCues.ringCount(FinalPunchRules.RINGS + 1));
-      assertEquals(0.0, FinalPunchCues.sun(FinalPunchRules.CONTACT + 1), 1.0E-9, "spent by the hit");
+      assertEquals(0.0, FinalPunchCues.sun(FinalPunchRules.CONTACT + 4), 1.0E-9, "spent by the hit");
+      assertEquals(-1.0, FinalPunchCues.impact(FinalPunchRules.CONTACT - 1), 1.0E-9, "no flash before the hit");
+      assertEquals(0.0, FinalPunchCues.impact(FinalPunchRules.CONTACT), 1.0E-9, "the flash starts on the hit");
+      assertEquals(-1.0, FinalPunchCues.impact(FinalPunchRules.CONTACT + 40), 1.0E-9, "and is over in two seconds");
    }
 
    @Test

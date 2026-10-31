@@ -96,9 +96,46 @@ public final class FinalPunchShots {
       Shot shot = SEGMENTS[i].at(t, f);
       if (i > 0 && BLEND[i] > 0 && t < START[i] + BLEND[i]) {
          Shot before = SEGMENTS[i - 1].at(t, f);
-         shot = before.lerp(shot, FinalPunchCues.smooth((t - START[i]) / BLEND[i]));
+         shot = orbit(before, shot, FinalPunchCues.smooth((t - START[i]) / BLEND[i]), f.feet());
       }
-      return shot;
+      // A blend between two sides of him travels round the bodies, never through them.
+      Vec3 pos = clear(shot.pos(), f.feet());
+      if (f.target() != null) pos = clear(pos, f.target());
+      return pos == shot.pos() ? shot : new Shot(pos, shot.focus());
+   }
+
+   /** Blend round {@code centre}: angle on the shortest arc, radius and height linear (never through him). */
+   static Shot orbit(Shot a, Shot b, double w, Vec3 centre) {
+      double ax = a.pos().x - centre.x, az = a.pos().z - centre.z;
+      double bx = b.pos().x - centre.x, bz = b.pos().z - centre.z;
+      double ra = Math.sqrt(ax * ax + az * az), rb = Math.sqrt(bx * bx + bz * bz);
+      if (ra < 1.0E-3 || rb < 1.0E-3) return a.lerp(b, w);
+      double aa = Math.atan2(az, ax), ab = Math.atan2(bz, bx);
+      double d = ab - aa;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      double angle = aa + d * w;
+      double r = ra + (rb - ra) * w;
+      double y = a.pos().y + (b.pos().y - a.pos().y) * w;
+      return new Shot(new Vec3(centre.x + Math.cos(angle) * r, y, centre.z + Math.sin(angle) * r), a.focus().lerp(b.focus(), w));
+   }
+
+   /** Clearance of a standing body (feet, 2.1 tall): the lens is pushed out to {@link #CLEARANCE}. */
+   static final double CLEARANCE = 0.85;
+
+   static Vec3 clear(Vec3 pos, Vec3 feet) {
+      if (pos.y < feet.y - 0.2 || pos.y > feet.y + 2.3) return pos;
+      double dx = pos.x - feet.x;
+      double dz = pos.z - feet.z;
+      double d = Math.sqrt(dx * dx + dz * dz);
+      if (d >= CLEARANCE) return pos;
+      if (d < 1.0E-4) {
+         dx = 1;
+         dz = 0;
+         d = 1;
+      }
+      double k = CLEARANCE / d;
+      return new Vec3(feet.x + dx * k, pos.y, feet.z + dz * k);
    }
 
    public static Vec3 forward(Frame f) {
