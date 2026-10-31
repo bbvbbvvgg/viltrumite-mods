@@ -93,7 +93,7 @@ public final class ReinhardLines {
    public static final HeroLine LOW_HEALTH = ambient("reinhard:low_health", "low_health", 20 * 90);
    public static final HeroLine ENTER = ability("reinhard:enter", "enter", 20 * 60);
 
-   public static final HeroLines LINES = HeroLines.builder()
+   public static final HeroLines LINES = dev.baranhan.viltrumitecore.hero.reinhard.finalpunch.FinalPunchLines.bind(HeroLines.builder())
       .onAbility(ReinhardAbility.WORLD_ERASURE.id(), WORLD_ERASURE)
       .onAbility(ReinhardAbility.WORLD_CUT.id(), WORLD_CUT)
       .onAbility(ReinhardAbility.DIAGONAL_WORLD_CUT.id(), DIAGONAL_WORLD_CUT)
