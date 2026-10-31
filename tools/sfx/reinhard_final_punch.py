@@ -16,7 +16,7 @@ Cue sheet (scene ticks, 20 t/s; FinalPunchRules / FinalPunchAudio own the exact 
   impact    444         the punch
   jaw       444         bone crack (people)       clang 444  metal jaw (iron golem)
   smoke     452         hiss around the lowered fist
-Deterministic seeds. Rebuild: python3 tools/sfx/reinhard_final_punch.py [--replace]
+Deterministic seeds. Rebuild: python3 tools/sfx/reinhard_final_punch.py [--replace] [cue ...]
 Packages through the sound-design helper (mono 44.1 kHz Vorbis, .ogg.b64 in core binassets).
 Not a substitute for listening and tuning in Minecraft.
 """
@@ -263,7 +263,8 @@ def impact():
     dry, wet = reverb(x, 3.0, rng, 2200)
     x = (dry + wet * .55)[:len(t)]
     x = fade(x, .0005, .6)
-    return norm(np.tanh(norm(x) * 3.0), .95)
+    # Peak .6: the server plays it at full gain together with jaw / clang; Vorbis overshoots by ~15%.
+    return norm(np.tanh(norm(x) * 3.0), .6)
 
 
 def jaw():
@@ -278,7 +279,7 @@ def jaw():
         n = int(RATE * .003)
         crack[i:i + n] += rng.normal(0, 1, n)
     x = norm(snap) + norm(wood) * .5 + norm(band(crack, 1500, 12000)) * .7
-    return norm(np.tanh(norm(fade(x, .0005, .2)) * 2.2), .9)
+    return norm(np.tanh(norm(fade(x, .0005, .2)) * 2.2), .7)
 
 
 def clang():
@@ -291,7 +292,7 @@ def clang():
     thud = np.sin(sweep(120, 50, t, .4)) * np.exp(-t * 9)
     x = norm(x) + norm(hit) * .7 + norm(thud) * .6
     dry, wet = reverb(x, 1.6, rng, 6000)
-    return norm(np.tanh(norm(fade((dry + wet * .3)[:len(t)], .0005, .4)) * 1.8), .9)
+    return norm(np.tanh(norm(fade((dry + wet * .3)[:len(t)], .0005, .4)) * 1.8), .7)
 
 
 def smoke():
@@ -334,7 +335,10 @@ def main():
     replace = '--replace' in sys.argv
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
+        only = [a for a in sys.argv[1:] if not a.startswith('--')]
         for name, make in CUES.items():
+            if only and name not in only:
+                continue
             wav = tmp / f'{name}.wav'
             write_wav(wav, make())
             package(wav, name, replace)
