@@ -18,6 +18,8 @@ public final class IronManAbilities {
    public static final String COUNTERMEASURES = "ironman:countermeasures";
    public static final String HELMET = "ironman:helmet";
    public static final String VERONICA = "ironman:veronica";
+   /** Stage 6: the Iron Legion (call up to three marks, then orders). */
+   public static final String LEGION = "ironman:legion";
    /** Page 1 (slots 0-5), keys R Y Z V: everything for combat — Unibeam, missiles, nano arsenal / signature, countermeasures. */
    public static final int UNIBEAM_SLOT = 0;
    public static final int MISSILES_SLOT = 1;
@@ -28,8 +30,10 @@ public final class IronManAbilities {
    public static final int VERONICA_SLOT = 6 + 1;
    public static final int HELMET_SLOT = 6 + 2;
    public static final int SUIT_SLOT = 6 + 3;
+   /** Page 2, last slot of the second row: the Iron Legion (stage 6). */
+   public static final int LEGION_SLOT = 11;
    /** Own slots in panel order. Later stages append. */
-   private static final String[] OWN = {UNIBEAM, MISSILES, NANO_ARSENAL, COUNTERMEASURES, SCAN, VERONICA, HELMET, SUIT};
+   private static final String[] OWN = {UNIBEAM, MISSILES, NANO_ARSENAL, COUNTERMEASURES, SCAN, VERONICA, HELMET, SUIT, LEGION};
 
    private IronManAbilities() {
    }
@@ -119,6 +123,7 @@ public final class IronManAbilities {
       loadout[COUNTERMEASURES_SLOT] = COUNTERMEASURES;
       loadout[HELMET_SLOT] = HELMET;
       loadout[VERONICA_SLOT] = VERONICA;
+      loadout[LEGION_SLOT] = LEGION;
       return loadout;
    }
 
@@ -137,7 +142,18 @@ public final class IronManAbilities {
       old[8] = VERONICA;
       old[9] = HELMET;
       old[10] = SUIT;
-      return new String[][]{old};
+      // Stages 4–5 default (before the Legion took slot 11).
+      String[] stage5 = new String[18];
+      Arrays.fill(stage5, "");
+      stage5[SUIT_SLOT] = SUIT;
+      stage5[UNIBEAM_SLOT] = UNIBEAM;
+      stage5[MISSILES_SLOT] = MISSILES;
+      stage5[NANO_ARSENAL_SLOT] = NANO_ARSENAL;
+      stage5[SCAN_SLOT] = SCAN;
+      stage5[COUNTERMEASURES_SLOT] = COUNTERMEASURES;
+      stage5[HELMET_SLOT] = HELMET;
+      stage5[VERONICA_SLOT] = VERONICA;
+      return new String[][]{old, stage5};
    }
 
    @Nullable
@@ -155,6 +171,7 @@ public final class IronManAbilities {
          case COUNTERMEASURES -> HeroAction.COUNTERMEASURES;
          case HELMET -> HeroAction.HELMET;
          case VERONICA -> HeroAction.VERONICA;
+         case LEGION -> HeroAction.LEGION;
          default -> null;
       };
    }
@@ -182,6 +199,7 @@ public final class IronManAbilities {
             case MISSILES -> snapshot.extraCooldown(5) > 0;
             case NANO_ARSENAL -> snapshot.extraCooldown(6) > 0 || snapshot.resourceLocked();
             case HELMET -> true;
+            case LEGION -> snapshot.extraCooldown(4) > 0;
             default -> false;
          };
       }
@@ -199,6 +217,8 @@ public final class IronManAbilities {
          case SCAN -> !worn || !IronManFlags.is(flags, IronManFlags.Field.HELMET_CLOSED);
          case COUNTERMEASURES -> !worn || snapshot.extraCooldown(1) > 0;
          case HELMET -> !worn;
+         // Legion: call cooldown in extra [4]; usable without armor.
+         case LEGION -> snapshot.extraCooldown(4) > 0;
          default -> false;
       };
    }

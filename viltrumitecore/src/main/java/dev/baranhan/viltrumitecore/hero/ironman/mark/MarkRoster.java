@@ -111,13 +111,52 @@ public final class MarkRoster {
       }
    }
 
-   /** World instances are gone (logout, death, dimension): empty suit and delivery go back to storage. */
+   /** World instances are gone (logout, death, dimension): empty suit, delivery and Legion go back to storage. */
    public void recallWorld() {
       for (Entry entry : this.entries.values()) {
-         if (entry.location == MarkLocation.EMPTY || entry.location == MarkLocation.IN_DELIVERY) {
+         if (entry.location.inWorld()) {
             entry.location = MarkLocation.STORED;
          }
       }
+   }
+
+   /** Only the Legion goes back to storage; durability and cooldowns stay as they are. */
+   public void recallLegion() {
+      for (Entry entry : this.entries.values()) {
+         if (entry.location == MarkLocation.LEGION) {
+            entry.location = MarkLocation.STORED;
+         }
+      }
+   }
+
+   /** Can join the Iron Legion: in storage, not on break cooldown, with durability left. */
+   public boolean legionCallable(MarkId id) {
+      Entry entry = this.entry(id);
+      return entry.location == MarkLocation.STORED && entry.cooldown <= 0 && entry.durability > 0.0F;
+   }
+
+   /** Marks currently flying with the Legion, in {@link MarkId} order. */
+   public java.util.List<MarkId> legion() {
+      java.util.List<MarkId> out = new java.util.ArrayList<>(3);
+      for (MarkId id : MarkId.values()) {
+         if (this.entry(id).location == MarkLocation.LEGION) {
+            out.add(id);
+         }
+      }
+
+      return out;
+   }
+
+   /** Damage a Legion suit in the roster (the entity only mirrors it); a broken result means the suit must crash. */
+   public MarkDamage.Result damageLegion(MarkId id, float amount) {
+      Entry entry = this.entry(id);
+      if (entry.location != MarkLocation.LEGION) {
+         return new MarkDamage.Result(entry.durability, false, false);
+      }
+
+      MarkDamage.Result result = MarkDamage.apply(entry.durability, amount, MarkSpec.of(id).plating());
+      entry.durability = result.durability();
+      return result;
    }
 
    /** Hero change: everything fresh (spec §2). */

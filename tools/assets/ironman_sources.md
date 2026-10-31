@@ -140,3 +140,24 @@ Per file (synthesis support under every one; ids are the recordings in that file
 | `spark_loop` | `ironman_hulkbuster_spark_loop` | loop | 396240 |
 
 Loudness: every class is level-matched on the 100 ms K-weighted momentary maximum (BS.1770 meter of `tools/sfx/reinhard_strikes.py`) under a -1 dBTP ceiling (loops -2 dBTP), variants of one event within 0.2 dB. Measured on the decoded committed files: step -12.0…-12.1, screech -14.1…-14.3, swing -13.0…-13.1, impact -8.7…-8.9, heavy -7.9…-8.0, body -11.1…-11.3, riser -14.1…-14.3, ui -18.2, loop -18.1…-18.3 LUFS; highest true peak -1.0 dBTP (`repulsor_beam`). **Not auditioned**: the sandbox has no audio output; numbers are measured, not heard. The in-game balance still needs a listening pass.
+
+## Iron Legion (stage 6) sounds — own synthesis
+
+All 12 Legion cues are original numpy synthesis by `tools/sfx/ironman_legion.py` (CC0 1.0, no recordings, no film audio, no vanilla stand-ins), packaged as `sounds/ironman/legion/<name>.ogg.b64`; events `ironman_legion_<name>` in `sound-overlays/legion.json`, subtitles in `lang-overlays/legion/*.json` (12 locales).
+
+| Cue | Event | Length | Measured (100 ms momentary max / true peak) |
+| --- | --- | --- | --- |
+| `signal` | `ironman_legion_signal` | 2.40 s | -15.0 LUFS / -9.4 dBTP |
+| `engine` (loop) | `ironman_legion_engine` | 2.00 s | -19.0 LUFS / -13.2 dBTP |
+| `flyby` | `ironman_legion_flyby` | 1.80 s | -13.0 LUFS / -9.1 dBTP |
+| `brake` | `ironman_legion_brake` | 0.90 s | -12.0 LUFS / -4.2 dBTP |
+| `land` | `ironman_legion_land` | 0.50 s | -12.7 LUFS / -1.2 dBTP |
+| `servo` | `ironman_legion_servo` | 0.80 s | -20.0 LUFS / -7.3 dBTP |
+| `repulsor` | `ironman_legion_repulsor` | 0.45 s | -11.0 LUFS / -4.9 dBTP |
+| `ignite` | `ironman_legion_ignite` | 0.90 s | -12.0 LUFS / -1.2 dBTP |
+| `failure` | `ironman_legion_failure` | 1.30 s | -13.9 LUFS / -1.2 dBTP |
+| `crash` | `ironman_legion_crash` | 1.60 s | -9.0 LUFS / -1.9 dBTP |
+| `order` | `ironman_legion_order` | 0.35 s | -20.0 LUFS / -20.4 dBTP |
+| `hit` | `ironman_legion_hit` | 0.35 s | -11.3 LUFS / -1.2 dBTP |
+
+**Not auditioned**: the sandbox has no audio output; the numbers are measured on the synthesized signal before Vorbis encoding. The in-game balance against the other Iron Man cues still needs a listening pass.

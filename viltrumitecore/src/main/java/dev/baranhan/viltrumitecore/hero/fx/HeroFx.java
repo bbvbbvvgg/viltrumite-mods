@@ -22,17 +22,17 @@ public final class HeroFx {
    }
 
    /** Visible flying shards from origin to each end point (flat xyz triples, max 64), with an optional pass-by whiz. */
-   public static void shards(ServerPlayer source, Vec3 origin, float power, @Nullable BlockState material, float[] ends, @Nullable SoundEvent whiz) {
+   public static void shards(net.minecraft.world.entity.Entity source, Vec3 origin, float power, @Nullable BlockState material, float[] ends, @Nullable SoundEvent whiz) {
       send(source, HeroFxS2CPacket.SHARDS, origin, power, material, ends, whiz);
    }
 
    /** Expanding ground ring + dust + camera shake (landings). Power 0..1+. */
-   public static void shockwave(ServerPlayer source, Vec3 origin, float power, @Nullable BlockState material, float radius) {
+   public static void shockwave(net.minecraft.world.entity.Entity source, Vec3 origin, float power, @Nullable BlockState material, float radius) {
       send(source, HeroFxS2CPacket.SHOCKWAVE, origin, power, material, new float[]{radius, 0.0F, 0.0F}, null);
    }
 
    /** Heavy impact: double ring, white flash, lots of dust, strong shake. */
-   public static void slam(ServerPlayer source, Vec3 origin, @Nullable BlockState material, float radius) {
+   public static void slam(net.minecraft.world.entity.Entity source, Vec3 origin, @Nullable BlockState material, float radius) {
       send(source, HeroFxS2CPacket.SLAM, origin, 1.0F, material, new float[]{radius, 0.0F, 0.0F}, null);
    }
 
@@ -42,17 +42,17 @@ public final class HeroFx {
    }
 
    /** Ground puff ring under a launch (super jump, take-off). */
-   public static void launch(ServerPlayer source, Vec3 feet, float power, @Nullable BlockState material) {
+   public static void launch(net.minecraft.world.entity.Entity source, Vec3 feet, float power, @Nullable BlockState material) {
       send(source, HeroFxS2CPacket.LAUNCH, feet, power, material, null, null);
    }
 
    /** Short white flash + medium shake (a hit that sends someone flying). */
-   public static void flash(ServerPlayer source, Vec3 at) {
+   public static void flash(net.minecraft.world.entity.Entity source, Vec3 at) {
       flash(source,at,1.0F);
    }
 
    /** Compact contact flash; power controls size/shake without a ground wave or block damage. */
-   public static void flash(ServerPlayer source, Vec3 at, float power) {
+   public static void flash(net.minecraft.world.entity.Entity source, Vec3 at, float power) {
       send(source, HeroFxS2CPacket.FLASH, at, Math.max(.1F,Math.min(2,power)), null, null, null);
    }
 
@@ -228,10 +228,11 @@ public final class HeroFx {
       return out;
    }
 
-   private static void send(ServerPlayer source, byte kind, Vec3 origin, float power, @Nullable BlockState material, @Nullable float[] points, @Nullable SoundEvent sound) {
+   /** Tracking players of the source (and the source if it is a player): Tony or one of his Legion suits. */
+   private static void send(net.minecraft.world.entity.Entity source, byte kind, Vec3 origin, float power, @Nullable BlockState material, @Nullable float[] points, @Nullable SoundEvent sound) {
       int stateId = material == null ? 0 : Block.getId(material);
       int soundId = sound == null ? -1 : BuiltInRegistries.SOUND_EVENT.getId(sound);
       CoreMessages.sendToTrackingAndSelf(new HeroFxS2CPacket(kind, origin, power, stateId, points, soundId), source);
-      CombatNoise.emit(source.serverLevel(), origin, kind == HeroFxS2CPacket.LAUNCH ? 8.0F : 16.0F);
+      CombatNoise.emit((net.minecraft.server.level.ServerLevel)source.level(), origin, kind == HeroFxS2CPacket.LAUNCH ? 8.0F : 16.0F);
    }
 }

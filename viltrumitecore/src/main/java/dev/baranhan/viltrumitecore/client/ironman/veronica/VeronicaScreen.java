@@ -155,6 +155,7 @@ public final class VeronicaScreen extends Screen {
          case WORN -> Component.translatable("gui.viltrumitecore.veronica.worn");
          case EMPTY -> Component.translatable("gui.viltrumitecore.veronica.empty");
          case IN_DELIVERY -> Component.translatable("gui.viltrumitecore.veronica.delivery");
+         case LEGION -> Component.translatable("gui.viltrumitecore.veronica.legion");
          case STORED -> this.view.durability(mark) <= 0.0F ? Component.translatable("gui.viltrumitecore.veronica.unavailable")
             : Component.translatable("gui.viltrumitecore.veronica.durability", Math.round(this.view.durabilityFraction(mark) * 100.0F));
       };

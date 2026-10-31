@@ -37,6 +37,7 @@ public final class MarkVisuals {
       event.registerEntityRenderer(ViltrumiteEntities.VERONICA_POD.get(), dev.baranhan.viltrumitecore.client.ironman.veronica.VeronicaPodRenderer::new);
       event.registerEntityRenderer(ViltrumiteEntities.EMPTY_SUIT.get(), EmptySuitRenderer::new);
       event.registerEntityRenderer(ViltrumiteEntities.SUIT_DEBRIS.get(), SuitDebrisRenderer::new);
+      event.registerEntityRenderer(ViltrumiteEntities.LEGION_SUIT.get(), dev.baranhan.viltrumitecore.client.ironman.legion.LegionSuitRenderer::new);
    }
 
    /** Whole-suit skin: the mark (helmet open = Tony's head). Empty when Tony's skin or the plates show. */

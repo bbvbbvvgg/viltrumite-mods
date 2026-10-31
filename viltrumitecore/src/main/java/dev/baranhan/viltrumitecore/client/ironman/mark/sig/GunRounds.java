@@ -35,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
  * variant rings off as a ricochet); in a body, crit sparks and a hit sound.
  * Purely cosmetic and local; damage stays the server's hit-scan.
  */
-final class GunRounds {
+public final class GunRounds {
    /** Round speed (blocks per tick): fast, but visible for a few frames. */
    static final double SPEED = 7.5;
    /** Streak length behind the head (blocks). */
@@ -103,7 +103,7 @@ final class GunRounds {
    }
 
    /** One shot from the muzzle to the synced end point. */
-   static void fire(ClientLevel level, Entity shooter, Vec3 muzzle, Vec3 point) {
+   public static void fire(ClientLevel level, Entity shooter, Vec3 muzzle, Vec3 point) {
       if (ROUNDS.size() < ROUND_MAX) {
          ROUNDS.add(new Round(muzzle, point, shooter.getId()));
       }

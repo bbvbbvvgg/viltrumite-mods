@@ -8,7 +8,7 @@ reference. Every icon is 32x32 art saved 2x nearest-neighbour as a 64x64 RGBA PN
 
     regulus     textures/gui/ability/regulus/<name>.png      (6)
     homelander  textures/gui/ability/homelander/<name>.png   (6 panel + 2 flight bar)
-    ironman     textures/gui/ability/ironman/<name>.png      (8 kit + 7 signatures + 3 Hulkbuster)
+    ironman     textures/gui/ability/ironman/<name>.png      (9 kit incl. legion + 7 signatures + 3 Hulkbuster)
 
 Run:
     python3 tools/assets/make_hero_icons.py                    # all heroes

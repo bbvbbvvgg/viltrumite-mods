@@ -64,24 +64,28 @@ public final class PulseUnibeam implements MarkSignature {
          return;
       }
 
-      Vec3 from = SignatureTrace.chest(player);
-      Vec3 dir = player.getLookAngle();
-      var guard=beamEnd(player,from,dir);
-      sig.point = guard.end();
-      if (SignatureRules.pulseHitsTick(tick)) {
-         hitAlong(player, from, guard, dir);
+      sig.point = pulse(SignatureActor.of(player), SignatureTrace.chest(player), player.getLookAngle(), SignatureRules.pulseHitsTick(tick));
+   }
+
+   /** Shared pulse kernel (Tony and the Legion's Mark 17): beam end through glass, hits along it on hit ticks. */
+   public static Vec3 pulse(SignatureActor actor, Vec3 from, Vec3 dir, boolean hits) {
+      var guard = beamEnd(actor, from, dir);
+      if (hits) {
+         hitAlong(actor, from, guard, dir);
       }
+
+      return guard.end();
    }
 
    /** Glass and leaves give way (as the Unibeam); everything else stops the pulse. */
-   private static dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop beamEnd(ServerPlayer player, Vec3 from, Vec3 dir) {
-      ServerLevel level = player.serverLevel();
+   private static dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop beamEnd(SignatureActor actor, Vec3 from, Vec3 dir) {
+      ServerLevel level = actor.level();
       Vec3 end = from.add(dir.scale(IronManRules.UNIBEAM_RANGE));
       BlockHitResult block = null;
       for (int i = 0; i < 4; i++) {
-         block = level.clip(new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-         var guard=dev.baranhan.viltrumitecore.hero.HeroRayDefense.clip(player,from,block.getType()==HitResult.Type.BLOCK?block.getLocation():end,
-            IronManRules.UNIBEAM_RADIUS,e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player,e));
+         block = level.clip(new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, actor.body()));
+         var guard=dev.baranhan.viltrumitecore.hero.HeroRayDefense.clip(actor.body(),from,block.getType()==HitResult.Type.BLOCK?block.getLocation():end,
+            IronManRules.UNIBEAM_RADIUS,actor::canHit);
          if(guard.defender()!=null)return guard;
          if (block.getType() != HitResult.Type.BLOCK || i == 3) {
             break;
@@ -98,14 +102,14 @@ public final class PulseUnibeam implements MarkSignature {
       return new dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop(block != null && block.getType() == HitResult.Type.BLOCK ? block.getLocation() : end,null);
    }
 
-   private static void hitAlong(ServerPlayer player, Vec3 from, dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop guard, Vec3 dir) {
+   private static void hitAlong(SignatureActor actor, Vec3 from, dev.baranhan.viltrumitecore.hero.HeroRayDefense.Stop guard, Vec3 dir) {
       Vec3 to=guard.end();
       double radius = IronManRules.UNIBEAM_RADIUS;
       Vec3 segment = to.subtract(from);
       double length = segment.length();
       AABB box = new AABB(from, to).inflate(radius + 1.0);
-      DamageSource source = player.damageSources().playerAttack(player);
-      for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class, box, e -> dev.baranhan.viltrumitecore.hero.ironman.combat.IronManTargets.canHit(player, e))) {
+      DamageSource source = actor.attack();
+      for (LivingEntity target : actor.level().getEntitiesOfClass(LivingEntity.class, box, actor::canHit)) {
          Vec3 center = target.getBoundingBox().getCenter();
          double t = length < 1.0E-3 ? 0.0 : Mth.clamp(center.subtract(from).dot(segment) / (length * length), 0.0, 1.0);
          Vec3 closest = from.add(segment.scale(t));
