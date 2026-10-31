@@ -50,7 +50,7 @@ public class CoreMessages {
    // the wish packets first, then RegulusFxS2CPacket, both after the Jinwoo packet. A client built
    // from any single "15" branch is refused.
    // v17 (feat/captain-america-2012): CaptainFxS2CPacket appended after RegulusFxS2CPacket.
-   private static final String PROTOCOL_VERSION = "17";
+   private static final String PROTOCOL_VERSION = "18";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 

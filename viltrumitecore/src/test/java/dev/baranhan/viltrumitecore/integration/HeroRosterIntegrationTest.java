@@ -169,8 +169,8 @@ class HeroRosterIntegrationTest {
       assertTrue(packets.indexOf("ThorDashS2CPacket") < packets.indexOf("HeroLineS2CPacket"), "Thor / Hulkbuster packets keep their #74 slots");
       // 12 = #74 alone, 13 = #82 alone, 14 = the merged table; 15 = each of #86 (Thor GUARD bit), #88
       // (Od Lagna's wish packets) and #89 (Regulus Reborn) alone; 16 = the final table with all of them;
-      // 17 = Captain America's CaptainFxS2CPacket appended last.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"17\""), "the merged packet table needs its own protocol version");
+      // 17 = Captain America's CaptainFxS2CPacket appended last; 18 = its TEAM (joint move) event type.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"18\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
