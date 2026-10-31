@@ -38,6 +38,8 @@ public final class CombatTags {
    /** Unarmed body. */
    public static final String BODY = "body";
    public static final String BODY_BARE = "body.bare";
+   /** A Viltrumite body: flies, takes meteors bare-handed, punches like a falling star. */
+   public static final String BODY_VILTRUMITE = "body.viltrumite";
 
    private CombatTags() {
    }
