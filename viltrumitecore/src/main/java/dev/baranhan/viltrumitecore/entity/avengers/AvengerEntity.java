@@ -104,6 +104,11 @@ public class AvengerEntity extends PathfinderMob {
       this.setMaxUpStep(kind == AvengerKind.HULK ? 1.6F : 1.1F);
    }
 
+   /** Client-only preview entity (encyclopedia portrait): which Avenger it draws as. */
+   public void previewKind(AvengerKind kind) {
+      this.entityData.set(KIND, (byte)kind.ordinal());
+   }
+
    public AvengerKind kind() {
       return AvengerKind.byOrdinal(this.entityData.get(KIND));
    }

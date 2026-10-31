@@ -23,6 +23,11 @@ public final class HeroSkins {
       }
    }
 
+   /** The skin provider a hero registered, if any (encyclopedia portraits use its default skin). */
+   public static Optional<Provider> provider(HeroId id) {
+      return Optional.ofNullable(id == null ? null : PROVIDERS.get(id));
+   }
+
    public static Optional<ResolvedHeroSkin> resolve(AbstractClientPlayer player) {
       if (!(player instanceof HeroPlayer heroPlayer)) {
          return Optional.empty();

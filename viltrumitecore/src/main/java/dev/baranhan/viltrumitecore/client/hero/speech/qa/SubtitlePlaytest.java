@@ -207,6 +207,88 @@ public final class SubtitlePlaytest {
          }
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
+         // encyclopedia QA (hero gallery): open the wish screen, drive the GUI, resize, switch language
+         case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());
+         case "click" -> {
+            String[] a = arg.split(" ");
+            if (mc.screen != null) {
+               double x = Double.parseDouble(a[0]);
+               double y = Double.parseDouble(a[1]);
+               mc.screen.mouseMoved(x, y);
+               boolean handled = mc.screen.mouseClicked(x, y, 0);
+               if (mc.screen != null) {
+                  mc.screen.mouseReleased(x, y, 0);
+               }
+               LOG.info("SUBPT t={} click {} {} handled={} screen={}", ticks, x, y, handled, mc.screen == null ? "none" : mc.screen.getClass().getSimpleName());
+            }
+         }
+         case "mouse" -> {
+            String[] a = arg.split(" ");
+            double scale = mc.getWindow().getGuiScale();
+            double wx = Double.parseDouble(a[0]) * scale;
+            double wy = Double.parseDouble(a[1]) * scale;
+            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), wx, wy);
+            // Xvfb sends no cursor callback for a warp: set the handler's position too (first two doubles: xpos, ypos)
+            try {
+               int n = 0;
+               for (java.lang.reflect.Field f : net.minecraft.client.MouseHandler.class.getDeclaredFields()) {
+                  if (f.getType() == double.class && n < 2) {
+                     f.setAccessible(true);
+                     f.setDouble(mc.mouseHandler, n++ == 0 ? wx : wy);
+                  }
+               }
+            } catch (ReflectiveOperationException e) {
+               LOG.warn("SUBPT mouse: {}", e.toString());
+            }
+         }
+         case "scroll" -> {
+            String[] a = arg.split(" ");
+            if (mc.screen != null) {
+               mc.screen.mouseScrolled(Double.parseDouble(a[0]), Double.parseDouble(a[1]), Double.parseDouble(a[2]));
+            }
+         }
+         case "keypress" -> {
+            if (mc.screen != null) {
+               int key = switch (arg) {
+                  case "esc" -> org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
+                  case "down" -> org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
+                  case "up" -> org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
+                  case "left" -> org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT;
+                  case "right" -> org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
+                  case "pgdn" -> org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN;
+                  default -> Integer.parseInt(arg);
+               };
+               mc.screen.keyPressed(key, 0, 0);
+            }
+         }
+         case "codex" -> {
+            String[] a = arg.split(" ");
+            if (mc.screen instanceof dev.baranhan.viltrumitecore.client.codex.CodexScreen codex) {
+               codex.qaSelect(Integer.parseInt(a[0]), a.length > 1 ? Integer.parseInt(a[1]) : 0);
+               if (a.length > 2) {
+                  codex.qaScroll(Float.parseFloat(a[2]));
+               }
+            }
+         }
+         case "guiscale" -> {
+            mc.options.guiScale().set(Integer.parseInt(arg));
+            mc.resizeDisplay();
+         }
+         case "window" -> {
+            String[] a = arg.split(" ");
+            mc.getWindow().setWindowed(Integer.parseInt(a[0]), Integer.parseInt(a[1]));
+         }
+         case "lang" -> {
+            mc.options.languageCode = arg;
+            mc.getLanguageManager().setSelected(arg);
+            mc.reloadResourcePacks();
+         }
+         case "codexstate" -> {
+            dev.baranhan.viltrumitecore.codex.CodexRecord r = dev.baranhan.viltrumitecore.client.codex.CodexClientState.snapshot();
+            LOG.info("SUBPT t={} codex heroes={} interactions={} screen={} gui={}x{} scale={}", ticks, r.heroes(), r.interactions(),
+               mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight(),
+               mc.getWindow().getGuiScale());
+         }
          default -> LOG.warn("SUBPT unknown command '{}'", line);
       }
    }
