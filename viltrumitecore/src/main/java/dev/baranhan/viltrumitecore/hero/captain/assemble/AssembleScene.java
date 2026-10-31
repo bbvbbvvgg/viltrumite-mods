@@ -173,11 +173,11 @@ public final class AssembleScene {
             }
          }
          case BLACK_WIDOW, HAWKEYE -> {
-            int delay = k == AvengerKind.HAWKEYE ? 4 : 0;
+            int delay = k == AvengerKind.HAWKEYE ? CaptainRules.HAWKEYE_JUMP_DELAY : 0;
             if (sky) {
                m.mode = MODE_FALL;
                m.t0 = CaptainRules.QUINJET_JUMP + delay;
-               m.t1 = m.t0 + 20;
+               m.t1 = m.t0 + CaptainRules.DROP_TICKS;
             } else {
                m.mode = MODE_RUN;
                Vec3 back = FormationPlanner.dir(this.plan.yaw() + 180.0 + (k == AvengerKind.HAWKEYE ? 25 : -25));

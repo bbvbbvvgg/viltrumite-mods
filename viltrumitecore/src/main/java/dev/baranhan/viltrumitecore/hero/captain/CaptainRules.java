@@ -132,6 +132,9 @@ public final class CaptainRules {
    public static final int QUINJET_OVERHEAD = 90;
    public static final int QUINJET_JUMP = 92;
    public static final int QUINJET_END = 200;
+   /** Ramp drop: ticks from the jump to the landing, and Clint's delay after Natasha (each gets a close-up). */
+   public static final int DROP_TICKS = 20;
+   public static final int HAWKEYE_JUMP_DELAY = 12;
    public static final int IRONMAN_START = 30;
    public static final int IRONMAN_LAND = 88;
    public static final int THOR_BOLT = 70;

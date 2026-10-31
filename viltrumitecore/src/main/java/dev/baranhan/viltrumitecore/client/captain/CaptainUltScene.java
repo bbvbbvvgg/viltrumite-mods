@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.client.captain;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.baranhan.viltrumitecore.entity.avengers.AvengerEntity;
+import dev.baranhan.viltrumitecore.entity.avengers.AvengerKind;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainMove;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainRules;
@@ -16,6 +18,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Marker;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -57,6 +60,11 @@ public final class CaptainUltScene {
    private static Vec3[] blendFrom;
    private static float bars;
    private static float barsO;
+   /** Arrival close-up state: who the lens is on (0 = crane), ticks since that cut, the lens it blends from. */
+   private static int closeWho;
+   private static int closeAge;
+   @Nullable
+   private static Vec3[] closeFrom;
 
    private CaptainUltScene() {
    }
@@ -136,6 +144,9 @@ public final class CaptainUltScene {
          float w = (float)CaptainSceneShots.smooth((age + 1.0) / CaptainSceneShots.BLEND);
          shot = new Vec3[]{blendFrom[0].lerp(shot[0], w), blendFrom[1].lerp(shot[1], w)};
       }
+      if (m == CaptainMove.ASSEMBLE_WAIT) {
+         shot = arrivalCloseUp(level, me, shot, c, f);
+      }
       if (m == CaptainMove.ASSEMBLE_RAISE) {
          double w = CaptainSceneShots.returnWeight(age);
          if (w > 0.0) {
@@ -156,6 +167,44 @@ public final class CaptainUltScene {
          snap = true;
       }
       place(level, camera, shot[0], shot[1], snap);
+   }
+
+   /** Cuts the crane to Natasha's, then Clint's close-up while they drop from the ramp (cross-faded both ways). */
+   private static Vec3[] arrivalCloseUp(ClientLevel level, LocalPlayer me, Vec3[] wide, Vec3 c, Vec3 f) {
+      int sceneT = CaptainRules.CALL_TICKS + age;
+      int who = CaptainSceneShots.closeUp(sceneT);
+      AvengerEntity subject = who == 0 ? null : dropper(level, me, who == 1 ? AvengerKind.BLACK_WIDOW : AvengerKind.HAWKEYE, c);
+      int now = subject == null ? 0 : who;
+      if (now != closeWho) {
+         closeFrom = current();
+         closeWho = now;
+         closeAge = 0;
+      } else {
+         closeAge++;
+      }
+      Vec3[] shot = wide;
+      if (subject != null) {
+         int start = who == 1 ? CaptainSceneShots.WIDOW_CLOSE : CaptainSceneShots.CLINT_CLOSE;
+         shot = CaptainSceneShots.closeShot(subject.position(), c, f, who, (sceneT - start) / (double)CaptainSceneShots.CLOSE_TICKS);
+      }
+      if (closeFrom != null && closeAge < CaptainSceneShots.CLOSE_BLEND) {
+         float w = (float)CaptainSceneShots.smooth((closeAge + 1.0) / CaptainSceneShots.CLOSE_BLEND);
+         shot = new Vec3[]{closeFrom[0].lerp(shot[0], w), closeFrom[1].lerp(shot[1], w)};
+      }
+      return shot;
+   }
+
+   /** The caster's own Natasha / Clint near the circle (none: the crane stays). */
+   @Nullable
+   private static AvengerEntity dropper(ClientLevel level, LocalPlayer me, AvengerKind kind, Vec3 c) {
+      AvengerEntity best = null;
+      for (AvengerEntity e : level.getEntitiesOfClass(AvengerEntity.class, new AABB(c, c).inflate(48.0, 40.0, 48.0),
+            e -> e.isAlive() && e.kind() == kind && e.ownerId() == me.getId())) {
+         if (best == null || e.distanceToSqr(c) < best.distanceToSqr(c)) {
+            best = e;
+         }
+      }
+      return best;
    }
 
    @Nullable
@@ -216,6 +265,9 @@ public final class CaptainUltScene {
       move = null;
       age = 0;
       blendFrom = null;
+      closeWho = 0;
+      closeAge = 0;
+      closeFrom = null;
       wideEnd = CaptainSceneShots.WIDE_START;
       if (mc.player == null || CaptainView.of(mc.player) == null || !ceremony(mc.player)) {
          centre = null;
