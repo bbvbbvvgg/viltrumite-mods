@@ -6,7 +6,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Pure camera shots of «Avengers, assemble!» (no Minecraft client state): the call on Steve's face, a wide
- * high crane over the landing site while the team arrives, and the low 360° orbit around the circle from the
+ * high crane over the landing site while the team arrives (cut in for close-ups of Natasha and Clint dropping
+ * from the Quinjet's ramp), and the low 360° orbit around the circle from the
  * 2012 film, easing back into Steve's eyes before the fight. Each shot is {position, look-at}.
  */
 public final class CaptainSceneShots {
@@ -23,7 +24,42 @@ public final class CaptainSceneShots {
    static final double WIDE_START = 25.0;
    static final double WIDE_DRIFT = -0.3;
 
+   /** Close-ups of the ramp drop (scene ticks, the call included): Natasha from her jump, then Clint. */
+   public static final int CLOSE_TICKS = 24;
+   public static final int WIDOW_CLOSE = CaptainRules.QUINJET_JUMP;
+   public static final int CLINT_CLOSE = WIDOW_CLOSE + CLOSE_TICKS;
+   /** Cross-fade between the crane and a close-up. */
+   public static final int CLOSE_BLEND = 8;
+   /** Close-up lens distance from the face and its swing off the line to the circle (degrees). */
+   static final double CLOSE_DIST = 3.0;
+   static final double CLOSE_SWING = 38.0;
+
    private CaptainSceneShots() {
+   }
+
+   /** Who the arrival camera is on at scene tick {@code sceneT}: 1 = Natasha, 2 = Clint, 0 = the wide crane. */
+   public static int closeUp(int sceneT) {
+      if (sceneT >= WIDOW_CLOSE && sceneT < CLINT_CLOSE) {
+         return 1;
+      }
+      return sceneT >= CLINT_CLOSE && sceneT < CLINT_CLOSE + CLOSE_TICKS ? 2 : 0;
+   }
+
+   /**
+    * Close-up on a dropping Avenger: a short lens beside the line from {@code subject} to the circle centre
+    * (Natasha from Steve's left, Clint from his right), low on the ground so the drop comes down into the frame;
+    * the lens follows the fall only halfway so the landing reads as an impact. {@code u} 0..1 through the shot
+    * adds a slow push-in.
+    */
+   public static Vec3[] closeShot(Vec3 subject, Vec3 centre, Vec3 f, int who, double u) {
+      Vec3 toCentre = new Vec3(centre.x - subject.x, 0.0, centre.z - subject.z);
+      Vec3 dir = toCentre.lengthSqr() > 0.04 ? toCentre.normalize() : f;
+      Vec3 side = around(dir, who == 1 ? -CLOSE_SWING : CLOSE_SWING);
+      double ground = centre.y;
+      double above = Math.max(0.0, subject.y - ground);
+      double dist = CLOSE_DIST - 0.5 * Math.min(1.0, Math.max(0.0, u));
+      Vec3 lens = new Vec3(subject.x, ground + 1.15 + 0.5 * above, subject.z).add(side.scale(dist));
+      return new Vec3[]{lens, subject.add(0.0, 1.35, 0.0)};
    }
 
    /** Unit vector at {@code deg} around the centre in Steve's frame ({@code f} ahead, {@code r} right). */
