@@ -40,7 +40,7 @@ public class CoreMessages {
    // v4 clients lack ServerRulesS2CPacket and send the merged dash key's Dash Behind as Step Dash.
    // v10 (Thor round 3): HeroFx ELECTRIC_BOLT, the dash config sync and the scene contract changes; the
    // Thor move table is checked separately by the viltrumitecore:thor_moves channel (its fingerprint).
-   private static final String PROTOCOL_VERSION = "12";
+   private static final String PROTOCOL_VERSION = "13";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -358,6 +358,11 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.hero.thor.scene.net.ThorDashS2CPacket::handle).add();
+      // Ultimate Hero Expansion (protocol 13): short ultimate scenes.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.BudgetSceneS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.BudgetSceneS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.BudgetSceneS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.BudgetSceneS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
