@@ -44,7 +44,7 @@ public final class CodexEntries {
          Visual.skins(List.of(SKINS + "skin_thula.png", SKINS + "skin_lucan.png", SKINS + "skin_vidor.png"), List.of(true, false, false)),
          rel("conquest", "homelander", "viltrumite_squad_event"), "thula", "lucan", "vidor", "viltrumites", "squad");
       npc("chitauri_soldier", "enemy", 0x6E8FA8, Visual.entity("viltrumitecore:chitauri_soldier", null),
-         rel("chitauri_chariot", "chitauri_leviathan", "chitauri_invasion"), "chitauri");
+         rel("chitauri_chariot", "chitauri_leviathan", "chitauri_invasion"), "chitauri", "chitauri_creature");
       npc("chitauri_chariot", "enemy", 0x5F7F99, Visual.entity("viltrumitecore:chitauri_chariot", null),
          rel("chitauri_soldier", "chitauri_leviathan", "chitauri_invasion"), "chariot");
       npc("chitauri_leviathan", "boss", 0x4C6A85, Visual.entity("viltrumitecore:chitauri_leviathan", null),
@@ -56,7 +56,7 @@ public final class CodexEntries {
       avenger("avenger_hulk", "hulk", 0x5FBF4A, "avenger_black_widow", "hulk", "bruce_banner");
       avenger("avenger_black_widow", "black_widow", 0xC9302C, "avenger_hawkeye", "black_widow", "natasha_romanoff");
       avenger("avenger_hawkeye", "hawkeye", 0x8C5AC8, "avenger_black_widow", "hawkeye", "clint_barton");
-      npc("iron_legion", "ally", 0xD0A040, Visual.entity("viltrumitecore:legion_suit", null), rel("ironman"), "legion_suit", "legion");
+      npc("iron_legion", "ally", 0xD0A040, Visual.entity("viltrumitecore:legion_suit", null), rel("ironman"), "legion_suit", "legion", "iron_legion_suit");
       npc("shadow_army", "ally", 0x8A4DFF, Visual.entity("viltrumitecore:shadow_soldier", null), rel("jinwoo"), "shadow_soldier", "shadows",
          "igris", "beru", "tank");
       npc("sinclair_assistant", "ally", 0xFF6A8A, Visual.entity("viltrumitecore:sinclair_assistant", null), rel("sinclair"), "assistant");

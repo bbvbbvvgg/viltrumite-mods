@@ -558,7 +558,7 @@ public class CodexScreen extends Screen {
          this.y += 12;
       }
 
-      /** A wrapped row of chips: {label, colour, target id or null}. */
+      /** A wrapped row of chips: {label, colour, target id or null[, tooltip or null]}. */
       void chips(List<Object[]> chips) {
          int x = 0;
          for (Object[] c : chips) {
@@ -570,7 +570,8 @@ public class CodexScreen extends Screen {
             }
             String target = (String)c[2];
             Runnable action = target == null ? null : () -> CodexScreen.this.open(target);
-            this.out.add(new Placed(Kind.CHIP, x, this.y, w, 13, null, label, (Integer)c[1], null, List.of(), action));
+            List<Component> tip = c.length > 3 && c[3] != null ? List.of(Component.literal((String)c[3])) : List.of();
+            this.out.add(new Placed(Kind.CHIP, x, this.y, w, 13, null, label, (Integer)c[1], null, tip, action));
             x += w + 4;
          }
          if (!chips.isEmpty()) {
@@ -713,8 +714,10 @@ public class CodexScreen extends Screen {
          List<Object[]> chips = new ArrayList<>();
          for (CatalogInteraction.Participant p : i.participants()) {
             CodexEntry target = CodexEntries.byAlias(p.id());
-            String label = !p.name().isEmpty() ? this.text(p.name(), p.id()) : target != null ? I18n.get(target.nameKey()) : p.id();
-            chips.add(new Object[]{label, target != null ? this.accent(target) : 0x8C93B8, target != null ? target.id() : null});
+            String raw = this.text(p.name(), p.id());
+            String label = target != null ? I18n.get(target.nameKey()) : raw;
+            chips.add(new Object[]{label, target != null ? this.accent(target) : 0x8C93B8, target != null ? target.id() : null,
+               raw.equals(label) ? null : raw});
          }
          b.chips(chips);
       }
@@ -787,7 +790,7 @@ public class CodexScreen extends Screen {
       List<String> names = new ArrayList<>();
       for (CatalogInteraction.Participant p : i.participants()) {
          CodexEntry target = CodexEntries.byAlias(p.id());
-         names.add(!p.name().isEmpty() ? this.text(p.name(), p.id()) : target != null ? I18n.get(target.nameKey()) : p.id());
+         names.add(target != null ? I18n.get(target.nameKey()) : this.text(p.name(), p.id()));
       }
       return String.join(" × ", names);
    }
