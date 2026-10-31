@@ -50,6 +50,20 @@ class CityPureTest {
    }
 
    @Test
+   void raisedCellsCanBeLeftByDroppingDown() {
+      // regression (Atheria QA): 16 of 98 citizens never moved - they spawned on bench tops and
+      // log tops (cells 1-1.5 above the pavement) and every way down was BLOCKED by the grid
+      WalkGrid g = new WalkGrid(null);
+      g.put(10, -1, tile(322, 30, -102, WalkTile.PREFERRED)); // x = 5442, z = -482, feet y = -51
+      assertTrue(g.dropTo(5442, -50, -482, 3));
+      assertTrue(g.dropTo(5442, -48, -482, 3));
+      assertFalse(g.dropTo(5442, -47, -482, 3)); // deeper than the fall limit
+      assertFalse(g.dropTo(5442, -51, -482, 3)); // that is the cell itself
+      assertFalse(g.dropTo(5442, -52, -482, 3)); // below the floor
+      assertFalse(g.dropTo(5443, -50, -482, 3)); // no cell in that column
+   }
+
+   @Test
    void gridNegativeCoordinatesAndQueries() {
       WalkGrid g = new WalkGrid(null);
       // block x = -3, z = -510 lives in region (-1, -1) at local (509, 2)
