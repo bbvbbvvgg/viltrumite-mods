@@ -223,6 +223,7 @@ def hexc(c):
 COOL = np.array([0.80, 0.86, 1.12])
 WARM = np.array([1.07, 1.03, 0.90])
 SKIN_SHADOW = np.array([1.02, 0.84, 0.86])
+SKIN_LIGHT = np.array([1.05, 1.0, 0.95])
 
 
 SPEC = np.array([255.0, 246.0, 226.0])
@@ -344,13 +345,17 @@ class Mat:
     shaded = True
 
     def __init__(self, base, kind='cloth', fn=None, ao=0.5, hue=1.0, quant=0.05, cool=None, warm=None,
-                 alpha_fn=None, sheen=None, edges=True, micro=1.0, light=True, grad=None, cyl=None, spec=None):
+                 alpha_fn=None, sheen=None, edges=True, micro=1.0, light=True, grad=None, cyl=None, spec=None,
+                 locks='v'):
         self.base, self.kind, self.fn = base, kind, fn
         self.ao, self.hue, self.quant = ao, hue, quant
         self.cool = COOL if cool is None else np.array(cool)
         self.warm = WARM if warm is None else np.array(warm)
         if kind == 'skin' and cool is None:
             self.cool = SKIN_SHADOW
+        if kind == 'skin' and warm is None:
+            self.warm = SKIN_LIGHT
+        self.locks = locks
         self.alpha_fn, self.sheen, self.edges, self.micro, self.light = alpha_fn, sheen, edges, micro, light
         g, c, eh, el, es, mk, sp = KIND[kind]
         self.grad = g if grad is None else grad
@@ -403,7 +408,7 @@ def hair_locks(ctx, amt):
     """Locks of hair: columns grouped 2-4 texels wide with their own tone, dark partings between them,
     darker roots under the crown, lighter tips, a wavy sheen band; on caps the locks run front to back."""
     h, w = ctx.h, ctx.w
-    along_u = ctx.name in ('up', 'down')
+    along_u = getattr(ctx.mat, 'locks', 'v') == 'h'     # caps: strands run front to back (tone per column)
     n = h if along_u else w
     tone = np.zeros(n)
     edge = np.zeros(n, bool)

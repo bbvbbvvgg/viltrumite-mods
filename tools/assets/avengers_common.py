@@ -163,3 +163,28 @@ def face_fn(rows, pal, hair=None, top=None, back=None, ear=None, skin_lo=None, e
         if extra:
             extra(ctx)
     return fn
+
+
+def hair_strands(ctx, mask, colour=None, amt=1.0, width=(1, 2, 2, 3)):
+    """Hair painted on a skin cube (short hair, napes, sideburns): base colour, columns of strands with their own
+    tone, darker partings, lighter ends (lowest texel row of each column inside the mask)."""
+    m = np.asarray(mask, bool)
+    if not m.any():
+        return
+    if colour is not None:
+        ctx.put(m, colour)
+    h, w = ctx.h, ctx.w
+    tone = np.zeros(w)
+    i = 0
+    while i < w:
+        lw = int(ctx.rs.choice(width))
+        tone[i:i + lw] = ctx.rs.uniform(-0.06, 0.07)
+        if i + lw < w:
+            tone[i + lw - 1] -= 0.06
+        i += lw
+    L = np.broadcast_to(tone[None, :], (h, w)).copy()
+    rr = np.arange(h)[:, None]
+    ctx.L[m] += amt * L[m]
+    below = np.zeros_like(m)
+    below[:-1] = m[:-1] & ~m[1:]
+    ctx.L[below] += amt * 0.05
