@@ -9,6 +9,19 @@ import dev.baranhan.viltrumitecore.interaction.builtin.ReidShattersVibranium;
 import dev.baranhan.viltrumitecore.interaction.builtin.ThunderOverchargesArmor;
 import dev.baranhan.viltrumitecore.interaction.builtin.TitanScattersSummons;
 import dev.baranhan.viltrumitecore.interaction.builtin.VibraniumStopsMeteor;
+import dev.baranhan.viltrumitecore.interaction.builtin.ReidStrainsLionsHeart;
+import dev.baranhan.viltrumitecore.interaction.builtin.MjolnirReboundsOffShield;
+import dev.baranhan.viltrumitecore.interaction.builtin.ViltrumiteFistMeetsVibranium;
+import dev.baranhan.viltrumitecore.interaction.builtin.RepulsorSplitsOnVibranium;
+import dev.baranhan.viltrumitecore.interaction.builtin.TimeStoneRewindsLedger;
+import dev.baranhan.viltrumitecore.interaction.builtin.ReidCleavesMeteor;
+import dev.baranhan.viltrumitecore.interaction.builtin.ViltrumiteHurlsMeteor;
+import dev.baranhan.viltrumitecore.interaction.builtin.ShadowExchangeMeteor;
+import dev.baranhan.viltrumitecore.interaction.builtin.TitanBreaksGuard;
+import dev.baranhan.viltrumitecore.interaction.builtin.MeteorDownsLeviathan;
+import dev.baranhan.viltrumitecore.interaction.builtin.ThunderChargesLegion;
+import dev.baranhan.viltrumitecore.interaction.builtin.LightningRunsTheLeviathan;
+import dev.baranhan.viltrumitecore.interaction.builtin.HeavyHitterHaltsLeviathan;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -42,8 +55,11 @@ public final class ContextualInteractions {
 
    /** Every built-in interaction, in catalog order. Stateless instances (unit tests build them). */
    public static List<ContextualInteraction> builtins() {
-      return List.of(new ReidShattersVibranium(), new MjolnirMeetsVibranium(), new DivineWeaponClash(), new VibraniumStopsMeteor(),
-         new MjolnirShattersMeteor(), new ThunderOverchargesArmor(), new LegionVsChitauri(), new TitanScattersSummons());
+      return List.of(new ReidShattersVibranium(), new MjolnirMeetsVibranium(), new ReidStrainsLionsHeart(), new MjolnirReboundsOffShield(),
+         new DivineWeaponClash(), new ViltrumiteFistMeetsVibranium(), new RepulsorSplitsOnVibranium(), new TimeStoneRewindsLedger(),
+         new VibraniumStopsMeteor(), new ReidCleavesMeteor(), new ViltrumiteHurlsMeteor(), new ShadowExchangeMeteor(), new TitanBreaksGuard(),
+         new MeteorDownsLeviathan(), new MjolnirShattersMeteor(), new ThunderOverchargesArmor(), new ThunderChargesLegion(),
+         new LightningRunsTheLeviathan(), new HeavyHitterHaltsLeviathan(), new LegionVsChitauri(), new TitanScattersSummons());
    }
 
    /** Common setup: registers the built-ins once. */
