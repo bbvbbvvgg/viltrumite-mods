@@ -736,37 +736,114 @@ def sh_mat(base, fn, ao=0.0, alpha_fn=None, kind='flat', spec=0.45):
     return m
 
 
+# dome profile (radius, z of the front face; front = -Z): flat star field, then the rings slope ever steeper to
+# the rim, a quadratic-like curve with no vertical walls; band edges fall on slice joints (creases hide in the colour)
+DOME = ((R_BLUE, -1.90), (R_RED2, -1.62), ((R_RED2 + R_WHITE) / 2, -1.38), (R_WHITE, -1.06),
+        ((R_WHITE + R_OUT - 0.3) / 2, -0.72), (R_OUT - 0.3, -0.42))
+DOME_N = 24                     # segments per ring (the rim has as many tiles, the joints line up)
+DOME_T = 0.14                   # plate thickness
+
+
+def sh_slope_fn(colour, k, slope, lip):
+    """A sloped ring tile: band colour, lit by how much it faces the light (direction x slope), lathe marks along
+    the radius, a polished glint and the kinetic charge on the outer lip of the band."""
+    def fn(ctx):
+        ctx.put(ctx.all(), colour)
+        ctx.light(ctx.all(), 0.30 * k * min(1.0, slope / 0.45) + 0.02)
+        band = np.floor((ctx.y - ctx.y.min()) / 0.5).astype(int) % 2
+        ctx.L += np.where(band == 0, 0.012, -0.012)
+        if lip:
+            ctx.light(rows(ctx, 0, 1), 0.08)
+            ctx.emit(rows(ctx, 0, 1), CHARGE)
+        if k > 0.85:
+            ctx.light(rows(ctx, 1, 2) if ctx.h > 2 else ctx.all(), 0.06)
+    return fn
+
+
+def wedge_alpha(r0, phi, n):
+    """Cut a ring tile to its wedge (local x within the angle at its radius) so neighbours never poke through."""
+    def fn(face, rs):
+        x, y, z = face.world()
+        a = np.zeros((face.h, face.w), np.uint8)
+        r = r0 + (y - face.oy) * math.cos(phi)
+        a[np.abs(x) <= r / math.cos(math.pi / n) * math.tan(math.pi / n) + 0.12] = 255
+        return a
+    return fn
+
+
+def disc_alpha(r):
+    def fn(face, rs):
+        x, y, z = face.world()
+        a = np.zeros((face.h, face.w), np.uint8)
+        a[np.hypot(x, y) <= r] = 255
+        return a
+    return fn
+
+
+def sh_field_fn(ctx):
+    r = np.hypot(ctx.x, ctx.y)
+    ctx.put(ctx.all(), SH_BLUE)
+    lathe(ctx, r)
+    polish(ctx, r, 0.08)
+    ctx.light(r > R_BLUE - 0.2, 0.04)                 # polished edge of the field
+    ctx.emit((r > R_BLUE - 0.25) & (r <= R_BLUE + 0.05), CHARGE)
+
+
+def sh_back_fn(ctx):
+    r = np.hypot(ctx.x, ctx.y)
+    ctx.put(ctx.all(), SH_BACK)
+    lathe(ctx, r, 0.03, 0.6)
+    polish(ctx, r, 0.07)
+    ctx.light(r > R_OUT - 0.6, -0.1)
+
+
 def shield_model():
-    """Terraced vibranium dome: four stepped levels (cut-out discs) with real side walls, a raised star in three
-    stacked layers, a thick rolled rim of 24 segments and the back with two straps and a grip. Front = -Z."""
+    """Vibranium dome (rework §4): a flat blue star field, then sloped concentric ring tiles (24 per slice, each
+    tilted to the dome's slope and cut to its wedge) - red, white, red - growing steeper to the rim, so the side
+    view is a real curve with no vertical walls between the rings. A raised star in three layers, a thick rolled
+    rim of 24 tiles that the dome tucks under, a flat back plate with two straps, rivets and the grip. Front = -Z."""
     m = CleanModel('captain_shield', density=4, width=256, seed=1941)
     m.bone('shield', None, [0, 0, 0])
     m.bone('rim', 'shield', [0, 0, 0])
     c = m.cube
-    levels = ((R_WHITE, R_OUT - 0.2, 0.0), (R_RED2, R_WHITE, -0.22), (R_BLUE, R_RED2, -0.44), (0.0, R_BLUE, -0.64))
-    for i, (vis_lo, r_hi, zf) in enumerate(levels):
-        faces = ('north', 'south') if i == 0 else ('north',)
-        c('shield', [-r_hi, -r_hi, zf], [2 * r_hi, 2 * r_hi, 0.62 if i == 0 else 0.22],
-          sh_mat(SH_RED, sh_level_fn(vis_lo, r_hi, i == 0), alpha_fn=level_alpha(r_hi)), faces=faces)
-    # step walls: 16 thin segments per step (rotated about Z), only their outward / inward sides
-    for r, zf, colour in ((R_WHITE, -0.22, SH_WHITE_LO), (R_RED2, -0.44, SH_RED_LO), (R_BLUE, -0.64, SH_BLUE)):
-        n = 16
-        seg = 2 * r * math.tan(math.pi / n) + 0.06
-        for k in range(n):
-            ang = 360.0 * k / n
-            c('shield', [-seg / 2, r - 0.16, zf], [seg, 0.16, 0.221], sh_mat(colour, sh_wall_fn(colour, facing(ang))),
-              rotation=[0, 0, ang], pivot=[0, 0, 0], faces=('up', 'down'))
-    # raised star: three stacked cut-out layers (the bevel reads as thickness)
-    for zz, rr, col in ((-0.70, R_STAR, SH_WHITE_LO), (-0.76, R_STAR * 0.98, SH_WHITE), (-0.82, R_STAR * 0.96, SH_WHITE)):
-        c('shield', [-rr, -rr, zz], [2 * rr, 2 * rr, 0.04], sh_mat(col, sh_star_fn, alpha_fn=sh_star_alpha(rr)),
+    # back plate (only its back face shows; the dome closes the front)
+    rb = R_OUT - 0.2
+    c('shield', [-rb, -rb, 0.0], [2 * rb, 2 * rb, 0.62], sh_mat(SH_BACK, sh_back_fn, alpha_fn=disc_alpha(rb)), faces=('south',))
+    # star field: the flat top of the dome
+    r0, z0 = DOME[0]
+    c('shield', [-r0 - 0.05, -r0 - 0.05, z0 - 0.03], [2 * r0 + 0.1, 2 * r0 + 0.1, DOME_T],
+      sh_mat(SH_BLUE, sh_field_fn, alpha_fn=disc_alpha(r0 + 0.05)), faces=('north',))
+    # sloped ring slices
+    for i in range(1, len(DOME)):
+        (ra, za), (rb_, zb) = DOME[i - 1], DOME[i]
+        mid = (ra + rb_) / 2
+        colour = ring_colour(mid)
+        lip = i == len(DOME) - 1 or ring_colour((DOME[i][0] + DOME[i + 1][0]) / 2) != colour   # outer edge of a band
+        dr, dz = rb_ - ra, zb - za
+        phi = math.atan2(dz, dr)                       # tilt: the outer edge sits further back (+Z)
+        length = math.hypot(dr, dz) + 0.08          # starts a hair inside the previous slice: no seam
+        w = 2 * rb_ * math.tan(math.pi / DOME_N) + 0.12
+        # local plate (radius along +Y) placed so that Rx(phi) about the origin lands its front edge on (ra, za)
+        ra0, za0 = ra - 0.05 * math.cos(phi), za - 0.05 * math.sin(phi)
+        oy = ra0 * math.cos(phi) + za0 * math.sin(phi)
+        oz = -ra0 * math.sin(phi) + za0 * math.cos(phi)
+        for k in range(DOME_N):
+            ang = 360.0 * (k + 0.5) / DOME_N
+            c('shield', [-w / 2, oy, oz], [w, length, DOME_T],
+              sh_mat(colour, sh_slope_fn(colour, facing(ang), abs(dz / dr), lip), alpha_fn=wedge_alpha(ra0, phi, DOME_N)),
+              rotation=[-math.degrees(phi), 0, ang], pivot=[0, 0, 0], faces=('north',))
+    # raised star: three stacked cut-out layers on the field (the bevel reads as thickness)
+    for dz, rr, col in ((-0.06, R_STAR, SH_WHITE_LO), (-0.12, R_STAR * 0.98, SH_WHITE), (-0.18, R_STAR * 0.96, SH_WHITE)):
+        c('shield', [-rr, -rr, z0 + dz], [2 * rr, 2 * rr, 0.04], sh_mat(col, sh_star_fn, alpha_fn=sh_star_alpha(rr)),
           faces=('north',))
-    # rolled rim: 24 segments, red face with a bright inner lip, bare metal outer edge
+    # rolled rim: 24 tiles, red face with a bright inner lip, bare metal outer edge; its front stands just proud
+    # of the dome's last slice so the dome tucks under the lip
     n = 24
     seg = 2 * R_OUT * math.tan(math.pi / n) + 0.05
     for k in range(n):
-        ang = 360.0 * k / n
+        ang = 360.0 * (k + 0.5) / n
         dz = 0.02 * (k % 2)  # odd tiles stand proud by a hair: overlapping tile corners never share a plane
-        c('rim', [-seg / 2, R_OUT - 0.42 - dz, -0.34 - dz], [seg, 0.62 + 2 * dz, 1.04 + 2 * dz],
+        c('rim', [-seg / 2, R_OUT - 0.5 - dz, -0.62 - dz], [seg, 0.7 + 2 * dz, 1.32 + 2 * dz],
           sh_mat(SH_RED, sh_rim_fn(facing(ang))), rotation=[0, 0, ang], pivot=[0, 0, 0],
           faces=('north', 'south', 'up', 'down'))
     # back: two leather straps with rivets and the wrapped grip bar
@@ -867,6 +944,12 @@ def build():
 
 
 def main():
+    if '--shield-only' in sys.argv:
+        shield = shield_model()
+        write_model(shield, 'geo/captain/captain_shield.geo.json', 'textures/entity/captain/captain_shield.png',
+                    'textures/entity/captain/captain_shield_glow.png')
+        print('captain shield cubes', sum(len(b.cubes) for b in shield.bones))
+        return
     body, gear = build()
     write_model(body, 'geo/captain/captain.geo.json', 'textures/entity/captain/captain.png')
     write_json(os.path.join(RES, 'geo/captain/captain_arms.geo.json'), arms_only(body, 'captain_arms').geo_json())
