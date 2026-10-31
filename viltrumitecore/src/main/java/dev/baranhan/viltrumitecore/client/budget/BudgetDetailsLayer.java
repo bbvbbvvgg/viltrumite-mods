@@ -78,12 +78,25 @@ public class BudgetDetailsLayer extends RenderLayer<AbstractClientPlayer, Player
             .addBox(-1.4F, 10.0F, -1.6F, 0.4F, 4.5F, 0.4F)
             .addBox(-0.2F, 10.0F, -1.6F, 0.4F, 4.5F, 0.4F), PartPose.ZERO);
          root.addOrReplaceChild("ring", CubeListBuilder.create().addBox(-3.4F, 8.5F, -1.0F, 1.0F, 1.0F, 2.0F), PartPose.ZERO);
+         // MULTIVERSE EXPANSION PHASE II details: same cheap white cubes.
+         root.addOrReplaceChild("big_sword", CubeListBuilder.create()
+            .addBox(-1.5F, -6.0F, 2.4F, 3.0F, 22.0F, 0.8F)
+            .addBox(-2.5F, 15.0F, 2.4F, 5.0F, 1.0F, 1.0F), PartPose.rotation(0.0F, 0.0F, 0.5F));
+         root.addOrReplaceChild("horns", CubeListBuilder.create()
+            .addBox(-3.5F, -11.0F, -2.0F, 1.5F, 3.0F, 1.5F)
+            .addBox(2.0F, -11.0F, -2.0F, 1.5F, 3.0F, 1.5F), PartPose.ZERO);
+         root.addOrReplaceChild("chainsaw", CubeListBuilder.create()
+            .addBox(-1.0F, -12.0F, -5.0F, 2.0F, 6.0F, 2.0F)
+            .addBox(-0.5F, -14.0F, -5.0F, 1.0F, 2.0F, 1.0F), PartPose.ZERO);
+         root.addOrReplaceChild("wide_hat", CubeListBuilder.create()
+            .addBox(-7.0F, -8.4F, -7.0F, 14.0F, 0.6F, 14.0F)
+            .addBox(-4.4F, -11.5F, -4.4F, 8.8F, 3.2F, 8.8F), PartPose.ZERO);
          ModelPart baked = LayerDefinition.create(mesh, 16, 16).bakeRoot();
          Map<String, Detail> map = new java.util.HashMap<>();
-         for (String name : new String[]{"spiky", "tall_spiky", "bun", "long_hair", "ears", "ogre_ears", "bolts", "glasses", "headband", "straw_hat"}) {
+         for (String name : new String[]{"spiky", "tall_spiky", "bun", "long_hair", "ears", "ogre_ears", "bolts", "glasses", "headband", "straw_hat", "horns", "chainsaw", "wide_hat"}) {
             map.put(name, new Detail(baked.getChild(name), Anchor.HEAD));
          }
-         for (String name : new String[]{"cape", "katana_back", "sword_hip"}) {
+         for (String name : new String[]{"cape", "katana_back", "sword_hip", "big_sword"}) {
             map.put(name, new Detail(baked.getChild(name), Anchor.BODY));
          }
          for (String name : new String[]{"claws", "ring"}) {
@@ -107,8 +120,12 @@ public class BudgetDetailsLayer extends RenderLayer<AbstractClientPlayer, Player
          return;
       }
 
+      renderDetails(pose, buffers, light, this.getParentModel(), spec);
+   }
+
+   /** Shared with the multiverse NPC renderer: the hero's cubic details on any humanoid model. */
+   public static void renderDetails(PoseStack pose, MultiBufferSource buffers, int light, net.minecraft.client.model.HumanoidModel<?> model, BudgetHeroSpec spec) {
       VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(BudgetSkins.white()));
-      PlayerModel<AbstractClientPlayer> model = this.getParentModel();
       for (String token : spec.look().details()) {
          int split = token.indexOf(':');
          String name = split < 0 ? token : token.substring(0, split);
