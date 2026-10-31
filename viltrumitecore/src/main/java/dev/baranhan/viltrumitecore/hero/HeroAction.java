@@ -99,8 +99,12 @@ public enum HeroAction {
    ARMY_GUARD,
    ARMY_SENTINEL,
    MONARCH_CHARGE,
-   /** Iron Man stage 6: the Iron Legion menu (call / orders); appended, wire ordinals unchanged. */
-   LEGION;
+   /** Captain America (spec docs/design/2026-11-03-captain-america-design.md); appended, wire ordinals unchanged. */
+   CAPTAIN_THROW,
+   CAPTAIN_RUSH,
+   CAPTAIN_SLAM,
+   CAPTAIN_ROLL,
+   CAPTAIN_ASSEMBLE;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

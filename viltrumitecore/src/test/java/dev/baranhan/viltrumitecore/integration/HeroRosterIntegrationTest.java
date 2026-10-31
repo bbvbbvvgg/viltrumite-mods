@@ -59,7 +59,8 @@ class HeroRosterIntegrationTest {
       assertSame(HeroId.DIO, ids[7]);
       assertSame(HeroId.SINCLAIR, ids[8]);
       assertSame(HeroId.JINWOO, ids[9]);
-      assertEquals(10, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
+      assertSame(HeroId.CAPTAIN, ids[10], "Captain America appends after Jinwoo");
+      assertEquals(11, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
       Set<String> keys = new HashSet<>();
       for (HeroId id : ids) {
          assertTrue(keys.add(id.key()), "duplicate hero key " + id.key());
@@ -76,9 +77,9 @@ class HeroRosterIntegrationTest {
       assertEquals(HeroAction.CONTEXT_TELEPORT.ordinal() + 1, HeroAction.THE_WORLD.ordinal(), "DIO block follows Thor");
       assertEquals(HeroAction.ROAD_ROLLER.ordinal() + 1, HeroAction.VEXING_BOLT.ordinal(), "Sinclair block follows DIO");
       assertEquals(HeroAction.AUDIENCE_PARTICIPATION.ordinal() + 1, HeroAction.DAGGER_RUSH.ordinal(), "Jinwoo block follows Sinclair");
-      // Iron Man stage 6 appends the Iron Legion after the Jinwoo block (released ordinals unchanged).
-      assertEquals(HeroAction.MONARCH_CHARGE.ordinal() + 1, HeroAction.LEGION.ordinal(), "Iron Legion appends after Jinwoo");
-      assertSame(HeroAction.LEGION, actions[actions.length - 1]);
+      assertEquals(HeroAction.MONARCH_CHARGE.ordinal() + 1, HeroAction.CAPTAIN_THROW.ordinal(), "Captain block follows Jinwoo");
+      assertEquals(HeroAction.CAPTAIN_THROW.ordinal() + 4, HeroAction.CAPTAIN_ASSEMBLE.ordinal(), "Captain block is contiguous");
+      assertSame(HeroAction.CAPTAIN_ASSEMBLE, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
@@ -116,7 +117,7 @@ class HeroRosterIntegrationTest {
             }
          }
       }
-      for (HeroId id : List.of(HeroId.REINHARD, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO)) {
+      for (HeroId id : List.of(HeroId.REINHARD, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO, HeroId.CAPTAIN)) {
          // Thor (#74) has no cinematic lines yet; his lines() may stay empty.
          assertFalse(HeroRegistry.get(id).lines().isEmpty(), id + " lost its cinematic lines");
       }
@@ -168,14 +169,21 @@ class HeroRosterIntegrationTest {
       assertTrue(packets.indexOf("ThorDashS2CPacket") < packets.indexOf("HeroLineS2CPacket"), "Thor / Hulkbuster packets keep their #74 slots");
       // 12 = #74 alone, 13 = #82 alone, 14 = the merged table; 15 = each of #86 (Thor GUARD bit), #88
       // (Od Lagna's wish packets) and #89 (Regulus Reborn) alone; 16 = the final table with all of them;
-      // 17 = Iron Man stage 6 (the four Iron Legion packets appended after the v16 table).
-      assertTrue(source.contains("PROTOCOL_VERSION = \"17\""), "the merged packet table needs its own protocol version");
+      // 17 = Captain America's CaptainFxS2CPacket appended last; 18 = its TEAM (joint move) event type;
+      // 19 = the Thanos event's ThanosFxS2CPacket and ThanosStateS2CPacket appended after Captain's;
+      // 18 was also used by feat/chitauri-invasion alone (portal + FX packets after Regulus) and is refused;
+      // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"20\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
-      List<String> legion = List.of("LegionMenuS2CPacket", "LegionCallC2SPacket", "LegionOrderC2SPacket", "LegionStatusS2CPacket");
-      assertEquals(packets.size() - 1 - legion.size(), packets.indexOf("RegulusFxS2CPacket"), "Regulus Reborn's packet appends after the wish packets");
-      assertEquals(legion, packets.subList(packets.size() - legion.size(), packets.size()), "the Iron Legion packets append last (v17)");
+      int regulus = packets.indexOf("RegulusFxS2CPacket");
+      assertEquals(packets.indexOf("WishSceneS2CPacket") + 1, regulus, "Regulus Reborn's packet appends after the wish packets");
+      assertEquals(regulus + 1, packets.indexOf("CaptainFxS2CPacket"), "Captain America's packet appends after Regulus's");
+      assertEquals(regulus + 2, packets.indexOf("ThanosFxS2CPacket"), "the Thanos packets append after Captain's");
+      assertEquals(regulus + 3, packets.indexOf("ThanosStateS2CPacket"), "the Thanos state packet follows the Thanos FX packet");
+      assertEquals(regulus + 4, packets.indexOf("ChitauriPortalS2CPacket"), "the Chitauri portal packet appends after the Thanos packets");
+      assertEquals(regulus + 5, packets.indexOf("ChitauriFxS2CPacket"), "the Chitauri FX packet follows the portal packet");
    }
 
    @Test
@@ -220,7 +228,9 @@ class HeroRosterIntegrationTest {
                String path = name.substring(name.indexOf(':') + 1) + ".ogg";
                Path plain = ASSETS.resolve(ns).resolve("sounds").resolve(path);
                Path encoded = BINASSETS.resolve(ns).resolve("sounds").resolve(path + ".b64");
-               assertTrue(Files.isRegularFile(plain) || Files.isRegularFile(encoded), event.getKey() + " has no audio file " + name);
+               // big files are split into <file>.b64.part0..N (joined by the build's binary-asset step)
+               Path split = BINASSETS.resolve(ns).resolve("sounds").resolve(path + ".b64.part0");
+               assertTrue(Files.isRegularFile(plain) || Files.isRegularFile(encoded) || Files.isRegularFile(split), event.getKey() + " has no audio file " + name);
             }
          }
       }

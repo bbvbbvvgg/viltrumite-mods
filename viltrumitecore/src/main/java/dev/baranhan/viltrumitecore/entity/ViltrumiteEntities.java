@@ -65,16 +65,40 @@ public class ViltrumiteEntities {
          .sized(0.62F, 1.9F).clientTrackingRange(10).updateInterval(2).fireImmune().noSave().build("shadow_soldier")
    );
 
-   /** Iron Legion suit (stage 6, docs/design/2026-10-31-ironman-legion-design.md): never saved, the owner's roster keeps the mark. */
-   public static final RegistryObject<EntityType<LegionSuitEntity>> LEGION_SUIT = ENTITIES.register(
-      "legion_suit", () -> EntityType.Builder.<LegionSuitEntity>of(LegionSuitEntity::new, MobCategory.MISC)
-         .sized(0.6F, 1.8F).clientTrackingRange(10).updateInterval(2).fireImmune().noSave().noSummon().build("legion_suit")
+   /** The Thanos city event's boss (worldevent/thanos): one at a time, never saved, no army. */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity>> THANOS = ENTITIES.register(
+      "thanos", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity>of(dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity::new, MobCategory.MISC)
+         .sized(1.6F, 3.8F).clientTrackingRange(16).updateInterval(2).fireImmune().noSave().noSummon().build("thanos")
    );
 
    /** Living city pedestrian (city/citizen): never saved, the city population manager refills the streets. */
    public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>> CITIZEN = ENTITIES.register(
       "citizen", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>of(dev.baranhan.viltrumitecore.city.citizen.CitizenEntity::new, MobCategory.MISC)
          .sized(0.6F, 1.8F).clientTrackingRange(8).updateInterval(3).noSave().build("citizen")
+   );
+
+   /** Captain America's thrown shield (hero/captain, spec docs/design/2026-11-03-captain-america-design.md). */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.captain.ThrownShieldEntity>> THROWN_SHIELD = ENTITIES.register(
+      "captain_shield", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.captain.ThrownShieldEntity>of(dev.baranhan.viltrumitecore.entity.captain.ThrownShieldEntity::new, MobCategory.MISC)
+         .sized(0.8F, 0.25F).clientTrackingRange(10).updateInterval(1).fireImmune().noSave().noSummon().build("captain_shield")
+   );
+
+   /** «Avengers, assemble!»: the five summoned Avengers (one type, the kind is synced data); never saved. */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.avengers.AvengerEntity>> AVENGER = ENTITIES.register(
+      "avenger", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.avengers.AvengerEntity>of(dev.baranhan.viltrumitecore.entity.avengers.AvengerEntity::new, MobCategory.MISC)
+         .sized(0.7F, 2.0F).clientTrackingRange(12).updateInterval(1).fireImmune().noSave().noSummon().build("avenger")
+   );
+
+   /** Arrows, mini-missiles and the thrown Mjolnir of the summoned Avengers. */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.avengers.AvengerProjectileEntity>> AVENGER_PROJECTILE = ENTITIES.register(
+      "avenger_projectile", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.avengers.AvengerProjectileEntity>of(dev.baranhan.viltrumitecore.entity.avengers.AvengerProjectileEntity::new, MobCategory.MISC)
+         .sized(0.3F, 0.3F).clientTrackingRange(10).updateInterval(1).fireImmune().noSave().noSummon().build("avenger_projectile")
+   );
+
+   /** The Quinjet prop of the ultimate (kinematic, never saved). */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.avengers.QuinjetEntity>> QUINJET = ENTITIES.register(
+      "quinjet", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.avengers.QuinjetEntity>of(dev.baranhan.viltrumitecore.entity.avengers.QuinjetEntity::new, MobCategory.MISC)
+         .sized(3.0F, 2.0F).clientTrackingRange(16).updateInterval(1).fireImmune().noSave().noSummon().build("quinjet")
    );
 
    public static void register(IEventBus eventBus) {
