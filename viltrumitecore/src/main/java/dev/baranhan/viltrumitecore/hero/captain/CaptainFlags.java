@@ -14,6 +14,8 @@ public final class CaptainFlags {
    public static final int TEAM_ACTIVE = 7;
    public static final int AIMING = 8;
    public static final int IFRAMES = 9;
+   /** The guard is broken (contextual interaction reid_shatters_vibranium): the shield cannot be raised. */
+   public static final int SHIELD_BROKEN = 10;
 
    private CaptainFlags() {
    }
