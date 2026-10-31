@@ -61,6 +61,7 @@
     "SinclairStageMouseMixin",
     "ThorModelMixin",
     "ThorSceneCameraMixin",
+    "ReinhardSceneCameraMixin",
     "ThorSceneMouseMixin",
     "ItemInHandRendererMixin",
     "MinecraftClientMixin",
