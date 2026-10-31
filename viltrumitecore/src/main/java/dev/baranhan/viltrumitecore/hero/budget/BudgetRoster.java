@@ -146,6 +146,140 @@ public final class BudgetRoster {
             new BudgetMove(BudgetMoveType.D, "susanoo", 0.0F, 300, 0x4060ff, BudgetShape.BEAM, BudgetBuff.RESISTANCE),
             new BudgetMove(BudgetMoveType.E, "meteor", 38.0F, 260, 0xff7020, BudgetShape.RING, BudgetBuff.NONE)
          },
-         BudgetScene.NONE)
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.LUFFY,
+         new BudgetLook(0xd8a878, 0x151515, 0xd01818, 0x2050c0, 0xd0a060, 0x111111,
+            new String[]{"scar:a04040"}, new String[]{"straw_hat:e8c860"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "gum_gum_pistol", 9.0F, 16, 0xff8080, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "gear_second", 0.0F, 30, 0xffc0c0, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.E, "gum_gum_gatling", 20.0F, 60, 0xff4040, BudgetShape.RING, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.ZORO,
+         new BudgetLook(0xd8a878, 0x40a040, 0xf0f0f0, 0x202020, 0x202020, 0x111111,
+            new String[]{"scar:802020"}, new String[]{"sword_hip:202020"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "three_sword_style", 13.0F, 24, 0xc0ffc0, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "flying_slash", 11.0F, 40, 0x60e060, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.SANJI,
+         new BudgetLook(0xf0c8a0, 0xf0d040, 0x202020, 0x202020, 0x101010, 0x2050c0,
+            new String[]{"tie:101010"}, new String[]{}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "diable_jambe", 12.0F, 20, 0xff7010, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "sky_walk", 0.0F, 40, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.SAITAMA,
+         new BudgetLook(0xf0c8a0, 0xf0c8a0, 0xf0e030, 0xf0e030, 0xd02020, 0x111111,
+            new String[]{"bald", "gloves:d02020", "belt:111111"}, new String[]{"cape:f8f8f8"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "normal_punch", 40.0F, 30, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "serious_sidestep", 0.0F, 40, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.E, "serious_punch", 60.0F, 300, 0xffffa0, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.GENOS,
+         new BudgetLook(0xf0c8a0, 0xf0d040, 0x202020, 0x202020, 0x505050, 0xffd000,
+            new String[]{"metal_arms:8a8a90"}, new String[]{}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.B, "incineration", 14.0F, 40, 0xff8020, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "boost", 0.0F, 30, 0xffa040, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "upgrade", 0.0F, 300, 0xa0a0b0, BudgetShape.BEAM, BudgetBuff.RESISTANCE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.SUPERMAN,
+         new BudgetLook(0xf0c8a0, 0x101020, 0x1a40c0, 0x1a40c0, 0xc01818, 0x2050d0,
+            new String[]{"emblem:d01818", "belt:f0d020", "trunks:c01818"}, new String[]{"cape:c01818"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "super_punch", 15.0F, 24, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "heat_vision", 13.0F, 40, 0xff2010, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "solar_power", 0.0F, 300, 0xffe060, BudgetShape.BEAM, BudgetBuff.RESISTANCE),
+            new BudgetMove(BudgetMoveType.E, "divine_might", 36.0F, 240, 0xff3010, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.SUPERMAN),
+      new BudgetHeroSpec(HeroId.BATMAN,
+         new BudgetLook(0xf0c8a0, 0x151515, 0x3a3a40, 0x3a3a40, 0x151515, 0xf0f0f0,
+            new String[]{"cowl:151515", "emblem:151515", "belt:e0c020"}, new String[]{"ears:151515", "cape:151515"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "martial_arts", 8.0F, 16, 0xa0a0a0, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "batarang", 7.0F, 30, 0x404040, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "grapple", 0.0F, 40, 0x808080, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.FLASH,
+         new BudgetLook(0xf0c8a0, 0xc01010, 0xc01010, 0xc01010, 0xf0d020, 0xf0f0f0,
+            new String[]{"cowl:c01010", "emblem:f0d020", "belt:f0d020"}, new String[]{"bolts:f0d020"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "speed_punch", 7.0F, 10, 0xffe040, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "speed_force", 0.0F, 10, 0xfff080, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "lightning_speed", 0.0F, 200, 0xffd020, BudgetShape.BEAM, BudgetBuff.SPEED)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.GREEN_LANTERN,
+         new BudgetLook(0xf0c8a0, 0x3a2a1a, 0x20a040, 0x202020, 0x20a040, 0xf0f0f0,
+            new String[]{"domino:20a040", "emblem:f0f0f0"}, new String[]{"ring:30ff60"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.B, "lantern_beam", 12.0F, 30, 0x30ff60, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "willpower", 0.0F, 300, 0x40e070, BudgetShape.BEAM, BudgetBuff.RESISTANCE),
+            new BudgetMove(BudgetMoveType.E, "lanterns_oath", 25.0F, 200, 0x20ff50, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.AQUAMAN,
+         new BudgetLook(0xd8a878, 0xe0b040, 0xf09020, 0x209050, 0x209050, 0x20a0a0,
+            new String[]{}, new String[]{"long_hair:e0b040"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "trident_strike", 13.0F, 24, 0x40e0e0, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "tidal_wave", 10.0F, 40, 0x30a0ff, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.SPIDER_MAN,
+         new BudgetLook(0xd01818, 0xd01818, 0xd01818, 0x1a40c0, 0xd01818, 0xf0f0f0,
+            new String[]{"mask:d01818", "emblem:101010"}, new String[]{}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "web_punch", 8.0F, 16, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "web_shot", 5.0F, 20, 0xf0f0f0, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "web_swing", 0.0F, 30, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.DEADPOOL,
+         new BudgetLook(0xb01818, 0xb01818, 0xb01818, 0xb01818, 0x202020, 0xf0f0f0,
+            new String[]{"mask:b01818", "patches:202020", "belt:202020"}, new String[]{"katana_back:303030"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "katana_combo", 11.0F, 20, 0xd0d0d0, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "pistols", 9.0F, 24, 0x404040, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "regeneration", 0.0F, 300, 0xff4040, BudgetShape.BEAM, BudgetBuff.RESISTANCE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.WOLVERINE,
+         new BudgetLook(0xd8a878, 0x151515, 0xf0d020, 0x1a40c0, 0x1a40c0, 0x303030,
+            new String[]{"sideburns:151515", "belt:d01818"}, new String[]{"claws:d0d0d8"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "claw_slash", 12.0F, 20, 0xe0e0f0, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.C, "berserk_leap", 0.0F, 40, 0xffffff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "healing_factor", 0.0F, 300, 0xffd040, BudgetShape.BEAM, BudgetBuff.RESISTANCE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.KRATOS,
+         new BudgetLook(0xe8e4dc, 0xe8e4dc, 0xe8e4dc, 0x6a3a1a, 0x4a2a10, 0xd0a020,
+            new String[]{"bald", "tattoo:b01010", "beard:3a2a1a"}, new String[]{}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "blades_of_chaos", 14.0F, 24, 0xff6010, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.B, "leviathan_throw", 12.0F, 40, 0xa0e0ff, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "spartan_rage", 0.0F, 300, 0xff2010, BudgetShape.BEAM, BudgetBuff.STRENGTH),
+            new BudgetMove(BudgetMoveType.E, "god_slayer", 34.0F, 240, 0xff4000, BudgetShape.RING, BudgetBuff.NONE)
+         },
+         BudgetScene.NONE),
+      new BudgetHeroSpec(HeroId.SHREK,
+         new BudgetLook(0x8ab830, 0x8ab830, 0xf0e8c8, 0x6a4a2a, 0x4a3018, 0x6a4a20,
+            new String[]{"bald", "vest:5a3a1a"}, new String[]{"ogre_ears:8ab830"}),
+         new BudgetMove[]{
+            new BudgetMove(BudgetMoveType.A, "ogre_slap", 10.0F, 20, 0x8ab830, BudgetShape.BEAM, BudgetBuff.NONE),
+            new BudgetMove(BudgetMoveType.D, "swamp_power", 0.0F, 300, 0x6a8a20, BudgetShape.BEAM, BudgetBuff.STRENGTH),
+            new BudgetMove(BudgetMoveType.E, "ogre_roar", 18.0F, 200, 0xa0d040, BudgetShape.RING, BudgetBuff.NONE)
+         },
+         BudgetScene.SHREK)
    };
 }
