@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.client.ironman.legion;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.baranhan.viltrumitecore.client.AbilityInputManager;
+import dev.baranhan.viltrumitecore.client.gui.KeyLabels;
 import dev.baranhan.viltrumitecore.client.ironman.IronManView;
 import dev.baranhan.viltrumitecore.client.ironman.jarvis.JarvisVoice;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
@@ -9,6 +11,7 @@ import dev.baranhan.viltrumitecore.hero.ironman.legion.LegionStatus;
 import dev.baranhan.viltrumitecore.hero.ironman.legion.LegionTactics;
 import dev.baranhan.viltrumitecore.hero.ironman.mark.MarkId;
 import java.util.Locale;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -24,7 +27,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
  * Compact Legion column at the right edge (design §9): order and target
  * priority, then one row per suit with its mark, durability bar and what it
  * is doing; the call cooldown when the Legion is back. The Iron Man HUD owns
- * the left edge, so nothing overlaps. Without the helmet (JARVIS hints off)
+ * the left edge; the column sits left of the ability bar and its key labels
+ * (the first playtest drew it over them), so nothing overlaps. Without the helmet (JARVIS hints off)
  * the Legion's JARVIS subtitle is drawn here too.
  */
 @EventBusSubscriber(
@@ -57,7 +61,7 @@ public final class LegionHud {
       GuiGraphics graphics = event.getGuiGraphics();
       Font font = client.font;
       if (snapshot != null && (status.active() || status.cooldown() > 0)) {
-         draw(graphics, font, status, player.tickCount);
+         draw(graphics, font, status, player.tickCount, columnX(graphics.guiWidth(), widestKeyLabel(font)), ClientLegion.statusAge());
       }
 
       if (!JarvisVoice.online(snapshot)) {
@@ -65,12 +69,48 @@ public final class LegionHud {
       }
    }
 
-   private static void draw(GuiGraphics graphics, Font font, LegionStatus status, int ticks) {
-      int x = graphics.guiWidth() - WIDTH - 6;
+   /**
+    * Left edge of the column: right of it come 3 px of panel padding, a 3 px
+    * gap, then the ability bar's key labels (ViltrumiteInGameHudMixin: the
+    * bar is 22 wide, 5 from the right edge, slots 3 in, each label
+    * {@code width + 6} left of its slot).
+    */
+   static int columnX(int guiWidth, int keyLabelWidth) {
+      int slotX = guiWidth - 5 - 22 + 3;
+      int labelLeft = slotX - Math.max(0, keyLabelWidth) - 6;
+      return labelLeft - 6 - WIDTH;
+   }
+
+   /**
+    * Cooldown ticks still to wait: the server sends the status when the
+    * cooldown starts and when it ends, so the HUD counts down from the
+    * packet itself (the first playtest showed a frozen "10 s").
+    */
+   static int cooldownLeft(int cooldown, long statusAge) {
+      return (int) Math.max(0L, cooldown - Math.max(0L, statusAge));
+   }
+
+   private static int widestKeyLabel(Font font) {
+      int widest = 0;
+      for (KeyMapping key : new KeyMapping[]{AbilityInputManager.abilityKey1, AbilityInputManager.abilityKey2, AbilityInputManager.abilityKey3,
+         AbilityInputManager.abilityKey4, AbilityInputManager.abilityKey5, AbilityInputManager.abilityKey6}) {
+         if (key != null) {
+            widest = Math.max(widest, font.width(KeyLabels.shortName(key)));
+         }
+      }
+
+      return widest;
+   }
+
+   private static void draw(GuiGraphics graphics, Font font, LegionStatus status, int ticks, int x, long statusAge) {
       int y = graphics.guiHeight() / 2 - 44;
       boolean blink = (ticks / 5) % 2 == 0;
       if (!status.active()) {
-         small(graphics, font, Component.translatable("hud.viltrumitecore.legion.cooldown", (status.cooldown() + 19) / 20), x, y, WIDTH, DIM);
+         int left = cooldownLeft(status.cooldown(), statusAge);
+         if (left > 0) {
+            small(graphics, font, Component.translatable("hud.viltrumitecore.legion.cooldown", (left + 19) / 20), x, y, WIDTH, DIM);
+         }
+
          return;
       }
 

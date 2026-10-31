@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.baranhan.viltrumitecore.hero.ironman.legion.LegionPhase;
 import org.junit.jupiter.api.Test;
 
-/** Pure client rules: the engine loop's volume curve and the HUD's durability colours. */
+/** Pure client rules: the engine loop's volume curve and the HUD's colours, layout and cooldown countdown. */
 class LegionClientRulesTest {
    @Test
    void engineIsSilentInACrashAndLouderWithThrottle() {
@@ -44,5 +44,28 @@ class LegionClientRulesTest {
       assertEquals(worn, LegionHud.barColor(0.2F, false), "low but not blinking stays amber");
       assertNotEquals(LegionHud.barColor(0.2F, false), LegionHud.barColor(0.2F, true), "critical blinks red");
       assertEquals(healthy, LegionHud.barColor(0.5F, true), "blink only below a quarter");
+   }
+
+   @Test
+   void columnStaysLeftOfTheAbilityBarAndItsKeyLabels() {
+      for (int guiWidth : new int[]{320, 427, 480, 640, 960}) {
+         for (int label : new int[]{0, 6, 18, 40}) {
+            int x = LegionHud.columnX(guiWidth, label);
+            int panelRight = x + 96 + 3;
+            int slotX = guiWidth - 5 - 22 + 3;
+            int labelLeft = slotX - label - 6;
+            assertTrue(panelRight < labelLeft, "w=" + guiWidth + " label=" + label);
+            assertTrue(LegionHud.columnX(guiWidth, label + 10) < x, "a wider key label pushes the column left");
+         }
+      }
+   }
+
+   @Test
+   void cooldownCountsDownFromTheLastPacket() {
+      assertEquals(200, LegionHud.cooldownLeft(200, 0L));
+      assertEquals(120, LegionHud.cooldownLeft(200, 80L));
+      assertEquals(0, LegionHud.cooldownLeft(200, 400L), "never negative");
+      assertEquals(0, LegionHud.cooldownLeft(200, Long.MAX_VALUE), "no level: nothing to show");
+      assertEquals(200, LegionHud.cooldownLeft(200, -5L), "a clock going back does not add time");
    }
 }
