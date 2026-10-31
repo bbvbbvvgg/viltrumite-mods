@@ -5,11 +5,11 @@ import dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity;
 import dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosPhase;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosRules;
+import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosSceneTimeline;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosSounds;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -22,12 +22,14 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
  * Client state of the Thanos event from {@link ThanosStateS2CPacket}: the stage, the countdown
  * (estimated between packets on the unpaused client clock), the music, the last ten seconds'
  * beeps, the final minute's sky; the HUD is {@link ThanosHud}, the snap scene
- * {@link ThanosSceneClient}. A watchdog drops everything if the server goes silent for 3 s; a
- * logout or level unload clears it too.
+ * {@link ThanosSceneClient}. A watchdog drops everything if the server goes silent for 3 s (10 s
+ * in the snap scene, which the server sends to every player: silence there is a lag spike, and the
+ * scene holds through it); a logout or level unload clears it too.
  */
 @EventBusSubscriber(modid = "viltrumitecore", value = Dist.CLIENT)
 public final class ThanosClient {
    public static final int WATCHDOG_TICKS = 60;
+   public static final int SCENE_WATCHDOG_TICKS = 200;
    private static final Object TINT = new Object();
    private static int stage = ThanosStateS2CPacket.NONE;
    private static int thanosId = -1;
@@ -94,9 +96,9 @@ public final class ThanosClient {
       return e instanceof ThanosEntity t && !t.isRemoved() ? t : null;
    }
 
-   /** Stage clock: the server's stage tick plus the local unpaused ticks since that packet. */
+   /** Stage clock: the server's stage tick plus the local unpaused ticks since that packet (capped). */
    public static float stageTime(float partial) {
-      return stageTick + (clientTicks - received) + Mth.clamp(partial, 0.0F, 1.0F);
+      return ThanosSceneTimeline.estimate(stageTick, clientTicks - received, partial);
    }
 
    /** Ticks left on the timer, estimated between packets (the timer holds while the world is stopped). */
@@ -167,7 +169,8 @@ public final class ThanosClient {
          return;
       }
 
-      if (clientTicks - received > WATCHDOG_TICKS) {
+      boolean scene = stage == ThanosStateS2CPacket.SNAP || stage == ThanosStateS2CPacket.SNAP_WAIT;
+      if (clientTicks - received > (scene ? SCENE_WATCHDOG_TICKS : WATCHDOG_TICKS)) {
          clear();
          return;
       }

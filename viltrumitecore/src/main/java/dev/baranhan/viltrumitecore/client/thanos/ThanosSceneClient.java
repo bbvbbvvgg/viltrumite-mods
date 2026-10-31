@@ -39,9 +39,11 @@ import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.event.RenderNameTagEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -50,20 +52,20 @@ import org.joml.Matrix4f;
 /**
  * The snap and universe scene on this client, driven by the server's scene clock
  * ({@link ThanosStateS2CPacket#SNAP}, every 5 ticks): a local clock that runs every client tick
- * and is pulled toward the server's (a jump past {@link #SYNC_JUMP} ticks re-syncs at once), the
+ * and is pulled toward the server's (behind past {@link #SYNC_JUMP} ticks it jumps; ahead, after a
+ * lag spike, it holds and never rewinds), the
  * cinematic camera of {@link ThanosSceneShots} (a {@link Marker} camera entity, cuts, field of
  * view, the snap's shake), the clean screen with its letterbox and Od Lagna's subtitles
  * ({@link ThanosSceneHud}), the world passes and figures ({@link ThanosSceneDraw}), the sound cues
  * ({@link ThanosSceneCues}) and the void's loop. Everything is dropped on the scene's end, the
- * server's {@link ThanosStateS2CPacket#NONE}, the 3-second watchdog of {@link ThanosClient}, a
+ * server's {@link ThanosStateS2CPacket#NONE}, the watchdog of {@link ThanosClient} (10 s in the scene), a
  * logout or a level unload: the camera, the field of view, the input and the HUD are the player's
  * own again on the next frame.
  */
 @EventBusSubscriber(modid = "viltrumitecore", value = Dist.CLIENT)
 public final class ThanosSceneClient {
-   /** Share of the clock error corrected per tick; past {@link #SYNC_JUMP} the clock jumps. */
-   static final float SYNC_RATE = 0.15F;
-   static final float SYNC_JUMP = 12.0F;
+   /** Behind the server by more than this the scene clock jumps (see {@link ThanosSceneTimeline#follow}). */
+   static final float SYNC_JUMP = ThanosSceneTimeline.SYNC_JUMP;
    /** Od Lagna's distance in front of Thanos (near) or the player (far). */
    static final double OD_NEAR = 11.0;
    static final double OD_FAR = 9.0;
@@ -262,11 +264,9 @@ public final class ThanosSceneClient {
 
       float before = clock;
       float target = ThanosClient.stageTime(0.0F);
-      float next = clock + 1.0F;
-      float error = target - next;
-      boolean jump = Math.abs(error) > SYNC_JUMP;
+      boolean jump = ThanosSceneTimeline.jumps(clock, target);
       clockO = clock;
-      clock = jump ? Math.max(0.0F, target) : Math.max(clock, next + error * SYNC_RATE);
+      clock = Math.max(0.0F, ThanosSceneTimeline.follow(clock, target));
       if (jump) {
          clockO = clock;
       }
@@ -413,6 +413,18 @@ public final class ThanosSceneClient {
 
       if (hidesSelf(mc.gameRenderer.getMainCamera().getPosition(), mc.player.getBoundingBox())) {
          event.setCanceled(true);
+      }
+   }
+
+   /**
+    * The scene films the hero from outside (the camera is a marker, not the player), so vanilla would
+    * hang his own name tag in the shot, huge when the camera flies back behind his head.
+    */
+   @SubscribeEvent
+   public static void onNameTag(RenderNameTagEvent event) {
+      Minecraft mc = Minecraft.getInstance();
+      if (running && camera != null && mc.getCameraEntity() == camera && event.getEntity() == mc.player) {
+         event.setResult(Event.Result.DENY);
       }
    }
 

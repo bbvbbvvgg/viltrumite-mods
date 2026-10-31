@@ -22,7 +22,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -124,6 +127,21 @@ public final class ThanosEvent {
       return active != null && !active.ended;
    }
 
+   /**
+    * Where he lands: under the starter's feet, or, when a flying hero calls him from the air, on the
+    * first surface below (water stays water: the placement then refuses it).
+    */
+   static Vec3 groundBelow(ServerLevel level, ServerPlayer starter) {
+      Vec3 from = starter.position();
+      if (starter.onGround()) {
+         return from;
+      }
+
+      BlockHitResult hit = level.clip(new ClipContext(from, from.add(0.0, -ThanosRules.START_DROP, 0.0), ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY,
+         starter));
+      return hit.getType() == HitResult.Type.MISS ? from : hit.getLocation();
+   }
+
    public static StartResult start(ServerPlayer starter) {
       if (running()) {
          return StartResult.ALREADY;
@@ -143,9 +161,10 @@ public final class ThanosEvent {
       Vec3 look = starter.getLookAngle();
       Vec3 flat = new Vec3(look.x, 0.0, look.z);
       flat = flat.lengthSqr() < 1.0E-4 ? new Vec3(0.0, 0.0, 1.0) : flat.normalize();
-      Vec3 spot = ThanosPlacement.near(level, null, type.getDimensions(), starter.position().add(flat.scale(ThanosRules.SPAWN_DISTANCE)), 3.0, 8, 12);
+      Vec3 base = groundBelow(level, starter);
+      Vec3 spot = ThanosPlacement.near(level, null, type.getDimensions(), base.add(flat.scale(ThanosRules.SPAWN_DISTANCE)), 3.0, 8, 12);
       if (spot == null) {
-         spot = ThanosPlacement.near(level, null, type.getDimensions(), starter.position().add(flat.scale(6.0)), 3.0, 8, 12);
+         spot = ThanosPlacement.near(level, null, type.getDimensions(), base.add(flat.scale(6.0)), 3.0, 8, 12);
       }
 
       ThanosEntity thanos = spot == null ? null : type.create(level);
