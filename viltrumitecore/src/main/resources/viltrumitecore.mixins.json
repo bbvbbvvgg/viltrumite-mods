@@ -46,7 +46,8 @@
     "CityJournalMixin",
     "SawShellCollisionMixin",
     "EndDragonFightAccess",
-    "PlayerRespawnLogicInvoker"
+    "PlayerRespawnLogicInvoker",
+    "LevelPartQueryMixin"
   ],
   "injectors": {
     "defaultRequire": 1
