@@ -789,13 +789,38 @@ MOTIFS = {
     "kratos": {"blades_of_chaos": ("blades", {"chains": True}), "leviathan_throw": ("axe",), "spartan_rage": ("aura", {"extra": "drops"}),
                "god_slayer": ("ring",)},
     "shrek": {"ogre_slap": ("palm", {"rings": 2}), "swamp_power": ("aura", {"extra": "bubbles"}), "ogre_roar": ("ring",)},
+    # MULTIVERSE EXPANSION PHASE II: the same motif kit, new colours.
+    "aizen": {"reiatsu_strike": ("palm", {"rings": 3}), "black_coffin": ("vortex",), "kyoka_suigetsu": ("eye", {"pattern": "rinne"}),
+              "hogyoku_ascension": ("ring",)},
+    "ichigo": {"getsuga_tensho": ("slash", {"n": 2}), "shunpo": ("dash",), "bankai": ("aura", {"extra": "bolts"}),
+               "mugetsu": ("beam", {"wide": 6.0})},
+    "dante": {"rebellion": ("blades",), "ebony_ivory": ("pistols",), "devil_trigger": ("aura", {"extra": "bolts"})},
+    "vergil": {"yamato_slash": ("slash", {"katana": True}), "judgement_cut": ("slash", {"n": 3}), "air_trick": ("dash", {"mode": "teleport"}),
+               "judgement_cut_end": ("ring",)},
+    "guts": {"dragon_slayer": ("blades",), "cannon_arm": ("beam", {"wide": 2.0}), "berserker_armor": ("aura", {"extra": "drops"})},
+    "sans": {"bone_attack": ("blades", {"n": 3}), "shortcut": ("dash", {"mode": "teleport"}), "gaster_blaster": ("beam", {"wide": 5.0, "orb": True})},
+    "eren": {"titan_punch": ("mega_fist",), "odm_gear": ("dash", {"mode": "rope"}), "titan_hardening": ("aura", {"extra": "giant"}),
+             "the_rumbling": ("ring",)},
+    "levi": {"spinning_slash": ("blades", {"n": 2, "crossed": True}), "odm_maneuver": ("dash", {"mode": "rope"}), "ackerman_power": ("aura",)},
+    "denji": {"chainsaw_rip": ("blades", {"chains": True}), "pull_cord": ("dash", {"mode": "flames"}), "blood_frenzy": ("aura", {"extra": "drops"})},
+    "makima": {"bang": ("beam", {"wide": 2.0}), "control_devil": ("eye", {"pattern": "rinne"}), "domination": ("ring",)},
+    "power": {"blood_hammer": ("mega_fist",), "blood_spear": ("beam", {"wide": 2.0}), "greatest": ("aura", {"extra": "drops"})},
+    "alucard": {"jackal": ("pistols",), "shadow_form": ("dash", {"mode": "shadow"}), "release_restraint": ("eye",), "familiars": ("spirit",)},
+    "rimuru": {"water_blade": ("wave",), "predator": ("spirit", {"horns": False}), "beelzebuth": ("vortex",)},
+    "ainz": {"grasp_heart": ("heart",), "dark_wisdom": ("clock",), "fallen_down": ("sun",)},
+    "shadow": {"slime_sword": ("slash", {"katana": True}), "eminence_step": ("dash", {"mode": "shadow"}), "i_am_atomic": ("ring",)},
+    "mob": {"psychic_blast": ("orb", {"big": True}), "hundred_percent": ("aura", {"extra": "bolts"}), "question_percent": ("ring",)},
+    "escanor": {"rhitta_strike": ("axe",), "sunshine": ("sun",), "cruel_sun": ("meteor",)},
+    "meliodas": {"full_counter": ("palm", {"rings": 2}), "hellblaze": ("flame",), "demon_mode": ("aura", {"extra": "drops"}),
+                 "revenge_counter": ("beam", {"wide": 5.0})},
 }
 
 # icon-only colour overrides for abilities whose gameplay colour is too dark to read
 ICON_COLOR = {"black_flash": "e01a3a", "shadow_step": "5a5a8a", "ten_shadows": "6a6aa0", "uzumaki": "9a4ad0",
               "geto.cursed_spirit": "8a4ab0", "piercing_blood": "d01a1a", "batarang": "f1db4d", "pistols": "ffb030",
               "cursed_strike": "e02040", "malevolent_shrine": "e01818", "manipulation": "9a5ac0",
-              "divine_dogs": "8a96c8"}
+              "divine_dogs": "8a96c8", "black_coffin": "7a3aa0", "mugetsu": "6a2a6a", "bankai": "5a5a7a", "shadow_form": "6a2a3a",
+              "familiars": "8a2a3a", "hellblaze": "5a5a6a", "demon_mode": "6a6a7a", "eminence_step": "7a5ab0"}
 CUSTOM_RAMP = {"amaterasu": [hx("0e071b"), hx("1a1220"), hx("2c1d3a"), hx("622461"), hx("ca52c9"), hx("fdd2ed")]}
 
 LOOK_ARGS = {"punch", "combo", "mega_fist", "palm", "beam", "orb", "dash", "aura", "eye", "ring", "sun", "shrine"}

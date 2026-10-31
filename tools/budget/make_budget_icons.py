@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the 90 Ultimate Hero Expansion ability icons (64x64, Reinhard style).
+"""Writes the 150 Ultimate Hero Expansion ability icons (64x64, Reinhard style).
 
 Output: viltrumitecore/src/main/binassets/assets/viltrumitecore/textures/gui/ability/budget/<hero>/<ability>.png.b64
 (decoded by the decodeBinaryAssets Gradle task) and PNG previews plus a contact
