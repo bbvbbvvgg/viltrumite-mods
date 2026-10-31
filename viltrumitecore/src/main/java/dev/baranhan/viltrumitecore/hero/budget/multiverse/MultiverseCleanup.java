@@ -8,9 +8,20 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 
-/** Discards loaded multiverse NPCs; unloaded ones are never saved anyway. */
+/**
+ * Discards loaded multiverse NPCs; unloaded ones are never saved anyway. NPCs in
+ * chunks that were only hidden (no player nearby) are invisible to the sweep, so
+ * ended sessions are remembered and such NPCs discard themselves once they tick again.
+ */
 final class MultiverseCleanup {
+   private static final java.util.Set<Integer> ENDED = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
    private MultiverseCleanup() {
+   }
+
+   /** True for a session of an event or Boss Rush that is already over. */
+   static boolean ended(int session) {
+      return ENDED.contains(session);
    }
 
    static int discard(MinecraftServer server, Predicate<MultiverseFighter> which) {
@@ -33,6 +44,7 @@ final class MultiverseCleanup {
    }
 
    static int discardSession(MinecraftServer server, int session) {
+      ENDED.add(session);
       return discard(server, fighter -> fighter.session() == session);
    }
 }

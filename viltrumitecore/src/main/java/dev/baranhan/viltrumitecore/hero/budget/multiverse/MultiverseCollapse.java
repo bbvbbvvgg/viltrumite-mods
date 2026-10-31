@@ -137,16 +137,29 @@ public final class MultiverseCollapse {
       return this.origin;
    }
 
+   /**
+    * Living NPCs of the current wave. Removed NPCs leave {@link #wave} through {@link #forget};
+    * an NPC that is only hidden (its chunk has no player nearby) still counts, so the phases
+    * never skip ahead while nobody can see the fight.
+    */
    public int aliveWave(ServerLevel level) {
       int alive = 0;
       for (UUID id : this.wave) {
          Entity entity = level.getEntity(id);
-         if (entity != null && entity.isAlive()) {
+         if (entity == null || entity.isAlive()) {
             alive++;
          }
       }
 
       return alive;
+   }
+
+   /** A wave NPC left the world for good (killed, discarded or unloaded). */
+   static void forget(UUID id) {
+      MultiverseCollapse event = active;
+      if (event != null) {
+         event.wave.remove(id);
+      }
    }
 
    // ---- state machine --------------------------------------------------
@@ -353,13 +366,18 @@ public final class MultiverseCollapse {
       }
 
       Set<BudgetFaction> standing = EnumSet.noneOf(BudgetFaction.class);
+      boolean hidden = false;
       for (UUID id : this.wave) {
-         if (level.getEntity(id) instanceof MultiverseFighter fighter && fighter.isAlive() && fighter.faction() != null) {
+         Entity entity = level.getEntity(id);
+         if (entity == null) {
+            hidden = true;
+         } else if (entity instanceof MultiverseFighter fighter && fighter.isAlive() && fighter.faction() != null) {
             standing.add(fighter.faction());
          }
       }
 
-      if (MultiverseRules.warSettled(standing) || this.phaseTicks > MultiverseRules.warTimeout(this.mods)) {
+      // Hidden fighters (chunk without players) are unknown: do not declare a winner without them.
+      if (!hidden && MultiverseRules.warSettled(standing) || this.phaseTicks > MultiverseRules.warTimeout(this.mods)) {
          BudgetFaction winner = this.strongest(level, standing);
          if (winner != null) {
             MultiverseHud.chat(MultiverseHud.near(level, this.origin, MultiverseRules.ARENA_RADIUS),

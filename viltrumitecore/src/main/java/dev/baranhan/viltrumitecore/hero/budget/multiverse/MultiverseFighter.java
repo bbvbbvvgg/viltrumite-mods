@@ -308,6 +308,12 @@ public class MultiverseFighter extends PathfinderMob {
 
    @Override
    protected void customServerAiStep() {
+      if (MultiverseCleanup.ended(this.session)) {
+         // Left behind in a hidden chunk when its event ended: never fight on as an orphan.
+         this.discard();
+         return;
+      }
+
       super.customServerAiStep();
       if (this.bar != null) {
          this.bar.setProgress(this.getHealth() / this.getMaxHealth());
@@ -562,6 +568,15 @@ public class MultiverseFighter extends PathfinderMob {
       }
 
       super.remove(reason);
+   }
+
+   @Override
+   public void onRemovedFromWorld() {
+      super.onRemovedFromWorld();
+      if (this.isRemoved()) {
+         // Killed, discarded or unloaded (never saved): gone for good. A merely hidden NPC is not removed.
+         MultiverseCollapse.forget(this.getUUID());
+      }
    }
 
    @Override
