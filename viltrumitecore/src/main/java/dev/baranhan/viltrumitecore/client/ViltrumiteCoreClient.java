@@ -59,6 +59,7 @@ public class ViltrumiteCoreClient {
             renderer.addLayer(new dev.baranhan.viltrumitecore.client.ironman.ReactorGlowLayer(renderer));
             renderer.addLayer(new dev.baranhan.viltrumitecore.client.ironman.IronManSkinLayer(renderer));
             renderer.addLayer(new dev.baranhan.viltrumitecore.client.anim.render.PlayerGeoLayer(renderer));
+            renderer.addLayer(new dev.baranhan.viltrumitecore.client.budget.BudgetDetailsLayer(renderer));
             dev.baranhan.viltrumitecore.client.ironman.mark.MarkVisuals.addLayers(renderer);
             dev.baranhan.viltrumitecore.client.ironman.mark.sig.SignatureVisuals.addLayers(renderer);
          }
@@ -80,6 +81,7 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.ironman.IronManClient.registerSkins();
          dev.baranhan.viltrumitecore.client.reinhard.ReinhardClient.init();
          dev.baranhan.viltrumitecore.client.thor.ThorClient.init();
+         dev.baranhan.viltrumitecore.client.budget.BudgetHeroClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();
          ViltrumitePostProcessingConfig.load();

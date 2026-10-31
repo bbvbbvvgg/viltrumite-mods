@@ -26,6 +26,8 @@ public final class HeroRegistry {
       register(new dev.baranhan.viltrumitecore.hero.ironman.IronManHero());
       register(dev.baranhan.viltrumitecore.hero.reinhard.ReinhardHero.INSTANCE);
       register(dev.baranhan.viltrumitecore.hero.thor.ThorHero.INSTANCE);
+      // Ultimate Hero Expansion: every roster hero on the shared budget chassis.
+      dev.baranhan.viltrumitecore.hero.budget.BudgetHeroes.registerAll(HeroRegistry::register);
       installFlightPolicy();
    }
 

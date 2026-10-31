@@ -78,6 +78,7 @@ public class CoreCommands {
                      .executes(context -> reopenChoice(context.getSource(), EntityArgument.getPlayer(context, "target"))))
             )
             .then(divine())
+            .then(expansionHero())
             .then(annihilate())
             .then(Commands.literal("pause").requires(source -> source.hasPermission(2))
                .then(Commands.argument("ticks", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,1200))
@@ -149,6 +150,49 @@ public class CoreCommands {
       int count = hit;
       source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.divine.success", String.format(java.util.Locale.ROOT, "%.1f", amount), count), true);
       return count;
+   }
+
+   /**
+    * Operator switch: {@code /viltrumite hero <key> [target]} runs the full
+    * HeroRegistry.changeHero lifecycle (cleanup of the old hero, fresh
+    * loadout). "human" returns to a plain player; "hulk" only reports that
+    * the character is still in development.
+    */
+   private static com.mojang.brigadier.builder.ArgumentBuilder<CommandSourceStack, ?> expansionHero() {
+      return Commands.literal("hero")
+         .requires(source -> source.hasPermission(2))
+         .then(Commands.argument("key", StringArgumentType.word())
+            .suggests((context, builder) -> {
+               for (dev.baranhan.viltrumitecore.hero.HeroId id : dev.baranhan.viltrumitecore.hero.HeroId.values()) {
+                  if (id != dev.baranhan.viltrumitecore.hero.HeroId.VILTRUMITE) {
+                     builder.suggest(id.key());
+                  }
+               }
+               builder.suggest("hulk");
+               return builder.buildFuture();
+            })
+            .executes(context -> setHero(context.getSource(), context.getSource().getPlayerOrException(), StringArgumentType.getString(context, "key")))
+            .then(Commands.argument("target", EntityArgument.player())
+               .executes(context -> setHero(context.getSource(), EntityArgument.getPlayer(context, "target"), StringArgumentType.getString(context, "key")))));
+   }
+
+   private static int setHero(CommandSourceStack source, ServerPlayer target, String key) {
+      if ("hulk".equalsIgnoreCase(key)) {
+         source.sendFailure(Component.translatable("gui.viltrumitecore.expansion.hulk_locked"));
+         return 0;
+      }
+
+      dev.baranhan.viltrumitecore.hero.HeroId id = dev.baranhan.viltrumitecore.hero.HeroId.fromKey(key.toLowerCase(java.util.Locale.ROOT));
+      if (id == null) {
+         source.sendFailure(Component.translatable("commands.viltrumitecore.hero.unknown", key));
+         return 0;
+      }
+
+      dev.baranhan.viltrumitecore.hero.HeroRegistry.changeHero(target, id);
+      dev.baranhan.viltrumitecore.hero.HeroRegistry.repairLoadout(target);
+      dev.baranhan.viltrumitecore.hero.HeroId now = dev.baranhan.viltrumitecore.hero.HeroRegistry.get(target).id();
+      source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.hero.set", now.key()), true);
+      return now == id ? 1 : 0;
    }
 
    /**
