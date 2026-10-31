@@ -43,6 +43,32 @@ class CaptainSceneShotsTest {
    }
 
    @Test
+   void natashaAndClintEachGetACloseUpOfTheirDrop() {
+      int widowLand = CaptainRules.QUINJET_JUMP + CaptainRules.DROP_TICKS;
+      int clintJump = CaptainRules.QUINJET_JUMP + CaptainRules.HAWKEYE_JUMP_DELAY;
+      int clintLand = clintJump + CaptainRules.DROP_TICKS;
+      assertEquals(1, CaptainSceneShots.closeUp(CaptainRules.QUINJET_JUMP), "on Natasha from her jump");
+      assertEquals(1, CaptainSceneShots.closeUp(widowLand + 3), "and through her landing");
+      assertEquals(2, CaptainSceneShots.closeUp(clintLand - 6), "Clint still in the air when his shot starts");
+      assertEquals(2, CaptainSceneShots.closeUp(clintLand + 10), "and his landing pose");
+      assertEquals(0, CaptainSceneShots.closeUp(CaptainRules.QUINJET_JUMP - 1));
+      assertEquals(0, CaptainSceneShots.closeUp(CaptainSceneShots.CLINT_CLOSE + CaptainSceneShots.CLOSE_TICKS));
+      assertTrue(clintJump < CaptainRules.QUINJET_JUMP + 26, "the ramp is still open when Clint jumps");
+      assertTrue(CaptainSceneShots.CLINT_CLOSE + CaptainSceneShots.CLOSE_TICKS <= CaptainRules.FORM_DEADLINE, "both before the circle");
+      // the lens: close, beside the line to the circle, low, looking at the face; mirrored sides
+      Vec3 natasha = CENTRE.add(4.0, 6.0, 1.0);
+      Vec3[] a = CaptainSceneShots.closeShot(natasha, CENTRE, F, 1, 0.0);
+      Vec3[] b = CaptainSceneShots.closeShot(natasha, CENTRE, F, 2, 0.0);
+      double flat = new Vec3(a[0].x - natasha.x, 0, a[0].z - natasha.z).length();
+      assertEquals(3.0, flat, 1.0E-6);
+      assertTrue(a[0].y < natasha.y + 1.35, "below her face while she drops");
+      assertEquals(natasha.y + 1.35, a[1].y, 1.0E-6);
+      assertTrue(a[0].distanceTo(b[0]) > 2.0, "Natasha and Clint from opposite sides");
+      Vec3 landed = new Vec3(natasha.x, CENTRE.y, natasha.z);
+      assertEquals(CENTRE.y + 1.15, CaptainSceneShots.closeShot(landed, CENTRE, F, 1, 0.0)[0].y, 1.0E-6, "face height once down");
+   }
+
+   @Test
    void circleEndsInStevesEyes() {
       assertEquals(0.0, CaptainSceneShots.returnWeight(CaptainSceneShots.ORBIT_TICKS), 1.0E-9);
       assertEquals(1.0, CaptainSceneShots.returnWeight(CaptainRules.CIRCLE_TICKS), 1.0E-9);
