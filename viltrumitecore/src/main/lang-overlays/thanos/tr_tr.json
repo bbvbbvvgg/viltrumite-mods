@@ -21,6 +21,7 @@
   "commands.viltrumitecore.thanos.none": "Şu anda Thanos etkinliği yok.",
   "commands.viltrumitecore.thanos.not_fighting": "Thanos şu anda savaşmıyor.",
   "commands.viltrumitecore.thanos.skipped": "Zamanlayıcı ayarlandı: şıklatmaya %s kaldı.",
+  "commands.viltrumitecore.thanos.queued": "Thanos'un sıradaki hamlesi: %s.",
   "commands.viltrumitecore.thanos.status": "Thanos: %1$s, şıklatmaya %2$s, can %3$s, kahraman: %4$s, evre: %5$s, hamle: %6$s",
   "commands.viltrumitecore.thanos.stage.intro": "geliyor",
   "commands.viltrumitecore.thanos.stage.fight": "savaşıyor",

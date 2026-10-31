@@ -21,6 +21,7 @@
   "commands.viltrumitecore.thanos.none": "Событие «Танос» сейчас не идёт.",
   "commands.viltrumitecore.thanos.not_fighting": "Танос сейчас не сражается.",
   "commands.viltrumitecore.thanos.skipped": "Таймер переставлен: до щелчка %s.",
+  "commands.viltrumitecore.thanos.queued": "Следующим приёмом Таноса будет %s.",
   "commands.viltrumitecore.thanos.status": "Танос: %1$s, до щелчка %2$s, здоровье %3$s, героев: %4$s, фаза: %5$s, приёмов: %6$s",
   "commands.viltrumitecore.thanos.stage.intro": "появляется",
   "commands.viltrumitecore.thanos.stage.fight": "сражается",

@@ -21,6 +21,7 @@
   "commands.viltrumitecore.thanos.none": "当前没有灭霸事件。",
   "commands.viltrumitecore.thanos.not_fighting": "灭霸现在没有在战斗。",
   "commands.viltrumitecore.thanos.skipped": "计时器已调整：距离响指还剩 %s。",
+  "commands.viltrumitecore.thanos.queued": "灭霸的下一招将是 %s。",
   "commands.viltrumitecore.thanos.status": "灭霸：%1$s，距离响指 %2$s，生命值 %3$s，英雄：%4$s，阶段：%5$s，招式：%6$s",
   "commands.viltrumitecore.thanos.stage.intro": "降临中",
   "commands.viltrumitecore.thanos.stage.fight": "战斗中",

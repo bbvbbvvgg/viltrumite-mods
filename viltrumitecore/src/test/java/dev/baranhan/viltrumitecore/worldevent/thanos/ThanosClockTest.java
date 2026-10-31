@@ -75,6 +75,17 @@ class ThanosClockTest {
       assertEquals(ThanosOutcome.FIGHT, ThanosOutcome.resolve(false, false));
    }
 
+   /** Found in a real game: /kill dropped him past 40% and "Onslaught!" was announced over "Thanos falls!". */
+   @Test
+   void noPhaseIsAnnouncedOverTheEnd() {
+      assertTrue(ThanosOutcome.FIGHT.phaseMayAdvance());
+      assertFalse(ThanosOutcome.VICTORY.phaseMayAdvance());
+      assertFalse(ThanosOutcome.SNAP.phaseMayAdvance());
+      // a kill from full health crosses every threshold in that one tick: still no announcement
+      assertFalse(ThanosOutcome.resolve(true, false).phaseMayAdvance());
+      assertFalse(ThanosOutcome.resolve(false, true).phaseMayAdvance(), "the clock ran out: the snap, not \"final minute\"");
+   }
+
    @Test
    void lastTickOrderIsDeterministic() {
       // The event's END tick: defeat check, then advance, then expiry; a kill landing in the
