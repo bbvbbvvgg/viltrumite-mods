@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.command;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dev.baranhan.viltrumitecore.worldevent.WorldEventConflicts;
 import dev.baranhan.viltrumitecore.worldevent.meteor.MeteorRain;
 import java.util.Collection;
 import java.util.List;
@@ -10,13 +11,14 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
- * {@code /meteor start [targets]} (operator: the rain blows up terrain), {@code /meteor stop [targets]}
+ * {@code /meteor start [targets] [force]} (operator: the rain blows up terrain; refused while the Chitauri invasion runs unless {@code force}), {@code /meteor stop [targets]}
  * (a player may always stop their own rain; others and {@code all} need an operator) and
  * {@code /meteor status}.
  */
@@ -29,8 +31,10 @@ public final class MeteorRainCommands {
    public static void register(RegisterCommandsEvent event) {
       event.getDispatcher().register(Commands.literal("meteor")
          .then(Commands.literal("start").requires(s -> s.hasPermission(2))
-            .executes(c -> start(c, self(c)))
-            .then(Commands.argument("targets", EntityArgument.players()).executes(c -> start(c, EntityArgument.getPlayers(c, "targets")))))
+            .executes(c -> start(c, self(c), false))
+            .then(Commands.literal("force").executes(c -> start(c, self(c), true)))
+            .then(Commands.argument("targets", EntityArgument.players()).executes(c -> start(c, EntityArgument.getPlayers(c, "targets"), false))
+               .then(Commands.literal("force").executes(c -> start(c, EntityArgument.getPlayers(c, "targets"), true)))))
          .then(Commands.literal("stop")
             .executes(c -> stop(c, self(c)))
             .then(Commands.literal("all").requires(s -> s.hasPermission(2)).executes(MeteorRainCommands::stopAll))
@@ -43,7 +47,14 @@ public final class MeteorRainCommands {
       return List.of(c.getSource().getPlayerOrException());
    }
 
-   private static int start(CommandContext<CommandSourceStack> c, Collection<ServerPlayer> targets) {
+   private static int start(CommandContext<CommandSourceStack> c, Collection<ServerPlayer> targets, boolean force) {
+      // the Chitauri invasion owns the sky: no rain over it without an explicit force
+      List<Component> conflicts = WorldEventConflicts.invasion(c.getSource().getLevel());
+      if (!WorldEventConflicts.mayStart(conflicts.size(), force)) {
+         c.getSource().sendFailure(Component.translatable("commands.viltrumitecore.chitauri.conflict", ComponentUtils.formatList(conflicts, Component.literal(", "))));
+         return 0;
+      }
+
       int done = 0;
       for (ServerPlayer player : targets) {
          if (!MeteorRain.start(player)) {

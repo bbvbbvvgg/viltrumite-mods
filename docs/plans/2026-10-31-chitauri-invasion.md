@@ -1,0 +1,124 @@
+# Chitauri invasion (Avengers 2012) — plan
+
+Status: implemented on branch `feat/chitauri-invasion` (PR to `main`, not merged). Core `1.58.0` → `1.59.0`,
+network PROTOCOL `16` → `18` (`17` is claimed by `feat/captain-america-2012`).
+
+## Goal
+
+A manual world event: a blue portal opens over the city, Chitauri foot soldiers,
+flying chariots and Leviathans pour out in phases, fight heroes and citizens,
+break the city, then the portal collapses. Model, animation, texture and VFX
+quality is the top priority. Everything uses the existing anim core
+(`client/anim`), `HeroFx` / `HeroImpactFx` / `ElectricVfx` / `PixelVfx`,
+`CameraShake`, `SkyTint`, `CarveJobs` and the city journal. No second system.
+
+## Rules
+
+- Server-authoritative. Clients only render and play sounds.
+- The event never loads chunks. Spawns, AI moves and block edits check
+  `hasChunkAt` + `isPositionEntityTicking`.
+- Caps: soldiers ≤ 24, chariots ≤ 8, Leviathans ≤ 2, destroyed blocks per event
+  ≤ 40 000, carve jobs go through `CarveJobs` budgets, FX packets are rate limited.
+- All block edits go through `LevelChunk.setBlockState`, so the city journal
+  records them and `/city reset` restores them. Debris stays after the event.
+- Works with no city (Atheria) loaded: city calls are null-safe.
+- Manual only: `/chitauri start [force]`, `/chitauri stop`, `/chitauri status`,
+  `/chitauri wave`. No automatic start.
+- One world event at a time. A shared seam `worldevent/WorldEventConflicts`
+  reports active trio/conquest events, meteor rain and the invasion. Start
+  commands refuse when another event runs, unless `force` is given.
+- Event state is memory-only. A server restart ends the invasion; all Chitauri
+  entities are `noSave`, so nothing is left behind except broken blocks.
+- Time stop (`TimeFreeze.worldStopped`) pauses the director; frozen entities
+  do not tick.
+
+## Phases
+
+| Phase | Length | What happens |
+|---|---|---|
+| OPENING | ~35 s | Sky darkens, air distortion, energy beam from the anchor, portal forms (multi-layer, rotating, deep tunnel), lightning and vortex, first 3 chariots, first Leviathan |
+| GROUND_ASSAULT | waves | Carrier chariots drop soldier squads on streets and roofs |
+| AIR_ASSAULT | waves | Gunship chariots strafe from different directions |
+| LEVIATHAN | — | Second Leviathan, more troop drops |
+| CLIMAX | — | Mixed waves until the timer ends or `/chitauri stop` |
+| CLOSING | ~15 s | Portal collapses, the hive link is cut: soldiers collapse, chariots crash, Leviathans fall |
+
+`/chitauri stop` = emergency stop: portal closes fast, every Chitauri entity is
+removed with a short FX, no more destruction. Normal end = CLOSING sequence.
+
+## Entities
+
+- `chitauri_soldier` (Monster). Targets survival players, citizens, villagers,
+  golems. Ranged bursts with a charge-up, cover search by ray casts, bayonet
+  melee, squads share targets and flank, anti-stuck (repath → hop → `SafeSpot`).
+  Can ride a chariot (mounted pose, holds the rail, fires from the seat).
+- `chitauri_chariot` (flying Mob, own steering). Patrol, attack runs from random
+  azimuths, evade heroes, drop-off runs, death spiral. Look-ahead feelers avoid
+  buildings, separation keeps chariots apart, minimum height over the heightmap.
+  Seats: pilot + gunner, or pilot + 2 troopers. Banking/roll on turns. Damage
+  states (smoke, sparks), death = explosion → breakup → falling debris → crash.
+- `chitauri_leviathan` (Mob head + `PartEntity` segments). About 28 blocks long.
+  Head with jaws, eyes, plates; body segments with side fins and plates; tail.
+  The head flies smooth waypoints; segments sample the head trail by arc length,
+  so the body follows the same path with a traveling wave. Carves buildings it
+  passes (within the cap), dives on clusters, roars (shockwave), drops troops.
+  Big hits cause stagger (roll + height loss). Death: loss of control, falling
+  arc, crash crater, segments cascade down, corpse stays ~45 s then fades.
+- `chitauri_bolt` projectile: blue-white energy bolt (core + halo + trail).
+
+Heroes interact through the normal paths: melee/abilities damage the entities,
+`HeroTargets` resolves Leviathan parts to the head, grabs and pulls use
+`HeroRegistry.allowsExternalControl`. A new `ControlResistant` interface lets the
+Leviathan refuse PULL / VILTRUMITE_GRAB / IMPULSE but accept FREEZE / STASIS.
+
+## City
+
+- Danger zones for citizens: soldier fights (14), chariot strafes, Leviathan
+  (32), explosions (24). Citizens flee with the existing Flee goal.
+- Block damage uses `HeroDestruction` (respects `mobGriefing`) and `HeroDebris`.
+
+## Network
+
+`CoreMessages` PROTOCOL 16 → 18 (17 belongs to the Captain America branch). New packets at the end:
+`ChitauriPortalS2CPacket` (portal state; resent on login / dimension change) and
+`ChitauriFxS2CPacket` (impacts, explosions, breakup, Leviathan hit/crash, portal
+strikes).
+
+## Assets
+
+- Geo / animations / textures are generated by Python scripts in
+  `tools/assets/chitauri_*.py` (built on `tools/assets/jinwoo_geo.py`). Original
+  designs, no copied game or film assets.
+- Sounds are synthesized by `tools/sfx/chitauri.py` (own, CC0). See
+  `tools/assets/chitauri_sources.md` and `CREDITS.md`.
+- Lang: `src/main/lang-overlays/chitauri/<locale>.json` for all 12 locales.
+  Sounds: `src/main/sound-overlays/chitauri.json`.
+
+## Tests
+
+Rules timeline, Leviathan trail sampling, chariot steering, cover scoring,
+conflicts seam, asset parse, sounds registry ↔ json ↔ files ↔ subtitles,
+lang completeness.
+
+## QA checklist
+
+Build + tests; client run; all three creatures moving and fighting; front /
+side / back views; Leviathan between buildings; destruction + `/city reset`;
+stop / logout / death / server restart; dedicated server; FPS / TPS.
+
+## QA results (2026-10-31)
+
+- Build + tests: `ChitauriRulesTest`, `ChitauriPacketsTest`, `ChitauriAssetsTest`, `ChitauriClientMathTest`,
+  `LeviathanTrailTest`, `ChariotSteeringTest`, `CoverScoreTest` (timeline, waves vs caps, conflicts, packet
+  round trips, FX kinds, sounds registry ↔ overlay ↔ files ↔ subtitles, no vanilla `SoundEvents`, no chunk
+  tickets, 12 locales with equal keys/placeholders, clips ↔ bones, textures, loop/glare maths).
+- Singleplayer client (Xvfb, llvmpipe): full timeline 431 s, Russian bars/titles/chat/subtitles, caps held,
+  every `chitauri.*` sound captured through the OpenAL wave writer; conflicts with meteor rain both ways;
+  `/chitauri wave`, `phase`, `stop` (all entities gone, sky back); destruction → journal → `/city reset`
+  restored every tower block. 47 FPS idle → 14-15 FPS at full forces (software GL).
+- Dedicated server + 2 clients (ru_ru and en_us): each client gets its own language; boss bars, portal and
+  storm after a relog mid-invasion; server mean tick 3-10.5 ms (20 TPS) at 24 soldiers / 8 chariots /
+  2 Leviathans; server stop mid-invasion → after restart no invasion, no Chitauri entities, journal kept,
+  `/city reset` restored all 5651 blocks.
+- Fixed during QA: square storm clouds → soft puffs; beam whiteout at the anchor; engine loop churn (rank +
+  distance hysteresis); vanilla fall/death sounds; Leviathan runs now aim at towers.

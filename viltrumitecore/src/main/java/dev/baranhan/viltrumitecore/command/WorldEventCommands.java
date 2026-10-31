@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.baranhan.viltrumitecore.worldevent.WorldEvent;
+import dev.baranhan.viltrumitecore.worldevent.WorldEventConflicts;
 import dev.baranhan.viltrumitecore.worldevent.WorldEventManager;
 import dev.baranhan.viltrumitecore.worldevent.WorldEventType;
 import dev.baranhan.viltrumitecore.worldevent.WorldEvents;
@@ -15,6 +16,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
@@ -31,16 +33,20 @@ public final class WorldEventCommands {
                         .then(
                            ((RequiredArgumentBuilder)Commands.argument("id", StringArgumentType.word())
                                  .suggests(EVENT_IDS)
-                                 .executes(ctx -> start((CommandSourceStack)ctx.getSource(), StringArgumentType.getString(ctx, "id"), -1)))
+                                 .executes(ctx -> start((CommandSourceStack)ctx.getSource(), StringArgumentType.getString(ctx, "id"), -1, false)))
+                              .then(Commands.literal("force").executes(ctx -> start((CommandSourceStack)ctx.getSource(), StringArgumentType.getString(ctx, "id"), -1, true)))
                               .then(
                                  Commands.argument("seconds", IntegerArgumentType.integer(0, 3600))
                                     .executes(
                                        ctx -> start(
                                              (CommandSourceStack)ctx.getSource(),
                                              StringArgumentType.getString(ctx, "id"),
-                                             IntegerArgumentType.getInteger(ctx, "seconds")
+                                             IntegerArgumentType.getInteger(ctx, "seconds"),
+                                             false
                                           )
                                     )
+                                    .then(Commands.literal("force").executes(ctx -> start((CommandSourceStack)ctx.getSource(), StringArgumentType.getString(ctx, "id"),
+                                       IntegerArgumentType.getInteger(ctx, "seconds"), true)))
                               )
                         )
                   ))
@@ -61,9 +67,14 @@ public final class WorldEventCommands {
          .then(Commands.literal("list").executes(ctx -> list((CommandSourceStack)ctx.getSource())));
    }
 
-   private static int start(CommandSourceStack source, String id, int seconds) {
+   private static int start(CommandSourceStack source, String id, int seconds, boolean force) {
       WorldEventType type = WorldEvents.byId(id);
-      if (type == null) {
+      List<Component> conflicts = WorldEventConflicts.invasion(source.getLevel());
+      if (type != null && !WorldEventConflicts.mayStart(conflicts.size(), force)) {
+         // the Chitauri invasion is exclusive: another event only with an explicit force
+         source.sendFailure(Component.translatable("commands.viltrumitecore.chitauri.conflict", ComponentUtils.formatList(conflicts, Component.literal(", "))));
+         return 0;
+      } else if (type == null) {
          source.sendFailure(Component.translatable("commands.viltrumitecore.event.unknown", id).withStyle(ChatFormatting.RED));
          return 0;
       } else {

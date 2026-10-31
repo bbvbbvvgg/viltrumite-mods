@@ -83,6 +83,10 @@ public final class HeroRegistry {
     * active Lion's Heart denies every kind, including IMPULSE).
     */
    public static boolean allowsExternalControl(net.minecraft.world.entity.LivingEntity target, dev.baranhan.viltrumitecore.hero.control.ControlKind kind) {
+      if (target instanceof dev.baranhan.viltrumitecore.entity.ControlResistant resistant && !resistant.allowsControl(kind)) {
+         return false; // a huge creature (Chitauri Leviathan) refuses pulls and grabs
+      }
+
       return !(target instanceof Player player) || get(player).allowsExternalControl(target, kind);
    }
 
