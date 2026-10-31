@@ -57,8 +57,8 @@ public final class CityEvents {
    @SubscribeEvent
    public static void onLevelSave(LevelEvent.Save event) {
       CityManager m = CityManager.active();
-      if (m != null && event.getLevel() == m.level() && m.journal().dirty()) {
-         m.saveJournal(false);
+      if (m != null && event.getLevel() == m.level()) {
+         m.onWorldSaved();
       }
    }
 
@@ -107,6 +107,8 @@ public final class CityEvents {
       Entity attacker = event.getSource().getEntity();
       if (victim instanceof Player || attacker instanceof Player || event.getAmount() >= 4.0F) {
          city.danger(victim.getX(), victim.getY(), victim.getZ(), DangerMap.FIGHT_RADIUS, DangerMap.DEFAULT_LIFETIME);
+         // a heavy blow (a hammer, a super punch) shakes the street around the victim
+         city.blast(victim.getX(), victim.getY(), victim.getZ(), dev.baranhan.viltrumitecore.city.danger.ThreatRules.hitBlast(event.getAmount()));
       }
    }
 
@@ -116,6 +118,7 @@ public final class CityEvents {
       if (city != null) {
          Vec3 at = event.getExplosion().getPosition();
          city.danger(at.x, at.y, at.z, DangerMap.EXPLOSION_RADIUS, DangerMap.DEFAULT_LIFETIME);
+         city.blast(at.x, at.y, at.z, dev.baranhan.viltrumitecore.city.danger.ThreatRules.explosionBlast(event.getAffectedBlocks().size()));
       }
    }
 
@@ -123,6 +126,7 @@ public final class CityEvents {
       CityManager city = CityManager.of(level);
       if (city != null) {
          city.danger(at.x, at.y, at.z, Math.max(DangerMap.FIGHT_RADIUS, radius), DangerMap.DEFAULT_LIFETIME);
+         city.blast(at.x, at.y, at.z, dev.baranhan.viltrumitecore.city.danger.ThreatRules.noiseBlast(radius));
       }
    }
 

@@ -16,16 +16,24 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * Keeps the streets around players populated while the city is enabled: every second,
- * each player inside the arena gets citizens up to perPlayer x density within 64 blocks
- * (a few per second, on preferred cells 24-64 blocks away in entity-ticking chunks),
- * capped per level. Citizens more than 96 blocks (manual: 128) from every player are
- * removed; chunk unloads remove them too (they are never saved).
+ * each player inside the arena gets citizens up to perPlayer x density x crowd scale
+ * (config {@code cityCrowdScale}) within {@link #NEAR} blocks (a few per second, on free
+ * preferred sidewalk/plaza cells 20-64 blocks away in entity-ticking chunks, never inside
+ * walls, water or a danger anybody can see), capped per level (config
+ * {@code cityMaxCitizens}, at most {@link CityManager#ABSOLUTE_MAX}). Some arrive as small
+ * groups that walk together. Citizens more than {@link #FAR} blocks (manual: 128) from
+ * every player, or left in chunks that stopped ticking entities, are removed; chunk unloads remove them too (they are never saved), so a
+ * long session never accumulates entities.
  */
 final class CityPopulation {
    static final int NEAR = 64;
-   static final int FAR = 96;
+   static final int FAR = 100;
    static final int MANUAL_FAR = 128;
-   static final int SPAWNS_PER_PLAYER_PER_SECOND = 3;
+   /** Trimming never removes a citizen this close to a player (it would vanish in plain sight). */
+   static final int TRIM_KEEP = 40;
+   static final int SPAWNS_PER_PLAYER_PER_SECOND = 8;
+   /** Share of spawns that bring one or two companions. */
+   static final float GROUP_CHANCE = 0.3F;
    private final CityManager city;
 
    CityPopulation(CityManager city) {
@@ -37,9 +45,56 @@ final class CityPopulation {
       return (int)Math.round(Math.max(0.0, perPlayer * density));
    }
 
+   /** Citizens wanted around one player with the crowd scale of the config. */
+   static int targetPerPlayer(int perPlayer, double density, double crowdScale) {
+      return targetPerPlayer(perPlayer, density * clampScale(crowdScale));
+   }
+
    /** Level-wide cap: the profile cap scaled by density, never above {@link CityManager#ABSOLUTE_MAX}. */
    static int levelCap(int maxTotal, double density) {
       return (int)Math.min(CityManager.ABSOLUTE_MAX, Math.round(maxTotal * Math.max(1.0, density)));
+   }
+
+   /** Level cap with the crowd scale and the configured hard cap (a hard cap below 1 means no extra limit). */
+   static int levelCap(int maxTotal, double density, double crowdScale, int hardCap) {
+      int cap = levelCap(maxTotal, Math.max(1.0, density) * clampScale(crowdScale));
+      return hardCap > 0 ? Math.min(cap, hardCap) : cap;
+   }
+
+   /**
+    * Whether a citizen goes away: farther than {@link #FAR} (manual: {@link #MANUAL_FAR}) from
+    * every player, or standing in a chunk that does not tick entities (loaded beyond the
+    * simulation distance) while somebody is in the level - such citizens would freeze
+    * mid-flight, stay "fleeing" forever and count against the cap. Console
+    * {@code /city populate} with nobody online: manual citizens wait for the first player.
+    *
+    * @param bestSq squared distance to the nearest player, {@link Double#MAX_VALUE} with nobody in the level
+    */
+   static boolean shouldDespawn(boolean manual, double bestSq, boolean entityTicking) {
+      if (bestSq == Double.MAX_VALUE) {
+         return !manual;
+      }
+
+      int far = manual ? MANUAL_FAR : FAR;
+      return bestSq > (double)far * far || !entityTicking;
+   }
+
+   /**
+    * Automatic citizens to remove this second: everything above the level cap, and - when the
+    * density was lowered - the automatic crowd above what the players want (per player x
+    * players, a quarter more for the 64-100 block ring where walkers drift). Manual
+    * citizens (/city populate) count against the cap only.
+    */
+   static int trimCount(int total, int auto, int cap, int per, int players) {
+      int overCap = total > cap + 4 ? total - cap : 0;
+      int want = Math.min(cap, per * Math.max(0, players));
+      int keep = want + want / 4 + 4;
+      int overWant = auto > keep ? auto - keep : 0;
+      return Math.max(overCap, overWant);
+   }
+
+   static double clampScale(double s) {
+      return Double.isNaN(s) ? 1.0 : Math.max(0.0, Math.min(4.0, s));
    }
 
    void tick(long now) {
@@ -62,8 +117,7 @@ final class CityPopulation {
             best = Math.min(best, p.distanceToSqr(c));
          }
 
-         int far = c.manual ? MANUAL_FAR : FAR;
-         if (best > (double)far * far) {
+         if (shouldDespawn(c.manual, best, level.isPositionEntityTicking(c.blockPosition()))) {
             c.discard();
          }
       }
@@ -72,21 +126,47 @@ final class CityPopulation {
          return;
       }
 
-      int cap = levelCap(this.city.profile.maxTotal, this.city.density);
-      int per = Math.min(targetPerPlayer(this.city.profile.perPlayer, this.city.density), cap);
+      dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig cfg = dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig.INSTANCE;
+      int cap = levelCap(this.city.profile.maxTotal, this.city.density, cfg.cityCrowdScale, cfg.cityMaxCitizens);
+      int per = Math.min(targetPerPlayer(this.city.profile.perPlayer, this.city.density, cfg.cityCrowdScale), cap);
       int total = this.city.citizenCount();
-      // density lowered: trim auto citizens nobody is looking at closely
-      if (total > cap + 4) {
-         int excess = total - cap;
+      int auto = 0;
+      for (CitizenEntity c : this.city.citizens()) {
+         if (!c.manual) {
+            auto++;
+         }
+      }
+
+      // density lowered (or above the level cap): trim automatic citizens nobody is looking
+      // at closely, the farthest first
+      int excess = trimCount(total, auto, cap, per, players.size());
+      if (excess > 0) {
+         List<CitizenEntity> spare = new ArrayList<>();
+         List<Double> dist = new ArrayList<>();
          for (CitizenEntity c : this.city.citizens()) {
-            if (excess <= 0) {
-               break;
+            if (c.manual) {
+               continue;
             }
 
-            if (!c.manual && level.getNearestPlayer(c, 40.0) == null) {
-               c.discard();
-               excess--;
+            double best = Double.MAX_VALUE;
+            for (ServerPlayer p : level.players()) {
+               best = Math.min(best, p.distanceToSqr(c));
             }
+
+            if (best > TRIM_KEEP * TRIM_KEEP) {
+               spare.add(c);
+               dist.add(best);
+            }
+         }
+
+         Integer[] order = new Integer[spare.size()];
+         for (int i = 0; i < order.length; i++) {
+            order[i] = i;
+         }
+
+         java.util.Arrays.sort(order, (a, b) -> Double.compare(dist.get(b), dist.get(a)));
+         for (int i = 0; i < order.length && i < excess; i++) {
+            spare.get(order[i]).discard();
          }
 
          return;
@@ -100,8 +180,20 @@ final class CityPopulation {
          int near = level.getEntitiesOfClass(CitizenEntity.class, new AABB(p.blockPosition()).inflate(NEAR), c -> true).size();
          int want = Math.min(Math.min(per - near, SPAWNS_PER_PLAYER_PER_SECOND), cap - total);
          for (int i = 0; i < want; i++) {
-            if (this.spawnNear(p.position(), 24.0, 64.0, false) != null) {
+            CitizenEntity c = this.spawnNear(p.position(), 20.0, 64.0, false);
+            if (c != null) {
                total++;
+               if (i + 1 < want && level.random.nextFloat() < GROUP_CHANCE) {
+                  int extra = level.random.nextFloat() < 0.7F ? 1 : 2;
+                  for (int k = 0; k < extra && i + 1 < want; k++) {
+                     CitizenEntity f = this.spawnNear(c.position(), 0.8, 3.0, false);
+                     if (f != null) {
+                        f.leaderFollow(c);
+                        total++;
+                        i++;
+                     }
+                  }
+               }
             }
          }
       }
@@ -114,12 +206,13 @@ final class CityPopulation {
       long now = this.city.now();
       long cell = grid.randomCell(level.random::nextDouble, at.x, at.z, minR, maxR, true, 24, (x, y, z) -> {
          BlockPos pos = new BlockPos(x, y, z);
-         if (!level.isPositionEntityTicking(pos) || this.city.danger.dangerous(x + 0.5, y, z + 0.5, now) || !level.getFluidState(pos).isEmpty()) {
+         if (!level.isPositionEntityTicking(pos) || this.city.danger.noticed(x + 0.5, y, z + 0.5, now) != null || !level.getFluidState(pos).isEmpty()) {
             return false;
          }
 
          double fy = floorY(level, pos);
-         return !Double.isNaN(fy) && level.noCollision(ViltrumiteEntities.CITIZEN.get().getAABB(x + 0.5, fy + 0.01, z + 0.5));
+         // the whole body (tallest citizens included) must fit: never inside a wall, a sign or a car
+         return !Double.isNaN(fy) && level.noCollision(ViltrumiteEntities.CITIZEN.get().getAABB(x + 0.5, fy + 0.01, z + 0.5).inflate(0.05, 0.15, 0.05).move(0.0, 0.15, 0.0));
       });
       if (cell == Long.MIN_VALUE) {
          return null;
@@ -134,7 +227,7 @@ final class CityPopulation {
       }
 
       c.moveTo(x + 0.5, floorY(level, new BlockPos(x, y, z)) + 0.01, z + 0.5, level.random.nextFloat() * 360.0F, 0.0F);
-      c.setSkin(level.random.nextInt(CitizenEntity.SKINS));
+      c.setSkin(level.random.nextInt());
       c.manual = manual;
       c.finalizeSpawn(level, level.getCurrentDifficultyAt(c.blockPosition()), MobSpawnType.EVENT, null, null);
       level.addFreshEntity(c);

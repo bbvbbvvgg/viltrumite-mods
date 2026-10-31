@@ -109,9 +109,10 @@ public final class CityCommands {
       CityProfile p = m.profile;
       ok(c, line("viltrumitecore.city.status.title", p.name, p.mapVersion).withStyle(ChatFormatting.GOLD), false);
       ok(c, line("viltrumitecore.city.status.enabled", onOff(m.enabled)), false);
-      int cap = CityPopulation.levelCap(p.maxTotal, m.density);
+      dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig cfg = dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig.INSTANCE;
+      int cap = CityPopulation.levelCap(p.maxTotal, m.density, cfg.cityCrowdScale, cfg.cityMaxCitizens);
       ok(c, line("viltrumitecore.city.status.citizens", m.citizenCount(), cap,
-         CityPopulation.targetPerPlayer(p.perPlayer, m.density)), false);
+         CityPopulation.targetPerPlayer(p.perPlayer, m.density, cfg.cityCrowdScale)), false);
       ok(c, line("viltrumitecore.city.status.density", String.format(Locale.ROOT, "%.2f", m.density)), false);
       // active districts: where players or citizens are now
       Map<String, int[]> active = new LinkedHashMap<>();
@@ -145,6 +146,22 @@ public final class CityCommands {
       }
 
       ok(c, line("viltrumitecore.city.status.danger", m.danger.size()), false);
+      dev.baranhan.viltrumitecore.city.citizen.CrowdIndex crowd = m.crowd;
+      int calm = 0;
+      int alarmed = 0;
+      int fleeing = 0;
+      int hiding = 0;
+      for (dev.baranhan.viltrumitecore.city.citizen.CitizenState s : dev.baranhan.viltrumitecore.city.citizen.CitizenState.values()) {
+         int n = crowd.count(s);
+         switch (s) {
+            case FLEEING, FALLEN, GETTING_UP -> fleeing += n;
+            case COVER -> hiding += n;
+            case ALERT, STARTLED -> alarmed += n;
+            default -> calm += n;
+         }
+      }
+
+      ok(c, line("viltrumitecore.city.status.crowd", calm, alarmed, fleeing, hiding, m.threats.lastFound), false);
       if (m.restore.running()) {
          ok(c, line("viltrumitecore.city.status.restore_running", m.restore.restoredBlocks(), m.restore.chunksLeft(), m.restore.pass())
             .withStyle(ChatFormatting.YELLOW), false);
@@ -184,7 +201,7 @@ public final class CityCommands {
       CityManager m = city(c);
       m.setDensity(v);
       ok(c, line("viltrumitecore.city.density.set", String.format(Locale.ROOT, "%.2f", m.density),
-         CityPopulation.targetPerPlayer(m.profile.perPlayer, m.density)), true);
+         CityPopulation.targetPerPlayer(m.profile.perPlayer, m.density, dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig.INSTANCE.cityCrowdScale)), true);
       if (!m.enabled) {
          ok(c, line("viltrumitecore.city.density.hint").withStyle(ChatFormatting.GRAY), false);
       }

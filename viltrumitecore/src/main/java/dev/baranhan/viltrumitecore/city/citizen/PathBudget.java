@@ -5,8 +5,8 @@ package dev.baranhan.viltrumitecore.city.citizen;
  * {@link #TOTAL} searches in total (flee requests use the urgent share) per game tick.
  */
 public final class PathBudget {
-   public static final int NORMAL = 4;
-   public static final int TOTAL = 12;
+   public static final int NORMAL = 6;
+   public static final int TOTAL = 20;
    private static long tick = Long.MIN_VALUE;
    private static int used;
 

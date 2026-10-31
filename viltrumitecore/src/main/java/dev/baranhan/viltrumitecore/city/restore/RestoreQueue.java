@@ -29,6 +29,10 @@ import net.minecraft.world.phys.AABB;
  * removed and players inside restored blocks are lifted out. Side effects that still
  * happen (a torch popping, sand settling) are journaled normally and fixed by the next
  * pass; passes repeat until the journal is empty (at most {@link #MAX_PASSES}).
+ * Every restored chunk hands its originals to {@link ChangeJournal#settle} until the world
+ * has saved it, so a crash right after the reset loses nothing. While a chunk is being
+ * written back, changes of its not yet restored positions are not journaled
+ * ({@link #pending}): the original is still in this queue and is put back anyway.
  */
 public final class RestoreQueue {
    public static final int BLOCKS_PER_TICK = 6000;
@@ -37,10 +41,13 @@ public final class RestoreQueue {
    private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS;
 
    private final ChangeJournal journal;
+   private final ChangeJournal settleInto;
    private final ArrayDeque<Long> chunks = new ArrayDeque<>();
    private Long current;
    private List<Long2ObjectMap.Entry<ChangeJournal.Entry>> currentEntries;
    private Long2ObjectOpenHashMap<ChangeJournal.Entry> currentMap;
+   /** Positions of the current chunk not written back yet. */
+   private Long2ObjectOpenHashMap<ChangeJournal.Entry> remaining;
    private int cursor;
    private int pass;
    private boolean running;
@@ -51,8 +58,20 @@ public final class RestoreQueue {
    private int waitTicks;
 
    public RestoreQueue(ChangeJournal journal, Consumer<String> report) {
+      this(journal, journal, report);
+   }
+
+   /** A queue over {@code journal} whose restored chunks settle in {@code settleInto} (crash recovery). */
+   public RestoreQueue(ChangeJournal journal, ChangeJournal settleInto, Consumer<String> report) {
       this.journal = journal;
+      this.settleInto = settleInto;
       this.report = report;
+   }
+
+   /** True while this position's original waits in the chunk being written back now. */
+   public boolean pending(BlockPos pos) {
+      return this.current != null && this.remaining != null && this.current == ChangeJournal.chunkKey(pos.getX() >> 4, pos.getZ() >> 4)
+         && this.remaining.containsKey(pos.asLong());
    }
 
    public boolean running() {
@@ -94,19 +113,17 @@ public final class RestoreQueue {
    /** Stops after the current chunk is written back; its remaining entries return to the journal. */
    public void abort() {
       if (this.current != null && this.currentMap != null) {
-         Long2ObjectOpenHashMap<ChangeJournal.Entry> rest = new Long2ObjectOpenHashMap<>();
-         for (int i = this.cursor; i < this.currentEntries.size(); i++) {
-            rest.put(this.currentEntries.get(i).getLongKey(), this.currentEntries.get(i).getValue());
-         }
-
-         if (!rest.isEmpty()) {
-            this.journal.putBack(this.current, rest);
+         // the written part may not be on disk yet; the rest goes back to the journal
+         this.settleInto.settle(this.current, this.currentMap);
+         if (!this.remaining.isEmpty()) {
+            this.journal.putBack(this.current, this.remaining);
          }
       }
 
       this.current = null;
       this.currentEntries = null;
       this.currentMap = null;
+      this.remaining = null;
       this.chunks.clear();
       this.running = false;
    }
@@ -156,6 +173,7 @@ public final class RestoreQueue {
 
             this.current = key;
             this.currentMap = m;
+            this.remaining = new Long2ObjectOpenHashMap<>(m);
             this.currentEntries = new ArrayList<>(m.long2ObjectEntrySet());
             this.currentEntries.sort(Comparator.comparingInt(e -> BlockPos.getY(e.getLongKey())));
             this.cursor = 0;
@@ -168,6 +186,7 @@ public final class RestoreQueue {
             for (int i = 0; i < n; i++) {
                Long2ObjectMap.Entry<ChangeJournal.Entry> e = this.currentEntries.get(this.cursor + i);
                pos.set(e.getLongKey());
+               this.remaining.remove(e.getLongKey());
                restoreOne(level, pos.immutable(), e.getValue());
             }
          } finally {
@@ -178,11 +197,13 @@ public final class RestoreQueue {
          budget -= n;
          this.restoredBlocks += n;
          if (this.cursor >= this.currentEntries.size()) {
-            this.afterChunk(level, ChangeJournal.chunkX(this.current), ChangeJournal.chunkZ(this.current));
+            afterChunk(level, ChangeJournal.chunkX(this.current), ChangeJournal.chunkZ(this.current));
+            this.settleInto.settle(this.current, this.currentMap);
             this.restoredChunks++;
             this.current = null;
             this.currentEntries = null;
             this.currentMap = null;
+            this.remaining = null;
          }
       }
    }

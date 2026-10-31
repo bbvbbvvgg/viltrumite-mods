@@ -57,7 +57,8 @@ public final class CityManager {
    });
 
    public static final double MAX_DENSITY = 2.5;
-   public static final int ABSOLUTE_MAX = 300;
+   /** Upper bound of the level cap and of /city populate, whatever the config says. */
+   public static final int ABSOLUTE_MAX = 640;
 
    final MinecraftServer server;
    final ServerLevel level;
@@ -68,13 +69,20 @@ public final class CityManager {
    final ChangeJournal journal;
    final RestoreQueue restore;
    final CityPopulation population;
+   final ThreatScan threats;
+   final dev.baranhan.viltrumitecore.city.citizen.CrowdIndex crowd = new dev.baranhan.viltrumitecore.city.citizen.CrowdIndex();
    final Set<CitizenEntity> citizens = new LinkedHashSet<>();
    boolean enabled;
    double density;
+   private boolean crowdWasFull;
    private final Long2ObjectOpenHashMap<double[]> bursts = new Long2ObjectOpenHashMap<>();
    private long lastSave;
    private long saveRequestedAt = -1;
    private int resumeIn = -1;
+   /** Crash recovery: settling originals of the last session put back where the disk lost them. */
+   @Nullable
+   RestoreQueue recovery;
+   private int recoverIn = -1;
 
    private CityManager(MinecraftServer server, ServerLevel level, Path folder, CityProfile profile, ChangeJournal journal) {
       this.server = server;
@@ -86,6 +94,7 @@ public final class CityManager {
       this.density = profile.defaultDensity;
       this.restore = new RestoreQueue(journal, this::restoreReport);
       this.population = new CityPopulation(this);
+      this.threats = new ThreatScan(this);
       this.loadState();
    }
 
@@ -160,6 +169,18 @@ public final class CityManager {
       return this.citizens.size();
    }
 
+   /** Citizens near each other (rebuilt every few ticks): panic spreading, crowd spacing. */
+   public dev.baranhan.viltrumitecore.city.citizen.CrowdIndex crowd() {
+      return this.crowd;
+   }
+
+   /** A shock wave: citizens close to it are knocked down (and the place becomes dangerous). */
+   public void blast(double x, double y, double z, float radius) {
+      if (radius > 0.0F) {
+         this.danger.blast(x, y, z, radius, this.now());
+      }
+   }
+
    public void danger(double x, double y, double z, float radius, int lifetime) {
       this.danger.add(x, y, z, radius, this.now(), lifetime);
    }
@@ -206,6 +227,14 @@ public final class CityManager {
       if (journal.restoring && !journal.isEmpty()) {
          m.resumeIn = 100;
       }
+
+      ChangeJournal lost = journal.recovery();
+      if (!lost.isEmpty()) {
+         // restored chunks of the last session that the world may not have saved (a crash)
+         LOG.info("City reset recovery: checking {} restored blocks in {} chunks", lost.size(), lost.chunkCount());
+         m.recovery = new RestoreQueue(lost, journal, msg -> LOG.info("City reset recovery {}", recoveryText(msg)));
+         m.recoverIn = 100;
+      }
    }
 
    static void onLevelUnload(ServerLevel level) {
@@ -226,6 +255,11 @@ public final class CityManager {
       if (this.restore.running()) {
          this.restore.abort();
          this.journal.restoring = true; // resume after the next start
+      }
+
+      if (this.recovery != null) {
+         this.recovery.abort(); // its originals stay in the settling set: the next start checks again
+         this.recovery = null;
       }
 
       this.saveJournal(true);
@@ -273,7 +307,8 @@ public final class CityManager {
          b[3]++;
       }
 
-      if (m.journal.contains(pos)) {
+      if (m.journal.contains(pos) || m.restore.pending(pos) || m.recovery != null && m.recovery.pending(pos)) {
+         // already journaled, or its original is being written back right now
          return;
       }
 
@@ -317,6 +352,9 @@ public final class CityManager {
             if (b[3] >= 6) {
                // many blocks changed in one chunk within one tick: destruction is happening there
                this.danger.add(b[0] / b[3], b[1] / b[3], b[2] / b[3], DangerMap.EXPLOSION_RADIUS, now, DangerMap.DEFAULT_LIFETIME);
+               if (b[3] >= 30) {
+                  this.danger.blast(b[0] / b[3], b[1] / b[3], b[2] / b[3], dev.baranhan.viltrumitecore.city.danger.ThreatRules.explosionBlast((int)b[3]), now);
+               }
             }
          }
 
@@ -333,9 +371,43 @@ public final class CityManager {
       }
 
       this.restore.tick(this.level, now);
+      if (this.recovery != null) {
+         if (this.recoverIn > 0 && --this.recoverIn == 0) {
+            this.recovery.start(now);
+         }
+
+         this.recovery.tick(this.level, now);
+         if (this.recoverIn <= 0 && !this.recovery.running()) {
+            this.recovery = null;
+         }
+      }
+      if (!this.citizens.isEmpty()) {
+         this.threats.tick(now);
+         if (now % dev.baranhan.viltrumitecore.city.citizen.CrowdIndex.PERIOD == 0) {
+            this.crowd.rebuild(this.citizens, now);
+         }
+      } else if (this.crowdWasFull) {
+         // the last citizen left (clear, reset, despawn): empty the index once so /city status is not stale
+         this.crowd.rebuild(this.citizens, now);
+         this.threats.lastFound = 0;
+      }
+
+      this.crowdWasFull = !this.citizens.isEmpty();
+
       this.population.tick(now);
       long interval = this.journal.size() > 500_000 ? 6000 : 1200;
       if (this.journal.dirty() && (now - this.lastSave > interval || this.saveRequestedAt >= 0 && now - this.saveRequestedAt > 20)) {
+         this.saveJournal(false);
+      }
+   }
+
+   /** The world wrote its chunks (Forge posts the save event after the chunk save). */
+   void onWorldSaved() {
+      if (this.recovery == null) {
+         this.journal.worldSaved();
+      }
+
+      if (this.journal.dirty()) {
          this.saveJournal(false);
       }
    }
@@ -429,6 +501,12 @@ public final class CityManager {
       this.population.clearAll();
       this.restore.start(this.now());
       this.saveJournal(false);
+   }
+
+   /** Log text of a recovery report ("done:blocks:chunks:passes:secs:left"). */
+   static String recoveryText(String msg) {
+      String[] p = msg.split(":");
+      return p.length >= 6 && p[0].equals("done") ? "done: " + p[1] + " blocks checked in " + p[2] + " chunks, " + p[3] + " passes, " + p[4] + " s" : msg;
    }
 
    private void restoreReport(String msg) {

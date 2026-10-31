@@ -537,6 +537,10 @@ public final class ChitauriInvasion {
 
    private static void tickOpening(ServerLevel level, Session s) {
       int t = s.phaseTick;
+      if (t >= ChitauriRules.BEAT_BEAM && t % 40 == 0) {
+         // the sky tears open: people in the street stop and look up (curiosity, nobody runs yet)
+         ChitauriDestruction.spectacle(level, s.portal, 60);
+      }
       if (t == ChitauriRules.BEAT_BEAM) {
          // the beam strikes up from the anchor and tears the sky open
          ChitauriSounds.playWide(level, s.portal, ChitauriSounds.PORTAL_OPEN, 9.0F, 1.0F, VIEW_RANGE + 60.0);

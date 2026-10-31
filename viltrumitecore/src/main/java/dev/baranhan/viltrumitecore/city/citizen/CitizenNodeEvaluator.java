@@ -11,7 +11,8 @@ import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 /**
  * Vanilla walking rules, restricted to the prepared pedestrian network: a node is only
  * accepted where the offline analysis found an outdoor street-level surface at exactly
- * that height. Interiors, roofs, wall tops, water and drops are simply not in the grid,
+ * that height (or in the air right above a lower cell: stepping down off a bench or a
+ * planter). Interiors, roofs, wall tops, water and drops are simply not in the grid,
  * and terrain destroyed since (craters) fails the vanilla half of the check.
  */
 public class CitizenNodeEvaluator extends WalkNodeEvaluator {
@@ -33,7 +34,11 @@ public class CitizenNodeEvaluator extends WalkNodeEvaluator {
    @Override
    public BlockPathTypes getBlockPathType(BlockGetter level, int x, int y, int z, Mob mob) {
       if (this.grid != null && !this.grid.standable(x, y, z)) {
-         return BlockPathTypes.BLOCKED;
+         // the column above a lower cell stays open so vanilla can drop down to it: without
+         // this, citizens spawned on raised cells (benches, planters, log tops) never left them
+         if (!this.grid.dropTo(x, y, z, mob.getMaxFallDistance())) {
+            return BlockPathTypes.BLOCKED;
+         }
       }
 
       return super.getBlockPathType(level, x, y, z, mob);
