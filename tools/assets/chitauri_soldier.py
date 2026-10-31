@@ -19,7 +19,9 @@ import chitauri_lib as L  # noqa: E402
 from chitauri_lib import Model, Clip, write_anims  # noqa: E402
 
 GEO = 'geo/chitauri/soldier.geo.json'
-ANIM = 'animations/chitauri/soldier.animation.json'
+ANIM = 'animations/chitauri/soldier.animation.json'            # locomotion + combat
+ANIM_STATES = 'animations/chitauri/soldier_states.animation.json'   # fall, land, death, sever, mounted
+STATES = ('fall', 'land', 'death', 'sever', 'mounted', 'mounted_shoot', 'mounted_pilot')
 TEX = 'textures/entity/chitauri/soldier.png'
 GLOW = 'textures/entity/chitauri/soldier_glow.png'
 
@@ -525,8 +527,9 @@ def main():
     global GEO_JSON
     GEO_JSON = None
     clips = build_clips()
-    size = write_anims(ANIM, clips)
-    print('soldier clips: %s (%d bytes)' % (', '.join(c.name for c in clips), size))
+    size = write_anims(ANIM, [c for c in clips if c.name not in STATES])
+    size2 = write_anims(ANIM_STATES, [c for c in clips if c.name in STATES])
+    print('soldier clips: %s (%d + %d bytes)' % (', '.join(c.name for c in clips), size, size2))
     if '--review' in sys.argv:
         # --review name:frac,name:frac [sheet_name]: one row of four views per entry, stacked
         i = sys.argv.index('--review')
