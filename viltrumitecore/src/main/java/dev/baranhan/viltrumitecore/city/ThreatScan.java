@@ -4,7 +4,9 @@ import dev.baranhan.viltrumitecore.city.citizen.CitizenEntity;
 import dev.baranhan.viltrumitecore.city.danger.DangerMap;
 import dev.baranhan.viltrumitecore.city.danger.ThreatRules;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.server.level.ServerLevel;
@@ -37,6 +39,9 @@ final class ThreatScan {
    static final double RANGE_Y = 96.0;
    /** Zones of moving sources live a little longer than one scan period, so they never blink. */
    static final int TRACK_LIFE = PERIOD * 3;
+   /** Without players in the city the crowd anchors the scan: one box per this spacing, at most a few. */
+   static final double ANCHOR_SPACING = 64.0;
+   static final int MAX_ANCHORS = 6;
    private final CityManager city;
    private final Map<UUID, Vec3> lastPlayerPos = new HashMap<>();
    private final IntOpenHashSet seen = new IntOpenHashSet();
@@ -55,16 +60,36 @@ final class ThreatScan {
       ServerLevel level = this.city.level;
       this.seen.clear();
       int found = 0;
+      boolean anyPlayer = false;
       for (ServerPlayer p : level.players()) {
          if (p.isSpectator() || !this.city.profile.inArena(p.getBlockX(), level.getMinBuildHeight(), p.getBlockZ())) {
             continue;
          }
 
+         anyPlayer = true;
          this.flyby(p, now);
-         AABB box = p.getBoundingBox().inflate(RANGE, RANGE_Y, RANGE);
-         for (Entity e : level.getEntities((Entity)null, box, ThreatScan::candidate)) {
-            if (this.seen.add(e.getId()) && this.classify(level, e, now)) {
-               found++;
+         found += this.scan(level, p.getBoundingBox().inflate(RANGE, RANGE_Y, RANGE), now);
+      }
+
+      if (!anyPlayer && !this.city.citizens.isEmpty()) {
+         // nobody in the city (dedicated server, /city populate from the console): look around the crowd itself
+         List<Vec3> anchors = new ArrayList<>();
+         for (CitizenEntity c : this.city.citizens) {
+            Vec3 at = c.position();
+            boolean covered = false;
+            for (Vec3 a : anchors) {
+               if (a.distanceToSqr(at) < ANCHOR_SPACING * ANCHOR_SPACING) {
+                  covered = true;
+                  break;
+               }
+            }
+
+            if (!covered) {
+               anchors.add(at);
+               found += this.scan(level, new AABB(at, at).inflate(RANGE, RANGE_Y, RANGE), now);
+               if (anchors.size() >= MAX_ANCHORS) {
+                  break;
+               }
             }
          }
       }
@@ -74,6 +99,17 @@ final class ThreatScan {
          this.lastPlayerPos.keySet().removeIf(id -> level.getPlayerByUUID(id) == null);
          this.struck.clear();
       }
+   }
+
+   private int scan(ServerLevel level, AABB box, long now) {
+      int found = 0;
+      for (Entity e : level.getEntities((Entity)null, box, ThreatScan::candidate)) {
+         if (this.seen.add(e.getId()) && this.classify(level, e, now)) {
+            found++;
+         }
+      }
+
+      return found;
    }
 
    private static boolean candidate(Entity e) {
