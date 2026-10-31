@@ -39,9 +39,9 @@ public final class CatalogParser {
    private static final String[] DESCRIPTION = {"description", "summary", "desc", "short"};
    private static final String[] LORE = {"lore", "flavor", "flavour", "story"};
    private static final String[] CONDITIONS = {"conditions", "condition", "trigger", "triggers", "activation", "requirements", "how"};
-   private static final String[] MECHANIC = {"mechanic", "mechanics", "effect", "effects", "outcome", "result"};
-   private static final String[] VISUALS = {"visual", "visuals", "vfx", "fx", "presentation"};
-   private static final String[] HINT = {"hint", "teaser", "clue"};
+   private static final String[] MECHANIC = {"mechanic", "mechanics", "gameplay_result", "gameplayResult", "gameplay", "effect", "effects", "outcome", "result"};
+   private static final String[] VISUALS = {"visual", "visuals", "visual_fx", "visualFx", "vfx", "fx", "presentation"};
+   private static final String[] HINT = {"hint", "discovery_hint", "discoveryHint", "teaser", "clue"};
    private static final String[] CATEGORY = {"category", "type", "group"};
    private static final String[] RELATED = {"events", "worldEvents", "world_events", "related", "links", "relatedEntries"};
    public static final int MAX_ENTRIES = 1024;
@@ -139,13 +139,14 @@ public final class CatalogParser {
       return new InteractionCatalog(InteractionCatalog.Status.LOADED, List.copyOf(out), List.copyOf(problems), source, testData);
    }
 
-   /** Lowercase id with spaces and dashes as underscores; null for null. */
+   /** Lowercase id with spaces and dashes as underscores, qualifiers in parentheses dropped; null for null. */
    @Nullable
    public static String slug(@Nullable String raw) {
       if (raw == null) {
          return null;
       }
-      String s = raw.strip().toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+      // "Thor (Mjolnir in hand)" means "thor": qualifiers in parentheses are not part of the id
+      String s = raw.replaceAll("\\([^)]*\\)", " ").strip().toLowerCase(Locale.ROOT).replaceAll("\\s+", "_").replace('-', '_');
       int colon = s.indexOf(':');
       // "viltrumitecore:thor" and "hero:thor" both mean "thor"
       return colon >= 0 && colon < s.length() - 1 ? s.substring(colon + 1) : s;
@@ -172,8 +173,32 @@ public final class CatalogParser {
       return e != null && e.isJsonPrimitive() ? e.getAsString() : null;
    }
 
+   /**
+    * The first of {@code keys} as a text; else per-locale siblings ({@code title_ru}, {@code title_en},
+    * {@code description_de_de}, ...) of the first key that has any.
+    */
    static LocalText text(JsonObject o, String[] keys) {
-      return toText(first(o, keys));
+      JsonElement direct = first(o, keys);
+      if (direct != null) {
+         return toText(direct);
+      }
+      for (String k : keys) {
+         Map<String, String> map = new LinkedHashMap<>();
+         String prefix = k + "_";
+         for (Map.Entry<String, JsonElement> m : o.entrySet()) {
+            String name = m.getKey();
+            if (name.startsWith(prefix) && m.getValue().isJsonPrimitive()) {
+               String locale = name.substring(prefix.length());
+               if (locale.matches("[A-Za-z]{2,3}([_-][A-Za-z]{2,3})?")) {
+                  map.put(locale, m.getValue().getAsString());
+               }
+            }
+         }
+         if (!map.isEmpty()) {
+            return LocalText.ofLocales(map);
+         }
+      }
+      return LocalText.EMPTY;
    }
 
    static LocalText toText(@Nullable JsonElement e) {
@@ -260,8 +285,10 @@ public final class CatalogParser {
       }
       for (JsonElement x : list) {
          if (x.isJsonPrimitive()) {
-            String id = slug(x.getAsString());
-            out.add(new CatalogInteraction.Participant(id, LocalText.EMPTY, ""));
+            // an id ("thor") or a description ("Thor (Mjolnir in hand)"): the latter is kept as the shown text
+            String raw = x.getAsString().strip();
+            String id = slug(raw);
+            out.add(new CatalogInteraction.Participant(id, raw.equals(id) ? LocalText.EMPTY : LocalText.of(raw), ""));
          } else if (x.isJsonObject()) {
             JsonObject p = x.getAsJsonObject();
             String id = slug(string(p, new String[]{"id", "key", "entity", "hero", "npc", "event"}));

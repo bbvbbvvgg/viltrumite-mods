@@ -51,6 +51,31 @@ class CatalogParserTest {
       assertEquals(2, synonyms.participants().size(), "\"actors\" is read as participants");
    }
 
+   /** The layout docs/contextual-interactions.json uses (schema 1): title_ru/title_en, free-text participants. */
+   @Test
+   void readsTheSchemaOneLayout() throws IOException {
+      InteractionCatalog c;
+      try (Reader r = new InputStreamReader(CatalogParserTest.class.getResourceAsStream("/codex/test_catalog_schema1.json"), StandardCharsets.UTF_8)) {
+         c = CatalogParser.parse(r, "test_catalog_schema1.json", true);
+      }
+      assertEquals(InteractionCatalog.Status.LOADED, c.status(), c.problems().toString());
+      CatalogInteraction i = c.byId("test_schema_pair");
+      assertEquals("ТЕСТ: пара по схеме 1", i.name().resolve("ru_ru", NO_LANG));
+      assertEquals("TEST: schema 1 pair", i.name().resolve("en_us", NO_LANG));
+      assertEquals("TEST: schema 1 pair", i.name().resolve("tr_tr", NO_LANG));
+      assertEquals("Тестовое описание.", i.description().resolve("ru_ru", NO_LANG));
+      assertEquals("Test lore.", i.lore().resolve("en_us", NO_LANG));
+      assertEquals("Тестовая подсказка.", i.hint().resolve("ru_ru", NO_LANG));
+      assertEquals("Test result text.", i.mechanic().resolve("ru_ru", NO_LANG), "English-only fields fall back");
+      assertEquals("Test visuals text.", i.visuals().resolve("en_us", NO_LANG));
+      assertEquals(2, i.conditions().size(), "conditions win over the trigger name");
+      assertEquals("thor", i.participants().get(0).id());
+      assertEquals("captain_america", i.participants().get(1).id());
+      assertEquals("Thor (test qualifier)", i.participants().get(0).name().resolve("ru_ru", NO_LANG), "the description stays the shown text");
+      assertTrue(i.involves(Set.of("captain_america")));
+      assertFalse(i.secret(), "no explicit secret flag: the entry is open");
+   }
+
    @Test
    void plainArrayAndIdMapForms() {
       InteractionCatalog a = CatalogParser.parse("[{\"id\":\"x\",\"name\":\"X\"}]", "a", false);
@@ -80,6 +105,7 @@ class CatalogParserTest {
       assertEquals("thor", CatalogParser.slug("viltrumitecore:thor"));
       assertEquals("iron_man", CatalogParser.slug(" Iron-Man "));
       assertEquals("black_widow", CatalogParser.slug("Black Widow"));
+      assertEquals("iron_legion_suit", CatalogParser.slug("Iron Legion suit (summon)"));
    }
 
    /** The real catalog, when the contextual-interactions work has landed in this checkout. */

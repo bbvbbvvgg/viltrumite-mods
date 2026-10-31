@@ -95,6 +95,11 @@ class CodexClientMathTest {
       }
       assertEquals("thanos", CodexEntries.byAlias("viltrumitecore:thanos").id());
       assertEquals("avenger_black_widow", CodexEntries.byAlias("Black Widow").id());
+      // participant texts of the schema-1 catalog
+      assertEquals("captain", CodexEntries.byAlias("Captain America (raised shield)").id());
+      assertEquals("ironman", CodexEntries.byAlias("Iron Man (flight suit worn)").id());
+      assertEquals("iron_legion", CodexEntries.byAlias("Iron Legion suit (summon)").id());
+      assertEquals("meteor_fall", CodexEntries.byAlias("Meteor (world event)").id());
    }
 
    private static JsonObject overlay(String locale) throws IOException {
