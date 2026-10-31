@@ -33,6 +33,15 @@ public enum AvengerKind {
       return this.key;
    }
 
+   /**
+    * The hero whose name and portrait a subtitle line spoken by this Avenger shows: Iron Man and Thor are heroes of
+    * their own (save keys "ironman" / "thor"), the others speak through Captain America's voice.
+    */
+   public dev.baranhan.viltrumitecore.hero.HeroId voice() {
+      dev.baranhan.viltrumitecore.hero.HeroId own = dev.baranhan.viltrumitecore.hero.HeroId.fromKey(this.key.replace("_", ""));
+      return own != null ? own : dev.baranhan.viltrumitecore.hero.HeroId.CAPTAIN;
+   }
+
    /** Circle slot (1..5; Steve is 0). */
    public int slot() {
       return this.ordinal() + 1;
