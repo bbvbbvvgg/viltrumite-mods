@@ -45,6 +45,36 @@ public enum HeroId {
    SASUKE("sasuke"),
    /** Ultimate Hero Expansion: Madara. */
    MADARA("madara"),
+   /** Ultimate Hero Expansion: Luffy. */
+   LUFFY("luffy"),
+   /** Ultimate Hero Expansion: Zoro. */
+   ZORO("zoro"),
+   /** Ultimate Hero Expansion: Sanji. */
+   SANJI("sanji"),
+   /** Ultimate Hero Expansion: Saitama. */
+   SAITAMA("saitama"),
+   /** Ultimate Hero Expansion: Genos. */
+   GENOS("genos"),
+   /** Ultimate Hero Expansion: Superman. */
+   SUPERMAN("superman"),
+   /** Ultimate Hero Expansion: Batman. */
+   BATMAN("batman"),
+   /** Ultimate Hero Expansion: Flash. */
+   FLASH("flash"),
+   /** Ultimate Hero Expansion: Green Lantern. */
+   GREEN_LANTERN("green_lantern"),
+   /** Ultimate Hero Expansion: Aquaman. */
+   AQUAMAN("aquaman"),
+   /** Ultimate Hero Expansion: Spider-Man. */
+   SPIDER_MAN("spider_man"),
+   /** Ultimate Hero Expansion: Deadpool. */
+   DEADPOOL("deadpool"),
+   /** Ultimate Hero Expansion: Wolverine. */
+   WOLVERINE("wolverine"),
+   /** Ultimate Hero Expansion: Kratos. */
+   KRATOS("kratos"),
+   /** Ultimate Hero Expansion: Shrek. */
+   SHREK("shrek"),
    // END ULTIMATE HERO EXPANSION
    ;
 
