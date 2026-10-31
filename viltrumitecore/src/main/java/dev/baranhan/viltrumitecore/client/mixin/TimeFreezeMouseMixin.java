@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Stopped-time camera lock: while the local player is frozen the mouse cannot
  * turn him, and the motion collected meanwhile is dropped so nothing snaps on
  * release. The same lock holds the caster's mouse while his Road Roller cinema
- * owns the view. Priority below the default so it runs before the target-lock and
+ * owns the view, and Reinhard's while his Final Punch scene runs. Priority below the default so it runs before the target-lock and
  * scene mouse hooks.
  */
 @Mixin(value = MouseHandler.class, priority = 500)
@@ -24,7 +24,8 @@ public abstract class TimeFreezeMouseMixin {
 
    @Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
    private void viltrumitecore$frozenView(CallbackInfo ci) {
-      if (TimeFreezeView.locked() || dev.baranhan.viltrumitecore.client.dio.RollerCinema.active()) {
+      if (TimeFreezeView.locked() || dev.baranhan.viltrumitecore.client.dio.RollerCinema.active()
+         || dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient.locksLocal()) {
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;
          ci.cancel();
