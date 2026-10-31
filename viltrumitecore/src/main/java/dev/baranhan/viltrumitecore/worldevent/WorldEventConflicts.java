@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.worldevent;
 
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriInvasion;
 import dev.baranhan.viltrumitecore.worldevent.meteor.MeteorRain;
+import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosEvent;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.chat.Component;
@@ -10,7 +11,9 @@ import net.minecraft.server.level.ServerLevel;
 /**
  * Shared seam: which world events run now. A start command refuses while another big event
  * runs, unless the operator gives {@code force} (explicit permission). Only the Chitauri
- * invasion is exclusive: trio/conquest squads and meteor rain keep their old relation.
+ * invasion is exclusive: trio/conquest squads, meteor rain and the Thanos event keep their old
+ * relation to each other, and each of them refuses to start over the invasion (and the
+ * invasion over each of them).
  */
 public final class WorldEventConflicts {
    private WorldEventConflicts() {
@@ -29,10 +32,13 @@ public final class WorldEventConflicts {
       if (!MeteorRain.sessions().isEmpty()) {
          out.add(Component.translatable("viltrumitecore.chitauri.conflict.meteor"));
       }
+      if (ThanosEvent.running()) {
+         out.add(Component.translatable("entity.viltrumitecore.thanos"));
+      }
       return out;
    }
 
-   /** The invasion, when it runs (for /event start and /meteor start). */
+   /** The invasion, when it runs (for /event start, /meteor start and /thanos start). */
    public static List<Component> invasion(ServerLevel level) {
       List<Component> out = new ArrayList<>();
       if (ChitauriInvasion.running(level.getServer())) {

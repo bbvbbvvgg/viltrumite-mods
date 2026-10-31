@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.ironman.legion;
 
 import dev.baranhan.viltrumitecore.entity.LegionSuitEntity;
+import dev.baranhan.viltrumitecore.entity.SummonOwners;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.ironman.legion.ThreatScore.Relation;
 import java.util.UUID;
@@ -69,6 +70,15 @@ public final class LegionAllies {
          return foreignOwner == null || owner == null ? Relation.PROTECTED : relation(owner, suit, foreignOwner);
       }
 
+      if (SummonOwners.isSummon(target)) {
+         // Another hero's summon (Captain's Avengers, Jinwoo's shadows): worth what its owner is worth; no owner online: spared.
+         ServerPlayer summoner = SummonOwners.ownerOf(target);
+         if (summoner == null || owner == null) {
+            return Relation.PROTECTED;
+         }
+         return summoner == owner ? Relation.ALLY : relation(owner, suit, summoner);
+      }
+
       if (owner != null && (owner.isAlliedTo(target) || target.isAlliedTo(owner))) {
          return Relation.ALLY;
       }
@@ -126,7 +136,12 @@ public final class LegionAllies {
       }
 
       LegionSuitEntity suit = suitOf(attacker, direct);
-      return suit == null ? null : suit.owner();
+      if (suit != null) {
+         return suit.owner();
+      }
+
+      // Another hero's summon (an Avenger, a shadow) answers for its owner too.
+      return SummonOwners.ownerOf(attacker);
    }
 
    /**
@@ -136,11 +151,11 @@ public final class LegionAllies {
     * teams ({@code canHarmPlayer}) and spectator rules (Codex review #4).
     */
    public static boolean playerDamageAllowed(ServerPlayer owner, @Nullable Entity attacker, @Nullable Entity direct) {
-      boolean fromLegion = suitOf(attacker, direct) != null;
+      boolean fromSummon = suitOf(attacker, direct) != null || SummonOwners.isSummon(attacker);
       Player other = playerBehind(attacker, direct);
       if (other == null) {
-         // A suit whose owner is gone cannot claim PvP rights.
-         return !fromLegion;
+         // A suit (or another hero's summon) whose owner is gone cannot claim PvP rights.
+         return !fromSummon;
       }
 
       return pvpAllowed(other == owner, owner.server.isPvpAllowed(), owner.canHarmPlayer(other) && other.canHarmPlayer(owner), other.isSpectator());

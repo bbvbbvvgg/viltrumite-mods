@@ -39,6 +39,11 @@ public final class CaptainTargets {
       if (e instanceof Player other) {
          return owner != null && ServerRules.pvp(owner) && !other.isCreative() && !other.isSpectator();
       }
+      if (dev.baranhan.viltrumitecore.entity.SummonOwners.isSummon(e)) {
+         // Another hero's summon (an Iron Legion suit, a shadow): the PvP rule of its owner; no owner online: spared.
+         ServerPlayer summoner = dev.baranhan.viltrumitecore.entity.SummonOwners.ownerOf(e);
+         return summoner != null && summoner != owner && mayHit(owner, summoner);
+      }
       return true;
    }
 
