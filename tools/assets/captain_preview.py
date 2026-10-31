@@ -93,11 +93,11 @@ if __name__ == '__main__':
     sheet(frames).save(out)
 
 
-AVENGER_RIG = {'iron_man': 'avenger', 'thor': 'avenger', 'hawkeye': 'avenger', 'black_widow': 'avenger_slim'}
+AVENGER_RIG = {'iron_man': 'avenger', 'thor': 'thor', 'hawkeye': 'hawkeye', 'black_widow': 'black_widow'}
 
 
 def avenger_quads(kind):
-    """Quads builder for an Avenger: shared body rig + kind skin + gear (Hulk uses his own model)."""
+    """Quads builder for an Avenger: body (Iron Man: the player rig skin) + gear (Hulk uses his own model)."""
     def build(pose, root=None):
         if kind == 'hulk':
             return jp.layered([(geo('avengers/hulk.geo.json'), tex('avengers/hulk.png'), None)], pose, root)

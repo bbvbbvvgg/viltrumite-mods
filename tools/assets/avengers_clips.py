@@ -442,7 +442,9 @@ def quinjet():
     c.append(clip('flight', 40, [(0, {'body': (0, 0, 0), 'engine_right': (0, 0, 0), 'engine_left': (0, 0, 0)}),
                                   (20, {'body': (-2, 0, 1), 'engine_right': (0, 0, 0), 'engine_left': (0, 0, 0)}),
                                   (40, {'body': (0, 0, 0), 'engine_right': (0, 0, 0), 'engine_left': (0, 0, 0)})], loop=True))
-    c.append(clip('ramp_open', 20, [(0, {'ramp': (0, 0, 0)}), (20, {'ramp': (38, 0, 0)})]))
+    # rear ramp hinged at the cabin floor: closed = the rear wall, open = a walkway sloping down behind the jet
+    c.append(clip('ramp_open', 24, [(0, {'ramp': (0, 0, 0)}), (8, {'ramp': (-30, 0, 0)}), (18, {'ramp': (-88, 0, 0)}),
+                                    (24, {'ramp': (-100, 0, 0)})]))
     c.append(clip('hover', 20, [(0, {'engine_right': (-80, 0, 0), 'engine_left': (-80, 0, 0)}),
                                 (20, {'engine_right': (-80, 0, 0), 'engine_left': (-80, 0, 0)})], loop=True))
     return c

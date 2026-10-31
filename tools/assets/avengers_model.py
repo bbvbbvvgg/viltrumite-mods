@@ -176,18 +176,16 @@ def im_torso(face, rgb, glow, rs):
 
 
 def im_arm(face, rgb, glow, rs):
-    x, y, z = face.world()
-    put(rgb, (y < 17.8) & (y > 15.0), IM_GOLD)
-    put(rgb, (y < 15.0) & (y > 13.4), IM_SILVER, 0.55)
+    """Plain red armour: the gold gauntlets and the shoulder pads are separate gear blocks."""
+    return
 
 
 def im_leg(face, rgb, glow, rs):
+    """Red legs; the gold thigh plates and the silver boots are gear blocks; one gold shin panel at the front."""
     x, y, z = face.world()
-    if face.name in ('north', 'east', 'west'):
-        put(rgb, (y > 7.2) & (y < 10.8), IM_GOLD)
-    put(rgb, y < 2.8, IM_SILVER)
     if face.name == 'north':
-        put(rgb, (y < 6.0) & (y > 4.2), IM_GOLD)
+        cx = 2.0 if np.mean(x) > 0 else -2.0
+        put(rgb, (y < 5.6) & (y > 3.2) & (np.abs(x - cx) < 1.3), IM_GOLD)
 
 
 def clear_alpha(face, rs):
@@ -239,10 +237,15 @@ def faceplate_fn(face, rgb, glow, rs):
     if face.name == 'north':
         ax = np.abs(x)
         eye = (ax > 0.8) & (ax < 2.8) & (np.abs(y - (28.2 + (ax - 0.8) * 0.12)) < 0.28)
-        put(rgb, ax > 3.2, IM_RED)
+        gold = ((ax < 3.1) & (y < 30.4)) | ((ax < 2.0) & (y < 31.4))           # the gold face inside the red helmet
+        put(rgb, ~gold, IM_RED)
         put(rgb, (ax < 1.6) & (np.abs(y - 25.3) < 0.14), IM_GOLD_LO)       # mouth slit
         put(rgb, eye, '#f4fbff')
         glow_put(glow, eye, (200, 240, 255, 255))
+    elif face.name in ('up', 'east', 'west'):
+        put(rgb, np.ones(rgb.shape[:2], bool), IM_RED)
+    elif face.name == 'south':
+        put(rgb, np.ones(rgb.shape[:2], bool), '#3a3d44')                   # inside of the faceplate
 
 
 def helmet_fn(face, rgb, glow, rs):
@@ -285,7 +288,7 @@ def ironman_gear():
     m.bone('back_flaps', 'torso', [0, 22, 2.2])
     m.cube('helmet', [-4.45, 24.0, -3.6], [8.9, 8.45, 8.05], IM['helmet'], faces=('south', 'east', 'west', 'up'))
     m.cube('helmet', [-4.5, 24.0, 4.0], [9.0, 1.2, 0.6], IM['silver'])
-    m.cube('faceplate', [-4.35, 24.1, -4.5], [8.7, 8.1, 0.9], IM['faceplate'], faces=('north', 'east', 'west', 'down'))
+    m.cube('faceplate', [-4.35, 24.1, -4.5], [8.7, 8.35, 0.9], IM['faceplate'])
     m.cube('faceplate', [-1.2, 23.6, -4.65], [2.4, 1.2, 1.2], IM['gold'])
     m.cube('torso', [-1.05, 19.55, -2.35], [2.1, 2.1, 0.3], IM['reactor'], faces=('north',))
     m.cube('torso', [-4.25, 22.3, -2.25], [8.5, 1.9, 4.5], IM['plate'])
@@ -349,7 +352,7 @@ def th_torso(face, rgb, glow, rs):
         put(rgb, y < 16.6, TH_MAIL)                         # mail skirt above the belt
         u, v = face.grid()
         chk = ((np.floor(u * face.w) + np.floor(v * face.h)) % 2) == 0
-        put(rgb, (y < 16.6) & chk, TH_MAIL_LO, 0.35)
+        put(rgb, (y < 16.6) & chk, TH_MAIL_LO, 0.22)
     elif face.name in ('east', 'west'):
         put(rgb, y < 16.6, TH_MAIL)
 
@@ -366,7 +369,7 @@ def mail_fn(face, rgb, glow, rs):
     if sides(face):
         u, v = face.grid()
         chk = ((np.floor(u * face.w) + np.floor(v * face.h)) % 2) == 0
-        put(rgb, chk, TH_MAIL_LO, 0.35)
+        put(rgb, chk, TH_MAIL_LO, 0.22)
 
 
 def bracer_fn(face, rgb, glow, rs):
@@ -552,10 +555,10 @@ WIDOW_FACE = [
     'HssWGPssssPGWssH',
     'HssWGGssssGGWssH',
     'Hsssssssssssssss',
+    'ssssssssssssssss',
     'sssssssnssssssss',
-    'ssssssnnssssssss',
-    'ssssssLLLLssssss',
     'sssssssLLsssssss',
+    'ssssssLLLLssssss',
     'ssssssssssssssss',
     'sssssssssssssssS',
 ]
@@ -566,8 +569,8 @@ WIDOW_PAL = {'H': BW_HAIR, 'h': BW_HAIR_LO, 'b': '#6e2a1c', 'W': '#f7f5f2', 'G':
 def bw_torso(face, rgb, glow, rs):
     x, y, z = face.world()
     if face.name == 'north':
-        put(rgb, (np.abs(x) < 0.26) & (y > 15.2), BW_SILVER_LO)          # the zip, collar to belt
-        put(rgb, (np.abs(x) > 1.2) & (np.abs(x) < 3.4) & (y > 19.4) & (y < 22.2), BW_SUIT_HI, 0.55)
+        put(rgb, (x > -0.26) & (x < 0.0) & (y > 18.5), '#3b3e48')          # the zip (upper chest only)
+        put(rgb, (x > -0.26) & (x < 0.0) & (y > 22.6), BW_SILVER_LO)       # zip pull under the collar
     elif face.name in ('east', 'west'):
         put(rgb, np.abs(z) < 0.3, BW_SUIT_HI, 0.5)                         # side seam
 
@@ -609,18 +612,17 @@ def bite_fn(face, rgb, glow, rs):
 
 
 def curls_fn(face, rgb, glow, rs):
-    """Wavy red hair: a couple of lighter wave pixels per row on the outer faces, darker tips."""
+    """Red hair: flat colour, a lighter crown, two soft wave locks per side face, darker tips (no pattern)."""
     if face.name == 'up':
-        put(rgb, np.ones(rgb.shape[:2], bool), BW_HAIR_HI, 0.35)
+        put(rgb, np.ones(rgb.shape[:2], bool), BW_HAIR_HI, 0.3)
         return
     if not sides(face):
         return
     h, w = rgb.shape[:2]
-    for r in range(1, h - 1, 3):
-        off = (r // 3) % 3
-        for col in range(off, w, 4):
-            put(rgb, np.s_[r:r + 1, col:col + 2], BW_HAIR_HI, 0.55)
-    put(rgb, np.s_[-1:, :], BW_HAIR_LO, 0.8)
+    if w >= 6 and h >= 6:
+        for col in (w // 3, (2 * w) // 3):
+            put(rgb, np.s_[1:h - 2, col:col + 1], BW_HAIR_HI, 0.35)
+    put(rgb, np.s_[-1:, :], BW_HAIR_LO, 0.7)
 
 
 BW = {
@@ -642,7 +644,7 @@ BW = {
     'hair_curl': Flat(BW_HAIR_LO, curls_fn),
     'bite': Flat(BW_SILVER, bite_fn),
     'holster': Flat('#24252b', lambda f, r, g, s: put(r, np.s_[:1, :], '#3d3f47', 0.9) if sides(f) else None),
-    'strap': Flat('#2f3138'),
+    'strap': Flat('#272930'),
     'gun': Flat(BW_GUN),
     'gun_hi': Flat(BW_GUN_HI, lambda f, r, g, s: put(r, np.s_[:1, :], '#6a6f7a', 0.7) if sides(f) else None),
 }
@@ -697,7 +699,6 @@ def widow_gear():
         x0 = side_x(s, 3.95, 0.6)
         c(f'{side}_leg', [x0, 6.6, -1.25], [0.6, 3.6, 2.5], BW['holster'])
         c(f'{side}_leg', [side_x(s, 0.02, 4.2), 9.3, -2.2], [4.2, 0.6, 4.4], BW['strap'])
-        c(f'{side}_leg', [side_x(s, 0.02, 4.2), 7.0, -2.2], [4.2, 0.5, 4.4], BW['strap'])
     pistol(m, 'right_gun', -5.5, 12.6, 0)
     pistol(m, 'left_gun', 5.5, 12.6, 0)
     return m
@@ -730,7 +731,7 @@ HAWKEYE_FACE = [
     'sssseeeeeeeessss',
 ]
 HAWKEYE_PAL = {'H': HK_HAIR, 'h': HK_HAIR_LO, 'b': '#5a4026', 'W': '#f4f2ee', 'I': '#5f7fa0', 'P': '#1d2633',
-               'n': HK_SKIN_SH, 'L': '#a8685a', 'e': '#c79a78', 'S': HK_SKIN_LO}
+               'n': HK_SKIN_SH, 'L': '#a8685a', 'e': '#d8ad8b', 'S': HK_SKIN_LO}
 
 
 def hk_vest(face, rgb, glow, rs):
@@ -931,16 +932,16 @@ def muscle_fn(face, rgb, glow, rs):
 
 
 def fist_fn(face, rgb, glow, rs):
-    """Closed fist: finger gaps on the knuckle side, darker palm side."""
-    if face.name in ('north', 'south', 'down'):
-        h, w = rgb.shape[:2]
-        if face.name == 'down':
-            for k in (1, 2, 3):
-                put(rgb, np.s_[:, round(w * k / 4):round(w * k / 4) + 1], HU_LINE, 0.8)
-    if face.name in ('east', 'west'):
-        h, w = rgb.shape[:2]
+    """Closed fist: finger gaps on the palm side (towards the body) and across the knuckle row underneath."""
+    x, y, z = face.world()
+    palm = (face.name == 'east' and np.mean(x) < 0) or (face.name == 'west' and np.mean(x) > 0)
+    h, w = rgb.shape[:2]
+    if palm:
         for k in (1, 2, 3):
-            put(rgb, np.s_[:, round(w * k / 4):round(w * k / 4) + 1], HU_LINE, 0.8)
+            put(rgb, np.s_[:, round(w * k / 4):round(w * k / 4) + 1], HU_LINE, 0.7)
+    elif face.name == 'down':
+        for k in (1, 2, 3):
+            put(rgb, np.s_[round(h * k / 4):round(h * k / 4) + 1, :], HU_LINE, 0.7)
 
 
 def toes_fn(face, rgb, glow, rs):
@@ -1128,7 +1129,7 @@ def emblem_fn(face, rgb, glow, rs):
     r = np.hypot(u - cx, v - cy)
     put(rgb, (r < rad) & (r > rad - 1.3), '#d5dae1')
     g = len(A_MARK)
-    s = max(1, int(rad * 1.1 // g))
+    s = max(1, int(round(rad * 1.2 / g)))
     x0, y0 = int(round(cx - s * g / 2 + 0.5)), int(round(cy - s * g / 2 + 0.5))
     for rr, line in enumerate(A_MARK):
         for cc, ch in enumerate(line):
@@ -1164,7 +1165,7 @@ QM = {
     'strip': Flat('#e8f6ff', lamp('#cfeaff'), light=False),
     'jump': Flat('#ff3b30', lamp('#ff3b30'), light=False),
     'glass': Flat('#13263a', glass_fn, light=False),
-    'engine': Flat('#2a2e35'),
+    'engine': Flat(QJ_LO),
     'intake': Flat('#1b1e23'),
     'exhaust': Flat('#262a30', exhaust_fn, light=False),
     'ramp': Flat(QJ, ramp_fn),
@@ -1175,7 +1176,7 @@ QM = {
 
 
 def quinjet():
-    m = CleanModel('quinjet', density=2, width=256, seed=61, light=(11.0, 2.0, 0.06))
+    m = CleanModel('quinjet', density=4, width=512, seed=61, light=(11.0, 2.0, 0.06))
     m.bone('root', None, [0, 0, 0])
     m.bone('body', 'root', [0, 4, 0])
     m.bone('ramp', 'body', [0, 2.0, 15.0])
