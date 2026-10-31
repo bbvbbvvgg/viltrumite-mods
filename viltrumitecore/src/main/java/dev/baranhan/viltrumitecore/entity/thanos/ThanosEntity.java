@@ -44,6 +44,8 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
    private static final EntityDataAccessor<Byte> REACTION = SynchedEntityData.defineId(ThanosEntity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> REACTION_SERIAL = SynchedEntityData.defineId(ThanosEntity.class, EntityDataSerializers.INT);
    public static final byte REACT_HURT = 1;
+   /** Blocks walked per gait cycle (two steps of a 3.75-block titan). */
+   public static final double STRIDE = 3.4;
    public static final byte REACT_STUN = 2;
 
    private ThanosDamageCap cap;
@@ -60,6 +62,11 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
    public int clientReactStart = -1000;
    public float clientWalk;
    public float clientWalkO;
+   /** Gait cycles walked (one cycle = two steps), for the walk clips and the footfalls. */
+   public double clientGait;
+   public double clientGaitO;
+   /** Smoothed body turn, degrees per tick (+ = turning right). */
+   public float clientTurn;
 
    public ThanosEntity(EntityType<? extends ThanosEntity> type, Level level) {
       super(type, level);
@@ -292,8 +299,13 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
          this.clientWalkO = this.clientWalk;
          double dx = this.getX() - this.xo;
          double dz = this.getZ() - this.zo;
-         float speed = (float)Math.min(1.0, Math.sqrt(dx * dx + dz * dz) * 6.0);
+         double moved = Math.sqrt(dx * dx + dz * dz);
+         float speed = (float)Math.min(1.0, moved * 6.0);
          this.clientWalk += (speed - this.clientWalk) * 0.25F;
+         this.clientGaitO = this.clientGait;
+         this.clientGait += Math.min(0.5, moved) / STRIDE;
+         float turn = net.minecraft.util.Mth.wrapDegrees(this.yBodyRot - this.yBodyRotO);
+         this.clientTurn += (turn - this.clientTurn) * 0.3F;
       }
    }
 
