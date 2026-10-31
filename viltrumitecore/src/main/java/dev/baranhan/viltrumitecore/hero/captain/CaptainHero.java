@@ -471,6 +471,10 @@ public final class CaptainHero implements HeroDefinition {
             dev.baranhan.viltrumitecore.hero.speech.HeroSpeech.say(self, CaptainLines.STORM_SHIELD);
          }
          case METEOR_STOPPED -> CaptainCombat.teamBrace(self, state, dev.baranhan.viltrumitecore.interaction.InteractionTuning.METEOR_KINETIC);
+         case GUARD_DEFLECTED -> CaptainCombat.onBlocked(self, state, ctx.attacker() instanceof LivingEntity l ? l : null, true,
+            ctx.projectile() != null ? ctx.projectile().position() : self.getEyePosition());
+         case GUARD_CRUSHED -> CaptainCombat.shatterGuard(self, state, dev.baranhan.viltrumitecore.interaction.InteractionTuning.SHATTER_TICKS,
+            CaptainLines.ALL_DAY);
          default -> {
             return false;
          }
