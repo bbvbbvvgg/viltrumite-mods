@@ -72,6 +72,14 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
    public float clientAim;
    public float clientAimO;
    public int clientShots;
+   /** Client: smoothed ground speed (blocks/tick) and the gait phase (cycles) the walk/run clips follow. */
+   public float clientMove;
+   public float clientMoveO;
+   public float clientGait;
+   public float clientGaitO;
+   /** Client: last rendered muzzle (world) and the tick it was taken; the shot flash starts there. */
+   public net.minecraft.world.phys.Vec3 clientMuzzle;
+   public int clientMuzzleTick = -1000;
 
    public ChitauriSoldier(EntityType<? extends ChitauriSoldier> type, Level level) {
       super(type, level);
@@ -161,6 +169,22 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       return this.getVehicle() instanceof ChitauriChariot;
    }
 
+   /** Pure: walk clip weight for a ground speed in blocks/tick (0 standing, 1 from 0.045). */
+   public static float walkWeight(float speed) {
+      return Mth.clamp((speed - 0.008F) / 0.037F, 0.0F, 1.0F);
+   }
+
+   /** Pure: run clip weight over the walk (soldiers sprint at 0.13+ blocks/tick). */
+   public static float runWeight(float speed) {
+      float t = Mth.clamp((speed - 0.095F) / 0.04F, 0.0F, 1.0F);
+      return t * t * (3.0F - 2.0F * t);
+   }
+
+   /** Pure: blocks per full gait cycle (two steps) at a speed: the walk clip covers 1.7, the run 2.1. */
+   public static float stride(float speed) {
+      return Mth.lerp(runWeight(speed), 1.7F, 2.1F);
+   }
+
    /** The hive link breaks (invasion closing): collapse after {@code delay} ticks. */
    public void sever(int delay) {
       if (this.severDelay < 0 && this.isAlive()) {
@@ -181,6 +205,17 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
             this.clientAirTicks++;
          } else {
             this.clientAirTicks = 0;
+         }
+         double dx = this.getX() - this.xo;
+         double dz = this.getZ() - this.zo;
+         float moved = this.isPassenger() || !this.isAlive() ? 0.0F : (float)Math.min(0.6, Math.sqrt(dx * dx + dz * dz));
+         this.clientMoveO = this.clientMove;
+         this.clientMove += (moved - this.clientMove) * 0.35F;
+         this.clientGaitO = this.clientGait;
+         this.clientGait += moved / stride(this.clientMove);
+         if (this.clientGait > 1000.0F) {
+            this.clientGait -= 1000.0F;
+            this.clientGaitO -= 1000.0F;
          }
          return;
       }

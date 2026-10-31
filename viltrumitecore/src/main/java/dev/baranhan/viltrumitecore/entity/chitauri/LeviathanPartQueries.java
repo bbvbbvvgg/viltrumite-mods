@@ -61,9 +61,9 @@ public final class LeviathanPartQueries {
 
    @Nullable
    private static ChitauriLeviathan parentHit(PartEntity<?> part, AABB box) {
-      if (part instanceof LeviathanPart lp && lp.getParent() instanceof ChitauriLeviathan parent && !parent.isRemoved()
-         && lp.getBoundingBox().intersects(box)) {
-         return parent;
+      if (part instanceof LeviathanPart lp && lp.getBoundingBox().intersects(box)) {
+         ChitauriLeviathan parent = lp.getParent();
+         return parent != null && !parent.isRemoved() ? parent : null;
       }
       return null;
    }
