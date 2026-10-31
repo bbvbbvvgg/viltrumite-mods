@@ -30,10 +30,10 @@ GROUPS = {
     'black_widow': [('avengers/black_widow', 'avengers/black_widow'), ('avengers/black_widow_gear', 'avengers/black_widow_gear')],
     'hawkeye': [('avengers/hawkeye', 'avengers/hawkeye'), ('avengers/hawkeye_gear', 'avengers/hawkeye_gear')],
     'hulk': [('avengers/hulk', 'avengers/hulk')],
-    'iron_man_gear': [('avengers/iron_man_gear', 'avengers/iron_man_gear')],
+    'iron_man_gear': [('avengers/iron_man_gear', 'ironman/mark_42/pieces', {'gutter': False, 'reused': True})],
     'mjolnir': [('avengers/mjolnir', 'avengers/mjolnir')],
     'iron_man': [('avengers/avenger', 'avengers/iron_man', {'gutter': False}),
-                 ('avengers/iron_man_gear', 'avengers/iron_man_gear')],
+                 ('avengers/iron_man_gear', 'ironman/mark_42/pieces', {'gutter': False, 'reused': True})],
     'arrow': [('avengers/arrow', 'avengers/arrow')],
     'arrow_explosive': [('avengers/arrow_explosive', 'avengers/arrow_explosive')],
     'arrow_shock': [('avengers/arrow_shock', 'avengers/arrow_shock')],
@@ -180,12 +180,16 @@ def overlap(q1, q2, n, min_area=0.004):
     return len(inter) >= 3 and _area(inter) > min_area
 
 
+WARNINGS = []
+
+
 def lint_group(name, members):
     errors = []
     faces = []
     for member in members:
         geo_rel, tex_rel = member[:2]
         gutters = len(member) < 3 or member[2].get('gutter', True)  # vanilla-layout skins have no gutters
+        reused = len(member) > 2 and member[2].get('reused', False)  # a hero asset taken as is (Sind Mark 42)
         path = os.path.join(RES, 'geo', geo_rel + '.geo.json')
         if not os.path.exists(path):
             errors.append(f'{name}: missing {geo_rel}')
@@ -211,8 +215,13 @@ def lint_group(name, members):
                     errors.append(f'{name}: {geo_rel} {b["name"]}#{ci} box UV (expected per-face)')
                     continue
                 clear = set()
+                masks = {}
                 for f, spec in uvs.items():
                     (u, v), (w, h) = spec['uv'], spec['uv_size']
+                    flips = (w < 0, h < 0)
+                    # a negative size is the same island read backwards (GeckoLib flips the face)
+                    u, w = (u + w, -w) if w < 0 else (u, w)
+                    v, h = (v + h, -h) if h < 0 else (v, h)
                     if w <= 0 or h <= 0 or u < 0 or v < 0 or u + w > tw or v + h > th:
                         errors.append(f'{name}: {geo_rel} {b["name"]}#{ci}.{f} uv out of bounds {u},{v} {w}x{h}')
                         continue
@@ -221,6 +230,8 @@ def lint_group(name, members):
                         u, v, w, h = int(u * k), int(v * k), int(math.ceil(w * k)), int(math.ceil(h * k))
                         if tex is not None and (tex[v:v + h, u:u + w][..., 3] == 0).all():
                             clear.add(f)
+                        elif tex is not None:
+                            masks[f] = (flips, tex[v:v + h, u:u + w][..., 3] > 0)
                         continue
                     u, v, w, h = int(u), int(v), int(math.ceil(w)), int(math.ceil(h))
                     if (used[v:v + h, u:u + w] > 0).any():
@@ -240,19 +251,26 @@ def lint_group(name, members):
                             clear.add(f)  # fully transparent face: never drawn, cannot z-fight
                 for fn, quad, n, area in cube_faces(c, R, t):
                     if area > 1e-6 and fn not in clear:
-                        faces.append((f'{geo_rel}:{b["name"]}#{ci}.{fn}', quad, n))
+                        faces.append((f'{geo_rel}:{b["name"]}#{ci}.{fn}', quad, n, masks.get(fn), reused))
     # z-fighting: same plane, same facing, overlapping area
     for i in range(len(faces)):
-        ni, qi, nn = faces[i]
+        ni, qi, nn, mi, ri = faces[i]
         di = float(np.dot(nn, qi[0]))
         for j in range(i + 1, len(faces)):
-            nj, qj, mn = faces[j]
+            nj, qj, mn, mj, rj = faces[j]
             if np.dot(nn, mn) < 0.999:
                 continue
             if abs(di - float(np.dot(mn, qj[0]))) > 0.015:
                 continue
+            if (mi is not None and mj is not None and mi[0] == mj[0] and mi[1].shape == mj[1].shape
+                    and np.allclose(qi, qj, atol=1e-4) and not (mi[1] & mj[1]).any()):
+                continue  # layered masks of a reused asset (Sind pieces): the same face, disjoint opaque pixels
             if overlap(qi, qj, nn):
-                errors.append(f'{name}: z-fight {ni} / {nj}')
+                if ri and rj:
+                    # both faces belong to the hero's own Sind pieces (identical in the hero's suit): reported, not fatal
+                    WARNINGS.append(f'{name}: reused-asset overlap {ni} / {nj}')
+                else:
+                    errors.append(f'{name}: z-fight {ni} / {nj}')
     return errors
 
 
@@ -263,6 +281,8 @@ def main(argv):
         errs += lint_group(n, GROUPS[n])
     for e in errs:
         print(e)
+    if WARNINGS:
+        print(f'geo_lint: {len(WARNINGS)} overlap(s) inside reused hero assets (same as in the hero, not counted)')
     print(f'geo_lint: {len(errs)} problem(s) in {", ".join(names)}')
     return 1 if errs else 0
 

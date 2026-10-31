@@ -20,7 +20,7 @@ L['en_us'] = dict(
     assemble_line='Avengers, assemble!', all_day='I can do this all day.',
     names=['Ricochet', 'Shield Rush', 'Vibranium Slam', 'Tactical Roll', 'Avengers, Assemble!'],
     descs=[
-        'Throw the shield at the target in your sights: it ricochets between up to 3 enemies (5 with 50+ kinetic charge, '
+        'Throw the shield at the target in your sights: it ricochets between up to 5 enemies (8 with 50+ kinetic charge, '
         'spends 50) for 9 damage, -15% per bounce, and flies back to you. Hold to aim a bank shot off walls (up to 4 bounces). '
         'Press again in flight to recall it, hitting enemies on the way. Catch it during a combo for a Return Strike.',
         'Charge up to 9 blocks behind the shield: enemies on the path take 6 and are swept aside; the first big enemy or a wall '
@@ -32,7 +32,8 @@ L['en_us'] = dict(
         'Rolling toward the flying shield catches it sooner.',
         'Ultimate. Raise the shield and call the team: the Quinjet drops Black Widow and Hawkeye, Iron Man lands from the sky, '
         'Thor arrives in lightning and the Hulk leaps in. The six of you stand in a circle, then the Avengers fight at your side '
-        'for 60 seconds. Cooldown 5 minutes.'],
+        'for 60 seconds and pull off joint moves: Widow vaults Hawkeye into the air, Thor overcharges Iron Man\'s unibeam, '
+        'and Thor strikes your raised shield for a shockwave. Cooldown 5 minutes.'],
     shield='Captain America\'s Shield', avenger='Avenger', projectile='Avenger Projectile', quinjet='Quinjet',
     kinds=['Iron Man', 'Thor', 'Hulk', 'Black Widow', 'Hawkeye'],
     cap=['Shield swings', 'Shield strikes', 'Punch whooshes', 'Punch lands', 'Kick lands', 'Shield crashes down',
@@ -51,7 +52,7 @@ L['ru_ru'] = dict(
     assemble_line='Мстители, общий сбор!', all_day='Я могу так весь день.',
     names=['Рикошет', 'Таран щитом', 'Удар вибраниума', 'Тактический перекат', 'Мстители, общий сбор!'],
     descs=[
-        'Бросок щита в цель под прицелом: щит рикошетит между 3 врагами (5 при кинетическом заряде от 50, тратит 50), '
+        'Бросок щита в цель под прицелом: щит рикошетит между 5 врагами (8 при кинетическом заряде от 50, тратит 50), '
         '9 урона, −15 % за каждый отскок, и возвращается. Удержание — прицел броска с отскоками от стен (до 4). '
         'Повторное нажатие в полёте — отзыв: щит летит назад и задевает врагов. Поймай щит во время комбо — «Удар с возврата».',
         'Рывок до 9 блоков за щитом: враги на пути получают 6 урона и отлетают в сторону; первый крупный враг или стена '
@@ -63,7 +64,8 @@ L['ru_ru'] = dict(
         'Перекат навстречу летящему щиту ловит его раньше.',
         'Ультимейт. Стив поднимает щит и зовёт команду: квинджет высаживает Чёрную вдову и Соколиного глаза, '
         'Железный человек приземляется с неба, Тор является в молнии, Халк прилетает прыжком. Шестеро встают в круг, '
-        'затем Мстители 60 секунд сражаются рядом с тобой. Перезарядка 5 минут.'],
+        'затем Мстители 60 секунд сражаются рядом с тобой и проводят совместные приёмы: Вдова подбрасывает Соколиного глаза, '
+        'Тор заряжает юнилуч Старка молнией, а Тор бьёт Мьёльниром в поднятый щит — ударная волна. Перезарядка 5 минут.'],
     shield='Щит Капитана Америки', avenger='Мститель', projectile='Снаряд Мстителя', quinjet='Квинджет',
     kinds=['Железный человек', 'Тор', 'Халк', 'Чёрная вдова', 'Соколиный глаз'],
     cap=['Взмах щитом', 'Удар щитом', 'Свист кулака', 'Удар кулаком', 'Удар ногой', 'Щит обрушивается сверху',
@@ -82,7 +84,7 @@ L['de_de'] = dict(
     assemble_line='Avengers, sammeln!', all_day='Das kann ich den ganzen Tag.',
     names=['Querschläger', 'Schildansturm', 'Vibranium-Schlag', 'Taktische Rolle', 'Avengers, sammeln!'],
     descs=[
-        'Wirf den Schild auf das Ziel im Visier: Er prallt zwischen bis zu 3 Gegnern ab (5 ab 50 kinetischer Ladung, '
+        'Wirf den Schild auf das Ziel im Visier: Er prallt zwischen bis zu 5 Gegnern ab (8 ab 50 kinetischer Ladung, '
         'verbraucht 50), 9 Schaden, −15 % pro Abpraller, und fliegt zurück. Halten zielt einen Bandenwurf über Wände '
         '(bis zu 4 Abpraller). Erneut drücken ruft ihn zurück und trifft Gegner auf dem Weg. Fang ihn im Combo für einen Rückkehrschlag.',
         'Stürme bis zu 9 Blöcke hinter dem Schild vor: Gegner auf dem Weg erleiden 6 und werden beiseitegestoßen; der erste '
@@ -94,7 +96,8 @@ L['de_de'] = dict(
         'Eine Rolle zum fliegenden Schild fängt ihn früher.',
         'Ultimate. Heb den Schild und ruf das Team: Der Quinjet setzt Black Widow und Hawkeye ab, Iron Man landet aus dem Himmel, '
         'Thor erscheint im Blitz und Hulk springt herbei. Zu sechst bildet ihr einen Kreis, dann kämpfen die Avengers '
-        '60 Sekunden an deiner Seite. Abklingzeit 5 Minuten.'],
+        '60 Sekunden an deiner Seite, mit Teamangriffen: Widow katapultiert Hawkeye in die Luft, Thor lädt Iron Mans '
+        'Unibeam auf, und Thor schlägt auf deinen erhobenen Schild – eine Schockwelle. Abklingzeit 5 Minuten.'],
     shield='Captain Americas Schild', avenger='Avenger', projectile='Avenger-Geschoss', quinjet='Quinjet',
     kinds=['Iron Man', 'Thor', 'Hulk', 'Black Widow', 'Hawkeye'],
     cap=['Schild schwingt', 'Schild trifft', 'Faust zischt', 'Faust trifft', 'Tritt trifft', 'Schild kracht herab',
@@ -113,7 +116,7 @@ ES = dict(
     assemble_line='¡Vengadores, reuníos!', all_day='Puedo hacer esto todo el día.',
     names=['Rebote', 'Embestida con escudo', 'Golpe de vibranio', 'Voltereta táctica', '¡Vengadores, reuníos!'],
     descs=[
-        'Lanza el escudo al objetivo en la mira: rebota entre hasta 3 enemigos (5 con 50+ de carga cinética, gasta 50), '
+        'Lanza el escudo al objetivo en la mira: rebota entre hasta 5 enemigos (8 con 50+ de carga cinética, gasta 50), '
         '9 de daño, −15 % por rebote, y vuelve a ti. Mantén para apuntar un tiro con rebotes en paredes (hasta 4). '
         'Pulsa otra vez en vuelo para recuperarlo y golpear enemigos en el camino. Atrápalo en un combo para un Golpe de retorno.',
         'Carga hasta 9 bloques tras el escudo: los enemigos en el camino reciben 6 y salen despedidos; el primer enemigo grande '
@@ -125,7 +128,8 @@ ES = dict(
         'Rodar hacia el escudo en vuelo lo atrapa antes.',
         'Definitiva. Alza el escudo y llama al equipo: el Quinjet deja a Viuda Negra y Ojo de Halcón, Iron Man aterriza desde '
         'el cielo, Thor llega en un rayo y Hulk cae de un salto. Los seis forman un círculo y luego los Vengadores luchan a tu '
-        'lado 60 segundos. Recarga 5 minutos.'],
+        'lado 60 segundos con ataques en equipo: la Viuda lanza a Ojo de Halcón por los aires, Thor sobrecarga el unirrayo '
+        'de Iron Man y Thor golpea tu escudo alzado para una onda de choque. Recarga 5 minutos.'],
     shield='Escudo del Capitán América', avenger='Vengador', projectile='Proyectil de Vengador', quinjet='Quinjet',
     kinds=['Iron Man', 'Thor', 'Hulk', 'Viuda Negra', 'Ojo de Halcón'],
     cap=['El escudo silba', 'Golpe de escudo', 'Silba un puñetazo', 'Puñetazo', 'Patada', 'El escudo cae con fuerza',
@@ -152,7 +156,7 @@ L['tr_tr'] = dict(
     assemble_line='Yenilmezler, toplanın!', all_day='Bunu bütün gün yapabilirim.',
     names=['Seken Kalkan', 'Kalkan Hücumu', 'Vibranyum Darbesi', 'Taktik Yuvarlanma', 'Yenilmezler, Toplanın!'],
     descs=[
-        'Kalkanı nişangâhtaki hedefe fırlat: 3 düşman arasında seker (50+ kinetik yükte 5, 50 harcar), 9 hasar, her sekişte '
+        'Kalkanı nişangâhtaki hedefe fırlat: 5 düşman arasında seker (50+ kinetik yükte 8, 50 harcar), 9 hasar, her sekişte '
         '−%15, sonra geri döner. Basılı tut: duvarlardan sekme yolu nişanla (en fazla 4). Uçarken tekrar bas: geri çağır, '
         'yoldaki düşmanlara çarpar. Kombo sırasında yakala: Dönüş Darbesi.',
         'Kalkanın arkasında 9 bloka kadar hücum et: yoldaki düşmanlar 6 hasar alıp savrulur; ilk büyük düşman ya da duvar seni '
@@ -162,7 +166,9 @@ L['tr_tr'] = dict(
         'Hareket yönüne (ya da geriye) 4,5 blok yuvarlan, kısa süre dokunulmaz ol. Hemen ardından saldır: süpürme tekmesi. '
         'Uçan kalkana doğru yuvarlanmak onu daha erken yakalar.',
         'Nihai. Kalkanı kaldır ve takımı çağır: Quinjet Kara Dul ve Şahingöz\'ü bırakır, Demir Adam gökten iner, Thor yıldırımla '
-        'gelir, Hulk sıçrayarak düşer. Altınız bir çember kurar, ardından Yenilmezler 60 saniye yanında savaşır. Bekleme 5 dakika.'],
+        'gelir, Hulk sıçrayarak düşer. Altınız bir çember kurar, ardından Yenilmezler 60 saniye yanında savaşır ve ortak hamleler yapar: '
+        'Dul Kadın Şahin Göz\'ü havaya fırlatır, Thor Iron Man\'in tek ışınını aşırı yükler, Thor kaldırdığın kalkana vurup '
+        'şok dalgası yaratır. Bekleme 5 dakika.'],
     shield='Kaptan Amerika\'nın Kalkanı', avenger='Yenilmez', projectile='Yenilmez Mermisi', quinjet='Quinjet',
     kinds=['Demir Adam', 'Thor', 'Hulk', 'Kara Dul', 'Şahingöz'],
     cap=['Kalkan savrulur', 'Kalkan çarpar', 'Yumruk vınlar', 'Yumruk iner', 'Tekme iner', 'Kalkan yukarıdan iner',
@@ -181,7 +187,7 @@ L['zh_cn'] = dict(
     assemble_line='复仇者，集结！', all_day='我能跟你耗一整天。',
     names=['盾牌弹射', '盾牌冲撞', '振金重击', '战术翻滚', '复仇者，集结！'],
     descs=[
-        '把盾牌掷向准星中的目标：在最多 3 名敌人之间弹射（动能充能 50 以上时为 5 名，消耗 50），造成 9 点伤害，每次弹射 −15%，随后飞回。'
+        '把盾牌掷向准星中的目标：在最多 5 名敌人之间弹射（动能充能 50 以上时为 8 名，消耗 50），造成 9 点伤害，每次弹射 −15%，随后飞回。'
         '按住可瞄准借墙反弹的投掷（最多 4 次）。飞行中再按一次召回盾牌，沿途击中敌人。连招中接住盾牌可打出“回旋一击”。',
         '举盾冲锋最多 9 格：路上的敌人受到 6 点伤害并被撞开；第一个大型敌人或墙壁会让你停下，造成 10 点伤害并眩晕 1.25 秒。'
         '下一次攻击从上勾拳继续连招。无盾时：肩撞造成 8 点伤害。',
@@ -189,7 +195,8 @@ L['zh_cn'] = dict(
         '并爆出白蓝色星光。需要盾牌在手。',
         '朝移动方向（或向后）翻滚 4.5 格，短暂无敌。翻滚后立刻攻击可使出扫腿。朝飞行中的盾牌翻滚能更早接住它。',
         '终极技。举起盾牌召集队友：昆式战机放下黑寡妇和鹰眼，钢铁侠从天而降，雷神在闪电中现身，绿巨人一跃而至。'
-        '六人站成一圈，随后复仇者在你身边战斗 60 秒。冷却 5 分钟。'],
+        '六人站成一圈，随后复仇者在你身边战斗 60 秒，并施展合体技：黑寡妇把鹰眼抛向空中，雷神为钢铁侠的胸口光束充能，'
+        '雷神用妙尔尼尔锤击你举起的盾牌，形成冲击波。冷却 5 分钟。'],
     shield='美国队长的盾牌', avenger='复仇者', projectile='复仇者投射物', quinjet='昆式战机',
     kinds=['钢铁侠', '雷神', '绿巨人', '黑寡妇', '鹰眼'],
     cap=['盾牌挥动', '盾牌击中', '拳风呼啸', '拳头命中', '踢击命中', '盾牌重重砸下', '队长反击', '举起盾牌', '盾牌格挡',
@@ -199,6 +206,40 @@ L['zh_cn'] = dict(
         '面甲掀起', '绿巨人咆哮', '绿巨人猛砸', '绿巨人出拳', '绿巨人捶胸', '雷霆劈下', '雷神之锤挥动', '雷神之锤击中',
         '雷神之锤旋转', '手枪射击', '寡妇之刺噼啪作响', '黑寡妇出击', '杂技空翻', '拉开弓弦', '放箭', '箭矢命中', '电击',
         '重重落地', '复仇者离开'])
+
+
+# rework §15: joint moves (lines in Thor's / Iron Man's voice, hint, playtest command)
+TEAM = {
+    'en_us': ["Hey, Cap, raise your shield! I'll charge the strike!", 'Charging at four hundred percent!',
+              'Hold %s facing Thor to raise the shield', 'Unknown joint move: %s (vault, beam, shield)',
+              '%s has no Avengers fighting right now', 'The Avengers will try "%s" at the next chance'],
+    'ru_ru': ['Эй, кеп, подставь щит! Я заряжу атаку!', 'Заряд — четыреста процентов!',
+              'Удерживай %s лицом к Тору, чтобы подставить щит', 'Неизвестный совместный приём: %s (vault, beam, shield)',
+              'У %s сейчас нет сражающихся Мстителей', 'Мстители попробуют «%s» при первой возможности'],
+    'de_de': ['Hey, Cap, heb deinen Schild! Ich lade den Schlag auf!', 'Ladung auf vierhundert Prozent!',
+              'Halte %s in Richtung Thor, um den Schild zu heben', 'Unbekannter Teamangriff: %s (vault, beam, shield)',
+              '%s hat gerade keine kämpfenden Avengers', 'Die Avengers versuchen „%s“ bei der nächsten Gelegenheit'],
+    'es': ['¡Eh, Cap, alza el escudo! ¡Cargaré el golpe!', '¡Carga al cuatrocientos por ciento!',
+           'Mantén %s mirando a Thor para alzar el escudo', 'Ataque en equipo desconocido: %s (vault, beam, shield)',
+           '%s no tiene Vengadores luchando ahora', 'Los Vengadores intentarán «%s» en la próxima ocasión'],
+    'tr_tr': ['Hey, Kaptan, kalkanını kaldır! Saldırıyı ben yükleyeceğim!', 'Yükleme yüzde dört yüz!',
+              'Kalkanı kaldırmak için Thor\'a dönüp %s tuşunu basılı tut', 'Bilinmeyen ortak hamle: %s (vault, beam, shield)',
+              '%s şu anda savaşan Yenilmezlere sahip değil', 'Yenilmezler ilk fırsatta "%s" hamlesini deneyecek'],
+    'zh_cn': ['嘿，队长，举起盾牌！我来蓄力一击！', '充能百分之四百！',
+              '面向雷神按住 %s 举起盾牌', '未知的合体技：%s（vault、beam、shield）',
+              '%s 当前没有正在战斗的复仇者', '复仇者将在下一次机会尝试「%s」'],
+}
+ENTER = {'en_us': 'Captain Rogers, reporting for duty.', 'ru_ru': 'Капитан Роджерс прибыл для прохождения службы.',
+         'de_de': 'Captain Rogers meldet sich zum Dienst.', 'es': 'Capitán Rogers, presentándose para el servicio.',
+         'tr_tr': 'Kaptan Rogers göreve hazır.', 'zh_cn': '罗杰斯上尉，前来报到。'}
+for loc in TEAM:
+    TEAM[loc].append(ENTER[loc])
+TEAM_KEYS = ['subtitle.viltrumitecore.captain.team_shield', 'subtitle.viltrumitecore.captain.team_beam',
+             'hint.viltrumitecore.captain.team_shield', 'commands.viltrumitecore.hero.team.unknown',
+             'commands.viltrumitecore.hero.team.no_fight', 'commands.viltrumitecore.hero.team.forced',
+             'subtitle.viltrumitecore.captain.enter']
+for loc in L:
+    L[loc]['team'] = TEAM['es' if loc.startswith('es_') else loc]
 
 
 def build(v):
@@ -223,6 +264,7 @@ def build(v):
         out[f'subtitles.viltrumitecore.captain.{k}'] = n
     for k, n in zip(AV_SFX, v['av']):
         out[f'subtitles.viltrumitecore.avengers.{k}'] = n
+    out.update(zip(TEAM_KEYS, v['team'], strict=True))
     return out
 
 
