@@ -29,7 +29,7 @@ public final class CodexEntries {
       // Heroes: accent = the colour of the hero's wish (WishStyle.primary), filled in by CodexScreen at runtime.
       hero("homelander", 0xFF2A2A, rel("conquest", "viltrumite_squad", "conquest_arrival", "viltrumite_squad_event"), "viltrumite", "omni_man");
       hero("regulus", 0xE8EEF5, rel("reinhard", "od_lagna"), "regulus_corneas");
-      hero("ironman", 0x5FE6FF, rel("iron_legion", "avenger_iron_man", "captain"), "iron_man", "tony_stark", "tony");
+      hero("ironman", 0x5FE6FF, rel("iron_legion", "avenger_iron_man", "captain"), "iron_man", "tony_stark", "tony", "hulkbuster");
       hero("reinhard", 0xFFF1B8, rel("regulus", "thanos"), "reinhard_van_astrea");
       hero("thor", 0x7FD8FF, rel("avenger_thor", "captain"), "thor_odinson");
       hero("dio", 0xFFD34D, rel("thanos_snap", "regulus"), "dio_brando", "the_world");
@@ -44,7 +44,7 @@ public final class CodexEntries {
          Visual.skins(List.of(SKINS + "skin_thula.png", SKINS + "skin_lucan.png", SKINS + "skin_vidor.png"), List.of(true, false, false)),
          rel("conquest", "homelander", "viltrumite_squad_event"), "thula", "lucan", "vidor", "viltrumites", "squad");
       npc("chitauri_soldier", "enemy", 0x6E8FA8, Visual.entity("viltrumitecore:chitauri_soldier", null),
-         rel("chitauri_chariot", "chitauri_leviathan", "chitauri_invasion"), "chitauri", "chitauri_creature");
+         rel("chitauri_chariot", "chitauri_leviathan", "chitauri_invasion"), "chitauri", "chitauri_creature", "chitauri_rider", "chitauri_riders");
       npc("chitauri_chariot", "enemy", 0x5F7F99, Visual.entity("viltrumitecore:chitauri_chariot", null),
          rel("chitauri_soldier", "chitauri_leviathan", "chitauri_invasion"), "chariot");
       npc("chitauri_leviathan", "boss", 0x4C6A85, Visual.entity("viltrumitecore:chitauri_leviathan", null),
@@ -52,11 +52,11 @@ public final class CodexEntries {
       npc("thanos", "boss", 0x9B59D0, Visual.entity("viltrumitecore:thanos", null), rel("thanos_snap", "od_lagna", "reinhard", "dio"),
          "mad_titan", "infinity_gauntlet");
       avenger("avenger_iron_man", "iron_man", 0xE0413A, "avenger_thor", "mark_42");
-      avenger("avenger_thor", "thor", 0x7FD8FF, "avenger_hulk", "thor_2012");
-      avenger("avenger_hulk", "hulk", 0x5FBF4A, "avenger_black_widow", "hulk", "bruce_banner");
+      avenger("avenger_thor", "thor", 0x7FD8FF, "avenger_hulk", "thor_2012", "npc_thor");
+      avenger("avenger_hulk", "hulk", 0x5FBF4A, "avenger_black_widow", "hulk", "bruce_banner", "npc_hulk");
       avenger("avenger_black_widow", "black_widow", 0xC9302C, "avenger_hawkeye", "black_widow", "natasha_romanoff");
       avenger("avenger_hawkeye", "hawkeye", 0x8C5AC8, "avenger_black_widow", "hawkeye", "clint_barton");
-      npc("iron_legion", "ally", 0xD0A040, Visual.entity("viltrumitecore:legion_suit", null), rel("ironman"), "legion_suit", "legion", "iron_legion_suit");
+      npc("iron_legion", "ally", 0xD0A040, Visual.entity("viltrumitecore:legion_suit", null), rel("ironman"), "legion_suit", "legion", "iron_legion_suit", "iron_legion_suits", "legion_suits");
       npc("shadow_army", "ally", 0x8A4DFF, Visual.entity("viltrumitecore:shadow_soldier", null), rel("jinwoo"), "shadow_soldier", "shadows",
          "igris", "beru", "tank");
       npc("sinclair_assistant", "ally", 0xFF6A8A, Visual.entity("viltrumitecore:sinclair_assistant", null), rel("sinclair"), "assistant");
@@ -129,6 +129,56 @@ public final class CodexEntries {
    @Nullable
    public static CodexEntry get(@Nullable String id) {
       return id == null ? null : ALL.get(id);
+   }
+
+   /** Leading words that only qualify a free-text participant ("the summoned NPC Thor", "an Iron Legion suit"). */
+   private static final Set<String> FILLERS = Set.of("a", "an", "the", "any", "summoned", "npc", "other", "hero");
+
+   /**
+    * The articles a free-text participant names. One article when the whole text is known ("Thor (Mjolnir in hand)");
+    * otherwise the text is split on "," / " or " / " and " / "/" and each part is looked up, first as written, then
+    * without leading qualifiers ("NPC Hulk" → hulk, "Jinwoo's shadows" → shadows); when nothing outside parentheses is
+    * known, the list inside them is used. Unknown parts are skipped; empty when nothing is known.
+    */
+   public static List<CodexEntry> resolveAll(@Nullable String raw) {
+      CodexEntry whole = byAlias(raw);
+      if (whole != null || raw == null) {
+         return whole != null ? List.of(whole) : List.of();
+      }
+      List<CodexEntry> out = parts(raw.replaceAll("\\([^)]*\\)", " "));
+      if (out.isEmpty()) {
+         // "Hero summons (Iron Legion suits, Jinwoo's shadows)": the list in parentheses names them
+         java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\(([^)]*)\\)").matcher(raw);
+         while (m.find()) {
+            for (CodexEntry e : parts(m.group(1))) {
+               if (!out.contains(e)) {
+                  out.add(e);
+               }
+            }
+         }
+      }
+      return out;
+   }
+
+   private static List<CodexEntry> parts(String text) {
+      List<CodexEntry> out = new ArrayList<>();
+      for (String part : text.split("(?i),|/|\\s+or\\s+|\\s+and\\s+")) {
+         List<String> words = new ArrayList<>(List.of(part.strip().split("\\s+")));
+         CodexEntry found = null;
+         while (!words.isEmpty() && found == null) {
+            found = byAlias(String.join(" ", words));
+            String first = words.get(0).toLowerCase(java.util.Locale.ROOT);
+            if (found == null && (FILLERS.contains(first) || first.endsWith("'s"))) {
+               words.remove(0);
+            } else if (found == null) {
+               break;
+            }
+         }
+         if (found != null && !out.contains(found)) {
+            out.add(found);
+         }
+      }
+      return out;
    }
 
    /** The article a catalog id (participant, related) points to: by id, then by alias; null when unknown. */
