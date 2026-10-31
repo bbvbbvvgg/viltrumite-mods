@@ -484,7 +484,7 @@ def finish(model, scene, cube, ctx):
     L = quantise(L, mat.quant)
     L = np.clip(L, 0.35, 1.45)
     out = shade(ctx.rgb, L, mat.cool, mat.warm, mat.hue, mat.spec)
-    keep = ctx.flat | (ctx.glow[..., 3] > 0)
+    keep = ctx.flat | (ctx.glow[..., 3] > 0) if getattr(mat, 'keep_glow', True) else ctx.flat
     out[keep] = ctx.rgb[keep]
     col = np.zeros((h, w, 4), np.uint8)
     col[..., :3] = np.clip(out, 0, 255).astype(np.uint8)
