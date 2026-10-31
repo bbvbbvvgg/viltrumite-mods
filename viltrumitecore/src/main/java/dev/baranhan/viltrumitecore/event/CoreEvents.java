@@ -3,7 +3,6 @@ package dev.baranhan.viltrumitecore.event;
 import dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig;
 import dev.baranhan.viltrumitecore.effect.ViltrumiteEffects;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
-import dev.baranhan.viltrumitecore.network.packet.OpenRaceScreenS2CPacket;
 import dev.baranhan.viltrumitecore.util.ViltrumiteAbilityUser;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCosmeticsPlayer;
@@ -22,7 +21,6 @@ import net.minecraftforge.event.TickEvent.LevelTickEvent;
 import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.Clone;
-import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -32,15 +30,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
    bus = Bus.FORGE
 )
 public class CoreEvents {
-   @SubscribeEvent
-   public static void onPlayerJoin(PlayerLoggedInEvent event) {
-      if (event.getEntity() instanceof ServerPlayer player) {
-         ViltrumiteCorePlayer corePlayer = (ViltrumiteCorePlayer)player;
-         if (!corePlayer.hasChosenRace() && ViltrumiteCoreConfig.INSTANCE.shouldAskRace) {
-            CoreMessages.sendToPlayer(new OpenRaceScreenS2CPacket(), player);
-         }
-      }
-   }
+   // No hero choice is forced on join: a new player starts as a plain human.
+   // The picker stays available through /viltrumite choose.
 
    @SubscribeEvent
    public static void onPlayerClone(Clone event) {

@@ -44,6 +44,15 @@ public final class BudgetHeroes {
       return List.of(BudgetRoster.ALL);
    }
 
+   /**
+    * Hand-drawn 64x64 panel icon of one ability (Reinhard icon style), written by
+    * tools/budget/make_budget_icons.py into binassets.
+    */
+   public static net.minecraft.resources.ResourceLocation icon(BudgetHeroSpec spec, BudgetMove move) {
+      return new net.minecraft.resources.ResourceLocation("viltrumitecore",
+         "textures/gui/ability/budget/" + spec.key() + "/" + move.slug() + ".png");
+   }
+
    public static int count() {
       return BudgetRoster.ALL.length;
    }

@@ -11,8 +11,10 @@ import net.minecraftforge.fml.loading.FMLPaths;
 public class ViltrumiteCoreConfig {
    public float damageReductionPercent = 97.0F;
    public float damageIgnoreThreshold = 0.5F;
-   public boolean shouldAskRace = true;
-   public boolean isViltrumiteByDefault = true;
+   /** Kept for config/packet compatibility; no longer used: the hero choice is never forced on join. */
+   public boolean shouldAskRace = false;
+   /** Kept for config/packet compatibility; no longer used: new players always start as a human. */
+   public boolean isViltrumiteByDefault = false;
    public float punchBlockDropChance = 40.0F;
    public float dashBlockDropChance = 40.0F;
    public double spaceLimitY = 1500.0;

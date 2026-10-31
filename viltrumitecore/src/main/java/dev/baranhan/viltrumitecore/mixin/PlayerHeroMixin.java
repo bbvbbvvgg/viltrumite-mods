@@ -1,6 +1,5 @@
 package dev.baranhan.viltrumitecore.mixin;
 
-import dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroOwnerSnapshot;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
@@ -57,7 +56,8 @@ public abstract class PlayerHeroMixin implements HeroPlayer {
    @Inject(method = {"defineSynchedData"}, at = {@At("TAIL")})
    private void viltrumitecore$defineHeroData(CallbackInfo ci) {
       Player player = (Player)(Object)this;
-      int defaultId = ViltrumiteCoreConfig.INSTANCE.isViltrumiteByDefault ? HeroId.HOMELANDER.ordinal() : HeroId.HUMAN.ordinal();
+      // New players start as a plain human; Homelander is never forced.
+      int defaultId = HeroId.HUMAN.ordinal();
       player.getEntityData().define(HERO_ID, defaultId);
       player.getEntityData().define(HERO_SNAPSHOT, HeroPublicSnapshot.EMPTY.encode());
    }
