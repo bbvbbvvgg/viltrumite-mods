@@ -120,6 +120,7 @@ public class ViltrumiteCore {
       // Regulus Reborn (docs/design/2026-10-30-regulus-reborn-design.md): his own sound holders.
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
+      dev.baranhan.viltrumitecore.hero.captain.CaptainSounds.init();
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);

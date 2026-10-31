@@ -85,6 +85,7 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.regulus.RegulusClient.init();
          dev.baranhan.viltrumitecore.client.jinwoo.JinwooClient.init();
          dev.baranhan.viltrumitecore.client.hero.speech.qa.SubtitlePlaytest.init();
+         dev.baranhan.viltrumitecore.client.captain.CaptainClient.init();
          dev.baranhan.viltrumitecore.client.wish.WishSceneClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();

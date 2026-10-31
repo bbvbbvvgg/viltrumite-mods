@@ -3,10 +3,12 @@ package dev.baranhan.viltrumitecore.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import dev.baranhan.viltrumitecore.entity.avengers.TeamMoves;
 import dev.baranhan.viltrumitecore.hero.HeroDefinition;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
+import dev.baranhan.viltrumitecore.hero.captain.assemble.AvengersTeam;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +28,8 @@ import net.minecraft.world.item.ItemStack;
  * the targets' current hero. With {@code hero} only targets currently playing
  * that hero are touched. Cooldown timers only: running casts, channels,
  * resources and active states are left alone; the public snapshot is pushed at
- * once so the HUD updates the same tick.
+ * once so the HUD updates the same tick. {@code /hero team <vault|beam|shield>}
+ * makes the summoned Avengers try that joint move at its next chance (playtest).
  */
 public final class HeroCommands {
    private static final SuggestionProvider<CommandSourceStack> HEROES = (context, builder) -> SharedSuggestionProvider.suggest(
@@ -46,7 +49,27 @@ public final class HeroCommands {
                   .then(Commands.argument("hero", StringArgumentType.word())
                      .suggests(HEROES)
                      .executes(context -> reset(context.getSource(), EntityArgument.getPlayers(context, "targets"),
-                        StringArgumentType.getString(context, "hero"))))))));
+                        StringArgumentType.getString(context, "hero")))))))
+         .then(Commands.literal("team")
+            .then(Commands.argument("move", StringArgumentType.word())
+               .suggests((context, builder) -> SharedSuggestionProvider.suggest(TeamMoves.names(), builder))
+               .executes(context -> team(context.getSource(), context.getSource().getPlayerOrException(),
+                  StringArgumentType.getString(context, "move"))))));
+   }
+
+   /** Playtest of the Avengers' joint moves: the named one starts at its next chance (cooldown and gap ignored). */
+   private static int team(CommandSourceStack source, ServerPlayer player, String move) {
+      int index = TeamMoves.parse(move);
+      if (index < 0) {
+         source.sendFailure(Component.translatable("commands.viltrumitecore.hero.team.unknown", move));
+         return 0;
+      }
+      if (!AvengersTeam.forceTeamMove(player, index)) {
+         source.sendFailure(Component.translatable("commands.viltrumitecore.hero.team.no_fight", player.getDisplayName()));
+         return 0;
+      }
+      source.sendSuccess(() -> Component.translatable("commands.viltrumitecore.hero.team.forced", move), true);
+      return 1;
    }
 
    /** Pure: the hero named on the command line (its save key, case-insensitive), or null. */

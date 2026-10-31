@@ -72,11 +72,45 @@ class SafeRedirects(HTTPRedirectHandler):
 OPENER = build_opener(SafeRedirects())
 
 
+# Openverse sits behind a proxy that cuts slow backend queries at ~30 s with an HTML 500 page: that is a
+# degraded service, not a bad key (a bad key is an instant JSON 400/401). So: long timeouts, retry on 5xx/HTML,
+# and one cached token (12 h) instead of a token request per call.
+TIMEOUT = 90
+TRIES = int(os.environ.get("OPENVERSE_TRIES", "10"))
+TOKEN_CACHE = CACHE / "token.json"
+
+
+def _retrying(open_request, what: str):
+    last = None
+    for i in range(TRIES):
+        try:
+            with open_request() as response:
+                return response.read(4 * 1024 * 1024 + 1), response.headers
+        except HTTPError as exc:
+            body = exc.read(512).decode("utf-8", "replace").lstrip()
+            if exc.code >= 500 or body.startswith("<"):
+                last = f"HTTP {exc.code} (proxy timeout)"
+                time.sleep(min(2 ** i, 20))
+                continue
+            raise
+        except (URLError, TimeoutError) as exc:
+            last = str(exc)
+            time.sleep(3)
+            continue
+    raise SfxError(f"Openverse {what}: {TRIES} attempts failed (service degraded: {last})")
+
+
 def access_token() -> str:
-    """Accept a token or request a short-lived token from free API credentials."""
+    """Accept a token, reuse the cached one, or request a 12 h token from free API credentials."""
     direct = os.environ.get("OPENVERSE_API_TOKEN", "").strip()
     if direct:
         return direct
+    try:
+        cached = json.loads(TOKEN_CACHE.read_text("utf-8"))
+        if cached.get("until", 0) > time.time() + 60 and cached.get("access_token"):
+            return cached["access_token"]
+    except (OSError, ValueError):
+        pass
     client_id = os.environ.get("OPENVERSE_CLIENT_ID", "").strip()
     client_secret = os.environ.get("OPENVERSE_CLIENT_SECRET", "").strip()
     if not (client_id or client_secret):
@@ -85,17 +119,25 @@ def access_token() -> str:
         raise SfxError("Set both OPENVERSE_CLIENT_ID and OPENVERSE_CLIENT_SECRET")
     data = urlencode({"grant_type": "client_credentials", "client_id": client_id,
                       "client_secret": client_secret}).encode("utf-8")
-    req = Request("https://api.openverse.org/v1/auth_tokens/token/", data=data,
-                  headers={"Content-Type": "application/x-www-form-urlencoded",
-                           "User-Agent": "viltrumite-sfx-skill/1.0"})
+
+    def req():
+        return OPENER.open(Request("https://api.openverse.org/v1/auth_tokens/token/", data=data,
+                                   headers={"Content-Type": "application/x-www-form-urlencoded",
+                                            "User-Agent": "viltrumite-sfx-skill/1.0"}), timeout=TIMEOUT)
     try:
-        with OPENER.open(req, timeout=25) as response:
-            token = json.loads(response.read(8192)).get("access_token", "")
-            if not token:
-                raise SfxError("Openverse token response had no access_token")
-            return token
-    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        body, _ = _retrying(req, "authentication")
+        d = json.loads(body[:8192])
+    except HTTPError as exc:
+        raise SfxError(f"Openverse authentication failed: HTTP {exc.code} (check the client id/secret)") from exc
+    except json.JSONDecodeError as exc:
         raise SfxError(f"Openverse authentication failed: {exc}") from exc
+    token = d.get("access_token", "")
+    if not token:
+        raise SfxError("Openverse token response had no access_token")
+    CACHE.mkdir(parents=True, exist_ok=True)
+    TOKEN_CACHE.write_text(json.dumps({"access_token": token, "until": time.time() + float(d.get("expires_in", 3600))}), "utf-8")
+    os.chmod(TOKEN_CACHE, 0o600)
+    return token
 
 
 def request_json(url: str) -> tuple[dict, dict]:
@@ -104,20 +146,18 @@ def request_json(url: str) -> tuple[dict, dict]:
     if token:
         req_headers["Authorization"] = f"Bearer {token}"
     try:
-        with OPENER.open(Request(url, headers=req_headers), timeout=25) as response:
-            data = response.read(4 * 1024 * 1024 + 1)
-            if len(data) > 4 * 1024 * 1024:
-                raise SfxError("API response too large")
-            limits = {key: value for key, value in response.headers.items()
-                      if key.lower().startswith("x-ratelimit-")}
-            return json.loads(data), limits
+        data, headers = _retrying(lambda: OPENER.open(Request(url, headers=req_headers), timeout=TIMEOUT), "request")
+        if len(data) > 4 * 1024 * 1024:
+            raise SfxError("API response too large")
+        limits = {key: value for key, value in headers.items() if key.lower().startswith("x-ratelimit-")}
+        return json.loads(data), limits
     except HTTPError as exc:
         if exc.code == 429:
             raise SfxError(f"Openverse rate limit reached (429). Retry-After: {exc.headers.get('Retry-After', 'see response headers')}. Stop; do not bypass limits.") from exc
         if exc.code == 401:
             raise SfxError("Openverse rejected the token (401). Check OPENVERSE_API_TOKEN.") from exc
         raise SfxError(f"Openverse HTTP {exc.code}: {exc.reason}") from exc
-    except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+    except json.JSONDecodeError as exc:
         raise SfxError(f"Openverse request failed: {exc}") from exc
 
 
