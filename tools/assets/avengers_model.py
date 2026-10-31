@@ -1235,8 +1235,8 @@ def main():
             for cube in b.cubes:
                 cube.origin[0] += -0.1 if b.name.startswith('right') else 0.1
     write_json(os.path.join(RES, W('avenger.geo.json')), rig_model.geo_json())
-    write_png(T('iron_man.png'), paint_skin(rig_model, IM_MATS))
-    write_model(ironman_gear(), W('iron_man_gear.geo.json'), T('iron_man_gear.png'), T('iron_man_gear_glow.png'))
+    # Iron Man wears the hero's Mark 42 now (skin + Sind plates): avengers_ironman_mk42.py writes his skin and gear,
+    # the old blocky ironman_gear() / IM_MATS skin below are kept for reference only and must not overwrite them.
     import avengers_thor
     tb, tg = avengers_thor.build()
     write_model(tb, W('thor.geo.json'), T('thor.png'))
