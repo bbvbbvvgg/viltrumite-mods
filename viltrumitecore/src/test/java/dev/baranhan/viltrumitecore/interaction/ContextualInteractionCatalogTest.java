@@ -96,7 +96,10 @@ class ContextualInteractionCatalogTest {
    void everySoundIsShippedWithSubtitlesInEveryLocale() throws IOException {
       JsonObject sounds = JsonParser.parseString(Files.readString(Path.of("src/main/sound-overlays/interactions.json"))).getAsJsonObject();
       Set<String> events = new HashSet<>(List.of("interaction.shield_shatter", "interaction.storm_shield", "interaction.meteor_burst",
-         "interaction.meteor_split", "interaction.overcharge", "interaction.divine_clash", "interaction.titan_fling"));
+         "interaction.meteor_split", "interaction.overcharge", "interaction.divine_clash", "interaction.titan_fling", "interaction.storm_rebound",
+         "interaction.vibranium_ring", "interaction.repulsor_split", "interaction.time_rewind", "interaction.lion_strain", "interaction.shield_crush",
+         "interaction.meteor_cleave", "interaction.meteor_hurl", "interaction.shadow_exchange", "interaction.leviathan_impact",
+         "interaction.legion_discharge", "interaction.spine_lightning", "interaction.leviathan_halt"));
       assertEquals(events, sounds.keySet());
       Map<String, JsonObject> locales = ShippedLang.merged();
       for (String event : events) {
@@ -108,10 +111,45 @@ class ContextualInteractionCatalogTest {
             assertTrue(locale.getValue().has(subtitle), locale.getKey() + " lacks " + subtitle);
          }
       }
-      for (String key : List.of("subtitle.viltrumitecore.captain.shield_shattered", "subtitle.viltrumitecore.captain.storm_shield")) {
+      for (String key : List.of("subtitle.viltrumitecore.captain.shield_shattered", "subtitle.viltrumitecore.captain.storm_shield",
+         "subtitle.viltrumitecore.captain.all_day")) {
          for (Map.Entry<String, JsonObject> locale : locales.entrySet()) {
             assertTrue(locale.getValue().has(key), locale.getKey() + " lacks " + key);
          }
       }
+   }
+
+   /** The catalog's sound and FX columns name only shipped events and registered presets (the other agent reads them). */
+   @Test
+   void catalogNamesOnlyShippedSoundsAndPresets() throws IOException {
+      JsonObject sounds = JsonParser.parseString(Files.readString(Path.of("src/main/sound-overlays/interactions.json"))).getAsJsonObject();
+      Set<String> presets = new HashSet<>();
+      for (dev.baranhan.viltrumitecore.hero.fx.FxPreset preset : InteractionFx.PRESETS) {
+         presets.add(preset.id());
+      }
+      java.util.regex.Pattern soundRef = java.util.regex.Pattern.compile("viltrumitecore:(interaction\\.[a-z_]+)");
+      java.util.regex.Pattern fxRef = java.util.regex.Pattern.compile("viltrumitecore:interaction_[a-z_]+");
+      Set<String> usedSounds = new HashSet<>();
+      for (com.google.gson.JsonElement e : catalogJson().getAsJsonArray("interactions")) {
+         JsonObject o = e.getAsJsonObject();
+         String id = o.get("id").getAsString();
+         java.util.regex.Matcher m = soundRef.matcher(o.get("sound").getAsString());
+         while (m.find()) {
+            assertTrue(sounds.has(m.group(1)), id + " names unknown sound " + m.group(1));
+            usedSounds.add(m.group(1));
+         }
+         java.util.regex.Matcher f = fxRef.matcher(o.get("visual_fx").getAsString());
+         boolean any = false;
+         while (f.find()) {
+            any = true;
+            assertTrue(presets.contains(f.group()), id + " names unknown FX preset " + f.group());
+         }
+         assertTrue(any, id + " names no FX preset");
+      }
+      assertEquals(sounds.keySet(), usedSounds, "every shipped interaction sound is used by a catalog entry");
+   }
+
+   private static JsonObject catalogJson() throws IOException {
+      return JsonParser.parseString(Files.readString(CATALOG)).getAsJsonObject();
    }
 }
