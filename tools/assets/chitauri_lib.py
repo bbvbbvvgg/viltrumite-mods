@@ -24,14 +24,16 @@ import preview_geo as pg  # noqa: E402
 # ---- palette --------------------------------------------------------------------------------------------
 SKIN = '#4b4642'
 SKIN_DARK = '#34302d'
-GOLD = '#9c7b45'
+BRONZE = '#5d5344'        # tarnished plate: the bulk of the armour
+BRONZE_DARK = '#3d372f'
+GOLD = '#a3834c'          # trims, rings, crest edges only
 GOLD_DARK = '#6b5130'
 ALLOY = '#2c2e34'
 ALLOY_LIGHT = '#4a4d55'
 HOSE = '#1f1e1d'
 BONE = '#b9ad93'
-ENERGY = (150, 205, 255)
-ENERGY_HOT = (225, 242, 255)
+ENERGY = (70, 140, 255)
+ENERGY_HOT = (190, 225, 255)
 
 
 def _scratches(face, rgb, rs, count, light=1.22):
@@ -48,8 +50,11 @@ def _scratches(face, rgb, rs, count, light=1.22):
                 rgb[yy, xx] *= light
 
 
-def armour_fn(seams=True, rivets=True, scratches=3):
-    """Worn gold-bronze plate: lit top band, darker lower edge, seam lines, rivets, scratches."""
+def armour_fn(seams=True, rivets=True, scratches=3, trim=None):
+    """Worn plate: lit top band, darker lower edge, seam lines, rivets, scratches; optional gold trim line
+    along the top edge of the side faces (the plates stay dark bronze, gold only as an accent)."""
+    trim_rgb = None if trim is None else np.array(hexc(trim)[:3], float)
+
     def fn(face, rgb, glow, rs):
         h, w = rgb.shape[:2]
         u, v = face.grid()
@@ -62,7 +67,9 @@ def armour_fn(seams=True, rivets=True, scratches=3):
         if rivets and w >= 5 and h >= 5:
             for (yy, xx) in ((1, 1), (1, w - 2), (h - 2, 1), (h - 2, w - 2)):
                 if rs.rand() < 0.7:
-                    rgb[yy, xx] = rgb[yy, xx] * 0.5 + np.array([210, 180, 120]) * 0.5
+                    rgb[yy, xx] = rgb[yy, xx] * 0.45 + np.array([196, 160, 98]) * 0.55
+        if trim_rgb is not None and face.name not in ('up', 'down') and h >= 4:
+            rgb[0, :] = rgb[0, :] * 0.35 + trim_rgb * 0.65
         _scratches(face, rgb, rs, scratches)
     return fn
 
@@ -104,17 +111,17 @@ def alloy_fn(lights=0, colour=ENERGY):
     return fn
 
 
-def energy_glow(colour=ENERGY, hot=ENERGY_HOT, core=0.45):
-    """Glowing cell: hot core fading to the energy colour at the rim (base and glow layers)."""
+def energy_glow(colour=ENERGY, hot=ENERGY_HOT, core=0.2, alpha=255):
+    """Glowing cell: small hot core fading to saturated energy blue at the rim (base and glow layers)."""
     def fn(face, rgb, glow, rs):
         u, v = face.grid()
         d = np.maximum(abs(u - 0.5), abs(v - 0.5)) * 2.0
-        t = np.clip((d - core) / max(1e-3, 1.0 - core), 0, 1)[..., None]
+        t = np.clip((d - core) / max(1e-3, 1.0 - core), 0, 1)[..., None] ** 0.7
         col = np.array(hot, float) * (1 - t) + np.array(colour, float) * t
-        rgb[...] = col
+        rgb[...] = col * 0.45
         if glow is not None:
             glow[..., :3] = col
-            glow[..., 3] = 255
+            glow[..., 3] = alpha
     return fn
 
 
@@ -131,8 +138,10 @@ def mats():
     return {
         'skin': Mat(SKIN, noise=7, edge=0.14, fn=skin_fn),
         'skin_dark': Mat(SKIN_DARK, noise=6, edge=0.12, fn=skin_fn),
-        'gold': Mat(GOLD, noise=9, edge=0.24, top=1.18, bottom=0.7, fn=armour_fn()),
-        'gold_plain': Mat(GOLD, noise=7, edge=0.2, top=1.15, bottom=0.72, fn=armour_fn(seams=False, rivets=False, scratches=1)),
+        'bronze': Mat(BRONZE, noise=8, edge=0.26, top=1.16, bottom=0.7, fn=armour_fn(trim=GOLD)),
+        'bronze_plain': Mat(BRONZE, noise=6, edge=0.22, top=1.14, bottom=0.72, fn=armour_fn(seams=False, rivets=False, scratches=1)),
+        'bronze_dark': Mat(BRONZE_DARK, noise=6, edge=0.2, fn=armour_fn(seams=False, scratches=2)),
+        'gold': Mat(GOLD, noise=9, edge=0.24, top=1.18, bottom=0.7, fn=armour_fn(seams=False)),
         'gold_dark': Mat(GOLD_DARK, noise=7, edge=0.2, fn=armour_fn(seams=False)),
         'alloy': Mat(ALLOY, noise=5, edge=0.22, fn=alloy_fn()),
         'alloy_lit': Mat(ALLOY, noise=5, edge=0.22, fn=alloy_fn(lights=2)),
@@ -140,14 +149,20 @@ def mats():
         'hose': Mat(HOSE, noise=4, edge=0.1, fn=hose_fn),
         'bone': Mat(BONE, noise=10, edge=0.2),
         'eye': Mat('#121016', noise=0, edge=0, fn=eye_fn),
-        'energy': Mat('#9ccdff', noise=0, edge=0, fn=energy_glow()),
-        'energy_soft': Mat('#7fb6ff', noise=0, edge=0, fn=energy_glow(core=0.15)),
+        'energy': Mat('#4f8cff', noise=0, edge=0, fn=energy_glow()),
+        'energy_soft': Mat('#3f74e0', noise=0, edge=0, fn=energy_glow(core=0.0, alpha=200)),
     }
 
 
 # ---- forward kinematics ------------------------------------------------------------------------------------
+_BONES = {}
+
+
 def bones_of(geo):
-    return {b['name']: b for b in geo['minecraft:geometry'][0]['bones']}
+    key = id(geo)
+    if key not in _BONES:
+        _BONES[key] = {b['name']: b for b in geo['minecraft:geometry'][0]['bones']}
+    return _BONES[key]
 
 
 def sample_clip(clip, t):
@@ -176,72 +191,204 @@ def sample_clip(clip, t):
     return pose
 
 
-def matrices(geo, pose=None):
-    """Bone name -> 4x4 model matrix (Bedrock space) under a pose {bone: {'rot': [..], 'pos': [..]}}."""
-    pose = pose or {}
+def _rot_np(pivot, rot):
+    """numpy 4x4 of preview_geo.rotation (Bedrock pivot rotation, R = Rz(-rz) Ry(ry) Rx(-rx))."""
+    if not rot or not any(rot):
+        return np.eye(4)
+    px, py, pz = pivot
+    rx, ry, rz = (math.radians(v) for v in rot)
+    cx, sx = math.cos(-rx), math.sin(-rx)
+    cy, sy = math.cos(ry), math.sin(ry)
+    cz, sz = math.cos(-rz), math.sin(-rz)
+    Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
+    Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
+    Rz = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    R = Rz @ Ry @ Rx
+    m = np.eye(4)
+    m[:3, :3] = R
+    p = np.array([px, py, pz], float)
+    m[:3, 3] = p - R @ p
+    return m
+
+
+def _bone_m(geo, pose, name, cache):
+    if name in cache:
+        return cache[name]
     bones = bones_of(geo)
+    b = bones[name]
+    parent = b.get('parent')
+    m = _bone_m(geo, pose, parent, cache) if parent in bones else np.eye(4)
+    p = pose.get(name, {})
+    if 'pos' in p:
+        t = np.eye(4)
+        t[:3, 3] = p['pos']
+        m = m @ t
+    rest = b.get('rotation') or [0, 0, 0]
+    rot = [r + a for r, a in zip(rest, p.get('rot', [0, 0, 0]))]
+    m = m @ _rot_np(b.get('pivot', [0, 0, 0]), rot)
+    if 'scale' in p:
+        sxx, syy, szz = p['scale']
+        pv = np.array(b.get('pivot', [0, 0, 0]), float)
+        s4 = np.diag([sxx, syy, szz, 1.0])
+        t1, t2 = np.eye(4), np.eye(4)
+        t1[:3, 3] = pv
+        t2[:3, 3] = -pv
+        m = m @ t1 @ s4 @ t2
+    cache[name] = m
+    return m
+
+
+def bone_matrix(geo, pose, name):
+    """numpy 4x4 model matrix of one bone under a pose (only its ancestors are evaluated)."""
+    return _bone_m(geo, pose or {}, name, {})
+
+
+def matrices(geo, pose=None):
+    """Bone name -> 4x4 model matrix (nested lists, Bedrock space) under a pose {bone: {'rot': [..], 'pos': [..]}}."""
     cache = {}
-
-    def m_of(name):
-        if name in cache:
-            return cache[name]
-        b = bones[name]
-        parent = b.get('parent')
-        m = m_of(parent) if parent in bones else pg.IDENTITY
-        p = pose.get(name, {})
-        if 'pos' in p:
-            px, py, pz = p['pos']
-            m = pg.mat_mul(m, pg.translate(px, py, pz))
-        rest = b.get('rotation') or [0, 0, 0]
-        rot = [r + a for r, a in zip(rest, p.get('rot', [0, 0, 0]))]
-        m = pg.mat_mul(m, pg.rotation(b.get('pivot', [0, 0, 0]), rot))
-        if 'scale' in p:
-            sx, sy, sz = p['scale']
-            px, py, pz = b.get('pivot', [0, 0, 0])
-            m = pg.mat_mul(m, pg.translate(px, py, pz))
-            m = pg.mat_mul(m, [[sx, 0, 0, 0], [0, sy, 0, 0], [0, 0, sz, 0], [0, 0, 0, 1]])
-            m = pg.mat_mul(m, pg.translate(-px, -py, -pz))
-        cache[name] = m
-        return m
-
-    return {name: m_of(name) for name in bones}
+    out = {}
+    for name in bones_of(geo):
+        out[name] = _bone_m(geo, pose or {}, name, cache).tolist()
+    return out
 
 
 def point(geo, pose, bone, local):
-    return pg.apply(matrices(geo, pose)[bone], local)
+    m = bone_matrix(geo, pose, bone)
+    return tuple(m[:3, :3] @ np.array(local, float) + m[:3, 3])
+
+
+def pivot_of(geo, bone):
+    return list(bones_of(geo)[bone].get('pivot', [0, 0, 0]))
+
+
+def unit(v):
+    v = np.array(v, float)
+    n = np.linalg.norm(v)
+    return v / n if n > 1e-9 else v
+
+
+def euler_of(R):
+    """Bedrock (rx, ry, rz) whose pivot rotation has the 3x3 rotation part R (R = Rz(-rz) Ry(ry) Rx(-rx))."""
+    sb = max(-1.0, min(1.0, -R[2][0]))
+    b = math.asin(sb)
+    if abs(sb) < 0.99999:
+        a = math.atan2(R[2][1], R[2][2])
+        g = math.atan2(R[1][0], R[0][0])
+    else:
+        a = math.atan2(-R[1][2], R[1][1])
+        g = 0.0
+    return (round(-math.degrees(a), 2), round(math.degrees(b), 2), round(-math.degrees(g), 2))
+
+
+def frame(d, u):
+    """Rotation taking the rest axes -Y (barrel / along the limb) to d and -Z (top / thumb side) to u."""
+    d = unit(d)
+    u = np.array(u, float)
+    u = unit(u - np.dot(u, d) * d)
+    ey, ez = -d, -u
+    return np.column_stack([np.cross(ey, ez), ey, ez])
+
+
+def as_pose(p):
+    """Clip-style pose (tuples or dicts) -> FK pose dict with lists."""
+    out = {}
+    for k, v in p.items():
+        if isinstance(v, dict):
+            out[k] = {kk: list(vv) for kk, vv in v.items()}
+        else:
+            out[k] = {'rot': list(v)}
+    return out
+
+
+def solve_chain(geo, pose, shoulder, elbow, target, pole, end_bone=None, end_local=None, w_pole=0.45, iters=60,
+                elbow_range=(-155.0, -2.0)):
+    """Two-bone IK by damped least squares over (shoulder rx, ry, rz, elbow rx). The end point defaults to the
+    pivot of the elbow's child (the wrist); the elbow is pulled toward the analytic position on the side of
+    the pole vector so the swivel is natural. Returns (pose, end error px)."""
+    p = json.loads(json.dumps(pose))
+    for b in (shoulder, elbow):
+        p.setdefault(b, {}).setdefault('rot', [0.0, 0.0, 0.0])
+    bones = bones_of(geo)
+    if end_bone is None:
+        child = [n for n, b in bones.items() if b.get('parent') == elbow and n.startswith('hand')]
+        end_bone, end_local = elbow, pivot_of(geo, child[0])
+    T = np.array(target, float)
+    S = np.array(point(geo, p, shoulder, pivot_of(geo, shoulder)))
+    a = np.linalg.norm(np.array(pivot_of(geo, elbow)) - np.array(pivot_of(geo, shoulder)))
+    b = np.linalg.norm(np.array(end_local) - np.array(pivot_of(geo, elbow)))
+    d_vec = T - S
+    d = np.linalg.norm(d_vec)
+    dc = min(max(d, abs(a - b) + 1e-3), a + b - 1e-3)
+    u = d_vec / max(d, 1e-9)
+    cos_a = (a * a + dc * dc - b * b) / (2 * a * dc)
+    sin_a = math.sqrt(max(0.0, 1 - cos_a * cos_a))
+    pv = np.array(pole, float)
+    v = pv - np.dot(pv, u) * u
+    v = unit(v) if np.linalg.norm(v) > 1e-6 else unit(np.cross(u, [0, 0, 1]))
+    E = S + a * (cos_a * u + sin_a * v)
+    piv_e = pivot_of(geo, elbow)
+
+    def resid(q):
+        p[shoulder]['rot'] = list(q[:3])
+        p[elbow]['rot'][0] = q[3]
+        end = np.array(point(geo, p, end_bone, end_local))
+        el = np.array(point(geo, p, shoulder, piv_e))
+        return np.concatenate([end - T, w_pole * (el - E)])
+
+    q = np.array(p[shoulder]['rot'] + [p[elbow]['rot'][0]], float)
+    q[3] = min(max(q[3], elbow_range[0]), elbow_range[1])
+    r = resid(q)
+    cost = float(r @ r)
+    lam = 1e-2
+    for _ in range(iters):
+        J = np.zeros((len(r), 4))
+        for i in range(4):
+            dq = q.copy()
+            dq[i] += 0.25
+            J[:, i] = (resid(dq) - r) / 0.25
+        A = J.T @ J
+        g = J.T @ r
+        improved = False
+        for _ in range(8):
+            step = -np.linalg.solve(A + lam * np.diag(np.diag(A) + 1e-6), g)
+            nq = q + np.clip(step, -40, 40)
+            nq[3] = min(max(nq[3], elbow_range[0]), elbow_range[1])
+            nr = resid(nq)
+            nc = float(nr @ nr)
+            if nc < cost:
+                q, r, cost = nq, nr, nc
+                lam = max(lam / 3, 1e-6)
+                improved = True
+                break
+            lam *= 4
+        if not improved or cost < 1e-6:
+            break
+    resid(q)
+    for b in (shoulder, elbow):
+        p[b]['rot'] = [round(x, 2) for x in p[b]['rot']]
+    end = np.array(point(geo, p, end_bone, end_local))
+    return p, float(np.linalg.norm(end - T))
+
+
+def place_hand(geo, pose, side, grip_local, G, R_hand, pole):
+    """Puts hand_<side>'s grip_local point at G with world orientation R_hand: solves the arm for the
+    wrist, then the wrist rotation. Returns (pose, error px)."""
+    arm, fore, hand = 'arm_' + side, 'forearm_' + side, 'hand_' + side
+    piv = np.array(pivot_of(geo, hand), float)
+    W = np.array(G, float) - R_hand @ (np.array(grip_local, float) - piv)
+    p, _ = solve_chain(geo, pose, arm, fore, W, pole)
+    Rf = bone_matrix(geo, p, fore)[:3, :3]
+    p[hand] = dict(p.get(hand, {}))
+    p[hand]['rot'] = list(euler_of(Rf.T @ R_hand))
+    err = float(np.linalg.norm(np.array(point(geo, p, hand, grip_local)) - np.array(G, float)))
+    return p, err
 
 
 def reach(geo, pose, chain, end_bone, end_local, target, iters=160, step0=24.0):
-    """Coordinate search over (shoulder rx, ry, rz, elbow rx) so end_local of end_bone meets target.
-    Returns the pose dict entries for the chain (merged into a copy of pose)."""
+    """Back-compat wrapper: two-bone reach of end_local of end_bone onto target (elbow down/out)."""
     shoulder, elbow = chain
-    p = json.loads(json.dumps(pose))
-    p.setdefault(shoulder, {}).setdefault('rot', [0, 0, 0])
-    p.setdefault(elbow, {}).setdefault('rot', [0, 0, 0])
-    params = [(shoulder, 0), (shoulder, 1), (shoulder, 2), (elbow, 0)]
-
-    def err(q):
-        e = point(geo, q, end_bone, end_local)
-        return sum((a - b) ** 2 for a, b in zip(e, target))
-
-    best = err(p)
-    step = step0
-    for _ in range(iters):
-        improved = False
-        for bone, axis in params:
-            for d in (step, -step):
-                q = json.loads(json.dumps(p))
-                q[bone]['rot'][axis] += d
-                if bone == elbow and axis == 0 and not (-150 <= q[bone]['rot'][0] <= 5):
-                    continue
-                e = err(q)
-                if e < best:
-                    best, p, improved = e, q, True
-        if not improved:
-            step *= 0.6
-            if step < 0.05:
-                break
-    return p, math.sqrt(best)
+    side = -1 if shoulder.endswith('_r') else 1
+    return solve_chain(geo, pose, shoulder, elbow, target, (side, -1, 0.3), end_bone=end_bone, end_local=end_local)
 
 
 # ---- previews ----------------------------------------------------------------------------------------------
@@ -260,6 +407,22 @@ def posed_quads(geo, pose):
     return quads, tw, th
 
 
+def orbit(yaw, pitch=12.0):
+    """Camera orbiting the model: yaw 0 = front view, positive yaw swings toward the character's left side."""
+    a, b = math.radians(yaw), math.radians(pitch)
+    ca, sa, cb, sb = math.cos(a), math.sin(a), math.cos(b), math.sin(b)
+
+    def view(p):
+        x, y, z = p
+        xr = x * ca + z * sa
+        zr = -x * sa + z * ca
+        return (xr, y * cb + zr * sb, -zr * cb + y * sb)
+    return view
+
+
+VIEW_EXTRA = {'q_front': orbit(35), 'q_left': orbit(70, 8), 'q_back': orbit(215), 'q_right': orbit(-40), 'high': orbit(20, 40)}
+
+
 def preview(out, items, views=('front', 'side', 'back'), scale=6, bg=(40, 44, 52, 255)):
     """items: [(geo_dict, pose_dict, tex_path, glow_path)] drawn together; one panel per view."""
     loaded = []
@@ -270,7 +433,7 @@ def preview(out, items, views=('front', 'side', 'back'), scale=6, bg=(40, 44, 52
         loaded.append((quads, tw, th, t, gl))
     panels = []
     for name in views:
-        view = pg.VIEWS[name]
+        view = VIEW_EXTRA[name] if name in VIEW_EXTRA else pg.VIEWS[name]
         pts = [view(c) for quads, *_ in loaded for corners, _ in quads for c in corners] or [(0, 0, 0)]
         minx, maxx = min(p[0] for p in pts), max(p[0] for p in pts)
         miny, maxy = min(p[1] for p in pts), max(p[1] for p in pts)
