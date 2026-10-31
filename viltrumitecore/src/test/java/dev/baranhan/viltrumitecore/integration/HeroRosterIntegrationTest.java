@@ -175,8 +175,9 @@ class HeroRosterIntegrationTest {
       // 19 = the Thanos event's ThanosFxS2CPacket and ThanosStateS2CPacket appended after Captain's;
       // 18 was also used by feat/chitauri-invasion alone (portal + FX packets after Regulus) and is refused;
       // 17 was also used by the Iron Legion branch alone (its four packets after Regulus) and is refused;
-      // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"20\""), "the merged packet table needs its own protocol version");
+      // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets;
+      // 21 = Living City 2.0: same packet table, but the citizen entity syncs a new STATE byte (entity data layout).
+      assertTrue(source.contains("PROTOCOL_VERSION = \"21\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");

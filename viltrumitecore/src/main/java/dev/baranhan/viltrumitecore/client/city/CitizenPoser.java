@@ -149,13 +149,21 @@ public final class CitizenPoser {
          a.gw += (1.0F - a.gw) * approach(dt, 0.18F);
       }
 
+      apply(model, a.w, a.gesture, a.gw, s, elapsed, seed, e.look(), limbSwing, limbAmount, age);
+   }
+
+   /**
+    * The pose itself, from explicit weights (one per {@link CitizenState} ordinal): the live path
+    * passes the smoothed weights, tests and previews pass one-hot weights.
+    */
+   static void apply(CitizenModel model, float[] w, int gestureId, float gestureWeight, CitizenState s, float elapsed, int seed, CitizenLook look,
+      float limbSwing, float limbAmount, float age) {
       PoseRig rig = PoseRig.begin(model, model.crouching, 1.0F, null);
-      float[] w = a.w;
       float idle = w[CitizenState.IDLE.ordinal()] + w[CitizenState.WALKING.ordinal()];
       // breathing / weight shift while calm
       rig.add(model.body, 0.0F, 0.0F, Mth.sin(age * 0.031F + (seed & 15)) * 1.2F * idle);
-      if (a.gw > 0.01F) {
-         gesture(rig, model, a.gesture, a.gw * Math.min(1.0F, idle + 0.2F), age);
+      if (gestureWeight > 0.01F) {
+         gesture(rig, model, gestureId, gestureWeight * Math.min(1.0F, idle + 0.2F), age);
       }
 
       float walk = w[CitizenState.WALKING.ordinal()] + w[CitizenState.RECOVERING.ordinal()];
@@ -258,7 +266,7 @@ public final class CitizenPoser {
       }
 
       rig.finish();
-      ponytail(model, e.look(), limbSwing, limbAmount, age, flee);
+      ponytail(model, look, limbSwing, limbAmount, age, flee);
    }
 
    private static void gesture(PoseRig rig, CitizenModel model, int g, float wt, float age) {
