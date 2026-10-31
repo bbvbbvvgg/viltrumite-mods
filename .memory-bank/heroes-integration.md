@@ -19,6 +19,8 @@
   **1.59.0 / 17 = Captain on top of 1.58.0** (`integ/captain-america-main`); **1.60.0 / 18 = Captain/Avengers finishing
   rework** (new `CaptainFx.TEAM` joint-move FX type, so the protocol moves). **1.61.0 / 19 = Thanos event**
   (`feat/thanos-six-stones-event`, `.memory-bank/thanos.md`): ThanosFx + ThanosState after CaptainFx. Pick the next free pair (1.62.0 / 20).
+  **1.63.0 / 21 = Living City 2.0** (`feat/living-city-civilians-20261031`, `.memory-bank/atheria-city.md`): the citizen
+  entity gained a synced STATE byte (entity data layout changed), so the protocol moves.
 
 ## Where strings and sounds live
 - English and the 10 other base locales: `resources/assets/viltrumitecore/lang/<locale>.json` (Thor keys at

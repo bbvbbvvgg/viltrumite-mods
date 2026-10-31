@@ -84,7 +84,8 @@ final class CityPopulation {
          }
 
          int far = c.manual ? MANUAL_FAR : FAR;
-         if (best > (double)far * far) {
+         // console /city populate with nobody online: manual citizens wait for the first player
+         if (best > (double)far * far && !(c.manual && best == Double.MAX_VALUE)) {
             c.discard();
          }
       }

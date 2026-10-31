@@ -11,7 +11,32 @@
 - Citizens implement `entity/Bystander`. Heroes can hit them, but automatic target searches skip them:
   `HeroTargets.canAutoTarget` (= canHit && !Bystander) or `Bystander.is` in TargetLockManager, ThorTargets,
   Iron Man FlyBy, Sinclair ActScene, Homelander Focus. A new auto-target search must do the same.
-- Citizen skins are painted in code (`CitizenSkinPainter`, 16 outfits, even = wide arms, odd = slim). No texture files.
+- Citizen looks come from one synced int seed (`CitizenEntity.SKIN`): `CitizenLook.of(seed)` decodes sex, build,
+  height, skin/eye/hair colours, 14 hair styles, 10 tops, 6 bottoms, 5 shoes, hats, bags, eyewear, beard, scarf.
+  `CitizenTraits.of(seed)` uses other salts (bravery, curiosity, pace, reaction, sociability). No texture files:
+  `CitizenPainter` paints 128x64 (left half = vanilla skin layout, right half = extra-part UVs, constants in the
+  painter). Client cache `CitizenSkins`: LRU 320 textures keyed by `CitizenLook.textureKey()`, max 10 uploads per
+  tick (an over-budget citizen borrows a cached texture for a tick).
+
+## Living City 2.0 (core 1.63.0, branch feat/living-city-civilians-20261031)
+- `DangerMap` zones have a danger `radius` and a larger `notice` radius (`defaultNotice = min(112, 2r+8)`).
+  Radius 0 = curiosity only (people stop and look, never flee; never merged into a danger). `track(sourceId, ...)`
+  moves the zone of a moving source instead of leaving a trail. `blast()` / `blastAt()` = shock waves that knock
+  people down for `BLAST_WINDOW` ticks (explosions, heavy hits >= 20, combat noise >= 24, lightning, big bursts).
+- `ThreatScan` (every 10 ticks, 88/96 around each in-arena player; without players around the crowd itself, <= 6
+  anchors 64 apart) turns *kinds* of things into tracked zones: any `Enemy` (sized by `ThreatRules.hostile`;
+  giants >= 4 blocks are projected onto the street under them and seen up to 112), projectiles >= 0.45 b/t (zone
+  led a few ticks ahead), lightning, a `Mob` with a live target within 24 (legion suits, summons) and fast low
+  player flybys (curiosity only). New hostile mods need no city code as long as they implement `Enemy`.
+- `CitizenState` (synced byte) drives server behaviour and client poses: IDLE/WALKING/TALKING/ALERT/STARTLED/
+  FLEEING/COVER/FALLEN/GETTING_UP/RECOVERING. `CitizenBrain.think` runs every 5 ticks: contagion through
+  `CrowdIndex` (8-block buckets rebuilt every 5 ticks; also counts flee-target claims so crowds spread out),
+  1200-tick danger memory, flee paths scored away from the danger with cover raycasts.
+- Client poses: `client/city/CitizenPoser` on the shared `PoseRig` (one weight per state, exponential smoothing on
+  the age clock, `rig.finish()` once); knock-down tilt is in `CitizenRenderer.setupRotations` (seed bit 29 = back
+  or front). Model `CitizenModel` = PlayerModel + child cubes (hair, hats, skirt, bags, shoes, collar).
+- Config: `cityCrowdScale` (2.25, multiplies perPlayer and the profile cap) and `cityMaxCitizens` (480, hard cap);
+  `CityManager.ABSOLUTE_MAX` = 640. `/city status` prints a crowd line (calm/alarmed/fleeing/hiding/threats).
 
 ## Change journal and reset
 - Hook: `CityJournalMixin` on `LevelChunk.setBlockState` HEAD → `CityManager.onSetBlock`. It sees every block change
@@ -47,5 +72,8 @@
 ## Testing
 - `./gradlew runServer` does not forward stdin to the server: use RCON (`enable-rcon=true` in `run/server.properties`).
 - `./gradlew :viltrumitecore:runClient -Pquickplay=<save>` opens a save directly (dev property).
+- Smoke test without the licensed map: a flat world plus a synthetic `viltrumite_city/profile.json` and walk tiles
+  (generator in the PR description; flat surface feet y = -60, h2 = -120). A world with no players stops ticking
+  entities after 300 ticks: `/forceload add` the test area before `/city populate`.
 - The prepared world has a custom dimension height (datapack `atheria_height`): Minecraft shows the
   "experimental settings" warning once per world. This is expected.
