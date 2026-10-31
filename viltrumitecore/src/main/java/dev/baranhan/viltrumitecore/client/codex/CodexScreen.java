@@ -293,7 +293,11 @@ public class CodexScreen extends Screen {
             g.drawString(this.font, mark, right - mw, y + 5, argb(220 * a, locked ? LOCKED : FOUND), false);
             right -= mw + 3;
          }
-         String name = this.font.plainSubstrByWidth(this.name(item), right - (l.listX + 7));
+         String name = this.name(item);
+         int room = right - (l.listX + 7);
+         if (this.font.width(name) > room) {
+            name = this.font.plainSubstrByWidth(name, room - this.font.width("…")) + "…";
+         }
          int color = locked ? LOCKED : sel ? 0xFFE2A0 : hot ? 0xFFFFFF : 0xDAD6CC;
          if (a * 255 > 5) {
             g.drawString(this.font, name, l.listX + 7, y + 5, argb(255 * a, color), !locked);
