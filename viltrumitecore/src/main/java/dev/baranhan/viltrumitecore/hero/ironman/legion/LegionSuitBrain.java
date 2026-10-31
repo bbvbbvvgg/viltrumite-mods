@@ -490,7 +490,7 @@ public final class LegionSuitBrain {
       this.feelers();
       this.separation(squad);
       this.dodge(owner);
-      this.farFallback(owner);
+      this.farFallback(owner, squad);
       this.stuck(toGoal);
       if (this.camoTicks > 0 && this.suit.tickCount % SignatureRules.CAMO_MOB_CHECK == 0) {
          this.camoShake();
@@ -706,21 +706,45 @@ public final class LegionSuitBrain {
       }
    }
 
-   /** Tony is far away (elytra, pearls): a short re-entry behind him instead of an endless chase. */
-   private void farFallback(ServerPlayer owner) {
-      double d = this.suit.distanceTo(owner);
+   /**
+    * Tony is far away (elytra, pearls): a short re-entry behind him instead of
+    * an endless chase. Under HOLD the held point is the anchor, not Tony: the
+    * suits never leave the point because Tony walked off (Codex review #3).
+    */
+   private void farFallback(ServerPlayer owner, @Nullable LegionSquad squad) {
+      Vec3 hold = squad != null && squad.order == LegionOrder.HOLD ? squad.holdPoint : null;
+      Vec3 anchor = fallbackAnchor(squad == null ? LegionOrder.GUARD : squad.order, hold, owner.position());
+      double d = this.suit.position().distanceTo(anchor);
       this.farTicks = d > LegionRules.TELEPORT_DISTANCE ? this.farTicks + LegionRules.BRAIN_PERIOD : 0;
       if (this.farTicks < 40 || this.teleportCooldown > 0) {
          return;
       }
 
-      Vec3 back = LegionSteering.forward(owner.getYRot()).scale(-16.0).add(0.0, 12.0, 0.0);
-      Vec3 at = this.freeSpot(owner.position().add(back).add(this.side * 4.0, 0.0, 0.0));
+      Vec3 at;
+      if (hold != null) {
+         // Only into loaded ground: an unloaded held point waits until its chunk ticks again.
+         if (!this.suit.level().hasChunkAt(BlockPos.containing(hold))) {
+            this.farTicks = 0;
+            return;
+         }
+
+         at = this.freeSpot(hold.add(this.side * 4.0, 6.0, 0.0));
+         this.velocity = Vec3.ZERO;
+      } else {
+         Vec3 back = LegionSteering.forward(owner.getYRot()).scale(-16.0).add(0.0, 12.0, 0.0);
+         at = this.freeSpot(owner.position().add(back).add(this.side * 4.0, 0.0, 0.0));
+         this.velocity = owner.position().subtract(at).normalize().scale(this.profile.cruise());
+      }
+
       this.suit.moveTo(at.x, at.y, at.z, this.suit.getYRot(), this.suit.getXRot());
-      this.velocity = owner.position().subtract(at).normalize().scale(this.profile.cruise());
       this.teleportCooldown = LegionRules.TELEPORT_COOLDOWN;
       this.farTicks = 0;
       this.stuckStart = -1.0;
+   }
+
+   /** What the distance fallback measures from: the held point under HOLD, else Tony. */
+   static Vec3 fallbackAnchor(LegionOrder order, @Nullable Vec3 holdPoint, Vec3 ownerPos) {
+      return order == LegionOrder.HOLD && holdPoint != null ? holdPoint : ownerPos;
    }
 
    /** No progress for a while: climb, pass through for a moment and swap side. */
