@@ -13,7 +13,8 @@ Layering in LegionSuitRenderer (animation-system §5):
 
 Rotation keys are Bedrock degrees (the parser negates X and Y):
   arms/legs X < 0 swing forward/up, X > 0 back; head X < 0 looks up;
-  right limb Z > 0 / left limb Z < 0 move outward; Y > 0 turns to the model's left.
+  right limb Z > 0 / left limb Z < 0 move outward; Y > 0 turns toward the model's right
+  (the shell's right limbs sit at render +x after the geo X flip; front = -z).
 Easing on a key shapes the segment LEAVING that key (KeyframeStack).
 Every one-shot overlay starts on the hover pose and the ready clips end on the
 hover start pose, so the 2-tick fade-in / 5-tick fade-out never pops. Lengths
@@ -207,9 +208,9 @@ def dodge(side):
     tuck_arm = (10, 0, 4)
     fling_arm = (-20, 0, 58)
     if s > 0:  # dodge left: right arm flings, left arm tucks, legs swing to the right
-        p = pose(head=(0, 12, 0), ra=fling_arm, la=(tuck_arm[0], 0, -tuck_arm[2]), rl=(4, 0, 18), ll=(4, 0, 6))
+        p = pose(head=(0, -12, 0), ra=fling_arm, la=(tuck_arm[0], 0, -tuck_arm[2]), rl=(4, 0, 18), ll=(4, 0, 6))
     else:
-        p = pose(head=(0, -12, 0), ra=tuck_arm, la=(fling_arm[0], 0, -fling_arm[2]), rl=(4, 0, -6), ll=(4, 0, -18))
+        p = pose(head=(0, 12, 0), ra=tuck_arm, la=(fling_arm[0], 0, -fling_arm[2]), rl=(4, 0, -6), ll=(4, 0, -18))
     k = [
         (0.0, HOVER, OUTC),
         (0.12, p, IO),
