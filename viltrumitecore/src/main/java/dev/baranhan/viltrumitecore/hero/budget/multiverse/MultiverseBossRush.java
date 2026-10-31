@@ -131,6 +131,9 @@ public final class MultiverseBossRush {
 
       Entity entity = this.boss == null ? null : level.getEntity(this.boss);
       if (entity != null && entity.isAlive()) {
+         if (player.tickCount % 20 == 0 && MultiverseRules.beyondLeash(entity.position().distanceToSqr(player.getX(), entity.getY(), player.getZ()))) {
+            MultiverseFighter.pullBack(level, entity, player.position(), player.getYRot() * Math.PI / 180.0);
+         }
          return;
       }
 

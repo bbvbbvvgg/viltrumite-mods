@@ -185,6 +185,9 @@ public final class MultiverseCollapse {
 
       this.phaseTicks++;
       this.portalParticles(level);
+      if (this.phaseTicks % 20 == 0) {
+         this.leash(level);
+      }
       if (this.pause > 0) {
          if (--this.pause == 0) {
             this.enter(level, Phase.values()[this.phase.ordinal() + 1]);
@@ -206,6 +209,16 @@ public final class MultiverseCollapse {
             if (this.phaseTicks >= MultiverseRules.CLOSING_TICKS) {
                stop(level.getServer(), "multiverse.viltrumitecore.ended");
             }
+         }
+      }
+   }
+
+   /** Knockback must not carry a wave NPC (e.g. the Final Champion) hundreds of blocks out of the arena. */
+   private void leash(ServerLevel level) {
+      for (UUID id : this.wave) {
+         Entity entity = level.getEntity(id);
+         if (entity != null && entity.isAlive() && MultiverseRules.beyondLeash(entity.position().distanceToSqr(this.origin.x, entity.getY(), this.origin.z))) {
+            MultiverseFighter.pullBack(level, entity, this.origin, this.random.nextDouble() * Math.PI * 2.0);
          }
       }
    }
