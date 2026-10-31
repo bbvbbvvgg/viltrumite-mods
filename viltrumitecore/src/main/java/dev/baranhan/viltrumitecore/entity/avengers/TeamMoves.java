@@ -1,7 +1,6 @@
 package dev.baranhan.viltrumitecore.entity.avengers;
 
 import com.mojang.logging.LogUtils;
-import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainCombat;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainFx;
 import dev.baranhan.viltrumitecore.hero.captain.CaptainLines;
@@ -561,7 +560,7 @@ public final class TeamMoves {
                   }
                }
                if (this.stageT == TeamRules.BEAM_ARC_START + 6) {
-                  HeroSpeech.play(this.owner(), CaptainLines.TEAM_BEAM, HeroId.IRON_MAN, false);
+                  HeroSpeech.play(this.owner(), CaptainLines.TEAM_BEAM, AvengerKind.IRON_MAN.voice(), false);
                }
                if (this.stageT >= TeamRules.BEAM_CHARGE_TICKS) {
                   this.next(FIRE);
@@ -635,7 +634,7 @@ public final class TeamMoves {
       void begin() {
          this.claim(this.thor);
          this.spot = this.place();
-         HeroSpeech.play(TeamMoves.this.owner, CaptainLines.TEAM_SHIELD, HeroId.THOR, false);
+         HeroSpeech.play(TeamMoves.this.owner, CaptainLines.TEAM_SHIELD, AvengerKind.THOR.voice(), false);
          this.hint();
          CaptainSounds.play(this.thor, CaptainSounds.THUNDER, 0.6F, 1.5F);
       }
