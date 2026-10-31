@@ -65,16 +65,16 @@ public class ViltrumiteEntities {
          .sized(0.62F, 1.9F).clientTrackingRange(10).updateInterval(2).fireImmune().noSave().build("shadow_soldier")
    );
 
-   /** Living city pedestrian (city/citizen): never saved, the city population manager refills the streets. */
-   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>> CITIZEN = ENTITIES.register(
-      "citizen", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>of(dev.baranhan.viltrumitecore.city.citizen.CitizenEntity::new, MobCategory.MISC)
-         .sized(0.6F, 1.8F).clientTrackingRange(8).updateInterval(3).noSave().build("citizen")
-   );
-
    /** The Thanos city event's boss (worldevent/thanos): one at a time, never saved, no army. */
    public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity>> THANOS = ENTITIES.register(
       "thanos", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity>of(dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity::new, MobCategory.MISC)
          .sized(1.6F, 3.8F).clientTrackingRange(16).updateInterval(2).fireImmune().noSave().noSummon().build("thanos")
+   );
+
+   /** Living city pedestrian (city/citizen): never saved, the city population manager refills the streets. */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>> CITIZEN = ENTITIES.register(
+      "citizen", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.city.citizen.CitizenEntity>of(dev.baranhan.viltrumitecore.city.citizen.CitizenEntity::new, MobCategory.MISC)
+         .sized(0.6F, 1.8F).clientTrackingRange(8).updateInterval(3).noSave().build("citizen")
    );
 
    public static void register(IEventBus eventBus) {

@@ -49,8 +49,7 @@ public class CoreMessages {
    // replaces the first kit's packets). v16 (final integration of #85-#92): all of them together;
    // the wish packets first, then RegulusFxS2CPacket, both after the Jinwoo packet. A client built
    // from any single "15" branch is refused.
-   // v17 (Thanos city event): ThanosFxS2CPacket and ThanosStateS2CPacket appended after RegulusFxS2CPacket.
-   private static final String PROTOCOL_VERSION = "17";
+   private static final String PROTOCOL_VERSION = "16";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -393,12 +392,6 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.WishSceneS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.WishSceneS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.WishSceneS2CPacket::handle).add();
-      // Regulus Reborn (#89): one FX packet for every Regulus event; appended after the wish packets.
-      net.messageBuilder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-         .decoder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::new)
-         .encoder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::toBytes)
-         .consumerMainThread(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::handle)
-         .add();
       // Thanos city event (v17): his effects and the event state (HUD, music, scenes); appended last.
       net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
          .decoder(dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket::new)
@@ -409,6 +402,12 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket::handle)
+         .add();
+      // Regulus Reborn (#89): one FX packet for every Regulus event; appended after the wish packets.
+      net.messageBuilder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket::handle)
          .add();
    }
 
