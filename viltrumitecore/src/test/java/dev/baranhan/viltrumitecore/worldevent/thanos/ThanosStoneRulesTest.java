@@ -100,6 +100,18 @@ class ThanosStoneRulesTest {
       }
 
       @Test
+      void realityBendsTheShapeOfAttacks() {
+         assertEquals(1.0, Reality.shapeScale(1.234, Reality.SHAPE_CIRCLE));
+         assertEquals(1.0, Reality.shapeScale(0.0, Reality.SHAPE_STAR), 1.0E-9, "a point of the star");
+         assertEquals(0.6, Reality.shapeScale(Math.PI / 5.0, Reality.SHAPE_STAR), 1.0E-9, "between two points");
+         assertEquals(0.55, Reality.shapeScale(Math.PI / 4.0, Reality.SHAPE_CROSS), 1.0E-9);
+         for (double a = 0; a < 7; a += 0.05) {
+            double s = Reality.shapeScale(a, Reality.SHAPE_STAR);
+            assertTrue(s >= 0.55 && s <= 1.0);
+         }
+      }
+
+      @Test
       void realMirageIsStableAndInRange() {
          for (long seed = -50; seed < 50; seed++) {
             int i = Reality.realIndex(seed, Reality.MIRAGES + 1);

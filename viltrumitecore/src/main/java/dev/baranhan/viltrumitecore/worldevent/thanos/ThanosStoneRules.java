@@ -143,6 +143,20 @@ public final class ThanosStoneRules {
          return scale > 0.05F && dy > -1.5 && dy < 3.0 && dx * dx + dz * dz <= r * r;
       }
 
+      /** Shapes the Reality stone bends an attack into: 0 circle, 1 five-pointed star, 2 cross. */
+      public static final int SHAPE_CIRCLE = 0;
+      public static final int SHAPE_STAR = 1;
+      public static final int SHAPE_CROSS = 2;
+
+      /** Radius multiplier (0.55..1) of a shaped ring in the direction {@code angle} (radians). */
+      public static double shapeScale(double angle, int shape) {
+         return switch (shape) {
+            case SHAPE_STAR -> 0.6 + 0.4 * (0.5 + 0.5 * Math.cos(5.0 * angle));
+            case SHAPE_CROSS -> 0.55 + 0.45 * Math.pow(Math.abs(Math.cos(2.0 * angle)), 3.0);
+            default -> 1.0;
+         };
+      }
+
       /** Index of the real Thanos among the mirage positions (stable for the seed). */
       public static int realIndex(long seed, int count) {
          return (int)Math.floorMod(seed * 0x9E3779B97F4A7C15L >>> 33, (long)Math.max(1, count));
