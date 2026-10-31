@@ -89,4 +89,19 @@ class ThanosClockTest {
       assertTrue(clock.expired());
       assertEquals(ThanosOutcome.VICTORY, ThanosOutcome.resolve(killedThisTick, clock.expired()));
    }
+
+
+   @Test
+   void anotherSystemsStopHoldsTheClock() {
+      assertFalse(ThanosClock.holds(false, false));
+      assertTrue(ThanosClock.holds(true, false), "a world pause (Reinhard's stop, a hero scene)");
+      assertTrue(ThanosClock.holds(false, true), "a time stop holding Thanos (DIO)");
+      assertTrue(ThanosClock.holds(true, true));
+      ThanosClock clock = new ThanosClock(100);
+      for (int i = 0; i < 30; i++) {
+         clock.advance(ThanosClock.holds(false, i % 3 == 0));
+      }
+
+      assertEquals(80, clock.remaining(), "only the ticks nobody stopped count");
+   }
 }

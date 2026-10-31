@@ -110,9 +110,20 @@ public final class ThanosSceneShots {
    }
 
    /** Ticks at which the plan cuts (no interpolation across them). */
-   public static final float[] NEAR_CUTS = {ThanosSceneTimeline.RAISE_END, ThanosSceneTimeline.STONES_END, ThanosSceneTimeline.FACE_END, SNAP_CUT,
-      ThanosSceneTimeline.VOID_END, 505, 605, 705, 805, 905, ThanosSceneTimeline.SPEECH_END};
-   public static final float[] FAR_CUTS = {ThanosSceneTimeline.VOID_END, 505, 605, 705, 805, 905, ThanosSceneTimeline.SPEECH_END};
+   public static final float[] NEAR_CUTS = cuts(ThanosSceneTimeline.RAISE_END, ThanosSceneTimeline.STONES_END, ThanosSceneTimeline.FACE_END, SNAP_CUT,
+      ThanosSceneTimeline.VOID_END);
+   public static final float[] FAR_CUTS = cuts(ThanosSceneTimeline.VOID_END);
+
+   /** The given cuts, then the first line (Od Lagna has formed), every line change and the end of the speech. */
+   private static float[] cuts(float... before) {
+      float[] out = new float[before.length + ThanosSceneTimeline.LINES + 1];
+      System.arraycopy(before, 0, out, 0, before.length);
+      for (int i = 0; i <= ThanosSceneTimeline.LINES; i++) {
+         out[before.length + i] = ThanosSceneTimeline.SPEECH_START + i * ThanosSceneTimeline.LINE_TICKS;
+      }
+
+      return out;
+   }
 
    /** Is there a cut in (t0, t1]? */
    public static boolean cutBetween(boolean near, float t0, float t1) {
