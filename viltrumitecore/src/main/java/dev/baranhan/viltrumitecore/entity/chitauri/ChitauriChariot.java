@@ -338,7 +338,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
             }
          }
          case ATTACK -> {
-            if (this.target == null || !ChitauriMob.validTarget(this.target) || this.modeTicks > 700 || this.target.distanceToSqr(this) > 90.0 * 90.0) {
+            if (this.target == null || !ChitauriMob.pickTarget(this.target) || this.modeTicks > 700 || this.target.distanceToSqr(this) > 90.0 * 90.0) {
                this.target = null;
                this.setMode(Mode.PATROL);
                goal = pos.add(this.getDeltaMovement().scale(10.0));
@@ -558,7 +558,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
    private LivingEntity findTarget(ServerLevel level, double range) {
       LivingEntity best = null;
       double bestScore = Double.MAX_VALUE;
-      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range), ChitauriMob::validTarget)) {
+      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range), ChitauriMob::pickTarget)) {
          double d = e.distanceToSqr(this);
          if (e instanceof Player) {
             d *= 0.5; // heroes first

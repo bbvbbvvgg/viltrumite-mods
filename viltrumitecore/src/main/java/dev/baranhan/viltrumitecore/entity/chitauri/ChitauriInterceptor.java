@@ -294,7 +294,7 @@ public class ChitauriInterceptor extends Mob implements ChitauriMob, net.minecra
    private LivingEntity pickTarget(ServerLevel level) {
       LivingEntity best = null;
       double bestScore = Double.MAX_VALUE;
-      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(64.0, 40.0, 64.0), ChitauriMob::validTarget)) {
+      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(64.0, 40.0, 64.0), ChitauriMob::pickTarget)) {
          double d = e.distanceToSqr(this);
          if (e instanceof Player p) {
             d *= !p.onGround() && heightAbove(level, p) > 3.0 ? 0.15 : 0.6; // flying heroes first
