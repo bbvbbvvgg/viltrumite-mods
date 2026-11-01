@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.entity.ultron;
 import dev.baranhan.viltrumitecore.worldevent.ultron.UltronSounds;
 import dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket;
 import dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronNet;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -92,9 +93,25 @@ public class UltronBolt extends Projectile {
       ProjectileUtil.rotateTowardsMovement(this, 1.0F);
    }
 
+   /**
+    * A shot a hero turned back (Reflect makes him its owner): it now hits Ultron's machines and spares the
+    * hero's side. An Ultron shot whose shooter is gone stays Ultron's.
+    */
+   public static boolean turned(@Nullable Entity owner) {
+      return owner != null && !UltronMob.side(owner);
+   }
+
+   /** Who a shot of this owner may hit: Ultron's enemies, or — turned — Ultron's own (never the captured golems / suits). */
+   static boolean hits(@Nullable Entity owner, Entity entity) {
+      if (entity instanceof UltronBolt || entity instanceof UltronMissile) {
+         return false;
+      }
+      return turned(owner) ? entity != owner && UltronMob.is(entity) : !UltronMob.side(entity);
+   }
+
    @Override
    protected boolean canHitEntity(Entity entity) {
-      return super.canHitEntity(entity) && !UltronMob.side(entity) && !(entity instanceof UltronBolt) && !(entity instanceof UltronMissile);
+      return super.canHitEntity(entity) && hits(this.getOwner(), entity);
    }
 
    @Override
@@ -119,11 +136,14 @@ public class UltronBolt extends Projectile {
    private void impact(ServerLevel level, Vec3 at) {
       Vec3 d = this.getDeltaMovement().normalize();
       int style = this.style();
-      if (style == STYLE_PALM && this.getOwner() instanceof UltronUnit unit) {
-         // the palm blast bursts: a small splash around the hit
-         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(2.5), UltronMob::validTarget)) {
+      Entity owner = this.getOwner();
+      if (style == STYLE_PALM && owner instanceof LivingEntity shooter) {
+         // the palm blast bursts: a small splash around the hit (turned back by a hero, it splashes Ultron's own)
+         boolean turned = turned(owner);
+         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(2.5),
+            e -> turned ? e != owner && e.isAlive() && UltronMob.is(e) : UltronMob.validTarget(e))) {
             if (e.position().distanceToSqr(at) < 2.5 * 2.5) {
-               e.hurt(this.damageSources().mobProjectile(this, unit), this.damage * 0.35F);
+               e.hurt(this.damageSources().mobProjectile(this, shooter), this.damage * 0.35F);
             }
          }
       }

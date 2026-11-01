@@ -213,4 +213,22 @@ public final class UltronRules {
       }
       return !coreStanding || phase.atLeast(UltronPhase.MACHINE_WAR) && standingNodes <= FINALE_NODE_FLOOR - 1;
    }
+
+   /**
+    * A machine body that left the world goes back to the reserve (the foundries redeploy it without spending
+    * the budget) when it was unloaded whole — not destroyed, not empty — while the event still runs.
+    * (A removed body never counts as alive, so the health decides, not {@code isAlive}.)
+    */
+   public static boolean backToReserve(boolean destroyed, int outcome, float health) {
+      return !destroyed && outcome == 0 && health > 0.0F;
+   }
+
+   /** The reserve as saved: machines that are not bodies yet (builds in the foundries, machines waiting at the pads) come back from it. */
+   public static int[] savedReserve(int[] reserve, int[] bodies, int[] pending) {
+      int[] out = reserve.clone();
+      for (int i = 0; i < out.length; i++) {
+         out[i] += (i < bodies.length ? bodies[i] : 0) + (i < pending.length ? pending[i] : 0);
+      }
+      return out;
+   }
 }
