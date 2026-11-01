@@ -50,10 +50,5 @@
   "subtitles.viltrumitecore.red_hulk.heat_hum": "Red-hot body hums",
   "subtitles.viltrumitecore.red_hulk.refuse": "Red Hulk: not now",
   "subtitles.viltrumitecore.red_hulk.enter": "Red Hulk arrives",
-  "subtitles.viltrumitecore.red_hulk.hurt": "Red Hulk growls in pain",
-  "codex.viltrumitecore.red_hulk.name": "Red Hulk",
-  "codex.viltrumitecore.red_hulk.role": "General Thaddeus \"Thunderbolt\" Ross, a living furnace",
-  "codex.viltrumitecore.red_hulk.lore": "An old soldier who got the power he hunted all his life. His body does not turn green with anger, it heats up: the longer the fight, the hotter his skin, the brighter his eyes and the harder his blows.",
-  "codex.viltrumitecore.red_hulk.gameplay": "Heat gauge 0-1000: blows, combos, abilities and part of the damage taken heat the body; heat empowers his blows (up to +30 %), from 500 a heat aura burns around him. At 1000 he overheats: a steam vent, then 6 s slowed, without the heat abilities (Blast, Fury, ultimate) and taking +15 % damage. A five-hit LMB combo ending in a double-fist hammer, grab and throw on RMB, Thermal Clap, Seismic Slam, Destruction Leap, Heat Blast, Thermal Fury and the Critical Overheat ultimate. Fire and lava hurt him far less: most of that damage turns into heat.",
-  "codex.viltrumitecore.red_hulk.relations": "He hunted the Hulk all his life until he became one. Captain America remembers him as a general."
+  "subtitles.viltrumitecore.red_hulk.hurt": "Red Hulk growls in pain"
 }

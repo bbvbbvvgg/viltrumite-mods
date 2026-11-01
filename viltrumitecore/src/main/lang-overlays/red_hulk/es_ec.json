@@ -50,10 +50,5 @@
   "subtitles.viltrumitecore.red_hulk.heat_hum": "Zumba el cuerpo al rojo",
   "subtitles.viltrumitecore.red_hulk.refuse": "Hulk Rojo: ahora no",
   "subtitles.viltrumitecore.red_hulk.enter": "Llega Hulk Rojo",
-  "subtitles.viltrumitecore.red_hulk.hurt": "Hulk Rojo gruñe de dolor",
-  "codex.viltrumitecore.red_hulk.name": "Hulk Rojo",
-  "codex.viltrumitecore.red_hulk.role": "General Thaddeus «Thunderbolt» Ross, un horno viviente",
-  "codex.viltrumitecore.red_hulk.lore": "Un viejo soldado que obtuvo el poder que persiguió toda su vida. Su cuerpo no se vuelve verde de ira: se calienta. Cuanto más dura el combate, más arde su piel, más brillan sus ojos y más fuerte golpea.",
-  "codex.viltrumitecore.red_hulk.gameplay": "Barra de calor 0-1000: golpes, combos, habilidades y parte del daño recibido calientan el cuerpo; el calor potencia sus golpes (hasta +30 %) y desde 500 arde un aura de calor. A 1000 se sobrecalienta: expulsa vapor y pasa 6 s ralentizado, sin habilidades de calor (Descarga, Furia, definitiva) y recibiendo +15 % de daño. Combo de cinco golpes con clic izquierdo que acaba en martillo, agarre y lanzamiento con clic derecho, Palmada térmica, Golpe sísmico, Salto destructor, Descarga de calor, Furia térmica y la definitiva Sobrecalentamiento crítico. El fuego y la lava le hacen mucho menos daño: la mayor parte se convierte en calor.",
-  "codex.viltrumitecore.red_hulk.relations": "Persiguió a Hulk toda su vida hasta convertirse en uno. El Capitán América aún lo recuerda como general."
+  "subtitles.viltrumitecore.red_hulk.hurt": "Hulk Rojo gruñe de dolor"
 }

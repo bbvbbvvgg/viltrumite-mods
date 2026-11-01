@@ -50,10 +50,5 @@
   "subtitles.viltrumitecore.red_hulk.heat_hum": "赤热身体嗡鸣",
   "subtitles.viltrumitecore.red_hulk.refuse": "红浩克：现在不行",
   "subtitles.viltrumitecore.red_hulk.enter": "红浩克登场",
-  "subtitles.viltrumitecore.red_hulk.hurt": "红浩克痛苦低吼",
-  "codex.viltrumitecore.red_hulk.name": "红浩克",
-  "codex.viltrumitecore.red_hulk.role": "“雷霆”萨迪厄斯·罗斯将军，一座活着的熔炉",
-  "codex.viltrumitecore.red_hulk.lore": "一位老兵，终于得到了他追逐一生的力量。他的身体不会因愤怒变绿，而是不断升温：战斗越久，皮肤越烫，双眼越亮，拳头越重。",
-  "codex.viltrumitecore.red_hulk.gameplay": "热量条 0–1000：攻击、连击、技能以及部分所受伤害都会让身体升温；热量强化他的攻击（最多 +30%），500 起身边燃起热能光环。达到 1000 时过热：喷出蒸汽，随后 6 秒减速、无法使用热能技能（冲击、狂怒、终极技），并承受 +15% 伤害。左键五连击以双拳锤击收尾，右键抓取并投掷，另有热能拍击、震地猛击、毁灭跳跃、热能冲击、热能狂怒和终极技能“临界过热”。火焰与岩浆对他的伤害大减——大部分会转化为热量。",
-  "codex.viltrumitecore.red_hulk.relations": "他追捕浩克一辈子，最后自己也变成了浩克。美国队长仍记得他当将军时的样子。"
+  "subtitles.viltrumitecore.red_hulk.hurt": "红浩克痛苦低吼"
 }

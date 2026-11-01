@@ -50,10 +50,5 @@
   "subtitles.viltrumitecore.red_hulk.heat_hum": "Kızgın beden uğuldar",
   "subtitles.viltrumitecore.red_hulk.refuse": "Kızıl Hulk: şimdi değil",
   "subtitles.viltrumitecore.red_hulk.enter": "Kızıl Hulk gelir",
-  "subtitles.viltrumitecore.red_hulk.hurt": "Kızıl Hulk acıyla hırlar",
-  "codex.viltrumitecore.red_hulk.name": "Kızıl Hulk",
-  "codex.viltrumitecore.red_hulk.role": "General Thaddeus \"Thunderbolt\" Ross, yaşayan bir fırın",
-  "codex.viltrumitecore.red_hulk.lore": "Ömrü boyunca peşinden koştuğu güce sonunda kavuşan yaşlı bir asker. Bedeni öfkeyle yeşermez, kızarır: savaş uzadıkça derisi ısınır, gözleri parlar, darbeleri ağırlaşır.",
-  "codex.viltrumitecore.red_hulk.gameplay": "Isı göstergesi 0-1000: darbeler, kombolar, yetenekler ve alınan hasarın bir kısmı bedeni ısıtır; ısı darbelerini güçlendirir (+%30'a kadar), 500'den itibaren etrafında ısı aurası yanar. 1000'de aşırı ısınır: buhar boşalır, ardından 6 sn yavaşlar, ısı yeteneklerini (Patlama, Öfke, nihai) kullanamaz ve %15 fazla hasar alır. Sol tıkla çekiçle biten beş vuruşluk kombo, sağ tıkla kavrayıp fırlatma, Termal Alkış, Sismik Darbe, Yıkım Sıçrayışı, Isı Patlaması, Termal Öfke ve nihai Kritik Aşırı Isınma. Ateş ve lav ona çok daha az hasar verir: çoğu ısıya dönüşür.",
-  "codex.viltrumitecore.red_hulk.relations": "Ömrü boyunca Hulk'u avladı, sonunda kendisi de öyle oldu. Kaptan Amerika onu hâlâ bir general olarak hatırlar."
+  "subtitles.viltrumitecore.red_hulk.hurt": "Kızıl Hulk acıyla hırlar"
 }

@@ -50,10 +50,5 @@
   "subtitles.viltrumitecore.red_hulk.heat_hum": "Glühender Körper brummt",
   "subtitles.viltrumitecore.red_hulk.refuse": "Roter Hulk: nicht jetzt",
   "subtitles.viltrumitecore.red_hulk.enter": "Roter Hulk erscheint",
-  "subtitles.viltrumitecore.red_hulk.hurt": "Roter Hulk knurrt vor Schmerz",
-  "codex.viltrumitecore.red_hulk.name": "Roter Hulk",
-  "codex.viltrumitecore.red_hulk.role": "General Thaddeus „Thunderbolt“ Ross, ein lebender Hochofen",
-  "codex.viltrumitecore.red_hulk.lore": "Ein alter Soldat, der die Macht bekam, die er sein Leben lang jagte. Sein Körper wird vor Wut nicht grün, er glüht: je länger der Kampf, desto heißer die Haut, heller die Augen und härter die Schläge.",
-  "codex.viltrumitecore.red_hulk.gameplay": "Hitzeleiste 0-1000: Schläge, Kombos, Fähigkeiten und ein Teil des erlittenen Schadens heizen den Körper; Hitze verstärkt seine Schläge (bis +30 %), ab 500 brennt eine Hitzeaura. Bei 1000 überhitzt er: Dampfstoß, dann 6 s verlangsamt, ohne Hitzefähigkeiten (Strahl, Wut, Ultimative) und mit +15 % erlittenem Schaden. Fünfteilige LMT-Kombo mit Doppelfaust-Hammer, Griff und Wurf auf RMT, Thermoklatscher, Seismischer Schlag, Zerstörungssprung, Hitzestrahl, Thermowut und die ultimative Kritische Überhitzung. Feuer und Lava schaden ihm weniger: der Großteil wird zu Hitze.",
-  "codex.viltrumitecore.red_hulk.relations": "Er jagte den Hulk sein Leben lang, bis er selbst einer wurde. Captain America kennt ihn noch als General."
+  "subtitles.viltrumitecore.red_hulk.hurt": "Roter Hulk knurrt vor Schmerz"
 }
