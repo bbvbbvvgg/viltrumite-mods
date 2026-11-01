@@ -99,4 +99,33 @@ class UltronRulesTest {
       assertTrue(UltronRules.outside(0.0, 0.0, ring, 830.0, 0.0)); // the knocked-away player of the QA run
       assertTrue(UltronRules.outside(0.0, 0.0, ring, ring, ring));
    }
+
+   @Test
+   void machinesUnloadedWholeGoBackToTheReserve() {
+      assertTrue(UltronRules.backToReserve(false, 0, 12.0F));  // unloaded with its chunk (a removed body is never "alive")
+      assertFalse(UltronRules.backToReserve(true, 0, 12.0F));  // destroyed or discarded
+      assertFalse(UltronRules.backToReserve(false, 0, 0.0F));  // emptied: it died
+      assertFalse(UltronRules.backToReserve(false, 1, 12.0F)); // the event is over
+      assertFalse(UltronRules.backToReserve(false, 2, 12.0F));
+   }
+
+   @Test
+   void theSavedReserveKeepsBuildsAndQueuedMachines() {
+      int n = UltronUnitKind.values().length;
+      int[] reserve = new int[n];
+      int[] bodies = new int[n];
+      int[] pending = new int[n];
+      reserve[UltronUnitKind.DRONE.ordinal()] = 1;
+      bodies[UltronUnitKind.DRONE.ordinal()] = 2;
+      bodies[UltronUnitKind.SENTRY.ordinal()] = 1;
+      pending[UltronUnitKind.SENTRY.ordinal()] = 1;  // a build in a foundry
+      pending[UltronUnitKind.BRUTE.ordinal()] = 1;   // waiting at a pad
+      int[] saved = UltronRules.savedReserve(reserve, bodies, pending);
+      assertEquals(3, saved[UltronUnitKind.DRONE.ordinal()]);
+      assertEquals(2, saved[UltronUnitKind.SENTRY.ordinal()]);
+      assertEquals(1, saved[UltronUnitKind.BRUTE.ordinal()]);
+      assertEquals(0, saved[UltronUnitKind.INTERCEPTOR.ordinal()]);
+      assertEquals(1, reserve[UltronUnitKind.DRONE.ordinal()]); // the live reserve stays as it is
+      assertEquals(1 + 3 + 2, java.util.Arrays.stream(saved).sum());
+   }
 }
