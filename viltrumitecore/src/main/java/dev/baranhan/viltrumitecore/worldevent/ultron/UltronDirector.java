@@ -70,6 +70,8 @@ final class UltronDirector {
    static final int STYLE_TURN = 120 * UltronRules.TPS;
    /** Machines without a target this far out (area radius times) are recalled. */
    static final double LEASH = 1.7;
+   /** While his machines fight, a taunt is tried this often (seconds). */
+   static final int TAUNT_EVERY_S = 40;
    static final int BOSS_MISSING_TICKS = 5 * UltronRules.TPS;
    /** Orders from an alert or a mark hold this long against the role coordinator. */
    static final int ALERT_HOLD = 6 * UltronRules.TPS;
@@ -1301,7 +1303,7 @@ final class UltronDirector {
          }
          return;
       }
-      if (s.phase.atLeast(UltronPhase.MACHINE_WAR) && s.phaseTick % (25 * UltronRules.TPS) == 0) {
+      if (s.phase.atLeast(UltronPhase.MACHINE_WAR) && s.phaseTick % (TAUNT_EVERY_S * UltronRules.TPS) == 0) {
          boolean fighting = false;
          for (UltronUnit u : s.units.values()) {
             if (u.isAlive() && u.flag(UltronUnit.FLAG_COMBAT)) {
@@ -1309,8 +1311,9 @@ final class UltronDirector {
                break;
             }
          }
-         if (fighting) {
-            UltronVoice.say(level, s, "taunt_" + (1 + Math.floorMod(s.clock / 500, 3)), false);
+         String taunt = fighting ? UltronVoice.nextTaunt(s) : null;
+         if (taunt != null) {
+            UltronVoice.say(level, s, taunt, false);
          }
       }
    }
