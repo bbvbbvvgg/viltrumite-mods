@@ -53,6 +53,9 @@ public final class PowerTriggers {
       } else if (by != null && isChitauri(by)) {
          g.damage(at.x, at.y, at.z, (float)PowerRules.explosionRadius(blocks), (float)Math.max(0.3, PowerRules.explosionSeverity(blocks)), "chitauri",
             "chitauri:" + net.minecraft.world.entity.EntityType.getKey(by.getType()).getPath());
+      } else if (by != null && by.getClass().getName().startsWith("dev.baranhan.viltrumitecore.entity.ultron.") && blocks > 0) {
+         g.damage(at.x, at.y, at.z, (float)PowerRules.explosionRadius(blocks), (float)PowerRules.explosionSeverity(blocks), "ultron",
+            "ultron:" + net.minecraft.world.entity.EntityType.getKey(by.getType()).getPath());
       } else if (blocks > 0) {
          g.damage(at.x, at.y, at.z, (float)PowerRules.explosionRadius(blocks), (float)PowerRules.explosionSeverity(blocks), "explosion", "explosion");
       }

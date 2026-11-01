@@ -63,6 +63,9 @@ public final class CollapseEvents {
       if (e != null && e.getClass().getName().startsWith("dev.baranhan.viltrumitecore.entity.chitauri.")) {
          return CollapseCause.CHITAURI;
       }
+      if (e != null && e.getClass().getName().startsWith("dev.baranhan.viltrumitecore.entity.ultron.")) {
+         return CollapseCause.ULTRON;
+      }
       return CollapseCause.EXPLOSION;
    }
 

@@ -114,6 +114,10 @@ public final class AftermathEvents {
          if (e instanceof ChitauriMob) {
             return AftermathCause.CHITAURI;
          }
+
+         if (e != null && e.getClass().getName().startsWith("dev.baranhan.viltrumitecore.entity.ultron.")) {
+            return AftermathCause.ULTRON; // checked before the "our own entity = hero" fallback below
+         }
       }
 
       if (owner instanceof Player || direct instanceof Player) {

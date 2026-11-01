@@ -408,6 +408,9 @@ public final class PowerGrid {
       if (sev <= 0.0 || this.paused()) {
          return;
       }
+      if (dev.baranhan.viltrumitecore.city.links.CityDisasterLinks.collapseOwns(this.level, x, y, z)) {
+         return; // a running collapse reports its falling blocks once, at its impact
+      }
       int ix = PowerRules.cellIndex((int)Math.floor(x), this.originX), iz = PowerRules.cellIndex((int)Math.floor(z), this.originZ);
       long key = PowerRules.key(ix, iz);
       long now = this.now();

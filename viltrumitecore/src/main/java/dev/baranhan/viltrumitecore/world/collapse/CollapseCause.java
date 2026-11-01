@@ -21,6 +21,8 @@ public record CollapseCause(String id, float weight) {
    public static final CollapseCause EXPLOSION = new CollapseCause("explosion", 0.35F);
    /** Operator QA command ({@code /collapse strike}). */
    public static final CollapseCause COMMAND = new CollapseCause("command", 1.0F);
+   /** Ultron's machines (integration of #124-#127): full weight, like a meteor or the Leviathan. */
+   public static final CollapseCause ULTRON = new CollapseCause("ultron", 1.0F);
    /** Damage done by a collapse itself (rubble, ground impact): never feeds another collapse. */
    public static final CollapseCause SECONDARY = new CollapseCause("secondary", 0.0F);
 
@@ -41,7 +43,7 @@ public record CollapseCause(String id, float weight) {
 
    /** Known causes by id ({@code /collapse strike ... <cause>}); unknown ids give a full-weight custom cause. */
    public static CollapseCause byId(String id) {
-      for (CollapseCause c : new CollapseCause[]{LEVIATHAN, METEOR, CHITAURI, HERO, EXPLOSION, COMMAND, SECONDARY}) {
+      for (CollapseCause c : new CollapseCause[]{LEVIATHAN, METEOR, CHITAURI, HERO, EXPLOSION, COMMAND, ULTRON, SECONDARY}) {
          if (c.id.equals(id)) {
             return c;
          }

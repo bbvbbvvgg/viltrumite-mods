@@ -131,6 +131,11 @@ public final class CityAftermath {
       refreshFlags(level, data);
    }
 
+   /** Source ids of the outages other systems reported (a copy, safe to change outages while iterating). */
+   public static List<String> outageSources(ServerLevel level) {
+      return new java.util.ArrayList<>(AftermathData.get(level).outages.keySet());
+   }
+
    /** True when a point lies in a region another system reported without power. */
    public static boolean unpowered(ServerLevel level, double x, double y, double z) {
       for (AftermathData.Outage o : AftermathData.get(level).outages.values()) {

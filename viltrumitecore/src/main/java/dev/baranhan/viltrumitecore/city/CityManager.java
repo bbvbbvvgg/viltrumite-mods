@@ -378,6 +378,8 @@ public final class CityManager {
       if (this.resumeIn > 0 && --this.resumeIn == 0) {
          this.broadcastOps(Component.translatable("viltrumitecore.city.reset.resumed", this.journal.size()).withStyle(ChatFormatting.YELLOW));
          dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCityReset(this.level);
+      // the grid was cleared above: its outages in the aftermath go too
+      dev.baranhan.viltrumitecore.city.links.CityDisasterLinks.onCityReset(this.level);
          this.restore.start(now);
       }
 
