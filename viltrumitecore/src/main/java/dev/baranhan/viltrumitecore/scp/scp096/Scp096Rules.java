@@ -34,6 +34,8 @@ public final class Scp096Rules {
    public static final int CITIZEN_CHECK_INTERVAL = 10;
    public static final int CITIZEN_MAX_CHECKED = 12;
    public static final int CITIZEN_MAX_RAYS = 4;
+   /** Citizens who can still become targets during one rampage (players always can): a crowd cannot feed it forever. */
+   public static final int CITIZEN_TARGETS_PER_RAMPAGE = 8;
    // ---- states ----
    public static final int TRIGGERED_TICKS = 26;
    public static final int CALMING_TICKS = 120;
@@ -80,6 +82,11 @@ public final class Scp096Rules {
    }
 
    /** Ticks of hysteria from the config value in seconds (3..60 s). */
+   /** True when one more citizen who saw the face may still be added to the current rampage. */
+   public static boolean citizenMayJoin(boolean enraged, int citizensThisRampage) {
+      return !enraged || citizensThisRampage < CITIZEN_TARGETS_PER_RAMPAGE;
+   }
+
    public static int hysteriaTicks(double seconds) {
       if (!Double.isFinite(seconds)) {
          return DEFAULT_HYSTERIA_TICKS;

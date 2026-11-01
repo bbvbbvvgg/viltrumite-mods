@@ -153,4 +153,15 @@ class Scp096RulesTest {
       assertEquals(Scp096State.SIT, Scp096State.byName("nope"));
       assertFalse(Scp096State.CALMING.calm() || Scp096State.CALMING.enraged(), "calming is neither: no chase, no new trigger yet");
    }
+
+   @Test
+   void aCrowdCannotFeedARampageForever() {
+      // a calm 096 always accepts the citizen who triggers it
+      assertTrue(Scp096Rules.citizenMayJoin(false, 0));
+      assertTrue(Scp096Rules.citizenMayJoin(false, 1000));
+      // while enraged only a bounded number of citizens can join, so the chase runs out of targets and ends
+      assertTrue(Scp096Rules.citizenMayJoin(true, Scp096Rules.CITIZEN_TARGETS_PER_RAMPAGE - 1));
+      assertFalse(Scp096Rules.citizenMayJoin(true, Scp096Rules.CITIZEN_TARGETS_PER_RAMPAGE));
+      assertTrue(Scp096Rules.CITIZEN_TARGETS_PER_RAMPAGE >= 3, "still a real rampage through the crowd");
+   }
 }

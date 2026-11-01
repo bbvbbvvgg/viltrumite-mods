@@ -82,6 +82,8 @@ public class Scp096Entity extends PathfinderMob {
    private int stateLength = 2400;
    private boolean natural;
    private int peekTicks;
+   /** Citizens added as targets since it last was calm (capped, see Scp096Rules.CITIZEN_TARGETS_PER_RAMPAGE). */
+   private int rampageCitizens;
    private int nextPeek = 240;
    @Nullable
    private Vec3 home;
@@ -203,6 +205,9 @@ public class Scp096Entity extends PathfinderMob {
       }
       this.stateTicks = 0;
       this.entityData.set(DATA_STATE, (byte)next.id());
+      if (next.calm()) {
+         this.rampageCitizens = 0;
+      }
       switch (next) {
          case SIT -> this.stateLength = 2400 + this.random.nextInt(3600);
          case STAND -> this.stateLength = 200 + this.random.nextInt(300);
@@ -711,7 +716,7 @@ public class Scp096Entity extends PathfinderMob {
 
    private void scanCitizens(ServerLevel level) {
       CityManager city = CityManager.of(level);
-      if (city == null) {
+      if (city == null || !Scp096Rules.citizenMayJoin(this.state().enraged(), this.rampageCitizens)) {
          return;
       }
       double r2 = Scp096Rules.CITIZEN_RANGE * Scp096Rules.CITIZEN_RANGE;
@@ -767,6 +772,9 @@ public class Scp096Entity extends PathfinderMob {
          return;
       }
       boolean added = this.addTarget(observer, player);
+      if (added && !player) {
+         this.rampageCitizens++;
+      }
       if (added) {
          Scp096Spawner.LOG.debug("SCP-096 #{}: face seen by {} at {} blocks (state {})", this.getId(), observer.getName().getString(),
             Math.round(observer.distanceTo(this)), s);
@@ -967,6 +975,7 @@ public class Scp096Entity extends PathfinderMob {
       tag.putInt("StateLength", this.stateLength);
       tag.putInt("HysteriaTicks", this.hysteriaTicks);
       tag.putBoolean("Natural", this.natural);
+      tag.putInt("RampageCitizens", this.rampageCitizens);
       tag.putInt("NextPeek", this.nextPeek);
       if (this.home != null) {
          tag.putDouble("HomeX", this.home.x);
@@ -996,6 +1005,7 @@ public class Scp096Entity extends PathfinderMob {
       this.stateLength = tag.contains("StateLength") ? tag.getInt("StateLength") : 2400;
       this.hysteriaTicks = tag.contains("HysteriaTicks") ? tag.getInt("HysteriaTicks") : Scp096Rules.DEFAULT_HYSTERIA_TICKS;
       this.natural = tag.getBoolean("Natural");
+      this.rampageCitizens = tag.getInt("RampageCitizens");
       this.nextPeek = tag.contains("NextPeek") ? tag.getInt("NextPeek") : 240;
       if (tag.contains("HomeX")) {
          this.home = new Vec3(tag.getDouble("HomeX"), tag.getDouble("HomeY"), tag.getDouble("HomeZ"));

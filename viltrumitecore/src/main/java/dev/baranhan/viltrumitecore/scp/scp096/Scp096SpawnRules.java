@@ -9,8 +9,11 @@ public final class Scp096SpawnRules {
    public static final double RING_MAX = 0.92;
    /** Never closer than this to any player. */
    public static final double MIN_PLAYER_DISTANCE = 48.0;
-   /** A site inside this horizontal half angle of a player's look counts as "in front of the camera". */
-   public static final double VIEW_HALF = Math.toRadians(70.0);
+   /**
+    * A site inside this horizontal half angle of a player's look counts as "in front of the camera" (the widest
+    * vanilla view, FOV 110 on a 21:9 screen, is about 73 degrees to each side).
+    */
+   public static final double VIEW_HALF = Math.toRadians(80.0);
 
    private Scp096SpawnRules() {
    }
