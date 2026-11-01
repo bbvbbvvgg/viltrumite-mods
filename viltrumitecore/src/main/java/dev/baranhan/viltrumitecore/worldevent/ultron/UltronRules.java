@@ -54,6 +54,8 @@ public final class UltronRules {
    public static final int MAX_LINKS = 3;
    /** Engineers raise a node in this many ticks of welding. */
    public static final int BUILD_TICKS = 30 * TPS;
+   /** An engineer reports one weld step every this many ticks while its beam is on the node. */
+   public static final int WELD_EVERY = 4;
    /** A hacked node stays dark this long (engineers can reboot it sooner). */
    public static final int DISABLE_TICKS = 60 * TPS;
    /** Welding that reboots a disabled node. */
