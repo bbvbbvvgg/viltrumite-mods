@@ -162,6 +162,12 @@ public class UltronPrime extends UltronUnit {
       return UltronUnitKind.SENTRY; // not a foundry kind: never counted, the renderer goes by the entity type
    }
 
+   /** In flight (the renderer blends the ground stance into the hover / flight stance). */
+   @Override
+   protected float clientHoldTarget() {
+      return this.flier() ? 1.0F : 0.0F;
+   }
+
    @Override
    public int deathTicks() {
       return UltronMove.PRIME_DEATH.length;
@@ -500,7 +506,7 @@ public class UltronPrime extends UltronUnit {
       switch (m) {
          case PRIME_PALM_BLAST -> {
             this.sound(UltronSounds.PRIME_BEAM_CHARGE, 1.0F, 1.35F);
-            this.fx(UltronFxS2CPacket.CHARGE, this.local(-0.45, 1.55, 0.7), Vec3.ZERO, 1.0F, this.getId());
+            this.fx(UltronFxS2CPacket.CHARGE, this.local(0.32, 2.1, 0.8), Vec3.ZERO, 1.0F, this.getId());
          }
          case PRIME_BEAM -> {
             this.sound(UltronSounds.PRIME_BEAM_CHARGE, 1.6F, 1.0F);
@@ -667,7 +673,7 @@ public class UltronPrime extends UltronUnit {
             if (!(this.level() instanceof ServerLevel level)) {
                return;
             }
-            Vec3 palm = this.local(-0.45, 1.55, 0.9);
+            Vec3 palm = this.local(0.32, 2.1, 0.95); // the right palm at the palm_blast contact frame
             this.sound(UltronSounds.PRIME_PALM, 2.0F, 1.0F);
             if (target != null && target.isAlive() && this.distanceTo(target) < 4.0F) {
                // point-blank: the repulsor goes straight through

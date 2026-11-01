@@ -48,6 +48,12 @@ public class UltronSentry extends UltronUnit {
       return UltronUnitKind.SENTRY;
    }
 
+   /** Deflector guard in a fight (the renderer blends in the guard stance). */
+   @Override
+   protected float clientHoldTarget() {
+      return this.isAlive() && this.flag(FLAG_DEFLECTOR) && this.flag(FLAG_COMBAT) ? 1.0F : 0.0F;
+   }
+
    @Override
    public int deathTicks() {
       return 30;
@@ -115,7 +121,7 @@ public class UltronSentry extends UltronUnit {
          case SENTRY_STRIKE_A, SENTRY_STRIKE_B, SENTRY_STRIKE_C -> this.sound(UltronSounds.SENTRY_SERVO, 0.7F, 1.15F);
          case SENTRY_BLAST -> {
             this.sound(UltronSounds.SENTRY_SERVO, 0.8F, 0.9F);
-            this.fx(UltronFxS2CPacket.CHARGE, this.local(-0.48, 1.45, 0.55), Vec3.ZERO, 0.8F, this.getId());
+            this.fx(UltronFxS2CPacket.CHARGE, this.local(0.25, 1.68, 0.8), Vec3.ZERO, 0.8F, this.getId());
          }
          case SENTRY_LUNGE -> {
             this.sound(UltronSounds.SENTRY_SERVO, 0.9F, 0.8F);
@@ -155,7 +161,7 @@ public class UltronSentry extends UltronUnit {
             if (target == null || !(this.level() instanceof ServerLevel level)) {
                return;
             }
-            Vec3 from = this.local(-0.48, 1.45, 0.7);
+            Vec3 from = this.local(0.25, 1.68, 0.9); // the raised right palm at the blast clip's contact frame
             Vec3 aim = this.lead(target, from, 1.6, 0.6);
             UltronBolt.shoot(level, this, from, aim.subtract(from), 1.6, BalanceTable.ULTRON_SENTRY_BOLT * this.damageScale(), UltronBolt.STYLE_REPULSOR);
             this.fx(UltronFxS2CPacket.MUZZLE, from, aim.subtract(from).normalize(), 0.8F, this.getId());
