@@ -51,6 +51,17 @@ public final class ThanosWarClient {
    private static double shipTick;
    private static Vec3 start = Vec3.ZERO;
    private static Vec3 hover = Vec3.ZERO;
+   /**
+    * A jump of the synced path (a correction, the climb away starting under the bob or in mid-glide)
+    * is eased out over {@link #BLEND} ticks from the pose last drawn instead of snapping a ship the
+    * size of a district.
+    */
+   private static final double BLEND = 40.0;
+   private static Vec3 blendAt = Vec3.ZERO;
+   private static float blendYaw;
+   private static float blendPitch;
+   private static float blendRoll;
+   private static double blendLeft;
    private static int flags;
    private static int army;
    private static int strikes;
@@ -109,10 +120,12 @@ public final class ThanosWarClient {
             active = true;
             leavingOut = false;
             phase = p.phase();
-            ship = p.ship();
-            shipTick = p.shipTick();
-            start = new Vec3(p.sx(), p.sy(), p.sz());
-            hover = new Vec3(p.hx(), p.hy(), p.hz());
+            jump(() -> {
+               ship = p.ship();
+               shipTick = p.shipTick();
+               start = new Vec3(p.sx(), p.sy(), p.sz());
+               hover = new Vec3(p.hx(), p.hy(), p.hz());
+            });
             flags = p.flags();
             army = p.a();
             strikes = p.b();
@@ -128,8 +141,10 @@ public final class ThanosWarClient {
             hold = 0;
             if (ship == ShipPath.HOVER) {
                // the war ended under it (or the player walked out of range): it climbs away
-               ship = ShipPath.LEAVING;
-               shipTick = 0.0;
+               jump(() -> {
+                  ship = ShipPath.LEAVING;
+                  shipTick = 0.0;
+               });
             }
 
             if (ship == ShipPath.LEAVING) {
@@ -167,11 +182,62 @@ public final class ThanosWarClient {
    }
 
    static Vec3 shipAt(float partial) {
-      return ShipPath.at(ship, shipTick + partial, start, hover);
+      Vec3 at = ShipPath.at(ship, shipTick + partial, start, hover);
+      double w = blend(partial);
+      return w > 0.0 ? at.add(blendAt.scale(w)) : at;
    }
 
    static float shipYaw(float partial) {
-      return ShipPath.yaw(ship, shipTick + partial, start, hover);
+      return ShipPath.yaw(ship, shipTick + partial, start, hover) + blendYaw * (float)blend(partial);
+   }
+
+   static float shipPitch(float partial) {
+      return ShipPath.pitch(ship, shipTick + partial) + blendPitch * (float)blend(partial);
+   }
+
+   static float shipRoll(float partial) {
+      return ShipPath.roll(ship, shipTick + partial) + blendRoll * (float)blend(partial);
+   }
+
+   /** Weight (1 -> 0, smooth) of the eased-out jump at this partial tick. */
+   private static double blend(float partial) {
+      if (blendLeft <= 0.0) {
+         return 0.0;
+      }
+
+      double x = Mth.clamp((blendLeft - partial) / BLEND, 0.0, 1.0);
+      return x * x * (3.0 - 2.0 * x);
+   }
+
+   /**
+    * Applies a change of the path's inputs; while the ship stays in the sky, the difference between
+    * the pose drawn before and the new path is eased out (a jump beyond 64 blocks is a new war, not a
+    * correction, and is taken as it is).
+    */
+   private static void jump(Runnable change) {
+      boolean seen = shipVisible();
+      Vec3 oldAt = seen ? shipAt(0.0F) : Vec3.ZERO;
+      float oldYaw = seen ? shipYaw(0.0F) : 0.0F;
+      float oldPitch = seen ? shipPitch(0.0F) : 0.0F;
+      float oldRoll = seen ? shipRoll(0.0F) : 0.0F;
+      change.run();
+      blendLeft = 0.0;
+      if (!seen || !shipVisible()) {
+         return;
+      }
+
+      Vec3 d = oldAt.subtract(ShipPath.at(ship, shipTick, start, hover));
+      float dYaw = Mth.wrapDegrees(oldYaw - ShipPath.yaw(ship, shipTick, start, hover));
+      float dPitch = oldPitch - ShipPath.pitch(ship, shipTick);
+      float dRoll = oldRoll - ShipPath.roll(ship, shipTick);
+      boolean moved = d.lengthSqr() > 1.0E-4 || Math.abs(dYaw) > 0.01F || Math.abs(dPitch) > 0.01F || Math.abs(dRoll) > 0.01F;
+      if (moved && d.lengthSqr() < 64.0 * 64.0) {
+         blendAt = d;
+         blendYaw = dYaw;
+         blendPitch = dPitch;
+         blendRoll = dRoll;
+         blendLeft = BLEND;
+      }
    }
 
    private static void drop() {
@@ -179,6 +245,7 @@ public final class ThanosWarClient {
       leavingOut = false;
       ship = ShipPath.NONE;
       shipTick = 0.0;
+      blendLeft = 0.0;
       flags = 0;
       hold = 0;
       for (Puff p : PUFFS) {
@@ -256,6 +323,7 @@ public final class ThanosWarClient {
       boolean frozen = WorldPauseClient.active();
       if (shipVisible() && !frozen) {
          shipTick++;
+         blendLeft = Math.max(0.0, blendLeft - 1.0);
          if (ship == ShipPath.ARRIVING && shipTick >= ThanosWarRules.SHIP_ARRIVAL) {
             ship = ShipPath.HOVER;
             shipTick = 0.0;
@@ -401,8 +469,7 @@ public final class ThanosWarClient {
          if (shipVisible()) {
             float frozen = WorldPauseClient.active() ? 0.0F : partial;
             Vec3 at = shipAt(frozen);
-            double t = shipTick + frozen;
-            SanctuaryRenderer.draw(event, level, at, ShipPath.yaw(ship, t, start, hover), ShipPath.pitch(ship, t), ShipPath.roll(ship, t),
+            SanctuaryRenderer.draw(event, level, at, shipYaw(frozen), shipPitch(frozen), shipRoll(frozen),
                flash + ((flags & ThanosWarS2CPacket.SMOKE) != 0 ? 0.25F : 0.0F));
          }
       } else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {

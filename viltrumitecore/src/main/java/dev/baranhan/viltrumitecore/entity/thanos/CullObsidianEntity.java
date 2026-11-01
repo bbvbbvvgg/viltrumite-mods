@@ -333,6 +333,11 @@ public class CullObsidianEntity extends BlackOrderEntity {
       Vec3 dir = this.chargeDir;
       this.setYRot((float)(Math.atan2(dir.z, dir.x) * (180.0 / Math.PI)) - 90.0F);
       this.setYBodyRot(this.getYRot());
+      if (t == 0) {
+         // the burst off the mark: the rush of the charge (the roar was the wind-up)
+         ThanosWarSounds.play(level, this.position(), ThanosWarSounds.CULL_CHARGE, 2.2F, clash ? 0.9F : 1.0F, 64.0);
+      }
+
       if (t % 4 == 0) {
          ThanosWarSounds.play(level, this.position(), ThanosWarSounds.CULL_STEP, 1.4F, 1.2F, 40.0);
       }
