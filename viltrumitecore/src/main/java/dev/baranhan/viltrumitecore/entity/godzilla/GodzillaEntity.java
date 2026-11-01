@@ -46,6 +46,7 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    private static final EntityDataAccessor<Float> GAIT = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Vector3f> BEAM_END = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.VECTOR3);
    private static final EntityDataAccessor<Integer> FIRE_LEN = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.INT);
+   private static final EntityDataAccessor<Float> BODY_YAW = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.FLOAT);
 
    public static final int FLAG_RAGE = 1;
    public static final int FLAG_RETREAT = 2;
@@ -75,6 +76,11 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    private Vec3 lastHitAt;
    /** Extra forward speed of a lunge this tick (body slam), set by the session. */
    public float lunge;
+   /** The retreat's end: the body sinks (into the bay, under the streets) instead of following the ground. */
+   public boolean sinking;
+   private boolean turnedLastTick;
+   /** Slows the walk while the destruction queue is behind (pushing through a dense block). */
+   public float drag = 1.0F;
    // ---- tail chain (both sides): world yaw of each segment
    private final float[] tailYaw = new float[GodzillaRules.TAIL_SEGMENTS];
    public final float[] tailYawO = new float[GodzillaRules.TAIL_SEGMENTS];
@@ -90,6 +96,9 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    public float clientGaitO;
    public float clientWalk;
    public float clientWalkO;
+   public float clientYaw;
+   public float clientYawO;
+   private boolean clientYawReady;
    public Vec3 clientBeamEnd = Vec3.ZERO;
    public Vec3 clientBeamEndO = Vec3.ZERO;
    /** Client: the mouth and the head in world space, published by the renderer each frame (effects, beam origin). */
@@ -133,6 +142,7 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
       this.entityData.define(GAIT, 0.0F);
       this.entityData.define(BEAM_END, new Vector3f());
       this.entityData.define(FIRE_LEN, GodzillaRules.FIRE_TICKS);
+      this.entityData.define(BODY_YAW, 0.0F);
    }
 
    @Override
@@ -418,11 +428,14 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
             turned = Mth.clamp(err, -rate, rate);
             yaw += turned;
             float align = Math.abs(err) > 60.0F ? 0.12F : Math.abs(err) > 25.0F ? 0.5F : 1.0F;
-            double sp = Math.min(dist, GodzillaRules.speed(this.rage(), this.retreating()) * align);
+            double sp = Math.min(dist, GodzillaRules.speed(this.rage(), this.retreating()) * align * this.drag);
             Vec3 fw = forward(yaw);
-            nx += fw.x * sp;
-            nz += fw.z * sp;
-            moved = sp;
+            Vec3 lead = fw.scale(0.12 * GodzillaRules.HEIGHT);
+            if (GodzillaEvent.canEnter(level, nx + fw.x * sp + lead.x, nz + fw.z * sp + lead.z)) {
+               nx += fw.x * sp;
+               nz += fw.z * sp;
+               moved = sp;
+            }
          }
       } else if (!dead && this.faceTarget != null && !move.grounded()) {
          float err = GodzillaRules.wrap(yawTowards(this.faceTarget.x - nx, this.faceTarget.z - nz) - yaw);
@@ -446,7 +459,11 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
       double ny = this.followGround(level, nx, nz);
       this.setPos(nx, ny, nz);
       this.setYRot(yaw);
-      this.yRotO = this.yRotO;
+      this.setDeltaMovement(Vec3.ZERO);
+      this.turnedLastTick = Math.abs(turned) > 0.2F;
+      if (Math.abs(this.entityData.get(BODY_YAW) - yaw) > 0.01F) {
+         this.entityData.set(BODY_YAW, yaw);
+      }
       this.walkAmount = Mth.approach(this.walkAmount, moved > 0.05 || Math.abs(turned) > 0.2F ? 1.0F : 0.0F, 0.08F);
       this.setFlag(FLAG_WALKING, moved > 0.05 || Math.abs(turned) > 0.2F);
       if (!locked && (moved > 0.0 || turned != 0.0F)) {
@@ -465,6 +482,9 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
 
    /** Street height under the body (the city walk grid, else the lowest ground of the footprint), approached slowly. */
    private double followGround(ServerLevel level, double x, double z) {
+      if (this.sinking) {
+         return this.getY() - 0.22;
+      }
       if (--this.groundRecheck <= 0 || Double.isNaN(this.groundY)) {
          this.groundRecheck = 5;
          double g = GodzillaEvent.groundAt(level, x, z, this.getY());
@@ -500,7 +520,28 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
       }
    }
 
+   /** Server: the body turned last tick (the tail swings through things even on the spot). */
+   public boolean turning() {
+      return this.turnedLastTick;
+   }
+
+   /** Client: the precise body yaw (the vanilla rotation packet is quantised to 1.4 degrees, a lot at this size). */
+   public float renderYaw(float partial) {
+      return this.clientYawReady ? Mth.rotLerp(partial, this.clientYawO, this.clientYaw) : Mth.rotLerp(partial, this.yRotO, this.getYRot());
+   }
+
    private void clientView() {
+      float synced = this.entityData.get(BODY_YAW);
+      if (!this.clientYawReady) {
+         this.clientYaw = synced;
+         this.clientYawO = synced;
+         this.clientYawReady = true;
+      }
+      this.clientYawO = this.clientYaw;
+      this.clientYaw += Mth.wrapDegrees(synced - this.clientYaw) * 0.5F;
+      this.setYRot(this.clientYaw);
+      this.yRotO = this.clientYawO;
+      this.setYBodyRot(this.clientYaw);
       this.clientHeadYawO = this.clientHeadYaw;
       this.clientHeadPitchO = this.clientHeadPitch;
       this.clientHeadYaw += (this.entityData.get(HEAD_YAW) - this.clientHeadYaw) * 0.5F;
