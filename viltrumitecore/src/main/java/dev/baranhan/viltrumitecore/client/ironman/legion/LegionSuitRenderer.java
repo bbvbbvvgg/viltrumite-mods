@@ -140,8 +140,10 @@ public final class LegionSuitRenderer extends EntityRenderer<LegionSuitEntity> {
       AnimRenderer.render(shell, stack, null, buffers.getBuffer(body), light, overlay, 1.0F, 1.0F, 1.0F, alpha, null);
       float glow = glow(suit, phase, critical, camo, ticks);
       if (!shadow && glow > 0.01F) {
+         // a suit Ultron overrode burns red until it is handed back
+         boolean ultron = dev.baranhan.viltrumitecore.worldevent.ultron.UltronCapture.controlled(suit);
          AnimRenderer.render(shell, stack, null, buffers.getBuffer(RenderType.eyes(MarkTextures.glow(mark))), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
-            glow, glow, glow, 1.0F, null);
+            glow, ultron ? glow * 0.22F : glow, ultron ? glow * 0.18F : glow, 1.0F, null);
       }
 
       ResourceLocation extrasGeo = MarkExtras.geo(mark);

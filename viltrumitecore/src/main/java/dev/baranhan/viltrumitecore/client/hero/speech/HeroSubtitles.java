@@ -52,6 +52,8 @@ public final class HeroSubtitles {
    private static long lastFrame;
    /** ForgeGui left height right after an armor row that drew nothing (no armor), or -1. */
    private static int emptyArmorLeft = -1;
+   /** Client tick the shown line was last drawn (speaking state for the speaker's renderer). */
+   private static long shownTick = Long.MIN_VALUE / 2;
    /** Opt-in playtest log (client.hero.speech.qa.SubtitlePlaytest); null in a normal game. */
    @Nullable
    public static java.util.function.Consumer<String> qaLog;
@@ -126,6 +128,22 @@ public final class HeroSubtitles {
       boolean own = mc.player != null && mc.player.getUUID().equals(packet.speaker());
       return new Cue(packet.serial(), packet.speaker(), packet.entityId(), name.toUpperCase(Locale.ROOT), HeroId.fromKey(packet.heroKey()),
          packet.lineId(), List.copyOf(fragments), packet.priority(), packet.durationTicks(), own, packet.heroKey());
+   }
+
+   /**
+    * Entity id of the body whose line is on screen right now, or -1: a world voice's renderer (a villain's
+    * jaw and face) animates while its line is shown.
+    */
+   public static int speakingEntity() {
+      Shown s = shown;
+      return s == null || ticks - shownTick > 4 ? -1 : s.cue().entityId();
+   }
+
+   /** Voice key of the line on screen right now (a world voice or a hero key), or null. */
+   @Nullable
+   public static String speakingVoice() {
+      Shown s = shown;
+      return s == null || ticks - shownTick > 4 ? null : s.cue().voice();
    }
 
    public static void clear() {
@@ -225,6 +243,8 @@ public final class HeroSubtitles {
       if (frame.alpha() <= 0.004F) {
          return;
       }
+
+      shownTick = ticks;
 
       SubtitleLayout.Result layout = current.layout();
       // Forge reserves the armor row even without armor; when nothing was drawn there and nothing
