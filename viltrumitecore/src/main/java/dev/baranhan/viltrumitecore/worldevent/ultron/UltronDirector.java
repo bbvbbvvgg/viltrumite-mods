@@ -540,7 +540,7 @@ final class UltronDirector {
       UltronUprising.fx(level, UltronFxS2CPacket.NODE_BOOT, at, Vec3.ZERO, 1.0F, n.kind.ordinal(), true);
       UltronSounds.playWide(level, at, UltronSounds.NODE_ONLINE, 2.5F, 1.0F, 96.0);
       if (wasCore) {
-         UltronVoice.say(level, s, "core_online", true);
+         UltronVoice.say(level, s, "core_online", false);
       } else {
          UltronVoice.say(level, s, "node_online", false);
       }
@@ -550,7 +550,7 @@ final class UltronDirector {
          if (c != null) {
             UltronLearning.applyChange(level, s, c);
          }
-         UltronVoice.say(level, s, "relocated", true);
+         UltronVoice.say(level, s, "relocated", false);
       }
       syncBody(level, s, n);
       s.dirty = true;
@@ -610,7 +610,7 @@ final class UltronDirector {
       }
       if (n.kind == UltronNodeKind.FOUNDRY) {
          s.adaptation.setPressure(UltronAdaptation.Tactic.FACTORY_LOSS, s.adaptation.pressure(UltronAdaptation.Tactic.FACTORY_LOSS) + FOUNDRY_LOSS);
-         UltronVoice.say(level, s, "foundry_lost", true);
+         UltronVoice.say(level, s, "foundry_lost", false);
       } else {
          UltronVoice.say(level, s, "node_lost", false);
       }

@@ -2,12 +2,19 @@ package dev.baranhan.viltrumitecore.worldevent.ultron;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import dev.baranhan.viltrumitecore.hero.speech.HeroLine;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /** Ultron's taunt rotation and the queue that keeps simultaneous protocol news from cutting each other. */
@@ -78,6 +85,33 @@ class UltronVoiceTest {
       assertEquals(UltronVoice.QUEUE_MAX, q.size());
       assertEquals(List.of("protocol_anti_air", "protocol_fortify", "protocol_relocation"), ids(q));
       assertEquals(4, q.peekFirst().at());
+   }
+
+   /** Only phase and boss beats cut what he reads; news (ability lines) waits in the queue, remarks are skipped. */
+   @Test
+   void onlyUltimateBeatsAreForced() throws IOException {
+      Pattern call = Pattern.compile("UltronVoice\\.say\\((.*?)\\);");
+      Pattern literal = Pattern.compile("\"([a-z0-9_]+)\"");
+      int forced = 0;
+      try (Stream<Path> files = Files.walk(Path.of("src/main/java/dev/baranhan/viltrumitecore"))) {
+         for (Path f : files.filter(p -> p.toString().endsWith(".java")).toList()) {
+            Matcher m = call.matcher(Files.readString(f));
+            while (m.find()) {
+               String args = m.group(1).trim();
+               if (!args.endsWith("true")) {
+                  continue;
+               }
+               Matcher ids = literal.matcher(args);
+               while (ids.find()) {
+                  UltronVoice.Line line = UltronVoice.line(ids.group(1));
+                  assertNotNull(line, ids.group(1));
+                  assertEquals(HeroLine.Priority.ULTIMATE, line.priority(), ids.group(1) + " is forced but not a beat (" + f.getFileName() + ")");
+                  forced++;
+               }
+            }
+         }
+      }
+      assertTrue(forced >= 8, "the phase and boss beats are forced: " + forced);
    }
 
    private static List<String> ids(ArrayDeque<UltronVoice.Pending> q) {

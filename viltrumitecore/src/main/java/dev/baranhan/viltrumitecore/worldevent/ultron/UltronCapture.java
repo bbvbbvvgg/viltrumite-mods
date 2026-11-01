@@ -201,7 +201,7 @@ public final class UltronCapture {
       Vec3 to = e.position().add(0.0, e.getBbHeight() * 0.7, 0.0);
       UltronNet.fxAlways(level, new UltronFxS2CPacket(UltronFxS2CPacket.CAPTURE, from, to, 1.0F, e.getId()), to, 96.0);
       UltronSounds.play(level, to, UltronSounds.CAPTURE, 2.0F, 1.0F);
-      UltronVoice.say(level, s, c.suit ? "capture_suit" : "capture_golem", true);
+      UltronVoice.say(level, s, c.suit ? "capture_suit" : "capture_golem", false);
       s.dirty = true;
       return true;
    }
