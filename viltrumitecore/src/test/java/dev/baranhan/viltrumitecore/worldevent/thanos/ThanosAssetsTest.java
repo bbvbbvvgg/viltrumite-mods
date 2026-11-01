@@ -274,7 +274,8 @@ class ThanosAssetsTest {
    }
 
    private static final String[] THANOS_FILES = {"thanos_base.animation.json", "thanos_melee.animation.json", "thanos_stones.animation.json",
-      "thanos_combos.animation.json", "thanos_scene.animation.json"};
+      "thanos_combos.animation.json", "thanos_scene.animation.json", "thanos_war.animation.json", "thanos_war_stones.animation.json",
+      "thanos_war_combos.animation.json"};
 
    @Test
    void theViewLoadsEveryClipFileThatExists() throws IOException {
