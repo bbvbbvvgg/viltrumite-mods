@@ -86,6 +86,11 @@ final class AftermathAudio {
             break;
          }
 
+         if (zn.hold > 0) {
+            zn.hold--;
+            continue;
+         }
+
          int[] cd = COOLDOWNS.computeIfAbsent(zn.id, k -> new int[AftermathMixer.KINDS]);
          boolean focus = zn.focus != null;
          for (int kind = 0; kind < AftermathMixer.KINDS; kind++) {

@@ -49,6 +49,9 @@ public final class AftermathClient {
    }
 
    public static void handle(AftermathS2CPacket packet) {
+      // the first sync for a new level can arrive before the next client tick notices the level change:
+      // forget the old level here, or that tick would wipe the zones just received (seen on relog in QA)
+      followLevel(Minecraft.getInstance());
       switch (packet.kind) {
          case AftermathS2CPacket.SYNC -> {
             for (AftermathZone.Snapshot s : packet.zones) {
@@ -75,10 +78,7 @@ public final class AftermathClient {
       }
 
       Minecraft mc = Minecraft.getInstance();
-      if (mc.level != lastLevel) {
-         lastLevel = mc.level;
-         clear();
-      }
+      followLevel(mc);
 
       if (mc.level == null || mc.isPaused()) {
          return;
@@ -168,10 +168,19 @@ public final class AftermathClient {
       fog = 0.0F;
    }
 
+   /** A new (or no) client level: what was known about the old one is gone. */
+   private static void followLevel(Minecraft mc) {
+      if (mc.level != lastLevel) {
+         lastLevel = mc.level;
+         clear();
+      }
+   }
+
    static void clear() {
       ZONES.clear();
       SORTED.clear();
       AftermathAudio.clear();
+      AftermathFx.reset();
       fogGoal = 0.0F;
    }
 
@@ -192,10 +201,11 @@ public final class AftermathClient {
       return n;
    }
 
-   /** One line for the QA log: zones, emitters, stage of the nearest, fog, beds, one-shots played. */
+   /** One line for the QA log: zones, emitters, stage of the nearest, fog, beds, one-shots played, own live particles. */
    public static String debugLine() {
       ClientZone near = SORTED.isEmpty() ? null : SORTED.get(0);
-      return String.format(java.util.Locale.ROOT, "aftermath zones=%d emitters=%d nearest=%s fog=%.2f beds=%d oneshots=%d", ZONES.size(), emitterCount(),
-         near == null ? "-" : near.id + ":" + near.stage.id + "@" + Math.round(near.distance), fog, AftermathAudio.beds(), AftermathAudio.played());
+      return String.format(java.util.Locale.ROOT, "aftermath zones=%d emitters=%d nearest=%s fog=%.2f beds=%d oneshots=%d alive~%d", ZONES.size(),
+         emitterCount(), near == null ? "-" : near.id + ":" + near.stage.id + "@" + Math.round(near.distance), fog, AftermathAudio.beds(),
+         AftermathAudio.played(), AftermathFx.alive());
    }
 }

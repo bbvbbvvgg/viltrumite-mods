@@ -31,6 +31,9 @@ final class ClientZone {
    int scannedAt;
    /** The fresh dust cloud was drawn (once per hit). */
    boolean surged;
+   /** Ticks the ruin's one-shots wait after a fresh hit: the blast owns that moment, then the debris settles. */
+   int hold;
+   private boolean known;
    double distance;
 
    ClientZone(int id) {
@@ -41,6 +44,7 @@ final class ClientZone {
       boolean moved = s.x() != this.x || s.y() != this.y || s.z() != this.z || s.radius() != this.radius;
       boolean newSeeds = !Arrays.equals(s.seeds(), this.seeds) || !Arrays.equals(s.focus(), this.focus);
       boolean hit = s.age() < this.age - 40;
+      boolean fresh = hit || !this.known && s.age() < 40L;
       this.x = s.x();
       this.y = s.y();
       this.z = s.z();
@@ -60,7 +64,17 @@ final class ClientZone {
          this.surged = false;
       }
 
+      if (fresh) {
+         this.hold = holdTicks(this.id);
+      }
+
+      this.known = true;
       this.update();
+   }
+
+   /** Pure: the settle pause after a hit, 0.8-1.4 s, different per ruin so neighbouring ruins do not answer in unison. */
+   static int holdTicks(int id) {
+      return 16 + Math.floorMod(id * 7, 13);
    }
 
    void rescan() {

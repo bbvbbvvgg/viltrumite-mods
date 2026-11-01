@@ -29,6 +29,16 @@ final class AftermathFx {
    static final double DRAW = 224.0;
    static final double DETAIL = 72.0;
    static final double SMOKE_DETAIL = 140.0;
+   /**
+    * Ceiling on the aftermath particles alive at once, all ruins together, at the "all" setting: a burning
+    * quarter is many overlapping translucent puffs, and their overdraw (not their count) is what costs frames.
+    */
+   static final int LIVE_CAP = 2400;
+   /** Ticks of spawn history the live estimate keeps; about the life of a ruin smoke puff. */
+   static final int WINDOW = 256;
+   private static final int[] SPAWNED = new int[WINDOW];
+   private static int slot;
+   private static int recent;
    private static int budget;
 
    private AftermathFx() {
@@ -42,8 +52,43 @@ final class AftermathFx {
       };
    }
 
+   static int liveCapFor(ParticleStatus status) {
+      return switch (status) {
+         case ALL -> LIVE_CAP;
+         case DECREASED -> LIVE_CAP / 2;
+         case MINIMAL -> LIVE_CAP / 6;
+      };
+   }
+
+   /** This tick's budget: the per-tick rate, held back as the live estimate nears the ceiling. */
+   static int budgetFor(ParticleStatus status, int alive) {
+      return Math.max(0, Math.min(budgetFor(status), liveCapFor(status) - alive));
+   }
+
+   /** Estimated aftermath particles alive (spawned during the last {@link #WINDOW} ticks). */
+   static int alive() {
+      return recent;
+   }
+
    static void tick(Minecraft mc, List<ClientZone> nearestFirst, Vec3 cam, RandomSource random, int clock) {
-      budget = budgetFor(mc.options.particles().get());
+      // what was spawned a window ago has burnt out by now
+      slot = (slot + 1) % WINDOW;
+      recent -= SPAWNED[slot];
+      ParticleStatus status = mc.options.particles().get();
+      budget = budgetFor(status, recent);
+      int start = budget;
+      zones(mc, nearestFirst, cam, random, clock);
+      SPAWNED[slot] = start - budget;
+      recent += SPAWNED[slot];
+   }
+
+   /** Forget the spawn history (level change: the particle engine was cleared). */
+   static void reset() {
+      java.util.Arrays.fill(SPAWNED, 0);
+      recent = 0;
+   }
+
+   private static void zones(Minecraft mc, List<ClientZone> nearestFirst, Vec3 cam, RandomSource random, int clock) {
       for (ClientZone zn : nearestFirst) {
          if (budget <= 0) {
             return;
