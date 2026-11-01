@@ -82,6 +82,7 @@ public final class ChitauriDestruction {
 
    /** Cannon impact: glass, leaves and other weak blocks in a small sphere. */
    public static int crack(ServerLevel level, BlockPos center, double radius, Vec3 push) {
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.CHITAURI, center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, (float)radius);
       int done = 0;
       int r = Mth.ceil(radius);
       BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -121,6 +122,7 @@ public final class ChitauriDestruction {
       if (exhausted() || !level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
          return 0;
       }
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.CHITAURI, center.x, center.y, center.z, (float)radius);
       pruneFlying();
       RandomSource random = level.getRandom();
       int r = Mth.ceil(radius);
