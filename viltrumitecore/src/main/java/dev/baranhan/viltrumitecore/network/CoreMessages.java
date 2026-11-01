@@ -64,7 +64,10 @@ public class CoreMessages {
    // v23 (Meteor Rain 2.0): MeteorRainFxS2CPacket appended last (red sky, fire zones, brands, far impacts).
    // v23 (Chitauri evolution): FX kinds 14..23 for captors, pylons, siege, interceptors; new entity types.
    // v23 (feat/ultron-uprising): UltronFxS2CPacket and UltronStateS2CPacket appended after the Final Punch packets.
-   private static final String PROTOCOL_VERSION = "23";
+   // v24 (final integration of #113/#114/#115 + the Ultron uprising): all four v23 changes together, one table:
+   // ... FINAL_PUNCH packets, MeteorRainFxS2CPacket, UltronFxS2CPacket, UltronStateS2CPacket; the six Red Hulk
+   // HeroAction values and the Chitauri FX kinds 14..23. Every "23" peer (each branch alone) is refused.
+   private static final String PROTOCOL_VERSION = "24";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 

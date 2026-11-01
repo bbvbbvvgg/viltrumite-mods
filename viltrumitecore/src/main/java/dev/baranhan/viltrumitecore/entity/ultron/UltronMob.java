@@ -31,7 +31,10 @@ public interface UltronMob {
     * summons, and any mob that is fighting a machine. Never one of Ultron's own or a machine he controls.
     */
    static boolean validTarget(@Nullable LivingEntity target) {
-      if (target == null || !target.isAlive() || side(target) || target.isSpectator() || target.isInvulnerable()) {
+      if (target == null || !target.isAlive() || side(target) || target.isSpectator() || target.isInvulnerable()
+         || dev.baranhan.viltrumitecore.city.citizen.CitizenCaptivity.isHeld(target)) {
+         // A person another world event holds (a Chitauri captor carries them, a containment field keeps them) is
+         // not a combatant: the machines leave them alone, like the Chitauri themselves (integration of #115).
          return false;
       }
       if (target instanceof Player player) {
