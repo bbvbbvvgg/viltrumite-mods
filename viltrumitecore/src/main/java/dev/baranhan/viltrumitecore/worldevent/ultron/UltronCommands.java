@@ -200,6 +200,11 @@ public final class UltronCommands {
       return 1;
    }
 
+   /** The node state in the reader's language. */
+   private static Component state(UltronNodeState state) {
+      return Component.translatable("viltrumitecore.ultron.node_state." + state.name().toLowerCase(Locale.ROOT));
+   }
+
    private static int reveal(CommandContext<CommandSourceStack> c) {
       UltronSession s = live(c);
       if (s == null) {
@@ -238,7 +243,7 @@ public final class UltronCommands {
       UltronNetwork.Node core = net.core();
       c.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.ultron.status.network", net.count(UltronNodeState.ONLINE),
          net.count(UltronNodeState.DISABLED), net.count(UltronNodeState.BUILDING), net.count(UltronNodeState.DESTROYED), net.all().size(),
-         core == null ? "-" : core.state.name().toLowerCase(Locale.ROOT)).withStyle(ChatFormatting.GRAY), false);
+         core == null ? Component.literal("-") : state(core.state)).withStyle(ChatFormatting.GRAY), false);
       int[] counts = UltronDirector.counts(s);
       int players = UltronDirector.fighters(server.getLevel(s.dimension) != null ? server.getLevel(s.dimension) : c.getSource().getLevel(), s).size();
       c.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.ultron.status.forces", UltronDirector.sum(counts),
@@ -260,7 +265,7 @@ public final class UltronCommands {
       if (boss instanceof UltronPrime prime) {
          c.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.ultron.status.boss",
             Component.translatable("viltrumitecore.ultron.stage." + prime.stage().key()), Math.round(prime.getHealth()), Math.round(prime.getMaxHealth()),
-            Math.round(s.upload * 100.0F)).withStyle(ChatFormatting.GRAY), false);
+            Math.round(s.uploadShare() * 100.0F)).withStyle(ChatFormatting.GRAY), false);
       }
       return 1;
    }
@@ -272,7 +277,7 @@ public final class UltronCommands {
       }
       for (UltronNetwork.Node n : s.network.all()) {
          c.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.ultron.node_line", n.id,
-            Component.translatable("viltrumitecore.ultron.node." + n.kind.key()), n.state.name().toLowerCase(Locale.ROOT), Math.round(n.hull),
+            Component.translatable("viltrumitecore.ultron.node." + n.kind.key()), state(n.state), Math.round(n.hull),
             Math.round(UltronRules.hull(n.kind)), Math.round(n.shield), Math.round(n.x), Math.round(n.y), Math.round(n.z),
             n.discovered ? "+" : "-", n.powered ? "+" : "-").withStyle(n.online() ? ChatFormatting.RED : ChatFormatting.GRAY), false);
       }
