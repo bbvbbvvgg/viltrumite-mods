@@ -150,7 +150,10 @@ public final class CollapseAnalyzer {
          }
       }
       // 1. is it a building?
+      // terrain vs building is judged from the damage centre up: a strike that also cratered the street or the
+      // plinth under a tower must not count the whole ground layer of the box as "terrain"
       int structure = 0, natural = 0, top = Integer.MIN_VALUE;
+      int midY = (int)Math.floor(hy);
       double bx = 0, bz = 0;
       for (int i = 0; i < g.cells; i++) {
          if (g.y(i) < hMinY) {
@@ -161,14 +164,20 @@ public final class CollapseAnalyzer {
             top = Math.max(top, g.y(i));
             bx += g.x(i) + 0.5;
             bz += g.z(i) + 0.5;
-         } else if (g.m[i] == NATURAL) {
+         } else if (g.m[i] == NATURAL && g.y(i) >= midY) {
             natural++;
          }
       }
       if (structure < CollapseRules.MIN_STRUCTURE) {
          return Plan.reject("no building above the damage", nd, g.cells);
       }
-      if (natural > structure) {
+      int structureUp = 0;
+      for (int i = 0; i < g.cells; i++) {
+         if (g.m[i] == STRUCTURE && g.y(i) >= midY) {
+            structureUp++;
+         }
+      }
+      if (natural > structureUp) {
          return Plan.reject("terrain, not a building", nd, g.cells);
       }
       if (top - hMinY < CollapseRules.MIN_TOWER_HEIGHT) {

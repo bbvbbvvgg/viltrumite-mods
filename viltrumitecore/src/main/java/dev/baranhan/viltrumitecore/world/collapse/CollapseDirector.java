@@ -96,8 +96,9 @@ public final class CollapseDirector {
          RECENT.removeIf(r -> r.until < now);
       }
       if (enabled() && level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
-         List<DamageLedger.Candidate> found = ledger.settled(now, 1);
-         if (!found.isEmpty() && countIn(level) < maxActive() && ACTIVE.size() < maxActive()) {
+         // at capacity the settled damage waits in the ledger (it expires with the damage window)
+         List<DamageLedger.Candidate> found = countIn(level) < maxActive() && ACTIVE.size() < maxActive() ? ledger.settled(now, 1) : List.of();
+         if (!found.isEmpty()) {
             DamageLedger.Candidate c = found.get(0);
             if (!cooling(level, c.x(), c.y(), c.z())) {
                tryStart(level, c.x(), c.y(), c.z(), c.score(), null, false);
