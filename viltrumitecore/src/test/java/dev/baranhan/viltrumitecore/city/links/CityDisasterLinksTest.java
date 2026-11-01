@@ -14,6 +14,7 @@ class CityDisasterLinksTest {
       assertEquals(AftermathCause.METEOR, CityDisasterLinks.aftermathCause("meteor"));
       assertEquals(AftermathCause.LEVIATHAN, CityDisasterLinks.aftermathCause("leviathan"));
       assertEquals(AftermathCause.ULTRON, CityDisasterLinks.aftermathCause("ultron"));
+      assertEquals(AftermathCause.GODZILLA, CityDisasterLinks.aftermathCause("godzilla"));
       assertEquals(AftermathCause.COLLAPSE, CityDisasterLinks.aftermathCause("command"));
       assertEquals(AftermathCause.COLLAPSE, CityDisasterLinks.aftermathCause("secondary"));
    }
