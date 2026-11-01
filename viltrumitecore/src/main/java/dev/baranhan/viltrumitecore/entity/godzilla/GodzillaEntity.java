@@ -88,6 +88,14 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    private AABB cullBox;
    // ---- client view state
    public int clientMoveStart;
+   /** Client: the move before the current one, its argument and its start (the renderer cross-fades out of it). */
+   public GodzillaMove clientPrevMove = GodzillaMove.NONE;
+   public int clientPrevArg;
+   public int clientPrevStart;
+   private GodzillaMove clientMove = GodzillaMove.NONE;
+   private int clientArg;
+   /** Client: the level of detail the renderer drew last frame (hysteresis between the LOD distances). */
+   public int clientLod = -1;
    public float clientHeadYaw;
    public float clientHeadYawO;
    public float clientHeadPitch;
@@ -270,7 +278,13 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
       super.onSyncedDataUpdated(key);
       if (MOVE_SEQ.equals(key) && this.level().isClientSide) {
+         // MOVE and MOVE_ARG come before MOVE_SEQ in the same data packet: they already hold the new move
+         this.clientPrevMove = this.clientMove;
+         this.clientPrevArg = this.clientArg;
+         this.clientPrevStart = this.clientMoveStart;
          this.clientMoveStart = this.tickCount;
+         this.clientMove = this.move();
+         this.clientArg = this.moveArg();
       }
    }
 
