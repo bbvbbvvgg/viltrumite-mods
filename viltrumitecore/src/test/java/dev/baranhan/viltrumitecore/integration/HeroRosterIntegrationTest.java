@@ -187,7 +187,9 @@ class HeroRosterIntegrationTest {
       // 23 was used by three branches alone: Red Hulk (six HeroAction values appended after FINAL_PUNCH, the packet
       // table unchanged), Meteor Rain 2.0 (MeteorRainFxS2CPacket appended last) and Chitauri evolution (FX kinds
       // 14..23 for captors, pylons, siege, interceptors; new entity types): refused;
-      assertTrue(source.contains("PROTOCOL_VERSION = \"23\""), "the merged packet table needs its own protocol version");
+      // 26 = structural collapse (CityCollapseS2CPacket appended after the Meteor Rain packet); 24/25 are left to
+      // the parallel branches of the same round, so a client of either is refused;
+      assertTrue(source.contains("PROTOCOL_VERSION = \"26\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -202,8 +204,8 @@ class HeroRosterIntegrationTest {
       assertEquals(legion, packets.subList(regulus + 6, regulus + 6 + legion.size()), "the Iron Legion packets append after the Chitauri packets");
       assertEquals(List.of("ReinhardFinalPunchC2SPacket", "ReinhardFinalPunchS2CPacket"),
          packets.subList(regulus + 6 + legion.size(), regulus + 8 + legion.size()), "THE FINAL PUNCH packets append after the Iron Legion packets (v21)");
-      assertEquals(List.of("MeteorRainFxS2CPacket"), packets.subList(regulus + 8 + legion.size(), packets.size()),
-         "the Meteor Rain 2.0 packet appends last (v23)");
+      assertEquals(List.of("MeteorRainFxS2CPacket", "CityCollapseS2CPacket"), packets.subList(regulus + 8 + legion.size(), packets.size()),
+         "the Meteor Rain 2.0 packet (v23), then the structural collapse packet appends last (v26)");
    }
 
    @Test
