@@ -67,7 +67,9 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - `viltrumites-meteors.md`: squad NPC identity fix (Homelander override), manual-only world events, meteor rain, runtime harness.
 - `ironman.md`, `ironman-legion.md`: Iron Man (see the Iron Man section).
 - `contextual-interactions.md`: hero-vs-hero/mob/event combos (`interaction/`, catalog `docs/contextual-interactions.json`), core 1.63.0.
-- `heroes-integration.md`: the all-heroes merge (Thor #74 + DIO/Sinclair/Jinwoo #82): hero and action order, core 1.54.0 / protocol 14, where each hero's lang keys and sounds live.
+- `ultron.md`: the Ultron uprising world event (core 1.65.0, protocol 23): shape, invariants, sound kit.
+- `red-hulk.md`: Red Hulk (core 1.65.0, protocol 23): heat system, six abilities, generated assets.
+- `heroes-integration.md`: the all-heroes merge (Thor #74 + DIO/Sinclair/Jinwoo #82): hero and action order, core 1.54.0 / protocol 14, where each hero's lang keys and sounds live; the four-update merge (#113-#115 + Ultron, core 1.66.0 / protocol 24).
 ## Ability icons (house style, core 1.46.0)
 - Every hero icon is 64×64 = 32×32 art ×2 in the Reinhard house style (`tools/assets/icon_art.py`: Earth frame re-tinted via `FRAMES`, charcoal backdrop, navy outline, Endesga palette, no smooth gradients). Reinhard icons are the reference; do not redraw them.
 - Regulus / Homelander / Iron Man: `python3 tools/assets/make_hero_icons.py [--hero X] [--only name]` writes `binassets/.../textures/gui/ability/<hero>/<name>.png.b64` and previews (`build/hero_icons/<hero>/`, sheet, HUD mock at GUI 2/3 via `icon_preview.py`). `--check` fails if a committed icon is stale. Art: `<hero>_icon_art.py` (`NAMES`, `FOLDER`, `PANEL`, `HUD`, `FLIGHT`).

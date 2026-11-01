@@ -9,7 +9,7 @@ import org.joml.Vector3f;
  * Soft additive shapes for POSITION_COLOR quad buffers (RenderType.lightning or a QUADS BufferBuilder):
  * radial-gradient discs, rings and tapered ribbons. Triangles are degenerate quads. Render thread only.
  */
-final class GlowDraw {
+public final class GlowDraw {
    private static final float[] COS = new float[65];
    private static final float[] SIN = new float[65];
 
@@ -28,12 +28,12 @@ final class GlowDraw {
     * Disc in the plane of the unit axes (ax, bx) around {@code c}: solid core (alpha {@code a}) out to {@code core} of the
     * radius, fading to zero at the rim. 16 sectors.
     */
-   static void disc(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f ax, Vector3f bx, float radius, float core, int r, int g, int b, int a) {
+   public static void disc(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f ax, Vector3f bx, float radius, float core, int r, int g, int b, int a) {
       disc(vc, m, c, ax, bx, radius, core, 16, r, g, b, a);
    }
 
    /** {@link #disc} with 8, 16, 32 or 64 sectors (cheap far shapes such as cloud puffs use 8). */
-   static void disc(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f ax, Vector3f bx, float radius, float core, int sectors, int r, int g, int b, int a) {
+   public static void disc(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f ax, Vector3f bx, float radius, float core, int sectors, int r, int g, int b, int a) {
       if (a <= 0 || radius <= 0.0F) {
          return;
       }
@@ -58,7 +58,7 @@ final class GlowDraw {
    }
 
    /** Ring band between {@code inner} and {@code outer} radii, brightest at {@code peak} (0 inner .. 1 outer). */
-   static void ring(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f ax, Vector3f bx, float inner, float outer, float peak, int segments,
+   public static void ring(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f ax, Vector3f bx, float inner, float outer, float peak, int segments,
       int r, int g, int b, int a) {
       if (a <= 0 || outer <= inner) {
          return;
@@ -84,7 +84,7 @@ final class GlowDraw {
     * Camera-facing ribbon from {@code p0} to {@code p1} (camera-relative), half-width {@code w0} → {@code w1}, alpha
     * {@code a0} → {@code a1}; {@code toCam} is any vector towards the eye. Bright core plus a soft edge.
     */
-   static void ribbon(VertexConsumer vc, Matrix4f m, Vector3f p0, Vector3f p1, Vector3f toCam, float w0, float w1, int r, int g, int b, int a0, int a1) {
+   public static void ribbon(VertexConsumer vc, Matrix4f m, Vector3f p0, Vector3f p1, Vector3f toCam, float w0, float w1, int r, int g, int b, int a0, int a1) {
       float dx = p1.x - p0.x, dy = p1.y - p0.y, dz = p1.z - p0.z;
       float sx = dy * toCam.z - dz * toCam.y;
       float sy = dz * toCam.x - dx * toCam.z;
@@ -108,7 +108,7 @@ final class GlowDraw {
    }
 
    /** Camera-facing soft disc: {@code left}/{@code up} are the camera axes. */
-   static void billboard(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f left, Vector3f up, float radius, float core, int r, int g, int b, int a) {
+   public static void billboard(VertexConsumer vc, Matrix4f m, Vector3f c, Vector3f left, Vector3f up, float radius, float core, int r, int g, int b, int a) {
       disc(vc, m, c, left, up, radius, core, r, g, b, a);
    }
 
@@ -116,11 +116,11 @@ final class GlowDraw {
       vertex(vc, m, c.x + ax.x * u + bx.x * v, c.y + ax.y * u + bx.y * v, c.z + ax.z * u + bx.z * v, r, g, b, a);
    }
 
-   static void vertex(VertexConsumer vc, Matrix4f m, float x, float y, float z, int r, int g, int b, int a) {
+   public static void vertex(VertexConsumer vc, Matrix4f m, float x, float y, float z, int r, int g, int b, int a) {
       vc.vertex(m, x, y, z).color(clamp(r), clamp(g), clamp(b), clamp(a)).endVertex();
    }
 
-   static int clamp(int v) {
+   public static int clamp(int v) {
       return v < 0 ? 0 : Math.min(255, v);
    }
 }

@@ -25,6 +25,8 @@ import net.minecraftforge.event.ForgeEventFactory;
 public class MeteorEntity extends Projectile {
    /** False for meteor-rain meteors: an endless rain must not pile up invulnerable gun parts. */
    private boolean dropsLoot = true;
+   /** True for meteor-rain meteors: the impact starts the spreading city fire (Meteor Rain 2.0). */
+   private boolean ignitesCity;
 
    public MeteorEntity(EntityType<? extends Projectile> pEntityType, Level pLevel) {
       super(pEntityType, pLevel);
@@ -38,11 +40,29 @@ public class MeteorEntity extends Projectile {
       return this.dropsLoot;
    }
 
+   public void setIgnitesCity(boolean ignitesCity) {
+      this.ignitesCity = ignitesCity;
+   }
+
+   public boolean ignitesCity() {
+      return this.ignitesCity;
+   }
+
+   /** Rendering only: the glowing head and its plasma tail read from far away (tracking range stays 10 chunks). */
+   @Override
+   public boolean shouldRenderAtSqrDistance(double distanceSq) {
+      return distanceSq < 256.0 * 256.0;
+   }
+
    @Override
    protected void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
       super.addAdditionalSaveData(tag);
       if (!this.dropsLoot) {
          tag.putBoolean("NoLoot", true);
+      }
+
+      if (this.ignitesCity) {
+         tag.putBoolean("CityFire", true);
       }
    }
 
@@ -50,6 +70,7 @@ public class MeteorEntity extends Projectile {
    protected void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
       super.readAdditionalSaveData(tag);
       this.dropsLoot = !tag.getBoolean("NoLoot");
+      this.ignitesCity = tag.getBoolean("CityFire");
    }
 
    public void tick() {
@@ -63,14 +84,8 @@ public class MeteorEntity extends Projectile {
          Vec3 movement = this.getDeltaMovement();
          this.setPos(this.getX() + movement.x, this.getY() + movement.y, this.getZ() + movement.z);
          if (this.level().isClientSide()) {
-            this.level()
-               .addParticle(
-                  ParticleTypes.LARGE_SMOKE, this.getX(), this.getY() + 0.5, this.getZ(), -movement.x * 0.5, 0.1, -movement.z * 0.5
-               );
-            this.level()
-               .addParticle(
-                  ParticleTypes.FLAME, this.getX(), this.getY() + 0.5, this.getZ(), -movement.x * 0.5, 0.1, -movement.z * 0.5
-               );
+            // flame, sparks and turbulent smoke of the entry trail (client only, distance LOD)
+            dev.baranhan.viltrumitecore.client.render.vfx.MeteorTrailFx.tick(this);
          }
       }
    }
@@ -115,7 +130,12 @@ public class MeteorEntity extends Projectile {
             this.level().addFreshEntity(itemEntity);
          }
 
+         if (this.ignitesCity && this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            dev.baranhan.viltrumitecore.worldevent.meteor.fire.CityFire.meteorImpact(serverLevel, this.position());
+         }
+
          this.level().broadcastEntityEvent(this, (byte)77);
+         farImpact();
          this.discard();
       }
    }
@@ -128,27 +148,30 @@ public class MeteorEntity extends Projectile {
          MeteorImpactVFXManager.playImpactVFX(vfxPos, yaw, pitch);
          this.level().addAlwaysVisibleParticle(ParticleTypes.EXPLOSION_EMITTER, true, this.getX(), this.getY(), this.getZ(), 0.0, 0.0, 0.0);
          this.level().addAlwaysVisibleParticle(ParticleTypes.FLASH, true, this.getX(), this.getY() + 1.0, this.getZ(), 0.0, 0.0, 0.0);
-
-         for (int i = 0; i < 40; i++) {
-            double offsetX = (this.random.nextDouble() - 0.5) * 8.0;
-            double offsetZ = (this.random.nextDouble() - 0.5) * 8.0;
-            double speedY = 1.1 + this.random.nextDouble() * 2.0;
-            this.level()
-               .addParticle(
-                  (ParticleOptions)ViltrumiteParticles.GIANT_METEOR_SMOKE.get(),
-                  this.getX() + offsetX,
-                  this.getY() + 1.0,
-                  this.getZ() + offsetZ,
-                  offsetX * 0.1,
-                  speedY,
-                  offsetZ * 0.1
-               );
-         }
+         // Meteor Rain 2.0: layered dust, billow, hot column, debris sparks, ash, a smouldering crater and the
+         // distance-aware impact sound replace the old flat smoke puffs
+         dev.baranhan.viltrumitecore.client.render.vfx.MeteorImpactFx.play(this.level(), this.position(), this.getDeltaMovement());
       } else {
          super.handleEntityEvent(id);
       }
    }
 
    protected void defineSynchedData() {
+   }
+
+   /** Players beyond the entity tracking range still hear a distant impact (sound only, no VFX). */
+   private void farImpact() {
+      if (!(this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+         return;
+      }
+
+      dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket packet = new dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket(
+         dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket.FAR_IMPACT, this.position(), 1.0F, null);
+      for (net.minecraft.server.level.ServerPlayer p : serverLevel.players()) {
+         double d2 = p.distanceToSqr(this);
+         if (d2 > 150.0 * 150.0 && d2 < 480.0 * 480.0) {
+            dev.baranhan.viltrumitecore.network.CoreMessages.sendToPlayer(packet, p);
+         }
+      }
    }
 }

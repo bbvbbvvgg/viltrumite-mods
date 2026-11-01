@@ -1,7 +1,9 @@
 package dev.baranhan.viltrumitecore.client.chitauri;
 
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriEntities;
+import dev.baranhan.viltrumitecore.client.hero.speech.HeroPortraits;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -14,10 +16,22 @@ public final class ChitauriClientSetup {
    }
 
    @SubscribeEvent
+   public static void onClientSetup(FMLClientSetupEvent event) {
+      // hive orders and commanders' calls in the subtitles show the commander's bust
+      HeroPortraits.registerVoice("chitauri", ChitauriPortrait.INSTANCE);
+   }
+
+   @SubscribeEvent
    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
       event.registerEntityRenderer(ChitauriEntities.SOLDIER.get(), ChitauriSoldierRenderer::new);
       event.registerEntityRenderer(ChitauriEntities.CHARIOT.get(), ChitauriChariotRenderer::new);
       event.registerEntityRenderer(ChitauriEntities.LEVIATHAN.get(), ChitauriLeviathanRenderer::new);
       event.registerEntityRenderer(ChitauriEntities.BOLT.get(), ChitauriBoltRenderer::new);
+      event.registerEntityRenderer(ChitauriEntities.CAPTOR.get(), c -> new ChitauriEliteRenderer<>(c, ChitauriEliteRenderer.CAPTOR));
+      event.registerEntityRenderer(ChitauriEntities.HEAVY.get(), c -> new ChitauriEliteRenderer<>(c, ChitauriEliteRenderer.HEAVY));
+      event.registerEntityRenderer(ChitauriEntities.COMMANDER.get(), c -> new ChitauriEliteRenderer<>(c, ChitauriEliteRenderer.COMMANDER));
+      event.registerEntityRenderer(ChitauriEntities.INTERCEPTOR.get(), ChitauriInterceptorRenderer::new);
+      event.registerEntityRenderer(ChitauriEntities.SIEGE.get(), ChitauriSiegeRenderer::new);
+      event.registerEntityRenderer(ChitauriEntities.BEACON.get(), ChitauriBeaconRenderer::new);
    }
 }

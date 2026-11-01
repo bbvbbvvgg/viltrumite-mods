@@ -71,6 +71,9 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
    private float spin;
    private float roll;
    public int squad = -1;
+   /** War layer: the sector point this chariot patrols over and drops its troopers at (null: around the anchor). */
+   @Nullable
+   private Vec3 orderPoint;
 
    // client
    public float clientRollO;
@@ -192,6 +195,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
          Vec3 v = this.getDeltaMovement().scale(0.5).add(0, -0.1, 0);
          s.setDeltaMovement(v);
          s.hasImpulse = true;
+         s.onDisembark();
       }
    }
 
@@ -334,7 +338,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
             }
          }
          case ATTACK -> {
-            if (this.target == null || !ChitauriMob.validTarget(this.target) || this.modeTicks > 700 || this.target.distanceToSqr(this) > 90.0 * 90.0) {
+            if (this.target == null || !ChitauriMob.pickTarget(this.target) || this.modeTicks > 700 || this.target.distanceToSqr(this) > 90.0 * 90.0) {
                this.target = null;
                this.setMode(Mode.PATROL);
                goal = pos.add(this.getDeltaMovement().scale(10.0));
@@ -488,7 +492,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
       if (pos.y > anchor.y + 58.0) {
          desired = desired.add(0, -0.08, 0);
       }
-      double leash = 120.0;
+      double leash = this.orderPoint != null ? 200.0 : 120.0;
       if (pos.distanceToSqr(anchor) > leash * leash) {
          desired = desired.add(anchor.subtract(pos).normalize().scale(0.25));
       }
@@ -520,12 +524,27 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
       this.entityData.set(ROLL, this.roll);
    }
 
+   /** War layer: patrol and drop around this point from now on (null: back to the anchor). */
+   public void setOrderPoint(@Nullable Vec3 point) {
+      this.orderPoint = point;
+      if (point != null && this.mode == Mode.PATROL) {
+         this.waypoint = null;
+      }
+   }
+
+   @Nullable
+   public Vec3 orderPoint() {
+      return this.orderPoint;
+   }
+
    private Vec3 patrolPoint(ServerLevel level, Vec3 anchor) {
+      Vec3 centre = this.orderPoint != null ? this.orderPoint : anchor;
+      double reach = this.orderPoint != null ? 26.0 : 48.0;
       for (int i = 0; i < 8; i++) {
          double a = this.random.nextDouble() * Math.PI * 2.0;
-         double r = 12.0 + this.random.nextDouble() * 48.0;
-         double x = anchor.x + Math.cos(a) * r;
-         double z = anchor.z + Math.sin(a) * r;
+         double r = 12.0 + this.random.nextDouble() * reach;
+         double x = centre.x + Math.cos(a) * r;
+         double z = centre.z + Math.sin(a) * r;
          int s = ChitauriTerrain.surface(level, x, z);
          if (s == ChitauriTerrain.UNKNOWN || !ChitauriTerrain.ticking(level, x, s, z)) {
             continue;
@@ -539,7 +558,7 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
    private LivingEntity findTarget(ServerLevel level, double range) {
       LivingEntity best = null;
       double bestScore = Double.MAX_VALUE;
-      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range), ChitauriMob::validTarget)) {
+      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range), ChitauriMob::pickTarget)) {
          double d = e.distanceToSqr(this);
          if (e instanceof Player) {
             d *= 0.5; // heroes first
@@ -555,7 +574,10 @@ public class ChitauriChariot extends Mob implements ChitauriMob, net.minecraft.w
    @Nullable
    private Vec3 pickDropPoint(ServerLevel level, Vec3 anchor) {
       LivingEntity t = this.findTarget(level, 64.0);
-      Vec3 base = t != null ? t.position() : anchor;
+      if (t != null && this.orderPoint != null && t.position().distanceToSqr(this.orderPoint) > 28.0 * 28.0) {
+         t = null; // ordered elsewhere: the squad lands at its sector, not on the nearest hero
+      }
+      Vec3 base = t != null ? t.position() : this.orderPoint != null ? this.orderPoint : anchor;
       Vec3 best = null;
       double bestScore = -1.0E9;
       for (int i = 0; i < 10; i++) {

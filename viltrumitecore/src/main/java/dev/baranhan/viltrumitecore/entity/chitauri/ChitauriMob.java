@@ -32,7 +32,8 @@ public interface ChitauriMob {
     * that is fighting a Chitauri (hero summons). Never another Chitauri.
     */
    static boolean validTarget(@Nullable LivingEntity target) {
-      if (target == null || !target.isAlive() || is(target) || target.isSpectator()) {
+      if (target == null || !target.isAlive() || is(target) || target.isSpectator()
+         || dev.baranhan.viltrumitecore.city.citizen.CitizenCaptivity.isHeld(target)) {
          return false;
       }
       if (target instanceof Player player) {
@@ -42,5 +43,22 @@ public interface ChitauriMob {
          return true;
       }
       return target instanceof Mob mob && is(mob.getTarget());
+   }
+
+   /**
+    * Who a Chitauri picks as a target. Same as {@link #validTarget}, except civilians while a war is on: the hive wants
+    * the city's people alive (Captors take them, pylons hold them), so soldiers, chariots, interceptors, siege lancers
+    * and Leviathans do not hunt them. A civilian caught in a blast still gets hurt (area damage uses validTarget), and
+    * one who hits a Chitauri is fought back through the hurt-by goal.
+    */
+   static boolean pickTarget(@Nullable LivingEntity target) {
+      if (!validTarget(target)) {
+         return false;
+      }
+      if (!(target instanceof CitizenEntity) && !(target instanceof AbstractVillager)) {
+         return true;
+      }
+      return !(target.level() instanceof net.minecraft.server.level.ServerLevel level)
+         || dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriWar.of(level) == null;
    }
 }

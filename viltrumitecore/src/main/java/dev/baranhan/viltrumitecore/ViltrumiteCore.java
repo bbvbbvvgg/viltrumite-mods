@@ -111,6 +111,7 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.ironman.IronManMarkSounds.init();
       dev.baranhan.viltrumitecore.hero.ironman.IronManHulkbusterSounds.init();
       dev.baranhan.viltrumitecore.hero.ironman.IronManLegionSounds.init();
+      dev.baranhan.viltrumitecore.worldevent.meteor.MeteorRainSounds.init();
       dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds.init();
       dev.baranhan.viltrumitecore.hero.thor.ThorSounds.init();
       dev.baranhan.viltrumitecore.hero.dio.DioSounds.init();
@@ -122,10 +123,15 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
       dev.baranhan.viltrumitecore.hero.captain.CaptainSounds.init();
+      // Red Hulk (docs/design/2026-11-01-red-hulk-design.md): his sound holders and FX preset ids 700+.
+      dev.baranhan.viltrumitecore.hero.redhulk.RedHulkSounds.init();
+      dev.baranhan.viltrumitecore.hero.redhulk.RedHulkFx.init();
       // Contextual interactions (docs/contextual-interactions.json): their own sound holders.
       dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();
       // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
       dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
+      // ULTRON — ВОССТАНИЕ МАШИН (docs/plans/2026-11-01-ultron-uprising.md): sounds and the machines' entity register.
+      dev.baranhan.viltrumitecore.worldevent.ultron.UltronSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);

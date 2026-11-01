@@ -52,6 +52,8 @@ public final class HeroSubtitles {
    private static long lastFrame;
    /** ForgeGui left height right after an armor row that drew nothing (no armor), or -1. */
    private static int emptyArmorLeft = -1;
+   /** Client tick the shown line was last drawn (speaking state for the speaker's renderer). */
+   private static long shownTick = Long.MIN_VALUE / 2;
    /** Opt-in playtest log (client.hero.speech.qa.SubtitlePlaytest); null in a normal game. */
    @Nullable
    public static java.util.function.Consumer<String> qaLog;
@@ -61,7 +63,7 @@ public final class HeroSubtitles {
 
    /** One received line, its text resolved in the client language at arrival. */
    record Cue(int serial, UUID speaker, int entityId, String name, @Nullable HeroId hero, String lineId, List<String> fragments, int priority,
-      int durationTicks, boolean own) implements SubtitleQueue.Cue {
+      int durationTicks, boolean own, String voice) implements SubtitleQueue.Cue {
    }
 
    /** The laid-out shown cue: re-laid when the screen width changes. */
@@ -107,11 +109,15 @@ public final class HeroSubtitles {
       for (String fragment : packet.fragments()) {
          // A key missing from the client's lang (an older or partial resource pack) is skipped, never
          // shown raw: Language falls back to en_us first, so only a key absent everywhere is dropped.
-         if (!packet.literal() && !language.has(fragment)) {
-            continue;
+         String text;
+         if (packet.literal()) {
+            text = fragment;
+         } else {
+            text = format(language, fragment);
+            if (text == null) {
+               continue;
+            }
          }
-
-         String text = packet.literal() ? fragment : language.getOrDefault(fragment);
          if (!text.isBlank()) {
             fragments.add(text.replace("\\n", "\n"));
          }
@@ -125,7 +131,54 @@ public final class HeroSubtitles {
       Minecraft mc = Minecraft.getInstance();
       boolean own = mc.player != null && mc.player.getUUID().equals(packet.speaker());
       return new Cue(packet.serial(), packet.speaker(), packet.entityId(), name.toUpperCase(Locale.ROOT), HeroId.fromKey(packet.heroKey()),
-         packet.lineId(), List.copyOf(fragments), packet.priority(), packet.durationTicks(), own);
+         packet.lineId(), List.copyOf(fragments), packet.priority(), packet.durationTicks(), own, packet.heroKey());
+   }
+
+   /** Separator of a fragment with arguments: {@code key<US>arg1<US>arg2} (world-event lines naming a sector). */
+   public static final char ARG_SEPARATOR = '\u001F';
+
+   /**
+    * Translates one fragment. A plain fragment is a lang key; {@code key<US>args...} formats the key's {@code %s} with the
+    * arguments, each translated when the lang has it (sector names) and used literally otherwise (district names). Null
+    * when the key is missing everywhere (skipped, never shown raw).
+    */
+   @Nullable
+   static String format(Language language, String fragment) {
+      int cut = fragment.indexOf(ARG_SEPARATOR);
+      String key = cut < 0 ? fragment : fragment.substring(0, cut);
+      if (!language.has(key)) {
+         return null;
+      }
+      String pattern = language.getOrDefault(key);
+      if (cut < 0) {
+         return pattern;
+      }
+      String[] parts = fragment.substring(cut + 1).split(String.valueOf(ARG_SEPARATOR), -1);
+      Object[] args = new Object[parts.length];
+      for (int i = 0; i < parts.length; i++) {
+         args[i] = language.has(parts[i]) ? language.getOrDefault(parts[i]) : parts[i];
+      }
+      try {
+         return String.format(Locale.ROOT, pattern, args);
+      } catch (java.util.IllegalFormatException e) {
+         return pattern;
+      }
+   }
+
+   /**
+    * Entity id of the body whose line is on screen right now, or -1: a world voice's renderer (a villain's
+    * jaw and face) animates while its line is shown.
+    */
+   public static int speakingEntity() {
+      Shown s = shown;
+      return s == null || ticks - shownTick > 4 ? -1 : s.cue().entityId();
+   }
+
+   /** Voice key of the line on screen right now (a world voice or a hero key), or null. */
+   @Nullable
+   public static String speakingVoice() {
+      Shown s = shown;
+      return s == null || ticks - shownTick > 4 ? null : s.cue().voice();
    }
 
    public static void clear() {
@@ -226,6 +279,8 @@ public final class HeroSubtitles {
          return;
       }
 
+      shownTick = ticks;
+
       SubtitleLayout.Result layout = current.layout();
       // Forge reserves the armor row even without armor; when nothing was drawn there and nothing
       // came after it on the left, the panel may use that empty row (as in the reference).
@@ -277,7 +332,7 @@ public final class HeroSubtitles {
          float px = x + layout.textWidth() + SubtitleLayout.GAP;
          HeroPortraits.Frame box = new HeroPortraits.Frame(px + 2.0F, y + 2.0F, layout.portraitWidth() - 4.0F, layout.height() - 4.0F, frame.alpha(),
             Util.getMillis() / 1000.0, cue.speaker(), speaker(mc, cue));
-         HeroPortraits.resolve(cue.hero()).render(graphics, box);
+         HeroPortraits.resolve(cue.hero(), cue.voice()).render(graphics, box);
       }
    }
 

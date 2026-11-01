@@ -1,0 +1,283 @@
+{
+  "red_hulk.swing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/swing",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "red_hulk.swing_heavy": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.swing_heavy",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/swing_heavy",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "red_hulk.punch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.punch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/punch",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "red_hulk.punch_heavy": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.punch_heavy",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/punch_heavy",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "red_hulk.hammer": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.hammer",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/hammer",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "red_hulk.grab": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.grab",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/grab",
+        "attenuation_distance": 14
+      }
+    ]
+  },
+  "red_hulk.squeeze": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.squeeze",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/squeeze",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "red_hulk.throw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/throw",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "red_hulk.throw_impact": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.throw_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/throw_impact",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "red_hulk.clap": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.clap",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/clap",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "red_hulk.seismic": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.seismic",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/seismic",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "red_hulk.leap_launch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.leap_launch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/leap_launch",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "red_hulk.leap_land": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.leap_land",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/leap_land",
+        "attenuation_distance": 56
+      }
+    ]
+  },
+  "red_hulk.blast_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.blast_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/blast_charge",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "red_hulk.blast_fire": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.blast_fire",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/blast_fire",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "red_hulk.fury_roar": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.fury_roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/fury_roar",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "red_hulk.overheat": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.overheat",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/overheat",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "red_hulk.vent": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.vent",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/vent",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "red_hulk.ult_charge": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.ult_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/ult_charge",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "red_hulk.ult_release": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.ult_release",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/ult_release",
+        "attenuation_distance": 72
+      }
+    ]
+  },
+  "red_hulk.ult_recover": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.ult_recover",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/ult_recover",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "red_hulk.landing": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.landing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/landing",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "red_hulk.footstep": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.footstep",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/footstep",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "red_hulk.heat_up": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.heat_up",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/heat_up",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "red_hulk.heat_hum": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.heat_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/heat_hum",
+        "attenuation_distance": 12,
+        "stream": false
+      }
+    ]
+  },
+  "red_hulk.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.refuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/refuse",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "red_hulk.enter": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.enter",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/enter",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "red_hulk.hurt": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.red_hulk.hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:red_hulk/hurt",
+        "attenuation_distance": 16
+      }
+    ]
+  }
+}

@@ -197,6 +197,8 @@ public final class MeteorRain {
 
          MeteorEntity meteor = MeteorSpawnEvent.launch(level, impact, false);
          if (meteor != null) {
+            // Meteor Rain 2.0: rain impacts start the spreading city fire (motion and blast unchanged)
+            meteor.setIgnitesCity(true);
             return meteor;
          }
       }

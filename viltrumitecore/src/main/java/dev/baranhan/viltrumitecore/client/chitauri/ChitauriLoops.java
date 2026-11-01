@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.client.chitauri;
 
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriChariot;
+import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriInterceptor;
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriLeviathan;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSounds;
 import java.util.ArrayList;
@@ -53,6 +54,11 @@ public final class ChitauriLoops {
 
    private static final Map<Integer, Loop> ENGINES = new HashMap<>();
    private static final Map<Integer, Loop> LEVIATHANS = new HashMap<>();
+   /** Interceptor engine loops (nearest {@link #MAX_CRAFT} skiffs). */
+   private static final Map<Integer, Loop> CRAFT = new HashMap<>();
+   private static final Map<Integer, Integer> CRAFT_RANK = new HashMap<>();
+   public static final int MAX_CRAFT = 3;
+   public static final double CRAFT_RANGE = 48.0;
    private static final Map<Integer, Integer> RETRY_AT = new HashMap<>();
    private static final Map<Integer, Double> LAST_DIST = new HashMap<>();
    /** Distance rank (0 = nearest) of the chariots in engine range this tick. */
@@ -128,10 +134,63 @@ public final class ChitauriLoops {
       Vec3 eye = mc.gameRenderer.getMainCamera().getPosition();
       prune(mc, ENGINES);
       prune(mc, LEVIATHANS);
+      prune(mc, CRAFT);
       RETRY_AT.values().removeIf(at -> at <= clock);
       portal(mc, eye);
       engines(mc, eye);
       leviathans(mc, eye);
+      craft(mc, eye);
+   }
+
+   /** Pure: interceptor engine loudness by speed and flight state (perched it idles, boosting it screams). */
+   public static float craftVolume(double speed, byte state) {
+      float s = (float)Mth.clamp(speed / 0.95, 0.0, 1.0);
+      return switch (state) {
+         case ChitauriInterceptor.PERCH -> 0.18F;
+         case ChitauriInterceptor.BOOST -> 0.95F;
+         case ChitauriInterceptor.FALLING -> 0.7F;
+         default -> 0.35F + 0.45F * s;
+      };
+   }
+
+   /** Pure: interceptor engine pitch (rises with speed, jumps on boost, sags and wobbles while it falls). */
+   public static float craftPitch(double speed, byte state, int tick) {
+      float s = (float)Mth.clamp(speed / 0.95, 0.0, 1.0);
+      float pitch = 0.85F + 0.35F * s + (state == ChitauriInterceptor.BOOST ? 0.2F : 0.0F) - (state == ChitauriInterceptor.PERCH ? 0.2F : 0.0F);
+      return state == ChitauriInterceptor.FALLING ? pitch * 0.78F + 0.07F * Mth.sin(tick * 1.1F) : pitch;
+   }
+
+   private static void craft(Minecraft mc, Vec3 eye) {
+      AABB box = new AABB(eye, eye).inflate(CRAFT_RANGE + 8.0);
+      List<ChitauriInterceptor> near = new ArrayList<>(mc.level.getEntitiesOfClass(ChitauriInterceptor.class, box,
+         c -> !c.isRemoved() && c.distanceToSqr(eye) <= (CRAFT_RANGE + 8.0) * (CRAFT_RANGE + 8.0)));
+      near.sort(Comparator.comparingDouble(c -> c.distanceToSqr(eye)));
+      CRAFT_RANK.clear();
+      for (int i = 0; i < near.size(); i++) {
+         CRAFT_RANK.put(near.get(i).getId(), i);
+      }
+      for (ChitauriInterceptor craft : near) {
+         int id = craft.getId();
+         double d = Math.sqrt(craft.distanceToSqr(eye));
+         if (d <= CRAFT_RANGE && CRAFT_RANK.get(id) < MAX_CRAFT && CRAFT.size() < MAX_CRAFT + 1
+               && !CRAFT.containsKey(id) && !RETRY_AT.containsKey(id)) {
+            Loop loop = new Loop(ChitauriSounds.INTERCEPTOR_ENGINE.get(), SoundSource.HOSTILE, craft, false) {
+               @Override
+               Target target() {
+                  ChitauriInterceptor c = (ChitauriInterceptor)this.entity;
+                  Minecraft m = Minecraft.getInstance();
+                  if (c.isRemoved() || m.level == null || CRAFT_RANK.getOrDefault(c.getId(), Integer.MAX_VALUE) > MAX_CRAFT
+                        || Math.sqrt(c.distanceToSqr(m.gameRenderer.getMainCamera().getPosition())) > CRAFT_RANGE + 8.0) {
+                     return Target.OFF;
+                  }
+                  double v = c.clientSpeed;
+                  return new Target(craftVolume(v, c.state()), craftPitch(v, c.state(), c.tickCount));
+               }
+            };
+            CRAFT.put(id, loop);
+            mc.getSoundManager().play(loop);
+         }
+      }
    }
 
    private static void prune(Minecraft mc, Map<Integer, Loop> loops) {
@@ -291,6 +350,7 @@ public final class ChitauriLoops {
       Minecraft mc = Minecraft.getInstance();
       List<Loop> all = new ArrayList<>(ENGINES.values());
       all.addAll(LEVIATHANS.values());
+      all.addAll(CRAFT.values());
       if (portal != null) {
          all.add(portal);
       }
@@ -302,6 +362,8 @@ public final class ChitauriLoops {
       }
       ENGINES.clear();
       LEVIATHANS.clear();
+      CRAFT.clear();
+      CRAFT_RANK.clear();
       RETRY_AT.clear();
       RANK.clear();
       LAST_DIST.clear();
@@ -312,7 +374,7 @@ public final class ChitauriLoops {
 
    /** Loops currently tracked (tests and the debug HUD). */
    public static int playing() {
-      return ENGINES.size() + LEVIATHANS.size() + (portal != null ? 1 : 0);
+      return ENGINES.size() + LEVIATHANS.size() + CRAFT.size() + (portal != null ? 1 : 0);
    }
 
    record Target(float volume, float pitch) {

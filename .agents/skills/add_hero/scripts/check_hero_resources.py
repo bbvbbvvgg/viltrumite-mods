@@ -37,7 +37,8 @@ def load_json(path):
 def asset_exists(mod_dir, ns, rel):
     res = os.path.join(mod_dir, "src/main/resources/assets", ns, rel)
     b64 = os.path.join(mod_dir, "src/main/binassets/assets", ns, rel + ".b64")
-    return os.path.isfile(res) or os.path.isfile(b64)
+    # large binassets are split into <rel>.b64.part0..N (see decodeBinaryAssets in viltrumitecore/build.gradle)
+    return os.path.isfile(res) or os.path.isfile(b64) or os.path.isfile(b64 + ".part0")
 
 
 def java_files(mod_dir, hero):

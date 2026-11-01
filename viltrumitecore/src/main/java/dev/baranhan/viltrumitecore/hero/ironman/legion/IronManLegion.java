@@ -290,7 +290,8 @@ public final class IronManLegion {
             case RETURN -> {
                squad.event(LegionSquad.EVENT_RETURN);
                for (LegionSuitEntity suit : new ArrayList<>(squad.suits)) {
-                  if (suit.brain != null && suit.phase() != LegionPhase.CRASH) {
+                  // a taken-over suit does not answer the recall (its controller jams it)
+                  if (suit.brain != null && suit.phase() != LegionPhase.CRASH && !suit.hijacked()) {
                      suit.brain.leave(false);
                   }
                }

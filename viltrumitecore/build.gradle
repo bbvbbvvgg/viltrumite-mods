@@ -8,7 +8,7 @@ plugins {
 // core uses classes from viltrumiteflight
 evaluationDependsOn(':viltrumiteflight')
 
-version = '1.64.0'
+version = '1.66.0'
 group = 'dev.baranhan.viltrumitecore'
 base { archivesName = 'reforgedcodex-core' }
 
@@ -157,7 +157,8 @@ processResources {
 // Binary assets (sounds, textures) are stored as base64 text under
 // src/main/binassets/<resource path>.b64 and decoded into generated resources. A file whose text
 // would pass one GitHub push request (~60 KB, the Thanos music) is split at line boundaries into
-// <resource path>.b64.part0..N, joined in numeric order before decoding.
+// <resource path>.b64.part0..N, joined in numeric order before decoding. Large text resources (model and
+// clip JSON) are split the same way as plain <resource path>.part0..N and joined without decoding.
 def binAssetsSrc = file('src/main/binassets')
 def binAssetsOut = layout.buildDirectory.dir('generated/binassets')
 def decodeBinaryAssets = tasks.register('decodeBinaryAssets') {
@@ -168,6 +169,7 @@ def decodeBinaryAssets = tasks.register('decodeBinaryAssets') {
         project.delete(out)
         out.mkdirs()
         def parts = [:]
+        def textParts = [:]
         binAssetsSrc.eachFileRecurse(groovy.io.FileType.FILES) { f ->
             def rel = binAssetsSrc.toPath().relativize(f.toPath()).toString()
             if (f.name.endsWith('.b64')) {
@@ -176,10 +178,21 @@ def decodeBinaryAssets = tasks.register('decodeBinaryAssets') {
                 target.bytes = Base64.mimeDecoder.decode(f.getText('US-ASCII').trim())
             } else {
                 def m = rel =~ /^(.*)\.b64\.part(\d+)$/
+                def t = rel =~ /^(.*)\.part(\d+)$/
                 if (m.matches()) {
                     parts.computeIfAbsent(m.group(1)) { [:] }.put(m.group(2) as int, f)
+                } else if (t.matches()) {
+                    textParts.computeIfAbsent(t.group(1)) { [:] }.put(t.group(2) as int, f)
                 }
             }
+        }
+        textParts.each { rel, chunks ->
+            if (chunks.keySet() != (0..<chunks.size()).toSet()) {
+                throw new GradleException("text asset ${rel}: parts ${chunks.keySet().sort()} are not 0..${chunks.size() - 1}")
+            }
+            def target = new File(out, rel)
+            target.parentFile.mkdirs()
+            target.setText((0..<chunks.size()).collect { chunks[it].getText('UTF-8') }.join(''), 'UTF-8')
         }
         parts.each { rel, chunks ->
             if (chunks.keySet() != (0..<chunks.size()).toSet()) {

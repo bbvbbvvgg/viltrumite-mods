@@ -11,6 +11,8 @@ vanilla Minecraft sound is used by the event. Raw intermediate files are never c
 | `geo/chitauri/soldier.geo.json`, `animations/chitauri/soldier.animation.json`, `animations/chitauri/soldier_states.animation.json`, `textures/entity/chitauri/soldier{,_glow}.png.b64` | `tools/assets/chitauri_soldier.py` (`chitauri_lib.py`, `jinwoo_geo.py`) | ~160 cubes, jointed fingers, armour plates, hoses, staff rifle with energy cell; clips idle, walk, run, aim, shoot, melee, hurt, fall, land, death, sever, mounted, mounted_shoot, mounted_pilot; off hand solved onto the rifle grip |
 | `geo/chitauri/chariot.geo.json`, `animations/chitauri/chariot.animation.json`, `textures/entity/chitauri/chariot{,_glow}.png.b64` | `tools/assets/chitauri_chariot.py` | ~100 cubes: hull, insectoid prow, belly cannon, two engine pods, side blades, pilot console and grab bar; clips idle, cannon; top-level bones double as breakup pieces |
 | `geo/chitauri/leviathan_{head,segment,tail}.geo.json`, `animations/chitauri/leviathan.animation.json`, `textures/entity/chitauri/leviathan_{head,segment,tail}{,_glow}.png.b64` | `tools/assets/chitauri_leviathan.py` | armoured head with hinged jaw, teeth, eyes and crest; one body ring drawn ten times (`LeviathanTrail.SCALE`); tail with fluke; clips head idle / bite / roar / hurt / dead, segment swim / dead, tail swim / dead |
+| `geo/chitauri/{captor,heavy,commander}.geo.json`, `animations/chitauri/{captor,heavy,commander}{,_states,_special}.animation.json`, `textures/entity/chitauri/{captor,heavy,commander}{,_glow}.png.b64` | `tools/assets/chitauri_units.py` (+ `chitauri_units_geo.py`, shares `chitauri_soldier.py` joint layout and hand solvers) | elite infantry, 139-152 cubes each, own silhouettes/heads/weapons/special bones. Captor: snare lance with a forked clamp, back clamp arms, cuffs, padded shoulder for the captive. Heavy (renders x1.25): plasma drum cannon, reactor pack with vent flaps, breakable chest plate (`armor_chest`). Commander: gold crown, glaive with violet edge, 3-segment cape, antenna fins. Clips (21-23 per unit): idle, walk, run, turn_l, turn_r, aim, shoot, reload, melee, hurt, knockback, fall, land, death, sever, disembark, mounted, mounted_shoot + captor capture/carry/drop, heavy slam/vent/armor_break/stagger, commander idle_planted/signal/command/sweep/stagger |
+| `geo/chitauri/{interceptor,siege,beacon}.geo.json`, `animations/chitauri/{interceptor,siege,beacon}.animation.json`, `textures/entity/chitauri/{interceptor,siege,beacon}{,_glow}.png.b64` | `tools/assets/chitauri_craft.py` | Interceptor (71 cubes): one-seat blade-winged craft with pilot, folding wings, nozzle glows; clips cruise, hover, boost, brake, takeoff, perch, turn_l, turn_r, accel, maneuver, fire, hit, death_fall. Siege lancer (76 cubes): hover sled with a ribbed lance rail and stabiliser legs; clips idle, move, deploy, charge, fire, stagger, dying. Containment pylon (66 cubes): tripod mast with a cage emitter; clips deploy, idle, hurt, down |
 
 Paths are relative to `viltrumitecore/src/main/resources/assets/viltrumitecore/` (models, clips) and
 `viltrumitecore/src/main/binassets/assets/viltrumitecore/` (textures). Portal, beam, storm clouds, bolts, sparks
@@ -18,11 +20,11 @@ and smoke are drawn in code (`client/chitauri/ChitauriPortalClient`, `GlowDraw`,
 
 ## Sounds
 
-All 27 events (36 files; shots, impacts, chatter, steps and debris rotate 2-3 variants) are original procedural
-synthesis by `tools/sfx/chitauri.py` (seeded numpy noise, oscillators, inharmonic partials, STFT filters,
+All 58 events (68 files; shots, impacts, chatter, steps and debris rotate 2-3 variants) are original procedural
+synthesis by `tools/sfx/chitauri.py` (27 base events) and `tools/sfx/chitauri_units.py` (31 evolution events) (seeded numpy noise, oscillators, inharmonic partials, STFT filters,
 synthetic reverb; CC0-1.0), mono 44.1 kHz Vorbis (bitexact), packed as `.ogg.b64` in
 `viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/chitauri/`. Loops are built periodic (seamless).
-`python3 tools/sfx/chitauri.py --check` re-synthesises and compares the decoded PCM. Events:
+`python3 tools/sfx/chitauri.py --check` (same for `chitauri_units.py`) re-synthesises and compares the decoded PCM. Events:
 `viltrumitecore/src/main/sound-overlays/chitauri.json`; registry `worldevent/chitauri/ChitauriSounds`; subtitles in
 all 12 locales (`src/main/lang-overlays/chitauri/`). `ChitauriAssetsTest` keeps registry, overlay, files and
 subtitles in step and fails if the event's code references a vanilla `SoundEvents` constant.
@@ -56,6 +58,26 @@ subtitles in step and fails if the event's code references a vanilla `SoundEvent
 | `debris` | debris (1.70s attenuation_distance=38), debris_2 (1.70s attenuation_distance=38) | rubble falling from Leviathan smashes | one-shot | Rubble falls / Падают обломки |
 | `phase_horn` | phase_horn (3.20s attenuation_distance=40) | every phase change | one-shot | Chitauri war horn / Боевой рог читаури |
 | `sever` | sever (2.70s attenuation_distance=34) | hive link cut at CLOSING: soldiers collapse, chariots and Leviathans fall | one-shot | Hive link breaks / Связь с ульем рвётся |
+| `captor_grab` | captor_grab | Captor clamps a civilian (capture clip) | one-shot | Captor clamps a victim / Похититель хватает жертву |
+| `captor_tether` | captor_tether | Captor snare lance shot / tether lash | one-shot | Energy tether lashes / Хлещет энергетический аркан |
+| `captor_growl` | captor_growl | Captor ambient | one-shot | Captor growls / Рычит похититель |
+| `heavy_cannon` | heavy_cannon | Heavy plasma cannon shot | one-shot | Heavy cannon fires / Выстрел тяжёлой пушки |
+| `heavy_vent` | heavy_vent | Heavy overheat vent window (weak point open) | one-shot | Heavy vents steam / Тяжёлый стравливает пар |
+| `armor_break` | armor_break | Heavy chest plate broken (damage reduction removed) | one-shot | Heavy armor shatters / Броня тяжёлого раскалывается |
+| `heavy_slam` / `heavy_windup` | heavy_slam, heavy_windup | ground slam telegraph + impact | one-shot | Ground slam, Heavy winds up / Удар о землю, Тяжёлый замахивается |
+| `heavy_hurt` / `heavy_death` / `heavy_growl` | heavy_hurt, heavy_death, heavy_growl | Heavy hurt / death / ambient | one-shot | Heavy grunts, collapses, breathes |
+| `heavy_step` | heavy_step, heavy_step_2 | Heavy footsteps and landing | one-shot | Heavy footsteps / Тяжёлые шаги |
+| `commander_staff` / `commander_sweep` | commander_staff, commander_sweep | Commander glaive bolt / melee sweep | one-shot | Commander staff fires, Staff sweeps |
+| `commander_order` | commander_order | Commander rallies / re-targets the squad (no speech) | one-shot | Commander barks an order / Командир рявкает приказ |
+| `commander_signal` | commander_signal (attenuation 160) | Commander calls a reinforcement drop (budgeted by the director) | one-shot | War horn calls reinforcements / Боевой рог зовёт подкрепление |
+| `commander_growl` | commander_growl | Commander ambient | one-shot | Commander rumbles / Рокот командира |
+| `interceptor_engine` | interceptor_engine (48) | client loop per nearby interceptor (`ChitauriLoops`, 3 nearest) | loop | Interceptor whines / Вой перехватчика |
+| `interceptor_boost` / `interceptor_fire` / `interceptor_down` | interceptor_boost, interceptor_fire, interceptor_down | strafing run start / twin blasters / shot down | one-shot | Interceptor afterburner, blasters, goes down |
+| `siege_hum` | siege_hum (64) | siege lancer idle hum | loop-like ambient | Siege lancer hums / Гул осадного копейщика |
+| `siege_charge` / `siege_fire` / `siege_impact` | siege_charge (96), siege_fire (128), siege_impact (128) | lance charge telegraph (with ground marker), shot, shell blast | one-shot | Siege lance charging, fires, Siege shell explodes |
+| `beacon_deploy` / `beacon_hum` / `beacon_down` | beacon_deploy (64), beacon_hum (24), beacon_down (96) | containment pylon planted in a seized sector / idle / destroyed (captives freed) | one-shot | Pylon deploys, hums, destroyed |
+| `captive_freed` | captive_freed | civilian released (captor killed, pylon down, war end) | one-shot | Captive freed / Пленник освобождён |
+| `sector_seized` / `sector_liberated` | sector_seized (200), sector_liberated (200) | district captured by the hive / retaken by players | one-shot | Sector falls to the hive, Sector liberated |
 
 Known exceptions (block material sounds, not event sounds): a window hit by a bolt breaks through
 `Level.destroyBlock`, so the glass plays its own block-break sound; debris blocks that land use their block's

@@ -7,5 +7,18 @@
   "commands.viltrumitecore.meteor.stopped_all": "Se detuvieron %s lluvias de meteoritos",
   "commands.viltrumitecore.meteor.none": "No hay ninguna lluvia de meteoritos",
   "commands.viltrumitecore.meteor.entry": "%s: lluvia en %s desde hace %ss, %s meteoritos lanzados, %s en el aire",
-  "commands.viltrumitecore.meteor.entry.paused": "%s: lluvia en %s en pausa (el jugador está en otro mundo), %s lanzados, %s en el aire"
+  "commands.viltrumitecore.meteor.entry.paused": "%s: lluvia en %s en pausa (el jugador está en otro mundo), %s lanzados, %s en el aire",
+  "block.viltrumitecore.meteor_fire": "Fuego de meteorito",
+  "subtitles.viltrumitecore.meteor_rain.approach": "Un meteorito retumba en lo alto",
+  "subtitles.viltrumitecore.meteor_rain.roar": "Ruge un meteorito",
+  "subtitles.viltrumitecore.meteor_rain.whoosh": "Un meteorito pasa rozando",
+  "subtitles.viltrumitecore.meteor_rain.impact_near": "Impacto de meteorito",
+  "subtitles.viltrumitecore.meteor_rain.impact_far": "Impacto de meteorito lejano",
+  "subtitles.viltrumitecore.meteor_rain.shockwave": "Onda expansiva",
+  "subtitles.viltrumitecore.meteor_rain.debris": "Caen escombros",
+  "subtitles.viltrumitecore.meteor_rain.rubble": "Se asientan los escombros",
+  "subtitles.viltrumitecore.meteor_rain.fire_crackle": "Crepita el fuego",
+  "subtitles.viltrumitecore.meteor_rain.fire_roar": "Ruge el incendio",
+  "subtitles.viltrumitecore.meteor_rain.fire_flare": "Se aviva el fuego",
+  "subtitles.viltrumitecore.meteor_rain.brand": "Vuela una brasa ardiente"
 }
