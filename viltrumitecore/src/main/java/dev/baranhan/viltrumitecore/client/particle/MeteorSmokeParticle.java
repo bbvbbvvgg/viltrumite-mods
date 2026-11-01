@@ -26,7 +26,10 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       TRAIL(      1.3F, 1.0F,   3.6F,   80,  50,     1.0F, 0.55F, 0.22F, 9,     0.20F, 0.08F,  0.62F, 3,     0.94F, 0.004F, 0.012F, 0.04F),
       BILLOW(     3.0F, 3.0F,   2.6F,   100, 80,     1.0F, 0.60F, 0.30F, 12,    0.22F, 0.09F,  0.72F, 2,     0.90F, 0.006F, 0.010F, 0.02F),
       DUST(       2.4F, 2.6F,   2.3F,   60,  60,     0.0F, 0.0F,  0.0F,  0,     0.40F, 0.08F,  0.58F, 2,     0.86F, 0.0015F, 0.008F, 0.02F),
-      FIRE(       1.8F, 2.2F,   3.0F,   110, 80,     0.95F, 0.48F, 0.22F, 7,    0.17F, 0.08F,  0.46F, 4,     0.96F, 0.011F, 0.010F, 0.03F);
+      FIRE(       1.8F, 2.2F,   3.0F,   110, 80,     0.95F, 0.48F, 0.22F, 7,    0.17F, 0.08F,  0.46F, 4,     0.96F, 0.011F, 0.010F, 0.03F),
+      // structural collapse (client/collapse): cold concrete dust, a ground-hugging wall and a slow rising plume
+      COLLAPSE_DUST(3.0F, 2.6F,   2.7F,   140, 80,     0.0F, 0.0F,  0.0F,  0,     0.52F, 0.10F,  0.60F, 3,     0.93F, 0.0012F, 0.006F, 0.015F),
+      COLLAPSE_PLUME(3.4F, 3.0F,  3.1F,   170, 90,     0.0F, 0.0F,  0.0F,  0,     0.48F, 0.10F,  0.56F, 4,     0.90F, 0.006F, 0.008F, 0.015F);
 
       final float size, sizeVar, growth;
       final int life, lifeVar;

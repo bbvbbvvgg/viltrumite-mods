@@ -233,3 +233,13 @@ Sources list and cue sheet: `tools/assets/city_power_sources.md`.
   by hinchinbrook (freesound.org/s/496836), "Ambience City Quiet Night Air Tone" by leonelmail
   (freesound.org/s/427841).
 - Not auditioned by ear; checked by numbers and spectra only — the final mix needs a listening pass.
+## Structural collapse (city)
+
+Sources list and cue sheet: `tools/assets/city_collapse_sources.md`.
+
+### Own work
+- Noise grains and hiss layers — seeded synthesis by `tools/sfx/city_collapse.py` (CC0-1.0).
+- Collapse dust reuses the Meteor Rain smoke sprites (own work, see above); no new textures.
+
+### Recordings (CC0 1.0), mixed by `tools/sfx/city_collapse.py`
+- Freesound: "building collapse / demolition" by greyfeather (freesound.org/s/712918), "Concrete Breaks Several Denoised" by loganzsound (freesound.org/s/843339), "Concrete SMASH 2" by magnuswaker (freesound.org/s/522099), "Heavy Impacts" by Nightflame (freesound.org/s/397596), "Deep Boom" by Za-Games (freesound.org/s/539968), "Metallic Groan" by hinchinbrook (freesound.org/s/496836), "Bending Metal" by NachtmahrTV (freesound.org/s/556714), "Creaking Metal - Slow" by EagleStealthTeam (freesound.org/s/172411), "Metal Impact Creak Resonant" by SoundDesignForYou (freesound.org/s/697748), "rockfall2a.wav" by AlanCat (freesound.org/s/389303), "Rockslide_1.wav" by NinjaSharkStudios (freesound.org/s/608957), "Big falling debris (crash)" by xkeril (freesound.org/s/703247), "Foley_Impact_Stones_Strong_Debris" by Nox_Sound (freesound.org/s/554148), "bass rumble deep subterranean subsonic" by kyles (freesound.org/s/453405), "earth rumble.wav" by Reitanna (freesound.org/s/217657), "Quake Short.wav" by TheMinkman (freesound.org/s/199803), "Cinematic Deep Rumble" by swiftoid (freesound.org/s/184313), "Stone Impact Rubble Debris 14" by Sheyvan (freesound.org/s/569510), "Aggressive Clatter 01" by leonelmail (freesound.org/s/461696), "pour out gravel on the stairs.wav" by Dalibor (freesound.org/s/34175), "Tall dead tree splintering then falling" by ozymandias37 (freesound.org/s/869103).
