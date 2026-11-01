@@ -73,6 +73,7 @@ public final class BalanceModel {
    public static final HeroSheet DIO = new HeroSheet("DIO", 40.0F, 6.0F, 0.0F, 0.0F, 0.0F, false, BalanceTable.VAMPIRE);
    public static final HeroSheet JINWOO = new HeroSheet("Jinwoo", 40.0F, 6.0F, 2.0F, 0.0F, 0.0F, false, BalanceTable.MONARCH);
    public static final HeroSheet THOR = new HeroSheet("Thor", 44.0F, 8.0F, 4.0F, 0.0F, 0.0F, false, BalanceTable.THUNDER_GOD);
+   public static final HeroSheet RED_HULK = new HeroSheet("Red Hulk", 48.0F, 10.0F, 4.0F, 0.0F, 0.0F, false, BalanceTable.RAGE_TITAN);
    public static final HeroSheet IRON_MAN_SUIT = new HeroSheet("Iron Man (nano suit)", 40.0F, 28.0F, 8.0F, 0.0F, 0.0F, false, BalanceTable.ARMORED);
    public static final HeroSheet TONY = new HeroSheet("Tony (no suit)", 20.0F, 0.0F, 0.0F, 0.0F, 0.0F, false, BalanceTable.UNARMORED);
    public static final HeroSheet CAPTAIN = new HeroSheet("Captain America", 40.0F, 8.0F, 4.0F, 0.0F, 0.0F, false, BalanceTable.SUPER_SOLDIER);
@@ -80,7 +81,7 @@ public final class BalanceModel {
    public static final HeroSheet SINCLAIR = new HeroSheet("Sinclair", 20.0F + (float)BalanceTable.SINCLAIR_BONUS_HEALTH, 4.0F, 0.0F, 0.0F, 0.0F, false,
       BalanceTable.SHOWMAN);
 
-   public static final List<HeroSheet> HEROES = List.of(REINHARD, REGULUS, DIO, JINWOO, THOR, IRON_MAN_SUIT, CAPTAIN, HOMELANDER, SINCLAIR);
+   public static final List<HeroSheet> HEROES = List.of(REINHARD, REGULUS, DIO, JINWOO, THOR, RED_HULK, IRON_MAN_SUIT, CAPTAIN, HOMELANDER, SINCLAIR);
 
    /** Raw damage the Hulkbuster shell soaks before it breaks. */
    public static float hulkbusterEffectiveHealth(float durability, float plating) {

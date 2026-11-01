@@ -31,6 +31,7 @@ public final class HeroRegistry {
       register(dev.baranhan.viltrumitecore.hero.sinclair.SinclairHero.INSTANCE);
       register(dev.baranhan.viltrumitecore.hero.jinwoo.JinwooHero.INSTANCE);
       register(dev.baranhan.viltrumitecore.hero.captain.CaptainHero.INSTANCE);
+      register(dev.baranhan.viltrumitecore.hero.redhulk.RedHulkHero.INSTANCE);
       installFlightPolicy();
    }
 

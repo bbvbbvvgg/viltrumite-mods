@@ -84,7 +84,7 @@ class CodexClientMathTest {
       List<CodexEntry> heroes = CodexEntries.of(Category.HEROES);
       List<CodexEntry> npcs = CodexEntries.of(Category.NPCS);
       List<CodexEntry> events = CodexEntries.of(Category.EVENTS);
-      assertEquals(10, heroes.size());
+      assertEquals(11, heroes.size());
       assertEquals(16, npcs.size());
       assertEquals(6, events.size());
       assertEquals(3, npcs.stream().filter(e -> "boss".equals(e.kind())).count(), "Conquest, the Leviathan and Thanos are the bosses");

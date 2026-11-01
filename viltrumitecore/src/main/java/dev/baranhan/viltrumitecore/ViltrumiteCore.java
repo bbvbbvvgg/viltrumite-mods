@@ -122,6 +122,9 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
       dev.baranhan.viltrumitecore.hero.captain.CaptainSounds.init();
+      // Red Hulk (docs/design/2026-11-01-red-hulk-design.md): his sound holders and FX preset ids 700+.
+      dev.baranhan.viltrumitecore.hero.redhulk.RedHulkSounds.init();
+      dev.baranhan.viltrumitecore.hero.redhulk.RedHulkFx.init();
       // Contextual interactions (docs/contextual-interactions.json): their own sound holders.
       dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();
       // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.

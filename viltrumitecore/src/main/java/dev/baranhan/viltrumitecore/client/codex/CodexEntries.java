@@ -37,6 +37,7 @@ public final class CodexEntries {
       hero("jinwoo", 0x8A4DFF, rel("shadow_army"), "sung_jinwoo", "shadow_monarch");
       hero("captain", 0x3A78FF, rel("avenger_iron_man", "avenger_thor", "avenger_hulk", "avenger_black_widow", "avenger_hawkeye", "chitauri_invasion"),
          "captain_america", "steve_rogers", "cap");
+      hero("red_hulk", 0xE0301E, rel("avenger_hulk", "captain"), "thunderbolt_ross", "rulk");
       hero("human", 0xFFE3A3, rel("citizen", "od_lagna"), "player", "mortal");
 
       npc("conquest", "boss", 0xD23A3A, Visual.skin(SKINS + "skin_conquest.png", false), rel("viltrumite_squad", "homelander", "conquest_arrival"));

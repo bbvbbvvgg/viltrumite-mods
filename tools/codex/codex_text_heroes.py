@@ -90,6 +90,18 @@ HEROES = {
   "relations": ("Его Мстители: Железный человек, Тор, Халк, Чёрная вдова и Соколиный глаз. Нью-Йорк 2012 года он помнит по вторжению читаури.",
                 "His Avengers: Iron Man, Thor, Hulk, Black Widow and Hawkeye. He remembers New York in 2012 by the Chitauri invasion."),
  },
+ "red_hulk": {
+  "name": ("Красный Халк",
+         "Red Hulk"),
+  "role": ("Генерал Таддеус «Громовержец» Росс, живая печь",
+         "General Thaddeus \"Thunderbolt\" Ross, a living furnace"),
+  "lore": ("Старый солдат, который получил силу, за которой гонялся всю жизнь. Его тело не зеленеет от гнева — оно раскаляется: чем дольше бой, тем горячее кожа, ярче глаза и страшнее удары.",
+         "An old soldier who got the power he hunted all his life. His body does not turn green with anger, it heats up: the longer the fight, the hotter his skin, the brighter his eyes and the harder his blows."),
+  "gameplay": ("Шкала жара 0–1000: удары, комбо, способности и часть входящего урона нагревают тело; жар усиливает удары (до +30 %), с 500 вокруг горит тепловая аура. На 1000 — перегрев: сброс пара, 6 с замедления без тепловых способностей (Выброс, Ярость, ультимейт) и +15 % входящего урона. Комбо ЛКМ из пяти ударов с двуручным молотом, захват и бросок на ПКМ, Термохлопок, Сейсмический удар, Разрушительный прыжок, Тепловой выброс, Термоярость и ультимейт «Критический перегрев». Огонь и лава ранят его слабее обычного — большую часть урона они превращают в жар.",
+             "Heat gauge 0-1000: blows, combos, abilities and part of the damage taken heat the body; heat empowers his blows (up to +30 %), from 500 a heat aura burns around him. At 1000 he overheats: a steam vent, then 6 s slowed, without the heat abilities (Blast, Fury, ultimate) and taking +15 % damage. A five-hit LMB combo ending in a double-fist hammer, grab and throw on RMB, Thermal Clap, Seismic Slam, Destruction Leap, Heat Blast, Thermal Fury and the Critical Overheat ultimate. Fire and lava hurt him far less: most of that damage turns into heat."),
+  "relations": ("Всю жизнь охотился на Халка, пока сам не стал таким же. Капитан Америка помнит его генералом.",
+              "He hunted the Hulk all his life until he became one. Captain America remembers him as a general."),
+ },
  "human": {
   "name": ("Человек", "Human"),
   "role": ("обычная жизнь без сверхсил", "an ordinary life without powers"),
