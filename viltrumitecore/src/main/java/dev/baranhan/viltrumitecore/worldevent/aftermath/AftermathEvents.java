@@ -25,6 +25,11 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 /** Forge wiring of the city disaster aftermath (server side; safe on a dedicated server). */
 @EventBusSubscriber(modid = "viltrumitecore", bus = EventBusSubscriber.Bus.FORGE)
 public final class AftermathEvents {
+   /** QA: {@code -Dviltrumitecore.aftermath.log=true} logs zone changes and the mean server cost every 30 s. */
+   static final boolean QA_LOG = Boolean.getBoolean("viltrumitecore.aftermath.log");
+   private static long qaNanos;
+   private static int qaTicks;
+
    private static boolean listening;
 
    private AftermathEvents() {
@@ -51,6 +56,7 @@ public final class AftermathEvents {
          return;
       }
 
+      long start = QA_LOG ? System.nanoTime() : 0L;
       long now = level.getGameTime();
       AftermathTracker.flush(level, now);
       AftermathData data = AftermathData.get(level);
@@ -66,6 +72,16 @@ public final class AftermathEvents {
       }
 
       AftermathNet.tick(level, data, now);
+      if (QA_LOG) {
+         qaNanos += System.nanoTime() - start;
+         qaTicks++;
+         if (now % 600 == 0) {
+            CityAftermath.LOG.info("AMQA server {} zones={} outages={} mean={}us/tick over {} ticks", level.dimension().location(), data.zones.size(),
+               data.outages.size(), qaTicks == 0 ? 0 : qaNanos / 1000L / qaTicks, qaTicks);
+            qaNanos = 0L;
+            qaTicks = 0;
+         }
+      }
    }
 
    /** Explosions name their cause before their blocks go (same tick). */

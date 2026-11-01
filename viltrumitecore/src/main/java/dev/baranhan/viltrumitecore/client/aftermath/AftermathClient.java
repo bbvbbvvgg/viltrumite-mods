@@ -31,6 +31,11 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
  */
 @EventBusSubscriber(modid = "viltrumitecore", bus = Bus.FORGE, value = {Dist.CLIENT})
 public final class AftermathClient {
+   /** QA: {@code -Dviltrumitecore.aftermath.log=true} logs {@link #debugLine()}, FPS and the client cost every 10 s. */
+   private static final boolean QA_LOG = Boolean.getBoolean("viltrumitecore.aftermath.log");
+   private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("viltrumitecore/aftermath");
+   private static long qaNanos;
+
    /** Fog pull-in at full fog channel when standing in the ruin: the far plane comes to this share. */
    static final float FOG_PULL = 0.62F;
    private static final Map<Integer, ClientZone> ZONES = new HashMap<>();
@@ -87,6 +92,7 @@ public final class AftermathClient {
          return;
       }
 
+      long start = QA_LOG ? System.nanoTime() : 0L;
       Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
       SORTED.clear();
       for (ClientZone zn : ZONES.values()) {
@@ -112,6 +118,14 @@ public final class AftermathClient {
 
       fogGoal = goal;
       fog += (fogGoal - fog) * 0.03F;
+      if (QA_LOG) {
+         qaNanos += System.nanoTime() - start;
+         if (clock % 200 == 0) {
+            LOGGER.info("AMQA client {} fps={} cost={}us/tick particles={}", debugLine(), mc.getFps(), qaNanos / 1000L / 200L,
+               mc.particleEngine.countParticles());
+            qaNanos = 0L;
+         }
+      }
    }
 
    /** Pure: how deep the camera is in a ruin for its fog: 1 well inside, 0 beyond 1.3 radii. */

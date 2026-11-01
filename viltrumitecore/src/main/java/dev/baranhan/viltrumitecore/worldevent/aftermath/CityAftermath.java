@@ -429,6 +429,12 @@ public final class CityAftermath {
       target.version++;
       data.setDirty();
       AftermathNet.urgent(level);
+      if (AftermathEvents.QA_LOG) {
+         LOG.info("AMQA hit zone #{} {} at {} {} {} r={} sev={} blocks={} causes={} event={} declared={}", target.id, repeat ? "repeat" : "merge/new",
+            Math.round(target.x), Math.round(target.y), Math.round(target.z), Math.round(target.radius), String.format(java.util.Locale.ROOT, "%.2f", target.severity),
+            target.blocks, Integer.toBinaryString(target.causes), eventId, declared);
+      }
+
       return target;
    }
 
