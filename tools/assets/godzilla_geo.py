@@ -21,13 +21,13 @@ JAW = np.array([0.0, 150.0, -37.0])
 
 PIVOTS = {
     'root': (0, 0, 0), 'pelvis': (0, 66, 8), 'hips': (0, 66, 8), 'waist': (0, 86, 2), 'chest': (0, 108, -9),
-    'neck': (0, 130, -17), 'head': tuple(NECK), 'jaw': tuple(JAW), 'mouth_glow': (0, 150, -46),
+    'neck': (0, 130, -17), 'head': tuple(NECK), 'jaw': tuple(JAW), 'mouth_glow': (0, 150, -46), 'eyes': tuple(NECK),
     'arm_l': tuple(SHOULDER), 'forearm_l': tuple(ELBOW), 'hand_l': tuple(WRIST),
     'leg_l': tuple(HIP), 'shin_l': tuple(KNEE), 'foot_l': tuple(ANKLE), 'toes_l': (24.0, 5.0, -13.0),
 }
 PARENT = {
     'pelvis': 'root', 'hips': 'pelvis', 'waist': 'hips', 'chest': 'waist', 'neck': 'chest', 'head': 'neck',
-    'jaw': 'head', 'mouth_glow': 'head', 'arm_l': 'chest', 'forearm_l': 'arm_l', 'hand_l': 'forearm_l',
+    'jaw': 'head', 'mouth_glow': 'head', 'eyes': 'head', 'arm_l': 'chest', 'forearm_l': 'arm_l', 'hand_l': 'forearm_l',
     'leg_l': 'pelvis', 'shin_l': 'leg_l', 'foot_l': 'shin_l', 'toes_l': 'foot_l', 'tail_0': 'hips',
 }
 for k in range(7):
@@ -92,7 +92,7 @@ def spine_s(p):
 def build(detail):
     ident = 'godzilla' if detail == 2 else 'godzilla_lod%d' % (2 - detail)
     m = KaijuModel(ident, seed=17 + detail)
-    order = ['root', 'pelvis', 'hips', 'waist', 'chest', 'neck', 'head', 'jaw', 'mouth_glow',
+    order = ['root', 'pelvis', 'hips', 'waist', 'chest', 'neck', 'head', 'jaw', 'mouth_glow', 'eyes',
              'arm_l', 'forearm_l', 'hand_l', 'leg_l', 'shin_l', 'foot_l', 'toes_l'] + ['tail_%d' % k for k in range(7)]
     for name in order:
         m.bone(name, PARENT.get(name), list(PIVOTS[name]))
@@ -166,7 +166,7 @@ def neck_head(m, detail, rnd):
     for sx in (1, -1):
         box(m, 'head', (sx * 8.2, 165.0, -54.5), (9.5, 5, 13), 'hide', [8, 0, sx * 12])                       # brow ridge
         box(m, 'head', (sx * 11.6, 153.5, -40), (5, 13, 17), 'skin')                                         # cheek muscle
-        box(m, 'head', (sx * 12.05, 161.0, -56.2), (0.5, 2.4, 4.4), 'eye')
+        box(m, 'eyes', (sx * 12.05, 161.0, -56.2), (0.5, 2.4, 4.4), 'eye')
         if detail >= 2:
             box(m, 'head', (sx * 4.2, 156.6, -70.9), (2.4, 1.6, 0.8), 'gill')                                # nostril
             box(m, 'head', (sx * 11.6, 158, -48), (2, 3, 6), 'hide')                                         # cheek spur
