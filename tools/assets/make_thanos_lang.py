@@ -6,7 +6,12 @@ The base locale files are past what one push carries, so the event's keys live i
 the neutral Spanish column, as the other overlays do. Run: python3 tools/assets/make_thanos_lang.py
 """
 import json
+import os
+import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from thanos_lang_moves import MOVES  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "viltrumitecore/src/main/lang-overlays/thanos"
@@ -23,27 +28,27 @@ T = {
         "Thanos ha llegado con las seis Gemas del Infinito. ¡Hay que derrotarlo antes de que se acabe el tiempo, o chasqueará los dedos!",
         "Thanos altı Sonsuzluk Taşı'nın hepsiyle geldi. Süre dolmadan onu yenin — yoksa parmaklarını şıklatacak!",
         "灭霸带着全部六颗无限宝石降临了。在时间耗尽前击败他——否则他将打响指！"),
-    "event.viltrumitecore.thanos.phase.escalation": (
-        "Thanos stops holding back: the stones begin to combine.",
-        "Танос больше не сдерживается: камни начинают действовать вместе.",
-        "Thanos hält sich nicht mehr zurück: Die Steine beginnen zusammenzuwirken.",
-        "Thanos ya no se contiene: las gemas empiezan a combinarse.",
-        "Thanos artık kendini tutmuyor: taşlar birlikte çalışmaya başladı.",
-        "灭霸不再保留：宝石开始联合发动。"),
-    "event.viltrumitecore.thanos.phase.onslaught": (
-        "Onslaught: Thanos unleashes the full might of the Gauntlet!",
-        "Натиск: Танос обрушивает всю мощь Перчатки!",
-        "Ansturm: Thanos entfesselt die volle Macht des Handschuhs!",
-        "Embestida: ¡Thanos desata todo el poder del Guantelete!",
-        "Saldırı: Thanos Eldiven'in tüm gücünü serbest bırakıyor!",
-        "猛攻：灭霸释放了手套的全部力量！"),
-    "event.viltrumitecore.thanos.phase.final": (
-        "Final minute! All six stones blaze — the snap is coming!",
-        "Последняя минута! Все шесть камней пылают — щелчок близко!",
-        "Letzte Minute! Alle sechs Steine lodern – das Schnippen naht!",
-        "¡Último minuto! Las seis gemas arden: el chasquido está cerca.",
-        "Son dakika! Altı taşın hepsi alev alev — şıklatma yaklaşıyor!",
-        "最后一分钟！六颗宝石同时燃起——响指即将来临！"),
+    "event.viltrumitecore.thanos.phase.black_order": (
+        "Phase II: Thanos calls the Black Order down from the Sanctuary II!",
+        "Фаза II: Танос призывает Чёрный Орден с борта Санктуария II!",
+        "Phase II: Thanos ruft den Schwarzen Orden von der Sanctuary II herab!",
+        "Fase II: ¡Thanos llama a la Orden Negra desde el Sanctuary II!",
+        "Aşama II: Thanos, Kara Düzen'i Sanctuary II'den indiriyor!",
+        "第二阶段：灭霸从圣殿二号召下了黑曜五将！"),
+    "event.viltrumitecore.thanos.phase.invasion": (
+        "Phase III: the sky opens. The Chitauri invade Atheria!",
+        "Фаза III: небо разверзлось. Читаури вторгаются в Атерию!",
+        "Phase III: Der Himmel öffnet sich. Die Chitauri fallen in Atheria ein!",
+        "Fase III: el cielo se abre. ¡Los chitauri invaden Atheria!",
+        "Aşama III: gökyüzü açıldı. Chitauri Atheria'yı istila ediyor!",
+        "第三阶段：天空洞开，齐塔瑞人入侵阿瑟利亚！"),
+    "event.viltrumitecore.thanos.phase.gauntlet": (
+        "Phase IV: Thanos unleashes the full power of the Gauntlet!",
+        "Фаза IV: Танос обрушивает всю мощь Перчатки!",
+        "Phase IV: Thanos entfesselt die volle Macht des Handschuhs!",
+        "Fase IV: ¡Thanos desata todo el poder del Guantelete!",
+        "Aşama IV: Thanos Eldiven'in tüm gücünü serbest bırakıyor!",
+        "第四阶段：灭霸释放了手套的全部力量！"),
     "event.viltrumitecore.thanos.victory": (
         "Thanos falls! The Infinity Gauntlet goes dark.",
         "Танос повержен! Перчатка Бесконечности гаснет.",
@@ -142,10 +147,61 @@ T = {
     "commands.viltrumitecore.thanos.stage.snap_wait": ("raising the Gauntlet", "поднимает Перчатку", "hebt den Handschuh", "alzando el Guantelete",
                                                        "Eldiven'i kaldırıyor", "举起手套"),
     "commands.viltrumitecore.thanos.stage.snap": ("the snap", "щелчок", "das Schnippen", "el chasquido", "şıklatma", "响指"),
-    "commands.viltrumitecore.thanos.phase.opening": ("opening", "начало", "Auftakt", "apertura", "açılış", "开局"),
-    "commands.viltrumitecore.thanos.phase.escalation": ("escalation", "нарастание", "Eskalation", "escalada", "tırmanış", "升级"),
-    "commands.viltrumitecore.thanos.phase.onslaught": ("onslaught", "натиск", "Ansturm", "embestida", "saldırı", "猛攻"),
-    "commands.viltrumitecore.thanos.phase.final": ("final minute", "последняя минута", "letzte Minute", "último minuto", "son dakika", "最后一分钟"),
+    "commands.viltrumitecore.thanos.phase.arrival": ("I, arrival", "I, прибытие", "I, Ankunft", "I, llegada", "I, varış", "一，降临"),
+    "commands.viltrumitecore.thanos.phase.black_order": ("II, the Black Order", "II, Чёрный Орден", "II, der Schwarze Orden", "II, la Orden Negra",
+                                                         "II, Kara Düzen", "二，黑曜五将"),
+    "commands.viltrumitecore.thanos.phase.invasion": ("III, invasion", "III, вторжение", "III, Invasion", "III, invasión", "III, istila", "三，入侵"),
+    "commands.viltrumitecore.thanos.phase.gauntlet": ("IV, the full Gauntlet", "IV, полная Перчатка", "IV, der volle Handschuh",
+                                                      "IV, el Guantelete completo", "IV, tam Eldiven", "四，完整手套"),
+    "commands.viltrumitecore.thanos.phase_set": (
+        "War phase set: %s.", "Фаза войны: %s.", "Kriegsphase gesetzt: %s.", "Fase de la guerra: %s.", "Savaş aşaması: %s.", "战争阶段已设为：%s。"),
+    "commands.viltrumitecore.thanos.phase_refused": (
+        "No phase change now: the war is not being fought (or the snap has begun), or the phase is unknown.",
+        "Сменить фазу сейчас нельзя: война не идёт (или начался щелчок), либо фаза неизвестна.",
+        "Jetzt kein Phasenwechsel: Der Krieg läuft nicht (oder das Schnippen hat begonnen), oder die Phase ist unbekannt.",
+        "Ahora no se puede cambiar de fase: la guerra no está en curso (o empezó el chasquido), o la fase no existe.",
+        "Şu an aşama değiştirilemez: savaş sürmüyor (ya da şıklatma başladı) veya aşama bilinmiyor.",
+        "现在无法切换阶段：战争未在进行（或响指已开始），或阶段不存在。"),
+    "commands.viltrumitecore.thanos.order_called": (
+        "The Black Order is beamed down.", "Чёрный Орден спускается с корабля.", "Der Schwarze Orden wird herabgestrahlt.",
+        "La Orden Negra desciende de la nave.", "Kara Düzen gemiden indiriliyor.", "黑曜五将从战舰降下。"),
+    "commands.viltrumitecore.thanos.wave_called": (
+        "A Chitauri wave is called (%s invaders alive).", "Вызвана волна Читаури (живых захватчиков: %s).",
+        "Eine Chitauri-Welle wird gerufen (%s Invasoren am Leben).", "Se llama a una oleada chitauri (%s invasores vivos).",
+        "Bir Chitauri dalgası çağrıldı (hayatta %s istilacı).", "已召唤一波齐塔瑞人（存活入侵者：%s）。"),
+    "commands.viltrumitecore.thanos.ship_strike": (
+        "Orbital strike ordered on your position. Move!", "Орбитальный удар по вашей позиции. Уходите!",
+        "Orbitalschlag auf deine Position befohlen. Weg da!", "Ataque orbital ordenado sobre tu posición. ¡Muévete!",
+        "Konumuna yörünge saldırısı emredildi. Kaç!", "已对你的位置下令轨道打击。快跑！"),
+    "commands.viltrumitecore.thanos.ship_busy": (
+        "The Sanctuary II cannot fire now (not over the city yet, or every gun is busy).",
+        "Санктуарий II сейчас не может стрелять (ещё не над городом или все орудия заняты).",
+        "Die Sanctuary II kann jetzt nicht feuern (noch nicht über der Stadt oder alle Geschütze belegt).",
+        "El Sanctuary II no puede disparar ahora (aún no está sobre la ciudad o todos sus cañones están ocupados).",
+        "Sanctuary II şu an ateş edemez (henüz şehrin üstünde değil ya da tüm topları meşgul).",
+        "圣殿二号现在无法开火（尚未抵达城市上空，或所有炮位都在使用中）。"),
+    "commands.viltrumitecore.thanos.war": (
+        "War: phase %1$s; ship %2$s, %3$s strikes fired; army %4$s alive, %5$s waves, %6$s portals; Ebony Maw %7$s, Cull Obsidian %8$s; "
+        "city alarm %9$s, %10$s blackouts; %11$s holds; %12$s blocks destroyed",
+        "Война: фаза %1$s; корабль %2$s, ударов: %3$s; армия: живых %4$s, волн %5$s, порталов %6$s; Эбони Мо %7$s, Кулл Обсидиан %8$s; "
+        "тревога в городе: %9$s, отключений света: %10$s; удержаний: %11$s; разрушено блоков: %12$s",
+        "Krieg: Phase %1$s; Schiff %2$s, %3$s Schläge gefeuert; Armee %4$s am Leben, %5$s Wellen, %6$s Portale; Ebony Maw %7$s, Cull Obsidian %8$s; "
+        "Stadtalarm %9$s, %10$s Stromausfälle; %11$s Griffe; %12$s Blöcke zerstört",
+        "Guerra: fase %1$s; nave %2$s, %3$s ataques disparados; ejército: %4$s vivos, %5$s oleadas, %6$s portales; Ebony Maw %7$s, Cull Obsidian %8$s; "
+        "alarma de la ciudad %9$s, %10$s apagones; %11$s agarres; %12$s bloques destruidos",
+        "Savaş: aşama %1$s; gemi %2$s, %3$s saldırı yapıldı; ordu: hayatta %4$s, %5$s dalga, %6$s geçit; Ebony Maw %7$s, Cull Obsidian %8$s; "
+        "şehir alarmı %9$s, %10$s elektrik kesintisi; %11$s tutuş; %12$s blok yıkıldı",
+        "战争：阶段 %1$s；战舰 %2$s，已发射 %3$s 次打击；军队存活 %4$s，%5$s 波，%6$s 个传送门；乌木喉 %7$s，黑矮星 %8$s；"
+        "城市警报 %9$s，停电 %10$s 次；控制 %11$s 个；摧毁方块 %12$s 个"),
+    "commands.viltrumitecore.thanos.ship.none": ("not in the sky yet", "ещё не в небе", "noch nicht am Himmel", "aún no está en el cielo",
+                                                 "henüz gökte değil", "尚未出现"),
+    "commands.viltrumitecore.thanos.ship.arriving": ("arriving", "приближается", "im Anflug", "llegando", "yaklaşıyor", "抵达中"),
+    "commands.viltrumitecore.thanos.ship.hover": ("over the city", "над городом", "über der Stadt", "sobre la ciudad", "şehrin üstünde", "悬停于城市上空"),
+    "commands.viltrumitecore.thanos.ship.leaving": ("leaving", "улетает", "zieht ab", "marchándose", "ayrılıyor", "离去中"),
+    "commands.viltrumitecore.thanos.ship.gone": ("gone", "улетел", "fort", "se ha ido", "gitti", "已离去"),
+    "commands.viltrumitecore.thanos.general.down": ("down", "повержен", "besiegt", "abatido", "düştü", "已倒下"),
+    "commands.viltrumitecore.thanos.general.waiting": ("not called yet", "ещё не призван", "noch nicht gerufen", "aún no convocado",
+                                                       "henüz çağrılmadı", "尚未召唤"),
     # HUD
     "hud.viltrumitecore.thanos.until_snap": ("UNTIL THE SNAP", "ДО ЩЕЛЧКА", "BIS ZUM SCHNIPPEN", "HASTA EL CHASQUIDO", "ŞIKLATMAYA", "距离响指"),
     "hud.viltrumitecore.thanos.final": ("FINAL MINUTE", "ПОСЛЕДНЯЯ МИНУТА", "LETZTE MINUTE", "ÚLTIMO MINUTO", "SON DAKİKA", "最后一分钟"),
@@ -195,89 +251,7 @@ T = {
         "现在——回来吧。让存在记起自己……只让它忘记你。"),
 }
 
-# ability warnings: name, counterplay (ThanosHud.moveKey / hintKey)
-MOVES = {
-    "cleave": (("Backhand", "Step out of his reach"), ("Удар наотмашь", "Отойдите из зоны досягаемости"),
-               ("Rückhandschlag", "Geh aus seiner Reichweite"), ("Revés", "Sal de su alcance"),
-               ("Ters El Darbesi", "Menzilinden çekil"), ("反手横扫", "退出他的攻击范围")),
-    "hammer": (("Hammer Fists", "Jump the shock ring"), ("Молот кулаков", "Перепрыгните ударное кольцо"),
-               ("Hammerfäuste", "Spring über den Schockring"), ("Puños de martillo", "Salta el anillo de choque"),
-               ("Çekiç Yumruklar", "Şok halkasının üzerinden atla"), ("双拳锤击", "跳过冲击环")),
-    "power_punch": (("Power Punch", "Dodge sideways out of the cone"), ("Удар Силы", "Уйдите вбок из конуса удара"),
-                    ("Kraftschlag", "Weiche seitlich aus dem Kegel aus"), ("Puñetazo de Poder", "Esquiva hacia un lado del cono"),
-                    ("Güç Yumruğu", "Koniden yana kaç"), ("力量重拳", "向侧面闪出锥形范围")),
-    "power_wave": (("Power Shockwave", "Jump or fly over the ring"), ("Волна Силы", "Перепрыгните или перелетите кольцо"),
-                   ("Kraftwelle", "Spring oder flieg über den Ring"), ("Onda de Poder", "Salta o vuela sobre el anillo"),
-                   ("Güç Dalgası", "Halkanın üzerinden atla ya da uç"), ("力量冲击波", "跳过或飞过冲击环")),
-    "space_step": (("Space Step", "He comes out behind you"), ("Шаг сквозь пространство", "Он выйдет у вас за спиной"),
-                   ("Raumschritt", "Er taucht hinter dir auf"), ("Paso espacial", "Aparecerá a tu espalda"),
-                   ("Uzay Adımı", "Arkandan çıkacak"), ("空间跃迁", "他会出现在你身后")),
-    "space_pull": (("Gravity Grab", "You are pulled to his fist — break line of sight"),
-                   ("Гравитационный захват", "Вас тянет к его кулаку — уйдите из поля зрения"),
-                   ("Schwerkraftgriff", "Du wirst zu seiner Faust gezogen – brich die Sichtlinie"),
-                   ("Agarre gravitatorio", "Te arrastra hacia su puño: rompe la línea de visión"),
-                   ("Yerçekimi Kavrayışı", "Yumruğuna çekiliyorsun — görüş hattını kes"), ("引力攫取", "你会被拉向他的拳头——切断视线")),
-    "space_ward": (("Space Ward", "Projectiles are turned back — strike in melee"),
-                   ("Пространственный щит", "Снаряды отражаются — бейте вблизи"),
-                   ("Raumschild", "Geschosse werden zurückgeworfen – greif im Nahkampf an"),
-                   ("Escudo espacial", "Devuelve los proyectiles: ataca cuerpo a cuerpo"),
-                   ("Uzay Kalkanı", "Mermiler geri döner — yakından vur"), ("空间护盾", "投射物会被反弹——用近战攻击")),
-    "reality_zone": (("Reality Fracture", "Leave the red zones under your feet"), ("Разлом реальности", "Уйдите из красных зон под ногами"),
-                     ("Realitätsriss", "Verlass die roten Zonen unter deinen Füßen"), ("Fractura de realidad", "Sal de las zonas rojas bajo tus pies"),
-                     ("Gerçeklik Yarığı", "Ayağının altındaki kırmızı bölgelerden çık"), ("现实裂隙", "离开脚下的红色区域")),
-    "reality_mirage": (("Mirage", "Find the real Thanos — the copies burst"), ("Мираж", "Найдите настоящего Таноса — копии взрываются"),
-                       ("Trugbild", "Finde den echten Thanos – die Kopien zerplatzen"), ("Espejismo", "Encuentra al Thanos real: las copias estallan"),
-                       ("Serap", "Gerçek Thanos'u bul — kopyalar patlar"), ("幻象", "找出真正的灭霸——分身会爆裂")),
-    "time_dome": (("Time Dome", "Get out of the green ring before it closes"), ("Купол времени", "Выйдите из зелёного круга, пока он не замкнулся"),
-                  ("Zeitkuppel", "Verlass den grünen Ring, bevor er sich schließt"), ("Cúpula del tiempo", "Sal del anillo verde antes de que se cierre"),
-                  ("Zaman Kubbesi", "Yeşil halka kapanmadan dışarı çık"), ("时间穹顶", "在绿色圆环闭合前离开")),
-    "time_rewind": (("Rewind", "He returns to where he stood"), ("Перемотка", "Он вернётся туда, где стоял"),
-                    ("Zurückspulen", "Er kehrt dorthin zurück, wo er stand"), ("Retroceso", "Vuelve al lugar donde estaba"),
-                    ("Geri Sarma", "Durduğu yere geri döner"), ("时间回溯", "他会回到之前站的位置")),
-    "mind_gaze": (("Mind Gaze", "Look away from him!"), ("Взгляд Разума", "Отвернитесь от него!"),
-                  ("Blick des Geistes", "Schau von ihm weg!"), ("Mirada de la Mente", "¡Aparta la vista de él!"),
-                  ("Zihin Bakışı", "Gözlerini ondan çevir!"), ("心灵凝视", "把视线从他身上移开！")),
-    "mind_pulse": (("Mind Pulse", "Jump the yellow rings"), ("Импульс Разума", "Перепрыгивайте жёлтые кольца"),
-                   ("Geistespuls", "Spring über die gelben Ringe"), ("Pulso de la Mente", "Salta los anillos amarillos"),
-                   ("Zihin Darbesi", "Sarı halkaların üzerinden atla"), ("心灵脉冲", "跳过黄色圆环")),
-    "soul_tether": (("Soul Tether", "Run out of reach or stagger him to break it"),
-                    ("Узы Души", "Убегите подальше или оглушите его, чтобы разорвать связь"),
-                    ("Seelenfessel", "Lauf außer Reichweite oder betäube ihn, um sie zu lösen"),
-                    ("Lazo del Alma", "Aléjate o atúrdelo para romper el lazo"),
-                    ("Ruh Bağı", "Bağı koparmak için menzilden kaç ya da onu sersemlet"), ("灵魂锁链", "跑出范围或击晕他来扯断锁链")),
-    "soul_nova": (("Soul Nova", "Get far from him — the blast throws you out"), ("Взрыв Души", "Отойдите подальше — взрыв отбрасывает"),
-                  ("Seelennova", "Halte Abstand – die Explosion schleudert dich weg"), ("Nova del Alma", "Aléjate de él: la explosión te lanza lejos"),
-                  ("Ruh Patlaması", "Ondan uzaklaş — patlama seni fırlatır"), ("灵魂新星", "远离他——爆炸会把你震飞")),
-    "combo_portal_punch": (("Portal Punch", "His fist comes out of the portal beside you — move!"),
-                           ("Удар сквозь портал", "Кулак вылетит из портала рядом с вами — двигайтесь!"),
-                           ("Portalschlag", "Seine Faust kommt aus dem Portal neben dir – beweg dich!"),
-                           ("Puñetazo de portal", "Su puño sale del portal a tu lado: ¡muévete!"),
-                           ("Portal Yumruğu", "Yumruğu yanındaki portaldan çıkacak — hareket et!"),
-                           ("传送门重拳", "他的拳头会从你身旁的传送门里打出——快移动！")),
-    "combo_time_crush": (("Time Crush", "Leave the dome before it is crushed"), ("Сокрушение времени", "Покиньте купол, пока его не раздавило"),
-                         ("Zeitzermalmung", "Verlass die Kuppel, bevor sie zermalmt wird"),
-                         ("Aplastamiento temporal", "Sal de la cúpula antes de que la aplaste"),
-                         ("Zaman Ezmesi", "Kubbe ezilmeden dışarı çık"), ("时间碾压", "在穹顶被碾碎前离开")),
-    "combo_soul_mirage": (("Soul Mirage", "Pop the images before their tethers bind you"),
-                          ("Мираж душ", "Лопайте призраков, пока их узы не связали вас"),
-                          ("Seelentrugbild", "Zerstöre die Bilder, bevor ihre Fesseln dich binden"),
-                          ("Espejismo de almas", "Revienta las imágenes antes de que sus lazos te atrapen"),
-                          ("Ruh Serabı", "Bağları seni sarmadan görüntüleri patlat"), ("灵魂幻象", "在锁链缠住你之前击破幻象")),
-    "combo_mind_step": (("Mind Step", "Look away, then turn — he appears behind you"),
-                        ("Шаг Разума", "Отвернитесь, затем развернитесь — он появится сзади"),
-                        ("Geistesschritt", "Schau weg, dann dreh dich um – er erscheint hinter dir"),
-                        ("Paso de la Mente", "Aparta la vista y luego gírate: aparecerá detrás de ti"),
-                        ("Zihin Adımı", "Bakışını çevir, sonra dön — arkanda belirecek"), ("心灵跃迁", "先移开视线，再转身——他会出现在你身后")),
-    "combo_trinity": (("Trinity", "Jump the star wave, hide from the shards"),
-                      ("Триединство", "Перепрыгните звёздную волну и укройтесь от осколков"),
-                      ("Dreieinigkeit", "Spring über die Sternwelle und geh vor den Splittern in Deckung"),
-                      ("Trinidad", "Salta la onda en estrella y cúbrete de las esquirlas"),
-                      ("Üçleme", "Yıldız dalgasının üzerinden atla, kıymıklardan saklan"), ("三位一体", "跳过星形冲击波，躲避碎片")),
-    "combo_eternity": (("Eternity", "Look away and run far from the dome"), ("Вечность", "Отвернитесь и бегите подальше от купола"),
-                       ("Ewigkeit", "Schau weg und lauf weit weg von der Kuppel"), ("Eternidad", "Aparta la vista y huye lejos de la cúpula"),
-                       ("Sonsuzluk", "Gözlerini çevir ve kubbeden uzağa koş"), ("永恒", "移开视线，远离穹顶")),
-}
-
+# ability warnings: name, counterplay (ThanosHud.moveKey / hintKey), in thanos_lang_moves.py
 SUBTITLES = {
     "arrival": ("Thanos arrives", "Танос прибывает", "Thanos erscheint", "Llega Thanos", "Thanos geliyor", "灭霸降临"),
     "step": ("Thanos stomps", "Тяжёлые шаги Таноса", "Thanos stampft", "Pisadas de Thanos", "Thanos ağır adımlarla yürüyor", "灭霸沉重的脚步"),
@@ -310,6 +284,12 @@ SUBTITLES = {
                         "Thanos arkanda beliriyor", "灭霸出现在你身后"),
     "combo_trinity": ("Three stones detonate", "Взрываются три камня", "Drei Steine explodieren", "Estallan tres gemas", "Üç taş patlıyor", "三颗宝石爆炸"),
     "combo_eternity": ("Eternity erupts", "Извергается Вечность", "Ewigkeit bricht aus", "Erupciona la Eternidad", "Sonsuzluk patlıyor", "永恒爆发"),
+    "combo_time_volley": ("Time freezes a volley", "Время замораживает залп", "Zeit friert eine Salve ein", "El tiempo congela una descarga",
+                          "Zaman bir yaylımı donduruyor", "时间冻结齐射"),
+    "combo_moon_fall": ("Moon shards fall", "Падают осколки луны", "Mondsplitter stürzen herab", "Caen fragmentos lunares",
+                        "Ay parçaları düşüyor", "月球碎片坠落"),
+    "combo_infinity": ("All six stones unleashed", "Высвобождены все шесть камней", "Alle sechs Steine entfesselt", "Se desatan las seis gemas",
+                       "Altı taşın hepsi serbest", "六颗宝石尽数释放"),
     "world_stop": ("The world stops", "Мир останавливается", "Die Welt steht still", "El mundo se detiene", "Dünya duruyor", "世界静止"),
     "gauntlet_raise": ("Gauntlet rises", "Перчатка поднимается", "Handschuh hebt sich", "Se alza el Guantelete", "Eldiven yükseliyor", "手套举起"),
     "stone_light": ("A stone ignites", "Загорается камень", "Ein Stein leuchtet auf", "Se enciende una gema", "Bir taş tutuşuyor", "一颗宝石亮起"),
