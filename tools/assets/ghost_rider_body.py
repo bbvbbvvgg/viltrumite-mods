@@ -551,10 +551,7 @@ def glow_geo():
             infl = (0.03 if layer == 0 else (0.53 if group == 'head' else 0.28))
             uv = {}
             for f, (x, y, rw, rh) in rects(u, v, w, h, d).items():
-                if f in ('up', 'down'):
-                    uv[f] = {'uv': [x + rw, y + rh] if f == 'down' else [x + rw, y + rh], 'uv_size': [-rw, -rh]}
-                else:
-                    uv[f] = {'uv': [x, y], 'uv_size': [rw, rh]}
+                uv[f] = {'uv': [x, y], 'uv_size': [rw, rh]}           # same convention as jinwoo_geo.Model
             cubes.append({'origin': list(origin), 'size': list(size), 'inflate': infl, 'uv': uv})
         bones.append({'name': name, 'pivot': piv, 'cubes': cubes})
     return {'format_version': '1.12.0', 'minecraft:geometry': [{
