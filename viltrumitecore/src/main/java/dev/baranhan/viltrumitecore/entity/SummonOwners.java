@@ -17,16 +17,16 @@ public final class SummonOwners {
    private SummonOwners() {
    }
 
-   /** Is {@code e} a hero summon (whether or not its owner is online)? */
+   /** Is {@code e} a hero summon (whether or not its owner is online)? A Legion suit taken over by a world event is not (its hits are not its owner's). */
    public static boolean isSummon(@Nullable Entity e) {
-      return e instanceof LegionSuitEntity || e instanceof AvengerEntity || e instanceof QuinjetEntity || e instanceof ShadowSoldierEntity;
+      return e instanceof LegionSuitEntity suit && !suit.hijacked() || e instanceof AvengerEntity || e instanceof QuinjetEntity || e instanceof ShadowSoldierEntity;
    }
 
    /** The player behind a hero summon; null for anything else or while he is offline. */
    @Nullable
    public static ServerPlayer ownerOf(@Nullable Entity e) {
       if (e instanceof LegionSuitEntity suit) {
-         return suit.owner();
+         return suit.hijacked() ? null : suit.owner();
       }
       if (e instanceof AvengerEntity avenger) {
          return avenger.owner();
