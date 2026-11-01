@@ -500,6 +500,11 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::handle).add();
+      // City disaster aftermath, v24: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

@@ -43,6 +43,10 @@ public class ViltrumiteCoreConfig {
    public int collapseMaxBlocks = 1600;
    /** Block removals per server tick across all collapses (64..4000). */
    public int collapseBlocksPerTick = 900;
+   /** City disaster aftermath: ruins keep smoking, dusting and sounding after destruction (docs/city-aftermath-integration.md). */
+   public boolean aftermathEnabled = true;
+   /** City disaster aftermath: stage lengths x this (0.1..10; 1 = 45 s fresh, 6 min smouldering, 16 min late at severity 0.5). */
+   public double aftermathDurationScale = 1.0;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -60,7 +64,8 @@ public class ViltrumiteCoreConfig {
          // Files written before a knob existed get it added once (defaults; nothing else changes).
          try {
             if (!java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("reinhardFinalPunchDamage")
-               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseBlocksPerTick")) {
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseBlocksPerTick")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("aftermathDurationScale")) {
                save();
             }
          } catch (IOException ignored) {

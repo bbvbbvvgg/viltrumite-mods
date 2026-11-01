@@ -243,3 +243,25 @@ Sources list and cue sheet: `tools/assets/city_collapse_sources.md`.
 
 ### Recordings (CC0 1.0), mixed by `tools/sfx/city_collapse.py`
 - Freesound: "building collapse / demolition" by greyfeather (freesound.org/s/712918), "Concrete Breaks Several Denoised" by loganzsound (freesound.org/s/843339), "Concrete SMASH 2" by magnuswaker (freesound.org/s/522099), "Heavy Impacts" by Nightflame (freesound.org/s/397596), "Deep Boom" by Za-Games (freesound.org/s/539968), "Metallic Groan" by hinchinbrook (freesound.org/s/496836), "Bending Metal" by NachtmahrTV (freesound.org/s/556714), "Creaking Metal - Slow" by EagleStealthTeam (freesound.org/s/172411), "Metal Impact Creak Resonant" by SoundDesignForYou (freesound.org/s/697748), "rockfall2a.wav" by AlanCat (freesound.org/s/389303), "Rockslide_1.wav" by NinjaSharkStudios (freesound.org/s/608957), "Big falling debris (crash)" by xkeril (freesound.org/s/703247), "Foley_Impact_Stones_Strong_Debris" by Nox_Sound (freesound.org/s/554148), "bass rumble deep subterranean subsonic" by kyles (freesound.org/s/453405), "earth rumble.wav" by Reitanna (freesound.org/s/217657), "Quake Short.wav" by TheMinkman (freesound.org/s/199803), "Cinematic Deep Rumble" by swiftoid (freesound.org/s/184313), "Stone Impact Rubble Debris 14" by Sheyvan (freesound.org/s/569510), "Aggressive Clatter 01" by leonelmail (freesound.org/s/461696), "pour out gravel on the stairs.wav" by Dalibor (freesound.org/s/34175), "Tall dead tree splintering then falling" by ozymandias37 (freesound.org/s/869103).
+## City disaster aftermath (world event)
+
+Sources list and cue sheet: `tools/assets/city_aftermath_sources.md`.
+
+### Own work
+- Ruin smoke, plume, haze, settling dust and wire-spark particles reuse the Meteor Rain textures (no new art).
+- Sub thumps, swells, grit grains, mains buzz, wire zaps, fire roar and one distant siren wail — original
+  deterministic synthesis by `tools/sfx/city_aftermath.py` (CC0-1.0).
+
+### Recordings (CC0 1.0, Freesound), mixed by `tools/sfx/city_aftermath.py`
+- "distant explosions" and "distant explosion" and "multiple siren" by Kostrava (freesound.org/s/320788,
+  /324277, /324276), "Huge Distant Explosion" by Fission9 (/476225), "Nuclear distant.wav" by Svarvarn (/322365),
+  "building collapse / demolition" by greyfeather (/712918), "Bakers house collapse" by DasWaff (/721600),
+  "Creaking Metal - Slow" by EagleStealthTeam (/172411), "Creaking Metal.wav" by Soapuel (/489442), "Long Metal
+  Creak" by LoafDV (/238289), "rockfall2a.wav" by AlanCat (/389303), "Rocks.wav" by adamgryu (/336023), "Low
+  Rumble - loopable ambiance" by lennartgreen (/638914), "Ominous Rumble - loopable" by steaq (/593785),
+  "howling_wind.wav" by juryduty (/185070), "Howling wind through window in tower" by tomhannen (/486599),
+  "Electric Sparks.wav" by kev_durr (/396470), "Electricity, Arcs, Sparks, long" by julianmateo_ (/522690),
+  "Foley_Impact_Stones_Strong_Debris_Stereo_DS.wav" by Nox_Sound (/554148), "Stone Impact Rubble Debris 14" by
+  Sheyvan (/569510), "fire crackles" by florianreichelt (/563766), "Wood fire crackling, near flames" by
+  felix.blume (/779877).
+- Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.

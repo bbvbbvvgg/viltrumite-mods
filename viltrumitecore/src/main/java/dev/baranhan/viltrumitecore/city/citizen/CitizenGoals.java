@@ -429,7 +429,9 @@ final class CitizenGoals {
          boolean wary = now < this.c.memUntil;
          long cell = city.grid().randomCell(this.c.getRandom()::nextDouble, this.c.getX(), this.c.getZ(), 8.0, 24.0, preferred, 10,
             (x, y, z) -> loaded(this.c, x, z) && Math.abs(y - this.c.getY()) < 12 && city.dangerMap().noticed(x + 0.5, y, z + 0.5, now) == null
-               && (!wary || (x - this.c.memX) * (x - this.c.memX) + (z - this.c.memZ) * (z - this.c.memZ) > 28.0 * 28.0));
+               && (!wary || (x - this.c.memX) * (x - this.c.memX) + (z - this.c.memZ) * (z - this.c.memZ) > 28.0 * 28.0)
+               // never into a fresh or smouldering ruin (city disaster aftermath)
+               && !dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.avoid(this.c.level(), x + 0.5, y, z + 0.5));
          if (cell == Long.MIN_VALUE) {
             this.c.idleTicks = 20;
             return false;

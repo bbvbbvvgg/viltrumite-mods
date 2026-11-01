@@ -167,7 +167,8 @@ public final class ThanosDissolve {
    }
 
    /** Shader-pack detection through the public Iris/Oculus API, by reflection (no compile dependency). */
-   static boolean shaderPackInUse() {
+   /** True while an Iris/Oculus shader pack replaces the vanilla programs (or when that cannot be told). */
+   public static boolean shaderPackInUse() {
       if (!packChecked) {
          packChecked = true;
          ModList mods = ModList.get();

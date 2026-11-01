@@ -20,6 +20,12 @@ public class ViltrumiteParticles {
    public static final RegistryObject<SimpleParticleType> FIRE_FLARE = PARTICLES.register("fire_flare", () -> new SimpleParticleType(true));
    public static final RegistryObject<SimpleParticleType> METEOR_EMBER = PARTICLES.register("meteor_ember", () -> new SimpleParticleType(true));
    public static final RegistryObject<SimpleParticleType> METEOR_ASH = PARTICLES.register("meteor_ash", () -> new SimpleParticleType(true));
+   // City disaster aftermath (docs/city-aftermath-integration.md): ruin smoke styles and torn-wire sparks.
+   public static final RegistryObject<SimpleParticleType> RUIN_SMOKE = PARTICLES.register("ruin_smoke", () -> new SimpleParticleType(true));
+   public static final RegistryObject<SimpleParticleType> RUIN_PLUME = PARTICLES.register("ruin_plume", () -> new SimpleParticleType(true));
+   public static final RegistryObject<SimpleParticleType> RUIN_HAZE = PARTICLES.register("ruin_haze", () -> new SimpleParticleType(true));
+   public static final RegistryObject<SimpleParticleType> RUIN_DUST = PARTICLES.register("ruin_dust", () -> new SimpleParticleType(true));
+   public static final RegistryObject<SimpleParticleType> WIRE_SPARK = PARTICLES.register("wire_spark", () -> new SimpleParticleType(true));
 
    /** Structural collapse: the dust wall that rolls along the streets after the slam (world/collapse). */
    public static final RegistryObject<SimpleParticleType> COLLAPSE_DUST = PARTICLES.register("collapse_dust", () -> new SimpleParticleType(true));

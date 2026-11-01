@@ -66,6 +66,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - `city-infrastructure.md`: Living City 3.0 power grid, blackouts, sirens, emergency stages, QA harness (core 1.66.0, protocol 24).
 - `decompile.md`: decompile artifacts and their fixes.
 - `viltrumites-meteors.md`: squad NPC identity fix (Homelander override), manual-only world events, meteor rain, runtime harness.
+- `aftermath.md`: city disaster aftermath (ruin zones, stages, persistence, soft smoke shader, sync race, QA logs), core 1.66.0 / protocol 24.
 - `ironman.md`, `ironman-legion.md`: Iron Man (see the Iron Man section).
 - `contextual-interactions.md`: hero-vs-hero/mob/event combos (`interaction/`, catalog `docs/contextual-interactions.json`), core 1.63.0.
 - `ultron.md`: the Ultron uprising world event (core 1.65.0, protocol 23): shape, invariants, sound kit.

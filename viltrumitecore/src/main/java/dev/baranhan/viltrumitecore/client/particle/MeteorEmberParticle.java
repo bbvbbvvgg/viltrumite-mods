@@ -14,15 +14,23 @@ import net.minecraft.util.Mth;
  * Hot sparks and ash (Meteor Rain 2.0). A spark is additive, flies ballistically with the speed it was
  * thrown with, flickers and cools from white-yellow to dull red; it stops on the ground. Ash is a dark
  * flake that drifts and falls slowly; a quarter of it still glows at first (smouldering cinders).
+ * An electric spark (city disaster aftermath: a torn wire arcing) is a short blue-white flash that falls fast.
  */
 public class MeteorEmberParticle extends TextureSheetParticle {
    private final boolean ash;
+   private final boolean electric;
    private final boolean glowing;
    private final float sway;
 
    protected MeteorEmberParticle(ClientLevel level, double x, double y, double z, double dx, double dy, double dz, SpriteSet sprites, boolean ash) {
+      this(level, x, y, z, dx, dy, dz, sprites, ash, false);
+   }
+
+   protected MeteorEmberParticle(ClientLevel level, double x, double y, double z, double dx, double dy, double dz, SpriteSet sprites, boolean ash,
+      boolean electric) {
       super(level, x, y, z);
       this.ash = ash;
+      this.electric = electric && !ash;
       this.xd = dx;
       this.yd = dy;
       this.zd = dz;
@@ -33,6 +41,13 @@ public class MeteorEmberParticle extends TextureSheetParticle {
          this.lifetime = 80 + this.random.nextInt(90);
          this.gravity = 0.006F;
          this.friction = 0.95F;
+         this.hasPhysics = true;
+      } else if (this.electric) {
+         this.glowing = true;
+         this.quadSize = 0.04F + this.random.nextFloat() * 0.07F;
+         this.lifetime = 6 + this.random.nextInt(14);
+         this.gravity = 0.8F;
+         this.friction = 0.97F;
          this.hasPhysics = true;
       } else {
          this.glowing = true;
@@ -55,6 +70,13 @@ public class MeteorEmberParticle extends TextureSheetParticle {
          this.gCol = Mth.lerp(glow, grey, 0.45F);
          this.bCol = Mth.lerp(glow, grey, 0.12F);
          this.alpha = 0.9F * (1.0F - Mth.clamp((t - 0.75F) / 0.25F, 0.0F, 1.0F));
+      } else if (this.electric) {
+         // white-hot arc light cooling through electric blue
+         float k = Mth.clamp(t * 1.4F, 0.0F, 1.0F);
+         this.rCol = Mth.lerp(k, 0.92F, 0.35F);
+         this.gCol = Mth.lerp(k, 0.96F, 0.6F);
+         this.bCol = 1.0F;
+         this.alpha = (1.0F - t * t) * (this.random.nextInt(4) == 0 ? 0.45F : 1.0F);
       } else {
          float[] c = MeteorFlameParticle.ramp(t * 1.1F);
          this.rCol = c[0];
@@ -104,15 +126,21 @@ public class MeteorEmberParticle extends TextureSheetParticle {
    public static class Provider implements ParticleProvider<SimpleParticleType> {
       private final SpriteSet sprites;
       private final boolean ash;
+      private final boolean electric;
 
       public Provider(SpriteSet sprites, boolean ash) {
+         this(sprites, ash, false);
+      }
+
+      public Provider(SpriteSet sprites, boolean ash, boolean electric) {
          this.sprites = sprites;
          this.ash = ash;
+         this.electric = electric;
       }
 
       @Override
       public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z, double dx, double dy, double dz) {
-         return new MeteorEmberParticle(level, x, y, z, dx, dy, dz, this.sprites, this.ash);
+         return new MeteorEmberParticle(level, x, y, z, dx, dy, dz, this.sprites, this.ash, this.electric);
       }
    }
 }

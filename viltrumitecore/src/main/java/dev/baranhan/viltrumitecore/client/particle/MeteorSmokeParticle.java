@@ -18,6 +18,11 @@ import net.minecraft.util.Mth;
  * buoyancy and wander on their own turbulence, fade in and out softly and thin out near the camera so a
  * puff never covers the view. One class, four styles: the flight trail, the impact billow, the impact
  * dust ring and the smoke of fires and smouldering craters.
+ *
+ * <p>City disaster aftermath adds four more: {@link Style#RUIN} smoke seeping from broken windows and
+ * breaches, the tall {@link Style#PLUME} of a burning ruin, low {@link Style#HAZE} lying over a wrecked
+ * quarter and {@link Style#SETTLE} dust sinking back onto fresh rubble. They drift with the ruin wind
+ * ({@link #setWind}, 0 for the meteor styles) and vary their shade so no two columns look alike.
  */
 public class MeteorSmokeParticle extends TextureSheetParticle {
    public enum Style {
@@ -25,11 +30,16 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       //          size  sizeVar growth  life lifeVar hotR  hotG  hotB  hotTicks cool  coolVar alpha fadeIn drag   buoy    turb    roll
       TRAIL(      1.3F, 1.0F,   3.6F,   80,  50,     1.0F, 0.55F, 0.22F, 9,     0.20F, 0.08F,  0.62F, 3,     0.94F, 0.004F, 0.012F, 0.04F),
       BILLOW(     3.0F, 3.0F,   2.6F,   100, 80,     1.0F, 0.60F, 0.30F, 12,    0.22F, 0.09F,  0.72F, 2,     0.90F, 0.006F, 0.010F, 0.02F),
-      DUST(       2.4F, 2.6F,   2.3F,   60,  60,     0.0F, 0.0F,  0.0F,  0,     0.40F, 0.08F,  0.58F, 2,     0.86F, 0.0015F, 0.008F, 0.02F),
+      DUST(       2.4F, 2.6F,   2.3F,   60,  60,     0.0F, 0.0F,  0.0F,  0,     0.40F, 0.08F,  0.58F, 2,     0.86F, 0.0015F, 0.008F, 0.02F, 0.0F, true),
       FIRE(       1.8F, 2.2F,   3.0F,   110, 80,     0.95F, 0.48F, 0.22F, 7,    0.17F, 0.08F,  0.46F, 4,     0.96F, 0.011F, 0.010F, 0.03F),
       // structural collapse (client/collapse): cold concrete dust, a ground-hugging wall and a slow rising plume
       COLLAPSE_DUST(3.0F, 2.6F,   2.7F,   140, 80,     0.0F, 0.0F,  0.0F,  0,     0.52F, 0.10F,  0.60F, 3,     0.93F, 0.0012F, 0.006F, 0.015F),
-      COLLAPSE_PLUME(3.4F, 3.0F,  3.1F,   170, 90,     0.0F, 0.0F,  0.0F,  0,     0.48F, 0.10F,  0.56F, 4,     0.90F, 0.006F, 0.008F, 0.015F);
+      COLLAPSE_PLUME(3.4F, 3.0F,  3.1F,   170, 90,     0.0F, 0.0F,  0.0F,  0,     0.48F, 0.10F,  0.56F, 4,     0.90F, 0.006F, 0.008F, 0.015F),
+      // aftermath: slow, long-lived, wind-driven; alphas low because many overlap in a column
+      RUIN(       1.5F, 1.6F,   3.4F,   170, 110,    0.0F, 0.0F,  0.0F,  0,     0.15F, 0.13F,  0.44F, 8,     0.95F, 0.0065F, 0.008F, 0.02F, 1.0F, false),
+      PLUME(      2.6F, 2.4F,   3.0F,   220, 120,    0.95F, 0.5F, 0.22F, 10,    0.11F, 0.08F,  0.50F, 6,     0.95F, 0.0100F, 0.007F, 0.015F, 0.8F, false),
+      HAZE(       5.0F, 4.0F,   1.8F,   240, 140,    0.0F, 0.0F,  0.0F,  0,     0.46F, 0.08F,  0.12F, 30,    0.90F, 0.0004F, 0.004F, 0.008F, 0.6F, true),
+      SETTLE(     2.2F, 2.0F,   2.6F,   110, 80,     0.0F, 0.0F,  0.0F,  0,     0.48F, 0.10F,  0.40F, 3,     0.88F, -0.0008F, 0.006F, 0.015F, 0.5F, true);
 
       final float size, sizeVar, growth;
       final int life, lifeVar;
@@ -38,9 +48,20 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       final float cool, coolVar, alpha;
       final int fadeIn;
       final float drag, buoyancy, turbulence, roll;
+      /** Share of the ruin wind this style follows (0 = still air, the meteor styles). */
+      final float wind;
+      /** Warm earthy dust instead of neutral smoke. */
+      final boolean earthy;
 
       Style(float size, float sizeVar, float growth, int life, int lifeVar, float hotR, float hotG, float hotB, int hotTicks, float cool, float coolVar,
          float alpha, int fadeIn, float drag, float buoyancy, float turbulence, float roll) {
+         this(size, sizeVar, growth, life, lifeVar, hotR, hotG, hotB, hotTicks, cool, coolVar, alpha, fadeIn, drag, buoyancy, turbulence, roll, 0.0F, false);
+      }
+
+      Style(float size, float sizeVar, float growth, int life, int lifeVar, float hotR, float hotG, float hotB, int hotTicks, float cool, float coolVar,
+         float alpha, int fadeIn, float drag, float buoyancy, float turbulence, float roll, float wind, boolean earthy) {
+         this.wind = wind;
+         this.earthy = earthy;
          this.size = size;
          this.sizeVar = sizeVar;
          this.growth = growth;
@@ -61,6 +82,10 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       }
    }
 
+   /** Ruin wind in blocks per tick per tick (set by the aftermath client each tick; 0 when no ruin is near). */
+   private static float windX;
+   private static float windZ;
+
    private final Style style;
    private final float maxAlpha;
    private final float coolR, coolG, coolB;
@@ -80,11 +105,18 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       this.gravity = 0.0F;
       this.friction = style.drag;
       float grey = style.cool + this.random.nextFloat() * style.coolVar;
-      if (style == Style.DUST) {
+      if (style.earthy) {
          // warm earthy dust
          this.coolR = grey * 1.1F;
          this.coolG = grey * 0.95F;
          this.coolB = grey * 0.8F;
+      } else if (style.wind > 0.0F) {
+         // ruin smoke: burning plastics and tar are near black, plaster and wood smoke browner or bluer
+         float shade = this.random.nextFloat();
+         float warm = shade < 0.3F ? 1.12F : shade > 0.8F ? 0.94F : 1.03F;
+         this.coolR = grey * warm;
+         this.coolG = grey;
+         this.coolB = grey * (2.0F - warm) * 0.98F;
       } else {
          this.coolR = grey * 1.04F;
          this.coolG = grey;
@@ -120,6 +152,11 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       this.xd += Mth.sin(t + this.seedA) * turb + (this.random.nextFloat() - 0.5F) * turb * 0.6F;
       this.zd += Mth.cos(t * 0.9F + this.seedB) * turb + (this.random.nextFloat() - 0.5F) * turb * 0.6F;
       this.yd += this.style.buoyancy + Mth.sin(t * 1.3F + this.seedC) * turb * 0.4F;
+      if (this.style.wind > 0.0F) {
+         this.xd += windX * this.style.wind;
+         this.zd += windZ * this.style.wind;
+      }
+
       this.move(this.xd, this.yd, this.zd);
       this.xd *= this.friction;
       this.yd *= this.friction;
@@ -139,6 +176,12 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       float in = this.style.fadeIn <= 0 ? 1.0F : Mth.clamp(this.age / (float)this.style.fadeIn, 0.0F, 1.0F);
       float out = 1.0F - smooth(Mth.clamp((life - 0.45F) / 0.55F, 0.0F, 1.0F));
       this.alpha = this.maxAlpha * in * out;
+   }
+
+   /** The ruin wind the aftermath styles drift with (client tick; values are clamped to a breeze). */
+   public static void setWind(float x, float z) {
+      windX = Mth.clamp(x, -0.01F, 0.01F);
+      windZ = Mth.clamp(z, -0.01F, 0.01F);
    }
 
    private static float smooth(float t) {
@@ -185,7 +228,28 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
 
    @Override
    public ParticleRenderType getRenderType() {
-      return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+      return MeteorParticleRenderTypes.SOFT_SMOKE;
+   }
+
+   // the soft sheet samples the atlas linearly: keep a 1 % margin so a puff never picks up its neighbour sprite
+   @Override
+   protected float getU0() {
+      return Mth.lerp(0.01F, this.sprite.getU0(), this.sprite.getU1());
+   }
+
+   @Override
+   protected float getU1() {
+      return Mth.lerp(0.99F, this.sprite.getU0(), this.sprite.getU1());
+   }
+
+   @Override
+   protected float getV0() {
+      return Mth.lerp(0.01F, this.sprite.getV0(), this.sprite.getV1());
+   }
+
+   @Override
+   protected float getV1() {
+      return Mth.lerp(0.99F, this.sprite.getV0(), this.sprite.getV1());
    }
 
    public static class Provider implements ParticleProvider<SimpleParticleType> {
