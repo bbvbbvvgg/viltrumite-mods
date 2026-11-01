@@ -1,0 +1,21 @@
+{
+  "subtitles.viltrumitecore.collapse.impact": "Golpe brutal al edificio",
+  "subtitles.viltrumitecore.collapse.crumble_burst": "El hormigón se desmorona",
+  "subtitles.viltrumitecore.collapse.metal_groan": "Gime la estructura de acero",
+  "subtitles.viltrumitecore.collapse.crack": "La estructura se agrieta",
+  "subtitles.viltrumitecore.collapse.facade_shed": "Se desprende parte de la fachada",
+  "subtitles.viltrumitecore.collapse.roar": "El edificio se derrumba",
+  "subtitles.viltrumitecore.collapse.ground_impact": "El derrumbe golpea el suelo",
+  "subtitles.viltrumitecore.collapse.debris_scatter": "Vuelan escombros",
+  "subtitles.viltrumitecore.collapse.rumble": "Retumba el suelo",
+  "subtitles.viltrumitecore.collapse.tail": "Se asientan los escombros",
+  "subtitles.viltrumitecore.collapse.dust": "Cae polvo de los escombros",
+  "subtitles.viltrumitecore.collapse.distant": "Derrumbe lejano",
+  "commands.viltrumitecore.collapse.status": "Derrumbes: %s",
+  "commands.viltrumitecore.collapse.disabled": "Los derrumbes de edificios están desactivados (config collapseEnabled)",
+  "commands.viltrumitecore.collapse.cleared": "Derrumbes cancelados: %s, memoria de daños borrada",
+  "commands.viltrumitecore.collapse.analyze.yes": "Empezaría un derrumbe: %s",
+  "commands.viltrumitecore.collapse.analyze.no": "No habrá derrumbe: %s",
+  "commands.viltrumitecore.collapse.damage": "Daño (%s): %s bloques quitados",
+  "commands.viltrumitecore.collapse.too_big": "Como máximo %s bloques a la vez"
+}

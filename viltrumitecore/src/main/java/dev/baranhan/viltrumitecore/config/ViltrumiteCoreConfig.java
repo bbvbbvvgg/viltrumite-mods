@@ -39,7 +39,7 @@ public class ViltrumiteCoreConfig {
    public boolean collapseEnabled = true;
    /** Collapses running at the same time (0..8). */
    public int collapseMaxActive = 3;
-   /** Blocks one collapse may move (24..4000); bigger sections are cut at the top. */
+   /** Blocks one collapse may move (24..4000); of a bigger section only the part nearest the damage falls. */
    public int collapseMaxBlocks = 1600;
    /** Block removals per server tick across all collapses (64..4000). */
    public int collapseBlocksPerTick = 900;
