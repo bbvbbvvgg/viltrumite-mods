@@ -233,9 +233,13 @@ class GodzillaAssetsTest {
       Pattern key = Pattern.compile("\"((?:commands\\.)?viltrumitecore\\.godzilla[a-z0-9_.]*|entity\\.viltrumitecore\\.godzilla)\"");
       Set<String> asked = new TreeSet<>();
       for (Path f : javaFiles()) {
-         Matcher m = key.matcher(Files.readString(f));
+         String text = Files.readString(f);
+         Matcher m = key.matcher(text);
          while (m.find()) {
-            asked.add(m.group(1));
+            // system property names (the QA switch) are not lang keys
+            if (!text.startsWith("getBoolean(", Math.max(0, m.start() - 11))) {
+               asked.add(m.group(1));
+            }
          }
       }
       assertTrue(asked.size() > 20, "found " + asked);
