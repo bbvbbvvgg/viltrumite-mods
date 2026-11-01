@@ -134,6 +134,12 @@ public class MeteorEntity extends Projectile {
             dev.baranhan.viltrumitecore.worldevent.meteor.fire.CityFire.meteorImpact(serverLevel, this.position());
          }
 
+         if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            // city disaster aftermath: the crater keeps glowing, smoking and crumbling long after the impact
+            dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.registerDamage(serverLevel, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathEvent.of(serverLevel, "meteor:" + this.getUUID(), hitPos, 11.0F,
+               this.ignitesCity ? 0.75F : 0.6F, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.METEOR, java.util.List.of()));
+         }
+
          this.level().broadcastEntityEvent(this, (byte)77);
          farImpact();
          this.discard();
