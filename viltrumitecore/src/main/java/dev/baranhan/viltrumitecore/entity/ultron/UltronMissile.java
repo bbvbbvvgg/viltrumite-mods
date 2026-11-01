@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.entity.ultron;
 
 import dev.baranhan.viltrumitecore.balance.BalanceTable;
+import dev.baranhan.viltrumitecore.entity.Homing;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriTerrain;
 import dev.baranhan.viltrumitecore.worldevent.ultron.UltronSounds;
 import dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket;
@@ -25,8 +26,9 @@ import net.minecraftforge.event.ForgeEventFactory;
  * Micro-missile (heavy robot pods, interceptor belly): launches on its own heading, then homes on its
  * target with a limited turn rate (a hero can out-turn it), bursts on contact, near the target or at the
  * end of its fuel. Splash hurts only Ultron's enemies and never breaks blocks; chunk-safe like the bolts.
+ * Flares and Reflect retarget it ({@link Homing}); turned back by a hero it hunts Ultron's own.
  */
-public class UltronMissile extends Projectile {
+public class UltronMissile extends Projectile implements Homing {
    public static final int FUEL = 90;
    private static final double SPEED = 0.95;
    private static final double TURN = 0.11;
@@ -58,6 +60,18 @@ public class UltronMissile extends Projectile {
    protected void defineSynchedData() {
    }
 
+   /** Iron Man's flares and a hero's Reflect pick a new target (server; null: it flies straight on). */
+   @Override
+   public void retarget(@Nullable Entity target) {
+      this.targetId = target == null ? -1 : target.getId();
+   }
+
+   @Override
+   @Nullable
+   public Entity homingTarget() {
+      return this.targetId >= 0 ? this.level().getEntity(this.targetId) : null;
+   }
+
    @Override
    public void tick() {
       super.tick();
@@ -70,10 +84,11 @@ public class UltronMissile extends Projectile {
          if (this.arming > 0) {
             this.arming--;
          } else {
-            Entity t = this.targetId >= 0 ? this.level().getEntity(this.targetId) : null;
+            Entity t = this.homingTarget();
             double speed = Math.min(SPEED, v.length() + 0.05);
-            if (t instanceof LivingEntity target && target.isAlive()) {
-               Vec3 aim = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
+            if (t != null && t.isAlive()) {
+               // a living target or a decoy (a flare): it bursts next to whatever it chases
+               Vec3 aim = t.position().add(0.0, t.getBbHeight() * 0.5, 0.0);
                if (aim.distanceToSqr(this.position()) < 1.4 * 1.4) {
                   this.burst((ServerLevel)this.level(), this.position());
                   return;
@@ -112,7 +127,7 @@ public class UltronMissile extends Projectile {
 
    @Override
    protected boolean canHitEntity(Entity entity) {
-      return super.canHitEntity(entity) && !UltronMob.side(entity) && !(entity instanceof UltronBolt) && !(entity instanceof UltronMissile);
+      return super.canHitEntity(entity) && UltronBolt.hits(this.getOwner(), entity);
    }
 
    @Override
@@ -136,7 +151,9 @@ public class UltronMissile extends Projectile {
       }
       Entity owner = this.getOwner();
       LivingEntity source = owner instanceof LivingEntity living ? living : null;
-      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(3.0), UltronMob::validTarget)) {
+      boolean turned = UltronBolt.turned(owner);
+      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(3.0),
+         e -> turned ? e != owner && e.isAlive() && UltronMob.is(e) : UltronMob.validTarget(e))) {
          double d = e.position().add(0.0, e.getBbHeight() * 0.5, 0.0).distanceTo(at);
          if (d < 3.0) {
             float f = (float)(1.0 - 0.6 * (d / 3.0));
