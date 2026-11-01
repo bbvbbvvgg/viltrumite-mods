@@ -123,6 +123,7 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.sinclair.SinclairSetup.init(modEventBus);
       // Thanos city event (docs/design/2026-10-31-thanos-six-stones-design.md): his sound holders.
       dev.baranhan.viltrumitecore.worldevent.thanos.ThanosSounds.init();
+      dev.baranhan.viltrumitecore.worldevent.thanos.war.ThanosWarSounds.init();
       // Regulus Reborn (docs/design/2026-10-30-regulus-reborn-design.md): his own sound holders.
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
