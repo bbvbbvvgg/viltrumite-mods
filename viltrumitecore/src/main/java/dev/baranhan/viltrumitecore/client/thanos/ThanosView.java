@@ -20,7 +20,8 @@ public final class ThanosView {
       rl("animations/thanos/thanos_stones.animation.json"),
       rl("animations/thanos/thanos_combos.animation.json"),
       rl("animations/thanos/thanos_scene.animation.json"),
-      rl("animations/thanos/thanos_od_lagna.animation.json")
+      rl("animations/thanos/thanos_od_lagna.animation.json"),
+      rl("animations/thanos/thanos_war.animation.json")
    };
    /** Gauntlet socket bones in {@link ThanosStone} order. */
    public static final String[] STONE_BONES = bones();
