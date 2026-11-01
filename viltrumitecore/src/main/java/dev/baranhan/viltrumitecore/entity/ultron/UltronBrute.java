@@ -58,6 +58,12 @@ public class UltronBrute extends UltronUnit {
       return UltronUnitKind.BRUTE;
    }
 
+   /** Shield held up (the renderer blends in the hold stance). */
+   @Override
+   protected float clientHoldTarget() {
+      return this.isAlive() && this.flag(FLAG_SHIELD) ? 1.0F : 0.0F;
+   }
+
    @Override
    public int deathTicks() {
       return 40;

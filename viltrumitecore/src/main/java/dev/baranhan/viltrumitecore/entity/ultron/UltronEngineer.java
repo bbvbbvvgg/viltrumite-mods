@@ -56,6 +56,12 @@ public class UltronEngineer extends UltronUnit {
       return UltronUnitKind.ENGINEER;
    }
 
+   /** Welding / hacking (the renderer blends in the weld stance). */
+   @Override
+   protected float clientHoldTarget() {
+      return this.isAlive() && this.flag(FLAG_BEAM) ? 1.0F : 0.0F;
+   }
+
    @Override
    public int deathTicks() {
       return 30;

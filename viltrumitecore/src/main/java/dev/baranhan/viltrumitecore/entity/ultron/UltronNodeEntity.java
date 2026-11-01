@@ -56,7 +56,11 @@ public class UltronNodeEntity extends Mob implements UltronMob {
    public UltronNodeState clientState = UltronNodeState.PLANNED;
    public UltronNodeState clientPrevState = UltronNodeState.PLANNED;
    public int clientHitTick = -1000;
+   public int clientShieldHitTick = -1000;
    private float clientLastHull = 1.0F;
+   private float clientLastShield = -1.0F;
+   /** Ticked once on this client: later state changes are real transitions (boot, collapse), not the first sync. */
+   private boolean clientSeen;
 
    public UltronNodeEntity(EntityType<? extends UltronNodeEntity> type, Level level) {
       super(type, level);
@@ -163,6 +167,12 @@ public class UltronNodeEntity extends Mob implements UltronMob {
             this.clientHitTick = this.tickCount;
          }
          this.clientLastHull = hull;
+         float shield = this.shieldShare();
+         if (this.clientLastShield >= 0.0F && shield < this.clientLastShield - 1.0E-3F) {
+            this.clientShieldHitTick = this.tickCount;
+         }
+         this.clientLastShield = shield;
+         this.clientSeen = true;
          return;
       }
       if (this.getHealth() < this.getMaxHealth()) {
@@ -191,7 +201,7 @@ public class UltronNodeEntity extends Mob implements UltronMob {
          if (now != this.clientState) {
             this.clientPrevState = this.clientState;
             this.clientState = now;
-            this.clientStateStart = this.tickCount;
+            this.clientStateStart = this.clientSeen ? this.tickCount : -1000;
          }
       }
    }
