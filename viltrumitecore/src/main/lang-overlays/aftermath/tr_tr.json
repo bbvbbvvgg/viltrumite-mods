@@ -6,7 +6,7 @@
   "commands.viltrumitecore.aftermath.cleared": "%s harabe bölgesi temizlendi",
   "commands.viltrumitecore.aftermath.added": "Harabe bölgesi #%s eklendi (%s)",
   "commands.viltrumitecore.aftermath.aged": "Harabe bölgesi #%s, %s aşamasına alındı",
-  "commands.viltrumitecore.aftermath.power_on": "%s blok yarıçapında elektrik geri geldi",
+  "commands.viltrumitecore.aftermath.power_on": "Elektrik geri geldi: komutla verilen kesinti kaldırıldı",
   "commands.viltrumitecore.aftermath.power_off": "%s blok yarıçapında elektrik kesildi",
   "commands.viltrumitecore.aftermath.power_out": "[elektrik yok]",
   "subtitles.viltrumitecore.aftermath.explosion_far": "Uzak patlama",

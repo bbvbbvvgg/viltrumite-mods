@@ -6,7 +6,7 @@
   "commands.viltrumitecore.aftermath.cleared": "已清除 %s 个废墟区域",
   "commands.viltrumitecore.aftermath.added": "已添加废墟区域 #%s（%s）",
   "commands.viltrumitecore.aftermath.aged": "废墟区域 #%s 已进入阶段 %s",
-  "commands.viltrumitecore.aftermath.power_on": "已恢复 %s 格半径内的供电",
+  "commands.viltrumitecore.aftermath.power_on": "已恢复供电：由命令设置的停电已解除",
   "commands.viltrumitecore.aftermath.power_off": "已切断 %s 格半径内的供电",
   "commands.viltrumitecore.aftermath.power_out": "[停电]",
   "subtitles.viltrumitecore.aftermath.explosion_far": "远处爆炸",

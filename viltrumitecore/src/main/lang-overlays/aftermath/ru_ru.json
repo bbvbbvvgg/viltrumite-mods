@@ -6,7 +6,7 @@
   "commands.viltrumitecore.aftermath.cleared": "Убрано зон руин: %s",
   "commands.viltrumitecore.aftermath.added": "Добавлена зона руин #%s (%s)",
   "commands.viltrumitecore.aftermath.aged": "Зона руин #%s переведена в стадию %s",
-  "commands.viltrumitecore.aftermath.power_on": "Свет вернули в радиусе %s блоков",
+  "commands.viltrumitecore.aftermath.power_on": "Свет вернули: отключение, заданное командой, снято",
   "commands.viltrumitecore.aftermath.power_off": "Свет отключён в радиусе %s блоков",
   "commands.viltrumitecore.aftermath.power_out": "[нет света]",
   "subtitles.viltrumitecore.aftermath.explosion_far": "Далёкий взрыв",

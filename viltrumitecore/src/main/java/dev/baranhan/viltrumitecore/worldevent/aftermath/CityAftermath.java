@@ -340,6 +340,10 @@ public final class CityAftermath {
    @Nullable
    static AftermathZone hit(ServerLevel level, int causes, double x, double y, double z, float radius, int blocks, float severity, boolean declared,
       long[] seeds, int seedCount, @Nullable String eventId, @Nullable int[] focus) {
+      if (!AftermathRules.inWorld(x, y, z, level.getMinBuildHeight(), level.getMaxBuildHeight())) {
+         return null;
+      }
+
       AftermathData data = AftermathData.get(level);
       long now = level.getGameTime();
       AftermathZone target = null;

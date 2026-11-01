@@ -6,7 +6,7 @@
   "commands.viltrumitecore.aftermath.cleared": "%s Ruinenzonen entfernt",
   "commands.viltrumitecore.aftermath.added": "Ruinenzone #%s hinzugefügt (%s)",
   "commands.viltrumitecore.aftermath.aged": "Ruinenzone #%s in Phase %s versetzt",
-  "commands.viltrumitecore.aftermath.power_on": "Strom im Umkreis von %s Blöcken wiederhergestellt",
+  "commands.viltrumitecore.aftermath.power_on": "Strom wiederhergestellt: der per Befehl gesetzte Ausfall ist aufgehoben",
   "commands.viltrumitecore.aftermath.power_off": "Strom im Umkreis von %s Blöcken abgeschaltet",
   "commands.viltrumitecore.aftermath.power_out": "[kein Strom]",
   "subtitles.viltrumitecore.aftermath.explosion_far": "Ferne Explosion",

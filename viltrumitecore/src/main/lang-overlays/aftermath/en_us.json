@@ -6,7 +6,7 @@
   "commands.viltrumitecore.aftermath.cleared": "Cleared %s ruin zones",
   "commands.viltrumitecore.aftermath.added": "Ruin zone #%s added (%s)",
   "commands.viltrumitecore.aftermath.aged": "Ruin zone #%s moved to stage %s",
-  "commands.viltrumitecore.aftermath.power_on": "Power restored within %s blocks",
+  "commands.viltrumitecore.aftermath.power_on": "Power restored: the outage set by command is lifted",
   "commands.viltrumitecore.aftermath.power_off": "Power cut within %s blocks",
   "commands.viltrumitecore.aftermath.power_out": "[no power]",
   "subtitles.viltrumitecore.aftermath.explosion_far": "Distant explosion",

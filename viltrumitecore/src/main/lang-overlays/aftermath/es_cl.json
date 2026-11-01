@@ -6,7 +6,7 @@
   "commands.viltrumitecore.aftermath.cleared": "Zonas de ruinas eliminadas: %s",
   "commands.viltrumitecore.aftermath.added": "Zona de ruinas #%s añadida (%s)",
   "commands.viltrumitecore.aftermath.aged": "Zona de ruinas #%s pasada a la fase %s",
-  "commands.viltrumitecore.aftermath.power_on": "Electricidad restablecida en un radio de %s bloques",
+  "commands.viltrumitecore.aftermath.power_on": "Electricidad restablecida: se levantó el corte puesto por comando",
   "commands.viltrumitecore.aftermath.power_off": "Electricidad cortada en un radio de %s bloques",
   "commands.viltrumitecore.aftermath.power_out": "[sin electricidad]",
   "subtitles.viltrumitecore.aftermath.explosion_far": "Explosión lejana",
