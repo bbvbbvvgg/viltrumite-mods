@@ -196,6 +196,11 @@ public final class HeroDamage {
          return;
       }
 
+      if (target instanceof CleanDamageSink sink) {
+         sink.cleanDamage(source, amount);
+         return;
+      }
+
       float newHealth = target.getHealth() - amount;
       if (newHealth <= 0.0F) {
          if (target instanceof ServerPlayer player && tryHeroTotem(player, source)) {

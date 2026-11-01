@@ -67,7 +67,13 @@ public class CoreMessages {
    // v24 (final integration of #113/#114/#115 + the Ultron uprising): all four v23 changes together, one table:
    // ... FINAL_PUNCH packets, MeteorRainFxS2CPacket, UltronFxS2CPacket, UltronStateS2CPacket; the six Red Hulk
    // HeroAction values and the Chitauri FX kinds 14..23. Every "23" peer (each branch alone) is refused.
-   private static final String PROTOCOL_VERSION = "24";
+   // v24 (Living City 3.0 infrastructure, feat/city-infrastructure-disasters): CityPowerS2CPacket appended last;
+   //     new blocks dark_fixture / dark_lantern / dark_end_rod (registry sync refuses a mismatch anyway).
+   // v26 (structural collapse, feat/city-structural-collapse): CityCollapseS2CPacket appended last; 24/25 are left
+   // to the parallel branches of the same integration round.
+   // v27 (integration of #124/#125/#126/#127): one table with CityPowerS2CPacket, CityCollapseS2CPacket and
+   //     AftermathS2CPacket appended in that order after the Ultron packets. Every "24" and "26" peer is refused.
+   private static final String PROTOCOL_VERSION = "27";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -484,6 +490,21 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::handle).add();
+      // Living City 3.0 infrastructure (power grid, blackouts, city emergency), v24: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.CityPowerS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.CityPowerS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.CityPowerS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CityPowerS2CPacket::handle).add();
+      // Structural collapse (docs/city-collapse-integration.md), v26: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::handle).add();
+      // City disaster aftermath, v24: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

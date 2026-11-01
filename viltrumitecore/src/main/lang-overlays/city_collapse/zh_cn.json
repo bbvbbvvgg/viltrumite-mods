@@ -1,0 +1,21 @@
+{
+  "subtitles.viltrumitecore.collapse.impact": "建筑遭受重击",
+  "subtitles.viltrumitecore.collapse.crumble_burst": "混凝土碎裂",
+  "subtitles.viltrumitecore.collapse.metal_groan": "钢架呻吟",
+  "subtitles.viltrumitecore.collapse.crack": "结构开裂",
+  "subtitles.viltrumitecore.collapse.facade_shed": "外墙碎块脱落",
+  "subtitles.viltrumitecore.collapse.roar": "建筑坍塌",
+  "subtitles.viltrumitecore.collapse.ground_impact": "坍塌砸向地面",
+  "subtitles.viltrumitecore.collapse.debris_scatter": "碎石飞溅",
+  "subtitles.viltrumitecore.collapse.rumble": "大地轰鸣",
+  "subtitles.viltrumitecore.collapse.tail": "瓦砾沉降",
+  "subtitles.viltrumitecore.collapse.dust": "尘土从废墟洒落",
+  "subtitles.viltrumitecore.collapse.distant": "远处建筑坍塌",
+  "commands.viltrumitecore.collapse.status": "坍塌：%s",
+  "commands.viltrumitecore.collapse.disabled": "建筑坍塌已关闭（config collapseEnabled）",
+  "commands.viltrumitecore.collapse.cleared": "已中止坍塌：%s，损伤记录已清除",
+  "commands.viltrumitecore.collapse.analyze.yes": "将会开始坍塌：%s",
+  "commands.viltrumitecore.collapse.analyze.no": "不会坍塌：%s",
+  "commands.viltrumitecore.collapse.damage": "破坏（%s）：移除了 %s 个方块",
+  "commands.viltrumitecore.collapse.too_big": "一次最多 %s 个方块"
+}

@@ -204,6 +204,22 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       }
    }
 
+   /**
+    * City disaster aftermath: back in a street near a ruin that is not quiet yet. Walks slowly and watchfully
+    * for {@code ticks} (the usual recovering gait) and, while the ruin still smokes, keeps its strolls away from it.
+    */
+   public void returnCautiously(double ruinX, double ruinZ, long now, int ticks, boolean keepAway) {
+      this.recoverTicks = Math.max(this.recoverTicks, ticks);
+      CitizenState s = this.citizenState();
+      if (s == CitizenState.IDLE || s == CitizenState.WALKING) {
+         this.setCitizenState(CitizenState.RECOVERING);
+      }
+
+      if (keepAway) {
+         this.remember(ruinX, ruinZ, now);
+      }
+   }
+
    void remember(double x, double z, long now) {
       this.memX = x;
       this.memZ = z;

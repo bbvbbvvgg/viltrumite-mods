@@ -1,0 +1,152 @@
+{
+  "collapse.impact": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/impact_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/impact_2"
+      }
+    ]
+  },
+  "collapse.crumble_burst": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.crumble_burst",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/crumble_burst_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/crumble_burst_2"
+      }
+    ]
+  },
+  "collapse.metal_groan": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.metal_groan",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/metal_groan_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/metal_groan_2"
+      }
+    ]
+  },
+  "collapse.crack": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.crack",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/crack_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/crack_2"
+      },
+      {
+        "name": "viltrumitecore:collapse/crack_3"
+      }
+    ]
+  },
+  "collapse.facade_shed": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.facade_shed",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/facade_shed_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/facade_shed_2"
+      },
+      {
+        "name": "viltrumitecore:collapse/facade_shed_3"
+      }
+    ]
+  },
+  "collapse.roar": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/roar_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/roar_2"
+      }
+    ]
+  },
+  "collapse.ground_impact": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.ground_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/ground_impact_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/ground_impact_2"
+      }
+    ]
+  },
+  "collapse.debris_scatter": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.debris_scatter",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/debris_scatter_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/debris_scatter_2"
+      }
+    ]
+  },
+  "collapse.rumble": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.rumble",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/rumble_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/rumble_2"
+      }
+    ]
+  },
+  "collapse.tail": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.tail",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/tail_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/tail_2"
+      }
+    ]
+  },
+  "collapse.dust": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.dust",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/dust_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/dust_2"
+      }
+    ]
+  },
+  "collapse.distant": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.collapse.distant",
+    "sounds": [
+      {
+        "name": "viltrumitecore:collapse/distant_1"
+      },
+      {
+        "name": "viltrumitecore:collapse/distant_2"
+      }
+    ]
+  }
+}

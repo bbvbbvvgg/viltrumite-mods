@@ -202,3 +202,66 @@ Sources list and cue sheet: `tools/assets/ultron_sources.md`.
 - **No voice and no speech synthesis**: Ultron's lines exist only as subtitles (12 locales, Russian included), marked by a short synthetic blip. Levels are measured, not auditioned by ear — the final mix needs a listening pass.
 
 Ultron and the Iron Legion are creations of Marvel; this is a non-commercial fan implementation.
+
+## Living City 3.0 — city infrastructure, blackouts and emergency (world system)
+
+Sources list and cue sheet: `tools/assets/city_power_sources.md`.
+
+### Own work
+- Dark light-fixture block models and blockstates (`models/block/dark/`, `blockstates/dark_*.json`) reference the
+  vanilla block textures and templates by parent/texture id (nothing is copied); tinted grey in code.
+- The city defence speaker portrait (`client/city/power/CityDefensePortrait`) is drawn in code.
+- Far siren filtering/reverb, loop seams, layering and levels — `tools/sfx/city_power.py` (CC0-1.0).
+
+### Recordings (CC0 1.0, Freesound), mixed by `tools/sfx/city_power.py`
+- Sirens: "Air raid siren (Prague)" by nooly (freesound.org/s/382611), "air raid / tornado siren Sentry 20v2T
+  alert warning signal" by vyclops (freesound.org/s/714426), "3 Toned Mega Siren of Doom.wav" by HootOwl
+  (freesound.org/s/58927), "Tornado Siren winding down.aiff" by maurcs (freesound.org/s/118754).
+- Alarms: "Papatone Pictures Klaxon Rapid.wav" by alphatone (freesound.org/s/555465), "Fire Alarm Panel Repeated
+  Beeps" by loganzsound (freesound.org/s/874698).
+- Electricity: "Electric Arcs, Relays and Transformer Hum" by bassimat (freesound.org/s/867585), "ELECArc_Electric
+  arc hum and buzz" by pryanic (freesound.org/s/776446), "Electric Sparks.wav" by kev_durr (freesound.org/s/396470),
+  "etincelle-spark.wav" by therover (freesound.org/s/549878), "G32-16-Steady Sparks.wav" and "G32-10-Massive
+  Electrical Discharges.wav" by craigsmith (freesound.org/s/438500, /438494), "765 kilo-volt transmission lines
+  buzzing and crackling" by johnaudiotech (freesound.org/s/347046), "transformer at night.wav" by ideaph
+  (freesound.org/s/641208), "Electro_explosion 0" by STRANGEFOLD6541100 (freesound.org/s/730489), "Kill Switch
+  (Large Breaker Switch) .WAV" by EchoCinematics (freesound.org/s/131599), "Circuit Breaker 2 DP.wav" by sribubba
+  (freesound.org/s/130153).
+- Destruction and ambience: "Deep Boom" by Za-Games (freesound.org/s/539968), "distant explosion" and "distant
+  explosions" by Kostrava (freesound.org/s/324277, /320788), "building collapse / demolition" by greyfeather
+  (freesound.org/s/712918), "Creaking Metal - Slow" by EagleStealthTeam (freesound.org/s/172411), "Metallic Groan"
+  by hinchinbrook (freesound.org/s/496836), "Ambience City Quiet Night Air Tone" by leonelmail
+  (freesound.org/s/427841).
+- Not auditioned by ear; checked by numbers and spectra only — the final mix needs a listening pass.
+## Structural collapse (city)
+
+Sources list and cue sheet: `tools/assets/city_collapse_sources.md`.
+
+### Own work
+- Noise grains and hiss layers — seeded synthesis by `tools/sfx/city_collapse.py` (CC0-1.0).
+- Collapse dust reuses the Meteor Rain smoke sprites (own work, see above); no new textures.
+
+### Recordings (CC0 1.0), mixed by `tools/sfx/city_collapse.py`
+- Freesound: "building collapse / demolition" by greyfeather (freesound.org/s/712918), "Concrete Breaks Several Denoised" by loganzsound (freesound.org/s/843339), "Concrete SMASH 2" by magnuswaker (freesound.org/s/522099), "Heavy Impacts" by Nightflame (freesound.org/s/397596), "Deep Boom" by Za-Games (freesound.org/s/539968), "Metallic Groan" by hinchinbrook (freesound.org/s/496836), "Bending Metal" by NachtmahrTV (freesound.org/s/556714), "Creaking Metal - Slow" by EagleStealthTeam (freesound.org/s/172411), "Metal Impact Creak Resonant" by SoundDesignForYou (freesound.org/s/697748), "rockfall2a.wav" by AlanCat (freesound.org/s/389303), "Rockslide_1.wav" by NinjaSharkStudios (freesound.org/s/608957), "Big falling debris (crash)" by xkeril (freesound.org/s/703247), "Foley_Impact_Stones_Strong_Debris" by Nox_Sound (freesound.org/s/554148), "bass rumble deep subterranean subsonic" by kyles (freesound.org/s/453405), "earth rumble.wav" by Reitanna (freesound.org/s/217657), "Quake Short.wav" by TheMinkman (freesound.org/s/199803), "Cinematic Deep Rumble" by swiftoid (freesound.org/s/184313), "Stone Impact Rubble Debris 14" by Sheyvan (freesound.org/s/569510), "Aggressive Clatter 01" by leonelmail (freesound.org/s/461696), "pour out gravel on the stairs.wav" by Dalibor (freesound.org/s/34175), "Tall dead tree splintering then falling" by ozymandias37 (freesound.org/s/869103).
+## City disaster aftermath (world event)
+
+Sources list and cue sheet: `tools/assets/city_aftermath_sources.md`.
+
+### Own work
+- Ruin smoke, plume, haze, settling dust and wire-spark particles reuse the Meteor Rain textures (no new art).
+- Sub thumps, swells, grit grains, mains buzz, wire zaps, fire roar and one distant siren wail — original
+  deterministic synthesis by `tools/sfx/city_aftermath.py` (CC0-1.0).
+
+### Recordings (CC0 1.0, Freesound), mixed by `tools/sfx/city_aftermath.py`
+- "distant explosions" and "distant explosion" and "multiple siren" by Kostrava (freesound.org/s/320788,
+  /324277, /324276), "Huge Distant Explosion" by Fission9 (/476225), "Nuclear distant.wav" by Svarvarn (/322365),
+  "building collapse / demolition" by greyfeather (/712918), "Bakers house collapse" by DasWaff (/721600),
+  "Creaking Metal - Slow" by EagleStealthTeam (/172411), "Creaking Metal.wav" by Soapuel (/489442), "Long Metal
+  Creak" by LoafDV (/238289), "rockfall2a.wav" by AlanCat (/389303), "Rocks.wav" by adamgryu (/336023), "Low
+  Rumble - loopable ambiance" by lennartgreen (/638914), "Ominous Rumble - loopable" by steaq (/593785),
+  "howling_wind.wav" by juryduty (/185070), "Howling wind through window in tower" by tomhannen (/486599),
+  "Electric Sparks.wav" by kev_durr (/396470), "Electricity, Arcs, Sparks, long" by julianmateo_ (/522690),
+  "Foley_Impact_Stones_Strong_Debris_Stereo_DS.wav" by Nox_Sound (/554148), "Stone Impact Rubble Debris 14" by
+  Sheyvan (/569510), "fire crackles" by florianreichelt (/563766), "Wood fire crackling, near flames" by
+  felix.blume (/779877).
+- Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.

@@ -1,0 +1,21 @@
+{
+  "subtitles.viltrumitecore.collapse.impact": "Building hit hard",
+  "subtitles.viltrumitecore.collapse.crumble_burst": "Concrete crumbles",
+  "subtitles.viltrumitecore.collapse.metal_groan": "Steel frame groans",
+  "subtitles.viltrumitecore.collapse.crack": "Structure cracks",
+  "subtitles.viltrumitecore.collapse.facade_shed": "Facade piece breaks off",
+  "subtitles.viltrumitecore.collapse.roar": "Building collapses",
+  "subtitles.viltrumitecore.collapse.ground_impact": "Collapse hits the ground",
+  "subtitles.viltrumitecore.collapse.debris_scatter": "Debris scatters",
+  "subtitles.viltrumitecore.collapse.rumble": "Ground rumbles",
+  "subtitles.viltrumitecore.collapse.tail": "Rubble settles",
+  "subtitles.viltrumitecore.collapse.dust": "Dust pours off the rubble",
+  "subtitles.viltrumitecore.collapse.distant": "Distant building collapse",
+  "commands.viltrumitecore.collapse.status": "Collapses: %s",
+  "commands.viltrumitecore.collapse.disabled": "Structural collapses are turned off (config collapseEnabled)",
+  "commands.viltrumitecore.collapse.cleared": "Collapses aborted: %s, damage memory cleared",
+  "commands.viltrumitecore.collapse.analyze.yes": "A collapse would start: %s",
+  "commands.viltrumitecore.collapse.analyze.no": "No collapse: %s",
+  "commands.viltrumitecore.collapse.damage": "Damage (%s): %s blocks removed",
+  "commands.viltrumitecore.collapse.too_big": "At most %s blocks at once"
+}

@@ -28,7 +28,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * One running uprising: the seeded scenario, the network, what the machines learned, the live bodies and
  * the clocks. Everything that matters after a restart goes through {@link #save()} / {@link #load}; the
- * bodies are not saved (they are rebuilt in ticking chunks, machines from the reserve).
+ * bodies are not saved (they are rebuilt in ticking chunks, machines from the reserve — builds in the
+ * foundries and machines waiting at the pads go there too).
  */
 public final class UltronSession {
    /** One build in a foundry. */
@@ -245,13 +246,21 @@ public final class UltronSession {
       t.putInt("styleTurn", this.styleTurn);
       t.putInt("builtTotal", this.builtTotal);
       t.putInt("builtPhase", this.builtPhase);
-      int[] reserve = this.reserve.clone();
+      int[] bodies = new int[UltronUnitKind.values().length];
       for (UltronUnit u : this.units.values()) {
-         if (u.isAlive()) {
-            reserve[u.kind().ordinal()]++;
+         net.minecraft.world.entity.Entity.RemovalReason reason = u.getRemovalReason();
+         if (u.isRemoved() ? reason != null && UltronRules.backToReserve(reason.shouldDestroy(), this.outcome, u.getHealth()) : u.isAlive()) {
+            bodies[u.kind().ordinal()]++;
          }
       }
-      t.putIntArray("reserve", reserve);
+      int[] pending = new int[UltronUnitKind.values().length];
+      for (Fab f : this.fabs.values()) {
+         pending[f.kind.ordinal()]++;
+      }
+      for (UltronDirector.Spawn sp : this.queue) {
+         pending[sp.kind().ordinal()]++;
+      }
+      t.putIntArray("reserve", UltronRules.savedReserve(this.reserve, bodies, pending));
       t.putIntArray("killed", this.killed);
       t.putInt("nodesDestroyed", this.nodesDestroyed);
       t.putInt("nodesDisabled", this.nodesDisabled);

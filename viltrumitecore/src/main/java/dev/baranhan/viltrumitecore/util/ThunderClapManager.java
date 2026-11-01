@@ -29,6 +29,11 @@ public class ThunderClapManager {
    }
 
    public static void tickThunderclaps(ServerLevel world) {
+      // structural collapse (world/collapse): legacy punch/clap block damage counts as hero damage
+      dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.orDefault(dev.baranhan.viltrumitecore.world.collapse.CollapseCause.HERO, () -> tickThunderclaps0(world));
+   }
+
+   private static void tickThunderclaps0(ServerLevel world) {
       if (!ACTIVE_CLAPS.isEmpty()) {
          Iterator<ThunderClapManager.ActiveClap> iterator = ACTIVE_CLAPS.iterator();
 

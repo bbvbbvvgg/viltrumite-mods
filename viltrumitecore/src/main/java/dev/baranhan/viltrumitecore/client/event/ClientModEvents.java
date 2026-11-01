@@ -43,10 +43,18 @@ public class ClientModEvents {
       event.registerSpriteSet(ViltrumiteParticles.METEOR_SMOKE.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.TRAIL));
       event.registerSpriteSet(ViltrumiteParticles.METEOR_BILLOW.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.BILLOW));
       event.registerSpriteSet(ViltrumiteParticles.METEOR_DUST.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.DUST));
+      event.registerSpriteSet(ViltrumiteParticles.COLLAPSE_DUST.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.COLLAPSE_DUST));
+      event.registerSpriteSet(ViltrumiteParticles.COLLAPSE_PLUME.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.COLLAPSE_PLUME));
       event.registerSpriteSet(ViltrumiteParticles.FIRE_SMOKE.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.FIRE));
       event.registerSpriteSet(ViltrumiteParticles.METEOR_FLAME.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorFlameParticle.Provider(s, false));
       event.registerSpriteSet(ViltrumiteParticles.FIRE_FLARE.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorFlameParticle.Provider(s, true));
       event.registerSpriteSet(ViltrumiteParticles.METEOR_EMBER.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorEmberParticle.Provider(s, false));
       event.registerSpriteSet(ViltrumiteParticles.METEOR_ASH.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorEmberParticle.Provider(s, true));
+      // City disaster aftermath: the same smoke and spark classes in their ruin styles
+      event.registerSpriteSet(ViltrumiteParticles.RUIN_SMOKE.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.RUIN));
+      event.registerSpriteSet(ViltrumiteParticles.RUIN_PLUME.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.PLUME));
+      event.registerSpriteSet(ViltrumiteParticles.RUIN_HAZE.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.HAZE));
+      event.registerSpriteSet(ViltrumiteParticles.RUIN_DUST.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.SETTLE));
+      event.registerSpriteSet(ViltrumiteParticles.WIRE_SPARK.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorEmberParticle.Provider(s, false, true));
    }
 }

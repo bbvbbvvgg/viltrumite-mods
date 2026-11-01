@@ -1,0 +1,21 @@
+{
+  "subtitles.viltrumitecore.collapse.impact": "Binaya ağır darbe",
+  "subtitles.viltrumitecore.collapse.crumble_burst": "Beton ufalanıyor",
+  "subtitles.viltrumitecore.collapse.metal_groan": "Çelik iskelet inliyor",
+  "subtitles.viltrumitecore.collapse.crack": "Yapı çatlıyor",
+  "subtitles.viltrumitecore.collapse.facade_shed": "Cepheden parça kopuyor",
+  "subtitles.viltrumitecore.collapse.roar": "Bina çöküyor",
+  "subtitles.viltrumitecore.collapse.ground_impact": "Enkaz yere çarpıyor",
+  "subtitles.viltrumitecore.collapse.debris_scatter": "Enkaz saçılıyor",
+  "subtitles.viltrumitecore.collapse.rumble": "Yer gürlüyor",
+  "subtitles.viltrumitecore.collapse.tail": "Moloz oturuyor",
+  "subtitles.viltrumitecore.collapse.dust": "Molozdan toz dökülüyor",
+  "subtitles.viltrumitecore.collapse.distant": "Uzakta bina çöküyor",
+  "commands.viltrumitecore.collapse.status": "Çöküşler: %s",
+  "commands.viltrumitecore.collapse.disabled": "Bina çöküşleri kapalı (config collapseEnabled)",
+  "commands.viltrumitecore.collapse.cleared": "İptal edilen çöküş: %s, hasar belleği temizlendi",
+  "commands.viltrumitecore.collapse.analyze.yes": "Bir çöküş başlardı: %s",
+  "commands.viltrumitecore.collapse.analyze.no": "Çöküş yok: %s",
+  "commands.viltrumitecore.collapse.damage": "Hasar (%s): %s blok kaldırıldı",
+  "commands.viltrumitecore.collapse.too_big": "Tek seferde en fazla %s blok"
+}

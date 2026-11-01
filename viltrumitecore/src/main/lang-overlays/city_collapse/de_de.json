@@ -1,0 +1,21 @@
+{
+  "subtitles.viltrumitecore.collapse.impact": "Schwerer Treffer am Gebäude",
+  "subtitles.viltrumitecore.collapse.crumble_burst": "Beton bröckelt",
+  "subtitles.viltrumitecore.collapse.metal_groan": "Stahlskelett ächzt",
+  "subtitles.viltrumitecore.collapse.crack": "Bauwerk reißt",
+  "subtitles.viltrumitecore.collapse.facade_shed": "Fassadenteil bricht ab",
+  "subtitles.viltrumitecore.collapse.roar": "Gebäude stürzt ein",
+  "subtitles.viltrumitecore.collapse.ground_impact": "Einsturz schlägt auf",
+  "subtitles.viltrumitecore.collapse.debris_scatter": "Trümmer fliegen",
+  "subtitles.viltrumitecore.collapse.rumble": "Boden grollt",
+  "subtitles.viltrumitecore.collapse.tail": "Schutt setzt sich",
+  "subtitles.viltrumitecore.collapse.dust": "Staub rieselt vom Schutt",
+  "subtitles.viltrumitecore.collapse.distant": "Ferner Gebäudeeinsturz",
+  "commands.viltrumitecore.collapse.status": "Einstürze: %s",
+  "commands.viltrumitecore.collapse.disabled": "Gebäudeeinstürze sind ausgeschaltet (config collapseEnabled)",
+  "commands.viltrumitecore.collapse.cleared": "Einstürze abgebrochen: %s, Schadensspeicher geleert",
+  "commands.viltrumitecore.collapse.analyze.yes": "Ein Einsturz würde beginnen: %s",
+  "commands.viltrumitecore.collapse.analyze.no": "Kein Einsturz: %s",
+  "commands.viltrumitecore.collapse.damage": "Schaden (%s): %s Blöcke entfernt",
+  "commands.viltrumitecore.collapse.too_big": "Höchstens %s Blöcke auf einmal"
+}

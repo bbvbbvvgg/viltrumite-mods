@@ -312,6 +312,7 @@ public final class CityFire {
       Random r = f.random;
       if (s.material == FireRules.FRAGILE && f.canWrite() && r.nextFloat() < FireRules.shatterChance(s.heat, dt)) {
          // a window bursts or leaves flash away: the opening lets the fire inside
+         dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.METEOR, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 6.0F);
          level.destroyBlock(pos, false);
          f.writes++;
          flare(level, pos, 0.6F);
@@ -395,6 +396,8 @@ public final class CityFire {
       }
 
       if (left.isAir()) {
+         // burnt out: the aftermath of this ruin is the meteor fire's
+         dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.METEOR, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 6.0F);
          level.destroyBlock(pos, false);
       } else {
          level.setBlock(pos, left, Block.UPDATE_ALL);

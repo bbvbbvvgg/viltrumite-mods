@@ -341,7 +341,12 @@ final class UltronDirector {
       UltronSavedData.get(s.server).put(s.save());
    }
 
-   /** Bodies that left the world: unloaded with their chunk → back to the reserve (redeployed later), destroyed → gone. */
+   /**
+    * Bodies that left the world: removed whole (another dimension, an unload) → back to the reserve (redeployed
+    * later), destroyed → gone. Machines are not saved, so a chunk unload does not remove them: Minecraft keeps
+    * them hidden (still counted, not ticking) and they resume when the chunk loads again; a restart brings them
+    * back through the saved reserve.
+    */
    static void prune(ServerLevel level, UltronSession s) {
       Iterator<Map.Entry<UUID, UltronUnit>> it = s.units.entrySet().iterator();
       while (it.hasNext()) {
@@ -350,7 +355,7 @@ final class UltronDirector {
             continue;
          }
          Entity.RemovalReason reason = u.getRemovalReason();
-         if (reason != null && !reason.shouldDestroy() && s.outcome == 0 && u.isAlive()) {
+         if (reason != null && UltronRules.backToReserve(reason.shouldDestroy(), s.outcome, u.getHealth())) {
             s.reserve[u.kind().ordinal()]++;
          }
          it.remove();

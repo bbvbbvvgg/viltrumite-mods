@@ -1,0 +1,246 @@
+{
+  "city_power.siren_warning": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.siren_warning",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/siren_warning",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.siren_warning_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.siren_warning",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/siren_warning_far",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.siren_attack": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.siren_attack",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/siren_attack",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.siren_attack_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.siren_attack",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/siren_attack_far",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.siren_critical": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.siren_critical",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/siren_critical",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.siren_critical_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.siren_critical",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/siren_critical_far",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.siren_all_clear": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.siren_all_clear",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/siren_all_clear",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.klaxon": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.klaxon",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/klaxon",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.alarm_beeps": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.alarm_beeps",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/alarm_beeps",
+        "stream": true
+      }
+    ]
+  },
+  "city_power.arc": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.arc",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/arc_1"
+      },
+      {
+        "name": "viltrumitecore:city_power/arc_2"
+      },
+      {
+        "name": "viltrumitecore:city_power/arc_3"
+      },
+      {
+        "name": "viltrumitecore:city_power/arc_4"
+      }
+    ]
+  },
+  "city_power.transformer_blow": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.transformer_blow",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/transformer_blow_1"
+      },
+      {
+        "name": "viltrumitecore:city_power/transformer_blow_2"
+      },
+      {
+        "name": "viltrumitecore:city_power/transformer_blow_3"
+      }
+    ]
+  },
+  "city_power.transformer_blow_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.transformer_blow",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/transformer_blow_far_1"
+      },
+      {
+        "name": "viltrumitecore:city_power/transformer_blow_far_2"
+      }
+    ]
+  },
+  "city_power.spark_loop": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.spark_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/spark_loop"
+      }
+    ]
+  },
+  "city_power.line_hum": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.line_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/line_hum"
+      }
+    ]
+  },
+  "city_power.power_down": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.power_down",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/power_down"
+      }
+    ]
+  },
+  "city_power.power_up": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.power_up",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/power_up"
+      }
+    ]
+  },
+  "city_power.surge": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.surge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/surge_1"
+      },
+      {
+        "name": "viltrumitecore:city_power/surge_2"
+      }
+    ]
+  },
+  "city_power.cascade": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.cascade",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/cascade_1"
+      },
+      {
+        "name": "viltrumitecore:city_power/cascade_2"
+      }
+    ]
+  },
+  "city_power.metal_groan": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.metal_groan",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/metal_groan_1"
+      },
+      {
+        "name": "viltrumitecore:city_power/metal_groan_2"
+      }
+    ]
+  },
+  "city_power.low_impact": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.low_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/low_impact_1"
+      },
+      {
+        "name": "viltrumitecore:city_power/low_impact_2"
+      }
+    ]
+  },
+  "city_power.distant_destruction": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.distant_destruction",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/distant_destruction_1"
+      },
+      {
+        "name": "viltrumitecore:city_power/distant_destruction_2"
+      },
+      {
+        "name": "viltrumitecore:city_power/distant_destruction_3"
+      }
+    ]
+  },
+  "city_power.disaster_bed": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_power.disaster_bed",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_power/disaster_bed",
+        "stream": true
+      }
+    ]
+  }
+}

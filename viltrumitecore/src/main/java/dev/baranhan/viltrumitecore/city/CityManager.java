@@ -70,6 +70,8 @@ public final class CityManager {
    final RestoreQueue restore;
    final CityPopulation population;
    final ThreatScan threats;
+   /** Living City 3.0: the power grid, blackouts and the city emergency (city/power). */
+   final dev.baranhan.viltrumitecore.city.power.PowerGrid power;
    final dev.baranhan.viltrumitecore.city.citizen.CrowdIndex crowd = new dev.baranhan.viltrumitecore.city.citizen.CrowdIndex();
    final Set<CitizenEntity> citizens = new LinkedHashSet<>();
    boolean enabled;
@@ -95,6 +97,7 @@ public final class CityManager {
       this.restore = new RestoreQueue(journal, this::restoreReport);
       this.population = new CityPopulation(this);
       this.threats = new ThreatScan(this);
+      this.power = new dev.baranhan.viltrumitecore.city.power.PowerGrid(this);
       this.loadState();
    }
 
@@ -139,6 +142,11 @@ public final class CityManager {
 
    public ChangeJournal journal() {
       return this.journal;
+   }
+
+   /** The power grid and emergency of this city (Living City 3.0). */
+   public dev.baranhan.viltrumitecore.city.power.PowerGrid power() {
+      return this.power;
    }
 
    public RestoreQueue restoreQueue() {
@@ -262,6 +270,7 @@ public final class CityManager {
          this.recovery = null;
       }
 
+      this.power.shutdown();
       this.saveJournal(true);
       this.saveState();
       this.citizens.clear();
@@ -355,6 +364,7 @@ public final class CityManager {
                if (b[3] >= 30) {
                   this.danger.blast(b[0] / b[3], b[1] / b[3], b[2] / b[3], dev.baranhan.viltrumitecore.city.danger.ThreatRules.explosionBlast((int)b[3]), now);
                }
+               this.power.onBurst(b[0] / b[3], b[1] / b[3], b[2] / b[3], (int)b[3]);
             }
          }
 
@@ -367,6 +377,9 @@ public final class CityManager {
 
       if (this.resumeIn > 0 && --this.resumeIn == 0) {
          this.broadcastOps(Component.translatable("viltrumitecore.city.reset.resumed", this.journal.size()).withStyle(ChatFormatting.YELLOW));
+         dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCityReset(this.level);
+      // the grid was cleared above: its outages in the aftermath go too
+      dev.baranhan.viltrumitecore.city.links.CityDisasterLinks.onCityReset(this.level);
          this.restore.start(now);
       }
 
@@ -395,6 +408,7 @@ public final class CityManager {
       this.crowdWasFull = !this.citizens.isEmpty();
 
       this.population.tick(now);
+      this.power.tick(now);
       long interval = this.journal.size() > 500_000 ? 6000 : 1200;
       if (this.journal.dirty() && (now - this.lastSave > interval || this.saveRequestedAt >= 0 && now - this.saveRequestedAt > 20)) {
          this.saveJournal(false);
@@ -410,6 +424,8 @@ public final class CityManager {
       if (this.journal.dirty()) {
          this.saveJournal(false);
       }
+
+      this.power.save();
    }
 
    /** A journaled chunk is unloading (its blocks go to disk): persist the journal soon. */
@@ -499,6 +515,9 @@ public final class CityManager {
 
    void startReset() {
       this.population.clearAll();
+      this.power.onCityReset();
+      // the ruins are being rebuilt: their smoke, dust and sounds go with them
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCityReset(this.level);
       this.restore.start(this.now());
       this.saveJournal(false);
    }

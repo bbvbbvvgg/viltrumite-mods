@@ -271,7 +271,9 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
                ServerLevel level = (ServerLevel)this.level();
                Vec3 at = new Vec3(this.piece[i][0], below.getY() + 1, this.piece[i][2]);
                ChitauriNet.fx(level, new ChitauriFxS2CPacket(ChitauriFxS2CPacket.SEGMENT_LAND, at, Vec3.ZERO, LeviathanTrail.scale(i), i), at, 160);
-               ChitauriDestruction.smash(level, at.add(0, 0.5, 0), 1.6 * LeviathanTrail.scale(i) + 0.4, 2.0F, 24, Vec3.ZERO, 1);
+               final int seg = i;
+               dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.run(dev.baranhan.viltrumitecore.world.collapse.CollapseCause.LEVIATHAN,
+                  () -> ChitauriDestruction.smash(level, at.add(0, 0.5, 0), 1.6 * LeviathanTrail.scale(seg) + 0.4, 2.0F, 24, Vec3.ZERO, 1));
                if (i % 3 == 0) {
                   ChitauriSounds.playWide(level, at, ChitauriSounds.DEBRIS, 2.5F, 0.6F + this.random.nextFloat() * 0.2F, 96.0);
                }
@@ -491,8 +493,10 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
       if (!any) {
          return;
       }
-      int n = ChitauriDestruction.smash(level, front, 3.3, 6.0F, 160, this.heading.scale(0.7), 3);
-      n += ChitauriDestruction.smash(level, c.add(this.heading.scale(4.6)), 2.1, 6.0F, 60, this.heading.scale(0.9), 1);
+      // structural collapse (world/collapse): the ploughed hole is Leviathan damage
+      int n = dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.call(dev.baranhan.viltrumitecore.world.collapse.CollapseCause.LEVIATHAN,
+         () -> ChitauriDestruction.smash(level, front, 3.3, 6.0F, 160, this.heading.scale(0.7), 3)
+            + ChitauriDestruction.smash(level, c.add(this.heading.scale(4.6)), 2.1, 6.0F, 60, this.heading.scale(0.9), 1));
       if (n > 6) {
          if (--this.smashFx <= 0) {
             this.smashFx = 3;
@@ -781,9 +785,14 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
       }
       ChitauriNet.fxAlways(level, new ChitauriFxS2CPacket(ChitauriFxS2CPacket.LEVIATHAN_CRASH, at, this.fallVel, 1.0F, this.random.nextInt()), at, 256);
       ChitauriSounds.playWide(level, at, ChitauriSounds.LEVIATHAN_CRASH, 6.0F, 0.9F, 256.0);
-      ChitauriDestruction.smashLater(level, at, 6.5, 6.0F, this.fallVel.scale(0.6));
+      dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.run(dev.baranhan.viltrumitecore.world.collapse.CollapseCause.LEVIATHAN,
+         () -> ChitauriDestruction.smashLater(level, at, 6.5, 6.0F, this.fallVel.scale(0.6)));
+      dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.impact(level, at, dev.baranhan.viltrumitecore.world.collapse.CollapseCause.LEVIATHAN);
       ChitauriDestruction.blastEntities(level, at, 10.0, 24.0F, this, this);
       ChitauriDestruction.danger(level, at, 48.0F, 300);
+      // city disaster aftermath: the fallen hulk leaves the heaviest ruin of the invasion
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.registerDamage(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathEvent.of(level, "leviathan:" + this.getUUID(), net.minecraft.core.BlockPos.containing(at), 18.0F,
+         1.0F, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.LEVIATHAN, java.util.List.of()));
    }
 
    // ------------------------------------------------------------------ misc

@@ -1,0 +1,21 @@
+{
+  "subtitles.viltrumitecore.collapse.impact": "Мощный удар по зданию",
+  "subtitles.viltrumitecore.collapse.crumble_burst": "Крошится бетон",
+  "subtitles.viltrumitecore.collapse.metal_groan": "Стонет стальной каркас",
+  "subtitles.viltrumitecore.collapse.crack": "Трещит конструкция",
+  "subtitles.viltrumitecore.collapse.facade_shed": "Отваливается кусок фасада",
+  "subtitles.viltrumitecore.collapse.roar": "Здание обрушивается",
+  "subtitles.viltrumitecore.collapse.ground_impact": "Обломки бьют о землю",
+  "subtitles.viltrumitecore.collapse.debris_scatter": "Разлетаются обломки",
+  "subtitles.viltrumitecore.collapse.rumble": "Гудит земля",
+  "subtitles.viltrumitecore.collapse.tail": "Оседают обломки",
+  "subtitles.viltrumitecore.collapse.dust": "С завала сыплется пыль",
+  "subtitles.viltrumitecore.collapse.distant": "Далёкое обрушение здания",
+  "commands.viltrumitecore.collapse.status": "Обрушения: %s",
+  "commands.viltrumitecore.collapse.disabled": "Обрушения зданий выключены (config collapseEnabled)",
+  "commands.viltrumitecore.collapse.cleared": "Прервано обрушений: %s, память о повреждениях очищена",
+  "commands.viltrumitecore.collapse.analyze.yes": "Обрушение началось бы: %s",
+  "commands.viltrumitecore.collapse.analyze.no": "Обрушения не будет: %s",
+  "commands.viltrumitecore.collapse.damage": "Повреждение (%s): убрано блоков: %s",
+  "commands.viltrumitecore.collapse.too_big": "Не больше %s блоков за раз"
+}

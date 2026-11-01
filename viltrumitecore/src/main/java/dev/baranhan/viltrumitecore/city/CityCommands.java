@@ -66,7 +66,8 @@ public final class CityCommands {
             .executes(CityCommands::resetWarn)
             .then(Commands.literal("confirm").executes(CityCommands::resetConfirm))
             .then(Commands.literal("cancel").executes(CityCommands::resetCancel)))
-         .then(Commands.literal("here").requires(s -> s.hasPermission(2)).executes(CityCommands::here)));
+         .then(Commands.literal("here").requires(s -> s.hasPermission(2)).executes(CityCommands::here))
+         .then(dev.baranhan.viltrumitecore.city.power.PowerCommands.node()));
    }
 
    private static CityManager city(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
@@ -88,7 +89,7 @@ public final class CityCommands {
 
    private static int help(CommandContext<CommandSourceStack> c) {
       ok(c, line("viltrumitecore.city.help.title").withStyle(ChatFormatting.GOLD), false);
-      for (String k : new String[]{"enable", "disable", "density", "populate", "clear", "status", "reset", "help"}) {
+      for (String k : new String[]{"enable", "disable", "density", "populate", "clear", "status", "reset", "power", "help"}) {
          ok(c, Component.literal(" /city " + k + " ").withStyle(ChatFormatting.YELLOW)
             .append(line("viltrumitecore.city.help." + k).withStyle(ChatFormatting.GRAY)), false);
       }

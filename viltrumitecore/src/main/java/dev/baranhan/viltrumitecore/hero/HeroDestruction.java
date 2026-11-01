@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.hero;
 
 import dev.baranhan.viltrumitecore.config.ViltrumiteCoreConfig;
+import dev.baranhan.viltrumitecore.world.collapse.CollapseCause;
+import dev.baranhan.viltrumitecore.world.collapse.StructuralDamage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -35,11 +37,18 @@ public final class HeroDestruction {
     * and a block-particle burst. Returns false when canDestroy rejects it.
     */
    public static boolean destroyBlock(ServerLevel level, BlockPos pos) {
+      // structural collapse (world/collapse): hero damage unless an outer scope names a more specific cause
+      return StructuralDamage.orDefault(CollapseCause.HERO, () -> destroyBlock0(level, pos));
+   }
+
+   private static boolean destroyBlock0(ServerLevel level, BlockPos pos) {
       if (!canDestroy(level, pos)) {
          return false;
       }
 
       BlockState state = level.getBlockState(pos);
+      // city disaster aftermath: the ruin this leaves is a hero's (a weak hint: Chitauri or meteors nearby win)
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.HERO, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 4.0F);
       if (level.random.nextFloat() < ViltrumiteCoreConfig.INSTANCE.punchBlockDropChance / 100.0F) {
          Block.dropResources(state, level, pos);
       }
@@ -69,11 +78,16 @@ public final class HeroDestruction {
          return false;
       }
 
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.HERO, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 4.0F);
       return setAir(level, pos, CLEAR_FLAGS);
    }
 
    /** Debris and normal carve clearing use the same scoped callback boundary. */
    public static boolean setAir(ServerLevel level, BlockPos pos, int flags) {
+      return StructuralDamage.orDefault(CollapseCause.HERO, () -> setAir0(level, pos, flags));
+   }
+
+   private static boolean setAir0(ServerLevel level, BlockPos pos, int flags) {
       return flags == CLEAR_FLAGS
          ? QuietBlockRemoval.run(() -> level.setBlock(pos, Blocks.AIR.defaultBlockState(), flags))
          : level.setBlock(pos, Blocks.AIR.defaultBlockState(), flags);

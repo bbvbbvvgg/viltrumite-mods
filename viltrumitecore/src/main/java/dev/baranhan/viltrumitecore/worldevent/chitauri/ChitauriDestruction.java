@@ -6,6 +6,8 @@ import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriMob;
 import dev.baranhan.viltrumitecore.hero.CarveJobs;
 import dev.baranhan.viltrumitecore.hero.HeroDebris;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
+import dev.baranhan.viltrumitecore.world.collapse.CollapseCause;
+import dev.baranhan.viltrumitecore.world.collapse.StructuralDamage;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -66,6 +68,10 @@ public final class ChitauriDestruction {
 
    /** A rifle bolt on a window: the pane shatters (vanilla break particles and sound). */
    public static boolean shatterGlass(ServerLevel level, BlockPos pos) {
+      return StructuralDamage.orDefault(CollapseCause.CHITAURI, () -> shatterGlass0(level, pos));
+   }
+
+   private static boolean shatterGlass0(ServerLevel level, BlockPos pos) {
       if (exhausted() || !level.hasChunkAt(pos)) {
          return false;
       }
@@ -82,6 +88,11 @@ public final class ChitauriDestruction {
 
    /** Cannon impact: glass, leaves and other weak blocks in a small sphere. */
    public static int crack(ServerLevel level, BlockPos center, double radius, Vec3 push) {
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.CHITAURI, center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, (float)radius);
+      return StructuralDamage.orDefault(CollapseCause.CHITAURI, () -> crack0(level, center, radius));
+   }
+
+   private static int crack0(ServerLevel level, BlockPos center, double radius) {
       int done = 0;
       int r = Mth.ceil(radius);
       BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -118,9 +129,15 @@ public final class ChitauriDestruction {
     * throws up to {@code debrisMax} of them as falling debris along {@code push}. Returns blocks removed.
     */
    public static int smash(ServerLevel level, Vec3 center, double radius, float maxHardness, int maxBlocks, Vec3 push, int debrisMax) {
+      // structural collapse (world/collapse): an outer, more specific cause (Leviathan) wins
+      return StructuralDamage.orDefault(CollapseCause.CHITAURI, () -> smash0(level, center, radius, maxHardness, maxBlocks, push, debrisMax));
+   }
+
+   private static int smash0(ServerLevel level, Vec3 center, double radius, float maxHardness, int maxBlocks, Vec3 push, int debrisMax) {
       if (exhausted() || !level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
          return 0;
       }
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.CHITAURI, center.x, center.y, center.z, (float)radius);
       pruneFlying();
       RandomSource random = level.getRandom();
       int r = Mth.ceil(radius);
@@ -175,6 +192,7 @@ public final class ChitauriDestruction {
       for (double s = 1.5; s <= radius + 0.01; s += 1.5) {
          shells.add(new Vec3(s, 0, 0));
       }
+      CollapseCause cause = StructuralDamage.current() != null ? StructuralDamage.current() : CollapseCause.CHITAURI; // deferred: keep the cause
       CarveJobs.submit(level, new CarveJobs.Job() {
          int shell;
 
@@ -184,7 +202,8 @@ public final class ChitauriDestruction {
                return true;
             }
             double rr = shells.get(this.shell++).x;
-            smash(lvl, center, rr, maxHardness, Math.min(budget, 900), push, this.shell == shells.size() ? 10 : 2);
+            int debris = this.shell == shells.size() ? 10 : 2;
+            StructuralDamage.run(cause, () -> smash(lvl, center, rr, maxHardness, Math.min(budget, 900), push, debris));
             return this.shell >= shells.size();
          }
 

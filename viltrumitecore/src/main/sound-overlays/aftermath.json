@@ -1,0 +1,167 @@
+{
+  "aftermath.explosion_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.explosion_far",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/explosion_far_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/explosion_far_2"
+      },
+      {
+        "name": "viltrumitecore:aftermath/explosion_far_3"
+      },
+      {
+        "name": "viltrumitecore:aftermath/explosion_far_4"
+      }
+    ]
+  },
+  "aftermath.collapse": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.collapse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/collapse_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/collapse_2"
+      }
+    ]
+  },
+  "aftermath.crumble": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.crumble",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/crumble_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/crumble_2"
+      },
+      {
+        "name": "viltrumitecore:aftermath/crumble_3"
+      }
+    ]
+  },
+  "aftermath.rocks": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.rocks",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/rocks_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/rocks_2"
+      },
+      {
+        "name": "viltrumitecore:aftermath/rocks_3"
+      }
+    ]
+  },
+  "aftermath.debris_impact": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.debris_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/debris_impact_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/debris_impact_2"
+      },
+      {
+        "name": "viltrumitecore:aftermath/debris_impact_3"
+      },
+      {
+        "name": "viltrumitecore:aftermath/debris_impact_4"
+      }
+    ]
+  },
+  "aftermath.metal_creak": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.metal_creak",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/metal_creak_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/metal_creak_2"
+      },
+      {
+        "name": "viltrumitecore:aftermath/metal_creak_3"
+      }
+    ]
+  },
+  "aftermath.sparks": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.sparks",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/sparks_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/sparks_2"
+      },
+      {
+        "name": "viltrumitecore:aftermath/sparks_3"
+      }
+    ]
+  },
+  "aftermath.fire_crackle": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.fire_crackle",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/fire_crackle_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/fire_crackle_2"
+      },
+      {
+        "name": "viltrumitecore:aftermath/fire_crackle_3"
+      }
+    ]
+  },
+  "aftermath.fire_bed": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.fire_bed",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/fire_bed"
+      }
+    ]
+  },
+  "aftermath.rumble": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.rumble",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/rumble"
+      }
+    ]
+  },
+  "aftermath.wind": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.wind",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/wind"
+      }
+    ]
+  },
+  "aftermath.siren_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.aftermath.siren_far",
+    "sounds": [
+      {
+        "name": "viltrumitecore:aftermath/siren_far_1"
+      },
+      {
+        "name": "viltrumitecore:aftermath/siren_far_2"
+      },
+      {
+        "name": "viltrumitecore:aftermath/siren_far_3"
+      }
+    ]
+  }
+}

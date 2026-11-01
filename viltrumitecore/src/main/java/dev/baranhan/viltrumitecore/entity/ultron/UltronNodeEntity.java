@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.entity.ultron;
 
+import dev.baranhan.viltrumitecore.hero.CleanDamageSink;
 import dev.baranhan.viltrumitecore.worldevent.ultron.UltronNetwork;
 import dev.baranhan.viltrumitecore.worldevent.ultron.UltronNodeKind;
 import dev.baranhan.viltrumitecore.worldevent.ultron.UltronNodeState;
@@ -27,11 +28,12 @@ import net.minecraft.world.phys.Vec3;
 /**
  * The body of one network node: a modular pylon (per kind) standing on its site. It has no AI and no
  * health of its own: the node's shield and hull live in the network ({@link UltronNetwork}), hits go
- * there through {@link UltronUprising#damageNode}, sneak + use at its core runs the player's hack. The
+ * there through {@link UltronUprising#damageNode} (hero damage that skips {@code hurt} too, via
+ * {@link CleanDamageSink}), sneak + use at its core runs the player's hack. The
  * director rebuilds bodies in ticking chunks and syncs their state every second; a body whose node is
  * gone removes itself. Never saved, never pushed, never moves.
  */
-public class UltronNodeEntity extends Mob implements UltronMob {
+public class UltronNodeEntity extends Mob implements UltronMob, CleanDamageSink {
    private static final EntityDataAccessor<Byte> KIND = SynchedEntityData.defineId(UltronNodeEntity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Byte> STATE = SynchedEntityData.defineId(UltronNodeEntity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Byte> FLAGS = SynchedEntityData.defineId(UltronNodeEntity.class, EntityDataSerializers.BYTE);
@@ -218,6 +220,14 @@ public class UltronNodeEntity extends Mob implements UltronMob {
          return false;
       }
       return UltronUprising.damageNode(this, source, amount);
+   }
+
+   /** Hero damage written past {@code hurt} (drains, delayed releases): the hull takes it, the body's health would only be reset. */
+   @Override
+   public void cleanDamage(DamageSource source, float amount) {
+      if (!this.level().isClientSide && !this.collapsing()) {
+         UltronUprising.damageNode(this, source, amount);
+      }
    }
 
    @Override

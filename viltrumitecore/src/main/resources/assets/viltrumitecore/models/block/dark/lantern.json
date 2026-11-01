@@ -1,0 +1,6 @@
+{
+  "parent": "viltrumitecore:block/dark/template_lantern",
+  "textures": {
+    "lantern": "minecraft:block/lantern"
+  }
+}
