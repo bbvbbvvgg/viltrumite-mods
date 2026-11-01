@@ -227,6 +227,12 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
          return;
       }
 
+      if (CitizenCaptivity.isHeld(this)) {
+         // a world event holds this person (carried or in a containment field): no own walking, no stuck discard
+         this.getNavigation().stop();
+         return;
+      }
+
       if (this.hurtTicks > 0) {
          this.hurtTicks--;
       }

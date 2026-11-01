@@ -33,6 +33,21 @@ public class ChitauriBolt extends Projectile {
    /** Global balance table: 5 Normal-difficulty hits on an unarmored human. */
    public static final float RIFLE_DAMAGE = dev.baranhan.viltrumitecore.balance.BalanceTable.CHITAURI_RIFLE;
    public static final float CANNON_DAMAGE = dev.baranhan.viltrumitecore.balance.BalanceTable.CHITAURI_CANNON;
+   /** Power below 1: interceptor blaster; 3 and above: siege lancer shell (breaks cover). */
+   public static final float INTERCEPTOR_DAMAGE = dev.baranhan.viltrumitecore.balance.BalanceTable.CHITAURI_INTERCEPTOR;
+   public static final float SIEGE_DAMAGE = dev.baranhan.viltrumitecore.balance.BalanceTable.CHITAURI_SIEGE;
+   public static final float POWER_SIEGE = 3.0F;
+
+   /** Pure: direct-hit damage of a bolt of this power. */
+   public static float damageFor(float power) {
+      if (power >= POWER_SIEGE) {
+         return SIEGE_DAMAGE;
+      }
+      if (power >= 2.0F) {
+         return CANNON_DAMAGE;
+      }
+      return power < 1.0F ? INTERCEPTOR_DAMAGE : RIFLE_DAMAGE;
+   }
 
    // client trail: last positions, newest first
    public final double[] trail = new double[24];
@@ -104,7 +119,7 @@ public class ChitauriBolt extends Projectile {
       Entity target = result.getEntity();
       Entity owner = this.getOwner();
       float power = this.power();
-      target.hurt(this.damageSources().mobProjectile(this, owner instanceof LivingEntity living ? living : null), power >= 2.0F ? CANNON_DAMAGE : RIFLE_DAMAGE);
+      target.hurt(this.damageSources().mobProjectile(this, owner instanceof LivingEntity living ? living : null), damageFor(power));
       this.impact(level, result.getLocation(), power);
    }
 
@@ -112,7 +127,10 @@ public class ChitauriBolt extends Projectile {
    protected void onHitBlock(BlockHitResult result) {
       super.onHitBlock(result);
       if (this.level() instanceof ServerLevel level) {
-         if (this.power() >= 2.0F) {
+         if (this.power() >= POWER_SIEGE) {
+            // the siege shell breaks the cover it hits (stone and brick walls, wood), inside the destruction cap
+            ChitauriDestruction.smash(level, result.getLocation(), 2.3, 3.0F, 28, this.getDeltaMovement().normalize().scale(0.4), 6);
+         } else if (this.power() >= 2.0F) {
             ChitauriDestruction.crack(level, result.getBlockPos(), 1.6, this.getDeltaMovement());
          } else {
             ChitauriDestruction.shatterGlass(level, result.getBlockPos());
@@ -123,7 +141,11 @@ public class ChitauriBolt extends Projectile {
 
    private void impact(ServerLevel level, Vec3 at, float power) {
       Vec3 d = this.getDeltaMovement().normalize();
-      if (power >= 2.0F) {
+      if (power >= POWER_SIEGE) {
+         ChitauriDestruction.blastEntities(level, at, 4.0, 6.0F, this.getOwner(), this);
+         ChitauriNet.fx(level, new ChitauriFxS2CPacket(ChitauriFxS2CPacket.SIEGE_IMPACT, at, d, power, this.random.nextInt()), at, 128);
+         ChitauriSounds.play(level, at, ChitauriSounds.SIEGE_IMPACT, 4.0F, 0.9F + this.random.nextFloat() * 0.15F);
+      } else if (power >= 2.0F) {
          ChitauriDestruction.blastEntities(level, at, 3.0, 4.0F, this.getOwner(), this);
          ChitauriNet.fx(level, new ChitauriFxS2CPacket(ChitauriFxS2CPacket.CANNON_IMPACT, at, d, power, this.random.nextInt()), at, 96);
          ChitauriSounds.play(level, at, ChitauriSounds.EXPLOSION, 3.0F, 1.25F + this.random.nextFloat() * 0.2F);

@@ -117,7 +117,7 @@ final class CityPopulation {
             best = Math.min(best, p.distanceToSqr(c));
          }
 
-         if (shouldDespawn(c.manual, best, level.isPositionEntityTicking(c.blockPosition()))) {
+         if (shouldDespawn(c.manual, best, level.isPositionEntityTicking(c.blockPosition())) && !dev.baranhan.viltrumitecore.city.citizen.CitizenCaptivity.isHeld(c)) {
             c.discard();
          }
       }
@@ -144,7 +144,7 @@ final class CityPopulation {
          List<CitizenEntity> spare = new ArrayList<>();
          List<Double> dist = new ArrayList<>();
          for (CitizenEntity c : this.city.citizens()) {
-            if (c.manual) {
+            if (c.manual || dev.baranhan.viltrumitecore.city.citizen.CitizenCaptivity.isHeld(c)) {
                continue;
             }
 
