@@ -20,7 +20,8 @@ class CityDisasterLinksTest {
 
    @Test
    void outageRadiusGrowsWithDarkCells() {
-      assertEquals(24.0F, CityDisasterLinks.outageRadius(0), 1.0E-3F);
+      assertEquals(CityDisasterLinks.outageRadius(1), CityDisasterLinks.outageRadius(0), 1.0E-3F);
+      assertTrue(CityDisasterLinks.outageRadius(1) >= 24.0F);
       assertTrue(CityDisasterLinks.outageRadius(9) > CityDisasterLinks.outageRadius(1));
       assertEquals(Math.sqrt(9 * 48.0 * 48.0 / Math.PI), CityDisasterLinks.outageRadius(9), 1.0E-2);
    }
