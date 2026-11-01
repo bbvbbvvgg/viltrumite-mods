@@ -150,7 +150,7 @@ public final class CollapseDirector {
       long t0 = System.nanoTime();
       DamageLedger ledger = StructuralDamage.ledger(level);
       LongArrayList near = ledger.around(x, y, z, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP);
-      CollapseCause cause = hint != null ? hint : dominantCause(level, near);
+      CollapseCause cause = hint != null ? hint : dominantCause(level, ledger, x, y, z);
       long seed = level.getGameTime() * 0x9E3779B97F4A7C15L ^ BlockKey.of(x, y, z) ^ level.random.nextLong();
       CollapseAnalyzer.Request req = new CollapseAnalyzer.Request(x, y, z, near.toLongArray(), score, cause, seed, maxBlocks(), level.getMinBuildHeight(),
          level.getMaxBuildHeight() - 1);
@@ -175,8 +175,16 @@ public final class CollapseDirector {
       return plan;
    }
 
-   /** The ledger stores weights only; the strongest cause of the last {@link #CAUSE_MEMORY} ticks names the collapse. */
-   private static CollapseCause dominantCause(ServerLevel level, LongArrayList near) {
+   /**
+    * The cause with the most damage weight around the spot names the collapse (found in game: a hero strike and a
+    * Leviathan cut in the same tick used to share the level-wide cause). Damage without a recorded cause falls back
+    * to the strongest cause of the last {@link #CAUSE_MEMORY} ticks.
+    */
+   private static CollapseCause dominantCause(ServerLevel level, DamageLedger ledger, int x, int y, int z) {
+      CollapseCause local = ledger.dominantCause(x, y, z, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP);
+      if (local != null) {
+         return local;
+      }
       Noted n = lastCause.get(level.dimension());
       return n != null && level.getGameTime() - n.tick <= CAUSE_MEMORY ? n.cause : CollapseCause.HERO;
    }
