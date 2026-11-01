@@ -193,3 +193,25 @@ Sources list and cue sheet: `tools/assets/meteor_rain_sources.md`.
   "Fire - Crackling, Spitting, Roaring" by jamesdrake89 (freesound.org/s/636178).
 - Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.
 
+## City disaster aftermath (world event)
+
+Sources list and cue sheet: `tools/assets/city_aftermath_sources.md`.
+
+### Own work
+- Ruin smoke, plume, haze, settling dust and wire-spark particles reuse the Meteor Rain textures (no new art).
+- Sub thumps, swells, grit grains, mains buzz, wire zaps, fire roar and one distant siren wail — original
+  deterministic synthesis by `tools/sfx/city_aftermath.py` (CC0-1.0).
+
+### Recordings (CC0 1.0, Freesound), mixed by `tools/sfx/city_aftermath.py`
+- "distant explosions" and "distant explosion" and "multiple siren" by Kostrava (freesound.org/s/320788,
+  /324277, /324276), "Huge Distant Explosion" by Fission9 (/476225), "Nuclear distant.wav" by Svarvarn (/322365),
+  "building collapse / demolition" by greyfeather (/712918), "Bakers house collapse" by DasWaff (/721600),
+  "Creaking Metal - Slow" by EagleStealthTeam (/172411), "Creaking Metal.wav" by Soapuel (/489442), "Long Metal
+  Creak" by LoafDV (/238289), "rockfall2a.wav" by AlanCat (/389303), "Rocks.wav" by adamgryu (/336023), "Low
+  Rumble - loopable ambiance" by lennartgreen (/638914), "Ominous Rumble - loopable" by steaq (/593785),
+  "howling_wind.wav" by juryduty (/185070), "Howling wind through window in tower" by tomhannen (/486599),
+  "Electric Sparks.wav" by kev_durr (/396470), "Electricity, Arcs, Sparks, long" by julianmateo_ (/522690),
+  "Foley_Impact_Stones_Strong_Debris_Stereo_DS.wav" by Nox_Sound (/554148), "Stone Impact Rubble Debris 14" by
+  Sheyvan (/569510), "fire crackles" by florianreichelt (/563766), "Wood fire crackling, near flames" by
+  felix.blume (/779877).
+- Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.
