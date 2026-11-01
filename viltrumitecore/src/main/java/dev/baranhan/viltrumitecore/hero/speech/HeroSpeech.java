@@ -48,6 +48,12 @@ public final class HeroSpeech {
       @Nullable UUID session, List<UUID> audience, long started, long until, @Nullable Predicate<ServerPlayer> activeWhile) {
    }
 
+   /** A line of a world voice (no player speaks it: a world event's villain), keyed by {@link #worldVoiceId}. */
+   private record WorldActive(int serial, String lineId, HeroLine.Priority priority, List<UUID> audience, long started, long until) {
+   }
+
+   private static final Map<UUID, WorldActive> WORLD = new HashMap<>();
+
    private HeroSpeech() {
    }
 
@@ -211,6 +217,104 @@ public final class HeroSpeech {
       return true;
    }
 
+   /** Stable speaker id of a world voice (the client keys its subtitle queue and portrait on it). */
+   public static UUID worldVoiceId(String voice) {
+      return UUID.nameUUIDFromBytes(("viltrumitecore:world_voice:" + voice).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+   }
+
+   /**
+    * Shared seam: a line of a non-player world voice (a world event's villain) for the real players of
+    * {@code level} within {@code range} (horizontal) of {@code at}. Same packet, queue, priorities and
+    * timing as a hero line; {@code voice} is the portrait key ({@code HeroPortraits.registerVoice} on the
+    * client) and {@code entityId} the speaking body, or -1. One line per voice at a time.
+    */
+   public static boolean worldLine(net.minecraft.server.level.ServerLevel level, String voice, int entityId, String speakerKey, String speakerName,
+      String lineId, List<String> fragments, HeroLine.Priority priority, int durationTicks, net.minecraft.world.phys.Vec3 at, double range, boolean force) {
+      if (fragments.isEmpty()) {
+         return false;
+      }
+
+      MinecraftServer server = level.getServer();
+      UUID id = worldVoiceId(voice);
+      long now = server.getTickCount();
+      WorldActive current = WORLD.get(id);
+      if (current != null && now >= current.until) {
+         WORLD.remove(id);
+         current = null;
+      }
+
+      Map<String, Long> cooldowns = COOLDOWNS.computeIfAbsent(id, key -> new HashMap<>());
+      cooldowns.values().removeIf(until -> until <= now);
+      HeroSpeechRules.Decision decision = HeroSpeechRules.decide(current == null ? null : current.lineId, current == null ? null : current.priority,
+         current == null ? 0L : now - current.started, lineId, priority, now, cooldowns.getOrDefault(lineId, Long.MIN_VALUE), force);
+      if (!decision.starts()) {
+         return false;
+      }
+
+      List<ServerPlayer> audience = new ArrayList<>();
+      double rangeSq = range * range;
+      for (ServerPlayer player : level.players()) {
+         double dx = player.getX() - at.x;
+         double dz = player.getZ() - at.z;
+         if (isRealPlayer(player) && dx * dx + dz * dz <= rangeSq) {
+            audience.add(player);
+         }
+      }
+
+      if (audience.isEmpty()) {
+         return false;
+      }
+
+      if (current != null) {
+         WORLD.remove(id);
+         sendStop(server, current.serial, current.audience);
+      }
+
+      int serial = nextSerial++;
+      if (nextSerial == Integer.MAX_VALUE) {
+         nextSerial = 1;
+      }
+
+      HeroLineS2CPacket packet = HeroLineS2CPacket.play(serial, id, entityId, speakerName, voice, lineId, speakerKey, fragments, false, priority.ordinal(),
+         durationTicks);
+      List<UUID> listeners = new ArrayList<>(audience.size());
+      for (ServerPlayer listener : audience) {
+         CoreMessages.sendToPlayer(packet, listener);
+         listeners.add(listener.getUUID());
+      }
+
+      long until = now + HeroSpeechRules.lifetimeTicks(durationTicks, fragmentChars(fragments, false));
+      WORLD.put(id, new WorldActive(serial, lineId, priority, List.copyOf(listeners), now, until));
+      cooldowns.put(lineId, until);
+      return true;
+   }
+
+   /** Cuts the world voice's current line (its event ended). */
+   public static void stopWorld(MinecraftServer server, String voice) {
+      UUID id = worldVoiceId(voice);
+      WorldActive current = WORLD.remove(id);
+      COOLDOWNS.remove(id);
+      if (current != null) {
+         sendStop(server, current.serial, current.audience);
+      }
+   }
+
+   /** Is the world voice reading a line now? */
+   public static boolean worldSpeaking(MinecraftServer server, String voice) {
+      WorldActive current = WORLD.get(worldVoiceId(voice));
+      return current != null && server.getTickCount() < current.until;
+   }
+
+   private static void sendStop(MinecraftServer server, int serial, List<UUID> audience) {
+      HeroLineS2CPacket stop = HeroLineS2CPacket.stop(serial);
+      for (UUID listener : audience) {
+         ServerPlayer player = server.getPlayerList().getPlayer(listener);
+         if (player != null) {
+            CoreMessages.sendToPlayer(stop, player);
+         }
+      }
+   }
+
    /** Text length of each fragment as the server reads it (English on a dedicated server), -1 when the key is unknown. */
    private static int[] fragmentChars(List<String> fragments, boolean literal) {
       Language language = Language.getInstance();
@@ -284,7 +388,16 @@ public final class HeroSpeech {
    /** Once per server tick, only while lines play: stop the lines whose speaker can no longer be speaking. */
    @SubscribeEvent
    public static void onServerTick(TickEvent.ServerTickEvent event) {
-      if (event.phase != TickEvent.Phase.END || ACTIVE.isEmpty()) {
+      if (event.phase != TickEvent.Phase.END) {
+         return;
+      }
+
+      if (!WORLD.isEmpty()) {
+         long worldNow = event.getServer().getTickCount();
+         WORLD.values().removeIf(active -> worldNow >= active.until);
+      }
+
+      if (ACTIVE.isEmpty()) {
          return;
       }
 
@@ -313,6 +426,7 @@ public final class HeroSpeech {
    @SubscribeEvent
    public static void onServerStopped(ServerStoppedEvent event) {
       ACTIVE.clear();
+      WORLD.clear();
       COOLDOWNS.clear();
       ROTATION.clear();
       nextSerial = 1;

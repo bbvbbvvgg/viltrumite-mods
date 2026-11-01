@@ -59,7 +59,8 @@ public class CoreMessages {
    // v21 was used twice, by two branches alone: Living City 2.0 (#110, citizen entity syncs a new STATE byte)
    // and Reinhard's THE FINAL PUNCH (#109, C2S chord + S2C beats appended after the Legion packets).
    // v22 (final integration of #107/#108/#110/#109): both changes together; a "21" client is refused.
-   private static final String PROTOCOL_VERSION = "22";
+   // v23 (feat/ultron-uprising): UltronFxS2CPacket and UltronStateS2CPacket appended after the Final Punch packets.
+   private static final String PROTOCOL_VERSION = "23";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -462,6 +463,15 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ReinhardFinalPunchS2CPacket::handle).add();
+      // ULTRON — ВОССТАНИЕ МАШИН (docs/plans/2026-11-01-ultron-uprising.md), v23: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
