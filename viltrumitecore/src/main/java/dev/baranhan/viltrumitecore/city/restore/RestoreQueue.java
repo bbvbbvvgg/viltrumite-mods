@@ -78,6 +78,11 @@ public final class RestoreQueue {
       return this.running;
    }
 
+   /** City time of the last {@link #start}; a change tells other systems (the meteor city fire) that a reset began. */
+   public long startedAt() {
+      return this.startedAt;
+   }
+
    public long restoredBlocks() {
       return this.restoredBlocks;
    }
