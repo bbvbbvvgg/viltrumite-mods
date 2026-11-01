@@ -31,6 +31,21 @@ class DamageLedgerTest {
    }
 
    @Test
+   void twoBuildingsHitTogetherAreBothReturned() {
+      // found in game: a second building damaged in the same tick was dropped with the weaker cells
+      DamageLedger l = new DamageLedger();
+      hit(l, 0, 64, 0, 160, 1.0F, 100);
+      hit(l, 60, 64, 0, 120, 1.0F, 100);
+      long now = 100 + CollapseRules.SETTLE_TICKS;
+      List<DamageLedger.Candidate> first = l.settled(now, 1);
+      assertEquals(1, first.size());
+      List<DamageLedger.Candidate> second = l.settled(now + 1, 1);
+      assertEquals(1, second.size(), "the other building waits for the next tick");
+      assertTrue(Math.abs(first.get(0).x() - second.get(0).x()) > 30);
+      assertTrue(l.settled(now + 2, 1).isEmpty(), "and the same building is not returned twice");
+   }
+
+   @Test
    void weakDamageNeverTriggers() {
       DamageLedger l = new DamageLedger();
       hit(l, 0, 64, 0, 40, 0.35F, 100); // 40 TNT-ish blocks: score 14

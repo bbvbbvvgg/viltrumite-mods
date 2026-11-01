@@ -113,6 +113,17 @@ class CollapseAnalyzerTest {
    }
 
    @Test
+   void craterInTheStreetUnderATowerIsStillABuilding() {
+      // found in game: a hero strike at the base of a hollow tower also blew a crater into the ground layer
+      World w = new World();
+      w.box(0, 64, 0, 8, 90, 8, CollapseAnalyzer.STRUCTURE);
+      w.box(1, 64, 1, 7, 90, 7, CollapseAnalyzer.AIR);
+      long[] dmg = w.carve(-5, 58, -5, 5, 68, 5);
+      CollapseAnalyzer.Plan plan = analyze(w, 0, 63, 0, dmg, 1600);
+      assertFalse("terrain, not a building".equals(plan.reason()), plan.reason());
+   }
+
+   @Test
    void littleDamageIsIgnored() {
       World w = new World();
       w.box(0, 64, 0, 4, 90, 4, CollapseAnalyzer.STRUCTURE);

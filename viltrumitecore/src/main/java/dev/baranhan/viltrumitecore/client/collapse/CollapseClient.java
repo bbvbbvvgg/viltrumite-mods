@@ -43,6 +43,14 @@ public final class CollapseClient {
       return SCENES.size();
    }
 
+   /** One-line QA summary (playtest harness {@code collapsestate}); resets the max render time. */
+   public static String qaSummary() {
+      String s = "scenes=" + SCENES.size() + " drawn=" + lastDrawn + " renderMs=" + String.format(java.util.Locale.ROOT, "%.3f", lastRenderNanos / 1.0E6)
+         + " maxRenderMs=" + String.format(java.util.Locale.ROOT, "%.3f", maxRenderNanos / 1.0E6);
+      maxRenderNanos = 0L;
+      return s;
+   }
+
    public static void handle(CityCollapseS2CPacket packet) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == null) {

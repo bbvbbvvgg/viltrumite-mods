@@ -40,7 +40,8 @@ import org.slf4j.Logger;
  * screen), {@code respawn} (from the death screen). {@code key} also takes {@code swap} (ability page).
  * With {@code -Dviltrumitecore.subtitles.playtest.world=true} the title screen opens that world by itself.
  * {@code fpshots <prefix> <t1,t2,...>} takes screenshots on the Final Punch scene clock (first scene on the client)
- * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}).
+ * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}). {@code collapsestate} logs the
+ * structural-collapse scenes (count, drawn fragments, render ms) and the fps.
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -234,6 +235,8 @@ public final class SubtitlePlaytest {
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
          // encyclopedia QA (hero gallery): open the wish screen, drive the GUI, resize, switch language
+         case "collapsestate" -> LOG.info("SUBPT t={} collapse {} fps={}", ticks,
+            dev.baranhan.viltrumitecore.client.collapse.CollapseClient.qaSummary(), mc.getFps());
          case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());
          case "click" -> {
             String[] a = arg.split(" ");

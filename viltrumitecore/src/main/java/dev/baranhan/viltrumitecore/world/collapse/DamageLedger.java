@@ -168,14 +168,19 @@ public final class DamageLedger {
 
    /**
     * Settled dirty clusters whose score passed the threshold, strongest first, at most {@code max}.
-    * Returned cells leave the dirty set; weaker settled cells leave it too (they come back on new damage).
+    * Returned cells leave the dirty set, so do settled cells below the threshold and settled cells of the same
+    * building (within {@link CollapseRules#REGION_RADIUS} of a returned one, they come back on new damage).
+    * A settled cluster of another building that did not fit into {@code max} stays dirty for the next call, so
+    * two buildings hit in the same tick are both analysed.
     */
    public List<Candidate> settled(long now, int max) {
       List<Candidate> out = new ArrayList<>();
-      if (this.dirty.isEmpty()) {
+      if (this.dirty.isEmpty() || max <= 0) {
          return out;
       }
       LongArrayList done = new LongArrayList();
+      List<Candidate> ready = new ArrayList<>();
+      LongArrayList readyKeys = new LongArrayList();
       for (Long2LongOpenHashMap.Entry e : this.dirty.long2LongEntrySet()) {
          long ck = e.getLongKey();
          boolean impact = this.impactNear(ck, now);
@@ -183,18 +188,45 @@ public final class DamageLedger {
          if (now - e.getLongValue() < settle) {
             continue;
          }
-         done.add(ck);
          float score = this.clusterScore(ck);
          if (score >= CollapseRules.SCORE_THRESHOLD) {
             double[] c = this.centroid(ck);
-            out.add(new Candidate((int)Math.floor(c[0]), (int)Math.floor(c[1]), (int)Math.floor(c[2]), score, impact));
+            ready.add(new Candidate((int)Math.floor(c[0]), (int)Math.floor(c[1]), (int)Math.floor(c[2]), score, impact));
+            readyKeys.add(ck);
+         } else {
+            done.add(ck);
+         }
+      }
+      Integer[] order = new Integer[ready.size()];
+      for (int i = 0; i < order.length; i++) {
+         order[i] = i;
+      }
+      java.util.Arrays.sort(order, (a, b) -> Float.compare(ready.get(b).score(), ready.get(a).score()));
+      for (int idx : order) {
+         Candidate c = ready.get(idx);
+         boolean same = false;
+         for (Candidate o : out) {
+            if (sameBuilding(o, c)) {
+               same = true;
+               break;
+            }
+         }
+         if (same) {
+            done.add(readyKeys.getLong(idx));
+         } else if (out.size() < max) {
+            out.add(c);
+            done.add(readyKeys.getLong(idx));
          }
       }
       for (int i = 0; i < done.size(); i++) {
          this.dirty.remove(done.getLong(i));
       }
-      out.sort((a, b) -> Float.compare(b.score(), a.score()));
-      return out.size() > max ? new ArrayList<>(out.subList(0, max)) : out;
+      return out;
+   }
+
+   static boolean sameBuilding(Candidate a, Candidate b) {
+      double dx = a.x() - b.x(), dz = a.z() - b.z();
+      return dx * dx + dz * dz <= CollapseRules.REGION_RADIUS * CollapseRules.REGION_RADIUS && Math.abs(a.y() - b.y()) <= 24;
    }
 
    private boolean impactNear(long ck, long now) {
