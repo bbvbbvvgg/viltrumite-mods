@@ -217,8 +217,9 @@ public final class ThanosBrain {
       }
 
       if (!s.targetVisible() && move == ThanosMove.SPACE_STEP) {
-         // behind a wall: go to him through space rather than wait
-         w *= 4.0;
+         // behind a wall: go to him through space rather than wait (the
+         // portal volleys and marks that also reach him stay the exception)
+         w *= 5.0;
       }
 
       if (move.kind == ThanosMove.Kind.MELEE && s.distance() <= ThanosRules.CLOSE_RANGE) {
@@ -243,7 +244,7 @@ public final class ThanosBrain {
             case TIME_REWIND -> 14.0;
             case SPACE_STEP -> 5.0;
             case TIME_DOME -> 2.0;
-            default -> 0.3;
+            default -> 0.15;
          };
       }
 
@@ -299,10 +300,12 @@ public final class ThanosBrain {
       }
 
       if (war.flyers() > 0 && s.targetAirborne()) {
-         // bring the flyer down: drag, snap to the ground mark, portals in the air, the ship's lance
+         // bring the flyer down: drag, snap to the ground mark, portals in the air, the slam of the
+         // reality lift, the ship's lance
          w *= switch (move) {
             case MIND_COMPULSION, SPACE_BARRAGE -> 2.0;
             case TIME_ANOMALY, SPACE_PULL -> 1.7;
+            case REALITY_REWRITE -> 1.5;
             case SHIP_CALL, COMBO_TIME_VOLLEY -> 1.4;
             default -> 1.0;
          };

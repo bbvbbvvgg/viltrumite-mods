@@ -28,11 +28,10 @@ public final class ShipPath {
       Vec3 side = new Vec3(-dir.z, 0.0, dir.x);
       switch (state) {
          case ARRIVING -> {
-            double f = t / ThanosWarRules.SHIP_ARRIVAL;
-            double g = ThanosWarRules.glide(f);
+            double g = ThanosWarRules.glide(t / ThanosWarRules.SHIP_ARRIVAL);
             Vec3 p = start.add(hover.subtract(start).scale(g));
-            double sweep = Math.sin(Math.PI * Mth.clamp(f, 0.0, 1.0)) * SWEEP;
-            return p.add(side.scale(sweep));
+            // the curve follows the eased progress, so the ship also comes to rest sideways
+            return p.add(side.scale(Math.sin(Math.PI * g) * SWEEP));
          }
          case HOVER -> {
             return hover.add(0.0, ThanosWarRules.SHIP_BOB * Math.sin(t * Math.PI * 2.0 / ThanosWarRules.SHIP_BOB_PERIOD), 0.0);
@@ -53,18 +52,43 @@ public final class ShipPath {
       Vec3 dir = heading(start, hover);
       float base = (float)(Mth.atan2(dir.z, dir.x) * Mth.RAD_TO_DEG) - 90.0F;
       return switch (state) {
-         case ARRIVING -> base - 10.0F * (float)Math.sin(Math.PI * Mth.clamp(t / ThanosWarRules.SHIP_ARRIVAL, 0.0, 1.0));
+         case ARRIVING -> base + drift(t, start, hover);
          case HOVER -> base + 3.0F * (float)Math.sin(t * Math.PI * 2.0 / (ThanosWarRules.SHIP_BOB_PERIOD * 3.0));
          case LEAVING -> base + 25.0F * (float)Mth.clamp(t / ThanosWarRules.SHIP_LEAVE, 0.0, 1.0);
          default -> base;
       };
    }
 
-   /** Bank (roll, degrees) during the glide's curve and the departure's turn. */
+   /**
+    * The nose along the curve of the glide (degrees off the straight heading): the angle of the
+    * motion itself, settling onto the straight heading over the last stretch where the ship has all
+    * but stopped, so the hover starts square.
+    */
+   static float drift(double t, Vec3 start, Vec3 hover) {
+      double f = Mth.clamp(t / ThanosWarRules.SHIP_ARRIVAL, 0.0, 1.0);
+      double g = ThanosWarRules.glide(f);
+      double length = Math.max(1.0, Math.sqrt((hover.x - start.x) * (hover.x - start.x) + (hover.z - start.z) * (hover.z - start.z)));
+      double angle = Math.atan2(SWEEP * Math.PI * Math.cos(Math.PI * g), length) * Mth.RAD_TO_DEG;
+      return (float)(angle * (1.0 - settle(f)));
+   }
+
+   /** 0 until 72 % of the glide, then a smooth 0..1 to its end. */
+   static double settle(double f) {
+      double x = Mth.clamp((f - 0.72) / 0.28, 0.0, 1.0);
+      return x * x * (3.0 - 2.0 * x);
+   }
+
+   /**
+    * Bank (roll, degrees; + = right side down) into the glide's turn and the departure's turn: the
+    * glide curves left (its nose swings from right of the heading to left), the departure turns right.
+    */
    public static float roll(int state, double t) {
       return switch (state) {
-         case ARRIVING -> 7.0F * (float)Math.cos(Math.PI * Mth.clamp(t / ThanosWarRules.SHIP_ARRIVAL, 0.0, 1.0));
-         case LEAVING -> -9.0F * (float)Math.sin(Math.PI * Mth.clamp(t / ThanosWarRules.SHIP_LEAVE, 0.0, 1.0));
+         case ARRIVING -> {
+            double f = Mth.clamp(t / ThanosWarRules.SHIP_ARRIVAL, 0.0, 1.0);
+            yield -6.0F * (float)(Math.sin(Math.PI * ThanosWarRules.glide(f)) * (1.0 - settle(f)));
+         }
+         case LEAVING -> 9.0F * (float)Math.sin(Math.PI * Mth.clamp(t / ThanosWarRules.SHIP_LEAVE, 0.0, 1.0));
          default -> 0.0F;
       };
    }

@@ -146,7 +146,7 @@ public final class ThanosWarRules {
       return phase.atLeast(ThanosPhase.BLACK_ORDER);
    }
 
-   /** Ease of the ship's glide (0..1 -> 0..1, slow start, long slow end). */
+   /** Ease of the ship's glide (0..1 -> 0..1): in from the horizon at speed, a long slow end at rest (no speed left at 1). */
    public static double glide(double t) {
       double x = Math.max(0.0, Math.min(1.0, t));
       return 1.0 - Math.pow(1.0 - x, 3.0) * (1.0 - 0.35 * x);
