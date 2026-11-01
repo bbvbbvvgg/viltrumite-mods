@@ -26,6 +26,8 @@ public abstract class ThanosMaxHealthMixin {
          cir.setReturnValue(thanos.thanosMaxHealth());
       } else if ((Object)this instanceof UltronPrime prime) {
          cir.setReturnValue(prime.primeMaxHealth());
+      } else if ((Object)this instanceof dev.baranhan.viltrumitecore.entity.thanos.BlackOrderEntity order) {
+         cir.setReturnValue(order.orderMaxHealth());
       }
    }
 }
