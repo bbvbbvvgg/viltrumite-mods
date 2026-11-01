@@ -1,0 +1,137 @@
+{
+  "meteor_rain.approach": {
+    "category": "weather",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.approach",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/approach"
+      }
+    ]
+  },
+  "meteor_rain.roar": {
+    "category": "weather",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/roar"
+      }
+    ]
+  },
+  "meteor_rain.whoosh": {
+    "category": "weather",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.whoosh",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/whoosh_1"
+      },
+      {
+        "name": "viltrumitecore:meteor_rain/whoosh_2"
+      }
+    ]
+  },
+  "meteor_rain.impact_near": {
+    "category": "weather",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.impact_near",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/impact_near_1"
+      },
+      {
+        "name": "viltrumitecore:meteor_rain/impact_near_2"
+      }
+    ]
+  },
+  "meteor_rain.impact_far": {
+    "category": "weather",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.impact_far",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/impact_far_1"
+      },
+      {
+        "name": "viltrumitecore:meteor_rain/impact_far_2"
+      }
+    ]
+  },
+  "meteor_rain.shockwave": {
+    "category": "weather",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.shockwave",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/shockwave"
+      }
+    ]
+  },
+  "meteor_rain.debris": {
+    "category": "weather",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.debris",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/debris_1"
+      },
+      {
+        "name": "viltrumitecore:meteor_rain/debris_2"
+      }
+    ]
+  },
+  "meteor_rain.rubble": {
+    "category": "weather",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.rubble",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/rubble"
+      }
+    ]
+  },
+  "meteor_rain.fire_crackle": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.fire_crackle",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/fire_crackle_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "viltrumitecore:meteor_rain/fire_crackle_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "viltrumitecore:meteor_rain/fire_crackle_3",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "meteor_rain.fire_roar": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.fire_roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/fire_roar"
+      }
+    ]
+  },
+  "meteor_rain.fire_flare": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.fire_flare",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/fire_flare_1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "viltrumitecore:meteor_rain/fire_flare_2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "meteor_rain.brand": {
+    "category": "block",
+    "subtitle": "subtitles.viltrumitecore.meteor_rain.brand",
+    "sounds": [
+      {
+        "name": "viltrumitecore:meteor_rain/brand",
+        "attenuation_distance": 24
+      }
+    ]
+  }
+}
