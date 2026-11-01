@@ -225,7 +225,28 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
 
    @Override
    public ParticleRenderType getRenderType() {
-      return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+      return MeteorParticleRenderTypes.SOFT_SMOKE;
+   }
+
+   // the soft sheet samples the atlas linearly: keep a 1 % margin so a puff never picks up its neighbour sprite
+   @Override
+   protected float getU0() {
+      return Mth.lerp(0.01F, this.sprite.getU0(), this.sprite.getU1());
+   }
+
+   @Override
+   protected float getU1() {
+      return Mth.lerp(0.99F, this.sprite.getU0(), this.sprite.getU1());
+   }
+
+   @Override
+   protected float getV0() {
+      return Mth.lerp(0.01F, this.sprite.getV0(), this.sprite.getV1());
+   }
+
+   @Override
+   protected float getV1() {
+      return Mth.lerp(0.99F, this.sprite.getV0(), this.sprite.getV1());
    }
 
    public static class Provider implements ParticleProvider<SimpleParticleType> {

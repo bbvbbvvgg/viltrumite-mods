@@ -73,13 +73,16 @@ public final class AftermathEvents {
 
       AftermathNet.tick(level, data, now);
       if (QA_LOG) {
+         // all levels' cost summed, per server tick (counted on the overworld, which ticks once per server tick)
          qaNanos += System.nanoTime() - start;
-         qaTicks++;
-         if (now % 600 == 0) {
-            CityAftermath.LOG.info("AMQA server {} zones={} outages={} mean={}us/tick over {} ticks", level.dimension().location(), data.zones.size(),
-               data.outages.size(), qaTicks == 0 ? 0 : qaNanos / 1000L / qaTicks, qaTicks);
-            qaNanos = 0L;
-            qaTicks = 0;
+         if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+            qaTicks++;
+            if (now % 600 == 0) {
+               CityAftermath.LOG.info("AMQA server {} zones={} outages={} mean={}us/server tick (all levels) over {} ticks", level.dimension().location(),
+                  data.zones.size(), data.outages.size(), qaTicks == 0 ? 0 : qaNanos / 1000L / qaTicks, qaTicks);
+               qaNanos = 0L;
+               qaTicks = 0;
+            }
          }
       }
    }

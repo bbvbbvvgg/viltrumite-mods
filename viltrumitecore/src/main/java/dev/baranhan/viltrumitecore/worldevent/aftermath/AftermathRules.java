@@ -89,6 +89,14 @@ public final class AftermathRules {
       return Mth.clamp(hi + lo * 0.15F, 0.0F, 1.0F);
    }
 
+   /**
+    * True when a hit can leave a ruin there: a finite point no further than 16 blocks below the bottom of the
+    * world or 32 above its top (QA: a Leviathan that fell through the void reported its crash at y -1971).
+    */
+   public static boolean inWorld(double x, double y, double z, int minY, int maxY) {
+      return Double.isFinite(x) && Double.isFinite(y) && Double.isFinite(z) && y >= minY - 16 && y <= maxY + 32;
+   }
+
    /** True when a hit at distance {@code d} from a zone of radius {@code r1} belongs to that zone. */
    public static boolean merges(double d, float r1, float r2) {
       return d <= r1 + r2 * 0.5F + 4.0F && bound(d, r1, r2)[0] <= MAX_RADIUS + 0.01F || d < 6.0;

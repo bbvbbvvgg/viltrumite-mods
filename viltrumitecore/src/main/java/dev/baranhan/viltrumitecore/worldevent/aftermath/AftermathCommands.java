@@ -177,7 +177,8 @@ public final class AftermathCommands {
       check();
       ServerLevel level = c.getSource().getLevel();
       CityAftermath.setPower(level, "command", BlockPos.containing(c.getSource().getPosition()), radius, on);
-      ok(c, Component.translatable(on ? "commands.viltrumitecore.aftermath.power_on" : "commands.viltrumitecore.aftermath.power_off", Math.round(radius)));
+      ok(c, on ? Component.translatable("commands.viltrumitecore.aftermath.power_on")
+         : Component.translatable("commands.viltrumitecore.aftermath.power_off", Math.round(radius)));
       return 1;
    }
 }
