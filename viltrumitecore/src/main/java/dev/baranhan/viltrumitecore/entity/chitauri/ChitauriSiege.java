@@ -150,7 +150,7 @@ public class ChitauriSiege extends Mob implements ChitauriMob, net.minecraft.wor
       if (st == DYING || ChitauriMob.heldByHero(this)) {
          return;
       }
-      if (this.tickCount % 20 == 0 || this.target != null && !ChitauriMob.validTarget(this.target)) {
+      if (this.tickCount % 20 == 0 || this.target != null && !ChitauriMob.pickTarget(this.target)) {
          this.target = this.pickTarget(level);
       }
       Vec3 pos = this.position();
@@ -286,7 +286,7 @@ public class ChitauriSiege extends Mob implements ChitauriMob, net.minecraft.wor
    private LivingEntity pickTarget(ServerLevel level) {
       LivingEntity best = null;
       double bestScore = Double.MAX_VALUE;
-      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(56.0, 40.0, 56.0), ChitauriMob::validTarget)) {
+      for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(56.0, 40.0, 56.0), ChitauriMob::pickTarget)) {
          double d = Math.sqrt(e.distanceToSqr(this));
          double score = Math.abs(d - 27.0);
          if (e instanceof Player) {

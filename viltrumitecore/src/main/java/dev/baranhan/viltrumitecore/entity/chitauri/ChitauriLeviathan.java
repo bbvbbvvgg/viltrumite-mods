@@ -548,7 +548,7 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
       }
       LivingEntity best = null;
       double bestScore = 0.0;
-      for (LivingEntity t : level.getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(48.0), ChitauriMob::validTarget)) {
+      for (LivingEntity t : level.getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(48.0), ChitauriMob::pickTarget)) {
          double score = t instanceof Player ? 2.0 : 0.0;
          for (LivingEntity o : level.getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(8.0), ChitauriMob::validTarget)) {
             score += 1.0;
