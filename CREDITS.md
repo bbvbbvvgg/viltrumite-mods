@@ -265,3 +265,19 @@ Sources list and cue sheet: `tools/assets/city_aftermath_sources.md`.
   Sheyvan (/569510), "fire crackles" by florianreichelt (/563766), "Wood fire crackling, near flames" by
   felix.blume (/779877).
 - Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.
+
+## SCP-096 (world creature)
+
+Sources list: `tools/assets/scp096_sources.md`.
+
+### Concept
+- "SCP-096" by Dr Dan, SCP Foundation wiki (https://scp-wiki.wikidot.com/scp-096), CC BY-SA 3.0. The model,
+  texture and 19 animation clips are own work (`tools/assets/scp096_model.py`, `scp096_anims.py`) drawn from the
+  written description, no game or wiki image used; as depictions of the concept they are shared under CC BY-SA 3.0.
+
+### Sounds
+- No audio is committed. With the player's own copy of SCP – Containment Breach (Regalis11/scpcb) installed, the
+  client loads its five SCP-096 files locally (`096.ogg`, `096Angered.ogg`, `Scream.ogg`, `Triggered.ogg`,
+  `096Chase.ogg`; the last is based on "Hush" by Kevin MacLeod, incompetech.com, CC BY). Otherwise vanilla Minecraft
+  sound events stand in.
+
