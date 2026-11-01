@@ -20,6 +20,11 @@ public final class BalanceTable {
    /** Thor (God of War Ragnarök). */
    public static final HeroBalanceProfile THUNDER_GOD = new HeroBalanceProfile(HeroTier.A, 0.85F, 0.25F, 0.45F, 0.40F);
    /**
+    * Red Hulk: a heavy melee body (armor 10, toughness 4, 48 HP) whose heat multiplies his blows;
+    * slightly less resilient than Thor, and still below Reinhard and Regulus.
+    */
+   public static final HeroBalanceProfile RAGE_TITAN = new HeroBalanceProfile(HeroTier.A, 0.80F, 0.25F, 0.45F, 0.40F);
+   /**
     * Iron Man in an intact suit (nano Mark 50 or a mark). The suit's armor 28 already
     * removes up to 80 % of small hits, so the body layer is lighter; the cap is what keeps
     * a Viltrumite punch from deleting him (several ordinary punches, two heavy ones).
