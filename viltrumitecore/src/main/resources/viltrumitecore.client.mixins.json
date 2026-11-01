@@ -85,7 +85,8 @@
     "ItemInHandRendererInvoker",
     "DefendedArrowRendererMixin",
     "LivingEntityRendererInvoker",
-    "PlayerRendererInvoker"
+    "PlayerRendererInvoker",
+    "GhostRiderModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1
