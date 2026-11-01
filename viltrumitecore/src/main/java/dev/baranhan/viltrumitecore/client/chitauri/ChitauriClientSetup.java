@@ -19,5 +19,11 @@ public final class ChitauriClientSetup {
       event.registerEntityRenderer(ChitauriEntities.CHARIOT.get(), ChitauriChariotRenderer::new);
       event.registerEntityRenderer(ChitauriEntities.LEVIATHAN.get(), ChitauriLeviathanRenderer::new);
       event.registerEntityRenderer(ChitauriEntities.BOLT.get(), ChitauriBoltRenderer::new);
+      event.registerEntityRenderer(ChitauriEntities.CAPTOR.get(), c -> new ChitauriEliteRenderer<>(c, ChitauriEliteRenderer.CAPTOR));
+      event.registerEntityRenderer(ChitauriEntities.HEAVY.get(), c -> new ChitauriEliteRenderer<>(c, ChitauriEliteRenderer.HEAVY));
+      event.registerEntityRenderer(ChitauriEntities.COMMANDER.get(), c -> new ChitauriEliteRenderer<>(c, ChitauriEliteRenderer.COMMANDER));
+      event.registerEntityRenderer(ChitauriEntities.INTERCEPTOR.get(), ChitauriInterceptorRenderer::new);
+      event.registerEntityRenderer(ChitauriEntities.SIEGE.get(), ChitauriSiegeRenderer::new);
+      event.registerEntityRenderer(ChitauriEntities.BEACON.get(), ChitauriBeaconRenderer::new);
    }
 }
