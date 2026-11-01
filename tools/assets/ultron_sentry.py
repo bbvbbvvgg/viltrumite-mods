@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ultron combat robot ("sentry"): slender machined humanoid, 2.2 blocks. Geo (~120 cubes: layered chest
+"""Ultron combat robot ("sentry"): slender machined humanoid, 2.2 blocks. Geo (160 cubes: layered chest
 and pauldron plates, ribbed abdomen and neck, pistons, three jointed fingers and a thumb per hand, palm
 repulsors, back thruster pack), metal atlas + red glow atlas, and every clip: idle, combat_idle, walk, run,
 accel/decel/turn_l/turn_r (additive leans), strike_a/b/c, blast, lunge, guard, hurt (additive), heavy_hit,

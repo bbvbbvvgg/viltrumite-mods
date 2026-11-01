@@ -148,7 +148,7 @@ public class UltronInterceptor extends UltronUnit {
          }
          case INTERCEPTOR_DIVE -> {
             this.diveTo = null;
-            this.sound(UltronSounds.INTERCEPTOR_JET, 1.0F, 1.3F);
+            this.sound(UltronSounds.INTERCEPTOR_BOOST, 1.3F, 0.8F); // the engines kick in (the jet loop itself only runs on the client)
          }
          case INTERCEPTOR_BURST -> this.fx(UltronFxS2CPacket.CHARGE, this.local(0.0, 0.5, 0.7), Vec3.ZERO, 0.5F, this.getId());
          default -> {
