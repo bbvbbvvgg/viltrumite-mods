@@ -631,6 +631,8 @@ def mirror_r(model):
         if not b.name.endswith('_r'):
             continue
         nb_name = b.name[:-2] + '_l'
+        if nb_name in model.by_name:
+            continue  # the left side was built explicitly (asymmetric details): never duplicate it
         parent = b.parent[:-2] + '_l' if b.parent and b.parent.endswith('_r') else b.parent
         rot = None if b.rotation is None else [b.rotation[0], -b.rotation[1], -b.rotation[2]]
         nb = model.bone(nb_name, parent, [-b.pivot[0], b.pivot[1], b.pivot[2]], rot)
