@@ -48,6 +48,9 @@ public final class ThanosSounds {
    public static final RegistryObject<SoundEvent> COMBO_MIND_STEP = reg("thanos.combo_mind_step");
    public static final RegistryObject<SoundEvent> COMBO_TRINITY = reg("thanos.combo_trinity");
    public static final RegistryObject<SoundEvent> COMBO_ETERNITY = reg("thanos.combo_eternity");
+   public static final RegistryObject<SoundEvent> COMBO_TIME_VOLLEY = reg("thanos.combo_time_volley");
+   public static final RegistryObject<SoundEvent> COMBO_MOON_FALL = reg("thanos.combo_moon_fall");
+   public static final RegistryObject<SoundEvent> COMBO_INFINITY = reg("thanos.combo_infinity");
    public static final RegistryObject<SoundEvent> WORLD_STOP = reg("thanos.world_stop");
    public static final RegistryObject<SoundEvent> GAUNTLET_RAISE = reg("thanos.gauntlet_raise");
    public static final RegistryObject<SoundEvent> STONE_LIGHT = reg("thanos.stone_light");
@@ -84,6 +87,9 @@ public final class ThanosSounds {
          case COMBO_MIND_STEP -> COMBO_MIND_STEP;
          case COMBO_TRINITY -> COMBO_TRINITY;
          case COMBO_ETERNITY -> COMBO_ETERNITY;
+         case COMBO_TIME_VOLLEY -> COMBO_TIME_VOLLEY;
+         case COMBO_MOON_FALL -> COMBO_MOON_FALL;
+         case COMBO_INFINITY -> COMBO_INFINITY;
          default -> null;
       };
    }
@@ -92,7 +98,8 @@ public final class ThanosSounds {
     * Ticks before the active phase at which a combo cue starts, so its strike in the audio
     * (tools/sfx/thanos.py) lands with the hit: cue strike time minus the active tick of the hit
     * (portal fist 0.62 s / active 6, crush 1.3 s / 12, images 0.5 s / 0, blink 0.6 s / 4, first
-    * trinity blast 1.55 s / 0, eternity nova 1.8 s / 20). Clamped to the telegraph start.
+    * trinity blast 1.55 s / 0, eternity nova 1.8 s / 20, volley freeze 1.5 s / 0, moon portal
+    * 1.7 s / 0, infinity first stage 2.0 s / 0). Clamped to the telegraph start.
     */
    public static int comboLead(ThanosMove move) {
       return switch (move) {
@@ -102,6 +109,9 @@ public final class ThanosSounds {
          case COMBO_MIND_STEP -> 8;
          case COMBO_TRINITY -> 31;
          case COMBO_ETERNITY -> 16;
+         case COMBO_TIME_VOLLEY -> 30;
+         case COMBO_MOON_FALL -> 34;
+         case COMBO_INFINITY -> 40;
          default -> 0;
       };
    }

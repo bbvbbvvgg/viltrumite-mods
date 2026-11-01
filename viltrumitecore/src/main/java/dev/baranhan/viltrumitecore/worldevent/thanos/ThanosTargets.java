@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Who Thanos may target and hurt, how he hurts and pushes them, and where his effects are sent.
  * Targets are heroes (survival/adventure players); area hits also reach other combatants but
- * never city bystanders, armor stands or Thanos himself.
+ * never city bystanders, armor stands, Thanos himself or his army (Black Order, Chitauri).
  */
 public final class ThanosTargets {
    /** Effects are sent to players this close to their position. */
@@ -36,6 +36,11 @@ public final class ThanosTargets {
    /** May an area move hurt this entity? */
    public static boolean victim(LivingEntity entity, ThanosEntity thanos) {
       if (entity == thanos || !entity.isAlive() || entity instanceof ArmorStand || Bystander.is(entity) || entity instanceof ThanosEntity) {
+         return false;
+      }
+
+      // his own war: the Black Order, their debris and the Chitauri are never hit by his moves
+      if (entity instanceof dev.baranhan.viltrumitecore.entity.thanos.ThanosAlly || dev.baranhan.viltrumitecore.entity.chitauri.ChitauriMob.is(entity)) {
          return false;
       }
 
