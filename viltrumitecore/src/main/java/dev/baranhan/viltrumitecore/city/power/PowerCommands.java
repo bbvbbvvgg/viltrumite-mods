@@ -66,7 +66,7 @@ public final class PowerCommands {
       Map<String, Long> s = g.stats();
       CommandSourceStack src = c.getSource();
       src.sendSuccess(() -> t("status.title").copy().withStyle(ChatFormatting.GOLD), false);
-      src.sendSuccess(() -> t("status.cells", s.get("dark") + s.get("damaged"), s.get("cells"), s.get("damaged"), s.get("failing") + s.get("surge"),
+      src.sendSuccess(() -> t("status.cells", s.get("dark") + s.get("damaged"), s.get("urban_cells") > 0 ? s.get("urban_cells") : s.get("cells"), s.get("damaged"), s.get("failing") + s.get("surge"),
          s.get("restoring")), false);
       src.sendSuccess(() -> t("status.stations", s.get("stations_tripped"), s.get("stations_worn")), false);
       src.sendSuccess(() -> t("status.alarm", t("stage." + g.alarm().stage().key()), g.alarm().leases().size(), g.alarm().reason()), false);

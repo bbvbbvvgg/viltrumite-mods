@@ -224,12 +224,14 @@ final class FixtureSwitch {
          if (fx == null || chunk == null) {
             continue;
          }
+         // one per chunk, so the beacons spread over the cell instead of crowding one building
          for (long p : fx) {
             if (PowerRules.emergency(p) && Fixtures.isLit(chunk.getBlockState(this.cursor.set(p)))) {
                out.add(p);
                if (out.size() >= max) {
                   return out.toLongArray();
                }
+               break;
             }
          }
       }

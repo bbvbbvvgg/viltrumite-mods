@@ -10,7 +10,7 @@ call is a no-op elsewhere, outside the city dimension and while `/city reset` ru
 | Piece | What it is |
 |---|---|
 | Cell | 48 x 48 blocks (3 x 3 chunks) of the city footprint. States: lit, surge (voltage dip), dark, damaged. |
-| Substation | 3 x 3 cells (144 x 144 blocks). Has health 0..1; trips when worn out (≤ 0.42) or when 2/3 of its cells are dark. A trip darkens all its cells and may cascade to neighbours (load × 0.66 per step, depth ≤ 3, ≤ 6 trips per incident, 45–95 ticks between trips). |
+| Substation | 3 x 3 cells (144 x 144 blocks). Has health 0..1; trips when worn out (≤ 0.42) or when 2/3 of its cells are dark. A trip darkens all its cells and may cascade to neighbours (load × 0.66 per step, depth ≤ 3, ≤ 6 trips per incident, 45–95 ticks between trips). A neighbour carrying load < 0.30 never gives way; above that the chance is `min(0.85, (load − 0.30) × 1.2)`, so one heavy hit usually trips 1–3 substations, not the whole ring. |
 | District | Name from `CityProfile.districtAt` of the cell centre; used for subtitles and `OutageInfo`. |
 | Fixture | A real light block in a loaded chunk (see "Lights"). Found by a lazy palette-filtered chunk scan (2 chunks/tick, ≤ 160 per chunk). |
 | Incident | One hit on the grid (`InfrastructureIncident`): position, cause, source, radius, severity. Newest 16 are kept. |
@@ -37,7 +37,8 @@ Only real, reversible block states, written with flags `2 | 16` (client update, 
 | jack o'lantern | carved pumpkin (`facing` kept) |
 
 Torches, candles, campfires and fire are flames and stay lit. One fixture in nine (hash of its position) is on the
-emergency circuit and keeps burning; the client draws a rotating red beacon on emergency fixtures of dark cells.
+emergency circuit and keeps burning; the client draws a rotating red beacon on emergency fixtures of dark cells (at most one per chunk
+and 6 per cell, looked up again every 5 s while a cell has fewer).
 
 Invariants:
 - The first switch of a fixture records its original state in the city `ChangeJournal`, so `/city reset` and the
@@ -90,7 +91,10 @@ AlarmStage stage = CityInfrastructure.alarmStage(level);
   `CRITICAL`, `ALL_CLEAR`. When the last ACTIVE/CRITICAL lease ends the city sounds the all-clear for 30 s and the
   crews begin restoring power. A WARNING that ends without escalation goes quietly back to `NONE`.
 - `damage` raises its own lease `incident:<cause>`: ACTIVE for 60 s at severity ≥ 0.45, WARNING for 30 s at
-  ≥ 0.30 (not for plain destruction bursts). Meteor strikes in a row escalate further.
+  ≥ 0.30. Plain `destruction` (a hero smashing walls) never warns and needs severity ≥ 0.60 for ACTIVE.
+  Four or more meteor strikes within 60 s raise `meteor_storm` CRITICAL for 45 s.
+- A substation cascade raises lease `cascade`: ACTIVE, CRITICAL once one incident has tripped
+  `PowerRules.CRITICAL_TRIPS` (3) substations; the stage never drops while the lease lasts.
 - Server thread only. Calls on the client side or without a city return null / defaults.
 
 Events on `MinecraftForge.EVENT_BUS` (all `InfrastructureEvent`, server side):
