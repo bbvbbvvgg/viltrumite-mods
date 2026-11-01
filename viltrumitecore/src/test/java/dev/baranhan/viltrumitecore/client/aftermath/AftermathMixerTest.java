@@ -62,4 +62,16 @@ class AftermathMixerTest {
          assertEquals(0.0F, AftermathMixer.crowd(AftermathMixer.MAX_VOICES, k), 1.0E-6);
       }
    }
+
+   @Test
+   void ruinsPauseBrieflyAfterAHitAndNotInUnison() {
+      java.util.Set<Integer> seen = new java.util.HashSet<>();
+      for (int id = 1; id <= 40; id++) {
+         int h = ClientZone.holdTicks(id);
+         assertTrue(h >= 16 && h <= 28, "zone " + id + " holds " + h);
+         seen.add(h);
+      }
+
+      assertTrue(seen.size() >= 10, "pauses vary between ruins");
+   }
 }

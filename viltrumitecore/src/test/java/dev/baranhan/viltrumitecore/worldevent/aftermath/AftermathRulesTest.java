@@ -139,4 +139,15 @@ class AftermathRulesTest {
       float mid = AftermathRules.burstRadius(10, 6, 8);
       assertTrue(mid > AftermathRules.MIN_RADIUS && mid < 16.0F);
    }
+
+   @Test
+   void ruinsStayInsideTheWorld() {
+      assertTrue(AftermathRules.inWorld(0.0, -60.0, 0.0, -64, 320));
+      assertTrue(AftermathRules.inWorld(0.0, -78.0, 0.0, -64, 320));
+      assertTrue(AftermathRules.inWorld(0.0, 350.0, 0.0, -64, 320));
+      assertFalse(AftermathRules.inWorld(51.0, -1971.0, 160.0, -64, 320));
+      assertFalse(AftermathRules.inWorld(0.0, 400.0, 0.0, -64, 320));
+      assertFalse(AftermathRules.inWorld(Double.NaN, 0.0, 0.0, -64, 320));
+      assertFalse(AftermathRules.inWorld(0.0, Double.POSITIVE_INFINITY, 0.0, -64, 320));
+   }
 }
