@@ -65,6 +65,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 ## Topic files
 - `decompile.md`: decompile artifacts and their fixes.
 - `viltrumites-meteors.md`: squad NPC identity fix (Homelander override), manual-only world events, meteor rain, runtime harness.
+- `aftermath.md`: city disaster aftermath (ruin zones, stages, persistence, soft smoke shader, sync race, QA logs), core 1.66.0 / protocol 24.
 - `ironman.md`, `ironman-legion.md`: Iron Man (see the Iron Man section).
 - `contextual-interactions.md`: hero-vs-hero/mob/event combos (`interaction/`, catalog `docs/contextual-interactions.json`), core 1.63.0.
 - `heroes-integration.md`: the all-heroes merge (Thor #74 + DIO/Sinclair/Jinwoo #82): hero and action order, core 1.54.0 / protocol 14, where each hero's lang keys and sounds live.
