@@ -617,6 +617,45 @@ def clip_from(name, length, keys, loop=False, base=True, bones=None):
     return c
 
 
+def wrap180(a):
+    return (a + 180.0) % 360.0 - 180.0
+
+
+def euler_twins(rot):
+    """Both Euler triples of one rotation (R = Rz(-rz) Ry(ry) Rx(-rx)), each wrapped to (-180, 180]."""
+    a = [wrap180(float(v)) for v in rot]
+    b = [wrap180(float(rot[0]) + 180.0), wrap180(180.0 - float(rot[1])), wrap180(float(rot[2]) + 180.0)]
+    return a, b
+
+
+def near(rot, prev):
+    """The per-axis 360-degree shift of rot closest to prev."""
+    return [v + 360.0 * round((p - v) / 360.0) for v, p in zip(rot, prev)]
+
+
+def tidy(clip):
+    """Rewrites every key rotation without changing the pose: the IK hands back arbitrary Euler triples (an arm at
+    (131, -161, -145) is the same as (-49, -19, 35)), and the game interpolates and blends Euler angles per axis, so
+    a 360-degree jump between two keys spins the limb through the body. The first key of a bone takes the smaller
+    of its two triples (so every clip agrees and crossfades stay short), later keys the triple nearest the key
+    before (continuous curves)."""
+    prev = {}
+    for _, pose in sorted(clip.frames, key=lambda f: f[0]):
+        for bone, spec in pose.items():
+            if not isinstance(spec, dict) or 'rot' not in spec:
+                continue
+            a, b = euler_twins(spec['rot'])
+            if bone not in prev:
+                r = a if sum(v * v for v in a) <= sum(v * v for v in b) else b
+            else:
+                ca, cb = near(a, prev[bone]), near(b, prev[bone])
+                da = sum((x - y) ** 2 for x, y in zip(ca, prev[bone]))
+                db = sum((x - y) ** 2 for x, y in zip(cb, prev[bone]))
+                r = ca if da <= db else cb
+            spec['rot'] = [round(v, 3) for v in r]
+            prev[bone] = spec['rot']
+
+
 def cycle(fn, n, length, name):
     keys = [(length * i / n, fn(i / n)) for i in range(n + 1)]
     return clip_from(name, length, keys, loop=True)
@@ -657,6 +696,8 @@ def build_clips():
     clips['smash'].keep = upper
     clips['attack'] = clip_from('attack', 0.55, attack_keys(), bones=upper)
     clips['attack'].keep = upper
+    for c in clips.values():
+        tidy(c)
     return clips
 
 
