@@ -1,0 +1,22 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "one",
+        "dstrgb": "zero"
+    },
+    "vertex": "viltrumitecore:sanctuary_hull",
+    "fragment": "viltrumitecore:sanctuary_hull",
+    "attributes": [
+        "Position",
+        "Color"
+    ],
+    "samplers": [
+    ],
+    "uniforms": [
+        { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "ColorModulator", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
+        { "name": "Haze", "type": "float", "count": 4, "values": [ 0.7, 0.8, 1.0, 0.0 ] },
+        { "name": "Flash", "type": "float", "count": 4, "values": [ 1.0, 0.6, 0.3, 0.0 ] }
+    ]
+}
