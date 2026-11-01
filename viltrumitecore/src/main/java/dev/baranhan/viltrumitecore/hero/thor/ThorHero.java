@@ -128,6 +128,12 @@ public final class ThorHero implements HeroDefinition {
       return false;
    }
 
+   /** Global balance profile (BalanceTable): Thor; tier A. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.BalanceTable.THUNDER_GOD;
+   }
+
    @Override
    public boolean allowsAbilityPages(Player player) {
       return false;

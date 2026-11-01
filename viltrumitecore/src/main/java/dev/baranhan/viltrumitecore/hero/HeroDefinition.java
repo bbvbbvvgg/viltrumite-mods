@@ -190,6 +190,24 @@ public interface HeroDefinition {
       return true;
    }
 
+   /**
+    * PvE combat profile of this hero right now (global balance model,
+    * {@link dev.baranhan.viltrumitecore.balance.BalanceTable}): resilience and the
+    * anti one-shot caps the shared damage path applies to mob, NPC, boss and world
+    * hits. Default: vanilla body.
+    */
+   default dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.HeroBalanceProfile.VANILLA;
+   }
+
+   /**
+    * Does the shared hero support system ({@link dev.baranhan.viltrumitecore.balance.HeroSustain})
+    * keep this player fed and on Regeneration I? Every chosen hero does; the plain human does not.
+    */
+   default boolean heroSustain(Player player) {
+      return true;
+   }
+
    /** Default slot contents applied on hero enter. Length 18, "" for empty. */
    String[] defaultLoadout();
 

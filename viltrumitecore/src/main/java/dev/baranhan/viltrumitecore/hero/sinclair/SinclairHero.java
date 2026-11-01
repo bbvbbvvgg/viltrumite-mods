@@ -63,6 +63,12 @@ public final class SinclairHero implements HeroDefinition {
       return false;
    }
 
+   /** Global balance profile (BalanceTable): Sinclair; tier B. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.BalanceTable.SHOWMAN;
+   }
+
    @Override
    public boolean ownsAbility(String abilityId) {
       return SinclairAbilities.owns(abilityId);

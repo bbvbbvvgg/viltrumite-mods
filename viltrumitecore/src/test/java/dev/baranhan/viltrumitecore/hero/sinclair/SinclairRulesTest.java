@@ -11,9 +11,10 @@ import org.junit.jupiter.api.Test;
 class SinclairRulesTest {
    @Test
    void specNumbers() {
-      assertEquals(6.0, SinclairRules.BONUS_HEALTH);
+      // global rebalance 2026-10-31 (BalanceTable): 30 HP chassis, 2.5 spark
+      assertEquals(10.0, SinclairRules.BONUS_HEALTH);
       assertEquals(4.0, SinclairRules.BONUS_ARMOR);
-      assertEquals(2.0F, SinclairRules.SPARK_DAMAGE);
+      assertEquals(2.5F, SinclairRules.SPARK_DAMAGE);
       assertEquals(3.2F, SinclairRules.SPARK_SPEED);
       assertEquals(48.0F, SinclairRules.SPARK_RANGE);
       assertEquals(12, SinclairRules.MAGAZINE);

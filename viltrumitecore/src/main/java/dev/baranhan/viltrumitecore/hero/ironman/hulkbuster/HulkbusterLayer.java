@@ -15,7 +15,7 @@ public final class HulkbusterLayer {
    public static final float DURABILITY = 800.0F;
    public static final double ARMOR = 30.0;
    /** Durability loss per point of an absorbed hit (heavier than any mark). */
-   public static final float PLATING = 0.36F;
+   public static final float PLATING = dev.baranhan.viltrumitecore.balance.BalanceTable.HULKBUSTER_PLATING;
    public static final int COOLDOWN = 12000;
    /** Air variant: the capsule falls (0-20), opens (20-40) while the player flies up to it. */
    public static final int DROP_TICKS_AIR = 40;

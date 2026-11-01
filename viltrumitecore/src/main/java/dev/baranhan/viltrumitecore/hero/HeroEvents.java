@@ -263,6 +263,8 @@ public final class HeroEvents {
       if (!event.getEntity().level().isClientSide() && event.getAmount() > 0.0F) {
          event.setAmount(dev.baranhan.viltrumitecore.interaction.ContextualInteractions.onHurt(event.getEntity(), event.getSource(), event.getAmount()));
          event.setAmount(HeroDamageLayers.onHurt(event.getEntity(), event.getSource(), event.getAmount()));
+         // Global balance model: summoned groups and the raw amount a hero's PvE profile reads.
+         event.setAmount(dev.baranhan.viltrumitecore.balance.CombatBalance.onHurt(event.getEntity(), event.getSource(), event.getAmount()));
       }
    }
 

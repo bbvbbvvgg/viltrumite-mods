@@ -82,6 +82,12 @@ public final class DioHero implements HeroDefinition {
       return false;
    }
 
+   /** Global balance profile (BalanceTable): DIO; tier A+. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.BalanceTable.VAMPIRE;
+   }
+
    @Override
    public boolean hasAbilityPanel(Player player) {
       return true;

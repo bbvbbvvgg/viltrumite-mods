@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.worldevent;
 
+import dev.baranhan.viltrumitecore.balance.BalanceTable;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteFakePlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
@@ -19,10 +20,10 @@ public class ConquestEvent extends WorldEvent {
          1.15F,
          2,
          ViltrumiteFakePlayer.TargetMode.AGGRESSIVE_NO_ALLIES,
-         32.0F,
-         0.6F,
-         98.5F,
-         0.3F,
+         BalanceTable.CONQUEST.baseDamage(),
+         BalanceTable.CONQUEST.ignoreThreshold(),
+         BalanceTable.CONQUEST.reductionPercent(),
+         BalanceTable.CONQUEST.healFactor(),
          8.5F,
          0.016F
       );

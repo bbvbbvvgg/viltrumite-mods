@@ -55,6 +55,12 @@ public final class JinwooHero implements HeroDefinition {
       return false;
    }
 
+   /** Global balance profile (BalanceTable): Jinwoo; tier A+. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.BalanceTable.MONARCH;
+   }
+
    @Override
    public boolean hasAbilityPanel(Player player) {
       return true;

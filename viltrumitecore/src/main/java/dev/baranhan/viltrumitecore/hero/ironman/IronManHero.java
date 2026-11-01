@@ -213,6 +213,14 @@ public class IronManHero implements HeroDefinition {
       return false;
    }
 
+   /** Global balance profile (BalanceTable): the intact suit or the Hulkbuster is tier A armor; Tony alone is a human. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      IronManState state = IronManState.of(player);
+      boolean armored = state != null && (state.suit.worn() || state.hulkbuster.active());
+      return armored ? dev.baranhan.viltrumitecore.balance.BalanceTable.ARMORED : dev.baranhan.viltrumitecore.balance.BalanceTable.UNARMORED;
+   }
+
    @Override
    public boolean allowsLegacyAbility(Player player, String abilityId) {
       return false;

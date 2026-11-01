@@ -27,6 +27,12 @@ public class HumanHero implements HeroDefinition {
       return false;
    }
 
+   /** A plain human keeps vanilla hunger and no regeneration (balance spec §3). */
+   @Override
+   public boolean heroSustain(Player player) {
+      return false;
+   }
+
    @Override
    public boolean ownsAbility(String abilityId) {
       return false;

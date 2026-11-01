@@ -39,6 +39,12 @@ public class HomelanderHero implements HeroDefinition {
       return true;
    }
 
+   /** Global balance profile (BalanceTable): Homelander; tier B+. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.BalanceTable.SUPE;
+   }
+
    @Override
    public boolean allowsLegacyAbility(Player player, String abilityId) {
       if (!HomelanderAbilities.ownsKit(abilityId)) {

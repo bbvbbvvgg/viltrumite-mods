@@ -61,6 +61,12 @@ public final class CaptainHero implements HeroDefinition {
       return false;
    }
 
+   /** Global balance profile (BalanceTable): Captain America; A on the ultimate. */
+   @Override
+   public dev.baranhan.viltrumitecore.balance.HeroBalanceProfile balanceProfile(Player player) {
+      return dev.baranhan.viltrumitecore.balance.BalanceTable.SUPER_SOLDIER;
+   }
+
    @Override
    public boolean hasAbilityPanel(Player player) {
       return true;
