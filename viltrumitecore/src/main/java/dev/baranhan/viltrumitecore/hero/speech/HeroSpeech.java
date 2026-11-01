@@ -99,6 +99,37 @@ public final class HeroSpeech {
          HeroLine.DEFAULT_RANGE, null, true);
    }
 
+   /** Speaker id of world lines that have no speaking entity. */
+   public static final UUID WORLD_SPEAKER = UUID.nameUUIDFromBytes("viltrumitecore:world_speaker".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+   /**
+    * A world-event line without a hero speaker (Chitauri hive and commander announcements): text only, shown to the
+    * given real players with the portrait the client registered for {@code voice}. The caller owns cooldowns; this path
+    * keeps no per-speaker state, so it never interrupts a hero's own line on the server side (the client queue orders
+    * them by priority).
+    */
+   public static int announce(java.util.Collection<ServerPlayer> audience, @Nullable net.minecraft.world.entity.Entity speakerEntity, String voice,
+      String lineId, String speakerKey, List<String> fragments, HeroLine.Priority priority) {
+      if (fragments.isEmpty()) {
+         return 0;
+      }
+      int serial = nextSerial++;
+      if (nextSerial == Integer.MAX_VALUE) {
+         nextSerial = 1;
+      }
+      UUID speaker = speakerEntity != null ? speakerEntity.getUUID() : WORLD_SPEAKER;
+      HeroLineS2CPacket packet = HeroLineS2CPacket.play(serial, speaker, speakerEntity != null ? speakerEntity.getId() : -1, "", voice, lineId, speakerKey,
+         fragments, false, priority.ordinal(), 0);
+      int sent = 0;
+      for (ServerPlayer listener : audience) {
+         if (isRealPlayer(listener)) {
+            CoreMessages.sendToPlayer(packet, listener);
+            sent++;
+         }
+      }
+      return sent;
+   }
+
    /** Stops the speaker's line (only {@code lineId}, or any when null); e.g. a cancelled channel. */
    public static void interrupt(ServerPlayer speaker, @Nullable String lineId) {
       Active active = ACTIVE.get(speaker.getUUID());

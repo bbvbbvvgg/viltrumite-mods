@@ -61,7 +61,7 @@ public final class HeroSubtitles {
 
    /** One received line, its text resolved in the client language at arrival. */
    record Cue(int serial, UUID speaker, int entityId, String name, @Nullable HeroId hero, String lineId, List<String> fragments, int priority,
-      int durationTicks, boolean own) implements SubtitleQueue.Cue {
+      int durationTicks, boolean own, String voice) implements SubtitleQueue.Cue {
    }
 
    /** The laid-out shown cue: re-laid when the screen width changes. */
@@ -125,7 +125,7 @@ public final class HeroSubtitles {
       Minecraft mc = Minecraft.getInstance();
       boolean own = mc.player != null && mc.player.getUUID().equals(packet.speaker());
       return new Cue(packet.serial(), packet.speaker(), packet.entityId(), name.toUpperCase(Locale.ROOT), HeroId.fromKey(packet.heroKey()),
-         packet.lineId(), List.copyOf(fragments), packet.priority(), packet.durationTicks(), own);
+         packet.lineId(), List.copyOf(fragments), packet.priority(), packet.durationTicks(), own, packet.heroKey());
    }
 
    public static void clear() {
@@ -277,7 +277,7 @@ public final class HeroSubtitles {
          float px = x + layout.textWidth() + SubtitleLayout.GAP;
          HeroPortraits.Frame box = new HeroPortraits.Frame(px + 2.0F, y + 2.0F, layout.portraitWidth() - 4.0F, layout.height() - 4.0F, frame.alpha(),
             Util.getMillis() / 1000.0, cue.speaker(), speaker(mc, cue));
-         HeroPortraits.resolve(cue.hero()).render(graphics, box);
+         (cue.hero() != null ? HeroPortraits.resolve(cue.hero()) : HeroPortraits.resolveVoice(cue.voice())).render(graphics, box);
       }
    }
 

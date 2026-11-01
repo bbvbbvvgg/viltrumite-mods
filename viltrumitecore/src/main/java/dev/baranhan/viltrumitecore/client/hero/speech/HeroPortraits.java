@@ -34,6 +34,7 @@ public final class HeroPortraits {
    private static final Vector3f KEY_LIGHT = new Vector3f(-0.3F, -1.0F, 0.6F).normalize();
    private static final Vector3f FILL_LIGHT = new Vector3f(-0.2F, -0.2F, 1.0F).normalize();
    private static final Map<HeroId, Portrait> PORTRAITS = new EnumMap<>(HeroId.class);
+   private static final Map<String, Portrait> VOICES = new java.util.HashMap<>();
    /** GUI box (x0, y0, x1, y1) the caller has scissored to (GuiGraphics#enableScissor), or null. */
    @Nullable
    private static int[] outerClip;
@@ -54,6 +55,19 @@ public final class HeroPortraits {
    @FunctionalInterface
    public interface ModelPass {
       void draw(MultiBufferSource buffers, float alpha);
+   }
+
+   /**
+    * Portrait of a non-hero voice (a world event speaker such as the Chitauri hive), keyed by the line's voice key.
+    * Unknown voices fall back to the default bust.
+    */
+   public static synchronized void registerVoice(String voice, Portrait portrait) {
+      VOICES.put(Objects.requireNonNull(voice, "voice"), Objects.requireNonNull(portrait, "portrait"));
+   }
+
+   public static synchronized Portrait resolveVoice(@Nullable String voice) {
+      Portrait portrait = voice == null ? null : VOICES.get(voice);
+      return portrait == null ? PlayerBustPortrait.INSTANCE : portrait;
    }
 
    public static synchronized void register(HeroId hero, Portrait portrait) {
