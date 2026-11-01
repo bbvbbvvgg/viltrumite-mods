@@ -111,6 +111,7 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.ironman.IronManMarkSounds.init();
       dev.baranhan.viltrumitecore.hero.ironman.IronManHulkbusterSounds.init();
       dev.baranhan.viltrumitecore.hero.ironman.IronManLegionSounds.init();
+      dev.baranhan.viltrumitecore.worldevent.meteor.MeteorRainSounds.init();
       dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds.init();
       dev.baranhan.viltrumitecore.hero.thor.ThorSounds.init();
       dev.baranhan.viltrumitecore.hero.dio.DioSounds.init();
