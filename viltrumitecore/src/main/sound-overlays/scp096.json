@@ -1,0 +1,57 @@
+{
+  "scp096.cry": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp096.cry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ghast.ambient",
+        "type": "event",
+        "volume": 0.45,
+        "pitch": 1.35
+      }
+    ]
+  },
+  "scp096.angered": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp096.angered",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ghast.warn",
+        "type": "event",
+        "pitch": 0.9
+      }
+    ]
+  },
+  "scp096.scream": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp096.scream",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ghast.scream",
+        "type": "event",
+        "pitch": 0.75
+      }
+    ]
+  },
+  "scp096.triggered": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp096.triggered",
+    "sounds": [
+      {
+        "name": "minecraft:entity.elder_guardian.curse",
+        "type": "event",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "scp096.chase_music": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.heartbeat",
+        "type": "event",
+        "pitch": 1.6
+      }
+    ]
+  }
+}
