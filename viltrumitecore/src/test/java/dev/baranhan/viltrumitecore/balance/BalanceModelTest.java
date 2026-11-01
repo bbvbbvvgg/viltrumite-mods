@@ -14,7 +14,8 @@ import org.junit.jupiter.api.Test;
  */
 class BalanceModelTest {
    private static final HeroTier[] EXPECTED = {
-      HeroTier.S_PLUS, HeroTier.S, HeroTier.A_PLUS, HeroTier.A_PLUS, HeroTier.A, HeroTier.A, HeroTier.A, HeroTier.A_ON_ULTIMATE, HeroTier.B_PLUS, HeroTier.B
+      HeroTier.S_PLUS, HeroTier.S, HeroTier.A_PLUS, HeroTier.A_PLUS, HeroTier.A, HeroTier.A, HeroTier.A, HeroTier.A, HeroTier.A_ON_ULTIMATE, HeroTier.B_PLUS,
+      HeroTier.B
    };
 
    @Test
