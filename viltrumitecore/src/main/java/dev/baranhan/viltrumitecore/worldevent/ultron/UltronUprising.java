@@ -346,6 +346,22 @@ public final class UltronUprising {
       return UltronDirector.summon(level, s, prime);
    }
 
+   /** A player's hit mostly hit the tethers: he mocks it (the line keeps its own cooldown). */
+   public static void bossTethered(UltronPrime prime) {
+      UltronSession s = in(prime.level());
+      if (s != null && prime.level() instanceof ServerLevel level) {
+         UltronVoice.say(level, s, "prime_tether", false);
+      }
+   }
+
+   /** He staggered under a burst of damage: a dry remark (ambient, never over a beat). */
+   public static void bossStaggered(UltronPrime prime) {
+      UltronSession s = in(prime.level());
+      if (s != null && prime.level() instanceof ServerLevel level) {
+         UltronVoice.say(level, s, "prime_hurt", false);
+      }
+   }
+
    /** He drains the nearest live node for health (absorb move contact): the node takes the cost. */
    public static float bossAbsorb(UltronPrime prime) {
       UltronSession s = in(prime.level());
