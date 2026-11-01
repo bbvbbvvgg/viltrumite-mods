@@ -27,6 +27,22 @@ public final class ViltrumiteBlocks {
          )
    );
 
+   /** Meteor Rain 2.0 city fire flame: clings to any solid face, kept alive only by a live fire spot. */
+   public static final RegistryObject<Block> METEOR_FIRE = BLOCKS.register(
+      "meteor_fire",
+      () -> new MeteorFireBlock(
+            Properties.of()
+               .mapColor(MapColor.FIRE)
+               .replaceable()
+               .noCollission()
+               .instabreak()
+               .lightLevel(state -> 15)
+               .sound(SoundType.WOOL)
+               .pushReaction(PushReaction.DESTROY)
+               .noLootTable()
+         )
+   );
+
    public static void register(IEventBus modEventBus) {
       BLOCKS.register(modEventBus);
    }
