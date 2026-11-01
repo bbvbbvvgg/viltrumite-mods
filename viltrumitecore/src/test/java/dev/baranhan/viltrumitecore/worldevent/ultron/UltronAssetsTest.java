@@ -335,6 +335,9 @@ class UltronAssetsTest {
       for (UltronNodeKind k : UltronNodeKind.values()) {
          keys.add("viltrumitecore.ultron.node." + k.key());
       }
+      for (UltronNodeState st : UltronNodeState.values()) {
+         keys.add("viltrumitecore.ultron.node_state." + st.name().toLowerCase(java.util.Locale.ROOT));
+      }
       for (UltronScenario.Variant v : UltronScenario.Variant.values()) {
          keys.add("viltrumitecore.ultron.variant." + v.key());
       }
@@ -373,7 +376,8 @@ class UltronAssetsTest {
       String all = code.toString();
       for (UltronVoice.Line line : UltronVoice.lines()) {
          String id = line.id();
-         boolean said = all.contains("\"" + id + "\"");
+         boolean said = all.contains("\"" + id + "\"")
+            || UltronVoice.TAUNTS.contains(id) && all.contains("UltronVoice.nextTaunt("); // taunts rotate
          for (int cut = id.indexOf('_'); !said && cut > 0; cut = id.indexOf('_', cut + 1)) {
             said = all.contains("\"" + id.substring(0, cut + 1) + "\""); // composed: "protocol_" + key
          }

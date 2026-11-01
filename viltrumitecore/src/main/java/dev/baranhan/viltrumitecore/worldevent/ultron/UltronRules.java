@@ -164,6 +164,18 @@ public final class UltronRules {
    }
 
    /** Upload progress per tick (1.0 per tick with one powered uplink), 0 without any. */
+   /** A tick counter as a share 0..1 of its total (0 when there is no total). */
+   public static float share(float value, int total) {
+      return total > 0 ? Math.max(0.0F, Math.min(1.0F, value / total)) : 0.0F;
+   }
+
+   /** Is (x, z) outside the ring of this radius around (ax, az)? */
+   public static boolean outside(double ax, double az, double ring, double x, double z) {
+      double dx = x - ax;
+      double dz = z - az;
+      return dx * dx + dz * dz > ring * ring;
+   }
+
    public static float uploadRate(int poweredUplinks) {
       return poweredUplinks <= 0 ? 0.0F : 1.0F + UPLOAD_EXTRA_UPLINK * (poweredUplinks - 1);
    }

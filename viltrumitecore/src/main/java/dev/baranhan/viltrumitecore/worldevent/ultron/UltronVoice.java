@@ -3,6 +3,7 @@ package dev.baranhan.viltrumitecore.worldevent.ultron;
 import dev.baranhan.viltrumitecore.hero.speech.HeroLine;
 import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,18 @@ public final class UltronVoice {
    public static final String PREFIX = "subtitle.viltrumitecore.ultron.";
    /** Ambient lines keep at least this many ticks between each other. */
    public static final int AMBIENT_GAP = 12 * UltronRules.TPS;
+   /** Battle taunts, said in turn (the longest unsaid first); each waits this long before it may come again. */
+   public static final List<String> TAUNTS = List.of("taunt_1", "taunt_2", "taunt_3", "taunt_4", "taunt_5", "taunt_6");
+   public static final int TAUNT_COOLDOWN_S = 300;
+   /** Queued lines (protocol news) wait at most this long for him to finish the line he reads; at most this many wait. */
+   public static final int QUEUE_STALE = 20 * UltronRules.TPS;
+   public static final int QUEUE_MAX = 3;
+   /** A queued line cut by a forced one within this many ticks is put back at the head of the queue. */
+   static final int REQUEUE_WINDOW = 2 * UltronRules.TPS;
+
+   /** A line waiting for its turn. */
+   record Pending(String id, int at) {
+   }
 
    /** One line: pages (fragments), how hard it cuts in, its cooldown. */
    public record Line(String id, int pages, HeroLine.Priority priority, int cooldownSeconds) {
@@ -79,9 +92,9 @@ public final class UltronVoice {
       line("capture_golem", 1, HeroLine.Priority.ABILITY, 45);
       line("capture_suit", 1, HeroLine.Priority.ABILITY, 45);
       line("liberated", 1, HeroLine.Priority.AMBIENT, 45);
-      line("taunt_1", 1, HeroLine.Priority.AMBIENT, 120);
-      line("taunt_2", 1, HeroLine.Priority.AMBIENT, 120);
-      line("taunt_3", 1, HeroLine.Priority.AMBIENT, 120);
+      for (String taunt : TAUNTS) {
+         line(taunt, 1, HeroLine.Priority.AMBIENT, TAUNT_COOLDOWN_S);
+      }
       // Ultron Prime
       line("prime_assembled", 1, HeroLine.Priority.ULTIMATE, 0);
       line("prime_tether", 1, HeroLine.Priority.ABILITY, 90);
@@ -129,6 +142,103 @@ public final class UltronVoice {
     * boss beats). False when the line is cooling down, an ambient gap holds, or nobody listens.
     */
    static boolean say(ServerLevel level, UltronSession s, String id, boolean force) {
+      String cut = force ? s.voiceQueued : null;
+      int cutAt = s.voiceQueuedAt;
+      Integer cutSaid = cut == null ? null : s.said.get(cut);
+      boolean said = speak(level, s, id, force);
+      if (said) {
+         s.voiceQueued = null;
+         if (cut != null && !cut.equals(id) && s.clock - cutAt <= REQUEUE_WINDOW && cutSaid != null && cutSaid == cutAt) {
+            // a phase or boss beat cut the news he had just begun: it comes again right after
+            s.said.remove(cut);
+            requeue(s, cut);
+         }
+      }
+      return said;
+   }
+
+   /**
+    * Says a line as soon as he is not reading another one (protocol news, which several systems may raise in the
+    * same second): now when he is quiet, otherwise queued ({@link #QUEUE_MAX} at most, dropped after {@link #QUEUE_STALE}).
+    */
+   static void sayNext(ServerLevel level, UltronSession s, String id) {
+      if (!LINES.containsKey(id)) {
+         return;
+      }
+      if (s.voiceQueue.isEmpty() && !HeroSpeech.worldSpeaking(level.getServer(), VOICE)) {
+         if (speak(level, s, id, true)) {
+            s.voiceQueued = id;
+            s.voiceQueuedAt = s.clock;
+         }
+         return;
+      }
+      enqueue(s, id);
+   }
+
+   /** Every second (with listeners): the next queued line once he is quiet. */
+   static void second(ServerLevel level, UltronSession s) {
+      s.voiceQueue.removeIf(p -> s.clock - p.at() > QUEUE_STALE);
+      if (s.voiceQueue.isEmpty() || HeroSpeech.worldSpeaking(level.getServer(), VOICE)) {
+         return;
+      }
+      Pending next = s.voiceQueue.pollFirst();
+      if (speak(level, s, next.id(), true)) {
+         s.voiceQueued = next.id();
+         s.voiceQueuedAt = s.clock;
+      }
+   }
+
+   private static void enqueue(UltronSession s, String id) {
+      enqueue(s.voiceQueue, id, s.clock);
+   }
+
+   private static void requeue(UltronSession s, String id) {
+      requeue(s.voiceQueue, id, s.clock);
+   }
+
+   /** Pure: adds a line at the tail (once; the oldest goes when full). */
+   static void enqueue(Deque<Pending> queue, String id, int clock) {
+      queue.removeIf(p -> p.id().equals(id));
+      while (queue.size() >= QUEUE_MAX) {
+         queue.pollFirst();
+      }
+      queue.addLast(new Pending(id, clock));
+   }
+
+   /** Pure: puts a cut line back at the head (once; the newest goes when full). */
+   static void requeue(Deque<Pending> queue, String id, int clock) {
+      queue.removeIf(p -> p.id().equals(id));
+      queue.addFirst(new Pending(id, clock));
+      while (queue.size() > QUEUE_MAX) {
+         queue.pollLast();
+      }
+   }
+
+   @Nullable
+   static String nextTaunt(UltronSession s) {
+      return nextTaunt(s.said, s.clock);
+   }
+
+   /** Pure: the taunt to try now — of those off cooldown, the one never said or said longest ago (null: all cooling down). */
+   @Nullable
+   static String nextTaunt(Map<String, Integer> said, int clock) {
+      String best = null;
+      int bestAt = Integer.MAX_VALUE;
+      for (String id : TAUNTS) {
+         Integer last = said.get(id);
+         if (last != null && clock - last < TAUNT_COOLDOWN_S * UltronRules.TPS) {
+            continue;
+         }
+         int at = last == null ? Integer.MIN_VALUE : last;
+         if (at < bestAt) {
+            bestAt = at;
+            best = id;
+         }
+      }
+      return best;
+   }
+
+   private static boolean speak(ServerLevel level, UltronSession s, String id, boolean force) {
       Line line = LINES.get(id);
       if (line == null) {
          return false;

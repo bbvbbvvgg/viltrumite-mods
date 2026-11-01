@@ -128,6 +128,10 @@ public final class UltronSession {
    boolean dirty = true;
    boolean saveDirty = true;
    final Map<String, Integer> said = new HashMap<>();
+   /** Ultron's queued lines and the queued line he reads now (not saved: news is stale after a restart). */
+   final java.util.ArrayDeque<UltronVoice.Pending> voiceQueue = new java.util.ArrayDeque<>();
+   String voiceQueued;
+   int voiceQueuedAt;
    final ServerBossEvent bar = new ServerBossEvent(Component.literal(""), BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.NOTCHED_10);
    @Nullable
    ServerBossEvent bossBar;
@@ -202,6 +206,11 @@ public final class UltronSession {
 
    public float upload() {
       return this.upload;
+   }
+
+   /** The upload as a share 0..1 of the scenario's upload time ({@link #upload} counts ticks). */
+   public float uploadShare() {
+      return UltronRules.share(this.upload, this.scenario.uploadTicks());
    }
 
    boolean in(Level level) {

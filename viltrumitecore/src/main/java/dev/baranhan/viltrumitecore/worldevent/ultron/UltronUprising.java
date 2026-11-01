@@ -83,6 +83,19 @@ public final class UltronUprising {
       return s == null || s.outcome == 0 && s.phase.hostile();
    }
 
+   /**
+    * Past the event's leash ring (area radius × {@link UltronDirector#LEASH} around the anchor): machines do not
+    * chase or pick targets out there, so a fleeing (or knocked-away) player does not drag them across the world.
+    * False without an uprising in this level.
+    */
+   public static boolean beyondLeash(Level level, double x, double z) {
+      UltronSession s = in(level);
+      if (s == null) {
+         return false;
+      }
+      return UltronRules.outside(s.anchor.x, s.anchor.z, s.radius * UltronDirector.LEASH, x, z);
+   }
+
    /** A machine saw a player (real line of sight): the network knows where he is. */
    public static void sighted(LivingEntity seer, Player player) {
       UltronSession s = in(seer.level());
