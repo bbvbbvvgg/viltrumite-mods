@@ -40,6 +40,8 @@ public final class HeroDestruction {
       }
 
       BlockState state = level.getBlockState(pos);
+      // city disaster aftermath: the ruin this leaves is a hero's (a weak hint: Chitauri or meteors nearby win)
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.HERO, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 4.0F);
       if (level.random.nextFloat() < ViltrumiteCoreConfig.INSTANCE.punchBlockDropChance / 100.0F) {
          Block.dropResources(state, level, pos);
       }
@@ -69,6 +71,7 @@ public final class HeroDestruction {
          return false;
       }
 
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.hint(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.HERO, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 4.0F);
       return setAir(level, pos, CLEAR_FLAGS);
    }
 

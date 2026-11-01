@@ -784,6 +784,9 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
       ChitauriDestruction.smashLater(level, at, 6.5, 6.0F, this.fallVel.scale(0.6));
       ChitauriDestruction.blastEntities(level, at, 10.0, 24.0F, this, this);
       ChitauriDestruction.danger(level, at, 48.0F, 300);
+      // city disaster aftermath: the fallen hulk leaves the heaviest ruin of the invasion
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.registerDamage(level, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathEvent.of(level, "leviathan:" + this.getUUID(), net.minecraft.core.BlockPos.containing(at), 18.0F,
+         1.0F, dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathCause.LEVIATHAN, java.util.List.of()));
    }
 
    // ------------------------------------------------------------------ misc
