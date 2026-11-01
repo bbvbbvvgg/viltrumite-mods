@@ -20,6 +20,8 @@ import net.minecraft.nbt.TagParser;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,6 +30,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -291,7 +294,7 @@ public final class ChitauriCaptives {
          }
          List<CaptiveLedger.Entry> mates = d.ledger.listHeldBy(e.holder);
          int i = mates.indexOf(e);
-         Vec3 at = b.slot(i, Math.max(mates.size(), 3));
+         Vec3 at = freeSlot(level, p, b, i, Math.max(mates.size(), 3));
          double bob = Math.sin((level.getGameTime() + i * 13) * 0.08) * 0.12;
          p.setPos(at.x, at.y + bob, at.z);
          p.setDeltaMovement(Vec3.ZERO);
@@ -299,6 +302,42 @@ public final class ChitauriCaptives {
          if (p instanceof Mob mob) {
             mob.getNavigation().stop();
          }
+      }
+   }
+
+   /**
+    * The slot a held person floats in, moved out of walls: a pylon planted next to a building must not push its
+    * captives into the bricks. Tries the ring slot, then the same angle closer in and higher, then the pylon top.
+    */
+   static Vec3 freeSlot(ServerLevel level, Entity p, ChitauriBeacon b, int i, int n) {
+      Vec3 base = b.slot(i, n);
+      Vec3 c = b.position();
+      for (double lift = 0.0; lift <= 2.01; lift += 1.0) {
+         for (double k = 1.0; k >= 0.49; k -= 0.25) {
+            Vec3 at = new Vec3(c.x + (base.x - c.x) * k, base.y + lift, c.z + (base.z - c.z) * k);
+            if (level.noCollision(p, p.getDimensions(p.getPose()).makeBoundingBox(at))) {
+               return at;
+            }
+         }
+      }
+      return c.add(0.0, b.getBbHeight() + 0.2, 0.0);
+   }
+
+   /**
+    * A held person is not hurt by the holding itself (walls, crowding, falling or flying into things) nor by the hive's
+    * own fire: the field shields its prisoners from Chitauri bolts and blasts. Heroes' attacks still land.
+    */
+   @SubscribeEvent
+   public static void onAttack(LivingAttackEvent event) {
+      LivingEntity e = event.getEntity();
+      if (e.level().isClientSide() || !CitizenCaptivity.isHeld(e)) {
+         return;
+      }
+      DamageSource s = event.getSource();
+      if (s.is(DamageTypes.IN_WALL) || s.is(DamageTypes.CRAMMING) || s.is(DamageTypes.FALL) || s.is(DamageTypes.FLY_INTO_WALL)
+         || s.is(DamageTypes.DROWN) || dev.baranhan.viltrumitecore.entity.chitauri.ChitauriMob.is(s.getEntity())
+         || dev.baranhan.viltrumitecore.entity.chitauri.ChitauriMob.is(s.getDirectEntity())) {
+         event.setCanceled(true);
       }
    }
 
