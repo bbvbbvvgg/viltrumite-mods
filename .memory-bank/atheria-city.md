@@ -4,6 +4,8 @@
 - Package `city/`: `CityManager` (one per server, only for a world that has `viltrumite_city/profile.json`),
   `CityPopulation`, `CityCommands` (`/city`), `CityEvents` (Forge bus), `citizen/`, `danger/`, `profile/`, `restore/`.
   A world without that folder has no city: every hook returns at once.
+- City catastrophes that use the city systems: Godzilla (`/godzilla`, core 1.70.0, protocol 28) — see
+  `godzilla.md` (the `project.md` index is over the 64 KB GitHub-tool request limit, so it is linked from here).
 - The map is not in the repository. The Atheria author (Tazluh, PlanetMinecraft) gives no redistribution licence.
   The repository holds only the tools (`tools/atheria/`) that turn the user's own download into a 1.20.1 world.
 - Citizens (`viltrumitecore:citizen`) are `noSave`: they never go to disk. The city always starts OFF after a
