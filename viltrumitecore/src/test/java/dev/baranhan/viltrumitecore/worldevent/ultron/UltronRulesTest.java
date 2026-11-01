@@ -81,4 +81,22 @@ class UltronRulesTest {
       assertTrue(UltronPhase.SPREAD.hostile());
       assertSame(UltronPhase.ENDED, UltronPhase.ENDED.next());
    }
+
+   @Test
+   void uploadShareIsClampedToOne() {
+      // the upload counts ticks: the HUD and /ultron status show it as a share of the scenario's upload time
+      assertEquals(0.5F, UltronRules.share(1200.0F, 2400), 1.0E-6);
+      assertEquals(1.0F, UltronRules.share(126625.0F, 2400));
+      assertEquals(0.0F, UltronRules.share(-5.0F, 2400));
+      assertEquals(0.0F, UltronRules.share(50.0F, 0));
+   }
+
+   @Test
+   void theLeashRingKeepsChasesNearTheEvent() {
+      double ring = 160.0 * UltronDirector.LEASH;
+      assertFalse(UltronRules.outside(0.0, 0.0, ring, 200.0, 0.0));
+      assertFalse(UltronRules.outside(100.0, -50.0, ring, 100.0, -50.0 + ring - 1.0));
+      assertTrue(UltronRules.outside(0.0, 0.0, ring, 830.0, 0.0)); // the knocked-away player of the QA run
+      assertTrue(UltronRules.outside(0.0, 0.0, ring, ring, ring));
+   }
 }
