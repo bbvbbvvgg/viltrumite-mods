@@ -21,6 +21,8 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Natural spawn of SCP-096 (design §2): very rare, only inside the prepared city, at the edge of what a player
@@ -28,6 +30,7 @@ import net.minecraft.world.phys.Vec3;
  * no boss bar, no title, no global sound. Also admits loading instances (no duplicates) and drops stale records.
  */
 public final class Scp096Spawner {
+   static final Logger LOG = LoggerFactory.getLogger("viltrumitecore/scp096");
    private static final RandomSource RANDOM = RandomSource.create();
    private static final Map<UUID, Integer> STALE = new HashMap<>();
 
@@ -57,7 +60,8 @@ public final class Scp096Spawner {
          return;
       }
       data.setNextCheck(now + Scp096Rules.checkIntervalTicks(ViltrumiteCoreConfig.INSTANCE.scp096NaturalCheckSeconds));
-      attempt(server, false, false);
+      Attempt a = attempt(server, false, false);
+      LOG.debug("SCP-096 natural check: {}", a.result());
    }
 
    /** One natural attempt now. {@code force} skips the roll and the cooldown (QA), never the other rules. */
@@ -134,6 +138,8 @@ public final class Scp096Spawner {
          }
          data.touch(e);
          data.markNaturalSpawn(now);
+         LOG.debug("SCP-096 natural spawn at {} {} {} in {} ({} blocks from {}, ring {}..{})", x, feetY, z, level.dimension().location(),
+            Math.round(Math.sqrt(anchor.distanceToSqr(x + 0.5, feetY, z + 0.5))), anchor.getGameProfile().getName(), Math.round(minR), Math.round(maxR));
          return new Attempt(Result.SPAWNED, e);
       }
       return new Attempt(Result.NO_SITE, null);

@@ -21,6 +21,12 @@ public final class Scp096Sounds {
    public static final RegistryObject<SoundEvent> TRIGGERED = reg("scp096.triggered");
    /** Chase music for a hunted player (SCP:CB 096Chase.ogg), not positional. */
    public static final RegistryObject<SoundEvent> CHASE_MUSIC = reg("scp096.chase_music");
+   /** The killing blow (vanilla impact, own subtitle). */
+   public static final RegistryObject<SoundEvent> STRIKE = reg("scp096.strike");
+   /** Breaking through a wall, door or window (vanilla door break, own subtitle). */
+   public static final RegistryObject<SoundEvent> SMASH = reg("scp096.smash");
+   /** Take-off of a leap (vanilla heavy step, own subtitle). */
+   public static final RegistryObject<SoundEvent> LEAP = reg("scp096.leap");
 
    private Scp096Sounds() {
    }

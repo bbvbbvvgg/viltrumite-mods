@@ -198,6 +198,9 @@ public class Scp096Entity extends PathfinderMob {
 
    public void setState(Scp096State next) {
       Scp096State prev = this.state();
+      if (prev != next && !this.level().isClientSide) {
+         Scp096Spawner.LOG.debug("SCP-096 #{} {} -> {} at {} {} {}", this.getId(), prev, next, this.getBlockX(), this.getBlockY(), this.getBlockZ());
+      }
       this.stateTicks = 0;
       this.entityData.set(DATA_STATE, (byte)next.id());
       switch (next) {
@@ -281,7 +284,11 @@ public class Scp096Entity extends PathfinderMob {
    @Override
    public void onRemovedFromWorld() {
       super.onRemovedFromWorld();
-      LOADED.remove(this);
+      // server side only: Entity.equals/hashCode use the network id, and in single player the client copy
+      // shares the id of the server instance, so removing the client copy would drop the server one too
+      if (!this.level().isClientSide) {
+         LOADED.remove(this);
+      }
    }
 
    @Override
@@ -760,6 +767,10 @@ public class Scp096Entity extends PathfinderMob {
          return;
       }
       boolean added = this.addTarget(observer, player);
+      if (added) {
+         Scp096Spawner.LOG.debug("SCP-096 #{}: face seen by {} at {} blocks (state {})", this.getId(), observer.getName().getString(),
+            Math.round(observer.distanceTo(this)), s);
+      }
       if (s.calm()) {
          this.primary = observer.getUUID();
          this.setState(Scp096State.TRIGGERED);
