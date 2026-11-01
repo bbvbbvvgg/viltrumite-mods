@@ -7,5 +7,18 @@
   "commands.viltrumitecore.meteor.stopped_all": "Остановлено метеоритных дождей: %s",
   "commands.viltrumitecore.meteor.none": "Метеоритный дождь не идёт",
   "commands.viltrumitecore.meteor.entry": "%s: дождь в %s уже %s с, запущено метеоритов: %s, в воздухе: %s",
-  "commands.viltrumitecore.meteor.entry.paused": "%s: дождь в %s на паузе (игрок в другом мире), запущено: %s, в воздухе: %s"
+  "commands.viltrumitecore.meteor.entry.paused": "%s: дождь в %s на паузе (игрок в другом мире), запущено: %s, в воздухе: %s",
+  "block.viltrumitecore.meteor_fire": "Метеоритный огонь",
+  "subtitles.viltrumitecore.meteor_rain.approach": "Высоко гудит метеорит",
+  "subtitles.viltrumitecore.meteor_rain.roar": "Ревёт метеорит",
+  "subtitles.viltrumitecore.meteor_rain.whoosh": "Метеорит проносится мимо",
+  "subtitles.viltrumitecore.meteor_rain.impact_near": "Удар метеорита",
+  "subtitles.viltrumitecore.meteor_rain.impact_far": "Далёкий удар метеорита",
+  "subtitles.viltrumitecore.meteor_rain.shockwave": "Ударная волна",
+  "subtitles.viltrumitecore.meteor_rain.debris": "Падают обломки",
+  "subtitles.viltrumitecore.meteor_rain.rubble": "Оседают обломки",
+  "subtitles.viltrumitecore.meteor_rain.fire_crackle": "Трещит огонь",
+  "subtitles.viltrumitecore.meteor_rain.fire_roar": "Ревёт пожар",
+  "subtitles.viltrumitecore.meteor_rain.fire_flare": "Вспыхивает огонь",
+  "subtitles.viltrumitecore.meteor_rain.brand": "Летит горящая головня"
 }

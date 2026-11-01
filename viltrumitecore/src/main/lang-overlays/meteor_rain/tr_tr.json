@@ -7,5 +7,18 @@
   "commands.viltrumitecore.meteor.stopped_all": "%s meteor yağmuru durduruldu",
   "commands.viltrumitecore.meteor.none": "Aktif meteor yağmuru yok",
   "commands.viltrumitecore.meteor.entry": "%s: %s içinde %ssn'dir yağmur, %s meteor atıldı, %s havada",
-  "commands.viltrumitecore.meteor.entry.paused": "%s: %s içindeki yağmur duraklatıldı (oyuncu başka yerde), %s atıldı, %s havada"
+  "commands.viltrumitecore.meteor.entry.paused": "%s: %s içindeki yağmur duraklatıldı (oyuncu başka yerde), %s atıldı, %s havada",
+  "block.viltrumitecore.meteor_fire": "Meteor Ateşi",
+  "subtitles.viltrumitecore.meteor_rain.approach": "Meteor yükseklerde gürlüyor",
+  "subtitles.viltrumitecore.meteor_rain.roar": "Meteor kükrüyor",
+  "subtitles.viltrumitecore.meteor_rain.whoosh": "Meteor yanından geçiyor",
+  "subtitles.viltrumitecore.meteor_rain.impact_near": "Meteor çarpması",
+  "subtitles.viltrumitecore.meteor_rain.impact_far": "Uzak meteor çarpması",
+  "subtitles.viltrumitecore.meteor_rain.shockwave": "Şok dalgası",
+  "subtitles.viltrumitecore.meteor_rain.debris": "Enkaz düşüyor",
+  "subtitles.viltrumitecore.meteor_rain.rubble": "Moloz çöküyor",
+  "subtitles.viltrumitecore.meteor_rain.fire_crackle": "Ateş çıtırdıyor",
+  "subtitles.viltrumitecore.meteor_rain.fire_roar": "Yangın gürlüyor",
+  "subtitles.viltrumitecore.meteor_rain.fire_flare": "Ateş parlıyor",
+  "subtitles.viltrumitecore.meteor_rain.brand": "Yanan kıvılcım uçuyor"
 }
