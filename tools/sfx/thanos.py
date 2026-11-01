@@ -660,6 +660,76 @@ def combo_eternity():
     return finish(reverb(x, 2.0, 1252, 0.35))
 
 
+
+def combo_time_volley():
+    """Time + Space + Power: the clock races and stalls, six gates ring open, the stopped air hums with charge."""
+    dur = 2.6
+    t = tt(dur)
+    x = np.zeros_like(t)
+    at, gap = 0.0, 0.2
+    for k in range(18):
+        put(x, tick(0.12, 1450 + 45 * k, 1300 + k), at, 0.45 + 0.025 * k)
+        at += gap
+        gap = max(0.045, gap * 0.86)
+    s = swell(t, 1.5, 1.45, 0.06)
+    x += flange(bandsweep(nz(len(t), 1320), 400, 1800, 3000, 9000, curve=0.6), 1.5, 4.0, 1.4, 0.8) * s * 0.3
+    x += growl(t, 52 * 2 ** np.clip(t / 1.5, 0, 1), 1321, 2.6) * s * 0.4
+    put(x, bell(tt(1.1), hz(57), 0.9, 1322), 1.5, 0.4)
+    for i, m in enumerate((79, 84, 88, 91, 95, 98)):
+        put(x, glass(tt(0.9), hz(m), 0.5, 1323 + i), 1.52 + 0.05 * i, 0.16)
+    z = tt(1.1)
+    hold = osc(z, 110, "saw", seed=1330) * 0.5 + osc(z, 165.3, "saw", seed=1331) * 0.3
+    put(x, filt(hold, 60, 900) * env(z, 0.02, 0.5), 1.5, 0.3)
+    pre = int(0.3 * SR)
+    rev = boom(0.6, 140, 40, 0.2, 1332, 0.6, 0.6)[:pre][::-1] * np.linspace(0, 1, pre) ** 2
+    put(x, rev, 1.2, 0.5)
+    return finish(reverb(x, 1.6, 1339, 0.32))
+
+
+def combo_moon_fall():
+    """Power + Space: a gate opens in the sky with a groan of stone, the moon's shards tear down through it."""
+    dur = 3.2
+    t = tt(dur)
+    s = swell(t, 1.7, 1.65, 0.6)
+    x = growl(t, 41 * 2 ** (np.clip(t / 1.7, 0, 1) * 7 / 12), 1340, 3.0, 30, 700) * s * 0.5
+    x += flange(bandsweep(nz(len(t), 1341), 200, 900, 1600, 6000, curve=0.7), 2.0, 6.0, 0.7, 0.8) * s * 0.35
+    for i, m in enumerate((74, 79, 86)):
+        put(x, glass(tt(1.6), hz(m), 0.9, 1342 + i), 0.15 + 0.35 * i, 0.15)
+    groan = speed(filt(nz(int(2.0 * SR), 1346), 50, 420), 0.6 + 0.2 * np.linspace(0, 1, int(2.0 * SR)))
+    put(x, groan * env(tt(2.0), 0.4, 0.8), 0.6, 0.5)
+    for i in range(4):
+        put(x, whoosh(1.1, 120, 1600, 1350 + i, 0.75, True), 1.55 + 0.22 * i, 0.55 - 0.08 * i)
+    put(x, boom(1.5, 70, 20, 0.7, 1360, 1.0, 0.7), 1.7, 0.8)
+    put(x, bursts(int(1.4 * SR), 70, 1361, 0.0, 1.0, 300, 4000, shape="down", length=(0.004, 0.02)), 1.72, 0.4)
+    return finish(reverb(x, 2.2, 1369, 0.35))
+
+
+def combo_infinity():
+    """All six stones: each timbre joins in turn (power, space, reality, soul, mind, time) into one white chord."""
+    dur = 3.4
+    t = tt(dur)
+    x = np.zeros_like(t)
+    cut = np.where(t < 2.0, 1.0, np.exp(-np.maximum(t - 2.0, 0) / 0.08))
+
+    def lift(at):
+        return np.clip((t - at) / 0.35, 0, 1) ** 2 * cut
+    x += growl(t, 55 * 2 ** np.clip(t / 2.0, 0, 1), 1370, 2.8) * lift(0.0) * 0.3
+    x += flange(bandsweep(nz(len(t), 1371), 500, 1800, 3000, 9000, curve=0.6), 1.5, 4.0, 1.2, 0.8) * lift(0.3) * 0.25
+    x += warp(t, 98 * 2 ** (np.clip(t / 2.0, 0, 1) * 5 / 12), 1372, 6.0, 0.7) * lift(0.6) * 0.22
+    x += choir(t, (50, 57, 62), "ah", 1373, 0.2, 0.05) * lift(0.9) * 0.35
+    x += tinnitus(t, 1900 * 2 ** (np.clip(t / 2.0, 0, 1) * 0.4), 1374, 7) * lift(1.2) * 0.06
+    at, k = 1.5, 0
+    while at < 1.98:
+        put(x, tick(0.1, 1600 + 80 * k, 1375 + k), at, 0.4)
+        at += 0.08
+        k += 1
+    for i, a in enumerate((0.0, 0.3, 0.6, 0.9, 1.2, 1.5)):
+        put(x, bell(tt(0.8), hz(62 + (0, 3, 7, 10, 14, 19)[i]), 0.5, 1390 + i, 0.6), a, 0.12)
+    put(x, stone_chord(tt(1.4), 1.0, 1400), 2.0, 0.4)
+    put(x, boom(1.4, 100, 22, 0.6, 1410, 1.0, 1.2), 2.0, 0.9)
+    put(x, filt(nz(int(1.2 * SR), 1411), 1500, 10000) * env(tt(1.2), 0.002, 0.3), 2.0, 0.45)
+    return finish(reverb(x, 2.2, 1419, 0.36))
+
 # --- snap scene -----------------------------------------------------------------------------------
 
 def world_stop():
@@ -945,6 +1015,7 @@ CUES = {
     "stones_flare": stones_flare, "phase": phase,
     "combo_portal_punch": combo_portal_punch, "combo_time_crush": combo_time_crush, "combo_soul_mirage": combo_soul_mirage,
     "combo_mind_step": combo_mind_step, "combo_trinity": combo_trinity, "combo_eternity": combo_eternity,
+    "combo_time_volley": combo_time_volley, "combo_moon_fall": combo_moon_fall, "combo_infinity": combo_infinity,
     "world_stop": world_stop, "gauntlet_raise": gauntlet_raise, "stone_light": stone_light, "fingers": fingers,
     "snap_click": snap_click, "dissolve": dissolve, "void": void, "od_lagna_arrive": od_lagna_arrive,
     "od_lagna_line": od_lagna_line, "restore": restore, "victory": victory, "countdown": countdown,
@@ -960,7 +1031,8 @@ LOUDNESS = {
     "stone_light": -12.0, "fingers": -13.0, "void": -24.0,
     "slam": -9.0, "power_impact": -9.0, "power_wave": -9.5, "hit": -10.0, "soul_nova": -9.5,
     "combo_portal_punch": -9.0, "combo_time_crush": -9.0, "combo_trinity": -8.5, "combo_eternity": -8.5,
-    "combo_soul_mirage": -10.5, "combo_mind_step": -10.0,
+    "combo_soul_mirage": -10.5, "combo_mind_step": -10.0, "combo_time_volley": -10.0, "combo_moon_fall": -9.0,
+    "combo_infinity": -8.5,
     "power_charge": -11.0, "space_open": -11.5, "space_step": -11.5, "space_pull": -11.0, "space_ward": -12.0,
     "reality_warp": -11.0, "reality_mirage": -12.0, "time_dome": -11.0, "time_rewind": -11.5, "mind_gaze": -11.0,
     "mind_pulse": -11.5, "soul_tether": -11.5,
