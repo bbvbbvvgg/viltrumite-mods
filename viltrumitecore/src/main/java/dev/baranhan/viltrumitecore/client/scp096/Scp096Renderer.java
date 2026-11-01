@@ -22,7 +22,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 /**
- * SCP-096: sixteen full-body clip layers eased in real time and blended as a weighted average (see {@link Scp096Pose}),
+ * SCP-096: sixteen full-body clip layers eased in real time and blended as a weighted average in quaternions (see
+ * {@link Scp096Pose} and {@link Scp096Blend}),
  * the sobbing as an additive layer, the upper-body smash and claw strike over the run, and the head turned toward
  * what it looks at. The shuffle and the run are driven by the gait phase (distance), so the feet do not slide at any
  * speed. Client only.
@@ -33,6 +34,7 @@ public class Scp096Renderer extends EntityRenderer<Scp096Entity> {
    static final ResourceLocation[] ANIM = {rl("animations/scp096/scp096_calm.animation.json"), rl("animations/scp096/scp096_rage.animation.json"),
       rl("animations/scp096/scp096_chase.animation.json")};
    private final float[] targets = new float[Scp096Pose.SLOTS];
+   private final Scp096Blend blend = new Scp096Blend();
 
    public Scp096Renderer(EntityRendererProvider.Context context) {
       super(context);
@@ -84,19 +86,17 @@ public class Scp096Renderer extends EntityRenderer<Scp096Entity> {
       float[] w = e.clientWeights;
       double gait = Mth.lerp(partial, e.clientGaitO, e.clientGait);
       model.resetBones();
-      float sum = 0.0F;
+      this.blend.begin(model);
       for (int i = 0; i < Scp096Pose.LAYERS; i++) {
          if (w[i] < 0.002F) {
             continue;
          }
          Animation clip = AnimCache.animation(ANIM[Scp096Pose.FILE[i]], Scp096Pose.CLIP[i]);
-         if (clip == null) {
-            continue;
+         if (clip != null) {
+            this.blend.add(clip, Scp096Pose.time(i, since, ageSec, gait, e.clientFromSit, e.getId()), w[i]);
          }
-         float share = Scp096Pose.shareOf(w[i], sum);
-         sum += w[i];
-         AnimationController.overlay(clip, model, Scp096Pose.time(i, since, ageSec, gait, e.clientFromSit, e.getId()), share);
       }
+      this.blend.apply();
       // the shoulders still heave while it cries, whatever the base pose
       Animation sob = AnimCache.animation(ANIM[0], "sob");
       if (sob != null && w[Scp096Pose.SOB] > 0.01F) {
@@ -104,8 +104,8 @@ public class Scp096Renderer extends EntityRenderer<Scp096Entity> {
       }
       // upper-body strikes over the chase pose: smashing through a wall, the claw at a target
       if (state == Scp096State.CHASE) {
-         strike(model, "smash", (age - e.clientSmashStart) / 20.0);
-         strike(model, "attack", (age - e.clientAttackStart) / 20.0);
+         this.strike("smash", (age - e.clientSmashStart) / 20.0);
+         this.strike("attack", (age - e.clientAttackStart) / 20.0);
       }
       float look = w[Scp096Pose.LOOK];
       if (look > 0.01F) {
@@ -118,12 +118,12 @@ public class Scp096Renderer extends EntityRenderer<Scp096Entity> {
       }
    }
 
-   private static void strike(BakedGeoModel model, String name, double t) {
+   private void strike(String name, double t) {
       Animation clip = AnimCache.animation(ANIM[2], name);
       if (clip != null) {
          float k = Scp096Pose.strike(t, clip.lengthSeconds());
          if (k > 0.0F) {
-            AnimationController.overlay(clip, model, t, k);
+            this.blend.overlay(clip, t, k);
          }
       }
    }

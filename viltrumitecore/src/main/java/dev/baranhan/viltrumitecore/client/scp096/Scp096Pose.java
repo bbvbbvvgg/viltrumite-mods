@@ -6,8 +6,8 @@ import java.util.Arrays;
 /**
  * Pure layer logic of the SCP-096 renderer (no Minecraft classes, unit-tested): which clip layers a state wants
  * (0..1 targets), how fast each layer fades, and where in its clip each layer is. The renderer eases the weights
- * toward the targets in real time and blends the layers as a normalised weighted average, so every change of state
- * is a crossfade; the one-shot clips start and end on the poses of the loops around them (see scp096_anims.py).
+ * toward the targets in real time and blends the layers as a weighted average ({@link Scp096Blend}), so every change
+ * of state is a crossfade; the one-shot clips start and end on the poses of the loops around them (scp096_anims.py).
  */
 public final class Scp096Pose {
    public static final int SIT = 0;
@@ -140,16 +140,6 @@ public final class Scp096Pose {
             }
          }
       }
-   }
-
-   /**
-    * Overlay weight of a layer in a sequential blend, given the summed weight of the layers applied before it: the
-    * result is the weighted average of all layers (the first layer with any weight replaces the pose, later ones
-    * blend in by their share of the running sum).
-    */
-   public static float shareOf(float weight, float runningSum) {
-      float sum = runningSum + weight;
-      return sum <= 1.0E-6F ? 0.0F : weight / sum;
    }
 
    /**
