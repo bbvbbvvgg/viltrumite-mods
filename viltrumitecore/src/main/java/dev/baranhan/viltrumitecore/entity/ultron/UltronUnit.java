@@ -114,9 +114,25 @@ public abstract class UltronUnit extends Monster implements UltronMob {
    public int clientLandStart = -1000;
    public int clientAirTicks;
    private float clientLastYaw;
-   @Nullable
-   public Vec3 clientMuzzle;
-   public int clientMuzzleTick = -1000;
+   /** Smoothed look (degrees, relative to the body): the head and weapons track the aim entity. */
+   public float clientLookYaw;
+   public float clientLookYawO;
+   public float clientLookPitch;
+   public float clientLookPitchO;
+   /**
+    * World positions of the rendered anchor bones (hands / muzzles, eyes, tools: per kind, set by the
+    * renderer every frame) so beams, charges and flashes sit on the animated part; {@link #clientAnchorTick}
+    * is the tick they were rendered.
+    */
+   public final Vec3[] clientAnchors = new Vec3[4];
+   public int clientAnchorTick = -1000;
+   /** A weak part already came off (critical damage, client side). */
+   public boolean clientPartLost;
+   /** The body broke apart into its pieces (client side): the renderer stops drawing it. */
+   public boolean clientShattered;
+   /** Client: smoothed 0..1 weight of the kind's held stance (shield, welding, deflector guard, flight). */
+   public float clientHold;
+   public float clientHoldO;
 
    protected UltronUnit(EntityType<? extends UltronUnit> type, Level level) {
       super(type, level);
@@ -466,6 +482,13 @@ public abstract class UltronUnit extends Monster implements UltronMob {
       this.clientTurn += (Mth.clamp(yawRate, -20.0F, 20.0F) - this.clientTurn) * 0.3F;
       this.clientCombatO = this.clientCombat;
       this.clientCombat += ((this.flag(FLAG_COMBAT) ? 1.0F : 0.0F) - this.clientCombat) * 0.15F;
+      this.clientHoldO = this.clientHold;
+      this.clientHold += (this.clientHoldTarget() - this.clientHold) * 0.25F;
+      this.clientLookYawO = this.clientLookYaw;
+      this.clientLookPitchO = this.clientLookPitch;
+      float[] look = this.lookTarget();
+      this.clientLookYaw += (look[0] - this.clientLookYaw) * 0.35F;
+      this.clientLookPitch += (look[1] - this.clientLookPitch) * 0.35F;
       if (!this.flier()) {
          if (!this.onGround() && this.getDeltaMovement().y < -0.1) {
             this.clientAirTicks++;
@@ -476,6 +499,29 @@ public abstract class UltronUnit extends Monster implements UltronMob {
             this.clientAirTicks = 0;
          }
       }
+   }
+
+   /** Client: what {@link #clientHold} heads for (the kind's held stance; none by default). */
+   protected float clientHoldTarget() {
+      return 0.0F;
+   }
+
+   /** Look toward the aim entity (else the synced head rotation), relative to the body, clamped. */
+   private float[] lookTarget() {
+      float yaw;
+      float pitch;
+      Entity aim = this.isAlive() && this.aimId() >= 0 ? this.level().getEntity(this.aimId()) : null;
+      if (aim != null && aim.distanceToSqr(this) < 64.0 * 64.0) {
+         Vec3 eye = this.getEyePosition();
+         Vec3 to = aim.position().add(0.0, aim.getBbHeight() * 0.7, 0.0).subtract(eye);
+         double flat = Math.sqrt(to.x * to.x + to.z * to.z);
+         yaw = Mth.wrapDegrees((float)(Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90.0F - this.yBodyRot);
+         pitch = (float)(-(Mth.atan2(to.y, flat) * Mth.RAD_TO_DEG));
+      } else {
+         yaw = Mth.wrapDegrees(this.yHeadRot - this.yBodyRot);
+         pitch = this.getXRot();
+      }
+      return new float[]{Mth.clamp(yaw, -70.0F, 70.0F), Mth.clamp(pitch, -50.0F, 50.0F)};
    }
 
    /** Blocks per gait cycle at a speed (blocks/tick): longer strides when running. */
