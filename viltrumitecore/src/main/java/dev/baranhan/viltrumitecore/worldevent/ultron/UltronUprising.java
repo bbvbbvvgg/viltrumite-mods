@@ -52,6 +52,8 @@ import org.slf4j.LoggerFactory;
 public final class UltronUprising {
    static final Logger LOG = LoggerFactory.getLogger("viltrumitecore/ultron");
    @Nullable
+   /** Lang key naming the uprising in the other events' "already running" refusals. */
+   public static final String CONFLICT_KEY = "viltrumitecore.ultron.conflict";
    private static UltronSession session;
 
    private UltronUprising() {
