@@ -2,7 +2,7 @@
 """Ultron heavy assault robot ("brute"): a hunched three-block war machine. Barrel chest with a caged red reactor,
 huge layered pauldrons, gorilla arms ending in sledgehammer fists (three jointed fingers and a thumb each), a
 small visored head sunk between the shoulders, twin four-tube missile pods on the shoulder frame with hinged
-hatches, back exhaust stacks, a shield emitter on the left forearm and short pistoned legs. Geo (~190 cubes),
+hatches, back exhaust stacks, a shield emitter on the left forearm and short pistoned legs. Geo (211 cubes),
 metal atlas + red glow atlas, and every clip: idle, combat_idle, walk, run, accel/decel/turn_l/turn_r
 (additive), slam, swing, missiles, charge, shield_up, shield_hold, hurt (additive), heavy_hit, land, fall,
 death, fabricate. Contact frames match UltronMove (SLAM 30 ticks: hop 9, impact 17; SWING 18: hit 9;

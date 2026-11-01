@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ultron scout drone: a chrome sphere the size of a head with one red optic under an angry brow, four ducted
 rotors on struts (vectoring for flight), a whip antenna, side vents and a folding twin-prong zapper under the
-optic. Geo (~85 cubes), metal atlas + red glow atlas, and every clip: hover, fly, accel/decel/turn_l/turn_r
+optic. Geo (139 cubes), metal atlas + red glow atlas, and every clip: hover, fly, accel/decel/turn_l/turn_r
 (additive), scan, zap, mark, hurt (additive), heavy_hit, death, fabricate. The rotors spin procedurally in the
 renderer (speed follows thrust); the clips move the chassis, struts, optic iris, antenna and zapper. Contact
 frames match UltronMove (ZAP 16 ticks, hit 9; MARK 30, paint 12; SCAN 40; death 24). Own work, CC0.
