@@ -53,5 +53,35 @@
         "pitch": 1.6
       }
     ]
+  },
+  "scp096.strike": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp096.strike",
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.attack_impact",
+        "type": "event"
+      }
+    ]
+  },
+  "scp096.smash": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp096.smash",
+    "sounds": [
+      {
+        "name": "minecraft:entity.zombie.break_wooden_door",
+        "type": "event"
+      }
+    ]
+  },
+  "scp096.leap": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp096.leap",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ravager.step",
+        "type": "event"
+      }
+    ]
   }
 }
