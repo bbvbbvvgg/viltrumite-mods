@@ -285,6 +285,7 @@ final class CollapseScene {
       BlockState[] s = new BlockState[n];
       float[] rx = new float[n], ry = new float[n], rz = new float[n];
       int[] li = new int[n];
+      double r2 = 0.0;
       for (int k = 0; k < n; k++) {
          int i = members[k];
          s[k] = this.states[i];
@@ -292,6 +293,8 @@ final class CollapseScene {
          ry[k] = (float)(this.by[i] - piece.oy);
          rz[k] = (float)(this.bz[i] - piece.oz);
          li[k] = this.light[i];
+         double cx = rx[k] + 0.5, cy = ry[k] + 0.5, cz = rz[k] + 0.5;
+         r2 = Math.max(r2, cx * cx + cy * cy + cz * cz);
       }
       FragmentMesh mesh = FragmentMesh.bake(s, rx, ry, rz, li, n);
       if (mesh == null) {
@@ -301,7 +304,11 @@ final class CollapseScene {
       this.meshes.add(mesh);
       this.pieceStart.add(startAge);
       this.pieceFirst.add(members[0]);
+      this.pieceRadius.add((float)Math.sqrt(r2) + 0.87F);
    }
+
+   /** Bounding radius of each fragment around its pivot (camera clipping). */
+   private final List<Float> pieceRadius = new ArrayList<>();
 
    private final List<Integer> pieceFirst = new ArrayList<>();
 
@@ -486,6 +493,12 @@ final class CollapseScene {
          double x = Mth.lerp(partial, piece.x[a], piece.x[b]);
          double y = Mth.lerp(partial, piece.y[a], piece.y[b]) - Mth.lerp(partial, piece.sink(t), piece.sink(t + 1));
          double z = Mth.lerp(partial, piece.z[a], piece.z[b]);
+         // found in game: a tower toppling onto the viewer swept its fragments through the camera; a fragment
+         // that would enclose the eye is skipped for those frames instead of filling the screen with its inside
+         double ex = x - cam.x, ey = y - cam.y, ez = z - cam.z, clear = this.pieceRadius.get(k) + 0.6;
+         if (ex * ex + ey * ey + ez * ez < clear * clear) {
+            continue;
+         }
          q.set(piece.qx[a], piece.qy[a], piece.qz[a], piece.qw[a]);
          q2.set(piece.qx[b], piece.qy[b], piece.qz[b], piece.qw[b]);
          q.slerp(q2, partial);
