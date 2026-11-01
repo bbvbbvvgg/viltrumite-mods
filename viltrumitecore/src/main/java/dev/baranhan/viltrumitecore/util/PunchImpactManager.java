@@ -31,6 +31,11 @@ public class PunchImpactManager {
    public static final Map<Entity, PunchImpactManager.MeteorData> LAUNCHED_ENTITIES = new HashMap<>();
 
    public static void executePunch(ServerPlayer player) {
+      // structural collapse (world/collapse): legacy punch/clap block damage counts as hero damage
+      dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.orDefault(dev.baranhan.viltrumitecore.world.collapse.CollapseCause.HERO, () -> executePunch0(player));
+   }
+
+   private static void executePunch0(ServerPlayer player) {
       ServerLevel world = (ServerLevel)player.level();
       Vec3 eyePos = player.getEyePosition();
       Vec3 direction = player.getLookAngle().normalize();
@@ -198,6 +203,11 @@ public class PunchImpactManager {
    }
 
    public static void tickMeteorPhysics(ServerLevel world) {
+      // structural collapse (world/collapse): legacy punch/clap block damage counts as hero damage
+      dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.orDefault(dev.baranhan.viltrumitecore.world.collapse.CollapseCause.HERO, () -> tickMeteorPhysics0(world));
+   }
+
+   private static void tickMeteorPhysics0(ServerLevel world) {
       if (!LAUNCHED_ENTITIES.isEmpty()) {
          Iterator<Entry<Entity, PunchImpactManager.MeteorData>> it = LAUNCHED_ENTITIES.entrySet().iterator();
          float vaporizeChance = ViltrumiteCoreConfig.INSTANCE.punchBlockDropChance / 100.0F;
