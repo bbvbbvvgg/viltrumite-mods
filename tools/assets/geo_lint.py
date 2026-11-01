@@ -39,14 +39,23 @@ GROUPS = {
     'arrow_shock': [('avengers/arrow_shock', 'avengers/arrow_shock')],
     'mini_missile': [('avengers/mini_missile', 'avengers/mini_missile')],
     'quinjet': [('avengers/quinjet', 'avengers/quinjet')],
+    'red_hulk': [('red_hulk/red_hulk', 'red_hulk/red_hulk')],
+    'red_hulk_arms': [('red_hulk/red_hulk_arms', 'red_hulk/red_hulk', {'reused': True})],
 }
 
 
 def load_tex(rel):
     p = os.path.join(BIN, 'textures/entity', rel + '.png.b64')
-    if not os.path.exists(p):
+    if os.path.exists(p):
+        text = open(p).read()
+    elif os.path.exists(p + '.part0'):  # split for the push limit, joined like decodeBinaryAssets
+        i, text = 0, ''
+        while os.path.exists('%s.part%d' % (p, i)):
+            text += open('%s.part%d' % (p, i)).read()
+            i += 1
+    else:
         return None
-    return np.array(Image.open(io.BytesIO(base64.b64decode(open(p).read()))).convert('RGBA'))
+    return np.array(Image.open(io.BytesIO(base64.b64decode(text))).convert('RGBA'))
 
 
 def rot_m(rx, ry, rz):
