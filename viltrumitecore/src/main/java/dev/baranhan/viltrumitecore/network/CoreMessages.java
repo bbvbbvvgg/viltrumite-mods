@@ -59,6 +59,8 @@ public class CoreMessages {
    // v21 was used twice, by two branches alone: Living City 2.0 (#110, citizen entity syncs a new STATE byte)
    // and Reinhard's THE FINAL PUNCH (#109, C2S chord + S2C beats appended after the Legion packets).
    // v22 (final integration of #107/#108/#110/#109): both changes together; a "21" client is refused.
+   // v23 (Red Hulk, feat/red-hulk): six HeroAction values appended after FINAL_PUNCH and the hero id red_hulk;
+   // the packet table itself is unchanged, but a "22" peer would decode the new action ordinals wrongly.
    // v23 (Meteor Rain 2.0): MeteorRainFxS2CPacket appended last (red sky, fire zones, brands, far impacts).
    private static final String PROTOCOL_VERSION = "23";
    private static SimpleChannel INSTANCE;
