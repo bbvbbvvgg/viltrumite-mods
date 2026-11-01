@@ -42,6 +42,10 @@ public final class LegionAllies {
          return false;
       }
 
+      if (source instanceof LegionSuitEntity a && a.hijacked() || target instanceof LegionSuitEntity b && b.hijacked()) {
+         return false; // a taken-over suit is nobody's squad mate
+      }
+
       return sameSquad(commander(source), source instanceof LegionSuitEntity, commander(target), target instanceof LegionSuitEntity);
    }
 
@@ -58,6 +62,10 @@ public final class LegionAllies {
 
       if (!(target instanceof LivingEntity living) || !living.isAlive() || target.isSpectator() || HeroDamage.isProtected(living)) {
          return Relation.PROTECTED;
+      }
+
+      if (target instanceof LegionSuitEntity taken && taken.hijacked()) {
+         return Relation.HOSTILE; // the Legion fights a brother suit someone took over
       }
 
       if (spares(suit, target)) {
@@ -137,7 +145,8 @@ public final class LegionAllies {
 
       LegionSuitEntity suit = suitOf(attacker, direct);
       if (suit != null) {
-         return suit.owner();
+         // a taken-over suit's hits are its controller's, not its owner's
+         return suit.hijacked() ? null : suit.owner();
       }
 
       // Another hero's summon (an Avenger, a shadow) answers for its owner too.
@@ -151,7 +160,8 @@ public final class LegionAllies {
     * teams ({@code canHarmPlayer}) and spectator rules (Codex review #4).
     */
    public static boolean playerDamageAllowed(ServerPlayer owner, @Nullable Entity attacker, @Nullable Entity direct) {
-      boolean fromSummon = suitOf(attacker, direct) != null || SummonOwners.isSummon(attacker);
+      LegionSuitEntity fromSuit = suitOf(attacker, direct);
+      boolean fromSummon = fromSuit != null && !fromSuit.hijacked() || SummonOwners.isSummon(attacker);
       Player other = playerBehind(attacker, direct);
       if (other == null) {
          // A suit (or another hero's summon) whose owner is gone cannot claim PvP rights.

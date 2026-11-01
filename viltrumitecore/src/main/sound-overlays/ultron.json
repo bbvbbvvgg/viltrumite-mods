@@ -1,0 +1,671 @@
+{
+  "ultron.drone_hover": {
+    "subtitle": "subtitles.viltrumitecore.ultron.drone_hover",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/drone_hover",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "ultron.drone_zap": {
+    "subtitle": "subtitles.viltrumitecore.ultron.drone_zap",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/drone_zap"
+      }
+    ]
+  },
+  "ultron.drone_scan": {
+    "subtitle": "subtitles.viltrumitecore.ultron.drone_scan",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/drone_scan"
+      }
+    ]
+  },
+  "ultron.drone_mark": {
+    "subtitle": "subtitles.viltrumitecore.ultron.drone_mark",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/drone_mark"
+      }
+    ]
+  },
+  "ultron.drone_hurt": {
+    "subtitle": "subtitles.viltrumitecore.ultron.drone_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/drone_hurt"
+      }
+    ]
+  },
+  "ultron.drone_death": {
+    "subtitle": "subtitles.viltrumitecore.ultron.drone_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/drone_death"
+      }
+    ]
+  },
+  "ultron.sentry_step": {
+    "subtitle": "subtitles.viltrumitecore.ultron.sentry_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/sentry_step",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "viltrumitecore:ultron/sentry_step_2",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "viltrumitecore:ultron/sentry_step_3",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "ultron.sentry_servo": {
+    "subtitle": "subtitles.viltrumitecore.ultron.sentry_servo",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/sentry_servo"
+      }
+    ]
+  },
+  "ultron.sentry_swing": {
+    "subtitle": "subtitles.viltrumitecore.ultron.sentry_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/sentry_swing"
+      }
+    ]
+  },
+  "ultron.sentry_strike": {
+    "subtitle": "subtitles.viltrumitecore.ultron.sentry_strike",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/sentry_strike"
+      },
+      {
+        "name": "viltrumitecore:ultron/sentry_strike_2"
+      }
+    ]
+  },
+  "ultron.sentry_blast": {
+    "subtitle": "subtitles.viltrumitecore.ultron.sentry_blast",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/sentry_blast"
+      }
+    ]
+  },
+  "ultron.sentry_hurt": {
+    "subtitle": "subtitles.viltrumitecore.ultron.sentry_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/sentry_hurt"
+      }
+    ]
+  },
+  "ultron.sentry_death": {
+    "subtitle": "subtitles.viltrumitecore.ultron.sentry_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/sentry_death"
+      }
+    ]
+  },
+  "ultron.brute_step": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_step",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "viltrumitecore:ultron/brute_step_2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "viltrumitecore:ultron/brute_step_3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ultron.brute_servo": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_servo",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_servo"
+      }
+    ]
+  },
+  "ultron.brute_slam": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_slam"
+      }
+    ]
+  },
+  "ultron.brute_swing": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_swing"
+      }
+    ]
+  },
+  "ultron.brute_missiles": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_missiles",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_missiles"
+      }
+    ]
+  },
+  "ultron.brute_charge": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_charge"
+      }
+    ]
+  },
+  "ultron.brute_shield": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_shield",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_shield"
+      }
+    ]
+  },
+  "ultron.brute_hurt": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_hurt"
+      }
+    ]
+  },
+  "ultron.brute_death": {
+    "subtitle": "subtitles.viltrumitecore.ultron.brute_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/brute_death"
+      }
+    ]
+  },
+  "ultron.interceptor_jet": {
+    "subtitle": "subtitles.viltrumitecore.ultron.interceptor_jet",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/interceptor_jet",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "ultron.interceptor_burst": {
+    "subtitle": "subtitles.viltrumitecore.ultron.interceptor_burst",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/interceptor_burst"
+      }
+    ]
+  },
+  "ultron.interceptor_dive": {
+    "subtitle": "subtitles.viltrumitecore.ultron.interceptor_dive",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/interceptor_dive"
+      }
+    ]
+  },
+  "ultron.interceptor_boost": {
+    "subtitle": "subtitles.viltrumitecore.ultron.interceptor_boost",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/interceptor_boost"
+      }
+    ]
+  },
+  "ultron.interceptor_hurt": {
+    "subtitle": "subtitles.viltrumitecore.ultron.interceptor_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/interceptor_hurt"
+      }
+    ]
+  },
+  "ultron.interceptor_death": {
+    "subtitle": "subtitles.viltrumitecore.ultron.interceptor_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/interceptor_death"
+      }
+    ]
+  },
+  "ultron.engineer_step": {
+    "subtitle": "subtitles.viltrumitecore.ultron.engineer_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/engineer_step",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:ultron/engineer_step_2",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:ultron/engineer_step_3",
+        "attenuation_distance": 14
+      }
+    ]
+  },
+  "ultron.engineer_weld": {
+    "subtitle": "subtitles.viltrumitecore.ultron.engineer_weld",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/engineer_weld"
+      }
+    ]
+  },
+  "ultron.engineer_hack": {
+    "subtitle": "subtitles.viltrumitecore.ultron.engineer_hack",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/engineer_hack"
+      }
+    ]
+  },
+  "ultron.engineer_plant": {
+    "subtitle": "subtitles.viltrumitecore.ultron.engineer_plant",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/engineer_plant"
+      }
+    ]
+  },
+  "ultron.engineer_hurt": {
+    "subtitle": "subtitles.viltrumitecore.ultron.engineer_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/engineer_hurt"
+      }
+    ]
+  },
+  "ultron.engineer_death": {
+    "subtitle": "subtitles.viltrumitecore.ultron.engineer_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/engineer_death"
+      }
+    ]
+  },
+  "ultron.prime_assemble": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_assemble",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_assemble"
+      }
+    ]
+  },
+  "ultron.prime_step": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_step",
+        "attenuation_distance": 40
+      },
+      {
+        "name": "viltrumitecore:ultron/prime_step_2",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "ultron.prime_whoosh": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_whoosh",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_whoosh"
+      }
+    ]
+  },
+  "ultron.prime_impact": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_impact"
+      },
+      {
+        "name": "viltrumitecore:ultron/prime_impact_2"
+      }
+    ]
+  },
+  "ultron.prime_palm": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_palm",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_palm"
+      }
+    ]
+  },
+  "ultron.prime_beam_charge": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_beam_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_beam_charge"
+      }
+    ]
+  },
+  "ultron.prime_beam": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_beam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_beam"
+      }
+    ]
+  },
+  "ultron.prime_slam": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_slam"
+      }
+    ]
+  },
+  "ultron.prime_dash": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_dash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_dash"
+      }
+    ]
+  },
+  "ultron.prime_transition": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_transition",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_transition"
+      }
+    ]
+  },
+  "ultron.prime_hurt": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_hurt"
+      }
+    ]
+  },
+  "ultron.prime_death": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_death"
+      }
+    ]
+  },
+  "ultron.prime_ascend": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_ascend",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_ascend"
+      }
+    ]
+  },
+  "ultron.prime_summon": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_summon",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_summon"
+      }
+    ]
+  },
+  "ultron.prime_absorb": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_absorb",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_absorb"
+      }
+    ]
+  },
+  "ultron.prime_jet": {
+    "subtitle": "subtitles.viltrumitecore.ultron.prime_jet",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/prime_jet",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "ultron.node_hum": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_hum",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ultron.node_build": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_build",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_build"
+      }
+    ]
+  },
+  "ultron.node_online": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_online",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_online"
+      }
+    ]
+  },
+  "ultron.node_shield_hit": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_shield_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_shield_hit"
+      },
+      {
+        "name": "viltrumitecore:ultron/node_shield_hit_2"
+      }
+    ]
+  },
+  "ultron.node_shield_break": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_shield_break",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_shield_break"
+      }
+    ]
+  },
+  "ultron.node_disabled": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_disabled",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_disabled"
+      }
+    ]
+  },
+  "ultron.node_reboot": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_reboot",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_reboot"
+      }
+    ]
+  },
+  "ultron.node_destroyed": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_destroyed",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_destroyed"
+      }
+    ]
+  },
+  "ultron.node_hack": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_hack",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_hack"
+      }
+    ]
+  },
+  "ultron.node_tether": {
+    "subtitle": "subtitles.viltrumitecore.ultron.node_tether",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/node_tether",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "ultron.bolt_impact": {
+    "subtitle": "subtitles.viltrumitecore.ultron.bolt_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/bolt_impact"
+      },
+      {
+        "name": "viltrumitecore:ultron/bolt_impact_2"
+      }
+    ]
+  },
+  "ultron.missile_flight": {
+    "subtitle": "subtitles.viltrumitecore.ultron.missile_flight",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/missile_flight",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ultron.missile_explode": {
+    "subtitle": "subtitles.viltrumitecore.ultron.missile_explode",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/missile_explode"
+      }
+    ]
+  },
+  "ultron.deflect": {
+    "subtitle": "subtitles.viltrumitecore.ultron.deflect",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/deflect"
+      }
+    ]
+  },
+  "ultron.debris": {
+    "subtitle": "subtitles.viltrumitecore.ultron.debris",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/debris"
+      },
+      {
+        "name": "viltrumitecore:ultron/debris_2"
+      }
+    ]
+  },
+  "ultron.splash": {
+    "subtitle": "subtitles.viltrumitecore.ultron.splash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/splash"
+      }
+    ]
+  },
+  "ultron.fabricate": {
+    "subtitle": "subtitles.viltrumitecore.ultron.fabricate",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/fabricate"
+      }
+    ]
+  },
+  "ultron.event_start": {
+    "subtitle": "subtitles.viltrumitecore.ultron.event_start",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/event_start"
+      }
+    ]
+  },
+  "ultron.phase_change": {
+    "subtitle": "subtitles.viltrumitecore.ultron.phase_change",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/phase_change"
+      }
+    ]
+  },
+  "ultron.protocol": {
+    "subtitle": "subtitles.viltrumitecore.ultron.protocol",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/protocol"
+      }
+    ]
+  },
+  "ultron.transmission": {
+    "subtitle": "subtitles.viltrumitecore.ultron.transmission",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/transmission"
+      }
+    ]
+  },
+  "ultron.capture": {
+    "subtitle": "subtitles.viltrumitecore.ultron.capture",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/capture"
+      }
+    ]
+  },
+  "ultron.release": {
+    "subtitle": "subtitles.viltrumitecore.ultron.release",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/release"
+      }
+    ]
+  },
+  "ultron.discover": {
+    "subtitle": "subtitles.viltrumitecore.ultron.discover",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/discover"
+      }
+    ]
+  },
+  "ultron.upload_alarm": {
+    "subtitle": "subtitles.viltrumitecore.ultron.upload_alarm",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/upload_alarm"
+      }
+    ]
+  },
+  "ultron.victory": {
+    "subtitle": "subtitles.viltrumitecore.ultron.victory",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/victory"
+      }
+    ]
+  },
+  "ultron.defeat": {
+    "subtitle": "subtitles.viltrumitecore.ultron.defeat",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ultron/defeat"
+      }
+    ]
+  }
+}

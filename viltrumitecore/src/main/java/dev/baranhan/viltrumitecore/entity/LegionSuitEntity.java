@@ -54,6 +54,8 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
    public static final int FLAG_GUN = 16;
    public static final int FLAG_BOOST = 32;
    public static final int FLAG_FIST_AWAY = 64;
+   /** Taken over by a {@link dev.baranhan.viltrumitecore.hero.ironman.legion.LegionOverride} (synced: the renderer tints it, the owner can hit it). */
+   public static final int FLAG_HIJACKED = 128;
 
    private static final EntityDataAccessor<Byte> MARK = SynchedEntityData.defineId(LegionSuitEntity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> OWNER = SynchedEntityData.defineId(LegionSuitEntity.class, EntityDataSerializers.INT);
@@ -79,6 +81,9 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
    private int lastHitMove = -100;
    /** Set once the roster is updated for this suit leaving the world (no double recall). */
    private boolean released;
+   /** Server: the outside controller while the suit is taken over (null: the brain flies it). */
+   @Nullable
+   private dev.baranhan.viltrumitecore.hero.ironman.legion.LegionOverride override;
    private final Actor actor = new Actor();
 
    // --- client presentation clocks (client tickCount based) ---
@@ -199,6 +204,26 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
       this.entityData.set(MOVE, this.moveSeq << 8 | move.ordinal());
    }
 
+   /** Server: hands the suit to an outside controller (or back to its brain with null; the old one is told). */
+   public void setOverride(@Nullable dev.baranhan.viltrumitecore.hero.ironman.legion.LegionOverride next) {
+      dev.baranhan.viltrumitecore.hero.ironman.legion.LegionOverride old = this.override;
+      this.override = next;
+      this.setFlag(FLAG_HIJACKED, next != null);
+      if (old != null && old != next) {
+         old.released(this);
+      }
+   }
+
+   @Nullable
+   public dev.baranhan.viltrumitecore.hero.ironman.legion.LegionOverride override() {
+      return this.override;
+   }
+
+   /** Taken over right now (both sides: the flag is synced). */
+   public boolean hijacked() {
+      return this.flag(FLAG_HIJACKED);
+   }
+
    public int orderedTarget() {
       return this.orderedTarget;
    }
@@ -253,6 +278,11 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
       if (!this.claimed(owner)) {
          this.release();
          this.discard();
+         return;
+      }
+
+      if (this.override != null && this.isAlive()) {
+         this.override.tick(this, owner);
          return;
       }
 
@@ -317,7 +347,7 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
    /** Tony's own crosshair passes through his suits (his picks and orders aim past them). */
    @Override
    public boolean isPickable() {
-      if (this.level().isClientSide && dev.baranhan.viltrumitecore.client.ironman.legion.ClientLegion.isLocalOwner(this.ownerId())) {
+      if (this.level().isClientSide && !this.hijacked() && dev.baranhan.viltrumitecore.client.ironman.legion.ClientLegion.isLocalOwner(this.ownerId())) {
          return false;
       }
 
@@ -344,6 +374,11 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
          || source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.DROWN) || source.is(DamageTypeTags.IS_FALL)
          || source.is(DamageTypeTags.IS_FIRE) || source.is(DamageTypes.CRAMMING)) {
          return false;
+      }
+
+      if (this.override != null) {
+         // taken over: the controller's shell takes the hit (the owner may beat his own suit free)
+         return this.override.hurt(this, source, amount);
       }
 
       Entity attacker = source.getEntity();
@@ -431,6 +466,10 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
    public void onRemovedFromWorld() {
       super.onRemovedFromWorld();
       if (!this.level().isClientSide) {
+         if (this.override != null) {
+            this.setOverride(null);
+         }
+
          this.release();
       }
    }
@@ -498,6 +537,10 @@ public class LegionSuitEntity extends PathfinderMob implements SignatureActor.Pr
    public boolean isAlliedTo(Entity other) {
       if (other == null) {
          return false;
+      }
+
+      if (this.override != null) {
+         return this.override.friend(other);
       }
 
       if (other instanceof LegionSuitEntity suit) {
