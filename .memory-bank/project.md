@@ -63,6 +63,7 @@ Read this file before every task. Keep it short. See `AGENTS.md` §6 for the rul
 - Codex PR review has a usage limit; when it is reached it only posts a limit notice.
 
 ## Topic files
+- `city-infrastructure.md`: Living City 3.0 power grid, blackouts, sirens, emergency stages, QA harness (core 1.66.0, protocol 24).
 - `decompile.md`: decompile artifacts and their fixes.
 - `viltrumites-meteors.md`: squad NPC identity fix (Homelander override), manual-only world events, meteor rain, runtime harness.
 - `ironman.md`, `ironman-legion.md`: Iron Man (see the Iron Man section).
