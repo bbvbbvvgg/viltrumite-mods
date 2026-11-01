@@ -78,6 +78,35 @@ public final class BalanceTable {
    /** Cannon bolt (chariots, heavy gunners); its splash adds the explosion step. */
    public static final float CHITAURI_CANNON = 9.0F;
 
+   // ---- Ultron uprising (docs/plans/2026-11-01-ultron-uprising.md) -----------------------------
+
+   /** Scout drone zap (beam): a pest, 7 hits on an unarmored human. */
+   public static final float ULTRON_DRONE_ZAP = 3.0F;
+   /** Combat robot: arm-cannon bolt (5 hits on an unarmored human) and each strike of its blade combo. */
+   public static final float ULTRON_SENTRY_BOLT = 4.0F;
+   public static final float ULTRON_SENTRY_STRIKE = 5.0F;
+   /** Heavy assault robot: ground slam (blast around it), arm swing, charge, and each shoulder missile (plus its splash). */
+   public static final float ULTRON_BRUTE_SLAM = 12.0F;
+   public static final float ULTRON_BRUTE_SWING = 10.0F;
+   public static final float ULTRON_BRUTE_CHARGE = 9.0F;
+   public static final float ULTRON_MISSILE = 6.0F;
+   /** Flying interceptor: each bolt of its burst, and the dive strike. */
+   public static final float ULTRON_INTERCEPTOR_BOLT = 3.0F;
+   public static final float ULTRON_INTERCEPTOR_DIVE = 9.0F;
+   /**
+    * Ultron Prime (a boss: heroes take his hits under their boss cap). Group scale and the core tether
+    * ({@code UltronBossRules}) multiply these; the beam hits on each of its six contacts.
+    */
+   public static final float ULTRON_PRIME_JAB = 9.0F;
+   public static final float ULTRON_PRIME_CROSS = 11.0F;
+   public static final float ULTRON_PRIME_UPPERCUT = 14.0F;
+   public static final float ULTRON_PRIME_BACKHAND = 12.0F;
+   public static final float ULTRON_PRIME_PALM = 16.0F;
+   public static final float ULTRON_PRIME_BEAM = 4.0F;
+   public static final float ULTRON_PRIME_SLAM = 18.0F;
+   public static final float ULTRON_PRIME_DIVE = 20.0F;
+   public static final float ULTRON_PRIME_DASH = 10.0F;
+
    // ---- Iron Man ------------------------------------------------------------------------------
 
    /**

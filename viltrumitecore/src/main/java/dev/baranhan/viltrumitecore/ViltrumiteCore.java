@@ -126,6 +126,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();
       // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
       dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
+      // ULTRON — ВОССТАНИЕ МАШИН (docs/plans/2026-11-01-ultron-uprising.md): sounds and the machines' entity register.
+      dev.baranhan.viltrumitecore.worldevent.ultron.UltronSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);

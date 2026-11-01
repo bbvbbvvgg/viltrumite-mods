@@ -89,7 +89,8 @@ public final class CombatBalance {
 
    static boolean isBoss(@Nullable Entity e) {
       return e instanceof ThanosEntity || e instanceof ChitauriLeviathan || e instanceof LeviathanPart || e instanceof Warden
-         || e instanceof WitherBoss || e instanceof EnderDragon || e instanceof ElderGuardian;
+         || e instanceof WitherBoss || e instanceof EnderDragon || e instanceof ElderGuardian
+         || e instanceof dev.baranhan.viltrumitecore.entity.ultron.UltronPrime;
    }
 
    // ---- LivingHurtEvent ------------------------------------------------------------------------

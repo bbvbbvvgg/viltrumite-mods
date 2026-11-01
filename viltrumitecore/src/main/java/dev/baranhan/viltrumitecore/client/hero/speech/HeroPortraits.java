@@ -81,6 +81,25 @@ public final class HeroPortraits {
       }
    }
 
+   /** World voices (a world event's villain, no hero): portrait by the line's voice key. */
+   private static final Map<String, Portrait> VOICES = new java.util.HashMap<>();
+
+   public static synchronized void registerVoice(String voice, Portrait portrait) {
+      VOICES.put(Objects.requireNonNull(voice, "voice"), Objects.requireNonNull(portrait, "portrait"));
+   }
+
+   /** A hero's portrait, else a registered world voice's, else the default bust. */
+   public static synchronized Portrait resolve(@Nullable HeroId hero, @Nullable String voice) {
+      if (hero == null && voice != null) {
+         Portrait world = VOICES.get(voice);
+         if (world != null) {
+            return world;
+         }
+      }
+
+      return resolve(hero);
+   }
+
    public static synchronized Portrait resolve(@Nullable HeroId hero) {
       Portrait portrait = hero == null ? null : PORTRAITS.get(hero);
       return portrait == null ? PlayerBustPortrait.INSTANCE : portrait;
