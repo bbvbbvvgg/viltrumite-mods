@@ -88,6 +88,8 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.captain.CaptainClient.init();
          // Red Hulk (docs/design/2026-11-01-red-hulk-design.md).
          dev.baranhan.viltrumitecore.client.redhulk.RedHulkClient.init();
+         // Ghost Rider (docs/design/2026-11-02-ghost-rider-design.md): the Hell Cycle's input, sounds, trail, camera.
+         dev.baranhan.viltrumitecore.client.ghostrider.GhostRiderClient.init();
          // Contextual interactions (docs/contextual-interactions.json): FX recipes of the shared presets 600+.
          dev.baranhan.viltrumitecore.client.interaction.InteractionFxRecipes.init();
          dev.baranhan.viltrumitecore.client.wish.WishSceneClient.init();
