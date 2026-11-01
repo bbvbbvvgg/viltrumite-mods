@@ -193,3 +193,34 @@ Sources list and cue sheet: `tools/assets/meteor_rain_sources.md`.
   "Fire - Crackling, Spitting, Roaring" by jamesdrake89 (freesound.org/s/636178).
 - Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.
 
+
+## Living City 3.0 — city infrastructure, blackouts and emergency (world system)
+
+Sources list and cue sheet: `tools/assets/city_power_sources.md`.
+
+### Own work
+- Dark light-fixture block models and blockstates (`models/block/dark/`, `blockstates/dark_*.json`) reference the
+  vanilla block textures and templates by parent/texture id (nothing is copied); tinted grey in code.
+- The city defence speaker portrait (`client/city/power/CityDefensePortrait`) is drawn in code.
+- Far siren filtering/reverb, loop seams, layering and levels — `tools/sfx/city_power.py` (CC0-1.0).
+
+### Recordings (CC0 1.0, Freesound), mixed by `tools/sfx/city_power.py`
+- Sirens: "Air raid siren (Prague)" by nooly (freesound.org/s/382611), "air raid / tornado siren Sentry 20v2T
+  alert warning signal" by vyclops (freesound.org/s/714426), "3 Toned Mega Siren of Doom.wav" by HootOwl
+  (freesound.org/s/58927), "Tornado Siren winding down.aiff" by maurcs (freesound.org/s/118754).
+- Alarms: "Papatone Pictures Klaxon Rapid.wav" by alphatone (freesound.org/s/555465), "Fire Alarm Panel Repeated
+  Beeps" by loganzsound (freesound.org/s/874698).
+- Electricity: "Electric Arcs, Relays and Transformer Hum" by bassimat (freesound.org/s/867585), "ELECArc_Electric
+  arc hum and buzz" by pryanic (freesound.org/s/776446), "Electric Sparks.wav" by kev_durr (freesound.org/s/396470),
+  "etincelle-spark.wav" by therover (freesound.org/s/549878), "G32-16-Steady Sparks.wav" and "G32-10-Massive
+  Electrical Discharges.wav" by craigsmith (freesound.org/s/438500, /438494), "765 kilo-volt transmission lines
+  buzzing and crackling" by johnaudiotech (freesound.org/s/347046), "transformer at night.wav" by ideaph
+  (freesound.org/s/641208), "Electro_explosion 0" by STRANGEFOLD6541100 (freesound.org/s/730489), "Kill Switch
+  (Large Breaker Switch) .WAV" by EchoCinematics (freesound.org/s/131599), "Circuit Breaker 2 DP.wav" by sribubba
+  (freesound.org/s/130153).
+- Destruction and ambience: "Deep Boom" by Za-Games (freesound.org/s/539968), "distant explosion" and "distant
+  explosions" by Kostrava (freesound.org/s/324277, /320788), "building collapse / demolition" by greyfeather
+  (freesound.org/s/712918), "Creaking Metal - Slow" by EagleStealthTeam (freesound.org/s/172411), "Metallic Groan"
+  by hinchinbrook (freesound.org/s/496836), "Ambience City Quiet Night Air Tone" by leonelmail
+  (freesound.org/s/427841).
+- Not auditioned by ear; checked by numbers and spectra only — the final mix needs a listening pass.
