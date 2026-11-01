@@ -187,7 +187,7 @@ class HeroRosterIntegrationTest {
       // 23 was used by three branches alone: Red Hulk (six HeroAction values appended after FINAL_PUNCH, the packet
       // table unchanged), Meteor Rain 2.0 (MeteorRainFxS2CPacket appended last) and Chitauri evolution (FX kinds
       // 14..23 for captors, pylons, siege, interceptors; new entity types): refused;
-      assertTrue(source.contains("PROTOCOL_VERSION = \"23\""), "the merged packet table needs its own protocol version");
+      assertTrue(source.contains("PROTOCOL_VERSION = \"24\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
