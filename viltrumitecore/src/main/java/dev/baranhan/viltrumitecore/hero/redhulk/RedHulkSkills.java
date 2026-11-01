@@ -211,7 +211,6 @@ public final class RedHulkSkills {
       Vec3 flat = RedHulkTargets.flat(look);
       List<LivingEntity> targets = RedHulkTargets.arc(player, RedHulkRules.CLAP_REACH, RedHulkRules.CLAP_ARC, e -> RedHulkTargets.mayHit(player, e));
       int n = 0;
-      boolean hot = state.heat >= RedHulkRules.HOT;
       for (LivingEntity t : targets) {
          if (!RedHulkTargets.visible(player.level(), player.getEyePosition(), RedHulkTargets.center(t))) {
             continue;
@@ -222,9 +221,7 @@ public final class RedHulkSkills {
             n++;
             double k = 1.0 - 0.4 * Math.min(1.0, d / RedHulkRules.CLAP_REACH);
             RedHulkTargets.push(t, flat.scale(RedHulkRules.CLAP_PUSH * k).add(0, 0.3, 0));
-            if (hot) {
-               t.setSecondsOnFire(RedHulkRules.CLAP_IGNITE_SECONDS);
-            }
+            t.setSecondsOnFire(RedHulkRules.CLAP_IGNITE_SECONDS);
          }
       }
       // the wave turns projectiles in the cone around
