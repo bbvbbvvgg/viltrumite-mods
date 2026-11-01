@@ -62,6 +62,7 @@ public class CoreMessages {
    // v23 (Red Hulk, feat/red-hulk): six HeroAction values appended after FINAL_PUNCH and the hero id red_hulk;
    // the packet table itself is unchanged, but a "22" peer would decode the new action ordinals wrongly.
    // v23 (Meteor Rain 2.0): MeteorRainFxS2CPacket appended last (red sky, fire zones, brands, far impacts).
+   // v23 (Chitauri evolution): FX kinds 14..23 for captors, pylons, siege, interceptors; new entity types.
    private static final String PROTOCOL_VERSION = "23";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;

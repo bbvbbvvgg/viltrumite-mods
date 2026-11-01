@@ -184,8 +184,9 @@ class HeroRosterIntegrationTest {
       // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets;
       // 21 = Living City 2.0 alone (citizen STATE byte) and THE FINAL PUNCH alone (its packets appended last): refused;
       // 22 = the final integration of #107/#108/#110/#109 with both;
-      // 23 was used by Red Hulk alone (six HeroAction values appended after FINAL_PUNCH, the packet table unchanged)
-      // and by Meteor Rain 2.0 alone (MeteorRainFxS2CPacket appended last): refused;
+      // 23 was used by three branches alone: Red Hulk (six HeroAction values appended after FINAL_PUNCH, the packet
+      // table unchanged), Meteor Rain 2.0 (MeteorRainFxS2CPacket appended last) and Chitauri evolution (FX kinds
+      // 14..23 for captors, pylons, siege, interceptors; new entity types): refused;
       assertTrue(source.contains("PROTOCOL_VERSION = \"23\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
