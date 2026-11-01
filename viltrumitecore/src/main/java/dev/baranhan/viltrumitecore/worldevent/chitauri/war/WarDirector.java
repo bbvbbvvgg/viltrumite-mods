@@ -154,7 +154,8 @@ public final class WarDirector {
    public static Mix mix(Doctrine d, Snapshot s, Personality p) {
       int interceptors = s.airborne() > 0 ? Math.min(WarRules.MAX_INTERCEPTORS, 1 + s.airborne()) : d == Doctrine.AIR_DROP ? 1 : 0;
       int heavies = s.killsPerMinute() > 8.0F ? 2 : d == Doctrine.CENTRE_ASSAULT || d == Doctrine.HOLD_GROUND ? 1 : 0;
-      int captors = d == Doctrine.ABDUCTION ? 2 + (s.citizensSeen() > 6 ? 1 : 0) : s.citizensSeen() > 3 && p.greed() > 0.4F ? 1 : 0;
+      int captors = d == Doctrine.ABDUCTION ? 2 + (s.citizensSeen() > 6 ? 1 : 0) : s.citizensSeen() > 3 && (p.greed() > 0.4F || s.captivesHeld() + s.captivesFreed() == 0) ? 1 : 0;
+      // ^ even a war-minded hive sends one snatcher along until it has taken somebody
       int sieges = s.coverShare() > 0.4F || d == Doctrine.HOLD_GROUND && s.phase() >= 2 || d == Doctrine.CENTRE_ASSAULT && s.phase() >= 3 ? 1 : 0;
       int commanders = d == Doctrine.COMMANDER_PUSH || d == Doctrine.MULTI_FRONT && s.players() >= 2 ? 1 : 0;
       if (d == Doctrine.SURPRISE_REINFORCE) {
