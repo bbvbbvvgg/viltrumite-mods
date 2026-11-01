@@ -135,3 +135,14 @@ while the grid owns them; call `damage` instead.
 
 `status` · `blackout [radius]` · `damage <radius> <severity>` · `cascade` · `restore` ·
 `siren warning|active|critical|clear` (lease `command`).
+
+## Links after the integration of #124–#127 (core 1.69.0, protocol 27)
+
+- `InfrastructureEvent.Outage` / `Restored` → `CityAftermath.setPower(level, "grid:<district>", center, r, !dark)`;
+  `r` is a circle as large as the dark cells (≥ 24 blocks).
+- `InfrastructureEvent.Damaged` → up to 4 small `infrastructure` aftermath zones at the blown transformers
+  (id `grid:transformer:<incident>:<i>`). Aftermath never writes blocks, so this cannot loop back into the grid.
+- Every 100 ticks and on `/city reset`, `CityDisasterLinks.reconcilePower` makes the `grid:` outages of the
+  aftermath match `CityInfrastructure.outages` (restart, reset, missed events).
+- A running collapse owns its falling blocks: `onBurst` skips them; the collapse reports one incident at impact.
+- Explosions of `entity.ultron.*` report cause `ultron`.

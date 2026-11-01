@@ -145,3 +145,14 @@ else is needed; listen to the events for his own reactions.
 - Clients that do not have the chunks see only dust from far and hear the distant boom.
 - Viltrumite flight dash damage (`PlayerEntityCoreMixin`) is not wrapped in a scope yet, so it does not feed the
   ledger.
+
+## 9. Wired after the integration of #124–#127 (core 1.69.0, protocol 27)
+
+`city/links/CityDisasterLinks` connects the three city systems (server side):
+
+- `CityCollapseEvent.Impact` → `CityAftermath.registerCollapse(... "collapse:<eventId>" ..., box = landing)` and
+  `CityInfrastructure.damage(center, radius, severity.strength(), "collapse", "collapse:<eventId>:<cause>")`.
+  Cause, centre, radius, severity and event id are kept. One impact per event id (guard set + aftermath dedupes ids).
+- From `Started` to `Finished` the city burst stream skips `PowerGrid.onBurst` inside `info.inZone(...)`, so the
+  falling blocks hit the grid once, at the impact.
+- `CollapseCause.ULTRON` ("ultron", weight 1.0); explosions of `entity.ultron.*` record as `ultron`.

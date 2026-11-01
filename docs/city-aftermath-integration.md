@@ -116,3 +116,12 @@ stage <impact|smolder|late|scar> | power off [radius] | power on` — для QA 
 ## 6. Конфиг (`config/viltrumitecore.json`)
 
 `aftermathEnabled = true` — выключатель всей системы; `aftermathDurationScale = 1.0` (0.1..10) — растягивает стадии.
+
+## 7. Подключено при интеграции #124–#127 (core 1.69.0, протокол 27)
+
+`city/links/CityDisasterLinks`:
+- обрушение: `CityCollapseEvent.Impact` → `registerCollapse` с id `collapse:<eventId>`, коробкой `landing` и
+  исходной причиной (неизвестные aftermath id — `command`, `secondary` — читаются как `collapse`); один раз на событие;
+- электросеть: `Outage`/`Restored` → `setPower("grid:<район>", ...)`; трансформаторы → небольшие зоны
+  `infrastructure`; сверка с сетью раз в 5 с и при `/city reset` (`CityAftermath.outageSources`);
+- взрывы машин Альтрона → причина `ultron` (раньше попадали в `hero`).
