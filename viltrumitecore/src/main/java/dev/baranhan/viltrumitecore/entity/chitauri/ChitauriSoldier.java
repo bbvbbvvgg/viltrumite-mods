@@ -57,6 +57,13 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
 
    public int squad = -1;
    public int squadIndex;
+   /** The war layer's task for this soldier's squad (null: the old free roaming around the anchor). */
+   @Nullable
+   public dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder order;
+   /** Encircle slot: the bearing (radians) around the target this soldier takes, NaN = its flank offset. */
+   public double encircleBearing = Double.NaN;
+   /** War clock tick until which a commander nearby sharpens this soldier's aim. */
+   public long commandedUntil;
    private int severDelay = -1;
    private int stuckChecks;
    private Vec3 lastCheckPos = Vec3.ZERO;
@@ -89,13 +96,12 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
 
    public static AttributeSupplier.Builder createAttributes() {
       return Monster.createMonsterAttributes()
-         .add(Attributes.MAX_HEALTH, 26.0)
+         .add(Attributes.MAX_HEALTH, dev.baranhan.viltrumitecore.balance.BalanceTable.CHITAURI_SOLDIER_HEALTH)
          .add(Attributes.MOVEMENT_SPEED, 0.27)
          .add(Attributes.FOLLOW_RANGE, 40.0)
          .add(Attributes.ATTACK_DAMAGE, 6.0)
          .add(Attributes.ATTACK_KNOCKBACK, 0.6)
-         .add(Attributes.ARMOR, 6.0)
-         .add(Attributes.ARMOR_TOUGHNESS, 2.0)
+         .add(Attributes.ARMOR, dev.baranhan.viltrumitecore.balance.BalanceTable.CHITAURI_SOLDIER_ARMOR)
          .add(Attributes.KNOCKBACK_RESISTANCE, 0.2);
    }
 
@@ -110,7 +116,9 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
    @Override
    protected void registerGoals() {
       this.goalSelector.addGoal(0, new FloatGoal(this));
+      this.registerRoleGoals();
       this.goalSelector.addGoal(2, new CombatGoal(this));
+      this.goalSelector.addGoal(4, new OrderGoal(this));
       this.goalSelector.addGoal(5, new RoamGoal(this));
       this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 16.0F));
       this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
@@ -141,11 +149,59 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       this.entityData.set(SEAT, (byte)seat);
    }
 
-   private boolean flag(int f) {
+   /** Subclasses (the elite Chitauri) add their own goals here (before the shared combat goal). */
+   protected void registerRoleGoals() {
+   }
+
+   // ---- weapon profile (the foot soldier's numbers; elites override) ----
+
+   /** Bolts in one burst after the charge. */
+   protected int burstSize() {
+      return 2 + this.random.nextInt(3);
+   }
+
+   protected int burstGap() {
+      return 4;
+   }
+
+   protected int chargeTicks() {
+      return 12;
+   }
+
+   protected int burstCooldown() {
+      return 26 + this.random.nextInt(34);
+   }
+
+   protected double meleeRange() {
+      return 2.4;
+   }
+
+   protected int meleeCooldown() {
+      return 22;
+   }
+
+   protected double fireRange() {
+      return 36.0;
+   }
+
+   /** Called when a burst ends (elites vent or reload their weapon here). */
+   protected void onBurstEnd() {
+   }
+
+   /** Thrown out of a chariot seat over the drop point (elites play their own disembark clip). */
+   public void onDisembark() {
+   }
+
+   /** False while the unit is busy with its own task (a captor carrying someone does not stop to trade fire). */
+   protected boolean mayFight() {
+      return true;
+   }
+
+   protected boolean flag(int f) {
       return (this.entityData.get(FLAGS) & f) != 0;
    }
 
-   private void setFlag(int f, boolean on) {
+   protected void setFlag(int f, boolean on) {
       byte b = this.entityData.get(FLAGS);
       byte n = (byte)(on ? b | f : b & ~f);
       if (n != b) {
@@ -286,21 +342,26 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       return this.getEyePosition().add(look.scale(1.05)).add(right.scale(0.28)).add(0, -0.22, 0);
    }
 
-   void fireAt(LivingEntity target) {
+   protected void fireAt(LivingEntity target) {
       ServerLevel level = (ServerLevel)this.level();
       Vec3 from = this.muzzle();
       Vec3 aim = target.position().add(0, target.getBbHeight() * 0.55, 0);
       double dist = from.distanceTo(aim);
       double flight = dist / 2.4;
       aim = aim.add(target.getDeltaMovement().multiply(1.0, 0.3, 1.0).scale(flight * 0.8));
-      float spread = (float)(1.6 + dist * 0.06) * (this.mounted() ? 2.0F : 1.0F);
+      float spread = (float)(1.6 + dist * 0.06) * (this.mounted() ? 2.0F : 1.0F) * (this.commanded() ? 0.7F : 1.0F);
       ChitauriBolt.shoot(level, this, from, aim.subtract(from), 2.4, 1.0F, spread);
       this.level().broadcastEntityEvent(this, EVENT_SHOOT);
       ChitauriSounds.play(level, from, ChitauriSounds.RIFLE_FIRE, 2.0F, 0.92F + this.random.nextFloat() * 0.16F);
       ChitauriDestruction.danger(level, this.position(), 14.0F, 80);
    }
 
-   void melee(LivingEntity target) {
+   /** A commander is near: tighter aim (see {@link #commandedUntil}). */
+   public boolean commanded() {
+      return this.commandedUntil > this.level().getGameTime();
+   }
+
+   protected void melee(LivingEntity target) {
       this.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
       this.level().broadcastEntityEvent(this, EVENT_MELEE);
       ChitauriSounds.play((ServerLevel)this.level(), this.position(), ChitauriSounds.SOLDIER_MELEE, 0.9F, 0.9F + this.random.nextFloat() * 0.2F);
@@ -330,7 +391,9 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       Level level = this.level();
       Vec3 tp = target.position();
       Vec3 me = this.position();
-      double bearing = Math.atan2(me.z - tp.z, me.x - tp.x) + CoverScore.flankOffset(this.squadIndex) * 0.6;
+      double bearing = !Double.isNaN(this.encircleBearing) && this.order != null
+         && this.order.type() == dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder.Type.ENCIRCLE ? this.encircleBearing
+         : Math.atan2(me.z - tp.z, me.x - tp.x) + CoverScore.flankOffset(this.squadIndex) * 0.6;
       Vec3 targetEye = target.getEyePosition();
       Vec3 targetChest = tp.add(0, target.getBbHeight() * 0.5, 0);
       Vec3 best = null;
@@ -415,7 +478,19 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       if (ChitauriMob.is(source.getEntity()) || ChitauriMob.is(source.getDirectEntity())) {
          return false; // no friendly fire
       }
-      return super.hurt(source, amount);
+      boolean hurt = super.hurt(source, this.capHit(source, amount));
+      if (hurt && !this.level().isClientSide) {
+         this.afterHurt(source, amount);
+      }
+      return hurt;
+   }
+
+   /** Elites cap what one hit may take (no one-shot); the foot soldier takes every hit whole. */
+   protected float capHit(DamageSource source, float amount) {
+      return amount;
+   }
+
+   protected void afterHurt(DamageSource source, float amount) {
    }
 
    @Override
@@ -536,7 +611,8 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       @Override
       public boolean canUse() {
          LivingEntity t = this.s.getTarget();
-         return t != null && ChitauriMob.validTarget(t) && !this.s.severed() && !(this.s.mounted() && this.s.role() == ROLE_PILOT);
+         return t != null && ChitauriMob.validTarget(t) && !this.s.severed() && !(this.s.mounted() && this.s.role() == ROLE_PILOT) && this.s.mayFight()
+            && !(this.s.order != null && this.s.order.breaksContact());
       }
 
       @Override
@@ -580,14 +656,15 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
             this.meleeCooldown--;
          }
          if (!mounted) {
-            if (d < 2.4) {
+            if (d < this.s.meleeRange()) {
                this.s.getNavigation().stop();
                if (this.meleeCooldown <= 0) {
                   this.s.melee(t);
-                  this.meleeCooldown = 22;
+                  this.meleeCooldown = this.s.meleeCooldown();
                }
             } else if (d > 32.0 || this.lostSight > 60) {
-               if (this.s.tickCount % 10 == 0) {
+               // a squad holding a position does not chase far out of it
+               if (this.s.tickCount % 10 == 0 && !this.s.leashedAwayFrom(t)) {
                   this.s.getNavigation().moveTo(t, 1.15);
                }
             } else if (--this.repick <= 0 || this.lostSight == 30) {
@@ -598,11 +675,11 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
                }
             }
          }
-         boolean aim = see && d < (mounted ? 44.0 : 36.0) && d >= 2.4;
+         boolean aim = see && d < (mounted ? 44.0 : this.s.fireRange()) && d >= this.s.meleeRange();
          this.s.setFlag(FLAG_AIM, aim);
          if (this.charge > 0) {
             if (--this.charge == 0) {
-               this.burst = 2 + this.s.random.nextInt(3);
+               this.burst = this.s.burstSize();
                this.gap = 0;
             }
          } else if (this.burst > 0) {
@@ -611,14 +688,15 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
                   this.s.fireAt(t);
                }
                this.burst--;
-               this.gap = 4;
+               this.gap = this.s.burstGap();
                if (this.burst == 0) {
-                  this.cooldown = 26 + this.s.random.nextInt(34);
+                  this.cooldown = this.s.burstCooldown();
                   this.s.setFlag(FLAG_CHARGE, false);
+                  this.s.onBurstEnd();
                }
             }
          } else if (aim && --this.cooldown <= 0) {
-            this.charge = 12;
+            this.charge = this.s.chargeTicks();
             this.s.setFlag(FLAG_CHARGE, true);
             ChitauriSounds.play((ServerLevel)this.s.level(), this.s.position(), ChitauriSounds.RIFLE_CHARGE, 0.7F, 0.95F + this.s.random.nextFloat() * 0.1F);
          }
@@ -641,8 +719,14 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
             return false;
          }
          Vec3 anchor = ChitauriInvasion.anchor(this.s.level());
+         dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder o = this.s.order;
+         if (o != null) {
+            // under a war order the soldier walks the streets around its own point (patrol, hold, seize)
+            anchor = new Vec3(o.x(), o.y(), o.z());
+         }
+         double leash = o == null ? 60.0 : o.holds() ? 10.0 : 18.0;
          Vec3 pos;
-         if (anchor != null && anchor.distanceToSqr(this.s.position()) > 60.0 * 60.0) {
+         if (anchor != null && anchor.distanceToSqr(this.s.position()) > leash * leash) {
             pos = net.minecraft.world.entity.ai.util.DefaultRandomPos.getPosTowards(this.s, 20, 6, anchor, Math.PI / 2.0);
          } else {
             pos = DefaultRandomPos.getPos(this.s, 18, 6);
@@ -659,6 +743,107 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       @Override
       public void start() {
          this.s.getNavigation().moveTo(this.goal.x, this.goal.y, this.goal.z, 0.85);
+      }
+   }
+
+   /** True when this soldier holds a position and {@code t} is far outside it (it fires from there instead). */
+   boolean leashedAwayFrom(LivingEntity t) {
+      dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder o = this.order;
+      if (o == null || !o.holds()) {
+         return false;
+      }
+      double dx = t.getX() - o.x();
+      double dz = t.getZ() - o.z();
+      return dx * dx + dz * dz > 40.0 * 40.0;
+   }
+
+   /**
+    * War order movement: go to the order point (seize, reinforce, scout, retreat, patrol start). A retreating squad keeps
+    * running even with a target in sight; the others only move while nothing is in their sights (the combat goal has
+    * the higher priority).
+    */
+   static final class OrderGoal extends Goal {
+      private final ChitauriSoldier s;
+      private int repath;
+
+      OrderGoal(ChitauriSoldier s) {
+         this.s = s;
+         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
+      }
+
+      private double radius(dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder o) {
+         return switch (o.type()) {
+            case DEFEND, SEIZE -> 6.0;
+            case PATROL -> 14.0;
+            case RETREAT -> 5.0;
+            default -> 8.0;
+         };
+      }
+
+      private boolean far() {
+         dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder o = this.s.order;
+         if (o == null) {
+            return false;
+         }
+         double dx = this.s.getX() - o.x();
+         double dz = this.s.getZ() - o.z();
+         double r = this.radius(o);
+         return dx * dx + dz * dz > r * r;
+      }
+
+      @Override
+      public boolean canUse() {
+         dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder o = this.s.order;
+         if (o == null || this.s.isPassenger() || this.s.severed() || o.type() == dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder.Type.ENCIRCLE) {
+            return false;
+         }
+         if (this.s.getTarget() != null && !o.breaksContact()) {
+            return false;
+         }
+         return this.far() && ChitauriTerrain.loaded(this.s.level(), o.x(), o.z());
+      }
+
+      @Override
+      public boolean canContinueToUse() {
+         return this.canUse();
+      }
+
+      @Override
+      public void start() {
+         this.repath = 0;
+      }
+
+      @Override
+      public void stop() {
+         this.s.getNavigation().stop();
+      }
+
+      @Override
+      public void tick() {
+         dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarOrder o = this.s.order;
+         if (o == null || --this.repath > 0 && !this.s.getNavigation().isDone()) {
+            return;
+         }
+         this.repath = 40;
+         double speed = switch (o.type()) {
+            case RETREAT -> 1.25;
+            case REINFORCE -> 1.2;
+            case SCOUT -> 0.95;
+            default -> 1.05;
+         };
+         Vec3 me = this.s.position();
+         Vec3 goal = new Vec3(o.x(), o.y(), o.z());
+         double dist = me.distanceTo(goal);
+         if (dist > 24.0) {
+            // long trips go in legs (paths are capped by the follow range)
+            Vec3 step = me.add(goal.subtract(me).normalize().scale(20.0));
+            Vec3 p = DefaultRandomPos.getPosTowards(this.s, 20, 6, step, Math.PI / 3.0);
+            if (p != null) {
+               this.s.getNavigation().moveTo(p.x, p.y, p.z, speed);
+               return;
+            }
+         }
+         this.s.getNavigation().moveTo(goal.x, goal.y, goal.z, speed);
       }
    }
 }
