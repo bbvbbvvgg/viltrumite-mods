@@ -40,6 +40,7 @@ final class UltronLearning {
       for (UltronAdaptation.Change c : s.adaptation.second(s.phase.atLeast(UltronPhase.ADAPTATION))) {
          applyChange(level, s, c);
       }
+      UltronVoice.second(level, s);
       s.intel.second(s.clock);
       s.recentLosses *= 0.9F;
       s.styleTurn = s.phaseTick / STYLE_TURN;
@@ -85,7 +86,7 @@ final class UltronLearning {
             }
          }
          if (c.reason() == UltronAdaptation.Reason.ACTIVATED) {
-            UltronVoice.say(level, s, "protocol_" + p.key(), true);
+            UltronVoice.sayNext(level, s, "protocol_" + p.key());
          }
          UltronUprising.cue(level, s, UltronSounds.PROTOCOL, 1.0F, c.reason() == UltronAdaptation.Reason.RENEWED ? 1.15F : 1.0F);
          UltronUprising.fx(level, UltronFxS2CPacket.GLITCH, s.anchor.add(0.0, 2.0, 0.0), Vec3.ZERO, (float)s.radius, 3 + p.ordinal(), true);

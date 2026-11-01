@@ -105,7 +105,7 @@ final class UltronHud {
          bossId = prime.getId();
          bossHealth = Mth.clamp(prime.getHealth() / prime.getMaxHealth(), 0.0F, 1.0F);
       }
-      float upload = s.scenario.uploadTicks() > 0 ? Mth.clamp(s.upload / s.scenario.uploadTicks(), 0.0F, 1.0F) : 0.0F;
+      float upload = s.uploadShare();
       return new UltronStateS2CPacket(true, s.phase.ordinal(), progress(s), s.scenario.variant().ordinal(), s.doctrine.ordinal(), s.outcome, s.anchor.x,
          s.anchor.z, (float)s.radius, secs, lvls, nodes, bossId, s.bossStage, bossHealth, upload, s.uploading, s.capture.ids(level), s.units.size(), 0.0F, -1);
    }
@@ -128,7 +128,7 @@ final class UltronHud {
             yield Mth.clamp((float)raised / target, 0.0F, 1.0F);
          }
          case MACHINE_WAR, ADAPTATION -> Mth.clamp(s.phaseTick / (UltronRules.maxTicks(s.phase) * s.scenario.timeScale()), 0.0F, 1.0F);
-         case FINALE -> s.scenario.uploadTicks() > 0 ? Mth.clamp(s.upload / s.scenario.uploadTicks(), 0.0F, 1.0F) : 0.0F;
+         case FINALE -> s.uploadShare();
          case ENDED -> 1.0F;
       };
    }
