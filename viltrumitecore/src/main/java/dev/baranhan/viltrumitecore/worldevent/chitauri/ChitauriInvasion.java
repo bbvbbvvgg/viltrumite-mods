@@ -858,6 +858,45 @@ public final class ChitauriInvasion {
       return chariot;
    }
 
+   /**
+    * THANOS 2.0 seam: a crewed chariot out of a portal that is not the invasion's (no session needed,
+    * the caller tracks it): the chariot's UUID first, then its riders'; empty when the point is not
+    * ticking or the entity could not be added.
+    */
+   public static List<UUID> spawnChariotAt(ServerLevel level, Vec3 at, Vec3 dir, byte kind, @Nullable Vec3 dropAt) {
+      List<UUID> out = new ArrayList<>();
+      if (!ChitauriTerrain.ticking(level, at.x, at.y, at.z)) {
+         return out;
+      }
+      ChitauriChariot chariot = ChitauriEntities.CHARIOT.get().create(level);
+      if (chariot == null) {
+         return out;
+      }
+      chariot.setKind(kind);
+      chariot.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+      chariot.launch(dir);
+      if (dropAt != null) {
+         chariot.setOrderPoint(dropAt);
+      }
+      if (!level.addFreshEntity(chariot)) {
+         return out;
+      }
+      out.add(chariot.getUUID());
+      int riders = kind == ChitauriChariot.KIND_CARRIER ? 3 : 2;
+      for (int seat = 0; seat < riders; seat++) {
+         byte role = seat == 0 ? ChitauriSoldier.ROLE_PILOT : kind == ChitauriChariot.KIND_GUNSHIP ? ChitauriSoldier.ROLE_GUNNER : ChitauriSoldier.ROLE_TROOPER;
+         ChitauriSoldier soldier = spawnSoldier(level, at, role, -1);
+         if (soldier == null) {
+            continue;
+         }
+         soldier.squadIndex = seat - 1;
+         soldier.setSeat(seat);
+         soldier.startRiding(chariot, true);
+         out.add(soldier.getUUID());
+      }
+      return out;
+   }
+
    private static boolean spawnChariot(ServerLevel level, Session s, byte kind, @Nullable Vec3 dropAt) {
       int riders = kind == ChitauriChariot.KIND_CARRIER ? 3 : 2;
       if (s.chariots.size() >= ChitauriRules.MAX_CHARIOTS || s.soldiers.size() + riders > ChitauriRules.MAX_SOLDIERS) {
