@@ -7,5 +7,18 @@
   "commands.viltrumitecore.meteor.stopped_all": "Stopped %s meteor rains",
   "commands.viltrumitecore.meteor.none": "No meteor rain is running",
   "commands.viltrumitecore.meteor.entry": "%s: rain in %s for %ss, %s meteors launched, %s in the air",
-  "commands.viltrumitecore.meteor.entry.paused": "%s: rain in %s paused (player is elsewhere), %s meteors launched, %s in the air"
+  "commands.viltrumitecore.meteor.entry.paused": "%s: rain in %s paused (player is elsewhere), %s meteors launched, %s in the air",
+  "block.viltrumitecore.meteor_fire": "Meteor Fire",
+  "subtitles.viltrumitecore.meteor_rain.approach": "Meteor rumbles high above",
+  "subtitles.viltrumitecore.meteor_rain.roar": "Meteor roars",
+  "subtitles.viltrumitecore.meteor_rain.whoosh": "Meteor rushes past",
+  "subtitles.viltrumitecore.meteor_rain.impact_near": "Meteor impact",
+  "subtitles.viltrumitecore.meteor_rain.impact_far": "Distant meteor impact",
+  "subtitles.viltrumitecore.meteor_rain.shockwave": "Shockwave",
+  "subtitles.viltrumitecore.meteor_rain.debris": "Debris falls",
+  "subtitles.viltrumitecore.meteor_rain.rubble": "Rubble settles",
+  "subtitles.viltrumitecore.meteor_rain.fire_crackle": "Fire crackles",
+  "subtitles.viltrumitecore.meteor_rain.fire_roar": "Fire roars",
+  "subtitles.viltrumitecore.meteor_rain.fire_flare": "Fire flares up",
+  "subtitles.viltrumitecore.meteor_rain.brand": "Burning brand flies"
 }

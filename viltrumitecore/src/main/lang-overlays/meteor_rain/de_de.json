@@ -7,5 +7,18 @@
   "commands.viltrumitecore.meteor.stopped_all": "%s Meteoritenregen gestoppt",
   "commands.viltrumitecore.meteor.none": "Kein Meteoritenregen aktiv",
   "commands.viltrumitecore.meteor.entry": "%s: Regen in %s seit %ss, %s Meteoriten gestartet, %s in der Luft",
-  "commands.viltrumitecore.meteor.entry.paused": "%s: Regen in %s pausiert (Spieler woanders), %s gestartet, %s in der Luft"
+  "commands.viltrumitecore.meteor.entry.paused": "%s: Regen in %s pausiert (Spieler woanders), %s gestartet, %s in der Luft",
+  "block.viltrumitecore.meteor_fire": "Meteoritenfeuer",
+  "subtitles.viltrumitecore.meteor_rain.approach": "Meteorit grollt hoch oben",
+  "subtitles.viltrumitecore.meteor_rain.roar": "Meteorit dröhnt",
+  "subtitles.viltrumitecore.meteor_rain.whoosh": "Meteorit rauscht vorbei",
+  "subtitles.viltrumitecore.meteor_rain.impact_near": "Meteoriteneinschlag",
+  "subtitles.viltrumitecore.meteor_rain.impact_far": "Ferner Meteoriteneinschlag",
+  "subtitles.viltrumitecore.meteor_rain.shockwave": "Druckwelle",
+  "subtitles.viltrumitecore.meteor_rain.debris": "Trümmer fallen",
+  "subtitles.viltrumitecore.meteor_rain.rubble": "Schutt setzt sich",
+  "subtitles.viltrumitecore.meteor_rain.fire_crackle": "Feuer knistert",
+  "subtitles.viltrumitecore.meteor_rain.fire_roar": "Feuer tost",
+  "subtitles.viltrumitecore.meteor_rain.fire_flare": "Feuer lodert auf",
+  "subtitles.viltrumitecore.meteor_rain.brand": "Brennende Glut fliegt"
 }
