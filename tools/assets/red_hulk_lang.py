@@ -1,6 +1,6 @@
 """Red Hulk localization overlay: writes viltrumitecore/src/main/lang-overlays/red_hulk/<locale>.json for all 12 locales
 (ru_ru is the source; the es_* locales share one Spanish text). Keys: hero / race button / speaker, the four subtitle
-lines (text only, never voiced), the six abilities, the HUD heat tiers, the 28 sound subtitles and the codex entry.
+lines (text only, never voiced), the six abilities, the HUD heat tiers and the 28 sound subtitles (the codex article is in tools/codex/codex_text_heroes.py).
 Run: python3 tools/assets/red_hulk_lang.py"""
 import json
 import os
@@ -281,8 +281,7 @@ def build(t):
     out['hud.viltrumitecore.red_hulk.overheat'] = t['hud']['overheat']
     for s in SOUNDS:
         out[f'subtitles.viltrumitecore.red_hulk.{s}'] = t['sounds'][s]
-    for k, v in t['codex'].items():
-        out[f'codex.viltrumitecore.red_hulk.{k}'] = v
+    # the codex article lives in lang-overlays/codex (tools/codex/codex_text_heroes.py, CodexClientMathTest)
     return out
 
 
