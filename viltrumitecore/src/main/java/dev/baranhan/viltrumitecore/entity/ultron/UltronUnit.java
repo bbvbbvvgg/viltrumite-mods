@@ -609,6 +609,9 @@ public abstract class UltronUnit extends Monster implements UltronMob {
       if (!UltronUprising.hostile(this.level()) && target != this.getLastHurtByMob()) {
          return false;
       }
+      if (UltronUprising.beyondLeash(this.level(), target.getX(), target.getZ())) {
+         return false; // past the event's leash ring nobody is chased (the director then calls the machine home)
+      }
       return this.distanceToSqr(target) < this.senseRange() * this.senseRange() * 2.25 && this.lostSight < 120;
    }
 
@@ -617,7 +620,8 @@ public abstract class UltronUnit extends Monster implements UltronMob {
    protected LivingEntity findTarget() {
       if (!UltronUprising.hostile(this.level())) {
          LivingEntity attacker = this.getLastHurtByMob();
-         return attacker != null && UltronMob.validTarget(attacker) && this.distanceToSqr(attacker) < 32.0 * 32.0 ? attacker : null;
+         return attacker != null && UltronMob.validTarget(attacker) && this.distanceToSqr(attacker) < 32.0 * 32.0
+            && !UltronUprising.beyondLeash(this.level(), attacker.getX(), attacker.getZ()) ? attacker : null;
       }
       double r = this.senseRange();
       List<LivingEntity> list = this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(r, r * 0.6, r), UltronMob::validTarget);
@@ -625,7 +629,7 @@ public abstract class UltronUnit extends Monster implements UltronMob {
       double bestScore = Double.MAX_VALUE;
       for (LivingEntity e : list) {
          double d = this.distanceToSqr(e);
-         if (d > r * r) {
+         if (d > r * r || UltronUprising.beyondLeash(this.level(), e.getX(), e.getZ())) {
             continue;
          }
          boolean close = d < 36.0;

@@ -15,6 +15,9 @@ Plan: `docs/plans/2026-11-01-ultron-uprising.md`. Sources / cue sheet: `tools/as
 - Every renderer string literal must be a bone or a clip of its model (`UltronAssetsTest.renderersFindTheirClipsAndBones`).
 - Loop files are periodic with no attack or tail: only `UltronLoops` may play the five loops; one-shot accents use bursts (`prime_dash`, `interceptor_boost`).
 - No voice: a line is `HeroSpeech.worldLine` (subtitle, world voice "ultron") plus the `transmission` blip; every `UltronVoice` line must have a trigger (literal id or a composed prefix such as `"protocol_" + key`).
+- Line flow: phase / boss beats `say(..., force)`; protocol news `sayNext` (queued while he reads, ≤ `QUEUE_MAX` 3, stale after 20 s, a news line cut within 2 s by a forced beat is re-queued at the head); taunts rotate through `UltronVoice.TAUNTS` (6, longest-unsaid first, 300 s cooldown each, tried every `TAUNT_EVERY_S` 40 s while machines fight).
+- Machines never chase or pick targets beyond the leash ring (`UltronUprising.beyondLeash`: area radius × `UltronDirector.LEASH` around the anchor).
+- `UltronSession.upload` counts ticks: show `uploadShare()` (0..1), never `upload * 100`. Node states in `/ultron` output go through `viltrumitecore.ultron.node_state.<state>`.
 - Captures are never saved: `onServerStopping` releases golems / suits before the final save, a suit's hits go into the `LegionOverride` shell so the roster durability is untouched.
 - Translation keys: `viltrumitecore.ultron.*`, `commands.viltrumitecore.ultron.*`, `subtitles.viltrumitecore.ultron.<event>` (sounds), `subtitle.viltrumitecore.ultron.<line>[.<page>]` (lines). Only `%s`, `%n$s`, `%%` format; the status lines use positional args.
 
