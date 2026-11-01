@@ -317,6 +317,11 @@ public final class LegionSuitBrain {
          return;
       }
 
+      if (this.suit.override() != null) {
+         // a cleanup (death, hero change, dimension) takes the suit back from whoever controls it
+         this.suit.setOverride(null);
+      }
+
       this.stopChannel();
       this.camo(false);
       this.suit.setAim(-1);
