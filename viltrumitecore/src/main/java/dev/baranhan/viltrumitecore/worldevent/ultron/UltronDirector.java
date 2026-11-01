@@ -350,7 +350,7 @@ final class UltronDirector {
             continue;
          }
          Entity.RemovalReason reason = u.getRemovalReason();
-         if (reason != null && !reason.shouldDestroy() && s.outcome == 0 && u.isAlive()) {
+         if (reason != null && UltronRules.backToReserve(reason.shouldDestroy(), s.outcome, u.getHealth())) {
             s.reserve[u.kind().ordinal()]++;
          }
          it.remove();
