@@ -188,7 +188,8 @@ class HeroRosterIntegrationTest {
       // table unchanged), Meteor Rain 2.0 (MeteorRainFxS2CPacket appended last), Chitauri evolution (FX kinds
       // 14..23 for captors, pylons, siege, interceptors; new entity types) and the Ultron uprising (UltronFxS2CPacket
       // and UltronStateS2CPacket appended after THE FINAL PUNCH packets): refused;
-      assertTrue(source.contains("PROTOCOL_VERSION = \"23\""), "the merged packet table needs its own protocol version");
+      // 24 = the final integration of #113/#114/#115 and the Ultron uprising with all four.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"24\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
