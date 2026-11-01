@@ -43,28 +43,28 @@ def save(rel, rgba):
 
 
 def smoke(i):
-    n = 32
+    # 64 px with smooth alpha: smoke puffs are drawn up to ~15 blocks wide, where stepped pixel-art alpha
+    # turned a smoke column into a mosaic of hard-edged squares (seen in the runtime QA screenshots)
+    n = 64
     rng = np.random.default_rng(1000 + i)
     y, x = np.mgrid[0:n, 0:n] + 0.5
     dens = np.zeros((n, n))
     lobes = 4 + rng.integers(0, 4)
     for _ in range(lobes):
-        cx, cy = n / 2 + rng.normal(0, n * 0.12, 2)
-        r = n * (0.17 + rng.random() * 0.14)
+        cx, cy = n / 2 + rng.normal(0, n * 0.11, 2)
+        r = n * (0.16 + rng.random() * 0.13)
         d = np.hypot(x - cx, y - cy) / r
-        dens = np.maximum(dens, 1 - d)
-    noise = fbm(n, rng)
-    dens = dens + (noise - 0.5) * 0.55
+        dens = np.maximum(dens, np.clip(1 - d, 0, 1) ** 0.8)
+    noise = fbm(n, rng, octaves=5)
+    dens = dens + (noise - 0.5) * 0.45
     edge = np.hypot(x - n / 2, y - n / 2) / (n / 2)
-    dens *= smoothstep(1.0, 0.72, edge)
-    alpha = smoothstep(0.02, 0.55, dens)
-    alpha = np.round(alpha * 7) / 7
-    alpha[alpha < 0.2] = 0.0  # no stray specks around the puff  # stepped like the rest of the mod's pixel art
+    dens *= smoothstep(1.0, 0.6, edge)
+    alpha = smoothstep(0.0, 0.6, dens)
+    alpha[alpha < 0.02] = 0.0
     # light from the upper left: the lit side of a billow, a darker underside
     shade = 0.72 + 0.28 * np.clip(1.0 - ((x - n * 0.38) ** 2 + (y - n * 0.34) ** 2) / (n * 0.62) ** 2, 0, 1)
-    shade = shade * (0.9 + 0.2 * noise)
-    shade = np.round(np.clip(shade, 0, 1) * 10) / 10
-    rgba = np.dstack([shade, shade, shade, alpha * 0.92])
+    shade = np.clip(shade * (0.9 + 0.2 * noise), 0, 1)
+    rgba = np.dstack([shade, shade, shade, alpha * 0.9])
     return save('particle/meteor_smoke_%d' % i, rgba)
 
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
         out = sys.argv[sys.argv.index('--preview') + 1]
         sheet = Image.new('RGBA', (32 * 9 * 4, 32 * 4 + 64 * 4), (40, 40, 60, 255))
         for k, im in enumerate(imgs):
-            big = im.resize((128, 128), Image.NEAREST)
+            big = im.resize((128, 128), Image.BILINEAR if im.size[0] > 32 else Image.NEAREST)
             sheet.alpha_composite(big, ((k % 9) * 128, 0 if k < 9 else 128))
         sheet.alpha_composite(g.resize((256, 256), Image.NEAREST), (0, 256))
         sheet.alpha_composite(t.resize((512, 256), Image.NEAREST), (300, 256))

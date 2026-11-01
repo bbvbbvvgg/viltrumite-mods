@@ -21,11 +21,12 @@ import net.minecraft.util.Mth;
  */
 public class MeteorSmokeParticle extends TextureSheetParticle {
    public enum Style {
+      // alphas are for the smooth 64 px puffs; QA showed fire columns of 0.7-alpha black puffs hiding a whole burning block
       //          size  sizeVar growth  life lifeVar hotR  hotG  hotB  hotTicks cool  coolVar alpha fadeIn drag   buoy    turb    roll
-      TRAIL(      1.3F, 1.0F,   3.6F,   80,  50,     1.0F, 0.55F, 0.22F, 9,     0.14F, 0.07F,  0.78F, 3,     0.94F, 0.004F, 0.012F, 0.04F),
-      BILLOW(     3.0F, 3.0F,   2.6F,   100, 80,     1.0F, 0.60F, 0.30F, 12,    0.17F, 0.08F,  0.86F, 2,     0.90F, 0.006F, 0.010F, 0.02F),
-      DUST(       2.4F, 2.6F,   2.3F,   60,  60,     0.0F, 0.0F,  0.0F,  0,     0.40F, 0.08F,  0.72F, 2,     0.86F, 0.0015F, 0.008F, 0.02F),
-      FIRE(       1.8F, 2.2F,   3.0F,   110, 80,     0.95F, 0.48F, 0.22F, 7,    0.11F, 0.06F,  0.70F, 4,     0.96F, 0.011F, 0.010F, 0.03F);
+      TRAIL(      1.3F, 1.0F,   3.6F,   80,  50,     1.0F, 0.55F, 0.22F, 9,     0.20F, 0.08F,  0.62F, 3,     0.94F, 0.004F, 0.012F, 0.04F),
+      BILLOW(     3.0F, 3.0F,   2.6F,   100, 80,     1.0F, 0.60F, 0.30F, 12,    0.22F, 0.09F,  0.72F, 2,     0.90F, 0.006F, 0.010F, 0.02F),
+      DUST(       2.4F, 2.6F,   2.3F,   60,  60,     0.0F, 0.0F,  0.0F,  0,     0.40F, 0.08F,  0.58F, 2,     0.86F, 0.0015F, 0.008F, 0.02F),
+      FIRE(       1.8F, 2.2F,   3.0F,   110, 80,     0.95F, 0.48F, 0.22F, 7,    0.17F, 0.08F,  0.46F, 4,     0.96F, 0.011F, 0.010F, 0.03F);
 
       final float size, sizeVar, growth;
       final int life, lifeVar;
