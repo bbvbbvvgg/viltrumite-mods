@@ -17,10 +17,14 @@ public final class GodzillaDamage {
    }
 
    public static DamageSource crush(ServerLevel level, GodzillaEntity by) {
-      return level.damageSources().source(CRUSH, by);
+      return of(level, CRUSH, by);
    }
 
    public static DamageSource breath(ServerLevel level, GodzillaEntity by) {
-      return level.damageSources().source(BREATH, by);
+      return of(level, BREATH, by);
+   }
+
+   private static DamageSource of(ServerLevel level, ResourceKey<DamageType> type, GodzillaEntity by) {
+      return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(type), by);
    }
 }

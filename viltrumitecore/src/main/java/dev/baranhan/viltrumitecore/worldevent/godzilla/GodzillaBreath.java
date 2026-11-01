@@ -131,7 +131,7 @@ final class GodzillaBreath {
          this.burnCapsule(level, s, e, from, hit.end, radius, dmg);
          if (hit.block) {
             GodzillaActions.hurtSphere(level, s, e, hit.end, GodzillaRules.IMPACT_RADIUS, GodzillaRules.IMPACT_DAMAGE * ENTITY_EVERY, 0.6, true,
-               GodzillaDamage.breath(level, e));
+               GodzillaDamage.breath(level, e), null);
          }
          if (t % (ENTITY_EVERY * 4) == 0) {
             GodzillaNet.fx(level, GodzillaFxS2CPacket.BEAM_BLAST, hit.end, dir, rage ? 1.3F : 1.0F, 0);

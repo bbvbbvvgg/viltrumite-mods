@@ -96,6 +96,14 @@ public final class GodzillaSession {
    int endTicks = -1;
    boolean closed;
    int retreatSink;
+   // per move
+   final Set<Integer> hitThisMove = new HashSet<>();
+   boolean clawFx;
+   boolean tailFx;
+   int steps;
+   int sweepCursor;
+   @Nullable
+   String endKey;
 
    GodzillaSession(MinecraftServer server, ResourceKey<Level> dimension, UUID bodyId, Vec3 anchor, Vec3 home, long seed) {
       this.server = server;
@@ -177,7 +185,119 @@ public final class GodzillaSession {
          this.cdClaw = Math.max(this.cdClaw, 30);
       }
       this.moves++;
+      this.hitThisMove.clear();
+      this.clawFx = false;
+      this.tailFx = false;
       e.startMove(move, arg);
+   }
+
+   // ------------------------------------------------------------------ tick
+
+   /**
+    * One tick of the event, from the body's own tick (so it pauses with the body). False: the event is over and the
+    * body goes.
+    */
+   boolean tick(ServerLevel level, GodzillaEntity e) {
+      this.body = e;
+      this.lastBodyTick = level.getGameTime();
+      this.clock++;
+      this.phaseTick++;
+      this.cool();
+      this.destruction.tick(level, this.rage());
+      if (this.clock % 10 == 0) {
+         this.updateThreats(level, e);
+         this.updateBar(level, e);
+      }
+      this.alarm(level, e, false);
+      if (this.clock % 20 == 0 && this.phase != GodzillaPhase.DEATH) {
+         CityManager city = CityManager.of(level);
+         if (city != null) {
+            city.danger(e.getX(), e.getY(), e.getZ(), GodzillaRules.HEIGHT * 0.9F, 80);
+         }
+      }
+      this.transitions(level, e);
+      if (this.closed) {
+         return false;
+      }
+      // the end of the event: the corpse goes, or the retreat sinks away
+      if (this.phase == GodzillaPhase.DEATH) {
+         if (e.move() != GodzillaMove.DEATH) {
+            this.start(e, GodzillaMove.DEATH, 0);
+         }
+         if (e.moveTick() > GodzillaMove.DEATH.length + GodzillaRules.CORPSE_TICKS) {
+            GodzillaNet.always(level, GodzillaFxS2CPacket.DEATH, e.position(), Vec3.ZERO, -1.0F, 1, GodzillaRules.FX_FAR);
+            GodzillaEvent.finish(level, this, "viltrumitecore.godzilla.end.victory");
+            return false;
+         }
+      } else if (this.phase == GodzillaPhase.RETREAT) {
+         if (this.phaseTick > GodzillaRules.RETREAT_TICKS || GodzillaBrain.nearestPlayer(level, e, GodzillaRules.LOSE_RANGE) == null) {
+            e.sinking = true;
+            this.retreatSink++;
+            if (this.retreatSink > 360 || GodzillaBrain.nearestPlayer(level, e, GodzillaRules.FX_FAR) == null) {
+               GodzillaNet.always(level, GodzillaFxS2CPacket.RETREAT, e.position(), Vec3.ZERO, -1.0F, 1, GodzillaRules.FX_FAR);
+               GodzillaEvent.finish(level, this, "viltrumitecore.godzilla.end.retreat");
+               return false;
+            }
+         }
+      }
+      GodzillaMove move = e.move();
+      if (move != GodzillaMove.NONE) {
+         int t = e.moveTick();
+         GodzillaActions.contact(level, this, e, move, t);
+         if (GodzillaActions.finished(e, move, t)) {
+            GodzillaActions.next(level, this, e, move);
+         }
+      }
+      if (e.move() == GodzillaMove.NONE && e.isAlive()) {
+         GodzillaBrain.decide(level, this, e);
+      }
+      boolean walking = e.flag(GodzillaEntity.FLAG_WALKING);
+      GodzillaActions.sweep(level, this, e, walking && e.walkAmount() > 0.3F, !walking && e.turning());
+      return true;
+   }
+
+   private void transitions(ServerLevel level, GodzillaEntity e) {
+      if (this.phase == GodzillaPhase.DEATH || !e.isAlive() && this.phase != GodzillaPhase.DEATH) {
+         if (!e.isAlive()) {
+            this.phase(level, e, GodzillaPhase.DEATH);
+         }
+         return;
+      }
+      if (this.phase == GodzillaPhase.RETREAT) {
+         return;
+      }
+      if (this.clock >= GodzillaRules.EVENT_TICKS && !e.move().breath() && !e.move().grounded()) {
+         this.phase(level, e, GodzillaPhase.RETREAT);
+         return;
+      }
+      float health = this.healthShare();
+      if (health < GodzillaRules.FINALE_HEALTH && this.phase != GodzillaPhase.FINALE) {
+         this.phase(level, e, GodzillaPhase.FINALE);
+         return;
+      }
+      if ((health < GodzillaRules.RAGE_HEALTH || this.burst >= GodzillaRules.RAGE_BURST) && !this.phase.enraged()) {
+         this.phase(level, e, GodzillaPhase.RAGE);
+         return;
+      }
+      switch (this.phase) {
+         case ARRIVAL -> {
+            if (this.phaseTick >= GodzillaRules.ARRIVAL_TICKS) {
+               this.phase(level, e, GodzillaPhase.EXPLORE);
+            }
+         }
+         case EXPLORE -> {
+            if (this.target != null && this.targetThreat() >= 6.0F && !this.passive) {
+               this.phase(level, e, GodzillaPhase.COMBAT);
+            }
+         }
+         case COMBAT -> {
+            if (this.target == null && this.phaseTick > GodzillaRules.COMBAT_MEMORY) {
+               this.phase(level, e, GodzillaPhase.EXPLORE);
+            }
+         }
+         default -> {
+         }
+      }
    }
 
    // ------------------------------------------------------------------ threat
