@@ -683,6 +683,8 @@ public class EbonyMawEntity extends BlackOrderEntity {
    @Override
    public void die(DamageSource source) {
       super.die(source);
+      // the levitation fails with him: the death clip falls with the body
+      this.setNoGravity(false);
       if (!this.level().isClientSide()) {
          this.endMove();
          ThanosWarSounds.play((ServerLevel)this.level(), this.position(), ThanosWarSounds.MAW_DEATH, 1.8F, 1.0F, 64.0);
