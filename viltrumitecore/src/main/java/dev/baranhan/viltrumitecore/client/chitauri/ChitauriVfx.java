@@ -85,6 +85,16 @@ public final class ChitauriVfx {
       .shake(0, 0.5F, 64.0F));
    static final FxRecipe LANDING = recipe("landing", 3008, b -> b.dust(0, 1.3F, 10).shake(0, 0.06F, 10.0F));
    static final FxRecipe HIT = recipe("hit", 3009, b -> b.flash(0, 4, 1.6F).sparks(0, 10, 16, 0.6F).lightPool(0, 6, 3.0F, 0.6F));
+   // city war units
+   static final FxRecipe SLAM_FX = recipe("slam", 3010, b -> b.dust(0, 3.2F, 26).debris(0, 16, 4.0F, 1.0F).shockwave(0, 14, 6.0F, 0.0F)
+      .shake(0, 0.5F, 40.0F).scorch(0, 400, 2.4F, 10));
+   static final FxRecipe SIEGE_BLAST = recipe("siege_blast", 3011, b -> b.flash(0, 7, 4.5F).sparks(0, 16, 32, 1.0F).lightPool(0, 18, 8.0F, 1.3F)
+      .shockwave(0, 18, 7.0F, 1.0F).dust(0, 4.5F, 40).debris(0, 26, 6.0F, 1.2F).shake(0, 0.8F, 70.0F).screenFlash(0, 6, 0.22F, 30.0F)
+      .scorch(0, 700, 3.0F, 12));
+   static final FxRecipe BEACON_BLAST = recipe("beacon_blast", 3012, b -> b.flash(0, 6, 3.0F).sparks(0, 14, 28, 0.8F).lightPool(0, 16, 6.0F, 1.0F)
+      .debris(0, 18, 4.0F, 0.9F).shake(0, 0.35F, 48.0F));
+   static final FxRecipe ARMOR_FX = recipe("armor_break", 3013, b -> b.flash(0, 4, 1.8F).sparks(0, 12, 22, 0.7F).debris(0, 10, 2.0F, 0.6F)
+      .shake(0, 0.12F, 18.0F));
 
    private ChitauriVfx() {
    }
@@ -118,6 +128,16 @@ public final class ChitauriVfx {
          case ChitauriFxS2CPacket.MUZZLE -> muzzleFlash(at, d, Math.max(0.5F, p.power()));
          case ChitauriFxS2CPacket.SEGMENT_LAND -> segmentLand(level, at, p.power(), seed);
          case ChitauriFxS2CPacket.VANISH -> vanish(level, at, Math.max(1.0F, p.power()));
+         case ChitauriFxS2CPacket.TETHER -> tether(level, at, d, p.power(), seed);
+         case ChitauriFxS2CPacket.SLAM -> slam(level, at, d, seed);
+         case ChitauriFxS2CPacket.SIEGE_CHARGE -> siegeCharge(at, d, p.power());
+         case ChitauriFxS2CPacket.SIEGE_IMPACT -> siegeImpact(level, at, d, seed);
+         case ChitauriFxS2CPacket.BEACON_DEPLOY -> beaconDeploy(level, at, p.power(), seed);
+         case ChitauriFxS2CPacket.BEACON_DOWN -> beaconDown(level, at, p.power(), seed);
+         case ChitauriFxS2CPacket.SIGNAL -> signal(at, seed);
+         case ChitauriFxS2CPacket.RELEASE -> release(level, at, seed);
+         case ChitauriFxS2CPacket.ARMOR_BREAK -> armorBreak(level, at, d, seed);
+         case ChitauriFxS2CPacket.THRUST -> thrust(at, d, p.power());
          default -> {
          }
       }
@@ -136,10 +156,19 @@ public final class ChitauriVfx {
 
    /** A ring growing in the plane of {@code normal} (sever pulse, implosion). */
    public static void pulse(Vec3 centre, double[] normal, float from, float to, int life, float strength) {
+      pulse(centre, normal, from, to, life, strength, 140, 200, 255);
+   }
+
+   /** A ring in the plane of {@code normal} with its own colour (unit effects). */
+   public static void pulse(Vec3 centre, double[] normal, float from, float to, int life, float strength, int r, int g, int b) {
       if (PULSES.size() >= MAX_PULSES) {
          PULSES.remove(0);
       }
-      PULSES.add(new Pulse(centre, normal, from, to, life, strength));
+      Pulse p = new Pulse(centre, normal, from, to, life, strength);
+      p.cr = r;
+      p.cg = g;
+      p.cb = b;
+      PULSES.add(p);
    }
 
    // ------------------------------------------------------------------ kinds
@@ -310,6 +339,147 @@ public final class ChitauriVfx {
    private static void vanish(ClientLevel level, Vec3 at, float radius) {
       particles(level, ParticleTypes.SOUL_FIRE_FLAME, at, (int)(8 * radius), radius, 0.05, true);
       particles(level, ParticleTypes.END_ROD, at, (int)(4 * radius), radius, 0.04, true);
+   }
+
+   // ------------------------------------------------------------------ city war kinds
+
+   /** Captor snare: a beaded teal tether from the lance fork to the target, crackling, a flare on both ends. */
+   private static void tether(ClientLevel level, Vec3 from, Vec3 to, float power, long seed) {
+      Vec3 span = to.subtract(from);
+      double len = span.length();
+      if (len < 0.2 || len > 48.0) {
+         return;
+      }
+      int beads = Mth.clamp((int)(len * 3.0), 4, 90);
+      for (int i = 0; i <= beads; i++) {
+         double f = i / (double)beads;
+         double sag = Math.sin(f * Math.PI) * 0.18 * len / 8.0;
+         Vec3 p = from.add(span.scale(f)).add(0, -sag, 0);
+         glow(p, gauss(0.004), 0.16F, 0.05F, 8 + RANDOM.nextInt(4), Glow.TETHER, 0.9F * power, 0.0F, 0.0F);
+      }
+      ElectricVfx.arc(from, to, 0.05F, 6, 2, seed);
+      glow(from, Vec3.ZERO, 0.3F, 0.9F, 5, Glow.TETHER, 1.0F, 0.0F, 0.0F);
+      glow(to, Vec3.ZERO, 0.5F, 1.4F, 8, Glow.TETHER, 0.9F, 0.0F, 0.0F);
+      for (int i = 0; i < 6; i++) {
+         glow(to, gauss(0.09), 0.07F, 0.02F, 8 + RANDOM.nextInt(6), Glow.TETHER, 1.0F, 0.1F, 0.0F);
+      }
+      particles(level, ParticleTypes.ELECTRIC_SPARK, to, 4, 0.4, 0.1, false);
+   }
+
+   /** Heavy ground slam: a crater burst, a plasma shock ring along the street and flying debris. */
+   private static void slam(ClientLevel level, Vec3 at, Vec3 fwd, long seed) {
+      HeroImpactFx.play(SLAM_FX, at, at, 1.0F, null, seed);
+      pulse(at.add(0, 0.15, 0), new double[]{0, 1, 0}, 0.5F, 7.0F, 14, 0.9F, 255, 150, 70);
+      glow(at.add(0, 0.3, 0), Vec3.ZERO, 1.2F, 3.4F, 6, Glow.PLASMA, 1.0F, 0.0F, 0.0F);
+      for (int i = 0; i < 14; i++) {
+         double a = i / 14.0 * Math.PI * 2.0;
+         glow(at.add(0, 0.2, 0), new Vec3(Math.cos(a) * 0.32, 0.04, Math.sin(a) * 0.32), 0.3F, 0.08F, 9 + RANDOM.nextInt(5), Glow.PLASMA, 0.8F, 0.0F, 0.0F);
+      }
+      BlockPos below = BlockPos.containing(at.x, at.y - 0.5, at.z);
+      if (!level.getBlockState(below).isAir()) {
+         particles(level, new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(below)), at.add(0, 0.3, 0), 30, 2.4, 0.3, false);
+      }
+   }
+
+   /** Siege charge (sent every 4 ticks): energy drawn into the muzzle, the core swelling; a targeting line once locked. */
+   private static void siegeCharge(Vec3 muzzle, Vec3 aim, float fraction) {
+      float f = Mth.clamp(fraction, 0.0F, 1.0F);
+      for (int i = 0; i < 3 + (int)(6 * f); i++) {
+         Vec3 off = gauss(1.0).normalize().scale(1.6 + RANDOM.nextDouble() * 1.4);
+         glow(muzzle.add(off), off.scale(-0.22), 0.12F + 0.1F * f, 0.04F, 5, f > 0.7F ? Glow.ENERGY_HOT : Glow.ENERGY, 0.9F, 0.0F, 0.0F);
+      }
+      glow(muzzle, Vec3.ZERO, 0.4F + 1.2F * f, 0.6F + 1.6F * f, 5, Glow.ENERGY_HOT, 0.5F + 0.5F * f, 0.0F, 0.0F);
+      double len = aim.length();
+      if (f >= (ChitauriSiegeRenderer.LOCK_FRACTION) && len > 1.0 && len < 64.0) {
+         Vec3 n = aim.scale(1.0 / len);
+         for (double s = 1.0; s < len; s += 0.8) {
+            glow(muzzle.add(n.scale(s)), Vec3.ZERO, 0.08F, 0.05F, 5, Glow.ENERGY_HOT, 0.55F, 0.0F, 0.0F);
+         }
+         glow(muzzle.add(aim), Vec3.ZERO, 0.6F, 1.0F, 5, Glow.ENERGY_HOT, 0.8F, 0.0F, 0.0F);
+      }
+   }
+
+   /** Siege shell impact: a heavy blast, a ground ring, a column of smoke. */
+   private static void siegeImpact(ClientLevel level, Vec3 at, Vec3 d, long seed) {
+      HeroImpactFx.play(SIEGE_BLAST, at, at, 1.0F, null, seed);
+      fireball(level, at, d.scale(-0.04), 1.4F, true);
+      pulse(at.add(0, 0.2, 0), new double[]{0, 1, 0}, 1.0F, 12.0F, 18, 1.0F, 150, 205, 255);
+      ElectricVfx.crackle(at, 3.5F, 6, 10, seed);
+   }
+
+   /** A beacon lands and unfolds: a drop flash, a ground ring and a light column rising with the mast. */
+   private static void beaconDeploy(ClientLevel level, Vec3 at, float power, long seed) {
+      boolean containment = power > 1.2F;
+      int kind = containment ? Glow.TETHER : Glow.ENERGY;
+      HeroImpactFx.play(LANDING, at, at, 1.4F, null, seed);
+      pulse(at.add(0, 0.1, 0), new double[]{0, 1, 0}, 0.5F, containment ? 6.0F : 4.5F, 22, 0.9F,
+         containment ? 90 : 140, containment ? 240 : 200, containment ? 210 : 255);
+      for (int i = 0; i < 18; i++) {
+         glow(at.add(0, i * 0.18, 0), new Vec3(0, 0.12, 0).add(gauss(0.01)), 0.3F, 0.1F, 12 + i, kind, 0.7F, 0.0F, 0.0F);
+      }
+      ElectricVfx.lightPool(at, 4.0F, 1.0F, 30, seed);
+      particles(level, ParticleTypes.ELECTRIC_SPARK, at.add(0, 0.5, 0), 12, 1.0, 0.2, false);
+   }
+
+   /** A beacon is destroyed: energy burst, the rings scatter as sparks, a falling shower. */
+   private static void beaconDown(ClientLevel level, Vec3 at, float power, long seed) {
+      HeroImpactFx.play(BEACON_BLAST, at, at, Mth.clamp(power, 1.0F, 1.6F), null, seed);
+      int kind = power > 1.2F ? Glow.TETHER : Glow.ENERGY;
+      glow(at.add(0, 1.0, 0), Vec3.ZERO, 1.5F, 4.5F, 7, Glow.ENERGY_HOT, 1.0F, 0.0F, 0.0F);
+      for (int i = 0; i < 30; i++) {
+         glow(at.add(0, 0.6 + RANDOM.nextDouble() * 2.0, 0), gauss(0.2).add(0, 0.12, 0), 0.12F, 0.03F, 14 + RANDOM.nextInt(12), kind, 1.0F, 0.6F, 0.0F);
+      }
+      pulse(at, new double[]{0, 1, 0}, 0.5F, 8.0F, 16, 0.9F, 150, 205, 255);
+      ElectricVfx.crackle(at.add(0, 1.0, 0), 2.5F, 5, 12, seed);
+      particles(level, ParticleTypes.LARGE_SMOKE, at.add(0, 1.0, 0), 8, 1.0, 0.05, false);
+   }
+
+   /** Commander signal: a violet column into the sky and a wide ring that tells every squad nearby. */
+   private static void signal(Vec3 top, long seed) {
+      for (int i = 0; i < 40; i++) {
+         glow(top.add(0, i * 0.9, 0), new Vec3(0, 0.25, 0).add(gauss(0.01)), 0.5F - i * 0.006F, 0.15F, 16 + i / 2, Glow.VIOLET, 0.75F, 0.0F, 0.0F);
+      }
+      glow(top, Vec3.ZERO, 1.2F, 3.5F, 8, Glow.VIOLET, 1.0F, 0.0F, 0.0F);
+      pulse(top, new double[]{0, 1, 0}, 1.0F, 40.0F, 30, 0.8F, 180, 130, 255);
+      pulse(top.add(0, 12, 0), new double[]{0, 1, 0}, 0.5F, 18.0F, 24, 0.5F, 200, 160, 255);
+      ElectricVfx.skyFlash(top.add(0, 20, 0), 20.0F, 10, seed);
+   }
+
+   /** A captive breaks free: the restraint field bursts in teal sparks and a small ring. */
+   private static void release(ClientLevel level, Vec3 at, long seed) {
+      glow(at, Vec3.ZERO, 0.6F, 2.0F, 7, Glow.TETHER, 1.0F, 0.0F, 0.0F);
+      for (int i = 0; i < 18; i++) {
+         glow(at, gauss(0.12).add(0, 0.05, 0), 0.08F, 0.02F, 10 + RANDOM.nextInt(10), Glow.TETHER, 1.0F, 0.2F, 0.02F);
+      }
+      pulse(at, new double[]{0, 1, 0}, 0.3F, 2.6F, 12, 0.8F, 90, 240, 210);
+      particles(level, ParticleTypes.END_ROD, at, 8, 0.8, 0.06, false);
+   }
+
+   /** Heavy chest plate blown off: sparks, metal chunks and a plasma vent from the exposed core. */
+   private static void armorBreak(ClientLevel level, Vec3 at, Vec3 look, long seed) {
+      HeroImpactFx.play(ARMOR_FX, at, at, 1.0F, null, seed);
+      Vec3 n = look.lengthSqr() > 1.0E-6 ? look.normalize() : new Vec3(0, 0, 1);
+      for (int i = 0; i < 12; i++) {
+         glow(at, n.scale(0.15 + RANDOM.nextDouble() * 0.15).add(gauss(0.08)), 0.2F, 0.05F, 10 + RANDOM.nextInt(8), Glow.PLASMA, 1.0F, 0.3F, 0.0F);
+      }
+      glow(at, Vec3.ZERO, 0.6F, 1.6F, 6, Glow.PLASMA, 1.0F, 0.0F, 0.0F);
+      particles(level, ParticleTypes.CRIT, at, 12, 0.6, 0.3, false);
+      particles(level, ParticleTypes.SMOKE, at, 6, 0.4, 0.05, false);
+   }
+
+   /** Engine burst (boosting interceptor): a hot cone of exhaust behind the nozzle. */
+   static void thrust(Vec3 at, Vec3 back, float power) {
+      Vec3 n = back.lengthSqr() > 1.0E-6 ? back.normalize() : new Vec3(0, -1, 0);
+      float p = Mth.clamp(power, 0.2F, 2.0F);
+      glow(at, n.scale(0.05), 0.35F * p, 0.9F * p, 3, Glow.ENERGY_HOT, 0.8F, 0.0F, 0.0F);
+      for (int i = 0; i < 3; i++) {
+         glow(at, n.scale(0.25 + RANDOM.nextDouble() * 0.2).add(gauss(0.03)), 0.18F * p, 0.04F, 6 + RANDOM.nextInt(4), Glow.ENERGY, 0.7F, 0.0F, 0.0F);
+      }
+   }
+
+   /** Exhaust / spark helper for the unit renderers (one glow; kinds as Glow). */
+   static void spark(Vec3 at, Vec3 v, float size, int life, int kind, float alpha, float gravity) {
+      glow(at, v, size, size * 0.3F, life, kind, alpha, gravity, 0.0F);
    }
 
    // ------------------------------------------------------------------ helpers
@@ -502,8 +672,8 @@ public final class ChitauriVfx {
             int a = (int)(220 * p.strength * (1.0F - t) * Math.min(1.0F, age / 2.0F));
             Vec3 centre = p.centre.add(p.drift.scale(age));
             c.set((float)(centre.x - eye.x), (float)(centre.y - eye.y), (float)(centre.z - eye.z));
-            GlowDraw.ring(buf, m, c, p.a, p.b, r * 0.86F, r * 1.04F, 0.7F, 64, 140, 200, 255, a);
-            GlowDraw.ring(buf, m, c, p.a, p.b, r * 0.6F, r * 1.0F, 0.85F, 48, 60, 110, 255, a / 3);
+            GlowDraw.ring(buf, m, c, p.a, p.b, r * 0.86F, r * 1.04F, 0.7F, 64, p.cr, p.cg, p.cb, a);
+            GlowDraw.ring(buf, m, c, p.a, p.b, r * 0.6F, r * 1.0F, 0.85F, 48, p.cr * 3 / 7, p.cg * 11 / 20, p.cb, a / 3);
          }
          tess.end();
       } finally {
@@ -520,7 +690,7 @@ public final class ChitauriVfx {
 
    /** A soft additive glow: flash, fire puff, ember or energy spark. */
    static final class Glow {
-      static final int ENERGY = 0, ENERGY_HOT = 1, FIRE = 2, FLASH = 3;
+      static final int ENERGY = 0, ENERGY_HOT = 1, FIRE = 2, FLASH = 3, TETHER = 4, PLASMA = 5, VIOLET = 6;
       double x, y, z, px, py, pz, vx, vy, vz;
       final float size0, size1, alpha, gravity, lift;
       final int life, kind;
@@ -548,6 +718,9 @@ public final class ChitauriVfx {
             case ENERGY -> new int[]{70, 140, 255};
             case ENERGY_HOT -> new int[]{200, 228, 255};
             case FLASH -> new int[]{255, 244, 220};
+            case TETHER -> new int[]{80, 240, 210};
+            case PLASMA -> t < 0.3F ? mix(255, 230, 180, 255, 140, 50, t / 0.3F) : new int[]{255, 140, 50};
+            case VIOLET -> new int[]{175, 120, 255};
             default -> t < 0.25F ? mix(255, 246, 214, 255, 170, 70, t / 0.25F) : mix(255, 170, 70, 150, 45, 22, (t - 0.25F) / 0.75F);
          };
       }
@@ -565,6 +738,7 @@ public final class ChitauriVfx {
       final float from, to, strength;
       final int life;
       Vec3 drift = Vec3.ZERO;
+      int cr = 140, cg = 200, cb = 255;
       int delay;
       int age;
 

@@ -8,6 +8,11 @@ import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriEntities;
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriLeviathan;
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriMob;
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriSoldier;
+import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriCommander;
+import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriHeavy;
+import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriInterceptor;
+import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriSiege;
+import dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarRules;
 import dev.baranhan.viltrumitecore.hero.control.TimeFreeze;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.net.ChitauriFxS2CPacket;
@@ -79,18 +84,37 @@ public final class ChitauriInvasion {
    enum Kind {
       GUNSHIP,
       CARRIER,
-      LEVIATHAN
+      LEVIATHAN,
+      /** One of the war's new units (captor, heavy, commander by carrier; interceptor, siege from the portal). */
+      UNIT
    }
 
    static final class Pending {
       final Kind kind;
       final int born;
       int due;
+      /** UNIT: which new unit the war bought, and for which sector. */
+      @Nullable
+      final dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarRules.UnitKind unit;
+      final int sector;
+      /** CARRIER called by a commander: drop here instead of the war's front. */
+      @Nullable
+      Vec3 point;
 
       Pending(Kind kind, int due) {
          this.kind = kind;
          this.due = due;
          this.born = due;
+         this.unit = null;
+         this.sector = -1;
+      }
+
+      Pending(dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarRules.UnitKind unit, int due, int sector) {
+         this.kind = Kind.UNIT;
+         this.due = due;
+         this.born = due;
+         this.unit = unit;
+         this.sector = sector;
       }
    }
 
@@ -125,6 +149,8 @@ public final class ChitauriInvasion {
       final Map<UUID, Integer> heroKills = new HashMap<>();
       final ServerBossEvent bar;
       final Map<UUID, ServerBossEvent> leviathanBars = new HashMap<>();
+      /** The city war layer (sectors, squads, director); null only before {@link #start} finished. */
+      ChitauriWar war;
 
       Session(MinecraftServer server, ResourceKey<Level> dimension, Vec3 anchor, Vec3 portal, float tiltYaw, long seed, Vec3 areaCentre, double areaRadius,
          boolean inCity) {
@@ -317,8 +343,21 @@ public final class ChitauriInvasion {
             }
          }
       }
+      if (entity instanceof ChitauriInterceptor || entity instanceof ChitauriSiege) {
+         counted = s.war != null && s.war.elites.get(entity instanceof ChitauriSiege ? WarRules.UnitKind.SIEGE : WarRules.UnitKind.INTERCEPTOR)
+            .contains(id);
+      }
+      if (s.war != null && entity.level() instanceof ServerLevel wl && !severed) {
+         s.war.onKilled(wl, entity, source);
+      } else if (s.war != null) {
+         for (Set<UUID> set : s.war.elites.values()) {
+            set.remove(id);
+         }
+      }
       if (counted && !severed && source != null && source.getEntity() instanceof ServerPlayer player) {
-         s.heroKills.merge(player.getUUID(), entity instanceof ChitauriLeviathan ? 10 : entity instanceof ChitauriChariot ? 3 : 1, Integer::sum);
+         int score = entity instanceof ChitauriLeviathan ? 10 : entity instanceof ChitauriSiege || entity instanceof ChitauriCommander ? 5
+            : entity instanceof ChitauriChariot || entity instanceof ChitauriHeavy ? 3 : entity instanceof ChitauriInterceptor ? 2 : 1;
+         s.heroKills.merge(player.getUUID(), score, Integer::sum);
       }
    }
 
@@ -326,11 +365,16 @@ public final class ChitauriInvasion {
 
    /** Opens the portal above {@code at}. False when an invasion already runs on this server. */
    public static boolean start(ServerLevel level, Vec3 at) {
+      return start(level, at, null);
+   }
+
+   /** Same, with a fixed seed (reproducible runs: the same seed and battle give the same war decisions). */
+   public static boolean start(ServerLevel level, Vec3 at, @Nullable Long fixedSeed) {
       if (session != null) {
          return false;
       }
       RandomSource rnd = level.getRandom();
-      long seed = rnd.nextLong();
+      long seed = fixedSeed != null ? fixedSeed : rnd.nextLong();
       int surfaceTop = ChitauriTerrain.surfaceMax(level, at.x, at.z, 24);
       double py = Math.max(at.y + ChitauriRules.PORTAL_HEIGHT, (surfaceTop == ChitauriTerrain.UNKNOWN ? at.y : surfaceTop) + 36.0);
       py = Math.min(py, level.getMaxBuildHeight() - 12.0);
@@ -357,8 +401,10 @@ public final class ChitauriInvasion {
       Session s = new Session(level.getServer(), level.dimension(), at, portal, tiltYaw, seed, areaCentre, areaRadius, inCity);
       session = s;
       ChitauriDestruction.reset();
-      LOG.info("Chitauri invasion opened over {} {} {} in {} (portal y {}, area r {}, city {})", Mth.floor(at.x), Mth.floor(at.y), Mth.floor(at.z),
-         level.dimension().location(), Mth.floor(py), Math.round(areaRadius), inCity);
+      ChitauriCaptives.releaseAll(level); // leftovers of an earlier run go free first
+      s.war = new ChitauriWar(s, level, ChitauriWar.History.get(level));
+      LOG.info("Chitauri invasion opened over {} {} {} in {} (portal y {}, area r {}, city {}, seed {})", Mth.floor(at.x), Mth.floor(at.y), Mth.floor(at.z),
+         level.dimension().location(), Mth.floor(py), Math.round(areaRadius), inCity, seed);
       announce(level, s, ChitauriPhase.OPENING);
       ChitauriSounds.playWide(level, portal, ChitauriSounds.PORTAL_THUNDER, 7.0F, 0.6F, VIEW_RANGE);
       sendPortal(level, s);
@@ -389,6 +435,9 @@ public final class ChitauriInvasion {
       }
       ServerLevel level = server.getLevel(s.dimension);
       if (level != null) {
+         if (s.war != null) {
+            s.war.finish(level, false);
+         }
          int removed = purge(level);
          LOG.info("Chitauri invasion stopped (emergency), {} entities removed", removed);
          ChitauriNet.portal(level, ChitauriPortalS2CPacket.inactive());
@@ -513,6 +562,9 @@ public final class ChitauriInvasion {
       if (session != s) {
          return;
       }
+      if (s.war != null) {
+         s.war.tick(level);
+      }
       tickStorm(level, s);
       drain(level, s);
       if (s.phase != ChitauriPhase.ENDED && s.phase != ChitauriPhase.CLOSING && s.phaseTick >= ChitauriRules.length(s.phase)) {
@@ -604,6 +656,9 @@ public final class ChitauriInvasion {
                leviathan.sever();
             }
          }
+         if (s.war != null) {
+            s.war.sever(level);
+         }
       }
    }
 
@@ -693,6 +748,9 @@ public final class ChitauriInvasion {
       }
       LOG.info("Chitauri invasion over: {} soldiers, {} chariots, {} Leviathans down, {} blocks destroyed", s.killedSoldiers, s.killedChariots,
          s.killedLeviathans, ChitauriDestruction.destroyed());
+      if (s.war != null) {
+         s.war.finish(level, true);
+      }
       ChitauriNet.portal(level, ChitauriPortalS2CPacket.inactive());
       close(s);
    }
@@ -738,9 +796,10 @@ public final class ChitauriInvasion {
             continue;
          }
          boolean ok = switch (p.kind) {
-            case GUNSHIP -> spawnChariot(level, s, ChitauriChariot.KIND_GUNSHIP);
-            case CARRIER -> spawnChariot(level, s, ChitauriChariot.KIND_CARRIER);
+            case GUNSHIP -> spawnChariot(level, s, ChitauriChariot.KIND_GUNSHIP, null);
+            case CARRIER -> spawnChariot(level, s, ChitauriChariot.KIND_CARRIER, p.point);
             case LEVIATHAN -> spawnLeviathan(level, s);
+            case UNIT -> spawnUnit(level, s, p);
          };
          if (ok) {
             it.remove();
@@ -767,29 +826,48 @@ public final class ChitauriInvasion {
       return new Vec3[]{at, flat.normalize()};
    }
 
-   private static boolean spawnChariot(ServerLevel level, Session s, byte kind) {
-      int riders = kind == ChitauriChariot.KIND_CARRIER ? 3 : 2;
-      if (s.chariots.size() >= ChitauriRules.MAX_CHARIOTS || s.soldiers.size() + riders > ChitauriRules.MAX_SOLDIERS) {
-         return false;
-      }
+   /** A chariot out of the portal (no riders yet), or null when the portal disc is not ticking. */
+   @Nullable
+   private static ChitauriChariot launchChariot(ServerLevel level, Session s, byte kind, @Nullable Vec3 dropAt) {
       Vec3[] p = portalPoint(s, 0.7);
       Vec3 at = p[0];
       if (!ChitauriTerrain.ticking(level, at.x, at.y, at.z)) {
-         return false;
+         return null;
       }
       ChitauriChariot chariot = ChitauriEntities.CHARIOT.get().create(level);
       if (chariot == null) {
-         return false;
+         return null;
       }
       chariot.setKind(kind);
       chariot.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
       // out of the portal: down along its normal and fanning outwards, then levelling off
       Vec3 dir = s.normal().scale(0.55).add(p[1].scale(0.9)).add(0, -0.1, 0);
       chariot.launch(dir);
+      if (dropAt != null) {
+         chariot.setOrderPoint(dropAt);
+      } else if (s.war != null && kind == ChitauriChariot.KIND_CARRIER && !s.war.targets.isEmpty()) {
+         Vec3 front = s.war.pointFor(level, s.war.targets.get(s.random.nextInt(s.war.targets.size())));
+         if (front != null) {
+            chariot.setOrderPoint(front.add(0, 2, 0));
+         }
+      }
       if (!level.addFreshEntity(chariot)) {
-         return false;
+         return null;
       }
       s.chariots.add(chariot.getUUID());
+      return chariot;
+   }
+
+   private static boolean spawnChariot(ServerLevel level, Session s, byte kind, @Nullable Vec3 dropAt) {
+      int riders = kind == ChitauriChariot.KIND_CARRIER ? 3 : 2;
+      if (s.chariots.size() >= ChitauriRules.MAX_CHARIOTS || s.soldiers.size() + riders > ChitauriRules.MAX_SOLDIERS) {
+         return false;
+      }
+      ChitauriChariot chariot = launchChariot(level, s, kind, dropAt);
+      if (chariot == null) {
+         return false;
+      }
+      Vec3 at = chariot.position();
       int squad = s.squads++;
       for (int seat = 0; seat < riders; seat++) {
          byte role = seat == 0 ? ChitauriSoldier.ROLE_PILOT : kind == ChitauriChariot.KIND_GUNSHIP ? ChitauriSoldier.ROLE_GUNNER : ChitauriSoldier.ROLE_TROOPER;
@@ -805,6 +883,162 @@ public final class ChitauriInvasion {
          ChitauriSounds.playWide(level, at, ChitauriSounds.CHARIOT_FLYBY, 4.0F, 0.85F + s.random.nextFloat() * 0.3F, 128.0);
       }
       return true;
+   }
+
+   /**
+    * One unit the war bought. Ground elites (captor, heavy, commander) come on a carrier with a pilot (and an escort
+    * trooper when there is room) that drops them at the target sector; interceptors and siege lancers fly out of the
+    * portal themselves.
+    */
+   private static boolean spawnUnit(ServerLevel level, Session s, Pending p) {
+      ChitauriWar war = s.war;
+      WarRules.UnitKind kind = p.unit;
+      if (war == null || kind == null) {
+         return true; // nothing to do: drop it
+      }
+      Vec3 point = war.pointFor(level, p.sector);
+      if (kind == WarRules.UnitKind.INTERCEPTOR || kind == WarRules.UnitKind.SIEGE) {
+         Vec3[] pp = portalPoint(s, 0.6);
+         Vec3 at = pp[0];
+         if (!ChitauriTerrain.ticking(level, at.x, at.y, at.z)) {
+            return false;
+         }
+         Vec3 dir = s.normal().scale(0.55).add(pp[1].scale(0.9)).add(0, -0.1, 0);
+         net.minecraft.world.entity.Mob unit;
+         if (kind == WarRules.UnitKind.INTERCEPTOR) {
+            ChitauriInterceptor f = ChitauriEntities.INTERCEPTOR.get().create(level);
+            if (f == null) {
+               return false;
+            }
+            f.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+            f.launch(dir);
+            if (point != null) {
+               f.setOrderPoint(point.add(0, 22, 0));
+            }
+            unit = f;
+         } else {
+            ChitauriSiege g = ChitauriEntities.SIEGE.get().create(level);
+            if (g == null) {
+               return false;
+            }
+            g.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+            g.launch(dir);
+            if (point != null) {
+               g.setOrderPoint(point.add(0, 8, 0));
+            }
+            unit = g;
+         }
+         if (!level.addFreshEntity(unit)) {
+            return false;
+         }
+         war.track(level, kind, unit, p.sector);
+         ChitauriSounds.playWide(level, at, kind == WarRules.UnitKind.INTERCEPTOR ? ChitauriSounds.INTERCEPTOR_BOOST : ChitauriSounds.SIEGE_HUM, 4.0F, 0.9F,
+            128.0);
+         return true;
+      }
+      boolean escort = kind != WarRules.UnitKind.CAPTOR && s.soldiers.size() + 3 <= ChitauriRules.MAX_SOLDIERS;
+      if (s.chariots.size() >= ChitauriRules.MAX_CHARIOTS || s.soldiers.size() + 2 > ChitauriRules.MAX_SOLDIERS) {
+         return false;
+      }
+      ChitauriChariot chariot = launchChariot(level, s, ChitauriChariot.KIND_CARRIER, point != null ? point.add(0, 2, 0) : null);
+      if (chariot == null) {
+         return false;
+      }
+      Vec3 at = chariot.position();
+      int squad = s.squads++;
+      ChitauriSoldier pilot = spawnTrooper(level, at, ChitauriEntities.SOLDIER.get(), ChitauriSoldier.ROLE_PILOT, -1);
+      if (pilot != null) {
+         pilot.setSeat(0);
+         pilot.startRiding(chariot, true);
+      }
+      net.minecraft.world.entity.EntityType<? extends ChitauriSoldier> type = switch (kind) {
+         case CAPTOR -> ChitauriEntities.CAPTOR.get();
+         case HEAVY -> ChitauriEntities.HEAVY.get();
+         default -> ChitauriEntities.COMMANDER.get();
+      };
+      ChitauriSoldier elite = spawnTrooper(level, at, type, ChitauriSoldier.ROLE_TROOPER, kind == WarRules.UnitKind.CAPTOR ? -1 : squad);
+      if (elite != null) {
+         elite.squadIndex = 0;
+         elite.setSeat(1);
+         elite.startRiding(chariot, true);
+         war.track(level, kind, elite, p.sector);
+      }
+      if (escort) {
+         ChitauriSoldier t = spawnTrooper(level, at, ChitauriEntities.SOLDIER.get(), ChitauriSoldier.ROLE_TROOPER, squad);
+         if (t != null) {
+            t.squadIndex = 1;
+            t.setSeat(2);
+            t.startRiding(chariot, true);
+         }
+      }
+      return true;
+   }
+
+   /** Any trooper type (soldier or ground elite) at a point in an entity-ticking chunk; counted as a soldier. */
+   @Nullable
+   public static ChitauriSoldier spawnTrooper(ServerLevel level, Vec3 at, net.minecraft.world.entity.EntityType<? extends ChitauriSoldier> type, byte role,
+      int squad) {
+      if (!ChitauriTerrain.ticking(level, at.x, at.y, at.z)) {
+         return null;
+      }
+      ChitauriSoldier soldier = type.create(level);
+      if (soldier == null) {
+         return null;
+      }
+      soldier.setRole(role);
+      soldier.squad = squad;
+      soldier.moveTo(at.x, at.y, at.z, level.random.nextFloat() * 360.0F, 0.0F);
+      soldier.yHeadRot = soldier.getYRot();
+      soldier.yBodyRot = soldier.getYRot();
+      if (!level.addFreshEntity(soldier)) {
+         return null;
+      }
+      Session s = session;
+      if (s != null && s.in(level)) {
+         s.soldiers.add(soldier.getUUID());
+      }
+      return soldier;
+   }
+
+   /** Command / test hook: one war unit at a point, tracked by the running war when there is one. */
+   @Nullable
+   public static Entity spawnUnitAt(ServerLevel level, Vec3 at, WarRules.UnitKind kind) {
+      Session s = session;
+      ChitauriWar war = s != null && s.in(level) ? s.war : null;
+      Entity e;
+      switch (kind) {
+         case INTERCEPTOR -> {
+            ChitauriInterceptor f = ChitauriEntities.INTERCEPTOR.get().create(level);
+            if (f == null) {
+               return null;
+            }
+            f.moveTo(at.x, at.y + 1.0, at.z, level.random.nextFloat() * 360.0F, 0.0F);
+            f.takeOff();
+            e = level.addFreshEntity(f) ? f : null;
+         }
+         case SIEGE -> {
+            ChitauriSiege g = ChitauriEntities.SIEGE.get().create(level);
+            if (g == null) {
+               return null;
+            }
+            g.moveTo(at.x, at.y + 4.0, at.z, level.random.nextFloat() * 360.0F, 0.0F);
+            g.setOrderPoint(at.add(0, 8, 0));
+            e = level.addFreshEntity(g) ? g : null;
+         }
+         default -> {
+            net.minecraft.world.entity.EntityType<? extends ChitauriSoldier> type = switch (kind) {
+               case CAPTOR -> ChitauriEntities.CAPTOR.get();
+               case HEAVY -> ChitauriEntities.HEAVY.get();
+               default -> ChitauriEntities.COMMANDER.get();
+            };
+            e = spawnTrooper(level, at, type, ChitauriSoldier.ROLE_TROOPER, -1);
+         }
+      }
+      if (e != null && war != null) {
+         int sector = war.sectorAt(at) != null ? war.sectorAt(at).id : -1;
+         war.track(level, kind, e, sector);
+      }
+      return e;
    }
 
    private static boolean spawnLeviathan(ServerLevel level, Session s) {

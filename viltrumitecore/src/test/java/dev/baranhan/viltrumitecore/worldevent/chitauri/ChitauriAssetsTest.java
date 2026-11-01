@@ -39,6 +39,7 @@ class ChitauriAssetsTest {
    private static final Path BASE_LANG = ASSETS.resolve("lang");
    private static final Path JAVA = Path.of("src/main/java/dev/baranhan/viltrumitecore");
    private static final List<Path> CODE = List.of(JAVA.resolve("worldevent/chitauri"), JAVA.resolve("entity/chitauri"), JAVA.resolve("client/chitauri"));
+   private static final List<String> ELITES = List.of("captor", "heavy", "commander");
    private static final Pattern PLACEHOLDER = Pattern.compile("%(?:\\d+\\$)?[sd]");
 
    private static JsonObject read(Path path) throws IOException {
@@ -226,7 +227,7 @@ class ChitauriAssetsTest {
       for (String name : names()) {
          assertTrue(en.has("subtitles.viltrumitecore.chitauri." + name), "subtitle " + name);
       }
-      for (String entity : new String[]{"soldier", "chariot", "leviathan", "bolt"}) {
+      for (String entity : new String[]{"soldier", "chariot", "leviathan", "bolt", "captor", "heavy", "commander", "interceptor", "siege", "beacon"}) {
          assertTrue(en.has("entity.viltrumitecore.chitauri_" + entity), entity);
       }
    }
@@ -246,7 +247,15 @@ class ChitauriAssetsTest {
 
    @Test
    void clipsAnimateOnlyBonesOfTheirModel() throws IOException {
-      Map<String, String> rig = Map.of("soldier", "soldier", "soldier_states", "soldier", "chariot", "chariot");
+      Map<String, String> rig = new java.util.HashMap<>(Map.of("soldier", "soldier", "soldier_states", "soldier", "chariot", "chariot"));
+      for (String unit : ELITES) {
+         for (String suffix : new String[]{"", "_states", "_special"}) {
+            rig.put(unit + suffix, unit);
+         }
+      }
+      for (String craft : new String[]{"interceptor", "siege", "beacon"}) {
+         rig.put(craft, craft);
+      }
       for (Map.Entry<String, String> e : rig.entrySet()) {
          Set<String> bones = bones(e.getValue());
          for (Map.Entry<String, JsonElement> clip : clips(e.getKey()).entrySet()) {
@@ -281,13 +290,48 @@ class ChitauriAssetsTest {
          }
       }
       assertTrue(bones("soldier").containsAll(List.of("torso", "chest", "head")));
+      // the evolution units: every clip their renderers ask for, and the bones they drive by code
+      Map<String, List<String>> units = Map.of(
+         "captor_special", List.of("capture", "carry", "drop"),
+         "heavy_special", List.of("slam", "vent", "armor_break", "stagger"),
+         "commander_special", List.of("idle_planted", "signal", "command", "sweep", "stagger"),
+         "interceptor", List.of("cruise", "hover", "boost", "brake", "takeoff", "perch", "turn_l", "turn_r", "accel", "maneuver", "fire", "hit", "death_fall"),
+         "siege", List.of("idle", "move", "deploy", "charge", "fire", "stagger", "dying"),
+         "beacon", List.of("deploy", "idle", "hurt", "down"));
+      for (String unit : ELITES) {
+         for (String clip : List.of("idle", "walk", "run", "turn_l", "turn_r", "aim", "shoot", "reload", "melee", "hurt")) {
+            assertTrue(clips(unit).has(clip), unit + " lacks " + clip);
+         }
+         for (String clip : List.of("knockback", "fall", "land", "death", "sever", "disembark", "mounted", "mounted_shoot")) {
+            assertTrue(clips(unit + "_states").has(clip), unit + "_states lacks " + clip);
+         }
+         assertTrue(bones(unit).containsAll(List.of("torso", "chest", "head", "muzzle")), unit + " look / muzzle bones");
+      }
+      for (Map.Entry<String, List<String>> e : units.entrySet()) {
+         for (String clip : e.getValue()) {
+            assertTrue(clips(e.getKey()).has(clip), e.getKey() + " lacks clip " + clip);
+            assertTrue(clips(e.getKey()).getAsJsonObject(clip).get("animation_length").getAsDouble() > 0.0, clip + " length");
+         }
+      }
+      assertTrue(bones("heavy").contains("armor_chest"));
+      assertTrue(bones("interceptor").containsAll(List.of("thrust_r", "thrust_l")));
+      assertTrue(bones("siege").containsAll(List.of("turret", "barrel", "muzzle")));
+      assertTrue(bones("beacon").containsAll(List.of("emitter", "cage", "arm1", "arm2", "arm3", "arm4")));
+      // each new unit is its own model, not a re-skin of the soldier
+      Set<String> soldier = bones("soldier");
+      for (String unit : List.of("captor", "heavy", "commander", "interceptor", "siege", "beacon")) {
+         Set<String> own = new HashSet<>(bones(unit));
+         own.removeAll(soldier);
+         assertTrue(own.size() >= 3, unit + " has its own bones");
+      }
       assertTrue(bones("chariot").containsAll(List.of("fin_l", "fin_r")));
       assertTrue(bones("leviathan_head").contains("skull"));
    }
 
    @Test
    void texturesAreOwnPngs() throws IOException {
-      for (String tex : new String[]{"soldier", "chariot", "leviathan_head", "leviathan_segment", "leviathan_tail"}) {
+      for (String tex : new String[]{"soldier", "chariot", "leviathan_head", "leviathan_segment", "leviathan_tail", "captor", "heavy", "commander",
+            "interceptor", "siege", "beacon"}) {
          for (String suffix : new String[]{"", "_glow"}) {
             Path p = BIN.resolve("textures/entity/chitauri/" + tex + suffix + ".png.b64");
             assertTrue(Files.exists(p), "missing " + p);

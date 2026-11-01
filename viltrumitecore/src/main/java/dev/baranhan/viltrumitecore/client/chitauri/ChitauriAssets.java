@@ -24,7 +24,33 @@ final class ChitauriAssets {
    static final ResourceLocation TAIL_TEX = rl("textures/entity/chitauri/leviathan_tail.png");
    static final ResourceLocation TAIL_GLOW = rl("textures/entity/chitauri/leviathan_tail_glow.png");
 
+   // evolution units: one geo / atlas / glow (and clip files) each
+   static final ResourceLocation CAPTOR_GEO = rl("geo/chitauri/captor.geo.json");
+   static final ResourceLocation HEAVY_GEO = rl("geo/chitauri/heavy.geo.json");
+   static final ResourceLocation COMMANDER_GEO = rl("geo/chitauri/commander.geo.json");
+   static final ResourceLocation INTERCEPTOR_GEO = rl("geo/chitauri/interceptor.geo.json");
+   static final ResourceLocation INTERCEPTOR_ANIM = rl("animations/chitauri/interceptor.animation.json");
+   static final ResourceLocation INTERCEPTOR_TEX = rl("textures/entity/chitauri/interceptor.png");
+   static final ResourceLocation INTERCEPTOR_GLOW = rl("textures/entity/chitauri/interceptor_glow.png");
+   static final ResourceLocation SIEGE_GEO = rl("geo/chitauri/siege.geo.json");
+   static final ResourceLocation SIEGE_ANIM = rl("animations/chitauri/siege.animation.json");
+   static final ResourceLocation SIEGE_TEX = rl("textures/entity/chitauri/siege.png");
+   static final ResourceLocation SIEGE_GLOW = rl("textures/entity/chitauri/siege_glow.png");
+   static final ResourceLocation BEACON_GEO = rl("geo/chitauri/beacon.geo.json");
+   static final ResourceLocation BEACON_ANIM = rl("animations/chitauri/beacon.animation.json");
+   static final ResourceLocation BEACON_TEX = rl("textures/entity/chitauri/beacon.png");
+   static final ResourceLocation BEACON_GLOW = rl("textures/entity/chitauri/beacon_glow.png");
+
    private ChitauriAssets() {
+   }
+
+   /** Clip file of an infantry unit: "" (locomotion + combat), "_states" or "_special". */
+   static ResourceLocation unitAnim(String unit, String suffix) {
+      return rl("animations/chitauri/" + unit + suffix + ".animation.json");
+   }
+
+   static ResourceLocation unitTex(String unit, boolean glow) {
+      return rl("textures/entity/chitauri/" + unit + (glow ? "_glow" : "") + ".png");
    }
 
    static ResourceLocation rl(String path) {

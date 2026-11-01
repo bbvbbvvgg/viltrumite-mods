@@ -258,5 +258,267 @@
         "attenuation_distance": 34
       }
     ]
+  },
+  "chitauri.captor_grab": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.captor_grab",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/captor_grab"
+      }
+    ]
+  },
+  "chitauri.captor_tether": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.captor_tether",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/captor_tether"
+      }
+    ]
+  },
+  "chitauri.captor_growl": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.captor_growl",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/captor_growl"
+      }
+    ]
+  },
+  "chitauri.heavy_cannon": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.heavy_cannon",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/heavy_cannon"
+      }
+    ]
+  },
+  "chitauri.heavy_vent": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.heavy_vent",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/heavy_vent"
+      }
+    ]
+  },
+  "chitauri.armor_break": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.armor_break",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/armor_break"
+      }
+    ]
+  },
+  "chitauri.heavy_slam": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.heavy_slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/heavy_slam"
+      }
+    ]
+  },
+  "chitauri.heavy_windup": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.heavy_windup",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/heavy_windup"
+      }
+    ]
+  },
+  "chitauri.heavy_hurt": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.heavy_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/heavy_hurt"
+      }
+    ]
+  },
+  "chitauri.heavy_death": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.heavy_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/heavy_death"
+      }
+    ]
+  },
+  "chitauri.heavy_growl": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.heavy_growl",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/heavy_growl"
+      }
+    ]
+  },
+  "chitauri.heavy_step": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.heavy_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/heavy_step"
+      },
+      {
+        "name": "viltrumitecore:chitauri/heavy_step_2"
+      }
+    ]
+  },
+  "chitauri.commander_staff": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.commander_staff",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/commander_staff"
+      }
+    ]
+  },
+  "chitauri.commander_sweep": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.commander_sweep",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/commander_sweep"
+      }
+    ]
+  },
+  "chitauri.commander_order": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.commander_order",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/commander_order"
+      }
+    ]
+  },
+  "chitauri.commander_signal": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.commander_signal",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/commander_signal",
+        "attenuation_distance": 160
+      }
+    ]
+  },
+  "chitauri.commander_growl": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.commander_growl",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/commander_growl"
+      }
+    ]
+  },
+  "chitauri.interceptor_engine": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.interceptor_engine",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/interceptor_engine",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "chitauri.interceptor_boost": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.interceptor_boost",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/interceptor_boost"
+      }
+    ]
+  },
+  "chitauri.interceptor_fire": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.interceptor_fire",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/interceptor_fire"
+      }
+    ]
+  },
+  "chitauri.interceptor_down": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.interceptor_down",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/interceptor_down"
+      }
+    ]
+  },
+  "chitauri.siege_hum": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.siege_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/siege_hum",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "chitauri.siege_charge": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.siege_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/siege_charge",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "chitauri.siege_fire": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.siege_fire",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/siege_fire",
+        "attenuation_distance": 128
+      }
+    ]
+  },
+  "chitauri.siege_impact": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.siege_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/siege_impact",
+        "attenuation_distance": 128
+      }
+    ]
+  },
+  "chitauri.beacon_deploy": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.beacon_deploy",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/beacon_deploy",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "chitauri.beacon_hum": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.beacon_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/beacon_hum",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "chitauri.beacon_down": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.beacon_down",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/beacon_down",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "chitauri.captive_freed": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.captive_freed",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/captive_freed"
+      }
+    ]
+  },
+  "chitauri.sector_seized": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.sector_seized",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/sector_seized",
+        "attenuation_distance": 200
+      }
+    ]
+  },
+  "chitauri.sector_liberated": {
+    "subtitle": "subtitles.viltrumitecore.chitauri.sector_liberated",
+    "sounds": [
+      {
+        "name": "viltrumitecore:chitauri/sector_liberated",
+        "attenuation_distance": 200
+      }
+    ]
   }
 }

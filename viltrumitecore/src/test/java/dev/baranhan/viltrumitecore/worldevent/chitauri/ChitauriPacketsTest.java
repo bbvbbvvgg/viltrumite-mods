@@ -40,7 +40,9 @@ class ChitauriPacketsTest {
       int[] kinds = {ChitauriFxS2CPacket.BOLT_IMPACT, ChitauriFxS2CPacket.CANNON_IMPACT, ChitauriFxS2CPacket.EXPLOSION, ChitauriFxS2CPacket.CHARIOT_BREAKUP,
          ChitauriFxS2CPacket.LEVIATHAN_HIT, ChitauriFxS2CPacket.LEVIATHAN_ROAR, ChitauriFxS2CPacket.LEVIATHAN_CRASH, ChitauriFxS2CPacket.LEVIATHAN_SMASH,
          ChitauriFxS2CPacket.DROP_LANDING, ChitauriFxS2CPacket.PORTAL_STRIKE, ChitauriFxS2CPacket.SEVER, ChitauriFxS2CPacket.MUZZLE,
-         ChitauriFxS2CPacket.SEGMENT_LAND, ChitauriFxS2CPacket.VANISH};
+         ChitauriFxS2CPacket.SEGMENT_LAND, ChitauriFxS2CPacket.VANISH, ChitauriFxS2CPacket.TETHER, ChitauriFxS2CPacket.SLAM, ChitauriFxS2CPacket.SIEGE_CHARGE,
+         ChitauriFxS2CPacket.SIEGE_IMPACT, ChitauriFxS2CPacket.BEACON_DEPLOY, ChitauriFxS2CPacket.BEACON_DOWN, ChitauriFxS2CPacket.SIGNAL, ChitauriFxS2CPacket.RELEASE,
+         ChitauriFxS2CPacket.ARMOR_BREAK, ChitauriFxS2CPacket.THRUST};
       Set<Integer> seen = new HashSet<>();
       for (int i = 0; i < kinds.length; i++) {
          assertEquals(i, kinds[i], "kinds are contiguous network ids");

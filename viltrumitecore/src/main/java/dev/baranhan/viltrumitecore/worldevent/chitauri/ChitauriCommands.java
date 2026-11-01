@@ -1,11 +1,14 @@
 package dev.baranhan.viltrumitecore.worldevent.chitauri;
 
+import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.baranhan.viltrumitecore.worldevent.WorldEventConflicts;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import dev.baranhan.viltrumitecore.worldevent.chitauri.war.WarRules;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -20,7 +23,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
- * {@code /chitauri start [force] | end | stop | status | wave | phase <name>} (operator, level 2).
+ * {@code /chitauri start [force] [seed <n>] | end | stop | status | war | wave | phase <name> | spawn <unit>} (operator, level 2).
  * Manual only: nothing starts the invasion by itself. {@code start} refuses while another world
  * event runs unless {@code force} is given; {@code end} plays the normal closing; {@code stop} is
  * the emergency stop (everything gone at once).
@@ -30,15 +33,61 @@ public final class ChitauriCommands {
    private static final SuggestionProvider<CommandSourceStack> PHASES = (c, b) -> SharedSuggestionProvider.suggest(
       Arrays.stream(ChitauriPhase.values()).filter(p -> p != ChitauriPhase.ENDED).map(ChitauriPhase::key), b);
 
+   private static final SuggestionProvider<CommandSourceStack> UNITS = (c, b) -> SharedSuggestionProvider.suggest(
+      Arrays.stream(WarRules.UnitKind.values()).map(k -> k.name().toLowerCase(Locale.ROOT)), b);
+
    private ChitauriCommands() {
+   }
+
+   private static int war(CommandContext<CommandSourceStack> c) {
+      ChitauriInvasion.Session s = ChitauriInvasion.session();
+      if (s == null || s.war == null || !ChitauriInvasion.running(c.getSource().getServer())) {
+         c.getSource().sendFailure(Component.translatable("commands.viltrumitecore.chitauri.not_running"));
+         return 0;
+      }
+      ServerLevel level = c.getSource().getServer().getLevel(s.dimension());
+      if (level == null) {
+         return 0;
+      }
+      for (String line : s.war.status(level)) {
+         c.getSource().sendSuccess(() -> Component.literal(line).withStyle(ChatFormatting.GRAY), false);
+      }
+      return 1;
+   }
+
+   private static int spawn(CommandContext<CommandSourceStack> c) {
+      String name = StringArgumentType.getString(c, "unit");
+      WarRules.UnitKind kind = null;
+      for (WarRules.UnitKind k : WarRules.UnitKind.values()) {
+         if (k.name().equalsIgnoreCase(name)) {
+            kind = k;
+         }
+      }
+      if (kind == null) {
+         c.getSource().sendFailure(Component.translatable("commands.viltrumitecore.chitauri.unknown_unit", name));
+         return 0;
+      }
+      Vec3 at = c.getSource().getPosition();
+      if (ChitauriInvasion.spawnUnitAt(c.getSource().getLevel(), at, kind) == null) {
+         c.getSource().sendFailure(Component.translatable("commands.viltrumitecore.chitauri.spawn_failed", name));
+         return 0;
+      }
+      c.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.chitauri.spawned", name).withStyle(ChatFormatting.AQUA), true);
+      return 1;
    }
 
    @SubscribeEvent
    public static void register(RegisterCommandsEvent event) {
       event.getDispatcher().register(Commands.literal("chitauri").requires(s -> s.hasPermission(2))
          .then(Commands.literal("start")
-            .executes(c -> start(c, false))
-            .then(Commands.literal("force").executes(c -> start(c, true))))
+            .executes(c -> start(c, false, null))
+            .then(Commands.literal("seed").then(Commands.argument("seed", LongArgumentType.longArg())
+               .executes(c -> start(c, false, LongArgumentType.getLong(c, "seed")))))
+            .then(Commands.literal("force").executes(c -> start(c, true, null))
+               .then(Commands.literal("seed").then(Commands.argument("seed", LongArgumentType.longArg())
+                  .executes(c -> start(c, true, LongArgumentType.getLong(c, "seed")))))))
+         .then(Commands.literal("war").executes(ChitauriCommands::war))
+         .then(Commands.literal("spawn").then(Commands.argument("unit", StringArgumentType.word()).suggests(UNITS).executes(ChitauriCommands::spawn)))
          .then(Commands.literal("end").executes(ChitauriCommands::end))
          .then(Commands.literal("stop").executes(ChitauriCommands::stop))
          .then(Commands.literal("status").executes(ChitauriCommands::status))
@@ -46,7 +95,7 @@ public final class ChitauriCommands {
          .then(Commands.literal("phase").then(Commands.argument("phase", StringArgumentType.word()).suggests(PHASES).executes(ChitauriCommands::phase))));
    }
 
-   private static int start(CommandContext<CommandSourceStack> c, boolean force) {
+   private static int start(CommandContext<CommandSourceStack> c, boolean force, Long seed) {
       CommandSourceStack source = c.getSource();
       ServerLevel level = source.getLevel();
       if (ChitauriInvasion.running(source.getServer())) {
@@ -59,7 +108,7 @@ public final class ChitauriCommands {
          return 0;
       }
       Vec3 at = source.getPosition();
-      if (!ChitauriInvasion.start(level, at)) {
+      if (!ChitauriInvasion.start(level, at, seed)) {
          source.sendFailure(Component.translatable("commands.viltrumitecore.chitauri.already"));
          return 0;
       }
