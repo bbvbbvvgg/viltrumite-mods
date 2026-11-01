@@ -77,3 +77,21 @@
   Thanos and meteor rain may run together.
 - All Chitauri creatures and Thanos are `Enemy` (hero auto-targeting depends on it).
 - Report: `docs/reports/2026-10-31-final-integration-legion-chitauri-thanos.md`.
+
+## Four-update merge (Red Hulk #113 + Meteor Rain 2.0 #114 + Chitauri 2.0 #115 + Ultron uprising, core 1.66.0, protocol 24)
+- Each branch alone claimed protocol 23 and core 1.65.0. The merge is protocol 24 / core 1.66.0. Packet table tail:
+  FINAL_PUNCH pair, `MeteorRainFxS2CPacket`, `UltronFxS2CPacket`, `UltronStateS2CPacket` (`HeroRosterIntegrationTest`).
+- World voice = one seam: `HeroPortraits.registerVoice` (one map) + `resolve(hero, voice)`; server `HeroSpeech.announce`
+  (explicit audience, no state, Chitauri) and `HeroSpeech.worldLine` (range audience, one line per voice, Ultron) both
+  key a body-less line on `worldVoiceId(voice)`. Both branches had added their own copy; do not add a third.
+- `CitizenCaptivity.isHeld` is the shared "a world event holds this person" flag: Chitauri and Ultron target rules both
+  skip held people. A new hostile event must do the same.
+- Big events stay exclusive through `WorldEventConflicts` (invasion + Ultron in the exclusive set, meteor rain and the
+  others refuse them); running them together needs the operator `force` argument on each start command.
+- Lang/sound overlays merge per part folder, so the four branches had no lang or sounds.json conflict. A sound event
+  defined by two overlays fails the build; duplicate lang keys across overlays are not checked by Gradle.
+- Runtime QA of the merge (2026-11-01, dedicated server + 2 clients, llvmpipe, synthetic flat city, no Atheria map):
+  Red Hulk all inputs (combo, grab/throw, six slots, overheat, fury, ult), death/respawn, relog and server restart keep
+  the hero; each pair and all four events with `force`: TPS 20, tick 9–25 ms (one 2 s spike when three events start in
+  the same second). Meteor explosions drop items (~150–480 in the air) and can wear down Ultron nodes (capped per hit);
+  Chitauri and Ultron stop on "nobody left" (30 s / 3 min). FPS numbers from llvmpipe are not a GPU measurement.
