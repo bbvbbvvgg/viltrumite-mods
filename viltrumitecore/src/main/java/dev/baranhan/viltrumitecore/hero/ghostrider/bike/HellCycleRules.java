@@ -85,12 +85,17 @@ public final class HellCycleRules {
    // --- body ---
    public static final float WIDTH = 1.1F;
    public static final float HEIGHT = 1.6F;
-   public static final double WHEELBASE = 1.55;
+   /** Axle to axle (the model: axles at z -+14.4 px). */
+   public static final double WHEELBASE = 1.8;
+   /** Wheel radius (6 px): one block of travel turns a wheel 152.8 degrees. */
+   public static final double WHEEL_RADIUS = 0.375;
    /** Centre of the nose / tail probe boxes ahead of / behind the centre, and their half size. */
-   public static final double NOSE = 0.85;
+   public static final double NOSE = 1.0;
    public static final double PROBE_HALF = 0.25;
    /** Rider's feet above the bike's base (seat top at ~0.85). */
    public static final double SEAT_Y = 0.2;
+   /** The rider's hips sit this far behind the centre of the wheelbase (model: z +6.4 px). */
+   public static final double SEAT_BACK = 0.40;
 
    // --- lifecycle ---
    public static final int MATERIALIZE_TICKS = 20;

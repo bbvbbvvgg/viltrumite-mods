@@ -114,6 +114,12 @@ public class HellCycleEntity extends Entity {
    public double visualSpeed;
    public float rpm;
    public int dashLeft;
+   /** Throttle -1..1 as drawn: the local input for the rider's client, the synced value elsewhere (smoothed). */
+   public float throttle;
+   private float inputThrottle;
+   /** 1 = parked on the kickstand, 0 = ridden (smoothed). */
+   public float parkO;
+   public float park;
    private int lastDashSerial;
    private int lastEventSerial;
    private float terrainPitch;
@@ -331,6 +337,7 @@ public class HellCycleEntity extends Entity {
       } else if (local) {
          HellCyclePhysics.Input sampled = client.sample(this);
          in = new HellCyclePhysics.Input(sampled.throttle(), sampled.steer(), sampled.jump(), sampled.drift(), this.dashLeft > 0);
+         this.inputThrottle = (float)sampled.throttle();
       } else {
          in = HellCyclePhysics.Input.PARK;
       }
@@ -524,6 +531,7 @@ public class HellCycleEntity extends Entity {
          this.lift = (float)(s.stoppie * HellCycleRules.STOPPIE_MAX_DEG - s.wheelie * HellCycleRules.WHEELIE_MAX_DEG);
          this.steer = (float)s.steer;
          this.rpm = (float)s.rpm;
+         this.throttle = this.isVehicle() ? this.inputThrottle : 0.0F;
          this.pitch = this.terrainPitch + (s.onGround ? 0.0F : (float)Mth.clamp(s.velY * 30.0, -20.0, 12.0));
       } else {
          float syncedLift = this.entityData.get(DATA_LIFT) / 100.0F;
@@ -532,12 +540,16 @@ public class HellCycleEntity extends Entity {
          this.lift += (liftDeg - this.lift) * 0.5F;
          this.steer += (this.syncedSteer() - this.steer) * 0.5F;
          this.rpm += (this.entityData.get(DATA_RPM) / 100.0F - this.rpm) * 0.4F;
+         this.throttle += (this.syncedThrottle() - this.throttle) * 0.5F;
          this.measureTerrain();
          double dy = this.getY() - this.yo;
          this.pitch = this.terrainPitch + (this.onGround() ? 0.0F : (float)Mth.clamp(dy * 30.0, -20.0, 12.0));
       }
-      // wheel radius 6 px = 0.375 block: one block of travel turns the wheel 152.8 degrees
-      this.wheelSpin += (float)Math.toDegrees(fwd / 0.375);
+      this.wheelSpin += (float)Math.toDegrees(fwd / HellCycleRules.WHEEL_RADIUS);
+      // parked on the kickstand (leaning onto it) while nobody rides and it is not forming or burning
+      this.parkO = this.park;
+      float parkTarget = !this.isVehicle() && !this.forming() && !this.burning() ? 1.0F : 0.0F;
+      this.park += (parkTarget - this.park) * 0.2F;
       if (this.wheelSpin > 3600.0F) {
          this.wheelSpin -= 3600.0F;
          this.wheelSpinO -= 3600.0F;
@@ -656,7 +668,7 @@ public class HellCycleEntity extends Entity {
          return;
       }
       double rad = Math.toRadians(this.getYRot());
-      double back = 0.18; // the seat sits behind the centre of the wheelbase
+      double back = HellCycleRules.SEAT_BACK;
       double x = this.getX() + Math.sin(rad) * back;
       double z = this.getZ() - Math.cos(rad) * back;
       double y = this.getY() + HellCycleRules.SEAT_Y + passenger.getMyRidingOffset() + 0.35;
@@ -761,6 +773,12 @@ public class HellCycleEntity extends Entity {
    }
 
    // ------------------------------------------------------------------ body rules
+
+   /** Long model plus its flames: a box the frustum test will not cut while the wheels are still on screen. */
+   @Override
+   public AABB getBoundingBoxForCulling() {
+      return this.getBoundingBox().inflate(1.5, 0.9, 1.5);
+   }
 
    @Override
    public boolean isPickable() {

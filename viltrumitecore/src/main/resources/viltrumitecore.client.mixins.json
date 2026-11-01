@@ -21,6 +21,7 @@
     "BlockModelMixin",
     "BodyRotationTrackerMixin",
     "CameraMixin",
+    "HellCycleCameraMixin",
     "ChopHandTrackerMixin",
     "ChopModelMixin",
     "ChopModelMixin2",
