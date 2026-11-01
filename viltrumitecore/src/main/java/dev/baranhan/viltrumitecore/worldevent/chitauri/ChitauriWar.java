@@ -88,6 +88,9 @@ public final class ChitauriWar {
    int lastLiberated;
    int lastLosses;
    int citizensSeen;
+   /** Hero-samples since the last decision (one per player per sector update) and how many were airborne. */
+   int airSamples;
+   int airHits;
    final ArrayDeque<Integer> killTicks = new ArrayDeque<>();
    final EnumMap<WarRules.UnitKind, Set<UUID>> elites = new EnumMap<>(WarRules.UnitKind.class);
    final EnumMap<WarRules.UnitKind, Integer> bought = new EnumMap<>(WarRules.UnitKind.class);
@@ -216,6 +219,10 @@ public final class ChitauriWar {
             int k = SectorPlanner.locate(this.sectors, p.getX(), p.getZ());
             if (k >= 0) {
                heroes[k]++;
+               this.airSamples++;
+               if (airborne(level, p)) {
+                  this.airHits++;
+               }
             }
          }
       }
@@ -573,7 +580,23 @@ public final class ChitauriWar {
       for (UUID id : this.elites.get(WarRules.UnitKind.CAPTOR)) {
          if (level.getEntity(id) instanceof ChitauriCaptor c && !c.carrying() && !c.isPassenger()) {
             WarOrder o = c.order;
-            if (best != null && (o == null || o.sector() != best.id || this.s.clock - o.issued() > 600)) {
+            boolean abduct = o != null && o.type() == WarOrder.Type.ABDUCT;
+            if (best == null) {
+               if (abduct) {
+                  c.order = null; // nobody left to take: fight like a soldier
+               }
+               continue;
+            }
+            double dx = c.getX() - best.x;
+            double dz = c.getZ() - best.z;
+            double there = Math.max(8.0, best.radius * 0.7);
+            if (dx * dx + dz * dz < there * there) {
+               if (abduct) {
+                  c.order = null; // among the people: the hunt goal picks, a hero next to it is fought
+               }
+               continue;
+            }
+            if (o == null || o.sector() != best.id || this.s.clock - o.issued() > 600) {
                Vec3 p = this.groundIn(level, best, 0.5);
                if (p != null) {
                   c.order = new WarOrder(WarOrder.Type.ABDUCT, p.x, p.y, p.z, best.id, -1, this.s.clock);
@@ -778,6 +801,12 @@ public final class ChitauriWar {
          case CLIMAX -> 3;
          default -> 0;
       };
+      // heroes who spent much of the last period in the air count as fliers even if they landed for this sample
+      if (this.airSamples > 0) {
+         air = Math.max(air, Math.min(players.size(), (int)Math.floor(this.airHits / (float)this.airSamples * n + 0.6F)));
+      }
+      this.airSamples = 0;
+      this.airHits = 0;
       return new WarDirector.Snapshot(players.size(), air, covered / (float)n, this.killTicks.size(), known, held, liberated, ledger.active(), ledger.freed,
          this.citizensSeen, eff, players.isEmpty() ? 0.0F : spread.size() / (float)n, centre / (float)n, this.budgetLeft(level), commanders, phase);
    }

@@ -36,8 +36,11 @@ public record WarOrder(Type type, double x, double y, double z, int sector, int 
       return this.type == Type.DEFEND || this.type == Type.SEIZE || this.type == Type.PATROL;
    }
 
-   /** Orders under which the soldier keeps moving even with a target in sight (no stopping to trade fire). */
+   /**
+    * Orders under which the soldier keeps moving even with a target in sight (no stopping to trade fire). A Captor on
+    * its way to the people does not stop for a gunfight either; the order is lifted once it is among them.
+    */
    public boolean breaksContact() {
-      return this.type == Type.RETREAT;
+      return this.type == Type.RETREAT || this.type == Type.ABDUCT;
    }
 }
