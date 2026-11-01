@@ -184,9 +184,10 @@ class HeroRosterIntegrationTest {
       // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets;
       // 21 = Living City 2.0 alone (citizen STATE byte) and THE FINAL PUNCH alone (its packets appended last): refused;
       // 22 = the final integration of #107/#108/#110/#109 with both;
-      // 23 was used by three branches alone: Red Hulk (six HeroAction values appended after FINAL_PUNCH, the packet
-      // table unchanged), Meteor Rain 2.0 (MeteorRainFxS2CPacket appended last) and Chitauri evolution (FX kinds
-      // 14..23 for captors, pylons, siege, interceptors; new entity types): refused;
+      // 23 was used by four branches alone: Red Hulk (six HeroAction values appended after FINAL_PUNCH, the packet
+      // table unchanged), Meteor Rain 2.0 (MeteorRainFxS2CPacket appended last), Chitauri evolution (FX kinds
+      // 14..23 for captors, pylons, siege, interceptors; new entity types) and the Ultron uprising (UltronFxS2CPacket
+      // and UltronStateS2CPacket appended after THE FINAL PUNCH packets): refused;
       assertTrue(source.contains("PROTOCOL_VERSION = \"23\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
@@ -200,10 +201,13 @@ class HeroRosterIntegrationTest {
       assertEquals(regulus + 5, packets.indexOf("ChitauriFxS2CPacket"), "the Chitauri FX packet follows the portal packet");
       List<String> legion = List.of("LegionMenuS2CPacket", "LegionCallC2SPacket", "LegionOrderC2SPacket", "LegionStatusS2CPacket");
       assertEquals(legion, packets.subList(regulus + 6, regulus + 6 + legion.size()), "the Iron Legion packets append after the Chitauri packets");
+      int punch = regulus + 6 + legion.size();
       assertEquals(List.of("ReinhardFinalPunchC2SPacket", "ReinhardFinalPunchS2CPacket"),
-         packets.subList(regulus + 6 + legion.size(), regulus + 8 + legion.size()), "THE FINAL PUNCH packets append after the Iron Legion packets (v21)");
-      assertEquals(List.of("MeteorRainFxS2CPacket"), packets.subList(regulus + 8 + legion.size(), packets.size()),
-         "the Meteor Rain 2.0 packet appends last (v23)");
+         packets.subList(punch, punch + 2), "THE FINAL PUNCH packets append after the Iron Legion packets (v21)");
+      assertEquals(List.of("MeteorRainFxS2CPacket"), packets.subList(punch + 2, punch + 3),
+         "the Meteor Rain 2.0 packet appends after THE FINAL PUNCH packets");
+      assertEquals(List.of("UltronFxS2CPacket", "UltronStateS2CPacket"),
+         packets.subList(punch + 3, packets.size()), "the Ultron uprising packets append last, after the Meteor Rain 2.0 packet");
    }
 
    @Test

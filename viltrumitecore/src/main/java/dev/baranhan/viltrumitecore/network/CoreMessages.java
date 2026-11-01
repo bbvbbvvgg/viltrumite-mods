@@ -63,6 +63,7 @@ public class CoreMessages {
    // the packet table itself is unchanged, but a "22" peer would decode the new action ordinals wrongly.
    // v23 (Meteor Rain 2.0): MeteorRainFxS2CPacket appended last (red sky, fire zones, brands, far impacts).
    // v23 (Chitauri evolution): FX kinds 14..23 for captors, pylons, siege, interceptors; new entity types.
+   // v23 (feat/ultron-uprising): UltronFxS2CPacket and UltronStateS2CPacket appended after the Final Punch packets.
    private static final String PROTOCOL_VERSION = "23";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
@@ -471,6 +472,15 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket::handle).add();
+      // ULTRON — ВОССТАНИЕ МАШИН (docs/plans/2026-11-01-ultron-uprising.md), v23: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronFxS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
