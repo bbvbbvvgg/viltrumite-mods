@@ -51,6 +51,11 @@ public final class MeteorRainAudio {
    public static final double FIRE_RANGE = 70.0;
    /** Impacts within this many ticks count as simultaneous for the voice limit. */
    public static final int IMPACT_WINDOW = 30;
+   /**
+    * Gain on every impact layer: an 8-minute recording of the real client (OpenAL wave writer) peaked at 1.8
+    * full scale when a near meteor's layers met the gameplay explosion of the same hit; about -3 dB of headroom.
+    */
+   public static final float IMPACT_HEADROOM = 0.7F;
    /** Crackles of single burning blocks per second, all fires together. */
    public static final int CRACKLES_PER_SECOND = 8;
    /** Blocks per tick of sound: 343 m/s at 20 ticks per second. */
@@ -168,6 +173,9 @@ public final class MeteorRainAudio {
       }
 
       float[] mix = impactMix(distance, recent);
+      for (int i = 0; i < mix.length; i++) {
+         mix[i] *= IMPACT_HEADROOM;
+      }
       int delay = soundDelay(distance);
       float pitch = 0.92F + mc.level.random.nextFloat() * 0.14F;
       once(mc, MeteorRainSounds.IMPACT_NEAR, at, mix[0], pitch, delay);

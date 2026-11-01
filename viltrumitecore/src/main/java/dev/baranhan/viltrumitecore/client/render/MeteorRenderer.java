@@ -133,8 +133,11 @@ public class MeteorRenderer extends EntityRenderer<MeteorEntity> {
       poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
       VertexConsumer glow = buffer.getBuffer(Types.GLOW);
       float rim = 15.0F + 1.5F * pulse;
-      quad(glow, poseStack.last(), rim, 0.95F * pulse, 0.32F * pulse, 0.08F * pulse);
-      quad(glow, poseStack.last(), 7.5F, 1.0F, 0.85F * pulse, 0.55F * pulse);
+      // a meteor passing right by the camera must not white out the screen (QA): the additive halo fades
+      // out as the camera comes inside it
+      float near = haloFade((float)toCamera.length(), rim);
+      quad(glow, poseStack.last(), rim, 0.95F * pulse * near, 0.32F * pulse * near, 0.08F * pulse * near);
+      quad(glow, poseStack.last(), 7.5F, near, 0.85F * pulse * near, 0.55F * pulse * near);
       poseStack.popPose();
 
       poseStack.popPose();
@@ -197,6 +200,11 @@ public class MeteorRenderer extends EntityRenderer<MeteorEntity> {
    private static void vertex(VertexConsumer consumer, Matrix4f m, Matrix3f n, Vec3 p, float u, float v, float r, float g, float b) {
       consumer.vertex(m, (float)p.x, (float)p.y, (float)p.z).color(r, g, b, 1.0F).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY)
          .uv2(FULL_BRIGHT).normal(n, 0.0F, 1.0F, 0.0F).endVertex();
+   }
+
+   /** Pure: brightness factor of the glow halo for a camera at {@code distance} from a halo {@code rim} wide. */
+   public static float haloFade(float distance, float rim) {
+      return Mth.clamp((distance - rim * 0.15F) / (rim * 0.6F), 0.0F, 1.0F);
    }
 
    private static void quad(VertexConsumer consumer, PoseStack.Pose pose, float size, float r, float g, float b) {

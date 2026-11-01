@@ -69,20 +69,21 @@ def smoke(i):
 
 
 def flame(i):
-    n = 16
+    # 32 px, smooth alpha: the impact fireball draws these flames 3-8 blocks wide right in front of the camera
+    n = 32
     rng = np.random.default_rng(2000 + i)
     y, x = np.mgrid[0:n, 0:n] + 0.5
-    cx = n / 2 + rng.normal(0, 0.6)
+    cx = n / 2 + rng.normal(0, 1.2)
     # teardrop: wider at the bottom, licking up
     dy = (y - n * 0.62) / (n * 0.42)
     dx = (x - cx) / (n * (0.30 + 0.12 * np.clip(dy + 0.6, 0, 1)))
     d = np.hypot(dx, dy)
-    noise = fbm(n, rng, 3)
+    noise = fbm(n, rng, 4)
     dens = 1 - d + (noise - 0.5) * 0.5
     alpha = smoothstep(0.0, 0.5, dens)
     core = smoothstep(0.35, 0.85, dens)
     lum = 0.55 + 0.45 * core
-    alpha = np.round(alpha * 6) / 6
+    alpha[alpha < 0.03] = 0.0
     rgba = np.dstack([lum, lum, lum, alpha])
     return save('particle/meteor_flame_%d' % i, rgba)
 
@@ -113,7 +114,7 @@ def ash(i):
 
 
 def glow():
-    n = 64
+    n = 128  # the halo is drawn up to 33 blocks wide; 64 px showed its texels up close
     y, x = np.mgrid[0:n, 0:n] + 0.5
     d = np.hypot(x - n / 2, y - n / 2) / (n / 2)
     v = np.clip(1 - d, 0, 1) ** 1.5 + 0.8 * np.clip(1 - d * 2.5, 0, 1) ** 2

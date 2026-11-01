@@ -130,4 +130,12 @@ class MeteorRainClientFxTest {
       assertEquals(100.0F * (1.0F - MeteorRainClient.FOG_PULL), MeteorRainClient.fogFar(100.0F, 1.0F), 1.0E-4F);
       assertEquals(100.0F, MeteorRainClient.fogFar(100.0F, 0.0F), 1.0E-4F);
    }
+
+   @Test
+   void haloFadesOutAroundAPassingCamera() {
+      assertEquals(0.0F, MeteorRenderer.haloFade(0.5F, 15.0F), 1.0E-6F);
+      assertEquals(1.0F, MeteorRenderer.haloFade(40.0F, 15.0F), 1.0E-6F);
+      assertTrue(MeteorRenderer.haloFade(6.0F, 15.0F) > 0.0F && MeteorRenderer.haloFade(6.0F, 15.0F) < 1.0F);
+      assertTrue(MeteorRenderer.haloFade(8.0F, 15.0F) > MeteorRenderer.haloFade(6.0F, 15.0F));
+   }
 }
