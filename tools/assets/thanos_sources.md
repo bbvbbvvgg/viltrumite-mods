@@ -21,7 +21,7 @@ Sounds: see the «Sounds» section below.
 
 ## Sounds
 
-All 45 files are own synthesis by `tools/sfx/thanos.py` (numpy, no samples, no vanilla sound stands in;
+All 48 files are own synthesis by `tools/sfx/thanos.py` (numpy, no samples, no vanilla sound stands in;
 CC0-1.0), mono 44.1 kHz Vorbis stored as base64 in core binassets (`.ogg.b64`, or `.ogg.b64.part0..N` for
 the long loops). Each stone has its own timbre (power: distorted growl and arcs; space: glass and flanged
 air; reality: ring-modulated saws; time: ticks, bells, reversed tape; mind: beating high sines; soul:
@@ -54,7 +54,7 @@ subtitle for music).
 | `mind_pulse` | MIND_PULSE wave |
 | `soul_tether` | SOUL_TETHER / SOUL_NOVA telegraph; a soul tether lashes out |
 | `soul_nova` | SOUL_NOVA blast |
-| `combo_portal_punch, combo_time_crush, combo_soul_mirage, combo_mind_step, combo_trinity, combo_eternity` | the combo's own two/three-stone cue, started `ThanosSounds.comboLead` ticks before the active tick so its strike lands with the hit |
+| `combo_portal_punch, combo_time_crush, combo_soul_mirage, combo_mind_step, combo_trinity, combo_eternity, combo_time_volley, combo_moon_fall, combo_infinity` | the combo's own two/three-stone cue, started `ThanosSounds.comboLead` ticks before the active tick so its strike lands with the hit |
 | `phase` | phase change OPENING → ESCALATION → ONSLAUGHT |
 | `stones_flare` | the FINAL phase: all six stones flare |
 | `world_stop, gauntlet_raise, stone_light (×6, pitched per stone), fingers, snap_click, dissolve` | the snap scene beats of `ThanosSceneTimeline` (client, `ThanosSceneClient`) |
