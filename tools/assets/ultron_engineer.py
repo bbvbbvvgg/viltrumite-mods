@@ -2,7 +2,7 @@
 """Ultron engineer-repairer: a low four-legged walker. Armoured chassis with hazard-striped flanks, a turret head
 with the red optic and amber work lights, a jointed welding arm (glowing torch) on the right, a jointed claw arm
 with two pincers and a data probe on the left, a seed canister with a red core on the back and a seed driver
-spike under the nose. Spider legs (hip, thigh, shin, foot pad). Geo (~140 cubes), metal atlas + red/amber glow
+spike under the nose. Spider legs (hip, thigh, shin, foot pad). Geo (98 cubes), metal atlas + red/amber glow
 atlas, and every clip: idle, walk, run, accel/decel/turn_l/turn_r (additive), weld (loop), hack, plant, hurt
 (additive), heavy_hit, death, fabricate. Contact frames match UltronMove (HACK 40 ticks: capture 30; PLANT 24:
 the spike lands at 14; death 30). Own work, CC0.

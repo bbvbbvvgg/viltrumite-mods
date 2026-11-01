@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ultron flying interceptor: an arrowhead chrome hunter with Ultron's slanted red eyes on the nose, swept wings
 with split flaps and red tip lights, wing-root laser cannons, two vectoring engine nacelles (glow flames that the
-renderer stretches with thrust), a V-tail and a belly missile bay with doors. Geo (~120 cubes), metal atlas +
+renderer stretches with thrust), a V-tail and a belly missile bay with doors. Geo (55 cubes), metal atlas +
 red glow atlas, and every clip: hover, fly, accel/decel/turn_l/turn_r (additive), burst, missile, dive, boost,
 hurt (additive), heavy_hit, death, fabricate. Contact frames match UltronMove (BURST 18 ticks: shots 6 left
 gun, 9 right, 12 left; MISSILE 20: drop 10; DIVE 30: pull-up to 14, strike 22; BOOST 12; death 30). CC0.
