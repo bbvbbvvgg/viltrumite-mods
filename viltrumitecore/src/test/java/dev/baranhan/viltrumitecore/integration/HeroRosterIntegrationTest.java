@@ -60,7 +60,8 @@ class HeroRosterIntegrationTest {
       assertSame(HeroId.SINCLAIR, ids[8]);
       assertSame(HeroId.JINWOO, ids[9]);
       assertSame(HeroId.CAPTAIN, ids[10], "Captain America appends after Jinwoo");
-      assertEquals(11, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
+      assertSame(HeroId.RED_HULK, ids[11], "Red Hulk appends after Captain America");
+      assertEquals(12, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
       Set<String> keys = new HashSet<>();
       for (HeroId id : ids) {
          assertTrue(keys.add(id.key()), "duplicate hero key " + id.key());
@@ -83,7 +84,10 @@ class HeroRosterIntegrationTest {
       assertEquals(HeroAction.CAPTAIN_ASSEMBLE.ordinal() + 1, HeroAction.LEGION.ordinal(), "Iron Legion appends after Captain America");
       // Reinhard's secret THE FINAL PUNCH appends after the Iron Legion (released ordinals unchanged).
       assertEquals(HeroAction.LEGION.ordinal() + 1, HeroAction.FINAL_PUNCH.ordinal(), "THE FINAL PUNCH appends after the Iron Legion");
-      assertSame(HeroAction.FINAL_PUNCH, actions[actions.length - 1]);
+      // Red Hulk appends his six actions after THE FINAL PUNCH (released ordinals unchanged).
+      assertEquals(HeroAction.FINAL_PUNCH.ordinal() + 1, HeroAction.REDHULK_CLAP.ordinal(), "Red Hulk block follows THE FINAL PUNCH");
+      assertEquals(HeroAction.REDHULK_CLAP.ordinal() + 5, HeroAction.REDHULK_OVERHEAT.ordinal(), "Red Hulk block is contiguous");
+      assertSame(HeroAction.REDHULK_OVERHEAT, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
@@ -121,7 +125,7 @@ class HeroRosterIntegrationTest {
             }
          }
       }
-      for (HeroId id : List.of(HeroId.REINHARD, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO, HeroId.CAPTAIN)) {
+      for (HeroId id : List.of(HeroId.REINHARD, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO, HeroId.CAPTAIN, HeroId.RED_HULK)) {
          // Thor (#74) has no cinematic lines yet; his lines() may stay empty.
          assertFalse(HeroRegistry.get(id).lines().isEmpty(), id + " lost its cinematic lines");
       }
@@ -180,7 +184,10 @@ class HeroRosterIntegrationTest {
       // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets;
       // 21 = Living City 2.0 alone (citizen STATE byte) and THE FINAL PUNCH alone (its packets appended last): refused;
       // 22 = the final integration of #107/#108/#110/#109 with both;
-      // 23 = the Ultron uprising's UltronFxS2CPacket and UltronStateS2CPacket appended after THE FINAL PUNCH packets.
+      // 23 was used by four branches alone: Red Hulk (six HeroAction values appended after FINAL_PUNCH, the packet
+      // table unchanged), Meteor Rain 2.0 (MeteorRainFxS2CPacket appended last), Chitauri evolution (FX kinds
+      // 14..23 for captors, pylons, siege, interceptors; new entity types) and the Ultron uprising (UltronFxS2CPacket
+      // and UltronStateS2CPacket appended after THE FINAL PUNCH packets): refused;
       assertTrue(source.contains("PROTOCOL_VERSION = \"23\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
@@ -197,8 +204,10 @@ class HeroRosterIntegrationTest {
       int punch = regulus + 6 + legion.size();
       assertEquals(List.of("ReinhardFinalPunchC2SPacket", "ReinhardFinalPunchS2CPacket"),
          packets.subList(punch, punch + 2), "THE FINAL PUNCH packets append after the Iron Legion packets (v21)");
+      assertEquals(List.of("MeteorRainFxS2CPacket"), packets.subList(punch + 2, punch + 3),
+         "the Meteor Rain 2.0 packet appends after THE FINAL PUNCH packets");
       assertEquals(List.of("UltronFxS2CPacket", "UltronStateS2CPacket"),
-         packets.subList(punch + 2, packets.size()), "the Ultron uprising packets append after THE FINAL PUNCH packets (v23)");
+         packets.subList(punch + 3, packets.size()), "the Ultron uprising packets append last, after the Meteor Rain 2.0 packet");
    }
 
    @Test
