@@ -109,11 +109,15 @@ public final class HeroSubtitles {
       for (String fragment : packet.fragments()) {
          // A key missing from the client's lang (an older or partial resource pack) is skipped, never
          // shown raw: Language falls back to en_us first, so only a key absent everywhere is dropped.
-         if (!packet.literal() && !language.has(fragment)) {
-            continue;
+         String text;
+         if (packet.literal()) {
+            text = fragment;
+         } else {
+            text = format(language, fragment);
+            if (text == null) {
+               continue;
+            }
          }
-
-         String text = packet.literal() ? fragment : language.getOrDefault(fragment);
          if (!text.isBlank()) {
             fragments.add(text.replace("\\n", "\n"));
          }
@@ -128,6 +132,37 @@ public final class HeroSubtitles {
       boolean own = mc.player != null && mc.player.getUUID().equals(packet.speaker());
       return new Cue(packet.serial(), packet.speaker(), packet.entityId(), name.toUpperCase(Locale.ROOT), HeroId.fromKey(packet.heroKey()),
          packet.lineId(), List.copyOf(fragments), packet.priority(), packet.durationTicks(), own, packet.heroKey());
+   }
+
+   /** Separator of a fragment with arguments: {@code key<US>arg1<US>arg2} (world-event lines naming a sector). */
+   public static final char ARG_SEPARATOR = '\u001F';
+
+   /**
+    * Translates one fragment. A plain fragment is a lang key; {@code key<US>args...} formats the key's {@code %s} with the
+    * arguments, each translated when the lang has it (sector names) and used literally otherwise (district names). Null
+    * when the key is missing everywhere (skipped, never shown raw).
+    */
+   @Nullable
+   static String format(Language language, String fragment) {
+      int cut = fragment.indexOf(ARG_SEPARATOR);
+      String key = cut < 0 ? fragment : fragment.substring(0, cut);
+      if (!language.has(key)) {
+         return null;
+      }
+      String pattern = language.getOrDefault(key);
+      if (cut < 0) {
+         return pattern;
+      }
+      String[] parts = fragment.substring(cut + 1).split(String.valueOf(ARG_SEPARATOR), -1);
+      Object[] args = new Object[parts.length];
+      for (int i = 0; i < parts.length; i++) {
+         args[i] = language.has(parts[i]) ? language.getOrDefault(parts[i]) : parts[i];
+      }
+      try {
+         return String.format(Locale.ROOT, pattern, args);
+      } catch (java.util.IllegalFormatException e) {
+         return pattern;
+      }
    }
 
    /**

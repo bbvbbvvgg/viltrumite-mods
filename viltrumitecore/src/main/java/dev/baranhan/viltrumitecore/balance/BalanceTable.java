@@ -20,6 +20,11 @@ public final class BalanceTable {
    /** Thor (God of War Ragnarök). */
    public static final HeroBalanceProfile THUNDER_GOD = new HeroBalanceProfile(HeroTier.A, 0.85F, 0.25F, 0.45F, 0.40F);
    /**
+    * Red Hulk: a heavy melee body (armor 10, toughness 4, 48 HP) whose heat multiplies his blows;
+    * slightly less resilient than Thor, and still below Reinhard and Regulus.
+    */
+   public static final HeroBalanceProfile RAGE_TITAN = new HeroBalanceProfile(HeroTier.A, 0.80F, 0.25F, 0.45F, 0.40F);
+   /**
     * Iron Man in an intact suit (nano Mark 50 or a mark). The suit's armor 28 already
     * removes up to 80 % of small hits, so the body layer is lighter; the cap is what keeps
     * a Viltrumite punch from deleting him (several ordinary punches, two heavy ones).
@@ -77,6 +82,32 @@ public final class BalanceTable {
    public static final float CHITAURI_RIFLE = 4.0F;
    /** Cannon bolt (chariots, heavy gunners); its splash adds the explosion step. */
    public static final float CHITAURI_CANNON = 9.0F;
+   /** Interceptor twin blasters: light, fast bolts (two per volley). */
+   public static final float CHITAURI_INTERCEPTOR = 3.0F;
+   /** Siege lancer shell: the direct hit; the blast and the broken cover do the rest. */
+   public static final float CHITAURI_SIEGE = 8.0F;
+   /** Heavy assault ground slam (radius 3.5, falls off to half at the edge). */
+   public static final float CHITAURI_SLAM = 10.0F;
+
+   /**
+    * Chitauri bodies (docs/balance/2026-10-31-global-rebalance.md, Chitauri rows). The foot soldier is the mass enemy:
+    * 14 HP and armor 2 (was 26 / 6 / toughness 2) so a strong hero's ordinary hit (8-12) drops one in 1-2 hits.
+    * The elites stay dangerous through tactics, not a wall of health: a heavy is 60 HP / armor 10 and no single hit
+    * takes more than {@link #CHITAURI_HEAVY_HIT_CAP} of it (no one-shot, no endless sponge either).
+    */
+   public static final float CHITAURI_SOLDIER_HEALTH = 14.0F;
+   public static final float CHITAURI_SOLDIER_ARMOR = 2.0F;
+   public static final float CHITAURI_CAPTOR_HEALTH = 18.0F;
+   public static final float CHITAURI_HEAVY_HEALTH = 60.0F;
+   public static final float CHITAURI_HEAVY_ARMOR = 10.0F;
+   /** Share of a heavy's max health one hit may take at most (bypass-invulnerability damage ignores the cap). */
+   public static final float CHITAURI_HEAVY_HIT_CAP = 0.34F;
+   public static final float CHITAURI_COMMANDER_HEALTH = 70.0F;
+   public static final float CHITAURI_COMMANDER_HIT_CAP = 0.3F;
+   public static final float CHITAURI_INTERCEPTOR_HEALTH = 16.0F;
+   public static final float CHITAURI_SIEGE_HEALTH = 90.0F;
+   public static final float CHITAURI_SIEGE_HIT_CAP = 0.25F;
+   public static final float CHITAURI_BEACON_HEALTH = 40.0F;
 
    // ---- Ultron uprising (docs/plans/2026-11-01-ultron-uprising.md) -----------------------------
 

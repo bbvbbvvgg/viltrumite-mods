@@ -105,6 +105,36 @@ public final class HeroSpeech {
          HeroLine.DEFAULT_RANGE, null, true);
    }
 
+   /**
+    * A world-event line without a hero speaker (Chitauri hive and commander announcements): text only, shown to the
+    * given real players with the portrait the client registered for {@code voice}. The caller owns cooldowns; this path
+    * keeps no per-speaker state, so it never interrupts a hero's own line on the server side (the client queue orders
+    * them by priority). One world-voice seam with {@link #worldLine} (range audience, one line per voice): a line
+    * without a speaking entity uses the same speaker id, {@link #worldVoiceId}, so the client keys every world voice
+    * (the hive, Ultron) apart and never mixes it with another voice.
+    */
+   public static int announce(java.util.Collection<ServerPlayer> audience, @Nullable net.minecraft.world.entity.Entity speakerEntity, String voice,
+      String lineId, String speakerKey, List<String> fragments, HeroLine.Priority priority) {
+      if (fragments.isEmpty()) {
+         return 0;
+      }
+      int serial = nextSerial++;
+      if (nextSerial == Integer.MAX_VALUE) {
+         nextSerial = 1;
+      }
+      UUID speaker = speakerEntity != null ? speakerEntity.getUUID() : worldVoiceId(voice);
+      HeroLineS2CPacket packet = HeroLineS2CPacket.play(serial, speaker, speakerEntity != null ? speakerEntity.getId() : -1, "", voice, lineId, speakerKey,
+         fragments, false, priority.ordinal(), 0);
+      int sent = 0;
+      for (ServerPlayer listener : audience) {
+         if (isRealPlayer(listener)) {
+            CoreMessages.sendToPlayer(packet, listener);
+            sent++;
+         }
+      }
+      return sent;
+   }
+
    /** Stops the speaker's line (only {@code lineId}, or any when null); e.g. a cancelled channel. */
    public static void interrupt(ServerPlayer speaker, @Nullable String lineId) {
       Active active = ACTIVE.get(speaker.getUUID());
