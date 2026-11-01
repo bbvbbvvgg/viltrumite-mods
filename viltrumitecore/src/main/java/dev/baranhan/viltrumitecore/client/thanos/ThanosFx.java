@@ -79,7 +79,7 @@ public final class ThanosFx {
    private static final List<Mote> MOTES = new ArrayList<>();
    static final Map<Integer, Telegraph> TELEGRAPHS = new HashMap<>();
    private static final Map<Integer, Walker> WALKERS = new HashMap<>();
-   private static final RandomSource RNG = RandomSource.create();
+   static final RandomSource RNG = RandomSource.create();
    static long ticks;
    private static int disorient;
    private static int disorientMax = 1;
@@ -328,8 +328,7 @@ public final class ThanosFx {
             FX.removeIf(f -> f.a == p.a() || f.kind == ThanosFxS2CPacket.REALITY_MIRAGE);
             TELEGRAPHS.remove(p.a());
          }
-         default -> {
-         }
+         default -> ThanosWarFx.accept(p, level, at, dir);
       }
    }
 
@@ -420,6 +419,8 @@ public final class ThanosFx {
          }
       }
 
+      ThanosWarFx.tick(level);
+
       TELEGRAPHS.values().removeIf(t -> ticks - t.start() > t.ticks() + 4);
       for (Iterator<Mote> it = MOTES.iterator(); it.hasNext(); ) {
          Mote m = it.next();
@@ -483,7 +484,7 @@ public final class ThanosFx {
          return;
       }
 
-      boolean late = t.phase() == ThanosPhase.FINAL || ThanosClient.finalMinute();
+      boolean late = t.phase() == ThanosPhase.GAUNTLET || ThanosClient.finalMinute();
       for (int i = 0; i < anchors.stones().length; i++) {
          Vec3 s = anchors.stones()[i];
          float glow = anchors.glow()[i];
@@ -652,7 +653,7 @@ public final class ThanosFx {
    // ---- spawners --------------------------------------------------------------------------------
 
    @Nullable
-   private static Mote mote(Vec3 at, int rgb, float size0, float size1, int life, boolean glow) {
+   static Mote mote(Vec3 at, int rgb, float size0, float size1, int life, boolean glow) {
       if (MOTES.size() >= MAX_MOTES) {
          return null;
       }
@@ -671,7 +672,7 @@ public final class ThanosFx {
       return m;
    }
 
-   private static void burst(Vec3 at, int count, double speed, int rgb, float size, int life, boolean glow, double up) {
+   static void burst(Vec3 at, int count, double speed, int rgb, float size, int life, boolean glow, double up) {
       for (int i = 0; i < count; i++) {
          Mote m = mote(at, rgb, size, size * 0.2F, life / 2 + RNG.nextInt(Math.max(1, life)), glow);
          if (m == null) {
@@ -686,7 +687,7 @@ public final class ThanosFx {
       }
    }
 
-   private static void implode(Vec3 at, int count, double radius, int rgb, int life) {
+   static void implode(Vec3 at, int count, double radius, int rgb, int life) {
       for (int i = 0; i < count; i++) {
          Vec3 d = new Vec3(RNG.nextGaussian(), RNG.nextGaussian(), RNG.nextGaussian()).normalize().scale(radius * (0.6 + RNG.nextFloat() * 0.4));
          Mote m = mote(at.add(d), rgb, 0.06F, 0.01F, life, true);
@@ -847,7 +848,7 @@ public final class ThanosFx {
 
       ThanosRenderer.newFrame();
       boolean thanos = ThanosClient.active() || !WALKERS.isEmpty();
-      if (FX.isEmpty() && MOTES.isEmpty() && TELEGRAPHS.isEmpty() && !thanos) {
+      if (FX.isEmpty() && MOTES.isEmpty() && TELEGRAPHS.isEmpty() && !thanos && ThanosWarFx.idle()) {
          return;
       }
 
@@ -891,6 +892,8 @@ public final class ThanosFx {
             drawFx(buf, cam, camera, level, f, partial, glow);
          }
       }
+
+      ThanosWarFx.draw(buf, cam, camera, level, partial, glow);
 
       if (glow) {
          telegraphs(buf, cam, camera, level, partial);
@@ -1185,6 +1188,7 @@ public final class ThanosFx {
 
    public static void clear() {
       FX.clear();
+      ThanosWarFx.clear();
       MOTES.clear();
       TELEGRAPHS.clear();
       WALKERS.clear();
