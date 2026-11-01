@@ -534,6 +534,11 @@ public interface HeroDefinition {
       return false;
    }
 
+   /** Fire and lava neither burn nor show flames on this body (Entity#fireImmune / #isOnFire, both sides). */
+   default boolean fireImmune(Player player) {
+      return false;
+   }
+
    /**
     * Both sides: full knockback immunity ({@link HeroKnockback}). Vanilla knockback,
     * explosion pushes and the hurt velocity resync are skipped; hero pushes ask

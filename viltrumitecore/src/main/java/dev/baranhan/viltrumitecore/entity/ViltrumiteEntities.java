@@ -107,6 +107,13 @@ public class ViltrumiteEntities {
          .sized(3.0F, 2.0F).clientTrackingRange(16).updateInterval(1).fireImmune().noSave().noSummon().build("quinjet")
    );
 
+   /** Ghost Rider's Hell Cycle: a rideable hellfire motorcycle (owner-only, never saved). */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleEntity>> HELL_CYCLE = ENTITIES.register(
+      "hell_cycle", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleEntity>of(dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleEntity::new, MobCategory.MISC)
+         .sized(dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleRules.WIDTH, dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleRules.HEIGHT)
+         .clientTrackingRange(10).updateInterval(1).fireImmune().noSave().noSummon().build("hell_cycle")
+   );
+
    public static void register(IEventBus eventBus) {
       ENTITIES.register(eventBus);
    }
