@@ -40,5 +40,13 @@ public class ClientModEvents {
    @SubscribeEvent
    public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
       event.registerSpriteSet((ParticleType)ViltrumiteParticles.GIANT_METEOR_SMOKE.get(), GiantMeteorSmokeParticle.Provider::new);
+      event.registerSpriteSet(ViltrumiteParticles.METEOR_SMOKE.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.TRAIL));
+      event.registerSpriteSet(ViltrumiteParticles.METEOR_BILLOW.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.BILLOW));
+      event.registerSpriteSet(ViltrumiteParticles.METEOR_DUST.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.DUST));
+      event.registerSpriteSet(ViltrumiteParticles.FIRE_SMOKE.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Provider(s, dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.Style.FIRE));
+      event.registerSpriteSet(ViltrumiteParticles.METEOR_FLAME.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorFlameParticle.Provider(s, false));
+      event.registerSpriteSet(ViltrumiteParticles.FIRE_FLARE.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorFlameParticle.Provider(s, true));
+      event.registerSpriteSet(ViltrumiteParticles.METEOR_EMBER.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorEmberParticle.Provider(s, false));
+      event.registerSpriteSet(ViltrumiteParticles.METEOR_ASH.get(), s -> new dev.baranhan.viltrumitecore.client.particle.MeteorEmberParticle.Provider(s, true));
    }
 }

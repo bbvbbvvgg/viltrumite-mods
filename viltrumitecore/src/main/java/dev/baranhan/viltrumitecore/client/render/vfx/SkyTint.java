@@ -15,8 +15,16 @@ import java.util.function.Supplier;
  * show. Render thread only; the instance form is for tests.
  */
 public final class SkyTint {
-   /** Colour multipliers, extra darkening (0 none, 1 black) and the rain / thunder multiplier. */
-   public record Tint(float r, float g, float b, float darken, float rain) {
+   /**
+    * Colour multipliers, extra darkening (0 none, 1 black) and the rain / thunder multiplier. The optional
+    * cover colour ({@code cr, cg, cb}) replaces the hue by {@code cover} (0 none, 1 full) while it keeps the
+    * brightness of the vanilla colour, so a cover tint is bright by day and dark at night. A multiplier alone
+    * cannot turn a blue sky red; old five-value tints have cover 0 and work as before.
+    */
+   public record Tint(float r, float g, float b, float darken, float rain, float cr, float cg, float cb, float cover) {
+      public Tint(float r, float g, float b, float darken, float rain) {
+         this(r, g, b, darken, rain, 1.0F, 1.0F, 1.0F, 0.0F);
+      }
    }
 
    public static final Tint NONE = new Tint(1.0F, 1.0F, 1.0F, 0.0F, 1.0F);
@@ -91,14 +99,28 @@ public final class SkyTint {
 
    /** Pure: linear blend of every field. */
    public static Tint mix(Tint base, Tint over, float w) {
+      // the cover hue is the stronger side's hue (NONE has no hue), its amount blends like every other field
+      Tint hue = over.cover >= base.cover ? over : base;
       return new Tint(lerp(base.r, over.r, w), lerp(base.g, over.g, w), lerp(base.b, over.b, w),
-         lerp(base.darken, over.darken, w), lerp(base.rain, over.rain, w));
+         lerp(base.darken, over.darken, w), lerp(base.rain, over.rain, w), hue.cr, hue.cg, hue.cb, lerp(base.cover, over.cover, w));
    }
 
    /** Pure: a colour under a tint. */
    public static double[] apply(double r, double g, double b, Tint tint) {
       double keep = 1.0 - tint.darken;
-      return new double[]{r * tint.r * keep, g * tint.g * keep, b * tint.b * keep};
+      double or = r * tint.r * keep;
+      double og = g * tint.g * keep;
+      double ob = b * tint.b * keep;
+      if (tint.cover <= 0.0F) {
+         return new double[]{or, og, ob};
+      }
+
+      // the cover colour at the brightness of the original colour (Rec. 601 luma), so night stays night
+      double luma = 0.299 * r + 0.587 * g + 0.114 * b;
+      double scale = keep * (0.18 + 1.25 * luma);
+      double c = tint.cover;
+      return new double[]{or + (Math.min(1.0, tint.cr * scale) - or) * c, og + (Math.min(1.0, tint.cg * scale) - og) * c,
+         ob + (Math.min(1.0, tint.cb * scale) - ob) * c};
    }
 
    private static float lerp(float a, float b, float w) {
