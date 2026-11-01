@@ -8,6 +8,8 @@ import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.ThanosFxS2CPacket;
 import dev.baranhan.viltrumitecore.network.packet.ThanosStateS2CPacket;
+import dev.baranhan.viltrumitecore.worldevent.thanos.war.ThanosWar;
+import dev.baranhan.viltrumitecore.worldevent.thanos.war.ThanosWarSounds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The Thanos city event ({@code /thanos start}): one Thanos with the six stones, no army. A
+ * The Thanos city event ({@code /thanos start}): THANOS 2.0, the war for Atheria. Thanos with the
+ * six stones, the Sanctuary II over the city, the Black Order and the Chitauri ({@link ThanosWar}),
+ * in four phases ({@link ThanosPhase}: arrival, Black Order, invasion, full Gauntlet). A
  * session lives in memory only (a restart ends it; Thanos is never saved). Stages: INTRO (he
  * steps out of a portal, untouchable) -> FIGHT (6 minutes of active time) -> VICTORY (the heroes
  * beat him: he kneels, the stones go out, the gauntlet crumbles) or, when the time runs out, the
@@ -96,7 +100,12 @@ public final class ThanosEvent {
    private int fightTicks;
    private int counted = 1;
    private int lonely;
-   private ThanosPhase phase = ThanosPhase.OPENING;
+   private ThanosPhase phase = ThanosPhase.ARRIVAL;
+   /** Active fight ticks spent in the current phase (its minimum stay). */
+   private int phaseTicks;
+   private final ThanosWar war;
+   private int lastAbsorbFx = -1000;
+   private boolean absorbHinted;
    @Nullable
    private UUID pauseId;
    private boolean ended;
@@ -110,6 +119,8 @@ public final class ThanosEvent {
       this.dimension = level.dimension();
       this.thanos = thanos;
       this.combat = new ThanosCombat(this, level, thanos, level.random.nextLong());
+      this.war = new ThanosWar(this, level, thanos, this.combat);
+      this.combat.attach(this.war);
       this.bar = new ServerBossEvent(Component.translatable("entity.viltrumitecore.thanos"), BossEvent.BossBarColor.PURPLE,
          BossEvent.BossBarOverlay.NOTCHED_10);
       this.bar.setDarkenScreen(true);
@@ -244,6 +255,32 @@ public final class ThanosEvent {
       return this.thanos;
    }
 
+   public ThanosWar war() {
+      return this.war;
+   }
+
+   public ThanosCombat combat() {
+      return this.combat;
+   }
+
+   public int phaseTicks() {
+      return this.phaseTicks;
+   }
+
+   /** QA ({@code /thanos phase}): the next phase now (its stay and gates skipped), with its beat. */
+   public static boolean forcePhase(ThanosPhase target) {
+      ThanosEvent e = active;
+      if (e == null || e.ended || e.stage != Stage.FIGHT || target.ordinal() <= e.phase.ordinal()) {
+         return false;
+      }
+
+      while (e.phase.ordinal() < target.ordinal()) {
+         e.enterPhase(e.phase.next());
+      }
+
+      return true;
+   }
+
    public ServerLevel level() {
       return this.level;
    }
@@ -277,6 +314,8 @@ public final class ThanosEvent {
          ThanosRules.INTRO_TICKS);
       ThanosSounds.play(this.level, this.thanos.position(), ThanosSounds.ARRIVAL, 3.0F, 1.0F, 160.0);
       this.broadcast(Component.translatable("event.viltrumitecore.thanos.arrived").withStyle(ChatFormatting.DARK_PURPLE));
+      this.thanos.setHitListener(this.war::onHit);
+      this.war.begin();
       this.sync(true);
       LOG.info("Thanos arrived in {} at {} for {} hero(es), max health {}", this.dimension.location(), this.thanos.blockPosition().toShortString(),
          this.counted, this.thanos.getMaxHealth());
@@ -305,6 +344,7 @@ public final class ThanosEvent {
       }
 
       if (!this.ended) {
+         this.war.tick(this.stage, WorldPause.active(this.server));
          this.sync(false);
       }
    }
@@ -389,17 +429,22 @@ public final class ThanosEvent {
       }
 
       boolean defeated = this.thanos.defeated() || this.thanos.getHealth() <= 0.0F;
-      this.clock.advance(ThanosClock.holds(paused, timeStopped));
+      boolean holds = ThanosClock.holds(paused, timeStopped);
+      this.clock.advance(holds);
+      if (!holds) {
+         this.phaseTicks++;
+      }
+
       float max = Math.max(1.0F, this.thanos.getMaxHealth());
       float fraction = Mth.clamp(this.thanos.getHealth() / max, 0.0F, 1.0F);
       ThanosOutcome outcome = ThanosOutcome.resolve(defeated, this.clock.expired());
-      ThanosPhase next = ThanosPhase.of(fraction, this.clock.elapsed(), this.clock.duration());
-      // the fight ends this tick (a kill drops him below every threshold at once): no new phase is announced over its end
-      if (outcome.phaseMayAdvance() && next.ordinal() > this.phase.ordinal()) {
-         this.phase = next;
-         this.thanos.setPhase(next);
-         this.announce(next);
+      ThanosPhase next = ThanosPhase.advance(this.phase, fraction, this.clock.elapsed(), this.phaseTicks);
+      // the fight ends this tick: no new phase is announced over its end
+      if (outcome.phaseMayAdvance() && next != this.phase) {
+         this.enterPhase(next);
       }
+
+      this.absorbFx();
 
       this.bar.setProgress(fraction);
       switch (outcome) {
@@ -410,23 +455,55 @@ public final class ThanosEvent {
       }
    }
 
+   /** A new phase starts: announced, the war deploys what it brings, Thanos gives the order (the COMMAND beat). */
+   private void enterPhase(ThanosPhase next) {
+      this.phase = next;
+      this.phaseTicks = 0;
+      this.absorbHinted = false;
+      this.thanos.setPhase(next);
+      this.announce(next);
+      this.war.onPhase(next);
+      this.combat.command();
+      this.sync(true);
+   }
+
    private void announce(ThanosPhase next) {
       LOG.info("Thanos phase {} ({} left, health {}/{})", next, ThanosRules.clock(this.clock.remaining()), Math.round(this.thanos.getHealth()),
          Math.round(this.thanos.getMaxHealth()));
       String key = switch (next) {
-         case ESCALATION -> "event.viltrumitecore.thanos.phase.escalation";
-         case ONSLAUGHT -> "event.viltrumitecore.thanos.phase.onslaught";
-         case FINAL -> "event.viltrumitecore.thanos.phase.final";
+         case BLACK_ORDER -> "event.viltrumitecore.thanos.phase.black_order";
+         case INVASION -> "event.viltrumitecore.thanos.phase.invasion";
+         case GAUNTLET -> "event.viltrumitecore.thanos.phase.gauntlet";
          default -> null;
       };
       if (key != null) {
-         this.broadcast(Component.translatable(key).withStyle(next == ThanosPhase.FINAL ? ChatFormatting.RED : ChatFormatting.LIGHT_PURPLE));
+         this.broadcast(Component.translatable(key).withStyle(next == ThanosPhase.GAUNTLET ? ChatFormatting.RED : ChatFormatting.LIGHT_PURPLE));
       }
 
-      if (next == ThanosPhase.FINAL) {
+      if (next == ThanosPhase.GAUNTLET) {
          ThanosSounds.play(this.level, this.thanos.position(), ThanosSounds.STONES_FLARE, 3.0F, 0.8F, 160.0);
       } else if (key != null) {
          ThanosSounds.play(this.level, this.thanos.position(), ThanosSounds.PHASE, 3.0F, 1.0F, 160.0);
+      }
+   }
+
+   /** Damage the phase floor held off: the Gauntlet flares (at most every few ticks), and one hint per phase. */
+   private void absorbFx() {
+      float absorbed = this.thanos.takeAbsorbed();
+      if (absorbed <= 0.0F || this.stageTick - this.lastAbsorbFx < ThanosRules.ABSORB_FX_GAP) {
+         return;
+      }
+
+      this.lastAbsorbFx = this.stageTick;
+      ThanosTargets.fx(this.level, ThanosFxS2CPacket.GAUNTLET_ABSORB, this.thanos.getId(), -1, this.combat.handPos(), Vec3.ZERO, absorbed,
+         this.phase.ordinal());
+      ThanosWarSounds.play(this.level, this.thanos.position(),
+         ThanosWarSounds.ABSORB, 1.6F, 0.9F, 64.0);
+      if (!this.absorbHinted) {
+         this.absorbHinted = true;
+         for (ServerPlayer p : this.heroes) {
+            p.displayClientMessage(Component.translatable("event.viltrumitecore.thanos_war.absorb").withStyle(ChatFormatting.LIGHT_PURPLE), true);
+         }
       }
    }
 
@@ -442,6 +519,7 @@ public final class ThanosEvent {
    private void beginVictory() {
       this.clock.stop();
       this.combat.clearAll();
+      this.war.onVictory();
       // however the health reached 0 (a capped hit, a direct setHealth, /kill), no vanilla death runs:
       // the defeat scene plays on a living body and the event removes him at its end
       this.thanos.holdForDefeat();
@@ -466,6 +544,7 @@ public final class ThanosEvent {
    private void beginSnap() {
       this.clock.stop();
       this.combat.clearAll();
+      this.war.onSnap();
       this.snapAt = this.thanos.position();
       this.snapYaw = this.thanos.yBodyRot;
       this.stage = Stage.SNAP_WAIT;
@@ -510,6 +589,7 @@ public final class ThanosEvent {
    private void tickSnap() {
       if (this.stageTick == ThanosSceneTimeline.THANOS_GONE && !this.thanos.isRemoved()) {
          this.combat.clearAll();
+         this.war.onThanosGone();
          this.thanos.discard();
       }
 
@@ -539,6 +619,7 @@ public final class ThanosEvent {
 
       try {
          this.combat.clearAll();
+         this.war.end(kind);
       } finally {
          if (!this.thanos.isRemoved()) {
             this.thanos.discard();

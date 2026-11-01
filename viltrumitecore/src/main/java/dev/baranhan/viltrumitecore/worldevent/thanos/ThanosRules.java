@@ -8,14 +8,24 @@ public final class ThanosRules {
    public static final int TPS = 20;
    /** The fight lasts six minutes of active event ticks. */
    public static final int DURATION_TICKS = 6 * 60 * TPS;
-   /** The last minute is the FINAL phase. */
+   /** The last minute: the countdown and the final music (independent of the phase). */
    public static final int FINAL_TICKS = 60 * TPS;
-   /** Time pushes the phase: ESCALATION after 2 min, ONSLAUGHT after 4 min. */
-   public static final int ESCALATION_TICK = 2 * 60 * TPS;
-   public static final int ONSLAUGHT_TICK = 4 * 60 * TPS;
-   /** Health pushes the phase: ESCALATION at 70 % left, ONSLAUGHT at 40 %. */
-   public static final float ESCALATION_HEALTH = 0.70F;
-   public static final float ONSLAUGHT_HEALTH = 0.40F;
+   /** Time pushes the phase: BLACK_ORDER after 1:15, INVASION after 2:40, GAUNTLET after 4:10. */
+   public static final int BLACK_ORDER_TICK = 1500;
+   public static final int INVASION_TICK = 3200;
+   public static final int GAUNTLET_TICK = 5000;
+   /** Health pushes the phase: BLACK_ORDER at 75 % left, INVASION at 50 %, GAUNTLET at 25 %. */
+   public static final float BLACK_ORDER_HEALTH = 0.75F;
+   public static final float INVASION_HEALTH = 0.50F;
+   public static final float GAUNTLET_HEALTH = 0.25F;
+   /** Minimum stay of a phase before the next may start (the health floor holds meanwhile). */
+   public static final int ARRIVAL_MIN_TICKS = 900;
+   public static final int BLACK_ORDER_MIN_TICKS = 1000;
+   public static final int INVASION_MIN_TICKS = 1000;
+   /** Phase IV: stone moves hit this much harder. */
+   public static final float GAUNTLET_STONE_DAMAGE = 1.2F;
+   /** The gauntlet's absorb flash (health floor reached) at most this often. */
+   public static final int ABSORB_FX_GAP = 15;
    /** Arrival through a Space portal before the clock starts (he is untouchable meanwhile). */
    public static final int INTRO_TICKS = 80;
    /** Heroes within this distance of Thanos (same level) take part: HUD, boss bar, scene. */
@@ -73,7 +83,7 @@ public final class ThanosRules {
    public static final float REWIND_MIN_DAMAGE_REACTION = 0.01F;
    /** A target but no move for this long (everything gated, a lost path): the fight recovers. */
    public static final int IDLE_RECOVER_TICKS = 8 * TPS;
-   /** FINAL: telegraphs x0.8 (never under {@link #MIN_TELEGRAPH_FINAL}), cooldowns x0.7. */
+   /** GAUNTLET: telegraphs x0.8 (never under {@link #MIN_TELEGRAPH_FINAL}), cooldowns x0.7. */
    public static final float FINAL_TELEGRAPH = 0.8F;
    public static final float FINAL_COOLDOWN = 0.7F;
    public static final int MIN_TELEGRAPH = 12;
@@ -106,7 +116,7 @@ public final class ThanosRules {
 
    /** Telegraph of a move in a phase. */
    public static int telegraph(int base, ThanosPhase phase) {
-      if (phase != ThanosPhase.FINAL) {
+      if (phase != ThanosPhase.GAUNTLET) {
          return Math.max(MIN_TELEGRAPH, base);
       }
 
@@ -115,7 +125,7 @@ public final class ThanosRules {
 
    /** Cooldown of a move in a phase. */
    public static int cooldown(int base, ThanosPhase phase) {
-      return phase == ThanosPhase.FINAL ? Math.round(base * FINAL_COOLDOWN) : base;
+      return phase == ThanosPhase.GAUNTLET ? Math.round(base * FINAL_COOLDOWN) : base;
    }
 
    /** Seconds shown by the HUD for the ticks left (rounded up, so 0:00 only at the very end). */
@@ -134,8 +144,18 @@ public final class ThanosRules {
       return Math.max(0.0F, Math.min(recentDamage * REWIND_HEAL_SHARE, maxHealth * REWIND_HEAL_CAP));
    }
 
+   /** Damage factor of a move in a phase (phase IV: the full Gauntlet hits harder with the stones). */
+   public static float phaseDamage(ThanosMove move, ThanosPhase phase) {
+      return phase == ThanosPhase.GAUNTLET && move.usesStones() ? GAUNTLET_STONE_DAMAGE : 1.0F;
+   }
+
+   /** The health floor in points for a phase (0 in the last one). */
+   public static float floorHealth(ThanosPhase phase, float maxHealth) {
+      return phase.floor() * maxHealth;
+   }
+
    /** Ticks between two teleports in a phase. */
    public static int teleportGap(ThanosPhase phase) {
-      return phase == ThanosPhase.FINAL ? TELEPORT_GAP_FINAL_TICKS : TELEPORT_GAP_TICKS;
+      return phase == ThanosPhase.GAUNTLET ? TELEPORT_GAP_FINAL_TICKS : TELEPORT_GAP_TICKS;
    }
 }
