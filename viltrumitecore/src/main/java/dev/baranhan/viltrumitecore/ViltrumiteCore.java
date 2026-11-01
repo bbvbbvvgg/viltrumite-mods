@@ -136,6 +136,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
       // ULTRON — ВОССТАНИЕ МАШИН (docs/plans/2026-11-01-ultron-uprising.md): sounds and the machines' entity register.
       dev.baranhan.viltrumitecore.worldevent.ultron.UltronSetup.init(modEventBus);
+      // Godzilla — city catastrophe (docs/plans/2026-11-05-godzilla-city-catastrophe.md): sounds and the kaiju's entity register.
+      dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);

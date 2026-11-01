@@ -11,7 +11,7 @@ public final class GodzillaRules {
    // ------------------------------------------------------------------ size
 
    /** Height to the top of the tallest dorsal plate. */
-   public static final float HEIGHT = 96.0F;
+   public static final float HEIGHT = 120.0F;
    /** Height of the geo model in model blocks (px / 16); the renderer scales it by {@link #modelScale()}. */
    public static final float MODEL_HEIGHT = 12.0F;
 
