@@ -303,6 +303,36 @@
       }
     ]
   },
+  "thanos.combo_time_volley": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_time_volley",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_time_volley",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos.combo_moon_fall": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_moon_fall",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_moon_fall",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "thanos.combo_infinity": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos.combo_infinity",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos/combo_infinity",
+        "attenuation_distance": 64
+      }
+    ]
+  },
   "thanos.world_stop": {
     "category": "master",
     "subtitle": "subtitles.viltrumitecore.thanos.world_stop",
