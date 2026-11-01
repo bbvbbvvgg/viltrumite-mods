@@ -32,7 +32,8 @@ public interface ChitauriMob {
     * that is fighting a Chitauri (hero summons). Never another Chitauri.
     */
    static boolean validTarget(@Nullable LivingEntity target) {
-      if (target == null || !target.isAlive() || is(target) || target.isSpectator()) {
+      if (target == null || !target.isAlive() || is(target) || target.isSpectator()
+         || dev.baranhan.viltrumitecore.city.citizen.CitizenCaptivity.isHeld(target)) {
          return false;
       }
       if (target instanceof Player player) {
