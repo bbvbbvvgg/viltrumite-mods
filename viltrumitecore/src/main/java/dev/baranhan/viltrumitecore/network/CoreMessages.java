@@ -73,7 +73,10 @@ public class CoreMessages {
    // to the parallel branches of the same integration round.
    // v27 (integration of #124/#125/#126/#127): one table with CityPowerS2CPacket, CityCollapseS2CPacket and
    //     AftermathS2CPacket appended in that order after the Ultron packets. Every "24" and "26" peer is refused.
-   private static final String PROTOCOL_VERSION = "27";
+   // v28 (Ghost Rider, feat/ghost-rider-hell-on-wheels): HellCycleControlC2SPacket and HellfireS2CPacket appended after
+   //     AftermathS2CPacket, six GHOSTRIDER_* HeroAction values appended after REDHULK_OVERHEAT, hero id ghost_rider and
+   //     the hell_cycle entity type. Every "27" peer is refused.
+   private static final String PROTOCOL_VERSION = "28";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -505,6 +508,15 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::handle).add();
+      // Ghost Rider (feat/ghost-rider-hell-on-wheels), v28: the Hell Cycle's visual controls and the hellfire burn marks.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.HellCycleControlC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.HellCycleControlC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.HellCycleControlC2SPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HellCycleControlC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

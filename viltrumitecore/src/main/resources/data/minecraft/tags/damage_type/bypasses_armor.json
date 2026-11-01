@@ -5,6 +5,8 @@
       "id": "#viltrumitecore:divine",
       "required": false
     },
-    "viltrumitecore:annihilation"
+    "viltrumitecore:annihilation",
+    "viltrumitecore:hellfire",
+    "viltrumitecore:penance"
   ]
 }
