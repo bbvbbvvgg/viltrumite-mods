@@ -20,7 +20,9 @@ public enum HeroId {
    SINCLAIR("sinclair"),
    /** Sung Jinwoo, the Shadow Monarch (spec docs/design/2026-10-28-jinwoo-design.md). */
    JINWOO("jinwoo"),
-   CAPTAIN("captain");
+   CAPTAIN("captain"),
+   /** Red Hulk, Thunderbolt Ross (spec docs/design/2026-11-01-red-hulk-design.md); appended, saved ids unchanged. */
+   RED_HULK("red_hulk");
 
    private final String key;
 

@@ -108,7 +108,14 @@ public enum HeroAction {
    /** Iron Man stage 6: the Iron Legion menu (call / orders); appended after Captain America, wire ordinals unchanged. */
    LEGION,
    /** Reinhard's secret Final Punch (Shift + N, ReinhardFinalPunchC2SPacket); appended, wire ordinals unchanged. Never a slot action. */
-   FINAL_PUNCH;
+   FINAL_PUNCH,
+   /** Red Hulk (spec docs/design/2026-11-01-red-hulk-design.md); appended after FINAL_PUNCH, wire ordinals unchanged. */
+   REDHULK_CLAP,
+   REDHULK_SEISMIC,
+   REDHULK_LEAP,
+   REDHULK_BLAST,
+   REDHULK_FURY,
+   REDHULK_OVERHEAT;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();
