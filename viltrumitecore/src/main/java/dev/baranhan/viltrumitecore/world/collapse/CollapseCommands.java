@@ -43,11 +43,13 @@ public final class CollapseCommands {
    private static int status(CommandContext<CommandSourceStack> ctx) {
       ServerLevel level = ctx.getSource().getLevel();
       DamageLedger ledger = StructuralDamage.ledger(level);
-      String head = (CollapseDirector.enabled() ? "" : "[disabled] ") + CollapseDirector.status() + String.format("; ledger %d blocks in %d cells",
-         ledger.size(), ledger.cellCount());
-      ctx.getSource().sendSuccess(() -> Component.literal(head), false);
+      String head = CollapseDirector.status() + String.format("; ledger %d blocks in %d cells", ledger.size(), ledger.cellCount());
+      if (!CollapseDirector.enabled()) {
+         ctx.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.collapse.disabled"), false);
+      }
+      ctx.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.collapse.status", head), false);
       for (String line : CollapseDirector.describeActive()) {
-         ctx.getSource().sendSuccess(() -> Component.literal(line), false);
+         ctx.getSource().sendSuccess(() -> Component.literal(line), false); // technical: ids, phases, counts
       }
       return CollapseDirector.activeCount();
    }
@@ -58,7 +60,7 @@ public final class CollapseCommands {
       CollapseDirector.abortAll(level);
       StructuralDamage.ledger(level).clear();
       CollapseDirector.resetMetrics();
-      ctx.getSource().sendSuccess(() -> Component.literal("collapse: aborted " + n + ", ledger cleared"), true);
+      ctx.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.collapse.cleared", n), true);
       return n;
    }
 
@@ -67,11 +69,12 @@ public final class CollapseCommands {
       BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
       CollapseAnalyzer.Plan plan = CollapseDirector.tryStart(level, pos.getX(), pos.getY(), pos.getZ(), 0.0F, CollapseCause.COMMAND, true);
       String text = plan.accepted()
-         ? String.format("collapse would start: %s %s, rule %s, %d blocks%s, box %d..%d / %d..%d / %d..%d, ground %d, fall dir %.2f %.2f (%d damaged)",
+         ? String.format("%s %s, rule %s, %d blocks%s, box %d..%d / %d..%d / %d..%d, ground %d, fall dir %.2f %.2f (%d damaged)",
             plan.variant(), plan.severity(), plan.rule(), plan.blocks().length, plan.truncated() ? " (truncated)" : "", plan.minX(), plan.maxX(), plan.minY(),
             plan.maxY(), plan.minZ(), plan.maxZ(), plan.groundY(), plan.fallX(), plan.fallZ(), plan.damaged())
-         : String.format("no collapse: %s (%d damaged blocks, %d cells)", plan.reason(), plan.damaged(), plan.cells());
-      ctx.getSource().sendSuccess(() -> Component.literal(text), false);
+         : String.format("%s (%d damaged blocks, %d cells)", plan.reason(), plan.damaged(), plan.cells());
+      ctx.getSource().sendSuccess(() -> Component.translatable(plan.accepted() ? "commands.viltrumitecore.collapse.analyze.yes"
+         : "commands.viltrumitecore.collapse.analyze.no", text), false);
       return plan.accepted() ? 1 : 0;
    }
 
@@ -99,7 +102,7 @@ public final class CollapseCommands {
       });
       CollapseDirector.noteCause(level, cause);
       StructuralDamage.impact(level, Vec3.atCenterOf(pos), cause);
-      ctx.getSource().sendSuccess(() -> Component.literal("collapse strike (" + cause.id() + "): " + removed[0] + " blocks removed"), true);
+      ctx.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.collapse.damage", cause.id(), removed[0]), true);
       return removed[0];
    }
 
@@ -113,7 +116,7 @@ public final class CollapseCommands {
       int z0 = Math.min(a.getZ(), b.getZ()), z1 = Math.max(a.getZ(), b.getZ());
       long volume = (long)(x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1);
       if (volume > 4096L) {
-         ctx.getSource().sendFailure(Component.literal("collapse cut: at most 4096 blocks"));
+         ctx.getSource().sendFailure(Component.translatable("commands.viltrumitecore.collapse.too_big", 4096));
          return 0;
       }
       CollapseCause cause = CollapseCause.byId(causeId);
@@ -127,7 +130,7 @@ public final class CollapseCommands {
       });
       CollapseDirector.noteCause(level, cause);
       StructuralDamage.impact(level, new Vec3((x0 + x1) / 2.0 + 0.5, (y0 + y1) / 2.0 + 0.5, (z0 + z1) / 2.0 + 0.5), cause);
-      ctx.getSource().sendSuccess(() -> Component.literal("collapse cut (" + cause.id() + "): " + removed[0] + " blocks removed"), true);
+      ctx.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.collapse.damage", cause.id(), removed[0]), true);
       return removed[0];
    }
 }

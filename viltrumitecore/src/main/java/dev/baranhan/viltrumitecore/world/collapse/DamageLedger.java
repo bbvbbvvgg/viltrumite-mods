@@ -138,10 +138,12 @@ public final class DamageLedger {
       ObjectIterator<Long2ObjectMap.Entry<Cell>> it = this.cells.long2ObjectEntrySet().iterator();
       while (it.hasNext()) {
          Long2ObjectMap.Entry<Cell> e = it.next();
-         this.size -= e.getValue().prune(cutoff);
-         if (e.getValue().keys.isEmpty()) {
+         long key = e.getLongKey();
+         Cell cell = e.getValue();
+         this.size -= cell.prune(cutoff);
+         if (cell.keys.isEmpty()) {
             it.remove();
-            this.dirty.remove(e.getLongKey());
+            this.dirty.remove(key);
          }
       }
       this.impacts.long2LongEntrySet().removeIf(e -> e.getLongValue() < cutoff);
