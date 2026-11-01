@@ -52,6 +52,8 @@ public final class HeroSubtitles {
    private static long lastFrame;
    /** ForgeGui left height right after an armor row that drew nothing (no armor), or -1. */
    private static int emptyArmorLeft = -1;
+   /** Client tick the shown line was last drawn (speaking state for the speaker's renderer). */
+   private static long shownTick = Long.MIN_VALUE / 2;
    /** Opt-in playtest log (client.hero.speech.qa.SubtitlePlaytest); null in a normal game. */
    @Nullable
    public static java.util.function.Consumer<String> qaLog;
@@ -163,6 +165,22 @@ public final class HeroSubtitles {
       }
    }
 
+   /**
+    * Entity id of the body whose line is on screen right now, or -1: a world voice's renderer (a villain's
+    * jaw and face) animates while its line is shown.
+    */
+   public static int speakingEntity() {
+      Shown s = shown;
+      return s == null || ticks - shownTick > 4 ? -1 : s.cue().entityId();
+   }
+
+   /** Voice key of the line on screen right now (a world voice or a hero key), or null. */
+   @Nullable
+   public static String speakingVoice() {
+      Shown s = shown;
+      return s == null || ticks - shownTick > 4 ? null : s.cue().voice();
+   }
+
    public static void clear() {
       QUEUE.clear();
       shown = null;
@@ -261,6 +279,8 @@ public final class HeroSubtitles {
          return;
       }
 
+      shownTick = ticks;
+
       SubtitleLayout.Result layout = current.layout();
       // Forge reserves the armor row even without armor; when nothing was drawn there and nothing
       // came after it on the left, the panel may use that empty row (as in the reference).
@@ -312,7 +332,7 @@ public final class HeroSubtitles {
          float px = x + layout.textWidth() + SubtitleLayout.GAP;
          HeroPortraits.Frame box = new HeroPortraits.Frame(px + 2.0F, y + 2.0F, layout.portraitWidth() - 4.0F, layout.height() - 4.0F, frame.alpha(),
             Util.getMillis() / 1000.0, cue.speaker(), speaker(mc, cue));
-         (cue.hero() != null ? HeroPortraits.resolve(cue.hero()) : HeroPortraits.resolveVoice(cue.voice())).render(graphics, box);
+         HeroPortraits.resolve(cue.hero(), cue.voice()).render(graphics, box);
       }
    }
 

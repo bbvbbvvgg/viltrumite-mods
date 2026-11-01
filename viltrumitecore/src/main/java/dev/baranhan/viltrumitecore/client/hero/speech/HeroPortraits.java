@@ -34,6 +34,7 @@ public final class HeroPortraits {
    private static final Vector3f KEY_LIGHT = new Vector3f(-0.3F, -1.0F, 0.6F).normalize();
    private static final Vector3f FILL_LIGHT = new Vector3f(-0.2F, -0.2F, 1.0F).normalize();
    private static final Map<HeroId, Portrait> PORTRAITS = new EnumMap<>(HeroId.class);
+   /** World voices (world-event speakers without a hero): portrait by the line's voice key. */
    private static final Map<String, Portrait> VOICES = new java.util.HashMap<>();
    /** GUI box (x0, y0, x1, y1) the caller has scissored to (GuiGraphics#enableScissor), or null. */
    @Nullable
@@ -58,16 +59,17 @@ public final class HeroPortraits {
    }
 
    /**
-    * Portrait of a non-hero voice (a world event speaker such as the Chitauri hive), keyed by the line's voice key.
-    * Unknown voices fall back to the default bust.
+    * Shared seam (Chitauri 2.0 + Ultron uprising): portrait of a world voice, a world-event speaker without a hero
+    * (the Chitauri hive and commander, Ultron), keyed by the line's voice key. Unknown voices fall back to the
+    * default bust.
     */
    public static synchronized void registerVoice(String voice, Portrait portrait) {
       VOICES.put(Objects.requireNonNull(voice, "voice"), Objects.requireNonNull(portrait, "portrait"));
    }
 
+   /** Portrait of a world voice only (no hero), else the default bust. Same as {@code resolve(null, voice)}. */
    public static synchronized Portrait resolveVoice(@Nullable String voice) {
-      Portrait portrait = voice == null ? null : VOICES.get(voice);
-      return portrait == null ? PlayerBustPortrait.INSTANCE : portrait;
+      return resolve(null, voice);
    }
 
    public static synchronized void register(HeroId hero, Portrait portrait) {
@@ -93,6 +95,18 @@ public final class HeroPortraits {
       } finally {
          outerClip = previous;
       }
+   }
+
+   /** A hero's portrait, else a registered world voice's, else the default bust. */
+   public static synchronized Portrait resolve(@Nullable HeroId hero, @Nullable String voice) {
+      if (hero == null && voice != null) {
+         Portrait world = VOICES.get(voice);
+         if (world != null) {
+            return world;
+         }
+      }
+
+      return resolve(hero);
    }
 
    public static synchronized Portrait resolve(@Nullable HeroId hero) {
