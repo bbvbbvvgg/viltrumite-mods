@@ -34,5 +34,5 @@ Contract for other systems: `docs/city-collapse-integration.md`. Sounds: `tools/
 - Dedicated server + client: copy the client argv from `/proc/<pid>/cmdline`, see `.memory-bank/chitauri.md`.
   Never `pkill -f` a pattern that also matches your own shell command (use `pgrep -f "[f]orgeclientuserdev"`).
 - Measured (llvmpipe, not a GPU): one 966-block topple at 34 blocks: 48–52 fps → 25–34 while falling, 15–21 in
-  the dust, fragments 2.8–3.4 ms/frame; 3 collapses at once: 33–40 → 5–8 fps; at 120 blocks 37 → 29–40 fps.
-  Server: TPS 20.0 in every run, analysis 3.7–15 ms (first one after start 25–45 ms, cold JIT), worst tick 28–62 ms.
+  the dust, fragments 2.4–3.4 ms/frame; 3 collapses at once: 33–40 → 5–8 fps; at 120 blocks 37 → 29–40 fps.
+  Server: TPS 20.0 in every run, analysis 3.7–15 ms (first one after start 11–45 ms, cold JIT), worst tick 28–62 ms.
