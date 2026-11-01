@@ -21,7 +21,7 @@ MOVES = {
     'grab': (9, 4), 'hold': (20, -1), 'throw': (12, 6), 'grab_miss': (10, -1),
     'clap': (16, 9), 'seismic': (26, 15), 'leap_crouch': (10, 10), 'leap_air': (20, -1), 'leap_land': (16, 0),
     'blast': (32, 12), 'fury': (24, 10), 'ult_charge': (60, -1), 'ult_release': (18, 2), 'ult_recover': (50, -1),
-    'vent': (30, -1), 'stagger': (14, -1), 'landing': (12, 0), 'enter': (30, 12),
+    'vent': (30, 6), 'stagger': (14, -1), 'landing': (12, 0), 'enter': (30, 12),
 }
 
 FIST = {'right_fingers': (0, 0, -95), 'left_fingers': (0, 0, 95), 'right_thumb': (0, 0, -50), 'left_thumb': (0, 0, 50)}
