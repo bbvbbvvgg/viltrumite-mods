@@ -34,6 +34,15 @@ public class ViltrumiteCoreConfig {
    public double reinhardFinalPunchLaunchUp = 0.55;
    public int reinhardFinalPunchLaunchTicks = 10;
    public int reinhardFinalPunchCooldownSeconds = 300;
+   // Structural collapse of damaged buildings (world/collapse, docs/city-collapse-integration.md).
+   // Off: damage still breaks blocks as before, nothing ever collapses. Clamped by CollapseDirector.
+   public boolean collapseEnabled = true;
+   /** Collapses running at the same time (0..8). */
+   public int collapseMaxActive = 3;
+   /** Blocks one collapse may move (24..4000); bigger sections are cut at the top. */
+   public int collapseMaxBlocks = 1600;
+   /** Block removals per server tick across all collapses (64..4000). */
+   public int collapseBlocksPerTick = 900;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -50,7 +59,8 @@ public class ViltrumiteCoreConfig {
          }
          // Files written before a knob existed get it added once (defaults; nothing else changes).
          try {
-            if (!java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("reinhardFinalPunchDamage")) {
+            if (!java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("reinhardFinalPunchDamage")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseBlocksPerTick")) {
                save();
             }
          } catch (IOException ignored) {

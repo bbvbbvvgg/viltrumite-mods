@@ -21,6 +21,11 @@ public class ViltrumiteParticles {
    public static final RegistryObject<SimpleParticleType> METEOR_EMBER = PARTICLES.register("meteor_ember", () -> new SimpleParticleType(true));
    public static final RegistryObject<SimpleParticleType> METEOR_ASH = PARTICLES.register("meteor_ash", () -> new SimpleParticleType(true));
 
+   /** Structural collapse: the dust wall that rolls along the streets after the slam (world/collapse). */
+   public static final RegistryObject<SimpleParticleType> COLLAPSE_DUST = PARTICLES.register("collapse_dust", () -> new SimpleParticleType(true));
+   /** Structural collapse: the column of dust rising over the pile. */
+   public static final RegistryObject<SimpleParticleType> COLLAPSE_PLUME = PARTICLES.register("collapse_plume", () -> new SimpleParticleType(true));
+
    public static void register(IEventBus eventBus) {
       PARTICLES.register(eventBus);
    }

@@ -20,5 +20,7 @@ public abstract class CityJournalMixin {
    private void viltrumitecore$journal(BlockPos pos, BlockState state, boolean moving, CallbackInfoReturnable<BlockState> cir) {
       LevelChunk self = (LevelChunk)(Object)this;
       CityManager.onSetBlock(self.getLevel(), self, pos, state);
+      // structural damage ledger (world/collapse): records only inside a destruction cause scope
+      dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.onSetBlock(self.getLevel(), self, pos, state);
    }
 }
