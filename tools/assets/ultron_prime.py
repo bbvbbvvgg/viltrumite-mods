@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ultron Prime, the boss: 2.9-block machined humanoid. Geo (~330 cubes): a layered head (cranium, crown
+"""Ultron Prime, the boss: 2.9-block machined humanoid. Geo (248 cubes): a layered head (cranium, crown
 crest with back fins, flaring temple fins with ear discs, forehead plate, titanium face plates, nose ridge,
 recessed glowing eyes under moving lids and brows, cheek plates, upper lip, mouth corners, a hinged jaw with
 lower lip and chin, the red mouth light behind), a mechanical two-stage neck (ribbed vertebrae, telescoping
