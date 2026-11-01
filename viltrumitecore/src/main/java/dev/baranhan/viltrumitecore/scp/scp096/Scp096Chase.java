@@ -6,7 +6,6 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -331,7 +330,7 @@ final class Scp096Chase {
       this.mob.setDeltaMovement(s.vx(), s.vy(), s.vz());
       this.mob.setOnGround(false);
       this.mob.hasImpulse = true;
-      level.playSound(null, pos.x, pos.y, pos.z, SoundEvents.RAVAGER_STEP, SoundSource.HOSTILE, 1.2F, 0.6F);
+      level.playSound(null, pos.x, pos.y, pos.z, Scp096Sounds.LEAP.get(), SoundSource.HOSTILE, 1.2F, 0.6F);
       return true;
    }
 
@@ -351,7 +350,7 @@ final class Scp096Chase {
       this.mob.markAttack();
       this.mob.lookAtPoint(target.getEyePosition(), 180.0F);
       target.hurt(this.mob.attackSource(), Scp096Rules.ATTACK_DAMAGE);
-      level.playSound(null, target.getX(), target.getY() + 1.0, target.getZ(), SoundEvents.WARDEN_ATTACK_IMPACT, SoundSource.HOSTILE, 1.3F,
+      level.playSound(null, target.getX(), target.getY() + 1.0, target.getZ(), Scp096Sounds.STRIKE.get(), SoundSource.HOSTILE, 1.3F,
          0.75F + level.random.nextFloat() * 0.2F);
    }
 

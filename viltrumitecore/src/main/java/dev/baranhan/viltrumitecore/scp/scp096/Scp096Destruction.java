@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.AbstractGlassBlock;
@@ -133,7 +132,7 @@ final class Scp096Destruction {
       if (n >= 3 && now - memory.lastSmashMark >= 8) {
          memory.lastSmashMark = now;
          mob.markSmash();
-         level.playSound(null, c.x, c.y, c.z, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.HOSTILE, 1.4F, 0.55F + level.random.nextFloat() * 0.2F);
+         level.playSound(null, c.x, c.y, c.z, Scp096Sounds.SMASH.get(), SoundSource.HOSTILE, 1.4F, 0.55F + level.random.nextFloat() * 0.2F);
       }
       if (n < 4) {
          return;

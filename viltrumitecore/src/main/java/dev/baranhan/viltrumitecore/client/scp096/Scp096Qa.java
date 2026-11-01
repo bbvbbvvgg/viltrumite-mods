@@ -18,11 +18,11 @@ public final class Scp096Qa {
       if (mc.level != null && mc.player != null) {
          for (Entity en : mc.level.entitiesForRendering()) {
             if (en instanceof Scp096Entity e) {
-               b.append(String.format(Locale.ROOT, "[id=%d %s<-%s since=%.1fs flags=%s%s%s%s move=%.3f air=%d dist=%.1f pos=%.1f,%.1f,%.1f layers=%s] ",
+               b.append(String.format(Locale.ROOT, "[id=%d %s<-%s since=%.1fs flags=%s%s%s%s move=%.3f air=%d dist=%.1f pos=%.1f,%.1f,%.1f yaw=%.0f/%.0f layers=%s] ",
                   e.getId(), e.clientState, e.clientPrevState, (e.tickCount - e.clientStateStart) / 20.0F,
                   e.flag(Scp096Entity.FLAG_FACE_OPEN) ? "F" : "-", e.flag(Scp096Entity.FLAG_COVER) ? "C" : "-",
                   e.flag(Scp096Entity.FLAG_CLIMB) ? "K" : "-", e.flag(Scp096Entity.FLAG_LEAP) ? "L" : "-", e.clientMove, e.clientAirTicks,
-                  e.distanceTo(mc.player), e.getX(), e.getY(), e.getZ(), layers(e.clientWeights)));
+                  e.distanceTo(mc.player), e.getX(), e.getY(), e.getZ(), e.yBodyRot, e.getYHeadRot(), layers(e.clientWeights)));
             }
          }
       }
