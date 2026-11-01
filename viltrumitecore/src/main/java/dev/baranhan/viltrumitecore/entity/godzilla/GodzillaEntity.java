@@ -839,4 +839,20 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    protected net.minecraft.sounds.SoundEvent getAmbientSound() {
       return null;
    }
+
+   /** Footfalls are the event's own (GodzillaAudio, synced to the gait), never the block step sounds. */
+   @Override
+   protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+   }
+
+   /** No vanilla step, swim or game-event noise from moving: the kaiju's motion is all its own. */
+   @Override
+   protected net.minecraft.world.entity.Entity.MovementEmission getMovementEmission() {
+      return net.minecraft.world.entity.Entity.MovementEmission.NONE;
+   }
+
+   /** Wading through water: no vanilla splash sound or bubbles. */
+   @Override
+   protected void doWaterSplashEffect() {
+   }
 }
