@@ -215,7 +215,8 @@ class HeroRosterIntegrationTest {
       assertEquals(List.of("UltronFxS2CPacket", "UltronStateS2CPacket"),
          packets.subList(punch + 3, punch + 5), "the Ultron uprising packets append after the Meteor Rain 2.0 packet");
       assertEquals(List.of("CityPowerS2CPacket", "CityCollapseS2CPacket", "AftermathS2CPacket"),
-         packets.subList(punch + 5, packets.size()), "the city power, collapse and aftermath packets append last (v27)");
+         packets.subList(punch + 5, punch + 8), "the city power, collapse and aftermath packets append after Ultron's (v27)");
+      assertEquals(List.of("Scp096S2CPacket"), packets.subList(punch + 8, packets.size()), "the SCP-096 packet appends last (v28)");
    }
 
    @Test
