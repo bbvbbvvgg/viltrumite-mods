@@ -63,7 +63,9 @@ public class CoreMessages {
    // the packet table itself is unchanged, but a "22" peer would decode the new action ordinals wrongly.
    // v23 (Meteor Rain 2.0): MeteorRainFxS2CPacket appended last (red sky, fire zones, brands, far impacts).
    // v23 (Chitauri evolution): FX kinds 14..23 for captors, pylons, siege, interceptors; new entity types.
-   private static final String PROTOCOL_VERSION = "23";
+   // v26 (structural collapse, feat/city-structural-collapse): CityCollapseS2CPacket appended last; 24/25 are left
+   // to the parallel branches of the same integration round.
+   private static final String PROTOCOL_VERSION = "26";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -471,6 +473,11 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.MeteorRainFxS2CPacket::handle).add();
+      // Structural collapse (docs/city-collapse-integration.md), v26: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CityCollapseS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
