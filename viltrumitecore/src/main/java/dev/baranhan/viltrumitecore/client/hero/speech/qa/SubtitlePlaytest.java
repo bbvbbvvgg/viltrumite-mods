@@ -33,14 +33,15 @@ import org.slf4j.Logger;
  * only, nothing is registered otherwise. It logs every hero line the client receives, stops, clears and
  * actually draws ({@code SUBPT} lines, see {@link HeroSubtitles#qaLog}) and executes commands written to
  * {@code <gameDir>/subtitle_qa.txt} (one per line, the file is emptied once read), so a shell can drive a real
- * client: {@code press <1-6> [ticks]} (the real ability key mappings), {@code key attack|use|pick|jump|sneak <ticks>},
+ * client: {@code press <1-6> [ticks]} (the real ability key mappings), {@code key attack|use|pick|jump|sneak|forward|back|left|right|sprint <ticks>},
  * {@code cmd <command>} (sent as a chat command), {@code shot <name>}, {@code cam fp|back|front},
  * {@code look <yaw> <pitch>}, {@code leave} (to the title screen), {@code world} (create or reopen the
  * singleplayer world {@code subtitle_playtest}), {@code close} (closes any screen), {@code button <n>} (presses the n-th button of the open
  * screen), {@code respawn} (from the death screen). {@code key} also takes {@code swap} (ability page).
  * With {@code -Dviltrumitecore.subtitles.playtest.world=true} the title screen opens that world by itself.
  * {@code fpshots <prefix> <t1,t2,...>} takes screenshots on the Final Punch scene clock (first scene on the client)
- * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}). {@code collapsestate} logs the
+ * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}). {@code bike} logs the Hell Cycle the player rides
+ * (speed, rpm, gear, lean, drift, ground). {@code collapsestate} logs the
  * structural-collapse scenes (count, drawn fragments, render ms) and the fps.
  */
 public final class SubtitlePlaytest {
@@ -166,6 +167,10 @@ public final class SubtitlePlaytest {
                case "jump" -> mc.options.keyJump;
                case "sneak" -> mc.options.keyShift;
                case "forward" -> mc.options.keyUp;
+               case "back" -> mc.options.keyDown;
+               case "left" -> mc.options.keyLeft;
+               case "right" -> mc.options.keyRight;
+               case "sprint" -> mc.options.keySprint;
                case "swap" -> AbilityInputManager.abilitySwapKey;
                default -> throw new IllegalArgumentException("unknown key " + a[0]);
             };
@@ -235,6 +240,8 @@ public final class SubtitlePlaytest {
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
          // encyclopedia QA (hero gallery): open the wish screen, drive the GUI, resize, switch language
+         case "bike" -> LOG.info("SUBPT t={} bike {} fps={}", ticks,
+            dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleClient.qaSummary(mc), mc.getFps());
          case "collapsestate" -> LOG.info("SUBPT t={} collapse {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.collapse.CollapseClient.qaSummary(), mc.getFps());
          case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());

@@ -48,7 +48,7 @@ class HellCyclePhysicsTest {
    }
 
    @Test
-   void brakingFromTopSpeedStopsInAboutSevenBlocks() {
+   void brakingFromTopSpeedStopsInAboutTenBlocks() {
       State s = cruising(HellCycleRules.MAX_SPEED);
       double distance = 0.0;
       int ticks = 0;
@@ -62,8 +62,9 @@ class HellCyclePhysicsTest {
             break;
          }
       }
-      assertTrue(ticks <= 18, "stops in under a second: " + ticks);
-      assertTrue(distance > 4.0 && distance < 9.0, "braking distance " + distance);
+      // playtest tuning: the first brake (about 0.8 s) felt like hitting a wall, now about 1.3 s
+      assertTrue(ticks >= 18 && ticks <= 30, "stops in 0.9-1.5 s: " + ticks);
+      assertTrue(distance > 7.0 && distance < 13.0, "braking distance " + distance);
       assertTrue(stoppie, "a hard stop from top speed lifts the rear wheel");
    }
 

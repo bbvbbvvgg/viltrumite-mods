@@ -10,16 +10,18 @@ public final class HellCycleRules {
    public static final double MAX_SPEED = 0.85;
    /** Hell Dash top speed: 1.30 b/t = 94 km/h. */
    public static final double BOOST_SPEED = 1.30;
-   public static final double REVERSE_SPEED = 0.18;
+   /** Walking-pace reverse for backing out of a corner (0.1 b/t = 7 km/h; QA: 0.18 felt like a second gear). */
+   public static final double REVERSE_SPEED = 0.10;
    /** Throttle acceleration at a standstill; it falls off as (1 - v / vmax)^ACCEL_CURVE (drag included). */
    public static final double ACCEL = 0.032;
    public static final double ACCEL_CURVE = 0.65;
    public static final double BOOST_ACCEL = 0.06;
-   public static final double REVERSE_ACCEL = 0.012;
-   public static final double BRAKE = 0.055;
+   public static final double REVERSE_ACCEL = 0.008;
+   /** Both brakes, per tick: about 1.4 g, 61 km/h to a standstill in 1.25 s over ~10.6 blocks (QA: 0.055 stopped dead). */
+   public static final double BRAKE = 0.034;
    /** Rolling resistance and engine braking with the throttle closed: COAST + COAST_RATE * v per tick. */
-   public static final double COAST = 0.006;
-   public static final double COAST_RATE = 0.012;
+   public static final double COAST = 0.004;
+   public static final double COAST_RATE = 0.006;
    /** How fast a boost's surplus speed bleeds off once the dash ends. */
    public static final double OVERSPEED_DECAY = 0.02;
    /** Gravity along the frame on a slope: a -= SLOPE_GRAVITY * sin(pitch). */
@@ -49,7 +51,8 @@ public final class HellCycleRules {
    public static final double DRIFT_MIN_SPEED = 0.35;
    public static final double DRIFT_KEEP_SPEED = 0.22;
    public static final double DRIFT_STEER = 0.3;
-   public static final double DRIFT_TURN = 1.55;
+   /** Yaw rate multiplier while drifting (QA: 1.55 spun the bike 250 degrees in under two seconds). */
+   public static final double DRIFT_TURN = 1.3;
    public static final double DRIFT_GRIP = 0.12;
    public static final double DRIFT_SCRUB = 0.008;
    public static final double SLIP_MAX = 55.0;
