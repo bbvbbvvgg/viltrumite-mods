@@ -109,7 +109,7 @@ public final class StructuralDamage {
       }
       BlockState old = chunk.getBlockState(pos);
       if (counts(old, next)) {
-         ledger(server).record(pos.getX(), pos.getY(), pos.getZ(), cause.weight(), server.getGameTime());
+         ledger(server).record(pos.getX(), pos.getY(), pos.getZ(), cause.weight(), server.getGameTime(), cause);
          CollapseDirector.noteCause(server, cause);
       }
    }
@@ -123,7 +123,7 @@ public final class StructuralDamage {
       long now = level.getGameTime();
       for (BlockPos pos : toBlow) {
          if (level.isLoaded(pos) && counts(level.getBlockState(pos), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState())) {
-            ledger.record(pos.getX(), pos.getY(), pos.getZ(), cause.weight(), now);
+            ledger.record(pos.getX(), pos.getY(), pos.getZ(), cause.weight(), now, cause);
          }
       }
    }

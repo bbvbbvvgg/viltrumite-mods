@@ -46,6 +46,22 @@ class DamageLedgerTest {
    }
 
    @Test
+   void eachBuildingKeepsItsOwnCause() {
+      // found in game: a hero strike and a Leviathan cut in the same tick were both named "leviathan"
+      DamageLedger l = new DamageLedger();
+      for (int i = 0; i < 120; i++) {
+         l.record(i % 4, 64 + i / 16, (i / 4) % 4, 1.0F, 100, CollapseCause.HERO);
+         l.record(60 + i % 4, 64 + i / 16, (i / 4) % 4, 1.0F, 100, CollapseCause.LEVIATHAN);
+      }
+      l.record(1, 65, 1, 1.0F, 100, CollapseCause.LEVIATHAN); // a stray hit does not rename the hero's building
+      assertEquals(CollapseCause.HERO, l.dominantCause(1, 64, 1, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP));
+      assertEquals(CollapseCause.LEVIATHAN, l.dominantCause(61, 64, 1, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP));
+      assertEquals(null, l.dominantCause(200, 64, 0, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP));
+      l.prune(100 + CollapseRules.WINDOW_TICKS + 1);
+      assertEquals(null, l.dominantCause(1, 64, 1, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP), "pruned entries lose their cause too");
+   }
+
+   @Test
    void weakDamageNeverTriggers() {
       DamageLedger l = new DamageLedger();
       hit(l, 0, 64, 0, 40, 0.35F, 100); // 40 TNT-ish blocks: score 14

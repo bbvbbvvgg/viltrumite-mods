@@ -24,10 +24,12 @@ public final class DamageLedger {
       final LongArrayList keys = new LongArrayList();
       float[] weights = new float[16];
       long[] ticks = new long[16];
+      /** Cause of each entry (null: recorded without one). */
+      CollapseCause[] causes = new CollapseCause[16];
       float score;
       long last;
 
-      void add(long key, float weight, long now) {
+      void add(long key, float weight, long now, CollapseCause cause) {
          int n = this.keys.size();
          if (n >= CollapseRules.CELL_CAP) {
             // drop the oldest entry
@@ -35,15 +37,18 @@ public final class DamageLedger {
             this.keys.removeLong(0);
             System.arraycopy(this.weights, 1, this.weights, 0, n - 1);
             System.arraycopy(this.ticks, 1, this.ticks, 0, n - 1);
+            System.arraycopy(this.causes, 1, this.causes, 0, n - 1);
             n--;
          }
          if (n >= this.weights.length) {
             this.weights = java.util.Arrays.copyOf(this.weights, Math.min(CollapseRules.CELL_CAP, n * 2));
             this.ticks = java.util.Arrays.copyOf(this.ticks, this.weights.length);
+            this.causes = java.util.Arrays.copyOf(this.causes, this.weights.length);
          }
          this.keys.add(key);
          this.weights[n] = weight;
          this.ticks[n] = now;
+         this.causes[n] = cause;
          this.score += weight;
          this.last = now;
       }
@@ -60,6 +65,8 @@ public final class DamageLedger {
             this.keys.removeElements(0, drop);
             System.arraycopy(this.weights, drop, this.weights, 0, n - drop);
             System.arraycopy(this.ticks, drop, this.ticks, 0, n - drop);
+            System.arraycopy(this.causes, drop, this.causes, 0, n - drop);
+            java.util.Arrays.fill(this.causes, n - drop, n, null);
          }
          if (this.keys.isEmpty()) {
             this.score = 0.0F;
@@ -87,8 +94,13 @@ public final class DamageLedger {
       return this.cells.size();
    }
 
-   /** Records one removed block. A weight of 0 (secondary damage) is ignored. */
+   /** Records one removed block without a cause. A weight of 0 (secondary damage) is ignored. */
    public void record(int x, int y, int z, float weight, long now) {
+      this.record(x, y, z, weight, now, null);
+   }
+
+   /** Records one removed block and what removed it. A weight of 0 (secondary damage) is ignored. */
+   public void record(int x, int y, int z, float weight, long now, @javax.annotation.Nullable CollapseCause cause) {
       if (!(weight > 0.0F)) {
          return;
       }
@@ -99,7 +111,7 @@ public final class DamageLedger {
          this.cells.put(ck, cell);
       }
       int before = cell.keys.size();
-      cell.add(BlockKey.of(x, y, z), weight, now);
+      cell.add(BlockKey.of(x, y, z), weight, now, cause);
       this.size += cell.keys.size() - before;
       this.dirty.put(ck, now);
       if (this.size > CollapseRules.LEVEL_CAP) {
@@ -296,6 +308,49 @@ public final class DamageLedger {
       return out;
    }
 
+   /**
+    * The cause with the most recorded weight in the same area as {@link #around}, or null when no entry there
+    * carries one. Two buildings hit in the same tick by different causes keep their own cause.
+    */
+   @javax.annotation.Nullable
+   public CollapseCause dominantCause(int x, int y, int z, int radius, int below, int above) {
+      java.util.Map<CollapseCause, Float> sum = new java.util.HashMap<>();
+      int r = radius >> CollapseRules.CELL_SHIFT;
+      int x0 = (x >> CollapseRules.CELL_SHIFT) - r - 1, x1 = (x >> CollapseRules.CELL_SHIFT) + r + 1;
+      int z0 = (z >> CollapseRules.CELL_SHIFT) - r - 1, z1 = (z >> CollapseRules.CELL_SHIFT) + r + 1;
+      int y0 = (y - below) >> CollapseRules.CELL_SHIFT, y1 = (y + above) >> CollapseRules.CELL_SHIFT;
+      for (int cx = x0; cx <= x1; cx++) {
+         for (int cy = y0; cy <= y1; cy++) {
+            for (int cz = z0; cz <= z1; cz++) {
+               Cell c = this.cells.get(BlockKey.of(cx, cy, cz));
+               if (c == null) {
+                  continue;
+               }
+               for (int i = 0; i < c.keys.size(); i++) {
+                  CollapseCause cause = c.causes[i];
+                  if (cause == null) {
+                     continue;
+                  }
+                  long k = c.keys.getLong(i);
+                  int px = BlockKey.x(k), py = BlockKey.y(k), pz = BlockKey.z(k);
+                  if (Math.abs(px - x) <= radius && Math.abs(pz - z) <= radius && py >= y - below && py <= y + above) {
+                     sum.merge(cause, c.weights[i], Float::sum);
+                  }
+               }
+            }
+         }
+      }
+      CollapseCause best = null;
+      float bestW = 0.0F;
+      for (java.util.Map.Entry<CollapseCause, Float> e : sum.entrySet()) {
+         if (e.getValue() > bestW || e.getValue() == bestW && best != null && e.getKey().weight() > best.weight()) {
+            best = e.getKey();
+            bestW = e.getValue();
+         }
+      }
+      return best;
+   }
+
    /** Forgets every damaged position inside a box (a collapse consumed it, so it cannot fire again). */
    public void consume(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       ObjectIterator<Long2ObjectMap.Entry<Cell>> it = this.cells.long2ObjectEntrySet().iterator();
@@ -312,7 +367,7 @@ public final class DamageLedger {
             long k = c.keys.getLong(i);
             int px = BlockKey.x(k), py = BlockKey.y(k), pz = BlockKey.z(k);
             if (px < minX || px > maxX || py < minY || py > maxY || pz < minZ || pz > maxZ) {
-               kept.add(k, c.weights[i], c.ticks[i]);
+               kept.add(k, c.weights[i], c.ticks[i], c.causes[i]);
             }
          }
          this.size -= c.keys.size() - kept.keys.size();
