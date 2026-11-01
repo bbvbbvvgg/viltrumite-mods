@@ -179,8 +179,9 @@ class HeroRosterIntegrationTest {
       // 17 was also used by the Iron Legion branch alone (its four packets after Regulus) and is refused;
       // 20 = the final integration of #101/#99/#98: Chitauri packets after Thanos's, then the Iron Legion packets;
       // 21 = Living City 2.0 alone (citizen STATE byte) and THE FINAL PUNCH alone (its packets appended last): refused;
-      // 22 = the final integration of #107/#108/#110/#109 with both.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"22\""), "the merged packet table needs its own protocol version");
+      // 22 = the final integration of #107/#108/#110/#109 with both;
+      // 23 = Chitauri evolution (FX kinds 14..23 for captors, pylons, siege, interceptors; new entity types).
+      assertTrue(source.contains("PROTOCOL_VERSION = \"23\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
