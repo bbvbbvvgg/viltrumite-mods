@@ -153,13 +153,21 @@ public final class PowerRules {
       return Math.max(0.0, Math.min(1.0, severity)) * Math.pow(0.66, Math.max(0, depth));
    }
 
-   /** True when the neighbour cannot carry the load (deterministic in the seed). */
+   /**
+    * True when the neighbour cannot carry the load (deterministic in the seed). A fresh grid usually holds after
+    * one strong hit (about one neighbour in three gives way next to a meteor strike); worn substations, whose
+    * weakness the caller adds to the load, are what turns a hit into a chain. Tuned in game: the first curve
+    * (load x 1.35) tripped the per-incident cap of six substations on every meteor-sized hit.
+    */
    public static boolean cascades(double load, int depth, long seed) {
-      if (depth > MAX_CASCADE_DEPTH || load < 0.24) {
+      if (depth > MAX_CASCADE_DEPTH || load < 0.3) {
          return false;
       }
-      return unit(seed) < Math.min(0.92, load * 1.35);
+      return unit(seed) < Math.min(0.85, (load - 0.3) * 1.2);
    }
+
+   /** Substations tripped by one incident from which the city calls the situation critical (a real chain). */
+   public static final int CRITICAL_TRIPS = 3;
 
    /** Ticks between a substation tripping and the next one along the cascade. */
    public static int cascadeDelay(long seed) {

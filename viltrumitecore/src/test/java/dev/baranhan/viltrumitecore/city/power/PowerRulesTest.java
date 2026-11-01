@@ -81,6 +81,22 @@ class PowerRulesTest {
          assertTrue(d >= 45 && d < 95);
       }
       assertTrue(PowerRules.cascadeLoad(1, 2) < PowerRules.cascadeLoad(1, 1));
+      // a fresh grid mostly holds after one meteor-sized hit: well under half of the first neighbours trip
+      int first = 0;
+      for (long seed = 0; seed < 4000; seed++) {
+         if (PowerRules.cascades(PowerRules.cascadeLoad(0.9, 1), 1, seed)) {
+            first++;
+         }
+      }
+      assertTrue(first > 800 && first < 1800, "first ring " + first);
+      // worn neighbours (the caller adds their weakness) give way far more often
+      int worn = 0;
+      for (long seed = 0; seed < 4000; seed++) {
+         if (PowerRules.cascades(PowerRules.cascadeLoad(0.9, 1) + 0.3, 1, seed)) {
+            worn++;
+         }
+      }
+      assertTrue(worn > first * 1.6, "worn " + worn);
       assertTrue(PowerRules.stationTrips(0.4, 0, 9));
       assertTrue(PowerRules.stationTrips(1.0, 6, 9));
       assertFalse(PowerRules.stationTrips(1.0, 5, 9));

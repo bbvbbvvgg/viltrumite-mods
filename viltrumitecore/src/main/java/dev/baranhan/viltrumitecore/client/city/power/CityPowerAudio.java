@@ -186,8 +186,9 @@ final class CityPowerAudio {
       int delay = PowerRules.soundDelay(d);
       float pitch = 0.94F + (float)PowerRules.unit(seed) * 0.12F;
       if (d < 60.0) {
-         once(CityPowerSounds.TRANSFORMER_BLOW, at, curve(d, 26.0), pitch, delay);
-         once(CityPowerSounds.LOW_IMPACT, at, curve(d, 30.0) * 0.6F, pitch, delay);
+         // measured in game: blow + low impact + arc together peaked just over full scale next to the hit
+         once(CityPowerSounds.TRANSFORMER_BLOW, at, curve(d, 26.0) * 0.7F, pitch, delay);
+         once(CityPowerSounds.LOW_IMPACT, at, curve(d, 30.0) * 0.45F, pitch, delay);
       } else {
          once(CityPowerSounds.TRANSFORMER_BLOW_FAR, at, curve(d, 80.0), pitch, delay);
       }
@@ -220,7 +221,7 @@ final class CityPowerAudio {
       }
       arcsInWindow++;
       lastArc = clock;
-      once(CityPowerSounds.ARC, at, (float)(1.0 - d / 56.0) * 0.85F, 0.9F + (float)PowerRules.unit(seed) * 0.25F, PowerRules.soundDelay(d));
+      once(CityPowerSounds.ARC, at, (float)(1.0 - d / 56.0) * 0.7F, 0.9F + (float)PowerRules.unit(seed) * 0.25F, PowerRules.soundDelay(d));
    }
 
    /** Loudness of a one-shot {@code d} blocks away for a reference distance {@code ref} (half loudness there). */
