@@ -43,6 +43,11 @@ import org.slf4j.LoggerFactory;
 @EventBusSubscriber(modid = "viltrumitecore")
 public final class GodzillaEvent {
    static final Logger LOG = LoggerFactory.getLogger("viltrumitecore/godzilla");
+   /** QA: {@code -Dviltrumitecore.godzilla.log=true} logs the session's server cost every 100 body ticks ({@code GZQA}). */
+   private static final boolean QA_LOG = Boolean.getBoolean("viltrumitecore.godzilla.log");
+   private static long qaNanos;
+   private static long qaMax;
+   private static int qaTicks;
    /** Lang key naming the catastrophe in the other events' "already running" refusals. */
    public static final String CONFLICT_KEY = "viltrumitecore.godzilla.conflict";
    /** Ticks without a body tick before the session counts the body as lost (unloaded with its chunk). */
@@ -201,7 +206,24 @@ public final class GodzillaEvent {
       if (s == null || !s.bodyId.equals(e.getUUID())) {
          return false;
       }
-      return s.tick(level, e);
+      if (!QA_LOG) {
+         return s.tick(level, e);
+      }
+      long started = System.nanoTime();
+      boolean keep = s.tick(level, e);
+      long spent = System.nanoTime() - started;
+      qaNanos += spent;
+      qaMax = Math.max(qaMax, spent);
+      if (++qaTicks >= 100) {
+         LOG.info("GZQA tick avg={}ms max={}ms phase={} move={} hp={}% destroyed={} buildings={} jobs={} flying={} breaths={} at {} {} {}",
+            String.format(java.util.Locale.ROOT, "%.2f", qaNanos / 1.0E6 / qaTicks), String.format(java.util.Locale.ROOT, "%.2f", qaMax / 1.0E6),
+            s.phase.key(), e.move().key(), Math.round(s.healthShare() * 100.0F), s.destruction.destroyed(), s.destruction.buildingsHit(),
+            s.destruction.jobs(), s.destruction.flying(), s.breaths, Mth.floor(e.getX()), Mth.floor(e.getY()), Mth.floor(e.getZ()));
+         qaNanos = 0L;
+         qaMax = 0L;
+         qaTicks = 0;
+      }
+      return keep;
    }
 
    public static void onFootfall(ServerLevel level, GodzillaEntity e, boolean left) {
