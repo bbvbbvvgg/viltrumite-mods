@@ -55,6 +55,7 @@ public final class GodzillaClient {
 
    private static final List<Hot> HOT = new ArrayList<>();
    private static int budget = PARTICLE_BUDGET;
+   private static int lastSpent;
    private static int lastHit = -100;
    private static int clock;
    private static ClientLevel lastLevel;
@@ -301,6 +302,11 @@ public final class GodzillaClient {
       return HOT.size();
    }
 
+   /** QA line (subtitle playtest {@code godzillastate}): hot zones, particles started last tick, the body draw. */
+   public static String qaSummary() {
+      return "hot=" + HOT.size() + " particlesLastTick=" + lastSpent + "/" + PARTICLE_BUDGET + " " + GodzillaRenderer.qaSummary();
+   }
+
    public static void clear() {
       HOT.clear();
       GodzillaAudio.stopAll();
@@ -320,6 +326,7 @@ public final class GodzillaClient {
          return;
       }
       clock++;
+      lastSpent = PARTICLE_BUDGET - budget;
       budget = PARTICLE_BUDGET;
       Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
       RandomSource r = mc.level.random;

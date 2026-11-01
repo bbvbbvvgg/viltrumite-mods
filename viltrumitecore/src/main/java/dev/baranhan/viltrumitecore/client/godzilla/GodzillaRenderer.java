@@ -76,6 +76,12 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
    private static final Vector3f MOUTH = new Vector3f(0.0F, (GodzillaRules.NECK_PIVOT[1] + GodzillaRules.MOUTH_OFFSET[1]) * F / 16.0F,
       -(GodzillaRules.NECK_PIVOT[2] + GodzillaRules.MOUTH_OFFSET[2]) * F / 16.0F);
    private static final int MAX_SPARKS = 28;
+   // QA (subtitle playtest "godzillastate"): the last drawn body, written by the render thread only
+   private static int qaLod = -1;
+   private static double qaDist;
+   private static long qaNanos;
+   private static int qaPlates;
+   private static long qaFrames;
 
    private final Info[] infos = new Info[3];
    private final Matrix4f inverse = new Matrix4f();
@@ -131,6 +137,7 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
 
    @Override
    public void render(GodzillaEntity e, float entityYaw, float partial, PoseStack stack, MultiBufferSource buffers, int light) {
+      long started = System.nanoTime();
       double x = Mth.lerp(partial, e.xo, e.getX());
       double y = Mth.lerp(partial, e.yo, e.getY());
       double z = Mth.lerp(partial, e.zo, e.getZ());
@@ -186,6 +193,16 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
       }
       VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
       this.effects(e, partial, age, dist, stack.last().pose(), vc, mouth, mouthDir);
+      qaLod = lod;
+      qaDist = dist;
+      qaPlates = this.litPlates;
+      qaNanos = System.nanoTime() - started;
+      qaFrames++;
+   }
+
+   /** QA line: LOD and camera distance of the last drawn body, CPU time to build it (ms), lit plates, frames drawn. */
+   public static String qaSummary() {
+      return String.format(java.util.Locale.ROOT, "lod=%d dist=%.0f buildMs=%.2f plates=%d frames=%d", qaLod, qaDist, qaNanos / 1.0E6, qaPlates, qaFrames);
    }
 
    @Nullable
