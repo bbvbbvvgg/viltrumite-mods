@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ghost Rider's Hell Cycle: geo (~230 cubes), atlas and glow. Own work, CC0.
 
-A long hellfire chopper: raked springer-style fork with a skull headlamp, ape-hanger bars, a teardrop tank with
+A long hellfire chopper: raked springer-style fork with a skull headlamp, low drag bars, a teardrop tank with
 painted flames, a V-twin with glowing fin gaps, two drag pipes on the right, a fat rear tyre under a spiked
 fender, a low leather seat, a bone-ringed double-cradle frame and a kickstand on the left.
 
@@ -13,7 +13,7 @@ Bones animated by HellCycleRenderer: fork_steer (Y, about the raked steering axi
 spin), kickstand (X/Z, down when parked). fork_rake carries the static 32 degree rake, bars cancels it so the bars
 and the headlamp are authored in model coordinates.
 Renderer anchors (px, JSON): exhaust tips (-4.0, 7.4, 18.0) and (-4.4, 10.4, 17.6), pointing +Z;
-headlamp eyes (+-1.0, 17.9, -12.3); grips (+-8.6, 29.2, -4.0); pegs (+-4.6, 8.4, -3.2).
+headlamp eyes (+-1.0, 17.9, -12.3); grips (+-8.4, 23.6, -3.9); pegs (+-4.6, 8.4, -3.2).
 
 Run: PYTHONHASHSEED=0 python3 tools/assets/ghost_rider_bike.py [--preview]
 """
@@ -488,14 +488,16 @@ def build():
     m.bone('bars', 'fork_steer', list(HEAD), rotation=[RAKE, 0, 0])
     clamp = raked((0.0, 23.3, hz))
     cz = clamp[2]
+    # low drag bars: the grips sit at shoulder height a straight arm's length ahead of the rider (QA: the ape hangers
+    # filled the first-person view and no straight vanilla arm could reach them)
     for s in (-1, 1):
-        b.tube('bars', (s * 1.8, clamp[1] - 0.2, cz), (s * 1.8, 26.0, cz - 0.1), 0.9, 'chrome', ext=0.2)
-        b.chain_of_tubes('bars', [(s * 1.8, 26.0, cz - 0.1), (s * 6.4, 29.6, -4.3), (s * 7.4, 29.2, -4.0)], 0.9, 'chrome', ext=0.3)
-        b.box('bars', (s * 7.2, 28.7, -4.5), (s * 10.0, 29.7, -3.5), 'grip')
-        b.box('bars', (s * 10.0, 28.8, -4.4), (s * 10.4, 29.6, -3.6), 'chrome')
-        b.box('bars', (s * 7.0, 29.7, -4.2), (s * 7.6, 30.1, -3.0), 'chrome')               # levers' perches
-        b.tube('bars', (s * 7.4, 29.9, -3.4), (s * 9.6, 29.5, -1.8), 0.4, 'chrome')            # levers
-    b.box('bars', (-1.8, 24.9, cz - 0.5), (1.8, 25.6, cz + 0.3), 'chrome')                     # riser bridge
+        b.tube('bars', (s * 1.8, clamp[1] - 0.2, cz), (s * 1.8, 24.6, cz - 0.1), 0.9, 'chrome', ext=0.2)
+        b.chain_of_tubes('bars', [(s * 1.8, 24.6, cz - 0.1), (s * 5.4, 24.3, cz - 0.6), (s * 7.2, 23.6, cz + 0.1)], 0.9, 'chrome', ext=0.3)
+        b.box('bars', (s * 7.0, 23.1, cz - 0.4), (s * 9.8, 24.1, cz + 0.6), 'grip')
+        b.box('bars', (s * 9.8, 23.2, cz - 0.3), (s * 10.2, 24.0, cz + 0.5), 'chrome')
+        b.box('bars', (s * 6.8, 24.1, cz - 0.2), (s * 7.4, 24.5, cz + 1.0), 'chrome')               # levers' perches
+        b.tube('bars', (s * 7.1, 24.3, cz + 0.6), (s * 9.3, 23.9, cz + 2.2), 0.4, 'chrome')            # levers
+    b.box('bars', (-1.8, 23.9, cz - 0.5), (1.8, 24.6, cz + 0.3), 'chrome')                     # riser bridge
     # skull headlamp on the lower clamp
     b.box('bars', (-1.1, 16.4, -8.9), (1.1, 17.8, -7.0), 'black')
     b.box('bars', (-2.2, 15.0, -12.2), (2.2, 19.2, -8.8), 'skull')
