@@ -46,7 +46,7 @@ public final class Scp096Rules {
    public static final double CHASE_SPEED = 0.62;
    public static final double CHASE_ACCEL = 0.12;
    public static final double BURST_MAX = 2.4;
-   public static final double WANDER_SPEED_MOD = 0.32;
+   public static final double WANDER_SPEED_MOD = 0.16;
    public static final double CLIMB_SPEED = 0.45;
    public static final double LEAP_MAX_H = 24.0;
    public static final double LEAP_MAX_UP = 18.0;

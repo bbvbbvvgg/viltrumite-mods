@@ -66,6 +66,11 @@ public class Scp096Entity extends PathfinderMob {
    public static final int FLAG_CLIMB = 2;
    public static final int FLAG_LEAP = 4;
    public static final int FLAG_COVER = 8;
+   /** Blocks per full gait cycle (two steps) of the run and of the shuffle: the clips are phase-driven by distance. */
+   public static final double CHASE_STRIDE = 5.2;
+   public static final double WALK_STRIDE = 1.5;
+   /** Ticks into the calming after which it is back on the floor (the calm clip sits down at 4.4-5.3 s). */
+   public static final int CALM_SEATED_TICKS = 100;
    private static final EntityDataAccessor<Byte> DATA_STATE = SynchedEntityData.defineId(Scp096Entity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(Scp096Entity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> DATA_ATTACK = SynchedEntityData.defineId(Scp096Entity.class, EntityDataSerializers.INT);
@@ -103,6 +108,8 @@ public class Scp096Entity extends PathfinderMob {
    public double clientGaitO;
    public int clientAirTicks;
    public int clientClimbTicks;
+   /** The face was seen while it sat (gaze from the floor, then the rise into the hysteria). */
+   public boolean clientFromSit;
    /** Smoothed clip weights kept by the renderer (real-time exponential smoothing). */
    public final float[] clientWeights = new float[24];
    public float clientWeightAge = -1.0F;
@@ -223,9 +230,15 @@ public class Scp096Entity extends PathfinderMob {
          if (this.level().isClientSide) {
             Scp096State s = this.state();
             if (s != this.clientState) {
-               this.clientPrevState = this.clientState;
+               // the first sync of a freshly tracked entity is not a transition (no stand-up when it comes into view)
+               boolean fresh = this.tickCount == 0;
+               if (s == Scp096State.TRIGGERED) {
+                  this.clientFromSit = !fresh && (this.clientState == Scp096State.SIT
+                     || this.clientState == Scp096State.CALMING && this.tickCount - this.clientStateStart >= CALM_SEATED_TICKS);
+               }
+               this.clientPrevState = fresh ? s : this.clientState;
                this.clientState = s;
-               this.clientStateStart = this.tickCount;
+               this.clientStateStart = fresh ? -1000 : this.tickCount;
             }
          }
       } else if (DATA_ATTACK.equals(key) && this.level().isClientSide) {
@@ -381,7 +394,7 @@ public class Scp096Entity extends PathfinderMob {
       this.clientMove += (speed - this.clientMove) * 0.5F;
       this.clientGaitO = this.clientGait;
       Scp096State s = this.state();
-      double stride = s == Scp096State.CHASE ? 3.6 : 1.5;
+      double stride = s == Scp096State.CHASE ? CHASE_STRIDE : WALK_STRIDE;
       this.clientGait += speed / stride;
       this.clientAirTicks = this.onGround() ? 0 : this.clientAirTicks + 1;
       this.clientClimbTicks = this.flag(FLAG_CLIMB) ? this.clientClimbTicks + 1 : 0;
