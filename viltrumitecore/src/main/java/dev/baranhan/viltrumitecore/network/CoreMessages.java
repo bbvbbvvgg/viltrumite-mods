@@ -67,6 +67,8 @@ public class CoreMessages {
    // v24 (final integration of #113/#114/#115 + the Ultron uprising): all four v23 changes together, one table:
    // ... FINAL_PUNCH packets, MeteorRainFxS2CPacket, UltronFxS2CPacket, UltronStateS2CPacket; the six Red Hulk
    // HeroAction values and the Chitauri FX kinds 14..23. Every "23" peer (each branch alone) is refused.
+   // v24 (Living City 3.0 infrastructure, feat/city-infrastructure-disasters): CityPowerS2CPacket appended last;
+   //     new blocks dark_fixture / dark_lantern / dark_end_rod (registry sync refuses a mismatch anyway).
    private static final String PROTOCOL_VERSION = "24";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
@@ -484,6 +486,11 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.ultron.net.UltronStateS2CPacket::handle).add();
+      // Living City 3.0 infrastructure (power grid, blackouts, city emergency), v24: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.CityPowerS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.CityPowerS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.CityPowerS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CityPowerS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

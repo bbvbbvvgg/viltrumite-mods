@@ -43,6 +43,46 @@ public final class ViltrumiteBlocks {
          )
    );
 
+   /** Living City 3.0 blackout: glowstone, sea lantern, shroomlight and froglights with their power cut. */
+   public static final RegistryObject<Block> DARK_FIXTURE = BLOCKS.register(
+      "dark_fixture",
+      () -> new DarkFixtureBlock(
+            Properties.of()
+               .mapColor(MapColor.TERRACOTTA_GRAY)
+               .strength(0.3F)
+               .sound(SoundType.GLASS)
+               .noLootTable()
+         )
+   );
+
+   /** Living City 3.0 blackout: a lantern or soul lantern with its power cut. */
+   public static final RegistryObject<Block> DARK_LANTERN = BLOCKS.register(
+      "dark_lantern",
+      () -> new DarkLanternBlock(
+            Properties.of()
+               .mapColor(MapColor.METAL)
+               .forceSolidOn()
+               .strength(3.5F)
+               .sound(SoundType.LANTERN)
+               .noOcclusion()
+               .pushReaction(PushReaction.DESTROY)
+               .noLootTable()
+         )
+   );
+
+   /** Living City 3.0 blackout: an end rod light with its power cut. */
+   public static final RegistryObject<Block> DARK_END_ROD = BLOCKS.register(
+      "dark_end_rod",
+      () -> new DarkEndRodBlock(
+            Properties.of()
+               .forceSolidOff()
+               .instabreak()
+               .sound(SoundType.WOOD)
+               .noOcclusion()
+               .noLootTable()
+         )
+   );
+
    public static void register(IEventBus modEventBus) {
       BLOCKS.register(modEventBus);
    }

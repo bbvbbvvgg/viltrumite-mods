@@ -188,8 +188,12 @@ class HeroRosterIntegrationTest {
       // table unchanged), Meteor Rain 2.0 (MeteorRainFxS2CPacket appended last), Chitauri evolution (FX kinds
       // 14..23 for captors, pylons, siege, interceptors; new entity types) and the Ultron uprising (UltronFxS2CPacket
       // and UltronStateS2CPacket appended after THE FINAL PUNCH packets): refused;
-      // 24 = the final integration of #113/#114/#115 and the Ultron uprising with all four.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"24\""), "the merged packet table needs its own protocol version");
+      // 24 = the final integration of #113/#114/#115 and the Ultron uprising with all four; 24 was also used by
+      // Living City 3.0 infrastructure alone and the city disaster aftermath alone, 26 by the structural collapse
+      // alone (24/25 left to the others): refused;
+      // 27 = the integration of #124/#125/#126/#127: CityPowerS2CPacket, CityCollapseS2CPacket, AftermathS2CPacket
+      // appended in that order after the Ultron packets.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"27\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -208,7 +212,9 @@ class HeroRosterIntegrationTest {
       assertEquals(List.of("MeteorRainFxS2CPacket"), packets.subList(punch + 2, punch + 3),
          "the Meteor Rain 2.0 packet appends after THE FINAL PUNCH packets");
       assertEquals(List.of("UltronFxS2CPacket", "UltronStateS2CPacket"),
-         packets.subList(punch + 3, packets.size()), "the Ultron uprising packets append last, after the Meteor Rain 2.0 packet");
+         packets.subList(punch + 3, punch + 5), "the Ultron uprising packets append after the Meteor Rain 2.0 packet");
+      assertEquals(List.of("CityPowerS2CPacket", "CityCollapseS2CPacket", "AftermathS2CPacket"),
+         packets.subList(punch + 5, packets.size()), "the city power, collapse and aftermath packets append last (v27)");
    }
 
    @Test
