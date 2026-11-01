@@ -210,6 +210,12 @@ final class CityPopulation {
             return false;
          }
 
+         // near a ruin people come back step by step: nobody while it is fresh, more and more as it quiets down
+         float welcome = dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.welcome(level, x + 0.5, y, z + 0.5);
+         if (welcome < 1.0F && level.random.nextFloat() >= welcome) {
+            return false;
+         }
+
          double fy = floorY(level, pos);
          // the whole body (tallest citizens included) must fit: never inside a wall, a sign or a car
          return !Double.isNaN(fy) && level.noCollision(ViltrumiteEntities.CITIZEN.get().getAABB(x + 0.5, fy + 0.01, z + 0.5).inflate(0.05, 0.15, 0.05).move(0.0, 0.15, 0.0));
@@ -231,6 +237,7 @@ final class CityPopulation {
       c.manual = manual;
       c.finalizeSpawn(level, level.getCurrentDifficultyAt(c.blockPosition()), MobSpawnType.EVENT, null, null);
       level.addFreshEntity(c);
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCitizenSpawn(level, c);
       return c;
    }
 

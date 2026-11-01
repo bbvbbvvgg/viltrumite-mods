@@ -367,6 +367,7 @@ public final class CityManager {
 
       if (this.resumeIn > 0 && --this.resumeIn == 0) {
          this.broadcastOps(Component.translatable("viltrumitecore.city.reset.resumed", this.journal.size()).withStyle(ChatFormatting.YELLOW));
+         dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCityReset(this.level);
          this.restore.start(now);
       }
 
@@ -499,6 +500,8 @@ public final class CityManager {
 
    void startReset() {
       this.population.clearAll();
+      // the ruins are being rebuilt: their smoke, dust and sounds go with them
+      dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCityReset(this.level);
       this.restore.start(this.now());
       this.saveJournal(false);
    }
