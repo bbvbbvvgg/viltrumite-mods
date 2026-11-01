@@ -1,0 +1,67 @@
+{
+  "variants": {
+    "axis=x,kind=glowstone": {
+      "model": "viltrumitecore:block/dark/glowstone"
+    },
+    "axis=y,kind=glowstone": {
+      "model": "viltrumitecore:block/dark/glowstone"
+    },
+    "axis=z,kind=glowstone": {
+      "model": "viltrumitecore:block/dark/glowstone"
+    },
+    "axis=x,kind=sea_lantern": {
+      "model": "viltrumitecore:block/dark/sea_lantern"
+    },
+    "axis=y,kind=sea_lantern": {
+      "model": "viltrumitecore:block/dark/sea_lantern"
+    },
+    "axis=z,kind=sea_lantern": {
+      "model": "viltrumitecore:block/dark/sea_lantern"
+    },
+    "axis=x,kind=shroomlight": {
+      "model": "viltrumitecore:block/dark/shroomlight"
+    },
+    "axis=y,kind=shroomlight": {
+      "model": "viltrumitecore:block/dark/shroomlight"
+    },
+    "axis=z,kind=shroomlight": {
+      "model": "viltrumitecore:block/dark/shroomlight"
+    },
+    "axis=x,kind=ochre_froglight": {
+      "model": "viltrumitecore:block/dark/ochre_froglight_horizontal",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,kind=ochre_froglight": {
+      "model": "viltrumitecore:block/dark/ochre_froglight"
+    },
+    "axis=z,kind=ochre_froglight": {
+      "model": "viltrumitecore:block/dark/ochre_froglight_horizontal",
+      "x": 90
+    },
+    "axis=x,kind=verdant_froglight": {
+      "model": "viltrumitecore:block/dark/verdant_froglight_horizontal",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,kind=verdant_froglight": {
+      "model": "viltrumitecore:block/dark/verdant_froglight"
+    },
+    "axis=z,kind=verdant_froglight": {
+      "model": "viltrumitecore:block/dark/verdant_froglight_horizontal",
+      "x": 90
+    },
+    "axis=x,kind=pearlescent_froglight": {
+      "model": "viltrumitecore:block/dark/pearlescent_froglight_horizontal",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,kind=pearlescent_froglight": {
+      "model": "viltrumitecore:block/dark/pearlescent_froglight"
+    },
+    "axis=z,kind=pearlescent_froglight": {
+      "model": "viltrumitecore:block/dark/pearlescent_froglight_horizontal",
+      "x": 90
+    }
+  }
+}

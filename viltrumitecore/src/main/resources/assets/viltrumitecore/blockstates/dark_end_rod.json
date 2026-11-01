@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "viltrumitecore:block/dark/end_rod",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "viltrumitecore:block/dark/end_rod",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "viltrumitecore:block/dark/end_rod",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "viltrumitecore:block/dark/end_rod",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "viltrumitecore:block/dark/end_rod"
+    },
+    "facing=west": {
+      "model": "viltrumitecore:block/dark/end_rod",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "hanging=false,soul=false": {
+      "model": "viltrumitecore:block/dark/lantern"
+    },
+    "hanging=true,soul=false": {
+      "model": "viltrumitecore:block/dark/lantern_hanging"
+    },
+    "hanging=false,soul=true": {
+      "model": "viltrumitecore:block/dark/soul_lantern"
+    },
+    "hanging=true,soul=true": {
+      "model": "viltrumitecore:block/dark/soul_lantern_hanging"
+    }
+  }
+}
