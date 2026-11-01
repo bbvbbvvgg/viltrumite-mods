@@ -124,8 +124,8 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
       this.targetSelector.addGoal(1, new HurtByTargetGoal(this, ChitauriSoldier.class).setAlertOthers());
       this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, ChitauriMob::validTarget));
-      this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, CitizenEntity.class, 10, true, false, ChitauriMob::validTarget));
-      this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, 10, true, false, ChitauriMob::validTarget));
+      this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, CitizenEntity.class, 10, true, false, ChitauriMob::civilianTarget));
+      this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, 10, true, false, ChitauriMob::civilianTarget));
       this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, IronGolem.class, 10, true, false, ChitauriMob::validTarget));
       this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, net.minecraft.world.entity.Mob.class, 10, true, false,
          e -> e instanceof net.minecraft.world.entity.Mob m && ChitauriMob.is(m.getTarget()) && ChitauriMob.validTarget(e)));
