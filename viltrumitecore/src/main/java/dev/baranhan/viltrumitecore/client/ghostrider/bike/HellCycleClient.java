@@ -28,6 +28,8 @@ import net.minecraftforge.registries.RegistryObject;
  */
 public final class HellCycleClient implements HellCycleEntity.ClientHooks {
    public static final HellCycleClient INSTANCE = new HellCycleClient();
+   static final float FLAME_SCALE = 0.3F;
+   static final float FLARE_SCALE = 0.22F;
    private static final Int2ObjectOpenHashMap<Fx> FX = new Int2ObjectOpenHashMap<>();
    /** Trail flames are laid at most this far apart along the track (blocks). */
    static final double TRAIL_STEP = 0.32;
@@ -115,6 +117,21 @@ public final class HellCycleClient implements HellCycleEntity.ClientHooks {
       }
    }
 
+   /** Playtest line (SubtitlePlaytest {@code bike}): the Hell Cycle the local player rides, or "none". */
+   public static String qaSummary(Minecraft mc) {
+      if (mc.player == null || !(mc.player.getVehicle() instanceof HellCycleEntity bike)) {
+         return "none";
+      }
+      HellCyclePhysics.State st = bike.state;
+      double speed = Math.sqrt(st.velX * st.velX + st.velZ * st.velZ);
+      return String.format(java.util.Locale.ROOT,
+         "pos=%.2f,%.2f,%.2f yaw=%.1f speed=%.2f b/t (%.0f km/h) vy=%.2f rpm=%.2f gear=%d steer=%.2f lean=%.1f pitch=%.1f"
+            + " ground=%s drift=%s skid=%s brake=%s air=%d crash=%d stoppie=%.2f wheelie=%.2f throttle=%.2f dash=%d riderY=%.2f",
+         bike.getX(), bike.getY(), bike.getZ(), st.yaw, speed, speed * 72.0, st.velY, st.rpm, st.gear, st.steer, st.lean, st.pitch,
+         st.onGround, st.drifting, st.skidding, st.braking, st.airTicks, st.crashTicks, st.stoppie, st.wheelie, bike.throttle,
+         bike.dashTicksLeft(), mc.player.getY() - bike.getY());
+   }
+
    public static void onLevelUnload(LevelEvent.Unload event) {
       if (event.getLevel().isClientSide()) {
          FX.values().forEach(fx -> fx.loops.values().forEach(HellCycleClient::stop));
@@ -171,17 +188,17 @@ public final class HellCycleClient implements HellCycleEntity.ClientHooks {
       if (bike.forming()) {
          for (int i = 0; i < 3; i++) {
             Vec3 at = along(bike, rnd.nextDouble() * 2.0 - 1.0, rnd.nextDouble() * 0.4, (rnd.nextDouble() - 0.5) * 0.5);
-            level.addParticle(ViltrumiteParticles.FIRE_FLARE.get(), at.x, at.y, at.z, 0.0, 0.04, 0.0);
+            spawn(ViltrumiteParticles.FIRE_FLARE.get(), at.x, at.y, at.z, 0.0, 0.04, 0.0);
          }
          return;
       }
       if (bike.burning()) {
          for (int i = 0; i < 4; i++) {
             Vec3 at = along(bike, rnd.nextDouble() * 2.0 - 1.0, rnd.nextDouble() * 0.9, (rnd.nextDouble() - 0.5) * 0.5);
-            level.addParticle(ViltrumiteParticles.FIRE_FLARE.get(), at.x, at.y, at.z, 0.0, 0.06, 0.0);
+            spawn(ViltrumiteParticles.FIRE_FLARE.get(), at.x, at.y, at.z, 0.0, 0.06, 0.0);
          }
          Vec3 at = along(bike, rnd.nextDouble() * 2.0 - 1.0, 0.5, 0.0);
-         level.addParticle(ViltrumiteParticles.METEOR_EMBER.get(), at.x, at.y, at.z, (rnd.nextDouble() - 0.5) * 0.2, 0.15, (rnd.nextDouble() - 0.5) * 0.2);
+         spawn(ViltrumiteParticles.METEOR_EMBER.get(), at.x, at.y, at.z, (rnd.nextDouble() - 0.5) * 0.2, 0.15, (rnd.nextDouble() - 0.5) * 0.2);
          return;
       }
       double speed = bike.visualSpeed;
@@ -192,7 +209,7 @@ public final class HellCycleClient implements HellCycleEntity.ClientHooks {
       // idle: a few embers rising off the tyres
       if (rnd.nextInt(speed > 0.1 ? 2 : 5) == 0) {
          Vec3 at = rnd.nextBoolean() ? rear(bike) : front(bike);
-         level.addParticle(ViltrumiteParticles.METEOR_EMBER.get(), at.x, at.y + 0.5, at.z, (rnd.nextDouble() - 0.5) * 0.05, 0.08, (rnd.nextDouble() - 0.5) * 0.05);
+         spawn(ViltrumiteParticles.METEOR_EMBER.get(), at.x, at.y + 0.5, at.z, (rnd.nextDouble() - 0.5) * 0.05, 0.08, (rnd.nextDouble() - 0.5) * 0.05);
       }
       // the burning road trail, laid every TRAIL_STEP between this tick's and last tick's tyre contacts
       long now = level.getGameTime();
@@ -215,18 +232,18 @@ public final class HellCycleClient implements HellCycleEntity.ClientHooks {
          Vec3 h = heading(bike);
          int n = 1 + (int)(speedF * 1.5F) + (drift ? 2 : 0);
          for (int i = 0; i < n; i++) {
-            level.addParticle(ViltrumiteParticles.METEOR_FLAME.get(), rearAt.x + (rnd.nextDouble() - 0.5) * 0.3, rearAt.y + 0.2 + rnd.nextDouble() * 0.3,
+            spawn(ViltrumiteParticles.METEOR_FLAME.get(), rearAt.x + (rnd.nextDouble() - 0.5) * 0.3, rearAt.y + 0.2 + rnd.nextDouble() * 0.3,
                rearAt.z + (rnd.nextDouble() - 0.5) * 0.3, -h.x * speed * 0.35, 0.03, -h.z * speed * 0.35);
          }
          if (rnd.nextFloat() < speedF * 0.6F || drift) {
-            level.addParticle(ViltrumiteParticles.METEOR_EMBER.get(), rearAt.x, rearAt.y + 0.1, rearAt.z, -h.x * speed * 0.6 + (rnd.nextDouble() - 0.5) * 0.2,
+            spawn(ViltrumiteParticles.METEOR_EMBER.get(), rearAt.x, rearAt.y + 0.1, rearAt.z, -h.x * speed * 0.6 + (rnd.nextDouble() - 0.5) * 0.2,
                0.12 + rnd.nextDouble() * 0.1, -h.z * speed * 0.6 + (rnd.nextDouble() - 0.5) * 0.2);
          }
       }
       if (bike.dashing()) {
          Vec3 at = exhaust(bike);
          for (int i = 0; i < 2; i++) {
-            level.addParticle(ViltrumiteParticles.FIRE_FLARE.get(), at.x, at.y, at.z, 0.0, 0.02, 0.0);
+            spawn(ViltrumiteParticles.FIRE_FLARE.get(), at.x, at.y, at.z, 0.0, 0.02, 0.0);
          }
       }
    }
@@ -287,9 +304,34 @@ public final class HellCycleClient implements HellCycleEntity.ClientHooks {
       Level level = bike.level();
       RandomSource rnd = bike.level().getRandom();
       for (int i = 0; i < count; i++) {
-         level.addParticle(type, at.x + (rnd.nextDouble() - 0.5) * 0.4, at.y + 0.1 + rnd.nextDouble() * 0.3, at.z + (rnd.nextDouble() - 0.5) * 0.4,
+         spawn(type, at.x + (rnd.nextDouble() - 0.5) * 0.4, at.y + 0.1 + rnd.nextDouble() * 0.3, at.z + (rnd.nextDouble() - 0.5) * 0.4,
             (rnd.nextDouble() - 0.5) * spread * 2.0, rnd.nextDouble() * spread + 0.02, (rnd.nextDouble() - 0.5) * spread * 2.0);
       }
+   }
+
+   /**
+    * The shared meteor flames are sized for a burning meteor (1-3 blocks, additive white at birth): on the bike they are
+    * shrunk to tongues of fire (QA: unscaled they washed the screen out at speed). Respects the particle setting.
+    */
+   private static void spawn(ParticleOptions type, double x, double y, double z, double dx, double dy, double dz) {
+      Minecraft mc = Minecraft.getInstance();
+      net.minecraft.client.ParticleStatus status = mc.options.particles().get();
+      if (status == net.minecraft.client.ParticleStatus.MINIMAL || status == net.minecraft.client.ParticleStatus.DECREASED
+         && mc.level != null && mc.level.random.nextInt(3) == 0) {
+         return;
+      }
+      net.minecraft.client.particle.Particle p = mc.particleEngine.createParticle(type, x, y, z, dx, dy, dz);
+      float scale = particleScale(type);
+      if (p != null && scale != 1.0F) {
+         p.scale(scale);
+      }
+   }
+
+   static float particleScale(ParticleOptions type) {
+      if (type == ViltrumiteParticles.METEOR_FLAME.get()) {
+         return FLAME_SCALE;
+      }
+      return type == ViltrumiteParticles.FIRE_FLARE.get() ? FLARE_SCALE : 1.0F;
    }
 
    private static void play(HellCycleEntity bike, RegistryObject<SoundEvent> sound, float volume, float pitch) {
