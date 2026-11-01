@@ -76,3 +76,15 @@
   downloads work. Cache the search JSON and do not retry in a loop.
 - QA: `tools/city/meteor_fire_block.py` builds a synthetic block (concrete, stone, glass, brick, wood) over RCON;
   `-Dviltrumitecore.cityfire.log=true` logs spot counts and per-tick cost.
+- Runtime QA findings (2026-11-01, Xvfb client, synthetic block): large particles must have smooth alpha and
+  enough texels (smoke 64 px, flames 32 px, halo 128 px); stepped 16/32 px pixel art drawn 6-15 blocks wide
+  became a mosaic of hard squares. Additive halos/flames fade out near the camera (`MeteorRenderer.haloFade`),
+  otherwise a passing meteor whites out the screen. Long run: ~1600 spots (cap) after 5 min, TPS 20, city fire
+  ~0.6 ms/tick; `/city reset` cleared the spots and restored ~27k blocks in one pass.
+- Fire spots are not saved: after a server restart flames go out within seconds (by design). Spectator mode
+  pauses the rain launches (gameplay, untouched). A hard kill (OOM) can leave charred blocks that the journal
+  never saved; a clean run restores fully.
+- Audio QA without speakers: `ALSOFT_DRIVERS=wave` + `ALSOFT_CONF` with `[wave] file=...` makes OpenAL write
+  the real mix to a float WAV (analyse peaks/spectrum; peak > 1.0 = clipping). Impact layers carry
+  `IMPACT_HEADROOM` 0.7 after a capture peaked at 1.8.
+- The sandbox has ~4.2 GB RAM: running gradle while the client is up gets the client OOM-killed.
