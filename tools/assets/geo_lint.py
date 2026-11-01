@@ -41,6 +41,7 @@ GROUPS = {
     'quinjet': [('avengers/quinjet', 'avengers/quinjet')],
     'red_hulk': [('red_hulk/red_hulk', 'red_hulk/red_hulk')],
     'red_hulk_arms': [('red_hulk/red_hulk_arms', 'red_hulk/red_hulk', {'reused': True})],
+    'hell_cycle': [('ghost_rider/hell_cycle', 'ghost_rider/hell_cycle')],
 }
 
 
@@ -200,10 +201,18 @@ def lint_group(name, members):
         gutters = len(member) < 3 or member[2].get('gutter', True)  # vanilla-layout skins have no gutters
         reused = len(member) > 2 and member[2].get('reused', False)  # a hero asset taken as is (Sind Mark 42)
         path = os.path.join(RES, 'geo', geo_rel + '.geo.json')
-        if not os.path.exists(path):
+        split = os.path.join(BIN, 'geo', geo_rel + '.geo.json')
+        if os.path.exists(path):
+            g = json.load(open(path))['minecraft:geometry'][0]
+        elif os.path.exists(split + '.part0'):  # too big for one push: plain parts joined by decodeBinaryAssets
+            i, text = 0, ''
+            while os.path.exists('%s.part%d' % (split, i)):
+                text += open('%s.part%d' % (split, i)).read()
+                i += 1
+            g = json.loads(text)['minecraft:geometry'][0]
+        else:
             errors.append(f'{name}: missing {geo_rel}')
             continue
-        g = json.load(open(path))['minecraft:geometry'][0]
         d = g['description']
         tw, th = d['texture_width'], d['texture_height']
         tex = load_tex(tex_rel)
