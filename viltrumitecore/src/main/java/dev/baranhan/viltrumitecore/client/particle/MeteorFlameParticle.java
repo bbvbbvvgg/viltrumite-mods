@@ -81,6 +81,24 @@ public class MeteorFlameParticle extends TextureSheetParticle {
    }
 
    @Override
+   public void render(com.mojang.blaze3d.vertex.VertexConsumer consumer, net.minecraft.client.Camera camera, float partialTick) {
+      // a fireball flame right at the camera fades instead of filling the screen with additive white (QA)
+      double px = Mth.lerp(partialTick, this.xo, this.x) - camera.getPosition().x;
+      double py = Mth.lerp(partialTick, this.yo, this.y) - camera.getPosition().y;
+      double pz = Mth.lerp(partialTick, this.zo, this.z) - camera.getPosition().z;
+      float size = this.getQuadSize(partialTick);
+      float near = Mth.clamp(((float)Math.sqrt(px * px + py * py + pz * pz) - size * 0.4F) / (size * 0.8F + 1.0F), 0.0F, 1.0F);
+      if (near <= 0.01F) {
+         return;
+      }
+
+      float keep = this.alpha;
+      this.alpha = keep * near;
+      super.render(consumer, camera, partialTick);
+      this.alpha = keep;
+   }
+
+   @Override
    protected int getLightColor(float partialTick) {
       return 15728880;
    }
