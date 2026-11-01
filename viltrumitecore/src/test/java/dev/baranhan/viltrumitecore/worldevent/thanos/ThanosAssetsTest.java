@@ -216,7 +216,7 @@ class ThanosAssetsTest {
 
       for (ThanosPhase p : ThanosPhase.values()) {
          keys.add("commands.viltrumitecore.thanos.phase." + p.name().toLowerCase(Locale.ROOT));
-         if (p != ThanosPhase.OPENING) {
+         if (p != ThanosPhase.ARRIVAL) {
             keys.add("event.viltrumitecore.thanos.phase." + p.name().toLowerCase(Locale.ROOT));
          }
       }
