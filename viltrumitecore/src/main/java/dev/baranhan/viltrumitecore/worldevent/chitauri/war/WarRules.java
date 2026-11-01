@@ -40,6 +40,13 @@ public final class WarRules {
    public static final int MAX_INTERCEPTORS = 4;
    public static final int MAX_SIEGES = 2;
    public static final int MAX_COMMANDERS = 2;
+   /** Pylons the hive may have standing at once. */
+   public static final int MAX_STRONGHOLDS = 6;
+   public static final int MAX_CONTAINMENTS = 2;
+   /** Budget points one commander call costs (one carrier of regular troopers). */
+   public static final int COST_CALL = 2;
+   /** Ticks between two commander calls anywhere in the city. */
+   public static final int CALL_GAP = 400;
    /** Reinforcement calls one commander may make in its life. */
    public static final int COMMANDER_CALLS = 2;
 

@@ -45,12 +45,48 @@ public final class ChitauriSounds {
    public static final RegistryObject<SoundEvent> DEBRIS = reg("chitauri.debris");
    public static final RegistryObject<SoundEvent> PHASE_HORN = reg("chitauri.phase_horn");
    public static final RegistryObject<SoundEvent> SEVER = reg("chitauri.sever");
+   // ---- city war (docs/plans/2026-11-04-chitauri-evolution.md; tools/sfx/chitauri_units.py) ----
+   public static final RegistryObject<SoundEvent> CAPTOR_GRAB = reg("chitauri.captor_grab");
+   public static final RegistryObject<SoundEvent> CAPTOR_TETHER = reg("chitauri.captor_tether");
+   public static final RegistryObject<SoundEvent> CAPTOR_GROWL = reg("chitauri.captor_growl");
+   public static final RegistryObject<SoundEvent> HEAVY_CANNON = reg("chitauri.heavy_cannon");
+   public static final RegistryObject<SoundEvent> HEAVY_VENT = reg("chitauri.heavy_vent");
+   public static final RegistryObject<SoundEvent> ARMOR_BREAK = reg("chitauri.armor_break");
+   public static final RegistryObject<SoundEvent> HEAVY_SLAM = reg("chitauri.heavy_slam");
+   public static final RegistryObject<SoundEvent> HEAVY_WINDUP = reg("chitauri.heavy_windup");
+   public static final RegistryObject<SoundEvent> HEAVY_HURT = reg("chitauri.heavy_hurt");
+   public static final RegistryObject<SoundEvent> HEAVY_DEATH = reg("chitauri.heavy_death");
+   public static final RegistryObject<SoundEvent> HEAVY_GROWL = reg("chitauri.heavy_growl");
+   public static final RegistryObject<SoundEvent> HEAVY_STEP = reg("chitauri.heavy_step");
+   public static final RegistryObject<SoundEvent> COMMANDER_STAFF = reg("chitauri.commander_staff");
+   public static final RegistryObject<SoundEvent> COMMANDER_SWEEP = reg("chitauri.commander_sweep");
+   public static final RegistryObject<SoundEvent> COMMANDER_ORDER = reg("chitauri.commander_order");
+   public static final RegistryObject<SoundEvent> COMMANDER_SIGNAL = reg("chitauri.commander_signal");
+   public static final RegistryObject<SoundEvent> COMMANDER_GROWL = reg("chitauri.commander_growl");
+   public static final RegistryObject<SoundEvent> INTERCEPTOR_ENGINE = reg("chitauri.interceptor_engine");
+   public static final RegistryObject<SoundEvent> INTERCEPTOR_BOOST = reg("chitauri.interceptor_boost");
+   public static final RegistryObject<SoundEvent> INTERCEPTOR_FIRE = reg("chitauri.interceptor_fire");
+   public static final RegistryObject<SoundEvent> INTERCEPTOR_DOWN = reg("chitauri.interceptor_down");
+   public static final RegistryObject<SoundEvent> SIEGE_HUM = reg("chitauri.siege_hum");
+   public static final RegistryObject<SoundEvent> SIEGE_CHARGE = reg("chitauri.siege_charge");
+   public static final RegistryObject<SoundEvent> SIEGE_FIRE = reg("chitauri.siege_fire");
+   public static final RegistryObject<SoundEvent> SIEGE_IMPACT = reg("chitauri.siege_impact");
+   public static final RegistryObject<SoundEvent> BEACON_DEPLOY = reg("chitauri.beacon_deploy");
+   public static final RegistryObject<SoundEvent> BEACON_HUM = reg("chitauri.beacon_hum");
+   public static final RegistryObject<SoundEvent> BEACON_DOWN = reg("chitauri.beacon_down");
+   public static final RegistryObject<SoundEvent> CAPTIVE_FREED = reg("chitauri.captive_freed");
+   public static final RegistryObject<SoundEvent> SECTOR_SEIZED = reg("chitauri.sector_seized");
+   public static final RegistryObject<SoundEvent> SECTOR_LIBERATED = reg("chitauri.sector_liberated");
 
    /** Every registered name (tests: registry, sounds.json, files and subtitles stay in step). */
    public static final List<String> NAMES = List.of("rifle_fire", "rifle_charge", "bolt_impact", "cannon_fire", "explosion", "chariot_engine",
       "chariot_flyby", "chariot_hit", "chariot_explode", "soldier_chatter", "soldier_hurt", "soldier_death", "soldier_step", "soldier_melee", "leviathan_roar",
       "leviathan_loop", "leviathan_hit", "leviathan_smash", "leviathan_crash", "leviathan_death", "portal_open", "portal_loop", "portal_thunder",
-      "portal_close", "debris", "phase_horn", "sever");
+      "portal_close", "debris", "phase_horn", "sever",
+      "captor_grab", "captor_tether", "captor_growl", "heavy_cannon", "heavy_vent", "armor_break", "heavy_slam", "heavy_windup", "heavy_hurt",
+      "heavy_death", "heavy_growl", "heavy_step", "commander_staff", "commander_sweep", "commander_order", "commander_signal", "commander_growl",
+      "interceptor_engine", "interceptor_boost", "interceptor_fire", "interceptor_down", "siege_hum", "siege_charge", "siege_fire", "siege_impact",
+      "beacon_deploy", "beacon_hum", "beacon_down", "captive_freed", "sector_seized", "sector_liberated");
 
    private ChitauriSounds() {
    }

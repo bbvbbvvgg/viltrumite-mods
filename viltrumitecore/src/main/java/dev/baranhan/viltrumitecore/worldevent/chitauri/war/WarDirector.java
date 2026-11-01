@@ -111,7 +111,20 @@ public final class WarDirector {
 
    /** Picks the next plan. {@code roll} comes from the run's seeded stream (reproducible). */
    public static Plan decide(Personality p, Snapshot s, Doctrine previous, int repeats, SplittableRandom roll) {
+      return decide(p, s, previous, repeats, roll, null);
+   }
+
+   /**
+    * Same, with a learned penalty per doctrine (index = ordinal): doctrines under which the hive lost sectors or bled
+    * squads, in this run or remembered from earlier ones, score lower.
+    */
+   public static Plan decide(Personality p, Snapshot s, Doctrine previous, int repeats, SplittableRandom roll, float[] bias) {
       float[] u = scores(p, s, previous, repeats);
+      if (bias != null) {
+         for (int i = 0; i < Math.min(u.length, bias.length); i++) {
+            u[i] -= bias[i];
+         }
+      }
       Doctrine d = softmax(u, 0.18F, roll.nextDouble());
       return new Plan(d, mix(d, s, p), fronts(d, s), u);
    }
