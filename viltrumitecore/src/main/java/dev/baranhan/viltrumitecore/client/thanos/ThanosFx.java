@@ -1103,6 +1103,8 @@ public final class ThanosFx {
          return;
       }
 
+      dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.renderHud(g, partial, width, height);
+
       float time = ticks + partial;
       if (disorient > 0) {
          float k = Mth.clamp(Math.min(disorient / 12.0F, (disorientMax - disorient + 1) / 4.0F), 0.0F, 1.0F);
