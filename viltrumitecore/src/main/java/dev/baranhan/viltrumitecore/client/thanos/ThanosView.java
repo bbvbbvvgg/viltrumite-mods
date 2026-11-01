@@ -6,7 +6,7 @@ import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosStone;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
 
-/** Asset locations of the Thanos event and the clip lookup across its six animation files. */
+/** Asset locations of the Thanos event and the clip lookup across its animation files. */
 public final class ThanosView {
    public static final ResourceLocation GEO = rl("geo/thanos/thanos.geo.json");
    public static final ResourceLocation TEXTURE = rl("textures/entity/thanos/thanos.png");
@@ -21,7 +21,9 @@ public final class ThanosView {
       rl("animations/thanos/thanos_combos.animation.json"),
       rl("animations/thanos/thanos_scene.animation.json"),
       rl("animations/thanos/thanos_od_lagna.animation.json"),
-      rl("animations/thanos/thanos_war.animation.json")
+      rl("animations/thanos/thanos_war.animation.json"),
+      rl("animations/thanos/thanos_war_stones.animation.json"),
+      rl("animations/thanos/thanos_war_combos.animation.json")
    };
    /** Gauntlet socket bones in {@link ThanosStone} order. */
    public static final String[] STONE_BONES = bones();

@@ -396,6 +396,102 @@ def scenes():
     return out
 
 
+# ------------------------------------------------------------------ war moves (Thanos 2.0, telegraph | active | recovery)
+G_POINT = gfing((-6, 0, -4), zc(-2), zc(95), zc(100), zc(95), zc(100), zc(95), zc(100), (30, 0, 55), zc(40))
+
+
+def war():
+    out = []
+    F = FIGHT
+    up_open = P(F, **GAUNTLET_UP, root=low(0.8), **G_OPEN)
+    up_fist = P(F, **GAUNTLET_UP, root=low(0.8), **G_FIST)
+    # SHIP_CALL 16|10|10: the open gauntlet to the sky (the Sanctuary answers), then he points at the target
+    point = P(F, left_arm=(-100, -20, -6), left_forearm=(-6, 0, 0), left_hand=(0, -90, 0), torso=(8, 20, 0), head=(-10, -20, 0),
+              **G_POINT)
+    out.append(clip('ship_call', 36, [(0, F), (12, up_open), (16, jitter(up_open, 1)), (19, point), (26, jitter(point, 0)), (36, F)]))
+    # POWER_RUPTURE 22|24|16: the fist high, one knee down, the gauntlet driven into the street; holds while it splits
+    rupture = P(F, left_arm=(-30, 0, -6), left_forearm=(-4, 0, 0), left_hand=(0, 0, 0), torso=(48, 0, 0), waist=(10, 0, 0),
+                head=(-50, 0, 0), right_arm=(-20, 0, 30), right_forearm=(-36, 0, 0), **kneel_right(), **G_FIST)
+    out.append(clip('power_rupture', 62, [(0, F), (14, up_fist), (22, jitter(up_fist, 1)), (25, rupture), (32, jitter(rupture, 1)),
+                                          (40, jitter(rupture, 0)), (46, rupture), (54, P(F, torso=(24, 0, 0), **crouch(-4))), (62, F)]))
+    # SPACE_BARRAGE 20|30|14: a sweep opens the portal ring, then the gauntlet thrusts at each target
+    sweep_a = P(F, left_arm=(-110, -50, -30), right_arm=(-60, 30, 40), torso=(-4, -16, 0), head=(-10, 14, 0), **G_OPEN, **R_OPEN)
+    sweep_b = P(F, left_arm=(-110, 30, -20), torso=(4, 16, 0), head=(-10, -16, 0), **G_OPEN)
+    jab_a = P(F, left_arm=(-94, -30, -4), left_forearm=(-4, 0, 0), left_hand=(-50, 0, 0), torso=(12, 26, 0), head=(-10, -28, 0),
+              **lunge_left(-2, -1.5), **G_OPEN)
+    jab_b = P(F, left_arm=(-96, 10, -6), left_forearm=(-4, 0, 0), left_hand=(-50, 0, 0), torso=(12, 6, 0), head=(-10, -8, 0),
+              **lunge_left(-2, -1.5), **G_OPEN)
+    back = P(F, left_arm=(-40, 0, -18), left_forearm=(-90, 0, 0), torso=(4, -10, 0), **G_OPEN)
+    out.append(clip('space_barrage', 64, [(0, F), (12, sweep_a), (20, sweep_b), (24, jab_a), (28, back), (32, jab_b), (36, back),
+                                          (40, jab_a), (44, back), (48, jab_b), (50, jitter(jab_b, 0)), (56, back), (64, F)]))
+    # REALITY_REWRITE 24|26|14: gauntlet to the face, arms flung wide (the street turns), the fist closes on it
+    face = P(F, left_arm=(-72, -20, -14), left_forearm=(-72, 0, 0), left_hand=(0, -90, 0), head=(-4, 8, 0), **G_CLAW)
+    wide = P(F, left_arm=(-24, 0, -78), right_arm=(-24, 0, 78), left_forearm=(-16, 0, 0), right_forearm=(-16, 0, 0), left_hand=(0, 0, 0),
+             torso=(-8, 0, 0), waist=(0, 0, 0), head=(-14, 0, 0), root=low(0.6), **G_OPEN, **R_OPEN)
+    out.append(clip('reality_rewrite', 64, [(0, F), (14, face), (24, jitter(face, 1)), (28, wide), (38, jitter(wide, 1)),
+                                            (46, P(wide, left_arm=(-60, 0, -40), **G_FIST)), (50, P(wide, left_arm=(-62, 0, -38), **G_FIST)),
+                                            (64, F)]))
+    # TIME_ANOMALY 14|60|10: palm out at the target, the wrist turns slow circles while the field holds
+    palm = P(F, left_arm=(-90, -10, -10), left_forearm=(-10, 0, 0), left_hand=(-50, 0, 0), torso=(4, 18, 0), head=(-8, -18, 0), **G_OPEN)
+    keys = [(0, F), (10, palm), (14, jitter(palm, 1))]
+    for i, t in enumerate(range(20, 75, 6)):
+        keys.append((t, P(palm, left_hand=((-50, -30, 18) if i % 2 == 0 else (-50, 30, -18)))))
+    keys.append((84, F))
+    out.append(clip('time_anomaly', 84, keys))
+    # MIND_COMPULSION 20|40|12: the stone to the temple, then the claw reaches and pulls the minds toward him
+    temple = P(F, left_arm=(-62, 40, -20), left_forearm=(-122, 0, 0), left_hand=(0, -40, 0), head=(6, -10, 0), **G_CLAW)
+    reach = P(F, left_arm=(-96, 0, -8), left_forearm=(-8, 0, 0), left_hand=(0, -90, 0), torso=(6, 20, 0), head=(-10, -20, 0), **G_CLAW)
+    pull = P(reach, left_arm=(-70, 10, -12), left_forearm=(-60, 0, 0), torso=(-4, 10, 0), **G_FIST)
+    out.append(clip('mind_compulsion', 72, [(0, F), (12, temple), (20, jitter(temple, 1)), (24, reach), (32, pull), (40, reach),
+                                            (48, pull), (56, reach), (60, jitter(reach, 0)), (72, F)]))
+    # SOUL_HARVEST 26|70|14: arms wide and high, head back; the claws drag the souls in, the hands close on the chest
+    open_up = P(F, left_arm=(-30, 0, -115), right_arm=(-30, 0, 115), left_forearm=(-20, 0, 0), right_forearm=(-20, 0, 0),
+                left_hand=(0, 0, 0), torso=(-14, 0, 0), waist=(0, 0, 0), head=(-30, 0, 0), root=low(1), **G_OPEN, **R_OPEN)
+    drag = P(open_up, left_arm=(-84, -30, -10), right_arm=(-84, 30, 10), left_forearm=(-50, 0, 0), right_forearm=(-50, 0, 0),
+             torso=(0, 0, 0), head=(-20, 0, 0), **G_CLAW, **R_HALF)
+    chest = P(F, left_arm=(-50, 40, -10), right_arm=(-50, -40, 10), left_forearm=(-110, 0, 0), right_forearm=(-110, 0, 0),
+              left_hand=(0, 0, 0), torso=(18, 0, 0), head=(-6, 0, 0), **crouch(-3), **G_FIST, **R_FIST)
+    out.append(clip('soul_harvest', 110, [(0, F), (16, open_up), (26, jitter(open_up, 1)), (40, P(open_up, **G_CLAW)),
+                                          (56, jitter(drag, 1)), (70, jitter(drag, 0)), (84, P(drag, left_forearm=(-80, 0, 0),
+                                                                                              right_forearm=(-80, 0, 0))),
+                                          (96, chest), (110, F)]))
+    # COMBO_TIME_VOLLEY 30|60|24: time stopped (palm to the sky), the portal ring, ten power punches through it, the last one lunges
+    sky = P(F, left_arm=(-150, 0, -24), left_forearm=(-40, 0, 0), left_hand=(0, 0, 0), head=(-26, 8, 0), torso=(-8, 10, 0), **G_OPEN)
+    keys = [(0, F), (12, sky), (22, sweep_a), (30, jitter(sweep_b, 1))]
+    for i, t in enumerate(range(34, 89, 6)):
+        keys.append((t, P(F, **(PUNCH_OUT if i % 2 == 0 else PULL_BACK), **G_FIST)))
+    keys += [(94, P(F, **PUNCH_OUT, **lunge_left(), **G_FIST)), (100, jitter(P(F, **PUNCH_OUT, **lunge_left(), **G_FIST), 0)), (114, F)]
+    out.append(clip('combo_time_volley', 114, keys))
+    # COMBO_MOON_FALL 34|80|24: the claw closes on the sky and drags a moon down, knee by knee, then the fist hits the street
+    claw_sky = P(F, **GAUNTLET_UP, root=low(0.6), **G_CLAW)
+    strain1 = P(F, left_arm=(-150, 0, -10), left_forearm=(-30, 0, 0), left_hand=(0, -90, 0), torso=(-8, 0, 0), head=(-28, 0, 0),
+                **crouch(-2), **G_FIST)
+    strain2 = P(F, left_arm=(-120, 0, -14), left_forearm=(-40, 0, 0), left_hand=(0, -90, 0), torso=(6, 0, 0), head=(-30, 0, 0),
+                **crouch(-5), **G_FIST)
+    strain3 = P(F, left_arm=(-90, 0, -16), left_forearm=(-40, 0, 0), left_hand=(0, -90, 0), torso=(20, 0, 0), head=(-34, 0, 0),
+                **kneel_right(-11), **G_FIST)
+    out.append(clip('combo_moon_fall', 138, [(0, F), (20, claw_sky), (28, P(claw_sky, **G_FIST)), (34, jitter(up_fist, 1)),
+                                             (50, jitter(strain1, 0)), (66, jitter(strain2, 1)), (84, jitter(strain3, 0)),
+                                             (96, jitter(strain3, 1)), (102, rupture), (114, jitter(rupture, 0)),
+                                             (126, P(F, torso=(24, 0, 0), **crouch(-4))), (138, F)]))
+    # COMBO_INFINITY 40|90|30: all six stones: the fist high, then four stages (blast, spread, press, the street)
+    thrust = P(F, left_arm=(-94, -34, -4), left_forearm=(-6, 0, 0), left_hand=(-60, 0, 0), torso=(12, 30, 0), waist=(4, 10, 0),
+               head=(-10, -36, 0), right_arm=(-30, 0, 30), right_forearm=(-50, 0, 0), **lunge_left(-2.5, -1), **G_OPEN)
+    press = P(F, left_arm=(-62, 0, -18), left_forearm=(-20, 0, 0), left_hand=(0, -90, 0), torso=(18, 6, 0), head=(-18, -6, 0),
+              right_arm=(-20, 0, 40), right_forearm=(-20, 0, 0), **crouch(-3.5), **G_OPEN)
+    out.append(clip('combo_infinity', 160, [(0, F), (20, up_open), (32, jitter(up_fist, 0)), (40, jitter(up_fist, 1)), (44, thrust),
+                                            (60, jitter(thrust, 0)), (66, wide), (82, jitter(wide, 1)), (90, press), (104, jitter(press, 0)),
+                                            (110, up_fist), (116, rupture), (130, jitter(rupture, 1)), (145, P(F, torso=(24, 0, 0),
+                                                                                                                **crouch(-4))),
+                                            (160, F)]))
+    # COMMAND 20|30|10: the right arm raised, then sweeps forward: the Order and the army obey
+    raise_r = P(STAND, right_arm=(-150, 0, -16), right_forearm=(-20, 0, 0), head=(-20, 0, 0), torso=(-6, 0, 0), **R_OPEN)
+    order = P(STAND, right_arm=(-96, 30, 10), right_forearm=(-4, 0, 0), torso=(6, -14, 0), head=(-12, 10, 0), **R_OPEN)
+    out.append(clip('command', 60, [(0, F), (12, raise_r), (20, jitter(raise_r, 1, ('right_arm', 'torso', 'head'))), (24, order),
+                                    (40, jitter(order, 0, ('right_arm', 'torso', 'head'))), (50, STAND), (60, F)]))
+    return out
+
+
 FILES = {  # file -> clip groups; each file stays below 55 KB (one GitHub request per file)
     'thanos_base': ('idle', 'idle_fight', 'walk', 'walk_fight', 'turn_left', 'turn_right', 'hurt', 'stun'),
     'thanos_melee': ('cleave', 'hammer', 'power_punch', 'power_wave', 'space_step', 'space_pull', 'space_ward',
@@ -404,11 +500,15 @@ FILES = {  # file -> clip groups; each file stays below 55 KB (one GitHub reques
     'thanos_combos': ('combo_portal_punch', 'combo_time_crush', 'combo_soul_mirage', 'combo_mind_step', 'combo_trinity',
                       'combo_eternity'),
     'thanos_scene': ('intro', 'victory', 'snap', 'snap_hold', 'defeat'),
+    # Thanos 2.0 war moves: three files below 46 KB each (one GitHub request per file with JSON escaping)
+    'thanos_war': ('ship_call', 'power_rupture', 'space_barrage', 'reality_rewrite', 'command'),
+    'thanos_war_stones': ('time_anomaly', 'mind_compulsion', 'soul_harvest'),
+    'thanos_war_combos': ('combo_time_volley', 'combo_moon_fall', 'combo_infinity'),
 }
 
 
 def main():
-    clips = {c.name: c for c in locomotion() + moves() + scenes()}
+    clips = {c.name: c for c in locomotion() + moves() + scenes() + war()}
     listed = [n for names in FILES.values() for n in names]
     missing = sorted(set(clips) - set(listed))
     assert not missing, 'clips without a file: %s' % missing
@@ -417,7 +517,7 @@ def main():
         os.remove(old)
     for f, names in FILES.items():
         size = write_anims('animations/thanos/%s.animation.json' % f, [clips[n] for n in names])
-        assert size < 55000, '%s is %d bytes' % (f, size)
+        assert size < (46000 if f.startswith('thanos_war') else 55000), '%s is %d bytes' % (f, size)
         print('%s: %d clips, %d bytes' % (f, len(names), size))
 
 
