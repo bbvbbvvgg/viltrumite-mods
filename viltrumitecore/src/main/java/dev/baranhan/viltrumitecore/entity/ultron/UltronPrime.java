@@ -50,6 +50,8 @@ public class UltronPrime extends UltronUnit {
    public static final int GROUND_BOUT = 10 * 20;
    /** Overdrive flights are short hops into a dive. */
    public static final int OVERDRIVE_AIR = 5 * 20;
+   /** Tether reduction from which a player's hit draws his remark about the nodes. */
+   static final float TETHER_REMARK = 0.15F;
    /** Damage within the stagger window (share of max health) that staggers him. */
    public static final float STAGGER_SHARE = 0.06F;
    public static final double BEAM_RANGE = 42.0;
@@ -489,7 +491,7 @@ public class UltronPrime extends UltronUnit {
       this.setFlying(true);
       this.boutClock = 0;
       this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.6, 0.0));
-      this.sound(UltronSounds.PRIME_JET, 1.6F, 1.0F);
+      this.sound(UltronSounds.PRIME_DASH, 1.6F, 0.75F); // ignition burst; the jet loop itself runs on the client
       this.fx(UltronFxS2CPacket.JET, this.position(), new Vec3(0.0, -1.0, 0.0), 2.0F, this.getId());
    }
 
@@ -525,7 +527,7 @@ public class UltronPrime extends UltronUnit {
                this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.8, 0.0));
             }
             this.diveTo = null;
-            this.sound(UltronSounds.PRIME_JET, 1.6F, 1.1F);
+            this.sound(UltronSounds.PRIME_DASH, 1.6F, 0.9F);
          }
          case PRIME_SUMMON -> {
             if (this.level() instanceof ServerLevel level) {
@@ -858,11 +860,15 @@ public class UltronPrime extends UltronUnit {
       }
       UltronUprising.unitHurt(this, source, a, ranged);
       if (this.isAlive()) {
+         if (this.tethers.reduction() >= TETHER_REMARK && attacker instanceof Player) {
+            UltronUprising.bossTethered(this); // his nodes soaked most of it: he says so (own cooldown)
+         }
          this.checkStage();
          if (this.staggerTaken >= max * STAGGER_SHARE && this.heavyCooldown <= 0 && (this.move == UltronMove.NONE || this.interruptible(this.move))) {
             this.staggerTaken = 0.0F;
             this.heavyCooldown = 200;
             this.forceMove(UltronMove.HEAVY_HIT, null);
+            UltronUprising.bossStaggered(this);
          }
       }
       return true;
