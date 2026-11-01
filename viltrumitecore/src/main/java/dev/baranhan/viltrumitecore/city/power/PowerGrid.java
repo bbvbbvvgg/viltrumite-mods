@@ -83,6 +83,8 @@ public final class PowerGrid {
       @Nullable
       BlockPos transformer;
       long[] emergency = new long[0];
+      /** Game time of the last emergency light lookup (the chunk scans may not be done when a cell goes dark). */
+      long emergencyLookup = Long.MIN_VALUE;
       boolean shownLit = true;
 
       Cell(long key) {
@@ -138,6 +140,10 @@ public final class PowerGrid {
    private long lastSync = -1000;
    private long lastLine = -1000;
    private int darkCount;
+   /** Emergency lights per dark cell the clients draw beacons on (one per chunk at most, spread over the cell). */
+   static final int EMERGENCY_PER_CELL = 6;
+   /** Cells inside (or within 64 blocks of) a district: the built-up city, the denominator of the dark share. */
+   private int urbanCells;
    private long droppedActions;
 
    public PowerGrid(CityManager city) {
@@ -156,6 +162,9 @@ public final class PowerGrid {
             String name = d == null ? p.name : d.name();
             this.districtOf[ix * this.rows + iz] = name;
             this.districtCells.merge(name, 1, Integer::sum);
+            if (d != null) {
+               this.urbanCells++;
+            }
          }
       }
       this.index = new FixtureIndex(this.level, p.minY, p.maxY);
@@ -197,7 +206,8 @@ public final class PowerGrid {
    }
 
    public float darkFraction() {
-      return (float)this.darkCount / (this.cols * this.rows);
+      // the arena is far larger than the built-up districts; outskirts cells are rarely hit
+      return Math.min(1.0F, (float)this.darkCount / Math.max(1, this.urbanCells > 0 ? this.urbanCells : this.cols * this.rows));
    }
 
    public int cellCount() {
@@ -370,9 +380,11 @@ public final class PowerGrid {
          this.fx(CityPowerS2CPacket.FX_IMPACT, x, y, z, sev, (int)PowerRules.mix(incident.id()));
       }
       Vec3 at = new Vec3(x, y, z);
-      if (sev >= 0.45F) {
+      // a hero smashing a wall is not a city emergency: plain destruction bursts need a collapse-sized burst
+      boolean destruction = "destruction".equals(cause);
+      if (sev >= (destruction ? 0.6F : 0.45F)) {
          this.alarm.lease("incident:" + cause, AlarmStage.ACTIVE, at, (float)reach * 3, 1200);
-      } else if (sev >= 0.3F && !"destruction".equals(cause)) {
+      } else if (sev >= 0.3F && !destruction) {
          this.alarm.lease("incident:" + cause, AlarmStage.WARNING, at, (float)reach * 3, 600);
       }
       if ("meteor".equals(cause)) {
@@ -558,7 +570,14 @@ public final class PowerGrid {
       MinecraftForge.EVENT_BUS.post(new InfrastructureEvent.Outage(this.level,
          new OutageInfo(district, this.districtCells.getOrDefault(district, 0), this.districtDark.getOrDefault(district, 0), 0, at), a.depth > 0, a.incident));
       if (a.depth >= 1) {
-         this.alarm.lease("cascade", AlarmStage.CRITICAL, site, 600.0F, 900);
+         // one neighbour giving way is a cascade; three substations down in one incident is a crisis
+         AlarmStage stage = trips + 1 >= PowerRules.CRITICAL_TRIPS ? AlarmStage.CRITICAL : AlarmStage.ACTIVE;
+         for (CityAlarm.Lease l : this.alarm.leases()) {
+            if (l.source().equals("cascade")) {
+               stage = AlarmStage.max(stage, l.stage());
+            }
+         }
+         this.alarm.lease("cascade", stage, site, 600.0F, 900);
          if (now - this.lastLine > 200) {
             this.say("cascade" + SEP + district, true);
          }
@@ -650,7 +669,8 @@ public final class PowerGrid {
    }
 
    private void onDark(Cell c, long now) {
-      c.emergency = this.fixtures.emergencyLights(c.key, 3);
+      c.emergency = this.fixtures.emergencyLights(c.key, EMERGENCY_PER_CELL);
+      c.emergencyLookup = now;
       // most of a substation dark: it trips (and may take its neighbours with it)
       Station st = this.station(c.key);
       if (!st.tripped && PowerRules.stationTrips(st.health, this.darkCellsOf(st.key), this.cellsOfStation(st.key).length)) {
@@ -952,6 +972,11 @@ public final class PowerGrid {
             transformers.add(c.transformer.asLong());
          }
          if (c.state.dark()) {
+            if (c.emergency.length < EMERGENCY_PER_CELL && now - c.emergencyLookup >= 100) {
+               // the fixture scans of this cell finished after it went dark: look again (at most every 5 s)
+               c.emergency = this.fixtures.emergencyLights(c.key, EMERGENCY_PER_CELL);
+               c.emergencyLookup = now;
+            }
             for (long e : c.emergency) {
                if (emergency.size() < CityPowerS2CPacket.MAX_EMERGENCY) {
                   emergency.add(e);
@@ -989,6 +1014,7 @@ public final class PowerGrid {
          m.merge(c.state.name().toLowerCase(java.util.Locale.ROOT), 1L, Long::sum);
       }
       m.put("cells", (long)this.cellCount());
+      m.put("urban_cells", (long)this.urbanCells);
       m.put("stations_tripped", this.stations.values().stream().filter(st -> st.tripped).count());
       m.put("stations_worn", (long)this.stations.size());
       m.put("timeline", (long)this.timeline.size());
