@@ -92,7 +92,7 @@ finale timer, boss id, own hack progress; resent on login / dimension change / r
 ## Assets
 
 - Geo / animations / textures: `tools/assets/ultron_*.py` on `jinwoo_geo.py` + `chitauri_lib.py`.
-- Sounds: CC0 recordings (Openverse / Freesound) layered with own synthesis, `tools/sfx/ultron.py`;
+- Sounds: CC0 recordings (Kenney Sci-Fi / Impact / RPG Audio packs; Openverse was unreachable) layered with own synthesis, `tools/sfx/ultron.py`;
   ledger `tools/assets/ultron_sources.md` + `CREDITS.md`.
 - Lang: `src/main/lang-overlays/ultron/<locale>.json` (12 locales); sounds: `src/main/sound-overlays/ultron.json`.
 
