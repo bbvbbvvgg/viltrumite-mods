@@ -139,9 +139,18 @@ public final class UltronVoice {
 
    /**
     * Says a line to the players in the event's range. {@code force}: cut whatever he says now (phase and
-    * boss beats). False when the line is cooling down, an ambient gap holds, or nobody listens.
+    * boss beats only); unforced ability lines wait their turn ({@link #sayNext}). False when the line is cooling
+    * down, an ambient gap holds, he is busy (ambient remarks are skipped) or nobody listens.
     */
    static boolean say(ServerLevel level, UltronSession s, String id, boolean force) {
+      Line line = LINES.get(id);
+      if (line == null) {
+         return false;
+      }
+      if (!force && line.priority == HeroLine.Priority.ABILITY) {
+         // news (a capture, a loss, a protocol, the upload): never cuts the line he reads, never lost to it either
+         return sayNext(level, s, id);
+      }
       String cut = force ? s.voiceQueued : null;
       int cutAt = s.voiceQueuedAt;
       Integer cutSaid = cut == null ? null : s.said.get(cut);
@@ -158,21 +167,30 @@ public final class UltronVoice {
    }
 
    /**
-    * Says a line as soon as he is not reading another one (protocol news, which several systems may raise in the
-    * same second): now when he is quiet, otherwise queued ({@link #QUEUE_MAX} at most, dropped after {@link #QUEUE_STALE}).
+    * Says a line as soon as he is not reading another one (news that several systems may raise in the same second):
+    * now when he is quiet, otherwise queued ({@link #QUEUE_MAX} at most, dropped after {@link #QUEUE_STALE}). Every
+    * unforced {@link HeroLine.Priority#ABILITY} line comes this way. False when the line is cooling down or unheard.
     */
-   static void sayNext(ServerLevel level, UltronSession s, String id) {
-      if (!LINES.containsKey(id)) {
-         return;
+   static boolean sayNext(ServerLevel level, UltronSession s, String id) {
+      Line line = LINES.get(id);
+      if (line == null || cooling(s, line)) {
+         return false;
       }
       if (s.voiceQueue.isEmpty() && !HeroSpeech.worldSpeaking(level.getServer(), VOICE)) {
          if (speak(level, s, id, true)) {
             s.voiceQueued = id;
             s.voiceQueuedAt = s.clock;
+            return true;
          }
-         return;
+         return false;
       }
       enqueue(s, id);
+      return true;
+   }
+
+   private static boolean cooling(UltronSession s, Line line) {
+      Integer last = s.said.get(line.id);
+      return last != null && line.cooldownSeconds > 0 && s.clock - last < line.cooldownSeconds * UltronRules.TPS;
    }
 
    /** Every second (with listeners): the next queued line once he is quiet. */
@@ -244,8 +262,7 @@ public final class UltronVoice {
          return false;
       }
       int now = s.clock;
-      Integer last = s.said.get(id);
-      if (last != null && line.cooldownSeconds > 0 && now - last < line.cooldownSeconds * UltronRules.TPS) {
+      if (cooling(s, line)) {
          return false;
       }
       if (line.priority == HeroLine.Priority.AMBIENT) {
