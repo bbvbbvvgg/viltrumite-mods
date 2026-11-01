@@ -44,4 +44,17 @@ public interface ChitauriMob {
       }
       return target instanceof Mob mob && is(mob.getTarget());
    }
+
+   /**
+    * Civilians as auto-targets: only outside a war. While the hive wages a war it wants the city's people alive
+    * (Captors take them, pylons hold them), so soldiers leave them to the snatchers instead of gunning them down.
+    * A civilian who hits a Chitauri is still fought back through the hurt-by goal.
+    */
+   static boolean civilianTarget(@Nullable LivingEntity target) {
+      if (!validTarget(target)) {
+         return false;
+      }
+      return !(target.level() instanceof net.minecraft.server.level.ServerLevel level)
+         || dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriWar.of(level) == null;
+   }
 }

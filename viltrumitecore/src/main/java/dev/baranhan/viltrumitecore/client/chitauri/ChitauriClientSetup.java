@@ -1,7 +1,9 @@
 package dev.baranhan.viltrumitecore.client.chitauri;
 
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriEntities;
+import dev.baranhan.viltrumitecore.client.hero.speech.HeroPortraits;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -11,6 +13,12 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 @EventBusSubscriber(modid = "viltrumitecore", bus = Bus.MOD, value = {Dist.CLIENT})
 public final class ChitauriClientSetup {
    private ChitauriClientSetup() {
+   }
+
+   @SubscribeEvent
+   public static void onClientSetup(FMLClientSetupEvent event) {
+      // hive orders and commanders' calls in the subtitles show the commander's bust
+      HeroPortraits.registerVoice("chitauri", ChitauriPortrait.INSTANCE);
    }
 
    @SubscribeEvent
