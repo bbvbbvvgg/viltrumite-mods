@@ -195,6 +195,21 @@ class VenomBossBrainTest {
    }
 
    @Test
+   void aBellRingerIsHuntedOnceItLearnedTheNoise() {
+      VenomBossBrain brain = inPhase(Phase.HUNT);
+      assertFalse(brain.provokedByNoise(), "the first bells are only a weakness");
+      brain.used(Attack.TENDRIL);
+      brain.used(Attack.LEAP);
+      brain.hurt(Threat.SOUND, 6.0F);
+      brain.hurt(Threat.SOUND, 6.0F);
+      assertTrue(brain.adapted(Threat.SOUND));
+      assertNotEquals(Attack.TENDRIL, brain.choose(at(8.0)), "on cooldown before the next bell");
+      assertTrue(brain.provokedByNoise());
+      assertEquals(Attack.TENDRIL, brain.choose(at(8.0)), "the next bell is answered with a yank");
+      assertEquals(Attack.LEAP, brain.choose(new Situation(22.0, 0.0, false, true, false, 1, false)), "or a leap when out of reach");
+   }
+
+   @Test
    void aPlayerOnARoofIsPouncedOnFromTheWall() {
       VenomBossBrain brain = inPhase(Phase.HUNT);
       Situation roof = new Situation(10.0, 9.0, true, false, true, 1, false);

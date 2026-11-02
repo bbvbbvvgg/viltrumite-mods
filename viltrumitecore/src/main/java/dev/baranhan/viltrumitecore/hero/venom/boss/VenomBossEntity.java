@@ -734,13 +734,25 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       recoil();
    }
 
-   /** A loud sound in the level: every boss in earshot recoils. */
+   /** Adapted to noise: the player closest to the sound (within 8 blocks of it) becomes the target. */
+   private void huntNoise(Vec3 at) {
+      Player maker = this.level().getNearestPlayer(at.x, at.y, at.z, 8.0,
+         p -> p instanceof ServerPlayer sp && !sp.isSpectator() && !sp.isCreative() && sp.isAlive());
+      if (maker != null && maker != this.getTarget()) {
+         this.setTarget(maker);
+      }
+   }
+
+   /** A loud sound in the level: every boss in earshot recoils (and, once adapted, turns on the noisemaker). */
    public static void loudSound(ServerLevel level, Vec3 at, @Nullable ResourceLocation id, float volume) {
       List<VenomBossEntity> bosses = level.getEntitiesOfClass(VenomBossEntity.class, new AABB(at, at).inflate(VenomRules.SOUND_RADIUS * 3));
       for (VenomBossEntity boss : bosses) {
          if (VenomWeakness.loud(id, volume, boss.position().distanceTo(at))) {
             boss.brain.hurt(Threat.SOUND, 6.0F);
             boss.recoil();
+            if (boss.brain.provokedByNoise()) {
+               boss.huntNoise(at);
+            }
          }
       }
    }
