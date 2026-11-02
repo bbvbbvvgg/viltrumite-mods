@@ -34,6 +34,7 @@
   "commands.viltrumitecore.thanos.phase.gauntlet": "IV, tam Eldiven",
   "commands.viltrumitecore.thanos.phase_set": "Savaş aşaması: %s.",
   "commands.viltrumitecore.thanos.phase_refused": "Şu an aşama değiştirilemez: savaş sürmüyor (ya da şıklatma başladı) veya aşama bilinmiyor.",
+  "commands.viltrumitecore.thanos.phase_already": "Savaş zaten \"%s\" aşamasına ulaştı (aşamalar yalnızca ileri gider).",
   "commands.viltrumitecore.thanos.order_called": "Kara Düzen gemiden indiriliyor.",
   "commands.viltrumitecore.thanos.wave_called": "Bir Chitauri dalgası çağrıldı (hayatta %s istilacı).",
   "commands.viltrumitecore.thanos.ship_strike": "Konumuna yörünge saldırısı emredildi. Kaç!",

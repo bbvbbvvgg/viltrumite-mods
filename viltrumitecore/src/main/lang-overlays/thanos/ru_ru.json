@@ -34,6 +34,7 @@
   "commands.viltrumitecore.thanos.phase.gauntlet": "IV, полная Перчатка",
   "commands.viltrumitecore.thanos.phase_set": "Фаза войны: %s.",
   "commands.viltrumitecore.thanos.phase_refused": "Сменить фазу сейчас нельзя: война не идёт (или начался щелчок), либо фаза неизвестна.",
+  "commands.viltrumitecore.thanos.phase_already": "Война уже дошла до фазы «%s» (фазы идут только вперёд).",
   "commands.viltrumitecore.thanos.order_called": "Чёрный Орден спускается с корабля.",
   "commands.viltrumitecore.thanos.wave_called": "Вызвана волна Читаури (живых захватчиков: %s).",
   "commands.viltrumitecore.thanos.ship_strike": "Орбитальный удар по вашей позиции. Уходите!",
