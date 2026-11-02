@@ -603,16 +603,23 @@ public final class Scp106Pocket {
    private static void cues(ServerPlayer p, PocketSession s, PocketLayout l, double x, double y, double z) {
       int ox = PocketLayout.slotOriginX(s.slot);
       int oz = PocketLayout.slotOriginZ(s.slot);
-      if (!s.key) {
+      if (!s.key && RANDOM.nextInt(5) == 0) {
+         // only the nearest listening door knocks, every few seconds, so the sound leads somewhere
+         int[] best = null;
+         double bestD2 = 28 * 28;
          for (Room r : l.rooms()) {
             if (r.purpose != Purpose.LISTENING) {
                continue;
             }
             int[] k = PocketPainter.listeningPoint(r);
             double d2 = (k[0] - x) * (k[0] - x) + (k[2] - z) * (k[2] - z);
-            if (d2 < 30 * 30 && RANDOM.nextInt(4) == 0) {
-               sound(p, Scp106Sounds.KNOCK.get(), ox + k[0] + 0.5, k[1], oz + k[2] + 0.5, 0.9F, 0.9F + RANDOM.nextFloat() * 0.15F);
+            if (d2 < bestD2) {
+               bestD2 = d2;
+               best = k;
             }
+         }
+         if (best != null) {
+            sound(p, Scp106Sounds.KNOCK.get(), ox + best[0] + 0.5, best[1], oz + best[2] + 0.5, 0.9F, 0.9F + RANDOM.nextFloat() * 0.15F);
          }
       }
       int[] w = PocketPainter.secretWall(l.secret());
