@@ -58,6 +58,9 @@ public final class CitizenPoser {
    private static final float[][] RISE_RL = {PoseKeys.key(0.0F, 0.0F, 0.0F, 9.0F), PoseKeys.key(7.0F, -58.0F, 0.0F, 4.0F), PoseKeys.under(16.0F)};
    private static final float[][] HUG_R = row(-44.0F, -58.0F, -6.0F);
    private static final float[][] HUG_L = row(-44.0F, 58.0F, 6.0F);
+   // peril (issue #138): both hands up on the ledge while hanging
+   private static final float[][] HANG_R = row(-174.0F, 0.0F, 9.0F);
+   private static final float[][] HANG_L = row(-174.0F, 0.0F, -9.0F);
 
    private CitizenPoser() {
    }
@@ -127,6 +130,7 @@ public final class CitizenPoser {
          case STARTLED -> 0.9F;
          case FALLEN, COVER -> 0.55F;
          case FLEEING -> 0.45F;
+         case TEETER, HANGING, FALLING -> 0.6F;
          default -> 0.22F;
       };
       float k = approach(dt, rate);
@@ -265,8 +269,56 @@ public final class CitizenPoser {
          rig.add(model.head, 0.0F, Mth.sin(age * 0.07F + (seed & 31)) * 28.0F * recover, 0.0F);
       }
 
+      peril(rig, model, w, seed, age);
       rig.finish();
-      ponytail(model, look, limbSwing, limbAmount, age, flee);
+      float wind = w[CitizenState.FALLING.ordinal()] + w[CitizenState.HANGING.ordinal()] * 0.4F;
+      ponytail(model, look, limbSwing, limbAmount, age, Math.min(1.0F, flee + wind));
+   }
+
+   /**
+    * Issue #138: on a failing floor the arms windmill, the torso rocks and the eyes go down to
+    * the drop; hanging from a ledge both hands are up on the edge and the legs kick for a hold;
+    * falling, arms and legs flail (the renderer adds the tumble).
+    */
+   private static void peril(PoseRig rig, CitizenModel model, float[] w, int seed, float age) {
+      float ph = (seed & 31) * 0.2F;
+      float teeter = w[CitizenState.TEETER.ordinal()];
+      if (teeter > 0.01F) {
+         float sw = age * 0.55F + ph;
+         rig.add(model.rightArm, (-118.0F + Mth.sin(sw) * 55.0F) * teeter, 0.0F, (38.0F + Mth.cos(sw) * 26.0F) * teeter);
+         rig.add(model.leftArm, (-118.0F + Mth.sin(sw + 2.4F) * 55.0F) * teeter, 0.0F, (-38.0F - Mth.cos(sw + 2.4F) * 26.0F) * teeter);
+         rig.add(model.body, Mth.sin(age * 0.33F + ph) * 11.0F * teeter, 0.0F, Mth.sin(age * 0.21F + ph) * 5.0F * teeter);
+         rig.add(model.head, 32.0F * teeter, 0.0F, 0.0F);
+         rig.add(model.rightLeg, 0.0F, 0.0F, 7.0F * teeter);
+         rig.add(model.leftLeg, 0.0F, 0.0F, -7.0F * teeter);
+      }
+
+      float hang = w[CitizenState.HANGING.ordinal()];
+      if (hang > 0.01F) {
+         float kick = Mth.sin(age * 0.42F + ph) * 22.0F * hang;
+         float strain = Mth.sin(age * 1.7F + ph) * 1.5F * hang;
+         rig.mainArm(HANG_R, 0.0F, hang, false);
+         rig.offArm(HANG_L, 0.0F, hang, false);
+         rig.add(model.rightArm, strain, 0.0F, 0.0F);
+         rig.add(model.leftArm, -strain, 0.0F, 0.0F);
+         rig.add(model.rightLeg, kick, 0.0F, 4.0F * hang);
+         rig.add(model.leftLeg, -kick, 0.0F, -4.0F * hang);
+         rig.add(model.body, 5.0F * hang, 0.0F, 0.0F);
+         // up at the hands, now and then a terrified glance down
+         model.head.yRot *= 1.0F - hang * 0.7F;
+         rig.add(model.head, (-26.0F + Math.max(0.0F, Mth.sin(age * 0.05F + ph)) * 66.0F) * hang, 0.0F, 0.0F);
+      }
+
+      float fall = w[CitizenState.FALLING.ordinal()];
+      if (fall > 0.01F) {
+         float f = age * 0.8F + ph;
+         rig.add(model.rightArm, (-140.0F + Mth.sin(f) * 50.0F) * fall, 0.0F, (55.0F + Mth.cos(f * 1.3F) * 30.0F) * fall);
+         rig.add(model.leftArm, (-140.0F + Mth.sin(f + 2.1F) * 50.0F) * fall, 0.0F, (-55.0F - Mth.cos(f * 1.3F + 2.1F) * 30.0F) * fall);
+         rig.add(model.rightLeg, Mth.sin(f * 0.9F) * 38.0F * fall, 0.0F, 10.0F * fall);
+         rig.add(model.leftLeg, -Mth.sin(f * 0.9F) * 38.0F * fall, 0.0F, -10.0F * fall);
+         model.head.yRot *= 1.0F - fall * 0.5F;
+         rig.add(model.head, -18.0F * fall, 0.0F, 0.0F);
+      }
    }
 
    private static void gesture(PoseRig rig, CitizenModel model, int g, float wt, float age) {
