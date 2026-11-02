@@ -6,6 +6,10 @@ import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraftforge.client.event.ComputeFovModifierEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 
 /**
@@ -50,6 +54,35 @@ public final class GhostRiderCamera {
       if (Math.abs(fovBoost) > 1.0E-3F && event.usedConfiguredFov()) {
          event.setFOV(event.getFOV() * (1.0F + fovBoost));
       }
+   }
+
+   /**
+    * The rooted moves (transformation, stare, slam, wave) hold him with a -90 % speed modifier; vanilla reads any
+    * slow as a reason to narrow the view, which would zoom the camera in on every rooted move. Give back the part of
+    * the FOV modifier that root alone took away (flying, bows and sprint keep their own share).
+    */
+   public static void onFovModifier(ComputeFovModifierEvent event) {
+      if (event.getPlayer() != Minecraft.getInstance().player) {
+         return;
+      }
+      AttributeInstance speed = event.getPlayer().getAttribute(Attributes.MOVEMENT_SPEED);
+      AttributeModifier root = speed == null ? null : speed.getModifier(dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderHero.SLOW_ID);
+      float walk = event.getPlayer().getAbilities().getWalkingSpeed();
+      if (root == null || walk <= 0.0F) {
+         return;
+      }
+      event.setNewFovModifier(event.getNewFovModifier() * rootCompensation(speed.getValue(), root.getAmount(), walk));
+   }
+
+   /** Pure: the factor that undoes vanilla's speed term for a MULTIPLY_TOTAL slow of {@code rootAmount}. */
+   public static float rootCompensation(double speedNow, double rootAmount, float walk) {
+      double keep = 1.0 + rootAmount;
+      if (keep <= 1.0E-4 || walk <= 0.0F) {
+         return 1.0F;
+      }
+      double rooted = (speedNow / walk + 1.0) / 2.0;
+      double free = (speedNow / keep / walk + 1.0) / 2.0;
+      return rooted <= 1.0E-4 ? 1.0F : (float)(free / rooted);
    }
 
    public static void onAngles(ViewportEvent.ComputeCameraAngles event) {

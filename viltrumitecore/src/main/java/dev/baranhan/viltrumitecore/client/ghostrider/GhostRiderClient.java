@@ -67,6 +67,7 @@ public final class GhostRiderClient {
       MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, HellCycleCockpit::onRenderHand);
       MinecraftForge.EVENT_BUS.addListener(HellCycleCockpit::onRenderLevel);
       MinecraftForge.EVENT_BUS.addListener(GhostRiderCamera::onFov);
+      MinecraftForge.EVENT_BUS.addListener(GhostRiderCamera::onFovModifier);
       MinecraftForge.EVENT_BUS.addListener(GhostRiderCamera::onAngles);
    }
 }

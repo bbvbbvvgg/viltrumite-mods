@@ -397,8 +397,14 @@ public final class GhostRiderVfx {
          return;
       }
       Vec3 dst = victim.getEyePosition(partial);
+      Minecraft mc = Minecraft.getInstance();
+      // seen through his own eyes the streams would run along the view axis (a ribbon seen end-on smears across the
+      // screen): there they leave from just below and beside the view, thinner, and converge on the soul's eyes
+      boolean ownView = p == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
+      float wide = ownView ? 0.035F : 0.12F;
+      float core = ownView ? 0.016F : 0.05F;
       for (int side = 0; side < 2; side++) {
-         Vec3 src = GhostRiderAnchors.eye(p, side == 0, partial);
+         Vec3 src = ownView ? firstPersonSocket(cam, dst, side == 0) : GhostRiderAnchors.eye(p, side == 0, partial);
          Vec3 d = dst.subtract(src);
          float len = (float)d.length();
          if (len < 0.2F) {
@@ -406,8 +412,8 @@ public final class GhostRiderVfx {
          }
          AXIS.set((float)(d.x / len), (float)(d.y / len), (float)(d.z / len));
          float pulse = 0.85F + 0.15F * Mth.sin(age * 1.7F + side);
-         flame(vc, m, cam, src, AXIS, 0.12F * pulse, len * grow, HellfireDraw.frame(age, side * 4), HellfireDraw.TONGUE, 255, 200, 140, (int)(230 * grow));
-         flame(vc, m, cam, src, AXIS, 0.05F, len * grow, HellfireDraw.frame(age, side * 4 + 2), HellfireDraw.TONGUE, 255, 255, 230, (int)(255 * grow));
+         flame(vc, m, cam, src, AXIS, wide * pulse, len * grow, HellfireDraw.frame(age, side * 4), HellfireDraw.TONGUE, 255, 200, 140, (int)(230 * grow));
+         flame(vc, m, cam, src, AXIS, core, len * grow, HellfireDraw.frame(age, side * 4 + 2), HellfireDraw.TONGUE, 255, 255, 230, (int)(255 * grow));
       }
       if (grow >= 1.0F) {
          for (int side = 0; side < 2; side++) {
@@ -418,6 +424,17 @@ public final class GhostRiderVfx {
                255, 230);
          }
       }
+   }
+
+   /** First-person stream root: a little ahead of the camera, off to one side and below the line to the soul. */
+   static Vec3 firstPersonSocket(Vec3 cam, Vec3 dst, boolean left) {
+      Vec3 f = dst.subtract(cam);
+      double len = f.length();
+      f = len < 1.0E-4 ? new Vec3(0, 0, 1) : f.scale(1.0 / len);
+      Vec3 right = f.cross(new Vec3(0, 1, 0));
+      right = right.lengthSqr() < 1.0E-6 ? new Vec3(1, 0, 0) : right.normalize();
+      Vec3 up = right.cross(f);
+      return cam.add(f.scale(0.6)).add(right.scale(left ? -0.2 : 0.2)).add(up.scale(-0.14));
    }
 
    /** Hellfire on burning bodies: tongues round the bounding box, bigger at the feet. */

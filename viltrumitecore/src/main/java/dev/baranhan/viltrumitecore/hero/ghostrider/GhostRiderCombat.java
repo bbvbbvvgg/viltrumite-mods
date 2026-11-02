@@ -73,6 +73,9 @@ public final class GhostRiderCombat {
       boolean finisher = !bike && step == GhostRiderRules.COMBO_LENGTH - 1;
       List<LivingEntity> targets = GhostRiderTargets.arc(player, eye, look, reach, arc,
          e -> GhostRiderTargets.mayHit(player, e) && GhostRiderTargets.visible(player.level(), eye, GhostRiderTargets.center(e)));
+      // the sweep spares the innocent: only an on-foot lash aimed straight at one lands on it (never one from the bike)
+      LivingEntity aimed = bike ? null : GhostRiderTargets.aimed(targets, eye, look, GhostRiderRules.LASH_AIM_DEGREES);
+      targets.removeIf(t -> t != aimed && !GhostRiderTargets.mayAutoHit(player, t));
       int hits = 0;
       for (LivingEntity t : targets) {
          if (hits >= (bike ? 4 : GhostRiderRules.LASH_MAX_TARGETS) || !state.hit.add(t.getId())) {
@@ -131,17 +134,19 @@ public final class GhostRiderCombat {
 
    /** The first body on the aim ray, up to the hook range (blocks stop it). */
    @Nullable
-   static LivingEntity aimed(ServerPlayer player, double range) {
+   /** The body on the line of sight; from the saddle the chain only bites the guilty (the innocent are passed over). */
+   static LivingEntity aimed(ServerPlayer player, double range, boolean bike) {
       Vec3 eye = player.getEyePosition();
       Vec3 end = GhostRiderTargets.clip(player, eye, eye.add(player.getLookAngle().scale(range)));
       AABB box = player.getBoundingBox().expandTowards(end.subtract(eye)).inflate(1.0);
       EntityHitResult hit = ProjectileUtil.getEntityHitResult(player.level(), player, eye, end, box,
-         e -> e instanceof LivingEntity l && GhostRiderTargets.mayHit(player, l) && e.getVehicle() != player && player.getVehicle() != e, 0.45F);
+         e -> e instanceof LivingEntity l && (bike ? GhostRiderTargets.mayAutoHit(player, l) : GhostRiderTargets.mayHit(player, l))
+            && e.getVehicle() != player && player.getVehicle() != e, 0.45F);
       return hit != null && hit.getEntity() instanceof LivingEntity l ? l : null;
    }
 
    static void hookContact(ServerPlayer player, GhostRiderState state, boolean bike) {
-      LivingEntity t = aimed(player, GhostRiderRules.HOOK_RANGE);
+      LivingEntity t = aimed(player, GhostRiderRules.HOOK_RANGE, bike);
       if (t == null) {
          state.start(GhostRiderMove.HOOK_MISS);
          state.cooldowns[GhostRiderRules.CD_GRAB] = 20;
