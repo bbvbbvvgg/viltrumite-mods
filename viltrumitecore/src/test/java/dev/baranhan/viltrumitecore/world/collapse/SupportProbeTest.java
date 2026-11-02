@@ -188,7 +188,7 @@ class SupportProbeTest {
    }
 
    @Test
-   void chainCoversEveryBlockLowestFirstWithinPacketLimits() {
+   void chainCoversEveryBlockTopFirstWithinPacketLimits() {
       World w = new World();
       tower(w, 0, 0, 30, 64, 263); // 200 rows, 30 x 30
       long[] removed = w.carve(0, 64, 0, 29, 64, 29);
@@ -197,21 +197,21 @@ class SupportProbeTest {
       long[] f = p.floatingBlocks();
       SupportChainPlan chain = new SupportChainPlan(f, 7L);
       LongOpenHashSet seen = new LongOpenHashSet();
-      int lastMin = Integer.MIN_VALUE, stages = 0;
+      int lastMax = Integer.MAX_VALUE, stages = 0;
       CollapseAnalyzer.Plan plan;
       while ((plan = chain.next(w, 3200, CollapseCause.SUPPORT, 1L, 1.0F, 0.0F)) != null) {
          stages++;
          assertTrue(plan.blocks().length <= 3200);
          int sx = plan.maxX() - plan.minX() + 1, sy = plan.maxY() - plan.minY() + 1, sz = plan.maxZ() - plan.minZ() + 1;
          assertTrue(sx <= 255 && sy <= 255 && sz <= 255 && (long)sx * sy * sz <= CollapseRules.PACKET_MAX_CELLS, "packet box " + sx + "x" + sy + "x" + sz);
-         assertTrue(plan.minY() >= lastMin, "lowest first");
-         lastMin = plan.minY();
+         assertTrue(plan.maxY() <= lastMax, "top floors first");
+         lastMax = plan.maxY();
+         assertEquals(63, plan.groundY(), "every stage lands on the ground, not on the floors below it");
          for (long k : plan.blocks()) {
             assertTrue(seen.add(k), "a block in two stages");
             w.cells.put(k, CollapseAnalyzer.AIR); // the stage fell
          }
          assertEquals(chain.done(), !plan.truncated());
-         assertTrue(plan.groundY() <= plan.minY() - 1);
       }
       assertEquals(f.length, seen.size(), "nothing is left hanging");
       assertTrue(stages > 3);

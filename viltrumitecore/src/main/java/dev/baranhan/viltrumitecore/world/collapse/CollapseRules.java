@@ -46,9 +46,14 @@ public final class CollapseRules {
    public static final int LOCAL_MAX_BLOCKS = 160;
 
    // ---------------------------------------------------------------- support loss (#135, SupportWatch)
-   /** Removed positions within this horizontal radius / vertical band of a settled cell form one probe. */
-   public static final int SUPPORT_CLUSTER_RADIUS = 40;
+   /**
+    * Removed positions within this horizontal radius / vertical band of a settled cell form one probe (the walls of
+    * a 120-block wide building cut at the base are one {@link BaseCut}).
+    */
+   public static final int SUPPORT_CLUSTER_RADIUS = 64;
    public static final int SUPPORT_CLUSTER_BAND = 12;
+   /** How long a removal is remembered for a support probe: 10 minutes (a base cut by hand is slow). */
+   public static final int SUPPORT_WINDOW_TICKS = 12000;
    /** Largest structure one probe may search (a severed skyscraper top); bigger stays up (undecided). */
    public static final int SUPPORT_MAX_NODES = 600_000;
    /** Horizontal reach of a probe from the cluster centre; a structure that goes further counts as supported. */
@@ -62,6 +67,14 @@ public final class CollapseRules {
    /** Client packet limits of one stage: axis length (unsigned byte) and bitset cells (2048 longs). */
    public static final int PACKET_AXIS_MAX = 255;
    public static final int PACKET_MAX_CELLS = 2048 * 64;
+
+   /**
+    * Ticks between the removals of two chain stages: a whole skyscraper comes down in about 18 seconds, a small
+    * chain floor by floor every 0.7 s.
+    */
+   public static int chainCadence(int stages) {
+      return Math.max(5, Math.min(14, 360 / Math.max(1, stages)));
+   }
 
    /** Blocks of one chain stage: twice the per-collapse limit, at most the client snapshot (4000). */
    public static int chainStageBlocks(int maxBlocks) {

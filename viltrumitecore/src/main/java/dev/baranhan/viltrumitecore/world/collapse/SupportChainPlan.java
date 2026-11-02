@@ -7,15 +7,18 @@ import javax.annotation.Nullable;
 
 /**
  * A severed structure split into collapse stages (pure, unit tested). A section that fits one collapse falls as
- * one; a bigger one (a skyscraper top) comes down as a chain, lowest blocks first, each stage within the
- * per-stage block limit and the packet box limits. Nothing of it is left hanging: the chain runs until every
- * still-solid block of the structure has fallen (#135: truncation used to leave the rest in the air).
+ * one; a bigger one (a skyscraper top) comes down as a chain, top floors first, each stage within the per-stage
+ * block limit and the packet box limits: the roof line sinks floor by floor while the cut at the base stays as
+ * high as it was cut (lowest first would open a growing gap under a hovering tower). Every stage lands on the
+ * ground under the structure, never on the structure's own lower floors. Nothing of it is left hanging: the chain
+ * runs until every still-solid block has fallen (#135: truncation used to leave the rest in the air).
  */
 public final class SupportChainPlan {
    private long[] order;
    private int cursor;
    private final LongArrayList deferred = new LongArrayList();
    private final int total;
+   private final LongOpenHashSet all;
    private int stages;
    public final int minX, minY, minZ, maxX, maxY, maxZ;
    public final double centerX, centerZ;
@@ -23,6 +26,7 @@ public final class SupportChainPlan {
    public SupportChainPlan(long[] blocks, long seed) {
       this.total = blocks.length;
       this.order = sortByHeight(blocks, seed);
+      this.all = new LongOpenHashSet(blocks);
       int x0 = Integer.MAX_VALUE, y0 = Integer.MAX_VALUE, z0 = Integer.MAX_VALUE, x1 = Integer.MIN_VALUE, y1 = Integer.MIN_VALUE, z1 = Integer.MIN_VALUE;
       double sx = 0, sz = 0;
       for (long k : blocks) {
@@ -63,19 +67,19 @@ public final class SupportChainPlan {
       return this.remaining() == 0;
    }
 
-   /** Lowest layer first; inside a layer a seeded order, so a stage edge is jagged, not a ruler line. */
+   /** Highest layer first; inside a layer a seeded order, so a stage edge is jagged, not a ruler line. */
    static long[] sortByHeight(long[] blocks, long seed) {
       if (blocks.length == 0) {
          return blocks;
       }
-      int minY = Integer.MAX_VALUE;
+      // one primitive sort: depth below the top (12 bits) | seeded jitter (20 bits) | index (up to 2^31)
+      int maxY = Integer.MIN_VALUE;
       for (long k : blocks) {
-         minY = Math.min(minY, BlockKey.y(k));
+         maxY = Math.max(maxY, BlockKey.y(k));
       }
-      // one primitive sort: height (12 bits) | seeded jitter (20 bits) | index (up to 2^31)
       long[] keyed = new long[blocks.length];
       for (int i = 0; i < blocks.length; i++) {
-         long y = Math.min(4095, BlockKey.y(blocks[i]) - minY);
+         long y = Math.min(4095, maxY - BlockKey.y(blocks[i]));
          long jitter = CollapseAnalyzer.hash(seed, BlockKey.x(blocks[i]), 3, BlockKey.z(blocks[i])) & 0xFFFFFL;
          keyed[i] = y << 51 | jitter << 31 | i;
       }
@@ -88,7 +92,7 @@ public final class SupportChainPlan {
    }
 
    /**
-    * The next stage: up to {@code cap} blocks that are still standing, lowest first, inside the packet box limits.
+    * The next stage: up to {@code cap} blocks that are still standing, highest first, inside the packet box limits.
     * Null when nothing is left. {@code fallX/fallZ} is the chain's fall direction (unit vector).
     */
    @Nullable
@@ -113,7 +117,7 @@ public final class SupportChainPlan {
          boolean fits = sx <= CollapseRules.PACKET_AXIS_MAX && sy <= CollapseRules.PACKET_AXIS_MAX && sz <= CollapseRules.PACKET_AXIS_MAX
             && (long)sx * sy * sz <= CollapseRules.PACKET_MAX_CELLS;
          if (!fits) {
-            if (!stage.isEmpty() && y > y1) {
+            if (!stage.isEmpty() && y < y0) {
                break; // the stage is as tall as the box allows: the next layer goes to the next stage
             }
             this.deferred.add(k); // too far sideways for this box: a later stage takes it
@@ -137,8 +141,8 @@ public final class SupportChainPlan {
       boolean last = this.done();
       boolean only = last && this.stages == 0;
       this.stages++;
-      LongOpenHashSet in = new LongOpenHashSet(blocks);
-      int ground = ground(volume, in, x0, z0, x1, z1, y0);
+      // the ground under the whole structure: its own lower floors are not where a stage lands
+      int ground = ground(volume, this.all, x0, z0, x1, z1, y0);
       int width = Math.max(x1 - x0 + 1, z1 - z0 + 1), thin = Math.min(x1 - x0 + 1, z1 - z0 + 1), height = y1 - y0 + 1;
       CollapseVariant variant;
       if (only && height >= width * 1.4) {

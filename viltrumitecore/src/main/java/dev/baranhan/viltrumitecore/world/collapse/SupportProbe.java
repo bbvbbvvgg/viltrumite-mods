@@ -36,8 +36,17 @@ public final class SupportProbe {
    private static final int[] DY = {-1, 0, 0, 0, 0, 1};
    private static final int[] DZ = {0, 0, 0, 1, -1, 0};
 
+   /** Columns a footprint-restricted probe may enter ({@link BaseCut}); null = everywhere. */
+   @FunctionalInterface
+   public interface Columns {
+      boolean contains(int x, int z);
+   }
+
    private final CollapseAnalyzer.Volume volume;
    private final long[] seeds;
+   @Nullable
+   private Columns columns;
+   private int contacts, outside;
    @Nullable
    private final LongOpenHashSet assumed;
    private final boolean singleSearch;
@@ -51,7 +60,7 @@ public final class SupportProbe {
    private int search;
    private boolean inSearch;
    private LongArrayList comp = new LongArrayList();
-   private int compStructure, compNatural;
+   private int compStructure, compNatural, compContacts, compOutside;
    private final LongArrayList floating = new LongArrayList();
    private int floatingStructure, floatingNatural, floatingComponents, groundedSearches;
    private int nodes;
@@ -79,6 +88,21 @@ public final class SupportProbe {
       this.oz = originZ;
       this.buckets = new LongArrayList[Math.max(1, maxY - minY + 1)];
       this.visited.defaultReturnValue(0);
+   }
+
+   /**
+    * Restricts the searches to a footprint: a structure inside it that reaches the ground only through blocks
+    * outside it (a neighbour's wall, a sky bridge) is reported as floating; {@link #contactShare()} tells how firmly
+    * it is embedded in what surrounds it.
+    */
+   public SupportProbe within(Columns columns) {
+      this.columns = columns;
+      return this;
+   }
+
+   /** Share of the floating structure's outward faces (toward outside the footprint) that touch a solid block. */
+   public float contactShare() {
+      return this.outside == 0 ? 0.0F : (float)this.contacts / this.outside;
    }
 
    public Status status() {
@@ -140,6 +164,8 @@ public final class SupportProbe {
             this.floating.addAll(this.comp);
             this.floatingStructure += this.compStructure;
             this.floatingNatural += this.compNatural;
+            this.contacts += this.compContacts;
+            this.outside += this.compOutside;
             this.floatingComponents++;
             this.endSearch();
             continue;
@@ -166,6 +192,14 @@ public final class SupportProbe {
                continue;
             }
             byte m = this.classify(k, nx, ny, nz);
+            if (this.columns != null && d != 0 && d != 5 && !this.columns.contains(nx, nz)) {
+               // a face toward outside the footprint: count how much of it leans on something
+               this.compOutside++;
+               if (solid(m) || m == CollapseAnalyzer.UNKNOWN) {
+                  this.compContacts++;
+               }
+               continue;
+            }
             if (m == CollapseAnalyzer.UNKNOWN || m == CollapseAnalyzer.FIXED) {
                this.grounded();
                break;
@@ -221,7 +255,7 @@ public final class SupportProbe {
             continue;
          }
          long k = BlockKey.of(nx, ny, nz);
-         if (this.visited.get(k) != 0) {
+         if (this.visited.get(k) != 0 || this.columns != null && !this.columns.contains(nx, nz)) {
             continue;
          }
          byte m = this.classify(k, nx, ny, nz);
@@ -243,6 +277,8 @@ public final class SupportProbe {
       this.comp = new LongArrayList();
       this.compStructure = 0;
       this.compNatural = 0;
+      this.compContacts = 0;
+      this.compOutside = 0;
    }
 
    private void endSearch() {

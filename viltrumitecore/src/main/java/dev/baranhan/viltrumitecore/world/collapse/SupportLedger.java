@@ -10,7 +10,8 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
  * Where structural blocks were removed recently, by anything (pure, unit tested): player mining, commands, fire,
  * explosions and hero powers alike. Unlike the {@link DamageLedger} it has no weights and no score: it only says
  * where a building may have lost support, so {@link SupportWatch} can check the structure around it (#135).
- * Same 8^3 cells, window and caps as the damage ledger.
+ * Same 8^3 cells and caps as the damage ledger; a longer window ({@link CollapseRules#SUPPORT_WINDOW_TICKS}): cutting
+ * through every wall of a building by hand takes minutes, and the {@link BaseCut} footprint needs all of it.
  */
 public final class SupportLedger {
    private static final class Cell {
@@ -73,7 +74,7 @@ public final class SupportLedger {
 
    /** Forgets removals older than the window. */
    public void prune(long now) {
-      long cutoff = now - CollapseRules.WINDOW_TICKS;
+      long cutoff = now - CollapseRules.SUPPORT_WINDOW_TICKS;
       ObjectIterator<Long2ObjectMap.Entry<Cell>> it = this.cells.long2ObjectEntrySet().iterator();
       while (it.hasNext()) {
          Long2ObjectMap.Entry<Cell> e = it.next();
