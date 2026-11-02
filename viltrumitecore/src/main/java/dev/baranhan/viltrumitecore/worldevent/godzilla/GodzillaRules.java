@@ -103,6 +103,23 @@ public final class GodzillaRules {
       return retreat ? RETREAT_SPEED : rage ? RAGE_SPEED : WALK_SPEED;
    }
 
+   /**
+    * Wading: the walk slows while the body pushes through dense blocks. {@code load} is the smoothed share of the
+    * per-tick block budget used (0 open streets .. 1 a solid block of towers); the walk keeps at least
+    * {@code 1 - WADE_DEPTH} of its speed. Measured on Atheria: downtown costs 500..1300 blocks per block walked.
+    */
+   public static final float WADE_DEPTH = 0.35F;
+
+   public static float wade(float load) {
+      return 1.0F - WADE_DEPTH * smooth(load);
+   }
+
+   /** Survey pause at each reached waypoint while exploring: it stops, growls and looks over the city (ticks). */
+   public static final int SURVEY_MIN = 100;
+   public static final int SURVEY_SPREAD = 120;
+   /** Waypoint pull of tall blocks (score per block of height, up to 80): towers attract it, not every tower. */
+   public static final float TOWER_PULL = 0.45F;
+
    public static float turnRate(boolean walking, boolean rage) {
       return (walking ? TURN_WALK : TURN_STAND) + (rage ? TURN_RAGE_BONUS : 0.0F);
    }
@@ -436,15 +453,18 @@ public final class GodzillaRules {
    // ------------------------------------------------------------------ destruction budgets
 
    /** Blocks the kaiju may remove per tick, all sources together. */
-   public static final int BLOCKS_PER_TICK = 420;
-   public static final int BLOCKS_PER_TICK_RAGE = 600;
-   /** Blocks per session (all sources; the city journal keeps every original for /city reset). */
-   public static final int MAX_BLOCKS = 400000;
+   public static final int BLOCKS_PER_TICK = 360;
+   public static final int BLOCKS_PER_TICK_RAGE = 520;
+   /**
+    * Blocks per session (all sources; the city journal keeps every original for /city reset: about 45 bytes each in
+    * memory, a palette per chunk on disk, and the reset puts back 6000 per tick).
+    */
+   public static final int MAX_BLOCKS = 900000;
    /**
     * The last blocks of the session budget are kept for the way out: when the rampage has used the rest, the city is
     * in ruins and the kaiju leaves (it must still push through what stands between it and the edge).
     */
-   public static final int RETREAT_RESERVE = 40000;
+   public static final int RETREAT_RESERVE = 60000;
    /** Flying debris entities alive at once. */
    public static final int MAX_DEBRIS = 48;
    /** FX packets per tick. */

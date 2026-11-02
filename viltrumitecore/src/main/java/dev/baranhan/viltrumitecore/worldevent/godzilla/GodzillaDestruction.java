@@ -95,6 +95,8 @@ public final class GodzillaDestruction {
    private int destroyed;
    private int budget;
    private int usedThisTick;
+   /** Smoothed share of the tick budget used (the walk wades through dense blocks, see {@link GodzillaRules#wade}). */
+   private float load;
    private long tick;
    private boolean griefing = true;
    private int buildingsHit;
@@ -121,6 +123,10 @@ public final class GodzillaDestruction {
       return this.buildingsHit;
    }
 
+   public float load() {
+      return this.load;
+   }
+
    public boolean exhausted() {
       return this.destroyed >= GodzillaRules.blockCap(this.retreat);
    }
@@ -135,6 +141,8 @@ public final class GodzillaDestruction {
       this.tick = level.getGameTime();
       this.retreat = retreat;
       this.griefing = level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
+      float used = this.budget > 0 ? Math.min(1.0F, this.usedThisTick / (float)this.budget) : 0.0F;
+      this.load += (used - this.load) * 0.08F;
       this.budget = CarveBudget.perTick(GodzillaRules.blockBudget(rage), level.getServer().getAverageTickTime());
       this.usedThisTick = 0;
       this.pruneFlying();
