@@ -192,8 +192,9 @@ class HeroRosterIntegrationTest {
       // Living City 3.0 infrastructure alone and the city disaster aftermath alone, 26 by the structural collapse
       // alone (24/25 left to the others): refused;
       // 27 = the integration of #124/#125/#126/#127: CityPowerS2CPacket, CityCollapseS2CPacket, AftermathS2CPacket
-      // appended in that order after the Ultron packets.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"27\""), "the merged packet table needs its own protocol version");
+      // appended in that order after the Ultron packets;
+      // 28 = SCP-096 (Scp096S2CPacket appended last, a new entity type with its own synced data).
+      assertTrue(source.contains("PROTOCOL_VERSION = \"28\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -214,7 +215,8 @@ class HeroRosterIntegrationTest {
       assertEquals(List.of("UltronFxS2CPacket", "UltronStateS2CPacket"),
          packets.subList(punch + 3, punch + 5), "the Ultron uprising packets append after the Meteor Rain 2.0 packet");
       assertEquals(List.of("CityPowerS2CPacket", "CityCollapseS2CPacket", "AftermathS2CPacket"),
-         packets.subList(punch + 5, packets.size()), "the city power, collapse and aftermath packets append last (v27)");
+         packets.subList(punch + 5, punch + 8), "the city power, collapse and aftermath packets append after Ultron's (v27)");
+      assertEquals(List.of("Scp096S2CPacket"), packets.subList(punch + 8, packets.size()), "the SCP-096 packet appends last (v28)");
    }
 
    @Test
