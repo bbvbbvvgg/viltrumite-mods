@@ -26,6 +26,8 @@ public class ViltrumiteCoreConfig {
    public double cityCrowdScale = 2.25;
    /** Living city: hard cap of citizens in the city level (any density, any number of players). */
    public int cityMaxCitizens = 480;
+   /** Living city: people upstairs in tall buildings around each player (0 = off, at most 16; issue #138). */
+   public int cityOccupants = 6;
    public boolean bloodEnabled = true;
    public boolean shouldHumansBleed = true;
    // Reinhard's secret Final Punch (Shift + N): balance knobs, clamped by FinalPunchRules.
