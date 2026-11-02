@@ -32,6 +32,7 @@
   "codex.viltrumitecore.rohan.lore": "一位骄傲而好奇、为了作品的真实感不择手段的漫画家。他的替身是一个穿长外套、戴高礼帽的小男孩，能把看到他的画或被触碰的人变成活生生的书：每一页都是其人生的真相，而露伴写下的一切都必须服从。",
   "codex.viltrumitecore.rohan.gameplay": "墨水（0-100）支付除终极技以外的一切，终极技需要阅读新书获得的灵感。天堂之门通过触碰打开一个目标；空中速写与原稿打开所有看到的人。在书中你阅读真实数据，并从固定列表写入指令：安全锁、忘记目标、保持距离、站着不动、不伤村民、守护、前往、禁止某类攻击、向后飞、跟随、冷静。首领和强大英雄窗口短、仅一行、会抵抗并反弹；S+的书只能阅读。",
   "codex.viltrumitecore.rohan.relations": "他很想读一读DIO的书；城市居民是他最爱的素材。",
+  "gui.viltrumitecore.config.post_process.manga_effects": "漫画特效倍率（天堂之门）",
   "subtitles.viltrumitecore.rohan.door_summon": "天堂之门出现",
   "subtitles.viltrumitecore.rohan.door_touch": "天堂之门触碰",
   "subtitles.viltrumitecore.rohan.dismiss": "替身消失",
