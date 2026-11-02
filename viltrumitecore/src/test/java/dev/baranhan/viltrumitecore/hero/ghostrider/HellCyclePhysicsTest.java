@@ -243,6 +243,29 @@ class HellCyclePhysicsTest {
    }
 
    @Test
+   void aBikeNosedDownIntoAPlanterBacksOut() {
+      // QA 2026-11-02: the front wheel half a block down in a planter, the nose against a tree - forward is walled, and
+      // the slope used to outpull the reverse, so the bike could never leave
+      for (double pitch : new double[]{-15.5, -29.0, -35.0}) {
+         State s = new State();
+         s.pitch = pitch;
+         for (int t = 0; t < 40; t++) {
+            ground(s, BRAKE);
+            if (s.forward() > 0.0) {
+               s.velX = 0.0; // the tree takes any creep forward
+               s.velZ = 0.0;
+            }
+         }
+         assertTrue(s.forward() < -0.05, "backs out at " + pitch + " deg: " + s.forward());
+      }
+      State flat = new State();
+      for (int t = 0; t < 60; t++) {
+         ground(flat, BRAKE);
+      }
+      assertEquals(-HellCycleRules.REVERSE_SPEED, flat.forward(), 1.0E-9, "plain reverse unchanged");
+   }
+
+   @Test
    void jumpIsAControlledHop() {
       State s = cruising(0.6);
       ground(s, new Input(1.0, 0.0, true, false, false));
