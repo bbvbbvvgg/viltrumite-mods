@@ -49,6 +49,7 @@ final class GodzillaBrain {
          fight(level, s, e, target);
          return;
       }
+      s.backingOff = false;
       explore(level, s, e);
    }
 
@@ -74,6 +75,7 @@ final class GodzillaBrain {
          move = GodzillaMove.NONE;
       }
       if (move != GodzillaMove.NONE) {
+         s.backingOff = false;
          if (GodzillaEvent.QA_LOG) {
             GodzillaEvent.LOG.info("GZQA fight {} -> {} target={} left={} up={} fwd={} reach={}", zone, move.key(), target.getName().getString(),
                Math.round(f[0]), Math.round(f[1]), Math.round(f[2]), reach);
@@ -86,15 +88,23 @@ final class GodzillaBrain {
          s.start(e, move, arg);
          return;
       }
-      // close in: ground heroes into the stomp's wave, fliers to under them, a hero on a low roof through the building
+      // close in to where a move lands: ground heroes into the stomp's wave, a hero on a low roof through the
+      // building, chest-high fliers into the slam and the claws, higher fliers to where the beam pitches to them
       double flat = Math.sqrt(f[0] * f[0] + f[2] * f[2]);
-      double want = switch (zone) {
-         case AIR_NEAR, AIR_FAR -> 0.25 * GodzillaRules.HEIGHT;
-         case CLOSE -> 0.12 * GodzillaRules.HEIGHT;
-         default -> GodzillaRules.STOMP_CLOSE * GodzillaRules.HEIGHT;
-      };
-      if (flat > want + 4.0) {
-         Vec3 dir = new Vec3(at.x - e.getX(), 0.0, at.z - e.getZ()).normalize();
+      double want = GodzillaRules.standOff(f[1]);
+      Vec3 dir = flat < 1.0E-3 ? GodzillaEntity.forward(e.getYRot()) : new Vec3(at.x - e.getX(), 0.0, at.z - e.getZ()).normalize();
+      if (!reach.any() && flat < want - GodzillaRules.BACK_OFF) {
+         // too close for everything it has (a flier over the head, at the face or the belly): walk off to the stand-off
+         if (!s.backingOff && GodzillaEvent.QA_LOG) {
+            GodzillaEvent.LOG.info("GZQA backoff target={} up={} flat={} want={}", target.getName().getString(), Math.round(f[1]), Math.round(flat), Math.round(want));
+         }
+         s.backingOff = true;
+      } else if (s.backingOff && (reach.any() || flat >= want)) {
+         s.backingOff = false;
+      }
+      if (s.backingOff) {
+         e.walkTo(new Vec3(at.x - dir.x * (want + 4.0), e.getY(), at.z - dir.z * (want + 4.0)));
+      } else if (flat > want + 4.0) {
          e.walkTo(new Vec3(at.x - dir.x * want, e.getY(), at.z - dir.z * want));
       } else {
          e.walkTo(null);
