@@ -445,6 +445,18 @@ public class T1000Entity extends CitizenEntity {
       return false;
    }
 
+   /**
+    * Lost outside the walk grid (after a chase, say): never cleaned up like a passer-by (that was counted as a
+    * destruction). Unseen and calm, it slips away (dormant) and later returns at a city site near a player.
+    */
+   @Override
+   protected void lostOffGrid() {
+      if (this.level() instanceof ServerLevel sl && this.form() == T1000Form.HUMAN && this.brain().state() == T1000State.DISGUISE
+         && this.brain().unobserved(sl, 32.0)) {
+         this.vanish();
+      }
+   }
+
    @Override
    public boolean capturable() {
       return false;
