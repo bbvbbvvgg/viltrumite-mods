@@ -20,7 +20,7 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
  * model per arm width; {@link #prepare} switches the parts of each look before drawing.
  * Texture layout: {@link CitizenPainter} (128x64).
  */
-public final class CitizenModel extends PlayerModel<CitizenEntity> {
+public class CitizenModel extends PlayerModel<CitizenEntity> {
    final ModelPart hairBig;
    final ModelPart crown;
    final ModelPart visor;
@@ -39,7 +39,7 @@ public final class CitizenModel extends PlayerModel<CitizenEntity> {
    final ModelPart collar;
    final boolean slimArms;
    /** Set by the renderer before setupAnim: the partial tick of this frame. */
-   float partialTick;
+   public float partialTick;
 
    public CitizenModel(ModelPart root, boolean slim) {
       super(root, slim);
@@ -91,8 +91,18 @@ public final class CitizenModel extends PlayerModel<CitizenEntity> {
       return LayerDefinition.create(mesh, CitizenPainter.W, CitizenPainter.H);
    }
 
+   /** Citizen-only parts (hair volume, hats, bags, shoes, ...): subclasses may hide or shrink them. */
+   public ModelPart[] extras() {
+      return new ModelPart[]{this.hairBig, this.crown, this.visor, this.brim, this.bun, this.longBack, this.ponytail, this.glasses, this.quiff,
+         this.nose, this.skirt, this.backpack, this.bag, this.shoeR, this.shoeL, this.collar};
+   }
+
+   public boolean slimArms() {
+      return this.slimArms;
+   }
+
    /** Shows the parts of this look, hides the rest (the model is shared by every citizen). */
-   void prepare(CitizenLook l) {
+   public void prepare(CitizenLook l) {
       this.setAllVisible(true);
       CitizenLook.Hair hs = l.hair();
       this.hairBig.visible = hs.voluminous();

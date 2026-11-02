@@ -582,8 +582,13 @@ public final class CitizenPainter {
 
          if (y >= 11 && t != Top.DRESS && t != Top.COAT && t != Top.HOODIE && t != Top.SWEATER) {
             // waistband, belt with buckle in front
-            boolean tucked = t == Top.SHIRT || t == Top.SUIT || t == Top.BLOUSE;
+            boolean tucked = t == Top.SHIRT || t == Top.SUIT || t == Top.BLOUSE || t == Top.POLICE;
             if (tucked) {
+               if (t == Top.POLICE) {
+                  // duty belt: black leather, silver buckle, a holster pouch on the right hip
+                  return f == Face.FRONT && (x == 3 || x == 4) ? 0xB8BCC2 : f == Face.FRONT && x == 0 ? 0x2A2A2A : 0x141414;
+               }
+
                return f == Face.FRONT && (x == 3 || x == 4) ? 0xC9B26A : belt;
             }
          }
@@ -631,6 +636,28 @@ public final class CitizenPainter {
                   return base;
                case HOODIE:
                   return c;
+               case POLICE:
+                  if (y == 0 && (x == 2 || x == 5)) {
+                     return scale(c, 1.12F); // collar points
+                  }
+
+                  if (y == 0 && (x == 3 || x == 4)) {
+                     return skin;
+                  }
+
+                  if (x == 5 && (y == 3 || y == 4) || x == 6 && y == 3) {
+                     return y == 3 && x == 5 ? scale(acc, 1.08F) : acc; // badge on the left chest
+                  }
+
+                  if (x == 1 && y == 3 || x == 2 && y == 3) {
+                     return 0xD8D8D2; // name plate
+                  }
+
+                  if ((x == 1 || x == 2 || x == 5 || x == 6) && y == 2) {
+                     return scale(c, 0.8F); // pocket flaps
+                  }
+
+                  return x == 4 && (y == 4 || y == 7 || y == 9) ? 0xB8BCC2 : (x == 4 ? scale(c, 0.9F) : c); // placket, buttons
                case SWEATER:
                   if (y == 0) {
                      return x >= 2 && x <= 5 ? acc : scale(c, 0.9F); // collar of the shirt under it
