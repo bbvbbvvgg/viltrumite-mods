@@ -139,10 +139,29 @@ public final class GhostRiderCombat {
       Vec3 eye = player.getEyePosition();
       Vec3 end = GhostRiderTargets.clip(player, eye, eye.add(player.getLookAngle().scale(range)));
       AABB box = player.getBoundingBox().expandTowards(end.subtract(eye)).inflate(1.0);
-      EntityHitResult hit = ProjectileUtil.getEntityHitResult(player.level(), player, eye, end, box,
-         e -> e instanceof LivingEntity l && (bike ? GhostRiderTargets.mayAutoHit(player, l) : GhostRiderTargets.mayHit(player, l))
-            && e.getVehicle() != player && player.getVehicle() != e, 0.45F);
-      return hit != null && hit.getEntity() instanceof LivingEntity l ? l : null;
+      java.util.function.Predicate<Entity> ok = e -> e instanceof LivingEntity l
+         && (bike ? GhostRiderTargets.mayAutoHit(player, l) : GhostRiderTargets.mayHit(player, l))
+         && e.getVehicle() != player && player.getVehicle() != e;
+      // the body truly under the crosshair wins; only when the line misses every body does the forgiving margin
+      // pick one - the one nearest the line of sight, not the nearest whose widened corner the line clips
+      EntityHitResult exact = ProjectileUtil.getEntityHitResult(player.level(), player, eye, end, box, ok, 0.0F);
+      if (exact != null && exact.getEntity() instanceof LivingEntity l) {
+         return l;
+      }
+      Vec3 axis = end.subtract(eye).normalize();
+      LivingEntity pick = null;
+      double best = -2.0;
+      for (Entity e : player.level().getEntities(player, box, ok)) {
+         if (!(e instanceof LivingEntity l) || e.getBoundingBox().inflate(0.45).clip(eye, end).isEmpty()) {
+            continue;
+         }
+         double dot = e.getBoundingBox().getCenter().subtract(eye).normalize().dot(axis);
+         if (dot > best) {
+            best = dot;
+            pick = l;
+         }
+      }
+      return pick;
    }
 
    static void hookContact(ServerPlayer player, GhostRiderState state, boolean bike) {
