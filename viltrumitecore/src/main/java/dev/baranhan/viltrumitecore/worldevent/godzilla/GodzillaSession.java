@@ -92,6 +92,8 @@ public final class GodzillaSession {
    int roars;
    // debug switches (commands)
    boolean passive;
+   /** QA / cinematics: it stands where it is and only moves on command. */
+   boolean hold;
    boolean targetCreative;
    final Set<UUID> barPlayers = new HashSet<>();
    final ServerBossEvent bar;

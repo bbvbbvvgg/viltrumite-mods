@@ -31,6 +31,8 @@
   "commands.viltrumitecore.godzilla.not_running": "Godzilla ist nicht in der Stadt",
   "commands.viltrumitecore.godzilla.passive.on": "Godzilla ist passiv: Er streift umher und verwüstet die Stadt, greift aber niemanden an",
   "commands.viltrumitecore.godzilla.passive.off": "Godzilla greift wieder Helden an",
+  "commands.viltrumitecore.godzilla.hold.on": "Godzilla bleibt stehen und bewegt sich nur auf Befehl",
+  "commands.viltrumitecore.godzilla.hold.off": "Godzilla streift wieder durch die Stadt",
   "commands.viltrumitecore.godzilla.phase": "Godzilla-Phase: %s",
   "commands.viltrumitecore.godzilla.started": "Godzilla betritt die Stadt von %s %s %s aus. Sirenen an – bringt die Bewohner in Sicherheit!",
   "commands.viltrumitecore.godzilla.started.forced": "Godzilla betritt die Stadt von %s %s %s aus. Sirenen an – bringt die Bewohner in Sicherheit! (erzwungen, neben anderen Ereignissen)",

@@ -29,6 +29,15 @@ final class GodzillaBrain {
          retreat(level, s, e);
          return;
       }
+      if (s.hold) {
+         e.walkTo(null);
+         e.faceTowards(null);
+         ServerPlayer p = nearestPlayer(level, e, GodzillaRules.FX_NEAR);
+         if (p != null) {
+            e.lookAt(p.getEyePosition(), false);
+         }
+         return;
+      }
       // a phase change roar (arrival, rage, finale)
       if (s.cdRoar <= 0 && (s.phase == GodzillaPhase.ARRIVAL && s.phaseTick > 30 || s.phase.enraged() && s.phaseTick < 60)) {
          e.walkTo(null);

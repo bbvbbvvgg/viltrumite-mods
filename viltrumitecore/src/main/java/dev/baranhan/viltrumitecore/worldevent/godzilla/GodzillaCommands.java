@@ -27,7 +27,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
  * {@code /godzilla start [force] | stop | status | cleanup} (operator, level 2) and the QA helpers
- * {@code move <move> | phase <phase> | health <percent> | passive on|off | creative on|off}. Manual only: the kaiju
+ * {@code move <move> | phase <phase> | health <percent> | passive on|off | hold on|off | creative on|off}. Manual only: the kaiju
  * never spawns by itself. {@code start} refuses while another big event runs unless {@code force} is given;
  * {@code stop} removes the kaiju and everything the event owns (debris, alarm, effects) and keeps the city damage,
  * which {@code /city reset} restores; {@code cleanup} removes orphaned bodies and lingering effects.
@@ -58,6 +58,9 @@ public final class GodzillaCommands {
          .then(Commands.literal("passive")
             .then(Commands.literal("on").executes(c -> passive(c, true)))
             .then(Commands.literal("off").executes(c -> passive(c, false))))
+         .then(Commands.literal("hold")
+            .then(Commands.literal("on").executes(c -> hold(c, true)))
+            .then(Commands.literal("off").executes(c -> hold(c, false))))
          .then(Commands.literal("creative")
             .then(Commands.literal("on").executes(c -> creative(c, true)))
             .then(Commands.literal("off").executes(c -> creative(c, false)))));
@@ -218,6 +221,17 @@ public final class GodzillaCommands {
       }
       s.passive = on;
       c.getSource().sendSuccess(() -> Component.translatable(on ? "commands.viltrumitecore.godzilla.passive.on" : "commands.viltrumitecore.godzilla.passive.off")
+         .withStyle(ChatFormatting.DARK_AQUA), true);
+      return 1;
+   }
+
+   private static int hold(CommandContext<CommandSourceStack> c, boolean on) {
+      GodzillaSession s = live(c);
+      if (s == null) {
+         return 0;
+      }
+      s.hold = on;
+      c.getSource().sendSuccess(() -> Component.translatable(on ? "commands.viltrumitecore.godzilla.hold.on" : "commands.viltrumitecore.godzilla.hold.off")
          .withStyle(ChatFormatting.DARK_AQUA), true);
       return 1;
    }
