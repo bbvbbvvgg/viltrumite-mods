@@ -44,5 +44,7 @@
   "subtitles.od_lagna.confirm": "A wish is spoken",
   "subtitles.od_lagna.return": "The light recedes",
   "wish.viltrumitecore.shield": "I wish to stand up first and never give in",
-  "wish.viltrumitecore.shield.echo": "You will stand when everyone else has fallen."
+  "wish.viltrumitecore.shield.echo": "You will stand when everyone else has fallen.",
+  "wish.viltrumitecore.vengeance": "İntikam için sürmeyi ve suçluları yargılamayı diliyorum",
+  "wish.viltrumitecore.vengeance.echo": "Ruhun yanacak ve her günah sana hesap verecek."
 }
