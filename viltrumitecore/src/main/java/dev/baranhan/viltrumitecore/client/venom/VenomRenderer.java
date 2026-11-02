@@ -291,7 +291,7 @@ public final class VenomRenderer {
             // the hardened shell: short stiff spikes, no lazy strands
             for (int i = 0; i < 8; i++) {
                double a = i / 8.0 * Math.PI * 2;
-               Vector3f root = new Vector3f((float)Math.cos(a) * 0.26F, 1.32F + (float)Math.sin(a) * 0.18F, 0.2F);
+               Vector3f root = new Vector3f((float)Math.cos(a) * 0.26F, 1.32F + (float)Math.sin(a) * 0.18F, 0.29F);
                Vector3f dir = new Vector3f((float)Math.cos(a) * 0.7F, (float)Math.sin(a) * 0.5F + 0.2F, 0.8F).normalize();
                VenomTendrils.draw(pose, vc, new Vector3f[]{root, new Vector3f(root).add(new Vector3f(dir).mul(0.28F))}, 0.05F, 0.02F, light, overlay, 1, 1, 1,
                   1);
@@ -300,7 +300,7 @@ public final class VenomRenderer {
             for (int i = 0; i < count; i++) {
                float side = i % 2 == 0 ? 1 : -1;
                float row = i / 2;
-               Vector3f root = new Vector3f(side * (0.1F + 0.05F * row), 1.38F - 0.1F * row, 0.22F);
+               Vector3f root = new Vector3f(side * (0.1F + 0.05F * row), 1.38F - 0.1F * row, 0.30F);
                Vector3f dir = new Vector3f(side * (0.55F + 0.15F * row), 0.45F - 0.25F * row, 0.75F).normalize();
                Vector3f sideV = new Vector3f(dir).cross(0, 1, 0).normalize();
                Vector3f[] pts = VenomTendrils.wave(root, dir, sideV, len * (1 - 0.12F * row), seconds, i * 1.7F, amp, 9);
@@ -360,9 +360,10 @@ public final class VenomRenderer {
          stack.last().pose().set(jaw);
          for (int i = 0; i < 2; i++) {
             float x = i == 0 ? 0.09F : -0.07F;
-            Vector3f top = new Vector3f(x, 1.58F, -0.36F);
+            // from the chin (tools/assets/venom_model.py: the chin's front-bottom edge at y 23.9 px, z -8.25 px)
+            Vector3f top = new Vector3f(x, 1.50F, -0.51F);
             float sway = (float)Math.sin(seconds * 3 + i) * 0.03F;
-            VenomTendrils.draw(stack.last(), vc, new Vector3f[]{top, new Vector3f(x + sway, 1.46F, -0.37F), new Vector3f(x + sway * 1.5F, 1.36F, -0.36F)},
+            VenomTendrils.draw(stack.last(), vc, new Vector3f[]{top, new Vector3f(x + sway, 1.38F, -0.52F), new Vector3f(x + sway * 1.5F, 1.27F, -0.51F)},
                0.012F, 0.006F, light, overlay, 0.85F, 0.85F, 0.95F, 1);
          }
          stack.popPose();

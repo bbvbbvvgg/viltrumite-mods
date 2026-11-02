@@ -296,7 +296,7 @@ public final class VenomPose {
    private static void life(BakedGeoModel model, State st, LivingEntity e, int flags, double seconds, long now) {
       boolean rage = VenomFlags.has(flags, VenomFlags.RAGE);
       GeoBone jaw = model.getBone("jaw");
-      float open = jaw == null ? 0 : Mth.clamp(Math.abs(jaw.rotX) / 0.6F, 0.0F, 1.0F);
+      float open = jaw == null ? 0 : Mth.clamp(Math.abs(jaw.rotX - jaw.initRotX) / 0.5F, 0.0F, 1.0F); // the rest pose is already a grin
       tongue(model, seconds, 0.35F + 0.65F * open);
       float swell = VenomView.swell(seconds, rage);
       scale(model.getBone("chest"), 1 + swell * 1.2F, 1 + swell * 0.5F, 1 + swell * 1.6F);
@@ -331,7 +331,7 @@ public final class VenomPose {
          }
          double phase = seconds * 5.2 - i * 0.85;
          b.rotY += (float)Math.toRadians(Math.sin(phase) * (6 + 5 * i) * amp);
-         b.rotX += (float)Math.toRadians((Math.sin(phase * 0.7 + 1.3) * (4 + 3 * i) + 4 * i) * amp);
+         b.rotX += (float)Math.toRadians((Math.sin(phase * 0.7 + 1.3) * (4 + 3 * i) - 2 * i) * amp); // rotX > 0 lifts the tip: a slight droop
       }
    }
 
