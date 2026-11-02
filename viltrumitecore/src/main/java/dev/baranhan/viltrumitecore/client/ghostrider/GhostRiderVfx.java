@@ -148,10 +148,12 @@ public final class GhostRiderVfx {
                      p.getY() + 0.6 + RNG.nextDouble() * 1.2, p.getZ() + (RNG.nextDouble() - 0.5) * 0.6, 0.0, 0.04, 0.0);
                }
             }
-         } else if (GhostRiderView.rider(s) && clientTicks % 4 == 0 && !(p == mc.player && mc.options.getCameraType().isFirstPerson())) {
+         } else if (GhostRiderView.rider(s) && clientTicks % 9 == 0 && !p.isPassenger() && p.getDeltaMovement().horizontalDistanceSqr() < 0.02
+            && !(p == mc.player && mc.options.getCameraType().isFirstPerson())) {
+            // a thin wisp off the top of the flames (sparse: dense vanilla smoke reads as black specks)
             Vec3 eye = p.getEyePosition();
-            level.addParticle(ParticleTypes.SMOKE, eye.x + (RNG.nextDouble() - 0.5) * 0.3, eye.y + 0.55, eye.z + (RNG.nextDouble() - 0.5) * 0.3,
-               0.0, 0.05, 0.0);
+            level.addParticle(ParticleTypes.SMOKE, eye.x + (RNG.nextDouble() - 0.5) * 0.2, eye.y + 0.95, eye.z + (RNG.nextDouble() - 0.5) * 0.2,
+               0.0, 0.03, 0.0);
          }
       }
    }

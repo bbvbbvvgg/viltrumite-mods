@@ -22,14 +22,13 @@ public final class GhostRiderFxRecipes {
       return List.of(transform(), lash(), hook(), slam(), wave(), verdict(), ram(), bikeForm(), dash());
    }
 
-   /** The skull bursts into hellfire: a ring of heat, a wide shake, scorched ground under his boots. */
+   /** The skull bursts into hellfire: a low ring of heat, a wide shake, scorched ground under his boots (no white flash). */
    static FxRecipe transform() {
       return FxRecipe.builder(GhostRiderFx.TRANSFORM)
-         .flash(0, 6, 1.3F)
-         .screenFlash(0, 5, 0.18F, 18.0F)
+         .screenFlash(0, 5, 0.14F, 18.0F)
          .shake(0, 0.9F, 24.0F)
-         .shockwave(0, 16, 3.2F, 0.5F)
-         .dust(0, 2.2F, 24)
+         .shockwave(0, 16, 3.2F, 0.25F)
+         .dust(0, 1.4F, 12)
          .scorch(0, 160, 1.6F, 7)
          .build();
    }
@@ -64,12 +63,10 @@ public final class GhostRiderFxRecipes {
          .build();
    }
 
-   /** Hellfire Wave: the ground heaves along the cone (the fire is the listener's). */
+   /** Hellfire Wave: the ground heaves and scorches (the fire cone is the listener's; no ring round his own feet). */
    static FxRecipe wave() {
       return FxRecipe.builder(GhostRiderFx.WAVE)
          .shake(0, 0.8F, 26.0F)
-         .shockwave(0, 12, 2.0F, 0.4F)
-         .dust(2, 2.6F, 26)
          .scorch(0, 180, 1.8F, 7)
          .build();
    }
@@ -94,7 +91,6 @@ public final class GhostRiderFxRecipes {
    /** The Hell Cycle forms out of the fire: a ring and a scorched circle. */
    static FxRecipe bikeForm() {
       return FxRecipe.builder(GhostRiderFx.BIKE_FORM)
-         .flash(0, 6, 1.4F)
          .shake(0, 0.7F, 20.0F)
          .shockwave(0, 14, 2.6F, 0.6F)
          .dust(0, 2.0F, 22)
@@ -102,12 +98,11 @@ public final class GhostRiderFxRecipes {
          .build();
    }
 
-   /** Hell Dash on foot: a push-off ring at the start. */
+   /** Hell Dash: a scorched push-off at the start (no ring or dust: the camera starts inside it). */
    static FxRecipe dash() {
       return FxRecipe.builder(GhostRiderFx.DASH)
          .shake(0, 0.5F, 16.0F)
-         .shockwave(0, 10, 1.6F, 0.5F)
-         .dust(0, 1.4F, 16)
+         .scorch(0, 120, 1.0F, 5)
          .build();
    }
 }

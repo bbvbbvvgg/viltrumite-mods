@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.client.ghostrider;
 
 import dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleClient;
+import dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleCockpit;
+import dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleRiderPose;
 import dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleTrails;
 import dev.baranhan.viltrumitecore.client.hero.HeroSkins;
 import dev.baranhan.viltrumitecore.client.anim.render.PlayerGeoLayer;
@@ -11,6 +13,7 @@ import java.util.Optional;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 
 /** Client entry point for the Ghost Rider (called from ViltrumiteCoreClient's setup). */
 public final class GhostRiderClient {
@@ -55,6 +58,9 @@ public final class GhostRiderClient {
       MinecraftForge.EVENT_BUS.addListener(GhostRiderVfx::onLevelUnload);
       MinecraftForge.EVENT_BUS.addListener(HellCycleTrails::onRenderLevel);
       MinecraftForge.EVENT_BUS.addListener(HellCycleClient::onLevelUnload);
+      MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, HellCycleRiderPose::onRenderPlayerPre);
+      MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, HellCycleRiderPose::onRenderPlayerPost);
+      MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, HellCycleCockpit::onRenderHand);
       MinecraftForge.EVENT_BUS.addListener(GhostRiderCamera::onFov);
       MinecraftForge.EVENT_BUS.addListener(GhostRiderCamera::onAngles);
    }
