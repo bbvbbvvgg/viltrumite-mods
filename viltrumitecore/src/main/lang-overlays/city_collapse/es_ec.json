@@ -17,5 +17,8 @@
   "commands.viltrumitecore.collapse.analyze.yes": "Empezaría un derrumbe: %s",
   "commands.viltrumitecore.collapse.analyze.no": "No habrá derrumbe: %s",
   "commands.viltrumitecore.collapse.damage": "Daño (%s): %s bloques quitados",
-  "commands.viltrumitecore.collapse.too_big": "Como máximo %s bloques a la vez"
+  "commands.viltrumitecore.collapse.too_big": "Como máximo %s bloques a la vez",
+  "commands.viltrumitecore.collapse.support": "Soporte: %s",
+  "message.viltrumitecore.collapse.support_blocked.gamerule": "Esta estructura perdió su soporte, pero los derrumbes están desactivados: la regla mobGriefing es false",
+  "message.viltrumitecore.collapse.support_blocked.config": "Esta estructura perdió su soporte, pero los derrumbes están desactivados en la configuración (collapseEnabled)"
 }
