@@ -265,7 +265,8 @@ public class HellCycleRenderer extends EntityRenderer<HellCycleEntity> {
       float pulse = 0.85F + 0.15F * Mth.sin(age * 0.7F + id);
       for (int w = -1; w <= 1; w += 2) {
          this.bike.transformPosition(this.p.set(0.0F, AXLE_Y, w * AXLE_Z));
-         GlowDraw.billboard(vc, view, this.p, left, camUp, TYRE_R * 1.55F, 0.2F, 255, 110, 30, (int)(Math.min(1.0F, heat) * 90 * alpha * pulse));
+         // small and dim: additive orange over sunlit grass adds up to a yellow-white blob (playtest #3)
+         GlowDraw.billboard(vc, view, this.p, left, camUp, TYRE_R * 1.15F, 0.2F, 255, 80, 20, (int)(Math.min(1.0F, heat) * 38 * alpha * pulse));
       }
       for (float[] t : TIPS) {
          this.bike.transformPosition(this.p.set(t[0], t[1], t[2]));
