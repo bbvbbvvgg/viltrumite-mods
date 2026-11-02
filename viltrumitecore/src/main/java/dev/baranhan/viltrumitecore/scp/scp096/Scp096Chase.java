@@ -81,6 +81,8 @@ final class Scp096Chase {
    private double climbHoldZ;
    private int climbPunches;
    private int mantleTicks;
+   private int mantleX;
+   private int mantleZ;
    private int punchTicks;
    private boolean punchUp;
    @Nullable
@@ -88,6 +90,7 @@ final class Scp096Chase {
    @Nullable
    private Scp096Probe.Slab slab;
    private boolean hopping;
+   private boolean hopOut;
    private int hopTicks;
    private double hopTop;
    private int hopFails;
@@ -640,9 +643,10 @@ final class Scp096Chase {
       int fz = Mth.floor(pos.z + this.wallZ * 0.75);
       int fy = Mth.floor(feet + 0.2);
       boolean wallTop = feet >= this.climbStartY + 1.5 && Scp096Probe.openAbove(level, fx, fy, fz, 5)
-         && Scp096Probe.solid(level, new BlockPos(fx, fy - 1, fz));
+         && Scp096Probe.solid(level, new BlockPos(fx, fy - 1, fz))
+         && Scp096Probe.openAbove(level, fx + this.wallX, fy, fz + this.wallZ, 3);
       if (Scp096Route.mayMantle(feet, this.climbGoalY, frontFree, wallTop)) {
-         this.startMantle();
+         this.startMantle(level, target);
          return true;
       }
       if (feet >= this.climbGoalY - 0.35 && !frontFree) {
@@ -756,21 +760,57 @@ final class Scp096Chase {
       return false;
    }
 
-   private void startMantle() {
+   /**
+    * Lets go of the wall and pulls itself over the top. Over the wall when there is a floor beyond it (a parapet, a
+    * window sill); back off the wall onto the floor on the target's side when it came up inside (a punched shaft along
+    * an outer wall, whose top is a parapet with the street behind it).
+    */
+   private void startMantle(ServerLevel level, Entity target) {
       this.climbing = false;
       this.mob.setFlag(Scp096Entity.FLAG_CLIMB, false);
       this.mantleTicks = 1;
       this.mantles++;
+      this.mantleX = this.wallX;
+      this.mantleZ = this.wallZ;
+      double tx = target.getX() - this.mob.getX();
+      double tz = target.getZ() - this.mob.getZ();
+      boolean behind = tx * this.wallX + tz * this.wallZ < 0.0;
+      if (behind || !this.landable(level, this.wallX, this.wallZ)) {
+         int bx = axisX(tx, tz);
+         int bz = axisZ(tx, tz);
+         if ((bx != 0 || bz != 0) && (bx != this.wallX || bz != this.wallZ) && this.landable(level, bx, bz)) {
+            this.mantleX = bx;
+            this.mantleZ = bz;
+         } else if (this.landable(level, -this.wallX, -this.wallZ) && !this.landable(level, this.wallX, this.wallZ)) {
+            this.mantleX = -this.wallX;
+            this.mantleZ = -this.wallZ;
+         }
+      }
       this.mob.setFlag(Scp096Entity.FLAG_MANTLE, true);
-      this.log("mantle");
+      this.log("mantle %s", this.mantleX == this.wallX && this.mantleZ == this.wallZ ? "over" : "back");
+   }
+
+   /** A floor to step onto one block in this direction, around the height of the feet (free for the body above it). */
+   private boolean landable(ServerLevel level, int dx, int dz) {
+      int x = Mth.floor(this.mob.getX() + dx * 0.9);
+      int z = Mth.floor(this.mob.getZ() + dz * 0.9);
+      int fy = Mth.floor(this.mob.getY() + 0.5);
+      BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+      for (int y = fy - 1; y <= fy + 1; y++) {
+         if (Scp096Probe.solid(level, m.set(x, y - 1, z)) && !Scp096Probe.solid(level, m.set(x, y, z))
+            && !Scp096Probe.solid(level, m.set(x, y + 1, z)) && !Scp096Probe.solid(level, m.set(x, y + 2, z))) {
+            return true;
+         }
+      }
+      return false;
    }
 
    /** Pulling itself over the top: up and in, until it stands on the floor. */
    private void tickMantle(Entity target) {
       this.mantleTicks++;
       double vy = this.mantleTicks <= 4 ? 0.3 : this.mob.getDeltaMovement().y;
-      double hx = this.wallX * 0.32;
-      double hz = this.wallZ * 0.32;
+      double hx = this.mantleX * 0.32;
+      double hz = this.mantleZ * 0.32;
       this.mob.setDeltaMovement(hx, vy, hz);
       this.face(hx, hz, target);
       if (this.mantleTicks > 3 && this.mob.onGround() || this.mantleTicks > 14) {
@@ -828,7 +868,25 @@ final class Scp096Chase {
       }
       int y0 = this.punchUp ? s.near() : s.near() - s.thickness() + 1;
       int y1 = this.punchUp ? s.near() + s.thickness() - 1 : s.near();
-      List<BlockPos> broken = Scp096Destruction.bore(level, this.mob, h, y0, y1, this.punchUp ? this.mob.getBoundingBox().maxY : pos.y, 16);
+      // a storey too low for the body above the slab (a mezzanine, a crawl space): through the next slab as well
+      int clear = Mth.ceil(Scp096Rules.HEIGHT);
+      for (int pass = 0; pass < 2 && this.punchUp; pass++) {
+         int next = Integer.MIN_VALUE;
+         for (int y = y1 + 1; y <= y1 + clear && next == Integer.MIN_VALUE; y++) {
+            if (anySolid(level, h, y)) {
+               next = y;
+            }
+         }
+         if (next == Integer.MIN_VALUE) {
+            break;
+         }
+         int end = next;
+         while (end < next + Scp096Route.MAX_SLAB - 1 && anySolid(level, h, end + 1)) {
+            end++;
+         }
+         y1 = end;
+      }
+      List<BlockPos> broken = Scp096Destruction.bore(level, this.mob, h, y0, y1, this.punchUp ? this.mob.getBoundingBox().maxY : pos.y, 32);
       if (broken.isEmpty()) {
          this.stall("punch broke nothing", Math.abs(dy));
          return;
@@ -842,15 +900,29 @@ final class Scp096Chase {
          return;
       }
       // up through the hole: a jump that clears the slab, then a step onto the floor beside the hole
-      this.hopTop = s.near() + s.thickness();
+      this.hopTop = y1 + 1;
       this.hopping = true;
+      this.hopOut = false;
       this.hopTicks = 0;
-      double vy = Scp096Leap.vyForApex(this.hopTop - pos.y + 0.7);
+      double vy = Scp096Leap.vyForApex(this.hopTop - pos.y + 1.2);
       this.mob.setDeltaMovement(0.0, vy, 0.0);
       this.mob.setOnGround(false);
       this.mob.hasImpulse = true;
       this.mob.setFlag(Scp096Entity.FLAG_LEAP, true);
       level.playSound(null, pos.x, pos.y, pos.z, Scp096Sounds.LEAP.get(), SoundSource.HOSTILE, 1.0F, 0.7F);
+   }
+
+   /** Any solid block in layer y over the hole columns. */
+   private static boolean anySolid(ServerLevel level, int[] h, int y) {
+      BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+      for (int x = h[0]; x <= h[1]; x++) {
+         for (int z = h[2]; z <= h[3]; z++) {
+            if (Scp096Probe.solid(level, m.set(x, y, z))) {
+               return true;
+            }
+         }
+      }
+      return false;
    }
 
    private void tickHop(ServerLevel level, Entity target) {
@@ -862,8 +934,10 @@ final class Scp096Chase {
       if (h != null) {
          double cx = h[1];
          double cz = h[3];
-         if (pos.y >= this.hopTop + 0.05) {
-            // above the slab: off the hole, toward the target (or any free side when it stands right over the hole)
+         if (pos.y >= this.hopTop + 0.05 || this.hopOut && pos.y >= this.hopTop - 0.3) {
+            // above the slab: off the hole, toward the target (or any free side when it stands right over the hole),
+            // and on until it lands (re-centring would pull it back into the hole)
+            this.hopOut = true;
             double ox = target.getX() - cx;
             double oz = target.getZ() - cz;
             double ol = Math.sqrt(ox * ox + oz * oz);
@@ -879,8 +953,8 @@ final class Scp096Chase {
                }
                ol = 1.0;
             }
-            hx = ox / ol * 0.3;
-            hz = oz / ol * 0.3;
+            hx = ox / ol * 0.36;
+            hz = oz / ol * 0.36;
          } else {
             hx = Mth.clamp((cx - pos.x) * 0.6, -0.2, 0.2);
             hz = Mth.clamp((cz - pos.z) * 0.6, -0.2, 0.2);
