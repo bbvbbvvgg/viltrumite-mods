@@ -17,12 +17,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -57,6 +59,8 @@ public final class GodzillaEvent {
    public static final String CONFLICT_KEY = "viltrumitecore.godzilla.conflict";
    /** Ticks without a body tick before the session counts the body as lost (unloaded with its chunk). */
    static final int LOST_TICKS = 100;
+   /** Keeps the chunks around the body entity-ticking while a hero can see it ({@link GodzillaRules#watchRange}). */
+   static final TicketType<Integer> WATCH = TicketType.create("viltrumitecore_godzilla_watch", Integer::compareTo, GodzillaRules.WATCH_TICKET_TICKS);
    @Nullable
    private static GodzillaSession session;
 
@@ -451,9 +455,28 @@ public final class GodzillaEvent {
          return;
       }
       // the body unloaded with its chunk (nobody near) and was not saved: the kaiju is gone
-      if (level.getGameTime() - s.lastBodyTick > LOST_TICKS && level.getEntity(s.bodyId) == null) {
+      Entity body = level.getEntity(s.bodyId);
+      if (level.getGameTime() - s.lastBodyTick > LOST_TICKS && body == null) {
          GodzillaEvent.finish(level, s, "viltrumitecore.godzilla.end.lost");
+         return;
       }
+      // a hero who can see it sees it move: simulate the body's chunks while someone is within the drawing range
+      if (body != null && level.getGameTime() % GodzillaRules.WATCH_REFRESH == 0 && watched(level, body)) {
+         level.getChunkSource().addRegionTicket(WATCH, new ChunkPos(body.blockPosition()), GodzillaRules.WATCH_TICKET, body.getId());
+      }
+   }
+
+   /** A hero (not a spectator) within the range at which vanilla draws the body. */
+   static boolean watched(ServerLevel level, Entity body) {
+      double r = GodzillaRules.watchRange(level.getServer().getPlayerList().getViewDistance());
+      for (ServerPlayer p : level.players()) {
+         double dx = p.getX() - body.getX();
+         double dz = p.getZ() - body.getZ();
+         if (!p.isSpectator() && dx * dx + dz * dz <= r * r) {
+            return true;
+         }
+      }
+      return false;
    }
 
    @SubscribeEvent

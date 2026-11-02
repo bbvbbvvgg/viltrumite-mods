@@ -191,14 +191,22 @@ class GodzillaAssetsTest {
       }
    }
 
-   /** The event only lives in chunks players keep loaded: no tickets, no forced chunks, no sync chunk loads. */
+   /**
+    * The event only lives in chunks players keep loaded or can see: no forced chunks, no sync chunk loads. Its one ticket
+    * is the lapsing watch ticket of {@code GodzillaEvent} (3 x 3 entity-ticking chunks around a body a hero can see).
+    */
    @Test
    void theEventNeverForcesChunks() throws IOException {
       for (Path f : javaFiles()) {
          String src = Files.readString(f);
-         for (String banned : new String[]{"addRegionTicket", "setChunkForced", "TicketType", ".getChunk(", "ForgeChunkManager"}) {
+         for (String banned : new String[]{"setChunkForced", ".getChunk(", "ForgeChunkManager", "TicketType.FORCED", "TicketType.PLAYER"}) {
             assertFalse(src.contains(banned), f + " uses " + banned);
          }
+         int tickets = src.split(Pattern.quote("addRegionTicket("), -1).length - 1;
+         int types = src.split(Pattern.quote("TicketType.create("), -1).length - 1;
+         boolean event = f.endsWith("GodzillaEvent.java");
+         assertEquals(event ? 1 : 0, tickets, f + " region tickets");
+         assertEquals(event ? 1 : 0, types, f + " ticket types");
       }
    }
 
@@ -475,5 +483,21 @@ class GodzillaAssetsTest {
       assertTrue(join.group().contains("loadedFromDisk()") && join.group().contains("isDebris") && join.group().contains("setCanceled(true)"), join.group());
       Matcher cleanup = Pattern.compile("public static int cleanup\\(.*?return removed;", Pattern.DOTALL).matcher(event);
       assertTrue(cleanup.find() && cleanup.group().contains("isDebris"), "the cleanup must sweep untracked debris");
+   }
+
+   /**
+    * A hero between the simulation distance and the drawing range saw the kaiju frozen (playtest: a camera 140 blocks
+    * out, view 12 / simulation 8): the server tick keeps a watched body's chunks entity-ticking with a lapsing ticket.
+    */
+   @Test
+   void aWatchedKaijuIsNeverFrozen() throws IOException {
+      String event = Files.readString(JAVA.resolve("worldevent/godzilla/GodzillaEvent.java"));
+      Matcher tick = Pattern.compile("public static void onServerTick\\(TickEvent.ServerTickEvent event\\) \\{.*?\\n   \\}", Pattern.DOTALL).matcher(event);
+      assertTrue(tick.find(), "server tick");
+      assertTrue(tick.group().contains("watched(level, body)") && tick.group().contains("addRegionTicket(WATCH"), tick.group());
+      assertTrue(event.contains("TicketType.create(\"viltrumitecore_godzilla_watch\", Integer::compareTo, GodzillaRules.WATCH_TICKET_TICKS)"),
+         "the ticket must lapse by itself after the event");
+      Matcher watched = Pattern.compile("static boolean watched\\(.*?\\n   \\}", Pattern.DOTALL).matcher(event);
+      assertTrue(watched.find() && watched.group().contains("isSpectator()") && watched.group().contains("getViewDistance()"), "watchers");
    }
 }
