@@ -25,7 +25,8 @@ public abstract class TimeFreezeMouseMixin {
    @Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
    private void viltrumitecore$frozenView(CallbackInfo ci) {
       if (TimeFreezeView.locked() || dev.baranhan.viltrumitecore.client.dio.RollerCinema.active()
-         || dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient.locksLocal()) {
+         || dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient.locksLocal()
+         || dev.baranhan.viltrumitecore.client.venom.VenomPossessionClient.locksMouse()) {
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;
          ci.cancel();

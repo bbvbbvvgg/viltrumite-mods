@@ -17,7 +17,7 @@ import net.minecraft.world.entity.LivingEntity;
  * convulses; the reverse: hunched, the arms clutching the body as the coat recedes;</li>
  * <li>a ridden host: the symbiote's gait: hunched shoulders, the head low and cocked, the arms hanging forward and
  * swinging loose, wide knees, sudden twitches;</li>
- * <li>the husk: slumped on its knees, the head on the chest, the arms hanging.</li>
+ * <li>the husk: slumped sitting on the ground, the head on the chest, the arms hanging.</li>
  * </ul>
  * Client only.
  */
@@ -127,7 +127,7 @@ public final class VenomPoser {
       m.leftLeg.z += 4.0F * w;
    }
 
-   /** The empty husk: knees on the ground (the renderer lowers it), the head on the chest, arms hanging. */
+   /** The empty husk: sitting slumped, the legs out (the renderer lowers it), the head on the chest, arms hanging. */
    static void husk(PlayerModel<?> m, float age) {
       float breath = Mth.sin(age * 0.05F) * 0.03F;
       m.body.xRot = 0.55F + breath;
