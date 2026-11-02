@@ -123,6 +123,8 @@ public final class VenomPossession {
    private static final Map<UUID, Long> IMMUNE = new HashMap<>();
    /** Host UUID -> game time until which the environment cannot hurt him (after a release). */
    private static final Map<UUID, Long> SAFE = new HashMap<>();
+   /** Host UUID -> the symbiote that just let him go; it cannot hurt him while {@link #SAFE} lasts. */
+   private static final Map<UUID, UUID> SPAT_BY = new HashMap<>();
 
    static {
       ActionLocks.register(VenomPossession::isHost);
@@ -155,6 +157,16 @@ public final class VenomPossession {
       }
       Long until = SAFE.get(host.getUUID());
       return until != null && host.level().getGameTime() <= until;
+   }
+
+   /** The symbiote that just let this host go cannot hit him during the release window (§8.5: three seconds). */
+   public static boolean sparedFrom(LivingEntity host, @Nullable Entity attacker) {
+      if (attacker == null || isHost(host)) {
+         return false;
+      }
+      UUID by = SPAT_BY.get(host.getUUID());
+      Long until = SAFE.get(host.getUUID());
+      return by != null && by.equals(attacker.getUUID()) && until != null && host.level().getGameTime() <= until;
    }
 
    /** The takeover's remaining ticks for the possessor's snapshot (0 = none). */
@@ -370,10 +382,11 @@ public final class VenomPossession {
 
    public static void tick(MinecraftServer server) {
       if (BY_HOST.isEmpty()) {
-         if (!IMMUNE.isEmpty() && server.getTickCount() % 200 == 0) {
+         if ((!IMMUNE.isEmpty() || !SAFE.isEmpty()) && server.getTickCount() % 200 == 0) {
             long now = server.overworld().getGameTime();
             IMMUNE.values().removeIf(t -> t < now);
             SAFE.values().removeIf(t -> t < now);
+            SPAT_BY.keySet().removeIf(k -> !SAFE.containsKey(k));
          }
          return;
       }
@@ -540,6 +553,7 @@ public final class VenomPossession {
       }
       IMMUNE.clear();
       SAFE.clear();
+      SPAT_BY.clear();
    }
 
    static void end(Session s, End reason) {
@@ -566,6 +580,7 @@ public final class VenomPossession {
             IMMUNE.put(host.getUUID(), now + VenomRules.VICTIM_IMMUNITY);
          }
          SAFE.put(host.getUUID(), now + VenomRules.HOST_SAFE_TICKS);
+         SPAT_BY.put(host.getUUID(), s.possessor.getUUID());
       }
       if (!host.hasDisconnected() && host.isAlive()) {
          host.fallDistance = 0;

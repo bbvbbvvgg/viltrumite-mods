@@ -100,14 +100,17 @@ public final class VenomHostHud {
 
    static void drawResist(Minecraft mc, GuiGraphics g, VenomPossessionClient.Session s) {
       int w = g.guiWidth(), h = g.guiHeight();
-      int bw = 120, x = (w - bw) / 2, y = h / 2 + 34;
+      int bw = 120, x = (w - bw) / 2;
+      Component hint = Component.translatable("hud.viltrumitecore.venom.resist");
+      int half = Math.max(bw, mc.font.width(hint)) / 2 + 2;
+      // the symbiote's voice panel (drawn earlier in this frame) must not swallow the countdown and the hint
+      int y = VenomHostFx.resistY(h, dev.baranhan.viltrumitecore.client.hero.speech.HeroSubtitles.panelTop(w / 2.0F - half, w / 2.0F + half));
       float resist = Mth.clamp(s.resist / (float)VenomRules.RESIST_TO_BREAK, 0, 1);
       boolean shake = VenomPossessionClient.ticks() - struggleAt < 3;
       int dx = shake ? (int)((VenomPossessionClient.ticks() % 2) * 2 - 1) : 0;
       g.fill(x - 1 + dx, y - 1, x + bw + 1 + dx, y + 5, 0xC0100816);
       g.fill(x + dx, y, x + dx + Math.round(bw * resist), y + 4, 0xFFE8E4F0);
       g.fill(x + dx, y, x + dx + Math.round(bw * resist), y + 1, 0x60FFFFFF);
-      Component hint = Component.translatable("hud.viltrumitecore.venom.resist");
       g.drawCenteredString(mc.font, hint, w / 2 + dx, y + 8, 0xFFD8D0E8);
       int left = Math.max(0, s.remaining / 20);
       g.drawCenteredString(mc.font, Component.translatable("hud.viltrumitecore.venom.held", left), w / 2, y - 12, 0xFF9A88B8);

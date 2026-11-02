@@ -25,6 +25,27 @@ public final class VenomHostFx {
       return ticksSinceWord > (engulf ? STALE_ENGULF : STALE_CONTROL);
    }
 
+   /** The resist block around its bar's y: the countdown sits this far above, the hint ends this far below. */
+   public static final int RESIST_ABOVE = 12, RESIST_BELOW = 17;
+
+   /**
+    * GUI y of the resist bar: under the crosshair, unless a subtitle panel (the symbiote's voice, at a GUI height
+    * near 240) would cover the countdown or the hint; then it is lifted clear of the panel, and over the crosshair
+    * rather than onto it. {@code panelTop}: the panel's top edge there, NaN when there is none.
+    */
+   public static int resistY(int guiHeight, float panelTop) {
+      int mid = guiHeight / 2;
+      int y = mid + 34;
+      if (Float.isNaN(panelTop) || y + RESIST_BELOW + 2 <= panelTop) {
+         return y;
+      }
+      int lifted = (int)Math.floor(panelTop) - RESIST_BELOW - 2;
+      if (lifted - RESIST_ABOVE >= mid + 10) {
+         return lifted;
+      }
+      return Math.min(lifted, mid - 10 - RESIST_BELOW);
+   }
+
    private VenomHostFx() {
    }
 

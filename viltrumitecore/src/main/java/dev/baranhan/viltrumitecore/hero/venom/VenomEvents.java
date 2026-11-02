@@ -115,11 +115,18 @@ public final class VenomEvents {
       }
    }
 
-   /** The ground, lava, fire and the like cannot hurt a driven host (or one just released): nobody dies of the drive. */
+   /** The ground, lava, fire and the like cannot hurt a driven host (or one just released): nobody dies of the drive. Nor can the symbiote that released him, for that window. */
    @SubscribeEvent(priority = EventPriority.HIGH)
    public static void onHurt(LivingAttackEvent event) {
       LivingEntity e = event.getEntity();
-      if (e.level().isClientSide || event.getSource().getEntity() != null || event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+      if (e.level().isClientSide || event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+         return;
+      }
+      if (event.getSource().getEntity() != null) {
+         // the symbiote that just spat its host out does not finish him in the same breath (§8.5)
+         if (VenomPossession.sparedFrom(e, event.getSource().getEntity())) {
+            event.setCanceled(true);
+         }
          return;
       }
       if (e instanceof ServerPlayer && VenomPossession.shielded(e)) {

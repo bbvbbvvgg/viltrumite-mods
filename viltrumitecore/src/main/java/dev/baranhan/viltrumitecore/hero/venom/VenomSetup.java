@@ -43,6 +43,11 @@ public final class VenomSetup {
          .then(Commands.literal("boss").requires(s -> s.hasPermission(2)).executes(ctx -> {
             CommandSourceStack source = ctx.getSource();
             ServerLevel level = source.getLevel();
+            if (level.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
+               // a monster is discarded on Peaceful at once: say so instead of announcing a boss that never appears
+               source.sendFailure(Component.translatable("commands.viltrumitecore.venom.boss_peaceful"));
+               return 0;
+            }
             VenomBossEntity boss = VenomEntities.VENOM_BOSS.get().create(level);
             if (boss == null) {
                return 0;
