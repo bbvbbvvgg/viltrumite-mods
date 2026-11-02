@@ -493,6 +493,13 @@ public final class GodzillaSession {
             this.bar.removePlayer(p);
          }
       }
+      // reconcile: a viewer who left this dimension (or the server) is no longer in level.players() and would keep the bar
+      for (ServerPlayer p : new java.util.ArrayList<>(this.bar.getPlayers())) {
+         if (!GodzillaRules.keepsBar(p.level() == level, p.isRemoved())) {
+            this.bar.removePlayer(p);
+            this.barPlayers.remove(p.getUUID());
+         }
+      }
    }
 
    void say(ServerLevel level, String key, ChatFormatting style) {

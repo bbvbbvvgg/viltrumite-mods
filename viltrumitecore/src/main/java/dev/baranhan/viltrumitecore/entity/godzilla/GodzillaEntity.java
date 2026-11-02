@@ -47,6 +47,8 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    private static final EntityDataAccessor<Vector3f> BEAM_END = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.VECTOR3);
    private static final EntityDataAccessor<Integer> FIRE_LEN = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Float> BODY_YAW = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.FLOAT);
+   /** Server game time the current move started: a client that starts tracking mid-move joins it at its real progress. */
+   private static final EntityDataAccessor<Long> MOVE_START = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.LONG);
 
    public static final int FLAG_RAGE = 1;
    public static final int FLAG_RETREAT = 2;
@@ -153,6 +155,7 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
       this.entityData.define(BEAM_END, new Vector3f());
       this.entityData.define(FIRE_LEN, GodzillaRules.FIRE_TICKS);
       this.entityData.define(BODY_YAW, 0.0F);
+      this.entityData.define(MOVE_START, 0L);
    }
 
    @Override
@@ -248,6 +251,7 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
       this.moveTick = 0;
       this.entityData.set(MOVE, (byte)move.ordinal());
       this.entityData.set(MOVE_ARG, (byte)arg);
+      this.entityData.set(MOVE_START, this.level().getGameTime());
       this.entityData.set(MOVE_SEQ, this.entityData.get(MOVE_SEQ) + 1);
       if (move == GodzillaMove.FIRE) {
          this.entityData.set(FIRE_LEN, Math.max(1, arg));
@@ -287,6 +291,12 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
          this.clientMoveStart = this.tickCount;
          this.clientMove = this.move();
          this.clientArg = this.moveArg();
+      }
+      if ((MOVE_SEQ.equals(key) || MOVE_START.equals(key)) && this.level().isClientSide) {
+         // MOVE_START follows MOVE_SEQ in the packet: both updates land here, the last one with the real start. A viewer
+         // tracking from the first tick sees elapsed 0; one who arrives mid-move (or after the death) starts where the
+         // server is, instead of replaying the move from zero.
+         this.clientMoveStart = GodzillaRules.clientMoveStart(this.tickCount, this.level().getGameTime(), this.entityData.get(MOVE_START));
       }
    }
 

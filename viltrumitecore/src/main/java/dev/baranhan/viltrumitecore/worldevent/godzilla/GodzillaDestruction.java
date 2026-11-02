@@ -149,8 +149,10 @@ public final class GodzillaDestruction {
       this.budget = CarveBudget.perTick(GodzillaRules.blockBudget(rage), level.getServer().getAverageTickTime());
       this.usedThisTick = 0;
       this.pruneFlying();
-      if (this.exhausted()) {
-         this.jobs.clear(); // nothing more may break: queued smashes would wait forever
+      if (!GodzillaRules.mayDrainSmashes(this.griefing, this.exhausted())) {
+         // nothing more may break: mobGriefing was turned off (queued body, slam and fall jobs must not keep carving),
+         // or the budget is spent and queued smashes would wait forever
+         this.jobs.clear();
       }
       if (this.jobs.isEmpty()) {
          return;
@@ -211,6 +213,9 @@ public final class GodzillaDestruction {
    }
 
    private void work(ServerLevel level, Smash s, int limit) {
+      if (!this.griefing) {
+         return; // mobGriefing off: no carving and no direct air removal, whatever was queued before
+      }
       if (!s.scanned) {
          this.scan(level, s);
       }
@@ -384,13 +389,13 @@ public final class GodzillaDestruction {
     */
    void report(ServerLevel level, Vec3 at, float radius, int blocks, String kind, List<BlockPos> sample, boolean force) {
       long cell = cell(at);
-      if (force || this.tick - this.reported.get(cell) >= GodzillaRules.AFTERMATH_INTERVAL) {
+      if (force || GodzillaRules.reportDue(this.tick, this.reported.get(cell), GodzillaRules.AFTERMATH_INTERVAL)) {
          this.reported.put(cell, this.tick);
          CityAftermath.registerDamage(level, AftermathEvent.of(level, "godzilla:" + this.sessionId + ":" + cell, BlockPos.containing(at), radius,
             GodzillaRules.severity(blocks), AftermathCause.GODZILLA, sample));
          StructuralDamage.impact(level, at, CAUSE);
       }
-      if (this.tick - this.infra.get(cell) >= GodzillaRules.INFRA_INTERVAL) {
+      if (GodzillaRules.reportDue(this.tick, this.infra.get(cell), GodzillaRules.INFRA_INTERVAL)) {
          this.infra.put(cell, this.tick);
          CityInfrastructure.damage(level, at, radius, GodzillaRules.severity(blocks), "godzilla", "godzilla:" + kind);
       }
@@ -429,6 +434,11 @@ public final class GodzillaDestruction {
          // walk a few blocks around the point: panes come in walls
          for (int k = 0; k < 6 && done < limit; k++) {
             BlockPos q = this.cursor.offset(random.nextInt(5) - 2, random.nextInt(5) - 2, random.nextInt(5) - 2);
+            // every offset position is checked again: near a chunk edge or the arena border it can leave both, and a
+            // write outside the arena is never restored by /city reset
+            if (!level.isLoaded(q) || arena != null && !arena.inArena(q.getX(), q.getY(), q.getZ())) {
+               continue;
+            }
             BlockState state = level.getBlockState(q);
             if (state.getSoundType() == SoundType.GLASS && state.getDestroySpeed(level, q) >= 0.0F) {
                StructuralDamage.run(CAUSE, () -> level.destroyBlock(q, false));

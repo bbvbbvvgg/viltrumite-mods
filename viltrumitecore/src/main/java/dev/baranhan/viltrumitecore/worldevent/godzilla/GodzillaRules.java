@@ -809,6 +809,42 @@ public final class GodzillaRules {
    public static final int REPORT_CELL = 24;
    public static final int AFTERMATH_INTERVAL = 60;
    public static final int INFRA_INTERVAL = 80;
+
+   /**
+    * Pure: a throttled report of a cell is due. {@code last == Long.MIN_VALUE} is a cell never reported (the map's default),
+    * which is always due; {@code now - Long.MIN_VALUE} would overflow to a negative number and block it forever.
+    */
+   public static boolean reportDue(long now, long last, int interval) {
+      return last == Long.MIN_VALUE || last > now || now - last >= interval;
+   }
+
+   /** Elapsed ticks a late viewer can be off by from the time sync before it is trusted: below this the move starts now. */
+   public static final int MOVE_SYNC_SLACK = 2;
+
+   /**
+    * Pure: the client tick a move started on, from the server game time it started at. A viewer who tracks the kaiju from the
+    * move's first tick gets its own tick (elapsed within {@link #MOVE_SYNC_SLACK}); a late viewer is placed mid-move.
+    */
+   public static int clientMoveStart(int clientTick, long clientGameTime, long serverMoveStart) {
+      if (serverMoveStart <= 0L) {
+         return clientTick;
+      }
+      long elapsed = clientGameTime - serverMoveStart;
+      if (elapsed <= MOVE_SYNC_SLACK) {
+         return clientTick;
+      }
+      return clientTick - (int)Math.min(elapsed, 1_000_000L);
+   }
+
+   /** Pure: a boss-bar viewer keeps the bar only while still in the event's level and online. */
+   public static boolean keepsBar(boolean inEventLevel, boolean removed) {
+      return inEventLevel && !removed;
+   }
+
+   /** Pure: queued smash jobs may keep breaking blocks this tick. With mobGriefing off (or the budget spent) they are dropped. */
+   public static boolean mayDrainSmashes(boolean mobGriefing, boolean exhausted) {
+      return mobGriefing && !exhausted;
+   }
    /** FX range: full effects, and the far range of the simplified ones. */
    public static final double FX_NEAR = 192.0;
    public static final double FX_FAR = 512.0;
