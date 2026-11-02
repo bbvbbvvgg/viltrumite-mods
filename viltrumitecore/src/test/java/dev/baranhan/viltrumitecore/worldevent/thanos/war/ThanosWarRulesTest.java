@@ -139,4 +139,17 @@ class ThanosWarRulesTest {
       assertEquals(0.0, ThanosWarRules.bob(0), 1.0E-12);
       assertEquals(ThanosWarRules.bob(17), ThanosWarRules.bob(17 + ThanosWarRules.SHIP_BOB_PERIOD), 1.0E-9, "periodic");
    }
+
+   @Test
+   void repeatedLinesTakeTurnsThroughTheirVariants() {
+      assertEquals("ebony_maw.volley", ThanosWar.variant("ebony_maw.volley", 0));
+      assertEquals("ebony_maw.volley.2", ThanosWar.variant("ebony_maw.volley", 1));
+      assertEquals("ebony_maw.volley.3", ThanosWar.variant("ebony_maw.volley", 2));
+      assertEquals("ebony_maw.volley", ThanosWar.variant("ebony_maw.volley", 3), "and round again");
+      assertEquals("cull_obsidian.chain.2", ThanosWar.variant("cull_obsidian.chain", 7));
+      assertEquals("thanos.arrival", ThanosWar.variant("thanos.arrival", 5), "a line without variants stays itself");
+      for (java.util.Map.Entry<String, Integer> e : ThanosWar.VARIANTS.entrySet()) {
+         assertTrue(e.getValue() >= 2 && e.getValue() <= 9, e.getKey());
+      }
+   }
 }
