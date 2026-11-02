@@ -37,15 +37,12 @@ SOURCES = {
     'slow_breath': 'fd7703b4-31f3-4b0b-85f1-d327e137a1a1',     # "Male Breathing Slow" by Kodack
     'heavy_breath': '4dec51fa-e24f-4a6a-b0ea-3886e0ad3439',    # "Heavy Breathing" by Under7dude
     'steps_concrete': '51bcda21-8c54-4019-a500-b4032c7030ef',  # "footsteps concrete" by Yuval
-    'slow_steps': 'eff2ce14-b157-4464-b3a6-207dcb14cc87',      # "slow footsteps" by TheBuilder15
     'squelch': 'b4a7f38d-7ef3-41ed-a0b6-b83dd682edc9',         # "Squelch.flac" by billox30
     'mud_bubbles': '646e4e55-ad71-4fbf-9311-ba623ad595e0',     # "Bubbling Mud with Steam" by ProductionNow
     'feet_squelch': '586461b4-265a-4e0d-a3d3-14f67c945a4b',    # "Feet Squelch" by eqavox
     'squelching': '6d53a2de-28e5-460b-b76c-e849d6b52b79',      # "squelching.mp3" by tiddles451
     'miser_laugh': '35a6c127-b5af-4b0a-a4ec-d62cb5e51f33',     # "OLD MISER LAUGH" by Elenalostale
     'old_laugh_4': '968781f7-f791-4951-84dc-14267e1ab744',     # "Laugh_old_man_4.wav"
-    'old_laugh_6': '009497db-5e39-4f35-b5c5-bf99c3dc0673',     # "Laugh_old_man_6.wav"
-    'old_laugh_3': '2ab75c1f-b486-4b22-af82-5edea6a0a087',     # "Laugh_old_man_3.wav"
     'dark_drone_1': 'e4eda782-f5ef-4195-95b9-427979252840',    # "Dark Drone 1" by nomiqbomi
     'dark_drone_amb': '660dd2b9-83ed-476d-8e52-aed6b5ca52e6',  # "Dark Drone Ambient" by LulSayer
     'dark_drone_4': '9dd0e804-079e-4619-8a01-f648a2a15cde',    # "Dark Drone 4" by nomiqbomi
@@ -57,7 +54,6 @@ SOURCES = {
     'sizzle_drops': 'a02c919b-ed2c-475c-951b-c13e53a8a23b',    # "Sizzle single drops to multiple drops" by Canakinsound
     'acid_bubbling': '61630532-3c0f-4a42-bc82-457b89732e81',   # "Acid Bubbling.wav" by spookymodem
     'factory_buzz': 'cd796a43-85d1-4eaa-9748-1e3776f64d46',    # "Factory Fluorescent light buzz" by janbezouska
-    'fluo_hum': 'd93d3f36-b115-4765-af53-dc671a987d99',        # "Fluorescent Light Hum"
     'backrooms': 'c00c3433-6530-4bb6-8b99-49d6de48c4d3',       # "Backrooms Ambience" by Resaural
     'hull_creak': '9a15a0b5-45a6-44d2-82fc-2587a54f21bf',      # "wood creaks deep door or ship hull close slow.flac" by kyles
     'door_creak': '355bd187-1c42-4f73-ac4d-01095d86e082',      # "door wood creak open slow.flac" by kyles
@@ -65,6 +61,13 @@ SOURCES = {
     'pipe_basement': '9c238831-b3d0-423b-ae82-5ad21b9a38d9',   # "Metallic Pipe Hits on Concrete in Basement" by RutgerMuller
     'hollow_pipe': 'bf6e9f0b-8526-4e35-a6e0-db123f4b1a53',     # "Hollow Metal Pipe Hits" by Zott820
     'long_metal': '3ec98696-1bc9-449e-9ca2-5ab9cd577090',      # "long-metal-hit-01.wav" by newagesoup
+    'creepy_whisper': 'bae2b772-a614-4a46-ad99-6367a8d4ca39',  # "Creepy Whispering" by RaspberryTickle
+    'unfa_whispers': '71bda332-f6cf-4cc7-a09a-fa699a0667a2',   # "Whispers" by unfa
+    'whisper_trail': 'c626cd46-e941-4611-9ba9-e197cbd48dd8',   # "whisper trail 2.ogg" by Black Boe
+    'triple_knock': '6e71b761-f44d-4e5e-99eb-3a279975499c',    # "Triple Knock on Door" by Tombombadil1988
+    'door_knocking': '959edf67-d4a5-4bc7-8089-e69964db8fe8',   # "Knocking on Door" by Fabrizio84
+    'metal_door_knock': 'f864bf04-b7ab-409d-a3f6-bab5165d6ab8',  # "hard knocking metal door" by gamer500
+    'wood_knock': '04feb626-352a-46c3-bbab-80bbbc9aa8c2',      # "Knock on Door/Wood | Knocking 3 Times on Wood.mp3" by Alex-Fullam
 }
 
 
@@ -161,6 +164,97 @@ CUES = {
     'far_steps_2': C('scp106.pocket.far_steps', [
         L('steps_concrete', 0.9, 3.8, pitch=0.76, hp=120, lp=1000, fade_in=0.2, fade_out=1.4),
     ], peak=-4.0, fade=0.8, room=(1.6, 0.5)),
+    # ---------------------------------------------------------------- the Old Man, continued
+    # through the wall: the surface softens, bubbles, lets him through, a breath sucked inwards
+    'phase': C('scp106.phase', [
+        L('acid_bubbling', 0.5, 1.4, pitch=0.6, lp=2200, fade_in=0.2, fade_out=0.5),
+        L('squelching', 2.0, 0.6, pitch=0.55, gain=-3.0, delay=0.25, fade_out=0.25),
+        L('dark_drone_amb', 20.0, 1.6, pitch=0.5, gain=-5.0, lp=500, fade_in=0.6, fade_out=0.2, reverse=True),
+        L('slow_breath', 1.0, 1.6, pitch=0.6, gain=-12.0, delay=0.5, lp=1500, fade_out=0.4, reverse=True),
+    ], peak=-2.0, fade=0.4, room=(0.5, 0.15)),
+    # ---------------------------------------------------------------- the pocket dimension, more one-shots (mono)
+    'creak_1': C('scp106.pocket.creak', [L('hull_creak', 17.0, 3.6, pitch=0.75, lp=3000, fade_in=0.2, fade_out=0.8)],
+                 peak=-4.0, fade=0.6, room=(1.5, 0.4)),
+    'creak_2': C('scp106.pocket.creak', [L('door_creak', 0.25, 5.0, pitch=0.7, lp=3500, fade_in=0.1, fade_out=1.0)],
+                 peak=-4.0, fade=0.8, room=(1.5, 0.4)),
+    'creak_3': C('scp106.pocket.creak', [L('wood_creaks', 0.9, 3.0, pitch=0.65, lp=3000, fade_out=0.6)],
+                 peak=-4.0, fade=0.5, room=(1.8, 0.45)),
+    # a pipe struck somewhere far off, the ring carried down the corridors
+    'metal_1': C('scp106.pocket.metal', [L('pipe_basement', 0.2, 4.0, pitch=0.7, lp=3500, fade_out=1.2)],
+                 peak=-4.0, fade=0.8, room=(2.2, 0.55)),
+    'metal_2': C('scp106.pocket.metal', [
+        L('hollow_pipe', 0.6, 1.6, pitch=0.6, lp=3000, fade_out=0.8),
+        L('long_metal', 0.35, 3.5, pitch=0.5, gain=-9.0, delay=0.05, lp=1500, fade_out=1.5),
+    ], peak=-4.0, fade=0.8, room=(2.2, 0.55)),
+    'metal_3': C('scp106.pocket.metal', [L('long_metal', 0.35, 4.5, pitch=0.62, lp=2500, fade_out=2.0)],
+                 peak=-5.0, fade=1.0, room=(2.4, 0.6)),
+    # voices that are not quite words, from the end of the corridor
+    'whisper_1': C('scp106.pocket.whisper', [L('creepy_whisper', 0.55, 3.4, pitch=0.85, hp=200, lp=6000, fade_in=0.2, fade_out=0.6)],
+                   peak=-4.0, fade=0.5, room=(1.6, 0.45)),
+    'whisper_2': C('scp106.pocket.whisper', [L('unfa_whispers', 5.5, 4.0, pitch=0.8, hp=200, lp=5000, fade_in=0.4, fade_out=0.8)],
+                   peak=-4.0, fade=0.6, room=(1.6, 0.45)),
+    'whisper_3': C('scp106.pocket.whisper', [L('whisper_trail', 0.8, 2.6, pitch=0.75, hp=200, lp=5000, fade_in=0.3, fade_out=0.5, reverse=True)],
+                   peak=-4.0, fade=0.5, room=(1.8, 0.5)),
+    # someone on the other side of a door that leads nowhere
+    'knock_1': C('scp106.pocket.knock', [L('triple_knock', 0.25, 1.1, pitch=0.8, lp=4000, fade_out=0.3)],
+                 peak=-3.0, fade=0.5, room=(1.2, 0.35)),
+    'knock_2': C('scp106.pocket.knock', [L('door_knocking', 0.1, 2.3, pitch=0.72, lp=3500, fade_out=0.5)],
+                 peak=-3.0, fade=0.5, room=(1.2, 0.35)),
+    'knock_3': C('scp106.pocket.knock', [L('metal_door_knock', 0.05, 1.6, pitch=0.7, lp=4000, fade_out=0.5)],
+                 peak=-3.0, fade=0.5, room=(1.4, 0.4)),
+    # cold air through a seam that should not be there: a long exhale turned into wind
+    'draft_1': C('scp106.pocket.draft', [
+        L('slow_breath', 1.0, 3.6, pitch=0.42, hp=150, lp=1400, fade_in=0.6, fade_out=1.2),
+        L('cave_loop', 4.0, 4.0, pitch=0.8, gain=-8.0, hp=300, lp=4000, fade_in=0.8, fade_out=1.2),
+    ], peak=-5.0, fade=1.0, room=(1.2, 0.4)),
+    'draft_2': C('scp106.pocket.draft', [
+        L('heavy_breath', 0.4, 3.2, pitch=0.4, hp=150, lp=1300, fade_in=0.6, fade_out=1.2),
+        L('cave_loop', 12.0, 4.0, pitch=0.8, gain=-8.0, hp=300, lp=4000, fade_in=0.8, fade_out=1.2),
+    ], peak=-5.0, fade=1.0, room=(1.2, 0.4)),
+    # a sigil taken: a struck bowl of metal, its ring swelled backwards into itself
+    'sigil': C('scp106.pocket.sigil', [
+        L('long_metal', 0.35, 4.5, pitch=0.8, lp=6000, fade_out=2.0),
+        L('long_metal', 0.6, 2.5, pitch=0.8, gain=-8.0, lp=4000, fade_in=1.0, fade_out=0.05, reverse=True),
+        L('dark_drone_1', 40.0, 3.0, pitch=1.2, gain=-14.0, lp=3000, fade_in=0.5, fade_out=1.5),
+    ], peak=-2.0, fade=1.2, room=(2.0, 0.45)),
+    # the breach opens: the walls grind, a deep rumble, metal groaning
+    'breach': C('scp106.pocket.breach', [
+        L('dark_drone_amb', 20.0, 2.5, pitch=0.4, lp=400, fade_in=0.3, fade_out=1.5),
+        L('hull_creak', 30.0, 4.0, pitch=0.5, gain=-4.0, lp=1500, fade_in=0.2, fade_out=1.5),
+        L('mud_bubbles', 12.0, 2.0, pitch=0.4, gain=-6.0, lp=1200, delay=0.5, fade_out=1.0),
+        L('long_metal', 0.4, 3.5, pitch=0.4, gain=-6.0, lp=1200, delay=0.4, fade_out=2.0),
+    ], peak=-1.0, fade=1.2, room=(1.8, 0.4), drive=0.3),
+    # something right behind you
+    'scare': C('scp106.pocket.scare', [
+        L('miser_laugh', 0.4, 1.8, pitch=0.6, hp=80, lp=4000, fade_in=0.4, fade_out=0.05, reverse=True),
+        L('hollow_pipe', 0.6, 1.2, pitch=0.45, gain=-2.0, delay=1.15, lp=2500, fade_out=0.8),
+        L('squelch', 7.94, 0.5, pitch=0.5, gain=-3.0, delay=1.15, fade_out=0.2),
+        L('zombie_breath', 0.15, 1.8, pitch=0.7, gain=-6.0, delay=1.3, lp=3000, fade_out=0.6),
+    ], peak=-1.0, fade=0.6, room=(1.0, 0.3), drive=0.25),
+    # out: the drone swells backwards and lets go, the tar giving you up
+    'escape': C('scp106.pocket.escape', [
+        L('dark_drone_4', 30.0, 2.5, pitch=0.8, lp=2500, fade_in=1.2, fade_out=0.1, reverse=True),
+        L('mud_bubbles', 2.0, 2.0, pitch=0.6, gain=-5.0, lp=2500, fade_in=1.0, fade_out=0.1, reverse=True),
+        L('long_metal', 0.35, 3.5, pitch=1.0, gain=-10.0, delay=2.6, lp=7000, fade_out=2.0),
+        L('slow_breath', 5.8, 2.5, pitch=0.9, gain=-6.0, delay=2.8, lp=4000, fade_out=1.0),
+    ], peak=-1.5, fade=1.5, room=(1.4, 0.35)),
+    # a door that will not open: the handle tried, wood rattling in its frame
+    'locked': C('scp106.pocket.locked', [
+        L('wood_knock', 0.25, 0.7, pitch=1.1, lp=5000, fade_out=0.2),
+        L('door_creak', 6.3, 0.6, pitch=1.0, gain=-6.0, delay=0.15, lp=4000, fade_out=0.3),
+        L('metal_door_knock', 0.6, 0.5, pitch=1.3, gain=-10.0, delay=0.05, lp=5000, fade_out=0.3),
+    ], peak=-3.0, fade=0.4, room=(0.6, 0.2)),
+    # a key: small metal, picked up off stone
+    'key': C('scp106.pocket.key', [
+        L('hollow_pipe', 0.6, 0.6, pitch=2.2, hp=600, lp=9000, fade_out=0.3),
+        L('long_metal', 0.4, 1.6, pitch=2.0, gain=-6.0, delay=0.05, hp=800, fade_out=0.8),
+    ], peak=-3.0, fade=0.6, room=(0.8, 0.25)),
+    # the architecture rearranges itself behind your back
+    'shift': C('scp106.pocket.shift', [
+        L('hull_creak', 33.0, 4.0, pitch=0.55, lp=2000, fade_in=0.3, fade_out=1.5),
+        L('pipe_basement', 0.2, 3.0, pitch=0.5, gain=-5.0, delay=0.6, lp=1500, fade_out=1.5),
+        L('dark_drone_amb', 22.0, 3.5, pitch=0.45, gain=-6.0, lp=500, fade_in=1.0, fade_out=1.5),
+    ], peak=-2.0, fade=1.2, room=(2.0, 0.5)),
     # ---------------------------------------------------------------- ambience beds (stereo, seamless loops)
     'hum': C('scp106.pocket.hum', [
         L('dark_drone_1', 10.0, 20.5, pitch=0.85, lp=2000, fade_in=0.01, fade_out=0.01),
@@ -284,6 +378,82 @@ def write_wav(y, path):
         w.writeframes((np.clip(y, -1, 1) * 32767).astype('<i2').tobytes())
 
 
+SOUNDS = os.path.join(ROOT, 'viltrumitecore', 'src', 'main', 'binassets', 'assets', 'viltrumitecore', 'sounds', 'scp106')
+OVERLAY = os.path.join(ROOT, 'viltrumitecore', 'src', 'main', 'sound-overlays', 'scp106.json')
+SOURCES_MD = os.path.join(ROOT, 'tools', 'assets', 'scp106_sources.md')
+PART_BYTES = 48000  # one GitHub push request carries ~60 KB; build.gradle joins <name>.ogg.b64.part0..N
+
+
+def split_parts(name):
+    """Split a packaged .ogg.b64 larger than PART_BYTES at line boundaries into .ogg.b64.part0..N."""
+    path = os.path.join(SOUNDS, name + '.ogg.b64')
+    for old in os.listdir(SOUNDS):
+        if old.startswith(name + '.ogg.b64.part'):
+            os.remove(os.path.join(SOUNDS, old))
+    if os.path.getsize(path) <= PART_BYTES:
+        return
+    lines = open(path).read().splitlines(keepends=True)
+    parts, cur = [], ''
+    for line in lines:
+        if cur and len(cur) + len(line) > PART_BYTES:
+            parts.append(cur)
+            cur = ''
+        cur += line
+    parts.append(cur)
+    for i, text in enumerate(parts):
+        with open(f"{path}.part{i}", 'w') as f:
+            f.write(text)
+    os.remove(path)
+
+
+def write_overlay():
+    """sound-overlays/scp106.json: one event per cue group; the three beds stream."""
+    import json
+    events = {}
+    for name, cue in CUES.items():
+        ev = cue['event']
+        entry = events.setdefault(ev, {
+            'category': 'ambient' if ev.startswith('scp106.pocket.') else 'hostile',
+            'subtitle': 'subtitles.viltrumitecore.' + ev, 'sounds': []})
+        sound = {'name': 'viltrumitecore:scp106/' + name}
+        if cue['loop']:
+            sound['stream'] = True
+        entry['sounds'].append(sound)
+    with open(OVERLAY, 'w') as f:
+        json.dump(events, f, indent=2)
+        f.write('\n')
+
+
+def write_sources():
+    """tools/assets/scp106_sources.md from the cached Openverse metadata of every source."""
+    import json
+    meta_dir = os.path.join(os.path.dirname(RAW), 'metadata')
+    rows = []
+    for key, uuid in SOURCES.items():
+        item = json.load(open(os.path.join(meta_dir, uuid + '.json')))['openverse']
+        assert (item.get('license') or '').lower() == 'cc0', key
+        used = sorted({n for n, c in CUES.items() if any(l['src'] == key for l in c['layers'])})
+        rows.append(f"| `{key}` | [{item['foreign_landing_url'].rstrip('/').split('/')[-1]}]({item['foreign_landing_url']}) | "
+                    f"{item.get('creator') or '?'} | {item.get('title') or '?'} | CC0 1.0 | {', '.join('`' + u + '`' for u in used)} |")
+    head = (
+        "# SCP-106 sound sources\n\n"
+        "All 25 SCP-106 sound events (`scp106.*`, `scp106.pocket.*`; 44 files under\n"
+        "`viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/scp106/`) are mixed by `tools/sfx/scp106.py`\n"
+        "from the CC0 1.0 Freesound recordings below, found through Openverse. No vanilla Minecraft sound and no\n"
+        "SCP – Containment Breach audio is used. Every license is CC0 1.0\n"
+        "(https://creativecommons.org/publicdomain/zero/1.0/), checked by the download helper's license gate against the\n"
+        "Openverse record that points at the Freesound page. The HQ preview MP3s are downloaded with\n"
+        "`python3 .agents/skills/sound-design/scripts/openverse_sfx.py download <uuid>` (uuids in `SOURCES` of the\n"
+        "script) and never committed.\n\n"
+        "Processing (all in `tools/sfx/scp106.py`, ffmpeg + numpy): segment cut, varispeed (mostly 0.4-0.9x, lower and\n"
+        "slower), occasional reversal, high/low-pass, layering, a synthetic decaying-noise room, soft saturation, fades,\n"
+        "peak normalisation; the three beds (`hum`, `void`, `water`) are stereo loops with the tail crossfaded into the\n"
+        "head. Encoded as 44.1 kHz Ogg Vorbis q5 by the sound-design helper.\n\n"
+        "| Key | Freesound | Creator | Original title | License | Used in |\n|---|---|---|---|---|---|\n")
+    with open(SOURCES_MD, 'w') as f:
+        f.write(head + '\n'.join(rows) + '\n')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--only', help='comma-separated cue names')
@@ -306,6 +476,10 @@ def main():
             for src in sorted({l['src'] for l in cue['layers']}):
                 cmd += ['--source-id', SOURCES[src]]
             subprocess.run(cmd, cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+            split_parts(name)
+    if not a.only:
+        write_overlay()
+        write_sources()
 
 
 if __name__ == '__main__':
