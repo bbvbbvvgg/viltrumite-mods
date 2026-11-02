@@ -1,0 +1,474 @@
+package dev.baranhan.viltrumitecore.worldevent.godzilla;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaRules.Cooldowns;
+import dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaRules.Zone;
+import dev.baranhan.viltrumitecore.worldevent.godzilla.net.GodzillaFxS2CPacket;
+import io.netty.buffer.Unpooled;
+import net.minecraft.network.FriendlyByteBuf;
+import org.junit.jupiter.api.Test;
+
+/** Pure rules of the kaiju: damage caps, breath staging, gait, tail whip, target zones, move choice and budgets. */
+class GodzillaRulesTest {
+   private static final float H = GodzillaRules.HEIGHT;
+   private static final Cooldowns READY = new Cooldowns(0, 0, 0, 0, 0, 0);
+   private static final Cooldowns BUSY = new Cooldowns(99, 99, 99, 99, 99, 99);
+
+   @Test
+   void theModelIsScaledToTheEventHeight() {
+      assertEquals(GodzillaRules.HEIGHT, GodzillaRules.MODEL_HEIGHT * GodzillaRules.modelScale(), 1.0E-3F);
+      assertTrue(GodzillaRules.HEIGHT >= 100.0F, "towers of Atheria reach ~100 blocks: the kaiju must stand over them");
+   }
+
+   @Test
+   void hitsAreCappedAndScaledByTheZone() {
+      assertEquals(0.0F, GodzillaRules.hit(Float.NaN, 1.0F, false));
+      assertEquals(0.0F, GodzillaRules.hit(-5.0F, 1.0F, false));
+      assertEquals(10.0F * 1.35F, GodzillaRules.hit(10.0F, 1.35F, false), 1.0E-4F);
+      assertEquals(GodzillaRules.MAX_HIT * 0.5F, GodzillaRules.hit(10000.0F, 0.5F, false), 1.0E-3F);
+      assertEquals(10000.0F, GodzillaRules.hit(10000.0F, 0.5F, true), "kill commands pass untouched");
+      assertEquals(0.0F, GodzillaRules.allowance(GodzillaRules.MAX_DAMAGE_PER_TICK + 5.0F, 50.0F));
+      assertEquals(20.0F, GodzillaRules.allowance(GodzillaRules.MAX_DAMAGE_PER_TICK - 20.0F, 50.0F), 1.0E-4F);
+      assertEquals(GodzillaRules.PARTS, GodzillaRules.PART_SIZE.length);
+      assertEquals(GodzillaRules.PARTS, GodzillaRules.PART_FACTOR.length);
+      float best = 0.0F;
+      for (float f : GodzillaRules.PART_FACTOR) {
+         best = Math.max(best, f);
+      }
+      assertEquals(GodzillaRules.PART_FACTOR[GodzillaRules.P_HEAD], best, "the head is the weak spot");
+      float tail = 0.0F;
+      for (float l : GodzillaRules.TAIL_LENGTH) {
+         tail += l;
+      }
+      assertEquals(1.35F, tail, 0.01F);
+   }
+
+   @Test
+   void theBreathChargesFromTheTailToTheMouth() {
+      assertEquals(0, GodzillaRules.chargeStage(0.0F));
+      assertEquals(1, GodzillaRules.chargeStage(GodzillaRules.CHARGE_BRACE));
+      assertEquals(2, GodzillaRules.chargeStage(GodzillaRules.CHARGE_IGNITE));
+      assertEquals(3, GodzillaRules.chargeStage(GodzillaRules.CHARGE_SPINE));
+      float last = -1.0F;
+      for (int t = 0; t <= GodzillaRules.CHARGE_TICKS; t++) {
+         float f = GodzillaRules.glowFront(t);
+         assertTrue(f >= last - 1.0E-6F, "the glow front never runs back (t=" + t + ")");
+         last = f;
+         assertTrue(GodzillaRules.plateGlow(0.1F, f) >= GodzillaRules.plateGlow(0.9F, f), "tail plates light first (t=" + t + ")");
+      }
+      assertEquals(0.0F, GodzillaRules.glowFront(GodzillaRules.CHARGE_BRACE - 1));
+      assertEquals(1.0F, GodzillaRules.glowFront(GodzillaRules.CHARGE_SPINE), 1.0E-4F);
+      assertEquals(0.0F, GodzillaRules.plateGlow(0.5F, 0.0F));
+      assertEquals(1.0F, GodzillaRules.plateGlow(0.1F, 0.9F), 1.0E-4F);
+      assertEquals(0.0F, GodzillaRules.plateGlow(0.9F, 0.2F), 1.0E-4F);
+      assertEquals(0.0F, GodzillaRules.mouthGlow(GodzillaRules.CHARGE_IGNITE), 1.0E-4F);
+      assertEquals(1.0F, GodzillaRules.mouthGlow(GodzillaRules.CHARGE_TICKS), 1.0E-4F);
+   }
+
+   @Test
+   void theBeamIsNeverEndless() {
+      assertTrue(GodzillaRules.fireTicks(false, false) < GodzillaRules.fireTicks(true, false));
+      assertTrue(GodzillaRules.fireTicks(true, false) < GodzillaRules.fireTicks(true, true));
+      assertTrue(GodzillaRules.breathCooldown(true) < GodzillaRules.breathCooldown(false));
+      for (boolean rage : new boolean[]{false, true}) {
+         assertTrue(GodzillaRules.fireTicks(rage, rage) < GodzillaRules.breathCooldown(rage), "a pause longer than the beam");
+      }
+      assertTrue(GodzillaRules.beamTurn(true) > GodzillaRules.beamTurn(false));
+      assertTrue(GodzillaRules.beamTurn(false) < GodzillaRules.HEAD_TURN, "the beam lags behind a fast target");
+   }
+
+   @Test
+   void movesKeepTheirContactInsideTheClip() {
+      for (GodzillaMove m : GodzillaMove.values()) {
+         assertEquals(m, GodzillaMove.byKey(m.key()));
+         if (m.contact >= 0 && m.length > 0) {
+            assertTrue(m.contact <= m.contactEnd && m.contactEnd <= m.length, m + " contact " + m.contact + ".." + m.contactEnd + " / " + m.length);
+            assertTrue(m.inContact(m.contact) && !m.inContact(m.contactEnd + 1), m.name());
+         }
+      }
+      assertNull(GodzillaMove.byKey("no_such_move"));
+      assertTrue(GodzillaMove.CHARGE.breath() && GodzillaMove.FIRE.breath() && GodzillaMove.BREATH_END.breath());
+      assertFalse(GodzillaMove.ROAR.breath());
+      for (GodzillaPhase p : GodzillaPhase.values()) {
+         assertEquals(p, GodzillaPhase.byKey(p.key()));
+      }
+      assertTrue(GodzillaPhase.RAGE.enraged() && GodzillaPhase.FINALE.enraged() && !GodzillaPhase.COMBAT.enraged());
+      assertTrue(GodzillaPhase.COMBAT.fighting() && !GodzillaPhase.EXPLORE.fighting());
+   }
+
+   @Test
+   void footfallsAlternateOnTheGait() {
+      assertEquals(0, GodzillaRules.footfall(0.10, 0.20));
+      assertEquals(2, GodzillaRules.footfall(0.45, 0.55), "half cycle: right foot");
+      assertEquals(1, GodzillaRules.footfall(0.95, 1.05), "whole cycle: left foot");
+      assertTrue(GodzillaRules.gaitAdvance(1.0, 0.0F) > 0.0F);
+      assertTrue(GodzillaRules.gaitAdvance(0.0, 10.0F) > 0.0F, "turning on the spot steps too");
+      assertEquals(-GodzillaRules.footForward(0.0, true), GodzillaRules.footForward(0.0, false), 1.0E-5F);
+      assertTrue(GodzillaRules.speed(true, false) > GodzillaRules.speed(false, false));
+      assertTrue(GodzillaRules.turnRate(false, false) != GodzillaRules.turnRate(true, false));
+   }
+
+   @Test
+   void theTailWhipRunsDownTheTail() {
+      // the first segment is already winding up while the tip still rests
+      assertTrue(Math.abs(GodzillaRules.tailStrike(0, 6.0F, 1)) > 0.0F);
+      assertEquals(0.0F, GodzillaRules.tailStrike(6, 6.0F, 1));
+      // the swing goes to the strike side, mirrored for the other one
+      assertTrue(GodzillaRules.tailStrike(3, 40.0F, 1) > 0.0F);
+      assertEquals(-GodzillaRules.tailStrike(3, 40.0F, 1), GodzillaRules.tailStrike(3, 40.0F, -1), 1.0E-5F);
+      assertTrue(GodzillaRules.hipsTwist(38.0F, 1) > 30.0F);
+      assertEquals(0.0F, GodzillaRules.hipsTwist(GodzillaMove.TAIL.length + 30, 1), 1.0E-4F);
+      assertEquals(0.0F, GodzillaRules.tailSway(3, 0.3, 0.0F), "a standing kaiju keeps its tail still");
+      assertTrue(Math.abs(GodzillaRules.tailSway(6, 0.3, 1.0F)) > Math.abs(GodzillaRules.tailSway(0, 0.3, 1.0F)) * 0.5F);
+   }
+
+   @Test
+   void targetsAreClassifiedAroundTheBody() {
+      assertEquals(Zone.FEET, GodzillaRules.classify(2.0, 1.0, 5.0));
+      assertEquals(Zone.FEET, GodzillaRules.classify(0.0, 1.0, GodzillaRules.STOMP_CLOSE * H), "a closed-in ground hero is in the stomp's wave");
+      assertEquals(Zone.FRONT, GodzillaRules.classify(0.0, 0.4 * H, 0.35 * H));
+      assertEquals(Zone.SIDE_L, GodzillaRules.classify(0.20 * H, 0.45 * H, 0.38 * H), "only the left arm's swipe passes there");
+      assertEquals(Zone.SIDE_R, GodzillaRules.classify(-0.20 * H, 0.45 * H, 0.38 * H));
+      assertEquals(Zone.BEHIND, GodzillaRules.classify(0.0, 0.1 * H, -0.8 * H));
+      assertEquals(Zone.AIR_NEAR, GodzillaRules.classify(0.33 * H, 0.52 * H, 0.36 * H), "a flier at the start of the left swipe");
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 0.9 * H, 1.2 * H));
+      // hovering above the head, above the hands or beyond the arms: out of the claws' reach, the breath's
+      // (playtest: it swiped at air; the hand never rises over 0.56 H, its hit sphere over 0.66 H)
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 0.8 * H, 0.3 * H));
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 1.05 * H, 0.6 * H));
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 0.8 * H, 0.6 * H));
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 1.2 * H, 0.1 * H));
+      // a hero on the street in front, out of the stomp's wave: the claws pass 31+ blocks over the street
+      assertEquals(Zone.CLOSE, GodzillaRules.classify(0.0, 1.0, 0.4 * H));
+      assertEquals(Zone.CLOSE, GodzillaRules.classify(0.35 * H, 0.4 * H, 0.05 * H), "the flank: the swipe is a forward arc");
+      assertEquals(Zone.FAR, GodzillaRules.classify(0.0, 0.0, 2.0 * H));
+   }
+
+   @Test
+   void theMoveFitsTheZone() {
+      assertEquals(GodzillaMove.STOMP, GodzillaRules.choose(Zone.FEET, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.TAIL, GodzillaRules.choose(Zone.BEHIND, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.CLAW_R, GodzillaRules.choose(Zone.FRONT, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.CHARGE, GodzillaRules.choose(Zone.FRONT, READY, false, 200.0F, 1.0F), "a dangerous hero gets the breath");
+      assertEquals(GodzillaMove.CLAW_L, GodzillaRules.choose(Zone.SIDE_L, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.CHARGE, GodzillaRules.choose(Zone.FAR, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.CHARGE, GodzillaRules.choose(Zone.AIR_FAR, READY, false, 0.0F, 1.0F), "fliers far away get the breath");
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.FRONT, BUSY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.NONE, READY, true, 500.0F, 0.1F));
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.CLOSE, READY, false, 0.0F, 1.0F), "nothing lands: close in");
+      assertEquals(GodzillaMove.CHARGE, GodzillaRules.choose(Zone.CLOSE, READY, false, 200.0F, 1.0F));
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.CLOSE, GodzillaRules.Reach.NONE, READY, false, 200.0F, 1.0F), "no breath the beam cannot point");
+      GodzillaRules.Reach slam = new GodzillaRules.Reach(GodzillaMove.NONE, false, false, true, false);
+      assertEquals(GodzillaMove.SLAM, GodzillaRules.choose(Zone.CLOSE, slam, READY, false, 0.0F, 1.0F), "a flier in front of the chest is rammed");
+      assertEquals(GodzillaMove.SLAM, GodzillaRules.choose(Zone.AIR_FAR, slam, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.ROAR, GodzillaRules.choose(Zone.AIR_FAR, GodzillaRules.Reach.NONE, READY, false, 50.0F, 1.0F), "out of reach: a roar, no breath");
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.FAR, GodzillaRules.Reach.NONE, READY, false, 0.0F, 1.0F));
+      // a zone alone never sends a move its reach denies
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.FRONT, GodzillaRules.Reach.NONE, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.BEHIND, GodzillaRules.Reach.NONE, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.ROAR, GodzillaRules.choose(Zone.AIR_NEAR, GodzillaRules.Reach.NONE, READY, false, 0.0F, 1.0F));
+      assertTrue(GodzillaRules.cooldown(GodzillaRules.TAIL_COOLDOWN, true) < GodzillaRules.TAIL_COOLDOWN);
+   }
+
+   /**
+    * Every melee move the brain can choose lands with the server's own hit geometry (the same hand path, tail chain
+    * and stomp wave GodzillaActions uses): no claw at a hero on the street or above the hands, no tail over a head.
+    */
+   @Test
+   void aMeleeMoveIsChosenOnlyWhereItsHitGeometryLands() {
+      Cooldowns ready = READY;
+      int claws = 0;
+      int tails = 0;
+      int stomps = 0;
+      int slams = 0;
+      int breaths = 0;
+      for (double l = -1.5 * H; l <= 1.5 * H; l += 0.05 * H) {
+         for (double u = 0.5; u <= 1.2 * H; u += 0.04 * H) {
+            for (double f = -1.5 * H; f <= 1.5 * H; f += 0.05 * H) {
+               GodzillaRules.Reach reach = GodzillaRules.reach(l, u, f);
+               Zone zone = GodzillaRules.classify(l, u, f, reach);
+               for (float threat : new float[]{0.0F, 500.0F}) {
+                  GodzillaMove m = GodzillaRules.choose(zone, reach, ready, false, threat, 1.0F);
+                  String at = String.format(java.util.Locale.ROOT, "%s at l=%.1f u=%.1f f=%.1f (%s)", m, l, u, f, zone);
+                  if (m == GodzillaMove.CLAW_L || m == GodzillaMove.CLAW_R) {
+                     claws++;
+                     assertTrue(GodzillaRules.clawMiss(m, l, u, f) <= GodzillaRules.CLAW_RADIUS, at);
+                     assertTrue(u > 0.25 * H && u < 0.67 * H, "claws only between the street and over the hands: " + at);
+                  } else if (m == GodzillaMove.TAIL) {
+                     tails++;
+                     assertTrue(GodzillaRules.tailReaches(l >= 0.0 ? 1 : -1, l, u, f), at);
+                  } else if (m == GodzillaMove.STOMP) {
+                     stomps++;
+                     assertTrue(stompLands(l, u, f), at);
+                  } else if (m == GodzillaMove.SLAM) {
+                     slams++;
+                     assertTrue(GodzillaRules.slamReaches(l, u, f), at);
+                  } else if (m == GodzillaMove.CHARGE) {
+                     breaths++;
+                     assertTrue(beamLands(l, u, f), at);
+                  }
+               }
+            }
+         }
+      }
+      assertTrue(claws > 0 && tails > 0 && stomps > 0 && slams > 0 && breaths > 0,
+         "claws " + claws + ", tails " + tails + ", stomps " + stomps + ", slams " + slams + ", breaths " + breaths);
+   }
+
+   /** The beam the head aims with {@link GodzillaRules#beamPitch} runs through the target, from the server's mouth. */
+   @Test
+   void theBeamRunsThroughItsTarget() {
+      double[][] targets = {{0.0, 1.0, 90.0}, {0.0, 1.0, 200.0}, {0.0, 140.0, 60.0}, {20.0, 60.0, 80.0}, {-30.0, 30.0, 120.0}, {0.0, 100.0, 150.0}};
+      for (double[] t : targets) {
+         assertTrue(GodzillaRules.beamReaches(t[0], t[1], t[2]), "reachable: " + java.util.Arrays.toString(t));
+         assertTrue(beamMiss(t[0], t[1], t[2])[0] < 0.05, "the beam line misses " + java.util.Arrays.toString(t) + " by " + beamMiss(t[0], t[1], t[2])[0]);
+      }
+      // aimed with the head's axis (the old look) it passed 5.4 blocks over: wider than the beam's capsule and a hero
+      double up = 1.0 - GodzillaRules.NECK_PIVOT[1] * H;
+      double flat = 200.0 - GodzillaRules.NECK_PIVOT[2] * H;
+      float axis = (float)Math.toDegrees(Math.atan2(up, flat));
+      assertTrue(lineMiss(axis, 0.0F, 0.0, 1.0, 200.0)[0] > GodzillaRules.BEAM_RADIUS + 0.75);
+   }
+
+   /**
+    * The breath is only chosen where the head can point the beam through the target (playtest, Atheria: it charged
+    * at a flier straight over its head and at a hero on the street 90 blocks out; at 35 degrees down the mouth could
+    * not point below the street 150 blocks out, so the beam passed over him).
+    */
+   @Test
+   void theBreathGoesOnlyWhereTheBeamPoints() {
+      assertFalse(GodzillaRules.beamReaches(0.0, 141.0, 0.0), "a flier straight over the head");
+      assertFalse(GodzillaRules.beamReaches(0.0, 101.0, 28.0), "a flier in its face");
+      assertFalse(GodzillaRules.beamReaches(1.0, 57.0, 14.0), "a flier at the chest, under the mouth");
+      assertFalse(GodzillaRules.beamReaches(0.0, 1.0, 45.0), "a hero on the street under the mouth");
+      assertFalse(GodzillaRules.beamReaches(0.0, 60.0, -80.0), "behind the neck (it turns first)");
+      assertFalse(GodzillaRules.beamReaches(0.0, 1.0, 400.0), "out of range");
+      assertTrue(GodzillaRules.beamReaches(0.0, 1.0, 90.0), "a hero on the street 90 blocks out");
+      assertTrue(GodzillaRules.beamReaches(0.0, 140.0, 70.0), "a flier high in front");
+      for (double u : new double[]{1.0, 30.0, 90.0, 150.0, 200.0}) {
+         for (double f = -H; f <= 2.0 * H; f += 4.0) {
+            Zone zone = GodzillaRules.classify(0.0, u, f);
+            GodzillaRules.Reach reach = GodzillaRules.reach(0.0, u, f);
+            GodzillaMove m = GodzillaRules.choose(zone, reach, READY, false, 500.0F, 0.2F);
+            if (m == GodzillaMove.CHARGE) {
+               assertTrue(beamLands(0.0, u, f), "breath at u=" + u + " f=" + f);
+            }
+         }
+      }
+   }
+
+   /** Playtest positions (Atheria, a creative flier and a survival hero): every move chosen lands, nothing else is. */
+   @Test
+   void thePlaytestPositionsGetAMoveThatLands() {
+      // a flier 60 up in front of the chest (no move before: the claws pass under it): the slam
+      GodzillaRules.Reach chest = GodzillaRules.reach(0.0, 60.0, 40.0);
+      assertTrue(chest.slam());
+      assertEquals(GodzillaMove.SLAM, GodzillaRules.choose(GodzillaRules.classify(0.0, 60.0, 40.0, chest), chest, READY, false, 0.0F, 1.0F));
+      // straight over the head: nothing lands (a roar at most), and it walks off to where the beam reaches
+      GodzillaRules.Reach over = GodzillaRules.reach(0.0, 141.0, 0.0);
+      assertFalse(over.any());
+      GodzillaMove m = GodzillaRules.choose(GodzillaRules.classify(0.0, 141.0, 0.0, over), over, READY, false, 500.0F, 0.2F);
+      assertTrue(m == GodzillaMove.ROAR || m == GodzillaMove.NONE, m.toString());
+      double off = GodzillaRules.standOff(141.0);
+      assertTrue(off > GodzillaRules.BACK_OFF, "stand-off " + off);
+      assertTrue(GodzillaRules.beamReaches(0.0, 141.0, off - 2.0), "the stand-off brings it into the beam: " + off);
+      // a dangerous flier at the belly (it charged there every 40 s): no breath
+      GodzillaRules.Reach belly = GodzillaRules.reach(1.0, 57.0, 14.0);
+      assertTrue(GodzillaRules.choose(GodzillaRules.classify(1.0, 57.0, 14.0, belly), belly, READY, false, 500.0F, 0.2F) != GodzillaMove.CHARGE);
+      assertTrue(GodzillaRules.standOff(57.0) > 14.0 + GodzillaRules.BACK_OFF && GodzillaRules.slamReaches(0.0, 57.0, GodzillaRules.standOff(57.0)));
+      // ground heroes: the stomp close in, the breath from 90 blocks
+      assertEquals(GodzillaMove.STOMP, GodzillaRules.choose(Zone.FEET, GodzillaRules.reach(0.0, 1.0, 20.0), READY, false, 0.0F, 1.0F));
+      GodzillaRules.Reach street = GodzillaRules.reach(0.0, 1.0, 90.0);
+      assertEquals(GodzillaMove.CHARGE, GodzillaRules.choose(GodzillaRules.classify(0.0, 1.0, 90.0, street), street, READY, false, 0.0F, 1.0F));
+      GodzillaRules.Reach near = GodzillaRules.reach(0.0, 1.0, 55.0);
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(GodzillaRules.classify(0.0, 1.0, 55.0, near), near, READY, false, 0.0F, 1.0F),
+         "between the stomp and the beam: close in");
+      assertTrue(GodzillaRules.stompReaches(0.0, 1.0, GodzillaRules.standOff(1.0), Double.NaN));
+   }
+
+   private static double[] pivot() {
+      return new double[]{GodzillaRules.NECK_PIVOT[0] * H, GodzillaRules.NECK_PIVOT[1] * H, GodzillaRules.NECK_PIVOT[2] * H};
+   }
+
+   /**
+    * Distance (blocks) from a body-frame point to the beam of a head pitched {@code pitch}, turned {@code yaw}, and
+    * how far along the beam from the mouth the point is: {miss, along}.
+    */
+   private static double[] lineMiss(float pitch, float yaw, double... p) {
+      double[] m = GodzillaRules.headPoint(GodzillaRules.MOUTH_OFFSET, yaw, pitch);
+      double ml = m[0] * H;
+      double mu = m[1] * H;
+      double mf = m[2] * H;
+      double pr = Math.toRadians(pitch);
+      double yr = Math.toRadians(yaw);
+      double dl = -Math.sin(yr) * Math.cos(pr);
+      double du = Math.sin(pr);
+      double df = Math.cos(yr) * Math.cos(pr);
+      double vl = p[0] - ml;
+      double vu = p[1] - mu;
+      double vf = p[2] - mf;
+      double along = vl * dl + vu * du + vf * df;
+      if (along < 0.0) {
+         return new double[]{Double.MAX_VALUE, along};
+      }
+      double ql = vl - along * dl;
+      double qu = vu - along * du;
+      double qf = vf - along * df;
+      return new double[]{Math.sqrt(ql * ql + qu * qu + qf * qf), along};
+   }
+
+   /** How far the beam of a head aimed like the entity aims it passes from a body-frame point: {miss, along}. */
+   private static double[] beamMiss(double l, double u, double f) {
+      double[] n = pivot();
+      double dl = l - n[0];
+      double du = u - n[1];
+      double df = f - n[2];
+      double flat = Math.sqrt(dl * dl + df * df);
+      // GodzillaEntity.look: yaw from the pivot (left = -sin, forward = cos), pitch by beamPitch, both clamped
+      float yaw = GodzillaRules.clampYaw((float)Math.toDegrees(Math.atan2(-dl, df)));
+      float pitch = GodzillaRules.clampPitch(GodzillaRules.beamPitch(du, flat));
+      return lineMiss(pitch, yaw, l, u, f);
+   }
+
+   /** The beam lands: aimed as the entity aims, it passes within its capsule of a hero there, and not in its mouth. */
+   private static boolean beamLands(double l, double u, double f) {
+      double[] miss = beamMiss(l, u, f);
+      return miss[0] <= GodzillaRules.BEAM_RADIUS && miss[1] > GodzillaRules.BEAM_MIN && miss[1] < GodzillaRules.BEAM_RANGE;
+   }
+
+   @Test
+   void theSharedTailChainMatchesTheRestLayout() {
+      float[] yaw = new float[GodzillaRules.TAIL_SEGMENTS];
+      double[][] c = new double[GodzillaRules.TAIL_SEGMENTS][3];
+      GodzillaRules.tailCentres(yaw, 0.0F, c);
+      double reach = 0.0;
+      for (int k = 0; k < GodzillaRules.TAIL_SEGMENTS; k++) {
+         assertEquals(0.0, c[k][0], 1.0E-9, "a straight tail lies on the centre line");
+         assertTrue(c[k][2] < GodzillaRules.TAIL_ROOT[2], "behind the hips");
+         reach = Math.max(reach, -c[k][2]);
+      }
+      assertTrue(reach > 1.0, "the tail trails more than one height behind");
+      // the strike swings the chain to its side and back
+      for (int t = 0; t <= GodzillaMove.TAIL.contactEnd; t++) {
+         GodzillaRules.tailStep(yaw, 0.0F, t, 1, 0.0, 0.0F);
+      }
+      GodzillaRules.tailCentres(yaw, 0.0F, c);
+      assertTrue(c[GodzillaRules.TAIL_SEGMENTS - 1][0] > 0.3, "the tip swept out to the left");
+   }
+
+   /** The stomp's wave (GodzillaActions.stomp: radius STOMP_WAVE, STOMP_RISE high) from the foot on the target's side, at any gait phase. */
+   private static boolean stompLands(double l, double u, double f) {
+      if (u > GodzillaRules.STOMP_RISE) {
+         return false;
+      }
+      boolean left = l >= 0.0;
+      float[] leg = GodzillaRules.PART_REST[left ? GodzillaRules.P_LEG_L : GodzillaRules.P_LEG_R];
+      for (double phase = 0.0; phase < 1.0; phase += 0.01) {
+         double fl = leg[0] * H;
+         double ff = (leg[2] + GodzillaRules.footForward(phase, left)) * H;
+         if (Math.hypot(l - fl, f - ff) > GodzillaRules.STOMP_WAVE) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   @Test
+   void budgetsAndFallCurvesStayInRange() {
+      assertTrue(GodzillaRules.blockBudget(true) > GodzillaRules.blockBudget(false));
+      assertEquals(0.2F, GodzillaRules.severity(0), 1.0E-5F);
+      assertEquals(1.0F, GodzillaRules.severity(100000), 1.0E-5F);
+      assertEquals(1.0F, GodzillaRules.falloff(0.0, 10.0), 1.0E-5F);
+      assertEquals(0.0F, GodzillaRules.falloff(12.0, 10.0), 1.0E-5F);
+      assertEquals(0.0F, GodzillaRules.fallTilt(GodzillaMove.FALL, 0.0F), 1.0E-5F);
+      assertEquals(1.0F, GodzillaRules.fallTilt(GodzillaMove.FALL, GodzillaMove.FALL.length), 1.0E-5F);
+      assertEquals(1.0F, GodzillaRules.fallTilt(GodzillaMove.RISE, 0.0F), 1.0E-5F);
+      assertEquals(0.0F, GodzillaRules.fallTilt(GodzillaMove.RISE, GodzillaMove.RISE.length), 1.0E-5F);
+      assertEquals(0.0F, GodzillaRules.fallTilt(GodzillaMove.ROAR, 30.0F));
+      assertTrue(GodzillaRules.FX_NEAR < GodzillaRules.FX_FAR);
+   }
+
+   @Test
+   void theRuinedCityKeepsAReserveForTheWayOut() {
+      int rampage = GodzillaRules.blockCap(false);
+      assertEquals(GodzillaRules.MAX_BLOCKS, GodzillaRules.blockCap(true));
+      assertEquals(GodzillaRules.MAX_BLOCKS - GodzillaRules.RETREAT_RESERVE, rampage);
+      assertTrue(GodzillaRules.RETREAT_RESERVE > 0 && rampage > GodzillaRules.RETREAT_RESERVE);
+      assertFalse(GodzillaRules.sated(rampage - 1));
+      assertTrue(GodzillaRules.sated(rampage));
+      // one second of the full per-tick budget never jumps over the reserve
+      assertTrue(GodzillaRules.RETREAT_RESERVE > GodzillaRules.BLOCKS_PER_TICK_RAGE * 20);
+   }
+
+   @Test
+   void theKaijuSpawnsWhereItTicks() {
+      assertEquals(136.0, GodzillaRules.spawnReach(10), 1.0E-9);
+      assertTrue(GodzillaRules.spawnReach(12) >= GodzillaRules.SPAWN_DISTANCE);
+      assertEquals(40.0, GodzillaRules.spawnReach(2), 1.0E-9);
+   }
+
+   @Test
+   void theWalkIsHeavy() {
+      // ticks between two footfalls: the stride follows the distance walked
+      double walk = GodzillaRules.GAIT_CYCLE / 2.0 / GodzillaRules.WALK_SPEED;
+      double rage = GodzillaRules.GAIT_CYCLE / 2.0 / GodzillaRules.RAGE_SPEED;
+      assertTrue(walk >= 50.0 && walk <= 90.0, "walk step every " + walk + " ticks");
+      assertTrue(rage >= 40.0 && rage < walk, "rage step every " + rage + " ticks");
+      assertTrue(GodzillaRules.RETREAT_SPEED > GodzillaRules.WALK_SPEED && GodzillaRules.RETREAT_SPEED < GodzillaRules.RAGE_SPEED);
+   }
+
+   @Test
+   void theCityHoldsItBack() {
+      // open streets: full speed; a solid block of towers: slower, but never stuck
+      assertEquals(1.0F, GodzillaRules.wade(0.0F), 1.0E-6F);
+      assertEquals(1.0F - GodzillaRules.WADE_DEPTH, GodzillaRules.wade(1.0F), 1.0E-6F);
+      assertEquals(1.0F - GodzillaRules.WADE_DEPTH, GodzillaRules.wade(3.0F), 1.0E-6F);
+      float last = 2.0F;
+      for (int i = 0; i <= 20; i++) {
+         float w = GodzillaRules.wade(i / 20.0F);
+         assertTrue(w <= last, "wading never speeds it up");
+         last = w;
+      }
+      // the slowest wade still steps at least every 6 seconds
+      double step = GodzillaRules.GAIT_CYCLE / 2.0 / (GodzillaRules.WALK_SPEED * GodzillaRules.wade(1.0F));
+      assertTrue(step <= 120.0, "wading step every " + step + " ticks");
+   }
+
+   @Test
+   void theRampageLastsMinutesNotSeconds() {
+      // survey pauses between legs: a few seconds, never a stall
+      assertTrue(GodzillaRules.SURVEY_MIN >= 60 && GodzillaRules.SURVEY_MIN + GodzillaRules.SURVEY_SPREAD <= 300);
+      // the rampage share of the session budget outlasts 100 s of the full per-tick budget (the walk rarely uses it all)
+      assertTrue(GodzillaRules.blockCap(false) > GodzillaRules.BLOCKS_PER_TICK * 20 * 100);
+      // and the reset puts it all back within a minute (6000 blocks per tick)
+      assertTrue(GodzillaRules.MAX_BLOCKS / 6000 < 20 * 60);
+      assertTrue(GodzillaRules.TOWER_PULL > 0.0F && GodzillaRules.TOWER_PULL < 0.8F);
+   }
+
+   @Test
+   void heroesWhoSeeTheKaijuSeeItMove() {
+      // vanilla draws it out to view distance x 16 blocks: the watch range is that, capped by its tracking range
+      assertEquals(192.0, GodzillaRules.watchRange(12));
+      assertEquals(160.0, GodzillaRules.watchRange(10));
+      assertEquals(GodzillaRules.TRACK_CHUNKS * 16.0, GodzillaRules.watchRange(64));
+      assertEquals(32.0, GodzillaRules.watchRange(0));
+      // the ticket outlives its refresh, and its entity-ticking square holds the fastest walk between two refreshes
+      assertTrue(GodzillaRules.WATCH_TICKET_TICKS > GodzillaRules.WATCH_REFRESH);
+      assertTrue(GodzillaRules.WATCH_TICKET - 2 >= 1 && GodzillaRules.WATCH_TICKET <= 4);
+      assertTrue(GodzillaRules.RAGE_SPEED * GodzillaRules.WATCH_REFRESH < (GodzillaRules.WATCH_TICKET - 2) * 16.0);
+   }
+
+   @Test
+   void fxPacketsSurviveTheWire() {
+      GodzillaFxS2CPacket p = new GodzillaFxS2CPacket(GodzillaFxS2CPacket.BEAM_BLAST, 10.5, -51.0, 2048.25, 0.25F, -1.0F, 0.5F, 1.75F, 7);
+      FriendlyByteBuf b = new FriendlyByteBuf(Unpooled.buffer());
+      p.toBytes(b);
+      assertEquals(p, new GodzillaFxS2CPacket(b));
+      assertEquals(0, b.readableBytes());
+      assertTrue(GodzillaFxS2CPacket.LAST >= GodzillaFxS2CPacket.STEP);
+   }
+}

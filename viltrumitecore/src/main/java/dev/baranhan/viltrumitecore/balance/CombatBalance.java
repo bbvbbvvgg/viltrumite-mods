@@ -5,6 +5,8 @@ import dev.baranhan.viltrumitecore.entity.SummonOwners;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteFakePlayer;
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriLeviathan;
 import dev.baranhan.viltrumitecore.entity.chitauri.LeviathanPart;
+import dev.baranhan.viltrumitecore.entity.godzilla.GodzillaEntity;
+import dev.baranhan.viltrumitecore.entity.godzilla.GodzillaPart;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity;
 import dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity;
 import dev.baranhan.viltrumitecore.hero.DivineDamage;
@@ -90,7 +92,7 @@ public final class CombatBalance {
    static boolean isBoss(@Nullable Entity e) {
       return e instanceof ThanosEntity || e instanceof ChitauriLeviathan || e instanceof LeviathanPart || e instanceof Warden
          || e instanceof WitherBoss || e instanceof EnderDragon || e instanceof ElderGuardian
-         || e instanceof dev.baranhan.viltrumitecore.entity.ultron.UltronPrime;
+         || e instanceof dev.baranhan.viltrumitecore.entity.ultron.UltronPrime || e instanceof GodzillaEntity || e instanceof GodzillaPart;
    }
 
    // ---- LivingHurtEvent ------------------------------------------------------------------------

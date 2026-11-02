@@ -42,7 +42,9 @@ import org.slf4j.Logger;
  * {@code fpshots <prefix> <t1,t2,...>} takes screenshots on the Final Punch scene clock (first scene on the client)
  * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}). {@code collapsestate} logs the
  * structural-collapse scenes (count, drawn fragments, render ms) and the fps. {@code scp096state} logs every loaded
- * SCP-096 (state, flags, speed, layer weights) and its sounds; {@code scp096look} turns the camera to the nearest one.
+ * SCP-096 (state, flags, speed, layer weights) and its sounds; {@code scp096look} turns the camera to the nearest one; {@code godzillastate} the kaiju's last
+ * drawn LOD, camera distance, body build time, hot zones and particles; {@code godzillalod <n>} forces a LOD (-1 = by
+ * distance).
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -201,6 +203,13 @@ public final class SubtitlePlaytest {
          }
          case "world" -> openWorld(mc);
          case "close" -> mc.setScreen(null);
+         case "fly" -> {
+            // creative flight on / off without the double-tap (flying hero tests)
+            if (mc.player != null && mc.player.getAbilities().mayfly) {
+               mc.player.getAbilities().flying = !"off".equals(arg);
+               mc.player.onUpdateAbilities();
+            }
+         }
          case "button" -> {
             // Presses the n-th button (0-based) of the open screen, e.g. "Continue" on the experimental-world warning.
             if (mc.screen != null) {
@@ -241,6 +250,9 @@ public final class SubtitlePlaytest {
          case "scp096look" -> dev.baranhan.viltrumitecore.client.scp096.Scp096Qa.lookAtNearest(mc);
          case "collapsestate" -> LOG.info("SUBPT t={} collapse {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.collapse.CollapseClient.qaSummary(), mc.getFps());
+         case "godzillalod" -> dev.baranhan.viltrumitecore.client.godzilla.GodzillaRenderer.qaForceLod = Integer.parseInt(arg);
+         case "godzillastate" -> LOG.info("SUBPT t={} godzilla {} fps={}", ticks,
+            dev.baranhan.viltrumitecore.client.godzilla.GodzillaClient.qaSummary(), mc.getFps());
          case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());
          case "click" -> {
             String[] a = arg.split(" ");

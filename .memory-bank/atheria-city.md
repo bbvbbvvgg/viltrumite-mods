@@ -4,6 +4,8 @@
 - Package `city/`: `CityManager` (one per server, only for a world that has `viltrumite_city/profile.json`),
   `CityPopulation`, `CityCommands` (`/city`), `CityEvents` (Forge bus), `citizen/`, `danger/`, `profile/`, `restore/`.
   A world without that folder has no city: every hook returns at once.
+- City catastrophes that use the city systems: Godzilla (`/godzilla`, core 1.70.0, protocol 28) — see
+  `godzilla.md` (the `project.md` index is over the 64 KB GitHub-tool request limit, so it is linked from here).
 - The map is not in the repository. The Atheria author (Tazluh, PlanetMinecraft) gives no redistribution licence.
   The repository holds only the tools (`tools/atheria/`) that turn the user's own download into a 1.20.1 world.
 - Citizens (`viltrumitecore:citizen`) are `noSave`: they never go to disk. The city always starts OFF after a
@@ -63,6 +65,8 @@
   untouched copy (`tools/atheria/analysis/compare.py`). Entities (item frames, paintings, armor stands) are not
   journaled and are not restored.
 - `MeteorSpawnEvent` (random, config `meteorSpawnChancePercent`) also hits the city; reset repairs the craters.
+- `startReset` aborts the level's running collapses first (`CollapseDirector.abortAll`): after a Godzilla rampage three
+  collapses kept falling into the restored map (125 blocks, 7 fresh ruin zones). `CityDisasterLinksTest` pins the order.
 - Crash safety (settling): a restored chunk keeps its originals in the journal's `settling` set until the 2nd
   `LevelEvent.Save` after its restore (Forge posts the event after the chunk save, the 1st one may race). A start
   with settling originals runs a quiet recovery `RestoreQueue` 100 ticks after load (`journal.recovery()` skips
