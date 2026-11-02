@@ -32,7 +32,9 @@ class SupportLedgerTest {
       SupportLedger l = new SupportLedger();
       l.record(0, 64, 0, 0);
       l.record(1, 64, 0, 2000);
-      l.prune(2000);
+      l.prune(CollapseRules.WINDOW_TICKS + 100);
+      assertEquals(2, l.size(), "a slow cut by hand is remembered longer than the damage window");
+      l.prune(CollapseRules.SUPPORT_WINDOW_TICKS + 1);
       assertEquals(1, l.size());
       l.consume(0, 60, 0, 4, 70, 4);
       assertEquals(0, l.size());
