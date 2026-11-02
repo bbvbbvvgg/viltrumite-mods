@@ -23,6 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.Blocks;
@@ -46,6 +47,8 @@ public final class GodzillaDestruction {
    static final int SCAN_PER_TICK = 60000;
    /** Jobs kept at once; the oldest low-priority ones are dropped first. */
    static final int MAX_JOBS = 48;
+   /** Entity tag of the blocks the kaiju throws. */
+   public static final String DEBRIS_TAG = "viltrumitecore_godzilla_debris";
    /** Debris still flying after this many ticks is removed (it is stuck or frozen in a chunk nobody ticks). */
    static final int DEBRIS_LIFE = 600;
 
@@ -239,7 +242,9 @@ public final class GodzillaDestruction {
                double len = out.length();
                out = len < 1.0E-3 ? new Vec3(0.0, 1.0, 0.0) : out.scale(1.0 / len);
                Vec3 vel = new Vec3(out.x, Math.abs(out.y) + 0.5, out.z).normalize().scale(0.45 + random.nextDouble() * 0.55).add(s.push);
-               this.flying.add(new Flying(HeroDebris.launchBlock(level, at, state, vel, 2.0F, 16, HeroDestruction.CLEAR_FLAGS), this.tick));
+               FallingBlockEntity block = HeroDebris.launchBlock(level, at, state, vel, 2.0F, 16, HeroDestruction.CLEAR_FLAGS);
+               block.addTag(DEBRIS_TAG); // saved with the entity: debris reloaded from a chunk is known (GodzillaEvent)
+               this.flying.add(new Flying(block, this.tick));
             } else {
                QuietBlockRemoval.run(() -> level.setBlock(at, Blocks.AIR.defaultBlockState(), HeroDestruction.CLEAR_FLAGS));
             }
@@ -447,6 +452,21 @@ public final class GodzillaDestruction {
             it.remove();
          }
       }
+   }
+
+   /** The session's own flying debris (the cleanup keeps it). */
+   boolean owns(Entity e) {
+      for (Flying f : this.flying) {
+         if (f.block == e) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   /** A block the kaiju threw (tagged at launch). */
+   public static boolean isDebris(Entity e) {
+      return e instanceof FallingBlockEntity && e.getTags().contains(DEBRIS_TAG);
    }
 
    /** Stop / cleanup: queued work dropped, debris still in the air removed (it is the event's). */

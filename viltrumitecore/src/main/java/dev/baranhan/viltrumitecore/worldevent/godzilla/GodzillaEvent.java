@@ -21,11 +21,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -82,13 +84,20 @@ public final class GodzillaEvent {
    public enum Start {
       STARTED,
       RUNNING,
-      NO_ROOM
+      NO_ROOM,
+      /** {@code /city reset} is putting the map back: the kaiju would wreck the streets the queue restores. */
+      RESTORING
    }
 
    /** Starts the catastrophe near {@code near} (the command source): the kaiju walks in from a loaded spot. */
    public static Start start(ServerLevel level, Vec3 near, long seed) {
       if (running(level.getServer())) {
          return Start.RUNNING;
+      }
+      CityManager city = CityManager.of(level);
+      if (city != null && city.restoreQueue().running()) {
+         // playtest: a start during the reset left 609 blocks the queue could not put back
+         return Start.RESTORING;
       }
       RandomSource random = RandomSource.create(seed);
       Vec3 spawn = spawnPoint(level, near, random);
@@ -137,7 +146,8 @@ public final class GodzillaEvent {
 
    /**
     * Removes every kaiju body in every level that is not the running session's (orphans of a crashed or stopped
-    * session), and, without a session, the event's alarm lease and the clients' lingering effects. Returns bodies removed.
+    * session) and the debris no session tracks, and, without a session, the event's alarm lease and the clients'
+    * lingering effects. Returns the entities removed.
     */
    public static int cleanup(MinecraftServer server) {
       GodzillaSession s = running(server) ? session : null;
@@ -147,6 +157,8 @@ public final class GodzillaEvent {
          for (Entity any : level.getAllEntities()) {
             if (any instanceof GodzillaEntity && (s == null || !any.getUUID().equals(s.bodyId))) {
                stray.add(any);
+            } else if (GodzillaDestruction.isDebris(any) && (s == null || !s.destruction.owns(any))) {
+               stray.add(any); // debris no session tracks (frozen in the air outside the ticking range)
             }
          }
          for (Entity any : stray) {
@@ -396,6 +408,31 @@ public final class GodzillaEvent {
    }
 
    // ------------------------------------------------------------------ Forge events
+
+   /**
+    * {@code /city reset} is about to put the map back ({@code CityManager.startReset}): a kaiju still walking would
+    * wreck the restored streets and the queue would end with blocks it could not put back, so the event stops first,
+    * as {@code /godzilla stop} (the damage it did is in the journal and comes back with the rest).
+    */
+   public static void onCityReset(ServerLevel level) {
+      GodzillaSession s = in(level);
+      if (s != null) {
+         s.say(level, "viltrumitecore.godzilla.reset_stop", ChatFormatting.YELLOW);
+         stop(level.getServer());
+      }
+   }
+
+   /**
+    * Debris saved in mid-air with its chunk (the walk moved on and the chunk unloaded) loads back as a new entity no
+    * session tracks: outside the ticking range it hangs in the air and neither the 30 s prune nor {@code /godzilla
+    * cleanup} could see it (playtest: 43 falling blocks left after the retreat). Its flight is over: it is not loaded.
+    */
+   @SubscribeEvent
+   public static void onEntityJoin(EntityJoinLevelEvent event) {
+      if (event.loadedFromDisk() && !event.getLevel().isClientSide && GodzillaDestruction.isDebris(event.getEntity())) {
+         event.setCanceled(true);
+      }
+   }
 
    @SubscribeEvent
    public static void onServerTick(TickEvent.ServerTickEvent event) {

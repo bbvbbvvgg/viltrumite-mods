@@ -97,6 +97,10 @@ public final class GodzillaCommands {
             source.sendFailure(Component.translatable("commands.viltrumitecore.godzilla.no_room"));
             return 0;
          }
+         case RESTORING -> {
+            source.sendFailure(Component.translatable("commands.viltrumitecore.godzilla.restoring"));
+            return 0;
+         }
          default -> {
          }
       }
