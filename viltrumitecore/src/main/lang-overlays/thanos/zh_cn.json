@@ -34,6 +34,7 @@
   "commands.viltrumitecore.thanos.phase.gauntlet": "四，完整手套",
   "commands.viltrumitecore.thanos.phase_set": "战争阶段已设为：%s。",
   "commands.viltrumitecore.thanos.phase_refused": "现在无法切换阶段：战争未在进行（或响指已开始），或阶段不存在。",
+  "commands.viltrumitecore.thanos.phase_already": "战争已进入“%s”阶段（阶段只会前进）。",
   "commands.viltrumitecore.thanos.order_called": "黑曜五将从战舰降下。",
   "commands.viltrumitecore.thanos.wave_called": "已召唤一波齐塔瑞人（存活入侵者：%s）。",
   "commands.viltrumitecore.thanos.ship_strike": "已对你的位置下令轨道打击。快跑！",
