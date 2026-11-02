@@ -48,16 +48,24 @@ NPCS = {
  "venom_boss": {
   "name": ("Веном в Бешеном голоде", "Venom in a Feeding Frenzy"),
   "role": ("одичавший симбиот, босс", "a feral symbiote, boss"),
-  "look": ("Веном крупнее обычного: раздутые плечи, пасть до ушей, щупальца из спины, на груди — белый паук.",
-           "A Venom bigger than usual: swollen shoulders, a mouth from ear to ear, tendrils out of the back, the white spider on the chest."),
+  "look": ("Веном крупнее обычного: раздутые плечи, пасть до ушей, щупальца из спины, на груди — белый паук. С каждой фазой он становится ещё больше.",
+           "A Venom bigger than usual: swollen shoulders, a mouth from ear to ear, tendrils out of the back, the white spider on the chest. It grows with every phase."),
   "lore": ("Симбиот, оставшийся без носителя, сходит с ума от голода. Его вызывают командой /venom boss.",
            "A symbiote left without a host goes mad with hunger. It is summoned with /venom boss."),
-  "abilities": ("Комбо когтей, рывки и броски щупальцами, мегапрыжки, круговой хлёст, лазание по стенам; 300 здоровья. Если сервер разрешает, "
-                "захватывает ослабленного игрока на короткое время по тем же правилам, что и игрок-Веном.",
-                "Claw combos, tendril yanks and throws, mega leaps, the circular lash and wall climbing; 300 health. If the server allows it, it "
-                "takes a weakened player over for a short time under the same rules as a player Venom."),
-  "behavior": ("Всегда в ярости и охотится на ближайших игроков. Огонь и громкие звуки заставляют его визжать и отпрядывать — это окно для атаки.",
-               "Always in a frenzy, it hunts the nearest players. Fire and loud sounds make it shriek and recoil — that is the window to strike."),
+  "abilities": ("Три фазы, 300 здоровья. Охота: комбо когтей, рывки и броски щупальцами, мегапрыжки, круговой хлёст, лазание по стенам. "
+                "С двух третей здоровья — Бешенство (рёв отбрасывает всех рядом): удары быстрее, удар щупальцем-копьём и обрушение с высоты с волной щупалец. "
+                "С трети — Голод (полоса босса белеет, небо темнеет): из земли под целью бьют шипы-щупальца (сначала появляется метка — успейте отойти), "
+                "а схваченную жертву он кусает и лечится, если его не обжёг огонь. Если сервер разрешает, захватывает ослабленного игрока по тем же правилам, что и игрок-Веном.",
+                "Three phases, 300 health. The Hunt: claw combos, tendril yanks and throws, mega leaps, the circular lash and wall climbing. "
+                "From two thirds of its health, the Frenzy (a roar throws back everyone near): faster attacks, the tendril spear and a crash from above with a burst of tendrils. "
+                "From one third, the Starving (the boss bar turns white, the sky darkens): tendril spikes burst out of the ground under its target (a mark shows first: step away), "
+                "and a held victim is bitten, which heals it unless fire burned it. If the server allows it, it takes a weakened player over under the same rules as a player Venom."),
+  "behavior": ("Учится на том, как с ним дерутся: против стрел и лучей твердеет панцирем, бегущих достаёт щупальцами и прыжками, серию ударов вблизи сметает хлёстом, "
+               "от огня отпрыгивает, а игрока на крыше настигает прыжком со стены. Смените тактику — со временем он её забудет. "
+               "Огонь и громкие звуки всё равно каждый раз заставляют его визжать и отпрядывать — это окно для атаки.",
+               "It learns how it is fought: it hardens a shell against arrows and beams, reaches runners with tendrils and leaps, sweeps off a close flurry of blows, "
+               "jumps back from fire and pounces from the wall on a player on a roof. Change tactics: in time it forgets. "
+               "Fire and loud sounds still make it shriek and recoil every time — that is the window to strike."),
   "relations": ("Игрок-Веном — тот же симбиот, но с носителем, который держит голод в узде.",
                 "A player Venom is the same symbiote, but with a host who keeps the hunger in check."),
  },

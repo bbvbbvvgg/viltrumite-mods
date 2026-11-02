@@ -21,7 +21,7 @@ import org.joml.Matrix4f;
 /**
  * The raging Venom boss: the same body, poses, passes and tendrils as the player's form (VenomRenderer.drawBody),
  * at the boss's height. Its move is clocked from the synced serial on the client clock; the tendril line and the
- * held body come from its synced target. While it rides a host its body collapses into a mass on the ground (the
+ * held body come from its synced target; the body grows a little with each boss phase. While it rides a host its body collapses into a mass on the ground (the
  * "possess" clip) and a tendril runs from it to the host. Client only.
  */
 public class VenomBossRenderer extends EntityRenderer<VenomBossEntity> {
@@ -81,10 +81,16 @@ public class VenomBossRenderer extends EntityRenderer<VenomBossEntity> {
          VenomRenderer.Frame f = new VenomRenderer.Frame(e, flags, move, ticks, look, end, target, 1.0F);
          stack.pushPose();
          VenomRenderer.setupRotations(e, stack, partial);
-         VenomRenderer.drawBody(body, f, stack, buffers, light, LivingEntityRenderer.getOverlayCoords(e, 0.0F), partial, passes, new Matrix4f[1], HEIGHT);
+         VenomRenderer.drawBody(body, f, stack, buffers, light, LivingEntityRenderer.getOverlayCoords(e, 0.0F), partial, passes, new Matrix4f[1],
+            height(e.phaseId()));
          stack.popPose();
       }
       super.render(e, yaw, partial, stack, buffers, light);
+   }
+
+   /** The body grows with each phase of the boss (hunt, frenzy, starving): 2.6, 2.75, 2.9 blocks. */
+   static float height(int phase) {
+      return HEIGHT + 0.15F * Math.max(0, Math.min(2, phase));
    }
 
    /** The move's ticks on the client clock: loops run on, one-shots hold their last frame. */
