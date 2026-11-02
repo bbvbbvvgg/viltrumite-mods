@@ -281,6 +281,24 @@ Sources list: `tools/assets/scp096_sources.md`.
   `096Chase.ogg`; the last is based on "Hush" by Kevin MacLeod, incompetech.com, CC BY). Otherwise vanilla Minecraft
   sound events stand in.
 
+## SCP-106 and the pocket dimension (world creature)
+
+Sources list: `tools/assets/scp106_sources.md`.
+
+### Concept
+- "SCP-106" by Dr Gears, SCP Foundation wiki (https://scp-wiki.wikidot.com/scp-106), CC BY-SA 3.0. The model,
+  texture, 8 animation clips, the pocket-dimension blocks and textures and every generated room are own work
+  (`tools/assets/scp106_model.py`, `scp106_anims.py`, `scp106_blocks.py`, the `scp/scp106/pocket` generator) drawn
+  from the written description, no game or wiki image used; as depictions of the concept they are shared under
+  CC BY-SA 3.0. Notes, diaries and messages are own writing in 12 locales.
+
+### Sounds
+- All 25 sound events (44 files) are mixed by `tools/sfx/scp106.py` from 35 CC0 1.0 Freesound recordings found via
+  Openverse (creator, Freesound page and the cue each one feeds: `tools/assets/scp106_sources.md`). Processing:
+  cuts, varispeed, reversal, filtering, layering, synthetic room, fades, normalisation. No vanilla Minecraft sound
+  and no SCP – Containment Breach audio. Checked by numbers and in a real client (every event plays, no missing
+  sound); not auditioned by ear — the final mix needs a listening pass.
+
 ## Godzilla — City Catastrophe (world event)
 
 Everything is **own work** (CC0-1.0), no third-party assets. Sources list and cue sheet: `tools/assets/godzilla_sources.md`.
