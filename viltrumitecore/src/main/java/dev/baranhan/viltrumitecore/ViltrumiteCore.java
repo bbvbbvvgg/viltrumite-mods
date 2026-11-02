@@ -132,6 +132,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.redhulk.RedHulkSounds.init();
       dev.baranhan.viltrumitecore.hero.redhulk.RedHulkFx.init();
       dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderSounds.init();
+      dev.baranhan.viltrumitecore.hero.rohan.RohanSounds.init();
+      dev.baranhan.viltrumitecore.entity.directive.MobDirectives.init();
       dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderFx.init();
       // Contextual interactions (docs/contextual-interactions.json): their own sound holders.
       dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();

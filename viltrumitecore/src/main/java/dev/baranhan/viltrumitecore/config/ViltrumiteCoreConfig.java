@@ -61,6 +61,11 @@ public class ViltrumiteCoreConfig {
     * Empty: {@code <game dir>/viltrumitecore/scp096} and the usual install folders are searched.
     */
    public String scp096OriginalSoundsPath = "";
+   // Rohan Kishibe / Heaven's Door (docs/rohan/heavens-door-design.md §6).
+   /** Heaven's Door may write instructions into other players (PvP rules and teams are always checked as well). */
+   public boolean heavensDoorPlayerInstructions = true;
+   /** Heaven's Door may open and read other players' books at all. */
+   public boolean heavensDoorPlayerReading = true;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -80,7 +85,8 @@ public class ViltrumiteCoreConfig {
             if (!java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("reinhardFinalPunchDamage")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseBlocksPerTick")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("aftermathDurationScale")
-               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")) {
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("heavensDoorPlayerInstructions")) {
                save();
             }
          } catch (IOException ignored) {

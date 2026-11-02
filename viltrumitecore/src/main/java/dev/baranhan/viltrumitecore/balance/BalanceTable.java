@@ -43,6 +43,8 @@ public final class BalanceTable {
    public static final HeroBalanceProfile SUPE = new HeroBalanceProfile(HeroTier.B_PLUS, 0.50F, 0.30F, 0.50F, 0.50F);
    /** The Magnificent Sinclair. */
    public static final HeroBalanceProfile SHOWMAN = new HeroBalanceProfile(HeroTier.B, 0.50F, 0.30F, 0.50F, 0.50F);
+   /** Rohan Kishibe: an ordinary body (+10 HP, armor 4); his strength is Heaven's Door, not his frame. */
+   public static final HeroBalanceProfile MANGAKA = new HeroBalanceProfile(HeroTier.B, 0.55F, 0.30F, 0.50F, 0.50F);
 
    // ---- hero support system (HeroSustain) ----------------------------------------------------
 
