@@ -50,6 +50,7 @@ final class T1000Body {
    private static final float[] SH = new float[MAX];
    private static final float[] HH = new float[MAX];
    private static final float[] SEC = new float[2];
+   private static final float[] SLUMP = new float[2];
    private static final float[] RING = new float[6];
    private static final float[] RING_B = new float[6];
    private static final float[] UV = new float[2];
@@ -86,6 +87,10 @@ final class T1000Body {
       float originY;
       float originZ;
       float deathShrink = 1.0F;
+      /** Packed arms byte and the morph progress of each arm (0 before .. 1 now). */
+      int arms;
+      float morphR = 1.0F;
+      float morphL = 1.0F;
       final float[][] wounds = new float[T1000Rules.MAX_WOUNDS][];
       int woundCount;
    }
@@ -98,15 +103,7 @@ final class T1000Body {
       f.time = e.tickCount + partialTick;
       f.form = e.form();
       f.formAge = e.formAge(partialTick);
-      f.metal = f.form.metal(f.formAge);
-      f.melt = f.form.melt(f.formAge);
-      f.human = f.form == T1000Form.HUMAN;
-      f.settle = switch (f.form) {
-         case HUMAN, REVEALING -> 0.0F;
-         case LIQUID -> T1000Shapes.smooth(f.formAge / 14.0F);
-         case CONCEALING -> 1.0F - T1000Shapes.smooth(f.formAge / 8.0F);
-         default -> 1.0F;
-      };
+      derive(f);
       f.action = e.acting() ? e.action() : T1000Action.NONE;
       f.actionAge = e.actionAge(partialTick);
       float bodyYaw = Mth.rotLerp(partialTick, e.yBodyRotO, e.yBodyRot);
@@ -120,11 +117,10 @@ final class T1000Body {
       f.heated = (flags & T1000Entity.FLAG_HEATED) != 0;
       f.flowing = (flags & T1000Entity.FLAG_FLOWING) != 0 || f.action == T1000Action.FLOW;
       f.slim = slim;
+      f.arms = e.arms();
+      f.morphR = e.armMorph(true, partialTick);
+      f.morphL = e.armMorph(false, partialTick);
       f.seed = e.getId() * 0x9E3779B1;
-      f.deathShrink = 1.0F;
-      if (f.form == T1000Form.DYING) {
-         f.deathShrink = 1.0F - T1000Shapes.smooth((f.formAge - (T1000Rules.DEATH_TICKS - 22)) / 20.0F);
-      }
       // wounds: rest-model position, size, open fraction, kind
       List<T1000Entity.Wound> list = e.wounds();
       int now = (int)e.level().getGameTime();
@@ -154,6 +150,23 @@ final class T1000Body {
       return f;
    }
 
+   /** The blends that follow from the form and its age alone (metal, melt, settle, death shrink). Pure. */
+   static void derive(Frame f) {
+      f.metal = f.form.metal(f.formAge);
+      f.melt = f.form.melt(f.formAge);
+      f.human = f.form == T1000Form.HUMAN;
+      f.settle = switch (f.form) {
+         case HUMAN, REVEALING -> 0.0F;
+         case LIQUID -> T1000Shapes.smooth(f.formAge / 14.0F);
+         case CONCEALING -> 1.0F - T1000Shapes.smooth(f.formAge / 8.0F);
+         default -> 1.0F;
+      };
+      f.deathShrink = 1.0F;
+      if (f.form == T1000Form.DYING) {
+         f.deathShrink = 1.0F - T1000Shapes.smooth((f.formAge - (T1000Rules.DEATH_TICKS - 22)) / 20.0F);
+      }
+   }
+
    /** True when nothing of the metal is visible this frame (plain citizen). */
    static boolean invisible(Frame f) {
       return f.human && f.woundCount == 0;
@@ -163,6 +176,21 @@ final class T1000Body {
       if (invisible(f)) {
          return;
       }
+      boolean split = f.action == T1000Action.FACE_SPLIT;
+      // the split head shows its inside: no back-face culling for that part only (fetched last: one batch switch)
+      VertexConsumer solid = buffers.getBuffer(RenderType.entityTranslucentCull(T1000Matcap.texture()));
+      draw(f, model, pose, solid, light, split ? HEAD : -1);
+      if (split) {
+         VertexConsumer open = buffers.getBuffer(RenderType.entityTranslucent(T1000Matcap.texture()));
+         draw(f, model, pose, open, light, -2 - HEAD);
+      }
+   }
+
+   /**
+    * Writes the body into {@code vc}. {@code skip} >= 0 leaves that part out, {@code skip} <= -2 draws only part
+    * {@code -2 - skip}; -1 draws everything. Also the test entry point (any vertex sink).
+    */
+   static void draw(Frame f, CitizenModel model, PoseStack pose, VertexConsumer vc, int light, int skip) {
       ModelPart[] parts = {model.head, model.body, model.rightArm, model.leftArm, model.rightLeg, model.leftLeg};
       float heat = f.heated ? 0.7F + 0.3F * Mth.sin(f.time * 0.4F) : 0.0F;
       int lit = light;
@@ -170,9 +198,10 @@ final class T1000Body {
          int block = Math.max(LightTexture.block(light), 12);
          lit = LightTexture.pack(block, LightTexture.sky(light));
       }
-      boolean split = f.action == T1000Action.FACE_SPLIT;
-      VertexConsumer solid = buffers.getBuffer(RenderType.entityTranslucentCull(T1000Matcap.texture()));
       for (int p = 0; p < parts.length; p++) {
+         if (skip >= 0 && p == skip || skip <= -2 && p != -2 - skip) {
+            continue;
+         }
          int rings;
          int cols;
          if (p == HEAD) {
@@ -192,13 +221,9 @@ final class T1000Body {
          parts[p].translateAndRotate(PART_STACK);
          PART.set(PART_STACK.last().pose());
          build(f, p, rings, cols);
-         rootDeform(f, rings, cols);
+         rootDeform(f, rings, cols, p == R_ARM || p == L_ARM ? 0.9F : 1.0F);
          normals(rings, cols);
-         VertexConsumer vc = split && p == HEAD ? buffers.getBuffer(RenderType.entityTranslucent(T1000Matcap.texture())) : solid;
          emit(f, pose, vc, rings, cols, lit, heat);
-         if (split && p == HEAD) {
-            solid = buffers.getBuffer(RenderType.entityTranslucentCull(T1000Matcap.texture()));
-         }
       }
    }
 
@@ -220,10 +245,10 @@ final class T1000Body {
       float hx0 = f.slim ? 1.5F : 2.0F;
       float cxArm = (f.slim ? 0.5F : 1.0F) * (right ? -1.0F : 1.0F);
       if (arm) {
-         int a = f.e.arms();
+         int a = f.arms;
          now = right ? T1000Arm.right(a) : T1000Arm.left(a);
          before = right ? T1000Arm.rightBefore(a) : T1000Arm.leftBefore(a);
-         morph = f.e.armMorph(right, f.time - f.e.tickCount);
+         morph = right ? f.morphR : f.morphL;
          if (f.human) {
             // in disguise the arms are always hands (a wound patch is all the metal there is)
             now = T1000Arm.HAND;
@@ -438,7 +463,8 @@ final class T1000Body {
 
    // --- root-space deformation ---------------------------------------------------------------------------------
 
-   private static void rootDeform(Frame f, int rings, int cols) {
+   /** {@code inner}: where this part ends up across the slumping column (arms sink just inside the trunk). */
+   private static void rootDeform(Frame f, int rings, int cols, float inner) {
       int count = (rings + 1) * cols;
       boolean ripple = f.hitAge >= 0.0F && f.hitAge < 14.0F && !f.human;
       boolean heavy = f.action == T1000Action.HEAVY;
@@ -490,27 +516,37 @@ final class T1000Body {
          }
          if (melt > 0.0F) {
             float h = HH[v];
-            float mv = T1000Shapes.vertexMelt(melt, h);
-            if (mv > 0.0F) {
-               float phi = r > 0.2F ? (float)Math.atan2(z, x) : (v * 2.399963F);
-               int hash = v * 0x27D4EB2D ^ f.seed;
-               float jitter = ((hash >>> 9 & 255) / 255.0F - 0.5F) * 0.12F;
-               float q = Mth.clamp(0.2F + 0.35F * Math.min(r, 8.0F) / 8.0F + 0.45F * (1.0F - h) + jitter, 0.0F, 1.0F);
-               float radius = T1000Shapes.PUDDLE_RADIUS * T1000Shapes.puddleOutline(phi, f.time, f.seed) * f.deathShrink;
-               float tx = Mth.cos(phi) * q * radius;
-               float tz = Mth.sin(phi) * q * radius;
-               float ty = T1000Shapes.GROUND_Y - T1000Shapes.puddleHeight(q) * (0.25F + 0.75F * h) * (0.4F + 0.6F * f.deathShrink);
-               ty -= 0.28F * Mth.sin(phi * 4.0F + f.time * 0.25F + q * 6.0F) * (1.0F - q);
-               if (dying) {
-                  // the puddle boils away
-                  float bub = Mth.sin((hash & 1023) * 0.37F + f.time * 0.6F);
-                  ty -= 0.7F * Math.max(0.0F, bub) * (1.0F - q) * f.deathShrink;
-               }
-               float sag = 3.0F * mv * (1.0F - mv);
-               x = Mth.lerp(mv, x, tx);
-               y = Mth.lerp(mv, y, ty) + sag;
-               z = Mth.lerp(mv, z, tz);
+            float phi = r > 0.2F ? (float)Math.atan2(z, x) : (v * 2.399963F);
+            int hash = v * 0x27D4EB2D ^ f.seed;
+            float jitter = ((hash >>> 9 & 255) / 255.0F - 0.5F) * 0.12F;
+            float outline = T1000Shapes.puddleOutline(phi, f.time, f.seed) * f.deathShrink;
+            // the settled puddle
+            float q = Mth.clamp(0.2F + 0.35F * Math.min(r, 8.0F) / 8.0F + 0.45F * (1.0F - h) + jitter, 0.0F, 1.0F);
+            float radius = T1000Shapes.PUDDLE_RADIUS * outline;
+            float tx = Mth.cos(phi) * q * radius;
+            float tz = Mth.sin(phi) * q * radius;
+            float ty = T1000Shapes.GROUND_Y - T1000Shapes.puddleHeight(q) * (0.25F + 0.75F * h) * (0.4F + 0.6F * f.deathShrink);
+            ty -= 0.28F * Mth.sin(phi * 4.0F + f.time * 0.25F + q * 6.0F) * (1.0F - q);
+            if (dying) {
+               // the puddle boils away
+               float bub = Mth.sin((hash & 1023) * 0.37F + f.time * 0.6F);
+               ty -= 0.7F * Math.max(0.0F, bub) * (1.0F - q) * f.deathShrink;
             }
+            // on the way there (or back up) a slumping column: round, sagging, with a skirt that spreads
+            T1000Shapes.slump(melt, h, inner, phi, f.time, outline, SLUMP);
+            float[] col = SLUMP;
+            float sx = Mth.cos(phi) * col[0];
+            float sz = Mth.sin(phi) * col[0];
+            float sy = col[1];
+            float settle = T1000Shapes.smooth((melt - 0.55F) / 0.45F);
+            sx = Mth.lerp(settle, sx, tx);
+            sy = Mth.lerp(settle, sy, ty);
+            sz = Mth.lerp(settle, sz, tz);
+            // the top gives way first (and on the way back up the feet stand first)
+            float w = T1000Shapes.smooth(melt * 2.7F - (1.0F - h) * 0.55F);
+            x = Mth.lerp(w, x, sx);
+            y = Mth.lerp(w, y, sy);
+            z = Mth.lerp(w, z, sz);
          }
          PX[v] = x;
          PY[v] = Math.min(y, T1000Shapes.GROUND_Y - 0.05F + (melt > 0.0F ? 0.0F : 2.0F));
@@ -540,11 +576,6 @@ final class T1000Body {
                ux = PX[jr * cols + ip] - PX[jr * cols + im];
                uy = PY[jr * cols + ip] - PY[jr * cols + im];
                uz = PZ[jr * cols + ip] - PZ[jr * cols + im];
-               if (j != 0) {
-                  ux = -ux;
-                  uy = -uy;
-                  uz = -uz;
-               }
             }
             // outward = t x u (rings go down the part, columns turn from +x to +z)
             float nx = ty * uz - tz * uy;

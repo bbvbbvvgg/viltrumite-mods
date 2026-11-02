@@ -127,17 +127,21 @@ public final class T1000Shapes {
          }
          case HOOK -> {
             if (s > root) {
-               float q = clamp01((s - root) / Math.max(1.0F, length - root));
                float base = smooth(clamp01((s - root) / 2.0F));
-               float arc = (s - root);
+               float arc = s - root;
                float radius = 4.2F;
-               float phi = Math.min(arc / radius, 2.7F) * smooth(clamp01(q * 1.4F));
-               // the centreline curls forward and back up (a sickle)
-               float straight = Math.max(0.0F, arc - phi * radius);
-               y = -2.0F + root + radius * (float)Math.sin(phi) + straight * (float)Math.cos(phi);
-               z = -radius * (1.0F - (float)Math.cos(phi)) - straight * (float)Math.sin(phi);
+               float curl = 2.7F * radius;
+               // a straight shaft (the reach of a throw lengthens it) ending in a sickle curl
+               float shaft = Math.max(0.0F, length - root - curl);
+               float along = Math.min(arc, shaft);
+               float c = Math.max(0.0F, arc - shaft);
+               float phi = Math.min(c / radius, 2.7F);
+               float rest = Math.max(0.0F, c - phi * radius);
+               y = -2.0F + root + along + radius * (float)Math.sin(phi) + rest * (float)Math.cos(phi);
+               z = -radius * (1.0F - (float)Math.cos(phi)) - rest * (float)Math.sin(phi);
                bend = phi;
-               hx = lerp(base, hx0, 0.55F);
+               float q = clamp01(c / curl);
+               hx = lerp(base, hx0, 0.55F + 0.1F * (1.0F - q));
                hz = lerp(base, 2.0F, 1.7F * (1.0F - q) + 0.06F);
                n = lerp(base, N_SMOOTH, 2.3F);
             }
@@ -289,9 +293,25 @@ public final class T1000Shapes {
 
    // --- puddle -------------------------------------------------------------------------------------------------
 
-   /** Per-vertex melt progress: the upper body slumps first; {@code h} is 0 at the feet, 1 at the crown. */
-   public static float vertexMelt(float melt, float h) {
-      return smooth(melt * 1.35F - (1.0F - h) * 0.35F);
+   /**
+    * A body slumping into its puddle (or rising out of it) at melt {@code m}: a vertex at height fraction {@code h}
+    * lands at {radius, y} on a round column that sinks, sags and spreads a skirt ({@code qr} 1 on its surface,
+    * less inside it).
+    */
+   public static void slump(float m, float h, float qr, float phi, float time, float outline, float[] out) {
+      m = clamp01(m);
+      h = clamp01(h);
+      float height = lerp((float)Math.pow(m, 0.85), 31.0F, PUDDLE_HEIGHT * 1.6F);
+      float base = lerp(m, 4.6F, PUDDLE_RADIUS * 0.82F * outline);
+      float k = lerp(m, 5.0F, 2.0F);
+      float prof = (float)Math.pow(Math.max(0.0F, 1.0F - (float)Math.pow(h, k)), 1.0F / k);
+      float skirt = 1.0F + 0.55F * m * (1.0F - h) * (1.0F - h) * (1.0F - h);
+      // slow drips running down the sides
+      float drip = 1.0F + 0.09F * (float)Math.sin(h * 11.0F + time * 0.22F + phi * 3.0F) * (1.0F - h * 0.5F);
+      float rad = base * prof * skirt * drip * clamp01(qr);
+      float y = GROUND_Y - height * h - 0.5F * m * (1.0F - m) * (float)Math.sin(phi * 3.0F + time * 0.18F + h * 7.0F);
+      out[0] = rad;
+      out[1] = Math.min(y, GROUND_Y - 0.05F);
    }
 
    /** Outline radius factor of the puddle at angle {@code a} and time {@code t} (ticks): a slow living blob. */
