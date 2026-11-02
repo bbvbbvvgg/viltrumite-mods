@@ -34,6 +34,7 @@
   "commands.viltrumitecore.thanos.phase.gauntlet": "IV, der volle Handschuh",
   "commands.viltrumitecore.thanos.phase_set": "Kriegsphase gesetzt: %s.",
   "commands.viltrumitecore.thanos.phase_refused": "Jetzt kein Phasenwechsel: Der Krieg läuft nicht (oder das Schnippen hat begonnen), oder die Phase ist unbekannt.",
+  "commands.viltrumitecore.thanos.phase_already": "Der Krieg hat Phase „%s“ bereits erreicht (Phasen gehen nur vorwärts).",
   "commands.viltrumitecore.thanos.order_called": "Der Schwarze Orden wird herabgestrahlt.",
   "commands.viltrumitecore.thanos.wave_called": "Eine Chitauri-Welle wird gerufen (%s Invasoren am Leben).",
   "commands.viltrumitecore.thanos.ship_strike": "Orbitalschlag auf deine Position befohlen. Weg da!",

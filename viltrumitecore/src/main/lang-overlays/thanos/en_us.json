@@ -34,6 +34,7 @@
   "commands.viltrumitecore.thanos.phase.gauntlet": "IV, the full Gauntlet",
   "commands.viltrumitecore.thanos.phase_set": "War phase set: %s.",
   "commands.viltrumitecore.thanos.phase_refused": "No phase change now: the war is not being fought (or the snap has begun), or the phase is unknown.",
+  "commands.viltrumitecore.thanos.phase_already": "The war has already reached phase \"%s\" (phases only move forward).",
   "commands.viltrumitecore.thanos.order_called": "The Black Order is beamed down.",
   "commands.viltrumitecore.thanos.wave_called": "A Chitauri wave is called (%s invaders alive).",
   "commands.viltrumitecore.thanos.ship_strike": "Orbital strike ordered on your position. Move!",
