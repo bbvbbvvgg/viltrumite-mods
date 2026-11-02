@@ -702,7 +702,17 @@ public class T1000Entity extends CitizenEntity {
          return;
       }
       if (f.revealed() && f != T1000Form.CONCEALING) {
-         this.playSound(T1000Sounds.IMPACT.get(), 0.9F, 0.9F + this.random.nextFloat() * 0.25F);
+         if (kind == T1000Damage.Kind.COLD) {
+            // frost biting into frozen metal creaks; it does not splash like a shot
+            if (this.cold >= T1000Damage.FROZEN) {
+               this.playSound(T1000Sounds.CRACK.get(), 0.45F, 1.15F + this.random.nextFloat() * 0.2F);
+            }
+         } else if (kind == T1000Damage.Kind.HEAT) {
+            // heated metal runs and sloshes
+            this.playSound(T1000Sounds.FLOW.get(), 0.6F, 0.7F + this.random.nextFloat() * 0.1F);
+         } else {
+            this.playSound(T1000Sounds.IMPACT.get(), 0.9F, 0.9F + this.random.nextFloat() * 0.25F);
+         }
       }
       if (f.grounded()) {
          this.level().broadcastEntityEvent(this, EVENT_SPLASH);
