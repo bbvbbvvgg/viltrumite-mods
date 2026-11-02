@@ -74,6 +74,8 @@ public final class ThanosHud {
 
    @SubscribeEvent
    public static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress event) {
+      // the Black Order's two bars share a row (drawn there, the increment says so)
+      dev.baranhan.viltrumitecore.client.thanos.war.BlackOrderBars.onBar(event);
       bossSeen = Math.max(bossSeen, event.getY() + event.getIncrement());
    }
 
@@ -84,6 +86,7 @@ public final class ThanosHud {
       }
 
       bossSeen = -1.0F;
+      dev.baranhan.viltrumitecore.client.thanos.war.BlackOrderBars.endFrame();
       if (!ThanosClient.active() || mc.options.hideGui || CinematicHud.hiding()) {
          return;
       }
@@ -108,6 +111,7 @@ public final class ThanosHud {
       int x = ThanosHudLayout.panelX(width, w, ThanosHudLayout.maxRight(width, height, y + h, heroPanel, reachLeft, reachUp));
       float pulse = late ? 0.5F + 0.5F * (float)Math.sin(time * 0.32F) : 0.0F;
       panel(g, x, y, w, h, late, pulse);
+      dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.renderWarLines(g, font, x, y);
       Component title = Component.translatable(late ? "hud.viltrumitecore.thanos.final" : "hud.viltrumitecore.thanos.until_snap");
       int titleColor = late ? mix(0xFF8A7A, 0xFFFFFF, pulse * 0.5F) : 0xE9C46A;
       g.pose().pushPose();

@@ -139,6 +139,7 @@ public final class ThanosWarClient {
             army = 0;
             strikes = 0;
             hold = 0;
+            fadeHeldHint(Minecraft.getInstance());
             if (ship == ShipPath.HOVER) {
                // the war ended under it (or the player walked out of range): it climbs away
                jump(() -> {
@@ -157,6 +158,9 @@ public final class ThanosWarClient {
             hold = Math.max(0, p.a());
             holdMax = Math.max(1, hold);
             holdKind = p.b();
+            if (hold == 0) {
+               fadeHeldHint(Minecraft.getInstance());
+            }
          }
          default -> {
          }
@@ -318,7 +322,16 @@ public final class ThanosWarClient {
       }
 
       clock++;
+      if (hold > 0 && (hold == holdMax || hold % 20 == 0) && mc.player != null) {
+         // the hint rides the action bar: the subtitle panel (and the stone warnings) already make room for it
+         mc.gui.setOverlayMessage(Component.translatable("hud.viltrumitecore.thanos_war.held").withStyle(ChatFormatting.AQUA), false);
+      }
+
+      boolean held = hold > 0;
       hold = Math.max(0, hold - 1);
+      if (held && hold == 0) {
+         fadeHeldHint(mc);
+      }
       flash = Math.max(0.0F, flash - 0.05F);
       boolean frozen = WorldPauseClient.active();
       if (shipVisible() && !frozen) {
@@ -490,7 +503,21 @@ public final class ThanosWarClient {
 
    // ---- HUD -------------------------------------------------------------------------------------
 
-   /** War line on the left (army left, ship strikes), and the hold vignette. */
+   /** The hold ended: the action-bar hint fades at once instead of lingering for its usual 3 s. */
+   private static void fadeHeldHint(Minecraft mc) {
+      if (mc.gui == null) {
+         return;
+      }
+
+      dev.baranhan.viltrumitecore.client.mixin.GuiTimersAccessor gui = (dev.baranhan.viltrumitecore.client.mixin.GuiTimersAccessor)mc.gui;
+      Component shown = gui.viltrumitecore$overlayMessage();
+      if (shown != null && shown.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+         && "hud.viltrumitecore.thanos_war.held".equals(t.getKey()) && gui.viltrumitecore$overlayMessageTime() > 10) {
+         gui.viltrumitecore$setOverlayMessageTime(10);
+      }
+   }
+
+   /** The hold vignette (the war lines sit beside the snap timer, see {@link #renderWarLines}). */
    public static void renderHud(GuiGraphics g, float partial, int width, int height) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null || mc.options.hideGui) {
@@ -504,37 +531,68 @@ public final class ThanosWarClient {
          int band = Math.max(8, height / 6);
          g.fillGradient(0, 0, width, band, a, rgb);
          g.fillGradient(0, height - band, width, height, rgb, a);
-         Component c = Component.translatable("hud.viltrumitecore.thanos_war.held").withStyle(ChatFormatting.AQUA);
-         g.drawCenteredString(mc.font, c, width / 2, height / 2 + 24, 0xFFFFFF);
       }
+   }
 
-      if (!active) {
+   /**
+    * The war lines (phase, army in the city, incoming strikes) in the column left of the snap timer, top-aligned
+    * with its panel: clear of the boss bars above it, the warning strip below it and the subtitle panel. A line
+    * longer than the room shrinks (never under 60 %).
+    */
+   public static void renderWarLines(GuiGraphics g, net.minecraft.client.gui.Font font, int panelX, int panelY) {
+      int room = panelX - 12;
+      if (!active || room < 40) {
          return;
       }
 
-      int y = height / 3;
+      int y = panelY + 2;
       ThanosPhase ph = phase();
       if (ph != null) {
-         g.drawString(mc.font, Component.translatable("hud.viltrumitecore.thanos_war.phase." + ph.name().toLowerCase(java.util.Locale.ROOT))
-            .withStyle(ChatFormatting.LIGHT_PURPLE), 6, y, 0xFFFFFF);
-         y += 11;
+         y = warLine(g, font, Component.translatable("hud.viltrumitecore.thanos_war.phase." + ph.name().toLowerCase(java.util.Locale.ROOT))
+            .withStyle(ChatFormatting.LIGHT_PURPLE), y, room);
       }
 
       if ((flags & ThanosWarS2CPacket.ARMY) != 0 || army > 0) {
-         g.drawString(mc.font, Component.translatable("hud.viltrumitecore.thanos_war.army", army).withStyle(ChatFormatting.GRAY), 6, y, 0xFFFFFF);
-         y += 11;
+         y = warLine(g, font, Component.translatable("hud.viltrumitecore.thanos_war.army", army).withStyle(ChatFormatting.GRAY), y, room);
       }
 
       if (strikes > 0) {
-         g.drawString(mc.font, Component.translatable("hud.viltrumitecore.thanos_war.strikes", strikes).withStyle(ChatFormatting.GOLD), 6, y, 0xFFFFFF);
+         warLine(g, font, Component.translatable("hud.viltrumitecore.thanos_war.strikes", strikes).withStyle(ChatFormatting.GOLD), y, room);
       }
+   }
+
+   private static int warLine(GuiGraphics g, net.minecraft.client.gui.Font font, Component line, int y, int room) {
+      int w = font.width(line);
+      float s = w > room ? Math.max(0.6F, room / (float)w) : 1.0F;
+      g.pose().pushPose();
+      g.pose().translate(6.0F, y, 0.0F);
+      g.pose().scale(s, s, 1.0F);
+      g.drawString(font, line, 0, 0, 0xFFFFFF);
+      g.pose().popPose();
+      return y + Math.max(7, Math.round(12.0F * s));
    }
 
    @SubscribeEvent
    public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
       drop();
+      BlackOrderBars.reset();
       PUFFS.clear();
       SanctuaryRenderer.close();
+   }
+
+   /** QA harness ({@code warstate}): the war state, where the ship is and the worst hull frame since the last call. */
+   public static String qaSummary() {
+      Vec3 at = qaShip();
+      String s = describe() + " maxNs=" + SanctuaryRenderer.maxNanos
+         + (at == null ? "" : String.format(java.util.Locale.ROOT, " at=%.0f,%.0f,%.0f yaw=%.0f", at.x, at.y, at.z, shipYaw(0.0F)));
+      SanctuaryRenderer.maxNanos = 0L;
+      return s;
+   }
+
+   /** QA harness ({@code lookship}): the ship's centre now, or null while it is not in the sky. */
+   @Nullable
+   public static Vec3 qaShip() {
+      return active && shipVisible() ? shipAt(0.0F) : null;
    }
 
    /** State for tests and the QA log. */
