@@ -1,0 +1,404 @@
+{
+  "thanos_war.ship_arrival": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.ship_arrival",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/ship_arrival",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "thanos_war.ship_hum": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.ship_hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/ship_hum",
+        "attenuation_distance": 64,
+        "stream": true
+      }
+    ]
+  },
+  "thanos_war.ship_horn": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.ship_horn",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/ship_horn",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "thanos_war.ship_charge": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.ship_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/ship_charge",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos_war.ship_lance": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.ship_lance",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/ship_lance",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos_war.ship_beam": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.ship_beam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/ship_beam",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.ship_depart": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.ship_depart",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/ship_depart",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "thanos_war.portal_open": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.portal_open",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/portal_open",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.siren": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.siren",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/siren",
+        "attenuation_distance": 48,
+        "stream": true
+      }
+    ]
+  },
+  "thanos_war.command": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.command",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/command",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos_war.absorb": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.absorb",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/absorb",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.rupture": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.rupture",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/rupture",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos_war.barrage": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.barrage",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/barrage",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.rewrite": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.rewrite",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/rewrite",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.anomaly": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.anomaly",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/anomaly",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.compulsion": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.compulsion",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/compulsion",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.harvest": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.harvest",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/harvest",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.time_stop": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.time_stop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/time_stop",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos_war.volley": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.volley",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/volley",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos_war.rock_impact": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.rock_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/rock_impact",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos_war.infinity_stage": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.infinity_stage",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/infinity_stage",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos_war.maw_voice": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.maw_voice",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/maw_voice",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos_war.maw_lift": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.maw_lift",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/maw_lift",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos_war.maw_throw": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.maw_throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/maw_throw",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos_war.maw_grab": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.maw_grab",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/maw_grab",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos_war.maw_barrier": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.maw_barrier",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/maw_barrier",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos_war.maw_catch": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.maw_catch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/maw_catch",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "thanos_war.maw_hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.maw_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/maw_hurt",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "thanos_war.maw_death": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.maw_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/maw_death",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos_war.cull_roar": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_roar",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "thanos_war.cull_swing": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_swing",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_swing",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "thanos_war.cull_slam": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_slam",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.cull_charge": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_charge",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.cull_wall": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_wall",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_wall",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.cull_chain": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_chain",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_chain",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "thanos_war.cull_grab": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_grab",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_grab",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "thanos_war.cull_hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_hurt",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "thanos_war.cull_death": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_death",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "thanos_war.cull_step": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.cull_step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/cull_step",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "thanos_war.debris_impact": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.thanos_war.debris_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:thanos_war/debris_impact",
+        "attenuation_distance": 32
+      }
+    ]
+  }
+}

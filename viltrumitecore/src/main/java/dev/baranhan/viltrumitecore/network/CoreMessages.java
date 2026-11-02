@@ -73,7 +73,19 @@ public class CoreMessages {
    // to the parallel branches of the same integration round.
    // v27 (integration of #124/#125/#126/#127): one table with CityPowerS2CPacket, CityCollapseS2CPacket and
    //     AftermathS2CPacket appended in that order after the Ultron packets. Every "24" and "26" peer is refused.
-   private static final String PROTOCOL_VERSION = "27";
+   // v28 (SCP-096, feat/scp096-shy-guy): Scp096S2CPacket appended last (the hunted player's sting, chase music and
+   //     release); new entity type viltrumitecore:scp096. Every "27" peer is refused.
+   // v28 (feat/godzilla-city-catastrophe): GodzillaFxS2CPacket appended last after AftermathS2CPacket; a "27"
+   //     peer is refused.
+   // v28 (THANOS 2.0, feat/thanos-total-war-rework): ThanosWarS2CPacket appended last, ThanosFxS2CPacket kinds 29..58;
+   //     the Black Order entities (registry sync refuses a mismatch anyway). Every "27" peer is refused.
+   // v28 (Ghost Rider, feat/ghost-rider-hell-on-wheels): HellCycleControlC2SPacket and HellfireS2CPacket appended after
+   //     AftermathS2CPacket, six GHOSTRIDER_* HeroAction values appended after REDHULK_OVERHEAT, hero id ghost_rider and
+   //     the hell_cycle entity type. Every "27" peer is refused.
+   // v29 (integration of #129/#130/#131/#132): one table with Scp096S2CPacket, GodzillaFxS2CPacket, ThanosWarS2CPacket,
+   //     HellCycleControlC2SPacket and HellfireS2CPacket appended in that order after AftermathS2CPacket. Each branch
+   //     alone was "28" with its own table, so every "27" and "28" peer is refused.
+   private static final String PROTOCOL_VERSION = "29";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -505,6 +517,30 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.AftermathS2CPacket::handle).add();
+      // SCP-096 (docs/design/2026-11-05-scp096-design.md), v28: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.Scp096S2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.Scp096S2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.Scp096S2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.Scp096S2CPacket::handle).add();
+      // ГОДЗИЛЛА — ГОРОДСКАЯ КАТАСТРОФА (docs/plans/2026-11-05-godzilla-city-catastrophe.md), v28: appended last.
+      net.messageBuilder(dev.baranhan.viltrumitecore.worldevent.godzilla.net.GodzillaFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.worldevent.godzilla.net.GodzillaFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.worldevent.godzilla.net.GodzillaFxS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.godzilla.net.GodzillaFxS2CPacket::handle).add();
+      // THANOS 2.0 war state, v28: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket::handle).add();
+      // Ghost Rider (feat/ghost-rider-hell-on-wheels), v28: the Hell Cycle's visual controls and the hellfire burn marks.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.HellCycleControlC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.HellCycleControlC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.HellCycleControlC2SPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HellCycleControlC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

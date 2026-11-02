@@ -77,6 +77,12 @@ public class ChitauriBolt extends Projectile {
       return this.entityData.get(POWER);
    }
 
+   /** A three-second shot never goes to disk: one stranded outside the ticking range leaves with its chunk. */
+   @Override
+   public boolean shouldBeSaved() {
+      return false;
+   }
+
    @Override
    public void tick() {
       super.tick();

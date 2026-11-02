@@ -114,7 +114,7 @@ class ThanosSceneClientLogicTest {
             }
 
             int tel = ThanosRules.telegraph(m.telegraph, phase);
-            assertTrue(tel >= (phase == ThanosPhase.FINAL ? ThanosRules.MIN_TELEGRAPH_FINAL : ThanosRules.MIN_TELEGRAPH), m + " telegraph " + tel);
+            assertTrue(tel >= (phase == ThanosPhase.GAUNTLET ? ThanosRules.MIN_TELEGRAPH_FINAL : ThanosRules.MIN_TELEGRAPH), m + " telegraph " + tel);
             assertEquals(0.0F, ThanosHud.warning(m, phase, -1.0F));
             assertTrue(ThanosHud.warning(m, phase, 1.0F) > 0.2F, "it appears at once");
             for (float age = 3.0F; age <= tel + m.active; age += 1.0F) {

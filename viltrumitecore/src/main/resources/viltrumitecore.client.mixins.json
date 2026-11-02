@@ -21,6 +21,7 @@
     "BlockModelMixin",
     "BodyRotationTrackerMixin",
     "CameraMixin",
+    "HellCycleCameraMixin",
     "ChopHandTrackerMixin",
     "ChopModelMixin",
     "ChopModelMixin2",
@@ -43,6 +44,7 @@
     "FirstPersonThorMixin",
     "FirstPersonGunMixin",
     "FirstPersonHomelanderMixin",
+    "FirstPersonGhostRiderMixin",
     "FirstPersonPunchMixin",
     "FirstPersonThunderclapMixin",
     "GameRendererAccessor",
@@ -84,7 +86,8 @@
     "ItemInHandRendererInvoker",
     "DefendedArrowRendererMixin",
     "LivingEntityRendererInvoker",
-    "PlayerRendererInvoker"
+    "PlayerRendererInvoker",
+    "GhostRiderModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

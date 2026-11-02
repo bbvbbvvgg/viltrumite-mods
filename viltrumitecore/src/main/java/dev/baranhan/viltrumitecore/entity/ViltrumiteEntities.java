@@ -70,6 +70,19 @@ public class ViltrumiteEntities {
       "thanos", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity>of(dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity::new, MobCategory.MISC)
          .sized(1.6F, 3.8F).clientTrackingRange(16).updateInterval(2).fireImmune().noSave().noSummon().build("thanos")
    );
+   // THANOS 2.0: the Black Order and Ebony Maw's telekinetic debris (spawned by the war only, never saved)
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.EbonyMawEntity>> EBONY_MAW = ENTITIES.register(
+      "ebony_maw", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.EbonyMawEntity>of(dev.baranhan.viltrumitecore.entity.thanos.EbonyMawEntity::new, MobCategory.MISC)
+         .sized(0.7F, 2.1F).clientTrackingRange(12).updateInterval(2).fireImmune().noSave().noSummon().build("ebony_maw")
+   );
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.CullObsidianEntity>> CULL_OBSIDIAN = ENTITIES.register(
+      "cull_obsidian", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.CullObsidianEntity>of(dev.baranhan.viltrumitecore.entity.thanos.CullObsidianEntity::new, MobCategory.MISC)
+         .sized(1.5F, 3.3F).clientTrackingRange(12).updateInterval(2).fireImmune().noSave().noSummon().build("cull_obsidian")
+   );
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.WarDebrisEntity>> WAR_DEBRIS = ENTITIES.register(
+      "war_debris", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.WarDebrisEntity>of(dev.baranhan.viltrumitecore.entity.thanos.WarDebrisEntity::new, MobCategory.MISC)
+         .sized(0.9F, 0.9F).clientTrackingRange(10).updateInterval(1).fireImmune().noSave().noSummon().build("war_debris")
+   );
 
    /** Iron Legion suit (stage 6, docs/design/2026-10-31-ironman-legion-design.md): never saved, the owner's roster keeps the mark. */
    public static final RegistryObject<EntityType<LegionSuitEntity>> LEGION_SUIT = ENTITIES.register(
@@ -105,6 +118,13 @@ public class ViltrumiteEntities {
    public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.avengers.QuinjetEntity>> QUINJET = ENTITIES.register(
       "quinjet", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.avengers.QuinjetEntity>of(dev.baranhan.viltrumitecore.entity.avengers.QuinjetEntity::new, MobCategory.MISC)
          .sized(3.0F, 2.0F).clientTrackingRange(16).updateInterval(1).fireImmune().noSave().noSummon().build("quinjet")
+   );
+
+   /** Ghost Rider's Hell Cycle: a rideable hellfire motorcycle (owner-only, never saved). */
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleEntity>> HELL_CYCLE = ENTITIES.register(
+      "hell_cycle", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleEntity>of(dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleEntity::new, MobCategory.MISC)
+         .sized(dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleRules.WIDTH, dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleRules.HEIGHT)
+         .clientTrackingRange(10).updateInterval(1).fireImmune().noSave().noSummon().build("hell_cycle")
    );
 
    public static void register(IEventBus eventBus) {

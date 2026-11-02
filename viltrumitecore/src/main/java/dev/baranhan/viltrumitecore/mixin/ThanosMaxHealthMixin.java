@@ -1,7 +1,9 @@
 package dev.baranhan.viltrumitecore.mixin;
 
+import dev.baranhan.viltrumitecore.entity.godzilla.GodzillaEntity;
 import dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity;
 import dev.baranhan.viltrumitecore.entity.ultron.UltronPrime;
+import dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaRules;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Thanos's max health is 3000 x (1 + 0.6 x (heroes - 1)), past the 1024 at which vanilla clamps
  * the max-health attribute, and {@code getMaxHealth()} is final: for him it answers his synced
  * value ({@link ThanosEntity#thanosMaxHealth()}). Ultron Prime (1800 x (1 + 0.5 x (heroes - 1))) the same way
- * ({@link UltronPrime#primeMaxHealth()}). Every other entity is untouched.
+ * ({@link UltronPrime#primeMaxHealth()}). Godzilla's 4000 ({@link GodzillaRules#MAX_HEALTH}) too: without this the
+ * attribute clamp left the kaiju 1024 and a city-scale fight lasted a minute. Every other entity is untouched.
  */
 @Mixin({LivingEntity.class})
 public abstract class ThanosMaxHealthMixin {
@@ -26,6 +29,10 @@ public abstract class ThanosMaxHealthMixin {
          cir.setReturnValue(thanos.thanosMaxHealth());
       } else if ((Object)this instanceof UltronPrime prime) {
          cir.setReturnValue(prime.primeMaxHealth());
+      } else if ((Object)this instanceof GodzillaEntity) {
+         cir.setReturnValue(GodzillaRules.MAX_HEALTH);
+      } else if ((Object)this instanceof dev.baranhan.viltrumitecore.entity.thanos.BlackOrderEntity order) {
+         cir.setReturnValue(order.orderMaxHealth());
       }
    }
 }

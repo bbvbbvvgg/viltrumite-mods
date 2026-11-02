@@ -21,7 +21,7 @@ class AftermathCauseTest {
          }
       }
       // the ids the parallel branches send (docs/city-aftermath-integration.md)
-      for (String id : new String[]{"meteor", "chitauri", "leviathan", "hero", "explosion", "destruction", "collapse", "ultron", "infrastructure", "other"}) {
+      for (String id : new String[]{"meteor", "chitauri", "leviathan", "hero", "explosion", "destruction", "collapse", "ultron", "infrastructure", "other", "godzilla"}) {
          assertEquals(id, AftermathCause.of(id).id);
       }
       assertEquals(AftermathCause.OTHER, AftermathCause.of("tornado"));

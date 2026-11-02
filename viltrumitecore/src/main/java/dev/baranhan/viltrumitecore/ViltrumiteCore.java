@@ -123,6 +123,7 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.sinclair.SinclairSetup.init(modEventBus);
       // Thanos city event (docs/design/2026-10-31-thanos-six-stones-design.md): his sound holders.
       dev.baranhan.viltrumitecore.worldevent.thanos.ThanosSounds.init();
+      dev.baranhan.viltrumitecore.worldevent.thanos.war.ThanosWarSounds.init();
       // Regulus Reborn (docs/design/2026-10-30-regulus-reborn-design.md): his own sound holders.
       dev.baranhan.viltrumitecore.hero.regulus.RegulusSetup.init(modEventBus);
       dev.baranhan.viltrumitecore.hero.jinwoo.JinwooSounds.init();
@@ -130,12 +131,18 @@ public class ViltrumiteCore {
       // Red Hulk (docs/design/2026-11-01-red-hulk-design.md): his sound holders and FX preset ids 700+.
       dev.baranhan.viltrumitecore.hero.redhulk.RedHulkSounds.init();
       dev.baranhan.viltrumitecore.hero.redhulk.RedHulkFx.init();
+      dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderSounds.init();
+      dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderFx.init();
       // Contextual interactions (docs/contextual-interactions.json): their own sound holders.
       dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();
       // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
       dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
       // ULTRON — ВОССТАНИЕ МАШИН (docs/plans/2026-11-01-ultron-uprising.md): sounds and the machines' entity register.
       dev.baranhan.viltrumitecore.worldevent.ultron.UltronSetup.init(modEventBus);
+      // SCP-096 "Shy Guy" (docs/design/2026-11-05-scp096-design.md): sounds, the entity register, spawner, commands.
+      dev.baranhan.viltrumitecore.scp.scp096.Scp096Setup.init(modEventBus);
+      // Godzilla — city catastrophe (docs/plans/2026-11-05-godzilla-city-catastrophe.md): sounds and the kaiju's entity register.
+      dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);

@@ -33,7 +33,7 @@ import org.slf4j.Logger;
  * only, nothing is registered otherwise. It logs every hero line the client receives, stops, clears and
  * actually draws ({@code SUBPT} lines, see {@link HeroSubtitles#qaLog}) and executes commands written to
  * {@code <gameDir>/subtitle_qa.txt} (one per line, the file is emptied once read), so a shell can drive a real
- * client: {@code press <1-6> [ticks]} (the real ability key mappings), {@code key attack|use|pick|jump|sneak <ticks>},
+ * client: {@code press <1-6> [ticks]} (the real ability key mappings), {@code key attack|use|pick|jump|sneak|forward|back|left|right|sprint <ticks>},
  * {@code cmd <command>} (sent as a chat command), {@code shot <name>}, {@code cam fp|back|front},
  * {@code look <yaw> <pitch>}, {@code leave} (to the title screen), {@code world} (create or reopen the
  * singleplayer world {@code subtitle_playtest}), {@code close} (closes any screen), {@code button <n>} (presses the n-th button of the open
@@ -41,7 +41,16 @@ import org.slf4j.Logger;
  * With {@code -Dviltrumitecore.subtitles.playtest.world=true} the title screen opens that world by itself.
  * {@code fpshots <prefix> <t1,t2,...>} takes screenshots on the Final Punch scene clock (first scene on the client)
  * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}). {@code collapsestate} logs the
- * structural-collapse scenes (count, drawn fragments, render ms) and the fps.
+ * structural-collapse scenes (count, drawn fragments, render ms) and the fps. {@code scp096state} logs every loaded
+ * SCP-096 (state, flags, speed, layer weights) and its sounds; {@code scp096look} turns the camera to the nearest one.
+ * {@code godzillastate} logs the kaiju's last drawn LOD, camera distance, body build time, hot zones and particles;
+ * {@code godzillalod <n>} forces a LOD (-1 = by distance). {@code warstate} logs the Thanos war on the client (phase,
+ * ship and its position, army, worst hull frame), {@code lookship} aims the camera at the ship, {@code vfly} toggles
+ * viltrumite flight (the double-tap-jump packet; jump/sneak then climb/sink), {@code holdshot <name> [seconds]} takes
+ * a screenshot on the first frame the hold card fills the warning slot. Every change of that slot is logged
+ * ({@code SUBPT ... strip <move>|held|none}). {@code bike} logs the Hell Cycle the player rides (speed, rpm, gear,
+ * lean, drift, ground); {@code bikes} logs every Hell Cycle this client draws, remote copies included (multiplayer
+ * sync), with the effect entries and engine loops it still holds.
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -55,6 +64,9 @@ public final class SubtitlePlaytest {
    private static int shotDelayFrames;
    private static final List<Integer> SCENE_SHOTS = new ArrayList<>();
    private static String sceneShotPrefix = "fp";
+   private static String holdShot;
+   private static int holdShotUntil;
+   private static String lastStrip;
 
    private record Release(KeyMapping key, int at) {
    }
@@ -166,6 +178,10 @@ public final class SubtitlePlaytest {
                case "jump" -> mc.options.keyJump;
                case "sneak" -> mc.options.keyShift;
                case "forward" -> mc.options.keyUp;
+               case "back" -> mc.options.keyDown;
+               case "left" -> mc.options.keyLeft;
+               case "right" -> mc.options.keyRight;
+               case "sprint" -> mc.options.keySprint;
                case "swap" -> AbilityInputManager.abilitySwapKey;
                default -> throw new IllegalArgumentException("unknown key " + a[0]);
             };
@@ -200,6 +216,13 @@ public final class SubtitlePlaytest {
          }
          case "world" -> openWorld(mc);
          case "close" -> mc.setScreen(null);
+         case "fly" -> {
+            // creative flight on / off without the double-tap (flying hero tests)
+            if (mc.player != null && mc.player.getAbilities().mayfly) {
+               mc.player.getAbilities().flying = !"off".equals(arg);
+               mc.player.onUpdateAbilities();
+            }
+         }
          case "button" -> {
             // Presses the n-th button (0-based) of the open screen, e.g. "Continue" on the experimental-world warning.
             if (mc.screen != null) {
@@ -235,8 +258,35 @@ public final class SubtitlePlaytest {
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
          // encyclopedia QA (hero gallery): open the wish screen, drive the GUI, resize, switch language
+         case "scp096state" -> LOG.info("SUBPT t={} scp096 {} fps={}", ticks, dev.baranhan.viltrumitecore.client.scp096.Scp096Qa.describe(mc),
+            mc.getFps());
+         case "scp096look" -> dev.baranhan.viltrumitecore.client.scp096.Scp096Qa.lookAtNearest(mc);
+         // Thanos war QA: the client's war state (ship, army, hull render cost) and aiming the camera at the ship
+         case "warstate" -> LOG.info("SUBPT t={} war {} fps={}", ticks, dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.qaSummary(), mc.getFps());
+         case "lookship" -> {
+            net.minecraft.world.phys.Vec3 at = dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.qaShip();
+            if (at != null && mc.player != null) {
+               net.minecraft.world.phys.Vec3 d = at.subtract(mc.player.getEyePosition());
+               mc.player.setYRot((float)Math.toDegrees(Math.atan2(-d.x, d.z)));
+               mc.player.setXRot((float)-Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z))));
+            }
+         }
+         // "vfly": the Thanos war QA toggle of viltrumite flight; "fly" stays the creative-flight toggle (Godzilla QA)
+         case "vfly" -> dev.baranhan.viltrumiteflight.network.ModMessages.sendToServer(new dev.baranhan.viltrumiteflight.network.packet.FlightToggleC2SPacket());
+         case "holdshot" -> {
+            String[] a = arg.split(" ");
+            holdShot = a[0];
+            holdShotUntil = ticks + 20 * (a.length > 1 ? Integer.parseInt(a[1]) : 180);
+         }
+         case "bike" -> LOG.info("SUBPT t={} bike {} fps={}", ticks,
+            dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleClient.qaSummary(mc), mc.getFps());
+         case "bikes" -> LOG.info("SUBPT t={} bikes {} fps={}", ticks,
+            dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleClient.qaAll(mc), mc.getFps());
          case "collapsestate" -> LOG.info("SUBPT t={} collapse {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.collapse.CollapseClient.qaSummary(), mc.getFps());
+         case "godzillalod" -> dev.baranhan.viltrumitecore.client.godzilla.GodzillaRenderer.qaForceLod = Integer.parseInt(arg);
+         case "godzillastate" -> LOG.info("SUBPT t={} godzilla {} fps={}", ticks,
+            dev.baranhan.viltrumitecore.client.godzilla.GodzillaClient.qaSummary(), mc.getFps());
          case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());
          case "click" -> {
             String[] a = arg.split(" ");
@@ -334,10 +384,12 @@ public final class SubtitlePlaytest {
       };
    }
 
-   /** A real key press held for {@code holdTicks} (hero keys are edge-tracked on isDown). */
+   /** A real key press held for {@code holdTicks} (hero keys are edge-tracked on isDown). A new hold of a key that is
+    * still held replaces its pending release: the earlier one used to cut the new hold short. */
    private static void hold(KeyMapping key, int holdTicks) {
       KeyMapping.set(key.getKey(), true);
       KeyMapping.click(key.getKey());
+      RELEASES.removeIf(r -> r.key() == key);
       RELEASES.add(new Release(key, ticks + Math.max(1, holdTicks)));
    }
 
@@ -349,6 +401,30 @@ public final class SubtitlePlaytest {
    }
 
    private static void onRenderTick(TickEvent.RenderTickEvent event) {
+      if (event.phase == TickEvent.Phase.END) {
+         // the Thanos warning slot as drawn this frame (reset here, so a frame without the HUD reads as none)
+         String strip = dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStrip;
+         float stripK = dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStripK;
+         dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStrip = null;
+         if (!java.util.Objects.equals(strip, lastStrip)) {
+            LOG.info("SUBPT t={} strip {}", ticks, strip == null ? "none" : strip);
+            lastStrip = strip;
+         }
+
+         if (holdShot != null) {
+            if (ticks > holdShotUntil) {
+               LOG.info("SUBPT t={} holdshot {} timed out", ticks, holdShot);
+               holdShot = null;
+            } else if ("held".equals(strip) && stripK > 0.9F && pendingShot == null) {
+               LOG.info("SUBPT t={} holdshot {} colour={}", ticks, holdShot,
+                  Integer.toHexString(dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.heldColor()));
+               pendingShot = holdShot;
+               shotDelayFrames = 0;
+               holdShot = null;
+            }
+         }
+      }
+
       if (event.phase == TickEvent.Phase.END && pendingShot == null && !SCENE_SHOTS.isEmpty() && FinalPunchClient.any()) {
          double time = FinalPunchClient.all().iterator().next().time(event.renderTickTime);
          if (time >= SCENE_SHOTS.get(0)) {

@@ -1,0 +1,200 @@
+{
+  "godzilla.roar": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/roar"
+      }
+    ]
+  },
+  "godzilla.roar_far": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.roar_far",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/roar_far"
+      }
+    ]
+  },
+  "godzilla.growl": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.growl",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/growl"
+      }
+    ]
+  },
+  "godzilla.step": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/step"
+      }
+    ]
+  },
+  "godzilla.step_far": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.step_far",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/step_far"
+      }
+    ]
+  },
+  "godzilla.stomp": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.stomp",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/stomp"
+      }
+    ]
+  },
+  "godzilla.tail_swish": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.tail_swish",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/tail_swish"
+      }
+    ]
+  },
+  "godzilla.tail_hit": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.tail_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/tail_hit"
+      }
+    ]
+  },
+  "godzilla.claw_swish": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.claw_swish",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/claw_swish"
+      }
+    ]
+  },
+  "godzilla.claw_hit": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.claw_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/claw_hit"
+      }
+    ]
+  },
+  "godzilla.charge": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.charge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/charge"
+      }
+    ]
+  },
+  "godzilla.beam_start": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.beam_start",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/beam_start"
+      }
+    ]
+  },
+  "godzilla.beam_loop": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.beam_loop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/beam_loop"
+      }
+    ]
+  },
+  "godzilla.beam_impact": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.beam_impact",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/beam_impact"
+      }
+    ]
+  },
+  "godzilla.beam_end": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.beam_end",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/beam_end"
+      }
+    ]
+  },
+  "godzilla.smash": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.smash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/smash"
+      }
+    ]
+  },
+  "godzilla.hurt": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.hurt",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/hurt"
+      }
+    ]
+  },
+  "godzilla.fall": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.fall",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/fall"
+      }
+    ]
+  },
+  "godzilla.rise": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.rise",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/rise"
+      }
+    ]
+  },
+  "godzilla.death": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.death",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/death"
+      }
+    ]
+  },
+  "godzilla.arrive": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.arrive",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/arrive"
+      }
+    ]
+  },
+  "godzilla.retreat": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.godzilla.retreat",
+    "sounds": [
+      {
+        "name": "viltrumitecore:godzilla/retreat"
+      }
+    ]
+  }
+}

@@ -30,14 +30,14 @@ class ThanosBrainTest {
    @Test
    void noTargetMeansStalk() {
       ThanosBrain brain = new ThanosBrain(1);
-      assertNull(brain.choose(new ThanosBrain.Situation(ThanosPhase.FINAL, false, 3, false, true, 1, 1, 0, false, false, 1, 0)));
+      assertNull(brain.choose(new ThanosBrain.Situation(ThanosPhase.GAUNTLET, false, 3, false, true, 1, 1, 0, false, false, 1, 0)));
    }
 
    @Test
    void closeRangePrefersMelee() {
       Map<ThanosMove.Kind, Integer> kinds = new EnumMap<>(ThanosMove.Kind.class);
       for (int seed = 0; seed < 400; seed++) {
-         ThanosMove move = new ThanosBrain(seed).choose(at(ThanosPhase.OPENING, 3.0));
+         ThanosMove move = new ThanosBrain(seed).choose(at(ThanosPhase.ARRIVAL, 3.0));
          assertNotNull(move);
          kinds.merge(move.kind, 1, Integer::sum);
       }
@@ -48,7 +48,7 @@ class ThanosBrainTest {
    @Test
    void farTargetsNeverGetMelee() {
       for (int seed = 0; seed < 300; seed++) {
-         ThanosMove move = new ThanosBrain(seed).choose(at(ThanosPhase.ONSLAUGHT, 35.0));
+         ThanosMove move = new ThanosBrain(seed).choose(at(ThanosPhase.INVASION, 35.0));
          if (move != null) {
             assertNotEquals(ThanosMove.Kind.MELEE, move.kind, "seed " + seed + " -> " + move);
             assertTrue(move.inRange(35.0) || move.kind == ThanosMove.Kind.DEFENSE, move.toString());
@@ -61,7 +61,7 @@ class ThanosBrainTest {
       ThanosBrain brain = new ThanosBrain(7);
       for (ThanosMove move : ThanosMove.values()) {
          if (move.combo()) {
-            assertEquals(0.0, brain.weight(move, at(ThanosPhase.OPENING, 8.0)), move.toString());
+            assertEquals(0.0, brain.weight(move, at(ThanosPhase.ARRIVAL, 8.0)), move.toString());
          }
       }
    }
@@ -70,7 +70,7 @@ class ThanosBrainTest {
    void lateFightUsesTwoAndThreeStoneCombos() {
       Set<ThanosMove> seen = EnumSet.noneOf(ThanosMove.class);
       for (int seed = 0; seed < 2000; seed++) {
-         ThanosMove move = new ThanosBrain(seed).choose(with(at(ThanosPhase.FINAL, 9.0), false, 3, 0, false, false, 0.3F, 0.0F));
+         ThanosMove move = new ThanosBrain(seed).choose(with(at(ThanosPhase.GAUNTLET, 9.0), false, 3, 0, false, false, 0.3F, 0.0F));
          if (move != null && move.combo()) {
             seen.add(move);
          }
@@ -85,16 +85,16 @@ class ThanosBrainTest {
       ThanosBrain brain = new ThanosBrain(42);
       ThanosMove last = null;
       for (int i = 0; i < 300; i++) {
-         for (int t = 0; t < 2000 && brain.choose(at(ThanosPhase.FINAL, 4.0)) == null; t++) {
+         for (int t = 0; t < 2000 && brain.choose(at(ThanosPhase.GAUNTLET, 4.0)) == null; t++) {
             brain.tick();
          }
 
-         ThanosMove move = brain.choose(at(ThanosPhase.FINAL, 4.0));
+         ThanosMove move = brain.choose(at(ThanosPhase.GAUNTLET, 4.0));
          assertNotNull(move);
          assertNotEquals(last, move, "repeat at " + i);
-         brain.commit(move, ThanosPhase.FINAL);
+         brain.commit(move, ThanosPhase.GAUNTLET);
          last = move;
-         for (int t = 0; t < move.length(ThanosPhase.FINAL) + ThanosRules.BREATHER_TICKS; t++) {
+         for (int t = 0; t < move.length(ThanosPhase.GAUNTLET) + ThanosRules.BREATHER_TICKS; t++) {
             brain.tick();
          }
       }
@@ -103,11 +103,11 @@ class ThanosBrainTest {
    @Test
    void cooldownsAndTheStoneGapGate() {
       ThanosBrain brain = new ThanosBrain(3);
-      brain.commit(ThanosMove.POWER_PUNCH, ThanosPhase.OPENING);
+      brain.commit(ThanosMove.POWER_PUNCH, ThanosPhase.ARRIVAL);
       assertFalse(brain.ready(ThanosMove.POWER_PUNCH));
       assertFalse(brain.ready(ThanosMove.MIND_GAZE), "stone gap after a stone move");
       assertTrue(brain.ready(ThanosMove.CLEAVE), "melee fills the gap");
-      int gap = ThanosMove.POWER_PUNCH.length(ThanosPhase.OPENING) + ThanosRules.STONE_GAP_TICKS;
+      int gap = ThanosMove.POWER_PUNCH.length(ThanosPhase.ARRIVAL) + ThanosRules.STONE_GAP_TICKS;
       for (int i = 0; i < gap; i++) {
          brain.tick();
       }
@@ -119,10 +119,10 @@ class ThanosBrainTest {
    @Test
    void projectilesRaiseTheSpaceWard() {
       ThanosBrain calm = new ThanosBrain(1);
-      assertEquals(0.0, calm.weight(ThanosMove.SPACE_WARD, at(ThanosPhase.OPENING, 20)));
+      assertEquals(0.0, calm.weight(ThanosMove.SPACE_WARD, at(ThanosPhase.ARRIVAL, 20)));
       int ward = 0;
       for (int seed = 0; seed < 200; seed++) {
-         if (new ThanosBrain(seed).choose(with(at(ThanosPhase.OPENING, 20), false, 1, 4, false, false, 1, 0)) == ThanosMove.SPACE_WARD) {
+         if (new ThanosBrain(seed).choose(with(at(ThanosPhase.ARRIVAL, 20), false, 1, 4, false, false, 1, 0)) == ThanosMove.SPACE_WARD) {
             ward++;
          }
       }
@@ -132,7 +132,7 @@ class ThanosBrainTest {
 
    @Test
    void aTimeStopIsAnsweredWithTheTimeStone() {
-      ThanosBrain.Situation hit = with(at(ThanosPhase.ESCALATION, 6.0), false, 1, 0, true, false, 0.5F, 0.08F);
+      ThanosBrain.Situation hit = with(at(ThanosPhase.BLACK_ORDER, 6.0), false, 1, 0, true, false, 0.5F, 0.08F);
       int rewind = 0;
       for (int seed = 0; seed < 300; seed++) {
          ThanosMove move = new ThanosBrain(seed).choose(hit);
@@ -147,14 +147,14 @@ class ThanosBrainTest {
    @Test
    void rewindNeedsRealDamage() {
       ThanosBrain brain = new ThanosBrain(5);
-      assertEquals(0.0, brain.weight(ThanosMove.TIME_REWIND, with(at(ThanosPhase.ONSLAUGHT, 5), false, 1, 0, true, true, 0.2F, 0.0F)));
-      assertTrue(brain.weight(ThanosMove.TIME_REWIND, with(at(ThanosPhase.ONSLAUGHT, 5), false, 1, 0, false, false, 0.2F, 0.1F)) > 0.0);
+      assertEquals(0.0, brain.weight(ThanosMove.TIME_REWIND, with(at(ThanosPhase.INVASION, 5), false, 1, 0, true, true, 0.2F, 0.0F)));
+      assertTrue(brain.weight(ThanosMove.TIME_REWIND, with(at(ThanosPhase.INVASION, 5), false, 1, 0, false, false, 0.2F, 0.1F)) > 0.0);
    }
 
    @Test
    void strongHitsGetDefensiveAnswers() {
       ThanosBrain brain = new ThanosBrain(9);
-      ThanosBrain.Situation calm = at(ThanosPhase.ESCALATION, 6);
+      ThanosBrain.Situation calm = at(ThanosPhase.BLACK_ORDER, 6);
       ThanosBrain.Situation threat = with(calm, false, 1, 0, false, true, 1, 0);
       assertTrue(brain.weight(ThanosMove.REALITY_MIRAGE, threat) > 4 * brain.weight(ThanosMove.REALITY_MIRAGE, calm));
    }
@@ -163,7 +163,7 @@ class ThanosBrainTest {
    void flyingTargetsGetMovesThatReachTheAir() {
       int air = 0;
       for (int seed = 0; seed < 300; seed++) {
-         ThanosMove move = new ThanosBrain(seed).choose(with(at(ThanosPhase.ESCALATION, 12), true, 1, 0, false, false, 1, 0));
+         ThanosMove move = new ThanosBrain(seed).choose(with(at(ThanosPhase.BLACK_ORDER, 12), true, 1, 0, false, false, 1, 0));
          if (move != null && move.air) {
             air++;
          }
@@ -175,7 +175,7 @@ class ThanosBrainTest {
    @Test
    void crowdsGetAreaMoves() {
       ThanosBrain brain = new ThanosBrain(2);
-      ThanosBrain.Situation solo = at(ThanosPhase.ESCALATION, 5);
+      ThanosBrain.Situation solo = at(ThanosPhase.BLACK_ORDER, 5);
       ThanosBrain.Situation crowd = with(solo, false, 4, 0, false, false, 1, 0);
       assertEquals(2.0 * brain.weight(ThanosMove.SOUL_NOVA, solo), brain.weight(ThanosMove.SOUL_NOVA, crowd), 1.0E-9);
    }
@@ -183,13 +183,13 @@ class ThanosBrainTest {
    @Test
    void followUpsChainEffectively() {
       ThanosBrain brain = new ThanosBrain(4);
-      double before = brain.weight(ThanosMove.POWER_PUNCH, at(ThanosPhase.OPENING, 3));
-      brain.commit(ThanosMove.SPACE_PULL, ThanosPhase.OPENING);
-      for (int i = 0; i < ThanosMove.SPACE_PULL.length(ThanosPhase.OPENING) + ThanosRules.STONE_GAP_TICKS; i++) {
+      double before = brain.weight(ThanosMove.POWER_PUNCH, at(ThanosPhase.ARRIVAL, 3));
+      brain.commit(ThanosMove.SPACE_PULL, ThanosPhase.ARRIVAL);
+      for (int i = 0; i < ThanosMove.SPACE_PULL.length(ThanosPhase.ARRIVAL) + ThanosRules.STONE_GAP_TICKS; i++) {
          brain.tick();
       }
 
-      assertEquals(3.0 * before, brain.weight(ThanosMove.POWER_PUNCH, at(ThanosPhase.OPENING, 3)), 1.0E-9);
+      assertEquals(3.0 * before, brain.weight(ThanosMove.POWER_PUNCH, at(ThanosPhase.ARRIVAL, 3)), 1.0E-9);
    }
 
    private static void idle(ThanosBrain brain, int ticks) {
@@ -201,21 +201,21 @@ class ThanosBrainTest {
    @Test
    void oneStoneIsNeverUsedThreeTimesInARow() {
       ThanosBrain brain = new ThanosBrain(4);
-      brain.commit(ThanosMove.POWER_WAVE, ThanosPhase.FINAL);
-      brain.commit(ThanosMove.POWER_PUNCH, ThanosPhase.FINAL);
+      brain.commit(ThanosMove.POWER_WAVE, ThanosPhase.GAUNTLET);
+      brain.commit(ThanosMove.POWER_PUNCH, ThanosPhase.GAUNTLET);
       idle(brain, 2000);
-      ThanosBrain.Situation s = at(ThanosPhase.FINAL, 8);
+      ThanosBrain.Situation s = at(ThanosPhase.GAUNTLET, 8);
       // every move with the Power stone is out, combos included; the others are not
       for (ThanosMove move : ThanosMove.values()) {
          if (move.uses(ThanosStone.POWER)) {
             assertEquals(0.0, brain.weight(move, s), move.toString());
-            assertFalse(brain.allowed(move, ThanosPhase.FINAL), move.toString());
+            assertFalse(brain.allowed(move, ThanosPhase.GAUNTLET), move.toString());
          }
       }
 
       assertTrue(brain.weight(ThanosMove.COMBO_ETERNITY, s) > 0.0);
       // a plain strike in between breaks the streak
-      brain.commit(ThanosMove.CLEAVE, ThanosPhase.FINAL);
+      brain.commit(ThanosMove.CLEAVE, ThanosPhase.GAUNTLET);
       idle(brain, 2000);
       assertTrue(brain.weight(ThanosMove.COMBO_TRINITY, s) > 0.0);
    }
@@ -223,14 +223,14 @@ class ThanosBrainTest {
    @Test
    void teleportsKeepTheirGap() {
       ThanosBrain brain = new ThanosBrain(12);
-      ThanosBrain.Situation far = at(ThanosPhase.ONSLAUGHT, 20);
-      brain.commit(ThanosMove.SPACE_STEP, ThanosPhase.ONSLAUGHT);
-      brain.commit(ThanosMove.CLEAVE, ThanosPhase.ONSLAUGHT);
+      ThanosBrain.Situation far = at(ThanosPhase.INVASION, 20);
+      brain.commit(ThanosMove.SPACE_STEP, ThanosPhase.INVASION);
+      brain.commit(ThanosMove.CLEAVE, ThanosPhase.INVASION);
       idle(brain, ThanosRules.TELEPORT_GAP_TICKS - 1);
       assertEquals(0.0, brain.weight(ThanosMove.COMBO_MIND_STEP, far), "a second teleport inside the gap");
       brain.tick();
       assertTrue(brain.weight(ThanosMove.COMBO_MIND_STEP, far) > 0.0, "after the gap");
-      assertTrue(ThanosRules.teleportGap(ThanosPhase.FINAL) < ThanosRules.teleportGap(ThanosPhase.ONSLAUGHT));
+      assertTrue(ThanosRules.teleportGap(ThanosPhase.GAUNTLET) < ThanosRules.teleportGap(ThanosPhase.INVASION));
       assertTrue(ThanosMove.SPACE_STEP.teleports() && ThanosMove.COMBO_MIND_STEP.teleports() && !ThanosMove.SPACE_PULL.teleports());
    }
 
@@ -250,7 +250,7 @@ class ThanosBrainTest {
 
       // the step to a hidden target is much likelier than to a visible one
       ThanosBrain brain = new ThanosBrain(3);
-      ThanosBrain.Situation open = at(ThanosPhase.ESCALATION, 20);
+      ThanosBrain.Situation open = at(ThanosPhase.BLACK_ORDER, 20);
       assertTrue(brain.weight(ThanosMove.SPACE_STEP, hidden(open)) > 3.5 * brain.weight(ThanosMove.SPACE_STEP, open));
       int step = 0;
       for (int seed = 0; seed < 200; seed++) {
@@ -267,7 +267,7 @@ class ThanosBrainTest {
    @Test
    void afterATimeStopRewindOrStepLead() {
       // released from a time stop at 10 blocks with a little damage taken meanwhile
-      ThanosBrain.Situation released = with(at(ThanosPhase.ESCALATION, 10.0), false, 1, 0, true, false, 0.8F, 0.015F);
+      ThanosBrain.Situation released = with(at(ThanosPhase.BLACK_ORDER, 10.0), false, 1, 0, true, false, 0.8F, 0.015F);
       int answers = 0;
       for (int seed = 0; seed < 300; seed++) {
          ThanosMove move = new ThanosBrain(seed).choose(released);
@@ -279,7 +279,7 @@ class ThanosBrainTest {
       assertTrue(answers > 180, "rewind or step " + answers + "/300");
       // the same little damage without a time stop is not worth a rewind
       ThanosBrain brain = new ThanosBrain(1);
-      assertEquals(0.0, brain.weight(ThanosMove.TIME_REWIND, with(at(ThanosPhase.ESCALATION, 10.0), false, 1, 0, false, false, 0.8F, 0.015F)));
+      assertEquals(0.0, brain.weight(ThanosMove.TIME_REWIND, with(at(ThanosPhase.BLACK_ORDER, 10.0), false, 1, 0, false, false, 0.8F, 0.015F)));
    }
 
    /** Thousands of choices over random situations: the hard rules hold every time. */

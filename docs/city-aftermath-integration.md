@@ -125,3 +125,18 @@ stage <impact|smolder|late|scar> | power off [radius] | power on` — для QA 
 - электросеть: `Outage`/`Restored` → `setPower("grid:<район>", ...)`; трансформаторы → небольшие зоны
   `infrastructure`; сверка с сетью раз в 5 с и при `/city reset` (`CityAftermath.outageSources`);
 - взрывы машин Альтрона → причина `ultron` (раньше попадали в `hero`).
+
+## 8. Годзилла (core 1.70.0, протокол 28)
+
+`worldevent/godzilla/GodzillaDestruction` сообщает о разрушениях через тот же контракт:
+- `CityAftermath.registerDamage` с id `godzilla:<сессия>` и причиной `AftermathCause.GODZILLA` — не чаще одного отчёта
+  на ячейку 24×24 за 3 с (`REPORT_CELL`, `AFTERMATH_INTERVAL`), тяжесть по числу снесённых блоков
+  (`GodzillaRules.severity`); `CityAftermath.hint` подсказывает зону заранее (дым и пыль появляются вовремя);
+- каждый снесённый блок идёт через `StructuralDamage` с причиной `CollapseCause.custom("godzilla")`, поэтому
+  подрубленные здания рушатся сами (`city-collapse`), а обрушение уже связано с aftermath и электросетью
+  (`CityDisasterLinks`);
+- `CityInfrastructure.damage(..., "godzilla")` гасит районы под лапами и лучом, `raiseAlarm("godzilla", ...)` включает
+  сирены и бегство жителей, `clearAlarm` — при остановке и любом финале;
+- `/godzilla stop` убирает только то, что принадлежит событию (тело, обломки, тревогу, эффекты); руины и зоны
+  остаются до `/city reset`.
+

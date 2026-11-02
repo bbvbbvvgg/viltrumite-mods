@@ -9,6 +9,8 @@ import dev.baranhan.viltrumitecore.worldevent.thanos.stone.RealityStone;
 import dev.baranhan.viltrumitecore.worldevent.thanos.stone.SoulStone;
 import dev.baranhan.viltrumitecore.worldevent.thanos.stone.SpaceStone;
 import dev.baranhan.viltrumitecore.worldevent.thanos.stone.TimeStone;
+import dev.baranhan.viltrumitecore.worldevent.thanos.war.ThanosWar;
+import dev.baranhan.viltrumitecore.worldevent.thanos.war.ThanosWarMoves;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -44,7 +46,7 @@ public final class ThanosCombat {
    public ThanosMove move;
    public int moveTick;
    public int telegraph;
-   public ThanosPhase movePhase = ThanosPhase.OPENING;
+   public ThanosPhase movePhase = ThanosPhase.ARRIVAL;
    @Nullable
    public LivingEntity target;
    /** Aim point locked at the move start (the telegraph marks it). */
@@ -66,6 +68,13 @@ public final class ThanosCombat {
    /** QA ({@code /thanos move}): the next move, past the brain's choice and the breather. */
    @Nullable
    private ThanosMove queued;
+   /** The war around him (ship, Black Order, army), set right after construction. */
+   @Nullable
+   private ThanosWar war;
+   @Nullable
+   private ThanosWarMoves warMoves;
+   /** Ticks the current target has been held (the threat table's hysteresis). */
+   private int targetHeld;
 
    public ThanosCombat(ThanosEvent event, ServerLevel level, ThanosEntity thanos, long seed) {
       this.event = event;
@@ -86,6 +95,26 @@ public final class ThanosCombat {
       this.queued = move;
    }
 
+   public void attach(ThanosWar war) {
+      this.war = war;
+      this.warMoves = new ThanosWarMoves(this, war);
+   }
+
+   @Nullable
+   public ThanosWar war() {
+      return this.war;
+   }
+
+   @Nullable
+   public ThanosWarMoves warMoves() {
+      return this.warMoves;
+   }
+
+   /** A phase started: the order to his army is his next move (after the running one). */
+   public void command() {
+      this.queued = ThanosMove.COMMAND;
+   }
+
    /**
     * One fight tick. {@code frozen}: Thanos himself is held (a hero's time stop or control);
     * {@code worldStopped}: a time stop holds the world too, so his lingering effects wait as well.
@@ -98,6 +127,9 @@ public final class ThanosCombat {
          this.time.tick();
          this.mind.tick();
          this.soul.tick();
+         if (this.warMoves != null) {
+            this.warMoves.tick();
+         }
       }
 
       if (frozen) {
@@ -174,13 +206,25 @@ public final class ThanosCombat {
    // ---- targets -------------------------------------------------------------------------------------
    private void updateTarget() {
       if (this.target != null && (!this.valid(this.target) || --this.retarget <= 0)) {
-         this.target = null;
+         LivingEntity kept = this.threatTarget();
+         this.target = kept;
+         if (kept != null) {
+            this.retarget = ThanosRules.RETARGET_TICKS;
+         }
+      }
+
+      if (this.target != null) {
+         this.targetHeld++;
       }
 
       if (this.target == null) {
+         this.targetHeld = 0;
          this.retarget = ThanosRules.RETARGET_TICKS;
          LivingEntity attacker = this.thanos.getLastHurtByMob();
-         if (attacker != null && this.valid(attacker) && this.thanos.tickCount - this.thanos.getLastHurtByMobTimestamp() < 60
+         LivingEntity threat = this.threatTarget();
+         if (threat != null) {
+            this.target = threat;
+         } else if (attacker != null && this.valid(attacker) && this.thanos.tickCount - this.thanos.getLastHurtByMobTimestamp() < 60
             && this.thanos.distanceToSqr(attacker) < 48 * 48) {
             this.target = attacker;
          } else {
@@ -191,7 +235,35 @@ public final class ThanosCombat {
       this.thanos.setTargetId(this.target == null ? -1 : this.target.getId());
    }
 
-   private boolean valid(LivingEntity e) {
+   /**
+    * The hero the threat table points at (the most dangerous one, with hysteresis), or null to fall
+    * back to the last attacker or the nearest hero.
+    */
+   @Nullable
+   private LivingEntity threatTarget() {
+      ThanosWar w = this.war;
+      if (w == null || this.event.heroes().isEmpty()) {
+         return null;
+      }
+
+      java.util.Map<java.util.UUID, ServerPlayer> byId = new java.util.HashMap<>();
+      for (ServerPlayer p : this.event.heroes()) {
+         if (this.valid(p)) {
+            byId.put(p.getUUID(), p);
+         }
+      }
+
+      java.util.UUID current = this.target == null ? null : this.target.getUUID();
+      java.util.UUID pick = w.threat.pick(current, byId.keySet(), this.targetHeld);
+      ServerPlayer out = pick == null ? null : byId.get(pick);
+      if (out != null && out != this.target) {
+         this.targetHeld = 0;
+      }
+
+      return out;
+   }
+
+   public boolean valid(LivingEntity e) {
       return e.isAlive() && e.level() == this.level && ThanosTargets.victim(e, this.thanos)
          && e.distanceToSqr(this.thanos) <= ThanosRules.PARTICIPANT_RADIUS * ThanosRules.PARTICIPANT_RADIUS
          && (!(e instanceof ServerPlayer p) || this.event.isParticipant(p));
@@ -227,10 +299,11 @@ public final class ThanosCombat {
       }
 
       float max = this.thanos.getMaxHealth();
-      return new ThanosBrain.Situation(this.thanos.phase(), t != null, distance, t != null && airborne(t), t != null && this.sees(t),
+      ThanosBrain.Situation s = new ThanosBrain.Situation(this.thanos.phase(), t != null, distance, t != null && airborne(t), t != null && this.sees(t),
          this.event.heroCount(), close,
          this.incomingProjectiles(), this.releasedAgo <= ThanosRules.TIME_STOP_REACTION_TICKS, this.thanos.threatened(),
          this.thanos.getHealth() / max, this.thanos.damageCap().recent() / max);
+      return this.war == null ? s : s.withWar(this.war.brainWar(t));
    }
 
    /**
@@ -395,11 +468,16 @@ public final class ThanosCombat {
 
    /** Moves he holds still for: heavy damage meanwhile staggers him (counterplay). */
    private static boolean channelled(ThanosMove m) {
-      return m == ThanosMove.SOUL_TETHER || m == ThanosMove.COMBO_SOUL_MIRAGE || m == ThanosMove.COMBO_ETERNITY || m == ThanosMove.MIND_PULSE;
+      return m == ThanosMove.SOUL_TETHER || m == ThanosMove.COMBO_SOUL_MIRAGE || m == ThanosMove.COMBO_ETERNITY || m == ThanosMove.MIND_PULSE
+         || m == ThanosMove.COMBO_INFINITY || m == ThanosMove.SOUL_HARVEST;
    }
 
    private void stun() {
       this.soul.breakAll();
+      if (this.warMoves != null) {
+         this.warMoves.interrupted(this.move);
+      }
+
       this.move = null;
       this.thanos.startMove(null);
       this.thanos.react(ThanosEntity.REACT_STUN);
@@ -412,7 +490,7 @@ public final class ThanosCombat {
    private void finish() {
       this.move = null;
       this.thanos.startMove(null);
-      this.breather = this.thanos.phase() == ThanosPhase.FINAL ? ThanosRules.BREATHER_TICKS / 2 : ThanosRules.BREATHER_TICKS;
+      this.breather = this.thanos.phase() == ThanosPhase.GAUNTLET ? ThanosRules.BREATHER_TICKS / 2 : ThanosRules.BREATHER_TICKS;
    }
 
    /** Cuts the running move short (no valid destination, target gone). */
@@ -423,6 +501,11 @@ public final class ThanosCombat {
    }
 
    private void onBegin(ThanosMove m) {
+      if (m.war() && this.warMoves != null) {
+         this.warMoves.begin(m);
+         return;
+      }
+
       switch (m) {
          case POWER_PUNCH, POWER_WAVE, COMBO_TIME_CRUSH -> ThanosSounds.play(this.level, this.thanos.position(), ThanosSounds.POWER_CHARGE, 1.8F, 1.0F, 64.0);
          case SPACE_STEP -> this.space.planStep();
@@ -454,6 +537,11 @@ public final class ThanosCombat {
          this.thanos.faceTowards(this.target.position(), 6.0F);
       }
 
+      if (m.war() && this.warMoves != null) {
+         this.warMoves.telegraph(m, t);
+         return;
+      }
+
       if (m == ThanosMove.TIME_DOME && t == 0) {
          this.aux = this.target != null ? this.target.position() : this.thanos.position();
          this.time.telegraphDome(this.aux, this.telegraph);
@@ -466,7 +554,13 @@ public final class ThanosCombat {
    }
 
    private void onActive(ThanosMove m, int t) {
-      float s = this.scale();
+      // the full Gauntlet: every stone hits harder
+      float s = this.scale() * ThanosRules.phaseDamage(m, this.movePhase);
+      if (m.war() && this.warMoves != null) {
+         this.warMoves.active(m, t, s);
+         return;
+      }
+
       switch (m) {
          case CLEAVE -> {
             if (t == 0) {
@@ -639,13 +733,17 @@ public final class ThanosCombat {
       return this.thanos.position().add(0.0, this.thanos.getBbHeight() * 0.88, 0.0);
    }
 
-   private void lunge(double speed) {
+   public void lunge(double speed) {
       Vec3 f = this.facing();
       this.thanos.scriptedMotion(new Vec3(f.x * speed, Math.max(0.0, this.thanos.getDeltaMovement().y), f.z * speed));
    }
 
    /** Ends every lingering effect at once (stop, outcome). */
    public void clearAll() {
+      if (this.warMoves != null) {
+         this.warMoves.clear();
+      }
+
       this.power.clear();
       this.space.clear();
       this.reality.clear();

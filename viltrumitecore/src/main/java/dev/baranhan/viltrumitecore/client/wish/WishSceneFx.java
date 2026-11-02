@@ -75,7 +75,7 @@ final class WishSceneFx {
       }
       play(mc, scene, style == WishStyle.MORTAL ? WishSounds.RETURN : WishSounds.GRANTED, 1.0F, 1.0F);
       float shake = switch (style) {
-         case THUNDER, CRIMSON -> 0.9F;
+         case THUNDER, CRIMSON, HELLFIRE -> 0.9F;
          case HOLY, SHADOW, TIME -> 0.55F;
          case MORTAL -> 0.0F;
          default -> 0.35F;
@@ -122,6 +122,7 @@ final class WishSceneFx {
          case HOLY -> holy(b, cam, camera, scene, c, t, w, glow, s);
          case STILL -> still(b, cam, camera, scene, c, t, w, glow, s);
          case SHIELD -> shield(b, cam, camera, c, t, w, glow, s);
+         case HELLFIRE -> hellfire(b, cam, camera, scene, c, t, w, glow, s);
          case MORTAL -> mortal(b, cam, camera, scene, c, t, w, glow, s);
       }
    }
@@ -411,6 +412,49 @@ final class WishSceneFx {
          PixelVfx.crossGlow(b, cam, camera, centre, 0.4F + 1.1F * k, 255, 255, 255, (int)(230 * k * w));
          float run = Math.max(0, dt) / 14.0F;
          ringH(b, cam, camera, c.add(0, 0.08, 0), 0.6F + 4.5F * run, 40, 0, 0.05F, s.primary, (int)(230 * (1 - run) * w));
+      }
+   }
+
+   /**
+    * Ghost Rider: tongues of hellfire rise in a ring and two chains coil up around him; on the swap the fire
+    * erupts into a column, the burning skull flares at head height and a ring of flame runs over the ground.
+    */
+   private static void hellfire(BufferBuilder b, Vec3 cam, Camera camera, WishScene scene, Vec3 c, float t, float w, boolean glow, WishStyle s) {
+      if (!glow || w <= 0) {
+         return;
+      }
+      float build = Mth.clamp((t - WishTimeline.CALL_END) / (float)(WishTimeline.SWAP - WishTimeline.CALL_END), 0, 1);
+      // the ring of flame tongues: each rises, sways and fades, hotter (yellower) at the root
+      int n = 26;
+      for (int i = 0; i < n; i++) {
+         float u = frac(hash(scene.seed, i) + t * 0.05F);
+         double a = i * Math.PI * 2 / n + 0.3 * Math.sin(t * 0.07 + i);
+         double r = 1.35 - 0.25 * u;
+         double h = (0.4 + 1.4 * build) * u;
+         int col = WishScreen.mix(s.secondary, s.primary, u);
+         PixelVfx.billboardPixel(b, cam, camera, c.add(Math.cos(a) * r, 0.08 + h, Math.sin(a) * r), 0.05F * (1 - 0.5F * u), WishStyle.r(col),
+            WishStyle.g(col), WishStyle.b(col), (int)(235 * w * (1 - u)));
+      }
+      // two chains coiling up: dark links with an ember in every other one
+      for (int chain = 0; chain < 2; chain++) {
+         for (int k = 0; k < 16; k++) {
+            float v = k / 16.0F;
+            double a = chain * Math.PI + v * Math.PI * 3 + t * 0.12;
+            double r = 0.75 - 0.25 * v;
+            Vec3 p = c.add(Math.cos(a) * r, 0.15 + 2.2 * v * build, Math.sin(a) * r);
+            PixelVfx.billboardPixel(b, cam, camera, p, 0.045F, 70, 62, 58, (int)(230 * w));
+            if (k % 2 == 0) {
+               PixelVfx.crossGlow(b, cam, camera, p, 0.03F, 255, 120, 30, (int)(200 * w));
+            }
+         }
+      }
+      float dt = t - WishTimeline.SWAP;
+      if (dt >= -2) {
+         float k = dt < 0 ? (dt + 2) / 2 : Math.max(0, 1 - dt / 16);
+         PixelVfx.crossGlow(b, cam, camera, c.add(0, 1.75, 0), 0.35F + 0.9F * k, 255, 140, 40, (int)(230 * k * w));
+         PixelVfx.beamDots(b, cam, camera, c.add(0, 0.1, 0), c.add(0, 3 + 9 * k, 0), 0.3F, 0.09F, 255, 110, 30, (int)(210 * k * w));
+         float run = Math.max(0, dt) / 16.0F;
+         ringH(b, cam, camera, c.add(0, 0.08, 0), 0.6F + 5.0F * run, 48, 0, 0.06F, s.primary, (int)(230 * (1 - run) * w));
       }
    }
 

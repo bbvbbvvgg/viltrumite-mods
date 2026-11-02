@@ -62,3 +62,26 @@
 ## Known limits (2026-10-31)
 - One native client crash (SIGSEGV in libc, Render thread) during the tests; not reproduced; cause unknown (unverified).
 - Not verified in game: every hero's parry/guard against every move, large hero crowds, live-player dodging of each move.
+
+## THANOS 2.0 — Total War (2026-11-05, core 1.70.0 / protocol 28, branch `feat/thanos-total-war-rework`)
+- Design: `docs/design/2026-11-05-thanos-total-war-design.md`; attack list, manual QA, results, known limits:
+  `docs/design/2026-11-05-thanos-total-war-qa.md`; assets: `tools/assets/thanos_war_sources.md`.
+- Server code: `worldevent/thanos/war/` (`ThanosWar` owns ship/army/order/holds/city/destruction per event),
+  `war/order/` (Maw/Cull brains), entities `entity/thanos/{EbonyMawEntity,CullObsidianEntity,WarDebrisEntity}`.
+  New `ThanosMove`s and FX kinds (29–58) are append-only (ordinal = network id); `ThanosWarS2CPacket` is last.
+- Invariants: the phase floor (`ThanosPhase.floor` = next gate) is enforced in `ThanosEntity.setHealth` after the hit
+  cap; held-off damage feeds `takeAbsorbed` → absorb FX. Every hold asks `ThanosControlLedger` (200 t window:
+  full/half/quarter, then 120 t immunity). Every removed block goes through `ThanosWarDestruction` (canDestroy,
+  budget 3200, cause `thanos`). Thanos, the Order and the Chitauri never hurt each other.
+- End of the war (any outcome): Order discarded, army recalled, ship leaves, and `ThanosArmy.clear` also sweeps
+  `chitauri_bolt` within 224 blocks; `ChitauriBolt.shouldBeSaved()` is false. Found in MP QA: missed bolts flew out of
+  the server's simulation distance, froze in non-ticking chunks and outlived the war.
+- Time Anomaly hurts only heroes farther than `ANOMALY_SAFE` (2 blocks) from the mark (staying by it is the counter).
+- `/thanos phase <p>` for a phase already reached answers `commands.viltrumitecore.thanos.phase_already`.
+- Client harness (`-Dviltrumitecore.subtitles.playtest=true`, `<gameDir>/subtitle_qa.txt`): `warstate`, `lookship`,
+  `fly`, `holdshot <name> [secs]`; log lines `SUBPT … sound …` and `SUBPT … strip <MOVE>|held|none`.
+- QA recipe that worked in the 4 GB sandbox: dedicated server -Xmx1000m (`--launchTarget forgeserveruserdev --nogui`,
+  RCON, flat, allow-flight, ops) + two clients -Xmx850m with separate gameDirs. Never compile while a dev JVM runs
+  (it loads classes from `build/classes`). Do not delete tracked `viltrumitecore/logs/*.log.gz`.
+- Known limits: city alarm/blackouts/collapses not seen without the Atheria map; FPS only under llvmpipe; Hulkbuster
+  clash only unit-tested (no summon command; "heavy" = bbox h ≥ 2.6 or w ≥ 1.1).

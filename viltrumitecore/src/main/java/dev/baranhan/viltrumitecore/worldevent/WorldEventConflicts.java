@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.worldevent;
 
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriInvasion;
+import dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaEvent;
 import dev.baranhan.viltrumitecore.worldevent.meteor.MeteorRain;
 import dev.baranhan.viltrumitecore.worldevent.thanos.ThanosEvent;
 import dev.baranhan.viltrumitecore.worldevent.ultron.UltronUprising;
@@ -12,9 +13,9 @@ import net.minecraft.server.level.ServerLevel;
 /**
  * Shared seam: which world events run now. A start command refuses while another big event
  * runs, unless the operator gives {@code force} (explicit permission). Only the Chitauri
- * invasion and the Ultron uprising are exclusive: trio/conquest squads, meteor rain and the
- * Thanos event keep their old relation to each other, and each of them refuses to start over
- * the invasion or the uprising (and those two over each of them and over each other).
+ * invasion, the Ultron uprising and the Godzilla catastrophe are exclusive: trio/conquest squads,
+ * meteor rain and the Thanos event keep their old relation to each other, and each of them refuses
+ * to start over the exclusive ones (and those over each of them and over each other).
  */
 public final class WorldEventConflicts {
    private WorldEventConflicts() {
@@ -39,12 +40,15 @@ public final class WorldEventConflicts {
       if (UltronUprising.running(level.getServer())) {
          out.add(Component.translatable(UltronUprising.CONFLICT_KEY));
       }
+      if (GodzillaEvent.running(level.getServer())) {
+         out.add(Component.translatable(GodzillaEvent.CONFLICT_KEY));
+      }
       return out;
    }
 
    /**
-    * The exclusive events, when they run: the invasion and the Ultron uprising (for /event start,
-    * /meteor start, /thanos start and /ultron start).
+    * The exclusive events, when they run: the invasion, the Ultron uprising and the Godzilla catastrophe (for
+    * /event start, /meteor start, /thanos start, /ultron start and /godzilla start).
     */
    public static List<Component> invasion(ServerLevel level) {
       List<Component> out = new ArrayList<>();
@@ -53,6 +57,9 @@ public final class WorldEventConflicts {
       }
       if (UltronUprising.running(level.getServer())) {
          out.add(Component.translatable(UltronUprising.CONFLICT_KEY));
+      }
+      if (GodzillaEvent.running(level.getServer())) {
+         out.add(Component.translatable(GodzillaEvent.CONFLICT_KEY));
       }
       return out;
    }

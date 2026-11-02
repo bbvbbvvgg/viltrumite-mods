@@ -20,7 +20,9 @@ public enum AftermathCause {
    COLLAPSE(     "collapse",        0.40F, 1.00F, 0.20F, 0.00F, 0.35F, 1.00F, 0.80F),
    ULTRON(       "ultron",          0.80F, 0.70F, 0.60F, 0.30F, 1.00F, 0.80F, 1.00F),
    INFRASTRUCTURE("infrastructure", 0.70F, 0.45F, 0.55F, 0.20F, 1.00F, 0.40F, 0.80F),
-   OTHER(        "other",           0.60F, 0.70F, 0.40F, 0.20F, 0.30F, 0.70F, 0.40F);
+   OTHER(        "other",           0.60F, 0.70F, 0.40F, 0.20F, 0.30F, 0.70F, 0.40F),
+   /** The kaiju: crushed blocks and dust everywhere, the atomic breath leaves glowing hot trenches. */
+   GODZILLA(     "godzilla",        0.95F, 0.95F, 0.75F, 0.85F, 0.55F, 1.00F, 0.55F);
 
    public static final int SMOKE = 0;
    public static final int DUST = 1;

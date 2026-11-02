@@ -141,4 +141,20 @@ class ThanosHudLayoutTest {
       assertEquals(300, ThanosHudLayout.stripWidth(400, 320, 317), "screen margins as before (width - 20)");
       assertEquals(ThanosHudLayout.MIN_STRIP, ThanosHudLayout.stripWidth(400, 320, 20));
    }
+
+   @Test
+   void theHintGivesWayToASubtitlePanelUnderTheStrip() {
+      assertEquals(ThanosHudLayout.MAX_HINT_LINES, ThanosHudLayout.hintLines(1000), "nothing under it: the whole hint");
+      assertEquals(3, ThanosHudLayout.hintLines(36));
+      assertEquals(2, ThanosHudLayout.hintLines(35));
+      assertEquals(2, ThanosHudLayout.hintLines(29));
+      assertEquals(1, ThanosHudLayout.hintLines(28));
+      assertEquals(1, ThanosHudLayout.hintLines(22));
+      assertEquals(0, ThanosHudLayout.hintLines(21), "the name alone");
+      assertEquals(0, ThanosHudLayout.hintLines(-5), "no room at all: still the name (the warning never disappears)");
+      assertTrue(ThanosHudLayout.TITLE_HEIGHT < ThanosHudLayout.stripHeight(1));
+      // GUI 427x240 (1280x720 at scale 3), both boss-bar rows, a hero with two heart rows: the strip starts at 97 and
+      // a portrait subtitle panel at 121, so a hint keeps one line instead of running into the panel
+      assertEquals(1, ThanosHudLayout.hintLines(121 - 1 - 97));
+   }
 }

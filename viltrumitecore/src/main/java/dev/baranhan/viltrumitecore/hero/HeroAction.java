@@ -115,7 +115,14 @@ public enum HeroAction {
    REDHULK_LEAP,
    REDHULK_BLAST,
    REDHULK_FURY,
-   REDHULK_OVERHEAT;
+   REDHULK_OVERHEAT,
+   /** Ghost Rider (spec docs/design/2026-11-02-ghost-rider-design.md); appended after REDHULK_OVERHEAT, wire ordinals unchanged. */
+   GHOSTRIDER_CYCLE,
+   GHOSTRIDER_TRANSFORM,
+   GHOSTRIDER_DASH,
+   GHOSTRIDER_WHIRL,
+   GHOSTRIDER_WAVE,
+   GHOSTRIDER_STARE;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

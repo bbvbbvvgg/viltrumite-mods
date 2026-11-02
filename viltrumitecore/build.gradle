@@ -8,7 +8,7 @@ plugins {
 // core uses classes from viltrumiteflight
 evaluationDependsOn(':viltrumiteflight')
 
-version = '1.69.0'
+version = '1.70.0'
 group = 'dev.baranhan.viltrumitecore'
 base { archivesName = 'reforgedcodex-core' }
 
@@ -90,6 +90,11 @@ processResources {
     from('src/main/resources/assets/viltrumite_city/lang') {
         include 'en_us.json'
         into 'data/viltrumite_city/lang'
+    }
+    // Same for the /scp096 command feedback (its keys live only in the lang overlay).
+    from('src/main/lang-overlays/scp096') {
+        include 'en_us.json'
+        into 'data/viltrumitecore/lang'
     }
     // Encyclopedia: the contextual-interaction catalog (docs/contextual-interactions.json) travels in the
     // jar; while it is not in the repository the screen says so (CodexCatalog).

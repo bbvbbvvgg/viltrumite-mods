@@ -2,7 +2,8 @@
 """Generates the encyclopedia strings: viltrumitecore/src/main/lang-overlays/codex/<locale>.json.
 
 Russian is the primary text, English is complete; the other shipped locales get the English text as the
-project's fallback (the same as the wish phrases), so every locale has exactly the same keys.
+project's fallback (the same as the wish phrases) unless an article is translated in codex_text_locales.py,
+so every locale has exactly the same keys.
 Run: python3 tools/codex/codex_lang.py [--check]
 """
 import json
@@ -13,6 +14,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from codex_text_gui import GUI  # noqa: E402
 from codex_text_heroes import HEROES  # noqa: E402
 from codex_text_world import NPCS, EVENTS  # noqa: E402
+from codex_text_locales import LOCALIZED  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "viltrumitecore/src/main/lang-overlays/codex"
@@ -38,7 +40,10 @@ def main():
     stale = []
     OUT.mkdir(parents=True, exist_ok=True)
     for loc in LOCALES:
-        data = ru if loc == "ru_ru" else en
+        data = ru if loc == "ru_ru" else dict(en)
+        for key, value in LOCALIZED.get(loc, {}).items():
+            assert PREFIX + key in en, loc + " translates an unknown key " + key
+            data[PREFIX + key] = value
         text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
         path = OUT / (loc + ".json")
         if check:

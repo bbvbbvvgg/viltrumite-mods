@@ -47,6 +47,20 @@ public class ViltrumiteCoreConfig {
    public boolean aftermathEnabled = true;
    /** City disaster aftermath: stage lengths x this (0.1..10; 1 = 45 s fresh, 6 min smouldering, 16 min late at severity 0.5). */
    public double aftermathDurationScale = 1.0;
+   // SCP-096 (docs/design/2026-11-05-scp096-design.md). Natural spawn: very rare, inside the prepared city only.
+   /** Seconds between natural-spawn rolls (10..86400; 300 = every 5 minutes). */
+   public double scp096NaturalCheckSeconds = 300.0;
+   /** Chance of one roll in percent (0..100). */
+   public double scp096NaturalChancePercent = 1.0;
+   /** Minutes after a natural spawn before the next one may roll (0..144000; 180 = 3 hours). */
+   public double scp096NaturalCooldownMinutes = 180.0;
+   /** Seconds of hysteria between seeing the face and the chase (3..60). */
+   public double scp096HysteriaSeconds = 14.0;
+   /**
+    * Client: folder with the original SCP: Containment Breach sounds (the game folder or one with the files).
+    * Empty: {@code <game dir>/viltrumitecore/scp096} and the usual install folders are searched.
+    */
+   public String scp096OriginalSoundsPath = "";
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -65,7 +79,8 @@ public class ViltrumiteCoreConfig {
          try {
             if (!java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("reinhardFinalPunchDamage")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseBlocksPerTick")
-               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("aftermathDurationScale")) {
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("aftermathDurationScale")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")) {
                save();
             }
          } catch (IOException ignored) {
