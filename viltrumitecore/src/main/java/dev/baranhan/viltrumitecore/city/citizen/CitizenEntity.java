@@ -180,6 +180,14 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       return true;
    }
 
+   /**
+    * Off the pedestrian grid for too long with no walkable cell nearby. An ordinary passer-by is simply removed;
+    * an entity with its own lifecycle (the T-1000) decides itself and must never be counted as destroyed here.
+    */
+   protected void lostOffGrid() {
+      this.discard();
+   }
+
    /** Counted by the city population (density trims, despawn, crowd index); a body with its own lifecycle is not. */
    protected boolean cityTracked() {
       return true;
