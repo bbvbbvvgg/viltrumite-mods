@@ -41,7 +41,8 @@ import org.slf4j.Logger;
  * With {@code -Dviltrumitecore.subtitles.playtest.world=true} the title screen opens that world by itself.
  * {@code fpshots <prefix> <t1,t2,...>} takes screenshots on the Final Punch scene clock (first scene on the client)
  * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}). {@code collapsestate} logs the
- * structural-collapse scenes (count, drawn fragments, render ms) and the fps.
+ * structural-collapse scenes (count, drawn fragments, render ms) and the fps. {@code warstate} logs the Thanos
+ * war on the client (phase, ship and its position, army, worst hull frame), {@code lookship} aims the camera at the ship.
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -235,6 +236,16 @@ public final class SubtitlePlaytest {
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
          // encyclopedia QA (hero gallery): open the wish screen, drive the GUI, resize, switch language
+         // Thanos war QA: the client's war state (ship, army, hull render cost) and aiming the camera at the ship
+         case "warstate" -> LOG.info("SUBPT t={} war {} fps={}", ticks, dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.qaSummary(), mc.getFps());
+         case "lookship" -> {
+            net.minecraft.world.phys.Vec3 at = dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.qaShip();
+            if (at != null && mc.player != null) {
+               net.minecraft.world.phys.Vec3 d = at.subtract(mc.player.getEyePosition());
+               mc.player.setYRot((float)Math.toDegrees(Math.atan2(-d.x, d.z)));
+               mc.player.setXRot((float)-Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z))));
+            }
+         }
          case "collapsestate" -> LOG.info("SUBPT t={} collapse {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.collapse.CollapseClient.qaSummary(), mc.getFps());
          case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());

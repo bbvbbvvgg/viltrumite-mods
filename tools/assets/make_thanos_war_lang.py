@@ -88,6 +88,13 @@ LINES = {
         "Lucháis bien. No cambia nada.",
         "İyi dövüşüyorsunuz. Hiçbir şeyi değiştirmez.",
         "你们打得不错。但这改变不了什么。"),
+    "thanos.pressed.2": (
+        "Impressive. And futile.",
+        "Впечатляет. И бесполезно.",
+        "Beeindruckend. Und vergeblich.",
+        "Impresionante. E inútil.",
+        "Etkileyici. Ve nafile.",
+        "令人钦佩。也毫无意义。"),
     "thanos.ship": (
         "The Sanctuary is above you. There is nowhere left to run.",
         "Санктуарий над вами. Бежать больше некуда.",
@@ -102,6 +109,20 @@ LINES = {
         "Sanctuary. Fuego.",
         "Sanctuary. Ateş.",
         "圣殿号。开火。"),
+    "thanos.ship_call.2": (
+        "Bring it down on them.",
+        "Обрушь это на них.",
+        "Lasst es auf sie niedergehen.",
+        "Que caiga sobre ellos.",
+        "Üzerlerine indirin.",
+        "让它砸在他们头上。"),
+    "thanos.ship_call.3": (
+        "Target marked. Fire.",
+        "Цель отмечена. Огонь.",
+        "Ziel markiert. Feuer.",
+        "Objetivo marcado. Fuego.",
+        "Hedef işaretlendi. Ateş.",
+        "目标已标记。开火。"),
     "thanos.wave": (
         "More. Send them all.",
         "Ещё. Отправьте всех.",
@@ -144,6 +165,20 @@ LINES = {
         "Vuestra ciudad da armas tan magníficas.",
         "Şehriniz ne güzel silahlar çıkarıyor.",
         "你们的城市，真是绝佳的武器。"),
+    "ebony_maw.volley.2": (
+        "Let your own walls pass judgement on you.",
+        "Пусть вас судят ваши же стены.",
+        "Lasst eure eigenen Mauern über euch richten.",
+        "Que vuestros propios muros os juzguen.",
+        "Kendi duvarlarınız sizi yargılasın.",
+        "让你们自己的城墙来审判你们。"),
+    "ebony_maw.volley.3": (
+        "Stone, glass, steel... all of it serves him.",
+        "Камень, стекло, сталь... Всё служит ему.",
+        "Stein, Glas, Stahl... alles dient ihm.",
+        "Piedra, cristal, acero... todo le sirve a él.",
+        "Taş, cam, çelik... Hepsi ona hizmet eder.",
+        "石头、玻璃、钢铁……一切都为他效命。"),
     "ebony_maw.grab": (
         "Be still. Your struggle is only noise.",
         "Замри. Твоя борьба — лишь шум.",
@@ -151,6 +186,20 @@ LINES = {
         "Quieto. Tu forcejeo no es más que ruido.",
         "Kıpırdama. Çırpınışın yalnızca gürültü.",
         "别动。你的挣扎不过是噪音。"),
+    "ebony_maw.grab.2": (
+        "Hush. Kneel before the Titan.",
+        "Тише. Преклонись перед Титаном.",
+        "Still. Knie vor dem Titanen.",
+        "Silencio. Arrodíllate ante el Titán.",
+        "Sus. Titan'ın önünde diz çök.",
+        "嘘。在泰坦面前跪下。"),
+    "ebony_maw.grab.3": (
+        "Your strength means nothing to me.",
+        "Твоя сила для меня ничто.",
+        "Deine Kraft bedeutet mir nichts.",
+        "Tu fuerza no significa nada para mí.",
+        "Gücün benim için hiçbir şey ifade etmiyor.",
+        "你的力量对我毫无意义。"),
     "ebony_maw.death": (
         "A pity... I so enjoyed your little world.",
         "Как жаль... Мне так нравился ваш маленький мир.",
@@ -179,6 +228,20 @@ LINES = {
         "¡Fuera de mi camino!",
         "Çekil yolumdan!",
         "滚开！"),
+    "cull_obsidian.charge.2": (
+        "I will break you!",
+        "Я тебя сломаю!",
+        "Ich breche dich!",
+        "¡Te voy a romper!",
+        "Seni kıracağım!",
+        "我要把你撞碎！"),
+    "cull_obsidian.charge.3": (
+        "Nothing stops me!",
+        "Меня ничто не остановит!",
+        "Nichts hält mich auf!",
+        "¡Nada me detiene!",
+        "Hiçbir şey beni durduramaz!",
+        "什么都挡不住我！"),
     "cull_obsidian.clash": (
         "Strong! Not strong enough!",
         "Силён! Но недостаточно!",
@@ -193,6 +256,13 @@ LINES = {
         "¡No tienes adónde huir!",
         "Kaçacak yer yok!",
         "无处可逃！"),
+    "cull_obsidian.chain.2": (
+        "Come down here!",
+        "А ну вниз!",
+        "Komm runter!",
+        "¡Baja aquí!",
+        "İn aşağı!",
+        "给我下来！"),
     "cull_obsidian.death": (
         "For... the... Titan...",
         "За... Титана...",
