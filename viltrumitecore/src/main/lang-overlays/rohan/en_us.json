@@ -32,6 +32,7 @@
   "codex.viltrumitecore.rohan.lore": "A proud, curious manga artist who will do anything for reality in his work. His stand, a small boy in a long coat and a top hat, turns anyone who sees his drawing or is touched by it into a living book: every page is the truth of their life, and whatever Rohan writes into it they must obey.",
   "codex.viltrumitecore.rohan.gameplay": "Ink (0-100) pays for everything except the ultimate, which needs Inspiration from reading new kinds of books. Heaven's Door opens one body by touch; Air Sketch and the Manuscript open whoever looks. In the book you read real data and write lines from a fixed list: Safety Lock, forget the target, keep away, stand still, spare villagers, guard, go to, no attacks of a kind, fly backwards, follow, calm. Bosses and strong heroes give short windows, one line, resist and throw lines back; S+ books are read-only.",
   "codex.viltrumitecore.rohan.relations": "He would love to read DIO's book; the city's citizens are his favourite material.",
+  "gui.viltrumitecore.config.post_process.manga_effects": "Manga Effects Multiplier (Heaven's Door)",
   "subtitles.viltrumitecore.rohan.door_summon": "Heaven's Door appears",
   "subtitles.viltrumitecore.rohan.door_touch": "Heaven's Door touches",
   "subtitles.viltrumitecore.rohan.dismiss": "Stand fades",
