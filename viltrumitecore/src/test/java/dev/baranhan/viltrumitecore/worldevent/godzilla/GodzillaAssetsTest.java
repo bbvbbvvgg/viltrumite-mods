@@ -444,4 +444,36 @@ class GodzillaAssetsTest {
       assertTrue(boss.find(), "CombatBalance.isBoss");
       assertTrue(boss.group().contains("GodzillaEntity") && boss.group().contains("GodzillaPart"), boss.group());
    }
+   /**
+    * The event and /city reset never run over each other (playtest: a start during the reset left 609 blocks the queue
+    * could not put back): a start waits for the restore, the reset stops the kaiju before anything else.
+    */
+   @Test
+   void theEventAndTheCityResetNeverOverlap() throws IOException {
+      String event = Files.readString(JAVA.resolve("worldevent/godzilla/GodzillaEvent.java"));
+      Matcher start = Pattern.compile("public static Start start\\(.*?return Start\\.STARTED;", Pattern.DOTALL).matcher(event);
+      assertTrue(start.find(), "GodzillaEvent.start");
+      int restoring = start.group().indexOf("restoreQueue().running()");
+      assertTrue(restoring > 0 && restoring < start.group().indexOf("addFreshEntity"), "a start during /city reset must be refused");
+      String city = Files.readString(JAVA.resolve("city/CityManager.java"));
+      int reset = city.indexOf("void startReset()");
+      int stop = city.indexOf("GodzillaEvent.onCityReset(this.level)", reset);
+      assertTrue(reset >= 0 && stop > reset && stop < city.indexOf("this.restore.start(", reset), "/city reset must stop the kaiju first");
+   }
+
+   /**
+    * Debris saved in mid-air with its chunk loads back untracked (playtest: 43 falling blocks hung in the air after the
+    * retreat, the cleanup saw none): thrown blocks carry the tag, the event drops them on load and the cleanup finds them.
+    */
+   @Test
+   void thrownDebrisIsTaggedAndNeverOutlivesItsFlight() throws IOException {
+      String destruction = Files.readString(JAVA.resolve("worldevent/godzilla/GodzillaDestruction.java"));
+      assertTrue(destruction.contains("addTag(DEBRIS_TAG)"), "debris tag at launch");
+      String event = Files.readString(JAVA.resolve("worldevent/godzilla/GodzillaEvent.java"));
+      Matcher join = Pattern.compile("void onEntityJoin\\(EntityJoinLevelEvent event\\) \\{.*?\\n   \\}", Pattern.DOTALL).matcher(event);
+      assertTrue(join.find(), "join hook");
+      assertTrue(join.group().contains("loadedFromDisk()") && join.group().contains("isDebris") && join.group().contains("setCanceled(true)"), join.group());
+      Matcher cleanup = Pattern.compile("public static int cleanup\\(.*?return removed;", Pattern.DOTALL).matcher(event);
+      assertTrue(cleanup.find() && cleanup.group().contains("isDebris"), "the cleanup must sweep untracked debris");
+   }
 }

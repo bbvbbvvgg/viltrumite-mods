@@ -514,6 +514,8 @@ public final class CityManager {
    // ------------------------------------------------------------------ reset
 
    void startReset() {
+      // a kaiju still walking would wreck the streets the queue puts back: it goes first (its damage is journaled)
+      dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaEvent.onCityReset(this.level);
       // a collapse still falling would carve the restored map and leave fresh ruins (seen after a Godzilla rampage):
       // stop them first; what they already removed is in the journal and comes back with the rest
       dev.baranhan.viltrumitecore.world.collapse.CollapseDirector.abortAll(this.level);
