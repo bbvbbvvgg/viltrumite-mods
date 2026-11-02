@@ -25,3 +25,12 @@ Audio licences: `docs/venom/audio-sources.md`.
   logged reason (`/venom compat`); no hard dependency, none of their code or assets. Signature test:
   `./gradlew :viltrumitecore:test --tests '*FalbiksJarSignatureTest*' -PfalbiksJar=<path>`.
 - Gotchas: tests rewrite the tracked `viltrumitecore/logs/*.log.gz` — never commit them.
+- Release window (`HOST_SAFE_TICKS` 60): environment AND the releasing symbiote cannot hurt the host
+  (`VenomPossession.sparedFrom`); the boss turns to another player or backs off (`VenomBossBrain.spit/sparing`).
+  The host's resist HUD lifts over the voice subtitle panel (`VenomHostFx.resistY` + `HeroSubtitles.panelTop`);
+  the husk's name tag is hidden for host and possessor only.
+- Hero choice in game: Od Lagna's Wish (`viltrumitecore:od_lagna_wish`, RMB) → «я желаю больше никогда не быть
+  одному…»; `/viltrumite choose` no longer opens a screen (by design). `/venom boss` refuses on Peaceful.
+- Real QA (2026-11-02, Atheria): `docs/venom/playtest-2026-11-02.md` — singleplayer + dedicated server with
+  2 clients (one with real X input). QA helpers: harness `venomstate`; `/subtitleqa lowhp|prep|hero`.
+  Without the harness, keys need the window focused ~1 s before the press (`isWindowActive`).

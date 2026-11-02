@@ -26,9 +26,11 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
+import net.minecraftforge.client.event.RenderNameTagEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.client.event.sound.PlaySoundEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -239,6 +241,22 @@ public final class VenomPossessionClient {
       }
       Session s = ofPossessor(mc.player.getId());
       return s != null && s.phase == CONTROL ? s : null;
+   }
+
+   /**
+    * The husk's name tag is not drawn for the two inside a takeover: the host's camera stands right at the slumped
+    * body, so the possessor's name hung huge across the nightmare view (playtest 2026-11-02). Bystanders still see it.
+    */
+   @SubscribeEvent
+   public static void onNameTag(RenderNameTagEvent event) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player != null && hidesName(event.getEntity().getId(), localSession(), ofPossessor(mc.player.getId()))) {
+         event.setResult(Event.Result.DENY);
+      }
+   }
+
+   static boolean hidesName(int entityId, @Nullable Session asHost, @Nullable Session asPossessor) {
+      return asHost != null && asHost.possessorId == entityId || asPossessor != null && asPossessor.possessorId == entityId;
    }
 
    /** The host's mouse does not turn him (TimeFreezeMouseMixin asks). */
