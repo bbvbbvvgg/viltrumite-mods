@@ -82,6 +82,8 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
    private static long qaNanos;
    private static int qaPlates;
    private static long qaFrames;
+   /** QA only (subtitle playtest {@code godzillalod <n>}): draw this LOD at any distance; -1 = by distance. */
+   public static int qaForceLod = -1;
 
    private final Info[] infos = new Info[3];
    private final Matrix4f inverse = new Matrix4f();
@@ -151,6 +153,9 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
       } else {
          lod = lodFor(dist, e.clientLod);
          e.clientLod = lod;
+         if (qaForceLod >= 0) {
+            lod = Math.min(qaForceLod, GEO.length - 1);
+         }
       }
       Info info = this.info(lod);
       if (info == null) {
