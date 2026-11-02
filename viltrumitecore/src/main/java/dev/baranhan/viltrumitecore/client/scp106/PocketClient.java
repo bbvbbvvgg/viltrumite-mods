@@ -319,29 +319,36 @@ public final class PocketClient {
       BEDS.clear();
    }
 
+   @Nullable
+   private static SoundEvent lastOneShot;
+
    private static void oneShots(Minecraft mc, LocalPlayer p, Zone z, @Nullable Kind k) {
       if (--nextOneShot > 0) {
          return;
       }
       boolean calm = k == Kind.SANCTUARY;
-      nextOneShot = (calm ? 300 : 70) + RANDOM.nextInt(calm ? 400 : 170);
+      nextOneShot = (calm ? 300 : 110) + RANDOM.nextInt(calm ? 400 : 220);
       if (calm) {
          return;
       }
+      // the place itself (drips, creaks, pipes) most of the time; steps and voices rarely, never twice running
       SoundEvent s;
-      int roll = RANDOM.nextInt(100);
       boolean whisperZone = z == Zone.DOMAIN || z == Zone.FALSE_SAFE;
-      if (roll < (whisperZone ? 22 : 8)) {
-         s = Scp106Sounds.WHISPER.get();
-      } else if (roll < 40) {
-         s = Scp106Sounds.FAR_STEPS.get();
-      } else if (roll < 60) {
-         s = Scp106Sounds.CREAK.get();
-      } else if (roll < 78) {
-         s = Scp106Sounds.METAL.get();
-      } else {
-         s = Scp106Sounds.DRIP.get();
-      }
+      do {
+         int roll = RANDOM.nextInt(100);
+         if (roll < (whisperZone ? 18 : 6)) {
+            s = Scp106Sounds.WHISPER.get();
+         } else if (roll < 22) {
+            s = Scp106Sounds.FAR_STEPS.get();
+         } else if (roll < 48) {
+            s = Scp106Sounds.CREAK.get();
+         } else if (roll < 70) {
+            s = Scp106Sounds.METAL.get();
+         } else {
+            s = Scp106Sounds.DRIP.get();
+         }
+      } while (s == lastOneShot && s != Scp106Sounds.DRIP.get());
+      lastOneShot = s;
       double ang = RANDOM.nextDouble() * Math.PI * 2.0;
       double d = 8.0 + RANDOM.nextDouble() * 14.0;
       double x = p.getX() + Math.cos(ang) * d;
