@@ -1,0 +1,337 @@
+{
+  "ghost_rider.engine_idle": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.engine_idle",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/engine_idle",
+        "attenuation_distance": 24,
+        "stream": false
+      }
+    ]
+  },
+  "ghost_rider.engine_low": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.engine_low",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/engine_low",
+        "attenuation_distance": 32,
+        "stream": false
+      }
+    ]
+  },
+  "ghost_rider.engine_high": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.engine_high",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/engine_high",
+        "attenuation_distance": 40,
+        "stream": false
+      }
+    ]
+  },
+  "ghost_rider.skid": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.skid",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/skid",
+        "attenuation_distance": 24,
+        "stream": false
+      }
+    ]
+  },
+  "ghost_rider.flame_roar": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.flame_roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/flame_roar",
+        "attenuation_distance": 24,
+        "stream": false
+      }
+    ]
+  },
+  "ghost_rider.bike_form": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.bike_form",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/bike_form",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ghost_rider.bike_burnout": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.bike_burnout",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/bike_burnout",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ghost_rider.ignition": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.ignition",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/ignition",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ghost_rider.backfire": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.backfire",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/backfire",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "ghost_rider.shift": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.shift",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/shift",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "ghost_rider.boost": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.boost",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/boost",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "ghost_rider.bike_jump": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.bike_jump",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/bike_jump",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ghost_rider.bike_land": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.bike_land",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/bike_land",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ghost_rider.bike_crash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.bike_crash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/bike_crash",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "ghost_rider.hard_stop": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.hard_stop",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/hard_stop",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ghost_rider.mount": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.mount",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/mount",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "ghost_rider.ram": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.ram",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/ram",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ghost_rider.chain_lash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.chain_lash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/chain_lash",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ghost_rider.chain_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.chain_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/chain_hit",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ghost_rider.chain_throw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.chain_throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/chain_throw",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ghost_rider.chain_whirl": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.chain_whirl",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/chain_whirl",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ghost_rider.chain_slam": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.chain_slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/chain_slam",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ghost_rider.hellfire_ignite": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.hellfire_ignite",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/hellfire_ignite",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ghost_rider.hellfire_wave": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.hellfire_wave",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/hellfire_wave",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "ghost_rider.hellfire_burn": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.hellfire_burn",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/hellfire_burn",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "ghost_rider.dash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.dash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/dash",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ghost_rider.transform": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.transform",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/transform",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "ghost_rider.revert": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.revert",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/revert",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ghost_rider.skull_fire": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.skull_fire",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/skull_fire",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ghost_rider.stare": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.stare",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/stare",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ghost_rider.verdict": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.verdict",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/verdict",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ghost_rider.innocent": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.innocent",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/innocent",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ghost_rider.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.ghost_rider.refuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:ghost_rider/refuse",
+        "attenuation_distance": 12
+      }
+    ]
+  }
+}
