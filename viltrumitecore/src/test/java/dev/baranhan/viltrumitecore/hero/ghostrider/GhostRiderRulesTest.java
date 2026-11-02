@@ -1,0 +1,231 @@
+package dev.baranhan.viltrumitecore.hero.ghostrider;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleRules;
+import java.util.UUID;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import org.junit.jupiter.api.Test;
+
+/** Pure numbers of the Ghost Rider: the burn-away clock, the chain, hellfire, the bike's hits and the Penance Stare. */
+class GhostRiderRulesTest {
+   private static final float EPS = 1.0E-4F;
+
+   @Test
+   void burnFramesRunFromJohnnyToTheSkullAndBack() {
+      assertEquals(0, GhostRiderRules.burnFrame(false, 0), "Johnny at the start");
+      assertEquals(GhostRiderRules.BURN_FRAMES, GhostRiderRules.burnFrame(false, GhostRiderRules.TRANSFORM_FLARE_TICK),
+         "a bare skull when it bursts into flame");
+      int last = 0;
+      for (int t = 0; t <= GhostRiderRules.TRANSFORM_TICKS; t++) {
+         int f = GhostRiderRules.burnFrame(false, t);
+         assertTrue(f >= last && f <= GhostRiderRules.BURN_FRAMES, "the skin only burns further away");
+         last = f;
+      }
+      assertEquals(GhostRiderRules.BURN_FRAMES, GhostRiderRules.burnFrame(true, 0));
+      assertEquals(0, GhostRiderRules.burnFrame(true, GhostRiderRules.REVERT_TICKS), "Johnny again after the way back");
+      last = GhostRiderRules.BURN_FRAMES;
+      for (int t = 0; t <= GhostRiderRules.REVERT_TICKS + 5; t++) {
+         int f = GhostRiderRules.burnFrame(true, t);
+         assertTrue(f <= last && f >= 0, "the skin only grows back");
+         last = f;
+      }
+   }
+
+   @Test
+   void sinsComeOnlyFromRecordedDeeds() {
+      assertEquals(0, GhostRiderRules.sins(0, 0, 0.0F), "nothing is invented");
+      assertEquals(GhostRiderRules.SIN_PLAYER_KILL, GhostRiderRules.sins(1, 0, 0.0F));
+      assertEquals(GhostRiderRules.SIN_INNOCENT_KILL, GhostRiderRules.sins(0, 1, 0.0F));
+      assertEquals(0, GhostRiderRules.sins(0, 0, GhostRiderRules.SIN_HARM - 0.1F), "a scratch is no sin");
+      assertEquals(1, GhostRiderRules.sins(0, 0, GhostRiderRules.SIN_HARM));
+      assertEquals(2 * GhostRiderRules.SIN_PLAYER_KILL + 3 * GhostRiderRules.SIN_INNOCENT_KILL + 4, GhostRiderRules.sins(2, 3, 45.0F));
+      assertEquals(0, GhostRiderRules.sins(-5, -1, -100.0F), "corrupt negative records count as nothing");
+      assertEquals(Integer.MAX_VALUE, GhostRiderRules.sins(Integer.MAX_VALUE, Integer.MAX_VALUE, Float.MAX_VALUE), "no overflow");
+      assertEquals(Integer.MAX_VALUE, GhostRiderRules.sins(0, 0, Float.MAX_VALUE), "no overflow from harm alone");
+      assertEquals(0, GhostRiderRules.sins(0, 0, Float.NaN), "a corrupt harm record counts as nothing");
+   }
+
+   @Test
+   void penanceSparesTheInnocentGrowsWithSinsAndIsCapped() {
+      assertEquals(0.0F, GhostRiderRules.penanceDamage(0, false, 20.0F), EPS, "the innocent are spared");
+      assertEquals(0.0F, GhostRiderRules.penanceDamage(0, true, 500.0F), EPS, "an innocent boss too");
+      assertEquals(GhostRiderRules.STARE_BASE + GhostRiderRules.STARE_PER_SIN, GhostRiderRules.penanceDamage(1, false, 20.0F), EPS);
+      float last = 0.0F;
+      for (int sins = 1; sins < 100; sins++) {
+         float d = GhostRiderRules.penanceDamage(sins, false, 20.0F);
+         assertTrue(d >= last, "more sins never burn less");
+         assertTrue(d <= GhostRiderRules.STARE_CAP + EPS, "capped");
+         last = d;
+      }
+      assertEquals(GhostRiderRules.STARE_CAP, GhostRiderRules.penanceDamage(Integer.MAX_VALUE, false, 20.0F), EPS);
+      assertEquals(40.0F, GhostRiderRules.penanceDamage(1000, true, 200.0F), EPS, "a fifth of a boss's health");
+      assertEquals(GhostRiderRules.STARE_BOSS_CAP, GhostRiderRules.penanceDamage(1000, true, 5000.0F), EPS, "never more than the boss cap");
+      assertTrue(GhostRiderRules.penanceDamage(1000, true, 0.0F) > 0.0F, "a broken max health still gets a verdict");
+   }
+
+   @Test
+   void slamFallsOffToSixtyPercentAtTheRim() {
+      assertEquals(GhostRiderRules.SLAM_DAMAGE, GhostRiderRules.slamDamage(0.0), EPS);
+      assertEquals(GhostRiderRules.SLAM_DAMAGE, GhostRiderRules.slamDamage(GhostRiderRules.SLAM_RADIUS * 0.5), EPS);
+      assertEquals(GhostRiderRules.SLAM_DAMAGE * 0.6F, GhostRiderRules.slamDamage(GhostRiderRules.SLAM_RADIUS), EPS);
+      assertEquals(GhostRiderRules.SLAM_DAMAGE * 0.6F, GhostRiderRules.slamDamage(GhostRiderRules.SLAM_RADIUS * 3), EPS);
+      float last = Float.MAX_VALUE;
+      for (double d = 0; d <= GhostRiderRules.SLAM_RADIUS; d += 0.25) {
+         float v = GhostRiderRules.slamDamage(d);
+         assertTrue(v <= last, "falls off with distance");
+         last = v;
+      }
+   }
+
+   @Test
+   void hellfireBurnIsBoundedAndWaterProofNumbersAddUp() {
+      assertEquals(0.0F, GhostRiderRules.burnTotal(0), EPS);
+      assertEquals(4.0F, GhostRiderRules.burnTotal(GhostRiderRules.LASH_BURN_TICKS), EPS);
+      assertEquals(GhostRiderRules.burnTotal(GhostRiderRules.BURN_MAX_TICKS), GhostRiderRules.burnTotal(GhostRiderRules.BURN_MAX_TICKS * 10), EPS,
+         "the burn never stacks past its cap");
+      assertTrue(GhostRiderRules.burnTotal(GhostRiderRules.BURN_MAX_TICKS) <= 20.0F, "a full burn never kills a full-health player alone");
+   }
+
+   @Test
+   void normalRidingNeverHurtsAndRamsScaleWithSpeed() {
+      assertEquals(0.0F, GhostRiderRules.bikeHitDamage(0.0), EPS);
+      assertEquals(0.0F, GhostRiderRules.bikeHitDamage(GhostRiderRules.HIT_SPEED - 0.01), EPS, "cruising only nudges");
+      assertEquals(GhostRiderRules.HIT_DAMAGE_MIN, GhostRiderRules.bikeHitDamage(GhostRiderRules.HIT_SPEED), EPS);
+      assertEquals(GhostRiderRules.HIT_DAMAGE_MAX, GhostRiderRules.bikeHitDamage(HellCycleRules.MAX_SPEED), EPS);
+      assertEquals(GhostRiderRules.HIT_DAMAGE_MAX, GhostRiderRules.bikeHitDamage(HellCycleRules.BOOST_SPEED), EPS, "boost is the ram's job");
+      assertTrue(GhostRiderRules.HIT_SPEED > HellCycleRules.MAX_SPEED * 0.5, "half throttle through a crowd is harmless");
+      assertTrue(GhostRiderRules.RAM_DAMAGE > GhostRiderRules.HIT_DAMAGE_MAX, "the boosted ram hits hardest");
+   }
+
+   @Test
+   void chainPullsOnlyManSizedBodies() {
+      assertTrue(GhostRiderRules.pullable(0.6F, 1.95F, false), "zombie");
+      assertTrue(GhostRiderRules.pullable(0.6F, 1.8F, false), "player");
+      assertFalse(GhostRiderRules.pullable(1.4F, 2.7F, false), "iron golem");
+      assertFalse(GhostRiderRules.pullable(0.6F, 1.8F, true), "bosses only get bitten");
+   }
+
+   @Test
+   void chainTimelineFollowsTheSpec() {
+      // spec §5.4 / §8: 6/6/9 damage, contact on the 5th tick, 10/10/12 ticks, combo window 12
+      assertEquals(10, GhostRiderMove.LASH_1.length);
+      assertEquals(10, GhostRiderMove.LASH_2.length);
+      assertEquals(12, GhostRiderMove.LASH_3.length);
+      for (int step = 0; step < GhostRiderRules.COMBO_LENGTH; step++) {
+         GhostRiderMove lash = GhostRiderMove.lash(step);
+         assertEquals(4, lash.contact, lash + ": contact on the 5th tick");
+         assertTrue(lash.contact < lash.cancelFrom && lash.cancelFrom < lash.length, lash + ": cancellable only after the contact");
+      }
+      assertEquals(12, GhostRiderRules.COMBO_WINDOW);
+      assertEquals(9.0F, GhostRiderRules.LASH_DAMAGE[GhostRiderRules.COMBO_LENGTH - 1], EPS);
+   }
+
+   @Test
+   void closeBodiesTakeTheBurningFist() {
+      assertTrue(GhostRiderRules.punches(0.0));
+      assertTrue(GhostRiderRules.punches(GhostRiderRules.PUNCH_RANGE));
+      assertFalse(GhostRiderRules.punches(GhostRiderRules.PUNCH_RANGE + 0.01), "beyond 2.6 blocks the chain");
+      assertFalse(GhostRiderRules.punches(-1.0));
+      assertFalse(GhostRiderRules.punches(Double.NaN));
+      assertTrue(GhostRiderRules.PUNCH_RANGE < GhostRiderRules.LASH_REACH);
+      assertEquals(7.0F, GhostRiderRules.PUNCH_DAMAGE, EPS);
+      assertEquals(6.0F, GhostRiderRules.burnTotal(GhostRiderRules.PUNCH_BURN_TICKS), EPS, "3 s of hellfire");
+      GhostRiderMove punch = GhostRiderMove.PUNCH;
+      assertEquals(GhostRiderMove.values().length - 1, punch.ordinal(), "appended last: synced action ids never shift");
+      assertEquals(GhostRiderMove.BIKE_HOOK.ordinal() + 1, punch.ordinal());
+      assertEquals(punch, GhostRiderMove.byId(punch.ordinal()));
+      assertTrue(punch.contact > 0 && punch.contact < punch.cancelFrom && punch.cancelFrom < punch.length);
+      assertFalse(punch.onBike() || punch.roots() || punch.locks() || punch.isLash() || punch.unstoppable());
+   }
+
+   @Test
+   void theRiderShrugsOffFalls() {
+      assertEquals(0.0F, GhostRiderRules.fallDamage(GhostRiderRules.SAFE_FALL), EPS);
+      assertEquals(5.0F, GhostRiderRules.fallDamage(GhostRiderRules.SAFE_FALL + 10.0F), EPS);
+   }
+
+   @Test
+   void cooldownTableMatchesTheSlots() {
+      assertEquals(GhostRiderRules.COOLDOWNS, GhostRiderRules.COOLDOWN_TICKS.length);
+      for (int t : GhostRiderRules.COOLDOWN_TICKS) {
+         assertTrue(t > 0);
+      }
+      assertTrue(GhostRiderRules.COOLDOWN_TICKS[GhostRiderRules.CD_STARE] >= 600, "the verdict is rare");
+      assertTrue(GhostRiderRules.STARE_INNOCENT_COOLDOWN < GhostRiderRules.COOLDOWN_TICKS[GhostRiderRules.CD_STARE]);
+      assertTrue(GhostRiderRules.DASH_FOOT_COOLDOWN < GhostRiderRules.COOLDOWN_TICKS[GhostRiderRules.CD_DASH]);
+   }
+
+   @Test
+   void ledgerKeepsDeedsAcrossSaves() {
+      assertTrue(PenanceLedger.Deeds.NONE.innocent());
+      assertEquals(0, PenanceLedger.Deeds.NONE.sins());
+      PenanceLedger.Deeds killer = new PenanceLedger.Deeds(1, 2, 25.0F);
+      assertFalse(killer.innocent());
+      assertEquals(GhostRiderRules.sins(1, 2, 25.0F), killer.sins());
+      CompoundTag tag = new CompoundTag();
+      ListTag souls = new ListTag();
+      CompoundTag soul = new CompoundTag();
+      UUID id = UUID.randomUUID();
+      soul.putUUID("Id", id);
+      soul.putInt("Players", 1);
+      soul.putInt("Innocents", 2);
+      soul.putFloat("Harm", 25.0F);
+      souls.add(soul);
+      souls.add(new CompoundTag());
+      tag.put("Souls", souls);
+      CompoundTag again = PenanceLedger.load(tag).save(new CompoundTag());
+      ListTag list = again.getList("Souls", 10);
+      assertEquals(1, list.size(), "the record without an id is dropped");
+      CompoundTag c = list.getCompound(0);
+      assertEquals(id, c.getUUID("Id"));
+      assertEquals(1, c.getInt("Players"));
+      assertEquals(2, c.getInt("Innocents"));
+      assertEquals(25.0F, c.getFloat("Harm"), EPS);
+   }
+
+   @Test
+   void anEarlyClickWaitsForTheCutOfItsStrike() {
+      // QA 2026-11-02: an LMB before the cut tick was dropped, so a quick third lash never came
+      for (GhostRiderMove m : new GhostRiderMove[]{GhostRiderMove.LASH_1, GhostRiderMove.LASH_2, GhostRiderMove.LASH_3, GhostRiderMove.PUNCH}) {
+         assertTrue(m.cancelFrom > m.contact && m.cancelFrom < m.length, m + " may be cut after its contact, before its end");
+      }
+      GhostRiderState s = new GhostRiderState();
+      s.start(GhostRiderMove.LASH_1);
+      s.primaryQueued = true;
+      s.elapsed = GhostRiderMove.LASH_1.cancelFrom - 1;
+      assertFalse(s.takeQueuedPrimary(), "waits while the strike may not be cut");
+      s.elapsed = GhostRiderMove.LASH_1.cancelFrom;
+      assertTrue(s.takeQueuedPrimary(), "fires as the strike may be cut");
+      assertFalse(s.takeQueuedPrimary(), "once");
+      s.primaryQueued = true;
+      s.start(GhostRiderMove.HOOK);
+      assertFalse(s.primaryQueued, "another move drops it");
+      s.primaryQueued = true;
+      s.endMove();
+      assertFalse(s.takeQueuedPrimary(), "it dies with its move");
+   }
+
+   @Test
+   void aRespawnedBodyKeepsTheCooldownsAndTheForm() {
+      // QA 2026-11-02 (dedicated server): the Rider who died came back as Johnny with 20 HP, against spec §7
+      GhostRiderState s = new GhostRiderState();
+      s.rider = true;
+      s.cooldowns[0] = 40;
+      s.start(GhostRiderMove.LASH_1);
+      s.primaryQueued = true;
+      s.summonAfterTransform = true;
+      GhostRiderState copy = s.respawnCopy();
+      assertTrue(copy.rider, "the Spirit of Vengeance survives the death");
+      assertEquals(40, copy.cooldowns[0], "the cooldowns carry over");
+      assertNull(copy.move, "no move carries over");
+      assertFalse(copy.primaryQueued, "nothing queued");
+      assertFalse(copy.summonAfterTransform, "no bike is called for the fresh body");
+      s.rider = false;
+      assertFalse(s.respawnCopy().rider, "Johnny stays Johnny");
+   }
+}

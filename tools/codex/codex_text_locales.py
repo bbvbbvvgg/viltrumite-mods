@@ -1,0 +1,73 @@
+"""Codex articles translated beyond ru/en (other entries fall back to English in every other locale)."""
+LOCALIZED = {
+ "de_de": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, der Geist der Rache auf einem brennenden Bike",
+  "ghost_rider.lore": "Ein Stuntfahrer, der seine Seele verkaufte, um seinen Vater zu retten. Tagsüber ist er Johnny Blaze in schwarzer Lederjacke; ist Sünde nahe, verbrennt sein Fleisch zu einem flammenden Schädel, Ketten legen sich um seine Brust und die Höllenmaschine bricht brüllend aus dem Feuer.",
+  "ghost_rider.gameplay": "Johnny kann nur die Höllenmaschine rufen und sich verwandeln (2 s). Der Rider kämpft mit einer brennenden Kette: Dreier-Hiebkombo, ein Haken, der Körper heranzieht, Kettenwirbel mit Schmetterschlag, Höllenfeuerwelle, Höllensprint und der Blick der Buße, dessen Schaden nur aus den echten Taten des Ziels kommt (getötete Spieler und Unschuldige, verursachter Schaden). Die Höllenmaschine ist ein echtes Bike: Gas, Bremse, Rückwärtsgang, Lenkung, Drifts, die einen Schub laden, Sprünge und Wheelies; Fahren zerstört nie Blöcke und schiebt Unbeteiligte nur beiseite.",
+  "ghost_rider.relations": "Einst ein Sterblicher wie alle anderen, und er erinnert sich daran. Er brennt so heiß wie der Rote Hulk, doch sein Feuer richtet.",
+ },
+ "es_ar": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, el Espíritu de la Venganza sobre una moto en llamas",
+  "ghost_rider.lore": "Un especialista de acrobacias que vendió su alma para salvar a su padre. De día es Johnny Blaze con una chaqueta de cuero negra; cuando el pecado está cerca, su carne se consume hasta una calavera en llamas, las cadenas le rodean el pecho y la Moto Infernal sale rugiendo del fuego.",
+  "ghost_rider.gameplay": "Johnny solo puede invocar la Moto Infernal y transformarse (2 s). El Rider lucha con una cadena ardiente: un combo de tres latigazos, un gancho que atrae cuerpos, el Remolino de cadena que termina en un golpe al suelo, la Ola de fuego infernal, la Embestida infernal y la Mirada de Penitencia, cuyo daño sale solo de los actos reales del objetivo (jugadores e inocentes asesinados, daño causado). La Moto Infernal es una moto de verdad: acelerador, freno, marcha atrás, dirección, derrapes que cargan un impulso, saltos y caballitos; conducir nunca rompe bloques y solo aparta a los transeúntes.",
+  "ghost_rider.relations": "Antes fue un mortal como cualquier otro, y lo recuerda. Arde tanto como Red Hulk, pero su fuego juzga.",
+ },
+ "es_cl": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, el Espíritu de la Venganza sobre una moto en llamas",
+  "ghost_rider.lore": "Un especialista de acrobacias que vendió su alma para salvar a su padre. De día es Johnny Blaze con una chaqueta de cuero negra; cuando el pecado está cerca, su carne se consume hasta una calavera en llamas, las cadenas le rodean el pecho y la Moto Infernal sale rugiendo del fuego.",
+  "ghost_rider.gameplay": "Johnny solo puede invocar la Moto Infernal y transformarse (2 s). El Rider lucha con una cadena ardiente: un combo de tres latigazos, un gancho que atrae cuerpos, el Remolino de cadena que termina en un golpe al suelo, la Ola de fuego infernal, la Embestida infernal y la Mirada de Penitencia, cuyo daño sale solo de los actos reales del objetivo (jugadores e inocentes asesinados, daño causado). La Moto Infernal es una moto de verdad: acelerador, freno, marcha atrás, dirección, derrapes que cargan un impulso, saltos y caballitos; conducir nunca rompe bloques y solo aparta a los transeúntes.",
+  "ghost_rider.relations": "Antes fue un mortal como cualquier otro, y lo recuerda. Arde tanto como Red Hulk, pero su fuego juzga.",
+ },
+ "es_ec": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, el Espíritu de la Venganza sobre una moto en llamas",
+  "ghost_rider.lore": "Un especialista de acrobacias que vendió su alma para salvar a su padre. De día es Johnny Blaze con una chaqueta de cuero negra; cuando el pecado está cerca, su carne se consume hasta una calavera en llamas, las cadenas le rodean el pecho y la Moto Infernal sale rugiendo del fuego.",
+  "ghost_rider.gameplay": "Johnny solo puede invocar la Moto Infernal y transformarse (2 s). El Rider lucha con una cadena ardiente: un combo de tres latigazos, un gancho que atrae cuerpos, el Remolino de cadena que termina en un golpe al suelo, la Ola de fuego infernal, la Embestida infernal y la Mirada de Penitencia, cuyo daño sale solo de los actos reales del objetivo (jugadores e inocentes asesinados, daño causado). La Moto Infernal es una moto de verdad: acelerador, freno, marcha atrás, dirección, derrapes que cargan un impulso, saltos y caballitos; conducir nunca rompe bloques y solo aparta a los transeúntes.",
+  "ghost_rider.relations": "Antes fue un mortal como cualquier otro, y lo recuerda. Arde tanto como Red Hulk, pero su fuego juzga.",
+ },
+ "es_es": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, el Espíritu de la Venganza sobre una moto en llamas",
+  "ghost_rider.lore": "Un especialista de acrobacias que vendió su alma para salvar a su padre. De día es Johnny Blaze con una chaqueta de cuero negra; cuando el pecado está cerca, su carne se consume hasta una calavera en llamas, las cadenas le rodean el pecho y la Moto Infernal sale rugiendo del fuego.",
+  "ghost_rider.gameplay": "Johnny solo puede invocar la Moto Infernal y transformarse (2 s). El Rider lucha con una cadena ardiente: un combo de tres latigazos, un gancho que atrae cuerpos, el Remolino de cadena que termina en un golpe al suelo, la Ola de fuego infernal, la Embestida infernal y la Mirada de Penitencia, cuyo daño sale solo de los actos reales del objetivo (jugadores e inocentes asesinados, daño causado). La Moto Infernal es una moto de verdad: acelerador, freno, marcha atrás, dirección, derrapes que cargan un impulso, saltos y caballitos; conducir nunca rompe bloques y solo aparta a los transeúntes.",
+  "ghost_rider.relations": "Antes fue un mortal como cualquier otro, y lo recuerda. Arde tanto como Red Hulk, pero su fuego juzga.",
+ },
+ "es_mx": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, el Espíritu de la Venganza sobre una moto en llamas",
+  "ghost_rider.lore": "Un especialista de acrobacias que vendió su alma para salvar a su padre. De día es Johnny Blaze con una chaqueta de cuero negra; cuando el pecado está cerca, su carne se consume hasta una calavera en llamas, las cadenas le rodean el pecho y la Moto Infernal sale rugiendo del fuego.",
+  "ghost_rider.gameplay": "Johnny solo puede invocar la Moto Infernal y transformarse (2 s). El Rider lucha con una cadena ardiente: un combo de tres latigazos, un gancho que atrae cuerpos, el Remolino de cadena que termina en un golpe al suelo, la Ola de fuego infernal, la Embestida infernal y la Mirada de Penitencia, cuyo daño sale solo de los actos reales del objetivo (jugadores e inocentes asesinados, daño causado). La Moto Infernal es una moto de verdad: acelerador, freno, marcha atrás, dirección, derrapes que cargan un impulso, saltos y caballitos; conducir nunca rompe bloques y solo aparta a los transeúntes.",
+  "ghost_rider.relations": "Antes fue un mortal como cualquier otro, y lo recuerda. Arde tanto como Red Hulk, pero su fuego juzga.",
+ },
+ "es_uy": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, el Espíritu de la Venganza sobre una moto en llamas",
+  "ghost_rider.lore": "Un especialista de acrobacias que vendió su alma para salvar a su padre. De día es Johnny Blaze con una chaqueta de cuero negra; cuando el pecado está cerca, su carne se consume hasta una calavera en llamas, las cadenas le rodean el pecho y la Moto Infernal sale rugiendo del fuego.",
+  "ghost_rider.gameplay": "Johnny solo puede invocar la Moto Infernal y transformarse (2 s). El Rider lucha con una cadena ardiente: un combo de tres latigazos, un gancho que atrae cuerpos, el Remolino de cadena que termina en un golpe al suelo, la Ola de fuego infernal, la Embestida infernal y la Mirada de Penitencia, cuyo daño sale solo de los actos reales del objetivo (jugadores e inocentes asesinados, daño causado). La Moto Infernal es una moto de verdad: acelerador, freno, marcha atrás, dirección, derrapes que cargan un impulso, saltos y caballitos; conducir nunca rompe bloques y solo aparta a los transeúntes.",
+  "ghost_rider.relations": "Antes fue un mortal como cualquier otro, y lo recuerda. Arde tanto como Red Hulk, pero su fuego juzga.",
+ },
+ "es_ve": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, el Espíritu de la Venganza sobre una moto en llamas",
+  "ghost_rider.lore": "Un especialista de acrobacias que vendió su alma para salvar a su padre. De día es Johnny Blaze con una chaqueta de cuero negra; cuando el pecado está cerca, su carne se consume hasta una calavera en llamas, las cadenas le rodean el pecho y la Moto Infernal sale rugiendo del fuego.",
+  "ghost_rider.gameplay": "Johnny solo puede invocar la Moto Infernal y transformarse (2 s). El Rider lucha con una cadena ardiente: un combo de tres latigazos, un gancho que atrae cuerpos, el Remolino de cadena que termina en un golpe al suelo, la Ola de fuego infernal, la Embestida infernal y la Mirada de Penitencia, cuyo daño sale solo de los actos reales del objetivo (jugadores e inocentes asesinados, daño causado). La Moto Infernal es una moto de verdad: acelerador, freno, marcha atrás, dirección, derrapes que cargan un impulso, saltos y caballitos; conducir nunca rompe bloques y solo aparta a los transeúntes.",
+  "ghost_rider.relations": "Antes fue un mortal como cualquier otro, y lo recuerda. Arde tanto como Red Hulk, pero su fuego juzga.",
+ },
+ "tr_tr": {
+  "ghost_rider.name": "Ghost Rider",
+  "ghost_rider.role": "Johnny Blaze, yanan motorun üstündeki İntikam Ruhu",
+  "ghost_rider.lore": "Babasını kurtarmak için ruhunu satan bir dublör. Gündüz siyah deri ceketli Johnny Blaze; günah yakındayken eti yanıp alevli bir kafatasına dönüşür, göğsüne zincirler sarılır ve Cehennem Motoru ateşin içinden kükreyerek çıkar.",
+  "ghost_rider.gameplay": "Johnny yalnızca Cehennem Motorunu çağırabilir ve dönüşebilir (2 sn). Rider yanan bir zincirle savaşır: üç vuruşluk kırbaç kombosu, bedenleri çeken bir kanca, yere çarpmayla biten Zincir Girdabı, Cehennem Ateşi Dalgası, Cehennem Atılışı ve hasarı yalnızca hedefin gerçek eylemlerinden gelen Kefaret Bakışı (öldürülen oyuncular ve masumlar, verilen hasar). Cehennem Motoru gerçek bir motor: gaz, fren, geri vites, direksiyon, takviye biriktiren driftler, zıplamalar ve şahlanmalar; sürüş asla blok kırmaz ve etraftakileri sadece kenara iter.",
+  "ghost_rider.relations": "Bir zamanlar herkes gibi bir ölümlüydü ve bunu hatırlıyor. Kızıl Hulk kadar sıcak yanar, ama onun ateşi yargılar.",
+ },
+ "zh_cn": {
+  "ghost_rider.name": "恶灵骑士",
+  "ghost_rider.role": "约翰尼·布雷泽，骑着燃烧摩托的复仇之灵",
+  "ghost_rider.lore": "为救父亲而出卖灵魂的特技车手。白天他是身穿黑色皮夹克的约翰尼·布雷泽；当罪恶临近，他的血肉燃尽化为燃烧的骷髅，锁链缠绕胸前，地狱摩托从火焰中咆哮而出。",
+  "ghost_rider.gameplay": "约翰尼只能召唤地狱摩托和变身（2 秒）。恶灵骑士以燃烧的锁链作战：三段抽击连招、拉近目标的钩锁、以砸地结尾的锁链旋风、地狱火浪潮、地狱冲刺，以及伤害只来自目标真实罪行（杀死的玩家与无辜者、造成的伤害）的忏悔凝视。地狱摩托是一辆真正的摩托：油门、刹车、倒车、转向、积攒加速的漂移、跳跃与翘头；骑行绝不破坏方块，只会推开路人。",
+  "ghost_rider.relations": "他曾经也是凡人，而且没有忘记。他燃烧得和红浩克一样炽热，但他的火焰会审判。",
+ },
+}

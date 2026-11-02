@@ -61,7 +61,8 @@ class HeroRosterIntegrationTest {
       assertSame(HeroId.JINWOO, ids[9]);
       assertSame(HeroId.CAPTAIN, ids[10], "Captain America appends after Jinwoo");
       assertSame(HeroId.RED_HULK, ids[11], "Red Hulk appends after Captain America");
-      assertEquals(12, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
+      assertSame(HeroId.GHOST_RIDER, ids[12], "Ghost Rider appends after Red Hulk");
+      assertEquals(13, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
       Set<String> keys = new HashSet<>();
       for (HeroId id : ids) {
          assertTrue(keys.add(id.key()), "duplicate hero key " + id.key());
@@ -87,7 +88,10 @@ class HeroRosterIntegrationTest {
       // Red Hulk appends his six actions after THE FINAL PUNCH (released ordinals unchanged).
       assertEquals(HeroAction.FINAL_PUNCH.ordinal() + 1, HeroAction.REDHULK_CLAP.ordinal(), "Red Hulk block follows THE FINAL PUNCH");
       assertEquals(HeroAction.REDHULK_CLAP.ordinal() + 5, HeroAction.REDHULK_OVERHEAT.ordinal(), "Red Hulk block is contiguous");
-      assertSame(HeroAction.REDHULK_OVERHEAT, actions[actions.length - 1]);
+      // Ghost Rider appends his six actions after Red Hulk's (released ordinals unchanged).
+      assertEquals(HeroAction.REDHULK_OVERHEAT.ordinal() + 1, HeroAction.GHOSTRIDER_CYCLE.ordinal(), "Ghost Rider block follows Red Hulk");
+      assertEquals(HeroAction.GHOSTRIDER_CYCLE.ordinal() + 5, HeroAction.GHOSTRIDER_STARE.ordinal(), "Ghost Rider block is contiguous");
+      assertSame(HeroAction.GHOSTRIDER_STARE, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
@@ -197,7 +201,11 @@ class HeroRosterIntegrationTest {
       // 28 = the Godzilla city catastrophe: GodzillaFxS2CPacket appended last.
       // 28 = THANOS 2.0 (total war): ThanosWarS2CPacket appended after the aftermath packet, new FX kinds of
       // ThanosFxS2CPacket, the Black Order entity types and the war's moves appended to ThanosMove.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"28\""), "the merged packet table needs its own protocol version");
+      // 28 = Ghost Rider: HellCycleControlC2SPacket and HellfireS2CPacket appended after AftermathS2CPacket.
+      // 29 = the integration of #129/#130/#131/#132: one table with Scp096S2CPacket, GodzillaFxS2CPacket,
+      // ThanosWarS2CPacket, HellCycleControlC2SPacket and HellfireS2CPacket appended in that order after the aftermath
+      // packet. Each branch alone was "28" with a different table, so every "28" peer is refused.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"29\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -219,8 +227,9 @@ class HeroRosterIntegrationTest {
          packets.subList(punch + 3, punch + 5), "the Ultron uprising packets append after the Meteor Rain 2.0 packet");
       assertEquals(List.of("CityPowerS2CPacket", "CityCollapseS2CPacket", "AftermathS2CPacket"),
          packets.subList(punch + 5, punch + 8), "the city power, collapse and aftermath packets append after Ultron's (v27)");
-      assertEquals(List.of("Scp096S2CPacket", "GodzillaFxS2CPacket", "ThanosWarS2CPacket"), packets.subList(punch + 8, packets.size()),
-         "the integration of the new sessions appends SCP-096, Godzilla, then the Thanos war (v29)");
+      assertEquals(List.of("Scp096S2CPacket", "GodzillaFxS2CPacket", "ThanosWarS2CPacket", "HellCycleControlC2SPacket",
+         "HellfireS2CPacket"), packets.subList(punch + 8, packets.size()),
+         "the integration of the four sessions appends SCP-096, Godzilla, the Thanos war, then Ghost Rider (v29)");
    }
 
    @Test

@@ -25,6 +25,11 @@ public final class BalanceTable {
     */
    public static final HeroBalanceProfile RAGE_TITAN = new HeroBalanceProfile(HeroTier.A, 0.80F, 0.25F, 0.45F, 0.40F);
    /**
+    * Ghost Rider as the Spirit of Vengeance (armor 8, toughness 4, 36 HP, fire-proof): tier A beside Thor and the
+    * Red Hulk, a little less resilient than both; Johnny Blaze without the Rider is an ordinary man (UNARMORED).
+    */
+   public static final HeroBalanceProfile SPIRIT_OF_VENGEANCE = new HeroBalanceProfile(HeroTier.A, 0.75F, 0.25F, 0.45F, 0.40F);
+   /**
     * Iron Man in an intact suit (nano Mark 50 or a mark). The suit's armor 28 already
     * removes up to 80 % of small hits, so the body layer is lighter; the cap is what keeps
     * a Viltrumite punch from deleting him (several ordinary punches, two heavy ones).

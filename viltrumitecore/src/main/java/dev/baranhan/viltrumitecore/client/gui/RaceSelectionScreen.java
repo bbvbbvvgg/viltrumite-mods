@@ -16,8 +16,8 @@ public class RaceSelectionScreen extends Screen {
    private static final ResourceLocation REGULUS_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/regulus.png");
    private static final ResourceLocation IRON_MAN_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/ironman.png");
    private static final ResourceLocation DIO_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/dio.png");
-   private static final HeroId[] HEROES = {HeroId.HOMELANDER, HeroId.REGULUS, HeroId.IRON_MAN, HeroId.REINHARD, HeroId.THOR, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO, HeroId.CAPTAIN, HeroId.RED_HULK};
-   private static final String[] LABELS = {"become_homelander", "become_regulus", "become_ironman", "become_reinhard", "become_thor", "become_dio", "become_sinclair", "become_jinwoo", "become_captain", "become_red_hulk"};
+   private static final HeroId[] HEROES = {HeroId.HOMELANDER, HeroId.REGULUS, HeroId.IRON_MAN, HeroId.REINHARD, HeroId.THOR, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO, HeroId.CAPTAIN, HeroId.RED_HULK, HeroId.GHOST_RIDER};
+   private static final String[] LABELS = {"become_homelander", "become_regulus", "become_ironman", "become_reinhard", "become_thor", "become_dio", "become_sinclair", "become_jinwoo", "become_captain", "become_red_hulk", "become_ghost_rider"};
    private HeroChoiceLayout.Layout layout = HeroChoiceLayout.of(0, 0, HEROES.length);
 
    public RaceSelectionScreen() {

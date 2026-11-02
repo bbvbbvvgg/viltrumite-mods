@@ -6,6 +6,8 @@
       "required": false
     },
     "viltrumitecore:annihilation",
-    "viltrumitecore:scp096"
+    "viltrumitecore:scp096",
+    "viltrumitecore:hellfire",
+    "viltrumitecore:penance"
   ]
 }
