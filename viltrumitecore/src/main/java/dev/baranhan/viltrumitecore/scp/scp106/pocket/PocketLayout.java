@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.SplittableRandom;
 
 /**
- * Pure, deterministic plan of one pocket-dimension instance (docs/scp106/pocket-dimension.md): a 32 x 32 grid of
- * 16-block cells (one chunk each) split into five themed zones, rooms of several kinds on top of it, a route graph
+ * Pure, deterministic plan of one pocket-dimension instance (docs/design/2026-11-02-scp106-design.md): a 32 x 32 grid of
+ * 16-block cells (one chunk each) split into six themed zones, rooms of several kinds on top of it, a route graph
  * (randomised spanning tree + loops, so every room is reachable), the purposes of dead ends, the three escape routes
  * and the controlled anomalies. Same seed, same plan: the chunk generator, the server rules and the client ambience
  * all rebuild it from the instance seed instead of saving it. No Minecraft classes, unit-tested.
@@ -31,9 +31,9 @@ public final class PocketLayout {
    static final int[] DX = {0, 1, 0, -1};
    static final int[] DZ = {-1, 0, 1, 0};
 
-   /** The five spaces of the design: corridors of decay, colossal voids, flooded sections, false safe zones, the Old Man's domain. */
+   /** Spaces of the design: corridors of decay, colossal voids, flooded sections, false safe zones, the Old Man's domain, the labyrinth. */
    public enum Zone {
-      DECAY, VOID, FLOODED, FALSE_SAFE, DOMAIN;
+      DECAY, VOID, FLOODED, FALSE_SAFE, DOMAIN, LABYRINTH;
 
       private static final Zone[] VALUES = values();
 
@@ -43,12 +43,30 @@ public final class PocketLayout {
    }
 
    public enum Kind {
-      CORRIDOR, HALL, VOID, FLOODED, FLOODED_CORRIDOR, APARTMENT, STREET, SHAFT, THRONE
+      CORRIDOR, HALL, VOID, FLOODED, FLOODED_CORRIDOR, APARTMENT, STREET, SHAFT, THRONE,
+      /** A straight 7-wide vaulted gallery 7..11 cells long that seems to never end (ENDLESS portals). */
+      GALLERY,
+      /** A colossal pillared hall of 6..8 x 6..8 cells, 110 blocks high. */
+      CATHEDRAL,
+      /** Cliffs around a bottomless chasm with rock bridges. */
+      CHASM,
+      /** A braided labyrinth of 4-block units whose walls move while nobody looks (two variants). */
+      MAZE,
+      /** A square spiral stair around a bottomless well that loops back into itself (PENROSE portal). */
+      ESCHER,
+      /** A rare warm, quiet room: the stalker never comes in and it becomes the checkpoint. */
+      SANCTUARY
    }
 
    public enum Purpose {
-      NONE, ARRIVAL, NOTE, SIGIL, SECRET_EXIT, HOME_DOOR, BREACH, LISTENING, VANTAGE
+      NONE, ARRIVAL, NOTE, SIGIL, SECRET_EXIT, HOME_DOOR, BREACH, LISTENING, VANTAGE,
+      /** What is left of an earlier victim: bones and a diary. */
+      REMAINS,
+      /** A false exit: daylight at the end of a dead end, stepping into it throws the traveller somewhere else. */
+      DECOY
    }
+
+   public static final int DIARY_COUNT = 6;
 
    /** One room: a rectangle of cells with a kind, a zone, a private seed and its doors. */
    public static final class Room {
@@ -74,6 +92,12 @@ public final class PocketLayout {
       public boolean loopStair;
       /** APARTMENT: has a door that opens somewhere else. */
       public boolean wrongDoor;
+      /** REMAINS: which diary lies next to the bones (0..DIARY_COUNT-1). */
+      public int diary = -1;
+      /** DECOY: side of the cell holding the false daylight. */
+      public int decoySide = -1;
+      /** MAZE: the two wall variants (null for other kinds). */
+      public PocketMaze maze;
 
       Room(int id, int cx, int cz, int w, int h, Kind kind, Zone zone, long seed) {
          this.id = id;
@@ -158,13 +182,35 @@ public final class PocketLayout {
       /** A corridor doorway that sometimes leads into another identical doorway. */
       SHIFTING,
       /** A corridor that runs off the edge of the instance and comes back from the opposite edge. */
-      WRAP
+      WRAP,
+      /** The middle of a gallery quietly sends the walker two bays back: the gallery seems endless (limited). */
+      ENDLESS,
+      /** The spiral stair that climbs back into its own lower loop (limited). */
+      PENROSE,
+      /** The false daylight of a decoy dead end: always throws the traveller to a far landing. */
+      DECOY
    }
 
-   /** Entering box [x0..x1) x [y0..y1) x [z0..z1) moves the player by (dx, dy, dz) with the given chance per entry. */
-   public record Portal(int id, PortalType type, int x0, int y0, int z0, int x1, int y1, int z1, int dx, int dy, int dz, float chance, int room) {
+   /**
+    * Entering box [x0..x1) x [y0..y1) x [z0..z1) moves the player by (dx, dy, dz) with the given chance per entry.
+    * {@code dir} (N/E/S/W or -1) only fires while moving that way; {@code limit} > 0 stops after that many uses per
+    * visit, so every limited anomaly can always be outlasted (the route check treats them as optional).
+    */
+   public record Portal(int id, PortalType type, int x0, int y0, int z0, int x1, int y1, int z1, int dx, int dy, int dz, float chance, int room,
+      int dir, int limit) {
       public boolean contains(double x, double y, double z) {
          return x >= this.x0 && x < this.x1 && y >= this.y0 && y < this.y1 && z >= this.z0 && z < this.z1;
+      }
+
+      /** Destination feet block of a body at (x, y, z) inside the box: a fixed spot for DECOY, an offset for the others. */
+      public int[] target(int x, int y, int z) {
+         return this.type == PortalType.DECOY ? new int[]{this.x0 + this.dx, this.y0 + this.dy, this.z0 + this.dz}
+            : new int[]{x + this.dx, y + this.dy, z + this.dz};
+      }
+
+      /** Always taken when entered (unconditional, unlimited). */
+      public boolean forced() {
+         return this.chance >= 1.0F && this.limit == 0 && this.dir < 0;
       }
    }
 
@@ -184,6 +230,9 @@ public final class PocketLayout {
    final int[] sigils = {-1, -1, -1};
    int domainCx;
    int domainCz;
+   /** Cell of the arrival corner's zone seed: big set pieces never cover it. */
+   int arriveCx;
+   int arriveCz;
 
    private PocketLayout(long seed, int slot) {
       this.seed = seed;
@@ -295,13 +344,13 @@ public final class PocketLayout {
    }
 
    /**
-    * Feet positions (slot-local) where the abyss drop lands: just inside the first doorway of every void hall, on its
-    * ring walkway. Falling into an abyss never kills; the place simply puts the body somewhere else.
+    * Feet positions (slot-local) where the abyss drop lands: just inside the first doorway of every void hall, chasm
+    * and Escher well, on its walkway. Falling into an abyss never kills; the place simply puts the body somewhere else.
     */
    public List<int[]> abyssLandings() {
       List<int[]> out = new ArrayList<>();
       for (Room room : this.rooms) {
-         if (room.kind == Kind.VOID && !room.doors.isEmpty()) {
+         if ((room.kind == Kind.VOID || room.kind == Kind.CHASM || room.kind == Kind.ESCHER) && !room.doors.isEmpty()) {
             int[] in = PocketPainter.doorInside(room, room.doors.get(0));
             out.add(new int[]{in[0], in[1], in[2], room.id});
          }
@@ -326,6 +375,7 @@ public final class PocketLayout {
       this.zones(r);
       this.rooms(r);
       this.graph(r);
+      this.mazes();
       this.purposes(r);
       this.anomalies(r);
    }
@@ -338,8 +388,11 @@ public final class PocketLayout {
       this.domainCx = (corner & 1) == 0 ? GRID - 7 - r.nextInt(3) : 4 + r.nextInt(3);
       this.domainCz = (corner & 2) == 0 ? GRID - 7 - r.nextInt(3) : 4 + r.nextInt(3);
       List<int[]> seeds = new ArrayList<>();
+      this.arriveCx = ax;
+      this.arriveCz = az;
       seeds.add(new int[]{ax, az, Zone.DECAY.ordinal()});
-      int[][] plan = {{Zone.DECAY.ordinal(), 2}, {Zone.VOID.ordinal(), 3}, {Zone.FLOODED.ordinal(), 2}, {Zone.FALSE_SAFE.ordinal(), 2}};
+      int[][] plan = {{Zone.DECAY.ordinal(), 2}, {Zone.VOID.ordinal(), 3}, {Zone.FLOODED.ordinal(), 2}, {Zone.FALSE_SAFE.ordinal(), 2},
+         {Zone.LABYRINTH.ordinal(), 2}};
       for (int[] p : plan) {
          for (int i = 0; i < p[1]; i++) {
             int sx;
@@ -411,7 +464,7 @@ public final class PocketLayout {
       }
       for (int z = cz; z < cz + h; z++) {
          for (int x = cx; x < cx + w; x++) {
-            if (this.roomAt[z * GRID + x] >= 0 || this.zones[z * GRID + x] != zone) {
+            if (this.roomAt[z * GRID + x] >= 0 || zone != null && this.zones[z * GRID + x] != zone) {
                return false;
             }
          }
@@ -419,7 +472,10 @@ public final class PocketLayout {
       return true;
    }
 
-   /** Big rooms first (throne, voids, flooded halls, apartments, decay halls), single cells fill the rest. */
+   /**
+    * Set pieces first (throne, cathedral, galleries, the Escher stair, chasms), then the zone rooms (voids, flooded
+    * halls, streets, apartments, mazes, decay halls), a few sanctuaries, and single cells fill the rest.
+    */
    private void rooms(SplittableRandom r) {
       int tx = Math.max(0, Math.min(GRID - 4, this.domainCx));
       int tz = Math.max(0, Math.min(GRID - 4, this.domainCz));
@@ -429,12 +485,51 @@ public final class PocketLayout {
          }
       }
       this.add(tx, tz, 4, 4, Kind.THRONE, Zone.DOMAIN, r);
+      // the cathedral: far from the domain and the arrival, the biggest room of the instance
+      int cs = 6 + r.nextInt(3);
+      int ct = 7 + r.nextInt(2);
+      this.force(r, Kind.CATHEDRAL, Zone.VOID, new int[][]{{cs, ct}, {ct, cs}, {6, 6}, {5, 5}}, 10.0, 0);
+      // one or two endless galleries, both ends inside the grid so both doors exist
+      int galleries = 1 + r.nextInt(2);
+      for (int i = 0; i < galleries; i++) {
+         int len = 7 + r.nextInt(5);
+         this.force(r, Kind.GALLERY, Zone.DECAY, r.nextBoolean() ? new int[][]{{len, 1}, {1, len}, {7, 1}, {1, 7}}
+            : new int[][]{{1, len}, {len, 1}, {1, 7}, {7, 1}}, 6.0, 1);
+      }
+      this.force(r, Kind.ESCHER, Zone.DECAY, new int[][]{{2, 2}}, 6.0, 1);
+      int chasms = 1 + r.nextInt(2);
+      for (int i = 0; i < chasms; i++) {
+         this.force(r, Kind.CHASM, Zone.VOID, new int[][]{{4, 3}, {3, 4}, {3, 3}}, 6.0, 0);
+      }
       int[][] voidSizes = {{5, 5}, {5, 4}, {4, 5}, {4, 4}, {4, 3}, {3, 4}, {3, 3}};
       this.place(r, Zone.VOID, Kind.VOID, voidSizes, 260);
       this.place(r, Zone.FLOODED, Kind.FLOODED, new int[][]{{3, 2}, {2, 3}, {2, 2}}, 160);
       this.place(r, Zone.FALSE_SAFE, Kind.STREET, new int[][]{{3, 2}, {2, 3}}, 6);
       this.place(r, Zone.FALSE_SAFE, Kind.APARTMENT, new int[][]{{2, 1}, {1, 2}, {2, 2}}, 120);
+      int mazes = this.place(r, Zone.LABYRINTH, Kind.MAZE, new int[][]{{5, 5}, {4, 4}, {4, 3}, {3, 4}, {3, 3}}, 220);
+      if (mazes == 0) {
+         this.force(r, Kind.MAZE, Zone.LABYRINTH, new int[][]{{3, 3}, {3, 2}, {2, 3}}, 5.0, 0);
+      }
       this.place(r, Zone.DECAY, Kind.HALL, new int[][]{{2, 2}, {3, 2}, {2, 3}}, 10);
+      // sanctuaries: up to three single cells, spread out, never in the domain nor next to the arrival
+      List<int[]> calm = new ArrayList<>();
+      for (int t = 0; t < 400 && calm.size() < 3; t++) {
+         int x = 1 + r.nextInt(GRID - 2);
+         int z = 1 + r.nextInt(GRID - 2);
+         Zone zone = this.zones[z * GRID + x];
+         if (this.roomAt[z * GRID + x] >= 0 || zone == Zone.DOMAIN || dist2(x, z, this.arriveCx, this.arriveCz) < 49
+            || dist2(x, z, this.domainCx, this.domainCz) < 64) {
+            continue;
+         }
+         boolean spread = true;
+         for (int[] c : calm) {
+            spread &= dist2(x, z, c[0], c[1]) >= 81;
+         }
+         if (spread) {
+            calm.add(new int[]{x, z});
+            this.add(x, z, 1, 1, Kind.SANCTUARY, zone, r);
+         }
+      }
       for (int z = 0; z < GRID; z++) {
          for (int x = 0; x < GRID; x++) {
             if (this.roomAt[z * GRID + x] >= 0) {
@@ -453,15 +548,48 @@ public final class PocketLayout {
       }
    }
 
-   private void place(SplittableRandom r, Zone zone, Kind kind, int[][] sizes, int tries) {
+   /**
+    * Places a set piece whatever the zones say (the zone of its cells is rewritten), at least {@code far} cells from
+    * the domain and the arrival seed and {@code margin} cells from the grid border. Tries the sizes in order.
+    */
+   private boolean force(SplittableRandom r, Kind kind, Zone zone, int[][] sizes, double far, int margin) {
+      for (int[] s : sizes) {
+         for (int t = 0; t < 300; t++) {
+            int cx = margin + r.nextInt(Math.max(1, GRID - s[0] + 1 - 2 * margin));
+            int cz = margin + r.nextInt(Math.max(1, GRID - s[1] + 1 - 2 * margin));
+            if (!this.free(cx, cz, s[0], s[1], null)) {
+               continue;
+            }
+            double mx = cx + s[0] / 2.0;
+            double mz = cz + s[1] / 2.0;
+            double reach = far + Math.max(s[0], s[1]) / 2.0;
+            if (dist2(mx, mz, this.domainCx + 2, this.domainCz + 2) < reach * reach || dist2(mx, mz, this.arriveCx, this.arriveCz) < reach * reach) {
+               continue;
+            }
+            for (int z = cz; z < cz + s[1]; z++) {
+               for (int x = cx; x < cx + s[0]; x++) {
+                  this.zones[z * GRID + x] = zone;
+               }
+            }
+            this.add(cx, cz, s[0], s[1], kind, zone, r);
+            return true;
+         }
+      }
+      return false;
+   }
+
+   private int place(SplittableRandom r, Zone zone, Kind kind, int[][] sizes, int tries) {
+      int placed = 0;
       for (int t = 0; t < tries; t++) {
          int[] s = sizes[r.nextInt(sizes.length)];
          int cx = r.nextInt(GRID - s[0] + 1);
          int cz = r.nextInt(GRID - s[1] + 1);
          if (this.free(cx, cz, s[0], s[1], zone)) {
             this.add(cx, cz, s[0], s[1], kind, zone, r);
+            placed++;
          }
       }
+      return placed;
    }
 
    private record Edge(int cellX, int cellZ, int side, int a, int b, double weight) {
@@ -487,7 +615,7 @@ public final class PocketLayout {
                   continue;
                }
                int b = this.roomAt[nz * GRID + nx];
-               if (a == b) {
+               if (a == b || !this.wallAllowed(a, x, z, side) || !this.wallAllowed(b, nx, nz, (side + 2) & 3)) {
                   continue;
                }
                long key = Math.min(a, b) * 100000L + Math.max(a, b);
@@ -538,6 +666,12 @@ public final class PocketLayout {
             this.connect(e);
          }
       }
+      // a gallery always opens at both ends, otherwise it would be an endless dead end
+      for (Edge e : rest) {
+         if ((this.rooms.get(e.a).kind == Kind.GALLERY || this.rooms.get(e.b).kind == Kind.GALLERY) && !this.connected(e.a, e.b)) {
+            this.connect(e);
+         }
+      }
       // dead ends of plain corridors: open them into a neighbour when possible
       for (Room room : this.rooms) {
          if (room.degree() != 1 || room.kind != Kind.CORRIDOR && room.kind != Kind.FLOODED_CORRIDOR || r.nextInt(10) >= 7) {
@@ -555,6 +689,44 @@ public final class PocketLayout {
          if (best != null) {
             this.connect(best);
          }
+      }
+   }
+
+   /** Galleries only have doorways on their two end walls. */
+   private boolean wallAllowed(int roomId, int cellX, int cellZ, int side) {
+      Room room = this.rooms.get(roomId);
+      if (room.kind != Kind.GALLERY) {
+         return true;
+      }
+      if (room.w > 1) {
+         return side == W && cellX == room.cx || side == E && cellX == room.cx + room.w - 1;
+      }
+      return side == N && cellZ == room.cz || side == S && cellZ == room.cz + room.h - 1;
+   }
+
+   /** Maze walls of every MAZE room; the passages behind its doorways are open in both variants. */
+   private void mazes() {
+      for (Room room : this.rooms) {
+         if (room.kind != Kind.MAZE) {
+            continue;
+         }
+         int nx = room.sizeX() / PocketMaze.UNIT;
+         int nz = room.sizeZ() / PocketMaze.UNIT;
+         List<int[]> forced = new ArrayList<>();
+         for (Door d : room.doors) {
+            boolean mine = room.contains(d.cellX(), d.cellZ());
+            int side = mine ? d.side() : (d.side() + 2) & 3;
+            int cx = (mine ? d.cellX() : d.cellX() + DX[d.side()]) - room.cx;
+            int cz = (mine ? d.cellZ() : d.cellZ() + DZ[d.side()]) - room.cz;
+            if (side == N || side == S) {
+               int uz = side == N ? 0 : nz - 1;
+               forced.add(new int[]{uz * nx + cx * 4 + 1, uz * nx + cx * 4 + 2});
+            } else {
+               int ux = side == W ? 0 : nx - 1;
+               forced.add(new int[]{(cz * 4 + 1) * nx + ux, (cz * 4 + 2) * nx + ux});
+            }
+         }
+         room.maze = PocketMaze.generate(room.seed, nx, nz, forced.toArray(new int[0][]));
       }
    }
 
@@ -681,16 +853,35 @@ public final class PocketLayout {
          homeRoom.secretSide = this.freeSide(homeRoom);
       }
       this.home = homeRoom.id;
+      // false exits: daylight at the end of two far dead ends
+      List<Room> decoys = new ArrayList<>();
+      for (Room room : this.rooms) {
+         if (room.kind == Kind.CORRIDOR && room.purpose == Purpose.NONE && room.degree() == 1 && room.zone != Zone.DOMAIN
+            && room.depth >= max * 0.3 && this.freeSide(room) >= 0) {
+            decoys.add(room);
+         }
+      }
+      for (int i = 0; i < 2 && !decoys.isEmpty(); i++) {
+         Room pick = decoys.remove(r.nextInt(decoys.size()));
+         pick.purpose = Purpose.DECOY;
+         pick.decoySide = this.freeSide(pick);
+      }
       // every remaining dead end gets a reason to be there
       int note = 1;
+      int diary = 0;
       for (Room room : this.rooms) {
          if (room.purpose != Purpose.NONE || room.degree() > 1) {
             continue;
          }
          if (room.kind == Kind.APARTMENT && r.nextInt(3) == 0) {
             room.purpose = Purpose.LISTENING;
-         } else if (room.kind == Kind.VOID || room.kind == Kind.SHAFT) {
+         } else if (room.kind == Kind.VOID || room.kind == Kind.SHAFT || room.kind == Kind.CHASM || room.kind == Kind.CATHEDRAL
+            || room.kind == Kind.ESCHER) {
             room.purpose = Purpose.VANTAGE;
+         } else if (room.kind == Kind.CORRIDOR && r.nextInt(3) == 0) {
+            room.purpose = Purpose.REMAINS;
+            room.diary = diary;
+            diary = (diary + 1) % DIARY_COUNT;
          } else {
             room.purpose = Purpose.NOTE;
             room.note = note;
@@ -705,9 +896,25 @@ public final class PocketLayout {
             note = note % (NOTE_COUNT - 1) + 1;
          }
       }
+      int listening = 0;
       for (Room room : this.rooms) {
          if (room.purpose == Purpose.NONE && room.kind == Kind.APARTMENT && r.nextInt(6) == 0) {
             room.purpose = Purpose.LISTENING;
+         }
+         listening += room.purpose == Purpose.LISTENING ? 1 : 0;
+      }
+      // route III needs a listening door: at least two in every instance
+      for (int t = 0; t < 2 - listening; t++) {
+         Room pick = this.pickFar(r, Kind.APARTMENT, max);
+         if (pick != null) {
+            pick.purpose = Purpose.LISTENING;
+         }
+      }
+      // the set pieces keep the diaries of those who got that far
+      for (Room room : this.rooms) {
+         if (room.kind == Kind.CATHEDRAL || room.kind == Kind.ESCHER) {
+            room.diary = diary;
+            diary = (diary + 1) % DIARY_COUNT;
          }
       }
    }
@@ -753,7 +960,7 @@ public final class PocketLayout {
             Door d = room.doors.get(0);
             int[] in = PocketPainter.doorInside(room, d);
             this.portals.add(new Portal(this.portals.size(), PortalType.LOOP_STAIR, top[0], top[1], top[2], top[0] + 3, top[1] + 3, top[2] + 1,
-               in[0] - top[0], floor - top[1], in[2] - top[2], 1.0F, room.id));
+               in[0] - top[0], floor - top[1], in[2] - top[2], 1.0F, room.id, -1, 0));
          }
       }
       // wrong doors: closets on the north partition of apartments are paired with each other
@@ -775,9 +982,9 @@ public final class PocketLayout {
          int[] ca = PocketPainter.closet(a);
          int[] cb = PocketPainter.closet(b);
          this.portals.add(new Portal(this.portals.size(), PortalType.WRONG_DOOR, ca[0], floor, ca[2], ca[0] + 1, floor + 2, ca[2] + 1,
-            cb[0] - ca[0], 0, cb[2] - ca[2] + 2, 1.0F, a.id));
+            cb[0] - ca[0], 0, cb[2] - ca[2] + 2, 1.0F, a.id, -1, 0));
          this.portals.add(new Portal(this.portals.size(), PortalType.WRONG_DOOR, cb[0], floor, cb[2], cb[0] + 1, floor + 2, cb[2] + 1,
-            ca[0] - cb[0], 0, ca[2] - cb[2] + 2, 1.0F, b.id));
+            ca[0] - cb[0], 0, ca[2] - cb[2] + 2, 1.0F, b.id, -1, 0));
       }
       // shifting doorways: straight corridor cells (doors on two opposite sides) on the same axis swap travellers
       List<Room> straights = new ArrayList<>();
@@ -793,8 +1000,8 @@ public final class PocketLayout {
          int az = a.minZ() + 7;
          int bx = b.minX() + 7;
          int bz = b.minZ() + 7;
-         this.portals.add(new Portal(this.portals.size(), PortalType.SHIFTING, ax, floor, az, ax + 3, floor + 3, az + 2, bx - ax, 0, bz - az, 0.35F, a.id));
-         this.portals.add(new Portal(this.portals.size(), PortalType.SHIFTING, bx, floor, bz, bx + 3, floor + 3, bz + 2, ax - bx, 0, az - bz, 0.35F, b.id));
+         this.portals.add(new Portal(this.portals.size(), PortalType.SHIFTING, ax, floor, az, ax + 3, floor + 3, az + 2, bx - ax, 0, bz - az, 0.35F, a.id, -1, 0));
+         this.portals.add(new Portal(this.portals.size(), PortalType.SHIFTING, bx, floor, bz, bx + 3, floor + 3, bz + 2, ax - bx, 0, az - bz, 0.35F, b.id, -1, 0));
       }
       // wrap: corridor cells on opposite edges of the same column/row continue into each other
       List<Integer> wrapColumns = new ArrayList<>();
@@ -804,6 +1011,54 @@ public final class PocketLayout {
          if (top.kind == Kind.CORRIDOR && bottom.kind == Kind.CORRIDOR && top.purpose == Purpose.NONE && bottom.purpose == Purpose.NONE
             && top.w == 1 && bottom.w == 1 && top.degree() > 0 && bottom.degree() > 0) {
             wrapColumns.add(x);
+         }
+      }
+      // endless galleries: crossing the middle bay moves the walker two identical bays back, a few times per visit
+      for (Room room : this.rooms) {
+         if (room.kind != Kind.GALLERY) {
+            continue;
+         }
+         int limit = 2 + r.nextInt(3);
+         int[] m = PocketPainter.galleryMiddle(room);
+         boolean alongX = room.w > 1;
+         int lo = 8 - PocketPainter.GALLERY_HALF;
+         int hi = 8 + PocketPainter.GALLERY_HALF + 1;
+         for (int sign = -1; sign <= 1; sign += 2) {
+            int dir = alongX ? (sign > 0 ? E : W) : (sign > 0 ? S : N);
+            int shift = -sign * PocketPainter.GALLERY_BAY * 2;
+            if (alongX) {
+               this.portals.add(new Portal(this.portals.size(), PortalType.ENDLESS, m[0], floor, room.minZ() + lo, m[0] + 1, floor + 12, room.minZ() + hi,
+                  shift, 0, 0, 1.0F, room.id, dir, limit));
+            } else {
+               this.portals.add(new Portal(this.portals.size(), PortalType.ENDLESS, room.minX() + lo, floor, m[2], room.minX() + hi, floor + 12, m[2] + 1,
+                  0, 0, shift, 1.0F, room.id, dir, limit));
+            }
+         }
+      }
+      // the Penrose stair: half way up its last loop it is suddenly one loop lower again
+      for (Room room : this.rooms) {
+         if (room.kind == Kind.ESCHER) {
+            int[] b = PocketPainter.penroseBox(room);
+            this.portals.add(new Portal(this.portals.size(), PortalType.PENROSE, b[0], b[1], b[2], b[3], b[4], b[5], 0, -PocketPainter.ESCHER_LOOP, 0,
+               1.0F, room.id, W, 3 + r.nextInt(3)));
+         }
+      }
+      // false daylight: always throws the traveller onto a far landing
+      List<int[]> landings = this.abyssLandings();
+      for (Room room : this.rooms) {
+         if (room.purpose == Purpose.DECOY) {
+            int[] b = PocketPainter.decoyBox(room);
+            int[] best = landings.get(0);
+            double bestD = -1;
+            for (int[] l : landings) {
+               double d = dist2(l[0], l[2], b[0], b[2]) * (0.5 + r.nextDouble());
+               if (d > bestD) {
+                  bestD = d;
+                  best = l;
+               }
+            }
+            this.portals.add(new Portal(this.portals.size(), PortalType.DECOY, b[0], b[1], b[2], b[3], b[4], b[5], best[0] - b[0], best[1] - b[1],
+               best[2] - b[2], 1.0F, room.id, -1, 0));
          }
       }
       // one or two edges of the instance quietly continue into the opposite edge
@@ -822,8 +1077,8 @@ public final class PocketLayout {
       int tx = top.minX() + 7;
       int bx = bottom.minX() + 7;
       // stepping into the last two rows of a wrap tube moves the traveller to the matching rows on the other side
-      this.portals.add(new Portal(this.portals.size(), PortalType.WRAP, tx, floor, 0, tx + 3, floor + 4, 1, bx - tx, 0, SIZE - 3, 1.0F, top.id));
-      this.portals.add(new Portal(this.portals.size(), PortalType.WRAP, bx, floor, SIZE - 1, bx + 3, floor + 4, SIZE, tx - bx, 0, -(SIZE - 3), 1.0F, bottom.id));
+      this.portals.add(new Portal(this.portals.size(), PortalType.WRAP, tx, floor, 0, tx + 3, floor + 4, 1, bx - tx, 0, SIZE - 3, 1.0F, top.id, -1, 0));
+      this.portals.add(new Portal(this.portals.size(), PortalType.WRAP, bx, floor, SIZE - 1, bx + 3, floor + 4, SIZE, tx - bx, 0, -(SIZE - 3), 1.0F, bottom.id, -1, 0));
    }
 
    /** Wrap flag of a cell (the tube runs to the instance edge on its N or S side). */
