@@ -67,6 +67,10 @@ public class Scp096Entity extends PathfinderMob {
    public static final int FLAG_CLIMB = 2;
    public static final int FLAG_LEAP = 4;
    public static final int FLAG_COVER = 8;
+   /** The lunge of the chase (issue #137). */
+   public static final int FLAG_DASH = 16;
+   /** Pulling itself over a ledge or a roof edge at the end of a climb (issue #137). */
+   public static final int FLAG_MANTLE = 32;
    /** Blocks per full gait cycle (two steps) of the run and of the shuffle: the clips are phase-driven by distance. */
    public static final double CHASE_STRIDE = 5.2;
    public static final double WALK_STRIDE = 1.5;
@@ -76,6 +80,8 @@ public class Scp096Entity extends PathfinderMob {
    private static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(Scp096Entity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> DATA_ATTACK = SynchedEntityData.defineId(Scp096Entity.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Integer> DATA_SMASH = SynchedEntityData.defineId(Scp096Entity.class, EntityDataSerializers.INT);
+   /** Counter of punches up through a ceiling or a ledge (the client plays the clip from the tick it changes). */
+   private static final EntityDataAccessor<Integer> DATA_PUNCH = SynchedEntityData.defineId(Scp096Entity.class, EntityDataSerializers.INT);
    /** Loaded server instances (deaths of targets, logins, status). */
    private static final Set<Scp096Entity> LOADED = Collections.newSetFromMap(new WeakHashMap<>());
 
@@ -106,12 +112,16 @@ public class Scp096Entity extends PathfinderMob {
    public int clientStateStart = -1000;
    public int clientAttackStart = -1000;
    public int clientSmashStart = -1000;
+   public int clientPunchStart = -1000;
+   /** Tick the pull-up over a ledge began on this client (rising edge of {@link #FLAG_MANTLE}). */
+   public int clientMantleStart = -1000;
    public float clientMove;
    public float clientMoveO;
    public double clientGait;
    public double clientGaitO;
    public int clientAirTicks;
    public int clientClimbTicks;
+   private boolean clientMantle;
    /** The face was seen while it sat (gaze from the floor, then the rise into the hysteria). */
    public boolean clientFromSit;
    /** Smoothed clip weights kept by the renderer (real-time exponential smoothing). */
@@ -157,6 +167,7 @@ public class Scp096Entity extends PathfinderMob {
       this.entityData.define(DATA_FLAGS, (byte)0);
       this.entityData.define(DATA_ATTACK, 0);
       this.entityData.define(DATA_SMASH, 0);
+      this.entityData.define(DATA_PUNCH, 0);
    }
 
    @Override
@@ -257,6 +268,14 @@ public class Scp096Entity extends PathfinderMob {
          this.clientAttackStart = this.tickCount;
       } else if (DATA_SMASH.equals(key) && this.level().isClientSide) {
          this.clientSmashStart = this.tickCount;
+      } else if (DATA_PUNCH.equals(key) && this.level().isClientSide) {
+         this.clientPunchStart = this.tickCount;
+      } else if (DATA_FLAGS.equals(key) && this.level().isClientSide) {
+         boolean mantle = this.flag(FLAG_MANTLE);
+         if (mantle && !this.clientMantle) {
+            this.clientMantleStart = this.tickCount;
+         }
+         this.clientMantle = mantle;
       }
    }
 
@@ -588,6 +607,8 @@ public class Scp096Entity extends PathfinderMob {
       this.setFlag(FLAG_FACE_OPEN, false);
       this.setFlag(FLAG_CLIMB, false);
       this.setFlag(FLAG_LEAP, false);
+      this.setFlag(FLAG_DASH, false);
+      this.setFlag(FLAG_MANTLE, false);
       if (this.stateTicks >= Scp096Rules.CALMING_TICKS) {
          this.home = this.position();
          this.setState(Scp096State.SIT);
@@ -1030,6 +1051,10 @@ public class Scp096Entity extends PathfinderMob {
 
    void markSmash() {
       this.entityData.set(DATA_SMASH, this.entityData.get(DATA_SMASH) + 1);
+   }
+
+   void markPunch() {
+      this.entityData.set(DATA_PUNCH, this.entityData.get(DATA_PUNCH) + 1);
    }
 
    // ------------------------------------------------------------------ persistence
