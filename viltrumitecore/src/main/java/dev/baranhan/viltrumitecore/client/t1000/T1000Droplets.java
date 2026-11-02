@@ -136,7 +136,7 @@ public final class T1000Droplets {
       for (int i = 0; i < n; i++) {
          double sp = 0.08 + RANDOM.nextDouble() * 0.16;
          Vec3 v = out.scale(sp).add(gauss(0.06), 0.06 + RANDOM.nextDouble() * 0.14, gauss(0.06));
-         add(e, at.add(gauss(0.05), gauss(0.05), gauss(0.05)), v, 0.035F + RANDOM.nextFloat() * 0.05F, false);
+         add(e, at.add(gauss(0.05), gauss(0.05), gauss(0.05)), v, 0.018F + RANDOM.nextFloat() * 0.026F, false);
       }
    }
 
@@ -149,7 +149,7 @@ public final class T1000Droplets {
          Vec3 at = new Vec3(e.getX() + Math.cos(ang) * r, y, e.getZ() + Math.sin(ang) * r);
          double sp = speed * (0.35 + RANDOM.nextDouble() * 0.65);
          Vec3 v = new Vec3(Math.cos(ang) * sp, 0.05 + RANDOM.nextDouble() * speed * 0.7, Math.sin(ang) * sp);
-         add(e, at, v, (shards ? 0.05F : 0.04F) + RANDOM.nextFloat() * (shards ? 0.08F : 0.06F), shards);
+         add(e, at, v, (shards ? 0.035F : 0.022F) + RANDOM.nextFloat() * (shards ? 0.05F : 0.034F), shards);
       }
    }
 
@@ -160,7 +160,7 @@ public final class T1000Droplets {
          double ang = RANDOM.nextDouble() * Math.PI * 2.0;
          double r = 1.2 + RANDOM.nextDouble() * 2.2;
          Vec3 at = new Vec3(e.getX() + Math.cos(ang) * r, e.getY() + 0.6, e.getZ() + Math.sin(ang) * r);
-         Drop d = add(e, at, new Vec3(0.0, -0.05, 0.0), 0.04F + RANDOM.nextFloat() * 0.05F, false);
+         Drop d = add(e, at, new Vec3(0.0, -0.05, 0.0), 0.022F + RANDOM.nextFloat() * 0.03F, false);
          if (d != null) {
             d.age = 6;
          }
@@ -352,7 +352,7 @@ public final class T1000Droplets {
    }
 
    /** A small chrome blob: stretched along its flight, flattened into a bead on the ground, a faceted shard. */
-   private static void blob(VertexConsumer vc, Matrix4f m, Matrix3f nm, Drop d, float cx, float cy, float cz, int light, float pt) {
+   static void blob(VertexConsumer vc, Matrix4f m, Matrix3f nm, Drop d, float cx, float cy, float cz, int light, float pt) {
       float s = d.size;
       float sx = s;
       float sy = s;
@@ -363,7 +363,7 @@ public final class T1000Droplets {
       if (!d.landed) {
          // stretch along the velocity
          float v = (float)Math.sqrt(d.vx * d.vx + d.vy * d.vy + d.vz * d.vz);
-         float st = Math.min(2.2F, v * 9.0F);
+         float st = Math.min(1.6F, v * 7.0F);
          if (v > 1.0E-4F) {
             ex = (float)(d.vx / v) * st * s;
             ey = (float)(d.vy / v) * st * s;
@@ -398,10 +398,11 @@ public final class T1000Droplets {
       float sr = Mth.sin(rot);
       for (int a = 0; a < lat; a++) {
          for (int b = 0; b < lon; b++) {
+            // counter-clockwise seen from outside (the cull side): (th, ph), (th, ph+1), (th+1, ph+1), (th+1, ph)
             corner(vc, m, nm, a, b, lat, lon, cx, cy, cz, sx, sy, sz, ex, ey, ez, cr, sr, light, tr, tg, tb, alpha);
-            corner(vc, m, nm, a + 1, b, lat, lon, cx, cy, cz, sx, sy, sz, ex, ey, ez, cr, sr, light, tr, tg, tb, alpha);
-            corner(vc, m, nm, a + 1, b + 1, lat, lon, cx, cy, cz, sx, sy, sz, ex, ey, ez, cr, sr, light, tr, tg, tb, alpha);
             corner(vc, m, nm, a, b + 1, lat, lon, cx, cy, cz, sx, sy, sz, ex, ey, ez, cr, sr, light, tr, tg, tb, alpha);
+            corner(vc, m, nm, a + 1, b + 1, lat, lon, cx, cy, cz, sx, sy, sz, ex, ey, ez, cr, sr, light, tr, tg, tb, alpha);
+            corner(vc, m, nm, a + 1, b, lat, lon, cx, cy, cz, sx, sy, sz, ex, ey, ez, cr, sr, light, tr, tg, tb, alpha);
          }
       }
    }

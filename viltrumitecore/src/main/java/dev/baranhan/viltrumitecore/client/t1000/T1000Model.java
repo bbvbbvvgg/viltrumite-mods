@@ -51,6 +51,12 @@ public final class T1000Model extends CitizenModel {
       }
    }
 
+   @Override
+   protected boolean citizenPoses(CitizenEntity e) {
+      // the hunter has no idle gestures: once the stance is complete the citizen layer is skipped
+      return !(e instanceof T1000Entity t) || T1000Poser.mem(t).stance < 0.999F;
+   }
+
    /**
     * 1 while the painted skin is drawn under the spreading chrome, 0 once the metal covers it all. Pure (tests).
     * The metal mesh sits a hair outside the skin and fades in by coverage, so the two never fight.

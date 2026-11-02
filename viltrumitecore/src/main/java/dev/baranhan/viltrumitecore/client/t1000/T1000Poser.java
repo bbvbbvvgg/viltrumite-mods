@@ -136,18 +136,15 @@ public final class T1000Poser {
       // the hunter's sprint: longer arm strokes on the vanilla swing, torso pitched into the run
       float run = Mth.clamp(limbAmount * 1.6F, 0.0F, 1.0F) * stance;
       if (stance > 0.002F) {
-         float swing = Mth.cos(limbSwing * 0.6662F) * limbAmount;
-         model.rightArm.xRot += -swing * 0.45F * stance;
-         model.leftArm.xRot += swing * 0.45F * stance;
+         // absolute arms (they drown any citizen gesture still blending out): the vanilla stroke, 45% longer,
+         // weapons carried off the legs and a touch forward
+         float swing = (float)Math.toDegrees(Mth.cos(limbSwing * 0.6662F) * limbAmount) * 1.45F;
+         float[][] armR = {PoseKeys.key(0.0F, -swing + (right != T1000Arm.HAND ? -10.0F : 0.0F), 0.0F, right != T1000Arm.HAND ? 9.0F : 3.0F)};
+         float[][] armL = {PoseKeys.key(0.0F, swing + (left != T1000Arm.HAND ? -8.0F : 0.0F), 0.0F, left != T1000Arm.HAND ? -9.0F : -3.0F)};
+         rig.mainArm(armR, 0.0F, stance, false);
+         rig.offArm(armL, 0.0F, stance, false);
          rig.add(model.body, 9.0F * run, 0.0F, 0.0F);
          rig.add(model.head, -4.0F * run, 0.0F, 0.0F);
-         // weapons carried off the legs, a touch forward: ready
-         if (right != T1000Arm.HAND) {
-            rig.add(model.rightArm, -10.0F * stance, 0.0F, 9.0F * stance);
-         }
-         if (left != T1000Arm.HAND) {
-            rig.add(model.leftArm, -8.0F * stance, 0.0F, -9.0F * stance);
-         }
          // unnatural stillness of the head while standing: no idle sway, a slight forward set
          float still = (1.0F - run) * stance;
          rig.add(model.head, 3.0F * still, 0.0F, 0.0F);

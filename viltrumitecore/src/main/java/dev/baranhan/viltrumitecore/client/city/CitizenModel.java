@@ -129,6 +129,13 @@ public class CitizenModel extends PlayerModel<CitizenEntity> {
    public void setupAnim(CitizenEntity e, float limbSwing, float limbAmount, float age, float headYaw, float headPitch) {
       dev.baranhan.viltrumitecore.client.anim.pose.PoseRig.restorePivots(this);
       super.setupAnim(e, limbSwing, limbAmount, age, headYaw, headPitch);
-      CitizenPoser.pose(this, e, limbSwing, limbAmount, age, headPitch);
+      if (this.citizenPoses(e)) {
+         CitizenPoser.pose(this, e, limbSwing, limbAmount, age, headPitch);
+      }
+   }
+
+   /** Subclasses whose body language takes over entirely (the revealed T-1000) skip the citizen poses. */
+   protected boolean citizenPoses(CitizenEntity e) {
+      return true;
    }
 }
