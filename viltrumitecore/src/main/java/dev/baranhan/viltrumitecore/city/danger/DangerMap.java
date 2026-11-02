@@ -70,6 +70,16 @@ public final class DangerMap {
    private final List<Zone> zones = new ArrayList<>();
    private final List<double[]> blasts = new ArrayList<>();
 
+   /** Told about every danger and shock wave (the mood of the living city, #136). */
+   public interface Listener {
+      void danger(double x, double z, float radius);
+
+      void blast(double x, double z, float radius);
+   }
+
+   @Nullable
+   public Listener listener;
+
    /** Notice radius of a zone added without one: twice the danger plus a street width. */
    public static float defaultNotice(float radius) {
       return radius <= 0.0F ? 0.0F : Math.min(MAX_NOTICE, radius * 2.0F + 8.0F);
@@ -84,6 +94,10 @@ public final class DangerMap {
    public void add(double x, double y, double z, float radius, float notice, long now, int lifetime) {
       if (!valid(x, y, z, radius, notice)) {
          return;
+      }
+
+      if (this.listener != null && radius > 0.0F) {
+         this.listener.danger(x, z, Math.min(radius, MAX_RADIUS));
       }
 
       radius = Math.max(0.0F, Math.min(radius, MAX_RADIUS));
@@ -117,6 +131,10 @@ public final class DangerMap {
    public void track(int source, double x, double y, double z, float radius, float notice, long now, int lifetime) {
       if (!valid(x, y, z, radius, notice)) {
          return;
+      }
+
+      if (this.listener != null && radius > 0.0F) {
+         this.listener.danger(x, z, Math.min(radius, MAX_RADIUS));
       }
 
       radius = Math.max(0.0F, Math.min(radius, MAX_RADIUS));
@@ -168,6 +186,10 @@ public final class DangerMap {
    /** A shock wave (explosion, slam, lightning) of this radius happened now. */
    public void blast(double x, double y, double z, float radius, long now) {
       if (radius > 0.0F && !Double.isNaN(x) && !Double.isNaN(y) && !Double.isNaN(z)) {
+         if (this.listener != null) {
+            this.listener.blast(x, z, Math.min(radius, MAX_RADIUS));
+         }
+
          if (this.blasts.size() >= 64) {
             this.blasts.remove(0);
          }
