@@ -14,7 +14,14 @@ Contract for other systems: `docs/city-collapse-integration.md`. Sounds: `tools/
 - Wiring: `CityJournalMixin` → `StructuralDamage.onSetBlock`; hero/Chitauri/Leviathan call sites use
   `run`/`call`/`orDefault`. Flight dash is not wired.
 
+- Support loss (#135): `SupportLedger` (every STRUCTURE removal, scope or not, 10 min), `SupportProbe` (pure
+  flood, lowest layer first, incremental, `within(columns)` + `contactShare`), `BaseCut` (footprint of a cut ring +
+  enclosed rooms), `SupportChainPlan` (top-down stages ≤ 4000 blocks / packet limits), `SupportWatch` (per-level
+  job ≤ 5 ms/tick, before-check, chains, follow-ups, blocked message). `/collapse support <pos>`.
+
 ## Rules that matter
+- Atheria buildings are connected to their neighbours (one component of 172k blocks spans two towers): plain
+  connectivity says "standing"; only the masked `BaseCut` probe drops the building that was cut out.
 - A block change feeds the ledger only inside a scope; collapse changes run in `suppressed`.
 - The collapse cause = most recorded weight around the spot (`DamageLedger.dominantCause`), not the level-wide
   last cause (bug found in game: two buildings in one tick shared one cause).
