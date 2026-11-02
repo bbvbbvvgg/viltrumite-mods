@@ -277,6 +277,9 @@ public final class HellCyclePhysics {
 
       // --- engine: gears, rpm, backfire ---
       int gear = gear(fwd);
+      if (gear > s.gear && Math.abs(fwd) < GEAR_TOP[s.gear - 1] + GEAR_HYSTERESIS) {
+         gear = s.gear; // only brushing the top of the gear (a step down a hill): hold it, no shift each step
+      }
       double rpmTarget;
       if (!ground) {
          rpmTarget = IDLE_RPM + 0.8 * Math.max(0.0, throttle);

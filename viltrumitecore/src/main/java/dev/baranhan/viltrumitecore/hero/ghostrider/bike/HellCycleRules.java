@@ -84,6 +84,8 @@ public final class HellCycleRules {
    public static final double IDLE_RPM = 0.12;
    /** Upper speed of gears 1-5 (the fifth only on a dash). */
    public static final double[] GEAR_TOP = {0.20, 0.40, 0.60, 0.86, BOOST_SPEED + 0.05};
+   /** A gear shifts up only this far past its top: a downhill brushing 4th gear's top hunted 4-5-4 (QA 2026-11-02). */
+   public static final double GEAR_HYSTERESIS = 0.03;
 
    // --- body ---
    public static final float WIDTH = 1.1F;

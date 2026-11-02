@@ -266,6 +266,21 @@ class HellCyclePhysicsTest {
    }
 
    @Test
+   void aSteppedDescentAtTopSpeedDoesNotHuntGears() {
+      // QA 2026-11-02, hillside road: every step pitched the bike past 4th gear's top and back, a shift sound each time
+      State s = cruising(HellCycleRules.MAX_SPEED);
+      s.gear = 4;
+      int shifts = 0;
+      for (int t = 0; t < 90; t++) {
+         s.pitch = t % 9 < 2 ? -16.0 : 0.0;
+         ground(s, GAS);
+         shifts += (s.events & HellCyclePhysics.EV_SHIFT) != 0 ? 1 : 0;
+      }
+      assertEquals(0, shifts, "no 4-5-4 hunting down the steps");
+      assertEquals(4, s.gear);
+   }
+
+   @Test
    void jumpIsAControlledHop() {
       State s = cruising(0.6);
       ground(s, new Input(1.0, 0.0, true, false, false));
