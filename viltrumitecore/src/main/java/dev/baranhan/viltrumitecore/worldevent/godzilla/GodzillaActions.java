@@ -227,8 +227,8 @@ final class GodzillaActions {
       } else if (t == move.contact + 12) {
          s.destruction.queue(e.bodyPoint(0.0, 0.64, 0.26), GodzillaRules.SLAM_RADIUS * 0.7, 1.0, BODY_HARDNESS, fw.scale(0.7), 0.03F, 45, "slam");
       }
-      if (t <= move.contact + 10) {
-         hurtSphere(level, s, e, e.bodyPoint(0.0, 0.45, 0.32), GodzillaRules.SLAM_RADIUS, GodzillaRules.SLAM_DAMAGE, 1.8, true,
+      if (t <= move.contact + GodzillaRules.SLAM_HURT) {
+         hurtSphere(level, s, e, e.bodyPoint(GodzillaRules.SLAM_CENTRE), GodzillaRules.SLAM_RADIUS, GodzillaRules.SLAM_DAMAGE, 1.8, true,
             GodzillaDamage.crush(level, e), s.hitThisMove);
       }
    }

@@ -63,7 +63,7 @@ final class GodzillaBreath {
 
    /** Not at a hero standing in its mouth (the claws are for that). */
    static boolean worthIt(GodzillaEntity e, Vec3 at) {
-      return e.mouth().distanceTo(at) > 20.0;
+      return e.mouth().distanceTo(at) > GodzillaRules.BEAM_MIN;
    }
 
    /** Where the beam wants to point this tick. */

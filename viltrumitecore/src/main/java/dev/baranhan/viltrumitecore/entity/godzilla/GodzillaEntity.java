@@ -360,26 +360,13 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
       return new Vec3(at.x + (lf.x * l + fw.x * f) * h, at.y + u * h, at.z + (lf.z * l + fw.z * f) * h);
    }
 
-   /** A head-frame offset (left, up, forward) turned by the head yaw / pitch about the neck pivot, in the body frame. */
-   private static double[] headFrame(float[] off, float yaw, float pitch) {
-      double p = pitch * Mth.DEG_TO_RAD;
-      double y = yaw * Mth.DEG_TO_RAD;
-      double f1 = off[2] * Math.cos(p) - off[1] * Math.sin(p);
-      double u1 = off[2] * Math.sin(p) + off[1] * Math.cos(p);
-      double l1 = off[0];
-      double l2 = l1 * Math.cos(y) - f1 * Math.sin(y);
-      double f2 = l1 * Math.sin(y) + f1 * Math.cos(y);
-      float[] n = GodzillaRules.NECK_PIVOT;
-      return new double[]{n[0] + l2, n[1] + u1, n[2] + f2};
-   }
-
    public Vec3 mouth() {
-      double[] p = headFrame(GodzillaRules.MOUTH_OFFSET, this.headYaw, this.headPitch);
+      double[] p = GodzillaRules.headPoint(GodzillaRules.MOUTH_OFFSET, this.headYaw, this.headPitch);
       return this.bodyPoint(p[0], p[1], p[2]);
    }
 
    public Vec3 headCentre() {
-      double[] p = headFrame(GodzillaRules.HEAD_OFFSET, this.headYaw, this.headPitch);
+      double[] p = GodzillaRules.headPoint(GodzillaRules.HEAD_OFFSET, this.headYaw, this.headPitch);
       return this.bodyPoint(p[0], p[1], p[2]);
    }
 
@@ -523,7 +510,11 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
          Vec3 d = this.lookTarget.subtract(n);
          double flat = Math.sqrt(d.x * d.x + d.z * d.z);
          wantYaw = GodzillaRules.clampYaw(GodzillaRules.wrap(yawTowards(d.x, d.z) - this.getYRot()));
-         wantPitch = GodzillaRules.clampPitch((float)(Mth.atan2(d.y, flat) * Mth.RAD_TO_DEG));
+         GodzillaMove move = this.move();
+         // breathing, the head puts the beam (which leaves the mouth above the head's axis) through the target
+         float pitch = move == GodzillaMove.CHARGE || move == GodzillaMove.FIRE ? GodzillaRules.beamPitch(d.y, flat)
+            : (float)(Mth.atan2(d.y, flat) * Mth.RAD_TO_DEG);
+         wantPitch = GodzillaRules.clampPitch(pitch);
       }
       float rate = this.beamAim ? GodzillaRules.beamTurn(this.rage()) : GodzillaRules.HEAD_TURN;
       this.headYaw = GodzillaRules.approach(this.headYaw, wantYaw, rate);
