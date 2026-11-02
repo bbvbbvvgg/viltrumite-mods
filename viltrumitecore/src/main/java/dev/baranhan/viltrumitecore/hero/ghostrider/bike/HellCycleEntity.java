@@ -43,6 +43,8 @@ public class HellCycleEntity extends Entity {
    private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER = SynchedEntityData.defineId(HellCycleEntity.class, EntityDataSerializers.OPTIONAL_UUID);
    /** tickCount when burning out started, -1 while alive. */
    private static final EntityDataAccessor<Integer> DATA_BURN = SynchedEntityData.defineId(HellCycleEntity.class, EntityDataSerializers.INT);
+   /** Client: its own tickCount when the burning state arrived, -1 while alive (DATA_BURN is the server's clock). */
+   private int clientBurnStart = -1;
    /** Bumped on every Hell Dash; clients start their own dash clock on the change. */
    private static final EntityDataAccessor<Integer> DATA_DASH = SynchedEntityData.defineId(HellCycleEntity.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Byte> DATA_THROTTLE = SynchedEntityData.defineId(HellCycleEntity.class, EntityDataSerializers.BYTE);
@@ -202,8 +204,10 @@ public class HellCycleEntity extends Entity {
 
    /** 0 (starts burning out) to 1 (gone). */
    public float burnProgress(float partial) {
-      int start = this.entityData.get(DATA_BURN);
-      return start < 0 ? 0.0F : Mth.clamp((this.tickCount - start + partial) / HellCycleRules.DEMATERIALIZE_TICKS, 0.0F, 1.0F);
+      // the server's DATA_BURN is its own tickCount; a client (an observer who started tracking late included) counts
+      // from the tick the burning state reached it, on its own clock
+      int start = this.level().isClientSide ? this.clientBurnStart : this.entityData.get(DATA_BURN);
+      return HellCycleRules.burnProgress(this.tickCount, start, partial);
    }
 
    /** Server: throw the rider off and burn the bike out (dismiss, timeout, owner gone). */
@@ -283,6 +287,9 @@ public class HellCycleEntity extends Entity {
       super.onSyncedDataUpdated(key);
       if (!this.level().isClientSide) {
          return;
+      }
+      if (DATA_BURN.equals(key)) {
+         this.clientBurnStart = HellCycleRules.clientBurnStart(this.entityData.get(DATA_BURN) >= 0, this.clientBurnStart, this.tickCount);
       }
       if (DATA_DASH.equals(key)) {
          int serial = this.entityData.get(DATA_DASH);

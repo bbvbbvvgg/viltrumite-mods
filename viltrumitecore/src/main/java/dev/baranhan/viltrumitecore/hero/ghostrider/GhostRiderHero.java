@@ -386,6 +386,9 @@ public final class GhostRiderHero implements HeroDefinition {
 
    @Override
    public void onLanded(ServerPlayer player, float fallDistance) {
+      if (!rider(player)) {
+         return; // Johnny lands like anyone: vanilla fall damage with its multipliers (a slime block, a bed, boots)
+      }
       float damage = GhostRiderRules.fallDamage(fallDistance);
       if (damage > 0.0F) {
          player.hurt(player.damageSources().fall(), damage);

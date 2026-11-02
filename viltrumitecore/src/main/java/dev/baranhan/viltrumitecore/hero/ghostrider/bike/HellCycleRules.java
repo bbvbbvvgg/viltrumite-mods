@@ -167,4 +167,21 @@ public final class HellCycleRules {
       double f = Math.max(0.0, Math.min(1.0, (Math.abs(speed) - lo) / (hi - lo)));
       return 0.3 + 0.62 * f;
    }
+
+   /** Pure: 0 (starts burning out) to 1 (gone), from a start tick on the same clock as {@code now}; -1 = not burning. */
+   public static float burnProgress(int now, int start, float partial) {
+      if (start < 0) {
+         return 0.0F;
+      }
+      float p = (now - start + partial) / DEMATERIALIZE_TICKS;
+      return p < 0.0F ? 0.0F : Math.min(1.0F, p);
+   }
+
+   /** Pure: the client's burn start: set on its own clock when burning begins, kept while burning, cleared after. */
+   public static int clientBurnStart(boolean burning, int current, int clientTick) {
+      if (!burning) {
+         return -1;
+      }
+      return current >= 0 ? current : clientTick;
+   }
 }

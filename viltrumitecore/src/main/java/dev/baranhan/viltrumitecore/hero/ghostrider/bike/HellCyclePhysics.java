@@ -28,10 +28,17 @@ public final class HellCyclePhysics {
    }
 
    /** Rider input for one tick. Throttle and steer are -1..1 (W = +1, A = +1). */
-   public record Input(double throttle, double steer, boolean jump, boolean drift, boolean boost) {
+   public record Input(double throttle, double steer, boolean jump, boolean drift, boolean boost, boolean park) {
       public static final Input NONE = new Input(0.0, 0.0, false, false, false);
-      /** No rider: brake to a stop (a parked bike never rolls into a crowd). */
-      public static final Input PARK = new Input(-1.0, 0.0, false, false, false);
+      /**
+       * No rider (and forming, burning out): brake to a stop and stay there on the kickstand. A brake only: it never
+       * crosses zero into reverse and the slope does not roll it (a parked bike never rolls into a crowd).
+       */
+      public static final Input PARK = new Input(0.0, 0.0, false, false, false, true);
+
+      public Input(double throttle, double steer, boolean jump, boolean drift, boolean boost) {
+         this(throttle, steer, jump, drift, boost, false);
+      }
    }
 
    public static final class State {
@@ -147,7 +154,19 @@ public final class HellCyclePhysics {
       // --- throttle, brake, coast, slope ---
       boolean wasBraking = s.braking;
       s.braking = false;
-      if (ground) {
+      if (ground && in.park()) {
+         // parked: full brake toward zero from either direction, never past it; no throttle, no reverse, no slope roll
+         if (Math.abs(fwd) > 0.01) {
+            if (!wasBraking) {
+               s.brakeFrom = fwd;
+            }
+            s.braking = true;
+         }
+         fwd = towardZero(fwd, BRAKE);
+         if (Math.abs(fwd) < 0.004) {
+            fwd = 0.0;
+         }
+      } else if (ground) {
          if (throttle > 0.05) {
             if (fwd < -0.01) {
                fwd = Math.min(0.0, fwd + BRAKE * throttle);

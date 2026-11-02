@@ -367,15 +367,46 @@ public final class GhostRiderCombat {
       return centre.add(-Math.sin(a) * GhostRiderRules.SWING_RADIUS, lift + Math.max(0.0, 1.0 - height * 0.5), Math.cos(a) * GhostRiderRules.SWING_RADIUS);
    }
 
+   /** Pure: a stun interrupts the Rider's running move or chain (form changes run on; nothing running = nothing to do). */
+   public static boolean stunInterrupts(boolean anchored, @javax.annotation.Nullable GhostRiderMove move, boolean chained) {
+      if (!anchored) {
+         return false;
+      }
+      return chained || move != null && move != GhostRiderMove.TRANSFORM && move != GhostRiderMove.REVERT;
+   }
+
+   /** Longest step of the chain's swept move: a body never skips a block between two checks. */
+   public static final double SWEEP_STEP = 0.25;
+
+   /**
+    * Pure: how far along {@code from -> to} a body may go, checked every {@link #SWEEP_STEP}: the last free position before
+    * the first blocked one (a step blocked at the feet may lift by {@code stepUp}, a kerb or a floor edge). A destination
+    * past a wall is never reached through it.
+    */
+   public static Vec3 sweep(Vec3 from, Vec3 to, double stepUp, java.util.function.Predicate<Vec3> free) {
+      Vec3 d = to.subtract(from);
+      int steps = Math.max(1, (int)Math.ceil(d.length() / SWEEP_STEP));
+      Vec3 last = from;
+      double lift = 0.0;
+      for (int i = 1; i <= steps; i++) {
+         Vec3 p = from.add(d.scale(i / (double)steps)).add(0, lift, 0);
+         if (free.test(p)) {
+            last = p;
+         } else if (lift == 0.0 && stepUp > 0.0 && free.test(p.add(0, stepUp, 0)) && free.test(last.add(0, stepUp, 0))) {
+            lift = stepUp;
+            last = p.add(0, stepUp, 0);
+         } else {
+            break;
+         }
+      }
+      return last;
+   }
+
    static void place(LivingEntity t, Vec3 at) {
       Vec3 before = t.position();
-      Vec3 safe = at;
-      AABB box = t.getDimensions(t.getPose()).makeBoundingBox(at);
-      if (!t.level().noCollision(t, box)) {
-         // never through walls: keep the body where it was, nudged up out of the floor
-         AABB up = box.move(0, 0.6, 0);
-         safe = t.level().noCollision(t, up) ? at.add(0, 0.6, 0) : before;
-      }
+      // never through walls: the body moves along the path and stops at the first block in the way (the whole path is
+      // checked, not only the destination, so turning toward a wall cannot carry it to the far side)
+      Vec3 safe = sweep(before, at, 0.6, p -> t.level().noCollision(t, t.getDimensions(t.getPose()).makeBoundingBox(p)));
       t.setPos(safe.x, safe.y, safe.z);
       t.setDeltaMovement(safe.subtract(before).scale(0.5));
       t.resetFallDistance();
@@ -418,6 +449,15 @@ public final class GhostRiderCombat {
    // --- timeline ---------------------------------------------------------------------------------------------
 
    static void tick(ServerPlayer player, GhostRiderState state) {
+      if (stunInterrupts(HeroDamage.isAnchored(player), state.move, state.chained())) {
+         // a stun (any shared FREEZE, not only stopped time) ends a running attack and lets the chained body go: no
+         // contact damage and no dragging while he cannot act
+         releaseChain(player, state, ReleaseReason.INTERRUPTED, false);
+         if (state.move != null && state.move != GhostRiderMove.TRANSFORM && state.move != GhostRiderMove.REVERT) {
+            state.endMove();
+         }
+         return;
+      }
       chainTick(player, state);
       GhostRiderMove move = state.move;
       if (move == null) {
