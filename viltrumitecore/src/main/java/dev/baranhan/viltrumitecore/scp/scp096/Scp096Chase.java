@@ -69,6 +69,10 @@ final class Scp096Chase {
    private int stalls;
    private double stallDist = Double.MAX_VALUE;
    private int pauseTicks;
+   /** Stalls since the last real gain (a floor won, over a top, a strike) or since the target moved away. */
+   private int fruitless;
+   private Vec3 pauseAt = Vec3.ZERO;
+   private Vec3 lastTp = Vec3.ZERO;
    private int leapBan;
    private boolean pathReaches;
    @Nullable
@@ -206,6 +210,7 @@ final class Scp096Chase {
    void tick(ServerLevel level, Entity target) {
       Vec3 pos = this.mob.position();
       Vec3 tp = target.position();
+      this.lastTp = tp;
       if (this.lastTarget != null) {
          Vec3 d = tp.subtract(this.lastTarget);
          if (d.lengthSqr() < 400.0) {
@@ -288,8 +293,14 @@ final class Scp096Chase {
          return;
       }
       if (this.pauseTicks > 0) {
-         // a run of failed tactics: stand and stare for a moment instead of jumping at the ceiling forever
+         // a run of failed tactics: stand and stare for a moment instead of jumping at the ceiling forever (longer
+         // after every fruitless run); a target that moves on wakes it at once
          this.pauseTicks--;
+         if (tp.distanceToSqr(this.pauseAt) > 16.0) {
+            this.pauseTicks = 0;
+            this.fruitless = 0;
+            this.planAge = 999;
+         }
          this.vx *= 0.6;
          this.vz *= 0.6;
          this.mob.setDeltaMovement(this.vx, this.mob.getDeltaMovement().y, this.vz);
@@ -365,7 +376,8 @@ final class Scp096Chase {
          boolean onLevel = dy < 1.5 || this.tactic == Scp096Route.Tactic.BORE || this.tactic == Scp096Route.Tactic.TUNNEL;
          if (griefing && onLevel) {
             this.smashTicks = 6;
-         } else {
+         } else if (griefing || Scp096Probe.ceiling(level, this.mob, Scp096Probe.footprint(this.mob.getBoundingBox(), 0.0), 3) == null) {
+            // (indoors without mobGriefing a wall only leads up to the ceiling: no climb that ends at once)
             this.startClimb(axisX(hx, hz), axisZ(hx, hz), this.goalY(level, target, dy), false);
          }
          this.dashTicks = 0;
@@ -500,10 +512,11 @@ final class Scp096Chase {
       this.planAge = 999;
       this.progress.reset();
       this.log("stall %d (%s)", this.stalls, why);
-      if (this.stalls % Scp096Route.STALLS_BEFORE_PAUSE == 0) {
-         this.pauseTicks = Scp096Route.PAUSE_TICKS;
+      if (++this.fruitless % Scp096Route.STALLS_BEFORE_PAUSE == 0) {
+         this.pauseTicks = Scp096Route.pauseTicks(this.fruitless / Scp096Route.STALLS_BEFORE_PAUSE);
+         this.pauseAt = this.lastTp;
          this.failedColumns.clear();
-         this.log("pause");
+         this.log("pause %d", this.pauseTicks);
       }
    }
 
@@ -512,6 +525,7 @@ final class Scp096Chase {
          this.log("%s", what);
       }
       this.stalls = 0;
+      this.fruitless = 0;
       this.stallDist = Double.MAX_VALUE;
       this.progress.reset();
       this.planAge = 999;
