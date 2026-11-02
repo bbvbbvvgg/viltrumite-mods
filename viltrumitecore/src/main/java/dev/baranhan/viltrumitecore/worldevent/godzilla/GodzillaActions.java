@@ -187,9 +187,11 @@ final class GodzillaActions {
             continue;
          }
          float f = Math.max(0.25F, GodzillaRules.falloff(d, wave));
-         if (living.hurt(GodzillaDamage.crush(level, e), GodzillaRules.STOMP_DAMAGE * f)) {
+         boolean hurt = living.hurt(GodzillaDamage.crush(level, e), GodzillaRules.STOMP_DAMAGE * f);
+         if (hurt) {
             s.noteHit(living);
          }
+         s.qaContact(living, hurt);
          if (HeroRegistry.allowsImpulse(living)) {
             Vec3 out = d < 0.5 ? Vec3.ZERO : new Vec3(dx / d, 0.0, dz / d);
             living.push(out.x * 0.9 * f, 0.55 + 0.6 * f, out.z * 0.9 * f);
@@ -316,10 +318,12 @@ final class GodzillaActions {
          if (once != null) {
             once.add(living.getId());
          }
-         if (living.hurt(source, damage * f)) {
+         boolean hurt = living.hurt(source, damage * f);
+         if (hurt) {
             hits++;
             s.noteHit(living);
          }
+         s.qaContact(living, hurt);
          if (knock > 0.0 && HeroRegistry.allowsImpulse(living)) {
             Vec3 away = c.subtract(centre);
             away = away.lengthSqr() < 1.0E-4 ? GodzillaEntity.forward(e.getYRot()) : away.normalize();

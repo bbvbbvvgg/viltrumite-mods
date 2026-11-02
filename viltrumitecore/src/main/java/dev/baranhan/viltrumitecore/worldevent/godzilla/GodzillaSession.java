@@ -410,6 +410,14 @@ public final class GodzillaSession {
       }
    }
 
+   /** QA log ({@code -Dviltrumitecore.godzilla.log=true}): a living entity inside a hit shape, and whether it was hurt. */
+   void qaContact(LivingEntity living, boolean hurt) {
+      if (GodzillaEvent.QA_LOG) {
+         GodzillaEvent.LOG.info("GZQA contact {} by {} hurt={} hp={} up={}", living.getName().getString(), this.body == null ? "-" : this.body.move().key(),
+            hurt, Math.round(living.getHealth()), this.body == null ? 0 : Math.round(living.getY() - this.body.getY()));
+      }
+   }
+
    // ------------------------------------------------------------------ phase
 
    void phase(ServerLevel level, GodzillaEntity e, GodzillaPhase next) {
