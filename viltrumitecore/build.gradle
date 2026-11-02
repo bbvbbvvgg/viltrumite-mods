@@ -89,6 +89,11 @@ processResources {
         into 'META-INF/credits'
         rename { 'reinhard-sources.md' }
     }
+    // Venom: every sound is a CC0 1.0 Freesound recording; the source table and licence proof ship with the jar.
+    from(rootProject.file('docs/venom/audio-sources.md')) {
+        into 'META-INF/credits'
+        rename { 'venom-audio.md' }
+    }
     // Dedicated servers translate only from data packs (Forge LanguageHook reads data/<ns>/lang/en_us.json):
     // mirror the city's English strings there so console and RCON show text instead of keys.
     from('src/main/resources/assets/viltrumite_city/lang') {
