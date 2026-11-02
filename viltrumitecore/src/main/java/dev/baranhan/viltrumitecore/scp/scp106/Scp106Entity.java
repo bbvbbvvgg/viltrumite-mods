@@ -385,6 +385,13 @@ public class Scp106Entity extends PathfinderMob {
    public void tick() {
       super.tick();
       if (this.level().isClientSide) {
+         // EMERGE is the default value of DATA_STATE, so a freshly spawned creature never gets a state update
+         // for it: start the rise on the first client tick instead (a later state change overrides it)
+         if (this.tickCount == 1 && this.clientStateStart == -1000 && this.state() == Scp106State.EMERGE) {
+            this.clientState = Scp106State.EMERGE;
+            this.clientPrevState = Scp106State.EMERGE;
+            this.clientStateStart = 0;
+         }
          double dx = this.getX() - this.xo;
          double dz = this.getZ() - this.zo;
          float speed = (float)Math.sqrt(dx * dx + dz * dz);
