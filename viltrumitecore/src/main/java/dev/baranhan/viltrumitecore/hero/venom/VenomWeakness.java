@@ -59,6 +59,16 @@ public final class VenomWeakness {
       recoil(player, state);
    }
 
+   /**
+    * hellfire_scalds_symbiote: the regeneration stops for {@link VenomRules#SCALD_REGEN_BLOCK} ticks whatever the
+    * symbiote is doing; the shriek and the recoil follow the usual recoil rules (not while reeling, transforming or
+    * riding a host).
+    */
+   public static void scald(ServerPlayer player, VenomState state) {
+      state.fireBlock = Math.max(state.fireBlock, VenomRules.SCALD_REGEN_BLOCK);
+      recoil(player, state);
+   }
+
    static void recoil(ServerPlayer player, VenomState state) {
       if (!state.form || state.recoilImmune > 0 || state.possessing() || state.is(VenomMove.TRANSFORM) || state.is(VenomMove.REVERT)) {
          return;

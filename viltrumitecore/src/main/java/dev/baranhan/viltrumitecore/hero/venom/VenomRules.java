@@ -48,6 +48,9 @@ public final class VenomRules {
    public static final float REGEN_PER_TICK = 0.05F;   // 1 HP/s
    public static final float RAGE_REGEN_PER_TICK = 0.1F;
    public static final int FIRE_REGEN_BLOCK = 100;
+   /** hellfire_scalds_symbiote: extra damage factor of a hellfire hit and the regeneration stop (5 s). */
+   public static final float SCALD_DAMAGE = 1.25F;
+   public static final int SCALD_REGEN_BLOCK = 100;
 
    // ---- weaknesses ----
    public static final float FIRE_TAKEN = 1.75F;

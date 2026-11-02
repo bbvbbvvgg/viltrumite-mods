@@ -485,6 +485,31 @@ public final class VenomHero implements HeroDefinition {
       return state != null && (state.shell || state.possessing() || state.move != null && state.move.unstoppable());
    }
 
+   /** The symbiote in form: a living body for the contextual interactions (hellfire_scalds_symbiote). */
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence SYMBIOTE_BODY = new dev.baranhan.viltrumitecore.hero.combat.CombatPresence(
+      "viltrumitecore:symbiote", java.util.Set.of(dev.baranhan.viltrumitecore.hero.combat.CombatTags.BODY_SYMBIOTE),
+      dev.baranhan.viltrumitecore.hero.combat.CombatStance.NONE, 0);
+
+   @Override
+   public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      return player != null && form(player) ? SYMBIOTE_BODY : dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
+   }
+
+   /** hellfire_scalds_symbiote: the symbiote takes the scald (no regeneration, shriek and recoil when it can). */
+   @Override
+   public boolean react(ServerPlayer self, dev.baranhan.viltrumitecore.interaction.InteractionReaction reaction,
+      dev.baranhan.viltrumitecore.interaction.InteractionContext ctx) {
+      if (reaction != dev.baranhan.viltrumitecore.interaction.InteractionReaction.SYMBIOTE_SCALDED || self == null || !self.isAlive()) {
+         return false;
+      }
+      VenomState state = VenomState.of(self);
+      if (state == null || !state.form) {
+         return false;
+      }
+      VenomWeakness.scald(self, state);
+      return true;
+   }
+
    /** Fire makes the symbiote recoil (VenomWeakness); nothing is absorbed outright. */
    @Override
    public DamageAbsorb absorbIncoming(ServerPlayer self, DamageSource source, float raw) {
