@@ -69,6 +69,10 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // Local only: ./gradlew test -PfalbiksJar=<path to the friend's JAR> runs FalbiksJarSignatureTest against it.
+    if (project.hasProperty('falbiksJar')) {
+        systemProperty 'falbiks.jar', project.property('falbiksJar')
+    }
     testLogging {
         events 'passed', 'failed', 'skipped'
     }

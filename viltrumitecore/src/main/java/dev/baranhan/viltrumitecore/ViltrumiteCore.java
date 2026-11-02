@@ -162,6 +162,8 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         // Venom x Spider-Man of Falbiks Heroes: detect the mod and bind the versioned adapter (reflection only).
+         dev.baranhan.viltrumitecore.compat.spider.SpiderCompat.init(ViltrumiteCoreConfig.INSTANCE.spiderCompatEnabled);
          // Od Lagna's Wish: after the heroes, the registry names them by key.
          dev.baranhan.viltrumitecore.hero.wish.OdLagnaWishes.registerDefaults();
          dev.baranhan.viltrumitecore.hero.wish.WishRitual.init();
