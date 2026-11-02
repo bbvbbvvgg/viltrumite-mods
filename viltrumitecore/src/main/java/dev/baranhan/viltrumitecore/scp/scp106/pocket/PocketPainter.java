@@ -24,6 +24,15 @@ public final class PocketPainter {
    public static final int THRONE_CEIL = F + 40;
    public static final int SHAFT_TOP = F + 30;
    public static final int SECRET_TOP = F + 30;
+   public static final int CATHEDRAL_CEIL = F + 110;
+   public static final int CHASM_CEIL = F + 100;
+   public static final int ESCHER_CEIL = F + 104;
+   /** Rise of one full turn of the Escher stair, and the number of turns. */
+   public static final int ESCHER_LOOP = 32;
+   public static final int ESCHER_LOOPS = 3;
+   /** Half width of a gallery's floor and the length of one of its identical bays. */
+   public static final int GALLERY_HALF = 3;
+   public static final int GALLERY_BAY = 12;
    /** Falling below this in a void or a shaft is the "drop" anomaly, never a death in the abyss. */
    public static final int ABYSS_TRIGGER = F - 30;
    private final PocketLayout layout;
@@ -81,6 +90,12 @@ public final class PocketPainter {
          case STREET -> this.street(room, rx, rz, lx, lz, out);
          case SHAFT -> this.shaft(room, rx, rz, lx, lz, out);
          case THRONE -> this.throne(room, rx, rz, lx, lz, out);
+         case GALLERY -> this.gallery(room, rx, rz, lx, lz, out);
+         case CATHEDRAL -> this.cathedral(room, rx, rz, lx, lz, out);
+         case CHASM -> this.chasm(room, rx, rz, lx, lz, out);
+         case MAZE -> this.maze(room, rx, rz, lx, lz, out);
+         case ESCHER -> this.escher(room, rx, rz, lx, lz, out);
+         case SANCTUARY -> this.sanctuary(room, rx, rz, lx, lz, out);
       }
    }
 
@@ -139,13 +154,39 @@ public final class PocketPainter {
 
    // ------------------------------------------------------------------ corridors of decay (and flooded / domain corridors)
 
+   /** Narrow passages: every labyrinth corridor and about one decay corridor in eight are a single block wide. */
+   static boolean narrow(Room r) {
+      return r.kind == Kind.CORRIDOR && (r.zone == Zone.LABYRINTH || r.zone == Zone.DECAY && g(r, 7, 1, 9) < 0.12);
+   }
+
    private static int corridorWidth(Room r) {
+      if (narrow(r)) {
+         return 1;
+      }
       double u = g(r, 1, 2, 3);
       return r.zone == Zone.DOMAIN ? (u < 0.5 ? 3 : 5) : u < 0.68 ? 3 : 5;
    }
 
    private static int corridorHeight(Room r) {
+      if (narrow(r)) {
+         return r.zone == Zone.LABYRINTH ? 2 + (g(r, 2, 3, 4) < 0.5 ? 1 : 0) : 3;
+      }
       return 4 + (int)(g(r, 2, 3, 4) * (r.zone == Zone.DOMAIN ? 5 : 4));
+   }
+
+   /** Half size of the corridor hub (dead ends and rooms with a purpose get a wider one). */
+   private static int hubRadius(Room r, int mask) {
+      return corridorWidth(r) / 2 + (Integer.bitCount(mask & 15) <= 1 || r.purpose != Purpose.NONE ? 1 : 0);
+   }
+
+   /** Portal box of a decoy's false daylight (slot-local x0, y0, z0, x1, y1, z1): the end of its niche. */
+   public static int[] decoyBox(Room r) {
+      int side = r.decoySide;
+      int d = corridorWidth(r) / 2 + 1 + 3;
+      int x = r.minX() + 8 + PocketLayout.DX[side] * d;
+      int z = r.minZ() + 8 + PocketLayout.DZ[side] * d;
+      boolean ns = side == PocketLayout.N || side == PocketLayout.S;
+      return new int[]{ns ? x - 1 : x, F + 1, ns ? z : z - 1, ns ? x + 2 : x + 1, F + 4, ns ? z + 1 : z + 2};
    }
 
    private static int corridorStyle(Room r) {
@@ -156,7 +197,7 @@ public final class PocketPainter {
    private boolean tube(Room r, int cx, int cz) {
       int mask = this.layout.doorMask(r.cx, r.cz);
       int hw = corridorWidth(r) / 2;
-      int hub = hw + (Integer.bitCount(mask & 15) <= 1 || r.purpose != Purpose.NONE ? 1 : 0);
+      int hub = hubRadius(r, mask);
       if (Math.abs(cx - 8) <= hub && Math.abs(cz - 8) <= hub) {
          return true;
       }
@@ -194,6 +235,10 @@ public final class PocketPainter {
       boolean flooded = r.kind == Kind.FLOODED_CORRIDOR;
       int hgt = corridorHeight(r);
       int style = corridorStyle(r);
+      // a crawl-height passage stands one block taller at its ends, so sills and steps of the neighbours can be climbed
+      if (hgt == 2 && (cx <= 1 || cx >= 14 || cz <= 1 || cz >= 14)) {
+         hgt = 3;
+      }
       int top = F + hgt;
       fill(out, MASS_BOTTOM, MASS_TOP, MASS);
       // the hidden passage (escape route II) or the fallback home door: niche, thin wall, shaft
@@ -241,6 +286,26 @@ public final class PocketPainter {
                out[F] = METAL;
                return;
             }
+         }
+      }
+      if (r.purpose == Purpose.DECOY && r.decoySide >= 0) {
+         // a niche at the end of a dead end, flooded with something that looks exactly like daylight
+         int dside = r.decoySide;
+         int hub = hubRadius(r, this.layout.doorMask(r.cx, r.cz));
+         int d = along(dside, cx, cz);
+         int a = across(dside, cx, cz);
+         if (Math.abs(a) <= 1 && d > hub && d <= hub + 3) {
+            fill(out, F + 1, F + 3, AIR);
+            out[F] = TILE;
+            out[F + 4] = CONCRETE;
+            if (d == hub + 3 && a == 0) {
+               out[F + 4] = DAYLIGHT;
+            }
+            return;
+         }
+         if (Math.abs(a) <= 2 && d == hub + 4) {
+            fill(out, F, F + 4, Math.abs(a) <= 1 ? DAYLIGHT : METAL);
+            return;
          }
       }
       if (!this.tube(r, cx, cz)) {
@@ -311,8 +376,18 @@ public final class PocketPainter {
          this.stain(r, lx, lz, out, F + 1);
       }
       if (cx == 8 && cz == 8) {
-         if (r.purpose == Purpose.NOTE || r.purpose == Purpose.ARRIVAL) {
+         if (r.purpose == Purpose.NOTE || r.purpose == Purpose.ARRIVAL || r.purpose == Purpose.REMAINS) {
             out[F + 1] = NOTE;
+         }
+      }
+      if (r.purpose == Purpose.REMAINS) {
+         // what is left of somebody who stopped here: bones in the corners of the hub, a skull, webs under the ceiling
+         int hub = hubRadius(r, this.layout.doorMask(r.cx, r.cz));
+         if (Math.abs(cx - 8) == hub && Math.abs(cz - 8) == hub) {
+            out[F + 1] = g(r, lx, lz, 45) < 0.5 ? BONE : SKULL;
+            out[top] = COBWEB;
+         } else if (Math.abs(cx - 8) + Math.abs(cz - 8) == 1 && g(r, lx, lz, 46) < 0.4) {
+            out[F + 1] = PLATE;
          }
       }
       if (r.purpose == Purpose.SIGIL && glyph(r.sigil, cx - 6, cz - 7)) {
@@ -955,5 +1030,485 @@ public final class PocketPainter {
       int cx = throne.minX() + throne.sizeX() / 2;
       int cz = throne.minZ() + throne.sizeZ() / 2;
       return new int[]{cx - 2, F + 3, cz - 2, cx + 2, F + 6, cz + 2};
+   }
+
+   // ------------------------------------------------------------------ endless galleries
+
+   /** Along / across coordinates of a gallery column (along runs from one end wall to the other). */
+   private static int galleryAlong(Room r, int rx, int rz) {
+      return r.w > 1 ? rx : rz;
+   }
+
+   /** Middle of a gallery (slot-local x, y, z): a multiple of two bays from its start, well inside the identical part. */
+   public static int[] galleryMiddle(Room r) {
+      int len = r.w > 1 ? r.sizeX() : r.sizeZ();
+      int u = len / 2 / (GALLERY_BAY * 2) * GALLERY_BAY * 2;
+      return r.w > 1 ? new int[]{r.minX() + u, F + 1, r.minZ() + 8} : new int[]{r.minX() + 8, F + 1, r.minZ() + u};
+   }
+
+   /** Vault height of a gallery at an offset across its axis. */
+   private static int galleryTop(int a) {
+      return F + 9 + (int)(5.0 * Math.sqrt(Math.max(0.0, 1.0 - a * a / 16.0)));
+   }
+
+   private void gallery(Room r, int rx, int rz, int lx, int lz, byte[] out) {
+      boolean alongX = r.w > 1;
+      int len = alongX ? r.sizeX() : r.sizeZ();
+      int u = galleryAlong(r, rx, rz);
+      int a = (alongX ? rz : rx) - 8;
+      fill(out, MASS_BOTTOM, F + 18, MASS);
+      boolean end = u == 0 || u == len - 1;
+      int bay = Math.floorMod(u, GALLERY_BAY);
+      // everything between the first and the last bay repeats exactly every two bays: nothing tells them apart
+      boolean edgeBay = u < GALLERY_BAY || u >= len - GALLERY_BAY;
+      if (Math.abs(a) > GALLERY_HALF + 1) {
+         return;
+      }
+      if (end || Math.abs(a) == GALLERY_HALF + 1) {
+         fill(out, F, galleryTop(Math.abs(a)) + 1, PLASTER);
+         out[F] = TILE;
+         fill(out, F + 1, F + 2, TILE);
+         if (!end && bay == 9) {
+            // a door-shaped recess every bay that opens onto nothing
+            fill(out, F + 1, F + 3, VOID_GLASS);
+            out[F + 4] = PLANKS;
+         }
+         if (!end && bay == 6) {
+            out[F + 4] = (u / GALLERY_BAY & 1) == 0 ? LIGHT : LIGHT_DEAD;
+         }
+         if (end && opening(r, lx, lz)) {
+            doorway(out, false);
+         }
+         if (edgeBay && !end) {
+            this.streak(r, lx, lz, out, F + 3, galleryTop(Math.abs(a)), PLASTER);
+         }
+         return;
+      }
+      int top = galleryTop(Math.abs(a));
+      out[F] = (u + a & 1) == 0 ? TILE : MOSAIC;
+      out[F - 1] = CONCRETE;
+      fill(out, F + 1, top, AIR);
+      out[top + 1] = PLASTER;
+      if (bay == 0) {
+         // ribs of the vault and their pilasters
+         out[top + 1] = PILLAR;
+         out[top] = PILLAR;
+         if (Math.abs(a) == GALLERY_HALF) {
+            fill(out, F + 1, top, PILLAR);
+         }
+      }
+      if (Math.abs(a) <= 1) {
+         out[F + 1] = CARPET;
+      }
+      if (Math.abs(a) == GALLERY_HALF && bay == 3) {
+         out[F + 1] = (byte)(CHAIR + (alongX ? (a < 0 ? PocketLayout.S : PocketLayout.N) : (a < 0 ? PocketLayout.E : PocketLayout.W)));
+      }
+      if (a == 0 && bay == 6 && (u / GALLERY_BAY & 1) == 1) {
+         fill(out, top - 3, top, CHAIN);
+         out[top - 4] = LANTERN;
+      }
+      if (edgeBay) {
+         this.stain(r, lx, lz, out, F + 1);
+      }
+   }
+
+   // ------------------------------------------------------------------ the cathedral
+
+   private void cathedral(Room r, int rx, int rz, int lx, int lz, byte[] out) {
+      int sx = r.sizeX();
+      int sz = r.sizeZ();
+      fill(out, MASS_BOTTOM, CATHEDRAL_CEIL + 2, MASS);
+      if (boundary(r, rx, rz)) {
+         fill(out, F, CATHEDRAL_CEIL, CONCRETE);
+         this.streak(r, lx, lz, out, F + 20, CATHEDRAL_CEIL - 1, CONCRETE);
+         if (g(r, lx / 4, lz / 4, 141) < 0.1) {
+            // tall blind windows high up, glass onto solid rock
+            fill(out, F + 40, F + 70, VOID_GLASS);
+         }
+         if (opening(r, lx, lz)) {
+            doorway(out, false);
+         }
+         return;
+      }
+      out[CATHEDRAL_CEIL] = CONCRETE;
+      fill(out, F + 1, CATHEDRAL_CEIL - 1, AIR);
+      fill(out, F - 3, F - 1, CONCRETE);
+      double dx = rx + 0.5 - sx / 2.0;
+      double dz = rz + 0.5 - sz / 2.0;
+      double d = Math.sqrt(dx * dx + dz * dz);
+      // floor: a worn mosaic with a rose in the middle
+      boolean rose = d < 14 && (int)(d / 2) % 2 == 0;
+      out[F] = rose || (rx / 4 + rz / 4 & 1) == 0 ? MOSAIC : TILE;
+      int edge = Math.min(Math.min(rx, rz), Math.min(sx - 1 - rx, sz - 1 - rz));
+      // colossal pillars on a 32-block grid (footprint 6 x 6 at 13..18 of every 32); a quarter of them broke and fell
+      int kx = Math.floorDiv(rx, 32);
+      int kz = Math.floorDiv(rz, 32);
+      int px = rx - 32 * kx - 13;
+      int pz = rz - 32 * kz - 13;
+      int id = kx * 11 + kz;
+      boolean exists = 18 + 32 * kx <= sx - 11 && 18 + 32 * kz <= sz - 11;
+      boolean broken = g(r, id, 1, 142) < 0.25;
+      int ex = px < 0 ? -px : Math.max(0, px - 5);
+      int ez = pz < 0 ? -pz : Math.max(0, pz - 5);
+      int e = Math.max(ex, ez);
+      if (exists && e == 0) {
+         int topY = broken ? F + 12 + (int)(g(r, id, 2, 143) * 40) : CATHEDRAL_CEIL - 1;
+         fill(out, F, topY, PILLAR);
+         for (int y = F + 8; y < topY; y += 9) {
+            if (this.h(r, id, y, 144) < 0.4 + 0.15 * r.corrosion) {
+               out[y] = CORRODED;
+            }
+         }
+         return;
+      }
+      if (exists && !broken) {
+         // corbels: the vault spreads from every whole pillar
+         if (e <= 4) {
+            fill(out, CATHEDRAL_CEIL - 4 * (5 - e), CATHEDRAL_CEIL - 1, PILLAR);
+         }
+         // a dim lamp at the foot of each pillar
+         if (px == 6 && pz == 2) {
+            out[F + 1] = g(r, id, 4, 145) < 0.6 ? LIGHT : LIGHT_DEAD;
+         }
+      }
+      // rubble of the broken pillars: single blocks to step over, never a wall
+      if (exists && broken && e <= 5 && g(r, lx, lz, 146) < 0.22 && (px + pz & 1) == 0) {
+         out[F + 1] = g(r, lx, lz, 147) < 0.5 ? CONCRETE : PILLAR;
+      }
+      // black puddles of the Old Man's ooze
+      if (g(r, rx / 7, rz / 7, 148) < 0.12 && g(r, lx, lz, 149) < 0.7 && out[F + 1] == AIR) {
+         out[F] = OOZE;
+      }
+      // in the middle, under the rose: what is left of somebody who got this far
+      if (d < 3.5) {
+         int k = (int)(g(r, lx, lz, 150) * 5);
+         if (rx == sx / 2 && rz == sz / 2) {
+            out[F + 1] = NOTE;
+         } else if (k == 0) {
+            out[F + 1] = BONE;
+         } else if (k == 1) {
+            out[F + 1] = SKULL;
+         } else if (k == 2) {
+            out[F + 1] = PLATE;
+         }
+      }
+      if (edge >= 6 && g(r, lx, lz, 151) < 0.002) {
+         int len = 20 + (int)(g(r, lx, lz, 152) * 60);
+         fill(out, CATHEDRAL_CEIL - len, CATHEDRAL_CEIL - 1, CHAIN);
+      }
+      if (r.purpose == Purpose.NOTE && rx == 2 && rz == sz / 2) {
+         out[F + 1] = NOTE;
+      }
+   }
+
+   // ------------------------------------------------------------------ chasms
+
+   /** Smooth 1-D value noise in [0, 1) over t, period 8. */
+   private static double noise1(Room r, int salt, int t) {
+      int i = Math.floorDiv(t, 8);
+      double f = (t - i * 8) / 8.0;
+      f = f * f * (3 - 2 * f);
+      return g(r, i, salt, 153) * (1 - f) + g(r, i + 1, salt, 153) * f;
+   }
+
+   /** Ledge width of a chasm at a column: 2..4 blocks, varies smoothly along each wall. */
+   private static boolean chasmLedge(Room r, int rx, int rz) {
+      int sx = r.sizeX();
+      int sz = r.sizeZ();
+      int[] ds = {rz, sx - 1 - rx, sz - 1 - rz, rx};
+      int side = 0;
+      for (int i = 1; i < 4; i++) {
+         if (ds[i] < ds[side]) {
+            side = i;
+         }
+      }
+      int along = side == PocketLayout.N || side == PocketLayout.S ? rx : rz;
+      int w = 2 + (int)(noise1(r, side, along) * 3.0);
+      return ds[side] <= w;
+   }
+
+   private void chasm(Room r, int rx, int rz, int lx, int lz, byte[] out) {
+      int sx = r.sizeX();
+      int sz = r.sizeZ();
+      fill(out, 0, CHASM_CEIL + 2, ROCK_DARK);
+      if (boundary(r, rx, rz)) {
+         if (this.h(r, lx, lz, 154) < 0.01) {
+            out[F + 4 + (int)(this.h(r, lx, lz, 155) * 50)] = LIGHT;
+         }
+         if (opening(r, lx, lz)) {
+            doorway(out, false);
+            out[F] = ROCK;
+         }
+         return;
+      }
+      fill(out, 2, CHASM_CEIL - 1, AIR);
+      fill(out, 0, 1, OOZE);
+      // stalactites
+      if (g(r, lx / 2, lz / 2, 156) < 0.06) {
+         int len = 3 + (int)(g(r, lx / 2, lz / 2, 157) * 22);
+         fill(out, CHASM_CEIL - len, CHASM_CEIL - 1, ROCK);
+      }
+      if (chasmLedge(r, rx, rz)) {
+         fill(out, 2, F, ROCK);
+         out[F] = this.h(r, lx, lz, 158) < 0.15 ? ROCK_DARK : ROCK;
+         this.stain(r, lx, lz, out, F + 1);
+         if (r.purpose == Purpose.NOTE && rx == 2 && rz == sz / 2) {
+            out[F + 1] = NOTE;
+         }
+         return;
+      }
+      // rock bridges sag across the chasm from doorways; one of them has lost a block in the middle
+      for (Door d : r.doors) {
+         if (g(r, d.cellX(), d.cellZ(), 159 + d.side()) >= 0.7) {
+            continue;
+         }
+         boolean ns = d.side() == PocketLayout.N || d.side() == PocketLayout.S;
+         int off = ns ? lx - d.blockX() : lz - d.blockZ();
+         if (Math.abs(off) > 1) {
+            continue;
+         }
+         int span = ns ? sz : sx;
+         int t = ns ? rz : rx;
+         double sag = 3 + g(r, d.cellX(), d.cellZ(), 163) * 4;
+         int y = F - (int)Math.round(sag * Math.sin(Math.PI * t / (span - 1.0)));
+         boolean gap = g(r, d.cellX(), d.cellZ(), 164) < 0.5 && Math.abs(t - span / 2) == 0;
+         if (!gap) {
+            out[y] = ROCK;
+            out[y - 1] = ROCK_DARK;
+            int under = (int)Math.round(3 * (1 - Math.sin(Math.PI * t / (span - 1.0))));
+            fill(out, y - 2 - under, y - 2, ROCK_DARK);
+         }
+         return;
+      }
+      // spires rising out of the dark
+      int qx = Math.floorMod(rx - 6, 14);
+      int qz = Math.floorMod(rz - 6, 14);
+      int id = Math.floorDiv(rx - 6, 14) * 13 + Math.floorDiv(rz - 6, 14);
+      if (g(r, id, 5, 165) < 0.45) {
+         int e = Math.max(Math.abs(qx - 3), Math.abs(qz - 3));
+         int topY = F - 18 + (int)(g(r, id, 6, 166) * 26) - e * 7;
+         if (e <= 2) {
+            fill(out, 2, topY, ROCK_DARK);
+         }
+      }
+      if (this.h(r, lx, lz, 167) < 0.003) {
+         int len = 10 + (int)(this.h(r, lx, lz, 168) * 40);
+         fill(out, CHASM_CEIL - len, CHASM_CEIL - 1, CHAIN);
+      }
+   }
+
+   // ------------------------------------------------------------------ mazes
+
+   private void maze(Room r, int rx, int rz, int lx, int lz, byte[] out) {
+      int top = F + 4;
+      fill(out, MASS_BOTTOM, MASS_TOP, MASS);
+      byte wallBlock = r.corrosion >= 2 ? CORRODED : CONCRETE;
+      if (boundary(r, rx, rz)) {
+         fill(out, F, top + 1, wallBlock);
+         if (opening(r, lx, lz)) {
+            doorway(out, false);
+         }
+         return;
+      }
+      int v = this.variant(r) % PocketMaze.VARIANTS;
+      int mx = rx % PocketMaze.UNIT;
+      int mz = rz % PocketMaze.UNIT;
+      boolean wall;
+      if (mx == 0 && mz == 0) {
+         wall = true;
+      } else if (mx == 0) {
+         wall = !r.maze.isOpen(v, rx / PocketMaze.UNIT - 1, rz / PocketMaze.UNIT, PocketLayout.E);
+      } else if (mz == 0) {
+         wall = !r.maze.isOpen(v, rx / PocketMaze.UNIT, rz / PocketMaze.UNIT - 1, PocketLayout.S);
+      } else {
+         wall = false;
+      }
+      out[F] = TILE;
+      out[top + 1] = CONCRETE;
+      if (wall) {
+         fill(out, F + 1, top, wallBlock);
+         fill(out, F + 1, F + 1, TILE);
+         this.streak(r, lx, lz, out, F + 2, top, wallBlock);
+         return;
+      }
+      fill(out, F + 1, top, AIR);
+      int ux = rx / PocketMaze.UNIT;
+      int uz = rz / PocketMaze.UNIT;
+      if (mx == 2 && mz == 2) {
+         if (this.h(r, ux, uz, 171) < 0.07) {
+            out[top + 1] = LIGHT;
+         } else if (this.h(r, ux, uz, 172) < 0.05) {
+            out[top + 1] = LIGHT_DEAD;
+         }
+         if (r.purpose == Purpose.NOTE && ux == r.maze.nx / 2 && uz == r.maze.nz / 2) {
+            out[F + 1] = NOTE;
+         }
+      } else if (mx != 2 && mz != 2 && this.h(r, lx, lz, 173) < 0.1) {
+         out[top] = COBWEB;
+      }
+      this.stain(r, lx, lz, out, F + 1);
+   }
+
+   // ------------------------------------------------------------------ the Escher stair
+
+   /** Height of the ramp's walking block above F for loop 0 at a band column, or -1 outside the ramp. Also gives the ascend side. */
+   private static int escherRise(int rx, int rz, int[] ascend) {
+      int n = 31;
+      boolean north = rz >= 2 && rz <= 4;
+      boolean south = rz >= n - 4 && rz <= n - 2;
+      boolean west = rx >= 2 && rx <= 4;
+      boolean east = rx >= n - 4 && rx <= n - 2;
+      if (north && west) {
+         ascend[0] = PocketLayout.E;
+         return 0;
+      }
+      if (north && east) {
+         ascend[0] = PocketLayout.S;
+         return 8;
+      }
+      if (south && east) {
+         ascend[0] = PocketLayout.W;
+         return 16;
+      }
+      if (south && west) {
+         ascend[0] = PocketLayout.N;
+         return 24;
+      }
+      if (north && rx >= 5 && rx <= n - 5) {
+         ascend[0] = PocketLayout.E;
+         return (rx - 5) * 8 / 21;
+      }
+      if (east && rz >= 5 && rz <= n - 5) {
+         ascend[0] = PocketLayout.S;
+         return 8 + (rz - 5) * 8 / 21;
+      }
+      if (south && rx >= 5 && rx <= n - 5) {
+         ascend[0] = PocketLayout.W;
+         return 16 + (n - 5 - rx) * 8 / 21;
+      }
+      if (west && rz >= 5 && rz <= n - 5) {
+         ascend[0] = PocketLayout.N;
+         return 24 + (n - 5 - rz) * 8 / 21;
+      }
+      return -1;
+   }
+
+   /** Does the ramp step up at this column (the previous column along the climb is one block lower)? */
+   private static boolean escherStep(int rx, int rz, int rise, int[] ascend) {
+      int back = (ascend[0] + 2) & 3;
+      int[] tmp = new int[1];
+      int prev = escherRise(rx + PocketLayout.DX[back], rz + PocketLayout.DZ[back], tmp);
+      return prev >= 0 && prev == rise - 1;
+   }
+
+   /** Box of the Penrose anomaly: the middle of the south flight of the last turn (slot-local). */
+   public static int[] penroseBox(Room r) {
+      int base = F + ESCHER_LOOP * (ESCHER_LOOPS - 1) + 16;
+      return new int[]{r.minX() + 15, base + 3, r.minZ() + 27, r.minX() + 18, base + 8, r.minZ() + 30};
+   }
+
+   private void escher(Room r, int rx, int rz, int lx, int lz, byte[] out) {
+      int sx = r.sizeX();
+      int sz = r.sizeZ();
+      fill(out, 0, ESCHER_CEIL + 2, MASS);
+      if (boundary(r, rx, rz)) {
+         fill(out, F - 3, ESCHER_CEIL, CONCRETE);
+         this.streak(r, lx, lz, out, F + 1, ESCHER_CEIL - 1, CONCRETE);
+         if (g(r, lx, lz, 181) < 0.02) {
+            out[F + 8 + (int)(g(r, lx, lz, 182) * 90)] = LIGHT;
+         }
+         if (opening(r, lx, lz)) {
+            doorway(out, false);
+         }
+         return;
+      }
+      fill(out, 2, ESCHER_CEIL - 1, AIR);
+      fill(out, 0, 1, OOZE);
+      int edge = Math.min(Math.min(rx, rz), Math.min(sx - 1 - rx, sz - 1 - rz));
+      if (edge == 1) {
+         // the narrow walkway around the bottomless well
+         fill(out, F - 3, F, CONCRETE);
+         out[F - 3] = METAL;
+         this.stain(r, lx, lz, out, F + 1);
+         return;
+      }
+      int[] ascend = new int[1];
+      int rise = escherRise(rx, rz, ascend);
+      if (rise >= 0) {
+         boolean step = escherStep(rx, rz, rise, ascend);
+         boolean rail = edge == 4 && g(r, lx / 2, lz / 2, 183) < 0.7;
+         for (int loop = 0; loop < ESCHER_LOOPS; loop++) {
+            int y = F + loop * ESCHER_LOOP + rise;
+            out[y] = step ? (byte)(STAIR + ascend[0]) : CONCRETE;
+            out[y - 1] = METAL;
+            if (rail) {
+               out[y + 1] = BARS;
+            }
+         }
+      }
+      // the top: a landing over the north-west corner where the climb ends
+      if (rx >= 2 && rx <= 8 && rz >= 2 && rz <= 4 || rx >= 5 && rx <= 8 && rz >= 2 && rz <= 8) {
+         int y = F + ESCHER_LOOP * ESCHER_LOOPS;
+         out[y] = CONCRETE;
+         out[y - 1] = METAL;
+         if ((rx == 8 || rz == 8) && out[y + 1] == AIR) {
+            out[y + 1] = BARS;
+         }
+         if (rx == 6 && rz == 6) {
+            out[y + 1] = NOTE;
+         } else if (rx == 7 && rz == 5 || rx == 5 && rz == 7) {
+            out[y + 1] = BONE;
+         } else if (rx == 7 && rz == 7) {
+            out[y + 1] = SKULL;
+         }
+      }
+      if (edge >= 6 && this.h(r, lx, lz, 184) < 0.004) {
+         int len = 10 + (int)(this.h(r, lx, lz, 185) * 60);
+         fill(out, ESCHER_CEIL - len, ESCHER_CEIL - 1, CHAIN);
+      }
+   }
+
+   // ------------------------------------------------------------------ sanctuaries
+
+   public static int[] sanctuaryCheckpoint(Room r) {
+      return new int[]{r.minX() + 8, F + 1, r.minZ() + 8};
+   }
+
+   private void sanctuary(Room r, int rx, int rz, int lx, int lz, byte[] out) {
+      fill(out, MASS_BOTTOM, MASS_TOP, MASS);
+      int top = F + 5;
+      if (boundary(r, rx, rz)) {
+         fill(out, F, top + 1, PLASTER);
+         out[F] = PLANKS;
+         out[F + 1] = PLANKS;
+         if (opening(r, lx, lz)) {
+            doorway(out, false);
+            out[F + 5] = PLANKS;
+         }
+         return;
+      }
+      out[F] = PLANKS;
+      fill(out, F + 1, top, AIR);
+      out[top + 1] = PLANKS;
+      boolean corner = (rx <= 3 || rx >= 12) && (rz <= 3 || rz >= 12);
+      if (rx >= 5 && rx <= 10 && rz >= 5 && rz <= 10) {
+         out[F + 1] = CARPET;
+      }
+      if (corner) {
+         if (rx == 1 || rx == 14) {
+            fill(out, F + 1, F + 3, BOOKSHELF);
+         } else if (rz == 2 || rz == 13) {
+            out[F + 1] = (byte)(CHAIR + (rx <= 3 ? PocketLayout.W : PocketLayout.E));
+         }
+      }
+      if ((rx == 4 || rx == 11) && (rz == 4 || rz == 11)) {
+         out[top] = LANTERN;
+      }
+      if (rx == 8 && rz == 8) {
+         out[top + 1] = LIGHT;
+      }
+      if (r.purpose == Purpose.NOTE && rx == 8 && rz == 6) {
+         out[F + 1] = NOTE;
+      }
    }
 }
