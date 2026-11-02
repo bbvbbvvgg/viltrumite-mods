@@ -110,6 +110,39 @@ class GhostRiderRulesTest {
    }
 
    @Test
+   void chainTimelineFollowsTheSpec() {
+      // spec §5.4 / §8: 6/6/9 damage, contact on the 5th tick, 10/10/12 ticks, combo window 12
+      assertEquals(10, GhostRiderMove.LASH_1.length);
+      assertEquals(10, GhostRiderMove.LASH_2.length);
+      assertEquals(12, GhostRiderMove.LASH_3.length);
+      for (int step = 0; step < GhostRiderRules.COMBO_LENGTH; step++) {
+         GhostRiderMove lash = GhostRiderMove.lash(step);
+         assertEquals(4, lash.contact, lash + ": contact on the 5th tick");
+         assertTrue(lash.contact < lash.cancelFrom && lash.cancelFrom < lash.length, lash + ": cancellable only after the contact");
+      }
+      assertEquals(12, GhostRiderRules.COMBO_WINDOW);
+      assertEquals(9.0F, GhostRiderRules.LASH_DAMAGE[GhostRiderRules.COMBO_LENGTH - 1], EPS);
+   }
+
+   @Test
+   void closeBodiesTakeTheBurningFist() {
+      assertTrue(GhostRiderRules.punches(0.0));
+      assertTrue(GhostRiderRules.punches(GhostRiderRules.PUNCH_RANGE));
+      assertFalse(GhostRiderRules.punches(GhostRiderRules.PUNCH_RANGE + 0.01), "beyond 2.6 blocks the chain");
+      assertFalse(GhostRiderRules.punches(-1.0));
+      assertFalse(GhostRiderRules.punches(Double.NaN));
+      assertTrue(GhostRiderRules.PUNCH_RANGE < GhostRiderRules.LASH_REACH);
+      assertEquals(7.0F, GhostRiderRules.PUNCH_DAMAGE, EPS);
+      assertEquals(6.0F, GhostRiderRules.burnTotal(GhostRiderRules.PUNCH_BURN_TICKS), EPS, "3 s of hellfire");
+      GhostRiderMove punch = GhostRiderMove.PUNCH;
+      assertEquals(GhostRiderMove.values().length - 1, punch.ordinal(), "appended last: synced action ids never shift");
+      assertEquals(GhostRiderMove.BIKE_HOOK.ordinal() + 1, punch.ordinal());
+      assertEquals(punch, GhostRiderMove.byId(punch.ordinal()));
+      assertTrue(punch.contact > 0 && punch.contact < punch.cancelFrom && punch.cancelFrom < punch.length);
+      assertFalse(punch.onBike() || punch.roots() || punch.locks() || punch.isLash() || punch.unstoppable());
+   }
+
+   @Test
    void theRiderShrugsOffFalls() {
       assertEquals(0.0F, GhostRiderRules.fallDamage(GhostRiderRules.SAFE_FALL), EPS);
       assertEquals(5.0F, GhostRiderRules.fallDamage(GhostRiderRules.SAFE_FALL + 10.0F), EPS);

@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.baranhan.viltrumitecore.client.render.vfx.FxRecipe;
 import dev.baranhan.viltrumitecore.hero.fx.FxPreset;
 import dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderFx;
+import dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderMove;
 import dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleRules;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,6 +70,32 @@ class GhostRiderClientRulesTest {
       assertEquals(48, GhostRiderPanelStyle.timerWidth(HellCycleRules.BOOST_TICKS, HellCycleRules.BOOST_TICKS, 48));
       assertEquals(48, GhostRiderPanelStyle.timerWidth(HellCycleRules.BOOST_TICKS * 2, HellCycleRules.BOOST_TICKS, 48));
       assertEquals(24, GhostRiderPanelStyle.timerWidth(HellCycleRules.BOOST_TICKS / 2, HellCycleRules.BOOST_TICKS, 48));
+   }
+
+   @Test
+   void firstPersonArmsRestAtBothEndsOfEveryMove() {
+      for (GhostRiderMove m : GhostRiderMove.values()) {
+         for (boolean right : new boolean[]{true, false}) {
+            for (float t : new float[]{0.0F, m.length}) {
+               float[] o = GhostRiderPoser.firstPersonOffset(m, t, right, 0.0F);
+               if (o != null) {
+                  for (float v : o) {
+                     assertEquals(0.0F, v, 1.0E-3F, m + (right ? " right" : " left") + " at " + t + ": no pop into or out of the move");
+                  }
+               }
+            }
+            for (float t = 0.0F; t <= m.length; t += 0.25F) {
+               float[] o = GhostRiderPoser.firstPersonOffset(m, t, right, t);
+               if (o != null) {
+                  assertTrue(Math.abs(o[3]) <= 45.0F && Math.abs(o[4]) <= 20.0F && Math.abs(o[5]) <= 25.0F, m + ": small turns (they pivot on the camera)");
+               }
+            }
+         }
+      }
+      float[] thrown = GhostRiderPoser.firstPersonOffset(GhostRiderMove.PUNCH, GhostRiderMove.PUNCH.contact + 1.0F, true, 0.0F);
+      float[] cocked = GhostRiderPoser.firstPersonOffset(GhostRiderMove.PUNCH, 1.0F, true, 0.0F);
+      assertTrue(thrown[2] < -0.3F && cocked[2] > 0.0F, "the fist is cocked back, then thrown out on the contact");
+      assertTrue(GhostRiderPoser.firstPersonOffset(GhostRiderMove.BIKE_LASH, 4.0F, true, 0.0F) == null, "riding: the cockpit owns the arms");
    }
 
    @Test
