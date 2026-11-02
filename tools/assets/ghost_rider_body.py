@@ -4,7 +4,7 @@ emissive overlay for the burning cracks, and the 3D gear (the skull with a hinge
 collar, spiked shoulder pads, the chest chain, belt buckle, boot straps and heel spurs).
 
 Skins: standard 64x64 Steve layout painted HD 128x128 (2 texels per model pixel; vanilla UVs stay in 64-space).
-  skin_0 = Johnny (black leather biker jacket over a charcoal tee, belt, worn jeans, black boots, brown hair, stubble)
+  skin_0 = Johnny (black leather biker jacket over a charcoal tee, belt, black leather trousers, black boots, brown hair, stubble)
   skin_1..5 = the transformation (GhostRiderRules.burnFrame): flush, glowing cracks, charred flesh, bone breaking
               through, the last strips of flesh; skin_6 = the Rider (head cube empty: the 3D skull replaces it,
               skeletal hands, a charred ribcage glowing through the open jacket).
@@ -43,7 +43,7 @@ SKIN, SKIN_LO, SKIN_HI = '#c8936b', '#a3714f', '#dcaa84'
 HAIR, HAIR_HI = '#3a2617', '#5a3d26'
 LEATHER, LEATHER_HI, LEATHER_LO = '#17171a', '#34343b', '#0b0b0d'
 TEE = '#3a3a40'
-DENIM, DENIM_HI, DENIM_LO = '#2b3651', '#46587e', '#1d2538'
+DENIM, DENIM_HI, DENIM_LO = '#1c1c21', '#3b3b44', '#121216'   # black leather trousers (names kept)
 BOOT, SOLE = '#121214', '#060607'
 SILVER = '#a9adb6'
 BONE, BONE_LO = '#ddd2b6', '#a99c7e'
@@ -393,7 +393,7 @@ class Painter:
             whisk = (np.abs(y - 10.6) < 0.12) & (np.sin(x * 3.0) > 0)
             mix(rgb, whisk, DENIM_HI, 0.5)
         if face.name in ('east', 'west'):
-            mix(rgb, np.abs(face.grid()[0] - 0.5) < 0.07, '#9a7a3a', 0.5)              # side seam stitches
+            mix(rgb, np.abs(face.grid()[0] - 0.5) < 0.07, '#4a4038', 0.5)              # side seam stitches
         boot = y < 4.2
         rgb[boot] = hexf(BOOT)
         mix(rgb, boot & (np.sin(x * 2 + y) > 0.8), LEATHER_HI, 0.3)
