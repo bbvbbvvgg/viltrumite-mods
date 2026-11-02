@@ -31,6 +31,11 @@ keeps the peril state (no switch to plain fleeing mid-air).
   call for help after a short delay;
 - 3+ citizens in the street around -> one `citizen.crowd_panic` at the crowd centre (cooldown 240 ticks).
 
+Impact shelter (`CollapseRules.sheltered`, `CollapseDirector.impact`): the impact of a falling section only hurts
+bodies with open air up to the section (or inside it) and the landing zone. Whoever has an intact floor above
+is hit when that floor goes - in a support chain (#135) the top stage no longer kills every floor below at once,
+the people downstairs teeter, fall or get crushed stage by stage.
+
 Witnesses: when somebody starts to fall, up to 2 citizens within 28 blocks with a line of sight are `STARTLED`
 and cry out a little later; a danger-map alert zone makes the rest of the street look and run.
 
@@ -41,10 +46,13 @@ fall from a skyscraper. Every 5 s each player gets up to `cityOccupants` (config
 16) people upstairs, two per pass, 10-48 blocks away: a column whose top is 20+ above the nearest street cell,
 a structure floor (collapse volume `STRUCTURE`) at least 9 above it, under a roof, room for the body, no danger,
 no fresh ruin. They count against the city caps and despawn like everybody else. `Occupy` lets them take a few
-steps on the same floor now and then (flat path, under a roof); they never walk back to the street
+steps on the same floor now and then (flat path, under a roof; `CitizenNodeEvaluator` gives them the vanilla
+walking rules, the street grid knows no interiors); they never walk back to the street
 (`ReturnToGrid` skips them) and flee along the floor, away from the danger (`CitizenGoals.indoorPath`).
 QA: `/city occupants <n>` (op) adds manual ones around the command position; `/city status` prints a peril line
-(upstairs, teetered, fell, hung on, climbed, pulled up, caught, died, crowd panics).
+(upstairs, teetered, fell, hung on, climbed, pulled up, caught, died, crowd panics). An occupant who ends up on
+the street (fell, was caught) joins the crowd again. `-Dviltrumitecore.peril.log=true` logs every peril step
+(teeter, fall with the drop, hang, climb / pull-up, let go, land, catch, deaths with their cause, voices, crowd).
 
 ## 4. Voices
 
@@ -66,4 +74,6 @@ eased (35 % per step).
 - No audio device in the build sandbox: the voices were picked and mixed by measurement (energy, F0,
   spectrograms), not by ear. Two "help" takes are Portuguese ("socorro"), the rest English or wordless.
 - Occlusion is a ray test, not acoustics: no reverb, no diffraction around corners.
-- Occupants stand on floors; there is no furniture-aware indoor life (offices, elevators, stairs).
+- Occupants stand on floors; there is no furniture-aware indoor life (offices, elevators, stairs) and no
+  evacuation down the stairs: they run along their floor, away from the danger.
+- A falling scream of a person who screamed while teetering may overlap that scream for a moment.

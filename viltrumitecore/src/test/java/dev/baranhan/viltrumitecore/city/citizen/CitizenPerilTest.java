@@ -141,7 +141,9 @@ class CitizenPerilTest {
    void wiring_peril_owns_the_body_and_reacts_to_collapses() throws IOException {
       String entity = Files.readString(SRC.resolve("city/citizen/CitizenEntity.java"), StandardCharsets.UTF_8);
       assertTrue(entity.contains("!CitizenPeril.tick(this, city)"), "the peril runs before the brain");
-      assertTrue(entity.contains("CitizenPeril.onDeath(this, city)"));
+      assertTrue(entity.contains("CitizenPeril.onDeath(this, city, source.getMsgId())"));
+      String nodes = Files.readString(SRC.resolve("city/citizen/CitizenNodeEvaluator.java"), StandardCharsets.UTF_8);
+      assertTrue(nodes.contains("c.occupant ? null : city.grid()"), "occupants walk indoors (the street grid knows no interiors)");
       assertTrue(entity.contains("new CitizenGoals.Occupy(this)"));
       String events = Files.readString(SRC.resolve("city/citizen/CitizenPerilEvents.java"), StandardCharsets.UTF_8);
       assertTrue(events.contains("CityCollapseEvent.Started") && events.contains("EventPriority.LOWEST") && events.contains("isCanceled()"),
