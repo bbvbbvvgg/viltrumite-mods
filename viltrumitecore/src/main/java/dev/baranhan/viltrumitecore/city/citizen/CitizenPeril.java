@@ -70,6 +70,9 @@ public final class CitizenPeril {
 
    /** One server tick of a citizen; true when peril owns the body this tick (the brain is skipped). */
    static boolean tick(CitizenEntity c, CityManager city) {
+      if (c.isDeadOrDying()) {
+         return false; // the death is handled once (onDeath); a body does not land, hang or scream
+      }
       long now = city.now();
       if (c.voiceCooldown > 0) {
          c.voiceCooldown--;
@@ -81,6 +84,9 @@ public final class CitizenPeril {
       }
       if (c.onGround() || c.isInWater() || c.onClimbable()) {
          c.fallChecked = false;
+         if (c.occupant && (c.tickCount + c.getId()) % 40 == 0 && c.onGrid()) {
+            c.occupant = false; // fell, was caught or climbed down to the street: one of the crowd now
+         }
       }
       if (c.citizenState().peril()) {
          c.stateTicks++; // the brain (which counts otherwise) sleeps while the peril owns the body
