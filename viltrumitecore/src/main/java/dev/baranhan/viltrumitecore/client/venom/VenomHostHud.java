@@ -23,6 +23,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 @EventBusSubscriber(modid = "viltrumitecore", bus = Bus.FORGE, value = {Dist.CLIENT})
 public final class VenomHostHud {
    static final ResourceLocation VEINS = VenomView.rl("textures/gui/venom/veins.png");
+   static final ResourceLocation HAZE = VenomView.rl("textures/gui/venom/haze.png");
    static final ResourceLocation FLASH = VenomView.rl("textures/gui/venom/flash.png");
    static final ResourceLocation LID = VenomView.rl("textures/gui/venom/lid.png");
    private static long struggleAt = -100;
@@ -71,6 +72,9 @@ public final class VenomHostHud {
          float grow = 1.0F + 0.6F * (1.0F - veins);
          int vw = Math.round(w * grow), vh = Math.round(h * grow);
          float wob = (float)Math.sin(ticks * 0.15) * 0.015F;
+         // first the violet bruise along the border, then the veins themselves
+         g.setColor(1, 1, 1, Mth.clamp(veins, 0, 1));
+         g.blit(HAZE, 0, 0, w, h, 0, 0, 64, 64, 64, 64);
          g.setColor(1, 1, 1, Mth.clamp(veins * (0.85F + wob * 4), 0, 1));
          g.blit(VEINS, (w - vw) / 2, (h - vh) / 2, vw, vh, 0, 0, 256, 256, 256, 256);
       }
