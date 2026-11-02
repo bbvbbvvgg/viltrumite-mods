@@ -31,6 +31,8 @@
   "commands.viltrumitecore.godzilla.not_running": "Godzilla şehirde değil",
   "commands.viltrumitecore.godzilla.passive.on": "Godzilla pasif: dolaşıp şehri yıkıyor ama kimseye saldırmıyor",
   "commands.viltrumitecore.godzilla.passive.off": "Godzilla yeniden kahramanlara saldırıyor",
+  "commands.viltrumitecore.godzilla.hold.on": "Godzilla yerinde duruyor ve yalnızca komutla hareket ediyor",
+  "commands.viltrumitecore.godzilla.hold.off": "Godzilla yeniden şehirde dolaşıyor",
   "commands.viltrumitecore.godzilla.phase": "Godzilla evresi: %s",
   "commands.viltrumitecore.godzilla.started": "Godzilla şehre %s %s %s yönünden giriyor. Sirenler çalıyor: halkı tahliye edin!",
   "commands.viltrumitecore.godzilla.started.forced": "Godzilla şehre %s %s %s yönünden giriyor. Sirenler çalıyor: halkı tahliye edin! (zorla, diğer olaylarla birlikte)",

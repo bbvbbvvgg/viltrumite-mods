@@ -31,6 +31,8 @@
   "commands.viltrumitecore.godzilla.not_running": "哥斯拉不在城中",
   "commands.viltrumitecore.godzilla.passive.on": "哥斯拉处于被动状态：游荡并破坏城市，但不攻击任何人",
   "commands.viltrumitecore.godzilla.passive.off": "哥斯拉重新开始攻击英雄",
+  "commands.viltrumitecore.godzilla.hold.on": "哥斯拉原地不动，只按指令行动",
+  "commands.viltrumitecore.godzilla.hold.off": "哥斯拉重新在城市中游荡",
   "commands.viltrumitecore.godzilla.phase": "哥斯拉阶段：%s",
   "commands.viltrumitecore.godzilla.started": "哥斯拉正从 %s %s %s 方向进入城市。警报已拉响——快疏散市民！",
   "commands.viltrumitecore.godzilla.started.forced": "哥斯拉正从 %s %s %s 方向进入城市。警报已拉响——快疏散市民！（强制启动，与其他事件同时进行）",
