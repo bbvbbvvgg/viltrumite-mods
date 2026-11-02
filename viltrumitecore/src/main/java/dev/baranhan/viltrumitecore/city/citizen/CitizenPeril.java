@@ -357,11 +357,13 @@ public final class CitizenPeril {
    }
 
    /** A death from a fall: the closest people around react aloud. */
-   static void onDeath(CitizenEntity c, CityManager city) {
+   static void onDeath(CitizenEntity c, CityManager city, String cause) {
       if (c.citizenState() == CitizenState.FALLING || c.fallDistance > PerilRules.FALL_MIN_DROP) {
          stats(c.level()).deaths++;
          log(c, "died", String.format(java.util.Locale.ROOT, "fallDistance=%.1f", c.fallDistance));
          witnesses(c, city, city.now());
+      } else {
+         log(c, "died-other", cause + " state=" + c.citizenState() + (c.occupant ? " upstairs" : ""));
       }
    }
 
@@ -478,7 +480,8 @@ public final class CitizenPeril {
 
    /** One voice of a citizen, carried by it (moves with the body); false when the budget or its cooldown says no. */
    static boolean voice(CitizenEntity c, CitizenVoices.Kind kind, float reserve) {
-      if (c.voiceCooldown > 0 || c.isSilent()) {
+      // the scream of a fall is never held back by the person's own cooldown (it screamed while it teetered a moment ago)
+      if (c.voiceCooldown > 0 && kind != CitizenVoices.Kind.FALL || c.isSilent()) {
          return false;
       }
       Stats st = stats(c.level());
