@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.client.ghostrider.bike;
 
+import net.minecraft.world.entity.Entity;
+import javax.annotation.Nullable;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleEntity;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -9,6 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 /**
  * The rider leans, pitches and lifts with the Hell Cycle: his whole render (body, gear layers, the anchors his flames
@@ -56,5 +59,20 @@ public final class HellCycleRiderPose {
       HellCycleRenderer.tilt(out, bike, partial, park, true);
       out.rotateY(-(180.0F - yaw) * Mth.DEG_TO_RAD);
       return out.translate((float)-rel.x, (float)-rel.y, (float)-rel.z);
+   }
+
+   /**
+    * First person: where the eye goes when the rider's body leans, pitches and lifts with the bike (the same transform
+    * as his drawn body); null when the entity does not ride a Hell Cycle.
+    */
+   @Nullable
+   public static Vec3 firstPersonEye(Entity entity, Vec3 eye, float partial) {
+      if (!(entity.getVehicle() instanceof HellCycleEntity bike)) {
+         return null;
+      }
+      Vec3 origin = entity.getPosition(partial);
+      Matrix4f m = riderTilt(new Matrix4f(), bike, bike.getPosition(partial).subtract(origin), partial);
+      Vector3f p = m.transformPosition(new Vector3f((float)(eye.x - origin.x), (float)(eye.y - origin.y), (float)(eye.z - origin.z)));
+      return new Vec3(origin.x + p.x, origin.y + p.y, origin.z + p.z);
    }
 }

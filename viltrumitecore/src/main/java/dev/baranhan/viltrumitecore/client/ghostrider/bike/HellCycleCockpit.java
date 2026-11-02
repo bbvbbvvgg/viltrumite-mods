@@ -52,6 +52,11 @@ public final class HellCycleCockpit {
    /** Pivot to the knuckles of the vanilla arm (its cube runs 10 px down from the pivot); the fist closes 1.5 px in. */
    static final float ARM_PX = 10.0F;
    static final float FIST_PX = 1.5F;
+   /**
+    * The arms are drawn slimmer than the 4 px model arm: seen from the eye 4 px above the shoulder a full-width arm
+    * fills a quarter of the screen with its black sleeve (playtest #4).
+    */
+   static final float THICKNESS = 0.6F;
    private static final Vector3f UP = new Vector3f(0.0F, 1.0F, 0.0F);
    private static final Vector3f DOWN = new Vector3f(0.0F, -1.0F, 0.0F);
 
@@ -172,7 +177,7 @@ public final class HellCycleCockpit {
       stack.pushPose();
       stack.translate(shoulder.x, shoulder.y, shoulder.z);
       stack.mulPose(new Quaternionf().rotationTo(DOWN, dir));
-      stack.scale(1.0F, stretch(distance), 1.0F);
+      stack.scale(THICKNESS, stretch(distance), THICKNESS);
       stack.scale(-1.0F, -1.0F, 1.0F);
       stack.translate(-arm.x / 16.0F, -arm.y / 16.0F, -arm.z / 16.0F);
       arm.render(stack, buffers.getBuffer(RenderType.entitySolid(tex)), light, OverlayTexture.NO_OVERLAY);
