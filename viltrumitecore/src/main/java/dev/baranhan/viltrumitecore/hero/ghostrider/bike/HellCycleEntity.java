@@ -852,6 +852,13 @@ public class HellCycleEntity extends Entity {
       super.remove(reason);
    }
 
+   /** The server dropped this copy (burnt out, sent back, rider gone, out of range): its loops and effects go too. */
+   @Override
+   public void onClientRemoval() {
+      client.removed(this);
+      super.onClientRemoval();
+   }
+
    @Override
    protected void readAdditionalSaveData(CompoundTag tag) {
    }
