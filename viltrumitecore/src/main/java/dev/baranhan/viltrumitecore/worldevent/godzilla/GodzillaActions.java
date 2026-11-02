@@ -133,14 +133,8 @@ final class GodzillaActions {
 
    /** Hand position of a claw swipe in the world: an arc about the shoulder, high to low across the front. */
    static Vec3 clawHand(GodzillaEntity e, GodzillaMove move, float t) {
-      int side = move == GodzillaMove.CLAW_L ? 1 : -1;
-      float a = GodzillaRules.clawSweep(t, move) * Mth.DEG_TO_RAD;
-      float u = Mth.clamp((t - move.contact) / (float)(move.contactEnd - move.contact), 0.0F, 1.0F);
-      float arc = GodzillaRules.CLAW_ARC / GodzillaRules.HEIGHT;
-      double l = side * (GodzillaRules.SHOULDER_L[0] + Mth.sin(a) * arc);
-      double f = GodzillaRules.SHOULDER_L[2] + Mth.cos(a) * arc;
-      double up = 0.56 - 0.2 * u;
-      return e.bodyPoint(l, up, f);
+      float[] h = GodzillaRules.clawHand(move, t);
+      return e.bodyPoint(h[0], h[1], h[2]);
    }
 
    private static void claw(ServerLevel level, GodzillaSession s, GodzillaEntity e, GodzillaMove move, int t) {
@@ -167,10 +161,10 @@ final class GodzillaActions {
       int side = e.moveArg() >= 0 ? 1 : -1;
       Vec3 lf = GodzillaEntity.left(e.getYRot()).scale(side);
       GodzillaPart[] parts = e.parts();
-      for (int k = 2; k < GodzillaRules.TAIL_SEGMENTS; k++) {
+      for (int k = GodzillaRules.TAIL_STRIKE_FIRST; k < GodzillaRules.TAIL_SEGMENTS; k++) {
          GodzillaPart p = parts[GodzillaRules.P_TAIL + k];
          Vec3 c = p.getBoundingBox().getCenter();
-         float r = GodzillaRules.PART_SIZE[GodzillaRules.P_TAIL + k][0] * GodzillaRules.HEIGHT * 0.6F;
+         float r = GodzillaRules.tailSmashRadius(k);
          int hit = hurtSphere(level, s, e, c, r + 2.0F, GodzillaRules.TAIL_DAMAGE, 2.2, false, GodzillaDamage.crush(level, e), s.hitThisMove);
          int blocks = s.destruction.smashNow(level, c, r, 1.0, BODY_HARDNESS, lf.scale(0.9).add(0.0, 0.25, 0.0), 0.05F, 140, "tail");
          if ((hit > 0 || blocks > 20) && !s.tailFx) {
@@ -189,7 +183,7 @@ final class GodzillaActions {
          double dx = living.getX() - foot.x;
          double dz = living.getZ() - foot.z;
          double d = Math.sqrt(dx * dx + dz * dz);
-         if (d > wave || living.getY() - foot.y > 10.0) {
+         if (d > wave || living.getY() - foot.y > GodzillaRules.STOMP_RISE) {
             continue;
          }
          float f = Math.max(0.25F, GodzillaRules.falloff(d, wave));

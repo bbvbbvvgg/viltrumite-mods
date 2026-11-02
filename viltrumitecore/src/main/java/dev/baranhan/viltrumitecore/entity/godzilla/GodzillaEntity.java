@@ -84,6 +84,8 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    // ---- tail chain (both sides): world yaw of each segment
    private final float[] tailYaw = new float[GodzillaRules.TAIL_SEGMENTS];
    public final float[] tailYawO = new float[GodzillaRules.TAIL_SEGMENTS];
+   /** Scratch: body-frame centres of the tail segments (GodzillaRules.tailCentres). */
+   private final double[][] tailFrame = new double[GodzillaRules.TAIL_SEGMENTS][3];
    private boolean tailReady;
    private AABB cullBox;
    // ---- client view state
@@ -591,17 +593,9 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
          }
          this.tailReady = true;
       }
-      GodzillaMove move = this.move();
-      float t = this.moveTime(0.0F);
-      int side = this.moveArg() >= 0 ? 1 : -1;
-      boolean strike = move == GodzillaMove.TAIL;
-      float twist = strike ? GodzillaRules.hipsTwist(t, side) : 0.0F;
-      for (int k = 0; k < this.tailYaw.length; k++) {
-         this.tailYawO[k] = this.tailYaw[k];
-         float base = k == 0 ? body + twist : this.tailYaw[k - 1];
-         float target = base + GodzillaRules.tailSway(k, this.gait, this.walkAmount) + (strike ? GodzillaRules.tailStrike(k, t, side) : 0.0F);
-         this.tailYaw[k] += GodzillaRules.wrap(target - this.tailYaw[k]) * GodzillaRules.TAIL_FOLLOW[k];
-      }
+      boolean strike = this.move() == GodzillaMove.TAIL;
+      System.arraycopy(this.tailYaw, 0, this.tailYawO, 0, this.tailYaw.length);
+      GodzillaRules.tailStep(this.tailYaw, body, strike ? this.moveTime(0.0F) : -1.0F, this.moveArg() >= 0 ? 1 : -1, this.gait, this.walkAmount);
    }
 
    /** World yaw of tail segment k at a partial tick (renderer). */
@@ -625,24 +619,12 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
          box = box == null ? this.parts[i].getBoundingBox() : box.minmax(this.parts[i].getBoundingBox());
       }
       // tail chain in the body frame (relative yaws), then through the same roll as the body
-      float body = this.getYRot();
-      float[] root = GodzillaRules.TAIL_ROOT;
-      double l = root[0];
-      double u = root[1];
-      double f = root[2];
+      GodzillaRules.tailCentres(this.tailYaw, this.getYRot(), this.tailFrame);
       for (int k = 0; k < GodzillaRules.TAIL_SEGMENTS; k++) {
-         double rel = GodzillaRules.wrap(this.tailYaw[k] - body) * Mth.DEG_TO_RAD;
-         double p = GodzillaRules.TAIL_PITCH[k] * Mth.DEG_TO_RAD;
-         double len = GodzillaRules.TAIL_LENGTH[k];
-         double dl = Math.sin(rel) * Math.cos(p) * len;
-         double du = -Math.sin(p) * len;
-         double df = -Math.cos(rel) * Math.cos(p) * len;
-         Vec3 c = this.bodyPoint(l + dl * 0.5, Math.max(0.03, u + du * 0.5), f + df * 0.5);
+         double[] tc = this.tailFrame[k];
+         Vec3 c = this.bodyPoint(tc[0], tc[1], tc[2]);
          this.parts[GodzillaRules.P_TAIL + k].placeCentre(c.x, c.y, c.z);
          box = box.minmax(this.parts[GodzillaRules.P_TAIL + k].getBoundingBox());
-         l += dl;
-         u = Math.max(0.03, u + du);
-         f += df;
       }
       if (this.level().isClientSide && this.flag(FLAG_BEAM)) {
          Vec3 e = this.clientBeamEnd;
