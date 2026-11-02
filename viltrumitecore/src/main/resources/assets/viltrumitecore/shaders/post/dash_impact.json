@@ -200,6 +200,30 @@
                     "values": [
                         0.0
                     ]
+                },
+                {
+                    "name": "VenomHost",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "VenomVeins",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "VenomFlash",
+                    "values": [
+                        0.0
+                    ]
+                },
+                {
+                    "name": "VenomSlit",
+                    "values": [
+                        1.0
+                    ]
                 }
             ]
         },
