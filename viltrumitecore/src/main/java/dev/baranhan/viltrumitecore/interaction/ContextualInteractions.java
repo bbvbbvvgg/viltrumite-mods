@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.interaction;
 
 import com.mojang.logging.LogUtils;
 import dev.baranhan.viltrumitecore.interaction.builtin.DivineWeaponClash;
+import dev.baranhan.viltrumitecore.interaction.builtin.HellfireScaldsSymbiote;
 import dev.baranhan.viltrumitecore.interaction.builtin.LegionVsChitauri;
 import dev.baranhan.viltrumitecore.interaction.builtin.MjolnirMeetsVibranium;
 import dev.baranhan.viltrumitecore.interaction.builtin.MjolnirShattersMeteor;
@@ -59,7 +60,8 @@ public final class ContextualInteractions {
          new DivineWeaponClash(), new ViltrumiteFistMeetsVibranium(), new RepulsorSplitsOnVibranium(), new TimeStoneRewindsLedger(),
          new VibraniumStopsMeteor(), new ReidCleavesMeteor(), new ViltrumiteHurlsMeteor(), new ShadowExchangeMeteor(), new TitanBreaksGuard(),
          new MeteorDownsLeviathan(), new MjolnirShattersMeteor(), new ThunderOverchargesArmor(), new ThunderChargesLegion(),
-         new LightningRunsTheLeviathan(), new HeavyHitterHaltsLeviathan(), new LegionVsChitauri(), new TitanScattersSummons());
+         new LightningRunsTheLeviathan(), new HeavyHitterHaltsLeviathan(), new LegionVsChitauri(), new TitanScattersSummons(),
+         new HellfireScaldsSymbiote());
    }
 
    /** Common setup: registers the built-ins once. */

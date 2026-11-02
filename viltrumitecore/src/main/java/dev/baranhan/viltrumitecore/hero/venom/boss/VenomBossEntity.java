@@ -436,6 +436,13 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       VenomSounds.play(this, VenomSounds.SHRIEK, 1.4F, VenomSounds.jitter(this, 0.85F));
    }
 
+   /** hellfire_scalds_symbiote: no regeneration for a while, then the usual shriek and recoil (if it can). */
+   public void scald() {
+      this.fireBlock = Math.max(this.fireBlock, VenomRules.SCALD_REGEN_BLOCK);
+      this.sinceHurt = 0;
+      recoil();
+   }
+
    /** A loud sound in the level: every boss in earshot recoils. */
    public static void loudSound(ServerLevel level, Vec3 at, @Nullable ResourceLocation id, float volume) {
       List<VenomBossEntity> bosses = level.getEntitiesOfClass(VenomBossEntity.class, new AABB(at, at).inflate(VenomRules.SOUND_RADIUS * 3));
