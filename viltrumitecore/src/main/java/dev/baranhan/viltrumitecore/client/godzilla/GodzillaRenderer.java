@@ -335,7 +335,7 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
 
    // ------------------------------------------------------------------ glow
 
-   /** Pure: plate glow at spine position s for a move at tick t (rage: a faint ember pulse between breaths). */
+   /** Pure: plate glow at spine position s for a move at tick t (rage: a blue pulse between breaths, visible by day). */
    public static float plateLevel(GodzillaMove move, float t, float s, boolean rage, float age) {
       float g;
       switch (move) {
@@ -345,7 +345,7 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
          default -> g = 0.0F;
       }
       if (rage) {
-         g = Math.max(g, 0.12F + 0.07F * Mth.sin(age * 0.11F + s * 7.0F));
+         g = Math.max(g, 0.32F + 0.14F * Mth.sin(age * 0.11F + s * 7.0F));
       }
       return Mth.clamp(g, 0.0F, 1.0F);
    }
@@ -537,9 +537,10 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
       float wide = rage ? 1.3F : 1.0F;
       Vector3f mid = new Vector3f(from).lerp(to, 0.5F);
       Vector3f cam = this.toCam(e, partial, mid);
-      GlowDraw.ribbon(vc, m, from, to, cam, 5.5F * wide * flick, 7.0F * wide * flick, 40, 110, 255, 70, 50);
-      GlowDraw.ribbon(vc, m, from, to, cam, 2.6F * wide * flick, 3.2F * wide * flick, 90, 180, 255, 170, 140);
-      GlowDraw.ribbon(vc, m, from, to, cam, 1.0F * wide * flick, 1.3F * wide * flick, 230, 248, 255, 255, 230);
+      // as wide as the tunnel it drills (the soft ribbons fade to their edge: visible about half the width)
+      GlowDraw.ribbon(vc, m, from, to, cam, 10.0F * wide * flick, 12.5F * wide * flick, 40, 110, 255, 90, 70);
+      GlowDraw.ribbon(vc, m, from, to, cam, 5.0F * wide * flick, 6.0F * wide * flick, 90, 180, 255, 190, 160);
+      GlowDraw.ribbon(vc, m, from, to, cam, 1.8F * wide * flick, 2.2F * wide * flick, 230, 248, 255, 255, 235);
       if (detail) {
          Vector3f dir = new Vector3f(to).sub(from);
          float len = dir.length();
@@ -554,22 +555,22 @@ public class GodzillaRenderer extends EntityRenderer<GodzillaEntity> {
                for (int i = 0; i <= n; i++) {
                   float f = i / (float)n;
                   float ang = f * len * 0.11F - age * 0.7F + strand * Mth.PI;
-                  float r = (2.6F + 0.6F * Mth.sin(f * 20.0F + age)) * wide * grow;
+                  float r = (4.6F + 0.9F * Mth.sin(f * 20.0F + age)) * wide * grow;
                   Vector3f p = new Vector3f(from).add(new Vector3f(dir).mul(f * len)).add(new Vector3f(a).mul(Mth.cos(ang) * r))
                      .add(new Vector3f(b).mul(Mth.sin(ang) * r));
                   if (last != null) {
-                     GlowDraw.ribbon(vc, m, last, p, this.toCam(e, partial, p), 0.45F, 0.45F, 120, 200, 255, 120, 120);
+                     GlowDraw.ribbon(vc, m, last, p, this.toCam(e, partial, p), 0.8F, 0.8F, 120, 200, 255, 130, 130);
                   }
                   last = p;
                }
             }
          }
       }
-      GlowDraw.billboard(vc, m, from, left, up, 6.0F * wide * flick, 0.3F, 80, 170, 255, 220);
-      GlowDraw.billboard(vc, m, from, left, up, 2.6F * wide * flick, 0.55F, 235, 250, 255, 240);
-      GlowDraw.billboard(vc, m, to, left, up, 13.0F * wide * flick, 0.25F, 70, 150, 255, 190);
-      GlowDraw.billboard(vc, m, to, left, up, 6.0F * wide * flick, 0.5F, 255, 200, 140, 150);
-      GlowDraw.billboard(vc, m, to, left, up, 3.0F * wide * flick, 0.6F, 255, 250, 240, 230);
+      GlowDraw.billboard(vc, m, from, left, up, 9.0F * wide * flick, 0.3F, 80, 170, 255, 220);
+      GlowDraw.billboard(vc, m, from, left, up, 4.0F * wide * flick, 0.55F, 235, 250, 255, 240);
+      GlowDraw.billboard(vc, m, to, left, up, 18.0F * wide * flick, 0.25F, 70, 150, 255, 190);
+      GlowDraw.billboard(vc, m, to, left, up, 9.0F * wide * flick, 0.5F, 255, 200, 140, 150);
+      GlowDraw.billboard(vc, m, to, left, up, 4.5F * wide * flick, 0.6F, 255, 250, 240, 230);
    }
 
    private Vector3f toCam(GodzillaEntity e, float partial, Vector3f p) {

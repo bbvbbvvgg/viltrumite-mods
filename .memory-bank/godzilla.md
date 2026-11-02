@@ -16,7 +16,7 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
   fall roll; emissive plate / eye / mouth pass, mouth orb and beam ribbons via `GlowDraw`), `GodzillaClient` (own
   particles per FX kind with a budget, camera shake, hot ground glow), `GodzillaAudio` (every sound), `GodzillaClientSetup`.
 - Commands (op 2): `/godzilla start [force] | stop | status | cleanup | move <move> | phase <phase> | health <percent> |
-  passive on|off | creative on|off`.
+  passive on|off | creative on|off | hold on|off` (hold: it stands and only moves on command; the session clock runs).
 - Packet: `GodzillaFxS2CPacket` (kinds 0..`LAST` = `STEP`), appended last in `CoreMessages` (protocol 28).
 
 ## Invariants
@@ -39,6 +39,16 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
   attract the waypoints, not every tower).
 - `/godzilla stop` removes the kaiju and everything the event owns but keeps the damage; `/city reset` restores the city.
 - One big event at a time: `WorldEventConflicts` lists the others; `force` overrides.
+
+- Max health 4000 is past the vanilla 1024 attribute clamp: `ThanosMaxHealthMixin` answers `GodzillaRules.MAX_HEALTH`
+  for the kaiju (playtest found it at 1024). Its body and parts are bosses in `CombatBalance.isBoss` (hero hit cap).
+- Hit zones by the target's place: a flier is `AIR_NEAR` (claws / roar) only within `AIR_REACH_FLAT` 0.45 H and
+  `AIR_REACH_UP` 0.92 H, otherwise `AIR_FAR` (breath); a hovering hero above the head is breathed at, not swiped.
+
+## QA notes (client playtest on Xvfb / llvmpipe, Atheria)
+- The entity is only visible within the tracking range ((view distance - 1) x 16): keep the camera close in tests.
+- Beam ribbons were widened ~2x after the night shot read as a thin line; rage plate glow 0.32 + 0.14 sin (visible by day).
+- llvmpipe FPS (1..5) says nothing about real GPUs; server tick cost was 0.1..3.7 ms avg, up to ~27 ms carving downtown.
 
 ## Sound kit
 - `tools/sfx/godzilla.py` imports the primitives of `tools/sfx/chitauri.py`; 22 cues, all own synthesis (CC0). Big
