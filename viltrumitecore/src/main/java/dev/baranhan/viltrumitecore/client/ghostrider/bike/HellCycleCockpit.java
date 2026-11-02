@@ -51,6 +51,8 @@ public final class HellCycleCockpit {
    static final float SHOULDER_Z = (float)(HellCycleRules.SEAT_BACK * 16.0) - 1.5F;
    /** Pivot to the knuckles of the vanilla arm (its cube runs 10 px down from the pivot); the fist closes 1.5 px in. */
    static final float ARM_PX = 10.0F;
+   /** Share of the bars' steering angle the rider's shoulders turn with. */
+   static final float TORSO_TWIST = 0.6F;
    static final float FIST_PX = 1.5F;
    /**
     * The arms are drawn slimmer than the 4 px model arm: seen from the eye 4 px above the shoulder a full-width arm
@@ -105,7 +107,7 @@ public final class HellCycleCockpit {
          Vector3f grip = grip(side, steerYaw);
          // model -X is the rider's left (bike frame: front -Z, left -X), the player model's leftArm likewise
          arm(stack, buffers, light, tex, i == 0 ? model.leftArm : model.rightArm, i == 0 ? model.leftSleeve : model.rightSleeve,
-            shoulder(side), grip);
+            shoulder(side, steerYaw), grip);
          grips[i] = frame.transformPosition(new Vector3f(grip));
       }
       stack.popPose();
@@ -146,9 +148,21 @@ public final class HellCycleCockpit {
       return new Vector3f(sx / 16.0F, GRIP_Y / 16.0F, sz / 16.0F);
    }
 
-   /** Pure: one shoulder pivot (side -1 left / +1 right) in the bike frame (blocks). */
+   /** Pure: one shoulder pivot (side -1 left / +1 right) in the bike frame (blocks), bars straight. */
    static Vector3f shoulder(float side) {
-      return new Vector3f(side * SHOULDER_X / 16.0F, SHOULDER_Y / 16.0F, SHOULDER_Z / 16.0F);
+      return shoulder(side, 0.0F);
+   }
+
+   /**
+    * Pure: one shoulder pivot with the torso turned after the bars ({@link #TORSO_TWIST} of their angle, round the
+    * spine): the shoulder whose grip swings forward follows it, so neither arm visibly stretches at full lock.
+    */
+   static Vector3f shoulder(float side, float steerYawDeg) {
+      float a = steerYawDeg * TORSO_TWIST * Mth.DEG_TO_RAD;
+      float x = side * SHOULDER_X;
+      float sx = x * Mth.cos(a);
+      float sz = -x * Mth.sin(a) + SHOULDER_Z;
+      return new Vector3f(sx / 16.0F, SHOULDER_Y / 16.0F, sz / 16.0F);
    }
 
    /** Pure: how much the 10 px arm stretches so that its fist closes on a grip {@code distance} blocks from the shoulder. */

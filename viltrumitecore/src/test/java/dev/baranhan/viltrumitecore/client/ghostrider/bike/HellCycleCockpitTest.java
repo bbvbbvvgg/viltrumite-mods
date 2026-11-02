@@ -52,13 +52,19 @@ class HellCycleCockpitTest {
 
    @Test
    void armsReachTheGripsWithoutVisibleStretch() {
-      for (float steer = -30.0F; steer <= 30.0F; steer += 5.0F) {
+      // the bars' real range: full lock at a standstill (26 degrees round the raked axis), less with speed and in drifts
+      float lock = 26.0F * HellCycleRenderer.COS_RAKE;
+      for (float steer = -lock; steer <= lock + 1.0E-3F; steer += lock / 6.0F) {
          for (float side : new float[]{-1.0F, 1.0F}) {
-            float d = new Vector3f(HellCycleCockpit.grip(side, steer)).sub(HellCycleCockpit.shoulder(side)).length();
+            float d = new Vector3f(HellCycleCockpit.grip(side, steer)).sub(HellCycleCockpit.shoulder(side, steer)).length();
             float k = HellCycleCockpit.stretch(d);
             assertTrue(k > 0.8F && k < 1.3F, "arm scale " + k + " at steer " + steer);
          }
       }
+      // the torso follows the bars: with a fixed body the far arm would reach a third longer at full lock
+      float far = new Vector3f(HellCycleCockpit.grip(-1.0F, -lock)).sub(HellCycleCockpit.shoulder(-1.0F)).length();
+      float twisted = new Vector3f(HellCycleCockpit.grip(-1.0F, -lock)).sub(HellCycleCockpit.shoulder(-1.0F, -lock)).length();
+      assertTrue(twisted < far, "the shoulder comes forward with its grip");
       assertEquals(0.6F, HellCycleCockpit.stretch(0.0F), EPS, "clamped short");
       assertEquals(1.5F, HellCycleCockpit.stretch(5.0F), EPS, "clamped long");
    }
