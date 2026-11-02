@@ -14,6 +14,8 @@ public class ViltrumitePostProcessingConfig {
    public float punchShakeMultiplier = 1.0F;
    public float punchEffectMultiplier = 1.0F;
    public float lockVignetteMultiplier = 1.0F;
+   /** Heaven's Door manga overlay (speed lines, screentone, menacing glyphs): 0 disables; also scaled by Screen Effects. */
+   public float mangaEffectsMultiplier = 1.0F;
    public static ViltrumitePostProcessingConfig INSTANCE = new ViltrumitePostProcessingConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore_post_processing.json");

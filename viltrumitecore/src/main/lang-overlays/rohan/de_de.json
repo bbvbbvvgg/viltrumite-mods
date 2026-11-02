@@ -32,6 +32,7 @@
   "codex.viltrumitecore.rohan.lore": "Ein stolzer, neugieriger Mangaka, der für Realismus alles tut. Sein Stand, ein kleiner Junge in langem Mantel und Zylinder, verwandelt jeden, der seine Zeichnung sieht oder berührt wird, in ein lebendes Buch: Jede Seite ist die Wahrheit seines Lebens, und was Rohan hineinschreibt, muss befolgt werden.",
   "codex.viltrumitecore.rohan.gameplay": "Tinte (0-100) bezahlt alles außer dem Ultimate, das Inspiration aus neuen Büchern braucht. Heaven's Door öffnet ein Wesen durch Berührung; Luftskizze und Manuskript jeden, der hinsieht. Im Buch liest du echte Daten und schreibst Zeilen aus einer festen Liste: Sicherheitssperre, Ziel vergessen, Abstand halten, stillstehen, Dorfbewohner verschonen, beschützen, gehe zu, keine Angriffe einer Art, rückwärts fliegen, folgen, beruhigen. Bosse und starke Helden geben kurze Fenster, eine Zeile, widerstehen und werfen zurück; S+-Bücher sind nur lesbar.",
   "codex.viltrumitecore.rohan.relations": "Er würde zu gern DIOs Buch lesen; die Stadtbewohner sind sein liebstes Material.",
+  "gui.viltrumitecore.config.post_process.manga_effects": "Manga-Effekt-Multiplikator (Heaven's Door)",
   "subtitles.viltrumitecore.rohan.door_summon": "Heaven's Door erscheint",
   "subtitles.viltrumitecore.rohan.door_touch": "Heaven's Door berührt",
   "subtitles.viltrumitecore.rohan.dismiss": "Stand verblasst",
