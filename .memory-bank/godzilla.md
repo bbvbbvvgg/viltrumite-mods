@@ -30,9 +30,13 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
   in the event's code (test).
 - Destruction only through the city systems: `StructuralDamage` with `CollapseCause` "godzilla", `CityAftermath`
   (`AftermathCause.GODZILLA`, id `godzilla:<session>`), `CityInfrastructure` alarm "godzilla". Budgets:
-  `BLOCKS_PER_TICK` 420 (rage 600), `MAX_BLOCKS` 400 000 per session of which `RETREAT_RESERVE` 40 000 is kept for the way
+  `BLOCKS_PER_TICK` 360 (rage 520), `MAX_BLOCKS` 900 000 per session of which `RETREAT_RESERVE` 60 000 is kept for the way
   out (the rampage using the rest = "sated": the kaiju retreats), `MAX_DEBRIS` 48 (removed after 30 s), `FX_PER_TICK` 24. Never forces
   chunks (test).
+- Pacing (playtested on Atheria: downtown costs 500..1300 blocks per block walked, the first tuning was sated in 2.5 min):
+  walk 0.30 b/t (rage 0.40, retreat 0.36), wading `GodzillaRules.wade(load)` slows it to 65 % while the smoothed share of
+  the tick budget used is high, a survey pause (100..220 ticks) at every reached waypoint, `TOWER_PULL` 0.45 (towers
+  attract the waypoints, not every tower).
 - `/godzilla stop` removes the kaiju and everything the event owns but keeps the damage; `/city reset` restores the city.
 - One big event at a time: `WorldEventConflicts` lists the others; `force` overrides.
 

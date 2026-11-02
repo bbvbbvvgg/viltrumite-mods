@@ -89,7 +89,12 @@ final class GodzillaBrain {
    private static void explore(ServerLevel level, GodzillaSession s, GodzillaEntity e) {
       s.waypointAge++;
       Vec3 here = e.position();
-      if (s.waypoint == null || s.waypointAge > 1800 || horizontal(here, s.waypoint) < GodzillaRules.WAYPOINT_REACHED || s.stuck > 100) {
+      boolean reached = s.waypoint != null && horizontal(here, s.waypoint) < GodzillaRules.WAYPOINT_REACHED;
+      if (reached && s.phase != GodzillaPhase.ARRIVAL) {
+         // a survey pause: it stops among the ruins and looks over the city before the next leg
+         s.restUntil = s.clock + GodzillaRules.SURVEY_MIN + s.random.nextInt(GodzillaRules.SURVEY_SPREAD);
+      }
+      if (s.waypoint == null || s.waypointAge > 1800 || reached || s.stuck > 100) {
          s.waypoint = pickWaypoint(level, s, e);
          s.waypointAge = 0;
          s.stuck = 0;
@@ -118,8 +123,17 @@ final class GodzillaBrain {
             return;
          }
       }
-      if (s.waypoint == null) {
+      if (s.waypoint == null || s.clock < s.restUntil) {
          e.walkTo(null);
+         e.faceTowards(null);
+         if (watcher != null && (s.clock / 90 & 1) == 0) {
+            e.lookAt(watcher.getEyePosition(), false);
+         } else {
+            // the head pans slowly over the skyline
+            float pan = Mth.sin(s.clock * 0.025F) * 50.0F;
+            Vec3 fw = GodzillaEntity.forward(e.getYRot() + pan);
+            e.lookAt(here.add(fw.scale(90.0)).add(0.0, GodzillaRules.HEIGHT * 0.5, 0.0), false);
+         }
          return;
       }
       e.walkTo(s.waypoint);
@@ -182,7 +196,7 @@ final class GodzillaBrain {
          double tall = Math.max(0.0, ground - e.getY());
          double dist = Math.sqrt((x - e.getX()) * (x - e.getX()) + (z - e.getZ()) * (z - e.getZ()));
          float turn = Math.abs(GodzillaRules.wrap(GodzillaEntity.yawTowards(x - e.getX(), z - e.getZ()) - yaw));
-         double score = Math.min(tall, 80.0) * 0.8 - turn * 0.35 - Math.abs(dist - 90.0) * 0.15 + s.random.nextDouble() * 12.0;
+         double score = Math.min(tall, 80.0) * GodzillaRules.TOWER_PULL - turn * 0.35 - Math.abs(dist - 90.0) * 0.15 + s.random.nextDouble() * 12.0;
          if (dist < GodzillaRules.WAYPOINT_REACHED * 1.5) {
             continue;
          }

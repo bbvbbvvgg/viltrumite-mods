@@ -79,7 +79,7 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    /** The retreat's end: the body sinks (into the bay, under the streets) instead of following the ground. */
    public boolean sinking;
    private boolean turnedLastTick;
-   /** Slows the walk while the destruction queue is behind (pushing through a dense block). */
+   /** Wading: slows the walk while it pushes through dense blocks (set by the session each tick, see GodzillaRules.wade). */
    public float drag = 1.0F;
    // ---- tail chain (both sides): world yaw of each segment
    private final float[] tailYaw = new float[GodzillaRules.TAIL_SEGMENTS];
