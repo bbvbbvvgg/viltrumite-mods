@@ -13,8 +13,8 @@ import net.minecraft.world.entity.player.Player;
 
 /**
  * Spirit of Vengeance panel: black leather frames with a hellfire rim, a row of chain links along the top edge and an
- * ember seam, the flaming skull emblem. While he rides the Hell Cycle the dashboard sits left of the ability bar: the
- * speed in km/h over the rev bar (deep red to white-hot, redline mark), the gear under it and the boost timer.
+ * ember seam, the flaming skull emblem. While he rides the Hell Cycle the dashboard sits left of the bar's top: the gear
+ * (or BOOST while it burns), the speed in km/h and the rev bar (deep red to white-hot, redline mark, boost timer).
  */
 public final class GhostRiderPanelStyle implements PanelStyle {
    public static final GhostRiderPanelStyle INSTANCE = new GhostRiderPanelStyle();
@@ -89,11 +89,12 @@ public final class GhostRiderPanelStyle implements PanelStyle {
       if (!(player.getVehicle() instanceof HellCycleEntity bike)) {
          return;
       }
+      // everything sits above the bar's top: the key letters run down its left side from the first slot (playtest #3)
       HellCyclePhysics.State st = bike.state;
       double speed = Math.sqrt(st.velX * st.velX + st.velZ * st.velZ);
       int x1 = abilityBar.x() - 3;
       int x0 = x1 - BAR_WIDTH;
-      int y = abilityBar.y() + 2;
+      int y = abilityBar.y() - 8;
       float rpm = Math.max(0.0F, Math.min(1.0F, bike.engineRpm()));
       boolean blink = (player.tickCount / 3) % 2 == 0;
       g.fill(x0 - 1, y - 1, x1 + 1, y + BAR_HEIGHT + 1, 0xFF000000);
@@ -107,19 +108,27 @@ public final class GhostRiderPanelStyle implements PanelStyle {
       }
       int red = x0 + Math.round(REDLINE * BAR_WIDTH);
       g.fill(red, y - 1, red + 1, y + BAR_HEIGHT + 1, rpm >= REDLINE && blink ? 0xFFFFF0C0 : 0xFFB02010);
-      var font = Minecraft.getInstance().font;
-      Component speedText = Component.translatable("hud.viltrumitecore.ghost_rider.speed", kmh(speed));
-      g.drawString(font, speedText, x1 - font.width(speedText), y - 11, bike.dashing() ? EMBER : 0xFFFFE0B0, true);
-      Component gear = Component.translatable("hud.viltrumitecore.ghost_rider.gear", Math.max(1, st.gear));
-      g.drawString(font, gear, x1 - font.width(gear), y + BAR_HEIGHT + 3, RIM, true);
       int boost = timerWidth(bike.dashTicksLeft(), HellCycleRules.BOOST_TICKS, BAR_WIDTH);
       if (boost > 0) {
-         int by = y + BAR_HEIGHT + 13;
-         g.fill(x0 - 1, by - 1, x1 + 1, by + 2, 0xFF000000);
-         g.fill(x1 - boost, by, x1, by + 1, blink ? 0xFFFFF0C0 : RIM);
-         Component label = Component.translatable("hud.viltrumitecore.ghost_rider.boost");
-         g.drawString(font, label, x1 - font.width(label), by + 3, EMBER, true);
+         // the boost timer burns down along the rev bar's top edge
+         g.fill(x1 - boost, y - 1, x1, y, blink ? 0xFFFFF0C0 : EMBER);
       }
+      var font = Minecraft.getInstance().font;
+      Component speedText = Component.translatable("hud.viltrumitecore.ghost_rider.speed", kmh(speed));
+      g.drawString(font, speedText, x1 - font.width(speedText), y - 12, boost > 0 ? EMBER : 0xFFFFE0B0, true);
+      Component top = boost > 0 ? Component.translatable("hud.viltrumitecore.ghost_rider.boost")
+         : Component.translatable("hud.viltrumitecore.ghost_rider.gear", Math.max(1, st.gear));
+      g.drawString(font, top, x1 - font.width(top), y - 22, boost > 0 ? (blink ? 0xFFFFF0C0 : EMBER) : RIM, true);
+   }
+
+   @Override
+   public int attachmentsLeft() {
+      return 64;
+   }
+
+   @Override
+   public int attachmentsUp() {
+      return 32;
    }
 
    private static void frame(GuiGraphics g, Bounds b) {
