@@ -15,8 +15,9 @@ import javax.annotation.Nullable;
  *
  * <p>Upper floors are often wider than the lobby (the Atheria tower at 1215 -200 overhangs the street by one to
  * eight blocks): {@link #over} also lets the probe into columns near the footprint that are empty at the height of
- * the cut. A column that is solid there stands on the street itself (the neighbour's wall, an uncut pillar outside
- * the ring): it is the neighbour, the probe only counts how much the building leans on it.
+ * the cut. A column that is solid there stands on the street itself: a small free-standing pillar is the
+ * building's own support (it still holds the building until it is cut too), anything longer is the neighbour's wall
+ * and the probe only counts how much the building leans on it.
  */
 public final class BaseCut implements SupportProbe.Columns {
    /** Columns with a removed block: fewer is a doorway or a pillar, not a cut. */
@@ -36,6 +37,11 @@ public final class BaseCut implements SupportProbe.Columns {
    public static final int GAP = 2;
    /** How far upper floors may overhang the cut footprint and still fall with it. */
    public static final int OVERHANG = 8;
+   /**
+    * A free-standing pillar next to the footprint (the Atheria tower stands on a row of them outside its lobby)
+    * has at most this many columns at the cut height; a neighbour's wall is longer. The building may stand on it.
+    */
+   public static final int PILLAR_MAX = 9;
 
    public final int minX, minZ, width, depth, columns, footprint, core;
    private final BitSet cells;
@@ -202,12 +208,21 @@ public final class BaseCut implements SupportProbe.Columns {
             }
             int c = j * gw + i;
             if (seen[c] == 0) {
-               boolean clear = true;
-               for (int y = cutY; y <= cutTop && clear; y++) {
-                  byte m = volume.at(x, y, z);
-                  clear = m != CollapseAnalyzer.STRUCTURE && m != CollapseAnalyzer.NATURAL && m != CollapseAnalyzer.FIXED && m != CollapseAnalyzer.UNKNOWN;
+               if (clear(volume, x, z, cutY, cutTop)) {
+                  seen[c] = 1;
+               } else {
+                  // solid at the cut height: a pillar of this building (small) or the neighbour (long)
+                  it.unimi.dsi.fastutil.longs.LongArrayList pillar = new it.unimi.dsi.fastutil.longs.LongArrayList();
+                  boolean small = standing(volume, x, z, cutY, cutTop, pillar);
+                  for (int n = 0; n < pillar.size(); n++) {
+                     long k = pillar.getLong(n);
+                     int pi = BlockKey.x(k) - ox, pj = BlockKey.z(k) - oz;
+                     if (pi >= 0 && pj >= 0 && pi < gw && pj < gd) {
+                        seen[pj * gw + pi] = (byte)(small ? 1 : 2);
+                     }
+                  }
+                  seen[c] = (byte)(small ? 1 : 2);
                }
-               seen[c] = (byte)(clear ? 1 : 2);
             }
             return seen[c] == 1;
          }
@@ -217,6 +232,50 @@ public final class BaseCut implements SupportProbe.Columns {
             return cut.contains(x, z);
          }
       };
+   }
+
+   private static boolean clear(CollapseAnalyzer.Volume volume, int x, int z, int cutY, int cutTop) {
+      for (int y = cutY; y <= cutTop; y++) {
+         byte m = volume.at(x, y, z);
+         if (m == CollapseAnalyzer.STRUCTURE || m == CollapseAnalyzer.NATURAL || m == CollapseAnalyzer.FIXED || m == CollapseAnalyzer.UNKNOWN) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   /**
+    * The columns that stand at the cut height together with (x, z) (8-connected), into {@code out}; true when they
+    * are a small structural pillar ({@link #PILLAR_MAX} columns or fewer, no terrain).
+    */
+   private static boolean standing(CollapseAnalyzer.Volume volume, int x, int z, int cutY, int cutTop, it.unimi.dsi.fastutil.longs.LongArrayList out) {
+      it.unimi.dsi.fastutil.longs.LongOpenHashSet seen = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+      long start = BlockKey.of(x, 0, z);
+      seen.add(start);
+      out.add(start);
+      for (int n = 0; n < out.size(); n++) {
+         long k = out.getLong(n);
+         int cx = BlockKey.x(k), cz = BlockKey.z(k);
+         for (int y = cutY; y <= cutTop; y++) {
+            byte m = volume.at(cx, y, cz);
+            if (m == CollapseAnalyzer.NATURAL || m == CollapseAnalyzer.FIXED || m == CollapseAnalyzer.UNKNOWN) {
+               return false; // terrain, bedrock, the edge of the loaded world: not a pillar
+            }
+         }
+         for (int dz = -1; dz <= 1; dz++) {
+            for (int dx = -1; dx <= 1; dx++) {
+               long nk = BlockKey.of(cx + dx, 0, cz + dz);
+               if ((dx != 0 || dz != 0) && !seen.contains(nk) && !clear(volume, cx + dx, cz + dz, cutY, cutTop)) {
+                  seen.add(nk);
+                  out.add(nk);
+                  if (out.size() > PILLAR_MAX) {
+                     return false;
+                  }
+               }
+            }
+         }
+      }
+      return true;
    }
 
    private static int flood(int c, BitSet cut, BitSet outside, int[] queue, int tail) {

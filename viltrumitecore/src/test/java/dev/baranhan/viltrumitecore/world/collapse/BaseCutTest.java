@@ -151,6 +151,34 @@ class BaseCutTest {
    }
 
    @Test
+   void lastPillarOutsideTheLobbyHoldsUntilItIsCut() {
+      // the Atheria tower: a lobby ring plus a row of pillars one block outside it, a neighbour to the north
+      World w = new World();
+      SupportProbeTest.tower(w, 2, 2, 12, 64, 70);
+      w.box(0, 71, 0, 15, 71, 15, CollapseAnalyzer.STRUCTURE);
+      SupportProbeTest.tower(w, 0, 0, 16, 71, 130);
+      SupportProbeTest.tower(w, 0, -16, 16, 64, 110);
+      for (int z = 3; z <= 13; z += 5) {
+         w.box(0, 64, z, 0, 70, z, CollapseAnalyzer.STRUCTURE); // pillars under the west facade
+      }
+      long[] lobby = w.carve(1, 64, 1, 14, 66, 14);
+      long[] pillars = join(w.carve(0, 64, 3, 0, 66, 3), w.carve(0, 64, 8, 0, 66, 8));
+      long[] removed = join(lobby, pillars);
+      BaseCut cut = BaseCut.of(removed);
+      assertNotNull(cut);
+      assertEquals(SupportProbe.Status.GROUNDED, masked(w, removed, cut).run(), "the last pillar still holds it");
+      long[] last = w.carve(0, 65, 13, 0, 65, 13); // mined by hand
+      long[] all = join(removed, last);
+      BaseCut cut2 = BaseCut.of(all);
+      assertNotNull(cut2);
+      SupportProbe p = masked(w, all, cut2);
+      assertEquals(SupportProbe.Status.FLOATING, p.run(), p.reason());
+      for (long k : p.floatingBlocks()) {
+         assertTrue(BlockKey.z(k) >= 0, "the neighbour stays");
+      }
+   }
+
+   @Test
    void roomDugIntoASolidBlockStays() {
       World w = new World();
       w.box(0, 64, 0, 30, 100, 30, CollapseAnalyzer.STRUCTURE);

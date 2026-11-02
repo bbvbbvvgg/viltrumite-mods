@@ -228,11 +228,13 @@ public final class StructuralDamage {
       if (!state.getFluidState().isEmpty() && state.getCollisionShape(level, pos).isEmpty()) {
          return CollapseAnalyzer.FLUID;
       }
+      if (state.canBeReplaced() && state.getCollisionShape(level, pos).isEmpty()) {
+         // grass, flowers, snow layers: no support, never part of a section. Before the unbreakable check: the
+         // invisible minecraft:light blocks (hardness -1) sit on every floor of Atheria and held whole towers (#135)
+         return CollapseAnalyzer.AIR;
+      }
       if (state.getDestroySpeed(level, pos) < 0.0F) {
          return CollapseAnalyzer.FIXED;
-      }
-      if (state.canBeReplaced() && state.getCollisionShape(level, pos).isEmpty()) {
-         return CollapseAnalyzer.AIR; // grass, flowers, snow layers: no support, never part of a section
       }
       if (state.is(BlockTags.DIRT) || state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.BASE_STONE_NETHER) || state.is(BlockTags.SAND)
          || state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES) || state.is(BlockTags.ICE) || state.is(BlockTags.SNOW) || state.is(BlockTags.NYLIUM)
