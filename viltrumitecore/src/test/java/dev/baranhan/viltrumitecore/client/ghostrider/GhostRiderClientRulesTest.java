@@ -17,6 +17,20 @@ import org.junit.jupiter.api.Test;
 class GhostRiderClientRulesTest {
 
    @Test
+   void rootedMovesDoNotZoomTheCamera() {
+      float walk = 0.1F;
+      double free = 0.13;
+      double rooted = free * 0.1;
+      float k = GhostRiderCamera.rootCompensation(rooted, -0.9, walk);
+      double vanillaRooted = (rooted / walk + 1.0) / 2.0;
+      double vanillaFree = (free / walk + 1.0) / 2.0;
+      assertEquals(vanillaFree, vanillaRooted * k, 1.0E-6, "the compensated modifier is the unrooted one");
+      assertTrue(k > 1.0F, "a root narrows the view, so the fix widens it back");
+      assertEquals(1.0F, GhostRiderCamera.rootCompensation(0.1, -1.0, walk), "a full stop cannot be undone: leave it");
+      assertEquals(1.0F, GhostRiderCamera.rootCompensation(0.1, -0.9, 0.0F), "no walking speed: vanilla ignores the term");
+   }
+
+   @Test
    void dashboardSpeedIsKilometresPerHour() {
       assertEquals(0, GhostRiderPanelStyle.kmh(0.0));
       assertEquals(72, GhostRiderPanelStyle.kmh(1.0), "one block a tick is 72 km/h");

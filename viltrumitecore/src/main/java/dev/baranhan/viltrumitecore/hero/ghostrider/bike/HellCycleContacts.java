@@ -21,8 +21,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * What the ridden Hell Cycle does to bodies in its way (server, once per tick from the accepted motion):
  * <ul>
- *    <li>Hell Dash rams every legal non-bystander target once per dash: {@link GhostRiderRules#RAM_DAMAGE}, hellfire,
- *    thrown up and ahead;</li>
+ *    <li>Hell Dash rams every legal automatic target ({@link GhostRiderTargets#mayAutoHit}: no city folk, no innocent
+ *    villagers, traders or pets) once per dash: {@link GhostRiderRules#RAM_DAMAGE}, hellfire, thrown up and ahead;</li>
  *    <li>at speed ({@link GhostRiderRules#HIT_SPEED}) hostile monsters are hit (4-7 by speed) and knocked aside;</li>
  *    <li>everybody else - city folk, villagers, animals, players without PvP - is only nudged out of the way, unhurt.
  *    Normal riding never breaks a block.</li>

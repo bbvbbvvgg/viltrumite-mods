@@ -51,9 +51,20 @@ public final class GhostRiderTargets {
       return true;
    }
 
-   /** Area and automatic hits: a legal target that is not a city bystander. */
+   /**
+    * Area and automatic hits (whirl, wave, slam, the bike's ram): a legal target that is not a city bystander and not
+    * an innocent soul (villager, trader, tamed pet, allay) - unless the ledger holds sins against it. Hellfire spares
+    * the innocent; only a deliberate, aimed blow can still strike one (and it is written in the striker's own ledger).
+    */
    public static boolean mayAutoHit(ServerPlayer owner, LivingEntity e) {
-      return mayHit(owner, e) && !Bystander.is(e);
+      if (!mayHit(owner, e) || Bystander.is(e)) {
+         return false;
+      }
+      if (!PenanceLedger.innocent(e)) {
+         return true;
+      }
+      PenanceLedger ledger = PenanceLedger.get(owner.getServer());
+      return ledger != null && !ledger.deeds(e).innocent();
    }
 
    public static boolean isBoss(@Nullable Entity e) {
@@ -77,6 +88,26 @@ public final class GhostRiderTargets {
       }
       out.sort(Comparator.comparingDouble(e -> e.distanceToSqr(from)));
       return out;
+   }
+
+   /** The body nearest the line of sight (within {@code degrees} of it), or null: the one a blow is aimed at. */
+   @Nullable
+   public static LivingEntity aimed(List<LivingEntity> candidates, Vec3 eye, Vec3 look, double degrees) {
+      Vec3 axis = look.normalize();
+      double best = Math.cos(Math.toRadians(degrees));
+      LivingEntity pick = null;
+      for (LivingEntity e : candidates) {
+         Vec3 d = e.getBoundingBox().getCenter().subtract(eye);
+         if (d.lengthSqr() < 1.0E-4) {
+            return e;
+         }
+         double cos = d.normalize().dot(axis);
+         if (cos > best) {
+            best = cos;
+            pick = e;
+         }
+      }
+      return pick;
    }
 
    public static List<LivingEntity> around(Entity source, Vec3 at, double radius, Predicate<LivingEntity> ok) {

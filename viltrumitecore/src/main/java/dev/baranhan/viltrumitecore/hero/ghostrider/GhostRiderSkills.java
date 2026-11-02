@@ -390,7 +390,7 @@ public final class GhostRiderSkills {
    /** The soul under the crosshair, else the best one in the narrow cone; always in sight. */
    @Nullable
    static LivingEntity stareTarget(ServerPlayer player) {
-      LivingEntity aimed = GhostRiderCombat.aimed(player, GhostRiderRules.STARE_RANGE);
+      LivingEntity aimed = GhostRiderCombat.aimed(player, GhostRiderRules.STARE_RANGE, false);
       if (aimed != null) {
          return aimed;
       }
@@ -458,6 +458,12 @@ public final class GhostRiderSkills {
             victim.displayClientMessage(msg, false);
          }
          return;
+      }
+      // the verdict is not a blow queued under the stare's hold: let the soul go first, or the freeze's deferred-damage
+      // cap (40 % of max health) would silently shrink the penance the message just announced
+      if (state.stareUuid != null && state.stareEffect != null) {
+         ControlManager.get(player.serverLevel()).release(state.stareUuid, state.stareEffect, ReleaseReason.NORMAL_END);
+         state.stareEffect = null;
       }
       target.invulnerableTime = 0;
       boolean hurt = target.hurt(Hellfire.source(player.serverLevel(), Hellfire.PENANCE, player), damage);
