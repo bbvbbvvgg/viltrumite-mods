@@ -561,4 +561,11 @@ public final class CaptainHero implements HeroDefinition {
          0, false, teamLeft, CaptainRules.FIGHT_TICKS, false, false, 0, 0, state.shieldId, new int[HeroPublicSnapshot.COOLDOWN_COUNT],
          move != null, -1L, state.aimPoint, state.kinetic, false, flags, extra, Math.max(0, state.comboStep), state.scene == null ? 0 : state.scene.alive());
    }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): the raised shield blocks the touch from the front; his will halves the lines. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(Player self) {
+      dev.baranhan.viltrumitecore.hero.book.BookProfile base = HeroDefinition.super.bookProfile(self);
+      return base.withSenses(false, true).withScales(base.durationScale() * 0.5F, base.costScale()).withNotes("captain");
+   }
 }

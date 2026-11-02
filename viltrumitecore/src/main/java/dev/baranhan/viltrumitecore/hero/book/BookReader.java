@@ -176,7 +176,8 @@ public final class BookReader {
       HeroId id = player instanceof HeroPlayer hp ? hp.getHeroId() : HeroId.HUMAN;
       HeroDefinition hero = HeroRegistry.get(player);
       pages.page("book.viltrumitecore.page.hero");
-      pages.line("book.viltrumitecore.line.hero", TRANSLATE + "codex.viltrumitecore." + (id == HeroId.VILTRUMITE ? "homelander" : id.key()) + ".name");
+      HeroId canonical = HeroId.fromKey(id.key());
+      pages.line("book.viltrumitecore.line.hero", TRANSLATE + "codex.viltrumitecore." + (canonical == null ? id : canonical).key() + ".name");
       HeroTier tier = hero.balanceProfile(player).tier();
       pages.line("book.viltrumitecore.line.tier", TRANSLATE + "book.viltrumitecore.tier." + tier.name().toLowerCase(Locale.ROOT));
       ScanInfo scan = hero.scanInfo(player);
