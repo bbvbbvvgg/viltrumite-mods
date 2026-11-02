@@ -603,4 +603,11 @@ public final class RegulusHero implements HeroDefinition {
    public static int strainedBy(int strain, int amount) {
       return RegulusRules.strainAdd(strain, amount);
    }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): with the Lion's Heart his time is stopped, the pages do not turn. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(Player self) {
+      dev.baranhan.viltrumitecore.hero.book.BookProfile base = HeroDefinition.super.bookProfile(self).withNotes("regulus");
+      return stoppedOnWire(self) ? base.withAccess(dev.baranhan.viltrumitecore.hero.book.BookAccess.CLOSED) : base;
+   }
 }
