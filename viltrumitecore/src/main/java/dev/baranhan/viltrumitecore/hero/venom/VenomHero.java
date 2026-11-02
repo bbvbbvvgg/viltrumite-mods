@@ -418,12 +418,13 @@ public final class VenomHero implements HeroDefinition {
 
    @Override
    public float bodyScale(Player player) {
-      return !form(player) ? 1.0F : raging(player) ? VenomRules.RAGE_HEIGHT_SCALE : VenomRules.BODY_HEIGHT_SCALE;
+      // the husk left behind by a takeover is the bare human again (the symbiote rides the host)
+      return !form(player) || flag(player, VenomFlags.POSSESSING) ? 1.0F : raging(player) ? VenomRules.RAGE_HEIGHT_SCALE : VenomRules.BODY_HEIGHT_SCALE;
    }
 
    @Override
    public float bodyWidthScale(Player player) {
-      return !form(player) ? 1.0F : raging(player) ? VenomRules.RAGE_WIDTH_SCALE : VenomRules.BODY_WIDTH_SCALE;
+      return !form(player) || flag(player, VenomFlags.POSSESSING) ? 1.0F : raging(player) ? VenomRules.RAGE_WIDTH_SCALE : VenomRules.BODY_WIDTH_SCALE;
    }
 
    @Override
