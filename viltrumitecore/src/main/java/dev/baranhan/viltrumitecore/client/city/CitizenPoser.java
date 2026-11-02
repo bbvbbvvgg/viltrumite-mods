@@ -285,10 +285,11 @@ public final class CitizenPoser {
       float teeter = w[CitizenState.TEETER.ordinal()];
       if (teeter > 0.01F) {
          float sw = age * 0.55F + ph;
-         rig.add(model.rightArm, (-118.0F + Mth.sin(sw) * 55.0F) * teeter, 0.0F, (38.0F + Mth.cos(sw) * 26.0F) * teeter);
-         rig.add(model.leftArm, (-118.0F + Mth.sin(sw + 2.4F) * 55.0F) * teeter, 0.0F, (-38.0F - Mth.cos(sw + 2.4F) * 26.0F) * teeter);
-         rig.add(model.body, Mth.sin(age * 0.33F + ph) * 11.0F * teeter, 0.0F, Mth.sin(age * 0.21F + ph) * 5.0F * teeter);
-         rig.add(model.head, 32.0F * teeter, 0.0F, 0.0F);
+         // arms flung out to the sides, circling for balance
+         rig.add(model.rightArm, (-45.0F + Mth.sin(sw) * 60.0F) * teeter, 0.0F, (78.0F + Mth.cos(sw) * 28.0F) * teeter);
+         rig.add(model.leftArm, (-45.0F + Mth.sin(sw + 2.4F) * 60.0F) * teeter, 0.0F, (-78.0F - Mth.cos(sw + 2.4F) * 28.0F) * teeter);
+         rig.add(model.body, Mth.sin(age * 0.33F + ph) * 9.0F * teeter, 0.0F, Mth.sin(age * 0.21F + ph) * 8.0F * teeter);
+         rig.add(model.head, 22.0F * teeter, 0.0F, 0.0F);
          rig.add(model.rightLeg, 0.0F, 0.0F, 7.0F * teeter);
          rig.add(model.leftLeg, 0.0F, 0.0F, -7.0F * teeter);
       }

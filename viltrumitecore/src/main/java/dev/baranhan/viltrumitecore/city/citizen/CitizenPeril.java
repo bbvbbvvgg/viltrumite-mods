@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.city.citizen;
 
 import dev.baranhan.viltrumitecore.city.CityManager;
 import dev.baranhan.viltrumitecore.world.collapse.CollapseInfo;
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.slf4j.Logger;
 
 /**
  * Citizens in peril (#138, server): people on a floor that a collapse is taking away lose their balance and
@@ -42,6 +44,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public final class CitizenPeril {
    private static final Direction[] SIDES = {Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
    private static final Map<ResourceKey<Level>, Stats> STATS = new HashMap<>();
+   /** QA trace ({@code -Dviltrumitecore.peril.log=true}): one line per peril transition. */
+   private static final boolean LOG = Boolean.getBoolean("viltrumitecore.peril.log");
+   private static final Logger LOGGER = LogUtils.getLogger();
 
    /** Per-level counters and the voice budget. */
    static final class Stats {
@@ -51,6 +56,12 @@ public final class CitizenPeril {
    }
 
    private CitizenPeril() {
+   }
+
+   private static void log(CitizenEntity c, String what, Object extra) {
+      if (LOG) {
+         LOGGER.info("[peril] {} #{} at {} {} {} {}", what, c.getId(), Math.round(c.getX()), Math.round(c.getY()), Math.round(c.getZ()), extra);
+      }
    }
 
    static Stats stats(Level level) {
@@ -119,6 +130,7 @@ public final class CitizenPeril {
       c.setCitizenState(CitizenState.FALLING);
       Stats st = stats(c.level());
       st.falls++;
+      log(c, "fall", String.format(java.util.Locale.ROOT, "drop=%.1f", drop));
       if (drop >= PerilRules.SCREAM_DROP) {
          voice(c, CitizenVoices.Kind.FALL, 0.0F);
       }
@@ -135,6 +147,7 @@ public final class CitizenPeril {
          }
          c.fallTicks = 40 + c.getRandom().nextInt(30);
          c.fallCooldown = 120;
+         log(c, "landed", String.format(java.util.Locale.ROOT, "from=%.1f", c.fallFromY - c.getY()));
          c.setCitizenState(CitizenState.FALLEN);
          return;
       }
@@ -154,6 +167,7 @@ public final class CitizenPeril {
       c.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 160, 0, false, false));
       c.perilUntil = Long.MIN_VALUE;
       stats(c.level()).caught++;
+      log(c, "caught", by.getGameProfile().getName());
       stopFallScream(c);
       c.setThreat(c.getX(), c.fallFromY, c.getZ(), 10.0F);
       c.setCitizenState(CitizenState.STARTLED);
@@ -230,6 +244,7 @@ public final class CitizenPeril {
       c.fallDistance = 0.0F;
       c.setCitizenState(CitizenState.HANGING);
       stats(level).hangs++;
+      log(c, "hang", c.hangLedge);
       voice(c, CitizenVoices.Kind.SCREAM, 0.5F);
       c.voiceLater = CitizenVoices.Kind.HELP;
       c.voiceAt = now + 20 + c.getRandom().nextInt(20);
@@ -287,6 +302,7 @@ public final class CitizenPeril {
       } else {
          st.climbs++;
       }
+      log(c, pulled ? "pulled-up" : "climbed", l);
       // run from the edge it hung on (inward)
       c.setThreat(c.hangX, c.hangY, c.hangZ, 8.0F);
       c.legs = 0;
@@ -294,6 +310,7 @@ public final class CitizenPeril {
    }
 
    private static void release(CitizenEntity c, CityManager city, long now) {
+      log(c, "let-go", c.hangLedge);
       c.setNoGravity(false);
       c.hangLedge = null;
       c.fallChecked = true;
@@ -315,6 +332,7 @@ public final class CitizenPeril {
       }
       if (c.stateTicks > c.teeterTicks) {
          c.legs = 0;
+         log(c, "floor-held", "");
          c.setCitizenState(CitizenState.FLEEING); // the floor held: run
       }
    }
@@ -336,6 +354,7 @@ public final class CitizenPeril {
    static void onDeath(CitizenEntity c, CityManager city) {
       if (c.citizenState() == CitizenState.FALLING || c.fallDistance > PerilRules.FALL_MIN_DROP) {
          stats(c.level()).deaths++;
+         log(c, "died", String.format(java.util.Locale.ROOT, "fallDistance=%.1f", c.fallDistance));
          witnesses(c, city, city.now());
       }
    }
@@ -415,6 +434,7 @@ public final class CitizenPeril {
             e.getNavigation().stop();
             e.setCitizenState(CitizenState.TEETER);
             st.teeters++;
+            log(e, "teeter", info.center());
             voice(e, CitizenVoices.Kind.SCREAM, 1.0F);
          } else if (building.contains(e.position())) {
             // another floor of the same building: it may go next
@@ -442,6 +462,9 @@ public final class CitizenPeril {
          int n = street.size();
          st.crowdUntil = now + PerilRules.CROWD_COOLDOWN;
          st.crowds++;
+         if (LOG) {
+            LOGGER.info("[peril] crowd-panic n={} callers={} at {}", n, callers, info.center());
+         }
          level.playSound(null, sx / n, sy / n + 1.2, sz / n, CitizenVoices.CROWD_PANIC.get(), SoundSource.NEUTRAL, Math.min(3.0F, 1.6F + n * 0.08F),
             0.95F + level.random.nextFloat() * 0.1F);
       }
@@ -458,6 +481,7 @@ public final class CitizenPeril {
          return false;
       }
       st.voices++;
+      log(c, "voice", kind);
       float volume = switch (kind) {
          case FALL -> 3.2F;
          case SCREAM -> 2.4F;
