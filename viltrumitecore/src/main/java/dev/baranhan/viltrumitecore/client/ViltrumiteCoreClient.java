@@ -58,6 +58,7 @@ public class ViltrumiteCoreClient {
             renderer.addLayer(new dev.baranhan.viltrumitecore.client.ironman.ReactorGlowLayer(renderer));
             renderer.addLayer(new dev.baranhan.viltrumitecore.client.ironman.IronManSkinLayer(renderer));
             renderer.addLayer(new dev.baranhan.viltrumitecore.client.anim.render.PlayerGeoLayer(renderer));
+            renderer.addLayer(new dev.baranhan.viltrumitecore.client.venom.VenomCoatLayer(renderer));
             dev.baranhan.viltrumitecore.client.ironman.mark.MarkVisuals.addLayers(renderer);
             dev.baranhan.viltrumitecore.client.ironman.mark.sig.SignatureVisuals.addLayers(renderer);
          }
@@ -90,6 +91,8 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.redhulk.RedHulkClient.init();
          // Ghost Rider (docs/design/2026-11-02-ghost-rider-design.md): the Hell Cycle's input, sounds, trail, camera.
          dev.baranhan.viltrumitecore.client.ghostrider.GhostRiderClient.init();
+         // Venom (docs/design/2026-11-02-venom-design.md): skins, panel, previews, FX recipes, the symbiote goo.
+         dev.baranhan.viltrumitecore.client.venom.VenomClient.init();
          // Contextual interactions (docs/contextual-interactions.json): FX recipes of the shared presets 600+.
          dev.baranhan.viltrumitecore.client.interaction.InteractionFxRecipes.init();
          dev.baranhan.viltrumitecore.client.wish.WishSceneClient.init();
