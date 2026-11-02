@@ -59,4 +59,18 @@ class GodzillaRendererTest {
       assertTrue(GodzillaAudio.far(300.0, 100.0, 800.0) > GodzillaAudio.far(700.0, 100.0, 800.0));
       assertEquals(0.0F, GodzillaAudio.far(900.0, 100.0, 800.0), 1.0E-4F);
    }
+
+   @Test
+   void theBeamHumIsHeardAfterTheSameTravelTimeAsItsCracks() {
+      // playtest: at 122 blocks the loop started 6 ticks before the (travel-delayed) ignition crack
+      int lag = dev.baranhan.viltrumitecore.client.meteor.MeteorRainAudio.soundDelay(300.0);
+      assertTrue(lag > 10, "300 blocks is most of a second away");
+      for (int since = 0; since < lag; since++) {
+         assertFalse(GodzillaAudio.heard(true, since, lag), "the hum may not run ahead of the start crack (cue delay " + lag + ")");
+         assertTrue(GodzillaAudio.heard(false, since, lag), "nor stop ahead of the end crack");
+      }
+      assertTrue(GodzillaAudio.heard(true, lag, lag));
+      assertFalse(GodzillaAudio.heard(false, lag, lag));
+      assertTrue(GodzillaAudio.heard(true, 0, 0), "next to the mouth: at once");
+   }
 }

@@ -206,15 +206,28 @@ public final class GodzillaAudio {
                moveStarted(mc, g, move, ear);
             }
          }
-         if (g.flag(GodzillaEntity.FLAG_BEAM)) {
-            if (s.beam == null || s.beam.isStopped()) {
-               s.beam = new Loop(GodzillaSounds.BEAM_LOOP.get(), g, true);
-               mc.getSoundManager().play(s.beam);
-            }
-            if (s.impact == null || s.impact.isStopped()) {
-               s.impact = new Loop(GodzillaSounds.BEAM_IMPACT.get(), g, false);
-               mc.getSoundManager().play(s.impact);
-            }
+         // the beam loops lag the beam by the sound's travel time, like the start and end cracks (cue): heard at 300
+         // blocks, the hum used to start ~0.9 s before the ignition crack and stop ~0.9 s before the end crack
+         boolean beam = g.flag(GodzillaEntity.FLAG_BEAM);
+         if (beam != s.beamFlag) {
+            s.beamFlag = beam;
+            s.beamFlip = clock;
+         }
+         boolean mouthOn = heard(s.beamFlag, clock - s.beamFlip, MeteorRainAudio.soundDelay(mouth(g).distanceTo(ear)));
+         boolean impactOn = heard(s.beamFlag, clock - s.beamFlip, MeteorRainAudio.soundDelay(g.clientBeamEnd.distanceTo(ear)));
+         if (mouthOn && (s.beam == null || s.beam.isStopped())) {
+            s.beam = new Loop(GodzillaSounds.BEAM_LOOP.get(), g, true);
+            mc.getSoundManager().play(s.beam);
+         }
+         if (impactOn && (s.impact == null || s.impact.isStopped())) {
+            s.impact = new Loop(GodzillaSounds.BEAM_IMPACT.get(), g, false);
+            mc.getSoundManager().play(s.impact);
+         }
+         if (s.beam != null) {
+            s.beam.on = mouthOn;
+         }
+         if (s.impact != null) {
+            s.impact.on = impactOn;
          }
          // a threat growl now and then while it stands and looks around
          if (move == GodzillaMove.NONE && g.isAlive() && clock >= s.nextGrowl) {
@@ -271,11 +284,21 @@ public final class GodzillaAudio {
       }
    }
 
+   /**
+    * Pure: is the beam audible now? The listener hears the beam's state {@code lag} ticks (the sound's travel time)
+    * after it changed: {@code flag} is the beam's current state, {@code sinceFlip} the ticks since it last changed.
+    */
+   static boolean heard(boolean flag, int sinceFlip, int lag) {
+      return sinceFlip >= lag ? flag : !flag;
+   }
+
    private static final class State {
       GodzillaMove move;
       int moveStart = Integer.MIN_VALUE;
       int seen;
       int nextGrowl;
+      boolean beamFlag;
+      int beamFlip = Integer.MIN_VALUE / 2;
       Loop beam;
       Loop impact;
 
@@ -297,6 +320,8 @@ public final class GodzillaAudio {
       private final boolean mouth;
       private float level;
       private boolean dead;
+      /** The beam as the listener hears it now (set every tick by the owner's state, delayed by the travel time). */
+      boolean on = true;
 
       Loop(SoundEvent event, GodzillaEntity owner, boolean mouth) {
          super(event, SoundSource.HOSTILE, SoundInstance.createUnseededRandom());
@@ -327,8 +352,7 @@ public final class GodzillaAudio {
             this.stop();
             return;
          }
-         boolean on = this.owner.flag(GodzillaEntity.FLAG_BEAM);
-         this.level = on ? Math.min(1.0F, this.level + 0.25F) : this.level - 0.12F;
+         this.level = this.on ? Math.min(1.0F, this.level + 0.25F) : this.level - 0.12F;
          if (this.level <= 0.0F) {
             this.stop();
             return;
