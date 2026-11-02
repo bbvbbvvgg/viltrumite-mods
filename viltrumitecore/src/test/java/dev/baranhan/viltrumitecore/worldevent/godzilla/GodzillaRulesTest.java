@@ -168,6 +168,35 @@ class GodzillaRulesTest {
    }
 
    @Test
+   void theRuinedCityKeepsAReserveForTheWayOut() {
+      int rampage = GodzillaRules.blockCap(false);
+      assertEquals(GodzillaRules.MAX_BLOCKS, GodzillaRules.blockCap(true));
+      assertEquals(GodzillaRules.MAX_BLOCKS - GodzillaRules.RETREAT_RESERVE, rampage);
+      assertTrue(GodzillaRules.RETREAT_RESERVE > 0 && rampage > GodzillaRules.RETREAT_RESERVE);
+      assertFalse(GodzillaRules.sated(rampage - 1));
+      assertTrue(GodzillaRules.sated(rampage));
+      // one second of the full per-tick budget never jumps over the reserve
+      assertTrue(GodzillaRules.RETREAT_RESERVE > GodzillaRules.BLOCKS_PER_TICK_RAGE * 20);
+   }
+
+   @Test
+   void theKaijuSpawnsWhereItTicks() {
+      assertEquals(136.0, GodzillaRules.spawnReach(10), 1.0E-9);
+      assertTrue(GodzillaRules.spawnReach(12) >= GodzillaRules.SPAWN_DISTANCE);
+      assertEquals(40.0, GodzillaRules.spawnReach(2), 1.0E-9);
+   }
+
+   @Test
+   void theWalkIsHeavy() {
+      // ticks between two footfalls: the stride follows the distance walked
+      double walk = GodzillaRules.GAIT_CYCLE / 2.0 / GodzillaRules.WALK_SPEED;
+      double rage = GodzillaRules.GAIT_CYCLE / 2.0 / GodzillaRules.RAGE_SPEED;
+      assertTrue(walk >= 50.0 && walk <= 90.0, "walk step every " + walk + " ticks");
+      assertTrue(rage >= 40.0 && rage < walk, "rage step every " + rage + " ticks");
+      assertTrue(GodzillaRules.RETREAT_SPEED > GodzillaRules.WALK_SPEED && GodzillaRules.RETREAT_SPEED < GodzillaRules.RAGE_SPEED);
+   }
+
+   @Test
    void fxPacketsSurviveTheWire() {
       GodzillaFxS2CPacket p = new GodzillaFxS2CPacket(GodzillaFxS2CPacket.BEAM_BLAST, 10.5, -51.0, 2048.25, 0.25F, -1.0F, 0.5F, 1.75F, 7);
       FriendlyByteBuf b = new FriendlyByteBuf(Unpooled.buffer());
