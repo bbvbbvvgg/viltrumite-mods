@@ -27,6 +27,7 @@ public final class Scp096Route {
    public static final double PROGRESS_EPS = 0.9;
    public static final int STALLS_BEFORE_PAUSE = 6;
    public static final int PAUSE_TICKS = 40;
+   public static final int MAX_PAUSE_TICKS = 320;
    /** Leaps that land without progress before leaping is banned for {@link #LEAP_BAN_TICKS}. */
    public static final int LEAPS_WITHOUT_PROGRESS = 3;
    public static final int LEAP_BAN_TICKS = 120;
@@ -122,6 +123,11 @@ public final class Scp096Route {
    public static double facadeScore(double runDistance, double topToTarget, int overhangs, boolean griefing, boolean failedBefore) {
       double s = runDistance + topToTarget * 0.5 + overhangs * (griefing ? 1.5 : 5.0);
       return failedBefore ? s + 1000.0 : s;
+   }
+
+   /** Length of the n-th pause in a row without any gain (n from 1): doubles each time, capped. */
+   public static int pauseTicks(int cycle) {
+      return Math.min(MAX_PAUSE_TICKS, PAUSE_TICKS << Math.min(4, Math.max(0, cycle - 1)));
    }
 
    /** Vertical climb speed after this many ticks on the wall: a hard start, then the frantic scramble. */

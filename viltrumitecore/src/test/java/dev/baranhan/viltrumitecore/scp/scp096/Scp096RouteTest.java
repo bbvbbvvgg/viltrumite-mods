@@ -96,6 +96,12 @@ class Scp096RouteTest {
       p.tick(10.0);
       assertFalse(p.leapLanded(), "progress forgives the earlier leaps");
       assertTrue(Scp096Route.LEAP_BAN_TICKS >= 100 && Scp096Route.PAUSE_TICKS > 0 && Scp096Route.STALLS_BEFORE_PAUSE >= 3);
+      // every fruitless run of tactics pauses longer (no endless attempts at a sealed target), up to a cap
+      assertEquals(Scp096Route.PAUSE_TICKS, Scp096Route.pauseTicks(1));
+      assertEquals(Scp096Route.PAUSE_TICKS * 2, Scp096Route.pauseTicks(2));
+      assertTrue(Scp096Route.pauseTicks(3) > Scp096Route.pauseTicks(2));
+      assertEquals(Scp096Route.MAX_PAUSE_TICKS, Scp096Route.pauseTicks(50));
+      assertEquals(Scp096Route.PAUSE_TICKS, Scp096Route.pauseTicks(0));
    }
 
    @Test
@@ -177,6 +183,7 @@ class Scp096RouteTest {
       assertTrue(c.contains("this.progress.leapLanded()"));
       assertTrue(c.contains("Scp096Route.LEAP_BAN_TICKS"));
       assertTrue(c.contains("Scp096Route.STALLS_BEFORE_PAUSE"));
+      assertTrue(c.contains("Scp096Route.pauseTicks(this.fruitless / Scp096Route.STALLS_BEFORE_PAUSE)"));
       // the mantle backs off a wall it climbed from the inside instead of falling over the parapet
       assertTrue(c.contains("if (behind || !this.landable(level, this.wallX, this.wallZ)) {"));
    }
