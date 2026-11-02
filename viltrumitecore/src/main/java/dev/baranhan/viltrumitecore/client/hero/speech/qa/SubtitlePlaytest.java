@@ -41,7 +41,8 @@ import org.slf4j.Logger;
  * With {@code -Dviltrumitecore.subtitles.playtest.world=true} the title screen opens that world by itself.
  * {@code fpshots <prefix> <t1,t2,...>} takes screenshots on the Final Punch scene clock (first scene on the client)
  * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}). {@code bike} logs the Hell Cycle the player rides
- * (speed, rpm, gear, lean, drift, ground). {@code collapsestate} logs the
+ * (speed, rpm, gear, lean, drift, ground); {@code bikes} logs every Hell Cycle this client draws, remote copies
+ * included (multiplayer sync), with the effect entries and engine loops it still holds. {@code collapsestate} logs the
  * structural-collapse scenes (count, drawn fragments, render ms) and the fps.
  */
 public final class SubtitlePlaytest {
@@ -242,6 +243,8 @@ public final class SubtitlePlaytest {
          // encyclopedia QA (hero gallery): open the wish screen, drive the GUI, resize, switch language
          case "bike" -> LOG.info("SUBPT t={} bike {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleClient.qaSummary(mc), mc.getFps());
+         case "bikes" -> LOG.info("SUBPT t={} bikes {} fps={}", ticks,
+            dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleClient.qaAll(mc), mc.getFps());
          case "collapsestate" -> LOG.info("SUBPT t={} collapse {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.collapse.CollapseClient.qaSummary(), mc.getFps());
          case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());
@@ -341,10 +344,12 @@ public final class SubtitlePlaytest {
       };
    }
 
-   /** A real key press held for {@code holdTicks} (hero keys are edge-tracked on isDown). */
+   /** A real key press held for {@code holdTicks} (hero keys are edge-tracked on isDown). A new hold of a key that is
+    * still held replaces its pending release: the earlier one used to cut the new hold short. */
    private static void hold(KeyMapping key, int holdTicks) {
       KeyMapping.set(key.getKey(), true);
       KeyMapping.click(key.getKey());
+      RELEASES.removeIf(r -> r.key() == key);
       RELEASES.add(new Release(key, ticks + Math.max(1, holdTicks)));
    }
 

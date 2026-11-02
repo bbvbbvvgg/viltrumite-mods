@@ -13,7 +13,9 @@ import net.minecraft.util.RandomSource;
  * One looping layer of the Hell Cycle's voice, on every client near the bike: three engine loops cross-faded by the
  * revs (idle, low, high, each pitched by the revs, so gear shifts saw the pitch), the tyre skid while drifting or
  * locking the rear, and the roar of the hellfire that grows with the speed. Each loop stops itself when the bike is
- * gone, burnt out or out of earshot, so none can stick.
+ * gone, burnt out or out of earshot, so none can stick. A layer plays only while it is heard: it starts once its
+ * loudness would be audible and leaves when it has faded out, so the subtitles never name a silent layer (no
+ * "Tyres screech" for a parked bike, no "Hell Cycle roars" at idle).
  */
 public final class HellCycleEngineSound extends AbstractTickableSoundInstance {
    public enum Layer {
@@ -26,6 +28,10 @@ public final class HellCycleEngineSound extends AbstractTickableSoundInstance {
 
    /** Beyond this distance (blocks) a loop stops; HellCycleClient restarts it when the listener comes back. */
    static final double EARSHOT = 56.0;
+   /** A stopped layer starts once its target loudness reaches this (it would be heard). */
+   static final float AUDIBLE = 0.02F;
+   /** A layer whose target is zero leaves (frees its channel) once faded below this. */
+   static final float SILENT = 0.003F;
    private final HellCycleEntity bike;
    private final Layer layer;
    private float level;
@@ -78,6 +84,24 @@ public final class HellCycleEngineSound extends AbstractTickableSoundInstance {
       return Mth.clamp(p, 0.5F, 2.0F);
    }
 
+   /** Pure: a stopped layer starts only when it would be heard. */
+   public static boolean starts(float target) {
+      return target >= AUDIBLE;
+   }
+
+   /** Pure: a playing layer leaves once it is silent and has faded out. */
+   public static boolean leaves(float target, float level) {
+      return target <= 0.0F && level < SILENT;
+   }
+
+   /** Target loudness of a layer for this bike now, as this client sees it (life fade included). */
+   static float target(HellCycleEntity b, Layer layer) {
+      float burn = b.burning() ? b.burnProgress(0.0F) : 0.0F;
+      float speedF = (float)(b.visualSpeed / HellCycleRules.MAX_SPEED);
+      boolean skid = b.isVehicle() && (b.flag(HellCycleEntity.FLAG_SKID) || b.flag(HellCycleEntity.FLAG_DRIFT)) && !b.flag(HellCycleEntity.FLAG_AIR);
+      return targetVolume(layer, b.rpm, speedF, skid, b.isVehicle()) * life(b.formProgress(0.0F), burn);
+   }
+
    /** Pure: 0 while forming starts, 1 alive, fading to 0 as it burns out. */
    public static float life(float form, float burn) {
       return Mth.clamp(form, 0.0F, 1.0F) * (1.0F - Mth.clamp(burn, 0.0F, 1.0F));
@@ -113,9 +137,12 @@ public final class HellCycleEngineSound extends AbstractTickableSoundInstance {
       this.y = b.getY() + 0.5;
       this.z = b.getZ();
       float speedF = (float)(b.visualSpeed / HellCycleRules.MAX_SPEED);
-      boolean skid = b.isVehicle() && (b.flag(HellCycleEntity.FLAG_SKID) || b.flag(HellCycleEntity.FLAG_DRIFT)) && !b.flag(HellCycleEntity.FLAG_AIR);
-      float target = targetVolume(this.layer, b.rpm, speedF, skid, b.isVehicle()) * life(b.formProgress(0.0F), burn);
+      float target = target(b, this.layer);
       this.level += (target - this.level) * (target > this.level ? 0.35F : 0.2F);
+      if (leaves(target, this.level)) {
+         this.stop(); // HellCycleClient starts it again once it would be heard
+         return;
+      }
       this.volume = Math.max(0.0001F, this.level);
       float pitchTarget = targetPitch(this.layer, b.rpm, speedF, b.dashing());
       this.pitch += (pitchTarget - this.pitch) * 0.5F;

@@ -132,6 +132,37 @@ public final class HellCycleClient implements HellCycleEntity.ClientHooks {
          bike.dashTicksLeft(), mc.player.getY() - bike.getY());
    }
 
+   /**
+    * Playtest line (SubtitlePlaytest {@code bikes}): every Hell Cycle this client draws, remote copies included, as
+    * this client sees it (multiplayer sync checks), plus the effect entries and engine loops still held here.
+    */
+   public static String qaAll(Minecraft mc) {
+      if (mc.level == null) {
+         return "none";
+      }
+      StringBuilder out = new StringBuilder();
+      int count = 0;
+      for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+         if (!(e instanceof HellCycleEntity bike)) {
+            continue;
+         }
+         count++;
+         net.minecraft.world.entity.Entity rider = bike.getControllingPassenger();
+         Fx fx = FX.get(bike.getId());
+         long playing = fx == null ? 0 : fx.loops.values().stream().filter(s -> mc.getSoundManager().isActive(s)).count();
+         out.append(String.format(java.util.Locale.ROOT,
+            " [#%d rider=%s local=%s pos=%.2f,%.2f,%.2f yaw=%.1f v=%.2f lean=%.1f lift=%.1f steer=%.2f rpm=%.2f thr=%.2f"
+               + " pitch=%.1f drift=%s skid=%s brake=%s air=%s rev=%s dash=%d form=%s burn=%s park=%.2f loops=%d]",
+            bike.getId(), rider == null ? "-" : rider.getScoreboardName(), bike.isControlledByLocalInstance(), bike.getX(), bike.getY(),
+            bike.getZ(), bike.getYRot(), bike.visualSpeed, bike.lean, bike.lift, bike.steer, bike.rpm, bike.throttle, bike.pitch,
+            bike.flag(HellCycleEntity.FLAG_DRIFT), bike.flag(HellCycleEntity.FLAG_SKID), bike.flag(HellCycleEntity.FLAG_BRAKE),
+            bike.flag(HellCycleEntity.FLAG_AIR), bike.flag(HellCycleEntity.FLAG_REVERSE), bike.dashLeft, bike.forming(), bike.burning(),
+            bike.park, playing));
+      }
+      long held = FX.values().stream().mapToLong(fx -> fx.loops.values().stream().filter(s -> mc.getSoundManager().isActive(s)).count()).sum();
+      return count + " fxEntries=" + FX.size() + " loopsPlaying=" + held + out;
+   }
+
    public static void onLevelUnload(LevelEvent.Unload event) {
       if (event.getLevel().isClientSide()) {
          FX.values().forEach(fx -> fx.loops.values().forEach(HellCycleClient::stop));
@@ -168,6 +199,9 @@ public final class HellCycleClient implements HellCycleEntity.ClientHooks {
          if (s == null || s.isStopped() || !mc.getSoundManager().isActive(s)) {
             if (s != null && !s.isStopped() && bike.tickCount % 20 != 0) {
                continue; // queued but not yet playing: give the sound engine a moment
+            }
+            if (!HellCycleEngineSound.starts(HellCycleEngineSound.target(bike, layer))) {
+               continue; // a silent layer waits until it would be heard (its subtitle with it)
             }
             HellCycleEngineSound fresh = new HellCycleEngineSound(bike, layer);
             fx.loops.put(layer, fresh);
