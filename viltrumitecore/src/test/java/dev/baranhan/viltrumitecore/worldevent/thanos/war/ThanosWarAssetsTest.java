@@ -274,7 +274,8 @@ class ThanosWarAssetsTest {
 
       // the voices and every line said with them
       Map<String, String> voices = new HashMap<>();
-      Matcher voice = Pattern.compile("static final String (VOICE_[A-Z]+) = \"([a-z_]+)\";").matcher(Files.readString(JAVA.resolve("worldevent/thanos/war/ThanosWar.java")));
+      String warCode = Files.readString(JAVA.resolve("worldevent/thanos/war/ThanosWar.java"));
+      Matcher voice = Pattern.compile("static final String (VOICE_[A-Z]+) = \"([a-z_]+)\";").matcher(warCode);
       while (voice.find()) {
          voices.put(voice.group(1), voice.group(2));
          keys.add("subtitle.viltrumitecore.speaker." + voice.group(2));
@@ -295,6 +296,24 @@ class ThanosWarAssetsTest {
       }
 
       assertTrue(said.size() >= 20, "the war's lines: " + said);
+      // the lines that rotate through variants (<line>.2, <line>.3, ...): each one a line the code says
+      String table = warCode.substring(warCode.indexOf("VARIANTS = Map.of("));
+      Matcher variants = Pattern.compile("\"([a-z_]+\\.[a-z_]+)\",\\s*(\\d)").matcher(table);
+      int rotating = 0;
+      while (variants.find() && rotating < 64) {
+         String base = "subtitle.viltrumitecore.thanos_war." + variants.group(1);
+         assertTrue(said.contains(base), "variants of a line the code never says: " + base);
+         for (int i = 2; i <= Integer.parseInt(variants.group(2)); i++) {
+            said.add(base + "." + i);
+         }
+
+         rotating++;
+         if (table.charAt(variants.end()) == ')') {
+            break;
+         }
+      }
+
+      assertTrue(rotating >= 4, "the rotating lines");
       keys.addAll(said);
       for (String key : en.keySet()) {
          if (key.startsWith("subtitle.viltrumitecore.thanos_war.")) {
