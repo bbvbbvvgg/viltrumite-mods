@@ -58,6 +58,7 @@
   "message.viltrumitecore.venom.takeover.not_weakened": "Konak çok güçlü: onu zayıflat (%60 canın altı) ya da dokunaçlarla yakala.",
   "entity.viltrumitecore.venom_boss": "Açlık Çılgınlığındaki Venom",
   "commands.viltrumitecore.venom.boss": "Venom serbest kaldı!",
+  "commands.viltrumitecore.venom.boss_peaceful": "Simbiyot Huzurlu zorlukta avlanmaz: başka bir zorluk seçin.",
   "subtitles.viltrumitecore.venom.transform": "Simbiyot bedeni kaplıyor",
   "subtitles.viltrumitecore.venom.revert": "Simbiyot çekiliyor",
   "subtitles.viltrumitecore.venom.roar": "Venom kükrüyor",

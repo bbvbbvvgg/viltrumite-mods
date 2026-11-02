@@ -58,6 +58,7 @@
   "message.viltrumitecore.venom.takeover.not_weakened": "Носитель слишком силён: ослабь его (меньше 60 % здоровья) или схвати щупальцами.",
   "entity.viltrumitecore.venom_boss": "Веном в Бешеном голоде",
   "commands.viltrumitecore.venom.boss": "Веном вырвался на свободу!",
+  "commands.viltrumitecore.venom.boss_peaceful": "На мирной сложности симбиот не охотится: выберите другую сложность.",
   "subtitles.viltrumitecore.venom.transform": "Симбиот покрывает тело",
   "subtitles.viltrumitecore.venom.revert": "Симбиот отступает",
   "subtitles.viltrumitecore.venom.roar": "Рёв Венома",

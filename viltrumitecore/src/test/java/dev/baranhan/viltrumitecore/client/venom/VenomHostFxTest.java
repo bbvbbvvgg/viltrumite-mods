@@ -83,4 +83,19 @@ class VenomHostFxTest {
       assertTrue(VenomHostFx.stale(true, VenomHostFx.STALE_ENGULF + 1));
       assertTrue(VenomHostFx.STALE_ENGULF > VenomHostFx.STALE_CONTROL, "the engulf is silent by design");
    }
+
+   @Test
+   void theCountdownClimbsOverTheVoicePanel() {
+      // no panel, or one far below: the bar stays under the crosshair
+      assertEquals(240 / 2 + 34, VenomHostFx.resistY(240, Float.NaN));
+      assertEquals(480 / 2 + 34, VenomHostFx.resistY(480, 400.0F));
+      // the playtest case (GUI height 240, the inner voice's panel top at 126): lifted clear, over the crosshair
+      int y = VenomHostFx.resistY(240, 126.0F);
+      assertTrue(y + VenomHostFx.RESIST_BELOW < 126, "the hint ends above the panel");
+      assertTrue(y + VenomHostFx.RESIST_BELOW <= 120 - 10, "and does not sit on the crosshair");
+      assertTrue(y - VenomHostFx.RESIST_ABOVE >= 0, "the countdown stays on screen");
+      // a panel a little lower: lifted but still under the crosshair
+      int z = VenomHostFx.resistY(300, 200.0F);
+      assertTrue(z + VenomHostFx.RESIST_BELOW < 200 && z - VenomHostFx.RESIST_ABOVE >= 150 + 10);
+   }
 }

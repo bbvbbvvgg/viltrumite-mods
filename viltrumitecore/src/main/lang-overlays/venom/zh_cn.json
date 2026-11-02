@@ -58,6 +58,7 @@
   "message.viltrumitecore.venom.takeover.not_weakened": "宿主太强了：先削弱他（生命低于 60%）或用触手抓住他。",
   "entity.viltrumitecore.venom_boss": "饥饿狂暴的毒液",
   "commands.viltrumitecore.venom.boss": "毒液挣脱了束缚！",
+  "commands.viltrumitecore.venom.boss_peaceful": "和平难度下共生体不会狩猎：请选择其他难度。",
   "subtitles.viltrumitecore.venom.transform": "共生体覆盖身体",
   "subtitles.viltrumitecore.venom.revert": "共生体退去",
   "subtitles.viltrumitecore.venom.roar": "毒液咆哮",

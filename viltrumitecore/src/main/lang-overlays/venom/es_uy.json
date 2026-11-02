@@ -58,6 +58,7 @@
   "message.viltrumitecore.venom.takeover.not_weakened": "El huésped es demasiado fuerte: debilítalo (menos del 60 % de vida) o sujétalo con los tentáculos.",
   "entity.viltrumitecore.venom_boss": "Venom en Frenesí de hambre",
   "commands.viltrumitecore.venom.boss": "¡Venom se ha liberado!",
+  "commands.viltrumitecore.venom.boss_peaceful": "En Pacífico el simbionte no caza: elige otra dificultad.",
   "subtitles.viltrumitecore.venom.transform": "El simbionte cubre el cuerpo",
   "subtitles.viltrumitecore.venom.revert": "El simbionte se retira",
   "subtitles.viltrumitecore.venom.roar": "Venom ruge",
