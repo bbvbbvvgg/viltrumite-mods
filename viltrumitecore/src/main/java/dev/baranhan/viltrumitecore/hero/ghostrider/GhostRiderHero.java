@@ -43,7 +43,7 @@ public final class GhostRiderHero implements HeroDefinition {
    static final UUID KNOCKBACK_ID = UUID.fromString("6a1f3b2c-7d4e-4f8a-9b0c-1d2e3f4a5b04");
    static final UUID SPEED_ID = UUID.fromString("6a1f3b2c-7d4e-4f8a-9b0c-1d2e3f4a5b05");
    /** Rooted moves (transformation, stare, slam), removed when idle. */
-   static final UUID SLOW_ID = UUID.fromString("6a1f3b2c-7d4e-4f8a-9b0c-1d2e3f4a5b06");
+   public static final UUID SLOW_ID = UUID.fromString("6a1f3b2c-7d4e-4f8a-9b0c-1d2e3f4a5b06");
    public static final GhostRiderHero INSTANCE = new GhostRiderHero();
 
    private GhostRiderHero() {

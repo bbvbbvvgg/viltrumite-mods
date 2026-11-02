@@ -62,6 +62,8 @@ public final class GhostRiderRules {
    public static final double LASH_REACH = 6.5;
    public static final double LASH_ARC = 40.0;
    public static final int LASH_MAX_TARGETS = 3;
+   /** An innocent is struck only by an on-foot lash aimed within this many degrees of it (the sweep spares the rest). */
+   public static final double LASH_AIM_DEGREES = 12.0;
    public static final float[] LASH_DAMAGE = {6.0F, 6.0F, 9.0F};
    public static final int COMBO_LENGTH = 3;
    /** The next press continues the combo within this many ticks after a lash. */
