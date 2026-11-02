@@ -177,7 +177,13 @@ public final class HellCyclePhysics {
             fwd = towardZero(fwd, HANDBRAKE);
          }
          if (Math.abs(fwd) > 0.02 || Math.abs(throttle) > 0.05) {
-            fwd -= SLOPE_GRAVITY * Math.sin(Math.toRadians(s.pitch));
+            double slope = SLOPE_GRAVITY * Math.sin(Math.toRadians(s.pitch));
+            if (throttle < -0.05 && fwd <= 0.01) {
+               // backing up, the rider walks the bike out of a planter or up a kerb: a nose-down pitch only slows it
+               // (QA 2026-11-02: nosed into a planter at -15.5 deg, the slope outpulled the reverse and the bike was stuck)
+               slope = Math.max(slope, 0.5 * REVERSE_ACCEL * throttle);
+            }
+            fwd -= slope;
          }
          if (Math.abs(throttle) <= 0.05 && Math.abs(fwd) < 0.004) {
             fwd = 0.0;

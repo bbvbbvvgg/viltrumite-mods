@@ -466,6 +466,15 @@ public class HellCycleEntity extends Entity {
       return !this.level().noCollision(this, moved.move(0.0, HellCycleRules.STEP_HEIGHT, 0.0));
    }
 
+   /**
+    * A bike rolls: no footstep sounds (they ran as "Footsteps" subtitles all along a ride), only the step game events,
+    * like vanilla boats and minecarts (QA 2026-11-02).
+    */
+   @Override
+   protected Entity.MovementEmission getMovementEmission() {
+      return Entity.MovementEmission.EVENTS;
+   }
+
    /** Pushed into a block (a block placed on it, a bad dismount spot): climb out upwards. */
    private void unstick() {
       AABB box = this.getBoundingBox().deflate(0.01);
