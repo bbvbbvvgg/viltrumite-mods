@@ -27,9 +27,24 @@ public final class BookProfiles {
    private BookProfiles() {
    }
 
+   private static final java.util.List<java.util.function.BiFunction<Player, BookProfile, BookProfile>> PLAYER_MODIFIERS =
+      new java.util.concurrent.CopyOnWriteArrayList<>();
+
+   /**
+    * Adds a player-book modifier applied after {@link dev.baranhan.viltrumitecore.hero.HeroDefinition#bookProfile}: for
+    * heroes whose class is too large to grow (Iron Man) or for add-ons. Must return the input when it does not apply.
+    */
+   public static void registerPlayerModifier(java.util.function.BiFunction<Player, BookProfile, BookProfile> modifier) {
+      PLAYER_MODIFIERS.add(modifier);
+   }
+
    public static BookProfile resolve(LivingEntity e) {
       if (e instanceof Player player) {
-         return HeroRegistry.get(player).bookProfile(player);
+         BookProfile profile = HeroRegistry.get(player).bookProfile(player);
+         for (java.util.function.BiFunction<Player, BookProfile, BookProfile> m : PLAYER_MODIFIERS) {
+            profile = m.apply(player, profile);
+         }
+         return profile;
       }
       BookProfile base = classify(e);
       return e instanceof BookSubject subject ? subject.bookProfile(base) : base;

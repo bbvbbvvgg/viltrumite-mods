@@ -36,7 +36,7 @@ import org.joml.Vector3f;
  * Synced: the move (with a sequence number and an argument), flags, head yaw / pitch, gait phase, beam end and
  * beam length. Never saved: a restart ends the event.
  */
-public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
+public class GodzillaEntity extends Mob implements Enemy, ControlResistant, dev.baranhan.viltrumitecore.hero.book.BookSubject {
    private static final EntityDataAccessor<Byte> MOVE = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Byte> MOVE_ARG = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> MOVE_SEQ = SynchedEntityData.defineId(GodzillaEntity.class, EntityDataSerializers.INT);
@@ -837,5 +837,12 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
    /** Wading through water: no vanilla splash sound or bubbles. */
    @Override
    protected void doWaterSplashEffect() {
+   }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): far too big to write into; the book can only be read. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(dev.baranhan.viltrumitecore.hero.book.BookProfile base) {
+      return dev.baranhan.viltrumitecore.hero.book.BookProfile.BOSS.withAccess(dev.baranhan.viltrumitecore.hero.book.BookAccess.READ_ONLY)
+         .withReaction(0, 0, 0.0F).withNotes("godzilla");
    }
 }

@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
  * Health loss of any path goes through {@link #setHealth}: the per-hit and per-second caps hold
  * against one-shot abilities; operators can still end him ({@code /kill}, AdminKill).
  */
-public class ThanosEntity extends PathfinderMob implements Enemy {
+public class ThanosEntity extends PathfinderMob implements Enemy, dev.baranhan.viltrumitecore.hero.book.BookSubject {
    public static final byte STATE_INTRO = 0;
    public static final byte STATE_FIGHT = 1;
    public static final byte STATE_VICTORY = 2;
@@ -522,5 +522,11 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
       this.setYRot(turned);
       this.setYBodyRot(turned);
       this.setYHeadRot(turned);
+   }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): a boss's book, 2 s, one short line, often thrown back. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(dev.baranhan.viltrumitecore.hero.book.BookProfile base) {
+      return dev.baranhan.viltrumitecore.hero.book.BookProfile.BOSS.withNotes("thanos");
    }
 }
