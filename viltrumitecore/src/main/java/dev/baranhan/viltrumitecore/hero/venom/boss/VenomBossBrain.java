@@ -211,6 +211,20 @@ public final class VenomBossBrain {
       }
    }
 
+   /**
+    * A loud sound just made the boss recoil (the weakness itself never changes). Once it has learned that someone
+    * fights it with noise it answers the noisemaker: the tendril yank and the leap are ready at once, so the next
+    * choice drags or jumps at whoever rang the bell. True when it answers (the caller then turns on the source).
+    */
+   public boolean provokedByNoise() {
+      if (!adapted(Threat.SOUND)) {
+         return false;
+      }
+      this.cooldown[Attack.TENDRIL.ordinal()] = 0;
+      this.cooldown[Attack.LEAP.ordinal()] = 0;
+      return true;
+   }
+
    /** Sets a cooldown directly (a takeover that could not start waits a little before it tries again). */
    public void delay(Attack a, int ticks) {
       this.cooldown[a.ordinal()] = Math.max(this.cooldown[a.ordinal()], ticks);
