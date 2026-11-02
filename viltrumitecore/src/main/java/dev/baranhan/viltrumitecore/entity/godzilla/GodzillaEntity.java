@@ -646,7 +646,7 @@ public class GodzillaEntity extends Mob implements Enemy, ControlResistant {
       }
       if (this.level().isClientSide && this.flag(FLAG_BEAM)) {
          Vec3 e = this.clientBeamEnd;
-         box = box.minmax(new AABB(e, e).inflate(8.0));
+         box = box.minmax(new AABB(e, e).inflate(24.0));
       }
       this.cullBox = box.inflate(4.0);
    }
