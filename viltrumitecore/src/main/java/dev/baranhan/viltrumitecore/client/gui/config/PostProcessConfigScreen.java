@@ -20,6 +20,7 @@ public class PostProcessConfigScreen extends Screen {
    private EditBox punchShakeField;
    private EditBox punchEffectField;
    private EditBox lockVignetteField;
+   private EditBox mangaField;
 
    public PostProcessConfigScreen(Screen parent) {
       super(Component.translatable("gui.viltrumitecore.config.post_process.title"));
@@ -49,11 +50,17 @@ public class PostProcessConfigScreen extends Screen {
          .addEntry(
             new PostProcessConfigScreen.TextFieldEntry(Component.translatable("gui.viltrumitecore.config.post_process.lock_vignette"), this.lockVignetteField)
          );
+      this.mangaField = new EditBox(this.font, 0, 0, 200, 20, Component.literal(""));
+      this.mangaField.setValue(String.valueOf(ViltrumitePostProcessingConfig.INSTANCE.mangaEffectsMultiplier));
+      this.mangaField.setFilter(s -> s.isEmpty() || s.matches("-?\\d*\\.?\\d*"));
+      this.listWidget
+         .addEntry(new PostProcessConfigScreen.TextFieldEntry(Component.translatable("gui.viltrumitecore.config.post_process.manga_effects"), this.mangaField));
       this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.config.generic.save_back"), button -> {
          try {
             ViltrumitePostProcessingConfig.INSTANCE.punchShakeMultiplier = Float.parseFloat(this.punchShakeField.getValue());
             ViltrumitePostProcessingConfig.INSTANCE.punchEffectMultiplier = Float.parseFloat(this.punchEffectField.getValue());
             ViltrumitePostProcessingConfig.INSTANCE.lockVignetteMultiplier = Float.parseFloat(this.lockVignetteField.getValue());
+            ViltrumitePostProcessingConfig.INSTANCE.mangaEffectsMultiplier = Math.max(0.0F, Float.parseFloat(this.mangaField.getValue()));
             ViltrumitePostProcessingConfig.save();
          } catch (NumberFormatException var3) {
          }
