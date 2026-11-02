@@ -49,6 +49,16 @@
   During a full invasion no citizen spawns where a danger is noticed, so the streets around the fight empty out.
 - Config: `cityCrowdScale` (2.25, multiplies perPlayer and the profile cap) and `cityMaxCitizens` (480, hard cap);
   `CityManager.ABSOLUTE_MAX` = 640. `/city status` prints a crowd line (calm/alarmed/fleeing/hiding/threats).
+- Peril (#138, `docs/city-citizens-peril.md`): states TEETER/HANGING/FALLING appended to `CitizenState` (peril()
+  = panicked + contagious); `CitizenPeril.tick` owns the body before the brain (counts `stateTicks` itself).
+  `CitizenPerilEvents` (CityCollapseEvent.Started, LOWEST, skips cancelled) -> teeter on planned blocks, calls for
+  help on the other floors, crowd panic in the street. Occupants upstairs (`cityOccupants` = 6, 0 off, max 16;
+  `/city occupants <n>`): tall columns (top >= street + 20), floors >= street + 9, `STRUCTURE` below, under a
+  roof; `Occupy` goal, indoor flee, never ReturnToGrid. Voices: 9 events `citizen.*` (27 CC0 files,
+  `tools/sfx/city_citizens.py`), played on the entity (moves with the body, SP + MP), token bucket 6/0.2 per tick;
+  client `CitizenVoiceOcclusion` muffles behind walls (1.0 / 0.45 / 0.25). Lesson: a peril state must stop the
+  navigation (Panic goal) or the body "walks" in the air; `CitizenVoices` touches the registries, so pure checks
+  (`isVoice`) live in `PerilRules` for unit tests.
 
 ## Change journal and reset
 - Hook: `CityJournalMixin` on `LevelChunk.setBlockState` HEAD → `CityManager.onSetBlock`. It sees every block change

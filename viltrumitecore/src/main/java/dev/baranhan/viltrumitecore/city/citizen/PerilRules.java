@@ -43,6 +43,11 @@ public final class PerilRules {
    private PerilRules() {
    }
 
+   /** True for the citizen voice sound events ({@code viltrumitecore:citizen.*}); the client occlusion wraps exactly these. */
+   public static boolean isVoice(net.minecraft.resources.ResourceLocation id) {
+      return "viltrumitecore".equals(id.getNamespace()) && id.getPath().startsWith("citizen.");
+   }
+
    /** True when a drop of this many blocks is a real fall. */
    public static boolean isFall(double drop) {
       return drop >= FALL_MIN_DROP;

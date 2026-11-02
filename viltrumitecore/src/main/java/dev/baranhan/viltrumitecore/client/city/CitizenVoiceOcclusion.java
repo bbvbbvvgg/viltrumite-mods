@@ -1,6 +1,6 @@
 package dev.baranhan.viltrumitecore.client.city;
 
-import dev.baranhan.viltrumitecore.city.citizen.CitizenVoices;
+import dev.baranhan.viltrumitecore.city.citizen.PerilRules;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
@@ -66,7 +66,7 @@ public final class CitizenVoiceOcclusion {
    @SubscribeEvent(priority = EventPriority.LOW)
    public static void onPlaySound(PlaySoundEvent event) {
       SoundInstance s = event.getSound();
-      if (s == null || s instanceof Occluded || s.isRelative() || !CitizenVoices.isVoice(s.getLocation())) {
+      if (s == null || s instanceof Occluded || s.isRelative() || !PerilRules.isVoice(s.getLocation())) {
          return;
       }
 

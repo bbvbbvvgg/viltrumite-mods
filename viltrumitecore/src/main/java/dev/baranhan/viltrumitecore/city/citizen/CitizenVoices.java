@@ -47,7 +47,7 @@ public final class CitizenVoices {
 
    /** True for the sound events of this class (the client occlusion wraps exactly these). */
    public static boolean isVoice(ResourceLocation id) {
-      return ViltrumiteCore.MOD_ID.equals(id.getNamespace()) && id.getPath().startsWith("citizen.");
+      return PerilRules.isVoice(id);
    }
 
    private static RegistryObject<SoundEvent> reg(String name) {
