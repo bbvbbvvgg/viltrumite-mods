@@ -155,7 +155,7 @@ public final class CityCommands {
       for (dev.baranhan.viltrumitecore.city.citizen.CitizenState s : dev.baranhan.viltrumitecore.city.citizen.CitizenState.values()) {
          int n = crowd.count(s);
          switch (s) {
-            case FLEEING, FALLEN, GETTING_UP -> fleeing += n;
+            case FLEEING, FALLEN, GETTING_UP, TEETER, HANGING, FALLING -> fleeing += n;
             case COVER -> hiding += n;
             case ALERT, STARTLED -> alarmed += n;
             default -> calm += n;

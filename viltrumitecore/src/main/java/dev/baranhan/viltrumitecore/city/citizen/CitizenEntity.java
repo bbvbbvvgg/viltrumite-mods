@@ -40,6 +40,30 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
 
    /** Spawned by /city populate: exempt from density trimming. */
    public boolean manual;
+   /**
+    * Lives on an upper floor of a high-rise (#138): stays on its floor (never walks back to the street grid, never
+    * discarded for being off it), may be caught by a collapse.
+    */
+   public boolean occupant;
+   // peril (#138, server only; see CitizenPeril)
+   /** Until this game time a fall counts as caused by a collapse of the floor. */
+   long perilUntil = Long.MIN_VALUE;
+   int teeterTicks;
+   /** The airborne check ran for the current fall (reset on the ground). */
+   boolean fallChecked;
+   @Nullable
+   BlockPos hangLedge;
+   double hangX;
+   double hangY;
+   double hangZ;
+   double hangTop;
+   int hangTicks;
+   double fallFromY;
+   int voiceCooldown;
+   /** A voice due later (a witness gasps a moment after the fall): kind and game time. */
+   @Nullable
+   CitizenVoices.Kind voiceLater;
+   long voiceAt;
    /** Ticks to stay idle before the next stroll. */
    int idleTicks;
    /** Set by damage: counts as standing inside a danger for a few seconds. */
@@ -258,7 +282,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       }
 
       CityManager city = CityManager.of(this.level());
-      if (city != null) {
+      if (city != null && !CitizenPeril.tick(this, city)) {
          CitizenBrain.tick(this, city);
       }
 
@@ -315,7 +339,9 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
             }
 
             city.danger(from.x, from.y, from.z, 12.0F, 200);
-            if (this.isAlive()) {
+            if (this.isAlive() && CitizenPeril.onHurt(this)) {
+               this.hurtTicks = 100; // hanging on, teetering or falling: the peril keeps the body
+            } else if (this.isAlive()) {
                this.hurtTicks = 100;
                this.setThreat(from.x, from.y, from.z, 12.0F);
                CitizenState s = this.citizenState();
@@ -335,6 +361,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       super.die(source);
       CityManager city = CityManager.of(this.level());
       if (city != null && !this.level().isClientSide) {
+         CitizenPeril.onDeath(this, city);
          // somebody died here: everybody around notices, the closest run
          city.dangerMap().add(this.getX(), this.getY(), this.getZ(), 10.0F, 36.0F, city.now(), 240);
       }
