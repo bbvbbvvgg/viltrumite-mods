@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Per-player server state of the Ghost Rider. The cooldowns and the form persist (NBT); a respawned body keeps the
- * cooldowns and comes back as Johnny Blaze.
+ * cooldowns and the form (spec §7): the Rider who died comes back as the Rider, Johnny as Johnny.
  */
 public final class GhostRiderState {
    @Nullable public GhostRiderMove move;
@@ -122,10 +122,12 @@ public final class GhostRiderState {
       this.rider = nbt.getBoolean("GhostRiderForm");
    }
 
-   /** A respawned body: cooldowns only, Johnny again. */
+   /** A respawned body: the cooldowns and the form; no move, no bike, nothing queued. {@code GhostRiderHero.onRespawn}
+    * then dresses a Rider in the chassis at full health. */
    public GhostRiderState respawnCopy() {
       GhostRiderState copy = new GhostRiderState();
       System.arraycopy(this.cooldowns, 0, copy.cooldowns, 0, this.cooldowns.length);
+      copy.rider = this.rider;
       return copy;
    }
 

@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.hero.ghostrider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleRules;
@@ -207,5 +208,24 @@ class GhostRiderRulesTest {
       s.primaryQueued = true;
       s.endMove();
       assertFalse(s.takeQueuedPrimary(), "it dies with its move");
+   }
+
+   @Test
+   void aRespawnedBodyKeepsTheCooldownsAndTheForm() {
+      // QA 2026-11-02 (dedicated server): the Rider who died came back as Johnny with 20 HP, against spec §7
+      GhostRiderState s = new GhostRiderState();
+      s.rider = true;
+      s.cooldowns[0] = 40;
+      s.start(GhostRiderMove.LASH_1);
+      s.primaryQueued = true;
+      s.summonAfterTransform = true;
+      GhostRiderState copy = s.respawnCopy();
+      assertTrue(copy.rider, "the Spirit of Vengeance survives the death");
+      assertEquals(40, copy.cooldowns[0], "the cooldowns carry over");
+      assertNull(copy.move, "no move carries over");
+      assertFalse(copy.primaryQueued, "nothing queued");
+      assertFalse(copy.summonAfterTransform, "no bike is called for the fresh body");
+      s.rider = false;
+      assertFalse(s.respawnCopy().rider, "Johnny stays Johnny");
    }
 }
