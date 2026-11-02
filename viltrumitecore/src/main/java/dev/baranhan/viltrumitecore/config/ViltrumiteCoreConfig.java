@@ -61,6 +61,13 @@ public class ViltrumiteCoreConfig {
     * Empty: {@code <game dir>/viltrumitecore/scp096} and the usual install folders are searched.
     */
    public String scp096OriginalSoundsPath = "";
+   // SCP-106 (docs/design/2026-11-02-scp106-design.md). Natural spawn: rare, inside the prepared city only.
+   /** Seconds between natural-spawn rolls (10..86400; 300 = every 5 minutes). */
+   public double scp106NaturalCheckSeconds = 300.0;
+   /** Chance of one roll in percent (0..100); doubled at night. */
+   public double scp106NaturalChancePercent = 0.75;
+   /** Minutes after a natural spawn before the next one may roll (0..144000; 240 = 4 hours). */
+   public double scp106NaturalCooldownMinutes = 240.0;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -80,7 +87,8 @@ public class ViltrumiteCoreConfig {
             if (!java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("reinhardFinalPunchDamage")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseBlocksPerTick")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("aftermathDurationScale")
-               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")) {
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp106NaturalChancePercent")) {
                save();
             }
          } catch (IOException ignored) {
