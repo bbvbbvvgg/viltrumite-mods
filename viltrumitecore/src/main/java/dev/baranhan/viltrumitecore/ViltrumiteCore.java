@@ -136,6 +136,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
       // ULTRON — ВОССТАНИЕ МАШИН (docs/plans/2026-11-01-ultron-uprising.md): sounds and the machines' entity register.
       dev.baranhan.viltrumitecore.worldevent.ultron.UltronSetup.init(modEventBus);
+      // SCP-096 "Shy Guy" (docs/design/2026-11-05-scp096-design.md): sounds, the entity register, spawner, commands.
+      dev.baranhan.viltrumitecore.scp.scp096.Scp096Setup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
       modEventBus.addListener(this::commonSetup);
       MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);
