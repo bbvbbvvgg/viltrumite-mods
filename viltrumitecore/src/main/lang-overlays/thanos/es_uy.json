@@ -34,6 +34,7 @@
   "commands.viltrumitecore.thanos.phase.gauntlet": "IV, el Guantelete completo",
   "commands.viltrumitecore.thanos.phase_set": "Fase de la guerra: %s.",
   "commands.viltrumitecore.thanos.phase_refused": "Ahora no se puede cambiar de fase: la guerra no está en curso (o empezó el chasquido), o la fase no existe.",
+  "commands.viltrumitecore.thanos.phase_already": "La guerra ya llegó a la fase «%s» (las fases solo avanzan).",
   "commands.viltrumitecore.thanos.order_called": "La Orden Negra desciende de la nave.",
   "commands.viltrumitecore.thanos.wave_called": "Se llama a una oleada chitauri (%s invasores vivos).",
   "commands.viltrumitecore.thanos.ship_strike": "Ataque orbital ordenado sobre tu posición. ¡Muévete!",
