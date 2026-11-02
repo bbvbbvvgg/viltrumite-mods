@@ -184,6 +184,10 @@ class Scp096RouteTest {
       assertTrue(c.contains("Scp096Route.LEAP_BAN_TICKS"));
       assertTrue(c.contains("Scp096Route.STALLS_BEFORE_PAUSE"));
       assertTrue(c.contains("Scp096Route.pauseTicks(this.fruitless / Scp096Route.STALLS_BEFORE_PAUSE)"));
+      // the new moves ride on the flags byte: the synced data layout of the entity (and so the protocol) is unchanged
+      String e = src("Scp096Entity.java");
+      assertEquals(4, e.split("SynchedEntityData.defineId\\(", -1).length - 1, "DATA_STATE, DATA_FLAGS, DATA_ATTACK, DATA_SMASH only");
+      assertTrue(Scp096Entity.FLAG_PUNCH < 128 && Scp096Entity.FLAG_MANTLE < Scp096Entity.FLAG_PUNCH);
       // the mantle backs off a wall it climbed from the inside instead of falling over the parapet
       assertTrue(c.contains("if (behind || !this.landable(level, this.wallX, this.wallZ)) {"));
    }
