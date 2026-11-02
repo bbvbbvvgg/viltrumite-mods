@@ -14,5 +14,7 @@ public final class ThanosAttributes {
    @SubscribeEvent
    public static void onAttributes(EntityAttributeCreationEvent event) {
       event.put(ViltrumiteEntities.THANOS.get(), ThanosEntity.createAttributes().build());
+      event.put(ViltrumiteEntities.EBONY_MAW.get(), EbonyMawEntity.createAttributes().build());
+      event.put(ViltrumiteEntities.CULL_OBSIDIAN.get(), CullObsidianEntity.createAttributes().build());
    }
 }

@@ -77,6 +77,8 @@ public class CoreMessages {
    //     release); new entity type viltrumitecore:scp096. Every "27" peer is refused.
    // v28 (feat/godzilla-city-catastrophe): GodzillaFxS2CPacket appended last after AftermathS2CPacket; a "27"
    //     peer is refused.
+   // v28 (THANOS 2.0, feat/thanos-total-war-rework): ThanosWarS2CPacket appended last, ThanosFxS2CPacket kinds 29..58;
+   //     the Black Order entities (registry sync refuses a mismatch anyway). Every "27" peer is refused.
    private static final String PROTOCOL_VERSION = "28";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
@@ -519,6 +521,11 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.worldevent.godzilla.net.GodzillaFxS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.worldevent.godzilla.net.GodzillaFxS2CPacket::toBytes)
          .consumerMainThread(dev.baranhan.viltrumitecore.worldevent.godzilla.net.GodzillaFxS2CPacket::handle).add();
+      // THANOS 2.0 war state, v28: appended last, older ids unchanged.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket::toBytes)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

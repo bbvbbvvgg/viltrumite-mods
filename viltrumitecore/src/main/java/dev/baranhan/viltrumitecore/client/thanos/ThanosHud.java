@@ -74,6 +74,8 @@ public final class ThanosHud {
 
    @SubscribeEvent
    public static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress event) {
+      // the Black Order's two bars share a row (drawn there, the increment says so)
+      dev.baranhan.viltrumitecore.client.thanos.war.BlackOrderBars.onBar(event);
       bossSeen = Math.max(bossSeen, event.getY() + event.getIncrement());
    }
 
@@ -84,6 +86,7 @@ public final class ThanosHud {
       }
 
       bossSeen = -1.0F;
+      dev.baranhan.viltrumitecore.client.thanos.war.BlackOrderBars.endFrame();
       if (!ThanosClient.active() || mc.options.hideGui || CinematicHud.hiding()) {
          return;
       }
@@ -108,6 +111,7 @@ public final class ThanosHud {
       int x = ThanosHudLayout.panelX(width, w, ThanosHudLayout.maxRight(width, height, y + h, heroPanel, reachLeft, reachUp));
       float pulse = late ? 0.5F + 0.5F * (float)Math.sin(time * 0.32F) : 0.0F;
       panel(g, x, y, w, h, late, pulse);
+      dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.renderWarLines(g, font, x, y);
       Component title = Component.translatable(late ? "hud.viltrumitecore.thanos.final" : "hud.viltrumitecore.thanos.until_snap");
       int titleColor = late ? mix(0xFF8A7A, 0xFFFFFF, pulse * 0.5F) : 0xE9C46A;
       g.pose().pushPose();
@@ -174,8 +178,18 @@ public final class ThanosHud {
       }
    }
 
-   /** The dangerous-ability strip: the name in the lead stone's colour and the counterplay. */
+   /** QA (subtitle playtest): what the warning slot drew this frame (a move name, "held" or null) and its opacity. */
+   public static String qaStrip;
+   public static float qaStripK;
+
+   /**
+    * The warning slot under the timer: the dangerous ability winding up (its name in the lead stone's colour and
+    * the counterplay) or, with none, the hold that has the local player (in the hold's colour, how to break it).
+    * One slot for both keeps the action bar free, so the subtitle panel never has to climb into the strip.
+    */
    private static void warningStrip(GuiGraphics g, Font font, ThanosEntity thanos, int cx, int y, int width, int maxRight, float time) {
+      qaStrip = null;
+      qaStripK = 0.0F;
       if (thanos == null) {
          return;
       }
@@ -183,27 +197,65 @@ public final class ThanosHud {
       ThanosMove move = thanos.move();
       float age = thanos.tickCount - thanos.clientMoveStart;
       float k = move == null ? 0.0F : warning(move, ThanosClient.phase(), age);
-      if (k <= 0.02F) {
+      if (k > 0.02F) {
+         qaStrip = move.name();
+         qaStripK = k;
+         ThanosStone lead = move.lead();
+         boolean winding = age < ThanosRules.telegraph(move.telegraph, ThanosClient.phase());
+         float blink = winding ? 0.65F + 0.35F * (float)Math.sin(time * 0.8F) : 1.0F;
+         strip(g, font, cx, y, width, maxRight, lead == null ? 0xE9C46A : lead.rgb & 0xFFFFFF, Component.translatable(moveKey(move)),
+            Component.translatable(hintKey(move)), k, blink);
          return;
       }
 
-      ThanosStone lead = move.lead();
-      int rgb = lead == null ? 0xE9C46A : lead.rgb & 0xFFFFFF;
-      Component name = Component.translatable(moveKey(move));
-      Component hint = Component.translatable(hintKey(move));
+      float held = dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.heldCard(time - (float)Math.floor(time));
+      if (held > 0.02F) {
+         qaStrip = "held";
+         qaStripK = held;
+         strip(g, font, cx, y, width, maxRight, dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.heldColor(),
+            Component.translatable("hud.viltrumitecore.thanos_war.held.title"), Component.translatable("hud.viltrumitecore.thanos_war.held.hint"), held,
+            0.8F + 0.2F * (float)Math.sin(time * 0.6F));
+      }
+   }
+
+   private static void strip(GuiGraphics g, Font font, int cx, int y, int width, int maxRight, int rgb, Component name, Component hint, float k, float blink) {
       int nameWidth = font.width(name);
       int want = Math.max(nameWidth + 24, Math.round(font.width(hint) * 0.75F) + 16);
       int w = ThanosHudLayout.stripWidth(want, width, maxRight);
-      List<FormattedCharSequence> lines = w >= want ? List.of(hint.getVisualOrderText()) : font.split(hint, Math.max(40, (int)((w - 18) / 0.75F)));
-      if (lines.size() > ThanosHudLayout.MAX_HINT_LINES) {
-         lines = lines.subList(0, ThanosHudLayout.MAX_HINT_LINES);
+      int x = ThanosHudLayout.stripX(cx, w, maxRight);
+      // a subtitle panel right under the slot (a tall hero HUD at a GUI height near 240): the hint gives way first
+      float below = dev.baranhan.viltrumitecore.client.hero.speech.HeroSubtitles.panelTop(x, x + w);
+      int allowed = Float.isNaN(below) ? ThanosHudLayout.MAX_HINT_LINES : ThanosHudLayout.hintLines((int)Math.floor(below) - 1 - y);
+      int wrap = Math.max(40, (int)((w - 18) / 0.75F));
+      List<String> parts = new java.util.ArrayList<>();
+      if (w >= want) {
+         parts.add(hint.getString());
+      } else {
+         for (net.minecraft.network.chat.FormattedText t : font.getSplitter().splitLines(hint, wrap, net.minecraft.network.chat.Style.EMPTY)) {
+            parts.add(t.getString());
+         }
       }
 
-      int h = ThanosHudLayout.stripHeight(lines.size());
-      int x = ThanosHudLayout.stripX(cx, w, maxRight);
+      int keep = Math.min(parts.size(), Math.min(allowed, ThanosHudLayout.MAX_HINT_LINES));
+      List<FormattedCharSequence> lines = new java.util.ArrayList<>();
+      for (int i = 0; i < keep; i++) {
+         String line = parts.get(i);
+         if (i == keep - 1 && keep < parts.size()) {
+            // cut short: end the last kept line with an ellipsis inside the strip
+            line = font.plainSubstrByWidth(line, wrap - font.width("…")).stripTrailing() + "…";
+         }
+
+         lines.add(Component.literal(line).getVisualOrderText());
+      }
+
+      if (lines.isEmpty()) {
+         // title only: the card shrinks to the name (centred as before)
+         w = ThanosHudLayout.stripWidth(nameWidth + 24, width, maxRight);
+         x = ThanosHudLayout.stripX(cx, w, maxRight);
+      }
+
+      int h = lines.isEmpty() ? ThanosHudLayout.TITLE_HEIGHT : ThanosHudLayout.stripHeight(lines.size());
       int a = Math.round(k * 255.0F);
-      boolean winding = age < ThanosRules.telegraph(move.telegraph, ThanosClient.phase());
-      float blink = winding ? 0.65F + 0.35F * (float)Math.sin(time * 0.8F) : 1.0F;
       g.fill(x, y, x + w, y + h, Math.round(k * 0xC0) << 24 | 0x0B0810);
       g.fill(x, y, x + w, y + 1, Math.round(a * blink) << 24 | rgb);
       g.fill(x, y + h - 1, x + w, y + h, Math.round(a * 0.6F) << 24 | rgb);

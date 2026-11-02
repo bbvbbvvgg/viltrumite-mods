@@ -70,6 +70,19 @@ public class ViltrumiteEntities {
       "thanos", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity>of(dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity::new, MobCategory.MISC)
          .sized(1.6F, 3.8F).clientTrackingRange(16).updateInterval(2).fireImmune().noSave().noSummon().build("thanos")
    );
+   // THANOS 2.0: the Black Order and Ebony Maw's telekinetic debris (spawned by the war only, never saved)
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.EbonyMawEntity>> EBONY_MAW = ENTITIES.register(
+      "ebony_maw", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.EbonyMawEntity>of(dev.baranhan.viltrumitecore.entity.thanos.EbonyMawEntity::new, MobCategory.MISC)
+         .sized(0.7F, 2.1F).clientTrackingRange(12).updateInterval(2).fireImmune().noSave().noSummon().build("ebony_maw")
+   );
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.CullObsidianEntity>> CULL_OBSIDIAN = ENTITIES.register(
+      "cull_obsidian", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.CullObsidianEntity>of(dev.baranhan.viltrumitecore.entity.thanos.CullObsidianEntity::new, MobCategory.MISC)
+         .sized(1.5F, 3.3F).clientTrackingRange(12).updateInterval(2).fireImmune().noSave().noSummon().build("cull_obsidian")
+   );
+   public static final RegistryObject<EntityType<dev.baranhan.viltrumitecore.entity.thanos.WarDebrisEntity>> WAR_DEBRIS = ENTITIES.register(
+      "war_debris", () -> EntityType.Builder.<dev.baranhan.viltrumitecore.entity.thanos.WarDebrisEntity>of(dev.baranhan.viltrumitecore.entity.thanos.WarDebrisEntity::new, MobCategory.MISC)
+         .sized(0.9F, 0.9F).clientTrackingRange(10).updateInterval(1).fireImmune().noSave().noSummon().build("war_debris")
+   );
 
    /** Iron Legion suit (stage 6, docs/design/2026-10-31-ironman-legion-design.md): never saved, the owner's roster keeps the mark. */
    public static final RegistryObject<EntityType<LegionSuitEntity>> LEGION_SUIT = ENTITIES.register(

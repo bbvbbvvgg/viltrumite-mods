@@ -391,7 +391,7 @@ public class ThanosRenderer extends EntityRenderer<ThanosEntity> {
       }
 
       look(model, e, partial, 1.0F - 0.7F * look.moveWeight - (stunned ? 0.8F : 0.0F));
-      boolean late = phase == ThanosPhase.FINAL;
+      boolean late = phase == ThanosPhase.GAUNTLET;
       for (int i = 0; i < look.stones.length; i++) {
          look.stones[i] = ThanosPose.fightGlow(i, age, late, moving ? move : null, elapsed, tel);
       }

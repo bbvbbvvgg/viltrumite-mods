@@ -58,6 +58,11 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
    /** Heroes' scripted-motion guard: only the event moves him. */
    private boolean scripted;
    private boolean defeated;
+   /** Damage the Gauntlet held off at the phase floor since the event last asked ({@link #takeAbsorbed}). */
+   private float absorbed;
+   /** Told about every hit that landed (the war's threat table). */
+   @Nullable
+   private HitListener hitListener;
    private int threatTicks;
    private int lastHurtReact;
 
@@ -196,6 +201,29 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
       return this.threatTicks > 0;
    }
 
+   /** Who hit him and how hard (after the caps), ranged when from a projectile or from afar. */
+   @FunctionalInterface
+   public interface HitListener {
+      void hit(Entity attacker, float amount, boolean ranged);
+   }
+
+   public void setHitListener(@Nullable HitListener listener) {
+      this.hitListener = listener;
+   }
+
+   /** Damage held off at the phase floor since the last call (the event shows the Gauntlet absorbing it). */
+   public float takeAbsorbed() {
+      float out = this.absorbed;
+      this.absorbed = 0.0F;
+      return out;
+   }
+
+   /** His own war never hurts him: the Black Order, the Chitauri, the ship's lances. */
+   public static boolean friendly(@Nullable Entity attacker) {
+      return attacker instanceof dev.baranhan.viltrumitecore.entity.thanos.ThanosAlly
+         || dev.baranhan.viltrumitecore.entity.chitauri.ChitauriMob.is(attacker);
+   }
+
    private static boolean adminDamage(@Nullable DamageSource source) {
       return AdminKill.active() || source != null && (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(DamageTypes.FELL_OUT_OF_WORLD));
    }
@@ -207,7 +235,7 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
       }
 
       boolean admin = adminDamage(source);
-      if (!admin && (!this.fighting() || this.isInvulnerableTo(source))) {
+      if (!admin && (!this.fighting() || this.isInvulnerableTo(source) || friendly(source.getEntity()) || friendly(source.getDirectEntity()))) {
          return false;
       }
 
@@ -234,6 +262,12 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
          this.react(REACT_HURT);
       }
 
+      Entity attacker = source.getEntity();
+      if (lost > 0.0F && attacker != null && this.hitListener != null) {
+         boolean ranged = source.getDirectEntity() != attacker || attacker.distanceToSqr(this) > 81.0;
+         this.hitListener.hit(attacker, lost, ranged);
+      }
+
       return hurt;
    }
 
@@ -255,8 +289,17 @@ public class ThanosEntity extends PathfinderMob implements Enemy {
       }
 
       float loss = this.cap.allow(current - health, this.getMaxHealth());
-      this.cap.record(loss);
       float left = current - loss;
+      // the phase floor: until the next phase starts the Gauntlet absorbs what would take him under it
+      float floor = ThanosRules.floorHealth(this.phase(), this.getMaxHealth());
+      if (floor > 0.0F && left < floor) {
+         float held = Math.max(left, Math.min(current, floor));
+         this.absorbed += held - left;
+         left = held;
+         loss = current - left;
+      }
+
+      this.cap.record(loss);
       if (left <= 0.0F) {
          // a direct health write that empties him is a defeat, never a vanilla death (which would
          // remove him mid-scene): same end as die()

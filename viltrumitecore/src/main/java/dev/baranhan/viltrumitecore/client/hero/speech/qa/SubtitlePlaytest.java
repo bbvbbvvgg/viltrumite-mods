@@ -45,6 +45,11 @@ import org.slf4j.Logger;
  * SCP-096 (state, flags, speed, layer weights) and its sounds; {@code scp096look} turns the camera to the nearest one; {@code godzillastate} the kaiju's last
  * drawn LOD, camera distance, body build time, hot zones and particles; {@code godzillalod <n>} forces a LOD (-1 = by
  * distance).
+ * {@code warstate} logs the Thanos
+ * war on the client (phase, ship and its position, army, worst hull frame), {@code lookship} aims the camera at the ship,
+ * {@code fly} toggles viltrumite flight (the double-tap-jump packet; jump/sneak then climb/sink),
+ * {@code holdshot <name> [seconds]} takes a screenshot on the first frame the hold card fills the warning slot. Every
+ * change of that slot is logged ({@code SUBPT ... strip <move>|held|none}).
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -58,6 +63,9 @@ public final class SubtitlePlaytest {
    private static int shotDelayFrames;
    private static final List<Integer> SCENE_SHOTS = new ArrayList<>();
    private static String sceneShotPrefix = "fp";
+   private static String holdShot;
+   private static int holdShotUntil;
+   private static String lastStrip;
 
    private record Release(KeyMapping key, int at) {
    }
@@ -248,6 +256,22 @@ public final class SubtitlePlaytest {
          case "scp096state" -> LOG.info("SUBPT t={} scp096 {} fps={}", ticks, dev.baranhan.viltrumitecore.client.scp096.Scp096Qa.describe(mc),
             mc.getFps());
          case "scp096look" -> dev.baranhan.viltrumitecore.client.scp096.Scp096Qa.lookAtNearest(mc);
+         // Thanos war QA: the client's war state (ship, army, hull render cost) and aiming the camera at the ship
+         case "warstate" -> LOG.info("SUBPT t={} war {} fps={}", ticks, dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.qaSummary(), mc.getFps());
+         case "lookship" -> {
+            net.minecraft.world.phys.Vec3 at = dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.qaShip();
+            if (at != null && mc.player != null) {
+               net.minecraft.world.phys.Vec3 d = at.subtract(mc.player.getEyePosition());
+               mc.player.setYRot((float)Math.toDegrees(Math.atan2(-d.x, d.z)));
+               mc.player.setXRot((float)-Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z))));
+            }
+         }
+         case "fly" -> dev.baranhan.viltrumiteflight.network.ModMessages.sendToServer(new dev.baranhan.viltrumiteflight.network.packet.FlightToggleC2SPacket());
+         case "holdshot" -> {
+            String[] a = arg.split(" ");
+            holdShot = a[0];
+            holdShotUntil = ticks + 20 * (a.length > 1 ? Integer.parseInt(a[1]) : 180);
+         }
          case "collapsestate" -> LOG.info("SUBPT t={} collapse {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.collapse.CollapseClient.qaSummary(), mc.getFps());
          case "godzillalod" -> dev.baranhan.viltrumitecore.client.godzilla.GodzillaRenderer.qaForceLod = Integer.parseInt(arg);
@@ -365,6 +389,30 @@ public final class SubtitlePlaytest {
    }
 
    private static void onRenderTick(TickEvent.RenderTickEvent event) {
+      if (event.phase == TickEvent.Phase.END) {
+         // the Thanos warning slot as drawn this frame (reset here, so a frame without the HUD reads as none)
+         String strip = dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStrip;
+         float stripK = dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStripK;
+         dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStrip = null;
+         if (!java.util.Objects.equals(strip, lastStrip)) {
+            LOG.info("SUBPT t={} strip {}", ticks, strip == null ? "none" : strip);
+            lastStrip = strip;
+         }
+
+         if (holdShot != null) {
+            if (ticks > holdShotUntil) {
+               LOG.info("SUBPT t={} holdshot {} timed out", ticks, holdShot);
+               holdShot = null;
+            } else if ("held".equals(strip) && stripK > 0.9F && pendingShot == null) {
+               LOG.info("SUBPT t={} holdshot {} colour={}", ticks, holdShot,
+                  Integer.toHexString(dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.heldColor()));
+               pendingShot = holdShot;
+               shotDelayFrames = 0;
+               holdShot = null;
+            }
+         }
+      }
+
       if (event.phase == TickEvent.Phase.END && pendingShot == null && !SCENE_SHOTS.isEmpty() && FinalPunchClient.any()) {
          double time = FinalPunchClient.all().iterator().next().time(event.renderTickTime);
          if (time >= SCENE_SHOTS.get(0)) {

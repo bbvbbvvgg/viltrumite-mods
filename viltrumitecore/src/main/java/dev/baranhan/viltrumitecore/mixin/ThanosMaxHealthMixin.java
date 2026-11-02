@@ -31,6 +31,8 @@ public abstract class ThanosMaxHealthMixin {
          cir.setReturnValue(prime.primeMaxHealth());
       } else if ((Object)this instanceof GodzillaEntity) {
          cir.setReturnValue(GodzillaRules.MAX_HEALTH);
+      } else if ((Object)this instanceof dev.baranhan.viltrumitecore.entity.thanos.BlackOrderEntity order) {
+         cir.setReturnValue(order.orderMaxHealth());
       }
    }
 }
