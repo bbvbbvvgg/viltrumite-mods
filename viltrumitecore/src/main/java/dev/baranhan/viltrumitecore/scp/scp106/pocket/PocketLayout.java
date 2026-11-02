@@ -20,9 +20,8 @@ public final class PocketLayout {
    public static final int SIZE = CELL * GRID;
    /** Top block of the common floor; feet stand at FLOOR + 1. */
    public static final int FLOOR = 64;
-   /** Instance n occupies blocks [n * SLOT_STRIDE, n * SLOT_STRIDE + SIZE) on X and [0, SIZE) on Z. */
+   /** Instances sit on a grid of SLOT_STRIDE blocks; each covers [origin, origin + SIZE) on X and Z. */
    public static final int SLOT_STRIDE = 4096;
-   public static final int MAX_SLOTS = 64;
    public static final int NOTE_COUNT = 9;
    public static final int N = 0;
    public static final int E = 1;
@@ -279,12 +278,25 @@ public final class PocketLayout {
 
    // ------------------------------------------------------------------ queries
 
-   public static int slotOfBlockX(double x) {
-      return (int)Math.floor(x / SLOT_STRIDE);
-   }
+   /** Instances per row of the dimension: slot n sits at column n % SLOT_ROW, row n / SLOT_ROW (never reused). */
+   public static final int SLOT_ROW = 1024;
 
    public static int slotOriginX(int slot) {
-      return slot * SLOT_STRIDE;
+      return slot % SLOT_ROW * SLOT_STRIDE;
+   }
+
+   public static int slotOriginZ(int slot) {
+      return slot / SLOT_ROW * SLOT_STRIDE;
+   }
+
+   /** Slot whose instance covers block (x, z), or -1 in the empty space between instances. */
+   public static int slotAt(int x, int z) {
+      int sx = Math.floorDiv(x, SLOT_STRIDE);
+      int sz = Math.floorDiv(z, SLOT_STRIDE);
+      if (sx < 0 || sz < 0 || sx >= SLOT_ROW || x - sx * SLOT_STRIDE >= SIZE || z - sz * SLOT_STRIDE >= SIZE) {
+         return -1;
+      }
+      return sz * SLOT_ROW + sx;
    }
 
    public static boolean insideGrid(int lx, int lz) {
