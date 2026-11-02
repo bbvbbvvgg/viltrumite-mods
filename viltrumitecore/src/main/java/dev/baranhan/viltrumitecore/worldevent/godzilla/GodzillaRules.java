@@ -76,6 +76,26 @@ public final class GodzillaRules {
    public static final float AGGRO_RANGE = 110.0F;
    /** Targets further than this are dropped. */
    public static final float LOSE_RANGE = 220.0F;
+   /**
+    * Vanilla draws the kaiju out to view distance x 16 blocks (its tracking range, 32 chunks, is larger) but simulates it
+    * only inside the simulation distance: a hero in between saw it stand frozen and could hurt it for free (playtest:
+    * view 12 / simulation 8, a camera 140 blocks out froze it for minutes). While a hero is within {@link #watchRange}
+    * a short-lived region ticket keeps the chunks around the body entity-ticking; with nobody that close it still pauses.
+    */
+   public static final int TRACK_CHUNKS = 32;
+   /**
+    * Region ticket distance: entity ticking within {@code WATCH_TICKET - 2} chunks of the body's chunk (3 x 3), loaded
+    * within {@code WATCH_TICKET} (mostly chunks the watching hero keeps loaded anyway).
+    */
+   public static final int WATCH_TICKET = 3;
+   /** Ticket lifespan in ticks; refreshed every {@link #WATCH_REFRESH} ticks while watched, it lapses after the event. */
+   public static final int WATCH_TICKET_TICKS = 60;
+   public static final int WATCH_REFRESH = 20;
+
+   /** How far (horizontal blocks) a hero sees the kaiju with this server view distance (chunks). */
+   public static double watchRange(int viewDistance) {
+      return Math.max(2, Math.min(TRACK_CHUNKS, viewDistance)) * 16.0;
+   }
    /** Without a city: explore points around the start point within this radius. */
    public static final float WANDER_RADIUS = 160.0F;
    /** A waypoint counts as reached within this distance. */
