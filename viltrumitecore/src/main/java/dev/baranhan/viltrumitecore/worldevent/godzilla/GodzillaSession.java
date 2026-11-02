@@ -78,6 +78,8 @@ public final class GodzillaSession {
    int cdFall = 600;
    int cdExploreBreath = 900;
    int cdLook;
+   /** The target's zone at the last decision (status line, QA). */
+   GodzillaRules.Zone lastZone = GodzillaRules.Zone.NONE;
    // meters
    float burst;
    /** The retreat began because the city lay in ruins (the block budget), not because time ran out. */

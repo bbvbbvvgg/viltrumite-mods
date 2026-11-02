@@ -64,10 +64,12 @@ final class GodzillaBrain {
    private static void fight(ServerLevel level, GodzillaSession s, GodzillaEntity e, LivingEntity target) {
       Vec3 at = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
       double[] f = frame(e, at);
-      GodzillaRules.Zone zone = GodzillaRules.classify(f[0], f[1], f[2]);
+      GodzillaRules.Reach reach = GodzillaRules.reach(f[0], f[1], f[2], e.gait());
+      GodzillaRules.Zone zone = GodzillaRules.classify(f[0], f[1], f[2], reach);
+      s.lastZone = zone;
       e.lookAt(at, false);
       e.faceTowards(at);
-      GodzillaMove move = GodzillaRules.choose(zone, s.cooldowns(), s.rage(), s.targetThreat(), s.healthShare());
+      GodzillaMove move = GodzillaRules.choose(zone, reach, s.cooldowns(), s.rage(), s.targetThreat(), s.healthShare());
       if (move == GodzillaMove.CHARGE && !GodzillaBreath.worthIt(e, at)) {
          move = GodzillaMove.NONE;
       }
@@ -80,9 +82,13 @@ final class GodzillaBrain {
          s.start(e, move, arg);
          return;
       }
-      // close in: ground heroes to arm reach, fliers to under them, never closer than the feet
+      // close in: ground heroes into the stomp's wave, fliers to under them, a hero on a low roof through the building
       double flat = Math.sqrt(f[0] * f[0] + f[2] * f[2]);
-      double want = zone == GodzillaRules.Zone.AIR_NEAR || zone == GodzillaRules.Zone.AIR_FAR ? 0.25 * GodzillaRules.HEIGHT : 0.32 * GodzillaRules.HEIGHT;
+      double want = switch (zone) {
+         case AIR_NEAR, AIR_FAR -> 0.25 * GodzillaRules.HEIGHT;
+         case CLOSE -> 0.12 * GodzillaRules.HEIGHT;
+         default -> GodzillaRules.STOMP_CLOSE * GodzillaRules.HEIGHT;
+      };
       if (flat > want + 4.0) {
          Vec3 dir = new Vec3(at.x - e.getX(), 0.0, at.z - e.getZ()).normalize();
          e.walkTo(new Vec3(at.x - dir.x * want, e.getY(), at.z - dir.z * want));
