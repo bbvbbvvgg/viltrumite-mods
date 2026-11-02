@@ -60,6 +60,10 @@ public final class HeroSubtitles {
    /** Last drawn "serial:page" reported to {@link #qaLog}. */
    @Nullable
    private static String qaShown;
+   /** The panel drawn in this frame (GUI px; top NaN = none): HUDs above it (the Thanos warning strip) keep clear of it. */
+   private static float drawnTop = Float.NaN;
+   private static float drawnLeft;
+   private static float drawnRight;
 
    /** One received line, its text resolved in the client language at arrival. */
    record Cue(int serial, UUID speaker, int entityId, String name, @Nullable HeroId hero, String lineId, List<String> fragments, int priority,
@@ -317,6 +321,9 @@ public final class HeroSubtitles {
          }
       }
 
+      drawnTop = y;
+      drawnLeft = x;
+      drawnRight = x + layout.totalWidth();
       graphics.pose().pushPose();
       graphics.pose().translate(x, y, 0.0F);
       SubtitleRenderer.panel(graphics, layout.textWidth(), layout.height(), frame.alpha());
@@ -416,6 +423,15 @@ public final class HeroSubtitles {
    @SubscribeEvent
    public static void onGuiPre(RenderGuiEvent.Pre event) {
       emptyArmorLeft = -1;
+      drawnTop = Float.NaN;
+   }
+
+   /**
+    * Top edge (GUI y) of the subtitle panel drawn in this frame where it spans {@code left..right}, or NaN when
+    * no panel is on screen there. Valid for overlays drawn after this one (it sits below the chat).
+    */
+   public static float panelTop(float left, float right) {
+      return Float.isNaN(drawnTop) || right <= drawnLeft || left >= drawnRight ? Float.NaN : drawnTop;
    }
 
    @SubscribeEvent

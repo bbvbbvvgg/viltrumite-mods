@@ -31,13 +31,15 @@ T = {
         "¡El Guantelete absorbe los ataques de energía! Lucha cuerpo a cuerpo o derríbalo primero.",
         "Eldiven enerji saldırılarını emiyor! Onunla yakından dövüşün ya da önce sendeletin.",
         "手套会吸收能量攻击！近身作战，或先让他踉跄。"),
-    "hud.viltrumitecore.thanos_war.held": (
-        "HELD — staggering the one holding you breaks the grip",
-        "ВЫ СХВАЧЕНЫ — оглушите того, кто держит, и хватка ослабнет",
-        "GEPACKT — bringt den Halter ins Wanken, um euch zu befreien",
-        "ATRAPADO — aturde a quien te sujeta para liberarte",
-        "YAKALANDIN — seni tutanı sendelet, tutuş çözülür",
-        "被控制——让控制者踉跄即可挣脱"),
+    # the hold card in the warning slot under the snap timer
+    "hud.viltrumitecore.thanos_war.held.title": ("Held", "Вы схвачены", "Gepackt", "Atrapado", "Yakalandın", "被控制"),
+    "hud.viltrumitecore.thanos_war.held.hint": (
+        "Stagger the one holding you and the grip breaks",
+        "Оглушите того, кто держит, и хватка ослабнет",
+        "Bringt den Halter ins Wanken, dann löst sich der Griff",
+        "Aturde a quien te sujeta y el agarre se romperá",
+        "Seni tutanı sendelet, tutuş çözülür",
+        "让控制者踉跄，束缚就会解除"),
     "hud.viltrumitecore.thanos_war.phase.arrival": ("Phase I — Arrival", "Фаза I — Прибытие", "Phase I — Ankunft", "Fase I — Llegada",
                                                     "Aşama I — Varış", "第一阶段——降临"),
     "hud.viltrumitecore.thanos_war.phase.black_order": ("Phase II — The Black Order", "Фаза II — Чёрный Орден", "Phase II — Der Schwarze Orden",
