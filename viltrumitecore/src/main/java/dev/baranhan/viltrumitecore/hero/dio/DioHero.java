@@ -648,4 +648,17 @@ public final class DioHero implements HeroDefinition {
          instance.removeModifier(id);
       }
    }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): an A+ book whose "The World" page is sealed for 3 s. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(Player self) {
+      return HeroDefinition.super.bookProfile(self).withReaction(0, 60, 0.0F).withNotes("dio");
+   }
+
+   @Override
+   public void onBookOpened(net.minecraft.server.level.ServerPlayer self, net.minecraft.server.level.ServerPlayer reader, dev.baranhan.viltrumitecore.hero.book.BookProfile profile) {
+      // the page that names his stopped time is the one Heaven's Door holds down for a moment
+      dev.baranhan.viltrumitecore.entity.directive.MobDirectives.apply(self, new dev.baranhan.viltrumitecore.entity.directive.Directive("seal_the_world", 0, reader.getUUID(), null, null, null,
+         self.level().getGameTime() + profile.sealTicks(), 0, new int[]{HeroAction.THE_WORLD.ordinal()}));
+   }
 }

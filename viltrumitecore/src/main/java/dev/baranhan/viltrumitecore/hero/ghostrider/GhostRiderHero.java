@@ -500,4 +500,21 @@ public final class GhostRiderHero implements HeroDefinition {
          0, false, 0, 0, false, false, 0, 0, target, new int[HeroPublicSnapshot.COOLDOWN_COUNT],
          move != null, -1L, null, Math.max(0, state.lastSins), false, flags, extra, state.serial, state.bikeId + 1);
    }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): the Rider's book burns the reader and keeps a true count of sins. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(Player self) {
+      dev.baranhan.viltrumitecore.hero.book.BookProfile base = HeroDefinition.super.bookProfile(self);
+      return rider(self) ? base.withReaction(base.reflectTicks(), base.sealTicks(), 1.0F).withNotes("ghost_rider") : base;
+   }
+
+   @Override
+   public void bookPages(Player self, dev.baranhan.viltrumitecore.hero.book.BookPageSink sink) {
+      PenanceLedger ledger = self.level().isClientSide ? null : PenanceLedger.get(self.getServer());
+      if (ledger != null) {
+         PenanceLedger.Deeds deeds = ledger.deeds(self);
+         sink.line("book.viltrumitecore.line.sins", Integer.toString(deeds.sins()), Integer.toString(deeds.playerKills()),
+            Integer.toString(deeds.innocentKills()));
+      }
+   }
 }
