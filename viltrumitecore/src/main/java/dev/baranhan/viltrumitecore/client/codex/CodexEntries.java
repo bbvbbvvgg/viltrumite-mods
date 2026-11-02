@@ -39,6 +39,7 @@ public final class CodexEntries {
          "captain_america", "steve_rogers", "cap");
       hero("red_hulk", 0xE0301E, rel("avenger_hulk", "captain"), "thunderbolt_ross", "rulk");
       hero("ghost_rider", 0xFF7A1A, rel("human", "red_hulk"), "johnny_blaze", "spirit_of_vengeance", "hell_cycle");
+      hero("rohan", 0x2FA37A, rel("dio", "citizen"), "rohan_kishibe", "heavens_door", "kishibe_rohan");
       hero("human", 0xFFE3A3, rel("citizen", "od_lagna"), "player", "mortal");
 
       npc("conquest", "boss", 0xD23A3A, Visual.skin(SKINS + "skin_conquest.png", false), rel("viltrumite_squad", "homelander", "conquest_arrival"));

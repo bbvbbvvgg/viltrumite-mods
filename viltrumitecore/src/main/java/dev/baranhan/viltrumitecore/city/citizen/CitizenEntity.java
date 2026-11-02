@@ -29,7 +29,7 @@ import net.minecraft.world.level.Level;
  * and its personality both come from one synced seed ({@link CitizenLook},
  * {@link CitizenTraits}).
  */
-public class CitizenEntity extends PathfinderMob implements Bystander {
+public class CitizenEntity extends PathfinderMob implements Bystander, dev.baranhan.viltrumitecore.hero.book.BookSubject {
    /** Walk speed modifier on the 0.25 base speed; fleeing runs {@link #FLEE_FACTOR} times faster. */
    public static final double WALK_SPEED = 0.55;
    public static final double FLEE_FACTOR = 1.75;
@@ -413,6 +413,26 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       super.onRemovedFromWorld();
       if (!this.level().isClientSide) {
          CityManager.track(this, false);
+      }
+   }
+
+   // ------------------------------------------------------------------ Heaven's Door (docs/rohan/heavens-door-design.md §7)
+
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(dev.baranhan.viltrumitecore.hero.book.BookProfile base) {
+      return dev.baranhan.viltrumitecore.hero.book.BookProfile.CITIZEN;
+   }
+
+   /** A citizen's page: what the crowd system already shows on the street (mood, temper), nothing private. */
+   @Override
+   public void bookPages(net.minecraft.world.entity.LivingEntity self, dev.baranhan.viltrumitecore.hero.book.BookPageSink sink) {
+      sink.page("book.viltrumitecore.page.citizen");
+      sink.line("book.viltrumitecore.line.citizen_state", "@book.viltrumitecore.citizen_state." + this.citizenState().name().toLowerCase(java.util.Locale.ROOT));
+      CitizenTraits t = this.traits();
+      sink.line("book.viltrumitecore.line.citizen_traits", Integer.toString(Math.round(t.bravery() * 100)), Integer.toString(Math.round(t.curiosity() * 100)),
+         Integer.toString(Math.round(t.sociability() * 100)));
+      if (this.hasThreat()) {
+         sink.line("book.viltrumitecore.line.citizen_threat");
       }
    }
 }
