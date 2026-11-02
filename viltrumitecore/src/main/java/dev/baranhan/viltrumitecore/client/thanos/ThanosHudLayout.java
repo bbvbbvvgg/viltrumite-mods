@@ -70,6 +70,22 @@ public final class ThanosHudLayout {
       return 15 + 7 * Math.max(1, Math.min(MAX_HINT_LINES, lines));
    }
 
+   /** Height of a strip showing its name alone (a subtitle panel right under it leaves no room for the hint). */
+   public static final int TITLE_HEIGHT = 13;
+
+   /**
+    * Hint lines a strip may show with {@code room} px free below its top (down to a subtitle panel): as many as
+    * fit, up to {@link #MAX_HINT_LINES}; 0 = the name alone ({@link #TITLE_HEIGHT}).
+    */
+   public static int hintLines(int room) {
+      int lines = MAX_HINT_LINES;
+      while (lines > 0 && stripHeight(lines) > room) {
+         lines--;
+      }
+
+      return lines;
+   }
+
    /** The tallest strip, used to decide which parts of the hero HUD it may reach. */
    public static int maxStripHeight() {
       return stripHeight(MAX_HINT_LINES);

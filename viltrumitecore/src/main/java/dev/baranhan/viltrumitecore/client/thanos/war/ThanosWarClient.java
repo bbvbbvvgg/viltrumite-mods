@@ -68,6 +68,10 @@ public final class ThanosWarClient {
    private static int hold;
    private static int holdKind;
    private static int holdMax;
+   /** Ticks the current hold has lasted / ticks the hold card still lingers after it ended. */
+   private static int heldFor;
+   private static int heldLinger;
+   private static final int HELD_LINGER = 6;
    private static long clock;
    private static boolean tinted;
    private static float flash;
@@ -139,7 +143,6 @@ public final class ThanosWarClient {
             army = 0;
             strikes = 0;
             hold = 0;
-            fadeHeldHint(Minecraft.getInstance());
             if (ship == ShipPath.HOVER) {
                // the war ended under it (or the player walked out of range): it climbs away
                jump(() -> {
@@ -158,9 +161,6 @@ public final class ThanosWarClient {
             hold = Math.max(0, p.a());
             holdMax = Math.max(1, hold);
             holdKind = p.b();
-            if (hold == 0) {
-               fadeHeldHint(Minecraft.getInstance());
-            }
          }
          default -> {
          }
@@ -252,6 +252,8 @@ public final class ThanosWarClient {
       blendLeft = 0.0;
       flags = 0;
       hold = 0;
+      heldFor = 0;
+      heldLinger = 0;
       for (Puff p : PUFFS) {
          if (p.fade < 0) {
             p.fade = 0;
@@ -322,16 +324,15 @@ public final class ThanosWarClient {
       }
 
       clock++;
-      if (hold > 0 && (hold == holdMax || hold % 20 == 0) && mc.player != null) {
-         // the hint rides the action bar: the subtitle panel (and the stone warnings) already make room for it
-         mc.gui.setOverlayMessage(Component.translatable("hud.viltrumitecore.thanos_war.held").withStyle(ChatFormatting.AQUA), false);
+      if (hold > 0) {
+         heldFor++;
+         heldLinger = HELD_LINGER;
+      } else {
+         heldFor = 0;
+         heldLinger = Math.max(0, heldLinger - 1);
       }
 
-      boolean held = hold > 0;
       hold = Math.max(0, hold - 1);
-      if (held && hold == 0) {
-         fadeHeldHint(mc);
-      }
       flash = Math.max(0.0F, flash - 0.05F);
       boolean frozen = WorldPauseClient.active();
       if (shipVisible() && !frozen) {
@@ -503,18 +504,26 @@ public final class ThanosWarClient {
 
    // ---- HUD -------------------------------------------------------------------------------------
 
-   /** The hold ended: the action-bar hint fades at once instead of lingering for its usual 3 s. */
-   private static void fadeHeldHint(Minecraft mc) {
-      if (mc.gui == null) {
-         return;
+   /**
+    * The hold card for the warning slot under the snap timer ({@code ThanosHud}): its opacity (0 = none) while
+    * a hold has the local player and for a moment after it, so the hint never pushes the subtitle panel up
+    * the way an action-bar message does.
+    */
+   public static float heldCard(float partial) {
+      if (!active) {
+         return 0.0F;
       }
 
-      dev.baranhan.viltrumitecore.client.mixin.GuiTimersAccessor gui = (dev.baranhan.viltrumitecore.client.mixin.GuiTimersAccessor)mc.gui;
-      Component shown = gui.viltrumitecore$overlayMessage();
-      if (shown != null && shown.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
-         && "hud.viltrumitecore.thanos_war.held".equals(t.getKey()) && gui.viltrumitecore$overlayMessageTime() > 10) {
-         gui.viltrumitecore$setOverlayMessageTime(10);
+      if (hold > 0) {
+         return Mth.clamp((heldFor + partial) / 3.0F, 0.0F, 1.0F);
       }
+
+      return Mth.clamp((heldLinger - partial) / HELD_LINGER, 0.0F, 1.0F);
+   }
+
+   /** The hold's colour (the vignette's): time stop cyan, a carry blue, a drag Mind yellow. */
+   public static int heldColor() {
+      return holdKind == 0 ? 0x7FE8FF : holdKind == 1 ? 0x9FB8FF : 0xFFD630;
    }
 
    /** The hold vignette (the war lines sit beside the snap timer, see {@link #renderWarLines}). */
@@ -525,7 +534,7 @@ public final class ThanosWarClient {
       }
 
       if (hold > 0) {
-         int rgb = holdKind == 0 ? 0x7FE8FF : holdKind == 1 ? 0x9FB8FF : 0xFFD630;
+         int rgb = heldColor();
          float k = Mth.clamp(hold / 8.0F, 0.0F, 1.0F);
          int a = (int)(70.0F * k) << 24 | rgb;
          int band = Math.max(8, height / 6);
