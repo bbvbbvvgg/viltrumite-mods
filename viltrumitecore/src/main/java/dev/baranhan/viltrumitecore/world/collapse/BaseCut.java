@@ -42,6 +42,15 @@ public final class BaseCut implements SupportProbe.Columns {
     * has at most this many columns at the cut height; a neighbour's wall is longer. The building may stand on it.
     */
    public static final int PILLAR_MAX = 9;
+   /**
+    * A wall the falling building leaves leaning on its neighbour (the tower's facade standing on the podium wall)
+    * is at most this many columns thick outside the falling columns.
+    */
+   public static final int SHEET_DEPTH = 2;
+   /** At most this many remnant wall blocks join one collapse; the rest stays standing. */
+   public static final int SHEET_MAX = 40000;
+   /** A remnant wall rises at least this many rows above the neighbour (a parapet on the next roof is no sheet). */
+   public static final int SHEET_MIN_HEIGHT = 8;
 
    public final int minX, minZ, width, depth, columns, footprint, core;
    private final BitSet cells;
@@ -276,6 +285,144 @@ public final class BaseCut implements SupportProbe.Columns {
          }
       }
       return true;
+   }
+
+   /**
+    * The falling blocks plus the walls they leave standing on the neighbour. A wall solid at the cut height that
+    * is long (the shared wall of the podium or the next house) only counts as contact for the probe, so after the
+    * tower falls its facade would stay as a one block thick sheet two hundred blocks tall. Structure in the
+    * {@link #SHEET_DEPTH} columns around the falling ones that rises above everything further out (the podium roof,
+    * the next house, the street) comes down with the building; below that height it is the neighbour's wall and
+    * stays.
+    */
+   public static long[] withSheets(CollapseAnalyzer.Volume volume, long[] blocks, int cutTop, int maxY) {
+      return new Sheets(volume, blocks, cutTop, maxY).run();
+   }
+
+   private static final class Sheets {
+      private static final int[] DX = {1, -1, 0, 0, 0, 0}, DY = {0, 0, 0, 0, 1, -1}, DZ = {0, 0, 1, -1, 0, 0};
+      private final CollapseAnalyzer.Volume volume;
+      private final long[] blocks;
+      private final int cutTop, maxY;
+      private final it.unimi.dsi.fastutil.longs.LongOpenHashSet columns = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+      private final it.unimi.dsi.fastutil.longs.LongOpenHashSet in;
+      private final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap dist = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+      private final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap from = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+      private final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap tops = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+      private final it.unimi.dsi.fastutil.longs.LongArrayList added = new it.unimi.dsi.fastutil.longs.LongArrayList();
+
+      Sheets(CollapseAnalyzer.Volume volume, long[] blocks, int cutTop, int maxY) {
+         this.volume = volume;
+         this.blocks = blocks;
+         this.cutTop = cutTop;
+         this.maxY = maxY;
+         this.in = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(blocks);
+         for (long k : blocks) {
+            this.columns.add(BlockKey.of(BlockKey.x(k), 0, BlockKey.z(k)));
+         }
+         this.dist.defaultReturnValue(-1);
+         this.from.defaultReturnValue(Integer.MIN_VALUE);
+         this.tops.defaultReturnValue(Integer.MIN_VALUE);
+      }
+
+      long[] run() {
+         for (int i = 0; i < this.blocks.length && this.added.size() < SHEET_MAX; i++) {
+            long k = this.blocks[i];
+            int x = BlockKey.x(k), y = BlockKey.y(k), z = BlockKey.z(k);
+            for (int d = 0; d < 4; d++) {
+               this.offer(x + DX[d], y, z + DZ[d]);
+            }
+         }
+         for (int n = 0; n < this.added.size() && this.added.size() < SHEET_MAX; n++) {
+            long k = this.added.getLong(n);
+            int x = BlockKey.x(k), y = BlockKey.y(k), z = BlockKey.z(k);
+            for (int d = 0; d < 6; d++) {
+               this.offer(x + DX[d], y + DY[d], z + DZ[d]);
+            }
+         }
+         if (this.added.isEmpty()) {
+            return this.blocks;
+         }
+         long[] out = java.util.Arrays.copyOf(this.blocks, this.blocks.length + this.added.size());
+         this.added.getElements(0, out, this.blocks.length, this.added.size());
+         return out;
+      }
+
+      private void offer(int x, int y, int z) {
+         if (y <= this.cutTop || y > this.maxY || this.added.size() >= SHEET_MAX) {
+            return;
+         }
+         long k = BlockKey.of(x, y, z);
+         if (this.in.contains(k)) {
+            return;
+         }
+         int d = this.dist(x, z);
+         if (d == 0 || d > SHEET_DEPTH || y < this.from(x, z) || this.volume.at(x, y, z) != CollapseAnalyzer.STRUCTURE) {
+            return;
+         }
+         this.in.add(k);
+         this.added.add(k);
+      }
+
+      /** Chebyshev distance to the nearest falling column, {@code SHEET_DEPTH + 1} when farther. */
+      private int dist(int x, int z) {
+         long c = BlockKey.of(x, 0, z);
+         int d = this.dist.get(c);
+         if (d < 0) {
+            d = this.columns.contains(c) ? 0 : SHEET_DEPTH + 1;
+            for (int r = 1; r <= SHEET_DEPTH && d > r; r++) {
+               for (int dz = -r; dz <= r && d > r; dz++) {
+                  for (int dx = -r; dx <= r; dx++) {
+                     if ((Math.abs(dx) == r || Math.abs(dz) == r) && this.columns.contains(BlockKey.of(x + dx, 0, z + dz))) {
+                        d = r;
+                        break;
+                     }
+                  }
+               }
+            }
+            this.dist.put(c, d);
+         }
+         return d;
+      }
+
+      /** Lowest row of (x, z) that belongs to the falling building: above everything further out. */
+      private int from(int x, int z) {
+         long c = BlockKey.of(x, 0, z);
+         int f = this.from.get(c);
+         if (f == Integer.MIN_VALUE) {
+            f = this.cutTop + 1;
+            for (int dz = -SHEET_DEPTH; dz <= SHEET_DEPTH; dz++) {
+               for (int dx = -SHEET_DEPTH; dx <= SHEET_DEPTH; dx++) {
+                  if (this.dist(x + dx, z + dz) > SHEET_DEPTH) {
+                     f = Math.max(f, this.top(x + dx, z + dz) + 1);
+                  }
+               }
+            }
+            if (this.top(x, z) - f + 1 < SHEET_MIN_HEIGHT) {
+               f = Integer.MAX_VALUE;
+            }
+            this.from.put(c, f);
+         }
+         return f;
+      }
+
+      /** Highest solid row of a column (anything unknown counts as solid all the way up). */
+      private int top(int x, int z) {
+         long c = BlockKey.of(x, 0, z);
+         int t = this.tops.get(c);
+         if (t == Integer.MIN_VALUE) {
+            t = this.cutTop;
+            for (int y = this.maxY; y > this.cutTop; y--) {
+               byte m = this.volume.at(x, y, z);
+               if (m == CollapseAnalyzer.STRUCTURE || m == CollapseAnalyzer.NATURAL || m == CollapseAnalyzer.FIXED || m == CollapseAnalyzer.UNKNOWN) {
+                  t = y;
+                  break;
+               }
+            }
+            this.tops.put(c, t);
+         }
+         return t;
+      }
    }
 
    private static int flood(int c, BitSet cut, BitSet outside, int[] queue, int tail) {

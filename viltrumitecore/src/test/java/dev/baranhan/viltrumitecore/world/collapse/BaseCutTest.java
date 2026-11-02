@@ -70,6 +70,38 @@ class BaseCutTest {
       for (long k : p.floatingBlocks()) {
          assertTrue(BlockKey.x(k) >= 10 && BlockKey.x(k) <= 19);
       }
+      assertEquals(p.floatingBlocks().length, BaseCut.withSheets(w, p.floatingBlocks(), 66, 319).length, "the neighbours keep their walls");
+   }
+
+   @Test
+   void facadeOnThePodiumWallFallsAboveThePodiumRoof() {
+      // the Atheria tower at 1215 -200: its north facade stands on the podium wall shared with the building behind
+      World w = new World();
+      SupportProbeTest.tower(w, 0, 0, 16, 64, 130);
+      byte s = CollapseAnalyzer.STRUCTURE;
+      w.box(-4, 64, -8, 19, 74, -8, s);
+      w.box(-4, 64, -8, -4, 74, 0, s);
+      w.box(19, 64, -8, 19, 74, 0, s);
+      w.box(-4, 64, 0, 19, 74, 0, s);
+      w.box(-4, 74, -8, 19, 74, 0, s);
+      w.box(1, 64, 1, 14, 64, 14, s); // the lobby floor
+      long[] removed = w.carve(0, 64, 1, 15, 66, 15);
+      BaseCut cut = BaseCut.of(removed);
+      assertNotNull(cut);
+      SupportProbe p = masked(w, removed, cut);
+      assertEquals(SupportProbe.Status.FLOATING, p.run(), p.reason());
+      assertTrue(p.contactShare() <= BaseCut.MAX_CONTACT, "one side of four leans on the podium: " + p.contactShare());
+      long[] own = p.floatingBlocks();
+      for (long k : own) {
+         assertTrue(BlockKey.z(k) > 0, "the probe itself leaves the facade on the podium wall");
+      }
+      it.unimi.dsi.fastutil.longs.LongOpenHashSet all = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(BaseCut.withSheets(w, own, 66, 319));
+      assertTrue(all.contains(BlockKey.of(7, 100, 0)), "the facade above the podium falls with the tower");
+      assertTrue(all.contains(BlockKey.of(0, 130, 0)) && all.contains(BlockKey.of(15, 75, 0)), "corner to corner, down to the podium roof");
+      assertEquals(own.length + 16 * (130 - 74), all.size(), "the whole facade above the roof and nothing else");
+      for (long k : all) {
+         assertTrue(BlockKey.z(k) > 0 || BlockKey.y(k) > 74, "the podium stays: " + BlockKey.x(k) + " " + BlockKey.y(k) + " " + BlockKey.z(k));
+      }
    }
 
    @Test

@@ -35,7 +35,7 @@ public final class SupportWatch {
    private static final Map<ResourceKey<Level>, State> STATES = new HashMap<>();
    private static final Map<UUID, Long> NOTIFIED = new HashMap<>();
    // QA metrics (/collapse status)
-   static int probes, grounded, floating, undecided, alreadyFloating, tooSmall, chainsStarted, stagesStarted, blocked, baseCuts, anchored;
+   static int probes, grounded, floating, undecided, alreadyFloating, tooSmall, chainsStarted, stagesStarted, blocked, baseCuts, anchored, sheetBlocks;
    static long lastProbeNanos, maxProbeNanos;
    static int lastNodes, maxNodes;
    static String lastResult = "-";
@@ -307,8 +307,19 @@ public final class SupportWatch {
                   p.contactShare() * 100.0F), job);
                return;
             }
+            int structure = p.floatingStructure();
+            if (job.mask != null) {
+               // the facade standing on the podium wall comes down with the tower above the podium roof
+               int own = blocks.length;
+               blocks = BaseCut.withSheets(p.volume(), blocks, cutTop(r), level.getMaxBuildHeight() - 1);
+               structure += blocks.length - own;
+               sheetBlocks += blocks.length - own;
+               if (CollapseDirector.LOG && blocks.length > own) {
+                  LOGGER.info("support probe {}: {} remnant wall blocks join the {} cut out", where, blocks.length - own, own);
+               }
+            }
             if (r.continuation) {
-               start(level, st, blocks, p.floatingStructure(), r, null, now);
+               start(level, st, blocks, structure, r, null, now);
                return;
             }
             // was it standing before? the removed blocks count as solid again
@@ -316,7 +327,7 @@ public final class SupportWatch {
             Request seeds = new Request(origins(blocks, r.removed), r.cutY, r.x, r.y, r.z, r.cause, false);
             Job before = new Job(r, probe(level, seeds, assumed, true), true, job.mask, job.started).carry(job);
             before.floatingBlocks = blocks;
-            before.floatingStructure = p.floatingStructure();
+            before.floatingStructure = structure;
             st.job = before;
          }
          default -> {
@@ -411,8 +422,8 @@ public final class SupportWatch {
 
    static String status() {
       return String.format(
-         "support: %s, probes %d (grounded %d, floating %d, undecided %d, already floating %d, too small %d, wedged %d, blocked %d), chains %d running / %d started (%d base cuts), %d stages; probe %.2f ms (max %.2f), %d nodes (max %d); last: %s",
-         enabled() ? "on" : "off", probes, grounded, floating, undecided, alreadyFloating, tooSmall, anchored, blocked, chainCount(), chainsStarted, baseCuts, stagesStarted,
+         "support: %s, probes %d (grounded %d, floating %d, undecided %d, already floating %d, too small %d, wedged %d, blocked %d), chains %d running / %d started (%d base cuts, %d remnant wall blocks), %d stages; probe %.2f ms (max %.2f), %d nodes (max %d); last: %s",
+         enabled() ? "on" : "off", probes, grounded, floating, undecided, alreadyFloating, tooSmall, anchored, blocked, chainCount(), chainsStarted, baseCuts, sheetBlocks, stagesStarted,
          lastProbeNanos / 1.0E6, maxProbeNanos / 1.0E6, lastNodes, maxNodes, lastResult);
    }
 
