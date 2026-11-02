@@ -153,8 +153,10 @@ public final class GhostRiderSkills {
       state.bikeUuid = bike.getUUID();
       state.cooldowns[GhostRiderRules.CD_CYCLE] = HellCycleRules.SUMMON_COOLDOWN;
       GhostRiderFx.send(player, GhostRiderFx.BIKE_FORM, at, null, 1.0F, null, 0, bike.getId());
-      GhostRiderSounds.playAt(player, at, GhostRiderSounds.BIKE_FORM, 1.0F, 1.0F);
-      GhostRiderSounds.playAt(player, at, GhostRiderSounds.IGNITION, 1.0F, 1.0F);
+      // two dense one-shots on one tick over the idle loop: at full gain they peaked at +2.5 dBFS next to a running bike
+      // (QA capture, dedicated server 2026-11-02); a gain below 1 keeps the 16-block range
+      GhostRiderSounds.playAt(player, at, GhostRiderSounds.BIKE_FORM, 0.8F, 1.0F);
+      GhostRiderSounds.playAt(player, at, GhostRiderSounds.IGNITION, 0.55F, 1.0F);
       HeroSpeech.ability(player, GhostRiderAbility.CYCLE.id());
    }
 
