@@ -383,6 +383,37 @@ class GodzillaAssetsTest {
       }
    }
 
+   /**
+    * The emissive atlas never wraps past white: the generator once rounded 255 up to 256 and uint8 turned the white-hot
+    * plate cores and the throat green and red (seen in the night playtest). A wrapped pixel is a bright channel next
+    * to a zeroed blue one; the only warm glow (the eyes) stays below that brightness.
+    */
+   @Test
+   void theGlowNeverWrapsPastWhite() throws IOException {
+      java.awt.image.BufferedImage glow = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(
+         binary("textures/entity/godzilla/godzilla_glow.png")));
+      assertNotNull(glow);
+      int lit = 0;
+      List<String> wrapped = new ArrayList<>();
+      for (int y = 0; y < glow.getHeight(); y++) {
+         for (int x = 0; x < glow.getWidth(); x++) {
+            int argb = glow.getRGB(x, y);
+            int a = argb >>> 24, r = argb >> 16 & 255, g = argb >> 8 & 255, b = argb & 255;
+            if (a == 0) {
+               continue;
+            }
+            if (b >= 200) {
+               lit++;
+            }
+            if (b < 4 && (r >= 100 || g >= 100) && wrapped.size() < 5) {
+               wrapped.add(x + "," + y + " = " + r + "/" + g + "/" + b);
+            }
+         }
+      }
+      assertTrue(wrapped.isEmpty(), "wrapped glow pixels " + wrapped);
+      assertTrue(lit > 2000, lit + " bright blue glow pixels");
+   }
+
    /** The client draws every effect kind the server may send. */
    @Test
    void theClientHandlesEveryFxKind() throws IOException {
