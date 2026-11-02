@@ -93,6 +93,7 @@ public final class CollapseDirector {
       DamageLedger ledger = StructuralDamage.ledger(level);
       if (now % 100L == 0L) {
          ledger.prune(now);
+         StructuralDamage.support(level).prune(now);
          RECENT.removeIf(r -> r.until < now);
       }
       if (enabled() && level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
@@ -115,6 +116,8 @@ public final class CollapseDirector {
             it.remove();
          }
       }
+      // support loss (#135): probes after removals, chains of severed structures
+      SupportWatch.tick(level, now);
       long dt = System.nanoTime() - t0;
       lastTickNanos = dt;
       maxTickNanos = Math.max(maxTickNanos, dt);
@@ -137,6 +140,11 @@ public final class CollapseDirector {
             return true;
          }
       }
+      return insideActive(level, x, y, z) || SupportWatch.covers(level, x, y, z);
+   }
+
+   /** Inside (4 blocks around) the section of a running collapse. */
+   static boolean insideActive(ServerLevel level, double x, double y, double z) {
       for (Active a : ACTIVE) {
          if (a.level == level && a.box.inflate(4.0).contains(x + 0.5, y + 0.5, z + 0.5)) {
             return true;
@@ -189,6 +197,13 @@ public final class CollapseDirector {
       return n != null && level.getGameTime() - n.tick <= CAUSE_MEMORY ? n.cause : CollapseCause.HERO;
    }
 
+   /** The cause with the most recorded damage around a spot, or {@code fallback} (plain mining, fire, commands). */
+   static CollapseCause causeNear(ServerLevel level, int x, int y, int z, CollapseCause fallback) {
+      CollapseCause local = StructuralDamage.ledger(level).dominantCause(x, y, z, CollapseRules.SUPPORT_CLUSTER_RADIUS, CollapseRules.SUPPORT_CLUSTER_BAND,
+         CollapseRules.SUPPORT_CLUSTER_BAND);
+      return local != null ? local : fallback;
+   }
+
    private record Noted(CollapseCause cause, long tick) {
    }
 
@@ -207,6 +222,18 @@ public final class CollapseDirector {
    }
 
    private static void start(ServerLevel level, CollapseAnalyzer.Plan plan, CollapseCause cause, long seed, DamageLedger ledger) {
+      startPlan(level, plan, cause, seed, ledger, 0, null);
+   }
+
+   /** One stage of a support chain ({@link SupportWatch}); null when a listener cancelled it. */
+   @Nullable
+   static Active startStage(ServerLevel level, CollapseAnalyzer.Plan plan, CollapseCause cause, long seed, int creak, SupportWatch.Chain chain) {
+      return startPlan(level, plan, cause, seed, StructuralDamage.ledger(level), creak, chain);
+   }
+
+   @Nullable
+   private static Active startPlan(ServerLevel level, CollapseAnalyzer.Plan plan, CollapseCause cause, long seed, DamageLedger ledger, int creak,
+      @Nullable SupportWatch.Chain chain) {
       long id = nextId++;
       List<BlockPos> planned = new ArrayList<>(plan.blocks().length);
       for (long k : plan.blocks()) {
@@ -224,15 +251,16 @@ public final class CollapseDirector {
       CollapseInfo info = new CollapseInfo(id, level.dimension(), center, radius, plan.severity(), cause, planned, Map.of(), level.getGameTime(), plan.variant(),
          landing, plan.truncated());
       ledger.consume(plan.minX() - 4, plan.minY() - 30, plan.minZ() - 4, plan.maxX() + 4, plan.maxY() + 4, plan.maxZ() + 4);
+      StructuralDamage.support(level).consume(plan.minX() - 4, plan.minY() - 30, plan.minZ() - 4, plan.maxX() + 4, plan.maxY() + 4, plan.maxZ() + 4);
       RECENT.add(new Region(level.dimension(), cx, cy, cz, level.getGameTime() + CollapseRules.REGION_COOLDOWN));
       if (MinecraftForge.EVENT_BUS.post(new CityCollapseEvent.Started(level, info))) {
          if (LOG) {
             LOGGER.info("collapse {} cancelled by a listener", id);
          }
-         return;
+         return null;
       }
       started++;
-      Active a = new Active(level, plan, info, seed, fall);
+      Active a = new Active(level, plan, info, seed, fall, creak, chain);
       ACTIVE.add(a);
       a.sendStart();
       CityManager city = CityManager.of(level);
@@ -241,9 +269,11 @@ public final class CollapseDirector {
          city.blast(cx + 0.5, plan.groundY() + 1.0, cz + 0.5, Math.min(24.0F, radius));
       }
       if (LOG) {
-         LOGGER.info("collapse {} started: {} {} {} blocks, cause {}, rule {}, creak {} t, fall {} t, radius {}", id, plan.variant(), plan.severity(),
-            plan.blocks().length, cause.id(), plan.rule(), a.creak, fall, String.format("%.1f", radius));
+         LOGGER.info("collapse {} started: {} {} {} blocks, cause {}, rule {}, creak {} t, fall {} t, radius {}{}", id, plan.variant(), plan.severity(),
+            plan.blocks().length, cause.id(), plan.rule(), a.creak, fall, String.format("%.1f", radius), chain == null ? "" : ", chain stage " + chain.plan.stages()
+               + " (" + chain.plan.remaining() + " blocks left)");
       }
+      return a;
    }
 
    /** Aborts every collapse of a level (unload) or all (server stop): Finished(aborted) is posted for each. */
@@ -256,6 +286,7 @@ public final class CollapseDirector {
             it.remove();
          }
       }
+      SupportWatch.abort(level);
       if (level == null) {
          RECENT.clear();
          lastCause.clear();
@@ -276,7 +307,7 @@ public final class CollapseDirector {
    static String status() {
       return String.format("collapses: %d active (max %d), started %d, analyses %d (accepted %d, rejected %d, last: %s); analysis %.2f ms (max %.2f), tick %.2f ms (max %.2f); limits %d blocks/collapse, %d blocks/tick",
          ACTIVE.size(), maxActive(), started, analyses, accepted, rejected, lastReason, lastAnalysisNanos / 1.0E6, maxAnalysisNanos / 1.0E6,
-         lastTickNanos / 1.0E6, maxTickNanos / 1.0E6, maxBlocks(), blocksPerTick());
+         lastTickNanos / 1.0E6, maxTickNanos / 1.0E6, maxBlocks(), blocksPerTick()) + "; " + SupportWatch.status();
    }
 
    static List<String> describeActive() {
@@ -291,11 +322,12 @@ public final class CollapseDirector {
    static void resetMetrics() {
       maxAnalysisNanos = 0;
       maxTickNanos = 0;
+      SupportWatch.resetMetrics();
    }
 
    // ------------------------------------------------------------------ one collapse
 
-   private static final class Active {
+   static final class Active {
       final ServerLevel level;
       final CollapseAnalyzer.Plan plan;
       final CollapseInfo info;
@@ -311,13 +343,16 @@ public final class CollapseDirector {
       int mainCursor;
       boolean collapsedPosted;
       boolean impactDone;
+      @Nullable
+      final SupportWatch.Chain chain;
 
-      Active(ServerLevel level, CollapseAnalyzer.Plan plan, CollapseInfo info, long seed, int fallTicks) {
+      Active(ServerLevel level, CollapseAnalyzer.Plan plan, CollapseInfo info, long seed, int fallTicks, int creak, @Nullable SupportWatch.Chain chain) {
          this.level = level;
          this.plan = plan;
          this.info = info;
          this.seed = seed;
-         this.creak = Math.max(4, CollapseRules.creakTicks(plan.variant(), plan.severity(), seed));
+         this.chain = chain;
+         this.creak = creak > 0 ? creak : Math.max(4, CollapseRules.creakTicks(plan.variant(), plan.severity(), seed));
          this.collapseAt = CollapseRules.IMPACT_TICKS + this.creak;
          this.fallTicks = fallTicks;
          this.impactAt = this.collapseAt + fallTicks;
@@ -384,6 +419,13 @@ public final class CollapseDirector {
          }
       }
 
+      /** Every block of the section has been removed (or skipped): a chain may start its next stage. */
+      boolean removalDone() {
+         return this.collapsedPosted || this.finished;
+      }
+
+      boolean finished;
+
       /** One tick; true when finished. */
       boolean step(long now) {
          if (!this.level.isLoaded(BlockPos.containing(this.center))) {
@@ -402,6 +444,15 @@ public final class CollapseDirector {
             this.collapsedPosted = true;
             MinecraftForge.EVENT_BUS.post(new CityCollapseEvent.Collapsed(this.level, this.info.with(new ArrayList<>(this.removed.keySet()), this.removed,
                this.level.getGameTime())));
+            if (this.chain == null && !this.removed.isEmpty()) {
+               // whatever hung on this section is checked next (#135: the rest of a truncated or banded section)
+               long[] keys = new long[this.removed.size()];
+               int i = 0;
+               for (BlockPos p : this.removed.keySet()) {
+                  keys[i++] = BlockKey.of(p.getX(), p.getY(), p.getZ());
+               }
+               SupportWatch.followUp(this.level, keys, this.plan.minY(), this.info.cause());
+            }
          }
          if (!this.impactDone && this.age >= this.impactAt && this.collapsedPosted) {
             this.impactDone = true;
@@ -556,6 +607,7 @@ public final class CollapseDirector {
       }
 
       void finish(boolean aborted) {
+         this.finished = true;
          this.sendPhase(CityCollapseS2CPacket.END);
          MinecraftForge.EVENT_BUS.post(new CityCollapseEvent.Finished(this.level, this.info.with(new ArrayList<>(this.changed.keySet()), this.changed,
             this.level.getGameTime()), aborted));
