@@ -52,7 +52,17 @@ public final class PocketPalette {
    /** The home door (iron, opened by the server only), lower / upper facing N, E, S, W. */
    public static final byte HOME_LOW = 54;
    public static final byte HOME_UP = 58;
-   public static final byte COUNT = 62;
+   public static final byte BONE = 62;
+   public static final byte SKULL = 63;
+   public static final byte COBWEB = 64;
+   /** The false daylight of a decoy dead end (a bright, cold glowing block). */
+   public static final byte DAYLIGHT = 65;
+   /** Hanging lantern of a sanctuary (warm light, not a full block). */
+   public static final byte LANTERN = 66;
+   public static final byte ROCK = 67;
+   public static final byte ROCK_DARK = 68;
+   public static final byte MOSAIC = 69;
+   public static final byte COUNT = 70;
 
    private PocketPalette() {
    }
@@ -63,7 +73,7 @@ public final class PocketPalette {
          return false;
       }
       return switch (b) {
-         case AIR, WATER, OOZE_STAIN, THIN_WALL, CARPET, PLATE, NOTE, CHAIN, SEAM -> false;
+         case AIR, WATER, OOZE_STAIN, THIN_WALL, CARPET, PLATE, NOTE, CHAIN, SEAM, SKULL, COBWEB, LANTERN -> false;
          default -> true;
       };
    }

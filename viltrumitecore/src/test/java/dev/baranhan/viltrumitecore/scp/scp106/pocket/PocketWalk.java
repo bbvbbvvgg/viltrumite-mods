@@ -31,8 +31,13 @@ final class PocketWalk {
    private int edgeCount;
 
    PocketWalk(PocketLayout layout) {
+      this(layout, null);
+   }
+
+   /** @param variants per-room variants (maze walls, decor), null for the generated state */
+   PocketWalk(PocketLayout layout, int[] variants) {
       this.layout = layout;
-      PocketPainter painter = new PocketPainter(layout);
+      PocketPainter painter = new PocketPainter(layout, variants);
       byte[] col = new byte[H];
       for (int z = 0; z < S; z++) {
          for (int x = 0; x < S; x++) {
@@ -175,9 +180,10 @@ final class PocketWalk {
       if (here != null) {
          for (Portal p : here) {
             if (p.contains(x + 0.5, y + 0.1, z + 0.5)) {
-               int tx = x + p.dx();
-               int ty = y + p.dy();
-               int tz = z + p.dz();
+               int[] t = p.target(x, y, z);
+               int tx = t[0];
+               int ty = t[1];
+               int tz = t[2];
                if (this.standable(tx, ty, tz)) {
                   sink.accept(idx(tx, ty, tz));
                } else {
@@ -190,7 +196,7 @@ final class PocketWalk {
                      sink.accept(idx(tx, fy, tz));
                   }
                }
-               forced |= p.chance() >= 1.0F;
+               forced |= p.forced();
             }
          }
       }

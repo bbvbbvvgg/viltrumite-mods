@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.baranhan.viltrumitecore.scp.scp106.pocket.PocketLayout.Kind;
+import dev.baranhan.viltrumitecore.scp.scp106.pocket.PocketLayout.PortalType;
 import dev.baranhan.viltrumitecore.scp.scp106.pocket.PocketLayout.Purpose;
 import dev.baranhan.viltrumitecore.scp.scp106.pocket.PocketLayout.Room;
 import dev.baranhan.viltrumitecore.scp.scp106.pocket.PocketLayout.Zone;
@@ -91,15 +92,72 @@ class PocketLayoutTest {
          assertEquals(Kind.FLOODED, l.sigil(2).kind);
          assertEquals(Kind.APARTMENT, l.sigil(3).kind);
          assertTrue(l.portals().size() >= 3, "too few anomalies");
-         assertTrue(l.portals().size() <= 40, "too many anomalies");
+         assertTrue(l.portals().size() <= 48, "too many anomalies");
       }
+   }
+
+   @Test
+   void setPiecesAreGeneratedAndSane() {
+      for (long seed : SEEDS) {
+         for (int slot = 0; slot < 3; slot++) {
+            PocketLayout l = layout(seed, slot);
+            EnumSet<Kind> kinds = EnumSet.noneOf(Kind.class);
+            EnumSet<PortalType> types = EnumSet.noneOf(PortalType.class);
+            int listening = 0;
+            int sanctuaries = 0;
+            for (Room room : l.rooms()) {
+               kinds.add(room.kind);
+               listening += room.purpose == Purpose.LISTENING ? 1 : 0;
+               sanctuaries += room.kind == Kind.SANCTUARY ? 1 : 0;
+               if (room.kind == Kind.MAZE) {
+                  for (int v = 0; v < PocketMaze.VARIANTS; v++) {
+                     assertTrue(room.maze.connected(v), "maze variant " + v + " split " + room);
+                  }
+                  assertTrue(room.maze.differences() > 0, "maze never moves " + room);
+               }
+               if (room.kind == Kind.GALLERY) {
+                  assertEquals(2, room.degree(), "gallery must open at both ends " + room);
+                  assertTrue(room.w == 1 || room.h == 1);
+               }
+               if (room.kind == Kind.CATHEDRAL) {
+                  assertTrue(room.w >= 5 && room.h >= 5, "cathedral too small " + room);
+               }
+            }
+            for (PortalType t : l.portals().stream().map(PocketLayout.Portal::type).toList()) {
+               types.add(t);
+            }
+            String at = " seed " + seed + " slot " + slot;
+            assertTrue(kinds.containsAll(EnumSet.of(Kind.GALLERY, Kind.CATHEDRAL, Kind.CHASM, Kind.MAZE, Kind.ESCHER)), kinds + at);
+            assertTrue(sanctuaries >= 1 && sanctuaries <= 3, "sanctuaries " + sanctuaries + at);
+            assertTrue(listening >= 1, "no listening door" + at);
+            assertTrue(types.containsAll(EnumSet.of(PortalType.ENDLESS, PortalType.PENROSE)), types + at);
+            for (PocketLayout.Portal p : l.portals()) {
+               if (p.type() == PortalType.ENDLESS || p.type() == PortalType.PENROSE) {
+                  assertTrue(p.limit() > 0 && p.dir() >= 0, "an endless anomaly must be outlastable " + p);
+               }
+            }
+         }
+      }
+   }
+
+   @Test
+   void movedMazeWallsKeepEveryEscapeReachable() {
+      PocketLayout l = layout(777L, 5);
+      int[] variants = new int[l.rooms().size()];
+      java.util.Arrays.fill(variants, 1);
+      assertWalk(l, new PocketWalk(l, variants), "variant 1");
    }
 
    @Test
    void voxelWalkReachesEveryRoomAndEveryEscapeWithoutTraps() {
       for (long seed : SEEDS) {
          PocketLayout l = layout(seed, 2);
-         PocketWalk w = new PocketWalk(l);
+         assertWalk(l, new PocketWalk(l), "seed " + seed);
+      }
+   }
+
+   private static void assertWalk(PocketLayout l, PocketWalk w, String seed) {
+      {
          int[] cp = PocketPainter.checkpoint(l.arrival());
          w.flood(cp[0], cp[1], cp[2]);
          for (Room r : l.rooms()) {
@@ -126,7 +184,17 @@ class PocketLayoutTest {
          goals.add(PocketWalk.idx(cp[0], cp[1], cp[2]));
          List<Integer> traps = w.traps(goals.stream().mapToInt(Integer::intValue).toArray());
          assertTrue(traps.isEmpty(), traps.size() + " reachable spots cannot get back, e.g. "
-            + (traps.isEmpty() ? "" : PocketWalk.ix(traps.get(0)) + "," + PocketWalk.iy(traps.get(0)) + "," + PocketWalk.iz(traps.get(0))) + " seed " + seed);
+            + (traps.isEmpty() ? "" : PocketWalk.ix(traps.get(0)) + "," + PocketWalk.iy(traps.get(0)) + "," + PocketWalk.iz(traps.get(0))) + " " + seed);
+         for (Room r : l.rooms()) {
+            if (r.kind == Kind.SANCTUARY) {
+               int[] c = PocketPainter.sanctuaryCheckpoint(r);
+               assertTrue(w.standable(c[0], c[1], c[2]), "sanctuary checkpoint " + r);
+            }
+            if (r.kind == Kind.ESCHER) {
+               int top = PocketPainter.F + PocketPainter.ESCHER_LOOP * PocketPainter.ESCHER_LOOPS + 1;
+               assertTrue(w.reachedBox(r.minX() + 5, top, r.minZ() + 5, r.minX() + 8, top + 1, r.minZ() + 8), "top of the Escher stair " + r);
+            }
+         }
       }
    }
 
