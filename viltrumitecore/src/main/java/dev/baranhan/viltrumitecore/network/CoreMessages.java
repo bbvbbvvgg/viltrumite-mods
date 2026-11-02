@@ -85,7 +85,10 @@ public class CoreMessages {
    // v29 (integration of #129/#130/#131/#132): one table with Scp096S2CPacket, GodzillaFxS2CPacket, ThanosWarS2CPacket,
    //     HellCycleControlC2SPacket and HellfireS2CPacket appended in that order after AftermathS2CPacket. Each branch
    //     alone was "28" with its own table, so every "27" and "28" peer is refused.
-   private static final String PROTOCOL_VERSION = "29";
+   // v30 (Rohan Kishibe, feat/rohan-heavens-door): RohanBookS2CPacket, RohanBookC2SPacket and RohanFxS2CPacket appended
+   //     after HellfireS2CPacket, six ROHAN_* HeroAction values appended after GHOSTRIDER_STARE and the hero id rohan.
+   //     Every "29" peer is refused.
+   private static final String PROTOCOL_VERSION = "30";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -541,6 +544,18 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.RohanBookS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.RohanBookS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.RohanBookS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.RohanBookS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.RohanBookC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.RohanBookC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.RohanBookC2SPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.RohanBookC2SPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.RohanFxS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.RohanFxS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.RohanFxS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.RohanFxS2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

@@ -76,7 +76,7 @@ public class HeroInputC2SPacket {
          }
 
          // Spec 2026-10-28-sinclair §7: a locked body (rabbit hex) starts nothing; releases still pass.
-         if (this.pressed && dev.baranhan.viltrumitecore.hero.ActionLocks.locked(player)) {
+         if (this.pressed && dev.baranhan.viltrumitecore.hero.ActionLocks.locked(player, action)) {
             HeroRegistry.get(player).onInputRefused(player, action);
             return;
          }
