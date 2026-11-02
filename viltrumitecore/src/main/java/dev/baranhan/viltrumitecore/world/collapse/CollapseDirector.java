@@ -419,9 +419,14 @@ public final class CollapseDirector {
          }
       }
 
-      /** Every block of the section has been removed (or skipped): a chain may start its next stage. */
+      /** Every block of the section has been removed (or skipped). */
       boolean removalDone() {
          return this.collapsedPosted || this.finished;
+      }
+
+      /** A chain stage started now (impact + short creak) is removed {@code cadence} ticks after this one. */
+      boolean readyForNext(int cadence) {
+         return this.finished || this.age + CollapseRules.IMPACT_TICKS + CollapseRules.CHAIN_CREAK_TICKS >= this.collapseAt + cadence;
       }
 
       boolean finished;

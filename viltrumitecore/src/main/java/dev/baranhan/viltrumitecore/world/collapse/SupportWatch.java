@@ -35,7 +35,7 @@ public final class SupportWatch {
    private static final Map<ResourceKey<Level>, State> STATES = new HashMap<>();
    private static final Map<UUID, Long> NOTIFIED = new HashMap<>();
    // QA metrics (/collapse status)
-   static int probes, grounded, floating, undecided, alreadyFloating, tooSmall, chainsStarted, stagesStarted, blocked;
+   static int probes, grounded, floating, undecided, alreadyFloating, tooSmall, chainsStarted, stagesStarted, blocked, baseCuts, anchored;
    static long lastProbeNanos, maxProbeNanos;
    static int lastNodes, maxNodes;
    static String lastResult = "-";
@@ -55,6 +55,9 @@ public final class SupportWatch {
       final Request request;
       final SupportProbe probe;
       final boolean before;
+      /** Footprint of a base cut: the probe only follows the structure inside it. */
+      @Nullable
+      final BaseCut mask;
       final long started;
       long nanos;
       int ticks;
@@ -62,11 +65,18 @@ public final class SupportWatch {
       long[] floatingBlocks;
       int floatingStructure;
 
-      Job(Request request, SupportProbe probe, boolean before, long started) {
+      Job(Request request, SupportProbe probe, boolean before, @Nullable BaseCut mask, long started) {
          this.request = request;
-         this.probe = probe;
+         this.probe = mask == null ? probe : probe.within(mask);
          this.before = before;
+         this.mask = mask;
          this.started = started;
+      }
+
+      Job carry(Job from) {
+         this.nanos = from.nanos;
+         this.ticks = from.ticks;
+         return this;
       }
    }
 
@@ -165,7 +175,7 @@ public final class SupportWatch {
             r = settledRequest(level, ledger, now);
          }
          if (r != null) {
-            st.job = new Job(r, probe(level, r, null, false), false, now);
+            st.job = new Job(r, probe(level, r, null, false), false, null, now);
             probes++;
          }
       }
@@ -186,7 +196,8 @@ public final class SupportWatch {
       Iterator<Chain> it = st.chains.iterator();
       while (it.hasNext()) {
          Chain c = it.next();
-         if (c.current != null && !c.current.removalDone()) {
+         int expected = (c.plan.total() + CollapseRules.chainStageBlocks(CollapseDirector.maxBlocks()) - 1) / CollapseRules.chainStageBlocks(CollapseDirector.maxBlocks());
+         if (c.current != null && !c.current.readyForNext(CollapseRules.chainCadence(expected))) {
             continue;
          }
          if (!allowed(level)) {
@@ -255,42 +266,55 @@ public final class SupportWatch {
       maxNodes = Math.max(maxNodes, p.nodes());
       Request r = job.request;
       String where = r.x + " " + r.y + " " + r.z;
+      String scope = job.mask == null ? "" : " inside the base cut (" + job.mask + ")";
       if (job.before) {
          if (p.status() == SupportProbe.Status.GROUNDED) {
-            start(level, st, job.floatingBlocks, job.floatingStructure, r, now);
+            start(level, st, job.floatingBlocks, job.floatingStructure, r, job.mask, now);
          } else {
             alreadyFloating++;
-            result(String.format("%s: was not standing before (%s), stays", where, p.reason()), job);
+            result(String.format("%s: was not standing before%s (%s), stays", where, scope, p.reason()), job);
          }
          return;
+      }
+      if (job.mask == null && !r.continuation && p.status() != SupportProbe.Status.FLOATING) {
+         // standing, perhaps only on the building next door: does the cut-out building stand on anything of its own?
+         BaseCut cut = BaseCut.of(r.removed);
+         if (cut != null) {
+            st.job = new Job(r, probe(level, r, null, false), false, cut, job.started).carry(job);
+            return;
+         }
       }
       switch (p.status()) {
          case GROUNDED -> {
             grounded++;
-            result(String.format("%s: supported (%d removed, cut y %d, %d searches)", where, r.removed.length, r.cutY, p.groundedSearches()), job);
+            result(String.format("%s: supported%s (%d removed, cut y %d, %d searches)", where, scope, r.removed.length, r.cutY, p.groundedSearches()), job);
          }
          case UNDECIDED -> {
             undecided++;
-            result(String.format("%s: undecided, %s", where, p.reason()), job);
+            result(String.format("%s: undecided%s, %s", where, scope, p.reason()), job);
          }
          case FLOATING -> {
             floating++;
             long[] blocks = p.floatingBlocks();
             if (blocks.length < CollapseRules.SUPPORT_MIN_BLOCKS || p.floatingNatural() > p.floatingStructure()) {
                tooSmall++;
-               result(String.format("%s: %d loose blocks (%d natural), too small or terrain", where, blocks.length, p.floatingNatural()), job);
+               result(String.format("%s: %d loose blocks%s (%d natural), too small or terrain", where, blocks.length, scope, p.floatingNatural()), job);
+               return;
+            }
+            if (job.mask != null && p.contactShare() > BaseCut.MAX_CONTACT) {
+               anchored++;
+               result(String.format("%s: %d blocks cut out%s, wedged between neighbours (%.0f%% of the sides touch), stays", where, blocks.length, scope,
+                  p.contactShare() * 100.0F), job);
                return;
             }
             if (r.continuation) {
-               start(level, st, blocks, p.floatingStructure(), r, now);
+               start(level, st, blocks, p.floatingStructure(), r, null, now);
                return;
             }
             // was it standing before? the removed blocks count as solid again
             LongOpenHashSet assumed = new LongOpenHashSet(r.removed);
             Request seeds = new Request(origins(blocks, r.removed), r.cutY, r.x, r.y, r.z, r.cause, false);
-            Job before = new Job(r, probe(level, seeds, assumed, true), true, job.started);
-            before.nanos = job.nanos;
-            before.ticks = job.ticks;
+            Job before = new Job(r, probe(level, seeds, assumed, true), true, job.mask, job.started).carry(job);
             before.floatingBlocks = blocks;
             before.floatingStructure = p.floatingStructure();
             st.job = before;
@@ -314,7 +338,7 @@ public final class SupportWatch {
       return out.toLongArray();
    }
 
-   private static void start(ServerLevel level, State st, long[] blocks, int structure, Request r, long now) {
+   private static void start(ServerLevel level, State st, long[] blocks, int structure, Request r, @Nullable BaseCut mask, long now) {
       String where = r.x + " " + r.y + " " + r.z;
       if (!allowed(level)) {
          blocked++;
@@ -346,7 +370,11 @@ public final class SupportWatch {
       Chain chain = new Chain(plan, cause, seed, fx, fz);
       st.chains.add(chain);
       chainsStarted++;
-      result(String.format("%s: %d blocks lost support (%d structure), chain started, cause %s", where, blocks.length, structure, cause.id()), null);
+      if (mask != null) {
+         baseCuts++;
+      }
+      result(String.format("%s: %d blocks lost support (%d structure)%s, chain started, cause %s", where, blocks.length, structure,
+         mask == null ? "" : ", cut out of the block (" + mask + ")", cause.id()), null);
    }
 
    private static void result(String text, @Nullable Job job) {
@@ -374,8 +402,8 @@ public final class SupportWatch {
 
    static String status() {
       return String.format(
-         "support: %s, probes %d (grounded %d, floating %d, undecided %d, already floating %d, too small %d, blocked %d), chains %d running / %d started, %d stages; probe %.2f ms (max %.2f), %d nodes (max %d); last: %s",
-         enabled() ? "on" : "off", probes, grounded, floating, undecided, alreadyFloating, tooSmall, blocked, chainCount(), chainsStarted, stagesStarted,
+         "support: %s, probes %d (grounded %d, floating %d, undecided %d, already floating %d, too small %d, wedged %d, blocked %d), chains %d running / %d started (%d base cuts), %d stages; probe %.2f ms (max %.2f), %d nodes (max %d); last: %s",
+         enabled() ? "on" : "off", probes, grounded, floating, undecided, alreadyFloating, tooSmall, anchored, blocked, chainCount(), chainsStarted, baseCuts, stagesStarted,
          lastProbeNanos / 1.0E6, maxProbeNanos / 1.0E6, lastNodes, maxNodes, lastResult);
    }
 
