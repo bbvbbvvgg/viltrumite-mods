@@ -83,9 +83,12 @@ public final class GodzillaRules {
 
    // ------------------------------------------------------------------ gait
 
-   public static final float WALK_SPEED = 0.40F;
-   public static final float RAGE_SPEED = 0.52F;
-   public static final float RETREAT_SPEED = 0.46F;
+   // blocks per tick; the stride follows the distance walked, so a slower walk is a slower, heavier cadence
+   // (0.30: a step every 3.4 s). Tested on Atheria: 0.40 crossed downtown in under a minute and used up the
+   // session's block budget in two.
+   public static final float WALK_SPEED = 0.30F;
+   public static final float RAGE_SPEED = 0.40F;
+   public static final float RETREAT_SPEED = 0.36F;
    /** Blocks per gait cycle (two steps). */
    public static final float GAIT_CYCLE = 0.34F * HEIGHT;
    /** Turning in place: one gait cycle per this many degrees. */
@@ -435,8 +438,13 @@ public final class GodzillaRules {
    /** Blocks the kaiju may remove per tick, all sources together. */
    public static final int BLOCKS_PER_TICK = 420;
    public static final int BLOCKS_PER_TICK_RAGE = 600;
-   /** Blocks per session. */
-   public static final int MAX_BLOCKS = 150000;
+   /** Blocks per session (all sources; the city journal keeps every original for /city reset). */
+   public static final int MAX_BLOCKS = 400000;
+   /**
+    * The last blocks of the session budget are kept for the way out: when the rampage has used the rest, the city is
+    * in ruins and the kaiju leaves (it must still push through what stands between it and the edge).
+    */
+   public static final int RETREAT_RESERVE = 40000;
    /** Flying debris entities alive at once. */
    public static final int MAX_DEBRIS = 48;
    /** FX packets per tick. */
@@ -451,6 +459,24 @@ public final class GodzillaRules {
 
    public static int blockBudget(boolean rage) {
       return rage ? BLOCKS_PER_TICK_RAGE : BLOCKS_PER_TICK;
+   }
+
+   /** Session blocks available in a phase: all of them on the way out, the rest keeps the reserve. */
+   public static int blockCap(boolean retreat) {
+      return retreat ? MAX_BLOCKS : MAX_BLOCKS - RETREAT_RESERVE;
+   }
+
+   /** The rampage has used its share: the kaiju leaves the ruined city. */
+   public static boolean sated(int destroyed) {
+      return destroyed >= blockCap(false);
+   }
+
+   /**
+    * Farthest spawn distance at which the body still ticks: entities only tick inside the players' simulation
+    * distance (chunks), so a kaiju spawned beyond it would stand frozen until the event lost it.
+    */
+   public static double spawnReach(int simulationChunks) {
+      return Math.max(40.0, (simulationChunks - 1) * 16.0 - 8.0);
    }
 
    /** Severity (0..1) of an aftermath report for a number of destroyed blocks. */

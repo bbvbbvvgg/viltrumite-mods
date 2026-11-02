@@ -78,6 +78,8 @@ public final class GodzillaSession {
    int cdLook;
    // meters
    float burst;
+   /** The retreat began because the city lay in ruins (the block budget), not because time ran out. */
+   boolean sated;
    float stagger;
    // statistics
    float damageTaken;
@@ -203,7 +205,7 @@ public final class GodzillaSession {
       this.clock++;
       this.phaseTick++;
       this.cool();
-      this.destruction.tick(level, this.rage());
+      this.destruction.tick(level, this.rage(), this.phase == GodzillaPhase.RETREAT);
       if (this.clock % 10 == 0) {
          this.updateThreats(level, e);
          this.updateBar(level, e);
@@ -267,6 +269,12 @@ public final class GodzillaSession {
          return;
       }
       if (this.clock >= GodzillaRules.EVENT_TICKS && !e.move().breath() && !e.move().grounded()) {
+         this.phase(level, e, GodzillaPhase.RETREAT);
+         return;
+      }
+      // the city is in ruins (the rampage used its share of the block budget): it loses interest and leaves
+      if (this.destruction.sated() && !e.move().breath() && !e.move().grounded()) {
+         this.sated = true;
          this.phase(level, e, GodzillaPhase.RETREAT);
          return;
       }
@@ -420,7 +428,7 @@ public final class GodzillaSession {
             this.cdBreath = Math.min(this.cdBreath, 60);
          }
          case RETREAT -> {
-            this.say(level, "viltrumitecore.godzilla.retreat", ChatFormatting.GOLD);
+            this.say(level, this.sated ? "viltrumitecore.godzilla.sated" : "viltrumitecore.godzilla.retreat", ChatFormatting.GOLD);
             GodzillaNet.always(level, GodzillaFxS2CPacket.RETREAT, e.position(), GodzillaEntity.forward(e.getYRot()), 1.0F, 0, GodzillaRules.FX_FAR);
          }
          case COMBAT -> {

@@ -6,6 +6,7 @@
   "viltrumitecore.godzilla.rage": "Godzilla is enraged: its dorsal plates blaze blue!",
   "viltrumitecore.godzilla.finale": "Godzilla can barely stand — this is its last stand!",
   "viltrumitecore.godzilla.retreat": "Godzilla turns away from the city and leaves…",
+  "viltrumitecore.godzilla.sated": "The city lies in ruins — Godzilla loses interest and turns away…",
   "viltrumitecore.godzilla.death": "Godzilla has fallen!",
   "viltrumitecore.godzilla.end.victory": "The city stands: Godzilla is down · blocks destroyed: %s · buildings hit: %s · atomic breaths: %s · damage taken: %s",
   "viltrumitecore.godzilla.end.retreat": "Godzilla has left the city · blocks destroyed: %s · buildings hit: %s · atomic breaths: %s · damage taken: %s",
