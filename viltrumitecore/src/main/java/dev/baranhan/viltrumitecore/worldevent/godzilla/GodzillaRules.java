@@ -217,8 +217,13 @@ public final class GodzillaRules {
    // ------------------------------------------------------------------ look
 
    public static final float HEAD_YAW_MAX = 55.0F;
-   public static final float HEAD_PITCH_UP = 55.0F;
-   public static final float HEAD_PITCH_DOWN = 35.0F;
+   /**
+    * Head pitch limits (degrees; the model spreads the pitch over chest, neck and head). Down to 60: the beam reaches
+    * the street from about 75 blocks out (playtest: at 35 the mouth could not point below the street 150 blocks out,
+    * so a ground hero at 90 blocks was "breathed at" over his head).
+    */
+   public static final float HEAD_PITCH_UP = 60.0F;
+   public static final float HEAD_PITCH_DOWN = 60.0F;
    /** Head turn rate when only looking. */
    public static final float HEAD_TURN = 2.2F;
    /** Head turn rate while the beam fires (the beam lags behind a fast target). */
@@ -252,6 +257,33 @@ public final class GodzillaRules {
 
    public static float clampPitch(float pitch) {
       return Math.max(-HEAD_PITCH_DOWN, Math.min(HEAD_PITCH_UP, pitch));
+   }
+
+   /**
+    * A head-frame offset (fractions of HEIGHT: left, up, forward) turned by the head yaw / pitch (degrees) about the
+    * neck pivot, in the body frame (fractions of HEIGHT). The server's mouth, head centre and beam start.
+    */
+   public static double[] headPoint(float[] off, float yaw, float pitch) {
+      double p = Math.toRadians(pitch);
+      double y = Math.toRadians(yaw);
+      double f1 = off[2] * Math.cos(p) - off[1] * Math.sin(p);
+      double u1 = off[2] * Math.sin(p) + off[1] * Math.cos(p);
+      double l1 = off[0];
+      double l2 = l1 * Math.cos(y) - f1 * Math.sin(y);
+      double f2 = l1 * Math.sin(y) + f1 * Math.cos(y);
+      return new double[]{NECK_PIVOT[0] + l2, NECK_PIVOT[1] + u1, NECK_PIVOT[2] + f2};
+   }
+
+   /**
+    * Head pitch (degrees, unclamped) that puts the beam through a point {@code up} blocks above and {@code flat} blocks
+    * out from the neck pivot. The beam leaves the mouth along the head, and the mouth sits MOUTH_OFFSET[1] above the
+    * head's axis: aimed with the axis, the beam passed 5.4 blocks over its target (wider than the beam and a hero).
+    */
+   public static float beamPitch(double up, double flat) {
+      double d = Math.sqrt(up * up + flat * flat);
+      double m = MOUTH_OFFSET[1] * HEIGHT;
+      double a = Math.atan2(up, flat);
+      return (float)Math.toDegrees(d <= m ? a : a - Math.asin(m / d));
    }
 
    // ------------------------------------------------------------------ atomic breath
@@ -291,6 +323,36 @@ public final class GodzillaRules {
 
    public static int breathCooldown(boolean rage) {
       return rage ? BREATH_COOLDOWN_RAGE : BREATH_COOLDOWN;
+   }
+
+   /** No breath at what is this close to the mouth (blocks; a hero in its face gets the claws or a roar). */
+   public static final double BEAM_MIN = 20.0;
+   /** The breath is only chosen this far (degrees) inside the head's pitch limits: the target keeps moving. */
+   public static final float BEAM_AIM_MARGIN = 3.0F;
+
+   /**
+    * Whether the breath can burn a body-frame point (blocks: left, up from the ground, forward): the head turns the
+    * beam through it within its yaw and pitch limits (the body turns to face a target before it charges), the point
+    * is in front of the mouth and not in its face, within range. A hero over the head or behind the neck is out of
+    * the beam's reach (playtest: it charged at a flier straight above and at a hero on the street 90 blocks out, and
+    * the beam passed over both).
+    */
+   public static boolean beamReaches(double left, double up, double forward) {
+      double dl = left - NECK_PIVOT[0] * HEIGHT;
+      double du = up - NECK_PIVOT[1] * HEIGHT;
+      double df = forward - NECK_PIVOT[2] * HEIGHT;
+      double flat = Math.sqrt(dl * dl + df * df);
+      double d = Math.sqrt(flat * flat + du * du);
+      double m = MOUTH_OFFSET[1] * HEIGHT;
+      if (d <= m || Math.abs(Math.toDegrees(Math.atan2(dl, df))) > HEAD_YAW_MAX) {
+         return false;
+      }
+      float pitch = beamPitch(du, flat);
+      if (pitch > HEAD_PITCH_UP - BEAM_AIM_MARGIN || pitch < -HEAD_PITCH_DOWN + BEAM_AIM_MARGIN) {
+         return false;
+      }
+      double along = Math.sqrt(d * d - m * m) - MOUTH_OFFSET[2] * HEIGHT;
+      return along > BEAM_MIN && along < BEAM_RANGE - 8.0;
    }
 
    /** Charge stage at a charge tick: 0 brace, 1 ignite, 2 spine, 3 mouth. */
@@ -342,6 +404,10 @@ public final class GodzillaRules {
    public static final float STOMP_WAVE = 0.34F * HEIGHT;
    public static final float SLAM_DAMAGE = 36.0F;
    public static final float SLAM_RADIUS = 0.17F * HEIGHT;
+   /** Centre of the slam's hit sphere (body frame, fractions of HEIGHT): the chest, carried forward by the lunge. */
+   public static final float[] SLAM_CENTRE = {0.0F, 0.45F, 0.32F};
+   /** The slam hurts from its first contact tick through this many ticks more. */
+   public static final int SLAM_HURT = 10;
    /** How far the body slam lunges forward. */
    public static final float SLAM_LUNGE = 0.12F * HEIGHT;
    public static final float FALL_DAMAGE = 40.0F;
@@ -487,9 +553,66 @@ public final class GodzillaRules {
       return false;
    }
 
-   /** What lands on a target: the arm whose swipe reaches it (or NONE), the tail strike to its side, the stomp's wave. */
-   public record Reach(GodzillaMove claw, boolean tail, boolean stomp) {
-      public static final Reach NONE = new Reach(GodzillaMove.NONE, false, false);
+   /**
+    * What lands on a target: the arm whose swipe reaches it (or NONE), the tail strike to its side, the stomp's wave,
+    * the body slam, the breath.
+    */
+   public record Reach(GodzillaMove claw, boolean tail, boolean stomp, boolean slam, boolean beam) {
+      public static final Reach NONE = new Reach(GodzillaMove.NONE, false, false, false, false);
+
+      /** Some move lands from here (ready or not). */
+      public boolean any() {
+         return this.claw != GodzillaMove.NONE || this.tail || this.stomp || this.slam || this.beam;
+      }
+   }
+
+   /**
+    * Whether the body slam (GodzillaActions.slam: a sphere about the chest, carried forward by the lunge while it
+    * hurts) covers a body-frame point (blocks): the answer to a flier in front of the chest, below the claws' arc
+    * (playtest: a hero hovering 60 blocks up in front of it was never attacked).
+    */
+   public static boolean slamReaches(double left, double up, double forward) {
+      GodzillaMove slam = GodzillaMove.SLAM;
+      double step = SLAM_LUNGE / (slam.contactEnd - slam.contact + 1);
+      double r = SLAM_RADIUS - REACH_SLACK;
+      for (int k = 0; k <= SLAM_HURT; k++) {
+         double dl = left - SLAM_CENTRE[0] * HEIGHT;
+         double du = up - SLAM_CENTRE[1] * HEIGHT;
+         double df = forward - (SLAM_CENTRE[2] * HEIGHT + step * k);
+         if (dl * dl + du * du + df * df <= r * r) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   /** Over this height (blocks) nothing but the breath reaches a flier (the claws' arc tops out under it). */
+   public static final float MELEE_TOP = 0.64F * HEIGHT;
+   /** Too close by this much (blocks) for every move: it walks off to its stand-off distance. */
+   public static final float BACK_OFF = 8.0F;
+
+   /**
+    * Flat distance (blocks, body centre to target) the kaiju closes in to, or walks back to, for a target this high
+    * (blocks above its ground): into the stomp's wave on the street, through the building under a hero on a low roof,
+    * the slam and the claws in front of the chest, and for a flier over that the nearest spot the beam can pitch to
+    * (playtest: it closed in under fliers, where nothing it has reaches).
+    */
+   public static double standOff(double up) {
+      if (up <= STOMP_RISE) {
+         return STOMP_CLOSE * HEIGHT;
+      }
+      if (up < 0.30 * HEIGHT) {
+         return 0.12 * HEIGHT;
+      }
+      if (up <= MELEE_TOP) {
+         return SLAM_CENTRE[2] * HEIGHT + SLAM_LUNGE * 0.3;
+      }
+      for (double f = 0.25 * HEIGHT; f < BEAM_RANGE; f += 2.0) {
+         if (beamReaches(0.0, up, f)) {
+            return f + 4.0;
+         }
+      }
+      return 0.25 * HEIGHT;
    }
 
    /**
@@ -523,7 +646,8 @@ public final class GodzillaRules {
 
    /** Reach with the feet where the gait phase put them (the server's body). */
    public static Reach reach(double left, double up, double forward, double gait) {
-      return new Reach(clawFor(left, up, forward), tailReaches(left >= 0.0 ? 1 : -1, left, up, forward), stompReaches(left, up, forward, gait));
+      return new Reach(clawFor(left, up, forward), tailReaches(left >= 0.0 ? 1 : -1, left, up, forward), stompReaches(left, up, forward, gait),
+         slamReaches(left, up, forward), beamReaches(left, up, forward));
    }
 
    /**
@@ -579,20 +703,23 @@ public final class GodzillaRules {
    /** The reach a zone implies when only the zone is known (tests, commands). */
    static Reach defaultReach(Zone zone) {
       return switch (zone) {
-         case FEET -> new Reach(GodzillaMove.NONE, false, true);
-         case BEHIND -> new Reach(GodzillaMove.NONE, true, false);
-         case FRONT, AIR_NEAR -> new Reach(GodzillaMove.CLAW_R, false, false);
-         case SIDE_L -> new Reach(GodzillaMove.CLAW_L, true, false);
-         case SIDE_R -> new Reach(GodzillaMove.CLAW_R, true, false);
+         case FEET -> new Reach(GodzillaMove.NONE, false, true, false, false);
+         case BEHIND -> new Reach(GodzillaMove.NONE, true, false, false, false);
+         case FRONT, AIR_NEAR -> new Reach(GodzillaMove.CLAW_R, false, false, false, true);
+         case SIDE_L -> new Reach(GodzillaMove.CLAW_L, true, false, false, false);
+         case SIDE_R -> new Reach(GodzillaMove.CLAW_R, true, false, false, false);
+         case CLOSE, FAR, AIR_FAR -> new Reach(GodzillaMove.NONE, false, false, false, true);
          default -> Reach.NONE;
       };
    }
 
    public static GodzillaMove choose(Zone zone, Reach reach, Cooldowns cd, boolean rage, float threat, float healthShare) {
-      boolean breathReady = cd.breath() <= 0;
       boolean dangerous = threat >= (rage ? 60.0F : 110.0F) || healthShare < 0.35F;
+      // the breath only where the head can point the beam through the target
+      boolean breath = cd.breath() <= 0 && reach.beam();
       GodzillaMove claw = cd.claw() <= 0 ? reach.claw() : GodzillaMove.NONE;
       GodzillaMove tail = reach.tail() && cd.tail() <= 0 ? GodzillaMove.TAIL : GodzillaMove.NONE;
+      GodzillaMove slam = reach.slam() && cd.slam() <= 0 ? GodzillaMove.SLAM : GodzillaMove.NONE;
       switch (zone) {
          case FEET:
             if (reach.stomp() && cd.stomp() <= 0) {
@@ -602,30 +729,36 @@ public final class GodzillaRules {
          case BEHIND:
             return tail;
          case FRONT:
-            if (breathReady && dangerous) {
+            if (breath && dangerous) {
                return GodzillaMove.CHARGE;
             }
-            return claw;
+            return claw != GodzillaMove.NONE ? claw : slam;
          case SIDE_L:
          case SIDE_R:
             return claw != GodzillaMove.NONE ? claw : tail;
          case AIR_NEAR:
-            if (breathReady && dangerous) {
+            if (breath && dangerous) {
                return GodzillaMove.CHARGE;
             }
             if (claw != GodzillaMove.NONE) {
                return claw;
             }
+            if (slam != GodzillaMove.NONE) {
+               return slam;
+            }
             return cd.roar() <= 0 ? GodzillaMove.ROAR : GodzillaMove.NONE;
          case CLOSE:
-            if (breathReady && dangerous) {
+            if (breath && dangerous) {
                return GodzillaMove.CHARGE;
             }
-            return tail;
+            return slam != GodzillaMove.NONE ? slam : tail;
          case AIR_FAR:
          case FAR:
-            if (breathReady) {
+            if (breath) {
                return GodzillaMove.CHARGE;
+            }
+            if (slam != GodzillaMove.NONE) {
+               return slam;
             }
             return cd.roar() <= 0 && threat > 20.0F ? GodzillaMove.ROAR : GodzillaMove.NONE;
          default:
