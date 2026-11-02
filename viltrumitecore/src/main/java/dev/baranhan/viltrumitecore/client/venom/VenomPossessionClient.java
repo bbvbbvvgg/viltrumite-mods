@@ -72,6 +72,8 @@ public final class VenomPossessionClient {
       int resist;
       int bits;
       int reason;
+      /** Client tick of the last server word about this session (the watchdog, VenomHostFx#stale). */
+      long heard = ticks;
       final int seed;
 
       Session(int hostId, long now) {
@@ -114,6 +116,7 @@ public final class VenomPossessionClient {
             s.possessorId = p.possessorId();
             s.bits = p.bits();
             BY_HOST.put(p.hostId(), s);
+            s.heard = ticks;
          }
          case VenomPossessS2CPacket.CONTROL, VenomPossessS2CPacket.STATUS -> {
             Session s = BY_HOST.computeIfAbsent(p.hostId(), id -> {
@@ -125,6 +128,7 @@ public final class VenomPossessionClient {
                s.phase = CONTROL;
                s.controlStart = now;
             }
+            s.heard = ticks;
             s.possessorId = p.possessorId();
             s.remaining = p.remaining();
             s.max = Math.max(1, p.max());
@@ -154,6 +158,7 @@ public final class VenomPossessionClient {
             driveAt = now;
             Session s = BY_HOST.get(p.hostId());
             if (s != null) {
+               s.heard = ticks;
                s.remaining = p.remaining();
                s.resist = p.resist();
                s.bits = p.bits() & (VenomPossessS2CPacket.SPIDER | VenomPossessS2CPacket.BOSS) | s.bits & ~(VenomPossessS2CPacket.SPIDER | VenomPossessS2CPacket.BOSS);
@@ -258,8 +263,14 @@ public final class VenomPossessionClient {
       }
       ticks++;
       long now = mc.level.getGameTime();
-      BY_HOST.values().removeIf(s -> s.phase == ENDING && now - s.endStart > END_TICKS
-         || s.phase != ENDING && mc.level.getEntity(s.hostId) == null && now - s.start > 40);
+      for (Session s : BY_HOST.values()) {
+         if (s.phase != ENDING && VenomHostFx.stale(s.phase == ENGULF, ticks - s.heard)) {
+            s.phase = ENDING;
+            s.endStart = now;
+         }
+      }
+      BY_HOST.values().removeIf(s -> s.phase == ENDING && (now - s.endStart > END_TICKS || now < s.endStart)
+         || s.phase != ENDING && mc.level.getEntity(s.hostId) == null && Math.abs(now - s.start) > 40);
       LocalPlayer me = mc.player;
       Session mine = localPossession();
       if (mine != null) {
@@ -512,6 +523,41 @@ public final class VenomPossessionClient {
          out[3] = 1.0F;
       }
       return out;
+   }
+
+   /** QA log line (SubtitlePlaytest {@code venomstate}): every Venom, takeover and boss this client draws. */
+   public static String qaSummary() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level == null || mc.player == null) {
+         return "no level";
+      }
+      StringBuilder b = new StringBuilder();
+      for (var p : mc.level.players()) {
+         var snap = VenomView.of(p);
+         if (snap != null) {
+            VenomMove m = VenomView.move(snap);
+            b.append(String.format(java.util.Locale.ROOT, "[venom %s form=%b move=%s hunger=%.2f h=%.2f rage=%b shell=%b wall=%b crawl=%b recoil=%b possessing=%b spider=%b] ",
+               p.getGameProfile().getName(), VenomView.flag(snap, dev.baranhan.viltrumitecore.hero.venom.VenomFlags.FORM), m == null ? "-" : m.name(),
+               VenomView.hunger(snap), p.getBbHeight(), VenomView.flag(snap, dev.baranhan.viltrumitecore.hero.venom.VenomFlags.RAGE),
+               VenomView.flag(snap, dev.baranhan.viltrumitecore.hero.venom.VenomFlags.SHELL), VenomView.flag(snap, dev.baranhan.viltrumitecore.hero.venom.VenomFlags.WALL),
+               VenomView.flag(snap, dev.baranhan.viltrumitecore.hero.venom.VenomFlags.CRAWL), VenomView.flag(snap, dev.baranhan.viltrumitecore.hero.venom.VenomFlags.RECOIL),
+               VenomView.flag(snap, dev.baranhan.viltrumitecore.hero.venom.VenomFlags.POSSESSING), VenomView.flag(snap, dev.baranhan.viltrumitecore.hero.venom.VenomFlags.SPIDER_NEAR)));
+         }
+      }
+      for (Session s : BY_HOST.values()) {
+         b.append(String.format(java.util.Locale.ROOT, "[session host=%d possessor=%d phase=%d remaining=%d/%d resist=%d bits=%d reason=%d] ",
+            s.hostId, s.possessorId, s.phase, s.remaining, s.max, s.resist, s.bits, s.reason));
+      }
+      float[] post = post(0);
+      b.append(String.format(java.util.Locale.ROOT, "[local cameraTaken=%b host=%b post=%.2f,%.2f,%.2f,%.2f clinging=%b] ", cameraTaken, localHost(),
+         post[0], post[1], post[2], post[3], VenomCrawlClient.clinging()));
+      for (var e : mc.level.entitiesForRendering()) {
+         if (e instanceof dev.baranhan.viltrumitecore.hero.venom.boss.VenomBossEntity boss) {
+            b.append(String.format(java.util.Locale.ROOT, "[boss id=%d hp=%.1f phase=%d move=%s h=%.2f dist=%.1f] ", boss.getId(), boss.getHealth(),
+               boss.phaseId(), boss.move() == null ? "-" : boss.move().name(), boss.getBbHeight(), boss.distanceTo(mc.player)));
+         }
+      }
+      return b.toString().trim();
    }
 
    static float remainingFraction(Session s) {

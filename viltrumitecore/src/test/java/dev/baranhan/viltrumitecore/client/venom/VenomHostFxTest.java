@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.client.venom;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -70,5 +71,16 @@ class VenomHostFxTest {
       assertEquals(10, VenomHostFx.heartbeatGap(1.0F));
       assertTrue(VenomHostFx.heartbeatGap(5.0F) >= 9, "never faster than every 9 ticks");
       assertTrue(VenomHostFx.MIN_LIGHT > 0.0F, "the view is never black");
+   }
+
+   @Test
+   void aLostEndNeverLeavesTheHostBlind() {
+      // the control phase hears a state every 5 server ticks, the engulf is 30 ticks long: lag is not a lost END
+      assertFalse(VenomHostFx.stale(false, 5 * 4));
+      assertFalse(VenomHostFx.stale(true, 30 * 3));
+      // but a session that heard nothing for seconds ends on its own
+      assertTrue(VenomHostFx.stale(false, VenomHostFx.STALE_CONTROL + 1));
+      assertTrue(VenomHostFx.stale(true, VenomHostFx.STALE_ENGULF + 1));
+      assertTrue(VenomHostFx.STALE_ENGULF > VenomHostFx.STALE_CONTROL, "the engulf is silent by design");
    }
 }

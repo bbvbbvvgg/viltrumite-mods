@@ -12,6 +12,19 @@ public final class VenomHostFx {
    /** The view's floor brightness under the darkest vignette. */
    public static final float MIN_LIGHT = 0.2F;
 
+   /** Client ticks without any server word after which a takeover view is dropped (engulf / control). */
+   public static final int STALE_ENGULF = 200, STALE_CONTROL = 100;
+
+   /**
+    * The watchdog of a takeover on the client: the server repeats the state every 5 ticks of the control phase and
+    * the engulf is 30 ticks without a word, so a session that heard nothing for much longer has lost its END (a
+    * changed level, a lost tracker) and must not leave the host blind or the camera taken. The next server state
+    * brings it back if it was only lag.
+    */
+   public static boolean stale(boolean engulf, long ticksSinceWord) {
+      return ticksSinceWord > (engulf ? STALE_ENGULF : STALE_CONTROL);
+   }
+
    private VenomHostFx() {
    }
 

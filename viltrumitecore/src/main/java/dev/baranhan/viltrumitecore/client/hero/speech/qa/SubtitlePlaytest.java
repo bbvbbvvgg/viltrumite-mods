@@ -50,7 +50,8 @@ import org.slf4j.Logger;
  * a screenshot on the first frame the hold card fills the warning slot. Every change of that slot is logged
  * ({@code SUBPT ... strip <move>|held|none}). {@code bike} logs the Hell Cycle the player rides (speed, rpm, gear,
  * lean, drift, ground); {@code bikes} logs every Hell Cycle this client draws, remote copies included (multiplayer
- * sync), with the effect entries and engine loops it still holds.
+ * sync), with the effect entries and engine loops it still holds. {@code venomstate} logs every Venom this client draws
+ * (form, move, hunger, flags, height), the running host takeovers, the local host view (camera, post uniforms) and the boss.
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -287,6 +288,7 @@ public final class SubtitlePlaytest {
          case "godzillalod" -> dev.baranhan.viltrumitecore.client.godzilla.GodzillaRenderer.qaForceLod = Integer.parseInt(arg);
          case "godzillastate" -> LOG.info("SUBPT t={} godzilla {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.godzilla.GodzillaClient.qaSummary(), mc.getFps());
+         case "venomstate" -> LOG.info("SUBPT t={} venom {} fps={}", ticks, dev.baranhan.viltrumitecore.client.venom.VenomPossessionClient.qaSummary(), mc.getFps());
          case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());
          case "click" -> {
             String[] a = arg.split(" ");
