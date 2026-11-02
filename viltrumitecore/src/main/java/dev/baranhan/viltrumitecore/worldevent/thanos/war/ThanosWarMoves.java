@@ -311,7 +311,7 @@ public final class ThanosWarMoves {
       }
 
       if (ok) {
-         this.war.say(ThanosWar.VOICE_THANOS, this.c.thanos, "ship_call", HeroLine.Priority.ABILITY, 400, false);
+         this.war.say(ThanosWar.VOICE_THANOS, this.c.thanos, "ship_call", HeroLine.Priority.ABILITY, 500, false);
       }
    }
 
