@@ -984,4 +984,10 @@ public final class ReinhardHero implements HeroDefinition {
       }
       return state.action.is(ReinhardAbility.REID_STRIKE) ? REID_STROKE : REID_DRAWN;
    }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): S+, the divine protection keeps the book read-only and reflects. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(Player self) {
+      return HeroDefinition.super.bookProfile(self).withNotes("reinhard");
+   }
 }
