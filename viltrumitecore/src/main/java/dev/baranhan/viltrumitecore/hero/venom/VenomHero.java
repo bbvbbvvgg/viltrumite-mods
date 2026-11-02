@@ -538,6 +538,9 @@ public final class VenomHero implements HeroDefinition {
 
    @Override
    public boolean interceptsProjectiles(Player self) {
+      if (self == null) {
+         return true; // the hero can catch or throw back webs (seam probe without a player)
+      }
       return form(self) && !flag(self, VenomFlags.POSSESSING);
    }
 
