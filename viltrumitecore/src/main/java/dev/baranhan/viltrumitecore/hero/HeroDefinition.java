@@ -301,6 +301,25 @@ public interface HeroDefinition {
    }
 
    /** Hidden from scans (Iron Man scan skips this player). */
+   /**
+    * How this hero's book answers Heaven's Door (docs/rohan/heavens-door-design.md §5): by default the tier table
+    * (S+ read-only, S partial, A+/A short windows, B and below ordinary). Override for a hero-specific reaction.
+    */
+   default dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(Player self) {
+      return dev.baranhan.viltrumitecore.hero.book.BookProfile.forTier(this.balanceProfile(self).tier());
+   }
+
+   /**
+    * This hero's book was just opened by {@code reader} (a reaction: seal a signature action through
+    * {@code MobDirectives}, flare up, ...). Server.
+    */
+   default void onBookOpened(ServerPlayer self, ServerPlayer reader, dev.baranhan.viltrumitecore.hero.book.BookProfile profile) {
+   }
+
+   /** Extra public lines of this hero's book (state anyone in the fight can see; never secrets of other systems). */
+   default void bookPages(Player self, dev.baranhan.viltrumitecore.hero.book.BookPageSink sink) {
+   }
+
    default boolean hiddenFromScan(Player self) {
       return false;
    }

@@ -24,7 +24,9 @@ public enum HeroId {
    /** Red Hulk, Thunderbolt Ross (spec docs/design/2026-11-01-red-hulk-design.md); appended, saved ids unchanged. */
    RED_HULK("red_hulk"),
    /** Ghost Rider, Johnny Blaze, and the Hell Cycle (spec docs/design/2026-11-02-ghost-rider-design.md); appended, saved ids unchanged. */
-   GHOST_RIDER("ghost_rider");
+   GHOST_RIDER("ghost_rider"),
+   /** Rohan Kishibe and his stand Heaven's Door (spec docs/rohan/heavens-door-design.md); appended, saved ids unchanged. */
+   ROHAN("rohan");
 
    private final String key;
 

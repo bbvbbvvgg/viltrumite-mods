@@ -122,7 +122,14 @@ public enum HeroAction {
    GHOSTRIDER_DASH,
    GHOSTRIDER_WHIRL,
    GHOSTRIDER_WAVE,
-   GHOSTRIDER_STARE;
+   GHOSTRIDER_STARE,
+   /** Rohan Kishibe (spec docs/rohan/heavens-door-design.md); appended after GHOSTRIDER_STARE, wire ordinals unchanged. */
+   ROHAN_DOOR,
+   ROHAN_SKETCH,
+   ROHAN_NIBS,
+   ROHAN_COUNTER,
+   ROHAN_SELF_EDIT,
+   ROHAN_MANUSCRIPT;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();

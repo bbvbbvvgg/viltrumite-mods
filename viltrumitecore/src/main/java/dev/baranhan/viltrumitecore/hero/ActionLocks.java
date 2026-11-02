@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.hero;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -13,6 +14,8 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public final class ActionLocks {
    private static final List<Predicate<LivingEntity>> PROVIDERS = new CopyOnWriteArrayList<>();
+   /** Per-action seals (Heaven's Door "cannot use X", a hero's sealed time stop): only the named action is refused. */
+   private static final List<BiPredicate<LivingEntity, HeroAction>> ACTION_PROVIDERS = new CopyOnWriteArrayList<>();
 
    private ActionLocks() {
    }
@@ -21,6 +24,32 @@ public final class ActionLocks {
       if (provider != null && !PROVIDERS.contains(provider)) {
          PROVIDERS.add(provider);
       }
+   }
+
+   /** Registers a per-action seal provider (both sides; the server decides). */
+   public static void registerAction(BiPredicate<LivingEntity, HeroAction> provider) {
+      if (provider != null && !ACTION_PROVIDERS.contains(provider)) {
+         ACTION_PROVIDERS.add(provider);
+      }
+   }
+
+   /** True when the whole body is locked or a seal forbids this one action now. */
+   public static boolean locked(LivingEntity entity, HeroAction action) {
+      if (entity == null) {
+         return false;
+      }
+      if (locked(entity)) {
+         return true;
+      }
+      if (action == null) {
+         return false;
+      }
+      for (BiPredicate<LivingEntity, HeroAction> provider : ACTION_PROVIDERS) {
+         if (provider.test(entity, action)) {
+            return true;
+         }
+      }
+      return false;
    }
 
    /** True when any provider forbids the entity to start an action now. */
@@ -50,5 +79,6 @@ public final class ActionLocks {
    /** Test hook: forget every provider. */
    static void clearForTests() {
       PROVIDERS.clear();
+      ACTION_PROVIDERS.clear();
    }
 }
