@@ -300,4 +300,21 @@ class VenomBossBrainTest {
       assertEquals(Attack.NONE, brain.choose(at(2.0)));
       assertEquals(Attack.NONE, brain.choose(at(12.0)));
    }
+
+   @Test
+   void aSpatOutHostGetsHisBreather() {
+      VenomBossBrain brain = new VenomBossBrain();
+      assertFalse(brain.sparing());
+      brain.spit(60);
+      for (int i = 0; i < 30; i++) {
+         brain.tick();
+      }
+      brain.spit(10);
+      for (int i = 0; i < 29; i++) {
+         brain.tick();
+      }
+      assertTrue(brain.sparing(), "a shorter word does not cut the three seconds short");
+      brain.tick();
+      assertFalse(brain.sparing(), "and the window closes on time");
+   }
 }
