@@ -65,6 +65,8 @@
   untouched copy (`tools/atheria/analysis/compare.py`). Entities (item frames, paintings, armor stands) are not
   journaled and are not restored.
 - `MeteorSpawnEvent` (random, config `meteorSpawnChancePercent`) also hits the city; reset repairs the craters.
+- `startReset` aborts the level's running collapses first (`CollapseDirector.abortAll`): after a Godzilla rampage three
+  collapses kept falling into the restored map (125 blocks, 7 fresh ruin zones). `CityDisasterLinksTest` pins the order.
 - Crash safety (settling): a restored chunk keeps its originals in the journal's `settling` set until the 2nd
   `LevelEvent.Save` after its restore (Forge posts the event after the chunk save, the 1st one may race). A start
   with settling originals runs a quiet recovery `RestoreQueue` 100 ticks after load (`journal.recovery()` skips

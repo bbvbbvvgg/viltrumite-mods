@@ -35,5 +35,9 @@ class CityDisasterLinksTest {
       assertTrue(grid.contains("CityDisasterLinks.collapseOwns"), "collapse bursts must not hit the grid twice");
       assertTrue(city.contains("CityAftermath.onCityReset") && city.contains("CityDisasterLinks.onCityReset")
          && city.contains("this.power.onCityReset()"), "/city reset clears grid, ruins and grid outages together");
+      int reset = city.indexOf("void startReset()");
+      int abort = city.indexOf("CollapseDirector.abortAll(this.level)", reset);
+      assertTrue(reset >= 0 && abort > reset && abort < city.indexOf("CityAftermath.onCityReset", reset),
+         "/city reset stops the running collapses before it clears the ruins (they carved the restored map)");
    }
 }

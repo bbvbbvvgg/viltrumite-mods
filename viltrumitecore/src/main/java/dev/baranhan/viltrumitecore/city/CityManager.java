@@ -514,6 +514,9 @@ public final class CityManager {
    // ------------------------------------------------------------------ reset
 
    void startReset() {
+      // a collapse still falling would carve the restored map and leave fresh ruins (seen after a Godzilla rampage):
+      // stop them first; what they already removed is in the journal and comes back with the rest
+      dev.baranhan.viltrumitecore.world.collapse.CollapseDirector.abortAll(this.level);
       this.population.clearAll();
       this.power.onCityReset();
       // the ruins are being rebuilt: their smoke, dust and sounds go with them

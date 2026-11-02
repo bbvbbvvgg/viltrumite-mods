@@ -48,6 +48,9 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
 ## QA notes (client playtest on Xvfb / llvmpipe, Atheria)
 - The entity is only visible within the tracking range ((view distance - 1) x 16): keep the camera close in tests.
 - Beam ribbons were widened ~2x after the night shot read as a thin line; rage plate glow 0.32 + 0.14 sin (visible by day).
+- `/godzilla stop` leaves its collapses falling (damage stays); `/city reset` aborts them before it rebuilds.
+- Dedicated server + one client (view distance 6): body, LOD, plates, rage tint, boss bar, subtitles, chat and alerts
+  synced; claw / stomp / slam / tail hurt entities; TPS 20 (mean tick 9..12 ms rampaging); reset 440k blocks in 5 s.
 - llvmpipe FPS (1..5) says nothing about real GPUs; server tick cost was 0.1..3.7 ms avg, up to ~27 ms carving downtown.
 
 ## Sound kit
