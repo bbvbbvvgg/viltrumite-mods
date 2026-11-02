@@ -28,6 +28,8 @@ final class Scp096LoopSound extends AbstractTickableSoundInstance {
    private int silent;
    /** Wanted loudness 0..1, written by the client tick. */
    float target;
+   /** Client clock tick it was started at ({@link Scp096ClientSounds#clock}). */
+   final int born = Scp096ClientSounds.clock;
 
    Scp096LoopSound(SoundEvent event, SoundSource source, @Nullable Scp096Entity entity, boolean loop, float fadeUp, float fadeDown) {
       super(event, source, SoundInstance.createUnseededRandom());

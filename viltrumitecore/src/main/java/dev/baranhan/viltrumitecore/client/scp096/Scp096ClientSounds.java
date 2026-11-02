@@ -44,6 +44,10 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 public final class Scp096ClientSounds {
    public static final double RANGE = 72.0;
    static final int RETRY_TICKS = 20;
+   /** Ticks a fresh sound may take to start in the engine before an inactive one counts as discarded. */
+   static final int START_GRACE_TICKS = 40;
+   /** Client tick counter (runs while the game is not paused). */
+   static int clock;
    private static final Map<Integer, Track> TRACKS = new HashMap<>();
    /** Entities hunting the local player (from {@link Scp096S2CPacket}). */
    private static final Set<Integer> HUNTED = new HashSet<>();
@@ -154,6 +158,7 @@ public final class Scp096ClientSounds {
       if (level == null || player == null || mc.isPaused()) {
          return;
       }
+      clock++;
       kickO = kick;
       kick = Math.max(0.0F, kick - 0.045F);
       int now = player.tickCount;
@@ -177,7 +182,7 @@ public final class Scp096ClientSounds {
 
    private static boolean quiet(Track t) {
       for (Scp096LoopSound l : t.loops) {
-         if (l != null && !l.isStopped()) {
+         if (!dead(Minecraft.getInstance(), l)) {
             l.target = 0.0F;
             return false;
          }
@@ -202,7 +207,7 @@ public final class Scp096ClientSounds {
             }
             continue;
          }
-         if (loop != null && !loop.isStopped()) {
+         if (!dead(mc, loop)) {
             loop.target = target;
          } else if (target > 0.02F && --t.retry[i] <= 0) {
             loop = new Scp096LoopSound(event(i), SoundSource.HOSTILE, e, true, i == 0 ? 0.03F : 0.12F, i == 0 ? 0.05F : 0.08F);
@@ -238,7 +243,7 @@ public final class Scp096ClientSounds {
       }
       lastMusicTarget = target;
       pulse += (pulseTarget - pulse) * 0.08F;
-      if (music != null && !music.isStopped()) {
+      if (!dead(mc, music)) {
          music.target = target;
       } else if (target > 0.02F && --musicRetry <= 0) {
          music = new Scp096LoopSound(Scp096Sounds.CHASE_MUSIC.get(), SoundSource.HOSTILE, null, true, 0.08F, 0.02F);
@@ -250,6 +255,26 @@ public final class Scp096ClientSounds {
       if (target > 0.02F && mc.level.getGameTime() % 40 == 0) {
          mc.getMusicManager().stopPlaying();
       }
+   }
+
+   /**
+    * A loop the engine no longer plays: stopped by itself, or dropped by the sound engine without being told (F3+T
+    * resource reload, device change), which never sets {@code isStopped}. Such a loop is halted so it is replaced.
+    */
+   private static boolean dead(Minecraft mc, @Nullable Scp096LoopSound l) {
+      if (l == null) {
+         return true;
+      }
+      boolean gone = abandoned(l.isStopped(), mc.getSoundManager().isActive(l), clock - l.born);
+      if (gone && !l.isStopped()) {
+         l.halt();
+      }
+      return gone;
+   }
+
+   /** Pure: a sound instance is to be replaced (stopped, or inactive in the engine past the start grace). */
+   static boolean abandoned(boolean stopped, boolean active, int age) {
+      return stopped || !active && age > START_GRACE_TICKS;
    }
 
    /** The camera: a zoom kick on the sting, a slow pulse while it closes in (FOV effects option respected). */

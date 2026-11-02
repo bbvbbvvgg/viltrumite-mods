@@ -30,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.stats.Stats;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
@@ -94,7 +95,8 @@ public class Scp096Entity extends PathfinderMob {
    private int noTargetTicks;
    private int hysteriaTicks = Scp096Rules.DEFAULT_HYSTERIA_TICKS;
    private final Map<UUID, Target> targets = new LinkedHashMap<>();
-   private final Map<UUID, Integer> seen = new HashMap<>();
+   /** Consecutive positive face checks per player: {streak, game tick of the last positive check}. */
+   private final Map<UUID, long[]> seen = new HashMap<>();
    private final Set<UUID> notified = new HashSet<>();
    final Scp096Chase chase = new Scp096Chase(this);
 
@@ -121,6 +123,8 @@ public class Scp096Entity extends PathfinderMob {
       final UUID id;
       final boolean player;
       int missing;
+      /** The player's death count when the face was seen (-1: unknown, a citizen or an old save). */
+      int life = -1;
 
       Target(UUID id, boolean player) {
          this.id = id;
@@ -293,6 +297,10 @@ public class Scp096Entity extends PathfinderMob {
       // shares the id of the server instance, so removing the client copy would drop the server one too
       if (!this.level().isClientSide) {
          LOADED.remove(this);
+         RemovalReason reason = this.getRemovalReason();
+         if (reason != null && !reason.shouldDestroy() && this.level() instanceof ServerLevel sl) {
+            this.retireClientIds(sl);
+         }
       }
    }
 
@@ -362,6 +370,19 @@ public class Scp096Entity extends PathfinderMob {
       return super.hurt(source, Scp096Rules.cappedHit(amount));
    }
 
+   /**
+    * The last step of every hit, after invulnerability frames: ordinary damage is clamped so it never takes the
+    * creature below {@link Scp096Rules#HEALTH_FLOOR} (the hurt flash, the knock and the regeneration stay). Only damage
+    * that bypasses invulnerability, which is /kill and the void, can kill it.
+    */
+   @Override
+   protected void actuallyHurt(DamageSource source, float amount) {
+      if (!source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+         amount = Scp096Rules.nonLethal(this.getHealth(), amount);
+      }
+      super.actuallyHurt(source, amount);
+   }
+
    @Override
    public boolean shouldRenderAtSqrDistance(double distanceSq) {
       double r = 192.0 * getViewScale();
@@ -424,8 +445,11 @@ public class Scp096Entity extends PathfinderMob {
       if (this.tickCount % 5 == 0) {
          this.updateTargets(level, peaceful);
       }
-      if (!peaceful && this.faceOpen()) {
-         if (this.tickCount % 2 == 0) {
+      if (peaceful || !this.faceOpen()) {
+         // a hidden face breaks every streak: checks from before it closed never count toward a later peek
+         this.seen.clear();
+      } else {
+         if (this.tickCount % Scp096Rules.PLAYER_SCAN_INTERVAL == 0) {
             this.scanPlayers(level);
          }
          if (this.tickCount % Scp096Rules.CITIZEN_CHECK_INTERVAL == 0) {
@@ -703,8 +727,11 @@ public class Scp096Entity extends PathfinderMob {
             continue;
          }
          if (this.canSeeFace(p, true)) {
-            int n = this.seen.merge(p.getUUID(), 1, Integer::sum);
-            if (n >= Scp096Rules.SEEN_CHECKS) {
+            long now = level.getGameTime();
+            long[] s = this.seen.computeIfAbsent(p.getUUID(), id -> new long[]{0L, Long.MIN_VALUE / 2});
+            s[0] = Scp096Rules.sightStreak((int)s[0], s[1], now, Scp096Rules.PLAYER_SCAN_INTERVAL);
+            s[1] = now;
+            if (s[0] >= Scp096Rules.SEEN_CHECKS) {
                this.seen.remove(p.getUUID());
                this.onFaceSeen(level, p, true);
             }
@@ -743,6 +770,9 @@ public class Scp096Entity extends PathfinderMob {
          }
          if (this.clearSight(eye, face, c)) {
             this.onFaceSeen(level, c, false);
+            if (!Scp096Rules.citizenMayJoin(this.state().enraged(), this.rampageCitizens)) {
+               break;
+            }
          }
       }
    }
@@ -771,6 +801,9 @@ public class Scp096Entity extends PathfinderMob {
       if (s == Scp096State.CALMING) {
          return;
       }
+      if (!player && !Scp096Rules.citizenMayJoin(s.enraged(), this.rampageCitizens)) {
+         return;
+      }
       boolean added = this.addTarget(observer, player);
       if (added && !player) {
          this.rampageCitizens++;
@@ -797,7 +830,11 @@ public class Scp096Entity extends PathfinderMob {
       if (this.targets.containsKey(e.getUUID())) {
          return false;
       }
-      this.targets.put(e.getUUID(), new Target(e.getUUID(), player));
+      Target t = new Target(e.getUUID(), player);
+      if (e instanceof ServerPlayer sp) {
+         t.life = deaths(sp);
+      }
+      this.targets.put(e.getUUID(), t);
       if (this.primary == null) {
          this.primary = e.getUUID();
       }
@@ -837,6 +874,20 @@ public class Scp096Entity extends PathfinderMob {
       }
    }
 
+   /**
+    * Unloaded with its chunk (or moved away): the hunt is kept in the save, but this runtime id dies with the instance.
+    * The hunted players drop it now; when the creature loads again under a new id, the resync announces that one.
+    */
+   private void retireClientIds(ServerLevel level) {
+      for (UUID id : this.notified) {
+         ServerPlayer p = level.getServer().getPlayerList().getPlayer(id);
+         if (p != null) {
+            CoreMessages.sendToPlayer(new Scp096S2CPacket(Scp096S2CPacket.RELEASED, this.getId()), p);
+         }
+      }
+      this.notified.clear();
+   }
+
    private void releaseAll(ServerLevel level) {
       for (UUID id : new ArrayList<>(this.targets.keySet())) {
          this.removeTarget(level, id);
@@ -846,11 +897,20 @@ public class Scp096Entity extends PathfinderMob {
       this.primary = null;
    }
 
+   private static int deaths(ServerPlayer p) {
+      return p.getStats().getValue(Stats.CUSTOM.get(Stats.DEATHS));
+   }
+
+   /** The hunted player died since the face was seen (even while this creature was unloaded): that hunt is over. */
+   private static boolean diedSince(ServerPlayer p, Target t) {
+      return !Scp096Rules.sameLife(t.life, deaths(p));
+   }
+
    @Nullable
    Entity resolve(ServerLevel level, Target t) {
       if (t.player) {
          ServerPlayer p = level.getServer().getPlayerList().getPlayer(t.id);
-         return p != null && p.level() == level ? p : null;
+         return p != null && p.level() == level && !diedSince(p, t) ? p : null;
       }
       return level.getEntity(t.id);
    }
@@ -867,6 +927,13 @@ public class Scp096Entity extends PathfinderMob {
       List<UUID> drop = new ArrayList<>();
       while (it.hasNext()) {
          Target t = it.next().getValue();
+         if (t.player) {
+            ServerPlayer online = level.getServer().getPlayerList().getPlayer(t.id);
+            if (online != null && diedSince(online, t)) {
+               drop.add(t.id);
+               continue;
+            }
+         }
          Entity e = this.resolve(level, t);
          if (e == null) {
             t.missing += 5;
@@ -991,6 +1058,7 @@ public class Scp096Entity extends PathfinderMob {
          e.putUUID("Id", t.id);
          e.putBoolean("Player", t.player);
          e.putInt("Missing", t.missing);
+         e.putInt("Life", t.life);
          list.add(e);
       }
       tag.put("Targets", list);
@@ -1018,6 +1086,7 @@ public class Scp096Entity extends PathfinderMob {
          if (e.hasUUID("Id")) {
             Target t = new Target(e.getUUID("Id"), e.getBoolean("Player"));
             t.missing = e.getInt("Missing");
+            t.life = e.contains("Life") ? e.getInt("Life") : -1;
             this.targets.put(t.id, t);
          }
       }

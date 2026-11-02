@@ -68,6 +68,7 @@ final class Scp096Chase {
       this.vz = 0.0;
       this.path = null;
       this.pathGoal = null;
+      this.pathAge = 999;
       this.lastTarget = null;
       this.targetVel = Vec3.ZERO;
       this.smashTicks = 0;
@@ -273,8 +274,8 @@ final class Scp096Chase {
 
    private Vec3 followPath(Vec3 tp) {
       this.pathAge++;
-      boolean stale = this.path == null || this.path.isDone() || this.pathAge > 40 || this.pathGoal == null
-         || this.pathGoal.distanceToSqr(tp) > 4.0 && this.pathAge > 10;
+      boolean goalMoved = this.pathGoal == null || this.pathGoal.distanceToSqr(tp) > 4.0;
+      boolean stale = Scp096Rules.shouldRepath(this.path != null, this.path != null && this.path.isDone(), this.pathAge, goalMoved);
       if (stale && (this.mob.onGround() || this.mob.isInWater())) {
          this.pathAge = 0;
          this.pathGoal = tp;

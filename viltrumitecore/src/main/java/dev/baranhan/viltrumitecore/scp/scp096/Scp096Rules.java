@@ -81,12 +81,12 @@ public final class Scp096Rules {
       return Math.abs(d) <= accel ? want : current + Math.signum(d) * accel;
    }
 
-   /** Ticks of hysteria from the config value in seconds (3..60 s). */
    /** True when one more citizen who saw the face may still be added to the current rampage. */
    public static boolean citizenMayJoin(boolean enraged, int citizensThisRampage) {
       return !enraged || citizensThisRampage < CITIZEN_TARGETS_PER_RAMPAGE;
    }
 
+   /** Ticks of hysteria from the config value in seconds (3..60 s). */
    public static int hysteriaTicks(double seconds) {
       if (!Double.isFinite(seconds)) {
          return DEFAULT_HYSTERIA_TICKS;
@@ -97,6 +97,52 @@ public final class Scp096Rules {
    /** The damage it takes from one hit (the void and /kill go through untouched elsewhere). */
    public static float cappedHit(float amount) {
       return Float.isFinite(amount) ? Math.max(0.0F, Math.min(MAX_HIT, amount)) : 0.0F;
+   }
+
+   /** Lowest health ordinary damage can leave it at: only damage that bypasses invulnerability (/kill, the void) kills. */
+   public static final float HEALTH_FLOOR = 1.0F;
+
+   /**
+    * Ordinary damage after the cap, clamped so it can never take the creature below {@link #HEALTH_FLOOR}. Applied before
+    * armour and absorption, which only reduce it further, so the clamp holds after every modifier.
+    */
+   public static float nonLethal(float health, float cappedAmount) {
+      if (!Float.isFinite(cappedAmount) || !Float.isFinite(health)) {
+         return 0.0F;
+      }
+      return Math.max(0.0F, Math.min(cappedAmount, health - HEALTH_FLOOR));
+   }
+
+   /** Fewest ticks between two path searches of the chase (failed, completed or stale paths alike). */
+   public static final int REPATH_MIN_TICKS = 10;
+   /** A path older than this is searched again even while it still leads somewhere. */
+   public static final int REPATH_MAX_TICKS = 40;
+
+   /** Pure: the chase may search a new path now. Every search, including a retry after a failed one, waits the cooldown. */
+   public static boolean shouldRepath(boolean hasPath, boolean pathDone, int pathAge, boolean goalMoved) {
+      if (pathAge < REPATH_MIN_TICKS) {
+         return false;
+      }
+      return !hasPath || pathDone || pathAge > REPATH_MAX_TICKS || goalMoved;
+   }
+
+   /**
+    * Pure: the consecutive sight streak after one scan. A positive check continues the streak only when the previous
+    * positive check was the scan right before ({@code now - lastTick <= interval}); otherwise it starts again at 1.
+    */
+   public static int sightStreak(int previous, long lastTick, long now, int interval) {
+      return previous > 0 && now - lastTick <= interval ? previous + 1 : 1;
+   }
+
+   /** Ticks between two player face scans. */
+   public static final int PLAYER_SCAN_INTERVAL = 2;
+
+   /**
+    * Pure: a saved hunt still belongs to this life of the player. {@code recordedDeaths} is the player's death count when
+    * the face was seen (-1 for hunts saved before it was recorded); any later death ends that hunt.
+    */
+   public static boolean sameLife(int recordedDeaths, int currentDeaths) {
+      return recordedDeaths < 0 || recordedDeaths == currentDeaths;
    }
 
    /** Natural spawn check interval in ticks from seconds (10 s .. 24 h). */
