@@ -42,10 +42,36 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
 
 - Max health 4000 is past the vanilla 1024 attribute clamp: `ThanosMaxHealthMixin` answers `GodzillaRules.MAX_HEALTH`
   for the kaiju (playtest found it at 1024). Its body and parts are bosses in `CombatBalance.isBoss` (hero hit cap).
-- Hit zones by the target's place: a flier is `AIR_NEAR` (claws / roar) only within `AIR_REACH_FLAT` 0.45 H and
-  `AIR_REACH_UP` 0.92 H, otherwise `AIR_FAR` (breath); a hovering hero above the head is breathed at, not swiped.
+- Reach decides, the zone only names the place. `GodzillaRules.reach(left, up, fwd)` → `Reach(claw, tail, stomp, slam,
+  beam)`; `choose()` never picks a move whose reach is false (a roar instead), so nothing is aimed at a target it cannot
+  touch (playtest before the fix: charges at a flier over the head and at a street hero 90 out, no attack at a flier
+  60 up in front of the chest). Breath only where `beamReaches`: head pitch ±60 (`HEAD_PITCH_UP/DOWN`), the beam leaves
+  the mouth `MOUTH_OFFSET[1]`·H = 5.4 above the head's axis and `beamPitch` puts that line through the target
+  (α − asin(5.4 / D)), not closer than `BEAM_MIN` 20 or past `BEAM_RANGE`, `BEAM_AIM_MARGIN` 3°; the entity's head uses
+  the same `beamPitch` during CHARGE / FIRE. Slam where `slamReaches` (sphere `SLAM_RADIUS` 0.17 H − `REACH_SLACK`
+  around `SLAM_CENTRE` (0, 0.45 H, 0.32 H) moving `SLAM_LUNGE` over `SLAM_HURT` ticks); claws up to `MELEE_TOP` 0.64 H.
+- Out of reach the brain moves to where a move lands: `standOff(up)` (ground 24, low roof 14.4, chest 42.7, a high
+  flier: the nearest beam spot + 4, e.g. 141 up → ~50); it walks in, or backs off (`BACK_OFF` 8, hysteresis
+  `GodzillaSession.backingOff`, QA line `GZQA backoff`) from a hero over its head. `GodzillaRulesTest` pins every
+  playtest position (beam line through the target, breath only where the beam points, slam / beam grid).
+- `/city reset` and the event never overlap: a start during the restore is refused (`Start.RESTORING`), and
+  `CityManager.startReset` calls `GodzillaEvent.onCityReset` first (the kaiju stops like `/godzilla stop`; its damage is
+  journaled and comes back). Thrown blocks carry the entity tag `viltrumitecore_godzilla_debris`: debris saved mid-air
+  with its chunk is not loaded back (`EntityJoinLevelEvent`), `/godzilla cleanup` sweeps tagged debris no session tracks.
 
 ## QA notes (client playtest on Xvfb / llvmpipe, Atheria)
+- 2026-11-02 (3 SP sessions + dedicated server with 2 clients): see the plan's "Playtest" section for numbers. Harness:
+  `-Dviltrumitecore.godzilla.log=true` (`GZQA tick / fight / contact / backoff`), relative re-teleports every 2–3 s
+  (`execute at <kaiju> rotated as <kaiju> run tp …`) for fixed body-frame positions; a dedicated server from the captured
+  client argv (`--launchTarget forgeserveruserdev`, `max-tick-time=-1`, `allow-flight=true`) and two clients with
+  `--gameDir/--username/--quickPlayMultiplayer`, -Xmx 1400m / 900m / 850m, clients `nice`d: fits 4.2 GB + swap.
+- On llvmpipe the client does not compile chunk sections fast enough after a teleport: vanilla skips entities whose
+  section is not compiled, so the kaiju (and the city) are missing in shots taken right after a jump. Hold the camera
+  still ~40 s before a shot. Dense smoke over a rampage can hide the body entirely from 60–120 blocks.
+- The integrated client ticks at 4–9/s on this box (client-timeline cues — swish, growl — then trail the server hit);
+  a dedicated-server client ticks at ~18–20/s and plays swish before hit.
+- `/godzilla creative on` makes creative players targets (`off` = ignored again); creative players are never hurt
+  (`GZQA contact … hurt=false`) and fall when the slam knocks them (they lose flight).
 - The entity is only visible within the tracking range ((view distance - 1) x 16): keep the camera close in tests.
 - Beam ribbons were widened ~2x after the night shot read as a thin line; rage plate glow 0.32 + 0.14 sin (visible by day).
 - `/godzilla stop` leaves its collapses falling (damage stays); `/city reset` aborts them before it rebuilds.
@@ -56,4 +82,7 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
 ## Sound kit
 - `tools/sfx/godzilla.py` imports the primitives of `tools/sfx/chitauri.py`; 22 cues, all own synthesis (CC0). Big
   cues are written as `.ogg.b64.partN`. `--check` re-synthesises and compares the decoded PCM.
-- Levels are measured, not auditioned by ear.
+- Levels are measured, not auditioned by ear. OpenAL Soft `drivers=wave` (`ALSOFT_CONF`) records the client mix as
+  float32 WAV (`WAVE_FORMAT_EXTENSIBLE`, 32 bit), analysed with numpy (peak, RMS, spectral centroid, onset vs the SUBPT log).
+  2026-11-02: Godzilla cues alone peak −1.0 (beam_end) … −6.7 dBFS (stomp); the whole city mix touched +1.6 dBFS for
+  ≤ 104 samples only when a beam start / impact met a stack of collapse cues (12–20 `facade_shed` in 5 s).

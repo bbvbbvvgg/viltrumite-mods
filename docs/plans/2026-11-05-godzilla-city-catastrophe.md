@@ -23,7 +23,12 @@ particles for the breath, no voice / TTS.
   the walker and the destruction skip unloaded chunks; the event pauses its timers when no player is near.
 - `stop` removes only what the event owns: the kaiju and its hit zones, its debris entities, its alarm lease and
   the client effects (a CLEAR packet). City damage stays; `/city reset` restores it (city journal).
-  `cleanup` also removes orphaned kaiju entities of a crashed session.
+  `cleanup` also removes orphaned kaiju entities of a crashed session and tagged debris no session tracks.
+- `/city reset` and the event never overlap: `/godzilla start` is refused while the map is being restored, and the
+  reset stops a running kaiju before it rebuilds (its damage is in the journal and comes back with the rest).
+- Reach first: a move is only chosen when it can touch the target (`GodzillaRules.reach`: claws, tail, stomp, slam
+  sphere with its lunge, the beam line through the mouth within the ±60° head pitch); out of reach the kaiju roars
+  and walks to where a move lands (`standOff`) or backs off from a hero over its head.
 - Budgets (numbers in `GodzillaRules`): destroyed blocks per tick (normal / rage), per session cap, flying debris
   cap, FX packets per tick, aftermath and infrastructure reports throttled per area.
 
@@ -80,3 +85,32 @@ ledger `tools/assets/godzilla_sources.md`.
 8. Rage phase; finale (death / retreat).
 9. `stop` + `cleanup`; `/city reset` restores the city.
 10. Dedicated server + client (multiplayer sync), FPS / TPS under heavy destruction.
+
+## Playtest 2026-11-02 (Atheria v2.06, Xvfb + llvmpipe, 2 CPU / 4.2 GB)
+
+Three single-player sessions on the real map and one dedicated server with two clients. Sounds were recorded
+(OpenAL Soft wave writer) and measured, not listened to.
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | `./gradlew build` | green; Godzilla tests: Rules 21, Assets 15, Renderer 5 |
+| 2 | Model, clips | idle / walk / turns / roar / charge → fire → end / claws / tail / stomp / slam / rage / retreat seen in game, both sides of the body in MP |
+| 3 | Scale | 120 blocks tall, the head level with the tallest downtown towers; the body fills the view from 70 blocks |
+| 4 | Breath | plates light from the tail up, mouth opens, beam leaves the mouth: down at a roof 40 up / 70 ahead (head pitch ≈ −47°), up at a flier 150 up / 60 ahead (≈ +51°); contacts every tick on the target |
+| 5 | Claws, tail, stomp, slam | contacts on fliers in front of the chest (slam, claw), street targets (stomp), animals trampled |
+| 6 | Destruction | 60 k blocks in the first 40 s, 900 k session cap reached on a long run, collapses, transformer blow-outs, power cascades, sirens, smoke and dust |
+| 7 | AI | ground and flying heroes: only reachable moves (roar when out of reach), stand-off / back-off from a hero 141 up (`GZQA backoff … want=50`), breath where the beam points, slam at 0 / 61 / 40 |
+| 8 | Rage, retreat | rage (red bar, blue plates, civil-defence alert on both clients), retreat → sink → summary line, 0 entities left |
+| 9 | stop / cleanup / reset | `/city reset` restored 601 k blocks / 1 136 chunks in 21 s and 1.08 M blocks / 1 387 chunks in 22 s; a reset while the kaiju ran stopped it and restored 293 k blocks with no leftovers; a start during the restore is refused |
+| 10 | Dedicated server + 2 clients | boss bar, chat, alerts, subtitles, poses and sounds the same on both clients (step 80/80, charge / beam 3/3); TPS 20.0 in every sample, mean tick 7–16 ms, kaiju tick ≤ 3.7 ms per 5 s (worst single 39.6 ms); no leaked entities after the end (0 kaiju, 0 debris) |
+
+Bugs found in game and fixed on this branch: breath at targets the beam could not point at (and a beam aimed with the
+head's axis while it leaves the mouth 5.4 blocks above it); no attack on a flier 60 up in front of the chest; debris
+saved mid-air in unloaded chunks came back untracked (43 falling blocks hung in the air after a retreat, the cleanup saw
+none); a start during `/city reset` left 609 blocks unrestored.
+
+Known limits (not bugs of the event): vanilla tracks the entity only within (view distance − 1) × 16 blocks, so on a
+server with view distance 10 the kaiju is drawn up to 144 blocks; llvmpipe FPS (1–7, MP 2–3) says nothing about GPUs;
+dense rampage smoke can hide the body from 60–120 blocks; the full city mix (Godzilla + collapse + grid sounds) touched
++1.6 dBFS for ≤ 104 samples in the MP capture when a beam start met a stack of collapse cues.
+
