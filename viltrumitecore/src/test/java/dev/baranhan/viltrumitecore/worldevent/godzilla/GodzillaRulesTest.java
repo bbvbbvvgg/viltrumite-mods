@@ -135,6 +135,10 @@ class GodzillaRulesTest {
       assertEquals(Zone.BEHIND, GodzillaRules.classify(0.0, 0.1 * H, -0.8 * H));
       assertEquals(Zone.AIR_NEAR, GodzillaRules.classify(0.0, 0.8 * H, 0.3 * H));
       assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 0.9 * H, 1.2 * H));
+      // hovering above the head or beyond the arms: out of the claws' reach, the breath's (playtest: it swiped at air)
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 1.05 * H, 0.6 * H));
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 0.8 * H, 0.6 * H));
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 1.2 * H, 0.1 * H));
       assertEquals(Zone.FAR, GodzillaRules.classify(0.0, 0.0, 2.0 * H));
    }
 
