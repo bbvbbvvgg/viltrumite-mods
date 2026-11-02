@@ -186,4 +186,26 @@ class GhostRiderRulesTest {
       assertEquals(2, c.getInt("Innocents"));
       assertEquals(25.0F, c.getFloat("Harm"), EPS);
    }
+
+   @Test
+   void anEarlyClickWaitsForTheCutOfItsStrike() {
+      // QA 2026-11-02: an LMB before the cut tick was dropped, so a quick third lash never came
+      for (GhostRiderMove m : new GhostRiderMove[]{GhostRiderMove.LASH_1, GhostRiderMove.LASH_2, GhostRiderMove.LASH_3, GhostRiderMove.PUNCH}) {
+         assertTrue(m.cancelFrom > m.contact && m.cancelFrom < m.length, m + " may be cut after its contact, before its end");
+      }
+      GhostRiderState s = new GhostRiderState();
+      s.start(GhostRiderMove.LASH_1);
+      s.primaryQueued = true;
+      s.elapsed = GhostRiderMove.LASH_1.cancelFrom - 1;
+      assertFalse(s.takeQueuedPrimary(), "waits while the strike may not be cut");
+      s.elapsed = GhostRiderMove.LASH_1.cancelFrom;
+      assertTrue(s.takeQueuedPrimary(), "fires as the strike may be cut");
+      assertFalse(s.takeQueuedPrimary(), "once");
+      s.primaryQueued = true;
+      s.start(GhostRiderMove.HOOK);
+      assertFalse(s.primaryQueued, "another move drops it");
+      s.primaryQueued = true;
+      s.endMove();
+      assertFalse(s.takeQueuedPrimary(), "it dies with its move");
+   }
 }

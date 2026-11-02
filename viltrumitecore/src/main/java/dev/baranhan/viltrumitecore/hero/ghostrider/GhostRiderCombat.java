@@ -46,6 +46,9 @@ public final class GhostRiderCombat {
       if (state.running()) {
          GhostRiderMove m = state.move;
          if (m.locks() || !m.cancellable(state.elapsed)) {
+            if (bike == null && (m.isLash() || m == GhostRiderMove.PUNCH)) {
+               state.primaryQueued = true; // a click early in a foot strike chains as soon as it may (QA: the third lash got lost)
+            }
             return;
          }
          state.endMove();
@@ -440,6 +443,8 @@ public final class GhostRiderCombat {
       state.elapsed++;
       if (state.elapsed >= move.length) {
          GhostRiderSkills.moveEnd(player, state, move);
+      } else if (state.takeQueuedPrimary()) {
+         primary(player, state);
       }
    }
 

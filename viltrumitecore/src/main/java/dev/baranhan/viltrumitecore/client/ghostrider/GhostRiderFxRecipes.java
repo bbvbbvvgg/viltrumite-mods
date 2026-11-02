@@ -22,13 +22,15 @@ public final class GhostRiderFxRecipes {
       return List.of(transform(), lash(), hook(), slam(), wave(), verdict(), ram(), bikeForm(), dash(), punch());
    }
 
-   /** The skull bursts into hellfire: a low ring of heat, a wide shake, scorched ground under his boots (no white flash). */
+   /**
+    * The skull bursts into hellfire: a low ring of heat, a wide shake, scorched ground under his boots (no white flash).
+    * No dust: the preset sits at his chest, so its campfire smoke hid the freshly lit skull for seconds (QA 2026-11-02).
+    */
    static FxRecipe transform() {
       return FxRecipe.builder(GhostRiderFx.TRANSFORM)
          .screenFlash(0, 5, 0.14F, 18.0F)
          .shake(0, 0.9F, 24.0F)
          .shockwave(0, 16, 3.2F, 0.25F)
-         .dust(0, 1.4F, 12)
          .scorch(0, 160, 1.6F, 7)
          .build();
    }

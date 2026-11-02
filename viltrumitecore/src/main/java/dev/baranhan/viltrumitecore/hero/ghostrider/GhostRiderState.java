@@ -24,6 +24,9 @@ public final class GhostRiderState {
    public final Set<Integer> hit = new HashSet<>();
    /** The body a PUNCH was thrown at (entity id, -1 = none); re-checked at the contact. Not saved. */
    public int punchTarget = -1;
+   /** An LMB clicked before the running lash or punch may be cut: it fires once that strike may be cut (one slot,
+    * dies with the move). Not saved. */
+   public boolean primaryQueued;
    public Vec3 moveDir = Vec3.ZERO;
    public int tickCount;
    public int idle = 1000;
@@ -79,12 +82,23 @@ public final class GhostRiderState {
       this.elapsed = 0;
       this.serial = (this.serial + 1) & 0xFFFF;
       this.hit.clear();
+      this.primaryQueued = false;
    }
 
    public void endMove() {
       this.move = null;
       this.elapsed = 0;
       this.hit.clear();
+      this.primaryQueued = false;
+   }
+
+   /** True once: a queued LMB may fire now (its strike still runs and may be cut). */
+   public boolean takeQueuedPrimary() {
+      if (!this.primaryQueued || this.move == null || !this.move.cancellable(this.elapsed)) {
+         return false;
+      }
+      this.primaryQueued = false;
+      return true;
    }
 
    public void tickTimers() {

@@ -115,6 +115,7 @@ class GhostRiderClientRulesTest {
          assertTrue(r.of(FxRecipe.Kind.FLASH).isEmpty(), r.preset().id() + ": no flash");
       }
       assertTrue(GhostRiderFxRecipes.dash().of(FxRecipe.Kind.DUST).isEmpty(), "no dust in the first-person dash");
+      assertTrue(GhostRiderFxRecipes.transform().of(FxRecipe.Kind.DUST).isEmpty(), "no smoke over the skull as it lights (QA)");
       assertTrue(GhostRiderFxRecipes.dash().of(FxRecipe.Kind.SHOCKWAVE).isEmpty(), "no ring in the first-person dash");
       GhostRiderFxRecipes.init();
       for (FxPreset p : GhostRiderFx.PRESETS) {
