@@ -75,7 +75,7 @@ final class WishSceneFx {
       }
       play(mc, scene, style == WishStyle.MORTAL ? WishSounds.RETURN : WishSounds.GRANTED, 1.0F, 1.0F);
       float shake = switch (style) {
-         case THUNDER, CRIMSON, HELLFIRE -> 0.9F;
+         case THUNDER, CRIMSON, HELLFIRE, RAGE -> 0.9F;
          case HOLY, SHADOW, TIME -> 0.55F;
          case MORTAL -> 0.0F;
          default -> 0.35F;
@@ -120,6 +120,7 @@ final class WishSceneFx {
          case TECH -> tech(b, cam, camera, scene, level, c, t, w, glow, s);
          case CRIMSON -> crimson(b, cam, camera, level, scene, c, t, w, glow, s);
          case HOLY -> holy(b, cam, camera, scene, c, t, w, glow, s);
+         case RAGE -> rage(b, cam, camera, scene, c, t, w, glow, s);
          case STILL -> still(b, cam, camera, scene, c, t, w, glow, s);
          case SHIELD -> shield(b, cam, camera, c, t, w, glow, s);
          case HELLFIRE -> hellfire(b, cam, camera, scene, c, t, w, glow, s);
@@ -455,6 +456,68 @@ final class WishSceneFx {
          PixelVfx.beamDots(b, cam, camera, c.add(0, 0.1, 0), c.add(0, 3 + 9 * k, 0), 0.3F, 0.09F, 255, 110, 30, (int)(210 * k * w));
          float run = Math.max(0, dt) / 16.0F;
          ringH(b, cam, camera, c.add(0, 0.08, 0), 0.6F + 5.0F * run, 48, 0, 0.06F, s.primary, (int)(230 * (1 - run) * w));
+      }
+   }
+
+   /**
+    * Red Hulk: the ground splits in jagged cracks that glow like magma, embers rise off the hot street and a ring
+    * of heat beats like a heart that races towards the swap; on the swap the cracks flare, a seismic ring runs out
+    * over the ground and a column of embers bursts up.
+    */
+   private static void rage(BufferBuilder b, Vec3 cam, Camera camera, WishScene scene, Vec3 c, float t, float w, boolean glow, WishStyle s) {
+      if (w <= 0) {
+         return;
+      }
+      float build = Mth.clamp((t - WishTimeline.CALL_END) / (float)(WishTimeline.SWAP - WishTimeline.CALL_END), 0, 1);
+      float dt = t - WishTimeline.SWAP;
+      float flare = dt < -2 ? 0 : dt < 0 ? (dt + 2) / 2 : Math.max(0, 1 - dt / 16);
+      // the cracks: seven jagged lines that run out from his feet, charred in the solid pass, glowing in the glow pass
+      int cracks = 7;
+      for (int i = 0; i < cracks; i++) {
+         double a = i * Math.PI * 2 / cracks + 0.5 * hash(scene.seed, i);
+         float length = (0.35F + 2.3F * build + 1.2F * flare) * (0.75F + 0.25F * hash(scene.seed, i + 20));
+         int steps = 14;
+         for (int k = 1; k <= steps; k++) {
+            float v = k / (float)steps;
+            double jag = 0.22 * (hash(scene.seed, i * 31 + k) - 0.5);
+            double r = length * v;
+            Vec3 p = c.add(Math.cos(a + jag) * r, 0.07, Math.sin(a + jag) * r);
+            if (!glow) {
+               PixelVfx.billboardPixel(b, cam, camera, p, 0.06F, 40, 18, 14, (int)(210 * w));
+            } else {
+               int col = WishScreen.mix(s.secondary, s.primary, v);
+               float hot = 0.6F + 0.4F * Mth.sin(t * 0.5F + k * 0.7F + i);
+               PixelVfx.billboardPixel(b, cam, camera, p, 0.035F + 0.02F * flare, WishStyle.r(col), WishStyle.g(col), WishStyle.b(col),
+                  (int)(230 * w * hot * (1 - 0.5F * v)));
+            }
+         }
+      }
+      if (!glow) {
+         return;
+      }
+      // embers off the hot ground: each rises, drifts and cools from gold to deep red
+      for (int i = 0; i < 24; i++) {
+         float u = frac(hash(scene.seed, i + 60) + t * 0.035F);
+         double a = hash(scene.seed, i + 90) * Math.PI * 2 + u * 0.8;
+         double r = 0.4 + 1.3 * hash(scene.seed, i + 120);
+         Vec3 p = c.add(Math.cos(a) * r, 0.1 + (0.6 + 2.4 * build) * u, Math.sin(a) * r);
+         int col = WishScreen.mix(s.secondary, s.primary, u);
+         PixelVfx.billboardPixel(b, cam, camera, p, 0.04F * (1 - 0.4F * u), WishStyle.r(col), WishStyle.g(col), WishStyle.b(col),
+            (int)(220 * w * (1 - u)));
+      }
+      // the heartbeat: a ring of heat at the waist, its beat speeding up as the rage builds
+      if (dt < 0) {
+         float period = 22 - 13 * build;
+         float beat = frac(t / period);
+         float pulse = beat < 0.18F ? Mth.sin(beat / 0.18F * (float)Math.PI) : 0;
+         ringH(b, cam, camera, c.add(0, 1.0, 0), 0.75F + 0.35F * pulse, 30, t * 0.03F, 0.045F, s.primary, (int)(90 + 140 * pulse * w));
+      }
+      if (flare > 0) {
+         PixelVfx.crossGlow(b, cam, camera, c.add(0, 0.2, 0), 0.4F + 1.4F * flare, 255, 120, 40, (int)(230 * flare * w));
+         PixelVfx.beamDots(b, cam, camera, c.add(0, 0.1, 0), c.add(0, 2 + 7 * flare, 0), 0.3F, 0.08F, 255, 150, 50, (int)(200 * flare * w));
+         float run = Math.max(0, dt) / 16.0F;
+         ringH(b, cam, camera, c.add(0, 0.08, 0), 0.6F + 6.0F * run, 56, 0, 0.07F, s.primary, (int)(240 * (1 - run) * w));
+         ringH(b, cam, camera, c.add(0, 0.09, 0), 0.4F + 4.2F * run, 40, 0.3F, 0.05F, s.secondary, (int)(200 * (1 - run) * w));
       }
    }
 
