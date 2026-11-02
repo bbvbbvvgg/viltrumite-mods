@@ -71,8 +71,8 @@ public final class GhostRiderPoser {
             }
             case LASH_3 -> {
                // both fists over the head, down hard
-               float w = GhostRiderGear.bump(t, 0.0F, 14.0F, 2.0F);
-               float k = phase(t, 7.0F);
+               float w = GhostRiderGear.bump(t, 0.0F, GhostRiderMove.LASH_3.length, 2.0F);
+               float k = phase(t, GhostRiderMove.LASH_3.contact);
                float x = Mth.lerp(k, -3.0F, -0.7F);
                model.rightArm.xRot = Mth.lerp(w, model.rightArm.xRot, x);
                model.leftArm.xRot = Mth.lerp(w, model.leftArm.xRot, x);

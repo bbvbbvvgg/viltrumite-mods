@@ -67,7 +67,7 @@ public final class GhostRiderRules {
    public static final float[] LASH_DAMAGE = {6.0F, 6.0F, 9.0F};
    public static final int COMBO_LENGTH = 3;
    /** The next press continues the combo within this many ticks after a lash. */
-   public static final int COMBO_WINDOW = 14;
+   public static final int COMBO_WINDOW = 12;
    public static final double LASH_FINISHER_RADIUS = 2.5;
    public static final int LASH_BURN_TICKS = 40;
    public static final double HOOK_RANGE = 14.0;
@@ -98,8 +98,8 @@ public final class GhostRiderRules {
 
    // --- Chain Whirl ---
    public static final int WHIRL_TICKS = 30;
-   public static final double WHIRL_RADIUS = 4.5;
-   public static final int WHIRL_HIT_INTERVAL = 8;
+   public static final double WHIRL_RADIUS = 5.0;
+   public static final int WHIRL_HIT_INTERVAL = 6;
    public static final float WHIRL_DAMAGE = 3.0F;
    public static final int WHIRL_BURN_TICKS = 40;
    public static final int SLAM_TICKS = 14;
@@ -109,7 +109,7 @@ public final class GhostRiderRules {
    public static final float SLAM_DAMAGE = 10.0F;
    /** Extra damage for the body swung on the chain and smashed down. */
    public static final float SLAM_HELD_BONUS = 6.0F;
-   public static final int SLAM_BURN_TICKS = 80;
+   public static final int SLAM_BURN_TICKS = 100;
    public static final double SLAM_LIFT = 0.5;
    public static final double SWING_RADIUS = 3.5;
 
@@ -128,12 +128,12 @@ public final class GhostRiderRules {
    public static final float BURN_DAMAGE = 1.0F;
    public static final int BURN_INTERVAL = 10;
    public static final int BURN_MAX_TICKS = 200;
-   public static final int WAVE_TICKS = 18;
+   public static final int WAVE_TICKS = 20;
    public static final int WAVE_RELEASE = 8;
    public static final double WAVE_REACH = 11.0;
    public static final double WAVE_ARC = 55.0;
    /** Blocks the wave front travels per tick after the release. */
-   public static final double WAVE_SPEED = 1.25;
+   public static final double WAVE_SPEED = WAVE_REACH / (WAVE_TICKS - WAVE_RELEASE);
    public static final float WAVE_DAMAGE = 8.0F;
    public static final int WAVE_BURN_TICKS = 100;
    public static final double WAVE_PUSH = 0.6;

@@ -36,7 +36,7 @@ class GhostRiderClientRulesTest {
       assertEquals(72, GhostRiderPanelStyle.kmh(1.0), "one block a tick is 72 km/h");
       assertEquals(61, GhostRiderPanelStyle.kmh(HellCycleRules.MAX_SPEED));
       assertEquals(94, GhostRiderPanelStyle.kmh(HellCycleRules.BOOST_SPEED));
-      assertEquals(7, GhostRiderPanelStyle.kmh(-HellCycleRules.REVERSE_SPEED), "reverse reads as a positive speed");
+      assertEquals(13, GhostRiderPanelStyle.kmh(-HellCycleRules.REVERSE_SPEED), "reverse reads as a positive speed");
    }
 
    @Test

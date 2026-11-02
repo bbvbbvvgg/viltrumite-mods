@@ -11,7 +11,7 @@ public enum GhostRiderMove {
    REVERT("revert", GhostRiderRules.REVERT_TICKS, -1, -1),
    LASH_1("lash_1", 10, 4, 7),
    LASH_2("lash_2", 10, 4, 7),
-   LASH_3("lash_3", 14, 7, 11),
+   LASH_3("lash_3", 12, 4, 9),
    HOOK("hook", 8, 3, -1),
    YANK("yank", GhostRiderRules.YANK_TICKS + 2, -1, 6),
    HOOK_MISS("hook_miss", 8, -1, 5),
