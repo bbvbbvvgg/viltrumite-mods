@@ -45,6 +45,22 @@ NPCS = {
   "behavior": ("Прокладывает маршрут через самые высокие постройки, разрушая всё на пути.", "Routes itself through the tallest buildings, wrecking everything in its path."),
   "relations": ("Главная ударная сила вторжения читаури.", "The heavy hitter of the Chitauri invasion."),
  },
+ "venom_boss": {
+  "name": ("Веном в Бешеном голоде", "Venom in a Feeding Frenzy"),
+  "role": ("одичавший симбиот, босс", "a feral symbiote, boss"),
+  "look": ("Веном крупнее обычного: раздутые плечи, пасть до ушей, щупальца из спины, на груди — белый паук.",
+           "A Venom bigger than usual: swollen shoulders, a mouth from ear to ear, tendrils out of the back, the white spider on the chest."),
+  "lore": ("Симбиот, оставшийся без носителя, сходит с ума от голода. Его вызывают командой /venom boss.",
+           "A symbiote left without a host goes mad with hunger. It is summoned with /venom boss."),
+  "abilities": ("Комбо когтей, рывки и броски щупальцами, мегапрыжки, круговой хлёст, лазание по стенам; 300 здоровья. Если сервер разрешает, "
+                "захватывает ослабленного игрока на короткое время по тем же правилам, что и игрок-Веном.",
+                "Claw combos, tendril yanks and throws, mega leaps, the circular lash and wall climbing; 300 health. If the server allows it, it "
+                "takes a weakened player over for a short time under the same rules as a player Venom."),
+  "behavior": ("Всегда в ярости и охотится на ближайших игроков. Огонь и громкие звуки заставляют его визжать и отпрядывать — это окно для атаки.",
+               "Always in a frenzy, it hunts the nearest players. Fire and loud sounds make it shriek and recoil — that is the window to strike."),
+  "relations": ("Игрок-Веном — тот же симбиот, но с носителем, который держит голод в узде.",
+                "A player Venom is the same symbiote, but with a host who keeps the hunger in check."),
+ },
  "thanos": {
   "name": ("Танос", "Thanos"),
   "role": ("Безумный титан с Перчаткой бесконечности, босс", "the Mad Titan with the Infinity Gauntlet, boss"),
