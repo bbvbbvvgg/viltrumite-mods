@@ -54,12 +54,64 @@ public final class GhostRiderCombat {
          state.start(GhostRiderMove.BIKE_LASH);
          state.cooldowns[GhostRiderRules.CD_LASH] = GhostRiderRules.COOLDOWN_TICKS[GhostRiderRules.CD_LASH];
       } else {
+         LivingEntity close = punchTarget(player, GhostRiderRules.PUNCH_RANGE);
+         if (close != null) {
+            // a body in his face takes the burning fist; the chain combo keeps its place (spec §5.4)
+            state.start(GhostRiderMove.PUNCH);
+            state.punchTarget = close.getId();
+            state.moveDir = player.getLookAngle();
+            GhostRiderSounds.play(player, GhostRiderSounds.HELLFIRE_IGNITE, 0.45F, GhostRiderSounds.jitter(player, 1.35F));
+            return;
+         }
          int step = state.comboIdle <= GhostRiderRules.COMBO_WINDOW ? (state.comboStep + 1) % GhostRiderRules.COMBO_LENGTH : 0;
          state.comboStep = step;
          state.start(GhostRiderMove.lash(step));
       }
       state.moveDir = player.getLookAngle();
       GhostRiderSounds.play(player, GhostRiderSounds.CHAIN_LASH, 0.9F, GhostRiderSounds.jitter(player, state.comboStep == 2 ? 0.85F : 1.0F));
+   }
+
+   /**
+    * The body a close LMB punches: the one under the crosshair when its box is within {@code reach} of his eyes (an
+    * innocent too - the blow is aimed), else the nearest one he may strike unaimed in the fist's cone. Null: the chain.
+    */
+   @Nullable
+   static LivingEntity punchTarget(ServerPlayer player, double reach) {
+      Vec3 eye = player.getEyePosition();
+      LivingEntity aimed = aimed(player, reach + 1.5, false);
+      if (aimed != null) {
+         return Math.sqrt(aimed.getBoundingBox().distanceToSqr(eye)) <= reach ? aimed : null;
+      }
+      List<LivingEntity> near = GhostRiderTargets.arc(player, eye, player.getLookAngle(), reach, GhostRiderRules.PUNCH_ARC,
+         e -> GhostRiderTargets.mayAutoHit(player, e) && e.getVehicle() != player && player.getVehicle() != e
+            && GhostRiderTargets.visible(player.level(), eye, GhostRiderTargets.center(e)));
+      return near.isEmpty() ? null : near.get(0);
+   }
+
+   /** The fist lands (PUNCH contact): the body it was thrown at if still in reach, else whoever stepped into it. */
+   static void punchContact(ServerPlayer player, GhostRiderState state) {
+      double reach = GhostRiderRules.PUNCH_RANGE + GhostRiderRules.PUNCH_SLACK;
+      Vec3 eye = player.getEyePosition();
+      LivingEntity t = player.level().getEntity(state.punchTarget) instanceof LivingEntity l && GhostRiderTargets.mayHit(player, l)
+         && Math.sqrt(l.getBoundingBox().distanceToSqr(eye)) <= reach && GhostRiderTargets.visible(player.level(), eye, GhostRiderTargets.center(l))
+         ? l : punchTarget(player, reach);
+      state.punchTarget = -1;
+      state.comboIdle = 0;
+      if (t == null || !state.hit.add(t.getId())) {
+         return; // a swing at the air: the ignite flare at the throw was its sound
+      }
+      if (GhostRiderTargets.strike(player, t, GhostRiderRules.PUNCH_DAMAGE)) {
+         Hellfire.ignite(player, t, GhostRiderRules.PUNCH_BURN_TICKS);
+         Vec3 out = GhostRiderTargets.outward(player.position(), t);
+         GhostRiderTargets.push(t, out.scale(0.55).add(0, 0.22, 0));
+         // the knuckles meet the near side of the body, at chest height
+         Vec3 c = GhostRiderTargets.center(t);
+         Vec3 at = c.subtract(out.scale(t.getBbWidth() * 0.5));
+         GhostRiderFx.send(player, GhostRiderFx.PUNCH, at, GhostRiderTargets.hand(player), 1.0F, null, 2, t.getId());
+         player.level().playSound(null, at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_STRONG, net.minecraft.sounds.SoundSource.PLAYERS,
+            1.0F, GhostRiderSounds.jitter(player, 0.8F));
+         GhostRiderSounds.playAt(player, at, GhostRiderSounds.HELLFIRE_IGNITE, 0.8F, GhostRiderSounds.jitter(player, 1.1F));
+      }
    }
 
    static void lashContact(ServerPlayer player, GhostRiderState state, boolean bike) {
@@ -132,9 +184,11 @@ public final class GhostRiderCombat {
       GhostRiderSounds.play(player, GhostRiderSounds.CHAIN_THROW, 1.0F, GhostRiderSounds.jitter(player, 1.0F));
    }
 
-   /** The first body on the aim ray, up to the hook range (blocks stop it). */
+   /**
+    * The first body on the aim ray up to {@code range} (blocks stop it); from the saddle the chain only bites the guilty
+    * (the innocent are passed over).
+    */
    @Nullable
-   /** The body on the line of sight; from the saddle the chain only bites the guilty (the innocent are passed over). */
    static LivingEntity aimed(ServerPlayer player, double range, boolean bike) {
       Vec3 eye = player.getEyePosition();
       Vec3 end = GhostRiderTargets.clip(player, eye, eye.add(player.getLookAngle().scale(range)));
@@ -366,6 +420,9 @@ public final class GhostRiderCombat {
          }
          case BIKE_LASH -> {
             if (e == move.contact) lashContact(player, state, true);
+         }
+         case PUNCH -> {
+            if (e == move.contact) punchContact(player, state);
          }
          case HOOK, BIKE_HOOK -> {
             if (e == move.contact) {

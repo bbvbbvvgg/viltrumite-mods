@@ -60,7 +60,8 @@ public abstract class AlwaysVisibleOffhandMixin {
                shouldRender = isBlocking || isGrabbing || isLeftPunching || isLeftChopping || isThunderclapping || isBarraging
                   || dev.baranhan.viltrumitecore.client.regulus.RegulusFirstPerson.wantsOffhand(player) || dev.baranhan.viltrumitecore.client.ironman.IronManFirstPerson.wantsOffhand(player)
                   || dev.baranhan.viltrumitecore.client.reinhard.ReinhardFirstPerson.wantsOffhand(player)
-                  || dev.baranhan.viltrumitecore.client.thor.ThorClipPlayer.wantsOffhand(player);
+                  || dev.baranhan.viltrumitecore.client.thor.ThorClipPlayer.wantsOffhand(player)
+                  || dev.baranhan.viltrumitecore.client.ghostrider.GhostRiderPoser.wantsOffhand(player);
             }
 
             if (shouldRender) {

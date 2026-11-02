@@ -70,6 +70,13 @@ public final class GhostRiderRules {
    public static final int COMBO_WINDOW = 12;
    public static final double LASH_FINISHER_RADIUS = 2.5;
    public static final int LASH_BURN_TICKS = 40;
+   /** LMB with a body this close (eye to its box): a burning fist instead of the chain (spec §5.4, §8). */
+   public static final double PUNCH_RANGE = 2.6;
+   /** The fist's cone (full angle) for a body off the crosshair, and the reach it keeps at the contact (a step back). */
+   public static final double PUNCH_ARC = 70.0;
+   public static final double PUNCH_SLACK = 0.6;
+   public static final float PUNCH_DAMAGE = 7.0F;
+   public static final int PUNCH_BURN_TICKS = 60;
    public static final double HOOK_RANGE = 14.0;
    public static final float HOOK_DAMAGE = 4.0F;
    public static final int HOOK_STUN_TICKS = 20;
@@ -84,6 +91,11 @@ public final class GhostRiderRules {
 
    public static boolean pullable(float width, float height, boolean boss) {
       return !boss && width <= PULL_MAX_WIDTH && height <= PULL_MAX_HEIGHT;
+   }
+
+   /** A body this far from his eyes (to its box) takes the fist, not the chain. */
+   public static boolean punches(double distance) {
+      return distance >= 0.0 && distance <= PUNCH_RANGE;
    }
 
    // --- Hell Chain on the bike ---

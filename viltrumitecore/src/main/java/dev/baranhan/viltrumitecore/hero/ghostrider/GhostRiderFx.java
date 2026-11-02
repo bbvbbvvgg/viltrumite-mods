@@ -31,8 +31,10 @@ public final class GhostRiderFx {
    public static final FxPreset BIKE_FORM = FxPreset.register("ghost_rider:bike_form", 727);
    /** Hell Dash on foot: at = start, target = the end of the dash. */
    public static final FxPreset DASH = FxPreset.register("ghost_rider:dash", 728);
+   /** The burning fist lands: at = the knuckles on the body, target = the hand. */
+   public static final FxPreset PUNCH = FxPreset.register("ghost_rider:punch", 729);
 
-   public static final java.util.List<FxPreset> PRESETS = java.util.List.of(TRANSFORM, LASH, HOOK, SLAM, WAVE, VERDICT, RAM, BIKE_FORM, DASH);
+   public static final java.util.List<FxPreset> PRESETS = java.util.List.of(TRANSFORM, LASH, HOOK, SLAM, WAVE, VERDICT, RAM, BIKE_FORM, DASH, PUNCH);
 
    private GhostRiderFx() {
    }

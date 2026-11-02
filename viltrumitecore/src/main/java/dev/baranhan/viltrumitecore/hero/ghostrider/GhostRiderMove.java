@@ -21,7 +21,9 @@ public enum GhostRiderMove {
    DASH("dash", GhostRiderRules.DASH_TICKS, 0, 6),
    STARE("stare", GhostRiderRules.STARE_TICKS, GhostRiderRules.STARE_VERDICT, -1),
    BIKE_LASH("bike_lash", 10, 4, 8),
-   BIKE_HOOK("bike_hook", 8, 3, -1);
+   BIKE_HOOK("bike_hook", 8, 3, -1),
+   /** LMB at a body within GhostRiderRules.PUNCH_RANGE: a burning right fist (cocked 0-3, lands on 3, back by 9). */
+   PUNCH("punch", 9, 3, 6);
 
    private final String clip;
    public final int length;

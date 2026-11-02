@@ -22,6 +22,8 @@ public final class GhostRiderState {
    public int comboStep = -1;
    public int comboIdle = 1000;
    public final Set<Integer> hit = new HashSet<>();
+   /** The body a PUNCH was thrown at (entity id, -1 = none); re-checked at the contact. Not saved. */
+   public int punchTarget = -1;
    public Vec3 moveDir = Vec3.ZERO;
    public int tickCount;
    public int idle = 1000;
