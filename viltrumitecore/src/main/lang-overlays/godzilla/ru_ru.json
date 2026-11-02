@@ -31,6 +31,8 @@
   "commands.viltrumitecore.godzilla.not_running": "Годзиллы нет в городе",
   "commands.viltrumitecore.godzilla.passive.on": "Годзилла пассивен: бродит и крушит город, но никого не атакует",
   "commands.viltrumitecore.godzilla.passive.off": "Годзилла снова атакует героев",
+  "commands.viltrumitecore.godzilla.hold.on": "Годзилла стоит на месте и двигается только по команде",
+  "commands.viltrumitecore.godzilla.hold.off": "Годзилла снова бродит по городу",
   "commands.viltrumitecore.godzilla.phase": "Фаза Годзиллы: %s",
   "commands.viltrumitecore.godzilla.started": "Годзилла входит в город со стороны %s %s %s. Сирены включены — уводите жителей!",
   "commands.viltrumitecore.godzilla.started.forced": "Годзилла входит в город со стороны %s %s %s. Сирены включены — уводите жителей! (принудительно, вместе с другими событиями)",
