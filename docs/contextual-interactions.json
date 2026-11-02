@@ -660,6 +660,37 @@
       "code_refs": [
         "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/TitanScattersSummons.java#apply"
       ]
+    },
+    {
+      "id": "hellfire_scalds_symbiote",
+      "title_ru": "Адский огонь ошпаривает симбиота",
+      "title_en": "Hellfire Scalds the Symbiote",
+      "participants": [
+        "Ghost Rider (Rider form) or Red Hulk (heat 500+)",
+        "Venom in symbiote form (player) or the Venom boss"
+      ],
+      "trigger": "HURT",
+      "priority": 45,
+      "cooldown_ticks": 60,
+      "aftermath_ticks": 0,
+      "conditions": [
+        "The target is a Venom in symbiote form or the Venom boss",
+        "The hit is hellfire damage, or comes from Ghost Rider in Rider form, or from Red Hulk with heat at 500 or more",
+        "The hit deals damage"
+      ],
+      "gameplay_result": "Damage x1.25; the symbiote's regeneration stops for 5 s and it shrieks and recoils, dropping whatever it holds and losing its shell (unless it is already reeling, transforming or riding a host).",
+      "visual_fx": "viltrumitecore:interaction_symbiote_scald (flash, scorch marks, sparks, smoke, short shake)",
+      "sound": "viltrumitecore:venom.shriek (the symbiote's shriek)",
+      "description_ru": "Симбиот боится огня, а адского пламени — больше всего: удар Призрачного гонщика или раскалённого Красного Халка заставляет Венома визжать и отпрянуть.",
+      "description_en": "The symbiote fears fire, and hellfire most of all: a blow of the Ghost Rider or a red-hot Red Hulk makes Venom shriek and recoil.",
+      "lore_ru": "Живая масса шипит и съёживается там, где её коснулось пламя.",
+      "lore_en": "The living mass hisses and shrinks where the flame touched it.",
+      "discovery_hint_ru": "Ударь Венома горящей цепью или раскалённым кулаком.",
+      "discovery_hint_en": "Strike Venom with a burning chain or a red-hot fist.",
+      "code_refs": [
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/interaction/builtin/HellfireScaldsSymbiote.java#apply",
+        "viltrumitecore/src/main/java/dev/baranhan/viltrumitecore/hero/venom/VenomWeakness.java#scald"
+      ]
     }
   ]
 }
