@@ -541,4 +541,13 @@ public final class RedHulkHero implements HeroDefinition {
          0, false, state.overheat, RedHulkRules.OVERHEAT_TICKS, false, false, 0, 0, state.heldId, new int[HeroPublicSnapshot.COOLDOWN_COUNT],
          move != null, -1L, null, state.heat, state.overheated(), flags, extra, state.serial, state.fury);
    }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): blind rage does not see drawings; the touch holds 1 s. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(Player self) {
+      dev.baranhan.viltrumitecore.hero.book.BookProfile base = HeroDefinition.super.bookProfile(self).withNotes("red_hulk");
+      RedHulkState state = RedHulkState.of(self);
+      boolean rage = state != null && (state.furious() || state.overheated());
+      return rage ? base.withSenses(true, false).withWindow(20) : base;
+   }
 }
