@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.client.ghostrider;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.baranhan.viltrumiteflight.client.util.ShaderCompat;
+import dev.baranhan.viltrumitecore.client.anim.pose.PoseRig;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
 import dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderMove;
 import dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderRules;
@@ -144,11 +146,177 @@ public final class GhostRiderPoser {
                model.leftArm.xRot = Mth.lerp(w, model.leftArm.xRot, -0.25F);
             }
             case BIKE_LASH -> lash(model.rightArm, t, 4.0F, 10.0F, true);
+            case PUNCH -> punch(model, t);
             default -> {
             }
          }
       }
       copyLayers(model);
+   }
+
+   /**
+    * The burning right fist: cocked back with the shoulder, thrown straight down the gaze on the contact tick, the left
+    * fist guarding the jaw. The shoulders ride the twisted torso the way vanilla's attack swing moves them (setupAnim
+    * resets those pivots every frame).
+    */
+   static void punch(PlayerModel<?> model, float t) {
+      GhostRiderMove m = GhostRiderMove.PUNCH;
+      float w = GhostRiderGear.bump(t, 0.0F, m.length, 1.5F);
+      float k = phase(t, m.contact);
+      // + = right shoulder back (vanilla attack convention): wound up, then driven through
+      model.body.yRot = Mth.lerp(w, model.body.yRot, Mth.lerp(k, 0.35F, -0.3F));
+      model.rightArm.z = Mth.sin(model.body.yRot) * 5.0F;
+      model.rightArm.x = -Mth.cos(model.body.yRot) * 5.0F;
+      model.leftArm.z = -Mth.sin(model.body.yRot) * 5.0F;
+      model.leftArm.x = Mth.cos(model.body.yRot) * 5.0F;
+      model.rightArm.xRot = Mth.lerp(w, model.rightArm.xRot, Mth.lerp(k, -0.45F, -1.57F + model.head.xRot));
+      model.rightArm.yRot = Mth.lerp(w, model.rightArm.yRot, Mth.lerp(k, 0.25F, model.head.yRot * 0.8F - 0.12F));
+      model.rightArm.zRot = Mth.lerp(w, model.rightArm.zRot, Mth.lerp(k, 0.2F, 0.0F));
+      model.leftArm.xRot = Mth.lerp(w, model.leftArm.xRot, -1.25F);
+      model.leftArm.yRot = Mth.lerp(w, model.leftArm.yRot, 0.45F);
+      model.leftArm.zRot = Mth.lerp(w, model.leftArm.zRot, 0.0F);
+   }
+
+   // ------------------------------------------------------------------------------------------------ first person
+
+   /** On foot the chain moves also move the first-person arms (riding, HellCycleCockpit owns them). */
+   @Nullable
+   private static HeroPublicSnapshot firstPersonMove(LivingEntity entity) {
+      HeroPublicSnapshot s = GhostRiderView.of(entity);
+      return s == null || entity.getVehicle() instanceof HellCycleEntity || GhostRiderView.move(s) == null ? null : s;
+   }
+
+   /** The empty off hand shows while a move uses it (AlwaysVisibleOffhandMixin). */
+   public static boolean wantsOffhand(LivingEntity entity) {
+      HeroPublicSnapshot s = firstPersonMove(entity);
+      return s != null && switch (GhostRiderView.move(s)) {
+         case LASH_2, LASH_3, YANK, SLAM, WAVE, PUNCH, DASH, TRANSFORM -> true;
+         default -> false;
+      };
+   }
+
+   /**
+   * First-person arm layer (FirstPersonGhostRiderMixin, before vanilla's arm transform): camera-space offsets of the
+   * physical arm on {@code side} (+1 right, -1 left), sampled from the same synced move clock as the body poses, so
+   * repeated passes at one timestamp agree. Small turns only: they pivot about the camera.
+   */
+   public static void poseFirstPerson(PoseStack stack, LivingEntity entity, float side, float partial) {
+      HeroPublicSnapshot s = firstPersonMove(entity);
+      if (s == null) {
+         return;
+      }
+      GhostRiderMove move = GhostRiderView.move(s);
+      float t = GhostRiderView.elapsed(s, partial);
+      boolean right = side > 0.0F;
+      float[] o = firstPersonOffset(move, t, right, entity.tickCount + partial);
+      if (o != null) {
+         PoseRig.firstPersonRaw(stack, o[3], o[4] * side, o[5] * side, o[0] * side, o[1], o[2]);
+      }
+   }
+
+   /**
+    * {x, y, z, pitch, yaw, roll} of one arm in camera space, or null when the move leaves it alone. Mirrored for the left
+    * arm: + x = outward, + pitch = up and forward, + yaw = inward (towards the crosshair), + roll = out and up.
+    */
+   @Nullable
+   static float[] firstPersonOffset(GhostRiderMove move, float t, boolean right, float age) {
+      float w;
+      float k;
+      switch (move) {
+         case PUNCH -> {
+            w = GhostRiderGear.bump(t, 0.0F, move.length, 1.5F);
+            if (!right) {
+               return scale(new float[]{-0.1F, 0.12F, -0.06F, 8.0F, 6.0F, 0.0F}, w); // the guard
+            }
+            k = phase(t, move.contact);
+            return scale(new float[]{Mth.lerp(k, 0.05F, -0.13F), Mth.lerp(k, -0.08F, 0.07F), Mth.lerp(k, 0.12F, -0.42F), Mth.lerp(k, -10.0F, 6.0F),
+               Mth.lerp(k, -4.0F, 12.0F), 0.0F}, w);
+         }
+         case LASH_1, LASH_3 -> {
+            if (!right && move == GhostRiderMove.LASH_1) {
+               return null;
+            }
+            w = GhostRiderGear.bump(t, 0.0F, move.length, 2.0F);
+            k = phase(t, move.contact);
+            return scale(new float[]{Mth.lerp(k, 0.02F, -0.06F), Mth.lerp(k, 0.16F, -0.06F), Mth.lerp(k, 0.1F, -0.24F), Mth.lerp(k, 20.0F, -12.0F), 0.0F,
+               0.0F}, w);
+         }
+         case LASH_2 -> {
+            if (right) {
+               return null;
+            }
+            w = GhostRiderGear.bump(t, 0.0F, move.length, 2.0F);
+            k = phase(t, move.contact);
+            return scale(new float[]{Mth.lerp(k, 0.14F, -0.3F), 0.06F, -0.12F, 4.0F, Mth.lerp(k, -10.0F, 16.0F), 0.0F}, w);
+         }
+         case HOOK, HOOK_MISS -> {
+            if (!right) {
+               return null;
+            }
+            w = GhostRiderGear.bump(t, 0.0F, move.length, 1.5F);
+            k = phase(t, Math.max(3, move.contact));
+            return scale(new float[]{Mth.lerp(k, 0.03F, -0.06F), Mth.lerp(k, -0.02F, 0.06F), Mth.lerp(k, 0.1F, -0.36F), Mth.lerp(k, -5.0F, 8.0F), 0.0F,
+               0.0F}, w);
+         }
+         case YANK -> {
+            w = GhostRiderGear.bump(t, 0.0F, move.length, 1.5F);
+            k = phase(t, 6.0F);
+            return scale(new float[]{-0.04F, Mth.lerp(k, 0.04F, -0.08F), Mth.lerp(k, -0.26F, 0.12F), Mth.lerp(k, 6.0F, -12.0F), 0.0F, 0.0F}, w);
+         }
+         case WHIRL -> {
+            if (!right) {
+               return null;
+            }
+            w = GhostRiderGear.bump(t, 0.0F, GhostRiderRules.WHIRL_TICKS, 3.0F);
+            float spin = t * 0.85F;
+            return scale(new float[]{0.04F * Mth.cos(spin), 0.28F + 0.03F * Mth.sin(spin), -0.1F, 30.0F, 0.0F, 0.0F}, w);
+         }
+         case SLAM -> {
+            w = GhostRiderGear.bump(t, 0.0F, GhostRiderRules.SLAM_TICKS, 2.0F);
+            k = phase(t, GhostRiderRules.SLAM_CONTACT);
+            return scale(new float[]{-0.06F, Mth.lerp(k, 0.32F, -0.14F), Mth.lerp(k, 0.05F, -0.2F), Mth.lerp(k, 36.0F, -24.0F), 0.0F, 0.0F}, w);
+         }
+         case WAVE -> {
+            w = GhostRiderGear.bump(t, 0.0F, GhostRiderRules.WAVE_TICKS, 2.0F);
+            k = phase(t, GhostRiderRules.WAVE_RELEASE);
+            return scale(new float[]{Mth.lerp(k, -0.14F, 0.04F), Mth.lerp(k, -0.02F, 0.06F), Mth.lerp(k, 0.06F, -0.34F), Mth.lerp(k, 0.0F, 8.0F),
+               Mth.lerp(k, 8.0F, 0.0F), 0.0F}, w);
+         }
+         case STARE -> {
+            if (!right) {
+               return null;
+            }
+            w = GhostRiderGear.bump(t, 0.0F, GhostRiderRules.STARE_TICKS, 4.0F);
+            float shake = t > GhostRiderRules.STARE_VERDICT - 2 ? 0.006F * Mth.sin(age * 3.1F) : 0.0F;
+            return scale(new float[]{-0.08F, 0.08F + shake, -0.3F, 6.0F, 0.0F, 0.0F}, w);
+         }
+         case DASH -> {
+            w = GhostRiderGear.bump(t, 0.0F, GhostRiderRules.DASH_TICKS, 2.0F);
+            return scale(new float[]{0.04F, -0.12F, 0.14F, -18.0F, 0.0F, 0.0F}, w);
+         }
+         case TRANSFORM -> {
+            float flare = GhostRiderRules.TRANSFORM_FLARE_TICK;
+            float clutch = GhostRiderGear.bump(t, 0.0F, flare - 2.0F, 4.0F);
+            float roar = GhostRiderGear.bump(t, flare - 3.0F, GhostRiderRules.TRANSFORM_TICKS, 3.0F);
+            float tremble = 0.01F * Mth.sin(age * 4.3F) * clutch;
+            return new float[]{-0.16F * clutch + 0.3F * roar, 0.32F * clutch - 0.1F * roar + tremble, 0.12F * clutch, 40.0F * clutch, 0.0F,
+               22.0F * roar};
+         }
+         case REVERT -> {
+            w = GhostRiderGear.bump(t, 0.0F, GhostRiderRules.REVERT_TICKS, 4.0F);
+            return scale(new float[]{0.0F, -0.14F, 0.04F, -10.0F, 0.0F, 0.0F}, w);
+         }
+         default -> {
+            return null;
+         }
+      }
+   }
+
+   private static float[] scale(float[] o, float w) {
+      for (int i = 0; i < o.length; i++) {
+         o[i] *= w;
+      }
+      return o;
    }
 
    /** Both fists on the grips, boots on the pegs; the head turns freely; a lean into the throttle at speed. */

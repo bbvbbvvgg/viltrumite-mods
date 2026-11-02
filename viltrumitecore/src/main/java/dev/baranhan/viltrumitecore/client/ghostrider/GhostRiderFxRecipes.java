@@ -19,7 +19,7 @@ public final class GhostRiderFxRecipes {
    }
 
    public static List<FxRecipe> all() {
-      return List.of(transform(), lash(), hook(), slam(), wave(), verdict(), ram(), bikeForm(), dash());
+      return List.of(transform(), lash(), hook(), slam(), wave(), verdict(), ram(), bikeForm(), dash(), punch());
    }
 
    /** The skull bursts into hellfire: a low ring of heat, a wide shake, scorched ground under his boots (no white flash). */
@@ -95,6 +95,14 @@ public final class GhostRiderFxRecipes {
          .shockwave(0, 14, 2.6F, 0.6F)
          .dust(0, 2.0F, 22)
          .scorch(0, 200, 1.8F, 8)
+         .build();
+   }
+
+   /** The burning fist lands: a small orange pop and a short, firm shake (the fire burst is the listener's). */
+   static FxRecipe punch() {
+      return FxRecipe.builder(GhostRiderFx.PUNCH)
+         .flash(0, 2, 0.5F)
+         .shake(0, 0.45F, 10.0F)
          .build();
    }
 

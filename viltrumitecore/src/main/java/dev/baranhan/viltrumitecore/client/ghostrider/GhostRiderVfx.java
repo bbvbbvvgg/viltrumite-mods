@@ -214,6 +214,16 @@ public final class GhostRiderVfx {
             add(at.x + (RNG.nextDouble() - 0.5) * 0.6, at.y + RNG.nextDouble() * 0.6, at.z + z, 0.0, 0.1 + RNG.nextDouble() * 0.05, 0.0,
                0.5F + RNG.nextFloat() * 0.4F, 10 + RNG.nextInt(8), HellfireDraw.BLAZE, 0);
          }
+      } else if (preset == GhostRiderFx.PUNCH) {
+         // the fist's fire splashes off the body, away from the hand
+         Vec3 push = at.subtract(target);
+         push = push.lengthSqr() < 1.0E-4 ? Vec3.ZERO : push.normalize();
+         for (int i = 0; i < 12; i++) {
+            double s = 0.05 + RNG.nextDouble() * 0.1;
+            add(at.x + (RNG.nextDouble() - 0.5) * 0.3, at.y + (RNG.nextDouble() - 0.5) * 0.4, at.z + (RNG.nextDouble() - 0.5) * 0.3,
+               push.x * s + (RNG.nextDouble() - 0.5) * 0.08, 0.04 + RNG.nextDouble() * 0.06, push.z * s + (RNG.nextDouble() - 0.5) * 0.08,
+               0.3F + RNG.nextFloat() * 0.3F, 5 + RNG.nextInt(5), i < 4 ? HellfireDraw.BLAZE : HellfireDraw.TONGUE, 0);
+         }
       } else if (preset == GhostRiderFx.DASH) {
          Vec3 d = target.subtract(at);
          int n = (int)Math.min(30, 6 + d.length() * 3);
