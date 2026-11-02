@@ -45,7 +45,7 @@ import org.slf4j.Logger;
  * SCP-096 (state, flags, speed, layer weights) and its sounds; {@code scp096look} turns the camera to the nearest one.
  * {@code godzillastate} logs the kaiju's last drawn LOD, camera distance, body build time, hot zones and particles;
  * {@code godzillalod <n>} forces a LOD (-1 = by distance). {@code warstate} logs the Thanos war on the client (phase,
- * ship and its position, army, worst hull frame), {@code lookship} aims the camera at the ship, {@code fly} toggles
+ * ship and its position, army, worst hull frame), {@code lookship} aims the camera at the ship, {@code vfly} toggles
  * viltrumite flight (the double-tap-jump packet; jump/sneak then climb/sink), {@code holdshot <name> [seconds]} takes
  * a screenshot on the first frame the hold card fills the warning slot. Every change of that slot is logged
  * ({@code SUBPT ... strip <move>|held|none}). {@code bike} logs the Hell Cycle the player rides (speed, rpm, gear,
@@ -271,7 +271,8 @@ public final class SubtitlePlaytest {
                mc.player.setXRot((float)-Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z))));
             }
          }
-         case "fly" -> dev.baranhan.viltrumiteflight.network.ModMessages.sendToServer(new dev.baranhan.viltrumiteflight.network.packet.FlightToggleC2SPacket());
+         // "vfly": the Thanos war QA toggle of viltrumite flight; "fly" stays the creative-flight toggle (Godzilla QA)
+         case "vfly" -> dev.baranhan.viltrumiteflight.network.ModMessages.sendToServer(new dev.baranhan.viltrumiteflight.network.packet.FlightToggleC2SPacket());
          case "holdshot" -> {
             String[] a = arg.split(" ");
             holdShot = a[0];

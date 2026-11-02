@@ -158,7 +158,7 @@ are the existing Chitauri entities, tracked by UUID; on any end every unit is re
 already reached answers `commands.viltrumitecore.thanos.phase_already`), `/thanos order` (the Black Order now),
 `/thanos army` (a Chitauri wave now), `/thanos ship strike` (a ship strike at the caller), `/thanos war` (phase,
 ship, strikes, army, Order health, alarm, blackouts, holds, destroyed blocks). Client playtest harness
-(`-Dviltrumitecore.subtitles.playtest=true`, `<gameDir>/subtitle_qa.txt`): `warstate`, `lookship`, `fly`,
+(`-Dviltrumitecore.subtitles.playtest=true`, `<gameDir>/subtitle_qa.txt`): `warstate`, `lookship`, `vfly` (named `fly` before the integration with the Godzilla QA command of that name),
 `holdshot <name> [secs]`, `shot`, `cmd`, …; the client log prints `SUBPT` lines for voice lines, sounds and the
 warning-slot changes (`strip <MOVE>|held|none`).
 
