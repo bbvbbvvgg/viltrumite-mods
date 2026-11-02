@@ -162,6 +162,13 @@ T = {
         "Ahora no se puede cambiar de fase: la guerra no está en curso (o empezó el chasquido), o la fase no existe.",
         "Şu an aşama değiştirilemez: savaş sürmüyor (ya da şıklatma başladı) veya aşama bilinmiyor.",
         "现在无法切换阶段：战争未在进行（或响指已开始），或阶段不存在。"),
+    "commands.viltrumitecore.thanos.phase_already": (
+        "The war has already reached phase \"%s\" (phases only move forward).",
+        "Война уже дошла до фазы «%s» (фазы идут только вперёд).",
+        "Der Krieg hat Phase „%s“ bereits erreicht (Phasen gehen nur vorwärts).",
+        "La guerra ya llegó a la fase «%s» (las fases solo avanzan).",
+        "Savaş zaten \"%s\" aşamasına ulaştı (aşamalar yalnızca ileri gider).",
+        "战争已进入“%s”阶段（阶段只会前进）。"),
     "commands.viltrumitecore.thanos.order_called": (
         "The Black Order is beamed down.", "Чёрный Орден спускается с корабля.", "Der Schwarze Orden wird herabgestrahlt.",
         "La Orden Negra desciende de la nave.", "Kara Düzen gemiden indiriliyor.", "黑曜五将从战舰降下。"),
