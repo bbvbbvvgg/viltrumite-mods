@@ -46,6 +46,8 @@ public final class GodzillaDestruction {
    static final int SCAN_PER_TICK = 60000;
    /** Jobs kept at once; the oldest low-priority ones are dropped first. */
    static final int MAX_JOBS = 48;
+   /** Debris still flying after this many ticks is removed (it is stuck or frozen in a chunk nobody ticks). */
+   static final int DEBRIS_LIFE = 600;
 
    /** A queued smash: an ellipsoid (vertical radius = radius / squash) removed inner blocks first. */
    static final class Smash {
@@ -83,7 +85,10 @@ public final class GodzillaDestruction {
 
    private final String sessionId;
    private final List<Smash> jobs = new ArrayList<>();
-   private final ArrayDeque<FallingBlockEntity> flying = new ArrayDeque<>();
+   /** Debris thrown by the event, with the game time of the throw (debris outside the ticking range never land). */
+   private final ArrayDeque<Flying> flying = new ArrayDeque<>();
+   /** The way out: the whole session budget is open (see {@link GodzillaRules#RETREAT_RESERVE}). */
+   private boolean retreat;
    private final Long2LongOpenHashMap reported = new Long2LongOpenHashMap();
    private final Long2LongOpenHashMap infra = new Long2LongOpenHashMap();
    private final BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
@@ -117,16 +122,25 @@ public final class GodzillaDestruction {
    }
 
    public boolean exhausted() {
-      return this.destroyed >= GodzillaRules.MAX_BLOCKS;
+      return this.destroyed >= GodzillaRules.blockCap(this.retreat);
+   }
+
+   /** The rampage has used its share of the session budget (the event sends the kaiju away). */
+   public boolean sated() {
+      return GodzillaRules.sated(this.destroyed);
    }
 
    /** Start of a server tick: the budget of this tick and the queued jobs. */
-   void tick(ServerLevel level, boolean rage) {
+   void tick(ServerLevel level, boolean rage, boolean retreat) {
       this.tick = level.getGameTime();
+      this.retreat = retreat;
       this.griefing = level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
       this.budget = CarveBudget.perTick(GodzillaRules.blockBudget(rage), level.getServer().getAverageTickTime());
       this.usedThisTick = 0;
       this.pruneFlying();
+      if (this.exhausted()) {
+         this.jobs.clear(); // nothing more may break: queued smashes would wait forever
+      }
       if (this.jobs.isEmpty()) {
          return;
       }
@@ -149,7 +163,7 @@ public final class GodzillaDestruction {
    }
 
    private int left() {
-      return Math.max(0, Math.min(this.budget - this.usedThisTick, GodzillaRules.MAX_BLOCKS - this.destroyed));
+      return Math.max(0, Math.min(this.budget - this.usedThisTick, GodzillaRules.blockCap(this.retreat) - this.destroyed));
    }
 
    /** Queues a smash (the job starts working this tick if the budget allows). */
@@ -217,7 +231,7 @@ public final class GodzillaDestruction {
                double len = out.length();
                out = len < 1.0E-3 ? new Vec3(0.0, 1.0, 0.0) : out.scale(1.0 / len);
                Vec3 vel = new Vec3(out.x, Math.abs(out.y) + 0.5, out.z).normalize().scale(0.45 + random.nextDouble() * 0.55).add(s.push);
-               this.flying.add(HeroDebris.launchBlock(level, at, state, vel, 2.0F, 16, HeroDestruction.CLEAR_FLAGS));
+               this.flying.add(new Flying(HeroDebris.launchBlock(level, at, state, vel, 2.0F, 16, HeroDestruction.CLEAR_FLAGS), this.tick));
             } else {
                QuietBlockRemoval.run(() -> level.setBlock(at, Blocks.AIR.defaultBlockState(), HeroDestruction.CLEAR_FLAGS));
             }
@@ -415,10 +429,13 @@ public final class GodzillaDestruction {
    }
 
    private void pruneFlying() {
-      Iterator<FallingBlockEntity> it = this.flying.iterator();
+      Iterator<Flying> it = this.flying.iterator();
       while (it.hasNext()) {
-         FallingBlockEntity e = it.next();
-         if (e.isRemoved() || e.tickCount > 600) {
+         Flying f = it.next();
+         if (f.block.isRemoved()) {
+            it.remove();
+         } else if (this.tick - f.at > DEBRIS_LIFE) {
+            f.block.discard(); // still in the air after 30 s: stuck, or frozen outside the ticking range
             it.remove();
          }
       }
@@ -427,11 +444,15 @@ public final class GodzillaDestruction {
    /** Stop / cleanup: queued work dropped, debris still in the air removed (it is the event's). */
    void clear() {
       this.jobs.clear();
-      for (FallingBlockEntity e : this.flying) {
-         if (!e.isRemoved()) {
-            e.discard();
+      for (Flying f : this.flying) {
+         if (!f.block.isRemoved()) {
+            f.block.discard();
          }
       }
       this.flying.clear();
    }
+
+   private record Flying(FallingBlockEntity block, long at) {
+   }
+
 }

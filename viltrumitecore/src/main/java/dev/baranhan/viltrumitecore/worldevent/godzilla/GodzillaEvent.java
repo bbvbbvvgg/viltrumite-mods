@@ -343,7 +343,13 @@ public final class GodzillaEvent {
       CityManager city = CityManager.of(level);
       CityProfile arena = city != null ? city.profile() : null;
       double base = random.nextDouble() * Math.PI * 2.0;
-      for (double dist : new double[]{GodzillaRules.SPAWN_DISTANCE, 120.0, 96.0, 72.0, 56.0}) {
+      // never beyond the simulation distance: a body there would not tick (frozen until the event lost it)
+      double reach = GodzillaRules.spawnReach(level.getServer().getPlayerList().getSimulationDistance());
+      for (double want : new double[]{GodzillaRules.SPAWN_DISTANCE, 120.0, 96.0, 72.0, 56.0}) {
+         double dist = Math.min(want, reach);
+         if (dist < want && want != GodzillaRules.SPAWN_DISTANCE) {
+            continue; // the clamped first try already used this distance
+         }
          Vec3 best = null;
          double bestScore = -1.0E9;
          for (int i = 0; i < 24; i++) {
