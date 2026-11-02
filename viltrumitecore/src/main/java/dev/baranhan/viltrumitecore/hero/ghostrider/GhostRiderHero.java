@@ -54,6 +54,16 @@ public final class GhostRiderHero implements HeroDefinition {
       return HeroId.GHOST_RIDER;
    }
 
+   /** The Rider in his burning form: hellfire for the contextual interactions (hellfire_scalds_symbiote). */
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence HELLFIRE_BODY = new dev.baranhan.viltrumitecore.hero.combat.CombatPresence(
+      "viltrumitecore:hellfire", java.util.Set.of(dev.baranhan.viltrumitecore.hero.combat.CombatTags.ELEMENT_HELLFIRE),
+      dev.baranhan.viltrumitecore.hero.combat.CombatStance.NONE, 0);
+
+   @Override
+   public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      return player != null && rider(player) ? HELLFIRE_BODY : dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
+   }
+
    /** The Rider form on either side (server state, client snapshot). */
    public static boolean rider(Player player) {
       if (player.level().isClientSide) {

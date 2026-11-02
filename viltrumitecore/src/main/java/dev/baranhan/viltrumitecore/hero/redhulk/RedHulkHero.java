@@ -47,6 +47,21 @@ public final class RedHulkHero implements HeroDefinition {
    private RedHulkHero() {
    }
 
+   /** Heat at {@link RedHulkRules#HOT} or more: his fists count as hellfire for the contextual interactions. */
+   public static final dev.baranhan.viltrumitecore.hero.combat.CombatPresence RED_HOT = new dev.baranhan.viltrumitecore.hero.combat.CombatPresence(
+      "viltrumitecore:red_hot_fists", java.util.Set.of(dev.baranhan.viltrumitecore.hero.combat.CombatTags.ELEMENT_HELLFIRE),
+      dev.baranhan.viltrumitecore.hero.combat.CombatStance.NONE, 0);
+
+   /** Server only (the heat lives in the server state); the client answers NONE like the other server presences. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.combat.CombatPresence combatPresence(Player player) {
+      if (player == null || player.level().isClientSide) {
+         return dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
+      }
+      RedHulkState state = RedHulkState.of(player);
+      return state != null && state.heat >= RedHulkRules.HOT ? RED_HOT : dev.baranhan.viltrumitecore.hero.combat.CombatPresence.NONE;
+   }
+
    @Override
    public HeroId id() {
       return HeroId.RED_HULK;
