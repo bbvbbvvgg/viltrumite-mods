@@ -1,4 +1,4 @@
-package dev.baranhan.viltrumitecore.client.scp096;
+package dev.baranhan.viltrumitecore.client.anim.pose;
 
 import dev.baranhan.viltrumitecore.client.anim.animation.Animation;
 import dev.baranhan.viltrumitecore.client.anim.geo.BakedGeoModel;
@@ -15,9 +15,11 @@ import java.util.Map;
  * between them would swing the limb through the body. Here every layer's bone rotation becomes a quaternion, the
  * layers are summed with their weights (sign-aligned, normalised: nlerp) and the result goes back to the engine's
  * Z-Y-X Euler order ({@code AnimRenderer} applies Rz, then Ry, then Rx). Positions and scales blend linearly.
- * One instance per renderer; not thread-safe (render thread only).
+ * Shared animation core: any {@code AnimRenderer}-based entity that crossfades clips whose Euler keys may come from
+ * different branches (IK-solved poses) uses this instead of the per-axis overlay. One instance per renderer; not
+ * thread-safe (render thread only).
  */
-final class Scp096Blend {
+public final class QuatPoseBlend {
    private final Map<GeoBone, Integer> index = new IdentityHashMap<>();
    private final List<GeoBone> bones = new ArrayList<>();
    private BakedGeoModel model;
@@ -26,7 +28,7 @@ final class Scp096Blend {
    private final float[] e = new float[3];
 
    /** Clears the accumulators (and rebuilds the bone table when the model was reloaded). */
-   void begin(BakedGeoModel m) {
+   public void begin(BakedGeoModel m) {
       if (m != this.model) {
          this.model = m;
          this.index.clear();
@@ -41,7 +43,7 @@ final class Scp096Blend {
    }
 
    /** Adds a clip at t seconds with this weight to the blend (bones it does not key are unaffected). */
-   void add(Animation clip, double t, float w) {
+   public void add(Animation clip, double t, float w) {
       if (w <= 0.0F) {
          return;
       }
@@ -70,7 +72,7 @@ final class Scp096Blend {
    }
 
    /** Writes the blended pose into the bones that any added clip keyed. */
-   void apply() {
+   public void apply() {
       for (int i = 0; i < this.bones.size(); i++) {
          int o = i * 11;
          float w = this.acc[o + 10];
@@ -96,7 +98,7 @@ final class Scp096Blend {
    }
 
    /** Blends a clip over the current pose of the bones it keys by weight k (0 = unchanged, 1 = the clip). */
-   void overlay(Animation clip, double t, float k) {
+   public void overlay(Animation clip, double t, float k) {
       if (k <= 0.0F) {
          return;
       }
@@ -120,7 +122,7 @@ final class Scp096Blend {
    }
 
    /** Pure: quaternion (x, y, z, w) of Rz(rz) * Ry(ry) * Rx(rx), angles in radians. */
-   static void quat(float rx, float ry, float rz, float[] out) {
+   public static void quat(float rx, float ry, float rz, float[] out) {
       double cx = Math.cos(rx * 0.5);
       double sx = Math.sin(rx * 0.5);
       double cy = Math.cos(ry * 0.5);
@@ -135,7 +137,7 @@ final class Scp096Blend {
    }
 
    /** Pure: Euler (rx, ry, rz) in radians with Rz * Ry * Rx equal to the (not necessarily unit) quaternion q. */
-   static void euler(float[] q, float[] out) {
+   public static void euler(float[] q, float[] out) {
       double x = q[0];
       double y = q[1];
       double z = q[2];
@@ -163,7 +165,7 @@ final class Scp096Blend {
    }
 
    /** Pure: normalised lerp from a to b (taking the short way) into out (may alias b). */
-   static void nlerp(float[] a, float[] b, float t, float[] out) {
+   public static void nlerp(float[] a, float[] b, float t, float[] out) {
       float dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
       float s = dot < 0.0F ? -1.0F : 1.0F;
       float x = a[0] + (b[0] * s - a[0]) * t;

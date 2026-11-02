@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.client.scp096;
 
+import dev.baranhan.viltrumitecore.client.anim.pose.QuatPoseBlend;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.baranhan.viltrumitecore.client.anim.AnimCache;
@@ -23,7 +24,7 @@ import net.minecraft.util.Mth;
 
 /**
  * SCP-096: sixteen full-body clip layers eased in real time and blended as a weighted average in quaternions (see
- * {@link Scp096Pose} and {@link Scp096Blend}),
+ * {@link Scp096Pose} and {@link QuatPoseBlend}),
  * the sobbing as an additive layer, the upper-body smash and claw strike over the run, and the head turned toward
  * what it looks at. The shuffle and the run are driven by the gait phase (distance), so the feet do not slide at any
  * speed. Client only.
@@ -34,7 +35,7 @@ public class Scp096Renderer extends EntityRenderer<Scp096Entity> {
    static final ResourceLocation[] ANIM = {rl("animations/scp096/scp096_calm.animation.json"), rl("animations/scp096/scp096_rage.animation.json"),
       rl("animations/scp096/scp096_chase.animation.json")};
    private final float[] targets = new float[Scp096Pose.SLOTS];
-   private final Scp096Blend blend = new Scp096Blend();
+   private final QuatPoseBlend blend = new QuatPoseBlend();
 
    public Scp096Renderer(EntityRendererProvider.Context context) {
       super(context);

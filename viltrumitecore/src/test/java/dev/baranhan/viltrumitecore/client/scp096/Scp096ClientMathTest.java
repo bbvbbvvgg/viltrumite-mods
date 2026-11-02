@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.client.scp096;
 
+import dev.baranhan.viltrumitecore.client.anim.pose.QuatPoseBlend;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -119,13 +120,13 @@ class Scp096ClientMathTest {
          float rx = (float)((r.nextDouble() * 2 - 1) * Math.PI);
          float ry = (float)((r.nextDouble() * 2 - 1) * Math.PI * 0.49);
          float rz = (float)((r.nextDouble() * 2 - 1) * Math.PI);
-         Scp096Blend.quat(rx, ry, rz, q);
-         Scp096Blend.euler(q, back);
+         QuatPoseBlend.quat(rx, ry, rz, q);
+         QuatPoseBlend.euler(q, back);
          assertEquals(rx, back[0], 1.0E-3F);
          assertEquals(ry, back[1], 1.0E-3F);
          assertEquals(rz, back[2], 1.0E-3F);
          // the other Euler branch of the same orientation gives the same rotation (up to the quaternion sign)
-         Scp096Blend.quat((float)(rx + Math.PI), (float)(Math.PI - ry), (float)(rz + Math.PI), q2);
+         QuatPoseBlend.quat((float)(rx + Math.PI), (float)(Math.PI - ry), (float)(rz + Math.PI), q2);
          float dot = Math.abs(q[0] * q2[0] + q[1] * q2[1] + q[2] * q2[2] + q[3] * q2[3]);
          assertEquals(1.0F, dot, 1.0E-4F);
       }
@@ -137,20 +138,20 @@ class Scp096ClientMathTest {
       float d = (float)(Math.PI / 180.0);
       float[] a = new float[4];
       float[] b = new float[4];
-      Scp096Blend.quat(131.43F * d, -160.88F * d, -145.01F * d, a);
-      Scp096Blend.quat(-48.57F * d, -19.12F * d, 34.99F * d, b);
+      QuatPoseBlend.quat(131.43F * d, -160.88F * d, -145.01F * d, a);
+      QuatPoseBlend.quat(-48.57F * d, -19.12F * d, 34.99F * d, b);
       float[] mid = new float[4];
-      Scp096Blend.nlerp(a, b, 0.5F, mid);
+      QuatPoseBlend.nlerp(a, b, 0.5F, mid);
       float dot = Math.abs(a[0] * mid[0] + a[1] * mid[1] + a[2] * mid[2] + a[3] * mid[3]);
       assertEquals(1.0F, dot, 1.0E-3F, "no swing through the body");
       // and a real blend lands between the two orientations
-      Scp096Blend.quat(0.0F, 0.0F, 0.0F, a);
-      Scp096Blend.quat(1.0F, 0.0F, 0.0F, b);
-      Scp096Blend.nlerp(a, b, 0.5F, mid);
+      QuatPoseBlend.quat(0.0F, 0.0F, 0.0F, a);
+      QuatPoseBlend.quat(1.0F, 0.0F, 0.0F, b);
+      QuatPoseBlend.nlerp(a, b, 0.5F, mid);
       float[] e = new float[3];
-      Scp096Blend.euler(mid, e);
+      QuatPoseBlend.euler(mid, e);
       assertEquals(0.5F, e[0], 1.0E-4F);
-      Scp096Blend.euler(new float[4], e);
+      QuatPoseBlend.euler(new float[4], e);
       assertEquals(0.0F, e[0]);
    }
 
