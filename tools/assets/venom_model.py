@@ -474,7 +474,7 @@ def skeleton(m):
         parent = f'tongue_{i}'
     for s in (-1, 1):
         side = sname(s)
-        m.bone(f'{side}_arm', 'torso', [s * ARM_X, ARM_Y, 0], [0, 0, s * ARM_OUT])
+        m.bone(f'{side}_arm', 'torso', [s * ARM_X, ARM_Y, 0], [0, 0, -s * ARM_OUT])
         m.bone(f'{side}_forearm', f'{side}_arm', [s * ELBOW[0], ELBOW[1], -0.2])
         m.bone(f'{side}_hand', f'{side}_forearm', [s * WRIST[0], WRIST[1], -0.3])
         m.bone(f'{side}_fingers', f'{side}_hand', [s * 9.6, FINGER_Y, -0.5])
@@ -510,7 +510,7 @@ def body_model():
         c('torso', [side_x(s, 5.0, 2.4), 16.0, -2.2], [2.4, 8.0, 5.2], 'lat', rotation=[0, 0, s * 17], pivot=[s * 5.4, 24.0, 0],
           faces=('north', 'south', 'east', 'west', 'down'))
         c('torso', [side_x(s, 0.35, 3.4), 14.2, 2.6], [3.4, 5.0, 0.7], 'back', faces=('south', 'east', 'west', 'up', 'down'))
-    c('torso', [-5.8, 19.0, -3.0], [11.6, 3.0, 6.4], 'rib')
+    c('torso', [-5.8, 19.0, -3.0], [11.6, 3.0, 6.2], 'rib')
     # ---- chest (breathes with the pulse): upper chest, pecs, traps, neck, upper back
     c('chest', [-6.9, 21.6, -3.4], [13.8, 4.6, 7.4], 'chest')
     for s in (-1, 1):
