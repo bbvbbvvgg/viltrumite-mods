@@ -17,5 +17,8 @@
   "commands.viltrumitecore.collapse.analyze.yes": "Bir çöküş başlardı: %s",
   "commands.viltrumitecore.collapse.analyze.no": "Çöküş yok: %s",
   "commands.viltrumitecore.collapse.damage": "Hasar (%s): %s blok kaldırıldı",
-  "commands.viltrumitecore.collapse.too_big": "Tek seferde en fazla %s blok"
+  "commands.viltrumitecore.collapse.too_big": "Tek seferde en fazla %s blok",
+  "commands.viltrumitecore.collapse.support": "Destek: %s",
+  "message.viltrumitecore.collapse.support_blocked.gamerule": "Bu yapı desteğini kaybetti ama çökmeler kapalı: mobGriefing oyun kuralı false",
+  "message.viltrumitecore.collapse.support_blocked.config": "Bu yapı desteğini kaybetti ama çökmeler ayarlarda kapalı (collapseEnabled)"
 }
