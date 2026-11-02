@@ -83,6 +83,8 @@ public final class VenomBossBrain {
    private final int[] cooldown = new int[Attack.values().length];
    private int meleeStreak;
    private int sinceMelee = STREAK_WINDOW;
+   /** Ticks the boss still spares the host it just let go (§8.5: the released host gets three seconds). */
+   private int spare;
    private int adaptedMask;
 
    public Phase phase() {
@@ -147,6 +149,9 @@ public final class VenomBossBrain {
    }
 
    public void tick() {
+      if (this.spare > 0) {
+         this.spare--;
+      }
       for (int i = 0; i < this.threat.length; i++) {
          this.threat[i] *= DECAY;
       }
@@ -160,6 +165,16 @@ public final class VenomBossBrain {
       } else {
          this.meleeStreak = 0;
       }
+   }
+
+   /** The boss let its host go: it backs off from him for {@code ticks} instead of finishing him at once. */
+   public void spit(int ticks) {
+      this.spare = Math.max(this.spare, ticks);
+   }
+
+   /** Still giving the released host his breather (the boss turns to someone else or keeps its distance). */
+   public boolean sparing() {
+      return this.spare > 0;
    }
 
    public float threat(Threat kind) {

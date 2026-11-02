@@ -111,6 +111,8 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
    @Nullable private UUID heldEffect;
    private int holdTicks;
    private boolean possessing;
+   /** The host it last let go: spared while {@link VenomBossBrain#sparing()}. */
+   @Nullable private UUID spitOut;
    /** Client: the move's start, on the client clock. */
    public int clientSerialSeen = -1;
    public float clientStart;
@@ -251,6 +253,15 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       }
       if (target == null || !target.isAlive()) {
          return;
+      }
+      if (this.brain.sparing() && this.spitOut != null && this.spitOut.equals(target.getUUID())) {
+         LivingEntity other = otherPrey(target);
+         if (other == null) {
+            backOff(target);
+            return;
+         }
+         this.setTarget(other);
+         target = other;
       }
       double d = this.distanceTo(target);
       double above = target.getY() - this.getY();
@@ -700,8 +711,38 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       VenomPossession.bossInput(this, new VenomDriveC2SPacket(false, forward, 0.0F, yaw, pitch, bits, 0));
    }
 
+   /** Somebody else to hunt while the spat-out host gets his breather (nearest, in reach of the hunt). */
+   @Nullable
+   private LivingEntity otherPrey(LivingEntity spared) {
+      LivingEntity best = null;
+      double bestD = Double.MAX_VALUE;
+      for (LivingEntity e : VenomTargets.around(this, this.position(), 24.0, c -> c != spared && c != this && c instanceof Player p && p.isAlive()
+         && !p.isCreative() && !p.isSpectator() && !VenomPossession.involved(p))) {
+         double d = e.distanceToSqr(this);
+         if (d < bestD) {
+            bestD = d;
+            best = e;
+         }
+      }
+      return best;
+   }
+
+   /** Nobody else around: it circles the released host at a distance, watching, until the window closes. */
+   private void backOff(LivingEntity host) {
+      this.getLookControl().setLookAt(host, 30.0F, 30.0F);
+      if (this.distanceTo(host) >= 6.0) {
+         this.getNavigation().stop();
+         return;
+      }
+      Vec3 away = VenomTargets.flat(this.position().subtract(host.position()));
+      away = away.lengthSqr() < 1.0E-4 ? VenomTargets.flat(this.getLookAngle()).scale(-1) : away.normalize();
+      Vec3 to = this.position().add(away.scale(4.0));
+      this.getNavigation().moveTo(to.x, to.y, to.z, 1.0);
+   }
+
    @Override
    public void onPossessionEnd(VenomPossession.End reason) {
+      this.brain.spit(VenomRules.HOST_SAFE_TICKS);
       this.possessing = false;
       this.flag(VenomFlags.POSSESSING, false);
       this.entityData.set(TARGET, -1);
@@ -711,6 +752,7 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
 
    @Override
    public void beganPossessing(ServerPlayer host) {
+      this.spitOut = host.getUUID();
       this.possessing = true;
       this.flag(VenomFlags.POSSESSING, true);
       this.entityData.set(TARGET, host.getId());
