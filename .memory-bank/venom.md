@@ -20,7 +20,8 @@ Audio licences: `docs/venom/audio-sources.md`.
   reload; threat scores with half-life 200 t, adapt at 12 (melee, ranged, fire, sound = hunts the noisemaker,
   height = pounce from the wall, kite). Tests: `VenomBossBrainTest`.
 - Weaknesses: fire ×1.75 + 5 s no regen + recoil; loud sound (volume ≥ 2 within 10) recoil; hellfire scalds
-  (`InteractionReaction.SYMBIOTE_SCALDED`). Fire and sound always work, also on the adapted boss.
+  (`InteractionReaction.SYMBIOTE_SCALDED`). Fire and sound always work, also on the adapted boss. The recoil line
+  names the cause: `venom:recoil` for fire, `venom:recoil_sound` for a bell/blast.
 - Falbiks Heroes: reflection only through `SpiderCompat`, each `SpiderFeature` binds or disables itself with a
   logged reason (`/venom compat`); no hard dependency, none of their code or assets. Signature test:
   `./gradlew :viltrumitecore:test --tests '*FalbiksJarSignatureTest*' -PfalbiksJar=<path>`.

@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.hero.venom;
 
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
+import dev.baranhan.viltrumitecore.hero.speech.HeroLine;
 import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
@@ -56,7 +57,7 @@ public final class VenomWeakness {
 
    static void burnt(ServerPlayer player, VenomState state) {
       state.fireBlock = VenomRules.FIRE_REGEN_BLOCK;
-      recoil(player, state);
+      recoil(player, state, VenomLines.RECOIL);
    }
 
    /**
@@ -66,10 +67,11 @@ public final class VenomWeakness {
     */
    public static void scald(ServerPlayer player, VenomState state) {
       state.fireBlock = Math.max(state.fireBlock, VenomRules.SCALD_REGEN_BLOCK);
-      recoil(player, state);
+      recoil(player, state, VenomLines.RECOIL);
    }
 
-   static void recoil(ServerPlayer player, VenomState state) {
+   /** The symbiote reels; {@code line} names what hurt it (fire or a loud sound) so the subtitle never lies about it. */
+   static void recoil(ServerPlayer player, VenomState state, HeroLine line) {
       if (!state.form || state.recoilImmune > 0 || state.possessing() || state.is(VenomMove.TRANSFORM) || state.is(VenomMove.REVERT)) {
          return;
       }
@@ -80,7 +82,7 @@ public final class VenomWeakness {
       state.recoilImmune = VenomRules.RECOIL_IMMUNITY;
       VenomFx.send(player, VenomFx.RECOIL, VenomTargets.center(player), null, 1.0F, 0);
       VenomSounds.play(player, VenomSounds.SHRIEK, 1.1F, VenomSounds.jitter(player, 1.0F));
-      HeroSpeech.say(player, VenomLines.RECOIL);
+      HeroSpeech.say(player, line);
    }
 
    /** Server: a sound was played in the world. */
@@ -90,7 +92,7 @@ public final class VenomWeakness {
          if (p instanceof HeroPlayer hp && hp.getHeroId() == HeroId.VENOM) {
             VenomState state = VenomState.of(p);
             if (state != null && state.form && loud(id, volume, p.position().distanceTo(at))) {
-               recoil(p, state);
+               recoil(p, state, VenomLines.RECOIL_SOUND);
             }
          }
       }
@@ -106,7 +108,7 @@ public final class VenomWeakness {
          if (p instanceof HeroPlayer hp && hp.getHeroId() == HeroId.VENOM && p.position().distanceTo(at) <= Math.max(6.0, radius * 3.0)) {
             VenomState state = VenomState.of(p);
             if (state != null && state.form) {
-               recoil(p, state);
+               recoil(p, state, VenomLines.RECOIL_SOUND);
             }
          }
       }

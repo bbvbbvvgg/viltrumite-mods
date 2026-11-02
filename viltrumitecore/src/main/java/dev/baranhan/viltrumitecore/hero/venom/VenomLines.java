@@ -29,6 +29,8 @@ public final class VenomLines {
    public static final HeroLine SPIDER = line("venom:spider", "spider", HeroLine.Priority.AMBIENT, 20 * 90);
    /** «Огонь! Больно!» — recoil. */
    public static final HeroLine RECOIL = line("venom:recoil", "recoil", HeroLine.Priority.AMBIENT, 20 * 30);
+   /** «Этот звон! Заткните его!» — recoil from a bell, a blast or another loud sound (never the fire line). */
+   public static final HeroLine RECOIL_SOUND = line("venom:recoil_sound", "recoil_sound", HeroLine.Priority.AMBIENT, 20 * 30);
 
    public static final HeroLines LINES = HeroLines.builder()
       .onAbility(VenomAbility.SYMBIOSIS.id(), TRANSFORM)
@@ -37,6 +39,7 @@ public final class VenomLines {
       .add(PULL)
       .add(SPIDER)
       .add(RECOIL)
+      .add(RECOIL_SOUND)
       .onEvent(HeroLineEvents.HERO_ENTER, ENTER)
       .build();
 
