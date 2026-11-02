@@ -205,7 +205,8 @@ class HeroRosterIntegrationTest {
       // 29 = the integration of #129/#130/#131/#132: one table with Scp096S2CPacket, GodzillaFxS2CPacket,
       // ThanosWarS2CPacket, HellCycleControlC2SPacket and HellfireS2CPacket appended in that order after the aftermath
       // packet. Each branch alone was "28" with a different table, so every "28" peer is refused.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"29\""), "the merged packet table needs its own protocol version");
+      // 30 = SCP-106 and the pocket dimension: Scp106S2CPacket appended last.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"30\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -228,7 +229,7 @@ class HeroRosterIntegrationTest {
       assertEquals(List.of("CityPowerS2CPacket", "CityCollapseS2CPacket", "AftermathS2CPacket"),
          packets.subList(punch + 5, punch + 8), "the city power, collapse and aftermath packets append after Ultron's (v27)");
       assertEquals(List.of("Scp096S2CPacket", "GodzillaFxS2CPacket", "ThanosWarS2CPacket", "HellCycleControlC2SPacket",
-         "HellfireS2CPacket"), packets.subList(punch + 8, packets.size()),
+         "HellfireS2CPacket", "Scp106S2CPacket"), packets.subList(punch + 8, packets.size()),
          "the integration of the four sessions appends SCP-096, Godzilla, the Thanos war, then Ghost Rider (v29)");
    }
 
