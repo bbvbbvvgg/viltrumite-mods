@@ -178,12 +178,18 @@ public final class ThanosHud {
       }
    }
 
+   /** QA (subtitle playtest): what the warning slot drew this frame (a move name, "held" or null) and its opacity. */
+   public static String qaStrip;
+   public static float qaStripK;
+
    /**
     * The warning slot under the timer: the dangerous ability winding up (its name in the lead stone's colour and
     * the counterplay) or, with none, the hold that has the local player (in the hold's colour, how to break it).
     * One slot for both keeps the action bar free, so the subtitle panel never has to climb into the strip.
     */
    private static void warningStrip(GuiGraphics g, Font font, ThanosEntity thanos, int cx, int y, int width, int maxRight, float time) {
+      qaStrip = null;
+      qaStripK = 0.0F;
       if (thanos == null) {
          return;
       }
@@ -192,6 +198,8 @@ public final class ThanosHud {
       float age = thanos.tickCount - thanos.clientMoveStart;
       float k = move == null ? 0.0F : warning(move, ThanosClient.phase(), age);
       if (k > 0.02F) {
+         qaStrip = move.name();
+         qaStripK = k;
          ThanosStone lead = move.lead();
          boolean winding = age < ThanosRules.telegraph(move.telegraph, ThanosClient.phase());
          float blink = winding ? 0.65F + 0.35F * (float)Math.sin(time * 0.8F) : 1.0F;
@@ -202,6 +210,8 @@ public final class ThanosHud {
 
       float held = dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.heldCard(time - (float)Math.floor(time));
       if (held > 0.02F) {
+         qaStrip = "held";
+         qaStripK = held;
          strip(g, font, cx, y, width, maxRight, dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.heldColor(),
             Component.translatable("hud.viltrumitecore.thanos_war.held.title"), Component.translatable("hud.viltrumitecore.thanos_war.held.hint"), held,
             0.8F + 0.2F * (float)Math.sin(time * 0.6F));
@@ -236,6 +246,12 @@ public final class ThanosHud {
          }
 
          lines.add(Component.literal(line).getVisualOrderText());
+      }
+
+      if (lines.isEmpty()) {
+         // title only: the card shrinks to the name (centred as before)
+         w = ThanosHudLayout.stripWidth(nameWidth + 24, width, maxRight);
+         x = ThanosHudLayout.stripX(cx, w, maxRight);
       }
 
       int h = lines.isEmpty() ? ThanosHudLayout.TITLE_HEIGHT : ThanosHudLayout.stripHeight(lines.size());

@@ -95,12 +95,19 @@ public final class ThanosCommands {
          return 0;
       }
 
+      Component label = Component.translatable("commands.viltrumitecore.thanos.phase." + target.name().toLowerCase(Locale.ROOT));
+      ThanosEvent event = ThanosEvent.active();
+      if (event != null && event.phase().ordinal() >= target.ordinal()) {
+         // already there (or past it, e.g. the clock got there first): phases only move forward
+         c.getSource().sendFailure(Component.translatable("commands.viltrumitecore.thanos.phase_already", label));
+         return 0;
+      }
+
       if (!ThanosEvent.forcePhase(target)) {
          c.getSource().sendFailure(Component.translatable("commands.viltrumitecore.thanos.phase_refused"));
          return 0;
       }
 
-      Component label = Component.translatable("commands.viltrumitecore.thanos.phase." + target.name().toLowerCase(Locale.ROOT));
       c.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.thanos.phase_set", label), true);
       return 1;
    }
