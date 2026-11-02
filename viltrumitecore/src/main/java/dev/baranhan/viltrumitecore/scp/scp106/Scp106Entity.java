@@ -77,6 +77,9 @@ public class Scp106Entity extends PathfinderMob {
    public float clientMoveO;
    public double clientGait;
    public double clientGaitO;
+   /** Eased layer weights of the renderer (client only), see Scp106Renderer. */
+   public final float[] clientWeights = new float[8];
+   public float clientWeightAge = -1.0F;
 
    // server state
    @Nullable
@@ -830,7 +833,8 @@ public class Scp106Entity extends PathfinderMob {
          }
       }
       if (this.stateTicks >= this.stateLength) {
-         this.leave();
+         // the capture clip ends with it under the floor together with its prey: gone, no second sink
+         this.discard();
       }
    }
 
