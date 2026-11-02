@@ -114,6 +114,30 @@ HEROES = {
   "relations": ("Когда-то он был таким же смертным, как все, и помнит об этом. Горит не слабее Красного Халка, но его огонь — это суд.",
                 "Once a mortal like any other, and he still remembers it. He burns as hot as the Red Hulk, but his fire judges."),
  },
+ "venom": {
+  "name": ("Веном",
+           "Venom"),
+  "role": ("Эдди Брок и живой инопланетный симбиот: «Мы — Веном»",
+           "Eddie Brock and a living alien symbiote: \"We are Venom\""),
+  "lore": ("Журналист, которого выбрал голодный симбиот. Чёрная масса живёт своей жизнью: дышит, вздрагивает, отращивает щупальца и "
+           "срастается после каждого удара. Огромная пасть, длинный язык, белые глаза и паук на груди — и вечный голод.",
+           "A reporter chosen by a hungry symbiote. The black mass has a life of its own: it breathes, twitches, grows tendrils and knits "
+           "itself back together after every blow. A huge mouth, a long tongue, white eyes and the spider on the chest — and an endless hunger."),
+  "gameplay": ("Эдди превращается по этапам (2,3 с): руки и ноги, торс и голова, рост, пасть и эмблема. В облике — 40 здоровья, бег по стенам "
+               "и фасадам, прыжки на 11 блоков, когти (комбо из трёх), захват щупальцами с броском или ударом о землю, щупальце-гарпун к "
+               "стенам и врагам, хлёст щупалец, панцирь и Бешеный голод. Голод копится в бою и питает ярость. Огонь и громкий звук — его "
+               "слабость: симбиот визжит и отпрядывает. В ярости, при PvP и с разрешения сервера он может захватить ослабленного игрока на "
+               "несколько секунд — жертва видит всё сквозь вены и может вырваться.",
+               "Eddie transforms in stages (2.3 s): arms and legs, torso and head, height, the mouth and the emblem. In form: 40 health, wall and "
+               "facade running, 11-block leaps, claws (a three-hit combo), a tendril grab that throws or slams, a harpoon tendril to walls and "
+               "enemies, the tentacle lash, the shell and the Feeding Frenzy. Hunger builds in a fight and feeds the frenzy. Fire and loud sound are "
+               "his weakness: the symbiote shrieks and recoils. In the frenzy, with PvP on and the server's permission, he can take over a "
+               "weakened player for a few seconds — the victim sees everything through veins and can break free."),
+  "relations": ("Человек-паук из Falbiks Heroes — его любимая добыча: Веном режет и ест его паутину, лазает по ней и сшибается с ним в воздухе. "
+                "Одичавший симбиот без носителя бродит по миру как босс.",
+                "Spider-Man from Falbiks Heroes is his favourite prey: Venom cuts and eats his webs, climbs them and clashes with him in mid-air. "
+                "A feral symbiote without a host roams the world as a boss."),
+ },
  "human": {
   "name": ("Человек", "Human"),
   "role": ("обычная жизнь без сверхсил", "an ordinary life without powers"),
