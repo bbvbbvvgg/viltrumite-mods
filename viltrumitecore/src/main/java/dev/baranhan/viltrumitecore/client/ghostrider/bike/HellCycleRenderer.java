@@ -124,14 +124,24 @@ public class HellCycleRenderer extends EntityRenderer<HellCycleEntity> {
 
    /** Model transform at the entity origin: sink while forming / burning, yaw, ground pitch, lifts, lean. */
    private void pose(HellCycleEntity e, float partial, float form, float burn, float park) {
+      float sink = -0.3F * (1.0F - form) - 0.35F * burn * burn;
+      Matrix4f m = this.bike.identity();
+      m.translate(0.0F, sink, 0.0F);
+      tilt(m, e, partial, park, true);
+   }
+
+   /**
+    * The bike's model transform after the sink: yaw (when withYaw), pitch, stoppie or wheelie round a tyre contact, lean
+    * round the contact line. Shared with the rider (HellCycleRiderPose) and the first-person grips (HellCycleCockpit).
+    */
+   static Matrix4f tilt(Matrix4f m, HellCycleEntity e, float partial, float park, boolean withYaw) {
       float yaw = Mth.rotLerp(partial, e.yRotO, e.getYRot());
       float pitch = Mth.lerp(partial, e.pitchO, e.pitch);
       float lift = Mth.lerp(partial, e.liftO, e.lift);
       float lean = Mth.lerp(partial, e.leanO, e.lean) + PARK_LEAN * park;
-      float sink = -0.3F * (1.0F - form) - 0.35F * burn * burn;
-      Matrix4f m = this.bike.identity();
-      m.translate(0.0F, sink, 0.0F);
-      m.rotateY((180.0F - yaw) * Mth.DEG_TO_RAD);
+      if (withYaw) {
+         m.rotateY((180.0F - yaw) * Mth.DEG_TO_RAD);
+      }
       m.rotateX(pitch * Mth.DEG_TO_RAD);
       if (lift > 0.0F) {
          // stoppie: nose down round the front tyre's contact
@@ -141,6 +151,7 @@ public class HellCycleRenderer extends EntityRenderer<HellCycleEntity> {
          m.translate(0.0F, 0.0F, AXLE_Z).rotateX(-lift * Mth.DEG_TO_RAD).translate(0.0F, 0.0F, -AXLE_Z);
       }
       m.rotateZ(lean * Mth.DEG_TO_RAD);
+      return m;
    }
 
    static void poseBones(BakedGeoModel model, float steerDeg, float spin, float park) {
