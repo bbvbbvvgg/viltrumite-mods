@@ -6,7 +6,9 @@ package dev.baranhan.viltrumitecore.city.citizen;
  * {@link #ALERT} (noticed something: stops and looks), {@link #STARTLED} (the flinch before
  * running), {@link #FLEEING}, {@link #COVER} (hiding / cowering, arms over the head),
  * {@link #FALLEN} and {@link #GETTING_UP} (knocked down by a shock wave). Afterwards
- * {@link #RECOVERING}: walks again, slowly and watchfully, until calm.
+ * {@link #RECOVERING}: walks again, slowly and watchfully, until calm. Peril (#138, {@link CitizenPeril}):
+ * {@link #TEETER} (the floor under them is giving way: balance lost, arms windmilling), {@link #HANGING}
+ * (holding on to a ledge after the floor went) and {@link #FALLING} (a real drop of several blocks).
  */
 public enum CitizenState {
    IDLE,
@@ -18,7 +20,10 @@ public enum CitizenState {
    COVER,
    FALLEN,
    GETTING_UP,
-   RECOVERING;
+   RECOVERING,
+   TEETER,
+   HANGING,
+   FALLING;
 
    private static final CitizenState[] VALUES = values();
 
@@ -33,11 +38,16 @@ public enum CitizenState {
 
    /** The citizen is in the grip of a danger (running, hiding, down). */
    public boolean panicked() {
-      return this == STARTLED || this == FLEEING || this == COVER || this == FALLEN || this == GETTING_UP;
+      return this == STARTLED || this == FLEEING || this == COVER || this == FALLEN || this == GETTING_UP || this.peril();
+   }
+
+   /** Losing the floor, hanging on or falling: {@link CitizenPeril} runs the body, not the brain. */
+   public boolean peril() {
+      return this == TEETER || this == HANGING || this == FALLING;
    }
 
    /** A neighbour in this state makes others nervous (people notice runners and screams). */
    public boolean contagious() {
-      return this == STARTLED || this == FLEEING || this == FALLEN;
+      return this == STARTLED || this == FLEEING || this == FALLEN || this.peril();
    }
 }
