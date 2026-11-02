@@ -450,6 +450,19 @@ class GodzillaRulesTest {
    }
 
    @Test
+   void heroesWhoSeeTheKaijuSeeItMove() {
+      // vanilla draws it out to view distance x 16 blocks: the watch range is that, capped by its tracking range
+      assertEquals(192.0, GodzillaRules.watchRange(12));
+      assertEquals(160.0, GodzillaRules.watchRange(10));
+      assertEquals(GodzillaRules.TRACK_CHUNKS * 16.0, GodzillaRules.watchRange(64));
+      assertEquals(32.0, GodzillaRules.watchRange(0));
+      // the ticket outlives its refresh, and its entity-ticking square holds the fastest walk between two refreshes
+      assertTrue(GodzillaRules.WATCH_TICKET_TICKS > GodzillaRules.WATCH_REFRESH);
+      assertTrue(GodzillaRules.WATCH_TICKET - 2 >= 1 && GodzillaRules.WATCH_TICKET <= 4);
+      assertTrue(GodzillaRules.RAGE_SPEED * GodzillaRules.WATCH_REFRESH < (GodzillaRules.WATCH_TICKET - 2) * 16.0);
+   }
+
+   @Test
    void fxPacketsSurviveTheWire() {
       GodzillaFxS2CPacket p = new GodzillaFxS2CPacket(GodzillaFxS2CPacket.BEAM_BLAST, 10.5, -51.0, 2048.25, 0.25F, -1.0F, 0.5F, 1.75F, 7);
       FriendlyByteBuf b = new FriendlyByteBuf(Unpooled.buffer());
