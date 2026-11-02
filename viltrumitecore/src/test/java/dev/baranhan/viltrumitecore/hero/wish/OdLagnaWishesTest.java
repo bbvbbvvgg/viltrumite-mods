@@ -36,7 +36,7 @@ class OdLagnaWishesTest {
    @Test
    void everyWishGrantsAKnownHeroAndTheReturnIsLast() {
       List<Wish> all = OdLagnaWishes.all();
-      assertTrue(all.size() >= 11, "nine spec wishes + Captain America + Ghost Rider");
+      assertTrue(all.size() >= 12, "nine spec wishes + Captain America + Ghost Rider + Venom");
       Set<String> ids = new HashSet<>();
       Set<String> heroes = new HashSet<>();
       for (Wish wish : all) {
@@ -50,7 +50,7 @@ class OdLagnaWishesTest {
       Wish last = all.get(all.size() - 1);
       assertEquals(OdLagnaWishes.RETURN, last.id());
       assertEquals(HeroId.HUMAN.key(), last.heroKey());
-      for (String key : new String[]{"dio", "jinwoo", "thor", "sinclair", "ironman", "homelander", "reinhard", "regulus", "captain", "ghost_rider", "human"}) {
+      for (String key : new String[]{"dio", "jinwoo", "thor", "sinclair", "ironman", "homelander", "reinhard", "regulus", "captain", "ghost_rider", "venom", "human"}) {
          assertTrue(heroes.contains(key), "no wish grants " + key);
       }
       assertNull(OdLagnaWishes.byId("nope"));
