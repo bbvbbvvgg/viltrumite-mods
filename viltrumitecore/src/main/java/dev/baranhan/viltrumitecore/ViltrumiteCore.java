@@ -141,6 +141,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.worldevent.ultron.UltronSetup.init(modEventBus);
       // SCP-096 "Shy Guy" (docs/design/2026-11-05-scp096-design.md): sounds, the entity register, spawner, commands.
       dev.baranhan.viltrumitecore.scp.scp096.Scp096Setup.init(modEventBus);
+      // SCP-106 "Old Man" and his pocket dimension (docs/design/2026-11-02-scp106-design.md): blocks, entity, dimension generator, sounds.
+      dev.baranhan.viltrumitecore.scp.scp106.Scp106Setup.init(modEventBus);
       // Godzilla — city catastrophe (docs/plans/2026-11-05-godzilla-city-catastrophe.md): sounds and the kaiju's entity register.
       dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
