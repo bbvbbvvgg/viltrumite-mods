@@ -34,6 +34,12 @@ public final class VenomView {
    public static final ResourceLocation VANILLA_SKIN = rl("textures/entity/venom/venom_skin.png");
    public static final ResourceLocation STANCES = rl("animations/venom/venom_stances.animation.json");
    public static final ResourceLocation MOVES = rl("animations/venom/venom_moves.animation.json");
+   /** The tentacle combo, the slam, the Spider clashes, the recoil. */
+   public static final ResourceLocation LASH = rl("animations/venom/venom_lash.animation.json");
+   /** Transformation, shell, rage, engulf, possession, reform. */
+   public static final ResourceLocation SKILLS = rl("animations/venom/venom_skills.animation.json");
+   /** Every third-person move clip lives in exactly one of these (tools/assets/venom_clips.py FILES). */
+   public static final ResourceLocation[] MOVE_FILES = {MOVES, LASH, SKILLS};
    public static final ResourceLocation FACE = rl("animations/venom/venom_face.animation.json");
    public static final ResourceLocation FP = rl("animations/venom/venom_fp.animation.json");
    /** Coat frames (spreading from the hands and feet, the head last): coat_0 .. coat_{@link #COAT_FRAMES}. */

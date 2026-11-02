@@ -265,8 +265,23 @@ public final class VenomPose {
       }
    }
 
+   /** The move's clip: first person from the arms file, otherwise from whichever move file holds it. */
+   @Nullable
+   static Animation moveAnimation(VenomMove move, boolean fp) {
+      if (fp) {
+         return AnimCache.animation(VenomView.FP, move.clip());
+      }
+      for (ResourceLocation file : VenomView.MOVE_FILES) {
+         Animation clip = AnimCache.animation(file, move.clip());
+         if (clip != null) {
+            return clip;
+         }
+      }
+      return null;
+   }
+
    private static void moveClip(BakedGeoModel model, State st, @Nullable VenomMove move, double ticks, long now, boolean fp) {
-      Animation clip = move == null ? null : AnimCache.animation(fp ? VenomView.FP : VenomView.MOVES, move.clip());
+      Animation clip = move == null ? null : moveAnimation(move, fp);
       if (clip != null) {
          double seconds = move.loops() ? (ticks / 20.0) % clip.lengthSeconds() : Math.min(ticks / 20.0, clip.lengthSeconds());
          boolean quick = move.isClaw() || move.isLash() || move == VenomMove.GRAB || move == VenomMove.TENDRIL_SHOT || move == VenomMove.REFORM;
