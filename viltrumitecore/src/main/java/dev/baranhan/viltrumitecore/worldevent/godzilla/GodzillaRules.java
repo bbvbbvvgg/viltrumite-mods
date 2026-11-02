@@ -382,11 +382,16 @@ public final class GodzillaRules {
     * Classifies a target from its body-frame offset (blocks: left, up from the ground, forward).
     * Close and low = FEET; behind within tail reach = BEHIND; high = AIR_*; in arm reach = FRONT / SIDE; else FAR.
     */
+   /** Claw reach for fliers (fractions of HEIGHT): the shoulder at 0.58 up plus the claw arc and the hit sphere. */
+   public static final float AIR_REACH_FLAT = 0.45F;
+   public static final float AIR_REACH_UP = 0.92F;
+
    public static Zone classify(double left, double up, double forward) {
       double flat = Math.sqrt(left * left + forward * forward);
       double angle = Math.toDegrees(Math.atan2(left, forward));
       if (up > 0.62 * HEIGHT || up > 0.3 * HEIGHT && flat > 0.45 * HEIGHT) {
-         return flat < 0.7 * HEIGHT ? Zone.AIR_NEAR : Zone.AIR_FAR;
+         // a flier the claws can reach (the arc about the shoulder), else one for the breath
+         return flat < AIR_REACH_FLAT * HEIGHT && up < AIR_REACH_UP * HEIGHT ? Zone.AIR_NEAR : Zone.AIR_FAR;
       }
       if (flat < 0.2 * HEIGHT && up < 0.18 * HEIGHT) {
          return Zone.FEET;

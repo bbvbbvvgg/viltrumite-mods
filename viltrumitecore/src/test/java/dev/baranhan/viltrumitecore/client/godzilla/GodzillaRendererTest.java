@@ -38,7 +38,11 @@ class GodzillaRendererTest {
       assertEquals(0.0F, GodzillaRenderer.plateLevel(GodzillaMove.CHARGE, 0.0F, 0.5F, false, 10.0F));
       assertTrue(GodzillaRenderer.plateLevel(GodzillaMove.CHARGE, GodzillaRules.CHARGE_SPINE, 0.2F, false, 10.0F) > 0.7F);
       assertTrue(GodzillaRenderer.plateLevel(GodzillaMove.FIRE, 3.0F, 0.6F, false, 10.0F) >= 0.56F);
-      assertTrue(GodzillaRenderer.plateLevel(GodzillaMove.NONE, 0.0F, 0.6F, true, 10.0F) > 0.04F, "rage keeps an ember glow");
+      // rage: the plates keep a blue pulse between breaths (the chat line says they blaze), dimmer than a charge
+      for (float age = 0.0F; age < 120.0F; age += 7.0F) {
+         float g = GodzillaRenderer.plateLevel(GodzillaMove.NONE, 0.0F, 0.6F, true, age);
+         assertTrue(g >= 0.15F && g <= 0.5F, "rage glow " + g);
+      }
       assertEquals(1.0F, GodzillaRenderer.mouthLevel(GodzillaMove.FIRE, 5.0F));
       assertEquals(0.0F, GodzillaRenderer.mouthLevel(GodzillaMove.ROAR, 5.0F));
       assertEquals(0.0F, GodzillaRenderer.mouthLevel(GodzillaMove.CHARGE, 0.0F), 1.0E-5F);

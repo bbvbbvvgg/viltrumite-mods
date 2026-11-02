@@ -396,4 +396,21 @@ class GodzillaAssetsTest {
       }
       assertTrue(kinds >= 10, kinds + " kinds");
    }
+
+   /**
+    * Vanilla clamps the max-health attribute at 1024: a kaiju above that needs the getMaxHealth mixin (the playtest
+    * found it at 1024 of 4000), and its hits count as a boss's for the hero hit cap.
+    */
+   @Test
+   void theKaijuKeepsItsFullHealthAndCountsAsABoss() throws IOException {
+      if (GodzillaRules.MAX_HEALTH > 1024.0F) {
+         String mixin = Files.readString(JAVA.resolve("mixin/ThanosMaxHealthMixin.java"));
+         assertTrue(mixin.contains("instanceof GodzillaEntity"), "getMaxHealth mixin misses the kaiju");
+         assertTrue(mixin.contains("GodzillaRules.MAX_HEALTH"), "getMaxHealth mixin answers something else");
+      }
+      String balance = Files.readString(JAVA.resolve("balance/CombatBalance.java"));
+      Matcher boss = Pattern.compile("static boolean isBoss\\(.*?\\}", Pattern.DOTALL).matcher(balance);
+      assertTrue(boss.find(), "CombatBalance.isBoss");
+      assertTrue(boss.group().contains("GodzillaEntity") && boss.group().contains("GodzillaPart"), boss.group());
+   }
 }
