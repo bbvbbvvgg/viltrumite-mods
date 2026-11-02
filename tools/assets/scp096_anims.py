@@ -398,6 +398,82 @@ def climb_pose(t):
     return full(P(d, root_pos=(0, 2.0, -1.0)))
 
 
+def dash_pose(t):
+    """The lunge (issue #137): body thrown almost flat, the long arms clawing ahead in turn, huge bounding strides."""
+    c = math.cos(2 * math.pi * t)
+    sn = math.sin(2 * math.pi * t)
+    d = {
+        'root': (6, 0, -3 * sn),
+        'pelvis': (30, 6 * c, 0), 'belly': (16, -2 * c, 0), 'chest': (14, -8 * c, 2 * sn),
+        'neck': (4, 0, 0), 'head': (-60 + 4 * math.cos(4 * math.pi * t), 3 * c, -3 * sn),
+        'jaw': (68 + 6 * math.sin(4 * math.pi * t + 1.0), 0, 0),
+    }
+    for side, ph in (('r', 0.0), ('l', 0.5)):
+        s = -1 if side == 'r' else 1
+        tt = (t + ph) % 1.0
+        d['thigh_' + side] = (curve(RUN_THIGH, tt) * 1.2 - 6, 0, s * 4)
+        d['shin_' + side] = (curve(RUN_SHIN, tt) * 1.1, 0, 0)
+        d['foot_' + side] = (curve(RUN_FOOT, tt), 0, 0)
+        ca = math.cos(2 * math.pi * tt)
+        d['arm_' + side] = (-112 + 38 * ca, s * -4, -s * (16 + 8 * math.sin(2 * math.pi * tt + 0.9)))
+        d['forearm_' + side] = (-18 - 22 * (0.5 + 0.5 * math.cos(2 * math.pi * (tt - 0.15))), 0, 0)
+        d['hand_' + side] = (-20 + 12 * ca, 0, 0)
+        d['fingers_' + side] = (0, 0, s * (30 + 20 * max(0.0, -ca)))
+        d['tips_' + side] = (0, 0, s * (44 + 25 * max(0.0, -ca)))
+        d['thumb_' + side] = (0, 0, s * 18)
+    p = full(P(d))
+    p = grounded(p)
+    p['root']['pos'][1] += 1.2 * max(0.0, math.sin(4 * math.pi * (t - 0.25)))
+    return p
+
+
+def mantle_keys():
+    """Over the edge (issue #137): both claws slam onto the ledge, the body hauls up and over, a knee comes up onto the
+    edge, it rolls forward into the crouch."""
+    c0 = climb_pose(0.25)
+    plant = copy(c0)
+    spine(plant, pelvis=(-4, 0, 0), belly=(14, 0, 0), chest=(22, 0, 0), neck=(6, 0, 0), head=(-46, 0, 0), jaw=(58, 0, 0))
+    for side in ('r', 'l'):
+        s = -1 if side == 'r' else 1
+        spine(plant, **{'arm_' + side: (-118, 0, -s * 14), 'forearm_' + side: (-30, 0, 0), 'hand_' + side: (-35, 0, 0),
+                        'fingers_' + side: (0, 0, s * 55), 'tips_' + side: (0, 0, s * 65)})
+    spine(plant, thigh_r=(-70, 0, -6), shin_r=(95, 0, 0), thigh_l=(-30, 0, 6), shin_l=(80, 0, 0))
+    plant['root']['pos'] = [0.0, 2.6, -1.2]
+    haul = copy(plant)
+    spine(haul, pelvis=(24, 0, 0), belly=(22, 0, 0), chest=(28, 0, 0), head=(-34, 0, 0), jaw=(66, 0, 0))
+    for side in ('r', 'l'):
+        s = -1 if side == 'r' else 1
+        spine(haul, **{'arm_' + side: (-38, 0, -s * 20), 'forearm_' + side: (-14, 0, 0), 'hand_' + side: (-50, 0, 0)})
+    spine(haul, thigh_r=(-92, 0, -6), shin_r=(118, 0, 0), foot_r=(20, 0, 0), thigh_l=(18, 0, 6), shin_l=(64, 0, 0))
+    haul['root']['pos'] = [0.0, 1.0, 0.2]
+    r = rage_pose(0.0)
+    return [(0.0, c0), (0.12, plant), (0.3, haul), (0.5, r)]
+
+
+def punch_up_keys():
+    """Through the ceiling (issue #137): fists cocked low, then both arms rammed straight up, back arched, head thrown
+    back screaming, claws open in the hole."""
+    r = rage_pose(0.0)
+    cock = copy(r)
+    spine(cock, belly=(18, 0, 0), chest=(26, 0, 0), neck=(12, 0, 0), head=(-18, 0, 0), jaw=(30, 0, 0))
+    for side in ('r', 'l'):
+        s = -1 if side == 'r' else 1
+        spine(cock, **{'arm_' + side: (24, 0, -s * 22), 'forearm_' + side: (-96, 0, 0), 'hand_' + side: (-10, 0, 0),
+                       'fingers_' + side: (0, 0, s * 70), 'tips_' + side: (0, 0, s * 80)})
+    ram = copy(r)
+    spine(ram, belly=(-10, 0, 0), chest=(-26, 0, 0), neck=(-10, 0, 0), head=(-58, 0, 0), jaw=(76, 0, 0))
+    for side in ('r', 'l'):
+        s = -1 if side == 'r' else 1
+        spine(ram, **{'arm_' + side: (-176, 0, -s * 8), 'forearm_' + side: (-6, 0, 0), 'hand_' + side: (8, 0, 0),
+                      'fingers_' + side: (0, 0, s * 20), 'tips_' + side: (0, 0, s * 26)})
+    claw = copy(ram)
+    for side in ('r', 'l'):
+        s = -1 if side == 'r' else 1
+        spine(claw, **{'arm_' + side: (-166, 0, -s * 16), 'forearm_' + side: (-22, 0, 0), 'fingers_' + side: (0, 0, s * 66),
+                       'tips_' + side: (0, 0, s * 78)})
+    return [(0.0, r), (0.15, cock), (0.25, ram), (0.34, claw), (0.5, r)]
+
+
 def smash_keys():
     r = rage_pose(0.0)
     wind = copy(r)
@@ -664,7 +740,7 @@ def cycle(fn, n, length, name):
 FILES = {
     'animations/scp096/scp096_calm.animation.json': ('sit', 'sit_peek', 'sob', 'stand', 'cover', 'walk', 'stand_up', 'sit_down'),
     'animations/scp096/scp096_rage.animation.json': ('gaze', 'gaze_sit', 'hysteria', 'rise', 'calm'),
-    'animations/scp096/scp096_chase.animation.json': ('run', 'rage', 'leap', 'climb', 'smash', 'attack'),
+    'animations/scp096/scp096_chase.animation.json': ('run', 'rage', 'leap', 'climb', 'smash', 'attack', 'dash', 'mantle', 'punch_up'),
 }
 
 
@@ -696,6 +772,10 @@ def build_clips():
     clips['smash'].keep = upper
     clips['attack'] = clip_from('attack', 0.55, attack_keys(), bones=upper)
     clips['attack'].keep = upper
+    clips['dash'] = cycle(dash_pose, 8, 0.5, 'dash')
+    clips['mantle'] = clip_from('mantle', 0.5, mantle_keys())
+    clips['punch_up'] = clip_from('punch_up', 0.5, punch_up_keys(), bones=upper)
+    clips['punch_up'].keep = upper
     for c in clips.values():
         tidy(c)
     return clips
@@ -743,7 +823,7 @@ def preview_clips(names, samples=5, views=('q_front', 'side'), scale=4, tag='cli
         for i in range(samples):
             t = c.length * i / (samples - 1 if not c.loop else samples)
             pose = cl.sample_clip(c, t)
-            if n in ('smash', 'attack', 'sob'):
+            if n in ('smash', 'attack', 'sob', 'punch_up'):
                 base = full(rage_pose(0.0)) if n != 'sob' else full(sit_pose(0.0))
                 if n == 'sob':
                     pose = add(base, pose)
