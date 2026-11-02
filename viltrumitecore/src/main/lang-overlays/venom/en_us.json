@@ -58,6 +58,7 @@
   "message.viltrumitecore.venom.takeover.not_weakened": "The host is too strong: weaken them (below 60% health) or hold them with the tendrils.",
   "entity.viltrumitecore.venom_boss": "Venom in a Feeding Frenzy",
   "commands.viltrumitecore.venom.boss": "Venom has broken loose!",
+  "commands.viltrumitecore.venom.boss_peaceful": "The symbiote does not hunt on Peaceful: choose another difficulty.",
   "subtitles.viltrumitecore.venom.transform": "Symbiote covers the body",
   "subtitles.viltrumitecore.venom.revert": "Symbiote recedes",
   "subtitles.viltrumitecore.venom.roar": "Venom roars",

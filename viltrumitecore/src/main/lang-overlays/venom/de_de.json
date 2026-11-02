@@ -58,6 +58,7 @@
   "message.viltrumitecore.venom.takeover.not_weakened": "Der Wirt ist zu stark: schwäche ihn (unter 60 % Leben) oder pack ihn mit den Tentakeln.",
   "entity.viltrumitecore.venom_boss": "Venom im Fressrausch",
   "commands.viltrumitecore.venom.boss": "Venom hat sich losgerissen!",
+  "commands.viltrumitecore.venom.boss_peaceful": "Auf „Friedlich“ jagt der Symbiont nicht: stelle eine andere Schwierigkeit ein.",
   "subtitles.viltrumitecore.venom.transform": "Symbiont bedeckt den Körper",
   "subtitles.viltrumitecore.venom.revert": "Symbiont zieht sich zurück",
   "subtitles.viltrumitecore.venom.roar": "Venom brüllt",
