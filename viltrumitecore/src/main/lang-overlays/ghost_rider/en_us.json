@@ -71,10 +71,5 @@
   "subtitles.viltrumitecore.ghost_rider.stare": "Penance Stare",
   "subtitles.viltrumitecore.ghost_rider.verdict": "Penance is paid",
   "subtitles.viltrumitecore.ghost_rider.innocent": "Soul found innocent",
-  "subtitles.viltrumitecore.ghost_rider.refuse": "Hellfire fizzles",
-  "codex.viltrumitecore.ghost_rider.name": "Ghost Rider",
-  "codex.viltrumitecore.ghost_rider.role": "Johnny Blaze, the Spirit of Vengeance on a burning bike",
-  "codex.viltrumitecore.ghost_rider.lore": "A stunt rider who sold his soul to save his father. By day he is Johnny Blaze in a black leather jacket; when sin is near his flesh burns away to a flaming skull, chains wrap his chest and the Hell Cycle roars out of the fire.",
-  "codex.viltrumitecore.ghost_rider.gameplay": "Johnny can only summon the Hell Cycle and transform (2 s). The Rider fights with a burning chain: a three-hit lash combo, a hook that pulls bodies in, Chain Whirl ending in a slam, Hellfire Wave, Hell Dash and the Penance Stare, whose damage comes only from the target's real deeds (players and innocents killed, damage dealt). The Hell Cycle is a real bike: throttle, brake, reverse, steering, drifts that fill a boost, jumps and wheelies; riding never breaks blocks and only nudges bystanders aside.",
-  "codex.viltrumitecore.ghost_rider.relations": "Once a mortal like any other, and he still remembers it. He burns as hot as the Red Hulk, but his fire judges."
+  "subtitles.viltrumitecore.ghost_rider.refuse": "Hellfire fizzles"
 }
