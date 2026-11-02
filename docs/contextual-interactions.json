@@ -670,7 +670,7 @@
         "Venom in symbiote form (player) or the Venom boss"
       ],
       "trigger": "HURT",
-      "priority": 45,
+      "priority": 38,
       "cooldown_ticks": 60,
       "aftermath_ticks": 0,
       "conditions": [
