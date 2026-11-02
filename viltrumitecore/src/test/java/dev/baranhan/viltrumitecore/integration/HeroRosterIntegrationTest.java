@@ -62,7 +62,8 @@ class HeroRosterIntegrationTest {
       assertSame(HeroId.CAPTAIN, ids[10], "Captain America appends after Jinwoo");
       assertSame(HeroId.RED_HULK, ids[11], "Red Hulk appends after Captain America");
       assertSame(HeroId.GHOST_RIDER, ids[12], "Ghost Rider appends after Red Hulk");
-      assertEquals(13, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
+      assertSame(HeroId.ROHAN, ids[13], "Rohan Kishibe appends after Ghost Rider");
+      assertEquals(14, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
       Set<String> keys = new HashSet<>();
       for (HeroId id : ids) {
          assertTrue(keys.add(id.key()), "duplicate hero key " + id.key());
@@ -91,7 +92,10 @@ class HeroRosterIntegrationTest {
       // Ghost Rider appends his six actions after Red Hulk's (released ordinals unchanged).
       assertEquals(HeroAction.REDHULK_OVERHEAT.ordinal() + 1, HeroAction.GHOSTRIDER_CYCLE.ordinal(), "Ghost Rider block follows Red Hulk");
       assertEquals(HeroAction.GHOSTRIDER_CYCLE.ordinal() + 5, HeroAction.GHOSTRIDER_STARE.ordinal(), "Ghost Rider block is contiguous");
-      assertSame(HeroAction.GHOSTRIDER_STARE, actions[actions.length - 1]);
+      // Rohan Kishibe appends his six actions after Ghost Rider's (released ordinals unchanged).
+      assertEquals(HeroAction.GHOSTRIDER_STARE.ordinal() + 1, HeroAction.ROHAN_DOOR.ordinal(), "Rohan block follows Ghost Rider");
+      assertEquals(HeroAction.ROHAN_DOOR.ordinal() + 5, HeroAction.ROHAN_MANUSCRIPT.ordinal(), "Rohan block is contiguous");
+      assertSame(HeroAction.ROHAN_MANUSCRIPT, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
@@ -205,7 +209,9 @@ class HeroRosterIntegrationTest {
       // 29 = the integration of #129/#130/#131/#132: one table with Scp096S2CPacket, GodzillaFxS2CPacket,
       // ThanosWarS2CPacket, HellCycleControlC2SPacket and HellfireS2CPacket appended in that order after the aftermath
       // packet. Each branch alone was "28" with a different table, so every "28" peer is refused.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"29\""), "the merged packet table needs its own protocol version");
+      // 30 = Rohan Kishibe: RohanBookS2CPacket, RohanBookC2SPacket and RohanFxS2CPacket appended after HellfireS2CPacket,
+      // six ROHAN_* HeroAction values and the hero id rohan. Every "29" peer is refused.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"30\""), "the Rohan packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -228,8 +234,10 @@ class HeroRosterIntegrationTest {
       assertEquals(List.of("CityPowerS2CPacket", "CityCollapseS2CPacket", "AftermathS2CPacket"),
          packets.subList(punch + 5, punch + 8), "the city power, collapse and aftermath packets append after Ultron's (v27)");
       assertEquals(List.of("Scp096S2CPacket", "GodzillaFxS2CPacket", "ThanosWarS2CPacket", "HellCycleControlC2SPacket",
-         "HellfireS2CPacket"), packets.subList(punch + 8, packets.size()),
+         "HellfireS2CPacket"), packets.subList(punch + 8, punch + 13),
          "the integration of the four sessions appends SCP-096, Godzilla, the Thanos war, then Ghost Rider (v29)");
+      assertEquals(List.of("RohanBookS2CPacket", "RohanBookC2SPacket", "RohanFxS2CPacket"), packets.subList(punch + 13, packets.size()),
+         "Rohan Kishibe's book and FX packets append after Ghost Rider's (v30)");
    }
 
    @Test
