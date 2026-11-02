@@ -41,7 +41,7 @@ import net.minecraftforge.entity.PartEntity;
  * control, falls, crashes into a crater and its segments come down one after another. Hitboxes:
  * the head (this entity), a snout part, ten segment parts and the tail part.
  */
-public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResistant, net.minecraft.world.entity.monster.Enemy {
+public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResistant, net.minecraft.world.entity.monster.Enemy, dev.baranhan.viltrumitecore.hero.book.BookSubject {
    private static final EntityDataAccessor<Byte> STATE = SynchedEntityData.defineId(ChitauriLeviathan.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> STAGGER = SynchedEntityData.defineId(ChitauriLeviathan.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Integer> FOCUS = SynchedEntityData.defineId(ChitauriLeviathan.class, EntityDataSerializers.INT);
@@ -916,5 +916,12 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
    @Override
    public int getAmbientSoundInterval() {
       return 400;
+   }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): far too big to write into; the book can only be read. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(dev.baranhan.viltrumitecore.hero.book.BookProfile base) {
+      return dev.baranhan.viltrumitecore.hero.book.BookProfile.BOSS.withAccess(dev.baranhan.viltrumitecore.hero.book.BookAccess.READ_ONLY)
+         .withReaction(0, 0, 0.0F).withNotes("leviathan");
    }
 }

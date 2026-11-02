@@ -19,8 +19,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 /** Forge hooks of the behaviour-control layer (server side only). */
 @EventBusSubscriber(modid = "viltrumitecore")
 public final class DirectiveEvents {
-   /** Above everything a vanilla mob registers (0 is the float goal; directives share it). */
-   public static final int PRIORITY = 0;
+   /** Above everything a mob registers (vanilla and the city use 0 for floating and panic): a written line wins. */
+   public static final int PRIORITY = -1;
 
    private DirectiveEvents() {
    }
