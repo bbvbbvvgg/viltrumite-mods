@@ -134,6 +134,17 @@ Use the lightest tool that answers.
 
 Compilation proves nothing about behavior.
 
+### Atheria: canonical city playtest world
+
+- **Download source (Google Drive, supplied by the project owner):** https://drive.google.com/file/d/1eIAn4mb-46EejRFH0I6h1KoOp2f69H_d/view?usp=sharing
+- **Drive file ID:** `1eIAn4mb-46EejRFH0I6h1KoOp2f69H_d`. This link is a remote asset, not a tracked repository file.
+- For tasks involving city buildings, collapses, destruction, NPCs, SCP-096 in urban terrain, city ambience, or FPS, **download and test on Atheria in a real Minecraft client**. Do not substitute a synthetic tower as the sole acceptance test.
+- Check that the link is accessible without an interactive sign-in. Use a Drive-aware downloader if necessary. Confirm the downloaded bytes are a real world/archive, not a Google Drive HTML confirmation page. Inspect the file type and archive layout before extraction.
+- Extract/copy the world into the client saves directory (for example, `viltrumitecore/run/saves/` when that is the configured run directory). Check for `level.dat` at the world root and confirm the city loads. Use a disposable copy and preserve the source map.
+- **Never commit the downloaded world or its archive** to Git. The Google Drive link is the reference. If the download fails, access is denied, or the world does not load, report the blocker and do not claim Atheria testing passed.
+- For city work, verify in-game visuals and behavior, plus FPS/frametime and TPS/MSPT when performance matters. State the tested world, scenario, and build in the PR.
+
+
 - `./gradlew build` must pass locally or in the CI `build.yml` run.
 - Runtime changes (gameplay, input, rendering, entities, networking, VFX, HUD) need a check in game with `./gradlew runClient`. Check animations and VFX in first and third person. If you cannot launch the game, write this in the PR. Do not claim a check you did not do.
 - If you change the client/common split or mixin configs, prove that a dedicated server starts.
