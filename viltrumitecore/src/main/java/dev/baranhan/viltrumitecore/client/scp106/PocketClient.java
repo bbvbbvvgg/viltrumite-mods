@@ -142,6 +142,17 @@ public final class PocketClient {
 
    // ------------------------------------------------------------------ queries
 
+   /** One line for the opt-in QA driver (SubtitlePlaytest "scp106state"): pocket state, zone, fog, ambience. */
+   public static String qaSummary() {
+      StringBuilder b = new StringBuilder();
+      b.append(String.format(java.util.Locale.ROOT, "pocket slot=%d flags=%d seed=%x layout=%s zone=%s kind=%s fog=%.1f/%.1f rgb=%.2f,%.2f,%.2f danger=%.2f beds=",
+         slot, flags, seed, layout != null, zone, kind, fogFar, fogTarget, FOG[0], FOG[1], FOG[2], danger));
+      for (Map.Entry<String, PocketLoopSound> e : BEDS.entrySet()) {
+         b.append(e.getKey()).append(e.getValue().isStopped() ? "(stopped)" : "").append(',');
+      }
+      return b.append(" held=").append(HELD.keySet()).toString();
+   }
+
    public static boolean inPocket() {
       Minecraft mc = Minecraft.getInstance();
       return mc.level != null && PocketWorld.is(mc.level);
