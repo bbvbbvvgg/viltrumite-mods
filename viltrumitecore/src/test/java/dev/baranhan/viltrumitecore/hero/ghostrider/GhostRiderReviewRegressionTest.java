@@ -71,7 +71,7 @@ class GhostRiderReviewRegressionTest {
    // ---- P2: burnout progress on the observer's own clock
 
    @Test
-   void aLateObserverSeesTheBikeBurnAway() {
+   void aLateObserverSeesTheBikeBurnAway() throws IOException {
       // server bike 900 ticks old starts burning; an observer tracking for 50 ticks gets the state at its tick 50
       int start = HellCycleRules.clientBurnStart(true, -1, 50);
       assertEquals(50, start);
@@ -119,7 +119,7 @@ class GhostRiderReviewRegressionTest {
    // ---- P2: the chained body moves along its path, never through a wall
 
    @Test
-   void aChainedBodyStopsAtTheWall() {
+   void aChainedBodyStopsAtTheWall() throws IOException {
       // a wall filling x in [3, 4): the body (a point here) cannot be inside it
       java.util.function.Predicate<Vec3> free = p -> p.x < 3.0 || p.x >= 4.0;
       Vec3 from = new Vec3(0.0, 64.0, 0.0);
