@@ -32,7 +32,7 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
   (`AftermathCause.GODZILLA`, id `godzilla:<session>`), `CityInfrastructure` alarm "godzilla". Budgets:
   `BLOCKS_PER_TICK` 360 (rage 520), `MAX_BLOCKS` 900 000 per session of which `RETREAT_RESERVE` 60 000 is kept for the way
   out (the rampage using the rest = "sated": the kaiju retreats), `MAX_DEBRIS` 48 (removed after 30 s), `FX_PER_TICK` 24. Never forces
-  chunks (test).
+  chunks: the only ticket is the lapsing watch ticket below (test).
 - Pacing (playtested on Atheria: downtown costs 500..1300 blocks per block walked, the first tuning was sated in 2.5 min):
   walk 0.30 b/t (rage 0.40, retreat 0.36), wading `GodzillaRules.wade(load)` slows it to 65 % while the smoothed share of
   the tick budget used is high, a survey pause (100..220 ticks) at every reached waypoint, `TOWER_PULL` 0.45 (towers
@@ -58,6 +58,14 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
   `CityManager.startReset` calls `GodzillaEvent.onCityReset` first (the kaiju stops like `/godzilla stop`; its damage is
   journaled and comes back). Thrown blocks carry the entity tag `viltrumitecore_godzilla_debris`: debris saved mid-air
   with its chunk is not loaded back (`EntityJoinLevelEvent`), `/godzilla cleanup` sweeps tagged debris no session tracks.
+- A kaiju a hero can see is never frozen. The event's clock runs from the body's tick, and a body beyond the simulation
+  distance does not tick, so `GodzillaEvent.onServerTick` adds the region ticket `WATCH` ("viltrumitecore_godzilla_watch",
+  level 33 − `WATCH_TICKET` 3 → 3 × 3 chunks entity-ticking, lapses after `WATCH_TICKET_TICKS` 60) at the body's chunk
+  every `WATCH_REFRESH` 20 ticks while a non-spectator is within `watchRange(view distance)` = clamp(vd, 2, 32) × 16
+  blocks horizontally (vanilla draws a tracked entity up to `min(tracking range, viewDistance × 16)`; `TRACK_CHUNKS` 32).
+  No ticket when nobody is that close: the body pauses with its chunk, unloaded for `LOST_TICKS` 100 → ends as lost.
+  `GodzillaAssetsTest.theEventNeverForcesChunks` allows exactly this one ticket (no forced / player tickets, no
+  `getChunk`). Playtest before the fix: a camera 140 blocks out (view 12 / simulation 8) froze the body for 4 min.
 
 ## QA notes (client playtest on Xvfb / llvmpipe, Atheria)
 - 2026-11-02 (3 SP sessions + dedicated server with 2 clients): see the plan's "Playtest" section for numbers. Harness:
@@ -72,7 +80,15 @@ Plan: `docs/plans/2026-11-05-godzilla-city-catastrophe.md`. Sources / cue sheet:
   a dedicated-server client ticks at ~18–20/s and plays swish before hit.
 - `/godzilla creative on` makes creative players targets (`off` = ignored again); creative players are never hurt
   (`GZQA contact … hurt=false`) and fall when the slam knocks them (they lose flight).
-- The entity is only visible within the tracking range ((view distance - 1) x 16): keep the camera close in tests.
+- The entity is drawn within view distance × 16 blocks (192 at view 12, 128 on the view-8 dedicated server); between the
+  simulation distance and that range the watch ticket keeps it moving (verified: camera 150 out, walk / roar / death /
+  victory went on). Beyond it nothing is drawn (no far proxy) and the kaiju pauses.
+- Shots need ≥ 2.5 s spacing (a shot taken sooner replaces the pending one). A clear camera over the harbour basin:
+  `/tp @s 1350 -20 -300`, `start force`, 10 s, `hold on` + `passive on`, `execute at <kaiju> rotated as <kaiju> run
+  fill ^-63 ^72 ^37 ^-57 ^78 ^43 air`, then `… run tp @s ^-60 ^75 ^40 facing ^0 ^30 ^0` re-sent for ~35 s.
+- Verified in game 2026-11-02: hurt flinch, stagger fall → down → rise, finale line, death fall, corpse 33 s, victory
+  summary, 0 kaiju / 0 tagged debris after every end. The wave capture restarted when the client left the world (sound
+  engine reload): copy the WAV before `leave`.
 - Beam ribbons were widened ~2x after the night shot read as a thin line; rage plate glow 0.32 + 0.14 sin (visible by day).
 - `/godzilla stop` leaves its collapses falling (damage stays); `/city reset` aborts them before it rebuilds.
 - Dedicated server + one client (view distance 6): body, LOD, plates, rage tint, boss bar, subtitles, chat and alerts

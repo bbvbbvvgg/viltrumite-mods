@@ -20,7 +20,10 @@ particles for the breath, no voice / TTS.
 - Manual only: `/godzilla start [force]`. No natural spawn. One big event at a time through `WorldEventConflicts`
   (Godzilla joins the exclusive set next to the Chitauri invasion and the Ultron uprising).
 - The session lives in memory only. The entity is `noSave`; a restart ends the event. Nothing force-loads chunks:
-  the walker and the destruction skip unloaded chunks; the event pauses its timers when no player is near.
+  the walker and the destruction skip unloaded chunks. A kaiju a hero can see is never frozen: while a non-spectator
+  is within the drawing range (view distance × 16 blocks, horizontally) a short region ticket (refreshed every second,
+  lapses after 3 s) keeps the 3 × 3 chunks around the body entity-ticking. With nobody that close the body pauses with
+  its chunk (the event's clock runs from the body's tick); a body unloaded with its chunk ends the event (lost).
 - `stop` removes only what the event owns: the kaiju and its hit zones, its debris entities, its alarm lease and
   the client effects (a CLEAR packet). City damage stays; `/city reset` restores it (city journal).
   `cleanup` also removes orphaned kaiju entities of a crashed session and tagged debris no session tracks.
@@ -88,29 +91,32 @@ ledger `tools/assets/godzilla_sources.md`.
 
 ## Playtest 2026-11-02 (Atheria v2.06, Xvfb + llvmpipe, 2 CPU / 4.2 GB)
 
-Three single-player sessions on the real map and one dedicated server with two clients. Sounds were recorded
+Five single-player sessions on the real map and one dedicated server with two clients. Sounds were recorded
 (OpenAL Soft wave writer) and measured, not listened to.
 
 | # | Check | Result |
 |---|-------|--------|
-| 1 | `./gradlew build` | green; Godzilla tests: Rules 21, Assets 15, Renderer 5 |
-| 2 | Model, clips | idle / walk / turns / roar / charge → fire → end / claws / tail / stomp / slam / rage / retreat seen in game, both sides of the body in MP |
+| 1 | `./gradlew build` | green (3 min 19 s, 2 954 tests, 0 failures, 1 skipped); Godzilla tests: Rules 22, Assets 16, Renderer 5, city links 3 |
+| 2 | Model, clips | idle / walk / turns / roar / charge → fire → end / claws / tail / stomp / slam / rage / retreat seen in game, both sides of the body in MP; hurt flinch (a 60 hit), stagger fall → down → rise (8 × 90 within the window), death fall |
 | 3 | Scale | 120 blocks tall, the head level with the tallest downtown towers; the body fills the view from 70 blocks |
 | 4 | Breath | plates light from the tail up, mouth opens, beam leaves the mouth: down at a roof 40 up / 70 ahead (head pitch ≈ −47°), up at a flier 150 up / 60 ahead (≈ +51°); contacts every tick on the target |
 | 5 | Claws, tail, stomp, slam | contacts on fliers in front of the chest (slam, claw), street targets (stomp), animals trampled |
 | 6 | Destruction | 60 k blocks in the first 40 s, 900 k session cap reached on a long run, collapses, transformer blow-outs, power cascades, sirens, smoke and dust |
 | 7 | AI | ground and flying heroes: only reachable moves (roar when out of reach), stand-off / back-off from a hero 141 up (`GZQA backoff … want=50`), breath where the beam points, slam at 0 / 61 / 40 |
-| 8 | Rage, retreat | rage (red bar, blue plates, civil-defence alert on both clients), retreat → sink → summary line, 0 entities left |
+| 8 | Rage, finale, death, retreat | rage (red bar, blue plates, civil-defence alert on both clients); finale line below 12 % (set to 10 % and 5 %); a kill by hero hits: «Годзилла рухнул!», the body falls (its impact carved 10.8 k blocks), the corpse lies 33 s (DEATH 160 + CORPSE 500 ticks), then the victory summary; retreat → sink → summary line; 0 kaiju / 0 tagged debris left after each end |
 | 9 | stop / cleanup / reset | `/city reset` restored 601 k blocks / 1 136 chunks in 21 s and 1.08 M blocks / 1 387 chunks in 22 s; a reset while the kaiju ran stopped it and restored 293 k blocks with no leftovers; a start during the restore is refused |
 | 10 | Dedicated server + 2 clients | boss bar, chat, alerts, subtitles, poses and sounds the same on both clients (step 80/80, charge / beam 3/3); TPS 20.0 in every sample, mean tick 7–16 ms, kaiju tick ≤ 3.7 ms per 5 s (worst single 39.6 ms); no leaked entities after the end (0 kaiju, 0 debris) |
+| 11 | Watched from afar (view 12 = 192 blocks, simulation 8 = 128) | before the fix a camera 140 blocks out froze the body for 4 min (no kaiju tick) and a kill from there left the corpse waiting until the camera came within ~90 blocks; after it, a camera held 150 blocks out: kaiju tick every 5 s, a roar played and finished, the walk went on (1369 −341 → 1316 −244 in 30 s), the body drawn walking in shots, finale → kill → victory summary 33 s after the death; TPS 20 |
 
 Bugs found in game and fixed on this branch: breath at targets the beam could not point at (and a beam aimed with the
 head's axis while it leaves the mouth 5.4 blocks above it); no attack on a flier 60 up in front of the chest; debris
 saved mid-air in unloaded chunks came back untracked (43 falling blocks hung in the air after a retreat, the cleanup saw
-none); a start during `/city reset` left 609 blocks unrestored.
+none); a start during `/city reset` left 609 blocks unrestored; a kaiju watched from beyond the simulation distance (but
+within the drawing range) froze in place, and its corpse ended the event only once the camera came closer.
 
-Known limits (not bugs of the event): vanilla tracks the entity only within (view distance − 1) × 16 blocks, so on a
-server with view distance 10 the kaiju is drawn up to 144 blocks; llvmpipe FPS (1–7, MP 2–3) says nothing about GPUs;
+Known limits (not bugs of the event): vanilla tracks the entity only within view distance × 16 blocks, so on a server
+with view distance 10 the kaiju is drawn up to 160 blocks (no far proxy beyond); with nobody within that range it
+pauses; llvmpipe FPS (1–7, MP 2–3) says nothing about GPUs;
 dense rampage smoke can hide the body from 60–120 blocks; the full city mix (Godzilla + collapse + grid sounds) touched
 +1.6 dBFS for ≤ 104 samples in the MP capture when a beam start met a stack of collapse cues.
 
