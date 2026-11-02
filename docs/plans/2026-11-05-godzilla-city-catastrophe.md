@@ -1,6 +1,7 @@
 # ГОДЗИЛЛА — ГОРОДСКАЯ КАТАСТРОФА (Godzilla city catastrophe) — plan
 
-Status: in progress on branch `feat/godzilla-city-catastrophe` (PR to `main`, never merged by the agent).
+Status: implemented and playtested on branch `feat/godzilla-city-catastrophe`; ready for review (PR to `main`,
+never merged by the agent).
 Core `1.69.0` → `1.70.0`, network PROTOCOL `27` → `28` (one packet, `GodzillaFxS2CPacket`, appended last).
 
 ## Goal
