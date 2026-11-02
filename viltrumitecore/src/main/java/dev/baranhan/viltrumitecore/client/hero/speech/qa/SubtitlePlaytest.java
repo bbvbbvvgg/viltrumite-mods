@@ -202,6 +202,13 @@ public final class SubtitlePlaytest {
          }
          case "world" -> openWorld(mc);
          case "close" -> mc.setScreen(null);
+         case "fly" -> {
+            // creative flight on / off without the double-tap (flying hero tests)
+            if (mc.player != null && mc.player.getAbilities().mayfly) {
+               mc.player.getAbilities().flying = !"off".equals(arg);
+               mc.player.onUpdateAbilities();
+            }
+         }
          case "button" -> {
             // Presses the n-th button (0-based) of the open screen, e.g. "Continue" on the experimental-world warning.
             if (mc.screen != null) {

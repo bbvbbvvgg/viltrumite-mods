@@ -43,8 +43,11 @@ import org.slf4j.LoggerFactory;
 @EventBusSubscriber(modid = "viltrumitecore")
 public final class GodzillaEvent {
    static final Logger LOG = LoggerFactory.getLogger("viltrumitecore/godzilla");
-   /** QA: {@code -Dviltrumitecore.godzilla.log=true} logs the session's server cost every 100 body ticks ({@code GZQA}). */
-   private static final boolean QA_LOG = Boolean.getBoolean("viltrumitecore.godzilla.log");
+   /**
+    * QA: {@code -Dviltrumitecore.godzilla.log=true} logs the session's server cost every 100 body ticks, every fight move
+    * with the target's zone and body-frame offset, and every hero hit ({@code GZQA}).
+    */
+   static final boolean QA_LOG = Boolean.getBoolean("viltrumitecore.godzilla.log");
    private static long qaNanos;
    private static long qaMax;
    private static int qaTicks;

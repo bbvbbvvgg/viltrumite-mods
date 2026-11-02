@@ -74,6 +74,10 @@ final class GodzillaBrain {
          move = GodzillaMove.NONE;
       }
       if (move != GodzillaMove.NONE) {
+         if (GodzillaEvent.QA_LOG) {
+            GodzillaEvent.LOG.info("GZQA fight {} -> {} target={} left={} up={} fwd={} reach={}", zone, move.key(), target.getName().getString(),
+               Math.round(f[0]), Math.round(f[1]), Math.round(f[2]), reach);
+         }
          e.walkTo(null);
          if (move == GodzillaMove.CHARGE) {
             s.breath.begin(s, e, target, null);
