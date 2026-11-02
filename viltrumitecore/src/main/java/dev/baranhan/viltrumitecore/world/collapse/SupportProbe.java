@@ -39,7 +39,13 @@ public final class SupportProbe {
    /** Columns a footprint-restricted probe may enter ({@link BaseCut}); null = everywhere. */
    @FunctionalInterface
    public interface Columns {
+      /** The probe may enter this column. */
       boolean contains(int x, int z);
+
+      /** The column is part of the cut footprint itself (faces toward other columns count for the contact share). */
+      default boolean inside(int x, int z) {
+         return this.contains(x, z);
+      }
    }
 
    private final CollapseAnalyzer.Volume volume;
@@ -100,13 +106,20 @@ public final class SupportProbe {
       return this;
    }
 
-   /** Share of the floating structure's outward faces (toward outside the footprint) that touch a solid block. */
+   /**
+    * Share of the floating structure's side faces toward outside the cut footprint (open air, or a column the probe
+    * may not enter) that touch a solid block the probe may not enter: how much it leans on its neighbours.
+    */
    public float contactShare() {
       return this.outside == 0 ? 0.0F : (float)this.contacts / this.outside;
    }
 
    public Status status() {
       return this.status;
+   }
+
+   public CollapseAnalyzer.Volume volume() {
+      return this.volume;
    }
 
    public String reason() {
@@ -192,13 +205,19 @@ public final class SupportProbe {
                continue;
             }
             byte m = this.classify(k, nx, ny, nz);
-            if (this.columns != null && d != 0 && d != 5 && !this.columns.contains(nx, nz)) {
-               // a face toward outside the footprint: count how much of it leans on something
-               this.compOutside++;
-               if (solid(m) || m == CollapseAnalyzer.UNKNOWN) {
-                  this.compContacts++;
+            if (this.columns != null && d != 0 && d != 5) {
+               boolean enter = this.columns.contains(nx, nz);
+               boolean leans = solid(m) || m == CollapseAnalyzer.UNKNOWN;
+               if (!this.columns.inside(nx, nz) && (!enter || !leans)) {
+                  // a side face toward outside the footprint: open air, or the neighbour it leans on
+                  this.compOutside++;
+                  if (!enter && leans) {
+                     this.compContacts++;
+                  }
                }
-               continue;
+               if (!enter) {
+                  continue;
+               }
             }
             if (m == CollapseAnalyzer.UNKNOWN || m == CollapseAnalyzer.FIXED) {
                this.grounded();

@@ -67,7 +67,7 @@ public final class SupportWatch {
 
       Job(Request request, SupportProbe probe, boolean before, @Nullable BaseCut mask, long started) {
          this.request = request;
-         this.probe = mask == null ? probe : probe.within(mask);
+         this.probe = mask == null ? probe : probe.within(mask.over(probe.volume(), request.cutY, cutTop(request)));
          this.before = before;
          this.mask = mask;
          this.started = started;
@@ -322,6 +322,15 @@ public final class SupportWatch {
          default -> {
          }
       }
+   }
+
+   /** Top of the cut band: the highest removed block, at most 8 rows above the lowest. */
+   static int cutTop(Request r) {
+      int top = r.cutY;
+      for (long k : r.removed) {
+         top = Math.max(top, BlockKey.y(k));
+      }
+      return Math.min(top, r.cutY + 8);
    }
 
    /** Removed positions next to a floating block: the "before" search starts there. */

@@ -103,6 +103,35 @@ StructuralDamage.suppressed(() -> ...); // changes inside never feed the ledger
 `ULTRON = CollapseCause.custom("ultron", 1.0F)` and call `StructuralDamage.impact` at each heavy hit. Nothing
 else is needed; listen to the events for his own reactions.
 
+## 4a. Support loss (#135): every removal, the whole structure
+
+The damage ledger alone missed real players: mining, `/fill`, fire and plain `setBlock` have no scope, the box
+above is only 30 rows tall and its top and sides count as support, and a big section was cut to 1600 blocks. Since
+#135 a second, weightless ledger runs next to it:
+
+1. **Support ledger** (`SupportLedger`, memory only, same cells/caps, 10 min window): every removed block of the
+   `STRUCTURE` class is recorded, with or without a scope (not inside `StructuralDamage.suppressed`, not world
+   generation). Config `collapseSupportLoss` (true) switches it off.
+2. **Probe** (`SupportProbe`, pure, incremental, ≤ 5 ms per tick, one per level): when a cluster settles (8 quiet
+   ticks, removals within 64 blocks / ±12 rows), a flood fill from the neighbours of the removed blocks walks the
+   real structure, lowest layer first. It is **grounded** when it reaches a block below the cut, an unbreakable
+   block, an unloaded chunk or 192 blocks away; a structure it exhausts is **floating**. A wall that still stands
+   answers after a few dozen blocks; a severed tower costs its size (≤ 600 000 blocks, more is "undecided" = stays).
+3. **Base cut** (`BaseCut`): Atheria buildings touch their neighbours (sky bridges, shared wings, walls against
+   the next house), so a building cut through every wall still reaches the ground next door. The footprint of the
+   cut (every column with a removed block + the rooms that ring encloses) restricts a second probe; the building
+   inside falls when it stands on nothing of its own and at most 60 % of its outer faces touch a neighbour. A wall
+   strip, an L of two facades, a doorway, a room dug into a solid block or a house wedged on three sides stays.
+4. **Before check**: the same search with the removed blocks put back must reach the ground, so a sky platform
+   that already floated is left alone.
+5. **Chain** (`SupportChainPlan`): the floating structure comes down top first in stages of
+   `2 x collapseMaxBlocks` (≤ 4000, packet axis ≤ 255) through the normal director timeline (`Rule.SUPPORT`, cause
+   `support` unless another cause is recorded nearby); a stage starts every 5–14 ticks (a skyscraper in about 18 s),
+   each lands on the street under the building. When a normal collapse finishes, what hung on its section is probed
+   again (follow-up).
+6. **Off**: with `collapseEnabled=false` or `mobGriefing=false` nothing falls and players within 96 blocks see one
+   action-bar line why (`message.viltrumitecore.collapse.support_blocked.*`, once per 30 s).
+
 ## 5. Restoration
 
 - Every block change of a collapse goes through `level.setBlock`, so the living city journal (`CityJournalMixin`)
@@ -126,8 +155,11 @@ else is needed; listen to the events for his own reactions.
 - `config/viltrumitecore.json`: `collapseEnabled` (true), `collapseMaxActive` (3), `collapseMaxBlocks` (1600),
   `collapseBlocksPerTick` (900). Missing keys are added on load. The gamerule `mobGriefing=false` also stops
   collapses.
-- `/collapse` (op 2): `status` (active, analyses, analysis/tick ms, ledger size), `clear` (abort all, forget damage),
-  `analyze <pos>` (dry run), `strike <pos> <radius 1-8> [cause]`, `cut <from> <to> [cause]` (≤ 4096 blocks).
+- `config/viltrumitecore.json`: `collapseSupportLoss` (true): support-loss probes of §4a.
+- `/collapse` (op 2): `status` (active, analyses, analysis/tick ms, ledger size, support probes/chains, probe ms and
+  nodes, last result), `clear` (abort all, forget damage and removals), `analyze <pos>` (dry run),
+  `support <pos>` (does the structure at `pos` reach anything below `pos`?), `strike <pos> <radius 1-8> [cause]`,
+  `cut <from> <to> [cause]` (≤ 4096 blocks).
 - Debug log: `-Dviltrumitecore.collapse.log=true` (every analysis with cost, every start/finish).
 - `CityCollapseS2CPacket` (last packet of `CoreMessages`, protocol 26): `START` carries the section as a bitset
   over its bounding box (≈ 3 KB at 1600 blocks) and the timeline; `COLLAPSE`, `IMPACT`, `END` carry only the id.
@@ -136,11 +168,12 @@ else is needed; listen to the events for his own reactions.
 ## 8. Limits (known, by design)
 
 - Memory only: a server restart forgets running collapses and the ledger (changed blocks stay, journaled).
-- The analysis box is 25 x 25 x (4 + 30) blocks. A tower that is taller than the box above the damage touches
-  the box top and counts as supported, so a cut at the base of a very tall tower drops nothing; the hit must be
-  within 30 blocks of what should fall.
-- A truncated section leaves the rest of the structure hanging; the next damage there starts a new analysis.
-- A thin column or a single wall still connects a section to the ground: the heuristic does not compute loads.
+- The damage analysis box is still 25 x 25 x (4 + 30) blocks; what it misses (a tall tower cut at the base, the
+  rest of a truncated section) is caught by the support probe of §4a.
+- No loads are computed: a single remaining pillar or wall still holds a whole building (cut it too); interior
+  stairs or partition walls that reach the ground floor hold a base-cut building.
+- A structure bigger than 600 000 blocks, or one reaching an unloaded chunk or 192 blocks away, counts as standing.
+- The support ledger is memory only (restart forgets removals) and probes one cluster per level at a time.
 - Fragment light is sampled once at the start; translucent blocks (glass, ice) are drawn with the cutout sheet.
 - Clients that do not have the chunks see only dust from far and hear the distant boom.
 - Viltrumite flight dash damage (`PlayerEntityCoreMixin`) is not wrapped in a scope yet, so it does not feed the

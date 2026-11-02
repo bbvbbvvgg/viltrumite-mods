@@ -16,7 +16,12 @@ import org.junit.jupiter.api.Test;
  */
 class BaseCutTest {
    static SupportProbe masked(World w, long[] removed, BaseCut cut) {
-      return SupportProbeTest.probe(w, removed, null, false).within(cut);
+      int low = Integer.MAX_VALUE, top = Integer.MIN_VALUE;
+      for (long k : removed) {
+         low = Math.min(low, BlockKey.y(k));
+         top = Math.max(top, BlockKey.y(k));
+      }
+      return SupportProbeTest.probe(w, removed, null, false).within(cut.over(w, low, Math.min(top, low + 8)));
    }
 
    static long[] join(long[]... parts) {
@@ -43,7 +48,7 @@ class BaseCutTest {
       assertEquals(SupportProbe.Status.FLOATING, p.run(), p.reason());
       assertTrue(p.contactShare() < 0.05F, "only the bridge touches it: " + p.contactShare());
       for (long k : p.floatingBlocks()) {
-         assertTrue(BlockKey.x(k) <= 8, "the neighbour and the bridge stay: " + BlockKey.x(k));
+         assertTrue(BlockKey.x(k) < 20, "the neighbour stays (the end of the bridge next to the tower falls with it): " + BlockKey.x(k));
       }
       assertTrue(p.floatingBlocks().length > 1000);
    }
@@ -102,6 +107,47 @@ class BaseCutTest {
       assertEquals(144, cut.footprint);
       assertEquals(44, cut.columns, "only the walls were cut, the rooms inside are enclosed");
       assertEquals(SupportProbe.Status.FLOATING, masked(w, removed, cut).run());
+   }
+
+   @Test
+   void lobbyWithAnOpenArcadeStillEnclosesItsRooms() {
+      // found in Atheria (tower at 1215 -200): the lobby front is pillars with 4-block openings, nothing to remove
+      World w = new World();
+      SupportProbeTest.tower(w, 0, 0, 20, 64, 120);
+      w.carve(1, 64, 0, 4, 66, 0);
+      w.carve(6, 64, 0, 9, 66, 0);
+      w.carve(11, 64, 0, 14, 66, 0);
+      w.carve(16, 64, 0, 18, 66, 0);
+      long[] removed = w.carve(0, 64, 0, 19, 66, 19);
+      BaseCut cut = BaseCut.of(removed);
+      assertNotNull(cut, "the openings between the pillars are closed");
+      assertEquals(400, cut.footprint);
+      assertEquals(SupportProbe.Status.FLOATING, masked(w, removed, cut).run());
+   }
+
+   @Test
+   void upperFloorsOverhangingTheLobbyFallWithIt() {
+      // found in Atheria: the tower's facade is wider than its lobby and touches the next building
+      World w = new World();
+      SupportProbeTest.tower(w, 2, 2, 12, 64, 70); // the lobby
+      SupportProbeTest.tower(w, 0, 0, 16, 71, 130); // the tower above, one to two blocks wider on every side
+      w.box(0, 71, 0, 15, 71, 15, CollapseAnalyzer.STRUCTURE); // its first floor rests on the lobby walls
+      SupportProbeTest.tower(w, 0, -16, 16, 64, 110); // the neighbour, wall to wall with the tower's north face
+      long[] removed = w.carve(2, 64, 2, 13, 66, 13);
+      assertEquals(SupportProbe.Status.GROUNDED, SupportProbeTest.probe(w, removed, null, false).run(), "the neighbour holds it");
+      BaseCut cut = BaseCut.of(removed);
+      assertNotNull(cut);
+      SupportProbe p = masked(w, removed, cut);
+      assertEquals(SupportProbe.Status.FLOATING, p.run(), p.reason());
+      assertTrue(p.contactShare() <= BaseCut.MAX_CONTACT, "one side of four: " + p.contactShare());
+      int facade = 0;
+      for (long k : p.floatingBlocks()) {
+         assertTrue(BlockKey.z(k) >= 0, "the neighbour stays: " + BlockKey.z(k));
+         if (BlockKey.x(k) == 0 || BlockKey.x(k) == 15) {
+            facade++;
+         }
+      }
+      assertTrue(facade > 500, "the overhanging facade falls with the tower: " + facade);
    }
 
    @Test
