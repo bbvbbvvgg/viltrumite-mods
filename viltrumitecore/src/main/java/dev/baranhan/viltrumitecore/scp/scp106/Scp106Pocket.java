@@ -430,6 +430,41 @@ public final class Scp106Pocket {
       }
    }
 
+   /** Caught by a hunter inside: hurt (never to death), blinded, and dropped somewhere far away in the same instance. */
+   public static void drag(ServerPlayer p, Scp106Entity by) {
+      PocketSession s = data(p.server).session(p.getUUID());
+      if (s == null || !inPocket(p)) {
+         return;
+      }
+      float dmg = Math.min(Scp106Rules.DRAG_DAMAGE, p.getHealth() - 1.0F);
+      if (dmg > 0) {
+         p.hurt(p.damageSources().mobAttack(by), dmg);
+      }
+      PocketLayout l = PocketWorld.layout(s.slot);
+      List<int[]> landings = l.abyssLandings();
+      int ox = PocketLayout.slotOriginX(s.slot);
+      int oz = PocketLayout.slotOriginZ(s.slot);
+      int[] at = landings.get(RANDOM.nextInt(landings.size()));
+      for (int i = 0; i < 8; i++) {
+         int[] c = landings.get(RANDOM.nextInt(landings.size()));
+         if (p.distanceToSqr(ox + c[0] + 0.5, c[1], oz + c[2] + 0.5) > 80 * 80) {
+            at = c;
+            break;
+         }
+      }
+      p.connection.teleport(ox + at[0] + 0.5, at[1], oz + at[2] + 0.5, p.getYRot(), p.getXRot());
+      p.setDeltaMovement(Vec3.ZERO);
+      p.fallDistance = 0;
+      LAST.put(p.getUUID(), p.position());
+      p.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 70, 0, false, false));
+      p.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 120, 0, false, false));
+      s.drags++;
+      s.nextStalk = Math.max(s.nextStalk, now(p.server) + Scp106Rules.stalkerDelay(RANDOM.nextDouble()));
+      data(p.server).setDirty();
+      CoreMessages.sendToPlayer(new Scp106S2CPacket(Scp106S2CPacket.SCARE, SCARE_DRAG, 0, 0L), p);
+      tell(p, "scp106.pocket.dragged", "It dragged you through the walls. You are somewhere else now.");
+   }
+
    /** Falling into a bottomless place never kills: the place puts the body somewhere else. */
    private static void abyss(ServerPlayer p, PocketSession s, PocketLayout l) {
       List<int[]> landings = l.abyssLandings();
