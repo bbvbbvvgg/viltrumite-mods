@@ -61,6 +61,10 @@ public final class CityCommands {
             .then(Commands.argument("count", IntegerArgumentType.integer(1, CityManager.ABSOLUTE_MAX))
                .suggests((c, b) -> b.suggest(20).suggest(50).suggest(100).buildFuture())
                .executes(c -> populate(c, IntegerArgumentType.getInteger(c, "count")))))
+         .then(Commands.literal("occupants").requires(s -> s.hasPermission(2))
+            .then(Commands.argument("count", IntegerArgumentType.integer(1, 64))
+               .suggests((c, b) -> b.suggest(4).suggest(8).suggest(16).buildFuture())
+               .executes(c -> occupants(c, IntegerArgumentType.getInteger(c, "count")))))
          .then(Commands.literal("clear").requires(s -> s.hasPermission(2)).executes(CityCommands::clear))
          .then(Commands.literal("reset").requires(s -> s.hasPermission(2))
             .executes(CityCommands::resetWarn)
@@ -89,7 +93,7 @@ public final class CityCommands {
 
    private static int help(CommandContext<CommandSourceStack> c) {
       ok(c, line("viltrumitecore.city.help.title").withStyle(ChatFormatting.GOLD), false);
-      for (String k : new String[]{"enable", "disable", "density", "populate", "clear", "status", "reset", "power", "help"}) {
+      for (String k : new String[]{"enable", "disable", "density", "populate", "occupants", "clear", "status", "reset", "power", "help"}) {
          ok(c, Component.literal(" /city " + k + " ").withStyle(ChatFormatting.YELLOW)
             .append(line("viltrumitecore.city.help." + k).withStyle(ChatFormatting.GRAY)), false);
       }
@@ -163,6 +167,14 @@ public final class CityCommands {
       }
 
       ok(c, line("viltrumitecore.city.status.crowd", calm, alarmed, fleeing, hiding, m.threats.lastFound), false);
+      int upstairs = 0;
+      for (CitizenEntity ce : m.citizens) {
+         if (ce.occupant) {
+            upstairs++;
+         }
+      }
+
+      ok(c, line("viltrumitecore.city.status.peril", dev.baranhan.viltrumitecore.city.citizen.CitizenPeril.statusArgs(m.level, upstairs)), false);
       if (m.restore.running()) {
          ok(c, line("viltrumitecore.city.status.restore_running", m.restore.restoredBlocks(), m.restore.chunksLeft(), m.restore.pass())
             .withStyle(ChatFormatting.YELLOW), false);
@@ -223,6 +235,21 @@ public final class CityCommands {
       Vec3 at = c.getSource().getPosition();
       int made = m.population.populate(at, n);
       ok(c, line("viltrumitecore.city.populated", made, n), true);
+      return made;
+   }
+
+   private static int occupants(CommandContext<CommandSourceStack> c, int n) throws CommandSyntaxException {
+      CityManager m = city(c);
+      if (m.restore.running()) {
+         throw RESTORING.create();
+      }
+
+      if (!m.enabled) {
+         throw NOT_ENABLED.create();
+      }
+
+      int made = m.population.occupants(c.getSource().getPosition(), n);
+      ok(c, line("viltrumitecore.city.occupants", made, n), true);
       return made;
    }
 
