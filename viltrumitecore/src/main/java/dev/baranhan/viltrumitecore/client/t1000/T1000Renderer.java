@@ -63,7 +63,9 @@ public final class T1000Renderer extends CitizenRenderer {
          if (T1000Body.invisible(f)) {
             return;
          }
+         long t0 = System.nanoTime();
          T1000Body.render(f, model, pose, buffers, light);
+         T1000Qa.record(System.nanoTime() - t0);
       }
    }
 }
