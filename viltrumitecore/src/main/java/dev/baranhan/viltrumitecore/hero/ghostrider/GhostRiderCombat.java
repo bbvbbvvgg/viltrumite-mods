@@ -239,6 +239,7 @@ public final class GhostRiderCombat {
       state.chainId = t.getId();
       state.chainUuid = t.getUUID();
       state.chainTicks = 0;
+      state.chainHold = null;
       boolean pull = pullable(t) && acquirePull(player, state, t, GhostRiderRules.YANK_TICKS + GhostRiderRules.HOOK_HOLD_TICKS
          + GhostRiderRules.WHIRL_TICKS + GhostRiderRules.SLAM_TICKS + 20);
       state.pulling = pull;
@@ -327,7 +328,16 @@ public final class GhostRiderCombat {
       }
       if (state.pulling && state.chainTicks <= GhostRiderRules.YANK_TICKS + GhostRiderRules.HOOK_HOLD_TICKS && !state.running()) {
          // held at the end of the chain, waiting for the whirl or for the hold to end
-         t.setDeltaMovement(Vec3.ZERO);
+         if (t instanceof ServerPlayer) {
+            // a player moves on its own client: a zero velocity set here never reaches it, so a hooked player walked
+            // out of the hold at once (QA, dedicated server 2026-11-02); place() pulls it back where the yank left it
+            if (state.chainHold == null) {
+               state.chainHold = t.position();
+            }
+            place(t, state.chainHold);
+         } else {
+            t.setDeltaMovement(Vec3.ZERO);
+         }
          return;
       }
       if (!state.running() && state.chainTicks > GhostRiderRules.YANK_TICKS + GhostRiderRules.HOOK_HOLD_TICKS) {
@@ -402,6 +412,7 @@ public final class GhostRiderCombat {
       state.chainTicks = 0;
       state.towing = false;
       state.pulling = false;
+      state.chainHold = null;
    }
 
    // --- timeline ---------------------------------------------------------------------------------------------

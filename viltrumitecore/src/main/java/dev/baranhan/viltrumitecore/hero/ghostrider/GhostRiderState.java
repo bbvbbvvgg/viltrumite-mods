@@ -48,6 +48,8 @@ public final class GhostRiderState {
    public int chainTicks;
    public boolean towing;
    public boolean pulling;
+   /** Where a hooked player is held after the yank (a player's body moves on its own client). Not saved. */
+   @Nullable public Vec3 chainHold;
 
    // Penance Stare
    public int stareId = -1;
