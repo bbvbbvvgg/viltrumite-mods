@@ -75,7 +75,7 @@ final class WishSceneFx {
       }
       play(mc, scene, style == WishStyle.MORTAL ? WishSounds.RETURN : WishSounds.GRANTED, 1.0F, 1.0F);
       float shake = switch (style) {
-         case THUNDER, CRIMSON, HELLFIRE -> 0.9F;
+         case THUNDER, CRIMSON, HELLFIRE, SYMBIOTE -> 0.9F;
          case HOLY, SHADOW, TIME -> 0.55F;
          case MORTAL -> 0.0F;
          default -> 0.35F;
@@ -123,6 +123,7 @@ final class WishSceneFx {
          case STILL -> still(b, cam, camera, scene, c, t, w, glow, s);
          case SHIELD -> shield(b, cam, camera, c, t, w, glow, s);
          case HELLFIRE -> hellfire(b, cam, camera, scene, c, t, w, glow, s);
+         case SYMBIOTE -> symbiote(b, cam, camera, scene, c, t, w, glow, s);
          case MORTAL -> mortal(b, cam, camera, scene, c, t, w, glow, s);
       }
    }
@@ -455,6 +456,65 @@ final class WishSceneFx {
          PixelVfx.beamDots(b, cam, camera, c.add(0, 0.1, 0), c.add(0, 3 + 9 * k, 0), 0.3F, 0.09F, 255, 110, 30, (int)(210 * k * w));
          float run = Math.max(0, dt) / 16.0F;
          ringH(b, cam, camera, c.add(0, 0.08, 0), 0.6F + 5.0F * run, 48, 0, 0.06F, s.primary, (int)(230 * (1 - run) * w));
+      }
+   }
+
+   /**
+    * Venom: black tendrils crawl out of the ground, coil up around him and close over his head like a cocoon; on
+    * the swap the cocoon bursts, two white slit eyes open at head height and a dark ring races over the ground.
+    * The tendrils are drawn in the solid pass (black does not glow), the eyes, the violet sheen and the ring in
+    * the glow pass.
+    */
+   private static void symbiote(BufferBuilder b, Vec3 cam, Camera camera, WishScene scene, Vec3 c, float t, float w, boolean glow, WishStyle s) {
+      if (w <= 0) {
+         return;
+      }
+      float build = Mth.clamp((t - WishTimeline.CALL_END) / (float)(WishTimeline.SWAP - WishTimeline.CALL_END), 0, 1);
+      float dt = t - WishTimeline.SWAP;
+      // after the swap the tendrils fly apart instead of closing in
+      float burst = dt <= 0 ? 0 : Math.min(1, dt / 10.0F);
+      int tendrils = 9;
+      int links = 22;
+      for (int i = 0; i < tendrils; i++) {
+         double base = i * Math.PI * 2 / tendrils + hash(scene.seed, i) * 0.6;
+         double twist = 1.6 + 0.8 * hash(scene.seed, i + 20);
+         for (int k = 0; k < links; k++) {
+            float v = k / (float)links;
+            if (v > build * 1.05F) {
+               break;
+            }
+            double wave = 0.12 * Math.sin(t * 0.21 + i * 1.7 + v * 9);
+            double a = base + v * twist + t * 0.03;
+            // the coil narrows towards the head, then the cocoon closes over it
+            double r = (1.25 - 0.85 * v) * (1 + 2.4 * burst) + wave;
+            double h = 0.05 + 2.25 * v * Math.min(1, build * 1.2) + 1.2 * burst * v;
+            Vec3 p = c.add(Math.cos(a) * r, h, Math.sin(a) * r);
+            int alpha = (int)(240 * w * (1 - burst) * (1 - 0.35F * v));
+            if (!glow) {
+               PixelVfx.billboardPixel(b, cam, camera, p, 0.06F * (1 - 0.55F * v), 16, 14, 22, alpha);
+            } else if ((k + i) % 4 == 0) {
+               PixelVfx.crossGlow(b, cam, camera, p, 0.025F, WishStyle.r(s.primary), WishStyle.g(s.primary), WishStyle.b(s.primary), alpha / 2);
+            }
+         }
+      }
+      if (!glow) {
+         return;
+      }
+      if (dt >= -3) {
+         float k = dt < 0 ? (dt + 3) / 3 : Math.max(0, 1 - dt / 18);
+         // two white slit eyes, a little apart, angled like the mask
+         Vec3 head = c.add(0, 1.72, 0);
+         Vec3 side = new Vec3(camera.getLeftVector());
+         for (int eye = -1; eye <= 1; eye += 2) {
+            Vec3 e0 = head.add(side.scale(eye * 0.09)).add(0, 0.03, 0);
+            Vec3 e1 = head.add(side.scale(eye * 0.24)).add(0, 0.09, 0);
+            PixelVfx.beamDots(b, cam, camera, e0, e1, 0.04F, 0.05F, WishStyle.r(s.secondary), WishStyle.g(s.secondary), WishStyle.b(s.secondary),
+               (int)(250 * k * w));
+         }
+         PixelVfx.crossGlow(b, cam, camera, head, 0.3F + 0.8F * k, WishStyle.r(s.primary), WishStyle.g(s.primary), WishStyle.b(s.primary),
+            (int)(170 * k * w));
+         float run = Math.max(0, dt) / 16.0F;
+         ringH(b, cam, camera, c.add(0, 0.08, 0), 0.6F + 5.2F * run, 48, 0, 0.07F, s.primary, (int)(210 * (1 - run) * w));
       }
    }
 

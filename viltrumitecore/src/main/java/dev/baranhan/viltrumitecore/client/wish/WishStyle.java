@@ -19,6 +19,7 @@ public enum WishStyle {
    SHIELD("shield", 0x3A78FF, 0xFFFFFF, 0.78F, 0.85F, 1.0F, 0.25F, "captain.charged", "captain.parry"),
    STILL("still", 0xE8EEF5, 0x9FB2C8, 0.8F, 0.82F, 0.88F, 0.3F, null, "regulus_impact_heavy"),
    HELLFIRE("hellfire", 0xFF6A1A, 0xFFD24A, 1.0F, 0.6F, 0.42F, 0.45F, "ghost_rider.skull_fire", "ghost_rider.transform"),
+   SYMBIOTE("symbiote", 0x8A78C8, 0xF2F2F7, 0.55F, 0.5F, 0.72F, 0.6F, "venom.squirm", "venom.roar"),
    MORTAL("mortal", 0xFFE3A3, 0xFFFFFF, 1.0F, 0.95F, 0.85F, 0.0F, null, null);
 
    /** Od Lagna's own gold: the shared ring, motes and title. */

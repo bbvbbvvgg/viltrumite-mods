@@ -20,7 +20,8 @@ public final class InteractionFxRecipes {
    public static List<FxRecipe> all() {
       return List.of(shieldShatter(), stormShield(), meteorBurst(), meteorSplit(), overcharge(), divineClash(), legionMark(), titanFling(), stormRebound(),
          vibraniumRing(), repulsorSplit(), repulsorShard(), timeRewind(), lionStrain(), shieldCrush(), meteorCleave(), meteorHurl(), shadowExchange(),
-         leviathanImpact(), legionDischarge(), spineArc(), leviathanHalt());
+         leviathanImpact(), legionDischarge(), spineArc(), leviathanHalt(),
+         symbioteScald());
    }
 
    /** Reid tears the guard aside: a hard white flash, the shield's sparks thrown back, a tight ring, a heavy shake. */
@@ -279,6 +280,17 @@ public final class InteractionFxRecipes {
          .shockwave(0, 26, 6.0F, 1.6F)
          .debris(0, 18, 4.5F, 0.9F)
          .sparks(0, 26, 70, 0.7F)
+         .build();
+   }
+
+   /** Hellfire on a symbiote: a hot flash, scorch marks, sparks, smoke and a short shake. */
+   static FxRecipe symbioteScald() {
+      return FxRecipe.builder(InteractionFx.SYMBIOTE_SCALD)
+         .flash(0, 10, 2.2F)
+         .scorch(0, 60, 1.6F, 7)
+         .sparks(0, 22, 45, 0.45F)
+         .dust(2, 1.8F, 30)
+         .shake(0, 0.7F, 20.0F)
          .build();
    }
 }
