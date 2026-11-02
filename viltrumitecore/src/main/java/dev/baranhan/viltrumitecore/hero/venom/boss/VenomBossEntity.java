@@ -15,6 +15,12 @@ import dev.baranhan.viltrumitecore.hero.venom.VenomSounds;
 import dev.baranhan.viltrumitecore.hero.venom.VenomTargets;
 import dev.baranhan.viltrumitecore.hero.venom.VenomWeakness;
 import dev.baranhan.viltrumitecore.network.packet.VenomDriveC2SPacket;
+import dev.baranhan.viltrumitecore.hero.speech.HeroLine;
+import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
+import dev.baranhan.viltrumitecore.hero.venom.boss.VenomBossBrain.Attack;
+import dev.baranhan.viltrumitecore.hero.venom.boss.VenomBossBrain.Phase;
+import dev.baranhan.viltrumitecore.hero.venom.boss.VenomBossBrain.Threat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -30,6 +36,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -42,6 +50,7 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -52,12 +61,36 @@ import net.minecraft.world.phys.Vec3;
  * allows ({@code venomBossPossession}), the host takeover of a weakened player through the same server manager the
  * player Venom uses (shorter, same end rules, same immunity). Its moves reuse {@link VenomMove} so the client poses it
  * with the player's clips.
+ * <p>
+ * Three phases and an adaptive mind ({@link VenomBossBrain}, spec §9.2-§9.4): at two thirds of its health it roars
+ * into the FRENZY (faster, the tendril impale and the crashing dive), at one third into STARVING (the boss bar turns
+ * white and darkens the sky; tendril storms burst from the ground under the target after a visible mark, and a held
+ * victim is bitten, which heals it unless fire stopped its regeneration). It reads how it is fought: arrows and beams
+ * raise a shell, kiting gets yanked and leapt at, a melee flurry is swept off, fire makes it jump back, a player on a
+ * roof is pounced on from the wall. Fire and loud sounds still make it recoil every time.
  */
 public class VenomBossEntity extends Monster implements VenomPossessor {
    static final EntityDataAccessor<Integer> MOVE = SynchedEntityData.defineId(VenomBossEntity.class, EntityDataSerializers.INT);
    static final EntityDataAccessor<Integer> SERIAL = SynchedEntityData.defineId(VenomBossEntity.class, EntityDataSerializers.INT);
    static final EntityDataAccessor<Integer> FLAGS = SynchedEntityData.defineId(VenomBossEntity.class, EntityDataSerializers.INT);
    static final EntityDataAccessor<Integer> TARGET = SynchedEntityData.defineId(VenomBossEntity.class, EntityDataSerializers.INT);
+   static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(VenomBossEntity.class, EntityDataSerializers.INT);
+   /** Shell against shooters (ticks) and what it lets through. */
+   static final int SHELL_TICKS = 50;
+   static final float SHELL_PROJECTILE_TAKEN = 0.25F;
+   /** The phase roar: damage taken while it roars, the push ring. */
+   static final float ROAR_TAKEN = 0.3F;
+   static final double ROAR_RADIUS = 6.0;
+   /** Tendril storm: spikes per wave, the ring radius, the mark-to-burst delay, the second wave. */
+   static final int STORM_SPIKES = 5;
+   static final double STORM_RING = 2.6;
+   static final int STORM_DELAY = 14;
+   static final int STORM_SECOND_WAVE = 22;
+   static final double SPIKE_RADIUS = 1.4;
+   static final float SPIKE_DAMAGE = 10.0F;
+   /** The starving bite: damage and the health it eats back. */
+   static final float BITE_DAMAGE = 5.0F;
+   static final float BITE_HEAL = 8.0F;
    public static final float MAX_HEALTH = 300.0F;
 
    private final ServerBossEvent bossBar = new ServerBossEvent(Component.translatable("entity.viltrumitecore.venom_boss"), BossEvent.BossBarColor.PURPLE,
@@ -65,7 +98,14 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
    @Nullable private VenomMove move;
    private int elapsed;
    private int combo;
-   private int clawCd, tendrilCd, leapCd, lashCd, takeoverCd, recoilImmune;
+   private final VenomBossBrain brain = new VenomBossBrain();
+   private int recoilImmune;
+   private int shellTicks;
+   private boolean diving;
+   private int airTicks;
+   private int tauntCd;
+   private final List<Spike> spikes = new ArrayList<>();
+   private int stormWaveAt = -1;
    private int sinceHurt = 100, fireBlock;
    private int heldId = -1;
    @Nullable private UUID heldEffect;
@@ -99,6 +139,7 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       this.entityData.define(SERIAL, 0);
       this.entityData.define(FLAGS, VenomFlags.set(VenomFlags.set(0, VenomFlags.FORM, true), VenomFlags.RAGE, true));
       this.entityData.define(TARGET, -1);
+      this.entityData.define(PHASE, 0);
    }
 
    @Override
@@ -131,9 +172,22 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       return this.entityData.get(TARGET);
    }
 
+   /** 0 hunt, 1 frenzy, 2 starving (synced; the renderer grows the body with it). */
+   public int phaseId() {
+      return this.entityData.get(PHASE);
+   }
+
+   /** Server: the mind (tests and the /venom debug output read it). */
+   public VenomBossBrain brain() {
+      return this.brain;
+   }
+
    // --- server AI ----------------------------------------------------------------------------------------------
 
    private void start(VenomMove m) {
+      if (this.move == VenomMove.SHELL && m != VenomMove.SHELL) {
+         this.flag(VenomFlags.SHELL, false);
+      }
       this.move = m;
       this.elapsed = 0;
       this.entityData.set(MOVE, m.ordinal());
@@ -141,6 +195,9 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
    }
 
    private void endMove() {
+      if (this.move == VenomMove.SHELL) {
+         this.flag(VenomFlags.SHELL, false);
+      }
       this.move = null;
       this.elapsed = 0;
       this.entityData.set(MOVE, -1);
@@ -153,18 +210,36 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
    @Override
    protected void customServerAiStep() {
       super.customServerAiStep();
-      this.bossBar.setProgress(this.getHealth() / this.getMaxHealth());
+      float health = this.getHealth() / this.getMaxHealth();
+      this.bossBar.setProgress(health);
+      Phase next = this.brain.health(health);
+      if (next != null) {
+         enterPhase(next, true);
+      }
+      this.brain.tick();
       tickTimers();
+      tickSpikes();
       if (this.possessing) {
          driveHost();
          return;
       }
       LivingEntity target = this.getTarget();
       holdTick(target);
+      tickDive();
       if (this.move != null) {
          this.elapsed++;
          if (this.elapsed == this.move.contact) {
             contact(this.move, target);
+         }
+         if (this.move == VenomMove.SHELL) {
+            // the shell walks on, slower; it hardens against what it learned to fear
+            if (target != null && target.isAlive()) {
+               this.getLookControl().setLookAt(target, 30.0F, 30.0F);
+               this.getNavigation().moveTo(target, 0.8 * this.brain.phase().speedScale);
+            }
+            if (--this.shellTicks <= 0) {
+               endMove();
+            }
          }
          if (this.move != null && !this.move.loops() && this.elapsed >= this.move.length) {
             endMove();
@@ -178,57 +253,224 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
          return;
       }
       double d = this.distanceTo(target);
+      double above = target.getY() - this.getY();
+      this.brain.watch(d, above);
+      Threat learned = this.brain.newlyAdapted();
+      if (learned != null) {
+         taunt("boss_adapt_" + learned.name().toLowerCase(java.util.Locale.ROOT));
+      }
       this.getLookControl().setLookAt(target, 30.0F, 30.0F);
-      this.getNavigation().moveTo(target, 1.15);
+      this.getNavigation().moveTo(target, 1.15 * this.brain.phase().speedScale);
       // climbing: a wall in the way is just another floor
-      if (this.horizontalCollision && target.getY() > this.getY() - 1) {
+      boolean wall = this.horizontalCollision && target.getY() > this.getY() - 1;
+      if (wall) {
          Vec3 v = this.getDeltaMovement();
-         this.setDeltaMovement(v.x, Math.max(v.y, VenomRules.WALL_CLIMB_SPEED + 0.06), v.z);
-         this.flag(VenomFlags.WALL, true);
+         double climb = VenomRules.WALL_CLIMB_SPEED + (this.brain.adapted(Threat.HEIGHT) ? 0.16 : 0.06);
+         this.setDeltaMovement(v.x, Math.max(v.y, climb), v.z);
          this.fallDistance = 0;
-      } else {
-         this.flag(VenomFlags.WALL, false);
       }
+      this.flag(VenomFlags.WALL, wall);
       int nearby = VenomTargets.around(this, this.position(), 4.5, e -> e != this && e instanceof Player p && !p.isCreative() && !p.isSpectator()).size();
-      if (this.takeoverCd <= 0 && d < VenomRules.TAKEOVER_RANGE && target instanceof ServerPlayer host && VenomPossession.bossMayPossess()
-         && host.getHealth() / host.getMaxHealth() <= VenomRules.TAKEOVER_HEALTH_FRACTION && VenomPossession.eligible(this, host)) {
-         if (VenomPossession.engulfByBoss(this, host)) {
-            this.start(VenomMove.ENGULF);
-            this.takeoverCd = 20 * 45;
-            return;
+      boolean mayTakeover = target instanceof ServerPlayer host && VenomPossession.bossMayPossess()
+         && host.getHealth() / host.getMaxHealth() <= this.brain.takeoverFraction() && VenomPossession.eligible(this, host);
+      Attack attack = this.brain.choose(new VenomBossBrain.Situation(d, above, this.hasLineOfSight(target), this.onGround(), wall, nearby, mayTakeover));
+      perform(attack, target, d);
+   }
+
+   /** Starts what the brain chose; {@link VenomBossBrain#used} only once it really began. */
+   private void perform(Attack attack, LivingEntity target, double d) {
+      switch (attack) {
+         case ROAR -> {
+            releaseHeld(null);
+            this.start(VenomMove.RAGE);
+            this.brain.used(Attack.ROAR);
+            VenomSounds.play(this, VenomSounds.ROAR, 2.0F, this.brain.phase() == Phase.STARVING ? 0.7F : 0.8F);
+            VenomFx.send(this, VenomFx.TRANSFORM, VenomTargets.center(this), null, 1.6F, 0);
          }
-         this.takeoverCd = 100;
+         case TAKEOVER -> {
+            if (target instanceof ServerPlayer host && VenomPossession.engulfByBoss(this, host)) {
+               this.start(VenomMove.ENGULF);
+               this.brain.used(Attack.TAKEOVER);
+            } else {
+               this.brain.delay(Attack.TAKEOVER, 100);
+            }
+         }
+         case RETREAT -> {
+            Vec3 away = VenomTargets.flat(this.position().subtract(target.position()));
+            away = away.lengthSqr() < 1.0E-4 ? VenomTargets.flat(this.getLookAngle()).scale(-1) : away.normalize();
+            this.setDeltaMovement(away.scale(1.1).add(0, 0.55, 0));
+            this.hasImpulse = true;
+            this.brain.used(Attack.RETREAT);
+            VenomSounds.play(this, VenomSounds.SQUIRM, 1.0F, VenomSounds.jitter(this, 1.1F));
+            VenomFx.send(this, VenomFx.LEAP, this.position(), null, 0.7F, 0);
+         }
+         case LASH_SWEEP -> {
+            this.start(VenomMove.LASH_SWEEP);
+            this.brain.used(Attack.LASH_SWEEP);
+            VenomSounds.play(this, VenomSounds.LASH, 1.0F, 0.9F);
+         }
+         case STORM -> {
+            this.start(VenomMove.SLAM);
+            this.brain.used(Attack.STORM);
+            VenomSounds.play(this, VenomSounds.LASH, 1.3F, 0.7F);
+         }
+         case SHELL -> {
+            this.start(VenomMove.SHELL);
+            this.shellTicks = SHELL_TICKS;
+            this.flag(VenomFlags.SHELL, true);
+            this.brain.used(Attack.SHELL);
+            VenomSounds.play(this, VenomSounds.SHELL, 1.1F, VenomSounds.jitter(this, 0.9F));
+         }
+         case POUNCE, DIVE -> {
+            Vec3 to = target.position().subtract(this.position());
+            double[] v = VenomBossBrain.pounce(to.x, attack == Attack.DIVE ? Math.max(to.y, 8.0) : to.y, to.z);
+            this.setDeltaMovement(v[0], v[1], v[2]);
+            this.hasImpulse = true;
+            this.diving = true;
+            this.airTicks = 0;
+            this.flag(VenomFlags.WALL, false);
+            this.brain.used(attack);
+            VenomFx.send(this, VenomFx.LEAP, this.position(), null, 1.3F, 0);
+            VenomSounds.play(this, VenomSounds.ROAR, 1.3F, VenomSounds.jitter(this, 0.8F));
+         }
+         case CLAW -> {
+            this.combo = (this.combo + 1) % 3;
+            this.start(VenomMove.claw(this.combo));
+            this.brain.used(Attack.CLAW);
+            if (this.combo == 2) {
+               this.brain.delay(Attack.CLAW, Math.round(22 * this.brain.phase().cooldownScale));
+            }
+            VenomSounds.play(this, VenomSounds.CLAW, 0.9F, VenomSounds.jitter(this, 0.9F));
+         }
+         case IMPALE -> {
+            this.start(VenomMove.LASH_IMPALE);
+            this.entityData.set(TARGET, target.getId());
+            this.brain.used(Attack.IMPALE);
+            VenomSounds.play(this, VenomSounds.LASH, 1.0F, 1.1F);
+         }
+         case TENDRIL -> {
+            this.start(VenomMove.TENDRIL_SHOT);
+            this.brain.used(Attack.TENDRIL);
+            VenomSounds.play(this, VenomSounds.TENDRIL_SHOT, 1.0F, 1.0F);
+         }
+         case LEAP -> {
+            Vec3 to = target.position().subtract(this.position());
+            Vec3 flat = new Vec3(to.x, 0, to.z).normalize();
+            this.setDeltaMovement(flat.scale(Math.min(1.6, d * 0.09)).add(0, 0.95, 0));
+            this.hasImpulse = true;
+            this.brain.used(Attack.LEAP);
+            VenomFx.send(this, VenomFx.LEAP, this.position(), null, 1.2F, 0);
+            VenomSounds.play(this, VenomSounds.ROAR, 1.2F, VenomSounds.jitter(this, 0.85F));
+         }
+         case NONE -> {
+         }
       }
-      if (nearby >= 2 && this.lashCd <= 0) {
-         this.start(VenomMove.LASH_SWEEP);
-         this.lashCd = 80;
-         VenomSounds.play(this, VenomSounds.LASH, 1.0F, 0.9F);
-      } else if (d < 3.6 && this.clawCd <= 0) {
-         this.combo = (this.combo + 1) % 3;
-         this.start(VenomMove.claw(this.combo));
-         this.clawCd = this.combo == 2 ? 22 : 11;
-         VenomSounds.play(this, VenomSounds.CLAW, 0.9F, VenomSounds.jitter(this, 0.9F));
-      } else if (d > 6 && d < VenomRules.TENDRIL_RANGE * 0.7 && this.tendrilCd <= 0 && this.hasLineOfSight(target)) {
-         this.start(VenomMove.TENDRIL_SHOT);
-         this.tendrilCd = 90;
-         VenomSounds.play(this, VenomSounds.TENDRIL_SHOT, 1.0F, 1.0F);
-      } else if (d > 9 && this.leapCd <= 0 && this.onGround()) {
-         Vec3 to = target.position().subtract(this.position());
-         Vec3 flat = new Vec3(to.x, 0, to.z).normalize();
-         this.setDeltaMovement(flat.scale(Math.min(1.6, d * 0.09)).add(0, 0.95, 0));
-         this.hasImpulse = true;
-         this.leapCd = 70;
-         VenomFx.send(this, VenomFx.LEAP, this.position(), null, 1.2F, 0);
-         VenomSounds.play(this, VenomSounds.ROAR, 1.2F, VenomSounds.jitter(this, 0.85F));
+   }
+
+   /** A phase border: the bar, the synced phase, the line (the roar itself comes from the brain). */
+   private void enterPhase(Phase phase, boolean announce) {
+      this.entityData.set(PHASE, phase.ordinal());
+      this.bossBar.setColor(switch (phase) {
+         case HUNT -> BossEvent.BossBarColor.PURPLE;
+         case FRENZY -> BossEvent.BossBarColor.RED;
+         case STARVING -> BossEvent.BossBarColor.WHITE;
+      });
+      this.bossBar.setDarkenScreen(phase == Phase.STARVING);
+      if (announce && phase != Phase.HUNT) {
+         this.tauntCd = 0;
+         taunt(phase == Phase.FRENZY ? "boss_frenzy" : "boss_starving");
+      }
+   }
+
+   /** A subtitle line to the players around (text only; the boss has no voice audio, like the player Venom). */
+   private void taunt(String key) {
+      if (this.tauntCd > 0 || !(this.level() instanceof ServerLevel level)) {
+         return;
+      }
+      this.tauntCd = 160;
+      List<ServerPlayer> audience = new ArrayList<>();
+      for (ServerPlayer p : level.players()) {
+         if (p.distanceToSqr(this) < 48 * 48) {
+            audience.add(p);
+         }
+      }
+      HeroSpeech.announce(audience, this, "venom", "venom:" + key, "subtitle.viltrumitecore.speaker.venom",
+         List.of("subtitle.viltrumitecore.venom." + key), HeroLine.Priority.ULTIMATE);
+   }
+
+   /** The end of a pounce or a dive: the tendrils slam out where it lands. */
+   private void tickDive() {
+      if (!this.diving) {
+         return;
+      }
+      this.airTicks++;
+      if (this.airTicks > 80 || this.isInWater() || this.isInLava()) {
+         this.diving = false;
+         return;
+      }
+      if (this.airTicks > 3 && this.onGround()) {
+         this.diving = false;
+         if (this.move == null || this.move.cancellable(this.elapsed)) {
+            this.start(VenomMove.LASH_SLAM);
+            VenomSounds.play(this, VenomSounds.SLAM, 1.2F, 0.85F);
+         }
+      }
+   }
+
+   /** One spike of the tendril storm: marked on the ground, bursting {@link #STORM_DELAY} ticks later. */
+   private record Spike(Vec3 at, int burstAt) {
+   }
+
+   private void stormWave(LivingEntity target) {
+      Vec3 feet = target.position();
+      spike(feet);
+      double turn = this.random.nextDouble() * Math.PI * 2;
+      for (int i = 0; i < STORM_SPIKES; i++) {
+         double a = turn + i * Math.PI * 2 / STORM_SPIKES;
+         spike(feet.add(Math.cos(a) * STORM_RING, 0, Math.sin(a) * STORM_RING));
+      }
+      VenomSounds.playAt(this, feet, VenomSounds.TENDRIL_STICK, 1.0F, 0.7F);
+   }
+
+   private void spike(Vec3 at) {
+      this.spikes.add(new Spike(at, this.tickCount + STORM_DELAY));
+      VenomFx.send(this, VenomFx.STICK, at.add(0, 0.05, 0), null, 0.8F, 0);
+   }
+
+   private void tickSpikes() {
+      if (this.stormWaveAt >= 0 && this.tickCount >= this.stormWaveAt) {
+         this.stormWaveAt = -1;
+         LivingEntity target = this.getTarget();
+         if (target != null && target.isAlive() && target.distanceToSqr(this) < 24 * 24 && !this.possessing) {
+            stormWave(target);
+         }
+      }
+      if (this.spikes.isEmpty()) {
+         return;
+      }
+      List<Spike> due = new ArrayList<>();
+      this.spikes.removeIf(sp -> {
+         if (this.tickCount >= sp.burstAt()) {
+            due.add(sp);
+            return true;
+         }
+         return false;
+      });
+      for (Spike sp : due) {
+         Vec3 at = sp.at();
+         for (LivingEntity e : VenomTargets.around(this, at.add(0, 0.8, 0), SPIKE_RADIUS, e -> e != this && legal(e) && !VenomPossession.involved(e))) {
+            if (VenomTargets.strike(this, e, SPIKE_DAMAGE)) {
+               VenomTargets.push(e, new Vec3(0, 0.85, 0));
+               VenomFx.send(this, VenomFx.CLAW, VenomTargets.center(e), at, 1.0F, 0);
+            }
+         }
+         VenomFx.send(this, VenomFx.SLAM, at, null, 0.55F, 0);
+         VenomSounds.playAt(this, at, VenomSounds.LASH, 0.9F, VenomSounds.jitter(this, 1.15F));
       }
    }
 
    private void tickTimers() {
-      if (this.clawCd > 0) this.clawCd--;
-      if (this.tendrilCd > 0) this.tendrilCd--;
-      if (this.leapCd > 0) this.leapCd--;
-      if (this.lashCd > 0) this.lashCd--;
-      if (this.takeoverCd > 0) this.takeoverCd--;
+      if (this.tauntCd > 0) this.tauntCd--;
       if (this.recoilImmune > 0) this.recoilImmune--;
       if (this.fireBlock > 0) this.fireBlock--;
       if (this.sinceHurt < 1000) this.sinceHurt++;
@@ -269,6 +511,45 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
                dev.baranhan.viltrumitecore.hero.venom.VenomThrows.track(this, held, VenomRules.THROW_IMPACT_DAMAGE);
                VenomSounds.play(this, VenomSounds.THROW, 1.0F, 0.9F);
             }
+         }
+         case LASH_IMPALE -> {
+            Vec3 eye = this.getEyePosition();
+            Vec3 look = target != null ? VenomTargets.center(target).subtract(eye).normalize() : this.getLookAngle();
+            Vec3 end = VenomTargets.clip(this, eye, eye.add(look.scale(VenomBossBrain.IMPALE_MAX)));
+            for (LivingEntity e : VenomTargets.along(this, eye, end, 0.8, e -> e != this && legal(e))) {
+               if (VenomTargets.strike(this, e, VenomRules.LASH_IMPALE_DAMAGE + 1.0F)) {
+                  VenomTargets.push(e, look.scale(0.6).add(0, 0.25, 0));
+                  VenomFx.send(this, VenomFx.CLAW, VenomTargets.center(e), eye, 1.2F, 0);
+                  VenomSounds.playAt(this, VenomTargets.center(e), VenomSounds.CLAW_HIT, 1.0F, VenomSounds.jitter(this, 0.8F));
+               }
+            }
+            VenomFx.send(this, VenomFx.STICK, end, eye, 1.0F, 0);
+            this.entityData.set(TARGET, -1);
+         }
+         case SLAM -> {
+            // the tendril storm: the hands go into the ground, the spikes come out under the target
+            VenomFx.send(this, VenomFx.SLAM, this.position(), null, 1.0F, 0);
+            if (target != null && target.isAlive()) {
+               stormWave(target);
+               this.stormWaveAt = this.tickCount + STORM_SECOND_WAVE;
+            }
+         }
+         case LASH_SLAM -> {
+            double r = VenomRules.LASH_SLAM_RADIUS + 0.5;
+            for (LivingEntity e : VenomTargets.around(this, this.position(), r, e -> e != this && legal(e))) {
+               if (VenomTargets.strike(this, e, VenomRules.LASH_SLAM_DAMAGE)) {
+                  VenomTargets.push(e, VenomTargets.outward(this.position(), e).scale(1.0).add(0, 0.5, 0));
+               }
+            }
+            VenomFx.send(this, VenomFx.SLAM, this.position(), null, 1.5F, 0);
+            VenomSounds.play(this, VenomSounds.SLAM, 1.4F, 0.8F);
+         }
+         case RAGE -> {
+            for (LivingEntity e : VenomTargets.around(this, VenomTargets.center(this), ROAR_RADIUS, e -> e != this && legal(e))) {
+               VenomTargets.strike(this, e, 4.0F);
+               VenomTargets.push(e, VenomTargets.outward(this.position(), e).scale(1.2).add(0, 0.45, 0));
+            }
+            VenomFx.send(this, VenomFx.SLAM, this.position(), null, 1.6F, 0);
          }
          case LASH_SWEEP -> {
             for (LivingEntity e : VenomTargets.around(this, VenomTargets.center(this), VenomRules.LASH_SWEEP_RADIUS, e -> e != this && legal(e))) {
@@ -331,7 +612,17 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       if (this.move == VenomMove.PULL && d.length() < 1.6) {
          this.start(VenomMove.HOLD);
       }
-      if (this.move == VenomMove.HOLD && this.holdTicks > 30) {
+      boolean starving = this.brain.phase() == Phase.STARVING;
+      if (starving && this.move == VenomMove.HOLD && VenomBossBrain.biteAt(this.holdTicks) && VenomTargets.strike(this, t, BITE_DAMAGE)) {
+         // the starving symbiote eats: it heals, unless fire stopped its regeneration
+         if (this.fireBlock <= 0) {
+            this.heal(BITE_HEAL);
+         }
+         VenomFx.send(this, VenomFx.CLAW, VenomTargets.center(t), VenomTargets.center(this), 1.1F, 0);
+         VenomSounds.playAt(this, VenomTargets.center(t), VenomSounds.CLAW_HIT, 1.0F, VenomSounds.jitter(this, 0.75F));
+         VenomSounds.play(this, VenomSounds.GRAB, 0.8F, VenomSounds.jitter(this, 0.8F));
+      }
+      if (this.move == VenomMove.HOLD && this.holdTicks > (starving ? 40 : 30)) {
          this.start(VenomMove.THROW);
       }
       if (this.holdTicks > 90) {
@@ -448,6 +739,7 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       List<VenomBossEntity> bosses = level.getEntitiesOfClass(VenomBossEntity.class, new AABB(at, at).inflate(VenomRules.SOUND_RADIUS * 3));
       for (VenomBossEntity boss : bosses) {
          if (VenomWeakness.loud(id, volume, boss.position().distanceTo(at))) {
+            boss.brain.hurt(Threat.SOUND, 6.0F);
             boss.recoil();
          }
       }
@@ -455,13 +747,35 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
 
    @Override
    public boolean hurt(DamageSource source, float amount) {
+      if (this.level().isClientSide || this.isInvulnerableTo(source)) {
+         return super.hurt(source, amount);
+      }
+      Entity attacker = source.getEntity();
+      boolean ranged = source.getDirectEntity() instanceof Projectile || source.is(DamageTypeTags.IS_PROJECTILE)
+         || attacker != null && attacker != this && attacker.distanceTo(this) > 6.0F;
       if (VenomTargets.fire(source)) {
          amount *= VenomRules.FIRE_TAKEN;
          this.fireBlock = VenomRules.FIRE_REGEN_BLOCK;
+         this.brain.hurt(Threat.FIRE, amount);
          recoil();
       } else if (VenomTargets.sonic(source)) {
          amount *= VenomRules.SONIC_TAKEN;
+         this.brain.hurt(Threat.SOUND, amount);
          recoil();
+      } else if (ranged) {
+         this.brain.hurt(Threat.RANGED, amount);
+         if (this.move == VenomMove.SHELL) {
+            amount *= SHELL_PROJECTILE_TAKEN;
+            VenomSounds.play(this, VenomSounds.SHELL, 0.6F, VenomSounds.jitter(this, 1.4F));
+         }
+      } else if (attacker != null && attacker != this) {
+         this.brain.hurt(Threat.MELEE, amount);
+         if (this.move == VenomMove.SHELL) {
+            amount *= 1.0F - VenomRules.SHELL_ABSORB;
+         }
+      }
+      if (this.move == VenomMove.RAGE) {
+         amount *= ROAR_TAKEN;
       }
       if (this.possessing) {
          amount *= VenomRules.HUSK_DAMAGE_TAKEN;
@@ -493,6 +807,8 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
    public void die(DamageSource source) {
       VenomPossession.endAllFor(this, VenomPossession.End.DEATH);
       releaseHeld(null);
+      this.spikes.clear();
+      this.stormWaveAt = -1;
       super.die(source);
    }
 
@@ -539,5 +855,8 @@ public class VenomBossEntity extends Monster implements VenomPossessor {
       if (this.hasCustomName()) {
          this.bossBar.setName(this.getDisplayName());
       }
+      // the phase follows the saved health, silently (no roar on a reload); adaptation starts fresh
+      this.brain.restore(this.getHealth() / this.getMaxHealth());
+      enterPhase(this.brain.phase(), false);
    }
 }

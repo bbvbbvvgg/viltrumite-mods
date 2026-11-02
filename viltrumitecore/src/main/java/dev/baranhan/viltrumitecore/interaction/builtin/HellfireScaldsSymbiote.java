@@ -26,7 +26,7 @@ import net.minecraft.world.phys.Vec3;
  * target; the player's side is played by {@code react(SYMBIOTE_SCALDED)}.
  */
 public final class HellfireScaldsSymbiote implements ContextualInteraction {
-   public static final InteractionSpec SPEC = new InteractionSpec("hellfire_scalds_symbiote", InteractionTrigger.HURT, 45, 60, 0);
+   public static final InteractionSpec SPEC = new InteractionSpec("hellfire_scalds_symbiote", InteractionTrigger.HURT, 38, 60, 0);
 
    @Override
    public InteractionSpec spec() {
