@@ -107,7 +107,7 @@
   "hud.viltrumitecore.thanos.move.reality_rewrite": "现实改写",
   "hud.viltrumitecore.thanos.hint.reality_rewrite": "离开红色地面；飞行者会被拽下",
   "hud.viltrumitecore.thanos.move.time_anomaly": "时间异常",
-  "hud.viltrumitecore.thanos.hint.time_anomaly": "被标记：两秒后你会被拉回此处",
+  "hud.viltrumitecore.thanos.hint.time_anomaly": "被标记：留在标记旁——两秒后离开的人会被拉回并受伤",
   "hud.viltrumitecore.thanos.move.mind_compulsion": "心灵强制",
   "hud.viltrumitecore.thanos.hint.mind_compulsion": "你会不由自主地走向他：队友可以让他踉跄来解救你",
   "hud.viltrumitecore.thanos.move.soul_harvest": "灵魂收割",
