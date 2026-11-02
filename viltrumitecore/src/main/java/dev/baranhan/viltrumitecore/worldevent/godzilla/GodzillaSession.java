@@ -61,6 +61,8 @@ public final class GodzillaSession {
    Vec3 waypoint;
    int waypointAge;
    int stuck;
+   /** Survey pause at a reached waypoint: no walking before this clock tick. */
+   int restUntil;
    final Map<UUID, Threat> threats = new HashMap<>();
    @Nullable
    UUID target;
@@ -206,6 +208,7 @@ public final class GodzillaSession {
       this.phaseTick++;
       this.cool();
       this.destruction.tick(level, this.rage(), this.phase == GodzillaPhase.RETREAT);
+      e.drag = GodzillaRules.wade(this.destruction.load());
       if (this.clock % 10 == 0) {
          this.updateThreats(level, e);
          this.updateBar(level, e);

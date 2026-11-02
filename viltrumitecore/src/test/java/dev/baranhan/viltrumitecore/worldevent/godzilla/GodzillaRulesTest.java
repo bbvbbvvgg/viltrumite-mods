@@ -197,6 +197,34 @@ class GodzillaRulesTest {
    }
 
    @Test
+   void theCityHoldsItBack() {
+      // open streets: full speed; a solid block of towers: slower, but never stuck
+      assertEquals(1.0F, GodzillaRules.wade(0.0F), 1.0E-6F);
+      assertEquals(1.0F - GodzillaRules.WADE_DEPTH, GodzillaRules.wade(1.0F), 1.0E-6F);
+      assertEquals(1.0F - GodzillaRules.WADE_DEPTH, GodzillaRules.wade(3.0F), 1.0E-6F);
+      float last = 2.0F;
+      for (int i = 0; i <= 20; i++) {
+         float w = GodzillaRules.wade(i / 20.0F);
+         assertTrue(w <= last, "wading never speeds it up");
+         last = w;
+      }
+      // the slowest wade still steps at least every 6 seconds
+      double step = GodzillaRules.GAIT_CYCLE / 2.0 / (GodzillaRules.WALK_SPEED * GodzillaRules.wade(1.0F));
+      assertTrue(step <= 120.0, "wading step every " + step + " ticks");
+   }
+
+   @Test
+   void theRampageLastsMinutesNotSeconds() {
+      // survey pauses between legs: a few seconds, never a stall
+      assertTrue(GodzillaRules.SURVEY_MIN >= 60 && GodzillaRules.SURVEY_MIN + GodzillaRules.SURVEY_SPREAD <= 300);
+      // the rampage share of the session budget outlasts 100 s of the full per-tick budget (the walk rarely uses it all)
+      assertTrue(GodzillaRules.blockCap(false) > GodzillaRules.BLOCKS_PER_TICK * 20 * 100);
+      // and the reset puts it all back within a minute (6000 blocks per tick)
+      assertTrue(GodzillaRules.MAX_BLOCKS / 6000 < 20 * 60);
+      assertTrue(GodzillaRules.TOWER_PULL > 0.0F && GodzillaRules.TOWER_PULL < 0.8F);
+   }
+
+   @Test
    void fxPacketsSurviveTheWire() {
       GodzillaFxS2CPacket p = new GodzillaFxS2CPacket(GodzillaFxS2CPacket.BEAM_BLAST, 10.5, -51.0, 2048.25, 0.25F, -1.0F, 0.5F, 1.75F, 7);
       FriendlyByteBuf b = new FriendlyByteBuf(Unpooled.buffer());
