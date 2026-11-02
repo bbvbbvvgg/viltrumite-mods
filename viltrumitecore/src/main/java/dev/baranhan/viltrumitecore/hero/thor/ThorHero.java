@@ -595,4 +595,11 @@ public final class ThorHero implements HeroDefinition {
          heroPlayer.viltrumitecore$setHeroState(state.erasedCopy());
       }
    }
+
+   /** Heaven's Door (docs/rohan/heavens-door-design.md §7): a god's book, runes in the margins; lines last half, cost double. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(Player self) {
+      dev.baranhan.viltrumitecore.hero.book.BookProfile base = HeroDefinition.super.bookProfile(self);
+      return base.withScales(base.durationScale() * 0.5F, base.costScale() * 2.0F).withNotes("thor");
+   }
 }
