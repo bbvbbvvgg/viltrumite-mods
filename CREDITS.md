@@ -290,3 +290,24 @@ Everything is **own work** (CC0-1.0), no third-party assets. Sources list and cu
 
 Godzilla is a character of Toho Co., Ltd.; this is a non-commercial fan implementation.
 
+## T-1000 — liquid-metal infiltrator (world creature)
+
+Sources list and cue sheet: `tools/assets/t1000_sources.md`.
+
+### Own work
+- The liquid-metal body (procedural mesh, wounds, blades, hook, puddle, droplets), its matcap and every pose are
+  **own work** (CC0-1.0), generated in code (`client/t1000/`); the disguise reuses the mod's own citizen skins. No
+  film, game or mod model copied or traced.
+
+### Recordings (CC0 1.0), mixed by `tools/sfx/t1000.py`
+- Freesound via Openverse: "Slime 13/16/19/27.wav" by Archos (freesound.org/s/433812 and siblings), "Step on a slug
+  (Splat!) 2" and "Muddy Boots" by Breviceps, "squishy oobleck goo" by AlaskaRobotics, "Jello Squish" by Fugeni,
+  "Metal Clang sound" by kermite607, "Metallic clang" by tomwilkinson, "R15-07-Metal Clangs and Hollow Hits.wav" by
+  craigsmith, "Metal scrape 1.wav" by BehanSean, "small-metal-scrape-02/04.wav" by newagesoup (from "SFX Metal Shed
+  Door" by EpicWizard, CC0), "Metallic Scrape Slide" by tyballer92, "Metal Scraping Metal.wav" by sentryx86, "Ice
+  Crack 1/2" by j_p_higgins, "Ice Crack 5/9.wav" by ecfike, "Swosh swoosh whoosh air sound", "Swoosh 15 Windy" and
+  "swoosh wind 09.flac" by qubodup, "Swoosh 1/3" by D4XX, "RADIATOR - Metallic clanging, water spouting" by
+  flood-mix. Exact ids, links and attributions: `tools/assets/t1000_sources.md`.
+- Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.
+
+T-1000 is a character of the Terminator franchise (StudioCanal); this is a non-commercial fan implementation.
