@@ -236,11 +236,20 @@ final class Scp096Probe {
          if (ex == Integer.MIN_VALUE) {
             continue;
          }
-         // the wall axis: from the open column back toward the last floor cell
+         // the wall axis: from the open column toward the floor cell beside it that faces back along the march (a
+         // diagonal ray crosses the edge on one axis only: the other step was still on the floor)
          int wx = Integer.signum(ix - ex);
          int wz = Integer.signum(iz - ez);
          if (wx != 0 && wz != 0) {
-            if (Math.abs(cx) >= Math.abs(cz)) {
+            boolean xFloor = solid(level, m, ex + wx, floorY, ez);
+            boolean zFloor = solid(level, m, ex, floorY, ez + wz);
+            if (xFloor != zFloor) {
+               if (xFloor) {
+                  wz = 0;
+               } else {
+                  wx = 0;
+               }
+            } else if (Math.abs(cx) >= Math.abs(cz)) {
                wz = 0;
             } else {
                wx = 0;
