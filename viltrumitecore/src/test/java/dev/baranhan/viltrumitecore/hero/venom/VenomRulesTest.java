@@ -161,4 +161,22 @@ class VenomRulesTest {
       assertTrue(VenomWeakness.loudDistance(5.0, 1.0F, true));
       assertFalse(VenomWeakness.loudDistance(5.0, 1.0F, false));
    }
+
+   /** Playtest (bell next to the boss): a loud sound has its own subtitle, the symbiote never cries «fire» at a bell. */
+   @Test
+   void aBellNeverSpeaksTheFireLine() throws Exception {
+      assertFalse(VenomLines.RECOIL_SOUND.fragments().equals(VenomLines.RECOIL.fragments()));
+      var merged = dev.baranhan.viltrumitecore.integration.ShippedLang.merged();
+      assertEquals(12, merged.size(), "the twelve shipped locales");
+      for (var entry : merged.entrySet()) {
+         for (var line : VenomLines.LINES.all()) {
+            for (String key : line.fragments()) {
+               assertTrue(entry.getValue().has(key) && !entry.getValue().get(key).getAsString().isBlank(), entry.getKey() + " " + key);
+            }
+         }
+      }
+      var ru = merged.containsKey("ru_ru.json") ? merged.get("ru_ru.json") : merged.get("ru_ru");
+      String sound = ru.get(VenomLines.RECOIL_SOUND.fragments().get(0)).getAsString();
+      assertFalse(sound.contains("Огонь"), sound);
+   }
 }
