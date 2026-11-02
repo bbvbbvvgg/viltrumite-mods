@@ -61,7 +61,7 @@ import net.minecraft.world.phys.Vec3;
  * {@code Enemy} (citizens flee only from the danger zone it raises while enraged), effectively unkillable without
  * a boss bar.
  */
-public class Scp096Entity extends PathfinderMob {
+public class Scp096Entity extends PathfinderMob implements dev.baranhan.viltrumitecore.hero.book.BookSubject {
    public static final ResourceKey<DamageType> DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("viltrumitecore", "scp096"));
    public static final int FLAG_FACE_OPEN = 1;
    public static final int FLAG_CLIMB = 2;
@@ -801,6 +801,10 @@ public class Scp096Entity extends PathfinderMob {
       if (s == Scp096State.CALMING) {
          return;
       }
+      // a face it was told to forget (Heaven's Door "forget_faces", shared directive layer) no longer triggers it
+      if (dev.baranhan.viltrumitecore.entity.directive.MobDirectives.forbidsTarget(this, observer)) {
+         return;
+      }
       if (!player && !Scp096Rules.citizenMayJoin(s.enraged(), this.rampageCitizens)) {
          return;
       }
@@ -1105,5 +1109,46 @@ public class Scp096Entity extends PathfinderMob {
 
    AABB box() {
       return this.getBoundingBox();
+   }
+
+   // ------------------------------------------------------------------ Heaven's Door (docs/rohan/heavens-door-design.md §7)
+
+   /** Calm: a full, readable book (it is a person). Enraged: nothing reaches it, not even a book. */
+   @Override
+   public dev.baranhan.viltrumitecore.hero.book.BookProfile bookProfile(dev.baranhan.viltrumitecore.hero.book.BookProfile base) {
+      if (this.state().enraged() || this.state() == Scp096State.TRIGGERED) {
+         return base.withAccess(dev.baranhan.viltrumitecore.hero.book.BookAccess.CLOSED);
+      }
+      return dev.baranhan.viltrumitecore.hero.book.BookProfile.SMART_MOB.withNotes("scp096");
+   }
+
+   @Override
+   public void bookPages(LivingEntity self, dev.baranhan.viltrumitecore.hero.book.BookPageSink sink) {
+      sink.page("book.viltrumitecore.page.scp096");
+      sink.line("book.viltrumitecore.line.scp096_state", "@book.viltrumitecore.scp096_state." + this.state().name().toLowerCase(java.util.Locale.ROOT));
+      sink.line("book.viltrumitecore.line.scp096_faces", Integer.toString(this.targetCount()));
+   }
+
+   /** Directive adapter: calm and forget_faces drop every face it remembers (only while it is calm). */
+   public static final class Directives implements dev.baranhan.viltrumitecore.entity.directive.DirectiveAdapter {
+      @Override
+      public boolean handles(LivingEntity entity) {
+         return entity instanceof Scp096Entity;
+      }
+
+      @Override
+      public boolean supports(LivingEntity entity, dev.baranhan.viltrumitecore.entity.directive.DirectiveEffect effect) {
+         return effect == dev.baranhan.viltrumitecore.entity.directive.DirectiveEffect.FORGET_FACES && entity instanceof Scp096Entity scp
+            && scp.state().calm();
+      }
+
+      @Override
+      public void onApply(LivingEntity entity, dev.baranhan.viltrumitecore.entity.directive.Directive directive) {
+         if (entity instanceof Scp096Entity scp && scp.level() instanceof ServerLevel level && scp.state().calm()
+            && (directive.has(dev.baranhan.viltrumitecore.entity.directive.DirectiveEffect.FORGET_FACES)
+               || directive.has(dev.baranhan.viltrumitecore.entity.directive.DirectiveEffect.CALM))) {
+            scp.calmDown(level);
+         }
+      }
    }
 }
