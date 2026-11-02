@@ -1,0 +1,149 @@
+{
+  "rohan.door_summon": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.door_summon",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/door_summon"
+      }
+    ]
+  },
+  "rohan.door_touch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.door_touch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/door_touch"
+      }
+    ]
+  },
+  "rohan.dismiss": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.dismiss",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/dismiss"
+      }
+    ]
+  },
+  "rohan.book_open": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.book_open",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/book_open"
+      }
+    ]
+  },
+  "rohan.page_flip": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.page_flip",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/page_flip1"
+      },
+      {
+        "name": "viltrumitecore:rohan/page_flip2"
+      }
+    ]
+  },
+  "rohan.write": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.write",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/write"
+      }
+    ]
+  },
+  "rohan.book_close": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.book_close",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/book_close"
+      }
+    ]
+  },
+  "rohan.page_rip": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.page_rip",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/page_rip"
+      }
+    ]
+  },
+  "rohan.sketch": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.sketch",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/sketch"
+      }
+    ]
+  },
+  "rohan.nib_throw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.nib_throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/nib_throw"
+      }
+    ]
+  },
+  "rohan.nib_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.nib_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/nib_hit"
+      }
+    ]
+  },
+  "rohan.counter": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.counter",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/counter"
+      }
+    ]
+  },
+  "rohan.whoosh": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.whoosh",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/whoosh"
+      }
+    ]
+  },
+  "rohan.manuscript": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.manuscript",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/manuscript"
+      }
+    ]
+  },
+  "rohan.resist": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.resist",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/resist"
+      }
+    ]
+  },
+  "rohan.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.rohan.refuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:rohan/refuse"
+      }
+    ]
+  }
+}
