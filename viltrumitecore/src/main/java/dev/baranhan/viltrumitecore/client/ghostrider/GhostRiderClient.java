@@ -4,7 +4,9 @@ import dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleClient;
 import dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleCockpit;
 import dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleRiderPose;
 import dev.baranhan.viltrumitecore.client.ghostrider.bike.HellCycleTrails;
+import dev.baranhan.viltrumitecore.client.hero.HeroHeadPreviews;
 import dev.baranhan.viltrumitecore.client.hero.HeroSkins;
+import dev.baranhan.viltrumitecore.client.hero.PanelStyles;
 import dev.baranhan.viltrumitecore.client.anim.render.PlayerGeoLayer;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroPublicSnapshot;
@@ -50,6 +52,8 @@ public final class GhostRiderClient {
          }
       });
       PlayerGeoLayer.register(GhostRiderGear.INSTANCE);
+      PanelStyles.register(HeroId.GHOST_RIDER, GhostRiderPanelStyle.INSTANCE);
+      HeroHeadPreviews.register(HeroId.GHOST_RIDER, GhostRiderHeadPreview.INSTANCE);
       GhostRiderFxRecipes.init();
       GhostRiderVfx.init();
       HellCycleEntity.installClient(HellCycleClient.INSTANCE);

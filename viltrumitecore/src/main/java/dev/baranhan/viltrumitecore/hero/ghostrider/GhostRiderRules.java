@@ -190,9 +190,10 @@ public final class GhostRiderRules {
     * damage dealt to players and innocents. Monsters slain are no sin. Nothing is invented: 0 deeds, 0 sins.
     */
    public static int sins(int playerKills, int innocentKills, float harm) {
-      long total = (long)Math.max(0, playerKills) * SIN_PLAYER_KILL + (long)Math.max(0, innocentKills) * SIN_INNOCENT_KILL
-         + (long)Math.floor(Math.max(0.0F, harm) / SIN_HARM);
-      return (int)Math.min(Integer.MAX_VALUE, total);
+      long kills = (long)Math.max(0, playerKills) * SIN_PLAYER_KILL + (long)Math.max(0, innocentKills) * SIN_INNOCENT_KILL;
+      // each term saturates on its own: a huge harm record must not wrap the sum round to a negative verdict
+      long harmed = (long)Math.min(Integer.MAX_VALUE, Math.floor(Math.max(0.0F, harm) / SIN_HARM));
+      return (int)Math.min(Integer.MAX_VALUE, kills + harmed);
    }
 
    /** The verdict: 0 for the innocent; else base + per sin, capped (bosses: a fifth of their health, at most 60). */
