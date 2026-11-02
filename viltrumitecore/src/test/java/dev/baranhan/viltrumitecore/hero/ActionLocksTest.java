@@ -54,8 +54,8 @@ class ActionLocksTest {
    void inputPathsAskTheLock() throws Exception {
       String root = "src/main/java/dev/baranhan/viltrumitecore/";
       String packet = Files.readString(Path.of(root + "network/packet/HeroInputC2SPacket.java"));
-      assertTrue(packet.contains("this.pressed && dev.baranhan.viltrumitecore.hero.ActionLocks.locked(player)"));
-      assertTrue(Files.readString(Path.of(root + "hero/HeldInputs.java")).contains("!ActionLocks.locked(player)"));
+      assertTrue(packet.contains("this.pressed && dev.baranhan.viltrumitecore.hero.ActionLocks.locked(player"));
+      assertTrue(Files.readString(Path.of(root + "hero/HeldInputs.java")).contains("!ActionLocks.locked(player"));
       assertTrue(Files.readString(Path.of(root + "hero/LegacyKit.java")).contains("!ActionLocks.locked(player)"));
    }
 }

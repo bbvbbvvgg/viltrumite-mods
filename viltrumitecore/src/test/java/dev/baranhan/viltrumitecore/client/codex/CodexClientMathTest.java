@@ -84,7 +84,7 @@ class CodexClientMathTest {
       List<CodexEntry> heroes = CodexEntries.of(Category.HEROES);
       List<CodexEntry> npcs = CodexEntries.of(Category.NPCS);
       List<CodexEntry> events = CodexEntries.of(Category.EVENTS);
-      assertEquals(12, heroes.size());
+      assertEquals(13, heroes.size());
       assertEquals(16, npcs.size());
       assertEquals(6, events.size());
       assertEquals(3, npcs.stream().filter(e -> "boss".equals(e.kind())).count(), "Conquest, the Leviathan and Thanos are the bosses");
@@ -120,8 +120,15 @@ class CodexClientMathTest {
       assertEquals("meteor_fall", CodexEntries.byAlias("Meteor (world event)").id());
    }
 
+   /** The codex overlay plus a hero's own overlay (the build merges every lang-overlays part into one file). */
    private static JsonObject overlay(String locale) throws IOException {
-      return JsonParser.parseString(Files.readString(OVERLAYS.resolve(locale + ".json"), StandardCharsets.UTF_8)).getAsJsonObject();
+      JsonObject out = JsonParser.parseString(Files.readString(OVERLAYS.resolve(locale + ".json"), StandardCharsets.UTF_8)).getAsJsonObject();
+      for (String part : List.of("rohan")) {
+         Path p = OVERLAYS.resolveSibling(part).resolve(locale + ".json");
+         JsonObject extra = JsonParser.parseString(Files.readString(p, StandardCharsets.UTF_8)).getAsJsonObject();
+         extra.entrySet().forEach(e -> out.add(e.getKey(), e.getValue()));
+      }
+      return out;
    }
 
    @Test

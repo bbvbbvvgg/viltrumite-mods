@@ -227,8 +227,10 @@ public final class RohanHero implements HeroDefinition {
 
    @Override
    public void onRespawn(ServerPlayer player) {
-      applyChassis(player);
-      player.setHealth(player.getMaxHealth());
+      if (player != null) {
+         applyChassis(player);
+         player.setHealth(player.getMaxHealth());
+      }
    }
 
    static void applyChassis(ServerPlayer player) {
