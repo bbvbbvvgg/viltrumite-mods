@@ -70,6 +70,8 @@ public final class ThanosWar {
    private boolean over;
    private boolean ended;
    private final Map<String, Long> said = new HashMap<>();
+   /** How many times each line was said: the lines he and the generals repeat rotate through variants. */
+   private final Map<String, Integer> turns = new HashMap<>();
    private final Set<UUID> viewers = new HashSet<>();
 
    public ThanosWar(ThanosEvent event, ServerLevel level, ThanosEntity thanos, ThanosCombat combat) {
@@ -338,14 +340,30 @@ public final class ThanosWar {
          return false;
       }
 
+      String spoken = variant(key, this.turns.getOrDefault(key, 0));
       Vec3 at = speaker != null ? speaker.position() : this.thanos.position();
       boolean ok = HeroSpeech.worldLine(this.level, voice, speaker == null ? -1 : speaker.getId(), "subtitle.viltrumitecore.speaker." + voice, speakerName(voice),
-         "thanos_war." + key, List.of("subtitle.viltrumitecore.thanos_war." + key), priority, 0, at, VOICE_RANGE, force);
+         "thanos_war." + spoken, List.of("subtitle.viltrumitecore.thanos_war." + spoken), priority, 0, at, VOICE_RANGE, force);
       if (ok) {
          this.said.put(key, now);
+         this.turns.merge(key, 1, Integer::sum);
       }
 
       return ok;
+   }
+
+   /**
+    * Lines said again and again in a fight (the ship's fire order, Maw's volleys and grabs, Cull's
+    * charges and chains, Thanos under pressure) have variants: {@code <line>}, {@code <line>.2}, ...
+    */
+   static final Map<String, Integer> VARIANTS = Map.of("thanos.ship_call", 3, "thanos.pressed", 2, "ebony_maw.volley", 3, "ebony_maw.grab", 3,
+      "cull_obsidian.charge", 3, "cull_obsidian.chain", 2);
+
+   /** The variant of a line for its {@code turn}-th saying (they take turns, the first is the plain key). */
+   static String variant(String key, int turn) {
+      int n = VARIANTS.getOrDefault(key, 1);
+      int i = Math.floorMod(turn, n);
+      return i == 0 ? key : key + "." + (i + 1);
    }
 
    static String speakerName(String voice) {

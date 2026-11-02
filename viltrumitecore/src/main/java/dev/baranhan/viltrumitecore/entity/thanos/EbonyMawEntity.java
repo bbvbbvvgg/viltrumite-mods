@@ -245,7 +245,7 @@ public class EbonyMawEntity extends BlackOrderEntity {
             this.liftAround(n, 1.0F, false);
             ThanosWarSounds.play(level, this.position(), ThanosWarSounds.MAW_LIFT, 1.6F, 1.0F, 48.0);
             if (this.war != null) {
-               this.war.say(ThanosWar.VOICE_MAW, this, "volley", HeroLine.Priority.ABILITY, 400, false);
+               this.war.say(ThanosWar.VOICE_MAW, this, "volley", HeroLine.Priority.ABILITY, 600, false);
             }
          }
          case GRAB -> {
