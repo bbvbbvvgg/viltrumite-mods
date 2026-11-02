@@ -2,7 +2,6 @@ package dev.baranhan.viltrumitecore.client.hero.speech.qa;
 
 import com.mojang.logging.LogUtils;
 import dev.baranhan.viltrumitecore.client.AbilityInputManager;
-import dev.baranhan.viltrumitecore.client.gui.RaceSelectionScreen;
 import dev.baranhan.viltrumitecore.client.hero.speech.HeroSubtitles;
 import dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient;
 import java.io.File;
@@ -101,11 +100,6 @@ public final class SubtitlePlaytest {
       if (AUTO_WORLD && !worldRequested && mc.level == null && mc.screen instanceof TitleScreen) {
          worldRequested = true;
          openWorld(mc);
-      }
-
-      if (mc.screen instanceof RaceSelectionScreen && mc.level != null) {
-         // The hero is set by the operator command (/subtitleqa hero), not the one-time choice screen.
-         mc.setScreen(null);
       }
 
       RELEASES.removeIf(r -> {
@@ -255,8 +249,10 @@ public final class SubtitlePlaytest {
 
             SCENE_SHOTS.sort(Integer::compare);
          }
-         case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
-            mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
+         // The choice screen opens only on purpose now (/viltrumite choose), so it is no longer closed here (#134).
+         case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} hero={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
+            mc.player == null ? -1.0F : mc.player.getHealth(), mc.player == null ? "-" : dev.baranhan.viltrumitecore.hero.HeroRegistry.get(mc.player).id().key(),
+            mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
          // encyclopedia QA (hero gallery): open the wish screen, drive the GUI, resize, switch language
          case "scp096state" -> LOG.info("SUBPT t={} scp096 {} fps={}", ticks, dev.baranhan.viltrumitecore.client.scp096.Scp096Qa.describe(mc),
             mc.getFps());
