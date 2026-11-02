@@ -2,6 +2,8 @@ package dev.baranhan.viltrumitecore.worldevent.thanos.war;
 
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
+import dev.baranhan.viltrumitecore.hero.control.ControlManager;
+import dev.baranhan.viltrumitecore.hero.control.ReleaseReason;
 import dev.baranhan.viltrumitecore.hero.control.WorldPause;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.ThanosWarS2CPacket;
@@ -49,6 +51,9 @@ public final class ThanosHolds {
       final Supplier<Vec3> point;
       final double speed;
       final Vec3 anchor;
+      /** The shared ControlManager effect of a FREEZE hold (null for carries and drags). */
+      @Nullable
+      UUID effect;
       int left;
 
       Hold(LivingEntity target, Kind kind, Entity holder, Supplier<Vec3> point, double speed, int left) {
@@ -93,12 +98,29 @@ public final class ThanosHolds {
          return 0;
       }
 
+      // arbitration of the shared control system: a target another effect already controls is not taken over
+      if (!(target.level() instanceof ServerLevel level) || ControlManager.get(level).isControlled(target)) {
+         return 0;
+      }
+
       int granted = this.war.ledger.grant(target.getUUID(), ticks, this.war.now());
       if (granted <= 0) {
          return 0;
       }
 
-      this.holds.add(new Hold(target, kind, holder, point, speed, granted));
+      Hold hold = new Hold(target, kind, holder, point, speed, granted);
+      if (usesSharedFreeze(kind)) {
+         // the freeze is a real FREEZE control: HeroDamage.isAnchored() and every hero's canAct() see it, so a frozen
+         // hero cannot cast, attack or fly out of the time stop
+         UUID effect = UUID.randomUUID();
+         if (!ControlManager.get(level).tryAcquire(target, holder.getUUID(), effect, ControlKind.FREEZE, level.getGameTime() + granted)) {
+            this.war.ledger.release(target.getUUID(), this.war.now());
+            return 0;
+         }
+         hold.effect = effect;
+      }
+
+      this.holds.add(hold);
       if (target instanceof ServerPlayer p) {
          CoreMessages.sendToPlayer(ThanosWarS2CPacket.hold(granted, kind.ordinal()), p);
       }
@@ -156,7 +178,20 @@ public final class ThanosHolds {
       }
    }
 
+   /** Pure: the hold kinds that are a shared FREEZE control (the time stop), not only the war's own hold. */
+   public static boolean usesSharedFreeze(Kind kind) {
+      return kind == Kind.FREEZE;
+   }
+
+   private void releaseShared(Hold h) {
+      if (h.effect != null && h.target.level() instanceof ServerLevel level) {
+         ControlManager.get(level).release(h.target.getUUID(), h.effect, ReleaseReason.NORMAL_END);
+      }
+      h.effect = null;
+   }
+
    private void ended(Hold h) {
+      this.releaseShared(h);
       this.war.ledger.release(h.target.getUUID(), this.war.now());
       if (h.target instanceof ServerPlayer p) {
          CoreMessages.sendToPlayer(ThanosWarS2CPacket.hold(0, h.kind.ordinal()), p);
@@ -167,7 +202,8 @@ public final class ThanosHolds {
       for (Iterator<Hold> it = this.holds.iterator(); it.hasNext(); ) {
          Hold h = it.next();
          boolean holderGone = !h.holder.isAlive() || h.holder.isRemoved() || h.holder.level() != level;
-         if (--h.left <= 0 || !h.target.isAlive() || h.target.level() != level || holderGone || !allows(h.target, h.kind)) {
+         boolean sharedLost = h.effect != null && !ControlManager.get(level).holdsFreeze(h.target.getUUID(), h.effect);
+         if (--h.left <= 0 || !h.target.isAlive() || h.target.level() != level || holderGone || sharedLost || !allows(h.target, h.kind)) {
             it.remove();
             this.ended(h);
             continue;
@@ -214,6 +250,7 @@ public final class ThanosHolds {
 
    public void clear() {
       for (Hold h : this.holds) {
+         this.releaseShared(h);
          if (h.target instanceof ServerPlayer p) {
             CoreMessages.sendToPlayer(ThanosWarS2CPacket.hold(0, h.kind.ordinal()), p);
          }

@@ -405,7 +405,8 @@ public class CullObsidianEntity extends BlackOrderEntity {
       }
 
       if (t == 0) {
-         if (target == null || !this.sees(target)) {
+         // range again at contact: a hero who broke distance during the telegraph is out of the chain's reach
+         if (target == null || !this.sees(target) || !m.reaches(this.distanceTo(target))) {
             this.moveTick = m.length() - m.recovery();
             return;
          }
@@ -519,11 +520,15 @@ public class CullObsidianEntity extends BlackOrderEntity {
    }
 
    @Override
-   protected void passive() {
+   protected void combatClock() {
+      // the roar and the clash harden him for a fixed time: it runs down during telegraphs, attacks and recoveries too
       if (this.hardened > 0) {
          this.hardened--;
       }
+   }
 
+   @Override
+   protected void passive() {
       if (this.target == null) {
          ThanosWar w = this.war;
          if (w != null && this.distanceToSqr(w.thanos) > 100.0 && this.tickCount % 20 == 0) {

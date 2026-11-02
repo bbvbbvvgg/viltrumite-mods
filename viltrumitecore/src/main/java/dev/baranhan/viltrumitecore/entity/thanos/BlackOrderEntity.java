@@ -368,6 +368,8 @@ public abstract class BlackOrderEntity extends PathfinderMob implements Enemy, T
    }
 
    private void fightTick() {
+      // timers that run on every unpaused combat tick, whatever the move state (a running move returns early below)
+      this.combatClock();
       if (this.stagger > 0) {
          this.stagger--;
          this.getNavigation().stop();
@@ -554,6 +556,10 @@ public abstract class BlackOrderEntity extends PathfinderMob implements Enemy, T
    protected abstract void position(LivingEntity t);
 
    /** Between moves (catching shots, guarding). */
+   /** Every unpaused combat tick, before moves, staggers and stand-downs: buffs and debuffs that must expire on time. */
+   protected void combatClock() {
+   }
+
    protected void passive() {
    }
 

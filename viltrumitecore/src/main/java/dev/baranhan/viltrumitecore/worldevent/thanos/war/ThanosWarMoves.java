@@ -426,16 +426,18 @@ public final class ThanosWarMoves {
          Vec3 from = s.pos;
          Vec3 to = from.add(s.vel);
          boolean done = --s.life <= 0;
+         // blocks first: the wall cuts the path, and only a hero on the open part of it can be hit (no shots through cover)
+         BlockHitResult bh = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this.c.thanos));
+         Vec3 open = bh.getType() != HitResult.Type.MISS ? bh.getLocation() : to;
          LivingEntity hit = null;
          if (!done) {
-            double best = Double.MAX_VALUE;
-            for (LivingEntity v : ThanosTargets.victims(level, this.c.thanos, new AABB(from, to).inflate(0.55))) {
-               double d = v.position().distanceToSqr(from);
-               if (d < best) {
-                  best = d;
-                  hit = v;
-               }
+            List<LivingEntity> near = ThanosTargets.victims(level, this.c.thanos, new AABB(from, open).inflate(0.55));
+            List<AABB> boxes = new java.util.ArrayList<>(near.size());
+            for (LivingEntity v : near) {
+               boxes.add(v.getBoundingBox());
             }
+            int first = SweptHits.firstAlong(from, open, boxes, 0.55);
+            hit = first < 0 ? null : near.get(first);
          }
 
          if (hit != null) {
@@ -446,7 +448,6 @@ public final class ThanosWarMoves {
             continue;
          }
 
-         BlockHitResult bh = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this.c.thanos));
          if (bh.getType() != HitResult.Type.MISS || done) {
             this.endShard(s, bh.getType() != HitResult.Type.MISS ? bh.getLocation() : to);
             it.remove();

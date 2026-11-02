@@ -62,6 +62,14 @@ public enum CullMove implements OrderMove {
       };
    }
 
+   /** Slack on the reach checked at contact (the target's half width and a tick of its motion). */
+   public static final double CONTACT_SLACK = 1.0;
+
+   /** Pure: the move still reaches a target this far away when it lands (CHAIN re-checks after its telegraph). */
+   public boolean reaches(double distance) {
+      return distance >= 0.0 && distance <= this.maxRange + CONTACT_SLACK;
+   }
+
    @Override
    public int telegraph() {
       return this.telegraph;

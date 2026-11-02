@@ -193,6 +193,12 @@ public class WarDebrisEntity extends Entity implements ThanosAlly {
          return;
       }
 
+      if (war != null && war.over()) {
+         // the war is won: held, thrown and falling pieces crumble harmlessly instead of hitting heroes or carving blocks
+         this.shatter();
+         return;
+      }
+
       BlackOrderEntity o = this.owner;
       byte mode = this.mode();
       boolean held = mode == ORBIT || mode == HOLD || mode == BARRIER;
@@ -247,25 +253,23 @@ public class WarDebrisEntity extends Entity implements ThanosAlly {
       Vec3 from = this.position();
       Vec3 to = from.add(v);
       double r = this.size() * 0.5 + 0.35;
+      // blocks first: the wall cuts the path, so a hero behind cover is never hit through it
+      BlockHitResult bh = this.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+      Vec3 open = bh.getType() != HitResult.Type.MISS ? bh.getLocation() : to;
       if (this.damage > 0.0F) {
-         LivingEntity hit = null;
-         double best = Double.MAX_VALUE;
-         AABB box = new AABB(from, to).inflate(r);
-         for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, box, this::hittable)) {
-            double d = e.position().distanceToSqr(from);
-            if (d < best) {
-               best = d;
-               hit = e;
-            }
+         java.util.List<LivingEntity> near = this.level().getEntitiesOfClass(LivingEntity.class, new AABB(from, open).inflate(r), this::hittable);
+         java.util.List<AABB> boxes = new java.util.ArrayList<>(near.size());
+         for (LivingEntity e : near) {
+            boxes.add(e.getBoundingBox());
          }
-
-         if (hit != null) {
+         int first = dev.baranhan.viltrumitecore.worldevent.thanos.war.SweptHits.firstAlong(from, open, boxes, r);
+         if (first >= 0) {
+            LivingEntity hit = near.get(first);
             this.impact(hit.position().add(0, hit.getBbHeight() * 0.4, 0), hit);
             return;
          }
       }
 
-      BlockHitResult bh = this.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
       if (bh.getType() != HitResult.Type.MISS) {
          this.setPos(bh.getLocation().x, bh.getLocation().y, bh.getLocation().z);
          this.impact(bh.getLocation(), null);
