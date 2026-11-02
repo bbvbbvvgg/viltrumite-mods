@@ -228,12 +228,11 @@ def paint_atlas(seed=11):
     y, x = np.mgrid[0:32, 0:64].astype(float)
     put('lip', paint_scales(64, 32, seed + 110, '#232325', '#0c0c0d', '#5d5b5a', scale=4.5))
     put('sole', paint_scales(64, 64, seed + 120, '#3b3936', '#1a1918', '#77726a', scale=4.0, blotch=0.2))
-    base = np.clip(base, 0, 255)
-    # quantise a little: keeps the PNG small without visible banding
+    # quantise a little: keeps the PNG small without visible banding. Clip after rounding: 255 / 4 rounds up to 256,
+    # which wrapped to 0 in uint8 (the white-hot plate cores and the throat came out green and red)
     base[..., :3] = np.round(base[..., :3] / 3.0) * 3.0
-    glow = np.clip(glow, 0, 255)
     glow[..., :3] = np.round(glow[..., :3] / 4.0) * 4.0
-    return base.astype(np.uint8), glow.astype(np.uint8)
+    return np.clip(base, 0, 255).astype(np.uint8), np.clip(glow, 0, 255).astype(np.uint8)
 
 
 # ---- swatch-mapped model -----------------------------------------------------------------------------------
