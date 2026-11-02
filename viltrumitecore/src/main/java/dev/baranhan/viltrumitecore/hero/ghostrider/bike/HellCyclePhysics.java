@@ -112,6 +112,10 @@ public final class HellCyclePhysics {
       double throttle = locked ? 0.0 : clamp(in.throttle(), -1.0, 1.0);
       double steerIn = locked ? 0.0 : clamp(in.steer(), -1.0, 1.0);
       boolean boost = in.boost();
+      // the Hell Dash is 40 t of hellfire acceleration: it pulls without the throttle (only the brake overrides it)
+      if (boost && !locked && throttle > -0.05) {
+         throttle = 1.0;
+      }
       double vmax = boost ? BOOST_SPEED : MAX_SPEED;
 
       double r = Math.toRadians(s.yaw);
@@ -183,7 +187,9 @@ public final class HellCyclePhysics {
       // --- handlebar and heading ---
       boolean outward = Math.abs(steerIn) > Math.abs(s.steer) && (s.steer == 0.0 || Math.signum(steerIn) == Math.signum(s.steer));
       s.steer = approach(s.steer, steerIn, outward ? STEER_RATE : STEER_RETURN);
-      double speedNow = Math.abs(fwd);
+      // a drift turns at the speed along its path: the forward share shrinks as the tail swings out, and a rate read
+      // from it (omega = a / v) would wind the slide into a spin
+      double speedNow = s.drifting ? Math.sqrt(fwd * fwd + lat * lat) : Math.abs(fwd);
       double rate = yawRate(speedNow);
       if (s.drifting) {
          rate *= DRIFT_TURN;

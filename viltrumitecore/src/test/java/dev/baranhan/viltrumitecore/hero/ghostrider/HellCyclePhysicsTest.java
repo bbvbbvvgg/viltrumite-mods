@@ -162,6 +162,34 @@ class HellCyclePhysicsTest {
    }
 
    @Test
+   void aFullLockDriftCornersWithoutSpinningOut() {
+      State s = cruising(HellCycleRules.MAX_SPEED);
+      Input drift = new Input(1.0, 1.0, false, true, false);
+      for (int t = 0; t < HellCycleRules.DRIFT_BOOST_TICKS; t++) {
+         ground(s, drift);
+      }
+      // the boost-length drift at full lock is a hard corner (about 100 deg), not a spin: the turn rate follows the
+      // speed along the path, so the swinging tail does not feed it
+      double turned = -s.yaw;
+      assertTrue(turned > 85.0 && turned < 110.0, "heading after an 18 t full-lock drift: " + turned);
+      assertTrue(s.drifting && s.speed() > 0.7, "still sliding fast: " + s.speed());
+   }
+
+   @Test
+   void dashPullsWithoutTheThrottleButTheBrakeWins() {
+      State s = new State();
+      Input dash = new Input(0.0, 0.0, false, false, true);
+      for (int t = 0; t < 20; t++) {
+         ground(s, dash);
+      }
+      assertTrue(s.forward() > 1.0, "the dash launches a parked bike: " + s.forward());
+      Input brakeDash = new Input(-1.0, 0.0, false, false, true);
+      double before = s.forward();
+      ground(s, brakeDash);
+      assertTrue(s.forward() < before, "braking overrides the dash");
+   }
+
+   @Test
    void slowDriftKeyIsAHandbrakeNotADrift() {
       State s = cruising(0.2);
       Input drift = new Input(0.0, 1.0, false, true, false);
