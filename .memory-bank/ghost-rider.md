@@ -31,10 +31,27 @@
   `lang-overlays/od_lagna`; sounds `src/main/sound-overlays/ghost_rider.json`.
 - Tests: `GhostRiderRulesTest`, `HellCyclePhysicsTest`, `client/ghostrider/GhostRiderClientRulesTest`,
   `HellCycleCockpitTest`; `OdLagnaWishesTest` / `WishClientMathTest` cover the wish and the style.
-- QA harness (`SubtitlePlaytest`): `bike` logs `HellCycleClient.qaSummary`; `key <name> <ticks>` holds keys
-  (concurrent), `press 1..6` = R/Y/Z/V/B/N; `look yaw pitch`; `cam back|front|fp`. Use husks with
+- QA harness (`SubtitlePlaytest`): `bike` logs `HellCycleClient.qaSummary`; `bikes` logs `HellCycleClient.qaAll`
+  (every bike this client sees, remote ones too: rider, local, pos, yaw, v, lean, rpm, flags, dash, burn, park,
+  loops + FX entries and playing loops); `key <name> <ticks>` holds keys (concurrent; a new hold of the same key
+  replaces its pending release), `press 1..6` = R/Y/Z/V/B/N; `look yaw pitch`; `cam back|front|fp`. Use husks with
   `PersistenceRequired:1b` as targets (no sun burn, no despawn); `/damage <villager> 100 minecraft:mob_attack by <mob>`
   makes a mob guilty.
+- Life cycle (verified on a dedicated server, 2 clients): `GhostRiderState.respawnCopy` keeps cooldowns **and the
+  form** (spec §7; before, the Rider respawned as Johnny and `onRespawn` was dead code); `onRespawn` dresses a Rider
+  in the chassis at full health (36 HP, armor 8). After a dimension change the player is already elsewhere, so the
+  bike left behind burns on its own next tick (`serverTick`: owner not in its level); `onDimensionChange` cleanup
+  ends chain/stare. Clients drop bike FX in `HellCycleEntity.onClientRemoval` (`ClientLevel` removes entities via
+  `setRemoved`, not `remove()` — FX entries used to leak on every observer).
+- Engine loops start on demand: a layer starts at target volume ≥ `AUDIBLE` 0.02 and leaves below `SILENT` 0.003
+  (`HellCycleEngineSound.starts/leaves/target`) — no "Tyres screech"/"Hell Cycle roars" subtitles for a parked bike.
+  Summon one-shots: `bike_form` 0.8, `ignition` 0.55 (at 1.0 they stacked to +2.5 dBFS next to a running bike).
+- Hooked players are held by `place()` every tick at `GhostRiderState.chainHold` (a server-side zero velocity
+  never reaches a player's own client); mobs keep `setDeltaMovement(0)`.
+- MP QA notes: creative players are never targets (`GhostRiderTargets.mayHit`) — test PvP in survival. The first
+  Nether visit stalls a 2-core server ~14 s (chunk generation): a bike "lingering" then is the stall, not a leak.
+  Remote bikes trail ~3 ticks (vanilla 3-step lerp); a low-FPS rider client sends bursty vehicle moves (visible
+  per-tick jitter on observers). Report: `docs/reports/2026-11-02-ghost-rider.md`.
 - `.memory-bank/project.md` is not updated on this branch (bigger than the push tool's per-file limit). Topic line
   to add on merge: "- `ghost-rider.md`: Ghost Rider + Hell Cycle (core 1.70.0, protocol 28): bike physics,
   innocent-sparing combat, Penance Stare from real deeds."
