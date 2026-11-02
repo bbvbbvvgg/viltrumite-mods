@@ -147,8 +147,10 @@ Shift — слезть, R (слот рывка) — Адский рывок, Л�
 | корпус | +16 HP, броня 8, прочность 4, отбрасывание −30 % |
 
 ## 9. Звуки и ассеты
-Генераторы: `tools/assets/ghost_rider_model.py` (мотоцикл, череп, шипы, цепь, скины, кадры трансформации),
-`tools/assets/ghost_rider_icons.py`, `tools/assets/ghost_rider_lang.py`, `tools/sfx/ghost_rider.py`.
+Генераторы: `tools/assets/ghost_rider_bike.py` (Адский мотоцикл), `tools/assets/ghost_rider_body.py` (череп, куртка,
+шипы, цепь, скины Джонни и Гонщика, свечение), `tools/assets/ghost_rider_fx.py` (кадры пламени и следа),
+`tools/assets/ghost_rider_icons.py` (иконки способностей), `tools/sfx/ghost_rider.py` (все звуки — собственный синтез, CC0).
+Строки — `src/main/lang-overlays/ghost_rider/<12 локалей>.json`, звуки — `src/main/sound-overlays/ghost_rider.json`.
 Звуки: запуск, холостой ход и обороты (петли с высотой от оборотов), разгон, рывок, дрифт, тормоз,
 выхлоп, приземление, удар о стену, призыв/сжигание, цепь (взмах, удар, звон, захват, вращение, удар по
 площади), адское пламя (удар, волна, горение), трансформация, карающий взгляд, отказ.

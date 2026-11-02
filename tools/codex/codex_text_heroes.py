@@ -102,6 +102,18 @@ HEROES = {
   "relations": ("Всю жизнь охотился на Халка, пока сам не стал таким же. Капитан Америка помнит его генералом.",
               "He hunted the Hulk all his life until he became one. Captain America remembers him as a general."),
  },
+ "ghost_rider": {
+  "name": ("Призрачный гонщик",
+           "Ghost Rider"),
+  "role": ("Джонни Блэйз, Дух мщения на горящем байке",
+           "Johnny Blaze, the Spirit of Vengeance on a burning bike"),
+  "lore": ("Каскадёр, продавший душу, чтобы спасти отца. Днём он Джонни Блэйз в чёрной кожаной куртке; когда рядом грех, его плоть сгорает до пылающего черепа, грудь обвивают цепи, а из огня с рёвом вырывается Адский байк.",
+           "A stunt rider who sold his soul to save his father. By day he is Johnny Blaze in a black leather jacket; when sin is near his flesh burns away to a flaming skull, chains wrap his chest and the Hell Cycle roars out of the fire."),
+  "gameplay": ("Джонни может только призвать Адский байк и превратиться (2 с). Гонщик сражается горящей цепью: комбо из трёх ударов, крюк, притягивающий цель, Вихрь цепи с ударом о землю, Волна адского пламени, Адский рывок и Взгляд покаяния, урон которого берётся только из реальных поступков цели (убитые игроки и невинные, нанесённый урон). Адский байк — настоящий мотоцикл: газ, тормоз, задний ход, руль, заносы, копящие ускорение, прыжки и вилли; езда не ломает блоки и лишь отталкивает прохожих.",
+               "Johnny can only summon the Hell Cycle and transform (2 s). The Rider fights with a burning chain: a three-hit lash combo, a hook that pulls bodies in, Chain Whirl ending in a slam, Hellfire Wave, Hell Dash and the Penance Stare, whose damage comes only from the target's real deeds (players and innocents killed, damage dealt). The Hell Cycle is a real bike: throttle, brake, reverse, steering, drifts that fill a boost, jumps and wheelies; riding never breaks blocks and only nudges bystanders aside."),
+  "relations": ("Когда-то он был таким же смертным, как все, и помнит об этом. Горит не слабее Красного Халка, но его огонь — это суд.",
+                "Once a mortal like any other, and he still remembers it. He burns as hot as the Red Hulk, but his fire judges."),
+ },
  "human": {
   "name": ("Человек", "Human"),
   "role": ("обычная жизнь без сверхсил", "an ordinary life without powers"),
