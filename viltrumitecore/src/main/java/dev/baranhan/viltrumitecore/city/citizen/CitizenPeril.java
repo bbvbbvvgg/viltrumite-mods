@@ -71,6 +71,9 @@ public final class CitizenPeril {
       if (c.onGround() || c.isInWater() || c.onClimbable()) {
          c.fallChecked = false;
       }
+      if (c.citizenState().peril()) {
+         c.stateTicks++; // the brain (which counts otherwise) sleeps while the peril owns the body
+      }
       switch (c.citizenState()) {
          case TEETER -> {
             teeter(c, city, now);
@@ -456,8 +459,8 @@ public final class CitizenPeril {
       }
       st.voices++;
       float volume = switch (kind) {
-         case FALL -> 2.6F;
-         case SCREAM -> 2.0F;
+         case FALL -> 3.2F;
+         case SCREAM -> 2.4F;
          case HELP -> 1.7F;
          case WITNESS -> 1.3F;
       };
@@ -512,6 +515,12 @@ public final class CitizenPeril {
       Stats st = stats(level);
       return String.format("peril: teetered %d, fell %d, hung on %d (climbed %d, pulled up %d), caught %d, died %d; voices %d (%d skipped), crowd %d",
          st.teeters, st.falls, st.hangs, st.climbs, st.pulledUp, st.caught, st.deaths, st.voices, st.skippedVoices, st.crowds);
+   }
+
+   /** Arguments of the localized {@code /city status} line: upstairs, teetered, fell, hung on, climbed, pulled up, caught, died, crowds. */
+   public static Object[] statusArgs(Level level, int upstairs) {
+      Stats st = stats(level);
+      return new Object[]{upstairs, st.teeters, st.falls, st.hangs, st.climbs, st.pulledUp, st.caught, st.deaths, st.crowds};
    }
 
    @Nullable
