@@ -261,4 +261,13 @@ class Scp096ClientMathTest {
       assertTrue(hi > lo, "the chase pulse breathes with a 7.2 s period");
       assertEquals(Scp096ClientSounds.fovZoom(0.0F, 1.0F, 1.0), Scp096ClientSounds.fovZoom(0.0F, 1.0F, 8.2), 1e-5F);
    }
+
+   @Test
+   void soundsDroppedByTheEngineAreReplaced() {
+      // F3+T discards active sounds without stopping the instances: inactive past the grace = replace
+      assertTrue(Scp096ClientSounds.abandoned(false, false, Scp096ClientSounds.START_GRACE_TICKS + 1));
+      assertFalse(Scp096ClientSounds.abandoned(false, false, 5), "a fresh sound may not have started yet");
+      assertFalse(Scp096ClientSounds.abandoned(false, true, 10_000));
+      assertTrue(Scp096ClientSounds.abandoned(true, true, 0));
+   }
 }
