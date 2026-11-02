@@ -373,37 +373,192 @@ public final class GodzillaRules {
       return rage ? Math.round(base * RAGE_COOLDOWN) : base;
    }
 
-   /** Where a target is, seen from the body. */
+   /** Where a target is, seen from the body. CLOSE: near, but no move lands from here (close in, turn, ram). */
    public enum Zone {
-      NONE, FEET, FRONT, SIDE_L, SIDE_R, BEHIND, AIR_NEAR, AIR_FAR, FAR
+      NONE, FEET, FRONT, SIDE_L, SIDE_R, BEHIND, AIR_NEAR, AIR_FAR, FAR, CLOSE
+   }
+
+   // ------------------------------------------------------------------ reach: a melee move is chosen only where it lands
+
+   /** The stomp's wave hurts bodies at most this high above the stomping foot (blocks, GodzillaActions.stomp). */
+   public static final float STOMP_RISE = 10.0F;
+   /** Ground heroes are closed in to this distance (fraction of HEIGHT): inside the stomp's wave at any gait phase. */
+   public static final float STOMP_CLOSE = 0.20F;
+   /** The target keeps moving through the wind-up: a claw or the tail is swung only at what is this far inside its hit sphere. */
+   public static final float REACH_SLACK = 2.0F;
+   /** Tail segments that carry hit spheres in the strike (the root segments only turn). */
+   public static final int TAIL_STRIKE_FIRST = 2;
+
+   /** Body-frame centre of the swiping hand (fractions of HEIGHT: left, up, forward) at move tick {@code t}: an arc
+    * about the shoulder, high to low across the front (GodzillaActions.clawHand places the server hit sphere here). */
+   public static float[] clawHand(GodzillaMove arm, float t) {
+      int side = arm == GodzillaMove.CLAW_L ? 1 : -1;
+      double a = Math.toRadians(clawSweep(t, arm));
+      float u = Math.max(0.0F, Math.min(1.0F, (t - arm.contact) / (float)(arm.contactEnd - arm.contact)));
+      float arc = CLAW_ARC / HEIGHT;
+      return new float[]{(float)(side * (SHOULDER_L[0] + Math.sin(a) * arc)), 0.56F - 0.2F * u, (float)(SHOULDER_L[2] + Math.cos(a) * arc)};
+   }
+
+   /** Closest approach (blocks) of an arm's hand path over its contact window to a body-frame point (blocks). */
+   public static double clawMiss(GodzillaMove arm, double left, double up, double forward) {
+      double best = Double.MAX_VALUE;
+      for (float t = arm.contact; t <= arm.contactEnd + 1.0E-3F; t += 0.5F) {
+         float[] h = clawHand(arm, t);
+         double dl = left - h[0] * HEIGHT;
+         double du = up - h[1] * HEIGHT;
+         double df = forward - h[2] * HEIGHT;
+         best = Math.min(best, Math.sqrt(dl * dl + du * du + df * df));
+      }
+      return best;
    }
 
    /**
-    * Classifies a target from its body-frame offset (blocks: left, up from the ground, forward).
-    * Close and low = FEET; behind within tail reach = BEHIND; high = AIR_*; in arm reach = FRONT / SIDE; else FAR.
+    * The arm whose swipe lands on a body-frame point (blocks), or NONE: the hand sweeps 31..79 blocks up across the
+    * front, so a hero on the street, above the head or at the flank is never clawed (playtest: it swiped at air).
     */
-   /** Claw reach for fliers (fractions of HEIGHT): the shoulder at 0.58 up plus the claw arc and the hit sphere. */
-   public static final float AIR_REACH_FLAT = 0.45F;
-   public static final float AIR_REACH_UP = 0.92F;
+   public static GodzillaMove clawFor(double left, double up, double forward) {
+      double l = clawMiss(GodzillaMove.CLAW_L, left, up, forward);
+      double r = clawMiss(GodzillaMove.CLAW_R, left, up, forward);
+      if (Math.min(l, r) > CLAW_RADIUS - REACH_SLACK) {
+         return GodzillaMove.NONE;
+      }
+      return l < r ? GodzillaMove.CLAW_L : GodzillaMove.CLAW_R;
+   }
 
+   /** One tick of the tail chain (world yaws, degrees): each segment follows the one before it (inertia), with the walk
+    * sway and the tail strike ({@code strikeT} below 0: none). Shared by the entity (both sides) and the reach test. */
+   public static void tailStep(float[] yaw, float body, float strikeT, int side, double gait, float walk) {
+      boolean strike = strikeT >= 0.0F;
+      float twist = strike ? hipsTwist(strikeT, side) : 0.0F;
+      for (int k = 0; k < yaw.length; k++) {
+         float base = k == 0 ? body + twist : yaw[k - 1];
+         float target = base + tailSway(k, gait, walk) + (strike ? tailStrike(k, strikeT, side) : 0.0F);
+         yaw[k] += wrap(target - yaw[k]) * TAIL_FOLLOW[k];
+      }
+   }
+
+   /** Body-frame centres (fractions of HEIGHT: left, up, forward) of the tail segments for world yaws about a body yaw. */
+   public static void tailCentres(float[] yaw, float body, double[][] out) {
+      double l = TAIL_ROOT[0];
+      double u = TAIL_ROOT[1];
+      double f = TAIL_ROOT[2];
+      for (int k = 0; k < TAIL_SEGMENTS; k++) {
+         double rel = Math.toRadians(wrap(yaw[k] - body));
+         double p = Math.toRadians(TAIL_PITCH[k]);
+         double len = TAIL_LENGTH[k];
+         double dl = Math.sin(rel) * Math.cos(p) * len;
+         double du = -Math.sin(p) * len;
+         double df = -Math.cos(rel) * Math.cos(p) * len;
+         out[k][0] = l + dl * 0.5;
+         out[k][1] = Math.max(0.03, u + du * 0.5);
+         out[k][2] = f + df * 0.5;
+         l += dl;
+         u = Math.max(0.03, u + du);
+         f += df;
+      }
+   }
+
+   /** Radius (blocks) of the block smash a striking tail segment carries; living things are hit 2 blocks further. */
+   public static float tailSmashRadius(int k) {
+      return PART_SIZE[P_TAIL + k][0] * HEIGHT * 0.6F;
+   }
+
+   /** Whether a tail strike to {@code side} (+1 left) sweeps a body-frame point (blocks), from the tail at rest. */
+   public static boolean tailReaches(int side, double left, double up, double forward) {
+      float[] yaw = new float[TAIL_SEGMENTS];
+      double[][] c = new double[TAIL_SEGMENTS][3];
+      GodzillaMove move = GodzillaMove.TAIL;
+      for (int t = 0; t <= move.contactEnd; t++) {
+         tailStep(yaw, 0.0F, t, side, 0.0, 0.0F);
+         if (!move.inContact(t)) {
+            continue;
+         }
+         tailCentres(yaw, 0.0F, c);
+         for (int k = TAIL_STRIKE_FIRST; k < TAIL_SEGMENTS; k++) {
+            double r = tailSmashRadius(k) + 2.0F - REACH_SLACK;
+            double dl = left - c[k][0] * HEIGHT;
+            double du = up - c[k][1] * HEIGHT;
+            double df = forward - c[k][2] * HEIGHT;
+            if (dl * dl + du * du + df * df <= r * r) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   /** What lands on a target: the arm whose swipe reaches it (or NONE), the tail strike to its side, the stomp's wave. */
+   public record Reach(GodzillaMove claw, boolean tail, boolean stomp) {
+      public static final Reach NONE = new Reach(GodzillaMove.NONE, false, false);
+   }
+
+   /**
+    * Whether the stomp's wave (GodzillaActions.stomp: the foot on the target's side) covers a body-frame point
+    * (blocks) at a gait phase; NaN: at every phase (the feet are where the walk left them).
+    */
+   public static boolean stompReaches(double left, double up, double forward, double gait) {
+      if (up > STOMP_RISE) {
+         return false;
+      }
+      boolean side = left >= 0.0;
+      float[] leg = PART_REST[side ? P_LEG_L : P_LEG_R];
+      double fl = leg[0] * HEIGHT;
+      for (int i = 0; i < 20; i++) {
+         double phase = Double.isNaN(gait) ? i / 20.0 : gait;
+         double ff = (leg[2] + footForward(phase, side)) * HEIGHT;
+         if (Math.hypot(left - fl, forward - ff) > STOMP_WAVE - REACH_SLACK) {
+            return false;
+         }
+         if (!Double.isNaN(gait)) {
+            break;
+         }
+      }
+      return true;
+   }
+
+   /** Reach of the melee moves on a body-frame point (blocks: left, up from the ground, forward), feet at any phase. */
+   public static Reach reach(double left, double up, double forward) {
+      return reach(left, up, forward, Double.NaN);
+   }
+
+   /** Reach with the feet where the gait phase put them (the server's body). */
+   public static Reach reach(double left, double up, double forward, double gait) {
+      return new Reach(clawFor(left, up, forward), tailReaches(left >= 0.0 ? 1 : -1, left, up, forward), stompReaches(left, up, forward, gait));
+   }
+
+   /**
+    * Classifies a target from its body-frame offset (blocks: left, up from the ground, forward) and what reaches it.
+    * Low and within the stomp's wave = FEET; behind within the tail's length = BEHIND; high = AIR_NEAR (a claw lands)
+    * or AIR_FAR; a claw lands = FRONT, or SIDE_L / SIDE_R when only that arm reaches; near but out of every move's
+    * reach (a roof below the claws, the flank) = CLOSE; else FAR.
+    */
    public static Zone classify(double left, double up, double forward) {
+      return classify(left, up, forward, reach(left, up, forward));
+   }
+
+   public static Zone classify(double left, double up, double forward, Reach reach) {
       double flat = Math.sqrt(left * left + forward * forward);
       double angle = Math.toDegrees(Math.atan2(left, forward));
       if (up > 0.62 * HEIGHT || up > 0.3 * HEIGHT && flat > 0.45 * HEIGHT) {
-         // a flier the claws can reach (the arc about the shoulder), else one for the breath
-         return flat < AIR_REACH_FLAT * HEIGHT && up < AIR_REACH_UP * HEIGHT ? Zone.AIR_NEAR : Zone.AIR_FAR;
+         return reach.claw() != GodzillaMove.NONE ? Zone.AIR_NEAR : Zone.AIR_FAR;
       }
-      if (flat < 0.2 * HEIGHT && up < 0.18 * HEIGHT) {
+      if (reach.stomp()) {
          return Zone.FEET;
       }
       if (Math.abs(angle) > 115.0 && flat < 1.4 * HEIGHT) {
          return Zone.BEHIND;
       }
-      if (flat < 0.5 * HEIGHT) {
-         if (Math.abs(angle) <= 50.0) {
+      if (reach.claw() != GodzillaMove.NONE) {
+         // FRONT: both arms land (the right one swings); SIDE_*: only that arm reaches
+         double reachable = CLAW_RADIUS - REACH_SLACK;
+         boolean both = clawMiss(GodzillaMove.CLAW_L, left, up, forward) <= reachable && clawMiss(GodzillaMove.CLAW_R, left, up, forward) <= reachable;
+         if (both && Math.abs(angle) <= 50.0) {
             return Zone.FRONT;
          }
-         return angle > 0.0 ? Zone.SIDE_L : Zone.SIDE_R;
+         return reach.claw() == GodzillaMove.CLAW_L ? Zone.SIDE_L : Zone.SIDE_R;
+      }
+      if (flat < 0.5 * HEIGHT) {
+         return Zone.CLOSE;
       }
       return Zone.FAR;
    }
@@ -413,37 +568,60 @@ public final class GodzillaRules {
    }
 
    /**
-    * The move for a target zone (NONE: walk towards it / keep tracking). Breath for dangerous or far targets
-    * and fliers, the tail behind, claws in front and at the sides, a stomp at the feet; a roar now and then.
+    * The move for a target zone (NONE: walk towards it / keep tracking). Breath for dangerous or far targets and
+    * fliers out of the claws' reach, the tail where it sweeps, a claw only where the swipe lands, a stomp at the feet,
+    * a roar now and then. A melee move never goes where its own hit geometry does not reach ({@link #reach}).
     */
    public static GodzillaMove choose(Zone zone, Cooldowns cd, boolean rage, float threat, float healthShare) {
+      return choose(zone, defaultReach(zone), cd, rage, threat, healthShare);
+   }
+
+   /** The reach a zone implies when only the zone is known (tests, commands). */
+   static Reach defaultReach(Zone zone) {
+      return switch (zone) {
+         case FEET -> new Reach(GodzillaMove.NONE, false, true);
+         case BEHIND -> new Reach(GodzillaMove.NONE, true, false);
+         case FRONT, AIR_NEAR -> new Reach(GodzillaMove.CLAW_R, false, false);
+         case SIDE_L -> new Reach(GodzillaMove.CLAW_L, true, false);
+         case SIDE_R -> new Reach(GodzillaMove.CLAW_R, true, false);
+         default -> Reach.NONE;
+      };
+   }
+
+   public static GodzillaMove choose(Zone zone, Reach reach, Cooldowns cd, boolean rage, float threat, float healthShare) {
       boolean breathReady = cd.breath() <= 0;
       boolean dangerous = threat >= (rage ? 60.0F : 110.0F) || healthShare < 0.35F;
+      GodzillaMove claw = cd.claw() <= 0 ? reach.claw() : GodzillaMove.NONE;
+      GodzillaMove tail = reach.tail() && cd.tail() <= 0 ? GodzillaMove.TAIL : GodzillaMove.NONE;
       switch (zone) {
          case FEET:
-            if (cd.stomp() <= 0) {
+            if (reach.stomp() && cd.stomp() <= 0) {
                return GodzillaMove.STOMP;
             }
-            return cd.tail() <= 0 ? GodzillaMove.TAIL : GodzillaMove.NONE;
+            return tail;
          case BEHIND:
-            return cd.tail() <= 0 ? GodzillaMove.TAIL : GodzillaMove.NONE;
+            return tail;
          case FRONT:
             if (breathReady && dangerous) {
                return GodzillaMove.CHARGE;
             }
-            return cd.claw() <= 0 ? GodzillaMove.CLAW_R : GodzillaMove.NONE;
+            return claw;
          case SIDE_L:
-            return cd.claw() <= 0 ? GodzillaMove.CLAW_L : cd.tail() <= 0 ? GodzillaMove.TAIL : GodzillaMove.NONE;
          case SIDE_R:
-            return cd.claw() <= 0 ? GodzillaMove.CLAW_R : cd.tail() <= 0 ? GodzillaMove.TAIL : GodzillaMove.NONE;
+            return claw != GodzillaMove.NONE ? claw : tail;
          case AIR_NEAR:
             if (breathReady && dangerous) {
                return GodzillaMove.CHARGE;
             }
-            if (cd.claw() <= 0) {
-               return GodzillaMove.CLAW_R;
+            if (claw != GodzillaMove.NONE) {
+               return claw;
             }
             return cd.roar() <= 0 ? GodzillaMove.ROAR : GodzillaMove.NONE;
+         case CLOSE:
+            if (breathReady && dangerous) {
+               return GodzillaMove.CHARGE;
+            }
+            return tail;
          case AIR_FAR:
          case FAR:
             if (breathReady) {

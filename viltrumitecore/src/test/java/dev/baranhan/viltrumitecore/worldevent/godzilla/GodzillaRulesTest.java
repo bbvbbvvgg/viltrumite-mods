@@ -129,16 +129,22 @@ class GodzillaRulesTest {
    @Test
    void targetsAreClassifiedAroundTheBody() {
       assertEquals(Zone.FEET, GodzillaRules.classify(2.0, 1.0, 5.0));
+      assertEquals(Zone.FEET, GodzillaRules.classify(0.0, 1.0, GodzillaRules.STOMP_CLOSE * H), "a closed-in ground hero is in the stomp's wave");
       assertEquals(Zone.FRONT, GodzillaRules.classify(0.0, 0.4 * H, 0.35 * H));
-      assertEquals(Zone.SIDE_L, GodzillaRules.classify(0.35 * H, 0.4 * H, 0.05 * H));
-      assertEquals(Zone.SIDE_R, GodzillaRules.classify(-0.35 * H, 0.4 * H, 0.05 * H));
+      assertEquals(Zone.SIDE_L, GodzillaRules.classify(0.20 * H, 0.45 * H, 0.38 * H), "only the left arm's swipe passes there");
+      assertEquals(Zone.SIDE_R, GodzillaRules.classify(-0.20 * H, 0.45 * H, 0.38 * H));
       assertEquals(Zone.BEHIND, GodzillaRules.classify(0.0, 0.1 * H, -0.8 * H));
-      assertEquals(Zone.AIR_NEAR, GodzillaRules.classify(0.0, 0.8 * H, 0.3 * H));
+      assertEquals(Zone.AIR_NEAR, GodzillaRules.classify(0.33 * H, 0.52 * H, 0.36 * H), "a flier at the start of the left swipe");
       assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 0.9 * H, 1.2 * H));
-      // hovering above the head or beyond the arms: out of the claws' reach, the breath's (playtest: it swiped at air)
+      // hovering above the head, above the hands or beyond the arms: out of the claws' reach, the breath's
+      // (playtest: it swiped at air; the hand never rises over 0.56 H, its hit sphere over 0.66 H)
+      assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 0.8 * H, 0.3 * H));
       assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 1.05 * H, 0.6 * H));
       assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 0.8 * H, 0.6 * H));
       assertEquals(Zone.AIR_FAR, GodzillaRules.classify(0.0, 1.2 * H, 0.1 * H));
+      // a hero on the street in front, out of the stomp's wave: the claws pass 31+ blocks over the street
+      assertEquals(Zone.CLOSE, GodzillaRules.classify(0.0, 1.0, 0.4 * H));
+      assertEquals(Zone.CLOSE, GodzillaRules.classify(0.35 * H, 0.4 * H, 0.05 * H), "the flank: the swipe is a forward arc");
       assertEquals(Zone.FAR, GodzillaRules.classify(0.0, 0.0, 2.0 * H));
    }
 
@@ -153,7 +159,86 @@ class GodzillaRulesTest {
       assertEquals(GodzillaMove.CHARGE, GodzillaRules.choose(Zone.AIR_FAR, READY, false, 0.0F, 1.0F), "fliers far away get the breath");
       assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.FRONT, BUSY, false, 0.0F, 1.0F));
       assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.NONE, READY, true, 500.0F, 0.1F));
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.CLOSE, READY, false, 0.0F, 1.0F), "nothing lands: close in");
+      assertEquals(GodzillaMove.CHARGE, GodzillaRules.choose(Zone.CLOSE, READY, false, 200.0F, 1.0F));
+      // a zone alone never sends a move its reach denies
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.FRONT, GodzillaRules.Reach.NONE, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.NONE, GodzillaRules.choose(Zone.BEHIND, GodzillaRules.Reach.NONE, READY, false, 0.0F, 1.0F));
+      assertEquals(GodzillaMove.ROAR, GodzillaRules.choose(Zone.AIR_NEAR, GodzillaRules.Reach.NONE, READY, false, 0.0F, 1.0F));
       assertTrue(GodzillaRules.cooldown(GodzillaRules.TAIL_COOLDOWN, true) < GodzillaRules.TAIL_COOLDOWN);
+   }
+
+   /**
+    * Every melee move the brain can choose lands with the server's own hit geometry (the same hand path, tail chain
+    * and stomp wave GodzillaActions uses): no claw at a hero on the street or above the hands, no tail over a head.
+    */
+   @Test
+   void aMeleeMoveIsChosenOnlyWhereItsHitGeometryLands() {
+      Cooldowns ready = READY;
+      int claws = 0;
+      int tails = 0;
+      int stomps = 0;
+      for (double l = -1.5 * H; l <= 1.5 * H; l += 0.05 * H) {
+         for (double u = 0.5; u <= 1.2 * H; u += 0.04 * H) {
+            for (double f = -1.5 * H; f <= 1.5 * H; f += 0.05 * H) {
+               GodzillaRules.Reach reach = GodzillaRules.reach(l, u, f);
+               Zone zone = GodzillaRules.classify(l, u, f, reach);
+               for (float threat : new float[]{0.0F, 500.0F}) {
+                  GodzillaMove m = GodzillaRules.choose(zone, reach, ready, false, threat, 1.0F);
+                  String at = String.format(java.util.Locale.ROOT, "%s at l=%.1f u=%.1f f=%.1f (%s)", m, l, u, f, zone);
+                  if (m == GodzillaMove.CLAW_L || m == GodzillaMove.CLAW_R) {
+                     claws++;
+                     assertTrue(GodzillaRules.clawMiss(m, l, u, f) <= GodzillaRules.CLAW_RADIUS, at);
+                     assertTrue(u > 0.25 * H && u < 0.67 * H, "claws only between the street and over the hands: " + at);
+                  } else if (m == GodzillaMove.TAIL) {
+                     tails++;
+                     assertTrue(GodzillaRules.tailReaches(l >= 0.0 ? 1 : -1, l, u, f), at);
+                  } else if (m == GodzillaMove.STOMP) {
+                     stomps++;
+                     assertTrue(stompLands(l, u, f), at);
+                  }
+               }
+            }
+         }
+      }
+      assertTrue(claws > 0 && tails > 0 && stomps > 0, "claws " + claws + ", tails " + tails + ", stomps " + stomps);
+   }
+
+   @Test
+   void theSharedTailChainMatchesTheRestLayout() {
+      float[] yaw = new float[GodzillaRules.TAIL_SEGMENTS];
+      double[][] c = new double[GodzillaRules.TAIL_SEGMENTS][3];
+      GodzillaRules.tailCentres(yaw, 0.0F, c);
+      double reach = 0.0;
+      for (int k = 0; k < GodzillaRules.TAIL_SEGMENTS; k++) {
+         assertEquals(0.0, c[k][0], 1.0E-9, "a straight tail lies on the centre line");
+         assertTrue(c[k][2] < GodzillaRules.TAIL_ROOT[2], "behind the hips");
+         reach = Math.max(reach, -c[k][2]);
+      }
+      assertTrue(reach > 1.0, "the tail trails more than one height behind");
+      // the strike swings the chain to its side and back
+      for (int t = 0; t <= GodzillaMove.TAIL.contactEnd; t++) {
+         GodzillaRules.tailStep(yaw, 0.0F, t, 1, 0.0, 0.0F);
+      }
+      GodzillaRules.tailCentres(yaw, 0.0F, c);
+      assertTrue(c[GodzillaRules.TAIL_SEGMENTS - 1][0] > 0.3, "the tip swept out to the left");
+   }
+
+   /** The stomp's wave (GodzillaActions.stomp: radius STOMP_WAVE, STOMP_RISE high) from the foot on the target's side, at any gait phase. */
+   private static boolean stompLands(double l, double u, double f) {
+      if (u > GodzillaRules.STOMP_RISE) {
+         return false;
+      }
+      boolean left = l >= 0.0;
+      float[] leg = GodzillaRules.PART_REST[left ? GodzillaRules.P_LEG_L : GodzillaRules.P_LEG_R];
+      for (double phase = 0.0; phase < 1.0; phase += 0.01) {
+         double fl = leg[0] * H;
+         double ff = (leg[2] + GodzillaRules.footForward(phase, left)) * H;
+         if (Math.hypot(l - fl, f - ff) > GodzillaRules.STOMP_WAVE) {
+            return false;
+         }
+      }
+      return true;
    }
 
    @Test
