@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "viltrumitecore:block/pocket_pillar_top",
+    "side": "viltrumitecore:block/pocket_pillar"
+  }
+}
