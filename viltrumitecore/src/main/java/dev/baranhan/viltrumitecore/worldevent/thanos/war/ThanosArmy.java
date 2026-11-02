@@ -39,6 +39,8 @@ import net.minecraft.world.phys.Vec3;
  * tracked so the end removes all of them. Victory: the Order is beamed out, the hive link breaks.
  */
 public final class ThanosArmy {
+   /** Reach of the end-of-war sweep for Chitauri bolts (a bolt flies at most ~150 blocks). */
+   static final double BOLT_SWEEP = 224.0;
    private static final class Portal {
       final int id;
       final Vec3 at;
@@ -593,6 +595,11 @@ public final class ThanosArmy {
       this.alive = 0;
       this.mawBar.removeAllPlayers();
       this.cullBar.removeAllPlayers();
+      // shots still in the air go too: a bolt that flew out of the ticking range stops there and would outlive the war
+      net.minecraft.world.phys.AABB area = new net.minecraft.world.phys.AABB(this.war.thanos.blockPosition()).inflate(BOLT_SWEEP);
+      for (Entity bolt : level.getEntities(ChitauriEntities.BOLT.get(), area, e -> true)) {
+         bolt.discard();
+      }
    }
 
    /** Debug: the tracked units (commands). */

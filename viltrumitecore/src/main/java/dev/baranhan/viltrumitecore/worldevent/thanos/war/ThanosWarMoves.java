@@ -109,6 +109,8 @@ public final class ThanosWarMoves {
    static final double PHANTOM_SPEED = 0.34;
    static final int ROCK_FALL = 26;
    static final int ANOMALY_DELAY = 40;
+   /** Within this distance of the mark the anomaly passes harmlessly. */
+   static final double ANOMALY_SAFE = 2.0;
    static final double REWRITE_RADIUS = 6.0;
    static final double TIME_STOP_RADIUS = 32.0;
    static final int TIME_STOP_TICKS = 30;
@@ -516,9 +518,11 @@ public final class ThanosWarMoves {
 
       Vec3 was = t.position();
       ServerLevel level = this.level();
+      // only a hero who left the mark (over 2 blocks) is torn back and hurt: staying by it is the answer
+      boolean away = was.distanceToSqr(this.markedAt) > ANOMALY_SAFE * ANOMALY_SAFE;
       // the snap back is a hold of its own: the ledger and the hero's protections decide
       boolean moved = false;
-      if (this.war.holds.canHold(t, ThanosHolds.Kind.DRAG) && was.distanceToSqr(this.markedAt) > 4.0) {
+      if (away && this.war.holds.canHold(t, ThanosHolds.Kind.DRAG)) {
          int granted = this.war.ledger.grant(t.getUUID(), ThanosControlLedger.MIN_TICKS, this.war.now());
          if (granted > 0) {
             t.teleportTo(this.markedAt.x, this.markedAt.y, this.markedAt.z);
@@ -530,7 +534,9 @@ public final class ThanosWarMoves {
 
       ThanosTargets.fx(level, ThanosFxS2CPacket.ANOMALY_SNAP, this.c.thanos.getId(), t.getId(), this.markedAt, was.subtract(this.markedAt), moved ? 1.0F : 0.0F, 12);
       ThanosSounds.play(level, this.markedAt, ThanosSounds.TIME_REWIND, 1.6F, 1.3F, 48.0);
-      ThanosTargets.hurt(this.c.thanos, t, this.markDamage, 1.0F);
+      if (away) {
+         ThanosTargets.hurt(this.c.thanos, t, this.markDamage, 1.0F);
+      }
    }
 
    // ---- MIND_COMPULSION --------------------------------------------------------------------------------
