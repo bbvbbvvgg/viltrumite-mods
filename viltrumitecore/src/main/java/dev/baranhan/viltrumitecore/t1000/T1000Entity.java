@@ -92,6 +92,8 @@ public class T1000Entity extends CitizenEntity {
    private boolean vanishing;
    private boolean destroyedRecorded;
    private boolean natural;
+   /** Added to the world while a city was active: it belongs to the city and waits there (even an operator spawn). */
+   private boolean cityBound;
    @Nullable
    private T1000Brain brain;
    @Nullable
@@ -884,6 +886,7 @@ public class T1000Entity extends CitizenEntity {
    public void onAddedToWorld() {
       super.onAddedToWorld();
       if (this.level() instanceof ServerLevel sl) {
+         this.cityBound |= CityManager.of(sl) != null;
          T1000SavedData.get(sl.getServer()).touch(this, this.natural);
       }
    }
@@ -903,8 +906,9 @@ public class T1000Entity extends CitizenEntity {
          // erased by something else (a snap, an erasure, /kill of another mod): that was its end
          this.recordDestroyed();
       } else if (data.instance(this.getUUID()) != null) {
-         // chunk unloaded or the server stops: it waits, never keeping a chunk loaded
-         if (this.natural || CityManager.of(sl) != null) {
+         // chunk unloaded or the server stops: it waits, never keeping a chunk loaded. The city manager is already
+         // gone when the server stops (ServerStoppingEvent comes first), so remember whether it lived in a city.
+         if (this.natural || this.cityBound || CityManager.of(sl) != null) {
             data.sleep(this, now);
          } else {
             data.forget(this.getUUID());
