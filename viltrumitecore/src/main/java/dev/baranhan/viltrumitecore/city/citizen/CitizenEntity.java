@@ -362,7 +362,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       super.die(source);
       CityManager city = CityManager.of(this.level());
       if (city != null && !this.level().isClientSide) {
-         CitizenPeril.onDeath(this, city);
+         CitizenPeril.onDeath(this, city, source.getMsgId());
          // somebody died here: everybody around notices, the closest run
          city.dangerMap().add(this.getX(), this.getY(), this.getZ(), 10.0F, 36.0F, city.now(), 240);
       }

@@ -117,6 +117,21 @@ public final class CollapseRules {
       return Math.max(Math.min(sectionBlocks / 4, creakTicks / 2), Math.min(n, 64));
    }
 
+   /**
+    * True when something solid stands in a body's column between its head ({@code headY}) and the bottom of a
+    * falling section ({@code sectionBottom}, exclusive): that intact floor takes the impact, the person under it is
+    * only hit when the floor goes too (#138: in a pancake chain the people downstairs are not crushed by the top
+    * section the moment it lands). A body inside the section or with open air up to it is never sheltered.
+    */
+   public static boolean sheltered(int headY, int sectionBottom, java.util.function.IntPredicate solidAt) {
+      for (int y = headY; y < sectionBottom; y++) {
+         if (solidAt.test(y)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    /** Damage to a living entity under the falling section at the landing tick. */
    public static float impactDamage(CollapseSeverity severity, double distanceShare) {
       double near = 1.0 - Math.max(0.0, Math.min(1.0, distanceShare));
