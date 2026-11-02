@@ -141,6 +141,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       this.goalSelector.addGoal(3, new CitizenGoals.ReturnToGrid(this));
       this.goalSelector.addGoal(4, new CitizenGoals.Talk(this));
       this.goalSelector.addGoal(5, new CitizenGoals.Stroll(this));
+      this.goalSelector.addGoal(5, new CitizenGoals.Occupy(this));
       this.goalSelector.addGoal(6, new CitizenGoals.Gaze(this, 8.0F));
       this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
    }
