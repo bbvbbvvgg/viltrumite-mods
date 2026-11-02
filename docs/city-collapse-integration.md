@@ -122,6 +122,15 @@ above is only 30 rows tall and its top and sides count as support, and a big sec
    cut (every column with a removed block + the rooms that ring encloses) restricts a second probe; the building
    inside falls when it stands on nothing of its own and at most 60 % of its outer faces touch a neighbour. A wall
    strip, an L of two facades, a doorway, a room dug into a solid block or a house wedged on three sides stays.
+   Details tuned on the Atheria tower at 1215 -200:
+   - openings in the cut ring up to 4 wide (an open arcade) are closed first (morphological closing, `GAP`);
+   - upper floors overhanging the lobby by up to 8 blocks fall with it (`OVERHANG`, columns empty at the cut height);
+   - a free-standing pillar next to the lobby (≤ 9 columns at the cut height, `PILLAR_MAX`) still holds the building
+     until it is cut too; a longer solid strip is the neighbour's wall and only counts as contact;
+   - remnant walls (`BaseCut.withSheets`): a wall standing on the neighbour (the tower's north facade on the shared
+     podium wall) at most 2 columns thick and rising ≥ 8 rows above everything further out comes down with the
+     building above the neighbour's roof; below that it is the neighbour's and stays.
+   `minecraft:light` (hardness −1, placed everywhere in Atheria) counts as air, not as an unbreakable anchor.
 4. **Before check**: the same search with the removed blocks put back must reach the ground, so a sky platform
    that already floated is left alone.
 5. **Chain** (`SupportChainPlan`): the floating structure comes down top first in stages of
@@ -172,6 +181,7 @@ above is only 30 rows tall and its top and sides count as support, and a big sec
   rest of a truncated section) is caught by the support probe of §4a.
 - No loads are computed: a single remaining pillar or wall still holds a whole building (cut it too); interior
   stairs or partition walls that reach the ground floor hold a base-cut building.
+- A remnant wall thicker than 2 blocks, or one with anything as tall 3–4 blocks behind it, stays standing.
 - A structure bigger than 600 000 blocks, or one reaching an unloaded chunk or 192 blocks away, counts as standing.
 - The support ledger is memory only (restart forgets removals) and probes one cluster per level at a time.
 - Fragment light is sampled once at the start; translucent blocks (glass, ice) are drawn with the cutout sheet.

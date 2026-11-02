@@ -22,6 +22,9 @@ Contract for other systems: `docs/city-collapse-integration.md`. Sounds: `tools/
 ## Rules that matter
 - Atheria buildings are connected to their neighbours (one component of 172k blocks spans two towers): plain
   connectivity says "standing"; only the masked `BaseCut` probe drops the building that was cut out.
+- `minecraft:light` is AIR in `StructuralDamage.classify` (it was FIXED and grounded every Atheria building).
+  `BaseCut.over`: arcade closing (GAP 2), overhang 8, pillars ≤ 9 columns hold; `BaseCut.withSheets` adds remnant
+  walls (≤ 2 thick, ≥ 8 rows above the neighbour) after a masked FLOATING verdict (counter "remnant wall blocks").
 - A block change feeds the ledger only inside a scope; collapse changes run in `suppressed`.
 - The collapse cause = most recorded weight around the spot (`DamageLedger.dominantCause`), not the level-wide
   last cause (bug found in game: two buildings in one tick shared one cause).
