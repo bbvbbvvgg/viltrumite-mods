@@ -10,5 +10,7 @@ public enum ControlKind {
    FREEZE,
    STASIS,
    VILTRUMITE_GRAB,
-   IMPULSE
+   IMPULSE,
+   /** Policy query: may a symbiote take this body over (Venom's host takeover); the hold itself is a PULL record. */
+   POSSESS
 }

@@ -122,7 +122,14 @@ public enum HeroAction {
    GHOSTRIDER_DASH,
    GHOSTRIDER_WHIRL,
    GHOSTRIDER_WAVE,
-   GHOSTRIDER_STARE;
+   GHOSTRIDER_STARE,
+   /** Venom (spec docs/design/2026-11-02-venom-design.md); appended after GHOSTRIDER_STARE, wire ordinals unchanged. */
+   VENOM_SYMBIOSIS,
+   VENOM_TENDRIL,
+   VENOM_LASH,
+   VENOM_SHELL,
+   VENOM_RAGE,
+   VENOM_TAKEOVER;
 
    public static HeroAction byId(int ordinal) {
       HeroAction[] values = values();
