@@ -34,6 +34,15 @@ final class CityPopulation {
    static final int SPAWNS_PER_PLAYER_PER_SECOND = 8;
    /** Share of spawns that bring one or two companions. */
    static final float GROUP_CHANCE = 0.3F;
+   /** People upstairs in tall buildings (issue #138): the most per player, whatever the config says. */
+   static final int OCCUPANT_MAX = 16;
+   static final int OCCUPANTS_PER_PASS = 2;
+   static final double OCCUPANT_MIN_R = 10.0;
+   static final double OCCUPANT_MAX_R = 48.0;
+   /** Lowest occupied floor above the street: a fall from there is a real fall. */
+   static final int OCCUPANT_FLOOR = 9;
+   /** Only buildings at least this tall (above the street) get occupants. */
+   static final int OCCUPANT_TALL = 20;
    private final CityManager city;
 
    CityPopulation(CityManager city) {
@@ -91,6 +100,24 @@ final class CityPopulation {
       int keep = want + want / 4 + 4;
       int overWant = auto > keep ? auto - keep : 0;
       return Math.max(overCap, overWant);
+   }
+
+   /**
+    * Occupants wanted around one player this pass (config {@code cityOccupants}, clamped to
+    * {@link #OCCUPANT_MAX}; at most {@link #OCCUPANTS_PER_PASS} new ones every 5 s).
+    */
+   static int occupantsWanted(int configured, int present) {
+      int want = Math.max(0, Math.min(OCCUPANT_MAX, configured)) - present;
+      return Math.max(0, Math.min(OCCUPANTS_PER_PASS, want));
+   }
+
+   /** Floors an occupant may stand on: at least {@link #OCCUPANT_FLOOR} above the street, a few below the top; empty range = no. */
+   static int[] occupantFloors(int street, int top) {
+      if (top - street < OCCUPANT_TALL) {
+         return null;
+      }
+
+      return new int[]{street + OCCUPANT_FLOOR, top - 3};
    }
 
    static double clampScale(double s) {
@@ -172,6 +199,10 @@ final class CityPopulation {
          return;
       }
 
+      if (now % 100 == 47 && cfg.cityOccupants > 0) {
+         total += this.occupy(players, cap - total, cfg.cityOccupants);
+      }
+
       for (ServerPlayer p : players) {
          if (total >= cap) {
             return;
@@ -239,6 +270,107 @@ final class CityPopulation {
       level.addFreshEntity(c);
       dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCitizenSpawn(level, c);
       return c;
+   }
+
+   /** Tops up the people upstairs around every player; returns how many arrived. */
+   private int occupy(List<ServerPlayer> players, int room, int configured) {
+      int made = 0;
+      for (ServerPlayer p : players) {
+         if (made >= room) {
+            break;
+         }
+
+         int present = this.city.level.getEntitiesOfClass(CitizenEntity.class, new AABB(p.blockPosition()).inflate(NEAR), c -> c.occupant).size();
+         int want = Math.min(occupantsWanted(configured, present), room - made);
+         for (int i = 0; i < want; i++) {
+            if (this.spawnUpstairs(p.position(), OCCUPANT_MIN_R, OCCUPANT_MAX_R, false) != null) {
+               made++;
+            }
+         }
+      }
+
+      return made;
+   }
+
+   /**
+    * One occupant on a floor of a tall building in the ring around a point: a column whose top
+    * is {@link #OCCUPANT_TALL}+ above the nearest street, a structure floor at least
+    * {@link #OCCUPANT_FLOOR} above it, under a roof, room for the whole body, no danger, no
+    * fresh ruin. Null when nothing was found in a few tries.
+    */
+   CitizenEntity spawnUpstairs(Vec3 at, double minR, double maxR, boolean manual) {
+      ServerLevel level = this.city.level;
+      WalkGrid grid = this.city.grid;
+      long now = this.city.now();
+      dev.baranhan.viltrumitecore.world.collapse.CollapseAnalyzer.Volume vol = dev.baranhan.viltrumitecore.world.collapse.StructuralDamage.volume(level);
+      for (int tries = 0; tries < 12; tries++) {
+         double a = level.random.nextDouble() * Math.PI * 2.0;
+         double r = minR + level.random.nextDouble() * (maxR - minR);
+         int x = (int)Math.floor(at.x + Math.cos(a) * r);
+         int z = (int)Math.floor(at.z + Math.sin(a) * r);
+         if (!this.city.profile.inArena(x, level.getMinBuildHeight(), z) || !level.isPositionEntityTicking(new BlockPos(x, (int)Math.floor(at.y), z))) {
+            continue;
+         }
+
+         long cell = grid.nearestCell(x, z, 12, null);
+         if (cell == Long.MIN_VALUE) {
+            continue;
+         }
+
+         int street = grid.feetY(WalkGrid.unpackX(cell), WalkGrid.unpackZ(cell));
+         int[] floors = occupantFloors(street, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z));
+         if (floors == null || floors[1] < floors[0]) {
+            continue;
+         }
+
+         // a random height, then down to the first floor that fits
+         for (int y = floors[0] + level.random.nextInt(floors[1] - floors[0] + 1); y >= floors[0]; y--) {
+            BlockPos feet = new BlockPos(x, y, z);
+            double fy = floorY(level, feet);
+            if (Double.isNaN(fy) || vol.at(x, y - 1, z) != dev.baranhan.viltrumitecore.world.collapse.CollapseAnalyzer.STRUCTURE
+               || level.canSeeSky(feet) || !level.getFluidState(feet).isEmpty()) {
+               continue;
+            }
+
+            if (!level.noCollision(ViltrumiteEntities.CITIZEN.get().getAABB(x + 0.5, fy + 0.01, z + 0.5).inflate(0.05, 0.15, 0.05).move(0.0, 0.15, 0.0))) {
+               continue;
+            }
+
+            if (this.city.danger.noticed(x + 0.5, y, z + 0.5, now) != null
+               || dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.avoid(level, x + 0.5, y, z + 0.5)) {
+               break;
+            }
+
+            CitizenEntity c = ViltrumiteEntities.CITIZEN.get().create(level);
+            if (c == null) {
+               return null;
+            }
+
+            c.moveTo(x + 0.5, fy + 0.01, z + 0.5, level.random.nextFloat() * 360.0F, 0.0F);
+            c.setSkin(level.random.nextInt());
+            c.manual = manual;
+            c.occupant = true;
+            c.finalizeSpawn(level, level.getCurrentDifficultyAt(c.blockPosition()), MobSpawnType.EVENT, null, null);
+            level.addFreshEntity(c);
+            dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCitizenSpawn(level, c);
+            return c;
+         }
+      }
+
+      return null;
+   }
+
+   /** {@code /city occupants}: people upstairs around a point (manual, like /city populate). */
+   int occupants(Vec3 at, int n) {
+      int cap = CityManager.ABSOLUTE_MAX - this.city.citizenCount();
+      int made = 0;
+      for (int i = 0; i < Math.min(n, cap); i++) {
+         if (this.spawnUpstairs(at, 0.0, 32.0, true) != null) {
+            made++;
+         }
+      }
+
+      return made;
    }
 
    /** Standing height on the feet block (slab, carpet or the block below), NaN when there is no floor. */
