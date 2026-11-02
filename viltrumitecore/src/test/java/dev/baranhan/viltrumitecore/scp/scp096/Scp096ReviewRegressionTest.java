@@ -132,4 +132,26 @@ class Scp096ReviewRegressionTest {
       assertTrue(c.contains("Scp096Rules.shouldRepath("));
       assertTrue(c.contains("this.pathAge = 999;"));
    }
+
+   // ---- P2 (second review): no strike through a wall
+
+   @Test
+   void aStrikeNeedsAnOpenRayToTheBody() {
+      assertFalse(Scp096Rules.mayStrike(true, 0, 0), "in reach behind a wall: no hit");
+      assertTrue(Scp096Rules.mayStrike(true, 0, 1));
+      assertFalse(Scp096Rules.mayStrike(true, 3, 6));
+      assertFalse(Scp096Rules.mayStrike(false, 0, 6));
+   }
+
+   @Test
+   void theChaseChecksBlockCollidersBeforeItHurtsTheTarget() throws IOException {
+      String c = src("Scp096Chase.java");
+      int guard = c.indexOf("Scp096Rules.mayStrike(inReach, this.attackCooldown");
+      int call = c.indexOf("this.strike(level, target);");
+      assertTrue(guard > 0 && guard < call, "the strike is guarded by the ray check");
+      assertEquals(1, c.split("target.hurt\\(", -1).length - 1, "the strike is the only place the chase hurts its target");
+      assertTrue(c.contains("ClipContext.Block.COLLIDER"), "rays stop at every solid block, unbreakable ones included");
+      int rays = c.indexOf("private int clearStrikeRays(Entity target)");
+      assertTrue(rays > 0 && c.indexOf("this.lineOfSight(f, t)", rays) > rays);
+   }
 }

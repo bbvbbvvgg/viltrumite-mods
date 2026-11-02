@@ -122,7 +122,9 @@ final class Scp096Chase {
       this.mob.getNavigation().stop();
       // ---- attack: anything in reach, in the air too ----
       double reach = Scp096Rules.ATTACK_REACH + target.getBbWidth() * 0.5;
-      if (dh < reach && dy > -2.6 && dy < 2.8 && this.attackCooldown == 0) {
+      boolean inReach = dh < reach && dy > -2.6 && dy < 2.8;
+      // a strike needs an open line to the body: never through a wall, a floor or an unbreakable block (review #129)
+      if (Scp096Rules.mayStrike(inReach, this.attackCooldown, inReach && this.attackCooldown == 0 ? this.clearStrikeRays(target) : 0)) {
          this.strike(level, target);
       }
       // ---- a leap in flight ----
@@ -301,6 +303,25 @@ final class Scp096Chase {
    private boolean lineOfSight(Vec3 from, Vec3 to) {
       HitResult hit = this.mob.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this.mob));
       return hit.getType() == HitResult.Type.MISS;
+   }
+
+   /**
+    * Open rays from the creature's eye and chest to the target's eye, chest and shins, against block colliders. A target
+    * behind a solid wall, floor or ceiling has none; one leaning over a parapet or half behind a doorframe keeps some.
+    */
+   private int clearStrikeRays(Entity target) {
+      Vec3[] from = {this.mob.getEyePosition(), this.mob.position().add(0.0, this.mob.getBbHeight() * 0.5, 0.0)};
+      Vec3[] to = {target.getEyePosition(), target.position().add(0.0, target.getBbHeight() * 0.5, 0.0),
+         target.position().add(0.0, Math.min(0.3, target.getBbHeight() * 0.25), 0.0)};
+      int clear = 0;
+      for (Vec3 f : from) {
+         for (Vec3 t : to) {
+            if (this.lineOfSight(f, t)) {
+               clear++;
+            }
+         }
+      }
+      return clear;
    }
 
    private boolean tryLeap(ServerLevel level, Vec3 tp, boolean flying) {

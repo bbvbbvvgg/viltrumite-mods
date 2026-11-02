@@ -113,6 +113,14 @@ public final class Scp096Rules {
       return Math.max(0.0F, Math.min(cappedAmount, health - HEALTH_FLOOR));
    }
 
+   /**
+    * Pure: the chase may land a melee strike now. Reach and cooldown are not enough: at least one ray from the creature to
+    * the target's body must be free of block colliders, so it never hits through a wall, a floor or unbreakable blocks.
+    */
+   public static boolean mayStrike(boolean inReach, int attackCooldown, int clearRays) {
+      return inReach && attackCooldown == 0 && clearRays > 0;
+   }
+
    /** Fewest ticks between two path searches of the chase (failed, completed or stale paths alike). */
    public static final int REPATH_MIN_TICKS = 10;
    /** A path older than this is searched again even while it still leads somewhere. */
