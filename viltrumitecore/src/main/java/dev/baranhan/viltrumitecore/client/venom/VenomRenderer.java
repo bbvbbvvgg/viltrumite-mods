@@ -75,6 +75,27 @@ public final class VenomRenderer {
       int targetId, float hunger) {
    }
 
+   /** The husk sits slumped on the ground: lowered while it is drawn (pushed last, popped in Post). */
+   static final float HUSK_DROP = 0.6F;
+   private static final java.util.Set<Entity> LOWERED = java.util.Collections.newSetFromMap(new WeakHashMap<>());
+
+   @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+   public static void onHuskPre(RenderPlayerEvent.Pre event) {
+      HeroPublicSnapshot s = VenomView.of(event.getEntity());
+      if (s != null && VenomView.flag(s, VenomFlags.POSSESSING) && !event.getEntity().isPassenger()) {
+         event.getPoseStack().pushPose();
+         event.getPoseStack().translate(0.0F, -HUSK_DROP, 0.0F);
+         LOWERED.add(event.getEntity());
+      }
+   }
+
+   @SubscribeEvent
+   public static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
+      if (LOWERED.remove(event.getEntity())) {
+         event.getPoseStack().popPose();
+      }
+   }
+
    @SubscribeEvent
    public static void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
       if (!(event.getEntity() instanceof AbstractClientPlayer player)) {

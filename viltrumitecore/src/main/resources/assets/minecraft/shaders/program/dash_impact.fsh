@@ -49,6 +49,12 @@ uniform float SnapCenterY;
 uniform float SnapGold;    // 0..1
 uniform float SnapVoid;    // 0..1
 
+// Venom's host (client.venom.VenomPossessionClient.post): the symbiote over the victim's eyes
+uniform float VenomHost;   // 0..1 overall
+uniform float VenomVeins;  // 0..1 how far the veins have crawled in from the edges
+uniform float VenomFlash;  // 0..1 a sudden scary flash
+uniform float VenomSlit;   // 0..1 how open the eyes are (never below VenomHostFx.MIN_OPEN while held)
+
 in vec2 texCoord;
 out vec4 fragColor;
 
@@ -86,9 +92,12 @@ void main() {
     float safeSnapShock = clamp(SnapShock, 0.0, 1.5);
     float safeSnapGold = clamp(SnapGold, 0.0, 1.0);
     float safeSnapVoid = clamp(SnapVoid, 0.0, 1.0);
+    float safeVenomHost = clamp(VenomHost, 0.0, 1.0);
+    float safeVenomVeins = clamp(VenomVeins, 0.0, 1.0);
+    float safeVenomFlash = clamp(VenomFlash, 0.0, 1.0);
 
     // Hiçbir efekt yoksa boş döndür (Performans)
-    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0) {
+    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0 && safeVenomHost <= 0.001) {
         vec4 defaultColor = texture(DiffuseSampler, baseUv);
         defaultColor.a = 1.0;
         fragColor = defaultColor;
@@ -401,6 +410,49 @@ void main() {
             snapCol = mix(snapCol, flash, safeSnapFlash * (0.55 + 0.45 * core));
         }
         finalColor.rgb = clamp(snapCol, 0.0, 1.0);
+    }
+
+    // Venom's host: the world seen through the symbiote. A soft blur that breathes, the colour drained toward
+    // violet-black, dark veins crawling in from the edges with a faint pulse, the lids closing to a narrow slit
+    // (soft-edged and wavering, never shut) and sudden violet-white flashes with an inverted ghost. A floor keeps
+    // even the darkest part from going plain black.
+    if (safeVenomHost > 0.001) {
+        vec2 vSize = vec2(textureSize(DiffuseSampler, 0));
+        float vAspect = vSize.x / max(vSize.y, 1.0);
+        vec2 vRel = (texCoord - 0.5) * vec2(vAspect, 1.0);
+        float vDist = length(vRel);
+        float breathe = 0.5 + 0.5 * sin(Time * 2.1);
+        float radius = (1.5 + 3.0 * safeVenomHost + 2.0 * breathe * safeVenomHost) / max(vSize.y, 1.0);
+        vec3 blur = finalColor.rgb * 0.2;
+        for (int i = 0; i < 8; i++) {
+            float a = float(i) * 0.785398 + Time * 0.3;
+            vec2 off = vec2(cos(a) / vAspect, sin(a)) * radius * (1.0 + float(i - (i / 2) * 2));
+            blur += texture(DiffuseSampler, clamp(texCoord + off, 0.0, 1.0)).rgb * 0.1;
+        }
+        vec3 vc = mix(finalColor.rgb, blur, clamp(safeVenomHost * (0.45 + 0.45 * smoothstep(0.1, 0.8, vDist)), 0.0, 1.0));
+        float vLuma = dot(vc, vec3(0.299, 0.587, 0.114));
+        vec3 sick = vec3(vLuma) * vec3(0.8, 0.7, 0.98) + vec3(0.025, 0.0, 0.045);
+        vc = mix(vc, sick, 0.55 * safeVenomHost);
+        // the lids: top and bottom close toward a slit
+        float halfOpen = clamp(VenomSlit, 0.0, 1.0) * 0.5;
+        float dy = abs(texCoord.y - 0.5) + 0.018 * sin(texCoord.x * 9.0 + Time * 1.3);
+        float lid = smoothstep(halfOpen, halfOpen + 0.09, dy) * safeVenomHost;
+        vc = mix(vc, vc * 0.08 + vec3(0.02, 0.006, 0.035), lid * 0.9);
+        // veins: dark branching strands from the edges, a faint violet throb along them
+        float ang = atan(vRel.y, vRel.x);
+        float n = sin(ang * 23.0 + sin(vDist * 17.0 + Time * 0.7) * 2.0) * sin(ang * 9.0 - vDist * 11.0 + Time * 0.4);
+        float strand = smoothstep(0.82, 0.98, abs(n));
+        float reach = smoothstep(1.0 - 0.8 * safeVenomVeins, 1.05, vDist + 0.08 * sin(ang * 5.0 + Time));
+        vc = mix(vc, vec3(0.015, 0.0, 0.03), strand * reach * 0.8);
+        vc += vec3(0.28, 0.1, 0.5) * strand * reach * 0.18 * breathe;
+        // a flash: violet-white burst with the inverted frame showing through
+        if (safeVenomFlash > 0.0) {
+            vec3 ghost = vec3(1.0) - texture(DiffuseSampler, clamp(texCoord + vec2(0.01, -0.006), 0.0, 1.0)).rgb;
+            vec3 burst = mix(ghost * vec3(0.85, 0.75, 1.0), vec3(0.92, 0.85, 1.0), 0.45);
+            vc = mix(vc, burst, safeVenomFlash * 0.7);
+        }
+        vc = max(vc, vec3(0.03, 0.012, 0.045) * safeVenomHost);
+        finalColor.rgb = clamp(vc, 0.0, 1.0);
     }
 
     finalColor.a = 1.0;
