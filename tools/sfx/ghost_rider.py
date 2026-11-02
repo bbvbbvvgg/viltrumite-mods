@@ -43,6 +43,14 @@ def loop(make, dur, xfade=0.25):
     return out
 
 
+def quiet_seam(x, win=220):
+    """Rotate a seamless loop so that its seam sits in its quietest 5 ms. Vorbis rebuilds the first and last samples
+    of a file from cut-off windows; at a loud seam that error clicked on every pass of the encoded idle loop
+    (QA 2026-11-02: seam step 0.021 = 99.6th percentile of the sample steps; rotated: 0.0055)."""
+    e = np.convolve(np.concatenate([x, x[:win]]) ** 2, np.ones(win), 'valid')[:len(x)]
+    return np.roll(x, -(int(np.argmin(e)) + win // 2))
+
+
 def master_loop(x, peak=0.8, drive=1.3):
     """master() without the fades (they would click at the loop point)."""
     x = x - np.mean(x)
@@ -472,6 +480,9 @@ RECIPES = {
     'stare': stare, 'verdict': verdict, 'innocent': innocent, 'refuse': refuse,
 }
 LOOPS = ('engine_idle', 'engine_low', 'engine_high', 'skid', 'flame_roar')
+# Measured 2026-11-02: these transient one-shots came back from libvorbis q4 above full scale (decoded peaks
+# 1.01-1.09, clipped samples; their sharp attacks ring up to +19 % in the codec), so they are mastered to -2 dBFS.
+HEADROOM = ('backfire', 'ram', 'bike_crash', 'bike_land', 'skull_fire')
 
 
 def main(argv=None):
@@ -487,6 +498,10 @@ def main(argv=None):
     red_hulk.OUT = OUT
     for name in names:
         x = RECIPES[name]()
+        if name in LOOPS:
+            x = quiet_seam(x)
+        elif name in HEADROOM:
+            x = x * min(1.0, 0.8 / (np.max(np.abs(x)) + 1e-9))
         p = out / f'{name}.wav'
         write_wav(p, x)
         info = f'{name}: {len(x) / SR:.2f}s peak {np.max(np.abs(x)):.2f} rms {np.sqrt(np.mean(x ** 2)):.3f}'
