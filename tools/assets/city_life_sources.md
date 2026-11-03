@@ -69,7 +69,8 @@ startle, flight, help and survivors) are spoken in Russian by **Piper** text-to-
 takes re-pitched with the WORLD vocoder (pyworld): F0 up and the spectral envelope stretched so the formants
 follow. Calls are spoken faster, pitched up and driven harder. The takes are own work of this project
 (`tools/sfx/city_life_voice.py`), shared under CC0 1.0 like the rest of the mixes; every take was checked by speech
-recognition (vosk, Russian) against its text. Subtitles carry the words in all 12 locales.
+recognition (vosk small-ru) against its text: mean word match 0.76, 257 of 292 takes at 0.5 or better; the misses
+are mostly short shouted calls (one or two words, pitched up and driven). Subtitles carry the words in all 12 locales.
 
 ## Playback (summary)
 
@@ -82,9 +83,10 @@ recognition (vosk, Russian) against its text. Subtitles carry the words in all 1
   and occlusion (open / thin wall 45 % / building 25 %), at most 3 chats, 3 calls, 3 screams and 2 quiet sounds at
   once with the nearest first (the farthest fades out), no line twice within 24 blocks and 1.5 s; the speaker
   gestures while his line plays and the other one nods. Beds follow the citizens actually around (density, calm /
-  walking / running / panicking), time of day, rain, indoors, height above the street and nearby ruins; positional
-  beds are mono and drift toward the crowd they stand for.
+  walking / running / panicking), time of day, rain, indoors, height above the street and nearby ruins; a placed bed
+  plays as two layers, a mono source toward the crowd it stands for and a centred wide copy, so it leans to a side
+  (at most 60 %) but is never hard-panned to one ear.
 - QA: `/city life` (mood here, talks, calls, limits), `/city life reset`; client playtest command `lifestate`.
 
-Not auditioned by ear: checked by numbers (loudness, loop seams), spectrograms, speech recognition and in-game
-logs only — the final mix deserves a listening pass.
+Not auditioned by ear: checked by numbers (loudness, loop seams), spectrograms, speech recognition, in-game
+logs and recordings of the game's own output (OpenAL wave writer) only — the final mix deserves a listening pass.

@@ -4,8 +4,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.crowd",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/crowd",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/crowd"
       }
     ]
   },
@@ -14,8 +13,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.crowd",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/crowd_far",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/crowd_far"
       }
     ]
   },
@@ -24,8 +22,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.steps",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/steps",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/steps"
       }
     ]
   },
@@ -34,8 +31,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.running",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/running",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/running"
       }
     ]
   },
@@ -44,8 +40,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.street",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/street_day",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/street_day"
       }
     ]
   },
@@ -54,8 +49,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.night",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/street_night",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/street_night"
       }
     ]
   },
@@ -64,8 +58,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.wind",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/wind",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/wind"
       }
     ]
   },
@@ -74,8 +67,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.panic",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/panic",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/panic"
       }
     ]
   },
@@ -84,8 +76,7 @@
     "subtitle": "subtitles.viltrumitecore.city_life.hush",
     "sounds": [
       {
-        "name": "viltrumitecore:city_life/bed/hush",
-        "stream": true
+        "name": "viltrumitecore:city_life/bed/hush"
       }
     ]
   },

@@ -52,7 +52,11 @@ public final class CityLifeAmbience {
    static final float FADE_DOWN = 0.035F;
    static final int RETRY = 20;
    static final String[] BEDS = {"crowd", "crowd_far", "steps", "running", "street_day", "street_night", "wind", "panic", "hush"};
-   /** Beds that are mono and placed toward their people (the rest are wide stereo around the listener). */
+   /**
+    * Beds that are mono and placed toward their people (the rest are wide stereo around the listener). A placed
+    * bed plays as two layers of the same loop: one from the side of its people, one centred, split by how
+    * one-sided they are ({@link CityLifeMixer#sideShare}) - a single placed source would be hard-panned.
+    */
    static final boolean[] PLACED = {true, true, true, true, false, false, false, true, false};
    static final int CROWD = 0;
    static final int STEPS = 2;
@@ -60,6 +64,10 @@ public final class CityLifeAmbience {
    static final int PANIC = 7;
 
    private static final Loop[] LOOPS = new Loop[BEDS.length];
+   /** The centred layer of the placed beds. */
+   private static final Loop[] WIDE = new Loop[BEDS.length];
+   /** Side share of each placed bed (0 = all centred). */
+   private static final float[] SIDE = new float[BEDS.length];
    private static final float[] TARGET = new float[BEDS.length];
    private static final Vec3[] AT = new Vec3[BEDS.length];
    private static final int[] RETRIES = new int[BEDS.length];
@@ -117,9 +125,16 @@ public final class CityLifeAmbience {
             }
 
             final int k = i;
-            LOOPS[i] = new Loop(EVENTS[i], () -> TARGET[k], () -> AT[k]);
+            LOOPS[i] = PLACED[i] ? new Loop(EVENTS[i], () -> CityLifeMixer.layer(TARGET[k], SIDE[k], true), () -> AT[k], false)
+               : new Loop(EVENTS[i], () -> TARGET[k], () -> AT[k], true);
             RETRIES[i] = RETRY / SCAN_EVERY;
             mc.getSoundManager().play(LOOPS[i]);
+         }
+
+         if (PLACED[i] && TARGET[i] > 0.04F && (WIDE[i] == null || WIDE[i].isStopped()) && LOOPS[i] != null && !LOOPS[i].isStopped()) {
+            final int k = i;
+            WIDE[i] = new Loop(EVENTS[i], () -> CityLifeMixer.layer(TARGET[k], SIDE[k], false), () -> null, true);
+            mc.getSoundManager().play(WIDE[i]);
          }
       }
 
@@ -144,6 +159,9 @@ public final class CityLifeAmbience {
       double rx = 0.0;
       double ry = 0.0;
       double rz = 0.0;
+      // sums of the weighted unit directions per placed group (calm, walking, running, panic)
+      double[] ux = new double[4];
+      double[] uz = new double[4];
       calmNear.clear();
       List<CitizenEntity> all = level.getEntitiesOfClass(CitizenEntity.class, new AABB(ear, ear).inflate(SCAN, 32.0, SCAN));
       double[] ys = new double[all.size()];
@@ -155,6 +173,11 @@ public final class CityLifeAmbience {
          }
 
          ys[n++] = c.getY();
+         double hx = c.getX() - ear.x;
+         double hz = c.getZ() - ear.z;
+         double hd = Math.sqrt(hx * hx + hz * hz);
+         hx = hd > 0.5 ? hx / hd : 0.0;
+         hz = hd > 0.5 ? hz / hd : 0.0;
          CitizenState s = c.citizenState();
          if (s.panicked()) {
             float w = CityLifeMixer.weight(d, 48.0);
@@ -162,12 +185,16 @@ public final class CityLifeAmbience {
             px += c.getX() * w;
             py += c.getY() * w;
             pz += c.getZ() * w;
+            ux[3] += hx * w;
+            uz[3] += hz * w;
             if (s == CitizenState.FLEEING) {
                float r = CityLifeMixer.weight(d, 28.0);
                running += r;
                rx += c.getX() * r;
                ry += c.getY() * r;
                rz += c.getZ() * r;
+               ux[2] += hx * r;
+               uz[2] += hz * r;
             }
          } else {
             float w = CityLifeMixer.weight(d, 24.0) * (s == CitizenState.TALKING ? 1.4F : s == CitizenState.ALERT ? 0.4F : 1.0F);
@@ -175,6 +202,8 @@ public final class CityLifeAmbience {
             cx += c.getX() * w;
             cy += c.getY() * w;
             cz += c.getZ() * w;
+            ux[0] += hx * w;
+            uz[0] += hz * w;
             if (d > 20.0) {
                far += CityLifeMixer.weight(d - 20.0, 44.0);
             }
@@ -185,6 +214,8 @@ public final class CityLifeAmbience {
                sx += c.getX() * st;
                sy += c.getY() * st;
                sz += c.getZ() * st;
+               ux[1] += hx * st;
+               uz[1] += hz * st;
             }
 
             if (d < 20.0 && (s == CitizenState.TALKING || s == CitizenState.IDLE)) {
@@ -213,6 +244,12 @@ public final class CityLifeAmbience {
       AT[STEPS] = toward(ear, walking, sx, sy, sz, 4.0);
       AT[RUNNING] = toward(ear, running, rx, ry, rz, 4.0);
       AT[PANIC] = toward(ear, panic, px, py, pz, 7.0);
+      SIDE[CROWD] = side(calm, ux[0], uz[0]);
+      // the far murmur is the whole street around: mostly centred
+      SIDE[1] = SIDE[CROWD] * 0.5F;
+      SIDE[STEPS] = side(walking, ux[1], uz[1]);
+      SIDE[RUNNING] = side(running, ux[2], uz[2]);
+      SIDE[PANIC] = side(panic, ux[3], uz[3]);
       for (int i = 0; i < AT.length; i++) {
          if (AT[i] == null || !PLACED[i]) {
             AT[i] = ear;
@@ -225,6 +262,10 @@ public final class CityLifeAmbience {
       }
 
       lastPanic = p;
+   }
+
+   private static float side(float w, double ux, double uz) {
+      return w <= 1.0E-4F ? 0.0F : CityLifeMixer.sideShare(Math.sqrt(ux * ux + uz * uz) / w);
    }
 
    /** The weighted centre of a group, brought to within {@code keep} blocks of the ear (direction kept). */
@@ -292,23 +333,24 @@ public final class CityLifeAmbience {
       boolean calmStreet = TARGET[PANIC] < 0.05F && trauma < 0.25F;
       int time = (int)(level.getDayTime() % 24000L);
       double street = Double.isNaN(medianY) ? ear.y : medianY + 1.0;
-      if (cooldown[0] == 0 && calmStreet && day > 0.5F && citizens > 0 && RANDOM.nextFloat() < 0.06F) {
+      if (cooldown[0] == 0 && calmStreet && day > 0.5F && citizens > 0 && RANDOM.nextFloat() < 0.04F) {
          Vec3 a = around(ear, 8.0, 22.0, 0.0);
          oneShot(mc, "city_life.pigeons", new Vec3(a.x, street + 3.0 + RANDOM.nextDouble() * 4.0, a.z), 0.9F, 0.95F + RANDOM.nextFloat() * 0.1F);
-         cooldown[0] = 30 + RANDOM.nextInt(40);
+         // details are rare, so they stay details (cooldowns in scans of half a second)
+         cooldown[0] = 120 + RANDOM.nextInt(120);
       }
 
       if (cooldown[1] == 0 && calmStreet && day > 0.5F && !level.isRaining() && crowd > 0.2F && RANDOM.nextFloat() < 0.04F) {
          Vec3 a = around(ear, 10.0, 24.0, 0.0);
          oneShot(mc, "city_life.bike_bell", new Vec3(a.x, street, a.z), 0.8F, 0.97F + RANDOM.nextFloat() * 0.06F);
-         cooldown[1] = 50 + RANDOM.nextInt(60);
+         cooldown[1] = 100 + RANDOM.nextInt(120);
       }
 
       if (cooldown[2] == 0 && calmStreet && trauma < 0.1F && !calmNear.isEmpty() && RANDOM.nextFloat() < 0.05F) {
          // laughter from a group that is really there
          CitizenEntity c = calmNear.get(RANDOM.nextInt(calmNear.size()));
          oneShot(mc, "city_life.laugh", c.position().add(0.0, 1.5, 0.0), 0.7F, 0.96F + RANDOM.nextFloat() * 0.08F);
-         cooldown[2] = 40 + RANDOM.nextInt(60);
+         cooldown[2] = 70 + RANDOM.nextInt(90);
       }
 
       if (cooldown[3] == 0 && (time < 1200 || time > 5600 && time < 6400) && RANDOM.nextFloat() < 0.08F) {
@@ -323,7 +365,7 @@ public final class CityLifeAmbience {
       if (cooldown[4] == 0 && dogChance > 0.0F && RANDOM.nextFloat() < dogChance) {
          Vec3 a = around(ear, 25.0, 55.0, 0.0);
          oneShot(mc, "city_life.dog", new Vec3(a.x, street, a.z), 1.6F, 0.93F + RANDOM.nextFloat() * 0.12F);
-         cooldown[4] = 25 + RANDOM.nextInt(40);
+         cooldown[4] = 50 + RANDOM.nextInt(60);
       }
    }
 
@@ -334,12 +376,22 @@ public final class CityLifeAmbience {
             LOOPS[i] = null;
          }
 
+         if (WIDE[i] != null) {
+            WIDE[i].halt();
+            WIDE[i] = null;
+         }
+
          TARGET[i] = 0.0F;
+         SIDE[i] = 0.0F;
       }
 
       trauma = 0.0F;
       lastPanic = 0.0F;
       medianY = Double.NaN;
+      // a fresh world does not open with pigeons, a bell and laughter in the same second
+      for (int i = 0; i < cooldown.length; i++) {
+         cooldown[i] = 10 + RANDOM.nextInt(60);
+      }
    }
 
    @SubscribeEvent
@@ -363,6 +415,11 @@ public final class CityLifeAmbience {
                b.append('/').append(String.format(Locale.ROOT, "%.2f", LOOPS[i].level));
             }
 
+            if (PLACED[i]) {
+               boolean wide = WIDE[i] != null && !WIDE[i].isStopped();
+               b.append(String.format(Locale.ROOT, " side=%.2f%s", SIDE[i], wide ? "+wide" : ""));
+            }
+
             b.append(' ');
          }
       }
@@ -379,10 +436,12 @@ public final class CityLifeAmbience {
       float level;
       private int silent;
 
-      Loop(SoundEvent event, Supplier<Float> target, Supplier<Vec3> at) {
+      Loop(SoundEvent event, Supplier<Float> target, Supplier<Vec3> at, boolean centred) {
          super(event, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
          this.target = target;
-         this.at = at;
+         // centred: at the listener, in both ears (stereo beds and the centred layer of a placed one)
+         this.at = centred ? () -> null : at;
+         this.relative = centred;
          this.looping = true;
          this.delay = 0;
          this.volume = 0.001F;

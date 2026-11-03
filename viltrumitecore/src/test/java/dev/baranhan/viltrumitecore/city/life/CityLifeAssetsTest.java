@@ -99,7 +99,8 @@ class CityLifeAssetsTest {
       for (String bed : new String[]{"crowd", "crowd_far", "steps", "running", "street_day", "street_night", "wind", "panic", "hush"}) {
          assertTrue(all.has("city_life.bed." + bed), bed);
          for (JsonElement s : all.getAsJsonObject("city_life.bed." + bed).getAsJsonArray("sounds")) {
-            assertTrue(s.getAsJsonObject().get("stream").getAsBoolean(), "beds stream: " + bed);
+            // static: the beds loop from memory and leave the 8 stream channels to music and SCP-096
+            assertFalse(s.getAsJsonObject().has("stream"), "beds are static sounds: " + bed);
          }
       }
       for (String e : new String[]{"city_life.scream.male", "city_life.scream.female", "city_life.sob.male", "city_life.sob.female", "city_life.cough",

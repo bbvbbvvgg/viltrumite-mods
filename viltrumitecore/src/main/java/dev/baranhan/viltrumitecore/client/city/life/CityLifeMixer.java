@@ -77,6 +77,22 @@ public final class CityLifeMixer {
       return thickness <= THIN_WALL ? THIN : THICK;
    }
 
+   /** Most of a placed bed that may come from the side of its people: a crowd is wide, never a hard pan. */
+   public static final float MAX_SIDE = 0.6F;
+
+   /**
+    * Pure: the share of a placed bed played from the direction of its people (the rest plays centred, in both
+    * ears), from the resultant length of their directions (0 = people all around, 1 = all on one side).
+    */
+   public static float sideShare(double resultant) {
+      return (float)Mth.clamp(resultant, 0.0, 1.0) * MAX_SIDE;
+   }
+
+   /** Pure: equal-power split of a bed volume into its side ({@code side = true}) and centred layer. */
+   public static float layer(float volume, float share, boolean side) {
+      return volume * (float)Math.sqrt(side ? share : 1.0F - share);
+   }
+
    /** Pure: linear distance gain like the engine's own (1 at the source, 0 at {@code range}). */
    public static float linear(double distance, double range) {
       return range <= 0.0 ? 0.0F : (float)Mth.clamp(1.0 - distance / range, 0.0, 1.0);
