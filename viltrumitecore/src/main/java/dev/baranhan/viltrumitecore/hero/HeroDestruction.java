@@ -24,7 +24,8 @@ public final class HeroDestruction {
 
    /** True when hero abilities may remove the block at pos. */
    public static boolean canDestroy(ServerLevel level, BlockPos pos) {
-      if (!level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+      // SCP-106's pocket dimension: its architecture is the puzzle, nothing breaks it open
+      if (dev.baranhan.viltrumitecore.scp.scp106.pocket.PocketWorld.is(level) || !level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
          return false;
       }
 

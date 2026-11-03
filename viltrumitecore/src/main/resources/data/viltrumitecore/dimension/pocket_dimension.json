@@ -1,0 +1,10 @@
+{
+  "type": "viltrumitecore:pocket_dimension",
+  "generator": {
+    "type": "viltrumitecore:pocket",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "viltrumitecore:pocket"
+    }
+  }
+}

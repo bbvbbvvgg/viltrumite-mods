@@ -109,6 +109,12 @@ processResources {
         include 'en_us.json'
         into 'data/viltrumitecore/lang'
     }
+    // /scp106 feedback: a second namespace, because one jar can hold only one data/viltrumitecore/lang/en_us.json
+    // (LanguageHook loads lang/en_us.json from every data namespace).
+    from('src/main/lang-overlays/scp106') {
+        include 'en_us.json'
+        into 'data/viltrumitecore_scp106/lang'
+    }
     // Encyclopedia: the contextual-interaction catalog (docs/contextual-interactions.json) travels in the
     // jar; while it is not in the repository the screen says so (CodexCatalog).
     from(rootProject.file('docs')) {
