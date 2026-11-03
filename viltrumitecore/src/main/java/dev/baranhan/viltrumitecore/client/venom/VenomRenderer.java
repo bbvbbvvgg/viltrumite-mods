@@ -315,14 +315,16 @@ public final class VenomRenderer {
       // the line: hand -> its end (shot / pull / zip / wrapped round a web line)
       Vec3 end = f.tendrilEnd();
       Vec3 origin = f.e().getPosition(partial);
-      Matrix4f inv = new Matrix4f(base).invert();
+      // world endpoints are offsets in the unrotated frame: draw both ends there, not through the body's rotation
+      Matrix4f world = worldFrame(base, f.e(), partial);
+      Matrix4f inv = new Matrix4f(world).invert();
       if (end != null && VenomFlags.has(flags, VenomFlags.TENDRIL) && handR != null) {
          Vector3f from = local(inv, handR, 0, 0, 0);
          Vector3f to = new Vector3f((float)(end.x - origin.x), (float)(end.y - origin.y), (float)(end.z - origin.z));
          float reach = move == VenomMove.TENDRIL_SHOT ? (float)Mth.clamp(f.ticks() / 3.0, 0.1, 1.0) : 1.0F;
          float sag = move == VenomMove.ZIP || move == VenomMove.PULL ? 0.0F : 0.04F;
          stack.pushPose();
-         stack.last().pose().set(base);
+         stack.last().pose().set(world);
          VenomTendrils.draw(stack.last(), vc, VenomTendrils.line(from, to, reach, seconds, sag, 14), 0.06F, 0.035F, light, overlay, 1, 1, 1, 1);
          stack.popPose();
       }
@@ -333,7 +335,7 @@ public final class VenomRenderer {
             Vec3 c = t.getPosition(partial).add(0, t.getBbHeight() * 0.5, 0);
             Vector3f to = new Vector3f((float)(c.x - origin.x), (float)(c.y - origin.y), (float)(c.z - origin.z));
             stack.pushPose();
-            stack.last().pose().set(base);
+            stack.last().pose().set(world);
             for (Matrix4f h : new Matrix4f[]{handL, handR}) {
                if (h == null) {
                   continue;
@@ -412,6 +414,16 @@ public final class VenomRenderer {
    /** The palm of a hand bone: its pivot (the wrist) and a little down towards the claws. */
    static Matrix4f palm(PoseStack pose, GeoBone bone) {
       return new Matrix4f(pose.last().pose()).translate(bone.pivotX / 16.0F, bone.pivotY / 16.0F - 0.12F, bone.pivotZ / 16.0F);
+   }
+
+   /**
+    * The frame {@code base} had before {@link #setupRotations}: world-aligned, at the body's feet. {@code base} is
+    * that frame times the body rotation, so the rotation is rebuilt on an empty stack and taken off again.
+    */
+   static Matrix4f worldFrame(Matrix4f base, LivingEntity e, float partial) {
+      PoseStack rot = new PoseStack();
+      setupRotations(e, rot, partial);
+      return new Matrix4f(base).mul(new Matrix4f(rot.last().pose()).invert());
    }
 
    /** A point of a bone's frame (model px / 16) in the body's unrotated frame (world offset from its feet). */
