@@ -30,6 +30,12 @@ public final class BalanceTable {
     */
    public static final HeroBalanceProfile SPIRIT_OF_VENGEANCE = new HeroBalanceProfile(HeroTier.A, 0.75F, 0.25F, 0.45F, 0.40F);
    /**
+    * Venom in symbiote form (armor 6, toughness 2, 40 HP, regenerating): tier A beside the Ghost Rider, a little less
+    * resilient (the symbiote heals instead of hardening; fire and loud sound go through it, VenomRules). The host
+    * without the symbiote is an ordinary man (UNARMORED).
+    */
+   public static final HeroBalanceProfile SYMBIOTE = new HeroBalanceProfile(HeroTier.A, 0.72F, 0.25F, 0.45F, 0.40F);
+   /**
     * Iron Man in an intact suit (nano Mark 50 or a mark). The suit's armor 28 already
     * removes up to 80 % of small hits, so the body layer is lighter; the cap is what keeps
     * a Viltrumite punch from deleting him (several ordinary punches, two heavy ones).

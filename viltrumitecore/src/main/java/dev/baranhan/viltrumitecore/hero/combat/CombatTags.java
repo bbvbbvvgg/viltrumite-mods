@@ -23,6 +23,8 @@ public final class CombatTags {
    public static final String ELEMENT = "element";
    public static final String ELEMENT_LIGHTNING = "element.lightning";
    public static final String ELEMENT_FROST = "element.frost";
+   /** Hellfire: the Ghost Rider's flames or a red-hot Red Hulk. Scalds what ordinary fire only singes. */
+   public static final String ELEMENT_HELLFIRE = "element.hellfire";
    /** Weapon / body traits. */
    public static final String TRAIT = "trait";
    public static final String TRAIT_DIVINE = "trait.divine";
@@ -40,6 +42,8 @@ public final class CombatTags {
    public static final String BODY_BARE = "body.bare";
    /** A Viltrumite body: flies, takes meteors bare-handed, punches like a falling star. */
    public static final String BODY_VILTRUMITE = "body.viltrumite";
+   /** A living symbiote body (Venom in form, the Venom boss): it fears fire and loud sound. */
+   public static final String BODY_SYMBIOTE = "body.symbiote";
 
    private CombatTags() {
    }

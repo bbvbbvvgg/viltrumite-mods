@@ -26,9 +26,14 @@ public class CitizenRenderer extends MobRenderer<CitizenEntity, CitizenModel> {
    private final CitizenModel slim;
 
    public CitizenRenderer(EntityRendererProvider.Context ctx) {
-      super(ctx, new CitizenModel(CitizenModel.create(false).bakeRoot(), false), 0.5F);
-      this.wide = this.model;
-      this.slim = new CitizenModel(CitizenModel.create(true).bakeRoot(), true);
+      this(ctx, new CitizenModel(CitizenModel.create(false).bakeRoot(), false), new CitizenModel(CitizenModel.create(true).bakeRoot(), true));
+   }
+
+   /** Subclasses (the T-1000 disguise) draw the very same body with their own model subclass. */
+   protected CitizenRenderer(EntityRendererProvider.Context ctx, CitizenModel wide, CitizenModel slim) {
+      super(ctx, wide, 0.5F);
+      this.wide = wide;
+      this.slim = slim;
    }
 
    @Override
@@ -62,10 +67,33 @@ public class CitizenRenderer extends MobRenderer<CitizenEntity, CitizenModel> {
          pose.translate(0.0F, 0.15F * tip, 0.0F);
          pose.mulPose(Axis.XP.rotationDegrees((back ? -90.0F : 90.0F) * tip));
       }
+
+      float tumble = tumble(e, partialTick);
+      if (tumble != 0.0F) {
+         // a falling body rocks around its middle (issue #138); never upside down, so the landing does not snap
+         float mid = e.look().height() * 0.9F;
+         pose.translate(0.0F, mid, 0.0F);
+         pose.mulPose(Axis.XP.rotationDegrees(tumble));
+         pose.mulPose(Axis.ZP.rotationDegrees(tumble * 0.35F));
+         pose.translate(0.0F, -mid, 0.0F);
+      }
+   }
+
+   /** Degrees of the fall tumble: eases in over 8 ticks, then a slow rock of up to 55 degrees. */
+   static float tumble(CitizenEntity e, float partialTick) {
+      if (e.citizenState() != CitizenState.FALLING) {
+         return 0.0F;
+      }
+      float age = e.tickCount + partialTick;
+      CitizenPoser.Anim a = CitizenPoser.anim(e);
+      float since = a.state == CitizenState.FALLING ? age - a.since : 0.0F;
+      float in = Mth.clamp(since / 8.0F, 0.0F, 1.0F);
+      float dir = (e.skin() >>> 27 & 1) == 0 ? 1.0F : -1.0F;
+      return dir * Mth.sin(since * 0.11F + 0.6F) * 55.0F * in;
    }
 
    /** 0 standing .. 1 lying: eased over the fall, back to 0 over the get-up. */
-   static float tip(CitizenEntity e, float partialTick) {
+   public static float tip(CitizenEntity e, float partialTick) {
       CitizenState s = e.citizenState();
       if (s != CitizenState.FALLEN && s != CitizenState.GETTING_UP) {
          return 0.0F;

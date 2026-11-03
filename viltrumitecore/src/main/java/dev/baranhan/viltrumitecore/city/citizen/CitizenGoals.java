@@ -15,6 +15,12 @@ import net.minecraft.world.level.pathfinder.Path;
  * stroll (alone or with a companion, cautiously after a danger) and look at players.
  */
 final class CitizenGoals {
+   /** A goal's beat in server ticks, so it lands on a tick when the goal selector looks (see {@link GoalClock}). */
+   static boolean due(CitizenEntity c, int period) {
+      net.minecraft.server.MinecraftServer server = c.level().getServer();
+      return GoalClock.due(server == null ? c.tickCount : server.getTickCount(), c.getId(), period);
+   }
+
    private CitizenGoals() {
    }
 
@@ -104,6 +110,12 @@ final class CitizenGoals {
                }
             }
             case FLEEING -> this.flee(city);
+            case TEETER -> {
+               // balance lost on a failing floor: no walking, eyes on the danger (the pose looks down)
+               this.c.getNavigation().stop();
+               lookAtThreat(this.c, 20.0F);
+            }
+            case HANGING, FALLING -> this.c.getNavigation().stop();
             default -> {
             }
          }
@@ -229,7 +241,13 @@ final class CitizenGoals {
 
       @Override
       public boolean canUse() {
-         if ((this.c.tickCount + this.c.getId()) % 20 != 0 || !this.c.getNavigation().isDone() || !this.c.citizenState().calm()) {
+         if (!due(this.c, 20) || !this.c.getNavigation().isDone() || !this.c.citizenState().calm()) {
+            return false;
+         }
+
+         if (this.c.occupant) {
+            // someone upstairs in a building is not lost: no walk back to the street, no stuck discard
+            this.c.offGridTicks = 0;
             return false;
          }
 
@@ -245,7 +263,8 @@ final class CitizenGoals {
          }
 
          if (this.c.offGridTicks > 400) {
-            this.c.discard();
+            this.c.offGridTicks = 0;
+            this.c.lostOffGrid();
             return false;
          }
 
@@ -292,6 +311,9 @@ final class CitizenGoals {
    static final class Talk extends Goal {
       private final CitizenEntity c;
       private int time;
+      /** The voiced conversation (#136) when this one started it, null for a silent chat or for the one answering. */
+      @javax.annotation.Nullable
+      private dev.baranhan.viltrumitecore.city.life.CityConversation conv;
 
       Talk(CitizenEntity c) {
          this.c = c;
@@ -304,13 +326,18 @@ final class CitizenGoals {
             return true; // the other one started the chat
          }
 
-         if (this.c.citizenState() != CitizenState.IDLE || (this.c.tickCount + this.c.getId()) % 40 != 0
-            || this.c.getRandom().nextFloat() > 0.15F + this.c.traits().sociability() * 0.35F) {
+         if (this.c.citizenState() != CitizenState.IDLE || !due(this.c, 40)) {
             return false;
          }
 
          CityManager city = CityManager.of(this.c.level());
          if (city == null) {
+            return false;
+         }
+
+         // fewer chats at night, in the rain, when the street is nervous; none in a panic (#136)
+         float mood = city.life().chatFactor(this.c);
+         if (this.c.getRandom().nextFloat() > (0.15F + this.c.traits().sociability() * 0.35F) * mood) {
             return false;
          }
 
@@ -323,12 +350,22 @@ final class CitizenGoals {
          o.setCitizenState(CitizenState.TALKING);
          this.c.talkPartner = o;
          o.talkPartner = this.c;
+         this.conv = city.life().startTalk(this.c, o);
          return true;
       }
 
       @Override
       public void start() {
-         this.time = 80 + this.c.getRandom().nextInt(160);
+         CityManager city = CityManager.of(this.c.level());
+         dev.baranhan.viltrumitecore.city.life.CityConversation shared = city == null ? null : city.life().talkOf(this.c);
+         if (shared != null) {
+            // a voiced chat lasts as long as its lines (both stay until the last one is said)
+            this.time = (int)Math.max(20L, shared.endsAt() - city.now());
+         } else {
+            this.conv = null;
+            this.time = 80 + this.c.getRandom().nextInt(160);
+         }
+
          this.c.getNavigation().stop();
       }
 
@@ -354,12 +391,24 @@ final class CitizenGoals {
             float delta = net.minecraft.util.Mth.wrapDegrees(want - this.c.getYRot());
             this.c.setYRot(this.c.getYRot() + net.minecraft.util.Mth.clamp(delta, -8.0F, 8.0F));
             this.c.yBodyRot = this.c.getYRot();
+            if (this.conv != null) {
+               CityManager city = CityManager.of(this.c.level());
+               if (city != null) {
+                  city.life().tickTalk(this.c, o, this.conv);
+               }
+            }
          }
       }
 
       @Override
       public void stop() {
          CitizenEntity o = this.c.talkPartner;
+         CityManager city = CityManager.of(this.c.level());
+         if (city != null) {
+            city.life().endTalk(this.c);
+         }
+
+         this.conv = null;
          if (this.c.citizenState() == CitizenState.TALKING) {
             this.c.setCitizenState(CitizenState.IDLE);
          }
@@ -407,7 +456,7 @@ final class CitizenGoals {
 
          if (lead != null && lead.citizenState() == CitizenState.WALKING && !lead.getNavigation().isDone() && this.c.distanceToSqr(lead) > 4.0) {
             this.following = true;
-            return (this.c.tickCount + this.c.getId()) % 10 == 0;
+            return due(this.c, 10);
          }
 
          if (this.c.idleTicks > 0) {
@@ -484,6 +533,114 @@ final class CitizenGoals {
             this.c.idleTicks = 40 + this.c.getRandom().nextInt(160);
          }
       }
+   }
+
+   /**
+    * Someone upstairs in a building (an {@link CitizenEntity#occupant}): now and then a few
+    * steps across the same floor, never onto a balcony, a stair or out of a window.
+    */
+   static final class Occupy extends Goal {
+      private final CitizenEntity c;
+      private int time;
+
+      Occupy(CitizenEntity c) {
+         this.c = c;
+         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
+      }
+
+      @Override
+      public boolean canUse() {
+         CitizenState s = this.c.citizenState();
+         if (!this.c.occupant || s != CitizenState.IDLE && s != CitizenState.RECOVERING || !this.c.onGround()
+            || this.c.idleTicks > 0 || (this.c.tickCount + this.c.getId()) % 20 != 0) {
+            return false;
+         }
+
+         CityManager city = CityManager.of(this.c.level());
+         if (city == null || !PathBudget.tryAcquire(city.now(), false)) {
+            return false;
+         }
+
+         Path p = indoorPath(this.c, false, 3.0, 8.0);
+         if (p == null) {
+            this.c.idleTicks = 60;
+            return false;
+         }
+
+         this.c.getNavigation().moveTo(p, this.c.walkSpeed() * 0.8);
+         return true;
+      }
+
+      @Override
+      public void start() {
+         this.time = 0;
+         this.c.setCitizenState(CitizenState.WALKING);
+      }
+
+      @Override
+      public boolean canContinueToUse() {
+         return this.c.citizenState() == CitizenState.WALKING && ++this.time < 200 && !this.c.getNavigation().isDone();
+      }
+
+      @Override
+      public void stop() {
+         this.c.getNavigation().stop();
+         if (this.c.citizenState() == CitizenState.WALKING) {
+            this.c.setCitizenState(CitizenState.IDLE);
+         }
+
+         this.c.idleTicks = 120 + this.c.getRandom().nextInt(320);
+      }
+   }
+
+   /**
+    * A short walk on the floor a person stands on (same feet height, under a roof, a floor under
+    * every step): for occupants upstairs, idle or running from a danger inside the building
+    * ({@code away}: only spots farther from the threat than here). Null when nothing fits.
+    */
+   static Path indoorPath(CitizenEntity c, boolean away, double minR, double maxR) {
+      net.minecraft.world.level.Level level = c.level();
+      BlockPos at = c.blockPosition();
+      double here = Math.hypot(c.getX() - c.threatX, c.getZ() - c.threatZ);
+      double base = away && here > 0.5 ? Math.atan2(c.getZ() - c.threatZ, c.getX() - c.threatX) : c.getRandom().nextDouble() * Math.PI * 2.0;
+      for (int i = 0; i < 6; i++) {
+         double a = base + (c.getRandom().nextDouble() - 0.5) * (away ? 1.6 + i * 0.3 : Math.PI * 2.0);
+         double d = minR + c.getRandom().nextDouble() * (maxR - minR);
+         int x = (int)Math.floor(c.getX() + Math.cos(a) * d);
+         int z = (int)Math.floor(c.getZ() + Math.sin(a) * d);
+         BlockPos t = new BlockPos(x, at.getY(), z);
+         if (!level.hasChunkAt(t) || level.canSeeSky(t) || level.getBlockState(t.below()).getCollisionShape(level, t.below()).isEmpty()) {
+            continue;
+         }
+
+         if (away && Math.hypot(x + 0.5 - c.threatX, z + 0.5 - c.threatZ) < here + 2.0) {
+            continue;
+         }
+
+         if (!level.noCollision(c, c.getType().getAABB(x + 0.5, at.getY() + 0.01, z + 0.5).deflate(0.05))) {
+            continue;
+         }
+
+         Path p = c.getNavigation().createPath(t, 0);
+         if (p == null || p.getNodeCount() < 2 || !p.canReach() || !flat(p, at.getY())) {
+            continue;
+         }
+
+         return p;
+      }
+
+      return null;
+   }
+
+   /** Every node of a path at one height: no stairs and no drop off an edge. */
+   private static boolean flat(Path p, int y) {
+      for (int i = 0; i < p.getNodeCount(); i++) {
+         if (p.getNode(i).y != y) {
+            return false;
+         }
+      }
+
+      return true;
    }
 
    /** Looks at a player nearby, only while calm (a danger owns the eyes). */

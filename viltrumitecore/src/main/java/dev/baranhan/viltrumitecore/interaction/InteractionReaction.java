@@ -27,5 +27,7 @@ public enum InteractionReaction {
    /** A blade that cuts what cannot be cut met a body whose time is stopped: the stopped heart takes the strain. */
    LION_STRAINED,
    /** A falling meteor was caught bare-handed: the catcher braces and throws it on. */
-   METEOR_CAUGHT
+   METEOR_CAUGHT,
+   /** Hellfire touched a symbiote: it shrieks and recoils, its regeneration stops for a while. */
+   SYMBIOTE_SCALDED
 }

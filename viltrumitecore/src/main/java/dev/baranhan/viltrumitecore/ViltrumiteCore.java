@@ -114,6 +114,7 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.worldevent.meteor.MeteorRainSounds.init();
       dev.baranhan.viltrumitecore.city.power.CityPowerSounds.init();
       dev.baranhan.viltrumitecore.world.collapse.CollapseSounds.init();
+      dev.baranhan.viltrumitecore.city.citizen.CitizenVoices.init();
       // City disaster aftermath (docs/city-aftermath-integration.md): its soundscape.
       dev.baranhan.viltrumitecore.worldevent.aftermath.AftermathSounds.init();
       dev.baranhan.viltrumitecore.hero.reinhard.ReinhardSounds.init();
@@ -133,6 +134,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.redhulk.RedHulkFx.init();
       dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderSounds.init();
       dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderFx.init();
+      // Venom (docs/design/2026-11-02-venom-design.md): sounds, FX preset ids 740+, the boss entity, /venom.
+      dev.baranhan.viltrumitecore.hero.venom.VenomSetup.init(modEventBus);
       // Contextual interactions (docs/contextual-interactions.json): their own sound holders.
       dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();
       // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
@@ -141,6 +144,10 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.worldevent.ultron.UltronSetup.init(modEventBus);
       // SCP-096 "Shy Guy" (docs/design/2026-11-05-scp096-design.md): sounds, the entity register, spawner, commands.
       dev.baranhan.viltrumitecore.scp.scp096.Scp096Setup.init(modEventBus);
+      // T-1000 (docs/design/2026-11-06-t1000-design.md): the infiltrator of the city.
+      dev.baranhan.viltrumitecore.t1000.T1000Setup.init(modEventBus);
+      // SCP-106 "Old Man" and his pocket dimension (docs/design/2026-11-02-scp106-design.md): blocks, entity, dimension generator, sounds.
+      dev.baranhan.viltrumitecore.scp.scp106.Scp106Setup.init(modEventBus);
       // Godzilla — city catastrophe (docs/plans/2026-11-05-godzilla-city-catastrophe.md): sounds and the kaiju's entity register.
       dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
@@ -162,6 +169,9 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         // Venom x Spider-Man of Falbiks Heroes: detect the mod and bind the versioned adapter (reflection only).
+         dev.baranhan.viltrumitecore.compat.spider.SpiderCompat.init(ViltrumiteCoreConfig.INSTANCE.spiderCompatEnabled);
+         dev.baranhan.viltrumitecore.hero.venom.VenomSetup.commonSetup();
          // Od Lagna's Wish: after the heroes, the registry names them by key.
          dev.baranhan.viltrumitecore.hero.wish.OdLagnaWishes.registerDefaults();
          dev.baranhan.viltrumitecore.hero.wish.WishRitual.init();

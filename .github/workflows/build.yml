@@ -18,6 +18,9 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Test SCP-096 official audio installer (offline)
+        run: python3 -m unittest discover -s tools/scp096 -p 'test_download_original_sounds.py'
+
       - name: Build
         run: |
           chmod +x gradlew

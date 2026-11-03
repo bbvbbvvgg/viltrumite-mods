@@ -10,11 +10,16 @@ import net.minecraft.world.entity.player.Player;
  */
 public interface Bystander {
    static boolean is(Entity entity) {
-      return entity instanceof Bystander;
+      return entity instanceof Bystander b && b.isBystander();
+   }
+
+   /** False while this body is not a non-combatant right now (a revealed T-1000 is a fair target). */
+   default boolean isBystander() {
+      return true;
    }
 
    /** Auto-target filter: a bystander is never a priority target for this player. */
    static boolean skipAutoTarget(Player player, Entity entity) {
-      return entity instanceof Bystander;
+      return is(entity);
    }
 }

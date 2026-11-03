@@ -33,7 +33,14 @@ public record CitizenLook(int seed, boolean female, int build, float height, int
       }
    }
 
-   public enum Top { TEE, SHIRT, HOODIE, JACKET, COAT, SUIT, SWEATER, BLOUSE, DRESS, VEST }
+   /** POLICE: a rare city patrol uniform (navy shirt, badge, trousers, black shoes, often the cap). */
+   public enum Top { TEE, SHIRT, HOODIE, JACKET, COAT, SUIT, SWEATER, BLOUSE, DRESS, VEST, POLICE }
+   /** The everyday tops picked by the seed (the uniform comes from its own roll, so old seeds keep their clothes). */
+   private static final Top[] CIVIL_TOPS = {Top.TEE, Top.SHIRT, Top.HOODIE, Top.JACKET, Top.COAT, Top.SUIT, Top.SWEATER, Top.BLOUSE, Top.DRESS, Top.VEST};
+   /** Share of the crowd in a police uniform. */
+   public static final float POLICE_SHARE = 0.025F;
+   public static final int POLICE_NAVY = 0x1F2A44;
+   public static final int POLICE_BADGE = 0xE0C35A;
 
    public enum Bottom { JEANS, TROUSERS, CHINOS, SHORTS, SKIRT, LEGGINGS }
 
@@ -100,8 +107,7 @@ public record CitizenLook(int seed, boolean female, int build, float height, int
          hair = Hair.BUZZ;
       }
 
-      Top[] tops = Top.values();
-      Top top = tops[pick(seed, 15, tops.length)];
+      Top top = CIVIL_TOPS[pick(seed, 15, CIVIL_TOPS.length)];
       if (top == Top.DRESS && !female) {
          top = Top.SHIRT;
       }
@@ -110,8 +116,15 @@ public record CitizenLook(int seed, boolean female, int build, float height, int
          top = Top.SWEATER;
       }
 
+      boolean police = top != Top.DRESS && chance(seed, 36, POLICE_SHARE);
+      if (police) {
+         top = Top.POLICE;
+      }
+
       Bottom bottom;
-      if (top == Top.DRESS) {
+      if (police) {
+         bottom = Bottom.TROUSERS;
+      } else if (top == Top.DRESS) {
          bottom = Bottom.SKIRT;
       } else if (top == Top.SUIT) {
          bottom = female && chance(seed, 16, 0.4F) ? Bottom.SKIRT : Bottom.TROUSERS;
@@ -128,7 +141,9 @@ public record CitizenLook(int seed, boolean female, int build, float height, int
       }
 
       Shoes shoes;
-      if (top == Top.SUIT) {
+      if (police) {
+         shoes = chance(seed, 37, 0.5F) ? Shoes.BOOTS : Shoes.OXFORDS;
+      } else if (top == Top.SUIT) {
          shoes = female && chance(seed, 19, 0.5F) ? Shoes.HEELS : Shoes.OXFORDS;
       } else {
          Shoes[] all = Shoes.values();
@@ -142,19 +157,19 @@ public record CitizenLook(int seed, boolean female, int build, float height, int
          }
       }
 
-      int topColor = top == Top.SUIT ? CLOTH[pick(seed, 22, 8)] : cloth(seed, 22, top == Top.COAT);
-      int accent = top == Top.SUIT || top == Top.SHIRT ? (chance(seed, 23, 0.7F) ? 0xEDEBE6 : 0x9FB8D8) : cloth(seed, 23, false);
-      if (accent == topColor) {
+      int topColor = police ? POLICE_NAVY : top == Top.SUIT ? CLOTH[pick(seed, 22, 8)] : cloth(seed, 22, top == Top.COAT);
+      int accent = police ? POLICE_BADGE : top == Top.SUIT || top == Top.SHIRT ? (chance(seed, 23, 0.7F) ? 0xEDEBE6 : 0x9FB8D8) : cloth(seed, 23, false);
+      if (accent == topColor && !police) {
          accent = CLOTH[(pick(seed, 24, 24) + 5) % 24];
       }
 
       int bottomColor = switch (bottom) {
          case JEANS -> DENIM[pick(seed, 25, DENIM.length)];
-         case TROUSERS -> top == Top.SUIT ? topColor : CLOTH[pick(seed, 25, 9)];
+         case TROUSERS -> top == Top.SUIT || police ? topColor : CLOTH[pick(seed, 25, 9)];
          case CHINOS -> new int[]{0xC2A27A, 0x8A6A4A, 0x5E6A4A, 0x2E3440, 0xD8CBB0}[pick(seed, 25, 5)];
          default -> top == Top.DRESS ? topColor : cloth(seed, 25, false);
       };
-      int shoeColor = shoes == Shoes.SNEAKERS ? (chance(seed, 26, 0.55F) ? 0xEDEDED : cloth(seed, 26, false)) : LEATHER[pick(seed, 26, LEATHER.length)];
+      int shoeColor = police ? LEATHER[0] : shoes == Shoes.SNEAKERS ? (chance(seed, 26, 0.55F) ? 0xEDEDED : cloth(seed, 26, false)) : LEATHER[pick(seed, 26, LEATHER.length)];
       Hat hat = Hat.NONE;
       float hr = CitizenTraits.unit(seed, 27);
       if (hr < 0.11F) {
@@ -182,9 +197,13 @@ public record CitizenLook(int seed, boolean female, int build, float height, int
       }
 
       boolean beard = !female && chance(seed, 30, old ? 0.5F : 0.26F);
-      boolean scarf = chance(seed, 31, top == Top.COAT ? 0.45F : 0.06F);
+      boolean scarf = !police && chance(seed, 31, top == Top.COAT ? 0.45F : 0.06F);
+      if (police) {
+         hat = chance(seed, 38, 0.55F) ? Hat.CAP : Hat.NONE;
+         bag = Bag.NONE;
+      }
       return new CitizenLook(seed, female, build, height, SKIN_TONES[tone], EYE_COLORS[pick(seed, 32, EYE_COLORS.length)], hair, hairColor, top,
-         topColor, accent, bottom, bottomColor, shoes, shoeColor, hat, cloth(seed, 33, false), bag, bag == Bag.BACKPACK ? cloth(seed, 34, false) : LEATHER[pick(seed, 34, LEATHER.length)],
+         topColor, accent, bottom, bottomColor, shoes, shoeColor, hat, police ? POLICE_NAVY : cloth(seed, 33, false), bag, bag == Bag.BACKPACK ? cloth(seed, 34, false) : LEATHER[pick(seed, 34, LEATHER.length)],
          eyes, beard, scarf, cloth(seed, 35, false));
    }
 

@@ -17,5 +17,8 @@
   "commands.viltrumitecore.collapse.analyze.yes": "Обрушение началось бы: %s",
   "commands.viltrumitecore.collapse.analyze.no": "Обрушения не будет: %s",
   "commands.viltrumitecore.collapse.damage": "Повреждение (%s): убрано блоков: %s",
-  "commands.viltrumitecore.collapse.too_big": "Не больше %s блоков за раз"
+  "commands.viltrumitecore.collapse.too_big": "Не больше %s блоков за раз",
+  "commands.viltrumitecore.collapse.support": "Опора: %s",
+  "message.viltrumitecore.collapse.support_blocked.gamerule": "Конструкция потеряла опору, но обрушения выключены: правило mobGriefing = false",
+  "message.viltrumitecore.collapse.support_blocked.config": "Конструкция потеряла опору, но обрушения выключены в настройках (collapseEnabled)"
 }

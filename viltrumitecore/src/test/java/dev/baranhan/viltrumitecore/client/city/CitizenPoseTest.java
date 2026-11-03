@@ -100,6 +100,14 @@ class CitizenPoseTest {
       assertTrue(shade.rightArm.xRot < -1.9F, "alert: shading the eyes");
       CitizenModel up = posed(CitizenState.GETTING_UP, 0, 6.0F, 0.0F, 0.0F);
       assertTrue(up.body.xRot > 0.35F, "getting up: pushing off, leaning over the knees");
+      // issue #138: peril silhouettes
+      CitizenModel teeter = posed(CitizenState.TEETER, 0, 6.0F, 0.0F, 0.0F);
+      assertTrue(teeter.rightArm.zRot > 0.7F && teeter.leftArm.zRot < -0.7F, "teetering: arms flung out to the sides");
+      assertTrue(teeter.head.xRot > 0.2F, "teetering: eyes down at the drop");
+      CitizenModel hang = posed(CitizenState.HANGING, 0, 6.0F, 0.0F, 0.0F);
+      assertTrue(hang.rightArm.xRot < -2.6F && hang.leftArm.xRot < -2.6F, "hanging: both hands up on the ledge");
+      CitizenModel fall = posed(CitizenState.FALLING, 0, 6.0F, 0.0F, 0.0F);
+      assertTrue(Math.abs(fall.rightArm.zRot) > 0.3F && Math.abs(fall.leftArm.zRot) > 0.3F, "falling: arms flailing out");
    }
 
    // ------------------------------------------------------------------ preview sheet

@@ -67,6 +67,16 @@ public class Scp096Entity extends PathfinderMob {
    public static final int FLAG_CLIMB = 2;
    public static final int FLAG_LEAP = 4;
    public static final int FLAG_COVER = 8;
+   /** The lunge of the chase (issue #137). */
+   public static final int FLAG_DASH = 16;
+   /** Pulling itself over a ledge or a roof edge at the end of a climb (issue #137). */
+   public static final int FLAG_MANTLE = 32;
+   /**
+    * A short pulse per punch up through a ceiling or a ledge (issue #137): the client plays the clip on its rising edge.
+    * A bit of the existing flags byte, so the synced data layout (and the protocol) stays as it was.
+    */
+   public static final int FLAG_PUNCH = 64;
+   private static final int PUNCH_PULSE_TICKS = 3;
    /** Blocks per full gait cycle (two steps) of the run and of the shuffle: the clips are phase-driven by distance. */
    public static final double CHASE_STRIDE = 5.2;
    public static final double WALK_STRIDE = 1.5;
@@ -106,12 +116,20 @@ public class Scp096Entity extends PathfinderMob {
    public int clientStateStart = -1000;
    public int clientAttackStart = -1000;
    public int clientSmashStart = -1000;
+   public int clientPunchStart = -1000;
+   /** Tick the pull-up over a ledge began on this client (rising edge of {@link #FLAG_MANTLE}). */
+   public int clientMantleStart = -1000;
    public float clientMove;
    public float clientMoveO;
    public double clientGait;
    public double clientGaitO;
    public int clientAirTicks;
    public int clientClimbTicks;
+   private boolean clientMantle;
+   private boolean clientPunch;
+   /** Server: ticks left of the punch pulse, and a punch that came while the last pulse was still up. */
+   private int punchPulse;
+   private boolean punchQueued;
    /** The face was seen while it sat (gaze from the floor, then the rise into the hysteria). */
    public boolean clientFromSit;
    /** Smoothed clip weights kept by the renderer (real-time exponential smoothing). */
@@ -257,6 +275,17 @@ public class Scp096Entity extends PathfinderMob {
          this.clientAttackStart = this.tickCount;
       } else if (DATA_SMASH.equals(key) && this.level().isClientSide) {
          this.clientSmashStart = this.tickCount;
+      } else if (DATA_FLAGS.equals(key) && this.level().isClientSide) {
+         boolean mantle = this.flag(FLAG_MANTLE);
+         if (mantle && !this.clientMantle) {
+            this.clientMantleStart = this.tickCount;
+         }
+         this.clientMantle = mantle;
+         boolean punch = this.flag(FLAG_PUNCH);
+         if (punch && !this.clientPunch) {
+            this.clientPunchStart = this.tickCount;
+         }
+         this.clientPunch = punch;
       }
    }
 
@@ -438,6 +467,7 @@ public class Scp096Entity extends PathfinderMob {
       super.customServerAiStep();
       ServerLevel level = (ServerLevel)this.level();
       this.stateTicks++;
+      this.tickPunchPulse();
       if (this.getHealth() < this.getMaxHealth() && this.isAlive()) {
          this.heal(Scp096Rules.REGEN_PER_TICK);
       }
@@ -588,6 +618,11 @@ public class Scp096Entity extends PathfinderMob {
       this.setFlag(FLAG_FACE_OPEN, false);
       this.setFlag(FLAG_CLIMB, false);
       this.setFlag(FLAG_LEAP, false);
+      this.setFlag(FLAG_DASH, false);
+      this.setFlag(FLAG_MANTLE, false);
+      this.setFlag(FLAG_PUNCH, false);
+      this.punchPulse = 0;
+      this.punchQueued = false;
       if (this.stateTicks >= Scp096Rules.CALMING_TICKS) {
          this.home = this.position();
          this.setState(Scp096State.SIT);
@@ -1030,6 +1065,25 @@ public class Scp096Entity extends PathfinderMob {
 
    void markSmash() {
       this.entityData.set(DATA_SMASH, this.entityData.get(DATA_SMASH) + 1);
+   }
+
+   void markPunch() {
+      if (this.flag(FLAG_PUNCH)) {
+         this.punchQueued = true;
+      } else {
+         this.setFlag(FLAG_PUNCH, true);
+         this.punchPulse = PUNCH_PULSE_TICKS;
+      }
+   }
+
+   /** Server: lowers the punch pulse after a few ticks (a queued punch rises again on the next tick). */
+   private void tickPunchPulse() {
+      if (this.punchPulse > 0 && --this.punchPulse == 0) {
+         this.setFlag(FLAG_PUNCH, false);
+      } else if (this.punchPulse == 0 && this.punchQueued) {
+         this.punchQueued = false;
+         this.markPunch();
+      }
    }
 
    // ------------------------------------------------------------------ persistence

@@ -243,6 +243,17 @@ Sources list and cue sheet: `tools/assets/city_collapse_sources.md`.
 
 ### Recordings (CC0 1.0), mixed by `tools/sfx/city_collapse.py`
 - Freesound: "building collapse / demolition" by greyfeather (freesound.org/s/712918), "Concrete Breaks Several Denoised" by loganzsound (freesound.org/s/843339), "Concrete SMASH 2" by magnuswaker (freesound.org/s/522099), "Heavy Impacts" by Nightflame (freesound.org/s/397596), "Deep Boom" by Za-Games (freesound.org/s/539968), "Metallic Groan" by hinchinbrook (freesound.org/s/496836), "Bending Metal" by NachtmahrTV (freesound.org/s/556714), "Creaking Metal - Slow" by EagleStealthTeam (freesound.org/s/172411), "Metal Impact Creak Resonant" by SoundDesignForYou (freesound.org/s/697748), "rockfall2a.wav" by AlanCat (freesound.org/s/389303), "Rockslide_1.wav" by NinjaSharkStudios (freesound.org/s/608957), "Big falling debris (crash)" by xkeril (freesound.org/s/703247), "Foley_Impact_Stones_Strong_Debris" by Nox_Sound (freesound.org/s/554148), "bass rumble deep subterranean subsonic" by kyles (freesound.org/s/453405), "earth rumble.wav" by Reitanna (freesound.org/s/217657), "Quake Short.wav" by TheMinkman (freesound.org/s/199803), "Cinematic Deep Rumble" by swiftoid (freesound.org/s/184313), "Stone Impact Rubble Debris 14" by Sheyvan (freesound.org/s/569510), "Aggressive Clatter 01" by leonelmail (freesound.org/s/461696), "pour out gravel on the stairs.wav" by Dalibor (freesound.org/s/34175), "Tall dead tree splintering then falling" by ozymandias37 (freesound.org/s/869103).
+## Citizens in peril (city, issue #138)
+
+Sources list and cue sheet: `tools/assets/city_citizens_sources.md`.
+
+### Own work
+- Poses (teeter, hanging from a ledge, falling) and the fall tumble are drawn in code on the existing citizen model; no new textures.
+
+### Recordings (CC0 1.0, Freesound), mixed by `tools/sfx/city_citizens.py`
+- "Cry of fear - Man.wav" by guamorims (freesound.org/s/391362), "Cry of fear - Female.wav" by guamorims (freesound.org/s/391363), "Cry of fear - Collective.wav" by guamorims (freesound.org/s/391364), "Cry for help - Man.wav" by guamorims (freesound.org/s/391365), "Cry for help - Female.wav" by guamorims (freesound.org/s/391361), "Cry for help- Collective.wav" by guamorims (freesound.org/s/391366), "Scream NO - Man.wav" by guamorims (freesound.org/s/391357), "Scream NO - Female.wav" by guamorims (freesound.org/s/391358), "WOMAN SCREAM" by queen_westeros (freesound.org/s/222545), "Woman Scream" by courtneyeck (freesound.org/s/673306), "VOXScrm_Loud Scream Male Medium Distance In Forest LCR" by VanEngelen (freesound.org/s/873718), "Male_Fall_Death_01" by Artmasterrich (freesound.org/s/345455), "Female Falling Screams" by IENBA (freesound.org/s/713549), "Help! Help!.wav" by Whiprealgood (freesound.org/s/87531), "Asking For help" by TyrantTim (freesound.org/s/814235), "male saying someone get help.wav" by melnjay87 (freesound.org/s/315843), "help me!.wav" by niamhd00145229 (freesound.org/s/422689), "help me" by Feed_ (freesound.org/s/529115), "Help us" by wordwiz1 (freesound.org/s/800903), "masculine "oh, my god"" by Elijahbaby (freesound.org/s/692784), "Oh my god.wav" by Sami_Kullström (freesound.org/s/387941), "Female Voc txt _Oh No.wav" by owstu (freesound.org/s/639860), "Women gasping.wav" by FloydP (freesound.org/s/346213), "Crowd in panic" by IENBA (freesound.org/s/491405), "Crowd Screaming" by DigestContent (freesound.org/s/459101).
+- Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.
+
 ## City disaster aftermath (world event)
 
 Sources list and cue sheet: `tools/assets/city_aftermath_sources.md`.
@@ -276,10 +287,36 @@ Sources list: `tools/assets/scp096_sources.md`.
   written description, no game or wiki image used; as depictions of the concept they are shared under CC BY-SA 3.0.
 
 ### Sounds
-- No audio is committed. With the player's own copy of SCP – Containment Breach (Regalis11/scpcb) installed, the
-  client loads its five SCP-096 files locally (`096.ogg`, `096Angered.ogg`, `Scream.ogg`, `Triggered.ogg`,
-  `096Chase.ogg`; the last is based on "Hush" by Kevin MacLeod, incompetech.com, CC BY). Otherwise vanilla Minecraft
-  sound events stand in.
+- Own sounds (issue #136), mixed by `tools/sfx/scp096.py`: the crying, wailing and screaming loops, strike, smash
+  and leap from CC0 1.0 Freesound recordings (full list with ids and authors in `tools/assets/scp096_sources.md`:
+  SPAudiobooks, scottemoil, craigsmith, SnowFightStudios, BrainClaim, hisoul, mvVoiceActing, Archeos, AderuMoro,
+  nick121087, Khrinx, NaturesTemper, Voices_Of_Marz, Kinoton, janbezouska, morgothFLOW, Sheyvan, Kneeling,
+  egomassive, Paul368, iggy1345); the sting and the chase music are original synthesis (CC0-1.0).
+- No SCP: CB audio is committed. The five authentic SCP-096 effects (`096.ogg`, `096Angered.ogg`,
+  `Scream.ogg`, `Triggered.ogg`, `096Chase.ogg`) are available from the player's own local copy of
+  **SCP – Containment Breach** (<https://github.com/Regalis11/scpcb>, game license CC BY-SA 3.0) or through the
+  explicitly invoked verified downloader `tools/scp096/download_original_sounds.py`. Source game credits include
+  Regalis, Omniary, FireFox and Kevin MacLeod; `096Chase.ogg` uses "Hush" by Kevin MacLeod (CC BY).
+  Individual third-party recording rights are not established, so the originals are not shipped in this mod JAR.
+  See `tools/assets/scp096_sources.md` for the precise original paths and provenance.
+
+## SCP-106 and the pocket dimension (world creature)
+
+Sources list: `tools/assets/scp106_sources.md`.
+
+### Concept
+- "SCP-106" by Dr Gears, SCP Foundation wiki (https://scp-wiki.wikidot.com/scp-106), CC BY-SA 3.0. The model,
+  texture, 8 animation clips, the pocket-dimension blocks and textures and every generated room are own work
+  (`tools/assets/scp106_model.py`, `scp106_anims.py`, `scp106_blocks.py`, the `scp/scp106/pocket` generator) drawn
+  from the written description, no game or wiki image used; as depictions of the concept they are shared under
+  CC BY-SA 3.0. Notes, diaries and messages are own writing in 12 locales.
+
+### Sounds
+- All 25 sound events (44 files) are mixed by `tools/sfx/scp106.py` from 35 CC0 1.0 Freesound recordings found via
+  Openverse (creator, Freesound page and the cue each one feeds: `tools/assets/scp106_sources.md`). Processing:
+  cuts, varispeed, reversal, filtering, layering, synthetic room, fades, normalisation. No vanilla Minecraft sound
+  and no SCP – Containment Breach audio. Checked by numbers and in a real client (every event plays, no missing
+  sound); not auditioned by ear — the final mix needs a listening pass.
 
 ## Godzilla — City Catastrophe (world event)
 
@@ -290,3 +327,59 @@ Everything is **own work** (CC0-1.0), no third-party assets. Sources list and cu
 
 Godzilla is a character of Toho Co., Ltd.; this is a non-commercial fan implementation.
 
+## Living Atheria — street life sound (city)
+
+Sources list: `tools/assets/city_life_sources.md`.
+
+### Own work
+- Citizen voices: 73 Russian lines in 4 voices spoken by Piper text-to-speech (`ru_RU-denis-medium`,
+  `ru_RU-dmitri-medium`, rhasspy/piper-voices, trained on CC0 datasets) and re-pitched with the WORLD vocoder,
+  `tools/sfx/city_life_voice.py` (CC0-1.0).
+- Beds, details, screams, sobs and coughs mixed by `tools/sfx/city_life.py` (CC0-1.0).
+
+### Recordings (CC0 1.0, Freesound), mixed by `tools/sfx/city_life.py`
+- 41 recordings by florianreichelt, IENBA, WhiteNoiseSleeper, moxobna, evsecrets, Reikun, SoftDistortionFX,
+  quattrostagii, Pfannkuchn, ValentinPetiteau, kyles, GB01, dhallcomposer, audible-edge, belthazarus, Heigh-hoo, v23,
+  nikiforov5000, dm103, mcmikai, csaszi, TRP, snakebarney, ivolipa, The_Sound_Side, missozzy, peridactyloptrix,
+  Dinsfire, Archeos, joseppujol, Harris85, Eelke, BOBtheROSS, loisgwenllian, RutgerMuller, purplereptar,
+  mvVoiceActing, scottemoil (titles and ids in the sources list).
+- Not auditioned by ear; checked by numbers, spectrograms and speech recognition only.
+
+## T-1000 — liquid-metal infiltrator (world creature)
+
+Sources list and cue sheet: `tools/assets/t1000_sources.md`.
+
+### Own work
+- The liquid-metal body (procedural mesh, wounds, blades, hook, puddle, droplets), its matcap and every pose are
+  **own work** (CC0-1.0), generated in code (`client/t1000/`); the disguise reuses the mod's own citizen skins. No
+  film, game or mod model copied or traced.
+
+### Recordings (CC0 1.0), mixed by `tools/sfx/t1000.py`
+- Freesound via Openverse: "Slime 13/16/19/27.wav" by Archos (freesound.org/s/433812 and siblings), "Step on a slug
+  (Splat!) 2" and "Muddy Boots" by Breviceps, "squishy oobleck goo" by AlaskaRobotics, "Jello Squish" by Fugeni,
+  "Metal Clang sound" by kermite607, "Metallic clang" by tomwilkinson, "R15-07-Metal Clangs and Hollow Hits.wav" by
+  craigsmith, "Metal scrape 1.wav" by BehanSean, "small-metal-scrape-02/04.wav" by newagesoup (from "SFX Metal Shed
+  Door" by EpicWizard, CC0), "Metallic Scrape Slide" by tyballer92, "Metal Scraping Metal.wav" by sentryx86, "Ice
+  Crack 1/2" by j_p_higgins, "Ice Crack 5/9.wav" by ecfike, "Swosh swoosh whoosh air sound", "Swoosh 15 Windy" and
+  "swoosh wind 09.flac" by qubodup, "Swoosh 1/3" by D4XX, "RADIATOR - Metallic clanging, water spouting" by
+  flood-mix. Exact ids, links and attributions: `tools/assets/t1000_sources.md`.
+- Not auditioned by ear; checked by numbers and spectrograms only — the final mix needs a listening pass.
+
+T-1000 is a character of the Terminator franchise (StudioCanal); this is a non-commercial fan implementation.
+
+## Venom
+
+Sources list and licence proof: `docs/venom/audio-sources.md` (in the jar: `META-INF/credits/venom-audio.md`).
+
+### Own work
+- Model, rig, textures, the living coat frames, first-person arms, every animation clip and the GUI art: generated by
+  project scripts (`tools/assets/venom_model.py`, `venom_skin.py`, `venom_clips.py`, `venom_gui.py`), CC0 1.0.
+- Spoken lines and the host's inner voices (subtitles in 12 locales): own phrasing, no quotes from comics or films.
+
+### Recordings (CC0 1.0), cut and mixed by `tools/sfx/venom.py`
+- Freesound, CC0 1.0, each checked on its landing page on 2026-11-02: NicknameLarry, ecfike, colorsCrimsonTears,
+  john129pats, jackieAZ, lendrick, Elth2010, qubodup, Archos, e_r_r_1012, tiddles451, breadparticles, EminYILDIRIM,
+  Nightflame, Jofae, ms107, janbezouska, Nox_Sound, ErikCruzDev, JustInvoke, sebastientate, Breviceps, velcronator,
+  SciFiSounds, JayRom01, leonelmail, kbnevel, j_p_higgins, Crinkem, melle_teich, Rudmer_Rotteveel, benkenart,
+  magnuswaker, kathol, BehanSean, Amekiano, geoneo0, JoBot__, deleted_user_2104797. Titles and links per file are in
+  the sources list.

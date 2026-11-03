@@ -8,7 +8,7 @@ plugins {
 // core uses classes from viltrumiteflight
 evaluationDependsOn(':viltrumiteflight')
 
-version = '1.70.0'
+version = '1.71.0'
 group = 'dev.baranhan.viltrumitecore'
 base { archivesName = 'reforgedcodex-core' }
 
@@ -69,6 +69,10 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // Local only: ./gradlew test -PfalbiksJar=<path to the friend's JAR> runs FalbiksJarSignatureTest against it.
+    if (project.hasProperty('falbiksJar')) {
+        systemProperty 'falbiks.jar', project.property('falbiksJar')
+    }
     testLogging {
         events 'passed', 'failed', 'skipped'
     }
@@ -85,6 +89,15 @@ processResources {
         into 'META-INF/credits'
         rename { 'reinhard-sources.md' }
     }
+    from(rootProject.file('tools/assets/t1000_sources.md')) {
+        into 'META-INF/credits'
+        rename { 't1000-sources.md' }
+    }
+    // Venom: every sound is a CC0 1.0 Freesound recording; the source table and licence proof ship with the jar.
+    from(rootProject.file('docs/venom/audio-sources.md')) {
+        into 'META-INF/credits'
+        rename { 'venom-audio.md' }
+    }
     // Dedicated servers translate only from data packs (Forge LanguageHook reads data/<ns>/lang/en_us.json):
     // mirror the city's English strings there so console and RCON show text instead of keys.
     from('src/main/resources/assets/viltrumite_city/lang') {
@@ -95,6 +108,12 @@ processResources {
     from('src/main/lang-overlays/scp096') {
         include 'en_us.json'
         into 'data/viltrumitecore/lang'
+    }
+    // /scp106 feedback: a second namespace, because one jar can hold only one data/viltrumitecore/lang/en_us.json
+    // (LanguageHook loads lang/en_us.json from every data namespace).
+    from('src/main/lang-overlays/scp106') {
+        include 'en_us.json'
+        into 'data/viltrumitecore_scp106/lang'
     }
     // Encyclopedia: the contextual-interaction catalog (docs/contextual-interactions.json) travels in the
     // jar; while it is not in the repository the screen says so (CodexCatalog).
@@ -125,6 +144,24 @@ processResources {
             merged.putAll(slurper.parse(extra, 'UTF-8'))
             target.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(merged)), 'UTF-8')
         }
+    }
+    // The /t1000 command feedback on dedicated servers (console, RCON): its keys live only in the lang overlay,
+    // so they are merged into the server-side strings next to the SCP-096 ones (one file per namespace).
+    doLast {
+        def t1000 = file('src/main/lang-overlays/t1000/en_us.json')
+        if (!t1000.isFile()) {
+            return
+        }
+        def slurper = new groovy.json.JsonSlurper()
+        def target = new File(destinationDir, 'data/viltrumitecore/lang/en_us.json')
+        def merged = target.isFile() ? new LinkedHashMap(slurper.parse(target, 'UTF-8')) : new LinkedHashMap()
+        slurper.parse(t1000, 'UTF-8').each { k, v ->
+            if (k.startsWith('commands.viltrumitecore.t1000.')) {
+                merged.put(k, v)
+            }
+        }
+        target.parentFile.mkdirs()
+        target.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(merged)), 'UTF-8')
     }
     // Sound overlays (same reason: the base sounds.json is past 64 KB), two layouts:
     // - src/main/sound-overlays/<part>/sounds.json (DIO polish, #90) adds or replaces whole events

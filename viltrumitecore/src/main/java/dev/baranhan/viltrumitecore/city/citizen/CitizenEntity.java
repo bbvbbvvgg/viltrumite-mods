@@ -37,9 +37,35 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    public static final double RECOVER_FACTOR = 0.8;
    private static final EntityDataAccessor<Integer> SKIN = SynchedEntityData.defineId(CitizenEntity.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Byte> STATE = SynchedEntityData.defineId(CitizenEntity.class, EntityDataSerializers.BYTE);
+   /** Entity event: a hero caught this person mid-fall, the clients stop its falling scream (only this one). */
+   public static final byte EVENT_STOP_FALL_VOICE = 71;
 
    /** Spawned by /city populate: exempt from density trimming. */
    public boolean manual;
+   /**
+    * Lives on an upper floor of a high-rise (#138): stays on its floor (never walks back to the street grid, never
+    * discarded for being off it), may be caught by a collapse.
+    */
+   public boolean occupant;
+   // peril (#138, server only; see CitizenPeril)
+   /** Until this game time a fall counts as caused by a collapse of the floor. */
+   long perilUntil = Long.MIN_VALUE;
+   int teeterTicks;
+   /** The airborne check ran for the current fall (reset on the ground). */
+   boolean fallChecked;
+   @Nullable
+   BlockPos hangLedge;
+   double hangX;
+   double hangY;
+   double hangZ;
+   double hangTop;
+   int hangTicks;
+   double fallFromY;
+   int voiceCooldown;
+   /** A voice due later (a witness gasps a moment after the fall): kind and game time. */
+   @Nullable
+   CitizenVoices.Kind voiceLater;
+   long voiceAt;
    /** Ticks to stay idle before the next stroll. */
    int idleTicks;
    /** Set by damage: counts as standing inside a danger for a few seconds. */
@@ -103,6 +129,15 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    }
 
    @Override
+   public void handleEntityEvent(byte id) {
+      if (id == EVENT_STOP_FALL_VOICE) {
+         CitizenPeril.clientStopFallVoice.accept(this.getId());
+      } else {
+         super.handleEntityEvent(id);
+      }
+   }
+
+   @Override
    protected void defineSynchedData() {
       super.defineSynchedData();
       this.entityData.define(SKIN, 0);
@@ -117,6 +152,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       this.goalSelector.addGoal(3, new CitizenGoals.ReturnToGrid(this));
       this.goalSelector.addGoal(4, new CitizenGoals.Talk(this));
       this.goalSelector.addGoal(5, new CitizenGoals.Stroll(this));
+      this.goalSelector.addGoal(5, new CitizenGoals.Occupy(this));
       this.goalSelector.addGoal(6, new CitizenGoals.Gaze(this, 8.0F));
       this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
    }
@@ -167,8 +203,40 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       return CitizenState.of(this.entityData.get(STATE));
    }
 
-   void setCitizenState(CitizenState s) {
-      if (this.citizenState() != s) {
+   /**
+    * True while this body thinks like a citizen: crowd reactions (danger, panic, hurt flight) and the citizen
+    * brain run. A subclass with its own mind (the T-1000 while it hunts) answers false.
+    */
+   protected boolean citizenMind() {
+      return true;
+   }
+
+   /** Ordinary citizens give up (vanish) after repeated stuck paths; an entity with its own lifecycle does not. */
+   protected boolean discardWhenStuck() {
+      return true;
+   }
+
+   /**
+    * Off the pedestrian grid for too long with no walkable cell nearby. An ordinary passer-by is simply removed;
+    * an entity with its own lifecycle (the T-1000) decides itself and must never be counted as destroyed here.
+    */
+   protected void lostOffGrid() {
+      this.discard();
+   }
+
+   /** Counted by the city population (density trims, despawn, crowd index); a body with its own lifecycle is not. */
+   protected boolean cityTracked() {
+      return true;
+   }
+
+   /** World events may carry this person away (Chitauri captors, containment fields). */
+   public boolean capturable() {
+      return true;
+   }
+
+   protected void setCitizenState(CitizenState s) {
+      CitizenState from = this.citizenState();
+      if (from != s) {
          this.entityData.set(STATE, (byte)s.ordinal());
          this.stateTicks = 0;
          if (s != CitizenState.FLEEING) {
@@ -177,6 +245,14 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
 
          if (s != CitizenState.TALKING) {
             this.talkPartner = null;
+         }
+
+         if (!this.level().isClientSide) {
+            // #136: screams, calls and coughs by what happens to this person; a chat that is cut off ends
+            dev.baranhan.viltrumitecore.city.life.CityLife life = dev.baranhan.viltrumitecore.city.life.CityLife.of(this.level());
+            if (life != null) {
+               life.onState(this, from, s);
+            }
          }
       }
    }
@@ -246,6 +322,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       if (CitizenCaptivity.isHeld(this)) {
          // a world event holds this person (carried or in a containment field): no own walking, no stuck discard
          this.getNavigation().stop();
+         CitizenPeril.onHeld(this);
          return;
       }
 
@@ -258,7 +335,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       }
 
       CityManager city = CityManager.of(this.level());
-      if (city != null) {
+      if (city != null && this.citizenMind() && !CitizenPeril.tick(this, city)) {
          CitizenBrain.tick(this, city);
       }
 
@@ -281,7 +358,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
             }
          }
 
-         if (this.stuckStrikes >= 5 || this.getY() < this.level().getMinBuildHeight()) {
+         if (this.discardWhenStuck() && (this.stuckStrikes >= 5 || this.getY() < this.level().getMinBuildHeight())) {
             this.discard();
          }
       }
@@ -301,7 +378,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    @Override
    public boolean hurt(DamageSource source, float amount) {
       boolean hurt = super.hurt(source, amount);
-      if (!this.level().isClientSide && hurt) {
+      if (!this.level().isClientSide && hurt && this.citizenMind()) {
          CityManager city = CityManager.of(this.level());
          if (city != null) {
             // run away from whoever or whatever did it; a hurt person is also a sight for others
@@ -315,7 +392,9 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
             }
 
             city.danger(from.x, from.y, from.z, 12.0F, 200);
-            if (this.isAlive()) {
+            if (this.isAlive() && CitizenPeril.onHurt(this)) {
+               this.hurtTicks = 100; // hanging on, teetering or falling: the peril keeps the body
+            } else if (this.isAlive()) {
                this.hurtTicks = 100;
                this.setThreat(from.x, from.y, from.z, 12.0F);
                CitizenState s = this.citizenState();
@@ -335,6 +414,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       super.die(source);
       CityManager city = CityManager.of(this.level());
       if (city != null && !this.level().isClientSide) {
+         CitizenPeril.onDeath(this, city, source.getMsgId());
          // somebody died here: everybody around notices, the closest run
          city.dangerMap().add(this.getX(), this.getY(), this.getZ(), 10.0F, 36.0F, city.now(), 240);
       }
@@ -403,7 +483,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    @Override
    public void onAddedToWorld() {
       super.onAddedToWorld();
-      if (!this.level().isClientSide) {
+      if (!this.level().isClientSide && this.cityTracked()) {
          CityManager.track(this, true);
       }
    }
@@ -411,7 +491,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    @Override
    public void onRemovedFromWorld() {
       super.onRemovedFromWorld();
-      if (!this.level().isClientSide) {
+      if (!this.level().isClientSide && this.cityTracked()) {
          CityManager.track(this, false);
       }
    }

@@ -42,6 +42,8 @@ GROUPS = {
     'red_hulk': [('red_hulk/red_hulk', 'red_hulk/red_hulk')],
     'red_hulk_arms': [('red_hulk/red_hulk_arms', 'red_hulk/red_hulk', {'reused': True})],
     'hell_cycle': [('ghost_rider/hell_cycle', 'ghost_rider/hell_cycle')],
+    'venom': [('venom/venom', 'venom/venom')],
+    'venom_arms': [('venom/venom_arms', 'venom/venom', {'reused': True})],
 }
 
 

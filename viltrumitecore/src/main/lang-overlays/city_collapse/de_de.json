@@ -17,5 +17,8 @@
   "commands.viltrumitecore.collapse.analyze.yes": "Ein Einsturz würde beginnen: %s",
   "commands.viltrumitecore.collapse.analyze.no": "Kein Einsturz: %s",
   "commands.viltrumitecore.collapse.damage": "Schaden (%s): %s Blöcke entfernt",
-  "commands.viltrumitecore.collapse.too_big": "Höchstens %s Blöcke auf einmal"
+  "commands.viltrumitecore.collapse.too_big": "Höchstens %s Blöcke auf einmal",
+  "commands.viltrumitecore.collapse.support": "Stütze: %s",
+  "message.viltrumitecore.collapse.support_blocked.gamerule": "Dieses Bauwerk hat seine Stütze verloren, aber Einstürze sind aus: Spielregel mobGriefing ist false",
+  "message.viltrumitecore.collapse.support_blocked.config": "Dieses Bauwerk hat seine Stütze verloren, aber Einstürze sind in der Konfiguration aus (collapseEnabled)"
 }

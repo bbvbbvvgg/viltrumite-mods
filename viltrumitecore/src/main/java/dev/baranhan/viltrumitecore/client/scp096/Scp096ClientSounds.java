@@ -17,7 +17,6 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -35,9 +34,9 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
  * while it is calm (SCP:CB 096.ogg), the wailing from the moment its face was seen through the hysteria
  * (096Angered.ogg) and the screaming of the chase (Scream.ogg), all positional; for the local player only, the
  * sting when he saw the face (Triggered.ogg) with a short camera zoom kick, and the chase music while he is hunted
- * (096Chase.ogg, louder as it closes in, never below 60% — the SCP:CB rule) with a slow zoom pulse. With the
- * originals found ({@link Scp096OriginalSounds}) the loops stream continuously; with the vanilla fallbacks the
- * positional sounds are spaced one-shots instead. Every loop fades toward a target re-read each tick and stops
+ * (096Chase.ogg, louder as it closes in, never below 60% — the SCP:CB rule) with a slow zoom pulse. The loops
+ * stream continuously: the mod's own recordings (sounds/scp096, issue #136), or the originals when
+ * {@link Scp096OriginalSounds} finds them on this computer. Every loop fades toward a target re-read each tick and stops
  * itself, so a despawn, a level change or a logout can never leave a sound hanging. Client only.
  */
 @EventBusSubscriber(modid = "viltrumitecore", bus = Bus.FORGE, value = {Dist.CLIENT})
@@ -51,7 +50,6 @@ public final class Scp096ClientSounds {
    private static final Map<Integer, Track> TRACKS = new HashMap<>();
    /** Entities hunting the local player (from {@link Scp096S2CPacket}). */
    private static final Set<Integer> HUNTED = new HashSet<>();
-   private static final RandomSource RANDOM = RandomSource.create();
    @Nullable
    private static Scp096LoopSound music;
    private static int musicRetry;
@@ -71,7 +69,6 @@ public final class Scp096ClientSounds {
       final Scp096Entity entity;
       final Scp096LoopSound[] loops = new Scp096LoopSound[3];
       final int[] retry = new int[3];
-      int nextShot;
       int seen;
 
       Track(Scp096Entity entity) {
@@ -118,28 +115,11 @@ public final class Scp096ClientSounds {
       return (float)Mth.clamp(1.0 - (distance - 12.0) / 80.0, 0.6, 1.0);
    }
 
-   /** Pure: spacing in ticks of the fallback one-shots of a loop. */
-   static int shotGap(int loop, RandomSource random) {
-      return switch (loop) {
-         case 0 -> 70 + random.nextInt(70);
-         case 1 -> 38 + random.nextInt(24);
-         default -> 26 + random.nextInt(16);
-      };
-   }
-
    private static SoundEvent event(int loop) {
       return switch (loop) {
          case 0 -> Scp096Sounds.CRY.get();
          case 1 -> Scp096Sounds.ANGERED.get();
          default -> Scp096Sounds.SCREAM.get();
-      };
-   }
-
-   private static String original(int loop) {
-      return switch (loop) {
-         case 0 -> "cry";
-         case 1 -> "angered";
-         default -> "scream";
       };
    }
 
@@ -198,15 +178,6 @@ public final class Scp096ClientSounds {
       for (int i = 0; i < 3; i++) {
          float target = i == want ? loopVolume(i, s, stateTicks) : 0.0F;
          Scp096LoopSound loop = t.loops[i];
-         if (!Scp096OriginalSounds.has(original(i))) {
-            // vanilla fallback: spaced positional one-shots instead of a continuous loop
-            if (i == want && --t.nextShot <= 0) {
-               t.nextShot = shotGap(i, RANDOM);
-               mc.level.playLocalSound(e.getX(), e.getY() + e.getBbHeight() * 0.85, e.getZ(), event(i), SoundSource.HOSTILE, target,
-                  0.95F + RANDOM.nextFloat() * 0.1F, false);
-            }
-            continue;
-         }
          if (!dead(mc, loop)) {
             loop.target = target;
          } else if (target > 0.02F && --t.retry[i] <= 0) {

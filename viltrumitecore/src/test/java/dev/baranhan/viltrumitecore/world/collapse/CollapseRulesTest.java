@@ -74,4 +74,15 @@ class CollapseRulesTest {
          assertEquals(net.minecraft.core.BlockPos.asLong(p[0], p[1], p[2]), k);
       }
    }
+
+   @Test
+   void anIntactFloorAboveShieldsFromTheImpact() {
+      // floors every 4 blocks (y = 1, 5, 9, ...), the falling section starts at y = 21
+      java.util.function.IntPredicate floors = y -> Math.floorMod(y - 1, 4) == 0;
+      assertTrue(CollapseRules.sheltered(4, 21, floors), "two floors up are still standing");
+      assertTrue(CollapseRules.sheltered(16, 21, floors), "the floor right above (17) holds");
+      org.junit.jupiter.api.Assertions.assertFalse(CollapseRules.sheltered(18, 21, floors), "on the top floor: hit");
+      org.junit.jupiter.api.Assertions.assertFalse(CollapseRules.sheltered(30, 21, floors), "inside the section: hit");
+      org.junit.jupiter.api.Assertions.assertFalse(CollapseRules.sheltered(4, 21, y -> false), "open shaft up to the section: hit");
+   }
 }

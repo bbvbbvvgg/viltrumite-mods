@@ -20,9 +20,10 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /**
- * SCP-096 assets: every sound event has a subtitle (the music excepted) and a vanilla fallback, no SCP: Containment
- * Breach audio is committed (the originals come only from the player's own copy), all 12 locales carry the same
- * keys, every key the Java code builds exists, and every clip the renderer asks for is in the clip files.
+ * SCP-096 assets: every sound event has a subtitle (the music excepted) and plays the mod's own sounds, which are
+ * all in the jar (issue #136: a clean install never falls back to vanilla events); no SCP: Containment Breach audio
+ * is committed (the originals come only from the player's own copy), all 12 locales carry the same keys, every
+ * key the Java code builds exists, and every clip the renderer asks for is in the clip files.
  */
 class Scp096AssetsTest {
    private static final Path MAIN = Path.of("src/main");
@@ -37,7 +38,7 @@ class Scp096AssetsTest {
    }
 
    @Test
-   void soundEventsHaveSubtitlesAndOnlyVanillaFallbacks() throws IOException {
+   void soundEventsHaveSubtitlesAndOwnSounds() throws IOException {
       String src = Files.readString(JAVA.resolve("scp/scp096/Scp096Sounds.java"));
       Set<String> events = new TreeSet<>();
       Matcher m = Pattern.compile("reg\\(\"([a-z0-9_.]+)\"\\)").matcher(src);
@@ -54,9 +55,14 @@ class Scp096AssetsTest {
          }
          for (JsonElement s : ev.getAsJsonArray("sounds")) {
             JsonObject so = s.getAsJsonObject();
-            assertEquals("event", so.get("type").getAsString(), e.getKey() + " falls back to a vanilla event");
-            assertTrue(so.get("name").getAsString().startsWith("minecraft:"), e.getKey());
+            assertFalse(so.has("type"), e.getKey() + " plays a file, not another event");
+            String name = so.get("name").getAsString();
+            assertTrue(name.startsWith("viltrumitecore:scp096/") && !name.contains("/original/"), e.getKey() + ": " + name);
+            String rel = "assets/viltrumitecore/sounds/" + name.substring("viltrumitecore:".length()) + ".ogg";
+            assertTrue(Files.isRegularFile(MAIN.resolve("resources").resolve(rel)) || Files.isRegularFile(MAIN.resolve("binassets").resolve(rel + ".b64"))
+               || Files.isRegularFile(MAIN.resolve("binassets").resolve(rel + ".b64.part0")), "the sound is in the jar: " + rel);
          }
+         assertEquals(e.getKey().equals("scp096.chase_music") ? "music" : "hostile", ev.get("category").getAsString(), e.getKey());
       }
    }
 
@@ -66,9 +72,15 @@ class Scp096AssetsTest {
          try (Stream<Path> files = Files.walk(root)) {
             files.filter(Files::isRegularFile).forEach(p -> {
                String n = p.toString().toLowerCase().replace('\\', '/');
-               assertFalse(n.contains("scp096") && (n.endsWith(".ogg") || n.endsWith(".ogg.b64") || n.contains(".ogg.b64.part")),
-                  "SCP: CB audio must not be committed: " + p);
-               assertFalse(n.contains("/sounds/scp096/"), "no scp096 sound folder in the jar: " + p);
+               String file = n.substring(n.lastIndexOf('/') + 1);
+               // the mod's own SCP-096 sounds live in sounds/scp096 under their own names; the SCP: CB files are
+               // 096.ogg, 096angered.ogg, 096chase.ogg, scream.ogg and triggered.ogg (and never an original/ folder)
+               assertFalse(file.startsWith("096"), "SCP: CB audio must not be committed: " + p);
+               assertFalse(n.contains("/sounds/scp096/original/"), "the originals are served from the player's copy only: " + p);
+               if (n.contains("/sounds/scp096/")) {
+                  assertTrue(file.matches("(cry|angered|scream|triggered|chase_music|strike_[1-3]|smash_[1-3]|leap_[12])\\.ogg(\\.b64(\\.part\\d+)?)?"),
+                     "only the mod's own SCP-096 sounds: " + p);
+               }
             });
          }
       }
@@ -127,6 +139,7 @@ class Scp096AssetsTest {
       assertTrue(json(ANIMS.resolve("scp096_calm.animation.json")).getAsJsonObject("animations").has("sob"));
       JsonObject chase = json(ANIMS.resolve("scp096_chase.animation.json")).getAsJsonObject("animations");
       assertTrue(chase.has("smash") && chase.has("attack"));
+      assertTrue(chase.has("punch_up") && chase.has("dash") && chase.has("mantle"), "the moves of the vertical pursuit (#137)");
       assertTrue(Files.isRegularFile(MAIN.resolve("resources/assets/viltrumitecore/geo/scp096/scp096.geo.json"))
          || Files.isRegularFile(MAIN.resolve("binassets/assets/viltrumitecore/geo/scp096/scp096.geo.json.part0")), "the model");
    }

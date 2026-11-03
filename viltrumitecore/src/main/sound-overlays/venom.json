@@ -1,0 +1,307 @@
+{
+  "venom.transform": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.transform",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/transform",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "venom.revert": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.revert",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/revert"
+      }
+    ]
+  },
+  "venom.roar": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.roar",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/roar_1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "viltrumitecore:venom/roar_2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "venom.squirm": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.squirm",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/squirm_1"
+      },
+      {
+        "name": "viltrumitecore:venom/squirm_2"
+      },
+      {
+        "name": "viltrumitecore:venom/squirm_3"
+      }
+    ]
+  },
+  "venom.reform": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.reform",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/reform_1"
+      },
+      {
+        "name": "viltrumitecore:venom/reform_2"
+      }
+    ]
+  },
+  "venom.shriek": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.shriek",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/shriek_1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "viltrumitecore:venom/shriek_2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "venom.claw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.claw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/claw_1"
+      },
+      {
+        "name": "viltrumitecore:venom/claw_2"
+      },
+      {
+        "name": "viltrumitecore:venom/claw_3"
+      }
+    ]
+  },
+  "venom.claw_hit": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.claw_hit",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/claw_hit_1"
+      },
+      {
+        "name": "viltrumitecore:venom/claw_hit_2"
+      },
+      {
+        "name": "viltrumitecore:venom/claw_hit_3"
+      }
+    ]
+  },
+  "venom.tendril_shot": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.tendril_shot",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/tendril_shot_1"
+      },
+      {
+        "name": "viltrumitecore:venom/tendril_shot_2"
+      }
+    ]
+  },
+  "venom.tendril_stick": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.tendril_stick",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/tendril_stick_1"
+      },
+      {
+        "name": "viltrumitecore:venom/tendril_stick_2"
+      }
+    ]
+  },
+  "venom.zip": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.zip",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/zip"
+      }
+    ]
+  },
+  "venom.lash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.lash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/lash_1"
+      },
+      {
+        "name": "viltrumitecore:venom/lash_2"
+      }
+    ]
+  },
+  "venom.slam": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.slam",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/slam_1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "viltrumitecore:venom/slam_2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "venom.grab": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.grab",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/grab_1"
+      },
+      {
+        "name": "viltrumitecore:venom/grab_2"
+      }
+    ]
+  },
+  "venom.throw": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.throw",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/throw_1"
+      },
+      {
+        "name": "viltrumitecore:venom/throw_2"
+      }
+    ]
+  },
+  "venom.shell": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.shell",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/shell"
+      }
+    ]
+  },
+  "venom.web_tear": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.web_tear",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/web_tear_1"
+      },
+      {
+        "name": "viltrumitecore:venom/web_tear_2"
+      }
+    ]
+  },
+  "venom.web_eat": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.web_eat",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/web_eat"
+      }
+    ]
+  },
+  "venom.clash": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.clash",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/clash_1"
+      },
+      {
+        "name": "viltrumitecore:venom/clash_2"
+      }
+    ]
+  },
+  "venom.engulf": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.engulf",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/engulf"
+      }
+    ]
+  },
+  "venom.heartbeat": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.heartbeat",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/heartbeat_1",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "viltrumitecore:venom/heartbeat_2",
+        "attenuation_distance": 4
+      }
+    ]
+  },
+  "venom.breath": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.breath",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/breath_1",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "viltrumitecore:venom/breath_2",
+        "attenuation_distance": 4
+      }
+    ]
+  },
+  "venom.whisper": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.whisper",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/whisper_1",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "viltrumitecore:venom/whisper_2",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "viltrumitecore:venom/whisper_3",
+        "attenuation_distance": 4
+      }
+    ]
+  },
+  "venom.release": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.release",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/release"
+      }
+    ]
+  },
+  "venom.refuse": {
+    "category": "player",
+    "subtitle": "subtitles.viltrumitecore.venom.refuse",
+    "sounds": [
+      {
+        "name": "viltrumitecore:venom/refuse_1"
+      },
+      {
+        "name": "viltrumitecore:venom/refuse_2"
+      }
+    ]
+  }
+}

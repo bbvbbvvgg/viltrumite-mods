@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "viltrumitecore:block/pocket_pillar"
+    },
+    "axis=x": {
+      "model": "viltrumitecore:block/pocket_pillar",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "viltrumitecore:block/pocket_pillar",
+      "x": 90
+    }
+  }
+}

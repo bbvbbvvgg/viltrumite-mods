@@ -62,7 +62,8 @@ class HeroRosterIntegrationTest {
       assertSame(HeroId.CAPTAIN, ids[10], "Captain America appends after Jinwoo");
       assertSame(HeroId.RED_HULK, ids[11], "Red Hulk appends after Captain America");
       assertSame(HeroId.GHOST_RIDER, ids[12], "Ghost Rider appends after Red Hulk");
-      assertEquals(13, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
+      assertSame(HeroId.VENOM, ids[13], "Venom appends after Ghost Rider");
+      assertEquals(14, ids.length, "a hero was added or lost: update this guard, the race screen and the protocol");
       Set<String> keys = new HashSet<>();
       for (HeroId id : ids) {
          assertTrue(keys.add(id.key()), "duplicate hero key " + id.key());
@@ -91,7 +92,10 @@ class HeroRosterIntegrationTest {
       // Ghost Rider appends his six actions after Red Hulk's (released ordinals unchanged).
       assertEquals(HeroAction.REDHULK_OVERHEAT.ordinal() + 1, HeroAction.GHOSTRIDER_CYCLE.ordinal(), "Ghost Rider block follows Red Hulk");
       assertEquals(HeroAction.GHOSTRIDER_CYCLE.ordinal() + 5, HeroAction.GHOSTRIDER_STARE.ordinal(), "Ghost Rider block is contiguous");
-      assertSame(HeroAction.GHOSTRIDER_STARE, actions[actions.length - 1]);
+      // Venom appends his six actions after Ghost Rider's (released ordinals unchanged).
+      assertEquals(HeroAction.GHOSTRIDER_STARE.ordinal() + 1, HeroAction.VENOM_SYMBIOSIS.ordinal(), "Venom block follows Ghost Rider");
+      assertEquals(HeroAction.VENOM_SYMBIOSIS.ordinal() + 5, HeroAction.VENOM_TAKEOVER.ordinal(), "Venom block is contiguous");
+      assertSame(HeroAction.VENOM_TAKEOVER, actions[actions.length - 1]);
       for (HeroAction action : actions) {
          assertSame(action, HeroAction.byId(action.ordinal()));
       }
@@ -137,22 +141,24 @@ class HeroRosterIntegrationTest {
 
    @Test
    void raceSelectionOffersEveryHeroWithATranslatedButton() throws IOException {
-      String screen = Files.readString(SRC.resolve("client/gui/RaceSelectionScreen.java"));
-      List<String> heroes = arrayItems(screen, "HeroId\\[\\] HEROES");
-      List<String> labels = arrayItems(screen, "String\\[\\] LABELS");
-      assertEquals(heroes.size(), labels.size(), "every button needs a label");
-      Set<String> expected = new HashSet<>();
+      // The screen lists HeroChoices.heroes() (= Od Lagna's wish registry), so the wish and the screen cannot drift
+      // apart again (#134: Red Hulk was on neither path a player could reach).
+      List<HeroId> heroes = dev.baranhan.viltrumitecore.client.gui.HeroChoices.heroes();
+      Set<HeroId> expected = EnumSet.noneOf(HeroId.class);
       for (HeroId id : HeroId.values()) {
-         if (!NOT_SELECTABLE.contains(id)) expected.add("HeroId." + id.name());
+         if (!NOT_SELECTABLE.contains(id)) expected.add(id);
       }
       assertEquals(expected, new HashSet<>(heroes), "the race selection screen must list every selectable hero");
+      assertEquals(heroes.size(), new HashSet<>(heroes).size(), "a hero is listed twice");
       Map<String, Map<String, String>> locales = mergedLocales();
-      for (String label : labels) {
-         String key = "gui.viltrumitecore.race_selection." + label.replace("\"", "");
+      for (HeroId hero : heroes) {
+         String key = dev.baranhan.viltrumitecore.client.gui.HeroChoices.labelKey(hero);
          for (String locale : LOCALES) {
             assertNotNull(locales.get(locale).get(key), locale + " misses " + key);
          }
       }
+      String screen = Files.readString(SRC.resolve("client/gui/RaceSelectionScreen.java"));
+      assertTrue(screen.contains("HeroChoices.heroes()") && screen.contains("HeroChoices.labelKey("), "the screen must read HeroChoices");
    }
 
    @Test
@@ -205,7 +211,11 @@ class HeroRosterIntegrationTest {
       // 29 = the integration of #129/#130/#131/#132: one table with Scp096S2CPacket, GodzillaFxS2CPacket,
       // ThanosWarS2CPacket, HellCycleControlC2SPacket and HellfireS2CPacket appended in that order after the aftermath
       // packet. Each branch alone was "28" with a different table, so every "28" peer is refused.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"29\""), "the merged packet table needs its own protocol version");
+      // 30 = Venom: VenomPossessS2CPacket and VenomDriveC2SPacket appended after HellfireS2CPacket.
+      // 30 = SCP-106 and the pocket dimension: Scp106S2CPacket appended last.
+      // 31 = the integration of #141..#147 and SCP-106: Venom's two packets after HellfireS2CPacket, then
+      // Scp106S2CPacket. Each branch alone was "30" with a different table, so every "30" peer is refused.
+      assertTrue(source.contains("PROTOCOL_VERSION = \"31\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -228,8 +238,12 @@ class HeroRosterIntegrationTest {
       assertEquals(List.of("CityPowerS2CPacket", "CityCollapseS2CPacket", "AftermathS2CPacket"),
          packets.subList(punch + 5, punch + 8), "the city power, collapse and aftermath packets append after Ultron's (v27)");
       assertEquals(List.of("Scp096S2CPacket", "GodzillaFxS2CPacket", "ThanosWarS2CPacket", "HellCycleControlC2SPacket",
-         "HellfireS2CPacket"), packets.subList(punch + 8, packets.size()),
+         "HellfireS2CPacket"), packets.subList(punch + 8, punch + 13),
          "the integration of the four sessions appends SCP-096, Godzilla, the Thanos war, then Ghost Rider (v29)");
+      assertEquals(List.of("VenomPossessS2CPacket", "VenomDriveC2SPacket"), packets.subList(punch + 13, punch + 15),
+         "Venom's host takeover packets append after Ghost Rider's (v30)");
+      assertEquals(List.of("Scp106S2CPacket"), packets.subList(punch + 15, packets.size()),
+         "the SCP-106 packet appends last, after Venom's (v31)");
    }
 
    @Test
@@ -307,15 +321,5 @@ class HeroRosterIntegrationTest {
       if (!Files.isRegularFile(file)) return;
       JsonParser.parseString(Files.readString(file)).getAsJsonObject().entrySet()
          .forEach(e -> into.put(e.getKey(), e.getValue().getAsString()));
-   }
-
-   private static List<String> arrayItems(String source, String declaration) {
-      Matcher m = Pattern.compile(declaration + "\\s*=\\s*\\{([^}]*)}").matcher(source);
-      assertTrue(m.find(), declaration + " not found");
-      List<String> items = new ArrayList<>();
-      for (String item : m.group(1).split(",")) {
-         if (!item.isBlank()) items.add(item.trim());
-      }
-      return items;
    }
 }

@@ -16,8 +16,6 @@ import dev.baranhan.viltrumitecore.hero.thor.bridge.HammerView;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvent;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEventType;
 import dev.baranhan.viltrumitecore.hero.thor.bridge.ThorEvents;
-import dev.baranhan.viltrumitecore.network.CoreMessages;
-import dev.baranhan.viltrumitecore.network.packet.OpenRaceScreenS2CPacket;
 import dev.baranhan.viltrumitecore.util.ViltrumiteCorePlayer;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -393,9 +391,9 @@ public final class MjolnirWorld {
    }
 
    /**
-    * Approved by the author (session A review): a former Thor who logs in
-    * while another Thor holds the slot becomes Human and gets the race
-    * screen to choose again (№211: he never displaces the active Thor).
+    * A former Thor who logs in while another Thor holds the slot becomes Human
+    * (№211: he never displaces the active Thor). No choice screen on login
+    * (heroes come from Od Lagna's Wish): the chat line tells him why.
     */
    private static void demote(ServerPlayer player) {
       HeroRegistry.changeHero(player, HeroId.HUMAN);
@@ -403,7 +401,6 @@ public final class MjolnirWorld {
          corePlayer.setChosenRace(false);
       }
 
-      CoreMessages.sendToPlayer(new OpenRaceScreenS2CPacket(), player);
       player.displayClientMessage(Component.translatable(SLOT_TAKEN_LOGIN), false);
    }
 

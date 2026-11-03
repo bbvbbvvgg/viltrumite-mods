@@ -2,7 +2,6 @@ package dev.baranhan.viltrumitecore.client.hero.speech.qa;
 
 import com.mojang.logging.LogUtils;
 import dev.baranhan.viltrumitecore.client.AbilityInputManager;
-import dev.baranhan.viltrumitecore.client.gui.RaceSelectionScreen;
 import dev.baranhan.viltrumitecore.client.hero.speech.HeroSubtitles;
 import dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient;
 import java.io.File;
@@ -43,6 +42,11 @@ import org.slf4j.Logger;
  * and logs the scene every 20 ticks while one exists ({@code SUBPT ... fp}). {@code collapsestate} logs the
  * structural-collapse scenes (count, drawn fragments, render ms) and the fps. {@code scp096state} logs every loaded
  * SCP-096 (state, flags, speed, layer weights) and its sounds; {@code scp096look} turns the camera to the nearest one.
+ * {@code lifestate} logs the living city's sound (issue #136): mood, beds and their volumes, active voices and calls per
+ * kind, what the limits dropped and the sound engine's channel count.
+ * {@code t1000state} logs every loaded T-1000 (form, action, arms, flags, wounds, disguise), its droplets and the metal
+ * body's render cost; {@code t1000look} turns the camera to the nearest one.
+ * {@code scp106state} logs every loaded SCP-106 and the pocket-dimension client state; {@code scp106look} aims at the nearest one.
  * {@code godzillastate} logs the kaiju's last drawn LOD, camera distance, body build time, hot zones and particles;
  * {@code godzillalod <n>} forces a LOD (-1 = by distance). {@code warstate} logs the Thanos war on the client (phase,
  * ship and its position, army, worst hull frame), {@code lookship} aims the camera at the ship, {@code vfly} toggles
@@ -50,7 +54,8 @@ import org.slf4j.Logger;
  * a screenshot on the first frame the hold card fills the warning slot. Every change of that slot is logged
  * ({@code SUBPT ... strip <move>|held|none}). {@code bike} logs the Hell Cycle the player rides (speed, rpm, gear,
  * lean, drift, ground); {@code bikes} logs every Hell Cycle this client draws, remote copies included (multiplayer
- * sync), with the effect entries and engine loops it still holds.
+ * sync), with the effect entries and engine loops it still holds. {@code venomstate} logs every Venom this client draws
+ * (form, move, hunger, flags, height), the running host takeovers, the local host view (camera, post uniforms) and the boss.
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -82,7 +87,8 @@ public final class SubtitlePlaytest {
       HeroSubtitles.qaLog = message -> LOG.info("SUBPT t={} {}", ticks, message);
       MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onRenderTick);
-      MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onPlaySound);
+      // lowest priority: log what really plays, after the city voice limiter (#136) dropped doubles and extras
+      MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, SubtitlePlaytest::onPlaySound);
       LOG.info("SUBPT enabled (command file {})", commandFile().getAbsolutePath());
    }
 
@@ -101,11 +107,6 @@ public final class SubtitlePlaytest {
       if (AUTO_WORLD && !worldRequested && mc.level == null && mc.screen instanceof TitleScreen) {
          worldRequested = true;
          openWorld(mc);
-      }
-
-      if (mc.screen instanceof RaceSelectionScreen && mc.level != null) {
-         // The hero is set by the operator command (/subtitleqa hero), not the one-time choice screen.
-         mc.setScreen(null);
       }
 
       RELEASES.removeIf(r -> {
@@ -255,12 +256,21 @@ public final class SubtitlePlaytest {
 
             SCENE_SHOTS.sort(Integer::compare);
          }
-         case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
-            mc.player == null ? -1.0F : mc.player.getHealth(), mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
+         // The choice screen opens only on purpose now (/viltrumite choose), so it is no longer closed here (#134).
+         case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} hero={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
+            mc.player == null ? -1.0F : mc.player.getHealth(), mc.player == null ? "-" : dev.baranhan.viltrumitecore.hero.HeroRegistry.get(mc.player).id().key(),
+            mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
          // encyclopedia QA (hero gallery): open the wish screen, drive the GUI, resize, switch language
          case "scp096state" -> LOG.info("SUBPT t={} scp096 {} fps={}", ticks, dev.baranhan.viltrumitecore.client.scp096.Scp096Qa.describe(mc),
             mc.getFps());
          case "scp096look" -> dev.baranhan.viltrumitecore.client.scp096.Scp096Qa.lookAtNearest(mc);
+         // living city QA (#136): ambience beds, voices, limits and the sound engine's source count
+         case "lifestate" -> LOG.info("SUBPT t={} life {} fps={}", ticks, dev.baranhan.viltrumitecore.client.city.life.CityLifeAmbience.describe(), mc.getFps());
+         case "t1000state" -> LOG.info("SUBPT t={} t1000 {} fps={}", ticks, dev.baranhan.viltrumitecore.client.t1000.T1000Qa.describe(mc), mc.getFps());
+         case "t1000look" -> dev.baranhan.viltrumitecore.client.t1000.T1000Qa.lookAtNearest(mc);
+         case "scp106state" -> LOG.info("SUBPT t={} scp106 {} fps={}", ticks, dev.baranhan.viltrumitecore.client.scp106.Scp106Qa.describe(mc),
+            mc.getFps());
+         case "scp106look" -> dev.baranhan.viltrumitecore.client.scp106.Scp106Qa.lookAtNearest(mc);
          // Thanos war QA: the client's war state (ship, army, hull render cost) and aiming the camera at the ship
          case "warstate" -> LOG.info("SUBPT t={} war {} fps={}", ticks, dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.qaSummary(), mc.getFps());
          case "lookship" -> {
@@ -287,6 +297,7 @@ public final class SubtitlePlaytest {
          case "godzillalod" -> dev.baranhan.viltrumitecore.client.godzilla.GodzillaRenderer.qaForceLod = Integer.parseInt(arg);
          case "godzillastate" -> LOG.info("SUBPT t={} godzilla {} fps={}", ticks,
             dev.baranhan.viltrumitecore.client.godzilla.GodzillaClient.qaSummary(), mc.getFps());
+         case "venomstate" -> LOG.info("SUBPT t={} venom {} fps={}", ticks, dev.baranhan.viltrumitecore.client.venom.VenomPossessionClient.qaSummary(), mc.getFps());
          case "wish" -> mc.setScreen(new dev.baranhan.viltrumitecore.client.wish.WishScreen());
          case "click" -> {
             String[] a = arg.split(" ");

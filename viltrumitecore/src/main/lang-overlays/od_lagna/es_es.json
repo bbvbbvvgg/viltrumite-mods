@@ -45,6 +45,10 @@
   "subtitles.od_lagna.return": "The light recedes",
   "wish.viltrumitecore.shield": "I wish to stand up first and never give in",
   "wish.viltrumitecore.shield.echo": "You will stand when everyone else has fallen.",
+  "wish.viltrumitecore.rage": "Deseo una fuerza que crezca con mi furia",
+  "wish.viltrumitecore.rage.echo": "Cuanto más arda tu ira, más temblará el mundo.",
   "wish.viltrumitecore.vengeance": "Deseo cabalgar por venganza y juzgar a los culpables",
-  "wish.viltrumitecore.vengeance.echo": "Tu alma arderá y cada pecado tendrá que responder ante ti."
+  "wish.viltrumitecore.vengeance.echo": "Tu alma arderá y cada pecado tendrá que responder ante ti.",
+  "wish.viltrumitecore.hunger": "Deseo no volver a estar solo nunca y ser lo bastante fuerte para devolver el mordisco",
+  "wish.viltrumitecore.hunger.echo": "Tendrá hambre contigo, y los dos seréis uno."
 }

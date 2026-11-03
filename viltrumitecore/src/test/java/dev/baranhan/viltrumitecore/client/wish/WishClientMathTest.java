@@ -113,7 +113,7 @@ class WishClientMathTest {
             }
          }
       }
-      for (String key : new String[]{"time", "shadow", "thunder", "cards", "tech", "crimson", "holy", "still", "shield", "hellfire", "mortal"}) {
+      for (String key : new String[]{"time", "shadow", "thunder", "cards", "tech", "crimson", "holy", "still", "shield", "rage", "hellfire", "symbiote", "mortal"}) {
          assertEquals(key, WishStyle.of(key).key);
       }
       assertEquals(WishStyle.MORTAL, WishStyle.of("unknown"));

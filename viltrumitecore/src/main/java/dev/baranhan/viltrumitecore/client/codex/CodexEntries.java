@@ -39,6 +39,7 @@ public final class CodexEntries {
          "captain_america", "steve_rogers", "cap");
       hero("red_hulk", 0xE0301E, rel("avenger_hulk", "captain"), "thunderbolt_ross", "rulk");
       hero("ghost_rider", 0xFF7A1A, rel("human", "red_hulk"), "johnny_blaze", "spirit_of_vengeance", "hell_cycle");
+      hero("venom", 0x8A78C8, rel("venom_boss", "human", "ghost_rider"), "eddie_brock", "symbiote", "we_are_venom");
       hero("human", 0xFFE3A3, rel("citizen", "od_lagna"), "player", "mortal");
 
       npc("conquest", "boss", 0xD23A3A, Visual.skin(SKINS + "skin_conquest.png", false), rel("viltrumite_squad", "homelander", "conquest_arrival"));
@@ -51,6 +52,8 @@ public final class CodexEntries {
          rel("chitauri_soldier", "chitauri_leviathan", "chitauri_invasion"), "chariot");
       npc("chitauri_leviathan", "boss", 0x4C6A85, Visual.entity("viltrumitecore:chitauri_leviathan", null),
          rel("chitauri_soldier", "chitauri_chariot", "chitauri_invasion"), "leviathan");
+      npc("venom_boss", "boss", 0x5A4A8A, Visual.entity("viltrumitecore:venom_boss", null), rel("venom", "human"), "feral_venom",
+         "venom_npc");
       npc("thanos", "boss", 0x9B59D0, Visual.entity("viltrumitecore:thanos", null), rel("thanos_snap", "od_lagna", "reinhard", "dio"),
          "mad_titan", "infinity_gauntlet");
       avenger("avenger_iron_man", "iron_man", 0xE0413A, "avenger_thor", "mark_42");

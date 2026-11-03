@@ -48,9 +48,11 @@ class CodexInteractionsIntegrationTest {
    }
 
    @Test
-   void encyclopediaShowsAllTwentyOneInteractionsOfTheOneCatalog() throws IOException {
+   void encyclopediaShowsAllInteractionsOfTheOneCatalog() throws IOException {
       List<String> raw = rawIds();
-      assertEquals(21, raw.size(), "#107 ships 21 contextual interactions");
+      // #107 shipped 21 contextual interactions; Venom adds hellfire_scalds_symbiote.
+      assertEquals(22, raw.size(), "the catalog ships 22 contextual interactions");
+      assertEquals("hellfire_scalds_symbiote", raw.get(21), "Venom's interaction appends after the #107 catalog");
       InteractionCatalog c = parsed();
       assertEquals(InteractionCatalog.Status.LOADED, c.status(), c.problems().toString());
       assertTrue(c.problems().isEmpty(), "no catalog entry may be skipped: " + c.problems());

@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.city.citizen.CitizenLook;
 import dev.baranhan.viltrumitecore.city.citizen.CitizenState;
 import dev.baranhan.viltrumitecore.client.anim.pose.PoseKeys;
 import dev.baranhan.viltrumitecore.client.anim.pose.PoseRig;
+import dev.baranhan.viltrumitecore.client.city.life.CityLifeVoices;
 import net.minecraft.util.Mth;
 
 /**
@@ -58,6 +59,9 @@ public final class CitizenPoser {
    private static final float[][] RISE_RL = {PoseKeys.key(0.0F, 0.0F, 0.0F, 9.0F), PoseKeys.key(7.0F, -58.0F, 0.0F, 4.0F), PoseKeys.under(16.0F)};
    private static final float[][] HUG_R = row(-44.0F, -58.0F, -6.0F);
    private static final float[][] HUG_L = row(-44.0F, 58.0F, 6.0F);
+   // peril (issue #138): both hands up on the ledge while hanging
+   private static final float[][] HANG_R = row(-174.0F, 0.0F, 9.0F);
+   private static final float[][] HANG_L = row(-174.0F, 0.0F, -9.0F);
 
    private CitizenPoser() {
    }
@@ -74,6 +78,8 @@ public final class CitizenPoser {
       float last = Float.NaN;
       int gesture;
       float gw;
+      /** Smoothed "my line is playing" of a voiced chat (issue #136), -1 while the chat is silent. */
+      float speak = -1.0F;
    }
 
    static Anim anim(CitizenEntity e) {
@@ -127,6 +133,7 @@ public final class CitizenPoser {
          case STARTLED -> 0.9F;
          case FALLEN, COVER -> 0.55F;
          case FLEEING -> 0.45F;
+         case TEETER, HANGING, FALLING -> 0.6F;
          default -> 0.22F;
       };
       float k = approach(dt, rate);
@@ -149,7 +156,19 @@ public final class CitizenPoser {
          a.gw += (1.0F - a.gw) * approach(dt, 0.18F);
       }
 
-      apply(model, a.w, a.gesture, a.gw, s, elapsed, seed, e.look(), limbSwing, limbAmount, age);
+      float voiced = s == CitizenState.TALKING ? CityLifeVoices.speaking(e) : -1.0F;
+      if (voiced < 0.0F) {
+         a.speak = -1.0F;
+      } else {
+         a.speak = a.speak < 0.0F ? voiced : a.speak + (voiced - a.speak) * approach(dt, 0.25F);
+      }
+
+      apply(model, a.w, a.gesture, a.gw, s, elapsed, seed, e.look(), limbSwing, limbAmount, age, a.speak);
+   }
+
+   static void apply(CitizenModel model, float[] w, int gestureId, float gestureWeight, CitizenState s, float elapsed, int seed, CitizenLook look,
+      float limbSwing, float limbAmount, float age) {
+      apply(model, w, gestureId, gestureWeight, s, elapsed, seed, look, limbSwing, limbAmount, age, -1.0F);
    }
 
    /**
@@ -157,7 +176,7 @@ public final class CitizenPoser {
     * passes the smoothed weights, tests and previews pass one-hot weights.
     */
    static void apply(CitizenModel model, float[] w, int gestureId, float gestureWeight, CitizenState s, float elapsed, int seed, CitizenLook look,
-      float limbSwing, float limbAmount, float age) {
+      float limbSwing, float limbAmount, float age, float speak) {
       PoseRig rig = PoseRig.begin(model, model.crouching, 1.0F, null);
       float idle = w[CitizenState.IDLE.ordinal()] + w[CitizenState.WALKING.ordinal()];
       // breathing / weight shift while calm
@@ -175,13 +194,24 @@ public final class CitizenPoser {
       float talk = w[CitizenState.TALKING.ordinal()];
       if (talk > 0.01F) {
          float phase = (seed & 255) * 0.1F;
-         float active = Mth.clamp(Mth.sin(age * 0.045F + phase) * 2.0F, 0.0F, 1.0F) * talk;
+         float active;
+         float nodGate;
+         if (speak >= 0.0F) {
+            // voiced chat (client/city/life/CityLifeVoices): the one whose line plays gestures with emphasis, the
+            // other one listens and nods; they swap with the lines
+            active = speak * (0.55F + 0.45F * Mth.clamp(Mth.sin(age * 0.11F + phase) * 1.6F + 0.6F, 0.0F, 1.0F)) * talk;
+            nodGate = 1.0F - speak;
+         } else {
+            active = Mth.clamp(Mth.sin(age * 0.045F + phase) * 2.0F, 0.0F, 1.0F) * talk;
+            nodGate = Mth.clamp(Mth.sin(age * 0.07F + phase) * 3.0F, 0.0F, 1.0F);
+         }
          if (active > 0.01F) {
             rig.mainArm(row(-34.0F + Mth.sin(age * 0.26F) * 12.0F, -18.0F + Mth.sin(age * 0.17F) * 8.0F, 6.0F), 0.0F, active, false);
          }
          float listen = talk - active * 0.6F;
-         float nod = Math.max(0.0F, Mth.sin(age * 0.34F)) * Mth.clamp(Mth.sin(age * 0.07F + phase) * 3.0F, 0.0F, 1.0F);
-         rig.add(model.head, nod * 7.0F * listen, 0.0F, Mth.sin(age * 0.05F + phase) * 4.0F * talk);
+         float nod = Math.max(0.0F, Mth.sin(age * 0.34F)) * nodGate;
+         float bob = speak > 0.0F ? Mth.sin(age * 0.58F + phase) * 2.5F * speak * talk : 0.0F;
+         rig.add(model.head, nod * 7.0F * listen + bob, 0.0F, Mth.sin(age * 0.05F + phase) * 4.0F * talk);
          rig.offArm(row(-14.0F, 10.0F, -4.0F), 0.0F, talk * 0.6F, false);
       }
 
@@ -265,8 +295,57 @@ public final class CitizenPoser {
          rig.add(model.head, 0.0F, Mth.sin(age * 0.07F + (seed & 31)) * 28.0F * recover, 0.0F);
       }
 
+      peril(rig, model, w, seed, age);
       rig.finish();
-      ponytail(model, look, limbSwing, limbAmount, age, flee);
+      float wind = w[CitizenState.FALLING.ordinal()] + w[CitizenState.HANGING.ordinal()] * 0.4F;
+      ponytail(model, look, limbSwing, limbAmount, age, Math.min(1.0F, flee + wind));
+   }
+
+   /**
+    * Issue #138: on a failing floor the arms windmill, the torso rocks and the eyes go down to
+    * the drop; hanging from a ledge both hands are up on the edge and the legs kick for a hold;
+    * falling, arms and legs flail (the renderer adds the tumble).
+    */
+   private static void peril(PoseRig rig, CitizenModel model, float[] w, int seed, float age) {
+      float ph = (seed & 31) * 0.2F;
+      float teeter = w[CitizenState.TEETER.ordinal()];
+      if (teeter > 0.01F) {
+         float sw = age * 0.55F + ph;
+         // arms flung out to the sides, circling for balance
+         rig.add(model.rightArm, (-45.0F + Mth.sin(sw) * 60.0F) * teeter, 0.0F, (78.0F + Mth.cos(sw) * 28.0F) * teeter);
+         rig.add(model.leftArm, (-45.0F + Mth.sin(sw + 2.4F) * 60.0F) * teeter, 0.0F, (-78.0F - Mth.cos(sw + 2.4F) * 28.0F) * teeter);
+         rig.add(model.body, Mth.sin(age * 0.33F + ph) * 9.0F * teeter, 0.0F, Mth.sin(age * 0.21F + ph) * 8.0F * teeter);
+         rig.add(model.head, 22.0F * teeter, 0.0F, 0.0F);
+         rig.add(model.rightLeg, 0.0F, 0.0F, 7.0F * teeter);
+         rig.add(model.leftLeg, 0.0F, 0.0F, -7.0F * teeter);
+      }
+
+      float hang = w[CitizenState.HANGING.ordinal()];
+      if (hang > 0.01F) {
+         float kick = Mth.sin(age * 0.42F + ph) * 22.0F * hang;
+         float strain = Mth.sin(age * 1.7F + ph) * 1.5F * hang;
+         rig.mainArm(HANG_R, 0.0F, hang, false);
+         rig.offArm(HANG_L, 0.0F, hang, false);
+         rig.add(model.rightArm, strain, 0.0F, 0.0F);
+         rig.add(model.leftArm, -strain, 0.0F, 0.0F);
+         rig.add(model.rightLeg, kick, 0.0F, 4.0F * hang);
+         rig.add(model.leftLeg, -kick, 0.0F, -4.0F * hang);
+         rig.add(model.body, 5.0F * hang, 0.0F, 0.0F);
+         // up at the hands, now and then a terrified glance down
+         model.head.yRot *= 1.0F - hang * 0.7F;
+         rig.add(model.head, (-26.0F + Math.max(0.0F, Mth.sin(age * 0.05F + ph)) * 66.0F) * hang, 0.0F, 0.0F);
+      }
+
+      float fall = w[CitizenState.FALLING.ordinal()];
+      if (fall > 0.01F) {
+         float f = age * 0.8F + ph;
+         rig.add(model.rightArm, (-140.0F + Mth.sin(f) * 50.0F) * fall, 0.0F, (55.0F + Mth.cos(f * 1.3F) * 30.0F) * fall);
+         rig.add(model.leftArm, (-140.0F + Mth.sin(f + 2.1F) * 50.0F) * fall, 0.0F, (-55.0F - Mth.cos(f * 1.3F + 2.1F) * 30.0F) * fall);
+         rig.add(model.rightLeg, Mth.sin(f * 0.9F) * 38.0F * fall, 0.0F, 10.0F * fall);
+         rig.add(model.leftLeg, -Mth.sin(f * 0.9F) * 38.0F * fall, 0.0F, -10.0F * fall);
+         model.head.yRot *= 1.0F - fall * 0.5F;
+         rig.add(model.head, -18.0F * fall, 0.0F, 0.0F);
+      }
    }
 
    private static void gesture(PoseRig rig, CitizenModel model, int g, float wt, float age) {

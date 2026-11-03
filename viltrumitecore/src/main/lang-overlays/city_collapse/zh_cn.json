@@ -17,5 +17,8 @@
   "commands.viltrumitecore.collapse.analyze.yes": "将会开始坍塌：%s",
   "commands.viltrumitecore.collapse.analyze.no": "不会坍塌：%s",
   "commands.viltrumitecore.collapse.damage": "破坏（%s）：移除了 %s 个方块",
-  "commands.viltrumitecore.collapse.too_big": "一次最多 %s 个方块"
+  "commands.viltrumitecore.collapse.too_big": "一次最多 %s 个方块",
+  "commands.viltrumitecore.collapse.support": "支撑：%s",
+  "message.viltrumitecore.collapse.support_blocked.gamerule": "这座建筑失去了支撑，但坍塌已关闭：游戏规则 mobGriefing 为 false",
+  "message.viltrumitecore.collapse.support_blocked.config": "这座建筑失去了支撑，但配置中已关闭坍塌（collapseEnabled）"
 }

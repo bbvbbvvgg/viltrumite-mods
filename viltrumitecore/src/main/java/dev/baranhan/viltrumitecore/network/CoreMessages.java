@@ -85,7 +85,15 @@ public class CoreMessages {
    // v29 (integration of #129/#130/#131/#132): one table with Scp096S2CPacket, GodzillaFxS2CPacket, ThanosWarS2CPacket,
    //     HellCycleControlC2SPacket and HellfireS2CPacket appended in that order after AftermathS2CPacket. Each branch
    //     alone was "28" with its own table, so every "27" and "28" peer is refused.
-   private static final String PROTOCOL_VERSION = "29";
+   // v30 (Venom, feat/venom-living-symbiote): VenomPossessS2CPacket and VenomDriveC2SPacket appended after
+   //     HellfireS2CPacket, six VENOM_* HeroAction values appended after GHOSTRIDER_STARE, hero id venom, ControlKind
+   //     POSSESS and the venom_boss entity type. Every "29" peer is refused.
+   // v30 (SCP-106, feat/scp106-pocket-dimension): Scp106S2CPacket appended last (pocket state, capture, notes,
+   //     scares and escapes of one player).
+   // v31 (integration of #141..#147 and SCP-106): one table with VenomPossessS2CPacket and VenomDriveC2SPacket after
+   //     HellfireS2CPacket, then Scp106S2CPacket. Each branch alone was "30" with its own table, so every "29" and
+   //     "30" peer is refused.
+   private static final String PROTOCOL_VERSION = "31";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -541,6 +549,21 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.HellfireS2CPacket::handle).add();
+      // Venom (feat/venom-living-symbiote), v30: the host takeover's state for every viewer and its input from the
+      // possessor (drive) or the host (resistance).
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.VenomPossessS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.VenomPossessS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.VenomPossessS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.VenomPossessS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.VenomDriveC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.VenomDriveC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.VenomDriveC2SPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.VenomDriveC2SPacket::handle).add();
+      // SCP-106 (feat/scp106-pocket-dimension): pocket state, capture, notes, scares and escapes of one player.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.Scp106S2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.Scp106S2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.Scp106S2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.Scp106S2CPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {

@@ -24,7 +24,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
  */
 @EventBusSubscriber(modid = "viltrumitecore", bus = EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class CollapseClient {
-   static final int MAX_SCENES = 4;
+   /** A support chain (#135) runs a stage every ~half second: keep the falling ones and the fresh dust. */
+   static final int MAX_SCENES = 8;
    private static final List<CollapseScene> SCENES = new ArrayList<>();
    private static Object lastLevel;
    // QA metrics (/collapse is server side; the client logs with -Dviltrumitecore.collapse.log=true)

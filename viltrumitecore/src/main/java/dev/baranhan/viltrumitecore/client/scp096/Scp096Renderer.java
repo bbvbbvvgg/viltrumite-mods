@@ -23,7 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 /**
- * SCP-096: sixteen full-body clip layers eased in real time and blended as a weighted average in quaternions (see
+ * SCP-096: eighteen full-body clip layers eased in real time and blended as a weighted average in quaternions (see
  * {@link Scp096Pose} and {@link QuatPoseBlend}),
  * the sobbing as an additive layer, the upper-body smash and claw strike over the run, and the head turned toward
  * what it looks at. The shuffle and the run are driven by the gait phase (distance), so the feet do not slide at any
@@ -73,8 +73,8 @@ public class Scp096Renderer extends EntityRenderer<Scp096Entity> {
       Scp096State state = e.clientState;
       float move = Mth.lerp(partial, e.clientMoveO, e.clientMove);
       Scp096Pose.targets(state, e.clientPrevState, since, e.clientFromSit, e.flag(Scp096Entity.FLAG_FACE_OPEN), e.flag(Scp096Entity.FLAG_COVER),
-         e.flag(Scp096Entity.FLAG_CLIMB), e.flag(Scp096Entity.FLAG_LEAP), move, e.clientAirTicks + (e.clientAirTicks > 0 ? partial : 0.0F),
-         this.targets);
+         e.flag(Scp096Entity.FLAG_CLIMB), e.flag(Scp096Entity.FLAG_LEAP), e.flag(Scp096Entity.FLAG_DASH), e.flag(Scp096Entity.FLAG_MANTLE), move,
+         e.clientAirTicks + (e.clientAirTicks > 0 ? partial : 0.0F), this.targets);
       if (advance) {
          float now = RealTime.seconds();
          float dt = now - e.clientWeightAge;
@@ -94,7 +94,7 @@ public class Scp096Renderer extends EntityRenderer<Scp096Entity> {
          }
          Animation clip = AnimCache.animation(ANIM[Scp096Pose.FILE[i]], Scp096Pose.CLIP[i]);
          if (clip != null) {
-            this.blend.add(clip, Scp096Pose.time(i, since, ageSec, gait, e.clientFromSit, e.getId()), w[i]);
+            this.blend.add(clip, Scp096Pose.time(i, since, ageSec, gait, e.clientFromSit, e.getId(), (age - e.clientMantleStart) / 20.0F), w[i]);
          }
       }
       this.blend.apply();
@@ -107,6 +107,8 @@ public class Scp096Renderer extends EntityRenderer<Scp096Entity> {
       if (state == Scp096State.CHASE) {
          this.strike("smash", (age - e.clientSmashStart) / 20.0);
          this.strike("attack", (age - e.clientAttackStart) / 20.0);
+         // both fists rammed up through a ceiling or a ledge over the climber (issue #137)
+         this.strike("punch_up", (age - e.clientPunchStart) / 20.0);
       }
       float look = w[Scp096Pose.LOOK];
       if (look > 0.01F) {

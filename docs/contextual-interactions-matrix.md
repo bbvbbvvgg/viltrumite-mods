@@ -29,6 +29,9 @@ already handled by an existing system (named), so no duplicate was added · `✗
 | Chitauri soldiers / chariots | event mobs | `entity/chitauri` | `ChitauriMob` |
 | Chitauri Leviathan | event boss | `entity/chitauri/ChitauriLeviathan` | multipart body (`parts()`), `staggerBy(ticks)` |
 | Meteor | world event projectile | `entity/MeteorEntity`, `worldevent/meteor` | PROJECTILE impact before the crater |
+| Ghost Rider (player) | hero | `hero/ghostrider` | presence `element.hellfire` (`HELLFIRE_BODY`, Rider form); hellfire damage type |
+| Red Hulk (player) | hero | `hero/redhulk` | presence `element.hellfire` (`RED_HOT`, heat 500+, server side only) |
+| Venom (player) / Venom boss | hero / boss | `hero/venom`, `hero/venom/boss` | presence `body.symbiote` (`SYMBIOTE_BODY`, symbiote form), `react(SYMBIOTE_SCALDED)`, `VenomBossEntity#scald` |
 
 ## Matrix — hero × hero / summon / boss
 
@@ -48,6 +51,15 @@ Rows attack, columns are hit (direction matters).
 | DIO — time-stop ledger | · | · | · | · | ≈ Lion's Heart cannot be frozen | **✔ time_stone_rewinds_ledger** | · | · |
 | Thanos melee | **✔ titan_breaks_guard** | · | · | · | · | · | **✔ titan_scatters_summons** | · |
 | Thanos — any hit on a summon | · | · | · | · | · | · | **✔ titan_scatters_summons** (also shadows, NPC Avengers) | · |
+
+## Matrix — fire and the symbiote
+
+| ↓ attacker / target → | Venom (symbiote form) | Venom boss |
+|---|---|---|
+| Ghost Rider — Rider form, any hit or hellfire | **✔ hellfire_scalds_symbiote** | **✔ hellfire_scalds_symbiote** |
+| Red Hulk — heat 500+ | **✔ hellfire_scalds_symbiote** | **✔ hellfire_scalds_symbiote** |
+| Ordinary fire, lava, flaming arrows | ≈ `VenomWeakness` (fire weakness: more damage, regeneration stop, recoil) | ≈ `VenomBossEntity#hurt` (same weakness) |
+| Loud sounds (thunder, explosions, a bell) | ≈ `VenomWeakness.loud` (recoil) | ≈ `VenomBossEntity.loudSound` (recoil) |
 
 ## Matrix — world events
 

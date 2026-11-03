@@ -1,0 +1,137 @@
+{
+  "citizen.scream.male": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.scream",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/scream_male_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/scream_male_2"
+      },
+      {
+        "name": "viltrumitecore:citizen/scream_male_3"
+      }
+    ]
+  },
+  "citizen.scream.female": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.scream",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/scream_female_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/scream_female_2"
+      },
+      {
+        "name": "viltrumitecore:citizen/scream_female_3"
+      }
+    ]
+  },
+  "citizen.fall.male": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.fall",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/fall_male_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/fall_male_2"
+      }
+    ]
+  },
+  "citizen.fall.female": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.fall",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/fall_female_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/fall_female_2"
+      }
+    ]
+  },
+  "citizen.help.male": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.help",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/help_male_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/help_male_2"
+      },
+      {
+        "name": "viltrumitecore:citizen/help_male_3"
+      },
+      {
+        "name": "viltrumitecore:citizen/help_male_4"
+      }
+    ]
+  },
+  "citizen.help.female": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.help",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/help_female_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/help_female_2"
+      },
+      {
+        "name": "viltrumitecore:citizen/help_female_3"
+      },
+      {
+        "name": "viltrumitecore:citizen/help_female_4"
+      }
+    ]
+  },
+  "citizen.witness.male": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.witness",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/witness_male_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/witness_male_2"
+      },
+      {
+        "name": "viltrumitecore:citizen/witness_male_3"
+      }
+    ]
+  },
+  "citizen.witness.female": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.witness",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/witness_female_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/witness_female_2"
+      },
+      {
+        "name": "viltrumitecore:citizen/witness_female_3"
+      }
+    ]
+  },
+  "citizen.crowd_panic": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.citizen.crowd_panic",
+    "sounds": [
+      {
+        "name": "viltrumitecore:citizen/crowd_panic_1"
+      },
+      {
+        "name": "viltrumitecore:citizen/crowd_panic_2"
+      },
+      {
+        "name": "viltrumitecore:citizen/crowd_panic_3"
+      }
+    ]
+  }
+}

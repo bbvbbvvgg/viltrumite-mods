@@ -1,0 +1,287 @@
+{
+  "scp106.breath": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp106.breath",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/breath_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/breath_2"
+      },
+      {
+        "name": "viltrumitecore:scp106/breath_3"
+      }
+    ]
+  },
+  "scp106.step": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp106.step",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/step_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/step_2"
+      },
+      {
+        "name": "viltrumitecore:scp106/step_3"
+      }
+    ]
+  },
+  "scp106.emerge": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp106.emerge",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/emerge"
+      }
+    ]
+  },
+  "scp106.sink": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp106.sink",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/sink"
+      }
+    ]
+  },
+  "scp106.capture": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp106.capture",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/capture"
+      }
+    ]
+  },
+  "scp106.laugh": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp106.laugh",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/laugh_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/laugh_2"
+      },
+      {
+        "name": "viltrumitecore:scp106/laugh_3"
+      }
+    ]
+  },
+  "scp106.corrode": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp106.corrode",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/corrode_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/corrode_2"
+      }
+    ]
+  },
+  "scp106.pocket.drip": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.drip",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/drip_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/drip_2"
+      },
+      {
+        "name": "viltrumitecore:scp106/drip_3"
+      }
+    ]
+  },
+  "scp106.pocket.far_steps": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.far_steps",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/far_steps_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/far_steps_2"
+      }
+    ]
+  },
+  "scp106.phase": {
+    "category": "hostile",
+    "subtitle": "subtitles.viltrumitecore.scp106.phase",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/phase"
+      }
+    ]
+  },
+  "scp106.pocket.creak": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.creak",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/creak_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/creak_2"
+      },
+      {
+        "name": "viltrumitecore:scp106/creak_3"
+      }
+    ]
+  },
+  "scp106.pocket.metal": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.metal",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/metal_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/metal_2"
+      },
+      {
+        "name": "viltrumitecore:scp106/metal_3"
+      }
+    ]
+  },
+  "scp106.pocket.whisper": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.whisper",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/whisper_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/whisper_2"
+      },
+      {
+        "name": "viltrumitecore:scp106/whisper_3"
+      }
+    ]
+  },
+  "scp106.pocket.knock": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.knock",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/knock_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/knock_2"
+      },
+      {
+        "name": "viltrumitecore:scp106/knock_3"
+      }
+    ]
+  },
+  "scp106.pocket.draft": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.draft",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/draft_1"
+      },
+      {
+        "name": "viltrumitecore:scp106/draft_2"
+      }
+    ]
+  },
+  "scp106.pocket.sigil": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.sigil",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/sigil"
+      }
+    ]
+  },
+  "scp106.pocket.breach": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.breach",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/breach"
+      }
+    ]
+  },
+  "scp106.pocket.scare": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.scare",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/scare"
+      }
+    ]
+  },
+  "scp106.pocket.escape": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.escape",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/escape"
+      }
+    ]
+  },
+  "scp106.pocket.locked": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.locked",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/locked"
+      }
+    ]
+  },
+  "scp106.pocket.key": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.key",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/key"
+      }
+    ]
+  },
+  "scp106.pocket.shift": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.shift",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/shift"
+      }
+    ]
+  },
+  "scp106.pocket.hum": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.hum",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/hum",
+        "stream": true
+      }
+    ]
+  },
+  "scp106.pocket.void": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.void",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/void",
+        "stream": true
+      }
+    ]
+  },
+  "scp106.pocket.water": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.scp106.pocket.water",
+    "sounds": [
+      {
+        "name": "viltrumitecore:scp106/water",
+        "stream": true
+      }
+    ]
+  }
+}

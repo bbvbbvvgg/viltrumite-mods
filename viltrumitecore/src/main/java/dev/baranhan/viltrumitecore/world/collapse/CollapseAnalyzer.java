@@ -43,7 +43,9 @@ public final class CollapseAnalyzer {
    public enum Rule {
       SEVERED,
       OVERHANG,
-      LOCAL
+      LOCAL,
+      /** Global support loss ({@link SupportProbe}): a structure that lost its last connection to the ground. */
+      SUPPORT
    }
 
    /** Analysis input: damage centre, damaged positions (packed, may contain blocks that were rebuilt). */
