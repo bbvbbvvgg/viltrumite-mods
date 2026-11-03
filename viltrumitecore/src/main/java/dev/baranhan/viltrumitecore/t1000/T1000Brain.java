@@ -6,6 +6,8 @@ import dev.baranhan.viltrumitecore.city.citizen.CitizenState;
 import dev.baranhan.viltrumitecore.city.citizen.PathBudget;
 import dev.baranhan.viltrumitecore.city.profile.WalkGrid;
 import dev.baranhan.viltrumitecore.entity.Bystander;
+import dev.baranhan.viltrumitecore.hero.HeroRegistry;
+import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath;
 import java.util.List;
 import java.util.UUID;
@@ -835,7 +837,7 @@ public final class T1000Brain {
       DamageSource src = this.e.damageSources().mobAttack(this.e);
       switch (this.cur) {
          case STAB -> {
-            if (t != null && this.e.distanceTo(t) <= T1000Rules.STAB_REACH + 0.5 && this.facing(t, 75.0) && t.hurt(src, T1000Rules.STAB_DAMAGE)) {
+            if (t != null && this.e.distanceTo(t) <= T1000Rules.STAB_REACH + 0.5 && this.facing(t, 75.0) && this.clearPath(t) && t.hurt(src, T1000Rules.STAB_DAMAGE)) {
                t.knockback(0.25, this.e.getX() - t.getX(), this.e.getZ() - t.getZ());
                this.e.playSound(T1000Sounds.BLADE_HIT.get(), 1.0F, 0.95F + this.rnd.nextFloat() * 0.15F);
             }
@@ -846,7 +848,7 @@ public final class T1000Brain {
                List<LivingEntity> near = level.getEntitiesOfClass(LivingEntity.class, this.e.getBoundingBox().inflate(T1000Rules.SLASH_REACH),
                   l -> l != this.e && (l == t || this.hostileTo(l)));
                for (LivingEntity l : near) {
-                  if (this.e.distanceTo(l) <= T1000Rules.SLASH_REACH + 0.4 && this.facing(l, T1000Rules.SLASH_ARC_DEG) && l.hurt(src, T1000Rules.SLASH_DAMAGE)) {
+                  if (this.e.distanceTo(l) <= T1000Rules.SLASH_REACH + 0.4 && this.facing(l, T1000Rules.SLASH_ARC_DEG) && this.clearPath(l) && l.hurt(src, T1000Rules.SLASH_DAMAGE)) {
                      l.knockback(0.45, this.e.getX() - l.getX(), this.e.getZ() - l.getZ());
                      hit = true;
                   }
@@ -863,7 +865,7 @@ public final class T1000Brain {
                }
                Vec3 pull = this.e.position().subtract(t.position());
                double l = pull.length();
-               if (l > 1.0E-3) {
+               if (l > 1.0E-3 && canPull(t)) {
                   double s = Math.min(1.35, l * 0.2) / l;
                   t.setDeltaMovement(pull.x * s, 0.32, pull.z * s);
                   t.hurtMarked = true;
@@ -871,13 +873,15 @@ public final class T1000Brain {
             }
          }
          case GRAB -> {
-            if (t != null && this.e.distanceTo(t) <= T1000Rules.GRAB_REACH + 0.6 && !t.isPassenger()) {
-               this.grabbed = t;
+            if (t != null && this.e.distanceTo(t) <= T1000Rules.GRAB_REACH + 0.6 && !t.isPassenger() && this.clearPath(t)) {
+               if (canHold(t)) {
+                  this.grabbed = t;
+               }
                t.hurt(src, T1000Rules.GRAB_DAMAGE);
             }
          }
          case COUNTER -> {
-            if (t != null && this.e.distanceTo(t) <= 3.6 && t.hurt(src, T1000Rules.COUNTER_DAMAGE)) {
+            if (t != null && this.e.distanceTo(t) <= 3.6 && this.clearPath(t) && t.hurt(src, T1000Rules.COUNTER_DAMAGE)) {
                t.knockback(0.6, this.e.getX() - t.getX(), this.e.getZ() - t.getZ());
                this.e.playSound(T1000Sounds.BLADE_HIT.get(), 1.0F, 0.8F);
             }
@@ -900,7 +904,8 @@ public final class T1000Brain {
    /** Holds the grabbed body at arm's length, throws it at the end. */
    private void holdGrab() {
       LivingEntity g = this.grabbed;
-      if (g == null || !g.isAlive() || g.level() != this.e.level()) {
+      if (g == null || !g.isAlive() || g.level() != this.e.level() || !canHold(g)) {
+         // Lion's Heart, an anchor or a resistant body can break the hold at any moment
          this.grabbed = null;
          return;
       }
@@ -913,8 +918,10 @@ public final class T1000Brain {
          g.fallDistance = 0.0F;
       } else if (this.curTick == 24) {
          g.hurt(this.e.damageSources().mobAttack(this.e), T1000Rules.THROW_DAMAGE);
-         g.setDeltaMovement(f.x * 1.3, 0.5, f.z * 1.3);
-         g.hurtMarked = true;
+         if (g.isAlive() && HeroRegistry.allowsImpulse(g)) {
+            g.setDeltaMovement(f.x * 1.3, 0.5, f.z * 1.3);
+            g.hurtMarked = true;
+         }
          this.e.playSound(T1000Sounds.STRETCH.get(), 0.8F, 0.8F);
          this.grabbed = null;
       }
@@ -922,6 +929,32 @@ public final class T1000Brain {
 
    private void releaseGrab() {
       this.grabbed = null;
+   }
+
+   /** A blade, a counter or a grab needs an unobstructed path: cover works against the T-1000. */
+   private boolean clearPath(LivingEntity t) {
+      return this.e.hasLineOfSight(t);
+   }
+
+   /** Victim-side policy for the hook's pull (PULL + knockback impulse, not anchored). */
+   static boolean canPull(LivingEntity t) {
+      return HeroRegistry.allowsExternalControl(t, ControlKind.PULL) && HeroRegistry.allowsImpulse(t);
+   }
+
+   /** Victim-side policy for carrying a body (grab kind + impulse, not anchored); rechecked every held tick. */
+   static boolean canHold(LivingEntity t) {
+      return HeroRegistry.allowsExternalControl(t, ControlKind.VILTRUMITE_GRAB) && HeroRegistry.allowsImpulse(t);
+   }
+
+   /** The body is held by a control stun or NoAI: drop what it holds, stop the running action. */
+   void onDisabled() {
+      this.releaseGrab();
+      this.leapTo = null;
+      if (this.cur != T1000Action.NONE) {
+         this.cur = T1000Action.NONE;
+         this.e.setAction(T1000Action.NONE);
+      }
+      this.e.getNavigation().stop();
    }
 
    /** A melee blow at a ready blade may be parried and answered. */
@@ -999,6 +1032,8 @@ public final class T1000Brain {
       }
       if (f == T1000Form.LIQUID) {
          if (this.valid(this.target) && this.e.distanceTo(this.target) < 40.0 && this.beforeMelt != T1000State.CONCEAL) {
+            // melt() turned both arms back into hands: the fight needs the right blade again
+            this.e.setArm(true, T1000Arm.BLADE, false);
             this.set(T1000State.CHASE);
          } else {
             this.toConceal();
