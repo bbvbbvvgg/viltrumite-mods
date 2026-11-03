@@ -71,6 +71,8 @@ public final class CityCommands {
             .then(Commands.literal("confirm").executes(CityCommands::resetConfirm))
             .then(Commands.literal("cancel").executes(CityCommands::resetCancel)))
          .then(Commands.literal("here").requires(s -> s.hasPermission(2)).executes(CityCommands::here))
+         .then(Commands.literal("life").executes(CityCommands::life)
+            .then(Commands.literal("reset").requires(s -> s.hasPermission(2)).executes(CityCommands::lifeReset)))
          .then(dev.baranhan.viltrumitecore.city.power.PowerCommands.node()));
    }
 
@@ -93,7 +95,7 @@ public final class CityCommands {
 
    private static int help(CommandContext<CommandSourceStack> c) {
       ok(c, line("viltrumitecore.city.help.title").withStyle(ChatFormatting.GOLD), false);
-      for (String k : new String[]{"enable", "disable", "density", "populate", "occupants", "clear", "status", "reset", "power", "help"}) {
+      for (String k : new String[]{"enable", "disable", "density", "populate", "occupants", "clear", "status", "life", "reset", "power", "help"}) {
          ok(c, Component.literal(" /city " + k + " ").withStyle(ChatFormatting.YELLOW)
             .append(line("viltrumitecore.city.help." + k).withStyle(ChatFormatting.GRAY)), false);
       }
@@ -326,6 +328,26 @@ public final class CityCommands {
    }
 
    /** Developer probe: district and pedestrian cell under the caller. */
+   /** #136: the mood of the streets here and what the citizens said so far. */
+   private static int life(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+      CityManager m = city(c);
+      dev.baranhan.viltrumitecore.city.life.CityLife l = m.life();
+      net.minecraft.world.phys.Vec3 at = c.getSource().getPosition();
+      dev.baranhan.viltrumitecore.city.life.CityMood.Mood mood = l.moodAt(at.x, at.z);
+      ok(c, line("viltrumitecore.city.life.status", line("viltrumitecore.city.life.mood." + mood.name().toLowerCase(Locale.ROOT)),
+         String.format(Locale.ROOT, "%.2f", l.alarmAt(at.x, at.z)), String.format(Locale.ROOT, "%.2f", l.traumaAt(at.x, at.z))), false);
+      int[] n = l.counters();
+      ok(c, line("viltrumitecore.city.life.talks", n[0], n[1], l.activeTalks(), n[2]).withStyle(ChatFormatting.GRAY), false);
+      ok(c, line("viltrumitecore.city.life.calls", n[3], n[4], n[5], n[6], n[7]).withStyle(ChatFormatting.GRAY), false);
+      return mood.ordinal();
+   }
+
+   private static int lifeReset(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+      city(c).life().clear();
+      ok(c, line("viltrumitecore.city.life.reset"), true);
+      return 1;
+   }
+
    private static int here(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
       CityManager m = city(c);
       BlockPos p = BlockPos.containing(c.getSource().getPosition());
