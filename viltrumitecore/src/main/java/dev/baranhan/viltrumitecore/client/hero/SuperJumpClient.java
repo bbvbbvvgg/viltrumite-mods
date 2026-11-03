@@ -49,6 +49,8 @@ public final class SuperJumpClient {
    /** Held by someone's control (channel target, grab, freeze, stasis): no self-propelled jump. Shared with AirJumpClient. */
    public static boolean anchored(LocalPlayer player, HeroPublicSnapshot snapshot) {
       if (WorldPauseClient.isPaused() || BodyIsolationClient.active(player)) return true;
+      // a host driven by Venom: his launch would bypass the takeover's movement control
+      if (dev.baranhan.viltrumitecore.client.venom.VenomPossessionClient.localHost()) return true;
       if ((snapshot != null && snapshot.controlTargetId() >= 0) || ViltrumiteCoreClient.iAmBeingGrabbedBy != null) {
          return true;
       }

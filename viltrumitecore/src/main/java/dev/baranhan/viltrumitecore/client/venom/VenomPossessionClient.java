@@ -208,7 +208,8 @@ public final class VenomPossessionClient {
       return s == null ? 0 : s.phase == CONTROL ? 1 : s.phase == ENGULF ? coatOf(e, partial) * 0.6F : coatOf(e, partial);
    }
 
-   static boolean localHost() {
+   /** This client's player is a driven host (the symbiote has his legs: no own super or air jumps). */
+   public static boolean localHost() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return false;
