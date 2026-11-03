@@ -77,6 +77,15 @@ public class ViltrumiteCoreConfig {
    public double t1000RespawnDelayMinutes = 120.0;
    /** Instances at the same time, dormant ones included (1..8). */
    public int t1000MaxActive = 1;
+
+   // Venom (docs/design/2026-11-02-venom-design.md). The host takeover of a player needs server PvP AND this switch.
+   public boolean venomPossessionEnabled = true;
+   /** Longest control phase of a host takeover in seconds (clamped 3..15 by VenomRules). */
+   public double venomPossessionMaxSeconds = 10.0;
+   /** May the Venom boss NPC take a player over (also needs venomPossessionEnabled; no PvP needed, it is a monster). */
+   public boolean venomBossPossession = true;
+   /** Use the Spider-Man of Falbiks Heroes through SpiderCompat when it is installed (docs/venom/spiderman-compatibility.md). */
+   public boolean spiderCompatEnabled = true;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -98,7 +107,8 @@ public class ViltrumiteCoreConfig {
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("aftermathDurationScale")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseSupportLoss")
-               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("t1000NaturalChancePercent")) {
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("t1000NaturalChancePercent")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("venomPossessionEnabled")) {
                save();
             }
          } catch (IOException ignored) {
