@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 /**
  * The original SCP: Containment Breach sounds of SCP-096, taken from the player's own copy of the game. The mod
  * does not ship them (see tools/assets/scp096_sources.md for why): a built-in, always-on client pack serves the
- * files found on this computer under the mod's sound events and replaces the vanilla fallbacks of
- * src/main/sound-overlays/scp096.json. Searched in order, the first valid Ogg file per sound wins: the folder in
+ * files found on this computer under the mod's sound events and replaces the mod's own sounds of
+ * src/main/sound-overlays/scp096.json (sounds/scp096, mixed from CC0 recordings and synthesised, issue #136). Searched in order, the first valid Ogg file per sound wins: the folder in
  * the config ({@code scp096OriginalSoundsPath}), {@code <game dir>/viltrumitecore/scp096}, then SCP: CB install
  * folders next to the usual places (Desktop, Downloads, Games, Program Files, Steam libraries). Each folder may be
  * the game root ({@code SFX/Music/096.ogg} ...) or hold the files directly ({@code 096.ogg} ...). The scan runs
@@ -66,7 +66,7 @@ public final class Scp096OriginalSounds {
          Map<String, Path> files = locate(roots());
          found = files;
          if (files.isEmpty()) {
-            LOGGER.info("SCP-096: original SCP: Containment Breach sounds not found; vanilla fallbacks in use"
+            LOGGER.info("SCP-096: original SCP: Containment Breach sounds not found; the mod's own SCP-096 sounds in use"
                + " (put the game folder path into scp096OriginalSoundsPath or copy the files to viltrumitecore/scp096)");
             return;
          }
