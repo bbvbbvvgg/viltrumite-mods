@@ -7,8 +7,10 @@ import net.minecraftforge.registries.RegistryObject;
 
 /**
  * Sound events of SCP-096 (src/main/sound-overlays/scp096.json). The mod ships no SCP:CB audio: the base events
- * fall back to vanilla sounds, and the client's built-in pack (client/scp096/Scp096OriginalSounds) replaces them
- * with the original SCP: Containment Breach files from the player's own copy of the game when it finds them.
+ * play the mod's own sounds (sounds/scp096: CC0 recordings mixed by tools/sfx/scp096.py, the chase music and the
+ * sting synthesised there; issue #136), and the client's built-in pack (client/scp096/Scp096OriginalSounds)
+ * replaces the five recognisable ones with the original SCP: Containment Breach files from the player's own copy
+ * of the game when it finds them.
  */
 public final class Scp096Sounds {
    /** Sobbing loop while calm (SCP:CB 096.ogg), positional. */
@@ -21,11 +23,11 @@ public final class Scp096Sounds {
    public static final RegistryObject<SoundEvent> TRIGGERED = reg("scp096.triggered");
    /** Chase music for a hunted player (SCP:CB 096Chase.ogg), not positional. */
    public static final RegistryObject<SoundEvent> CHASE_MUSIC = reg("scp096.chase_music");
-   /** The killing blow (vanilla impact, own subtitle). */
+   /** The killing blow (a heavy punch into flesh). */
    public static final RegistryObject<SoundEvent> STRIKE = reg("scp096.strike");
-   /** Breaking through a wall, door or window (vanilla door break, own subtitle). */
+   /** Breaking through a wall, door or window (wood and masonry crashing). */
    public static final RegistryObject<SoundEvent> SMASH = reg("scp096.smash");
-   /** Take-off of a leap (vanilla heavy step, own subtitle). */
+   /** Take-off of a leap (a heavy stamp and a whoosh). */
    public static final RegistryObject<SoundEvent> LEAP = reg("scp096.leap");
 
    private Scp096Sounds() {
