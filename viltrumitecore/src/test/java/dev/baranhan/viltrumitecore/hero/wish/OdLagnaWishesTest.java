@@ -36,7 +36,7 @@ class OdLagnaWishesTest {
    @Test
    void everyWishGrantsAKnownHeroAndTheReturnIsLast() {
       List<Wish> all = OdLagnaWishes.all();
-      assertTrue(all.size() >= 12, "nine spec wishes + Captain America + Ghost Rider + Venom");
+      assertTrue(all.size() >= 13, "nine spec wishes + Captain America + Red Hulk + Ghost Rider + Venom");
       Set<String> ids = new HashSet<>();
       Set<String> heroes = new HashSet<>();
       for (Wish wish : all) {
@@ -50,11 +50,27 @@ class OdLagnaWishesTest {
       Wish last = all.get(all.size() - 1);
       assertEquals(OdLagnaWishes.RETURN, last.id());
       assertEquals(HeroId.HUMAN.key(), last.heroKey());
-      for (String key : new String[]{"dio", "jinwoo", "thor", "sinclair", "ironman", "homelander", "reinhard", "regulus", "captain", "ghost_rider", "venom", "human"}) {
+      for (String key : new String[]{"dio", "jinwoo", "thor", "sinclair", "ironman", "homelander", "reinhard", "regulus", "captain", "red_hulk", "ghost_rider", "venom", "human"}) {
          assertTrue(heroes.contains(key), "no wish grants " + key);
       }
       assertNull(OdLagnaWishes.byId("nope"));
       assertNull(OdLagnaWishes.byId(null));
+   }
+
+   /** Issue #134: Red Hulk shipped without a wish. Every playable hero must be reachable through exactly one wish. */
+   @Test
+   void everyPlayableHeroHasExactlyOneWish() {
+      for (HeroId hero : HeroId.values()) {
+         if (hero == HeroId.VILTRUMITE) {
+            continue; // save-compatibility alias of Homelander, not a hero of its own
+         }
+         long wishes = OdLagnaWishes.all().stream().filter(wish -> wish.heroKey().equals(hero.key())).count();
+         assertEquals(1, wishes, hero.key() + " must be granted by exactly one wish (OdLagnaWishes.registerDefaults)");
+      }
+      Wish rage = OdLagnaWishes.byId("rage");
+      assertNotNull(rage, "the Red Hulk wish");
+      assertEquals("red_hulk", rage.heroKey());
+      assertEquals("rage", rage.style());
    }
 
    @Test
