@@ -97,39 +97,74 @@ public final class SupportLedger {
 
    /**
     * The cell key of one settled dirty cell ({@link CollapseRules#SETTLE_TICKS} without a new removal), the oldest
-    * first, or {@link Long#MIN_VALUE}. It leaves the dirty set together with the dirty cells a probe around it
-    * covers ({@link CollapseRules#SUPPORT_CLUSTER_RADIUS}), settled or not: their removals are part of that probe.
+    * first, or {@link Long#MIN_VALUE}. A cluster with a neighbour cell that is still being damaged stays pending and the
+    * next settled cluster is tried (a busy site never blocks a distant one). The chosen cell leaves the dirty set
+    * together with the dirty cells the probe around its centre covers completely ({@link #covered}); a cell the probe
+    * only grazes keeps its removals pending for a probe of its own.
     */
    public long settled(long now) {
-      long best = Long.MIN_VALUE;
-      long bestTick = Long.MAX_VALUE;
+      LongArrayList candidates = new LongArrayList();
       for (Long2LongOpenHashMap.Entry e : this.dirty.long2LongEntrySet()) {
-         long t = e.getLongValue();
-         if (now - t >= CollapseRules.SETTLE_TICKS && t < bestTick) {
-            bestTick = t;
-            best = e.getLongKey();
+         if (now - e.getLongValue() >= CollapseRules.SETTLE_TICKS) {
+            candidates.add(e.getLongKey());
          }
       }
-      if (best == Long.MIN_VALUE) {
+      if (candidates.isEmpty()) {
+         return Long.MIN_VALUE;
+      }
+      candidates.sort((a, b) -> {
+         int c = Long.compare(this.dirty.get(a), this.dirty.get(b));
+         return c != 0 ? c : Long.compare(a, b);
+      });
+      int r = (CollapseRules.SUPPORT_CLUSTER_RADIUS >> CollapseRules.CELL_SHIFT) + 1, ry = (CollapseRules.SUPPORT_CLUSTER_BAND >> CollapseRules.CELL_SHIFT) + 1;
+      for (int c = 0; c < candidates.size(); c++) {
+         long best = candidates.getLong(c);
+         int bx = BlockKey.x(best), by = BlockKey.y(best), bz = BlockKey.z(best);
+         // a neighbour cell that is still being damaged waits: probing half a cut would answer "grounded"
+         boolean busy = false;
+         LongArrayList cover = new LongArrayList();
+         for (Long2LongOpenHashMap.Entry e : this.dirty.long2LongEntrySet()) {
+            long k = e.getLongKey();
+            if (Math.abs(BlockKey.x(k) - bx) <= r && Math.abs(BlockKey.y(k) - by) <= ry && Math.abs(BlockKey.z(k) - bz) <= r) {
+               if (now - e.getLongValue() < CollapseRules.SETTLE_TICKS) {
+                  busy = true;
+                  break;
+               }
+               if (covered(best, k, CollapseRules.SUPPORT_CLUSTER_RADIUS, CollapseRules.SUPPORT_CLUSTER_BAND)) {
+                  cover.add(k);
+               }
+            }
+         }
+         if (busy) {
+            continue;
+         }
+         for (int i = 0; i < cover.size(); i++) {
+            this.dirty.remove(cover.getLong(i));
+         }
+         this.dirty.remove(best);
          return best;
       }
-      // a neighbour cell that is still being damaged waits: probing half a cut would answer "grounded"
-      int bx = BlockKey.x(best), by = BlockKey.y(best), bz = BlockKey.z(best);
-      int r = (CollapseRules.SUPPORT_CLUSTER_RADIUS >> CollapseRules.CELL_SHIFT) + 1, ry = (CollapseRules.SUPPORT_CLUSTER_BAND >> CollapseRules.CELL_SHIFT) + 1;
-      LongArrayList cover = new LongArrayList();
-      for (Long2LongOpenHashMap.Entry e : this.dirty.long2LongEntrySet()) {
-         long k = e.getLongKey();
-         if (Math.abs(BlockKey.x(k) - bx) <= r && Math.abs(BlockKey.y(k) - by) <= ry && Math.abs(BlockKey.z(k) - bz) <= r) {
-            if (now - e.getLongValue() < CollapseRules.SETTLE_TICKS) {
-               return Long.MIN_VALUE;
-            }
-            cover.add(k);
-         }
-      }
-      for (int i = 0; i < cover.size(); i++) {
-         this.dirty.remove(cover.getLong(i));
-      }
-      return best;
+      return Long.MIN_VALUE;
+   }
+
+   /**
+    * Pure: every block of cell {@code cell} lies inside the probe box around the centre of cell {@code centre}
+    * ({@code |d| <= radius} horizontally, {@code <= band} vertically, as {@link #around} selects removals).
+    */
+   static boolean covered(long centre, long cell, int radius, int band) {
+      int s = CollapseRules.CELL_SHIFT, size = 1 << s;
+      return axisCovered((BlockKey.x(centre) << s) + size / 2, BlockKey.x(cell) << s, size, radius)
+         && axisCovered((BlockKey.y(centre) << s) + size / 2, BlockKey.y(cell) << s, size, band)
+         && axisCovered((BlockKey.z(centre) << s) + size / 2, BlockKey.z(cell) << s, size, radius);
+   }
+
+   private static boolean axisCovered(int centre, int min, int size, int reach) {
+      return min >= centre - reach && min + size - 1 <= centre + reach;
+   }
+
+   /** Pending (dirty) state of one cell key, for tests. */
+   boolean isPending(long cellKey) {
+      return this.dirty.containsKey(cellKey);
    }
 
    /** Removed positions within a horizontal radius and a vertical band of a point. */

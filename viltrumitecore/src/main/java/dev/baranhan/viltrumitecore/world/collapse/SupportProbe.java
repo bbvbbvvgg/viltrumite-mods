@@ -205,9 +205,14 @@ public final class SupportProbe {
                continue;
             }
             byte m = this.classify(k, nx, ny, nz);
+            if (m == CollapseAnalyzer.UNKNOWN) {
+               // an unloaded neighbour is inconclusive inside or outside a base-cut footprint: never call the part floating
+               this.grounded();
+               break;
+            }
             if (this.columns != null && d != 0 && d != 5) {
                boolean enter = this.columns.contains(nx, nz);
-               boolean leans = solid(m) || m == CollapseAnalyzer.UNKNOWN;
+               boolean leans = solid(m);
                if (!this.columns.inside(nx, nz) && (!enter || !leans)) {
                   // a side face toward outside the footprint: open air, or the neighbour it leans on
                   this.compOutside++;
@@ -219,7 +224,7 @@ public final class SupportProbe {
                   continue;
                }
             }
-            if (m == CollapseAnalyzer.UNKNOWN || m == CollapseAnalyzer.FIXED) {
+            if (m == CollapseAnalyzer.FIXED) {
                this.grounded();
                break;
             }

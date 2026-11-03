@@ -64,6 +64,13 @@ public final class SupportWatch {
       @Nullable
       long[] floatingBlocks;
       int floatingStructure;
+      /** "Was it standing before" runs per floating component: the ones still waiting for their own check. */
+      final ArrayDeque<long[]> components = new ArrayDeque<>();
+      /** Components that stood before the removal (they come down together). */
+      final LongArrayList accepted = new LongArrayList();
+      /** Remnant wall blocks of a base cut: they join the structure only when some component is accepted. */
+      long[] sheets = new long[0];
+      int totalBlocks;
 
       Job(Request request, SupportProbe probe, boolean before, @Nullable BaseCut mask, long started) {
          this.request = request;
@@ -78,6 +85,57 @@ public final class SupportWatch {
          this.ticks = from.ticks;
          return this;
       }
+
+      /** Hands the per-component state of a finished before-check on to the next one. */
+      Job carryComponents(Job from) {
+         this.components.addAll(from.components);
+         this.accepted.addAll(from.accepted);
+         this.sheets = from.sheets;
+         this.totalBlocks = from.totalBlocks;
+         this.floatingStructure = from.floatingStructure;
+         return this;
+      }
+   }
+
+   /** Most floating components that get their own "was it standing before" check; tinier leftovers stay. */
+   static final int MAX_BEFORE_COMPONENTS = 24;
+
+   /**
+    * Pure: the 6-connected components of a set of blocks, largest first (at most {@code max}). A newly severed
+    * building and an unrelated platform that was already floating are never checked as one (review of PR #142).
+    */
+   static List<long[]> components(long[] blocks, int max) {
+      LongOpenHashSet left = new LongOpenHashSet(blocks);
+      List<long[]> out = new ArrayList<>();
+      LongArrayList queue = new LongArrayList();
+      for (long seed : blocks) {
+         if (!left.remove(seed)) {
+            continue;
+         }
+         LongArrayList comp = new LongArrayList();
+         queue.clear();
+         queue.add(seed);
+         for (int i = 0; i < queue.size(); i++) {
+            long k = queue.getLong(i);
+            comp.add(k);
+            int x = BlockKey.x(k), y = BlockKey.y(k), z = BlockKey.z(k);
+            long[] next = {BlockKey.of(x + 1, y, z), BlockKey.of(x - 1, y, z), BlockKey.of(x, y + 1, z), BlockKey.of(x, y - 1, z), BlockKey.of(x, y, z + 1),
+               BlockKey.of(x, y, z - 1)};
+            for (long n : next) {
+               if (left.remove(n)) {
+                  queue.add(n);
+               }
+            }
+         }
+         out.add(comp.toLongArray());
+      }
+      out.sort((a, b) -> Integer.compare(b.length, a.length));
+      return out.size() > max ? new ArrayList<>(out.subList(0, max)) : out;
+   }
+
+   /** Pure: a stage of a support chain may start only below the active-collapse limit (a limit of 0 means none start). */
+   static boolean capacity(int active, int maxActive) {
+      return active < maxActive;
    }
 
    /** One severed structure coming down stage by stage. */
@@ -204,6 +262,9 @@ public final class SupportWatch {
             it.remove(); // switched off half-way: the rest stays (the journal still restores what fell)
             continue;
          }
+         if (!capacity(CollapseDirector.activeCount(), CollapseDirector.maxActive())) {
+            continue; // the server's collapse limit: the chain keeps its plan and waits for a free slot
+         }
          CollapseAnalyzer.Plan plan = c.plan.next(StructuralDamage.volume(level), CollapseRules.chainStageBlocks(CollapseDirector.maxBlocks()), c.cause,
             c.seed + c.plan.stages(), c.fallX, c.fallZ);
          if (plan == null || plan.blocks().length == 0) {
@@ -269,10 +330,28 @@ public final class SupportWatch {
       String scope = job.mask == null ? "" : " inside the base cut (" + job.mask + ")";
       if (job.before) {
          if (p.status() == SupportProbe.Status.GROUNDED) {
-            start(level, st, job.floatingBlocks, job.floatingStructure, r, job.mask, now);
+            job.accepted.addAll(LongArrayList.wrap(job.floatingBlocks));
          } else {
             alreadyFloating++;
-            result(String.format("%s: was not standing before%s (%s), stays", where, scope, p.reason()), job);
+            result(String.format("%s: %d blocks were not standing before%s (%s), they stay", where, job.floatingBlocks.length, scope, p.reason()), job);
+         }
+         long[] nextComp = job.components.pollFirst();
+         if (nextComp != null) {
+            st.job = beforeJob(level, r, nextComp, job).carry(job).carryComponents(job);
+            return;
+         }
+         if (!job.accepted.isEmpty()) {
+            long[] blocks = job.accepted.toLongArray();
+            int structure = (int)((long)job.floatingStructure * blocks.length / Math.max(1, job.totalBlocks));
+            if (job.sheets.length > 0) {
+               LongOpenHashSet all = new LongOpenHashSet(blocks);
+               for (long k : job.sheets) {
+                  all.add(k);
+               }
+               structure += all.size() - blocks.length;
+               blocks = all.toLongArray();
+            }
+            start(level, st, blocks, structure, r, job.mask, now);
          }
          return;
       }
@@ -308,31 +387,52 @@ public final class SupportWatch {
                return;
             }
             int structure = p.floatingStructure();
+            long[] own = blocks;
+            long[] sheets = new long[0];
             if (job.mask != null) {
                // the facade standing on the podium wall comes down with the tower above the podium roof
-               int own = blocks.length;
-               blocks = BaseCut.withSheets(p.volume(), blocks, cutTop(r), level.getMaxBuildHeight() - 1);
-               structure += blocks.length - own;
-               sheetBlocks += blocks.length - own;
-               if (CollapseDirector.LOG && blocks.length > own) {
-                  LOGGER.info("support probe {}: {} remnant wall blocks join the {} cut out", where, blocks.length - own, own);
+               long[] withSheets = BaseCut.withSheets(p.volume(), blocks, cutTop(r), level.getMaxBuildHeight() - 1);
+               LongOpenHashSet ownSet = new LongOpenHashSet(own);
+               LongArrayList extra = new LongArrayList();
+               for (long k : withSheets) {
+                  if (!ownSet.contains(k)) {
+                     extra.add(k);
+                  }
+               }
+               sheets = extra.toLongArray();
+               blocks = withSheets;
+               sheetBlocks += sheets.length;
+               if (CollapseDirector.LOG && sheets.length > 0) {
+                  LOGGER.info("support probe {}: {} remnant wall blocks join the {} cut out", where, sheets.length, own.length);
                }
             }
             if (r.continuation) {
-               start(level, st, blocks, structure, r, null, now);
+               start(level, st, blocks, structure + sheets.length, r, null, now);
                return;
             }
-            // was it standing before? the removed blocks count as solid again
-            LongOpenHashSet assumed = new LongOpenHashSet(r.removed);
-            Request seeds = new Request(origins(blocks, r.removed), r.cutY, r.x, r.y, r.z, r.cause, false);
-            Job before = new Job(r, probe(level, seeds, assumed, true), true, job.mask, job.started).carry(job);
-            before.floatingBlocks = blocks;
+            // was it standing before? the removed blocks count as solid again; each floating component on its own
+            List<long[]> comps = components(own, MAX_BEFORE_COMPONENTS);
+            Job before = beforeJob(level, r, comps.get(0), job).carry(job);
+            for (int i = 1; i < comps.size(); i++) {
+               before.components.add(comps.get(i));
+            }
+            before.sheets = sheets;
+            before.totalBlocks = own.length;
             before.floatingStructure = structure;
             st.job = before;
          }
          default -> {
          }
       }
+   }
+
+   /** The "was it standing before" probe of one floating component (the removed blocks count as solid again). */
+   private static Job beforeJob(ServerLevel level, Request r, long[] component, Job from) {
+      LongOpenHashSet assumed = new LongOpenHashSet(r.removed);
+      Request seeds = new Request(origins(component, r.removed), r.cutY, r.x, r.y, r.z, r.cause, false);
+      Job before = new Job(r, probe(level, seeds, assumed, true), true, from.mask, from.started);
+      before.floatingBlocks = component;
+      return before;
    }
 
    /** Top of the cut band: the highest removed block, at most 8 rows above the lowest. */
