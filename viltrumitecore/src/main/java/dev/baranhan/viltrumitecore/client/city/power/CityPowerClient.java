@@ -76,6 +76,11 @@ public final class CityPowerClient {
       return stage;
    }
 
+   /** The server sent the grid of a city in the current level (cleared on logout and level change). */
+   public static boolean known() {
+      return known;
+   }
+
    /** State of the grid cell at a block position (POWERED = 0 when unknown). */
    static int stateAt(double x, double z) {
       if (!known) {

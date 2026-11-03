@@ -172,4 +172,18 @@ public final class CityLifeMixer {
       float hushBed = trauma > 0.15F ? Mth.clamp((trauma - 0.15F) / 0.5F, 0.0F, 1.0F) * 0.6F * (1.0F - p) * (indoor ? 0.5F : 1.0F) : 0.0F;
       return new float[]{crowd, crowdFar, steps, run, day, night, w, panicBed, hushBed};
    }
+
+   /** Citizens heard this long ago still count as a city around (a quiet street between two scans of people). */
+   static final long PRESENCE_MEMORY = 1200L;
+
+   /**
+    * Pure: the city soundscape may play. Only in a level whose city grid the server sent, or where citizens were heard
+    * within {@link #PRESENCE_MEMORY} ticks; never in an ordinary world or another dimension (review of PR #147).
+    */
+   static boolean cityPresent(boolean gridKnown, int citizensNear, long citizensSeenAt, long now) {
+      if (gridKnown || citizensNear > 0) {
+         return true;
+      }
+      return citizensSeenAt != Long.MIN_VALUE && now - citizensSeenAt >= 0L && now - citizensSeenAt < PRESENCE_MEMORY;
+   }
 }

@@ -87,6 +87,10 @@ public final class CityLifeAmbience {
    @Nullable
    private static ClientLevel lastLevel;
    private static final List<CitizenEntity> calmNear = new ArrayList<>();
+   /** Game time of the last scan that heard citizens (Long.MIN_VALUE: none in this level yet). */
+   private static long citizensSeenAt = Long.MIN_VALUE;
+   /** A city is around the listener (grid known or citizens heard recently); outside one the soundscape is silent. */
+   private static boolean present;
 
    private CityLifeAmbience() {
    }
@@ -106,6 +110,8 @@ public final class CityLifeAmbience {
       if (level != lastLevel) {
          stopAll();
          lastLevel = level;
+         citizensSeenAt = Long.MIN_VALUE;
+         present = false;
       }
 
       if (level == null || mc.player == null || mc.isPaused() || mc.gameRenderer == null) {
@@ -236,6 +242,10 @@ public final class CityLifeAmbience {
 
       citizens = n;
       if (n > 0) {
+         citizensSeenAt = level.getGameTime();
+      }
+      present = CityLifeMixer.cityPresent(dev.baranhan.viltrumitecore.client.city.power.CityPowerClient.known(), n, citizensSeenAt, level.getGameTime());
+      if (n > 0) {
          Arrays.sort(ys, 0, n);
          double m = ys[n / 2];
          medianY = Double.isNaN(medianY) ? m : medianY + (m - medianY) * 0.3;
@@ -248,6 +258,10 @@ public final class CityLifeAmbience {
       trauma = CityLifeMixer.trauma(trauma, SCAN_EVERY, Math.max(p * 0.9F, ruin * 0.8F));
       float[] t = CityLifeMixer.beds(calm, far, walking, running, panic, trauma, CityLifeMixer.daylight(level.getDayTime()), level.isRaining(), indoor,
          above, ruin);
+      if (!present) {
+         // an ordinary world, the Nether, the End, far from any city: no street, no wind between buildings, no bells
+         Arrays.fill(t, 0.0F);
+      }
       System.arraycopy(t, 0, TARGET, 0, t.length);
       AT[CROWD] = toward(ear, calm, cx, cy, cz, 5.0);
       AT[1] = AT[CROWD];
@@ -336,7 +350,7 @@ public final class CityLifeAmbience {
          }
       }
 
-      if (indoor || cooldown[GAP] > 0) {
+      if (!present || indoor || cooldown[GAP] > 0) {
          return;
       }
 
