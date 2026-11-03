@@ -47,7 +47,7 @@ final class Scp096Destruction {
          || hardness <= CHEAP_HARDNESS;
    }
 
-   private static boolean breakable(ServerLevel level, BlockPos pos, BlockState state, Scp096Entity mob, boolean cheapOnly) {
+   static boolean breakable(ServerLevel level, BlockPos pos, BlockState state, Scp096Entity mob, boolean cheapOnly) {
       if (state.isAir() || state.getCollisionShape(level, pos).isEmpty()) {
          return false;
       }
@@ -100,6 +100,42 @@ final class Scp096Destruction {
       }
       Vec3 c = bb.getCenter();
       candidates.sort((a, b) -> Double.compare(c.distanceToSqr(Vec3.atCenterOf(a)), c.distanceToSqr(Vec3.atCenterOf(b))));
+      StructuralDamage.run(CAUSE, () -> {
+         for (BlockPos p : candidates) {
+            if (out.size() >= max) {
+               break;
+            }
+            if (level.destroyBlock(p, false, mob)) {
+               out.add(p);
+            }
+         }
+      });
+      return out;
+   }
+
+   /**
+    * Breaks the blocks of the columns {@code f} = {x0, x1, z0, z1} in the layers y0..y1 (a hole punched through a ceiling
+    * or a floor, a ledge over the climber's head), the layer nearest to {@code fromY} first, at most {@code max}. Same
+    * rules as {@link #carve}: mobGriefing, Forge's destroy events, nothing unbreakable or harder than
+    * {@link Scp096Rules#SMASH_MAX_HARDNESS}, all inside the structural damage scope so the collapse system sees it.
+    */
+   static List<BlockPos> bore(ServerLevel level, Scp096Entity mob, int[] f, int y0, int y1, double fromY, int max) {
+      List<BlockPos> out = new ArrayList<>();
+      if (max <= 0 || !griefing(level, mob)) {
+         return out;
+      }
+      List<BlockPos> candidates = new ArrayList<>();
+      for (int y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
+         for (int x = f[0]; x <= f[1]; x++) {
+            for (int z = f[2]; z <= f[3]; z++) {
+               BlockPos p = new BlockPos(x, y, z);
+               if (level.isLoaded(p) && breakable(level, p, level.getBlockState(p), mob, false)) {
+                  candidates.add(p);
+               }
+            }
+         }
+      }
+      candidates.sort((a, b) -> Double.compare(Math.abs(a.getY() + 0.5 - fromY), Math.abs(b.getY() + 0.5 - fromY)));
       StructuralDamage.run(CAUSE, () -> {
          for (BlockPos p : candidates) {
             if (out.size() >= max) {

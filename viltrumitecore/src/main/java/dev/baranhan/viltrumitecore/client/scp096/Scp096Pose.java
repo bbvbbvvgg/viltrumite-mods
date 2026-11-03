@@ -26,21 +26,26 @@ public final class Scp096Pose {
    public static final int LEAP = 13;
    public static final int CLIMB = 14;
    public static final int CALM = 15;
+   /** The lunge and the pull-up over a ledge (issue #137). */
+   public static final int DASH = 16;
+   public static final int MANTLE = 17;
    /** Number of full-body layers (indices 0..LAYERS-1). */
-   public static final int LAYERS = 16;
+   public static final int LAYERS = 18;
    /** Extra eased slots after the layers: the additive sobbing and the share of the head look. */
-   public static final int SOB = 16;
-   public static final int LOOK = 17;
-   public static final int SLOTS = 18;
+   public static final int SOB = 18;
+   public static final int LOOK = 19;
+   public static final int SLOTS = 20;
 
    /** Clip name per layer, in {@link #FILE} (0 calm, 1 rage, 2 chase). */
    public static final String[] CLIP = {"sit", "sit_peek", "stand", "cover", "walk", "stand_up", "sit_down", "gaze", "gaze_sit", "rise",
-      "hysteria", "run", "rage", "leap", "climb", "calm"};
-   public static final int[] FILE = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 1};
+      "hysteria", "run", "rage", "leap", "climb", "calm", "dash", "mantle"};
+   public static final int[] FILE = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 1, 2, 2};
    /** Clip lengths in seconds (as generated); the one-shots are held on their last frame. */
-   public static final double[] LENGTH = {4.0, 3.0, 4.0, 3.0, 1.0, 1.6, 1.6, 1.3, 1.3, 1.5, 2.0, 0.6, 1.6, 0.8, 0.9, 6.0};
+   public static final double[] LENGTH = {4.0, 3.0, 4.0, 3.0, 1.0, 1.6, 1.6, 1.3, 1.3, 1.5, 2.0, 0.6, 1.6, 0.8, 0.9, 6.0, 0.5, 0.5};
    public static final boolean[] ONE_SHOT = {false, false, false, false, false, true, true, true, true, true, false, false, false, false, false,
-      true};
+      true, false, true};
+   /** Gait cycles of the dash per run cycle: its bounds are twice as long as the run's strides. */
+   static final double DASH_GAIT = 0.5;
 
    /** Ground speeds (blocks per tick) where the shuffle and the run take over from standing and from the crouch. */
    static final float WALK_FROM = 0.006F;
@@ -61,6 +66,12 @@ public final class Scp096Pose {
     */
    public static void targets(Scp096State state, Scp096State prev, float since, boolean fromSit, boolean faceOpen, boolean cover, boolean climb,
          boolean leap, float move, float air, float[] out) {
+      targets(state, prev, since, fromSit, faceOpen, cover, climb, leap, false, false, move, air, out);
+   }
+
+   /** As above, with the lunge and the pull-up over a ledge of the vertical pursuit (issue #137). */
+   public static void targets(Scp096State state, Scp096State prev, float since, boolean fromSit, boolean faceOpen, boolean cover, boolean climb,
+         boolean leap, boolean dash, boolean mantle, float move, float air, float[] out) {
       Arrays.fill(out, 0, SLOTS, 0.0F);
       switch (state) {
          case SIT -> {
@@ -92,16 +103,20 @@ public final class Scp096Pose {
             out[LOOK] = 0.2F;
          }
          case CHASE -> {
-            if (climb) {
+            if (mantle) {
+               out[MANTLE] = 1.0F;
+            } else if (climb) {
                out[CLIMB] = 1.0F;
             } else if (leap || air > AIR_TICKS) {
                out[LEAP] = 1.0F;
+            } else if (dash) {
+               out[DASH] = 1.0F;
             } else {
                float run = runWeight(move);
                out[RUN] = run;
                out[RAGE] = 1.0F - run;
             }
-            out[LOOK] = climb ? 0.0F : 0.55F;
+            out[LOOK] = climb || mantle ? 0.0F : dash ? 0.3F : 0.55F;
          }
          case CALMING -> {
             out[CALM] = 1.0F;
@@ -119,6 +134,9 @@ public final class Scp096Pose {
          return 14.0F;
       }
       if (state == Scp096State.CHASE) {
+         if (slot == MANTLE || slot == DASH) {
+            return 16.0F;
+         }
          return slot == LEAP || slot == CLIMB ? 9.0F : 11.0F;
       }
       if (slot == SOB || slot == LOOK) {
@@ -147,8 +165,15 @@ public final class Scp096Pose {
     * seam), the walk and the run by gait phase, the rest from the entity's age.
     */
    public static double time(int layer, float since, float ageSeconds, double phase, boolean fromSit, int id) {
+      return time(layer, since, ageSeconds, phase, fromSit, id, 0.0F);
+   }
+
+   /** As above; {@code mantleSince} is the time since the pull-up over a ledge began (seconds). */
+   public static double time(int layer, float since, float ageSeconds, double phase, boolean fromSit, int id, float mantleSince) {
       double len = LENGTH[layer];
       return switch (layer) {
+         case MANTLE -> Math.min(Math.max(mantleSince, 0.0F), len);
+         case DASH -> wrap(phase * DASH_GAIT, 1.0) * len;
          case STAND_UP, SIT_DOWN, GAZE, GAZE_SIT, RISE, CALM -> Math.min(Math.max(since, 0.0F), len);
          case HYSTERIA -> wrap(since - (fromSit ? LENGTH[RISE] : 0.0), len);
          case WALK, RUN -> wrap(phase, 1.0) * len;

@@ -50,6 +50,24 @@ public final class Scp096Leap {
       return -1;
    }
 
+   /** Smallest start vertical speed whose apex is at least {@code need} blocks up ({@link #MAX_VY} when none is). */
+   public static double vyForApex(double need) {
+      if (!Double.isFinite(need) || apex(MAX_VY) < need) {
+         return MAX_VY;
+      }
+      double lo = 0.0;
+      double hi = MAX_VY;
+      for (int i = 0; i < 40; i++) {
+         double mid = (lo + hi) * 0.5;
+         if (apex(mid) >= need) {
+            hi = mid;
+         } else {
+            lo = mid;
+         }
+      }
+      return hi;
+   }
+
    /**
     * A leap to the point (dx, dy, dz) relative to the feet, clearing it by {@code clearance} at the apex; null when
     * it is out of reach (more than {@link Scp096Rules#LEAP_MAX_UP} up, or no arc fits the speed limits).

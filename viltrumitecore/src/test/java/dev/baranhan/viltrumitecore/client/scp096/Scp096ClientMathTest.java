@@ -270,4 +270,25 @@ class Scp096ClientMathTest {
       assertFalse(Scp096ClientSounds.abandoned(false, true, 10_000));
       assertTrue(Scp096ClientSounds.abandoned(true, true, 0));
    }
+
+   @Test
+   void theVerticalPursuitPosesTakeTurns() {
+      // issue #137: pulling over a ledge > on the wall > in the air > the lunge > the run
+      for (int f = 0; f < 16; f++) {
+         boolean climb = (f & 1) != 0;
+         boolean leap = (f & 2) != 0;
+         boolean dash = (f & 4) != 0;
+         boolean mantle = (f & 8) != 0;
+         Scp096Pose.targets(Scp096State.CHASE, Scp096State.HYSTERIA, 3.0F, false, true, false, climb, leap, dash, mantle, 0.6F, 0.0F, this.out);
+         assertEquals(1.0F, layerSum(this.out), 1.0E-5F, "flags " + f);
+         int expected = mantle ? Scp096Pose.MANTLE : climb ? Scp096Pose.CLIMB : leap ? Scp096Pose.LEAP : dash ? Scp096Pose.DASH : Scp096Pose.RUN;
+         assertEquals(1.0F, this.out[expected], 1.0E-6F, "flags " + f);
+      }
+      // the old signature is the same pose without the new moves
+      Scp096Pose.targets(Scp096State.CHASE, Scp096State.HYSTERIA, 3.0F, false, true, false, false, false, 0.6F, 0.0F, this.out);
+      assertEquals(1.0F, this.out[Scp096Pose.RUN], 1.0E-6F);
+      // the new moves only exist in the chase
+      Scp096Pose.targets(Scp096State.CALMING, Scp096State.CHASE, 1.0F, false, false, false, false, false, true, true, 0.0F, 0.0F, this.out);
+      assertEquals(1.0F, this.out[Scp096Pose.CALM], 1.0E-6F);
+   }
 }

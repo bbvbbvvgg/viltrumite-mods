@@ -18,10 +18,12 @@ public final class Scp096Qa {
       if (mc.level != null && mc.player != null) {
          for (Entity en : mc.level.entitiesForRendering()) {
             if (en instanceof Scp096Entity e) {
-               b.append(String.format(Locale.ROOT, "[id=%d %s<-%s since=%.1fs flags=%s%s%s%s move=%.3f air=%d dist=%.1f pos=%.1f,%.1f,%.1f yaw=%.0f/%.0f layers=%s] ",
+               b.append(String.format(Locale.ROOT, "[id=%d %s<-%s since=%.1fs flags=%s%s%s%s%s%s%s punchAge=%d move=%.3f air=%d dist=%.1f pos=%.1f,%.1f,%.1f yaw=%.0f/%.0f layers=%s] ",
                   e.getId(), e.clientState, e.clientPrevState, (e.tickCount - e.clientStateStart) / 20.0F,
                   e.flag(Scp096Entity.FLAG_FACE_OPEN) ? "F" : "-", e.flag(Scp096Entity.FLAG_COVER) ? "C" : "-",
-                  e.flag(Scp096Entity.FLAG_CLIMB) ? "K" : "-", e.flag(Scp096Entity.FLAG_LEAP) ? "L" : "-", e.clientMove, e.clientAirTicks,
+                  e.flag(Scp096Entity.FLAG_CLIMB) ? "K" : "-", e.flag(Scp096Entity.FLAG_LEAP) ? "L" : "-",
+                  e.flag(Scp096Entity.FLAG_DASH) ? "D" : "-", e.flag(Scp096Entity.FLAG_MANTLE) ? "M" : "-",
+                  e.flag(Scp096Entity.FLAG_PUNCH) ? "P" : "-", e.tickCount - e.clientPunchStart, e.clientMove, e.clientAirTicks,
                   e.distanceTo(mc.player), e.getX(), e.getY(), e.getZ(), e.yBodyRot, e.getYHeadRot(), layers(e.clientWeights)));
             }
          }

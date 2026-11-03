@@ -127,6 +127,7 @@ class Scp096AssetsTest {
       assertTrue(json(ANIMS.resolve("scp096_calm.animation.json")).getAsJsonObject("animations").has("sob"));
       JsonObject chase = json(ANIMS.resolve("scp096_chase.animation.json")).getAsJsonObject("animations");
       assertTrue(chase.has("smash") && chase.has("attack"));
+      assertTrue(chase.has("punch_up") && chase.has("dash") && chase.has("mantle"), "the moves of the vertical pursuit (#137)");
       assertTrue(Files.isRegularFile(MAIN.resolve("resources/assets/viltrumitecore/geo/scp096/scp096.geo.json"))
          || Files.isRegularFile(MAIN.resolve("binassets/assets/viltrumitecore/geo/scp096/scp096.geo.json.part0")), "the model");
    }
