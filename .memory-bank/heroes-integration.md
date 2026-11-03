@@ -95,3 +95,6 @@
   the hero; each pair and all four events with `force`: TPS 20, tick 9–25 ms (one 2 s spike when three events start in
   the same second). Meteor explosions drop items (~150–480 in the air) and can wear down Ultron nodes (capped per hit);
   Chitauri and Ultron stop on "nobody left" (30 s / 3 min). FPS numbers from llvmpipe are not a GPU measurement.
+- Venom (core 1.71.0, protocol 30, branch `feat/venom-living-symbiote`): see `venom.md`. `HeroId.VENOM` and
+  `HeroAction.VENOM_*` are appended after Ghost Rider; lang in `lang-overlays/venom`, sounds in
+  `sound-overlays/venom.json`. (`project.md` is over the 64 KB GitHub MCP push limit, so the index line lives here.)

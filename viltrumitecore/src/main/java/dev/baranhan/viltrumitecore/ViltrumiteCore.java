@@ -134,6 +134,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.redhulk.RedHulkFx.init();
       dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderSounds.init();
       dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderFx.init();
+      // Venom (docs/design/2026-11-02-venom-design.md): sounds, FX preset ids 740+, the boss entity, /venom.
+      dev.baranhan.viltrumitecore.hero.venom.VenomSetup.init(modEventBus);
       // Contextual interactions (docs/contextual-interactions.json): their own sound holders.
       dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();
       // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
@@ -165,6 +167,9 @@ public class ViltrumiteCore {
          CoreMessages.register();
          ViltrumiteAbilities.registerAll();
          HeroRegistry.registerDefaults();
+         // Venom x Spider-Man of Falbiks Heroes: detect the mod and bind the versioned adapter (reflection only).
+         dev.baranhan.viltrumitecore.compat.spider.SpiderCompat.init(ViltrumiteCoreConfig.INSTANCE.spiderCompatEnabled);
+         dev.baranhan.viltrumitecore.hero.venom.VenomSetup.commonSetup();
          // Od Lagna's Wish: after the heroes, the registry names them by key.
          dev.baranhan.viltrumitecore.hero.wish.OdLagnaWishes.registerDefaults();
          dev.baranhan.viltrumitecore.hero.wish.WishRitual.init();

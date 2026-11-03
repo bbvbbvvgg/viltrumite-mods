@@ -24,7 +24,9 @@ public enum HeroId {
    /** Red Hulk, Thunderbolt Ross (spec docs/design/2026-11-01-red-hulk-design.md); appended, saved ids unchanged. */
    RED_HULK("red_hulk"),
    /** Ghost Rider, Johnny Blaze, and the Hell Cycle (spec docs/design/2026-11-02-ghost-rider-design.md); appended, saved ids unchanged. */
-   GHOST_RIDER("ghost_rider");
+   GHOST_RIDER("ghost_rider"),
+   /** Venom, the living symbiote (spec docs/design/2026-11-02-venom-design.md); appended, saved ids unchanged. */
+   VENOM("venom");
 
    private final String key;
 

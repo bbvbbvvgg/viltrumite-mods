@@ -314,7 +314,10 @@ public abstract class GameRendererDashMixin {
                snap[3] = finalPunch[3];
             }
          }
+         // Venom's host: the symbiote over the eyes (blur, violet grade, veins, the narrow slit, flashes)
+         float[] venomHost = dev.baranhan.viltrumitecore.client.venom.VenomPossessionClient.post(partialTicks);
          boolean anyEffect = ErasurePost.active() || dashProgress > 0.0F
+            || venomHost[0] > 0.005F
             || timeStop[0] + timeStop[1] + timeStop[2] > 0.0F
             || snap[0] + snap[1] + snap[4] + snap[5] > 0.0F
             || punchIntensity > 0.0F
@@ -439,6 +442,14 @@ public abstract class GameRendererDashMixin {
                      regulusMadnessUnif.set(Math.max(0.0F, Math.min(1.0F, this.currentRegulusMadness)));
                   }
 
+                  Uniform venomHostUnif = pass.getEffect().getUniform("VenomHost");
+                  if (venomHostUnif != null) venomHostUnif.set(Mth.clamp(venomHost[0], 0.0F, 1.0F));
+                  Uniform venomVeinsUnif = pass.getEffect().getUniform("VenomVeins");
+                  if (venomVeinsUnif != null) venomVeinsUnif.set(Mth.clamp(venomHost[1], 0.0F, 1.0F));
+                  Uniform venomFlashUnif = pass.getEffect().getUniform("VenomFlash");
+                  if (venomFlashUnif != null) venomFlashUnif.set(Mth.clamp(venomHost[2], 0.0F, 1.0F));
+                  Uniform venomSlitUnif = pass.getEffect().getUniform("VenomSlit");
+                  if (venomSlitUnif != null) venomSlitUnif.set(venomHost[0] > 0.005F ? Mth.clamp(venomHost[3], 0.0F, 1.0F) : 1.0F);
                   Uniform regulusPulseUnif = pass.getEffect().getUniform("RegulusPulse");
                   if (regulusPulseUnif != null) {
                      regulusPulseUnif.set(Math.max(0.0F, Math.min(1.0F, regulusPulse)));

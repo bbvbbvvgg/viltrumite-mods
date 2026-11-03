@@ -84,10 +84,10 @@ class CodexClientMathTest {
       List<CodexEntry> heroes = CodexEntries.of(Category.HEROES);
       List<CodexEntry> npcs = CodexEntries.of(Category.NPCS);
       List<CodexEntry> events = CodexEntries.of(Category.EVENTS);
-      assertEquals(12, heroes.size());
-      assertEquals(16, npcs.size());
+      assertEquals(13, heroes.size());
+      assertEquals(17, npcs.size());
       assertEquals(6, events.size());
-      assertEquals(3, npcs.stream().filter(e -> "boss".equals(e.kind())).count(), "Conquest, the Leviathan and Thanos are the bosses");
+      assertEquals(4, npcs.stream().filter(e -> "boss".equals(e.kind())).count(), "Conquest, the Leviathan, the Venom boss and Thanos are the bosses");
       // every playable hero has exactly one article (Viltrumite is the legacy id of Homelander)
       Set<HeroId> covered = new HashSet<>();
       for (CodexEntry e : heroes) {

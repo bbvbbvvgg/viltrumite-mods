@@ -53,11 +53,14 @@ public final class InteractionFx {
    public static final FxPreset SPINE_ARC = FxPreset.register("viltrumitecore:interaction_spine_arc", 620);
    /** A heavy fist halts a Leviathan: flash, shockwave, debris, shake. */
    public static final FxPreset LEVIATHAN_HALT = FxPreset.register("viltrumitecore:interaction_leviathan_halt", 621);
+   /** Hellfire scalds a symbiote: a hot flash, scorch on the body, sparks, smoke and a short shake. */
+   public static final FxPreset SYMBIOTE_SCALD = FxPreset.register("viltrumitecore:interaction_symbiote_scald", 622);
 
    /** Every preset of the interactions, in net id order. */
    public static final java.util.List<FxPreset> PRESETS = java.util.List.of(SHIELD_SHATTER, STORM_SHIELD, METEOR_BURST, METEOR_SPLIT, OVERCHARGE,
       DIVINE_CLASH, LEGION_MARK, TITAN_FLING,
-      STORM_REBOUND, VIBRANIUM_RING, REPULSOR_SPLIT, REPULSOR_SHARD, TIME_REWIND, LION_STRAIN, SHIELD_CRUSH, METEOR_CLEAVE, METEOR_HURL, SHADOW_EXCHANGE, LEVIATHAN_IMPACT, LEGION_DISCHARGE, SPINE_ARC, LEVIATHAN_HALT);
+      STORM_REBOUND, VIBRANIUM_RING, REPULSOR_SPLIT, REPULSOR_SHARD, TIME_REWIND, LION_STRAIN, SHIELD_CRUSH, METEOR_CLEAVE, METEOR_HURL, SHADOW_EXCHANGE, LEVIATHAN_IMPACT, LEGION_DISCHARGE, SPINE_ARC, LEVIATHAN_HALT,
+      SYMBIOTE_SCALD);
 
    private InteractionFx() {
    }

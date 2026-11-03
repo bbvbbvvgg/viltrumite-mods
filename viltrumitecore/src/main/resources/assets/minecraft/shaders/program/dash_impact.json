@@ -297,6 +297,38 @@
             "values": [
                 0.0
             ]
+        },
+        {
+            "name": "VenomHost",
+            "type": "float",
+            "count": 1,
+            "values": [
+                0.0
+            ]
+        },
+        {
+            "name": "VenomVeins",
+            "type": "float",
+            "count": 1,
+            "values": [
+                0.0
+            ]
+        },
+        {
+            "name": "VenomFlash",
+            "type": "float",
+            "count": 1,
+            "values": [
+                0.0
+            ]
+        },
+        {
+            "name": "VenomSlit",
+            "type": "float",
+            "count": 1,
+            "values": [
+                1.0
+            ]
         }
     ]
 }

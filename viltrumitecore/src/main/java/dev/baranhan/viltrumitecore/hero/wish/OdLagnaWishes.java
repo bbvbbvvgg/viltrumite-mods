@@ -36,6 +36,7 @@ public final class OdLagnaWishes {
       register(new Wish("shield", "captain", "shield", WishGrant.hero("captain")));
       register(new Wish("rage", "red_hulk", "rage", WishGrant.hero("red_hulk")));
       register(new Wish("vengeance", "ghost_rider", "hellfire", WishGrant.hero("ghost_rider")));
+      register(new Wish("hunger", "venom", "symbiote", WishGrant.hero("venom")));
       register(new Wish(RETURN, HUMAN, "mortal", WishGrant.hero(HUMAN)));
    }
 
