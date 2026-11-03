@@ -1,6 +1,9 @@
 package dev.baranhan.viltrumitecore.client.city;
 
+import dev.baranhan.viltrumitecore.city.citizen.CitizenEntity;
+import dev.baranhan.viltrumitecore.city.citizen.CitizenVoices;
 import dev.baranhan.viltrumitecore.city.citizen.PerilRules;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
@@ -14,7 +17,9 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -30,7 +35,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
  * test between the camera and the mouth - open line 100 %, one thin wall or window
  * {@link #THIN}, a thick wall or a whole building {@link #THICK}, eased so it never pops.
  * The wrapped sound keeps following its citizen (entity-bound sounds move with the body) and
- * keeps the original id, so a stop packet (a citizen caught mid-fall) still finds it.
+ * keeps the original id. A falling scream is also tracked per citizen, so a catch stops only that citizen's voice.
  */
 @EventBusSubscriber(modid = "viltrumitecore", bus = EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class CitizenVoiceOcclusion {
@@ -46,7 +51,55 @@ public final class CitizenVoiceOcclusion {
    /** Mouth height over the feet (entity sounds sit at the feet). */
    static final double MOUTH = 1.5;
 
+   /** The falling scream of each citizen in earshot (entity id -> its voice), so a catch stops only that one. */
+   private static final Int2ObjectOpenHashMap<Occluded> FALLING = new Int2ObjectOpenHashMap<>();
+
    private CitizenVoiceOcclusion() {
+   }
+
+   /** Client side of {@link CitizenEntity#EVENT_STOP_FALL_VOICE}: stops the falling scream of this citizen only. */
+   public static void stopFallVoice(int entityId) {
+      Occluded v = FALLING.remove(entityId);
+      if (v != null) {
+         v.kill();
+      }
+   }
+
+   /** Pure: the sound is a falling scream (male or female). */
+   static boolean isFallScream(ResourceLocation id) {
+      return id.equals(CitizenVoices.FALL_MALE.getId()) || id.equals(CitizenVoices.FALL_FEMALE.getId());
+   }
+
+   /** The citizen a just-started entity-bound voice belongs to: entity sounds start exactly at the feet of their body. */
+   @Nullable
+   private static CitizenEntity owner(SoundInstance s) {
+      ClientLevel level = Minecraft.getInstance().level;
+      if (level == null) {
+         return null;
+      }
+      Vec3 at = new Vec3(s.getX(), s.getY(), s.getZ());
+      CitizenEntity best = null;
+      double bestD = 0.75 * 0.75;
+      for (CitizenEntity c : level.getEntitiesOfClass(CitizenEntity.class, new AABB(at, at).inflate(1.0))) {
+         double d = c.position().distanceToSqr(at);
+         if (d < bestD) {
+            best = c;
+            bestD = d;
+         }
+      }
+      return best;
+   }
+
+   private static void track(SoundInstance original, Occluded wrapped) {
+      SoundManager sounds = Minecraft.getInstance().getSoundManager();
+      FALLING.int2ObjectEntrySet().removeIf(e -> e.getValue().done() || !sounds.isActive(e.getValue()));
+      CitizenEntity c = owner(original);
+      if (c != null) {
+         Occluded old = FALLING.put(c.getId(), wrapped);
+         if (old != null && old != wrapped) {
+            old.kill();
+         }
+      }
    }
 
    /** Pure: the volume factor of a voice for a blocked/open line and the solid thickness on it. */
@@ -70,7 +123,11 @@ public final class CitizenVoiceOcclusion {
          return;
       }
 
-      event.setSound(new Occluded(s));
+      Occluded wrapped = new Occluded(s);
+      if (isFallScream(s.getLocation())) {
+         track(s, wrapped);
+      }
+      event.setSound(wrapped);
    }
 
    /** Current factor for a voice at a point (feet position), measured from the camera. */
@@ -103,6 +160,7 @@ public final class CitizenVoiceOcclusion {
       private final SoundInstance inner;
       private float factor;
       private int age;
+      private boolean killed;
 
       Occluded(SoundInstance inner) {
          this.inner = inner;
@@ -114,9 +172,19 @@ public final class CitizenVoiceOcclusion {
          return this.factor;
       }
 
+      /** Stops this voice on the next sound tick (a hero caught its citizen). */
+      void kill() {
+         this.killed = true;
+      }
+
+      /** Stopped or long finished (a falling scream is a few seconds): no longer worth tracking. */
+      boolean done() {
+         return this.killed || this.age > 20 * 20;
+      }
+
       @Override
       public boolean isStopped() {
-         return this.inner instanceof TickableSoundInstance t && t.isStopped();
+         return this.killed || this.inner instanceof TickableSoundInstance t && t.isStopped();
       }
 
       @Override

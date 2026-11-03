@@ -37,6 +37,8 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    public static final double RECOVER_FACTOR = 0.8;
    private static final EntityDataAccessor<Integer> SKIN = SynchedEntityData.defineId(CitizenEntity.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Byte> STATE = SynchedEntityData.defineId(CitizenEntity.class, EntityDataSerializers.BYTE);
+   /** Entity event: a hero caught this person mid-fall, the clients stop its falling scream (only this one). */
+   public static final byte EVENT_STOP_FALL_VOICE = 71;
 
    /** Spawned by /city populate: exempt from density trimming. */
    public boolean manual;
@@ -124,6 +126,15 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
          .add(Attributes.MAX_HEALTH, 10.0)
          .add(Attributes.MOVEMENT_SPEED, 0.25)
          .add(Attributes.FOLLOW_RANGE, 48.0);
+   }
+
+   @Override
+   public void handleEntityEvent(byte id) {
+      if (id == EVENT_STOP_FALL_VOICE) {
+         CitizenPeril.clientStopFallVoice.accept(this.getId());
+      } else {
+         super.handleEntityEvent(id);
+      }
    }
 
    @Override
@@ -271,6 +282,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       if (CitizenCaptivity.isHeld(this)) {
          // a world event holds this person (carried or in a containment field): no own walking, no stuck discard
          this.getNavigation().stop();
+         CitizenPeril.onHeld(this);
          return;
       }
 

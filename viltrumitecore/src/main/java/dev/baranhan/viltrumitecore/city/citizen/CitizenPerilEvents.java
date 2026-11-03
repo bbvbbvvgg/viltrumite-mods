@@ -1,6 +1,9 @@
 package dev.baranhan.viltrumitecore.city.citizen;
 
 import dev.baranhan.viltrumitecore.world.collapse.CityCollapseEvent;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -20,5 +23,18 @@ public final class CitizenPerilEvents {
       if (!event.isCanceled()) {
          CitizenPeril.onCollapseStarted(event.getLevel(), event.info());
       }
+   }
+
+   /** Peril statistics and the voice budget live as long as their server level (review of PR #145). */
+   @SubscribeEvent
+   public static void onLevelUnload(LevelEvent.Unload event) {
+      if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
+         CitizenPeril.forget(level.dimension());
+      }
+   }
+
+   @SubscribeEvent
+   public static void onServerStopped(ServerStoppedEvent event) {
+      CitizenPeril.forgetAll();
    }
 }

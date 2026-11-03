@@ -8,13 +8,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntConsumer;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.ClientboundStopSoundPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -55,7 +54,37 @@ public final class CitizenPeril {
       int teeters, falls, hangs, climbs, pulledUp, caught, deaths, voices, crowds, skippedVoices;
    }
 
+   /**
+    * Client side of {@link CitizenEntity#EVENT_STOP_FALL_VOICE}: stops the falling scream of one citizen (by entity id).
+    * Set by the client setup; a no-op on a dedicated server.
+    */
+   public static volatile IntConsumer clientStopFallVoice = id -> {
+   };
+
    private CitizenPeril() {
+   }
+
+   /** The level unloads (a world is left, the server stops): its counters, crowd cooldown and voice budget go with it. */
+   static void forget(ResourceKey<Level> dimension) {
+      STATS.remove(dimension);
+   }
+
+   static void forgetAll() {
+      STATS.clear();
+   }
+
+   /**
+    * Another system took the body (a captor carries it, a containment field holds it): a ledge grip or a teeter ends
+    * here, so the next peril tick never puts the person back on the old anchor. The holder owns gravity meanwhile.
+    */
+   static void onHeld(CitizenEntity c) {
+      if (c.citizenState() == CitizenState.HANGING || c.citizenState() == CitizenState.TEETER) {
+         log(c, "transferred", c.hangLedge);
+         c.hangLedge = null;
+         c.hangTicks = 0;
+         c.fallChecked = false;
+         c.setCitizenState(CitizenState.STARTLED);
+      }
    }
 
    private static void log(CitizenEntity c, String what, Object extra) {
@@ -179,15 +208,13 @@ public final class CitizenPeril {
       c.setCitizenState(CitizenState.STARTLED);
    }
 
+   /**
+    * Stops the falling scream of this citizen only: an entity event goes to the players tracking it, and each client
+    * stops the voice bound to this entity (an event-wide stop packet would silence every falling citizen of the sex).
+    */
    private static void stopFallScream(CitizenEntity c) {
-      if (!(c.level() instanceof ServerLevel level)) {
-         return;
-      }
-      ClientboundStopSoundPacket stop = new ClientboundStopSoundPacket(CitizenVoices.of(CitizenVoices.Kind.FALL, c.look().female()).getLocation(), SoundSource.NEUTRAL);
-      for (ServerPlayer p : level.players()) {
-         if (p.distanceToSqr(c) < 48.0 * 48.0) {
-            p.connection.send(stop);
-         }
+      if (c.level() instanceof ServerLevel level) {
+         level.broadcastEntityEvent(c, CitizenEntity.EVENT_STOP_FALL_VOICE);
       }
    }
 
@@ -259,6 +286,15 @@ public final class CitizenPeril {
 
    private static void hang(CitizenEntity c, CityManager city, long now) {
       Level level = c.level();
+      if (c.hangLedge == null || c.distanceToSqr(c.hangX, c.hangY, c.hangZ) > PerilRules.ANCHOR_SLACK * PerilRules.ANCHOR_SLACK) {
+         // something else moved the body off its grip (a transfer, a push, a teleport): never snap it back to the old ledge
+         log(c, "off-anchor", c.hangLedge);
+         c.setNoGravity(false);
+         c.hangLedge = null;
+         c.fallChecked = false;
+         c.setCitizenState(CitizenState.STARTLED);
+         return;
+      }
       c.getNavigation().stop();
       c.setDeltaMovement(Vec3.ZERO);
       c.setPos(c.hangX, c.hangY, c.hangZ);

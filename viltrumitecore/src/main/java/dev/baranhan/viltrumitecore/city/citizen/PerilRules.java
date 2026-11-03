@@ -8,6 +8,9 @@ package dev.baranhan.viltrumitecore.city.citizen;
  * person next to a remaining edge may grab it and hang on until somebody comes, it climbs back up or lets go.
  */
 public final class PerilRules {
+   /** A hanging body farther than this from its anchor was moved by something else: the grip is gone (review of PR #145). */
+   public static final double ANCHOR_SLACK = 1.0;
+
    /** A drop shorter than this (blocks) is a stumble: no fall state, no scream. */
    public static final double FALL_MIN_DROP = 4.0;
    /** A drop at least this long gets the long falling scream. */
