@@ -26,9 +26,14 @@ public class CitizenRenderer extends MobRenderer<CitizenEntity, CitizenModel> {
    private final CitizenModel slim;
 
    public CitizenRenderer(EntityRendererProvider.Context ctx) {
-      super(ctx, new CitizenModel(CitizenModel.create(false).bakeRoot(), false), 0.5F);
-      this.wide = this.model;
-      this.slim = new CitizenModel(CitizenModel.create(true).bakeRoot(), true);
+      this(ctx, new CitizenModel(CitizenModel.create(false).bakeRoot(), false), new CitizenModel(CitizenModel.create(true).bakeRoot(), true));
+   }
+
+   /** Subclasses (the T-1000 disguise) draw the very same body with their own model subclass. */
+   protected CitizenRenderer(EntityRendererProvider.Context ctx, CitizenModel wide, CitizenModel slim) {
+      super(ctx, wide, 0.5F);
+      this.wide = wide;
+      this.slim = slim;
    }
 
    @Override
@@ -88,7 +93,7 @@ public class CitizenRenderer extends MobRenderer<CitizenEntity, CitizenModel> {
    }
 
    /** 0 standing .. 1 lying: eased over the fall, back to 0 over the get-up. */
-   static float tip(CitizenEntity e, float partialTick) {
+   public static float tip(CitizenEntity e, float partialTick) {
       CitizenState s = e.citizenState();
       if (s != CitizenState.FALLEN && s != CitizenState.GETTING_UP) {
          return 0.0F;

@@ -119,7 +119,8 @@ public class ChitauriCaptor extends ChitauriSoldier {
    /** People the captor goes for: alive, on foot, not held already, in a loaded chunk. */
    public static boolean prey(@Nullable Entity e) {
       return e instanceof LivingEntity l && l.isAlive() && (e instanceof CitizenEntity || e instanceof AbstractVillager) && !l.isPassenger()
-         && !CitizenCaptivity.isHeld(e) && !l.isBaby();
+         && !CitizenCaptivity.isHeld(e) && !l.isBaby()
+         && !(e instanceof CitizenEntity c && !c.capturable());
    }
 
    /** Shoulder point the carried person is moved to (over the left shoulder, lying across it). */

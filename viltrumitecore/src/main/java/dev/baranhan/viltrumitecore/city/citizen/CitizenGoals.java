@@ -263,7 +263,8 @@ final class CitizenGoals {
          }
 
          if (this.c.offGridTicks > 400) {
-            this.c.discard();
+            this.c.offGridTicks = 0;
+            this.c.lostOffGrid();
             return false;
          }
 
