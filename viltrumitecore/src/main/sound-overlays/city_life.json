@@ -1,0 +1,264 @@
+{
+  "city_life.bed.crowd": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.crowd",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/crowd",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.bed.crowd_far": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.crowd",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/crowd_far",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.bed.steps": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.steps",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/steps",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.bed.running": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.running",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/running",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.bed.street_day": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.street",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/street_day",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.bed.street_night": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.night",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/street_night",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.bed.wind": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.wind",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/wind",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.bed.panic": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.panic",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/panic",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.bed.hush": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.hush",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/bed/hush",
+        "stream": true
+      }
+    ]
+  },
+  "city_life.dog": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.dog",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/detail/dog_1",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/dog_2",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/dog_3",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/dog_4",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "city_life.bike_bell": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.bike_bell",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/detail/bike_bell_1",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/bike_bell_2",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/bike_bell_3",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "city_life.pigeons": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.pigeons",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/detail/pigeons_1",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/pigeons_2",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/pigeons_3",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "city_life.laugh": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.laugh",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/detail/laugh_1",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/laugh_2",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "viltrumitecore:city_life/detail/laugh_3",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "city_life.bells": {
+    "category": "ambient",
+    "subtitle": "subtitles.viltrumitecore.city_life.bells",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/detail/bells_1",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "city_life.scream.male": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.city_life.scream",
+    "sounds": [
+      "viltrumitecore:city_life/panic/scream_male_1",
+      "viltrumitecore:city_life/panic/scream_male_2",
+      "viltrumitecore:city_life/panic/scream_male_3",
+      "viltrumitecore:city_life/panic/scream_male_4"
+    ]
+  },
+  "city_life.sob.male": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.city_life.sob",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/panic/sob_male_1",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/sob_male_2",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "city_life.scream.female": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.city_life.scream",
+    "sounds": [
+      "viltrumitecore:city_life/panic/scream_female_1",
+      "viltrumitecore:city_life/panic/scream_female_2",
+      "viltrumitecore:city_life/panic/scream_female_3",
+      "viltrumitecore:city_life/panic/scream_female_4"
+    ]
+  },
+  "city_life.sob.female": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.city_life.sob",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/panic/sob_female_1",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/sob_female_2",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "city_life.cough": {
+    "category": "neutral",
+    "subtitle": "subtitles.viltrumitecore.city_life.cough",
+    "sounds": [
+      {
+        "name": "viltrumitecore:city_life/panic/cough_1",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/cough_2",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/cough_3",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/cough_4",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/cough_5",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/cough_6",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/cough_7",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "viltrumitecore:city_life/panic/cough_8",
+        "attenuation_distance": 14
+      }
+    ]
+  }
+}
