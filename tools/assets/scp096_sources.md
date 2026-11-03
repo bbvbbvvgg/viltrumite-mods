@@ -92,8 +92,14 @@ from the player's **own local copy** of the game at start-up (`client/scp096/Scp
 - the pack "SCP-096: original SCP: CB sounds" replaces only the events it found (`replace: true`, `stream: true`);
   positional loops are stereo files, so `MonoDownmixStream` averages them to mono on the fly (OpenAL attenuates
   and pans mono sources only);
-- `tools/scp096/install_original_sounds.py "<SCP-CB folder>" <gameDir>` copies the five files into
-  `<gameDir>/viltrumitecore/scp096/` for players whose install is somewhere else.
+- `tools/scp096/install_original_sounds.py "<SCP-CB folder>" <gameDir>` copies the five files from a local
+  installation into `<gameDir>/viltrumitecore/scp096/`.
+- **One-step opt-in official download:** `python3 tools/scp096/download_original_sounds.py viltrumitecore/run`
+  (or substitute your Minecraft game directory). This obtains the exact five game Ogg files straight from
+  `Regalis11/scpcb` at pinned commit `edb8fe0840b78f14d1aef3a0bf6174630e7be296`. Every file's size, Ogg
+  signature and Git blob SHA1 are verified before being atomically installed to the same local directory. It
+  never overwrites existing, different audio; restart Minecraft or press F3+T to reload.
+  Downloading is explicitly initiated by the user, never silently performed when the mod loads.
 
 Without the originals the mod's own sounds above play (before #136 they were vanilla Minecraft events). With them,
 only the five events found are replaced; strike, smash and leap always stay the mod's own.
