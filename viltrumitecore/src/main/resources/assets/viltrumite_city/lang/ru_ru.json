@@ -10,6 +10,7 @@
   "viltrumitecore.city.help.occupants": "<число> - добавить жителей на верхние этажи высоких зданий вокруг вас",
   "viltrumitecore.city.help.clear": "- убрать всех жителей (город остаётся включён)",
   "viltrumitecore.city.help.status": "- город, жители, районы и восстановление",
+  "viltrumitecore.city.help.life": "[reset] — жизнь города: настроение, тревога и травма здесь, разговоры и звонки (reset — сбросить)",
   "viltrumitecore.city.help.reset": "- восстановить все разрушенные блоки карты",
   "viltrumitecore.city.help.help": "- эта справка",
   "viltrumitecore.city.error.no_city": "В этом мире нет подготовленного живого города (установите подготовленный мир Atheria).",
