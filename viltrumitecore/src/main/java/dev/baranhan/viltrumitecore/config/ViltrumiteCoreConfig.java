@@ -26,6 +26,8 @@ public class ViltrumiteCoreConfig {
    public double cityCrowdScale = 2.25;
    /** Living city: hard cap of citizens in the city level (any density, any number of players). */
    public int cityMaxCitizens = 480;
+   /** Living city: people upstairs in tall buildings around each player (0 = off, at most 16; issue #138). */
+   public int cityOccupants = 6;
    public boolean bloodEnabled = true;
    public boolean shouldHumansBleed = true;
    // Reinhard's secret Final Punch (Shift + N): balance knobs, clamped by FinalPunchRules.
@@ -43,6 +45,11 @@ public class ViltrumiteCoreConfig {
    public int collapseMaxBlocks = 1600;
    /** Block removals per server tick across all collapses (64..4000). */
    public int collapseBlocksPerTick = 900;
+   /**
+    * Support loss (#135): a structure whose last connection to the ground was removed (mining, /fill, fire, TNT,
+    * powers) comes down; a big one as a chain of collapses. Off: only damage-score collapses (meteors, heroes).
+    */
+   public boolean collapseSupportLoss = true;
    /** City disaster aftermath: ruins keep smoking, dusting and sounding after destruction (docs/city-aftermath-integration.md). */
    public boolean aftermathEnabled = true;
    /** City disaster aftermath: stage lengths x this (0.1..10; 1 = 45 s fresh, 6 min smouldering, 16 min late at severity 0.5). */
@@ -90,6 +97,7 @@ public class ViltrumiteCoreConfig {
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseBlocksPerTick")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("aftermathDurationScale")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseSupportLoss")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("t1000NaturalChancePercent")) {
                save();
             }
