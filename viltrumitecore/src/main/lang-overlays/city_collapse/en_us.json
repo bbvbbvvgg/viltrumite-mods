@@ -17,5 +17,8 @@
   "commands.viltrumitecore.collapse.analyze.yes": "A collapse would start: %s",
   "commands.viltrumitecore.collapse.analyze.no": "No collapse: %s",
   "commands.viltrumitecore.collapse.damage": "Damage (%s): %s blocks removed",
-  "commands.viltrumitecore.collapse.too_big": "At most %s blocks at once"
+  "commands.viltrumitecore.collapse.too_big": "At most %s blocks at once",
+  "commands.viltrumitecore.collapse.support": "Support: %s",
+  "message.viltrumitecore.collapse.support_blocked.gamerule": "This structure lost its support, but collapses are off: gamerule mobGriefing is false",
+  "message.viltrumitecore.collapse.support_blocked.config": "This structure lost its support, but collapses are off in the config (collapseEnabled)"
 }

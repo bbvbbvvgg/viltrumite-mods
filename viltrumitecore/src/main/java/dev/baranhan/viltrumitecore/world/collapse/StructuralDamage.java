@@ -20,15 +20,23 @@ import net.minecraft.world.phys.Vec3;
  * Where structural damage comes from. Destructive code runs inside a cause scope
  * ({@link #run(CollapseCause, Runnable)} / {@link #orDefault}); every solid block that turns into air inside a
  * scope is recorded in the level's {@link DamageLedger} by the existing {@code CityJournalMixin} hook
- * (LevelChunk.setBlockState HEAD). Outside a scope nothing is recorded, so mining, building, fluids, pistons
- * and world generation never feed a collapse. Collapse writes run {@link #suppressed()}: a collapse can never
- * feed another collapse (no recursion). Server thread only.
+ * (LevelChunk.setBlockState HEAD). Outside a scope nothing is recorded as <i>damage</i>, so mining, building,
+ * fluids and pistons never start a damage-score collapse (overhang, local crumble).
+ *
+ * <p>Support loss is separate (#135): every structural block that turns into air outside a collapse, with or
+ * without a scope (a player mining the base of a tower, {@code /fill}, fire, TNT), is noted in the level's
+ * {@link SupportLedger}. {@link SupportWatch} then checks whether the structure above still reaches the ground;
+ * only a structure that just lost its last support comes down. Collapse writes and city restores run suppressed
+ * and are never noted. World generation never passes here (proto chunks). Server thread only.
  */
 public final class StructuralDamage {
    @Nullable
    private static CollapseCause scope;
    private static int suppress;
    private static final Map<ResourceKey<Level>, DamageLedger> LEDGERS = new HashMap<>();
+   private static final Map<ResourceKey<Level>, SupportLedger> SUPPORT = new HashMap<>();
+   /** Block state -> analyzer class for the support ledger (position independent for every vanilla block). */
+   private static final Map<BlockState, Byte> SUPPORT_CLASS = new IdentityHashMap<>();
 
    private StructuralDamage() {
    }
@@ -91,27 +99,60 @@ public final class StructuralDamage {
       return LEDGERS.computeIfAbsent(level.dimension(), k -> new DamageLedger());
    }
 
+   public static SupportLedger support(ServerLevel level) {
+      return SUPPORT.computeIfAbsent(level.dimension(), k -> new SupportLedger());
+   }
+
    public static void forget(ResourceKey<Level> dimension) {
       LEDGERS.remove(dimension);
+      SUPPORT.remove(dimension);
    }
 
    public static void clearAll() {
       LEDGERS.clear();
+      SUPPORT.clear();
+      SUPPORT_CLASS.clear();
       scope = null;
       suppress = 0;
    }
 
    /** Called from CityJournalMixin before every block write of a loaded chunk. */
    public static void onSetBlock(Level level, LevelChunk chunk, BlockPos pos, BlockState next) {
-      CollapseCause cause = scope;
-      if (cause == null || suppress > 0 || !cause.feeds() || !(level instanceof ServerLevel server) || !server.getServer().isSameThread()) {
+      if (suppress > 0 || !(level instanceof ServerLevel server)) {
          return;
       }
+      CollapseCause cause = scope;
+      boolean feeds = cause != null && cause.feeds();
+      boolean support = SupportWatch.enabled() && !dev.baranhan.viltrumitecore.city.restore.ChangeJournal.suppressed;
+      if (!feeds && !support || !server.getServer().isSameThread()) {
+         return;
+      }
+      if (!next.isAir() && next.getFluidState().isEmpty() && !next.canBeReplaced()) {
+         return; // a solid block replaces another: nothing was removed
+      }
       BlockState old = chunk.getBlockState(pos);
-      if (counts(old, next)) {
-         ledger(server).record(pos.getX(), pos.getY(), pos.getZ(), cause.weight(), server.getGameTime(), cause);
+      if (!counts(old, next)) {
+         return;
+      }
+      long now = server.getGameTime();
+      if (feeds) {
+         ledger(server).record(pos.getX(), pos.getY(), pos.getZ(), cause.weight(), now, cause);
          CollapseDirector.noteCause(server, cause);
       }
+      if (support && supportClass(server, pos, old) == CollapseAnalyzer.STRUCTURE) {
+         support(server).record(pos.getX(), pos.getY(), pos.getZ(), now);
+      }
+   }
+
+   private static byte supportClass(ServerLevel level, BlockPos pos, BlockState state) {
+      Byte b = SUPPORT_CLASS.get(state);
+      if (b == null) {
+         b = classify(level, pos, state);
+         if (SUPPORT_CLASS.size() < 65536) {
+            SUPPORT_CLASS.put(state, b);
+         }
+      }
+      return b;
    }
 
    /** Blocks an explosion is about to remove (ExplosionEvent.Detonate). */
@@ -126,6 +167,7 @@ public final class StructuralDamage {
             ledger.record(pos.getX(), pos.getY(), pos.getZ(), cause.weight(), now, cause);
          }
       }
+      // the support ledger sees these removals through the block-write hook when the explosion clears them
    }
 
    /**
@@ -186,11 +228,13 @@ public final class StructuralDamage {
       if (!state.getFluidState().isEmpty() && state.getCollisionShape(level, pos).isEmpty()) {
          return CollapseAnalyzer.FLUID;
       }
+      if (state.canBeReplaced() && state.getCollisionShape(level, pos).isEmpty()) {
+         // grass, flowers, snow layers: no support, never part of a section. Before the unbreakable check: the
+         // invisible minecraft:light blocks (hardness -1) sit on every floor of Atheria and held whole towers (#135)
+         return CollapseAnalyzer.AIR;
+      }
       if (state.getDestroySpeed(level, pos) < 0.0F) {
          return CollapseAnalyzer.FIXED;
-      }
-      if (state.canBeReplaced() && state.getCollisionShape(level, pos).isEmpty()) {
-         return CollapseAnalyzer.AIR; // grass, flowers, snow layers: no support, never part of a section
       }
       if (state.is(BlockTags.DIRT) || state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.BASE_STONE_NETHER) || state.is(BlockTags.SAND)
          || state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES) || state.is(BlockTags.ICE) || state.is(BlockTags.SNOW) || state.is(BlockTags.NYLIUM)

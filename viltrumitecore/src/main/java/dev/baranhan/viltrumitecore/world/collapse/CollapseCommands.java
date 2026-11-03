@@ -30,6 +30,7 @@ public final class CollapseCommands {
          .then(Commands.literal("status").executes(CollapseCommands::status))
          .then(Commands.literal("clear").executes(CollapseCommands::clear))
          .then(Commands.literal("analyze").then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(CollapseCommands::analyze)))
+         .then(Commands.literal("support").then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(CollapseCommands::support)))
          .then(Commands.literal("strike").then(Commands.argument("pos", BlockPosArgument.blockPos())
             .then(Commands.argument("radius", IntegerArgumentType.integer(1, 8)).executes(c -> strike(c, "command"))
                .then(Commands.argument("cause", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(CAUSES, b))
@@ -43,7 +44,9 @@ public final class CollapseCommands {
    private static int status(CommandContext<CommandSourceStack> ctx) {
       ServerLevel level = ctx.getSource().getLevel();
       DamageLedger ledger = StructuralDamage.ledger(level);
-      String head = CollapseDirector.status() + String.format("; ledger %d blocks in %d cells", ledger.size(), ledger.cellCount());
+      SupportLedger support = StructuralDamage.support(level);
+      String head = CollapseDirector.status() + String.format("; ledger %d blocks in %d cells; support ledger %d removals, %d waiting", ledger.size(),
+         ledger.cellCount(), support.size(), support.pending());
       if (!CollapseDirector.enabled()) {
          ctx.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.collapse.disabled"), false);
       }
@@ -59,6 +62,7 @@ public final class CollapseCommands {
       int n = CollapseDirector.activeCount();
       CollapseDirector.abortAll(level);
       StructuralDamage.ledger(level).clear();
+      StructuralDamage.support(level).clear();
       CollapseDirector.resetMetrics();
       ctx.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.collapse.cleared", n), true);
       return n;
@@ -76,6 +80,22 @@ public final class CollapseCommands {
       ctx.getSource().sendSuccess(() -> Component.translatable(plan.accepted() ? "commands.viltrumitecore.collapse.analyze.yes"
          : "commands.viltrumitecore.collapse.analyze.no", text), false);
       return plan.accepted() ? 1 : 0;
+   }
+
+   /**
+    * Dry run of the support check: does the structure at {@code pos} still stand on anything below {@code pos}?
+    * Point it at the lowest block of a part that should hang (right above a cut).
+    */
+   private static int support(CommandContext<CommandSourceStack> ctx) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+      ServerLevel level = ctx.getSource().getLevel();
+      BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
+      long t0 = System.nanoTime();
+      SupportProbe p = SupportWatch.dryRun(level, pos.getX(), pos.getY(), pos.getZ());
+      double ms = (System.nanoTime() - t0) / 1.0E6;
+      String text = String.format("%s: %d blocks searched in %.2f ms, floating %d (%d structure, %d natural, %d parts)", p.status(), p.nodes(), ms,
+         p.floatingBlocks().length, p.floatingStructure(), p.floatingNatural(), p.floatingComponents());
+      ctx.getSource().sendSuccess(() -> Component.translatable("commands.viltrumitecore.collapse.support", text), false);
+      return p.status() == SupportProbe.Status.FLOATING ? 1 : 0;
    }
 
    /** Damages a sphere the way an attack would; the collapse (if any) follows from the analysis. */
