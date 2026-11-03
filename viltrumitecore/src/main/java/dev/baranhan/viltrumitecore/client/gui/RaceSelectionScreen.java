@@ -16,9 +16,9 @@ public class RaceSelectionScreen extends Screen {
    private static final ResourceLocation REGULUS_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/regulus.png");
    private static final ResourceLocation IRON_MAN_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/ironman.png");
    private static final ResourceLocation DIO_SKIN = new ResourceLocation("viltrumitecore", "textures/entity/hero/dio.png");
-   private static final HeroId[] HEROES = {HeroId.HOMELANDER, HeroId.REGULUS, HeroId.IRON_MAN, HeroId.REINHARD, HeroId.THOR, HeroId.DIO, HeroId.SINCLAIR, HeroId.JINWOO, HeroId.CAPTAIN, HeroId.RED_HULK, HeroId.GHOST_RIDER, HeroId.VENOM};
-   private static final String[] LABELS = {"become_homelander", "become_regulus", "become_ironman", "become_reinhard", "become_thor", "become_dio", "become_sinclair", "become_jinwoo", "become_captain", "become_red_hulk", "become_ghost_rider", "become_venom"};
-   private HeroChoiceLayout.Layout layout = HeroChoiceLayout.of(0, 0, HEROES.length);
+   /** Every hero Od Lagna can grant, in wish order ({@link HeroChoices}). */
+   private final HeroId[] heroes = HeroChoices.heroes().toArray(new HeroId[0]);
+   private HeroChoiceLayout.Layout layout = HeroChoiceLayout.of(0, 0, this.heroes.length);
 
    public RaceSelectionScreen() {
       super(Component.translatable("gui.viltrumitecore.race_selection.title"));
@@ -26,11 +26,11 @@ public class RaceSelectionScreen extends Screen {
 
    protected void init() {
       // One centred row when it fits, wrapped rows on narrow GUI scales (HeroChoiceLayout).
-      this.layout = HeroChoiceLayout.of(this.width, this.height, HEROES.length);
-      for (int index = 0; index < HEROES.length; index++) {
-         HeroId hero = HEROES[index];
+      this.layout = HeroChoiceLayout.of(this.width, this.height, this.heroes.length);
+      for (int index = 0; index < this.heroes.length; index++) {
+         HeroId hero = this.heroes[index];
          HeroChoiceLayout.Cell cell = this.layout.heroes().get(index);
-         this.addRenderableWidget(Button.builder(Component.translatable("gui.viltrumitecore.race_selection." + LABELS[index]), button -> {
+         this.addRenderableWidget(Button.builder(Component.translatable(HeroChoices.labelKey(hero)), button -> {
             this.sendHeroChoice(hero);
             this.onClose();
          }).bounds(cell.x(), cell.y(), HeroChoiceLayout.BUTTON_W, HeroChoiceLayout.BUTTON_H).build());
@@ -55,9 +55,9 @@ public class RaceSelectionScreen extends Screen {
       guiGraphics.drawCenteredString(this.font, Component.translatable("gui.viltrumitecore.race_selection.question"), this.width / 2, this.layout.questionY(), 16777215);
 
       // Head previews above each hero button (HeroHeadPreviews: registered 3D heads, else the flat skin face).
-      for (int index = 0; index < HEROES.length; index++) {
+      for (int index = 0; index < this.heroes.length; index++) {
          HeroChoiceLayout.Cell cell = this.layout.heroes().get(index);
-         HeroHeadPreviews.draw(HEROES[index], guiGraphics, cell.headX(), cell.headY(), HeroChoiceLayout.HEAD, partialTick, skin(HEROES[index]));
+         HeroHeadPreviews.draw(this.heroes[index], guiGraphics, cell.headX(), cell.headY(), HeroChoiceLayout.HEAD, partialTick, skin(this.heroes[index]));
       }
    }
 
