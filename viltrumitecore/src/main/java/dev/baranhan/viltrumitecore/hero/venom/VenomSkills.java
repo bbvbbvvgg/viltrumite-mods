@@ -218,7 +218,7 @@ public final class VenomSkills {
          return;
       }
       VenomTargets.place(t, t.position().add(d.normalize().scale(Math.min(d.length(), VenomRules.PULL_SPEED))));
-      if (state.elapsed >= VenomMove.PULL.length + 10) {
+      if (state.elapsed >= VenomRules.PULL_MAX_TICKS) {
          endPull(player, state, ReleaseReason.NORMAL_END);
          state.endMove();
       }
@@ -577,6 +577,7 @@ public final class VenomSkills {
          }
          case TENDRIL_SHOT -> state.tendrilEnd = state.tendrilEnd != null && state.move == VenomMove.TENDRIL_SHOT ? null : state.tendrilEnd;
          case LASH_IMPALE -> state.tendrilEnd = null;
+         case PULL -> endPull(player, state, ReleaseReason.NORMAL_END);
          case LASH_SWEEP, LASH_SLAM -> state.lashIdle = 0;
          case ENGULF -> VenomPossession.engulfFailed(player, state);
          default -> {

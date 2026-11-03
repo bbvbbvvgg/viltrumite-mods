@@ -72,6 +72,14 @@ public enum VenomMove {
       return this == LASH_SWEEP || this == LASH_IMPALE || this == LASH_SLAM;
    }
 
+   /**
+    * Ends itself from its own tick (arrival or {@link VenomRules#PULL_MAX_TICKS}), not at {@link #length}: a pull
+    * at the far end of the tendril needs longer than its clip.
+    */
+   public boolean selfEnding() {
+      return this == PULL;
+   }
+
    /** Loops its clip (held states). */
    public boolean loops() {
       return this == HOLD || this == SHELL || this == POSSESS || this == ZIP;

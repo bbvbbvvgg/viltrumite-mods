@@ -73,6 +73,8 @@ public final class VenomRules {
    public static final double ZIP_SPEED = 1.55;
    public static final int ZIP_MAX_TICKS = 22;
    public static final double PULL_SPEED = 1.35;
+   /** A pull from the far end of the tendril arrives in time; past this it lets go (control lease released). */
+   public static final int PULL_MAX_TICKS = (int)Math.ceil(TENDRIL_RANGE / PULL_SPEED) + 10;
    public static final double GRAB_RANGE = 7.0;
    public static final int HOLD_MAX_TICKS = 80;
    public static final double THROW_SPEED = 2.2;
