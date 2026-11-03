@@ -68,6 +68,15 @@ public class ViltrumiteCoreConfig {
     * Empty: {@code <game dir>/viltrumitecore/scp096} and the usual install folders are searched.
     */
    public String scp096OriginalSoundsPath = "";
+   // T-1000 (docs/design/2026-11-06-t1000-design.md). Natural appearance: extremely rare, inside the prepared city only.
+   /** Seconds between natural rolls (10..86400; 300 = every 5 minutes). */
+   public double t1000NaturalCheckSeconds = 300.0;
+   /** Chance of one roll in percent (0..100; 1.5 % every 5 minutes = about once in 5.5 hours in the city). */
+   public double t1000NaturalChancePercent = 1.5;
+   /** Minutes after a final destruction before the next natural roll may succeed (0..144000; 120 = 2 hours). */
+   public double t1000RespawnDelayMinutes = 120.0;
+   /** Instances at the same time, dormant ones included (1..8). */
+   public int t1000MaxActive = 1;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -88,7 +97,8 @@ public class ViltrumiteCoreConfig {
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseBlocksPerTick")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("aftermathDurationScale")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")
-               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseSupportLoss")) {
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseSupportLoss")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("t1000NaturalChancePercent")) {
                save();
             }
          } catch (IOException ignored) {

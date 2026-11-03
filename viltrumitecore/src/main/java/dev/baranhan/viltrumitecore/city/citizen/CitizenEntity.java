@@ -203,7 +203,38 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       return CitizenState.of(this.entityData.get(STATE));
    }
 
-   void setCitizenState(CitizenState s) {
+   /**
+    * True while this body thinks like a citizen: crowd reactions (danger, panic, hurt flight) and the citizen
+    * brain run. A subclass with its own mind (the T-1000 while it hunts) answers false.
+    */
+   protected boolean citizenMind() {
+      return true;
+   }
+
+   /** Ordinary citizens give up (vanish) after repeated stuck paths; an entity with its own lifecycle does not. */
+   protected boolean discardWhenStuck() {
+      return true;
+   }
+
+   /**
+    * Off the pedestrian grid for too long with no walkable cell nearby. An ordinary passer-by is simply removed;
+    * an entity with its own lifecycle (the T-1000) decides itself and must never be counted as destroyed here.
+    */
+   protected void lostOffGrid() {
+      this.discard();
+   }
+
+   /** Counted by the city population (density trims, despawn, crowd index); a body with its own lifecycle is not. */
+   protected boolean cityTracked() {
+      return true;
+   }
+
+   /** World events may carry this person away (Chitauri captors, containment fields). */
+   public boolean capturable() {
+      return true;
+   }
+
+   protected void setCitizenState(CitizenState s) {
       CitizenState from = this.citizenState();
       if (from != s) {
          this.entityData.set(STATE, (byte)s.ordinal());
@@ -304,7 +335,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       }
 
       CityManager city = CityManager.of(this.level());
-      if (city != null && !CitizenPeril.tick(this, city)) {
+      if (city != null && this.citizenMind() && !CitizenPeril.tick(this, city)) {
          CitizenBrain.tick(this, city);
       }
 
@@ -327,7 +358,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
             }
          }
 
-         if (this.stuckStrikes >= 5 || this.getY() < this.level().getMinBuildHeight()) {
+         if (this.discardWhenStuck() && (this.stuckStrikes >= 5 || this.getY() < this.level().getMinBuildHeight())) {
             this.discard();
          }
       }
@@ -347,7 +378,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    @Override
    public boolean hurt(DamageSource source, float amount) {
       boolean hurt = super.hurt(source, amount);
-      if (!this.level().isClientSide && hurt) {
+      if (!this.level().isClientSide && hurt && this.citizenMind()) {
          CityManager city = CityManager.of(this.level());
          if (city != null) {
             // run away from whoever or whatever did it; a hurt person is also a sight for others
@@ -452,7 +483,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    @Override
    public void onAddedToWorld() {
       super.onAddedToWorld();
-      if (!this.level().isClientSide) {
+      if (!this.level().isClientSide && this.cityTracked()) {
          CityManager.track(this, true);
       }
    }
@@ -460,7 +491,7 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    @Override
    public void onRemovedFromWorld() {
       super.onRemovedFromWorld();
-      if (!this.level().isClientSide) {
+      if (!this.level().isClientSide && this.cityTracked()) {
          CityManager.track(this, false);
       }
    }
