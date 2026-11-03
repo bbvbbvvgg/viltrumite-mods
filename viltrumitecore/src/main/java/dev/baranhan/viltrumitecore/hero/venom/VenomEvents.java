@@ -44,6 +44,17 @@ public final class VenomEvents {
    public static void onDeath(LivingDeathEvent event) {
       if (!event.getEntity().level().isClientSide && !event.isCanceled()) {
          VenomPossession.endAllFor(event.getEntity(), VenomPossession.End.DEATH);
+         creditKill(event.getEntity(), event.getSource().getEntity());
+      }
+   }
+
+   /** Feeding: a kill by Venom in symbiote form fills the hunger by {@link VenomRules#HUNGER_KILL} (once per death). */
+   static void creditKill(LivingEntity victim, @javax.annotation.Nullable net.minecraft.world.entity.Entity killer) {
+      if (killer instanceof ServerPlayer venom && killer != victim) {
+         VenomState state = VenomState.of(venom);
+         if (state != null && state.form) {
+            state.hunger = VenomRules.feed(state.hunger, VenomRules.HUNGER_KILL);
+         }
       }
    }
 

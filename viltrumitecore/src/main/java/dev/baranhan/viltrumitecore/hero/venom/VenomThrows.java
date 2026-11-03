@@ -17,7 +17,43 @@ import net.minecraft.world.phys.Vec3;
 public final class VenomThrows {
    private static final Map<UUID, Flight> FLIGHTS = new ConcurrentHashMap<>();
 
-   private record Flight(LivingEntity thrower, LivingEntity body, float damage, long until) {
+   private static final class Flight {
+      final LivingEntity thrower;
+      final LivingEntity body;
+      final float damage;
+      final long until;
+      /** Last airborne tick's fall state: vanilla resets {@code fallDistance} on landing before the END tick. */
+      boolean airborne;
+      float fall;
+      double fallSpeed;
+
+      Flight(LivingEntity thrower, LivingEntity body, float damage, long until) {
+         this.thrower = thrower;
+         this.body = body;
+         this.damage = damage;
+         this.until = until;
+      }
+
+      LivingEntity thrower() {
+         return this.thrower;
+      }
+
+      LivingEntity body() {
+         return this.body;
+      }
+
+      float damage() {
+         return this.damage;
+      }
+
+      long until() {
+         return this.until;
+      }
+   }
+
+   /** A landing after an airborne tick that fell far enough or fast enough. */
+   static boolean hardLanding(boolean wasAirborne, float fall, double fallSpeed, boolean onGround) {
+      return onGround && wasAirborne && (fall > 2.0F || fallSpeed > 0.6);
    }
 
    private VenomThrows() {
@@ -36,12 +72,21 @@ public final class VenomThrows {
             it.remove();
             continue;
          }
+         Vec3 v = b.getDeltaMovement();
+         boolean ground = hardLanding(f.airborne, f.fall, f.fallSpeed, b.onGround());
+         if (b.onGround()) {
+            f.airborne = false;
+            f.fall = 0.0F;
+            f.fallSpeed = 0.0;
+         } else {
+            f.airborne = true;
+            f.fall = Math.max(f.fall, b.fallDistance);
+            f.fallSpeed = Math.max(f.fallSpeed, -v.y);
+         }
          if (b.level().getGameTime() < f.until() - 36) {
             continue; // the first ticks leave the thrower's reach
          }
-         Vec3 v = b.getDeltaMovement();
          boolean wall = b.horizontalCollision && v.horizontalDistanceSqr() > 0.01;
-         boolean ground = b.onGround() && b.fallDistance > 2.0F;
          Entity other = null;
          for (LivingEntity e : b.level().getEntitiesOfClass(LivingEntity.class, b.getBoundingBox().inflate(0.3),
             e -> e != b && e != f.thrower() && f.thrower() instanceof net.minecraft.server.level.ServerPlayer sp ? VenomTargets.mayHit(sp, e) : e != b && e != f.thrower())) {

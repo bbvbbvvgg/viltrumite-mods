@@ -322,7 +322,7 @@ public final class VenomCombat {
          primary(player, state);
          return;
       }
-      if (!m.loops() && state.elapsed >= m.length) {
+      if (!m.loops() && !m.selfEnding() && state.elapsed >= m.length) {
          VenomSkills.finish(player, state, m);
       }
    }
