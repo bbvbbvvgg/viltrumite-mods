@@ -81,6 +81,8 @@ public final class CityLifeAmbience {
    private static int clock;
    private static int citizens;
    private static final int[] cooldown = new int[6];
+   /** The cooldown slot shared by all details. */
+   private static final int GAP = 5;
    private static int details;
    @Nullable
    private static ClientLevel lastLevel;
@@ -119,7 +121,11 @@ public final class CityLifeAmbience {
       scan(mc, level, ear);
       CityLifeVoices.housekeeping(level.getGameTime());
       for (int i = 0; i < BEDS.length; i++) {
-         if (TARGET[i] > 0.04F && (LOOPS[i] == null || LOOPS[i].isStopped()) && --RETRIES[i] <= 0) {
+         if (TARGET[i] > 0.04F && !alive(LOOPS[i]) && --RETRIES[i] <= 0) {
+            if (LOOPS[i] != null) {
+               LOOPS[i].halt();
+            }
+
             if (EVENTS[i] == null) {
                EVENTS[i] = event("city_life.bed." + BEDS[i]);
             }
@@ -131,7 +137,11 @@ public final class CityLifeAmbience {
             mc.getSoundManager().play(LOOPS[i]);
          }
 
-         if (PLACED[i] && TARGET[i] > 0.04F && (WIDE[i] == null || WIDE[i].isStopped()) && LOOPS[i] != null && !LOOPS[i].isStopped()) {
+         if (PLACED[i] && TARGET[i] > 0.04F && !alive(WIDE[i]) && alive(LOOPS[i])) {
+            if (WIDE[i] != null) {
+               WIDE[i].halt();
+            }
+
             final int k = i;
             WIDE[i] = new Loop(EVENTS[i], () -> CityLifeMixer.layer(TARGET[k], SIDE[k], false), () -> null, true);
             mc.getSoundManager().play(WIDE[i]);
@@ -314,6 +324,8 @@ public final class CityLifeAmbience {
       mc.getSoundManager().play(new SimpleSoundInstance(new ResourceLocation("viltrumitecore", path), SoundSource.AMBIENT, volume, pitch, RANDOM, false, 0,
          SoundInstance.Attenuation.LINEAR, at.x, at.y, at.z, false));
       details++;
+      // a breath between any two details: walking into a busy street does not set off pigeons, a bell and laughter at once
+      cooldown[GAP] = 16 + RANDOM.nextInt(24);
    }
 
    /** Street details at real places, each with its own cooldown (in scans). */
@@ -324,7 +336,7 @@ public final class CityLifeAmbience {
          }
       }
 
-      if (indoor) {
+      if (indoor || cooldown[GAP] > 0) {
          return;
       }
 
@@ -399,12 +411,21 @@ public final class CityLifeAmbience {
       stopAll();
    }
 
+   /**
+    * A bed loop that really still plays: not stopped by itself and still known to the sound engine. A resource reload
+    * (language, resource packs, F3+T) or a restart of the sound engine drops every sound without stopping the
+    * instance; the beds would stay silent until the next world without this check.
+    */
+   private static boolean alive(@Nullable Loop l) {
+      return l != null && !l.isStopped() && Minecraft.getInstance().getSoundManager().isActive(l);
+   }
+
    /** QA line: bed targets and levels, the scene, the voices and the engine's source counts. */
    public static String describe() {
       StringBuilder b = new StringBuilder();
       int playing = 0;
       for (int i = 0; i < BEDS.length; i++) {
-         boolean on = LOOPS[i] != null && !LOOPS[i].isStopped();
+         boolean on = alive(LOOPS[i]);
          if (on) {
             playing++;
          }
@@ -416,7 +437,7 @@ public final class CityLifeAmbience {
             }
 
             if (PLACED[i]) {
-               boolean wide = WIDE[i] != null && !WIDE[i].isStopped();
+               boolean wide = alive(WIDE[i]);
                b.append(String.format(Locale.ROOT, " side=%.2f%s", SIDE[i], wide ? "+wide" : ""));
             }
 

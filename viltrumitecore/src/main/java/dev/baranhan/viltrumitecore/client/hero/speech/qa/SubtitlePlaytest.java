@@ -84,7 +84,8 @@ public final class SubtitlePlaytest {
       HeroSubtitles.qaLog = message -> LOG.info("SUBPT t={} {}", ticks, message);
       MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onRenderTick);
-      MinecraftForge.EVENT_BUS.addListener(SubtitlePlaytest::onPlaySound);
+      // lowest priority: log what really plays, after the city voice limiter (#136) dropped doubles and extras
+      MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, SubtitlePlaytest::onPlaySound);
       LOG.info("SUBPT enabled (command file {})", commandFile().getAbsolutePath());
    }
 
