@@ -43,8 +43,11 @@ public final class CityLife {
    public static final double NEAR = 20.0;
    public static final int VOICED_NEAR = 2;
    public static final int VOICED_MAX = 16;
-   /** The same dialogue is not heard again within this many blocks... */
-   public static final double REPEAT_RANGE = 48.0;
+   /**
+    * The same dialogue is not heard again within this many blocks: twice the 16 blocks a chat carries, so nobody
+    * standing between two chats hears it twice, while the next street over can still have it...
+    */
+   public static final double REPEAT_RANGE = 32.0;
    /** ...for this many ticks. */
    public static final long REPEAT_TICKS = 6000L;
    public static final int CALL_CELL = 16;

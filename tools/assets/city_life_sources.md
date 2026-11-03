@@ -76,8 +76,8 @@ are mostly short shouted calls (one or two words, pitched up and driven). Subtit
 
 - Server (`city/life/CityLife`, `CityMood`, `CityConversation`): a mood map of the streets in 32-block cells
   (alarm from danger, blasts and collapses with a 45 s half-life, trauma with 4 min) gives calm → wary → panic →
-  aftermath and the slow return; chats pick a dialogue for mood, time of day and weather, never one heard nearby in
-  the last 5 min, at most 2 voiced chats within 20 blocks and 16 in the city; calls and screams are limited per
+  aftermath and the slow return; chats pick a dialogue for mood, time of day and weather, never one heard within 32
+  blocks in the last 5 min, at most 2 voiced chats within 20 blocks and 16 in the city; calls and screams are limited per
   16-block street cell (12 ticks apart, 3 per 2 s) and per citizen. Lines are played at the speaker.
 - Client (`client/city/life/CityLifeVoices`, `CityLifeAmbience`, `CityLifeMixer`): voices get distance, direction
   and occlusion (open / thin wall 45 % / building 25 %), at most 3 chats, 3 calls, 3 screams and 2 quiet sounds at
