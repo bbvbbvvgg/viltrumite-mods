@@ -15,6 +15,12 @@ import net.minecraft.world.level.pathfinder.Path;
  * stroll (alone or with a companion, cautiously after a danger) and look at players.
  */
 final class CitizenGoals {
+   /** A goal's beat in server ticks, so it lands on a tick when the goal selector looks (see {@link GoalClock}). */
+   static boolean due(CitizenEntity c, int period) {
+      net.minecraft.server.MinecraftServer server = c.level().getServer();
+      return GoalClock.due(server == null ? c.tickCount : server.getTickCount(), c.getId(), period);
+   }
+
    private CitizenGoals() {
    }
 
@@ -229,7 +235,7 @@ final class CitizenGoals {
 
       @Override
       public boolean canUse() {
-         if ((this.c.tickCount + this.c.getId()) % 20 != 0 || !this.c.getNavigation().isDone() || !this.c.citizenState().calm()) {
+         if (!due(this.c, 20) || !this.c.getNavigation().isDone() || !this.c.citizenState().calm()) {
             return false;
          }
 
@@ -307,7 +313,7 @@ final class CitizenGoals {
             return true; // the other one started the chat
          }
 
-         if (this.c.citizenState() != CitizenState.IDLE || (this.c.tickCount + this.c.getId()) % 40 != 0) {
+         if (this.c.citizenState() != CitizenState.IDLE || !due(this.c, 40)) {
             return false;
          }
 
@@ -437,7 +443,7 @@ final class CitizenGoals {
 
          if (lead != null && lead.citizenState() == CitizenState.WALKING && !lead.getNavigation().isDone() && this.c.distanceToSqr(lead) > 4.0) {
             this.following = true;
-            return (this.c.tickCount + this.c.getId()) % 10 == 0;
+            return due(this.c, 10);
          }
 
          if (this.c.idleTicks > 0) {

@@ -146,10 +146,14 @@ public final class CityLifeVoices {
    }
 
    private static void prune() {
+      net.minecraft.client.multiplayer.ClientLevel level = Minecraft.getInstance().level;
+      long now = level == null ? Long.MAX_VALUE / 2 : level.getGameTime();
       Iterator<Voice> it = ACTIVE.iterator();
       while (it.hasNext()) {
          Voice v = it.next();
-         if (v.isStopped() || v.age > 20 && !Minecraft.getInstance().getSoundManager().isActive(v)) {
+         // not active any more: ended, or dropped by a resource reload / engine restart (then it is not ticked either,
+         // so the age by game time, not its own tick counter)
+         if (v.isStopped() || now - v.born > 20 && !Minecraft.getInstance().getSoundManager().isActive(v)) {
             it.remove();
             if (v.speaker != null && SPEAKING.get(v.speaker.getId()) == v) {
                SPEAKING.remove(v.speaker.getId());
