@@ -281,9 +281,13 @@ Sources list: `tools/assets/scp096_sources.md`.
   SPAudiobooks, scottemoil, craigsmith, SnowFightStudios, BrainClaim, hisoul, mvVoiceActing, Archeos, AderuMoro,
   nick121087, Khrinx, NaturesTemper, Voices_Of_Marz, Kinoton, janbezouska, morgothFLOW, Sheyvan, Kneeling,
   egomassive, Paul368, iggy1345); the sting and the chase music are original synthesis (CC0-1.0).
-- No SCP: CB audio is committed. With the player's own copy of SCP – Containment Breach (Regalis11/scpcb) installed,
-  the client loads its five SCP-096 files locally (`096.ogg`, `096Angered.ogg`, `Scream.ogg`, `Triggered.ogg`,
-  `096Chase.ogg`; the last is based on "Hush" by Kevin MacLeod, incompetech.com, CC BY) in place of the own ones.
+- No SCP: CB audio is committed. The five authentic SCP-096 effects (`096.ogg`, `096Angered.ogg`,
+  `Scream.ogg`, `Triggered.ogg`, `096Chase.ogg`) are available from the player's own local copy of
+  **SCP – Containment Breach** (<https://github.com/Regalis11/scpcb>, game license CC BY-SA 3.0) or through the
+  explicitly invoked verified downloader `tools/scp096/download_original_sounds.py`. Source game credits include
+  Regalis, Omniary, FireFox and Kevin MacLeod; `096Chase.ogg` uses "Hush" by Kevin MacLeod (CC BY).
+  Individual third-party recording rights are not established, so the originals are not shipped in this mod JAR.
+  See `tools/assets/scp096_sources.md` for the precise original paths and provenance.
 
 ## Godzilla — City Catastrophe (world event)
 
