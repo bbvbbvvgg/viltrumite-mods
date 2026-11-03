@@ -187,6 +187,20 @@ public final class AftermathClient {
    // ---------------------------------------------------------------- QA
 
    /** Zones known now. */
+   /** #136: how much a ruin weighs on the street around the camera (0..1): its severity, fading 64 blocks past its edge. */
+   public static float ruinNear() {
+      if (ZONES.isEmpty()) {
+         return 0.0F;
+      }
+
+      float best = 0.0F;
+      for (ClientZone zn : SORTED) {
+         best = Math.max(best, Math.min(1.0F, zn.severity) * AftermathMixer.bed(zn.distance, zn.radius, 64.0));
+      }
+
+      return best;
+   }
+
    public static int zoneCount() {
       return ZONES.size();
    }

@@ -15,6 +15,12 @@ import net.minecraft.world.level.pathfinder.Path;
  * stroll (alone or with a companion, cautiously after a danger) and look at players.
  */
 final class CitizenGoals {
+   /** A goal's beat in server ticks, so it lands on a tick when the goal selector looks (see {@link GoalClock}). */
+   static boolean due(CitizenEntity c, int period) {
+      net.minecraft.server.MinecraftServer server = c.level().getServer();
+      return GoalClock.due(server == null ? c.tickCount : server.getTickCount(), c.getId(), period);
+   }
+
    private CitizenGoals() {
    }
 
@@ -235,7 +241,7 @@ final class CitizenGoals {
 
       @Override
       public boolean canUse() {
-         if ((this.c.tickCount + this.c.getId()) % 20 != 0 || !this.c.getNavigation().isDone() || !this.c.citizenState().calm()) {
+         if (!due(this.c, 20) || !this.c.getNavigation().isDone() || !this.c.citizenState().calm()) {
             return false;
          }
 
@@ -304,6 +310,9 @@ final class CitizenGoals {
    static final class Talk extends Goal {
       private final CitizenEntity c;
       private int time;
+      /** The voiced conversation (#136) when this one started it, null for a silent chat or for the one answering. */
+      @javax.annotation.Nullable
+      private dev.baranhan.viltrumitecore.city.life.CityConversation conv;
 
       Talk(CitizenEntity c) {
          this.c = c;
@@ -316,13 +325,18 @@ final class CitizenGoals {
             return true; // the other one started the chat
          }
 
-         if (this.c.citizenState() != CitizenState.IDLE || (this.c.tickCount + this.c.getId()) % 40 != 0
-            || this.c.getRandom().nextFloat() > 0.15F + this.c.traits().sociability() * 0.35F) {
+         if (this.c.citizenState() != CitizenState.IDLE || !due(this.c, 40)) {
             return false;
          }
 
          CityManager city = CityManager.of(this.c.level());
          if (city == null) {
+            return false;
+         }
+
+         // fewer chats at night, in the rain, when the street is nervous; none in a panic (#136)
+         float mood = city.life().chatFactor(this.c);
+         if (this.c.getRandom().nextFloat() > (0.15F + this.c.traits().sociability() * 0.35F) * mood) {
             return false;
          }
 
@@ -335,12 +349,22 @@ final class CitizenGoals {
          o.setCitizenState(CitizenState.TALKING);
          this.c.talkPartner = o;
          o.talkPartner = this.c;
+         this.conv = city.life().startTalk(this.c, o);
          return true;
       }
 
       @Override
       public void start() {
-         this.time = 80 + this.c.getRandom().nextInt(160);
+         CityManager city = CityManager.of(this.c.level());
+         dev.baranhan.viltrumitecore.city.life.CityConversation shared = city == null ? null : city.life().talkOf(this.c);
+         if (shared != null) {
+            // a voiced chat lasts as long as its lines (both stay until the last one is said)
+            this.time = (int)Math.max(20L, shared.endsAt() - city.now());
+         } else {
+            this.conv = null;
+            this.time = 80 + this.c.getRandom().nextInt(160);
+         }
+
          this.c.getNavigation().stop();
       }
 
@@ -366,12 +390,24 @@ final class CitizenGoals {
             float delta = net.minecraft.util.Mth.wrapDegrees(want - this.c.getYRot());
             this.c.setYRot(this.c.getYRot() + net.minecraft.util.Mth.clamp(delta, -8.0F, 8.0F));
             this.c.yBodyRot = this.c.getYRot();
+            if (this.conv != null) {
+               CityManager city = CityManager.of(this.c.level());
+               if (city != null) {
+                  city.life().tickTalk(this.c, o, this.conv);
+               }
+            }
          }
       }
 
       @Override
       public void stop() {
          CitizenEntity o = this.c.talkPartner;
+         CityManager city = CityManager.of(this.c.level());
+         if (city != null) {
+            city.life().endTalk(this.c);
+         }
+
+         this.conv = null;
          if (this.c.citizenState() == CitizenState.TALKING) {
             this.c.setCitizenState(CitizenState.IDLE);
          }
@@ -419,7 +455,7 @@ final class CitizenGoals {
 
          if (lead != null && lead.citizenState() == CitizenState.WALKING && !lead.getNavigation().isDone() && this.c.distanceToSqr(lead) > 4.0) {
             this.following = true;
-            return (this.c.tickCount + this.c.getId()) % 10 == 0;
+            return due(this.c, 10);
          }
 
          if (this.c.idleTicks > 0) {

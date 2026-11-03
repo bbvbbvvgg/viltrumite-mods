@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import net.minecraft.util.RandomSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -249,10 +248,6 @@ class Scp096ClientMathTest {
       assertEquals(1.0F, Scp096ClientSounds.musicVolume(5.0));
       assertEquals(0.6F, Scp096ClientSounds.musicVolume(500.0));
       assertTrue(Scp096ClientSounds.musicVolume(40.0) < 1.0F && Scp096ClientSounds.musicVolume(40.0) > 0.6F);
-      RandomSource r = RandomSource.create(7L);
-      for (int i = 0; i < 50; i++) {
-         assertTrue(Scp096ClientSounds.shotGap(2, r) < Scp096ClientSounds.shotGap(0, RandomSource.create(i)), "screams come faster than sobs");
-      }
       assertEquals(0.0F, Scp096ClientSounds.fovZoom(0.0F, 0.0F, 3.0));
       float sting = Scp096ClientSounds.fovZoom(1.0F, 0.0F, 0.0);
       assertTrue(sting > 0.05F && sting < 0.1F, "the sting zooms in a little: " + sting);

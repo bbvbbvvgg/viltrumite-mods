@@ -287,10 +287,18 @@ Sources list: `tools/assets/scp096_sources.md`.
   written description, no game or wiki image used; as depictions of the concept they are shared under CC BY-SA 3.0.
 
 ### Sounds
-- No audio is committed. With the player's own copy of SCP – Containment Breach (Regalis11/scpcb) installed, the
-  client loads its five SCP-096 files locally (`096.ogg`, `096Angered.ogg`, `Scream.ogg`, `Triggered.ogg`,
-  `096Chase.ogg`; the last is based on "Hush" by Kevin MacLeod, incompetech.com, CC BY). Otherwise vanilla Minecraft
-  sound events stand in.
+- Own sounds (issue #136), mixed by `tools/sfx/scp096.py`: the crying, wailing and screaming loops, strike, smash
+  and leap from CC0 1.0 Freesound recordings (full list with ids and authors in `tools/assets/scp096_sources.md`:
+  SPAudiobooks, scottemoil, craigsmith, SnowFightStudios, BrainClaim, hisoul, mvVoiceActing, Archeos, AderuMoro,
+  nick121087, Khrinx, NaturesTemper, Voices_Of_Marz, Kinoton, janbezouska, morgothFLOW, Sheyvan, Kneeling,
+  egomassive, Paul368, iggy1345); the sting and the chase music are original synthesis (CC0-1.0).
+- No SCP: CB audio is committed. The five authentic SCP-096 effects (`096.ogg`, `096Angered.ogg`,
+  `Scream.ogg`, `Triggered.ogg`, `096Chase.ogg`) are available from the player's own local copy of
+  **SCP – Containment Breach** (<https://github.com/Regalis11/scpcb>, game license CC BY-SA 3.0) or through the
+  explicitly invoked verified downloader `tools/scp096/download_original_sounds.py`. Source game credits include
+  Regalis, Omniary, FireFox and Kevin MacLeod; `096Chase.ogg` uses "Hush" by Kevin MacLeod (CC BY).
+  Individual third-party recording rights are not established, so the originals are not shipped in this mod JAR.
+  See `tools/assets/scp096_sources.md` for the precise original paths and provenance.
 
 ## Godzilla — City Catastrophe (world event)
 
@@ -301,3 +309,20 @@ Everything is **own work** (CC0-1.0), no third-party assets. Sources list and cu
 
 Godzilla is a character of Toho Co., Ltd.; this is a non-commercial fan implementation.
 
+## Living Atheria — street life sound (city)
+
+Sources list: `tools/assets/city_life_sources.md`.
+
+### Own work
+- Citizen voices: 73 Russian lines in 4 voices spoken by Piper text-to-speech (`ru_RU-denis-medium`,
+  `ru_RU-dmitri-medium`, rhasspy/piper-voices, trained on CC0 datasets) and re-pitched with the WORLD vocoder,
+  `tools/sfx/city_life_voice.py` (CC0-1.0).
+- Beds, details, screams, sobs and coughs mixed by `tools/sfx/city_life.py` (CC0-1.0).
+
+### Recordings (CC0 1.0, Freesound), mixed by `tools/sfx/city_life.py`
+- 41 recordings by florianreichelt, IENBA, WhiteNoiseSleeper, moxobna, evsecrets, Reikun, SoftDistortionFX,
+  quattrostagii, Pfannkuchn, ValentinPetiteau, kyles, GB01, dhallcomposer, audible-edge, belthazarus, Heigh-hoo, v23,
+  nikiforov5000, dm103, mcmikai, csaszi, TRP, snakebarney, ivolipa, The_Sound_Side, missozzy, peridactyloptrix,
+  Dinsfire, Archeos, joseppujol, Harris85, Eelke, BOBtheROSS, loisgwenllian, RutgerMuller, purplereptar,
+  mvVoiceActing, scottemoil (titles and ids in the sources list).
+- Not auditioned by ear; checked by numbers, spectrograms and speech recognition only.

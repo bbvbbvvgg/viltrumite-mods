@@ -73,6 +73,8 @@ public final class CityManager {
    /** Living City 3.0: the power grid, blackouts and the city emergency (city/power). */
    final dev.baranhan.viltrumitecore.city.power.PowerGrid power;
    final dev.baranhan.viltrumitecore.city.citizen.CrowdIndex crowd = new dev.baranhan.viltrumitecore.city.citizen.CrowdIndex();
+   /** Issue #136: the mood of the streets, conversations and calls of the citizens (city/life). */
+   final dev.baranhan.viltrumitecore.city.life.CityLife life;
    final Set<CitizenEntity> citizens = new LinkedHashSet<>();
    boolean enabled;
    double density;
@@ -98,6 +100,18 @@ public final class CityManager {
       this.population = new CityPopulation(this);
       this.threats = new ThreatScan(this);
       this.power = new dev.baranhan.viltrumitecore.city.power.PowerGrid(this);
+      this.life = new dev.baranhan.viltrumitecore.city.life.CityLife(this);
+      this.danger.listener = new DangerMap.Listener() {
+         @Override
+         public void danger(double x, double z, float radius) {
+            CityManager.this.life.onDanger(x, z, radius);
+         }
+
+         @Override
+         public void blast(double x, double z, float radius) {
+            CityManager.this.life.onBlast(x, z, radius);
+         }
+      };
       this.loadState();
    }
 
@@ -180,6 +194,11 @@ public final class CityManager {
    /** Citizens near each other (rebuilt every few ticks): panic spreading, crowd spacing. */
    public dev.baranhan.viltrumitecore.city.citizen.CrowdIndex crowd() {
       return this.crowd;
+   }
+
+   /** The mood of the streets, the voiced chats and the calls of the citizens (#136). */
+   public dev.baranhan.viltrumitecore.city.life.CityLife life() {
+      return this.life;
    }
 
    /** A shock wave: citizens close to it are knocked down (and the place becomes dangerous). */
@@ -365,6 +384,7 @@ public final class CityManager {
                   this.danger.blast(b[0] / b[3], b[1] / b[3], b[2] / b[3], dev.baranhan.viltrumitecore.city.danger.ThreatRules.explosionBlast((int)b[3]), now);
                }
                this.power.onBurst(b[0] / b[3], b[1] / b[3], b[2] / b[3], (int)b[3]);
+               this.life.onBurst(b[0] / b[3], b[2] / b[3], (int)b[3]);
             }
          }
 
@@ -409,6 +429,7 @@ public final class CityManager {
 
       this.population.tick(now);
       this.power.tick(now);
+      this.life.tick(now, this.citizens);
       long interval = this.journal.size() > 500_000 ? 6000 : 1200;
       if (this.journal.dirty() && (now - this.lastSave > interval || this.saveRequestedAt >= 0 && now - this.saveRequestedAt > 20)) {
          this.saveJournal(false);

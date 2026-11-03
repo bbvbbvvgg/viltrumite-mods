@@ -1,87 +1,103 @@
 {
   "scp096.cry": {
     "category": "hostile",
-    "subtitle": "subtitles.viltrumitecore.scp096.cry",
     "sounds": [
       {
-        "name": "minecraft:entity.ghast.ambient",
-        "type": "event",
-        "volume": 0.45,
-        "pitch": 1.35
+        "name": "viltrumitecore:scp096/cry",
+        "stream": true,
+        "attenuation_distance": 20
       }
-    ]
+    ],
+    "subtitle": "subtitles.viltrumitecore.scp096.cry"
   },
   "scp096.angered": {
     "category": "hostile",
-    "subtitle": "subtitles.viltrumitecore.scp096.angered",
     "sounds": [
       {
-        "name": "minecraft:entity.ghast.warn",
-        "type": "event",
-        "pitch": 0.9
+        "name": "viltrumitecore:scp096/angered",
+        "stream": true,
+        "attenuation_distance": 40
       }
-    ]
+    ],
+    "subtitle": "subtitles.viltrumitecore.scp096.angered"
   },
   "scp096.scream": {
     "category": "hostile",
-    "subtitle": "subtitles.viltrumitecore.scp096.scream",
     "sounds": [
       {
-        "name": "minecraft:entity.ghast.scream",
-        "type": "event",
-        "pitch": 0.75
+        "name": "viltrumitecore:scp096/scream",
+        "stream": true,
+        "attenuation_distance": 56
       }
-    ]
+    ],
+    "subtitle": "subtitles.viltrumitecore.scp096.scream"
   },
   "scp096.triggered": {
     "category": "hostile",
-    "subtitle": "subtitles.viltrumitecore.scp096.triggered",
     "sounds": [
       {
-        "name": "minecraft:entity.elder_guardian.curse",
-        "type": "event",
-        "pitch": 0.6
+        "name": "viltrumitecore:scp096/triggered"
       }
-    ]
+    ],
+    "subtitle": "subtitles.viltrumitecore.scp096.triggered"
   },
   "scp096.chase_music": {
     "category": "music",
     "sounds": [
       {
-        "name": "minecraft:entity.warden.heartbeat",
-        "type": "event",
-        "pitch": 1.6
+        "name": "viltrumitecore:scp096/chase_music",
+        "stream": true
       }
     ]
   },
   "scp096.strike": {
     "category": "hostile",
-    "subtitle": "subtitles.viltrumitecore.scp096.strike",
     "sounds": [
       {
-        "name": "minecraft:entity.warden.attack_impact",
-        "type": "event"
+        "name": "viltrumitecore:scp096/strike_1",
+        "pitch": 1.2
+      },
+      {
+        "name": "viltrumitecore:scp096/strike_2",
+        "pitch": 1.2
+      },
+      {
+        "name": "viltrumitecore:scp096/strike_3",
+        "pitch": 1.2
       }
-    ]
+    ],
+    "subtitle": "subtitles.viltrumitecore.scp096.strike"
   },
   "scp096.smash": {
     "category": "hostile",
-    "subtitle": "subtitles.viltrumitecore.scp096.smash",
     "sounds": [
       {
-        "name": "minecraft:entity.zombie.break_wooden_door",
-        "type": "event"
+        "name": "viltrumitecore:scp096/smash_1",
+        "pitch": 1.5
+      },
+      {
+        "name": "viltrumitecore:scp096/smash_2",
+        "pitch": 1.5
+      },
+      {
+        "name": "viltrumitecore:scp096/smash_3",
+        "pitch": 1.5
       }
-    ]
+    ],
+    "subtitle": "subtitles.viltrumitecore.scp096.smash"
   },
   "scp096.leap": {
     "category": "hostile",
-    "subtitle": "subtitles.viltrumitecore.scp096.leap",
     "sounds": [
       {
-        "name": "minecraft:entity.ravager.step",
-        "type": "event"
+        "name": "viltrumitecore:scp096/leap_1",
+        "pitch": 1.6
+      },
+      {
+        "name": "viltrumitecore:scp096/leap_2",
+        "pitch": 1.6
       }
-    ]
+    ],
+    "subtitle": "subtitles.viltrumitecore.scp096.leap"
   }
 }

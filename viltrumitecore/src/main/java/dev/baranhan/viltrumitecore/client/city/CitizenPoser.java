@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.city.citizen.CitizenLook;
 import dev.baranhan.viltrumitecore.city.citizen.CitizenState;
 import dev.baranhan.viltrumitecore.client.anim.pose.PoseKeys;
 import dev.baranhan.viltrumitecore.client.anim.pose.PoseRig;
+import dev.baranhan.viltrumitecore.client.city.life.CityLifeVoices;
 import net.minecraft.util.Mth;
 
 /**
@@ -77,6 +78,8 @@ public final class CitizenPoser {
       float last = Float.NaN;
       int gesture;
       float gw;
+      /** Smoothed "my line is playing" of a voiced chat (issue #136), -1 while the chat is silent. */
+      float speak = -1.0F;
    }
 
    static Anim anim(CitizenEntity e) {
@@ -153,7 +156,19 @@ public final class CitizenPoser {
          a.gw += (1.0F - a.gw) * approach(dt, 0.18F);
       }
 
-      apply(model, a.w, a.gesture, a.gw, s, elapsed, seed, e.look(), limbSwing, limbAmount, age);
+      float voiced = s == CitizenState.TALKING ? CityLifeVoices.speaking(e) : -1.0F;
+      if (voiced < 0.0F) {
+         a.speak = -1.0F;
+      } else {
+         a.speak = a.speak < 0.0F ? voiced : a.speak + (voiced - a.speak) * approach(dt, 0.25F);
+      }
+
+      apply(model, a.w, a.gesture, a.gw, s, elapsed, seed, e.look(), limbSwing, limbAmount, age, a.speak);
+   }
+
+   static void apply(CitizenModel model, float[] w, int gestureId, float gestureWeight, CitizenState s, float elapsed, int seed, CitizenLook look,
+      float limbSwing, float limbAmount, float age) {
+      apply(model, w, gestureId, gestureWeight, s, elapsed, seed, look, limbSwing, limbAmount, age, -1.0F);
    }
 
    /**
@@ -161,7 +176,7 @@ public final class CitizenPoser {
     * passes the smoothed weights, tests and previews pass one-hot weights.
     */
    static void apply(CitizenModel model, float[] w, int gestureId, float gestureWeight, CitizenState s, float elapsed, int seed, CitizenLook look,
-      float limbSwing, float limbAmount, float age) {
+      float limbSwing, float limbAmount, float age, float speak) {
       PoseRig rig = PoseRig.begin(model, model.crouching, 1.0F, null);
       float idle = w[CitizenState.IDLE.ordinal()] + w[CitizenState.WALKING.ordinal()];
       // breathing / weight shift while calm
@@ -179,13 +194,24 @@ public final class CitizenPoser {
       float talk = w[CitizenState.TALKING.ordinal()];
       if (talk > 0.01F) {
          float phase = (seed & 255) * 0.1F;
-         float active = Mth.clamp(Mth.sin(age * 0.045F + phase) * 2.0F, 0.0F, 1.0F) * talk;
+         float active;
+         float nodGate;
+         if (speak >= 0.0F) {
+            // voiced chat (client/city/life/CityLifeVoices): the one whose line plays gestures with emphasis, the
+            // other one listens and nods; they swap with the lines
+            active = speak * (0.55F + 0.45F * Mth.clamp(Mth.sin(age * 0.11F + phase) * 1.6F + 0.6F, 0.0F, 1.0F)) * talk;
+            nodGate = 1.0F - speak;
+         } else {
+            active = Mth.clamp(Mth.sin(age * 0.045F + phase) * 2.0F, 0.0F, 1.0F) * talk;
+            nodGate = Mth.clamp(Mth.sin(age * 0.07F + phase) * 3.0F, 0.0F, 1.0F);
+         }
          if (active > 0.01F) {
             rig.mainArm(row(-34.0F + Mth.sin(age * 0.26F) * 12.0F, -18.0F + Mth.sin(age * 0.17F) * 8.0F, 6.0F), 0.0F, active, false);
          }
          float listen = talk - active * 0.6F;
-         float nod = Math.max(0.0F, Mth.sin(age * 0.34F)) * Mth.clamp(Mth.sin(age * 0.07F + phase) * 3.0F, 0.0F, 1.0F);
-         rig.add(model.head, nod * 7.0F * listen, 0.0F, Mth.sin(age * 0.05F + phase) * 4.0F * talk);
+         float nod = Math.max(0.0F, Mth.sin(age * 0.34F)) * nodGate;
+         float bob = speak > 0.0F ? Mth.sin(age * 0.58F + phase) * 2.5F * speak * talk : 0.0F;
+         rig.add(model.head, nod * 7.0F * listen + bob, 0.0F, Mth.sin(age * 0.05F + phase) * 4.0F * talk);
          rig.offArm(row(-14.0F, 10.0F, -4.0F), 0.0F, talk * 0.6F, false);
       }
 
