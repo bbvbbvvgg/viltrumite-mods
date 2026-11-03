@@ -173,6 +173,22 @@ class CityLifeTest {
    }
 
    @Test
+   void twoPeopleInAChatNeverShareOneVoice() {
+      for (int a = 0; a < CityLifeCatalog.VOICES.length; a++) {
+         for (int b = 0; b < CityLifeCatalog.VOICES.length; b++) {
+            int p = CityLife.partnerVoice(a, b);
+            assertNotEquals(a, p, CityLifeCatalog.VOICES[a] + " answered by " + CityLifeCatalog.VOICES[p]);
+            assertEquals(CityLifeCatalog.VOICES[b].charAt(0), CityLifeCatalog.VOICES[p].charAt(0), "the answer keeps the partner's sex");
+            if (a != b) {
+               assertEquals(b, p, "a different voice is kept");
+            }
+         }
+      }
+      assertEquals(CityLifeCatalog.voice("m2"), CityLife.partnerVoice(CityLifeCatalog.voice("m1"), CityLifeCatalog.voice("m1")));
+      assertEquals(CityLifeCatalog.voice("f1"), CityLife.partnerVoice(CityLifeCatalog.voice("f2"), CityLifeCatalog.voice("f2")));
+   }
+
+   @Test
    void chatFactorAndCallLimiter() {
       assertEquals(1.0F, CityLife.chatFactor(CityMood.Mood.CALM, CityLifeCatalog.DAY, false));
       assertEquals(0.0F, CityLife.chatFactor(CityMood.Mood.PANIC, CityLifeCatalog.DAY, false), "nobody chats in a panic");

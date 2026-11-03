@@ -128,6 +128,21 @@ public final class CityLife {
       return 0.94F + CitizenTraits.unit(seed, 302) * 0.12F;
    }
 
+   /**
+    * Pure: the voice the answering citizen speaks with in a voiced chat: their own, unless it is the same voice as
+    * the one who started (two copies of one voice talking to each other sound like one person) - then the other
+    * voice of the same sex (m1 and m2, f1 and f2).
+    */
+   public static int partnerVoice(int starter, int partner) {
+      if (starter != partner) {
+         return partner;
+      }
+
+      String id = CityLifeCatalog.VOICES[partner];
+      int other = CityLifeCatalog.voice(id.charAt(0) + (id.charAt(1) == '1' ? "2" : "1"));
+      return other < 0 ? partner : other;
+   }
+
    static int voice(CitizenEntity c) {
       return voiceOf(c.skin(), c.look().female());
    }
@@ -207,7 +222,7 @@ public final class CityLife {
          gaps[i] = CityConversation.GAP_MIN + this.random().nextInt(CityConversation.GAP_RANDOM);
       }
 
-      CityConversation conv = new CityConversation(d, voice(a), voice(b), pitch(a), pitch(b), now, gaps);
+      CityConversation conv = new CityConversation(d, voice(a), partnerVoice(voice(a), voice(b)), pitch(a), pitch(b), now, gaps);
       this.talks.put(a.getId(), conv);
       this.talks.put(b.getId(), conv);
       this.voiced.add(new Talk(a, b, conv));

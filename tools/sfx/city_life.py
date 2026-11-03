@@ -263,7 +263,7 @@ def write_data(durations):
     ev = {}
     for name, sub in BEDS.items():
         ev[f"city_life.bed.{name}"] = {"category": "ambient", "subtitle": f"subtitles.{NS}.city_life.{sub}",
-                                       "sounds": [{"name": f"{NS}:city_life/bed/{name}", "stream": True}]}
+                                       "sounds": [{"name": f"{NS}:city_life/bed/{name}"}]}
     far = {"attenuation_distance": 64}
     for name, sub in (("dog", "dog"), ("bike_bell", "bike_bell"), ("pigeons", "pigeons"), ("laugh", "laugh"), ("bells", "bells")):
         ev[f"city_life.{name}"] = {"category": "ambient", "subtitle": f"subtitles.{NS}.city_life.{sub}",

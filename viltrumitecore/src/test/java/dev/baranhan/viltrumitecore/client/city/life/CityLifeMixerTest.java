@@ -48,6 +48,19 @@ class CityLifeMixerTest {
    }
 
    @Test
+   void placedBedsAreNeverHardPanned() {
+      assertEquals(0.0F, CityLifeMixer.sideShare(0.0), "people all around: centred");
+      assertEquals(CityLifeMixer.MAX_SIDE, CityLifeMixer.sideShare(1.0));
+      assertTrue(CityLifeMixer.MAX_SIDE < 0.8F, "even a one-sided crowd keeps a centred part");
+      float v = 0.8F;
+      for (float share : new float[]{0.0F, 0.3F, 0.6F}) {
+         float a = CityLifeMixer.layer(v, share, true);
+         float b = CityLifeMixer.layer(v, share, false);
+         assertEquals(v * v, a * a + b * b, 1e-5F, "equal power at share " + share);
+      }
+   }
+
+   @Test
    void dayNightAndTrauma() {
       assertEquals(1.0F, CityLifeMixer.daylight(6000));
       assertEquals(0.0F, CityLifeMixer.daylight(18000));
