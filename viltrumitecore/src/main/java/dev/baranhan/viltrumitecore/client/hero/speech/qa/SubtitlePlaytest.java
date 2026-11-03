@@ -46,6 +46,7 @@ import org.slf4j.Logger;
  * kind, what the limits dropped and the sound engine's channel count.
  * {@code t1000state} logs every loaded T-1000 (form, action, arms, flags, wounds, disguise), its droplets and the metal
  * body's render cost; {@code t1000look} turns the camera to the nearest one.
+ * {@code scp106state} logs every loaded SCP-106 and the pocket-dimension client state; {@code scp106look} aims at the nearest one.
  * {@code godzillastate} logs the kaiju's last drawn LOD, camera distance, body build time, hot zones and particles;
  * {@code godzillalod <n>} forces a LOD (-1 = by distance). {@code warstate} logs the Thanos war on the client (phase,
  * ship and its position, army, worst hull frame), {@code lookship} aims the camera at the ship, {@code vfly} toggles
@@ -267,6 +268,9 @@ public final class SubtitlePlaytest {
          case "lifestate" -> LOG.info("SUBPT t={} life {} fps={}", ticks, dev.baranhan.viltrumitecore.client.city.life.CityLifeAmbience.describe(), mc.getFps());
          case "t1000state" -> LOG.info("SUBPT t={} t1000 {} fps={}", ticks, dev.baranhan.viltrumitecore.client.t1000.T1000Qa.describe(mc), mc.getFps());
          case "t1000look" -> dev.baranhan.viltrumitecore.client.t1000.T1000Qa.lookAtNearest(mc);
+         case "scp106state" -> LOG.info("SUBPT t={} scp106 {} fps={}", ticks, dev.baranhan.viltrumitecore.client.scp106.Scp106Qa.describe(mc),
+            mc.getFps());
+         case "scp106look" -> dev.baranhan.viltrumitecore.client.scp106.Scp106Qa.lookAtNearest(mc);
          // Thanos war QA: the client's war state (ship, army, hull render cost) and aiming the camera at the ship
          case "warstate" -> LOG.info("SUBPT t={} war {} fps={}", ticks, dev.baranhan.viltrumitecore.client.thanos.war.ThanosWarClient.qaSummary(), mc.getFps());
          case "lookship" -> {

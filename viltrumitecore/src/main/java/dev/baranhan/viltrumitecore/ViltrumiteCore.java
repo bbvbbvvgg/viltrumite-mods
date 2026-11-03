@@ -146,6 +146,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.scp.scp096.Scp096Setup.init(modEventBus);
       // T-1000 (docs/design/2026-11-06-t1000-design.md): the infiltrator of the city.
       dev.baranhan.viltrumitecore.t1000.T1000Setup.init(modEventBus);
+      // SCP-106 "Old Man" and his pocket dimension (docs/design/2026-11-02-scp106-design.md): blocks, entity, dimension generator, sounds.
+      dev.baranhan.viltrumitecore.scp.scp106.Scp106Setup.init(modEventBus);
       // Godzilla — city catastrophe (docs/plans/2026-11-05-godzilla-city-catastrophe.md): sounds and the kaiju's entity register.
       dev.baranhan.viltrumitecore.worldevent.godzilla.GodzillaSetup.init(modEventBus);
       SOUND_EVENTS.register(modEventBus);
