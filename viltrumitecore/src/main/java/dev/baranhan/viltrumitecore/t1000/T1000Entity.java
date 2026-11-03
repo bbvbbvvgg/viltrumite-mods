@@ -4,6 +4,7 @@ import dev.baranhan.viltrumitecore.city.CityManager;
 import dev.baranhan.viltrumitecore.city.citizen.CitizenEntity;
 import dev.baranhan.viltrumitecore.city.citizen.CitizenState;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteEntities;
+import dev.baranhan.viltrumitecore.hero.CleanDamageSink;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -48,7 +49,7 @@ import net.minecraft.world.phys.Vec3;
  * (synced form, arms, action and wounds for the client mesh) and a two-pool damage model ({@link T1000Damage}).
  * Never written into a chunk ({@code noSave}); {@link T1000SavedData} keeps it across unloads and restarts.
  */
-public class T1000Entity extends CitizenEntity {
+public class T1000Entity extends CitizenEntity implements CleanDamageSink {
    private static final EntityDataAccessor<Byte> FORM = SynchedEntityData.defineId(T1000Entity.class, EntityDataSerializers.BYTE);
    private static final EntityDataAccessor<Integer> FORM_START = SynchedEntityData.defineId(T1000Entity.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Byte> ARMS = SynchedEntityData.defineId(T1000Entity.class, EntityDataSerializers.BYTE);
@@ -517,7 +518,12 @@ public class T1000Entity extends CitizenEntity {
       }
       this.tickForm(f);
       this.tickFlow();
-      this.brain().tick();
+      if (this.isNoAi()) {
+         // a control stun (cage, freeze) or an explicit NoAI holds the whole body, brain included
+         this.brain().onDisabled();
+      } else {
+         this.brain().tick();
+      }
       this.tickSounds(f);
       if (--this.refreshIn <= 0) {
          this.refreshIn = 100;
@@ -684,6 +690,46 @@ public class T1000Entity extends CitizenEntity {
          this.melt();
       }
       return hurt || split.integrity() > 0.0F;
+   }
+
+   /**
+    * Clean hero damage (Mutilation, drains, deferred control damage) skips {@code hurt()}; it still
+    * goes through the liquid-metal model: integrity first, the capped core part, wounds and the brain.
+    * No parry and no invulnerability window: clean damage is not a blow that can be met.
+    */
+   @Override
+   public void cleanDamage(DamageSource source, float amount) {
+      if (this.level().isClientSide || amount <= 0.0F || this.isInvulnerableTo(source) || !this.isAlive() || this.isDeadOrDying()
+         || this.form() == T1000Form.DYING) {
+         return;
+      }
+      T1000Damage.Kind kind = kindOf(source, amount);
+      Entity attacker = source.getEntity();
+      if (attacker instanceof T1000Entity) {
+         return;
+      }
+      boolean puddle = this.form() == T1000Form.PUDDLE || this.form() == T1000Form.MELTING;
+      T1000Damage.Split split = T1000Damage.split(amount, kind, this.integrity, this.cold, puddle, this.getMaxHealth());
+      this.sinceHit = 0;
+      this.integrity = Math.max(0.0F, this.integrity - split.integrity());
+      this.cold = Math.max(0.0F, this.cold + split.cold());
+      if (kind == T1000Damage.Kind.HEAT) {
+         this.heatTicks = Math.max(this.heatTicks, 60);
+      }
+      this.reactToHit(source, attacker, amount, kind, split);
+      float core = Math.max(0.0F, split.core());
+      if (core > 0.0F) {
+         float health = this.getHealth() - core;
+         if (health <= 0.0F) {
+            this.setHealth(0.0F);
+            this.die(source);
+            return;
+         }
+         this.setHealth(health);
+      }
+      if (this.isAlive() && this.integrity <= 0.0F && !puddle && this.form() != T1000Form.DYING) {
+         this.melt();
+      }
    }
 
    private void reactToHit(DamageSource source, @Nullable Entity attacker, float amount, T1000Damage.Kind kind, T1000Damage.Split split) {
