@@ -416,6 +416,11 @@ public final class CityLife {
 
    // ---------------------------------------------------------------- tick
 
+   /** Pure: the states that get a periodic aftermath voice (coughs, sobs, survivor calls; help calls from cover). */
+   static boolean periodicVoice(CitizenState s) {
+      return s == CitizenState.IDLE || s == CitizenState.RECOVERING || s == CitizenState.COVER;
+   }
+
    public void tick(long now, Iterable<CitizenEntity> citizens) {
       if (now % 40 != 13) {
          return;
@@ -429,7 +434,9 @@ public final class CityLife {
          CitizenState s = c.citizenState();
          if (s.panicked()) {
             panicked.computeIfAbsent(CityMood.key(CityMood.cell(c.getX()), CityMood.cell(c.getZ())), k -> new int[1])[0]++;
-         } else if ((s == CitizenState.IDLE || s == CitizenState.RECOVERING || s == CitizenState.COVER) && r.nextInt(6) == 0) {
+         }
+         // independent of the panic count: a person hiding in COVER is panicked and must still get its periodic voice
+         if (periodicVoice(s) && r.nextInt(6) == 0) {
             // the aftermath: coughs in the dust, someone crying, survivors calling; hidden people still call for help
             float trauma = this.mood.trauma(c.getX(), c.getZ(), now);
             float alarm = this.mood.alarm(c.getX(), c.getZ(), now);
