@@ -86,6 +86,14 @@ public class ViltrumiteCoreConfig {
    public boolean venomBossPossession = true;
    /** Use the Spider-Man of Falbiks Heroes through SpiderCompat when it is installed (docs/venom/spiderman-compatibility.md). */
    public boolean spiderCompatEnabled = true;
+
+   // SCP-106 (docs/design/2026-11-02-scp106-design.md). Natural spawn: rare, inside the prepared city only.
+   /** Seconds between natural-spawn rolls (10..86400; 300 = every 5 minutes). */
+   public double scp106NaturalCheckSeconds = 300.0;
+   /** Chance of one roll in percent (0..100); doubled at night. */
+   public double scp106NaturalChancePercent = 0.75;
+   /** Minutes after a natural spawn before the next one may roll (0..144000; 240 = 4 hours). */
+   public double scp106NaturalCooldownMinutes = 240.0;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -108,7 +116,8 @@ public class ViltrumiteCoreConfig {
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp096NaturalChancePercent")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseSupportLoss")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("t1000NaturalChancePercent")
-               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("venomPossessionEnabled")) {
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("venomPossessionEnabled")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp106NaturalChancePercent")) {
                save();
             }
          } catch (IOException ignored) {
