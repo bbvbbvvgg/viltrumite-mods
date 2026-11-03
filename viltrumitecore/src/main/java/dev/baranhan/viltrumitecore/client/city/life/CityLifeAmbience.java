@@ -131,8 +131,8 @@ public final class CityLifeAmbience {
             }
 
             final int k = i;
-            LOOPS[i] = PLACED[i] ? new Loop(EVENTS[i], () -> CityLifeMixer.layer(TARGET[k], SIDE[k], true), () -> AT[k], false)
-               : new Loop(EVENTS[i], () -> TARGET[k], () -> AT[k], true);
+            LOOPS[i] = PLACED[i] ? new Loop(EVENTS[i], () -> CityLifeMixer.layer(TARGET[k], SIDE[k], true), () -> TARGET[k], () -> AT[k], false)
+               : new Loop(EVENTS[i], () -> TARGET[k], () -> TARGET[k], () -> AT[k], true);
             RETRIES[i] = RETRY / SCAN_EVERY;
             mc.getSoundManager().play(LOOPS[i]);
          }
@@ -143,7 +143,7 @@ public final class CityLifeAmbience {
             }
 
             final int k = i;
-            WIDE[i] = new Loop(EVENTS[i], () -> CityLifeMixer.layer(TARGET[k], SIDE[k], false), () -> null, true);
+            WIDE[i] = new Loop(EVENTS[i], () -> CityLifeMixer.layer(TARGET[k], SIDE[k], false), () -> TARGET[k], () -> null, true);
             mc.getSoundManager().play(WIDE[i]);
          }
       }
@@ -450,16 +450,22 @@ public final class CityLifeAmbience {
          above, playing, b.toString().trim(), details, CityLifeVoices.describe(), mc.getSoundManager().getDebugString());
    }
 
-   /** A bed: fades toward its target, follows its place, stops itself when silent. */
+   /**
+    * A bed: fades toward its target, follows its place, stops itself when the whole bed has been silent for two seconds.
+    * A layer of a placed bed can be silent while the bed plays (all of the crowd on one side or all around): it waits
+    * at zero instead of stopping, so it is not dropped and started again every few seconds.
+    */
    static final class Loop extends AbstractTickableSoundInstance {
       private final Supplier<Float> target;
+      private final Supplier<Float> bed;
       private final Supplier<Vec3> at;
       float level;
       private int silent;
 
-      Loop(SoundEvent event, Supplier<Float> target, Supplier<Vec3> at, boolean centred) {
+      Loop(SoundEvent event, Supplier<Float> target, Supplier<Float> bed, Supplier<Vec3> at, boolean centred) {
          super(event, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
          this.target = target;
+         this.bed = bed;
          // centred: at the listener, in both ears (stereo beds and the centred layer of a placed one)
          this.at = centred ? () -> null : at;
          this.relative = centred;
@@ -492,7 +498,7 @@ public final class CityLifeAmbience {
       public void tick() {
          float goal = Mth.clamp(this.target.get(), 0.0F, 1.0F);
          this.level = goal > this.level ? Math.min(goal, this.level + FADE_UP) : Math.max(goal, this.level - FADE_DOWN);
-         this.silent = goal <= 0.0F && this.level <= 0.0F ? this.silent + 1 : 0;
+         this.silent = this.bed.get() <= 0.0F && this.level <= 0.0F ? this.silent + 1 : 0;
          if (this.silent > 40) {
             this.stop();
             return;
