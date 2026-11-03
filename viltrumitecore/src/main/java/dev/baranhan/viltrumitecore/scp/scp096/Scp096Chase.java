@@ -238,6 +238,8 @@ final class Scp096Chase {
          this.leapBan--;
       }
       this.planAge++;
+      // the path cooldown ages once per chase tick, whatever the tactic: FACADE/BORE/TUNNEL never follow a path
+      this.pathAge++;
       this.holdTicket(level, dh);
       this.mob.getNavigation().stop();
       // ---- attack: anything in reach, in the air too ----
@@ -380,7 +382,9 @@ final class Scp096Chase {
             // (indoors without mobGriefing a wall only leads up to the ceiling: no climb that ends at once)
             this.startClimb(axisX(hx, hz), axisZ(hx, hz), this.goalY(level, target, dy), false);
          }
+         // a collision cancels the dash: the synced flag must die with the countdown (review of PR #146)
          this.dashTicks = 0;
+         this.mob.setFlag(Scp096Entity.FLAG_DASH, false);
       }
       // ---- stuck: no progress over the window -> tunnel straight at the target ----
       this.windowClock++;
@@ -1041,7 +1045,6 @@ final class Scp096Chase {
    }
 
    private Vec3 followPath(Vec3 tp) {
-      this.pathAge++;
       boolean goalMoved = this.pathGoal == null || this.pathGoal.distanceToSqr(tp) > 4.0;
       boolean stale = Scp096Rules.shouldRepath(this.path != null, this.path != null && this.path.isDone(), this.pathAge, goalMoved);
       if (stale && (this.mob.onGround() || this.mob.isInWater())) {
