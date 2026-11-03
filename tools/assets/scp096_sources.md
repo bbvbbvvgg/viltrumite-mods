@@ -17,7 +17,54 @@ these files are shared under CC BY-SA 3.0 as well.
 Paths are relative to `viltrumitecore/src/main/resources/assets/viltrumitecore/` (model, clips) and
 `viltrumitecore/src/main/binassets/assets/viltrumitecore/` (texture).
 
-## Sounds: none committed
+## Sounds
+
+### The mod's own sounds (issue #136)
+
+A clean install plays the mod's own SCP-096 sounds (`viltrumitecore/src/main/binassets/assets/viltrumitecore/sounds/scp096/`,
+events in `src/main/sound-overlays/scp096.json`), built by `python3 tools/sfx/scp096.py` (fetch: `--fetch`, listen:
+`--wav <dir>`):
+
+| Event | File(s) | How it is made |
+|---|---|---|
+| `scp096.cry` | `cry` (22 s loop) | a man's broken, high sobbing: two cries and two whimpers raised a little, a breathy ghostly layer far behind, small reverb |
+| `scp096.angered` | `angered` (12 s loop) | a hysteric weeping scream at four pitches over a crying girl and a crying man, softly saturated: wailing that never pauses |
+| `scp096.scream` | `scream` (10 s loop) | a shrieking voice, a screaming man, a monster screech, a demonic scream and horror shrieks stacked and saturated |
+| `scp096.triggered` | `triggered` | a reversed screech sucked in, then a synthesised sub boom, a dissonant string-cluster stab and the screech forward |
+| `scp096.chase_music` | `chase_music` (26.5 s loop) | own composition, written note by note in `scp096.py` (16 bars, 145 bpm, D minor: low drums, chromatic bass ostinato, trembling string cluster, high dissonance) |
+| `scp096.strike` | `strike_1..3` | power kick, body smack, bone crunch and a heavy punch |
+| `scp096.smash` | `smash_1..3` | wood smash at three pitches over a low thump and a crunch, glass breaking in two of them |
+| `scp096.leap` | `leap_1..2` | a big whoosh, then a heavy barefoot stamp and a low landing thump |
+
+The loops are seamless (cross-faded wrap) and stream continuously (`Scp096ClientSounds`); the old vanilla
+one-shot fallback is gone. Recordings used (all **CC0 1.0** on Freesound, downloaded with their licence checked by
+`tools/sfx/fslib.py`):
+
+| Freesound id | Title | Author | Used in |
+|---|---|---|---|
+| [776565](https://freesound.org/s/776565/) | Crying man | SPAudiobooks | cry |
+| [263776](https://freesound.org/s/263776/) | Crying Man | scottemoil | cry |
+| [481763](https://freesound.org/s/481763/) | R21-33-Man Sobs.wav | craigsmith | cry |
+| [643669](https://freesound.org/s/643669/) | Man sobbing, crying, or whimpering.mp3 | SnowFightStudios | cry, angered |
+| [267197](https://freesound.org/s/267197/) | Sad Lonely Ghost Crying.wav | BrainClaim | cry |
+| [520285](https://freesound.org/s/520285/) | Zisa, Cry, Scream, Sad, Weep, Hysteric_7.wav | hisoul | angered |
+| [218184](https://freesound.org/s/218184/) | Girl Crying | mvVoiceActing | angered |
+| [325548](https://freesound.org/s/325548/) | Man screaming.wav | Archeos | scream |
+| [320740](https://freesound.org/s/320740/) | Horror shrieks woman | AderuMoro | scream |
+| [333832](https://freesound.org/s/333832/) | Demonic Woman Scream.wav | nick121087 | scream |
+| [565024](https://freesound.org/s/565024/) | Monster screech | Khrinx | triggered |
+| [518297](https://freesound.org/s/518297/) | High Quality Monster Screech | NaturesTemper | scream |
+| [433735](https://freesound.org/s/433735/) | Shrieker_Screeching_Screaming_Nazgul_Demon_Voice_byTiffanyMarz.wav | Voices_Of_Marz | scream |
+| [586841](https://freesound.org/s/586841/) | Power Kick, Body Impact, 7x | Kinoton | strike |
+| [399183](https://freesound.org/s/399183/) | Major punch | janbezouska | strike |
+| [124971](https://freesound.org/s/124971/) | bonebreaker.mp3 | morgothFLOW | strike |
+| [540752](https://freesound.org/s/540752/) | Impact: Smack Body | Sheyvan | strike |
+| [448004](https://freesound.org/s/448004/) | break-window.mp3 | Kneeling | smash |
+| [536777](https://freesound.org/s/536777/) | Smash.ogg | egomassive | smash |
+| [237980](https://freesound.org/s/237980/) | Very Big Whoosh | Paul368 | leap |
+| [76932](https://freesound.org/s/76932/) | heavy barefoot on wood_bip.wav | iggy1345 | leap |
+
+### The originals: never committed
 
 The five sounds that make SCP-096 recognisable come from **SCP – Containment Breach** (Regalis11/scpcb). The game
 is published under CC BY-SA 3.0 according to its README, but the authorship of these particular files is unclear
@@ -32,7 +79,8 @@ or third-party:
 | `scp096.chase_music` | `SFX/Music/096Chase.ogg` | chase music; "Hush" by Kevin MacLeod (CC BY), as edited for the game |
 
 Because redistribution rights are not clear for every file, **no SCP: CB audio is committed** and the jar contains
-none (`Scp096AssetsTest.noContainmentBreachAudioIsCommitted`). Instead, the client builds a built-in resource pack
+none (`Scp096AssetsTest.noContainmentBreachAudioIsCommitted` forbids the SCP: CB file names and any
+`sounds/scp096/original/` file). Instead, the client builds a built-in resource pack
 from the player's **own local copy** of the game at start-up (`client/scp096/Scp096OriginalSounds`,
 `Scp096OriginalPack`):
 
@@ -47,10 +95,8 @@ from the player's **own local copy** of the game at start-up (`client/scp096/Scp
 - `tools/scp096/install_original_sounds.py "<SCP-CB folder>" <gameDir>` copies the five files into
   `<gameDir>/viltrumitecore/scp096/` for players whose install is somewhere else.
 
-Without the originals every event falls back to a vanilla Minecraft sound event (no file of ours):
-`entity.ghast.ambient` (cry, quiet, higher), `entity.ghast.warn` (angered), `entity.ghast.scream` (scream),
-`entity.elder_guardian.curse` (sting), `entity.warden.heartbeat` (chase pulse). This is a deliberate exception to
-the project's "no vanilla sounds" habit: the real sounds are the player's own files.
+Without the originals the mod's own sounds above play (before #136 they were vanilla Minecraft events). With them,
+only the five events found are replaced; strike, smash and leap always stay the mod's own.
 
 Playback follows SCP: CB (`NPCs.bb`): the cry loop is heard within ~8 game units (here 20 blocks, linear), the
 wailing within ~10 (40 blocks), the scream within 7.5 (56 blocks, it is a city); the sting is not positional and
