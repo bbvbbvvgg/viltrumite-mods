@@ -137,22 +137,24 @@ class HeroRosterIntegrationTest {
 
    @Test
    void raceSelectionOffersEveryHeroWithATranslatedButton() throws IOException {
-      String screen = Files.readString(SRC.resolve("client/gui/RaceSelectionScreen.java"));
-      List<String> heroes = arrayItems(screen, "HeroId\\[\\] HEROES");
-      List<String> labels = arrayItems(screen, "String\\[\\] LABELS");
-      assertEquals(heroes.size(), labels.size(), "every button needs a label");
-      Set<String> expected = new HashSet<>();
+      // The screen lists HeroChoices.heroes() (= Od Lagna's wish registry), so the wish and the screen cannot drift
+      // apart again (#134: Red Hulk was on neither path a player could reach).
+      List<HeroId> heroes = dev.baranhan.viltrumitecore.client.gui.HeroChoices.heroes();
+      Set<HeroId> expected = EnumSet.noneOf(HeroId.class);
       for (HeroId id : HeroId.values()) {
-         if (!NOT_SELECTABLE.contains(id)) expected.add("HeroId." + id.name());
+         if (!NOT_SELECTABLE.contains(id)) expected.add(id);
       }
       assertEquals(expected, new HashSet<>(heroes), "the race selection screen must list every selectable hero");
+      assertEquals(heroes.size(), new HashSet<>(heroes).size(), "a hero is listed twice");
       Map<String, Map<String, String>> locales = mergedLocales();
-      for (String label : labels) {
-         String key = "gui.viltrumitecore.race_selection." + label.replace("\"", "");
+      for (HeroId hero : heroes) {
+         String key = dev.baranhan.viltrumitecore.client.gui.HeroChoices.labelKey(hero);
          for (String locale : LOCALES) {
             assertNotNull(locales.get(locale).get(key), locale + " misses " + key);
          }
       }
+      String screen = Files.readString(SRC.resolve("client/gui/RaceSelectionScreen.java"));
+      assertTrue(screen.contains("HeroChoices.heroes()") && screen.contains("HeroChoices.labelKey("), "the screen must read HeroChoices");
    }
 
    @Test
@@ -307,15 +309,5 @@ class HeroRosterIntegrationTest {
       if (!Files.isRegularFile(file)) return;
       JsonParser.parseString(Files.readString(file)).getAsJsonObject().entrySet()
          .forEach(e -> into.put(e.getKey(), e.getValue().getAsString()));
-   }
-
-   private static List<String> arrayItems(String source, String declaration) {
-      Matcher m = Pattern.compile(declaration + "\\s*=\\s*\\{([^}]*)}").matcher(source);
-      assertTrue(m.find(), declaration + " not found");
-      List<String> items = new ArrayList<>();
-      for (String item : m.group(1).split(",")) {
-         if (!item.isBlank()) items.add(item.trim());
-      }
-      return items;
    }
 }

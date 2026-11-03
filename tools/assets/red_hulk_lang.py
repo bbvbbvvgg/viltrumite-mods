@@ -13,7 +13,7 @@ ABILITIES = ['thermal_clap', 'seismic_slam', 'destruction_leap', 'heat_blast', '
 
 RU = {
     'hero': 'Красный Халк',
-    'race': 'Стать Красным Халком',
+    'race': 'Красный Халк',
     'speaker': 'Красный Халк',
     'lines': {
         'enter': 'Генерал Росс на поле боя. Отойдите.',
