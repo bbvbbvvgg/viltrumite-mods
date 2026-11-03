@@ -457,12 +457,21 @@ public final class CollapseDirector {
 
       private void impact() {
          AABB landing = this.info.landing();
-         // impact damage: everything under the falling section and in the landing zone
+         // impact damage: everything under the falling section (not sheltered by a floor still standing) and in the landing zone
          DamageSource source = new DamageSource(this.level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.FALLING_BLOCK));
          AABB hurt = landing.minmax(this.box.inflate(0.5));
          Vec3 lc = landing.getCenter();
          double reach = Math.max(2.0, 0.5 * Math.hypot(landing.getXsize(), landing.getZsize()));
+         int bottom = Mth.floor(this.box.minY);
+         BlockPos.MutableBlockPos col = new BlockPos.MutableBlockPos();
          for (LivingEntity e : this.level.getEntitiesOfClass(LivingEntity.class, hurt, x -> x.isAlive() && !x.isSpectator())) {
+            col.set(Mth.floor(e.getX()), 0, Mth.floor(e.getZ()));
+            if (CollapseRules.sheltered(Mth.floor(e.getBoundingBox().maxY), bottom, y -> {
+               col.setY(y);
+               return !this.level.getBlockState(col).getCollisionShape(this.level, col).isEmpty();
+            })) {
+               continue; // an intact floor above takes this impact; whoever is under it is hit when it goes (#138)
+            }
             double share = Math.hypot(e.getX() - lc.x, e.getZ() - lc.z) / reach;
             if (e.hurt(source, CollapseRules.impactDamage(this.plan.severity(), share)) && HeroRegistry.allowsImpulse(e)) {
                Vec3 away = new Vec3(e.getX() - lc.x, 0.0, e.getZ() - lc.z);

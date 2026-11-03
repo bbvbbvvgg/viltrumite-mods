@@ -21,6 +21,7 @@ public final class CityPowerClientSetup {
    @SubscribeEvent
    public static void onClientSetup(FMLClientSetupEvent event) {
       HeroPortraits.registerVoice("city", CityDefensePortrait.INSTANCE);
+      dev.baranhan.viltrumitecore.city.citizen.CitizenPeril.clientStopFallVoice = dev.baranhan.viltrumitecore.client.city.CitizenVoiceOcclusion::stopFallVoice;
    }
 
    @SubscribeEvent

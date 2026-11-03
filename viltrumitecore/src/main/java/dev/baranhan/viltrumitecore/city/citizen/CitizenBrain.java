@@ -199,6 +199,11 @@ final class CitizenBrain {
     */
    @Nullable
    static Path fleePath(CitizenEntity c, CityManager city, long now) {
+      if (c.occupant) {
+         // upstairs the street grid is out of reach: run along the floor, away from the danger
+         return CitizenGoals.indoorPath(c, true, 5.0, 14.0);
+      }
+
       WalkGrid grid = city.grid();
       DangerMap map = city.dangerMap();
       double dx = c.getX() - c.threatX;
