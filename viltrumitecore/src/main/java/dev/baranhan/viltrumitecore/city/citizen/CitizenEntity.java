@@ -168,7 +168,8 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    }
 
    void setCitizenState(CitizenState s) {
-      if (this.citizenState() != s) {
+      CitizenState from = this.citizenState();
+      if (from != s) {
          this.entityData.set(STATE, (byte)s.ordinal());
          this.stateTicks = 0;
          if (s != CitizenState.FLEEING) {
@@ -177,6 +178,14 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
 
          if (s != CitizenState.TALKING) {
             this.talkPartner = null;
+         }
+
+         if (!this.level().isClientSide) {
+            // #136: screams, calls and coughs by what happens to this person; a chat that is cut off ends
+            dev.baranhan.viltrumitecore.city.life.CityLife life = dev.baranhan.viltrumitecore.city.life.CityLife.of(this.level());
+            if (life != null) {
+               life.onState(this, from, s);
+            }
          }
       }
    }
