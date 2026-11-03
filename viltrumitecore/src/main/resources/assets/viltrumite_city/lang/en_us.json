@@ -10,6 +10,7 @@
   "viltrumitecore.city.help.occupants": "<count> - add people on the upper floors of tall buildings around you",
   "viltrumitecore.city.help.clear": "- remove all citizens (the city stays on)",
   "viltrumitecore.city.help.status": "- city, citizens, districts and restore state",
+  "viltrumitecore.city.help.life": "[reset] - city life: mood, alarm and trauma here, talks and calls (reset: clear)",
   "viltrumitecore.city.help.reset": "- restore every destroyed block of the map",
   "viltrumitecore.city.help.help": "- this help",
   "viltrumitecore.city.error.no_city": "This world has no prepared living city (install the prepared Atheria world).",
