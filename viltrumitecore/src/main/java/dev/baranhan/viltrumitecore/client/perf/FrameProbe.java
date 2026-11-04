@@ -38,6 +38,7 @@ public final class FrameProbe {
       count = 0;
       last = 0L;
       resetAt = System.nanoTime();
+      dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.resetQuadStats();
       gcTimeAtReset = gcTime();
       gcCountAtReset = gcCount();
    }
@@ -81,10 +82,10 @@ public final class FrameProbe {
       Runtime rt = Runtime.getRuntime();
       long usedMb = (rt.totalMemory() - rt.freeMemory()) >> 20;
       return String.format(Locale.ROOT,
-         "frames=%d secs=%.1f avgFps=%.1f low1=%.1f low01=%s p50ms=%.2f p99ms=%.2f maxMs=%.2f gcMs=%d gcCount=%d heapMb=%d/%d particles=%s entities=%d",
+         "frames=%d secs=%.1f avgFps=%.1f low1=%.1f low01=%s p50ms=%.2f p99ms=%.2f maxMs=%.2f gcMs=%d gcCount=%d heapMb=%d/%d particles=%s entities=%d smokeQuads=%s",
          n, (System.nanoTime() - resetAt) / 1.0E9, s[0], s[1], n >= 1000 ? String.format(Locale.ROOT, "%.1f", s[2]) : "n/a", s[3], s[4], s[5],
          gcTime() - gcTimeAtReset, gcCount() - gcCountAtReset, usedMb, rt.maxMemory() >> 20, mc.particleEngine.countParticles(),
-         mc.level == null ? 0 : mc.level.getEntityCount());
+         mc.level == null ? 0 : mc.level.getEntityCount(), dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.quadStats());
    }
 
    private static long gcTime() {
