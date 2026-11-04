@@ -21,7 +21,11 @@ out vec4 vertexColor;
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
 
-    vertexDistance = fog_distance(ModelViewMat, Position, FogShape);
+    // Trimmed puffs inside the fog ramp send the fog distance of the original full quad in the lightmap's high
+    // bits (MeteorSmokeParticle / TrimGeometry.packLight); code 0 = plain vertex, computed as vanilla does.
+    ivec2 fogBits = (UV2 >> 8) & 0x7F;
+    int fogCode = fogBits.x | (fogBits.y << 7);
+    vertexDistance = fogCode == 0 ? fog_distance(ModelViewMat, Position, FogShape) : float(fogCode - 1) / 64.0;
     texCoord0 = UV0;
-    vertexColor = Color * texelFetch(Sampler2, UV2 / 16, 0);
+    vertexColor = Color * texelFetch(Sampler2, (UV2 & 0xFF) / 16, 0);
 }

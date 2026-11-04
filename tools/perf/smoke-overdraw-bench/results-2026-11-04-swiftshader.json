@@ -1,0 +1,70 @@
+[
+ {
+  "renderer": "WebKit WebGL",
+  "count": 2400,
+  "overdraw_full": 77.27653083265145,
+  "overdraw_trim": 47.030212491013856,
+  "diff_channels": 21392,
+  "max_diff": 1,
+  "ms_full": [
+   4641,
+   4372.9
+  ],
+  "ms_trim": [
+   2799.95,
+   2625.9
+  ],
+  "name": "C-ruin-40m-2400"
+ },
+ {
+  "renderer": "WebKit WebGL",
+  "count": 1200,
+  "overdraw_full": 98.30893016789057,
+  "overdraw_trim": 60.0958799597376,
+  "diff_channels": 14625,
+  "max_diff": 1,
+  "ms_full": [
+   4772.25,
+   4312.8
+  ],
+  "ms_trim": [
+   2912.35,
+   2492.1
+  ],
+  "name": "C-ruin-25m-1200"
+ },
+ {
+  "renderer": "WebKit WebGL",
+  "count": 800,
+  "overdraw_full": 14.087688284801523,
+  "overdraw_trim": 8.658649889670079,
+  "diff_channels": 17942,
+  "max_diff": 2,
+  "ms_full": [
+   668.3,
+   624.13
+  ],
+  "ms_trim": [
+   345.1,
+   371.4
+  ],
+  "name": "B-collapse-60m-800"
+ },
+ {
+  "renderer": "WebKit WebGL",
+  "count": 300,
+  "overdraw_full": 1.1590469477089855,
+  "overdraw_trim": 0.7123694415713147,
+  "diff_channels": 24859,
+  "max_diff": 2,
+  "ms_full": [
+   48.74,
+   72.3
+  ],
+  "ms_trim": [
+   37.34,
+   46.18
+  ],
+  "name": "A-light-80m-300"
+ }
+]

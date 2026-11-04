@@ -56,6 +56,8 @@ import org.slf4j.Logger;
  * lean, drift, ground); {@code bikes} logs every Hell Cycle this client draws, remote copies included (multiplayer
  * sync), with the effect entries and engine loops it still holds. {@code venomstate} logs every Venom this client draws
  * (form, move, hunger, flags, height), the running host takeovers, the local host view (camera, post uniforms) and the boss.
+ * {@code perfreset} starts a frame-time window, {@code perfstate [label]} logs it ({@code FrameProbe}: avg FPS, 1 %/0.1 % low,
+ * p50/p99/max frame ms, GC, heap, particles, entities).
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -257,6 +259,26 @@ public final class SubtitlePlaytest {
             SCENE_SHOTS.sort(Integer::compare);
          }
          // The choice screen opens only on purpose now (/viltrumite choose), so it is no longer closed here (#134).
+         // freeze on|off: stop client particle/entity ticking so A/B windows render the very same frame (perf + pixel diff)
+         case "freeze" -> dev.baranhan.viltrumitecore.hero.control.TimeFreeze.setClientWorld("on".equals(arg), Integer.MIN_VALUE, false);
+         // clouds on|off: clouds drift on real time even while frozen, which would pollute same-frame pixel diffs
+         case "clouds" -> mc.options.cloudStatus().set("off".equals(arg) ? net.minecraft.client.CloudStatus.OFF : net.minecraft.client.CloudStatus.FANCY);
+         case "smoketrim" -> dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.setTrimEnabled(!"off".equals(arg));
+         case "rd" -> {
+            mc.options.renderDistance().set(Integer.parseInt(arg));
+            mc.levelRenderer.needsUpdate();
+         }
+         case "tp" -> {
+            // tp x y z yaw pitch: exact, repeatable camera for benchmarks (server-side teleport + local rotation)
+            String[] p = arg.split(" ");
+            if (mc.player != null && p.length >= 5) {
+               mc.player.connection.sendCommand(String.format(java.util.Locale.ROOT, "tp @s %s %s %s %s %s", p[0], p[1], p[2], p[3], p[4]));
+               mc.player.setYRot(Float.parseFloat(p[3]));
+               mc.player.setXRot(Float.parseFloat(p[4]));
+            }
+         }
+         case "perfreset" -> dev.baranhan.viltrumitecore.client.perf.FrameProbe.reset();
+         case "perfstate" -> LOG.info("SUBPT t={} perf {} {}", ticks, arg, dev.baranhan.viltrumitecore.client.perf.FrameProbe.describe(mc));
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} hero={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.player == null ? "-" : dev.baranhan.viltrumitecore.hero.HeroRegistry.get(mc.player).id().key(),
             mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
@@ -413,6 +435,7 @@ public final class SubtitlePlaytest {
 
    private static void onRenderTick(TickEvent.RenderTickEvent event) {
       if (event.phase == TickEvent.Phase.END) {
+         dev.baranhan.viltrumitecore.client.perf.FrameProbe.frame();
          // the Thanos warning slot as drawn this frame (reset here, so a frame without the HUD reads as none)
          String strip = dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStrip;
          float stripK = dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStripK;

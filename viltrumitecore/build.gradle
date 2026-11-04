@@ -8,7 +8,7 @@ plugins {
 // core uses classes from viltrumiteflight
 evaluationDependsOn(':viltrumiteflight')
 
-version = '1.71.0'
+version = '1.71.1'
 group = 'dev.baranhan.viltrumitecore'
 base { archivesName = 'reforgedcodex-core' }
 
@@ -262,3 +262,18 @@ jar {
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+// Perf QA only (docs/performance): -PperfMods=/abs/dir puts every *.jar of that folder on the runClient classpath
+// through fg.deobf (SRG -> official names), so external optimization mods can be A/B-tested in the dev client.
+// Never set in CI; release JARs are unaffected.
+if (project.hasProperty('perfMods')) {
+    def perfDir = file(project.property('perfMods'))
+    repositories { flatDir { dirs perfDir } }
+    dependencies {
+        perfDir.listFiles().findAll { it.name.endsWith('.jar') }.sort { it.name }.each { f ->
+            def n = f.name - '.jar'
+            def i = n.lastIndexOf('-')
+            runtimeOnly fg.deobf("perfmods:${n.substring(0, i)}:${n.substring(i + 1)}")
+        }
+    }
+}

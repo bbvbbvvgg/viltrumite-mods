@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.client.particle;
 
+import com.mojang.blaze3d.shaders.FogShape;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -11,6 +13,10 @@ import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * Meteor Rain 2.0 smoke: irregular volumetric puffs (8 procedural sprites, random roll) that start hot and
@@ -82,6 +88,35 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       }
    }
 
+   /**
+    * Draw only the visible rectangle of the sprite ({@link SpriteTrim}). On by default; {@code -Dviltrumitecore.smoke.trim=false}
+    * restores the full quads for A/B frame-time and screenshot comparisons; the QA harness can flip it at runtime
+    * ({@code smoketrim on|off}) so both variants are measured on the very same particles.
+    */
+   private static volatile boolean trimEnabled = !"false".equalsIgnoreCase(System.getProperty("viltrumitecore.smoke.trim"));
+
+   public static void setTrimEnabled(boolean on) {
+      trimEnabled = on;
+   }
+
+   public static boolean trimEnabled() {
+      return trimEnabled;
+   }
+
+   // QA counters (render thread only): how many puffs took the trimmed path vs the full vanilla quad
+   private static long trimmedQuads;
+   private static long fullQuads;
+
+   public static void resetQuadStats() {
+      trimmedQuads = 0L;
+      fullQuads = 0L;
+   }
+
+   /** "trimmed/total" puff quads drawn since the last reset (FrameProbe perfstate). */
+   public static String quadStats() {
+      return trimmedQuads + "/" + (trimmedQuads + fullQuads);
+   }
+
    /** Ruin wind in blocks per tick per tick (set by the aftermath client each tick; 0 when no ruin is near). */
    private static float windX;
    private static float windZ;
@@ -92,6 +127,8 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
    private final int hotTicks;
    private final float rollSpeed;
    private final float seedA, seedB, seedC;
+   /** Visible part of the sprite in quad fractions {s0, s1, t0, t1} ({@link SpriteTrim}). */
+   private final float[] trim;
 
    protected MeteorSmokeParticle(ClientLevel level, double x, double y, double z, double dx, double dy, double dz, SpriteSet sprites, Style style) {
       super(level, x, y, z);
@@ -133,6 +170,7 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       this.seedB = this.random.nextFloat() * 100.0F;
       this.seedC = this.random.nextFloat() * 100.0F;
       this.pickSprite(sprites);
+      this.trim = SpriteTrim.of(this.sprite, UV_INSET);
       this.updateColor();
    }
 
@@ -222,8 +260,134 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
 
       float keep = this.alpha;
       this.alpha = keep * near;
-      super.render(consumer, camera, partialTick);
+      if (trimEnabled && this.trim != SpriteTrim.FULL && MeteorParticleRenderTypes.softSheetActive()) {
+         if (this.renderTrimmed(consumer, camera, partialTick)) {
+            trimmedQuads++;
+         } else {
+            fullQuads++;
+            super.render(consumer, camera, partialTick);
+         }
+      } else {
+         fullQuads++;
+         super.render(consumer, camera, partialTick);
+      }
       this.alpha = keep;
+   }
+
+   /**
+    * The vanilla {@code SingleQuadParticle.render} quad cut down to the sprite's visible rectangle. Same corners
+    * order, the same UV per point of the plane, so every pixel that can be non-transparent is drawn exactly as
+    * before; the transparent margin (≈42 % of the quad's area) is simply not rasterized. Only valid while the soft
+    * program samples the atlas linearly without mipmaps ({@link MeteorParticleRenderTypes#softSheetActive}).
+    *
+    * <p>Fog is evaluated per vertex and interpolated, so moved corners would carry different fog distances. When
+    * fog cannot differ (the whole puff is nearer than the fog start or beyond the fog end, {@link #fogNeutral}) the
+    * rectangle is drawn as one quad. Otherwise it is cut along the original triangle diagonal and every vertex gets
+    * the fog distance the original triangle interpolates there ({@link TrimGeometry}), sent to the soft shader in
+    * the lightmap's high bits. Returns {@code false} (caller draws the full quad) only beyond the encodable range.
+    */
+   private boolean renderTrimmed(VertexConsumer consumer, Camera camera, float partialTick) {
+      Vec3 cam = camera.getPosition();
+      float px = (float)(Mth.lerp(partialTick, this.xo, this.x) - cam.x());
+      float py = (float)(Mth.lerp(partialTick, this.yo, this.y) - cam.y());
+      float pz = (float)(Mth.lerp(partialTick, this.zo, this.z) - cam.z());
+      float size = this.getQuadSize(partialTick);
+      boolean cylinder = RenderSystem.getShaderFogShape() == FogShape.CYLINDER;
+      boolean neutral = fogNeutral(px, py, pz, size, RenderSystem.getShaderFogStart(), RenderSystem.getShaderFogEnd(), cylinder);
+      Quaternionf rotation;
+      if (this.roll == 0.0F) {
+         rotation = camera.rotation();
+      } else {
+         rotation = new Quaternionf(camera.rotation());
+         rotation.rotateZ(Mth.lerp(partialTick, this.oRoll, this.roll));
+      }
+
+      // vanilla corner (x, y) in -1..1 shows U1 at x = -1 and U0 at x = +1, V1 at y = -1 and V0 at y = +1
+      float s0 = this.trim[0], s1 = this.trim[1], t0 = this.trim[2], t1 = this.trim[3];
+      float xNear = 1.0F - 2.0F * s1, xFar = 1.0F - 2.0F * s0;
+      float yNear = 1.0F - 2.0F * t1, yFar = 1.0F - 2.0F * t0;
+      float uA = this.getU0(), uB = this.getU1(), vA = this.getV0(), vB = this.getV1();
+      float uS0 = Mth.lerp(s0, uA, uB), uS1 = Mth.lerp(s1, uA, uB);
+      float vT0 = Mth.lerp(t0, vA, vB), vT1 = Mth.lerp(t1, vA, vB);
+      int light = this.getLightColor(partialTick);
+      if (neutral) {
+         this.corner(consumer, rotation, xNear, yNear, size, px, py, pz, uS1, vT1, light);
+         this.corner(consumer, rotation, xNear, yFar, size, px, py, pz, uS1, vT0, light);
+         this.corner(consumer, rotation, xFar, yFar, size, px, py, pz, uS0, vT0, light);
+         this.corner(consumer, rotation, xFar, yNear, size, px, py, pz, uS0, vT1, light);
+         return true;
+      }
+
+      // inside the fog ramp: the original corners' fog distances, exactly as soft_particle.vsh computes them
+      Matrix4f modelView = RenderSystem.getModelViewMatrix();
+      float d0 = fogDistance(modelView, rotation, -1.0F, -1.0F, size, px, py, pz, cylinder);
+      float d1 = fogDistance(modelView, rotation, -1.0F, 1.0F, size, px, py, pz, cylinder);
+      float d2 = fogDistance(modelView, rotation, 1.0F, 1.0F, size, px, py, pz, cylinder);
+      float d3 = fogDistance(modelView, rotation, 1.0F, -1.0F, size, px, py, pz, cylinder);
+      if (Math.max(Math.max(d0, d1), Math.max(d2, d3)) >= TrimGeometry.MAX_FOG_DISTANCE) {
+         return false;
+      }
+      float[] poly = POLY.get();
+      for (int half = 0; half < 2; half++) {
+         int n = TrimGeometry.clip(xNear, yNear, xFar, yFar, half == 0, poly);
+         // fan as QUADS: (0,1,2,3) then (0,3,4,4); a 3-point half repeats its last point (zero-area triangle)
+         for (int q = 0; q + 2 < n; q += 2) {
+            int a = 0, b = q + 1, c = q + 2, d = Math.min(q + 3, n - 1);
+            this.fogCorner(consumer, rotation, poly, a, size, px, py, pz, uA, uB, vA, vB, light, d0, d1, d2, d3);
+            this.fogCorner(consumer, rotation, poly, b, size, px, py, pz, uA, uB, vA, vB, light, d0, d1, d2, d3);
+            this.fogCorner(consumer, rotation, poly, c, size, px, py, pz, uA, uB, vA, vB, light, d0, d1, d2, d3);
+            this.fogCorner(consumer, rotation, poly, d, size, px, py, pz, uA, uB, vA, vB, light, d0, d1, d2, d3);
+         }
+      }
+      return true;
+   }
+
+   private static final ThreadLocal<float[]> POLY = ThreadLocal.withInitial(() -> new float[10]);
+
+   /** Plane point i of {@code poly} with the vanilla UV mapping (U1 at x = -1, V1 at y = -1) and its exact fog distance. */
+   private void fogCorner(VertexConsumer consumer, Quaternionf rotation, float[] poly, int i, float size, float px, float py, float pz,
+      float uA, float uB, float vA, float vB, int light, float d0, float d1, float d2, float d3) {
+      float x = poly[2 * i], y = poly[2 * i + 1];
+      float u = Mth.lerp((1.0F - x) * 0.5F, uA, uB), v = Mth.lerp((1.0F - y) * 0.5F, vA, vB);
+      int packed = TrimGeometry.packLight(light, TrimGeometry.fogAt(x, y, d0, d1, d2, d3));
+      this.corner(consumer, rotation, x, y, size, px, py, pz, u, v, packed);
+   }
+
+   /** fog.glsl {@code fog_distance(ModelViewMat, Position, FogShape)} for corner (cx, cy) of this quad. */
+   private static float fogDistance(Matrix4f mv, Quaternionf rotation, float cx, float cy, float size, float px, float py, float pz,
+      boolean cylinder) {
+      Vector3f p = new Vector3f(cx, cy, 0.0F).rotate(rotation).mul(size).add(px, py, pz);
+      if (!cylinder) {
+         return mv.transformPosition(p, new Vector3f()).length();
+      }
+      float xz = mv.transformPosition(new Vector3f(p.x(), 0.0F, p.z())).length();
+      float y = mv.transformPosition(new Vector3f(0.0F, p.y(), 0.0F)).length();
+      return Math.max(xz, y);
+   }
+
+   /**
+    * True when vanilla per-vertex fog gives the same result for every point of a camera-facing quad of half-size
+    * {@code size} centred at camera-relative (px, py, pz), whatever sub-rectangle is drawn. Any point of the quad
+    * lies within {@code size * sqrt 2} of the centre; spherical fog distance is the length, cylindrical fog
+    * distance lies between length / sqrt 2 and length. A one-block margin absorbs float error and small model-view offsets (camera shake).
+    */
+   static boolean fogNeutral(float px, float py, float pz, float size, float fogStart, float fogEnd, boolean cylinder) {
+      float centre = Mth.sqrt(px * px + py * py + pz * pz);
+      float reach = size * 1.4143F + 1.0F;
+      if (centre + reach <= fogStart) {
+         return true;
+      }
+      float nearest = centre - reach;
+      if (cylinder) {
+         nearest /= 1.4143F;
+      }
+      return nearest >= fogEnd;
+   }
+
+   private void corner(VertexConsumer consumer, Quaternionf rotation, float cx, float cy, float size, float px, float py, float pz, float u, float v,
+      int light) {
+      Vector3f p = new Vector3f(cx, cy, 0.0F).rotate(rotation).mul(size).add(px, py, pz);
+      consumer.vertex(p.x(), p.y(), p.z()).uv(u, v).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
    }
 
    @Override
@@ -232,24 +396,26 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
    }
 
    // the soft sheet samples the atlas linearly: keep a 1 % margin so a puff never picks up its neighbour sprite
+   static final float UV_INSET = 0.01F;
+
    @Override
    protected float getU0() {
-      return Mth.lerp(0.01F, this.sprite.getU0(), this.sprite.getU1());
+      return Mth.lerp(UV_INSET, this.sprite.getU0(), this.sprite.getU1());
    }
 
    @Override
    protected float getU1() {
-      return Mth.lerp(0.99F, this.sprite.getU0(), this.sprite.getU1());
+      return Mth.lerp(1.0F - UV_INSET, this.sprite.getU0(), this.sprite.getU1());
    }
 
    @Override
    protected float getV0() {
-      return Mth.lerp(0.01F, this.sprite.getV0(), this.sprite.getV1());
+      return Mth.lerp(UV_INSET, this.sprite.getV0(), this.sprite.getV1());
    }
 
    @Override
    protected float getV1() {
-      return Mth.lerp(0.99F, this.sprite.getV0(), this.sprite.getV1());
+      return Mth.lerp(1.0F - UV_INSET, this.sprite.getV0(), this.sprite.getV1());
    }
 
    public static class Provider implements ParticleProvider<SimpleParticleType> {
