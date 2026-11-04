@@ -65,7 +65,9 @@ public final class WindowRules {
       /** Another panicking person pushed past at the opening. */
       SHOVE(0.32, 0.1),
       /** Glass and rubble on the sill: slipped. */
-      SLIP(0.2, 0.04);
+      SLIP(0.2, 0.04),
+      /** Away from the flames: a jump out of the window. */
+      JUMP(0.36, 0.3);
 
       /** Horizontal speed out of the window (blocks/tick) and the upward part of the push. */
       public final double out;
@@ -132,6 +134,86 @@ public final class WindowRules {
    /** Ticks at the window before stepping back, from a 0..1 roll. */
    public static int windowTicks(float roll) {
       return AT_WINDOW_MIN + Math.round(clamp01(roll) * AT_WINDOW_SPREAD);
+   }
+
+   // ------------------------------------------------------------------ jumpers (WindowJumpers): the background picture
+
+   /** Places in trouble remembered at once per level. */
+   public static final int MAX_INCIDENTS = 12;
+   /** Destruction or fire this close (blocks, horizontally) to a known place is the same place. */
+   public static final double MERGE_R = 20.0;
+   /** Windows are looked for this far around a fire (blocks) and this far above or below the flames. */
+   public static final double FIRE_RADIUS = 7.0;
+   public static final int FIRE_BAND = 6;
+   /** A fire is a place in trouble this long after its last new flame (ticks). */
+   public static final int FIRE_LIFE = 600;
+   /** The first person at a window of a burning building after this (ticks): the flames have to get going. */
+   public static final int FIRE_FIRST = 80;
+   /** A damaged building stays dangerous this long after its last destruction (ticks). */
+   public static final int DAMAGED_LIFE = 900;
+   /** The first person after a blast: once the first dust of the blast thins out enough to see it (ticks). */
+   public static final int BLAST_FIRST_MIN = 50;
+   public static final int BLAST_FIRST_SPREAD = 80;
+   /** Within this (ticks) of the first destruction the first person may be thrown out by the blast itself. */
+   public static final int BLAST_THROWN_WINDOW = 140;
+   /** How often (ticks) the places are considered; one person per period for the whole level at most. */
+   public static final int JUMPER_PERIOD = 5;
+   /** At least this many ticks between two people appearing anywhere on the level. */
+   public static final int LEVEL_JUMP_GAP = 30;
+   /** People panicking in windows at once (the rest wait). */
+   public static final int MAX_SHOWING = 3;
+   /** A player has to be this close to the place (and the window at least NEAR away to be seen whole). */
+   public static final double JUMPER_FAR = 128.0;
+   public static final double JUMPER_NEAR = 10.0;
+   /** Sight lines tried per attempt, failed attempts before a place is given up. */
+   public static final int SIGHT_TRIES = 6;
+   public static final int MAX_MISSES = 40;
+   /** A window high enough that going out of it is a fall (blocks below the sill). */
+   public static final int JUMP_MIN_DROP = 7;
+
+   /** Cosine of the angle from the view a window may be at (well inside the screen), and the place itself. */
+   public static final double WINDOW_VIEW = 0.72;
+   public static final double PLACE_VIEW = 0.45;
+
+   /** True when {@code at} is within the cone of {@code cos} around the look of eyes at {@code eye} (the player sees it). */
+   public static boolean onScreen(net.minecraft.world.phys.Vec3 look, net.minecraft.world.phys.Vec3 eye, net.minecraft.world.phys.Vec3 at, double cos) {
+      net.minecraft.world.phys.Vec3 d = at.subtract(eye);
+      double len = d.length();
+      return len < 1.0E-6 || look.dot(d) / (len * Math.max(1.0E-6, look.length())) >= cos;
+   }
+
+   /** A shock wave of this radius counts like this many destroyed blocks. */
+   public static double blastPower(float radius) {
+      return Math.min(Math.max(radius, 0.0F), 64.0F) * 12.0;
+   }
+
+   /** How many people go out of the windows of one place over its whole life: a few, never a rain of bodies. */
+   public static int quota(double power, boolean fire) {
+      if (fire) {
+         return power < 3.0 ? 0 : Math.min(5, 1 + (int)((power - 3.0) / 15.0));
+      }
+      return power < 20.0 ? 0 : Math.min(5, 1 + (int)((power - 20.0) / 70.0));
+   }
+
+   /** Ticks to the next person of the same place, from a 0..1 roll ("now and then"). */
+   public static int gap(boolean fire, float roll) {
+      return fire ? 120 + Math.round(clamp01(roll) * 240.0F) : 50 + Math.round(clamp01(roll) * 110.0F);
+   }
+
+   /** Ticks a person panics in the window before going out (a blast throws it out at once). */
+   public static int showTicks(boolean fire, boolean thrown, float roll) {
+      if (thrown) {
+         return 2 + Math.round(clamp01(roll) * 4.0F);
+      }
+      return (fire ? 25 : 20) + Math.round(clamp01(roll) * 40.0F);
+   }
+
+   /** People on a collapsing section who go down with it. */
+   public static int riders(int blocks, float roll) {
+      if (blocks < 20) {
+         return roll < 0.5F ? 1 : 0;
+      }
+      return roll < 0.4F ? 2 : 1;
    }
 
    static float clamp01(float v) {

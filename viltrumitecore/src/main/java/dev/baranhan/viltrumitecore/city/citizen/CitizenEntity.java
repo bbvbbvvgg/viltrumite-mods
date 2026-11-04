@@ -71,6 +71,8 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    int windowTicks;
    @Nullable
    WindowRules.Cause windowCause;
+   /** A person at a window of a burning building ({@link WindowJumpers}): smoke there, still burning on the way down. */
+   boolean windowFire;
    int voiceCooldown;
    /** A voice due later (a witness gasps a moment after the fall): kind and game time. */
    @Nullable

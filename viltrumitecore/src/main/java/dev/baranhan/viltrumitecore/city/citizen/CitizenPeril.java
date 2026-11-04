@@ -71,10 +71,12 @@ public final class CitizenPeril {
    /** The level unloads (a world is left, the server stops): its counters, crowd cooldown and voice budget go with it. */
    static void forget(ResourceKey<Level> dimension) {
       STATS.remove(dimension);
+      WindowJumpers.forget(dimension);
    }
 
    static void forgetAll() {
       STATS.clear();
+      WindowJumpers.forgetAll();
    }
 
    /**
@@ -389,6 +391,10 @@ public final class CitizenPeril {
 
    /** A hurt hanging person lets go; a hurt person in peril stays in peril (no switch to plain fleeing). */
    static boolean onHurt(CitizenEntity c) {
+      if (c.windowPhase == WindowJumpers.SHOW) {
+         c.windowTicks = Math.min(c.windowTicks, 6); // the flames (or a hit) reach the person in the window: out now
+         return true;
+      }
       if (c.windowPhase != WindowPeril.NONE && c.windowPhase != WindowPeril.EDGE) {
          WindowPeril.cancel(c); // hurt at the window: runs (the hit's knockback may still throw it out)
       }
@@ -455,6 +461,7 @@ public final class CitizenPeril {
       }
       long now = city.now();
       WindowPeril.onDestruction(level, info.center().getX() + 0.5, info.center().getZ() + 0.5, info.affectedBlocks().size() * 2.0, now);
+      WindowJumpers.onCollapse(level, city, info, now);
       LongOpenHashSet planned = new LongOpenHashSet(info.affectedBlocks().size());
       int x0 = Integer.MAX_VALUE, y0 = Integer.MAX_VALUE, z0 = Integer.MAX_VALUE, x1 = Integer.MIN_VALUE, y1 = Integer.MIN_VALUE, z1 = Integer.MIN_VALUE;
       for (BlockPos p : info.affectedBlocks()) {
