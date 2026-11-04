@@ -34,6 +34,8 @@ public class CitizenRenderer extends MobRenderer<CitizenEntity, CitizenModel> {
       super(ctx, wide, 0.5F);
       this.wide = wide;
       this.slim = slim;
+      // #151: the phone in the hand, on the posed arm of whichever body is drawn
+      this.addLayer(new CitizenPhoneLayer(this));
    }
 
    @Override
