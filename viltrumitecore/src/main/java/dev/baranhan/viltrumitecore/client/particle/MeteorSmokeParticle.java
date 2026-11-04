@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.client.particle;
 
+import com.mojang.blaze3d.shaders.FogShape;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -244,7 +246,9 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       float keep = this.alpha;
       this.alpha = keep * near;
       if (trimEnabled && this.trim != SpriteTrim.FULL && MeteorParticleRenderTypes.softSheetActive()) {
-         this.renderTrimmed(consumer, camera, partialTick);
+         if (!this.renderTrimmed(consumer, camera, partialTick)) {
+            super.render(consumer, camera, partialTick);
+         }
       } else {
          super.render(consumer, camera, partialTick);
       }
@@ -256,12 +260,22 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
     * order, the same UV per point of the plane, so every pixel that can be non-transparent is drawn exactly as
     * before; the transparent margin (≈42 % of the quad's area) is simply not rasterized. Only valid while the soft
     * program samples the atlas linearly without mipmaps ({@link MeteorParticleRenderTypes#softSheetActive}).
+    *
+    * <p>Fog is evaluated per vertex and interpolated, so a smaller quad would carry slightly different fog
+    * distances. The trimmed quad is therefore used only when fog cannot differ: the whole puff is nearer than the
+    * fog start (no fog on either quad) or farther than the fog end (fully fogged on both). Otherwise this returns
+    * {@code false} and the caller draws the original full quad.
     */
-   private void renderTrimmed(VertexConsumer consumer, Camera camera, float partialTick) {
+   private boolean renderTrimmed(VertexConsumer consumer, Camera camera, float partialTick) {
       Vec3 cam = camera.getPosition();
       float px = (float)(Mth.lerp(partialTick, this.xo, this.x) - cam.x());
       float py = (float)(Mth.lerp(partialTick, this.yo, this.y) - cam.y());
       float pz = (float)(Mth.lerp(partialTick, this.zo, this.z) - cam.z());
+      float size = this.getQuadSize(partialTick);
+      if (!fogNeutral(px, py, pz, size, RenderSystem.getShaderFogStart(), RenderSystem.getShaderFogEnd(),
+         RenderSystem.getShaderFogShape() == FogShape.CYLINDER)) {
+         return false;
+      }
       Quaternionf rotation;
       if (this.roll == 0.0F) {
          rotation = camera.rotation();
@@ -277,12 +291,31 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       float uA = this.getU0(), uB = this.getU1(), vA = this.getV0(), vB = this.getV1();
       float uS0 = Mth.lerp(s0, uA, uB), uS1 = Mth.lerp(s1, uA, uB);
       float vT0 = Mth.lerp(t0, vA, vB), vT1 = Mth.lerp(t1, vA, vB);
-      float size = this.getQuadSize(partialTick);
       int light = this.getLightColor(partialTick);
       this.corner(consumer, rotation, xNear, yNear, size, px, py, pz, uS1, vT1, light);
       this.corner(consumer, rotation, xNear, yFar, size, px, py, pz, uS1, vT0, light);
       this.corner(consumer, rotation, xFar, yFar, size, px, py, pz, uS0, vT0, light);
       this.corner(consumer, rotation, xFar, yNear, size, px, py, pz, uS0, vT1, light);
+      return true;
+   }
+
+   /**
+    * True when vanilla per-vertex fog gives the same result for every point of a camera-facing quad of half-size
+    * {@code size} centred at camera-relative (px, py, pz), whatever sub-rectangle is drawn. Any point of the quad
+    * lies within {@code size * sqrt 2} of the centre; spherical fog distance is the length, cylindrical fog
+    * distance lies between length / sqrt 2 and length. A one-block margin absorbs float error and small model-view offsets (camera shake).
+    */
+   static boolean fogNeutral(float px, float py, float pz, float size, float fogStart, float fogEnd, boolean cylinder) {
+      float centre = Mth.sqrt(px * px + py * py + pz * pz);
+      float reach = size * 1.4143F + 1.0F;
+      if (centre + reach <= fogStart) {
+         return true;
+      }
+      float nearest = centre - reach;
+      if (cylinder) {
+         nearest /= 1.4143F;
+      }
+      return nearest >= fogEnd;
    }
 
    private void corner(VertexConsumer consumer, Quaternionf rotation, float cx, float cy, float size, float px, float py, float pz, float u, float v,
