@@ -300,12 +300,12 @@ public final class WindowPeril {
                continue;
             }
             BlockPos b = new BlockPos(feet.getX() + dx, y, feet.getZ() + dz);
-            if (!level.isLoaded(b) || !free(level, b) || !free(level, b.above()) || level.canSeeSky(b) || !fullTop(level, b.below())) {
+            if (!level.isLoaded(b) || !free(level, b) || !free(level, b.above()) || !roofed(level, b, m) || !fullTop(level, b.below())) {
                continue;
             }
             for (Direction side : SIDES) {
                BlockPos e = b.relative(side);
-               if (!level.isLoaded(e) || !free(level, e) || !free(level, e.above()) || !level.canSeeSky(e)) {
+               if (!level.isLoaded(e) || !free(level, e) || !free(level, e.above()) || !outside(level, e)) {
                   continue;
                }
                int drop = drop(level, e, m);
@@ -318,6 +318,29 @@ public final class WindowPeril {
          }
       }
       return best;
+   }
+
+   /**
+    * A floor of the building, not a roof terrace: a ceiling a few blocks up (a blast may have opened the slab right
+    * above the person, the rest of the room still has one).
+    */
+   static boolean roofed(Level level, BlockPos b, BlockPos.MutableBlockPos m) {
+      for (int dy = 2; dy <= WindowRules.CEILING_UP; dy++) {
+         m.set(b.getX(), b.getY() + dy, b.getZ());
+         if (!free(level, m)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   /**
+    * Open air outside the facade: daylight reaches it from the sky (sky light, so a cornice or a balcony above the
+    * window does not hide the street as a strict "sees the sky" test did in the Atheria playtest) - an inner
+    * courtyard under a roof or a stairwell stays darker.
+    */
+   static boolean outside(Level level, BlockPos e) {
+      return level.canSeeSky(e) || level.getBrightness(net.minecraft.world.level.LightLayer.SKY, e) >= WindowRules.OUTSIDE_SKY_LIGHT;
    }
 
    /** Free blocks under {@code e} down to the first one to land on (solid or a fluid); 0 when unknown. */

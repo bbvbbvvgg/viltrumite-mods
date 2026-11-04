@@ -20,6 +20,10 @@ public final class WindowRules {
    public static final int MAX_DROP = 96;
    /** Openings are looked for this far (blocks, horizontally) from the person, on its own floor. */
    public static final int SEARCH_R = 9;
+   /** A floor has its ceiling within this many blocks above the feet (else it is a roof terrace). */
+   public static final int CEILING_UP = 6;
+   /** Sky light (0..15) of open air outside a window, also under a cornice or a balcony. */
+   public static final int OUTSIDE_SKY_LIGHT = 13;
    /** How often (ticks) the people upstairs are considered. */
    public static final int SCAN_PERIOD = 20;
    /** Destruction below this (0..1) leaves people upstairs where they are. */
