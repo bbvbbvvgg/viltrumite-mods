@@ -85,6 +85,12 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       }
    }
 
+   /**
+    * Draw only the visible rectangle of the sprite ({@link SpriteTrim}). On by default; {@code -Dviltrumitecore.smoke.trim=false}
+    * restores the full quads for A/B frame-time and screenshot comparisons.
+    */
+   static final boolean TRIM = !"false".equalsIgnoreCase(System.getProperty("viltrumitecore.smoke.trim"));
+
    /** Ruin wind in blocks per tick per tick (set by the aftermath client each tick; 0 when no ruin is near). */
    private static float windX;
    private static float windZ;
@@ -138,7 +144,7 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       this.seedB = this.random.nextFloat() * 100.0F;
       this.seedC = this.random.nextFloat() * 100.0F;
       this.pickSprite(sprites);
-      this.trim = SpriteTrim.of(this.sprite, UV_INSET);
+      this.trim = TRIM ? SpriteTrim.of(this.sprite, UV_INSET) : SpriteTrim.FULL;
       this.updateColor();
    }
 

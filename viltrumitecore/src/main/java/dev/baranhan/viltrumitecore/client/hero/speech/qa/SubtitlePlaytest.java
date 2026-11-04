@@ -56,6 +56,8 @@ import org.slf4j.Logger;
  * lean, drift, ground); {@code bikes} logs every Hell Cycle this client draws, remote copies included (multiplayer
  * sync), with the effect entries and engine loops it still holds. {@code venomstate} logs every Venom this client draws
  * (form, move, hunger, flags, height), the running host takeovers, the local host view (camera, post uniforms) and the boss.
+ * {@code perfreset} starts a frame-time window, {@code perfstate [label]} logs it ({@code FrameProbe}: avg FPS, 1 %/0.1 % low,
+ * p50/p99/max frame ms, GC, heap, particles, entities).
  */
 public final class SubtitlePlaytest {
    public static final boolean ENABLED = Boolean.getBoolean("viltrumitecore.subtitles.playtest");
@@ -257,6 +259,8 @@ public final class SubtitlePlaytest {
             SCENE_SHOTS.sort(Integer::compare);
          }
          // The choice screen opens only on purpose now (/viltrumite choose), so it is no longer closed here (#134).
+         case "perfreset" -> dev.baranhan.viltrumitecore.client.perf.FrameProbe.reset();
+         case "perfstate" -> LOG.info("SUBPT t={} perf {} {}", ticks, arg, dev.baranhan.viltrumitecore.client.perf.FrameProbe.describe(mc));
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} hero={} screen={} fps={}", ticks, mc.level != null, mc.player != null,
             mc.player == null ? -1.0F : mc.player.getHealth(), mc.player == null ? "-" : dev.baranhan.viltrumitecore.hero.HeroRegistry.get(mc.player).id().key(),
             mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getFps());
@@ -413,6 +417,7 @@ public final class SubtitlePlaytest {
 
    private static void onRenderTick(TickEvent.RenderTickEvent event) {
       if (event.phase == TickEvent.Phase.END) {
+         dev.baranhan.viltrumitecore.client.perf.FrameProbe.frame();
          // the Thanos warning slot as drawn this frame (reset here, so a frame without the HUD reads as none)
          String strip = dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStrip;
          float stripK = dev.baranhan.viltrumitecore.client.thanos.ThanosHud.qaStripK;
