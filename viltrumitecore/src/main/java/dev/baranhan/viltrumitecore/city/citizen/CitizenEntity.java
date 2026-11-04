@@ -61,6 +61,16 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    double hangTop;
    int hangTicks;
    double fallFromY;
+   // window falls (server only; see WindowPeril)
+   /** The opening this person goes to / stands at, the way out of it, the phase and its ticks. */
+   @Nullable
+   BlockPos windowAt;
+   @Nullable
+   net.minecraft.core.Direction windowOut;
+   byte windowPhase;
+   int windowTicks;
+   @Nullable
+   WindowRules.Cause windowCause;
    int voiceCooldown;
    /** A voice due later (a witness gasps a moment after the fall): kind and game time. */
    @Nullable
@@ -119,6 +129,29 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       this.setMaxUpStep(1.0F);
       this.setCanPickUpLoot(false);
       this.xpReward = 0;
+      this.phoneCalmSince = level.getGameTime();
+   }
+
+   /** Game time since when this person has been calm (#151): a phone moment that began before is skipped. */
+   long phoneCalmSince;
+
+   /**
+    * The shared phone moment of this person now (#151, {@link dev.baranhan.viltrumitecore.city.life.PhoneRoutine}):
+    * only while calm, and never one that began before the person calmed down. Clients compute the same timeline.
+    */
+   public dev.baranhan.viltrumitecore.city.life.PhoneRoutine.Moment phone() {
+      CitizenState s = this.citizenState();
+      if (s != CitizenState.IDLE && s != CitizenState.WALKING) {
+         return dev.baranhan.viltrumitecore.city.life.PhoneRoutine.Moment.NONE;
+      }
+      long now = this.level().getGameTime();
+      return dev.baranhan.viltrumitecore.city.life.PhoneRoutine.calm(
+         dev.baranhan.viltrumitecore.city.life.PhoneRoutine.at(this.skin(), now, 0.0F), now - this.phoneCalmSince);
+   }
+
+   /** Stands still for the call right now (#151): dialling, raising the phone, talking. */
+   public boolean onCall() {
+      return this.phone().holdsStill();
    }
 
    public static AttributeSupplier.Builder createAttributes() {
@@ -239,6 +272,10 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
       if (from != s) {
          this.entityData.set(STATE, (byte)s.ordinal());
          this.stateTicks = 0;
+         boolean calmFrom = from == CitizenState.IDLE || from == CitizenState.WALKING;
+         if (!calmFrom && (s == CitizenState.IDLE || s == CitizenState.WALKING)) {
+            this.phoneCalmSince = this.level().getGameTime();
+         }
          if (s != CitizenState.FLEEING) {
             this.fleeTarget = null;
          }

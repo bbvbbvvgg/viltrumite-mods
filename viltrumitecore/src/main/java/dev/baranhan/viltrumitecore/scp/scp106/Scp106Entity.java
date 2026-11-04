@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.scp.scp106;
 
+import dev.baranhan.viltrumitecore.hero.CleanDamageSink;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.Scp106S2CPacket;
 import dev.baranhan.viltrumitecore.scp.scp106.block.PocketBlocks;
@@ -56,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * takes the one player it caught into the pocket dimension. It never dies: enough damage only makes it retreat.
  * Inside the pocket dimension it is a hunter bound to one player: a catch there drags and hurts, never kills.
  */
-public class Scp106Entity extends PathfinderMob {
+public class Scp106Entity extends PathfinderMob implements CleanDamageSink {
    static final Logger LOG = LoggerFactory.getLogger("viltrumitecore/scp106");
    public static final int FLAG_POCKET = 1;
    public static final int FLAG_NATURAL = 2;
@@ -93,6 +94,8 @@ public class Scp106Entity extends PathfinderMob {
    private boolean leaving;
    private long lastSeen = Long.MIN_VALUE;
    private boolean checkedLoad;
+   /** Set only by {@link #readAdditionalSaveData}: a fresh spawn (pocket hunter included) is never "stale". */
+   private boolean loadedFromDisk;
    private Vec3 lastPos = Vec3.ZERO;
    @Nullable
    private Vec3 phaseDir;
@@ -323,24 +326,64 @@ public class Scp106Entity extends PathfinderMob {
       if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
          return super.hurt(source, amount);
       }
-      if (source.is(DamageTypeTags.IS_FALL) || source.is(DamageTypeTags.IS_DROWNING) || source.is(DamageTypeTags.IS_FREEZING)
-         || source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.CACTUS) || source.is(DamageTypes.CRAMMING)
-         || source.is(DamageTypes.FLY_INTO_WALL) || source.is(DamageTypes.WITHER) || source.is(DamageTypeTags.IS_FIRE)) {
+      if (shrugsOff(source)) {
          return false;
       }
       boolean hit = super.hurt(source, amount);
       if (hit && !this.level().isClientSide) {
-         this.hitTicks[this.hitIndex] = this.level().getGameTime();
-         this.hitDamage[this.hitIndex] = amount;
-         this.hitIndex = (this.hitIndex + 1) % this.hitTicks.length;
-         if (Scp106Rules.shouldRetreat(this.level().getGameTime(), this.hitTicks, this.hitDamage, this.hitTicks.length)) {
-            this.retreat();
-         } else if (this.state() == Scp106State.STARE) {
-            this.setState(Scp106State.STALK);
-         }
+         this.recordHit(amount);
       }
       return hit;
    }
+
+   /** Environmental damage it never takes (fall, drowning, freezing, suffocation, cactus, cramming, wither, fire). */
+   static boolean shrugsOff(DamageSource source) {
+      return source.is(DamageTypeTags.IS_FALL) || source.is(DamageTypeTags.IS_DROWNING) || source.is(DamageTypeTags.IS_FREEZING)
+         || source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.CACTUS) || source.is(DamageTypes.CRAMMING)
+         || source.is(DamageTypes.FLY_INTO_WALL) || source.is(DamageTypes.WITHER) || source.is(DamageTypeTags.IS_FIRE);
+   }
+
+   /** Retreat accounting shared by {@link #hurt} and {@link #cleanDamage}: 80 damage in 10 s sends it away. */
+   private void recordHit(float amount) {
+      this.hitTicks[this.hitIndex] = this.level().getGameTime();
+      this.hitDamage[this.hitIndex] = amount;
+      this.hitIndex = (this.hitIndex + 1) % this.hitTicks.length;
+      if (Scp106Rules.shouldRetreat(this.level().getGameTime(), this.hitTicks, this.hitDamage, this.hitTicks.length)) {
+         this.retreat();
+      } else if (this.state() == Scp106State.STARE) {
+         this.setState(Scp106State.STALK);
+      }
+   }
+
+   /**
+    * Clean hero damage (Mutilation, drains, deferred control damage) skips {@code hurt()}; it keeps the same rules:
+    * immune states and damage types, the one-point health floor and the retreat accounting. Only damage that
+    * bypasses invulnerability (/kill, the void) can take the last point.
+    */
+   @Override
+   public void cleanDamage(DamageSource source, float amount) {
+      if (this.level().isClientSide || amount <= 0.0F || !this.isAlive() || this.isDeadOrDying() || this.isInvulnerableTo(source)) {
+         return;
+      }
+      boolean bypass = source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
+      if (!bypass && shrugsOff(source)) {
+         return;
+      }
+      float dealt = Scp106Rules.cleanDealt(bypass, amount, this.getHealth());
+      if (dealt > 0.0F) {
+         float health = this.getHealth() - dealt;
+         if (health <= 0.0F) {
+            this.setHealth(0.0F);
+            this.die(source);
+            return;
+         }
+         this.setHealth(health);
+      }
+      if (!bypass) {
+         this.recordHit(amount);
+      }
+   }
+
 
    /** Ordinary damage never takes it below one heart point: it retreats instead (only /kill and the void kill it). */
    @Override
@@ -418,7 +461,7 @@ public class Scp106Entity extends PathfinderMob {
       if (!this.checkedLoad) {
          this.checkedLoad = true;
          // a saved hunter that comes back long after (chunk reloaded, server restarted) has no business left here
-         if (this.pocketHunter() || this.lastSeen != Long.MIN_VALUE && now - this.lastSeen > 1_200) {
+         if (Scp106Rules.staleOnLoad(this.loadedFromDisk, this.pocketHunter(), this.lastSeen, now)) {
             LOG.debug("SCP-106 #{} reloaded stale ({} ticks), discarded", this.getId(), now - this.lastSeen);
             this.discard();
             return;
@@ -863,6 +906,10 @@ public class Scp106Entity extends PathfinderMob {
 
    /** A corrosion film in the free block {@code pos}, on its {@code face} side (that neighbour must be a solid face). */
    void corrode(ServerLevel level, BlockPos pos, Direction face) {
+      // every corrosion path (emerge, walk, phase, capture, stand) goes through here: honour mobGriefing once
+      if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(level, this)) {
+         return;
+      }
       if (!level.hasChunkAt(pos)) {
          return;
       }
@@ -1007,7 +1054,9 @@ public class Scp106Entity extends PathfinderMob {
       this.huntTicks = tag.getInt("Hunt");
       this.leaving = tag.getBoolean("Leaving");
       this.lastSeen = tag.contains("LastSeen") ? tag.getLong("LastSeen") : Long.MIN_VALUE;
+      this.loadedFromDisk = true;
    }
+
 
    public String describe() {
       return String.format(java.util.Locale.ROOT, "#%d %s %s at %.0f %.0f %.0f in %s, hunt %ds%s%s", this.getId(), this.state(),

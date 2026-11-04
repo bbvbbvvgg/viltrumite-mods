@@ -26,6 +26,8 @@ public final class VenomThrows {
       boolean airborne;
       float fall;
       double fallSpeed;
+      /** Last tick's horizontal speed (squared): vanilla zeroes the blocked components before the END tick. */
+      double horizontal;
 
       Flight(LivingEntity thrower, LivingEntity body, float damage, long until) {
          this.thrower = thrower;
@@ -56,6 +58,11 @@ public final class VenomThrows {
       return onGround && wasAirborne && (fall > 2.0F || fallSpeed > 0.6);
    }
 
+   /** A wall impact: a horizontal collision while the body was still flying fast before it (or still is). */
+   static boolean wallImpact(boolean collided, double horizontalBefore, double horizontalNow) {
+      return collided && Math.max(horizontalBefore, horizontalNow) > 0.01;
+   }
+
    private VenomThrows() {
    }
 
@@ -73,6 +80,8 @@ public final class VenomThrows {
             continue;
          }
          Vec3 v = b.getDeltaMovement();
+         double before = f.horizontal;
+         f.horizontal = v.horizontalDistanceSqr();
          boolean ground = hardLanding(f.airborne, f.fall, f.fallSpeed, b.onGround());
          if (b.onGround()) {
             f.airborne = false;
@@ -86,7 +95,7 @@ public final class VenomThrows {
          if (b.level().getGameTime() < f.until() - 36) {
             continue; // the first ticks leave the thrower's reach
          }
-         boolean wall = b.horizontalCollision && v.horizontalDistanceSqr() > 0.01;
+         boolean wall = wallImpact(b.horizontalCollision, before, v.horizontalDistanceSqr());
          Entity other = null;
          for (LivingEntity e : b.level().getEntitiesOfClass(LivingEntity.class, b.getBoundingBox().inflate(0.3),
             e -> e != b && e != f.thrower() && f.thrower() instanceof net.minecraft.server.level.ServerPlayer sp ? VenomTargets.mayHit(sp, e) : e != b && e != f.thrower())) {

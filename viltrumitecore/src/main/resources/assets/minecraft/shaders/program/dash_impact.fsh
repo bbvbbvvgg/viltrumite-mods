@@ -97,7 +97,7 @@ void main() {
     float safeVenomFlash = clamp(VenomFlash, 0.0, 1.0);
 
     // Hiçbir efekt yoksa boş döndür (Performans)
-    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0 && safeVenomHost <= 0.001) {
+    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0 && safeVenomHost <= 0.001 && safeVenomVeins <= 0.001) {
         vec4 defaultColor = texture(DiffuseSampler, baseUv);
         defaultColor.a = 1.0;
         fragColor = defaultColor;
@@ -416,18 +416,22 @@ void main() {
     // violet-black, dark veins crawling in from the edges with a faint pulse, the lids closing to a narrow slit
     // (soft-edged and wavering, never shut) and sudden violet-white flashes with an inverted ghost. A floor keeps
     // even the darkest part from going plain black.
-    if (safeVenomHost > 0.001) {
+    // (the veins alone also run it: Venom's own first-person transformation sets VenomVeins without a host)
+    if (safeVenomHost > 0.001 || safeVenomVeins > 0.001) {
         vec2 vSize = vec2(textureSize(DiffuseSampler, 0));
         float vAspect = vSize.x / max(vSize.y, 1.0);
         vec2 vRel = (texCoord - 0.5) * vec2(vAspect, 1.0);
         float vDist = length(vRel);
         float breathe = 0.5 + 0.5 * sin(Time * 2.1);
         float radius = (1.5 + 3.0 * safeVenomHost + 2.0 * breathe * safeVenomHost) / max(vSize.y, 1.0);
-        vec3 blur = finalColor.rgb * 0.2;
-        for (int i = 0; i < 8; i++) {
-            float a = float(i) * 0.785398 + Time * 0.3;
-            vec2 off = vec2(cos(a) / vAspect, sin(a)) * radius * (1.0 + float(i - (i / 2) * 2));
-            blur += texture(DiffuseSampler, clamp(texCoord + off, 0.0, 1.0)).rgb * 0.1;
+        vec3 blur = finalColor.rgb;
+        if (safeVenomHost > 0.001) {
+            blur *= 0.2;
+            for (int i = 0; i < 8; i++) {
+                float a = float(i) * 0.785398 + Time * 0.3;
+                vec2 off = vec2(cos(a) / vAspect, sin(a)) * radius * (1.0 + float(i - (i / 2) * 2));
+                blur += texture(DiffuseSampler, clamp(texCoord + off, 0.0, 1.0)).rgb * 0.1;
+            }
         }
         vec3 vc = mix(finalColor.rgb, blur, clamp(safeVenomHost * (0.45 + 0.45 * smoothstep(0.1, 0.8, vDist)), 0.0, 1.0));
         float vLuma = dot(vc, vec3(0.299, 0.587, 0.114));

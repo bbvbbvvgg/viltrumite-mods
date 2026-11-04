@@ -23,10 +23,33 @@ public final class CollapseMotion {
    public static final int SINK_TICKS = 20;
    public static final double SINK_DEPTH = 1.3;
 
-   /** Where a fragment comes to rest: the first air block above the ground at a column. */
+   /**
+    * Longest free flight a track may simulate (60 s). A track always ends on a real contact before this; the cap
+    * only guards against a column with no floor at all (the void), where the piece ends below the world.
+    */
+   public static final int MAX_FLIGHT_TICKS = 1200;
+
+   /** Where a fragment comes to rest. */
    @FunctionalInterface
    public interface Ground {
+      /** A column whose blocks are not known here (unloaded chunk): the piece lands on the section's ground. */
+      int UNKNOWN = Integer.MIN_VALUE;
+
+      /** The first air block above the ground at a column. */
       int surface(int x, int z);
+
+      /**
+       * The landing surface under {@code fromY}: the first free y above the highest solid block at or below it
+       * (a roof, a floor slab, a ledge, the street), or {@link #UNKNOWN}.
+       */
+      default int surface(int x, int z, int fromY) {
+         return this.surface(x, z);
+      }
+
+      /** Whether the block is solid (a facade the piece runs into sideways). */
+      default boolean solid(int x, int y, int z) {
+         return false;
+      }
    }
 
    public static final class Piece {
@@ -37,6 +60,7 @@ public final class CollapseMotion {
       public int delay;
       /** Tick (relative to the collapse) the fragment lands, or -1. */
       public int land = -1;
+      /** Samples in the track; the last one is the resting pose (a track always ends on a contact). */
       public int length;
       public float[] x, y, z, qx, qy, qz, qw;
 
@@ -49,15 +73,41 @@ public final class CollapseMotion {
          this.facade = facade;
       }
 
+      /** Initial capacity of the track; it grows while the piece is still flying (no fixed length). */
       void alloc(int n) {
-         this.length = n;
-         this.x = new float[n];
-         this.y = new float[n];
-         this.z = new float[n];
-         this.qx = new float[n];
-         this.qy = new float[n];
-         this.qz = new float[n];
-         this.qw = new float[n];
+         int cap = Math.max(8, n);
+         this.length = 0;
+         this.x = new float[cap];
+         this.y = new float[cap];
+         this.z = new float[cap];
+         this.qx = new float[cap];
+         this.qy = new float[cap];
+         this.qz = new float[cap];
+         this.qw = new float[cap];
+      }
+
+      void ensure(int n) {
+         if (n <= this.x.length) {
+            return;
+         }
+         int cap = Math.max(n, this.x.length * 2);
+         this.x = java.util.Arrays.copyOf(this.x, cap);
+         this.y = java.util.Arrays.copyOf(this.y, cap);
+         this.z = java.util.Arrays.copyOf(this.z, cap);
+         this.qx = java.util.Arrays.copyOf(this.qx, cap);
+         this.qy = java.util.Arrays.copyOf(this.qy, cap);
+         this.qz = java.util.Arrays.copyOf(this.qz, cap);
+         this.qw = java.util.Arrays.copyOf(this.qw, cap);
+      }
+
+      /** In the air at track tick {@code t}: started and not yet on a surface. */
+      public boolean airborne(int t) {
+         return this.land < 0 || t < this.land;
+      }
+
+      /** Resting on its surface (before it sinks into the dust): the window in which that surface is watched. */
+      public boolean resting(int t) {
+         return this.land >= 0 && t >= this.land && t < this.land + REST_TICKS;
       }
 
       /** Track sample, clamped to the last one; after landing the piece rests, then sinks. */
@@ -214,8 +264,7 @@ public final class CollapseMotion {
    // ------------------------------------------------------------------ tracks
 
    private static void track(Piece p, int index, CollapseVariant variant, Section s) {
-      int length = Math.min(260, s.impact * 3 + 60);
-      p.alloc(length);
+      p.alloc(Math.min(260, s.impact * 3 + 60));
       double rel = (p.oy - s.minY) / Math.max(1.0, s.height());
       long seed = s.seed;
       double u0 = u(seed, index, 11, 0), u1 = u(seed, index, 12, 0), u2 = u(seed, index, 13, 0), u3 = u(seed, index, 14, 0);
@@ -285,9 +334,13 @@ public final class CollapseMotion {
    private static final class Motion {
       double x, y, z, vx, vy, vz;
       double qx, qy, qz, qw;
+      /** Height before this tick's step: the contact test sweeps from here (a fast piece cannot skip a roof). */
+      double py;
    }
 
    private static void store(Piece p, int t, Motion m) {
+      p.ensure(t + 1);
+      p.length = Math.max(p.length, t + 1);
       p.x[t] = (float)m.x;
       p.y[t] = (float)m.y;
       p.z[t] = (float)m.z;
@@ -297,11 +350,17 @@ public final class CollapseMotion {
       p.qw[t] = (float)m.qw;
    }
 
-   /** True (and the motion clamped) when the piece touches the ground at its column. */
+   /**
+    * True (and the motion clamped) when the piece touches a real surface at its column: the highest solid
+    * block under the height it had before this step (roof, floor slab, ledge, street), so a fast piece cannot
+    * fall through a roof between two samples. An unknown column (unloaded chunk) lands on the section's ground.
+    */
    private static boolean grounded(Piece p, Section s, Motion m) {
       int fx = (int)Math.floor(m.x), fz = (int)Math.floor(m.z);
-      boolean under = fx >= s.minX && fx <= s.maxX && fz >= s.minZ && fz <= s.maxZ;
-      int surface = under ? s.surfaceY : Math.max(s.surfaceY - 8, Math.min(s.surfaceY + 12, s.ground.surface(fx, fz)));
+      int surface = s.ground.surface(fx, fz, (int)Math.floor(Math.max(m.py, m.y)));
+      if (surface == Ground.UNKNOWN) {
+         surface = s.surfaceY;
+      }
       double floor = surface + p.half * 0.55;
       if (m.y <= floor) {
          m.y = floor;
@@ -310,21 +369,35 @@ public final class CollapseMotion {
       return false;
    }
 
+   /** Free-flight step: a piece flying sideways into a solid facade stops against it and slides down. */
+   private static void step(Section s, Motion m) {
+      m.py = m.y;
+      double nx = m.x + m.vx, nz = m.z + m.vz;
+      int by = (int)Math.floor(m.y);
+      if (((int)Math.floor(nx) != (int)Math.floor(m.x) || (int)Math.floor(nz) != (int)Math.floor(m.z))
+         && s.ground.solid((int)Math.floor(nx), by, (int)Math.floor(nz)) && !s.ground.solid((int)Math.floor(m.x), by, (int)Math.floor(m.z))) {
+         m.vx *= -0.15;
+         m.vz *= -0.15;
+      } else {
+         m.x = nx;
+         m.z = nz;
+      }
+      m.y += m.vy;
+   }
+
    /** Free fall after {@code delay} ticks at rest, with a small drift and spin. */
    private static void dropTrack(Piece p, Section s, Motion m, int delay, double vx, double vz, double sax, double say, double saz, double spin) {
       int t = 0;
-      for (; t < Math.min(delay, p.length); t++) {
+      for (; t < delay; t++) {
          store(p, t, m);
       }
       m.vx = vx;
       m.vz = vz;
       m.vy = 0.0;
       int start = t;
-      for (; t < p.length; t++) {
+      for (; t < MAX_FLIGHT_TICKS; t++) {
          m.vy -= CollapseRules.GRAVITY;
-         m.x += m.vx;
-         m.y += m.vy;
-         m.z += m.vz;
+         step(s, m);
          m.vy *= 0.985;
          setQuat(m, sax, say, saz, spin * (t - start));
          if (grounded(p, s, m)) {
@@ -334,6 +407,7 @@ public final class CollapseMotion {
          }
          store(p, t, m);
       }
+      land(p, p.length - 1);
    }
 
    /**
@@ -343,7 +417,7 @@ public final class CollapseMotion {
    private static void swingTrack(Piece p, Section s, Motion m, int delay, double hx, double hy, double hz, double ax, double ay, double az, double maxAngle,
       double T, double breakAt, double sax, double say, double saz, double spinScale) {
       int t = 0;
-      for (; t < Math.min(delay, p.length); t++) {
+      for (; t < delay; t++) {
          store(p, t, m);
       }
       double rx = p.ox - hx, ry = p.oy - hy, rz = p.oz - hz;
@@ -352,7 +426,8 @@ public final class CollapseMotion {
       boolean free = false;
       int freeAt = 0;
       double spin = 0.0;
-      for (; t < p.length; t++) {
+      for (; t < MAX_FLIGHT_TICKS; t++) {
+         m.py = m.y;
          if (!free) {
             double k = (t - delay + 1) / T;
             double angle = maxAngle * Math.min(1.0, k * k);
@@ -369,7 +444,25 @@ public final class CollapseMotion {
             m.qy = qy;
             m.qz = qz;
             m.qw = qw;
-            if (angle >= breakAt || k >= 1.0) {
+            // the swinging piece runs into a neighbour's facade: it breaks off there and falls along it
+            boolean hit = s.ground.solid((int)Math.floor(m.x), (int)Math.floor(m.y), (int)Math.floor(m.z))
+               && !s.ground.solid((int)Math.floor(prevX), (int)Math.floor(prevY), (int)Math.floor(prevZ));
+            if (hit) {
+               double hvx = m.x - prevX, hvy = m.y - prevY, hvz = m.z - prevZ;
+               m.x = prevX;
+               m.y = prevY;
+               m.z = prevZ;
+               free = true;
+               freeAt = t;
+               m.vx = -0.15 * hvx;
+               m.vz = -0.15 * hvz;
+               m.vy = Math.min(0.0, hvy);
+               bqx = qx;
+               bqy = qy;
+               bqz = qz;
+               bqw = qw;
+               spin = spinScale * maxAngle * 0.5 * Math.min(1.0, k) / T;
+            } else if (angle >= breakAt || k >= 1.0) {
                free = true;
                freeAt = t;
                m.vx = m.x - prevX;
@@ -384,9 +477,7 @@ public final class CollapseMotion {
             }
          } else {
             m.vy -= CollapseRules.GRAVITY;
-            m.x += m.vx;
-            m.y += m.vy;
-            m.z += m.vz;
+            step(s, m);
             m.vx *= 0.99;
             m.vz *= 0.99;
             double a = spin * (t - freeAt);
@@ -404,20 +495,47 @@ public final class CollapseMotion {
          }
          store(p, t, m);
       }
+      land(p, p.length - 1);
    }
 
+   /** The track ends on the contact: {@link Piece#at} holds that resting pose from here on. */
    private static void land(Piece p, int t) {
       p.land = t;
-      // the rest of the track holds the resting pose
-      for (int i = t + 1; i < p.length; i++) {
-         p.x[i] = p.x[t];
-         p.y[i] = p.y[t];
-         p.z[i] = p.z[t];
-         p.qx[i] = p.qx[t];
-         p.qy[i] = p.qy[t];
-         p.qz[i] = p.qz[t];
-         p.qw[i] = p.qw[t];
+      p.length = t + 1;
+   }
+
+   /**
+    * The surface a resting piece lay on is gone (a roof or a slab broken later, another collapse): it falls on
+    * from its resting pose at track tick {@code t} until the next real contact, then rests and sinks again.
+    */
+   public static void refall(Piece p, int t, Ground ground, int fallbackSurface) {
+      int last = p.length - 1;
+      Motion m = new Motion();
+      m.x = p.x[last];
+      m.y = p.y[last];
+      m.z = p.z[last];
+      m.qx = p.qx[last];
+      m.qy = p.qy[last];
+      m.qz = p.qz[last];
+      m.qw = p.qw[last];
+      for (int i = p.length; i <= t; i++) {
+         store(p, i, m);
       }
+      p.length = t + 1;
+      p.land = -1;
+      Section s = new Section(0, 0, 0, 0, 0, 0, m.x, m.z, 1.0, 0.0, 0.5, fallbackSurface, 4, 0L, ground);
+      for (int i = t + 1; i < t + MAX_FLIGHT_TICKS; i++) {
+         m.vy -= CollapseRules.GRAVITY;
+         step(s, m);
+         m.vy *= 0.985;
+         if (grounded(p, s, m)) {
+            store(p, i, m);
+            land(p, i);
+            return;
+         }
+         store(p, i, m);
+      }
+      land(p, p.length - 1);
    }
 
    private static void setQuat(Motion m, double ax, double ay, double az, double angle) {

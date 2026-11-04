@@ -326,8 +326,8 @@ final class CitizenGoals {
             return true; // the other one started the chat
          }
 
-         if (this.c.citizenState() != CitizenState.IDLE || !due(this.c, 40)) {
-            return false;
+         if (this.c.citizenState() != CitizenState.IDLE || !due(this.c, 40) || this.c.phone().active()) {
+            return false; // #151: busy with the phone
          }
 
          CityManager city = CityManager.of(this.c.level());
@@ -342,7 +342,7 @@ final class CitizenGoals {
          }
 
          CitizenEntity o = city.crowd().idleNear(this.c, 4.0);
-         if (o == null || o.citizenState() != CitizenState.IDLE) {
+         if (o == null || o.citizenState() != CitizenState.IDLE || o.phone().active()) {
             return false;
          }
 
@@ -445,8 +445,8 @@ final class CitizenGoals {
 
       @Override
       public boolean canUse() {
-         if (!this.strollState()) {
-            return false;
+         if (!this.strollState() || this.c.onCall()) {
+            return false; // #151: stops for the call
          }
 
          CitizenEntity lead = this.c.leader;
@@ -519,7 +519,7 @@ final class CitizenGoals {
 
       @Override
       public boolean canContinueToUse() {
-         return this.strollState() && ++this.time < (this.following ? 20 : 900) && !this.c.getNavigation().isDone();
+         return this.strollState() && ++this.time < (this.following ? 20 : 900) && !this.c.getNavigation().isDone() && !this.c.onCall();
       }
 
       @Override
@@ -552,7 +552,7 @@ final class CitizenGoals {
       public boolean canUse() {
          CitizenState s = this.c.citizenState();
          if (!this.c.occupant || s != CitizenState.IDLE && s != CitizenState.RECOVERING || !this.c.onGround()
-            || this.c.idleTicks > 0 || (this.c.tickCount + this.c.getId()) % 20 != 0) {
+            || this.c.idleTicks > 0 || !due(this.c, 20)) {
             return false;
          }
 

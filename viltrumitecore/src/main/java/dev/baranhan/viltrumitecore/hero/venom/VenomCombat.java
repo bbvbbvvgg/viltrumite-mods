@@ -260,7 +260,8 @@ public final class VenomCombat {
       Vec3 at = t.position();
       VenomFx.send(player, VenomFx.SLAM, at, VenomFx.radius(at, 3.0), 1.3F, 4, t.getId());
       VenomSounds.playAt(player, at, VenomSounds.SLAM, 1.2F, VenomSounds.jitter(player, 0.85F));
-      player.level().playSound(null, at.x, at.y, at.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.4F, 1.4F);
+      // the blast layer is cosmetic: played as Venom's own sound so the slam cannot stun its caster
+      VenomWeakness.playOwn(player, at, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.4F, 1.4F);
       for (LivingEntity e : VenomTargets.around(player, at, 2.8, e -> e != t && VenomTargets.mayAutoHit(player, e))) {
          VenomTargets.strike(player, e, VenomRules.SLAM_DAMAGE * 0.4F);
          VenomTargets.push(e, VenomTargets.outward(at, e).scale(0.6).add(0, 0.3, 0));

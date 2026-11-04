@@ -95,4 +95,17 @@ public final class Scp106Rules {
    private static double clamp01(double u) {
       return u < 0 ? 0 : u > 1 ? 1 : u;
    }
+
+   /** Health actually removed by a clean hit: ordinary damage stops one point above death. */
+   public static float cleanDealt(boolean bypass, float amount, float health) {
+      return bypass ? amount : Math.max(0.0F, Math.min(amount, health - 1.0F));
+   }
+
+   /**
+    * Whether an entity seen for the first time this session must be dropped: only one deserialized from disk
+    * (chunk reload, restart) — a saved pocket hunter, or one away for more than a minute. A fresh spawn never is.
+    */
+   public static boolean staleOnLoad(boolean loadedFromDisk, boolean pocketHunter, long lastSeen, long now) {
+      return loadedFromDisk && (pocketHunter || lastSeen != Long.MIN_VALUE && now - lastSeen > 1_200);
+   }
 }

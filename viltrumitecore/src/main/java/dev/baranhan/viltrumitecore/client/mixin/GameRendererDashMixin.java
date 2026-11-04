@@ -318,6 +318,8 @@ public abstract class GameRendererDashMixin {
          float[] venomHost = dev.baranhan.viltrumitecore.client.venom.VenomPossessionClient.post(partialTicks);
          boolean anyEffect = ErasurePost.active() || dashProgress > 0.0F
             || venomHost[0] > 0.005F
+            // Venom's own transformation: only the veins component is set (no host), it must still run the chain
+            || venomHost[1] > 0.005F
             || timeStop[0] + timeStop[1] + timeStop[2] > 0.0F
             || snap[0] + snap[1] + snap[4] + snap[5] > 0.0F
             || punchIntensity > 0.0F

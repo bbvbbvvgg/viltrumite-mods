@@ -26,6 +26,24 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 public final class CollapseClient {
    /** A support chain (#135) runs a stage every ~half second: keep the falling ones and the fresh dust. */
    static final int MAX_SCENES = 8;
+   /** Scenes kept at most even when all of them have fragments in the air (GPU buffers stay bounded). */
+   static final int HARD_MAX_SCENES = 20;
+
+   /**
+    * Pure: which scene to drop for a new one, or -1 to keep them all: the oldest settled one; with all busy,
+    * nothing until the hard cap, then the oldest.
+    */
+   static int evictIndex(boolean[] busy, int max, int hardMax) {
+      if (busy.length < max) {
+         return -1;
+      }
+      for (int i = 0; i < busy.length; i++) {
+         if (!busy[i]) {
+            return i;
+         }
+      }
+      return busy.length >= hardMax ? 0 : -1;
+   }
    private static final List<CollapseScene> SCENES = new ArrayList<>();
    private static Object lastLevel;
    // QA metrics (/collapse is server side; the client logs with -Dviltrumitecore.collapse.log=true)
@@ -61,8 +79,18 @@ public final class CollapseClient {
          if (find(packet.id) != null) {
             return;
          }
+         // make room by dropping a settled scene, oldest first; a scene with fragments in the air (or still to
+         // fall) is only dropped past the hard cap, so a burst of collapses never freezes debris mid-flight
          while (SCENES.size() >= MAX_SCENES) {
-            SCENES.remove(0).close();
+            boolean[] busy = new boolean[SCENES.size()];
+            for (int i = 0; i < busy.length; i++) {
+               busy[i] = SCENES.get(i).busy();
+            }
+            int victim = evictIndex(busy, MAX_SCENES, HARD_MAX_SCENES);
+            if (victim < 0) {
+               break;
+            }
+            SCENES.remove(victim).close();
          }
          SCENES.add(new CollapseScene(mc.level, packet));
          return;

@@ -86,10 +86,33 @@ public final class VenomWeakness {
    }
 
    /** Server: a sound was played in the world. */
+   /** Venom whose own cosmetic sound is being played right now (server thread only): it never stuns its caster. */
+   @javax.annotation.Nullable
+   private static java.util.UUID ownSound;
+
+   /**
+    * Server: plays one of Venom's own cosmetic layers (e.g. the slam's blast) so it still reaches everyone, still
+    * frightens other symbiotes, but does not put its own caster into {@code RECOIL}.
+    */
+   public static void playOwn(ServerPlayer caster, Vec3 at, SoundEvent sound, net.minecraft.sounds.SoundSource source, float volume, float pitch) {
+      java.util.UUID before = ownSound;
+      ownSound = caster.getUUID();
+      try {
+         caster.level().playSound(null, at.x, at.y, at.z, sound, source, volume, pitch);
+      } finally {
+         ownSound = before;
+      }
+   }
+
+   /** Pure: whether a loud sound hits this listener (its own cosmetic playback does not). */
+   static boolean hears(java.util.UUID listener, @javax.annotation.Nullable java.util.UUID own) {
+      return !listener.equals(own);
+   }
+
    public static void sound(ServerLevel level, Vec3 at, SoundEvent sound, float volume) {
       ResourceLocation id = sound.getLocation();
       for (ServerPlayer p : level.players()) {
-         if (p instanceof HeroPlayer hp && hp.getHeroId() == HeroId.VENOM) {
+         if (p instanceof HeroPlayer hp && hp.getHeroId() == HeroId.VENOM && hears(p.getUUID(), ownSound)) {
             VenomState state = VenomState.of(p);
             if (state != null && state.form && loud(id, volume, p.position().distanceTo(at))) {
                recoil(p, state, VenomLines.RECOIL_SOUND);

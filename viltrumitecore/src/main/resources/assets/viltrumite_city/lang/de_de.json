@@ -25,6 +25,7 @@
   "viltrumitecore.city.status.danger": "Danger zones: %s",
   "viltrumitecore.city.status.crowd": "Menge: %s ruhig, %s beunruhigt, %s auf der Flucht, %s versteckt (bewegliche Gefahren: %s)",
   "viltrumitecore.city.status.peril": "Gefahr: %s Personen in oberen Etagen; %s verloren das Gleichgewicht, %s stürzten, %s hielten sich an einer Kante fest (%s kletterten hoch, %s hochgezogen), %s in der Luft gefangen, %s starben beim Sturz; Massenpanik: %s",
+  "viltrumitecore.city.status.windows": "Fenster: %s gingen an ein zerbrochenes Fenster, %s riefen dort um Hilfe, %s stürzten über die Kante, %s traten zurück",
   "viltrumitecore.city.status.restore_clean": "Map: untouched, nothing to restore",
   "viltrumitecore.city.status.restore_dirty": "Map: %s changed blocks in %s chunks (/city reset restores them)",
   "viltrumitecore.city.status.restore_running": "Restoring: %s blocks done, %s chunks left (pass %s)",

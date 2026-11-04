@@ -37,7 +37,7 @@ class CitizenModelTest {
    }
 
    @Test
-   void idleGesturesVaryAndWalkersOnlyKeepThePhone() {
+   void idleGesturesVaryAndThePhoneIsNoMime() {
       Set<Integer> seen = new HashSet<>();
       Random rnd = new Random(5);
       for (int i = 0; i < 2000; i++) {
@@ -45,12 +45,13 @@ class CitizenModelTest {
          int w = rnd.nextInt(1000);
          seen.add(CitizenPoser.gestureFor(seed, w, 10, false));
          int walking = CitizenPoser.gestureFor(seed, w, 10, true);
-         assertTrue(walking == CitizenPoser.NONE || walking == CitizenPoser.PHONE);
+         assertEquals(CitizenPoser.NONE, walking, "walkers keep their hands free (the phone has its own routine, #151)");
+         assertTrue(CitizenPoser.gestureFor(seed, w, 10, false) != CitizenPoser.PHONE, "no phone pose without the phone model");
          // a look at the watch / a head scratch is short: late in the window it is over
          int late = CitizenPoser.gestureFor(seed, w, 120, false);
          assertTrue(late != CitizenPoser.WATCH && late != CitizenPoser.SCRATCH);
       }
-      assertEquals(6, seen.size());
+      assertEquals(5, seen.size());
       assertTrue(CitizenPoser.approach(1.0F, 0.3F) > 0.2F && CitizenPoser.approach(0.0F, 0.3F) == 0.0F);
    }
 }

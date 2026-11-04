@@ -18,7 +18,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
@@ -256,8 +255,9 @@ final class CollapseScene {
       }
       int lod = this.lod();
       int cap = lod == 2 ? 48 : lod == 1 ? 90 : MAX_PIECES;
+      // the section's own blocks are leaving (the server removed them; the client may lag a tick): never a floor
       List<CollapseMotion.Piece> made = CollapseMotion.build(xs, ys, zs, this.variant, this.start.seed, this.start.fallX, this.start.fallZ, this.surfaceY,
-         this.start.fallTicks, cap, this::surface);
+         this.start.fallTicks, cap, this.ground(true));
       for (CollapseMotion.Piece piece : made) {
          int[] members = new int[piece.members.length];
          for (int k = 0; k < members.length; k++) {
@@ -275,8 +275,48 @@ final class CollapseScene {
       }
    }
 
-   private int surface(int x, int z) {
-      return this.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+   /** Snapshot positions (the section): excluded as floors for the main fragments. */
+   private it.unimi.dsi.fastutil.longs.LongOpenHashSet sectionKeys;
+
+   /**
+    * Real collision for the fragment tracks: the client's blocks with a collision shape, unloaded chunks
+    * unknown (the piece then lands on the section's ground), optionally without the section's own blocks.
+    */
+   private ColumnGround ground(boolean withoutSection) {
+      if (withoutSection && this.sectionKeys == null) {
+         this.sectionKeys = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(this.count);
+         for (int i = 0; i < this.count; i++) {
+            this.sectionKeys.add(BlockPos.asLong(this.bx[i], this.by[i], this.bz[i]));
+         }
+      }
+      it.unimi.dsi.fastutil.longs.LongOpenHashSet skip = withoutSection ? this.sectionKeys : null;
+      BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+      ClientLevel lv = this.level;
+      return new ColumnGround((x, y, z) -> {
+         if (!lv.hasChunk(x >> 4, z >> 4)) {
+            return ColumnGround.UNLOADED;
+         }
+         if (y >= lv.getMaxBuildHeight()) {
+            return ColumnGround.AIR;
+         }
+         pos.set(x, y, z);
+         if (skip != null && skip.contains(pos.asLong())) {
+            return ColumnGround.AIR;
+         }
+         BlockState st = lv.getBlockState(pos);
+         return st.isAir() || st.getCollisionShape(lv, pos).isEmpty() ? ColumnGround.AIR : ColumnGround.SOLID;
+      }, lv.getMinBuildHeight(), this.surfaceY);
+   }
+
+   /** Whether the block a resting fragment lies on is still there (unknown chunks count as there). */
+   private boolean supported(CollapseMotion.Piece piece, int t) {
+      int j = piece.at(t);
+      BlockPos below = BlockPos.containing(piece.x[j], piece.y[j] - piece.half * 0.55 - 0.5, piece.z[j]);
+      if (!this.level.hasChunk(below.getX() >> 4, below.getZ() >> 4) || below.getY() < this.level.getMinBuildHeight()) {
+         return true;
+      }
+      BlockState st = this.level.getBlockState(below);
+      return !st.isAir() && !st.getCollisionShape(this.level, below).isEmpty();
    }
 
    /** Bakes one fragment; {@code members} index the snapshot. */
@@ -346,16 +386,59 @@ final class CollapseScene {
       if (this.impactAge >= 0) {
          this.settle(lod);
       }
-      // safety: a lost END never leaves a scene behind
-      int limit = this.start.collapseAt + this.start.fallTicks + CollapseRules.SETTLE_PHASE_TICKS + 200;
-      boolean piecesDone = true;
+      // a resting fragment whose roof/slab broke since falls on (checked a few times while it rests)
+      ColumnGround live = null;
       for (int i = 0; i < this.pieces.size(); i++) {
-         if (!this.pieces.get(i).done(this.age - this.pieceStart.get(i))) {
-            piecesDone = false;
-            break;
+         CollapseMotion.Piece piece = this.pieces.get(i);
+         int t = this.age - this.pieceStart.get(i);
+         if (piece.resting(t) && (t - piece.land) % 4 == 3 && !this.supported(piece, t)) {
+            if (live == null) {
+               live = this.ground(false);
+            }
+            CollapseMotion.refall(piece, t, live, this.surfaceY);
          }
       }
-      return this.ended && (piecesDone || this.age - this.endAge > 80) || this.age > limit;
+      // safety: a lost END never leaves a scene behind, but never while a fragment is still in the air
+      int limit = this.start.collapseAt + this.start.fallTicks + CollapseRules.SETTLE_PHASE_TICKS + 200;
+      boolean piecesDone = true;
+      boolean flying = false;
+      for (int i = 0; i < this.pieces.size(); i++) {
+         CollapseMotion.Piece piece = this.pieces.get(i);
+         int t = this.age - this.pieceStart.get(i);
+         if (!piece.done(t)) {
+            piecesDone = false;
+            flying |= piece.airborne(t);
+         }
+      }
+      return dropNow(this.ended, piecesDone, flying, this.age - this.endAge, this.age, limit);
+   }
+
+   /**
+    * Pure: when a scene may go. After END once every fragment is gone, or 80 ticks later once none is still in
+    * the air (resting ones may vanish then); a lost END after the safety limit, again never mid-flight. The
+    * flight cap bounds even that ({@link CollapseMotion#MAX_FLIGHT_TICKS}).
+    */
+   static boolean dropNow(boolean ended, boolean piecesDone, boolean flying, int sinceEnd, int age, int limit) {
+      if (age > limit + CollapseMotion.MAX_FLIGHT_TICKS) {
+         return true;
+      }
+      if (flying) {
+         return false;
+      }
+      return ended && (piecesDone || sinceEnd > 80) || age > limit;
+   }
+
+   /** Busy: still standing (its fragments are still to come) or a fragment in the air; never evicted then. */
+   boolean busy() {
+      if (this.collapseAge < 0 && !this.ended) {
+         return true;
+      }
+      for (int i = 0; i < this.pieces.size(); i++) {
+         if (this.pieces.get(i).airborne(this.age - this.pieceStart.get(i))) {
+            return true;
+         }
+      }
+      return false;
    }
 
    private void creak(int lod, int running) {
@@ -413,8 +496,9 @@ final class CollapseScene {
          CollapseDust.chips(this.states[i], at, 1.0, 0.25, lod == 0 ? 6 : 2, this.random);
          if (this.shedPieces < MAX_SHED_PIECES) {
             this.shedPieces++;
+            // a shed block falls past the still standing section: it may land on a ledge of it (and fall on later)
             List<CollapseMotion.Piece> one = CollapseMotion.build(new int[]{this.bx[i]}, new int[]{this.by[i]}, new int[]{this.bz[i]}, CollapseVariant.CRUMBLE,
-               this.start.seed ^ i, this.start.fallX, this.start.fallZ, this.surfaceY, 8, 1, this::surface);
+               this.start.seed ^ i, this.start.fallX, this.start.fallZ, this.surfaceY, 8, 1, this.ground(false));
             if (!one.isEmpty()) {
                one.get(0).delay = 0;
                this.addPiece(one.get(0), new int[]{i}, this.age);

@@ -52,6 +52,10 @@ public final class CitizenPeril {
       final PerilRules.VoiceBudget budget = new PerilRules.VoiceBudget();
       long crowdUntil = Long.MIN_VALUE;
       int teeters, falls, hangs, climbs, pulledUp, caught, deaths, voices, crowds, skippedVoices;
+      /** Destruction around the city and the cooldowns of window events ({@link WindowPeril}). */
+      final WindowRules.Field destruction = new WindowRules.Field();
+      final WindowRules.Gate windows = new WindowRules.Gate();
+      int windowGoes, windowCalls, windowFalls, windowBacks;
    }
 
    /**
@@ -78,6 +82,7 @@ public final class CitizenPeril {
     * here, so the next peril tick never puts the person back on the old anchor. The holder owns gravity meanwhile.
     */
    static void onHeld(CitizenEntity c) {
+      WindowPeril.cancel(c);
       if (c.citizenState() == CitizenState.HANGING || c.citizenState() == CitizenState.TEETER) {
          log(c, "transferred", c.hangLedge);
          c.hangLedge = null;
@@ -119,6 +124,9 @@ public final class CitizenPeril {
       }
       if (c.citizenState().peril()) {
          c.stateTicks++; // the brain (which counts otherwise) sleeps while the peril owns the body
+      }
+      if (WindowPeril.tick(c, city, now)) {
+         return true; // walking to a broken window, calling for help there, or losing the footing at its edge
       }
       switch (c.citizenState()) {
          case TEETER -> {
@@ -381,6 +389,9 @@ public final class CitizenPeril {
 
    /** A hurt hanging person lets go; a hurt person in peril stays in peril (no switch to plain fleeing). */
    static boolean onHurt(CitizenEntity c) {
+      if (c.windowPhase != WindowPeril.NONE && c.windowPhase != WindowPeril.EDGE) {
+         WindowPeril.cancel(c); // hurt at the window: runs (the hit's knockback may still throw it out)
+      }
       CitizenState s = c.citizenState();
       if (s == CitizenState.HANGING) {
          CityManager city = CityManager.of(c.level());
@@ -443,6 +454,7 @@ public final class CitizenPeril {
          return;
       }
       long now = city.now();
+      WindowPeril.onDestruction(level, info.center().getX() + 0.5, info.center().getZ() + 0.5, info.affectedBlocks().size() * 2.0, now);
       LongOpenHashSet planned = new LongOpenHashSet(info.affectedBlocks().size());
       int x0 = Integer.MAX_VALUE, y0 = Integer.MAX_VALUE, z0 = Integer.MAX_VALUE, x1 = Integer.MIN_VALUE, y1 = Integer.MIN_VALUE, z1 = Integer.MIN_VALUE;
       for (BlockPos p : info.affectedBlocks()) {
@@ -587,6 +599,12 @@ public final class CitizenPeril {
    }
 
    /** Arguments of the localized {@code /city status} line: upstairs, teetered, fell, hung on, climbed, pulled up, caught, died, crowds. */
+   /** Arguments of the localized {@code /city status} window line: went to a window, called there, went over, stepped back. */
+   public static Object[] windowArgs(Level level) {
+      Stats st = stats(level);
+      return new Object[]{st.windowGoes, st.windowCalls, st.windowFalls, st.windowBacks};
+   }
+
    public static Object[] statusArgs(Level level, int upstairs) {
       Stats st = stats(level);
       return new Object[]{upstairs, st.teeters, st.falls, st.hangs, st.climbs, st.pulledUp, st.caught, st.deaths, st.crowds};
