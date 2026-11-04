@@ -20,7 +20,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 /**
- * The phone in a citizen's hand (#151): a small 3D model (a box of 1.5 x 2.9 x 0.26 model pixels with its case,
+ * The phone in a citizen's hand (#151): a small 3D model (a box of 1.8 x 3.3 x 0.32 model pixels with its case,
  * camera back and a lit screen, {@link PhonePainter}) attached to the main arm, so it follows every pose of the
  * shared animation system ({@link CitizenPoser}). Drawn only while the current phone moment has it in the hand
  * (out of the pocket and until it is put away); the grip turns from reading (screen to the eyes) to the ear
@@ -28,10 +28,13 @@ import org.joml.Matrix4f;
  * at night. Nothing is drawn beyond the poser's level of detail (far people never get a phone moment).
  */
 public class CitizenPhoneLayer extends RenderLayer<CitizenEntity, CitizenModel> {
-   /** Phone size in model pixels: width, length, thickness. */
-   static final float W = 1.5F;
-   static final float L = 2.9F;
-   static final float T = 0.26F;
+   /**
+    * Phone size in model pixels: width, length, thickness (a touch larger than a real one, about 10 x 19 cm on a
+    * 1.8 m body, so it still reads in the hand from a few blocks away; the playtest showed the true size vanishes).
+    */
+   static final float W = 1.8F;
+   static final float L = 3.3F;
+   static final float T = 0.32F;
    /** Reading grip in the right arm's space (model pixels): in the fingers, in front of the palm. */
    static final float READ_Y = 10.2F;
    static final float READ_Z = -2.3F;
