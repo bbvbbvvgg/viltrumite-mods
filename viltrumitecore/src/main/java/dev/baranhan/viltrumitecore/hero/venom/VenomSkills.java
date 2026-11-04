@@ -281,7 +281,7 @@ public final class VenomSkills {
    static void finishZip(ServerPlayer player, VenomState state, boolean arrived) {
       if (state.webSpiderId >= 0 && arrived) {
          Entity spider = player.level().getEntity(state.webSpiderId);
-         if (spider instanceof ServerPlayer sp && SpiderCompat.cutLine(sp)) {
+         if (spider instanceof ServerPlayer sp && VenomSpider.mayCut(player, sp) && SpiderCompat.cutLine(sp)) {
             // at the top of the climb the symbiote bites the line through: the Spider drops
             VenomFx.send(player, VenomFx.WEB, player.getEyePosition(), null, 1.0F, 0);
             VenomSounds.play(player, VenomSounds.WEB_TEAR, 1.0F, VenomSounds.jitter(player, 1.0F));
