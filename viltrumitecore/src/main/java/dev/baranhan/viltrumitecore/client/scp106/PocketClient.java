@@ -299,17 +299,34 @@ public final class PocketClient {
       bed(mc, "water", Scp106Sounds.WATER.get(), wet ? 0.7F : 0.0F);
    }
 
+   /** Ticks a fresh bed may stay inactive in the engine before it counts as dropped (the engine starts it a bit later). */
+   static final int START_GRACE_TICKS = 40;
+   /** Delay between two restarts of the same bed, so a broken sound device does not get a new instance every tick. */
+   static final int RETRY_TICKS = 20;
+
    private static void bed(Minecraft mc, String name, SoundEvent sound, float target) {
       PocketLoopSound s = BEDS.get(name);
-      if (s == null || s.isStopped() || !mc.getSoundManager().isActive(s) && s.target <= 0.0F) {
-         if (target <= 0.0F) {
+      boolean gone = s == null || abandoned(s.isStopped(), mc.getSoundManager().isActive(s), clock - s.born);
+      if (gone) {
+         // F3+T, a resource-pack/language change or a sound-device restart drop the instance without stopping it:
+         // detect that independently of the target volume and start a new one (after the retry delay)
+         if (s != null && !s.isStopped()) {
+            s.halt();
+         }
+         if (target <= 0.0F || s != null && clock - s.born < RETRY_TICKS) {
             return;
          }
          s = new PocketLoopSound(sound);
+         s.born = clock;
          BEDS.put(name, s);
          mc.getSoundManager().play(s);
       }
       s.target = target;
+   }
+
+   /** Pure: a bed is to be replaced (stopped, or inactive in the engine past the start grace). */
+   static boolean abandoned(boolean stopped, boolean active, int age) {
+      return stopped || !active && age > START_GRACE_TICKS;
    }
 
    private static void stopBeds() {
