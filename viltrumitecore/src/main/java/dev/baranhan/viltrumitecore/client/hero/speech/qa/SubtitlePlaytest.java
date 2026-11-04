@@ -261,6 +261,8 @@ public final class SubtitlePlaytest {
          // The choice screen opens only on purpose now (/viltrumite choose), so it is no longer closed here (#134).
          // freeze on|off: stop client particle/entity ticking so A/B windows render the very same frame (perf + pixel diff)
          case "freeze" -> dev.baranhan.viltrumitecore.hero.control.TimeFreeze.setClientWorld("on".equals(arg), Integer.MIN_VALUE, false);
+         // clouds on|off: clouds drift on real time even while frozen, which would pollute same-frame pixel diffs
+         case "clouds" -> mc.options.cloudStatus().set("off".equals(arg) ? net.minecraft.client.CloudStatus.OFF : net.minecraft.client.CloudStatus.FANCY);
          case "smoketrim" -> dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.setTrimEnabled(!"off".equals(arg));
          case "rd" -> {
             mc.options.renderDistance().set(Integer.parseInt(arg));
