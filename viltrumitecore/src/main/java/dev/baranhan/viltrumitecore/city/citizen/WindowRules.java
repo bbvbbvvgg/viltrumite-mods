@@ -19,7 +19,7 @@ public final class WindowRules {
    /** Drops are measured down to this depth at most. */
    public static final int MAX_DROP = 96;
    /** Openings are looked for this far (blocks, horizontally) from the person, on its own floor. */
-   public static final int SEARCH_R = 5;
+   public static final int SEARCH_R = 9;
    /** How often (ticks) the people upstairs are considered. */
    public static final int SCAN_PERIOD = 20;
    /** Destruction below this (0..1) leaves people upstairs where they are. */

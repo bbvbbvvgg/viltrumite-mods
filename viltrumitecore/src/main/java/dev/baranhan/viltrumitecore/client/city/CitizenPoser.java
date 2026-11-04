@@ -214,7 +214,8 @@ public final class CitizenPoser {
       if (calm && limbAmount < 0.8F && e.level() != null && near(e)) {
          m = PhoneRoutine.calm(PhoneRoutine.at(e.skin(), e.level().getGameTime(), partialTick), age - a.calmSince);
          if (m.active()) {
-            long frame = e.level().getGameTime();
+            // one budget per rendered frame (several frames share a tick; shadow passes share the frame's partial tick)
+            long frame = e.level().getGameTime() * 4096L + (long)(partialTick * 4095.0F);
             if (frame != phoneFrame) {
                phoneFrame = frame;
                phonesThisFrame = 0;

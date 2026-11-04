@@ -73,38 +73,48 @@ public final class WindowPeril {
             busy++;
          }
       }
+      // why occupants did not go (debug log only): body, state, calm floor, no player / no roll, no opening, no path, cooldown
+      int[] why = LOG ? new int[7] : null;
       for (CitizenEntity c : city.citizens()) {
          if (busy >= WindowRules.MAX_AT_WINDOWS) {
-            return;
+            break;
          }
          if (!c.occupant || c.windowPhase != NONE || !c.isAlive() || !c.onGround() || c.isInWater() || c.fallCooldown > 0 || CitizenCaptivity.isHeld(c)) {
+            count(why, c.occupant ? 0 : -1);
             continue;
          }
          CitizenState s = c.citizenState();
          if (s.peril() || s == CitizenState.FALLEN || s == CitizenState.GETTING_UP) {
+            count(why, 1);
             continue;
          }
          float d = st.destruction.at(c.getX(), c.getZ(), now);
          if (d < WindowRules.MIN_DESTRUCTION) {
+            count(why, 2);
             continue;
          }
          Player p = level.getNearestPlayer(c, WindowRules.FAR);
          if (p == null) {
+            count(why, 3);
             continue;
          }
          float chance = WindowRules.approachChance(d, others(city, c), p.distanceTo(c), c.traits().bravery());
          if (chance <= 0.0F || c.getRandom().nextFloat() >= chance) {
+            count(why, 3);
             continue;
          }
          Opening o = opening(c);
          if (o == null) {
+            count(why, 4);
             continue;
          }
          Path path = c.getNavigation().createPath(o.at, 0);
          if (path == null || !path.canReach() || !flat(path, o.at.getY())) {
+            count(why, 5);
             continue;
          }
          if (!st.windows.take(now, WindowRules.building(o.at.getX(), o.at.getZ()), WindowRules.window(o.at.getX(), o.at.getY(), o.at.getZ()))) {
+            count(why, 6);
             continue;
          }
          c.windowAt = o.at;
@@ -116,6 +126,10 @@ public final class WindowPeril {
          st.windowGoes++;
          busy++;
          log(c, "to-window", o.at + " drop=" + o.drop + " destruction=" + d);
+      }
+      if (why != null && why[2] + why[3] + why[4] + why[5] + why[6] > 0) {
+         LOGGER.info("[window] scan: busy body {} state {} calm {} roll {} no-opening {} no-path {} cooldown {} (at windows {})", why[0], why[1], why[2],
+            why[3], why[4], why[5], why[6], busy);
       }
    }
 
@@ -341,6 +355,12 @@ public final class WindowPeril {
          }
       }
       return true;
+   }
+
+   private static void count(int[] why, int i) {
+      if (why != null && i >= 0) {
+         why[i]++;
+      }
    }
 
    private static void log(CitizenEntity c, String what, Object extra) {
