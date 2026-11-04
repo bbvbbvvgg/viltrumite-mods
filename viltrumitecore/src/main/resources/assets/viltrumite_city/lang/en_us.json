@@ -25,6 +25,7 @@
   "viltrumitecore.city.status.danger": "Danger zones: %s",
   "viltrumitecore.city.status.crowd": "Crowd: %s calm, %s alarmed, %s fleeing, %s hiding (moving threats seen: %s)",
   "viltrumitecore.city.status.peril": "Peril: %s people upstairs; %s lost balance, %s fell, %s grabbed a ledge (%s climbed up, %s pulled up), %s caught in the air, %s died falling; crowd panics: %s",
+  "viltrumitecore.city.status.windows": "Windows: %s went to a broken window, %s called for help there, %s went over the edge, %s stepped back",
   "viltrumitecore.city.status.restore_clean": "Map: untouched, nothing to restore",
   "viltrumitecore.city.status.restore_dirty": "Map: %s changed blocks in %s chunks (/city reset restores them)",
   "viltrumitecore.city.status.restore_running": "Restoring: %s blocks done, %s chunks left (pass %s)",

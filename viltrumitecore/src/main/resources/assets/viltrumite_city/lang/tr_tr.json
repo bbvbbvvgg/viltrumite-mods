@@ -25,6 +25,7 @@
   "viltrumitecore.city.status.danger": "Danger zones: %s",
   "viltrumitecore.city.status.crowd": "Kalabalık: %s sakin, %s tedirgin, %s kaçıyor, %s saklanıyor (hareketli tehdit: %s)",
   "viltrumitecore.city.status.peril": "Tehlike: üst katlarda %s kişi; %s dengesini kaybetti, %s düştü, %s kenara tutundu (%s tırmandı, %s yukarı çekildi), %s havada yakalandı, %s düşerek öldü; kalabalık paniği: %s",
+  "viltrumitecore.city.status.windows": "Pencereler: %s kişi kırık bir pencereye gitti, %s kişi orada yardım istedi, %s kişi kenardan düştü, %s kişi geri çekildi",
   "viltrumitecore.city.status.restore_clean": "Map: untouched, nothing to restore",
   "viltrumitecore.city.status.restore_dirty": "Map: %s changed blocks in %s chunks (/city reset restores them)",
   "viltrumitecore.city.status.restore_running": "Restoring: %s blocks done, %s chunks left (pass %s)",
