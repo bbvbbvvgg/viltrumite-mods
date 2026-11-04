@@ -259,6 +259,22 @@ public final class SubtitlePlaytest {
             SCENE_SHOTS.sort(Integer::compare);
          }
          // The choice screen opens only on purpose now (/viltrumite choose), so it is no longer closed here (#134).
+         // freeze on|off: stop client particle/entity ticking so A/B windows render the very same frame (perf + pixel diff)
+         case "freeze" -> dev.baranhan.viltrumitecore.hero.control.TimeFreeze.setClientWorld("on".equals(arg), Integer.MIN_VALUE, false);
+         case "smoketrim" -> dev.baranhan.viltrumitecore.client.particle.MeteorSmokeParticle.setTrimEnabled(!"off".equals(arg));
+         case "rd" -> {
+            mc.options.renderDistance().set(Integer.parseInt(arg));
+            mc.levelRenderer.needsUpdate();
+         }
+         case "tp" -> {
+            // tp x y z yaw pitch: exact, repeatable camera for benchmarks (server-side teleport + local rotation)
+            String[] p = arg.split(" ");
+            if (mc.player != null && p.length >= 5) {
+               mc.player.connection.sendCommand(String.format(java.util.Locale.ROOT, "tp @s %s %s %s %s %s", p[0], p[1], p[2], p[3], p[4]));
+               mc.player.setYRot(Float.parseFloat(p[3]));
+               mc.player.setXRot(Float.parseFloat(p[4]));
+            }
+         }
          case "perfreset" -> dev.baranhan.viltrumitecore.client.perf.FrameProbe.reset();
          case "perfstate" -> LOG.info("SUBPT t={} perf {} {}", ticks, arg, dev.baranhan.viltrumitecore.client.perf.FrameProbe.describe(mc));
          case "state" -> LOG.info("SUBPT t={} state level={} player={} hp={} hero={} screen={} fps={}", ticks, mc.level != null, mc.player != null,

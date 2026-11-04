@@ -87,9 +87,18 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
 
    /**
     * Draw only the visible rectangle of the sprite ({@link SpriteTrim}). On by default; {@code -Dviltrumitecore.smoke.trim=false}
-    * restores the full quads for A/B frame-time and screenshot comparisons.
+    * restores the full quads for A/B frame-time and screenshot comparisons; the QA harness can flip it at runtime
+    * ({@code smoketrim on|off}) so both variants are measured on the very same particles.
     */
-   static final boolean TRIM = !"false".equalsIgnoreCase(System.getProperty("viltrumitecore.smoke.trim"));
+   private static volatile boolean trimEnabled = !"false".equalsIgnoreCase(System.getProperty("viltrumitecore.smoke.trim"));
+
+   public static void setTrimEnabled(boolean on) {
+      trimEnabled = on;
+   }
+
+   public static boolean trimEnabled() {
+      return trimEnabled;
+   }
 
    /** Ruin wind in blocks per tick per tick (set by the aftermath client each tick; 0 when no ruin is near). */
    private static float windX;
@@ -144,7 +153,7 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       this.seedB = this.random.nextFloat() * 100.0F;
       this.seedC = this.random.nextFloat() * 100.0F;
       this.pickSprite(sprites);
-      this.trim = TRIM ? SpriteTrim.of(this.sprite, UV_INSET) : SpriteTrim.FULL;
+      this.trim = SpriteTrim.of(this.sprite, UV_INSET);
       this.updateColor();
    }
 
@@ -234,7 +243,7 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
 
       float keep = this.alpha;
       this.alpha = keep * near;
-      if (this.trim != SpriteTrim.FULL && MeteorParticleRenderTypes.softSheetActive()) {
+      if (trimEnabled && this.trim != SpriteTrim.FULL && MeteorParticleRenderTypes.softSheetActive()) {
          this.renderTrimmed(consumer, camera, partialTick);
       } else {
          super.render(consumer, camera, partialTick);
