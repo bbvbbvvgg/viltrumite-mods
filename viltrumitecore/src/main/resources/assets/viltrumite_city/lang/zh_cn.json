@@ -25,6 +25,7 @@
   "viltrumitecore.city.status.danger": "Danger zones: %s",
   "viltrumitecore.city.status.crowd": "人群：平静 %s，警觉 %s，逃跑 %s，躲藏 %s（移动威胁：%s）",
   "viltrumitecore.city.status.peril": "险情：高层有 %s 人；%s 人失去平衡，%s 人坠落，%s 人抓住边缘（%s 人爬回，%s 人被拉上），%s 人在空中被接住，%s 人坠亡；人群恐慌：%s",
+  "viltrumitecore.city.status.windows": "窗口：%s 人走到破碎的窗边，%s 人在那里呼救，%s 人从边缘坠落，%s 人退了回去",
   "viltrumitecore.city.status.restore_clean": "Map: untouched, nothing to restore",
   "viltrumitecore.city.status.restore_dirty": "Map: %s changed blocks in %s chunks (/city reset restores them)",
   "viltrumitecore.city.status.restore_running": "Restoring: %s blocks done, %s chunks left (pass %s)",
