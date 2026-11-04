@@ -171,8 +171,9 @@ final class CityPopulation {
          List<CitizenEntity> spare = new ArrayList<>();
          List<Double> dist = new ArrayList<>();
          for (CitizenEntity c : this.city.citizens()) {
-            if (c.manual || dev.baranhan.viltrumitecore.city.citizen.CitizenCaptivity.isHeld(c)) {
-               continue;
+            if (c.manual || dev.baranhan.viltrumitecore.city.citizen.CitizenCaptivity.isHeld(c) || c.citizenState().peril()
+               || dev.baranhan.viltrumitecore.city.citizen.WindowPeril.busy(c)) {
+               continue; // never trimmed mid-fall, hanging on or at a window
             }
 
             double best = Double.MAX_VALUE;
@@ -336,6 +337,10 @@ final class CityPopulation {
                continue;
             }
 
+            if (!manual && (seen(level, x + 0.5, fy + 1.0, z + 0.5) || crowdedFloor(level, x + 0.5, fy, z + 0.5))) {
+               break; // never appears in plain sight (a window in front of a player); spread over floors and buildings
+            }
+
             if (this.city.danger.noticed(x + 0.5, y, z + 0.5, now) != null
                || dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.avoid(level, x + 0.5, y, z + 0.5)) {
                break;
@@ -358,6 +363,44 @@ final class CityPopulation {
       }
 
       return null;
+   }
+
+   /** Occupants on one floor of one building at most (the rest go to other floors and buildings). */
+   static final int OCCUPANTS_PER_FLOOR = 3;
+   /** A player closer than this who looks toward a spot (and sees it) would watch someone appear there. */
+   static final double SEEN_RANGE = 96.0;
+
+   /** True when the eyes look toward the spot: inside a cone of about 70 degrees half-angle around the view. */
+   static boolean inView(double lookX, double lookY, double lookZ, double dx, double dy, double dz) {
+      double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (d < 1.0E-6) {
+         return true;
+      }
+      return (lookX * dx + lookY * dy + lookZ * dz) / d > 0.34;
+   }
+
+   /** Some player in range looks toward the spot and nothing blocks the line (a pop-in would be seen). */
+   private static boolean seen(ServerLevel level, double x, double y, double z) {
+      for (ServerPlayer p : level.players()) {
+         if (p.isSpectator() || p.distanceToSqr(x, y, z) > SEEN_RANGE * SEEN_RANGE) {
+            continue;
+         }
+         Vec3 eye = p.getEyePosition();
+         Vec3 look = p.getLookAngle();
+         if (!inView(look.x, look.y, look.z, x - eye.x, y - eye.y, z - eye.z)) {
+            continue;
+         }
+         if (level.clip(new net.minecraft.world.level.ClipContext(eye, new Vec3(x, y, z), net.minecraft.world.level.ClipContext.Block.VISUAL,
+            net.minecraft.world.level.ClipContext.Fluid.NONE, p)).getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   private static boolean crowdedFloor(ServerLevel level, double x, double y, double z) {
+      return level.getEntitiesOfClass(CitizenEntity.class, new AABB(x - 10.0, y - 1.0, z - 10.0, x + 10.0, y + 2.0, z + 10.0), c -> c.occupant).size()
+         >= OCCUPANTS_PER_FLOOR;
    }
 
    /** {@code /city occupants}: people upstairs around a point (manual, like /city populate). */

@@ -177,6 +177,7 @@ public final class CityCommands {
       }
 
       ok(c, line("viltrumitecore.city.status.peril", dev.baranhan.viltrumitecore.city.citizen.CitizenPeril.statusArgs(m.level, upstairs)), false);
+      ok(c, line("viltrumitecore.city.status.windows", dev.baranhan.viltrumitecore.city.citizen.CitizenPeril.windowArgs(m.level)), false);
       if (m.restore.running()) {
          ok(c, line("viltrumitecore.city.status.restore_running", m.restore.restoredBlocks(), m.restore.chunksLeft(), m.restore.pass())
             .withStyle(ChatFormatting.YELLOW), false);

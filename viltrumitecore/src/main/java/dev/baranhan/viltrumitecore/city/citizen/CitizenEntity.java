@@ -61,6 +61,16 @@ public class CitizenEntity extends PathfinderMob implements Bystander {
    double hangTop;
    int hangTicks;
    double fallFromY;
+   // window falls (server only; see WindowPeril)
+   /** The opening this person goes to / stands at, the way out of it, the phase and its ticks. */
+   @Nullable
+   BlockPos windowAt;
+   @Nullable
+   net.minecraft.core.Direction windowOut;
+   byte windowPhase;
+   int windowTicks;
+   @Nullable
+   WindowRules.Cause windowCause;
    int voiceCooldown;
    /** A voice due later (a witness gasps a moment after the fall): kind and game time. */
    @Nullable
