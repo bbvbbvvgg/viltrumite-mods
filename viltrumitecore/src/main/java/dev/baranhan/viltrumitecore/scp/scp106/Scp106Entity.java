@@ -369,7 +369,7 @@ public class Scp106Entity extends PathfinderMob implements CleanDamageSink {
       if (!bypass && shrugsOff(source)) {
          return;
       }
-      float dealt = cleanDealt(bypass, amount, this.getHealth());
+      float dealt = Scp106Rules.cleanDealt(bypass, amount, this.getHealth());
       if (dealt > 0.0F) {
          float health = this.getHealth() - dealt;
          if (health <= 0.0F) {
@@ -384,10 +384,6 @@ public class Scp106Entity extends PathfinderMob implements CleanDamageSink {
       }
    }
 
-   /** Health actually removed by a clean hit: ordinary damage stops one point above death. */
-   static float cleanDealt(boolean bypass, float amount, float health) {
-      return bypass ? amount : Math.max(0.0F, Math.min(amount, health - 1.0F));
-   }
 
    /** Ordinary damage never takes it below one heart point: it retreats instead (only /kill and the void kill it). */
    @Override
@@ -465,7 +461,7 @@ public class Scp106Entity extends PathfinderMob implements CleanDamageSink {
       if (!this.checkedLoad) {
          this.checkedLoad = true;
          // a saved hunter that comes back long after (chunk reloaded, server restarted) has no business left here
-         if (staleOnLoad(this.loadedFromDisk, this.pocketHunter(), this.lastSeen, now)) {
+         if (Scp106Rules.staleOnLoad(this.loadedFromDisk, this.pocketHunter(), this.lastSeen, now)) {
             LOG.debug("SCP-106 #{} reloaded stale ({} ticks), discarded", this.getId(), now - this.lastSeen);
             this.discard();
             return;
@@ -1061,13 +1057,6 @@ public class Scp106Entity extends PathfinderMob implements CleanDamageSink {
       this.loadedFromDisk = true;
    }
 
-   /**
-    * Whether an entity seen for the first time this session must be dropped: only one deserialized from disk
-    * (chunk reload, restart) — a saved pocket hunter, or one away for more than a minute. A fresh spawn never is.
-    */
-   static boolean staleOnLoad(boolean loadedFromDisk, boolean pocketHunter, long lastSeen, long now) {
-      return loadedFromDisk && (pocketHunter || lastSeen != Long.MIN_VALUE && now - lastSeen > 1_200);
-   }
 
    public String describe() {
       return String.format(java.util.Locale.ROOT, "#%d %s %s at %.0f %.0f %.0f in %s, hunt %ds%s%s", this.getId(), this.state(),
