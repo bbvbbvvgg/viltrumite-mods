@@ -52,6 +52,7 @@ public final class WindowPeril {
       c.windowPhase = NONE;
       c.windowAt = null;
       c.windowOut = null;
+      c.windowFire = false;
    }
 
    /** Once per {@link WindowRules#SCAN_PERIOD} from the city tick: who goes to a window. */
@@ -138,7 +139,7 @@ public final class WindowPeril {
       if (c.windowPhase == NONE) {
          return false;
       }
-      if (c.windowAt == null || c.windowOut == null || c.citizenState().peril() && c.windowPhase != EDGE || CitizenCaptivity.isHeld(c)) {
+      if (c.windowAt == null || c.windowOut == null || c.citizenState().peril() && c.windowPhase != EDGE && c.windowPhase != WindowJumpers.SHOW || CitizenCaptivity.isHeld(c)) {
          cancel(c); // the floor went, a captor took it: the peril (or the holder) runs the body now
          return false;
       }
@@ -190,6 +191,7 @@ public final class WindowPeril {
                over(c, city, now, c.windowCause == null ? WindowRules.Cause.SLIP : c.windowCause);
             }
          }
+         case WindowJumpers.SHOW -> WindowJumpers.show(c, city, now);
          default -> cancel(c);
       }
       return true;
@@ -210,7 +212,7 @@ public final class WindowPeril {
    }
 
    /** Balance lost at the edge: the body leans over the sill, arms windmilling (the teeter pose). */
-   private static void edge(CitizenEntity c, WindowRules.Cause cause) {
+   static void edge(CitizenEntity c, WindowRules.Cause cause) {
       BlockPos b = c.windowAt;
       Direction out = c.windowOut;
       double x = b.getX() + 0.5 + out.getStepX() * 0.3, z = b.getZ() + 0.5 + out.getStepZ() * 0.3;
@@ -227,10 +229,14 @@ public final class WindowPeril {
    }
 
    /** Over the edge with the push of its cause; from here the peril sees a real fall (or a grab at the sill). */
-   private static void over(CitizenEntity c, CityManager city, long now, WindowRules.Cause cause) {
+   static void over(CitizenEntity c, CityManager city, long now, WindowRules.Cause cause) {
       BlockPos b = c.windowAt;
       Direction out = c.windowOut;
+      boolean burning = c.windowFire;
       cancel(c);
+      if (burning) {
+         c.setRemainingFireTicks(70); // out of the flames, still on fire
+      }
       double x = b.getX() + 0.5 + out.getStepX() * 0.45, z = b.getZ() + 0.5 + out.getStepZ() * 0.45;
       if (c.level().noCollision(c, c.getType().getAABB(x, c.getY(), z).deflate(0.02))) {
          c.setPos(x, c.getY(), z);
