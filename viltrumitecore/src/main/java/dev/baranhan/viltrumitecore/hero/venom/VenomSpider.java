@@ -51,7 +51,7 @@ public final class VenomSpider {
       }
       int cut = 0;
       for (ServerPlayer p : level.players()) {
-         if (p == venom || p.distanceToSqr(venom) > 64 * 64) {
+         if (p == venom || p.distanceToSqr(venom) > 64 * 64 || !mayCut(venom, p)) {
             continue;
          }
          Optional<SpiderLine> line = SpiderCompat.line(p);
@@ -66,6 +66,14 @@ public final class VenomSpider {
          }
       }
       return cut;
+   }
+
+   /**
+    * Whether this Venom may tear that player's line: a player Venom obeys the shared player-target rules
+    * (server PvP, teams without friendly fire), exactly like its damage; a non-player symbiote always may.
+    */
+   static boolean mayCut(LivingEntity venom, ServerPlayer owner) {
+      return !(venom instanceof ServerPlayer sp) || VenomTargets.mayHit(sp, owner);
    }
 
    /** A claw on a Spider becomes a clash when both are off the ground (in the air, on a line or on a wall). */
