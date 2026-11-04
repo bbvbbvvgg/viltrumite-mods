@@ -32,6 +32,8 @@ public final class MeteorParticleRenderTypes {
    private static final Logger LOGGER = LoggerFactory.getLogger("viltrumitecore/aftermath");
    private static final ResourceLocation SOFT_SHADER = new ResourceLocation("viltrumitecore", "soft_particle");
    private static ShaderInstance softProgram;
+   /** True between begin and end of a {@link #SOFT_SMOKE} batch drawn with the soft program (linear, no mipmaps). */
+   private static volatile boolean softSheetActive;
 
    public static final ParticleRenderType ADDITIVE = new ParticleRenderType() {
       @Override
@@ -74,6 +76,7 @@ public final class MeteorParticleRenderTypes {
             RenderSystem.setShader(() -> program);
             this.atlas = textures.getTexture(TextureAtlas.LOCATION_PARTICLES);
             this.atlas.setBlurMipmap(true, false);
+            softSheetActive = true;
          }
 
          builder.begin(Mode.QUADS, DefaultVertexFormat.PARTICLE);
@@ -82,6 +85,7 @@ public final class MeteorParticleRenderTypes {
       @Override
       public void end(Tesselator tesselator) {
          tesselator.end();
+         softSheetActive = false;
          if (this.atlas != null) {
             this.atlas.restoreLastBlurMipmap();
             this.atlas = null;
@@ -97,6 +101,15 @@ public final class MeteorParticleRenderTypes {
    };
 
    private MeteorParticleRenderTypes() {
+   }
+
+   /**
+    * Whether the smoke being drawn now goes through the soft program: linear atlas filter, no mipmaps, discard only
+    * at alpha 0. Only then may a puff skip its fully transparent margin ({@link SpriteTrim}); the vanilla/shader-pack
+    * path samples mip levels whose footprint is wider, so it keeps the full quad.
+    */
+   public static boolean softSheetActive() {
+      return softSheetActive;
    }
 
    /** Mod bus: the soft smoke program. */

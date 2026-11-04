@@ -11,6 +11,9 @@ import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * Meteor Rain 2.0 smoke: irregular volumetric puffs (8 procedural sprites, random roll) that start hot and
@@ -92,6 +95,8 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
    private final int hotTicks;
    private final float rollSpeed;
    private final float seedA, seedB, seedC;
+   /** Visible part of the sprite in quad fractions {s0, s1, t0, t1} ({@link SpriteTrim}). */
+   private final float[] trim;
 
    protected MeteorSmokeParticle(ClientLevel level, double x, double y, double z, double dx, double dy, double dz, SpriteSet sprites, Style style) {
       super(level, x, y, z);
@@ -133,6 +138,7 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       this.seedB = this.random.nextFloat() * 100.0F;
       this.seedC = this.random.nextFloat() * 100.0F;
       this.pickSprite(sprites);
+      this.trim = SpriteTrim.of(this.sprite, UV_INSET);
       this.updateColor();
    }
 
@@ -222,8 +228,52 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
 
       float keep = this.alpha;
       this.alpha = keep * near;
-      super.render(consumer, camera, partialTick);
+      if (this.trim != SpriteTrim.FULL && MeteorParticleRenderTypes.softSheetActive()) {
+         this.renderTrimmed(consumer, camera, partialTick);
+      } else {
+         super.render(consumer, camera, partialTick);
+      }
       this.alpha = keep;
+   }
+
+   /**
+    * The vanilla {@code SingleQuadParticle.render} quad cut down to the sprite's visible rectangle. Same corners
+    * order, the same UV per point of the plane, so every pixel that can be non-transparent is drawn exactly as
+    * before; the transparent margin (≈42 % of the quad's area) is simply not rasterized. Only valid while the soft
+    * program samples the atlas linearly without mipmaps ({@link MeteorParticleRenderTypes#softSheetActive}).
+    */
+   private void renderTrimmed(VertexConsumer consumer, Camera camera, float partialTick) {
+      Vec3 cam = camera.getPosition();
+      float px = (float)(Mth.lerp(partialTick, this.xo, this.x) - cam.x());
+      float py = (float)(Mth.lerp(partialTick, this.yo, this.y) - cam.y());
+      float pz = (float)(Mth.lerp(partialTick, this.zo, this.z) - cam.z());
+      Quaternionf rotation;
+      if (this.roll == 0.0F) {
+         rotation = camera.rotation();
+      } else {
+         rotation = new Quaternionf(camera.rotation());
+         rotation.rotateZ(Mth.lerp(partialTick, this.oRoll, this.roll));
+      }
+
+      // vanilla corner (x, y) in -1..1 shows U1 at x = -1 and U0 at x = +1, V1 at y = -1 and V0 at y = +1
+      float s0 = this.trim[0], s1 = this.trim[1], t0 = this.trim[2], t1 = this.trim[3];
+      float xNear = 1.0F - 2.0F * s1, xFar = 1.0F - 2.0F * s0;
+      float yNear = 1.0F - 2.0F * t1, yFar = 1.0F - 2.0F * t0;
+      float uA = this.getU0(), uB = this.getU1(), vA = this.getV0(), vB = this.getV1();
+      float uS0 = Mth.lerp(s0, uA, uB), uS1 = Mth.lerp(s1, uA, uB);
+      float vT0 = Mth.lerp(t0, vA, vB), vT1 = Mth.lerp(t1, vA, vB);
+      float size = this.getQuadSize(partialTick);
+      int light = this.getLightColor(partialTick);
+      this.corner(consumer, rotation, xNear, yNear, size, px, py, pz, uS1, vT1, light);
+      this.corner(consumer, rotation, xNear, yFar, size, px, py, pz, uS1, vT0, light);
+      this.corner(consumer, rotation, xFar, yFar, size, px, py, pz, uS0, vT0, light);
+      this.corner(consumer, rotation, xFar, yNear, size, px, py, pz, uS0, vT1, light);
+   }
+
+   private void corner(VertexConsumer consumer, Quaternionf rotation, float cx, float cy, float size, float px, float py, float pz, float u, float v,
+      int light) {
+      Vector3f p = new Vector3f(cx, cy, 0.0F).rotate(rotation).mul(size).add(px, py, pz);
+      consumer.vertex(p.x(), p.y(), p.z()).uv(u, v).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
    }
 
    @Override
@@ -232,24 +282,26 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
    }
 
    // the soft sheet samples the atlas linearly: keep a 1 % margin so a puff never picks up its neighbour sprite
+   static final float UV_INSET = 0.01F;
+
    @Override
    protected float getU0() {
-      return Mth.lerp(0.01F, this.sprite.getU0(), this.sprite.getU1());
+      return Mth.lerp(UV_INSET, this.sprite.getU0(), this.sprite.getU1());
    }
 
    @Override
    protected float getU1() {
-      return Mth.lerp(0.99F, this.sprite.getU0(), this.sprite.getU1());
+      return Mth.lerp(1.0F - UV_INSET, this.sprite.getU0(), this.sprite.getU1());
    }
 
    @Override
    protected float getV0() {
-      return Mth.lerp(0.01F, this.sprite.getV0(), this.sprite.getV1());
+      return Mth.lerp(UV_INSET, this.sprite.getV0(), this.sprite.getV1());
    }
 
    @Override
    protected float getV1() {
-      return Mth.lerp(0.99F, this.sprite.getV0(), this.sprite.getV1());
+      return Mth.lerp(1.0F - UV_INSET, this.sprite.getV0(), this.sprite.getV1());
    }
 
    public static class Provider implements ParticleProvider<SimpleParticleType> {
