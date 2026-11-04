@@ -1,0 +1,4 @@
+[{"name":"C-ruin-40m-2400","w":1280,"h":720,"fov":70,"count":2400,"dist":40,"depth":30,"spread":50,"minSize":2,"maxSize":14,"frames":2,"shot":"C_trim.png"},
+ {"name":"C-ruin-25m-1200","w":1280,"h":720,"fov":70,"count":1200,"dist":25,"depth":20,"spread":40,"minSize":2,"maxSize":14,"frames":2},
+ {"name":"B-collapse-60m-800","w":1280,"h":720,"fov":70,"count":800,"dist":60,"depth":30,"spread":60,"minSize":3,"maxSize":16,"frames":3},
+ {"name":"A-light-80m-300","w":1280,"h":720,"fov":70,"count":300,"dist":80,"depth":40,"spread":80,"minSize":2,"maxSize":10,"frames":5}]
