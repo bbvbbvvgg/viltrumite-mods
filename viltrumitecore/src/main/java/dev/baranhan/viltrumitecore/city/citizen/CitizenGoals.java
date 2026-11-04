@@ -552,7 +552,7 @@ final class CitizenGoals {
       public boolean canUse() {
          CitizenState s = this.c.citizenState();
          if (!this.c.occupant || s != CitizenState.IDLE && s != CitizenState.RECOVERING || !this.c.onGround()
-            || this.c.idleTicks > 0 || (this.c.tickCount + this.c.getId()) % 20 != 0) {
+            || this.c.idleTicks > 0 || !due(this.c, 20)) {
             return false;
          }
 

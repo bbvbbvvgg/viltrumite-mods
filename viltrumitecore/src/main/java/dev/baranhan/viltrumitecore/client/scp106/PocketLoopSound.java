@@ -11,6 +11,8 @@ final class PocketLoopSound extends AbstractTickableSoundInstance {
    private float level;
    private int silent;
    float target;
+   /** {@link PocketClient} clock when this instance was started (start grace and retry delay). */
+   int born;
 
    PocketLoopSound(SoundEvent event) {
       super(event, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
