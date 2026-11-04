@@ -207,6 +207,7 @@ public final class CityManager {
          this.danger.blast(x, y, z, radius, this.now());
          // a shock wave shakes the buildings around it like a few dozen broken blocks per block of radius
          dev.baranhan.viltrumitecore.city.citizen.WindowPeril.onDestruction(this.level, x, z, Math.min(radius, 64.0F) * 12.0, this.now());
+         dev.baranhan.viltrumitecore.city.citizen.WindowJumpers.onBlast(this.level, x, y, z, radius, this.now());
       }
    }
 
@@ -316,6 +317,11 @@ public final class CityManager {
          return;
       }
 
+      if (next.getBlock() instanceof net.minecraft.world.level.block.BaseFireBlock) {
+         // a building on fire: now and then somebody jumps out of a window (WindowJumpers)
+         dev.baranhan.viltrumitecore.city.citizen.WindowJumpers.onFire(level, pos, m.now());
+      }
+
       boolean sameBlock = old.getBlock() == next.getBlock();
       if (sameBlock && ambientOnly(old, next)) {
          // daylight detectors, redstone power, leaf distance, crop growth...: the map living on its own
@@ -382,6 +388,7 @@ public final class CityManager {
             if (b[3] >= 6) {
                // many blocks changed in one chunk within one tick: destruction is happening there
                dev.baranhan.viltrumitecore.city.citizen.WindowPeril.onDestruction(this.level, b[0] / b[3], b[2] / b[3], b[3], now);
+               dev.baranhan.viltrumitecore.city.citizen.WindowJumpers.onBurst(this.level, b[0] / b[3], b[1] / b[3], b[2] / b[3], b[3], now);
                this.danger.add(b[0] / b[3], b[1] / b[3], b[2] / b[3], DangerMap.EXPLOSION_RADIUS, now, DangerMap.DEFAULT_LIFETIME);
                if (b[3] >= 30) {
                   this.danger.blast(b[0] / b[3], b[1] / b[3], b[2] / b[3], dev.baranhan.viltrumitecore.city.danger.ThreatRules.explosionBlast((int)b[3]), now);
@@ -434,6 +441,7 @@ public final class CityManager {
       if (!this.citizens.isEmpty()) {
          dev.baranhan.viltrumitecore.city.citizen.WindowPeril.scan(this, now);
       }
+      dev.baranhan.viltrumitecore.city.citizen.WindowJumpers.tick(this, now);
       this.power.tick(now);
       this.life.tick(now, this.citizens);
       long interval = this.journal.size() > 500_000 ? 6000 : 1200;
