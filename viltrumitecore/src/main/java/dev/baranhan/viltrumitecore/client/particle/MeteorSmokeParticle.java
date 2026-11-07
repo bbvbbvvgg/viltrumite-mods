@@ -13,6 +13,7 @@ import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -233,6 +234,16 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       return this.quadSize * (1.0F + (this.style.growth - 1.0F) * ease);
    }
 
+   /**
+    * Cull puffs against the sphere their quad really sweeps ({@link #getBoundingBox} for the details). Vanilla would
+    * cull with a {@code 0.2 × scale} box, so a grown puff whose centre is off screen popped in when its edge entered
+    * the view (T16). The kept path never sets this bounding box, so physics is unchanged.
+    */
+   @Override
+   public boolean shouldCull() {
+      return true;
+   }
+
    @Override
    protected int getLightColor(float partialTick) {
       int world = super.getLightColor(partialTick);
@@ -243,6 +254,29 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
       float hot = 1.0F - Mth.clamp((this.age + partialTick) / (float)this.hotTicks, 0.0F, 1.0F);
       int block = Math.max(LightTexture.block(world), Math.round(15.0F * hot));
       return LightTexture.pack(block, LightTexture.sky(world));
+   }
+
+   /**
+    * The sphere the rendered quad can reach, as an axis-aligned box for the vanilla frustum test, so a grown puff is
+    * culled only when none of it can be on screen (T16: vanilla culls with a {@code 0.2 × scale} box and the
+    * {@code quadSize·√2} corners of these quads popped in at the screen edges). Three terms: the grown half-size of
+    * the quad times √2 (a corner of a camera-facing quad of half-size {@code s} lies at most {@code s·√2} from the
+    * centre; {@link #getQuadSize(float)} at the end of the current tick window bounds the growth for every partial
+    * tick), a one-block margin for float error and camera shake, and one drag-corrected tick of travel (the vanilla
+    * path renders a sub-tick interpolation behind the ticked position, so the centre moves up to one pre-friction
+    * tick of speed between the culling position and the rendered one). Never assigned as the live bounding box, so
+    * the kept physics path still sees the vanilla {@code 0.2 × scale} box.
+    */
+   @Override
+   public AABB getBoundingBox() {
+      if (this.style == null) {
+         // vanilla construction path (setSize reads the box before our fields exist); the vanilla box is never used
+         return super.getBoundingBox();
+      }
+      float size = this.getQuadSize(1.0F);
+      float speed = Mth.sqrt((float)(this.xd * this.xd + this.yd * this.yd + this.zd * this.zd));
+      float reach = size * 1.4143F + 1.0F + speed / Math.max(this.friction, 0.1F);
+      return new AABB(this.x - reach, this.y - reach, this.z - reach, this.x + reach, this.y + reach, this.z + reach);
    }
 
    @Override
@@ -343,6 +377,8 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
    }
 
    private static final ThreadLocal<float[]> POLY = ThreadLocal.withInitial(() -> new float[10]);
+   // T17: reusable corner vectors (render thread only); vanilla allocates per vertex otherwise
+   private static final ThreadLocal<Vector3f> VEC = ThreadLocal.withInitial(Vector3f::new);
 
    /** Plane point i of {@code poly} with the vanilla UV mapping (U1 at x = -1, V1 at y = -1) and its exact fog distance. */
    private void fogCorner(VertexConsumer consumer, Quaternionf rotation, float[] poly, int i, float size, float px, float py, float pz,
@@ -356,12 +392,14 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
    /** fog.glsl {@code fog_distance(ModelViewMat, Position, FogShape)} for corner (cx, cy) of this quad. */
    private static float fogDistance(Matrix4f mv, Quaternionf rotation, float cx, float cy, float size, float px, float py, float pz,
       boolean cylinder) {
-      Vector3f p = new Vector3f(cx, cy, 0.0F).rotate(rotation).mul(size).add(px, py, pz);
+      Vector3f p = VEC.get().set(cx, cy, 0.0F).rotate(rotation).mul(size).add(px, py, pz);
       if (!cylinder) {
-         return mv.transformPosition(p, new Vector3f()).length();
+         return mv.transformPosition(p, p).length();
       }
-      float xz = mv.transformPosition(new Vector3f(p.x(), 0.0F, p.z())).length();
-      float y = mv.transformPosition(new Vector3f(0.0F, p.y(), 0.0F)).length();
+      // read the corner position before the transform overwrites the pooled vector
+      float vx = p.x(), vy = p.y(), vz = p.z();
+      float xz = mv.transformPosition(vx, 0.0F, vz, VEC.get()).length();
+      float y = mv.transformPosition(0.0F, vy, 0.0F, VEC.get()).length();
       return Math.max(xz, y);
    }
 
@@ -386,7 +424,7 @@ public class MeteorSmokeParticle extends TextureSheetParticle {
 
    private void corner(VertexConsumer consumer, Quaternionf rotation, float cx, float cy, float size, float px, float py, float pz, float u, float v,
       int light) {
-      Vector3f p = new Vector3f(cx, cy, 0.0F).rotate(rotation).mul(size).add(px, py, pz);
+      Vector3f p = VEC.get().set(cx, cy, 0.0F).rotate(rotation).mul(size).add(px, py, pz);
       consumer.vertex(p.x(), p.y(), p.z()).uv(u, v).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
    }
 
