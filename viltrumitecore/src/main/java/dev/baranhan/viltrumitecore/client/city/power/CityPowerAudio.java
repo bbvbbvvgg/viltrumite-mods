@@ -186,9 +186,9 @@ final class CityPowerAudio {
       int delay = PowerRules.soundDelay(d);
       float pitch = 0.94F + (float)PowerRules.unit(seed) * 0.12F;
       if (d < 60.0) {
-         // measured in game: blow + low impact + arc together peaked just over full scale next to the hit
-         once(CityPowerSounds.TRANSFORMER_BLOW, at, curve(d, 26.0) * 0.7F, pitch, delay);
-         once(CityPowerSounds.LOW_IMPACT, at, curve(d, 30.0) * 0.45F, pitch, delay);
+         // measured in game: blow + low impact stacked just over full scale next to the hit; oneshotGain keeps the sum at 1.0
+         onceAll(new RegistryObject[]{CityPowerSounds.TRANSFORMER_BLOW, CityPowerSounds.LOW_IMPACT}, at,
+            new float[]{curve(d, 26.0) * 0.7F, curve(d, 30.0) * 0.45F}, new float[]{pitch, pitch}, new int[]{delay, delay});
       } else {
          once(CityPowerSounds.TRANSFORMER_BLOW_FAR, at, curve(d, 80.0), pitch, delay);
       }
@@ -202,8 +202,8 @@ final class CityPowerAudio {
       int delay = PowerRules.soundDelay(d);
       float pitch = 0.95F + (float)PowerRules.unit(seed) * 0.1F;
       if (d < 130.0) {
-         once(CityPowerSounds.CASCADE, at, curve(d, 60.0), pitch, delay);
-         once(CityPowerSounds.METAL_GROAN, at, curve(d, 40.0) * 0.8F, pitch, delay + 30);
+         onceAll(new RegistryObject[]{CityPowerSounds.CASCADE, CityPowerSounds.METAL_GROAN}, at,
+            new float[]{curve(d, 60.0), curve(d, 40.0) * 0.8F}, new float[]{pitch, pitch}, new int[]{delay, delay + 30});
       } else if (d < 420.0) {
          once(CityPowerSounds.TRANSFORMER_BLOW_FAR, at, curve(d, 120.0), pitch * 0.9F, delay);
          once(CityPowerSounds.LOW_IMPACT, at, curve(d, 140.0) * 0.8F, pitch * 0.9F, delay);
@@ -229,6 +229,30 @@ final class CityPowerAudio {
       return (float)Mth.clamp(1.0 / (1.0 + Math.pow(Math.max(0.0, d) / ref, 1.4)), 0.0, 1.0);
    }
 
+   /**
+    * Gains of the one-shots played at the same moment, scaled so their sum never exceeds full scale
+    * (0 dBFS): several epicentre cues stacked (blow + low impact, arcs, cascade layers) used to peak
+    * over full scale next to the hit, so every voice now keeps its share of the total. Each input is
+    * clamped to 0..1 first, the returned array follows the request order, negative requests yield 0.
+    */
+   static float[] oneshotGain(float... volumes) {
+      float[] out = new float[volumes.length];
+      float sum = 0.0F;
+      for (int i = 0; i < volumes.length; i++) {
+         float v = Mth.clamp(volumes[i], 0.0F, 1.0F);
+         out[i] = v;
+         sum += v;
+      }
+
+      if (sum > 1.0F) {
+         for (int i = 0; i < out.length; i++) {
+            out[i] *= 1.0F / sum;
+         }
+      }
+
+      return out;
+   }
+
    private static void once(RegistryObject<SoundEvent> event, Vec3 at, float volume, float pitch, int delay) {
       if (volume < 0.02F) {
          return;
@@ -240,6 +264,14 @@ final class CityPowerAudio {
          mc.getSoundManager().playDelayed(sound, delay);
       } else {
          mc.getSoundManager().play(sound);
+      }
+   }
+
+   /** One group of simultaneous one-shots: gains are clamped so the sum never clips. */
+   private static void onceAll(RegistryObject<SoundEvent>[] events, Vec3 at, float[] volumes, float[] pitches, int[] delays) {
+      float[] gains = oneshotGain(volumes);
+      for (int i = 0; i < events.length; i++) {
+         once(events[i], at, gains[i], pitches[i], delays[i]);
       }
    }
 
