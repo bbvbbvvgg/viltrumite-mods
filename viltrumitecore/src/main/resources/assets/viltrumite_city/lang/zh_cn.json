@@ -65,5 +65,13 @@
   "viltrumitecore.city.power.stage.warning": "预警",
   "viltrumitecore.city.power.stage.active": "进行中",
   "viltrumitecore.city.power.stage.critical": "危急",
-  "viltrumitecore.city.power.stage.all_clear": "解除"
+  "viltrumitecore.city.power.stage.all_clear": "解除",
+  "viltrumitecore.city.help.districts": " [x z] - 列出地图的所有城区及其边界，以及你（或指定）位置所在的城区",
+  "viltrumitecore.city.districts.title": "城市 %s：%s 个城区（边界 minX..maxX、minZ..maxZ，步行单元格）：",
+  "viltrumitecore.city.districts.none": "该地图的配置文件中没有城区。",
+  "viltrumitecore.city.districts.line": " %s：x %s..%s，z %s..%s（%s 格）",
+  "viltrumitecore.city.districts.here": " <-- 你在这里",
+  "viltrumitecore.city.districts.far": " [距 %s 格]",
+  "viltrumitecore.city.districts.at": "位置 %s %s 的城区：%s",
+  "viltrumitecore.city.districts.unresolved": "位置 %s %s 没有城区（距每个城区都超过 64 格）。"
 }

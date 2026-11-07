@@ -71,6 +71,11 @@ public final class CityCommands {
             .then(Commands.literal("confirm").executes(CityCommands::resetConfirm))
             .then(Commands.literal("cancel").executes(CityCommands::resetCancel)))
          .then(Commands.literal("here").requires(s -> s.hasPermission(2)).executes(CityCommands::here))
+         .then(Commands.literal("districts").requires(s -> s.hasPermission(2))
+            .executes(CityCommands::districts)
+            .then(Commands.argument("x", IntegerArgumentType.integer())
+               .then(Commands.argument("z", IntegerArgumentType.integer())
+                  .executes(c -> districtsProbe(c, IntegerArgumentType.getInteger(c, "x"), IntegerArgumentType.getInteger(c, "z"))))))
          .then(Commands.literal("life").executes(CityCommands::life)
             .then(Commands.literal("reset").requires(s -> s.hasPermission(2)).executes(CityCommands::lifeReset)))
          .then(dev.baranhan.viltrumitecore.city.power.PowerCommands.node()));
@@ -95,7 +100,7 @@ public final class CityCommands {
 
    private static int help(CommandContext<CommandSourceStack> c) {
       ok(c, line("viltrumitecore.city.help.title").withStyle(ChatFormatting.GOLD), false);
-      for (String k : new String[]{"enable", "disable", "density", "populate", "occupants", "clear", "status", "life", "reset", "power", "help"}) {
+      for (String k : new String[]{"enable", "disable", "density", "populate", "occupants", "clear", "status", "districts", "here", "life", "reset", "power", "help"}) {
          ok(c, Component.literal(" /city " + k + " ").withStyle(ChatFormatting.YELLOW)
             .append(line("viltrumitecore.city.help." + k).withStyle(ChatFormatting.GRAY)), false);
       }
@@ -360,6 +365,43 @@ public final class CityCommands {
          p.getX(), p.getY(), p.getZ(), d == null ? "-" : d.name(), m.profile.inArena(p.getX(), p.getY(), p.getZ()), cls, feet,
          m.grid.standable(p.getX(), p.getY(), p.getZ()), m.danger.dangerous(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, m.now()))), false);
       return cell == 0 ? 0 : 1;
+   }
+
+   /** Developer probe: every district of the map with its box, and the district at the caller's position. */
+   private static int districts(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+      CityManager m = city(c);
+      Vec3 at = c.getSource().getPosition();
+      return districts(c, m.profile, at.x, at.z);
+   }
+
+   /** {@code /city districts <x> <z>}: the same list, resolving the given block instead of the caller. */
+   private static int districtsProbe(CommandContext<CommandSourceStack> c, int x, int z) throws CommandSyntaxException {
+      return districts(c, city(c).profile, x, z);
+   }
+
+   private static int districts(CommandContext<CommandSourceStack> c, CityProfile p, double x, double z) {
+      if (p.districts.isEmpty()) {
+         ok(c, line("viltrumitecore.city.districts.none").withStyle(ChatFormatting.YELLOW), false);
+         return 0;
+      }
+
+      ok(c, line("viltrumitecore.city.districts.title", p.name, p.districts.size()).withStyle(ChatFormatting.GOLD), false);
+      CityProfile.District at = p.districtAt(x, z);
+      for (CityProfile.District d : p.districts) {
+         MutableComponent mark = d == at
+            ? line("viltrumitecore.city.districts.here").withStyle(ChatFormatting.GREEN)
+            : line("viltrumitecore.city.districts.far", (int)Math.sqrt(d.distanceSq(x, z))).withStyle(ChatFormatting.DARK_GRAY);
+         ok(c, line("viltrumitecore.city.districts.line", d.name(), d.minX(), d.maxX(), d.minZ(), d.maxZ(), d.walkCells())
+            .withStyle(ChatFormatting.GRAY).append(mark), false);
+      }
+
+      if (at == null) {
+         ok(c, line("viltrumitecore.city.districts.unresolved", (int)x, (int)z).withStyle(ChatFormatting.YELLOW), false);
+      } else {
+         ok(c, line("viltrumitecore.city.districts.at", (int)x, (int)z, at.name()).withStyle(ChatFormatting.GREEN), false);
+      }
+
+      return p.districts.size();
    }
 
 }

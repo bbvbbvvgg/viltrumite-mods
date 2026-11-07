@@ -65,5 +65,13 @@
   "viltrumitecore.city.power.stage.warning": "aviso",
   "viltrumitecore.city.power.stage.active": "activa",
   "viltrumitecore.city.power.stage.critical": "crítica",
-  "viltrumitecore.city.power.stage.all_clear": "fin de alerta"
+  "viltrumitecore.city.power.stage.all_clear": "fin de alerta",
+  "viltrumitecore.city.help.districts": " [x z] - todos los distritos del mapa con sus límites y el distrito en tu (o la dada) posición",
+  "viltrumitecore.city.districts.title": "Ciudad %s: %s distritos (límite minX..maxX, minZ..maxZ, celdas peatonales):",
+  "viltrumitecore.city.districts.none": "El perfil de este mapa no tiene distritos.",
+  "viltrumitecore.city.districts.line": " %s: x %s..%s, z %s..%s (%s celdas)",
+  "viltrumitecore.city.districts.here": " <-- aquí",
+  "viltrumitecore.city.districts.far": " [%s bloques]",
+  "viltrumitecore.city.districts.at": "Distrito en %s %s: %s",
+  "viltrumitecore.city.districts.unresolved": "No hay distrito en %s %s (a más de 64 bloques de todos)."
 }

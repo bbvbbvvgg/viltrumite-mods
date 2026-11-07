@@ -65,5 +65,13 @@
   "viltrumitecore.city.power.stage.warning": "предупреждение",
   "viltrumitecore.city.power.stage.active": "действует",
   "viltrumitecore.city.power.stage.critical": "критическое",
-  "viltrumitecore.city.power.stage.all_clear": "отбой"
+  "viltrumitecore.city.power.stage.all_clear": "отбой",
+  "viltrumitecore.city.help.districts": " [x z] - все районы карты с их границами и район в вашей (или указанной) точке",
+  "viltrumitecore.city.districts.title": "Город %s: районов %s (граница minX..maxX, minZ..maxZ, пешеходных ячеек):",
+  "viltrumitecore.city.districts.none": "В профиле этой карты нет районов.",
+  "viltrumitecore.city.districts.line": " %s: x %s..%s, z %s..%s (%s ячеек)",
+  "viltrumitecore.city.districts.here": " <-- вы здесь",
+  "viltrumitecore.city.districts.far": " [%s блоков]",
+  "viltrumitecore.city.districts.at": "Район в точке %s %s: %s",
+  "viltrumitecore.city.districts.unresolved": "В точке %s %s района нет (дальше 64 блоков от каждого)."
 }

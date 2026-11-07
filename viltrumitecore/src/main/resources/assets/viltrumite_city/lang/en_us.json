@@ -65,5 +65,13 @@
   "viltrumitecore.city.power.stage.warning": "warning",
   "viltrumitecore.city.power.stage.active": "active",
   "viltrumitecore.city.power.stage.critical": "critical",
-  "viltrumitecore.city.power.stage.all_clear": "all clear"
+  "viltrumitecore.city.power.stage.all_clear": "all clear",
+  "viltrumitecore.city.help.districts": " [x z] - every district of the map with its box, and the one at your (or the given) position",
+  "viltrumitecore.city.districts.title": "City %s: %s districts (box minX..maxX, minZ..maxZ, walk cells):",
+  "viltrumitecore.city.districts.none": "This map has no districts in its profile.",
+  "viltrumitecore.city.districts.line": " %s: x %s..%s, z %s..%s (%s cells)",
+  "viltrumitecore.city.districts.here": " <-- here",
+  "viltrumitecore.city.districts.far": " [%s blocks]",
+  "viltrumitecore.city.districts.at": "District at %s %s: %s",
+  "viltrumitecore.city.districts.unresolved": "No district at %s %s (more than 64 blocks from every one)."
 }

@@ -65,5 +65,13 @@
   "viltrumitecore.city.power.stage.warning": "uyarı",
   "viltrumitecore.city.power.stage.active": "etkin",
   "viltrumitecore.city.power.stage.critical": "kritik",
-  "viltrumitecore.city.power.stage.all_clear": "tehlike geçti"
+  "viltrumitecore.city.power.stage.all_clear": "tehlike geçti",
+  "viltrumitecore.city.help.districts": " [x z] - haritanın tüm bölgeleri sınırlarıyla ve senin (veya verilen) konumdaki bölge",
+  "viltrumitecore.city.districts.title": "Şehir %s: %s bölge (sınır minX..maxX, minZ..maxZ, yürüme hücresi):",
+  "viltrumitecore.city.districts.none": "Bu haritanın profilinde bölge yok.",
+  "viltrumitecore.city.districts.line": " %s: x %s..%s, z %s..%s (%s hücre)",
+  "viltrumitecore.city.districts.here": " <-- burada",
+  "viltrumitecore.city.districts.far": " [%s blok]",
+  "viltrumitecore.city.districts.at": "%s %s konumundaki bölge: %s",
+  "viltrumitecore.city.districts.unresolved": "%s %s konumunda bölge yok (her birinden 64 bloktan uzak)."
 }

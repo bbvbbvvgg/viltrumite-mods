@@ -65,5 +65,13 @@
   "viltrumitecore.city.power.stage.warning": "Warnung",
   "viltrumitecore.city.power.stage.active": "aktiv",
   "viltrumitecore.city.power.stage.critical": "kritisch",
-  "viltrumitecore.city.power.stage.all_clear": "Entwarnung"
+  "viltrumitecore.city.power.stage.all_clear": "Entwarnung",
+  "viltrumitecore.city.help.districts": " [x z] - alle Bezirke der Karte mit ihren Grenzen und der Bezirk an deiner (oder der angegebenen) Position",
+  "viltrumitecore.city.districts.title": "Stadt %s: %s Bezirke (Grenze minX..maxX, minZ..maxZ, Gehzellen):",
+  "viltrumitecore.city.districts.none": "Das Profil dieser Karte hat keine Bezirke.",
+  "viltrumitecore.city.districts.line": " %s: x %s..%s, z %s..%s (%s Zellen)",
+  "viltrumitecore.city.districts.here": " <-- hier",
+  "viltrumitecore.city.districts.far": " [%s Blöcke]",
+  "viltrumitecore.city.districts.at": "Bezirk bei %s %s: %s",
+  "viltrumitecore.city.districts.unresolved": "Kein Bezirk bei %s %s (mehr als 64 Blöcke von jedem entfernt)."
 }
