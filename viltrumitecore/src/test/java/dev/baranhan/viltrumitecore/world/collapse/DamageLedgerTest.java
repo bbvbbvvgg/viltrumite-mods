@@ -117,4 +117,73 @@ class DamageLedgerTest {
       hit(l, 200, 64, 0, 64, 1.0F, 100);
       assertEquals(64, l.around(1, 65, 1, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP).size());
    }
+
+   @Test
+   void settledReturnsEveryReadyClusterNotOnlyTheStrongest() {
+      // T4b pin (docs §8 / .memory-bank/city-collapse.md): in game the second building settled in the same
+      // tick was dropped, because settled handed the director one candidate and lost the rest
+      DamageLedger l = new DamageLedger();
+      hit(l, 0, 64, 0, 128, 1.0F, 100);
+      hit(l, 60, 64, 0, 128, 1.0F, 100);
+      hit(l, 120, 64, 0, 128, 1.0F, 100);
+      long now = 100 + CollapseRules.SETTLE_TICKS;
+      List<DamageLedger.Candidate> all = l.settled(now, 3);
+      assertEquals(3, all.size(), "all three settled buildings come out in one call");
+      for (int i = 0; i < all.size(); i++) {
+         for (int j = i + 1; j < all.size(); j++) {
+            assertTrue(Math.abs(all.get(i).x() - all.get(j).x()) > 30, "three different buildings");
+         }
+      }
+      assertTrue(l.settled(now + 1, 3).isEmpty(), "and nothing is served twice");
+   }
+
+   @Test
+   void settledWithMaxOneKeepsTheOtherBuildingsForTheNextCalls() {
+      // T4b pin: with a full quota the remaining ready clusters must stay dirty, never be consumed
+      DamageLedger l = new DamageLedger();
+      hit(l, 0, 64, 0, 128, 1.0F, 100);
+      hit(l, 60, 64, 0, 128, 1.0F, 100);
+      hit(l, 120, 64, 0, 128, 1.0F, 100);
+      long now = 100 + CollapseRules.SETTLE_TICKS;
+      assertEquals(1, l.settled(now, 1).size(), "one cluster per call when the quota is one");
+      assertEquals(1, l.settled(now + 1, 1).size(), "the second building waits one tick, not forever");
+      assertEquals(1, l.settled(now + 2, 1).size(), "the third as well");
+      assertTrue(l.settled(now + 3, 1).isEmpty());
+   }
+
+   @Test
+   void weakNoiseNeverCrowdsOutAReadyCluster() {
+      // T4b pin: clusters below the threshold are consumed silently, they must not eat the quota
+      DamageLedger l = new DamageLedger();
+      hit(l, 0, 64, 0, 128, 1.0F, 100);      // ready (score 128)
+      hit(l, 200, 64, 0, 40, 0.35F, 100);    // settles at 14: consumed, not returned
+      long now = 100 + CollapseRules.SETTLE_TICKS;
+      List<DamageLedger.Candidate> out = l.settled(now, 1);
+      assertEquals(1, out.size());
+      assertTrue(out.get(0).x() < 100, "the ready cluster is the one returned");
+      assertTrue(l.settled(now + 1, 1).isEmpty(), "the weak one left the dirty set without a candidate");
+   }
+
+   @Test
+   void dominantCauseIsTheLocalWeightNotTheLastRecordedCause() {
+      // T4a pin (docs §8 / .memory-bank/city-collapse.md): in game two towers that fell in one tick shared
+      // one cause - the last one recorded level-wide. The cause must be read around each spot.
+      DamageLedger l = new DamageLedger();
+      // tower A: 128 hero-weight blocks (128 x 0.8) at x 0..3
+      for (int i = 0; i < 128; i++) {
+         l.record(i % 4, 64 + i / 16, (i / 4) % 4, 0.8F, 100, CollapseCause.HERO);
+      }
+      // one Leviathan edge inside tower A's window, recorded after all of the hero's blocks
+      l.record(10, 66, 2, 1.0F, 100, CollapseCause.LEVIATHAN);
+      // tower B: 128 Leviathan-weight blocks (128 x 1.0) at x 60..63
+      for (int i = 0; i < 128; i++) {
+         l.record(60 + i % 4, 64 + i / 16, (i / 4) % 4, 1.0F, 100, CollapseCause.LEVIATHAN);
+      }
+      // one hero edge inside tower B's window, recorded last of the whole tick
+      l.record(52, 66, 2, 0.8F, 100, CollapseCause.HERO);
+      assertEquals(CollapseCause.HERO, l.dominantCause(2, 66, 2, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP),
+         "128x0.8 beats one Leviathan block: weight wins, recency does not");
+      assertEquals(CollapseCause.LEVIATHAN, l.dominantCause(62, 66, 2, CollapseRules.MAX_HALF, 24, CollapseRules.MAX_UP),
+         "and in reverse: the late hero edge does not rename the Leviathan tower");
+   }
 }

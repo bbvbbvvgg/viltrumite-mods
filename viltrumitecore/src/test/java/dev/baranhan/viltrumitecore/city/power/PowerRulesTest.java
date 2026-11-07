@@ -226,4 +226,92 @@ class PowerRulesTest {
          assertEquals(en.keySet(), lang.keySet(), loc + " key set differs from en_us");
       }
    }
+
+   @Test
+   void plainDestructionNeedsCollapseSeverityForAnActiveAlarmAndNeverWarns() {
+      // tuned on Atheria (memory: city-infrastructure.md): hero smashing walls at spawn must not raise the alarm
+      assertEquals(AlarmStage.NONE, PowerRules.alarmStage("destruction", 0.0));
+      assertEquals(AlarmStage.NONE, PowerRules.alarmStage("destruction", 0.29));
+      assertEquals(AlarmStage.NONE, PowerRules.alarmStage("destruction", 0.59));
+      assertEquals(AlarmStage.ACTIVE, PowerRules.alarmStage("destruction", 0.6), "active exactly at 0.6");
+      assertEquals(AlarmStage.ACTIVE, PowerRules.alarmStage("destruction", 0.9));
+      assertEquals(AlarmStage.ACTIVE, PowerRules.alarmStage("destruction", 1.5), "severity above 1 clamps to 1 and fires");
+      // every other cause follows the general ladder and can warn before going active
+      assertEquals(AlarmStage.NONE, PowerRules.alarmStage("meteor", 0.29));
+      assertEquals(AlarmStage.WARNING, PowerRules.alarmStage("meteor", 0.3), "warning exactly at 0.3");
+      assertEquals(AlarmStage.WARNING, PowerRules.alarmStage("explosion", 0.44));
+      assertEquals(AlarmStage.ACTIVE, PowerRules.alarmStage("explosion", 0.45), "other causes go active at 0.45");
+      assertEquals(AlarmStage.ACTIVE, PowerRules.alarmStage("godzilla", 0.9));
+      assertEquals(AlarmStage.ACTIVE, PowerRules.alarmStage("", 0.9), "unknown causes are not plain destruction");
+      assertEquals(AlarmStage.NONE, PowerRules.alarmStage(null, 0.1), "no cause, no alarm");
+      // the constants are the documented tuning, pinned so a rebalance is a conscious change
+      assertEquals(0.6, PowerRules.ACTIVE_SEVERITY, 1e-9);
+      assertEquals(0.45, PowerRules.ACTIVE_OTHER_SEVERITY, 1e-9);
+      assertEquals(0.3, PowerRules.WARNING_SEVERITY, 1e-9);
+   }
+
+   @Test
+   void cascadeFloorChanceAndCriticalTripsAreTheTunedOnes() {
+      // tuned on Atheria (memory: city-infrastructure.md): a neighbour under 0.30 load never gives way
+      for (long seed = 0; seed < 4000; seed++) {
+         assertFalse(PowerRules.cascades(0.29, 1, seed), "floor 0.30: below it nothing trips, seed " + seed);
+         assertFalse(PowerRules.cascades(0.30, 1, seed), "at the floor the chance is 0, seed " + seed);
+      }
+      // chance = min(0.85, (load - 0.30) * 1.2), deterministic per seed: one spot check above the floor
+      assertTrue(PowerRules.cascades(0.31, 1, 0));
+      assertFalse(PowerRules.cascades(0.31, 1, 1));
+      assertFalse(PowerRules.cascades(0.31, 1, 2));
+      assertFalse(PowerRules.cascades(0.31, 1, 3));
+      assertFalse(PowerRules.cascades(0.31, 1, 4));
+      assertFalse(PowerRules.cascades(0.31, 1, 5));
+      assertFalse(PowerRules.cascades(0.31, 1, 6));
+      // 0.5 load: (0.5-0.3)*1.2 = 0.24 chance — about a quarter of the neighbours over 4000 seeds
+      int quarter = 0;
+      for (long seed = 0; seed < 4000; seed++) {
+         if (PowerRules.cascades(0.5, 1, seed)) quarter++;
+      }
+      assertTrue(quarter > 700 && quarter < 1400, "0.5 load trips " + quarter + "/4000");
+      // a worn chain far above the cap stays at the 0.85 ceiling, whatever the load
+      int capped = 0, more = 0;
+      for (long seed = 0; seed < 4000; seed++) {
+         if (PowerRules.cascades(1.5, 1, seed)) capped++;
+         if (PowerRules.cascades(3.0, 1, seed)) more++;
+      }
+      assertEquals(capped, more, "the 0.85 chance cap does not move with load");
+      assertTrue(capped > 3100 && capped < 3700, "capped trips " + capped + "/4000");
+      assertEquals(3, PowerRules.CRITICAL_TRIPS, "three substations down in one incident = critical");
+      assertEquals(0.594, PowerRules.cascadeLoad(0.9, 1), 1e-9, "0.66^1 decay from a 0.9 severity");
+      assertEquals(1.0, PowerRules.cascadeLoad(2.0, 0), 1e-9, "severity is clamped into the load");
+   }
+
+   @Test
+   void darkFractionCountsUrbanCellsNotTheWholeArena() {
+      // tuned on Atheria (memory: city-infrastructure.md): districts are the denominator, outskirts hide nothing
+      assertEquals(0.5221543F, PowerRules.darkFraction(7000, 13406, 160000), 1e-6, "half of downtown dark");
+      assertEquals(1.0F, PowerRules.darkFraction(13406, 13406, 160000), 1e-6);
+      assertEquals(1.0F, PowerRules.darkFraction(30000, 13406, 160000), 1e-6, "clamped at 1");
+      assertEquals(0.0F, PowerRules.darkFraction(0, 13406, 160000), 1e-9);
+      // without mapped districts the whole grid is the fallback denominator, never a zero division
+      assertEquals(5.0F / 160000.0F, PowerRules.darkFraction(5, 0, 160000), 1e-9);
+      assertEquals(0.0F, PowerRules.darkFraction(0, 0, 0), 1e-9);
+   }
+
+   @Test
+   void sirenLevelsAreThePinnedCurveNumbers() {
+      // 1 at the mast, half at the 110-block reference distance, silence from 900 blocks (from PowerRules source)
+      assertEquals(1.0F, PowerRules.sirenLevel(0), 1e-6);
+      assertEquals(0.5F, PowerRules.sirenLevel(110), 1e-6);
+      assertEquals(0.2612039F, PowerRules.sirenLevel(220), 1e-5);
+      assertEquals(0.1111111F, PowerRules.sirenLevel(440), 1e-5);
+      assertEquals(0.0020821F, PowerRules.sirenLevel(890), 1e-5, "the edge fade before the cutoff");
+      assertEquals(0.0F, PowerRules.sirenLevel(900), 1e-9);
+      assertEquals(0.0F, PowerRules.sirenLevel(1500), 1e-9);
+      assertEquals(0.0F, PowerRules.sirenNear(220), 1e-9);
+      assertEquals(0.5F, PowerRules.sirenNear(145), 1e-6);
+      assertEquals(1.0F, PowerRules.sirenNear(70), 1e-6);
+      // sound is delayed by distance at 343 m/s, capped at three seconds
+      assertEquals(10, PowerRules.soundDelay(171.5));
+      assertEquals(60, PowerRules.soundDelay(5000));
+      assertEquals(0, PowerRules.soundDelay(0));
+   }
 }

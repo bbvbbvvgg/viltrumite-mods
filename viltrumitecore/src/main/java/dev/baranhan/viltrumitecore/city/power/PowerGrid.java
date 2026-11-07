@@ -207,7 +207,7 @@ public final class PowerGrid {
 
    public float darkFraction() {
       // the arena is far larger than the built-up districts; outskirts cells are rarely hit
-      return Math.min(1.0F, (float)this.darkCount / Math.max(1, this.urbanCells > 0 ? this.urbanCells : this.cols * this.rows));
+      return PowerRules.darkFraction(this.darkCount, this.urbanCells, this.cols * this.rows);
    }
 
    public int cellCount() {
@@ -381,11 +381,10 @@ public final class PowerGrid {
       }
       Vec3 at = new Vec3(x, y, z);
       // a hero smashing a wall is not a city emergency: plain destruction bursts need a collapse-sized burst
-      boolean destruction = "destruction".equals(cause);
-      if (sev >= (destruction ? 0.6F : 0.45F)) {
-         this.alarm.lease("incident:" + cause, AlarmStage.ACTIVE, at, (float)reach * 3, 1200);
-      } else if (sev >= 0.3F && !destruction) {
-         this.alarm.lease("incident:" + cause, AlarmStage.WARNING, at, (float)reach * 3, 600);
+      AlarmStage stage = PowerRules.alarmStage(cause, sev);
+      if (stage != AlarmStage.NONE) {
+         this.alarm.lease("incident:" + cause, stage, at, (float)reach * 3,
+            stage == AlarmStage.ACTIVE ? 1200 : 600);
       }
       if ("meteor".equals(cause)) {
          int strikes = 0;

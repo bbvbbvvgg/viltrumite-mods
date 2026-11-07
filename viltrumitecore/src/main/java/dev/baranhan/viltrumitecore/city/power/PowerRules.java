@@ -169,6 +169,37 @@ public final class PowerRules {
    /** Substations tripped by one incident from which the city calls the situation critical (a real chain). */
    public static final int CRITICAL_TRIPS = 3;
 
+   /**
+    * Severity at which an incident raises an ACTIVE alarm. Plain destruction (a hero smashing walls) must stay
+    * below it: a burst of destroyed blocks has to reach a collapse-sized size before the city wails (tuned on
+    * Atheria, see .memory-bank/city-infrastructure.md). Other causes already go ACTIVE at
+    * {@link #ACTIVE_OTHER_SEVERITY}.
+    */
+   public static final double ACTIVE_SEVERITY = 0.6;
+
+   /** Severity at which an incident that is not plain destruction raises an ACTIVE alarm. */
+   public static final double ACTIVE_OTHER_SEVERITY = 0.45;
+
+   /** Severity at which a non-destruction incident raises a WARNING. */
+   public static final double WARNING_SEVERITY = 0.3;
+
+   /**
+    * Alarm stage of a grid incident. Plain {@code destruction} (hero smashing walls at spawn) never warns:
+    * it raises ACTIVE only at a collapse-sized severity, and nothing at all below the warning line. Other
+    * causes warn earlier and go ACTIVE at {@link #ACTIVE_OTHER_SEVERITY}.
+    */
+   public static AlarmStage alarmStage(String cause, double severity) {
+      double s = Math.max(0.0, Math.min(1.0, severity));
+      boolean destruction = "destruction".equals(cause);
+      if (s >= (destruction ? ACTIVE_SEVERITY : ACTIVE_OTHER_SEVERITY)) {
+         return AlarmStage.ACTIVE;
+      }
+      if (s >= WARNING_SEVERITY && !destruction) {
+         return AlarmStage.WARNING;
+      }
+      return AlarmStage.NONE;
+   }
+
    /** Ticks between a substation tripping and the next one along the cascade. */
    public static int cascadeDelay(long seed) {
       return 45 + (int)Math.floorMod(mix(seed), 50L);
@@ -252,6 +283,16 @@ public final class PowerRules {
          return AlarmStage.ALL_CLEAR;
       }
       return AlarmStage.NONE;
+   }
+
+   /**
+    * Dark share of the city (0..1) that the state packet reports: dark cells over the urban cells (cells with a
+    * district), not over all grid cells — outskirts would otherwise hide a downtown blackout. Without a mapped
+    * district the whole grid counts as the denominator; the share never exceeds 1.
+    */
+   public static float darkFraction(int darkCells, int urbanCells, int totalCells) {
+      int denominator = Math.max(1, urbanCells > 0 ? urbanCells : Math.max(1, totalCells));
+      return Math.min(1.0F, (float)darkCells / denominator);
    }
 
    // ------------------------------------------------------------------ sirens (client audio)
