@@ -72,6 +72,13 @@ public final class SupportProbe {
    private int nodes;
    private Status status = Status.RUNNING;
    private String reason = "running";
+   /**
+    * A GROUNDED verdict that only a {@link CollapseAnalyzer#UNKNOWN} neighbour (an unloaded chunk), the search
+    * radius or the covered area produced: the structure may really be floating, the search just could not look
+    * there. {@link #reason} names which of the three; a re-poll re-runs the same search once those bounds move.
+    */
+   private boolean recheckableGround;
+   private int unknownExits, radiusExits, areaExits;
 
    /**
     * @param seeds removed positions (their solid neighbours are searched) or, with {@code singleSearch}, the
@@ -126,6 +133,26 @@ public final class SupportProbe {
       return this.reason;
    }
 
+   /** True when the search ended GROUNDED only on an unloaded chunk, the radius or the covered area (see {@link #reason}). */
+   public boolean recheckableGround() {
+      return this.recheckableGround && this.status == Status.GROUNDED;
+   }
+
+   /** Searches that stopped at an {@link CollapseAnalyzer#UNKNOWN} neighbour (an unloaded chunk). */
+   public int unknownExits() {
+      return this.unknownExits;
+   }
+
+   /** Searches that stopped at a solid block beyond the search radius. */
+   public int radiusExits() {
+      return this.radiusExits;
+   }
+
+   /** Searches that stopped at the covered area boundary (world bottom, without {@code noGround} also the radius cap). */
+   public int areaExits() {
+      return this.areaExits;
+   }
+
    public int nodes() {
       return this.nodes;
    }
@@ -166,7 +193,22 @@ public final class SupportProbe {
          if (!this.inSearch) {
             if (!this.nextSearch()) {
                this.status = this.floating.isEmpty() ? Status.GROUNDED : Status.FLOATING;
-               this.reason = this.floating.isEmpty() ? "grounded" : "floating";
+               if (this.status == Status.GROUNDED && this.recheckableGround) {
+                  int parts = 0;
+                  StringBuilder w = new StringBuilder();
+                  if (this.unknownExits > 0) {
+                     w.append("recheckable: an unloaded chunk").append(parts++ > 0 ? ", " : "");
+                  }
+                  if (this.radiusExits > 0) {
+                     w.append(parts++ > 0 ? ", " : "").append("recheckable: the search radius ").append(this.radius);
+                  }
+                  if (this.areaExits > 0) {
+                     w.append(parts++ > 0 ? ", " : "").append("recheckable: the area boundary");
+                  }
+                  this.reason = w.toString();
+               } else {
+                  this.reason = this.floating.isEmpty() ? "grounded" : "floating";
+               }
                break;
             }
             continue;
@@ -190,8 +232,13 @@ public final class SupportProbe {
             break;
          }
          int x = BlockKey.x(n), y = BlockKey.y(n), z = BlockKey.z(n);
-         if (y < this.cutY || y <= this.minY) {
+         if (y < this.cutY) {
             this.grounded();
+            continue;
+         }
+         if (y <= this.minY) {
+            // the bottom of the world: solid, but the real ground below it was never looked at
+            this.groundedArea();
             continue;
          }
          for (int d = 0; d < 6; d++) {
@@ -207,7 +254,7 @@ public final class SupportProbe {
             byte m = this.classify(k, nx, ny, nz);
             if (m == CollapseAnalyzer.UNKNOWN) {
                // an unloaded neighbour is inconclusive inside or outside a base-cut footprint: never call the part floating
-               this.grounded();
+               this.groundedUnknown();
                break;
             }
             if (this.columns != null && d != 0 && d != 5) {
@@ -237,7 +284,8 @@ public final class SupportProbe {
                break;
             }
             if (Math.abs(nx - this.ox) > this.radius || Math.abs(nz - this.oz) > this.radius) {
-               this.grounded();
+               // a solid block beyond the search radius: its support is out of reach of this probe
+               this.groundedRadius();
                break;
             }
             this.add(k, m, ny);
@@ -255,7 +303,12 @@ public final class SupportProbe {
          for (long s : this.seeds) {
             int x = BlockKey.x(s), y = BlockKey.y(s), z = BlockKey.z(s);
             byte m = this.classify(s, x, y, z);
-            if (m == CollapseAnalyzer.FIXED || m == CollapseAnalyzer.UNKNOWN) {
+            if (m == CollapseAnalyzer.UNKNOWN) {
+               // the seed itself is in a part of the world nobody can see: the verdict may change
+               this.groundedUnknown();
+               return true;
+            }
+            if (m == CollapseAnalyzer.FIXED) {
                this.grounded();
                return true;
             }
@@ -321,6 +374,27 @@ public final class SupportProbe {
    private void grounded() {
       this.groundedSearches++;
       this.endSearch();
+   }
+
+   /** A search that stopped at a solid block it may not enter (an unloaded chunk: the verdict may change). */
+   private void groundedUnknown() {
+      this.unknownExits++;
+      this.recheckableGround = true;
+      this.grounded();
+   }
+
+   /** A search that stopped at a solid block beyond the search radius (out of this probe's reach). */
+   private void groundedRadius() {
+      this.radiusExits++;
+      this.recheckableGround = true;
+      this.grounded();
+   }
+
+   /** A search that stopped at the boundary of the covered area (the world floor: what holds it was never seen). */
+   private void groundedArea() {
+      this.areaExits++;
+      this.recheckableGround = true;
+      this.grounded();
    }
 
    private void add(long k, byte m, int y) {

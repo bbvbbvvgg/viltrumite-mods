@@ -152,13 +152,55 @@ class SupportProbeTest {
       tower(w, 0, 0, 9, 64, 100);
       long[] removed = w.carve(0, 64, 0, 8, 65, 8);
       w.unknownFromX = 6;
-      assertEquals(SupportProbe.Status.GROUNDED, probe(w, removed, null, false).run(), "half the tower is in an unloaded chunk");
+      SupportProbe u = probe(w, removed, null, false);
+      assertEquals(SupportProbe.Status.GROUNDED, u.run(), "half the tower is in an unloaded chunk");
+      // T3: the verdict is "supported" only because the search could not look into the unloaded part
+      assertTrue(u.recheckableGround(), u.reason());
+      assertTrue(u.unknownExits() > 0, "the searches stopped at the unloaded chunk");
       World b = new World();
       tower(b, 0, 0, 9, 64, 100);
       long[] r2 = b.carve(0, 64, 0, 8, 65, 8);
       b.box(4, 70, 4, 4, 70, 4, CollapseAnalyzer.FIXED);
       b.box(4, 66, 4, 4, 69, 4, CollapseAnalyzer.STRUCTURE);
-      assertEquals(SupportProbe.Status.GROUNDED, probe(b, r2, null, false).run(), "a barrier inside holds it");
+      SupportProbe fixed = probe(b, r2, null, false);
+      assertEquals(SupportProbe.Status.GROUNDED, fixed.run(), "a barrier inside holds it");
+      assertFalse(fixed.recheckableGround(), "real ground inside the covered area: no re-poll");
+      assertEquals(0, fixed.unknownExits() + fixed.radiusExits() + fixed.areaExits());
+   }
+
+   @Test
+   void aStructureBeyondTheSearchRadiusIsRecheckable() {
+      World w = new World();
+      SupportProbe p = new SupportProbe(w, new long[]{BlockKey.of(0, 70, 0)}, null, true, 70, -64, 1023,
+         CollapseRules.SUPPORT_MAX_NODES, 4, 0, 0);
+      // one solid column that runs past the 4-block radius of the search: the probe trusts it, but cannot see its base
+      w.box(0, 64, 0, 0, 90, 0, CollapseAnalyzer.STRUCTURE);
+      assertEquals(SupportProbe.Status.GROUNDED, p.run());
+      assertTrue(p.recheckableGround(), p.reason());
+      assertTrue(p.radiusExits() > 0);
+      assertEquals(0, p.unknownExits() + p.areaExits());
+   }
+
+   @Test
+   void worldBottomIsAnAreaExitNotRealGround() {
+      World w = new World();
+      w.noGround = true;
+      w.box(0, 100, 0, 3, 120, 3, CollapseAnalyzer.STRUCTURE); // a slab nobody holds up
+      long[] removed = w.carve(0, 99, 0, 3, 99, 3); // cut between it and the platform below (nothing there)
+      SupportProbe p = probe(w, removed, null, false);
+      assertEquals(SupportProbe.Status.GROUNDED, p.run(), "the slab reaches minY and counts as supported");
+      assertTrue(p.recheckableGround(), p.reason());
+      assertTrue(p.areaExits() > 0);
+   }
+
+   @Test
+   void aFloatingVerdictIsNeverRecheckable() {
+      World w = new World();
+      tower(w, 0, 0, 9, 64, 163);
+      long[] removed = w.carve(0, 64, 0, 8, 65, 8);
+      SupportProbe p = probe(w, removed, null, false);
+      assertEquals(SupportProbe.Status.FLOATING, p.run());
+      assertFalse(p.recheckableGround(), "floating is decided, nothing to re-poll");
    }
 
    @Test
@@ -168,6 +210,7 @@ class SupportProbeTest {
       long[] removed = w.carve(0, 64, 0, 8, 65, 8);
       SupportProbe p = new SupportProbe(w, removed, null, false, 64, -64, 1023, 500, 192, 4, 4);
       assertEquals(SupportProbe.Status.UNDECIDED, p.run());
+      assertFalse(p.recheckableGround(), "UNDECIDED already has its own re-poll (SupportWatch), not this flag");
    }
 
    @Test

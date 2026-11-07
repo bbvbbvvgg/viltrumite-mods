@@ -10,7 +10,9 @@ import dev.baranhan.viltrumitecore.world.collapse.CollapseAnalyzerTest.World;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /** Regressions for the review of PR #142 (support-loss collapses). */
@@ -105,6 +107,38 @@ class SupportReviewTest {
       assertTrue(s.contains("List<long[]> comps = components(own, MAX_BEFORE_COMPONENTS);"));
       assertTrue(s.contains("long[] nextComp = job.components.pollFirst();"));
       assertTrue(s.contains("job.accepted.addAll(LongArrayList.wrap(job.floatingBlocks));"), "only a grounded component is accepted");
+   }
+
+   // ---- T3: a "supported" verdict with an unseen edge waits for a re-poll at chunk loads
+
+   @Test
+   void rePollsWakeForTheCellOfALoadedChunk() {
+      SupportWatch.Request a = new SupportWatch.Request(new long[]{BlockKey.of(0, 64, 0)}, 64, 4, 64, 4, null, false);
+      SupportWatch.Request far = new SupportWatch.Request(new long[]{BlockKey.of(3000, 64, 3000)}, 64, 3004, 64, 3004, null, false);
+      Map<Long, SupportWatch.Request> plans = new HashMap<>();
+      plans.put(BlockKey.of(4, 64, 4), a);
+      plans.put(BlockKey.of(3004, 64, 3004), far);
+      List<SupportWatch.Request> due = SupportWatch.repollsFor(plans, BlockKey.of(0, 0, 0));
+      assertEquals(1, due.size(), "the chunk at cell (0,0,0) wakes the plan built around it");
+      assertEquals(a, due.get(0));
+      assertEquals(1, SupportWatch.repollsFor(plans, BlockKey.of(190, 0, 190)).size(), "the radius 192 reaches six cells out");
+      assertTrue(SupportWatch.repollsFor(plans, BlockKey.of(200, 0, 0)).isEmpty(), "beyond the radius: the plan is not woken");
+      assertTrue(SupportWatch.repollsFor(plans, BlockKey.of(4, 5, 4)).isEmpty(), "a different column of cells never wakes it");
+   }
+
+   @Test
+   void aRecheckableVerdictPlansARePollTheListenerWakesUp() throws IOException {
+      String probe = Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/world/collapse/SupportProbe.java"));
+      assertTrue(probe.contains("groundedUnknown()"), "an unloaded neighbour marks the grounded verdict recheckable");
+      assertTrue(probe.contains("recheckableGround()"), "the probe reports the recheckable verdict");
+      String watch = Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/world/collapse/SupportWatch.java"));
+      assertTrue(watch.contains("boolean wantsRepoll()"), "a recheckable job plans a re-poll");
+      assertTrue(watch.contains("static void onChunkLoad(ServerLevel level, int chunkX, int chunkZ)"), "chunk loads wake the plans");
+      assertTrue(watch.contains("st.repolls.isEmpty() && ledger.pending() == 0"), "pending re-polls keep the state alive");
+      assertTrue(watch.contains("undecidedRepolls"), "the re-polls show up in /collapse status");
+      String events = Files.readString(Path.of("src/main/java/dev/baranhan/viltrumitecore/world/collapse/CollapseEvents.java"));
+      assertTrue(events.contains("ChunkEvent.Load"), "the Forge listener is wired");
+      assertTrue(events.contains("SupportWatch.onChunkLoad(level, event.getChunk().getPos().x, event.getChunk().getPos().z)"));
    }
 
    // ---- P2: support chains respect the active-collapse limit

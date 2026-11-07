@@ -36,6 +36,8 @@ public final class SupportWatch {
    private static final Map<UUID, Long> NOTIFIED = new HashMap<>();
    // QA metrics (/collapse status)
    static int probes, grounded, floating, undecided, alreadyFloating, tooSmall, chainsStarted, stagesStarted, blocked, baseCuts, anchored, sheetBlocks;
+   /** Planned re-probes of recheckable "supported" verdicts (the T3 re-poll at chunk loads). */
+   static int undecidedRepolls;
    static long lastProbeNanos, maxProbeNanos;
    static int lastNodes, maxNodes;
    static String lastResult = "-";
@@ -78,6 +80,11 @@ public final class SupportWatch {
          this.before = before;
          this.mask = mask;
          this.started = started;
+      }
+
+      /** True when this job ended "supported" only because the search could not look everywhere. */
+      boolean wantsRepoll() {
+         return !this.before && this.probe.recheckableGround();
       }
 
       Job carry(Job from) {
@@ -163,6 +170,8 @@ public final class SupportWatch {
       Job job;
       final ArrayDeque<Request> pending = new ArrayDeque<>();
       final List<Chain> chains = new ArrayList<>();
+      /** Settled "supported" verdicts worth re-probing when more of the world loads (one per cluster). */
+      final Map<Long, Request> repolls = new HashMap<>();
    }
 
    private static State state(ServerLevel level) {
@@ -198,6 +207,66 @@ public final class SupportWatch {
          }
       }
       return false;
+   }
+
+   /** Every re-poll plan that waits for chunks of this cell to load. */
+   static List<Request> repollsFor(Map<Long, Request> plans, long cell) {
+      int cx = BlockKey.x(cell), cy = BlockKey.y(cell), cz = BlockKey.z(cell);
+      int r = (CollapseRules.SUPPORT_SEARCH_RADIUS >> CollapseRules.CELL_SHIFT) + 1;
+      int ry = (CollapseRules.SUPPORT_CLUSTER_BAND >> CollapseRules.CELL_SHIFT) + 1;
+      List<Request> out = new ArrayList<>();
+      for (Map.Entry<Long, Request> e : plans.entrySet()) {
+         Request req = e.getValue();
+         if (Math.abs((req.x >> CollapseRules.CELL_SHIFT) - cx) <= r && Math.abs((req.y >> CollapseRules.CELL_SHIFT) - cy) <= ry
+            && Math.abs((req.z >> CollapseRules.CELL_SHIFT) - cz) <= r) {
+            out.add(req);
+         }
+      }
+      return out;
+   }
+
+   /**
+    * The loaded chunk may have been the inconclusive edge of a "supported" verdict (an unloaded neighbour, beyond
+    * the search radius or the covered area): each affected plan is re-probed from scratch. A re-probe runs only
+    * when the watch is idle, one per level at a time, like any other probe; a plan that decides something for
+    * good is dropped, one that stays recheckable waits again.
+    */
+   static void onChunkLoad(ServerLevel level, int chunkX, int chunkZ) {
+      State st = STATES.get(level.dimension());
+      if (st == null || st.repolls.isEmpty() || st.job != null) {
+         return;
+      }
+      long cell = BlockKey.of(chunkX, 0, chunkZ);
+      List<Request> due = repollsFor(st.repolls, cell);
+      if (due.isEmpty()) {
+         return;
+      }
+      Request r = due.get(0);
+      st.repolls.remove(BlockKey.of(r.x, r.y, r.z));
+      if (insideAnActiveEvent(level, r)) {
+         return;
+      }
+      SupportLedger ledger = StructuralDamage.support(level);
+      LongArrayList near = ledger.around(r.x, r.y, r.z, CollapseRules.SUPPORT_CLUSTER_RADIUS, CollapseRules.SUPPORT_CLUSTER_BAND);
+      CollapseAnalyzer.Volume v = StructuralDamage.volume(level);
+      LongArrayList air = new LongArrayList();
+      for (int i = 0; i < near.size(); i++) {
+         long k = near.getLong(i);
+         if (v.at(BlockKey.x(k), BlockKey.y(k), BlockKey.z(k)) == CollapseAnalyzer.AIR) {
+            air.add(k);
+         }
+      }
+      if (air.isEmpty()) {
+         return; // rebuilt while nobody looked: nothing to re-probe
+      }
+      Request now = new Request(air.toLongArray(), r.cutY, r.x, r.y, r.z, null, false);
+      st.job = new Job(now, probe(level, now, null, false), false, null, level.getGameTime());
+      probes++;
+   }
+
+   /** True when a running collapse or chain is already bringing this structure down. */
+   private static boolean insideAnActiveEvent(ServerLevel level, Request r) {
+      return CollapseDirector.insideActive(level, r.x, r.y, r.z) || covers(level, r.x, r.y, r.z);
    }
 
    public static int chainCount() {
@@ -282,7 +351,7 @@ public final class SupportWatch {
             it.remove(); // cancelled by a listener (protected zone)
          }
       }
-      if (st.job == null && st.pending.isEmpty() && st.chains.isEmpty() && ledger.pending() == 0) {
+      if (st.job == null && st.pending.isEmpty() && st.chains.isEmpty() && st.repolls.isEmpty() && ledger.pending() == 0) {
          STATES.remove(level.dimension());
       }
    }
@@ -328,6 +397,7 @@ public final class SupportWatch {
       Request r = job.request;
       String where = r.x + " " + r.y + " " + r.z;
       String scope = job.mask == null ? "" : " inside the base cut (" + job.mask + ")";
+      st.repolls.remove(BlockKey.of(r.x, r.y, r.z)); // a decided verdict replaces its re-poll plan
       if (job.before) {
          if (p.status() == SupportProbe.Status.GROUNDED) {
             job.accepted.addAll(LongArrayList.wrap(job.floatingBlocks));
@@ -361,6 +431,13 @@ public final class SupportWatch {
          if (cut != null) {
             st.job = new Job(r, probe(level, r, null, false), false, cut, job.started).carry(job);
             return;
+         }
+      }
+      if (job.wantsRepoll() && !r.continuation) {
+         st.repolls.put(BlockKey.of(r.x, r.y, r.z), r);
+         undecidedRepolls++;
+         if (CollapseDirector.LOG) {
+            LOGGER.info("support probe {}: re-poll planned when more of the world loads ({})", where, p.reason());
          }
       }
       switch (p.status()) {
@@ -522,14 +599,15 @@ public final class SupportWatch {
 
    static String status() {
       return String.format(
-         "support: %s, probes %d (grounded %d, floating %d, undecided %d, already floating %d, too small %d, wedged %d, blocked %d), chains %d running / %d started (%d base cuts, %d remnant wall blocks), %d stages; probe %.2f ms (max %.2f), %d nodes (max %d); last: %s",
-         enabled() ? "on" : "off", probes, grounded, floating, undecided, alreadyFloating, tooSmall, anchored, blocked, chainCount(), chainsStarted, baseCuts, sheetBlocks, stagesStarted,
+         "support: %s, probes %d (grounded %d, floating %d, undecided %d, re-polls %d, already floating %d, too small %d, wedged %d, blocked %d), chains %d running / %d started (%d base cuts, %d remnant wall blocks), %d stages; probe %.2f ms (max %.2f), %d nodes (max %d); last: %s",
+         enabled() ? "on" : "off", probes, grounded, floating, undecided, undecidedRepolls, alreadyFloating, tooSmall, anchored, blocked, chainCount(), chainsStarted, baseCuts, sheetBlocks, stagesStarted,
          lastProbeNanos / 1.0E6, maxProbeNanos / 1.0E6, lastNodes, maxNodes, lastResult);
    }
 
    static void resetMetrics() {
       maxProbeNanos = 0;
       maxNodes = 0;
+      undecidedRepolls = 0;
    }
 
    /** {@code /collapse support <pos>}: is the structure at {@code pos} standing on anything below {@code pos}? */

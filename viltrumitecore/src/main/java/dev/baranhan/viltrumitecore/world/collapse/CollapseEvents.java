@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Explosion;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -74,6 +75,18 @@ public final class CollapseEvents {
       if (event.getLevel() instanceof ServerLevel level) {
          CollapseDirector.abortAll(level);
          StructuralDamage.forget(level.dimension());
+      }
+   }
+
+   /**
+    * T3: a loaded chunk may have been the inconclusive edge of a "supported" verdict of the support probe (an
+    * unloaded neighbour, beyond its search radius or covered area): the plan is re-probed from scratch. Cheap:
+    * the watch has at most one plan per settled cluster, and a job only starts when the watch is idle.
+    */
+   @SubscribeEvent
+   public static void onChunkLoad(ChunkEvent.Load event) {
+      if (event.getLevel() instanceof ServerLevel level) {
+         SupportWatch.onChunkLoad(level, event.getChunk().getPos().x, event.getChunk().getPos().z);
       }
    }
 
