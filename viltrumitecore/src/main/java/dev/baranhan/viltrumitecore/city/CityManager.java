@@ -556,8 +556,10 @@ public final class CityManager {
       dev.baranhan.viltrumitecore.world.collapse.CollapseDirector.abortAll(this.level);
       this.population.clearAll();
       this.power.onCityReset();
-      // the ruins are being rebuilt: their smoke, dust and sounds go with them
+      // the ruins are being rebuilt: their smoke, dust and sounds go with them; the danger map goes
+      // too (an aborted collapse and the stopped events must not keep people fleeing a rebuilt map)
       dev.baranhan.viltrumitecore.worldevent.aftermath.CityAftermath.onCityReset(this.level);
+      dev.baranhan.viltrumitecore.city.links.CityDisasterLinks.onCityReset(this.level);
       this.restore.start(this.now());
       this.saveJournal(false);
    }

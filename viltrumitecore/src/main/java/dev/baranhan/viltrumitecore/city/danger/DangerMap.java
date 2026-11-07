@@ -183,6 +183,31 @@ public final class DangerMap {
       this.blasts.removeIf(b -> b[4] + BLAST_WINDOW <= now);
    }
 
+   /**
+    * The event at this place is over or the map is being put back: every zone whose centre lies within
+    * {@code radius} of the point goes, whatever kind it is (a danger, a curiosity, a tracked source that
+    * stopped, a merged cluster), and fresh shock waves near the point too. Zones further away keep living:
+    * their own event is still real. Returns how many zones went.
+    */
+   public int clearNear(double x, double y, double z, float radius) {
+      if (radius <= 0.0F || Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z) || Double.isInfinite(x)
+         || Double.isInfinite(y) || Double.isInfinite(z)) {
+         return 0;
+      }
+
+      double r2 = (double)radius * radius;
+      int before = this.zones.size();
+      this.zones.removeIf(zn -> {
+         double dx = zn.x - x, dy = zn.y - y, dz = zn.z - z;
+         return dx * dx + dy * dy + dz * dz <= r2;
+      });
+      this.blasts.removeIf(b -> {
+         double dx = b[0] - x, dy = b[1] - y, dz = b[2] - z;
+         return dx * dx + dy * dy + dz * dz <= r2;
+      });
+      return before - this.zones.size();
+   }
+
    /** A shock wave (explosion, slam, lightning) of this radius happened now. */
    public void blast(double x, double y, double z, float radius, long now) {
       if (radius > 0.0F && !Double.isNaN(x) && !Double.isNaN(y) && !Double.isNaN(z)) {

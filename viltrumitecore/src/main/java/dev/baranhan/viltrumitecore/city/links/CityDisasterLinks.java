@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.city.links;
 
+import dev.baranhan.viltrumitecore.city.CityManager;
+import dev.baranhan.viltrumitecore.city.danger.DangerMap;
 import dev.baranhan.viltrumitecore.city.power.api.CityInfrastructure;
 import dev.baranhan.viltrumitecore.city.power.api.InfrastructureEvent;
 import dev.baranhan.viltrumitecore.city.power.api.InfrastructureIncident;
@@ -49,6 +51,8 @@ public final class CityDisasterLinks {
    static final int MAX_TRANSFORMER_ZONES = 4;
    /** A grid cell is 48 x 48 blocks. */
    static final double CELL_AREA = 48.0 * 48.0;
+   /** Extra reach over the collapse radius when an abort drops its danger zones. */
+   static final float DANGER_CLEAR_MARGIN = 24.0F;
 
    private static final Map<ResourceKey<Level>, List<CollapseInfo>> ACTIVE = new HashMap<>();
    private static final Set<Long> IMPACTED = new HashSet<>();
@@ -74,6 +78,34 @@ public final class CityDisasterLinks {
       }
 
       IMPACTED.remove(id);
+      if (event.aborted()) {
+         // The collapse was stopped before its end (level unload, /collapse clear, /city reset): the map
+         // is whole again, so the danger zones and shock waves it marked must not send citizens fleeing
+         // from destruction that no longer exists. A collapse that ran to its end keeps its zones: the
+         // ruin is real and its danger ages out by itself.
+         clearCollapseDanger(event.getLevel(), event.info());
+      }
+   }
+
+   /** Drops every danger zone and fresh blast near an aborted collapse (its centre and its landing zone). */
+   static int clearCollapseDanger(ServerLevel level, CollapseInfo info) {
+      CityManager city = CityManager.of(level);
+      if (city == null) {
+         return 0;
+      }
+
+      DangerMap danger = city.dangerMap();
+      float reach = info.radius() + DANGER_CLEAR_MARGIN;
+      Vec3 c = Vec3.atCenterOf(info.center());
+      int gone = danger.clearNear(c.x, c.y, c.z, reach);
+      AABB landing = info.landing();
+      if (landing != null) {
+         Vec3 lc = landing.getCenter();
+         gone += danger.clearNear(lc.x, lc.y, lc.z, (float)Math.max(reach, 0.5 * Math.hypot(landing.getXsize(), landing.getZsize()))
+            + DANGER_CLEAR_MARGIN);
+      }
+
+      return gone;
    }
 
    @SubscribeEvent
@@ -202,6 +234,14 @@ public final class CityDisasterLinks {
          if (source.startsWith(GRID_PREFIX)) {
             CityAftermath.setPower(level, source, BlockPos.ZERO, 1.0F, true);
          }
+      }
+
+      // The map is being put back whole: nothing on it is dangerous any more. Zones of other events go
+      // too (their sources were just stopped or reset by /city reset); a live event re-marks itself on
+      // its next tick. Keeps people from fleeing destruction that was just undone.
+      CityManager city = CityManager.of(level);
+      if (city != null) {
+         city.dangerMap().clear();
       }
    }
 }
