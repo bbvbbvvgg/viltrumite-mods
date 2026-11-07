@@ -38,6 +38,26 @@ public final class RestoreQueue {
    public static final int BLOCKS_PER_TICK = 6000;
    public static final int CHUNK_LOADS_PER_TICK = 2;
    public static final int MAX_PASSES = 4;
+
+   /**
+    * The world the originals are written back into (the server level in production).
+    * A seam for the lifecycle test: {@link #tick(ServerLevel, long)} delegates to
+    * {@link #tick(Access, long)} through a trivial adapter, behavior is identical.
+    */
+   public interface Access {
+      /** True when the chunk exists (production: {@code level.hasChunk}). */
+      boolean hasChunk(int cx, int cz);
+
+      /** Loads the chunk synchronously (production: {@code level.getChunk}). */
+      void loadChunk(int cx, int cz);
+
+      /** Writes one original back (production: the old {@code restoreOne}). */
+      void restore(BlockPos pos, ChangeJournal.Entry original);
+
+      /** One chunk is fully restored (production: debris cleanup, player lift-out). */
+      void chunkRestored(int cx, int cz);
+   }
+
    private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS;
 
    private final ChangeJournal journal;
@@ -138,6 +158,39 @@ public final class RestoreQueue {
          return;
       }
 
+      this.tick(of(level), now);
+   }
+
+   /** Server world adapter for {@link #tick(Access, long)}: identical behavior, see {@link Access}. */
+   private static Access of(ServerLevel level) {
+      return new Access() {
+         @Override
+         public boolean hasChunk(int cx, int cz) {
+            return level.hasChunk(cx, cz);
+         }
+
+         @Override
+         public void loadChunk(int cx, int cz) {
+            level.getChunk(cx, cz); // loads (or generates nothing: the chunk exists) synchronously
+         }
+
+         @Override
+         public void restore(BlockPos pos, ChangeJournal.Entry original) {
+            restoreOne(level, pos, original);
+         }
+
+         @Override
+         public void chunkRestored(int cx, int cz) {
+            afterChunk(level, cx, cz);
+         }
+      };
+   }
+
+   public void tick(Access world, long now) {
+      if (!this.running) {
+         return;
+      }
+
       if (this.waitTicks > 0) {
          this.waitTicks--;
          return;
@@ -161,7 +214,7 @@ public final class RestoreQueue {
             long key = this.chunks.peekFirst();
             int cx = ChangeJournal.chunkX(key);
             int cz = ChangeJournal.chunkZ(key);
-            if (!level.hasChunk(cx, cz)) {
+            if (!world.hasChunk(cx, cz)) {
                if (loads >= CHUNK_LOADS_PER_TICK) {
                   return;
                }
@@ -170,7 +223,7 @@ public final class RestoreQueue {
             }
 
             this.chunks.pollFirst();
-            level.getChunk(cx, cz); // loads (or generates nothing: the chunk exists) synchronously
+            world.loadChunk(cx, cz);
             Long2ObjectOpenHashMap<ChangeJournal.Entry> m = this.journal.take(key);
             if (m == null || m.isEmpty()) {
                continue;
@@ -192,7 +245,7 @@ public final class RestoreQueue {
                Long2ObjectMap.Entry<ChangeJournal.Entry> e = this.currentEntries.get(this.cursor + i);
                pos.set(e.getLongKey());
                this.remaining.remove(e.getLongKey());
-               restoreOne(level, pos.immutable(), e.getValue());
+               world.restore(pos.immutable(), e.getValue());
             }
          } finally {
             ChangeJournal.suppressed = false;
@@ -202,7 +255,7 @@ public final class RestoreQueue {
          budget -= n;
          this.restoredBlocks += n;
          if (this.cursor >= this.currentEntries.size()) {
-            afterChunk(level, ChangeJournal.chunkX(this.current), ChangeJournal.chunkZ(this.current));
+            world.chunkRestored(ChangeJournal.chunkX(this.current), ChangeJournal.chunkZ(this.current));
             this.settleInto.settle(this.current, this.currentMap);
             this.restoredChunks++;
             this.current = null;
