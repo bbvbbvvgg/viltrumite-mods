@@ -1,157 +1,157 @@
 # v2.0-wave-1 baseline: branches that existed at T0 (main@bc758de, 2026-11-08T14:14:35Z). Format: <branch> <head-sha7>
-backup/pr85-1d8635ae 
-devin/1791266359-agents-pvp-memory-bank 
-devin/1791269361-regulus-design-spec 
-devin/1791282398-regulus-implementation 
-devin/1791282885-regulus-plan-contract-review 
-devin/1791283583-regulus-flight-permissions 
-devin/1791283588-generic-hero-skins 
-devin/1791287016-regulus-implementation 
-devin/1791287016-regulus-task3 
-devin/1791287016-regulus-task4 
-devin/1791287016-regulus-task5 
-devin/1791369803-agents-md-proposals 
-docs/animation-skill-2026-refresh 
-docs/atheria-drive-playtest-20261102 
-docs/homelander-design 
-docs/homelander-lessons 
-docs/ironman-design 
-docs/reinhard-design 
-docs/reinhard-plan 
-docs/thor-gowr-specs-v4.2 
-feat/atheria-living-city 
-feat/captain-america-2012 
-feat/chitauri-evolution 
-feat/chitauri-invasion 
-feat/city-disaster-aftermath 
-feat/city-infrastructure-disasters 
-feat/city-structural-collapse 
-feat/contextual-interactions-20261031 
-feat/dio-polish 
-feat/ghost-rider-hell-on-wheels 
-feat/global-rebalance-20261031 
-feat/global-subtitles-expansion 
-feat/godzilla-city-catastrophe 
-feat/hero-batman 
-feat/hero-dio 
-feat/hero-gallery-encyclopedia-20261031 
-feat/hero-garfiel 
-feat/hero-icons-redraw 
-feat/hero-sinclair 
-feat/hero-subtitles 
-feat/hero-sung-jinwoo 
-feat/hero-toolkit 
-feat/hero-wave-expansion-20261031 
-feat/heroes-wave-base 
-feat/homelander 
-feat/hulkbuster-rework 
-feat/iron-legion-stage6 
-feat/ironman-fixes-1 
-feat/ironman-fixes-2 
-feat/ironman-fixes-3 
-feat/ironman-models 
-feat/ironman-polish 
-feat/ironman-stage1a 
-feat/ironman-stage1b 
-feat/ironman-stage2 
-feat/ironman-stage3 
-feat/ironman-stage4 
-feat/ironman-stage5 
-feat/living-city-civilians-20261031 
-feat/meteor-rain-visual-polish-20261101 
-feat/od-lagna-wish-20261030 
-feat/red-hulk 
-feat/regulus-reborn 
-feat/reinhard-final-punch-20261031 
-feat/reinhard-holy-sword-cinematic 
-feat/reinhard-icons-redraw 
-feat/reinhard-n-erasure-polish 
-feat/reinhard-overhaul-1-survival 
-feat/reinhard-overhaul-2-combat 
-feat/reinhard-overhaul-3-worldcut 
-feat/reinhard-overhaul-4-reid-draw 
-feat/reinhard-quality-rework 
-feat/reinhard-saw-sphere 
-feat/reinhard-stage1 
-feat/reinhard-stage1b 
-feat/reinhard-stage2 
-feat/reinhard-stage3 
-feat/reinhard-stage4 
-feat/reinhard-stage5 
-feat/reinhard-stage6 
-feat/reinhard-stage7 
-feat/reinhard-worldcut-audio 
-feat/reinhard-worldcut-thehand 
-feat/rohan-heavens-door 
-feat/scp096-shy-guy 
-feat/scp106-pocket-dimension 
-feat/sinclair-cinematic-polish 
-feat/sound-design-skill 
-feat/t1000-infiltrator 
-feat/thanos-six-stones-event 
-feat/thanos-total-war-rework 
-feat/thor-foundation 
-feat/thor-hulkbuster-build 
-feat/thor-integration 
-feat/thor-integration-abc 
-feat/thor-parallel-cinematics 
-feat/thor-parallel-combat 
-feat/thor-parallel-hammer 
-feat/thor-r1-body 
-feat/thor-r2a-timings 
-feat/thor-r2b-clips 
-feat/thor-r3-world 
-feat/thor-r4-vfx 
-feat/thor-r5-sound 
-feat/thor-rework 
-feat/thor-rework-20261030 
-feat/ultron-uprising 
-feat/venom-living-symbiote 
-fix/134-red-hulk-wish-hero-screen 
-fix/135-atheria-collapse-support 
-fix/136-city-life-audio 
-fix/137-scp096-vertical-chase 
-fix/138-falling-citizens 
-fix/final-review-cleanup-20261103 
-fix/general-polish-15-20261030 
-fix/ironman-review 
-fix/reinhard-animation-continuity 
-fix/reinhard-deepseek-rework 
-fix/reinhard-overhaul-3b-playtest 
-fix/reinhard-snapshot-overflow 
-fix/reinhard-stack-stabilization 
-fix/reinhard-strike-fluidity 
-fix/sinclair-polish-20261030 
-fix/thor-hulkbuster-zip-v2-integration-20261030 
-fix/thor-playtest-bugs 
-integ/captain-america-main 
-integ/city-systems-20261101 
-integ/four-sessions-20261102 
-integ/release-4pr-20261031 
-integrate/reinhard-pr50-pr51 
-integration/141-148 
-integration/all-heroes-final 
-integration/current-heroes-2026-10-29 
-integration/final-legion-chitauri-thanos-20261031 
-integration/four-updates-20261101 
-integration/merge-helper-chitauri-20261031 
-integration/merge-helper-chitauri-evolution-20261101 
-integration/merge-helper-icons 
-integration/merge-helper-jinwoo 
-integration/merge-helper-legion-20261031 
-integration/merge-helper-meteor-20261101 
-integration/merge-helper-sinclair 
-integration/merge-helper-thor 
-integration/merge-helper-ultron-20261101 
-integration/pr93-95-viltrumites-meteors 
-integration/thor-b-resolution 
-integration/thor-c-resolution 
-main 
-ops/swarm-baseline 
-perf/atheria-extreme-optimization 
-polish/final-150-152 
-polish/window-jumpers 
-rework/reinhard-combat-interaction 
-scratch/thor-push-probe 
-swarm/support-probe-repoll-wip 
-tmp-tensura-pack-20261011 
+backup/pr85-1d8635ae 1d8635a
+devin/1791266359-agents-pvp-memory-bank 33433d7
+devin/1791269361-regulus-design-spec 35f832a
+devin/1791282398-regulus-implementation 2673f44
+devin/1791282885-regulus-plan-contract-review 914f7dd
+devin/1791283583-regulus-flight-permissions 89c824d
+devin/1791283588-generic-hero-skins 912275c
+devin/1791287016-regulus-implementation f2358e2
+devin/1791287016-regulus-task3 822e412
+devin/1791287016-regulus-task4 64ce86c
+devin/1791287016-regulus-task5 35da60d
+devin/1791369803-agents-md-proposals d63884d
+docs/animation-skill-2026-refresh 7f4f2ba
+docs/atheria-drive-playtest-20261102 b03ec36
+docs/homelander-design b7d129d
+docs/homelander-lessons 006faea
+docs/ironman-design a272c99
+docs/reinhard-design 50a10dc
+docs/reinhard-plan b84f318
+docs/thor-gowr-specs-v4.2 deaaff6
+feat/atheria-living-city 7f47175
+feat/captain-america-2012 e80bf40
+feat/chitauri-evolution 1ee217a
+feat/chitauri-invasion faa76d6
+feat/city-disaster-aftermath 4521611
+feat/city-infrastructure-disasters 6375c66
+feat/city-structural-collapse 3ba1ace
+feat/contextual-interactions-20261031 bde9334
+feat/dio-polish cd9c6fc
+feat/ghost-rider-hell-on-wheels e5b2dd4
+feat/global-rebalance-20261031 c62a295
+feat/global-subtitles-expansion 08e0ac6
+feat/godzilla-city-catastrophe 78b7207
+feat/hero-batman d181687
+feat/hero-dio 224022b
+feat/hero-gallery-encyclopedia-20261031 75df260
+feat/hero-garfiel d181687
+feat/hero-icons-redraw b9aa88c
+feat/hero-sinclair bd64ae2
+feat/hero-subtitles d181687
+feat/hero-sung-jinwoo 8d690dc
+feat/hero-toolkit 0052d92
+feat/hero-wave-expansion-20261031 207ecba
+feat/heroes-wave-base d181687
+feat/homelander 037e76a
+feat/hulkbuster-rework c942f6e
+feat/iron-legion-stage6 04397d8
+feat/ironman-fixes-1 a39aec9
+feat/ironman-fixes-2 d69a381
+feat/ironman-fixes-3 2d8fc94
+feat/ironman-models ca0351e
+feat/ironman-polish 9004554
+feat/ironman-stage1a a7b3e15
+feat/ironman-stage1b dac688a
+feat/ironman-stage2 90fac81
+feat/ironman-stage3 11c297b
+feat/ironman-stage4 64d61e8
+feat/ironman-stage5 604f0c9
+feat/living-city-civilians-20261031 a1e1215
+feat/meteor-rain-visual-polish-20261101 2fd0ad7
+feat/od-lagna-wish-20261030 2d050b7
+feat/red-hulk 93a58b0
+feat/regulus-reborn 12e4df9
+feat/reinhard-final-punch-20261031 b0188ff
+feat/reinhard-holy-sword-cinematic 050d18f
+feat/reinhard-icons-redraw 6ee123a
+feat/reinhard-n-erasure-polish 847490e
+feat/reinhard-overhaul-1-survival 5b34dba
+feat/reinhard-overhaul-2-combat c9c3358
+feat/reinhard-overhaul-3-worldcut a49c37a
+feat/reinhard-overhaul-4-reid-draw dff254d
+feat/reinhard-quality-rework 69d094d
+feat/reinhard-saw-sphere 45a7cf7
+feat/reinhard-stage1 f6106a3
+feat/reinhard-stage1b 9a49c52
+feat/reinhard-stage2 88ff14e
+feat/reinhard-stage3 175b4b0
+feat/reinhard-stage4 2a49a71
+feat/reinhard-stage5 f93f27f
+feat/reinhard-stage6 d478f1f
+feat/reinhard-stage7 add8a0d
+feat/reinhard-worldcut-audio 4c28d04
+feat/reinhard-worldcut-thehand dfcc5b1
+feat/rohan-heavens-door db60532
+feat/scp096-shy-guy 993b6d1
+feat/scp106-pocket-dimension 88bf3ed
+feat/sinclair-cinematic-polish b5d52e1
+feat/sound-design-skill 4542b54
+feat/t1000-infiltrator cb37774
+feat/thanos-six-stones-event e0d50e7
+feat/thanos-total-war-rework 7e232f1
+feat/thor-foundation 3c233ed
+feat/thor-hulkbuster-build 5cc4fe4
+feat/thor-integration 3fdc3ef
+feat/thor-integration-abc 580a322
+feat/thor-parallel-cinematics 64b7958
+feat/thor-parallel-combat feca686
+feat/thor-parallel-hammer fe401b5
+feat/thor-r1-body ec86aa5
+feat/thor-r2a-timings 8ac526d
+feat/thor-r2b-clips 2f4e3e6
+feat/thor-r3-world aab6b26
+feat/thor-r4-vfx 7058c77
+feat/thor-r5-sound 60bf4bb
+feat/thor-rework cc0d8f9
+feat/thor-rework-20261030 8afceb0
+feat/ultron-uprising 1673ad8
+feat/venom-living-symbiote fd57541
+fix/134-red-hulk-wish-hero-screen ff7214f
+fix/135-atheria-collapse-support a9c4287
+fix/136-city-life-audio 84fb759
+fix/137-scp096-vertical-chase f4d0fbe
+fix/138-falling-citizens d7215b3
+fix/final-review-cleanup-20261103 0234fa4
+fix/general-polish-15-20261030 2e6c419
+fix/ironman-review df44211
+fix/reinhard-animation-continuity 45ccf66
+fix/reinhard-deepseek-rework 21d6934
+fix/reinhard-overhaul-3b-playtest 17e9b22
+fix/reinhard-snapshot-overflow 2df721d
+fix/reinhard-stack-stabilization 33e8bd5
+fix/reinhard-strike-fluidity 381850a
+fix/sinclair-polish-20261030 c3359c4
+fix/thor-hulkbuster-zip-v2-integration-20261030 4380594
+fix/thor-playtest-bugs 77be2c0
+integ/captain-america-main a6a315f
+integ/city-systems-20261101 7d5009d
+integ/four-sessions-20261102 b5bb5b7
+integ/release-4pr-20261031 c536360
+integrate/reinhard-pr50-pr51 3aa9791
+integration/141-148 e96e23d
+integration/all-heroes-final 55a6d3c
+integration/current-heroes-2026-10-29 f41e49c
+integration/final-legion-chitauri-thanos-20261031 f90013c
+integration/four-updates-20261101 03595f1
+integration/merge-helper-chitauri-20261031 e1a0bbf
+integration/merge-helper-chitauri-evolution-20261101 abcfb8e
+integration/merge-helper-icons b9aa88c
+integration/merge-helper-jinwoo ea00e95
+integration/merge-helper-legion-20261031 b8c72f7
+integration/merge-helper-meteor-20261101 87d4e47
+integration/merge-helper-sinclair 7efd547
+integration/merge-helper-thor af70903
+integration/merge-helper-ultron-20261101 fb3d7de
+integration/pr93-95-viltrumites-meteors f04e325
+integration/thor-b-resolution a250545
+integration/thor-c-resolution 5c0c60e
+main bc758de
+ops/swarm-baseline 1ee03ff
+perf/atheria-extreme-optimization 8e3bec3
+polish/final-150-152 a33147a
+polish/window-jumpers d8409a1
+rework/reinhard-combat-interaction e0e2da3
+scratch/thor-push-probe fe6e7a6
+swarm/support-probe-repoll-wip 94d745b
+tmp-tensura-pack-20261011 885ff4a
