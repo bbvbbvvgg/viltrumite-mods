@@ -1053,7 +1053,10 @@ class Runner:
     def do_foreach(self, step, vars_, base):
         items = resolve_items(step["foreach"], base)
         var = step.get("as", "item")
-        only = step.get("only")
+        # "only": list of ids in the step, or --var only=a,b,c to run a part of a long scenario.
+        only = step.get("only") or vars_.get("only")
+        if isinstance(only, str):
+            only = [s.strip() for s in only.split(",") if s.strip()]
         for item in items:
             if only and isinstance(item, dict) and item.get("id") not in only:
                 continue
