@@ -1029,8 +1029,12 @@ class Runner:
             if kind is None:
                 raise RigError(f"unknown step {raw!r}")
             self.step_no += 1
+            n_before = len(self.checks)
             try:
                 getattr(self, "do_" + kind)(step, vars_, base)
+                failed = [c for c in self.checks[n_before:] if not c["ok"] and not c["soft"]]
+                if step.get("fatal") and failed:
+                    self.aborted = f"fatal step failed: {failed[0]['name']}"
             except RigError as e:
                 self.check(f"step {self.step_no} {kind}", False, str(e), soft=bool(step.get("soft")))
                 if step.get("fatal"):
