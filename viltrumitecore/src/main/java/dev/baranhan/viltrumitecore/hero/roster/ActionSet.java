@@ -325,11 +325,27 @@ public final class ActionSet {
       return fromBytes(buffer.readByteArray(8 + ORDINAL_LIMIT / 8));
    }
 
-   /** The snapshot token: {@code "-1"} or {@code "~" + base64url}. Never contains {@code ';'}. */
+   /**
+    * The snapshot token. Never contains {@code ';'}.
+    * <ul>
+    *   <li>{@link #ALL}: {@code "-1"} (the pre-wave-1 token, byte for byte);</li>
+    *   <li>a set inside ordinals 0..63: the pre-wave-1 decimal mask (old snapshots re-encode unchanged);</li>
+    *   <li>anything else, including the explicit full set 0..63 whose mask would read as {@code -1}:
+    *   {@code "~" + base64url}.</li>
+    * </ul>
+    */
    public String toWire() {
       String token = this.wire;
       if (token == null) {
-         token = this.all ? ALL_TOKEN : SET_PREFIX + Base64.getUrlEncoder().withoutPadding().encodeToString(this.toBytes());
+         if (this.all) {
+            token = ALL_TOKEN;
+         } else if (this.words.length == 0) {
+            token = "0";
+         } else if (this.words.length == 1 && this.words[0] != -1L) {
+            token = Long.toString(this.words[0]);
+         } else {
+            token = SET_PREFIX + Base64.getUrlEncoder().withoutPadding().encodeToString(this.toBytes());
+         }
          this.wire = token;
       }
       return token;

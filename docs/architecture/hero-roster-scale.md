@@ -64,8 +64,10 @@ input, trailing bytes, a varint longer than 5 bytes, and any size past `ORDINAL_
 Field 20 of the packed snapshot string:
 
 - `-1`: `ALL`. This is byte-for-byte the old value, so today's traffic does not change.
-- `~` + unpadded base64url of the binary form: an explicit set. It never contains `;`.
-- a decimal `long`: the old mask. Still accepted on read.
+- a decimal `long`: an explicit set inside ordinals 0..63, written exactly as the old mask (`0` = none).
+  Old snapshot strings re-encode byte for byte.
+- `~` + unpadded base64url of the binary form: any other explicit set (an ordinal of 64+, or the full set
+  0..63, whose mask would otherwise read as `-1` = `ALL`). It never contains `;`.
 
 The snapshot is a synced string (`HERO_SNAPSHOT`), not NBT. No save migration is needed.
 

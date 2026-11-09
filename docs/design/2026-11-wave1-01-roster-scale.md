@@ -24,7 +24,7 @@
    - `of(HeroAction...)`, `ofOrdinals(int...)`, `contains(HeroAction)`, `contains(int)`, `with`, `without`, `union`, `size`, `isAll`, `isEmpty`, `stream()`.
    - `fromLegacyMask(long)` / `legacyMask()` — мост к старому `long`.
    - `toBytes()` / `fromBytes(byte[])` — компактное кодирование: тег + varint. Плотная форма (битовый набор) или разреженная (дельты индексов) — выбирается более короткая.
-   - `toWire()` / `fromWire(String)` — токен для строкового снимка: `-1` = ALL, `~<base64url>` = набор, десятичный `long` принимается как старый формат.
+   - `toWire()` / `fromWire(String)` — токен для строкового снимка: `-1` = ALL; набор внутри ординалов 0..63 пишется старым десятичным `long` (старые строки снимка кодируются байт в байт); любой другой набор (ординал 64+ или полный набор 0..63, чья маска читалась бы как `-1`) — `~<base64url>`.
 2. **`HeroPublicSnapshot`**: компонент `long availableActions` заменён на `ActionSet actions`.
    - Совместимость по исходникам: все прежние конструкторы (включая 23-аргументный с `long`) сохранены; `long availableActions()` сохранён как метод (ALL → `-1L`, иначе младшие 64 бита); `actionAvailable(HeroAction)` теперь точен для любого ordinal.
    - Новое рядом: `actions()`, `actionAvailable(int)`, `withActions(ActionSet)`, `static ActionSet actions(HeroAction...)`.

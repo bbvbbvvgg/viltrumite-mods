@@ -2,7 +2,7 @@
 
 - Branch `wave1/01-roster-scale`, PR #168 into `integration/viltrumite-2.0`.
 - `hero/roster/ActionSet` replaces the 64-bit action mask in `HeroPublicSnapshot` (component `actions`).
-- Snapshot token: `-1` = ALL (unchanged bytes), `~<base64url>` = explicit set, decimal long still read.
+- Snapshot token: `-1` = ALL (unchanged bytes); a set within ordinals 0..63 stays the old decimal long (old strings re-encode byte for byte, `HeroIdentityTest` relies on it); otherwise `~<base64url>`.
 - `HeroInputC2SPacket` ordinal is a varint. `PROTOCOL_VERSION` = 32. Core version stays 1.71.1 (the orchestrator sets versions, D1).
 - `actionMask(...)` is deprecated (0..63 only); use `HeroPublicSnapshot.actionSet(...)` + `withActions`.
 - Contract: `docs/architecture/hero-roster-scale.md`.

@@ -87,6 +87,23 @@ class ActionSetTest {
    }
 
    @Test
+   void smallSetsKeepTheLegacyDecimalToken() {
+      // Old snapshots (ordinals 0..63) re-encode byte for byte.
+      assertEquals("239", ActionSet.fromWire("239").toWire());
+      assertEquals("0", ActionSet.NONE.toWire());
+      assertEquals(Long.toString(Long.MIN_VALUE), ActionSet.ofOrdinals(63).toWire());
+      assertEquals(ActionSet.ofOrdinals(63), ActionSet.fromWire(ActionSet.ofOrdinals(63).toWire()));
+      // The explicit full set 0..63 must not collapse into the ALL token "-1".
+      ActionSet full64 = ActionSet.range(0, 64);
+      assertEquals('~', full64.toWire().charAt(0));
+      assertEquals(full64, ActionSet.fromWire(full64.toWire()));
+      assertNotEquals(ActionSet.ALL, ActionSet.fromWire(full64.toWire()));
+      // Ordinal 64+ always uses the explicit token.
+      assertEquals('~', ActionSet.ofOrdinals(64).toWire().charAt(0));
+      assertEquals('~', ActionSet.ofOrdinals(0, 64).toWire().charAt(0));
+   }
+
+   @Test
    void allAndNone() {
       assertTrue(ActionSet.ALL.isAll());
       assertTrue(ActionSet.ALL.contains(0));
