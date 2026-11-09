@@ -215,7 +215,7 @@ class HeroRosterIntegrationTest {
       // 30 = SCP-106 and the pocket dimension: Scp106S2CPacket appended last.
       // 31 = the integration of #141..#147 and SCP-106: Venom's two packets after HellfireS2CPacket, then
       // Scp106S2CPacket. Each branch alone was "30" with a different table, so every "30" peer is refused.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"31\""), "the merged packet table needs its own protocol version");
+      assertTrue(source.contains("PROTOCOL_VERSION = \"32\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");

@@ -55,6 +55,11 @@ uniform float VenomVeins;  // 0..1 how far the veins have crawled in from the ed
 uniform float VenomFlash;  // 0..1 a sudden scary flash
 uniform float VenomSlit;   // 0..1 how open the eyes are (never below VenomHostFx.MIN_OPEN while held)
 
+// Cinematic combat air rings (client.cinematic.feel.ShockwaveDistortion.post): centre x/y in texture
+// coordinates, radius in screen heights, strength 0..1.5 (0 = none). Pure refraction, no tint.
+uniform vec4 FeelWaveA;
+uniform vec4 FeelWaveB;
+
 in vec2 texCoord;
 out vec4 fragColor;
 
@@ -62,6 +67,28 @@ out vec4 fragColor;
 // (client.reinhard.erasure.ErasureGlassRenderer), drawn after this pass.
 float eraseHash(vec2 p) {
     return fract(sin(dot(p, vec2(12.9898, 78.233)) + clamp(EraseSeed, 0.0, 1.0) * 61.7) * 43758.5453);
+}
+
+vec3 feelWave(vec3 color, vec4 wave, vec2 uv, float aspect) {
+    float strength = clamp(wave.w, 0.0, 1.5);
+    if (strength <= 0.001) {
+        return color;
+    }
+    vec2 rel = (uv - wave.xy) * vec2(aspect, 1.0);
+    float dist = length(rel);
+    float radius = clamp(wave.z, 0.0, 1.5);
+    float band = exp(-pow((dist - radius) / (0.035 + radius * 0.05), 2.0));
+    if (band < 0.002) {
+        return color;
+    }
+    vec2 dir = dist > 0.0001 ? rel / dist : vec2(0.0);
+    vec2 push = dir / vec2(aspect, 1.0) * band * 0.028 * strength;
+    vec3 bent;
+    bent.r = texture(DiffuseSampler, clamp(uv - push * 1.2, 0.0, 1.0)).r;
+    bent.g = texture(DiffuseSampler, clamp(uv - push, 0.0, 1.0)).g;
+    bent.b = texture(DiffuseSampler, clamp(uv - push * 0.8, 0.0, 1.0)).b;
+    bent += vec3(band * 0.05 * strength);
+    return mix(color, bent, clamp(band * 3.0, 0.0, 1.0));
 }
 
 void main() {
@@ -97,7 +124,7 @@ void main() {
     float safeVenomFlash = clamp(VenomFlash, 0.0, 1.0);
 
     // Hiçbir efekt yoksa boş döndür (Performans)
-    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0 && safeVenomHost <= 0.001 && safeVenomVeins <= 0.001) {
+    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0 && safeVenomHost <= 0.001 && safeVenomVeins <= 0.001 && clamp(FeelWaveA.w, 0.0, 1.5) + clamp(FeelWaveB.w, 0.0, 1.5) <= 0.001) {
         vec4 defaultColor = texture(DiffuseSampler, baseUv);
         defaultColor.a = 1.0;
         fragColor = defaultColor;
@@ -457,6 +484,13 @@ void main() {
         }
         vc = max(vc, vec3(0.03, 0.012, 0.045) * safeVenomHost);
         finalColor.rgb = clamp(vc, 0.0, 1.0);
+    }
+
+    if (clamp(FeelWaveA.w, 0.0, 1.5) + clamp(FeelWaveB.w, 0.0, 1.5) > 0.001) {
+        vec2 feelSize = vec2(textureSize(DiffuseSampler, 0));
+        float feelAspect = feelSize.x / max(feelSize.y, 1.0);
+        finalColor.rgb = feelWave(finalColor.rgb, FeelWaveA, texCoord, feelAspect);
+        finalColor.rgb = feelWave(finalColor.rgb, FeelWaveB, texCoord, feelAspect);
     }
 
     finalColor.a = 1.0;
