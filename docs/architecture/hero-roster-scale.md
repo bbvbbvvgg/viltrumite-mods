@@ -1,10 +1,10 @@
 # Hero roster scale: the action set
 
-Wave 1 · session 01. Core 1.72.0, network protocol 32.
+Wave 1 · session 01. Network protocol 32. The core version is set by the orchestrator at integration.
 
 ## Problem
 
-The merged roster has more than 64 `HeroAction` values. Before 1.72.0:
+The merged roster has more than 64 `HeroAction` values. Before this change:
 
 - `HeroPublicSnapshot.availableActions` was one `long`. Bit `n` was action `n`.
   Actions 64+ had no bit. Java `1L << 64` is `1L << 0`, so a naive check of action 64 read action 0.
