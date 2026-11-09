@@ -124,7 +124,7 @@ void main() {
     float safeVenomFlash = clamp(VenomFlash, 0.0, 1.0);
 
     // Hiçbir efekt yoksa boş döndür (Performans)
-    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0 && safeVenomHost <= 0.001 && safeVenomVeins <= 0.001 && clamp(FeelWaveA.w, 0.0, 1.5) + clamp(FeelWaveB.w, 0.0, 1.5) <= 0.001) {
+    if (safeDash <= 0.001 && safePunch <= 0.001 && safeShake <= 0.001 && safeGrab <= 0.001 && safeLock <= 0.001 && safeChop <= 0.001 && safeBarrage <= 0.001 && safeScourge <= 0.001 && safeOverheat <= 0.001 && safeHeartFlash <= 0.001 && safeMadness <= 0.001 && safeEraseCrack + safeEraseShatter + safeEraseDark + safeEraseRebuild == 0.0 && safeTsGrey + safeTsInvert + safeTsRipple == 0.0 && safeSnapFlash + safeSnapShock + safeSnapGold + safeSnapVoid == 0.0 && clamp(FeelWaveA.w, 0.0, 1.5) + clamp(FeelWaveB.w, 0.0, 1.5) <= 0.001 && safeVenomHost <= 0.001 && safeVenomVeins <= 0.001) {
         vec4 defaultColor = texture(DiffuseSampler, baseUv);
         defaultColor.a = 1.0;
         fragColor = defaultColor;
