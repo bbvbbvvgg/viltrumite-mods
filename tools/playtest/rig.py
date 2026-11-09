@@ -906,9 +906,11 @@ def client_perf(c: ClientHandle, label: str) -> dict:
     mark = c.log.size()
     if not c.qa(f"perfstate {label}"):
         return {"error": "perfstate not acknowledged"}
-    m = c.log.wait(r"^.*SUBPT.*perf.*" + re.escape(label) + r".*$", 8, mark)
+    # The QA ack line "SUBPT t=N exec 'perfstate <label>'" also contains the label, so match
+    # only the FrameProbe line itself: "SUBPT t=N perf <label> frames=... avgFps=...".
+    m = c.log.wait(r"^.*SUBPT t=\d+ perf " + re.escape(label) + r"\s.*avgFps=.*$", 8, mark)
     if not m:
-        m = c.log.wait(r"^.*(?:FrameProbe|perfstate).*fps.*$", 4, mark)
+        m = c.log.wait(r"^.*SUBPT t=\d+ perf \S*\s.*avgFps=.*$", 4, mark)
     return parse_perf(m.group(0)) if m else {"error": "no perf line"}
 
 
