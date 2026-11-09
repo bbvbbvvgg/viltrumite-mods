@@ -1,0 +1,28 @@
+[rig 16:01:04] reusing running rig
+[rig 16:01:04] == Подготовка
+[rig 16:01:04] rcon> playtest ping -> playtest pong
+[rig 16:01:04] PASS [Подготовка] dev-команды /playtest включены
+[rig 16:01:04] rcon> gamerule doDaylightCycle false -> Gamerule doDaylightCycle is now set to: false
+[rig 16:01:04] rcon> time set day -> Set the time to 1000
+[rig 16:01:04] rcon> weather clear -> Set the weather to clear
+[rig 16:01:04] rcon> gamerule doMobSpawning false -> Gamerule doMobSpawning is now set to: false
+[rig 16:01:04] rcon> tp @a 6 -60 10 -> Teleported Alpha to 6.500000, -60.000000, 10.500000
+[rig 16:01:13] rcon> city status -> This world has no prepared living city (install the prepared Atheria world).
+[rig 16:01:30] metrics atheria_empty: server 20.0 TPS 1.209 mspt; rss {'server': 1212.2, 'Alpha': 1349.4}; avail 1400.5 MB
+[rig 16:01:30] == Город включён
+[rig 16:01:30] rcon> city enable -> This world has no prepared living city (install the prepared Atheria world).
+[rig 16:01:30] rcon> city populate 40 -> This world has no prepared living city (install the prepared Atheria world).
+[rig 16:01:40] rcon> city status -> This world has no prepared living city (install the prepared Atheria world).
+[rig 16:02:02] metrics atheria_populated: server 20.0 TPS 2.278 mspt; rss {'server': 1212.4, 'Alpha': 1349.8}; avail 1396.6 MB
+[rig 16:02:02] PASS [Город включён] TPS >= 15 (atheria_populated)
+[rig 16:02:02] PASS [Город включён] город: без ошибок на сервере
+[rig 16:02:02] == Сброс города
+[rig 16:02:02] rcon> city reset -> This world has no prepared living city (install the prepared Atheria world).
+[rig 16:02:02] rcon> city reset confirm -> This world has no prepared living city (install the prepared Atheria world).
+[rig 16:02:17] rcon> city status -> This world has no prepared living city (install the prepared Atheria world).
+[rig 16:02:39] metrics atheria_after_reset: server 20.0 TPS 1.206 mspt; rss {'server': 1212.3, 'Alpha': 1350.3}; avail 1395.3 MB
+[rig 16:02:39] PASS [Сброс города] TPS >= 18 (atheria_after_reset)
+[rig 16:02:39] PASS [Сброс города] сброс: без ошибок на сервере
+[rig 16:02:39] PASS [Сброс города] сброс: без ошибок на клиентах
+[rig 16:02:39] report: /vercel/sandbox/data/kit/rig/reports/20261109-160104-city-atheria/report.md
+RUN_EXIT=0
