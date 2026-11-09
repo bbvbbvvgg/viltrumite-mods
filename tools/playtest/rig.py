@@ -1169,7 +1169,7 @@ class Runner:
 
     def do_metrics(self, step, vars_, base):
         label = re.sub(r"\W+", "_", str(step["metrics"]))
-        window = float(step.get("window_s", 10))
+        window = float(step.get("window_s", step.get("seconds", 10)))  # "seconds" is the documented alias
         clients = [c for c in self.rig.clients("*") if c.name not in self.dead_clients]
         for c in clients:
             c.qa("perfreset")

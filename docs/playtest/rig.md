@@ -110,7 +110,9 @@ rig.py capture [all|server|client]    # пересохранить команд�
     {"expect": {"log": "*", "regex": "SUBPT t=\\d+ state level=true", "timeout_s": 20, "name": "в мире"}},
     {"shot": "join"},
     {"metrics": "idle", "seconds": 15, "min_tps": 18},
-    {"repeat": ["human", "thor"], "as": "h", "steps": [ {"server": "playtest hero @a ${h}"} ]}
+    {"foreach": ["human", "thor"], "as": "h", "do": [ {"server": "playtest hero @a ${h}"} ]},
+    {"expect": {"log": "*", "regex": "Exception|/(ERROR|FATAL)\\]", "since": "start",
+                "absent": true, "wait": false, "soft": true, "name": "без ошибок в логах"}}
   ]
 }
 ```
@@ -118,8 +120,12 @@ rig.py capture [all|server|client]    # пересохранить команд�
 Шаги: `section`, `server` (строка или список RCON-команд, `expect` - regex по ответу),
 `qa` / `key` (клиент или `*`), `expect.log` (`server`, ник или `*`), `shot`, `metrics`
 (TPS/MSPT сервера, FPS/1% low/p99 клиента через `perfstate`, RSS, свободная память),
-`wait`, `repeat`, `no_errors` (новые ERROR/исключения в логах с начала шага). Общие поля:
-`name`, `pause`, `fatal`, `timeout_s`. Переменные: `${имя}` из `vars` или `--var имя=значение`.
+`wait`, `foreach` (список или `@файл.json:ключ`; `as`, `do`; фильтр `only` или `--var only=a,b,c` -
+так длинный сценарий гоняется частями), `include`, `mark` (метка в логах), `chat`, `mouse`, `note`, `rejoin`.
+В `expect.log`: `since` - `action` (по умолчанию, с последнего действия), `start` или `mark:<имя>`;
+`absent: true` - совпадения быть не должно (так проверяются ERROR/исключения в логах).
+У `metrics`: `seconds` (или `window_s`, по умолчанию 10) и `min_tps`. Общие поля:
+`name`, `pause`, `fatal`, `soft` (не прерывать сценарий), `timeout_s`. Переменные: `${имя}` из `vars` или `--var имя=значение`.
 
 Готовые сценарии в `tools/playtest/scenarios/`:
 
@@ -128,7 +134,7 @@ rig.py capture [all|server|client]    # пересохранить команд�
 - `world-events.json` - каждое мировое событие (`conquest`, `trio`): старт, работа, стоп;
 - `city-atheria.json` - карта Atheria (`up --world <zip>`), `/city status`, `/city reset`.
 
-Списки героев и событи��: `tools/playtest/data/*.json`, пересобираются из исходников
+Списки героев и событий: `tools/playtest/data/*.json`, пересобираются из исходников
 `python3 tools/playtest/gen_data.py`.
 
 ## Если что-то пошло не так
