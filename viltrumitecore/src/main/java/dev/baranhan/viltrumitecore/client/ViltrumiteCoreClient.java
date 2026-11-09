@@ -95,6 +95,8 @@ public class ViltrumiteCoreClient {
          dev.baranhan.viltrumitecore.client.venom.VenomClient.init();
          // Contextual interactions (docs/contextual-interactions.json): FX recipes of the shared presets 600+.
          dev.baranhan.viltrumitecore.client.interaction.InteractionFxRecipes.init();
+         // Wave 1 · 23: beam struggle views, HUD, input and FX recipes.
+         dev.baranhan.viltrumitecore.client.clash.ClashClient.init();
          dev.baranhan.viltrumitecore.client.wish.WishSceneClient.init();
          CosmeticLoader.init();
          ViltrumiteCameraConfig.load();

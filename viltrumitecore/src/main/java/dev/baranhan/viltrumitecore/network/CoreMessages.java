@@ -93,7 +93,9 @@ public class CoreMessages {
    // v31 (integration of #141..#147 and SCP-106): one table with VenomPossessS2CPacket and VenomDriveC2SPacket after
    //     HellfireS2CPacket, then Scp106S2CPacket. Each branch alone was "30" with its own table, so every "29" and
    //     "30" peer is refused.
-   private static final String PROTOCOL_VERSION = "31";
+   // v32 (wave 1 · 23 clashes): ClashStateS2CPacket and ClashInputC2SPacket appended after Scp106S2CPacket, so
+   //     every "31" peer is refused.
+   private static final String PROTOCOL_VERSION = "32";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
@@ -564,6 +566,15 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.Scp106S2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.Scp106S2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.Scp106S2CPacket::handle).add();
+      // v32 (wave 1 · 23 clashes): the beam struggle state for watchers and the mash pulse of a struggling player.
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ClashStateS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ClashStateS2CPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ClashStateS2CPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ClashStateS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.ClashInputC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.ClashInputC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.ClashInputC2SPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.ClashInputC2SPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
