@@ -504,6 +504,35 @@ def rt_env() -> dict[str, str]:
     return env
 
 
+XVFB_DRI_COMPILED = b"/usr/lib/x86_64-linux-gnu/dri"
+XVFB_DRI_RELATIVE = b"../lib/x86_64-linux-gnu/dri"  # resolved from the cwd RT/usr/bin
+
+
+def xvfb_binary() -> Path:
+    """The kit's Debian Xvfb loads swrast_dri.so for GLX only from its compiled path
+    /usr/lib/x86_64-linux-gnu/dri (LIBGL_DRIVERS_PATH is ignored by the server). On hosts
+    without that directory GLX has no visuals and Forge fails with 'GLX: Failed to find a
+    suitable GLXFBConfig'. Make a copy with a same-length relative path instead."""
+    orig = RT / "usr/bin/Xvfb"
+    if (Path(XVFB_DRI_COMPILED.decode()) / "swrast_dri.so").exists():
+        return orig
+    patched = orig.with_name("Xvfb.rig")
+    if patched.exists() and patched.stat().st_mtime >= orig.stat().st_mtime:
+        return patched
+    data = orig.read_bytes()
+    old = XVFB_DRI_COMPILED + b"\0"
+    if data.count(old) != 1:
+        log("warning: Xvfb DRI path not found, GLX may have no visuals")
+        return orig
+    new = data.replace(old, XVFB_DRI_RELATIVE + b"\0" * (len(old) - len(XVFB_DRI_RELATIVE)))
+    tmp = patched.with_name("Xvfb.rig.tmp")
+    tmp.write_bytes(new)
+    tmp.chmod(0o755)
+    tmp.replace(patched)
+    log(f"made {patched.name}: GLX drivers from {RT / 'usr/lib/x86_64-linux-gnu/dri'}")
+    return patched
+
+
 def start_xvfb(session: Path, size: str = "1280x720x24") -> tuple[int, str, dict[str, str]]:
     if session.exists():
         shutil.rmtree(session, ignore_errors=True)
@@ -521,7 +550,7 @@ def start_xvfb(session: Path, size: str = "1280x720x24") -> tuple[int, str, dict
         disp = f"127.0.0.1:{n}"
         subprocess.run([str(xbin / "xauth"), "-f", str(xauth), "add", disp, "MIT-MAGIC-COOKIE-1", cookie],
                        env=env, check=True, capture_output=True)
-        args = [str(xbin / "Xvfb"), f":{n}", "-screen", "0", size, "-listen", "tcp", "-nolisten", "unix",
+        args = [str(xvfb_binary()), f":{n}", "-screen", "0", size, "-listen", "tcp", "-nolisten", "unix",
                 "-auth", str(xauth), "-nolisten", "local"]
         xkb = RT / "usr/share/X11/xkb"
         if xkb.is_dir():
