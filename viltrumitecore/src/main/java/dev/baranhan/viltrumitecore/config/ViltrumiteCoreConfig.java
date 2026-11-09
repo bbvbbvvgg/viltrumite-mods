@@ -94,6 +94,14 @@ public class ViltrumiteCoreConfig {
    public double scp106NaturalChancePercent = 0.75;
    /** Minutes after a natural spawn before the next one may roll (0..144000; 240 = 4 hours). */
    public double scp106NaturalCooldownMinutes = 240.0;
+
+   // Hero select screen (key H or /heroselect; docs/architecture/codex-2.0.md). The server decides every switch.
+   /** Off: the screen still opens and shows the heroes, but the server refuses every switch. */
+   public boolean heroSelectEnabled = true;
+   /** Seconds between two switches of one player (clamped 0..3600 by HeroSelectService). */
+   public int heroSelectCooldownSeconds = 30;
+   /** Permission level a player needs to switch (0 = everyone, 2 = operators; clamped 0..4). */
+   public int heroSelectPermissionLevel = 0;
    public static ViltrumiteCoreConfig INSTANCE = new ViltrumiteCoreConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore.json");
@@ -117,7 +125,8 @@ public class ViltrumiteCoreConfig {
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("collapseSupportLoss")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("t1000NaturalChancePercent")
                || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("venomPossessionEnabled")
-               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp106NaturalChancePercent")) {
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("scp106NaturalChancePercent")
+               || !java.nio.file.Files.readString(CONFIG_FILE.toPath()).contains("heroSelectCooldownSeconds")) {
                save();
             }
          } catch (IOException ignored) {
