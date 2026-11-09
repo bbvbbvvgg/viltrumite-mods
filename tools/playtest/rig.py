@@ -43,7 +43,7 @@ def _kit() -> Path:
 
 KIT = _kit()
 RT = KIT / "client-runtime"
-RIG_HOME = Path(os.environ.get("RIG_HOME", str(Path.home() / "rig"))).expanduser()
+RIG_HOME = Path(os.environ.get("RIG_HOME", str(KIT / "rig"))).expanduser()
 STATE = RIG_HOME / "state.json"
 MAIN = "cpw.mods.bootstraplauncher.BootstrapLauncher"
 TARGETS = {"server": "forgeserveruserdev", "client": "forgeclientuserdev"}
@@ -103,6 +103,55 @@ def java_pids() -> list[int]:
         except OSError:
             pass
     return pids
+
+
+def ppid_of(pid: int) -> int:
+    try:
+        stat = Path(f"/proc/{pid}/stat").read_text()
+        return int(stat.rsplit(")", 1)[1].split()[1])
+    except (OSError, ValueError, IndexError):
+        return 0
+
+
+def descends_from(pid: int, root: int) -> bool:
+    for _ in range(64):
+        if pid == root:
+            return True
+        if pid <= 1:
+            return False
+        pid = ppid_of(pid)
+    return False
+
+
+def descendants(root: int) -> list[int]:
+    out = []
+    for d in Path("/proc").iterdir():
+        if d.name.isdigit() and int(d.name) != root and descends_from(int(d.name), root):
+            out.append(int(d.name))
+    return out
+
+
+def kill_tree(root: int | None, grace: float = 10.0) -> None:
+    """Kill a process group and every descendant. Gradle daemons call setsid(), so killing
+    only the group of the Gradle wrapper leaves the daemon and the game JVM running."""
+    if not root:
+        return
+    kids = descendants(root)
+    groups = [root]
+    for k in kids:
+        try:
+            g = os.getpgid(k)
+        except OSError:
+            continue
+        if g not in groups:
+            groups.append(g)
+    for g in groups:
+        kill_group(g, grace=grace)
+    for k in kids:
+        try:
+            os.kill(k, signal.SIGKILL)
+        except OSError:
+            pass
 
 
 def alive(pid: int | None) -> bool:
@@ -306,9 +355,9 @@ def capture(kind: str, timeout: float = 900) -> dict:
     """Start the ForgeGradle run task once, copy the real game JVM command line, kill it.
     Later launches skip Gradle (saves ~1 GB RAM per process and ~1 minute per start)."""
     RIG_HOME.mkdir(parents=True, exist_ok=True)
-    cmd = [str(KIT / "run.sh"), TASKS[kind]]
-    if kind == "client":
-        cmd += ["-Dorg.gradle.jvmargs=-Xmx1536m", "--max-workers=2"]
+    # Small Gradle heap: the game JVM is killed right after it appears, so Gradle is the only big process.
+    cmd = [str(KIT / "run.sh"), TASKS[kind], "-Dorg.gradle.jvmargs=-Xmx1536m", "--max-workers=2"]
+    before = set(java_pids())
     logpath = RIG_HOME / f"capture-{kind}.log"
     log(f"capture {kind}: {' '.join(cmd)} (log {logpath})")
     p = spawn(cmd, KIT, dict(os.environ), logpath)
@@ -321,10 +370,9 @@ def capture(kind: str, timeout: float = 900) -> dict:
             if p.poll() is not None:
                 raise RigError(f"capture {kind}: gradle exited with {p.returncode}, see {logpath}")
             for pid in java_pids():
-                try:
-                    if os.getsid(pid) != p.pid:
-                        continue
-                except OSError:
+                # Gradle starts the game from its daemon, which has its own session (setsid),
+                # so match any new game JVM instead of the session id.
+                if pid in before:
                     continue
                 argv = read_cmdline(pid)
                 if TARGETS[kind] in argv and MAIN in argv:
@@ -335,7 +383,12 @@ def capture(kind: str, timeout: float = 900) -> dict:
         env = read_environ(found)
         cwd = os.readlink(f"/proc/{found}/cwd")
     finally:
-        kill_group(p.pid, grace=5)
+        if found:
+            try:
+                os.kill(found, signal.SIGKILL)
+            except OSError:
+                pass
+        kill_tree(p.pid, grace=5)
     keep = {k: v for k, v in env.items() if not ENV_SKIP.search(k) and os.environ.get(k) != v}
     data = {"kind": kind, "captured": now_iso(), "fingerprint": fingerprint(), "kit": str(KIT),
             "cwd": cwd, "argv": argv, "env": keep}
@@ -482,6 +535,50 @@ def start_xvfb(session: Path, size: str = "1280x720x24") -> tuple[int, str, dict
             time.sleep(0.5)
         kill_group(p.pid, grace=2)
     raise RigError(f"Xvfb did not start (see {session / 'xvfb.log'})")
+
+
+def guard_loop(min_mb: float, interval: float = 1.0) -> int:
+    """Separate process started by `up`. The machine has no swap, and running out of memory
+    can kill everything (on the sandbox VM it restarted the whole machine). When MemAvailable
+    drops below min_mb, kill the newest client; if no client is left, stop the server."""
+    idle = 0
+    log(f"memory guard on: min {min_mb:.0f} MB")
+    while True:
+        st = load_state()
+        srv = st.get("server") or {}
+        live = sorted((c.get("started", ""), n, c) for n, c in (st.get("clients") or {}).items()
+                      if alive(c.get("pid")))
+        if not live and not alive(srv.get("pid")):
+            idle += 1
+            if idle > 60:
+                log("memory guard off: nothing running")
+                return 0
+        else:
+            idle = 0
+        avail = meminfo_mb().get("MemAvailable", 1e9)
+        if avail < min_mb and (live or alive(srv.get("pid"))):
+            if live:
+                _, name, c = live[-1]
+                what, rss = f"client {name}", rss_mb(c.get("pid"))
+                kill_group(c.get("pid"), grace=1)
+                kill_group(c.get("xvfb_pid"), grace=1)
+            else:
+                what, rss = "server", rss_mb(srv.get("pid"))
+                kill_group(srv.get("pid"), grace=2)
+            ev = {"t": now_iso(), "killed": what, "rss_mb": rss, "mem_available_mb": round(avail)}
+            with open(RIG_HOME / "guard-events.jsonl", "a") as fh:
+                fh.write(json.dumps(ev) + "\n")
+            log(f"memory guard: MemAvailable {avail:.0f} MB < {min_mb:.0f} MB, killed {what} (rss {rss} MB)")
+            time.sleep(3)
+        time.sleep(interval)
+
+
+def start_guard(min_mb: int) -> int | None:
+    if min_mb <= 0:
+        return None
+    p = spawn([sys.executable, str(Path(__file__).resolve()), "guard", "--min-mb", str(min_mb)],
+              RIG_HOME, dict(os.environ), RIG_HOME / "guard.log")
+    return p.pid
 
 
 def load_state() -> dict:
@@ -680,6 +777,7 @@ class Rig:
                         pass
             subprocess.run(["pkill", "-f", str(RT / "usr/bin/Xvfb")], capture_output=True)
             shutil.rmtree(KIT / ".client-session", ignore_errors=True)
+        kill_group(self.state.get("guard_pid"), grace=2)
         self.state = {"server": None, "clients": {}}
         save_state(self.state)
 
@@ -1227,6 +1325,7 @@ def cmd_up(opts) -> Rig:
     if not opts.no_build:
         do_build(opts)
     rig = Rig(opts, {"server": None, "clients": {}})
+    rig.state["guard_pid"] = start_guard(opts.guard_mb)
     rig.start_server()
     names = (opts.names.split(",") if opts.names else DEFAULT_NAMES)[:opts.clients]
     for name in names:
@@ -1350,6 +1449,8 @@ def add_up_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--jvm", action="append", help="extra JVM arg for all game processes")
     p.add_argument("--no-op", action="store_true", help="do not /op the clients")
     p.add_argument("--strict", action="store_true", help="fail if any client cannot start")
+    p.add_argument("--guard-mb", type=int, default=350,
+                   help="memory guard: kill the newest client when MemAvailable < this (0 = off)")
 
 
 def main(argv=None) -> int:
@@ -1369,6 +1470,8 @@ def main(argv=None) -> int:
     p = sub.add_parser("down", help="stop server and clients")
     p.add_argument("--all", action="store_true", help="also kill stray game JVMs, Gradle and Xvfb")
     sub.add_parser("status", help="process and memory status")
+    p = sub.add_parser("guard", help="(internal) memory guard loop, started by up")
+    p.add_argument("--min-mb", type=float, default=350)
     p = sub.add_parser("shot", help="screenshot of a client display")
     p.add_argument("client")
     p.add_argument("file")
@@ -1400,6 +1503,8 @@ def main(argv=None) -> int:
             return 0
         if opts.cmd == "status":
             return cmd_status(opts)
+        if opts.cmd == "guard":
+            return guard_loop(opts.min_mb)
         rig = Rig()
         if opts.cmd == "shot":
             ok = rig.client(opts.client).shot(Path(opts.file).resolve())
