@@ -491,8 +491,14 @@ def rt_env() -> dict[str, str]:
         for key in ("LD_LIBRARY_PATH", "LIBGL_DRIVERS_PATH"):
             m = re.search(rf'export {key}="?([^"\n]+)"?', text)
             if m and "$" in m.group(1):
-                env[key] = m.group(1).replace("$RT", str(RT)).replace("${RT}", str(RT)).replace(
-                    "$KIT", str(KIT)).replace("${KIT}", str(KIT))
+                val = m.group(1).replace("${RT}", str(RT)).replace("$RT", str(RT)).replace(
+                    "${KIT}", str(KIT)).replace("$KIT", str(KIT))
+                # drop shell expansions such as ${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}; left in place
+                # they glue onto the last directory and hide it from the loader (libbz2 not found)
+                val = re.sub(r"\$\{[^}]*\}", "", val)
+                parts = [x for x in val.split(":") if x and "$" not in x]
+                if parts:
+                    env[key] = ":".join(parts)
     except OSError:
         pass
     return env
@@ -520,6 +526,9 @@ def start_xvfb(session: Path, size: str = "1280x720x24") -> tuple[int, str, dict
         xkb = RT / "usr/share/X11/xkb"
         if xkb.is_dir():
             args += ["-xkbdir", str(xkb)]
+        fonts = RT / "usr/share/fonts/X11/misc"
+        if fonts.is_dir():
+            args += ["-fp", str(fonts)]
         p = spawn(args, xbin, env, session / "xvfb.log")
         denv = dict(env)
         denv["DISPLAY"] = disp
