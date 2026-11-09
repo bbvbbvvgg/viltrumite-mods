@@ -1,0 +1,60 @@
+[rig 15:47:20] reusing running rig
+[rig 15:47:20] == Подготовка
+[rig 15:47:20] rcon> playtest ping -> playtest pong
+[rig 15:47:20] PASS [Подготовка] dev-команды /playtest включены
+[rig 15:47:20] rcon> gamerule doDaylightCycle false -> Gamerule doDaylightCycle is now set to: false
+[rig 15:47:20] rcon> gamerule doWeatherCycle false -> Gamerule doWeatherCycle is now set to: false
+[rig 15:47:20] rcon> gamerule doMobSpawning false -> Gamerule doMobSpawning is now set to: false
+[rig 15:47:20] rcon> time set day -> Set the time to 1000
+[rig 15:47:20] rcon> weather clear -> Set the weather to clear
+[rig 15:47:20] rcon> playtest heroes -> playtest heroes human,viltrumite,regulus,homelander,ironman,reinhard,thor,dio,sinclair,jinwoo,captain,red_hulk,ghost_rider,venom
+[rig 15:47:20] PASS [Подготовка] список героев
+[rig 15:47:22] == Герой jinwoo
+[rig 15:47:22] rcon> playtest hero @a jinwoo -> playtest hero Alpha human -> jinwoo ok
+[rig 15:47:22] PASS [Герой jinwoo] jinwoo: вход в героя
+[rig 15:47:27] rcon> playtest who -> playtest who Alpha hero=jinwoo hp=40.0 dim=minecraft:overworld pos=-3,-60,6
+[rig 15:47:27] PASS [Герой jinwoo] jinwoo: сервер видит героя
+[rig 15:47:50] metrics jinwoo: server 20.0 TPS 4.153 mspt; rss {'server': 1204.8, 'Alpha': 1320.2}; avail 1415.8 MB
+[rig 15:47:50] PASS [Герой jinwoo] jinwoo: без ошибок на сервере
+[rig 15:47:50] PASS [Герой jinwoo] jinwoo: без ошибок на клиентах
+[rig 15:47:50] rcon> hero cooldown reset @a jinwoo -> Cooldowns reset: Alpha (Sung Jinwoo)
+[rig 15:47:50] == Герой captain
+[rig 15:47:50] rcon> playtest hero @a captain -> playtest hero Alpha jinwoo -> captain ok
+[rig 15:47:50] PASS [Герой captain] captain: вход в героя
+[rig 15:47:55] rcon> playtest who -> playtest who Alpha hero=captain hp=40.0 dim=minecraft:overworld pos=-3,-60,21
+[rig 15:47:55] PASS [Герой captain] captain: сервер видит героя
+[rig 15:48:18] metrics captain: server 20.0 TPS 5.631 mspt; rss {'server': 1207.1, 'Alpha': 1343.1}; avail 1384.7 MB
+[rig 15:48:18] PASS [Герой captain] captain: без ошибок на сервере
+[rig 15:48:18] PASS [Герой captain] captain: без ошибок на клиентах
+[rig 15:48:18] rcon> hero cooldown reset @a captain -> Cooldowns reset: Alpha (Captain America)
+[rig 15:48:18] == Герой red_hulk
+[rig 15:48:18] rcon> playtest hero @a red_hulk -> playtest hero Alpha captain -> red_hulk ok
+[rig 15:48:18] PASS [Герой red_hulk] red_hulk: вход в героя
+[rig 15:48:23] rcon> playtest who -> playtest who Alpha hero=red_hulk hp=47.6 dim=minecraft:overworld pos=-4,-60,45
+[rig 15:48:23] PASS [Герой red_hulk] red_hulk: сервер видит героя
+[rig 15:48:46] metrics red_hulk: server 20.0 TPS 4.139 mspt; rss {'server': 1207.6, 'Alpha': 1348.9}; avail 1378.9 MB
+[rig 15:48:46] PASS [Герой red_hulk] red_hulk: без ошибок на сервере
+[rig 15:48:46] PASS [Герой red_hulk] red_hulk: без ошибок на клиентах
+[rig 15:48:46] rcon> hero cooldown reset @a red_hulk -> Cooldowns reset: Alpha (Red Hulk)
+[rig 15:48:46] == Герой ghost_rider
+[rig 15:48:46] rcon> playtest hero @a ghost_rider -> playtest hero Alpha red_hulk -> ghost_rider ok
+[rig 15:48:46] PASS [Герой ghost_rider] ghost_rider: вход в героя
+[rig 15:48:50] rcon> playtest who -> playtest who Alpha hero=ghost_rider hp=19.0 dim=minecraft:overworld pos=-5,-60,58
+[rig 15:48:50] PASS [Герой ghost_rider] ghost_rider: сервер видит героя
+[rig 15:49:13] metrics ghost_rider: server 20.0 TPS 3.645 mspt; rss {'server': 1209.0, 'Alpha': 1355.6}; avail 1385.9 MB
+[rig 15:49:13] PASS [Герой ghost_rider] ghost_rider: без ошибок на сервере
+[rig 15:49:13] PASS [Герой ghost_rider] ghost_rider: без ошибок на клиентах
+[rig 15:49:13] rcon> hero cooldown reset @a ghost_rider -> Cooldowns reset: Alpha (Ghost Rider)
+[rig 15:49:13] == Герой venom
+[rig 15:49:13] rcon> playtest hero @a venom -> playtest hero Alpha ghost_rider -> venom ok
+[rig 15:49:13] PASS [Герой venom] venom: вход в героя
+[rig 15:49:18] rcon> playtest who -> playtest who Alpha hero=venom hp=20.0 dim=minecraft:overworld pos=-4,-60,136
+[rig 15:49:18] PASS [Герой venom] venom: сервер видит героя
+[rig 15:49:41] metrics venom: server 20.0 TPS 3.032 mspt; rss {'server': 1209.3, 'Alpha': 1385.3}; avail 1337.9 MB
+[rig 15:49:41] PASS [Герой venom] venom: без ошибок на сервере
+[rig 15:49:41] PASS [Герой venom] venom: без ошибок на клиентах
+[rig 15:49:41] rcon> hero cooldown reset @a venom -> Cooldowns reset: Alpha (Venom)
+[rig 15:49:41] == Возврат
+[rig 15:49:41] rcon> playtest hero @a human -> playtest hero Alpha venom -> human ok
+[rig 15:49:41] report: /vercel/sandbox/data/kit/rig/reports/20261109-154720-smoke-heroes/report.md
+RUN_EXIT=0
