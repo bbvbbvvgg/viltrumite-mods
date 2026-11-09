@@ -87,7 +87,10 @@ public final class HomelanderVfx {
          if (laser) {
             HitResult hit = EyeLasers.ray(player, HomelanderRules.LASER_RANGE);
             Vec3 at = hit.getLocation();
-            if (hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK) {
+            if (dev.baranhan.viltrumitecore.client.clash.ClashClient.clashPoint(player) != null) {
+               // Wave 1 · 23: locked in a beam struggle, the clash point owns the sparks; nothing behind it burns.
+               SCORCH.forget(player.getUUID());
+            } else if (hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK) {
                SCORCH.addLine(player.getUUID(), at, blockHit.getDirection(), now);
                Vec3 normal = Vec3.atLowerCornerOf(blockHit.getDirection().getNormal());
                for (int i = 0; i < 2; i++) {
@@ -228,6 +231,11 @@ public final class HomelanderVfx {
       HitResult hit = EyeLasers.ray(player, HomelanderRules.LASER_RANGE);
       Vec3 end = hit instanceof net.minecraft.world.phys.EntityHitResult entityHit
          ? dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.endpoint(entityHit.getEntity(),hit.getLocation()) : hit.getLocation();
+      // Wave 1 · 23: a struggling beam ends at the clash point.
+      Vec3 clash = dev.baranhan.viltrumitecore.client.clash.ClashClient.clashPoint(player);
+      if (clash != null) {
+         end = clash;
+      }
       if (localFirstPerson) {
          // Start below the view so the beams converge into the crosshair.
          leftEye = eye.add(look.scale(0.5)).add(right.scale(-0.12)).add(0.0, -0.09, 0.0);
