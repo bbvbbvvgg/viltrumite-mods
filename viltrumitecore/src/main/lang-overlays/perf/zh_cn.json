@@ -4,7 +4,7 @@
   "viltrumitecore.perf.overlay.on": "性能面板已开启",
   "viltrumitecore.perf.overlay.off": "性能面板已关闭",
   "viltrumitecore.perf.reset": "性能测量已重置",
-  "viltrumitecore.perf.stress.stopped": "压力测试已停止",
+  "viltrumitecore.perf.stress.stopped": "压力测试已停止，已恢复 %s 个方块",
   "viltrumitecore.perf.quality.current": "特效质量：%s。粒子 %s / %s，每秒生成 %s，每秒精简 %s，每秒超出预算 %s",
   "viltrumitecore.perf.quality.unknown": "未知质量 %s：low、medium、high 或 ultra",
   "viltrumitecore.perf.quality.set": "特效质量：%s",
@@ -15,5 +15,8 @@
   "viltrumitecore.perf.hud.server": "服务器 %s TPS · 刻 %s 毫秒（p95 %s，最大 %s）· 负载 %s%%",
   "viltrumitecore.perf.hud.entities": "实体 %s",
   "viltrumitecore.perf.hud.entities.remote": "附近实体 %s · 服务器 %s",
-  "viltrumitecore.perf.hud.server.none": "服务器数据：/vperf overlay（管理员）"
+  "viltrumitecore.perf.hud.server.none": "服务器数据：/vperf overlay（管理员）",
+  "viltrumitecore.perf.stress.started": "压力测试 %s 秒：每刻 %s 粒子，%s 碎片，每刻 %s 方块（/vperf stress stop）",
+  "viltrumitecore.perf.stress.status": "压力测试：剩余 %s 秒 · 已发送粒子 %s · 碎片 %s（拒绝 %s）· 已改方块 %s，推迟 %s",
+  "viltrumitecore.perf.stress.none": "没有正在运行的压力测试"
 }

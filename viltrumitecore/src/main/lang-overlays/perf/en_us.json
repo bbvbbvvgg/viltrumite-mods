@@ -4,7 +4,7 @@
   "viltrumitecore.perf.overlay.on": "Performance overlay on",
   "viltrumitecore.perf.overlay.off": "Performance overlay off",
   "viltrumitecore.perf.reset": "Performance measurements reset",
-  "viltrumitecore.perf.stress.stopped": "Stress stopped",
+  "viltrumitecore.perf.stress.stopped": "Stress stopped, %s blocks restored",
   "viltrumitecore.perf.quality.current": "Effect quality: %s. Particles %s of %s live, %s/s spawned, %s/s thinned, %s/s over budget",
   "viltrumitecore.perf.quality.unknown": "Unknown quality %s: low, medium, high or ultra",
   "viltrumitecore.perf.quality.set": "Effect quality set to %s",
@@ -15,5 +15,8 @@
   "viltrumitecore.perf.hud.server": "Server %s TPS · tick %s ms (p95 %s, max %s) · load %s%%",
   "viltrumitecore.perf.hud.entities": "Entities %s",
   "viltrumitecore.perf.hud.entities.remote": "Entities %s here · %s on the server",
-  "viltrumitecore.perf.hud.server.none": "Server numbers: /vperf overlay (op)"
+  "viltrumitecore.perf.hud.server.none": "Server numbers: /vperf overlay (op)",
+  "viltrumitecore.perf.stress.started": "Stress for %s s: %s particles/tick, %s debris, %s blocks/tick (/vperf stress stop)",
+  "viltrumitecore.perf.stress.status": "Stress: %s s left · %s particles sent · %s debris alive (%s refused) · %s blocks changed, %s deferred",
+  "viltrumitecore.perf.stress.none": "No stress is running"
 }

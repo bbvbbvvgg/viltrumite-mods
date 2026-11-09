@@ -71,6 +71,16 @@ public final class TickBudget {
       return this.take(priority, 1) == 1;
    }
 
+   /**
+    * Marks units as already in use at the lowest priority, outside the granted totals: a live count (entities
+    * alive, particles on screen) that the cap must include. Higher priorities still get their reserve on top.
+    */
+   public void occupy(int units) {
+      int n = Math.max(0, units);
+      this.used += n;
+      this.usedBy[PRIORITIES.length - 1] += n;
+   }
+
    /** Gives back units of {@code priority} that were granted but not spent. */
    public void refund(PerfPriority priority, int units) {
       int back = Math.max(0, Math.min(units, this.usedBy[priority.ordinal()]));

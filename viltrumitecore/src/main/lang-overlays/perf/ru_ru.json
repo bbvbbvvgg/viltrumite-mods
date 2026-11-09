@@ -4,7 +4,7 @@
   "viltrumitecore.perf.overlay.on": "Панель производительности включена",
   "viltrumitecore.perf.overlay.off": "Панель производительности выключена",
   "viltrumitecore.perf.reset": "Замеры производительности сброшены",
-  "viltrumitecore.perf.stress.stopped": "Нагрузка остановлена",
+  "viltrumitecore.perf.stress.stopped": "Нагрузка остановлена, восстановлено блоков: %s",
   "viltrumitecore.perf.quality.current": "Качество эффектов: %s. Частиц %s из %s, появляется %s/с, прорежено %s/с, сверх бюджета %s/с",
   "viltrumitecore.perf.quality.unknown": "Неизвестное качество %s: low, medium, high или ultra",
   "viltrumitecore.perf.quality.set": "Качество эффектов: %s",
@@ -15,5 +15,8 @@
   "viltrumitecore.perf.hud.server": "Сервер %s TPS · тик %s мс (p95 %s, макс. %s) · нагрузка %s%%",
   "viltrumitecore.perf.hud.entities": "Сущностей %s",
   "viltrumitecore.perf.hud.entities.remote": "Сущностей %s рядом · %s на сервере",
-  "viltrumitecore.perf.hud.server.none": "Цифры сервера: /vperf overlay (оператор)"
+  "viltrumitecore.perf.hud.server.none": "Цифры сервера: /vperf overlay (оператор)",
+  "viltrumitecore.perf.stress.started": "Нагрузка на %s с: %s частиц/тик, %s обломков, %s блоков/тик (/vperf stress stop)",
+  "viltrumitecore.perf.stress.status": "Нагрузка: осталось %s с · отправлено частиц %s · обломков %s (отказано %s) · изменено блоков %s, отложено %s",
+  "viltrumitecore.perf.stress.none": "Нагрузка не запущена"
 }
