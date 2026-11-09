@@ -316,6 +316,8 @@ public abstract class GameRendererDashMixin {
          }
          // Venom's host: the symbiote over the eyes (blur, violet grade, veins, the narrow slit, flashes)
          float[] venomHost = dev.baranhan.viltrumitecore.client.venom.VenomPossessionClient.post(partialTicks);
+         // wave1-22 cinematic combat: air distortion rings share this pass (no second post chain)
+         float[] feelWaves = dev.baranhan.viltrumitecore.client.cinematic.feel.ShockwaveDistortion.post(partialTicks);
          boolean anyEffect = ErasurePost.active() || dashProgress > 0.0F
             || venomHost[0] > 0.005F
             // Venom's own transformation: only the veins component is set (no host), it must still run the chain
@@ -331,7 +333,8 @@ public abstract class GameRendererDashMixin {
             || this.currentScourgeIntensity > 0.005F
             || this.currentRegulusOverheat > 0.01F
             || this.currentRegulusMadness > 0.01F
-            || regulusHeartFlash > 0.01F;
+            || regulusHeartFlash > 0.01F
+            || feelWaves[3] + feelWaves[7] > 0.001F;
          if (anyEffect) {
             PostChain chain = ViltrumiteShaders.get();
             if (chain != null) {
@@ -450,6 +453,14 @@ public abstract class GameRendererDashMixin {
                   if (venomVeinsUnif != null) venomVeinsUnif.set(Mth.clamp(venomHost[1], 0.0F, 1.0F));
                   Uniform venomFlashUnif = pass.getEffect().getUniform("VenomFlash");
                   if (venomFlashUnif != null) venomFlashUnif.set(Mth.clamp(venomHost[2], 0.0F, 1.0F));
+                  Uniform feelWaveA = pass.getEffect().getUniform("FeelWaveA");
+                  if (feelWaveA != null) {
+                     feelWaveA.set(feelWaves[0], feelWaves[1], feelWaves[2], feelWaves[3]);
+                  }
+                  Uniform feelWaveB = pass.getEffect().getUniform("FeelWaveB");
+                  if (feelWaveB != null) {
+                     feelWaveB.set(feelWaves[4], feelWaves[5], feelWaves[6], feelWaves[7]);
+                  }
                   Uniform venomSlitUnif = pass.getEffect().getUniform("VenomSlit");
                   if (venomSlitUnif != null) venomSlitUnif.set(venomHost[0] > 0.005F ? Mth.clamp(venomHost[3], 0.0F, 1.0F) : 1.0F);
                   Uniform regulusPulseUnif = pass.getEffect().getUniform("RegulusPulse");

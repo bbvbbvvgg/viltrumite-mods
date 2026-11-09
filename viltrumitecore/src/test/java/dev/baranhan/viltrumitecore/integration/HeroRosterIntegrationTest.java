@@ -215,7 +215,7 @@ class HeroRosterIntegrationTest {
       // 30 = SCP-106 and the pocket dimension: Scp106S2CPacket appended last.
       // 31 = the integration of #141..#147 and SCP-106: Venom's two packets after HellfireS2CPacket, then
       // Scp106S2CPacket. Each branch alone was "30" with a different table, so every "30" peer is refused.
-      assertTrue(source.contains("PROTOCOL_VERSION = \"31\""), "the merged packet table needs its own protocol version");
+      assertTrue(source.contains("PROTOCOL_VERSION = \"32\""), "the merged packet table needs its own protocol version");
       assertTrue(packets.contains("RegulusFxS2CPacket"), "RegulusFxS2CPacket is not registered");
       assertTrue(packets.indexOf("WishChoiceC2SPacket") > packets.indexOf("JinwooFxS2CPacket")
          && packets.indexOf("WishSceneS2CPacket") == packets.indexOf("WishChoiceC2SPacket") + 1, "the wish packets append after the Jinwoo packet");
@@ -242,8 +242,10 @@ class HeroRosterIntegrationTest {
          "the integration of the four sessions appends SCP-096, Godzilla, the Thanos war, then Ghost Rider (v29)");
       assertEquals(List.of("VenomPossessS2CPacket", "VenomDriveC2SPacket"), packets.subList(punch + 13, punch + 15),
          "Venom's host takeover packets append after Ghost Rider's (v30)");
-      assertEquals(List.of("Scp106S2CPacket"), packets.subList(punch + 15, packets.size()),
-         "the SCP-106 packet appends last, after Venom's (v31)");
+      assertEquals(List.of("Scp106S2CPacket"), packets.subList(punch + 15, punch + 16),
+         "the SCP-106 packet appends after Venom's (v31)");
+      assertEquals(List.of("FeelS2CPacket"), packets.subList(punch + 16, packets.size()),
+         "the cinematic combat feel packet appends last, after SCP-106's (v32)");
    }
 
    @Test
