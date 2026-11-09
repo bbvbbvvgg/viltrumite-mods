@@ -14,6 +14,8 @@ public class ViltrumiteClientConfig {
    public boolean heroSubtitles = true;
    /** Reading-time factor of automatically timed hero subtitles, 0.5..2.5. */
    public double heroSubtitleDurationScale = 1.0;
+   /** Effect quality: low, medium, high (the game as designed; thins only under load) or ultra. Also /vfx quality. */
+   public String effectQuality = "high";
    public static ViltrumiteClientConfig INSTANCE = new ViltrumiteClientConfig();
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final File CONFIG_FILE = new File(FMLPaths.CONFIGDIR.get().toFile(), "viltrumitecore_client.json");
