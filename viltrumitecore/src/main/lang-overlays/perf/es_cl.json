@@ -1,0 +1,22 @@
+{
+  "viltrumitecore.perf.status.server": "Servidor: %s TPS, tick %s ms (p95 %s, máx. %s), carga %s%%",
+  "viltrumitecore.perf.status.budget": "  %s: %s de %s en el último tick, %s aplazados (desde el inicio: %s hechos, %s aplazados)",
+  "viltrumitecore.perf.overlay.on": "Panel de rendimiento activado",
+  "viltrumitecore.perf.overlay.off": "Panel de rendimiento desactivado",
+  "viltrumitecore.perf.reset": "Mediciones de rendimiento reiniciadas",
+  "viltrumitecore.perf.stress.stopped": "Carga detenida, %s bloques restaurados",
+  "viltrumitecore.perf.quality.current": "Calidad de efectos: %s. Partículas %s de %s, %s/s generadas, %s/s reducidas, %s/s sobre el presupuesto",
+  "viltrumitecore.perf.quality.unknown": "Calidad desconocida %s: low, medium, high o ultra",
+  "viltrumitecore.perf.quality.set": "Calidad de efectos: %s",
+  "viltrumitecore.perf.hud.title": "Rendimiento de Viltrumite · %s%s",
+  "viltrumitecore.perf.hud.fixed": " · fija",
+  "viltrumitecore.perf.hud.frame": "FPS %s · fotograma %s ms · p99 %s ms · carga %s%%",
+  "viltrumitecore.perf.hud.particles": "Partículas %s / %s · +%s/s · reducidas %s/s · sobre %s/s",
+  "viltrumitecore.perf.hud.server": "Servidor %s TPS · tick %s ms (p95 %s, máx. %s) · carga %s%%",
+  "viltrumitecore.perf.hud.entities": "Entidades %s",
+  "viltrumitecore.perf.hud.entities.remote": "Entidades %s aquí · %s en el servidor",
+  "viltrumitecore.perf.hud.server.none": "Datos del servidor: /vperf overlay (operador)",
+  "viltrumitecore.perf.stress.started": "Carga durante %s s: %s partículas/tick, %s escombros, %s bloques/tick (/vperf stress stop)",
+  "viltrumitecore.perf.stress.status": "Carga: quedan %s s · %s partículas enviadas · %s escombros (%s rechazados) · %s bloques cambiados, %s aplazados",
+  "viltrumitecore.perf.stress.none": "No hay ninguna carga en marcha"
+}

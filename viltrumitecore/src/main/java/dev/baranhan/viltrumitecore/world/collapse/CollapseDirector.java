@@ -299,7 +299,8 @@ public final class CollapseDirector {
          budgetTick = now;
          budgetLeft = blocksPerTick();
       }
-      int got = Math.min(want, budgetLeft);
+      // the shared level allowance (wave 1 / 03): identical on a healthy server, defers the rest under load
+      int got = dev.baranhan.viltrumitecore.perf.BlockUpdateBudget.take(level, dev.baranhan.viltrumitecore.perf.PerfPriority.HIGH, Math.min(want, budgetLeft));
       budgetLeft -= got;
       return got;
    }

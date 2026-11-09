@@ -1,0 +1,22 @@
+{
+  "viltrumitecore.perf.status.server": "Sunucu: %s TPS, tik %s ms (p95 %s, en çok %s), yük %%%s",
+  "viltrumitecore.perf.status.budget": "  %s: son tikte %s / %s, %s ertelendi (başlangıçtan beri: %s yapıldı, %s ertelendi)",
+  "viltrumitecore.perf.overlay.on": "Performans paneli açık",
+  "viltrumitecore.perf.overlay.off": "Performans paneli kapalı",
+  "viltrumitecore.perf.reset": "Performans ölçümleri sıfırlandı",
+  "viltrumitecore.perf.stress.stopped": "Yük durduruldu, %s blok geri yüklendi",
+  "viltrumitecore.perf.quality.current": "Efekt kalitesi: %s. Parçacık %s / %s, %s/sn oluştu, %s/sn seyreltildi, %s/sn bütçe dışı",
+  "viltrumitecore.perf.quality.unknown": "Bilinmeyen kalite %s: low, medium, high veya ultra",
+  "viltrumitecore.perf.quality.set": "Efekt kalitesi: %s",
+  "viltrumitecore.perf.hud.title": "Viltrumite performansı · %s%s",
+  "viltrumitecore.perf.hud.fixed": " · sabit",
+  "viltrumitecore.perf.hud.frame": "FPS %s · kare %s ms · p99 %s ms · yük %%%s",
+  "viltrumitecore.perf.hud.particles": "Parçacık %s / %s · +%s/sn · seyreltilen %s/sn · fazla %s/sn",
+  "viltrumitecore.perf.hud.server": "Sunucu %s TPS · tik %s ms (p95 %s, en çok %s) · yük %%%s",
+  "viltrumitecore.perf.hud.entities": "Varlık %s",
+  "viltrumitecore.perf.hud.entities.remote": "Burada %s varlık · sunucuda %s",
+  "viltrumitecore.perf.hud.server.none": "Sunucu verileri: /vperf overlay (operatör)",
+  "viltrumitecore.perf.stress.started": "%s sn yük: tik başına %s parçacık, %s enkaz, tik başına %s blok (/vperf stress stop)",
+  "viltrumitecore.perf.stress.status": "Yük: %s sn kaldı · %s parçacık gönderildi · %s enkaz (%s reddedildi) · %s blok değişti, %s ertelendi",
+  "viltrumitecore.perf.stress.none": "Çalışan yük yok"
+}
