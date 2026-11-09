@@ -3,7 +3,10 @@ package dev.baranhan.viltrumitecore.hero;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.baranhan.viltrumitecore.hero.roster.ActionSet;
 
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
@@ -170,21 +173,88 @@ class HeroPublicSnapshotTest {
 
    @Test
    void actionsPastTheMaskDoNotAliasEarlierBits() {
-      // #74 + #82 together have more than 64 actions. Bits 0..63 stay exact; later actions never borrow bit (ordinal % 64).
+      // #74 + #82 together have more than 64 actions. No action ever borrows bit (ordinal % 64).
       HeroAction[] actions = HeroAction.values();
       HeroAction first = actions[0];
-      long firstMask = HeroPublicSnapshot.actionMask(first);
+      HeroPublicSnapshot onlyFirst = withSet(HeroPublicSnapshot.actionSet(first));
       for (HeroAction action : actions) {
          if (action.ordinal() < HeroPublicSnapshot.MASK_BITS) {
             assertEquals(1L << action.ordinal(), HeroPublicSnapshot.actionMask(action));
-            continue;
+         } else {
+            // The deprecated long helper cannot hold the bit; it refuses loudly and names the unlimited path.
+            IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> HeroPublicSnapshot.actionMask(action));
+            assertTrue(error.getMessage().contains("actionSet"), error.getMessage());
          }
-         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> HeroPublicSnapshot.actionMask(action));
-         HeroPublicSnapshot masked = withMask(firstMask);
-         assertTrue(masked.actionAvailable(first));
-         assertFalse(masked.actionAvailable(action), action + " must not read " + first + "'s bit");
+         if (action != first) {
+            assertFalse(onlyFirst.actionAvailable(action), action + " must not read " + first + "'s bit");
+         }
          assertTrue(withMask(-1L).actionAvailable(action), "the all-actions mask still covers " + action);
       }
+      assertTrue(onlyFirst.actionAvailable(first));
+   }
+
+   @Test
+   void everyActionMasksIndividuallyAndSurvivesTheWire() {
+      // Wave 1 · session 01: an exact mask for every action of the roster, including ordinals 64+.
+      for (HeroAction action : HeroAction.values()) {
+         HeroPublicSnapshot snapshot = withSet(HeroPublicSnapshot.actionSet(action));
+         HeroPublicSnapshot decoded = HeroPublicSnapshot.decode(snapshot.encode());
+         assertEquals(snapshot, decoded, action.name());
+         for (HeroAction other : HeroAction.values()) {
+            assertEquals(other == action, decoded.actionAvailable(other), action + " vs " + other);
+         }
+      }
+   }
+
+   @Test
+   void highOrdinalSetRoundTripsWithAllOptionalFields() {
+      HeroAction last = HeroAction.values()[HeroAction.values().length - 1];
+      ActionSet set = HeroPublicSnapshot.actionSet(HeroAction.LIONS_HEART, last);
+      HeroPublicSnapshot snapshot = new HeroPublicSnapshot(HeroId.REINHARD, 3, 4, 20, 5, true, 6, 40, false, true, 7, 8, 9,
+         new int[]{1, 2, 3, 4, 5, 6}, true, set, new Vec3(1.5, 64.0, -2.25), 300, true, 0b101, new int[]{11, 12}, 77, 88);
+      HeroPublicSnapshot decoded = HeroPublicSnapshot.decode(snapshot.encode());
+      assertEquals(snapshot, decoded);
+      assertEquals(snapshot.hashCode(), decoded.hashCode());
+      assertTrue(decoded.actionAvailable(last));
+      assertTrue(decoded.actionAvailable(last.ordinal()));
+      assertFalse(decoded.actionAvailable(HeroAction.DEBRIS_KICK));
+      assertEquals(1L, decoded.availableActions(), "the legacy long view keeps bits 0..63 only");
+      assertEquals(77, decoded.variant());
+      assertEquals(88, decoded.resource2());
+   }
+
+   @Test
+   void allActionsStayOnTheLegacyWireToken() {
+      // Every hero sends "everything" today: the packed string keeps the old "-1" field, byte for byte.
+      HeroPublicSnapshot all = withMask(-1L);
+      assertEquals(ActionSet.ALL, all.actions());
+      assertEquals("-1", all.encode().split(";")[20]);
+      assertEquals(all, HeroPublicSnapshot.decode(all.encode()));
+      assertEquals(ActionSet.ALL, HeroPublicSnapshot.EMPTY.actions());
+      assertEquals(ActionSet.ALL, withSet(null).actions(), "a null set means every action");
+   }
+
+   @Test
+   void withActionsReplacesOnlyTheSet() {
+      HeroPublicSnapshot base = withResource(new Vec3(1, 2, 3));
+      HeroAction last = HeroAction.values()[HeroAction.values().length - 1];
+      HeroPublicSnapshot narrowed = base.withActions(ActionSet.of(last));
+      assertTrue(narrowed.actionAvailable(last));
+      assertFalse(narrowed.actionAvailable(HeroAction.LIONS_HEART));
+      assertEquals(base, narrowed.withActions(base.actions()));
+   }
+
+   @Test
+   void malformedActionTokenDecodesAsEmpty() {
+      String prefix = "regulus;-1;0;0;4;0;0;0;0;0;0;-1;-1;0;0;0;0;0;0;0;";
+      assertEquals(HeroPublicSnapshot.EMPTY, HeroPublicSnapshot.decode(prefix + "~!!"));
+      assertEquals(HeroPublicSnapshot.EMPTY, HeroPublicSnapshot.decode(prefix + "~CQ"));
+      assertEquals(HeroPublicSnapshot.EMPTY, HeroPublicSnapshot.decode(prefix + "zz"));
+   }
+
+   private static HeroPublicSnapshot withSet(ActionSet set) {
+      return new HeroPublicSnapshot(HeroId.REINHARD, -1, 0, 0, 0, false, 0, 0, false, false, 0, 0, -1,
+         new int[HeroPublicSnapshot.COOLDOWN_COUNT], false, set, null, 0, false, 0, null, 0, 0);
    }
 
 }

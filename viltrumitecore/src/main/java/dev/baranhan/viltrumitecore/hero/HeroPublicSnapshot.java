@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero;
 
+import dev.baranhan.viltrumitecore.hero.roster.ActionSet;
 import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -26,7 +27,12 @@ public record HeroPublicSnapshot(
    int controlTargetId,
    int[] cooldowns,
    boolean actionBusy,
-   long availableActions,
+   /**
+    * Actions the hero offers right now, with no upper limit on the ordinal (wave 1 · session 01).
+    * {@link ActionSet#ALL} ("everything", legacy mask {@code -1L}) is what every hero sends today.
+    * Read it through {@link #actionAvailable(HeroAction)}.
+    */
+   ActionSet actions,
    @Nullable Vec3 actionTarget,
    /** Generic hero resource (Homelander: eye heat x10, 0-1000). */
    int resource,
@@ -90,7 +96,20 @@ public record HeroPublicSnapshot(
          availableActions, actionTarget, resource, resourceLocked, heroFlags, extraCooldowns, 0, 0);
    }
 
+   /** The pre-wave-1 canonical signature with the legacy 64-bit mask; {@code -1L} means {@link ActionSet#ALL}. */
+   public HeroPublicSnapshot(HeroId heroId, int actionId, int actionElapsed, int actionLength, int hearts,
+      boolean lionActive, int lionWindowLeft, int lionWindowMax, boolean lionOverheat, boolean madness,
+      int madnessTicksLeft, int ritualTicks, int controlTargetId, int[] cooldowns, boolean actionBusy,
+      long availableActions, @Nullable Vec3 actionTarget, int resource, boolean resourceLocked, int heroFlags,
+      int[] extraCooldowns, int variant, int resource2) {
+      this(heroId, actionId, actionElapsed, actionLength, hearts, lionActive, lionWindowLeft, lionWindowMax,
+         lionOverheat, madness, madnessTicksLeft, ritualTicks, controlTargetId, cooldowns, actionBusy,
+         ActionSet.fromLegacyMask(availableActions), actionTarget, resource, resourceLocked, heroFlags,
+         extraCooldowns, variant, resource2);
+   }
+
    public HeroPublicSnapshot {
+      actions = actions == null ? ActionSet.ALL : actions;
       extraCooldowns = extraCooldowns == null ? NO_EXTRA
          : extraCooldowns.length > EXTRA_COOLDOWN_MAX ? Arrays.copyOf(extraCooldowns, EXTRA_COOLDOWN_MAX) : extraCooldowns;
    }
@@ -104,26 +123,57 @@ public record HeroPublicSnapshot(
       return (this.heroFlags & (1 << bit)) != 0;
    }
 
-   /** Actions with an ordinal below this have their own bit in {@link #availableActions}. */
+   /**
+    * Width of the legacy {@code long} view ({@link #availableActions()}, {@link #actionMask}). The snapshot
+    * itself has no such limit: {@link #actions()} holds any ordinal.
+    */
    public static final int MASK_BITS = Long.SIZE;
 
-   /**
-    * One bit per action for ordinals below {@link #MASK_BITS}. The merged roster (#74 + #82) has more
-    * actions than a long has bits; a later action has no bit of its own and is available only under the
-    * "everything" mask {@code -1L} that every hero sends today. Java's {@code 1L << n} wraps n modulo 64,
-    * so without this guard action 64 would silently read action 0's bit.
-    */
+   /** The public availability check. Exact for every ordinal; there is no 64-action limit and no bit aliasing. */
    public boolean actionAvailable(HeroAction action) {
-      int ordinal = action.ordinal();
-      return ordinal < MASK_BITS ? (this.availableActions & (1L << ordinal)) != 0 : this.availableActions == -1L;
+      return this.actions.contains(action);
    }
 
-   /** Bit mask with one {@code 1L << ordinal} bit per action; actions past bit 63 cannot be masked individually. */
+   /** {@link #actionAvailable(HeroAction)} by raw ordinal; a negative ordinal is never available. */
+   public boolean actionAvailable(int ordinal) {
+      return this.actions.contains(ordinal);
+   }
+
+   /**
+    * Legacy 64-bit view of {@link #actions()}: {@code -1L} for {@link ActionSet#ALL}, else bits 0..63.
+    * Kept for source compatibility; new code reads {@link #actionAvailable(HeroAction)} or {@link #actions()}.
+    */
+   public long availableActions() {
+      return this.actions.legacyMask();
+   }
+
+   /** A copy with another action set. */
+   public HeroPublicSnapshot withActions(ActionSet actions) {
+      return new HeroPublicSnapshot(this.heroId, this.actionId, this.actionElapsed, this.actionLength, this.hearts,
+         this.lionActive, this.lionWindowLeft, this.lionWindowMax, this.lionOverheat, this.madness,
+         this.madnessTicksLeft, this.ritualTicks, this.controlTargetId, this.cooldowns, this.actionBusy,
+         actions, this.actionTarget, this.resource, this.resourceLocked, this.heroFlags, this.extraCooldowns,
+         this.variant, this.resource2);
+   }
+
+   /** An action set for the canonical constructor or {@link #withActions}; any ordinal, no limit. */
+   public static ActionSet actionSet(HeroAction... actions) {
+      return ActionSet.of(actions);
+   }
+
+   /**
+    * Legacy {@code long} mask for the {@code long} constructors. A {@code long} physically holds only
+    * ordinals 0..63, so a later action is refused with a pointer to the unlimited path
+    * ({@link #actionSet(HeroAction...)} + the canonical constructor or {@link #withActions}).
+    *
+    * @deprecated use {@link #actionSet(HeroAction...)}; it has no ordinal limit.
+    */
+   @Deprecated
    public static long actionMask(HeroAction... actions) {
       long mask = 0L;
       for (HeroAction action : actions) {
          if (action.ordinal() >= MASK_BITS) {
-            throw new IllegalArgumentException(action + " (ordinal " + action.ordinal() + ") has no bit in the 64-bit action mask");
+            throw new IllegalArgumentException(action + " needs HeroPublicSnapshot.actionSet(...): the legacy long view stops at ordinal 63");
          }
          mask |= 1L << action.ordinal();
       }
@@ -151,7 +201,7 @@ public record HeroPublicSnapshot(
       }
 
       builder.append(';').append(this.actionBusy ? 1 : 0);
-      builder.append(';').append(this.availableActions);
+      builder.append(';').append(this.actions.toWire());
       boolean hasVariant = this.variant != 0 || this.resource2 != 0;
       boolean hasExtra = this.extraCooldowns.length > 0 || hasVariant;
       boolean hasResource = this.resource != 0 || this.resourceLocked || this.heroFlags != 0 || hasExtra;
@@ -246,7 +296,7 @@ public record HeroPublicSnapshot(
             Integer.parseInt(parts[12]),
             cooldowns,
             parts.length > 19 && "1".equals(parts[19]),
-            parts.length > 20 ? Long.parseLong(parts[20]) : -1L,
+            parts.length > 20 ? ActionSet.fromWire(parts[20]) : ActionSet.ALL,
             target,
             parts.length > 24 ? Integer.parseInt(parts[24]) : 0,
             parts.length > 25 && "1".equals(parts[25]),
@@ -282,7 +332,7 @@ public record HeroPublicSnapshot(
             && this.controlTargetId == snapshot.controlTargetId
             && Arrays.equals(this.cooldowns, snapshot.cooldowns)
             && this.actionBusy == snapshot.actionBusy
-            && this.availableActions == snapshot.availableActions
+            && this.actions.equals(snapshot.actions)
             && Objects.equals(this.actionTarget, snapshot.actionTarget)
             && this.resource == snapshot.resource
             && this.resourceLocked == snapshot.resourceLocked
@@ -310,7 +360,7 @@ public record HeroPublicSnapshot(
       result = 31 * result + this.controlTargetId;
       result = 31 * result + Arrays.hashCode(this.cooldowns);
       result = 31 * result + Boolean.hashCode(this.actionBusy);
-      result = 31 * result + Long.hashCode(this.availableActions);
+      result = 31 * result + this.actions.hashCode();
       result = 31 * result + Objects.hashCode(this.actionTarget);
       result = 31 * result + this.resource;
       result = 31 * result + Boolean.hashCode(this.resourceLocked);
