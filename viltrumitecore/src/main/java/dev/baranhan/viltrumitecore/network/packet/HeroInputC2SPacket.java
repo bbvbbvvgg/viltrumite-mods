@@ -12,6 +12,9 @@ import net.minecraftforge.network.NetworkEvent;
 /**
  * Bounded hero input edges: action ordinal + pressed. The server re-validates
  * the action against the sender's hero, equipment page and action lock.
+ *
+ * <p>The ordinal is a varint (protocol 32, wave 1 · session 01): one byte up to ordinal 127, two bytes
+ * up to 16383. The old single signed byte wrapped ordinal 128+ to a negative id and the press was lost.
  */
 public class HeroInputC2SPacket {
    private final int actionOrdinal;
@@ -22,13 +25,22 @@ public class HeroInputC2SPacket {
       this.pressed = pressed;
    }
 
+   /** The wire ordinal (tests and debug). */
+   public int actionOrdinal() {
+      return this.actionOrdinal;
+   }
+
+   public boolean pressed() {
+      return this.pressed;
+   }
+
    public HeroInputC2SPacket(FriendlyByteBuf buffer) {
-      this.actionOrdinal = buffer.readByte();
+      this.actionOrdinal = buffer.readVarInt();
       this.pressed = buffer.readBoolean();
    }
 
    public void toBytes(FriendlyByteBuf buffer) {
-      buffer.writeByte(this.actionOrdinal);
+      buffer.writeVarInt(this.actionOrdinal);
       buffer.writeBoolean(this.pressed);
    }
 

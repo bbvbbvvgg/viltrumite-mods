@@ -93,7 +93,10 @@ public class CoreMessages {
    // v31 (integration of #141..#147 and SCP-106): one table with VenomPossessS2CPacket and VenomDriveC2SPacket after
    //     HellfireS2CPacket, then Scp106S2CPacket. Each branch alone was "30" with its own table, so every "29" and
    //     "30" peer is refused.
-   private static final String PROTOCOL_VERSION = "31";
+   // v32 (wave 1 · session 01, roster scale): HeroInputC2SPacket writes the action ordinal as a varint (was one
+   //     signed byte, so ordinal 128+ was lost) and the hero snapshot carries an unlimited action set token
+   //     ("-1" or "~<base64url>") instead of a 64-bit long. The packet table is unchanged. Every "31" peer is refused.
+   private static final String PROTOCOL_VERSION = "32";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
 
