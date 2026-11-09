@@ -45,8 +45,8 @@ public final class BlockUpdateBudget {
       return budget(level.dimension()).take(priority, wanted);
    }
 
-   public static void refund(ServerLevel level, int unused) {
-      budget(level.dimension()).refund(unused);
+   public static void refund(ServerLevel level, PerfPriority priority, int unused) {
+      budget(level.dimension()).refund(priority, unused);
    }
 
    public static synchronized TickBudget budget(ResourceKey<Level> dimension) {

@@ -1,12 +1,16 @@
 package dev.baranhan.viltrumitecore.perf;
 
 /**
- * A per-tick allowance of work units with priority reserves (see {@link PerfPriority#share}). Work that does
- * not fit is the caller's to defer (block queues) or thin (cosmetic effects). One budget belongs to one thread.
- * Pure.
+ * A per-tick allowance of work units with priority reserves. A priority and everything below it together may
+ * fill at most {@link PerfPriority#share} of the capacity, so the priorities above always find their reserve
+ * free no matter who asked first; while the budget has room, everyone gets everything. CRITICAL is never denied.
+ * Work that does not fit is the caller's to defer (block queues) or thin (cosmetic effects). One budget belongs
+ * to one thread. Pure.
  */
 public final class TickBudget {
+   private static final PerfPriority[] PRIORITIES = PerfPriority.values();
    private final String name;
+   private final int[] usedBy = new int[PRIORITIES.length];
    private int capacity;
    private int used;
    private int denied;
@@ -30,18 +34,25 @@ public final class TickBudget {
       this.capacity = Math.max(0, capacity);
       this.used = 0;
       this.denied = 0;
+      java.util.Arrays.fill(this.usedBy, 0);
    }
 
-   /** The fill level up to which {@code priority} may take (CRITICAL: unbounded). */
-   public int limit(PerfPriority priority) {
-      return priority.critical() ? Integer.MAX_VALUE : (int)Math.floor(this.capacity * priority.share);
-   }
-
+   /** Units {@code priority} may still take this tick (CRITICAL: unbounded). */
    public int remaining(PerfPriority priority) {
-      return priority.critical() ? Integer.MAX_VALUE : Math.max(0, this.limit(priority) - this.used);
+      if (priority.critical()) {
+         return Integer.MAX_VALUE;
+      }
+
+      int atOrBelow = 0;
+      for (int i = priority.ordinal(); i < PRIORITIES.length; i++) {
+         atOrBelow += this.usedBy[i];
+      }
+
+      int share = (int)Math.floor(this.capacity * priority.share) - atOrBelow;
+      return Math.max(0, Math.min(this.capacity - this.used, share));
    }
 
-   /** Grants up to {@code wanted} units and returns how many (0..wanted). CRITICAL always gets everything. */
+   /** Grants up to {@code wanted} units and returns how many (0..wanted). */
    public int take(PerfPriority priority, int wanted) {
       if (wanted <= 0) {
          return 0;
@@ -49,6 +60,7 @@ public final class TickBudget {
 
       int grant = priority.critical() ? wanted : Math.min(wanted, this.remaining(priority));
       this.used += grant;
+      this.usedBy[priority.ordinal()] += grant;
       this.denied += wanted - grant;
       this.grantedTotal += grant;
       this.deniedTotal += wanted - grant;
@@ -59,9 +71,10 @@ public final class TickBudget {
       return this.take(priority, 1) == 1;
    }
 
-   /** Gives back units that were granted but not spent. */
-   public void refund(int units) {
-      int back = Math.max(0, Math.min(units, this.used));
+   /** Gives back units of {@code priority} that were granted but not spent. */
+   public void refund(PerfPriority priority, int units) {
+      int back = Math.max(0, Math.min(units, this.usedBy[priority.ordinal()]));
+      this.usedBy[priority.ordinal()] -= back;
       this.used -= back;
       this.grantedTotal -= back;
    }

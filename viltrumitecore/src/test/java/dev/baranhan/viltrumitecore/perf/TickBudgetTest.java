@@ -27,10 +27,21 @@ class TickBudgetTest {
    }
 
    @Test
+   void theReserveHoldsWhateverTheOrder() {
+      TickBudget b = new TickBudget("t", 100);
+      assertEquals(90, b.take(PerfPriority.HIGH, 90));
+      assertEquals(10, b.take(PerfPriority.LOW, 1000), "low work still uses what high work left");
+      b.reset(100);
+      assertEquals(60, b.take(PerfPriority.LOW, 1000));
+      assertEquals(40, b.take(PerfPriority.HIGH, 1000), "high work always finds its reserve");
+   }
+
+   @Test
    void underCapacityEverythingIsGrantedUnchanged() {
       TickBudget b = new TickBudget("t", 1536);
       assertEquals(900, b.take(PerfPriority.HIGH, 900), "the collapse default fits untouched");
-      assertEquals(40, b.take(PerfPriority.LOW, 40), "the fire default fits untouched");
+      assertEquals(40, b.take(PerfPriority.LOW, 40), "the fire default fits untouched after it");
+      assertEquals(520, b.take(PerfPriority.NORMAL, 520), "Godzilla's rage budget fits too");
       b.reset(1536);
       assertEquals(0, b.lastDenied());
    }
@@ -39,7 +50,7 @@ class TickBudgetTest {
    void resetSnapshotsTheFinishedTickAndRefundGivesBack() {
       TickBudget b = new TickBudget("t", 10);
       b.take(PerfPriority.HIGH, 8);
-      b.refund(3);
+      b.refund(PerfPriority.HIGH, 3);
       assertEquals(5, b.used());
       b.take(PerfPriority.HIGH, 20);
       b.reset(4);
