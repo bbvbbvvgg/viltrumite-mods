@@ -1,0 +1,145 @@
+{
+  "name": "smoke-heroes",
+  "description": "Смоук всех героев: вход в героя через /playtest hero, способности 1-6 на каждом клиенте, скриншот, ошибки в логах, FPS/TPS.",
+  "vars": {
+    "p": "@a",
+    "press_pause": "1.5"
+  },
+  "steps": [
+    {
+      "section": "Подготовка",
+      "steps": [
+        {
+          "server": "playtest ping",
+          "expect": "playtest pong",
+          "name": "dev-команды /playtest включены",
+          "fatal": true
+        },
+        {
+          "server": [
+            "gamerule doDaylightCycle false",
+            "gamerule doWeatherCycle false",
+            "gamerule doMobSpawning false",
+            "time set day",
+            "weather clear"
+          ]
+        },
+        {
+          "server": "playtest heroes",
+          "expect": "playtest heroes \\w",
+          "name": "список героев"
+        },
+        {
+          "qa": "close",
+          "client": "*",
+          "pause": 1
+        }
+      ]
+    },
+    {
+      "foreach": "@../data/heroes.json:heroes",
+      "as": "hero",
+      "do": [
+        {
+          "section": "Герой ${hero.id}"
+        },
+        {
+          "mark": "h-${hero.id}"
+        },
+        {
+          "server": "playtest hero ${p} ${hero.id}",
+          "expect": "-> ${hero.resolves_to} (ok|same|deferred)",
+          "name": "${hero.id}: вход в героя",
+          "pause": 3
+        },
+        {
+          "qa": "close",
+          "client": "*",
+          "pause": 1
+        },
+        {
+          "server": "playtest who",
+          "expect": "hero=${hero.resolves_to}",
+          "name": "${hero.id}: сервер видит героя",
+          "soft": true
+        },
+        {
+          "qa": "press 1 10",
+          "client": "*",
+          "pause": "${press_pause}",
+          "soft": true
+        },
+        {
+          "qa": "press 2 10",
+          "client": "*",
+          "pause": "${press_pause}",
+          "soft": true
+        },
+        {
+          "qa": "press 3 10",
+          "client": "*",
+          "pause": "${press_pause}",
+          "soft": true
+        },
+        {
+          "qa": "press 4 10",
+          "client": "*",
+          "pause": "${press_pause}",
+          "soft": true
+        },
+        {
+          "qa": "press 5 10",
+          "client": "*",
+          "pause": "${press_pause}",
+          "soft": true
+        },
+        {
+          "qa": "press 6 10",
+          "client": "*",
+          "pause": "${press_pause}",
+          "soft": true
+        },
+        {
+          "shot": "${hero.id}"
+        },
+        {
+          "metrics": "${hero.id}",
+          "window_s": 8
+        },
+        {
+          "expect": {
+            "log": "server",
+            "regex": "Exception|/(ERROR|FATAL)\\]",
+            "since": "mark:h-${hero.id}",
+            "absent": true,
+            "wait": false,
+            "soft": true,
+            "name": "${hero.id}: без ошибок на сервере"
+          }
+        },
+        {
+          "expect": {
+            "log": "*",
+            "regex": "Exception|/(ERROR|FATAL)\\]",
+            "since": "mark:h-${hero.id}",
+            "absent": true,
+            "wait": false,
+            "soft": true,
+            "name": "${hero.id}: без ошибок на клиентах"
+          }
+        },
+        {
+          "server": "hero cooldown reset ${p} ${hero.resolves_to}",
+          "soft": true
+        }
+      ]
+    },
+    {
+      "section": "Возврат"
+    },
+    {
+      "server": "playtest hero ${p} human",
+      "soft": true
+    }
+  ]
+}
