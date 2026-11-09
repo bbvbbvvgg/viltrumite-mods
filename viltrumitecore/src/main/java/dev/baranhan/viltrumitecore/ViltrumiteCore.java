@@ -138,6 +138,8 @@ public class ViltrumiteCore {
       dev.baranhan.viltrumitecore.hero.venom.VenomSetup.init(modEventBus);
       // Contextual interactions (docs/contextual-interactions.json): their own sound holders.
       dev.baranhan.viltrumitecore.interaction.InteractionSounds.init();
+      // Wave 1 · 23: clash sounds and FX presets (beam struggle).
+      dev.baranhan.viltrumitecore.hero.combat.clash.ClashSounds.init();
       // Chitauri invasion (docs/plans/2026-10-31-chitauri-invasion.md): sounds and the invaders' entity register.
       dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSetup.init(modEventBus);
       // ULTRON — ВОССТАНИЕ МАШИН (docs/plans/2026-11-01-ultron-uprising.md): sounds and the machines' entity register.

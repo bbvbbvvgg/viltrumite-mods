@@ -30,7 +30,8 @@ public final class EyeLasers {
    }
 
    static void press(ServerPlayer player, HomelanderState state, boolean allowed) {
-      if (!allowed) {
+      // Wave 1 · 23: a beam that lost (or drew) a struggle stays dark for ClashRules.BEAM_LOCK_TICKS.
+      if (!allowed || dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeams.beamLocked(player)) {
          HomelanderFeedback.refuse(player);
          return;
       }
@@ -66,9 +67,21 @@ public final class EyeLasers {
          return;
       }
 
-      if (!state.laserHeld || !state.heat.sourcesAllowed()) {
+      if (!state.laserHeld || !state.heat.sourcesAllowed() || dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeams.beamLocked(player)) {
          release(player, state);
          return;
+      }
+
+      if (state.laserBeamOn()) {
+         // Wave 1 · 23: report the live beam. Two head-on beams lock into a struggle; while locked the lasers
+         // push the clash point instead of burning whatever stands behind it (the struggle decides the damage).
+         Vec3 eye = player.getEyePosition();
+         double reach = Math.max(dev.baranhan.viltrumitecore.hero.combat.clash.ClashRules.MIN_BEAM_LENGTH, eye.distanceTo(ray(player, HomelanderRules.LASER_RANGE).getLocation()));
+         dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeams.report(dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeam.of("homelander:eye_lasers", player, eye, player.getLookAngle(), reach, 1.0F));
+         if (dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeams.struggling(player)) {
+            state.laserAge++;
+            return;
+         }
       }
 
       LivingEntity target = firstLivingOnRay(player);

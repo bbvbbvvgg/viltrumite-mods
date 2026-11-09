@@ -257,6 +257,11 @@ public final class IronManCombat {
          }
       }
 
+      if (state.unibeam.phase() == UnibeamTimeline.Phase.BEAM && dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeams.beamLocked(player) && state.unibeam.release()) {
+         // Wave 1 · 23: a Unibeam that lost (or drew) a beam struggle dies on the spot and overheats as usual.
+         beamEnded(player, state);
+      }
+
       if (state.unibeam.phase() == UnibeamTimeline.Phase.BEAM) {
          state.beamDir = UnibeamTimeline.turn(state.beamDir == null ? player.getLookAngle() : state.beamDir, player.getLookAngle(), IronManRules.UNIBEAM_TURN_DEG);
          beamTick(player, state);
@@ -302,6 +307,16 @@ public final class IronManCombat {
       Vec3 hitEnd = block != null && block.getType() == HitResult.Type.BLOCK ? block.getLocation() : end;
       if(guard!=null && guard.defender()!=null)hitEnd=guard.end();
       state.beamEnd = hitEnd;
+      // Wave 1 · 23: the Unibeam is a struggle beam. Head-on with another beam it locks: the synced end
+      // (actionTarget) becomes the clash point and the struggle, not the ray, decides the damage.
+      dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeams.report(dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeam.of("ironman:unibeam", player, from, dir,
+         Math.max(dev.baranhan.viltrumitecore.hero.combat.clash.ClashRules.MIN_BEAM_LENGTH, from.distanceTo(hitEnd)), state.unibeam.overdraft() ? 2.0F : 1.5F));
+      Vec3 clash = dev.baranhan.viltrumitecore.hero.combat.clash.ClashBeams.clashPoint(player);
+      if (clash != null) {
+         state.beamEnd = clash;
+         return;
+      }
+
       boolean overdraft = state.unibeam.overdraft();
       if (!UnibeamTimeline.damageTick(state.unibeam.ticks())) {
          return;
