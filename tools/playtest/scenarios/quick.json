@@ -1,0 +1,83 @@
+{
+  "name": "quick",
+  "description": "Проверка за 2 минуты: сервер и клиенты в мире, dev-команды, смена героя, скриншот, метрики.",
+  "steps": [
+    {
+      "section": "Подключение"
+    },
+    {
+      "server": "playtest ping",
+      "expect": "playtest pong",
+      "name": "dev-команды /playtest включены",
+      "fatal": true
+    },
+    {
+      "server": "list",
+      "expect": "There are [1-9]",
+      "name": "клиенты на сервере"
+    },
+    {
+      "server": "playtest who",
+      "expect": "playtest who \\S+ hero=",
+      "name": "/playtest who видит игроков"
+    },
+    {
+      "qa": "close",
+      "client": "*",
+      "pause": 1
+    },
+    {
+      "qa": "state",
+      "client": "*"
+    },
+    {
+      "expect": {
+        "log": "*",
+        "regex": "SUBPT t=\\d+ state level=true player=true",
+        "timeout_s": 20,
+        "name": "клиенты в мире"
+      }
+    },
+    {
+      "server": [
+        "time set day",
+        "weather clear"
+      ]
+    },
+    {
+      "shot": "join"
+    },
+    {
+      "section": "Смена героя"
+    },
+    {
+      "server": "playtest hero @a thor",
+      "expect": "-> thor (ok|same|deferred)",
+      "name": "все игроки стали Thor",
+      "pause": 3
+    },
+    {
+      "qa": "close",
+      "client": "*",
+      "pause": 1
+    },
+    {
+      "server": "playtest who",
+      "expect": "hero=thor",
+      "name": "сервер видит героя Thor"
+    },
+    {
+      "shot": "thor"
+    },
+    {
+      "metrics": "idle",
+      "window_s": 15,
+      "min_tps": 18
+    },
+    {
+      "server": "playtest hero @a human",
+      "expect": "-> human (ok|same|deferred)",
+      "soft": true
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "name": "world-events",
+  "description": "Каждое мировое событие: старт с короткой разминкой, активная фаза под нагрузкой, метрики, скриншоты, остановка и проверка ошибок.",
+  "vars": {
+    "warmup_s": "5",
+    "active_s": "60"
+  },
+  "steps": [
+    {
+      "section": "Подготовка",
+      "steps": [
+        {
+          "server": "playtest ping",
+          "expect": "playtest pong",
+          "name": "dev-команды /playtest включены",
+          "fatal": true
+        },
+        {
+          "server": [
+            "viltrumite event stopall",
+            "gamerule doDaylightCycle false",
+            "time set day",
+            "weather clear",
+            "gamerule doMobSpawning false"
+          ]
+        },
+        {
+          "server": "playtest hero @a homelander",
+          "soft": true,
+          "pause": 2
+        },
+        {
+          "qa": "close",
+          "client": "*",
+          "pause": 1
+        },
+        {
+          "metrics": "before-events",
+          "window_s": 10
+        }
+      ]
+    },
+    {
+      "foreach": "@../data/events.json:events",
+      "as": "ev",
+      "do": [
+        {
+          "section": "Событие ${ev.id}"
+        },
+        {
+          "mark": "ev-${ev.id}"
+        },
+        {
+          "server": "viltrumite event start ${ev.id} ${warmup_s} force",
+          "reject": "Unknown|Incorrect|unknown command|<--\\[HERE\\]",
+          "name": "${ev.id}: старт"
+        },
+        {
+          "wait": "${warmup_s}"
+        },
+        {
+          "wait": "10"
+        },
+        {
+          "server": "viltrumite event list",
+          "reject": "event\\.none|No active",
+          "name": "${ev.id}: событие активно",
+          "soft": true
+        },
+        {
+          "shot": "${ev.id}-start"
+        },
+        {
+          "metrics": "${ev.id}-active",
+          "window_s": "${active_s}",
+          "min_tps": 15
+        },
+        {
+          "shot": "${ev.id}-active"
+        },
+        {
+          "server": "viltrumite event stop ${ev.id}",
+          "reject": "Unknown|Incorrect|<--\\[HERE\\]",
+          "name": "${ev.id}: остановка",
+          "pause": 5
+        },
+        {
+          "server": "viltrumite event list",
+          "soft": true,
+          "name": "${ev.id}: список после остановки"
+        },
+        {
+          "expect": {
+            "log": "server",
+            "regex": "Exception|/(ERROR|FATAL)\\]",
+            "since": "mark:ev-${ev.id}",
+            "absent": true,
+            "wait": false,
+            "soft": true,
+            "name": "${ev.id}: без ошибок на сервере"
+          }
+        },
+        {
+          "expect": {
+            "log": "*",
+            "regex": "Exception|/(ERROR|FATAL)\\]",
+            "since": "mark:ev-${ev.id}",
+            "absent": true,
+            "wait": false,
+            "soft": true,
+            "name": "${ev.id}: без ошибок на клиентах"
+          }
+        },
+        {
+          "metrics": "${ev.id}-after",
+          "window_s": 10
+        }
+      ]
+    },
+    {
+      "server": "viltrumite event stopall",
+      "soft": true
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "name": "city-atheria",
+  "description": "Город Атерия: включить город, заселить, нагрузка, метрики на точке бенчмарка, /city reset confirm и проверка после сброса. Мир: rig.py up --world <atheria.zip|dir>.",
+  "vars": {
+    "x": "1384",
+    "y": "-44",
+    "z": "-250",
+    "population": "120",
+    "load_s": "60"
+  },
+  "steps": [
+    {
+      "section": "Подготовка",
+      "steps": [
+        {
+          "server": "playtest ping",
+          "expect": "playtest pong",
+          "name": "dev-команды /playtest включены",
+          "fatal": true
+        },
+        {
+          "server": [
+            "gamerule doDaylightCycle false",
+            "time set day",
+            "weather clear",
+            "gamerule doMobSpawning false"
+          ]
+        },
+        {
+          "server": "tp @a ${x} ${y} ${z}",
+          "pause": 8
+        },
+        {
+          "qa": "close",
+          "client": "*",
+          "pause": 1
+        },
+        {
+          "server": "city status",
+          "name": "/city status отвечает",
+          "reject": "Unknown|Incorrect|<--\\[HERE\\]"
+        },
+        {
+          "shot": "atheria-arrive"
+        },
+        {
+          "metrics": "atheria-empty",
+          "window_s": 15
+        }
+      ]
+    },
+    {
+      "section": "Город включён",
+      "steps": [
+        {
+          "mark": "city-on"
+        },
+        {
+          "server": "city enable",
+          "reject": "Unknown|Incorrect|<--\\[HERE\\]",
+          "name": "/city enable"
+        },
+        {
+          "server": "city populate ${population}",
+          "reject": "Unknown|Incorrect|<--\\[HERE\\]",
+          "name": "/city populate ${population}",
+          "pause": 10
+        },
+        {
+          "server": "city status",
+          "name": "статус после заселения",
+          "soft": true
+        },
+        {
+          "shot": "atheria-populated"
+        },
+        {
+          "metrics": "atheria-populated",
+          "window_s": "${load_s}",
+          "min_tps": 15
+        },
+        {
+          "expect": {
+            "log": "server",
+            "regex": "Exception|/(ERROR|FATAL)\\]",
+            "since": "mark:city-on",
+            "absent": true,
+            "wait": false,
+            "soft": true,
+            "name": "город: без ошибок на сервере"
+          }
+        }
+      ]
+    },
+    {
+      "section": "Сброс города",
+      "steps": [
+        {
+          "mark": "city-reset"
+        },
+        {
+          "server": "city reset",
+          "name": "/city reset (предупреждение)",
+          "reject": "Unknown|Incorrect|<--\\[HERE\\]"
+        },
+        {
+          "server": "city reset confirm",
+          "name": "/city reset confirm",
+          "reject": "Unknown|Incorrect|<--\\[HERE\\]",
+          "pause": 15
+        },
+        {
+          "server": "city status",
+          "name": "статус после сброса",
+          "soft": true
+        },
+        {
+          "shot": "atheria-after-reset"
+        },
+        {
+          "metrics": "atheria-after-reset",
+          "window_s": 20,
+          "min_tps": 18
+        },
+        {
+          "expect": {
+            "log": "server",
+            "regex": "Exception|/(ERROR|FATAL)\\]",
+            "since": "mark:city-reset",
+            "absent": true,
+            "wait": false,
+            "soft": true,
+            "name": "сброс: без ошибок на сервере"
+          }
+        },
+        {
+          "expect": {
+            "log": "*",
+            "regex": "Exception|/(ERROR|FATAL)\\]",
+            "since": "mark:city-reset",
+            "absent": true,
+            "wait": false,
+            "soft": true,
+            "name": "сброс: без ошибок на клиентах"
+          }
+        }
+      ]
+    }
+  ]
+}
