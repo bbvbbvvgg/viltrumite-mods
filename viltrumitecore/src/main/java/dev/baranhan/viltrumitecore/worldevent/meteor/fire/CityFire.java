@@ -50,7 +50,8 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Safety: every world read checks {@code isLoaded} first (fire never loads a chunk); spots of an
  * unloading chunk are dropped; spots, brands and the burnt memory are capped; a tick visits at most
- * {@link FireRules#VISITS_PER_TICK} spots and writes at most {@link FireRules#WRITES_PER_TICK} blocks.
+ * {@link FireRules#VISITS_PER_TICK} spots and writes at most {@link FireRules#WRITES_PER_TICK} blocks (fewer when the
+ * dimension block budget is under pressure: the fire is secondary detail and takes its share at LOW priority).
  * All writes are plain {@code setBlock} calls, so the living city journal records them and {@code /city
  * reset} restores them; a reset (seen through the city's {@link RestoreQueue}) clears every spot and
  * brand first, so nothing re-ignites from old queues.
@@ -103,6 +104,7 @@ public final class CityFire {
       long lastBrand;
       long resetSeen = Long.MIN_VALUE;
       int writes;
+      int allowance = FireRules.WRITES_PER_TICK;
       long nanos;
       long visits;
 
@@ -112,7 +114,7 @@ public final class CityFire {
       }
 
       boolean canWrite() {
-         return this.writes < FireRules.WRITES_PER_TICK;
+         return this.writes < this.allowance;
       }
 
       void clear() {
@@ -249,6 +251,7 @@ public final class CityFire {
    private static void tickField(ServerLevel level, Field f) {
       long now = level.getGameTime();
       f.writes = 0;
+      f.allowance = dev.baranhan.viltrumitecore.perf.BlockUpdateBudget.take(level, dev.baranhan.viltrumitecore.perf.PerfPriority.LOW, FireRules.WRITES_PER_TICK);
       if (now % 20L == 0L) {
          f.wind += (f.random.nextDouble() - 0.5) * 0.08;
       }
@@ -271,6 +274,12 @@ public final class CityFire {
             f.spots.remove(key);
          }
       }
+
+      if (f.allowance > f.writes) {
+         dev.baranhan.viltrumitecore.perf.BlockUpdateBudget.refund(level, dev.baranhan.viltrumitecore.perf.PerfPriority.LOW, f.allowance - f.writes);
+      }
+
+      f.allowance = FireRules.WRITES_PER_TICK;
    }
 
    /** One visit of a spot; false = forget it. */
