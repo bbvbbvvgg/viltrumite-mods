@@ -1,0 +1,19 @@
+{
+  "viltrumitecore.perf.status.server": "服务器：%s TPS，刻 %s 毫秒（p95 %s，最大 %s），负载 %s%%",
+  "viltrumitecore.perf.status.budget": "  %s：上一刻 %s / %s，推迟 %s（自启动：完成 %s，推迟 %s）",
+  "viltrumitecore.perf.overlay.on": "性能面板已开启",
+  "viltrumitecore.perf.overlay.off": "性能面板已关闭",
+  "viltrumitecore.perf.reset": "性能测量已重置",
+  "viltrumitecore.perf.stress.stopped": "压力测试已停止",
+  "viltrumitecore.perf.quality.current": "特效质量：%s。粒子 %s / %s，每秒生成 %s，每秒精简 %s，每秒超出预算 %s",
+  "viltrumitecore.perf.quality.unknown": "未知质量 %s：low、medium、high 或 ultra",
+  "viltrumitecore.perf.quality.set": "特效质量：%s",
+  "viltrumitecore.perf.hud.title": "Viltrumite 性能 · %s%s",
+  "viltrumitecore.perf.hud.fixed": " · 固定",
+  "viltrumitecore.perf.hud.frame": "FPS %s · 帧 %s 毫秒 · p99 %s 毫秒 · 负载 %s%%",
+  "viltrumitecore.perf.hud.particles": "粒子 %s / %s · +%s/秒 · 精简 %s/秒 · 超出 %s/秒",
+  "viltrumitecore.perf.hud.server": "服务器 %s TPS · 刻 %s 毫秒（p95 %s，最大 %s）· 负载 %s%%",
+  "viltrumitecore.perf.hud.entities": "实体 %s",
+  "viltrumitecore.perf.hud.entities.remote": "附近实体 %s · 服务器 %s",
+  "viltrumitecore.perf.hud.server.none": "服务器数据：/vperf overlay（管理员）"
+}

@@ -1,0 +1,19 @@
+{
+  "viltrumitecore.perf.status.server": "Server: %s TPS, Tick %s ms (p95 %s, max. %s), Last %s%%",
+  "viltrumitecore.perf.status.budget": "  %s: %s von %s im letzten Tick, %s aufgeschoben (seit Start: %s erledigt, %s aufgeschoben)",
+  "viltrumitecore.perf.overlay.on": "Leistungsanzeige an",
+  "viltrumitecore.perf.overlay.off": "Leistungsanzeige aus",
+  "viltrumitecore.perf.reset": "Leistungsmessungen zurückgesetzt",
+  "viltrumitecore.perf.stress.stopped": "Last gestoppt",
+  "viltrumitecore.perf.quality.current": "Effektqualität: %s. Partikel %s von %s, %s/s erzeugt, %s/s ausgedünnt, %s/s über dem Budget",
+  "viltrumitecore.perf.quality.unknown": "Unbekannte Qualität %s: low, medium, high oder ultra",
+  "viltrumitecore.perf.quality.set": "Effektqualität: %s",
+  "viltrumitecore.perf.hud.title": "Viltrumite-Leistung · %s%s",
+  "viltrumitecore.perf.hud.fixed": " · fest",
+  "viltrumitecore.perf.hud.frame": "FPS %s · Frame %s ms · p99 %s ms · Last %s%%",
+  "viltrumitecore.perf.hud.particles": "Partikel %s / %s · +%s/s · ausgedünnt %s/s · über %s/s",
+  "viltrumitecore.perf.hud.server": "Server %s TPS · Tick %s ms (p95 %s, max. %s) · Last %s%%",
+  "viltrumitecore.perf.hud.entities": "Entitäten %s",
+  "viltrumitecore.perf.hud.entities.remote": "Entitäten %s hier · %s auf dem Server",
+  "viltrumitecore.perf.hud.server.none": "Serverwerte: /vperf overlay (OP)"
+}

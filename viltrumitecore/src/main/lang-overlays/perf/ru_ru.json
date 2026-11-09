@@ -1,0 +1,19 @@
+{
+  "viltrumitecore.perf.status.server": "Сервер: %s TPS, тик %s мс (p95 %s, макс. %s), нагрузка %s%%",
+  "viltrumitecore.perf.status.budget": "  %s: %s из %s за прошлый тик, отложено %s (с запуска: сделано %s, отложено %s)",
+  "viltrumitecore.perf.overlay.on": "Панель производительности включена",
+  "viltrumitecore.perf.overlay.off": "Панель производительности выключена",
+  "viltrumitecore.perf.reset": "Замеры производительности сброшены",
+  "viltrumitecore.perf.stress.stopped": "Нагрузка остановлена",
+  "viltrumitecore.perf.quality.current": "Качество эффектов: %s. Частиц %s из %s, появляется %s/с, прорежено %s/с, сверх бюджета %s/с",
+  "viltrumitecore.perf.quality.unknown": "Неизвестное качество %s: low, medium, high или ultra",
+  "viltrumitecore.perf.quality.set": "Качество эффектов: %s",
+  "viltrumitecore.perf.hud.title": "Производительность Viltrumite · %s%s",
+  "viltrumitecore.perf.hud.fixed": " · без адаптации",
+  "viltrumitecore.perf.hud.frame": "FPS %s · кадр %s мс · p99 %s мс · нагрузка %s%%",
+  "viltrumitecore.perf.hud.particles": "Частицы %s / %s · +%s/с · прорежено %s/с · сверх %s/с",
+  "viltrumitecore.perf.hud.server": "Сервер %s TPS · тик %s мс (p95 %s, макс. %s) · нагрузка %s%%",
+  "viltrumitecore.perf.hud.entities": "Сущностей %s",
+  "viltrumitecore.perf.hud.entities.remote": "Сущностей %s рядом · %s на сервере",
+  "viltrumitecore.perf.hud.server.none": "Цифры сервера: /vperf overlay (оператор)"
+}
