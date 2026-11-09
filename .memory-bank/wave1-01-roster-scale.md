@@ -9,3 +9,4 @@
 - Gotcha: the sandbox may stop during a Gradle build (seen twice). Push before every build.
 - Gotcha: never leave a symlink in `/data` that points outside `/data` (e.g. `/data/proj -> ~/kit/project`).
   The sandbox backup restore then fails with ENOENT and the computer stays unusable.
+- Verified 2026-11-09: local `./run.sh build` green on the kit (3411 tests passed, 2m50s); `HeroIdentityTest` legacy-token round trip is the regression to watch.
