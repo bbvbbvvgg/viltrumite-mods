@@ -37,8 +37,9 @@
         },
         {
           "server": "city status",
-          "name": "/city status отвечает",
-          "reject": "Unknown|Incorrect|<--\\[HERE\\]"
+          "name": "/city status: в мире есть подготовленный город (Atheria)",
+          "reject": "Unknown|Incorrect|<--\\[HERE\\]|no prepared living city",
+          "fatal": true
         },
         {
           "shot": "atheria-arrive"
