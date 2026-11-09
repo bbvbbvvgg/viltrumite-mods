@@ -1,0 +1,24 @@
+[rig 15:57:50] reusing running rig
+[rig 15:57:50] == Подготовка
+[rig 15:57:50] rcon> playtest ping -> playtest pong
+[rig 15:57:50] PASS [Подготовка] dev-команды /playtest включены
+[rig 15:57:50] rcon> viltrumite event stopall -> All world events stopped.
+[rig 15:57:51] rcon> gamerule doDaylightCycle false -> Gamerule doDaylightCycle is now set to: false
+[rig 15:57:51] rcon> time set day -> Set the time to 1000
+[rig 15:57:51] rcon> weather clear -> Set the weather to clear
+[rig 15:57:51] rcon> gamerule doMobSpawning false -> Gamerule doMobSpawning is now set to: false
+[rig 15:57:51] rcon> playtest hero @a homelander -> playtest hero Alpha human -> homelander ok
+[rig 15:58:06] metrics before_events: server 20.0 TPS 5.661 mspt; rss {'server': 1124.7, 'Alpha': 1321.9}; avail 1497.3 MB
+[rig 15:58:06] == Событие trio
+[rig 15:58:06] rcon> viltrumite event start trio 5 force -> Started 'trio' (5 s countdown)
+[rig 15:58:21] rcon> viltrumite event list -> - trio [active]
+[rig 15:59:23] metrics trio_active: server 20.0 TPS 6.464 mspt; rss {'server': 1211.9, 'Alpha': 1373.3}; avail 1386.4 MB
+[rig 15:59:23] PASS [Событие trio] TPS >= 15 (trio_active)
+[rig 15:59:24] rcon> viltrumite event stop trio -> Stopped 'trio'.
+[rig 15:59:29] rcon> viltrumite event list -> No active world events.
+[rig 15:59:29] PASS [Событие trio] trio: без ошибок на сервере
+[rig 15:59:29] WARN [Событие trio] trio: без ошибок на клиентах -- Exception
+[rig 15:59:40] metrics trio_after: server 20.0 TPS 3.402 mspt; rss {'server': 1212.0, 'Alpha': 1374.3}; avail 1372.3 MB
+[rig 15:59:40] rcon> viltrumite event stopall -> All world events stopped.
+[rig 15:59:40] report: /vercel/sandbox/data/kit/rig/reports/20261109-155750-world-events/report.md
+RUN_EXIT=0
