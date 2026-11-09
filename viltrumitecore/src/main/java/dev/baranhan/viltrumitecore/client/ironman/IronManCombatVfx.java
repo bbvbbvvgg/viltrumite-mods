@@ -193,6 +193,12 @@ public final class IronManCombatVfx {
    }
 
    private static Vec3 beamEnd(Player player, HeroPublicSnapshot snapshot, float partialTick) {
+      // Wave 1 · 23: a struggling Unibeam ends at the (smoothed) clash point.
+      Vec3 clash = dev.baranhan.viltrumitecore.client.clash.ClashClient.clashPoint(player);
+      if (clash != null) {
+         return clash;
+      }
+
       Vec3 target = snapshot.actionTarget();
       if (target != null) {
          return dev.baranhan.viltrumitecore.client.hero.HeroDefenseContacts.endpoint(target);
