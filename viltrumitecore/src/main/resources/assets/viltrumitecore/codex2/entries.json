@@ -1,0 +1,849 @@
+{
+  "entries": [
+    {
+      "id": "hero.homelander",
+      "category": "heroes",
+      "accent": "FF2A2A",
+      "order": 10,
+      "visual": {
+        "type": "hero",
+        "ref": "homelander"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "homelander"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.regulus",
+      "category": "heroes",
+      "accent": "E8EEF5",
+      "order": 11,
+      "visual": {
+        "type": "hero",
+        "ref": "regulus"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "regulus"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.ironman",
+      "category": "heroes",
+      "accent": "5FE6FF",
+      "order": 12,
+      "visual": {
+        "type": "hero",
+        "ref": "ironman"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "ironman"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.reinhard",
+      "category": "heroes",
+      "accent": "FFF1B8",
+      "order": 13,
+      "visual": {
+        "type": "hero",
+        "ref": "reinhard"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "reinhard"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.thor",
+      "category": "heroes",
+      "accent": "7FD8FF",
+      "order": 14,
+      "visual": {
+        "type": "hero",
+        "ref": "thor"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "thor"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.dio",
+      "category": "heroes",
+      "accent": "FFD34D",
+      "order": 15,
+      "visual": {
+        "type": "hero",
+        "ref": "dio"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "dio"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.sinclair",
+      "category": "heroes",
+      "accent": "FF3B5C",
+      "order": 16,
+      "visual": {
+        "type": "hero",
+        "ref": "sinclair"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "sinclair"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.jinwoo",
+      "category": "heroes",
+      "accent": "8A4DFF",
+      "order": 17,
+      "visual": {
+        "type": "hero",
+        "ref": "jinwoo"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "jinwoo"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.captain",
+      "category": "heroes",
+      "accent": "3A78FF",
+      "order": 18,
+      "visual": {
+        "type": "hero",
+        "ref": "captain"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "captain"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.red_hulk",
+      "category": "heroes",
+      "accent": "E0301E",
+      "order": 19,
+      "visual": {
+        "type": "hero",
+        "ref": "red_hulk"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "red_hulk"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.ghost_rider",
+      "category": "heroes",
+      "accent": "FF7A1A",
+      "order": 20,
+      "visual": {
+        "type": "hero",
+        "ref": "ghost_rider"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "ghost_rider"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "hero.venom",
+      "category": "heroes",
+      "accent": "8A78C8",
+      "order": 21,
+      "visual": {
+        "type": "hero",
+        "ref": "venom"
+      },
+      "sections": [
+        "lore",
+        "play"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "venom"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "boss.thanos",
+      "category": "bosses",
+      "accent": "9B59D0",
+      "order": 10,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:thanos"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:thanos"
+        },
+        {
+          "type": "entity_killed",
+          "target": "viltrumitecore:thanos"
+        }
+      ],
+      "relations": [
+        "hero.reinhard",
+        "hero.dio"
+      ]
+    },
+    {
+      "id": "boss.conquest",
+      "category": "bosses",
+      "accent": "D23A3A",
+      "order": 20,
+      "visual": {
+        "type": "skin",
+        "ref": "viltrumitecore:textures/entity/skins/skin_conquest.png"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "world_event",
+          "target": "conquest"
+        }
+      ],
+      "relations": [
+        "event.conquest_arrival",
+        "hero.homelander"
+      ]
+    },
+    {
+      "id": "boss.chitauri_leviathan",
+      "category": "bosses",
+      "accent": "6FA8A0",
+      "order": 30,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:chitauri_leviathan"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:chitauri_leviathan"
+        },
+        {
+          "type": "entity_killed",
+          "target": "viltrumitecore:chitauri_leviathan"
+        }
+      ],
+      "relations": [
+        "event.chitauri_invasion"
+      ]
+    },
+    {
+      "id": "boss.venom_boss",
+      "category": "bosses",
+      "accent": "5A4E8C",
+      "order": 40,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:venom_boss"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:venom_boss"
+        },
+        {
+          "type": "entity_killed",
+          "target": "viltrumitecore:venom_boss"
+        }
+      ],
+      "relations": [
+        "hero.venom"
+      ]
+    },
+    {
+      "id": "boss.ultron_prime",
+      "category": "bosses",
+      "accent": "B8C4D6",
+      "order": 50,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:ultron_prime"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:ultron_prime"
+        },
+        {
+          "type": "entity_killed",
+          "target": "viltrumitecore:ultron_prime"
+        }
+      ],
+      "relations": [
+        "event.ultron_uprising",
+        "hero.ironman"
+      ]
+    },
+    {
+      "id": "boss.godzilla",
+      "category": "bosses",
+      "accent": "4E9A5A",
+      "order": 60,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:godzilla"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:godzilla"
+        },
+        {
+          "type": "entity_killed",
+          "target": "viltrumitecore:godzilla"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "boss.t1000",
+      "category": "bosses",
+      "accent": "AEB8C2",
+      "order": 70,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:t1000"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:t1000"
+        },
+        {
+          "type": "entity_killed",
+          "target": "viltrumitecore:t1000"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "event.conquest_arrival",
+      "category": "events",
+      "accent": "D23A3A",
+      "order": 10,
+      "visual": {
+        "type": "skin",
+        "ref": "viltrumitecore:textures/entity/skins/skin_conquest.png"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "world_event",
+          "target": "conquest"
+        }
+      ],
+      "relations": [
+        "boss.conquest"
+      ]
+    },
+    {
+      "id": "event.viltrumite_trio",
+      "category": "events",
+      "accent": "C04060",
+      "order": 20,
+      "visual": {
+        "type": "halo"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "world_event",
+          "target": "trio"
+        }
+      ],
+      "relations": [
+        "boss.conquest"
+      ]
+    },
+    {
+      "id": "event.chitauri_invasion",
+      "category": "events",
+      "accent": "6FA8A0",
+      "order": 30,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:chitauri_soldier"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:chitauri_soldier"
+        },
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:chitauri_commander"
+        },
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:chitauri_chariot"
+        }
+      ],
+      "relations": [
+        "boss.chitauri_leviathan"
+      ]
+    },
+    {
+      "id": "event.ultron_uprising",
+      "category": "events",
+      "accent": "B8C4D6",
+      "order": 40,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:ultron_drone"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:ultron_drone"
+        },
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:ultron_sentry"
+        },
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:ultron_brute"
+        }
+      ],
+      "relations": [
+        "boss.ultron_prime"
+      ]
+    },
+    {
+      "id": "dimension.overworld",
+      "category": "dimensions",
+      "accent": "7FBF5F",
+      "order": 10,
+      "visual": {
+        "type": "glyph"
+      },
+      "sections": [
+        "about"
+      ],
+      "unlock": [
+        {
+          "type": "dimension",
+          "target": "minecraft:overworld"
+        }
+      ],
+      "relations": [
+        "dimension.the_void"
+      ]
+    },
+    {
+      "id": "dimension.the_nether",
+      "category": "dimensions",
+      "accent": "C2452F",
+      "order": 20,
+      "visual": {
+        "type": "glyph"
+      },
+      "sections": [
+        "about"
+      ],
+      "unlock": [
+        {
+          "type": "dimension",
+          "target": "minecraft:the_nether"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "dimension.the_end",
+      "category": "dimensions",
+      "accent": "D8D49A",
+      "order": 30,
+      "visual": {
+        "type": "glyph"
+      },
+      "sections": [
+        "about"
+      ],
+      "unlock": [
+        {
+          "type": "dimension",
+          "target": "minecraft:the_end"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "dimension.the_void",
+      "category": "dimensions",
+      "accent": "9AA0B8",
+      "order": 40,
+      "visual": {
+        "type": "halo"
+      },
+      "sections": [
+        "about"
+      ],
+      "unlock": [
+        {
+          "type": "dimension",
+          "target": "viltrumitecore:the_void"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "dimension.pocket_dimension",
+      "category": "dimensions",
+      "accent": "B08AE0",
+      "order": 50,
+      "visual": {
+        "type": "halo"
+      },
+      "sections": [
+        "about"
+      ],
+      "unlock": [
+        {
+          "type": "dimension",
+          "target": "viltrumitecore:pocket_dimension"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "combo.dio_knives",
+      "category": "combos",
+      "accent": "FFD34D",
+      "order": 10,
+      "visual": {
+        "type": "hero",
+        "ref": "dio"
+      },
+      "sections": [
+        "how",
+        "why"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "dio"
+        }
+      ],
+      "relations": [
+        "hero.dio"
+      ]
+    },
+    {
+      "id": "combo.thor_mjolnir",
+      "category": "combos",
+      "accent": "7FD8FF",
+      "order": 20,
+      "visual": {
+        "type": "hero",
+        "ref": "thor"
+      },
+      "sections": [
+        "how",
+        "why"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "thor"
+        }
+      ],
+      "relations": [
+        "hero.thor"
+      ]
+    },
+    {
+      "id": "combo.captain_charge",
+      "category": "combos",
+      "accent": "3A78FF",
+      "order": 30,
+      "visual": {
+        "type": "hero",
+        "ref": "captain"
+      },
+      "sections": [
+        "how",
+        "why"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "captain"
+        }
+      ],
+      "relations": [
+        "hero.captain"
+      ]
+    },
+    {
+      "id": "combo.ghost_rider_ride",
+      "category": "combos",
+      "accent": "FF7A1A",
+      "order": 40,
+      "visual": {
+        "type": "hero",
+        "ref": "ghost_rider"
+      },
+      "sections": [
+        "how",
+        "why"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "ghost_rider"
+        }
+      ],
+      "relations": [
+        "hero.ghost_rider"
+      ]
+    },
+    {
+      "id": "combo.red_hulk_heat",
+      "category": "combos",
+      "accent": "E0301E",
+      "order": 50,
+      "visual": {
+        "type": "hero",
+        "ref": "red_hulk"
+      },
+      "sections": [
+        "how",
+        "why"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "red_hulk"
+        }
+      ],
+      "relations": [
+        "hero.red_hulk"
+      ]
+    },
+    {
+      "id": "combo.venom_tendril",
+      "category": "combos",
+      "accent": "8A78C8",
+      "order": 60,
+      "visual": {
+        "type": "hero",
+        "ref": "venom"
+      },
+      "sections": [
+        "how",
+        "why"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "venom"
+        }
+      ],
+      "relations": [
+        "hero.venom"
+      ]
+    },
+    {
+      "id": "combo.jinwoo_authority",
+      "category": "combos",
+      "accent": "8A4DFF",
+      "order": 70,
+      "visual": {
+        "type": "hero",
+        "ref": "jinwoo"
+      },
+      "sections": [
+        "how",
+        "why"
+      ],
+      "unlock": [
+        {
+          "type": "hero_chosen",
+          "target": "jinwoo"
+        }
+      ],
+      "relations": [
+        "hero.jinwoo"
+      ]
+    },
+    {
+      "id": "secret.scp096",
+      "category": "secrets",
+      "accent": "E8E0D0",
+      "order": 10,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:scp096"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:scp096"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "secret.scp106",
+      "category": "secrets",
+      "accent": "5A4A3A",
+      "order": 20,
+      "visual": {
+        "type": "entity",
+        "ref": "viltrumitecore:scp106"
+      },
+      "sections": [
+        "lore",
+        "tactics"
+      ],
+      "unlock": [
+        {
+          "type": "entity_seen",
+          "target": "viltrumitecore:scp106"
+        }
+      ],
+      "relations": [
+        "dimension.pocket_dimension"
+      ]
+    }
+  ]
+}
