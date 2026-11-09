@@ -1,0 +1,24 @@
+[rig 15:50:08] reusing running rig
+[rig 15:50:08] == Подготовка
+[rig 15:50:08] rcon> playtest ping -> playtest pong
+[rig 15:50:08] PASS [Подготовка] dev-команды /playtest включены
+[rig 15:50:08] rcon> viltrumite event stopall -> All world events stopped.
+[rig 15:50:08] rcon> gamerule doDaylightCycle false -> Gamerule doDaylightCycle is now set to: false
+[rig 15:50:08] rcon> time set day -> Set the time to 1000
+[rig 15:50:08] rcon> weather clear -> Set the weather to clear
+[rig 15:50:08] rcon> gamerule doMobSpawning false -> Gamerule doMobSpawning is now set to: false
+[rig 15:50:08] rcon> playtest hero @a homelander -> playtest hero Alpha human -> homelander ok
+[rig 15:50:23] metrics before_events: server 20.0 TPS 3.084 mspt; rss {'server': 1209.2, 'Alpha': 1387.1}; avail 1349.7 MB
+[rig 15:50:23] == Событие conquest
+[rig 15:50:23] rcon> viltrumite event start conquest 5 force -> Started 'conquest' (5 s countdown)
+[rig 15:50:38] rcon> viltrumite event list -> - conquest [active]
+[rig 15:51:40] metrics conquest_active: server 20.0 TPS 3.545 mspt; rss {'server': 1212.2, 'Alpha': 1390.0}; avail 1328.8 MB
+[rig 15:51:40] PASS [Событие conquest] TPS >= 15 (conquest_active)
+[rig 15:51:41] rcon> viltrumite event stop conquest -> Stopped 'conquest'.
+[rig 15:51:46] rcon> viltrumite event list -> No active world events.
+[rig 15:51:46] PASS [Событие conquest] conquest: без ошибок на сервере
+[rig 15:51:46] PASS [Событие conquest] conquest: без ошибок на клиентах
+[rig 15:51:57] metrics conquest_after: server 20.0 TPS 3.339 mspt; rss {'server': 1200.2, 'Alpha': 1375.5}; avail 1330.6 MB
+[rig 15:51:57] rcon> viltrumite event stopall -> All world events stopped.
+[rig 15:51:57] report: /vercel/sandbox/data/kit/rig/reports/20261109-155008-world-events/report.md
+RUN_EXIT=0
