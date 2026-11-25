@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.regulus;
 
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
 import dev.baranhan.viltrumitecore.hero.control.ControlManager;
@@ -160,7 +161,7 @@ public final class KingdomOfOne {
          Vec3 at = target.getBoundingBox().getCenter();
          Vec3 away = target.position().subtract(player.position());
          target.invulnerableTime = 0;
-         RegulusCombat.hit(player, target, RegulusRules.ULT_FLICK_DAMAGE);
+         RegulusCombat.hit(player, target, RegulusRules.ULT_FLICK_DAMAGE, HitWeight.CRUSHING);
          RegulusCombat.push(target, away, 2.6, 0.7);
          crater(player, level, BlockPos.containing(scene.anchor));
          RegulusSounds.play(level, at, RegulusSounds.ULT_FLICK, 1.4F, 1.0F);

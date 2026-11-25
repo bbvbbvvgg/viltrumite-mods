@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.regulus;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroDestruction;
 import dev.baranhan.viltrumitecore.hero.dio.DioTimeStop;
 import dev.baranhan.viltrumitecore.hero.regulus.net.RegulusFxS2CPacket;
@@ -88,9 +90,15 @@ public final class RegulusCombat {
 
    /** One validated hit with the player-attack source; returns true when it landed. */
    public static boolean hit(ServerPlayer self, LivingEntity target, float damage) {
+      return hit(self, target, damage, HitWeight.forDamage(damage));
+   }
+
+   /** As {@link #hit(ServerPlayer, LivingEntity, float)} with an explicit feel weight (the ultimate). */
+   public static boolean hit(ServerPlayer self, LivingEntity target, float damage, HitWeight weight) {
       boolean landed = target.hurt(self.damageSources().playerAttack(self), damage);
       if (landed) {
          self.setLastHurtMob(target);
+         CombatFeel.hit(self, target, weight);
       }
 
       return landed;

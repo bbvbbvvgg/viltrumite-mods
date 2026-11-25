@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.venom;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.ghostrider.GhostRiderTargets;
 import java.util.List;
 import java.util.function.Predicate;
@@ -62,7 +64,15 @@ public final class VenomTargets {
    public static boolean strike(LivingEntity attacker, LivingEntity target, float damage) {
       target.invulnerableTime = 0;
       DamageSource source = attacker instanceof Player p ? attacker.damageSources().playerAttack(p) : attacker.damageSources().mobAttack(attacker);
-      return target.hurt(source, damage);
+      boolean landed = target.hurt(source, damage);
+      if (landed) {
+         // wave1-22: Venom's per-hit preset FX (CLAW / SLAM, grab STICK/WEB) already carry the
+         // authored hit-stop for this same blow, so CombatFeel adds the weight shake, impact frame
+         // and ring only — one hit-stop source per hit.
+         CombatFeel.hit(attacker, target, HitWeight.forDamage(damage), false);
+      }
+
+      return landed;
    }
 
    public static void push(LivingEntity target, Vec3 velocity) {

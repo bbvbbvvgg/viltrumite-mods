@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.HeroTargets;
 import dev.baranhan.viltrumitecore.hero.combat.StagedTimeline;
@@ -272,12 +274,22 @@ public final class CombatHits {
          return false;
       }
 
+      // wave1-22: the landed hit feels its weight. Thor keeps its authored hit-stop (MeleeMoves
+      // launches the target after it, so the client freeze must match the server's tick count), so
+      // CombatFeel adds the weight shake, impact frame and ring only.
+      CombatFeel.hit(player, target, thorWeight(move, damage), false);
+
       if (MELEE.contains(move)) {
          ThorEvents.post(event(ThorEventType.MELEE_HIT, player.getUUID(), target.getUUID(), move, attackId, hammer, damage, true)
             .at(ThorEvent.Where.of(player, target)));
       }
 
       return true;
+   }
+
+   /** Pure: the feel weight of a Thor hit; the ultimate is CRUSHING, the rest follow the damage. */
+   static HitWeight thorWeight(ThorMove move, float damage) {
+      return move == ThorMove.WRATH ? HitWeight.CRUSHING : HitWeight.forDamage(damage);
    }
 
    /** B-M5: this swing may skip the target's i-frames now (once per swing, target and tick). */

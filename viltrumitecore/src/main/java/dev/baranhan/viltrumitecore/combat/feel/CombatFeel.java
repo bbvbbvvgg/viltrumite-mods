@@ -28,22 +28,41 @@ public final class CombatFeel {
    public static final double WAVE_RANGE = 64.0;
    public static final int WAVE_TICKS = 14;
 
+   /** One fan-out of shake / impact frame / ring per attacker per tick (an area hit calls {@link #hit} per body). */
+   private static final FeelFanout FANOUT = new FeelFanout();
+
    private CombatFeel() {
    }
 
-   /** A landed hit of the given weight. Server side only; client calls are ignored. */
+   /** A landed hit of the given weight: shake, manga impact frame, air ring and the weight hit-stop. */
    public static void hit(Entity attacker, Entity target, HitWeight weight) {
+      hit(attacker, target, weight, true);
+   }
+
+   /**
+    * As {@link #hit(Entity, Entity, HitWeight)} but with the hit-stop optional. A seam that already
+    * owns an authored hit-stop for the same landed hit (Thor's launch timing, Reinhard's melee
+    * first body, an FX preset with its own stop) passes {@code false} and keeps its single source.
+    * The shake, the impact frame and the ring are sent at most once per attacker per server tick,
+    * and only for the heaviest hit of that tick, so an area hit that strikes many bodies does not
+    * fire the shared effects once per body (a chipping light wave will not eat the impact frame of
+    * the crushing blow that lands in the same tick); the hit-stop is still per body.
+    */
+   public static void hit(Entity attacker, Entity target, HitWeight weight, boolean withHitStop) {
       if (attacker == null || target == null || weight == null || !(target.level() instanceof ServerLevel level)) {
          return;
       }
       Vec3 at = target.position().add(0.0, target.getBbHeight() * 0.6, 0.0);
-      if (weight.hitStopTicks > 0 && attacker instanceof ServerPlayer player) {
+      if (withHitStop && weight.hitStopTicks > 0 && attacker instanceof ServerPlayer player) {
          int ticks = Math.min(weight.hitStopTicks, HeroFx.PRESET_MAX_HIT_STOP);
          if (attacker == target) {
             HeroFx.hitStop(player, at, ticks, target.getId());
          } else {
             HeroFx.hitStop(player, at, ticks, attacker.getId(), target.getId());
          }
+      }
+      if (!FANOUT.admit(attacker.getId(), level.getGameTime(), weight.ordinal())) {
+         return;
       }
       shake(level, at, weight.shake, weight.trauma, SHAKE_RANGE);
       if (weight.impactFrame) {

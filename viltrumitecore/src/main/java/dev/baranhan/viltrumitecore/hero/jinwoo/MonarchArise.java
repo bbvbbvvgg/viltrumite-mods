@@ -1,5 +1,6 @@
 package dev.baranhan.viltrumitecore.hero.jinwoo;
 
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
@@ -76,7 +77,7 @@ public final class MonarchArise {
          e -> waveHits(e instanceof Enemy, e instanceof Player) && JinwooCombat.mayHit(player, e));
       LivingEntity strongest = null;
       for (LivingEntity e : hostile) {
-         JinwooCombat.strike(player, state, e, JinwooRules.ULT_DAMAGE, true, 2);
+         JinwooCombat.strike(player, state, e, JinwooRules.ULT_DAMAGE, true, 2, HitWeight.CRUSHING);
          if (e.isAlive()) {
             e.addEffect(JinwooCombat.hidden(MobEffects.MOVEMENT_SLOWDOWN, JinwooRules.ULT_SLOW_TICKS, 1));
             if (strongest == null || e.getMaxHealth() > strongest.getMaxHealth()) {

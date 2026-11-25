@@ -32,7 +32,6 @@ public final class JinwooRules {
    public static final double ARC_DEGREES = 110.0;
    public static final double SPIN_RADIUS = 2.8;
    public static final double FINISHER_LIFT = 0.45;
-   public static final int FINISHER_HIT_STOP = 2;
    public static final float LOW_DAMAGE = 5.0F;
    public static final int LOW_LENGTH = 8;
    public static final int LOW_CONTACT = 4;

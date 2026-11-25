@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.reinhard.ability;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.CleanupReason;
 import dev.baranhan.viltrumitecore.hero.reinhard.ActionTimeline;
 import dev.baranhan.viltrumitecore.hero.reinhard.DestructionLevel;
@@ -75,6 +77,9 @@ public final class LightPunch implements AbilityHandler {
             } finally {
                state.resolvingMelee = false;
             }
+            // wave1-22: this body never reaches Strikes.hit, so it gets the weight feel here.
+            // MeleeImpact.land keeps the authored hit-stop as the only source (withHitStop = false).
+            CombatFeel.hit(player, hits.get(i).target(), HitWeight.forDamage(move.damage()), false);
          } else if (Strikes.hit(player, hits.get(i).target(), move.damage())) {
             Strikes.knockback(hits.get(i).target(), MeleeImpact.push(player, move.swing()), move.knockback());
          }
