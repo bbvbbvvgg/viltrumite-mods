@@ -37,18 +37,34 @@ class FeelCallersTest {
    @Test
    void sharedEffectsFanOutOncePerAttackerPerTick() {
       FeelFanout gate = new FeelFanout();
-      assertTrue(gate.admit(7, 100), "first body of an area hit fans out");
-      assertFalse(gate.admit(7, 100), "second body of the same hit does not repeat the shared effects");
-      assertFalse(gate.admit(7, 100));
-      assertTrue(gate.admit(7, 101), "the next tick is a fresh event");
-      assertTrue(gate.admit(8, 100), "another attacker in the same tick fans out on its own");
+      assertTrue(gate.admit(7, 100, HitWeight.HEAVY.ordinal()), "first body of an area hit fans out");
+      assertFalse(gate.admit(7, 100, HitWeight.HEAVY.ordinal()), "second body of the same hit does not repeat the shared effects");
+      assertFalse(gate.admit(7, 100, HitWeight.HEAVY.ordinal()));
+      assertTrue(gate.admit(7, 101, HitWeight.HEAVY.ordinal()), "the next tick is a fresh event");
+      assertTrue(gate.admit(8, 100, HitWeight.HEAVY.ordinal()), "another attacker in the same tick fans out on its own");
+   }
+
+   @Test
+   void aHeavierHitInTheSameTickStillFansOut() {
+      FeelFanout gate = new FeelFanout();
+      assertTrue(gate.admit(7, 100, HitWeight.LIGHT.ordinal()), "a light wave fans out first");
+      assertTrue(gate.admit(7, 100, HitWeight.CRUSHING.ordinal()), "the crushing blow later in the tick still lands its impact frame and ring");
+      assertFalse(gate.admit(7, 100, HitWeight.MEDIUM.ordinal()), "a lighter hit after a heavier one is swallowed");
+   }
+
+   @Test
+   void aLighterHitAfterAHeavierOneIsSwallowed() {
+      FeelFanout gate = new FeelFanout();
+      assertTrue(gate.admit(7, 100, HitWeight.CRUSHING.ordinal()));
+      assertFalse(gate.admit(7, 100, HitWeight.LIGHT.ordinal()), "CRUSHING then LIGHT: the light hit is swallowed");
+      assertFalse(gate.admit(7, 100, HitWeight.CRUSHING.ordinal()), "an equal-weight repeat is swallowed too");
    }
 
    @Test
    void fanOutTableStaysBounded() {
       FeelFanout gate = new FeelFanout();
       for (int id = 0; id < FeelFanout.MAX_TRACKED * 3; id++) {
-         assertTrue(gate.admit(id, id + 1));
+         assertTrue(gate.admit(id, id + 1, HitWeight.HEAVY.ordinal()));
       }
       assertTrue(gate.tracked() <= FeelFanout.MAX_TRACKED, "the table is dropped before it grows without bound");
 
