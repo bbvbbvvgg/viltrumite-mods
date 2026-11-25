@@ -25,6 +25,8 @@ public class AbilityInputManager {
    /** Regulus: mark/unmark a heart carrier. Default MMB — wins over vanilla pick-block. */
    public static KeyMapping assignHeartKey;
    public static KeyMapping superJumpKey;
+   /** Cinematic combat (wave1-22): skip the running cinematic scene. Default Backspace. */
+   public static KeyMapping skipCinematicKey;
 
    public static void registerKeys(RegisterKeyMappingsEvent event) {
       abilityKey1 = new KeyMapping("key.viltrumitecore.ability_1", 82, "category.viltrumitecore.keys");
@@ -52,6 +54,9 @@ public class AbilityInputManager {
       superJumpKey = new KeyMapping("key.viltrumitecore.regulus_super_jump", net.minecraftforge.client.settings.KeyConflictContext.IN_GAME,
          com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_G, "category.viltrumitecore.keys");
       event.register(superJumpKey);
+      skipCinematicKey = new KeyMapping("key.viltrumitecore.skip_cinematic", net.minecraftforge.client.settings.KeyConflictContext.IN_GAME,
+         com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE, "category.viltrumitecore.keys");
+      event.register(skipCinematicKey);
    }
 
    /**

@@ -102,6 +102,8 @@ public class ViltrumiteCoreClient {
          ViltrumiteClientConfig.load();
          // Cinematic combat comfort settings (wave1-22, config/viltrumitecore_cinematic.json).
          dev.baranhan.viltrumitecore.client.cinematic.CinematicSettings.load();
+         // Cinematic camera core (wave1-22): marker camera, one-shot path, skip key, safe return.
+         dev.baranhan.viltrumitecore.client.cinematic.CinematicCamera.init();
       });
    }
 
