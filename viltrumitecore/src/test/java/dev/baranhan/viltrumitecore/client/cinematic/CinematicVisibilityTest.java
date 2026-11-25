@@ -46,4 +46,12 @@ class CinematicVisibilityTest {
    void anotherHeroCameraWinsOverBoth() {
       assertFalse(CinematicVisibility.shouldPlay(true, true, true, true));
    }
+
+   @Test
+   void theCameraTypeIsCapturedOnlyOnTheFirstCapture() {
+      assertTrue(CinematicVisibility.capturesCameraType(false, false));
+      assertFalse(CinematicVisibility.capturesCameraType(true, false));
+      assertFalse(CinematicVisibility.capturesCameraType(false, true));
+      assertFalse(CinematicVisibility.capturesCameraType(true, true));
+   }
 }

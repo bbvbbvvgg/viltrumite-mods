@@ -1,13 +1,10 @@
 package dev.baranhan.viltrumitecore.client.cinematic;
 
 import dev.baranhan.viltrumitecore.client.AbilityInputManager;
-import dev.baranhan.viltrumitecore.client.dio.RollerCinema;
-import dev.baranhan.viltrumitecore.client.reinhard.finalpunch.FinalPunchClient;
-import dev.baranhan.viltrumitecore.client.thor.scene.ThorSceneCamera;
-import dev.baranhan.viltrumitecore.hero.ghostrider.bike.HellCycleEntity;
 import dev.baranhan.viltrumitecore.network.packet.CinematicS2CPacket;
 import javax.annotation.Nullable;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -69,10 +66,15 @@ public final class CinematicCamera {
    // ---------------------------------------------------------------- lifecycle
 
    private static void start(Minecraft mc, CinematicPath scene) {
+      // The player's own camera type is captured once per scene: a second packet mid-scene must not
+      // overwrite it with the FIRST_PERSON we forced, or the return would leave the player in first person.
+      boolean alreadyHolding = camera != null && mc.getCameraEntity() == camera;
+      if (CinematicVisibility.capturesCameraType(alreadyHolding, savedType != null)) {
+         savedType = mc.options.getCameraType();
+      }
       if (camera == null || camera.level() != mc.level) {
          camera = new Marker(EntityType.MARKER, mc.level);
       }
-      savedType = mc.options.getCameraType();
       mc.options.setCameraType(CameraType.FIRST_PERSON);
       mc.setCameraEntity(camera);
       path = scene;
@@ -97,16 +99,22 @@ public final class CinematicCamera {
    }
 
    static void onClientTick(TickEvent.ClientTickEvent event) {
-      if (event.phase != TickEvent.Phase.END || path == null) {
+      if (event.phase != TickEvent.Phase.END) {
          return;
       }
       Minecraft mc = Minecraft.getInstance();
+      if (path == null) {
+         // No scene: the skip key must not build up a queue that would kill the next scene at once.
+         drainSkipKey();
+         return;
+      }
       if (mc.level == null || mc.player == null || !mc.player.isAlive() || mc.screen != null
             || camera == null || camera.level() != mc.level || mc.getCameraEntity() != camera) {
          release(mc);
          return;
       }
-      while (AbilityInputManager.skipCinematicKey.consumeClick()) {
+      // A skip eats the whole queue, so repeated presses never leak into the next scene.
+      if (drainSkipKey()) {
          release(mc);
          return;
       }
@@ -116,6 +124,19 @@ public final class CinematicCamera {
          return;
       }
       place(mc, camera, path.position(t), path.look(), false);
+   }
+
+   /** Drains every queued click of the skip key; true when there was at least one. */
+   private static boolean drainSkipKey() {
+      KeyMapping skip = AbilityInputManager.skipCinematicKey;
+      if (skip == null) {
+         return false;
+      }
+      boolean any = false;
+      while (skip.consumeClick()) {
+         any = true;
+      }
+      return any;
    }
 
    static void onLevelUnload(LevelEvent.Unload event) {
@@ -129,23 +150,15 @@ public final class CinematicCamera {
    }
 
    /**
-    * True when another hero's own camera already holds the view. Marker-based cameras (Jinwoo,
-    * Captain, Regulus, Thanos, Wish, Venom) are detected by the camera entity no longer being the
-    * player; the angle-mixin owners (DIO, Thor, Reinhard, the Hell Cycle) never replace it, so they
-    * are asked directly. The cinematic's own marker is never counted as "another" owner.
+    * True when another hero's own camera already holds the view. Our own marker is never counted as
+    * "another" owner; everything else is {@link CameraOwners}' job (the single place that knows the
+    * hero cameras). See it for which owners exist and how each is detected.
     */
    private static boolean otherCameraOwnerActive(Minecraft mc) {
       if (camera != null && mc.getCameraEntity() == camera) {
          return false;
       }
-      Entity cam = mc.getCameraEntity();
-      if (cam != null && cam != mc.player) {
-         return true;
-      }
-      if (cam != null && cam.getVehicle() instanceof HellCycleEntity) {
-         return true;
-      }
-      return RollerCinema.active() || ThorSceneCamera.active() || FinalPunchClient.local() != null;
+      return CameraOwners.anyActive(mc);
    }
 
    // ---------------------------------------------------------------- placement
