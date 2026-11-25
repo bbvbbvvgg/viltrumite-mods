@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.entity.chitauri;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.ControlResistant;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
@@ -594,7 +596,10 @@ public class ChitauriLeviathan extends Mob implements ChitauriMob, ControlResist
          if (e.position().distanceTo(snout) > 6.0) {
             continue;
          }
-         e.hurt(this.damageSources().mobAttack(this), (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE));
+         float bite = (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+         if (e.hurt(this.damageSources().mobAttack(this), bite)) {
+            CombatFeel.hit(this, e, HitWeight.forDamage(bite));
+         }
          if (HeroRegistry.allowsImpulse(e)) {
             Vec3 push = e.position().subtract(snout).normalize().add(this.heading).normalize().scale(1.4);
             e.setDeltaMovement(e.getDeltaMovement().add(push.x, 0.6, push.z));

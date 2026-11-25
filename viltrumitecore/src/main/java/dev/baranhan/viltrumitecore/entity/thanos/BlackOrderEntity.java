@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.entity.thanos;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.Bystander;
 import dev.baranhan.viltrumitecore.hero.AdminKill;
 import dev.baranhan.viltrumitecore.hero.control.WorldPause;
@@ -235,7 +237,13 @@ public abstract class BlackOrderEntity extends PathfinderMob implements Enemy, T
          scale *= 1.15F;
       }
 
-      return v.hurt(this.damageSources().mobAttack(this), amount * scale);
+      float dealt = amount * scale;
+      if (!v.hurt(this.damageSources().mobAttack(this), dealt)) {
+         return false;
+      }
+      // Same route as Thanos himself: a mob attacker never takes the hit-stop, the shake carries the blow.
+      CombatFeel.hit(this, v, HitWeight.forDamage(dealt));
+      return true;
    }
 
    protected void fx(int kind, int b, Vec3 at, Vec3 dir, float power, int extra) {

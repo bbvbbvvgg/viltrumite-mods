@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.entity.chitauri;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.balance.BalanceTable;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriDestruction;
@@ -176,7 +178,10 @@ public class ChitauriHeavy extends ChitauriSoldier {
             continue;
          }
          float f = (float)(1.0 - d / radius);
-         e.hurt(this.damageSources().mobAttack(this), BalanceTable.CHITAURI_SLAM * (0.5F + 0.5F * f));
+         float slamDamage = BalanceTable.CHITAURI_SLAM * (0.5F + 0.5F * f);
+         if (e.hurt(this.damageSources().mobAttack(this), slamDamage)) {
+            CombatFeel.hit(this, e, HitWeight.forDamage(slamDamage));
+         }
          if (HeroRegistry.allowsImpulse(e)) {
             Vec3 away = e.position().subtract(this.position()).normalize();
             e.knockback(0.9 * f + 0.3, -away.x, -away.z);

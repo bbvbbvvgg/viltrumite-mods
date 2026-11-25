@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.ironman;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.effect.ViltrumiteEffects;
 import dev.baranhan.viltrumitecore.entity.MicroMissileEntity;
 import dev.baranhan.viltrumitecore.entity.RepulsorBlastEntity;
@@ -187,6 +189,7 @@ public final class IronManCombat {
          }
 
          if (dev.baranhan.viltrumitecore.hero.HeroAttackContext.hurt(target,player.damageSources().playerAttack(player), IronManRules.REPULSOR_SHOCKWAVE_DAMAGE,dev.baranhan.viltrumitecore.hero.HeroAttackContext.Kind.WAVE)) {
+            CombatFeel.hit(player, target, HitWeight.forDamage(IronManRules.REPULSOR_SHOCKWAVE_DAMAGE));
             Vec3 out = distance < 1.0E-3 ? Vec3.ZERO : new Vec3(away.x / distance, 0.0, away.z / distance);
             push(target, out.scale(IronManRules.REPULSOR_SHOCKWAVE_KNOCKBACK).add(0.0, 0.5, 0.0));
          }
@@ -322,7 +325,10 @@ public final class IronManCombat {
 
          if(!guard.permits(target,from))continue;
          target.invulnerableTime = 0;
-         if (target.hurt(player.damageSources().playerAttack(player), UnibeamTimeline.damageAt(from.distanceTo(center), overdraft))) {
+         float beamDamage = UnibeamTimeline.damageAt(from.distanceTo(center), overdraft);
+         if (target.hurt(player.damageSources().playerAttack(player), beamDamage)) {
+            // The beam grinds the same body every tick it is held: shake yes, hit-stop no.
+            CombatFeel.hit(player, target, HitWeight.forDamage(beamDamage), false);
             push(target, dir.scale(IronManRules.UNIBEAM_PUSH));
             if (target instanceof Mob mob) {
                mob.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, IronManRules.UNIBEAM_MOB_BLIND_TICKS, 0, false, false));
@@ -566,6 +572,7 @@ public final class IronManCombat {
 
    private static void bladeHit(ServerPlayer player, LivingEntity target) {
       if (target.hurt(player.damageSources().playerAttack(player), IronManRules.BLADE)) {
+         CombatFeel.hit(player, target, HitWeight.forDamage(IronManRules.BLADE));
          target.addEffect(new MobEffectInstance(ViltrumiteEffects.SUNDER.get(), IronManRules.BLADE_SUNDER_TICKS, 0, false, true), player);
       }
    }
@@ -576,6 +583,7 @@ public final class IronManCombat {
       if (target != null) {
          double height = heightAboveGround(level, target);
          if (target.hurt(player.damageSources().playerAttack(player), IronManRules.HAMMER)) {
+            CombatFeel.hit(player, target, HitWeight.forDamage(IronManRules.HAMMER));
             if (!HammerLaunch.slamsDown(target.onGround(), height)) {
                Vec3 look = player.getLookAngle();
                push(target, new Vec3(look.x, 0.0, look.z).normalize().scale(IronManRules.HAMMER_KNOCKBACK).add(0.0, 0.45, 0.0));
@@ -617,7 +625,11 @@ public final class IronManCombat {
             continue;
          }
 
-         if (target.hurt(player.damageSources().playerAttack(player), IronManRules.HAMMER_SLAM) && HeroRegistry.allowsImpulse(target)) {
+         boolean slammed = target.hurt(player.damageSources().playerAttack(player), IronManRules.HAMMER_SLAM);
+         if (slammed) {
+            CombatFeel.hit(player, target, HitWeight.forDamage(IronManRules.HAMMER_SLAM));
+         }
+         if (slammed && HeroRegistry.allowsImpulse(target)) {
             Vec3 v = target.getDeltaMovement();
             target.setDeltaMovement(v.x, Math.max(v.y, IronManRules.HAMMER_SLAM_LIFT), v.z);
             target.hurtMarked = true;
@@ -640,7 +652,11 @@ public final class IronManCombat {
          return;
       }
 
-      if (target.hurt(player.damageSources().playerAttack(player), IronManRules.HAMMER_SLAM) && HeroRegistry.allowsImpulse(target)) {
+      boolean launched = target.hurt(player.damageSources().playerAttack(player), IronManRules.HAMMER_SLAM);
+      if (launched) {
+         CombatFeel.hit(player, target, HitWeight.forDamage(IronManRules.HAMMER_SLAM));
+      }
+      if (launched && HeroRegistry.allowsImpulse(target)) {
          Vec3 velocity = player.getLookAngle().scale(HammerLaunch.speed(charge)).add(0.0, 0.25, 0.0);
          target.setDeltaMovement(velocity);
          target.hurtMarked = true;

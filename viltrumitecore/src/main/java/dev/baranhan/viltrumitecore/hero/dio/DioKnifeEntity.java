@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.dio;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.ViltrumiteEntities;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket;
@@ -174,6 +176,8 @@ public class DioKnifeEntity extends Projectile {
          living.invulnerableTime = 0;
          boolean hurt = living.hurt(this.damageSources().thrown(this, owner), DioRules.KNIFE_DAMAGE);
          if (hurt) {
+            // Knives fly in volleys: the shake is deduped per attacker per tick, the stop stays off.
+            CombatFeel.hit(owner != null ? owner : this, living, HitWeight.forDamage(DioRules.KNIFE_DAMAGE), false);
             if (HeroRegistry.allowsImpulse(living)) {
                Vec3 push = this.getDeltaMovement().normalize().scale(0.15);
                living.push(push.x, 0.04, push.z);

@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.scp.scp096;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.Comparator;
 import java.util.List;
@@ -1130,7 +1132,10 @@ final class Scp096Chase {
       this.strikes++;
       this.mob.markAttack();
       this.mob.lookAtPoint(target.getEyePosition(), 180.0F);
-      target.hurt(this.mob.attackSource(), Scp096Rules.ATTACK_DAMAGE);
+      if (target.hurt(this.mob.attackSource(), Scp096Rules.ATTACK_DAMAGE)) {
+         // A mob attacker: CombatFeel keeps the stop for players, the shake and the ring land for everyone.
+         CombatFeel.hit(this.mob, target, HitWeight.forDamage(Scp096Rules.ATTACK_DAMAGE));
+      }
       level.playSound(null, target.getX(), target.getY() + 1.0, target.getZ(), Scp096Sounds.STRIKE.get(), SoundSource.HOSTILE, 1.3F,
          0.75F + level.random.nextFloat() * 0.2F);
    }

@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.dio;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroAction;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
@@ -209,7 +211,9 @@ public final class DioAbilitiesRuntime {
             Vec3 out = flatAway(victim.position(), target).scale(0.9);
             if (!DioTimeStop.defer(player, victim, DioRules.ROLLER_SLAM_DAMAGE, out)) {
                victim.invulnerableTime = 0;
-               victim.hurt(player.damageSources().playerAttack(player), DioRules.ROLLER_SLAM_DAMAGE);
+               if (victim.hurt(player.damageSources().playerAttack(player), DioRules.ROLLER_SLAM_DAMAGE)) {
+                  CombatFeel.hit(player, victim, HitWeight.forDamage(DioRules.ROLLER_SLAM_DAMAGE));
+               }
             }
          }
 
@@ -222,7 +226,10 @@ public final class DioAbilitiesRuntime {
          for (LivingEntity victim : around(player, target, 3.0)) {
             if (!DioTimeStop.defer(player, victim, DioRules.ROLLER_PULSE_DAMAGE, flatAway(victim.position(), target).scale(0.12))) {
                victim.invulnerableTime = 0;
-               victim.hurt(player.damageSources().playerAttack(player), DioRules.ROLLER_PULSE_DAMAGE);
+               if (victim.hurt(player.damageSources().playerAttack(player), DioRules.ROLLER_PULSE_DAMAGE)) {
+                  // The pulse beats every ROLLER_PULSE ticks: shake only.
+                  CombatFeel.hit(player, victim, HitWeight.forDamage(DioRules.ROLLER_PULSE_DAMAGE), false);
+               }
             }
          }
 
@@ -243,7 +250,11 @@ public final class DioAbilitiesRuntime {
 
          for (LivingEntity victim : around(player, target, DioRules.ROLLER_BLAST_RADIUS)) {
             victim.invulnerableTime = 0;
-            if (victim.hurt(player.damageSources().playerAttack(player), DioRules.ROLLER_BLAST_DAMAGE) && HeroRegistry.allowsImpulse(victim)) {
+            boolean blasted = victim.hurt(player.damageSources().playerAttack(player), DioRules.ROLLER_BLAST_DAMAGE);
+            if (blasted) {
+               CombatFeel.hit(player, victim, HitWeight.forDamage(DioRules.ROLLER_BLAST_DAMAGE));
+            }
+            if (blasted && HeroRegistry.allowsImpulse(victim)) {
                Vec3 out = flatAway(victim.position(), target);
                victim.knockback(1.6, -out.x, -out.z);
                victim.setDeltaMovement(victim.getDeltaMovement().add(0, 0.55, 0));

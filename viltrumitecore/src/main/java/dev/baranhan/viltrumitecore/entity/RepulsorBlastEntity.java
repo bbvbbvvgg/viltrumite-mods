@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.entity;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.ironman.IronManRules;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -105,6 +107,11 @@ public class RepulsorBlastEntity extends Projectile {
          int previous = living.invulnerableTime;
          living.invulnerableTime = 0;
          boolean hurt = living.hurt(this.damageSources().mobProjectile(this, owner instanceof LivingEntity shooter ? shooter : null), this.damage);
+         if (hurt) {
+            // A volley can land twice in one tick: the shake/frame/ring are deduped per attacker per tick
+            // by CombatFeel, and the stop lands on the shooter only when the shooter is a player.
+            CombatFeel.hit(owner != null ? owner : this, living, HitWeight.forDamage(this.damage));
+         }
          if (hurt && dev.baranhan.viltrumitecore.hero.HeroRegistry.allowsImpulse(living)) {
             Vec3 push = this.getDeltaMovement().normalize().scale(this.knockback);
             living.push(push.x, Math.max(0.1, push.y * 0.5 + 0.15 * this.knockback), push.z);
