@@ -70,6 +70,12 @@ public final class ThorHero implements HeroDefinition {
       return BODY_HEIGHT_SCALE;
    }
 
+   /** Finisher (wave1-22 T6): the hammer brought down, the God of War's fatality. */
+   @Override
+   public net.minecraft.resources.ResourceLocation finisherScene(Player player) {
+      return dev.baranhan.viltrumitecore.combat.finisher.FinisherScenes.THOR;
+   }
+
    @Override
    public float bodyWidthScale(Player player) {
       return BODY_WIDTH_SCALE;

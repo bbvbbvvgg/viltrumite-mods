@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.reinhard.ability;
 
+import dev.baranhan.viltrumitecore.combat.feel.CinematicUltimates;
+import dev.baranhan.viltrumitecore.combat.feel.Cinematics;
 import dev.baranhan.viltrumitecore.hero.Annihilation;
 import dev.baranhan.viltrumitecore.hero.CarveJobs;
 import dev.baranhan.viltrumitecore.hero.reinhard.*;
@@ -85,6 +87,7 @@ public final class WorldCut implements AbilityHandler {
       state.cutAnchor=player.position();
       state.worldCut = timed(world.startTime, world);
       WorldCutManager.get(level).submit(state.worldCut);
+      Cinematics.play(player, CinematicUltimates.REINHARD_WORLD_CUT, null);
       world.send(WorldCutS2CPacket.START);
       return true;
    }

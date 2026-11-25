@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.dio;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroId;
 import dev.baranhan.viltrumitecore.hero.HeroPlayer;
@@ -350,6 +352,12 @@ public final class DioTimeStop {
          hurt = target.hurt(source, amount);
       } finally {
          paying--;
+      }
+      if (hurt && caster != null) {
+         // ZA WARUDO pays the whole stopped-time ledger at once; the freeze is his own authored mechanism,
+         // so this seam feeds the shake and never a second stop. Without a caster there was no hit to feel,
+         // and the target must never be its own attacker.
+         CombatFeel.hit(caster, target, HitWeight.forDamage(amount), false);
       }
       if (hurt && entry.push.lengthSqr() > 1.0E-4 && HeroRegistry.allowsImpulse(target) && !HeroDamage.isAnchored(target)) {
          Vec3 push = entry.push;

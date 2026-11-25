@@ -38,6 +38,10 @@
   "key.viltrumitecore.ability_menu": "技能菜单",
   "key.viltrumitecore.ability_swap": "技能切换",
   "key.viltrumitecore.dashboard": "控制面板",
+  "key.viltrumitecore.skip_cinematic": "跳过过场动画",
+  "hud.viltrumitecore.cinematic.skip": "[%s] 跳过场景",
+  "key.viltrumitecore.finisher": "终结技",
+  "hud.viltrumitecore.finisher.hint": "[%s] 终结",
   "gui.viltrumitecore.npc_spawner.title": "NPC 生成器",
   "gui.viltrumitecore.npc_spawner.spawn": "生成",
   "gui.viltrumitecore.npc_spawner.name": "名称",
@@ -813,5 +817,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.check.arms": "手臂伺服 ..... 在线",
   "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "肩部装甲 ..... 已锁定",
   "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "头盔链路 ..... 在线",
-  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48：全系统就绪"
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48：全系统就绪",
+  "gui.viltrumitecore.config.cinematic": "电影化战斗设置",
+  "gui.viltrumitecore.config.cinematic.title": "电影化战斗设置（客户端）",
+  "gui.viltrumitecore.config.cinematic.reduce_motion": "减少镜头晃动：%s",
+  "gui.viltrumitecore.config.cinematic.disable_camera": "禁用电影化镜头：%s",
+  "gui.viltrumitecore.config.cinematic.watch_others": "观看他人演出：%s",
+  "gui.viltrumitecore.config.cinematic.impact_frames": "冲击定格帧：%s",
+  "gui.viltrumitecore.config.cinematic.flash": "闪光强度：%s"
 }

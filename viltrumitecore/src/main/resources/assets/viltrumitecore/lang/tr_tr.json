@@ -38,6 +38,10 @@
   "key.viltrumitecore.ability_menu": "Yetenek Menüsü",
   "key.viltrumitecore.ability_swap": "Yetenek Değiştir",
   "key.viltrumitecore.dashboard": "Kontrol Paneli",
+  "key.viltrumitecore.skip_cinematic": "Sinematiği atla",
+  "hud.viltrumitecore.cinematic.skip": "[%s] Sahneyi atla",
+  "key.viltrumitecore.finisher": "Bitirici vuruş",
+  "hud.viltrumitecore.finisher.hint": "[%s] Bitir",
   "gui.viltrumitecore.npc_spawner.title": "NPC Oluşturucu",
   "gui.viltrumitecore.npc_spawner.spawn": "Oluştur",
   "gui.viltrumitecore.npc_spawner.name": "İsim",
@@ -813,5 +817,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.check.arms": "KOL SERVOLARI ..... ÇEVRİMİÇİ",
   "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "OMUZ ZIRHI ..... KİLİTLİ",
   "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "KASK BAĞLANTISI ..... ÇEVRİMİÇİ",
-  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: TÜM SİSTEMLER HAZIR"
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: TÜM SİSTEMLER HAZIR",
+  "gui.viltrumitecore.config.cinematic": "Sinematik Dövüş Ayarları",
+  "gui.viltrumitecore.config.cinematic.title": "Sinematik Dövüş Ayarları (İstemci)",
+  "gui.viltrumitecore.config.cinematic.reduce_motion": "Daha Az Kamera Hareketi: %s",
+  "gui.viltrumitecore.config.cinematic.disable_camera": "Sinematik Kamera Yok: %s",
+  "gui.viltrumitecore.config.cinematic.watch_others": "Başkalarının Sahnelerini İzle: %s",
+  "gui.viltrumitecore.config.cinematic.impact_frames": "Vuruş Kareleri: %s",
+  "gui.viltrumitecore.config.cinematic.flash": "Flaş Yoğunluğu: %s"
 }

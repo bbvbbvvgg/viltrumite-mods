@@ -2,8 +2,20 @@ name: Build
 
 on:
   push:
+    # 2.0: evidence and orchestrator branches carry no code worth a build.
+    branches-ignore:
+      - 'evidence/**'
+      - 'ops/**'
+    tags:
+      - '**'
   pull_request:
   workflow_dispatch:
+
+# 2.0: one build per branch. A newer push or the PR run cancels the stale one;
+# builds of main and the integration branch are never interrupted.
+concurrency:
+  group: build-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ !contains(fromJSON('["main", "integration/viltrumite-2.0"]'), github.head_ref || github.ref_name) }}
 
 jobs:
   build:

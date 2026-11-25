@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.entity.chitauri;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.balance.BalanceTable;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriDestruction;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriSounds;
@@ -136,7 +138,9 @@ public class ChitauriCommander extends ChitauriSoldier {
          e -> e.isAlive() && ChitauriMob.validTarget(e))) {
          Vec3 to = e.position().subtract(this.position());
          if (to.horizontalDistance() < 0.3 || to.multiply(1, 0, 1).normalize().dot(fwd) > 0.2) {
-            this.doHurtTarget(e);
+            if (this.doHurtTarget(e)) {
+               CombatFeel.hit(this, e, HitWeight.forDamage((float)this.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)));
+            }
          }
       }
    }

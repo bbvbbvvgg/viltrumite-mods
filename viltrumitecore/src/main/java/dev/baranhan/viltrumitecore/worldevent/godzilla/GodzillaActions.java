@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.worldevent.godzilla;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.city.CityManager;
 import dev.baranhan.viltrumitecore.entity.godzilla.GodzillaEntity;
 import dev.baranhan.viltrumitecore.entity.godzilla.GodzillaPart;
@@ -189,6 +191,7 @@ final class GodzillaActions {
          float f = Math.max(0.25F, GodzillaRules.falloff(d, wave));
          boolean hurt = living.hurt(GodzillaDamage.crush(level, e), GodzillaRules.STOMP_DAMAGE * f);
          if (hurt) {
+            CombatFeel.hit(e, living, HitWeight.forDamage(GodzillaRules.STOMP_DAMAGE * f));
             s.noteHit(living);
          }
          s.qaContact(living, hurt);
@@ -320,6 +323,8 @@ final class GodzillaActions {
          }
          boolean hurt = living.hurt(source, damage * f);
          if (hurt) {
+            // The kaiju is a mob: the shake, the frame and the ring land for everyone, the stop stays player-only.
+            CombatFeel.hit(e, living, HitWeight.forDamage(damage * f));
             hits++;
             s.noteHit(living);
          }

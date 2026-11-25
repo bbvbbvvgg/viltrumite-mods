@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.worldevent.godzilla;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.city.CityManager;
 import dev.baranhan.viltrumitecore.entity.godzilla.GodzillaEntity;
 import dev.baranhan.viltrumitecore.entity.godzilla.GodzillaPart;
@@ -160,6 +162,7 @@ final class GodzillaBreath {
          boolean hurt = living.hurt(GodzillaDamage.breath(level, e), damage);
          s.qaContact(living, hurt);
          if (hurt) {
+            CombatFeel.hit(e, living, HitWeight.forDamage(damage));
             living.setSecondsOnFire(5);
             s.noteHit(living);
             if (HeroRegistry.allowsImpulse(living)) {

@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.ironman;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -40,6 +42,7 @@ public final class FlyBy {
 
       Result result = compute(velocity);
       if (target.hurt(player.damageSources().playerAttack(player), result.damage())) {
+         CombatFeel.hit(player, target, HitWeight.forDamage(result.damage()));
          push(target, result.knockback());
          IronManSounds.play(player, dev.baranhan.viltrumitecore.ViltrumiteCore.IRONMAN_FLYBY_HIT.get(), 1.0F, 0.9F + player.getRandom().nextFloat() * 0.2F);
       }

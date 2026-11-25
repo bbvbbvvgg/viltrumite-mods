@@ -185,6 +185,17 @@ public interface HeroDefinition {
       return ChopStyle.DEFAULT;
    }
 
+   /**
+    * Scene of this hero's finisher (wave1-22, task T6), or null to use the shared finisher shot
+    * ({@code combat.finisher.FinisherScenes}). The shared finisher code asks this method and never
+    * names a concrete hero. The id selects a scene file of task T4; until those land it is played as
+    * the built-in orbit.
+    */
+   @javax.annotation.Nullable
+   default net.minecraft.resources.ResourceLocation finisherScene(Player player) {
+      return null;
+   }
+
    /** Does the shared legacy-kit regeneration (every 40 t) apply; heroes with their own regen opt out. */
    default boolean usesLegacyRegen(Player player) {
       return true;

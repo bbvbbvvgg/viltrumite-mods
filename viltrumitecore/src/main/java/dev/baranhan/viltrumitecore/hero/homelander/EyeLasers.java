@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.hero.homelander;
 
 import dev.baranhan.viltrumitecore.ViltrumiteCore;
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -79,6 +81,10 @@ public final class EyeLasers {
             int previousInvulnerable = target.invulnerableTime;
             target.invulnerableTime = 0;
             if (target.hurt(player.damageSources().playerAttack(player), HomelanderRules.LASER_DAMAGE)) {
+               // The beam lands on the same body every LASER_DAMAGE_INTERVAL ticks while it is held, so it
+               // feeds the shake (at most one fan-out per attacker per tick, see CombatFeel) and never the
+               // hit-stop: a stop every few ticks would read as a stutter, not as weight.
+               CombatFeel.hit(player, target, HitWeight.forDamage(HomelanderRules.LASER_DAMAGE), false);
                target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), HomelanderRules.LASER_FIRE_TICKS));
             } else {
                target.invulnerableTime = previousInvulnerable;

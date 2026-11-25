@@ -1,5 +1,8 @@
 package dev.baranhan.viltrumitecore.hero.jinwoo;
 
+import dev.baranhan.viltrumitecore.combat.feel.CinematicUltimates;
+import dev.baranhan.viltrumitecore.combat.feel.Cinematics;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
@@ -23,6 +26,8 @@ public final class MonarchArise {
    static boolean start(ServerPlayer player, JinwooState state) {
       JinwooCombat.autoDraw(player, state);
       state.start(JinwooMove.ARISE, -1);
+      // The Monarch's own rise camera keeps the view (CameraOwners): the shared camera bows out on the client.
+      Cinematics.play(player, CinematicUltimates.JINWOO_MONARCH, null);
       state.domainCenter = player.position();
       state.domainLeft = JinwooRules.ULT_DOMAIN;
       state.ultSpoken = HeroSpeech.ability(player, JinwooAbility.MONARCH.id());
@@ -76,7 +81,7 @@ public final class MonarchArise {
          e -> waveHits(e instanceof Enemy, e instanceof Player) && JinwooCombat.mayHit(player, e));
       LivingEntity strongest = null;
       for (LivingEntity e : hostile) {
-         JinwooCombat.strike(player, state, e, JinwooRules.ULT_DAMAGE, true, 2);
+         JinwooCombat.strike(player, state, e, JinwooRules.ULT_DAMAGE, true, 2, HitWeight.CRUSHING);
          if (e.isAlive()) {
             e.addEffect(JinwooCombat.hidden(MobEffects.MOVEMENT_SLOWDOWN, JinwooRules.ULT_SLOW_TICKS, 1));
             if (strongest == null || e.getMaxHealth() > strongest.getMaxHealth()) {

@@ -25,6 +25,14 @@ public class AbilityInputManager {
    /** Regulus: mark/unmark a heart carrier. Default MMB — wins over vanilla pick-block. */
    public static KeyMapping assignHeartKey;
    public static KeyMapping superJumpKey;
+   /** Cinematic combat (wave1-22): skip the running cinematic scene. Default Backspace. */
+   public static KeyMapping skipCinematicKey;
+   /**
+    * Cinematic combat (wave1-22): finish the low-health body in reach. Default H. G is taken by
+    * {@link #superJumpKey} and C/X are vanilla creative toolbar activators, so the finisher takes H:
+    * free in vanilla and in this mod, and reachable with the left hand that already rests on WASD.
+    */
+   public static KeyMapping finisherKey;
 
    public static void registerKeys(RegisterKeyMappingsEvent event) {
       abilityKey1 = new KeyMapping("key.viltrumitecore.ability_1", 82, "category.viltrumitecore.keys");
@@ -52,6 +60,12 @@ public class AbilityInputManager {
       superJumpKey = new KeyMapping("key.viltrumitecore.regulus_super_jump", net.minecraftforge.client.settings.KeyConflictContext.IN_GAME,
          com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_G, "category.viltrumitecore.keys");
       event.register(superJumpKey);
+      skipCinematicKey = new KeyMapping("key.viltrumitecore.skip_cinematic", net.minecraftforge.client.settings.KeyConflictContext.IN_GAME,
+         com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE, "category.viltrumitecore.keys");
+      event.register(skipCinematicKey);
+      finisherKey = new KeyMapping("key.viltrumitecore.finisher", net.minecraftforge.client.settings.KeyConflictContext.IN_GAME,
+         com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_H, "category.viltrumitecore.keys");
+      event.register(finisherKey);
    }
 
    /**
@@ -71,6 +85,13 @@ public class AbilityInputManager {
       // Claimed mouse buttons (Regulus heart key, Iron Man LMB in flight) are
       // edge-tracked in HeroMouseInput, which also cancels the vanilla mapping.
       dev.baranhan.viltrumitecore.client.hero.HeroMouseInput.tick(client);
+      // Cinematic finisher (wave1-22): re-pick the predicted target once per tick, then a press asks
+      // the server for that body. The server re-checks everything; nothing is sent without a candidate.
+      dev.baranhan.viltrumitecore.client.cinematic.finisher.FinisherTargeting.tick(client);
+      while (finisherKey.consumeClick()) {
+         dev.baranhan.viltrumitecore.client.cinematic.finisher.FinisherTargeting.press();
+      }
+
       while (abilitySwapKey.consumeClick()) {
          Player player = client.player;
          if (player == null || !dev.baranhan.viltrumitecore.hero.HeroRegistry.get(player).allowsAbilityPages(player)) {

@@ -76,7 +76,6 @@ public final class RedHulkRules {
    public static final double HAMMER_AHEAD = 2.0;
    public static final float HAMMER_AREA_DAMAGE = 7.0F;
    public static final int HAMMER_STUN = 10;
-   public static final int HIT_STOP_HEAVY = 3;
 
    // ---- grab and throw (RMB) ------------------------------------------------------------------------------
    public static final double GRAB_REACH = 3.6;

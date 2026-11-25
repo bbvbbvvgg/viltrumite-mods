@@ -329,6 +329,28 @@
             "values": [
                 1.0
             ]
+        },
+        {
+            "name": "FeelWaveA",
+            "type": "float",
+            "count": 4,
+            "values": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "name": "FeelWaveB",
+            "type": "float",
+            "count": 4,
+            "values": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ]
         }
     ]
 }

@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.worldevent.thanos;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.Bystander;
 import dev.baranhan.viltrumitecore.entity.thanos.ThanosEntity;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
@@ -72,7 +74,14 @@ public final class ThanosTargets {
          return false;
       }
 
-      return victim.hurt(thanos.damageSources().mobAttack(thanos), amount * scale);
+      float dealt = amount * scale;
+      if (!victim.hurt(thanos.damageSources().mobAttack(thanos), dealt)) {
+         return false;
+      }
+      // The attacker is a mob (and so is every Black Order body that borrows this route): CombatFeel
+      // reserves the hit-stop for players, so his war only feeds the shake, the frame and the ring.
+      CombatFeel.hit(thanos, victim, HitWeight.forDamage(dealt));
+      return true;
    }
 
    /** A push from a stone (respects heroes that refuse impulses and anchored targets). */

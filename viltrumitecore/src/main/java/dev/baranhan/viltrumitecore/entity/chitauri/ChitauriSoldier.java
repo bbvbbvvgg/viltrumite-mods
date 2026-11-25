@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.entity.chitauri;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.city.citizen.CitizenEntity;
 import dev.baranhan.viltrumitecore.hero.SafeSpot;
 import dev.baranhan.viltrumitecore.worldevent.chitauri.ChitauriDestruction;
@@ -365,7 +367,9 @@ public class ChitauriSoldier extends Monster implements ChitauriMob {
       this.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
       this.level().broadcastEntityEvent(this, EVENT_MELEE);
       ChitauriSounds.play((ServerLevel)this.level(), this.position(), ChitauriSounds.SOLDIER_MELEE, 0.9F, 0.9F + this.random.nextFloat() * 0.2F);
-      this.doHurtTarget(target);
+      if (this.doHurtTarget(target)) {
+         CombatFeel.hit(this, target, HitWeight.forDamage((float)this.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)));
+      }
    }
 
    @Override

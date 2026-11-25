@@ -6,7 +6,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -80,18 +79,26 @@ public final class CameraShake {
       }
    }
 
-   @SubscribeEvent
-   public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+   /**
+    * Legacy shared shake offsets {pitch, yaw, roll} of this frame, the same math as before wave1-22.
+    * Applied by client.cinematic.feel.CameraFeel, the single ComputeCameraAngles owner, so legacy
+    * and profiled shakes add up and both follow the reduced camera motion setting.
+    */
+   public static boolean legacyOffsets(double partialTick, float[] out) {
       if (shake <= 0.001F) {
-         return;
+         out[0] = 0.0F;
+         out[1] = 0.0F;
+         out[2] = 0.0F;
+         return false;
       }
 
       float multiplier = ViltrumitePostProcessingConfig.INSTANCE.punchShakeMultiplier;
-      float t = (float)(event.getPartialTick() + (lastLevel == null ? 0L : lastLevel.getGameTime() % 100000L));
+      float t = (float)(partialTick + (lastLevel == null ? 0L : lastLevel.getGameTime() % 100000L));
       float amp = shake * multiplier;
       // Two detuned sines per axis: cheap, smooth, never periodic-looking.
-      event.setPitch(event.getPitch() + amp * 1.6F * (Mth.sin(t * 2.9F) * 0.6F + Mth.sin(t * 5.3F + 1.3F) * 0.4F));
-      event.setYaw(event.getYaw() + amp * 1.3F * (Mth.sin(t * 3.7F + 0.7F) * 0.6F + Mth.sin(t * 6.1F + 2.1F) * 0.4F));
-      event.setRoll(event.getRoll() + amp * 1.1F * Mth.sin(t * 4.3F + 0.4F));
+      out[0] = amp * 1.6F * (Mth.sin(t * 2.9F) * 0.6F + Mth.sin(t * 5.3F + 1.3F) * 0.4F);
+      out[1] = amp * 1.3F * (Mth.sin(t * 3.7F + 0.7F) * 0.6F + Mth.sin(t * 6.1F + 2.1F) * 0.4F);
+      out[2] = amp * 1.1F * Mth.sin(t * 4.3F + 0.4F);
+      return true;
    }
 }

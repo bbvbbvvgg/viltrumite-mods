@@ -38,6 +38,10 @@
   "key.viltrumitecore.ability_menu": "Fähigkeitsmenü",
   "key.viltrumitecore.ability_swap": "Fähigkeit wechseln",
   "key.viltrumitecore.dashboard": "Übersicht",
+  "key.viltrumitecore.skip_cinematic": "Filmsequenz überspringen",
+  "hud.viltrumitecore.cinematic.skip": "[%s] Szene überspringen",
+  "key.viltrumitecore.finisher": "Hinrichtung",
+  "hud.viltrumitecore.finisher.hint": "[%s] Hinrichten",
   "gui.viltrumitecore.npc_spawner.title": "NPC-Spawner",
   "gui.viltrumitecore.npc_spawner.spawn": "Spawnen",
   "gui.viltrumitecore.npc_spawner.name": "Name",
@@ -813,5 +817,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.check.arms": "ARMSERVOS ..... ONLINE",
   "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "SCHULTERPANZER ..... VERRIEGELT",
   "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "HELMVERBINDUNG ..... ONLINE",
-  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: ALLE SYSTEME BEREIT"
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: ALLE SYSTEME BEREIT",
+  "gui.viltrumitecore.config.cinematic": "Einstellungen für filmischen Kampf",
+  "gui.viltrumitecore.config.cinematic.title": "Einstellungen für filmischen Kampf (Client)",
+  "gui.viltrumitecore.config.cinematic.reduce_motion": "Weniger Kamerabewegung: %s",
+  "gui.viltrumitecore.config.cinematic.disable_camera": "Keine Filmkamera: %s",
+  "gui.viltrumitecore.config.cinematic.watch_others": "Szenen anderer ansehen: %s",
+  "gui.viltrumitecore.config.cinematic.impact_frames": "Einschlagbilder: %s",
+  "gui.viltrumitecore.config.cinematic.flash": "Blitzintensität: %s"
 }

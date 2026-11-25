@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.thor.combat;
 
+import dev.baranhan.viltrumitecore.combat.feel.CinematicUltimates;
+import dev.baranhan.viltrumitecore.combat.feel.Cinematics;
 import dev.baranhan.viltrumitecore.hero.thor.ThorSounds;
 import dev.baranhan.viltrumitecore.hero.thor.ThorCue;
 import dev.baranhan.viltrumitecore.hero.combat.MovePhase;
@@ -89,6 +91,10 @@ public final class WrathMove {
 
          if (event == StagedTimeline.Event.ENTER_MAIN) {
             strike(player, ThorCombatState.of(context.state()));
+            // The shot takes the view here, not at the start of the move: the build-up is aimed with the
+            // ordinary crosshair (the strike raycasts the player's look), so the camera must not hide the
+            // target while the player still picks it. From the contact on, the aim is already locked.
+            Cinematics.play(player, CinematicUltimates.THOR_WRATH, null);
             dev.baranhan.viltrumitecore.hero.thor.ThorLines.say(player, dev.baranhan.viltrumitecore.hero.thor.ThorLines.WRATH_STRIKE_EVENT);
          } else if (event == StagedTimeline.Event.ENTER_FINISH) {
             ThorSounds.play(player, ThorCue.WRATH_TAIL);

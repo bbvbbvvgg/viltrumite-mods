@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.captain;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.ServerRules;
@@ -128,7 +130,12 @@ public final class CaptainTargets {
       target.invulnerableTime = 0;
       net.minecraft.world.damagesource.DamageSource source = attacker instanceof Player p
          ? attacker.damageSources().playerAttack(p) : attacker.damageSources().mobAttack(attacker);
-      return target.hurt(source, damage);
+      boolean landed = target.hurt(source, damage);
+      if (landed) {
+         CombatFeel.hit(attacker, target, HitWeight.forDamage(damage));
+      }
+
+      return landed;
    }
 
    /** Push a target (honours hero control rules and anchors). */

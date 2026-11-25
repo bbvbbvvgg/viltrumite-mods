@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.hero.dio;
 
 import dev.baranhan.viltrumitecore.hero.HeroAction;
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.dio.net.DioFxS2CPacket;
 import dev.baranhan.viltrumitecore.hero.dio.net.DioNet;
@@ -228,6 +230,9 @@ public final class DioCombat {
       target.invulnerableTime = 0;
       boolean hurt = target.hurt(player.damageSources().playerAttack(player), damage);
       if (hurt) {
+         // The same seam drives the stand barrage (a body every BARRAGE_HIT_INTERVAL ticks), so it feeds
+         // the shake and never the stop: a barrage must not chain freezes.
+         CombatFeel.hit(player, target, HitWeight.forDamage(damage), false);
          DioHero.addBlood(player, blood);
          if (knockback > 0.0F && HeroRegistry.allowsImpulse(target)) {
             target.knockback(knockback, -flat.x, -flat.z);

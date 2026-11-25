@@ -70,6 +70,8 @@ public class ViltrumiteCoreClient {
       event.registerReloadListener(dev.baranhan.viltrumitecore.client.ironman.IronManSuitTextures.INSTANCE);
       event.registerReloadListener(dev.baranhan.viltrumitecore.client.ironman.NanoDamageVisuals.INSTANCE);
       event.registerReloadListener(dev.baranhan.viltrumitecore.client.ironman.mark.MarkSkins.INSTANCE);
+      // Cinematic scenes (wave1-22, T4): assets/<ns>/cinematics/<id>.json, data-driven.
+      event.registerReloadListener(dev.baranhan.viltrumitecore.client.cinematic.CinematicScenes.INSTANCE);
    }
 
    @SubscribeEvent
@@ -100,6 +102,12 @@ public class ViltrumiteCoreClient {
          ViltrumiteCameraConfig.load();
          ViltrumitePostProcessingConfig.load();
          ViltrumiteClientConfig.load();
+         // Cinematic combat comfort settings (wave1-22, config/viltrumitecore_cinematic.json).
+         dev.baranhan.viltrumitecore.client.cinematic.CinematicSettings.load();
+         // Cinematic camera core (wave1-22): marker camera, one-shot path, skip key, safe return.
+         dev.baranhan.viltrumitecore.client.cinematic.CinematicCamera.init();
+         // Cinematic HUD (wave1-22, T4): letterbox, skip hint, slow-mo sound duck.
+         dev.baranhan.viltrumitecore.client.cinematic.CinematicHud.init();
       });
    }
 

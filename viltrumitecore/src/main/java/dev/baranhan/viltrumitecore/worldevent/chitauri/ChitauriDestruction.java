@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.worldevent.chitauri;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.city.CityManager;
 import dev.baranhan.viltrumitecore.city.danger.DangerMap;
 import dev.baranhan.viltrumitecore.entity.chitauri.ChitauriMob;
@@ -223,7 +225,14 @@ public final class ChitauriDestruction {
             continue;
          }
          float f = (float)(1.0 - d / radius);
-         living.hurt(level.damageSources().explosion(direct, owner), damage * (0.4F + 0.6F * f));
+         float blastDamage = damage * (0.4F + 0.6F * f);
+         if (living.hurt(level.damageSources().explosion(direct, owner), blastDamage)) {
+            Entity feel = owner != null ? owner : direct;
+            if (feel != null) {
+               // A mob attacker (or the bolt itself): the shake, the frame and the ring land, no hit-stop.
+               CombatFeel.hit(feel, living, HitWeight.forDamage(blastDamage));
+            }
+         }
          if (HeroRegistry.allowsImpulse(living)) {
             Vec3 away = living.position().subtract(at).normalize();
             living.knockback(0.6 * f, -away.x, -away.z);

@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.redhulk;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.ServerRules;
@@ -121,7 +123,12 @@ public final class RedHulkTargets {
    /** One hit through the player's melee source (heat / fury scale it in modifyOutgoingDamage); ignores i-frames. */
    public static boolean strike(ServerPlayer attacker, LivingEntity target, float damage) {
       target.invulnerableTime = 0;
-      return target.hurt(attacker.damageSources().playerAttack(attacker), damage);
+      boolean landed = target.hurt(attacker.damageSources().playerAttack(attacker), damage);
+      if (landed) {
+         CombatFeel.hit(attacker, target, HitWeight.forDamage(damage));
+      }
+
+      return landed;
    }
 
    /** Push a target (honours hero control rules, anchors and knockback resistance). */
