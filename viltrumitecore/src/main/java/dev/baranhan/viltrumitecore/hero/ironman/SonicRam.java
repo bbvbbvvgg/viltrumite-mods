@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.ironman;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,6 +45,7 @@ public final class SonicRam {
          }
 
          if (entity.hurt(player.damageSources().playerAttack(player), IronManRules.RAM_DAMAGE)) {
+            CombatFeel.hit(player, entity, HitWeight.forDamage(IronManRules.RAM_DAMAGE));
             FlyBy.push((LivingEntity)entity, push);
             IronManSounds.play(player, dev.baranhan.viltrumitecore.ViltrumiteCore.IRONMAN_FLYBY_HIT.get(), 1.4F, 0.7F);
          } else {

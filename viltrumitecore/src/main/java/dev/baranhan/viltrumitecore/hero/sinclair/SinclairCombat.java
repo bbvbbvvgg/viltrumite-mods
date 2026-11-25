@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.sinclair;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.DivineTargets;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.control.ControlKind;
@@ -69,7 +71,14 @@ public final class SinclairCombat {
       DamageSource source = owner.damageSources().mobProjectile(projectile, owner);
       // Bursts land faster than the vanilla hurt cooldown; every spark counts (as in the canon).
       target.invulnerableTime = 0;
-      return target.hurt(source, damage);
+      boolean landed = target.hurt(source, damage);
+      if (landed) {
+         // Spark volleys land several times in one tick and the beam beats every few ticks, so this seam
+         // feeds the shake (deduped per attacker per tick) and never the stop.
+         CombatFeel.hit(owner, target, HitWeight.forDamage(damage), false);
+      }
+
+      return landed;
    }
 
    /** Direct act / trick damage credited to Sinclair. True when the hit landed. */
@@ -79,7 +88,13 @@ public final class SinclairCombat {
       }
 
       target.invulnerableTime = 0;
-      return target.hurt(owner.damageSources().indirectMagic(owner, owner), damage);
+      boolean landed = target.hurt(owner.damageSources().indirectMagic(owner, owner), damage);
+      if (landed) {
+         // The acts are a multi-beat show: same rule as the sparks, the shake carries the weight.
+         CombatFeel.hit(owner, target, HitWeight.forDamage(damage), false);
+      }
+
+      return landed;
    }
 
    /** §5.1 "Vexed": −25 % speed for 1 s. */
