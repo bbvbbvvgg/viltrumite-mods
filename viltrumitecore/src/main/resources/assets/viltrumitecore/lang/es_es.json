@@ -40,6 +40,8 @@
   "key.viltrumitecore.dashboard": "Panel de control",
   "key.viltrumitecore.skip_cinematic": "Saltar cinemática",
   "hud.viltrumitecore.cinematic.skip": "[%s] Saltar escena",
+  "key.viltrumitecore.finisher": "Remate",
+  "hud.viltrumitecore.finisher.hint": "[%s] Rematar",
   "gui.viltrumitecore.npc_spawner.title": "Generador de NPC",
   "gui.viltrumitecore.npc_spawner.spawn": "Generar",
   "gui.viltrumitecore.npc_spawner.name": "Nombre",

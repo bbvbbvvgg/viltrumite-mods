@@ -40,6 +40,8 @@
   "key.viltrumitecore.dashboard": "Kontrol Paneli",
   "key.viltrumitecore.skip_cinematic": "Sinematiği atla",
   "hud.viltrumitecore.cinematic.skip": "[%s] Sahneyi atla",
+  "key.viltrumitecore.finisher": "Bitirici vuruş",
+  "hud.viltrumitecore.finisher.hint": "[%s] Bitir",
   "gui.viltrumitecore.npc_spawner.title": "NPC Oluşturucu",
   "gui.viltrumitecore.npc_spawner.spawn": "Oluştur",
   "gui.viltrumitecore.npc_spawner.name": "İsim",

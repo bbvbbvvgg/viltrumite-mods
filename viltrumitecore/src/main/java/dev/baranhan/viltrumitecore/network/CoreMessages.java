@@ -93,8 +93,10 @@ public class CoreMessages {
    // v31 (integration of #141..#147 and SCP-106): one table with VenomPossessS2CPacket and VenomDriveC2SPacket after
    //     HellfireS2CPacket, then Scp106S2CPacket. Each branch alone was "30" with its own table, so every "29" and
    //     "30" peer is refused.
-   // v32 (wave1-22 cinematic combat): FeelS2CPacket, then CinematicS2CPacket, appended last (camera shake
-   //     profiles, impact frames, air distortion rings, then the one-shot cinematic camera cue).
+   // v32 (wave1-22 cinematic combat): FeelS2CPacket, then CinematicS2CPacket, then FinisherRequestC2SPacket,
+   //     appended last (camera shake profiles, impact frames, air distortion rings, the one-shot cinematic
+   //     camera cue, then the C2S finisher request of task T6). The owner kept the "32" string: the finisher
+   //     packet is append-only, so a "32" peer without it simply never sends one.
    private static final String PROTOCOL_VERSION = "32";
    private static SimpleChannel INSTANCE;
    private static int packetId = 0;
@@ -574,6 +576,10 @@ public class CoreMessages {
          .decoder(dev.baranhan.viltrumitecore.network.packet.CinematicS2CPacket::new)
          .encoder(dev.baranhan.viltrumitecore.network.packet.CinematicS2CPacket::encode)
          .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.CinematicS2CPacket::handle).add();
+      net.messageBuilder(dev.baranhan.viltrumitecore.network.packet.FinisherRequestC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+         .decoder(dev.baranhan.viltrumitecore.network.packet.FinisherRequestC2SPacket::new)
+         .encoder(dev.baranhan.viltrumitecore.network.packet.FinisherRequestC2SPacket::encode)
+         .consumerMainThread(dev.baranhan.viltrumitecore.network.packet.FinisherRequestC2SPacket::handle).add();
    }
 
    public static <MSG> void sendToServer(MSG message) {
