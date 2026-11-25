@@ -15,6 +15,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
@@ -30,11 +31,18 @@ import net.minecraftforge.event.level.LevelEvent;
 public final class CinematicCamera {
    @Nullable
    private static Marker camera;
+   /** The JSON scene being played, or {@code null} when the built-in orbit is (see {@link #orbit}). */
    @Nullable
-   private static CinematicPath path;
+   private static CinematicScene scene;
+   @Nullable
+   private static CinematicPath orbit;
    @Nullable
    private static CameraType savedType;
-   private static long startTick;
+   private static Vec3 focus = Vec3.ZERO;
+   private static float frameYaw;
+   private static float duration;
+   private static float clock;
+   private static boolean reduced;
 
    private CinematicCamera() {
    }
@@ -44,6 +52,22 @@ public final class CinematicCamera {
       MinecraftForge.EVENT_BUS.addListener(CinematicCamera::onClientTick);
       MinecraftForge.EVENT_BUS.addListener(CinematicCamera::onLevelUnload);
       MinecraftForge.EVENT_BUS.addListener(CinematicCamera::onLoggingOut);
+      MinecraftForge.EVENT_BUS.addListener(CinematicCamera::onFov);
+   }
+
+   /** Is a shot holding the view right now (the HUD layer and the skip key ask this). */
+   public static boolean active() {
+      return scene != null || orbit != null;
+   }
+
+   /** Does the running scene letterbox the screen (the built-in orbit does not). */
+   public static boolean letterbox() {
+      return scene != null && scene.letterbox();
+   }
+
+   /** Scene-clock ticks per client tick, 1 when nothing is slowing down (the sound bed ducks to it). */
+   public static float clockRate() {
+      return active() && scene != null ? scene.clockRate(reduced) : 1.0F;
    }
 
    /** Packet entry: start the scene, unless the player's comfort settings or another camera say no. */
@@ -58,14 +82,29 @@ public final class CinematicCamera {
             CinematicSettings.get().cinematicCameraEnabled(), otherOwner)) {
          return;
       }
-      Entity focus = mc.level.getEntity(packet.focusId);
-      Vec3 centre = focus != null ? focus.position() : mc.player.position();
-      start(mc, CinematicPath.around(centre, CinematicSettings.get().reducedMotion()));
+      Entity focusEntity = mc.level.getEntity(packet.focusId);
+      reduced = CinematicSettings.get().reducedMotion();
+      focus = focusEntity != null ? focusEntity.position() : mc.player.position();
+      // The offsets of a scene are taken in the focus's frame, so every viewer of the same scene sees
+      // the same shot and a late-joining watcher lands on it too.
+      frameYaw = focusEntity != null ? focusEntity.getYRot() : mc.player.getYRot();
+      CinematicScene json = CinematicScenes.get(packet.sceneId);
+      if (json != null) {
+         scene = json;
+         orbit = null;
+         duration = json.duration(reduced);
+      } else {
+         scene = null;
+         orbit = CinematicPath.around(focus, reduced);
+         duration = orbit.ticks();
+      }
+      clock = 0.0F;
+      start(mc);
    }
 
    // ---------------------------------------------------------------- lifecycle
 
-   private static void start(Minecraft mc, CinematicPath scene) {
+   private static void start(Minecraft mc) {
       // The player's own camera type is captured once per scene: a second packet mid-scene must not
       // overwrite it with the FIRST_PERSON we forced, or the return would leave the player in first person.
       boolean alreadyHolding = camera != null && mc.getCameraEntity() == camera;
@@ -77,9 +116,38 @@ public final class CinematicCamera {
       }
       mc.options.setCameraType(CameraType.FIRST_PERSON);
       mc.setCameraEntity(camera);
-      path = scene;
-      startTick = mc.level.getGameTime();
-      place(mc, camera, scene.position(0.0F), scene.look(), true);
+      place(mc, camera, positionAt(0.0F), lookAt(0.0F), true);
+   }
+
+   /** Camera position of the shot at {@code progress} 0..1. */
+   private static Vec3 positionAt(float progress) {
+      if (scene != null) {
+         return CameraPath.toWorld(scene.path().sample(progress, scene.amplitude(reduced)).offset(), focus, frameYaw);
+      }
+      return orbit.position(progress * orbit.ticks());
+   }
+
+   /** What the shot looks at, at {@code progress} 0..1. */
+   private static Vec3 lookAt(float progress) {
+      if (scene != null) {
+         return CameraPath.toWorld(scene.path().sample(progress, scene.amplitude(reduced)).look(), focus, frameYaw);
+      }
+      return orbit.look();
+   }
+
+   private static float progress() {
+      return duration <= 0.0F ? 1.0F : (float)CameraPath.clamp01(clock / duration);
+   }
+
+   /** The lens of the running scene, when it names one (a scene without fov keeps the player's). */
+   static void onFov(ViewportEvent.ComputeFov event) {
+      if (scene == null) {
+         return;
+      }
+      float fov = scene.path().sample(progress(), scene.amplitude(reduced)).fov();
+      if (fov > 0.0F) {
+         event.setFOV(fov);
+      }
    }
 
    /**
@@ -87,7 +155,10 @@ public final class CinematicCamera {
     * it runs on every exit path, so a player can never stay stuck in another camera). Safe twice.
     */
    public static void release(Minecraft mc) {
-      path = null;
+      scene = null;
+      orbit = null;
+      clock = 0.0F;
+      duration = 0.0F;
       // The camera entity goes back to the player only while it is still ours: if another owner
       // replaced it, that camera is not ours to touch.
       if (camera != null && mc.getCameraEntity() == camera && mc.player != null) {
@@ -108,7 +179,7 @@ public final class CinematicCamera {
          return;
       }
       Minecraft mc = Minecraft.getInstance();
-      if (path == null) {
+      if (!active()) {
          // No scene: the skip key must not build up a queue that would kill the next scene at once.
          drainSkipKey();
          return;
@@ -123,12 +194,14 @@ public final class CinematicCamera {
          release(mc);
          return;
       }
-      float t = (float)(mc.level.getGameTime() - startTick);
-      if (t >= path.ticks()) {
+      // The scene clock runs at the scene's own rate: a slow-mo scene lasts longer in client ticks
+      // while the world and the server keep their own time.
+      clock += 1.0F;
+      if (clock >= duration) {
          release(mc);
          return;
       }
-      place(mc, camera, path.position(t), path.look(), false);
+      place(mc, camera, positionAt(progress()), lookAt(progress()), false);
    }
 
    /** Drains every queued click of the skip key; true when there was at least one. */

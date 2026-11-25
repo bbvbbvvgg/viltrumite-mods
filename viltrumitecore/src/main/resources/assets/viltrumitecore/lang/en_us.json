@@ -39,6 +39,7 @@
   "key.viltrumitecore.ability_swap": "Ability Swap",
   "key.viltrumitecore.dashboard": "Dashboard",
   "key.viltrumitecore.skip_cinematic": "Skip cinematic",
+  "hud.viltrumitecore.cinematic.skip": "[%s] Skip scene",
   "gui.viltrumitecore.npc_spawner.title": "NPC Spawner",
   "gui.viltrumitecore.npc_spawner.spawn": "Spawn",
   "gui.viltrumitecore.npc_spawner.name": "Name",
