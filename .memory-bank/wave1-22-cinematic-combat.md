@@ -122,6 +122,7 @@ Order: T1 and T2 are independent; T3 needs T2; T4 needs T1+T3; T5 needs T3+T4; T
 
 - `CinematicSettings.load()` теперь вызывается в `ViltrumiteCoreClient.onClientSetup` рядом с остальными тремя конфигами: файл `config/viltrumitecore_cinematic.json` создаётся детерминированно при старте, а не лениво при первом толчке камеры.
 - Публичные читатели: `cinematicCameraEnabled()` (= !disableCinematicCamera), `watchOthers()` (= watchOthersCinematics), `reducedMotion()`, `impactFramesEnabled()`, плюс существующие `motionScale()`, `flash()`. Код кинокамеры слоя 2 зовёт их вместо прямого чтения полей.
+- Читатель камеры называется `cinematicCameraEnabled()` (в плане аудита — `enabledCamera()`; прав код).
 - Сериализация вынесена в чистые `CinematicSettings.read(String)` / `write()` (Gson), чтобы юнит-тесту не требовались Minecraft-классы и CONFIGDIR. `load()`/`save()` работают через них же.
 - Экран `client/gui/config/CinematicConfigScreen` (образец — `PostProcessConfigScreen` + toggle-стиль `ClientConfigScreen`) правит все 5 полей: 4 переключателя ON/OFF и слайдер яркости 0..1; кнопка «Сохранить и назад» пишет файл. Вход — кнопка `gui.viltrumitecore.config.cinematic` в `ViltrumiteConfigScreen` (рядом с flight_camera).
 - Локализация: 7 ключей `gui.viltrumitecore.config.cinematic*` во всех 12 локалях `assets/viltrumitecore/lang/`; ru_ru/en_us — вручную, остальные переведены. Overlay не понадобился (ru_ru 62 KB; lang-overlays для этого ключа не нужен).

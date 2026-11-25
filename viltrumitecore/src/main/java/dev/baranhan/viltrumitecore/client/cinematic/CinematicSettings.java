@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.mojang.logging.LogUtils;
 import dev.baranhan.viltrumitecore.combat.feel.FeelMath;
 import java.io.File;
-import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -48,8 +47,8 @@ public final class CinematicSettings {
       File file = file();
       CinematicSettings loaded = null;
       if (file.exists()) {
-         try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            loaded = GSON.fromJson(reader, CinematicSettings.class);
+         try {
+            loaded = read(Files.readString(file.toPath(), StandardCharsets.UTF_8));
          } catch (Exception e) {
             LOGGER.warn("Could not read {}, using defaults", FILE_NAME, e);
          }
@@ -63,7 +62,7 @@ public final class CinematicSettings {
    public static synchronized void save() {
       CinematicSettings current = instance == null ? new CinematicSettings() : instance;
       try (Writer writer = Files.newBufferedWriter(file().toPath(), StandardCharsets.UTF_8)) {
-         GSON.toJson(current, writer);
+         writer.write(current.write());
       } catch (Exception e) {
          LOGGER.warn("Could not save {}", FILE_NAME, e);
       }
