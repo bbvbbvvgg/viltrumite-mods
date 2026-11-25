@@ -72,7 +72,22 @@ class FinisherRulesTest {
       assertEquals(FinisherRules.Verdict.ALLOW, judge(true, true, true, 1.0, 1.0F, 20.0F, false, true, true, false));
       assertEquals(FinisherRules.Verdict.PVP_FORBIDDEN, judge(true, true, true, 1.0, 1.0F, 20.0F, false, true, false, false));
       assertEquals(FinisherRules.Verdict.ALLY, judge(true, true, true, 1.0, 1.0F, 20.0F, false, true, true, true));
-      assertEquals(FinisherRules.Verdict.ALLOW, judge(true, true, true, 1.0, 1.0F, 20.0F, false, false, false, true), "a mob is not gated by the PvP rule");
+      assertEquals(FinisherRules.Verdict.PVP_FORBIDDEN, judge(true, true, true, 1.0, 1.0F, 20.0F, false, true, false, true), "PvP off is refused before the ally rule");
+   }
+
+   @Test
+   void theAllyRuleCoversEveryTargetNotOnlyPlayers() {
+      assertEquals(FinisherRules.Verdict.ALLOW, judge(true, true, true, 1.0, 1.0F, 20.0F, false, false, true, false), "a wild animal stays finishable");
+      assertEquals(FinisherRules.Verdict.ALLY, judge(true, true, true, 1.0, 1.0F, 20.0F, false, false, false, true), "the attacker's own wolf, cat or horse is refused");
+      assertEquals(FinisherRules.Verdict.ALLY, judge(true, true, true, 1.0, 1.0F, 20.0F, false, true, true, true), "an allied player target is refused with PvP on");
+   }
+
+   @Test
+   void aBlowOnlyPlaysOutWhenItLandedOnADyingBody() {
+      assertTrue(FinisherRules.blowLands(true, true));
+      assertFalse(FinisherRules.blowLands(false, true), "a blow a shield, an invulnerability or a full absorb swallowed plays nothing");
+      assertFalse(FinisherRules.blowLands(true, false), "a body a survival totem pulled back plays nothing");
+      assertFalse(FinisherRules.blowLands(false, false));
    }
 
    @Test

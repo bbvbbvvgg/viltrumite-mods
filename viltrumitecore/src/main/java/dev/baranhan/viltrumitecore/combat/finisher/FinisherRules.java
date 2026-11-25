@@ -77,9 +77,19 @@ public final class FinisherRules {
    }
 
    /**
+    * Does an accepted request play its feel and its scene: the finishing blow must have been accepted
+    * by the body (a shield, an invulnerability or a full absorb says no) and the target must be dying
+    * (a survival totem or Regulus' heart leaves it alive). Both facts come from the live world, so only
+    * the decision itself is pure.
+    */
+   public static boolean blowLands(boolean blowAccepted, boolean targetDying) {
+      return blowAccepted && targetDying;
+   }
+
+   /**
     * The verdict, in the order a refusal should read: a dead body first, then the geometry, then the
-    * health, then the PvP rule (players may be finished only when the server allows PvP and the target
-    * is not an ally).
+    * health, then the PvP rule (a player target only when the server allows PvP) and the ally rule
+    * (any target on the attacker's side, his own tamed pet or mount included).
     */
    public static Verdict judge(Facts facts) {
       if (facts == null || !facts.alive()) {
@@ -97,13 +107,11 @@ public final class FinisherRules {
       if (!healthAllows(facts.health(), facts.maxHealth(), facts.boss())) {
          return Verdict.TOO_HEALTHY;
       }
-      if (facts.player()) {
-         if (!facts.pvpAllowed()) {
-            return Verdict.PVP_FORBIDDEN;
-         }
-         if (facts.ally()) {
-            return Verdict.ALLY;
-         }
+      if (facts.player() && !facts.pvpAllowed()) {
+         return Verdict.PVP_FORBIDDEN;
+      }
+      if (facts.ally()) {
+         return Verdict.ALLY;
       }
       return Verdict.ALLOW;
    }

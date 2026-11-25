@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.client.cinematic.finisher;
 
 import dev.baranhan.viltrumitecore.balance.CombatBalance;
 import dev.baranhan.viltrumitecore.combat.finisher.FinisherRules;
+import dev.baranhan.viltrumitecore.combat.finisher.FinisherTargets;
 import dev.baranhan.viltrumitecore.hero.ServerRules;
 import dev.baranhan.viltrumitecore.network.CoreMessages;
 import dev.baranhan.viltrumitecore.network.packet.FinisherRequestC2SPacket;
@@ -94,6 +95,6 @@ public final class FinisherTargeting {
          CombatBalance.isBoss(target),
          target instanceof Player,
          ServerRules.pvp(player),
-         player.isAlliedTo(target))) == FinisherRules.Verdict.ALLOW;
+         FinisherTargets.allied(player, target))) == FinisherRules.Verdict.ALLOW;
    }
 }

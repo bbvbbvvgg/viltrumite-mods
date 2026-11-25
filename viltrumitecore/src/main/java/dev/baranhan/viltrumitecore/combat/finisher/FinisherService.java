@@ -5,6 +5,7 @@ import dev.baranhan.viltrumitecore.combat.feel.Cinematics;
 import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
 import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.ActionLocks;
+import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.PersistentCooldowns;
 import dev.baranhan.viltrumitecore.hero.ServerRules;
@@ -38,8 +39,9 @@ public final class FinisherService {
          return;
       }
       // Authority gate: the attacker must be able to act at all (a forged packet can arrive from a
-      // dead, spectating or locked body such as Sinclair's rabbit).
-      if (!attacker.isAlive() || attacker.isSpectator() || ActionLocks.locked(attacker)) {
+      // dead, spectating or locked body such as Sinclair's rabbit, or from one frozen by FREEZE/STASIS
+      // — the shared gate in HeroEvents denies an anchored player's attacks, and this path bypasses it).
+      if (!attacker.isAlive() || attacker.isSpectator() || ActionLocks.locked(attacker) || HeroDamage.isAnchored(attacker)) {
          return;
       }
       if (FinisherRules.onCooldown(PersistentCooldowns.get(attacker, COOLDOWN_KEY))) {
@@ -64,7 +66,7 @@ public final class FinisherService {
          CombatBalance.isBoss(target),
          target instanceof Player,
          ServerRules.pvp(attacker),
-         attacker.isAlliedTo(target)));
+         FinisherTargets.allied(attacker, target)));
       if (verdict != FinisherRules.Verdict.ALLOW) {
          LOGGER.debug("finisher refused for {}: {}", attacker.getScoreboardName(), verdict);
          return;
@@ -73,11 +75,18 @@ public final class FinisherService {
       execute(attacker, target);
    }
 
-   /** The finishing blow, its weight and the hero's scene; the order is feel, kill, scene. */
+   /**
+    * The finishing blow first, then its feel and the hero's scene, and only when the blow actually
+    * landed on a dying body: a blow swallowed by a shield, an invulnerability or a full absorb, and a
+    * body a survival totem pulled back, must leave the screen alone (the cooldown is already paid).
+    */
    private static void execute(ServerPlayer attacker, LivingEntity target) {
-      CombatFeel.hit(attacker, target, HitWeight.FINISHER);
-      target.hurt(attacker.damageSources().playerAttack(attacker),
+      boolean accepted = target.hurt(attacker.damageSources().playerAttack(attacker),
          FinisherRules.finishingDamage(target.getHealth(), target.getAbsorptionAmount()));
+      if (!FinisherRules.blowLands(accepted, target.isDeadOrDying())) {
+         return;
+      }
+      CombatFeel.hit(attacker, target, HitWeight.FINISHER);
       ResourceLocation scene = FinisherScenes.pick(HeroRegistry.get(attacker).finisherScene(attacker), CombatBalance.isBoss(target));
       Cinematics.play(attacker, scene, target);
    }

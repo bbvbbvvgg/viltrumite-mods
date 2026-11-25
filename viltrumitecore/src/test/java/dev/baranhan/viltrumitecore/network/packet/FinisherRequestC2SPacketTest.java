@@ -6,7 +6,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import org.junit.jupiter.api.Test;
 
-/** Wire round trip and the encode/decode clamps of the finisher request (wave1-22 T6). */
+/** Wire round trip of the finisher request (wave1-22 T6): the target id is never rewritten. */
 class FinisherRequestC2SPacketTest {
    private static FinisherRequestC2SPacket roundTrip(int targetId) {
       FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -21,33 +21,36 @@ class FinisherRequestC2SPacketTest {
    }
 
    @Test
-   void roundTripKeepsTheTargetId() {
-      assertEquals(42, roundTrip(42).targetId);
-      assertEquals(0, roundTrip(0).targetId);
-      assertEquals(FinisherRequestC2SPacket.MAX_ENTITY_ID, roundTrip(FinisherRequestC2SPacket.MAX_ENTITY_ID).targetId);
+   void everyIdDozensOutExactlyAsItCameIn() {
+      for (int id : new int[] {0, 42, 0xFFFFF, 0x100000, 1_000_000_000, Integer.MAX_VALUE, -7, Integer.MIN_VALUE}) {
+         assertEquals(id, roundTrip(id).targetId, "id " + id + " must not be clamped or rewritten");
+      }
    }
 
    @Test
-   void hostileIdsAreClampedOnEncode() {
-      assertEquals(0, new FinisherRequestC2SPacket(-7).targetId);
-      assertEquals(FinisherRequestC2SPacket.MAX_ENTITY_ID, new FinisherRequestC2SPacket(Integer.MAX_VALUE).targetId);
-      assertEquals(0, roundTrip(-7).targetId);
+   void anIdPastTheOldCeilingStillReachesTheServer() {
+      // A long-lived server outgrows any ceiling we could pick; clamping here would retarget the
+      // request at whatever body owns the clamped id. The level, not the packet, decides what exists.
+      assertEquals(4_000_000, roundTrip(4_000_000).targetId);
    }
 
    @Test
-   void hostileIdsAreClampedOnDecode() {
+   void aHugeIdFromTheWireIsKeptAsItIs() {
       FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
       try {
-         buf.writeVarInt(-9);
-         assertEquals(0, new FinisherRequestC2SPacket(buf).targetId);
+         buf.writeVarInt(Integer.MAX_VALUE);
+         assertEquals(Integer.MAX_VALUE, new FinisherRequestC2SPacket(buf).targetId);
       } finally {
          buf.release();
       }
+   }
 
-      buf = new FriendlyByteBuf(Unpooled.buffer());
+   @Test
+   void aNegativeIdFromTheWireIsKeptAsItIs() {
+      FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
       try {
-         buf.writeVarInt(Integer.MAX_VALUE);
-         assertEquals(FinisherRequestC2SPacket.MAX_ENTITY_ID, new FinisherRequestC2SPacket(buf).targetId);
+         buf.writeVarInt(-9);
+         assertEquals(-9, new FinisherRequestC2SPacket(buf).targetId);
       } finally {
          buf.release();
       }
