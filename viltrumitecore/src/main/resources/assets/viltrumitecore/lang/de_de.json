@@ -40,6 +40,8 @@
   "key.viltrumitecore.dashboard": "Übersicht",
   "key.viltrumitecore.skip_cinematic": "Filmsequenz überspringen",
   "hud.viltrumitecore.cinematic.skip": "[%s] Szene überspringen",
+  "key.viltrumitecore.finisher": "Hinrichtung",
+  "hud.viltrumitecore.finisher.hint": "[%s] Hinrichten",
   "gui.viltrumitecore.npc_spawner.title": "NPC-Spawner",
   "gui.viltrumitecore.npc_spawner.spawn": "Spawnen",
   "gui.viltrumitecore.npc_spawner.name": "Name",

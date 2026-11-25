@@ -40,6 +40,8 @@
   "key.viltrumitecore.dashboard": "控制面板",
   "key.viltrumitecore.skip_cinematic": "跳过过场动画",
   "hud.viltrumitecore.cinematic.skip": "[%s] 跳过场景",
+  "key.viltrumitecore.finisher": "终结技",
+  "hud.viltrumitecore.finisher.hint": "[%s] 终结",
   "gui.viltrumitecore.npc_spawner.title": "NPC 生成器",
   "gui.viltrumitecore.npc_spawner.spawn": "生成",
   "gui.viltrumitecore.npc_spawner.name": "名称",

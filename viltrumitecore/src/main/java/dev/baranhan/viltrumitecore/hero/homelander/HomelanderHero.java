@@ -85,6 +85,12 @@ public class HomelanderHero implements HeroDefinition {
       return true;
    }
 
+   /** Finisher (wave1-22 T6): the flagship Viltrumite's execution, a carry-and-drop. */
+   @Override
+   public net.minecraft.resources.ResourceLocation finisherScene(Player player) {
+      return dev.baranhan.viltrumitecore.combat.finisher.FinisherScenes.HOMELANDER;
+   }
+
    @Override
    public boolean ownsAbility(String abilityId) {
       return HomelanderAbilities.owns(abilityId);

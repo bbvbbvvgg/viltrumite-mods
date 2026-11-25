@@ -244,8 +244,9 @@ class HeroRosterIntegrationTest {
          "Venom's host takeover packets append after Ghost Rider's (v30)");
       assertEquals(List.of("Scp106S2CPacket"), packets.subList(punch + 15, punch + 16),
          "the SCP-106 packet appends after Venom's (v31)");
-      assertEquals(List.of("FeelS2CPacket", "CinematicS2CPacket"), packets.subList(punch + 16, packets.size()),
-         "the cinematic camera packet appends last, after the feel packet (v32)");
+      assertEquals(List.of("FeelS2CPacket", "CinematicS2CPacket", "FinisherRequestC2SPacket"),
+         packets.subList(punch + 16, packets.size()),
+         "the finisher request appends last, after the cinematic camera packet (v32)");
    }
 
    @Test
