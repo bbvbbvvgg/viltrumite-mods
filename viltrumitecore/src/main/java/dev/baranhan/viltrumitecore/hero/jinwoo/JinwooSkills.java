@@ -1,12 +1,12 @@
 package dev.baranhan.viltrumitecore.hero.jinwoo;
 
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowKind;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowMode;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import dev.baranhan.viltrumitecore.hero.SafeSpot;
-import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import dev.baranhan.viltrumitecore.hero.speech.HeroSpeech;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,11 +123,8 @@ public final class JinwooSkills {
          } else {
             victims.addAll(JinwooTargets.around(player, player.position().add(0, 1, 0), JinwooRules.RUSH_SELF_RADIUS, e -> JinwooCombat.mayHit(player, e)));
          }
-         int[] ids = new int[victims.size() + 1];
-         int n = 0;
          for (LivingEntity v : victims) {
-            if (JinwooCombat.strike(player, state, v, JinwooRules.RUSH_FINAL, true, 2)) {
-               ids[n++] = v.getId();
+            if (JinwooCombat.strike(player, state, v, JinwooRules.RUSH_FINAL, true, 2, HitWeight.CRUSHING)) {
                if (HeroRegistry.allowsImpulse(v)) {
                   Vec3 d = v.position().subtract(player.position());
                   Vec3 h = new Vec3(d.x, 0, d.z);
@@ -137,8 +134,6 @@ public final class JinwooSkills {
                }
             }
          }
-         ids[n++] = player.getId();
-         HeroFx.hitStop(player, player.position(), 3, java.util.Arrays.copyOf(ids, n));
          JinwooSounds.play(player, JinwooSounds.FINISHER, 1.0F, 0.9F);
       }
    }
@@ -418,15 +413,12 @@ public final class JinwooSkills {
          }
       }
       if (t == JinwooRules.CHARGE_TICKS) {
-         List<Integer> ids = new ArrayList<>();
          for (LivingEntity e : JinwooTargets.around(player, origin.add(dir.scale(JinwooRules.CHARGE_LENGTH_BLOCKS * 0.5)), JinwooRules.CHARGE_LENGTH_BLOCKS * 0.6,
             e -> JinwooCombat.mayHit(player, e))) {
-            if (state.hit.contains(e.getUUID()) && corridor(origin, dir, e.position()) && JinwooCombat.strike(player, state, e, JinwooRules.CHARGE_FINISH, true, 2)) {
-               ids.add(e.getId());
+            if (state.hit.contains(e.getUUID()) && corridor(origin, dir, e.position())) {
+               JinwooCombat.strike(player, state, e, JinwooRules.CHARGE_FINISH, true, 2, HitWeight.CRUSHING);
             }
          }
-         ids.add(player.getId());
-         HeroFx.hitStop(player, player.position(), 2, ids.stream().mapToInt(Integer::intValue).toArray());
          JinwooSounds.play(player, JinwooSounds.FINISHER, 1.0F, 0.8F);
          endCharge(player, state);
       }

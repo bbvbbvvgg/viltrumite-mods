@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.reinhard.ability;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,6 +24,11 @@ public final class Strikes {
          target.invulnerableTime = saved;
          return false;
       }
+
+      // wave1-22: the landed strike feels its weight. Reinhard keeps its authored hit-stop
+      // (MeleeImpact per move, and the first body of the ordinary melee never reaches this seam),
+      // so CombatFeel adds the weight shake, impact frame and ring only.
+      CombatFeel.hit(player, target, HitWeight.forDamage(damage), false);
 
       return true;
    }

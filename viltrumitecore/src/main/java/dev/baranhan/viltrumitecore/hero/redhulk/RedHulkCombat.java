@@ -72,14 +72,13 @@ public final class RedHulkCombat {
       }
    }
 
-   /** Contact of a combo move: arc hits, heat, hit-stop on the heavy ones, the hammer's ground wave. */
+   /** Contact of a combo move: arc hits, heat, the weight feel (CombatFeel) and the hammer's ground wave. */
    static void comboContact(ServerPlayer player, RedHulkState state, RedHulkMove move) {
       int step = move.comboStep();
       List<LivingEntity> targets = RedHulkTargets.arc(player, RedHulkRules.REACH, RedHulkRules.ARC_DEGREES, e -> RedHulkTargets.mayHit(player, e));
       float damage = RedHulkRules.COMBO_DAMAGE[step];
       Vec3 look = RedHulkTargets.flat(player.getLookAngle());
       int landed = 0;
-      int[] ids = new int[Math.min(8, targets.size()) + 1];
       for (LivingEntity t : targets) {
          if (move != RedHulkMove.HAMMER && landed >= 2) {
             break; // a punch carries through two bodies at most
@@ -87,7 +86,6 @@ public final class RedHulkCombat {
          if (!state.hit.add(t.getId()) || !RedHulkTargets.strike(player, t, damage)) {
             continue;
          }
-         if (landed < ids.length - 1) ids[landed] = t.getId();
          landed++;
          Vec3 at = RedHulkTargets.center(t);
          RedHulkFx.send(player, RedHulkFx.PUNCH, at, player.getEyePosition(), RedHulkFx.scale(state.heat, step >= 3 ? 1.3F : 1.0F), null, 0);
@@ -121,13 +119,6 @@ public final class RedHulkCombat {
       if (landed > 0) {
          state.addHeat(RedHulkRules.COMBO_HEAT[step] + RedHulkRules.HEAT_PER_EXTRA_TARGET * (landed - 1));
          state.idle = 0;
-         if (step >= 3) {
-            int n = Math.min(landed, ids.length - 1);
-            ids[n] = player.getId();
-            int[] all = new int[n + 1];
-            System.arraycopy(ids, 0, all, 0, n + 1);
-            HeroFx.hitStop(player, player.position(), RedHulkRules.HIT_STOP_HEAVY, all);
-         }
       }
    }
 

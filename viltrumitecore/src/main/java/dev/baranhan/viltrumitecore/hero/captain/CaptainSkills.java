@@ -226,14 +226,11 @@ public final class CaptainSkills {
       boolean shield = state.shieldInHand();
       float damage = shield ? CaptainRules.RUSH_BASH_DAMAGE : CaptainRules.RUSH_TACKLE_DAMAGE;
       Vec3 dir = state.moveDir;
-      int[] ids = new int[Math.min(6, hit.size()) + 1];
-      int n = 0;
       for (LivingEntity t : CaptainTargets.around(player, player.position().add(dir.scale(1.2)).add(0, 0.9, 0), 2.0,
          e -> CaptainTargets.mayHit(player, e))) {
          if (!state.hit.add(t.getId()) || !CaptainTargets.strike(player, t, damage)) {
             continue;
          }
-         if (n < ids.length - 1) ids[n++] = t.getId();
          CaptainTargets.push(t, dir.scale(1.25).add(0, 0.35, 0));
          if (shield) {
             CaptainTargets.stun(player, t, CaptainRules.RUSH_STUN);
@@ -245,12 +242,6 @@ public final class CaptainSkills {
       CaptainFx.around(player, CaptainFx.CONTACT, 4, at, player.getEyePosition());
       CaptainSounds.playAt(player, at, CaptainSounds.RUSH_HIT, 1.0F, 1.0F);
       CaptainFx.motion(player, dir.scale(-0.1), 2, true);
-      if (n > 0) {
-         ids[n++] = player.getId();
-         int[] all = new int[n];
-         System.arraycopy(ids, 0, all, 0, n);
-         HeroFx.hitStop(player, at, 2, all);
-      }
       state.start(CaptainMove.RUSH_BASH);
       state.rushFollow = CaptainRules.RUSH_FOLLOW_WINDOW;
    }

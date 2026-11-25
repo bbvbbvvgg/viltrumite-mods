@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.jinwoo;
 
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
@@ -37,6 +39,11 @@ public final class JinwooCombat {
 
    /** One dagger hit. {@code clean} ignores invulnerability frames (Mutilation). Returns true when it landed. */
    public static boolean strike(ServerPlayer player, JinwooState state, LivingEntity target, float damage, boolean clean, int blade) {
+      return strike(player, state, target, damage, clean, blade, HitWeight.forDamage(damage));
+   }
+
+   /** As {@link #strike(ServerPlayer, JinwooState, LivingEntity, float, boolean, int)} with an explicit feel weight. */
+   public static boolean strike(ServerPlayer player, JinwooState state, LivingEntity target, float damage, boolean clean, int blade, HitWeight weight) {
       DamageSource source = player.damageSources().playerAttack(player);
       boolean landed;
       if (clean) {
@@ -55,6 +62,7 @@ public final class JinwooCombat {
          Vec3 at = target.getBoundingBox().getCenter();
          JinwooFx.around(player, JinwooFx.CONTACT, blade, at, player.getEyePosition());
          JinwooSounds.playAt(player, at, JinwooSounds.DAGGER_HIT, 0.9F, 0.9F + player.getRandom().nextFloat() * 0.25F);
+         CombatFeel.hit(player, target, weight);
       }
       return landed;
    }
@@ -143,14 +151,11 @@ public final class JinwooCombat {
          case COMBO_2, AIR_2 -> 1;
          default -> 2;
       };
-      int[] ids = new int[Math.min(8, targets.size())];
-      int n = 0;
       for (LivingEntity t : targets) {
          if (!state.hit.add(t.getUUID())) {
             continue;
          }
          if (strike(player, state, t, damage, false, blade)) {
-            if (n < ids.length) ids[n++] = t.getId();
             if (move == JinwooMove.LOW_SWEEP) {
                t.addEffect(hidden(MobEffects.MOVEMENT_SLOWDOWN, JinwooRules.LOW_SLOW_TICKS, 1));
             }
@@ -159,12 +164,6 @@ public final class JinwooCombat {
                t.hurtMarked = true;
             }
          }
-      }
-      if (move == JinwooMove.COMBO_5 && n > 0) {
-         int[] all = new int[n + 1];
-         System.arraycopy(ids, 0, all, 0, n);
-         all[n] = player.getId();
-         HeroFx.hitStop(player, player.position(), JinwooRules.FINISHER_HIT_STOP, all);
       }
    }
 

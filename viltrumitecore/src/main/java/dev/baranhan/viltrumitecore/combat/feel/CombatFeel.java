@@ -31,13 +31,23 @@ public final class CombatFeel {
    private CombatFeel() {
    }
 
-   /** A landed hit of the given weight. Server side only; client calls are ignored. */
+   /** A landed hit of the given weight: shake, manga impact frame, air ring and the weight hit-stop. */
    public static void hit(Entity attacker, Entity target, HitWeight weight) {
+      hit(attacker, target, weight, true);
+   }
+
+   /**
+    * As {@link #hit(Entity, Entity, HitWeight)} but with the hit-stop optional. A seam that already
+    * owns an authored hit-stop for the same landed hit (Thor's launch timing, Reinhard's melee
+    * first body) passes {@code false} and keeps its single source; the shake, the impact frame and
+    * the ring are always sent.
+    */
+   public static void hit(Entity attacker, Entity target, HitWeight weight, boolean withHitStop) {
       if (attacker == null || target == null || weight == null || !(target.level() instanceof ServerLevel level)) {
          return;
       }
       Vec3 at = target.position().add(0.0, target.getBbHeight() * 0.6, 0.0);
-      if (weight.hitStopTicks > 0 && attacker instanceof ServerPlayer player) {
+      if (withHitStop && weight.hitStopTicks > 0 && attacker instanceof ServerPlayer player) {
          int ticks = Math.min(weight.hitStopTicks, HeroFx.PRESET_MAX_HIT_STOP);
          if (attacker == target) {
             HeroFx.hitStop(player, at, ticks, target.getId());

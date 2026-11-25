@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.hero.ghostrider;
 
 import dev.baranhan.viltrumitecore.balance.CombatBalance;
+import dev.baranhan.viltrumitecore.combat.feel.CombatFeel;
+import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.Bystander;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
 import dev.baranhan.viltrumitecore.hero.HeroRegistry;
@@ -159,7 +161,12 @@ public final class GhostRiderTargets {
    /** One blow through the player's melee source; ignores i-frames. */
    public static boolean strike(ServerPlayer attacker, LivingEntity target, float damage) {
       target.invulnerableTime = 0;
-      return target.hurt(attacker.damageSources().playerAttack(attacker), damage);
+      boolean landed = target.hurt(attacker.damageSources().playerAttack(attacker), damage);
+      if (landed) {
+         CombatFeel.hit(attacker, target, HitWeight.forDamage(damage));
+      }
+
+      return landed;
    }
 
    /** Push a target (honours hero control rules, anchors and knockback resistance). */

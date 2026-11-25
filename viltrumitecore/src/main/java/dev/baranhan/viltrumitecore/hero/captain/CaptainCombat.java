@@ -135,7 +135,6 @@ public final class CaptainCombat {
          default -> 0;
       };
       Vec3 look = flat(player.getLookAngle());
-      int[] ids = new int[Math.min(8, targets.size()) + 1];
       int n = 0;
       for (LivingEntity t : targets) {
          if (!state.hit.add(t.getId())) {
@@ -144,7 +143,7 @@ public final class CaptainCombat {
          if (!CaptainTargets.strike(player, t, damage)) {
             continue;
          }
-         if (n < ids.length - 1) ids[n++] = t.getId();
+         n++;
          state.kinetic = CaptainRules.gain(state.kinetic, CaptainRules.GAIN_COMBO);
          state.kineticIdle = 0;
          Vec3 at = t.getBoundingBox().getCenter();
@@ -180,12 +179,6 @@ public final class CaptainCombat {
          }
          CaptainFx.around(player, CaptainFx.FINISHER, 0, at, new Vec3(CaptainRules.FINISHER_RADIUS, 0, 0));
          CaptainSounds.playAt(player, at, CaptainSounds.FINISHER, 1.0F, 1.0F);
-      }
-      if ((move == CaptainMove.SHIELD_4 || move == CaptainMove.COUNTER) && n > 0) {
-         ids[n++] = player.getId();
-         int[] all = new int[n];
-         System.arraycopy(ids, 0, all, 0, n);
-         HeroFx.hitStop(player, player.position(), 3, all);
       }
       if (move == CaptainMove.COUNTER && n > 0) {
          CaptainSounds.play(player, CaptainSounds.COUNTER, 1.0F, 1.0F);
