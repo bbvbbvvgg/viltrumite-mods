@@ -66,7 +66,10 @@ public final class VenomTargets {
       DamageSource source = attacker instanceof Player p ? attacker.damageSources().playerAttack(p) : attacker.damageSources().mobAttack(attacker);
       boolean landed = target.hurt(source, damage);
       if (landed) {
-         CombatFeel.hit(attacker, target, HitWeight.forDamage(damage));
+         // wave1-22: Venom's per-hit preset FX (CLAW / SLAM, grab STICK/WEB) already carry the
+         // authored hit-stop for this same blow, so CombatFeel adds the weight shake, impact frame
+         // and ring only — one hit-stop source per hit.
+         CombatFeel.hit(attacker, target, HitWeight.forDamage(damage), false);
       }
 
       return landed;

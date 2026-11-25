@@ -28,6 +28,9 @@ public final class CombatFeel {
    public static final double WAVE_RANGE = 64.0;
    public static final int WAVE_TICKS = 14;
 
+   /** One fan-out of shake / impact frame / ring per attacker per tick (an area hit calls {@link #hit} per body). */
+   private static final FeelFanout FANOUT = new FeelFanout();
+
    private CombatFeel() {
    }
 
@@ -39,8 +42,10 @@ public final class CombatFeel {
    /**
     * As {@link #hit(Entity, Entity, HitWeight)} but with the hit-stop optional. A seam that already
     * owns an authored hit-stop for the same landed hit (Thor's launch timing, Reinhard's melee
-    * first body) passes {@code false} and keeps its single source; the shake, the impact frame and
-    * the ring are always sent.
+    * first body, an FX preset with its own stop) passes {@code false} and keeps its single source.
+    * The shake, the impact frame and the ring are sent at most once per attacker per server tick,
+    * so an area hit that strikes many bodies does not fire the shared effects once per body; the
+    * hit-stop is still per body.
     */
    public static void hit(Entity attacker, Entity target, HitWeight weight, boolean withHitStop) {
       if (attacker == null || target == null || weight == null || !(target.level() instanceof ServerLevel level)) {
@@ -54,6 +59,9 @@ public final class CombatFeel {
          } else {
             HeroFx.hitStop(player, at, ticks, attacker.getId(), target.getId());
          }
+      }
+      if (!FANOUT.admit(attacker.getId(), level.getGameTime())) {
+         return;
       }
       shake(level, at, weight.shake, weight.trauma, SHAKE_RANGE);
       if (weight.impactFrame) {

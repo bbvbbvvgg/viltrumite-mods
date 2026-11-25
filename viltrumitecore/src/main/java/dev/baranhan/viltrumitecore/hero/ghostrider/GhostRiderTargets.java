@@ -163,7 +163,10 @@ public final class GhostRiderTargets {
       target.invulnerableTime = 0;
       boolean landed = target.hurt(attacker.damageSources().playerAttack(attacker), damage);
       if (landed) {
-         CombatFeel.hit(attacker, target, HitWeight.forDamage(damage));
+         // wave1-22: the Ghost Rider's per-hit preset FX (PUNCH / LASH / HOOK) already carry the
+         // authored hit-stop for this same blow, so CombatFeel adds the weight shake, impact frame
+         // and ring only — one hit-stop source per hit.
+         CombatFeel.hit(attacker, target, HitWeight.forDamage(damage), false);
       }
 
       return landed;

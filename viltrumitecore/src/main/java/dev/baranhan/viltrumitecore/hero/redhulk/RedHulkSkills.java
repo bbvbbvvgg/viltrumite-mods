@@ -235,8 +235,7 @@ public final class RedHulkSkills {
       }
       player.clearFire();
       state.addHeat(RedHulkRules.CLAP_HEAT + RedHulkRules.CLAP_HEAT_PER_TARGET * Math.min(4, n));
-      RedHulkFx.send(player, RedHulkFx.CLAP, hands, hands.add(look.scale(RedHulkRules.CLAP_REACH)), RedHulkFx.scale(state.heat, 1.0F), null,
-         n > 0 ? 2 : 0, player.getId());
+      RedHulkFx.send(player, RedHulkFx.CLAP, hands, hands.add(look.scale(RedHulkRules.CLAP_REACH)), RedHulkFx.scale(state.heat, 1.0F), null, 0);
       RedHulkSounds.playAt(player, hands, RedHulkSounds.CLAP, RedHulkSounds.heatVolume(state.heat, 1.5F), RedHulkSounds.heatPitch(state.heat, 1.0F));
    }
 
@@ -247,8 +246,7 @@ public final class RedHulkSkills {
          RedHulkRules.SEISMIC_STUN);
       erupt(player, SEISMIC_CRATER);
       state.addHeat(RedHulkRules.SEISMIC_HEAT);
-      RedHulkFx.send(player, RedHulkFx.SEISMIC, c, RedHulkFx.radius(c, RedHulkRules.SEISMIC_RADIUS), RedHulkFx.scale(state.heat, 1.0F), ground(player),
-         3, player.getId());
+      RedHulkFx.send(player, RedHulkFx.SEISMIC, c, RedHulkFx.radius(c, RedHulkRules.SEISMIC_RADIUS), RedHulkFx.scale(state.heat, 1.0F), ground(player), 0);
       RedHulkSounds.playAt(player, c, RedHulkSounds.SEISMIC, RedHulkSounds.heatVolume(state.heat, 1.8F), RedHulkSounds.heatPitch(state.heat, 1.0F));
    }
 
@@ -277,7 +275,7 @@ public final class RedHulkSkills {
       impact(player, state, c, r, RedHulkRules.LEAP_DAMAGE * (float)k, RedHulkRules.LEAP_EDGE_DAMAGE, RedHulkRules.LEAP_LIFT, 8);
       erupt(player, LEAP_CRATER.scaled(k));
       state.addHeat(RedHulkRules.LEAP_HEAT);
-      RedHulkFx.send(player, RedHulkFx.LEAP_LAND, c, RedHulkFx.radius(c, r), RedHulkFx.scale(state.heat, (float)k), ground(player), 3, player.getId());
+      RedHulkFx.send(player, RedHulkFx.LEAP_LAND, c, RedHulkFx.radius(c, r), RedHulkFx.scale(state.heat, (float)k), ground(player), 0);
       RedHulkSounds.play(player, RedHulkSounds.LEAP_LAND, RedHulkSounds.heatVolume(state.heat, 1.8F), RedHulkSounds.heatPitch(state.heat, 1.0F));
       player.resetFallDistance();
    }
@@ -332,7 +330,7 @@ public final class RedHulkSkills {
       state.heat = 0;
       state.fury = 0;
       Vec3 at = chest(player);
-      RedHulkFx.send(player, RedHulkFx.ULT_RELEASE, at, RedHulkFx.radius(at, r), 1.0F, ground(player), 5, player.getId());
+      RedHulkFx.send(player, RedHulkFx.ULT_RELEASE, at, RedHulkFx.radius(at, r), 1.0F, ground(player), 0);
       RedHulkSounds.play(player, RedHulkSounds.ULT_RELEASE, 3.0F, 1.0F);
    }
 
