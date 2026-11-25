@@ -1,6 +1,8 @@
 package dev.baranhan.viltrumitecore.hero.homelander;
 
 import dev.baranhan.viltrumitecore.ViltrumiteCore;
+import dev.baranhan.viltrumitecore.combat.feel.CinematicUltimates;
+import dev.baranhan.viltrumitecore.combat.feel.Cinematics;
 import dev.baranhan.viltrumitecore.hero.fx.HeroFx;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -67,6 +69,7 @@ public final class Roar {
 
       state.roarCooldown = HomelanderRules.ROAR_COOLDOWN;
       state.roarAnim = ANIM_TICKS;
+      Cinematics.play(player, CinematicUltimates.HOMELANDER_ROAR, null);
       Vec3 eye = player.getEyePosition();
       Vec3 look = player.getLookAngle();
       player.level().playSound(null, player.getX(), player.getEyeY(), player.getZ(), ViltrumiteCore.HOMELANDER_ROAR.get(), SoundSource.PLAYERS, 2.0F, 1.0F);

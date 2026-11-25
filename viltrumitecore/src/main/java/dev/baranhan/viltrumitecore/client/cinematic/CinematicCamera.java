@@ -29,6 +29,14 @@ import net.minecraftforge.event.level.LevelEvent;
  * Client thread only.
  */
 public final class CinematicCamera {
+   /**
+    * Tick-ends a scene waits before it takes the view. A hero's own camera learns about its scene from
+    * the synced hero snapshot, which can reach the client one tick after our packet (Jinwoo's Arise
+    * reads {@code JinwooView.of(p)}), and the END-phase handler order between its tick and ours is not
+    * defined, so the window is left a tick wider than the snapshot alone needs. The check ages the
+    * scene before it looks, so the shot starts on the third tick-end after the packet (~150 ms).
+    */
+   private static final int GRACE_TICKS = 2;
    @Nullable
    private static Marker camera;
    /** The JSON scene being played, or {@code null} when the built-in orbit is (see {@link #orbit}). */
@@ -43,6 +51,11 @@ public final class CinematicCamera {
    private static float duration;
    private static float clock;
    private static boolean reduced;
+   /** A scene that arrived but has not taken the view yet (see the tick of grace in {@link #play}). */
+   @Nullable
+   private static CinematicS2CPacket pending;
+   /** Tick-ends survived so far; the check ages the scene before it looks, so it takes the view on the tick after {@link #GRACE_TICKS}. */
+   private static int pendingAge;
 
    private CinematicCamera() {
    }
@@ -70,18 +83,33 @@ public final class CinematicCamera {
       return active() && scene != null ? scene.clockRate(reduced) : 1.0F;
    }
 
-   /** Packet entry: start the scene, unless the player's comfort settings or another camera say no. */
+   /**
+    * Packet entry: queue the scene for {@link #GRACE_TICKS} tick-ends, unless the player's comfort
+    * settings or another camera say no. The grace is not decoration: a hero's own scene takes the view
+    * from the synced hero snapshot and may do so on a later tick than this packet. Capturing first
+    * would force FIRST_PERSON and let that hero scene save the forced type as the perspective it
+    * restores at the end (Jinwoo's Arise does exactly that), so we wait and let the hero camera win.
+    */
    public static void play(CinematicS2CPacket packet) {
-      Minecraft mc = Minecraft.getInstance();
+      if (!mayTake(Minecraft.getInstance(), packet)) {
+         return;
+      }
+      pending = packet;
+      pendingAge = 0;
+   }
+
+   /** Is this scene ours to play: comfort settings, opt-in and no other hero's camera on the view. */
+   private static boolean mayTake(Minecraft mc, CinematicS2CPacket packet) {
       if (mc.level == null || mc.player == null || mc.screen != null) {
-         return;
+         return false;
       }
-      boolean isCaster = packet.casterId == mc.player.getId();
-      boolean otherOwner = otherCameraOwnerActive(mc);
-      if (!CinematicVisibility.shouldPlay(isCaster, CinematicSettings.get().watchOthers(),
-            CinematicSettings.get().cinematicCameraEnabled(), otherOwner)) {
-         return;
-      }
+      return CinematicVisibility.shouldPlay(packet.casterId == mc.player.getId(),
+         CinematicSettings.get().watchOthers(), CinematicSettings.get().cinematicCameraEnabled(),
+         otherCameraOwnerActive(mc));
+   }
+
+   /** Takes the view for an accepted packet: the focus frame, the scene and the camera entity. */
+   private static void begin(Minecraft mc, CinematicS2CPacket packet) {
       Entity focusEntity = mc.level.getEntity(packet.focusId);
       reduced = CinematicSettings.get().reducedMotion();
       focus = focusEntity != null ? focusEntity.position() : mc.player.position();
@@ -157,6 +185,7 @@ public final class CinematicCamera {
    public static void release(Minecraft mc) {
       scene = null;
       orbit = null;
+      pending = null;
       clock = 0.0F;
       duration = 0.0F;
       // The camera entity goes back to the player only while it is still ours: if another owner
@@ -179,6 +208,18 @@ public final class CinematicCamera {
          return;
       }
       Minecraft mc = Minecraft.getInstance();
+      if (pending != null) {
+         if (pendingAge >= GRACE_TICKS) {
+            CinematicS2CPacket packet = pending;
+            pending = null;
+            // Asked again after the grace: a hero's own scene may have claimed the view meanwhile.
+            if (mayTake(mc, packet)) {
+               begin(mc, packet);
+            }
+         } else {
+            pendingAge++;
+         }
+      }
       if (!active()) {
          // No scene: the skip key must not build up a queue that would kill the next scene at once.
          drainSkipKey();
