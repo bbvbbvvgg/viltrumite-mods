@@ -89,6 +89,22 @@ public final class CinematicSettings {
       return GSON.toJson(this);
    }
 
+   /** An independent copy, so a settings screen can edit a pending copy before writing it back. */
+   public CinematicSettings copy() {
+      CinematicSettings copy = new CinematicSettings();
+      copy.copyFrom(this);
+      return copy;
+   }
+
+   /** Copies every field from {@code other} into this instance (the pending-to-live write-back). */
+   public void copyFrom(CinematicSettings other) {
+      this.reduceCameraMotion = other.reduceCameraMotion;
+      this.disableCinematicCamera = other.disableCinematicCamera;
+      this.watchOthersCinematics = other.watchOthersCinematics;
+      this.impactFrames = other.impactFrames;
+      this.flashIntensity = other.flashIntensity;
+   }
+
    private static File file() {
       return new File(FMLPaths.CONFIGDIR.get().toFile(), FILE_NAME);
    }

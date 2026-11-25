@@ -79,6 +79,37 @@ class CinematicSettingsTest {
    }
 
    @Test
+   void copyIsIndependentAndCopyFromWritesBack() {
+      CinematicSettings live = new CinematicSettings();
+      live.reduceCameraMotion = true;
+      live.flashIntensity = 0.25F;
+
+      CinematicSettings pending = live.copy();
+      assertTrue(pending.reduceCameraMotion);
+      assertEquals(0.25F, pending.flashIntensity, 0.0F);
+
+      // editing the pending copy must not touch the live instance (the settings screen contract)
+      pending.reduceCameraMotion = false;
+      pending.disableCinematicCamera = true;
+      pending.watchOthersCinematics = true;
+      pending.impactFrames = false;
+      pending.flashIntensity = 0.9F;
+      assertTrue(live.reduceCameraMotion);
+      assertFalse(live.disableCinematicCamera);
+      assertFalse(live.watchOthersCinematics);
+      assertTrue(live.impactFrames);
+      assertEquals(0.25F, live.flashIntensity, 0.0F);
+
+      // save writes the pending copy back into the live instance
+      live.copyFrom(pending);
+      assertFalse(live.reduceCameraMotion);
+      assertTrue(live.disableCinematicCamera);
+      assertTrue(live.watchOthersCinematics);
+      assertFalse(live.impactFrames);
+      assertEquals(0.9F, live.flashIntensity, 0.0F);
+   }
+
+   @Test
    void gettersReflectTheFields() {
       CinematicSettings s = new CinematicSettings();
       assertTrue(s.cinematicCameraEnabled());
