@@ -813,5 +813,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.check.arms": "SERVOS DE BRAZOS ..... EN LÍNEA",
   "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "BLINDAJE DE HOMBROS ..... FIJADO",
   "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "ENLACE DEL CASCO ..... EN LÍNEA",
-  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: TODOS LOS SISTEMAS LISTOS"
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: TODOS LOS SISTEMAS LISTOS",
+  "gui.viltrumitecore.config.cinematic": "Ajustes de combate cinematográfico",
+  "gui.viltrumitecore.config.cinematic.title": "Ajustes de combate cinematográfico (cliente)",
+  "gui.viltrumitecore.config.cinematic.reduce_motion": "Menos movimiento de cámara: %s",
+  "gui.viltrumitecore.config.cinematic.disable_camera": "Sin cámara cinematográfica: %s",
+  "gui.viltrumitecore.config.cinematic.watch_others": "Ver escenas de otros: %s",
+  "gui.viltrumitecore.config.cinematic.impact_frames": "Fotogramas de impacto: %s",
+  "gui.viltrumitecore.config.cinematic.flash": "Intensidad del destello: %s"
 }

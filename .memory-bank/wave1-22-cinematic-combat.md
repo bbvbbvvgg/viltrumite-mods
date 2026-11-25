@@ -117,3 +117,14 @@ Order: T1 and T2 are independent; T3 needs T2; T4 needs T1+T3; T5 needs T3+T4; T
 
 - The mines above are grep-verified at `704db00a`: `CombatFeel` has no call site; `CinematicSettings.disableCinematicCamera`/`watchOthersCinematics` have no reader; `assets/viltrumitecore/cinematics/` does not exist; no `Cinematics`/`CameraPath`/`CinematicCamera` class exists.
 - Slice 1 is a plumbing slice. It is green and shippable, but it changes no gameplay until T1/T5 wire `CombatFeel`/`Cinematics`.
+
+## T2 — настройки комфорта (2026-11-25)
+
+- `CinematicSettings.load()` теперь вызывается в `ViltrumiteCoreClient.onClientSetup` рядом с остальными тремя конфигами: файл `config/viltrumitecore_cinematic.json` создаётся детерминированно при старте, а не лениво при первом толчке камеры.
+- Публичные читатели: `cinematicCameraEnabled()` (= !disableCinematicCamera), `watchOthers()` (= watchOthersCinematics), `reducedMotion()`, `impactFramesEnabled()`, плюс существующие `motionScale()`, `flash()`. Код кинокамеры слоя 2 зовёт их вместо прямого чтения полей.
+- Читатель камеры называется `cinematicCameraEnabled()` (в плане аудита — `enabledCamera()`; прав код).
+- Сериализация вынесена в чистые `CinematicSettings.read(String)` / `write()` (Gson), чтобы юнит-тесту не требовались Minecraft-классы и CONFIGDIR. `load()`/`save()` работают через них же.
+- Экран `client/gui/config/CinematicConfigScreen` (образец — `PostProcessConfigScreen` + toggle-стиль `ClientConfigScreen`) правит все 5 полей: 4 переключателя ON/OFF и слайдер яркости 0..1; кнопка «Сохранить и назад» пишет файл. Вход — кнопка `gui.viltrumitecore.config.cinematic` в `ViltrumiteConfigScreen` (рядом с flight_camera).
+- Локализация: 7 ключей `gui.viltrumitecore.config.cinematic*` во всех 12 локалях `assets/viltrumitecore/lang/`; ru_ru/en_us — вручную, остальные переведены. Overlay не понадобился (ru_ru 62 KB; lang-overlays для этого ключа не нужен).
+- Тест `client/cinematic/CinematicSettingsTest`: round-trip всех полей, мусор/`null`/`{}` → дефолты без исключения, отсутствующие поля → дефолты, неизвестные поля игнорируются, зажим `flash()` в 0..1, геттеры совпадают с полями.
+- Слой 2 (`Cinematics`/`CinematicCamera`) отсутствует: `cinematicCameraEnabled()`/`watchOthers()` пока без читателей — держим API готовым, как требует план.

@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.mojang.logging.LogUtils;
 import dev.baranhan.viltrumitecore.combat.feel.FeelMath;
 import java.io.File;
-import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -48,8 +47,8 @@ public final class CinematicSettings {
       File file = file();
       CinematicSettings loaded = null;
       if (file.exists()) {
-         try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            loaded = GSON.fromJson(reader, CinematicSettings.class);
+         try {
+            loaded = read(Files.readString(file.toPath(), StandardCharsets.UTF_8));
          } catch (Exception e) {
             LOGGER.warn("Could not read {}, using defaults", FILE_NAME, e);
          }
@@ -63,10 +62,46 @@ public final class CinematicSettings {
    public static synchronized void save() {
       CinematicSettings current = instance == null ? new CinematicSettings() : instance;
       try (Writer writer = Files.newBufferedWriter(file().toPath(), StandardCharsets.UTF_8)) {
-         GSON.toJson(current, writer);
+         writer.write(current.write());
       } catch (Exception e) {
          LOGGER.warn("Could not save {}", FILE_NAME, e);
       }
+   }
+
+   /**
+    * File-independent serialisation, so a unit test can round-trip the settings without a config directory
+    * (and without Minecraft classes). A malformed document or an unknown shape falls back to the defaults; Gson
+    * drops unknown keys and uses the Java defaults for missing ones.
+    */
+   public static CinematicSettings read(String json) {
+      try {
+         CinematicSettings parsed = GSON.fromJson(json, CinematicSettings.class);
+         return parsed != null ? parsed : new CinematicSettings();
+      } catch (RuntimeException e) {
+         LOGGER.warn("Could not parse cinematic settings JSON, using defaults", e);
+         return new CinematicSettings();
+      }
+   }
+
+   /** File-independent serialisation; the counterpart of {@link #read(String)}. */
+   public String write() {
+      return GSON.toJson(this);
+   }
+
+   /** An independent copy, so a settings screen can edit a pending copy before writing it back. */
+   public CinematicSettings copy() {
+      CinematicSettings copy = new CinematicSettings();
+      copy.copyFrom(this);
+      return copy;
+   }
+
+   /** Copies every field from {@code other} into this instance (the pending-to-live write-back). */
+   public void copyFrom(CinematicSettings other) {
+      this.reduceCameraMotion = other.reduceCameraMotion;
+      this.disableCinematicCamera = other.disableCinematicCamera;
+      this.watchOthersCinematics = other.watchOthersCinematics;
+      this.impactFrames = other.impactFrames;
+      this.flashIntensity = other.flashIntensity;
    }
 
    private static File file() {
@@ -81,5 +116,25 @@ public final class CinematicSettings {
    /** Sanitised flash multiplier in 0..1. */
    public float flash() {
       return FeelMath.sane(this.flashIntensity, 1.0F);
+   }
+
+   /** True when the cinematic camera may fly (the scene keeps letterbox and slow-mo either way). */
+   public boolean cinematicCameraEnabled() {
+      return !this.disableCinematicCamera;
+   }
+
+   /** True when other players' scenes may take over this player's camera (opt-in). */
+   public boolean watchOthers() {
+      return this.watchOthersCinematics;
+   }
+
+   /** True when reduced camera motion is on (shake ×0.35, no roll, no FOV kick, no air rings). */
+   public boolean reducedMotion() {
+      return this.reduceCameraMotion;
+   }
+
+   /** True when inverted manga impact frames are on. */
+   public boolean impactFramesEnabled() {
+      return this.impactFrames;
    }
 }

@@ -100,6 +100,8 @@ public class ViltrumiteCoreClient {
          ViltrumiteCameraConfig.load();
          ViltrumitePostProcessingConfig.load();
          ViltrumiteClientConfig.load();
+         // Cinematic combat comfort settings (wave1-22, config/viltrumitecore_cinematic.json).
+         dev.baranhan.viltrumitecore.client.cinematic.CinematicSettings.load();
       });
    }
 
