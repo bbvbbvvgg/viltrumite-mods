@@ -2,6 +2,7 @@ package dev.baranhan.viltrumitecore.network.packet;
 
 import dev.baranhan.viltrumitecore.client.cinematic.CinematicCamera;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -29,7 +30,7 @@ public final class CinematicS2CPacket {
 
    public CinematicS2CPacket(int casterId, ResourceLocation sceneId, int focusId) {
       this.casterId = clampId(casterId);
-      this.sceneId = sceneId == null ? DEFAULT_SCENE_ID : sceneId;
+      this.sceneId = saneScene(sceneId);
       this.focusId = clampId(focusId);
    }
 
@@ -52,8 +53,21 @@ public final class CinematicS2CPacket {
       return Mth.clamp(id, 0, MAX_ENTITY_ID);
    }
 
+   /**
+    * A scene id the wire can carry: {@code null} or one longer than {@link #MAX_SCENE_ID_LENGTH} falls
+    * back to the built-in scene, so {@link #encode} can never throw on an id taken from a file name
+    * (T4's JSON scenes).
+    */
+   public static ResourceLocation saneScene(@Nullable ResourceLocation sceneId) {
+      if (sceneId == null || sceneId.toString().length() > MAX_SCENE_ID_LENGTH) {
+         return DEFAULT_SCENE_ID;
+      }
+      return sceneId;
+   }
+
    private static ResourceLocation readScene(FriendlyByteBuf buf) {
-      ResourceLocation id = ResourceLocation.tryParse(buf.readUtf(MAX_SCENE_ID_LENGTH));
-      return id == null ? DEFAULT_SCENE_ID : id;
+      // readUtf(maxLength) refuses an oversized frame before it allocates anything (maxLength * 3
+      // bytes) and tryParse returns null on a malformed id; both routes fall back to the default.
+      return saneScene(ResourceLocation.tryParse(buf.readUtf(MAX_SCENE_ID_LENGTH)));
    }
 }

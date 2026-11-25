@@ -49,4 +49,28 @@ class CinematicS2CPacketTest {
          buf.release();
       }
    }
+
+   /** A scene id at the wire limit survives; one over it falls back, so encode can never throw (T4's file-name ids). */
+   @Test
+   void aSceneIdAtTheLimitIsKeptAndOneOverItFallsBack() {
+      ResourceLocation atLimit = new ResourceLocation("a", "b".repeat(CinematicS2CPacket.MAX_SCENE_ID_LENGTH - 2));
+      assertEquals(CinematicS2CPacket.MAX_SCENE_ID_LENGTH, atLimit.toString().length());
+      assertEquals(atLimit, new CinematicS2CPacket(1, atLimit, 2).sceneId);
+
+      ResourceLocation over = new ResourceLocation("a", "b".repeat(CinematicS2CPacket.MAX_SCENE_ID_LENGTH - 1));
+      assertEquals(CinematicS2CPacket.MAX_SCENE_ID_LENGTH + 1, over.toString().length());
+      CinematicS2CPacket packet = new CinematicS2CPacket(1, over, 2);
+      assertEquals(CinematicS2CPacket.DEFAULT_SCENE_ID, packet.sceneId);
+      assertEquals(CinematicS2CPacket.DEFAULT_SCENE_ID, CinematicS2CPacket.saneScene(over));
+
+      FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+      try {
+         packet.encode(buf);
+         CinematicS2CPacket got = new CinematicS2CPacket(buf);
+         assertEquals(CinematicS2CPacket.DEFAULT_SCENE_ID, got.sceneId);
+         assertEquals(0, buf.readableBytes(), "decoder consumes exactly what the encoder wrote");
+      } finally {
+         buf.release();
+      }
+   }
 }

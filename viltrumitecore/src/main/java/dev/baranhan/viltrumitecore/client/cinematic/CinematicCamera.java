@@ -88,11 +88,16 @@ public final class CinematicCamera {
     */
    public static void release(Minecraft mc) {
       path = null;
+      // The camera entity goes back to the player only while it is still ours: if another owner
+      // replaced it, that camera is not ours to touch.
       if (camera != null && mc.getCameraEntity() == camera && mc.player != null) {
          mc.setCameraEntity(mc.player);
-         if (savedType != null) {
-            mc.options.setCameraType(savedType);
-         }
+      }
+      // A non-null savedType is the flag "we forced FIRST_PERSON when we took the view", so the
+      // player's own type always comes back — even when another owner has meanwhile replaced the
+      // camera entity. Otherwise the player would silently stay in first person for good.
+      if (savedType != null) {
+         mc.options.setCameraType(savedType);
       }
       savedType = null;
       camera = null;
