@@ -38,6 +38,7 @@
 "key.viltrumitecore.ability_menu": "Меню способностей",
 "key.viltrumitecore.ability_swap": "Смена способностей",
 "key.viltrumitecore.dashboard": "Панель управления",
+"key.viltrumitecore.skip_cinematic": "Пропустить сцену",
 "gui.viltrumitecore.npc_spawner.title": "Создание NPC",
 "gui.viltrumitecore.npc_spawner.spawn": "Создать",
 "gui.viltrumitecore.npc_spawner.name": "Имя",

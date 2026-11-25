@@ -38,6 +38,7 @@
   "key.viltrumitecore.ability_menu": "技能菜单",
   "key.viltrumitecore.ability_swap": "技能切换",
   "key.viltrumitecore.dashboard": "控制面板",
+  "key.viltrumitecore.skip_cinematic": "跳过过场动画",
   "gui.viltrumitecore.npc_spawner.title": "NPC 生成器",
   "gui.viltrumitecore.npc_spawner.spawn": "生成",
   "gui.viltrumitecore.npc_spawner.name": "名称",
