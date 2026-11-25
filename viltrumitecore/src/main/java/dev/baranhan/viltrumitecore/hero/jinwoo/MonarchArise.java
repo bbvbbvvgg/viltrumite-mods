@@ -1,5 +1,7 @@
 package dev.baranhan.viltrumitecore.hero.jinwoo;
 
+import dev.baranhan.viltrumitecore.combat.feel.CinematicUltimates;
+import dev.baranhan.viltrumitecore.combat.feel.Cinematics;
 import dev.baranhan.viltrumitecore.combat.feel.HitWeight;
 import dev.baranhan.viltrumitecore.entity.jinwoo.ShadowSoldierEntity;
 import dev.baranhan.viltrumitecore.hero.HeroDamage;
@@ -24,6 +26,8 @@ public final class MonarchArise {
    static boolean start(ServerPlayer player, JinwooState state) {
       JinwooCombat.autoDraw(player, state);
       state.start(JinwooMove.ARISE, -1);
+      // The Monarch's own rise camera keeps the view (CameraOwners): the shared camera bows out on the client.
+      Cinematics.play(player, CinematicUltimates.JINWOO_MONARCH, null);
       state.domainCenter = player.position();
       state.domainLeft = JinwooRules.ULT_DOMAIN;
       state.ultSpoken = HeroSpeech.ability(player, JinwooAbility.MONARCH.id());
