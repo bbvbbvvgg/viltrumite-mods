@@ -71,11 +71,17 @@ public final class CinematicSettings {
 
    /**
     * File-independent serialisation, so a unit test can round-trip the settings without a config directory
-    * (and without Minecraft classes). Gson drops unknown keys and falls back to the Java defaults for missing ones.
+    * (and without Minecraft classes). A malformed document or an unknown shape falls back to the defaults; Gson
+    * drops unknown keys and uses the Java defaults for missing ones.
     */
    public static CinematicSettings read(String json) {
-      CinematicSettings parsed = GSON.fromJson(json, CinematicSettings.class);
-      return parsed != null ? parsed : new CinematicSettings();
+      try {
+         CinematicSettings parsed = GSON.fromJson(json, CinematicSettings.class);
+         return parsed != null ? parsed : new CinematicSettings();
+      } catch (RuntimeException e) {
+         LOGGER.warn("Could not parse cinematic settings JSON, using defaults", e);
+         return new CinematicSettings();
+      }
    }
 
    /** File-independent serialisation; the counterpart of {@link #read(String)}. */

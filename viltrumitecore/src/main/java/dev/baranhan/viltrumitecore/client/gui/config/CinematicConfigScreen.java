@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList.Entry;
@@ -124,9 +125,9 @@ public class CinematicConfigScreen extends Screen {
    }
 
    private class SingleButtonEntry extends CinematicConfigScreen.ConfigListEntry {
-      private final Button button;
+      private final AbstractWidget button;
 
-      public SingleButtonEntry(Button button) {
+      public SingleButtonEntry(AbstractWidget button) {
          this.button = button;
       }
 
