@@ -1,6 +1,7 @@
 package dev.baranhan.viltrumitecore.client.gui;
 
 import dev.baranhan.viltrumitecore.client.gui.config.CameraConfigScreen;
+import dev.baranhan.viltrumitecore.client.gui.config.CinematicConfigScreen;
 import dev.baranhan.viltrumitecore.client.gui.config.ClientConfigScreen;
 import dev.baranhan.viltrumitecore.client.gui.config.CoreConfigScreen;
 import dev.baranhan.viltrumitecore.client.gui.config.FlightCameraConfigScreen;
@@ -60,6 +61,11 @@ public class ViltrumiteConfigScreen extends Screen {
       this.addRenderableWidget(
          Button.builder(Component.translatable("gui.viltrumitecore.config.flight_camera"), button -> this.minecraft.setScreen(new FlightCameraConfigScreen(this)))
             .bounds(startX, startY + rowSpacing * 3, buttonWidth, buttonHeight)
+            .build()
+      );
+      this.addRenderableWidget(
+         Button.builder(Component.translatable("gui.viltrumitecore.config.cinematic"), button -> this.minecraft.setScreen(new CinematicConfigScreen(this)))
+            .bounds(startX + 160, startY + rowSpacing * 3, buttonWidth, buttonHeight)
             .build()
       );
       this.addRenderableWidget(

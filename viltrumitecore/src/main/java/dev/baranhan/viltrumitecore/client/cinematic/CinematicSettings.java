@@ -69,6 +69,20 @@ public final class CinematicSettings {
       }
    }
 
+   /**
+    * File-independent serialisation, so a unit test can round-trip the settings without a config directory
+    * (and without Minecraft classes). Gson drops unknown keys and falls back to the Java defaults for missing ones.
+    */
+   public static CinematicSettings read(String json) {
+      CinematicSettings parsed = GSON.fromJson(json, CinematicSettings.class);
+      return parsed != null ? parsed : new CinematicSettings();
+   }
+
+   /** File-independent serialisation; the counterpart of {@link #read(String)}. */
+   public String write() {
+      return GSON.toJson(this);
+   }
+
    private static File file() {
       return new File(FMLPaths.CONFIGDIR.get().toFile(), FILE_NAME);
    }
@@ -81,5 +95,25 @@ public final class CinematicSettings {
    /** Sanitised flash multiplier in 0..1. */
    public float flash() {
       return FeelMath.sane(this.flashIntensity, 1.0F);
+   }
+
+   /** True when the cinematic camera may fly (the scene keeps letterbox and slow-mo either way). */
+   public boolean cinematicCameraEnabled() {
+      return !this.disableCinematicCamera;
+   }
+
+   /** True when other players' scenes may take over this player's camera (opt-in). */
+   public boolean watchOthers() {
+      return this.watchOthersCinematics;
+   }
+
+   /** True when reduced camera motion is on (shake ×0.35, no roll, no FOV kick, no air rings). */
+   public boolean reducedMotion() {
+      return this.reduceCameraMotion;
+   }
+
+   /** True when inverted manga impact frames are on. */
+   public boolean impactFramesEnabled() {
+      return this.impactFrames;
    }
 }

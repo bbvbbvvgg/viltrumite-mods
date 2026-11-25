@@ -813,5 +813,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.check.arms": "手臂伺服 ..... 在线",
   "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "肩部装甲 ..... 已锁定",
   "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "头盔链路 ..... 在线",
-  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48：全系统就绪"
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48：全系统就绪",
+  "gui.viltrumitecore.config.cinematic": "电影化战斗设置",
+  "gui.viltrumitecore.config.cinematic.title": "电影化战斗设置（客户端）",
+  "gui.viltrumitecore.config.cinematic.reduce_motion": "减少镜头晃动：%s",
+  "gui.viltrumitecore.config.cinematic.disable_camera": "禁用电影化镜头：%s",
+  "gui.viltrumitecore.config.cinematic.watch_others": "观看他人演出：%s",
+  "gui.viltrumitecore.config.cinematic.impact_frames": "冲击定格帧：%s",
+  "gui.viltrumitecore.config.cinematic.flash": "闪光强度：%s"
 }

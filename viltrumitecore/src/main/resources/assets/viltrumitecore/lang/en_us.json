@@ -813,5 +813,12 @@
   "hud.viltrumitecore.ironman.hulkbuster.check.arms": "ARM SERVOS ..... ONLINE",
   "hud.viltrumitecore.ironman.hulkbuster.check.shoulders": "SHOULDER PLATING ..... LOCKED",
   "hud.viltrumitecore.ironman.hulkbuster.check.helmet": "HELMET LINK ..... ONLINE",
-  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: ALL SYSTEMS GO"
+  "hud.viltrumitecore.ironman.hulkbuster.check.ready": "MARK 48: ALL SYSTEMS GO",
+  "gui.viltrumitecore.config.cinematic": "Cinematic Combat Settings",
+  "gui.viltrumitecore.config.cinematic.title": "Cinematic Combat Settings (Client-Side)",
+  "gui.viltrumitecore.config.cinematic.reduce_motion": "Less Camera Motion: %s",
+  "gui.viltrumitecore.config.cinematic.disable_camera": "No Cinematic Camera: %s",
+  "gui.viltrumitecore.config.cinematic.watch_others": "Watch Others' Scenes: %s",
+  "gui.viltrumitecore.config.cinematic.impact_frames": "Impact Frames: %s",
+  "gui.viltrumitecore.config.cinematic.flash": "Flash Intensity: %s"
 }

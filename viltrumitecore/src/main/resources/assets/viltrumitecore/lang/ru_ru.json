@@ -507,5 +507,12 @@
 "commands.viltrumitecore.herolines.unknown": "Неизвестная реплика героя: %s",
 "commands.viltrumitecore.herolines.skipped": "Реплика не запущена (уже звучит, ещё на перезарядке или говорящий не может говорить): %s",
 "commands.viltrumitecore.herolines.played": "Реплика запущена: %s",
-"commands.viltrumitecore.herolines.stopped": "Реплики остановлены"
+"commands.viltrumitecore.herolines.stopped": "Реплики остановлены",
+"gui.viltrumitecore.config.cinematic": "Настройки кинематографичного боя",
+"gui.viltrumitecore.config.cinematic.title": "Настройки кинематографичного боя (клиент)",
+"gui.viltrumitecore.config.cinematic.reduce_motion": "Меньше движения камеры: %s",
+"gui.viltrumitecore.config.cinematic.disable_camera": "Без кинокамеры: %s",
+"gui.viltrumitecore.config.cinematic.watch_others": "Смотреть чужие сцены: %s",
+"gui.viltrumitecore.config.cinematic.impact_frames": "Кадры удара: %s",
+"gui.viltrumitecore.config.cinematic.flash": "Яркость вспышек: %s"
 }
